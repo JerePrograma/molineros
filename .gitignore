@@ -1,0 +1,112 @@
+############################
+# CONTROL DE VERSIONES VIEJO
+############################
+
+# Carpeta SVN heredada
+/svn/
+.svn/
+
+############################
+# IDEs
+############################
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+# Eclipse (por si convivió)
+.project
+.classpath
+.settings/
+
+# NetBeans (por si alguna vez se abrió ahí)
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+############################
+# SISTEMA OPERATIVO
+############################
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+############################
+# JAVA / BUILD GENERADOS
+############################
+
+# Maven
+target/
+
+# Gradle
+.gradle/
+build/
+
+# Ant / genéricos
+bin/
+classes/
+tmp/
+temp/
+*.tmp
+
+# Compilados / empaquetados
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+############################
+# LOGS / RUNTIME
+############################
+
+logs/
+*.log
+
+# Archivos de parche o merge
+*.orig
+*.rej
+
+# Archivos temporales de editores
+*~
+*.swp
+*.swo
+
+############################
+# LIFERAY / SERVIDOR DE APLICACIONES
+############################
+
+# Directorios de runtime típicos de Tomcat
+tomcat-*/logs/
+tomcat-*/temp/
+tomcat-*/work/
+tomcat-*/webapps/ROOT/work/
+
+# Si el bundle de Liferay está dentro del repo,
+# ignorar solo runtime, no código fuente.
+liferay-portal-*/logs/
+liferay-portal-*/temp/
+liferay-portal-*/work/
+
+# Carpeta de deploy automático de Liferay
+deploy/
+
+############################
+# OTROS
+############################
+
+# Archivos de configuración locales
+*.local.properties
+*.env
+*.env.*

@@ -1,0 +1,156 @@
+package ar.com.ospim.farmaciaOspim.action;
+
+import java.math.BigDecimal;
+import java.sql.Types;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.portlet.ActionRequest;
+import javax.portlet.ActionResponse;
+import javax.portlet.PortletConfig;
+import javax.portlet.PortletRequest;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.apache.log4j.Logger;
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+import org.mortbay.jetty.Request;
+
+import ar.com.ospim.farmaciaOspim.WebKeysFarmaciaOspim;
+import ar.com.ospim.farmaciaOspim.services.FarmaciaServiceUtil;
+import ar.com.ospim.global.beans.Farmacia;
+import ar.com.ospim.util.StringUtils;
+
+import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.kernel.servlet.SessionMessages;
+import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.model.User;
+import com.liferay.portal.struts.PortletAction;
+import com.liferay.portal.util.PortalUtil;
+
+	public class EditarFarmaciaOspimEntryAction extends PortletAction  {
+		
+	private Logger _log = Logger.getLogger(this.getClass());
+	
+	public void processAction(ActionMapping mapping, ActionForm form,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse) throws Exception {		
+	}
+	
+	public ActionForward render(ActionMapping mapping, ActionForm form,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse) throws Exception {
+		
+		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
+		
+		String cmd = ParamUtil.getString(renderRequest, Constants.CMD);
+		User user = PortalUtil.getUser(renderRequest);
+        int idRegFarmacia = ParamUtil.getInteger(renderRequest, "id_registro_farmacia",0);
+        
+        if(StringUtils.checkEmpty(cmd))		{ 			
+												this.cargarListas(renderRequest);
+		}	
+        try {
+        	
+        
+        Farmacia  farmacia=null;
+		if(!StringUtils.checkEmpty(cmd)){
+			if(cmd.equals(Constants.DELETE)){ 
+				  borraFarmaciaEntry(renderRequest);
+				  idRegFarmacia =0;
+			      return mapping.findForward("portlet.farmaciaospim.view");
+		    }
+			
+			session.removeAttribute(WebKeysFarmaciaOspim.FARMACIA_EN_EDICION);
+
+				if(cmd.equals(Constants.SAVE)){					
+					farmacia  =getFarmaciaFromRequest(renderRequest, farmacia );
+					idRegFarmacia = FarmaciaServiceUtil.insertar(farmacia , user); 
+					farmacia  = FarmaciaServiceUtil.getFarmacia(idRegFarmacia );
+					session.setAttribute(WebKeysFarmaciaOspim.FARMACIA_EN_EDICION, farmacia   );
+					renderRequest.setAttribute(Constants.CMD, Constants.EDIT);
+				}
+				if(cmd.equals(Constants.EDIT ) || cmd.equals(Constants.VIEW )){
+					farmacia= FarmaciaServiceUtil.getFarmacia(idRegFarmacia ) ;
+					session.setAttribute(WebKeysFarmaciaOspim.FARMACIA_EN_EDICION, farmacia    );
+					renderRequest.setAttribute(Constants.CMD, Constants.EDIT);
+					if (cmd.equals(Constants.VIEW ) ){
+						renderRequest.setAttribute(Constants.CMD,Constants.VIEW);						
+					}
+				}				
+				if(cmd.equals(Constants.UPDATE )){
+					farmacia  =getFarmaciaFromRequest(renderRequest, farmacia );
+					FarmaciaServiceUtil.actualizar(farmacia, user);
+					farmacia = FarmaciaServiceUtil.getFarmacia(idRegFarmacia );
+					session.setAttribute(WebKeysFarmaciaOspim.FARMACIA_EN_EDICION, farmacia );					
+				}	
+				if (SessionErrors.isEmpty(renderRequest)  && (cmd.equals(Constants.UPDATE)  || cmd.equals(Constants.SAVE))  ) 	{
+						String successMessage = ParamUtil.getString(renderRequest, "successMessage");
+						SessionMessages.add(renderRequest, "request_processed", successMessage);																}
+						renderRequest.setAttribute(Constants.CMD, Constants.EDIT);					
+					    if (cmd.equals(Constants.VIEW) ){
+						   renderRequest.setAttribute(Constants.CMD,Constants.VIEW);	
+						}
+				}else{  	  
+					session.removeAttribute(WebKeysFarmaciaOspim.FARMACIA_EN_EDICION);
+					renderRequest.setAttribute(Constants.CMD, Constants.ADD);
+				}
+		
+		} catch (Exception e) {
+			_log.debug("item:errorr " );
+		}		
+        
+		return mapping.findForward(getForward(renderRequest,
+						"portletportlet.farmaciaospim.farmacia._edicion_entry"));
+	}	
+	
+	private void cargarListas(RenderRequest renderRequest) throws Exception{
+		// por las dudas
+	}
+
+	protected void borraFarmaciaEntry(RenderRequest renderRequest)
+			throws Exception {
+		    int idFarmacia = ParamUtil.getInteger(renderRequest,
+				"id_registro_farmacia", 0);
+		    User user = PortalUtil.getUser(renderRequest);
+		    FarmaciaServiceUtil.borrar(idFarmacia ,user);
+	}	
+		
+public Farmacia  getFarmaciaFromRequest(RenderRequest req, Farmacia farmacia) {		
+
+		try {
+			String calle= ParamUtil.getString(req,"calle");
+			String telefono= ParamUtil.getString(req,"telefono");
+			String codigo= ParamUtil.getString(req,"codigo");
+			String cuit  = ParamUtil.getString(req,"cuit");
+			String camara= ParamUtil.getString(req,"camara");
+			String farmaciaDesc= ParamUtil.getString(req,"farmacia");			
+			String codigoFarmacia= ParamUtil.getString(req,"codigofarmacia");
+			String codigoFarmaciaMandataria= ParamUtil.getString(req,"codigofarmaciamandataria");			
+			BigDecimal porceDesc= new BigDecimal(ParamUtil.getDouble(req,"porcedesc")) ;
+		    String sucursal= ParamUtil.getString(req,"sucursal");
+		    int idSeccional=ParamUtil.getInteger(req,"id_seccional_sel");
+		    String nombreSeccional=ParamUtil.getString(req,"nombre_seccional_sel");
+		    String codColegio=ParamUtil.getString(req,"codigoColegio"); 
+		    String nombreColegio =ParamUtil.getString(req,"nombreColegio_sel");
+		    String baseDescuento =ParamUtil.getString(req,"baseDescuento");		    
+		    int idRegistroFarmacia = ParamUtil.getInteger(req,"id_registro_farmacia");
+		    int localidadFarmacia =  ParamUtil.getInteger(req,"id_localidad");
+		    int provinciaFarmacia =  ParamUtil.getInteger(req,"id_provincia");
+			farmacia  = new Farmacia(calle,telefono,codigo,cuit,camara,farmaciaDesc,codigoFarmacia,porceDesc,sucursal , idSeccional ,nombreSeccional , nombreColegio , codColegio, baseDescuento, codigoFarmaciaMandataria, provinciaFarmacia  , localidadFarmacia  );
+			
+			farmacia.setId_farmacia(idRegistroFarmacia); 
+		} catch (Exception e) {
+			_log.debug("item:errorr " );
+		}		
+		return farmacia  ;
+	}	
+}

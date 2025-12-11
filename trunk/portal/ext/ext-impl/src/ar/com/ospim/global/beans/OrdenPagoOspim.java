@@ -1,0 +1,399 @@
+package ar.com.ospim.global.beans;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import ar.com.ospim.global.beans.Comprobante.ComprobanteConcepto;
+import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
+import ar.com.ospim.liquidaciones.beans.Liquidacion;
+import ar.com.ospim.liquidaciones.services.ConceptoServiceUtil;
+import ar.com.ospim.util.DateUtils;
+
+public class OrdenPagoOspim extends OrdenPago implements ItemSubdiarioEgreso, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4980708047019987597L;
+	
+	public final static String CONCEPTO_FARMACIA = "CHEQUE PARA EL PAGO DEL SERVICIO DE MEDICAMENTOS AMBULATORIOS";
+	private static Calendar fechaExcepcionIni;
+	private static Calendar fechaExcepcionFin;
+	static {
+		try {
+			fechaExcepcionIni = Calendar.getInstance();
+			fechaExcepcionIni.setTime(DateUtils.parse(
+					WebKeysLiquidaciones.EXCEPCION_SUBDIARIO_CUENTA_PASIVO_INI,
+					DateUtils.SHORT));
+			fechaExcepcionFin = Calendar.getInstance();
+			fechaExcepcionFin.setTime(DateUtils.parse(
+					WebKeysLiquidaciones.EXCEPCION_SUBDIARIO_CUENTA_PASIVO_FIN,
+					DateUtils.SHORT));
+		} catch (ParseException e) {
+		}
+	}
+	
+	private boolean prestador;
+	transient private boolean liquidacion;
+	transient private boolean reintegro;
+	private boolean mostrarEnCuadro;
+	
+
+	public OrdenPagoOspim(int idOpOspim) {
+		setId(idOpOspim);
+	}
+
+	public OrdenPagoOspim() {
+	}
+
+	public static OrdenPagoOspim getMapping(ResultSet rs) throws SQLException {
+		return getMapping(rs, "");
+	}
+	
+	
+
+	public static OrdenPagoOspim getMapping(ResultSet rs, String prefix)
+			throws SQLException {
+		OrdenPagoOspim op = new OrdenPagoOspim();
+		op.setId(rs.getInt(prefix + "id_orden_pago"));
+		op.setImporte(rs.getBigDecimal(prefix + "importe"));
+		op.setAlta_fecha(rs.getDate(prefix + "alta_fecha"));
+		op.setAlta_usr(rs.getString(prefix + "alta_usr"));
+		op.setAlta_ip(rs.getString(prefix + "alta_ip"));
+		op.setModi_fecha(rs.getDate(prefix + "modi_fecha"));
+		op.setModi_usr(rs.getString(prefix + "modi_usr"));
+		op.setModi_ip(rs.getString(prefix + "modi_ip"));
+		op.setBaja_fecha(rs.getDate(prefix + "baja_fecha"));
+		op.setBaja_usr(rs.getString(prefix + "baja_usr"));
+		op.setBaja_ip(rs.getString(prefix + "baja_ip"));
+		
+		op.setIdLote(rs.getInt(prefix + "id_lote"));
+		try{
+			op.setDestino(rs.getString(prefix + "destino"));
+			op.setObsInterna(rs.getString(prefix + "obs_interna"));
+			op.setFechaFirma(rs.getDate(prefix + "fecha_firma"));
+			
+		}catch(Exception e){
+			
+		}
+
+		op.setPrestador(rs.getBoolean(prefix + "prestador"));
+		op.setFarmacia(rs.getBoolean(prefix + "farmacia"));
+		op.setObservaciones(rs.getString(prefix + "observaciones"));
+		String cuitAcreedor = rs.getString(prefix + "cuit_acreedor");
+		String sucuAcreedor = rs.getString(prefix + "sucu_acreedor");
+		int seccional = rs.getInt(prefix + "id_seccional");
+
+		op.setAcreedor(new Empresa(cuitAcreedor, sucuAcreedor, null));
+		op.setSeccional(new Seccional(seccional, null));
+
+		return op;
+	}
+
+	
+	public void setPrestador(boolean prestador) {
+		this.prestador = prestador;
+	}
+
+	public boolean isPrestador() {
+		return prestador;
+	}
+
+	// Para el reporte de subdiario de egresos
+	public String getCuit() {
+		return getAcreedor().getCuit();
+	}
+
+	public Date getFecha() {
+		return getAlta_fecha();
+	}
+
+	public String getNumeroOP() {
+		return String.valueOf(getId());
+	}
+
+	/**
+	 * Obtiene todos los comprobantes agrupados por concepeto para el subdiario
+	 * de egreso
+	 */
+	private List<? extends SubdiarioEgresoColumna> getHaciaOriginal() {
+		List<ColumnaConceptosSubdiario> cuentas = new ArrayList<ColumnaConceptosSubdiario>();
+		if (getComprobantes() != null) {
+			for (Comprobante c : getComprobantes()) {
+				Calendar pago = Calendar.getInstance();
+				pago.setTime(c.getFechaPrimerPago());
+				pago.set(Calendar.DATE, 1);
+
+				if (getFormaPago() != null
+						&& getFormaPago().indexOf(
+								new OrdenPago.FormaPago(new Anticipo(c))) != -1) {
+					continue;
+				}
+				Calendar recepcion = Calendar.getInstance();
+				if (c.getFechaRecepcion() != null) {
+					recepcion.setTime(c.getFechaRecepcion());
+				} else {
+					recepcion.setTime(c.getFechaEmision());
+				}
+				recepcion.set(Calendar.DATE, 1);
+				boolean pasivo = false;
+				//AGREGO EL CASO DE QUE SE ESTE CANCELANDO UN COMPRO CON UNA NCR EMITIDA CON ANTERIORIDAD. EN ESE CASO NO ES PASIVO. (23/01/2015)
+				if (pago.compareTo(recepcion) > 0
+						&& !excepcionCuentasPasivo(c.getFechaPrimerPago()) && !c.getTipoComprobante().equals("NCR")) {
+					pasivo = true;
+				}
+				if (c.getConceptos() != null) {
+					List<ComprobanteConcepto> ccList = c.getConceptos();
+					for (ComprobanteConcepto cc : ccList) {
+						BigDecimal importe = cc.getImporte();
+						if (c.isDebitoParaEgreso()) {
+							importe = importe.negate();
+						}
+						PlanCuentas pc = cc.getConceptoComprobante()
+								.getPlanCuentas();
+						if (pasivo
+								|| cc.getConceptoComprobante().getId() == ConceptoServiceUtil
+										.getIdSueldosSeccionales(c
+												.getFechaRecepcion())
+								|| cc.getConceptoComprobante().getId() == ConceptoServiceUtil
+										.getIdSueldosSedeCentral(c
+												.getFechaRecepcion())) {
+							pc = cc.getConceptoComprobante()
+									.getPlanCuentasPasivo();
+						}
+						ColumnaConceptosSubdiario col = new ColumnaConceptosSubdiario(
+								pc.getNumero(), "", BigDecimal.ZERO, "", false,
+								pc.getId());
+						int indexOf = cuentas.indexOf(col);
+						if (indexOf == -1) {
+							cuentas.add(new ColumnaConceptosSubdiario(pc
+									.getNumero(), pc.getCuenta(), importe, "",
+									false, pc.getId()));
+						} else {
+							ColumnaConceptosSubdiario comprobanteConcepto = cuentas
+									.get(indexOf);
+							comprobanteConcepto.setImporte(comprobanteConcepto
+									.getImporte().add(importe));
+						}
+					}
+				}
+			}
+		}
+		return cuentas;
+	}
+	
+	//EXCEPCION QUE SE UTILIZO PARA QUE NO APAREZCAN CUENTAS DE PASIVO 
+	private boolean excepcionCuentasPasivo(Date pago) {
+		Calendar pagoC = Calendar.getInstance();
+		pagoC.setTime(pago);
+		if (fechaExcepcionIni.compareTo(pagoC) <= 0
+				&& fechaExcepcionFin.compareTo(pagoC) >= 0) {
+			return true;
+		}
+		return false;
+	}
+	//ESTE ES EL DEBE
+	public List<? extends SubdiarioEgresoColumna> getDesde() {
+		//SI ES UNA ANULACION HAY QUE INVERTIR COLUMNAS
+		if (getBaja_fecha() == null) {
+			return getDesdeOriginal();
+		} else {
+			return getHaciaOriginal();
+		}
+	}
+	//ESTE ES EL HABER
+	public List<? extends SubdiarioEgresoColumna> getHacia() {
+		//SI ES UNA ANULACION HAY QUE INVERTIR COLUMNAS
+		if (getBaja_fecha() == null) {
+			return getHaciaOriginal();
+		} else {
+			return getDesdeOriginal();
+		}
+	}
+
+	/**
+	 * Obtiene todas las formas de pago que no sean anticipos, y agrupa los
+	 * anticipos segun su concepto para el subdiario de egreso
+	 */
+	private List<? extends SubdiarioEgresoColumna> getDesdeOriginal() {
+		List<SubdiarioEgresoColumna> desde = new ArrayList<SubdiarioEgresoColumna>();
+		List<ColumnaConceptosSubdiario> cuentas = new ArrayList<ColumnaConceptosSubdiario>();
+		if (getFormaPago() != null) {
+			for (OrdenPago.FormaPago fp : getFormaPago()) {
+				if (!fp.getTipo().equals(Anticipo.class.getSimpleName())) {
+					desde.add(fp);
+				} else {
+					List<ComprobanteConcepto> conceptos = ((Anticipo) fp
+							.getPago()).getAnticipo().getConceptos();
+
+					for (ComprobanteConcepto concepto : conceptos) {
+						PlanCuentas pc = concepto.getConceptoComprobante()
+								.getPlanCuentas();
+						ColumnaConceptosSubdiario col = new ColumnaConceptosSubdiario(
+								pc.getNumero(), "", BigDecimal.ZERO, "", true,
+								pc.getId());
+						int indexOf = cuentas.indexOf(col);
+						if (indexOf == -1) {
+							cuentas.add(new ColumnaConceptosSubdiario(pc
+									.getNumero(), pc.getCuenta(), concepto
+									.getImporte(), "", true, pc.getId()));
+						} else {
+							ColumnaConceptosSubdiario comprobanteConcepto = cuentas
+									.get(indexOf);
+							comprobanteConcepto.setImporte(comprobanteConcepto
+									.getImporte().add(concepto.getImporte()));
+						}
+					}
+				}
+			}
+		}
+		desde.addAll(cuentas);
+		return desde;
+	}
+
+	public String getRazonSocial() {
+		return getAcreedor().getRazon_soc();
+	}
+
+	public int getId_seccional() {
+		return getSeccional().getIdSeccional();
+	}
+
+	public List<? extends SubdiarioComprobante> getComprobantesSubdiario() {
+		return getComprobantes();
+	}
+
+	public boolean isLiquidacion() {
+		return liquidacion;
+	}
+
+	public void setLiquidacion(boolean liquidacion) {
+		this.liquidacion = liquidacion;
+	}
+
+	public boolean isReintegro() {
+		return reintegro;
+	}
+
+	public void setReintegro(boolean reintegro) {
+		this.reintegro = reintegro;
+	}
+
+	public boolean isProveedor() {
+		return !reintegro && !liquidacion;
+	}
+
+	private class ColumnaConceptosSubdiario implements SubdiarioEgresoColumna {
+		private String cuenta;
+		private String descripcion;
+		private int cuentaId;
+		private BigDecimal importe;
+		private String tipo;
+		private boolean isAnticipo;
+
+		public ColumnaConceptosSubdiario(String cuenta, String descripcion,
+				BigDecimal importe, String tipo, boolean isAnticipo,
+				int cuentaId) {
+			this.cuenta = cuenta;
+			this.descripcion = descripcion;
+			this.importe = importe;
+			this.tipo = tipo;
+			this.isAnticipo = isAnticipo;
+			this.cuentaId = cuentaId;
+		}
+
+		public String getCuenta(int entidad) {
+			return cuenta;
+		}
+		
+		public String getCuenta() {
+			return cuenta;
+		}
+
+		public String getDescripcionPAraSubdiario() {
+			return descripcion;
+		}
+
+		public BigDecimal getImporte() {
+			return importe;
+		}
+
+		public void setImporte(BigDecimal importe) {
+			this.importe = importe;
+		}
+
+		public String getTipo() {
+			return tipo;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result
+					+ ((cuenta == null) ? 0 : cuenta.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			ColumnaConceptosSubdiario other = (ColumnaConceptosSubdiario) obj;
+			if (cuenta == null) {
+				if (other.cuenta != null)
+					return false;
+			} else if (!cuenta.equals(other.cuenta))
+				return false;
+			return true;
+		}
+
+		public boolean isAnticipo() {
+			return isAnticipo;
+		}
+
+		public int getCuentaId(int entidad) {
+			return cuentaId;
+		}
+		public int getCuentaId() {
+			return cuentaId;
+		}
+	
+	}
+
+	public void setMostrarEnCuadro(boolean boolean1) {
+		mostrarEnCuadro = boolean1;
+	}
+
+	public boolean isMostrarEnCuadro() {
+		return mostrarEnCuadro;
+	}
+
+	public static Calendar getFechaExcepcionIni() {
+		return fechaExcepcionIni;
+	}
+
+	public static void setFechaExcepcionIni(Calendar fechaExcepcionIni) {
+		OrdenPagoOspim.fechaExcepcionIni = fechaExcepcionIni;
+	}
+
+	public static Calendar getFechaExcepcionFin() {
+		return fechaExcepcionFin;
+	}
+
+	public static void setFechaExcepcionFin(Calendar fechaExcepcionFin) {
+		OrdenPagoOspim.fechaExcepcionFin = fechaExcepcionFin;
+	}	
+		
+
+}

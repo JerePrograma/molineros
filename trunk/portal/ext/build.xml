@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<project name="ext" basedir="." default="deploy">
+	<property name="project.dir" value="." />
+
+	<import file="build-parent.xml" />
+	
+	<target name="pre-war" depends="deploy">
+		<copy todir="ext-web/tmp/WEB-INF/lib">
+				<fileset dir="lib/global">
+					<include name="*.jar" />
+				</fileset>
+		</copy>
+		<copy todir="ext-web/tmp/WEB-INF/lib">
+			<fileset dir="lib/portal">
+				<include name="*.jar" />
+			</fileset>
+		</copy>
+		<copy todir="ext-web/tmp/WEB-INF/lib">
+			<fileset dir="ext-impl">
+				<include name="ext-impl.jar" />
+			</fileset>
+		</copy>
+		<copy todir="ext-web/tmp/WEB-INF/lib">
+				<fileset dir="modules">
+					<include name="portal-impl.jar" />
+				</fileset>
+		</copy>
+		<copy todir="ext-web/tmp/WEB-INF/classes">
+				<fileset dir="classes">
+					<include name="*.properties" />
+				</fileset>
+		</copy>
+		<copy todir="ext-web/tmp/WEB-INF/classes">
+				<fileset dir="ext-impl/src">
+					<include name="*.properties" />
+				</fileset>
+		</copy>
+	</target>
+
+	<target name="war" depends="pre-war">
+		<replace file="ext-web/tmp/WEB-INF/classes/c3p0-config.xml">
+				  <replacefilter  token="@IP@" value="${ip.produccion}"/>
+				  <replacefilter  token="@PASS@" value="${pass.produccion}"/>
+			      <replacefilter  token="@BASE@" value="${base.produccion}"/>
+		</replace>
+		
+		<replace file="ext-web/tmp/WEB-INF/classes/portal-ext.properties">
+				  <replacefilter  token="@IP@" value="${ip.produccion}"/>
+				  <replacefilter  token="@PASS@" value="${pass.produccion}"/>
+				  <replacefilter  token="@LUCENE_DIR@" value="lucene.dir=/home/usuario/lucene/"/>
+		</replace>
+		<war destfile="ROOT.war" webxml="ext-web/tmp/WEB-INF/web.xml" basedir="ext-web/tmp"/>
+	</target>
+		
+	<target name="war-qa" depends="pre-war">
+			<replace file="ext-web/tmp/WEB-INF/classes/c3p0-config.xml">
+					  <replacefilter  token="@IP@" value="${ip.qa}"/>
+					  <replacefilter  token="@PASS@" value="${pass.qa}"/>
+					  <replacefilter  token="@BASE@" value="${base.qa}"/>
+			</replace>
+			
+			<replace file="ext-web/tmp/WEB-INF/classes/portal-ext.properties">
+					  <replacefilter  token="@IP@" value="${ip.qa}"/>
+					  <replacefilter  token="@PASS@" value="${pass.qa}"/>
+					  <replacefilter  token="@LUCENE_DIR@" value="lalalala=lalalal"/>
+			</replace>	
+				
+			<war destfile="ROOT.war" webxml="ext-web/tmp/WEB-INF/web.xml" basedir="ext-web/tmp"/>
+		</target>
+		
+</project>

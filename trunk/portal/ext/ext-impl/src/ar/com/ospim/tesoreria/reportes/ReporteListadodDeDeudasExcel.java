@@ -1,0 +1,853 @@
+package ar.com.ospim.tesoreria.reportes;
+
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFPrintSetup;
+import org.apache.poi.hssf.usermodel.HSSFRichTextString;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.util.CellRangeAddress;
+
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.ParamUtil;
+
+import ar.com.ospim.global.beans.Comprobante;
+import ar.com.ospim.global.beans.Empresa;
+import ar.com.ospim.liquidaciones.ordenespago.reportes.ReporteSubdiario;
+import ar.com.ospim.tesoreria.service.ContabilidadServiceUtil;
+import ar.com.ospim.util.DateUtils;
+import ar.com.ospim.util.StringUtils;
+
+public class ReporteListadodDeDeudasExcel extends ReporteSubdiario {
+	private static Log _log = LogFactoryUtil
+			.getLog(ReporteListadodDeDeudasExcel.class);
+
+	public static HSSFWorkbook generaReporteListadoDeDeudas(
+			HttpServletRequest req, HttpServletResponse res) {
+		
+		int entidad=ParamUtil.getInteger(req, "entidad");
+		
+		boolean incluirReintegros = ParamUtil.getBoolean(req,
+				"incluir_reintegros");
+		boolean incluirLiquidaciones = ParamUtil.getBoolean(req,
+				"incluir_liquidaciones");
+		boolean incluirProveedores = ParamUtil.getBoolean(req,
+				"incluir_proveedores");
+
+		SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
+		String fechaDesdeDia = ParamUtil.getString(req, "fechaDesdeDia");
+		String fechaDesdeMes = ParamUtil.getString(req, "fechaDesdeMes");
+		fechaDesdeMes = String.valueOf(Integer.valueOf(fechaDesdeMes) + 1);
+		String fechaDesdeAnio = ParamUtil.getString(req, "fechaDesdeAnio");
+		String fechaHastaDia = ParamUtil.getString(req, "fechaHastaDia");
+		String fechaHastaMes = ParamUtil.getString(req, "fechaHastaMes");
+		fechaHastaMes = String.valueOf(Integer.valueOf(fechaHastaMes) + 1);
+		String fechaHastaAnio = ParamUtil.getString(req, "fechaHastaAnio");
+		String fechaPagoHastaDia = ParamUtil
+				.getString(req, "fechaPagoHastaDia");
+		String fechaPagoHastaMes = ParamUtil
+				.getString(req, "fechaPagoHastaMes");
+		fechaPagoHastaMes = String
+				.valueOf(Integer.valueOf(fechaPagoHastaMes) + 1);
+		String fechaPagoHastaAnio = ParamUtil.getString(req,
+				"fechaPagoHastaAnio");
+		
+		
+
+		String cuit = ParamUtil.getString(req, "cuit_entidad");
+		String sucu = ParamUtil.getString(req, "sucursal_entidad");
+		Integer seccional = ParamUtil.getInteger(req, "id_seccional", 0);
+		if (seccional != 0) {
+			sucu = "000";
+		}
+
+		try {
+			Date fechaIni = format.parse(fechaDesdeDia + "-" + fechaDesdeMes
+					+ "-" + fechaDesdeAnio);
+			Date fechaFin = format.parse(fechaHastaDia + "-" + fechaHastaMes
+					+ "-" + fechaHastaAnio);
+			Date fechaPagoHasta = format.parse(fechaPagoHastaDia + "-"
+					+ fechaPagoHastaMes + "-" + fechaPagoHastaAnio);
+
+			List<ItemListadoDeuda> listado = ContabilidadServiceUtil
+					.listadoDeDeudas(fechaIni, fechaFin, cuit, sucu, seccional,
+							fechaPagoHasta, incluirProveedores,
+							incluirLiquidaciones, incluirReintegros, entidad);
+			return generarReporte(fechaIni, fechaFin, fechaPagoHasta, cuit,
+					listado, entidad);
+		} catch (Exception e) {
+			_log.error("Error al generar listado de deudas", e);
+			return null;
+		}
+	}
+
+	private static HSSFWorkbook generarReporte(Date fechaIni, Date fechaFin,
+			Date fechaPagoHasta, String cuit, List<ItemListadoDeuda> listado, int entidad) {
+		HSSFWorkbook wb = new HSSFWorkbook();
+		HSSFCellStyle styleHeader = getStyleHeaderWithBorder(wb);
+		HSSFCellStyle styleHeaderSinBorde = getStyleHeader(wb);
+		styleHeaderSinBorde.setBorderTop(BorderStyle.THIN);
+		styleHeaderSinBorde.setBorderBottom(BorderStyle.THIN);
+
+		HSSFCellStyle styleHeaderL = getStyleHeader(wb);
+		styleHeaderL.setBorderLeft(BorderStyle.THIN);
+		styleHeaderL.setBorderTop(BorderStyle.THIN);
+		styleHeaderL.setBorderBottom(BorderStyle.THIN);
+
+		HSSFCellStyle styleHeaderR = getStyleHeader(wb);
+		styleHeaderR.setBorderRight(BorderStyle.THIN);
+		styleHeaderR.setBorderTop(BorderStyle.THIN);
+		styleHeaderR.setBorderBottom(BorderStyle.THIN);
+
+		HSSFSheet sheet = wb.createSheet("Hoja 1");
+		sheet.setMargin(HSSFSheet.TopMargin, 0.8);
+		addDefaultHeader(sheet);
+
+		HSSFPrintSetup ps = sheet.getPrintSetup();
+		sheet.setAutobreaks(true);
+		ps.setPaperSize(HSSFPrintSetup.A4_PAPERSIZE);
+		ps.setFitHeight((short) 0);
+		ps.setFitWidth((short) 1);
+		ps.setLandscape(true);
+
+		HSSFRow rowTitulo = sheet.createRow(0);
+		HSSFCell cellTitulo = rowTitulo.createCell(0);
+
+		StringBuffer sb = new StringBuffer(
+				"Listado de Deudas - Fecha Rec. Desde: ");
+		sb.append(DateUtils.format(fechaIni, DateUtils.SHORT));
+		sb.append(" Fecha Rec. Hasta: ");
+		sb.append(DateUtils.format(fechaFin, DateUtils.SHORT));
+
+		sb.append(" - Pagos hasta: "
+				+ DateUtils.format(fechaPagoHasta, DateUtils.SHORT));
+
+		if (null != cuit && !cuit.trim().equals("")) {
+			sb.append(" - CUIT: " + cuit);
+		}
+		cellTitulo.setCellValue(new HSSFRichTextString(sb.toString()));
+		cellTitulo.setCellStyle(styleHeader);
+
+		sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 11));
+
+		TotalesGenerales totales = new TotalesGenerales();
+		createHeader(wb, sheet, styleHeaderSinBorde, styleHeaderL, styleHeaderR);
+		int i = generarDatos(listado, wb, sheet, totales);
+
+		HSSFRow row = sheet.createRow(i);
+		HSSFCell cellFin = row.createCell(0);
+		cellFin.setCellValue(new HSSFRichTextString(" "));
+		HSSFCellStyle styleAllTop = getStyleAll(wb);
+		styleAllTop.setBorderTop(BorderStyle.THIN);
+		cellFin.setCellStyle(styleAllTop);
+		sheet.addMergedRegion(new CellRangeAddress(i, i, 0, 11));
+
+		HSSFCellStyle styleMoney = getStyleMoney(wb);
+		HSSFCellStyle styleAll = getStyleAll(wb);
+		i++;
+		HSSFRow rowTotales = sheet.createRow(i);
+		HSSFCell cellTotalCompStr = rowTotales.createCell(4);
+		cellTotalCompStr.setCellValue(new HSSFRichTextString("Total"));
+		cellTotalCompStr.setCellStyle(styleAll);
+		HSSFCell cellTotalComp = rowTotales.createCell(5);
+
+		cellTotalComp.setCellValue(totales.getImporteComprobante()
+				.add(totales.getTotalDebitos()).doubleValue());
+		cellTotalComp.setCellStyle(styleMoney);
+
+		HSSFCell cellTotalFromStr = rowTotales.createCell(7);
+		cellTotalFromStr.setCellValue(new HSSFRichTextString("Total"));
+		cellTotalFromStr.setCellStyle(styleAll);
+		HSSFCell cellTotalFrom = rowTotales.createCell(8);
+		cellTotalFrom.setCellValue(totales.getImporteDde().doubleValue());
+		cellTotalFrom.setCellStyle(styleMoney);
+
+		HSSFCell cellTotalToStr = rowTotales.createCell(10);
+		cellTotalToStr.setCellValue(new HSSFRichTextString("Total"));
+		cellTotalToStr.setCellStyle(styleAll);
+		HSSFCell cellTotalTo = rowTotales.createCell(11);
+		cellTotalTo.setCellValue(totales.getImporteHta().doubleValue());
+		cellTotalTo.setCellStyle(styleMoney);
+
+		i++;
+
+		incluirCuadro(sheet, i, totales.getResumenDesde(),
+				totales.getResumenHasta(), styleAll, styleMoney,
+				getStyleBold(wb), getStyleMoneyBold(wb), styleAll, styleAll,
+				styleAll, styleAll, fechaIni, entidad);
+
+		sheet.autoSizeColumn((short) 0);
+		sheet.autoSizeColumn((short) 1);
+		sheet.setColumnWidth(2, 5200);
+		sheet.autoSizeColumn((short) 3);
+		sheet.autoSizeColumn((short) 4);
+		sheet.autoSizeColumn((short) 5);
+		sheet.autoSizeColumn((short) 6);
+		sheet.setColumnWidth(7, 5200);
+		sheet.autoSizeColumn((short) 8);
+		sheet.autoSizeColumn((short) 9);
+		sheet.setColumnWidth(10, 5200);
+		sheet.autoSizeColumn((short) 11);
+
+		return wb;
+	}
+
+	private static int generarDatos(List<ItemListadoDeuda> listado,
+			HSSFWorkbook wb, HSSFSheet sheet, TotalesGenerales totales) {
+		int i = 2;
+		HSSFCellStyle styleAll = getStyleAll(wb);
+		HSSFCellStyle styleAllLeft = getStyleAll(wb);
+		styleAllLeft.setBorderLeft(BorderStyle.THIN);
+
+		HSSFCellStyle styleAllRight = getStyleAll(wb);
+		styleAllRight.setBorderLeft(BorderStyle.THIN);
+
+		HSSFCellStyle styleAllLeftTop = getStyleAll(wb);
+		styleAllLeftTop.setBorderLeft(BorderStyle.THIN);
+		styleAllLeftTop.setBorderTop(BorderStyle.THIN);
+
+		HSSFCellStyle styleAllTop = getStyleAll(wb);
+		styleAllTop.setBorderTop(BorderStyle.THIN);
+
+		HSSFCellStyle styleAllRightTop = getStyleAll(wb);
+		styleAllRightTop.setBorderTop(BorderStyle.THIN);
+		styleAllRightTop.setBorderRight(BorderStyle.THIN);
+
+		HSSFCellStyle styleMoneyRight = getStyleMoney(wb);
+		styleMoneyRight.setBorderRight(BorderStyle.THIN);
+
+		HSSFCellStyle styleMoneyRightTop = getStyleMoney(wb);
+		styleMoneyRightTop.setBorderRight(BorderStyle.THIN);
+		styleMoneyRightTop.setBorderTop(BorderStyle.THIN);
+
+		HSSFCellStyle styleDateLeftTop = getStyleDate(wb);
+		styleDateLeftTop.setBorderLeft(BorderStyle.THIN);
+		styleDateLeftTop.setBorderTop(BorderStyle.THIN);
+
+		HSSFCellStyle styleDateLeft = getStyleDate(wb);
+		styleDateLeftTop.setBorderLeft(BorderStyle.THIN);
+
+		for (ItemListadoDeuda item : listado) {
+			Comprobante comp = item.getComprobante();
+			HSSFRow row = sheet.createRow(i);
+			HSSFCell cell = row.createCell(0);
+			cell.setCellValue(comp.getFechaRecepcion());
+			cell.setCellStyle(styleDateLeftTop);
+
+			HSSFCell cellAcreed = row.createCell(1);
+			cellAcreed.setCellValue(new HSSFRichTextString(item
+					.getEmpresaAcreedor().getCuit()
+					+ "-"
+					+ item.getEmpresaAcreedor().getSucursal()));
+			cellAcreed.setCellStyle(styleAllTop);
+
+			HSSFCell cellRaz = row.createCell(2);
+			cellRaz.setCellValue(new HSSFRichTextString(item
+					.getEmpresaAcreedor().getRazon_soc()));
+			cellRaz.setCellStyle(styleAllTop);
+
+			HSSFCell cell2 = row.createCell(3);
+			cell2.setCellValue(new HSSFRichTextString(comp.getCuitEmisor()));
+			cell2.setCellStyle(styleAllTop);
+
+			String desc = comp.getTipoComprobante() + "-" + comp.getPtoVenta()
+					+ "-" + comp.getNroComprobante();
+			HSSFCell cell1 = row.createCell(4);
+			cell1.setCellValue(new HSSFRichTextString(desc));
+			cell1.setCellStyle(styleAllTop);
+
+			HSSFCell cell5 = row.createCell(5);
+			cell5.setCellValue(comp.getImporteComprobante().doubleValue());
+			cell5.setCellStyle(styleMoneyRightTop);
+			totales.setImporteComprobante(totales.getImporteComprobante().add(
+					comp.getImporteComprobante()));
+			totales.setTotalDebitos(totales.getTotalDebitos().add(
+					item.getTotalNotasDebito()));
+			int indComps = reportarColumnaNDB(item.getNotasDebito(), i, row,
+					sheet, styleAll, styleAllLeft, styleMoneyRight);
+
+			List<ColumnaListadoDeuda> desdeAgrupado = item.getDesdeAgrupado();
+			List<ColumnaListadoDeuda> hastaAgrupado = item.getHastaAgrupado();
+
+			int indDD = reportarColumna(desdeAgrupado, i, row, sheet, styleAll,
+					styleAllLeft, styleAllRight, styleAllLeftTop, styleAllTop,
+					styleAllRightTop, styleMoneyRight, styleMoneyRightTop, 6,
+					7, 8, totales, true, totales.getResumenDesde());
+			int indHta = reportarColumna(hastaAgrupado, i, row, sheet,
+					styleAll, styleAllLeft, styleAllRight, styleAllLeftTop,
+					styleAllTop, styleAllRightTop, styleMoneyRight,
+					styleMoneyRightTop, 9, 10, 11, totales, false,
+					totales.getResumenHasta());
+
+			int max = completarFilasVacias(sheet, i, indDD, indHta, indComps,
+					styleDateLeft, styleAllLeft, styleAllRight,
+					styleMoneyRight, styleAll);
+
+			i = max;
+		}
+		return i;
+	}
+
+	private static int completarFilasVacias(HSSFSheet sheet, int primerFila,
+			int indexDD, int indexHta, int indComps,
+			HSSFCellStyle styleDateLeft, HSSFCellStyle styleAllLeft,
+			HSSFCellStyle styleAllRight, HSSFCellStyle styleMoneyRight,
+			HSSFCellStyle styleAll) {
+		int max = Math.max(indexHta, indexDD);
+		max = Math.max(indComps, max);
+		int fin = max - 1;
+
+		if (indexDD <= fin) {
+			for (int i = indexDD; i <= fin; i++) {
+				HSSFRow row = sheet.getRow(i);
+				if (row.getCell(6) == null) {
+					HSSFCell createCell = row.createCell(6);
+					createCell.setCellValue(new HSSFRichTextString(" "));
+					createCell.setCellStyle(styleAllLeft);
+					HSSFCell createCell2 = row.createCell(7);
+					createCell2.setCellValue(new HSSFRichTextString(" "));
+					createCell2.setCellStyle(styleAll);
+					HSSFCell createCell3 = row.createCell(8);
+					createCell3.setCellValue(new HSSFRichTextString(" "));
+					createCell3.setCellStyle(styleMoneyRight);
+				}
+			}
+		}
+		if (indexHta <= fin) {
+			for (int i = indexHta; i <= fin; i++) {
+				HSSFRow row = sheet.getRow(i);
+				if (row.getCell(9) == null) {
+					HSSFCell createCell = row.createCell(9);
+					createCell.setCellValue(new HSSFRichTextString(" "));
+					createCell.setCellStyle(styleAllLeft);
+					HSSFCell createCell2 = row.createCell(10);
+					createCell2.setCellValue(new HSSFRichTextString(" "));
+					createCell2.setCellStyle(styleAll);
+					HSSFCell createCell3 = row.createCell(11);
+					createCell3.setCellValue(new HSSFRichTextString(" "));
+					createCell3.setCellStyle(styleMoneyRight);
+				}
+			}
+		}
+
+		// primerFila+1 porque en la primera siempre escribo algo, asiq debo
+		// completar de ahi en adelante
+		if ((primerFila + 1) <= fin) {
+			for (int i = (primerFila + 1); i <= fin; i++) {
+				HSSFRow row = sheet.getRow(i);
+				if (row.getCell(0) == null) {
+					HSSFCell createCell = row.createCell(0);
+					createCell.setCellStyle(styleAllLeft);
+				}
+			}
+		}
+		return (fin + 1);
+	}
+
+	private static int reportarColumnaNDB(List<Comprobante> notasDebito, int i,
+			HSSFRow row, HSSFSheet sheet, HSSFCellStyle styleAll,
+			HSSFCellStyle styleAllLeft, HSSFCellStyle styleMoneyRight) {
+
+		int index = i;
+		if (notasDebito != null) {
+			for (Comprobante ndb : notasDebito) {
+				if (ndb.getImporte().compareTo(BigDecimal.ZERO) == 0) {
+					continue;
+				}
+				index = i + 1; // en el i que me pasaron ya figura la info del
+								// comprobante
+				HSSFRow rowPago = null;
+				if (index == i) {
+					rowPago = row;
+				} else {
+					rowPago = sheet.getRow(index);
+					if (rowPago == null) {
+						rowPago = sheet.createRow(index);
+					}
+				}
+				index++;
+
+				String desc = ndb.getTipoComprobante() + "-"
+						+ ndb.getPtoVenta() + "-" + ndb.getNroComprobante();
+				HSSFCell cell3 = rowPago.createCell(4);
+				cell3.setCellValue(new HSSFRichTextString(desc));
+				cell3.setCellStyle(styleAll);
+
+				HSSFCell cell4 = rowPago.createCell(5);
+				cell4.setCellValue(ndb.getImporte().doubleValue());
+				cell4.setCellStyle(styleMoneyRight);
+			}
+		}
+
+		return index;
+	}
+
+	private static int reportarColumna(List<ColumnaListadoDeuda> desdeAgrupado,
+			int i, HSSFRow row, HSSFSheet sheet, HSSFCellStyle styleAll,
+			HSSFCellStyle styleAllLeft, HSSFCellStyle styleAllRight,
+			HSSFCellStyle styleAllLeftTop, HSSFCellStyle styleAllTop,
+			HSSFCellStyle styleAllRightTop, HSSFCellStyle styleMoneyRight,
+			HSSFCellStyle styleMoneyRightTop, int col1, int col2, int col3,
+			TotalesGenerales totales, boolean from,
+			Map<String, BigDecimal> resumen) {
+		int index = i;
+		boolean seCreoAlgo = false;
+
+		BigDecimal total = BigDecimal.ZERO;
+
+		if (desdeAgrupado != null) {
+			for (ColumnaListadoDeuda fp : desdeAgrupado) {
+				if (fp.getImporte().compareTo(BigDecimal.ZERO) == 0) {
+					continue;
+				}
+				seCreoAlgo = true;
+				HSSFRow rowPago = null;
+				if (index == i) {
+					rowPago = row;
+				} else {
+					rowPago = sheet.getRow(index);
+					if (rowPago == null) {
+						rowPago = sheet.createRow(index);
+					}
+				}
+				index++;
+
+				HSSFCell cell3 = rowPago.createCell(col1);
+				cell3.setCellValue(new HSSFRichTextString(fp.getNumero()));
+				if (index - 1 == i) {
+					cell3.setCellStyle(styleAllLeftTop);
+				} else {
+					cell3.setCellStyle(styleAllLeft);
+				}
+
+				HSSFCell cell4 = rowPago.createCell(col2);
+				cell4.setCellValue(new HSSFRichTextString(fp.getCuenta()));
+				if (index - 1 == i) {
+					cell4.setCellStyle(styleAllTop);
+				} else {
+					cell4.setCellStyle(styleAll);
+				}
+				total = total.add(fp.getImporte());
+				HSSFCell cell5 = rowPago.createCell(col3);
+				cell5.setCellValue(fp.getImporte().doubleValue());
+				if (index - 1 == i) {
+					cell5.setCellStyle(styleMoneyRightTop);
+				} else {
+					cell5.setCellStyle(styleMoneyRight);
+				}
+
+				if (resumen.get(fp.getNumero()) != null) {
+					resumen.put(fp.getNumero(), resumen.get(fp.getNumero())
+							.add(fp.getImporte()));
+				} else {
+					resumen.put(fp.getNumero(), fp.getImporte());
+				}
+			}
+		}
+
+		if (!seCreoAlgo) {
+			HSSFCell cell1 = row.createCell(col1);
+			cell1.setCellValue(new HSSFRichTextString(" "));
+			cell1.setCellStyle(styleAllLeftTop);
+
+			HSSFCell cell2 = row.createCell(col2);
+			cell2.setCellValue(new HSSFRichTextString(" "));
+			cell2.setCellStyle(styleAllTop);
+
+			HSSFCell cell3 = row.createCell(col3);
+			cell3.setCellValue(new HSSFRichTextString(" "));
+			cell3.setCellStyle(styleMoneyRightTop);
+			index++;
+		}
+
+		if (from) {
+			totales.setImporteDde(totales.getImporteDde().add(total));
+		} else {
+			totales.setImporteHta(totales.getImporteHta().add(total));
+		}
+		return index;
+	}
+
+	private static void createHeader(HSSFWorkbook wb, HSSFSheet sheet,
+			HSSFCellStyle styleHeader, HSSFCellStyle styleHeaderL,
+			HSSFCellStyle styleHeaderR) {
+		HSSFRow row = sheet.createRow(1);
+		HSSFCell cell = row.createCell(0);
+		cell.setCellValue(new HSSFRichTextString("Fecha"));
+		cell.setCellStyle(styleHeader);
+
+		HSSFCell cellAcreed = row.createCell(1);
+		cellAcreed.setCellValue(new HSSFRichTextString("CUIT"));
+		cellAcreed.setCellStyle(styleHeader);
+
+		HSSFCell cellRaz = row.createCell(2);
+		cellRaz.setCellValue(new HSSFRichTextString("Razon Social"));
+		cellRaz.setCellStyle(styleHeader);
+
+		
+
+		HSSFCell cell4 = row.createCell(3);
+		cell4.setCellValue(new HSSFRichTextString("Cuit Comp."));
+		cell4.setCellStyle(styleHeader);
+		
+		HSSFCell cell3 = row.createCell(4);
+		cell3.setCellValue(new HSSFRichTextString("Comprobante"));
+		cell3.setCellStyle(styleHeader);
+
+		HSSFCell cell5 = row.createCell(5);
+		cell5.setCellValue(new HSSFRichTextString("Importe"));
+		cell5.setCellStyle(styleHeader);
+
+		HSSFCell cell6 = row.createCell(6);
+		cell6.setCellValue(new HSSFRichTextString("Cuenta"));
+		cell6.setCellStyle(styleHeaderL);
+
+		HSSFCell cell7 = row.createCell(7);
+		cell7.setCellValue(new HSSFRichTextString("Descripcion"));
+		cell7.setCellStyle(styleHeader);
+
+		HSSFCell cell8 = row.createCell(8);
+		cell8.setCellValue(new HSSFRichTextString("Importe"));
+		cell8.setCellStyle(styleHeaderR);
+
+		HSSFCell cell9 = row.createCell(9);
+		cell9.setCellValue(new HSSFRichTextString("Cuenta"));
+		cell9.setCellStyle(styleHeaderL);
+
+		HSSFCell cell10 = row.createCell(10);
+		cell10.setCellValue(new HSSFRichTextString("Descripcion"));
+		cell10.setCellStyle(styleHeader);
+
+		HSSFCell cell11 = row.createCell(11);
+		cell11.setCellValue(new HSSFRichTextString("Importe"));
+		cell11.setCellStyle(styleHeaderR);
+
+		//wb.setRepeatingRowsAndColumns(0, 0, 10, 1, 1);
+		
+		for(int j=0;j<24;j++){
+		     sheet.autoSizeColumn((short) j);
+		}
+
+	}
+
+	public static class ItemListadoDeuda {
+		private Empresa empresaAcreedor;
+		private Comprobante comprobante;
+		private List<ColumnaListadoDeuda> desde;
+		private List<ColumnaListadoDeuda> hasta;
+		private List<Comprobante> notasDebito = new ArrayList<Comprobante>();
+
+		public Empresa getEmpresaAcreedor() {
+			return empresaAcreedor;
+		}
+
+		public BigDecimal getTotalNotasDebito() {
+			BigDecimal total = BigDecimal.ZERO;
+			for (Comprobante nota : notasDebito) {
+				total = total.add(nota.getImporte());
+			}
+			return total;
+		}
+
+		public void setEmpresaAcreedor(Empresa empresaAcreedor) {
+			this.empresaAcreedor = empresaAcreedor;
+		}
+
+		public Comprobante getComprobante() {
+			return comprobante;
+		}
+
+		public void setComprobante(Comprobante comprobante) {
+			this.comprobante = comprobante;
+		}
+
+		public List<ColumnaListadoDeuda> getDesde() {
+			return desde;
+		}
+
+		public void setDesde(List<ColumnaListadoDeuda> desde) {
+			this.desde = desde;
+		}
+
+		public List<ColumnaListadoDeuda> getHasta() {
+			return hasta;
+		}
+
+		public void setHasta(List<ColumnaListadoDeuda> hasta) {
+			this.hasta = hasta;
+		}
+
+		public List<ColumnaListadoDeuda> getDesdeAgrupado() {
+			if (getComprobante().isDebitoParaEgreso()) {
+				if (hasta.size() <= 1) {
+					return hasta;
+				}
+				return agrupar(hasta);
+			} else {
+				if (desde.size() <= 1) {
+					return desde;
+				}
+				return agrupar(desde);
+			}
+		}
+
+		public List<ColumnaListadoDeuda> getHastaAgrupado() {
+			if (getComprobante().isDebitoParaEgreso()) {
+				if (desde.size() <= 1) {
+					return desde;
+				}
+				return agrupar(desde);
+			} else {
+				if (hasta.size() <= 1) {
+					return hasta;
+				}
+				return agrupar(hasta);
+			}
+		}
+
+		private List<ColumnaListadoDeuda> agrupar(
+				List<ColumnaListadoDeuda> lista) {
+			List<ColumnaListadoDeuda> grupo = new ArrayList<ColumnaListadoDeuda>();
+			for (ColumnaListadoDeuda col : lista) {
+				int indexOf = grupo.indexOf(col);
+				if (indexOf == -1) {
+					grupo.add(col);
+				} else {
+					ColumnaListadoDeuda columnaListadoDeuda = grupo
+							.get(indexOf);
+					columnaListadoDeuda.setImporte(columnaListadoDeuda
+							.getImporte().add(col.getImporte()));
+				}
+			}
+			return grupo;
+		}
+
+		public static ItemListadoDeuda getMapping(ResultSet rs)
+				throws SQLException {
+			return getMapping(rs, "");
+		}
+
+		public static ItemListadoDeuda getMapping(ResultSet rs, String prefix)
+				throws SQLException {
+			ItemListadoDeuda item = new ItemListadoDeuda();
+			String seccional = "";
+			String sucu = rs.getString(prefix + "sucu_acreedor");
+			int id_seccional = rs.getInt(prefix + "id_seccional");
+			if (id_seccional != 0) {
+				sucu = String.valueOf(id_seccional);
+			}
+			seccional = rs.getString(prefix + "seccional");
+			if (StringUtils.checkEmpty(seccional)) {
+				seccional = "";
+			}
+			item.setEmpresaAcreedor(new Empresa(rs.getString(prefix
+					+ "cuit_acreedor"), sucu, rs.getString(prefix
+					+ "razon_social")
+					+ " " + seccional));
+
+			Comprobante comp = new Comprobante();
+			comp.setImporteComprobante(rs.getBigDecimal(prefix + "total"));
+			comp.setFechaRecepcion(rs.getDate(prefix + "fecha_recepcion"));
+			comp.setCuit(rs.getString(prefix + "cuit"));
+			comp.setNroComprobante(rs.getString(prefix + "compro_nro"));
+			comp.setLetraComprobante(rs.getString(prefix + "compro_letra"));
+			comp.setTipoComprobante(rs.getString(prefix + "compro_tipo"));
+			comp.setSucuComprobante(rs.getInt(prefix + "compro_sucu"));
+			comp.setPtoVenta(rs.getInt(prefix + "id_punto_venta"));
+			item.setComprobante(comp);
+
+			ColumnaListadoDeuda colDD = new ColumnaListadoDeuda();
+			colDD.setNumero(rs.getString(prefix + "numero"));
+			colDD.setCuenta(rs.getString(prefix + "cuenta"));
+			colDD.setImporte(rs.getBigDecimal(prefix + "importe"));
+			colDD.setCuentaId(rs.getInt(prefix + "cuenta_id"));
+			List<ColumnaListadoDeuda> listaDesde = new ArrayList<ColumnaListadoDeuda>();
+			listaDesde.add(colDD);
+			item.setDesde(listaDesde);
+
+			ColumnaListadoDeuda colHta = new ColumnaListadoDeuda();
+			colHta.setNumero(rs.getString(prefix + "numero_pasivo"));
+			colHta.setCuenta(rs.getString(prefix + "cuenta_pasivo"));
+			colHta.setCuentaId(rs.getInt(prefix + "cuenta_pasivo_id"));
+			colHta.setImporte(rs.getBigDecimal(prefix + "importe_pasivo"));
+			List<ColumnaListadoDeuda> listaHasta = new ArrayList<ColumnaListadoDeuda>();
+			listaHasta.add(colHta);
+			item.setHasta(listaHasta);
+			return item;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result
+					+ ((comprobante == null) ? 0 : comprobante.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			ItemListadoDeuda other = (ItemListadoDeuda) obj;
+			if (comprobante == null) {
+				if (other.comprobante != null)
+					return false;
+			} else if (!comprobante.equals(other.comprobante))
+				return false;
+			return true;
+		}
+
+		public void addNotaDebito(Comprobante ndb) {
+			notasDebito.add(ndb);
+		}
+
+		public List<Comprobante> getNotasDebito() {
+			return notasDebito;
+		}
+
+	}
+
+	public static class ColumnaListadoDeuda {
+		private String numero;
+		private String cuenta;
+		private Integer cuentaId;
+		private BigDecimal importe;
+
+		public String getNumero() {
+			return numero != null ? numero : "";
+		}
+
+		public void setNumero(String numero) {
+			this.numero = numero;
+		}
+
+		public String getCuenta() {
+			return cuenta != null ? cuenta : "";
+		}
+
+		public void setCuenta(String cuenta) {
+			this.cuenta = cuenta;
+		}
+
+		public BigDecimal getImporte() {
+			return importe != null ? importe : BigDecimal.ZERO;
+		}
+
+		public void setImporte(BigDecimal importe) {
+			this.importe = importe;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result
+					+ ((numero == null) ? 0 : numero.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			ColumnaListadoDeuda other = (ColumnaListadoDeuda) obj;
+			if (numero == null) {
+				if (other.numero != null)
+					return false;
+			} else if (!numero.equals(other.numero))
+				return false;
+			return true;
+		}
+
+		public Integer getCuentaId() {
+			return cuentaId;
+		}
+
+		public void setCuentaId(Integer cuentaId) {
+			this.cuentaId = cuentaId;
+		}
+	}
+
+	private static class TotalesGenerales {
+		private BigDecimal importeComprobante = BigDecimal.ZERO;
+		private BigDecimal importeDde = BigDecimal.ZERO;
+		private BigDecimal importeHta = BigDecimal.ZERO;
+		private BigDecimal totalDebitos = BigDecimal.ZERO;
+
+		private Map<String, BigDecimal> resumenDesde = new HashMap<String, BigDecimal>();
+		private Map<String, BigDecimal> resumenHasta = new HashMap<String, BigDecimal>();
+
+		public BigDecimal getImporteComprobante() {
+			return importeComprobante;
+		}
+
+		public BigDecimal getTotalDebitos() {
+			return totalDebitos;
+		}
+
+		public void setImporteComprobante(BigDecimal importeComprobante) {
+			this.importeComprobante = importeComprobante;
+		}
+
+		public BigDecimal getImporteDde() {
+			return importeDde;
+		}
+
+		public void setImporteDde(BigDecimal importeDde) {
+			this.importeDde = importeDde;
+		}
+
+		public BigDecimal getImporteHta() {
+			return importeHta;
+		}
+
+		public void setImporteHta(BigDecimal importeHta) {
+			this.importeHta = importeHta;
+		}
+
+		public void setTotalDebitos(BigDecimal totalDebitos) {
+			this.totalDebitos = totalDebitos;
+		}
+
+		public Map<String, BigDecimal> getResumenDesde() {
+			return resumenDesde;
+		}
+
+		public void setResumenDesde(Map<String, BigDecimal> resumenDesde) {
+			this.resumenDesde = resumenDesde;
+		}
+
+		public Map<String, BigDecimal> getResumenHasta() {
+			return resumenHasta;
+		}
+
+		public void setResumenHasta(Map<String, BigDecimal> resumenHasta) {
+			this.resumenHasta = resumenHasta;
+		}
+	}
+}

@@ -1,0 +1,275 @@
+<%@ include file="/html/portlet/liquidaciones/init.jsp" %>
+<%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
+<portlet:defineObjects/>
+
+<%		
+		
+		Calendar fechaDesde = CalendarFactoryUtil.getCalendar(); 		
+		fechaDesde.setTime(new Date());
+ 		Calendar fechaHasta = CalendarFactoryUtil.getCalendar(); 		
+ 		fechaHasta.setTime(new Date()); 
+ 		
+ 		String[] tiposStr = TraeListasServiceUtil.getSystemConfig("GESTION_JUDICIAL_TIPOS_DEMANDA").split(";");
+	    List<ClaseBase> tipos =new ArrayList<ClaseBase>();
+	    for(int i=0;i<=tiposStr.length-1;i++){
+		   ClaseBase c =new ClaseBase();
+		   String codigo = tiposStr[i].split("=")[0];
+		   String descripcion = tiposStr[i].split("=")[1];
+		   c.setId(codigo);
+		   c.setDescripcion(descripcion);
+		   tipos.add(c);
+	    }
+ 				
+%>	
+		<fieldset class="block-labels">
+				<legend><liferay-ui:message key="reporte-debito-tercerizadoras" /></legend>
+				<table class="lfr-table">			
+					<tr>
+						<td><label><liferay-ui:message key="periodo" />:</label></td>
+						<td>
+							<liferay-ui:input-date
+								dayParam="fechaDesdeDia"
+								dayValue="<%= fechaDesde.get(Calendar.DATE)%>"
+								monthParam="fechaDesdeMes"
+								monthValue="<%= fechaDesde.get(Calendar.MONTH) %>"
+								yearParam="fechaDesdeAnio"
+								yearValue="<%= fechaDesde.get(Calendar.YEAR) %>"
+								yearRangeStart="<%= fechaDesde.get(Calendar.YEAR) - 25 %>"
+								yearRangeEnd="<%= fechaDesde.get(Calendar.YEAR)  %>"
+								firstDayOfWeek="<%= fechaDesde.getFirstDayOfWeek() - 1 %>"
+								disabled="<%= false %>"
+								/>
+						</td>
+						<td><label><liferay-ui:message key="cobertura-expediente-tercerizadora" />:</label></td>
+						<td><select name="<portlet:namespace/>tipo_debitos_tercerizadoras" id="<portlet:namespace/>tipo_debitos_tercerizadoras">
+							<option value="0">Seleccione</option>
+							<option value="OMI">OMINT</option>	
+							<option value="MPS">MOLINEROS POR PS</option>
+							<option value="MEN">MOLINEROS POR ENSALUD</option>	
+							<option value="CEM">CEMIC</option>		
+							<option value="MIM">IMESA</option>
+							<option value="MON">MONOTRIBUTO</option>			
+						</select>
+						</td>	
+						
+						<td>Proceso:</td>
+			            <td>
+			            <select name="<portlet:namespace />tipoProceso"  id="<portlet:namespace />tipoProceso" >
+						  <%for(ClaseBase c:tipos) {%>
+						     <option value="<%= c.getId() %>">
+							<%=c.getDescripcion() %>
+						</option>
+						<% } %>
+				        </select>
+			           </td>
+							
+						<td>
+							<label><liferay-ui:message key="grabar-debitos-tercerizadoras"/>:</label>  &nbsp;&nbsp;&nbsp;&nbsp;
+							<input type="checkbox" name="<portlet:namespace />grabarDebitos" id="<portlet:namespace />grabarDebitos" value="false"/>
+						</td>
+						<td>
+							<input id="<portlet:namespace />buscar" value="<liferay-ui:message key="buscar"/>" title="<liferay-ui:message key="buscar" />" type="button" onClick="javascript:<portlet:namespace />buscarMovimientos();"/>
+						</td>
+					</tr>	
+					<tr>
+					
+					</tr>					
+					<tr>
+						<td colspan="7">&nbsp;</td>
+					</tr>
+				</table>
+
+				<table>
+					<tr>
+						<td><label><liferay-ui:message key="archivo-debito-tercerizadora" />:</label></td>
+					</tr>
+					<tr>
+						<td colspan="3">&nbsp;</td>
+					</tr>
+					<tr>
+						<td colspan="3">
+							<div id="<portlet:namespace />archivos_debitos">
+								<jsp:include
+									page='/html/portlet/liquidaciones/reportes/archivos_debitos_terciarizadoras.jsp' />
+							</div>
+						</td>
+					</tr>
+				</table>
+
+</fieldset>	
+		<fieldset class="block-labels">
+			<div align="center" id="<portlet:namespace />buscando">
+				<table style="align:center;">
+					<tr>
+						<td><liferay-ui:message key='buscando'/></td>
+						<td align="center">					
+							<img alt="<liferay-ui:message key='buscando'/>" src="<%= themeDisplay.getPathThemeImages() %>/progress_bar/loading_animation.gif" />
+						</td>
+					</tr>
+				</table>		
+			</div>	
+			<div align="center" id="<portlet:namespace />busquedaMovimientoDiv">						
+			</div>
+		</fieldset>
+			
+<script type="text/javascript">
+jQuery('#<portlet:namespace />buscando').hide();
+jQuery("#<portlet:namespace/>fechaDesdeDia").hide();
+
+
+
+
+
+
+jQuery(document).ready(function() {
+	 valiadSiHayReporteGrabado();	 
+});
+
+
+function <portlet:namespace />buscarMovimientos(){
+	
+	var desde_mes=jQuery("#<portlet:namespace/>fechaDesdeMes").val();
+	var desde_anio=jQuery("#<portlet:namespace/>fechaDesdeAnio").val();
+	//var grabar_debitos=jQuery("#<portlet:namespace/>grabarDebitos").val();
+	var grabar_debitos = document.getElementById("<portlet:namespace />grabarDebitos").checked ? 'true' : 'false';
+	var tipo_debitos_tercerizadoras = jQuery("#<portlet:namespace/>tipo_debitos_tercerizadoras").val();
+	var tipo_proceso = jQuery("#<portlet:namespace/>tipo_proceso").val();	
+
+jQuery('#<portlet:namespace />buscando').show();
+	
+
+
+	if (tipo_debitos_tercerizadoras == '0'){
+		alert('Debe seleccionar una tercerizadoras');
+		return false;
+	}
+	
+	var mes = parseInt(desde_mes) +1
+	var periodo = desde_anio + '-' + PadLeft(mes, 2); 
+	if (valiadSiHayReporte()== false){
+		alert('No hay Datos para el periodo solicitado');
+		return false;
+	} 
+	
+	
+	var busquedaNom = {"periodo":periodo,"inte":inte,"fechaDesdeDia":"01","fechaDesdeMes":desde_mes,
+				       "fechaDesdeAnio":desde_anio,"tipo_debito":tipo_debitos_tercerizadoras,"tipo_proceso":tipo_proceso,
+	 			       "cmd":"filter"};
+
+	var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/debitos_tercerizadoras" /></portlet:renderURL>';
+	
+	jQuery('#<portlet:namespace />listado_debitos').load(url,busquedaNom, function(){
+				jQuery('#<portlet:namespace />buscando').hide();											      
+		});	
+	
+	
+	
+	/* 
+	var url = '/xlsservlet/?reporte=REPORTE_DEBITO_TERCERIZADORAS' 
+		+ '&fechaDesdeDia=01'
+		+ '&fechaDesdeMes=' +desde_mes
+		+ '&fechaDesdeAnio=' +desde_anio
+		+'&grabarDebitos='+grabar_debitos
+		+'&periodo='+periodo 
+		+'&tipo_debitos_tercerizadoras='+tipo_debitos_tercerizadoras
+	url += '&rnd=' + Math.floor(Math.random()*100);
+
+	window.location.href =url;
+
+	if (grabar_debitos == 'true'){
+	  	jQuery('#<portlet:namespace />grabarDebitos').attr('checked', true);
+    }	
+    */
+	
+}	
+
+	
+	
+	function valiadSiHayReporte(){
+		var result=false;
+		var desde_mes=jQuery("#<portlet:namespace/>fechaDesdeMes").val();
+		var desde_anio=jQuery("#<portlet:namespace/>fechaDesdeAnio").val();
+		var grabar_debitos = document.getElementById("<portlet:namespace />grabarDebitos").checked ? 'true' : 'false';
+		var tipo_debitos_tercerizadoras = jQuery("#<portlet:namespace/>tipo_debitos_tercerizadoras").val();	
+		
+	    var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/hay_reporte_tercerizadora';
+		    url += '&fechaDesdeMes='+desde_mes;
+		    url += "&fechaDesdeAnio="+desde_anio;
+		    url+= "&tipo_debitos_tercerizadoras="+tipo_debitos_tercerizadoras;
+		      
+		    jQuery.ajax({   
+		     url: url,
+		     async: false,
+		     success: function(data){
+			 var obj = jQuery.parseJSON(data);
+			 var resultado =obj.resultado;
+			 if (resultado == '1'){
+				 result = true;
+			 }          
+		    }				                                                                                                                                                                                                                                                            
+		  });
+	   return result;
+	}
+
+	
+	
+
+
+	jQuery('#<portlet:namespace />fechaDesdeMes').change(function(){
+		valiadSiHayReporteGrabado(); 
+	});
+	
+	
+	jQuery('#<portlet:namespace />fechaDesdeAnio').change(function(){
+		valiadSiHayReporteGrabado(); 
+	});
+	
+	
+	jQuery('#<portlet:namespace />tipo_debitos_tercerizadoras').change(function(){
+		valiadSiHayReporteGrabado(); 
+	});
+
+
+	
+
+	function valiadSiHayReporteGrabado(){
+		var result=false;
+		var desde_mes=jQuery("#<portlet:namespace/>fechaDesdeMes").val();
+		var desde_anio=jQuery("#<portlet:namespace/>fechaDesdeAnio").val();
+		var grabar_debitos = document.getElementById("<portlet:namespace />grabarDebitos").checked ? 'true' : 'false';
+		var tipo_debitos_tercerizadoras = jQuery("#<portlet:namespace/>tipo_debitos_tercerizadoras").val();	
+		
+	    var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/hay_reporte_tercerizadora_grabar';
+		    url += '&fechaDesdeMes='+desde_mes;
+	    	url += "&fechaDesdeAnio="+desde_anio;
+		    url+= "&tipo_debitos_tercerizadoras="+tipo_debitos_tercerizadoras;
+		      
+		    jQuery.ajax({   
+		     url: url,
+		     async: false,
+		     success: function(data){
+			 var obj = jQuery.parseJSON(data);
+			 var resultado =obj.resultado;
+			 if (resultado == '1'){
+				 result = true;
+			 }          
+		    }				                                                                                                                                                                                                                                                            
+		  });
+		    
+		  if (result == true ){
+		  	jQuery('#<portlet:namespace />grabarDebitos').attr('checked', true);
+			jQuery('#<portlet:namespace />grabarDebitos').attr("disabled",true);
+
+		  }else{
+			jQuery('#<portlet:namespace />grabarDebitos').attr('checked', false);
+			jQuery('#<portlet:namespace />grabarDebitos').attr("disabled",false);
+		  }   	
+	}
+
+	
+
+function PadLeft(value, length) {
+    return (value.toString().length < length) ? PadLeft("0" + value, length) : 
+    value;
+}
+</script>

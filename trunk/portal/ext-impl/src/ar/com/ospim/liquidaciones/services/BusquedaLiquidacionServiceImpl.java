@@ -1,0 +1,620 @@
+package ar.com.ospim.liquidaciones.services;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Types;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import ar.com.ospim.global.WebKeysGlobal;
+import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
+import ar.com.ospim.liquidaciones.beans.FichaConsumo;
+import ar.com.ospim.liquidaciones.beans.FichaFarmacia;
+import ar.com.ospim.liquidaciones.beans.Liquidacion;
+import ar.com.ospim.liquidaciones.beans.LiquidacionPrestacion;
+import ar.com.ospim.liquidaciones.beans.LiquidacionPrestacionOdo;
+import ar.com.ospim.liquidaciones.beans.Prestador;
+import ar.com.ospim.liquidaciones.beans.PrestadorLugarAtencion;
+import ar.com.ospim.liquidaciones.beans.TratamiendoDiscapacidad;
+import ar.com.ospim.tesoreria.service.ContabilidadServiceUtil;
+import ar.com.ospim.util.ConnectionHelper;
+
+import com.liferay.portal.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+
+/**
+ * <a href="BusquedaLiquidacionServiceImpl.java.html"><b><i>View
+ * Source</i></b></a>
+ * 
+ * @author Carlos Rivas
+ * 
+ */
+public class BusquedaLiquidacionServiceImpl {
+
+	private static Log _log = LogFactoryUtil.getLog(BusquedaLiquidacionServiceImpl.class);
+
+	public List<Liquidacion> getBusquedaLiquidaciones(String entidad,
+			Date fechaDesde, Date fechaHasta, Date periodoDesde,
+			Date periodoHasta, int codPrestad, int id_prestador, String cuit,
+			String prestador, int numero, String tipo_compro,
+			String letra_compro, int sucu, String nro_compro, int estado, 
+			int id_orden_compra,Integer sector)
+			throws SystemException, NumberFormatException, ParseException {
+
+		Date fecha_cierre_periodo = ContabilidadServiceUtil.getFechaUltimoPeriodoContable(WebKeysGlobal.OSPIM);
+
+		Connection con = null;
+		CallableStatement stmt = null;
+		ArrayList<Liquidacion> listaLiquidaciones = null;
+		listaLiquidaciones = new ArrayList<Liquidacion>();
+		try {
+			String sql = "{call buscar_liquidaciones(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+			stmt.setInt(1, numero);
+			stmt.setDate(2, fechaDesde == null ? null : new java.sql.Date(fechaDesde.getTime()));
+			stmt.setDate(3, fechaHasta == null ? null : new java.sql.Date(fechaHasta.getTime()));
+			stmt.setDate(4, periodoDesde == null ? null : new java.sql.Date(periodoDesde.getTime()));
+			stmt.setDate(5, periodoHasta == null ? null : new java.sql.Date(periodoHasta.getTime()));
+			stmt.setInt(6, codPrestad);
+			stmt.setInt(7, id_prestador);
+			if (entidad != null && entidad.length() == 0) {
+				entidad = null;
+			}
+			stmt.setString(8, entidad);
+			stmt.setString(9, tipo_compro);
+			stmt.setString(10, letra_compro);
+			stmt.setInt(11, sucu);
+			stmt.setString(12, nro_compro);
+			stmt.setInt(13, estado);
+			stmt.setInt(14, id_orden_compra);
+			if (sector != null && sector!=-1) {
+				stmt.setInt(15, sector);
+			}else {	
+				stmt.setNull(15,Types.INTEGER);
+			}
+			
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				Liquidacion liquidacion = new Liquidacion(rs.getDate("fecha"),
+						rs.getDate("periodo"), rs.getInt("id_liquidacion"), 
+						rs.getDate("b_fecha"), rs.getString("b_usr"), 
+						rs.getString("compro_a_debitar_tipo"), 
+						rs.getString("compro_a_debitar_letra"), 
+						rs.getInt("sucu"), rs.getString("compro_a_debitar_numero"), 
+						rs.getInt("id_orden_pago"), 
+						rs.getBigDecimal("nro_cheque") != null ? rs.getBigDecimal("nro_cheque").toBigInteger(): null, 
+						rs.getDate("fecha_op"), rs.getBigDecimal("importe_total"), 
+						rs.getBigDecimal("debitado"), rs.getString("observaciones"), 
+						rs.getInt("estado"),
+						rs.getInt("id_orden_compra")
+						);
+				
+				liquidacion.setFecha_emitido(rs.getDate("fecha_emitido"));
+				liquidacion.setOp_baja_existente(rs.getBoolean("baja_fecha_op"));
+				
+				try {
+				    liquidacion.setAlta_fecha(rs.getDate("alta_fecha"));
+				    liquidacion.setAlta_usr(rs.getString("usuario"));
+				} catch(Exception e) {
+					
+				}
+				
+				if (rs.getInt("id_orden_pago") != 0) {
+					if (fecha_cierre_periodo.before(rs.getDate("fecha_op"))) {
+						liquidacion.setEstado(WebKeysLiquidaciones.LIQUIDACION_ESTADO_LIQUIDADO);
+					} else {
+						if (liquidacion.getEstado() != WebKeysLiquidaciones.LIQUIDACION_ESTADO_CARGADO) {
+							liquidacion.setEstado(WebKeysLiquidaciones.LIQUIDACION_ESTADO_CIERRE_PERIODO_CONTABLE);
+						}
+					}
+				} else if (fecha_cierre_periodo.after(rs.getDate("fecha_recibido"))) {
+					if (liquidacion.getEstado() != WebKeysLiquidaciones.LIQUIDACION_ESTADO_CARGADO) {
+						liquidacion.setEstado(WebKeysLiquidaciones.LIQUIDACION_ESTADO_CIERRE_PERIODO_CONTABLE);
+					}
+				}
+
+				PrestadorLugarAtencion pla = new PrestadorLugarAtencion();
+				pla.setPrestador(new Prestador(rs.getString("cuit"), rs.getInt("id_prestador"), rs.getString("descripcion")));
+				liquidacion.setPrestador_lugar_atencion(pla);
+				liquidacion.setId_prestador(rs.getInt("id_prestador"));
+				int indexOf = listaLiquidaciones.indexOf(liquidacion);
+				if (indexOf == -1) {
+					listaLiquidaciones.add(liquidacion);
+				} else {
+					liquidacion = listaLiquidaciones.get(indexOf);
+				}
+
+				LiquidacionPrestacion liquidacionPrestacion = new LiquidacionPrestacion(
+						liquidacion, rs.getBigDecimal("cantidad"), rs.getBigDecimal("importe"));
+
+				List<LiquidacionPrestacion> listaLiquidacionPrest = liquidacion.getLiquidacionPrestacion();
+				
+				if (listaLiquidacionPrest == null) {
+					listaLiquidacionPrest = new ArrayList<LiquidacionPrestacion>();
+				}
+				listaLiquidacionPrest.add(liquidacionPrestacion);
+				liquidacion.setLiquidacionPrestacion(listaLiquidacionPrest);
+			}
+		} catch (Exception e) {
+			_log.error(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return listaLiquidaciones;
+	}
+
+	public List<LiquidacionPrestacionOdo> getBusquedaLiquidacionesOdo(
+			String entidad, Date fechaDesde, Date fechaHasta,
+			Date periodoDesde, Date periodoHasta, int nroAfi, int inte,
+			String cuil_titular, int seccional, BigDecimal presupuesto,
+			int numero) {
+		Connection con = null;
+		CallableStatement stmt = null;
+		List<LiquidacionPrestacionOdo> listaLiquidacionesOdo = null;
+		try {
+			String sql = "{call buscar_liquidaciones_odo(?,?,?,?,?,?,?,?,?,?,?)}";
+
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+			stmt.setInt(1, numero);
+			stmt.setDate(2, fechaDesde == null ? null : new java.sql.Date(
+					fechaDesde.getTime()));
+			stmt.setDate(3, fechaHasta == null ? null : new java.sql.Date(
+					fechaHasta.getTime()));
+			stmt.setDate(4, periodoDesde == null ? null : new java.sql.Date(
+					periodoDesde.getTime()));
+			stmt.setDate(5, periodoHasta == null ? null : new java.sql.Date(
+					periodoHasta.getTime()));
+			if (nroAfi == 0) {
+				stmt.setNull(6, Types.INTEGER);
+			} else {
+				stmt.setInt(6, nroAfi);
+			}
+			if (inte == 0) {
+				stmt.setNull(7, Types.INTEGER);
+			} else {
+				stmt.setInt(7, inte);
+			}
+			stmt.setString(8, cuil_titular);
+			stmt.setInt(9, seccional);
+			stmt.setBigDecimal(10, presupuesto);
+			stmt.setString(11, entidad);
+
+			ResultSet rs = stmt.executeQuery();
+			listaLiquidacionesOdo = new ArrayList<LiquidacionPrestacionOdo>();
+			while (rs.next()) {
+				LiquidacionPrestacionOdo liquidacionPrestacionOdo = new LiquidacionPrestacionOdo();
+				listaLiquidacionesOdo.add(liquidacionPrestacionOdo);
+			}
+		} catch (Exception e) {
+			_log.error(e);
+			_log.debug(e.getMessage());
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return listaLiquidacionesOdo;
+	}
+
+	public List<FichaConsumo> getConsumoAfiliado(String entidad,
+			Date fechaDesde, Date fechaHasta, String codPrestaci, int nroAfi,
+			int inte, String cuil_titular, String cuit, String sucu,
+			String prestac, String ortop, String protesis,
+			String odontogeneral, String liquidaciones, String discapacidad, 
+			String farmacia, String liqFarmacia, String preAutorizaciones, 
+			String rtaPrevencion) {
+
+		Connection con = null;
+		CallableStatement stmt = null;
+		ArrayList<FichaConsumo> listaPagos = null;
+		listaPagos = new ArrayList<FichaConsumo>();
+		try {
+					
+			String sql = "{call consumo_afiliado_pago(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+
+			con = ConnectionHelper.getReportesOspimConnection();
+			stmt = con.prepareCall(sql.toString());
+			
+			stmt.setDate(1, fechaDesde == null ? null : new java.sql.Date(
+					fechaDesde.getTime()));
+			stmt.setDate(2, fechaHasta == null ? null : new java.sql.Date(
+					fechaHasta.getTime()));			
+			stmt.setString(3, codPrestaci);
+			stmt.setString(4, cuil_titular);
+			stmt.setInt(5, inte);
+			stmt.setString(6, cuit);
+			stmt.setString(7, sucu);					
+			stmt.setString(8, prestac);
+			stmt.setString(9, ortop);
+			stmt.setString(10, protesis);
+			stmt.setString(11, odontogeneral);
+			stmt.setString(12, liquidaciones);
+			stmt.setString(13, discapacidad);
+			stmt.setString(14, farmacia);			
+			stmt.setString(15, liqFarmacia);
+			stmt.setString(16, preAutorizaciones);
+			stmt.setString(17, rtaPrevencion);
+			
+			
+								
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+																
+				FichaConsumo fichaConsumo = new FichaConsumo(
+																																		
+						rs.getString("tipo_consumo"),
+						rs.getInt("id_liquidacion"), 
+						rs.getDate("fecha_prestacion"), 
+						rs.getString("apellido"), 
+						rs.getString("nombre"),
+						rs.getString("docu_numero"), 
+						rs.getString("secciona"),
+						rs.getString("cuit"),
+						rs.getString("razon_soc"),
+						rs.getString("codigo"),
+						rs.getString("descripcion"),
+						rs.getString("presentacion"),
+						rs.getString("laboratorio"),
+						rs.getString("pieza"),
+						rs.getString("cara"),
+						rs.getBigDecimal("importe_total"),
+						rs.getInt("nro_cuota"),
+						rs.getInt("porcentaje_cuota"),
+						rs.getBigDecimal("cantidad"),
+						rs.getBigDecimal("importe"),
+						rs.getBigDecimal("ospim"),
+						rs.getBigDecimal("amtima"),
+						rs.getBigDecimal("uoma"),
+						rs.getString("receta"),
+						rs.getBigDecimal("porcentaje"),
+						rs.getString("localidad_prestador"),
+						rs.getString("prov_prestador"),
+						rs.getBigDecimal("debitado_omint"),
+						rs.getInt("id_orden_pago"),
+						rs.getString("discapacitado"),
+						rs.getInt("cta"),
+						rs.getDate("periodo"),						
+						null, 0, null, null, null, rs.getString("tercerizado"), rs.getDate("fecha_op"), null,rs.getString("provincia"));
+				        fichaConsumo.setDiagnostico(rs.getString("diagnostico"));
+				        try {
+				        	fichaConsumo.setPlan(rs.getString("plan"));
+				        }catch(Exception e1) {}
+						listaPagos.add(fichaConsumo);
+			}			
+		} catch (Exception e) {
+			_log.error(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+
+		return listaPagos;
+	}
+
+	public List<FichaConsumo> getReporteDiscapacidad(String entidad,
+			Date fechaDesde, Date fechaHasta, Date periodoDesde,
+			Date periodoHasta, String codPrestaci, int estado, int nroAfi,
+			int inte, String cuilTitular, String cuit, String sucu,
+			String prestac, String liquidaciones, String diagnostico, String ciex) {
+
+		Connection con = null;
+		CallableStatement stmt = null;
+		ArrayList<FichaConsumo> listaPagos = null;
+		listaPagos = new ArrayList<FichaConsumo>();
+		try {
+					
+			String sql = "{call reporte_discapacidad(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+			
+			stmt.setDate(1, fechaDesde == null ? null : new java.sql.Date(
+					fechaDesde.getTime()));
+			stmt.setDate(2, fechaHasta == null ? null : new java.sql.Date(
+					fechaHasta.getTime()));
+
+			stmt.setDate(3, periodoDesde == null ? null : new java.sql.Date(
+					periodoDesde.getTime()));
+			stmt.setDate(4, periodoHasta == null ? null : new java.sql.Date(
+					periodoHasta.getTime()));
+	
+			stmt.setString(5, codPrestaci);
+			stmt.setInt(6, estado);
+		
+			stmt.setInt(7, nroAfi);					
+			stmt.setString(8, cuilTitular);
+			stmt.setInt(9, inte);
+			
+			stmt.setString(10, cuit);
+			stmt.setString(11, sucu);
+			
+			stmt.setString(12, prestac);
+			stmt.setString(13, liquidaciones);
+			stmt.setString(14, diagnostico);
+			stmt.setString(15, ciex);								
+			
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+													
+				FichaConsumo fichaConsumo = new FichaConsumo(
+						rs.getString("tipo_consumo"),
+						rs.getInt("id_liquidacion"), 
+						rs.getDate("fecha_prestacion"), 
+						rs.getString("apellido"), 
+						rs.getString("nombre"),
+						rs.getString("docu_numero"), 
+						rs.getString("secciona"),
+						rs.getString("cuit"),
+						rs.getString("razon_soc"),
+						rs.getString("codigo"),
+						rs.getString("descripcion"),
+						rs.getString("presentacion"),
+						rs.getString("laboratorio"),
+						rs.getString("pieza"),
+						rs.getString("cara"),
+						rs.getBigDecimal("importe_total").setScale(2,
+								RoundingMode.HALF_DOWN),
+						rs.getInt("nro_cuota"),
+						rs.getInt("porcentaje_cuota"),
+						rs.getBigDecimal("cantidad"),
+						rs.getBigDecimal("importe"),
+						rs.getBigDecimal("ospim"),
+						rs.getBigDecimal("amtima"),
+						BigDecimal.ZERO,//uoma
+						rs.getString("receta"),
+						rs.getBigDecimal("porcentaje"),
+						rs.getString("localidad_prestador"),
+						rs.getString("prov_prestador"),
+						rs.getBigDecimal("debitado_omint"),
+						rs.getInt("id_orden_pago"),
+						rs.getString("discapacitado"),
+						rs.getInt("cta"),
+						rs.getDate("periodo"), 
+						rs.getString("cuil_titular"),
+						rs.getInt("inte"),
+						rs.getDate("fecha"),
+						rs.getDate("fecha_comprobante"),
+						rs.getBigDecimal("importe_comprobante"),
+						rs.getString("tercerizado"),
+						rs.getDate("fecha_op"),
+						rs.getString("comprobante"),
+						""
+						);
+						fichaConsumo.setDiagnostico(rs.getString("diagnostico"));
+						fichaConsumo.setCiex(rs.getString("ciex"));
+						listaPagos.add(fichaConsumo);
+			}
+		} catch (Exception e) {
+			_log.error(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		
+		return listaPagos;
+		
+	}
+	
+	public List<FichaFarmacia> getLiquidacionesFarmacia(Date periodoDesde,
+			Date periodoHasta, String troquel, String cuil, Integer inte,
+			String id_farmacia, String farmacia, int opDesde, int opHasta, boolean pmi) {
+
+		Connection con = null;
+		CallableStatement stmt = null;
+		ArrayList<FichaFarmacia> listaFichas= null;
+		listaFichas = new ArrayList<FichaFarmacia>();
+		try {
+					
+			String sql = "{call reporte_liquidacion_farmacia(?,?,?,?,?,?,?,?,?,?)}";
+
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+			
+			if(null!=periodoDesde){
+				stmt.setDate(1, new java.sql.Date(periodoDesde.getTime()));
+			}else{
+				stmt.setNull(1, Types.DATE);
+			}
+			if(null!=periodoHasta){
+				stmt.setDate(2, new java.sql.Date(periodoHasta.getTime()));				
+			}else{
+				stmt.setNull(2, Types.DATE);				
+			}
+			
+			if(null!=troquel && troquel.trim().length()>0){				
+				stmt.setString(3, troquel);
+			}else{
+				stmt.setNull(3, Types.VARCHAR);
+			}
+			
+			if(null!=cuil && cuil.trim().length()>0){
+				stmt.setString(4, cuil);
+			}else{
+				stmt.setNull(4, Types.VARCHAR);
+			}
+			
+			if(null!=inte){
+				stmt.setInt(5, inte);
+			}else{
+				stmt.setNull(5, Types.INTEGER);
+			}
+			
+			if(null!=id_farmacia && id_farmacia.trim().length()>0){
+				stmt.setString(6, id_farmacia);
+			}else{
+				stmt.setNull(6, Types.VARCHAR);
+			}
+			
+			if(null!=farmacia && farmacia.trim().length()>0){
+				stmt.setString(7, farmacia);
+			}else{
+				stmt.setNull(7, Types.VARCHAR);
+			}
+			
+			if(opDesde>0){
+				stmt.setInt(8, opDesde);
+			}else{
+				stmt.setNull(8, Types.INTEGER);
+			}
+			if(opHasta>=1){
+				stmt.setInt(9, opHasta);	
+			}else{
+				stmt.setNull(9, Types.INTEGER);
+			}
+			
+			stmt.setBoolean(10, pmi);
+							
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				FichaFarmacia ficha=FichaFarmacia.getMapping(rs);
+				listaFichas.add(ficha);							
+			}		
+ 		} catch (Exception e) {
+			_log.error(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+
+		return listaFichas;
+	}
+
+	
+	public List<TratamiendoDiscapacidad> getReporteTratamiendoDiscapacidad(Date periodoDesde, Date periodoHasta, 
+			boolean sur, String ciex, String codigoPrestacion, String cuitPrestador, String tipoDiscapacidad) {
+
+		Connection con = null;
+		CallableStatement stmt = null;
+		ArrayList<TratamiendoDiscapacidad> lista= null;
+		lista = new ArrayList<TratamiendoDiscapacidad>();
+		try {
+			String sql = "{call reporte_tratamientos_discapacidad(?,?,?,?,?,?,?)}";
+
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+			
+			if(null!=periodoDesde){
+				stmt.setDate(1, new java.sql.Date(periodoDesde.getTime()));
+			}else{
+				stmt.setNull(1, Types.DATE);
+			}
+			if(null!=periodoHasta){
+				stmt.setDate(2, new java.sql.Date(periodoHasta.getTime()));				
+			}else{
+				stmt.setNull(2, Types.DATE);				
+			}
+			
+			if(null!=codigoPrestacion && codigoPrestacion.trim().length()>0){				
+				stmt.setString(3, codigoPrestacion);
+			}else{
+				stmt.setNull(3, Types.VARCHAR);
+			}
+			
+			if(null!=cuitPrestador && cuitPrestador.trim().length()>0){
+				stmt.setString(4, cuitPrestador);
+			}else{
+				stmt.setNull(4, Types.VARCHAR);
+			}
+			
+			if(null!=ciex && ciex.trim().length()>0){
+				stmt.setString(5, ciex);
+			}else{
+				stmt.setNull(5, Types.VARCHAR);
+			}
+			
+			stmt.setBoolean(6, sur);
+			
+			if(null!=tipoDiscapacidad && tipoDiscapacidad.trim().length()>0){
+				stmt.setString(7, tipoDiscapacidad);
+			}else{
+				stmt.setNull(7, Types.VARCHAR);
+			}
+			
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				TratamiendoDiscapacidad tratamiento=TratamiendoDiscapacidad.getMapping(rs);
+				lista.add(tratamiento);							
+			}		
+ 		} catch (Exception e) {
+			_log.error(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+
+		return lista;
+	}
+	
+	
+	public List<TratamiendoDiscapacidad> reporteTratamientosDiscaPorEdad(Date periodoDesde, Date periodoHasta, 
+			boolean sur, String ciex, String codigoPrestacion, String cuitPrestador, String tipoDiscapacidad) {
+
+		Connection con = null;
+		CallableStatement stmt = null;
+		ArrayList<TratamiendoDiscapacidad> lista= null;
+		lista = new ArrayList<TratamiendoDiscapacidad>();
+		try {
+			String sql = "{call reporte_tratamientos_disca_por_edad(?,?,?,?,?,?,?)}";
+
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+			
+			if(null!=periodoDesde){
+				stmt.setDate(1, new java.sql.Date(periodoDesde.getTime()));
+			}else{
+				stmt.setNull(1, Types.DATE);
+			}
+			if(null!=periodoHasta){
+				stmt.setDate(2, new java.sql.Date(periodoHasta.getTime()));				
+			}else{
+				stmt.setNull(2, Types.DATE);				
+			}
+			
+			if(null!=codigoPrestacion && codigoPrestacion.trim().length()>0){				
+				stmt.setString(3, codigoPrestacion);
+			}else{
+				stmt.setNull(3, Types.VARCHAR);
+			}
+			
+			if(null!=cuitPrestador && cuitPrestador.trim().length()>0){
+				stmt.setString(4, cuitPrestador);
+			}else{
+				stmt.setNull(4, Types.VARCHAR);
+			}
+			
+			if(null!=ciex && ciex.trim().length()>0){
+				stmt.setString(5, ciex);
+			}else{
+				stmt.setNull(5, Types.VARCHAR);
+			}
+			
+			stmt.setBoolean(6, sur);
+			
+			if(null!=tipoDiscapacidad && tipoDiscapacidad.trim().length()>0){
+				stmt.setString(7, tipoDiscapacidad);
+			}else{
+				stmt.setNull(7, Types.VARCHAR);
+			}
+
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				TratamiendoDiscapacidad tratamiento=TratamiendoDiscapacidad.getMappingPorEdad(rs);
+				lista.add(tratamiento);							
+			}		
+ 		} catch (Exception e) {
+			_log.error(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+
+		return lista;
+	}
+
+	
+	
+	
+	
+}

@@ -1,0 +1,118 @@
+package ar.com.ospim.autorizaciones.action;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+
+import javax.portlet.PortletConfig;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
+import javax.servlet.http.HttpSession;
+
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+
+import ar.com.ospim.autorizaciones.beans.RevisionesReclamo;
+import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
+import ar.com.ospim.global.beans.Provincia;
+import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
+import ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaMatriculasAction;
+import ar.com.ospim.liquidaciones.administracion.prestadores.exception.MatriculaNacionalPrestadorException;
+import ar.com.ospim.liquidaciones.administracion.prestadores.exception.MatriculaProvincialPrestadorException;
+import ar.com.ospim.liquidaciones.beans.MatriculaPrestador;
+
+import com.liferay.portal.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.struts.PortletAction;
+import com.liferay.portal.util.PortalUtil;
+
+
+public class ListaRevisionesAction extends PortletAction {	
+	
+	private static Log _log = LogFactoryUtil.getLog(ListaRevisionesAction.class);
+
+	public ActionForward render(ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
+			RenderRequest renderRequest, RenderResponse renderResponse) throws Exception {
+		
+		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
+		
+		String resolucion = ParamUtil.getString(renderRequest, "resolucion");		
+		String presentes = ParamUtil.getString(renderRequest, "presentes");
+		String respresolucion = ParamUtil.getString(renderRequest, "respresolucion");		
+		
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeInMillis(System.currentTimeMillis());
+		SimpleDateFormat formatoDePeriodo = new SimpleDateFormat("dd/MM/yyyy");
+
+		String revisionFechaVtoDia = ParamUtil.getString(renderRequest,"revisionFechaVtoDia");
+		String revisionFechaVtoMes = ParamUtil.getString(renderRequest,"revisionFechaVtoMes");
+		String revisionFechaVtoAnio = ParamUtil.getString(renderRequest,"revisionFechaVtoAnio");
+		int idObservacionMedica = ParamUtil.getInteger(renderRequest,"observacionMedica",0);
+
+		
+		Date fechaRevision = null;		
+		
+		/*
+		  boolean superintendencia= ParamUtil.getBoolean(renderRequest,"reclamosuperintendencia");
+		 
+		boolean  recuperable= ParamUtil.getBoolean(renderRequest,"reclamorecuperable");
+		boolean  amparo= ParamUtil.getBoolean(renderRequest,"reclamoamparo");			   		   
+		 */  
+		String observacion=ParamUtil.getString(renderRequest,"reclamoobservacion");
+		
+		
+			try {
+				fechaRevision = formatoDePeriodo.parse(revisionFechaVtoDia + "/"
+						+ (Integer.parseInt(revisionFechaVtoMes) + 1) + "/"
+						+ revisionFechaVtoAnio);
+			} catch (Exception e) {
+				fechaRevision = null;
+			}
+				
+		   
+		
+//		me aseguro sea un numero negativo para no confundir con IDs de BD
+		Random r = new Random(System.currentTimeMillis());
+		int idAux = r.nextInt(); // sale neg o pos, si es pos, lo pasamos con (-1)
+		if(idAux > 0){
+			idAux = (-1)*idAux;
+		}
+		
+		RevisionesReclamo revreclamo = new RevisionesReclamo(fechaRevision ,presentes ,resolucion ,respresolucion , observacion);
+				 
+		
+		revreclamo.setEstado(RevisionesReclamo.ESTADOS.NUEVO); 
+		
+		revreclamo.setId(idAux);
+		
+		_log.debug("Agrega revision : " + revreclamo.toString());
+		
+		
+		@SuppressWarnings("unchecked")
+		List<RevisionesReclamo > revisionesreclamo  = (ArrayList<RevisionesReclamo >) session.getAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION);
+
+		session.removeAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION);
+		
+		if(revisionesreclamo   == null){
+			revisionesreclamo  = new ArrayList<RevisionesReclamo>();
+		}				
+		
+		revisionesreclamo.add(revreclamo);		
+		
+		//pongo la lista en session		
+		session.setAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION, revisionesreclamo );	
+		
+//		return mapping.findForward("portlet.liquidaciones.matricula.prestador");
+		return mapping.findForward(getForward(renderRequest,
+				"portlet.autorizaciones.reclamosprestacionales.revision.reclamo"));
+	}
+	
+			
+}

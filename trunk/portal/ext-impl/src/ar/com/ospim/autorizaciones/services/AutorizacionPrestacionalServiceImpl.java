@@ -1,0 +1,492 @@
+package ar.com.ospim.autorizaciones.services;
+
+import java.math.BigDecimal;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import ar.com.ospim.afiliados.beans.Afiliado;
+import ar.com.ospim.afiliados.beans.Documento;
+import ar.com.ospim.global.WebKeysGlobal;
+import ar.com.ospim.global.beans.Prestacion;
+import ar.com.ospim.liquidaciones.DuplicateTratamientoDiscapacidadIdException;
+import ar.com.ospim.liquidaciones.ImposibleBorrarTratamientoDiscapacidadException;
+import ar.com.ospim.liquidaciones.beans.Prestador;
+import ar.com.ospim.liquidaciones.services.PrestadorServiceUtil;
+import ar.com.ospim.autorizaciones.beans.AutorizacionPrestacional;
+import ar.com.ospim.autorizaciones.beans.AutoPrestacional;
+import ar.com.ospim.util.ConnectionHelper;
+
+import com.liferay.portal.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+
+public class AutorizacionPrestacionalServiceImpl {
+
+	private static Log _log = LogFactoryUtil
+			.getLog(AutorizacionPrestacionalServiceImpl.class);
+
+	public List<AutorizacionPrestacional> buscarAutorizacionPrestacional(
+			String entidad, Date fechaDesde, Date fechaHasta, int nroAfi,
+			int inte, String cuil_titular, int codPrestad, int id_prestador, String cuit,
+			String prestador, int numero, int estado, String codPrestaci) throws SystemException,
+			NumberFormatException, ParseException {
+
+		Connection con = null;
+		CallableStatement stmt = null;
+		ArrayList<AutorizacionPrestacional> listaLiquidaciones = null;
+		listaLiquidaciones = new ArrayList<AutorizacionPrestacional>();
+		
+		//CAMBIAR EL STORED
+		try {
+			String sql = "{call autorizaciones.buscar_tratamientos_discapacidad(?,?,?,?,?,?,?,?,?,?)}";
+			_log.debug("obteniendo conexion");
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+
+			stmt.setDate(1, fechaDesde == null ? null : new java.sql.Date(
+					fechaDesde.getTime()));
+			stmt.setDate(2, fechaHasta == null ? null : new java.sql.Date(
+					fechaHasta.getTime()));
+			stmt.setString(3, cuil_titular);
+			if (inte == 0) {
+				stmt.setNull(4, Types.INTEGER);
+			} else {
+				stmt.setInt(4, inte);
+			}
+			if (entidad != null && entidad.length() == 0) {
+				entidad = null;}
+			stmt.setString(5, entidad);
+			if (nroAfi == 0) {
+				stmt.setNull(6, Types.INTEGER);
+			} else {
+				stmt.setInt(6, nroAfi);
+			}
+			stmt.setString(7, cuit);
+			stmt.setString(8, prestador);
+			stmt.setInt(9, estado);
+			stmt.setString(10, codPrestaci);
+			
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				AutorizacionPrestacional tratamiento = AutorizacionPrestacional
+						.getMapping(rs, "td_");
+				tratamiento.setPrestacion(Prestacion.getMapping(rs, "n_"));				
+				tratamiento.getPrestacion().setId_prestacion(rs.getInt("td_" + "id_prestacion"));
+				tratamiento.setAfiliado(Afiliado.getMapping(rs, "a_"));
+				listaLiquidaciones.add(tratamiento);
+			}
+		} catch (Exception e) {
+			_log.error(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return listaLiquidaciones;
+	}
+
+	public List<AutorizacionPrestacional> buscarAutorizacionPrestacional(
+			String entidad, Date fechaDesde, Date fechaHasta, int nroAfi,
+			int inte, String cuil_titular, int codPrestad, int id_prestador, String cuit,
+			String prestador, int numero, int estado, String codPrestaci,boolean incluyeAntiguos,
+			Integer nroAutorizacion,boolean discapacidad,boolean leche,boolean dependencia,Integer pagina) throws SystemException,
+			NumberFormatException, ParseException {
+
+		Connection con = null;
+		CallableStatement stmt = null;
+		ArrayList<AutorizacionPrestacional> listaLiquidaciones = null;
+		listaLiquidaciones = new ArrayList<AutorizacionPrestacional>();
+		
+		//CAMBIAR EL STORED
+		try {
+			String sql = "{call autorizaciones.buscar_autorizaciones_prestacionales(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			_log.debug("obteniendo conexion");
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+
+			stmt.setDate(1, fechaDesde == null ? null : new java.sql.Date(
+					fechaDesde.getTime()));
+			stmt.setDate(2, fechaHasta == null ? null : new java.sql.Date(
+					fechaHasta.getTime()));
+			stmt.setString(3, cuil_titular);//23...
+			stmt.setInt(4, inte);
+			
+			if (entidad != null && entidad.length() == 0) {
+				entidad = null;}
+			stmt.setString(5, entidad);//ospim
+			if (nroAfi == 0) {
+				stmt.setNull(6, Types.INTEGER);
+			} else {
+				stmt.setInt(6, nroAfi);//34678
+			}
+			stmt.setString(7, cuit);
+			stmt.setString(8, prestador);//12151
+			stmt.setInt(9, estado);//-1 todo ,0 Pre Autorización 1 ,En Curso  2 ,Documentación Faltante 3 ,Cambio Prestador  4,Finalizado ,5 Abandonado
+			stmt.setString(10, codPrestaci);//12151
+			stmt.setBoolean(11, incluyeAntiguos);//false
+			stmt.setInt(12, nroAutorizacion);//0
+			stmt.setBoolean(13, discapacidad);//false
+			stmt.setBoolean(14, leche);//false
+			stmt.setBoolean(15, dependencia);//false
+			if (pagina == null) {
+				stmt.setNull(16, Types.INTEGER);
+			} else {
+				stmt.setInt(16, pagina);//34678
+			}
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				AutorizacionPrestacional tratamiento = AutorizacionPrestacional
+						.getMapping(rs, "td_");
+				tratamiento.setTotalRegistros(rs.getInt("total_registros"));
+				tratamiento.setPrestacion(Prestacion.getMapping(rs, "n_"));				
+				tratamiento.getPrestacion().setId_prestacion(rs.getInt("td_" + "id_prestacion"));
+				tratamiento.setAfiliado(Afiliado.getMapping(rs, "a_"));
+				listaLiquidaciones.add(tratamiento);
+			}
+		} catch (Exception e) {
+			_log.error(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return listaLiquidaciones;
+	}
+
+	
+	public AutorizacionPrestacional getAutorizacionPrestacional(int id) {
+		Connection con = null;
+		CallableStatement stmt = null;
+		AutorizacionPrestacional td = null;
+		try {
+			String sql = "{call autorizaciones.buscar_autorizacion_prestacional_by_id(?)}";
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+			stmt.setInt(1, id);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				td = AutorizacionPrestacional.getMapping(rs, "td_");
+				td.setPrestacion(Prestacion.getMapping(rs, "n_"));
+				td.getPrestacion().setId_prestacion(rs.getInt("td_" + "id_prestacion"));
+				td.setAfiliado(Afiliado.getMapping(rs, "a_"));
+				
+				Prestador prestador = new Prestador();
+				if( rs.getInt("td_" + "id_prestador")>0){
+				  try{
+				   prestador = PrestadorServiceUtil.getPrestador(rs.getInt("td_" + "id_prestador"));
+				  }catch(Exception e){
+					//_log.error("Error al buscar prestador de la autorizacion", e);
+				  }
+				}  
+				td.setPrestador(prestador);
+				
+			}
+		} catch (Exception e) {
+			_log.error("Error al buscar autorizacion  prestacional", e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return td;
+	}
+
+	/**
+	 * Metodo que obtiene la lista de docuentos faltantes a partir de la clave primaria
+	 * del tratamiento
+	 * 
+	 * @throws SystemException
+	 */
+	public List<Documento> getDocFaltanteAutorizacionPrestacional(
+			int id_tratamiento) throws SystemException {
+		Connection con = null;
+		CallableStatement stmt = null;		
+		List<Documento> documentoItems = new ArrayList<Documento>();
+		try {
+			String sql = "{call busca_documentos_faltantes_por_id_tratamiento(?)}";
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+			stmt.setInt(1, id_tratamiento);
+			ResultSet rs = stmt.executeQuery();
+			
+			while (rs.next()) {
+				Documento doc = new Documento(rs.getInt("id_documento"), "");										
+				documentoItems.add(doc);
+			}
+		} catch (Exception e) {
+			_log.debug("Error al obtener documentación faltante", e);
+			throw new SystemException(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return documentoItems;
+	}
+	
+	public int save(AutoPrestacional autoPrestacionales, int idPreautorizacion) throws SystemException,
+			DuplicateTratamientoDiscapacidadIdException {
+		Connection con = null;
+		CallableStatement stmt = null;
+		try {
+			
+			String sql = "{call autorizaciones.inserta_autorizacion_prestacional (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
+					+ "?,?,?,?,?,?,?,?,?,?,?)}";
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+			stmt.setInt(1, autoPrestacionales.getIdPrestacion());
+			stmt.setString(2, autoPrestacionales.getCuil());
+			stmt.setInt(3, autoPrestacionales.getInte());
+			stmt.setBigDecimal(4, new BigDecimal(autoPrestacionales.getCantidad()));
+			stmt.setString(5, autoPrestacionales.getPeriodicidad());
+			stmt.setDate(6, autoPrestacionales.getPeriodoDesde() != null ? new java.sql.Date(autoPrestacionales.getPeriodoDesde().getTime()) : null);
+			stmt.setDate(7, autoPrestacionales.getPeriodoHasta() != null ? new java.sql.Date(autoPrestacionales.getPeriodoHasta().getTime()) : null);
+			stmt.setBigDecimal(8, new BigDecimal(autoPrestacionales.getImporteTotal()));
+			stmt.setString(9, autoPrestacionales.getUser().getScreenName());
+			stmt.setInt(10, autoPrestacionales.getIdPrestador());	
+			stmt.setString(11, autoPrestacionales.getObservaciones());
+			stmt.setBoolean(12, autoPrestacionales.isRecuperaApe());
+			stmt.setInt(13, autoPrestacionales.getEstado());
+			stmt.setString(14, autoPrestacionales.getCuit());
+			stmt.setString(15, autoPrestacionales.getPrestador());
+			stmt.setString(16, autoPrestacionales.getIdSeccional());			
+			stmt.setBigDecimal(17, new BigDecimal(autoPrestacionales.getCantidadViajesMes()));
+			stmt.setBigDecimal(18, new BigDecimal(autoPrestacionales.getCantidadKilometrosDia()));
+			stmt.setBigDecimal(19, new BigDecimal(autoPrestacionales.getCantidadKilometrosMes()));
+			stmt.setBigDecimal(20, new BigDecimal(autoPrestacionales.getImporteKilometroUnit()));
+			stmt.setBigDecimal(21, new BigDecimal(autoPrestacionales.getHsEsperaDia()));
+			stmt.setBigDecimal(22, new BigDecimal(autoPrestacionales.getHsEsperaMes()));
+			stmt.setBigDecimal(23, new BigDecimal(autoPrestacionales.getImporteHsEsperaUnit()));
+			stmt.setBigDecimal(24, new BigDecimal(autoPrestacionales.getImporteTercerizado()));
+			stmt.setString(25, autoPrestacionales.getIdTercerizadora());
+			stmt.setBoolean(26,  autoPrestacionales.getEsExcepcion().equalsIgnoreCase("SI")?true:false);
+			stmt.setBoolean(27, autoPrestacionales.isEsDiscapacitado());
+			stmt.setString(28,  autoPrestacionales.getMotivoExcepcion());
+			stmt.setInt(29, idPreautorizacion);
+			stmt.setBoolean(30, autoPrestacionales.isEsLecheMaternizada());
+			stmt.setBoolean(31, autoPrestacionales.isEsConDependencia() );
+			if(autoPrestacionales.getObservacionesInternas()!=null) {
+			   stmt.setString(32, autoPrestacionales.getObservacionesInternas());
+			}else {
+			   stmt.setNull(32, Types.VARCHAR);	
+			}
+			stmt.setInt(33, autoPrestacionales.getCopago());
+			
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				return rs.getInt(1);
+			}
+		} catch (SQLException e) {
+			_log.error("Error al insertar autorizacion prestacional", e);
+			if (e.getSQLState().equalsIgnoreCase(
+					WebKeysGlobal.SQL_STATE_DUPLICATE_KEY)) {
+				throw new DuplicateTratamientoDiscapacidadIdException(e);
+			} else {
+				throw new SystemException(e);
+			}
+		} catch (Exception e) {
+			_log.error("Error al insertar autorizacion prestacional", e);
+			throw new SystemException(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return 0;
+	}
+
+	public void update(AutoPrestacional autoPrestacionales,  int idPreautorizacion) throws SystemException {
+		Connection con = null;
+		CallableStatement stmt = null;
+		try {
+			String sql = "{call autorizaciones.actualiza_autorizacion_prestacional (?,?,?,?,?,?,?,?,?,?,"
+					+ "?,?,?,?,?,?,?,?,?,?,"
+					+ "?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+
+			stmt.setInt(1, autoPrestacionales.getIdPrestacion());
+			stmt.setString(2, autoPrestacionales.getCuil());
+			stmt.setInt(3, autoPrestacionales.getInte());
+			stmt.setBigDecimal(4, new BigDecimal( autoPrestacionales.getCantidad()));
+			stmt.setString(5, autoPrestacionales.getPeriodicidad());
+			if(autoPrestacionales.getPeriodoDesde()!=null){
+			   stmt.setDate(6, new java.sql.Date(autoPrestacionales.getPeriodoDesde().getTime()));
+			}else{
+				stmt.setNull(6, Types.DATE);	
+			}
+			if(autoPrestacionales.getPeriodoHasta()!=null){
+			   stmt.setDate(7, new java.sql.Date(autoPrestacionales.getPeriodoHasta().getTime()));
+			}else{
+				stmt.setNull(7, Types.DATE);	
+			}   
+			stmt.setString(8, autoPrestacionales.getUser().getScreenName());
+			stmt.setBigDecimal(9, new BigDecimal( autoPrestacionales.getImporteTotal()));
+			stmt.setInt(10, autoPrestacionales.getIdTratamiento());
+			stmt.setInt(11, autoPrestacionales.getIdPrestador());
+			stmt.setString(12, autoPrestacionales.getObservaciones());
+			stmt.setBoolean(13, autoPrestacionales.isRecuperaApe());
+			stmt.setInt(14, autoPrestacionales.getEstado());
+		 	stmt.setString(15,autoPrestacionales.getCuit());
+			stmt.setString(16, autoPrestacionales.getPrestador());
+			stmt.setString(17, autoPrestacionales.getIdSeccional());
+			stmt.setBigDecimal(18, new BigDecimal(autoPrestacionales.getCantidadViajesMes()));
+			stmt.setBigDecimal(19, new BigDecimal(autoPrestacionales.getCantidadKilometrosDia()));
+			stmt.setBigDecimal(20, new BigDecimal(autoPrestacionales.getCantidadKilometrosMes()));
+			stmt.setBigDecimal(21, new BigDecimal(autoPrestacionales.getImporteKilometroUnit()));
+			stmt.setBigDecimal(22, new BigDecimal(autoPrestacionales.getHsEsperaDia()));
+			stmt.setBigDecimal(23, new BigDecimal(autoPrestacionales.getHsEsperaMes()));
+			stmt.setBigDecimal(24, new BigDecimal(autoPrestacionales.getImporteHsEsperaUnit()));
+			stmt.setBigDecimal(25, new BigDecimal(autoPrestacionales.getImporteTercerizado()));
+			stmt.setString(26, autoPrestacionales.getIdTercerizadora());
+			stmt.setBoolean(27,  autoPrestacionales.getEsExcepcion().equalsIgnoreCase("SI")?true:false);
+			stmt.setBoolean(28, autoPrestacionales.isEsDiscapacitado());
+			stmt.setString(29,autoPrestacionales.getMotivoExcepcion());
+			stmt.setBoolean(30, autoPrestacionales.isEsLecheMaternizada());
+			stmt.setBoolean(31, autoPrestacionales.isEsConDependencia());
+			if(autoPrestacionales.getObservacionesInternas()!=null) {
+				   stmt.setString(32, autoPrestacionales.getObservacionesInternas());
+			}else {
+				   stmt.setNull(32, Types.VARCHAR);	
+			}
+			stmt.setInt(33, autoPrestacionales.getCopago());
+			stmt.executeUpdate();
+		} catch (Exception e) {
+			_log.error("Error al actualizar autorizacion prestacional", e);
+			throw new SystemException(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+	}
+
+	public void borrar(int id, String screenName) throws SQLException,
+			ImposibleBorrarTratamientoDiscapacidadException {
+		Connection con = null;
+		CallableStatement stmt = null;
+		try {
+			String sql = "{call autorizaciones.borra_autorizacion_prestacional(?, ?)}";
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+			stmt.setInt(1, id);
+			stmt.setString(2, screenName);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				if (rs.getInt(1) == 0) {
+					throw new ImposibleBorrarTratamientoDiscapacidadException();
+				}
+			}
+		} catch (ImposibleBorrarTratamientoDiscapacidadException e) {
+			_log.error("Error al borrar tratamiento", e);
+			throw e;
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+	}
+	
+	
+	
+	public void marcaEmailSendPrestador(int id) throws SQLException {
+		Connection con = null;
+		CallableStatement stmt = null;
+		try {
+			String sql = "{call autorizaciones.marca_mail_autorizacion_prestacional(?)}";
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+			stmt.setInt(1, id);
+			ResultSet rs = stmt.executeQuery();
+			
+			while (rs.next()) {
+				if (rs.getInt(1) == 0) {
+					throw new SQLException();
+				}
+			}
+		} catch (SQLException e) {
+			_log.error("Error marca", e);
+			throw e;
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+	}
+	
+
+	/**
+	 * @throws SystemException
+	 */
+	public void borrarDocumentosFaltantes(int id_tratamiento) throws SystemException {
+		Connection con = null;
+		CallableStatement stmt = null;
+		try {
+			_log.debug("creando conexion");
+			con = ConnectionHelper.getConnection();
+			String sql = "{call borra_documentos_faltantes_tratamiento(?)}";
+			stmt = con.prepareCall(sql.toString());
+			stmt.setInt(1, id_tratamiento);
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			_log.debug(e.getMessage());
+			throw new SystemException(e);
+		} catch (Exception e) {
+			_log.debug(e.getMessage());
+			throw new SystemException(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return;
+	}
+
+	/**
+	 * @throws SystemException
+	 */
+	public void cargarDocumentosFaltantes(int id_tratamiento, int id_documento, String usuario) throws SystemException {
+		Connection con = null;
+		CallableStatement stmt = null;
+		try {
+			_log.debug("creando conexion");
+			con = ConnectionHelper.getConnection();
+			String sql = "{call carga_documento_faltante_tratamiento(?,?,?)}";
+			stmt = con.prepareCall(sql.toString());
+			stmt.setInt(1, id_tratamiento);
+			stmt.setInt(2, id_documento);
+			stmt.setString(3, usuario);
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			_log.debug(e.getMessage());
+			throw new SystemException(e);
+		} catch (Exception e) {
+			_log.debug(e.getMessage());
+			throw new SystemException(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return;
+	}
+
+	/**
+	 * Metodo cambia el estado a estado en el parámetro
+	 * 
+	 * @throws SystemException
+	 */
+	public void cambiarEstadoAutorizacion(int id_tratamiento, int estado,
+			String userName,String motivo) throws SystemException {
+		Connection con = null;
+		CallableStatement stmt = null;
+		try {
+			_log.debug("creando conexion");
+			con = ConnectionHelper.getConnection();
+			String sql = "{call autorizaciones.cambio_estado_autorizacion_prestacional(?,?,?,?)}";
+			stmt = con.prepareCall(sql.toString());
+			stmt.setInt(1, id_tratamiento);
+			stmt.setInt(2, estado);
+			stmt.setString(3, userName);
+			stmt.setString(4, motivo);
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			_log.debug(e.getMessage());
+			throw new SystemException(e);			
+		} catch (Exception e) {
+			_log.debug(e.getMessage());
+			throw new SystemException(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return;
+	}
+
+}

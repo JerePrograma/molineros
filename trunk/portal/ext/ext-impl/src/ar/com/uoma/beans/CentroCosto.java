@@ -1,0 +1,119 @@
+package ar.com.uoma.beans;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.util.Date;
+import java.util.List;
+
+import ar.com.ospim.tesoreria.beans.caja_chica.ComprobanteCajaChica;
+
+public class CentroCosto implements Serializable {
+
+	private static final long serialVersionUID = -7029556097087275842L;
+	
+	public CentroCosto(Integer id, String descripcion) {
+		super();
+		this.id = id;
+		this.descripcion = descripcion;
+	}
+
+	
+	public CentroCosto() {
+		super();
+	}
+
+	private Integer id;
+	private String descripcion;
+	private Double presupuesto;
+	private Date vigenciaDde;
+	private Date vigenciaHta;
+	private String observaciones;
+	private Double ejecutado;
+	private List<ComprobanteCajaChica>comprobantes;
+	
+	
+	public static CentroCosto getMapping(ResultSet rs)
+			throws Exception {
+		CentroCosto cc=new CentroCosto();
+		cc.setDescripcion(rs.getString("descripcion"));
+		cc.setId(rs.getInt("id"));
+		cc.setPresupuesto(rs.getDouble("presupuesto"));
+		cc.setVigenciaDde(rs.getDate("vigencia_desde"));
+		cc.setVigenciaHta(rs.getDate("vigencia_hasta"));
+		cc.setObservaciones(rs.getString("observaciones"));
+		
+		return cc;	
+	}
+	
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public String getDescripcion() {
+		return descripcion;
+	}
+
+	public void setDescripcion(String descripcion) {
+		this.descripcion = descripcion;
+	}
+
+	public Double getPresupuesto() {
+		return presupuesto;
+	}
+
+	public void setPresupuesto(Double presupuesto) {
+		this.presupuesto = presupuesto;
+	}
+
+	public Date getVigenciaDde() {
+		return vigenciaDde;
+	}
+
+	public String getObservaciones() {
+		return observaciones;
+	}
+
+	public void setObservaciones(String observaciones) {
+		this.observaciones = observaciones;
+	}
+
+	public void setVigenciaDde(Date vigenciaDde) {
+		this.vigenciaDde = vigenciaDde;
+	}
+
+	public Date getVigenciaHta() {
+		return vigenciaHta;
+	}
+
+	public void setVigenciaHta(Date vigenciaHta) {
+		this.vigenciaHta = vigenciaHta;
+	}
+
+
+	public Double getEjecutado() {
+		return ejecutado;
+	}
+
+
+	public void setEjecutado(Double ejecutado) {
+		this.ejecutado = ejecutado;
+	}
+
+
+	public List<ComprobanteCajaChica> getComprobantes() {
+		return comprobantes;
+	}
+
+
+	public void setComprobantes(List<ComprobanteCajaChica> comprobantes) {
+		this.comprobantes = comprobantes;
+	}
+	
+	
+	
+}

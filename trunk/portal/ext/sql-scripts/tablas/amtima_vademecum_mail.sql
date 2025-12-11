@@ -1,0 +1,1 @@
+create table amtima_vademecum_mail (id serial not null, email varchar)

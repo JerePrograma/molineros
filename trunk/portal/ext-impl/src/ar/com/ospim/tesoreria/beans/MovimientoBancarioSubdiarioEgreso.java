@@ -1,0 +1,279 @@
+package ar.com.ospim.tesoreria.beans;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import ar.com.ospim.global.beans.Comprobante.ComprobanteConcepto;
+import ar.com.ospim.global.beans.ItemSubdiarioEgreso;
+import ar.com.ospim.global.beans.SubdiarioComprobante;
+import ar.com.ospim.global.beans.SubdiarioEgresoColumna;
+
+public class MovimientoBancarioSubdiarioEgreso extends MovimientoBancario
+		implements ItemSubdiarioEgreso {
+	private transient String cuitReporteEgresos;
+	private transient BigDecimal nroChequeRechazado;
+
+	public MovimientoBancarioSubdiarioEgreso(
+			MovimientoBancarioSubdiarioEgreso otro) {
+		super(otro);
+		this.cuitReporteEgresos = otro.getCuit();
+		this.nroChequeRechazado = otro.getNroChequeRechazado();
+	}
+
+	public MovimientoBancarioSubdiarioEgreso() {
+		super();
+	}
+
+	public MovimientoBancarioSubdiarioEgreso(int idMov,
+			java.util.Date fechaMov, int idTipoMov, int idCtaBca,
+			boolean debCred, int idChequera, String nroCompro,
+			java.util.Date fechaCompro, double importe, String descrip,
+			boolean imprimeCheque, boolean noALaOrden,
+			java.util.Date conciliaFecha, String conciliaUsr,
+			java.util.Date altaFecha, String altaUsr) {
+		super(idMov, fechaMov, idTipoMov, idCtaBca, debCred, idChequera,
+				nroCompro, fechaCompro, importe, descrip, imprimeCheque,
+				noALaOrden, conciliaFecha, conciliaUsr, altaFecha, altaUsr);
+	}
+
+	public MovimientoBancarioSubdiarioEgreso(int idMov,
+			java.util.Date fechaMov, String tipoMov, String ctaBca,
+			java.util.Date fechaCompro, String nroCompro, String descrip,
+			double importe) {
+		super(idMov, fechaMov, tipoMov, ctaBca, fechaCompro, nroCompro,
+				descrip, importe);
+	}
+
+	public MovimientoBancarioSubdiarioEgreso(MovimientoBancario mov) {
+		super(mov);
+	}
+
+	// PARA SUBDIARIO
+	public List<? extends SubdiarioComprobante> getComprobantesSubdiario() {
+		List<ColumnaComprobante> list = new ArrayList<ColumnaComprobante>();
+		ColumnaComprobante comp = new ColumnaComprobante();
+		comp.setImporte(getImporte());
+		String desc = "";
+		if (nroChequeRechazado != null) {
+			desc = " Ch. " + nroChequeRechazado.toString();
+		}
+		comp.setDescripcion("Mov. Bcrio. "
+				+ (getId_movimiento() != 0 ? String.valueOf(getId_movimiento())
+						: "") + desc);
+		list.add(comp);
+		return list;
+	}
+
+	public List<? extends SubdiarioEgresoColumna> getDesde() {
+		if (getBaja_fecha() == null) {
+			return getDesdeOriginal();
+		} else {
+			return getHaciaOriginal();
+		}
+	}
+
+	public List<? extends SubdiarioEgresoColumna> getHacia() {
+		if (getBaja_fecha() == null) {
+			return getHaciaOriginal();
+		} else {
+			return getDesdeOriginal();
+		}
+	}
+
+	private List<? extends SubdiarioEgresoColumna> getDesdeOriginal() {
+		List<ColumnaSubdiario> list = new ArrayList<ColumnaSubdiario>();
+		ColumnaSubdiario col = new ColumnaSubdiario();
+		col.setCuenta(getCta_bcria().getCuentaAsociada().getNumero());
+		col.setDescripcion(getCta_bcria().getCuentaAsociada().getCuenta());
+		col.setCuentaId(getCta_bcria().getCuentaAsociada().getId());
+		col.setImporte(getImporte());
+		col.setTipo("");
+		list.add(col);
+		return list;
+	}
+
+	private List<? extends SubdiarioEgresoColumna> getHaciaOriginal() {
+		// no necesito la fechaPago porque la cuenta asociada no varia
+		List<ColumnaSubdiario> list = new ArrayList<ColumnaSubdiario>();
+		ColumnaSubdiario col = new ColumnaSubdiario();
+		col.setCuenta(getTipo_mov().getCuentaAsociada().getNumero());
+		col.setDescripcion(getTipo_mov().getCuentaAsociada().getCuenta());
+		col.setCuentaId(getTipo_mov().getCuentaAsociada().getId());
+		col.setImporte(getImporte());
+		col.setTipo("");
+		list.add(col);
+		return list;
+	}
+
+	public String getNumeroOP() {
+		return "";
+	}
+
+	public String getRazonSocial() {
+		return "";
+	}
+
+	public class ColumnaComprobante implements SubdiarioComprobante {
+		private BigDecimal importe;
+		private String descripcion;
+
+		public BigDecimal getImporte() {
+			return importe;
+		}
+
+		public void setImporte(BigDecimal importe) {
+			this.importe = importe;
+		}
+
+		public boolean isDebitoParaEgreso() {
+			return false;
+		}
+
+		public void setDescripcion(String desc) {
+			this.descripcion = desc;
+		}
+
+		public String getDescripcion() {
+			return descripcion;
+		}
+
+		public List<ComprobanteConcepto> getConceptos() {
+			return null;
+		}
+
+		public Date getFechaRecepcion() {
+			return getFecha_movimiento();
+		}
+
+		public Date getPeriodoPrestacion() {
+			return null;
+		}
+
+		public String getNroComprobante() {
+			return descripcion;
+		}
+
+		
+		public Date getFechaEmision() {			
+			return getFecha_movimiento();
+		}
+
+		public String getTipoMovDescripcion(){
+			return getTipo_mov().getDescripcion();
+		}		
+		
+		public int getIdTipoMov() {
+			return getTipo_mov().getId_tipo_mov();
+		}
+
+		@Override
+		public String getTipoComprobante() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public String getObservaciones() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+	}
+
+	private class ColumnaSubdiario implements SubdiarioEgresoColumna {
+		private String tipo;
+		private String cuenta;
+		private String descripcion;
+		private BigDecimal importe;
+		private int cuentaId;
+
+		public String getCuenta() {
+			return cuenta;
+		}
+		public String getCuenta(int entidad) {
+			return cuenta;
+		}
+
+		public String getDescripcionPAraSubdiario() {
+			return getDescripcion();
+		}
+
+		public BigDecimal getImporte() {
+			return importe;
+		}
+
+		public String getTipo() {
+			return tipo;
+		}
+
+		public void setTipo(String tipo) {
+			this.tipo = tipo;
+		}
+
+		public void setCuenta(String cuenta) {
+			this.cuenta = cuenta;
+		}
+
+		public void setDescripcion(String descripcion) {
+			this.descripcion = descripcion;
+		}
+
+		public String getDescripcion() {
+			return descripcion;
+		}
+
+		public void setImporte(BigDecimal importe) {
+			this.importe = importe;
+		}
+
+		public boolean isAnticipo() {
+			return false;
+		}
+
+		public int getCuentaId() {
+			return cuentaId;
+		}
+		
+		public int getCuentaId(int entidad) {
+			return cuentaId;
+		}
+
+
+		public void setCuentaId(int cuentaId) {
+			this.cuentaId = cuentaId;
+		}
+
+	}
+
+	public String getCuit() {
+		return cuitReporteEgresos != null ? cuitReporteEgresos : "";
+	}
+
+	public void setCuit(String cuitReporteEgresos) {
+		this.cuitReporteEgresos = cuitReporteEgresos;
+	}
+
+	public void setNroChequeRechazado(BigDecimal nroChequeRechazado) {
+		this.nroChequeRechazado = nroChequeRechazado;
+	}
+
+	public BigDecimal getNroChequeRechazado() {
+		return nroChequeRechazado;
+	}
+
+	public boolean isMostrarEnCuadro() {
+		return true;
+	}
+
+	@Override
+	public boolean isMostrarComprobantesEnSubdiario() {		
+		return true;
+	}
+
+	@Override
+	public String getObservaciones() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+}

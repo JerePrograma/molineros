@@ -1,0 +1,34 @@
+package ar.com.ospim.liquidaciones.ordenespago.action;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionMapping;
+
+import ar.com.ospim.global.services.OrdenPagoServiceUtil;
+import ar.com.ospim.util.StringUtils;
+
+import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.struts.JSONAction;
+
+public class BuscarUltimaRazonSocialChequeYDestinoAction extends JSONAction {
+
+	@Override
+	public String getJSON(ActionMapping arg0, ActionForm arg1,
+			HttpServletRequest req, HttpServletResponse res) throws Exception {
+		String seccional = req.getParameter("id_seccional");
+		String cuit = req.getParameter("cuit_entidad");
+		String sucu = req.getParameter("sucu_entidad");
+		int entidad= ParamUtil.getInteger(req, "entidad");		
+		
+		if (StringUtils.checkEmpty(seccional)) {
+			seccional = "0";
+		}
+		
+		String[] razonDestino = OrdenPagoServiceUtil.getUltimaRazonSocialChequeYDestinoOP(cuit,
+				sucu, Integer.parseInt(seccional), entidad);
+		return "{ \"razon\" : \"" + razonDestino[OrdenPagoServiceUtil.A_NOMBRE_DE_POS]+ "\",\"nombre\" : \""+razonDestino[OrdenPagoServiceUtil.RAZON_SOC_POS] + "\",\"destino\" : \""+razonDestino[OrdenPagoServiceUtil.DESTINO_POS].replaceAll("\"", "")+"\",\"cbu\" : \""+razonDestino[OrdenPagoServiceUtil.CBU_POS]+"\",\"email\" : \""+razonDestino[OrdenPagoServiceUtil.EMAIL_POS]+"\"}";
+	}
+
+}
