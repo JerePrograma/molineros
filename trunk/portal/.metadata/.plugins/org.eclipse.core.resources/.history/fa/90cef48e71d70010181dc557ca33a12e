@@ -6594,8 +6594,13 @@
 <!-- FIN REIMPUTACION PAGOS EMPLEADORES -->
 
 <action path="/liquidaciones/debitos_tercerizadoras" type="ar.com.ospim.liquidaciones.action.DebitoTercerizadorasAction">
-		    <forward name="portlet.liquidaciones.debitos_tercerizadoras_search_result" path="portlet.liquidaciones.debitos_tercerizadoras_search_result"/>
+		    <forward name="portlet.autorizaciones.preautorizacion_result" path="portlet.autorizaciones.preautorizacion_result"/>
 		    
+		    <forward name="portlet.autorizaciones.preautorizacion_editar" path="portlet.autorizaciones.preautorizacion_editar" />
+		    <forward name="portlet.autorizaciones.buscar_preautorizacion" path="portlet.autorizaciones.buscar_preautorizacion" />
+		    
+		    <forward name="portlet.autorizaciones.imagenes_preautorizacion" path="portlet.autorizaciones.imagenes_preautorizacion" />
+		    <forward name="portlet.autorizaciones.preautorizacion_procesa_archivo" path="portlet.autorizaciones.preautorizacion_procesa_archivo" />
 </action>
      
  </action-mappings>

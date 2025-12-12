@@ -4282,7 +4282,7 @@
 	<definition name="portlet.liquidaciones.debitos_tercerizadoras_search_result"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/liquidaciones/reportes/reporte_debitos_terciarizadoras_search_result.jsp" />
+			value="/portlet/liquidaciones/reportes/reporte_debitos_tercerizadoras_search_result.jsp" />
 	</definition>
 	
 </tiles-definitions>
