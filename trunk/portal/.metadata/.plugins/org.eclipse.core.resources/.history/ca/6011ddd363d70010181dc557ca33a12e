@@ -4279,10 +4279,4 @@
 	    <put name="portlet_content" value="/portlet/afiliados/historico_cuentas_bancarias.jsp" />
 	</definition>
 	
-	<definition name="portlet.liquidaciones.debitos_tercerizadoras_search_result"
-		extends="portlet.uoma">
-		<put name="portlet_content"
-			value="/portlet/tesoreria/recibos/recibo_aportes_empleadores_search_result.jsp" />
-	</definition>
-	
 </tiles-definitions>

@@ -9,7 +9,7 @@
  		Calendar fechaHasta = CalendarFactoryUtil.getCalendar(); 		
  		fechaHasta.setTime(new Date()); 
  		
- 		String[] tiposStr = TraeListasServiceUtil.getSystemConfig("DEBITOS_TERCERIZADORAS_TIPO").split(";");
+ 		String[] tiposStr = TraeListasServiceUtil.getSystemConfig("GESTION_JUDICIAL_TIPOS_DEMANDA").split(";");
 	    List<ClaseBase> tipos =new ArrayList<ClaseBase>();
 	    for(int i=0;i<=tiposStr.length-1;i++){
 		   ClaseBase c =new ClaseBase();
@@ -154,6 +154,8 @@ function <portlet:namespace />buscarMovimientos(){
 
 jQuery('#<portlet:namespace />buscando').show();
 	
+
+
 	if (tipo_debitos_tercerizadoras == '0'){
 		alert('Debe seleccionar una tercerizadoras');
 		return false;
@@ -167,9 +169,10 @@ jQuery('#<portlet:namespace />buscando').show();
 	} 
 	
 	
-	var busquedaNom = {"periodo":periodo,"fechaDesdeDia":"01","fechaDesdeMes":desde_mes,
+	var busquedaNom = {"periodo":periodo,"inte":inte,"fechaDesdeDia":"01","fechaDesdeMes":desde_mes,
 				       "fechaDesdeAnio":desde_anio,"tipo_debito":tipo_debitos_tercerizadoras,"tipo_proceso":tipo_proceso,
 	 			       "cmd":"search"};
+alert(url);
 	var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/debitos_tercerizadoras" /></portlet:renderURL>';
 	
 	jQuery('#<portlet:namespace />listado_debitos').load(url,busquedaNom, function(){

@@ -19,10 +19,6 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import ar.com.ospim.autorizaciones.beans.BusquedaPreautorizacionesFiltro;
-import ar.com.ospim.autorizaciones.beans.PreAutorizacion;
-import ar.com.ospim.autorizaciones.services.PreAutorizacionServiceUtil;
-import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.global.beans.TipoPago;
 import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
@@ -132,15 +128,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
 	    		
 	    		String proceso = ParamUtil.getString(renderRequest, "tipo_proceso");
 	    		
-	    		
-	    		session.removeAttribute(WebKeysAutorizaciones.BUSQUEDA_PREAUTORIZACIONES_RESULT);
-	    			
-	    		
-	    		List<PreAutorizacion> lista = PreAutorizacionServiceUtil.getListaPreAutorizacion(filtro);
-	    		
-	    		session.setAttribute(WebKeysAutorizaciones.BUSQUEDA_PREAUTORIZACIONES_RESULT,lista);
-	    		
-	    		return mapping.findForward(getForward(renderRequest,"portlet.liquidaciones.debitos_tercerizadoras_search_result"));
+	    		return mapping.findForward(getForward(renderRequest,"portlet.liquidaciones.debitos_tercerizadoras_result"));
 	        }
 			
 			if(cmd.equals(Constants.ADD) ){ 

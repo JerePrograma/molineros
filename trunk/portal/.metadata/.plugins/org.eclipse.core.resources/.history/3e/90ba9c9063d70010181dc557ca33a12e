@@ -44,18 +44,14 @@ import com.liferay.portal.util.PortalUtil;
  * @author SVA
  * 
  */
-public class EditarConvPrestacionalAction extends PortletAction {
+public class DebitoTercerizadorasAction extends PortletAction {
 	
 	private Logger _log = Logger.getLogger(this.getClass());
 		
-// redirige al render
 	public void processAction(ActionMapping mapping, ActionForm form,
 							  PortletConfig portletConfig, ActionRequest actionRequest,
 							  ActionResponse actionResponse) throws Exception {
 
-	// preferi no hacer nada x el processAction...
-//			System.out.println("pasando x el processAction");
-		
 	}
 
 	public ActionForward render(ActionMapping mapping, ActionForm form,
@@ -69,33 +65,34 @@ public class EditarConvPrestacionalAction extends PortletAction {
 		String msg = "";
 		int idConvPrestCab=0;
 		
-		ConvenioPrestacional convPrestacional = null;
+	//  ConvenioPrestacional convPrestacional = null;
 
-		cargarListas(renderRequest);
+	//	cargarListas(renderRequest);
 		
 		if (!StringUtils.checkEmpty(cmd)) {
 			
-			List<ConvenioPrestacionalDetalle> detalles = (ArrayList<ConvenioPrestacionalDetalle>) session.getAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
+//			List<ConvenioPrestacionalDetalle> detalles = (ArrayList<ConvenioPrestacionalDetalle>) session.getAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
+	        if(cmd.equals(Constants.SEARCH)){
+	        	
+	        }
 			
-			if(cmd.equals(Constants.ADD) ){ // prepara un convenio prest en blanco (vacio)
+			if(cmd.equals(Constants.ADD) ){ 
 				_log.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
-				
-//				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION);
+/*				
 				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLE_EN_EDICION);
 				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
 				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE);
 				session.removeAttribute(WebKeysLiquidaciones.PLANES_PRESTADOR_EN_SESSION);
-				
 				renderRequest.setAttribute(Constants.CMD, Constants.SAVE);
+*/				
 			}
 			
 			if(cmd.equals(Constants.SAVE) ){ // inserta nuevo
 				_log.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
-				
+/*				
 				 convPrestacional = this.getConvenioPrestCabeceraFromRequest(renderRequest);
 				
 				 renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional); // que no quede vacio en caso de validacion error
-//				 validar si existe un Convenio vigente para el Prestador, solo puede tener 1
 				 if(ConvenioPrestacionalServiceUtil.validarConvenioPrestadorVigente(convPrestacional.getPrestador().getId_prestador())){
 					 SessionErrors.add(renderRequest, "conv-prest-duplicado");
 				
@@ -135,7 +132,6 @@ public class EditarConvPrestacionalAction extends PortletAction {
 										+ " id convprest: " + idConvPrestCab);
 			
 							 renderRequest.setAttribute("msgConvenioOk", msg);
-//							 session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION);
 							 session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
 							 
 							 renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
@@ -144,9 +140,10 @@ public class EditarConvPrestacionalAction extends PortletAction {
 						 }	 
 					 }	 
 				 }
+*/
 			}
-//			
-			if(cmd.equals(Constants.VIEW) ){ 
+			if(cmd.equals(Constants.VIEW) ){
+/*				
 				_log.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
 	
 				idConvPrestCab = ParamUtil.getInteger(renderRequest, "id_convenio",0);
@@ -158,11 +155,12 @@ public class EditarConvPrestacionalAction extends PortletAction {
 				renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
 
 				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE);
+*/				
 			}
 			
 			if(cmd.equals(Constants.DELETE) ){ 
 				_log.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
-	
+/*	
 				idConvPrestCab = ParamUtil.getInteger(renderRequest, "id_convenio_prest",0);
 	
 				ConvenioPrestacionalServiceUtil.eliminarConvenioPrestacional(idConvPrestCab, usuario.getScreenName());
@@ -185,13 +183,13 @@ public class EditarConvPrestacionalAction extends PortletAction {
 
 				session.removeAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_RESULTS);
 				session.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_RESULTS, busqueda);
-				
+*/				
 				return mapping.findForward(getForward(renderRequest,"portlet.liquidaciones.eliminar_convenio_prest_entry"));
 			}
 			
 			if(cmd.equals(Constants.APPROVE) || cmd.equals(Constants.REJECT) ){ // actualiza estado del conv. prest.
 				_log.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
-				
+/*				
 				idConvPrestCab = ParamUtil.getInteger(renderRequest, "id_convenio_prest",0);
 		  
 				ConvenioPrestacionalServiceUtil.cambiarEstadoConvenioPrestacional(idConvPrestCab, 
@@ -209,7 +207,6 @@ public class EditarConvPrestacionalAction extends PortletAction {
 						+ " id convprest: " + idConvPrestCab);
 
 				renderRequest.setAttribute("msgConvenioOk", msg);
-//				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION);
 				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
 				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE);
 				
@@ -218,12 +215,12 @@ public class EditarConvPrestacionalAction extends PortletAction {
 				renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
 				
 				renderRequest.setAttribute(Constants.CMD, Constants.VIEW);
-				
+*/				
 			}
 			
 			if(cmd.equals(Constants.EDIT) ){ 
 				_log.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
-	
+/*	
 				idConvPrestCab = ParamUtil.getInteger(renderRequest, "id_convenio_prest",0);
 				
 				convPrestacional = ConvenioPrestacionalServiceUtil.getConvenioPrestacional(idConvPrestCab);
@@ -236,11 +233,12 @@ public class EditarConvPrestacionalAction extends PortletAction {
 				
 				renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
 				session.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION, convPrestacional.getConvenioPrestDetalle());
+*/				
 			}
 
 			if(cmd.equals(Constants.UPDATE) ){ // actualiza
 				_log.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
-				
+/*				
 				convPrestacional = this.getConvenioPrestCabeceraFromRequest(renderRequest);
 				convPrestacional.setEstado(EstadosConvPrest.CARGADO);
 								
@@ -251,7 +249,6 @@ public class EditarConvPrestacionalAction extends PortletAction {
 				}else{
 					convPrestacional.setConvenioPrestDetalle(detalles);
 				}	 
-//				FIXME hay que informar alguien por cambios de convenios que ya estaban aprobados o rechazados??
 				
 				if(SessionErrors.isEmpty(renderRequest)){
 					ConvenioPrestacionalServiceUtil.actualizarConvenioPrestacional(convPrestacional, usuario.getScreenName());
@@ -273,21 +270,20 @@ public class EditarConvPrestacionalAction extends PortletAction {
 				}	 
 				renderRequest.setAttribute(Constants.CMD, Constants.UPDATE);
 				renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
-				
+*/				
 			}
 
-			session.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
-			session.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION, convPrestacional!=null?convPrestacional.getConvenioPrestDetalle():null);
+//			session.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
+//			session.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION, convPrestacional!=null?convPrestacional.getConvenioPrestDetalle():null);
 
 		}else{
-//			renderRequest.setAttribute("tabs1", "afiliados");
 		}
 		
 		return mapping.findForward(getForward(renderRequest,"portlet.liquidaciones.editar_convenio_prest_entry"));
 
 	}
 
-	
+//-- Borrar	
 	
 	private void cargarListas(RenderRequest renderRequest) throws SystemException{
 

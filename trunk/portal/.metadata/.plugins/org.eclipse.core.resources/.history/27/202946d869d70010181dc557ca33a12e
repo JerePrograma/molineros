@@ -9,7 +9,7 @@
  		Calendar fechaHasta = CalendarFactoryUtil.getCalendar(); 		
  		fechaHasta.setTime(new Date()); 
  		
- 		String[] tiposStr = TraeListasServiceUtil.getSystemConfig("DEBITOS_TERCERIZADORAS_TIPO").split(";");
+ 		String[] tiposStr = TraeListasServiceUtil.getSystemConfig("GESTION_JUDICIAL_TIPOS_DEMANDA").split(";");
 	    List<ClaseBase> tipos =new ArrayList<ClaseBase>();
 	    for(int i=0;i<=tiposStr.length-1;i++){
 		   ClaseBase c =new ClaseBase();

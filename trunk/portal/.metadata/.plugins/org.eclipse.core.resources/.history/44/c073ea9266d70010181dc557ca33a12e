@@ -7,7 +7,19 @@
 		Calendar fechaDesde = CalendarFactoryUtil.getCalendar(); 		
 		fechaDesde.setTime(new Date());
  		Calendar fechaHasta = CalendarFactoryUtil.getCalendar(); 		
- 		fechaHasta.setTime(new Date()); 		
+ 		fechaHasta.setTime(new Date()); 
+ 		
+ 		String[] tiposStr = TraeListasServiceUtil.getSystemConfig("GESTION_JUDICIAL_TIPOS_DEMANDA").split(";");
+	    List<ClaseBase> tipos =new ArrayList<ClaseBase>();
+	    for(int i=0;i<=tiposStr.length-1;i++){
+		   ClaseBase c =new ClaseBase();
+		   String codigo = tiposStr[i].split("=")[0];
+		   String descripcion = tiposStr[i].split("=")[1];
+		   c.setId(codigo);
+		   c.setDescripcion(descripcion);
+		   tipos.add(c);
+	    }
+ 				
 %>	
 		<fieldset class="block-labels">
 				<legend><liferay-ui:message key="reporte-debito-tercerizadoras" /></legend>
@@ -38,7 +50,19 @@
 							<option value="MIM">IMESA</option>
 							<option value="MON">MONOTRIBUTO</option>			
 						</select>
-						</td>		
+						</td>	
+						
+						<td>Proceso:</td>
+			            <td>
+			            <select name="<portlet:namespace />tipoProceso"  id="<portlet:namespace />tipoProceso" >
+						  <%for(ClaseBase c:tipos) {%>
+						     <option value="<%= c.getId() %>">
+							<%=c.getDescripcion() %>
+						</option>
+						<% } %>
+				        </select>
+			           </td>
+							
 						<td>
 							<label><liferay-ui:message key="grabar-debitos-tercerizadoras"/>:</label>  &nbsp;&nbsp;&nbsp;&nbsp;
 							<input type="checkbox" name="<portlet:namespace />grabarDebitos" id="<portlet:namespace />grabarDebitos" value="false"/>
@@ -65,6 +89,23 @@
 					<tr>
 						<td colspan="3">
 							<div id="<portlet:namespace />archivos_debitos">
+								<jsp:include
+									page='/html/portlet/liquidaciones/reportes/archivos_debitos_terciarizadoras.jsp' />
+							</div>
+						</td>
+					</tr>
+				</table>
+				
+				<table>
+					<tr>
+						<td><label>Detalle:</label></td>
+					</tr>
+					<tr>
+						<td colspan="3">&nbsp;</td>
+					</tr>
+					<tr>
+						<td colspan="3">
+							<div id="<portlet:namespace />listado_debitos">
 								<jsp:include
 									page='/html/portlet/liquidaciones/reportes/archivos_debitos_terciarizadoras.jsp' />
 							</div>
@@ -108,9 +149,10 @@ function <portlet:namespace />buscarMovimientos(){
 	var desde_anio=jQuery("#<portlet:namespace/>fechaDesdeAnio").val();
 	//var grabar_debitos=jQuery("#<portlet:namespace/>grabarDebitos").val();
 	var grabar_debitos = document.getElementById("<portlet:namespace />grabarDebitos").checked ? 'true' : 'false';
-	var tipo_debitos_tercerizadoras = jQuery("#<portlet:namespace/>tipo_debitos_tercerizadoras").val();	
+	var tipo_debitos_tercerizadoras = jQuery("#<portlet:namespace/>tipo_debitos_tercerizadoras").val();
+	var tipo_proceso = jQuery("#<portlet:namespace/>tipo_proceso").val();	
 
-
+jQuery('#<portlet:namespace />buscando').show();
 	
 
 
@@ -127,7 +169,19 @@ function <portlet:namespace />buscarMovimientos(){
 	} 
 	
 	
-	 
+	var busquedaNom = {"periodo":periodo,"inte":inte,"fechaDesdeDia":"01","fechaDesdeMes":desde_mes,
+				       "fechaDesdeAnio":desde_anio,"tipo_debito":tipo_debitos_tercerizadoras,"tipo_proceso":tipo_proceso,
+	 			       "cmd":"search"};
+alert(url);
+	var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/debitos_tercerizadoras" /></portlet:renderURL>';
+	
+	jQuery('#<portlet:namespace />listado_debitos').load(url,busquedaNom, function(){
+				jQuery('#<portlet:namespace />buscando').hide();											      
+		});	
+	
+	
+	
+	/* 
 	var url = '/xlsservlet/?reporte=REPORTE_DEBITO_TERCERIZADORAS' 
 		+ '&fechaDesdeDia=01'
 		+ '&fechaDesdeMes=' +desde_mes
@@ -142,7 +196,7 @@ function <portlet:namespace />buscarMovimientos(){
 	if (grabar_debitos == 'true'){
 	  	jQuery('#<portlet:namespace />grabarDebitos').attr('checked', true);
     }	
-    
+    */
 	
 }	
 
