@@ -110,3 +110,8 @@ deploy/
 *.local.properties
 *.env
 *.env.*
+
+
+# Carpeta de archivos
+/svn/
+.svn/
