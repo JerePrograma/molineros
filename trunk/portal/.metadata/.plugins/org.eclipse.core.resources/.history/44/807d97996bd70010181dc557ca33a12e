@@ -136,7 +136,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
 	    		session.removeAttribute(WebKeysAutorizaciones.BUSQUEDA_PREAUTORIZACIONES_RESULT);
 	    			
 	    		
-	    		//List<PreAutorizacion> lista = PreAutorizacionServiceUtil.getListaPreAutorizacion(filtro);
+	    		List<PreAutorizacion> lista = PreAutorizacionServiceUtil.getListaPreAutorizacion(filtro);
 	    		
 	    		session.setAttribute(WebKeysAutorizaciones.BUSQUEDA_PREAUTORIZACIONES_RESULT,lista);
 	    		
