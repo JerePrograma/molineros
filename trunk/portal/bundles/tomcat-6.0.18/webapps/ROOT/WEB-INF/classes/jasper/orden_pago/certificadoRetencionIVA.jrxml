@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="certificadoAfiliacion" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="id_op_p" class="java.lang.String"/>
+	<parameter name="entidad_p" class="java.lang.String"/>
+	<parameter name="tipo_p" class="java.lang.String"/>
+	<parameter name="jurisdiccion_p" class="java.lang.Integer"/>
+	<queryString>
+		<![CDATA[select  id_cert,
+	fecha,
+        entidad,
+        cuit_entidad,
+	domicilio_entidad,
+        acreedor,
+	cuit_acreedor,
+	domicilio_acreedor,
+	impuesto,
+	regimen,
+	id_op,
+	monto_total_compro,
+	monto_retencion,
+	impos_retencion
+from trae_comprobante_retencion_otras(cast($P{id_op_p} as integer),cast($P{entidad_p} as integer),cast($P{tipo_p} as varchar),cast($P{jurisdiccion_p} as integer))]]>
+	</queryString>
+	<field name="id_cert" class="java.lang.String"/>
+	<field name="fecha" class="java.lang.String"/>
+	<field name="entidad" class="java.lang.String"/>
+	<field name="cuit_entidad" class="java.lang.String"/>
+	<field name="domicilio_entidad" class="java.lang.String"/>
+	<field name="acreedor" class="java.lang.String"/>
+	<field name="cuit_acreedor" class="java.lang.String"/>
+	<field name="domicilio_acreedor" class="java.lang.String"/>
+	<field name="impuesto" class="java.lang.String"/>
+	<field name="regimen" class="java.lang.String"/>
+	<field name="id_op" class="java.lang.Integer"/>
+	<field name="monto_total_compro" class="java.lang.String"/>
+	<field name="monto_retencion" class="java.lang.String"/>
+	<field name="impos_retencion" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="76" splitType="Stretch">
+			<staticText>
+				<reportElement x="298" y="12" width="248" height="44"/>
+				<textElement textAlignment="Center">
+					<font fontName="SansSerif" size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[SI.CO.RE. - Sistema de Control de Retenciones]]></text>
+			</staticText>
+			<image>
+				<reportElement x="2" y="7" width="155" height="47"/>
+				<imageExpression class="java.lang.String"><![CDATA["/home/usuario/apache-tomcat-8.5.20/webapps/ROOT/WEB-INF/classes/jasper/orden_pago/AFIP.jpg"]]></imageExpression>
+			</image>
+		</band>
+	</title>
+	<detail>
+		<band height="700" splitType="Stretch">
+			<staticText>
+				<reportElement x="354" y="37" width="100" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Fecha	:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="36" y="93" width="208" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Apellido y Nombre o Denominación:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="36" y="149" width="113" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Domicilio: ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="36" y="121" width="78" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[C.U.I.T. N°:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="463" y="18" width="82" height="20"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{id_cert}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="463" y="39" width="81" height="20"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{fecha}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement stretchType="RelativeToBandHeight" x="286" y="93" width="260" height="35"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{entidad}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="286" y="148" width="260" height="36"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{domicilio_entidad}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="286" y="121" width="261" height="20"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{cuit_entidad}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="19" y="63" width="402" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" size="12" isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[A. - Datos del Agente de Retención]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="19" y="186" width="402" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" size="12" isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[B. - Datos del Sujeto Retenido]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="36" y="245" width="78" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[C.U.I.T. N°:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="286" y="245" width="261" height="20"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{cuit_acreedor}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement stretchType="RelativeToBandHeight" x="286" y="217" width="261" height="29"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{acreedor}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="36" y="273" width="113" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Domicilio: ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="36" y="217" width="208" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Apellido y Nombre o Denominación:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="286" y="272" width="261" height="36"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{domicilio_acreedor}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement stretchType="RelativeToTallestObject" x="287" y="367" width="260" height="28"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{regimen}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="37" y="339" width="208" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Impuesto:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="20" y="308" width="402" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" size="12" isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[C. - Datos de la Retención Practicada]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="287" y="395" width="260" height="20"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{id_op}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement stretchType="RelativeToBandHeight" x="287" y="339" width="260" height="20"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{impuesto}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="37" y="395" width="228" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Comprobante que origina la Retención:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="37" y="367" width="78" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Régimen:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="287" y="425" width="260" height="20"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{monto_total_compro}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="37" y="425" width="250" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Monto del Comp. que origina la Retención:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="37" y="454" width="178" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Monto de la Retención:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="287" y="454" width="260" height="20"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{monto_retencion}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="287" y="482" width="260" height="20"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{impos_retencion}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="37" y="482" width="178" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Imposibilidad de Retención:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="37" y="568" width="178" height="14"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Firma del Agente de Retención]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="37" y="583" width="66" height="14"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Aclaración:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="37" y="596" width="46" height="14"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Cargo: ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="22" y="659" width="511" height="38"/>
+				<box topPadding="1" leftPadding="1" bottomPadding="1" rightPadding="1">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Declaro que los datos consignados en este Formulario son correctos y completos y que he confeccionado la presente utilizando la aplicación (software) entregada y aprobada por la AFIP sin omitir ni falsear dato alguno que deba contener, siendio fiel expresión de la verdad.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="354" y="18" width="111" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Certificado N°	:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="109" y="582" width="178" height="14">
+					<printWhenExpression><![CDATA[$P{entidad_p}.equals("1")]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Alejandro Abi Zeid]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="109" y="596" width="77" height="14">
+					<printWhenExpression><![CDATA[$P{entidad_p}.equals("1")]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Apoderado]]></text>
+			</staticText>
+			<image>
+				<reportElement x="37" y="501" width="151" height="66">
+					<printWhenExpression><![CDATA[!$P{entidad_p}.equals("2")]]></printWhenExpression>
+				</reportElement>
+				<imageExpression class="java.lang.String"><![CDATA["/home/usuario/apache-tomcat-8.5.20/webapps/ROOT/WEB-INF/classes/jasper/orden_pago/FirmaAbiZeid.jpg"]]></imageExpression>
+			</image>
+		</band>
+	</detail>
+</jasperReport>

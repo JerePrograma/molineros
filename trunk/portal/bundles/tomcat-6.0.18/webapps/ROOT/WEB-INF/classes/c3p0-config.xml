@@ -1,0 +1,137 @@
+<c3p0-config>	
+	<named-config name="portal-ospim"> 
+		<property name="driverClass">org.postgresql.Driver</property>
+		<property name="jdbcUrl">jdbc:postgresql://@IP@:5432/@BASE@</property>
+		<property name="user">postgres</property>
+		<property name="password">@PASS@</property>
+		<property name="acquireIncrement">1</property> 
+		<property name="initialPoolSize">5</property> 
+		<property name="minPoolSize">5</property> 
+		<property name="maxPoolSize">20</property> 
+		<!-- fbrachi adopts a different approach to configuring statement caching --> 
+		<property name="maxStatements">0</property> 
+		<property name="maxStatementsPerConnection">30</property>
+		<property name="unreturnedConnectionTimeout">200</property> <!-- seconds -->
+		<property name="debugUnreturnedConnectionStackTraces">true</property> 
+	</named-config>
+	<named-config name="portal-lportal"> 
+		<property name="driverClass">org.postgresql.Driver</property>
+		<property name="jdbcUrl">jdbc:postgresql://@IP@:5432/lportal</property>
+		<property name="user">postgres</property>
+		<property name="password">@PASS@</property>
+		<property name="acquireIncrement">1</property> 
+		<property name="initialPoolSize">2</property> 
+		<property name="minPoolSize">2</property> 
+		<property name="maxPoolSize">10</property> 
+		<!-- fbrachi adopts a different approach to configuring statement caching --> 
+		<property name="maxStatements">0</property> 
+		<property name="maxStatementsPerConnection">5</property>
+		<property name="unreturnedConnectionTimeout">200</property> <!-- seconds -->
+		<property name="debugUnreturnedConnectionStackTraces">true</property> 
+	</named-config>
+	<named-config name="portal-ospim-reportes"> 
+		<property name="driverClass">org.postgresql.Driver</property>
+		<property name="jdbcUrl">jdbc:postgresql://@IP@:5432/@BASE@</property>
+		<property name="user">postgres</property>
+		<property name="password">@PASS@</property>
+		<property name="acquireIncrement">1</property> 
+		<property name="initialPoolSize">5</property> 
+		<property name="minPoolSize">5</property> 
+		<property name="maxPoolSize">20</property> 
+		<!-- fbrachi adopts a different approach to configuring statement caching --> 
+		<property name="maxStatements">0</property> 
+		<property name="maxStatementsPerConnection">30</property>
+		<property name="unreturnedConnectionTimeout">1200</property> <!-- seconds -->
+		<property name="debugUnreturnedConnectionStackTraces">true</property> 
+	</named-config>
+	<named-config name="portal-cgt"> 
+		<property name="driverClass">org.postgresql.Driver</property>
+		<property name="jdbcUrl">jdbc:postgresql://@IP@:5432/cgt</property>
+		<property name="user">postgres</property>
+		<property name="password">@PASS@</property>
+		<property name="acquireIncrement">1</property> 
+		<property name="initialPoolSize">5</property> 
+		<property name="minPoolSize">5</property> 
+		<property name="maxPoolSize">20</property> 
+		<!-- fbrachi adopts a different approach to configuring statement caching --> 
+		<property name="maxStatements">0</property> 
+		<property name="maxStatementsPerConnection">30</property>
+		<property name="unreturnedConnectionTimeout">200</property> <!-- seconds -->
+		<property name="debugUnreturnedConnectionStackTraces">true</property> 
+	</named-config>
+	<named-config name="portal-mailing"> 
+		<property name="driverClass">org.postgresql.Driver</property>
+		<property name="jdbcUrl">jdbc:postgresql://@IP@:5432/mailing</property>
+		<property name="user">postgres</property>
+		<property name="password">@PASS@</property>
+		<property name="acquireIncrement">1</property> 
+		<property name="initialPoolSize">5</property> 
+		<property name="minPoolSize">5</property> 
+		<property name="maxPoolSize">20</property> 
+		<!-- fbrachi adopts a different approach to configuring statement caching --> 
+		<property name="maxStatements">0</property> 
+		<property name="maxStatementsPerConnection">30</property>
+		<property name="unreturnedConnectionTimeout">200</property> <!-- seconds -->
+		<property name="debugUnreturnedConnectionStackTraces">true</property> 
+	</named-config>
+	
+	
+	<named-config name="portalempleadoresV01"> 
+		<property name="driverClass">org.postgresql.Driver</property>
+		<!-- DESARROLLO 
+		<property name="jdbcUrl">jdbc:postgresql://12.5.1.10:5432/portalempresasV2</property>
+		<property name="user">postgres</property>
+		<property name="password">postgres</property>
+		-->
+		
+		<property name="jdbcUrl">jdbc:postgresql://12.20.1.16:5432/portalempresasV2</property>
+		<property name="user">tecnicos</property>
+		<property name="password">Valkyria01</property> 
+		<property name="acquireIncrement">1</property> 
+		<property name="initialPoolSize">5</property> 
+		<property name="minPoolSize">5</property> 
+		<property name="maxPoolSize">20</property> 
+		<property name="maxStatements">0</property> 
+		<property name="maxStatementsPerConnection">30</property>
+		<property name="unreturnedConnectionTimeout">1200</property> <!-- seconds -->
+		<property name="debugUnreturnedConnectionStackTraces">true</property> 
+	</named-config>
+	
+  	
+	<named-config name="portalempleadores"> 
+		<property name="driverClass">org.postgresql.Driver</property>
+		<!--  <property name="jdbcUrl">jdbc:postgresql://12.1.1.5:5432/portalempresas</property>-->
+		<!--  <property name="user">postgres</property>-->
+		<!--  <property name="password">barracud5</property>-->
+		<property name="jdbcUrl">jdbc:postgresql://12.20.1.16:5432/portalempresas</property>
+		<property name="user">tecnicos</property>
+		<property name="password">Valkyria01</property>
+		<property name="acquireIncrement">1</property> 
+		<property name="initialPoolSize">5</property> 
+		<property name="minPoolSize">5</property> 
+		<property name="maxPoolSize">20</property> 
+		<property name="maxStatements">0</property> 
+		<property name="maxStatementsPerConnection">30</property>
+		<property name="unreturnedConnectionTimeout">700</property> 
+		<property name="debugUnreturnedConnectionStackTraces">true</property> 
+	</named-config>
+	
+	
+	<named-config name="portal-postgres"> 
+		<property name="driverClass">org.postgresql.Driver</property>
+	    <property name="jdbcUrl">jdbc:postgresql://@IP@:5432/postgres</property>
+	    <property name="user">postgres</property> 
+        <property name="password">@PASS@</property>
+<!--  		<property name="jdbcUrl">jdbc:postgresql://12.1.1.5:5432/postgres</property> -->
+<!--		<property name="password">barracud5</property> -->
+		<property name="acquireIncrement">1</property> 
+		<property name="initialPoolSize">5</property> 
+		<property name="minPoolSize">5</property> 
+		<property name="maxPoolSize">20</property> 
+		<property name="maxStatements">0</property> 
+		<property name="maxStatementsPerConnection">30</property>
+		<property name="unreturnedConnectionTimeout">200</property> <!-- seconds -->
+		<property name="debugUnreturnedConnectionStackTraces">true</property> 
+	</named-config>
+	
+</c3p0-config>

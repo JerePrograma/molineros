@@ -1,0 +1,112 @@
+<%
+/**
+ * Copyright (c) 2000-2009 Liferay, Inc. All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+%>
+
+<fb:title><%= portletTitle %></fb:title>
+
+<fb:header><%= portletTitle %></fb:header>
+
+<link href="<%= PortalUtil.getStaticResourceURL(request, themeDisplay.getPortalURL() + "/html/portal/css.jsp", "themeId=classic&colorSchemeId=01") %>" rel="stylesheet" type="text/css" />
+<link href="<%= PortalUtil.getStaticResourceURL(request, themeDisplay.getPortalURL() + "/html/themes/classic/css/portlet.css") %>" rel="stylesheet" type="text/css" />
+
+<%
+Set<String> headerPortalCssPaths = new LinkedHashSet<String>();
+
+List<String> headerPortalCssList = portlet.getHeaderPortalCss();
+
+for (String headerPortalCss : headerPortalCssList) {
+	String headerPortalCssPath = request.getContextPath() + headerPortalCss;
+
+	if (!headerPortalCssPaths.contains(headerPortalCssPath)) {
+		headerPortalCssPaths.add(headerPortalCssPath);
+
+		headerPortalCssPath = PortalUtil.getStaticResourceURL(request, headerPortalCssPath, portlet.getTimestamp());
+%>
+
+		<link href="<%= headerPortalCssPath %>" rel="stylesheet" type="text/css" />
+
+<%
+	}
+}
+
+Set<String> headerPortletCssPaths = new LinkedHashSet<String>();
+
+List<String> headerPortletCssList = portlet.getHeaderPortletCss();
+
+for (String headerPortletCss : headerPortletCssList) {
+	String headerPortletCssPath = portlet.getContextPath() + headerPortletCss;
+
+	if (!headerPortletCssPaths.contains(headerPortletCssPath)) {
+		headerPortletCssPaths.add(headerPortletCssPath);
+
+		headerPortletCssPath = PortalUtil.getStaticResourceURL(request, headerPortletCssPath, portlet.getTimestamp());
+%>
+
+		<link href="<%= headerPortletCssPath %>" rel="stylesheet" type="text/css" />
+
+<%
+	}
+}
+%>
+
+<%@ include file="/html/common/themes/portlet_content_wrapper.jspf" %>
+
+<%
+Set<String> footerPortalCssPaths = new LinkedHashSet<String>();
+
+List<String> footerPortalCssList = portlet.getFooterPortalCss();
+
+for (String footerPortalCss : footerPortalCssList) {
+	String footerPortalCssPath = request.getContextPath() + footerPortalCss;
+
+	if (!footerPortalCssPaths.contains(footerPortalCssPath)) {
+		footerPortalCssPaths.add(footerPortalCssPath);
+
+		footerPortalCssPath = PortalUtil.getStaticResourceURL(request, footerPortalCssPath, portlet.getTimestamp());
+%>
+
+		<link href="<%= footerPortalCssPath %>" rel="stylesheet" type="text/css" />
+
+<%
+	}
+}
+
+Set<String> footerPortletCssPaths = new LinkedHashSet<String>();
+
+List<String> footerPortletCssList = portlet.getFooterPortletCss();
+
+for (String footerPortletCss : footerPortletCssList) {
+	String footerPortletCssPath = portlet.getContextPath() + footerPortletCss;
+
+	if (!footerPortletCssPaths.contains(footerPortletCssPath)) {
+		footerPortletCssPaths.add(footerPortletCssPath);
+
+		footerPortletCssPath = PortalUtil.getStaticResourceURL(request, footerPortletCssPath, portlet.getTimestamp());
+%>
+
+		<link href="<%= footerPortletCssPath %>" rel="stylesheet" type="text/css" />
+
+<%
+	}
+}
+%>

@@ -50,13 +50,6 @@ target/
 .gradle/
 build/
 
-# Ant / genéricos
-bin/
-classes/
-tmp/
-temp/
-*.tmp
-
 ############################
 # LOGS / RUNTIME
 ############################
@@ -76,18 +69,6 @@ logs/
 ############################
 # LIFERAY / SERVIDOR DE APLICACIONES
 ############################
-
-# Directorios de runtime típicos de Tomcat
-tomcat-*/logs/
-tomcat-*/temp/
-tomcat-*/work/
-tomcat-*/webapps/ROOT/work/
-
-# Si el bundle de Liferay está dentro del repo,
-# ignorar solo runtime, no código fuente.
-liferay-portal-*/logs/
-liferay-portal-*/temp/
-liferay-portal-*/work/
 
 # Carpeta de deploy automático de Liferay
 deploy/
