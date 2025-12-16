@@ -6592,8 +6592,16 @@
 			<forward name="portlet.uoma.view" path="portlet.uoma.view" />
 </action>
 <!-- FIN REIMPUTACION PAGOS EMPLEADORES -->
-     
- </action-mappings>
+
+
+		<action path="/liquidaciones/debitos_tercerizadoras" type="ar.com.ospim.liquidaciones.action.DebitosaTercerizadorasAction">
+			<forward
+					name="portlet.liquidaciones.debitos_tercerizadoras_search_result"
+					path="/html/portlet/liquidaciones/reportes/reporte_debitos_terciarizadoras_search_result.jsp"
+			/>
+		</action>
+
+	</action-mappings>
   
 </struts-config>
 
