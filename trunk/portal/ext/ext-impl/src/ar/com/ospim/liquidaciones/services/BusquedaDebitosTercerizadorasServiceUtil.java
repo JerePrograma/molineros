@@ -16,12 +16,12 @@ import ar.com.ospim.liquidaciones.reportes.bean.DebitosaTotal;
 /**
  * <a href="BusquedaDebitosTercerizadorasServiceUtil.java.html"><b><i>View
  * Source</i></b></a>
- * 
+ *
  * <p>
  * </p>
- * 
+ *
  * @author Pablo Conde
- * 
+ *
  */
 public class BusquedaDebitosTercerizadorasServiceUtil {
 
@@ -39,61 +39,61 @@ public class BusquedaDebitosTercerizadorasServiceUtil {
 			throws Exception {
 		return getInstance().getBusquedaDebitosaLiquidacionesPendientes(fechaDesde,fechaHasta, debitosaTotal, idTercerizadoras);
 	}
-	
-	
+
+
 
 	public static List<?> getBusquedaDebitosaGrabados(String tipo, Date fechaHasta ,  String idTercerizadoras)
 			throws Exception {
 		return getInstance().getBusquedaDebitosaGrabados(tipo,fechaHasta, idTercerizadoras);
 	}
-	
-	
+
+
 	public static List<DebitosHospitales> getBusquedaDebitosaHospitales(
 			 Date fechaDesde, Date fechaHasta, DebitosaTotal debitosaTotal ,  String idTercerizadoras) {
-		return getInstance().getBusquedaDebitosHospitales( fechaDesde, fechaHasta, debitosaTotal, idTercerizadoras);		
+		return getInstance().getBusquedaDebitosHospitales( fechaDesde, fechaHasta, debitosaTotal, idTercerizadoras);
 	}
-	
-	
-	
+
+
+
 	public static List<DebitosaReintegros> getBusquedaDebitosReintegros(Date fechaDesde, Date fechaHasta, DebitosaTotal debitosaTotal , String idTercerizadoras) {
 		return  getInstance().getBusquedaDebitosReintegros(fechaDesde,fechaHasta,  debitosaTotal, idTercerizadoras);
 	}
-	
-	
+
+
 	public static List<DebitosaPrestadores> getBusquedaDebitosPrestadores(Date fechaDesde, Date fechaHasta, DebitosaTotal debitosaTotal , String idTercerizadoras) {
-		return  getInstance().getBusquedaDebitosPrestadores(fechaDesde,fechaHasta, debitosaTotal, idTercerizadoras);	
+		return  getInstance().getBusquedaDebitosPrestadores(fechaDesde,fechaHasta, debitosaTotal, idTercerizadoras);
 	}
-	
+
 	public static DebitosaTotal getBuscarTotalesDebitos(Date fecha, String idTercerizadora) {
-		return  getInstance().getBuscarTotalesDebitos(fecha, idTercerizadora);	
+		return  getInstance().getBuscarTotalesDebitos(fecha, idTercerizadora);
 	}
-	
+
 	public static int grabarTotalesDebitos(DebitosaTotal deb, String user , Date fecha , String idTercerizadoras ) throws SystemException {
-		return  getInstance().grabarTotalesDebitos(deb, user, fecha, idTercerizadoras);	
+		return  getInstance().grabarTotalesDebitos(deb, user, fecha, idTercerizadoras);
 	}
-	
+
 	public static int grabarLiquidacionesPendientesDebitos(DebitosLiquidacionesPendientes deb, String user , Date fecha , String idTercerizadoras ) throws SystemException {
-		return  getInstance().grabarLiquidacionesPendientesDebitos(deb, user, fecha, idTercerizadoras);	
+		return  getInstance().grabarLiquidacionesPendientesDebitos(deb, user, fecha, idTercerizadoras);
 	}
-	
+
 	public static int grabarHospitalesDebitos(DebitosHospitales deb, String user , Date fecha , String idTercerizadoras ) throws SystemException {
-		return  getInstance().grabarHospitalesDebitos(deb, user, fecha, idTercerizadoras);	
+		return  getInstance().grabarHospitalesDebitos(deb, user, fecha, idTercerizadoras);
 	}
-	
+
 	public static int grabarReintegrosDebitos(DebitosaReintegros deb, String user , Date fecha , String idTercerizadoras ) throws SystemException {
-		return  getInstance().grabarReintegrosDebitos(deb, user, fecha, idTercerizadoras);	
+		return  getInstance().grabarReintegrosDebitos(deb, user, fecha, idTercerizadoras);
 	}
-	
+
 	public static int grabarPrestadoresDebitos(DebitosaPrestadores deb, String user , Date fecha , String idTercerizadoras ) throws SystemException {
-		return  getInstance().grabarPrestadoresDebitos(deb, user, fecha, idTercerizadoras);	
+		return  getInstance().grabarPrestadoresDebitos(deb, user, fecha, idTercerizadoras);
 	}
-	
+
 	public static boolean existeReporteDebitoTercerizadoras(Date fechaDesde, Date fechaHasta,String idTercerizadora ) throws SystemException {
-		return  getInstance().existeReporteDebitoTercerizadoras(fechaDesde, fechaHasta, idTercerizadora);	
+		return  getInstance().existeReporteDebitoTercerizadoras(fechaDesde, fechaHasta, idTercerizadora);
 	}
-	
+
 	/**
-	 * Exite reporte periodo grabado 
+	 * Exite reporte periodo grabado
 	 * @param fechaDesde
 	 * @param fechaHasta
 	 * @param idTercerizadora
@@ -101,9 +101,9 @@ public class BusquedaDebitosTercerizadorasServiceUtil {
 	 * @throws SystemException
 	 */
 	public static boolean existeReporteGrabadoDebitoTercerizadoras(Date fechaHasta,String idTercerizadora ) throws SystemException {
-		return  getInstance().existeReporteGrabadoDebitoTercerizadoras(fechaHasta, idTercerizadora);	
+		return  getInstance().existeReporteGrabadoDebitoTercerizadoras(fechaHasta, idTercerizadora);
 	}
-	
+
 	/**
 	 * Nota de debito
 	 * @param deb
@@ -114,14 +114,37 @@ public class BusquedaDebitosTercerizadorasServiceUtil {
 	 * @throws SystemException
 	 */
 	public static int grabarNDB(BigDecimal totalDebitoPrestadoras , User user , Date fecha, Date periodo , String idTercerizadoras ) throws SystemException {
-		return  getInstance().grabarTotalesDebitos(totalDebitoPrestadoras, user, fecha, periodo,idTercerizadoras);	
+		return  getInstance().grabarTotalesDebitos(totalDebitoPrestadoras, user, fecha, periodo,idTercerizadoras);
 	}
-	
+
 
 	public static List<DebitosaTotal> getArchivosDebitos ()
 			throws SystemException {
 		return getInstance().getArchivosDebitos();
 	}
-	
-	
+
+	public static int grabarBorradorLiquidacionesPendientesDebitos(
+			DebitosLiquidacionesPendientes deb, String user, Date periodoFechaDesde) throws SystemException {
+		return getInstance().grabarBorradorLiquidacionesPendientesDebitos(deb, user, periodoFechaDesde);
+	}
+
+	public static int grabarBorradorHospitalesDebitos(
+			DebitosHospitales deb, String user, Date periodoFechaDesde) throws SystemException {
+		return getInstance().grabarBorradorHospitalesDebitos(deb, user, periodoFechaDesde);
+	}
+
+	public static int grabarBorradorReintegrosDebitos(
+			DebitosaReintegros deb, String user, Date periodoFechaDesde) throws SystemException {
+		return getInstance().grabarBorradorReintegrosDebitos(deb, user, periodoFechaDesde);
+	}
+
+	public static int grabarBorradorPrestadoresDebitos(
+			DebitosaPrestadores deb, String user, Date periodoFechaDesde) throws SystemException {
+		return getInstance().grabarBorradorPrestadoresDebitos(deb, user, periodoFechaDesde);
+	}
+
+	public static int borrarBorradorDebitosPorPeriodo(Date periodoFechaDesde) throws SystemException {
+		return getInstance().borrarBorradorDebitosPorPeriodo(periodoFechaDesde);
+	}
+
 }
