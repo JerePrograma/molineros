@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="ext-lib">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/ext-lib/jdom.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/barbecue-1.5-beta1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

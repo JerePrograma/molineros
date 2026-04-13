@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report name" pageWidth="595" pageHeight="842" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="104"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="entidad" class="java.lang.String"/>
+	<parameter name="id_caja_chica" class="java.lang.String"/>
+	<parameter name="id_seccional" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select td_id_tratamiento, td_importe_total, a_apellido  || ', ' || a_nombre as afiliado_string,  TO_CHAR(localtimestamp, 'DD/MM/YYYY') as fecha_actual, prestador_string, n_descripcion, cast (a_docu_numero as character varying) as a_id_ospim, s_descripcion, cast(TO_CHAR(td_periodo_desde,'YYYY') as character varying) as anio_actual, cast (td_cantidad as numeric) as td_cantidad, TO_CHAR(td_periodo_desde, 'DD/MM/YYYY') as td_periodo_desde, TO_CHAR(td_periodo_hasta, 'DD/MM/YYYY') as td_periodo_hasta, '(' || td_periodicidad || ')' as td_periodicidad,td_alta_fecha,
+coalesce(p.descripcion,'') as plan_molineros,coalesce(po.descripcion_prevencion,'') as plan_prevencion,n_codigo,td_cuit,td_razon_soc,td_observaciones,td_id_tratamiento as td_nro_autorizacion
+from buscar_tratamiento_discapacidad_by_id(cast ($P{id_ini} as integer)) ap
+left join afiliado af on ap.a_cuil_titular=af.cuil_titular and ap.a_inte=af.inte
+left join afi_plan afp on afp.cuil_titular = ap.a_cuil_titular and 0=afp.inte and
+          afp.id in(select max(id) from afi_plan afp1 where afp.cuil_titular=afp1.cuil_titular and 0=afp1.inte)
+left join plan p on afp.id_plan=p.id_plan
+left join plan_omint po on afp.id_plan=po.id_plan
+union all
+select td_id as td_id_tratamiento, td_importe_total, a_apellido  || ', ' || a_nombre as afiliado_string,  TO_CHAR(localtimestamp, 'DD/MM/YYYY') as fecha_actual, prestador_string, n_descripcion, cast (a_docu_numero as character varying) as a_id_ospim, s_descripcion, cast(TO_CHAR(td_periodo_desde,'YYYY') as character varying) as anio_actual, cast (td_cantidad as numeric) as td_cantidad, TO_CHAR(td_periodo_desde, 'DD/MM/YYYY') as td_periodo_desde, TO_CHAR(td_periodo_hasta, 'DD/MM/YYYY') as td_periodo_hasta, '(' || td_periodicidad || ')' as td_periodicidad,td_alta_fecha,
+coalesce(p.descripcion,'') as plan_molineros,coalesce(po.descripcion_prevencion,'') as plan_prevencion,n_codigo,td_cuit,td_razon_soc,td_observaciones,td_nro_autorizacion
+from autorizaciones.buscar_autorizacion_prestacional_by_id(cast ($P{id_ini} as integer)) ap
+left join afiliado af on ap.a_cuil_titular=af.cuil_titular and ap.a_inte=af.inte
+left join afi_plan afp on afp.cuil_titular = ap.a_cuil_titular and 0=afp.inte and
+          afp.id in(select max(id) from afi_plan afp1 where afp.cuil_titular=afp1.cuil_titular and 0=afp1.inte)
+left join plan p on afp.id_plan=p.id_plan
+left join plan_omint po on afp.id_plan=po.id_plan]]>
+	</queryString>
+	<field name="td_id_tratamiento" class="java.lang.Integer"/>
+	<field name="td_importe_total" class="java.math.BigDecimal"/>
+	<field name="afiliado_string" class="java.lang.String"/>
+	<field name="fecha_actual" class="java.lang.String"/>
+	<field name="prestador_string" class="java.lang.String"/>
+	<field name="n_descripcion" class="java.lang.String"/>
+	<field name="a_id_ospim" class="java.lang.String"/>
+	<field name="s_descripcion" class="java.lang.String"/>
+	<field name="anio_actual" class="java.lang.String"/>
+	<field name="td_cantidad" class="java.math.BigDecimal"/>
+	<field name="td_periodo_desde" class="java.lang.String"/>
+	<field name="td_periodo_hasta" class="java.lang.String"/>
+	<field name="td_periodicidad" class="java.lang.String"/>
+	<field name="td_alta_fecha" class="java.sql.Timestamp"/>
+	<field name="plan_molineros" class="java.lang.String"/>
+	<field name="plan_prevencion" class="java.lang.String"/>
+	<field name="n_codigo" class="java.lang.String"/>
+	<field name="td_cuit" class="java.lang.String"/>
+	<field name="td_razon_soc" class="java.lang.String"/>
+	<field name="td_observaciones" class="java.lang.String"/>
+	<field name="td_nro_autorizacion" class="java.lang.Integer"/>
+	<detail>
+		<band height="842" splitType="Stretch"/>
+	</detail>
+</jasperReport>

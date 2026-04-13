@@ -1,0 +1,23 @@
+<component name="libraryTable">
+  <library name="google">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/org.mortbay.jetty.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/google-http-client-gson-1.21.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/commons-logging-1.1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/google-api-client-1.21.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/google-http-client-jackson2-1.21.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/google-api-client-jackson2-1.21.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/google-api-services-calendar-v3-rev168-1.21.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/google-api-client-extensions-1.4.1-beta.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/com.fasterxml.jackson.core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/jackson-annotations-2.1.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/google-oauth-client-jetty-1.21.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/org.mortbay.jetty.util.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/google-oauth-client-1.21.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/google-oauth-client-java6-1.21.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ext-lib/google/google-http-client-1.21.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

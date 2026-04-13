@@ -1,0 +1,167 @@
+<%
+/**
+ * Copyright (c) 2000-2009 Liferay, Inc. All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+%>
+
+<script type="text/javascript">
+	var maxDimension = <%= PrefsPropsUtil.getInteger(PropsKeys.IG_IMAGE_THUMBNAIL_MAX_DIMENSION) %>;
+
+	function <portlet:namespace />viewImage(id, token, name, width, height) {
+		var page = Liferay.Util.viewport.page();
+
+		var maxWidth = Math.max(page.x - 150, maxDimension);
+		var maxHeight = Math.max(page.y - 150, maxDimension);
+
+		var imgWidth = width;
+		var imgHeight = height;
+
+		if (imgWidth > maxWidth || imgHeight > maxHeight) {
+			if (imgWidth > maxWidth) {
+				var x = maxWidth / imgWidth;
+
+				imgWidth = maxWidth;
+				imgHeight = x * imgHeight;
+			}
+
+			if (imgHeight > maxHeight) {
+				var y = maxHeight / imgHeight;
+
+				imgHeight = maxHeight;
+				imgWidth = y * imgWidth;
+			}
+		}
+
+		var winWidth = imgWidth + 36;
+
+		if (winWidth < maxDimension) {
+			winWidth = maxDimension;
+		}
+
+		var html =
+			"<div style='margin-top: 16px; text-align: center;'><img alt='<liferay-ui:message key="image" />' src='<%= themeDisplay.getPathImage() %>/image_gallery?img_id=" + id + "&t=" + token + "' style='height: " + imgHeight + "px; width" + imgWidth + "px;' /></div>" +
+			"<div style='text-align: center;'>" + name + "</div>";
+
+		var messageId = "<portlet:namespace />popup_" + id;
+		var buttonsId = "<portlet:namespace />buttons_" + id;
+
+		var popup = Liferay.Popup(
+			{
+				width: winWidth,
+				modal: true,
+				noDraggable: true,
+				noTitleBar: true,
+				message: html,
+				messageId: messageId,
+				onClose: function() {
+					var buttons = jQuery("#<portlet:namespace />buttons_" + id);
+
+					jQuery("#<portlet:namespace />buttonsContainer_" + id).append(buttons);
+				}
+			}
+		);
+
+		jQuery(popup).addClass('image-popup');
+
+		var buttons = jQuery("#" + buttonsId);
+
+		jQuery("#" + messageId).append(buttons);
+	}
+</script>
+
+<c:if test="<%= results.size() > 0 %>">
+	<div class="taglib-search-iterator-page-iterator-top">
+		<liferay-ui:search-paginator searchContainer="<%= searchContainer %>" />
+	</div>
+</c:if>
+
+<div>
+
+	<%
+	for (int i = 0; i < results.size(); i++) {
+		IGImage image = (IGImage)results.get(i);
+	%>
+
+		<c:choose>
+			<c:when test="<%= IGImagePermission.contains(permissionChecker, image, ActionKeys.VIEW) %>">
+
+				<%
+				Image largeImage = ImageLocalServiceUtil.getImage(image.getLargeImageId());
+				Image smallImage = ImageLocalServiceUtil.getImage(image.getSmallImageId());
+
+				long smallImageId = 0;
+				int smallImageHeight = 100;
+				int smallImageWidth = 100;
+
+				if (smallImage != null) {
+					smallImageId = smallImage.getImageId();
+					smallImageHeight = smallImage.getHeight();
+					smallImageWidth = smallImage.getWidth();
+				}
+
+				int topMargin = PrefsPropsUtil.getInteger(PropsKeys.IG_IMAGE_THUMBNAIL_MAX_DIMENSION) - smallImageHeight + 20;
+				int sideMargin = (PrefsPropsUtil.getInteger(PropsKeys.IG_IMAGE_THUMBNAIL_MAX_DIMENSION) - smallImageWidth + 20) / 2;
+				%>
+
+				<div style="float: left; margin: <%= topMargin %>px <%= sideMargin %>px 0px <%= sideMargin %>px;">
+					<a href="javascript: ;" onClick="<portlet:namespace />viewImage(<%= largeImage.getImageId() %>, '<%= ImageServletTokenUtil.getToken(largeImage.getImageId()) %>', '<b><%= UnicodeFormatter.toString(image.getName()) %></b><br /><%= UnicodeFormatter.toString(image.getDescription()) %>', <%= largeImage.getWidth() %>, <%= largeImage.getHeight() %>)">
+						<img alt="<liferay-ui:message key="image" />" border="no" src="<%= themeDisplay.getPathImage() %>/image_gallery?img_id=<%= smallImageId %>&t=<%= ImageServletTokenUtil.getToken(smallImageId) %>" style="height: <%= smallImageHeight %>; width: <%= smallImageWidth %>;" />
+					</a>
+
+					<div style="text-align: center;">
+						<%= image.getName() %>
+
+						<c:if test="<%= scores != null %>">
+							<br />
+
+							<%
+							double score = ((Double)scores.get(i)).doubleValue();
+
+							score = MathUtils.round((score * 10) / 2, 1, BigDecimal.ROUND_UP);
+							%>
+
+							<liferay-ui:ratings-score score="<%= score %>" />
+						</c:if>
+					</div>
+
+					<div id="<portlet:namespace />buttonsContainer_<%= largeImage.getImageId() %>" style="display: none;">
+						<div class="buttons-container float-container" id="<portlet:namespace />buttons_<%= largeImage.getImageId() %>">
+							<%@ include file="/html/portlet/image_gallery/image_action.jspf" %>
+						</div>
+					</div>
+				</div>
+			</c:when>
+			<c:otherwise>
+				<div style="float: left; margin: 100px 10px 0px;">
+					<img alt="<liferay-ui:message key="image" />" border="no" src="<%= themeDisplay.getPathThemeImages() %>/application/forbidden_action.png" />
+				</div>
+			</c:otherwise>
+		</c:choose>
+
+	<%
+	}
+	%>
+
+</div>
+
+<div class="taglib-search-iterator-page-iterator-bottom">
+	<liferay-ui:search-paginator searchContainer="<%= searchContainer %>" />
+</div>

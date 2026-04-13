@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="thumbnails">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/ext-web/tmp/layouttpl/thumbnails.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

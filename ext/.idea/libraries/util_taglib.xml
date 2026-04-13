@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="util-taglib">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/ext-web/tmp/WEB-INF/lib/util-taglib.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

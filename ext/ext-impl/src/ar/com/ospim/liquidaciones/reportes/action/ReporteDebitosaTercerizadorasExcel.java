@@ -1,0 +1,1783 @@
+package ar.com.ospim.liquidaciones.reportes.action;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Locale;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.liferay.portal.kernel.util.GetterUtil;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFPrintSetup;
+import org.apache.poi.hssf.usermodel.HSSFRichTextString;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+
+import com.liferay.portal.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.model.User;
+
+import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
+import ar.com.ospim.liquidaciones.ordenespago.reportes.ReporteXLS;
+import ar.com.ospim.liquidaciones.reportes.bean.DebitosHospitales;
+import ar.com.ospim.liquidaciones.reportes.bean.DebitosLiquidacionesPendientes;
+import ar.com.ospim.liquidaciones.reportes.bean.DebitosaPrestadores;
+import ar.com.ospim.liquidaciones.reportes.bean.DebitosaReintegros;
+import ar.com.ospim.liquidaciones.reportes.bean.DebitosaTotal;
+import ar.com.ospim.liquidaciones.services.BusquedaDebitosTercerizadorasServiceUtil;
+import ar.com.ospim.util.DateUtils;
+
+public class ReporteDebitosaTercerizadorasExcel extends ReporteXLS {
+
+	private static final Log _log = LogFactoryUtil.getLog(ReporteDebitosaTercerizadorasExcel.class);
+
+	// =========================================================================
+	// Segmentación (JSP decide qué módulo se genera / persiste)
+	//
+	// Parámetros aceptados (cualquiera):
+	// - "segmento" o "modulo" o "segment" o "seccion"
+	//
+	// Valores (case-insensitive, admite CSV con ',' o ';'):
+	// - ALL (default)
+	// - LIQUIDACIONES_PENDIENTES | LIQ | LP
+	// - HOSPITALES | HOSP | HOS
+	// - REINTEGROS | REIN
+	// - PRESTADORES | PRES
+	// - TOTAL | T
+	// =========================================================================
+	private enum Segmento {
+		LIQUIDACIONES_PENDIENTES,
+		HOSPITALES,
+		REINTEGROS,
+		PRESTADORES,
+		TOTAL
+	}
+
+	private static final EnumSet<Segmento> DETALLE = EnumSet.of(
+			Segmento.LIQUIDACIONES_PENDIENTES,
+			Segmento.HOSPITALES,
+			Segmento.REINTEGROS,
+			Segmento.PRESTADORES
+	);
+
+	@SuppressWarnings("unchecked")
+	public static HSSFWorkbook generaReporte(HttpServletRequest renderRequest, HttpServletResponse res) {
+
+		final long t0 = System.currentTimeMillis();
+		final String rid = "XLS-" + t0 + "-" + Thread.currentThread().getId();
+		final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+
+		// =========================
+		// Params (request) - usar helper suffix-safe para soportar namespace
+		// =========================
+		final String fechaDesdeMesStrReq  = getParamAny(renderRequest, rid, "fechaDesdeMes");
+		final String fechaDesdeAnioStrReq = getParamAny(renderRequest, rid, "fechaDesdeAnio");
+
+		String tercerizadorasReq = getParamAny(renderRequest, rid, "tipo_debitos_tercerizadoras", "tipo_debito");
+		tercerizadorasReq = (tercerizadorasReq != null) ? tercerizadorasReq.trim() : "";
+		String tercNormReq = (tercerizadorasReq != null) ? tercerizadorasReq.trim().toUpperCase() : "";
+
+		// Importante: tu JSP usa "tipoProceso" (además de aliases).
+		String tipoProcesoReq = getParamAny(renderRequest, rid, "tipoProceso", "tipo_proceso", "tipoDebito");
+		tipoProcesoReq = (tipoProcesoReq != null) ? tipoProcesoReq.trim() : "";
+
+		String busquedaModeReq = getParamAny(renderRequest, rid, "busquedaMode");
+		busquedaModeReq = (busquedaModeReq != null && busquedaModeReq.trim().length() > 0) ? busquedaModeReq.trim().toUpperCase() : "NEW";
+		if (!"NEW".equals(busquedaModeReq)) busquedaModeReq = "LEGACY";
+		final boolean preferNew = "NEW".equals(busquedaModeReq);
+
+		final boolean grabarDebitos = ParamUtil.getBoolean(renderRequest, "grabarDebitos");
+		final EnumSet<Segmento> segmentosSolicitados = parseSegmentos(renderRequest);
+
+		// =========================
+		// User (solo para persistencia)
+		// =========================
+		User user = null;
+		try {
+			com.liferay.portal.theme.ThemeDisplay td =
+					(com.liferay.portal.theme.ThemeDisplay) renderRequest.getAttribute(com.liferay.portal.util.WebKeys.THEME_DISPLAY);
+			if (td != null) user = td.getUser();
+		} catch (Exception ignore) {}
+
+		// =========================
+		// Fechas (resolver mes con ayuda de SESION si existe)
+		// =========================
+		Date fechaDesde = null;
+		Date fechaHasta = null;
+		Date fechaEjecucion = null;
+
+		int mesRawReq = GetterUtil.getInteger(fechaDesdeMesStrReq, -1);
+		int anioReq = GetterUtil.getInteger(fechaDesdeAnioStrReq, -1);
+
+// Fallback 1: algunos exports mandan fechaHastaMs/fechaHasta (epoch millis)
+		long fechaHastaMsReq = 0L;
+		try {
+			String msStr = getParamAny(renderRequest, rid, "fechaHastaMs", "fechaHasta");
+			if (msStr != null && msStr.trim().length() > 0) {
+				fechaHastaMsReq = Long.parseLong(msStr.trim());
+			}
+		} catch (Exception ignore) {}
+
+		if ((mesRawReq < 0 || anioReq < 0) && fechaHastaMsReq > 0L) {
+			try {
+				Calendar c = DateUtils.getCalendarGMTMenos3();
+				c.setTime(new Date(fechaHastaMsReq));
+				anioReq = c.get(Calendar.YEAR);
+				mesRawReq = c.get(Calendar.MONTH); // 0-based
+				_log.info("[XLS][" + rid + "][PERIODO] parsed fechaHastaMs=" + fechaHastaMsReq
+						+ " -> anioReq=" + anioReq + " mesRawReq(0based)=" + mesRawReq);
+			} catch (Exception ignore) {}
+		}
+
+// Fallback 2: algunos exports mandan "periodo"/"periodoSel"/"periodoSeleccionado" = "YYYY-MM"
+		String periodoReq = getParamAny(renderRequest, rid, "periodo", "periodoSel", "periodoSeleccionado");
+		if ((mesRawReq < 0 || anioReq < 0) && periodoReq != null && periodoReq.trim().length() > 0) {
+			String p = periodoReq.trim().replace('/', '-'); // tolerante
+			try {
+				int pipe = p.indexOf('|');        // por si viene "YYYY-MM|MEN"
+				if (pipe > 0) p = p.substring(0, pipe);
+
+				int dash = p.indexOf('-');
+				if (dash > 0 && dash + 2 < p.length()) {
+					int y = Integer.parseInt(p.substring(0, dash));
+					int m1 = Integer.parseInt(p.substring(dash + 1, dash + 3)); // 01..12
+					if (y >= 1900 && m1 >= 1 && m1 <= 12) {
+						anioReq = y;
+						mesRawReq = m1 - 1; // 0-based
+						_log.info("[XLS][" + rid + "][PERIODO] parsed periodo=" + periodoReq
+								+ " -> anioReq=" + anioReq + " mesRawReq(0based)=" + mesRawReq);
+					}
+				}
+			} catch (Exception ignore) {
+				_log.warn("[XLS][" + rid + "][PERIODO] invalid periodo=" + periodoReq);
+			}
+		}
+
+		// --- Session keys (copiados de tu Action) ---
+		final String S_WORK_ANIO        = "BUSQUEDA_DEBITOS_TERCERIZADORAS_WORK_ANIO";
+		final String S_WORK_MES0        = "BUSQUEDA_DEBITOS_TERCERIZADORAS_WORK_MES0";
+		final String S_WORK_TERC        = "BUSQUEDA_DEBITOS_TERCERIZADORAS_WORK_TERC";
+		final String S_WORK_FECHA_DESDE = "BUSQUEDA_DEBITOS_TERCERIZADORAS_WORK_FDESDE";
+		final String S_WORK_FECHA_HASTA = "BUSQUEDA_DEBITOS_TERCERIZADORAS_WORK_FHASTA";
+		final String S_WORK_SOURCE_KEY  = "BUSQUEDA_DEBITOS_TERCERIZADORAS_WORK_SOURCE_KEY";
+		final String S_WORK_MODE        = "BUSQUEDA_DEBITOS_TERCERIZADORAS_WORK_MODE";
+		final String S_WORK_BUSQ_MODE   = "BUSQUEDA_DEBITOS_TERCERIZADORAS_WORK_BUSQUEDA_MODE";
+		final String S_WORK_TIPO_SEL    = "BUSQUEDA_DEBITOS_TERCERIZADORAS_WORK_TIPO_SEL";
+		final String S_TOTALES_KEY      = "BUSQUEDA_DEBITOS_TERCERIZADORAS_TOTALES";
+
+		final String S_WORK_LI          = "BUSQUEDA_DEBITOS_TERCERIZADORAS_WORK_LI";
+		final String S_WORK_HO          = "BUSQUEDA_DEBITOS_TERCERIZADORAS_WORK_HO";
+		final String S_WORK_RE          = "BUSQUEDA_DEBITOS_TERCERIZADORAS_WORK_RE";
+		final String S_WORK_PR          = "BUSQUEDA_DEBITOS_TERCERIZADORAS_WORK_PR";
+
+		javax.servlet.http.HttpSession sess = null;
+		try { sess = renderRequest.getSession(false); } catch (Exception ignore) {}
+
+		Integer sessAnio = null;
+		Integer sessMes0 = null;
+		String sessTerc = null;
+		String sessWorkKey = null;
+		Date sessDesde = null;
+		Date sessHasta = null;
+		String sessMode = null;
+		String sessTipoSel = null;
+
+		if (sess != null) {
+			try { sessAnio = (Integer) sess.getAttribute(S_WORK_ANIO); } catch (Exception ignore) {}
+			try { sessMes0 = (Integer) sess.getAttribute(S_WORK_MES0); } catch (Exception ignore) {}
+			try { sessTerc = (String) sess.getAttribute(S_WORK_TERC); } catch (Exception ignore) {}
+			try { sessWorkKey = (String) sess.getAttribute(S_WORK_SOURCE_KEY); } catch (Exception ignore) {}
+			try { sessDesde = (Date) sess.getAttribute(S_WORK_FECHA_DESDE); } catch (Exception ignore) {}
+			try { sessHasta = (Date) sess.getAttribute(S_WORK_FECHA_HASTA); } catch (Exception ignore) {}
+			try { sessTipoSel = (String) sess.getAttribute(S_WORK_TIPO_SEL); } catch (Exception ignore) {}
+
+			try { sessMode = (String) sess.getAttribute(S_WORK_BUSQ_MODE); } catch (Exception ignore) {}
+			if (sessMode == null) {
+				try { sessMode = (String) sess.getAttribute(S_WORK_MODE); } catch (Exception ignore) {}
+			}
+		}
+
+		// Fallback 3: si sigue sin fechas, parsear desde WORK_KEY de sesión ("YYYY-MM|TERC")
+		if ((mesRawReq < 0 || anioReq < 0) && sessWorkKey != null && sessWorkKey.trim().length() > 0) {
+			try {
+				String wk = sessWorkKey.trim();     // "2025-10|MEN"
+				int pipe = wk.indexOf('|');
+				String ym = (pipe > 0) ? wk.substring(0, pipe) : wk;
+				int dash = ym.indexOf('-');
+				if (dash > 0 && dash + 2 < ym.length()) {
+					int y = Integer.parseInt(ym.substring(0, dash));
+					int m1 = Integer.parseInt(ym.substring(dash + 1, dash + 3)); // 01..12
+					if (y >= 1900 && m1 >= 1 && m1 <= 12) {
+						anioReq = y;
+						mesRawReq = m1 - 1;
+						_log.info("[XLS][" + rid + "][PERIODO] parsed sessWorkKey=" + sessWorkKey
+								+ " -> anioReq=" + anioReq + " mesRawReq(0based)=" + mesRawReq);
+					}
+				}
+			} catch (Exception ignore) {}
+		}
+
+		// candidatos: mesRaw como 0-based vs 1-based (recién acá)
+		Integer cand0 = (mesRawReq >= 0 && mesRawReq <= 11) ? Integer.valueOf(mesRawReq) : null;
+		Integer cand1 = (mesRawReq >= 1 && mesRawReq <= 12) ? Integer.valueOf(mesRawReq - 1) : null;
+
+		final boolean reqTieneFechas =
+				fechaDesdeMesStrReq != null && fechaDesdeMesStrReq.trim().length() > 0
+						&& fechaDesdeAnioStrReq != null && fechaDesdeAnioStrReq.trim().length() > 0;
+
+		final boolean reqTercOk = tercNormReq != null && tercNormReq.trim().length() > 0;
+		final boolean sessTercOk = sessTerc != null && sessTerc.trim().length() > 0;
+
+		final boolean sessHasDates = (sessDesde != null && sessHasta != null);
+		final boolean sessHasYm    = (sessAnio != null && sessMes0 != null);
+		final boolean sessHasKey   = (sessWorkKey != null && sessWorkKey.trim().length() > 0);
+
+		// Para XLS: si el request NO trae fechas, basta con que sesión tenga *alguna* forma de reconstruir período.
+		final boolean sessHasCtx =
+				sess != null
+						&& sessTercOk
+						&& (!reqTercOk || tercNormReq.equalsIgnoreCase(sessTerc.trim()))
+						&& (sessHasDates || sessHasYm || sessHasKey);
+
+		// =========================
+		// Contexto efectivo (SESSION FIRST)
+		// =========================
+		int anio = anioReq;
+		int mes0Based = -1;
+		String tercNorm = tercNormReq;
+		String tipoProceso = tipoProcesoReq;
+		String busquedaModeEff = busquedaModeReq;
+
+		if (sessHasCtx) {
+			tercNorm = sessTerc.trim().toUpperCase();
+
+			// 1) Preferir fechas directas
+			if (sessDesde != null && sessHasta != null) {
+				fechaDesde = sessDesde;
+				fechaHasta = sessHasta;
+
+				Calendar c = DateUtils.getCalendarGMTMenos3();
+				c.setTime(fechaDesde);
+				anio = c.get(Calendar.YEAR);
+				mes0Based = c.get(Calendar.MONTH);
+
+			} else {
+				// 2) Si no hay fechas, usar ANIO/MES0 de sesión o parseado desde workKey
+				if (sessAnio != null) anio = sessAnio.intValue();
+
+				if (sessMes0 != null) {
+					mes0Based = sessMes0.intValue();
+				} else {
+					// si sessMes0 es null pero se pudo inferir mesRawReq/anioReq arriba, úsalo
+					if (anioReq > 0 && mesRawReq >= 0) {
+						anio = anioReq;
+						mes0Based = mesRawReq;
+					}
+				}
+
+				Calendar calDesde = DateUtils.getCalendarGMTMenos3();
+				calDesde.set(Calendar.YEAR, anio);
+				calDesde.set(Calendar.MONTH, mes0Based);
+				calDesde.set(Calendar.DAY_OF_MONTH, 1);
+				calDesde.set(Calendar.HOUR_OF_DAY, 0);
+				calDesde.set(Calendar.MINUTE, 0);
+				calDesde.set(Calendar.SECOND, 0);
+				calDesde.set(Calendar.MILLISECOND, 0);
+
+				fechaDesde = calDesde.getTime();
+				fechaHasta = DateUtils.getLastDateOfMonth(fechaDesde, false);
+			}
+
+			fechaEjecucion = fechaDesde;
+
+			if (sessMode != null && sessMode.trim().length() > 0) {
+				busquedaModeEff = sessMode.trim().toUpperCase();
+			}
+			if (sessTipoSel != null && sessTipoSel.trim().length() > 0) {
+				tipoProceso = sessTipoSel.trim();
+			}
+		} else {
+			// Resolver mes0Based desde request (manteniendo tu comportamiento)
+			if (cand1 != null) mes0Based = cand1.intValue();
+			else if (cand0 != null) mes0Based = cand0.intValue();
+			else mes0Based = -1;
+
+			try {
+				if (mes0Based < 0 || mes0Based > 11 || anio < 1900) {
+					throw new IllegalArgumentException("Parametros invalidos: fechaDesdeMes=" + fechaDesdeMesStrReq + ", fechaDesdeAnio=" + fechaDesdeAnioStrReq);
+				}
+
+				Calendar calDesde = DateUtils.getCalendarGMTMenos3();
+				calDesde.set(Calendar.YEAR, anio);
+				calDesde.set(Calendar.MONTH, mes0Based);
+				calDesde.set(Calendar.DAY_OF_MONTH, 1);
+				calDesde.set(Calendar.HOUR_OF_DAY, 0);
+				calDesde.set(Calendar.MINUTE, 0);
+				calDesde.set(Calendar.SECOND, 0);
+				calDesde.set(Calendar.MILLISECOND, 0);
+
+				fechaDesde = calDesde.getTime();
+				fechaHasta = DateUtils.getLastDateOfMonth(fechaDesde, false);
+				fechaEjecucion = fechaDesde;
+
+			} catch (Exception e) {
+				_log.error("[XLS] Error calculando fechas"
+						+ " fechaDesdeMes=" + fechaDesdeMesStrReq
+						+ " fechaDesdeAnio=" + fechaDesdeAnioStrReq
+						+ " resolvedMes0Based=" + mes0Based, e);
+				_log.info("[XLS] END (fechas invalidas) elapsedMs=" + (System.currentTimeMillis() - t0));
+				return new HSSFWorkbook();
+			}
+		}
+
+		// WorkKey efectivo: si hay sesión, el canonical es el de sesión
+		final String workKey;
+		if (sessHasCtx && sessWorkKey != null && sessWorkKey.trim().length() > 0) {
+			workKey = sessWorkKey.trim();
+		} else {
+			workKey = anio + "-" + String.format("%02d", (mes0Based + 1))
+					+ "|" + (tercNorm != null ? tercNorm.trim().toUpperCase() : "");
+		}
+
+		_log.info("[XLS] START"
+				+ " rid=" + rid
+				+ " sessionFirst=" + (sessHasCtx ? "SI" : "NO")
+				+ " req{mes=" + fechaDesdeMesStrReq + ",anio=" + fechaDesdeAnioStrReq + ",terc=" + tercNormReq + ",tipo=" + tipoProcesoReq + ",mode=" + busquedaModeReq + "}"
+				+ " ctx{anio=" + anio + ",mes0=" + mes0Based + ",terc=" + tercNorm + ",tipo=" + tipoProceso + ",mode=" + busquedaModeEff + ",workKey=" + workKey + "}"
+				+ " grabarDebitos=" + grabarDebitos
+				+ " segmentos=" + segmentosSolicitados);
+
+		_log.info("[XLS] FECHAS"
+				+ " fechaDesde=" + (fechaDesde == null ? "null" : sdf.format(fechaDesde))
+				+ " fechaHasta=" + (fechaHasta == null ? "null" : sdf.format(fechaHasta))
+				+ " fechaEjecucion=" + (fechaEjecucion == null ? "null" : sdf.format(fechaEjecucion))
+				+ " sessWorkKey=" + (sessWorkKey != null ? sessWorkKey : "null")
+				+ " sessMode=" + (sessMode != null ? sessMode : "null"));
+
+		// =========================
+		// Segmentos a cargar (si piden TOTAL, cargamos detalle para consistencia)
+		// =========================
+		final EnumSet<Segmento> segmentosParaCargar = EnumSet.copyOf(segmentosSolicitados);
+		if (segmentosSolicitados.contains(Segmento.TOTAL)) {
+			segmentosParaCargar.addAll(DETALLE);
+		}
+
+		// =========================
+		// Totales + Datos
+		// =========================
+		List totales = new ArrayList();
+		DebitosaTotal debitosaTotal = new DebitosaTotal();
+		DebitosaTotal debitosaTotalPersistido = null;
+
+		List<DebitosLiquidacionesPendientes> debitosLiquidacionesPendientes = new ArrayList<DebitosLiquidacionesPendientes>();
+		List<DebitosHospitales> debitosHospitales = new ArrayList<DebitosHospitales>();
+		List<DebitosaReintegros> debitosReintegros = new ArrayList<DebitosaReintegros>();
+		List<DebitosaPrestadores> debitosPrestadores = new ArrayList<DebitosaPrestadores>();
+
+		boolean reusedSession = false;
+
+		// =========================
+		// Reuse SESION (sin exigir que el request "matchee")
+		// =========================
+		if (sessHasCtx) {
+
+			// Totales desde sesión
+			try {
+				List totSess = (List) sess.getAttribute(S_TOTALES_KEY);
+				if (totSess != null && !totSess.isEmpty()) {
+					totales = totSess;
+					Object first = totSess.get(0);
+					if (first instanceof DebitosaTotal) {
+						debitosaTotal = (DebitosaTotal) first;
+						if (debitosaTotal != null && debitosaTotal.isExisteDebito()) debitosaTotalPersistido = debitosaTotal;
+					}
+				}
+			} catch (Exception ignore) {}
+
+			// Detalles desde sesión (solo lo que se pidió)
+			try { if (segmentosParaCargar.contains(Segmento.LIQUIDACIONES_PENDIENTES)) debitosLiquidacionesPendientes = (List<DebitosLiquidacionesPendientes>) sess.getAttribute(S_WORK_LI); } catch (Exception ignore) {}
+			try { if (segmentosParaCargar.contains(Segmento.HOSPITALES))              debitosHospitales = (List<DebitosHospitales>) sess.getAttribute(S_WORK_HO); } catch (Exception ignore) {}
+			try { if (segmentosParaCargar.contains(Segmento.REINTEGROS))              debitosReintegros = (List<DebitosaReintegros>) sess.getAttribute(S_WORK_RE); } catch (Exception ignore) {}
+			try { if (segmentosParaCargar.contains(Segmento.PRESTADORES))             debitosPrestadores = (List<DebitosaPrestadores>) sess.getAttribute(S_WORK_PR); } catch (Exception ignore) {}
+
+			if (debitosLiquidacionesPendientes == null) debitosLiquidacionesPendientes = new ArrayList<DebitosLiquidacionesPendientes>();
+			if (debitosHospitales == null) debitosHospitales = new ArrayList<DebitosHospitales>();
+			if (debitosReintegros == null) debitosReintegros = new ArrayList<DebitosaReintegros>();
+			if (debitosPrestadores == null) debitosPrestadores = new ArrayList<DebitosaPrestadores>();
+
+			// Aplicar filtro de tipo (consistencia; usa tipoProceso efectivo)
+			debitosLiquidacionesPendientes = filterByTipoProceso(debitosLiquidacionesPendientes, tipoProceso);
+			debitosHospitales              = filterByTipoProceso(debitosHospitales, tipoProceso);
+			debitosReintegros              = filterByTipoProceso(debitosReintegros, tipoProceso);
+			debitosPrestadores             = filterByTipoProceso(debitosPrestadores, tipoProceso);
+
+			reusedSession = true;
+
+			_log.info("[XLS][SESSION] reuse=SI workKey=" + workKey
+					+ " mode=" + (busquedaModeEff != null ? busquedaModeEff : "null")
+					+ " sizes{LP=" + debitosLiquidacionesPendientes.size()
+					+ ",HO=" + debitosHospitales.size()
+					+ ",RE=" + debitosReintegros.size()
+					+ ",PR=" + debitosPrestadores.size()
+					+ "} totalesSize=" + (totales != null ? totales.size() : 0));
+		}
+
+		// =========================
+		// Fallback DB si no reusamos sesión (o no hay sesión)
+		// =========================
+		if (!reusedSession) {
+
+			// Totales desde DB (como estabas)
+			try {
+				DebitosaTotal t = BusquedaDebitosTercerizadorasServiceUtil.getBuscarTotalesDebitos(fechaHasta, tercNorm);
+				if (t != null) {
+					debitosaTotal = t;
+					totales.add(t);
+					if (t.isExisteDebito()) debitosaTotalPersistido = t;
+				}
+				_log.info("[XLS][TOTALES] ok existeDebito=" + (debitosaTotal != null && debitosaTotal.isExisteDebito()));
+			} catch (Exception e) {
+				_log.error("[XLS][TOTALES] Error consultando totales", e);
+				debitosaTotal = new DebitosaTotal();
+			}
+
+			// Datos por segmento (NEW primero, fallback LEGACY si vacío)
+			try {
+
+				// LIQUIDACIONES PENDIENTES
+				if (segmentosParaCargar.contains(Segmento.LIQUIDACIONES_PENDIENTES)) {
+					boolean usedLegacy = !preferNew;
+					if (preferNew) {
+						try {
+							List tmp = (List) BusquedaDebitosTercerizadorasServiceUtil.getBusquedaDebitosLiquidacionesStatus(
+									fechaDesde, fechaHasta, debitosaTotal, tercNorm);
+							if (tmp != null && !tmp.isEmpty()) {
+								debitosLiquidacionesPendientes = (List<DebitosLiquidacionesPendientes>) tmp;
+							} else {
+								usedLegacy = true;
+							}
+						} catch (Exception e) {
+							_log.error("[XLS][LP][NEW] error -> fallback LEGACY", e);
+							usedLegacy = true;
+						}
+					}
+					if (usedLegacy) {
+						debitosLiquidacionesPendientes = fetchOrComputeLiquidacionesPendientes(
+								fechaEjecucion, fechaHasta, debitosaTotal, tercNorm
+						);
+					}
+					debitosLiquidacionesPendientes = filterByTipoProceso(debitosLiquidacionesPendientes, tipoProceso);
+					_log.info("[XLS][LP] size=" + (debitosLiquidacionesPendientes == null ? 0 : debitosLiquidacionesPendientes.size())
+							+ " mode=" + (usedLegacy ? "LEGACY" : "NEW"));
+				}
+
+				// HOSPITALES
+				if (segmentosParaCargar.contains(Segmento.HOSPITALES)) {
+					boolean usedLegacy = !preferNew;
+					if (preferNew) {
+						try {
+							List tmp = (List) BusquedaDebitosTercerizadorasServiceUtil.getBusquedaDebitosHospitalesStatus(
+									fechaDesde, fechaHasta, debitosaTotal, tercNorm);
+							if (tmp != null && !tmp.isEmpty()) {
+								debitosHospitales = (List<DebitosHospitales>) tmp;
+							} else {
+								usedLegacy = true;
+							}
+						} catch (Exception e) {
+							_log.error("[XLS][HO][NEW] error -> fallback LEGACY", e);
+							usedLegacy = true;
+						}
+					}
+					if (usedLegacy) {
+						debitosHospitales = fetchOrComputeHospitales(
+								fechaDesde, fechaHasta, debitosaTotal, tercNorm
+						);
+					}
+					debitosHospitales = filterByTipoProceso(debitosHospitales, tipoProceso);
+					_log.info("[XLS][HO] size=" + (debitosHospitales == null ? 0 : debitosHospitales.size())
+							+ " mode=" + (usedLegacy ? "LEGACY" : "NEW"));
+				}
+
+				// REINTEGROS
+				if (segmentosParaCargar.contains(Segmento.REINTEGROS)) {
+					boolean usedLegacy = !preferNew;
+					if (preferNew) {
+						try {
+							List tmp = (List) BusquedaDebitosTercerizadorasServiceUtil.getBusquedaDebitosReintegrosStatus(
+									fechaDesde, fechaHasta, debitosaTotal, tercNorm);
+							if (tmp != null && !tmp.isEmpty()) {
+								debitosReintegros = (List<DebitosaReintegros>) tmp;
+							} else {
+								usedLegacy = true;
+							}
+						} catch (Exception e) {
+							_log.error("[XLS][RE][NEW] error -> fallback LEGACY", e);
+							usedLegacy = true;
+						}
+					}
+					if (usedLegacy) {
+						debitosReintegros = fetchOrComputeReintegros(
+								fechaDesde, fechaHasta, debitosaTotal, tercNorm
+						);
+					}
+					debitosReintegros = filterByTipoProceso(debitosReintegros, tipoProceso);
+					_log.info("[XLS][RE] size=" + (debitosReintegros == null ? 0 : debitosReintegros.size())
+							+ " mode=" + (usedLegacy ? "LEGACY" : "NEW"));
+				}
+
+				// PRESTADORES
+				if (segmentosParaCargar.contains(Segmento.PRESTADORES)) {
+					boolean usedLegacy = !preferNew;
+
+					if (preferNew) {
+						try {
+							List tmp = (List) BusquedaDebitosTercerizadorasServiceUtil.getBusquedaDebitosPrestadoresStatus(
+									fechaDesde, fechaHasta, debitosaTotal, tercNorm);
+
+							if (tmp != null && !tmp.isEmpty()) {
+								debitosPrestadores = (List<DebitosaPrestadores>) tmp;
+							} else {
+								usedLegacy = true;
+							}
+						} catch (Exception e) {
+							_log.error("[XLS][PR][NEW] error -> fallback LEGACY rid=" + rid, e);
+							usedLegacy = true;
+						}
+					}
+
+					if (usedLegacy) {
+						debitosPrestadores = fetchOrComputePrestadores(
+								fechaDesde, fechaHasta, debitosaTotal, tercNorm
+						);
+					}
+
+					debitosPrestadores = filterByTipoProceso(debitosPrestadores, tipoProceso);
+
+					_log.info("[XLS][PR] size=" + (debitosPrestadores == null ? 0 : debitosPrestadores.size())
+							+ " mode=" + (usedLegacy ? "LEGACY" : "NEW")
+							+ " rid=" + rid);
+				}
+
+			} catch (Exception e) {
+				_log.error("[XLS][DATA] Error obteniendo datos rid=" + rid, e);
+			}
+		}
+
+		// =========================
+		// Excel por segmento (solo sheets solicitadas)
+		// =========================
+		HSSFWorkbook wb = new HSSFWorkbook();
+
+		if (segmentosSolicitados.contains(Segmento.LIQUIDACIONES_PENDIENTES)) {
+			writeLiquidacionesPendientesSheet(wb, debitosLiquidacionesPendientes);
+		}
+		if (segmentosSolicitados.contains(Segmento.HOSPITALES)) {
+			writeHospitalesSheet(wb, debitosHospitales);
+		}
+		if (segmentosSolicitados.contains(Segmento.REINTEGROS)) {
+			writeReintegrosSheet(wb, debitosReintegros);
+		}
+		if (segmentosSolicitados.contains(Segmento.PRESTADORES)) {
+			writePrestadoresSheet(wb, debitosPrestadores);
+		}
+
+		// TOTAL
+		BigDecimal totalDebitoPrestadoras = BigDecimal.ZERO;
+		if (segmentosSolicitados.contains(Segmento.TOTAL)) {
+			boolean soloTotal = segmentosSolicitados.size() == 1 && segmentosSolicitados.contains(Segmento.TOTAL);
+			DebitosaTotal totalParaReporte = (soloTotal && debitosaTotalPersistido != null) ? debitosaTotalPersistido : debitosaTotal;
+
+			// sheet TOTAL (usa tu writer existente)
+			writeTotalSheet(wb, totalParaReporte, tercNorm);
+
+			// total NDB (suma de *_Debito)
+			totalDebitoPrestadoras = generarTotalDebitoPrestadoras(totalParaReporte);
+		}
+
+		// Persistencia (solo si el JSP lo pidió)
+		if (grabarDebitos) {
+			persistirCierrePeriodo(
+					segmentosSolicitados,
+					debitosLiquidacionesPendientes,
+					debitosHospitales,
+					debitosReintegros,
+					debitosPrestadores,
+					debitosaTotal,
+					totalDebitoPrestadoras,
+					user,
+					fechaHasta,
+					fechaDesde,
+					tercNorm
+			);
+		}
+
+		_log.info("[XLS] END elapsedMs=" + (System.currentTimeMillis() - t0)
+				+ " rid=" + rid
+				+ " reuseSession=" + (reusedSession ? "SI" : "NO")
+				+ " workKey=" + workKey
+				+ " ctx{anio=" + anio + ",mes0=" + mes0Based + ",terc=" + tercNorm + ",tipo=" + tipoProceso + ",mode=" + busquedaModeEff + "}");
+
+		return wb;
+	}
+
+	private static void persistirCierrePeriodo(
+			EnumSet<Segmento> segmentosSolicitados,
+			List<DebitosLiquidacionesPendientes> debitosLiquidacionesPendientes,
+			List<DebitosHospitales> debitosHospitales,
+			List<DebitosaReintegros> debitosReintegros,
+			List<DebitosaPrestadores> debitosPrestadores,
+			DebitosaTotal debitosaTotal,
+			BigDecimal totalDebitoPrestadoras,
+			User user,
+			Date fechaHasta,
+			Date fechaDesde,
+			String tercerizadoras
+	) {
+		final long t0 = System.currentTimeMillis();
+		final String cid = "CP-" + t0 + "-" + Thread.currentThread().getId();
+
+		int szLP = (debitosLiquidacionesPendientes != null) ? debitosLiquidacionesPendientes.size() : 0;
+		int szHO = (debitosHospitales != null) ? debitosHospitales.size() : 0;
+		int szRE = (debitosReintegros != null) ? debitosReintegros.size() : 0;
+		int szPR = (debitosPrestadores != null) ? debitosPrestadores.size() : 0;
+
+		if (segmentosSolicitados == null) {
+			segmentosSolicitados = EnumSet.noneOf(Segmento.class);
+		}
+
+		boolean debeGrabarNdb = segmentosSolicitados.contains(Segmento.TOTAL)
+				&& segmentosSolicitados.containsAll(DETALLE);
+
+		if (user == null) {
+			throw new RuntimeException("[" + cid + "][CIERRE][PERSIST] Usuario nulo; no se puede cerrar el período.");
+		}
+
+		String userInfo;
+		try {
+			userInfo = "userId=" + user.getUserId() + " screenName=" + user.getScreenName();
+		} catch (Exception e) {
+			userInfo = "user=<no-readable>";
+		}
+
+		_log.info("[" + cid + "][CIERRE][PERSIST] INICIO "
+				+ userInfo
+				+ " tercerizadoras=" + (tercerizadoras != null ? tercerizadoras : "<null>")
+				+ " fechaDesde=" + (fechaDesde != null ? fechaDesde.toString() : "<null>")
+				+ " fechaHasta=" + (fechaHasta != null ? fechaHasta.toString() : "<null>")
+				+ " segmentos=" + segmentosSolicitados
+				+ " debeGrabarNdb=" + debeGrabarNdb
+				+ " sizes{LP=" + szLP + ",HO=" + szHO + ",RE=" + szRE + ",PR=" + szPR + "}"
+				+ " totalDebitoPrestadoras=" + (totalDebitoPrestadoras != null ? totalDebitoPrestadoras.toPlainString() : "<null>")
+		);
+
+		try {
+			if (segmentosSolicitados.contains(Segmento.LIQUIDACIONES_PENDIENTES)) {
+				long t = System.currentTimeMillis();
+				_log.info("[" + cid + "][CIERRE][PERSIST] -> persistLiquidacionesPendientes size=" + szLP);
+				try {
+					persistLiquidacionesPendientes(debitosLiquidacionesPendientes, user, fechaHasta, tercerizadoras);
+					_log.info("[" + cid + "][CIERRE][PERSIST] OK persistLiquidacionesPendientes dtMs=" + (System.currentTimeMillis() - t));
+				} catch (Exception e) {
+					_log.error("[" + cid + "][CIERRE][PERSIST] FAIL persistLiquidacionesPendientes dtMs=" + (System.currentTimeMillis() - t), e);
+				}
+			}
+
+			if (segmentosSolicitados.contains(Segmento.HOSPITALES)) {
+				long t = System.currentTimeMillis();
+				_log.info("[" + cid + "][CIERRE][PERSIST] -> persistHospitales size=" + szHO);
+				try {
+					persistHospitales(debitosHospitales, user, fechaHasta, tercerizadoras);
+					_log.info("[" + cid + "][CIERRE][PERSIST] OK persistHospitales dtMs=" + (System.currentTimeMillis() - t));
+				} catch (Exception e) {
+					_log.error("[" + cid + "][CIERRE][PERSIST] FAIL persistHospitales dtMs=" + (System.currentTimeMillis() - t), e);
+				}
+			}
+
+			if (segmentosSolicitados.contains(Segmento.REINTEGROS)) {
+				long t = System.currentTimeMillis();
+				_log.info("[" + cid + "][CIERRE][PERSIST] -> persistReintegros size=" + szRE);
+				try {
+					persistReintegros(debitosReintegros, user, fechaHasta, tercerizadoras);
+					_log.info("[" + cid + "][CIERRE][PERSIST] OK persistReintegros dtMs=" + (System.currentTimeMillis() - t));
+				} catch (Exception e) {
+					_log.error("[" + cid + "][CIERRE][PERSIST] FAIL persistReintegros dtMs=" + (System.currentTimeMillis() - t), e);
+				}
+			}
+
+			if (segmentosSolicitados.contains(Segmento.PRESTADORES)) {
+				long t = System.currentTimeMillis();
+				_log.info("[" + cid + "][CIERRE][PERSIST] -> persistPrestadores size=" + szPR);
+				try {
+					persistPrestadores(debitosPrestadores, user, fechaHasta, tercerizadoras);
+					_log.info("[" + cid + "][CIERRE][PERSIST] OK persistPrestadores dtMs=" + (System.currentTimeMillis() - t));
+				} catch (Exception e) {
+					_log.error("[" + cid + "][CIERRE][PERSIST] FAIL persistPrestadores dtMs=" + (System.currentTimeMillis() - t), e);
+				}
+			}
+
+			if (segmentosSolicitados.contains(Segmento.TOTAL)) {
+				long t = System.currentTimeMillis();
+				_log.info("[" + cid + "][CIERRE][PERSIST] -> persistTotales total=" + (debitosaTotal != null ? "<obj>" : "<null>"));
+				try {
+					persistTotales(debitosaTotal, user, fechaHasta, tercerizadoras);
+					_log.info("[" + cid + "][CIERRE][PERSIST] OK persistTotales dtMs=" + (System.currentTimeMillis() - t));
+				} catch (Exception e) {
+					_log.error("[" + cid + "][CIERRE][PERSIST] FAIL persistTotales dtMs=" + (System.currentTimeMillis() - t), e);
+				}
+			}
+
+			if (debeGrabarNdb) {
+				long t = System.currentTimeMillis();
+
+				BigDecimal totalNdb = totalDebitoPrestadoras;
+				boolean recalculado = false;
+
+				if (totalNdb == null || BigDecimal.ZERO.compareTo(totalNdb) == 0) {
+					_log.info("[" + cid + "][CIERRE][PERSIST] totalDebitoPrestadoras nulo/cero -> recalcular desde debitosaTotal");
+					totalNdb = generarTotalDebitoPrestadoras(debitosaTotal);
+					recalculado = true;
+				}
+
+				_log.info("[" + cid + "][CIERRE][PERSIST] -> persistNdb totalNdb="
+						+ (totalNdb != null ? totalNdb.toPlainString() : "<null>")
+						+ " recalculado=" + recalculado);
+
+				try {
+					persistNdb(totalNdb, user, fechaHasta, fechaDesde, tercerizadoras);
+					_log.info("[" + cid + "][CIERRE][PERSIST] OK persistNdb dtMs=" + (System.currentTimeMillis() - t));
+				} catch (Exception e) {
+					_log.error("[" + cid + "][CIERRE][PERSIST] FAIL persistNdb dtMs=" + (System.currentTimeMillis() - t), e);
+				}
+			}
+
+		} catch (Exception e) {
+			_log.error("[" + cid + "][CIERRE][PERSIST] Error (bloque general)", e);
+		} finally {
+			_log.info("[" + cid + "][CIERRE][PERSIST] FIN dtMs=" + (System.currentTimeMillis() - t0));
+		}
+	}
+
+	private static BigDecimal generarTotalDebitoPrestadoras(DebitosaTotal deb) {
+		if (deb == null) return BigDecimal.ZERO;
+
+		BigDecimal total = BigDecimal.ZERO;
+
+		total = total.add(deb.getMontoLiquidacionPendienteDebito() != null ? deb.getMontoLiquidacionPendienteDebito() : BigDecimal.ZERO);
+		total = total.add(deb.getMontoHospitaleDebito() != null ? deb.getMontoHospitaleDebito() : BigDecimal.ZERO);
+		total = total.add(deb.getMontoReintegroDebito() != null ? deb.getMontoReintegroDebito() : BigDecimal.ZERO);
+		total = total.add(deb.getMontoPrestadoreDebito() != null ? deb.getMontoPrestadoreDebito() : BigDecimal.ZERO);
+
+		return total;
+	}
+
+	// =========================================================================
+	// FILTRO por tipoProceso (reflexión, sin tocar services)
+	// =========================================================================
+
+	private static <T> List<T> filterByTipoProceso(List<T> in, String tipoProceso) {
+		if (in == null || in.isEmpty()) return in;
+		if (tipoProceso == null) return in;
+
+		String tp = tipoProceso.trim();
+		if (tp.length() == 0) return in;
+
+		// buscar getter/campo una sola vez por tipo
+		Object first = null;
+		for (int i = 0; i < in.size(); i++) {
+			if (in.get(i) != null) { first = in.get(i); break; }
+		}
+		if (first == null) return in;
+
+		Accessor acc = resolveTipoProcesoAccessor(first.getClass());
+		if (acc == null) return in; // si no hay forma de obtener tipoProceso, no filtramos
+
+		List<T> out = new ArrayList<T>(in.size());
+		for (int i = 0; i < in.size(); i++) {
+			T row = in.get(i);
+			if (row == null) continue;
+
+			String val = acc.get(row);
+			if (val != null && tp.equals(val.trim())) {
+				out.add(row);
+			}
+		}
+
+		return out;
+	}
+
+	private static class Accessor {
+		private Method method;
+		private Field field;
+
+		String get(Object target) {
+			try {
+				if (method != null) {
+					Object v = method.invoke(target, new Object[0]);
+					return (v == null) ? null : String.valueOf(v);
+				}
+				if (field != null) {
+					Object v = field.get(target);
+					return (v == null) ? null : String.valueOf(v);
+				}
+			} catch (Exception ignore) {
+			}
+			return null;
+		}
+	}
+
+	private static Accessor resolveTipoProcesoAccessor(Class clazz) {
+		// getters más probables
+		String[] getters = new String[] {
+				"getTipoProceso",
+				"getTipoDebito",
+				"getTipo",
+				"getProceso",
+				"getCodProceso",
+				"getCodigoProceso"
+		};
+
+		for (int i = 0; i < getters.length; i++) {
+			try {
+				Method m = clazz.getMethod(getters[i], new Class[0]);
+				if (m != null) {
+					Accessor a = new Accessor();
+					a.method = m;
+					return a;
+				}
+			} catch (Exception ignore) {
+			}
+		}
+
+		// campos más probables
+		String[] fields = new String[] {
+				"tipoProceso",
+				"tipo_proceso",
+				"tipoDebito",
+				"tipo",
+				"proceso",
+				"codProceso",
+				"codigoProceso"
+		};
+
+		for (int i = 0; i < fields.length; i++) {
+			try {
+				Field f = clazz.getDeclaredField(fields[i]);
+				if (f != null) {
+					f.setAccessible(true);
+					Accessor a = new Accessor();
+					a.field = f;
+					return a;
+				}
+			} catch (Exception ignore) {
+			}
+		}
+
+		return null;
+	}
+
+	// =========================================================================
+	// Segment parsing
+	// =========================================================================
+
+	private static EnumSet<Segmento> parseSegmentos(HttpServletRequest req) {
+		String seg = ParamUtil.getString(req, "segmento");
+		if (seg == null || seg.trim().isEmpty()) seg = ParamUtil.getString(req, "modulo");
+		if (seg == null || seg.trim().isEmpty()) seg = ParamUtil.getString(req, "segment");
+		if (seg == null || seg.trim().isEmpty()) seg = ParamUtil.getString(req, "seccion");
+
+		if (seg == null || seg.trim().isEmpty()) {
+			return EnumSet.allOf(Segmento.class);
+		}
+
+		String raw = seg.trim().toUpperCase(Locale.ROOT);
+		if ("ALL".equals(raw) || "TODO".equals(raw) || "TODOS".equals(raw)) {
+			return EnumSet.allOf(Segmento.class);
+		}
+
+		EnumSet<Segmento> out = EnumSet.noneOf(Segmento.class);
+		String[] tokens = raw.split("[,;\\s]+");
+		for (int i = 0; i < tokens.length; i++) {
+			String t = tokens[i];
+			if (t == null) continue;
+			String tok = t.trim();
+			if (tok.isEmpty()) continue;
+
+			Segmento s = mapTokenToSegmento(tok);
+			if (s != null) out.add(s);
+		}
+
+		if (out.isEmpty()) {
+			return EnumSet.allOf(Segmento.class);
+		}
+		return out;
+	}
+
+	private static Segmento mapTokenToSegmento(String tok) {
+		tok = tok.replace('-', '_');
+
+		if ("LP".equals(tok) || "LIQ".equals(tok) || "LIQUIDACIONES".equals(tok) || "LIQUIDACIONES_PENDIENTES".equals(tok)) {
+			return Segmento.LIQUIDACIONES_PENDIENTES;
+		}
+		if ("HOS".equals(tok) || "HOSP".equals(tok) || "HOSPITALES".equals(tok)) {
+			return Segmento.HOSPITALES;
+		}
+		if ("REIN".equals(tok) || "REINTEGROS".equals(tok)) {
+			return Segmento.REINTEGROS;
+		}
+		if ("PRES".equals(tok) || "PREST".equals(tok) || "PRESTADORES".equals(tok)) {
+			return Segmento.PRESTADORES;
+		}
+		if ("T".equals(tok) || "TOTAL".equals(tok)) {
+			return Segmento.TOTAL;
+		}
+		if ("ALL".equals(tok) || "TODO".equals(tok) || "TODOS".equals(tok)) {
+			return null;
+		}
+		return null;
+	}
+
+	// =========================================================================
+	// Fetch-or-compute por segmento
+	// =========================================================================
+
+	@SuppressWarnings("unchecked")
+	private static List<DebitosLiquidacionesPendientes> fetchOrComputeLiquidacionesPendientes(
+			Date fechaEjecucion, Date fechaHasta, DebitosaTotal debitosaTotal, String tercerizadoras) throws Exception {
+
+		try {
+			List<DebitosLiquidacionesPendientes> grabados =
+					(List<DebitosLiquidacionesPendientes>) BusquedaDebitosTercerizadorasServiceUtil.getBusquedaDebitosaGrabados(
+							WebKeysLiquidaciones.DEBITOS_LIQ_PENDIENTES, fechaHasta, tercerizadoras
+					);
+			if (grabados != null && !grabados.isEmpty()) return grabados;
+		} catch (Exception ignore) {
+		}
+
+		return BusquedaDebitosTercerizadorasServiceUtil.getBusquedaDebitosaLiquidacionesPendientes(
+				fechaEjecucion, fechaHasta, debitosaTotal, tercerizadoras
+		);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static List<DebitosHospitales> fetchOrComputeHospitales(
+			Date fechaDesde, Date fechaHasta, DebitosaTotal debitosaTotal, String tercerizadoras) {
+
+		try {
+			List<DebitosHospitales> grabados =
+					(List<DebitosHospitales>) BusquedaDebitosTercerizadorasServiceUtil.getBusquedaDebitosaGrabados(
+							WebKeysLiquidaciones.DEBITOS_HOSPITALES, fechaHasta, tercerizadoras
+					);
+			if (grabados != null && !grabados.isEmpty()) return grabados;
+		} catch (Exception ignore) {
+		}
+
+		return BusquedaDebitosTercerizadorasServiceUtil.getBusquedaDebitosaHospitales(
+				fechaDesde, fechaHasta, debitosaTotal, tercerizadoras
+		);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static List<DebitosaReintegros> fetchOrComputeReintegros(
+			Date fechaDesde, Date fechaHasta, DebitosaTotal debitosaTotal, String tercerizadoras) {
+
+		try {
+			List<DebitosaReintegros> grabados =
+					(List<DebitosaReintegros>) BusquedaDebitosTercerizadorasServiceUtil.getBusquedaDebitosaGrabados(
+							WebKeysLiquidaciones.DEBITOS_REINTEGROS, fechaHasta, tercerizadoras
+					);
+			if (grabados != null && !grabados.isEmpty()) return grabados;
+		} catch (Exception ignore) {
+		}
+
+		return BusquedaDebitosTercerizadorasServiceUtil.getBusquedaDebitosReintegros(
+				fechaDesde, fechaHasta, debitosaTotal, tercerizadoras
+		);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static List<DebitosaPrestadores> fetchOrComputePrestadores(
+			Date fechaDesde, Date fechaHasta, DebitosaTotal debitosaTotal, String tercerizadoras) {
+
+		try {
+			List<DebitosaPrestadores> grabados =
+					(List<DebitosaPrestadores>) BusquedaDebitosTercerizadorasServiceUtil.getBusquedaDebitosaGrabados(
+							WebKeysLiquidaciones.DEBITOS_PRESTADORES, fechaHasta, tercerizadoras
+					);
+			if (grabados != null && !grabados.isEmpty()) return grabados;
+		} catch (Exception ignore) {
+		}
+
+		return BusquedaDebitosTercerizadorasServiceUtil.getBusquedaDebitosPrestadores(
+				fechaDesde, fechaHasta, debitosaTotal, tercerizadoras
+		);
+	}
+
+	// =========================================================================
+	// Excel writers (por segmento)
+	// =========================================================================
+
+	private static void writeLiquidacionesPendientesSheet(HSSFWorkbook wb, List<DebitosLiquidacionesPendientes> list) {
+		HSSFSheet sheet = wb.createSheet("LIQUIDACIONES PENDIENTES");
+		generarReporteLiquidacionesPendientes(list, wb, sheet);
+	}
+
+	private static void writeHospitalesSheet(HSSFWorkbook wb, List<DebitosHospitales> list) {
+		HSSFSheet sheet = wb.createSheet("HOSPITALES");
+		generarReporteHospitales(list, wb, sheet);
+	}
+
+	private static void writeReintegrosSheet(HSSFWorkbook wb, List<DebitosaReintegros> list) {
+		HSSFSheet sheet = wb.createSheet("REINTEGROS");
+		generarReporteReintegros(list, wb, sheet);
+	}
+
+	private static void writePrestadoresSheet(HSSFWorkbook wb, List<DebitosaPrestadores> list) {
+		HSSFSheet sheet = wb.createSheet("PRESTADORES");
+		generarReporterestadores(list, wb, sheet);
+	}
+
+	private static BigDecimal writeTotalSheet(HSSFWorkbook wb, DebitosaTotal total, String tercerizadoras) {
+		HSSFSheet sheet = wb.createSheet("TOTAL");
+		generarReporteTotal(total, wb, sheet, tercerizadoras);
+		return generarTotal(total);
+	}
+
+	// =========================================================================
+	// Persist writers (por segmento)
+	// =========================================================================
+
+	private static void persistTotales(DebitosaTotal total, User user, Date fechaHasta, String tercerizadoras)
+			throws SystemException {
+		BusquedaDebitosTercerizadorasServiceUtil.grabarTotalesDebitos(
+				total, user.getScreenName(), fechaHasta, tercerizadoras
+		);
+	}
+
+	private static void persistLiquidacionesPendientes(List<DebitosLiquidacionesPendientes> list, User user, Date fechaHasta, String tercerizadoras)
+			throws SystemException {
+		if (list == null) return;
+		for (DebitosLiquidacionesPendientes d : list) {
+			BusquedaDebitosTercerizadorasServiceUtil.grabarLiquidacionesPendientesDebitos(
+					d, user.getScreenName(), fechaHasta, tercerizadoras
+			);
+		}
+	}
+
+	private static void persistHospitales(List<DebitosHospitales> list, User user, Date fechaHasta, String tercerizadoras)
+			throws SystemException {
+		if (list == null) return;
+		for (DebitosHospitales d : list) {
+			BusquedaDebitosTercerizadorasServiceUtil.grabarHospitalesDebitos(
+					d, user.getScreenName(), fechaHasta, tercerizadoras
+			);
+		}
+	}
+
+	private static void persistReintegros(List<DebitosaReintegros> list, User user, Date fechaHasta, String tercerizadoras)
+			throws SystemException {
+		if (list == null) return;
+		for (DebitosaReintegros d : list) {
+			BusquedaDebitosTercerizadorasServiceUtil.grabarReintegrosDebitos(
+					d, user.getScreenName(), fechaHasta, tercerizadoras
+			);
+		}
+	}
+
+	private static void persistPrestadores(List<DebitosaPrestadores> list, User user, Date fechaHasta, String tercerizadoras)
+			throws SystemException {
+		if (list == null) return;
+		for (DebitosaPrestadores d : list) {
+			BusquedaDebitosTercerizadorasServiceUtil.grabarPrestadoresDebitos(
+					d, user.getScreenName(), fechaHasta, tercerizadoras
+			);
+		}
+	}
+
+	private static void persistNdb(BigDecimal totalDebitoPrestadoras, User user, Date fechaHasta, Date fechaDesde, String tercerizadoras)
+			throws SystemException {
+		BusquedaDebitosTercerizadorasServiceUtil.grabarNDB(
+				totalDebitoPrestadoras, user, fechaHasta, fechaDesde, tercerizadoras
+		);
+	}
+
+	// =========================================================================
+	// ======= TODO lo que sigue es tu implementación original (sin tocar) =======
+	// =========================================================================
+
+	private static HSSFWorkbook generarReporteLiquidacionesPendientes(List<DebitosLiquidacionesPendientes> list, HSSFWorkbook wb, HSSFSheet sheet) {
+
+		HSSFPrintSetup ps = sheet.getPrintSetup();
+		sheet.setAutobreaks(true);
+		ps.setPaperSize(HSSFPrintSetup.A4_PAPERSIZE);
+		ps.setFitHeight((short) 0);
+		ps.setFitWidth((short) 1);
+
+		HSSFCellStyle styleAll = getStyleAll(wb);
+		HSSFCellStyle styleBold = getStyleBold(wb);
+		HSSFCellStyle styleDate = getStyleDate(wb);
+		HSSFCellStyle styleMoney = getStyleMoney(wb);
+
+		int index = 0;
+		HSSFRow rowHeader = sheet.createRow(index);
+
+		HSSFCell cell0H = rowHeader.createCell(0);
+		cell0H.setCellValue(new HSSFRichTextString("HOSPITALES"));
+		cell0H.setCellStyle(styleBold);
+
+		HSSFCell cell1H = rowHeader.createCell(1);
+		cell1H.setCellValue(new HSSFRichTextString("FACTURA"));
+		cell1H.setCellStyle(styleBold);
+
+		HSSFCell cell2H = rowHeader.createCell(2);
+		cell2H.setCellValue(new HSSFRichTextString("MONTO"));
+		cell2H.setCellStyle(styleBold);
+
+		if (list == null || list.isEmpty()) {
+			return wb;
+		}
+
+		BigDecimal total = new BigDecimal("0");
+		BigDecimal totalPrestadorReclamos = new BigDecimal("0");
+
+		for (DebitosLiquidacionesPendientes debitosaLiq : list) {
+			index++;
+			total = total.add(crearHeaderLiquidacionesPendientes(sheet, index, debitosaLiq, styleBold,
+					styleAll, styleDate, styleMoney));
+			totalPrestadorReclamos = totalPrestadorReclamos.add(debitosaLiq.getCargoPrestadoraReclamo() != null ? debitosaLiq.getCargoPrestadoraReclamo() : BigDecimal.ZERO);
+		}
+		index++;
+		HSSFRow rowTotal = sheet.createRow(index);
+
+		HSSFCell cell = rowTotal.createCell(1);
+		cell.setCellValue(new HSSFRichTextString("Total"));
+		cell.setCellStyle(styleBold);
+
+		HSSFCell cell1 = rowTotal.createCell(2);
+		cell1.setCellValue(total.doubleValue());
+		cell1.setCellStyle(styleAll);
+
+		index++;
+		sheet.createRow(index);
+
+		sheet.autoSizeColumn((short) 0);
+		sheet.autoSizeColumn((short) 1);
+		sheet.autoSizeColumn((short) 2);
+		sheet.autoSizeColumn((short) 3);
+		sheet.autoSizeColumn((short) 4);
+		sheet.autoSizeColumn((short) 5);
+		sheet.autoSizeColumn((short) 6);
+		sheet.autoSizeColumn((short) 7);
+		sheet.autoSizeColumn((short) 8);
+
+		return wb;
+	}
+
+	private static BigDecimal crearHeaderLiquidacionesPendientes(HSSFSheet sheet, int index,
+																 DebitosLiquidacionesPendientes debitosaAutogestion, HSSFCellStyle styleBold,
+																 HSSFCellStyle styleAll, HSSFCellStyle styleDate,
+																 HSSFCellStyle styleMoney) {
+
+		HSSFRow rowHeader = sheet.createRow(index);
+
+		HSSFCell cell0 = rowHeader.createCell(0);
+		cell0.setCellValue(new HSSFRichTextString(debitosaAutogestion.getHospitalesAutogestion()));
+		cell0.setCellStyle(styleAll);
+
+		HSSFCell cell1 = rowHeader.createCell(1);
+		cell1.setCellValue(new HSSFRichTextString(debitosaAutogestion.getFactura()));
+		cell1.setCellStyle(styleAll);
+
+		if (BigDecimal.ZERO.compareTo(debitosaAutogestion.getMonto()) == 0) {
+			HSSFCell cell2 = rowHeader.createCell(2);
+			cell2.setCellValue("");
+			cell2.setCellStyle(styleAll);
+		} else {
+			HSSFCell cell2 = rowHeader.createCell(2);
+			cell2.setCellValue(debitosaAutogestion.getMonto().doubleValue());
+			cell2.setCellStyle(styleAll);
+		}
+
+		return debitosaAutogestion.getMonto() != null ? debitosaAutogestion.getMonto() : BigDecimal.ZERO;
+	}
+
+	private static BigDecimal crearHeaderHospitales(HSSFSheet sheet, int index,
+													DebitosHospitales debitosaHospitales, HSSFCellStyle styleBold,
+													HSSFCellStyle styleAll, HSSFCellStyle styleDate,
+													HSSFCellStyle styleMoney) {
+
+		HSSFRow rowHeader = sheet.createRow(index);
+
+		HSSFCell cell0 = rowHeader.createCell(0);
+		cell0.setCellValue(new HSSFRichTextString(debitosaHospitales.getHospital()));
+		cell0.setCellStyle(styleAll);
+
+		HSSFCell cell1 = rowHeader.createCell(1);
+		cell1.setCellValue(new HSSFRichTextString(debitosaHospitales.getFactura()));
+		cell1.setCellStyle(styleAll);
+
+		if (BigDecimal.ZERO.compareTo(debitosaHospitales.getMonto()) == 0) {
+			HSSFCell cell2 = rowHeader.createCell(2);
+			cell2.setCellValue("");
+			cell2.setCellStyle(styleAll);
+		} else {
+			HSSFCell cell2 = rowHeader.createCell(2);
+			cell2.setCellValue(debitosaHospitales.getMonto().doubleValue());
+			cell2.setCellStyle(styleAll);
+		}
+
+		HSSFCell cell4 = rowHeader.createCell(3);
+		cell4.setCellValue(new HSSFRichTextString(debitosaHospitales.getOrdenPago()));
+		cell4.setCellStyle(styleAll);
+
+		return debitosaHospitales.getMonto() != null ? debitosaHospitales.getMonto() : BigDecimal.ZERO;
+	}
+
+	private static HSSFWorkbook generarReporteHospitales(List<DebitosHospitales> list, HSSFWorkbook wb, HSSFSheet sheet) {
+
+		HSSFPrintSetup ps = sheet.getPrintSetup();
+		sheet.setAutobreaks(true);
+		ps.setPaperSize(HSSFPrintSetup.A4_PAPERSIZE);
+		ps.setFitHeight((short) 0);
+		ps.setFitWidth((short) 1);
+
+		HSSFCellStyle styleAll = getStyleAll(wb);
+		HSSFCellStyle styleBold = getStyleBold(wb);
+		HSSFCellStyle styleDate = getStyleDate(wb);
+		HSSFCellStyle styleMoney = getStyleMoney(wb);
+
+		int index = 0;
+		HSSFRow rowHeader = sheet.createRow(index);
+
+		HSSFCell cell0H = rowHeader.createCell(0);
+		cell0H.setCellValue(new HSSFRichTextString("HOSPITALES AUTOGESTION"));
+		cell0H.setCellStyle(styleBold);
+
+		HSSFCell cell1H = rowHeader.createCell(1);
+		cell1H.setCellValue(new HSSFRichTextString("FACTURA"));
+		cell1H.setCellStyle(styleBold);
+
+		HSSFCell cell2H = rowHeader.createCell(2);
+		cell2H.setCellValue(new HSSFRichTextString("MONTO"));
+		cell2H.setCellStyle(styleBold);
+
+		HSSFCell cell4H = rowHeader.createCell(3);
+		cell4H.setCellValue(new HSSFRichTextString("NUMERO DE OP"));
+		cell4H.setCellStyle(styleBold);
+
+		if (list == null || list.isEmpty()) {
+			return wb;
+		}
+
+		BigDecimal total = new BigDecimal("0");
+		BigDecimal totalCargoPrestadora = new BigDecimal("0");
+
+		for (DebitosHospitales debitosHospitales : list) {
+			index++;
+			total = total.add(crearHeaderHospitales(sheet, index, debitosHospitales, styleBold,
+					styleAll, styleDate, styleMoney));
+		}
+		index++;
+		HSSFRow rowTotal = sheet.createRow(index);
+
+		HSSFCell cell = rowTotal.createCell(1);
+		cell.setCellValue(new HSSFRichTextString("Total"));
+		cell.setCellStyle(styleBold);
+
+		HSSFCell cell1 = rowTotal.createCell(2);
+		cell1.setCellValue(total.doubleValue());
+		cell1.setCellStyle(styleAll);
+
+		index++;
+		sheet.createRow(index);
+
+		sheet.autoSizeColumn((short) 0);
+		sheet.autoSizeColumn((short) 1);
+		sheet.autoSizeColumn((short) 2);
+		sheet.autoSizeColumn((short) 3);
+		sheet.autoSizeColumn((short) 4);
+		sheet.autoSizeColumn((short) 5);
+		sheet.autoSizeColumn((short) 6);
+		sheet.autoSizeColumn((short) 7);
+		return wb;
+	}
+
+	private static HSSFWorkbook generarReporteReintegros(List<DebitosaReintegros> list, HSSFWorkbook wb, HSSFSheet sheet) {
+
+		HSSFPrintSetup ps = sheet.getPrintSetup();
+		sheet.setAutobreaks(true);
+		ps.setPaperSize(HSSFPrintSetup.A4_PAPERSIZE);
+		ps.setFitHeight((short) 0);
+		ps.setFitWidth((short) 1);
+
+		HSSFCellStyle styleAll = getStyleAll(wb);
+		HSSFCellStyle styleBold = getStyleBold(wb);
+		HSSFCellStyle styleDate = getStyleDate(wb);
+		HSSFCellStyle styleMoney = getStyleMoney(wb);
+
+		int index = 0;
+		HSSFRow rowHeader = sheet.createRow(index);
+
+		HSSFCell cell0H = rowHeader.createCell(0);
+		cell0H.setCellValue(new HSSFRichTextString("NUMERO DE REINTEGRO"));
+		cell0H.setCellStyle(styleBold);
+
+		HSSFCell cell1H = rowHeader.createCell(1);
+		cell1H.setCellValue(new HSSFRichTextString("APELLIDO"));
+		cell1H.setCellStyle(styleBold);
+
+		HSSFCell cell2H = rowHeader.createCell(2);
+		cell2H.setCellValue(new HSSFRichTextString("NOMBRE"));
+		cell2H.setCellStyle(styleBold);
+
+		HSSFCell cell3H = rowHeader.createCell(3);
+		cell3H.setCellValue(new HSSFRichTextString("DOCUMENTO"));
+		cell3H.setCellStyle(styleBold);
+
+		HSSFCell cell4H = rowHeader.createCell(4);
+		cell4H.setCellValue(new HSSFRichTextString("SECCIONAL"));
+		cell4H.setCellStyle(styleBold);
+
+		HSSFCell cell5H = rowHeader.createCell(5);
+		cell5H.setCellValue(new HSSFRichTextString("DESCRIPCION"));
+		cell5H.setCellStyle(styleBold);
+
+		HSSFCell cell6H = rowHeader.createCell(6);
+		cell6H.setCellValue(new HSSFRichTextString("MONTO"));
+		cell6H.setCellStyle(styleBold);
+
+		HSSFCell cell7H = rowHeader.createCell(7);
+		cell7H.setCellValue(new HSSFRichTextString("N. OP"));
+		cell7H.setCellStyle(styleBold);
+
+		HSSFCell cell8H = rowHeader.createCell(8);
+		cell8H.setCellValue(new HSSFRichTextString("FECHA OP"));
+		cell8H.setCellStyle(styleBold);
+
+		HSSFCell cell9H = rowHeader.createCell(9);
+		cell9H.setCellValue(new HSSFRichTextString("RECLAMOS"));
+		cell9H.setCellStyle(styleBold);
+
+		if (list == null || list.isEmpty()) {
+			return wb;
+		}
+
+		BigDecimal total = new BigDecimal("0");
+
+		for (DebitosaReintegros debitosaReintegros : list) {
+			index++;
+			total = total.add(crearHeaderDebitosaReintegros(sheet, index, debitosaReintegros, styleBold,
+					styleAll, styleDate, styleMoney));
+		}
+		index++;
+		HSSFRow rowTotal = sheet.createRow(index);
+
+		HSSFCell cell = rowTotal.createCell(5);
+		cell.setCellValue(new HSSFRichTextString("Total"));
+		cell.setCellStyle(styleBold);
+
+		HSSFCell cell1 = rowTotal.createCell(6);
+		cell1.setCellValue(total.doubleValue());
+		cell1.setCellStyle(styleAll);
+
+		index++;
+		sheet.createRow(index);
+
+		sheet.autoSizeColumn((short) 0);
+		sheet.autoSizeColumn((short) 1);
+		sheet.autoSizeColumn((short) 2);
+		sheet.autoSizeColumn((short) 3);
+		sheet.autoSizeColumn((short) 4);
+		sheet.autoSizeColumn((short) 5);
+		sheet.autoSizeColumn((short) 6);
+		sheet.autoSizeColumn((short) 7);
+		sheet.autoSizeColumn((short) 8);
+		sheet.autoSizeColumn((short) 9);
+		sheet.autoSizeColumn((short) 10);
+		sheet.autoSizeColumn((short) 11);
+		return wb;
+	}
+
+	private static BigDecimal crearHeaderDebitosaReintegros(HSSFSheet sheet, int index,
+															DebitosaReintegros debitosaReintegros, HSSFCellStyle styleBold,
+															HSSFCellStyle styleAll, HSSFCellStyle styleDate,
+															HSSFCellStyle styleMoney) {
+
+		HSSFRow rowHeader = sheet.createRow(index);
+
+		HSSFCell cell0 = rowHeader.createCell(0);
+		cell0.setCellValue(new HSSFRichTextString(debitosaReintegros.getNumReintegroToString()));
+		cell0.setCellStyle(styleAll);
+
+		HSSFCell cell1 = rowHeader.createCell(1);
+		cell1.setCellValue(new HSSFRichTextString(debitosaReintegros.getApellido()));
+		cell1.setCellStyle(styleAll);
+
+		HSSFCell cell2 = rowHeader.createCell(2);
+		cell2.setCellValue(new HSSFRichTextString(debitosaReintegros.getNombre()));
+		cell2.setCellStyle(styleAll);
+
+		HSSFCell cell3 = rowHeader.createCell(3);
+		cell3.setCellValue(new HSSFRichTextString(debitosaReintegros.getDocumento()));
+		cell3.setCellStyle(styleAll);
+
+		HSSFCell cell4 = rowHeader.createCell(4);
+		cell4.setCellValue(new HSSFRichTextString(debitosaReintegros.getSeccional()));
+		cell4.setCellStyle(styleAll);
+
+		HSSFCell cell5 = rowHeader.createCell(5);
+		cell5.setCellValue(new HSSFRichTextString(debitosaReintegros.getDescripcion()));
+		cell5.setCellStyle(styleAll);
+
+		if (debitosaReintegros.getImporteTotal().compareTo(BigDecimal.ZERO) == 0) {
+			HSSFCell cell6 = rowHeader.createCell(6);
+			cell6.setCellValue("");
+			cell6.setCellStyle(styleAll);
+		} else {
+			HSSFCell cell6 = rowHeader.createCell(6);
+			cell6.setCellValue(debitosaReintegros.getImporteTotal().doubleValue());
+			cell6.setCellStyle(styleAll);
+		}
+
+		HSSFCell cell7 = rowHeader.createCell(7);
+		cell7.setCellValue(new HSSFRichTextString(debitosaReintegros.getNumeroOP()));
+		cell7.setCellStyle(styleAll);
+
+		HSSFCell cell8 = rowHeader.createCell(8);
+		cell8.setCellValue(new HSSFRichTextString(debitosaReintegros.getFechaOP().toString()));
+		cell8.setCellStyle(styleAll);
+
+		HSSFCell cell9 = rowHeader.createCell(9);
+		cell9.setCellValue(debitosaReintegros.getReclamoPrestacional());
+		cell9.setCellStyle(styleAll);
+
+		return debitosaReintegros.getImporteTotal() != null ? debitosaReintegros.getImporteTotal() : BigDecimal.ZERO;
+	}
+
+	private static HSSFWorkbook generarReporterestadores(List<DebitosaPrestadores> list, HSSFWorkbook wb, HSSFSheet sheet) {
+
+		HSSFPrintSetup ps = sheet.getPrintSetup();
+		sheet.setAutobreaks(true);
+		ps.setPaperSize(HSSFPrintSetup.A4_PAPERSIZE);
+		ps.setFitHeight((short) 0);
+		ps.setFitWidth((short) 1);
+
+		HSSFCellStyle styleAll = getStyleAll(wb);
+		HSSFCellStyle styleBold = getStyleBold(wb);
+		HSSFCellStyle styleDate = getStyleDate(wb);
+		HSSFCellStyle styleMoney = getStyleMoney(wb);
+
+		int index = 0;
+		HSSFRow rowHeader = sheet.createRow(index);
+
+		HSSFCell cell0H = rowHeader.createCell(0);
+		cell0H.setCellValue(new HSSFRichTextString("PRESTADOR"));
+		cell0H.setCellStyle(styleBold);
+
+		HSSFCell cell1H = rowHeader.createCell(1);
+		cell1H.setCellValue(new HSSFRichTextString("FACTURA"));
+		cell1H.setCellStyle(styleBold);
+
+		HSSFCell cell2H = rowHeader.createCell(2);
+		cell2H.setCellValue(new HSSFRichTextString("MONTO"));
+		cell2H.setCellStyle(styleBold);
+
+		HSSFCell cell4H = rowHeader.createCell(3);
+		cell4H.setCellValue(new HSSFRichTextString("NUMERO DE OP"));
+		cell4H.setCellStyle(styleBold);
+
+		HSSFCell cell5H = rowHeader.createCell(4);
+		cell5H.setCellValue(new HSSFRichTextString("RECLAMO"));
+		cell5H.setCellStyle(styleBold);
+
+		if (list == null || list.isEmpty()) {
+			return wb;
+		}
+
+		BigDecimal total = new BigDecimal("0");
+		BigDecimal totalCargoPrestadora = new BigDecimal("0");
+
+		for (DebitosaPrestadores debitosaPrestadores : list) {
+			index++;
+			total = total.add(crearHeaderDebitosaPrestadores(sheet, index, debitosaPrestadores, styleBold,
+					styleAll, styleDate, styleMoney));
+		}
+		index++;
+		HSSFRow rowTotal = sheet.createRow(index);
+
+		HSSFCell cell = rowTotal.createCell(1);
+		cell.setCellValue(new HSSFRichTextString("Total"));
+		cell.setCellStyle(styleBold);
+
+		HSSFCell cell1 = rowTotal.createCell(2);
+		cell1.setCellValue(total.doubleValue());
+		cell1.setCellStyle(styleAll);
+
+		index++;
+		sheet.createRow(index);
+
+		sheet.autoSizeColumn((short) 0);
+		sheet.autoSizeColumn((short) 1);
+		sheet.autoSizeColumn((short) 2);
+		sheet.autoSizeColumn((short) 3);
+		sheet.autoSizeColumn((short) 4);
+		sheet.autoSizeColumn((short) 5);
+		sheet.autoSizeColumn((short) 6);
+		sheet.autoSizeColumn((short) 7);
+		return wb;
+	}
+
+	private static BigDecimal crearHeaderDebitosaPrestadores(HSSFSheet sheet, int index,
+															 DebitosaPrestadores debitosaPrestadores, HSSFCellStyle styleBold,
+															 HSSFCellStyle styleAll, HSSFCellStyle styleDate,
+															 HSSFCellStyle styleMoney) {
+
+		HSSFRow rowHeader = sheet.createRow(index);
+
+		HSSFCell cell0 = rowHeader.createCell(0);
+		cell0.setCellValue(new HSSFRichTextString(debitosaPrestadores.getPrestador()));
+		cell0.setCellStyle(styleAll);
+
+		HSSFCell cell1 = rowHeader.createCell(1);
+		cell1.setCellValue(new HSSFRichTextString(debitosaPrestadores.getFactura()));
+		cell1.setCellStyle(styleAll);
+
+		if (debitosaPrestadores.getMonto().compareTo(BigDecimal.ZERO) == 0) {
+			HSSFCell cell2 = rowHeader.createCell(2);
+			cell2.setCellValue("");
+			cell2.setCellStyle(styleAll);
+		} else {
+			HSSFCell cell2 = rowHeader.createCell(2);
+			cell2.setCellValue(debitosaPrestadores.getMonto().doubleValue());
+			cell2.setCellStyle(styleAll);
+		}
+
+		HSSFCell cell4 = rowHeader.createCell(3);
+		cell4.setCellValue(new HSSFRichTextString(debitosaPrestadores.getOrdenPago()));
+		cell4.setCellStyle(styleAll);
+
+		HSSFCell cell5 = rowHeader.createCell(4);
+
+		// 1) Preferir el String (plural) si viene seteado
+		String reclamoTxt = null;
+		String s = debitosaPrestadores.getReclamosPrestacionales();
+		if (s != null && s.trim().length() > 0) {
+			reclamoTxt = s.trim();
+		}
+
+		// 2) Fallback al numérico (singular) si el String no vino
+		if (reclamoTxt == null) {
+			Integer n = debitosaPrestadores.getReclamoPrestacional();
+			if (n != null && n.intValue() != 0) {
+				reclamoTxt = String.valueOf(n.intValue());
+			}
+		}
+
+		cell5.setCellValue(new HSSFRichTextString(reclamoTxt != null ? reclamoTxt : ""));
+		cell5.setCellStyle(styleAll);
+
+		return debitosaPrestadores.getMonto() != null ? debitosaPrestadores.getMonto() : BigDecimal.ZERO;
+	}
+
+	private static BigDecimal generarTotal(DebitosaTotal deb) {
+		BigDecimal total = new BigDecimal(0);
+
+		total = total.add(deb.getMontoLiquidacionPendiente() != null ? deb.getMontoLiquidacionPendiente() : new BigDecimal(0));
+		total = total.add(deb.getMontoHospitales() != null ? deb.getMontoHospitales() : new BigDecimal(0));
+		total = total.add(deb.getMontoReintegros() != null ? deb.getMontoReintegros() : new BigDecimal(0));
+		total = total.add(deb.getMontoPrestadores() != null ? deb.getMontoPrestadores() : new BigDecimal(0));
+
+		return total;
+	}
+
+	private static HSSFWorkbook generarReporteTotal(DebitosaTotal deb, HSSFWorkbook wb, HSSFSheet sheet, String tercerizadoras) {
+
+		HSSFPrintSetup ps = sheet.getPrintSetup();
+		sheet.setAutobreaks(true);
+		ps.setPaperSize(HSSFPrintSetup.A4_PAPERSIZE);
+		ps.setFitHeight((short) 0);
+		ps.setFitWidth((short) 1);
+
+		HSSFCellStyle styleAll = getStyleAll(wb);
+		HSSFCellStyle styleBold = getStyleBold(wb);
+		HSSFCellStyle styleDate = getStyleDate(wb);
+		HSSFCellStyle styleMoney = getStyleMoney(wb);
+
+		if (deb == null) {
+			return wb;
+		}
+
+		int index = 0;
+		HSSFRow rowHeader = sheet.createRow(index);
+
+		HSSFCell cell0H = rowHeader.createCell(0);
+		cell0H.setCellValue(new HSSFRichTextString("HOSPITALES"));
+		cell0H.setCellStyle(styleBold);
+
+		HSSFCell cell1H = rowHeader.createCell(1);
+		cell1H.setCellValue(new HSSFRichTextString("MONTO"));
+		cell1H.setCellStyle(styleBold);
+
+		BigDecimal total = new BigDecimal(0);
+		BigDecimal totalPrestador = new BigDecimal(0);
+
+		index++;
+		crearHeaderTotalLiquidacionesPendientes(sheet, index, deb, styleBold, styleAll, styleDate, styleMoney);
+		index++;
+		crearHeaderTotalReintegros(sheet, index, deb, styleBold, styleAll, styleDate, styleMoney);
+		index++;
+		crearHeaderTotalPrestadores(sheet, index, deb, styleBold, styleAll, styleDate, styleMoney);
+		index++;
+		crearHeaderTotalAutogestion(sheet, index, deb, styleBold, styleAll, styleDate, styleMoney);
+
+		index++;
+		index++;
+		index++;
+		HSSFRow rowTotal = sheet.createRow(index);
+
+		HSSFCell cell = rowTotal.createCell(0);
+		cell.setCellValue(new HSSFRichTextString("Total"));
+		cell.setCellStyle(styleBold);
+
+		HSSFCell cell1 = rowTotal.createCell(1);
+
+		total = total.add(deb.getMontoLiquidacionPendiente() != null ? deb.getMontoLiquidacionPendiente() : new BigDecimal(0));
+		total = total.add(deb.getMontoHospitales() != null ? deb.getMontoHospitales() : new BigDecimal(0));
+		total = total.add(deb.getMontoReintegros() != null ? deb.getMontoReintegros() : new BigDecimal(0));
+		total = total.add(deb.getMontoPrestadores() != null ? deb.getMontoPrestadores() : new BigDecimal(0));
+
+		totalPrestador = totalPrestador.add(deb.getMontoLiquidacionPendienteDebito());
+		totalPrestador = totalPrestador.add(deb.getMontoHospitaleDebito());
+		totalPrestador = totalPrestador.add(deb.getMontoReintegroDebito());
+		totalPrestador = totalPrestador.add(deb.getMontoPrestadoreDebito());
+
+		cell1.setCellValue(total.doubleValue());
+		cell1.setCellStyle(styleAll);
+
+		index++;
+		sheet.createRow(index);
+
+		sheet.autoSizeColumn((short) 0);
+		sheet.autoSizeColumn((short) 1);
+		sheet.autoSizeColumn((short) 2);
+		sheet.autoSizeColumn((short) 3);
+		sheet.autoSizeColumn((short) 4);
+		sheet.autoSizeColumn((short) 5);
+		return wb;
+	}
+
+	private static void crearHeaderTotalLiquidacionesPendientes(HSSFSheet sheet, int index,
+																DebitosaTotal debitoTotal, HSSFCellStyle styleBold,
+																HSSFCellStyle styleAll, HSSFCellStyle styleDate,
+																HSSFCellStyle styleMoney) {
+
+		HSSFRow rowHeader = sheet.createRow(index);
+
+		HSSFCell cell0 = rowHeader.createCell(0);
+		cell0.setCellValue(new HSSFRichTextString("HOSPITALES"));
+		cell0.setCellStyle(styleAll);
+
+		HSSFCell cell1 = rowHeader.createCell(1);
+		cell1.setCellValue(debitoTotal.getMontoHospitales() != null ? debitoTotal.getMontoHospitales().doubleValue() : 0);
+		cell1.setCellStyle(styleAll);
+	}
+
+	private static void crearHeaderTotalReintegros(HSSFSheet sheet, int index,
+												   DebitosaTotal debitoTotal, HSSFCellStyle styleBold,
+												   HSSFCellStyle styleAll, HSSFCellStyle styleDate,
+												   HSSFCellStyle styleMoney) {
+
+		HSSFRow rowHeader1 = sheet.createRow(index);
+
+		HSSFCell cell3 = rowHeader1.createCell(0);
+		cell3.setCellValue(new HSSFRichTextString("REINTEGROS"));
+		cell3.setCellStyle(styleAll);
+
+		HSSFCell cell4 = rowHeader1.createCell(1);
+		cell4.setCellValue(debitoTotal.getMontoReintegros() != null ? debitoTotal.getMontoReintegros().doubleValue() : 0);
+		cell4.setCellStyle(styleAll);
+	}
+
+	private static void crearHeaderTotalPrestadores(HSSFSheet sheet, int index,
+													DebitosaTotal debitoTotal, HSSFCellStyle styleBold,
+													HSSFCellStyle styleAll, HSSFCellStyle styleDate,
+													HSSFCellStyle styleMoney) {
+
+		HSSFRow rowHeader2 = sheet.createRow(index);
+
+		HSSFCell cell6 = rowHeader2.createCell(0);
+		cell6.setCellValue(new HSSFRichTextString("PRESTADORES"));
+		cell6.setCellStyle(styleAll);
+
+		HSSFCell cell7 = rowHeader2.createCell(1);
+		cell7.setCellValue(debitoTotal.getMontoPrestadores() != null ? debitoTotal.getMontoPrestadores().doubleValue() : 0);
+		cell7.setCellStyle(styleAll);
+	}
+
+	private static void crearHeaderTotalAutogestion(HSSFSheet sheet, int index,
+													DebitosaTotal debitoTotal, HSSFCellStyle styleBold,
+													HSSFCellStyle styleAll, HSSFCellStyle styleDate,
+													HSSFCellStyle styleMoney) {
+
+		HSSFRow rowHeader3 = sheet.createRow(index);
+
+		HSSFCell cell9 = rowHeader3.createCell(0);
+		cell9.setCellValue(new HSSFRichTextString("LIQUIDACIONES PENDIENTES"));
+		cell9.setCellStyle(styleAll);
+
+		HSSFCell cell10 = rowHeader3.createCell(1);
+		cell10.setCellValue(debitoTotal.getMontoLiquidacionPendiente() != null ? debitoTotal.getMontoLiquidacionPendiente().doubleValue() : 0);
+		cell10.setCellStyle(styleAll);
+	}
+
+	/** Param exacto o por suffix (namespace Liferay). Devuelve "" si no está. */
+	private static String getParamAny(HttpServletRequest req, String name, String rid) {
+		String exact = ParamUtil.getString(req, name);
+		if (exact != null && exact.trim().length() > 0) {
+			_log.info("[XLS][" + rid + "][PARAM] exact " + name + "=" + exact);
+			return exact;
+		}
+
+		try {
+			java.util.Map pm = req.getParameterMap();
+			if (pm != null) {
+				for (java.util.Iterator it = pm.keySet().iterator(); it.hasNext();) {
+					String k = String.valueOf(it.next());
+					if (k != null && k.endsWith(name)) {
+						String vv = ParamUtil.getString(req, k);
+						if (vv != null && vv.trim().length() > 0) {
+							_log.info("[XLS][" + rid + "][PARAM] suffix " + name + " matchedKey=" + k + " value=" + vv);
+							return vv;
+						}
+						_log.info("[XLS][" + rid + "][PARAM] suffix " + name + " matchedKey=" + k + " but blank");
+					}
+				}
+			}
+		} catch (Exception e) {
+			_log.error("[XLS][" + rid + "][PARAM] suffixScanError name=" + name, e);
+		}
+
+		_log.info("[XLS][" + rid + "][PARAM] missing " + name);
+		return "";
+	}
+
+	private static String getParamAny(HttpServletRequest req, String rid, String... names) {
+		for (int i = 0; i < names.length; i++) {
+			String v = getParamAny(req, names[i], rid);
+			if (v != null && v.trim().length() > 0) return v;
+		}
+		return "";
+	}
+
+}

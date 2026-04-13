@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report name" pageWidth="595" pageHeight="842" whenNoDataType="BlankPage" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="1.8150000000000581"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="id_ini" class="java.lang.String"/>
+	<parameter name="terceros" class="java.lang.String"/>
+	<parameter name="importe_terceros" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select numero_nd, importe, cuit_sucu, razon_soc, domicilio, fecha, conceptos, observaciones, transf_importe_a_texto(importe) as importe_texto
+from reporte_nota_debito_liquidacion(cast ($P{id_ini} as integer), cast ($P{terceros} as character varying), cast ($P{importe_terceros} as numeric))]]>
+	</queryString>
+	<field name="numero_nd" class="java.lang.String"/>
+	<field name="observaciones" class="java.lang.String"/>
+	<field name="importe" class="java.math.BigDecimal"/>
+	<field name="cuit_sucu" class="java.lang.String"/>
+	<field name="fecha" class="java.lang.String"/>
+	<field name="conceptos" class="java.lang.String"/>
+	<field name="razon_soc" class="java.lang.String"/>
+	<field name="domicilio" class="java.lang.String"/>
+	<field name="importe_texto" class="java.lang.String"/>
+	<detail>
+		<band height="842" splitType="Stretch">
+			<rectangle>
+				<reportElement x="26" y="25" width="542" height="788"/>
+			</rectangle>
+			<line>
+				<reportElement x="26" y="123" width="542" height="1"/>
+			</line>
+			<staticText>
+				<reportElement x="327" y="66" width="170" height="13"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[C.U.I.T : 30-62913856-7]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="76" y="32" width="152" height="35"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<text><![CDATA[OBRA SOCIAL del PERSONAL de la INDUSTRIA MOLINERA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="40" y="95" width="122" height="11"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[IVA EXENTO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="326" y="30" width="100" height="14"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[NOTA DE DÉBITO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="327" y="47" width="30" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Fecha]]></text>
+			</staticText>
+			<line>
+				<reportElement x="26" y="726" width="542" height="1"/>
+			</line>
+			<line>
+				<reportElement x="26" y="182" width="542" height="1"/>
+			</line>
+			<staticText>
+				<reportElement x="39" y="204" width="64" height="12"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[DESCRIPCIÓN:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="427" y="30" width="101" height="13"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{numero_nd}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="357" y="47" width="92" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{fecha}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="110" y="150" width="177" height="26"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{razon_soc}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="110" y="134" width="144" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{cuit_sucu}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="313" y="742" width="137" height="16"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{importe}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="302" y="742" width="14" height="14"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[$]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="40" y="227" width="450" height="38"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{conceptos} == null ? "" : $F{conceptos}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="40" y="82" width="179" height="13"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[Tel.: 4942-6734/7491]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="40" y="108" width="179" height="13"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[R.N.O.S. 11260/8]]></text>
+			</staticText>
+			<line>
+				<reportElement x="295" y="53" width="1" height="129"/>
+			</line>
+			<staticText>
+				<reportElement x="327" y="81" width="183" height="27"/>
+				<textElement>
+					<font size="6"/>
+				</textElement>
+				<text><![CDATA[Ingresos Brutos Exento. Caja Previsión: 62913858 Ex Comercio.
+Inicio de Actividades: 05/05/70]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement x="280" y="25" width="29" height="28"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="287" y="25" width="20" height="27"/>
+				<textElement>
+					<font fontName="SansSerif" size="20" isBold="true"/>
+				</textElement>
+				<text><![CDATA[C]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="40" y="270" width="488" height="437"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{observaciones}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="295" y="727" width="1" height="53"/>
+			</line>
+			<staticText>
+				<reportElement x="29" y="727" width="64" height="11"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[SON PESOS:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="36" y="134" width="60" height="11"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[CUIT:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="37" y="150" width="66" height="11"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[RAZÓN SOCIAL:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="40" y="71" width="179" height="12"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[Mexico 2070 - Cap. Fed. CP(1222) ]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="308" y="134" width="234" height="41"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{domicilio}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="520" y="802" width="48" height="11"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[ORIGINAL]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="48" y="787" width="512" height="14"/>
+				<textElement>
+					<font isBold="false"/>
+				</textElement>
+				<text><![CDATA[EXCLUIDO RÉGIMEN FACTURACIÓN ARTÍCULO 3 INCISO L RESOLUCIÓN GENERAL 3419]]></text>
+			</staticText>
+			<line>
+				<reportElement x="26" y="780" width="542" height="1"/>
+			</line>
+			<staticText>
+				<reportElement x="301" y="727" width="64" height="11"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[TOTAL PESOS:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="29" y="742" width="265" height="37"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{importe_texto}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="842">
+			<rectangle>
+				<reportElement x="26" y="30" width="542" height="781"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="326" y="35" width="100" height="14"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[NOTA DE DÉBITO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="327" y="52" width="30" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Fecha]]></text>
+			</staticText>
+			<line>
+				<reportElement x="295" y="58" width="1" height="129"/>
+			</line>
+			<staticText>
+				<reportElement x="40" y="113" width="179" height="13"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[R.N.O.S. 11260/8]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement x="280" y="30" width="29" height="28"/>
+			</rectangle>
+			<textField>
+				<reportElement x="110" y="155" width="177" height="26"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{razon_soc}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="110" y="139" width="144" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{cuit_sucu}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="37" y="155" width="66" height="11"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[RAZÓN SOCIAL:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="427" y="35" width="101" height="13"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{numero_nd}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="327" y="86" width="183" height="27"/>
+				<textElement>
+					<font size="6"/>
+				</textElement>
+				<text><![CDATA[Ingresos Brutos Exento. Caja Previsión: 62913858 Ex Comercio.
+Inicio de Actividades: 05/05/70]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="36" y="139" width="60" height="11"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[CUIT:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="327" y="71" width="170" height="13"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[C.U.I.T : 30-62913856-7]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="357" y="52" width="92" height="11"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{fecha}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="40" y="100" width="122" height="11"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[IVA EXENTO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="40" y="87" width="179" height="13"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[Tel.: 4942-6734/7491]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="308" y="139" width="234" height="41"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{domicilio}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="76" y="37" width="152" height="35"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<text><![CDATA[OBRA SOCIAL del PERSONAL de la INDUSTRIA MOLINERA]]></text>
+			</staticText>
+			<line>
+				<reportElement x="26" y="187" width="542" height="1"/>
+			</line>
+			<line>
+				<reportElement x="26" y="128" width="542" height="1"/>
+			</line>
+			<staticText>
+				<reportElement x="40" y="76" width="179" height="12"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[Mexico 2070 - Cap. Fed. CP(1222) ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="301" y="740" width="14" height="14"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[$]]></text>
+			</staticText>
+			<line>
+				<reportElement x="295" y="725" width="1" height="53"/>
+			</line>
+			<staticText>
+				<reportElement x="520" y="800" width="48" height="11"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[DUPLICADO]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="40" y="225" width="450" height="38"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{conceptos} == null ? "" : $F{conceptos}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="39" y="202" width="64" height="12"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[DESCRIPCIÓN:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="48" y="785" width="512" height="14"/>
+				<textElement>
+					<font isBold="false"/>
+				</textElement>
+				<text><![CDATA[EXCLUIDO RÉGIMEN FACTURACIÓN ARTÍCULO 3 INCISO L RESOLUCIÓN GENERAL 3419]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="40" y="268" width="488" height="437"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{observaciones}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="26" y="778" width="542" height="1"/>
+			</line>
+			<line>
+				<reportElement x="26" y="724" width="542" height="1"/>
+			</line>
+			<staticText>
+				<reportElement x="287" y="30" width="20" height="27"/>
+				<textElement>
+					<font fontName="SansSerif" size="20" isBold="true"/>
+				</textElement>
+				<text><![CDATA[C]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="312" y="740" width="137" height="16"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{importe}]]></textFieldExpression>
+			</textField>
+			<break>
+				<reportElement x="0" y="0" width="100" height="1"/>
+			</break>
+			<staticText>
+				<reportElement x="30" y="725" width="64" height="11"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[SON PESOS:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="300" y="725" width="64" height="11"/>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<text><![CDATA[TOTAL PESOS:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="29" y="740" width="265" height="37"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{importe_texto}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

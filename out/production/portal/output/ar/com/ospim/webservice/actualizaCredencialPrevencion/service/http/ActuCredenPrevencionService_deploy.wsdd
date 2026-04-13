@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<deployment xmlns="http://xml.apache.org/axis/wsdd/" xmlns:java="http://xml.apache.org/axis/wsdd/providers/java">
+	<service name="Portlet_ActualizaAfiliacionPrevencion_ActuCredenPrevencionService" provider="java:RPC" style="rpc" use="encoded">
+		<parameter name="wsdlTargetNamespace" value="urn:http.service.actualizaCredencialPrevencion.webservice.ospim.com.ar"/>
+		<parameter name="wsdlServiceElement" value="ActuCredenPrevencionServiceSoapService"/>
+		<parameter name="schemaUnqualified" value="http://beans.webservice.ospim.com.ar,http://dto.webservice.ospim.com.ar"/>
+		<parameter name="wsdlServicePort" value="Portlet_ActualizaAfiliacionPrevencion_ActuCredenPrevencionService"/>
+		<parameter name="className" value="ar.com.ospim.webservice.actualizaCredencialPrevencion.service.http.ActuCredenPrevencionServiceSoap"/>
+		<parameter name="wsdlPortType" value="ActuCredenPrevencionServiceSoap"/>
+		<parameter name="typeMappingVersion" value="1.2"/>
+		<operation xmlns:operNS="urn:http.service.actualizaCredencialPrevencion.webservice.ospim.com.ar" xmlns:rtns="http://beans.webservice.ospim.com.ar" name="actualizarCredencialBeneficiario" qname="operNS:actualizarCredencialBeneficiario" returnQName="actualizarCredencialBeneficiarioReturn" returnType="rtns:ResultadoActualizacionCredencial" soapAction="">
+			<parameter xmlns:tns="http://beans.webservice.ospim.com.ar" qname="mensaje" type="tns:MensajeActualizacionCredencial"></parameter>
+		</operation>
+		<parameter name="allowedMethods" value="actualizarCredencialBeneficiario"/>
+		<typeMapping xmlns:ns="http://beans.webservice.ospim.com.ar" qname="ns:MensajeActualizacionCredencial" type="java:ar.com.ospim.webservice.beans.MensajeActualizacionCredencial" serializer="org.apache.axis.encoding.ser.BeanSerializerFactory" deserializer="org.apache.axis.encoding.ser.BeanDeserializerFactory" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"></typeMapping>
+		<typeMapping xmlns:ns="http://beans.webservice.ospim.com.ar" qname="ns:ResultadoActualizacionCredencial" type="java:ar.com.ospim.webservice.beans.ResultadoActualizacionCredencial" serializer="org.apache.axis.encoding.ser.BeanSerializerFactory" deserializer="org.apache.axis.encoding.ser.BeanDeserializerFactory" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"></typeMapping>
+		<typeMapping xmlns:ns="http://beans.webservice.ospim.com.ar" qname="ns:CabeceraActualizacionCredencial" type="java:ar.com.ospim.webservice.beans.CabeceraActualizacionCredencial" serializer="org.apache.axis.encoding.ser.BeanSerializerFactory" deserializer="org.apache.axis.encoding.ser.BeanDeserializerFactory" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"></typeMapping>
+		<typeMapping xmlns:ns="http://beans.webservice.ospim.com.ar" qname="ns:DetalleActualizacionCredencial" type="java:ar.com.ospim.webservice.beans.DetalleActualizacionCredencial" serializer="org.apache.axis.encoding.ser.BeanSerializerFactory" deserializer="org.apache.axis.encoding.ser.BeanDeserializerFactory" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"></typeMapping>
+		<typeMapping xmlns:ns="http://dto.webservice.ospim.com.ar" qname="ns:AfiliacionPrevencionDTO" type="java:ar.com.ospim.webservice.dto.AfiliacionPrevencionDTO" serializer="org.apache.axis.encoding.ser.BeanSerializerFactory" deserializer="org.apache.axis.encoding.ser.BeanDeserializerFactory" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"></typeMapping>
+	</service>
+</deployment>

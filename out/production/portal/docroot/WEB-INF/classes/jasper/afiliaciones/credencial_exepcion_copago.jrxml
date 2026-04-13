@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report name" pageWidth="255" pageHeight="170" columnWidth="255" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String"/>
+	<parameter name="cuil_titular" class="java.lang.String"/>
+	<parameter name="inte" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select * from traer_credencial_exepcion_copago ($P{cuil_titular} ,cast($P{inte} as integer))]]>
+	</queryString>
+	<field name="nom_ape" class="java.lang.String"/>
+	<field name="tipo_docu" class="java.lang.String"/>
+	<field name="nro_doc" class="java.lang.String"/>
+	<field name="fecha_vigen_desde" class="java.lang.String"/>
+	<field name="fecha_vigen_hasta" class="java.lang.String"/>
+	<field name="plan" class="java.lang.String"/>
+	<field name="logo" class="java.lang.String"/>
+	<detail>
+		<band height="169" splitType="Stretch">
+			<rectangle>
+				<reportElement x="8" y="124" width="112" height="12" backcolor="#C0C0C0"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="133" y="68" width="109" height="13"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Plan – Cat. Farm.]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement x="7" y="47" width="239" height="12" backcolor="#C0C0C0"/>
+			</rectangle>
+			<rectangle>
+				<reportElement x="130" y="124" width="116" height="12" backcolor="#C0C0C0"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="8" y="28" width="110" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Apellido y Nombre]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="8" y="67" width="83" height="14"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{tipo_docu}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="9" y="104" width="111" height="15"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Vigencia desde]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="9" y="124" width="109" height="13"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{fecha_vigen_desde}==null?"":$F{fecha_vigen_desde}.toString()]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="133" y="124" width="109" height="13"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{fecha_vigen_hasta}==null?"":$F{fecha_vigen_hasta}.toString()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="131" y="104" width="115" height="15"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Vigencia hasta]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement x="9" y="85" width="112" height="13" backcolor="#C0C0C0"/>
+			</rectangle>
+			<textField>
+				<reportElement x="8" y="47" width="249" height="12"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans Mono" size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{nom_ape}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="11" y="84" width="97" height="14"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{nro_doc}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement x="131" y="85" width="115" height="12" backcolor="#C0C0C0"/>
+			</rectangle>
+			<textField>
+				<reportElement x="138" y="85" width="95" height="13"/>
+				<box leftPadding="2">
+					<pen lineWidth="0.0"/>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{plan}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="7" y="144" width="124" height="15"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[EXENTO DE COPAGO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="131" y="144" width="116" height="15"/>
+				<textElement verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[No válido como credencial]]></text>
+			</staticText>
+			<image>
+				<reportElement x="9" y="5" width="106" height="22"/>
+				<imageExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "logo_ospim.jpg"]]></imageExpression>
+			</image>
+			<image>
+				<reportElement x="160" y="8" width="87" height="22"/>
+				<imageExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + $F{logo}]]></imageExpression>
+			</image>
+		</band>
+	</detail>
+</jasperReport>

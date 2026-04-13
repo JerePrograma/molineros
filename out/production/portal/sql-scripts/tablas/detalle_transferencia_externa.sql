@@ -1,0 +1,23 @@
+create table detalle_transferencia_externa(
+fecha_proceso_transf timestamp without time zone, 
+codigo_organismo_transf character varying(4), 
+debito_credito_transf character(1), 
+codigo_organismo character varying(4), 
+numero_expediente character varying(9), 
+fecha_proceso date, 
+fecha_transferencia date, 
+clasif_expediente character varying(2),  
+importe_total numeric(13,2), 
+nro_cuota int,
+importe_transferencia numeric(13,2),
+debito_credito character(1), 
+nro_expediente_original character varying(9), 
+codigo_htal character varying(8), 
+nro_expediente_anssal character varying(30), 
+observacion character varying(50), 
+detalle_juzgado character varying(100),
+detalle_secretaria character varying(50), 
+autos character varying(1024), 
+constraint pk_det_transf_ext primary key (fecha_proceso_transf, codigo_organismo_transf, debito_credito_transf, numero_expediente, debito_credito),
+constraint fk_transferencia_ext foreign key (fecha_proceso_transf, codigo_organismo_transf, debito_credito_transf) references transferencia_externa(fecha_proceso, codigo_organismo, debito_credito)
+)

@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report name" pageWidth="595" pageHeight="842" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="137"/>
+	<parameter name="entidad" class="java.lang.String"/>
+	<parameter name="id_caja_chica" class="java.lang.String"/>
+	<parameter name="id_seccional" class="java.lang.String"/>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String"/>
+	<parameter name="des_seccional" class="java.lang.String"/>
+	<parameter name="nombre" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select c.*,coalesce(e.razon_soc,sec.descripcion) as razon_social , uc.descripcion_original as concepto from
+cajachica.caja_chica_ospim_comprobantes c
+left join informacion_afip.empresa e on c.cuit_acreedor = e.cuit and c.sucu_acreedor=e.sucursal
+left join seccional sec on sec.id_seccional= cast(c.sucu_acreedor as integer)
+left join concepto_maestro uc on c.concepto_id=uc.id
+and cast(uc.valido_desde as date)  <= cast(c.fecha as date)
+and cast(uc.valido_hasta as date)  >= cast(c.fecha as date)
+where ( $P{id_caja_chica} is null or  cast($P{id_caja_chica} as integer)= 0 or  (c.cajachica_id=cast ($P{id_caja_chica} as integer)))  and
+      ($P{id_seccional} is null  or  cast($P{id_seccional} as character varying)=''  or   cast($P{id_seccional} as integer)=0 or ( $P{id_seccional} is not null and c.seccional=cast($P{id_seccional} as integer))) and
+      c.ordenpago_id is null and c.baja_fecha is null;]]>
+	</queryString>
+	<field name="id" class="java.lang.Integer"/>
+	<field name="id_punto_venta" class="java.lang.Integer"/>
+	<field name="compro_tipo" class="java.lang.String"/>
+	<field name="compro_nro" class="java.lang.String"/>
+	<field name="fecha" class="java.sql.Date"/>
+	<field name="total" class="java.math.BigDecimal"/>
+	<field name="observaciones" class="java.lang.String"/>
+	<field name="alta_fecha" class="java.sql.Timestamp"/>
+	<field name="alta_usr" class="java.lang.String"/>
+	<field name="modi_fecha" class="java.sql.Timestamp"/>
+	<field name="modi_usr" class="java.lang.String"/>
+	<field name="baja_fecha" class="java.sql.Timestamp"/>
+	<field name="baja_usr" class="java.lang.String"/>
+	<field name="compro_letra" class="java.lang.String"/>
+	<field name="compro_sucu" class="java.lang.Integer"/>
+	<field name="seccional" class="java.lang.Integer"/>
+	<field name="cuit_acreedor" class="java.lang.String"/>
+	<field name="sucu_acreedor" class="java.lang.String"/>
+	<field name="importe_original" class="java.math.BigDecimal"/>
+	<field name="fecha_rendicion" class="java.sql.Date"/>
+	<field name="concepto_id" class="java.lang.Integer"/>
+	<field name="cajachica_id" class="java.lang.Integer"/>
+	<field name="solicita_reposicion" class="java.lang.Boolean"/>
+	<field name="rechazado" class="java.lang.Boolean"/>
+	<field name="ordenpago_id" class="java.lang.Integer"/>
+	<field name="reposicion_aprobada_sin_op" class="java.lang.Boolean"/>
+	<field name="fecha_recibo" class="java.sql.Date"/>
+	<field name="razon_social" class="java.lang.String"/>
+	<field name="concepto" class="java.lang.String"/>
+	<variable name="vTotal" class="java.math.BigDecimal" resetType="Group" resetGroup="seccional group" calculation="Sum">
+		<variableExpression><![CDATA[$F{total}]]></variableExpression>
+	</variable>
+	<group name="seccional group">
+		<groupExpression><![CDATA[$F{seccional}]]></groupExpression>
+		<groupFooter>
+			<band height="100">
+				<textField pattern="###0.00;-###0.00" isBlankWhenNull="true">
+					<reportElement x="481" y="0" width="95" height="20"/>
+					<box>
+						<pen lineWidth="0.0"/>
+						<topPen lineWidth="0.0"/>
+						<leftPen lineWidth="0.0"/>
+						<bottomPen lineWidth="0.0"/>
+						<rightPen lineWidth="0.0"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle"/>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{vTotal}]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement x="74" y="71" width="385" height="1"/>
+				</line>
+				<staticText>
+					<reportElement x="74" y="80" width="385" height="20"/>
+					<textElement textAlignment="Center"/>
+					<text><![CDATA[Firma y Aclaración]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="381" y="0" width="90" height="20"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle"/>
+					<text><![CDATA[Total:
+]]></text>
+				</staticText>
+				<rectangle>
+					<reportElement mode="Transparent" x="481" y="1" width="100" height="20"/>
+					<graphicElement>
+						<pen lineWidth="1.25"/>
+					</graphicElement>
+				</rectangle>
+			</band>
+		</groupFooter>
+	</group>
+	<pageHeader>
+		<band height="147">
+			<image>
+				<reportElement x="19" y="31" width="81" height="63"/>
+				<imageExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "logo_negro.jpg"]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="156" y="62" width="100" height="20"/>
+				<textElement/>
+				<text><![CDATA[Nombre:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="156" y="94" width="100" height="20"/>
+				<textElement/>
+				<text><![CDATA[Seccional:]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="267" y="94" width="314" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{des_seccional}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="267" y="62" width="314" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{nombre}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy HH.mm.ss" isBlankWhenNull="true">
+				<reportElement x="432" y="12" width="144" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.util.Date"><![CDATA[new Date()]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="20">
+			<staticText>
+				<reportElement x="10" y="0" width="100" height="20"/>
+				<box>
+					<pen lineWidth="1.25"/>
+					<topPen lineWidth="1.25"/>
+					<leftPen lineWidth="1.25"/>
+					<bottomPen lineWidth="1.25"/>
+					<rightPen lineWidth="1.25"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<text><![CDATA[Fecha]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="110" y="0" width="371" height="20"/>
+				<box>
+					<pen lineWidth="1.25"/>
+					<topPen lineWidth="1.25"/>
+					<leftPen lineWidth="1.25"/>
+					<bottomPen lineWidth="1.25"/>
+					<rightPen lineWidth="1.25"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<text><![CDATA[Descripción]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="481" y="0" width="100" height="20"/>
+				<box>
+					<pen lineWidth="1.25"/>
+					<topPen lineWidth="1.25"/>
+					<leftPen lineWidth="1.25"/>
+					<bottomPen lineWidth="1.25"/>
+					<rightPen lineWidth="1.25"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<text><![CDATA[Importe]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="21" splitType="Stretch">
+			<textField>
+				<reportElement x="121" y="0" width="350" height="20"/>
+				<box>
+					<pen lineWidth="0.0"/>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{compro_tipo}+ " "+$F{compro_letra}+" "+
+$F{id_punto_venta}+" "+$F{compro_nro} + " - " +$F{concepto}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="481" y="1" width="95" height="20"/>
+				<box>
+					<pen lineWidth="0.0"/>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{total}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement x="10" y="0" width="100" height="20"/>
+				<box>
+					<pen lineWidth="1.25"/>
+					<topPen lineWidth="1.25"/>
+					<leftPen lineWidth="1.25"/>
+					<bottomPen lineWidth="1.25"/>
+					<rightPen lineWidth="1.25"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.util.Date"><![CDATA[$F{fecha}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement mode="Transparent" x="110" y="1" width="371" height="20"/>
+			</rectangle>
+			<rectangle>
+				<reportElement mode="Transparent" x="481" y="0" width="100" height="20"/>
+				<graphicElement>
+					<pen lineWidth="1.25"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement mode="Transparent" x="110" y="0" width="371" height="20"/>
+				<graphicElement>
+					<pen lineWidth="1.25"/>
+				</graphicElement>
+			</rectangle>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="22" splitType="Immediate"/>
+	</columnFooter>
+</jasperReport>
