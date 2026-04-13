@@ -6626,6 +6626,11 @@
 
 		</action>
 
+		<action path="/liquidaciones/cartilla_convenio_por_plan"
+		        type="ar.com.ospim.liquidaciones.action.CartillaConvenioPorPlanAction">
+			<forward name="portlet.liquidaciones.cartilla_convenio_por_plan"
+			         path="portlet.liquidaciones.cartilla_convenio_por_plan" />
+		</action>
 	</action-mappings>
   
 </struts-config>

@@ -10,8 +10,7 @@ import ar.com.ospim.global.beans.TipoPago;
 
 /**
  * @version 1.0
- * @created 19-Oct-2012 02:25:41 p.m.
- */
+ * @created 19-Oct-2012 02:25:41 p.m. */
 public class ConvenioPrestacional implements Serializable{
 	
 	/**

@@ -227,7 +227,10 @@ public class WebKeysLiquidaciones implements
 	public static final String CONSULTA_COMPROBANTES_GLOBAL_TOTAL_REGISTROS="CONSULTA_COMPROBANTES_GLOBAL_TOTAL_REGISTROS";     
 	public static final String BUSQUEDA_COMPROBANTES_GLOBALES = "BUSQUEDA_COMPROBANTES_GLOBALES";
 	
-	public static final String ROL_LIQUIDACIONES_HOSPITALES = "liquidaciones_hospitales";	
+	public static final String ROL_LIQUIDACIONES_HOSPITALES = "liquidaciones_hospitales";
 
-		
+	public static final String BUSQUEDA_CARTILLA_CONVENIO_FILTRO = "BUSQUEDA_CARTILLA_CONVENIO_FILTRO";
+	public static final String BUSQUEDA_CARTILLA_CONVENIO_RESULTS = "BUSQUEDA_CARTILLA_CONVENIO_RESULTS";
+	public static final String PROVINCIAS_EN_SESSION = "PROVINCIAS_EN_SESSION";
+	public static final String LOCALIDADES_EN_SESSION = "LOCALIDADES_EN_SESSION";
 }
