@@ -24,12 +24,12 @@
 					searchContainer.setTotal(total);
 	 				List resultRows = searchContainer.getResultRows();
 
-/*	 				ResultRow row = new ResultRow(1, 1, 1);
+     				ResultRow row = new ResultRow(1, 1, 1);
 					PortletURL rowURL = renderResponse.createRenderURL();
 					rowURL.setWindowState(LiferayWindowState.MAXIMIZED);
 					rowURL.setParameter("struts_action","/liquidaciones/prestadores");
 					row.addText("Prestadores", rowURL);
-		 			resultRows.add(row); */
+		 			resultRows.add(row);
 		 			
 /*		 					 					 			
 		 			ResultRow row3 = new ResultRow(1, 1, 2);
@@ -52,7 +52,14 @@
 					rowURL5.setParameter("struts_action","/liquidaciones/importar_contratos");
 					row5.addText("Importar Contrato", rowURL5);
 		 			resultRows.add(row5);*/
-		 			
+
+		 			ResultRow row6 = new ResultRow(1, 1, 4);
+                    PortletURL rowURL6 = renderResponse.createRenderURL();
+                    rowURL6.setWindowState(LiferayWindowState.MAXIMIZED);
+                    rowURL6.setParameter("struts_action","/liquidaciones/cartilla_convenio_por_plan");
+                    row6.addText("Cartilla de Convenios de Prestadores", rowURL6);
+                    resultRows.add(row6);
+
 		 			if(showAumentoNomenclador) { 
 		 			ResultRow row5 = new ResultRow(1, 1, 5);
 					PortletURL rowURL5 = renderResponse.createRenderURL();

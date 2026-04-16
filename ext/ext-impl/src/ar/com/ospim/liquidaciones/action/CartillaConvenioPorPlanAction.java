@@ -7,8 +7,10 @@ import java.util.List;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
+import javax.portlet.PortletRequest;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
@@ -34,19 +36,24 @@ import com.liferay.portlet.ActionResponseImpl;
 
 public class CartillaConvenioPorPlanAction extends PortletAction {
 
-    private final Logger _log = Logger.getLogger(this.getClass());
+    private static final Logger log = Logger.getLogger(CartillaConvenioPorPlanAction.class);
 
     private static final String CMD_SEARCH = "search";
     private static final String CMD_EXPORT_XLS = "exportCartillaXls";
+
+    private static final String FORWARD_CARTILLA = "portlet.liquidaciones.cartilla_convenio_por_plan";
+    private static final String FORWARD_CARTILLA_RESULTADOS = "portlet.liquidaciones.cartilla_convenio_por_plan_resultados";
+
+    private static final String XLS_FILE_NAME = "cartilla_convenio_prestadores.xls";
 
     @Override
     public void processAction(ActionMapping mapping, ActionForm form,
                               PortletConfig portletConfig, ActionRequest actionRequest,
                               ActionResponse actionResponse) throws Exception {
 
-        String cmd = ParamUtil.getString(actionRequest, Constants.CMD, null);
+        String cmd = ParamUtil.getString(actionRequest, Constants.CMD, "");
 
-        if (CMD_EXPORT_XLS.equals(cmd)) {
+        if (CMD_EXPORT_XLS.equalsIgnoreCase(cmd)) {
             exportarXls(actionRequest, actionResponse);
         }
     }
@@ -56,50 +63,27 @@ public class CartillaConvenioPorPlanAction extends PortletAction {
                                 PortletConfig portletConfig, RenderRequest renderRequest,
                                 RenderResponse renderResponse) throws Exception {
 
+        String cmd = ParamUtil.getString(renderRequest, Constants.CMD, "");
         HttpSession session = PortalUtil.getHttpServletRequest(renderRequest).getSession();
-
-        cargarListas(session);
-
-        String cmd = ParamUtil.getString(renderRequest, Constants.CMD, null);
 
         if (CMD_SEARCH.equalsIgnoreCase(cmd)) {
             BusquedaCartillaConvenioFiltro filtro = getFiltroFromRequest(renderRequest);
-            List<CartillaConvenioRow> resultados = new ArrayList<CartillaConvenioRow>();
+            List<CartillaConvenioRow> resultados = buscarResultados(filtro);
 
-            if (filtro.getIdPlan() != null && filtro.getIdPlan().intValue() > 0) {
-                resultados = CartillaConvenioServiceUtil.buscarCartillaConvenioPorPlan(filtro);
-            }
+            guardarBusquedaEnContexto(session, renderRequest, filtro, resultados);
 
-            session.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO, filtro);
-            session.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS, resultados);
+            log.debug("[CARTILLA-CONV][RENDER][SEARCH] resultados=" + resultados.size());
 
-            renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO, filtro);
-            renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS, resultados);
-
-            _log.debug("[CARTILLA-CONV][RENDER][SEARCH] resultados=" + resultados.size());
-        } else {
-            Object filtroSession = session.getAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO);
-            Object resultadosSession = session.getAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS);
-
-            if (filtroSession != null) {
-                renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO, filtroSession);
-            } else {
-                renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO,
-                        new BusquedaCartillaConvenioFiltro());
-            }
-
-            if (resultadosSession != null) {
-                renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS, resultadosSession);
-            } else {
-                renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS,
-                        new ArrayList<CartillaConvenioRow>());
-            }
+            return mapping.findForward(getForward(renderRequest, FORWARD_CARTILLA_RESULTADOS));
         }
 
-        return mapping.findForward(getForward(renderRequest, "portlet.liquidaciones.cartilla_convenio_por_plan"));
+        cargarListas(session);
+        restaurarBusquedaDesdeSession(session, renderRequest);
+
+        return mapping.findForward(getForward(renderRequest, FORWARD_CARTILLA));
     }
 
-    private BusquedaCartillaConvenioFiltro getFiltroFromRequest(RenderRequest request) {
+    private BusquedaCartillaConvenioFiltro getFiltroFromRequest(PortletRequest request) {
         BusquedaCartillaConvenioFiltro filtro = new BusquedaCartillaConvenioFiltro();
 
         int idPlan = ParamUtil.getInteger(request, "idPlan", 0);
@@ -114,52 +98,106 @@ public class CartillaConvenioPorPlanAction extends PortletAction {
         filtro.setIdLocalidad(idLocalidad > 0 ? Integer.valueOf(idLocalidad) : null);
         filtro.setIdEspecialidad(idEspecialidad > 0 ? Integer.valueOf(idEspecialidad) : null);
 
-        filtro.setPrestadorDescripcion(ParamUtil.getString(request, "prestadorDescripcion", null));
-        filtro.setInstitucion(ParamUtil.getString(request, "institucion", null));
+        filtro.setCuitPrestador(normalizarTexto(
+                ParamUtil.getString(request, "cuitPrestador", null)
+        ));
+        filtro.setPrestadorDescripcion(normalizarTexto(
+                ParamUtil.getString(request, "prestadorDescripcion", null)
+        ));
+
         filtro.setIncluyeBajas(ParamUtil.getBoolean(request, "incluyeBajas", false));
         filtro.setPagina(ParamUtil.getInteger(request, "pagina", 1));
 
         return filtro;
     }
 
-    private void cargarListas(HttpSession session) throws Exception {
-
-        if (session.getAttribute(WebKeysLiquidaciones.PLANES_EN_SESSION) == null) {
-            session.setAttribute(WebKeysLiquidaciones.PLANES_EN_SESSION,
-                    TraeListasServiceUtil.getPlanesOspim());
+    private List<CartillaConvenioRow> buscarResultados(BusquedaCartillaConvenioFiltro filtro) throws Exception {
+        if (filtro == null) {
+            filtro = new BusquedaCartillaConvenioFiltro();
         }
 
-        if (session.getAttribute(WebKeysLiquidaciones.PRESTADORES_EN_SESSION) == null) {
-            session.setAttribute(WebKeysLiquidaciones.PRESTADORES_EN_SESSION,
-                    TraeListasServiceUtil.getPrestadores());
+        List<CartillaConvenioRow> resultados = CartillaConvenioServiceUtil.buscarCartillaConvenioPorPlan(filtro);
+        return resultados != null ? resultados : new ArrayList<CartillaConvenioRow>();
+    }
+
+    private void guardarBusquedaEnContexto(HttpSession session,
+                                           RenderRequest renderRequest,
+                                           BusquedaCartillaConvenioFiltro filtro,
+                                           List<CartillaConvenioRow> resultados) {
+
+        session.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO, filtro);
+        session.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS, resultados);
+
+        renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO, filtro);
+        renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS, resultados);
+    }
+
+    private void restaurarBusquedaDesdeSession(HttpSession session, RenderRequest renderRequest) {
+        Object filtroSession = session.getAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO);
+        Object resultadosSession = session.getAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS);
+
+        if (filtroSession != null) {
+            renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO, filtroSession);
+        } else {
+            renderRequest.setAttribute(
+                    WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO,
+                    new BusquedaCartillaConvenioFiltro()
+            );
         }
 
-        if (session.getAttribute(WebKeysLiquidaciones.PROVINCIAS_EN_SESSION) == null) {
-            session.setAttribute(WebKeysLiquidaciones.PROVINCIAS_EN_SESSION,
-                    TraeListasServiceUtil.getProvincias());
-        }
-
-        if (session.getAttribute(WebKeysLiquidaciones.LOCALIDADES_EN_SESSION) == null) {
-            session.setAttribute(WebKeysLiquidaciones.LOCALIDADES_EN_SESSION,
-                    TraeListasServiceUtil.getLocalidades());
-        }
-
-        if (session.getAttribute(WebKeysLiquidaciones.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION) == null) {
-            session.setAttribute(WebKeysLiquidaciones.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
-                    TraeListasServiceUtil.getEspecialidadesPrestador());
+        if (resultadosSession != null) {
+            renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS, resultadosSession);
+        } else {
+            renderRequest.setAttribute(
+                    WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS,
+                    new ArrayList<CartillaConvenioRow>()
+            );
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void exportarXls(ActionRequest actionRequest, ActionResponse actionResponse) throws Exception {
-        HttpSession session = PortalUtil.getHttpServletRequest(actionRequest).getSession();
+    private void cargarListas(HttpSession session) throws Exception {
 
-        List<CartillaConvenioRow> resultados =
-                (List<CartillaConvenioRow>) session.getAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS);
-
-        if (resultados == null) {
-            resultados = new ArrayList<CartillaConvenioRow>();
+        if (session.getAttribute(WebKeysLiquidaciones.PLANES_EN_SESSION) == null) {
+            session.setAttribute(
+                    WebKeysLiquidaciones.PLANES_EN_SESSION,
+                    TraeListasServiceUtil.getPlanesOspim()
+            );
         }
+
+        if (session.getAttribute(WebKeysLiquidaciones.PROVINCIAS_EN_SESSION) == null) {
+            session.setAttribute(
+                    WebKeysLiquidaciones.PROVINCIAS_EN_SESSION,
+                    TraeListasServiceUtil.getProvincias()
+            );
+        }
+
+        if (session.getAttribute(WebKeysLiquidaciones.LOCALIDADES_EN_SESSION) == null) {
+            session.setAttribute(
+                    WebKeysLiquidaciones.LOCALIDADES_EN_SESSION,
+                    TraeListasServiceUtil.getLocalidades()
+            );
+        }
+
+        if (session.getAttribute(WebKeysLiquidaciones.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION) == null) {
+            session.setAttribute(
+                    WebKeysLiquidaciones.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
+                    TraeListasServiceUtil.getEspecialidadesPrestador()
+            );
+        }
+    }
+
+    private String normalizarTexto(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+        return trimmed.length() > 0 ? trimmed : null;
+    }
+
+    private void exportarXls(ActionRequest actionRequest, ActionResponse actionResponse) throws Exception {
+        BusquedaCartillaConvenioFiltro filtro = getFiltroFromRequest(actionRequest);
+        List<CartillaConvenioRow> resultados = buscarResultados(filtro);
 
         HSSFWorkbook workbook = null;
         OutputStream outputStream = null;
@@ -167,33 +205,51 @@ public class CartillaConvenioPorPlanAction extends PortletAction {
         try {
             workbook = crearWorkbook(resultados);
 
-            javax.servlet.http.HttpServletResponse httpRes =
-                    ((ActionResponseImpl) actionResponse).getHttpServletResponse();
-
-            httpRes.reset();
-            httpRes.setContentType("application/vnd.ms-excel");
-            httpRes.setHeader("Content-Disposition", "attachment; filename=\"cartilla_convenio_por_plan.xls\"");
-            httpRes.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-            httpRes.setHeader("Pragma", "public");
+            HttpServletResponse httpRes = getHttpServletResponse((ActionResponseImpl) actionResponse);
 
             outputStream = httpRes.getOutputStream();
             workbook.write(outputStream);
             outputStream.flush();
 
             setForward(actionRequest, ActionConstants.COMMON_NULL);
+
+            log.info("[CARTILLA-CONV][EXPORT][OK] resultados=" + resultados.size());
+
         } finally {
             if (outputStream != null) {
-                try { outputStream.close(); } catch (Exception e) { _log.warn(e); }
+                try {
+                    outputStream.close();
+                } catch (Exception e) {
+                    log.warn("[CARTILLA-CONV][EXPORT][WARN] Error cerrando OutputStream", e);
+                }
             }
+
             if (workbook != null) {
-                try { workbook.close(); } catch (Exception e) { _log.warn(e); }
+                try {
+                    workbook.close();
+                } catch (Exception e) {
+                    log.warn("[CARTILLA-CONV][EXPORT][WARN] Error cerrando Workbook", e);
+                }
             }
         }
     }
 
+    private static HttpServletResponse getHttpServletResponse(ActionResponseImpl actionResponse) {
+        HttpServletResponse httpRes = actionResponse.getHttpServletResponse();
+
+        httpRes.reset();
+        httpRes.setContentType("application/vnd.ms-excel");
+        httpRes.setHeader("Content-Disposition", "attachment; filename=\"" + XLS_FILE_NAME + "\"");
+        httpRes.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        httpRes.setHeader("Pragma", "no-cache");
+        httpRes.setDateHeader("Expires", 0);
+
+        return httpRes;
+    }
+
     private HSSFWorkbook crearWorkbook(List<CartillaConvenioRow> resultados) {
         HSSFWorkbook workbook = new HSSFWorkbook();
-        HSSFSheet sheet = workbook.createSheet("cartilla_convenio");
+        HSSFSheet sheet = workbook.createSheet("cartilla_convenio_prestadores");
 
         int rowNum = 0;
         Row header = sheet.createRow(rowNum++);
@@ -203,28 +259,28 @@ public class CartillaConvenioPorPlanAction extends PortletAction {
         header.createCell(2).setCellValue("cuit");
         header.createCell(3).setCellValue("zona");
         header.createCell(4).setCellValue("especialidad");
-        header.createCell(5).setCellValue("institucion");
-        header.createCell(6).setCellValue("domicilio");
-        header.createCell(7).setCellValue("telefono");
-        header.createCell(8).setCellValue("localidad");
-        header.createCell(9).setCellValue("provincia");
+        header.createCell(5).setCellValue("domicilio");
+        header.createCell(6).setCellValue("telefono");
+        header.createCell(7).setCellValue("localidad");
+        header.createCell(8).setCellValue("provincia");
 
-        for (CartillaConvenioRow rowData : resultados) {
-            Row row = sheet.createRow(rowNum++);
+        if (resultados != null) {
+            for (CartillaConvenioRow rowData : resultados) {
+                Row row = sheet.createRow(rowNum++);
 
-            row.createCell(0).setCellValue(safe(rowData.getPlanDescripcion()));
-            row.createCell(1).setCellValue(safe(rowData.getPrestadorDescripcion()));
-            row.createCell(2).setCellValue(safe(rowData.getCuitPrestador()));
-            row.createCell(3).setCellValue(safe(rowData.getZona()));
-            row.createCell(4).setCellValue(safe(rowData.getEspecialidad()));
-            row.createCell(5).setCellValue(safe(rowData.getInstitucion()));
-            row.createCell(6).setCellValue(safe(rowData.getDomicilio()));
-            row.createCell(7).setCellValue(safe(rowData.getTelefono()));
-            row.createCell(8).setCellValue(safe(rowData.getLocalidad()));
-            row.createCell(9).setCellValue(safe(rowData.getProvincia()));
+                row.createCell(0).setCellValue(safe(rowData.getPlanDescripcion()));
+                row.createCell(1).setCellValue(safe(rowData.getPrestadorDescripcion()));
+                row.createCell(2).setCellValue(safe(rowData.getCuitPrestador()));
+                row.createCell(3).setCellValue(safe(rowData.getZona()));
+                row.createCell(4).setCellValue(safe(rowData.getEspecialidad()));
+                row.createCell(5).setCellValue(safe(rowData.getDomicilio()));
+                row.createCell(6).setCellValue(safe(rowData.getTelefono()));
+                row.createCell(7).setCellValue(safe(rowData.getLocalidad()));
+                row.createCell(8).setCellValue(safe(rowData.getProvincia()));
+            }
         }
 
-        for (int i = 0; i <= 9; i++) {
+        for (int i = 0; i <= 8; i++) {
             sheet.autoSizeColumn(i);
         }
 

@@ -4300,4 +4300,10 @@
 		<put name="portlet_content"
 		     value="/portlet/liquidaciones/administracion/convenios_prest/cartilla_convenio_por_plan.jsp" />
 	</definition>
+
+	<definition name="portlet.liquidaciones.cartilla_convenio_por_plan_resultados"
+	            extends="portlet.liquidaciones">
+		<put name="portlet_content"
+		     value="/portlet/liquidaciones/administracion/convenios_prest/cartilla_prestadores_por_plan_search_result.jsp" />
+	</definition>
 </tiles-definitions>

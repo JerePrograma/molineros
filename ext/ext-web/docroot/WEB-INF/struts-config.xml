@@ -6630,6 +6630,8 @@
 		        type="ar.com.ospim.liquidaciones.action.CartillaConvenioPorPlanAction">
 			<forward name="portlet.liquidaciones.cartilla_convenio_por_plan"
 			         path="portlet.liquidaciones.cartilla_convenio_por_plan" />
+			<forward name="portlet.liquidaciones.cartilla_convenio_por_plan_resultados"
+			         path="portlet.liquidaciones.cartilla_convenio_por_plan_resultados" />
 		</action>
 	</action-mappings>
   

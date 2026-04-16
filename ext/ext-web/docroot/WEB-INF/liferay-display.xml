@@ -133,5 +133,6 @@
 		<portlet id="COM_1" />
 		<portlet id="JUD_1" />
 		<portlet id="APM_1" />
+		<portlet id="PRE_1" />
 	</category>
 </display>
