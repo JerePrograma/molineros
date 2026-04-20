@@ -4306,4 +4306,15 @@
 		<put name="portlet_content"
 		     value="/portlet/liquidaciones/administracion/convenios_prest/cartilla_prestadores_por_plan_search_result.jsp" />
 	</definition>
+
+	<!-- PRESTADORES -->
+	<definition name="portlet.prestadores" extends="portlet" />
+
+	<definition name="portlet.prestadores.view" extends="portlet.prestadores">
+		<put name="portlet_content" value="/portlet/prestadores/view.jsp" />
+	</definition>
+
+	<definition name="portlet.comprobantes.download.prestadores" extends="portlet.prestadores">
+		<put name="portlet_content" value="/portlet/prestadores/comprobantes_download_prestadores.jsp" />
+	</definition>
 </tiles-definitions>

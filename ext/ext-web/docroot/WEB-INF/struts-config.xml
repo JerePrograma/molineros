@@ -6633,7 +6633,17 @@
 			<forward name="portlet.liquidaciones.cartilla_convenio_por_plan_resultados"
 			         path="portlet.liquidaciones.cartilla_convenio_por_plan_resultados" />
 		</action>
+
+		<!-- PRESTADORES -->
+		<action path="/prestadores/view" forward="portlet.prestadores.view" />
+
+		<action path="/prestadores/administracion_prestadores"
+		        type="ar.com.ospim.prestadores.action.ClientePrestadoresAction">
+			<forward name="portlet.comprobantes.download.prestadores"
+			         path="portlet.comprobantes.download.prestadores" />
+		</action>
+		<!-- FIN PRESTADORES -->
 	</action-mappings>
-  
+
 </struts-config>
 
