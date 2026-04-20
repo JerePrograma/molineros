@@ -4311,10 +4311,10 @@
 	<definition name="portlet.prestadores" extends="portlet" />
 
 	<definition name="portlet.prestadores.view" extends="portlet.prestadores">
-		<put name="portlet_content" value="/portlet/prestadores/view.jsp" />
+		<put name="portlet_content" value="/html/portlet/prestadores/view.jsp" />
 	</definition>
 
 	<definition name="portlet.comprobantes.download.prestadores" extends="portlet.prestadores">
-		<put name="portlet_content" value="/portlet/prestadores/comprobantes_download_prestadores.jsp" />
+		<put name="portlet_content" value="/html/portlet/prestadores/comprobantes_download_prestadores.jsp" />
 	</definition>
 </tiles-definitions>

@@ -6634,7 +6634,7 @@
 			         path="portlet.liquidaciones.cartilla_convenio_por_plan_resultados" />
 		</action>
 
-		<!-- PRESTADORES -->
+		<!-- PRE_1 -->
 		<action path="/prestadores/view" forward="portlet.prestadores.view" />
 
 		<action path="/prestadores/administracion_prestadores"

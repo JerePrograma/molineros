@@ -549,22 +549,17 @@
 		<portlet-name>PRE_1</portlet-name>
 		<display-name>Convenio de Prestadores</display-name>
 		<portlet-class>com.liferay.portlet.StrutsPortlet</portlet-class>
-
 		<init-param>
 			<name>view-action</name>
-			<value>/liquidaciones/convenios_prestacionales</value>
+			<value>/prestadores/view</value>
 		</init-param>
-
 		<instanceable>true</instanceable>
 		<private-request-attributes>false</private-request-attributes>
 		<expiration-cache>0</expiration-cache>
-
 		<supports>
 			<mime-type>text/html</mime-type>
 		</supports>
-
 		<resource-bundle>com.liferay.portlet.StrutsResourceBundle</resource-bundle>
-
 		<security-role-ref>
 			<role-name>power-user</role-name>
 		</security-role-ref>
