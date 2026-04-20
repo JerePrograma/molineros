@@ -1,4 +1,4 @@
-package ar.com.ospim.liquidaciones.action;
+package ar.com.ospim.prestadores.action;
 
 
 import java.text.SimpleDateFormat;
@@ -11,12 +11,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 
-import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
-import ar.com.ospim.liquidaciones.services.ConvenioPrestacionalServiceUtil;
-import ar.com.ospim.tesoreria.beans.caja_chica.CajaChica;
-import ar.com.ospim.tesoreria.service.CajaChicaServiceUtil;
-import ar.com.ospim.util.StringUtils;
+import ar.com.ospim.prestadores.services.ConvenioPrestacionalServiceUtil;
 
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.struts.JSONAction;
@@ -67,7 +63,7 @@ public class BuscaContratoPrestadorAction extends JSONAction {
 		List <ConvenioPrestacionalDetalle> l = ConvenioPrestacionalServiceUtil.detalleValorizarTratamientoV01(id_prestador, fechaDesde, fechaHasta, codigo,0);
 		
 		if(l.size()==0 && !"".equals(codigo)){
-			msg="No se encuentra Convenio para la prestación solicitada";
+			msg="No se encuentra Convenio para la prestaciï¿½n solicitada";
 		}else{
 			resultado=l.get(0).getImporte().doubleValue();
 		}

@@ -1,4 +1,4 @@
-package ar.com.ospim.liquidaciones.services;
+package ar.com.ospim.prestadores.services;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -8,8 +8,8 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
-import ar.com.ospim.liquidaciones.beans.BusquedaCartillaConvenioFiltro;
-import ar.com.ospim.liquidaciones.beans.CartillaConvenioRow;
+import ar.com.ospim.prestadores.beans.BusquedaCartillaConvenioFiltro;
+import ar.com.ospim.prestadores.beans.CartillaConvenioRow;
 import ar.com.ospim.util.ConnectionHelper;
 
 import com.liferay.portal.SystemException;

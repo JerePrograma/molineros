@@ -1,4 +1,4 @@
-package ar.com.ospim.liquidaciones.action;
+package ar.com.ospim.prestadores.action;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,6 +23,7 @@ import javax.servlet.http.HttpSession;
 
 import ar.com.ospim.liquidaciones.beans.*;
 import ar.com.ospim.liquidaciones.services.PrestadorServiceUtil;
+import ar.com.ospim.prestadores.beans.BusquedaConvenioPrestacionalFiltro;
 import com.liferay.portal.struts.ActionConstants;
 import com.liferay.portlet.ActionResponseImpl;
 import org.apache.log4j.Logger;
@@ -49,7 +50,7 @@ import ar.com.ospim.global.beans.TipoPago;
 import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
 import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional.EstadosConvPrest;
-import ar.com.ospim.liquidaciones.services.ConvenioPrestacionalServiceUtil;
+import ar.com.ospim.prestadores.services.ConvenioPrestacionalServiceUtil;
 import ar.com.ospim.util.StringUtils;
 
 /**

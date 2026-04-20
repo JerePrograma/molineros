@@ -521,12 +521,12 @@
     
     
 		<!-- Liquidaciones, Convenios Prestacionales -->
-		<action path="/liquidaciones/buscar_conv_prestac" type="ar.com.ospim.liquidaciones.action.BuscarConveniosPrestacAction">
+		<action path="/liquidaciones/buscar_conv_prestac" type="ar.com.ospim.prestadores.action.BuscarConveniosPrestacAction">
 			<forward name="portlet.liquidaciones.conv_prestac.result.search" path="portlet.liquidaciones.conv_prestac.result.search" />
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 		</action>
 				
-		<action path="/liquidaciones/editar_convenio_prest_entry" type="ar.com.ospim.liquidaciones.action.EditarConvPrestacionalAction">
+		<action path="/liquidaciones/editar_convenio_prest_entry" type="ar.com.ospim.prestadores.action.EditarConvPrestacionalAction">
 			<forward name="portlet.liquidaciones.editar_convenio_prest_entry" path="portlet.liquidaciones.editar_convenio_prest_entry" />
 			<forward name="portlet.liquidaciones.eliminar_convenio_prest_entry" path="portlet.liquidaciones.conv_prestac.result.search" />
 			<!-- <forward name="portlet.liquidaciones.eliminar_convenio_prest_entry" path="portlet.liquidaciones.conv_prestac" /> -->
@@ -551,11 +551,11 @@
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 		</action>
 		
-		<action path="/liquidaciones/lista_prestaciones_convenio_prest" type="ar.com.ospim.liquidaciones.action.ListaPrestacionesConvenioPrestAction">
+		<action path="/liquidaciones/lista_prestaciones_convenio_prest" type="ar.com.ospim.prestadores.action.ListaPrestacionesConvenioPrestAction">
 		 	<forward name="portlet.liquidaciones.lista_convenio_prest_detalle" path="portlet.liquidaciones.lista_convenio_prest_detalle" />  
 		</action>
 
-		<action path="/liquidaciones/cambio_vista_detalles_prestaciones_convenio_prest" type="ar.com.ospim.liquidaciones.action.CambioVistaListaPrestacionesConvenioPrestAction">
+		<action path="/liquidaciones/cambio_vista_detalles_prestaciones_convenio_prest" type="ar.com.ospim.prestadores.action.BuscarConveniosPrestacAction.CambioVistaListaPrestacionesConvenioPrestAction">
 		 	<forward name="portlet.liquidaciones.lista_convenio_prest_detalle" path="portlet.liquidaciones.lista_convenio_prest_detalle" />  
 		</action>
 				
@@ -4911,7 +4911,7 @@
 
 <!-- Inicio Liquidaciones agregado de busqueda de importe de acuerdo a los contratos firmados con los Prestadores -->
     <action path="/liquidaciones/busca_contrato_prestador"
-			type="ar.com.ospim.liquidaciones.action.BuscaContratoPrestadorAction" />	
+			type="ar.com.ospim.prestadores.action.BuscaContratoPrestadorAction" />
 <!-- Fin Liquidaciones agregado de busqueda de importe de acuerdo a los contratos firmados con los Prestadores -->
 
     <action path="/tesoreria/reporte_hospitales_autogestion" forward="portlet.tesoreria.reporte.hospitales_autogestion" />
@@ -4983,7 +4983,7 @@
     
     <action path="/autorizaciones/buscar_prestacion" forward="portlet.utils.prestacion.view" />
     <action path="/autorizaciones/busca_contrato_prestador"
-			type="ar.com.ospim.liquidaciones.action.BuscaContratoPrestadorAction" />
+			type="ar.com.ospim.prestadores.action.BuscaContratoPrestadorAction" />
 			
     <action path="/autorizaciones/editar_autorizacionprestacional_entry" type="ar.com.ospim.autorizaciones.action.EditarAutorizacionPrestacionalEntryAction">
 			<!-- forward name="portlet.autorizaciones.autorizacion_prestacional.result" path="portlet.autorizaciones.autorizacion_prestacional.result" /-->
@@ -6627,7 +6627,7 @@
 		</action>
 
 		<action path="/liquidaciones/cartilla_convenio_por_plan"
-		        type="ar.com.ospim.liquidaciones.action.CartillaConvenioPorPlanAction">
+		        type="ar.com.ospim.prestadores.action.CartillaConvenioPorPlanAction">
 			<forward name="portlet.liquidaciones.cartilla_convenio_por_plan"
 			         path="portlet.liquidaciones.cartilla_convenio_por_plan" />
 			<forward name="portlet.liquidaciones.cartilla_convenio_por_plan_resultados"

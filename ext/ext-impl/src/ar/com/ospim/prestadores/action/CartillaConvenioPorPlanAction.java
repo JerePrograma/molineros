@@ -1,4 +1,4 @@
-package ar.com.ospim.liquidaciones.action;
+package ar.com.ospim.prestadores.action;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -23,9 +23,9 @@ import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.liquidaciones.beans.BusquedaCartillaConvenioFiltro;
-import ar.com.ospim.liquidaciones.beans.CartillaConvenioRow;
-import ar.com.ospim.liquidaciones.services.CartillaConvenioServiceUtil;
+import ar.com.ospim.prestadores.beans.BusquedaCartillaConvenioFiltro;
+import ar.com.ospim.prestadores.beans.CartillaConvenioRow;
+import ar.com.ospim.prestadores.services.CartillaConvenioServiceUtil;
 
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;

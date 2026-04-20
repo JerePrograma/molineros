@@ -1,4 +1,4 @@
-package ar.com.ospim.liquidaciones.action;
+package ar.com.ospim.prestadores.action;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -20,7 +20,7 @@ import ar.com.ospim.liquidaciones.administracion.prestadores.exception.Profesion
 import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional;
 import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
 import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle.ESTADOS;
-import ar.com.ospim.liquidaciones.services.ConvenioPrestacionalServiceUtil;
+import ar.com.ospim.prestadores.services.ConvenioPrestacionalServiceUtil;
 import ar.com.ospim.util.StringUtils;
 
 import com.liferay.portal.kernel.log.Log;

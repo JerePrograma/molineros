@@ -522,37 +522,6 @@
 		extends="portlet.liquidaciones">
 		<put name="portlet_content" value="/portlet/liquidaciones/reintegros/editar_reintegro.jsp" />
 	</definition>
-	
-	
-	
-	
- 	<definition name="portlet.liquidaciones.conv_prestac" extends="portlet.liquidaciones">
-		<put name="portlet_content"
-			value="/portlet/liquidaciones/administracion/convenios_prest/busqueda_convenios_prestacionales.jsp" />
-	</definition>
-	
-	<definition name="portlet.liquidaciones.editar_convenio_prest_entry"
-		extends="portlet.liquidaciones">
-		<put name="portlet_content"
-			value="/portlet/liquidaciones/administracion/convenios_prest/editar_convenio_prest.jsp" />
-	</definition>
-
-	<definition name="portlet.liquidaciones.lista_convenio_prest_detalle" 
-		extends="portlet.liquidaciones">
-		<put name="portlet_content" 
-		value="/portlet/liquidaciones/administracion/convenios_prest/conv_prest_detalle_search_result.jsp" />
-	</definition>
-	
-	<definition name="portlet.liquidaciones.farmacia.editar_reintegro_entry"
-		extends="portlet.liquidaciones">
-		<put name="portlet_content" value="/portlet/liquidaciones/farmacia/editar_reintegro.jsp" />
-	</definition>
-
-	<definition name="portlet.liquidaciones.importar_contratos"
-		extends="portlet.liquidaciones">
-		<put name="portlet_content"
-			value="/portlet/liquidaciones/administracion/convenios_prest/upload_archivos_contratos.jsp" />
-	</definition>
 
 	<definition name="portlet.liquidaciones.editar_liquidacion_entry"
 		extends="portlet.liquidaciones">
@@ -590,7 +559,7 @@
 	<definition name="portlet.liquidaciones.conv_prestac.result.search"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/liquidaciones/administracion/convenios_prest/convenios_prestac_search_result.jsp" />
+			value="/portlet//prestadores/convenios_prest/convenios_prestac_search_result.jsp" />
 	</definition>
 
 	<definition name="portlet.liquidaciones.conv_prestac.result_rango.search"
@@ -4298,23 +4267,55 @@
 	<definition name="portlet.liquidaciones.cartilla_convenio_por_plan"
 	            extends="portlet.liquidaciones">
 		<put name="portlet_content"
-		     value="/portlet/liquidaciones/administracion/convenios_prest/cartilla_convenio_por_plan.jsp" />
+		     value="/portlet//prestadores/convenios_prest/cartilla_convenio_por_plan.jsp" />
 	</definition>
 
 	<definition name="portlet.liquidaciones.cartilla_convenio_por_plan_resultados"
 	            extends="portlet.liquidaciones">
 		<put name="portlet_content"
-		     value="/portlet/liquidaciones/administracion/convenios_prest/cartilla_prestadores_por_plan_search_result.jsp" />
+		     value="/portlet//prestadores/convenios_prest/cartilla_prestadores_por_plan_search_result.jsp" />
 	</definition>
 
 	<!-- PRESTADORES -->
 	<definition name="portlet.prestadores" extends="portlet" />
 
 	<definition name="portlet.prestadores.view" extends="portlet.prestadores">
-		<put name="portlet_content" value="/html/portlet/prestadores/view.jsp" />
+		<put name="portlet_content" value="/portlet/prestadores/view.jsp" />
 	</definition>
 
 	<definition name="portlet.comprobantes.download.prestadores" extends="portlet.prestadores">
-		<put name="portlet_content" value="/html/portlet/prestadores/comprobantes_download_prestadores.jsp" />
+		<put name="portlet_content" value="/portlet/prestadores/comprobantes_download_prestadores.jsp" />
+	</definition>
+
+	<!-- CARTILLA CONVENIO POR PLAN -->
+	<definition name="portlet.prestadores.cartilla_convenio_por_plan" extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/cartilla_convenio_por_plan.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.cartilla_convenio_por_plan_resultados" extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/cartilla_prestadores_por_plan_search_result.jsp" />
+	</definition>
+
+	<!-- CONVENIOS PRESTACIONALES -->
+	<definition name="portlet.prestadores.conv_prestac" extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/busqueda_convenios_prestacionales.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.editar_convenio_prest_entry" extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/editar_convenio_prest.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.lista_convenio_prest_detalle" extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/conv_prest_detalle_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.importar_contratos" extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/upload_archivos_contratos.jsp" />
 	</definition>
 </tiles-definitions>
