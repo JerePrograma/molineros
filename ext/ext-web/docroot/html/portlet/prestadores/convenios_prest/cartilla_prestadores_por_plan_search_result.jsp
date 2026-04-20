@@ -1,4 +1,5 @@
 <%@ include file="/html/portlet/liquidaciones/init.jsp"%>
+<%@ include file="/html/portlet/prestadores/init.jsp"%>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
 <%@ page import="java.util.ArrayList" %>
@@ -8,7 +9,7 @@
 <%@ page import="com.liferay.portal.kernel.dao.search.ResultRow" %>
 <%@ page import="com.liferay.portal.kernel.dao.search.SearchContainer" %>
 
-<%@ page import="ar.com.ospim.liquidaciones.beans.CartillaConvenioRow" %>
+<%@ page import="ar.com.ospim.prestadores.beans.CartillaConvenioRow" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>

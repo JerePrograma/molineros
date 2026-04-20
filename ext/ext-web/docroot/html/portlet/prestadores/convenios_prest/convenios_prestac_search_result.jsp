@@ -83,7 +83,7 @@
 					 				/* row.addText("<a href='#' onclick='redirigir(" +contrato.getId_contratoAsString()+ ");'>Ver</a>"); */
 							// Action
 							if (showABMButtons) {
-								row.addJSP("left", SearchEntry.DEFAULT_VALIGN, "/html/portlet/liquidaciones/administracion/convenios_prest/editar_borrar_convenio_prest.jsp");
+								row.addJSP("left", SearchEntry.DEFAULT_VALIGN, "/html/portlet/prestadores/editar_borrar_convenio_prest.jsp");
 							}							
 							else {
 								row.addText("");

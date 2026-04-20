@@ -4264,18 +4264,6 @@
 			 value="/portlet/liquidaciones/reportes/archivos_debitos_tercerizadoras.jsp" />
 	</definition>
 
-	<definition name="portlet.liquidaciones.cartilla_convenio_por_plan"
-	            extends="portlet.liquidaciones">
-		<put name="portlet_content"
-		     value="/portlet//prestadores/convenios_prest/cartilla_convenio_por_plan.jsp" />
-	</definition>
-
-	<definition name="portlet.liquidaciones.cartilla_convenio_por_plan_resultados"
-	            extends="portlet.liquidaciones">
-		<put name="portlet_content"
-		     value="/portlet//prestadores/convenios_prest/cartilla_prestadores_por_plan_search_result.jsp" />
-	</definition>
-
 	<!-- PRESTADORES -->
 	<definition name="portlet.prestadores" extends="portlet" />
 

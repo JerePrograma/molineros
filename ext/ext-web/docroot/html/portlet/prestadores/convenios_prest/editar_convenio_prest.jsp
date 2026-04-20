@@ -461,7 +461,7 @@
 
 				<div id="<portlet:namespace />detalleConvenioContainer">
 					<div align="center" id="<portlet:namespace />convenio_prest_detalle">
-						<liferay-util:include page="/html/portlet/liquidaciones/administracion/convenios_prest/conv_prest_detalle_search_result.jsp">
+						<liferay-util:include page="/html/portlet/prestadores/conv_prest_detalle_search_result.jsp">
 							<liferay-util:param name="<%=WebKeysLiquidaciones.VIEW_CONVENIO_PREST%>" value="<%=String.valueOf(!esEdicion)%>"/>
 						</liferay-util:include>
 					</div>

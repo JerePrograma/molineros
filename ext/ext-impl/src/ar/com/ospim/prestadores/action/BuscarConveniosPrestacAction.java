@@ -14,7 +14,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
+import ar.com.ospim.liquidaciones.WebKeysPrestadores;
 import ar.com.ospim.prestadores.beans.BusquedaConvenioPrestacionalFiltro;
 import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional;
 import ar.com.ospim.prestadores.services.ConvenioPrestacionalServiceUtil;
@@ -72,12 +72,12 @@ public class BuscarConveniosPrestacAction extends PortletAction {
 			List<ConvenioPrestacional> busqueda = ConvenioPrestacionalServiceUtil.buscarConveniosPrestacionales(filtro);
 			_log.debug("[BUSCAR-CONV-PREST][RENDER][SERVICE] resultadosBusqueda=" + (busqueda != null ? busqueda.size() : "null"));
 
-			session.removeAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_FILTRO);
-			session.removeAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_RESULTS);
+			session.removeAttribute(WebKeysPrestadores.BUSQUEDA_CONVENIOS_PRESTAC_FILTRO);
+			session.removeAttribute(WebKeysPrestadores.BUSQUEDA_CONVENIOS_PRESTAC_RESULTS);
 			_log.debug("[BUSCAR-CONV-PREST][RENDER][SESSION] Se limpian atributos previos de búsqueda");
 
-			session.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_FILTRO, filtro);
-			session.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_RESULTS, busqueda);
+			session.setAttribute(WebKeysPrestadores.BUSQUEDA_CONVENIOS_PRESTAC_FILTRO, filtro);
+			session.setAttribute(WebKeysPrestadores.BUSQUEDA_CONVENIOS_PRESTAC_RESULTS, busqueda);
 			_log.debug("[BUSCAR-CONV-PREST][RENDER][SESSION] Se guardan filtro y resultados en session");
 
 		} catch (Exception e) {
@@ -107,12 +107,12 @@ public class BuscarConveniosPrestacAction extends PortletAction {
 
 			String tipoVistaSelec = ParamUtil.getString(renderRequest, "tipoVistaSelec");
 
-			List<ConvenioPrestacionalDetalle> detallesPorRango = (List<ConvenioPrestacionalDetalle>) session.getAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
+			List<ConvenioPrestacionalDetalle> detallesPorRango = (List<ConvenioPrestacionalDetalle>) session.getAttribute(WebKeysPrestadores.CONVENIO_PREST_DETALLES_EN_SESSION);
 
 			_log.debug("Cambio vista detalles de prestaciones del convenio prest.: " + tipoVistaSelec);
 
 			if(tipoVistaSelec.equalsIgnoreCase("RANGO")){
-				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE);
+				session.removeAttribute(WebKeysPrestadores.CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE);
 			}
 			if(tipoVistaSelec.equalsIgnoreCase("CODIGO")){
 				if(!detallesPorRango.isEmpty() && detallesPorRango.size()>0){
@@ -120,7 +120,7 @@ public class BuscarConveniosPrestacAction extends PortletAction {
 				}
 				List<ConvenioPrestacionalDetalle> detallesPorCodigo = ConvenioPrestacionalServiceUtil.getPrestacionesDetallesPorCodigo(cpd.getIdConvenioPrestacional());
 
-				session.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE, detallesPorCodigo);
+				session.setAttribute(WebKeysPrestadores.CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE, detallesPorCodigo);
 			}
 
 			return mapping.findForward(getForward(renderRequest,

@@ -14,10 +14,13 @@ if (tabs1 == null) {
 	tabs1 = (String) request.getSession().getAttribute("tabs1");
 }
 
-boolean showAumentoNomenclador = PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_AUMENTO_NOMENCLADOR);
+boolean showAumentoNomenclador =
+	PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_AUMENTO_NOMENCLADOR);
 
-StringBuffer tabs1ValuesBuffer = new StringBuffer("prestadores,convenios-prestacionales,cartilla-convenios-prestadores");
-StringBuffer tabs1NamesBuffer = new StringBuffer("Prestadores,Convenios Prestacionales,Cartilla de Convenios de Prestadores");
+StringBuffer tabs1ValuesBuffer =
+	new StringBuffer("prestadores,convenios-prestacionales,cartilla-convenios-prestadores");
+StringBuffer tabs1NamesBuffer =
+	new StringBuffer("Prestadores,Convenios Prestacionales,Cartilla de Convenios de Prestadores");
 
 if (showAumentoNomenclador) {
 	tabs1ValuesBuffer.append(",aumento-prestaciones");
@@ -75,19 +78,19 @@ currentURL = PortalUtil.getCurrentURL(request);
 
 	<c:choose>
 		<c:when test='<%= "prestadores".equals(tabs1) %>'>
-			<liferay-util:include page="/html/portlet/liquidaciones/administracion/prestadores/busqueda_prestadores.jsp" />
+			<liferay-util:include page="/html/portlet/prestadores/busqueda_prestadores.jsp" />
 		</c:when>
 
 		<c:when test='<%= "convenios-prestacionales".equals(tabs1) %>'>
-			<liferay-util:include page="/html/portlet/liquidaciones/administracion/convenios_prest/busqueda_convenios_prestacionales.jsp" />
+			<liferay-util:include page="/html/portlet/prestadores/convenios_prest/busqueda_convenios_prestacionales.jsp" />
 		</c:when>
 
 		<c:when test='<%= "cartilla-convenios-prestadores".equals(tabs1) %>'>
-			<liferay-util:include page="/html/portlet/liquidaciones/administracion/convenios_prest/cartilla_convenio_por_plan.jsp" />
+			<liferay-util:include page="/html/portlet/prestadores/convenios_prest/cartilla_convenio_por_plan.jsp" />
 		</c:when>
 
 		<c:when test='<%= "aumento-prestaciones".equals(tabs1) %>'>
-			<liferay-util:include page="/html/portlet/liquidaciones/administracion/prestadores/aumento_prestaciones.jsp" />
+			<liferay-util:include page="/html/portlet/prestadores/aumento_prestaciones.jsp" />
 		</c:when>
 	</c:choose>
 </form>

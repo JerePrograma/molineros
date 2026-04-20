@@ -1,6 +1,6 @@
 /**
  */
-package ar.com.ospim.liquidaciones;
+package ar.com.ospim.prestadores;
 
 /**
  * <a href="WebKeys.java.html"><b><i>View Source</i></b></a>
@@ -8,7 +8,7 @@ package ar.com.ospim.liquidaciones;
  * @author Carlos Rivas
  * @modif SVA
  */
-public class WebKeysLiquidaciones implements
+public class WebKeysPrestadores implements
 		com.liferay.portal.kernel.util.WebKeys {
 	public static final String ROL_ABM_LIQUIDACIONES = "ABM_Liquidaciones";
 	public static final String ROL_ENTIDAD_OSPIM = "Entidad_Ospim";
@@ -51,21 +51,21 @@ public class WebKeysLiquidaciones implements
 	// que se carga con
 	// la informaci�n no
 	// completa
-	
+
 	public static final Integer REINTEGRO_ODO_PROTESIS_MARCA = 4;
-	
+
 	public static final int REINTEGRO_ESTADO_AUTORIZADO = 5; // equivalente a
 	// cargado pero
 	// solo para
 	// pr�tesis,
 	// ortopedia_ortodoncia
 	public static final int REINTEGRO_ESTADO_RECHAZADO = 6; // pr�tesis,
-	
-	
-	
+
+
+
 	public static final String  REINTEGRO_PRESTACIONES_RECLAMOS = "REINTEGRO_PRESTACIONES_RECLAMOS"; // LISTA DE PRESTACIONES DE RECLAMOS ASOCIADO AL REINTEGRO
-	
-	
+
+
 	// ortopedia_ortodoncia
 	// que es rechazada
 	// al momento de
@@ -78,9 +78,9 @@ public class WebKeysLiquidaciones implements
 	public static final String TIPO_REINTEGRO_EN_EDICION = "TIPO_REINTEGRO_EN_EDICION";
 	public static final String BUSQUEDA_LIQUIDACIONES_DEBITOS_TERCEROS = "BUSQUEDA_LIQUIDACIONES_DEBITOS_TERCEROS";
 	public static final String TERCERIZADORAS_POR_CONVENIOS = "TERCERIZADORAS_POR_CONVENIOS";
-	
+
 	public static final String RECLAMO_PRESTACIONAL_REINTEGRO_EN_EDICION = "RECLAMO_REINTEGRO_EN_EDICION";
-	
+
 
 	public static final String BUSQUEDA_PRESTADORES = "BUSQUEDA_PRESTADORES";
 	public static final String PRESTADOR_EN_EDICION = "PRESTADOR_EN_EDICION";
@@ -184,18 +184,18 @@ public class WebKeysLiquidaciones implements
 	public static final String CONVENIO_PREST_DETALLE_EN_EDICION = "CONVENIO_PREST_DETALLE_EN_EDICION";
 	public static final String CONVENIO_PREST_DETALLES_EN_SESSION = "CONVENIO_PREST_DETALLES_EN_SESSION";
 	public static final String CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE = "CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE";
-	
+
 	public static final String TIPOS_PAGO_CONVENIOS_PREST_EN_SESSION = "TIPOS_PAGO_CONVENIOS_PREST_EN_SESSION";
 	public static final String TIPOS_NOMENCLADORES_EN_SESSION = "TIPOS_NOMENCLADORES_EN_SESSION";
 	public static final String ROL_ABM_FARMACIA = "ABM_Farmacia";
 	public static final String REPORTES_PRESTACIONES = "reportes_prestaciones";
 	public static final String LOTE_ACTUAL = "LOTE_ACTUAL";
-	
+
 	public static final String ROL_AUMENTO_NOMENCLADOR = "AUMENTO_NOMENCLADOR";
 	public static final String LISTAS_DE_PROFESION_PRESTADOR_EN_SESSION = "LISTAS_DE_PROFESION_PRESTADOR_EN_SESSION";
 	public static final String LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION = "LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION";
 	public static final String LISTAS_DE_SUB_ESPECIALIDAD_PRESTADOR_EN_SESSION = "LISTAS_DE_SUB_ESPECIALIDAD_PRESTADOR_EN_SESSION";
-	
+
 	public static final String PROF_ESPEC_SUBESPEC_PRESTADOR_EN_SESSION = "PROF_ESPEC_SUBESPEC_PRESTADOR_EN_SESSION";
 	public static final String MATRICULAS_PRESTADOR_EN_SESSION = "MATRICULAS_PRESTADOR_EN_SESSION";
 	public static final String LUGARES_ATENCION_PRESTADOR_EN_SESSION = "LUGARES_ATENCION_PRESTADOR_EN_SESSION";
@@ -209,12 +209,12 @@ public class WebKeysLiquidaciones implements
 	public static final String PLANES_EN_SESSION  = "PLANES_EN_SESSION";
 	public static final String LISTAS_PRESTACIONES_REINTEGROS_RESULTADOS = "LISTAS_PRESTACIONES_REINTEGROS_RESULTADOS";
 	public static final String LISTAS_FARMACIAS_REINTEGROS_RESULTADOS = "LISTAS_FARMACIAS_REINTEGROS_RESULTADOS";
-	
+
 	public static final String COMPROBANTE_EXTENDIDO_ACUMULADO="COMPROBANTE_EXTENDIDO_ACUMULADO";
-	
+
 	public static final String ADD_FORMA_PAGO="ADD_FORMA_PAGO";
-	
-	
+
+
 	public static final String DEBITOS_LIQ_PENDIENTES= "DEBITOS_LIQ_PENDIENTES";
 	public static final String DEBITOS_HOSPITALES= "DEBITOS_HOSPITALES";
 	public static final String DEBITOS_REINTEGROS= "DEBITOS_REINTEGROS";
@@ -224,9 +224,9 @@ public class WebKeysLiquidaciones implements
 
 
 	public static final String CONSULTA_COMPROBANTES_GLOBAL_OFFSET_REG="CONSULTA_COMPROBANTES_GLOBAL_OFFSET_REG";
-	public static final String CONSULTA_COMPROBANTES_GLOBAL_TOTAL_REGISTROS="CONSULTA_COMPROBANTES_GLOBAL_TOTAL_REGISTROS";     
+	public static final String CONSULTA_COMPROBANTES_GLOBAL_TOTAL_REGISTROS="CONSULTA_COMPROBANTES_GLOBAL_TOTAL_REGISTROS";
 	public static final String BUSQUEDA_COMPROBANTES_GLOBALES = "BUSQUEDA_COMPROBANTES_GLOBALES";
-	
+
 	public static final String ROL_LIQUIDACIONES_HOSPITALES = "liquidaciones_hospitales";
 
 	public static final String BUSQUEDA_CARTILLA_CONVENIO_FILTRO = "BUSQUEDA_CARTILLA_CONVENIO_FILTRO";

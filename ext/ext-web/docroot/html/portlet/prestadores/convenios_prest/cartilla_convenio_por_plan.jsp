@@ -1,4 +1,5 @@
 <%@ include file="/html/portlet/liquidaciones/init.jsp"%>
+<%@ include file="/html/portlet/prestadores/init.jsp"%>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
 <%@ page import="java.util.ArrayList" %>
@@ -12,8 +13,8 @@
 <%@ page import="ar.com.ospim.global.beans.Provincia" %>
 <%@ page import="ar.com.ospim.global.beans.Localidad" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.EspecialidadPrestador" %>
-<%@ page import="ar.com.ospim.liquidaciones.beans.BusquedaCartillaConvenioFiltro" %>
-<%@ page import="ar.com.ospim.liquidaciones.beans.CartillaConvenioRow" %>
+<%@ page import="ar.com.ospim.prestadores.beans.BusquedaCartillaConvenioFiltro" %>
+<%@ page import="ar.com.ospim.prestadores.beans.CartillaConvenioRow" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
@@ -57,17 +58,18 @@
 %>
 
 <portlet:renderURL var="renderCartillaSearchURL" windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
-    <portlet:param name="struts_action" value="/liquidaciones/cartilla_convenio_por_plan" />
+    <portlet:param name="struts_action" value="/prestadores/cartilla_convenio_por_plan" />
     <portlet:param name="<%= Constants.CMD %>" value="search" />
 </portlet:renderURL>
 
 <portlet:actionURL var="exportCartillaXlsBaseURL">
-    <portlet:param name="struts_action" value="/liquidaciones/cartilla_convenio_por_plan" />
+    <portlet:param name="struts_action" value="/prestadores/cartilla_convenio_por_plan" />
     <portlet:param name="<%= Constants.CMD %>" value="exportCartillaXls" />
 </portlet:actionURL>
 
 <portlet:renderURL var="volverURL" windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>">
-    <portlet:param name="struts_action" value="/liquidaciones/view" />
+    <portlet:param name="struts_action" value="/prestadores/view" />
+<portlet:param name="tabs1" value="cartilla-convenios-prestadores" />
 </portlet:renderURL>
 
 <form action="#" method="post" name="<portlet:namespace />fm" onsubmit="return <portlet:namespace/>buscarCartilla();">
@@ -252,7 +254,7 @@
             <%
                 if (hayResultadosIniciales) {
             %>
-                <jsp:include page="/portlet/liquidaciones/administracion/convenios_prest/cartilla_prestadores_por_plan_search_result.jsp" />
+                <jsp:include page="/html/portlet/prestadores/convenios_prest/cartilla_prestadores_por_plan_search_result.jsp" />
             <%
                 } else {
             %>
