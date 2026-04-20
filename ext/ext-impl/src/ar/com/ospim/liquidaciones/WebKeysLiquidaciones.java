@@ -8,7 +8,7 @@ package ar.com.ospim.liquidaciones;
  * @author Carlos Rivas
  * @modif SVA
  */
-public class WebKeysPrestadores implements
+public class WebKeysLiquidaciones implements
 		com.liferay.portal.kernel.util.WebKeys {
 	public static final String ROL_ABM_LIQUIDACIONES = "ABM_Liquidaciones";
 	public static final String ROL_ENTIDAD_OSPIM = "Entidad_Ospim";
