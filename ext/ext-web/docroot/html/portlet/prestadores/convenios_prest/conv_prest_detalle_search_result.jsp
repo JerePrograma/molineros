@@ -1,4 +1,4 @@
-<%@ include file="/html/portlet/prestadores/init.jsp"%>
+<%@ include file="/html/portlet/prestadores/convenios_prest/init.jsp" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.math.BigDecimal" %>
 <%@ page import="java.math.RoundingMode" %>

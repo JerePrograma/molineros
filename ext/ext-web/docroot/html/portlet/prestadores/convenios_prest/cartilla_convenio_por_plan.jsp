@@ -1,4 +1,4 @@
-<%@ include file="/html/portlet/prestadores/init.jsp"%>
+<%@ include file="/html/portlet/prestadores/convenios_prest/init.jsp" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
 <%@ page import="java.util.ArrayList" %>
@@ -12,8 +12,6 @@
 <%@ page import="ar.com.ospim.global.beans.Provincia" %>
 <%@ page import="ar.com.ospim.global.beans.Localidad" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.EspecialidadPrestador" %>
-<%@ page import="ar.com.ospim.prestadores.beans.BusquedaCartillaConvenioFiltro" %>
-<%@ page import="ar.com.ospim.prestadores.beans.BusquedaCartillaConvenioFiltro" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
@@ -23,6 +21,10 @@
             (BusquedaCartillaConvenioFiltro) request.getAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_FILTRO);
 
     if (filtro == null) {
+        filtro = (BusquedaCartillaConvenioFiltro) session.getAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_FILTRO);
+    }
+
+    if (filtro == null) {
         filtro = new BusquedaCartillaConvenioFiltro();
     }
 
@@ -30,17 +32,24 @@
             (List<CartillaConvenioRow>) request.getAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_RESULTS);
 
     if (resultados == null) {
+        resultados = (List<CartillaConvenioRow>) session.getAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_RESULTS);
+    }
+
+    if (resultados == null) {
         resultados = new ArrayList<CartillaConvenioRow>();
     }
 
+    request.setAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_FILTRO, filtro);
+    request.setAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_RESULTS, resultados);
+
     List<Plan> planes =
-            (List<Plan>) session.getAttribute(WebKeysLiquidaciones.PLANES_EN_SESSION);
+            (List<Plan>) session.getAttribute(WebKeysPrestadores.PLANES_EN_SESSION);
 
     List<Provincia> provincias =
             (List<Provincia>) session.getAttribute(WebKeysPrestadores.PROVINCIAS_EN_SESSION);
 
     List<Localidad> localidades =
-            (List<Localidad>) session.getAttribute(WebKeysLiquidaciones.LOCALIDADES_EN_SESSION);
+            (List<Localidad>) session.getAttribute(WebKeysPrestadores.LOCALIDADES_EN_SESSION);
 
     List<EspecialidadPrestador> especialidades =
             (List<EspecialidadPrestador>) session.getAttribute(WebKeysPrestadores.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION);
@@ -68,7 +77,7 @@
 
 <portlet:renderURL var="volverURL" windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>">
     <portlet:param name="struts_action" value="/prestadores/view" />
-<portlet:param name="tabs1" value="cartilla-convenios-prestadores" />
+    <portlet:param name="tabs1" value="cartilla-convenios-prestadores" />
 </portlet:renderURL>
 
 <form action="#" method="post" name="<portlet:namespace />fm" onsubmit="return <portlet:namespace/>buscarCartilla();">
@@ -213,7 +222,7 @@
                     &nbsp;&nbsp;
 
                     <input type="button"
-                           id="<portlet:namespace/>btnExportarCartilla"
+                           id="<portlet:namespace />btnExportarCartilla"
                            value="Exportar XLS"
                            style="<%= hayResultadosIniciales ? "" : "display:none;" %>"
                            onclick="javascript:<portlet:namespace/>exportarCartilla();" />
@@ -234,7 +243,7 @@
         </table>
     </fieldset>
 
-    <div align="center" id="<portlet:namespace/>buscandoCartilla" style="display:none; margin:6px 0 0 0;">
+    <div align="center" id="<portlet:namespace />buscandoCartilla" style="display:none; margin:6px 0 0 0;">
         <table style="align:center;">
             <tr>
                 <td><liferay-ui:message key='buscando'/></td>
@@ -249,7 +258,7 @@
     <fieldset class="block-labels">
         <legend>Resultados</legend>
 
-        <div id="<portlet:namespace/>cartilla_resultados">
+        <div id="<portlet:namespace />cartilla_resultados">
             <%
                 if (hayResultadosIniciales) {
             %>
@@ -322,22 +331,18 @@
 
         var code = evt.which != null ? evt.which : evt.keyCode;
 
-        // backspace, tab, enter, escape, delete
         if (code === 8 || code === 9 || code === 13 || code === 27 || code === 46) {
             return true;
         }
 
-        // flechas, home, end
-        if ((code >= 35 && code <= 40)) {
+        if (code >= 35 && code <= 40) {
             return true;
         }
 
-        // números
         if (code >= 48 && code <= 57) {
             return true;
         }
 
-        // numpad
         if (code >= 96 && code <= 105) {
             return true;
         }
@@ -444,9 +449,3 @@
         <portlet:namespace/>syncExportButton();
     });
 </script>
-<div style="display:none;">
-    planes: <%= planes == null ? "null" : String.valueOf(planes.size()) %>,
-    provincias: <%= provincias == null ? "null" : String.valueOf(provincias.size()) %>,
-    localidades: <%= localidades == null ? "null" : String.valueOf(localidades.size()) %>,
-    especialidades: <%= especialidades == null ? "null" : String.valueOf(especialidades.size()) %>
-</div>

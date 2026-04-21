@@ -13,7 +13,6 @@ import javax.portlet.RenderResponse;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
 import ar.com.ospim.prestadores.WebKeysPrestadores;
 import org.apache.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -54,6 +53,7 @@ public class CartillaConvenioPorPlanAction extends PortletAction {
 
         String cmd = ParamUtil.getString(actionRequest, Constants.CMD, "");
         log.info("[CARTILLA-CONV][ACTION][START] cmd=" + cmd);
+
         if (CMD_EXPORT_XLS.equalsIgnoreCase(cmd)) {
             exportarXls(actionRequest, actionResponse);
         }
@@ -69,6 +69,8 @@ public class CartillaConvenioPorPlanAction extends PortletAction {
 
         log.info("[CARTILLA-CONV][RENDER][START] cmd=" + cmd);
 
+        cargarListas(session);
+
         if (CMD_SEARCH.equalsIgnoreCase(cmd)) {
             BusquedaCartillaConvenioFiltro filtro = getFiltroFromRequest(renderRequest);
             List<CartillaConvenioRow> resultados = buscarResultados(filtro);
@@ -80,12 +82,10 @@ public class CartillaConvenioPorPlanAction extends PortletAction {
             return mapping.findForward(getForward(renderRequest, FORWARD_CARTILLA_RESULTADOS));
         }
 
-        log.info("[CARTILLA-CONV][RENDER][DEFAULT] cargando listas");
-        cargarListas(session);
         restaurarBusquedaDesdeSession(session, renderRequest);
 
         log.info("[CARTILLA-CONV][RENDER][DEFAULT] planes="
-                + sizeOf(session.getAttribute(WebKeysLiquidaciones.PLANES_EN_SESSION)));
+                + sizeOf(session.getAttribute(WebKeysPrestadores.PLANES_EN_SESSION)));
 
         return mapping.findForward(getForward(renderRequest, FORWARD_CARTILLA));
     }

@@ -90,7 +90,7 @@
 <%@ page import="ar.com.ospim.liquidaciones.services.CatastroServiceUtil" %>
 <%@ page import="ar.com.ospim.liquidaciones.services.TratamientoDiscapacidadServiceUtil" %>
 <%@ page import="ar.com.ospim.liquidaciones.services.PrestadorExternoServiceUtil" %>
-<%@ page import="ar.com.ospim.liquidaciones.services.ConvenioPrestacionalServiceUtil" %>
+<%@ page import="ar.com.ospim.prestadores.services.ConvenioPrestacionalServiceUtil" %>
 <%@ page import="ar.com.ospim.liquidaciones.services.PrestadorServiceUtil" %>
 
 <%@ page import="ar.com.ospim.liquidaciones.action.LiquidacionDebitosActionUtil" %>

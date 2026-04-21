@@ -118,7 +118,7 @@ List<Nacionalidad> nacionalidades = (ArrayList<Nacionalidad>) portletSession
 if (nacionalidades == null) {
 	nacionalidades = TraeListasServiceUtil.getNacionalidades();
 	portletSession.setAttribute(WebKeysAfiliados.NACIONALIDADES_EN_SESSION,
-	nacionalidades,PortletSession.APPLICATION_SCOPE);	
+	nacionalidades,PortletSession.APPLICATION_SCOPE);
 }
 
 List<ObraSocialCampo> obrasSocialesAnteriores = (ArrayList<ObraSocialCampo>) portletSession
@@ -144,7 +144,7 @@ List<Parentesco> parentescos = (ArrayList<Parentesco>) portletSession
 if (parentescos == null || parentescos.size()==0) {
 	parentescos = TraeListasServiceUtil.getParentescos();
 	portletSession.setAttribute(WebKeysAfiliados.PARENTESCOS_EN_SESSION,
-	parentescos,PortletSession.APPLICATION_SCOPE);	
+	parentescos,PortletSession.APPLICATION_SCOPE);
 }
 List<EstadoCivil> estados_civil = (ArrayList<EstadoCivil>) portletSession
 .getAttribute(WebKeysAfiliados.ESTADOS_CIVIL_EN_SESSION, PortletSession.APPLICATION_SCOPE);
@@ -152,10 +152,10 @@ List<EstadoCivil> estados_civil = (ArrayList<EstadoCivil>) portletSession
 if (estados_civil == null || estados_civil.size()==0) {
 	estados_civil = TraeListasServiceUtil.getEstadosCivil();
 	portletSession.setAttribute(WebKeysAfiliados.ESTADOS_CIVIL_EN_SESSION,
-	estados_civil,PortletSession.APPLICATION_SCOPE);	
+	estados_civil,PortletSession.APPLICATION_SCOPE);
 }
 String seccionalString=null;
-String seccionalDefecto=user.getExpandoBridge().getAttribute("id_seccional").toString(); 		
+String seccionalDefecto=user.getExpandoBridge().getAttribute("id_seccional").toString();
 int seccionalFijada=null!=seccionalDefecto&& !seccionalDefecto.trim().equals("")&& !seccionalDefecto.trim().equals("0")?Integer.parseInt(seccionalDefecto):0;
 if(seccionalFijada!=0){
 	seccionalString=user.getExpandoBridge().getAttribute("seccional").toString();
@@ -166,7 +166,7 @@ if(seccionalFijada!=0){
 
 <script type="text/javascript">
 
-<% 
+<%
 int cont_emp=0;
 int cont_sec=0;
 int cont_usu=0;
@@ -178,27 +178,27 @@ List<EmpresaLiferay> empresasSectoresUsuarios = (ArrayList<EmpresaLiferay>) port
 		   if (empresasSectoresUsuarios == null) {
 			   empresasSectoresUsuarios = EmpresaSectorUsuarioServiceUtil.getEmpresasSectoresUsuarios();;
 		   		portletSession.setAttribute(WebKeysCorrespondencia.EMPRESA_SECTOR_USUARIOS_LIFERAY_EN_SESSION,
-		   		empresasSectoresUsuarios,PortletSession.APPLICATION_SCOPE);	
-		   }   
+		   		empresasSectoresUsuarios,PortletSession.APPLICATION_SCOPE);
+		   }
 
 
 //Empresas
 for(EmpresaLiferay empSecUsu : empresasSectoresUsuarios){ %>
-	data_<%=cont_emp%> = new Option("<%=empSecUsu.getEmpresa().getName() %>", "<%=empSecUsu.getEmpresa().getOrganizationId()%>");   	
+	data_<%=cont_emp%> = new Option("<%=empSecUsu.getEmpresa().getName() %>", "<%=empSecUsu.getEmpresa().getOrganizationId()%>");
 	<% cont_sec=0;
-	
-	// Sectores	
+
+	// Sectores
 	for(SectorLiferay secUsu : empSecUsu.getSectores() ){ %>
 		data_<%=cont_emp%>_<%=cont_sec%>=new Option("<%=secUsu.getSector().getName() %>","<%=secUsu.getSector().getUserGroupId()%>");
 		<% cont_usu=0;
-		
+
 		// Usuarios
 		%>
 		// Primer opcion de usuario es 'A todos los usuarios del grupo'
 		data_<%=cont_emp%>_<%=cont_sec%>_<%=cont_usu%>=new Option("<%="A todos los usuarios" %>","<%="TODOS"%>");
 		<%
 		cont_usu++;
-		for(User usu : secUsu.getUsuarios() ){ 
+		for(User usu : secUsu.getUsuarios() ){
 			if(usu.getActive()){%>
 				data_<%=cont_emp%>_<%=cont_sec%>_<%=cont_usu%>=new Option("<%=usu.getFullName() %>","<%=usu.getScreenName()%>");
 			<%
@@ -208,7 +208,7 @@ for(EmpresaLiferay empSecUsu : empresasSectoresUsuarios){ %>
 		cont_sec++;
 	}
 	cont_emp++;
-} 
+}
 
 %>
 </script>

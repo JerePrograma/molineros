@@ -1,4 +1,4 @@
-<%@ include file="/html/portlet/prestadores/init.jsp" %>
+<%@ include file="/html/portlet/prestadores/convenios_prest/init.jsp" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects />
@@ -46,6 +46,8 @@ if (tabs1 == null || !tabValida) {
 	tabs1 = vTab[0];
 }
 
+request.getSession().setAttribute("tabs1", tabs1);
+
 String subtitle = "Prestadores";
 
 if ("convenios-prestacionales".equals(tabs1)) {
@@ -64,39 +66,32 @@ portletURL.setParameter("tabs1", tabs1);
 currentURL = PortalUtil.getCurrentURL(request);
 %>
 
-<form action="<%= portletURL %>" method="get" name="<portlet:namespace />fm">
-	<input name="<portlet:namespace /><%= Constants.CMD %>" type="hidden" value="" />
+<liferay-portlet:renderURLParams varImpl="portletURL" />
 
-	<liferay-portlet:renderURLParams varImpl="portletURL" />
+<liferay-ui-custom:tabs
+	names="<%= tabs1Names %>"
+	tabsValues="<%= tabs1Values %>"
+	portletURL="<%= portletURL %>"
+	value="<%= tabs1 %>"
+/>
 
-	<liferay-ui-custom:tabs
-		names="<%= tabs1Names %>"
-		tabsValues="<%= tabs1Values %>"
-		portletURL="<%= portletURL %>"
-		value="<%= tabs1 %>"
-	/>
+<c:choose>
+    <c:when test='<%= "prestadores".equals(tabs1) %>'>
+        <liferay-util:include page="/html/portlet/prestadores/convenios_prest/busqueda_prestadores.jsp" />
+    </c:when>
 
-	<c:choose>
-		<c:when test='<%= "prestadores".equals(tabs1) %>'>
-			<liferay-util:include page="/html/portlet/prestadores/convenios_prest/administracionTablas.jsp" />
-		</c:when>
+	<c:when test='<%= "convenios-prestacionales".equals(tabs1) %>'>
+		<liferay-util:include page="/html/portlet/prestadores/convenios_prest/busqueda_convenios_prestacionales.jsp" />
+	</c:when>
 
-		<c:when test='<%= "convenios-prestacionales".equals(tabs1) %>'>
-			<liferay-util:include page="/html/portlet/prestadores/convenios_prest/busqueda_convenios_prestacionales.jsp" />
-		</c:when>
+	<c:when test='<%= "cartilla-convenios-prestadores".equals(tabs1) %>'>
+		<liferay-util:include page="/html/portlet/prestadores/convenios_prest/cartilla_convenio_por_plan.jsp" />
+	</c:when>
 
-		<c:when test='<%= "cartilla-convenios-prestadores".equals(tabs1) %>'>
-			<liferay-util:include page="/html/portlet/prestadores/convenios_prest/cartilla_convenio_por_plan.jsp" />
-		</c:when>
-
-		<c:when test='<%= "aumento-prestaciones".equals(tabs1) %>'>
-			<liferay-util:include page="/html/portlet/prestadores/convenios_prest/aumento_prestaciones.jsp" />
-		</c:when>
-	</c:choose>
-</form>
-
-<script type="text/javascript">
-</script>
+	<c:when test='<%= "aumento-prestaciones".equals(tabs1) %>'>
+		<liferay-util:include page="/html/portlet/prestadores/convenios_prest/aumento_prestaciones.jsp" />
+	</c:when>
+</c:choose>
 
 <%
 request.getSession().removeAttribute("opciones");

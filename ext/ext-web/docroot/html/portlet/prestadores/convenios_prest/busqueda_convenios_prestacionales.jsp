@@ -1,4 +1,5 @@
-<%@ include file="/html/portlet/prestadores/init.jsp" %>
+<%@ include file="/html/portlet/prestadores/convenios_prest/init.jsp" %>
+
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
 <%
@@ -76,7 +77,7 @@
 				</table>
 			</div>
 			<div align="center" id="<portlet:namespace />busquedaConvPrestacDiv">
-				<liferay-util:include page="/html/portlet/prestadores/convenios_prestac_search_result.jsp">
+				<liferay-util:include page="/html/portlet/prestadores/convenios_prest/convenios_prestac_search_result.jsp">
 				</liferay-util:include>
 			</div>
 		</fieldset>

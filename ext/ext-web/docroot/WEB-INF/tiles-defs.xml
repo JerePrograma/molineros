@@ -556,12 +556,6 @@
 			value="/portlet/liquidaciones/reintegros/reintegros_detalle_search_result.jsp" />
 	</definition>
 
-	<definition name="portlet.liquidaciones.conv_prestac.result.search"
-		extends="portlet.liquidaciones">
-		<put name="portlet_content"
-			value="/portlet//prestadores/convenios_prest/convenios_prestac_search_result.jsp" />
-	</definition>
-
 	<definition name="portlet.liquidaciones.conv_prestac.result_rango.search"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
@@ -4305,5 +4299,17 @@
 	            extends="portlet.liquidaciones">
 		<put name="portlet_content"
 		     value="/portlet/liquidaciones/administracion/prestadores/busqueda_prestadores.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.conv_prestac.result.search"
+	            extends="portlet.liquidaciones">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/convenios_prestac_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.prestadores"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/busqueda_prestadores.jsp" />
 	</definition>
 </tiles-definitions>
