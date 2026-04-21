@@ -78,7 +78,7 @@ currentURL = PortalUtil.getCurrentURL(request);
 
 	<c:choose>
 		<c:when test='<%= "prestadores".equals(tabs1) %>'>
-			<liferay-util:include page="/html/portlet/prestadores/busqueda_prestadores.jsp" />
+			<liferay-util:include page="/html/portlet/prestadores/convenios_prest/administracionTablas.jsp" />
 		</c:when>
 
 		<c:when test='<%= "convenios-prestacionales".equals(tabs1) %>'>
@@ -90,7 +90,7 @@ currentURL = PortalUtil.getCurrentURL(request);
 		</c:when>
 
 		<c:when test='<%= "aumento-prestaciones".equals(tabs1) %>'>
-			<liferay-util:include page="/html/portlet/prestadores/aumento_prestaciones.jsp" />
+			<liferay-util:include page="/html/portlet/prestadores/convenios_prest/aumento_prestaciones.jsp" />
 		</c:when>
 	</c:choose>
 </form>
