@@ -33,7 +33,7 @@ import ar.com.ospim.liquidaciones.TopeCantidadTotalExedidoException;
 import ar.com.ospim.liquidaciones.TopeImporteIndividualExedidoException;
 import ar.com.ospim.liquidaciones.TopeImporteTotalExedidoException;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
 import ar.com.ospim.liquidaciones.beans.DetalleCuota;
 import ar.com.ospim.liquidaciones.beans.Reintegro;
 import ar.com.ospim.liquidaciones.beans.ReintegroPrestacionNormal;

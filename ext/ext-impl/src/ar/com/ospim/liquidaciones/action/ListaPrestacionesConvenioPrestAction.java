@@ -1,4 +1,4 @@
-package ar.com.ospim.prestadores.action;
+package ar.com.ospim.liquidaciones.action;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -10,17 +10,17 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import javax.servlet.http.HttpSession;
 
-import ar.com.ospim.prestadores.WebKeysPrestadores;
+import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.global.beans.Prestacion;
 import ar.com.ospim.liquidaciones.administracion.prestadores.exception.ProfesionEspecialidadSubEspecPrestadorException;
-import ar.com.ospim.prestadores.beans.ConvenioPrestacional;
-import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
-import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle.ESTADOS;
-import ar.com.ospim.prestadores.services.ConvenioPrestacionalServiceUtil;
+import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional;
+import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle.ESTADOS;
+import ar.com.ospim.liquidaciones.services.ConvenioPrestacionalServiceUtil;
 import ar.com.ospim.util.StringUtils;
 
 import com.liferay.portal.kernel.log.Log;
@@ -150,7 +150,7 @@ public class ListaPrestacionesConvenioPrestAction extends PortletAction {
 
 			_log.debug("[LISTA-CONV-PREST][ADD][OBJ] convPrestDetalle=" + convPrestDetalle);
 
-			detalles = (ArrayList<ConvenioPrestacionalDetalle>) session.getAttribute(WebKeysPrestadores.CONVENIO_PREST_DETALLES_EN_SESSION);
+			detalles = (ArrayList<ConvenioPrestacionalDetalle>) session.getAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
 			_log.debug("[LISTA-CONV-PREST][ADD][SESSION-GET] detalles en session="
 					+ (detalles != null ? detalles.size() : "null"));
 
@@ -180,8 +180,8 @@ public class ListaPrestacionesConvenioPrestAction extends PortletAction {
 
 			_log.debug("[LISTA-CONV-PREST][ADD][SESSION-SET] Reemplazando lista en session con tamaño="
 					+ (detalles != null ? detalles.size() : "null"));
-			session.removeAttribute(WebKeysPrestadores.CONVENIO_PREST_DETALLES_EN_SESSION);
-			session.setAttribute(WebKeysPrestadores.CONVENIO_PREST_DETALLES_EN_SESSION, detalles);
+			session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
+			session.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION, detalles);
 
 			_log.info("[LISTA-CONV-PREST][ADD][END] Fin flujo ADD");
 		}
@@ -204,7 +204,7 @@ public class ListaPrestacionesConvenioPrestAction extends PortletAction {
 			_log.debug("[LISTA-CONV-PREST][COPY][DETALLES-ORIGEN] Cantidad detalles origen="
 					+ (origen != null ? origen.size() : "null"));
 
-			detalles = (ArrayList<ConvenioPrestacionalDetalle>) session.getAttribute(WebKeysPrestadores.CONVENIO_PREST_DETALLES_EN_SESSION);
+			detalles = (ArrayList<ConvenioPrestacionalDetalle>) session.getAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
 			_log.debug("[LISTA-CONV-PREST][COPY][SESSION-GET] detalles en session="
 					+ (detalles != null ? detalles.size() : "null"));
 
@@ -233,8 +233,8 @@ public class ListaPrestacionesConvenioPrestAction extends PortletAction {
 				}
 			}
 
-			session.removeAttribute(WebKeysPrestadores.CONVENIO_PREST_DETALLES_EN_SESSION);
-			session.setAttribute(WebKeysPrestadores.CONVENIO_PREST_DETALLES_EN_SESSION, detalles);
+			session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
+			session.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION, detalles);
 			_log.debug("[LISTA-CONV-PREST][COPY][SESSION-SET] Lista guardada en session con tamaño="
 					+ (detalles != null ? detalles.size() : "null"));
 
@@ -250,7 +250,7 @@ public class ListaPrestacionesConvenioPrestAction extends PortletAction {
 			int idConvPrestDet = ParamUtil.getInteger(renderRequest, "id_convprest_det");
 			_log.debug("[LISTA-CONV-PREST][DELETE][PARAMS] id_convprest_det=" + idConvPrestDet);
 
-			detalles = (ArrayList<ConvenioPrestacionalDetalle>) session.getAttribute(WebKeysPrestadores.CONVENIO_PREST_DETALLES_EN_SESSION);
+			detalles = (ArrayList<ConvenioPrestacionalDetalle>) session.getAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
 			_log.debug("[LISTA-CONV-PREST][DELETE][SESSION-GET] detalles en session="
 					+ (detalles != null ? detalles.size() : "null"));
 
@@ -275,8 +275,8 @@ public class ListaPrestacionesConvenioPrestAction extends PortletAction {
 						detalles.remove(pos);
 					}
 
-					session.removeAttribute(WebKeysPrestadores.CONVENIO_PREST_DETALLES_EN_SESSION);
-					session.setAttribute(WebKeysPrestadores.CONVENIO_PREST_DETALLES_EN_SESSION, detalles);
+					session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
+					session.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION, detalles);
 					_log.debug("[LISTA-CONV-PREST][DELETE][SESSION-SET] Lista guardada en session con tamaño="
 							+ (detalles != null ? detalles.size() : "null"));
 				} else {

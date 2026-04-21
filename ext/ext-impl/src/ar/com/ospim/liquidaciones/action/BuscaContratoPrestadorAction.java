@@ -1,4 +1,4 @@
-package ar.com.ospim.prestadores.action;
+package ar.com.ospim.liquidaciones.action;
 
 
 import java.text.SimpleDateFormat;
@@ -11,8 +11,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 
-import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
-import ar.com.ospim.prestadores.services.ConvenioPrestacionalServiceUtil;
+import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.liquidaciones.services.ConvenioPrestacionalServiceUtil;
 
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.struts.JSONAction;

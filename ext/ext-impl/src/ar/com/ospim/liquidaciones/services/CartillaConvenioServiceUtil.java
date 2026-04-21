@@ -1,9 +1,9 @@
-package ar.com.ospim.prestadores.services;
+package ar.com.ospim.liquidaciones.services;
 
 import java.util.List;
 
-import ar.com.ospim.prestadores.beans.BusquedaCartillaConvenioFiltro;
-import ar.com.ospim.prestadores.beans.CartillaConvenioRow;
+import ar.com.ospim.liquidaciones.beans.BusquedaCartillaConvenioFiltro;
+import ar.com.ospim.liquidaciones.beans.CartillaConvenioRow;
 
 import com.liferay.portal.SystemException;
 

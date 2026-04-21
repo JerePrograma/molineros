@@ -131,57 +131,6 @@ if (obrasSocialesAnteriores == null) {
 	obrasSocialesAnteriores, PortletSession.APPLICATION_SCOPE);
 }
 
-List<Provincia> provincias = (ArrayList<Provincia>) portletSession
-.getAttribute(WebKeysAfiliados.PROVINCIAS_EN_SESSION, PortletSession.APPLICATION_SCOPE);
-
-if (provincias == null) {
-	provincias = TraeListasServiceUtil.getProvincias();
-	portletSession.setAttribute(WebKeysAfiliados.PROVINCIAS_EN_SESSION,
-	provincias,PortletSession.APPLICATION_SCOPE);	
-}
-
-List<Localidad> localidades = (ArrayList<Localidad>) portletSession
-.getAttribute(WebKeysAfiliados.LOCALIDADES_EN_SESSION, PortletSession.APPLICATION_SCOPE);
-
-if (localidades == null || localidades.size()==0) {
-	localidades = TraeListasServiceUtil.getLocalidades();
-	portletSession.setAttribute(WebKeysAfiliados.LOCALIDADES_EN_SESSION,
-	localidades,PortletSession.APPLICATION_SCOPE);	
-}
-
-
-//DS - Manejo Localidades por Provincia
-//Map<Integer,List<Localidad>> localidadesPorProvincia = TraeListasServiceUtil.getLocalidadesAgrupadasPorProvincia();
-
-
- Map<Integer,List<Localidad>> localidadesPorProvincia = (Map<Integer,List<Localidad>>) portletSession
-.getAttribute(WebKeysAfiliados.LOCALIDADES_EN_SESSION_POR_PROVINCIA, PortletSession.APPLICATION_SCOPE);
-
- if (localidadesPorProvincia == null || localidadesPorProvincia.size()==0) {
-	localidadesPorProvincia = new HashMap<Integer,List<Localidad>>();	 
- 		
-	for(Localidad l:localidades){
-		if(l!=null && l.getId_provincia()>0 && l.getDescripcion()!=null && !"".equalsIgnoreCase(l.getDescripcion().trim() )){
-			List<Localidad> lst =  new ArrayList<Localidad>();
-			try{
-			  lst = localidadesPorProvincia.get(l.getId_provincia());
-			  if(lst==null) lst =  new ArrayList<Localidad>();
-			}catch(Exception e){
-			  lst =  new ArrayList<Localidad>();
-			}
-			lst.add(l);
-			localidadesPorProvincia.put(l.getId_provincia(), lst);
-	   }
-	}
-	
-	portletSession.setAttribute(WebKeysAfiliados.LOCALIDADES_EN_SESSION_POR_PROVINCIA,
-			localidadesPorProvincia,PortletSession.APPLICATION_SCOPE);
-
- }
-
-//DS
-
-
 List<MotivoBaja> motivos = (ArrayList<MotivoBaja>) portletSession.getAttribute(WebKeysAfiliados.MOTIVOS_BAJA_EN_SESSION,PortletSession.APPLICATION_SCOPE);
 if(motivos == null){
 	motivos = TraeListasServiceUtil.getMotivosBaja();

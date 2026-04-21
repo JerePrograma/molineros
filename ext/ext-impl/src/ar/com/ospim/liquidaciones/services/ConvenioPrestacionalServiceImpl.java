@@ -1,4 +1,4 @@
-package ar.com.ospim.prestadores.services;
+package ar.com.ospim.liquidaciones.services;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
@@ -8,9 +8,9 @@ import java.util.Date;
 import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.global.beans.Prestacion;
 import ar.com.ospim.liquidaciones.NoSuchConvenioPrestacionalEntryException;
-import ar.com.ospim.prestadores.beans.BusquedaConvenioPrestacionalFiltro;
-import ar.com.ospim.prestadores.beans.ConvenioPrestacional;
-import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.liquidaciones.beans.BusquedaConvenioPrestacionalFiltro;
+import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional;
+import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
 import ar.com.ospim.util.ConnectionHelper;
 
 import ar.com.ospim.util.StringUtils;

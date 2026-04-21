@@ -1,4 +1,4 @@
-package ar.com.ospim.prestadores.beans;
+package ar.com.ospim.liquidaciones.beans;
 
 import java.io.Serializable;
 import java.sql.ResultSet;

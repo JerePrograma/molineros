@@ -12,8 +12,8 @@
 <%@ page import="ar.com.ospim.global.beans.Provincia" %>
 <%@ page import="ar.com.ospim.global.beans.Localidad" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.EspecialidadPrestador" %>
-<%@ page import="ar.com.ospim.prestadores.beans.BusquedaCartillaConvenioFiltro" %>
-<%@ page import="ar.com.ospim.prestadores.beans.CartillaConvenioRow" %>
+<%@ page import="ar.com.ospim.liquidaciones.beans.BusquedaCartillaConvenioFiltro" %>
+<%@ page import="ar.com.ospim.liquidaciones.beans.CartillaConvenioRow" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
@@ -37,7 +37,7 @@
             (List<Plan>) session.getAttribute(WebKeysLiquidaciones.PLANES_EN_SESSION);
 
     List<Provincia> provincias =
-            (List<Provincia>) session.getAttribute(WebKeysLiquidaciones.PROVINCIAS_EN_SESSION);
+            (List<Provincia>) session.getAttribute(WebKeysPrestadores.PROVINCIAS_EN_SESSION);
 
     List<Localidad> localidades =
             (List<Localidad>) session.getAttribute(WebKeysLiquidaciones.LOCALIDADES_EN_SESSION);
@@ -377,10 +377,21 @@
 
         showCartillaLoading(true);
 
-        jQuery("#" + nsKey("cartilla_resultados")).load(SEARCH_URL, params, function(responseText) {
-            showCartillaLoading(false);
-            evalScriptsSafe(responseText);
-            <portlet:namespace/>syncExportButton();
+        jQuery.ajax({
+            url: SEARCH_URL,
+            type: "GET",
+            data: params,
+            success: function(responseText) {
+                jQuery("#" + nsKey("cartilla_resultados")).html(responseText);
+                showCartillaLoading(false);
+                evalScriptsSafe(responseText);
+                <portlet:namespace/>syncExportButton();
+            },
+            error: function(xhr) {
+                showCartillaLoading(false);
+                jQuery("#" + nsKey("cartilla_resultados"))
+                    .html('<div class="portlet-msg-error">Error consultando cartilla.</div>');
+            }
         });
 
         return false;
@@ -433,3 +444,9 @@
         <portlet:namespace/>syncExportButton();
     });
 </script>
+<div style="display:none;">
+    planes: <%= planes == null ? "null" : String.valueOf(planes.size()) %>,
+    provincias: <%= provincias == null ? "null" : String.valueOf(provincias.size()) %>,
+    localidades: <%= localidades == null ? "null" : String.valueOf(localidades.size()) %>,
+    especialidades: <%= especialidades == null ? "null" : String.valueOf(especialidades.size()) %>
+</div>
