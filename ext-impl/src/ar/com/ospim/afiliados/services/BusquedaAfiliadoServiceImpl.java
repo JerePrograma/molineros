@@ -31,17 +31,17 @@ import ar.com.uoma.beans.Incidente;
 
 /**
  * <a href="BusquedaAfiliadoServiceImpl.java.html"><b><i>View Source</i></b></a>
- * 
+ *
  * @author Federico Brachi
- * 
+ *
  */
 public class BusquedaAfiliadoServiceImpl {
 
 	private static Log _log = LogFactoryUtil.getLog(BusquedaAfiliadoServiceImpl.class);
 
 	public List<Afiliado> getBusquedaAfiliados(String cuil, String inte,
-			String tdoc, String nroDoc, int seccional_id, String apellido,
-			String nombre) {
+											   String tdoc, String nroDoc, int seccional_id, String apellido,
+											   String nombre) {
 		Connection con = null;
 		CallableStatement stmt = null;
 		List<Afiliado> listaAfiliados = null;
@@ -101,19 +101,18 @@ public class BusquedaAfiliadoServiceImpl {
 			listaAfiliados = new ArrayList<Afiliado>();
 			while (rs.next()) {
 				Afiliado bp = new Afiliado(rs.getString("cuil_titular"),
-						rs.getInt("inte"), 
-						rs.getInt("id_parentesco_sss"), 
+						rs.getInt("inte"),
+						rs.getInt("id_parentesco_sss"),
 						rs.getString("parentesco"),
-						rs.getString("nombre"), 
+						rs.getString("nombre"),
 						rs.getString("apellido"),
-						rs.getString("tdoc"), 
+						rs.getString("tdoc"),
 						rs.getString("documento"),
-						rs.getString("seccional"), 
+						rs.getString("seccional"),
 						rs.getDate("ingreso"),
 						rs.getDate("baja_fecha"));
 				bp.setVigen_fecha(rs.getDate("vigen_fecha"));
 				bp.setDiscapacitado(rs.getString("discapacitado"));
-				bp.setTieneAntecedentesJudiciales(rs.getInt("tiene_antecendentes_judiciales"));
 
 				listaAfiliados.add(bp);
 			}
@@ -128,10 +127,10 @@ public class BusquedaAfiliadoServiceImpl {
 	}
 
 	public List<Afiliado> getBusquedaAfiliadosComponente(String cuil,
-			String inte, String tipoDoc, String nroDoc, int seccional,
-			String apellido, String nombre, int entidad, int afiNumero, 
-			int nroSocioPrev, BigDecimal nroCredenPrev) {
-		
+														 String inte, String tipoDoc, String nroDoc, int seccional,
+														 String apellido, String nombre, int entidad, int afiNumero,
+														 int nroSocioPrev, BigDecimal nroCredenPrev) {
+
 		Connection con = null;
 		CallableStatement stmt = null;
 		List<Afiliado> listaAfiliados = null;
@@ -170,12 +169,12 @@ public class BusquedaAfiliadoServiceImpl {
 			} else {
 				stmt.setBigDecimal(11, nroCredenPrev);
 			}
-			
+
 			ResultSet rs = stmt.executeQuery();
 			listaAfiliados = new ArrayList<Afiliado>();
-			
+
 			String prefixAsc = "afi_cob_med_susp_";
-			
+
 			while (rs.next()) {
 				Afiliado afi = new Afiliado(rs.getString("cuil"),
 						rs.getInt("inte"), rs.getInt("id_parentesco_sss"),
@@ -187,7 +186,7 @@ public class BusquedaAfiliadoServiceImpl {
 						rs.getInt("id_ospim"), rs.getInt("id_amtima"),
 						rs.getInt("id_uoma"), rs.getInt("id_plan"),
 						rs.getString("nombre_plan"), rs.getDate("alta_fecha"),
-						rs.getString("discapacitado"), "", "");  // algun día buscar la tercerizadora y descripcion
+						rs.getString("discapacitado"), "", "");  // algun dï¿½a buscar la tercerizadora y descripcion
 
 				afi.setId_ospim_baja_fecha(rs.getDate("id_ospim_baja_fecha"));
 				afi.setId_uoma_baja_fecha(rs.getDate("id_uoma_baja_fecha"));
@@ -201,17 +200,20 @@ public class BusquedaAfiliadoServiceImpl {
 				afi.setId_tercerizadora("");
 				afi.setDesc_tercerizadora("");
 				afi.setDetalleFechasSuperintendencia(DetalleFechasSuper.getMapping("", rs));
-				
+				afi.setTieneAntecedentesJudiciales(
+						buscarTieneAntecedentesGrupoFamiliar(afi.getCuil_titular())
+				);
+
 				AfiSuspencionCobertura asc = new AfiSuspencionCobertura(rs.getInt(prefixAsc+"id"),
 						rs.getDate(prefixAsc+"vigen_desde"),rs.getDate(prefixAsc+"vigen_hasta"));
 				afi.addUltimaSuspCobertura(asc);
-				
+
 				try{
-				   AfiTercerizadoraServicio ats = TercerizadoraServiceUtil.getInstance().buscarUltimaTercerizadoraDelAfiliado(null, afi.getCuil_titular());
-				   afi.setId_tercerizadora(ats.getTercerizadora().getId_tercerizadora());
-				   afi.setDesc_tercerizadora(ats.getTercerizadora().getDescripcion());
-				}catch(Exception e1){}   
-				
+					AfiTercerizadoraServicio ats = TercerizadoraServiceUtil.getInstance().buscarUltimaTercerizadoraDelAfiliado(null, afi.getCuil_titular());
+					afi.setId_tercerizadora(ats.getTercerizadora().getId_tercerizadora());
+					afi.setDesc_tercerizadora(ats.getTercerizadora().getDescripcion());
+				}catch(Exception e1){}
+
 				listaAfiliados.add(afi);
 			}
 
@@ -224,12 +226,12 @@ public class BusquedaAfiliadoServiceImpl {
 		return listaAfiliados;
 	}
 
-	
+
 	public List<Afiliado> getBusquedaAfiliadosComponenteCredencialUOMA(String cuil,
-			String inte, String tipoDoc, String nroDoc, int seccional,
-			String apellido, String nombre, int entidad, int afiNumero, 
-			int nroSocioPrev, BigDecimal nroCredenPrev) {
-		
+																	   String inte, String tipoDoc, String nroDoc, int seccional,
+																	   String apellido, String nombre, int entidad, int afiNumero,
+																	   int nroSocioPrev, BigDecimal nroCredenPrev) {
+
 		Connection con = null;
 		CallableStatement stmt = null;
 		List<Afiliado> listaAfiliados = null;
@@ -268,12 +270,12 @@ public class BusquedaAfiliadoServiceImpl {
 			} else {
 				stmt.setBigDecimal(11, nroCredenPrev);
 			}
-			
+
 			ResultSet rs = stmt.executeQuery();
 			listaAfiliados = new ArrayList<Afiliado>();
-			
+
 			String prefixAsc = "afi_cob_med_susp_";
-			
+
 			while (rs.next()) {
 				Afiliado afi = new Afiliado(rs.getString("cuil"),
 						rs.getInt("inte"), rs.getInt("id_parentesco_sss"),
@@ -285,7 +287,7 @@ public class BusquedaAfiliadoServiceImpl {
 						rs.getInt("id_ospim"), rs.getInt("id_amtima"),
 						rs.getInt("id_uoma"), rs.getInt("id_plan"),
 						rs.getString("nombre_plan"), rs.getDate("alta_fecha"),
-						rs.getString("discapacitado"), "", "");  // algun día buscar la tercerizadora y descripcion
+						rs.getString("discapacitado"), "", "");  // algun dï¿½a buscar la tercerizadora y descripcion
 
 				afi.setId_ospim_baja_fecha(rs.getDate("id_ospim_baja_fecha"));
 				afi.setId_uoma_baja_fecha(rs.getDate("id_uoma_baja_fecha"));
@@ -299,11 +301,11 @@ public class BusquedaAfiliadoServiceImpl {
 				afi.setId_tercerizadora("");
 				afi.setDesc_tercerizadora("");
 				afi.setDetalleFechasSuperintendencia(DetalleFechasSuper.getMapping("", rs));
-				
+
 				AfiSuspencionCobertura asc = new AfiSuspencionCobertura(rs.getInt(prefixAsc+"id"),
 						rs.getDate(prefixAsc+"vigen_desde"),rs.getDate(prefixAsc+"vigen_hasta"));
 				afi.addUltimaSuspCobertura(asc);
-				
+
 				listaAfiliados.add(afi);
 			}
 
@@ -316,17 +318,17 @@ public class BusquedaAfiliadoServiceImpl {
 		return listaAfiliados;
 	}
 
-	
+
 	public List<Afiliado> getBusquedaAfiliadosComponenteReintegro(String cuil,
-			String inte, String tipoDoc, String nroDoc, int seccional,
-			String apellido, String nombre, int entidad, int afiNumero, 
-			int nroSocioPrev, BigDecimal nroCredenPrev) {
-		
+																  String inte, String tipoDoc, String nroDoc, int seccional,
+																  String apellido, String nombre, int entidad, int afiNumero,
+																  int nroSocioPrev, BigDecimal nroCredenPrev) {
+
 		Connection con = null;
 		CallableStatement stmt = null;
 		List<Afiliado> listaAfiliados = null;
 		try {
-			
+
 			String sql = "{call buscar_afiliados_componente_reintegro(?,?,?,?,?,?,?,?,?,?,?)}";
 			con = ConnectionHelper.getConnection();
 			stmt = con.prepareCall(sql.toString());
@@ -361,7 +363,7 @@ public class BusquedaAfiliadoServiceImpl {
 			} else {
 				stmt.setBigDecimal(11, nroCredenPrev);
 			}
-			
+
 			ResultSet rs = stmt.executeQuery();
 			listaAfiliados = new ArrayList<Afiliado>();
 			while (rs.next()) {
@@ -401,11 +403,11 @@ public class BusquedaAfiliadoServiceImpl {
 		return listaAfiliados;
 	}
 
-	
+
 	public List<Afiliado> getBusquedaAfiliadosOpciones(String cuil,
-			String delegacion, String apellido, String nombre, int libro, 
-			int nroFormulario, boolean incluyeBajas) {
-		
+													   String delegacion, String apellido, String nombre, int libro,
+													   int nroFormulario, boolean incluyeBajas) {
+
 		Connection con = null;
 		CallableStatement stmt = null;
 		List<Afiliado> listaAfiliados = null;
@@ -428,12 +430,12 @@ public class BusquedaAfiliadoServiceImpl {
 				stmt.setInt(6, nroFormulario);
 			}
 			stmt.setBoolean(7, incluyeBajas);
-			
+
 			ResultSet rs = stmt.executeQuery();
 			listaAfiliados = new ArrayList<Afiliado>();
 			while (rs.next()) {
 				Afiliado bp = new Afiliado(rs.getString("cuil"),
-						rs.getInt("inte"), rs.getInt("id_parentesco_sss"), 
+						rs.getInt("inte"), rs.getInt("id_parentesco_sss"),
 						rs.getString("parentesco"),
 						rs.getString("nombre"), rs.getString("apellido"),
 						rs.getString("tdoc"), rs.getString("documento"),
@@ -467,9 +469,9 @@ public class BusquedaAfiliadoServiceImpl {
 	}
 
 	public List<Afiliado> getBusquedaAfiliadosComponenteReintegro(String cuil,
-			String inte, String tipoDoc, String nroDoc, int seccional,
-			String apellido, String nombre, int entidad, int afiNumero,
-			Date fecha_prestacion, BigDecimal nroCredenPrev, int nroSocioPrev) {
+																  String inte, String tipoDoc, String nroDoc, int seccional,
+																  String apellido, String nombre, int entidad, int afiNumero,
+																  Date fecha_prestacion, BigDecimal nroCredenPrev, int nroSocioPrev) {
 		Connection con = null;
 		CallableStatement stmt = null;
 		List<Afiliado> listaAfiliados = null;
@@ -498,8 +500,8 @@ public class BusquedaAfiliadoServiceImpl {
 			} else {
 				stmt.setInt(9, afiNumero);
 			}
-			
-			
+
+
 			if (null != fecha_prestacion ) {
 				stmt.setDate(10, new java.sql.Date(fecha_prestacion.getTime()));
 			} else {
@@ -515,8 +517,8 @@ public class BusquedaAfiliadoServiceImpl {
 			} else {
 				stmt.setBigDecimal(12, nroCredenPrev);
 			}
-			
-			
+
+
 			ResultSet rs = stmt.executeQuery();
 			listaAfiliados = new ArrayList<Afiliado>();
 			while (rs.next()) {
@@ -539,7 +541,7 @@ public class BusquedaAfiliadoServiceImpl {
 				bp.setId_amtima_baja_fecha(rs.getDate("id_amtima_baja_fecha"));
 				bp.setNaci_fecha(rs.getDate("fecha_nacimiento"));
 				bp.setConReclamoPrestacional(rs.getBoolean("conreclamo_prestacional"));
-				
+				bp.setTieneAntecedentesJudiciales(rs.getInt("tiene_antecedentes_judiciales"));
 				AfiliacionPrevencion pre = new AfiliacionPrevencion();
 				pre.setNroSocio(rs.getInt("nrosocioprev"));
 				pre.setNroCredencial(rs.getBigDecimal("nrocredenprev"));
@@ -549,11 +551,11 @@ public class BusquedaAfiliadoServiceImpl {
 				if (incidente != null) {
 					bp.addIncidente(incidente);
 				}
-				
-				
-				
-				
-				
+
+
+
+
+
 				listaAfiliados.add(bp);
 			}
 
@@ -565,13 +567,13 @@ public class BusquedaAfiliadoServiceImpl {
 		}
 		return listaAfiliados;
 	}
-	
 
-	
+
+
 	public List<Afiliado> getBusquedaAfiliadosComponente(String cuil,
-			String inte, String tipoDoc, String nroDoc, int seccional,
-			String apellido, String nombre, int entidad, int afiNumero,
-			Date fecha_prestacion, int nroSocioPrev , BigDecimal nroCredenPrev) {
+														 String inte, String tipoDoc, String nroDoc, int seccional,
+														 String apellido, String nombre, int entidad, int afiNumero,
+														 Date fecha_prestacion, int nroSocioPrev , BigDecimal nroCredenPrev) {
 		Connection con = null;
 		CallableStatement stmt = null;
 		List<Afiliado> listaAfiliados = null;
@@ -601,7 +603,7 @@ public class BusquedaAfiliadoServiceImpl {
 				stmt.setInt(9, afiNumero);
 			}
 			stmt.setDate(10, new java.sql.Date(fecha_prestacion.getTime()));
-			
+
 			if (nroSocioPrev == 0) {
 				stmt.setNull(11, Types.INTEGER);
 			} else {
@@ -612,7 +614,7 @@ public class BusquedaAfiliadoServiceImpl {
 			} else {
 				stmt.setBigDecimal(12, nroCredenPrev);
 			}
-			
+
 			ResultSet rs = stmt.executeQuery();
 			listaAfiliados = new ArrayList<Afiliado>();
 			while (rs.next()) {
@@ -636,7 +638,9 @@ public class BusquedaAfiliadoServiceImpl {
 				bp.setId_uoma_baja_fecha(rs.getDate("id_uoma_baja_fecha"));
 				bp.setId_amtima_baja_fecha(rs.getDate("id_amtima_baja_fecha"));
 				bp.setNaci_fecha(rs.getDate("fecha_nacimiento"));
-				
+				bp.setTieneAntecedentesJudiciales(
+						buscarTieneAntecedentesGrupoFamiliar(bp.getCuil_titular())
+				);
 				listaAfiliados.add(bp);
 			}
 
@@ -648,15 +652,15 @@ public class BusquedaAfiliadoServiceImpl {
 		}
 		return listaAfiliados;
 	}
-	
+
 	public List<DetalleOpcionesSS> buscarOpcionesSSSpendientesExportar(){
-		
+
 		Connection con = null;
 		CallableStatement stmt = null;
 		List<DetalleOpcionesSS> listaOpciones = null;
-		
+
 		DetalleOpcionesSS detOpSS = null;
-		
+
 		try {
 			String sql = "{call buscar_opciones_sss_para_exportar()}";
 			con = ConnectionHelper.getConnection();
@@ -677,15 +681,15 @@ public class BusquedaAfiliadoServiceImpl {
 		}
 		return listaOpciones;
 	}
-	
+
 	public List<DetalleOpcionesSS> buscarOpcionesSSSpendientesExportarXls(){
-		
+
 		Connection con = null;
 		CallableStatement stmt = null;
 		List<DetalleOpcionesSS> listaOpciones = null;
-		
+
 		DetalleOpcionesSS detOpSS = null;
-		
+
 		try {
 			String sql = "{call buscar_opciones_sss_para_exportar_xls()}";
 			con = ConnectionHelper.getConnection();
@@ -706,21 +710,21 @@ public class BusquedaAfiliadoServiceImpl {
 		}
 		return listaOpciones;
 	}
-	
- public List<Domicilio> buscarDomiciliosAfiliado(String cuil_titular, int inte){
-		
+
+	public List<Domicilio> buscarDomiciliosAfiliado(String cuil_titular, int inte){
+
 		Connection con = null;
 		CallableStatement stmt = null;
 		List<Domicilio> lista = new ArrayList<Domicilio>();
 		Domicilio domi = null;
-		
+
 		try {
 			String sql = "{call busca_afiliado_domicilio(?,?)}";
 			con = ConnectionHelper.getConnection();
 			stmt = con.prepareCall(sql.toString());
 			stmt.setString(1, cuil_titular);
 			stmt.setInt(2, inte);
-			
+
 			ResultSet rs = stmt.executeQuery();
 
 			while (rs.next()) {
@@ -736,14 +740,14 @@ public class BusquedaAfiliadoServiceImpl {
 		}
 		return lista;
 	}
- 
- 	public Afiliado registraConsultaAfiliadoIGS(String cuilTitular, String nroCredencial, String inte, String docuTipo, String docuNumero, 
- 			String ip,String fecha) throws Exception{
-		
+
+	public Afiliado registraConsultaAfiliadoIGS(String cuilTitular, String nroCredencial, String inte, String docuTipo, String docuNumero,
+												String ip,String fecha) throws Exception{
+
 		Connection con = null;
 		CallableStatement stmt = null;
 		Afiliado afiliado= null;
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");		
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 		try {
 			String sql = "{call informes.registra_consulta_afiliado_igs(?,?,?,?,?,?,?)}";
 			con = ConnectionHelper.getConnection();
@@ -754,22 +758,22 @@ public class BusquedaAfiliadoServiceImpl {
 				stmt.setNull(1, Types.VARCHAR);
 			}
 			try{
-				stmt.setBigDecimal(2, BigDecimal.valueOf(Long.valueOf(nroCredencial)));				
+				stmt.setBigDecimal(2, BigDecimal.valueOf(Long.valueOf(nroCredencial)));
 			}catch(Exception e){
-				stmt.setNull(2, Types.INTEGER);				
-			}			
+				stmt.setNull(2, Types.INTEGER);
+			}
 			try{
 				stmt.setInt(3, Integer.valueOf(inte));
 			}catch(Exception e){
-				stmt.setNull(3, Types.INTEGER);				
+				stmt.setNull(3, Types.INTEGER);
 			}
-			
+
 			if(null!=docuTipo && !"".equals(docuTipo.trim())){
 				stmt.setString(4, docuTipo);
 			}else{
 				stmt.setNull(4, Types.VARCHAR);
 			}
-			
+
 			if(null!=docuNumero && !"".equals(docuNumero.trim())){
 				stmt.setString(5, docuNumero);
 			}else{
@@ -777,9 +781,9 @@ public class BusquedaAfiliadoServiceImpl {
 			}
 
 			stmt.setString(6, ip);
-			
+
 			stmt.setDate(7, new java.sql.Date((sdf.parse(fecha)).getTime()));
-			
+
 			ResultSet rs = stmt.executeQuery();
 
 			while (rs.next()) {
@@ -803,7 +807,7 @@ public class BusquedaAfiliadoServiceImpl {
 				Provincia prov=new Provincia();
 				prov.setDescripcion(rs.getString("provincia"));
 				domi.setProvincia(prov);
-				afiliado.setDomicilioDefault(domi);	
+				afiliado.setDomicilioDefault(domi);
 				afiliado.setId_tercerizadora(rs.getString("tercerizadora"));
 			}
 
@@ -814,22 +818,22 @@ public class BusquedaAfiliadoServiceImpl {
 		}
 		return afiliado;
 	}
- 
+
 	public List<ConsultaIGSTotal> buscarConsultasIGS(BusquedaConsultasIGSFiltro filtro) throws Exception{
-			
+
 		Connection con = null;
 		CallableStatement stmt = null;
 		List<ConsultaIGSTotal> consultasIGS= new ArrayList<ConsultaIGSTotal>();
-		ConsultaIGSTotal consIGS = null;		
+		ConsultaIGSTotal consIGS = null;
 		try {
 			String sql = "{call informes.buscar_consultas_IGS(?,?,?)}";
 			con = ConnectionHelper.getConnection();
 			stmt = con.prepareCall(sql.toString());
-			
+
 			stmt.setDate(1, new java.sql.Date(filtro.getFechaDesde().getTime()));
 			stmt.setDate(2, new java.sql.Date(filtro.getFechaHasta().getTime()));
 			stmt.setInt(3, filtro.getPagina());
-			
+
 			ResultSet rs = stmt.executeQuery();
 
 			while (rs.next()) {
@@ -843,22 +847,22 @@ public class BusquedaAfiliadoServiceImpl {
 			ConnectionHelper.cerrar(stmt, con);
 		}
 		return consultasIGS;
-	} 
-	
+	}
+
 	public List<ConsultaIGSTotal> buscarConsultasIGS_xls(BusquedaConsultasIGSFiltro filtro) throws Exception{
-		
+
 		Connection con = null;
 		CallableStatement stmt = null;
 		List<ConsultaIGSTotal> consultasIGS= new ArrayList<ConsultaIGSTotal>();
-		ConsultaIGSTotal consIGS = null;		
+		ConsultaIGSTotal consIGS = null;
 		try {
 			String sql = "{call informes.buscar_consultas_IGS_xls(?,?)}";
 			con = ConnectionHelper.getConnection();
 			stmt = con.prepareCall(sql.toString());
-			
+
 			stmt.setDate(1, new java.sql.Date(filtro.getFechaDesde().getTime()));
 			stmt.setDate(2, new java.sql.Date(filtro.getFechaHasta().getTime()));
-			
+
 			ResultSet rs = stmt.executeQuery();
 
 			while (rs.next()) {
@@ -872,31 +876,31 @@ public class BusquedaAfiliadoServiceImpl {
 			ConnectionHelper.cerrar(stmt, con);
 		}
 		return consultasIGS;
-	} 
-	
+	}
+
 	/**
-	 * 
+	 *
 	 * Este metodo trae el ultimo caso de unidad operativa
-	 * 
-	 *  
+	 *
+	 *
 	 * @return Incidente
 	 * @throws Exception
 	 */
 	public static Incidente buscarUltimoIncidente (String cuilTitular, int inte) throws Exception{
-		
+
 		Connection con = null;
 		CallableStatement stmt = null;
 		Incidente incidente= null;
-				
+
 		try {
 			String sql = "{call uoma.buscar_ultimo_incidente(?,?)}";
 			con = ConnectionHelper.getConnection();
 			stmt = con.prepareCall(sql.toString());
-			
+
 			stmt.setString(1, cuilTitular);
 			stmt.setInt(2, inte);
-		
-				
+
+
 			ResultSet rs = stmt.executeQuery();
 
 			while (rs.next()) {
@@ -909,5 +913,53 @@ public class BusquedaAfiliadoServiceImpl {
 			ConnectionHelper.cerrar(stmt, con);
 		}
 		return incidente;
+	}
+
+	public int buscarTieneAntecedentesGrupoFamiliar(String cuilTitular) {
+		Connection con = null;
+		CallableStatement stmt = null;
+		ResultSet rs = null;
+
+		final String rid = "ANT-GF#" + System.currentTimeMillis() + "-" + (int)(Math.random() * 10000);
+		final boolean dbg = _log.isDebugEnabled();
+
+		try {
+			if (dbg) {
+				_log.debug("[" + rid + "][START] buscarTieneAntecedentesGrupoFamiliar cuilTitular=" + cuilTitular);
+			}
+
+			String sql = "select public.buscar_tiene_antecedentes_grupo_familiar(?) as tiene_antecedentes_judiciales";
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql);
+			stmt.setString(1, cuilTitular);
+
+			rs = stmt.executeQuery();
+
+			if (rs.next()) {
+				int tieneAntecedentes = rs.getInt("tiene_antecedentes_judiciales");
+
+				if (dbg) {
+					_log.debug("[" + rid + "][RESULT] tieneAntecedentesGrupoFamiliar=" + tieneAntecedentes);
+				}
+
+				return tieneAntecedentes;
+			}
+
+			if (dbg) {
+				_log.debug("[" + rid + "][RESULT] sin filas. Retorna 0");
+			}
+
+		} catch (Exception e) {
+			_log.error("[" + rid + "][ERROR] Error buscando antecedentes del grupo familiar para cuilTitular=" + cuilTitular, e);
+		} finally {
+			try {
+				if (rs != null) rs.close();
+			} catch (Exception e) {
+				_log.error("[" + rid + "][FINALLY] Error cerrando ResultSet", e);
+			}
+			ConnectionHelper.cerrar(stmt, con);
+		}
+
+		return 0;
 	}
 }

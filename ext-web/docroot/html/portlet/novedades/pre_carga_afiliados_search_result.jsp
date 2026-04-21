@@ -28,8 +28,8 @@
 	headerNames.add("alta-secc-fecha");
 	if(showABMButtons) { 
 		headerNames.add("editar-borrar");
-	}				
-	
+	}
+
 	SearchContainer searchContainer = new SearchContainer(
 			renderRequest, null, null,
 			SearchContainer.DEFAULT_CUR_PARAM, Integer.MAX_VALUE,
@@ -76,7 +76,7 @@
 */					
 				row.addText(sdf.format(afiliado.getVigen_fecha()),rowURL); 					
 				row.addText(afiliado.getCuit(),rowURL); 
-				row.addText(sdf.format(afiliado.getAlta_fecha()),rowURL); 
+				row.addText(sdf.format(afiliado.getAlta_fecha()),rowURL);
 			// Action
 			if(showABMButtons) {
  				row.addJSP("left", SearchEntry.DEFAULT_VALIGN, "/html/portlet/novedades/editar_borrar_pre_afiliado.jsp");

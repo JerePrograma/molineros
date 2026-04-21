@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/portal.iml" filepath="$PROJECT_DIR$/portal.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ext.iml" filepath="$PROJECT_DIR$/ext.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ext-impl/ext-impl.iml" filepath="$PROJECT_DIR$/ext-impl/ext-impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ext-service/ext-service.iml" filepath="$PROJECT_DIR$/ext-service/ext-service.iml" />
     </modules>
   </component>
 </project>

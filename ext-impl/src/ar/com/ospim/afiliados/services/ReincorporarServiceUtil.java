@@ -95,20 +95,20 @@ public class ReincorporarServiceUtil {
 					
 						bajaFecha = DateUtils.addYears(afi.getNaci_fecha(),WebKeysGlobal.ANIOS_MAYOR_EDAD);
 						
-						id_motivo_baja_menor_edad = 4;  //"MAYOR DE 21 AÑOS NO ESTUDIANTE    "
+						id_motivo_baja_menor_edad = 4;  //"MAYOR DE 21 Aï¿½OS NO ESTUDIANTE    "
 						
 					}
 					if(afi.getParentesco() != null
-							//"Hijo del conyuge soltero de 21 a 25 años cursando estudios regulares", //4
+							//"Hijo del conyuge soltero de 21 a 25 aï¿½os cursando estudios regulares", //4
 							&& (afi.getId_parentesco() == WebKeysAfiliados.HIJO_MAYOR_CONYUGE 
-							// "Hijo soltero de 21 a 25 años cursando estudios regulares", //6	
+							// "Hijo soltero de 21 a 25 aï¿½os cursando estudios regulares", //6	
 								|| afi.getId_parentesco() == WebKeysAfiliados.HIJO_MAYOR
-							//	"Mayor de 25 años discapacitado" //8 
-								|| afi.getId_parentesco() == WebKeysAfiliados.MAYOR_DE_25_AÑOS_DISCAPACITADO )){
+							//	"Mayor de 25 aï¿½os discapacitado" //8 
+								|| afi.getId_parentesco() == WebKeysAfiliados.MAYOR_DE_25_ANOS_DISCAPACITADO )){
 						
 						bajaFecha =	getInstance().calculaFechaBajaFuturaIntegrante(connection, afiliadoInSession.getCuil_titular(), afi.getInte());
 						
-						id_motivo_baja_menor_edad = WebKeysAfiliados.HIJO_MAYOR;  //"MAYOR DE 21 AÑOS NO ESTUDIANTE    "
+						id_motivo_baja_menor_edad = WebKeysAfiliados.HIJO_MAYOR;  //"MAYOR DE 21 Aï¿½OS NO ESTUDIANTE    "
 						
 						if(afi.getDiscapacitado().equals("1")){ // es discapacitado
 							id_motivo_baja_menor_edad = WebKeysAfiliados.CERTIFICADO_POR_INCAPACIDAD; //"VTO. CERTIF. DISCAP./INCAP.       "
@@ -290,8 +290,8 @@ public class ReincorporarServiceUtil {
 							ats.getTercerizadora().getId_tercerizadora().equalsIgnoreCase("OED")  //ORGANISMOS ESTATALES DDJJ
 							){ 
 //						en este caso hacemos un sandwitch, mantenemos un periodo con la tercerizadora recuperada
-//						hasta la fecha fin que tenía,
-//						luego metemos una terceriz En Trámite hasta el corte de sept 2016, 
+//						hasta la fecha fin que tenï¿½a,
+//						luego metemos una terceriz En Trï¿½mite hasta el corte de sept 2016, 
 //						y luego la tercerizadora recuperada nuevamente
 						
 						Calendar corteInicio = Calendar.getInstance();
@@ -301,11 +301,11 @@ public class ReincorporarServiceUtil {
 						corteInicio.set(2018, Calendar.DECEMBER, 01); //  1/12/2018 solicitado x Sandra 10/01/2019
 						
 						if(fechaFinPresOriginal.getTime().compareTo(ar.com.ospim.util.DateUtils.getMismoDia_00_00hs(corteInicio.getTime()))< 0){
-							//1° el pan de abajo (dejamos la tercerizadora como estaba)
+							//1ï¿½ el pan de abajo (dejamos la tercerizadora como estaba)
 //							ats.setFechaFinPres(fechaFinPresOriginal.getTime());
 							tercerizadoras_recup.remove(ats);
 							
-							//3° el pan de arriba (la que queda vigente)
+							//3ï¿½ el pan de arriba (la que queda vigente)
 							AfiTercerizadoraServicio atsAjuste = new AfiTercerizadoraServicio(ats.getTercerizadora().getId_tercerizadora());
 							atsAjuste.setEstado(AfiTercerizadoraServicio.ESTADOS.ALTA);
 							atsAjuste.setAfiliado(afiliadoInSession);
@@ -317,11 +317,11 @@ public class ReincorporarServiceUtil {
 										ats.getTercerizadora().getId_tercerizadora().equalsIgnoreCase("CEU") //Consolidar
 							 ) {			
 							
-							   //2° el jamon y queso (relleno)
+							   //2ï¿½ el jamon y queso (relleno)
 							   corteInicioAux.setTime(fechaFinPresOriginal.getTime());
 							   corteInicioAux.add(Calendar.DATE, 1);
 							   corteInicio.add(Calendar.DATE, -1); //corte FIN!!
-							   atsSandwich = new AfiTercerizadoraServicio("ETR", "En Trámite", corteInicioAux.getTime(), corteInicio.getTime());
+							   atsSandwich = new AfiTercerizadoraServicio("ETR", "En Trï¿½mite", corteInicioAux.getTime(), corteInicio.getTime());
 							   atsSandwich.setEstado(AfiTercerizadoraServicio.ESTADOS.ALTA);
 							   tercerizadoras_recup.add(atsSandwich);
 							 }

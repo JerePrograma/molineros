@@ -155,9 +155,9 @@
 			<td>
 				<select name="<portlet:namespace />tipopedido" id="<portlet:namespace />tipopedido" >
 					<option value="SELECCIONE" >SELECCIONE</option>
-					<option value="EXCEPCION">EXCEPCIÓN</option>
+					<option value="EXCEPCION">EXCEPCIï¿½N</option>
 					<option value="REINTEGRO">REINTEGRO</option>
-					<option value="EXTRACAPITA">EXTRACÁPITA</option>
+					<option value="EXTRACAPITA">EXTRACï¿½PITA</option>
 				</select>					
 			</td>
 			<td>&nbsp;</td>
@@ -181,7 +181,7 @@
 			<td><label id="integracion_label"  style="display:none"><liferay-ui:message key="integracion"/>:</label></td>
 			<td><select name="<portlet:namespace/>integracion" id="<portlet:namespace/>integracion"
 					 style="display:none" >												
-				<option value="0">Seleccione Integración</option>
+				<option value="0">Seleccione Integraciï¿½n</option>
 				<% for (ReclamosPrestacionalesIntegracion integracion : listaIntegracion) { %>
 				<option value="<%= integracion.getId() %>"><%=integracion.getDescripcion()%>
 				</option>
@@ -276,7 +276,7 @@
 			<select name="<portlet:namespace />recuperable_sur" id="<portlet:namespace />recuperable_sur">
 					<option value="0">Seleccione</option>
 					<option value="1">SUR</option>
-					<option value="3">Integración</option>
+					<option value="3">Integraciï¿½n</option>
 					<option value="2">NO Recuperable</option>
 			</select>
 		</td>
@@ -635,7 +635,7 @@
 </div>
 <!--  
 <fieldset class="block-labels">				
-	<legend> Exportar Imágenes</legend>		
+	<legend> Exportar Imï¿½genes</legend>		
 	
 	
    <table style="align: center;">
@@ -648,14 +648,14 @@
 		</td>  	
 		<td align="center">
 		
-		 <input id="<portlet:namespace />exportar-imagenes" value="Exportar Imágenes" 
-					title="Exportar Imágenes" type="button" />
+		 <input id="<portlet:namespace />exportar-imagenes" value="Exportar Imï¿½genes" 
+					title="Exportar Imï¿½genes" type="button" />
 		
 		</td>
 	</tr>
 	<tr>
 	<table><tr>
-	<td><label style="color:blue" >Los números de Reclamos deben estar separados por punto y coma</label></td>
+	<td><label style="color:blue" >Los nï¿½meros de Reclamos deben estar separados por punto y coma</label></td>
 	</tr></table>
 	</tr>
    </table>	
@@ -995,7 +995,7 @@ function editarReclamoPrestacional(id_reclamo) {
 		var nroReclamo=jQuery('#<portlet:namespace />nroReclamoFiltro').val();	
 	     
 		if(trim(cuil).length != 0 && !validarCuil(cuil,"<liferay-ui:message key='valida-cuil'/>")){
-			alert("Cuil inválido");
+			alert("Cuil invï¿½lido");
 			jQuery('#<portlet:namespace />cuil').focus();
 			return false;
 		}
@@ -1117,7 +1117,7 @@ function editarReclamoPrestacional(id_reclamo) {
 	}
 	
 	function <portlet:namespace />initDateFields(){
-		//capaz que seleccionar el afiliado del componente de búsqueda de afiliados		
+		//capaz que seleccionar el afiliado del componente de bï¿½squeda de afiliados		
 	}
 	
 	<portlet:namespace />initDateFields();
@@ -1172,7 +1172,7 @@ function editarReclamoPrestacional(id_reclamo) {
 	    }else {
 	    
 	    	if(popupMD==null)
-	    		popupMD = Liferay.Popup({title:"Búsqueda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
+	    		popupMD = Liferay.Popup({title:"Bï¿½squeda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
 	    
 		    var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/buscar_nomenclador';
 		    url += '&descripcionnomenclador='+encodeURI(nombre_nomenclador)+'&codigonomenclador='+encodeURI(codigo_nomenclador);
@@ -1250,7 +1250,7 @@ function editarReclamoPrestacional(id_reclamo) {
 		var nroReclamo=jQuery('#<portlet:namespace />nroReclamoFiltro').val();	
 	     
 		if(trim(cuil).length != 0 && !validarCuil(cuil,"<liferay-ui:message key='valida-cuil'/>")){
-			alert("Cuil inválido");
+			alert("Cuil invï¿½lido");
 			jQuery('#<portlet:namespace />cuil').focus();
 			return false;
 		}

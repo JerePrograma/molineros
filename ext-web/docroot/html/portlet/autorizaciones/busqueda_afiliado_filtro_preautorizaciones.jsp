@@ -276,7 +276,7 @@
 
 
 	function <portlet:namespace />buscarAfiliados_<%=prefijo%>(fecha_prest){
-		//alert('función buscando, fecha' + fecha_prest);
+		//alert('funciï¿½n buscando, fecha' + fecha_prest);
 		var cuil=jQuery('#<portlet:namespace />cuil<%=prefijo%>').val();
 		var inte=jQuery('#<portlet:namespace />inte<%=prefijo%>').val();
 		var tipoDoc=jQuery('#<portlet:namespace />tipoDoc<%=prefijo%>').val();
@@ -464,7 +464,7 @@
 							var hoy = new Date();
 							var vVto = fechaVto.split("-");
 							var vto = new Date(vVto[2],vVto[1],vVto[0]);
-							jQuery('#<portlet:namespace/>discapacidad_vto').html("Vto.Documentación "+fechaVto);
+							jQuery('#<portlet:namespace/>discapacidad_vto').html("Vto. DocumentaciÃ³n "+fechaVto);
 							if(vto<hoy ){
 								alert("El certificado de Discapacidad Esta Vencido desde el " +fechaVto)
 							}
@@ -516,7 +516,7 @@
 		}
 		catch (err) {}
 		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
-			//llamar script que busca los tratamientos del afiliado en la página
+			//llamar script que busca los tratamientos del afiliado en la pï¿½gina
 		</c:if>			
 	}
 

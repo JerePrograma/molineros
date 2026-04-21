@@ -304,7 +304,7 @@
 					value='<%=seguimiento.getImporteOmint()  ==null?"":seguimiento.getImporteOmint() %>' />
 				</td>
 				<td>&nbsp;</td>
-    			<td id="celdalabelmontoprevencion"><liferay-ui:message key="Monto Prevención" /></td>				
+    			<td id="celdalabelmontoprevencion"><liferay-ui:message key="Monto Prevenciï¿½n" /></td>				
 				<td id="celdavaluemontoprevencion">
 				<input id="<portlet:namespace />montoprevencion" onkeydown="allowOnlyDigitsAndDecimals(event)"
 					name="<portlet:namespace />montoprevencion" size="10"	maxlength="10" type="text"
@@ -940,7 +940,7 @@ function <portlet:namespace />initDateFields(){
 		var fechaVto = obj.fechaVto;
 		var discapacitado =obj.discapacitado;
 		 if(discapacitado !=null && discapacitado=='1'){
-			jQuery('#<portlet:namespace/>discapacidad_vto_1').html("Vto.Documentación "+fechaVto);
+			jQuery('#<portlet:namespace/>discapacidad_vto_1').html("Vto. DocumentaciÃ³n "+fechaVto);
 			jQuery('#<portlet:namespace />discapacidad_1').show();
 			jQuery('#<portlet:namespace />discapacidad_vto_1').show();
 		 }else{
@@ -1014,7 +1014,7 @@ function <portlet:namespace />buscarSeguimientoSurOnDiv(e){
 		    }    
 		    if(jQuery("#<portlet:namespace />nom_seleccionado").val() != "1" && nombre_nomenclador.length>=6 ){
 		    	if(popupNM==null)
-		    	    popupNM = Liferay.Popup({title:"Búsqueda Nomenclador",modal:true,width:700,onClose: function() { popupNM = null;}});
+		    	    popupNM = Liferay.Popup({title:"Bï¿½squeda Nomenclador",modal:true,width:700,onClose: function() { popupNM = null;}});
 		    	
 		    	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/buscar_nomenclador';
 			    url += '&descripcionnomenclador='+encodeURI(nombre_nomenclador);
@@ -1041,7 +1041,7 @@ function <portlet:namespace />buscarNomencladorAutocompletar(){
 	        alert('<liferay-ui:message key="ingrese-parametros-busqueda" />'); 
 	    }else {
 	    	if(popupNM==null)
-	    		popupNM = Liferay.Popup({title:"Búsqueda Nomenclador",modal:true,width:700,onClose: function() { popupNM = null;}});
+	    		popupNM = Liferay.Popup({title:"Bï¿½squeda Nomenclador",modal:true,width:700,onClose: function() { popupNM = null;}});
 	    	
 		    var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/buscar_nomenclador';
 		    url += '&descripcionnomenclador='+encodeURI(nombre_nomenclador)+'&codigonomenclador='+encodeURI(codigo_nomenclador);
@@ -1083,7 +1083,7 @@ function <portlet:namespace />validarCampos(){
 	}else{
 		if (jQuery('#<portlet:namespace />bimestre').val()=="" ){
 			result=false;
-			alert("Debe Seleccionar un Período");
+			alert("Debe Seleccionar un Perï¿½odo");
 		}else{	
 			if (jQuery("#<portlet:namespace />tipoExpediente").val()==""){
 				result=false;
@@ -1200,7 +1200,7 @@ function <portlet:namespace />limpiarNomencladorAutocompletar(){
 }
 
 <c:if test='<%="N".equalsIgnoreCase((String)request.getSession().getAttribute("esPopUp"))%>'>
-	window.onbeforeunload = function(){return "Esta seguro de abandonar la página?";};
+	window.onbeforeunload = function(){return "Esta seguro de abandonar la pï¿½gina?";};
 </c:if>
 
 function <portlet:namespace />configuraCarga(){
@@ -1258,11 +1258,11 @@ function <portlet:namespace />configuraCarga(){
 		
 		
 		//Agregado por cambio de comportamiento de Discapacidad
-		document.getElementById("<portlet:namespace />medicamentoProtesisSur").innerHTML="Prestación";
-		document.getElementById("<portlet:namespace />medicamentoProtesisSurBusqueda").innerHTML="Prestación";
+		document.getElementById("<portlet:namespace />medicamentoProtesisSur").innerHTML="Prestaciï¿½n";
+		document.getElementById("<portlet:namespace />medicamentoProtesisSurBusqueda").innerHTML="Prestaciï¿½n";
 		document.getElementById("<portlet:namespace/>drogaMedicamento").style.visibility = "hidden";
 		document.getElementById("<portlet:namespace/>drogaMedicamentoLb").style.visibility = "hidden";
-		document.getElementById("<portlet:namespace />troquelProtesisSurBusqueda").innerHTML="Código";
+		document.getElementById("<portlet:namespace />troquelProtesisSurBusqueda").innerHTML="Cï¿½digo";
 		document.getElementById("<portlet:namespace/>drogaMedicamento").value=0;
 			
 		document.getElementById("<portlet:namespace/>valorUnitarioMedicamentoSurLb").style.visibility = "hidden";
@@ -1299,11 +1299,11 @@ function <portlet:namespace />configuraCarga(){
 			document.getElementById("<portlet:namespace/>valorUnitarioMedicamentoSurLb").style.visibility = "visible";
 			document.getElementById("<portlet:namespace />valorUnitarioMedicamentoSur").style.visibility = "visible";
 		}else{
-			document.getElementById("<portlet:namespace />medicamentoProtesisSur").innerHTML="Prestación";
-			document.getElementById("<portlet:namespace />medicamentoProtesisSurBusqueda").innerHTML="Prestación";
+			document.getElementById("<portlet:namespace />medicamentoProtesisSur").innerHTML="Prestaciï¿½n";
+			document.getElementById("<portlet:namespace />medicamentoProtesisSurBusqueda").innerHTML="Prestaciï¿½n";
 			document.getElementById("<portlet:namespace/>drogaMedicamento").style.visibility = "hidden";
 			document.getElementById("<portlet:namespace/>drogaMedicamentoLb").style.visibility = "hidden";
-			document.getElementById("<portlet:namespace />troquelProtesisSurBusqueda").innerHTML="Código";
+			document.getElementById("<portlet:namespace />troquelProtesisSurBusqueda").innerHTML="Cï¿½digo";
 			document.getElementById("<portlet:namespace/>drogaMedicamento").value=0;
 			
 			document.getElementById("<portlet:namespace/>valorUnitarioMedicamentoSurLb").style.visibility = "hidden";
@@ -1531,7 +1531,7 @@ function <portlet:namespace />calculaImporteDiabetesSUR(){
 function <portlet:namespace />agregarNuevaPatologia(){
    	
    //if(popupPAT==null)
-	   popupPAT = Liferay.Popup({title:"Nueva Patología",modal:true,width:700});
+	   popupPAT = Liferay.Popup({title:"Nueva Patologï¿½a",modal:true,width:700});
 	   
 	   var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/<%=portlet_name%>/nueva_patologia_sur';
 	   jQuery(popupPAT).load(url);
@@ -1726,12 +1726,12 @@ function validaDatosMontosCobertura(){
 	cobertura = jQuery("#<portlet:namespace />tipoExpediente").val();	
 	if(cobertura==4) {
     	total= montoOspimDouble + montoPrevencionDouble;
-    	msgCustom="Ospim / Prevención";
+    	msgCustom="Ospim / Prevenciï¿½n";
     	jQuery('#<portlet:namespace />montoOmint').val(0);
 	}
 	if (cobertura==5) {
 		total= montoPrevencionDouble + montoOmintDouble;
-    	msgCustom="Prevención / Omint";	
+    	msgCustom="Prevenciï¿½n / Omint";	
     	jQuery('#<portlet:namespace />montoOspim').val(0);
 	}
     if (cobertura==6) {

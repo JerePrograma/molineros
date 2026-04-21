@@ -300,11 +300,11 @@ span-fixed-size {
 
 
 	<div id="helpComprobantes" class="containerPlus draggable {buttons:'c', skin:'default', width:'700',title:'Ayuda',closed:'true'}" style="top: 500px; left: 200px">
-			Ejemplo de factura: CUIT 30999999999 FCP B 00001 - 00000028 F. Emisión 2/07/2020 <br>
+			Ejemplo de factura: CUIT 30999999999 FCP B 00001 - 00000028 F. Emisiï¿½n 2/07/2020 <br>
 			Comprobante: FCP,  <br>
 			Letra: B,  <br>
-			Suc.: 00001 ( o sólo el número 1 y el sistema autocompletará los 0 a izquierda al guardar)  <br>
-			Nro: 00000028 ( o sólo el número 28 y el sistema autocompletará los 0 a izquierda al guardar)  <br>
+			Suc.: 00001 ( o sï¿½lo el nï¿½mero 1 y el sistema autocompletarï¿½ los 0 a izquierda al guardar)  <br>
+			Nro: 00000028 ( o sï¿½lo el nï¿½mero 28 y el sistema autocompletarï¿½ los 0 a izquierda al guardar)  <br>
 			CUIT: 30999999999
 	</div>
 
@@ -427,11 +427,11 @@ span-fixed-size {
 										onblur="manejarTipoPedido();">
 										<option value="SELECCIONAR">SELECCIONAR</option>
 										<option value=EXCEPCION
-											<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getTipoPedido())  && reclamoprestacional.getTipoPedido().equals("EXCEPCION") ? "selected" : ""  %>>EXCEPCIÓN</option>
+											<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getTipoPedido())  && reclamoprestacional.getTipoPedido().equals("EXCEPCION") ? "selected" : ""  %>>EXCEPCIï¿½N</option>
 										<option value="REINTEGRO"
 											<%=Validator.isNotNull(reclamoprestacional)  && Validator.isNotNull(reclamoprestacional.getTipoPedido())  &&  reclamoprestacional.getTipoPedido().equals("REINTEGRO") ? "selected" : ""  %>>REINTEGRO</option>
 										<option value="EXTRACAPITA"
-											<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getTipoPedido())  && reclamoprestacional.getTipoPedido().equals("EXTRACAPITA") ? "selected" : ""  %>>EXTRACÁPITA</option>
+											<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getTipoPedido())  && reclamoprestacional.getTipoPedido().equals("EXTRACAPITA") ? "selected" : ""  %>>EXTRACï¿½PITA</option>
 									</select>
 								</table></td>
 							
@@ -453,7 +453,7 @@ span-fixed-size {
 							
 							            <option value="PRESTACIONES MEDICAS"
 							                <%= "PRESTACIONES MEDICAS".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
-							                PRESTACIONES MÉDICAS
+							                PRESTACIONES Mï¿½DICAS
 							            </option>
 							
 							            <option value="FARMACIA"
@@ -485,7 +485,7 @@ span-fixed-size {
 								<td><label id="integracion_label"  style="display:none"><liferay-ui:message key="integracion"  />:&nbsp;&nbsp;</label></td>
 								<td><select name="<portlet:namespace/>integracion" id="<portlet:namespace/>integracion"
 									<% if (!esEdicion) { %> disabled='disabled' <%}%> style15"display:none"  >												
-										<option value="0">Seleccione Integración</option>
+										<option value="0">Seleccione Integraciï¿½n</option>
 											<% for (ReclamosPrestacionalesIntegracion integracion : listaIntegracion) { %>
 												<option
 													<%=reclamoprestacional != null  && reclamoprestacional.getCodigoIntegracion() == integracion.getId() ? "selected" : ""  %>
@@ -667,7 +667,7 @@ span-fixed-size {
 									<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isEntramite()   ? "checked" : "Unchecked" %>
 									<% if (!esEdicion) { %> disabled='disabled' <%}%> /></td>
 								<td>&nbsp;</td>
-								<td><liferay-ui:message key="Beneficiario en trámite" /></td>
+								<td><liferay-ui:message key="Beneficiario en trï¿½mite" /></td>
 							</tr-->
 					
 
@@ -801,14 +801,14 @@ span-fixed-size {
 	<fieldset class="lfr-table"> 
 	
 		<legend>
-			<liferay-ui:message key="Datos de la Prestación" />
+			<liferay-ui:message key="Datos de la Prestaciï¿½n" />
 		</legend>
 
 		<div id="<portlet:namespace />busqueda_farmacia" align="left" width="80%">
 			<table class="lfr-table"
 				style="border-collapse: separate; border-spacing: 3px;">
 				<tr>
-					<td colspan="15"><label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;F. Prestación: </label></td>
+					<td colspan="15"><label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;F. Prestaciï¿½n: </label></td>
 					<td colspan="15"><liferay-ui:input-date
 							dayParam="fechaPrestacionDiaFarmacia" dayValue=""
 					dayNullable="<%=true%>"
@@ -842,7 +842,7 @@ span-fixed-size {
 		<div id="<portlet:namespace />busqueda_prestaciones" align="left" width="80%">
 			<table width="75%">
 				<tr>
-					<td ><label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;F. Prestación: </label></td>
+					<td ><label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;F. Prestaciï¿½n: </label></td>
 					<td ><liferay-ui:input-date dayParam="fechaPrestacionDia" dayValue="" dayNullable="<%=true%>"
 					monthParam="fechaPrestacionMes" monthValue="-1" monthNullable="<%=true%>"
 					yearParam="fechaPrestacionAnio" yearValue="" yearNullable="<%=true%>"
@@ -1021,7 +1021,7 @@ span-fixed-size {
 					<td colspan="15">
 						<fieldset class="block-labels">
 							<legend>
-								<liferay-ui:message key="Autorizado por Área Médica:" />
+								<liferay-ui:message key="Autorizado por ï¿½rea Mï¿½dica:" />
 							</legend>
 							<table>
 								<tr>
@@ -1082,7 +1082,7 @@ span-fixed-size {
 									 <% if (!esEdicion) { %> disabled="disabled" <%} %> onchange="cambiorecuperable();">
 														<option value="0">Seleccione</option>
 														<option value="1">SUR</option>
-														<option value="3">Integración</option>
+														<option value="3">Integraciï¿½n</option>
 														<option value="2">NO Recuperable</option>
 									</select>
 									
@@ -1101,7 +1101,7 @@ span-fixed-size {
 							id="<portlet:namespace />observacion_prestacion" maxlength="250"
 							name="<portlet:namespace />observacion_prestacion"></textarea> <br>
 						<b><liferay-ui:message
-								key="La observación de 200 caracteres como máximo." /></b></td>
+								key="La observaciï¿½n de 200 caracteres como mï¿½ximo." /></b></td>
 					<td colspan="12">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 					<td><input type="button"
 						value="<liferay-ui:message key="add-prestacion-reclamo" />"
@@ -1195,7 +1195,7 @@ span-fixed-size {
 						<table>
 							<tr>
 								<td><b><label id="CantidadDeContactosAsociados">
-											Ningún Contacto Asociado. </label></b></td>
+											Ningï¿½n Contacto Asociado. </label></b></td>
 								<td><input type="button"
 									value="Ver Contactos Asociados al Caso."
 									onClick="<portlet:namespace />vercontactosdelreclamo();"
@@ -1316,7 +1316,7 @@ span-fixed-size {
 							id="<portlet:namespace />observacion_revision" maxlength="200"
 							name="<portlet:namespace />observacion_revision"></textarea> <br>
 						<b><liferay-ui:message
-								key="La observación de 200 caracteres como máximo." /></b></td>
+								key="La observaciï¿½n de 200 caracteres como mï¿½ximo." /></b></td>
 					<td>
 						<div id="<portlet:namespace />botonrevision">
 							<input type="button"
@@ -1348,7 +1348,7 @@ span-fixed-size {
 				<td colspan="5">
 					<fieldset class="block-labels">
 						<legend>
-							<liferay-ui:message key="Justificación Médica" />
+							<liferay-ui:message key="Justificaciï¿½n Mï¿½dica" />
 						</legend>
 						<textarea name="<portlet:namespace />justificacionmedcica_reclamo"
 							id="<portlet:namespace />justificacionmedcica_reclamo" rows="4"
@@ -1364,7 +1364,7 @@ span-fixed-size {
 				<td colspan="5">
 					<fieldset class="block-labels">
 						<legend>
-							<liferay-ui:message key="Dictamen Comisión" />
+							<liferay-ui:message key="Dictamen Comisiï¿½n" />
 						</legend>
 						<textarea rows="4" cols="70" onkeyup="convertToUppercase(this)"
 							<% if (!esEdicion ||( reclamoprestacional!=null && reclamoprestacional.getTipo_gestion_cierre_reclamo()>0 ) )  { %>
@@ -1437,7 +1437,7 @@ span-fixed-size {
 											<td><label><liferay-ui:message key="observaciones-area-medica"/>:</label></td>
 											<td><select name="<portlet:namespace/>observacion_medica" id="<portlet:namespace/>observacion_medica"
 												<% if (!esEdicion) { %> disabled='disabled' <%}%>>												
-													<option value="0">Seleccione observación</option>
+													<option value="0">Seleccione observaciï¿½n</option>
 														<% for (ReclamosPrestacionalesRevisionEstado  revisionEstado  : listaRevisionEstado) { %>
 															<option
 																value="<%=revisionEstado.getId()%>"><%=revisionEstado.getDescripcion()%>
@@ -1486,7 +1486,7 @@ span-fixed-size {
 										<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isDosPorciento()   ? "checked" : "Unchecked"  %>
 										<% if (!esEdicion) { %> disabled='disabled' <%}%>></td>
 
-									<td width="210px"><label>Débito Prestadora:</label> <input
+									<td width="210px"><label>Dï¿½bito Prestadora:</label> <input
 										type="checkbox" id="<portlet:namespace />debitoprestadora"
 										name="<portlet:namespace />debitoprestadora"
 										<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isDebitoPrestadora()    ? "checked" : "Unchecked"  %>
@@ -1720,7 +1720,7 @@ jQuery("#<portlet:namespace />sector").change(function(){
 	        var params = "&<%= Constants.ACTION %>=" + "<%= WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL %>";
 			
 			var confirmar = false;
-			confirmar=confirm ('Se eliminaran los ítems por no pertenecer al tipo correspondiente '+'\nDesea hacerlo?');
+			confirmar=confirm ('Se eliminaran los ï¿½tems por no pertenecer al tipo correspondiente '+'\nDesea hacerlo?');
 			if(confirmar){
 				 var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/borrar_reclamosprestaciones_todos';
     			 url = url + params;
@@ -1993,7 +1993,7 @@ function <portlet:namespace />buscarNomencladorAutocompletar(){
         alert('<liferay-ui:message key="ingrese-parametros-busqueda" />'); 
     }else {
     	if(popupMD==null)
-    		popupMD = Liferay.Popup({title:"Búsqueda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
+    		popupMD = Liferay.Popup({title:"Bï¿½squeda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
     	
     	
     	if(tipoNomenclador==8){
@@ -2023,7 +2023,7 @@ function <portlet:namespace />buscarNomencladorAutocompletar_edit(){
         alert('<liferay-ui:message key="ingrese-parametros-busqueda" />'); 
     }else {
     	if(popupMD==null)
-    		popupMD = Liferay.Popup({title:"Búsqueda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
+    		popupMD = Liferay.Popup({title:"Bï¿½squeda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
     	
 	    var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/buscar_nomenclador';
 	    url += '&descripcionnomenclador='+encodeURI(nombre_nomenclador)+'&tiponomenclador='+tipoNomenclador +'&codigonomenclador='+encodeURI(codigo_nomenclador)+'&soloActivos=true';
@@ -2233,7 +2233,7 @@ function ValidarDatosObligatorios(Edicion){
 
 	
 	if (idgestion == 0  && jQuery('#<portlet:namespace/>estado option:selected').text().trim() == 'CERRADO' ){
-		alert('Debe ingresar el tipo de gestión del Reclamo ( Sección Cierre de Reclamo) ');
+		alert('Debe ingresar el tipo de gestiï¿½n del Reclamo ( Secciï¿½n Cierre de Reclamo) ');
 		document.getElementById("<portlet:namespace />tipo_gestion_cierre_reclamo").focus();
 		return false;
 	}
@@ -2242,7 +2242,7 @@ function ValidarDatosObligatorios(Edicion){
 	if (idgestion==5){
 	/* 	var isDisabled = jQuery('#<portlet:namespace />dosporciento').is(':disabled');			
 	    if (!isDisabled) { */
-			if(! confirm("Al seleccionar la opción RECHAZADO el sistema rechazará todas las prestaciones del caso, no podrá asociarlas a reintegros. Está seguro ?")){
+			if(! confirm("Al seleccionar la opciï¿½n RECHAZADO el sistema rechazarï¿½ todas las prestaciones del caso, no podrï¿½ asociarlas a reintegros. Estï¿½ seguro ?")){
 				return false;	
 			/* } */
 	    }	
@@ -2252,14 +2252,14 @@ function ValidarDatosObligatorios(Edicion){
 		if ( jQuery('#<portlet:namespace />auditoriaadministrativa').val()!="Ok" ){ // auditoria administrativa 
 
 			if (justificacion.length ==0  && resp ){ // no hay revisiones activas 
-				alert('Tiene que ingresar la justificación médica del Caso para efectuar el Cierre del Caso.');
+				alert('Tiene que ingresar la justificaciï¿½n mï¿½dica del Caso para efectuar el Cierre del Caso.');
 				jQuery('#<portlet:namespace />justificacionmedcica_reclamo').focus();
 				resp=false;
 			}		
 		}
 		// validar si 
 		if (idgestion<1  && resp && jQuery('#<portlet:namespace/>estado option:selected').text() == 'CERRADO' ){
-			alert('Debe ingresar el tipo de gestión del Reclamo ( Sección Cierre de Reclamo) ');
+			alert('Debe ingresar el tipo de gestiï¿½n del Reclamo ( Secciï¿½n Cierre de Reclamo) ');
 			document.getElementById("<portlet:namespace />tipo_gestion_cierre_reclamo").focus();
 			resp=false;
 		}
@@ -2272,7 +2272,7 @@ function ValidarDatosObligatorios(Edicion){
 		
 		if(tipoSelecttipopedido == 3){ //si estado = cerrado
 			if (jQuery('#<portlet:namespace/>cantrevisionesactivas').val()<1  && resp ){ // no hay revisiones activas 
-				alert('Recuerde, debe tener registrada por lo menos una revisión activa para el cierre del caso!!!!.');			
+				alert('Recuerde, debe tener registrada por lo menos una revisiï¿½n activa para el cierre del caso!!!!.');			
 				resp=false;
 			}
 		}
@@ -2285,7 +2285,7 @@ function ValidarDatosObligatorios(Edicion){
 
     if (Edicion && addprestacion) {
     	if (valor <1   && resp){
-    		alert('Debe tener ingresada por lo menos una prestación');
+    		alert('Debe tener ingresada por lo menos una prestaciï¿½n');
     		resp=false;
     	}
     }else{
@@ -2297,7 +2297,7 @@ function ValidarDatosObligatorios(Edicion){
     var integracion = jQuery("#<portlet:namespace />integracion").val();
 	 if ('EXCEPCION' ==  jQuery("#<portlet:namespace />tipopedido").val()){
 		if (integracion == '0'){
-			alert('Debe seleccionar un tipo de integración ');
+			alert('Debe seleccionar un tipo de integraciï¿½n ');
 			resp=false;
 		}
 		 
@@ -2306,7 +2306,7 @@ function ValidarDatosObligatorios(Edicion){
 	 if (Edicion && resp ) {
 		 if (idgestion!=0 &&idgestion!=5 ) {
 	    	if (valor <1   ){
-	    		alert('Debe tener ingresada por lo menos una prestación para poder cerrar el reclamo.');
+	    		alert('Debe tener ingresada por lo menos una prestaciï¿½n para poder cerrar el reclamo.');
 	    		resp=false;
 	    	}
 		 } 	
@@ -2327,7 +2327,7 @@ function ValidarDatosObligatorios(Edicion){
 	 }); 
 		   
 	 if(codError == '6'){
-	       alert('La fecha de la prestación no puede ser posterior a la fecha de baja del afiliado');
+	       alert('La fecha de la prestaciï¿½n no puede ser posterior a la fecha de baja del afiliado');
 		   resp=false;	   
 	 }
 
@@ -2370,7 +2370,7 @@ function <portlet:namespace />volverEstadoObservado() {
 	/* Recupera el Id del Reclamo */
 	var idgestion=jQuery('#<portlet:namespace />id_reclamosel').val();
 	
-	confirmar=confirm ('Estas observando la precarga, la misma será devuelta ' + 
+	confirmar=confirm ('Estas observando la precarga, la misma serï¿½ devuelta ' + 
 			'a la seccional. ' + '\nEstas seguro?');
 	
 	if(confirmar) {  	
@@ -2691,7 +2691,7 @@ function <portlet:namespace />agregarRevision() {
 			
 		// oculta boton de agreagr revision porque solo se admite un aprobacion o un rechazo no hay parciales dentro del reclamo
 		jQuery("#<portlet:namespace />botonrevision").hide();
-		jQuery("#<portlet:namespace/>mensajerevisionefectuada").html("Revisión Efectuada, el Sistema soporta solo una revisión activa (No de baja).");
+		jQuery("#<portlet:namespace/>mensajerevisionefectuada").html("Revisiï¿½n Efectuada, el Sistema soporta solo una revisiï¿½n activa (No de baja).");
 	
 	 	jQuery('#<portlet:namespace />lista_revisiones').load(url,params, function(){
 															jQuery('#<portlet:namespace />buscando').hide();            															
@@ -2854,7 +2854,7 @@ function <portlet:namespace />editarPrestacionSeleccionada(tipoAccion) {
 	}
 
 
-	// Solo validar montos si completó algo del área médica
+	// Solo validar montos si completï¿½ algo del ï¿½rea mï¿½dica
 	var tieneDatosAreaMedica = (
 	    (importe != null && importe != '' && importe != 0) ||
 	    (cargoospim != null && cargoospim != '' && cargoospim != 0) ||
@@ -2869,7 +2869,7 @@ function <portlet:namespace />editarPrestacionSeleccionada(tipoAccion) {
 	        return false;
 	    }
 
-	    //validación de montos
+	    //validaciï¿½n de montos
 	    if (!validaMontosEdicion()) {       
 	        return false;
 	    }
@@ -2974,11 +2974,11 @@ function <portlet:namespace />editarPrestacionSeleccionada(tipoAccion) {
 
 	if (nom_seleccionado_edit ==1){		 
 		if (codigoSeguimiento_filtro_edit<1  ) {
-		  alert('Debe seleccionar la prestación');
+		  alert('Debe seleccionar la prestaciï¿½n');
 		  return false;
 		} 	
 	    if(descripcionSeguimiento_filtro_edit==null || descripcionSeguimiento_filtro_edit==''){
-			  alert('Debe seleccionar la prestación');		  
+			  alert('Debe seleccionar la prestaciï¿½n');		  
 			  return false;
 	    }
 		
@@ -2999,7 +2999,7 @@ function <portlet:namespace />editarPrestacionSeleccionada(tipoAccion) {
     if(fechaPrestacionDia==null || fechaPrestacionDia==0 || fechaPrestacionDia=='' ||
     	       fechaPrestacionMes==null || fechaPrestacionMes==-1 || fechaPrestacionMes=='' ||
     	       fechaPrestacionAnio==null || fechaPrestacionAnio==0 || fechaPrestacionAnio==''){
-    	       alert('Debe ingresar la fecha de la Prestación');
+    	       alert('Debe ingresar la fecha de la Prestaciï¿½n');
     	return false;	
     }
     
@@ -3176,7 +3176,7 @@ function <portlet:namespace />agregarPrestacion() {
     var estado=jQuery('#<portlet:namespace />estado').val();
 	var chk_amparo=jQuery("#<portlet:namespace/>chk_amparo").is(':checked');
 
-	// Solo validar montos si completó algo del área médica
+	// Solo validar montos si completï¿½ algo del ï¿½rea mï¿½dica
 	var tieneDatosAreaMedica = (
 	    (importe != null && importe != '' && importe != 0) ||
 	    (cargoospim != null && cargoospim != '' && cargoospim != 0) ||
@@ -3191,7 +3191,7 @@ function <portlet:namespace />agregarPrestacion() {
 	        return false;
 	    }
 
-	    //validación de montos
+	    //validaciï¿½n de montos
 	    if (!ValidaMontos()) {       
 	        return false;
 	    }
@@ -3209,11 +3209,11 @@ function <portlet:namespace />agregarPrestacion() {
 	}	
 	if (jQuery("#<portlet:namespace />nom_seleccionado").val()==1){		 
 		if (jQuery('#<portlet:namespace />codigoSeguimiento_filtro').val()<1  ) {
-		 	alert('Debe seleccionar la prestación');
+		 	alert('Debe seleccionar la prestaciï¿½n');
 		 	return false;
 		} 	
 	    if(nombre_prestacion==null || nombre_prestacion==''){
-			  alert('Debe seleccionar la prestación');
+			  alert('Debe seleccionar la prestaciï¿½n');
 			  return false;
 		}
 			
@@ -3301,7 +3301,7 @@ function <portlet:namespace />agregarPrestacion() {
     if(fechaPrestacionDia==null || fechaPrestacionDia==0 || fechaPrestacionDia=='' ||
     	fechaPrestacionMes==null || fechaPrestacionMes==-1 || fechaPrestacionMes=='' ||
     	fechaPrestacionAnio==null || fechaPrestacionAnio==0 || fechaPrestacionAnio==''){
-    	alert('Debe ingresar la fecha de la Prestación');
+    	alert('Debe ingresar la fecha de la Prestaciï¿½n');
     	return false;	
     }
     	    
@@ -3451,7 +3451,7 @@ function controlarEstadoCerrado() {
 
 			}																												
 		}else{
-			alert("Debe agregar una Revisión");
+			alert("Debe agregar una Revisiï¿½n");
 			jQuery("#<portlet:namespace />estado option[value="+estadoIni+"]").attr("selected",true);
 
 		}
@@ -3540,7 +3540,7 @@ function ValidaDatosReclamo(){
 	   }); 
 		   
 	   if(codError == '1'){
-	       alert('La fecha de la prestación no puede ser posterior');
+	       alert('La fecha de la prestaciï¿½n no puede ser posterior');
 		   respuesta=false;	   
 		}
 		   
@@ -3553,7 +3553,7 @@ function ValidaDatosReclamo(){
 			respuesta=false;
 		 }
 		if(codError == '4'){
-		   	alert('No existe Prestación en el nomenclador');
+		   	alert('No existe Prestaciï¿½n en el nomenclador');
 			respuesta=false;
 		 }
 		if(codError == '5'){
@@ -3562,7 +3562,7 @@ function ValidaDatosReclamo(){
 		 }
 	
 		if(codError == '6'){
-		   	alert('La fecha de la prestación no puede ser posterior a la fecha de baja del afiliado');
+		   	alert('La fecha de la prestaciï¿½n no puede ser posterior a la fecha de baja del afiliado');
 			respuesta=false;
 		 }
 	return  respuesta;    
@@ -3624,7 +3624,7 @@ function ValidaDatosReclamoEditar(){
 	   }); 
 		   
 	   if(codError == '1'){
-	       alert('La fecha de la prestación no puede ser posterior');
+	       alert('La fecha de la prestaciï¿½n no puede ser posterior');
 		   respuesta=false;	   
 		}
 		   
@@ -3637,7 +3637,7 @@ function ValidaDatosReclamoEditar(){
 			respuesta=false;
 		}
 		if(codError == '4'){
-		   	alert('No existe Prestación en el nomenclador');
+		   	alert('No existe Prestaciï¿½n en el nomenclador');
 			respuesta=false;
 		}
 		if(codError == '5'){
@@ -3646,7 +3646,7 @@ function ValidaDatosReclamoEditar(){
 		}  
 	
 		if(codError == '6'){
-		   	alert('La fecha de la prestación no puede ser posterior a la fecha de baja del afiliado');
+		   	alert('La fecha de la prestaciï¿½n no puede ser posterior a la fecha de baja del afiliado');
 			respuesta=false;
 		 }
 	return  respuesta;    
@@ -3700,7 +3700,7 @@ function validarExisteComprobante( params ) {
 	   		}
 	   }); 
 	   if(rtaExisteCompro){
-		  alert('Ya existe una prestación en esa fecha para el mismo comprobante');
+		  alert('Ya existe una prestaciï¿½n en esa fecha para el mismo comprobante');
 		  respuesta=false;
 		   
 	   }
@@ -3810,7 +3810,7 @@ cargopsdouble= parseFloat(strcargops.replace(',','.'));
 //  valida la suma de los importes no debe superar el importe ingresado 
 
     if(total==0 && (importeFC>0 ||importeFCEdicion>0) && estado==3){
-	   alert('Debe ingresar los importes en el Área Médica');
+	   alert('Debe ingresar los importes en el ï¿½rea Mï¿½dica');
 	   return false; 
     }
 
@@ -3836,7 +3836,7 @@ if ( (total < importedouble) && (myXOR(cargopsdouble,cargoospimdouble)) ){
 
     if ( document.getElementById("<portlet:namespace />tipopedido").selectedIndex==1) { // tipo de pedido excepcion 
 	  if (total!=importedouble && estado==3){
-		alert('El importe total de la prestación debe coincidir con la suma de cargo Ospim y cargo tercerizadora');
+		alert('El importe total de la prestaciï¿½n debe coincidir con la suma de cargo Ospim y cargo tercerizadora');
 		return false;
 	  }
     }
@@ -3844,7 +3844,7 @@ if ( (total < importedouble) && (myXOR(cargopsdouble,cargoospimdouble)) ){
     var recuperable  =  jQuery('#<portlet:namespace />recuperable_surEdicion').val();
     if(recuperable==2){
     	if(reconocidoSSS>0){
-    	   	   alert('El importe reconocido debe estar vacío');
+    	   	   alert('El importe reconocido debe estar vacï¿½o');
     	   	   jQuery('#<portlet:namespace />reconocidoSSSEdicion').val('');
         	   return false;
     	}
@@ -3900,18 +3900,18 @@ function ValidaMontos()
 	
 	if ( document.getElementById("<portlet:namespace />tipopedido").selectedIndex==1) { // tipo de pedido excepcion 
 		if (totalCargos!=importedouble && estado=='3'){
-			alert('El importe total de la prestación debe coincidir con la suma de Cargo Ospim más Cargo Tercerizadora.');
+			alert('El importe total de la prestaciï¿½n debe coincidir con la suma de Cargo Ospim mï¿½s Cargo Tercerizadora.');
 			return false;
 		}
 	}
  
    if ( document.getElementById("<portlet:namespace />tipopedido").selectedIndex==2) { // tipo de pedido reintegro
 	    if (importedouble <totalCargos && estado=='3'){
-			alert('El importe total de prestación debe coincidir con la suma de a Cargo Ospim más Cargo Tercerizadora');
+			alert('El importe total de prestaciï¿½n debe coincidir con la suma de a Cargo Ospim mï¿½s Cargo Tercerizadora');
 			return false;
 		}   
 		if (totalCargos==0 && estado=='3'){
-			alert(' la suma de a Cargo Ospim más a Cargo Tercerizadora debe ser mayor que cero.');
+			alert(' la suma de a Cargo Ospim mï¿½s a Cargo Tercerizadora debe ser mayor que cero.');
 			return false;
 		}
    }
@@ -4153,7 +4153,7 @@ function <portlet:namespace />validarEmail() {
 	var expr = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
 	
 	if ( !expr.test(email) ){
-	    alert("Error: La dirección de correo " + email + " es incorrecta.");
+	    alert("Error: La direcciï¿½n de correo " + email + " es incorrecta.");
 	    jQuery("#<portlet:namespace />email").focus();
 		return false;
 	}
@@ -4206,18 +4206,18 @@ function confirmaActualizacionDomicilioAfiliado(){
 		 (trim(d_cod_area_tel) == '' && trim(d_telefono) != '') ||
 		 (trim(d_cod_area_tel) != '' && trim(d_telefono) == '')
 		){
-		alert("El teléfono debe necesariamente tener el código de area y el número");
+		alert("El telï¿½fono debe necesariamente tener el cï¿½digo de area y el nï¿½mero");
 		jQuery('#<portlet:namespace />telefono').focus();
 		return false;
 	}
 	
 	if(trim(d_cod_area_tel).startsWith('0')){
-		alert("El código de area del teléfono no debe iniciar con cero");
+		alert("El cï¿½digo de area del telï¿½fono no debe iniciar con cero");
 		jQuery("#<portlet:namespace />cod_area_telefono").focus();
 		return false;
 	}
 	if(trim(d_telefono).startsWith('0')){
-		alert("El número del teléfono no debe iniciar con cero");
+		alert("El nï¿½mero del telï¿½fono no debe iniciar con cero");
 		jQuery("#<portlet:namespace />telefono").focus();
 		return false;
 	}
@@ -4225,7 +4225,7 @@ function confirmaActualizacionDomicilioAfiliado(){
 	
 	if(trim(d_cod_area_tel).length>0 || trim(d_telefono).length>0){
 		if(trim(d_cod_area_tel).length+trim(d_telefono).length!=10){
-			alert("La longitud del código de área + teléfono debe de ser de 10 caracteres");
+			alert("La longitud del cï¿½digo de ï¿½rea + telï¿½fono debe de ser de 10 caracteres");
 			jQuery("#<portlet:namespace />cod_area_telefono").focus();
 			return false;
 		}
@@ -4234,25 +4234,25 @@ function confirmaActualizacionDomicilioAfiliado(){
 	if ((trim(d_cod_area_laboral) == '' && trim(d_laboral) != '') ||
 		(trim(d_cod_area_laboral) != '' && trim(d_laboral) == '')
 		){
-		alert("El teléfono laboral debe necesariamente tener el código de area y el número");
+		alert("El telï¿½fono laboral debe necesariamente tener el cï¿½digo de area y el nï¿½mero");
 		jQuery('#<portlet:namespace />tel_laboral').focus();
 		return false;
 	}
 	
 	if(trim(d_cod_area_laboral).startsWith('0')){
-		alert("El código de area laboral no debe iniciar con cero");
+		alert("El cï¿½digo de area laboral no debe iniciar con cero");
 		jQuery("#<portlet:namespace />cod_area_tel_laboral").focus();
 		return false;
 	}
 	if(trim(d_laboral).startsWith('0')){
-		alert("El número del teléfono laboral no debe iniciar con cero");
+		alert("El nï¿½mero del telï¿½fono laboral no debe iniciar con cero");
 		jQuery("#<portlet:namespace />tel_laboral").focus();
 		return false;
 	}
 	
 	if(trim(d_cod_area_laboral).length>0 || trim(d_laboral).length>0){
 		if(trim(d_cod_area_laboral).length+trim(d_laboral).length!=10){
-			alert("La longitud del código de área + teléfono laboral debe de ser de 10 caracteres");
+			alert("La longitud del cï¿½digo de ï¿½rea + telï¿½fono laboral debe de ser de 10 caracteres");
 			jQuery("#<portlet:namespace />cod_area_tel_laboral").focus();
 			return false;
 		}
@@ -4261,12 +4261,12 @@ function confirmaActualizacionDomicilioAfiliado(){
 	
 	
 	if(trim(d_cod_area_celu).startsWith('0')){
-		alert("El código de area del celular no debe iniciar con cero");
+		alert("El cï¿½digo de area del celular no debe iniciar con cero");
 		jQuery("#<portlet:namespace />cod_area_celular").focus();
 		return false;
 	}
 	if(trim(d_celular).startsWith('0')){
-		alert("El número del celular no debe iniciar con cero");
+		alert("El nï¿½mero del celular no debe iniciar con cero");
 		jQuery("#<portlet:namespace />celular").focus();
 		return false;
 	}
@@ -4274,7 +4274,7 @@ function confirmaActualizacionDomicilioAfiliado(){
 	
 	if(trim(d_cod_area_celu).length>0 || trim(d_celular).length>0){
 		if(trim(d_cod_area_celu).length+trim(d_celular).length!=10){
-			alert("La longitud del código de área + celular debe de ser de 10 caracteres");
+			alert("La longitud del cï¿½digo de ï¿½rea + celular debe de ser de 10 caracteres");
 			jQuery("#<portlet:namespace />cod_area_celular").focus();
 			return false;
 		}

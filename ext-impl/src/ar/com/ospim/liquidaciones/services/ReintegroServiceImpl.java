@@ -43,7 +43,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 /**
- * servicio test que nos da acceso a los datos de la aplicación (BD).
+ * servicio test que nos da acceso a los datos de la aplicaciï¿½n (BD).
  * 
  */
 public class ReintegroServiceImpl {
@@ -52,7 +52,7 @@ public class ReintegroServiceImpl {
 
 	/**
 	 * Metodo que obtiene un reintegro a partir de la clave primaria, en caso de
-	 * que está dado de baja o de no encontrarlo retorna null
+	 * que estï¿½ dado de baja o de no encontrarlo retorna null
 	 * 
 	 * @throws SystemException
 	 * @throws NoSuchReintegroEntryException
@@ -93,7 +93,7 @@ public class ReintegroServiceImpl {
 
 	/**
 	 * Metodo que obtiene la lista de prestaciones a partir de la clave primaria
-	 * del reintegro, en caso de no encontrarla arroja excepción
+	 * del reintegro, en caso de no encontrarla arroja excepciï¿½n
 	 * 
 	 * @throws SystemException
 	 * @throws NoSuchReintegroEntryException
@@ -140,7 +140,7 @@ public class ReintegroServiceImpl {
 
 	/**
 	 * Metodo que obtiene la lista de prestaciones de protesis a partir de la
-	 * clave primaria del reintegro, en caso de no encontrarla arroja excepción
+	 * clave primaria del reintegro, en caso de no encontrarla arroja excepciï¿½n
 	 * 
 	 * @throws SystemException
 	 * @throws NoSuchReintegroEntryException
@@ -186,7 +186,7 @@ public class ReintegroServiceImpl {
 	/**
 	 * Metodo que obtiene la lista de prestaciones de ortopedia y ortodoncia a
 	 * partir de la clave primaria del reintegro, en caso de no encontrarla
-	 * arroja excepción
+	 * arroja excepciï¿½n
 	 * 
 	 * @throws SystemException
 	 * @throws NoSuchReintegroEntryException
@@ -233,7 +233,7 @@ public class ReintegroServiceImpl {
 	 * Metodo que obtiene la lista de detalles de las cuotas de los tratamientos
 	 * de ortopedia y ortodoncia a partir de la clave primaria del reintegro que
 	 * es el el id del tratamiento en este caso, en caso de no encontrarla
-	 * arroja excepción
+	 * arroja excepciï¿½n
 	 * 
 	 * @throws SystemException
 	 * @throws NoSuchReintegroEntryException
@@ -265,7 +265,7 @@ public class ReintegroServiceImpl {
 
 	/**
 	 * Metodo que obtiene un detalles de la cuota de los tratamientos de
-	 * ortopedia y ortodoncia a partir del numero de reintegro que está en la
+	 * ortopedia y ortodoncia a partir del numero de reintegro que estï¿½ en la
 	 * cuota como id_cuota
 	 * 
 	 * @throws SystemException
@@ -296,7 +296,7 @@ public class ReintegroServiceImpl {
 	}
 
 	/**
-	 * metodo que carga un nuevo afiliado a partir de los parámetros")); si no
+	 * metodo que carga un nuevo afiliado a partir de los parï¿½metros")); si no
 	 * lo puede insertar retorna null
 	 * 
 	 * @throws DuplicateReintegroIdException
@@ -365,7 +365,7 @@ public class ReintegroServiceImpl {
 	}
 
 	/**
-	 * metodo que carga una nueva prestacion a partir de los parámetros si no lo
+	 * metodo que carga una nueva prestacion a partir de los parï¿½metros si no lo
 	 * puede insertar retorna null
 	 * 
 	 * @param periodo
@@ -384,8 +384,8 @@ public class ReintegroServiceImpl {
 		BigDecimal cargoImesa,Connection con) throws SystemException, DuplicateReintegroPrestacionIdException, AfiliadoSinPlanException {
 		
 		CallableStatement stmt = null;
-		// TEMPORAL, el plan por ahora es uno siempre, en la solución final
-		// deberíamos incorporar una cartilla
+		// TEMPORAL, el plan por ahora es uno siempre, en la soluciï¿½n final
+		// deberï¿½amos incorporar una cartilla
 		int idPlan = 1;
 		
 		int idReintegroRenglon = 0;
@@ -494,7 +494,7 @@ public class ReintegroServiceImpl {
 	
 	/**
 	 * metodo que carga una nueva prestacion de protesis a partir de los
-	 * parámetros si no lo puede insertar retorna null
+	 * parï¿½metros si no lo puede insertar retorna null
 	 * 
 	 * @param periodo
 	 * 
@@ -514,8 +514,8 @@ public class ReintegroServiceImpl {
 		throws SystemException, DuplicateReintegroPrestacionIdException, AfiliadoSinPlanException {
 		
 		CallableStatement stmt = null;
-		// TEMPORAL, el plan por ahora es uno siempre, en la solución final
-		// deberíamos incorporar una cartilla
+		// TEMPORAL, el plan por ahora es uno siempre, en la soluciï¿½n final
+		// deberï¿½amos incorporar una cartilla
 		int idPlan = 1;
 		
 		try {	
@@ -555,7 +555,7 @@ public class ReintegroServiceImpl {
 			stmt.executeUpdate();
 			
 		} catch (SQLException e) {
-			_log.error("Error al cargar prestacion para reintegro de prótesis",e);
+			_log.error("Error al cargar prestacion para reintegro de prï¿½tesis",e);
 			if (e.getSQLState().equalsIgnoreCase(WebKeysGlobal.SQL_STATE_DUPLICATE_KEY)) {
 				throw new DuplicateReintegroPrestacionIdException(e);
 			} else {
@@ -572,7 +572,7 @@ public class ReintegroServiceImpl {
 
 	/**
 	 * metodo que carga una nueva prestacion de ortopedia ortodoncia a partir de
-	 * los parámetros si no lo puede insertar retorna null
+	 * los parï¿½metros si no lo puede insertar retorna null
 	 * 
 	 * @param periodo
 	 * 
@@ -589,8 +589,8 @@ public class ReintegroServiceImpl {
 		int nroCuotas, Connection con) throws SystemException, DuplicateReintegroPrestacionIdException, AfiliadoSinPlanException {
 
 		CallableStatement stmt = null;
-		// TEMPORAL, el plan por ahora es uno siempre, en la solución final
-		// deberíamos incorporar una cartilla
+		// TEMPORAL, el plan por ahora es uno siempre, en la soluciï¿½n final
+		// deberï¿½amos incorporar una cartilla
 		int idPlan = 1;
 		try {
 			
@@ -638,7 +638,7 @@ public class ReintegroServiceImpl {
 	}
 
 	/**
-	 * metodo que carga una nueva prestacion a partir de los parámetros si no lo
+	 * metodo que carga una nueva prestacion a partir de los parï¿½metros si no lo
 	 * puede insertar retorna null
 	 * 
 	 * @param periodo
@@ -717,8 +717,8 @@ public class ReintegroServiceImpl {
 	}
 
 	/**
-	 * metodo que carga una nueva prestacion de protesis de odontología a partir
-	 * de los parámetros si no lo puede insertar retorna null
+	 * metodo que carga una nueva prestacion de protesis de odontologï¿½a a partir
+	 * de los parï¿½metros si no lo puede insertar retorna null
 	 * 
 	 * @param periodo
 	 * 
@@ -785,8 +785,8 @@ public class ReintegroServiceImpl {
 	}
 
 	/**
-	 * metodo que carga una nueva prestacion de or de odontología a partir de
-	 * los parámetros si no lo puede insertar retorna null
+	 * metodo que carga una nueva prestacion de or de odontologï¿½a a partir de
+	 * los parï¿½metros si no lo puede insertar retorna null
 	 * 
 	 * @param periodo
 	 * 
@@ -854,7 +854,7 @@ public class ReintegroServiceImpl {
 	}
 
 	/**
-	 * metodo que actualiza un afiliado a partir de los parámetros , si no lo
+	 * metodo que actualiza un afiliado a partir de los parï¿½metros , si no lo
 	 * puede actualizar retorna null
 	 * 
 	 * @throws NoSuchReintegroEntryException
@@ -893,8 +893,8 @@ public class ReintegroServiceImpl {
 	}
 
 	/**
-	 * Metodo que aplica borrado lógico de un reintegro a partir de la clave
-	 * primaria, no borra el reintegro físicamente, solo lo da de baja
+	 * Metodo que aplica borrado lï¿½gico de un reintegro a partir de la clave
+	 * primaria, no borra el reintegro fï¿½sicamente, solo lo da de baja
 	 * 
 	 * @throws NoSuchReintegroEntryException
 	 * @throws SystemException
@@ -957,8 +957,8 @@ public class ReintegroServiceImpl {
 	}
 	
 	/**
-	 * Metodo que aplica borrado lógico de un reintegro prestacion a partir de
-	 * la clave primaria, borra la prestacion físicamente
+	 * Metodo que aplica borrado lï¿½gico de un reintegro prestacion a partir de
+	 * la clave primaria, borra la prestacion fï¿½sicamente
 	 * 
 	 * @throws NoSuchReintegroPrestacionEntryException
 	 * @throws SystemException
@@ -1013,9 +1013,9 @@ public class ReintegroServiceImpl {
 	}
 
 	/**
-	 * Metodo que aplica borrado físico de un reintegro prestacion de protesis
+	 * Metodo que aplica borrado fï¿½sico de un reintegro prestacion de protesis
 	 * odontolog{ia a partir de la clave primaria, borra la prestacion
-	 * físicamente
+	 * fï¿½sicamente
 	 * 
 	 * @throws NoSuchReintegroPrestacionEntryException
 	 * @throws SystemException
@@ -1318,7 +1318,7 @@ public class ReintegroServiceImpl {
 				reintegro.setReintegroPrestacion(listaReintegrosPrest);
 			}
 		} catch (SQLException e) {
-			_log.error("Error al buscar histórico de protesis", e);
+			_log.error("Error al buscar histï¿½rico de protesis", e);
 			throw new SystemException(e);
 		} finally {
 			ConnectionHelper.cerrar(stmt, con);
@@ -1387,7 +1387,7 @@ public class ReintegroServiceImpl {
 
 			}
 		} catch (SQLException e) {
-			_log.error("Error al buscar histórico de protesis", e);
+			_log.error("Error al buscar histï¿½rico de protesis", e);
 			throw new SystemException(e);
 		} finally {
 			ConnectionHelper.cerrar(stmt, con);
@@ -2293,7 +2293,7 @@ public class ReintegroServiceImpl {
 				
 				// Duvi. 29-03-2022
 				// Estas dos lineas se encontraban comentadas.
-				// Se vuelven a descomentar intentando que funcione correcate¿mente el campo de 
+				// Se vuelven a descomentar intentando que funcione correcateï¿½mente el campo de 
 				// Pago Transferencia en la grilla de Busqueda de Reintegros.				
 				reintegro.setCbu(rs.getString("r__cbu") != null ? rs.getString("r__cbu") : rs.getString("r__cbu"));
 				reintegro.setCuilCuenta(rs.getString("r__cuil_cuenta") != null ? rs.getString("r__cuil_cuenta") : rs.getString("r__cuil_cuenta"));
@@ -2393,7 +2393,7 @@ public class ReintegroServiceImpl {
 				
 				// Duvi. 29-03-2022
 				// Estas dos lineas se encontraban comentadas.
-				// Se vuelven a descomentar intentando que funcione correcate¿mente el campo de 
+				// Se vuelven a descomentar intentando que funcione correcateï¿½mente el campo de 
 				// Pago Transferencia en la grilla de Busqueda de Reintegros.
 				reintegro.setCbu(rs.getString("r__cbu") != null ? rs.getString("r__cbu") : rs.getString("r__cbu"));
 				reintegro.setCuilCuenta(rs.getString("r__cuil_cuenta") != null ? rs.getString("r__cuil_cuenta") : rs.getString("r__cuil_cuenta"));
@@ -2503,7 +2503,7 @@ public class ReintegroServiceImpl {
 				
 				// Duvi. 29-03-2022
 				// Estas dos lineas se encontraban comentadas.
-				// Se vuelven a descomentar intentando que funcione correcate¿mente el campo de 
+				// Se vuelven a descomentar intentando que funcione correcateï¿½mente el campo de 
 				// Pago Transferencia en la grilla de Busqueda de Reintegros.
 				reintegro.setCbu(rs.getString("r__cbu") != null ? rs.getString("r__cbu") : rs.getString("r__cbu"));
 				reintegro.setCuilCuenta(rs.getString("r__cuil_cuenta") != null ? rs.getString("r__cuil_cuenta") : rs.getString("r__cuil_cuenta"));
@@ -2783,7 +2783,7 @@ public class ReintegroServiceImpl {
 
 	/**
 	 * Metodo que guarda en la base las cuotas, un a cuota determinado en el
-	 * parámetro, la guarda en estado default
+	 * parï¿½metro, la guarda en estado default
 	 * 
 	 * @throws SystemException
 	 */
@@ -2823,7 +2823,7 @@ public class ReintegroServiceImpl {
 
 	/**
 	 * Metodo que actualiza el importe de las las cuotas, un a cuota determinado
-	 * en el parámetro, la guarda en estado default
+	 * en el parï¿½metro, la guarda en estado default
 	 * 
 	 * @throws SystemException
 	 */
@@ -2904,7 +2904,7 @@ public class ReintegroServiceImpl {
 	}
 
 	/**
-	 * Metodo que aplica borrado físico de una cuota de un reintegro
+	 * Metodo que aplica borrado fï¿½sico de una cuota de un reintegro
 	 * 
 	 * @throws NoSuchReintegroEntryException
 	 * @throws SystemException
@@ -3101,7 +3101,7 @@ public class ReintegroServiceImpl {
 				rp.setCodigo(rs.getString("codigo"));
 			}
 		} catch (SQLException e) {
-			_log.error("Error al traer ultima prestación ", e);
+			_log.error("Error al traer ultima prestaciï¿½n ", e);
 			throw new SystemException(e);
 		} finally {
 			ConnectionHelper.cerrar(stmt, con);

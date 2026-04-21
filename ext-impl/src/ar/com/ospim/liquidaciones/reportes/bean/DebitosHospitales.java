@@ -1,6 +1,7 @@
 package ar.com.ospim.liquidaciones.reportes.bean;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 public class DebitosHospitales {
 
@@ -12,7 +13,15 @@ public class DebitosHospitales {
 	private String ordenPago;
 	private BigDecimal cargoPrestadora;
 	private BigDecimal importeTotal;
-	private int idLiquidacion;
+	private Integer idLiquidacion;
+	private Boolean status;
+	private Date periodoFechaDesde;
+
+	public Date getPeriodoFechaDesde() { return periodoFechaDesde; }
+	public void setPeriodoFechaDesde(Date d) { this.periodoFechaDesde = d; }
+
+	public Boolean getStatus() { return status; }
+	public void setStatus(Boolean status) { this.status = status; }
 
 	
 	
@@ -52,10 +61,10 @@ public class DebitosHospitales {
 	public void setImporteTotal(BigDecimal importeTotal) {
 		this.importeTotal = importeTotal;
 	}
-	public int getIdLiquidacion() {
+	public Integer getIdLiquidacion() {
 		return idLiquidacion;
 	}
-	public void setIdLiquidacion(int idLiquidacion) {
+	public void setIdLiquidacion(Integer idLiquidacion) {
 		this.idLiquidacion = idLiquidacion;
 	}
 	public BigDecimal getNumero() {

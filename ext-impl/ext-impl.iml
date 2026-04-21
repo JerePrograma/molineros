@@ -7,7 +7,15 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="ext-service2" />
+    <orderEntry type="library" name="global2" level="project" />
+    <orderEntry type="library" name="ext-service" level="project" />
+    <orderEntry type="library" name="global" level="project" />
+    <orderEntry type="library" name="development" level="project" />
+    <orderEntry type="library" name="ext-lib" level="project" />
+    <orderEntry type="library" name="portal" level="project" />
+    <orderEntry type="library" name="google" level="project" />
+    <orderEntry type="library" name="portal-impl" level="project" />
+    <orderEntry type="library" name="util-taglib" level="project" />
     <orderEntry type="module" module-name="ext-service" />
   </component>
 </module>

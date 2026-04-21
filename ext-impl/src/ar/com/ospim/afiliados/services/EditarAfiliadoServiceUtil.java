@@ -32,7 +32,7 @@ import ar.com.ospim.procesaArchivos.beans.opcionesss.DetalleOpcionesSS;
 import ar.com.ospim.util.StringUtils;
 
 /**
- * Mascara del servicio que da acceso a los datos de la aplicación (BD).
+ * Mascara del servicio que da acceso a los datos de la aplicaciï¿½n (BD).
  */
 public class EditarAfiliadoServiceUtil {
 
@@ -150,7 +150,7 @@ public class EditarAfiliadoServiceUtil {
 	}
 
 	/**
-	 * Método que trae un afiliado VIGENTE por el cuil, solo lo trare si baja
+	 * Mï¿½todo que trae un afiliado VIGENTE por el cuil, solo lo trare si baja
 	 * fecha es nula o baja futura
 	 */
 	public static Afiliado getAfiliadoXCuil(String cuil) {
@@ -270,7 +270,7 @@ public class EditarAfiliadoServiceUtil {
 //							
 //							afi.setInte(proximoInte);
 //							
-//							// SI EL DOCUMENTO ES ET SE LE DA LA BAJA A UN AÑO PARA
+//							// SI EL DOCUMENTO ES ET SE LE DA LA BAJA A UN Aï¿½O PARA
 //							// OBLIGAR A PRESENTAR LA DOCUMENTACION.
 //						} else {
 //							bajaFecha = DateUtils.addYears(afi.getNaci_fecha(), 1);
@@ -390,9 +390,9 @@ public class EditarAfiliadoServiceUtil {
 //			|| afi.getId_parentesco() == WebKeysAfiliados.CONYUGE_DEFAULT) {
 //			inteConyuge = getInstance().getTieneConyugeGrupoCuil(afi.getCuil_titular(),connection);
 //		}
-//		// Si no tiene conyuge o si se está actualizando el conyuge mismo es
-//		// posible actualizar el afiliado con parentésco conyuge o concubino, si
-//		// no, se lanza la excepción
+//		// Si no tiene conyuge o si se estï¿½ actualizando el conyuge mismo es
+//		// posible actualizar el afiliado con parentï¿½sco conyuge o concubino, si
+//		// no, se lanza la excepciï¿½n
 //		if (! ( inteConyuge == 0 || inteConyuge == afi.getInte())) {
 //			throw new AfliadoYaTieneConyugeException();
 //		}
@@ -436,10 +436,10 @@ public class EditarAfiliadoServiceUtil {
 ////					Id_uoma_baja_fecha = baja_fecha_titular;
 ////					Id_amtima_baja_fecha = baja_fecha_titular;
 ////				}
-//			//Si esta entre 21 y 25 calculo la fecha de baja a los 25 años
+//			//Si esta entre 21 y 25 calculo la fecha de baja a los 25 aï¿½os
 //		}else if(afi.getId_parentesco() == WebKeysAfiliados.HIJO_MAYOR 
 //				||  afi.getId_parentesco() == WebKeysAfiliados.HIJO_MAYOR_CONYUGE
-//				||  afi.getId_parentesco() == WebKeysAfiliados.MAYOR_DE_25_AÑOS_DISCAPACITADO) {
+//				||  afi.getId_parentesco() == WebKeysAfiliados.MAYOR_DE_25_ANOS_DISCAPACITADO) {
 //
 //			try {
 //				bajaFecha = getInstanceReincorpora().calculaFechaBajaFuturaIntegrante(connection, afi.getCuil_titular(), afi.getInte());
@@ -447,7 +447,7 @@ public class EditarAfiliadoServiceUtil {
 //				throw new SystemException(e);
 //			}
 //			
-//			motivo_baja = WebKeysAfiliados.HIJO_MAYOR;  //"MAYOR DE 21 AÑOS NO ESTUDIANTE    "
+//			motivo_baja = WebKeysAfiliados.HIJO_MAYOR;  //"MAYOR DE 21 Aï¿½OS NO ESTUDIANTE    "
 //			
 //			if(afi.getDiscapacitado().equals("1")){ // es discapacitado
 //				motivo_baja = WebKeysAfiliados.CERTIFICADO_POR_INCAPACIDAD; //"VTO. CERTIF. DISCAP./INCAP.       "
@@ -489,7 +489,7 @@ public class EditarAfiliadoServiceUtil {
 ////			motivo_baja = afi.getId_motivo_baja();
 ////		}
 //	
-//		// SI EL DOCUMENTO ES ET SE LE DA LA BAJA A UN AÑO PARA
+//		// SI EL DOCUMENTO ES ET SE LE DA LA BAJA A UN Aï¿½O PARA
 //		// OBLIGAR A PRESENTAR LA DOCUMENTACION.
 //		if (afi.getDocumento_tipo().trim().equals("ET")) {
 //			
@@ -704,9 +704,9 @@ public class EditarAfiliadoServiceUtil {
 			|| afi.getId_parentesco() == WebKeysAfiliados.CONYUGE_DEFAULT) {
 			inteConyuge = getInstance().getTieneConyugeGrupoCuil(afi.getCuil_titular(), afi.getVigen_fecha() ,connection);
 		}
-		// Si no tiene conyuge o si se está actualizando el conyuge mismo es
-		// posible actualizar el afiliado con parentésco conyuge o concubino, si
-		// no, se lanza la excepción
+		// Si no tiene conyuge o si se estï¿½ actualizando el conyuge mismo es
+		// posible actualizar el afiliado con parentï¿½sco conyuge o concubino, si
+		// no, se lanza la excepciï¿½n
 		if (! ( inteConyuge == 0 || inteConyuge == afi.getInte())) {
 			throw new AfliadoYaTieneConyugeException();
 		}
@@ -731,7 +731,7 @@ public class EditarAfiliadoServiceUtil {
 			throw new HijoNoPuedeSerCasadoException();
 		}	
 
-		//Si tiene hasta 21 calculo la fecha de baja a los 21 años				
+		//Si tiene hasta 21 calculo la fecha de baja a los 21 aï¿½os				
 		if (((afi.getId_parentesco() == WebKeysAfiliados.HIJO_MENOR 
 			|| afi.getId_parentesco() == WebKeysAfiliados.HIJO_MENOR_CONYUGE) 
 			|| afi.getId_parentesco() == WebKeysAfiliados.MENOR_BAJO_GUARDA)) {
@@ -739,10 +739,10 @@ public class EditarAfiliadoServiceUtil {
 			  bajaFecha = DateUtils.addYears(afi.getNaci_fecha(),WebKeysGlobal.ANIOS_MAYOR_EDAD);
 		      idMotivoBaja = WebKeysAfiliados.HIJO_MAYOR;
 
-		//Si esta entre 21 y 25 calculo la fecha de baja a los 25 años
+		//Si esta entre 21 y 25 calculo la fecha de baja a los 25 aï¿½os
 		}else if(afi.getId_parentesco() == WebKeysAfiliados.HIJO_MAYOR 
 				||  afi.getId_parentesco() == WebKeysAfiliados.HIJO_MAYOR_CONYUGE
-				||  afi.getId_parentesco() == WebKeysAfiliados.MAYOR_DE_25_AÑOS_DISCAPACITADO) {
+				||  afi.getId_parentesco() == WebKeysAfiliados.MAYOR_DE_25_ANOS_DISCAPACITADO) {
 
 			try {
 				bajaFecha = getInstanceReincorpora().calculaFechaBajaFuturaIntegrante(connection, afi.getCuil_titular(), afi.getInte());
@@ -754,7 +754,7 @@ public class EditarAfiliadoServiceUtil {
 				throw new SystemException(e);
 			}
 			
-			idMotivoBaja = WebKeysAfiliados.HIJO_MAYOR;  //"MAYOR DE 21 AÑOS NO ESTUDIANTE    "
+			idMotivoBaja = WebKeysAfiliados.HIJO_MAYOR;  //"MAYOR DE 21 Aï¿½OS NO ESTUDIANTE    "
 			
 			if(afi.getDiscapacitado().equals("1")){ // es discapacitado
 				idMotivoBaja = WebKeysAfiliados.CERTIFICADO_POR_INCAPACIDAD; //"VTO. CERTIF. DISCAP./INCAP.       "
@@ -825,7 +825,7 @@ public class EditarAfiliadoServiceUtil {
 			bajaFecha = afi.getBaja_fecha();
 			idMotivoBaja = afi.getId_motivo_baja();
     	}	
-		// SI EL DOCUMENTO ES ET SE LE DA LA BAJA A UN AÑO PARA
+		// SI EL DOCUMENTO ES ET SE LE DA LA BAJA A UN Aï¿½O PARA
 		// OBLIGAR A PRESENTAR LA DOCUMENTACION.
 		if (afi.getDocumento_tipo().trim().equals("ET")) {
 			

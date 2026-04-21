@@ -49,7 +49,7 @@ public class WebKeysLiquidaciones implements
 	public static final int REINTEGRO_ESTADO_PENDIENTE = 4; // protesis,
 	// ortopedia_ortodoncia
 	// que se carga con
-	// la información no
+	// la informaciï¿½n no
 	// completa
 	
 	public static final Integer REINTEGRO_ODO_PROTESIS_MARCA = 4;
@@ -57,9 +57,9 @@ public class WebKeysLiquidaciones implements
 	public static final int REINTEGRO_ESTADO_AUTORIZADO = 5; // equivalente a
 	// cargado pero
 	// solo para
-	// prótesis,
+	// prï¿½tesis,
 	// ortopedia_ortodoncia
-	public static final int REINTEGRO_ESTADO_RECHAZADO = 6; // prótesis,
+	public static final int REINTEGRO_ESTADO_RECHAZADO = 6; // prï¿½tesis,
 	
 	
 	
@@ -112,7 +112,7 @@ public class WebKeysLiquidaciones implements
 	public static final int[] PRESTACIONES_CON_TOPES = { 630, 629, 628, 397,
 			2358, 2335, 2359, 94, 95 }; // (630, 629, 628); --psicoterapia,
 										// //(397); --
-	// kinesiología, //(2358, 2335, 2359); --optica
+	// kinesiologï¿½a, //(2358, 2335, 2359); --optica
 	public static final int TOPES_PROTESIS_FAMILIA = 12750; //8500;//6750;//4500; No olvidar tabla autorizaciones.nomenclador_topes_reintegro
 	public static final String ORDENES_PAGO_ARCHIVOS_DUPLICADOS = "ORDENES_PAGO_ARCHIVOS_DUPLICADOS";
 	public static final String ALTA_USR_REINTEGROS_EN_SESSION = "ALTA_USR_REINTEGROS_EN_SESSION";
@@ -193,7 +193,6 @@ public class WebKeysLiquidaciones implements
 	
 	public static final String ROL_AUMENTO_NOMENCLADOR = "AUMENTO_NOMENCLADOR";
 	public static final String LISTAS_DE_PROFESION_PRESTADOR_EN_SESSION = "LISTAS_DE_PROFESION_PRESTADOR_EN_SESSION";
-	public static final String LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION = "LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION";
 	public static final String LISTAS_DE_SUB_ESPECIALIDAD_PRESTADOR_EN_SESSION = "LISTAS_DE_SUB_ESPECIALIDAD_PRESTADOR_EN_SESSION";
 	
 	public static final String PROF_ESPEC_SUBESPEC_PRESTADOR_EN_SESSION = "PROF_ESPEC_SUBESPEC_PRESTADOR_EN_SESSION";
@@ -206,7 +205,6 @@ public class WebKeysLiquidaciones implements
 	public static final String LUGAR_ATENCION_PRESTADOR_INDIRECTO_EN_EDICION = "LUGAR_ATENCION_PRESTADOR_INDIRECTO_EN_EDICION";
 	public static final String DOMICILIO_AFIP_PRESTADOR_EN_EDICION = "DOMICILIO_AFIP_PRESTADOR_EN_EDICION";
 	public static final String PLANES_PRESTADOR_EN_SESSION = "PLANES_PRESTADOR_EN_SESSION";
-	public static final String PLANES_EN_SESSION  = "PLANES_EN_SESSION";
 	public static final String LISTAS_PRESTACIONES_REINTEGROS_RESULTADOS = "LISTAS_PRESTACIONES_REINTEGROS_RESULTADOS";
 	public static final String LISTAS_FARMACIAS_REINTEGROS_RESULTADOS = "LISTAS_FARMACIAS_REINTEGROS_RESULTADOS";
 	
@@ -227,7 +225,9 @@ public class WebKeysLiquidaciones implements
 	public static final String CONSULTA_COMPROBANTES_GLOBAL_TOTAL_REGISTROS="CONSULTA_COMPROBANTES_GLOBAL_TOTAL_REGISTROS";     
 	public static final String BUSQUEDA_COMPROBANTES_GLOBALES = "BUSQUEDA_COMPROBANTES_GLOBALES";
 	
-	public static final String ROL_LIQUIDACIONES_HOSPITALES = "liquidaciones_hospitales";	
+	public static final String ROL_LIQUIDACIONES_HOSPITALES = "liquidaciones_hospitales";
 
-		
+	public static final String PROVINCIAS_EN_SESSION = "PROVINCIAS_EN_SESSION";
+	public static final String LOCALIDADES_EN_SESSION = "LOCALIDADES_EN_SESSION";
+	public static final String PLANES_EN_SESSION  = "PLANES_EN_SESSION";
 }

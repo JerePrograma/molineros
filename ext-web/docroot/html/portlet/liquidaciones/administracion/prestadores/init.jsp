@@ -38,12 +38,12 @@ if (profesionPrestador == null) {
 }
 
 List<EspecialidadPrestador> especialidadPrestador = (ArrayList<EspecialidadPrestador>) portletSession
-.getAttribute(WebKeysLiquidaciones.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
+.getAttribute(WebKeysPrestadores.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
 		PortletSession.APPLICATION_SCOPE);
 
 if (especialidadPrestador == null) {
 	especialidadPrestador = TraeListasServiceUtil.getEspecialidadesPrestador();
-	portletSession.setAttribute(WebKeysLiquidaciones.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
+	portletSession.setAttribute(WebKeysPrestadores.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
 	especialidadPrestador, PortletSession.APPLICATION_SCOPE);
 }
 

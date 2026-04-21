@@ -134,7 +134,7 @@ currentURL = PortalUtil.getCurrentURL(request);
 	portletURL="<%= portletURL %>"
 	value="<%=tabs1%>"
 />
-<!-- REPRESENTACIÓN DE LOS TABS DE Liquidaciones -->
+<!-- REPRESENTACIï¿½N DE LOS TABS DE Liquidaciones -->
 <c:choose>
 	<c:when test='<%= tabs1.equals("liquidaciones") %>'>
 		<liferay-util:include page="/html/portlet/liquidaciones/busqueda_liquidaciones.jsp">
@@ -186,11 +186,7 @@ currentURL = PortalUtil.getCurrentURL(request);
 	</c:when>	
 	<c:when test='<%= tabs1.equals("reportes") %>'>
 		<liferay-util:include page="/html/portlet/liquidaciones/reportes/reportes.jsp"/>	
-	</c:when>	
-	<c:when test='<%= tabs1.equals("administracion-tablas") %>'>	
-		<liferay-util:include page="/html/portlet/liquidaciones/administracion/administracionTablas.jsp"/>		
-	</c:when>
-
+	</c:when
 </c:choose>
 
 </form>

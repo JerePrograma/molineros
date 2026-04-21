@@ -189,7 +189,7 @@
 	jQuery('#<portlet:namespace />motivolabel').hide();
 	jQuery('#<portlet:namespace />motivo').hide();
 	
-//TODO AÑADIR CAMPOS NUEVOS
+//TODO Aï¿½ADIR CAMPOS NUEVOS
 	function <portlet:namespace />busquedaRegistrosEquipoInterdisciplinario(){
 	    
 		var cuil=jQuery('#<portlet:namespace />cuil').val();
@@ -271,7 +271,7 @@
 	    }else {
 	    
 	    	if(popupMD==null)
-	    		popupMD = Liferay.Popup({title:"Búsqueda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
+	    		popupMD = Liferay.Popup({title:"Bï¿½squeda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
 	    
 		    var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/buscar_nomenclador';
 		    url += '&descripcionnomenclador='+encodeURI(nombre_nomenclador)+'&codigonomenclador='+encodeURI(codigo_nomenclador);
@@ -328,7 +328,7 @@ jQuery('#<portlet:namespace />exportar-busqueda').click(function exportarBusqued
 		estado="";
 	}     
 	if(trim(cuil).length != 0 && !validarCuil(cuil,"<liferay-ui:message key='valida-cuil'/>")){
-			alert("Cuil inválido");
+			alert("Cuil invï¿½lido");
 			jQuery('#<portlet:namespace />cuil').focus();
 			return false;
 	}

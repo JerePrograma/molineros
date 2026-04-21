@@ -144,11 +144,11 @@
 				</table>
 				<input id="<portlet:namespace />fecha_alta_af" value="" type="hidden" name="<portlet:namespace />fecha_alta_af"/>
 				<input id="<portlet:namespace />incapacidad_af" value="" type="hidden" name="<portlet:namespace />incapacidad_af"/>
-			
+
 <script type="text/javascript">
 	var popupAfill; 		
 	var popupdd;
-	
+
 	function <portlet:namespace />buscarAfiliados(){
 		var cuil=jQuery('#<portlet:namespace />cuil').val();
 		var inte=jQuery('#<portlet:namespace />inte').val();
@@ -267,7 +267,7 @@
 	}
 
 	function <portlet:namespace />buscarAfiliados_(fecha_prest){
-		//alert('función buscando, fecha' + fecha_prest);
+		//alert('funciï¿½n buscando, fecha' + fecha_prest);
 		var cuil=jQuery('#<portlet:namespace />cuil').val();
 		var inte=jQuery('#<portlet:namespace />inte').val();
 		var tipoDoc=jQuery('#<portlet:namespace />tipoDoc').val();
@@ -345,7 +345,7 @@
 		Liferay.Popup.close(popupAfill);
 	}
 	
-	function seleccionaCamposAfiliado(cuil,inte,docu_tipo,docu_nro,nombre,apellido,id_secc,desc_secc,ospim,uoma,amtima,bajaFecha,nombre_plan,id_plan,fecha_alta_af,incapacidad_af,afi_tercerizadora,conreclamo){			
+	function seleccionaCamposAfiliado(cuil,inte,docu_tipo,docu_nro,nombre,apellido,id_secc,desc_secc,ospim,uoma,amtima,bajaFecha,nombre_plan,id_plan,fecha_alta_af,incapacidad_af,afi_tercerizadora,conreclamo){
 		jQuery('#<portlet:namespace />cuil').val(cuil);
 		jQuery('#<portlet:namespace />inte').val(inte);
 		jQuery('#<portlet:namespace />tipoDoc').val(docu_tipo);
@@ -401,7 +401,7 @@
 							var hoy = new Date();
 							var vVto = fechaVto.split("-");
 							var vto = new Date(vVto[2],vVto[1],vVto[0]);
-							jQuery('#<portlet:namespace/>discapacidad_vto').html("Vto.Documentación "+fechaVto);
+							jQuery('#<portlet:namespace/>discapacidad_vto').html("Vto. DocumentaciÃ³n "+fechaVto);
 							if(vto<hoy ){
 								alert("El certificado de Discapacidad Esta Vencido")
 							}
@@ -420,7 +420,7 @@
 			}
 		}
 		catch (err) {}
-		
+
 		jQuery("#<portlet:namespace />con_reclamo_prestacional").val(conreclamo);
 		try {	
 			
@@ -444,7 +444,7 @@
 		
 		
 		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
-			//llamar script que busca los tratamientos del afiliado en la página
+			//llamar script que busca los tratamientos del afiliado en la pï¿½gina
 		</c:if>			
 	}
 
@@ -491,7 +491,7 @@
 		</c:if>
 		jQuery("#<portlet:namespace />fecha_alta_af").val('');
 		jQuery("#<portlet:namespace />incapacidad_af").val('');	
-		jQuery("#<portlet:namespace />discapacidad").hide();	
+		jQuery("#<portlet:namespace />discapacidad").hide();
 	}
 
 	function <portlet:namespace />detalleDiscapacidad() {

@@ -88,7 +88,7 @@
 				</td>
 			   <td>
 			      <select name="<portlet:namespace/>bimestre_filtro"  id="<portlet:namespace/>bimestre_filtro">
-			      <option value="0">Seleccione período</option>
+			      <option value="0">Seleccione perï¿½odo</option>
 					<%	String bimestre[]={"","Primer","Segundo","Tercer","Cuarto","Quinto","Sexto"};
 						for (int i = 1; i<=6; i++){  %>
 					      <option value="<%=i%>">
@@ -135,7 +135,7 @@
 				</td>
 				<td>
 					<select name="<portlet:namespace/>autorizaOmint_filtro" id="<portlet:namespace/>autorizaOmint_filtro">
-						<option value="0">Seleccione autorización</option>
+						<option value="0">Seleccione autorizaciï¿½n</option>
 						<%for(int i = 0; i < WebKeysAutorizaciones.AUTORIZA_OMINT.length; i++ ) {%>
 			               <option value="<%=WebKeysAutorizaciones.AUTORIZA_OMINT[i][0] %>" 
 					      > <%=WebKeysAutorizaciones.AUTORIZA_OMINT[i][1] %> </option>
@@ -338,7 +338,7 @@
 			    </table>
 			   </fieldset>
                </td>		         
-		 		 <td>Est. Seguimiento<br>Histórico</td>
+		 		 <td>Est. Seguimiento<br>Histï¿½rico</td>
 			     <td>
 		            <select name="<portlet:namespace />estadoSS_His_SeguimientoSur_filtro"
 			                   id="<portlet:namespace />estadoSS_His_SeguimientoSur_filtro" 
@@ -572,7 +572,7 @@
 	    }    
 	    if(jQuery("#<portlet:namespace />nom_seleccionado").val() != "1" && nombre_nomenclador.length>=6 ){
 	    	if(popupMD==null)
-	    	    popupMD = Liferay.Popup({title:"Búsqueda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
+	    	    popupMD = Liferay.Popup({title:"Bï¿½squeda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
 	    	
 	    	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/buscar_nomenclador';
 		    url += '&descripcionnomenclador='+encodeURI(nombre_nomenclador);
@@ -722,7 +722,7 @@
 	        alert('<liferay-ui:message key="ingrese-parametros-busqueda" />'); 
 	    }else {
 	    	if(popupMD==null)
-	    		popupMD = Liferay.Popup({title:"Búsqueda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
+	    		popupMD = Liferay.Popup({title:"Bï¿½squeda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
 	    	
 		    var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/buscar_nomenclador';
 		    url += '&descripcionnomenclador='+encodeURI(nombre_nomenclador)+'&codigonomenclador='+encodeURI(codigo_nomenclador);
@@ -774,7 +774,7 @@
 				var obj = jQuery.parseJSON(data);
 				var str='';
 				jQuery('#<portlet:namespace />bimestre_filtro').find('option').remove();
-				str="<option value='0'>Seleccione período</option>";
+				str="<option value='0'>Seleccione perï¿½odo</option>";
 				jQuery('#<portlet:namespace />bimestre_filtro').append(str);
 				for(var i =0;i< obj.bimestres.length; i++){
 					str='<option value="'+obj.bimestres[i].id+'"';

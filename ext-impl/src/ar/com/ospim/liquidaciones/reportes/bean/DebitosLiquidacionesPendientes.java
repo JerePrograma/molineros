@@ -1,6 +1,7 @@
 package ar.com.ospim.liquidaciones.reportes.bean;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 public class DebitosLiquidacionesPendientes {
 	
@@ -10,6 +11,14 @@ public class DebitosLiquidacionesPendientes {
 	private BigDecimal monto;
 	private BigDecimal cargoPrestadora;	
 	private BigDecimal cargoPrestadoraReclamo;
+	private Boolean status;
+	private Date periodoFechaDesde;
+
+	public Date getPeriodoFechaDesde() { return periodoFechaDesde; }
+	public void setPeriodoFechaDesde(Date d) { this.periodoFechaDesde = d; }
+
+	public Boolean getStatus() { return status; }
+	public void setStatus(Boolean status) { this.status = status; }
 	
 	public DebitosLiquidacionesPendientes() {
 		

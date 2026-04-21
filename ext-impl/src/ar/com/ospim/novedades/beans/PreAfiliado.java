@@ -71,6 +71,7 @@ public class PreAfiliado implements Serializable {
 	  private String id_tercerizadora;
 	  private Date fecha_inicio_prestacion;
 	  private Date fecha_fin_prestacion;
+	private int tieneAntecedentesJudiciales;
 
 	  
 	public Integer getId() {
@@ -370,7 +371,7 @@ public class PreAfiliado implements Serializable {
 
 	@Override
 	public String toString() {
-		return "PreAfiliado [código=" + id + ", cuil_titular=" + cuil_titular
+		return "PreAfiliado [cï¿½digo=" + id + ", cuil_titular=" + cuil_titular
 				+ ", inte=" + inte + ", apellido=" + apellido + ", nombre="
 				+ nombre + ", tipo_novedad=" + (tipo_novedad!=null&&tipo_novedad.equalsIgnoreCase("add")?"ALTA":"MODIFICACION") + ", alta_fecha="
 				+ alta_fecha + ", alta_usr=" + alta_usr + ", alta_empresa_usr="
@@ -425,7 +426,15 @@ public class PreAfiliado implements Serializable {
 	public void setTipo_novedad(String tipo_novedad) {
 		this.tipo_novedad = tipo_novedad;
 	}
-	
+
+	public int getTieneAntecedentesJudiciales() {
+		return tieneAntecedentesJudiciales;
+	}
+
+	public void setTieneAntecedentesJudiciales(int tieneAntecedentesJudiciales) {
+		this.tieneAntecedentesJudiciales = tieneAntecedentesJudiciales;
+	}
+
 	public String getNovedadPreCarga() {
 		String retornoCarro =  "\n"; 
 		
@@ -436,7 +445,7 @@ public class PreAfiliado implements Serializable {
 			e.printStackTrace();
 		} 
 
-		return " Código: " + id + retornoCarro + 
+		return " Cï¿½digo: " + id + retornoCarro + 
 			   " Cuil Titular: " + cuil_titular + retornoCarro +
 			   " Inte: " + inte + retornoCarro +
 			   " Apellido: " + apellido + retornoCarro +

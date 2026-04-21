@@ -1,3 +1,0 @@
-create table medicamentos_temp (troquel numeric, nombre varchar, presentacion varchar, monto_ioma numeric, norma_ioma varchar, cober_ioma varchar, laboratorio varchar,
- precio numeric, fecha_vig date, controlado varchar, importado varchar, tipo_venta varchar, iva varchar , cod_dto_pami varchar, cod_lab varchar, nro_registro numeric, 
- baja varchar, cod_barra varchar, unidades numeric, tamanio varchar, heladera varchar, sifar varchar, baja_especial varchar)

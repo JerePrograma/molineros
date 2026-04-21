@@ -24,7 +24,6 @@ import ar.com.ospim.afiliados.beans.TercerizadoraServicio;
 import ar.com.ospim.afiliados.beans.TipoAporte;
 import ar.com.ospim.afiliados.beans.TipoBono;
 import ar.com.ospim.afiliados.reportes.beans.UltimosProcesosSisOld;
-import ar.com.ospim.autorizaciones.beans.Cartilla;
 import ar.com.ospim.autorizaciones.beans.DrogaPatologia;
 import ar.com.ospim.autorizaciones.beans.ModalidadAtencion;
 import ar.com.ospim.autorizaciones.beans.MotivoExcepcion;
@@ -3169,5 +3168,4 @@ public class TraeListasServiceImpl {
 		}
 		return lista;
 	}
-	
 }

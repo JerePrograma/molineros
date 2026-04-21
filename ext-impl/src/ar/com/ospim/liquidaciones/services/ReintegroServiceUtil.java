@@ -44,7 +44,7 @@ import ar.com.ospim.util.DateUtils;
 import ar.com.ospim.util.StringUtils;
 
 /**
- * Mascara del servicio que da acceso a los datos de la aplicación (BD).
+ * Mascara del servicio que da acceso a los datos de la aplicaciï¿½n (BD).
  */
 public class ReintegroServiceUtil {
 
@@ -395,8 +395,8 @@ public class ReintegroServiceUtil {
 							connection);
 				}
 			} else if (tipoReintegro.equalsIgnoreCase(WebKeysLiquidaciones.REINTEGRO_ODO_ORTOPEDIA_ORTODONCIA)) {
-				// si estado es pendiente y no tiene prestación carga una nueva
-				// prestación, la condición se evalúa en el stored p.
+				// si estado es pendiente y no tiene prestaciï¿½n carga una nueva
+				// prestaciï¿½n, la condiciï¿½n se evalï¿½a en el stored p.
 				if (idPrestacion != 0) {
 					getInstance().cargaReintegroPrestacionOdoOrtoEntry(cuilTitular, inte, idReintegro, cuit, descripcion, 
 							idPrestacion, codigo, prestacionFecha, new BigDecimal(cantidad), new BigDecimal(importe), 
@@ -854,7 +854,7 @@ public class ReintegroServiceUtil {
 		try {
 			tratamiento = getReintegroEntry(id_reintegro);
 			cant_cuotas = tratamiento.getDetalleCuota().size();
-			// si no tenía cuotas las crea
+			// si no tenï¿½a cuotas las crea
 			if (cant_cuotas == 0) {
 				cargaOrtoCuotasEnCero(id_reintegro, nro_cuotas, importe, userName,
 						con);
@@ -915,7 +915,7 @@ public class ReintegroServiceUtil {
 			
 		}
 		
-		//Importe contiene el Tope para el Año 
+		//Importe contiene el Tope para el Aï¿½o 
 		Double totalGrupo= 0D;
 		
 		retObj[1]=0;
@@ -974,12 +974,12 @@ public class ReintegroServiceUtil {
 		if (ultimaPrestacion != null) {			
 			cantDias = Math.abs(DateUtils.diferenciaDias(DateUtils.toCalendar(prestacionFechaActual), DateUtils.toCalendar(ultimaPrestacion.getFecha_prestacion())));
 			if("040412".equals(ultimaPrestacion.getCodigo())) {
-				//es menor a un año
+				//es menor a un aï¿½o
 				if ( cantDias <=  365 ) {
 					retObj[0]=true;
 				}
 			}else {
-				//es menor a 5 años
+				//es menor a 5 aï¿½os
 				if ( cantDias <= 1825) {
 					retObj[1]=true;
 				}

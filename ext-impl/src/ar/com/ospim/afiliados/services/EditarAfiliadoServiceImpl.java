@@ -35,7 +35,7 @@ import ar.com.ospim.util.StringUtils;
 import ar.com.uoma.beans.Incidente;
 
 /**
- * servicio test que nos da acceso a los datos de la aplicación (BD).
+ * servicio test que nos da acceso a los datos de la aplicaciï¿½n (BD).
  * 
  */
 public class EditarAfiliadoServiceImpl {
@@ -121,7 +121,7 @@ public class EditarAfiliadoServiceImpl {
 
 	/**
 	 * Metodo que obtiene un afiliado a partir de la clave primaria, en caso de
-	 * que está dado de baja o de no encontrarlo retorna null
+	 * que estï¿½ dado de baja o de no encontrarlo retorna null
 	 * 
 	 * @param cuil_titular
 	 * @param inte
@@ -156,7 +156,7 @@ public class EditarAfiliadoServiceImpl {
 				
 				afiliado = Afiliado.getMappingAfiliadoConDomicilioyDocDiscapacidad(rs);
 						
-				// Veo si tiene imágenes
+				// Veo si tiene imï¿½genes
 				String sqlImage = "{call tiene_imagen_afiliado(?)}";
 				stmt = conLportal.prepareCall(sqlImage.toString());
 				stmt.setString(1, cuil_titular);
@@ -172,9 +172,9 @@ public class EditarAfiliadoServiceImpl {
 				afiliados.add(afiliado);
 			}
 			if (afiliados.size() > 1) {
-				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado más de un afiliado con esa clave primaria, "
+				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado mï¿½s de un afiliado con esa clave primaria, "
 						+ "el problema pudo ser causado porque no hay datos correctos relacionados con la vigencia de domicilios, "
-						+ "esto se pudo inyectar por concurrencia, esto es válido solo hasta que se tengan en cuenta domicilios vigentes "
+						+ "esto se pudo inyectar por concurrencia, esto es vï¿½lido solo hasta que se tengan en cuenta domicilios vigentes "
 						+ "y tipos de domicilios";
 				_log.debug(cause);
 				throw new SystemException(cause);
@@ -210,68 +210,115 @@ public class EditarAfiliadoServiceImpl {
 	 * @throws NoSuchAfiliadoEntryException
 	 */
 	public Afiliado getAfiliadoEntryInclusoDadoBaja(String cuil_titular,
-			int inte, Connection connectionParameter) throws SystemException,
+													int inte, Connection connectionParameter) throws SystemException,
 			NoSuchAfiliadoEntryException {
 		Connection con = null;
-		CallableStatement stmt = null;		
+		CallableStatement stmt = null;
 		Connection conLportal = null;
 		Incidente incidente = null;
 		List<Afiliado> afiliados = new ArrayList<Afiliado>();
+		String rid = "AFI#" + System.currentTimeMillis() + "-" + Math.abs((int)(Math.random() * 100000));
+
+		_log.info("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA][START]"
+				+ " cuil_titular=" + cuil_titular
+				+ ", inte=" + inte
+				+ ", connectionParameterNull=" + (connectionParameter == null));
+
 		try {
 			String sql = "{call busca_afiliado_incluso_dado_baja_c_i(?,?)}";
 			if (connectionParameter == null) {
 				con = ConnectionHelper.getConnection();
+				_log.info("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA] conexion principal obtenida");
 			} else {
 				con = connectionParameter;
+				_log.info("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA] usando conexion externa");
 			}
-			
-			conLportal = ConnectionHelper.getLPortalConnection();
-			stmt = con.prepareCall(sql.toString());
-			
-			stmt.setString(1, cuil_titular);
 
+			conLportal = ConnectionHelper.getLPortalConnection();
+			_log.info("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA] conexion lportal obtenida");
+
+			stmt = con.prepareCall(sql.toString());
+			stmt.setString(1, cuil_titular);
 			stmt.setInt(2, inte);
+
+			_log.info("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA][EXEC_SP] sql=" + sql
+					+ ", cuil_titular=" + cuil_titular
+					+ ", inte=" + inte);
 
 			ResultSet rs = stmt.executeQuery();
 			Afiliado afiliado = null;
+			int rowCount = 0;
+
 			while (rs.next()) {
-				
+				rowCount++;
 				afiliado = Afiliado.getMappingAfiliadoConDomicilioyDocDiscapacidad(rs);
-				
-				// Veo si tiene imágenes
+
+				_log.info("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA][ROW]"
+						+ " row=" + rowCount
+						+ ", cuil_titular=" + (afiliado != null ? afiliado.getCuil_titular() : null)
+						+ ", inte=" + (afiliado != null ? afiliado.getInte() : null)
+						+ ", doc=" + (afiliado != null ? afiliado.getDocu_numero() : null)
+						+ ", apellido=" + (afiliado != null ? afiliado.getApellido() : null)
+						+ ", nombre=" + (afiliado != null ? afiliado.getNombre() : null)
+						+ ", baja_fecha=" + (afiliado != null ? afiliado.getBaja_fecha() : null));
+
 				String sqlImage = "{call tiene_imagen_afiliado(?)}";
-				stmt = conLportal.prepareCall(sqlImage.toString());
-				stmt.setString(1, cuil_titular);
-				ResultSet rsImage = stmt.executeQuery();
-				while (rsImage.next()) {
-					afiliado.setFolderid(rsImage.getInt(1));
-					afiliado.setTitle(rsImage.getString(2));
-					afiliado.setTiene_imagen(rsImage.getInt(3));
+				CallableStatement stmtImg = null;
+				try {
+					stmtImg = conLportal.prepareCall(sqlImage.toString());
+					stmtImg.setString(1, cuil_titular);
+					ResultSet rsImage = stmtImg.executeQuery();
+					while (rsImage.next()) {
+						afiliado.setFolderid(rsImage.getInt(1));
+						afiliado.setTitle(rsImage.getString(2));
+						afiliado.setTiene_imagen(rsImage.getInt(3));
+					}
+
+					_log.info("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA][IMAGEN]"
+							+ " tiene_imagen=" + afiliado.getTiene_imagen()
+							+ ", title=" + afiliado.getTitle()
+							+ ", folderid=" + afiliado.getFolderid());
+				} finally {
+					ConnectionHelper.cerrar(stmtImg);
 				}
-				//Agrego un incidente de unidad operativa de un empleado si es que tiene
+
 				incidente = BusquedaAfiliadoServiceImpl.buscarUltimoIncidente(cuil_titular, inte);
 				if (incidente != null) {
 					afiliado.addIncidente(incidente);
+					_log.info("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA][INCIDENTE] incidente agregado");
+				} else {
+					_log.info("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA][INCIDENTE] sin incidente");
 				}
+
 				afiliados.add(afiliado);
 			}
+
+			_log.info("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA][ROWS_TOTAL] rowCount=" + rowCount);
+
 			if (afiliados.size() > 1) {
-				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado más de un afiliado con esa clave primaria, "
-						+ "el problema pudo ser causado porque no hay datos correctos relacionados con la vigencia de domicilios, "
-						+ "esto se pudo inyectar por concurrencia, esto es válido solo hasta que se tengan en cuenta domicilios vigentes "
-						+ "y tipos de domicilios";
-				_log.debug(cause);
+				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado mÃ¡s de un afiliado con esa clave primaria";
+				_log.error("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA][ERROR] " + cause
+						+ " cuil_titular=" + cuil_titular
+						+ ", inte=" + inte);
 				throw new SystemException(cause);
 			}
+
 			if (afiliados.size() == 0) {
+				_log.warn("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA][NOT_FOUND]"
+						+ " cuil_titular=" + cuil_titular
+						+ ", inte=" + inte);
 				throw new NoSuchAfiliadoEntryException(
 						"No se ha encontrado un afiliado con esa clave primaria");
 			}
 		} catch (NoSuchAfiliadoEntryException e) {
-			_log.debug(e.getMessage());
+			_log.warn("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA][NO_SUCH_AFILIADO]"
+					+ " cuil_titular=" + cuil_titular
+					+ ", inte=" + inte, e);
 			throw e;
 		} catch (Exception e) {
-			_log.debug(e.getMessage());
+			_log.error("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA][ERROR]"
+					+ " cuil_titular=" + cuil_titular
+					+ ", inte=" + inte, e);
 			throw new SystemException(e);
 		} finally {
 			ConnectionHelper.cerrar(conLportal);
@@ -280,6 +327,7 @@ public class EditarAfiliadoServiceImpl {
 			}else{
 				ConnectionHelper.cerrar(stmt);
 			}
+			_log.info("[" + rid + "][GET_AFILIADO_INCLUSO_BAJA][END]");
 		}
 		return afiliados.get(0);
 	}
@@ -364,9 +412,9 @@ public class EditarAfiliadoServiceImpl {
 				afiliados.add(afiliado);
 			}
 			if (afiliados.size() > 1) {
-				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado más de un afiliado con esa clave primaria, "
+				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado mï¿½s de un afiliado con esa clave primaria, "
 						+ "el problema pudo ser causado porque no hay datos correctos relacionados con la vigencia de domicilios, "
-						+ "esto se pudo inyectar por concurrencia, esto es válido solo hasta que se tengan en cuenta domicilios vigentes "
+						+ "esto se pudo inyectar por concurrencia, esto es vï¿½lido solo hasta que se tengan en cuenta domicilios vigentes "
 						+ "y tipos de domicilios";
 				_log.debug(cause);
 				throw new SystemException(cause);
@@ -413,9 +461,9 @@ public class EditarAfiliadoServiceImpl {
 				afiliados.add(afiliado);
 			}
 			if (afiliados.size() > 1) {
-				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado más de un afiliado con esa clave primaria, "
+				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado mï¿½s de un afiliado con esa clave primaria, "
 						+ "el problema pudo ser causado porque no hay datos correctos relacionados con la vigencia de domicilios, "
-						+ "esto se pudo inyectar por concurrencia, esto es válido solo hasta que se tengan en cuenta domicilios vigentes "
+						+ "esto se pudo inyectar por concurrencia, esto es vï¿½lido solo hasta que se tengan en cuenta domicilios vigentes "
 						+ "y tipos de domicilios";
 				_log.debug(cause);
 				throw new SystemException(cause);
@@ -433,7 +481,7 @@ public class EditarAfiliadoServiceImpl {
 	}
 
 	/**
-	 * metodo que carga un nuevo afiliado a partir de los parámetros")); si no
+	 * metodo que carga un nuevo afiliado a partir de los parï¿½metros")); si no
 	 * lo puede insertar retorna null
 	 * 
 	 * @param connection
@@ -592,7 +640,7 @@ public class EditarAfiliadoServiceImpl {
 		return;
 	}
 	/**
-	 * metodo que actualiza un afiliado a partir de los parámetros , si no lo
+	 * metodo que actualiza un afiliado a partir de los parï¿½metros , si no lo
 	 * puede actualizar retorna null
 	 * 
 	 * @param connection
@@ -887,8 +935,8 @@ public class EditarAfiliadoServiceImpl {
 	}
 
 	/**
-	 * Metodo que aplica borrado lógico de un afiliado a partir de la clave
-	 * primaria, no borra el afiliado físicamente, solo lo da de baja
+	 * Metodo que aplica borrado lï¿½gico de un afiliado a partir de la clave
+	 * primaria, no borra el afiliado fï¿½sicamente, solo lo da de baja
 	 * 
 	 * @throws NoSuchAfiliadoEntryException
 	 * @throws SystemException
@@ -975,7 +1023,7 @@ public class EditarAfiliadoServiceImpl {
 	}
 	
 	/**
-	 * Metodo que sugiere el próximo numero de integrante para un Cuil_titular
+	 * Metodo que sugiere el prï¿½ximo numero de integrante para un Cuil_titular
 	 * dado
 	 * 
 	 * @throws SystemException
@@ -1048,10 +1096,10 @@ public class EditarAfiliadoServiceImpl {
 	}
 
 	/**
-	 * Método que trae un afiliado VIGENTE por el cuil, solo lo trare si baja
+	 * Mï¿½todo que trae un afiliado VIGENTE por el cuil, solo lo trare si baja
 	 * fecha es nula o baja futura,
 	 * 
-	 * @return si no se encuentra ningún afiliado vigente, retorna rulo
+	 * @return si no se encuentra ningï¿½n afiliado vigente, retorna rulo
 	 */
 //	TODO que es esta porqueria ???
 	public Afiliado getAfiliadoXCuil(String cuil) {
@@ -1070,9 +1118,9 @@ public class EditarAfiliadoServiceImpl {
 				afiliados.add(afiliado);
 			}
 			if (afiliados.size() > 1) {
-				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado más de un afiliado con esa clave primaria, "
+				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado mï¿½s de un afiliado con esa clave primaria, "
 						+ "el problema pudo ser causado porque no hay datos correctos relacionados con la vigencia de domicilios, "
-						+ "esto se pudo inyectar por concurrencia, esto es válido solo hasta que se tengan en cuenta domicilios vigentes "
+						+ "esto se pudo inyectar por concurrencia, esto es vï¿½lido solo hasta que se tengan en cuenta domicilios vigentes "
 						+ "y tipos de domicilios";
 				_log.debug(cause);
 				throw new SystemException(cause);
@@ -1102,9 +1150,9 @@ public class EditarAfiliadoServiceImpl {
 				afiliados.add(afiliado);
 			}
 			if (afiliados.size() > 1) {
-				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado más de un afiliado con esa clave primaria, "
+				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado mï¿½s de un afiliado con esa clave primaria, "
 						+ "el problema pudo ser causado porque no hay datos correctos relacionados con la vigencia de domicilios, "
-						+ "esto se pudo inyectar por concurrencia, esto es válido solo hasta que se tengan en cuenta domicilios vigentes "
+						+ "esto se pudo inyectar por concurrencia, esto es vï¿½lido solo hasta que se tengan en cuenta domicilios vigentes "
 						+ "y tipos de domicilios";
 				_log.debug(cause);
 				throw new SystemException(cause);
@@ -1134,9 +1182,9 @@ public class EditarAfiliadoServiceImpl {
 				afiliados.add(afiliado);
 			}
 			if (afiliados.size() > 1) {
-				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado más de un afiliado con esa clave primaria, "
+				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado mï¿½s de un afiliado con esa clave primaria, "
 						+ "el problema pudo ser causado porque no hay datos correctos relacionados con la vigencia de domicilios, "
-						+ "esto se pudo inyectar por concurrencia, esto es válido solo hasta que se tengan en cuenta domicilios vigentes "
+						+ "esto se pudo inyectar por concurrencia, esto es vï¿½lido solo hasta que se tengan en cuenta domicilios vigentes "
 						+ "y tipos de domicilios";
 				_log.debug(cause);
 				throw new SystemException(cause);
@@ -1166,9 +1214,9 @@ public class EditarAfiliadoServiceImpl {
 				afiliados.add(afiliado);
 			}
 			if (afiliados.size() > 1) {
-				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado más de un afiliado con esa clave primaria, "
+				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado mï¿½s de un afiliado con esa clave primaria, "
 						+ "el problema pudo ser causado porque no hay datos correctos relacionados con la vigencia de domicilios, "
-						+ "esto se pudo inyectar por concurrencia, esto es válido solo hasta que se tengan en cuenta domicilios vigentes "
+						+ "esto se pudo inyectar por concurrencia, esto es vï¿½lido solo hasta que se tengan en cuenta domicilios vigentes "
 						+ "y tipos de domicilios";
 				_log.debug(cause);
 				throw new SystemException(cause);
@@ -1281,9 +1329,9 @@ public class EditarAfiliadoServiceImpl {
 				afiliados.add(afiliado);
 			}
 			if (afiliados.size() > 1) {
-				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado más de un afiliado con esa clave primaria, "
+				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado mï¿½s de un afiliado con esa clave primaria, "
 						+ "el problema pudo ser causado porque no hay datos correctos relacionados con la vigencia de domicilios, "
-						+ "esto se pudo inyectar por concurrencia, esto es válido solo hasta que se tengan en cuenta domicilios vigentes "
+						+ "esto se pudo inyectar por concurrencia, esto es vï¿½lido solo hasta que se tengan en cuenta domicilios vigentes "
 						+ "y tipos de domicilios";
 				_log.debug(cause);
 				throw new SystemException(cause);
@@ -1686,9 +1734,9 @@ public class EditarAfiliadoServiceImpl {
 				afiliados.add(afiliado);
 			}
 			if (afiliados.size() > 1) {
-				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado más de un afiliado con esa clave primaria, "
+				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado mï¿½s de un afiliado con esa clave primaria, "
 						+ "el problema pudo ser causado porque no hay datos correctos relacionados con la vigencia de domicilios, "
-						+ "esto se pudo inyectar por concurrencia, esto es válido solo hasta que se tengan en cuenta domicilios vigentes "
+						+ "esto se pudo inyectar por concurrencia, esto es vï¿½lido solo hasta que se tengan en cuenta domicilios vigentes "
 						+ "y tipos de domicilios";
 				_log.debug(cause);
 				throw new SystemException(cause);
@@ -1933,7 +1981,7 @@ public class EditarAfiliadoServiceImpl {
 				
 				afiliado = Afiliado.getMappingAfiliadoConDomicilioyDocDiscapacidad(rs);
 				
-				// Veo si tiene imágenes
+				// Veo si tiene imï¿½genes
 				String sqlImage = "{call tiene_imagen_afiliado(?)}";
 				stmt = conLportal.prepareCall(sqlImage.toString());
 				stmt.setString(1, cuil);
@@ -1949,9 +1997,9 @@ public class EditarAfiliadoServiceImpl {
 			
 			/*
 			if (afiliados.size() > 1) {
-				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado más de un afiliado con esa clave primaria, "
+				String cause = "Hay un problema de inconsistencia de datos, se ha encontrado mï¿½s de un afiliado con esa clave primaria, "
 						+ "el problema pudo ser causado porque no hay datos correctos relacionados con la vigencia de domicilios, "
-						+ "esto se pudo inyectar por concurrencia, esto es válido solo hasta que se tengan en cuenta domicilios vigentes "
+						+ "esto se pudo inyectar por concurrencia, esto es vï¿½lido solo hasta que se tengan en cuenta domicilios vigentes "
 						+ "y tipos de domicilios";
 				_log.debug(cause);
 				throw new SystemException(cause);

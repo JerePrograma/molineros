@@ -1,7 +1,6 @@
 package ar.com.uoma.correspondencia.action;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 
 import javax.portlet.ActionRequest;
@@ -21,9 +20,6 @@ import ar.com.ospim.global.beans.Seccional;
 import ar.com.ospim.liquidaciones.DuplicateLiquidacionIdException;
 import ar.com.ospim.liquidaciones.NoSuchLiquidacionEntryException;
 import ar.com.ospim.liquidaciones.NoSuchLiquidacionPrestacionEntryException;
-import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
-import ar.com.ospim.liquidaciones.services.ConvenioPrestacionalServiceUtil;
 import ar.com.uoma.beans.Correspondencia;
 import ar.com.uoma.beans.TipoCorrespondencia;
 import ar.com.uoma.correspondencia.WebKeysCorrespondencia;

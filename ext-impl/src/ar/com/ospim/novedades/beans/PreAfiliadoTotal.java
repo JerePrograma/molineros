@@ -121,7 +121,10 @@ public class PreAfiliadoTotal extends PreAfiliado {
 	    pat.setModi_usr(rs.getString("modi_usr"));
 	    pat.setBaja_fecha(rs.getDate("baja_fecha"));
 	    pat.setBaja_usr(rs.getString("baja_usr"));
-	    
+		pat.setTieneAntecedentesJudiciales(
+				rs.getInt("tiene_antecedentes_judiciales")
+		);
+
 	    pat.setTotal_registros(rs.getInt("total_registros_v"));
 
 		return pat;

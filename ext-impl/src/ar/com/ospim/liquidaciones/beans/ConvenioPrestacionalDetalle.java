@@ -4,10 +4,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.ParseException;
 import java.util.Date;
-
-import oasis.names.tc.wsrp.v1.types.GetServiceDescription;
 
 import ar.com.ospim.global.beans.Prestacion;
 
@@ -16,26 +13,23 @@ import ar.com.ospim.global.beans.Prestacion;
  * @created 19-Oct-2012 02:25:41 p.m.
  */
 public class ConvenioPrestacionalDetalle implements Serializable{
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -2871379242655844634L;
-	
+
 	private int id; //id_convenio_prest_detalle
 	private int idConvenioPrestacional;
 	private Date fechaDesde;
 	private Date fechaHasta;
 //	private int id_prestacion_desde;
-	private TipoNomenclador tipoNomenclador;
-	private Prestacion prestacionDesde;
-	private String codigoDesde;
+	private Prestacion prestacion;
+	private String codigo;
 //	private String descripcion_prestacion_desde;
 //	private int id_prestacion_hasta;
-	private Prestacion prestacionHasta;
-	private String codigoHasta;
 //	private String descripcion_prestacion_hasta;
-	private int idPlan; // --todos los id_plan mas la opción 'todos' que es 0
+	private int idPlan; // --todos los id_plan mas la opciï¿½n 'todos' que es 0
 	private String planDescripcion;
 //	private int idCartilla;
 	private BigDecimal coseguro;
@@ -54,83 +48,46 @@ public class ConvenioPrestacionalDetalle implements Serializable{
 	private String bajaUsr;
 
 	private ESTADOS estado;
-    
-    public enum ESTADOS {
+
+	public ConvenioPrestacionalDetalle(String line) {
+	}
+
+	public enum ESTADOS {
 		NUEVO, MODIF, BAJA
-	};
-	
-//	public ConvenioPrestacionalDetalle(int idContratoDetalle, int idContrato, Date fechaDesde, Date fechaHasta,
-//			int idPrestacionDesde, String codigoDesde, int idPrestacionHasta,
-//			String codigoHasta, int idPlan, int idCartilla,
-//			BigDecimal coseguro, BigDecimal honorarios, BigDecimal gastos,
-//			BigDecimal importeTotal, Date altaFecha, String altaUsr,
-//			Date modiFecha, String modiUsr, Date bajaFecha, String bajaUsr, String plan_descripcion, String servicio, String tipo_valoriza) {
-//		super();
-//		id_contrato_detalle = idContratoDetalle;
-//		id_contrato = idContrato;
-//		fecha_desde = fechaDesde;
-//		fecha_hasta = fechaHasta;
-//		id_prestacion_desde = idPrestacionDesde;
-//		codigo_desde = codigoDesde;
-//		id_prestacion_hasta = idPrestacionHasta;
-//		codigo_hasta = codigoHasta;
-//		id_plan = idPlan;
-//		id_cartilla = idCartilla;
-//		this.coseguro = coseguro;
-//		this.honorarios = honorarios;
-//		this.gastos = gastos;
-//		importe_total = importeTotal;
-//		alta_fecha = altaFecha;
-//		alta_usr = altaUsr;
-//		modi_fecha = modiFecha;
-//		modi_usr = modiUsr;
-//		baja_fecha = bajaFecha;
-//		baja_usr = bajaUsr;
-//		this.plan_descripcion = plan_descripcion;
-//		this.servicio = servicio;
-//		tipo_valorizacion = tipo_valoriza;
-//	}	
-	
-	public ConvenioPrestacionalDetalle() {	
+	}
+
+	public ConvenioPrestacionalDetalle() {
 		super();
 	}
 
-	
-	
-	public ConvenioPrestacionalDetalle(int id, int idConvenioPrestacional,
-		Date fechaDesde, Date fechaHasta, TipoNomenclador tipoNomenclador,
-		Prestacion prestacionDesde, String codigoDesde,
-		Prestacion prestacionHasta, String codigoHasta, int idPlan,
-		String planDescripcion, BigDecimal coseguro, String tipoValorizacion,
-		BigDecimal importe, BigDecimal porcentaje, String servicio) {
-		
-	super();
-	this.id = id;
-	this.idConvenioPrestacional = idConvenioPrestacional;
-	this.fechaDesde = fechaDesde;
-	this.fechaHasta = fechaHasta;
-	this.tipoNomenclador = tipoNomenclador;
-	this.prestacionDesde = prestacionDesde;
-	this.codigoDesde = codigoDesde;
-	this.prestacionHasta = prestacionHasta;
-	this.codigoHasta = codigoHasta;
-	this.idPlan = idPlan;
-	this.planDescripcion = planDescripcion;
-	this.coseguro = coseguro;
-	this.tipoValorizacion = tipoValorizacion;
-	this.importe = importe;
-	this.porcentaje = porcentaje;
-	this.servicio = servicio;
-}
+	public ConvenioPrestacionalDetalle(
+			int id,
+			int idConvenioPrestacional,
+			Date fechaDesde,
+			Date fechaHasta,
+			Prestacion prestacion,
+			String codigo,
+			int idPlan,
+			String planDescripcion,
+			BigDecimal coseguro,
+			String tipoValorizacion,
+			BigDecimal importe,
+			BigDecimal porcentaje,
+			String servicio) {
 
-
-
-	public TipoNomenclador getTipoNomenclador() {
-		return tipoNomenclador;
-	}
-
-	public void setTipoNomenclador(TipoNomenclador tipoNomenclador) {
-		this.tipoNomenclador = tipoNomenclador;
+		this.id = id;
+		this.idConvenioPrestacional = idConvenioPrestacional;
+		this.fechaDesde = fechaDesde;
+		this.fechaHasta = fechaHasta;
+		this.prestacion = prestacion;
+		this.codigo = codigo;
+		this.idPlan = idPlan;
+		this.planDescripcion = planDescripcion;
+		this.coseguro = coseguro;
+		this.tipoValorizacion = tipoValorizacion;
+		this.importe = importe;
+		this.porcentaje = porcentaje;
+		this.servicio = servicio;
 	}
 
 	public BigDecimal getImporte() {
@@ -149,313 +106,47 @@ public class ConvenioPrestacionalDetalle implements Serializable{
 		this.porcentaje = porcentaje;
 	}
 
-	public ConvenioPrestacionalDetalle(String line) throws ParseException {
-//		TODO para exportar archivo...
-	}
-	
-//	public int getId_contrato_detalle() {
-//		return id_contrato_detalle;
-//	}
-//
-//	public void setId_contrato_detalle(int idContratoDetalle) {
-//		id_contrato_detalle = idContratoDetalle;
-//	}
-//
-//	public int getId_contrato() {
-//		return id_contrato;
-//	}
-//
-//	public void setId_contrato(int idContrato) {
-//		id_contrato = idContrato;
-//	}
-//
-//	public Date getFecha_desde() {
-//		return fecha_desde;
-//	}
-//
-//	public String getFecha_Desde_AsString() {
-//		SimpleDateFormat sdf=new SimpleDateFormat("dd/MM/yyyy");
-//		return fecha_desde!=null?sdf.format(fecha_desde):"";
-//	}
-//	
-//	public void setFecha_desde(Date fechaDesde) {
-//		fecha_desde = fechaDesde;
-//	}
-//
-//	public Date getFecha_hasta() {
-//		return fecha_hasta;
-//	}
-//
-//	public String getFecha_Hasta_AsString() {
-//		SimpleDateFormat sdf=new SimpleDateFormat("dd/MM/yyyy");
-//		return fecha_hasta!=null?sdf.format(fecha_hasta):"";
-//	}
-//	
-//	public void setFecha_hasta(Date fechaHasta) {
-//		fecha_hasta = fechaHasta;
-//	}
-//
-//	public int getId_prestacion_desde() {
-//		return id_prestacion_desde;
-//	}
-//
-//	public void setId_prestacion_desde(int idPrestacionDesde) {
-//		id_prestacion_desde = idPrestacionDesde;
-//	}
-//
-//	public String getCodigo_desde() {
-//		return codigo_desde;
-//	}
-//
-//	public void setCodigo_desde(String codigoDesde) {
-//		codigo_desde = codigoDesde;
-//	}
-//
-//	public String getDescripcion_prestacion_desde() {
-//		return descripcion_prestacion_desde;
-//	}
-//
-//	public void setDescripcion_prestacion_desde(
-//			String descripcionPrestacionDesde) {
-//		descripcion_prestacion_desde = descripcionPrestacionDesde;
-//	}
-//
-//	public int getId_prestacion_hasta() {
-//		return id_prestacion_hasta;
-//	}
-//
-//	public void setId_prestacion_hasta(int idPrestacionHasta) {
-//		id_prestacion_hasta = idPrestacionHasta;
-//	}
-//
-//	public String getCodigo_hasta() {
-//		return codigo_hasta;
-//	}
-//
-//	public void setCodigo_hasta(String codigoHasta) {
-//		codigo_hasta = codigoHasta;
-//	}
-//
-//	public String getDescripcion_prestacion_hasta() {
-//		return descripcion_prestacion_hasta;
-//	}
-//
-//	public void setDescripcion_prestacion_hasta(
-//			String descripcionPrestacionHasta) {
-//		descripcion_prestacion_hasta = descripcionPrestacionHasta;
-//	}
-//
-//	public int getId_plan() {
-//		return id_plan;
-//	}
-//
-//	public void setId_plan(int idPlan) {
-//		id_plan = idPlan;
-//	}
-//
-//	public int getId_cartilla() {
-//		return id_cartilla;
-//	}
-//
-//	public void setId_cartilla(int idCartilla) {
-//		id_cartilla = idCartilla;
-//	}
-//
-//	public BigDecimal getCoseguro() {
-//		return coseguro;
-//	}
-//
-//	public void setCoseguro(BigDecimal coseguro) {
-//		this.coseguro = coseguro;
-//	}
-//
-//	public BigDecimal getHonorarios() {
-//		return honorarios;
-//	}
-//
-//	public void setHonorarios(BigDecimal honorarios) {
-//		this.honorarios = honorarios;
-//	}
-//
-//	public BigDecimal getGastos() {
-//		return gastos;
-//	}
-//
-//	public void setGastos(BigDecimal gastos) {
-//		this.gastos = gastos;
-//	}
-//
-//	public BigDecimal getImporte_total() {
-//		return importe_total;
-//	}
-//
-//	public void setImporte_total(BigDecimal importeTotal) {
-//		importe_total = importeTotal;
-//	}
-//
-//	public Date getAlta_fecha() {
-//		return alta_fecha;
-//	}
-//
-//	public void setAlta_fecha(Date altaFecha) {
-//		alta_fecha = altaFecha;
-//	}
-//
-//	public String getAlta_usr() {
-//		return alta_usr;
-//	}
-//
-//	public void setAlta_usr(String altaUsr) {
-//		alta_usr = altaUsr;
-//	}
-//
-//	public Date getModi_fecha() {
-//		return modi_fecha;
-//	}
-//
-//	public void setModi_fecha(Date modiFecha) {
-//		modi_fecha = modiFecha;
-//	}
-//
-//	public String getModi_usr() {
-//		return modi_usr;
-//	}
-//
-//	public void setModi_usr(String modiUsr) {
-//		modi_usr = modiUsr;
-//	}
-//
-//	public Date getBaja_fecha() {
-//		return baja_fecha;
-//	}
-//
-//	public void setBaja_fecha(Date bajaFecha) {
-//		baja_fecha = bajaFecha;
-//	}
-//
-//	public String getBaja_usr() {
-//		return baja_usr;
-//	}
-//
-//	public void setBaja_usr(String bajaUsr) {
-//		baja_usr = bajaUsr;
-//	}
-//		
-//	public String getTipo_valorizacion() {
-//		return tipo_valorizacion;
-//	}
-//
-//
-//	public void setTipo_valorizacion(String tipoValorizacion) {
-//		tipo_valorizacion = tipoValorizacion;
-//	}
-
-	
-//	public String getPlan_descripcion() {
-//		return getId_plan() == 0 ? "TODOS" : plan_descripcion;
-//	}
-//
-//
-//	public void setPlan_descripcion(String planDescripcion) {		
-//		plan_descripcion = planDescripcion;		
-//	}
-		
-//	public String getServicio() {
-//		return servicio;
-//	}
-//
-//	public void setServicio(String servicio) {
-//		this.servicio = servicio;
-//	}
-//	
-//	public String getMarcaEdit() {
-//		return marcaEdit;
-//	}
-//
-//	public void setMarcaEdit(String marcaEdit) {
-//		this.marcaEdit = marcaEdit;
-//	}
-//	
-//	public static ConvenioPrestacionalDetalle getMapping(ResultSet rs) throws SQLException {
-//		return getMapping(rs, "");		
-//	}
-	
 	public static ConvenioPrestacionalDetalle getMapping(ResultSet rs, String prefix) throws SQLException {
-		  				
-		TipoNomenclador tipoNomenclador =TipoNomenclador.getMapping("nomenclador_", rs);
-		
-		Prestacion prestacionDesde = new Prestacion(rs.getInt(prefix+"id_prestacion_desde"), 
-				rs.getString(prefix+"prestacion_descripcion_desde") );
-		prestacionDesde.setId_tipo_nomenclador(tipoNomenclador.getId_tipo_nomenclador());
-		
-		Prestacion prestacionHasta = new Prestacion(rs.getInt(prefix+"id_prestacion_hasta"), 
-				rs.getString(prefix+"prestacion_descripcion_hasta") );
-		prestacionDesde.setId_tipo_nomenclador(tipoNomenclador.getId_tipo_nomenclador());
-		
-		ConvenioPrestacionalDetalle convenioPrestDet = new ConvenioPrestacionalDetalle();
-		convenioPrestDet.setIdConvenioPrestacional(rs.getInt(prefix+"id_convenio_prest"));
-		convenioPrestDet.setTipoNomenclador(tipoNomenclador);
-		convenioPrestDet.setId(rs.getInt(prefix+"id_convenio_prest_detalle"));
-		convenioPrestDet.setFechaDesde(rs.getDate(prefix+"fecha_desde"));
-		convenioPrestDet.setFechaHasta(rs.getDate(prefix+"fecha_hasta"));		
-		convenioPrestDet.setCodigoDesde(rs.getString(prefix+"codigo_desde"));
-		convenioPrestDet.setCodigoHasta(rs.getString(prefix+"codigo_hasta"));
-		convenioPrestDet.setPrestacionHasta(new Prestacion(rs.getInt(prefix+"id_prestacion_hasta"),""));
-		convenioPrestDet.setIdPlan(rs.getInt(prefix+"id_plan"));
-		convenioPrestDet.setPlanDescripcion(rs.getString(prefix+"plan_descripcion"));
-//		convenioPrestDet.setId_cartilla(rs.getInt(prefix+"id_cartilla"));
-		convenioPrestDet.setCoseguro(rs.getBigDecimal(prefix+"coseguro"));
-		convenioPrestDet.setTipoValorizacion(rs.getString(prefix+"tipo_valorizacion"));		
-//		convenioPrestDet.setHonorarios(rs.getBigDecimal(prefix+"honorarios"));
-//		convenioPrestDet.setGastos(rs.getBigDecimal(prefix+"gastos"));
-//		convenioPrestDet.setImporteTotal(rs.getBigDecimal(prefix+"importe_total"));
-		convenioPrestDet.setImporte(rs.getBigDecimal(prefix+"importe"));
-		convenioPrestDet.setPorcentaje(rs.getBigDecimal(prefix+"porcentaje"));
-		convenioPrestDet.setServicio(rs.getString(prefix+"servicio"));
-		convenioPrestDet.setAltaFecha(rs.getDate(prefix+"alta_fecha")); 
-		convenioPrestDet.setAltaUsr(rs.getString(prefix+"alta_usr")); 
-		convenioPrestDet.setModiFecha(rs.getDate(prefix+"modi_fecha")); 
-		convenioPrestDet.setModiUsr(rs.getString(prefix+"modi_usr")); 
-		convenioPrestDet.setBajaFecha(rs.getDate(prefix+"baja_fecha")); 
-		convenioPrestDet.setBajaUsr(rs.getString(prefix+"baja_usr"));
-		
-		convenioPrestDet.setPrestacionDesde(prestacionDesde);
-		convenioPrestDet.setPrestacionHasta(prestacionHasta);
-		
-		return convenioPrestDet;
+
+		Prestacion prestacion = new Prestacion(
+				rs.getInt(prefix + "id_prestacion"),
+				rs.getString(prefix + "prestacion_descripcion")
+		);
+
+		ConvenioPrestacionalDetalle det = new ConvenioPrestacionalDetalle();
+		det.setIdConvenioPrestacional(rs.getInt(prefix + "id_convenio_prest"));
+		det.setId(rs.getInt(prefix + "id_convenio_prest_detalle"));
+
+		det.setFechaDesde(rs.getTimestamp(prefix + "fecha_desde"));
+		det.setFechaHasta(rs.getTimestamp(prefix + "fecha_hasta"));
+
+		det.setPrestacion(prestacion);
+		det.setCodigo(rs.getString(prefix + "codigo"));
+
+		det.setIdPlan(rs.getInt(prefix + "id_plan"));
+		det.setPlanDescripcion(rs.getString(prefix + "plan_descripcion"));
+		det.setCoseguro(rs.getBigDecimal(prefix + "coseguro"));
+		det.setTipoValorizacion(rs.getString(prefix + "tipo_valorizacion"));
+		det.setImporte(rs.getBigDecimal(prefix + "importe"));
+		det.setPorcentaje(rs.getBigDecimal(prefix + "porcentaje"));
+		det.setServicio(rs.getString(prefix + "servicio"));
+
+		det.setAltaFecha(rs.getTimestamp(prefix + "alta_fecha"));
+		det.setAltaUsr(rs.getString(prefix + "alta_usr"));
+		det.setModiFecha(rs.getTimestamp(prefix + "modi_fecha"));
+		det.setModiUsr(rs.getString(prefix + "modi_usr"));
+		det.setBajaFecha(rs.getTimestamp(prefix + "baja_fecha"));
+		det.setBajaUsr(rs.getString(prefix + "baja_usr"));
+
+		return det;
 	}
 
-//	public ConvenioPrestacionalDetalle(ConvenioPrestacionalDetalle contratoDetalle) {
-//		id_contrato_detalle = contratoDetalle.id_contrato_detalle;
-//		id_contrato = contratoDetalle.id_contrato;
-//		fecha_desde = contratoDetalle.fecha_desde;
-//		fecha_hasta = contratoDetalle.fecha_hasta;
-//		id_prestacion_desde = contratoDetalle.id_prestacion_desde;
-//		codigo_desde = contratoDetalle.codigo_desde;
-//		id_prestacion_hasta = contratoDetalle.id_prestacion_desde;
-//		codigo_hasta = contratoDetalle.codigo_hasta;
-//		id_plan = contratoDetalle.id_plan;
-//		id_cartilla = contratoDetalle.id_cartilla;
-//		this.coseguro = contratoDetalle.coseguro;
-//		this.honorarios = contratoDetalle.honorarios;
-//		this.gastos = contratoDetalle.gastos;
-//		importe_total = contratoDetalle.importe_total;
-//		alta_fecha = contratoDetalle.alta_fecha;
-//		alta_usr = contratoDetalle.alta_usr;
-//		modi_fecha = contratoDetalle.modi_fecha;
-//		modi_usr = contratoDetalle.modi_usr;
-//		baja_fecha = contratoDetalle.baja_fecha;
-//		baja_usr = contratoDetalle.baja_usr;
-//		this.plan_descripcion = contratoDetalle.plan_descripcion;
-//		this.servicio = contratoDetalle.servicio;
-//		this.tipo_valorizacion = contratoDetalle.tipo_valorizacion;
-//	}	
-	
 	public String getPlanDescripcion() {
-		return getIdPlan() == 0 ? "TODOS" : planDescripcion;
+		return planDescripcion;
 	}
-	public void setPlanDescripcion(String planDescripcion) {		
-		this.planDescripcion = planDescripcion;		
+
+	public void setPlanDescripcion(String planDescripcion) {
+		this.planDescripcion = planDescripcion;
 	}
 
 	public int getId() {
@@ -490,36 +181,20 @@ public class ConvenioPrestacionalDetalle implements Serializable{
 		this.fechaHasta = fechaHasta;
 	}
 
-	public Prestacion getPrestacionDesde() {
-		return prestacionDesde;
+	public Prestacion getPrestacion() {
+		return prestacion;
 	}
 
-	public void setPrestacionDesde(Prestacion prestacionDesde) {
-		this.prestacionDesde = prestacionDesde;
+	public void setPrestacion(Prestacion prestacion) {
+		this.prestacion = prestacion;
 	}
 
-	public String getCodigoDesde() {
-		return codigoDesde;
+	public String getCodigo() {
+		return codigo;
 	}
 
-	public void setCodigoDesde(String codigoDesde) {
-		this.codigoDesde = codigoDesde;
-	}
-
-	public Prestacion getPrestacionHasta() {
-		return prestacionHasta;
-	}
-
-	public void setPrestacionHasta(Prestacion prestacionHasta) {
-		this.prestacionHasta = prestacionHasta;
-	}
-
-	public String getCodigoHasta() {
-		return codigoHasta;
-	}
-
-	public void setCodigoHasta(String codigoHasta) {
-		this.codigoHasta = codigoHasta;
+	public void setCodigo(String codigo) {
+		this.codigo = codigo;
 	}
 
 	public int getIdPlan() {
@@ -529,14 +204,6 @@ public class ConvenioPrestacionalDetalle implements Serializable{
 	public void setIdPlan(int idPlan) {
 		this.idPlan = idPlan;
 	}
-
-//	public int getIdCartilla() {
-//		return idCartilla;
-//	}
-//
-//	public void setIdCartilla(int idCartilla) {
-//		this.idCartilla = idCartilla;
-//	}
 
 	public BigDecimal getCoseguro() {
 		return coseguro;
@@ -553,30 +220,6 @@ public class ConvenioPrestacionalDetalle implements Serializable{
 	public void setTipoValorizacion(String tipoValorizacion) {
 		this.tipoValorizacion = tipoValorizacion;
 	}
-
-//	public BigDecimal getHonorarios() {
-//		return honorarios;
-//	}
-//
-//	public void setHonorarios(BigDecimal honorarios) {
-//		this.honorarios = honorarios;
-//	}
-//
-//	public BigDecimal getGastos() {
-//		return gastos;
-//	}
-//
-//	public void setGastos(BigDecimal gastos) {
-//		this.gastos = gastos;
-//	}
-//
-//	public BigDecimal getImporteTotal() {
-//		return importeTotal;
-//	}
-//
-//	public void setImporteTotal(BigDecimal importeTotal) {
-//		this.importeTotal = importeTotal;
-//	}
 
 	public String getServicio() {
 		return servicio;
@@ -642,14 +285,18 @@ public class ConvenioPrestacionalDetalle implements Serializable{
 		this.estado = estado;
 	}
 
+
 	@Override
 	public String toString() {
-		return "ConvenioPrestacionalDetalle [id=" + id + ", fechaDesde="
-				+ fechaDesde + ", codigoDesde=" + codigoDesde
-				+ ", codigoHasta=" + codigoHasta + ", idPlan=" + idPlan
-				+ ", planDescripcion=" + planDescripcion + ", importe="
-				+ importe + ", porcentaje=" + porcentaje + ", servicio="
-				+ servicio + "]";
+		return "ConvenioPrestacionalDetalle [id=" + id
+				+ ", fechaDesde=" + fechaDesde
+				+ ", fechaHasta=" + fechaHasta
+				+ ", codigo=" + codigo
+				+ ", idPlan=" + idPlan
+				+ ", planDescripcion=" + planDescripcion
+				+ ", importe=" + importe
+				+ ", porcentaje=" + porcentaje
+				+ ", servicio=" + servicio + "]";
 	}
 
 	@Override
@@ -673,5 +320,5 @@ public class ConvenioPrestacionalDetalle implements Serializable{
 			return false;
 		return true;
 	}
-	
+
 }

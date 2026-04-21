@@ -77,13 +77,13 @@ public class WebKeysAfiliados implements com.liferay.portal.kernel.util.WebKeys 
 	public static final int PARENTESCO_DEFAULT = 0; //"Titular";
 	public static final int CONYUGE_DEFAULT = 1; //"Conyuge";
 	public static final int CONCUBINO_DEFAULT = 2; //"Concubino/a";
-	public static final int HIJO_MENOR = 3; //"Hijo soltero menor de 21 años";
-	public static final int HIJO_MAYOR = 4; //"Hijo soltero de 21 a 25 años cursando estudios regulares";
-	public static final int HIJO_MENOR_CONYUGE = 5; //"Hijo del conyuge soltero menor de 21 años";
-	public static final int HIJO_MAYOR_CONYUGE = 6; //"Hijo del conyuge soltero de 21 a 25 años cursando estudios regulares";
+	public static final int HIJO_MENOR = 3; //"Hijo soltero menor de 21 aï¿½os";
+	public static final int HIJO_MAYOR = 4; //"Hijo soltero de 21 a 25 aï¿½os cursando estudios regulares";
+	public static final int HIJO_MENOR_CONYUGE = 5; //"Hijo del conyuge soltero menor de 21 aï¿½os";
+	public static final int HIJO_MAYOR_CONYUGE = 6; //"Hijo del conyuge soltero de 21 a 25 aï¿½os cursando estudios regulares";
 	public static final int MENOR_BAJO_GUARDA = 7; //"Menor bajo guarda o tutela";
 	public static final int FAMILIAR_A_CARGO =8; //"FAMILIAR A CARGO"
-	public static final int MAYOR_DE_25_AÑOS_DISCAPACITADO =9; //"MAYOR DE 25 AÑOS DISCAPACITADO"
+	public static final int MAYOR_DE_25_ANOS_DISCAPACITADO =9; //"MAYOR DE 25 Aï¿½OS DISCAPACITADO"
 	public static final int ID_DEFAULT_NACIONALIDAD = 10; // ARGENTINA
 	public static final int ID_DEFAULT_PROVINCIA = 1; // DESCONOCIDA
 	public static final int ID_DEFAULT_LOCALIDAD = 1; // DESCONOCIDA
@@ -93,22 +93,22 @@ public class WebKeysAfiliados implements com.liferay.portal.kernel.util.WebKeys 
 //			"Concubino/a",
 //			"Conyuge",
 //			"Familiar a cargo",
-//			"Hijo soltero menor de 21 años",
-//			"Hijo del conyuge soltero de 21 a 25 años cursando estudios regulares",
-//			"Hijo del conyuge soltero menor de 21 años",
-//			"Hijo soltero de 21 a 25 años cursando estudios regulares",
-//			"Menor bajo guarda o tutela", "Mayor de 25 años discapacitado",
+//			"Hijo soltero menor de 21 aï¿½os",
+//			"Hijo del conyuge soltero de 21 a 25 aï¿½os cursando estudios regulares",
+//			"Hijo del conyuge soltero menor de 21 aï¿½os",
+//			"Hijo soltero de 21 a 25 aï¿½os cursando estudios regulares",
+//			"Menor bajo guarda o tutela", "Mayor de 25 aï¿½os discapacitado",
 //			"Titular" };
 //	public static final String[] PARENTESCOS_INTEGRANTES = {
 //			"Concubino/a", //0
 //			"Conyuge",     //1
 //			"Familiar a cargo", //2
-//			"Hijo soltero menor de 21 años", //3
-//			"Hijo del conyuge soltero de 21 a 25 años cursando estudios regulares", //4
-//			"Hijo del conyuge soltero menor de 21 años", //5
-//			"Hijo soltero de 21 a 25 años cursando estudios regulares", //6
+//			"Hijo soltero menor de 21 aï¿½os", //3
+//			"Hijo del conyuge soltero de 21 a 25 aï¿½os cursando estudios regulares", //4
+//			"Hijo del conyuge soltero menor de 21 aï¿½os", //5
+//			"Hijo soltero de 21 a 25 aï¿½os cursando estudios regulares", //6
 //			"Menor bajo guarda o tutela", //7
-//			"Mayor de 25 años discapacitado" //8 
+//			"Mayor de 25 aï¿½os discapacitado" //8 
 //			};
 	public static final String CTAS_BCRIAS_EN_SESSION = "CTAS_BCRIAS_EN_SESSION";
 	public static final String HISTORICO_APORTES = "HISTORICO_APORTES";

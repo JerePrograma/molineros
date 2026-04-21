@@ -1,477 +1,676 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report name" pageWidth="595" pageHeight="842" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
-	<property name="ireport.zoom" value="1.996500000000008"/>
-	<property name="ireport.x" value="55"/>
-	<property name="ireport.y" value="1192"/>
-	<parameter name="id_ini" class="java.lang.String"/>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ordenPagoUoma" pageWidth="596" pageHeight="842" columnWidth="556" leftMargin="20" rightMargin="20" topMargin="30" bottomMargin="30" isSummaryWithPageHeaderAndFooter="true">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="49"/>
+	<style name="Title" forecolor="#FFFFFF" fontSize="50" isBold="false"/>
+	<style name="SubTitle" forecolor="#CCCCCC" fontSize="18" isBold="false"/>
+	<style name="Column header" forecolor="#666666" fontSize="14" isBold="true"/>
+	<style name="Detail" mode="Transparent"/>
+	<style name="Row" mode="Transparent">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#F0EFEF"/>
+		</conditionalStyle>
+	</style>
+	<style name="table">
+		<box>
+			<pen lineWidth="1.0" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TH" mode="Opaque" backcolor="#808080">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_CH" mode="Opaque" backcolor="#FFBFBF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table 1">
+		<box>
+			<pen lineWidth="1.0" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table 1_TH" mode="Opaque" backcolor="#F0F8FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table 1_CH" mode="Opaque" backcolor="#BFE1FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table 1_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<subDataset name="pagos">
+		<parameter name="ID_ORDEN_PAGO" class="java.lang.String"/>
+		<queryString language="SQL">
+			<![CDATA[select * from reporte_pagos_op_ospim($P{ID_ORDEN_PAGO})]]>
+		</queryString>
+		<field name="nro_cheque" class="java.lang.String"/>
+		<field name="descripcion" class="java.lang.String"/>
+		<field name="importe" class="java.lang.String"/>
+		<field name="a_favor_de" class="java.lang.String"/>
+		<field name="baja_fecha" class="java.lang.String"/>
+	</subDataset>
+	<subDataset name="conceptos">
+		<parameter name="ID_ORDEN_PAGO" class="java.lang.String"/>
+		<queryString>
+			<![CDATA[select cc__descripcion,        sum(case when cc_importe_op>=0 then ccc__importe else ccc__importe*-1 end ) as ccc__importe from buscar_concepto_comprobante_por_orden_pago_ospim($P{ID_ORDEN_PAGO}) group by cc__descripcion having sum(case when cc_importe_op>=0 then ccc__importe else ccc__importe*-1 end ) >0]]>
+		</queryString>
+		<field name="cc__descripcion" class="java.lang.String"/>
+		<field name="ccc__importe" class="java.math.BigDecimal"/>
+	</subDataset>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["/home/usuario/apache-tomcat-8.5.20/webapps/ROOT/WEB-INF/classes/jasper/orden_pago/"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="ID_ORDEN_PAGO" class="java.lang.String"/>
 	<queryString>
-		<![CDATA[select id_orden_pago ,
-comprobantes ,
-comprobantes2 ,
-pagos ,
-observaciones ,
-importe ,
-cuit_sucu ,
-fecha ,
-conceptos,
-razon_soc, baja,id_lote,
-isNull(destino,'') as destino,
-isNull(obs_interna,'') as obs_interna
-from reporte_orden_pago_ospim(cast ($P{id_ini} as integer))]]>
+		<![CDATA[select distinct a.* , o.alta_usr from reporte_orden_pago_ospim2(cast($P{ID_ORDEN_PAGO} as integer)) a
+left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 	</queryString>
 	<field name="id_orden_pago" class="java.lang.Integer"/>
-	<field name="comprobantes" class="java.lang.String"/>
-	<field name="comprobantes2" class="java.lang.String"/>
 	<field name="pagos" class="java.lang.String"/>
 	<field name="observaciones" class="java.lang.String"/>
 	<field name="importe" class="java.math.BigDecimal"/>
 	<field name="cuit_sucu" class="java.lang.String"/>
+	<field name="cuit" class="java.lang.String"/>
 	<field name="fecha" class="java.lang.String"/>
-	<field name="conceptos" class="java.lang.String"/>
 	<field name="razon_soc" class="java.lang.String"/>
 	<field name="baja" class="java.lang.String"/>
+	<field name="username" class="java.lang.String"/>
+	<field name="fecha_emision" class="java.lang.String"/>
+	<field name="fecha_recepcion" class="java.lang.String"/>
+	<field name="comprobante_resumen" class="java.lang.String"/>
+	<field name="punto_vta" class="java.math.BigDecimal"/>
+	<field name="compro_tipo" class="java.lang.String"/>
+	<field name="compro_nro" class="java.lang.String"/>
+	<field name="compro_letra" class="java.lang.String"/>
+	<field name="compro_sucu" class="java.lang.Integer"/>
+	<field name="total" class="java.math.BigDecimal"/>
 	<field name="id_lote" class="java.lang.Integer"/>
 	<field name="destino" class="java.lang.String"/>
 	<field name="obs_interna" class="java.lang.String"/>
-	<detail>
-		<band height="839" splitType="Stretch">
-			<rectangle>
-				<reportElement x="22" y="14" width="537" height="806"/>
-			</rectangle>
-			<line>
-				<reportElement x="22" y="99" width="537" height="1"/>
-			</line>
-			<staticText>
-				<reportElement x="391" y="67" width="170" height="13"/>
-				<textElement>
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<text><![CDATA[C.U.I.T : 30-62913856-7]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="35" y="17" width="352" height="13"/>
-				<textElement>
-					<font fontName="SansSerif"/>
-				</textElement>
-				<text><![CDATA[OBRA SOCIAL del PERSONAL de la INDUSTRIA MOLINERA]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="36" y="63" width="122" height="10"/>
-				<textElement>
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<text><![CDATA[IVA EXENTO]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="390" y="17" width="100" height="14"/>
-				<textElement>
-					<font fontName="SansSerif" isBold="true"/>
-				</textElement>
-				<text><![CDATA[ORDEN DE PAGO]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="391" y="54" width="30" height="11"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<text><![CDATA[Fecha]]></text>
-			</staticText>
-			<line>
-				<reportElement x="22" y="205" width="537" height="1"/>
-			</line>
-			<line>
-				<reportElement x="22" y="137" width="537" height="1"/>
-			</line>
-			<staticText>
-				<reportElement x="35" y="142" width="57" height="23"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<text><![CDATA[CONCEPTOS]]></text>
-			</staticText>
-			<line>
-				<reportElement x="22" y="702" width="537" height="1"/>
-			</line>
-			<line>
-				<reportElement x="22" y="753" width="537" height="1"/>
-			</line>
-			<staticText>
-				<reportElement x="36" y="734" width="471" height="14"/>
-				<textElement/>
-				<text><![CDATA[Confeccionó                          Autorizo                             Imputó                                          Contabilizó ]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="36" y="764" width="91" height="14"/>
-				<textElement/>
-				<text><![CDATA[Recibi Conforme:]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="214" y="798" width="100" height="14"/>
-				<textElement/>
-				<text><![CDATA[Aclaracion de Firma]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="389" y="798" width="100" height="14"/>
-				<textElement/>
-				<text><![CDATA[Doc. de Identidad]]></text>
-			</staticText>
-			<textField isStretchWithOverflow="true">
-				<reportElement stretchType="RelativeToTallestObject" x="28" y="286" width="192" height="330"/>
-				<textElement>
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{comprobantes}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="226" y="286" width="323" height="330"/>
-				<textElement textAlignment="Right" verticalAlignment="Top">
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{pagos}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="491" y="17" width="70" height="13"/>
-				<textElement>
-					<font size="10"/>
-				</textElement>
-				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{id_orden_pago}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="421" y="54" width="56" height="11"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{fecha}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="32" y="119" width="341" height="16"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{razon_soc}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="32" y="103" width="144" height="16"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{cuit_sucu}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="400" y="108" width="144" height="16"/>
-				<textElement>
-					<font size="10"/>
-				</textElement>
-				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{importe}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="389" y="108" width="21" height="14"/>
-				<textElement>
-					<font size="10"/>
-				</textElement>
-				<text><![CDATA[$]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="93" y="208" width="451" height="62"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{observaciones}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="32" y="208" width="67" height="14"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<text><![CDATA[Observaciones:]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="99" y="141" width="450" height="54"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{conceptos}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="36" y="33" width="179" height="24"/>
-				<textElement>
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<text><![CDATA[San Juan 2670 - Cap. Fed. CP(1232) ]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="36" y="48" width="179" height="13"/>
-				<textElement>
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<text><![CDATA[Tel.: 5238-3900]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="36" y="80" width="179" height="13"/>
-				<textElement>
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<text><![CDATA[R.N.O.S. 11260/8]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="28" y="270" width="67" height="14"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<text><![CDATA[Comprobantes:]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="237" y="270" width="77" height="14"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<text><![CDATA[Formas de pago:]]></text>
-			</staticText>
-			<line>
-				<reportElement x="387" y="14" width="1" height="123"/>
-			</line>
-			<textField evaluationTime="Report">
-				<reportElement x="442" y="80" width="100" height="11"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.Integer"><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="391" y="80" width="49" height="11"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<text><![CDATA[Página 1 de ]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="479" y="54" width="82" height="11"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{baja}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="390" y="35" width="100" height="14"/>
-				<textElement>
-					<font fontName="SansSerif" isBold="true"/>
-				</textElement>
-				<text><![CDATA[N° LOTE]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="491" y="35" width="70" height="13"/>
-				<textElement>
-					<font size="10"/>
-				</textElement>
-				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{id_lote}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="28" y="633" width="67" height="14"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<text><![CDATA[Destino:]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="28" y="649" width="192" height="48"/>
-				<textElement>
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{destino}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="229" y="649" width="320" height="48"/>
-				<textElement>
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{obs_interna}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="229" y="633" width="195" height="14"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<text><![CDATA[Observación Interna:]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="29" y="616" width="241" height="14"/>
-				<textElement markup="none"/>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{comprobantes2}.trim().equals("")?"":"Continúa en página 2"]]></textFieldExpression>
-			</textField>
+	<field name="alta_usr" class="java.lang.String"/>
+	<variable name="variable1" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{total}]]></variableExpression>
+	</variable>
+	<background>
+		<band height="782" splitType="Immediate">
+			<frame>
+				<reportElement x="0" y="0" width="556" height="782"/>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<staticText>
+					<reportElement x="281" y="532" width="251" height="62">
+						<printWhenExpression><![CDATA["integracion".equalsIgnoreCase( $F{alta_usr})]]></printWhenExpression>
+					</reportElement>
+					<textElement>
+						<font size="20"/>
+					</textElement>
+					<text><![CDATA[NO DEBITAR RECUPERO INTEGRACION]]></text>
+				</staticText>
+				<textField>
+					<reportElement stretchType="RelativeToBandHeight" x="15" y="315" width="526" height="187">
+						<printWhenExpression><![CDATA[$F{obs_interna}.length()>1000]]></printWhenExpression>
+					</reportElement>
+					<textElement>
+						<font size="8"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{obs_interna}]]></textFieldExpression>
+				</textField>
+			</frame>
 		</band>
-		<band height="840" splitType="Prevent">
-			<printWhenExpression><![CDATA[$F{comprobantes2} != null && !$F{comprobantes2}.trim().equals("")]]></printWhenExpression>
-			<rectangle>
-				<reportElement x="22" y="22" width="537" height="806"/>
-			</rectangle>
-			<line>
-				<reportElement x="22" y="698" width="537" height="1"/>
-			</line>
-			<staticText>
-				<reportElement x="389" y="68" width="155" height="14"/>
-				<textElement>
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<text><![CDATA[C.U.I.T : 30-62913856-7]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="36" y="50" width="179" height="13"/>
-				<textElement>
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<text><![CDATA[Tel.: 5238-3900]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="389" y="797" width="100" height="14"/>
-				<textElement/>
-				<text><![CDATA[Doc. de Identidad]]></text>
-			</staticText>
-			<line>
-				<reportElement x="22" y="138" width="537" height="1"/>
-			</line>
-			<staticText>
-				<reportElement x="214" y="797" width="100" height="14"/>
-				<textElement/>
-				<text><![CDATA[Aclaracion de Firma]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="28" y="174" width="192" height="493"/>
-				<textElement>
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{comprobantes2}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="36" y="37" width="179" height="14"/>
-				<textElement>
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<text><![CDATA[San Juan 2670 - Cap. Fed. CP(1232) ]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="32" y="108" width="144" height="16"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{cuit_sucu}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="36" y="731" width="471" height="14"/>
-				<textElement/>
-				<text><![CDATA[Confeccionó                          Autorizo                             Imputó                                          Contabilizó ]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="28" y="147" width="67" height="14"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<text><![CDATA[Comprobantes:]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="35" y="23" width="352" height="13"/>
-				<textElement>
-					<font fontName="SansSerif"/>
-				</textElement>
-				<text><![CDATA[OBRA SOCIAL del PERSONAL de la INDUSTRIA MOLINERA]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="389" y="53" width="30" height="14"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<text><![CDATA[Fecha]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="36" y="70" width="179" height="13"/>
-				<textElement>
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<text><![CDATA[R.N.O.S. 11260/8]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="388" y="24" width="100" height="16"/>
-				<textElement>
-					<font fontName="SansSerif" isBold="true"/>
-				</textElement>
-				<text><![CDATA[ORDEN DE PAGO]]></text>
-			</staticText>
-			<line>
-				<reportElement x="22" y="749" width="537" height="1"/>
-			</line>
-			<staticText>
-				<reportElement x="36" y="763" width="91" height="14"/>
-				<textElement/>
-				<text><![CDATA[Recibi Conforme:]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="32" y="122" width="341" height="16"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{razon_soc}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="419" y="53" width="92" height="16"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{fecha}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="36" y="59" width="122" height="20"/>
-				<textElement>
-					<font fontName="SansSerif" size="8"/>
-				</textElement>
-				<text><![CDATA[IVA EXENTO]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="489" y="24" width="70" height="16"/>
-				<textElement>
-					<font size="10"/>
-				</textElement>
-				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{id_orden_pago}]]></textFieldExpression>
-			</textField>
-			<line>
-				<reportElement x="22" y="105" width="537" height="1"/>
-			</line>
-			<line>
-				<reportElement x="387" y="22" width="1" height="65"/>
-			</line>
-			<staticText>
-				<reportElement x="228" y="141" width="116" height="14"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<text><![CDATA[CONTINUACION ...]]></text>
-			</staticText>
-			<textField evaluationTime="Report">
-				<reportElement x="440" y="85" width="100" height="20"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<textFieldExpression class="java.lang.Integer"><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="389" y="85" width="49" height="11"/>
-				<textElement>
-					<font size="8"/>
-				</textElement>
-				<text><![CDATA[Página 2 de ]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="389" y="40" width="100" height="14"/>
-				<textElement>
-					<font fontName="SansSerif" isBold="true"/>
-				</textElement>
-				<text><![CDATA[N° LOTE]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="490" y="40" width="70" height="13"/>
-				<textElement>
-					<font size="10"/>
-				</textElement>
-				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{id_lote}]]></textFieldExpression>
-			</textField>
+	</background>
+	<pageHeader>
+		<band height="127" splitType="Prevent">
+			<frame>
+				<reportElement x="0" y="0" width="556" height="126"/>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<staticText>
+					<reportElement x="367" y="54" width="170" height="13"/>
+					<textElement>
+						<font fontName="SansSerif" size="8"/>
+					</textElement>
+					<text><![CDATA[C.U.I.T : 30-62913856-7]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="5" y="38" width="179" height="13"/>
+					<textElement>
+						<font fontName="SansSerif" size="10"/>
+					</textElement>
+					<text><![CDATA[Tel.: 5238-3900]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="469" y="7" width="70" height="14"/>
+					<textElement>
+						<font size="12" isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.Integer"><![CDATA[$F{id_orden_pago}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="368" y="8" width="100" height="14"/>
+					<textElement>
+						<font fontName="SansSerif" isBold="true"/>
+					</textElement>
+					<text><![CDATA[ORDEN DE PAGO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="367" y="39" width="30" height="11"/>
+					<textElement>
+						<font size="8"/>
+					</textElement>
+					<text><![CDATA[Fecha]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="397" y="39" width="56" height="11"/>
+					<textElement>
+						<font size="8"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{fecha}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="369" y="94" width="21" height="14"/>
+					<textElement>
+						<font size="12" isBold="true"/>
+					</textElement>
+					<text><![CDATA[$]]></text>
+				</staticText>
+				<textField evaluationTime="Report" pattern="#,##0.00">
+					<reportElement x="380" y="94" width="159" height="16"/>
+					<textElement>
+						<font size="12" isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{variable1}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="455" y="39" width="82" height="11"/>
+					<textElement>
+						<font size="8"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{baja}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="469" y="22" width="70" height="13"/>
+					<textElement>
+						<font size="10"/>
+					</textElement>
+					<textFieldExpression class="java.lang.Integer"><![CDATA[$F{id_lote}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="368" y="22" width="100" height="14"/>
+					<textElement>
+						<font fontName="SansSerif" isBold="true"/>
+					</textElement>
+					<text><![CDATA[N° LOTE]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="367" y="70" width="21" height="13"/>
+					<textElement>
+						<font fontName="SansSerif" size="8"/>
+					</textElement>
+					<text><![CDATA[PAG ]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="391" y="69" width="19" height="16"/>
+					<textElement>
+						<font size="8"/>
+					</textElement>
+					<textFieldExpression class="java.lang.Integer"><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="413" y="70" width="21" height="13"/>
+					<textElement>
+						<font fontName="SansSerif" size="8"/>
+					</textElement>
+					<text><![CDATA[DE]]></text>
+				</staticText>
+				<textField evaluationTime="Report">
+					<reportElement x="439" y="69" width="24" height="13"/>
+					<textElement>
+						<font size="8"/>
+					</textElement>
+					<textFieldExpression class="java.lang.Integer"><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement x="0" y="0" width="362" height="127"/>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<staticText>
+					<reportElement x="5" y="21" width="179" height="15"/>
+					<textElement>
+						<font fontName="SansSerif" size="10"/>
+					</textElement>
+					<text><![CDATA[San Juan 2670 - Cap. Fed. CP(1232) ]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="4" y="4" width="352" height="17"/>
+					<textElement>
+						<font fontName="SansSerif" size="10" isBold="true"/>
+					</textElement>
+					<text><![CDATA[OBRA SOCIAL del PERSONAL de la INDUSTRIA MOLINERA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="5" y="53" width="111" height="14"/>
+					<textElement>
+						<font fontName="SansSerif" size="10"/>
+					</textElement>
+					<text><![CDATA[IVA EXENTO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="5" y="68" width="179" height="13"/>
+					<textElement>
+						<font fontName="SansSerif" size="10"/>
+					</textElement>
+					<text><![CDATA[R.N.O.S. 11260/8]]></text>
+				</staticText>
+			</frame>
+			<frame>
+				<reportElement x="0" y="87" width="362" height="40"/>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textField isStretchWithOverflow="true">
+					<reportElement stretchType="RelativeToBandHeight" x="5" y="3" width="351" height="32"/>
+					<textElement>
+						<font size="11" isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{cuit_sucu}+" - "+$F{razon_soc}]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement x="362" y="87" width="194" height="40"/>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+			</frame>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="14">
+			<frame>
+				<reportElement x="0" y="2" width="556" height="12"/>
+				<box>
+					<pen lineWidth="0.0"/>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<staticText>
+					<reportElement style="Column header" x="14" y="0" width="48" height="12" forecolor="#000000"/>
+					<textElement>
+						<font size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[Emisión]]></text>
+				</staticText>
+				<staticText>
+					<reportElement style="Column header" x="239" y="0" width="88" height="12" forecolor="#000000"/>
+					<textElement>
+						<font size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[Comprobante]]></text>
+				</staticText>
+				<staticText>
+					<reportElement style="Column header" x="113" y="0" width="52" height="12" forecolor="#000000"/>
+					<textElement>
+						<font size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[Recepción]]></text>
+				</staticText>
+				<staticText>
+					<reportElement style="Column header" x="434" y="0" width="93" height="12" forecolor="#000000"/>
+					<textElement textAlignment="Right">
+						<font size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[Importe]]></text>
+				</staticText>
+			</frame>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="13" splitType="Stretch">
+			<frame>
+				<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="556" height="13"/>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<frame>
+					<reportElement style="Row" mode="Opaque" x="0" y="0" width="556" height="13"/>
+					<box>
+						<pen lineWidth="1.0"/>
+						<topPen lineWidth="0.0"/>
+						<leftPen lineWidth="0.0"/>
+						<bottomPen lineWidth="0.0"/>
+						<rightPen lineWidth="1.0"/>
+					</box>
+					<textField isStretchWithOverflow="true">
+						<reportElement style="Detail" positionType="Float" x="15" y="0" width="47" height="13"/>
+						<textElement>
+							<font size="8"/>
+						</textElement>
+						<textFieldExpression class="java.lang.String"><![CDATA[$F{fecha_emision}]]></textFieldExpression>
+					</textField>
+					<textField isStretchWithOverflow="true">
+						<reportElement style="Detail" positionType="Float" x="116" y="0" width="44" height="13"/>
+						<textElement>
+							<font size="8"/>
+						</textElement>
+						<textFieldExpression class="java.lang.String"><![CDATA[$F{fecha_recepcion}]]></textFieldExpression>
+					</textField>
+					<textField isStretchWithOverflow="true">
+						<reportElement style="Detail" positionType="Float" x="239" y="0" width="214" height="13"/>
+						<textElement>
+							<font size="8"/>
+						</textElement>
+						<textFieldExpression class="java.lang.String"><![CDATA[$F{comprobante_resumen}]]></textFieldExpression>
+					</textField>
+					<textField isStretchWithOverflow="true" pattern="#,##0.00">
+						<reportElement style="Detail" positionType="Float" x="434" y="0" width="103" height="13"/>
+						<textElement textAlignment="Right">
+							<font size="8"/>
+						</textElement>
+						<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{total}]]></textFieldExpression>
+					</textField>
+				</frame>
+			</frame>
 		</band>
 	</detail>
+	<columnFooter>
+		<band height="18" splitType="Immediate">
+			<textField evaluationTime="Page" pattern="¤ #,##0.00">
+				<reportElement stretchType="RelativeToBandHeight" x="316" y="2" width="100" height="13"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{variable1}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" stretchType="RelativeToBandHeight" x="107" y="3" width="174" height="12" forecolor="#000000"/>
+				<textElement textAlignment="Right">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Total comprobantes hasta página]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="286" y="3" width="27" height="12"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnFooter>
+	<pageFooter>
+		<band height="157" splitType="Stretch">
+			<frame>
+				<reportElement x="0" y="0" width="556" height="78"/>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid"/>
+				</box>
+				<textField>
+					<reportElement x="3" y="13" width="265" height="61"/>
+					<textElement>
+						<font fontName="SansSerif" size="8"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{destino}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="272" y="15" width="283" height="59">
+						<printWhenExpression><![CDATA[$F{obs_interna}.length()<=1000]]></printWhenExpression>
+					</reportElement>
+					<textElement>
+						<font fontName="SansSerif" size="8"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{obs_interna}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="3" y="1" width="67" height="14"/>
+					<textElement>
+						<font size="8"/>
+					</textElement>
+					<text><![CDATA[Destino:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="272" y="0" width="195" height="14"/>
+					<textElement>
+						<font size="8"/>
+					</textElement>
+					<text><![CDATA[Observación Interna:]]></text>
+				</staticText>
+			</frame>
+			<frame>
+				<reportElement x="0" y="78" width="556" height="28"/>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textField isBlankWhenNull="true">
+					<reportElement x="14" y="8" width="537" height="16"/>
+					<textElement textAlignment="Center">
+						<font size="10"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA["Confeccionó: " +($F{username}==null?"Roch, Fabiana     ":$F{username}) +"                                 Autorizó: Doumerc, Carolina"]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement x="0" y="0" width="556" height="157"/>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<staticText>
+					<reportElement x="280" y="110" width="100" height="14"/>
+					<textElement/>
+					<text><![CDATA[Doc. Identidad:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="2" y="110" width="91" height="14"/>
+					<textElement/>
+					<text><![CDATA[Recibí Conforme:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="280" y="127" width="111" height="14"/>
+					<textElement/>
+					<text><![CDATA[Aclaración de Firma:]]></text>
+				</staticText>
+			</frame>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="122" splitType="Stretch">
+			<elementGroup>
+				<componentElement>
+					<reportElement key="table 1" style="table 1" mode="Transparent" x="9" y="3" width="542" height="44" isPrintWhenDetailOverflows="true"/>
+					<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+						<datasetRun subDataset="conceptos">
+							<datasetParameter name="ID_ORDEN_PAGO">
+								<datasetParameterExpression><![CDATA[$P{ID_ORDEN_PAGO}]]></datasetParameterExpression>
+							</datasetParameter>
+							<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+						</datasetRun>
+						<jr:column width="424">
+							<jr:columnHeader style="table 1_CH" height="30" rowSpan="1">
+								<staticText>
+									<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="424" height="30" isPrintWhenDetailOverflows="true"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<text><![CDATA[Conceptos]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:detailCell style="table 1_TD" height="20" rowSpan="1">
+								<textField>
+									<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="424" height="20" isPrintWhenDetailOverflows="true"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle"/>
+									<textFieldExpression class="java.lang.String"><![CDATA[$F{cc__descripcion}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="110">
+							<jr:columnHeader style="table 1_CH" height="30" rowSpan="1">
+								<staticText>
+									<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="110" height="30" isPrintWhenDetailOverflows="true"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<text><![CDATA[Importe]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:detailCell style="table 1_TD" height="20" rowSpan="1">
+								<textField>
+									<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="110" height="20" isPrintWhenDetailOverflows="true"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle"/>
+									<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{ccc__importe}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+					</jr:table>
+				</componentElement>
+			</elementGroup>
+			<componentElement>
+				<reportElement key="table" style="table" positionType="Float" x="5" y="65" width="536" height="45"/>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="pagos">
+						<datasetParameter name="ID_ORDEN_PAGO">
+							<datasetParameterExpression><![CDATA[$P{ID_ORDEN_PAGO}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:column width="77">
+						<jr:columnHeader style="table_CH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="4" y="7" width="72" height="23" backcolor="#C0C0C0"/>
+								<textElement textAlignment="Center">
+									<font size="8" isBold="true"/>
+								</textElement>
+								<text><![CDATA[F. Pago]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="30" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="76" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{nro_cheque}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="238">
+						<jr:tableHeader style="table_TH" height="1" rowSpan="1"/>
+						<jr:columnHeader style="table_CH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="7" width="237" height="17" backcolor="#C0C0C0"/>
+								<textElement textAlignment="Center">
+									<font size="8" isBold="true"/>
+								</textElement>
+								<text><![CDATA[Descripción]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="30" rowSpan="1">
+							<textField>
+								<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="237" height="30" isPrintWhenDetailOverflows="true"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{descripcion}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="82">
+						<jr:tableHeader style="table_TH" height="1" rowSpan="1"/>
+						<jr:columnHeader style="table_CH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="6" width="79" height="18" backcolor="#C0C0C0"/>
+								<textElement textAlignment="Center">
+									<font size="8" isBold="true"/>
+								</textElement>
+								<text><![CDATA[Importe]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="30" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="79" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{importe}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="150">
+						<jr:tableHeader style="table_TH" height="1" rowSpan="1"/>
+						<jr:columnHeader style="table_CH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="6" width="140" height="24" backcolor="#C0C0C0"/>
+								<textElement textAlignment="Center">
+									<font size="8" isBold="true"/>
+								</textElement>
+								<text><![CDATA[A Favor de]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="30" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="150" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{a_favor_de}!=null&&$F{a_favor_de}!="null"?$F{a_favor_de}:"------"]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+		</band>
+	</summary>
 </jasperReport>

@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<!DOCTYPE service-builder PUBLIC "-//Liferay//DTD Service Builder 5.2.0//EN" "http://www.liferay.com/dtd/liferay-service-builder_5_2_0.dtd">
-
-<service-builder package-path="ar.com.ospim.webservice.actualizaCredencialPrevencion">
- <namespace>ActualizaAfiliacionPrevencion</namespace>
- <entity name="ActuCredenPrevencion" local-service="false" remote-service="true">
- </entity>
-</service-builder>

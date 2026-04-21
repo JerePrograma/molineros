@@ -521,16 +521,8 @@
     
     
 		<!-- Liquidaciones, Convenios Prestacionales -->
-		<action path="/liquidaciones/buscar_conv_prestac" type="ar.com.ospim.liquidaciones.action.BuscarConveniosPrestacAction">
+		<action path="/liquidaciones/buscar_conv_prestac" type="ar.com.ospim.prestadores.action.BuscarConveniosPrestacAction">
 			<forward name="portlet.liquidaciones.conv_prestac.result.search" path="portlet.liquidaciones.conv_prestac.result.search" />
-			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
-		</action>
-				
-		<action path="/liquidaciones/editar_convenio_prest_entry" type="ar.com.ospim.liquidaciones.action.EditarConvPrestacionalAction">
-			<forward name="portlet.liquidaciones.editar_convenio_prest_entry" path="portlet.liquidaciones.editar_convenio_prest_entry" />
-			<forward name="portlet.liquidaciones.eliminar_convenio_prest_entry" path="portlet.liquidaciones.conv_prestac.result.search" />
-			<!-- <forward name="portlet.liquidaciones.eliminar_convenio_prest_entry" path="portlet.liquidaciones.conv_prestac" /> -->
-			<!-- <forward name="portlet.liquidaciones.conv_prestac.view" path="portlet.liquidaciones.conv_prestac.view" /> -->
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 		</action>
 
@@ -555,7 +547,7 @@
 		 	<forward name="portlet.liquidaciones.lista_convenio_prest_detalle" path="portlet.liquidaciones.lista_convenio_prest_detalle" />  
 		</action>
 
-		<action path="/liquidaciones/cambio_vista_detalles_prestaciones_convenio_prest" type="ar.com.ospim.liquidaciones.action.CambioVistaListaPrestacionesConvenioPrestAction">
+		<action path="/liquidaciones/cambio_vista_detalles_prestaciones_convenio_prest" type="ar.com.ospim.prestadores.action.BuscarConveniosPrestacAction.CambioVistaListaPrestacionesConvenioPrestAction">
 		 	<forward name="portlet.liquidaciones.lista_convenio_prest_detalle" path="portlet.liquidaciones.lista_convenio_prest_detalle" />  
 		</action>
 				
@@ -4911,7 +4903,7 @@
 
 <!-- Inicio Liquidaciones agregado de busqueda de importe de acuerdo a los contratos firmados con los Prestadores -->
     <action path="/liquidaciones/busca_contrato_prestador"
-			type="ar.com.ospim.liquidaciones.action.BuscaContratoPrestadorAction" />	
+			type="ar.com.ospim.liquidaciones.action.BuscaContratoPrestadorAction" />
 <!-- Fin Liquidaciones agregado de busqueda de importe de acuerdo a los contratos firmados con los Prestadores -->
 
     <action path="/tesoreria/reporte_hospitales_autogestion" forward="portlet.tesoreria.reporte.hospitales_autogestion" />
@@ -6591,9 +6583,67 @@
 		    <forward name="portlet.uoma.error" path="portlet.uoma.error" />
 			<forward name="portlet.uoma.view" path="portlet.uoma.view" />
 </action>
-<!-- FIN REIMPUTACION PAGOS EMPLEADORES -->
-     
- </action-mappings>
-  
+		<!-- FIN REIMPUTACION PAGOS EMPLEADORES -->
+
+		<action path="/liquidaciones/debitos_tercerizadoras"
+				type="ar.com.ospim.liquidaciones.action.DebitoTercerizadorasAction">
+
+			<forward
+					name="portlet.liquidaciones.debitos_tercerizadoras_search_result"
+					path="/portlet/liquidaciones/reportes/reporte_debitos_terciarizadoras_search_result.jsp"
+			/>
+
+			<forward
+					name="portlet.liquidaciones.debitos_tercerizadoras_append_result"
+					path="/portlet/liquidaciones/reportes/reporte_debitos_terciarizadoras_append_result.jsp"
+			/>
+
+			<forward
+					name="portlet.liquidaciones.archivos_debitos_tercerizadoras"
+					path="/portlet/liquidaciones/reportes/archivos_debitos_terciarizadoras.jsp" />
+
+			<forward name="archivos_debitos_tercerizadoras"
+					 path="/portlet/liquidaciones/reportes/archivos_debitos_terciarizadoras.jsp" />
+
+			<forward
+					name="portlet.liquidaciones.debitos_tercerizadoras_trabajadas"
+					path="/portlet/liquidaciones/reportes/reporte_debitos_terciarizadoras_trabajadas.jsp"
+			/>
+		</action>
+
+		<action path="/liquidaciones/hay_reporte_tercerizadora_grabar"
+				type="ar.com.ospim.liquidaciones.action.HayReporteTercerizadoraGrabadoAction">
+
+			<forward name="common.null" path="/common/null.jsp"/>
+
+		</action>
+
+		<action path="/prestadores/cartilla_convenio_por_plan"
+		        type="ar.com.ospim.prestadores.action.CartillaConvenioPorPlanAction">
+			<forward name="portlet.prestadores.cartilla_convenio_por_plan"
+			         path="portlet.prestadores.cartilla_convenio_por_plan" />
+			<forward name="portlet.prestadores.cartilla_convenio_por_plan_resultados"
+			         path="portlet.prestadores.cartilla_convenio_por_plan_resultados" />
+		</action>
+
+		<!-- PRE_1 -->
+		<action path="/prestadores/view" forward="portlet.prestadores.view" />
+
+		<action path="/prestadores/administracion_prestadores"
+		        type="ar.com.ospim.liquidaciones.action.ClientePrestadoresAction">
+			<forward name="portlet.comprobantes.download.prestadores"
+			         path="portlet.comprobantes.download.prestadores" />
+		</action>
+
+		<action path="/liquidaciones/editar_convenio_prest_entry" type="ar.com.ospim.prestadores.action.EditarConvPrestacionalAction">
+			<forward name="portlet.liquidaciones.editar_convenio_prest_entry" path="portlet.liquidaciones.editar_convenio_prest_entry" />
+			<forward name="portlet.liquidaciones.eliminar_convenio_prest_entry" path="portlet.liquidaciones.conv_prestac.result.search" />
+			<!-- <forward name="portlet.liquidaciones.eliminar_convenio_prest_entry" path="portlet.liquidaciones.conv_prestac" /> -->
+			<!-- <forward name="portlet.liquidaciones.conv_prestac.view" path="portlet.liquidaciones.conv_prestac.view" /> -->
+			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
+		</action>
+		<!-- FIN PRESTADORES -->
+	</action-mappings>
+
 </struts-config>
 

@@ -91,23 +91,99 @@ public class PreAutorizacionAction extends PortletAction {
 	SimpleDateFormat formatoDeFechas = new SimpleDateFormat("dd/MM/yyyy");
 	private PlanServiceUtil planService = new PlanServiceUtil();
 
-	
+	private String rid() {
+		return "PA#" + System.currentTimeMillis() + "-" + Math.abs(new Random().nextInt(100000));
+	}
+
+	private String s(Object o) {
+		return o == null ? "null" : String.valueOf(o);
+	}
+
+	private void logPreautorizacionSnapshot(String rid, String tag, PreAutorizacion p) {
+		if (p == null) {
+			_log.info("[" + rid + "][" + tag + "] preautorizacion=null");
+			return;
+		}
+
+		String ultimoEstado = (p.getUltimoEstado() != null) ? p.getUltimoEstado().getId() : null;
+		String estadoOspim = (p.getUltimoEstadoOSPIM() != null) ? p.getUltimoEstadoOSPIM().getId() : null;
+		String cuil = (p.getAfiliado() != null) ? p.getAfiliado().getCuil_titular() : null;
+		String inte = (p.getAfiliado() != null) ? String.valueOf(p.getAfiliado().getInte()) : null;
+		String prestador = (p.getPrestador() != null) ? String.valueOf(p.getPrestador().getId_prestador()) : null;
+		String diagnostico = (p.getDiagnostico() != null) ? p.getDiagnostico().getId() : null;
+
+		int codigos = p.getCodigosPresentados() != null ? p.getCodigosPresentados().size() : -1;
+		int meds = p.getMedicamentosPresentados() != null ? p.getMedicamentosPresentados().size() : -1;
+		int imgs = p.getImagenes() != null ? p.getImagenes().size() : -1;
+
+		_log.info("[" + rid + "][" + tag + "]"
+				+ " id=" + s(p.getId())
+				+ " estado=" + s(ultimoEstado)
+				+ " estadoOspim=" + s(estadoOspim)
+				+ " cuil=" + s(cuil)
+				+ " inte=" + s(inte)
+				+ " fecha=" + s(p.getFecha())
+				+ " fechaRespPS=" + s(p.getFechaRespuestaPS())
+				+ " fechaEntrega=" + s(p.getFechaEntregaRespuesta())
+				+ " fechaNotif=" + s(p.getFechaNotificacionAfiliado())
+				+ " fechaEmail=" + s(p.getFechaEmail())
+				+ " discapacidad=" + p.isDiscapacidad()
+				+ " medicamento=" + p.isMedicamento()
+				+ " alojamiento=" + p.isAlojamiento()
+				+ " supra=" + p.isSupra()
+				+ " protesisOrtesis=" + p.isProtesisOrtesis()
+				+ " art=" + p.isART()
+				+ " diagnostico=" + s(diagnostico)
+				+ " prestador=" + s(prestador)
+				+ " codigos=" + codigos
+				+ " medicamentos=" + meds
+				+ " imagenes=" + imgs
+		);
+	}
+
+	private void logRequestBasico(String rid, HttpServletRequest req) {
+		_log.info("[" + rid + "][REQ]"
+				+ " cmd=" + s(ParamUtil.getString(req, Constants.CMD))
+				+ " id_preautorizacion=" + s(ParamUtil.getString(req, "id_preautorizacion"))
+				+ " estadoPreautorizacion=" + s(ParamUtil.getString(req, "estadoPreautorizacion"))
+				+ " cuil=" + s(ParamUtil.getString(req, "cuil"))
+				+ " inte=" + s(ParamUtil.getString(req, "inte"))
+				+ " diagnostico=" + s(ParamUtil.getString(req, "id_diagnostico"))
+				+ " discapacidadChk=" + ParamUtil.getBoolean(req, "discapacidadChk")
+				+ " medicamentoChk=" + ParamUtil.getBoolean(req, "medicamentoChk")
+				+ " alojamientoChk=" + ParamUtil.getBoolean(req, "alojamientoChk")
+				+ " protesisOrtChk=" + ParamUtil.getBoolean(req, "protesisOrtChk")
+				+ " artChk=" + ParamUtil.getBoolean(req, "artChk")
+				+ " id_prestador_aut=" + s(ParamUtil.getString(req, "id_prestador_aut"))
+				+ " nroDoc=" + s(ParamUtil.getString(req, "nroDoc"))
+		);
+	}
+
 	public void processAction(ActionMapping mapping, ActionForm form,
 							  PortletConfig portletConfig, ActionRequest actionRequest,
 							  ActionResponse actionResponse) throws Exception {
+		String rid = rid();
 		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(actionRequest).getSession();
+		HttpServletRequest req = PortalUtil.getHttpServletRequest(actionRequest);
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
 		Boolean esDatosTab = ParamUtil.getBoolean(actionRequest, "esDatosTab");
-		
-		if (cmd.equals(Constants.MOVE) && esDatosTab){  // cambio a solapa Lugar Atencion.
-			
+
+		_log.info("[" + rid + "][PROCESS][START] cmd=" + s(cmd) + ", esDatosTab=" + esDatosTab);
+		logRequestBasico(rid, req);
+
+		if (cmd.equals(Constants.MOVE) && esDatosTab) {
 			PreAutorizacion preautorizacion = (PreAutorizacion) session.getAttribute(WebKeysAutorizaciones.PREAUTORIZACION_EN_EDICION);
-					
-			actualizaPreautorizacion(preautorizacion,PortalUtil.getHttpServletRequest(actionRequest));
-   		    session.setAttribute(WebKeysAutorizaciones.PREAUTORIZACION_EN_EDICION , preautorizacion);
-			
+			logPreautorizacionSnapshot(rid, "PROCESS][MOVE][BEFORE_ACTUALIZA", preautorizacion);
+
+			actualizaPreautorizacion(preautorizacion, req, rid);
+
+			logPreautorizacionSnapshot(rid, "PROCESS][MOVE][AFTER_ACTUALIZA", preautorizacion);
+			session.setAttribute(WebKeysAutorizaciones.PREAUTORIZACION_EN_EDICION , preautorizacion);
+			_log.info("[" + rid + "][PROCESS][MOVE][SESSION_UPDATED]");
 		}
+
+		_log.info("[" + rid + "][PROCESS][END]");
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -125,11 +201,18 @@ public class PreAutorizacionAction extends PortletAction {
 		String msg = "";
 		String tabSel = ParamUtil.get(renderRequest, "tab_seleccionada", "datos");
 		tabSel="null".equalsIgnoreCase(tabSel)?"datos":tabSel;
-		
+		String rid = rid();
+		_log.info("[" + rid + "][RENDER][START] user=" + (user != null ? user.getScreenName() : "null")
+				+ ", cmd=" + s(cmd)
+				+ ", id_preautorizacion=" + s(ParamUtil.getString(renderRequest,"id_preautorizacion"))
+				+ ", tabSel=" + s(tabSel));
 		if (!StringUtils.checkEmpty(cmd)) {
 			idPreautorizacion = ParamUtil.getInteger(renderRequest,"id_preautorizacion", 0);
-			if(cmd.equals(Constants.WRITE) ){ 
-				
+			if(cmd.equals(Constants.WRITE) ){
+				_log.info("[" + rid + "][RENDER][START] user=" + (user != null ? user.getScreenName() : "null")
+						+ ", cmd=" + s(cmd)
+						+ ", id_preautorizacion=" + s(ParamUtil.getString(renderRequest,"id_preautorizacion"))
+						+ ", tabSel=" + s(tabSel));
 				preautorizacion = new PreAutorizacion();
 				session.setAttribute("esPopUp","N");
 				session.setAttribute(WebKeysAutorizaciones.PREAUTORIZACION_EN_EDICION , preautorizacion);
@@ -166,7 +249,9 @@ public class PreAutorizacionAction extends PortletAction {
 			}
 			
             if(cmd.equals(Constants.EDIT) ){
-            	
+				_log.info("[" + rid + "][RENDER][EDIT] buscando preautorizacion id=" + idPreautorizacion);
+				preautorizacion = PreAutorizacionServiceUtil.buscarPreautorizacionPorId(idPreautorizacion);
+				logPreautorizacionSnapshot(rid, "RENDER][EDIT][LOADED", preautorizacion);
             	preautorizacion = PreAutorizacionServiceUtil.buscarPreautorizacionPorId(idPreautorizacion);
             	session.setAttribute("esPopUp","S");
 				session.setAttribute(WebKeysAutorizaciones.PREAUTORIZACION_EN_EDICION , preautorizacion);
@@ -179,7 +264,9 @@ public class PreAutorizacionAction extends PortletAction {
 				String tipoEdicion = ParamUtil.get(renderRequest, "accion", "E");
 				
 				renderRequest.setAttribute("view", "E".equalsIgnoreCase(tipoEdicion)?"EDIT":"VIEW");
-				
+				_log.info("[" + rid + "][RENDER][EDIT] buscando preautorizacion id=" + idPreautorizacion);
+				preautorizacion = PreAutorizacionServiceUtil.buscarPreautorizacionPorId(idPreautorizacion);
+				logPreautorizacionSnapshot(rid, "RENDER][EDIT][LOADED", preautorizacion);
 				return mapping.findForward(getForward(renderRequest,
 						"portlet.autorizaciones.preautorizacion_editar"));
 			}
@@ -274,7 +361,7 @@ public class PreAutorizacionAction extends PortletAction {
 //              
 //  			  session.setAttribute(WebKeysAutorizaciones.PREAUTORIZACION_EN_EDICION , preautorizacion);
                 try{
-                	//si la preautorización viene de APP, cambiar a CARGADO
+                	//si la preautorizaciï¿½n viene de APP, cambiar a CARGADO
                     if (preautorizacion.getUltimoEstado() != null 
                         && "AP".equals(preautorizacion.getUltimoEstado().getId())) {
 
@@ -327,7 +414,7 @@ public class PreAutorizacionAction extends PortletAction {
 
             		boolean rta= false;
             		
-//            		SVA, controlar envío de imágenes pendientes unicamente. 
+//            		SVA, controlar envï¿½o de imï¿½genes pendientes unicamente. 
 //            		Ensalud controla las repetidas, pero se nos solicito no enviar todo nuevamente si hay observaciones.
             		List<String> seguimDocs = PreAutorizacionServiceUtil.buscarSeguimientoDocumentos(preautorizacion.getId());
             		List<DLFileEntryImpl>listaImgCasoTodas = PreAutorizacionServiceUtil.getImagenesPreautorizacion("PREAUT_"+preautorizacion.getId()+"-");
@@ -366,7 +453,7 @@ public class PreAutorizacionAction extends PortletAction {
             			
             			rta = enviarCorreoAutorizacion(preautorizacion, listaIngCasoPendientes, emails, from, subject, body, destino, adjunto, user, rac.getPass());
             			
-//DS -- 09/03/2020  -- Agregado para que siempre que se envie un mail, se marque la fecha de envio de las imágenes            			
+//DS -- 09/03/2020  -- Agregado para que siempre que se envie un mail, se marque la fecha de envio de las imï¿½genes            			
             			if(rta ) {
             				preautorizacion.setFechaEmail(new java.sql.Timestamp(Calendar.getInstance().getTime().getTime()));
             				  for(DLFileEntryImpl l:listaIngCasoPendientes) {
@@ -378,7 +465,7 @@ public class PreAutorizacionAction extends PortletAction {
             			
             			//cantidadImagenes = PreAutorizacionServiceUtil.buscarSeguimientoDocumentos(preautorizacion.getId()).size();
             			
-//               		Agendar la solicitud de autorizacion a PS, el reporte automatico la correrá en ciclo de 1 hora durante el día en curso.
+//               		Agendar la solicitud de autorizacion a PS, el reporte automatico la correrï¿½ en ciclo de 1 hora durante el dï¿½a en curso.
 //            			si la cantidad de imagenes es superior al limit de envio por ws (SolitudAutorizacionPS.filesLimit) se debe enviar
 //            			1 creacion de solicitud (si es envioEmail = falso) y n envios de informacion adicional, 
 //            			(si es envioEmail = true) entonces solo los n envios de informacion adicional
@@ -410,7 +497,7 @@ public class PreAutorizacionAction extends PortletAction {
             				
 						}
             			*/
-               		    _log.info("Agendando la solicitud de autorización a PS - ID: " + preautorizacion.getId());
+               		    _log.info("Agendando la solicitud de autorizaciï¿½n a PS - ID: " + preautorizacion.getId());
 
 
             		}
@@ -540,7 +627,10 @@ public class PreAutorizacionAction extends PortletAction {
 				
 				 //Recupera Datos cargados en la jsp
 				preautorizacion = (PreAutorizacion) session.getAttribute(WebKeysAutorizaciones.PREAUTORIZACION_EN_EDICION);
-				actualizaPreautorizacion(preautorizacion,PortalUtil.getHttpServletRequest(renderRequest));
+				_log.info("[" + rid + "][RENDER][EDIT] buscando preautorizacion id=" + idPreautorizacion);
+				preautorizacion = PreAutorizacionServiceUtil.buscarPreautorizacionPorId(idPreautorizacion);
+				logPreautorizacionSnapshot(rid, "RENDER][EDIT][LOADED", preautorizacion);
+				actualizaPreautorizacion(preautorizacion,PortalUtil.getHttpServletRequest(renderRequest), rid);
 				
 				boolean supra=false;
 				if(preautorizacion.getCodigosPresentados()!=null && preautorizacion.getCodigosPresentados().size()>0) {
@@ -556,10 +646,14 @@ public class PreAutorizacionAction extends PortletAction {
 //				Validaciones
 				if(preautorizacion.getAfiliado()==null || preautorizacion.getAfiliado().getCuil_titular()==null){
 				   SessionErrors.add(renderRequest, "errorAfiliadoNull");
-				   renderRequest.setAttribute("msgInsertError","Debe Ingresar el Cuil Válido del Afiliado");
+				   renderRequest.setAttribute("msgInsertError","Debe Ingresar el Cuil Vï¿½lido del Afiliado");
 				   validaOk = false;
 				}
-				
+				_log.info("[" + rid + "][RENDER][UPDATE][VALIDACION]"
+						+ " afiliadoNull=" + (preautorizacion.getAfiliado() == null)
+						+ ", afiliadoCuil=" + s(preautorizacion.getAfiliado() != null ? preautorizacion.getAfiliado().getCuil_titular() : null)
+						+ ", afiliadoInte=" + s(preautorizacion.getAfiliado() != null ? preautorizacion.getAfiliado().getInte() : null)
+						+ ", ultimoEstado=" + s(preautorizacion.getUltimoEstado() != null ? preautorizacion.getUltimoEstado().getId() : null));
 				List<AfiSuspencionCobertura> suspCoberMedica = null;
 				if(preautorizacion.getAfiliado()!=null 
 						&& StringUtils.checkNotEmpty(preautorizacion.getAfiliado().getCuil_titular())
@@ -576,7 +670,7 @@ public class PreAutorizacionAction extends PortletAction {
 								|| ascm.getVigenHasta().after(preautorizacion.getFecha()) ) ) {
 							
 							SessionErrors.add(renderRequest, "errorAfiliadoSinCobertMed");
-							   renderRequest.setAttribute("msgErrorAfiSinCobMed","El Afiliado tiene suspendida la cobertura médica");
+							   renderRequest.setAttribute("msgErrorAfiSinCobMed","El Afiliado tiene suspendida la cobertura mï¿½dica");
 							   validaOk = false;
 							   
 						}
@@ -612,8 +706,8 @@ public class PreAutorizacionAction extends PortletAction {
 							   String.valueOf(UserGroupLocalServiceUtil.getUserUserGroups(user.getUserId()).get(0).getUserGroupId()),
 							   user.getExpandoBridge().getAttribute("id_seccional").toString());	
 						} else {
-						    _log.error("El usuario " + user.getScreenName() + " no pertenece a ningún grupo.");
-						    throw new SystemException("El usuario no pertenece a ningún grupo.");
+						    _log.error("El usuario " + user.getScreenName() + " no pertenece a ningï¿½n grupo.");
+						    throw new SystemException("El usuario no pertenece a ningï¿½n grupo.");
 						}
 					   preautorizacion.setId((Integer) idPreautorizacion);
 					   try{
@@ -621,7 +715,7 @@ public class PreAutorizacionAction extends PortletAction {
 					     preautorizacion.setAlta_fecha( new Timestamp(new Date().getTime()));
 					     preautorizacion.setSeccionalDescripcionAltaUsr(user.getExpandoBridge().getAttribute("seccional").toString());
 					   }catch(Exception e){
-						   _log.error("Este usuario: "+user.getScreenName() +" no esta correctamente configurado para preautorizaciones médicas");
+						   _log.error("Este usuario: "+user.getScreenName() +" no esta correctamente configurado para preautorizaciones mï¿½dicas");
 						   _log.error(e);
 					   }
 					   
@@ -720,7 +814,7 @@ public class PreAutorizacionAction extends PortletAction {
 						            _log.warn("No se pudo obtener token para actualizar estado");
 						        }
 						    } else {
-						        _log.warn("No se encontró idPedidoApp para la preautorización " + idPreautorizacion);
+						        _log.warn("No se encontrï¿½ idPedidoApp para la preautorizaciï¿½n " + idPreautorizacion);
 						    }
 						}
 						
@@ -761,162 +855,214 @@ public class PreAutorizacionAction extends PortletAction {
 		return mapping.findForward("portlet.autorizaciones.preautorizacion_editar");
 		
 	}
-	
-	
+
+
 	private Integer insertPreautorizacion(PreAutorizacion preautorizacion, String user,String sector,String id_seccional) throws Exception{
-		Integer id = 0;
+		String rid = rid();
+		_log.info("[" + rid + "][INSERT_PREAUT][START] user=" + s(user)
+				+ ", sector=" + s(sector)
+				+ ", id_seccional=" + s(id_seccional));
+		logPreautorizacionSnapshot(rid, "INSERT_PREAUT][PAYLOAD", preautorizacion);
+
 		Integer seccionalId = Integer.valueOf(id_seccional);
-		id = PreAutorizacionServiceUtil.insertaPreAutorizacion(preautorizacion, user,sector,seccionalId);
+		Integer id = PreAutorizacionServiceUtil.insertaPreAutorizacion(preautorizacion, user,sector,seccionalId);
+
+		_log.info("[" + rid + "][INSERT_PREAUT][END] idGenerado=" + s(id));
 		return id;
 	}
-	
+
 	private long updatePreautorizacion(PreAutorizacion preautorizacion, String user) throws Exception{
-		long id = 0;
-		
-		id = PreAutorizacionServiceUtil.updatePreautorizacion(preautorizacion, user);
+		String rid = rid();
+		_log.info("[" + rid + "][UPDATE_PREAUT][START] user=" + s(user));
+		logPreautorizacionSnapshot(rid, "UPDATE_PREAUT][PAYLOAD", preautorizacion);
+
+		long id = PreAutorizacionServiceUtil.updatePreautorizacion(preautorizacion, user);
+
+		_log.info("[" + rid + "][UPDATE_PREAUT][END] result=" + id);
 		return id;
 	}
 	
 //----
 //----	
-	
-	
-	
-	private void actualizaPreautorizacion(PreAutorizacion preautorizacion,HttpServletRequest renderRequest) throws SystemException{
-		
+
+
+
+	private void actualizaPreautorizacion(PreAutorizacion preautorizacion,HttpServletRequest renderRequest, String rid) throws SystemException{
+
+		_log.info("[" + rid + "][ACTUALIZA_PREAUT][START]");
+		logRequestBasico(rid, renderRequest);
+		logPreautorizacionSnapshot(rid, "ACTUALIZA_PREAUT][BEFORE", preautorizacion);
+
 		String fechaPreAutorizacionDia = ParamUtil.getString(renderRequest,"fechaPreAutorizacionDia");
 		String fechaPreAutorizacionMes = ParamUtil.getString(renderRequest,"fechaPreAutorizacionMes");
 		String fechaPreAutorizacionAnio = ParamUtil.getString(renderRequest,"fechaPreAutorizacionAnio");
-		
+
 		Date fechaAutorizacion = null;
 		try {
 			fechaAutorizacion = formatoDeFechas.parse(fechaPreAutorizacionDia + "/"
 					+ (Integer.parseInt(fechaPreAutorizacionMes) + 1) + "/"
 					+ fechaPreAutorizacionAnio);
 		} catch (Exception e) {
+			_log.warn("[" + rid + "][ACTUALIZA_PREAUT][PARSE_FECHA_AUTORIZACION][WARN]"
+					+ " dia=" + fechaPreAutorizacionDia
+					+ ", mes=" + fechaPreAutorizacionMes
+					+ ", anio=" + fechaPreAutorizacionAnio, e);
 			fechaAutorizacion = null;
 		}
-		
+
 		String estadoPreautorizacion=ParamUtil.getString(renderRequest,"estadoPreautorizacion",null);
 		String motivoRechazo=ParamUtil.getString(renderRequest,"motivoRechazo",null);
-		
+
 		String cuilTitular=ParamUtil.getString(renderRequest,"cuil",null);
 		Integer integrante=ParamUtil.getInteger(renderRequest, "inte",0);
-		
-		try{
-			_log.debug("Cuil titular: "+ cuilTitular );
-			_log.debug("Inte: "+ integrante );
-		}catch(Exception e){
-			_log.error("No se pudo obtener CUIL TITULAR e INTE");
-		}
+
+		_log.info("[" + rid + "][ACTUALIZA_PREAUT][AFILIADO_INPUT]"
+				+ " cuilTitular=" + s(cuilTitular)
+				+ ", integrante=" + s(integrante)
+				+ ", estadoPreautorizacion=" + s(estadoPreautorizacion)
+				+ ", motivoRechazo=" + s(motivoRechazo));
+
 		String fechaRespuestaPSDia = ParamUtil.getString(renderRequest,"fechaRespuestaPSDia");
 		String fechaRespuestaPSMes = ParamUtil.getString(renderRequest,"fechaRespuestaPSMes");
 		String fechaRespuestaPSAnio = ParamUtil.getString(renderRequest,"fechaRespuestaPSAnio");
-		
+
 		Date fechaRespuesta = null;
 		try {
 			fechaRespuesta = formatoDeFechas.parse(fechaRespuestaPSDia + "/"
 					+ (Integer.parseInt(fechaRespuestaPSMes) + 1) + "/"
 					+ fechaRespuestaPSAnio);
 		} catch (Exception e) {
+			_log.warn("[" + rid + "][ACTUALIZA_PREAUT][PARSE_FECHA_RESPUESTA][WARN]"
+					+ " dia=" + fechaRespuestaPSDia
+					+ ", mes=" + fechaRespuestaPSMes
+					+ ", anio=" + fechaRespuestaPSAnio, e);
 			fechaRespuesta = null;
 		}
-		
+
 		String fechaNotificacionDia = ParamUtil.getString(renderRequest,"fechaNotificacionDia");
 		String fechaNotificacionMes = ParamUtil.getString(renderRequest,"fechaNotificacionMes");
 		String fechaNotificacionAnio = ParamUtil.getString(renderRequest,"fechaNotificacionAnio");
-		
+
 		Date fechaNotificacion = null;
 		try {
 			fechaNotificacion = formatoDeFechas.parse(fechaNotificacionDia + "/"
 					+ (Integer.parseInt(fechaNotificacionMes) + 1) + "/"
 					+ fechaNotificacionAnio);
 		} catch (Exception e) {
+			_log.warn("[" + rid + "][ACTUALIZA_PREAUT][PARSE_FECHA_NOTIFICACION][WARN]"
+					+ " dia=" + fechaNotificacionDia
+					+ ", mes=" + fechaNotificacionMes
+					+ ", anio=" + fechaNotificacionAnio, e);
 			fechaNotificacion = null;
 		}
-		
+
 		String tipoEntrega=ParamUtil.getString(renderRequest,"tipoEntrega",null);
 		tipoEntrega="0".equalsIgnoreCase(tipoEntrega)?null:tipoEntrega;
+
 		String fechaEntregaDia = ParamUtil.getString(renderRequest,"fechaEntregaDia");
 		String fechaEntregaMes = ParamUtil.getString(renderRequest,"fechaEntregaMes");
 		String fechaEntregaAnio = ParamUtil.getString(renderRequest,"fechaEntregaAnio");
-		
+
 		Date fechaEntrega = null;
 		try {
 			fechaEntrega = formatoDeFechas.parse(fechaEntregaDia + "/"
 					+ (Integer.parseInt(fechaEntregaMes) + 1) + "/"
 					+ fechaEntregaAnio);
 		} catch (Exception e) {
+			_log.warn("[" + rid + "][ACTUALIZA_PREAUT][PARSE_FECHA_ENTREGA][WARN]"
+					+ " dia=" + fechaEntregaDia
+					+ ", mes=" + fechaEntregaMes
+					+ ", anio=" + fechaEntregaAnio, e);
 			fechaEntrega = null;
 		}
-		
-//		if(preautorizacion.getId()==null ||preautorizacion.getId().equals(0)){
-		  Afiliado afiliado= new Afiliado();
-		  try {
-		     afiliado = EditarAfiliadoServiceUtil.getAfiliadoEntryInclusoDadoBaja(cuilTitular, integrante);
-//DS - 2025-01-03 Manejo de MONOTRIBUTO		     
-		     AfiTercerizadoraServicio ats = TercerizadoraServiceUtil.getInstance().buscarUltimaTercerizadoraDelAfiliado(null, cuilTitular);
-		     afiliado.setId_tercerizadora(ats.getTercerizadora().getId_tercerizadora());
-//FIN - Manejo Monotributo
-		     
-		  } catch ( Exception e) {
-			  _log.error(e);
-		  }
-		  preautorizacion.setAfiliado(afiliado);
-//		}
-		
+
+		Afiliado afiliado= new Afiliado();
+		try {
+			_log.info("[" + rid + "][ACTUALIZA_PREAUT][AFILIADO_FETCH][START]"
+					+ " cuilTitular=" + s(cuilTitular)
+					+ ", integrante=" + s(integrante));
+
+			afiliado = EditarAfiliadoServiceUtil.getAfiliadoEntryInclusoDadoBaja(cuilTitular, integrante);
+
+			_log.info("[" + rid + "][ACTUALIZA_PREAUT][AFILIADO_FETCH][OK]"
+					+ " cuilTitular=" + s(afiliado != null ? afiliado.getCuil_titular() : null)
+					+ ", inte=" + s(afiliado != null ? afiliado.getInte() : null)
+					+ ", doc=" + s(afiliado != null ? afiliado.getDocu_numero() : null)
+					+ ", id_tercerizadora(before)=" + s(afiliado != null ? afiliado.getId_tercerizadora() : null));
+
+			AfiTercerizadoraServicio ats = TercerizadoraServiceUtil.getInstance().buscarUltimaTercerizadoraDelAfiliado(null, cuilTitular);
+
+			_log.info("[" + rid + "][ACTUALIZA_PREAUT][TERCERIZADORA_FETCH][OK]"
+					+ " cuilTitular=" + s(cuilTitular)
+					+ ", atsNull=" + (ats == null)
+					+ ", tercerizadoraNull=" + (ats != null ? ats.getTercerizadora() == null : true)
+					+ ", id_tercerizadora=" + s(ats != null && ats.getTercerizadora() != null ? ats.getTercerizadora().getId_tercerizadora() : null));
+
+			if (afiliado != null && ats != null && ats.getTercerizadora() != null) {
+				afiliado.setId_tercerizadora(ats.getTercerizadora().getId_tercerizadora());
+			}
+		} catch (Exception e) {
+			_log.error("[" + rid + "][ACTUALIZA_PREAUT][AFILIADO_FETCH][ERROR]"
+					+ " cuilTitular=" + s(cuilTitular)
+					+ ", integrante=" + s(integrante), e);
+		}
+
+		preautorizacion.setAfiliado(afiliado);
+
 		preautorizacion.setFecha(fechaAutorizacion);
 		preautorizacion.setFechaEntregaRespuesta(fechaEntrega);
-		
+
 		if(fechaNotificacion==null && fechaEntrega != null){
-		  preautorizacion.setFechaNotificacionAfiliado(fechaEntrega);	
+			preautorizacion.setFechaNotificacionAfiliado(fechaEntrega);
 		}else{
-		  preautorizacion.setFechaNotificacionAfiliado(fechaNotificacion);
-		}  
+			preautorizacion.setFechaNotificacionAfiliado(fechaNotificacion);
+		}
 		preautorizacion.setFechaRespuestaPS(fechaRespuesta);
 		preautorizacion.setTipoEntrega(tipoEntrega);
-		
+
 		Estado e =new Estado();
 		e.setId(estadoPreautorizacion);
 		e.setMotivoRechazo(motivoRechazo);
-		//preautorizacion.getEstados().add(e);
 		preautorizacion.setUltimoEstado(e);
-		
+
 		String observaciones=ParamUtil.getString(renderRequest,"observacionesPreautorizacion",null);
 		preautorizacion.setObservaciones(observaciones);
-		
+
 		String observacionesTerc=ParamUtil.getString(renderRequest,"observacionesPreautorizacionTerc",null);
 		preautorizacion.setObservacionesTercerizadoras(observacionesTerc);
-		
+
 		boolean esMedicamento=ParamUtil.getBoolean(renderRequest, "medicamentoChk");
-		
+
 		boolean chHC = ParamUtil.getBoolean(renderRequest, "chHC");
 		boolean chEC = ParamUtil.getBoolean(renderRequest, "chEC");
 		boolean chBI = ParamUtil.getBoolean(renderRequest, "chBI");
 		boolean chAN = ParamUtil.getBoolean(renderRequest, "chAN");
-/*		
-		chHC=preautorizacion.getExisteHistoriaClinica();
-		chEC=preautorizacion.getExisteEstudiosComplementarios();
-		chBI=preautorizacion.getExisteBiopsia();
-		chAN=preautorizacion.getExisteAnatomiaPatologica();
-*/		
+
 		preautorizacion.setHistoriaClinica(chHC);
 		preautorizacion.setEstudiosComplementarios(chEC);
 		preautorizacion.setBiopsia(chBI);
 		preautorizacion.setAnatomiaPatologica(chAN);
 		preautorizacion.setMedicamento(esMedicamento);
-		
+
 		boolean alertaRoja = ParamUtil.getBoolean(renderRequest, "alertaRoja");
 		boolean esDiscapacidad=ParamUtil.getBoolean(renderRequest, "discapacidadChk");
-		
+
 		preautorizacion.setAlertaRoja(alertaRoja);
 		preautorizacion.setDiscapacidad(esDiscapacidad);
-		
-		
+
+		_log.info("[" + rid + "][ACTUALIZA_PREAUT][FLAGS]"
+				+ " alertaRoja=" + alertaRoja
+				+ ", esDiscapacidad=" + esDiscapacidad
+				+ ", esMedicamento=" + esMedicamento
+				+ ", chHC=" + chHC
+				+ ", chEC=" + chEC
+				+ ", chBI=" + chBI
+				+ ", chAN=" + chAN);
+
 		String fechaEnvioTercerizadoraDia = ParamUtil.getString(renderRequest,"fechaEnvioTercerizadoraDia");
 		String fechaEnvioTercerizadoraMes = ParamUtil.getString(renderRequest,"fechaEnvioTercerizadoraMes");
 		String fechaEnvioTercerizadoraAnio = ParamUtil.getString(renderRequest,"fechaEnvioTercerizadoraAnio");
-		
+
 		Date fechaEnvioTercerizadora = null;
 		try {
 			fechaEnvioTercerizadora = formatoDeFechas.parse(fechaEnvioTercerizadoraDia + "/"
@@ -925,11 +1071,11 @@ public class PreAutorizacionAction extends PortletAction {
 		} catch (Exception e1) {
 			fechaEnvioTercerizadora = null;
 		}
-		
+
 		String fechaRecepcionTercerizadoraDia = ParamUtil.getString(renderRequest,"fechaRecepcionTercerizadoraDia");
 		String fechaRecepcionTercerizadoraMes = ParamUtil.getString(renderRequest,"fechaRecepcionTercerizadoraMes");
 		String fechaRecepcionTercerizadoraAnio = ParamUtil.getString(renderRequest,"fechaRecepcionTercerizadoraAnio");
-		
+
 		Date fechaRecepcionTercerizadora = null;
 		try {
 			fechaRecepcionTercerizadora = formatoDeFechas.parse(fechaRecepcionTercerizadoraDia + "/"
@@ -938,7 +1084,7 @@ public class PreAutorizacionAction extends PortletAction {
 		} catch (Exception e1) {
 			fechaRecepcionTercerizadora = null;
 		}
-		
+
 		if(!esDiscapacidad){
 			preautorizacion.setFechaEnvioTercerizadora(null);
 			preautorizacion.setFechaRecepcionTercerizadora(null);
@@ -946,99 +1092,132 @@ public class PreAutorizacionAction extends PortletAction {
 			preautorizacion.setFechaEnvioTercerizadora(fechaEnvioTercerizadora);
 			preautorizacion.setFechaRecepcionTercerizadora(fechaRecepcionTercerizadora);
 		}
-		
+
 		try {
 			String tipoPedidoOspim = ParamUtil.getString(renderRequest,"tipoPedidoOSPIM");
 			String strEstadoOspim = ParamUtil.getString(renderRequest,"estadoOSPIM");
 			String gestionOspim = ParamUtil.getString(renderRequest,"gestionOSPIM");
 			String observacionOspim = ParamUtil.getString(renderRequest,"observacionesOSPIM");
-			
+
 			preautorizacion.setTipoPedidoGestionOSPIM(tipoPedidoOspim);
 			preautorizacion.setTipoGestionOSPIM(gestionOspim);
 			preautorizacion.setObservacionesOSPIM(observacionOspim);
-			
+
 			Estado estadoOspim = new Estado();
 			estadoOspim.setId(strEstadoOspim);
 			preautorizacion.setUltimoEstadoOSPIM(estadoOspim);
-		}catch(Exception ex) {}
-		
+
+			_log.info("[" + rid + "][ACTUALIZA_PREAUT][OSPIM]"
+					+ " tipoPedidoOspim=" + s(tipoPedidoOspim)
+					+ ", strEstadoOspim=" + s(strEstadoOspim)
+					+ ", gestionOspim=" + s(gestionOspim)
+					+ ", observacionOspim=" + s(observacionOspim));
+		}catch(Exception ex) {
+			_log.error("[" + rid + "][ACTUALIZA_PREAUT][OSPIM][ERROR]", ex);
+		}
+
 		String diagnostico = ParamUtil.getString(renderRequest,"id_diagnostico");
 		if(diagnostico!=null) {
 			preautorizacion.setDiagnostico(new ClaseBase(diagnostico,""));
 		}
-		
-        boolean esAlojamiento=ParamUtil.getBoolean(renderRequest, "alojamientoChk");
+
+		boolean esAlojamiento=ParamUtil.getBoolean(renderRequest, "alojamientoChk");
 		preautorizacion.setAlojamiento(esAlojamiento);
-		
-		
-		if (!"AP".equals(preautorizacion.getUltimoEstado().getId())){
-		   if(preautorizacion.getFechaEmail()==null 
-				&& !preautorizacion.getRequiereAutorizacion() 
-				&& !preautorizacion.isSupra()
-				&& !preautorizacion.isMedicamento()
-				&& !preautorizacion.isAlojamiento()){
-			
-			   Estado estado = new Estado();
-			   estado.setId("NR");
-			   preautorizacion.setUltimoEstado(estado);
-		   }
+
+		if (preautorizacion.getUltimoEstado() != null && !"AP".equals(preautorizacion.getUltimoEstado().getId())){
+			if(preautorizacion.getFechaEmail()==null
+					&& !preautorizacion.getRequiereAutorizacion()
+					&& !preautorizacion.isSupra()
+					&& !preautorizacion.isMedicamento()
+					&& !preautorizacion.isAlojamiento()){
+
+				_log.info("[" + rid + "][ACTUALIZA_PREAUT][AUTO_ESTADO_NR]"
+						+ " fechaEmail=" + s(preautorizacion.getFechaEmail())
+						+ ", requiereAutorizacion=" + preautorizacion.getRequiereAutorizacion()
+						+ ", supra=" + preautorizacion.isSupra()
+						+ ", medicamento=" + preautorizacion.isMedicamento()
+						+ ", alojamiento=" + preautorizacion.isAlojamiento());
+
+				Estado estado = new Estado();
+				estado.setId("NR");
+				preautorizacion.setUltimoEstado(estado);
+			}
 		}
-		
+
 		if(esAlojamiento) {
-		   String fechaAlojamientoDesdeDia = ParamUtil.getString(renderRequest,"fechaPreAutorizacionAlojamientoDiaDesde");
-		   String fechaAlojamientoDesdeMes = ParamUtil.getString(renderRequest,"fechaPreAutorizacionAlojamientoMesDesde");
-		   String fechaAlojamientoDesdeAnio = ParamUtil.getString(renderRequest,"fechaPreAutorizacionAlojamientoAnioDesde");
-		
-		   Date fechaAlojamientoDesde = null;
-		   try {
-			 fechaAlojamientoDesde = formatoDeFechas.parse(fechaAlojamientoDesdeDia + "/"
-					+ (Integer.parseInt(fechaAlojamientoDesdeMes) + 1) + "/"
-					+ fechaAlojamientoDesdeAnio);
-		   } catch (Exception e1) {
-			 fechaAlojamientoDesde = null;
-		   }
-		   preautorizacion.setAlojamientoDesde(fechaAlojamientoDesde);
-		   
-		   String fechaAlojamientoHastaDia = ParamUtil.getString(renderRequest,"fechaPreAutorizacionAlojamientoDiaHasta");
-		   String fechaAlojamientoHastaMes = ParamUtil.getString(renderRequest,"fechaPreAutorizacionAlojamientoMesHasta");
-		   String fechaAlojamientoHastaAnio = ParamUtil.getString(renderRequest,"fechaPreAutorizacionAlojamientoAnioHasta");
-		
-		   Date fechaAlojamientoHasta = null;
-		   try {
-			 fechaAlojamientoHasta = formatoDeFechas.parse(fechaAlojamientoHastaDia + "/"
-					+ (Integer.parseInt(fechaAlojamientoHastaMes) + 1) + "/"
-					+ fechaAlojamientoHastaAnio);
-		   } catch (Exception e1) {
-			 fechaAlojamientoHasta = null;
-		   }
-		   preautorizacion.setAlojamientoHasta(fechaAlojamientoHasta);
-		   
+			String fechaAlojamientoDesdeDia = ParamUtil.getString(renderRequest,"fechaPreAutorizacionAlojamientoDiaDesde");
+			String fechaAlojamientoDesdeMes = ParamUtil.getString(renderRequest,"fechaPreAutorizacionAlojamientoMesDesde");
+			String fechaAlojamientoDesdeAnio = ParamUtil.getString(renderRequest,"fechaPreAutorizacionAlojamientoAnioDesde");
+
+			Date fechaAlojamientoDesde = null;
+			try {
+				fechaAlojamientoDesde = formatoDeFechas.parse(fechaAlojamientoDesdeDia + "/"
+						+ (Integer.parseInt(fechaAlojamientoDesdeMes) + 1) + "/"
+						+ fechaAlojamientoDesdeAnio);
+			} catch (Exception e1) {
+				fechaAlojamientoDesde = null;
+			}
+			preautorizacion.setAlojamientoDesde(fechaAlojamientoDesde);
+
+			String fechaAlojamientoHastaDia = ParamUtil.getString(renderRequest,"fechaPreAutorizacionAlojamientoDiaHasta");
+			String fechaAlojamientoHastaMes = ParamUtil.getString(renderRequest,"fechaPreAutorizacionAlojamientoMesHasta");
+			String fechaAlojamientoHastaAnio = ParamUtil.getString(renderRequest,"fechaPreAutorizacionAlojamientoAnioHasta");
+
+			Date fechaAlojamientoHasta = null;
+			try {
+				fechaAlojamientoHasta = formatoDeFechas.parse(fechaAlojamientoHastaDia + "/"
+						+ (Integer.parseInt(fechaAlojamientoHastaMes) + 1) + "/"
+						+ fechaAlojamientoHastaAnio);
+			} catch (Exception e1) {
+				fechaAlojamientoHasta = null;
+			}
+			preautorizacion.setAlojamientoHasta(fechaAlojamientoHasta);
+
+			_log.info("[" + rid + "][ACTUALIZA_PREAUT][ALOJAMIENTO]"
+					+ " desde=" + s(fechaAlojamientoDesde)
+					+ ", hasta=" + s(fechaAlojamientoHasta));
 		}
-		
-        boolean esProtesisOrt=ParamUtil.getBoolean(renderRequest, "protesisOrtChk");
+
+		boolean esProtesisOrt=ParamUtil.getBoolean(renderRequest, "protesisOrtChk");
 		preautorizacion.setProtesisOrtesis(esProtesisOrt);
-		
+
 		boolean esPosibleArt=ParamUtil.getBoolean(renderRequest, "artChk");
 		preautorizacion.setART(esPosibleArt);
-		
+
 		Prestador prestador=new Prestador();
 		if(esDiscapacidad){
-		   Integer prestadorId = ParamUtil.getInteger(renderRequest,"id_prestador_aut");
-		   String prestadorCuit=ParamUtil.getString(renderRequest,"cuit_prestador_aut");
-		   String prestadorDescripcion=ParamUtil.getString(renderRequest,"nombre_prestador_aut");
-		   
-		   prestador.setId_prestador(prestadorId);
-		   prestador.setCuit(prestadorCuit);
-		   prestador.setDescripcion(prestadorDescripcion);
+			Integer prestadorId = ParamUtil.getInteger(renderRequest,"id_prestador_aut");
+			String prestadorCuit=ParamUtil.getString(renderRequest,"cuit_prestador_aut");
+			String prestadorDescripcion=ParamUtil.getString(renderRequest,"nombre_prestador_aut");
+
+			prestador.setId_prestador(prestadorId);
+			prestador.setCuit(prestadorCuit);
+			prestador.setDescripcion(prestadorDescripcion);
+
+			_log.info("[" + rid + "][ACTUALIZA_PREAUT][PRESTADOR_DISCA]"
+					+ " prestadorId=" + s(prestadorId)
+					+ ", prestadorCuit=" + s(prestadorCuit)
+					+ ", prestadorDescripcion=" + s(prestadorDescripcion));
 		}
 		preautorizacion.setPrestador(prestador);
-    }
+
+		logPreautorizacionSnapshot(rid, "ACTUALIZA_PREAUT][AFTER", preautorizacion);
+		_log.info("[" + rid + "][ACTUALIZA_PREAUT][END]");
+	}
 	
 	
 	
 //--Preautorizacion
 //--	
 	private void addPrestacion(RenderRequest renderRequest,HttpSession session) throws Exception{
+		String rid = rid();
+		_log.info("[" + rid + "][ADD_PRESTACION][START]"
+				+ " codigo=" + s(ParamUtil.getString(renderRequest,"codigo"))
+				+ ", descripcion=" + s(ParamUtil.getString(renderRequest,"descripcion"))
+				+ ", tiponomenclador=" + s(ParamUtil.getString(renderRequest,"tiponomenclador"))
+				+ ", idpreautorizacioncodigo=" + s(ParamUtil.getString(renderRequest,"idpreautorizacioncodigo"))
+				+ ", cantidad=" + s(ParamUtil.getString(renderRequest,"cantidad"))
+				+ ", importe=" + s(ParamUtil.getString(renderRequest,"importe")));
 		String codigo=ParamUtil.getString(renderRequest,"codigo",null);
 		String descripcion=ParamUtil.getString(renderRequest,"descripcion",null);
 		Integer tipoNomenclador = ParamUtil.getInteger(renderRequest, "tiponomenclador",0);
@@ -1121,7 +1300,10 @@ public class PreAutorizacionAction extends PortletAction {
 		  pa.getCodigosPresentados().add(prestacion);
 		}
 		session.setAttribute(WebKeysAutorizaciones.PREAUTORIZACION_EN_EDICION, pa);
-		
+		_log.info("[" + rid + "][ADD_PRESTACION][END]"
+				+ " totalCodigos=" + (pa.getCodigosPresentados() != null ? pa.getCodigosPresentados().size() : -1)
+				+ ", encontro=" + encontro
+				+ ", idAux=" + s(prestacion.getIdAux()));
 	}
 	
 	
@@ -1267,15 +1449,15 @@ public class PreAutorizacionAction extends PortletAction {
 		raAux.setFechaUnicaVez(new Date()); 
 		raAux.setHora(99);
 		if(primeraVez && parte == 1) {
-			raAux.setTitulo("Solitud de autorización por ws ID: " + idPreAut);
+			raAux.setTitulo("Solitud de autorizaciï¿½n por ws ID: " + idPreAut);
 			raAux.setJava("ar.com.ospim.autorizaciones.beans.SolicitudAutorizacionPS");
 		}
 		if(primeraVez && parte > 1){
-			raAux.setTitulo("Envío de info adicional autorización por ws ID: " + idPreAut + " parte: " + parte + (necesitaEnviarInfoAdic?" CONTINUA":"") );
+			raAux.setTitulo("Envï¿½o de info adicional autorizaciï¿½n por ws ID: " + idPreAut + " parte: " + parte + (necesitaEnviarInfoAdic?" CONTINUA":"") );
 		    raAux.setJava("ar.com.ospim.autorizaciones.beans.EnvioInfoAdicionalPS");
 		} 
 		if(!primeraVez){
-			raAux.setTitulo("Envío de info adicional autorización por ws ID: " + idPreAut + " parte: " + parte + (necesitaEnviarInfoAdic?" CONTINUA":"") );
+			raAux.setTitulo("Envï¿½o de info adicional autorizaciï¿½n por ws ID: " + idPreAut + " parte: " + parte + (necesitaEnviarInfoAdic?" CONTINUA":"") );
 		    raAux.setJava("ar.com.ospim.autorizaciones.beans.EnvioInfoAdicionalPS");
 		} 
 		
@@ -1415,17 +1597,17 @@ public class PreAutorizacionAction extends PortletAction {
  		  body = "Probable Reserva Departamento desde el " + sdf.format(preautorizacion.getAlojamientoDesde())	+ " hasta el " +
  		         sdf.format(preautorizacion.getAlojamientoHasta()) +".";
  		}else if(preautorizacion.isProtesisOrtesis() || preautorizacion.isCirugia()) {
-// 			subject = "Preautorización ID: " + preautorizacion.getId() + " - Incluye prótesis / órtesis"; 
- 			body = "Se cargó un pedido de autorización que incluye marca de prótesis / órtesis / cirugía.";
+// 			subject = "Preautorizaciï¿½n ID: " + preautorizacion.getId() + " - Incluye prï¿½tesis / ï¿½rtesis"; 
+ 			body = "Se cargï¿½ un pedido de autorizaciï¿½n que incluye marca de prï¿½tesis / ï¿½rtesis / cirugï¿½a.";
  	 	}else {
- 		  body= "Se envía adjunto orden para autorizar. " +"\n\n\n" ;
+ 		  body= "Se envï¿½a adjunto orden para autorizar. " +"\n\n\n" ;
 // 		  body +=	"Por favor responder a: " + from;
  		  body +=	"Observaciones: "+ (StringUtils.checkNotEmpty(preautorizacion.getObservacionesTercerizadoras())?preautorizacion.getObservacionesTercerizadoras():" - " );
  		}
  				
 // 		seccional.getDescripcion()+"\n\n\n" +
 // 		"Email seccional: " + from + "\n\n\n" +
-// 		"Email usuario envío: " + emailUsr ;
+// 		"Email usuario envï¿½o: " + emailUsr ;
 		
  		
  		
@@ -1541,7 +1723,13 @@ public class PreAutorizacionAction extends PortletAction {
 	}
 
 	private void addMedicamento(RenderRequest renderRequest,HttpSession session) throws SystemException{
-		
+		String rid = rid();
+		_log.info("[" + rid + "][ADD_MEDICAMENTO][START]"
+				+ " codigo=" + s(ParamUtil.getString(renderRequest,"codigo"))
+				+ ", troquel=" + s(ParamUtil.getString(renderRequest,"troquel"))
+				+ ", descripcion=" + s(ParamUtil.getString(renderRequest,"descripcion"))
+				+ ", cantidad=" + s(ParamUtil.getString(renderRequest,"cantidad"))
+				+ ", importe=" + s(ParamUtil.getString(renderRequest,"importe")));
 		Integer codigo=ParamUtil.getInteger(renderRequest,"codigo",0);
 		String troquel=ParamUtil.getString(renderRequest,"troquel",null);
 		String descripcion=ParamUtil.getString(renderRequest,"descripcion",null);
@@ -1588,7 +1776,10 @@ public class PreAutorizacionAction extends PortletAction {
 		}
 		
 		session.setAttribute(WebKeysAutorizaciones.PREAUTORIZACION_EN_EDICION, pa);
-		
+		_log.info("[" + rid + "][ADD_MEDICAMENTO][END]"
+				+ " totalMedicamentos=" + (pa.getMedicamentosPresentados() != null ? pa.getMedicamentosPresentados().size() : -1)
+				+ ", encontro=" + encontro
+				+ ", idAux=" + s(medicamento.getIdAux()));
 	}
 	
 	private void deleteMedicamento(RenderRequest renderRequest,HttpSession session) throws SystemException{

@@ -19,6 +19,14 @@ public class DebitosaReintegros {
 	private String nombre;
 	private int numReintegro;
 	private Integer reclamoPrestacional;
+	private Boolean status;
+	private Date periodoFechaDesde;
+
+	public Date getPeriodoFechaDesde() { return periodoFechaDesde; }
+	public void setPeriodoFechaDesde(Date d) { this.periodoFechaDesde = d; }
+
+	public Boolean getStatus() { return status; }
+	public void setStatus(Boolean status) { this.status = status; }
 
 	
 	public String getDocumento() {

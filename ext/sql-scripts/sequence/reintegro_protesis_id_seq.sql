@@ -1,7 +1,0 @@
-CREATE SEQUENCE reintegro_protesis_id_seq
-  INCREMENT 1
-  MINVALUE 1
-  MAXVALUE 9223372036854775807
-  START 60000
-  CACHE 1;
-ALTER TABLE reintegro_protesis_id_seq OWNER TO postgres;

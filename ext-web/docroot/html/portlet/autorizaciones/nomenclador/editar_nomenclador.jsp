@@ -41,7 +41,9 @@
 	   </td>
 	   <td>
 			<select name="<portlet:namespace/>tipoNomenclador" id="<portlet:namespace/>tipoNomenclador" <%if(nomenclador.getId_prestacion()!=0){ %> disabled="disabled" <% } %> onchange="cambioTipo();" >
-					<option value="0">Seleccione un nomenclador</option>
+					<option value="0" <%= nomenclador.getId_tipo_nomenclador() == 0 ? "selected=\"selected\"" : "" %> disabled="disabled">
+						Seleccione un nomenclador
+					</option>
 					<%	for (TipoNomenclador tnom : tipoNomencladorList) { 
 					     
 					    if(tnom.getId_tipo_nomenclador() == 1 || tnom.getId_tipo_nomenclador() == 6 ||
@@ -347,8 +349,23 @@ function recalcularTotales(){
 	jQuery('#<portlet:namespace />importe_nomenclador').val(ret);
 }
 
+function validarTipoNomenclador(){
+	var tipoNomenclador = jQuery('#<portlet:namespace />tipoNomenclador').val();
+
+	if (tipoNomenclador == null || tipoNomenclador == '' || tipoNomenclador == '0') {
+		alert('Debe seleccionar un nomenclador válido');
+		jQuery('#<portlet:namespace />tipoNomenclador').focus();
+		return false;
+	}
+
+	return true;
+}
+
 function submitFormNotSave(){
-	    document.getElementById("<portlet:namespace/>tipoNomenclador").disabled=false;
+	if(!validarTipoNomenclador()){
+		return false;
+	}
+	document.getElementById("<portlet:namespace/>tipoNomenclador").disabled=false;
 		document.getElementById("cambioSolapa").value="cambioSolapa";
 		document.getElementById("tabs1").value="datos-contables";
 		document.getElementById("view").value="true";
