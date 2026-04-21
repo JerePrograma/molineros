@@ -1,4 +1,4 @@
-package ar.com.ospim.liquidaciones.action;
+package ar.com.ospim.prestadores.action;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
+import ar.com.ospim.prestadores.WebKeysPrestadores;
 import org.apache.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -23,9 +24,9 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.global.services.TraeListasServiceUtil;
-import ar.com.ospim.liquidaciones.beans.BusquedaCartillaConvenioFiltro;
-import ar.com.ospim.liquidaciones.beans.CartillaConvenioRow;
-import ar.com.ospim.liquidaciones.services.CartillaConvenioServiceUtil;
+import ar.com.ospim.prestadores.beans.BusquedaCartillaConvenioFiltro;
+import ar.com.ospim.prestadores.beans.CartillaConvenioRow;
+import ar.com.ospim.prestadores.services.CartillaConvenioServiceUtil;
 
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -135,31 +136,31 @@ public class CartillaConvenioPorPlanAction extends PortletAction {
                                            BusquedaCartillaConvenioFiltro filtro,
                                            List<CartillaConvenioRow> resultados) {
 
-        session.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO, filtro);
-        session.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS, resultados);
+        session.setAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_FILTRO, filtro);
+        session.setAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_RESULTS, resultados);
 
-        renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO, filtro);
-        renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS, resultados);
+        renderRequest.setAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_FILTRO, filtro);
+        renderRequest.setAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_RESULTS, resultados);
     }
 
     private void restaurarBusquedaDesdeSession(HttpSession session, RenderRequest renderRequest) {
-        Object filtroSession = session.getAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO);
-        Object resultadosSession = session.getAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS);
+        Object filtroSession = session.getAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_FILTRO);
+        Object resultadosSession = session.getAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_RESULTS);
 
         if (filtroSession != null) {
-            renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO, filtroSession);
+            renderRequest.setAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_FILTRO, filtroSession);
         } else {
             renderRequest.setAttribute(
-                    WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO,
+                    WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_FILTRO,
                     new BusquedaCartillaConvenioFiltro()
             );
         }
 
         if (resultadosSession != null) {
-            renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS, resultadosSession);
+            renderRequest.setAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_RESULTS, resultadosSession);
         } else {
             renderRequest.setAttribute(
-                    WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS,
+                    WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_RESULTS,
                     new ArrayList<CartillaConvenioRow>()
             );
         }
@@ -167,9 +168,9 @@ public class CartillaConvenioPorPlanAction extends PortletAction {
 
     private void cargarListas(HttpSession session) throws Exception {
 
-        if (session.getAttribute(WebKeysLiquidaciones.PLANES_EN_SESSION) == null) {
+        if (session.getAttribute(WebKeysPrestadores.PLANES_EN_SESSION) == null) {
             session.setAttribute(
-                    WebKeysLiquidaciones.PLANES_EN_SESSION,
+                    WebKeysPrestadores.PLANES_EN_SESSION,
                     TraeListasServiceUtil.getPlanesOspim()
             );
         }
@@ -181,16 +182,16 @@ public class CartillaConvenioPorPlanAction extends PortletAction {
             );
         }
 
-        if (session.getAttribute(WebKeysLiquidaciones.LOCALIDADES_EN_SESSION) == null) {
+        if (session.getAttribute(WebKeysPrestadores.LOCALIDADES_EN_SESSION) == null) {
             session.setAttribute(
-                    WebKeysLiquidaciones.LOCALIDADES_EN_SESSION,
+                    WebKeysPrestadores.LOCALIDADES_EN_SESSION,
                     TraeListasServiceUtil.getLocalidades()
             );
         }
 
-        if (session.getAttribute(WebKeysLiquidaciones.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION) == null) {
+        if (session.getAttribute(WebKeysPrestadores.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION) == null) {
             session.setAttribute(
-                    WebKeysLiquidaciones.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
+                    WebKeysPrestadores.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
                     TraeListasServiceUtil.getEspecialidadesPrestador()
             );
         }

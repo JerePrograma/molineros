@@ -12,22 +12,22 @@
 <%@ page import="ar.com.ospim.global.beans.Provincia" %>
 <%@ page import="ar.com.ospim.global.beans.Localidad" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.EspecialidadPrestador" %>
-<%@ page import="ar.com.ospim.liquidaciones.beans.BusquedaCartillaConvenioFiltro" %>
-<%@ page import="ar.com.ospim.liquidaciones.beans.CartillaConvenioRow" %>
+<%@ page import="ar.com.ospim.prestadores.beans.BusquedaCartillaConvenioFiltro" %>
+<%@ page import="ar.com.ospim.prestadores.beans.BusquedaCartillaConvenioFiltro" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
 
 <%
     BusquedaCartillaConvenioFiltro filtro =
-            (BusquedaCartillaConvenioFiltro) request.getAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_FILTRO);
+            (BusquedaCartillaConvenioFiltro) request.getAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_FILTRO);
 
     if (filtro == null) {
         filtro = new BusquedaCartillaConvenioFiltro();
     }
 
     List<CartillaConvenioRow> resultados =
-            (List<CartillaConvenioRow>) request.getAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS);
+            (List<CartillaConvenioRow>) request.getAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_RESULTS);
 
     if (resultados == null) {
         resultados = new ArrayList<CartillaConvenioRow>();
@@ -43,7 +43,7 @@
             (List<Localidad>) session.getAttribute(WebKeysLiquidaciones.LOCALIDADES_EN_SESSION);
 
     List<EspecialidadPrestador> especialidades =
-            (List<EspecialidadPrestador>) session.getAttribute(WebKeysLiquidaciones.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION);
+            (List<EspecialidadPrestador>) session.getAttribute(WebKeysPrestadores.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION);
 
     String idPlanValue = filtro.getIdPlan() != null ? String.valueOf(filtro.getIdPlan()) : "";
     String idPrestadorValue = filtro.getIdPrestador() != null ? String.valueOf(filtro.getIdPrestador()) : "";

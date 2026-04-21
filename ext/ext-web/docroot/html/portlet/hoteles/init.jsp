@@ -82,7 +82,7 @@
 <%@ page import="ar.com.ospim.liquidaciones.beans.TelefonoPrestador" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.ContactoElectronicoPrestador" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.TipoDiscapacidad" %>
-<%@ page import="ar.com.ospim.liquidaciones.beans.BusquedaConvenioPrestacionalFiltro" %>
+<%@ page import="ar.com.ospim.prestadores.beans.BusquedaCartillaConvenioFiltro" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.TipoNomenclador" %>
 
 <%@ page import="ar.com.ospim.liquidaciones.services.ReintegroServiceUtil" %>

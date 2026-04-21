@@ -50,7 +50,7 @@
 
 <%
     List<CartillaConvenioRow> resultados =
-            (List<CartillaConvenioRow>) request.getAttribute(WebKeysLiquidaciones.BUSQUEDA_CARTILLA_CONVENIO_RESULTS);
+            (List<CartillaConvenioRow>) request.getAttribute(WebKeysPrestadores.BUSQUEDA_CARTILLA_CONVENIO_RESULTS);
 
     if (resultados == null) {
         resultados = new ArrayList<CartillaConvenioRow>();

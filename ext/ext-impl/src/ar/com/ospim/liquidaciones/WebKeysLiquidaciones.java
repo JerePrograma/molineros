@@ -227,4 +227,7 @@ public class WebKeysLiquidaciones implements
 	
 	public static final String ROL_LIQUIDACIONES_HOSPITALES = "liquidaciones_hospitales";
 
+	public static final String PROVINCIAS_EN_SESSION = "PROVINCIAS_EN_SESSION";
+	public static final String LOCALIDADES_EN_SESSION = "LOCALIDADES_EN_SESSION";
+	public static final String PLANES_EN_SESSION  = "PLANES_EN_SESSION";
 }

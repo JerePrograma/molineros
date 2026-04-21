@@ -7,6 +7,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import ar.com.ospim.prestadores.WebKeysPrestadores;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 
@@ -25,7 +26,7 @@ public class IdProfesionEspecialidadAction extends JSONAction {
 		
 		@SuppressWarnings("unchecked")
 		List<EspecialidadPrestador> lista = (List<EspecialidadPrestador>) req.getSession()
-				.getAttribute(WebKeysLiquidaciones.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION);
+				.getAttribute(WebKeysPrestadores.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION);
 		
 		Collections.sort(lista, new Comparator() {
 			@Override

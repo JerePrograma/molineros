@@ -1,4 +1,4 @@
-package ar.com.ospim.liquidaciones.services;
+package ar.com.ospim.prestadores.services;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -6,7 +6,7 @@ import java.util.List;
 
 import ar.com.ospim.liquidaciones.NoSuchConvenioPrestacionalEntryException;
 import ar.com.ospim.liquidaciones.NoSuchReintegroEntryException;
-import ar.com.ospim.liquidaciones.beans.BusquedaConvenioPrestacionalFiltro;
+import ar.com.ospim.prestadores.beans.BusquedaConvenioPrestacionalFiltro;
 import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional;
 import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
 

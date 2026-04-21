@@ -13,6 +13,7 @@ import javax.portlet.RenderRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import ar.com.ospim.prestadores.WebKeysPrestadores;
 import com.liferay.portal.SystemException;
 import com.liferay.portal.util.PortalUtil;
 
@@ -1463,13 +1464,13 @@ public class TraeListasServiceUtil {
 			PortletRequest portletRequest) throws Exception {
 		List<EspecialidadPrestador> especialidadPrestador = (List<EspecialidadPrestador>) portletRequest
 				.getPortletSession().getAttribute(
-						WebKeysLiquidaciones.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
+						WebKeysPrestadores.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
 						PortletSession.APPLICATION_SCOPE);
 
 		if (especialidadPrestador == null) {
 			especialidadPrestador = getInstance().getEspecialidades();
 			portletRequest.getPortletSession().setAttribute(
-					WebKeysLiquidaciones.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
+					WebKeysPrestadores.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
 					especialidadPrestador, PortletSession.APPLICATION_SCOPE);
 		}
 		return especialidadPrestador;
