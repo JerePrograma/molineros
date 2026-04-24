@@ -40,8 +40,8 @@ public class BuscarConveniosPrestacAction extends PortletAction {
 							  PortletConfig portletConfig, ActionRequest actionRequest,
 							  ActionResponse actionResponse) throws Exception {
 		_log.info("[BUSCAR-CONV-PREST][ACTION][START] Inicio processAction");
-		_log.debug("[BUSCAR-CONV-PREST][ACTION][FORWARD] forward=portlet.liquidaciones.conv_prestac.result.search");
-		setForward(actionRequest, "portlet.liquidaciones.conv_prestac.result.search");
+		_log.debug("[BUSCAR-CONV-PREST][ACTION][FORWARD] forward=portlet.prestadores.conv_prestac.result.search");
+		setForward(actionRequest, "portlet.prestadores.conv_prestac.result.search");
 		_log.info("[BUSCAR-CONV-PREST][ACTION][END] Fin processAction");
 	}
 
@@ -84,7 +84,48 @@ public class BuscarConveniosPrestacAction extends PortletAction {
 			_log.error("[BUSCAR-CONV-PREST][RENDER][ERROR] Error en búsqueda de convenios prestacionales", e);
 		}
 
-		_log.info("[BUSCAR-CONV-PREST][RENDER][END] Fin render. Forward=portlet.liquidaciones.conv_prestac.result.search");
-		return mapping.findForward("portlet.liquidaciones.conv_prestac.result.search");
+		_log.info("[BUSCAR-CONV-PREST][RENDER][END] Fin render. Forward=portlet.prestadores.conv_prestac.result.search");
+		return mapping.findForward("portlet.prestadores.conv_prestac.result.search");
+	}
+
+	/**
+	 * @author SVA
+	 */
+
+	public static class CambioVistaListaPrestacionesConvenioPrestAction extends PortletAction {
+
+		private static Log _log = LogFactoryUtil.getLog(CambioVistaListaPrestacionesConvenioPrestAction.class);
+
+		public ActionForward render(
+				ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
+				RenderRequest renderRequest, RenderResponse renderResponse)
+			throws Exception {
+
+			HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
+
+			ConvenioPrestacionalDetalle cpd = null;
+
+			String tipoVistaSelec = ParamUtil.getString(renderRequest, "tipoVistaSelec");
+
+			List<ConvenioPrestacionalDetalle> detallesPorRango = (List<ConvenioPrestacionalDetalle>) session.getAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
+
+			_log.debug("Cambio vista detalles de prestaciones del convenio prest.: " + tipoVistaSelec);
+
+			if(tipoVistaSelec.equalsIgnoreCase("RANGO")){
+				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE);
+			}
+			if(tipoVistaSelec.equalsIgnoreCase("CODIGO")){
+				if(!detallesPorRango.isEmpty() && detallesPorRango.size()>0){
+					cpd = detallesPorRango.get(0); // tomo alguna prestacion para sacar el id del conv. prest.
+				}
+				List<ConvenioPrestacionalDetalle> detallesPorCodigo = ConvenioPrestacionalServiceUtil.getPrestacionesDetallesPorCodigo(cpd.getIdConvenioPrestacional());
+
+				session.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE, detallesPorCodigo);
+			}
+
+			return mapping.findForward(getForward(renderRequest,
+					"portlet.liquidaciones.lista_convenio_prest_detalle"));
+		}
+
 	}
 }

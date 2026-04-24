@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="reclamoHeader_revisiones" pageWidth="572" pageHeight="752" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="idreclamo" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select *  from autorizaciones.rpt_datoscierrereclamoprestacion (cast( $P{idreclamo} as integer))]]>
+	</queryString>
+	<field name="rp_fecha_cierre" class="java.sql.Date"/>
+	<field name="rp_observacion_cierre" class="java.lang.String"/>
+	<field name="rp_a_negociar" class="java.lang.String"/>
+	<field name="rp_factura_ospim" class="java.lang.String"/>
+	<field name="tipogestioncierre" class="java.lang.String"/>
+	<field name="rp_incluidoconveniogerenciadora" class="java.lang.String"/>
+	<field name="rp_dosporciento" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<columnHeader>
+		<band height="5" splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band height="89" splitType="Stretch">
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement x="13" y="13" width="82" height="20"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[$F{rp_fecha_cierre}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="10" y="50" width="536" height="36"/>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{rp_observacion_cierre}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="10" y="35" width="120" height="12"/>
+				<textElement>
+					<font fontName="Serif" size="8" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Observaciones del Cierre]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="10" y="1" width="85" height="16"/>
+				<textElement>
+					<font fontName="Serif" size="8" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Fecha  de Cierre]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="100" y="1" width="108" height="16"/>
+				<textElement>
+					<font fontName="Serif" size="8" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Tipo de Gestión]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="100" y="13" width="108" height="20"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{tipogestioncierre}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="213" y="1" width="53" height="15"/>
+				<textElement textAlignment="Center">
+					<font fontName="Serif" size="8" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[A Negociar:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="393" y="1" width="85" height="15"/>
+				<textElement>
+					<font fontName="Serif" size="8" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Factura a OSPIM:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="274" y="1" width="109" height="15"/>
+				<textElement textAlignment="Center">
+					<font fontName="Serif" size="8" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Incluido en Convenio:]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="393" y="13" width="85" height="20"/>
+				<textElement textAlignment="Center">
+					<font size="10" isBold="true" isItalic="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{rp_factura_ospim}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="213" y="13" width="53" height="20"/>
+				<textElement textAlignment="Center">
+					<font size="10" isBold="true" isItalic="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{rp_a_negociar}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="274" y="13" width="109" height="20"/>
+				<textElement textAlignment="Center">
+					<font size="10" isBold="true" isItalic="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{rp_incluidoconveniogerenciadora}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="493" y="1" width="53" height="15"/>
+				<textElement textAlignment="Center">
+					<font fontName="Serif" size="8" isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[UOMA 2%]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="495" y="13" width="46" height="20"/>
+				<textElement textAlignment="Center">
+					<font isBold="true" isItalic="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{rp_dosporciento}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

@@ -1,0 +1,582 @@
+package ar.com.ospim.afiliados.action;
+
+import java.io.File;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+import javax.portlet.ActionRequest;
+import javax.portlet.ActionResponse;
+import javax.portlet.PortletConfig;
+import javax.portlet.PortletSession;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
+
+import org.apache.log4j.Logger;
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+
+
+import com.liferay.portal.SystemException;
+import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.kernel.servlet.SessionMessages;
+import com.liferay.portal.kernel.upload.UploadPortletRequest;
+import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.model.User;
+import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.service.ServiceContextFactory;
+import com.liferay.portal.struts.PortletAction;
+import com.liferay.portal.util.PortalUtil;
+import com.liferay.portlet.documentlibrary.model.DLFileEntry;
+import com.liferay.portlet.documentlibrary.model.DLFolder;
+import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
+import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
+
+import ar.com.ospim.afiliados.WebKeysAfiliados;
+import ar.com.ospim.afiliados.beans.AfiCuentasBancarias;
+import ar.com.ospim.afiliados.beans.Afiliado;
+import ar.com.ospim.afiliados.services.AfiCuentasBancariasServiceUtil;
+import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
+import ar.com.ospim.desarrolloAppMobile.services.ClienteAppMobileServiceUtil;
+import ar.com.ospim.global.WebKeysGlobal;
+import ar.com.ospim.util.ConnectionHelper;
+
+public class AfiCuentasBancariasAction extends PortletAction {
+
+    private static final Logger _log = Logger.getLogger(AfiCuentasBancariasAction.class);
+
+    @Override
+    public void processAction(ActionMapping mapping, ActionForm form,
+                              PortletConfig portletConfig, ActionRequest actionRequest,
+                              ActionResponse actionResponse) throws Exception {
+
+        UploadPortletRequest uploadReq = PortalUtil.getUploadPortletRequest(actionRequest);
+        String cmd = ParamUtil.getString(uploadReq, Constants.CMD);
+
+        //elimina archivo
+        if (cmd.equals(Constants.DELETE) || "eliminar_archivo_cuenta".equals(cmd)) {
+            int id = ParamUtil.getInteger(uploadReq, "id");
+            String tipo = ParamUtil.getString(uploadReq, "tipo");
+            String cuil = ParamUtil.getString(uploadReq, "cuilTitular");
+            int inte = ParamUtil.getInteger(uploadReq, "inte");
+
+            Connection con = null;
+            try {
+                con = ConnectionHelper.getConnection();
+                AfiCuentasBancariasServiceUtil.eliminaArchivo(con, id, tipo);
+                SessionMessages.add(actionRequest, "archivo-eliminado-ok");
+            } finally {
+                ConnectionHelper.cerrar(con);
+            }
+
+            //llamada AJAX
+            boolean isAjax = "XMLHttpRequest".equals(
+                PortalUtil.getHttpServletRequest(actionRequest).getHeader("X-Requested-With")
+            );
+
+            if (isAjax) {
+                //evita recarga de formulario
+                return;
+            }
+
+            
+            String nuevoCbu = ParamUtil.getString(uploadReq, "cbu", "");
+            if (Validator.isNotNull(nuevoCbu)) {
+                actionResponse.setRenderParameter("cbu", nuevoCbu);
+            }
+
+            actionResponse.setRenderParameter("struts_action", "/afiliados/buscar_afiliados_cuenta_bancaria");
+            actionResponse.setRenderParameter("modo", "editar");
+            actionResponse.setRenderParameter("cuil", cuil);
+            actionResponse.setRenderParameter("inte", String.valueOf(inte));
+            
+            return;
+        }
+
+        //alta/actualiza
+        int id = ParamUtil.getInteger(uploadReq, "id", 0);
+        String cuil = ParamUtil.getString(uploadReq, "cuilTitular");
+        int inte = ParamUtil.getInteger(uploadReq, "inte");
+        String email = ParamUtil.getString(uploadReq, "email");
+        String cbu = ParamUtil.getString(uploadReq, "cbu");
+        boolean esApoderado = ParamUtil.getBoolean(uploadReq, "esApoderado");
+        boolean titular = !esApoderado;
+        
+        String nombreApoderado = ParamUtil.getString(uploadReq, "nombreApoderado");
+        String apellidoApoderado = ParamUtil.getString(uploadReq, "apellidoApoderado");
+        String cuilCbu = ParamUtil.getString(uploadReq, "cuilCbu");
+
+        File fileCbu = uploadReq.getFile("fileCbu");
+        File fileNotaAutorizada = uploadReq.getFile("fileNotaAutorizada");
+
+        //validaciones
+        if (cbu == null || cbu.trim().length() != 22) {
+            SessionErrors.add(actionRequest, "validacion-cbu");
+            return;
+        }
+        if (!titular && (Validator.isNull(nombreApoderado) || Validator.isNull(apellidoApoderado) || Validator.isNull(cuilCbu))) {
+            SessionErrors.add(actionRequest, "validacion-cuenta-incompleta");
+            return;
+        }
+
+        Afiliado afiliado = (Afiliado) PortalUtil.getHttpServletRequest(actionRequest)
+                .getSession().getAttribute(WebKeysAfiliados.AFILIADO_EN_EDICION);
+
+        AfiCuentasBancarias cuenta = new AfiCuentasBancarias();
+        cuenta.setCuilTitular(cuil);
+        cuenta.setInte(inte);
+        cuenta.setEmail(email);
+        cuenta.setCbu(cbu);
+        cuenta.setTitular(titular);
+        // cuil_cbu: solo aplica si es apoderado (si es titular lo dejás null/vacío)
+        cuenta.setCuilCbu(titular ? null : cuilCbu);
+        
+        // Nombre/Apellido: dependen de titular
+        if (titular) {
+
+            //desde sesión
+            if (afiliado == null) {
+                afiliado = (Afiliado) PortalUtil.getHttpServletRequest(actionRequest)
+                    .getSession().getAttribute(WebKeysAfiliados.AFILIADO_EN_EDICION);
+            }
+
+            // si viene null se busca por cuil/inte
+            if (afiliado == null) {
+                try {
+                    afiliado = ActionUtil.getAfiliadoInclusoDadoBajaByCuilInte(cuil, inte); 
+                } catch (Exception e) {
+                    _log.warn("No pude recuperar afiliado para completar nombre/apellido. CUIL=" + cuil + " INTE=" + inte, e);
+                }
+            }
+
+            //seteo nombre/apellido si se obtiene
+            if (afiliado != null) {
+                cuenta.setNombre(afiliado.getNombre());
+                cuenta.setApellido(afiliado.getApellido());
+            } else {
+                cuenta.setNombre("");
+                cuenta.setApellido("");
+            }
+
+        } else {
+            // apoderado: vienen del formulario
+            cuenta.setNombre(nombreApoderado);
+            cuenta.setApellido(apellidoApoderado);
+        }
+
+
+        User user = PortalUtil.getUser(actionRequest);
+        String userName = (user != null) ? user.getScreenName() : "";
+
+        Connection con = null;
+        try {
+            con = ConnectionHelper.getConnection();
+
+            //carpeta de destino
+            ServiceContext serviceContext = ServiceContextFactory.getInstance(DLFileEntry.class.getName(), actionRequest);
+            DLFolder folder = DLFolderLocalServiceUtil.getFolder(10136, 0L, "ReclamosPrestacionales");
+            long folderId = folder.getFolderId();
+
+            //busca cuentas
+            List<AfiCuentasBancarias> existentes = AfiCuentasBancariasServiceUtil.getCuentas(con, cuil, inte);
+            AfiCuentasBancarias vigente = null;
+            if (existentes != null) {
+                for (AfiCuentasBancarias a : existentes) {
+                    if (a.getBajaFecha() == null) {
+                        vigente = a;
+                        break;
+                    }
+                }
+            }
+
+            // si hay cuenta vigente la da de baja
+            if (vigente != null) {
+                AfiCuentasBancarias vigenteDB = AfiCuentasBancariasServiceUtil.getCuentaPorId(con, vigente.getId());
+                _log.info("Dando de baja cuenta vigente ID=" + vigenteDB.getId() + " | CBU=" + vigenteDB.getCbu());
+                AfiCuentasBancariasServiceUtil.actualizaCuenta(con, vigenteDB.getId(), userName);
+                
+
+	             // valores subidos desde el formulario
+	             String nombreFileCbu = uploadReq.getFileName("fileCbu");
+	
+	             //verifica si CBU nuevo es igual al vigente
+	             boolean mismoCbu = vigenteDB.getCbu() != null
+	                     && vigenteDB.getCbu().equals(cuenta.getCbu());
+	
+	             // decide si reutiliza la constancia anterior
+	             String fileCbuAnterior = null;
+	
+	             // si no cambió el CBU y no se subió archivo nuevo, reutilizamos la constancia anterior
+	             if (mismoCbu &&
+	                 (fileCbu == null || !fileCbu.exists() || Validator.isNull(nombreFileCbu))) {
+	                 fileCbuAnterior = vigenteDB.getFileCbu();
+	             }
+             
+	             // si cambió el CBU o se subió un archivo nuevo, fileCbuAnterior se mantiene null
+	             cuenta.setFileCbu(subirArchivoALiferay(
+	                     fileCbu,
+	                     nombreFileCbu,
+	                     fileCbuAnterior, 
+	                     "CBU",
+	                     folderId,
+	                     serviceContext,
+	                     cuil
+	             ));
+
+	             String nombreFileNota = uploadReq.getFileName("fileNotaAutorizada");
+
+	             // Si la cuenta NUEVA es TITULAR  la nota NO debe existir
+	             if (cuenta.isTitular()) {
+	                 cuenta.setFileNotaAutorizada(null);
+	             } else {
+	            	 
+	             
+	             // si no se subió nota nueva, podemos reutilizar la anterior
+	             String fileNotaAnterior = null;
+	             
+	             if ((fileNotaAutorizada == null || !fileNotaAutorizada.exists() || Validator.isNull(nombreFileNota))) {
+	                 fileNotaAnterior = vigenteDB.getFileNotaAutorizada();
+	             }
+
+	             cuenta.setFileNotaAutorizada(subirArchivoALiferay(
+	                     fileNotaAutorizada,
+	                     nombreFileNota,
+	                     fileNotaAnterior,
+	                     "NOTA AUTORIZACION PAGO",
+	                     folderId,
+	                     serviceContext,
+	                     cuil
+	             ));
+	           }
+            } else {
+                _log.info("No hay cuenta vigente, se insertará una nueva cuenta inicial.");
+
+                cuenta.setFileCbu(subirArchivoALiferay(
+                    fileCbu,
+                    uploadReq.getFileName("fileCbu"),
+                    null,
+                    "CBU",
+                    folderId,
+                    serviceContext, cuil
+                ));
+
+                cuenta.setFileNotaAutorizada(subirArchivoALiferay(
+                    fileNotaAutorizada,
+                    uploadReq.getFileName("fileNotaAutorizada"),
+                    null,
+                    "NOTA AUTORIZACION PAGO",
+                    folderId,
+                    serviceContext, cuil
+                ));
+            }
+
+            //guarda nueva cuenta
+            cuenta.setAltaUsr(userName);
+            cuenta.setAltaFecha(new Date());
+            cuenta.setBajaFecha(null);
+            cuenta.setBajaUsr(null);
+
+            AfiCuentasBancariasServiceUtil.insertaCuenta(con, cuenta);
+            SessionMessages.add(actionRequest, "cuenta-actualizada-ok");
+
+        } catch (Exception e) {
+            _log.error("Error guardando la cuenta bancaria", e);
+            SessionErrors.add(actionRequest, "error-guardar-cuenta");
+            throw e;
+        } finally {
+            ConnectionHelper.cerrar(con);
+        }
+        
+        String from = ParamUtil.getString(uploadReq, "from");
+        String idReclamo = ParamUtil.getString(uploadReq, "id_reclamosel");
+        String tab = ParamUtil.getString(uploadReq, "tab", "cta_bancaria");
+
+        if ("reclamo_prestacional".equals(from) && Validator.isNotNull(idReclamo) && !"0".equals(idReclamo)) {
+            actionResponse.setRenderParameter("struts_action", "/autorizaciones/editar_reclamosprestaciones_entry");
+            actionResponse.setRenderParameter(Constants.CMD, Constants.EDIT);
+            actionResponse.setRenderParameter("id_reclamosel", idReclamo);
+            actionResponse.setRenderParameter("tab", tab);
+            return;
+        }
+        
+        String  portlet_name ="";
+		if(actionResponse.getNamespace().equals("_AFI_1_")){
+			portlet_name="afiliados";
+		}else if(actionResponse.getNamespace().equals("_AUT_1_")){
+			portlet_name="autorizaciones";
+		}
+
+		if ("autorizaciones".equals(portlet_name)) {
+			
+		    actionResponse.setRenderParameter("struts_action","/autorizaciones/cta_bcria_seccional_result");
+
+		    actionResponse.setRenderParameter("modo", "editar");
+		    actionResponse.setRenderParameter("cuil", cuil);
+		    actionResponse.setRenderParameter("inte", String.valueOf(inte));
+
+		    return;
+		}
+		
+       //actionResponse.setRenderParameter("struts_action", "/"+ portlet_name +"/buscar_afiliados_cuenta_bancaria");
+		actionResponse.setRenderParameter("struts_action", "/afiliados/buscar_afiliados_cuenta_bancaria");
+
+		actionResponse.setRenderParameter("modo", "editar");
+        actionResponse.setRenderParameter("cuil", cuil);
+        actionResponse.setRenderParameter("inte", String.valueOf(inte));
+    }
+
+    private String subirArchivoALiferay(File file, String nuevoNombre, String anterior,
+            String descripcion, long folderId, ServiceContext ctx, String cuil) {
+
+        try {
+            if (file != null && file.exists() && Validator.isNotNull(nuevoNombre)) {
+            	
+            	//genera un numero aleatorio de 2 digitos para evitar duplicados
+            	//int sufijoRandom = (int)(Math.random() * 90) + 10; // 10 a 99
+            	//String sufijoUnico = "_" + sufijoRandom;
+            	String sufijoUnico = "_" + UUID.randomUUID().toString();
+
+
+            	//nombre del archivo
+            	String nombreFisico = "DLFE_" + cuil + sufijoUnico + "_" + nuevoNombre;
+
+            	//titulo
+            	String tituloVisible = "ABM_" + descripcion.replace(" ", "_") + "_" + cuil + sufijoUnico;
+
+
+                //sube archivo o sobrescribe si ya existe
+                DLFileEntry entry = DLFileEntryLocalServiceUtil.addOrOverwriteFileEntry(
+                    ctx.getUserId(),
+                    folderId,
+                    nombreFisico,
+                    nombreFisico,
+                    tituloVisible, 
+                    descripcion,
+                    "",
+                    file,
+                    ctx
+                );
+
+                return entry.getName();
+                
+            } else if (Validator.isNotNull(anterior)) {
+                return anterior; //hereda el archivo anterior si no se subio uno nuevo
+            }
+        } catch (Exception e) {
+            _log.error("Error al subir archivo a Liferay (" + descripcion + "): " + e.getMessage(), e);
+        }
+        return null;
+    }
+
+
+    @Override
+    public ActionForward render(ActionMapping mapping, ActionForm form,
+                                PortletConfig portletConfig, RenderRequest renderRequest,
+                                RenderResponse renderResponse) throws Exception {
+
+        try {
+        	
+        	String  portlet_name ="";
+    		if(renderResponse.getNamespace().equals("_AFI_1_")){
+    			portlet_name="afiliados";
+    		}else if(renderResponse.getNamespace().equals("_AUT_1_")){
+    			portlet_name="autorizaciones";
+    		}
+        	
+        	String modo = ParamUtil.getString(renderRequest, "modo", "listar");
+        	
+            if ("historico".equalsIgnoreCase(modo)) {
+                String cuil = ParamUtil.getString(renderRequest, "cuil");
+                int inte = ParamUtil.getInteger(renderRequest, "inte", 0);
+
+                Connection con = ConnectionHelper.getConnection();
+                List<AfiCuentasBancarias> historico = AfiCuentasBancariasServiceUtil.getCuentas(con, cuil, inte);
+                ConnectionHelper.cerrar(con);
+                renderRequest.setAttribute("HISTORICO_CUENTAS", historico);
+                
+                Afiliado afiliadoSel = ActionUtil.getAfiliadoInclusoDadoBajaByCuilInte(cuil, inte);
+                renderRequest.setAttribute("AFILIADO_SELECCIONADO", afiliadoSel);
+
+                return mapping.findForward("portlet.afiliados.historico_cuentas_bancarias");
+            }            
+            
+            //edita/ver
+            if ("editar".equalsIgnoreCase(modo) || "ver".equalsIgnoreCase(modo)) {
+                String cuil = ParamUtil.getString(renderRequest, "cuil");
+                int inte = ParamUtil.getInteger(renderRequest, "inte", 0);
+                
+                if (inte < 0) inte = 0;
+
+                _log.info("Cuentas bancarias - CUIL: " + cuil + " | INTE: " + inte);
+
+
+                Afiliado afiliado = ActionUtil.getAfiliadoInclusoDadoBajaByCuilInte(cuil, inte);
+                renderRequest.getPortletSession().setAttribute(WebKeysAfiliados.AFILIADO_EN_EDICION, afiliado, PortletSession.APPLICATION_SCOPE);
+
+                Connection con = null;
+                try {
+                    con = ConnectionHelper.getConnection();
+
+                    //se obtiene cuentas bancarias
+                    List<AfiCuentasBancarias> cuentas = AfiCuentasBancariasServiceUtil.getCuentas(con, cuil, inte);
+	                AfiCuentasBancarias cuenta = (!cuentas.isEmpty()) ? cuentas.get(0) : new AfiCuentasBancarias();
+	                
+                    Integer idReintegroApp = null;
+                    try {
+                        idReintegroApp = ClienteAppMobileServiceUtil.getIdReintegroAppPorCuilInte(cuil, inte);
+                        _log.info("idReintegroApp obtenido para CUIL=" + cuil + " INTE=" + inte + ": " + idReintegroApp);
+                    } catch (Exception e) {
+                        _log.warn("No se pudo obtener idReintegroApp para CUIL=" + cuil + " INTE=" + inte, e);
+                    }
+
+                    renderRequest.setAttribute("idReintegroApp", idReintegroApp);
+
+
+                    if (cuenta.isTitular() && afiliado != null) {
+                        if (Validator.isNull(cuenta.getNombre())) {
+                            cuenta.setNombre(afiliado.getNombre());
+                        }
+                        if (Validator.isNull(cuenta.getApellido())) {
+                            cuenta.setApellido(afiliado.getApellido());
+                        }
+                    }
+	
+	                renderRequest.setAttribute("CUENTA_AFILIADO", cuenta);
+	                renderRequest.setAttribute("AFILIADO_SELECCIONADO", afiliado);
+	                renderRequest.setAttribute("cuil", cuil);
+	                renderRequest.setAttribute("inte", inte);
+	                renderRequest.setAttribute("modo", modo);
+	                
+	                } finally {
+	                    ConnectionHelper.cerrar(con);
+	                }
+	                return mapping.findForward("portlet.afiliados.cuentas_bancarias");
+	                
+	                
+	                
+	            }
+
+            //busqueda
+            String cuil = null;
+            String inte = null;
+            String tipoDoc = null;
+            String nroDoc = null;
+            String apellido = null;
+            String nombre = null;
+            String entidad = null;
+            int seccional = 0;
+            int nroAfiliado = 0;
+            int nroSocioPrev = 0;
+            BigDecimal nroCredencialPrev = null;
+
+            if (renderRequest.getParameter("cuil") != null &&
+                renderRequest.getParameter("cuil").trim().length() > 0)
+                cuil = renderRequest.getParameter("cuil").trim();
+
+            if (renderRequest.getParameter("inte") != null &&
+                renderRequest.getParameter("inte").trim().length() > 0)
+                inte = renderRequest.getParameter("inte").trim();
+
+            if (renderRequest.getParameter("tipoDoc") != null &&
+                renderRequest.getParameter("tipoDoc").trim().length() > 0)
+                tipoDoc = renderRequest.getParameter("tipoDoc").trim();
+
+            if (renderRequest.getParameter("nroDoc") != null &&
+                renderRequest.getParameter("nroDoc").trim().length() > 0)
+                nroDoc = renderRequest.getParameter("nroDoc").trim();
+
+            if (renderRequest.getParameter("apellido") != null &&
+                renderRequest.getParameter("apellido").trim().length() > 0)
+                apellido = renderRequest.getParameter("apellido").trim();
+
+            if (renderRequest.getParameter("nombre") != null &&
+                renderRequest.getParameter("nombre").trim().length() > 0)
+                nombre = renderRequest.getParameter("nombre").trim();
+
+            if (renderRequest.getParameter("entidad") != null &&
+                renderRequest.getParameter("entidad").trim().length() > 0)
+                entidad = renderRequest.getParameter("entidad").trim();
+
+            if (renderRequest.getParameter("seccional") != null &&
+                renderRequest.getParameter("seccional").trim().length() > 0) {
+                try {
+                    seccional = Integer.parseInt(renderRequest.getParameter("seccional").trim());
+                } catch (NumberFormatException e) {
+                    seccional = 0;
+                }
+            }
+
+            if (renderRequest.getParameter("numero_afi") != null &&
+                renderRequest.getParameter("numero_afi").trim().length() > 0) {
+                try {
+                    nroAfiliado = Integer.parseInt(renderRequest.getParameter("numero_afi").trim());
+                } catch (NumberFormatException e) {
+                    nroAfiliado = 0;
+                }
+            }
+
+            if (renderRequest.getParameter("nroSocioPrevencion") != null &&
+                renderRequest.getParameter("nroSocioPrevencion").trim().length() > 0) {
+                try {
+                    nroSocioPrev = Integer.parseInt(renderRequest.getParameter("nroSocioPrevencion").trim());
+                } catch (NumberFormatException e) {
+                    nroSocioPrev = 0;
+                }
+            }
+
+            if (renderRequest.getParameter("nroCredencialPrevencion") != null &&
+                renderRequest.getParameter("nroCredencialPrevencion").trim().length() > 0) {
+                try {
+                    nroCredencialPrev = new BigDecimal(renderRequest.getParameter("nroCredencialPrevencion").trim());
+                } catch (NumberFormatException e) {
+                    nroCredencialPrev = null;
+                }
+            }
+            
+            List<Afiliado> busqueda = BusquedaAfiliadoServiceUtil.getBusquedaAfiliadosComponente(
+                cuil,
+                inte,
+                tipoDoc,
+                nroDoc,
+                seccional,
+                apellido,
+                nombre,
+                entidad,
+                nroAfiliado,
+                nroSocioPrev,
+                nroCredencialPrev
+            );
+            
+            //filtra solo afiliados titulares (inte = 0)
+            List<Afiliado> soloTitulares = new ArrayList<Afiliado>();
+            for (Afiliado a : busqueda) {
+                if (a.getInte() == 0) {
+                    soloTitulares.add(a);
+                }
+            }
+
+            //reemplaza lista original por la filtrada
+            busqueda = soloTitulares;
+            _log.info("Filtrando afiliados: total=" + busqueda.size() + ", soloTitulares=" + soloTitulares.size());
+
+            //guardar en session y request
+            renderRequest.getPortletSession().removeAttribute(WebKeysAfiliados.LISTA_AFILIADOS_EN_SESSION, PortletSession.APPLICATION_SCOPE);
+            renderRequest.getPortletSession().setAttribute(WebKeysAfiliados.LISTA_AFILIADOS_EN_SESSION, busqueda, PortletSession.APPLICATION_SCOPE);
+
+            renderRequest.removeAttribute(WebKeysAfiliados.BUSQUEDA_AFILIADO);
+            renderRequest.setAttribute(WebKeysAfiliados.BUSQUEDA_AFILIADO, busqueda);
+
+            return mapping.findForward("portlet.afiliados.result.search.cuenta_bancaria");
+
+        } catch (Exception e) {
+            _log.error("Error en render de AfiCuentasBancariasAction", e);
+            throw e;
+        }
+    }
+}

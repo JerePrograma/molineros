@@ -1,0 +1,13 @@
+eclipse.preferences.version=1
+encoding//ext-impl/src/ar/com/ospim/afiliados/action/BuscarAfiliadosAction.java=UTF-8
+encoding//ext-impl/src/ar/com/ospim/afiliados/services/BusquedaAfiliadoServiceImpl.java=UTF-8
+encoding//ext-impl/src/ar/com/ospim/liquidaciones/action/DebitoTercerizadorasAction.java=UTF-8
+encoding//ext-impl/src/ar/com/ospim/novedades/beans/PreAfiliado.java=UTF-8
+encoding//ext-web/docroot/html/portlet/afiliados/afiliados_search_result.jsp=UTF-8
+encoding//ext-web/docroot/html/portlet/autorizaciones/busqueda_afiliado.jsp=UTF-8
+encoding//ext-web/docroot/html/portlet/autorizaciones/busqueda_afiliado_filtro_preautorizaciones.jsp=UTF-8
+encoding//ext-web/docroot/html/portlet/autorizaciones/busqueda_afiliado_filtro_prevencion.jsp=UTF-8
+encoding//ext-web/docroot/html/portlet/autorizaciones/pre_autorizaciones/preautorizacion_edit.jsp=UTF-8
+encoding//ext-web/docroot/html/portlet/autorizaciones/pre_autorizaciones/preautorizacion_list.jsp=UTF-8
+encoding//ext-web/docroot/html/portlet/prestadores/convenios_prest/editar_convenio_prest.jsp=UTF-8
+encoding/<project>=UTF-8

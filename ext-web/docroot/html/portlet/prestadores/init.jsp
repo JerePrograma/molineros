@@ -78,7 +78,6 @@
 
 <%@ page import="ar.com.empresas.beans.Contacto" %>
 
-<%@ page import="ar.com.ospim.liquidaciones.WebKeysLiquidaciones" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.Prestador" %>
 
 <%@ page import="ar.com.ospim.correspondencia.WebKeysCorrespondencia" %>
@@ -102,7 +101,6 @@
 <%@ page import="ar.com.ospim.comprobantesPortalProveedores.beans.ComprobanteIntegracion" %>
 <%@ page import="ar.com.ospim.comprobantesPortalProveedores.beans.ComprobanteAcompanante" %>
 <%@ page import="ar.com.ospim.comprobantesPortalProveedores.beans.ComprobanteHospital" %>
-<%@ page import="ar.com.ospim.liquidaciones.WebKeysLiquidaciones" %>
 
 <%@ taglib uri="http://liferay.com/tld/ui-custom" prefix="liferay-ui-custom" %>
 <portlet:defineObjects />

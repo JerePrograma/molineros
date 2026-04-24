@@ -105,7 +105,7 @@
 		}
 		jQuery('#<portlet:namespace />buscandoConvPrest').show();
 		
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/buscar_conv_prestac&id_prestador='+id_prestador+'&cuit='+cuit+'&descripcion='+encodeURI(descripcion)+'&estado='+estado;
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/buscar_conv_prestac&id_prestador='+id_prestador+'&cuit='+cuit+'&descripcion='+encodeURI(descripcion)+'&estado='+estado;
 		jQuery('#<portlet:namespace />busquedaConvPrestacDiv').load(url, function() {
         																jQuery('#<portlet:namespace />buscandoConvPrest').hide();            															
         															  }
@@ -122,13 +122,13 @@
 	}
 
 	function <portlet:namespace />altaConvenioPrest() {
-		<%-- var url = '<portlet:renderURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/editar_convenio_prest_entry" /></portlet:renderURL>';
+		<%-- var url = '<portlet:renderURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/prestadores/editar_convenio_prest_entry" /></portlet:renderURL>';
 		url = url+'&<%= Constants.CMD %>='+'<%=Constants.ADD%>'; --%>
 		document.<portlet:namespace />fm.method = 'post';
 		
 		var cmd_ = '<%=Constants.ADD%>';
 
-		var xportletUrl = '/liquidaciones/editar_convenio_prest_entry';
+		var xportletUrl = '/prestadores/editar_convenio_prest_entry';
 		
 		var url= '<liferay-portlet:renderURL windowState="<%= LiferayWindowState.MAXIMIZED.toString()%>">'+
 		'<liferay-portlet:param name="struts_action" value="__xportletUrl" />'+
@@ -147,7 +147,7 @@
 		
 		var params = {"id_convenio_prest" : id_conv_prest, "<%= Constants.CMD %>" : "<%=Constants.DELETE%>" }
 		
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/editar_convenio_prest_entry';
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/editar_convenio_prest_entry';
 		jQuery('#<portlet:namespace />busquedaConvPrestacDiv').load(url, params, function() {
 											jQuery('#<portlet:namespace />buscandoConvPrest').hide();            															
 										  });

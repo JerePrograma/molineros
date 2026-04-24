@@ -1,0 +1,4 @@
+#Datos de conexion subida detalle de padron subida Pago Facil
+host = sftp.pagofacil.com.ar
+user = u90062588
+port = 22

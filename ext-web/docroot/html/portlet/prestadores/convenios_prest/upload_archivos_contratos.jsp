@@ -1,4 +1,4 @@
-<%@ include file="/html/portlet/prestadores/convenios_prest/init.jsp" %>
+<%@ include file="/html/portlet/liquidaciones/init.jsp"%>
 
 <%
 
@@ -61,7 +61,7 @@ if (errores != null && !errores.isEmpty()){
 
 <script type="text/javascript">
 		function <portlet:namespace />uploadArchivos() {	
-			var url = '<portlet:actionURL windowState="<%= WindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/upload_archivo_contratos"/></portlet:actionURL>';			
+			var url = '<portlet:actionURL windowState="<%= WindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/prestadores/upload_archivo_contratos"/></portlet:actionURL>';			
 			document.<portlet:namespace />fm2.method = 'post';
 			submitForm(document.<portlet:namespace />fm2, url+'&archivo=todos');
 		}

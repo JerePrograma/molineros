@@ -1,0 +1,2963 @@
+package ar.com.ospim.liquidaciones.services;
+
+import java.math.BigDecimal;
+import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Date;
+
+import com.liferay.portal.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.model.User;
+
+import ar.com.ospim.global.WebKeysGlobal;
+import ar.com.ospim.global.beans.Comprobante;
+import ar.com.ospim.global.beans.Comprobante.ComprobanteConcepto;
+import ar.com.ospim.global.beans.Concepto;
+import ar.com.ospim.global.beans.Empresa;
+import ar.com.ospim.global.services.ComprobanteServiceUtil;
+import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
+import ar.com.ospim.liquidaciones.reportes.bean.DebitosHospitales;
+import ar.com.ospim.liquidaciones.reportes.bean.DebitosLiquidacionesPendientes;
+import ar.com.ospim.liquidaciones.reportes.bean.DebitosaPrestadores;
+import ar.com.ospim.liquidaciones.reportes.bean.DebitosaReintegros;
+import ar.com.ospim.liquidaciones.reportes.bean.DebitosaTotal;
+import ar.com.ospim.util.ConnectionHelper;
+import ar.com.ospim.util.DateUtils;
+
+/**
+ * <a href="BusquedaDebitoTercerizadorasServiceImpl.java.html"><b><i>View
+ * Source</i></b></a>
+ *
+ * @author Pablo Conde
+ */
+public class BusquedaDebitoTercerizadorasServiceImpl {
+    static int entidad = WebKeysGlobal.OSPIM;
+
+
+    private static Log _log = LogFactoryUtil.getLog(BusquedaDebitoTercerizadorasServiceImpl.class);
+
+    public List<DebitosLiquidacionesPendientes> getBusquedaDebitosaLiquidacionesPendientes(Date fechaDesde, Date fechaHasta, DebitosaTotal debitosaTotal, String idTercerizadoras)
+            throws SystemException, NumberFormatException, ParseException {
+
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ArrayList<DebitosLiquidacionesPendientes> debitosAutogestion = null;
+        debitosAutogestion = new ArrayList<DebitosLiquidacionesPendientes>();
+        BigDecimal montoTotal = new BigDecimal(0);
+        BigDecimal montoPrestador = new BigDecimal(0);
+
+
+        try {
+            String sql = "{call public.reporte_debito_liq_pendientes(?,?,?)}";
+
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql.toString());
+            stmt.setDate(1, fechaDesde == null ? null : new java.sql.Date(fechaDesde.getTime()));
+            stmt.setDate(2, fechaHasta == null ? null : new java.sql.Date(fechaHasta.getTime()));
+            stmt.setString(3, idTercerizadoras);
+
+            String ordenPagoAnterior = null;
+
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                DebitosLiquidacionesPendientes debito = new DebitosLiquidacionesPendientes();
+
+                debito.setHospitalesAutogestion(rs.getString("v_nombre_prestador"));
+                debito.setFactura(rs.getString("v_numero_factura"));
+                debito.setMonto(rs.getBigDecimal("v_monto_prestador"));
+                debito.setCargoPrestadoraReclamo(rs.getBigDecimal("v_cargo_reclamo") != null ? rs.getBigDecimal("v_cargo_reclamo") : new BigDecimal("0"));
+
+
+                //acumulador
+                montoPrestador = montoPrestador.add(rs.getBigDecimal("v_monto_prestador") != null ? rs.getBigDecimal("v_monto_prestador") : new BigDecimal("0"));
+
+                debito.setMonto(rs.getBigDecimal("v_monto_prestador"));
+                montoTotal = montoTotal.add(rs.getBigDecimal("v_monto_prestador"));
+
+                debitosAutogestion.add(debito);
+
+
+            }
+            debitosaTotal.setMontoLiquidacionPendiente(montoPrestador);
+            debitosaTotal.setMontoLiquidacionPendienteDebito(montoPrestador);
+        } catch (Exception e) {
+            _log.error(e);
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+        return debitosAutogestion;
+    }
+
+
+    public List<?> getBusquedaDebitosaGrabados(String tipo, Date fechaHasta, String idTercerizadoras)
+            throws SystemException, NumberFormatException, ParseException {
+        _log.info("[CHECK-GRABADOS] tipo=" + tipo + " fechaHasta=" + fechaHasta + " terc=" + idTercerizadoras);
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+
+        // Listas SIEMPRE no-null
+        ArrayList<DebitosLiquidacionesPendientes> debitosAutogestion = new ArrayList<DebitosLiquidacionesPendientes>();
+        ArrayList<DebitosHospitales> debitosHospitales = new ArrayList<DebitosHospitales>();
+        ArrayList<DebitosaReintegros> listaReintegros = new ArrayList<DebitosaReintegros>();
+        ArrayList<DebitosaPrestadores> listaPrestadores = new ArrayList<DebitosaPrestadores>();
+
+        try {
+            String sql = "{call public.reporte_debito_grabado_detalle(?,?,?)}";
+
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql);
+
+            stmt.setString(1, tipo);
+
+            if (fechaHasta != null) {
+                stmt.setDate(2, new java.sql.Date(fechaHasta.getTime()));
+            } else {
+                stmt.setNull(2, java.sql.Types.DATE);
+            }
+
+            stmt.setString(3, idTercerizadoras);
+
+            rs = stmt.executeQuery();
+
+            if (WebKeysLiquidaciones.DEBITOS_LIQ_PENDIENTES.equals(tipo)) {
+
+                while (rs.next()) {
+                    DebitosLiquidacionesPendientes debito = new DebitosLiquidacionesPendientes();
+
+                    debito.setHospitalesAutogestion(rs.getString("descripcion"));
+                    debito.setFactura(rs.getString("numero_factura"));
+
+                    BigDecimal monto = rs.getBigDecimal("monto_debitar");
+                    if (monto == null) monto = BigDecimal.ZERO;
+                    debito.setMonto(monto);
+
+                    BigDecimal reclamo = rs.getBigDecimal("monto_debitar_reclamo");
+                    if (reclamo == null) reclamo = BigDecimal.ZERO;
+                    debito.setCargoPrestadoraReclamo(reclamo);
+
+                    debitosAutogestion.add(debito);
+                }
+                return debitosAutogestion;
+
+            } else if (WebKeysLiquidaciones.DEBITOS_HOSPITALES.equals(tipo)) {
+
+                while (rs.next()) {
+                    DebitosHospitales debito = new DebitosHospitales();
+
+                    debito.setHospital(rs.getString("descripcion"));
+                    debito.setFactura(rs.getString("numero_factura"));
+
+                    BigDecimal monto = rs.getBigDecimal("monto_debitar");
+                    if (monto == null) monto = BigDecimal.ZERO;
+                    debito.setMonto(monto);
+
+                    debito.setOrdenPago(rs.getString("numero_op"));
+
+                    // >>> CLAVE: leer numero como Integer para distinguir NULL
+                    Integer num = (Integer) rs.getObject("numero"); // NULL-safe
+                    if (num != null) {
+                        debito.setIdLiquidacion(num.intValue());
+                    } else {
+                        debito.setIdLiquidacion(0); // placeholder (no lo uses para dedup)
+                    }
+
+                    // >>> Si numero viene NULL, NO deduplicar: agregá tal cual (detalle fiel)
+                    if (num == null) {
+                        debitosHospitales.add(debito);
+                    } else {
+                        if (!this.existeElemento(debitosHospitales, debito)) {
+                            debitosHospitales.add(debito);
+                        }
+                    }
+                }
+                return debitosHospitales;
+
+            } else if (WebKeysLiquidaciones.DEBITOS_REINTEGROS.equals(tipo)) {
+
+                while (rs.next()) {
+                    DebitosaReintegros reintegro = new DebitosaReintegros();
+
+                    reintegro.setDescripcion(rs.getString("descripcion"));
+                    reintegro.setDocumento(rs.getString("numero_documento"));
+                    reintegro.setFechaOP(rs.getDate("fecha_op"));
+                    reintegro.setSeccional(rs.getString("desc_seccional"));
+                    reintegro.setNumeroOP(rs.getString("numero_op"));
+
+                    reintegro.setApellido(rs.getString("apellido"));
+                    reintegro.setNombre(rs.getString("nombre"));
+                    reintegro.setNumReintegro(rs.getInt("numero"));
+
+                    BigDecimal monto = rs.getBigDecimal("monto_debitar");
+                    if (monto == null) monto = BigDecimal.ZERO;
+                    reintegro.setImporteTotal(monto);
+
+                    reintegro.setReclamoPrestacional(rs.getInt("id_reclamo_prestacional"));
+
+                    listaReintegros.add(reintegro);
+                }
+                return listaReintegros;
+
+            } else if (WebKeysLiquidaciones.DEBITOS_PRESTADORES.equals(tipo)) {
+
+                while (rs.next()) {
+                    DebitosaPrestadores prestador = new DebitosaPrestadores();
+
+                    prestador.setPrestador(rs.getString("descripcion"));
+                    prestador.setFactura(rs.getString("numero_factura"));
+                    prestador.setOrdenPago(rs.getString("numero_op"));
+
+                    BigDecimal monto = rs.getBigDecimal("monto_debitar");
+                    if (monto == null) monto = BigDecimal.ZERO;
+
+                    prestador.setCargoPrestadora(monto);
+                    prestador.setMonto(monto);
+
+                    prestador.setIdLiquidacion(rs.getInt("numero"));
+                    prestador.setReclamoPrestacional(rs.getInt("id_reclamo_prestacional"));
+                    prestador.setReclamosPrestacionales(rs.getString("reclamos"));
+
+                    if (!this.existeElemento(listaPrestadores, prestador)) {
+                        listaPrestadores.add(prestador);
+                    }
+                }
+                return listaPrestadores;
+            }
+
+            // Tipo desconocido => lista vacía (pero no null)
+            return new ArrayList<Object>();
+
+        } catch (SQLException e) {
+            _log.error("Error en getBusquedaDebitosaGrabados tipo=" + tipo
+                    + " fechaHasta=" + (fechaHasta != null ? fechaHasta.getTime() : "null")
+                    + " tercerizadoras=" + idTercerizadoras, e);
+            throw new SystemException(e);
+
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (Exception ignore) {
+                }
+            }
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+
+    public List<DebitosHospitales> getBusquedaDebitosHospitales(
+            Date fechaDesde, Date fechaHasta, DebitosaTotal debitosaTotal, String idTercerizadoras) {
+        Connection con = null;
+        CallableStatement stmt = null;
+        List<DebitosHospitales> debitosHospitales = null;
+        BigDecimal montoTotal = new BigDecimal(0);
+        BigDecimal montoPrestador = new BigDecimal(0);
+        BigDecimal aux = new BigDecimal(0);
+        Boolean existe = false;
+
+        try {
+            String sql = "{call public.reporte_debito_hospitales(?,?,?)}";
+
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql.toString());
+            stmt.setDate(1, fechaDesde == null ? null : new java.sql.Date(fechaDesde.getTime()));
+            stmt.setDate(2, fechaHasta == null ? null : new java.sql.Date(fechaHasta.getTime()));
+            stmt.setString(3, idTercerizadoras);
+
+            ResultSet rs = stmt.executeQuery();
+            debitosHospitales = new ArrayList<DebitosHospitales>();
+            while (rs.next()) {
+                DebitosHospitales debito = new DebitosHospitales();
+
+
+                debito.setHospital(rs.getString("v_nombre_prestador"));
+                debito.setFactura(rs.getString("v_numero_factura"));
+                debito.setMonto(rs.getBigDecimal("v_monto_prestador"));
+                debito.setOrdenPago(rs.getString("v_id_orden_pago"));
+
+                debito.setIdLiquidacion(rs.getInt("v_id_liquidacion"));
+
+
+                //				if (!this.existeElemento(debitosHospitales, debito) ) {
+                //					debitosHospitales.add(debito);
+                //					montoPrestador = montoPrestador.add(rs.getBigDecimal("v_monto_prestador") != null ? rs.getBigDecimal("v_monto_prestador") : new BigDecimal("0") ) ;
+                //				}
+
+                //DS AGregad0 2022-09-21 Prueba porque traia 2 prestaciones para una liquidacion y no sumaba
+                montoPrestador = montoPrestador.add(rs.getBigDecimal("v_monto_prestador") != null ? rs.getBigDecimal("v_monto_prestador") : new BigDecimal("0"));
+                aux = rs.getBigDecimal("v_monto_prestador") != null ? rs.getBigDecimal("v_monto_prestador") : new BigDecimal("0");
+                existe = false;
+                for (DebitosHospitales deb : debitosHospitales) {
+                    if (deb.getIdLiquidacion() == debito.getIdLiquidacion()) {
+                        deb.setMonto(deb.getMonto().add(aux));
+                        existe = true;
+                    }
+                }
+                if (!existe) debitosHospitales.add(debito);
+                //Fin Agregado
+            }
+            debitosaTotal.setMontoHospitales(montoPrestador);
+            debitosaTotal.setMontoHospitaleDebito(montoPrestador);
+
+
+        } catch (Exception e) {
+            _log.error(e);
+            _log.debug(e.getMessage());
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+        return debitosHospitales;
+    }
+
+    public List<DebitosHospitales> getBusquedaDebitosHospitalesStatus(
+            Date fechaDesde,
+            Date fechaHasta,
+            DebitosaTotal debitosaTotal,
+            String idTercerizadoras
+            
+    ) {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        List<DebitosHospitales> debitosHospitales = new ArrayList<DebitosHospitales>();
+        BigDecimal montoPrestador = BigDecimal.ZERO;
+
+        final boolean dbg = _log.isDebugEnabled();
+        final int sampleRowsToLog = 50;
+        final String rid = "HO-STATUS#" + System.currentTimeMillis() + "-" + (int) (Math.random() * 10000);
+
+        final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        final java.sql.Date sqlDesde = (fechaDesde == null) ? null : new java.sql.Date(fechaDesde.getTime());
+        final java.sql.Date sqlHasta = (fechaHasta == null) ? null : new java.sql.Date(fechaHasta.getTime());
+
+        int rowCount = 0;
+        int statusTrueCount = 0;
+        int statusFalseCount = 0;
+        int statusNullCount = 0;
+        int idLiqNullCount = 0;
+        int opIdNullCount = 0;
+
+        Set<Integer> distinctLiq = new HashSet<Integer>();
+        Set<String> distinctOp = new HashSet<String>();
+        Map<Integer, Integer> noCoincidePorLiq = new HashMap<Integer, Integer>();
+
+        final String sql = "SELECT * FROM public.reporte_debito_hospitales_con_status(?::date, ?::date, ?::varchar)";
+
+        try {
+
+            con = ConnectionHelper.getConnection();
+            if (dbg) _log.debug(prefix(rid) + "[DB] gotConnection=" + (con != null));
+
+            ps = con.prepareStatement(sql);
+
+            if (sqlDesde == null) ps.setNull(1, Types.DATE);
+            else ps.setDate(1, sqlDesde);
+
+            if (sqlHasta == null) ps.setNull(2, Types.DATE);
+            else ps.setDate(2, sqlHasta);
+
+            if (Validator.isNull(idTercerizadoras)) {
+                _log.warn(prefix(rid) + "getBusquedaDebitosHospitalesStatus: tercerizadora null/vacía -> retorno vacío (evito mezclar terceros)");
+                return new ArrayList<DebitosHospitales>();
+            }
+            final String terc = idTercerizadoras.trim();
+            ps.setString(3, terc);
+
+            _log.info(prefix(rid) + "[IN] fechaDesde=" + fmt(sdf, fechaDesde) + " (" + ms(fechaDesde) + ")"
+                    + " fechaHasta=" + fmt(sdf, fechaHasta) + " (" + ms(fechaHasta) + ")"
+                    + " tercerizadoras=" + safe(terc));
+
+            if (dbg) {
+                _log.debug(prefix(rid) + "[SQL] " + sql);
+                _log.debug(prefix(rid) + "[SQL-PARAMS] p1(fechaDesde)=" + (sqlDesde == null ? "NULL" : sqlDesde.toString())
+                        + " p2(fechaHasta)=" + (sqlHasta == null ? "NULL" : sqlHasta.toString())
+                        + " p3(idTercerizadoras)=" + safe(terc));
+            }
+
+            long tQ0 = System.currentTimeMillis();
+            rs = ps.executeQuery();
+            long tQ1 = System.currentTimeMillis();
+            if (dbg) _log.debug(prefix(rid) + "[DB] executeQuery ok, elapsedMs=" + (tQ1 - tQ0));
+
+            if (dbg) {
+                try {
+                    ResultSetMetaData md = rs.getMetaData();
+                    int cols = md.getColumnCount();
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(prefix(rid)).append("[RS-META] columns=").append(cols).append(" => ");
+                    for (int i = 1; i <= cols; i++) {
+                        if (i > 1) sb.append(" | ");
+                        sb.append(i).append(":")
+                                .append(md.getColumnLabel(i)).append("(").append(md.getColumnTypeName(i)).append(")");
+                    }
+                    _log.debug(sb.toString());
+                } catch (Exception metaEx) {
+                    _log.warn(prefix(rid) + "[RS-META] no se pudo leer metadata", metaEx);
+                }
+            }
+
+            while (rs.next()) {
+                rowCount++;
+
+                DebitosHospitales debito = new DebitosHospitales();
+
+                BigDecimal opId = rs.getBigDecimal("v_id_orden_pago");
+                if (opId == null) opIdNullCount++;
+                String opIdStr = (opId == null) ? null : opId.toPlainString();
+                debito.setOrdenPago(opIdStr);
+                if (opIdStr != null) distinctOp.add(opIdStr);
+
+                String hospital = rs.getString("v_nombre_prestador");
+                String factura = rs.getString("v_numero_factura");
+                debito.setHospital(hospital);
+                debito.setFactura(factura);
+
+                BigDecimal monto = rs.getBigDecimal("v_monto_prestador");
+                if (monto == null) monto = BigDecimal.ZERO;
+                debito.setMonto(monto);
+
+                int idLiq = rs.getInt("v_id_liquidacion");
+                boolean idLiqWasNull = rs.wasNull();
+                if (idLiqWasNull) {
+                    idLiqNullCount++;
+                    idLiq = 0;
+                }
+                debito.setIdLiquidacion(idLiq);
+                if (!idLiqWasNull) distinctLiq.add(idLiq);
+
+                boolean st = rs.getBoolean("status");
+                boolean stWasNull = rs.wasNull();
+                if (stWasNull) {
+                    statusNullCount++;
+                    debito.setStatus(null);
+                } else {
+                    debito.setStatus(Boolean.valueOf(st));
+                    if (st) {
+                        statusTrueCount++;
+                        noCoincidePorLiq.put(idLiq, noCoincidePorLiq.getOrDefault(idLiq, 0) + 1);
+                    } else {
+                        statusFalseCount++;
+                    }
+                }
+
+                BigDecimal cargoPrestadora = rs.getBigDecimal("v_cargo_ospim");
+                BigDecimal importeTotal = rs.getBigDecimal("v_importe");
+                debito.setCargoPrestadora(cargoPrestadora);
+                debito.setImporteTotal(importeTotal);
+
+                montoPrestador = montoPrestador.add(monto);
+
+                debitosHospitales.add(debito);
+
+                if (dbg && rowCount <= sampleRowsToLog) {
+                    _log.debug(prefix(rid) + "[ROW#" + rowCount + "] "
+                            + "opId=" + bd(opId)
+                            + " liq=" + idLiq + (idLiqWasNull ? "(NULL->0)" : "")
+                            + " status=" + (stWasNull ? "NULL" : String.valueOf(st))
+                            + " monto=" + bd(monto)
+                            + " hospital=" + safe(hospital)
+                            + " factura=" + safe(factura)
+                            + " cargoPrestadora=" + bd(cargoPrestadora)
+                            + " importeTotal=" + bd(importeTotal));
+                }
+            }
+
+            if (debitosaTotal != null) {
+                if (dbg) _log.debug(prefix(rid) + "[TOTALS-BEFORE] montoHospitales="
+                        + bd(debitosaTotal.getMontoHospitales())
+                        + " montoHospitaleDebito=" + bd(debitosaTotal.getMontoHospitaleDebito()));
+                debitosaTotal.setMontoHospitales(montoPrestador);
+                debitosaTotal.setMontoHospitaleDebito(montoPrestador);
+                if (dbg) _log.debug(prefix(rid) + "[TOTALS-AFTER] montoHospitales="
+                        + bd(debitosaTotal.getMontoHospitales())
+                        + " montoHospitaleDebito=" + bd(debitosaTotal.getMontoHospitaleDebito()));
+            } else {
+                _log.warn(prefix(rid) + "[TOTALS] debitosaTotal=null (no se setean totales)");
+            }
+
+            _log.info(prefix(rid) + "[OUT] rows=" + rowCount
+                    + " distinctLiq=" + distinctLiq.size()
+                    + " distinctOp=" + distinctOp.size()
+                    + " statusTrue(NO COINCIDE)=" + statusTrueCount
+                    + " statusFalse(OK)=" + statusFalseCount
+                    + " statusNull=" + statusNullCount
+                    + " idLiqNull=" + idLiqNullCount
+                    + " opIdNull=" + opIdNullCount
+                    + " montoPrestadorSum=" + bd(montoPrestador));
+
+            if (dbg) {
+                logTopNoCoincidePorLiq(rid, noCoincidePorLiq, 20);
+                logSampleList(rid, debitosHospitales, 10);
+            }
+
+            return debitosHospitales;
+
+        } catch (Exception e) {
+            _log.error(prefix(rid) + "Error en getBusquedaDebitosHospitalesStatus", e);
+            return debitosHospitales;
+
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    public List<DebitosaPrestadores> getBusquedaDebitosPrestadoresStatus(
+            Date fechaDesde,
+            Date fechaHasta,
+            DebitosaTotal debitosaTotal,
+            String idTercerizadoras
+            
+    ) {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        List<DebitosaPrestadores> out = new ArrayList<DebitosaPrestadores>();
+        BigDecimal montoPrestadorSum = BigDecimal.ZERO;
+
+        final boolean dbg = _log.isDebugEnabled();
+        final int sampleRowsToLog = 50;
+        final String rid = "PR-STATUS#" + System.currentTimeMillis() + "-" + (int) (Math.random() * 10000);
+
+        final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        final java.sql.Date sqlDesde = (fechaDesde == null) ? null : new java.sql.Date(fechaDesde.getTime());
+        final java.sql.Date sqlHasta = (fechaHasta == null) ? null : new java.sql.Date(fechaHasta.getTime());
+
+        final String terc = (idTercerizadoras == null || idTercerizadoras.trim().isEmpty()) ? null : idTercerizadoras.trim();
+
+        int rowCount = 0;
+        int statusTrueCount = 0;
+        int statusFalseCount = 0;
+        int statusNullCount = 0;
+        int reinNullCount = 0;
+        int opNullCount = 0;
+
+        Set<Integer> distinctReintegro = new HashSet<Integer>();
+        Set<String> distinctOp = new HashSet<String>();
+        Map<Integer, Integer> noCoincidePorReintegro = new HashMap<Integer, Integer>();
+
+        final String sql = "SELECT * FROM public.reporte_debito_prestadores_con_status(?::date, ?::date, ?::varchar)";
+
+        try {
+            _log.info(prefix(rid) + "[IN] fechaDesde=" + fmt(sdf, fechaDesde) + " (" + ms(fechaDesde) + ")"
+                    + " fechaHasta=" + fmt(sdf, fechaHasta) + " (" + ms(fechaHasta) + ")"
+                    + " tercerizadoras=" + safe(terc));
+
+            if (dbg) {
+                _log.debug(prefix(rid) + "[SQL] " + sql);
+                _log.debug(prefix(rid) + "[SQL-PARAMS] p1(fechaDesde)=" + (sqlDesde == null ? "NULL" : sqlDesde.toString())
+                        + " p2(fechaHasta)=" + (sqlHasta == null ? "NULL" : sqlHasta.toString())
+                        + " p3(idTercerizadoras)=" + safe(terc));
+            }
+
+            con = ConnectionHelper.getConnection();
+            if (dbg) _log.debug(prefix(rid) + "[DB] gotConnection=" + (con != null));
+
+            ps = con.prepareStatement(sql);
+
+            if (sqlDesde == null) ps.setNull(1, Types.DATE);
+            else ps.setDate(1, sqlDesde);
+            if (sqlHasta == null) ps.setNull(2, Types.DATE);
+            else ps.setDate(2, sqlHasta);
+            if (terc == null) ps.setNull(3, Types.VARCHAR);
+            else ps.setString(3, terc);
+
+            long tQ0 = System.currentTimeMillis();
+            rs = ps.executeQuery();
+            long tQ1 = System.currentTimeMillis();
+            if (dbg) _log.debug(prefix(rid) + "[DB] executeQuery ok, elapsedMs=" + (tQ1 - tQ0));
+
+            if (dbg) {
+                try {
+                    ResultSetMetaData md = rs.getMetaData();
+                    int cols = md.getColumnCount();
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(prefix(rid)).append("[RS-META] columns=").append(cols).append(" => ");
+                    for (int i = 1; i <= cols; i++) {
+                        if (i > 1) sb.append(" | ");
+                        sb.append(i).append(":")
+                                .append(md.getColumnLabel(i)).append("(").append(md.getColumnTypeName(i)).append(")");
+                    }
+                    _log.debug(sb.toString());
+                } catch (Exception metaEx) {
+                    _log.warn(prefix(rid) + "[RS-META] no se pudo leer metadata", metaEx);
+                }
+            }
+
+            while (rs.next()) {
+                rowCount++;
+
+                DebitosaPrestadores deb = new DebitosaPrestadores();
+
+                int rein = rs.getInt("reintegro");
+                boolean reinWasNull = rs.wasNull();
+                if (reinWasNull) {
+                    reinNullCount++;
+                    rein = 0;
+                }
+                deb.setIdLiquidacion(rein);
+                if (!reinWasNull) distinctReintegro.add(Integer.valueOf(rein));
+
+                String prestador = rs.getString("prestador");
+                String factura = rs.getString("num_comprobante");
+                deb.setPrestador(prestador);
+                deb.setFactura(factura);
+
+                String op = rs.getString("id_orden_pago");
+                if (op == null) opNullCount++;
+                deb.setOrdenPago(op);
+                if (op != null) distinctOp.add(op);
+
+                BigDecimal cargoPrestadora = rs.getBigDecimal("cargo_prestadora");
+                if (cargoPrestadora == null) cargoPrestadora = BigDecimal.ZERO;
+                deb.setCargoPrestadora(cargoPrestadora);
+
+                BigDecimal monto = rs.getBigDecimal("monto");
+                if (monto == null) monto = BigDecimal.ZERO;
+                deb.setMonto(monto);
+
+                montoPrestadorSum = montoPrestadorSum.add(cargoPrestadora);
+
+                int rp = rs.getInt("id_reclamo_prestacional");
+                boolean rpWasNull = rs.wasNull();
+                if (!rpWasNull) deb.setReclamoPrestacional(rp);
+
+                boolean st = rs.getBoolean("status");
+                boolean stWasNull = rs.wasNull();
+                if (stWasNull) {
+                    statusNullCount++;
+                    deb.setStatus(null);
+                } else {
+                    deb.setStatus(Boolean.valueOf(st));
+                    if (st) {
+                        statusTrueCount++;
+                        noCoincidePorReintegro.put(rein, noCoincidePorReintegro.getOrDefault(rein, 0) + 1);
+                    } else {
+                        statusFalseCount++;
+                    }
+                }
+
+                out.add(deb);
+
+                if (dbg && rowCount <= sampleRowsToLog) {
+                    _log.debug(prefix(rid) + "[ROW#" + rowCount + "] "
+                            + "rein=" + rein + (reinWasNull ? "(NULL->0)" : "")
+                            + " op=" + safe(op)
+                            + " status=" + (stWasNull ? "NULL" : String.valueOf(st))
+                            + " cargoPrestadora=" + bd(cargoPrestadora)
+                            + " monto=" + bd(monto)
+                            + " prestador=" + safe(prestador)
+                            + " factura=" + safe(factura));
+                }
+            }
+
+            if (debitosaTotal != null) {
+                debitosaTotal.setMontoPrestadores(montoPrestadorSum);
+                debitosaTotal.setMontoPrestadoreDebito(montoPrestadorSum);
+            }
+
+            _log.info(prefix(rid) + "[OUT] rows=" + rowCount
+                    + " distinctReintegro=" + distinctReintegro.size()
+                    + " distinctOp=" + distinctOp.size()
+                    + " statusTrue(NO COINCIDE)=" + statusTrueCount
+                    + " statusFalse(OK)=" + statusFalseCount
+                    + " statusNull=" + statusNullCount
+                    + " reinNull=" + reinNullCount
+                    + " opNull=" + opNullCount
+                    + " montoPrestadorSum=" + bd(montoPrestadorSum));
+
+            if (dbg) {
+                logTopNoCoincidePorLiq(rid, noCoincidePorReintegro, 20);
+                logSampleListPR(rid, out, 10);
+            }
+
+            return out;
+
+        } catch (Exception e) {
+            _log.error(prefix(rid) + "Error en getBusquedaDebitosPrestadoresStatus", e);
+            return out;
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+
+    public List<DebitosaReintegros> getBusquedaDebitosReintegrosStatus(
+            Date fechaDesde,
+            Date fechaHasta,
+            DebitosaTotal debitosaTotal,
+            String idTercerizadoras
+    ) {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        List<DebitosaReintegros> out = new ArrayList<DebitosaReintegros>();
+        BigDecimal montoPrestadorSum = BigDecimal.ZERO;
+
+        final boolean dbg = _log.isDebugEnabled();
+        final int sampleRowsToLog = 50;
+        final String rid = "RE-STATUS#" + System.currentTimeMillis() + "-" + (int) (Math.random() * 10000);
+
+        final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        final java.sql.Date sqlDesde = (fechaDesde == null) ? null : new java.sql.Date(fechaDesde.getTime());
+        final java.sql.Date sqlHasta = (fechaHasta == null) ? null : new java.sql.Date(fechaHasta.getTime());
+
+        final String terc = (idTercerizadoras == null || idTercerizadoras.trim().isEmpty()) ? null : idTercerizadoras.trim();
+
+        int rowCount = 0;
+        int statusTrueCount = 0;
+        int statusFalseCount = 0;
+        int statusNullCount = 0;
+        int reinNullCount = 0;
+        int opNullCount = 0;
+
+        Set<Integer> distinctReintegro = new HashSet<Integer>();
+        Set<String> distinctOp = new HashSet<String>();
+        Map<Integer, Integer> noCoincidePorReintegro = new HashMap<Integer, Integer>();
+
+        final String sql = "SELECT * FROM public.reporte_debito_reintegros_con_status(?::date, ?::date, ?::varchar)";
+
+        try {
+            _log.info(prefix(rid) + "[IN] fechaDesde=" + fmt(sdf, fechaDesde) + " (" + ms(fechaDesde) + ")"
+                    + " fechaHasta=" + fmt(sdf, fechaHasta) + " (" + ms(fechaHasta) + ")"
+                    + " tercerizadoras=" + safe(terc));
+
+            if (dbg) {
+                _log.debug(prefix(rid) + "[SQL] " + sql);
+                _log.debug(prefix(rid) + "[SQL-PARAMS] p1(fechaDesde)=" + (sqlDesde == null ? "NULL" : sqlDesde.toString())
+                        + " p2(fechaHasta)=" + (sqlHasta == null ? "NULL" : sqlHasta.toString())
+                        + " p3(idTercerizadoras)=" + safe(terc));
+            }
+
+            con = ConnectionHelper.getConnection();
+            if (dbg) _log.debug(prefix(rid) + "[DB] gotConnection=" + (con != null));
+
+            ps = con.prepareStatement(sql);
+            if (sqlDesde == null) ps.setNull(1, Types.DATE);
+            else ps.setDate(1, sqlDesde);
+            if (sqlHasta == null) ps.setNull(2, Types.DATE);
+            else ps.setDate(2, sqlHasta);
+            if (terc == null) ps.setNull(3, Types.VARCHAR);
+            else ps.setString(3, terc);
+
+            long tQ0 = System.currentTimeMillis();
+            rs = ps.executeQuery();
+            long tQ1 = System.currentTimeMillis();
+            if (dbg) _log.debug(prefix(rid) + "[DB] executeQuery ok, elapsedMs=" + (tQ1 - tQ0));
+
+            if (dbg) {
+                try {
+                    ResultSetMetaData md = rs.getMetaData();
+                    int cols = md.getColumnCount();
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(prefix(rid)).append("[RS-META] columns=").append(cols).append(" => ");
+                    for (int i = 1; i <= cols; i++) {
+                        if (i > 1) sb.append(" | ");
+                        sb.append(i).append(":")
+                                .append(md.getColumnLabel(i)).append("(").append(md.getColumnTypeName(i)).append(")");
+                    }
+                    _log.debug(sb.toString());
+                } catch (Exception metaEx) {
+                    _log.warn(prefix(rid) + "[RS-META] no se pudo leer metadata", metaEx);
+                }
+            }
+
+            while (rs.next()) {
+                rowCount++;
+
+                DebitosaReintegros deb = new DebitosaReintegros();
+
+                int rein = rs.getInt("id_reintegro");
+                boolean reinWasNull = rs.wasNull();
+                if (reinWasNull) {
+                    reinNullCount++;
+                    rein = 0;
+                }
+                deb.setNumReintegro(rein);
+                if (!reinWasNull) distinctReintegro.add(Integer.valueOf(rein));
+
+                String op = rs.getString("id_orden_pago");
+                if (op == null) opNullCount++;
+                if (op != null) distinctOp.add(op);
+
+                deb.setSeccional(rs.getString("seccional"));
+                deb.setDocumento(rs.getString("docu_numero"));
+                deb.setDescripcion(rs.getString("descripcion_r"));
+                deb.setApellido(rs.getString("apellido"));
+                deb.setNombre(rs.getString("nombre"));
+
+                BigDecimal monto = rs.getBigDecimal("monto_prestador");
+                if (monto == null) monto = BigDecimal.ZERO;
+                deb.setImporteTotal(monto);
+                montoPrestadorSum = montoPrestadorSum.add(monto);
+
+                try {
+                    Timestamp ts = rs.getTimestamp("alta_fecha_op");
+                    if (ts != null) deb.setFechaOP(new Date(ts.getTime()));
+                } catch (Exception ignore) {}
+
+                try {
+                    int rp = rs.getInt("id_reclamo_prestacional");
+                    if (!rs.wasNull()) deb.setReclamoPrestacional(rp);
+                } catch (Exception ignore) {}
+
+                boolean st = rs.getBoolean("status");
+                boolean stWasNull = rs.wasNull();
+                if (stWasNull) {
+                    statusNullCount++;
+                    deb.setStatus(null);
+                } else {
+                    deb.setStatus(Boolean.valueOf(st));
+                    if (st) {
+                        statusTrueCount++;
+                        noCoincidePorReintegro.put(rein, noCoincidePorReintegro.getOrDefault(rein, 0) + 1);
+                    } else {
+                        statusFalseCount++;
+                    }
+                }
+
+                out.add(deb);
+
+                if (dbg && rowCount <= sampleRowsToLog) {
+                    _log.debug(prefix(rid) + "[ROW#" + rowCount + "] "
+                            + "rein=" + rein + (reinWasNull ? "(NULL->0)" : "")
+                            + " op=" + safe(op)
+                            + " status=" + (stWasNull ? "NULL" : String.valueOf(st))
+                            + " monto=" + bd(monto)
+                            + " doc=" + safe(deb.getDocumento())
+                            + " ape=" + safe(deb.getApellido()));
+                }
+            }
+
+            if (debitosaTotal != null) {
+                debitosaTotal.setMontoReintegros(montoPrestadorSum);
+                debitosaTotal.setMontoReintegroDebito(montoPrestadorSum);
+            }
+
+            _log.info(prefix(rid) + "[OUT] rows=" + rowCount
+                    + " distinctReintegro=" + distinctReintegro.size()
+                    + " distinctOp=" + distinctOp.size()
+                    + " statusTrue(NO COINCIDE)=" + statusTrueCount
+                    + " statusFalse(OK)=" + statusFalseCount
+                    + " statusNull=" + statusNullCount
+                    + " reinNull=" + reinNullCount
+                    + " opNull=" + opNullCount
+                    + " montoPrestadorSum=" + bd(montoPrestadorSum));
+
+            if (dbg) {
+                logTopNoCoincidePorLiq(rid, noCoincidePorReintegro, 20);
+                logSampleListRE(rid, out, 10);
+            }
+
+            return out;
+
+        } catch (Exception e) {
+            _log.error(prefix(rid) + "Error en getBusquedaDebitosReintegrosStatus", e);
+            return out;
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    public List<DebitosLiquidacionesPendientes> getBusquedaDebitosLiquidacionesStatus(
+            Date fechaDesde,
+            Date fechaHasta,
+            DebitosaTotal debitosaTotal,
+            String idTercerizadoras
+            
+    ) {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        List<DebitosLiquidacionesPendientes> out = new ArrayList<DebitosLiquidacionesPendientes>();
+        BigDecimal montoPrestadorSum = BigDecimal.ZERO;
+
+        final boolean dbg = _log.isDebugEnabled();
+        final int sampleRowsToLog = 50;
+        final String rid = "LI-STATUS#" + System.currentTimeMillis() + "-" + (int) (Math.random() * 10000);
+
+        final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        final java.sql.Date sqlDesde = (fechaDesde == null) ? null : new java.sql.Date(fechaDesde.getTime());
+        final java.sql.Date sqlHasta = (fechaHasta == null) ? null : new java.sql.Date(fechaHasta.getTime());
+
+        final String terc = (idTercerizadoras == null || idTercerizadoras.trim().isEmpty()) ? null : idTercerizadoras.trim();
+
+        int rowCount = 0;
+        int statusTrueCount = 0;
+        int statusFalseCount = 0;
+        int statusNullCount = 0;
+        int liqNullCount = 0;
+
+        Set<Integer> distinctLiq = new HashSet<Integer>();
+        Map<Integer, Integer> noCoincidePorLiq = new HashMap<Integer, Integer>();
+
+        final String sql = "SELECT * FROM public.reporte_debito_liq_pendientes_con_status(?::date, ?::date, ?::varchar)";
+
+        try {
+            _log.info(prefix(rid) + "[IN] fechaDesde=" + fmt(sdf, fechaDesde) + " (" + ms(fechaDesde) + ")"
+                    + " fechaHasta=" + fmt(sdf, fechaHasta) + " (" + ms(fechaHasta) + ")"
+                    + " tercerizadoras=" + safe(terc));
+
+            if (dbg) {
+                _log.debug(prefix(rid) + "[SQL] " + sql);
+                _log.debug(prefix(rid) + "[SQL-PARAMS] p1(fechaDesde)=" + (sqlDesde == null ? "NULL" : sqlDesde.toString())
+                        + " p2(fechaHasta)=" + (sqlHasta == null ? "NULL" : sqlHasta.toString())
+                        + " p3(idTercerizadoras)=" + safe(terc));
+            }
+
+            con = ConnectionHelper.getConnection();
+            if (dbg) _log.debug(prefix(rid) + "[DB] gotConnection=" + (con != null));
+
+            ps = con.prepareStatement(sql);
+            if (sqlDesde == null) ps.setNull(1, Types.DATE);
+            else ps.setDate(1, sqlDesde);
+            if (sqlHasta == null) ps.setNull(2, Types.DATE);
+            else ps.setDate(2, sqlHasta);
+            if (terc == null) ps.setNull(3, Types.VARCHAR);
+            else ps.setString(3, terc);
+
+            long tQ0 = System.currentTimeMillis();
+            rs = ps.executeQuery();
+            long tQ1 = System.currentTimeMillis();
+            if (dbg) _log.debug(prefix(rid) + "[DB] executeQuery ok, elapsedMs=" + (tQ1 - tQ0));
+
+            if (dbg) {
+                try {
+                    ResultSetMetaData md = rs.getMetaData();
+                    int cols = md.getColumnCount();
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(prefix(rid)).append("[RS-META] columns=").append(cols).append(" => ");
+                    for (int i = 1; i <= cols; i++) {
+                        if (i > 1) sb.append(" | ");
+                        sb.append(i).append(":")
+                                .append(md.getColumnLabel(i)).append("(").append(md.getColumnTypeName(i)).append(")");
+                    }
+                    _log.debug(sb.toString());
+                } catch (Exception metaEx) {
+                    _log.warn(prefix(rid) + "[RS-META] no se pudo leer metadata", metaEx);
+                }
+            }
+
+            while (rs.next()) {
+                rowCount++;
+
+                DebitosLiquidacionesPendientes deb = new DebitosLiquidacionesPendientes();
+
+                int liq = rs.getInt("v_id_liquidacion");
+                boolean liqWasNull = rs.wasNull();
+                if (liqWasNull) {
+                    liqNullCount++;
+                    liq = 0;
+                }
+                if (!liqWasNull) distinctLiq.add(Integer.valueOf(liq));
+
+
+                deb.setHospitalesAutogestion(rs.getString("v_nombre_prestador"));
+                deb.setFactura(rs.getString("v_numero_factura"));
+
+                BigDecimal monto = rs.getBigDecimal("v_monto_prestador");
+                if (monto == null) monto = BigDecimal.ZERO;
+                deb.setMonto(monto);
+                montoPrestadorSum = montoPrestadorSum.add(monto);
+
+                try { deb.setCargoPrestadora(rs.getBigDecimal("v_cargo_ospim")); } catch (Exception ignore) {}
+                try { deb.setCargoPrestadoraReclamo(rs.getBigDecimal("v_cargo_reclamo")); } catch (Exception ignore) {}
+
+                boolean st = rs.getBoolean("status");
+                boolean stWasNull = rs.wasNull();
+                if (stWasNull) {
+                    statusNullCount++;
+                    deb.setStatus(null);
+                } else {
+                    deb.setStatus(Boolean.valueOf(st));
+                    if (st) {
+                        statusTrueCount++;
+                        noCoincidePorLiq.put(liq, noCoincidePorLiq.getOrDefault(liq, 0) + 1);
+                    } else {
+                        statusFalseCount++;
+                    }
+                }
+
+                out.add(deb);
+
+                if (dbg && rowCount <= sampleRowsToLog) {
+                    _log.debug(prefix(rid) + "[ROW#" + rowCount + "] "
+                            + "liq=" + liq + (liqWasNull ? "(NULL->0)" : "")
+                            + " status=" + (stWasNull ? "NULL" : String.valueOf(st))
+                            + " monto=" + bd(monto)
+                            + " prestador=" + safe(deb.getHospitalesAutogestion())
+                            + " factura=" + safe(deb.getFactura()));
+                }
+            }
+
+            if (debitosaTotal != null) {
+                debitosaTotal.setMontoLiquidacionPendiente(montoPrestadorSum);
+                debitosaTotal.setMontoLiquidacionPendienteDebito(montoPrestadorSum);
+            }
+
+            _log.info(prefix(rid) + "[OUT] rows=" + rowCount
+                    + " distinctLiq=" + distinctLiq.size()
+                    + " statusTrue(NO COINCIDE)=" + statusTrueCount
+                    + " statusFalse(OK)=" + statusFalseCount
+                    + " statusNull=" + statusNullCount
+                    + " liqNull=" + liqNullCount
+                    + " montoPrestadorSum=" + bd(montoPrestadorSum));
+
+            if (dbg) {
+                logTopNoCoincidePorLiq(rid, noCoincidePorLiq, 20);
+                logSampleListLI(rid, out, 10);
+            }
+
+            return out;
+
+        } catch (Exception e) {
+            _log.error(prefix(rid) + "Error en getBusquedaDebitosLiquidacionesStatus", e);
+            return out;
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    public List<DebitosaReintegros> getBusquedaDebitosReintegrosStatusBorrador(
+            Date fechaDesde, Date fechaHasta, DebitosaTotal debitosaTotal, String idTercerizadoras
+    ) {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        List<DebitosaReintegros> out = new ArrayList<DebitosaReintegros>();
+        BigDecimal montoPrestadorSum = BigDecimal.ZERO;
+
+        final String sql =
+                "SELECT * FROM public.reporte_debito_reintegros_borrador_status(?::date, ?::date, ?::varchar)";
+
+        try {
+            con = ConnectionHelper.getConnection();
+            ps = con.prepareStatement(sql);
+
+            if (fechaDesde == null) ps.setNull(1, Types.DATE);
+            else ps.setDate(1, new java.sql.Date(fechaDesde.getTime()));
+
+            if (fechaHasta == null) ps.setNull(2, Types.DATE);
+            else ps.setDate(2, new java.sql.Date(fechaHasta.getTime()));
+
+            if (idTercerizadoras == null) ps.setNull(3, Types.VARCHAR);
+            else ps.setString(3, idTercerizadoras);
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                DebitosaReintegros deb = new DebitosaReintegros();
+
+                int rein = rs.getInt("id_reintegro");
+                if (rs.wasNull()) rein = 0;
+                deb.setNumReintegro(rein);
+
+                deb.setNumeroOP(rs.getString("id_orden_pago"));
+                deb.setSeccional(rs.getString("seccional"));
+                deb.setDocumento(rs.getString("docu_numero"));
+                deb.setDescripcion(rs.getString("descripcion_r"));
+                deb.setApellido(rs.getString("apellido"));
+                deb.setNombre(rs.getString("nombre"));
+
+                BigDecimal monto = rs.getBigDecimal("monto_prestador");
+                if (monto == null) monto = BigDecimal.ZERO;
+                deb.setImporteTotal(monto);
+                montoPrestadorSum = montoPrestadorSum.add(monto);
+
+                Timestamp ts = rs.getTimestamp("alta_fecha_op");
+                if (ts != null) deb.setFechaOP(new Date(ts.getTime()));
+
+                int rp = rs.getInt("id_reclamo_prestacional");
+                if (!rs.wasNull()) deb.setReclamoPrestacional(rp);
+
+                boolean st = rs.getBoolean("status");
+                if (rs.wasNull()) deb.setStatus(null);
+                else deb.setStatus(Boolean.valueOf(st));
+
+                out.add(deb);
+            }
+
+            if (debitosaTotal != null) {
+                debitosaTotal.setMontoReintegros(montoPrestadorSum);
+                debitosaTotal.setMontoReintegroDebito(montoPrestadorSum);
+            }
+
+            return out;
+
+        } catch (Exception e) {
+            _log.error("Error en getBusquedaDebitosReintegrosStatusBorrador", e);
+            return out;
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    public List<DebitosHospitales> getBusquedaDebitosHospitalesStatusBorrador(
+            Date fechaDesde,
+            Date fechaHasta,
+            DebitosaTotal debitosaTotal,
+            String idTercerizadoras,
+            String workKey
+    ) {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        final String wk = (workKey == null || workKey.trim().isEmpty())
+                ? null
+                : workKey.trim();
+
+        // BORRADOR: tercerizadora obligatoria (evita mezclar terceros)
+        if (idTercerizadoras == null || idTercerizadoras.trim().isEmpty()) {
+            _log.warn("getBusquedaDebitosHospitalesStatusBorrador: tercerizadora null/vacía -> retorno vacío");
+            return new ArrayList<DebitosHospitales>();
+        }
+
+        // BORRADOR: workKey obligatorio
+        if (wk == null) {
+            _log.warn("getBusquedaDebitosHospitalesStatusBorrador: workKey null/vacío -> retorno vacío");
+            return new ArrayList<DebitosHospitales>();
+        }
+
+        List<DebitosHospitales> out = new ArrayList<DebitosHospitales>();
+        BigDecimal montoPrestadorSum = BigDecimal.ZERO;
+
+        final String terc = idTercerizadoras.trim();
+
+        final String sql =
+                "SELECT * FROM public.reporte_debito_hospitales_borrador_status(?::date, ?::date, ?::varchar, ?::text)";
+
+        try {
+            con = ConnectionHelper.getConnection();
+            ps = con.prepareStatement(sql);
+
+            if (fechaDesde == null) ps.setNull(1, Types.DATE);
+            else ps.setDate(1, new java.sql.Date(fechaDesde.getTime()));
+
+            if (fechaHasta == null) ps.setNull(2, Types.DATE);
+            else ps.setDate(2, new java.sql.Date(fechaHasta.getTime()));
+
+            ps.setString(3, terc);
+            ps.setString(4, wk);
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                DebitosHospitales debito = new DebitosHospitales();
+
+                String op = rs.getString("v_orden_pago");
+                debito.setOrdenPago(op != null ? op.trim() : null);
+
+                debito.setHospital(rs.getString("v_nombre_prestador"));
+                debito.setFactura(rs.getString("v_numero_factura"));
+
+                BigDecimal monto = rs.getBigDecimal("v_monto_prestador");
+                if (monto == null) monto = BigDecimal.ZERO;
+                debito.setMonto(monto);
+                montoPrestadorSum = montoPrestadorSum.add(monto);
+
+                int idLiq = rs.getInt("v_id_liquidacion");
+                if (rs.wasNull()) idLiq = 0;
+                debito.setIdLiquidacion(idLiq);
+
+                debito.setCargoPrestadora(rs.getBigDecimal("v_cargo_ospim"));
+                debito.setImporteTotal(rs.getBigDecimal("v_importe"));
+
+                boolean st = rs.getBoolean("status");
+                if (rs.wasNull()) debito.setStatus(null);
+                else debito.setStatus(Boolean.valueOf(st));
+
+                out.add(debito);
+            }
+
+            if (debitosaTotal != null) {
+                debitosaTotal.setMontoHospitales(montoPrestadorSum);
+                debitosaTotal.setMontoHospitaleDebito(montoPrestadorSum);
+            }
+
+            return out;
+
+        } catch (Exception e) {
+            _log.error("Error en getBusquedaDebitosHospitalesStatusBorrador", e);
+            return out;
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    public List<DebitosLiquidacionesPendientes> getBusquedaDebitosLiquidacionesStatusBorrador(
+            Date fechaDesde,
+            Date fechaHasta,
+            DebitosaTotal debitosaTotal,
+            String idTercerizadoras
+    ) {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        List<DebitosLiquidacionesPendientes> out = new ArrayList<DebitosLiquidacionesPendientes>();
+        BigDecimal montoPrestadorSum = BigDecimal.ZERO;
+
+        final String terc = (idTercerizadoras == null || idTercerizadoras.trim().isEmpty())
+                ? null
+                : idTercerizadoras.trim();
+
+        final String sql =
+                "SELECT * FROM public.reporte_debito_liq_pendientes_borrador_status(?::date, ?::date, ?::varchar)";
+
+        try {
+            con = ConnectionHelper.getConnection();
+            ps = con.prepareStatement(sql);
+
+            if (fechaDesde == null) ps.setNull(1, Types.DATE);
+            else ps.setDate(1, new java.sql.Date(fechaDesde.getTime()));
+
+            if (fechaHasta == null) ps.setNull(2, Types.DATE);
+            else ps.setDate(2, new java.sql.Date(fechaHasta.getTime()));
+
+            if (terc == null) ps.setNull(3, Types.VARCHAR);
+            else ps.setString(3, terc);
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                DebitosLiquidacionesPendientes deb = new DebitosLiquidacionesPendientes();
+
+                int liq = rs.getInt("v_id_liquidacion");
+                if (rs.wasNull()) liq = 0;
+
+
+                deb.setHospitalesAutogestion(rs.getString("v_nombre_prestador"));
+                deb.setFactura(rs.getString("v_numero_factura"));
+
+                BigDecimal monto = rs.getBigDecimal("v_monto_prestador");
+                if (monto == null) monto = BigDecimal.ZERO;
+                deb.setMonto(monto);
+                montoPrestadorSum = montoPrestadorSum.add(monto);
+
+                try { deb.setCargoPrestadora(rs.getBigDecimal("v_cargo_ospim")); } catch (Exception ignore) {}
+                try { deb.setCargoPrestadoraReclamo(rs.getBigDecimal("v_cargo_reclamo")); } catch (Exception ignore) {}
+
+                boolean st = rs.getBoolean("status");
+                if (rs.wasNull()) deb.setStatus(null);
+                else deb.setStatus(Boolean.valueOf(st));
+
+                out.add(deb);
+            }
+
+            if (debitosaTotal != null) {
+                debitosaTotal.setMontoLiquidacionPendiente(montoPrestadorSum);
+                debitosaTotal.setMontoLiquidacionPendienteDebito(montoPrestadorSum);
+            }
+
+            return out;
+
+        } catch (Exception e) {
+            _log.error("Error en getBusquedaDebitosLiquidacionesStatusBorrador", e);
+            return out;
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    public List<DebitosaPrestadores> getBusquedaDebitosPrestadoresStatusBorrador(
+            Date fechaDesde,
+            Date fechaHasta,
+            DebitosaTotal debitosaTotal,
+            String idTercerizadoras
+    ) {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        List<DebitosaPrestadores> out = new ArrayList<DebitosaPrestadores>();
+        BigDecimal montoPrestadorSum = BigDecimal.ZERO;
+
+        final String terc = (idTercerizadoras == null || idTercerizadoras.trim().isEmpty())
+                ? null
+                : idTercerizadoras.trim();
+
+        final String sql =
+                "SELECT * FROM public.reporte_debito_prestadores_borrador_status(?::date, ?::date, ?::varchar)";
+
+        try {
+            con = ConnectionHelper.getConnection();
+            ps = con.prepareStatement(sql);
+
+            if (fechaDesde == null) ps.setNull(1, Types.DATE);
+            else ps.setDate(1, new java.sql.Date(fechaDesde.getTime()));
+
+            if (fechaHasta == null) ps.setNull(2, Types.DATE);
+            else ps.setDate(2, new java.sql.Date(fechaHasta.getTime()));
+
+            if (terc == null) ps.setNull(3, Types.VARCHAR);
+            else ps.setString(3, terc);
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                DebitosaPrestadores deb = new DebitosaPrestadores();
+
+                int rein = rs.getInt("reintegro");
+                if (rs.wasNull()) rein = 0;
+
+                deb.setIdLiquidacion(rein);
+
+                deb.setPrestador(rs.getString("prestador"));
+                deb.setFactura(rs.getString("num_comprobante"));
+
+                String op = rs.getString("id_orden_pago");
+                deb.setOrdenPago(op);
+
+                BigDecimal cargoPrestadora = rs.getBigDecimal("cargo_prestadora");
+                if (cargoPrestadora == null) cargoPrestadora = BigDecimal.ZERO;
+                deb.setCargoPrestadora(cargoPrestadora);
+
+                BigDecimal monto = rs.getBigDecimal("monto");
+                if (monto == null) monto = BigDecimal.ZERO;
+                deb.setMonto(monto);
+
+                // legacy: acumulabas cargo_prestadora
+                montoPrestadorSum = montoPrestadorSum.add(cargoPrestadora);
+
+                int rp = rs.getInt("id_reclamo_prestacional");
+                if (!rs.wasNull()) deb.setReclamoPrestacional(rp);
+
+                boolean st = rs.getBoolean("status");
+                if (rs.wasNull()) deb.setStatus(null);
+                else deb.setStatus(Boolean.valueOf(st));
+
+                out.add(deb);
+            }
+
+            if (debitosaTotal != null) {
+                debitosaTotal.setMontoPrestadores(montoPrestadorSum);
+                debitosaTotal.setMontoPrestadoreDebito(montoPrestadorSum);
+            }
+
+            return out;
+
+        } catch (Exception e) {
+            _log.error("Error en getBusquedaDebitosPrestadoresStatusBorrador", e);
+            return out;
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    // ============================================================================
+    // Helpers de log (nombres distintos para evitar type-erasure con List<?>)
+    // ============================================================================
+    private void logSampleListPR(String rid, List<DebitosaPrestadores> list, int sampleN) {
+        if (list == null) {
+            _log.debug(prefix(rid) + "[LIST-PR] null");
+            return;
+        }
+        _log.debug(prefix(rid) + "[LIST-PR] size=" + list.size() + " sampleN=" + sampleN);
+
+        int n = Math.min(sampleN, list.size());
+        for (int i = 0; i < n; i++) {
+            DebitosaPrestadores d = list.get(i);
+            _log.debug(prefix(rid) + "[LIST#" + (i + 1) + "][PR] "
+                    + "rein=" + d.getIdLiquidacion()
+                    + " status=" + (d.getStatus() == null ? "NULL" : d.getStatus().toString())
+                    + " cargoPrestadora=" + bd(d.getCargoPrestadora())
+                    + " monto=" + bd(d.getMonto())
+                    + " op=" + safe(d.getOrdenPago())
+                    + " prestador=" + safe(d.getPrestador())
+                    + " factura=" + safe(d.getFactura()));
+        }
+    }
+
+    private void logSampleListRE(String rid, List<DebitosaReintegros> list, int sampleN) {
+        if (list == null) {
+            _log.debug(prefix(rid) + "[LIST-RE] null");
+            return;
+        }
+        _log.debug(prefix(rid) + "[LIST-RE] size=" + list.size() + " sampleN=" + sampleN);
+
+        int n = Math.min(sampleN, list.size());
+        for (int i = 0; i < n; i++) {
+            DebitosaReintegros d = list.get(i);
+            _log.debug(prefix(rid) + "[LIST#" + (i + 1) + "][RE] "
+                    + "rein=" + d.getNumReintegro()
+                    + " status=" + (d.getStatus() == null ? "NULL" : d.getStatus().toString())
+                    + " monto=" + bd(d.getImporteTotal())
+                    + " op=" + safe(d.getNumeroOP())
+                    + " doc=" + safe(d.getDocumento())
+                    + " ape=" + safe(d.getApellido())
+                    + " nom=" + safe(d.getNombre()));
+        }
+    }
+
+    private void logSampleListLI(String rid, List<DebitosLiquidacionesPendientes> list, int sampleN) {
+        if (list == null) {
+            _log.debug(prefix(rid) + "[LIST-LI] null");
+            return;
+        }
+        _log.debug(prefix(rid) + "[LIST-LI] size=" + list.size() + " sampleN=" + sampleN);
+
+        int n = Math.min(sampleN, list.size());
+        for (int i = 0; i < n; i++) {
+            DebitosLiquidacionesPendientes d = list.get(i);
+            _log.debug(prefix(rid) + "[LIST#" + (i + 1) + "][LI] "
+                    + "liq=" + bd(d.getNumero())
+                    + " status=" + (d.getStatus() == null ? "NULL" : d.getStatus().toString())
+                    + " monto=" + bd(d.getMonto())
+                    + " prestador=" + safe(d.getHospitalesAutogestion())
+                    + " factura=" + safe(d.getFactura())
+                    + " cargoPrestadora=" + bd(d.getCargoPrestadora())
+                    + " cargoReclamo=" + bd(d.getCargoPrestadoraReclamo()));
+        }
+    }
+
+    // ============================================================================
+    // Helpers mínimos (Java 1.5 friendly)
+    // ============================================================================
+    private void incCount(Map<Integer, Integer> map, int key) {
+        Integer k = new Integer(key);
+        Integer curr = map.get(k);
+        if (curr == null) map.put(k, new Integer(1));
+        else map.put(k, new Integer(curr.intValue() + 1));
+    }
+
+    private void incCountStr(Map<String, Integer> map, String key) {
+        if (key == null) return;
+        Integer curr = map.get(key);
+        if (curr == null) map.put(key, new Integer(1));
+        else map.put(key, new Integer(curr.intValue() + 1));
+    }
+
+    // Top N para Map<String,Integer> (sin lambdas)
+    private void logTopNoCoincidePorKey(String rid, Map<String, Integer> map, int topN) {
+        if (map == null || map.isEmpty()) {
+            _log.debug(prefix(rid) + "[NO-COINCIDE] none");
+            return;
+        }
+        List<Map.Entry<String, Integer>> entries = new ArrayList<Map.Entry<String, Integer>>(map.entrySet());
+        java.util.Collections.sort(entries, new java.util.Comparator<Map.Entry<String, Integer>>() {
+            public int compare(Map.Entry<String, Integer> a, Map.Entry<String, Integer> b) {
+                int va = (a.getValue() == null) ? 0 : a.getValue().intValue();
+                int vb = (b.getValue() == null) ? 0 : b.getValue().intValue();
+                return (vb - va); // desc
+            }
+        });
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(prefix(rid)).append("[NO-COINCIDE] top ").append(topN).append(" key => count: ");
+        int n = Math.min(topN, entries.size());
+        for (int i = 0; i < n; i++) {
+            Map.Entry<String, Integer> e = entries.get(i);
+            if (i > 0) sb.append(", ");
+            sb.append(e.getKey()).append("=>").append(e.getValue());
+        }
+        _log.debug(sb.toString());
+    }
+
+    // Invocación por reflexión para no romper compilación si el método no existe
+    private void tryInvokeSetter(Object target, String methodName, BigDecimal value) {
+        if (target == null || methodName == null) return;
+        try {
+            java.lang.reflect.Method m = target.getClass().getMethod(methodName, new Class[]{BigDecimal.class});
+            m.invoke(target, new Object[]{value});
+        } catch (Exception ignore) {
+        }
+    }
+
+    /* ===================== helpers de debug ===================== */
+
+    private String prefix(String rid) {
+        return "[" + rid + "] ";
+    }
+
+    private String safe(String s) {
+        if (s == null) return "NULL";
+        String t = s.trim();
+        if (t.length() > 200) t = t.substring(0, 200) + "...";
+        return "\"" + t.replace("\n", "\\n").replace("\r", "\\r") + "\"";
+    }
+
+    private String fmt(SimpleDateFormat sdf, Date d) {
+        return (d == null) ? "NULL" : sdf.format(d);
+    }
+
+    private String ms(Date d) {
+        return (d == null) ? "NULL" : String.valueOf(d.getTime());
+    }
+
+    private String bd(BigDecimal b) {
+        return (b == null) ? "NULL" : b.toPlainString();
+    }
+
+    private void logTopNoCoincidePorLiq(String rid, Map<Integer, Integer> map, int topN) {
+        if (map == null || map.isEmpty()) {
+            _log.debug(prefix(rid) + "[NO-COINCIDE] none");
+            return;
+        }
+
+        // Java 5: sin diamond
+        List<Map.Entry<Integer, Integer>> entries =
+                new ArrayList<Map.Entry<Integer, Integer>>(map.entrySet());
+
+        // Java 5: sin lambda, sin List.sort
+        Collections.sort(entries, new Comparator<Map.Entry<Integer, Integer>>() {
+            public int compare(Map.Entry<Integer, Integer> a, Map.Entry<Integer, Integer> b) {
+                Integer av = (a != null ? a.getValue() : null);
+                Integer bv = (b != null ? b.getValue() : null);
+
+                // nulls last
+                if (av == null && bv == null) return 0;
+                if (av == null) return 1;
+                if (bv == null) return -1;
+
+                // DESC por value
+                if (bv.intValue() > av.intValue()) return 1;
+                if (bv.intValue() < av.intValue()) return -1;
+                return 0;
+            }
+        });
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(prefix(rid)).append("[NO-COINCIDE] top ").append(topN).append(" liqId => count: ");
+
+        int n = (topN < entries.size()) ? topN : entries.size();
+        for (int i = 0; i < n; i++) {
+            Map.Entry<Integer, Integer> e = entries.get(i);
+            if (i > 0) sb.append(", ");
+            sb.append(e.getKey()).append("=>").append(e.getValue());
+        }
+
+        _log.debug(sb.toString());
+    }
+
+    // Entry-point único: sirve para HO/LI/RE/PR sin cambiar llamadas.
+    private void logSampleList(String rid, List<?> list, int sampleN) {
+        if (list == null) {
+            _log.debug(prefix(rid) + "[LIST] null");
+            return;
+        }
+        _log.debug(prefix(rid) + "[LIST] size=" + list.size() + " sampleN=" + sampleN);
+
+        int n = Math.min(sampleN, list.size());
+        for (int i = 0; i < n; i++) {
+            Object o = list.get(i);
+
+            if (o instanceof DebitosHospitales) {
+                logOneHO(rid, i + 1, (DebitosHospitales) o);
+
+            } else if (o instanceof DebitosLiquidacionesPendientes) {
+                logOneLI(rid, i + 1, (DebitosLiquidacionesPendientes) o);
+
+            } else if (o instanceof DebitosaReintegros) {
+                logOneRE(rid, i + 1, (DebitosaReintegros) o);
+
+            } else if (o instanceof DebitosaPrestadores) {
+                logOnePR(rid, i + 1, (DebitosaPrestadores) o);
+
+            } else {
+                // fallback: no te quedes sin logs por un tipo nuevo
+                _log.debug(prefix(rid) + "[LIST#" + (i + 1) + "] type="
+                        + (o == null ? "null" : o.getClass().getName())
+                        + " value=" + String.valueOf(o));
+            }
+        }
+    }
+
+    private void logOneHO(String rid, int idx, DebitosHospitales d) {
+        _log.debug(prefix(rid) + "[LIST#" + idx + "][HO] "
+                + "opId=" + bd(d.getNumero())
+                + " liq=" + d.getIdLiquidacion()
+                + " status=" + (d.getStatus() == null ? "NULL" : d.getStatus().toString())
+                + " monto=" + bd(d.getMonto())
+                + " hospital=" + safe(d.getHospital())
+                + " factura=" + safe(d.getFactura())
+                + " cargoPrestadora=" + bd(d.getCargoPrestadora())
+                + " importeTotal=" + bd(d.getImporteTotal()));
+    }
+
+    private void logOneLI(String rid, int idx, DebitosLiquidacionesPendientes d) {
+        _log.debug(prefix(rid) + "[LIST#" + idx + "][LI] "
+                + "liq=" + bd(d.getNumero()) // en LI suele ser BigDecimal liquidacion_id
+                + " status=" + (d.getStatus() == null ? "NULL" : d.getStatus().toString())
+                + " monto=" + bd(d.getMonto())
+                + " prestador=" + safe(d.getHospitalesAutogestion())
+                + " factura=" + safe(d.getFactura())
+                + " cargoPrestadora=" + bd(d.getCargoPrestadora())
+                + " cargoReclamo=" + bd(d.getCargoPrestadoraReclamo()));
+    }
+
+    private void logOneRE(String rid, int idx, DebitosaReintegros d) {
+        _log.debug(prefix(rid) + "[LIST#" + idx + "][RE] "
+                + "reintegro=" + d.getNumReintegro()
+                + " status=" + (d.getStatus() == null ? "NULL" : d.getStatus().toString())
+                + " monto=" + bd(d.getImporteTotal()) // en tu código actual usás importeTotal=monto_prestador
+                + " op=" + safe(d.getNumeroOP())
+                + " doc=" + safe(d.getDocumento())
+                + " seccional=" + safe(d.getSeccional())
+                + " ape=" + safe(d.getApellido())
+                + " nom=" + safe(d.getNombre())
+                + " reclamo=" + d.getReclamoPrestacional());
+    }
+
+    private void logOnePR(String rid, int idx, DebitosaPrestadores d) {
+        _log.debug(prefix(rid) + "[LIST#" + idx + "][PR] "
+                + "numero=" + bd(d.getNumero())
+                + " liq=" + d.getIdLiquidacion()
+                + " status=" + (d.getStatus() == null ? "NULL" : d.getStatus().toString())
+                + " monto=" + bd(d.getMonto())
+                + " prestador=" + safe(d.getPrestador())
+                + " factura=" + safe(d.getFactura())
+                + " op=" + safe(d.getOrdenPago())
+                + " cargoPrestadora=" + bd(d.getCargoPrestadora())
+                + " reclamo=" + d.getReclamoPrestacional());
+    }
+
+    public List<DebitosaReintegros> getBusquedaDebitosReintegros(Date fechaDesde, Date fechaHasta, DebitosaTotal debitosaTotal, String idTercerizadoras) {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ArrayList<DebitosaReintegros> listaReintegros = null;
+        listaReintegros = new ArrayList<DebitosaReintegros>();
+        BigDecimal montoTotal = new BigDecimal(0);
+        BigDecimal montoPrestador = new BigDecimal(0);
+        try {
+
+            String sql = "{call public.reporte_debito_reintegros(?,?,?)}";
+
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql.toString());
+
+            stmt.setDate(1, fechaDesde == null ? null : new java.sql.Date(fechaDesde.getTime()));
+            stmt.setDate(2, fechaHasta == null ? null : new java.sql.Date(fechaHasta.getTime()));
+            stmt.setString(3, idTercerizadoras);
+
+            String ordenPagoAnterior = null;
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                DebitosaReintegros reintegro = new DebitosaReintegros();
+
+                reintegro.setDescripcion(rs.getString("descripcion_r"));
+                reintegro.setDocumento(rs.getString("docu_numero"));
+                reintegro.setFechaOP(rs.getDate("alta_fecha_op"));
+                //reintegro.setImporteTotal(rs.getBigDecimal("importe"));
+                reintegro.setSeccional(rs.getString("seccional"));
+                reintegro.setNumeroOP(rs.getString("id_orden_pago"));
+                //reintegro.setFechaOP(rs.getDate("alta_fecha_op"));
+                //reintegro.setCargoPrestadora(rs.getBigDecimal("monto_prestador"));
+
+                //acumulador
+
+                reintegro.setApellido(rs.getString("apellido"));
+                reintegro.setNombre(rs.getString("nombre"));
+                reintegro.setNumReintegro(rs.getInt("id_reintegro"));
+                montoPrestador = montoPrestador.add(rs.getBigDecimal("monto_prestador") != null ? rs.getBigDecimal("monto_prestador") : new BigDecimal("0"));
+
+                montoTotal = montoTotal.add(rs.getBigDecimal("monto_prestador"));
+                reintegro.setImporteTotal(rs.getBigDecimal("monto_prestador"));
+
+                ordenPagoAnterior = reintegro.getNumeroOP();
+                Integer reclamo = 0;
+                try {
+                    reclamo = rs.getInt("id_reclamo_prestacional");
+                } catch (Exception e) {
+                }
+
+                reintegro.setReclamoPrestacional(reclamo);
+                listaReintegros.add(reintegro);
+
+            }
+
+            debitosaTotal.setMontoReintegros(montoPrestador);
+            debitosaTotal.setMontoReintegroDebito(montoPrestador);
+        } catch (Exception e) {
+            _log.error(e);
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+
+        return listaReintegros;
+
+    }
+
+    public List<DebitosaPrestadores> getBusquedaDebitosPrestadores(Date periodoDesde, Date periodoHasta, DebitosaTotal debitosaTotal, String idTercerizadoras) {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ArrayList<DebitosaPrestadores> listaPrestadores = null;
+        listaPrestadores = new ArrayList<DebitosaPrestadores>();
+        BigDecimal montoTotal = new BigDecimal(0);
+        BigDecimal montoPrestador = new BigDecimal(0);
+        try {
+
+            String sql = "{call public.reporte_debito_prestadores(?,?,?)}";
+
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql.toString());
+
+            if (null != periodoDesde) {
+                stmt.setDate(1, new java.sql.Date(periodoDesde.getTime()));
+            } else {
+                stmt.setNull(1, Types.DATE);
+            }
+            if (null != periodoHasta) {
+                stmt.setDate(2, new java.sql.Date(periodoHasta.getTime()));
+            } else {
+                stmt.setNull(2, Types.DATE);
+            }
+            stmt.setString(3, idTercerizadoras);
+
+            String ordenPagoAnterior = null;
+            int idLiquidacion = 0;
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                DebitosaPrestadores prestador = new DebitosaPrestadores();
+
+                prestador.setPrestador(rs.getString("prestador"));
+                prestador.setFactura(rs.getString("num_comprobante"));
+                //prestadore.setMonto(rs.getBigDecimal("monto"));
+                prestador.setOrdenPago(rs.getString("id_orden_pago"));
+                prestador.setCargoPrestadora(rs.getBigDecimal("cargo_prestadora"));
+                prestador.setMonto(rs.getBigDecimal("cargo_prestadora"));
+                montoTotal = montoTotal.add(rs.getBigDecimal("cargo_prestadora"));
+
+                prestador.setIdLiquidacion(rs.getInt("reintegro"));
+
+                try {
+                    prestador.setReclamoPrestacional(rs.getInt("id_reclamo_prestacional"));
+                } catch (Exception e) {
+
+                }
+
+                if (!this.existeElemento(listaPrestadores, prestador)) {
+                    listaPrestadores.add(prestador);
+                    montoPrestador = montoPrestador.add(rs.getBigDecimal("cargo_prestadora") != null ? rs.getBigDecimal("cargo_prestadora") : new BigDecimal("0"));
+                }
+
+
+                //ordenPagoAnterior = prestadore.getOrdenPago();
+
+            }
+            debitosaTotal.setMontoPrestadores(montoPrestador);
+            debitosaTotal.setMontoPrestadoreDebito(montoPrestador);
+        } catch (Exception e) {
+            _log.error(e);
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+
+        return listaPrestadores;
+    }
+
+
+    private boolean existeElemento(ArrayList<DebitosaPrestadores> listaPrestadores, DebitosaPrestadores prestador) {
+        boolean found = false;
+        String rp = "";
+        if (prestador.getReclamosPrestacionales() != null && prestador.getReclamosPrestacionales().length() > 0) {
+            rp = prestador.getReclamosPrestacionales();
+        } else {
+            rp = prestador.getReclamoPrestacional() == null || prestador.getReclamoPrestacional() == 0 ? "" : prestador.getReclamoPrestacional().toString();
+        }
+        for (DebitosaPrestadores pres : listaPrestadores) {
+            if (pres.getIdLiquidacion() == prestador.getIdLiquidacion()) {
+                found = true;
+                if (pres.getReclamosPrestacionales() == null || !pres.getReclamosPrestacionales().contains(rp)) {
+                    pres.setReclamosPrestacionales(pres.getReclamosPrestacionales() + ";" + rp);
+                }
+                //also do something
+                break;
+            }
+        }
+        if (!found) prestador.setReclamosPrestacionales(rp);
+        return found;
+    }
+
+    private boolean existeElemento(List<DebitosHospitales> lista, DebitosHospitales debito) {
+        for (DebitosHospitales deb : lista) {
+            if (deb.getIdLiquidacion() == debito.getIdLiquidacion()
+                    && eq(deb.getFactura(), debito.getFactura())
+                    && eq(deb.getOrdenPago(), debito.getOrdenPago())
+                    && eq(deb.getHospital(), debito.getHospital())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean eq(String a, String b) {
+        return (a == null ? "" : a).equals(b == null ? "" : b);
+    }
+
+    public DebitosaTotal getBuscarTotalesDebitos(Date fecha, String idTercerizadora) {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        DebitosaTotal deb = null;
+
+        try {
+            String sql = "{call buscar_totales_debitos(?,?)}";
+
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql.toString());
+
+            if (null != fecha) {
+                stmt.setDate(1, new java.sql.Date(fecha.getTime()));
+            } else {
+                stmt.setNull(1, Types.DATE);
+            }
+            stmt.setString(2, idTercerizadora);
+
+
+            ResultSet rs = stmt.executeQuery();
+            deb = new DebitosaTotal();
+            deb.setExisteDebito(false);
+            while (rs.next()) {
+
+                deb.setExisteDebito(true);
+                deb.setMontoHospitales(rs.getBigDecimal("v_monto_hospital"));
+                deb.setMontoHospitaleDebito(rs.getBigDecimal("v_monto_hospital_debito"));
+
+                deb.setMontoLiquidacionPendiente(rs.getBigDecimal("v_monto_autogestion"));
+                deb.setMontoLiquidacionPendienteDebito(rs.getBigDecimal("v_monto_autogestion_devito"));
+
+                deb.setMontoPrestadores(rs.getBigDecimal("v_monto_prestador"));
+                deb.setMontoPrestadoreDebito(rs.getBigDecimal("v_monto_prestador_debito"));
+
+                deb.setMontoReintegros(rs.getBigDecimal("v_monto_reintegro"));
+                deb.setMontoReintegroDebito(rs.getBigDecimal("v_monto_reintegro_debito"));
+
+
+            }
+        } catch (Exception e) {
+            _log.error(e);
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+
+        return deb;
+    }
+
+
+    public int grabarTotalesDebitos(DebitosaTotal deb, String user, Date fecha, String idTercerizadoras) throws SystemException {
+        Connection con = null;
+        CallableStatement stmt = null;
+        try {
+            String sql = "{call insertar_totales_debitos(?,?,?,?,?,?,?,?,?,?,?)}";
+            _log.debug("creando conexion");
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql.toString());
+            stmt.setBigDecimal(1, deb.getMontoHospitales());
+            stmt.setBigDecimal(2, deb.getMontoHospitaleDebito());
+            stmt.setBigDecimal(3, deb.getMontoPrestadores());
+            stmt.setBigDecimal(4, deb.getMontoPrestadoreDebito());
+            stmt.setBigDecimal(5, deb.getMontoLiquidacionPendiente());
+            stmt.setBigDecimal(6, deb.getMontoLiquidacionPendienteDebito());
+            stmt.setBigDecimal(7, deb.getMontoReintegros());
+            stmt.setBigDecimal(8, deb.getMontoReintegroDebito());
+            stmt.setString(9, user);
+            stmt.setDate(10, new java.sql.Date(fecha.getTime()));
+            stmt.setString(11, idTercerizadoras);
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            _log.error("Error al insertar el item de catastro", e);
+            throw new SystemException(e);
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+        return 0;
+    }
+
+    public int grabarLiquidacionesPendientesDebitos(DebitosLiquidacionesPendientes deb, String user, Date fecha, String idTercerizadoras)
+            throws SystemException {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            String sql = "{call public.insertar_detalles_reporte_debitos_tercerizadoras(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+            _log.debug("creando conexion");
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql);
+
+            stmt.setDate(1, new java.sql.Date(fecha.getTime()));
+            stmt.setString(2, WebKeysLiquidaciones.DEBITOS_LIQ_PENDIENTES);
+            stmt.setString(3, idTercerizadoras);
+            stmt.setBigDecimal(4, deb.getNumero());
+            stmt.setString(5, deb.getHospitalesAutogestion());
+            stmt.setString(6, deb.getFactura());
+            stmt.setBigDecimal(7, deb.getMonto());
+            stmt.setBigDecimal(8, deb.getCargoPrestadoraReclamo());
+            stmt.setNull(9, Types.NUMERIC);
+            stmt.setNull(10, Types.VARCHAR);
+            stmt.setNull(11, Types.VARCHAR);
+            stmt.setNull(12, Types.VARCHAR);
+            stmt.setNull(13, Types.VARCHAR);
+            stmt.setNull(14, Types.DATE);
+            stmt.setString(15, user);
+            stmt.setNull(16, Types.INTEGER);
+
+            rs = stmt.executeQuery();
+            int inserted = 0;
+            while (rs.next()) {
+                inserted = rs.getInt(1);
+            }
+
+            // NUEVO: recalcular totales para el periodo/tercerizadora
+            recalcularTotalesDebitos(fecha, idTercerizadoras, user);
+
+            return inserted;
+
+        } catch (SQLException e) {
+            _log.error("Error al insertar el item de catastro", e);
+            throw new SystemException(e);
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+
+    public int grabarHospitalesDebitos(DebitosHospitales deb, String user, Date fecha, String idTercerizadoras)
+            throws SystemException {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            String sql = "{call public.insertar_detalles_reporte_debitos_tercerizadoras(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+            _log.debug("creando conexion");
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql);
+
+            stmt.setDate(1, new java.sql.Date(fecha.getTime()));
+            stmt.setString(2, WebKeysLiquidaciones.DEBITOS_HOSPITALES);
+            stmt.setString(3, idTercerizadoras);
+            stmt.setBigDecimal(4, deb.getNumero());
+            stmt.setString(5, deb.getHospital());
+            stmt.setString(6, deb.getFactura());
+            stmt.setBigDecimal(7, deb.getMonto());
+            stmt.setNull(8, Types.NUMERIC);
+
+            if (deb.getOrdenPago() != null) stmt.setBigDecimal(9, new BigDecimal(deb.getOrdenPago()));
+            else stmt.setNull(9, Types.NUMERIC);
+
+            stmt.setNull(10, Types.VARCHAR);
+            stmt.setNull(11, Types.VARCHAR);
+            stmt.setNull(12, Types.VARCHAR);
+            stmt.setNull(13, Types.VARCHAR);
+            stmt.setNull(14, Types.DATE);
+            stmt.setString(15, user);
+            stmt.setNull(16, Types.INTEGER);
+
+            rs = stmt.executeQuery();
+            int inserted = 0;
+            while (rs.next()) {
+                inserted = rs.getInt(1);
+            }
+
+            recalcularTotalesDebitos(fecha, idTercerizadoras, user);
+
+            return inserted;
+
+        } catch (SQLException e) {
+            _log.error("Error al insertar el item de catastro", e);
+            throw new SystemException(e);
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public int grabarReintegrosDebitos(DebitosaReintegros deb, String user, Date fecha, String idTercerizadoras)
+            throws SystemException {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            String sql = "{call public.insertar_detalles_reporte_debitos_tercerizadoras(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+            _log.debug("creando conexion");
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql);
+
+            stmt.setDate(1, new java.sql.Date(fecha.getTime()));
+            stmt.setString(2, WebKeysLiquidaciones.DEBITOS_REINTEGROS);
+            stmt.setString(3, idTercerizadoras);
+
+            int nr = deb.getNumReintegro();
+            stmt.setBigDecimal(4, new BigDecimal(nr));
+
+            stmt.setString(5, deb.getDescripcion());
+            stmt.setNull(6, Types.VARCHAR);
+            stmt.setBigDecimal(7, deb.getImporteTotal());
+            stmt.setNull(8, Types.NUMERIC);
+
+            if (deb.getNumeroOP() != null) stmt.setBigDecimal(9, new BigDecimal(deb.getNumeroOP()));
+            else stmt.setNull(9, Types.NUMERIC);
+
+            stmt.setString(10, deb.getApellido());
+            stmt.setString(11, deb.getNombre());
+            stmt.setString(12, deb.getDocumento());
+            stmt.setString(13, deb.getSeccional());
+
+            if (deb.getFechaOP() != null) stmt.setDate(14, new java.sql.Date(deb.getFechaOP().getTime()));
+            else stmt.setNull(14, Types.DATE);
+
+            stmt.setString(15, user);
+
+            if (deb.getReclamoPrestacional() != null) stmt.setInt(16, deb.getReclamoPrestacional());
+            else stmt.setNull(16, Types.INTEGER);
+
+            rs = stmt.executeQuery();
+            int inserted = 0;
+            while (rs.next()) {
+                inserted = rs.getInt(1);
+            }
+
+            recalcularTotalesDebitos(fecha, idTercerizadoras, user);
+
+            return inserted;
+
+        } catch (SQLException e) {
+            _log.error("Error al insertar el item de catastro", e);
+            throw new SystemException(e);
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public int grabarPrestadoresDebitos(DebitosaPrestadores deb, String user, Date fecha, String idTercerizadoras)
+            throws SystemException {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            String sql = "{call public.insertar_detalles_reporte_debitos_tercerizadoras(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+            _log.debug("creando conexion");
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql);
+
+            stmt.setDate(1, new java.sql.Date(fecha.getTime()));
+            stmt.setString(2, WebKeysLiquidaciones.DEBITOS_PRESTADORES);
+            stmt.setString(3, idTercerizadoras);
+            stmt.setBigDecimal(4, deb.getNumero());
+            stmt.setString(5, deb.getPrestador());
+            stmt.setString(6, deb.getFactura());
+            stmt.setBigDecimal(7, deb.getMonto());
+            stmt.setNull(8, Types.NUMERIC);
+
+            if (deb.getOrdenPago() != null) stmt.setBigDecimal(9, new BigDecimal(deb.getOrdenPago()));
+            else stmt.setNull(9, Types.NUMERIC);
+
+            stmt.setNull(10, Types.VARCHAR);
+            stmt.setNull(11, Types.VARCHAR);
+            stmt.setNull(12, Types.VARCHAR);
+            stmt.setNull(13, Types.VARCHAR);
+            stmt.setNull(14, Types.DATE);
+
+            stmt.setString(15, user);
+
+            if (deb.getReclamoPrestacional() != null) stmt.setInt(16, deb.getReclamoPrestacional());
+            else stmt.setNull(16, Types.INTEGER);
+
+            if (deb.getReclamosPrestacionales() != null) stmt.setString(17, deb.getReclamosPrestacionales());
+            else stmt.setNull(17, Types.VARCHAR);
+
+            rs = stmt.executeQuery();
+            int inserted = 0;
+            while (rs.next()) {
+                inserted = rs.getInt(1);
+            }
+
+            recalcularTotalesDebitos(fecha, idTercerizadoras, user);
+
+            return inserted;
+
+        } catch (SQLException e) {
+            _log.error("Error al insertar el item de catastro", e);
+            throw new SystemException(e);
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public boolean existeReporteDebitoTercerizadoras(Date periodoDesde, Date periodoHasta, String idTercerizadora) {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        boolean result = true;
+
+        try {
+            String sql = "{call existe_reporte_debito_tercerizadoras(?,?,?)}";
+
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql.toString());
+
+            if (null != periodoDesde) {
+                stmt.setDate(1, new java.sql.Date(periodoDesde.getTime()));
+            } else {
+                stmt.setNull(1, Types.DATE);
+            }
+            if (null != periodoHasta) {
+                stmt.setDate(2, new java.sql.Date(periodoHasta.getTime()));
+            } else {
+                stmt.setNull(2, Types.DATE);
+            }
+            stmt.setString(3, idTercerizadora);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                if (rs.getInt(1) == 0) {
+                    return false;
+                }
+            }
+
+
+        } catch (Exception e) {
+            _log.error(e);
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+
+        return result;
+    }
+
+
+    // ============================================================================
+// 1) EXISTE REPORTE GRABADO (FAIL-SAFE) + tipoProceso
+// ============================================================================
+    public boolean existeReporteGrabadoDebitoTercerizadoras(Date periodoHasta, String idTercerizadora, String tipoProceso) {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+
+        boolean result = false; // FAIL-SAFE
+
+        try {
+            String sql = "{call existe_reporte_grabado_debito_tercerizadoras(?,?,?)}";
+
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql);
+
+            if (periodoHasta != null) stmt.setDate(1, new java.sql.Date(periodoHasta.getTime()));
+            else stmt.setNull(1, Types.DATE);
+
+            stmt.setString(2, idTercerizadora);
+            stmt.setString(3, tipoProceso);
+
+            _log.info("[HAY_GRABADO_DAO] sql=" + sql
+                    + " periodoHasta=" + periodoHasta
+                    + " terc=" + idTercerizadora
+                    + " tipo=" + tipoProceso);
+
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                BigDecimal total = rs.getBigDecimal("total");
+                result = (total != null && total.compareTo(BigDecimal.ZERO) > 0);
+                _log.info("[HAY_GRABADO_DAO] total=" + total + " => result=" + result);
+            }
+
+        } catch (Exception e) {
+            _log.error("[HAY_GRABADO_DAO] ERROR", e);
+            result = false; // FAIL-SAFE: si falla, NO marques cerrado
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+
+        return result;
+    }
+
+
+
+    // ============================================================================
+    // 10) HELPERS COMUNES
+    // ============================================================================
+    private void closeQuietly(ResultSet rs) {
+        try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+    }
+
+    private static BigDecimal parseBigDecimalOrNull(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        if (t.length() == 0) return null;
+        try {
+            return new BigDecimal(t);
+        } catch (Exception ignore) {
+            return null;
+        }
+    }
+
+    private Comprobante getComprobante(String idTercerizadoras, BigDecimal totalDebitoPrestadoras, Date fecha, Date periodo) throws SystemException {
+
+        Date fechaActual = new Date();
+
+        int ptoVenta = 2;
+        String tipoC = "NDB";
+        String nro = ComprobanteServiceUtil.getUltimoNroDebito(entidad);
+        int suma = Integer.valueOf(nro) + 1;
+
+
+        String nroC = String.valueOf(suma);
+        String letra = "";
+        int cantCuotas = 0;
+
+        Date fechaEmisionC = fechaActual;
+        Date fechaRecepcionC = fechaActual;
+        int sucu = 0;
+        Date fechaVencimientoC = DateUtils.anyadeMeses(fechaActual, 1);
+
+        String cuit = WebKeysGlobal.CUIT_OSPIM;
+
+        Comprobante comprobante = new Comprobante(ptoVenta, tipoC, nroC, cuit,
+                fechaEmisionC, fechaRecepcionC,
+                totalDebitoPrestadoras, letra, sucu, fechaVencimientoC, null, periodo);
+
+
+        String cuitAcreedor = null;
+        if ("MPS".equalsIgnoreCase(idTercerizadoras)) {
+            cuitAcreedor = WebKeysGlobal.PREVENCION_CUIT;
+        } else if ("OMI".equalsIgnoreCase(idTercerizadoras)) {
+            cuitAcreedor = WebKeysGlobal.OMINT_CUIT;
+        } else if ("MEN".equalsIgnoreCase(idTercerizadoras)) {
+            cuitAcreedor = WebKeysGlobal.ENSALUD_CUIT;
+
+        }
+
+        Empresa empresa = null;
+        empresa = new Empresa(cuitAcreedor, "000", null);
+        empresa.setId_seccional(0);
+
+
+        comprobante.setAcreedorEmpresa(empresa);
+        comprobante.setObservaciones("Debito Tercerizadora");
+        comprobante.setCantCuotas(cantCuotas);
+        comprobante.setNroAnticipo(0);
+
+        comprobante.setAlta_fecha(new Date());
+
+
+        List<ComprobanteConcepto> conceptos = new ArrayList<ComprobanteConcepto>();
+        ComprobanteConcepto concepto = new ComprobanteConcepto();
+
+        //concepto.set
+        Concepto conceptoCompro = new Concepto();
+
+        conceptoCompro.setId(89);
+        concepto.setImporte(totalDebitoPrestadoras);
+        concepto.setConceptoComprobante(conceptoCompro);
+
+        conceptos.add(concepto);
+
+        comprobante.setConceptos(conceptos);
+
+        return comprobante;
+
+    }
+
+
+    public int grabarTotalesDebitos(BigDecimal totalDebitoPrestadoras, User user, Date fecha, Date periodo, String idTercerizadoras) throws SystemException {
+        Comprobante comp = null;
+
+        comp = getComprobante(idTercerizadoras, totalDebitoPrestadoras, fecha, periodo);
+
+        try {
+            ComprobanteServiceUtil.save(comp, user, entidad);
+        } catch (Exception e) {
+            _log.error(e);
+        }
+
+
+        return 0;
+    }
+
+
+    public List<DebitosaTotal> getArchivosDebitos(Date periodo, String idTercerizadora) throws SystemException {
+        Connection con = null;
+        CallableStatement stmt = null;
+        List<DebitosaTotal> list = new ArrayList<DebitosaTotal>();
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            String sql = "{call trae_debitos_tercerizadoras_por_periodo(?,?)}";
+            stmt = con.prepareCall(sql);
+
+            if (periodo != null) stmt.setDate(1, new java.sql.Date(periodo.getTime()));
+            else stmt.setNull(1, Types.DATE);
+
+            stmt.setString(2, idTercerizadora);
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                DebitosaTotal archivo = DebitosaTotal.getMapping(rs, "deb_");
+                list.add(archivo);
+            }
+
+        } catch (Exception e) {
+            _log.error("Error al trae_debitos_tercerizadoras_por_periodo()", e);
+            throw new SystemException(e);
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+
+        return list;
+    }
+
+    public int grabarBorradorLiquidacionesPendientesDebitos(
+            DebitosLiquidacionesPendientes deb, String user, Date periodoFechaDesde, String idTercerizadora
+    ) throws SystemException {
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        idTercerizadora = (idTercerizadora != null) ? idTercerizadora.trim() : "";
+
+        if (Validator.isNull(idTercerizadora)) {
+            _log.warn("grabarBorradorLiquidacionesPendientesDebitos: idTercerizadora vacío -> no inserto");
+            return 0;
+        }
+        if (periodoFechaDesde == null) {
+            _log.warn("grabarBorradorLiquidacionesPendientesDebitos: periodoFechaDesde null -> no inserto");
+            return 0;
+        }
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            // +1 parámetro: id_tercerizadora
+            String sql = "SELECT public.inserta_debitos_tercerizadoras_pendientes(?,?,?,?,?,?,?,?,?)";
+            ps = con.prepareStatement(sql);
+
+            // 1) periodo_fecha_desde
+            setTsOrNull(ps, 1, periodoFechaDesde);
+
+            // 2) id_tercerizadora
+            ps.setString(2, idTercerizadora);
+
+            // 3) liquidacion_id (numeric)
+            setBigDecOrNull(ps, 3, (deb != null ? deb.getNumero() : null));
+
+            // 4) prestador_nombre
+            ps.setString(4, (deb != null ? deb.getHospitalesAutogestion() : null));
+
+            // 5) numero_factura
+            ps.setString(5, (deb != null ? deb.getFactura() : null));
+
+            // 6) monto_prestador
+            setBigDecOrNull(ps, 6, (deb != null ? deb.getMonto() : null));
+
+            // 7) cargo_prestadora
+            setBigDecOrNull(ps, 7, (deb != null ? deb.getCargoPrestadora() : null));
+
+            // 8) cargo_reclamo
+            setBigDecOrNull(ps, 8, (deb != null ? deb.getCargoPrestadoraReclamo() : null));
+
+            // 9) usuario
+            ps.setString(9, user);
+
+            rs = ps.executeQuery();
+            return readSingleInt(rs);
+
+        } catch (SQLException e) {
+            _log.error("Error al insertar borrador liquidaciones pendientes", e);
+            throw new SystemException(e);
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    public int grabarBorradorHospitalesDebitos(
+            DebitosHospitales deb, String user, Date periodoFechaDesde, String idTercerizadora, String workKey
+    ) throws SystemException {
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        idTercerizadora = (idTercerizadora != null) ? idTercerizadora.trim() : "";
+
+        if (Validator.isNull(idTercerizadora)) {
+            _log.warn("grabarBorradorHospitalesDebitos: idTercerizadora vacío -> no inserto");
+            return 0;
+        }
+        if (periodoFechaDesde == null) {
+            _log.warn("grabarBorradorHospitalesDebitos: periodoFechaDesde null -> no inserto");
+            return 0;
+        }
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            // +1 parámetro: id_tercerizadora
+            String sql = "SELECT public.inserta_debitos_tercerizadoras_hospitales(?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            ps = con.prepareStatement(sql);
+
+            // 1) periodo_fecha_desde
+            setTsOrNull(ps, 1, periodoFechaDesde);
+
+            // 2) id_tercerizadora
+            ps.setString(2, idTercerizadora);
+
+            // 3) orden_pago_id (numeric)
+            setBigDecOrNull(ps, 3, (deb != null ? deb.getNumero() : null));
+
+            // 4) hospital_nombre
+            ps.setString(4, (deb != null ? deb.getHospital() : null));
+
+            // 5) numero_factura
+            ps.setString(5, (deb != null ? deb.getFactura() : null));
+
+            // 6) monto_debitar
+            setBigDecOrNull(ps, 6, (deb != null ? deb.getMonto() : null));
+
+            // 7) orden_pago_numero (varchar)
+            ps.setString(7, (deb != null ? deb.getOrdenPago() : null));
+
+            // 8) cargo_prestadora
+            setBigDecOrNull(ps, 8, (deb != null ? deb.getCargoPrestadora() : null));
+
+            // 9) importe_total
+            setBigDecOrNull(ps, 9, (deb != null ? deb.getImporteTotal() : null));
+
+            // 10) liquidacion_id (int NOT NULL en tabla)
+            if (deb == null) ps.setInt(10, 0);
+            else ps.setInt(10, deb.getIdLiquidacion());
+
+            // 11) usuario
+            ps.setString(11, user);
+            ps.setString(12, "B");
+            ps.setString(13, workKey);
+
+            rs = ps.executeQuery();
+            return readSingleInt(rs);
+
+        } catch (SQLException e) {
+            _log.error("Error al insertar borrador hospitales", e);
+            throw new SystemException(e);
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    public int grabarBorradorReintegrosDebitos(
+            DebitosaReintegros deb, String user, Date periodoFechaDesde, String idTercerizadora
+    ) throws SystemException {
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        idTercerizadora = (idTercerizadora != null) ? idTercerizadora.trim() : "";
+
+        if (Validator.isNull(idTercerizadora)) {
+            _log.warn("grabarBorradorReintegrosDebitos: idTercerizadora vacío -> no inserto");
+            return 0;
+        }
+        if (periodoFechaDesde == null) {
+            _log.warn("grabarBorradorReintegrosDebitos: periodoFechaDesde null -> no inserto");
+            return 0;
+        }
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            // +1 parámetro: id_tercerizadora
+            String sql = "SELECT public.inserta_debitos_tercerizadoras_reintegros(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            ps = con.prepareStatement(sql);
+
+            // 1) periodo_fecha_desde
+            setTsOrNull(ps, 1, periodoFechaDesde);
+
+            // 2) id_tercerizadora
+            ps.setString(2, idTercerizadora);
+
+            // 3) reintegro_numero
+            if (deb == null) ps.setInt(3, 0);
+            else ps.setInt(3, deb.getNumReintegro());
+
+            // 4) numero_documento
+            ps.setString(4, (deb != null ? deb.getDocumento() : null));
+
+            // 5) seccional_descripcion
+            ps.setString(5, (deb != null ? deb.getSeccional() : null));
+
+            // 6) descripcion
+            ps.setString(6, (deb != null ? deb.getDescripcion() : null));
+
+            // 7) monto_debitar
+            setBigDecOrNull(ps, 7, (deb != null ? deb.getImporteTotal() : null));
+
+            // 8) orden_pago_numero
+            ps.setString(8, (deb != null ? deb.getNumeroOP() : null));
+
+            // 9) orden_pago_fecha
+            if (deb != null && deb.getFechaOP() != null) ps.setTimestamp(9, toTs(deb.getFechaOP()));
+            else ps.setNull(9, Types.TIMESTAMP);
+
+            // 10) cargo_prestadora
+            setBigDecOrNull(ps, 10, (deb != null ? deb.getCargoPrestadora() : null));
+
+            // 11) apellido
+            ps.setString(11, (deb != null ? deb.getApellido() : null));
+
+            // 12) nombre
+            ps.setString(12, (deb != null ? deb.getNombre() : null));
+
+            // 13) reclamo_prestacional
+            setIntOrNull(ps, 13, (deb != null ? deb.getReclamoPrestacional() : null));
+
+            // 14) usuario
+            ps.setString(14, user);
+
+            rs = ps.executeQuery();
+            return readSingleInt(rs);
+
+        } catch (SQLException e) {
+            _log.error("Error al insertar borrador reintegros", e);
+            throw new SystemException(e);
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    public int grabarBorradorPrestadoresDebitos(
+            DebitosaPrestadores deb, String user, Date periodoFechaDesde, String idTercerizadora
+    ) throws SystemException {
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        idTercerizadora = (idTercerizadora != null) ? idTercerizadora.trim() : "";
+
+        if (Validator.isNull(idTercerizadora)) {
+            _log.warn("grabarBorradorPrestadoresDebitos: idTercerizadora vacío -> no inserto");
+            return 0;
+        }
+        if (periodoFechaDesde == null) {
+            _log.warn("grabarBorradorPrestadoresDebitos: periodoFechaDesde null -> no inserto");
+            return 0;
+        }
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            // +1 parámetro: id_tercerizadora
+            String sql = "SELECT public.inserta_debitos_tercerizadoras_prestadores(?,?,?,?,?,?,?,?,?,?,?,?)";
+            ps = con.prepareStatement(sql);
+
+            // 1) periodo_fecha_desde
+            setTsOrNull(ps, 1, periodoFechaDesde);
+
+            // 2) id_tercerizadora
+            ps.setString(2, idTercerizadora);
+
+            // 3) registro_id (numeric)
+            setBigDecOrNull(ps, 3, (deb != null ? deb.getNumero() : null));
+
+            // 4) registro_id_int (int NOT NULL)
+            if (deb == null) ps.setInt(4, 0);
+            else ps.setInt(4, deb.getIdLiquidacion());
+
+            // 5) prestador_nombre
+            ps.setString(5, (deb != null ? deb.getPrestador() : null));
+
+            // 6) numero_factura
+            ps.setString(6, (deb != null ? deb.getFactura() : null));
+
+            // 7) monto_debitar
+            setBigDecOrNull(ps, 7, (deb != null ? deb.getMonto() : null));
+
+            // 8) orden_pago_numero (varchar)
+            ps.setString(8, (deb != null ? deb.getOrdenPago() : null));
+
+            // 9) cargo_prestadora
+            setBigDecOrNull(ps, 9, (deb != null ? deb.getCargoPrestadora() : null));
+
+            // 10) reclamo_prestacional
+            setIntOrNull(ps, 10, (deb != null ? deb.getReclamoPrestacional() : null));
+
+            // 11) reclamos_prestacionales (text)
+            ps.setString(11, (deb != null ? deb.getReclamosPrestacionales() : null));
+
+            // 12) usuario
+            ps.setString(12, user);
+
+            rs = ps.executeQuery();
+            return readSingleInt(rs);
+
+        } catch (SQLException e) {
+            _log.error("Error al insertar borrador prestadores", e);
+            throw new SystemException(e);
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    /// BORRAR BORRADOR por (tipo + periodo + terc)
+    // - Acepta tipo corto (LI/HO/RE/PR) y también llaves largas (DEBITOS_* / nombres).
+    // - Normaliza y LOGUEA siempre el tipo original vs normalizado.
+    // - Fail-safe: si no hay scope completo => NO borra.
+    // - Llama a la función DB: borra_borrador_debitos_tercerizadoras_por_periodo_y_tipo
+    // ============================================================================/ ============================================================================
+    public int borrarBorradorDebitosTercerizadorasPorTipoYPeriodo(
+            String tipoKey,
+            Date periodoFechaDesde,
+            String idTercerizadora,
+            String workKey
+    ) throws SystemException {
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        final String tipoKeyRaw = tipoKey;
+        final String workKeyRaw = workKey;
+
+        // Normalizaciones defensivas
+        tipoKey = (tipoKey != null) ? tipoKey.trim() : "";
+        idTercerizadora = (idTercerizadora != null) ? idTercerizadora.trim() : "";
+        workKey = (workKey != null) ? workKey.trim() : "";
+
+        // Normalizar a corto (LI/HO/RE/PR) SIEMPRE para evitar NO-OP silencioso
+        String tipoSel = normalizeTipoSel(tipoKey);
+        if (tipoSel == null) tipoSel = "";
+        tipoSel = tipoSel.trim();
+
+        // Fallback manual por si normalizeTipoSel no contempla llaves DB
+        if (Validator.isNotNull(tipoKey)) {
+            String t = tipoKey.toUpperCase().trim();
+            if ("DEBITOS_LIQ_PENDIENTES".equals(t)) tipoSel = "LI";
+            else if ("DEBITOS_HOSPITALES".equals(t)) tipoSel = "HO";
+            else if ("DEBITOS_REINTEGROS".equals(t)) tipoSel = "RE";
+            else if ("DEBITOS_PRESTADORES".equals(t)) tipoSel = "PR";
+        }
+
+        // Fail-safe: no borro si no tengo scope completo
+        if (!("LI".equals(tipoSel) || "HO".equals(tipoSel) || "RE".equals(tipoSel) || "PR".equals(tipoSel))) {
+            _log.warn("[BORRAR-BORRADOR][POR-TIPO-PERIODO] tipo inválido: raw=" + safe(tipoKeyRaw)
+                    + " normalized=" + safe(tipoSel) + " -> no borro");
+            return 0;
+        }
+        if (Validator.isNull(idTercerizadora)) {
+            _log.warn("[BORRAR-BORRADOR][POR-TIPO-PERIODO] idTercerizadora null/vacío -> no borro"
+                    + " tipoSel=" + safe(tipoSel) + " rawTipo=" + safe(tipoKeyRaw));
+            return 0;
+        }
+        if (periodoFechaDesde == null) {
+            _log.warn("[BORRAR-BORRADOR][POR-TIPO-PERIODO] periodoFechaDesde null -> no borro"
+                    + " tipoSel=" + safe(tipoSel) + " rawTipo=" + safe(tipoKeyRaw)
+                    + " terc=" + safe(idTercerizadora));
+            return 0;
+        }
+        if (Validator.isNull(workKey)) {
+            _log.warn("[BORRAR-BORRADOR][POR-TIPO-PERIODO] workKey null/vacío -> no borro"
+                    + " tipoSel=" + safe(tipoSel)
+                    + " rawTipo=" + safe(tipoKeyRaw)
+                    + " terc=" + safe(idTercerizadora)
+                    + " periodoFechaDesde(ms)=" + String.valueOf(periodoFechaDesde.getTime()));
+            return 0;
+        }
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            // OJO: 4 params (incluye workKey)
+            String sql = "SELECT public.borra_borrador_debitos_tercerizadoras_por_periodo_y_tipo(" +
+                    "?::timestamp, ?::varchar, ?::varchar, ?::text)";
+
+            ps = con.prepareStatement(sql);
+
+            // 1) p_periodo_fecha (timestamp)
+            setTsOrNull(ps, 1, periodoFechaDesde);
+
+            // 2) p_tipo_key (varchar) -> 'HO'/'LI'/'RE'/'PR'
+            ps.setString(2, tipoSel);
+
+            // 3) p_id_tercerizadora (varchar)
+            ps.setString(3, idTercerizadora);
+
+            // 4) p_work_key (text)
+            ps.setString(4, workKey);
+
+            rs = ps.executeQuery();
+            int deleted = readSingleInt(rs);
+
+            if (_log.isInfoEnabled()) {
+                _log.info("[BORRAR-BORRADOR][POR-TIPO-PERIODO] deleted=" + deleted
+                        + " tipoRaw=" + safe(tipoKeyRaw)
+                        + " tipoSel=" + safe(tipoSel)
+                        + " periodoFechaDesde(ms)=" + String.valueOf(periodoFechaDesde.getTime())
+                        + " terc=" + safe(idTercerizadora)
+                        + " workKey=" + safe(workKey));
+            }
+
+            return deleted;
+
+        } catch (SQLException e) {
+            _log.error("Error al borrar borrador por (tipo+periodo+terc+workKey) (db-fn)."
+                    + " tipoRaw=" + safe(tipoKeyRaw)
+                    + " tipoSel=" + safe(tipoSel)
+                    + " periodoFechaDesde=" + (periodoFechaDesde != null ? String.valueOf(periodoFechaDesde.getTime()) : "null")
+                    + " terc=" + safe(idTercerizadora)
+                    + " workKeyRaw=" + safe(workKeyRaw)
+                    + " workKey=" + safe(workKey), e);
+            throw new SystemException(e);
+
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    private static java.sql.Timestamp toTs(Date d) {
+        return (d == null) ? null : new java.sql.Timestamp(d.getTime());
+    }
+
+    private static void setTsOrNull(PreparedStatement ps, int idx, Date d) throws SQLException {
+        java.sql.Timestamp ts = toTs(d);
+        if (ts == null) ps.setNull(idx, Types.TIMESTAMP);
+        else ps.setTimestamp(idx, ts);
+    }
+
+    private static void setBigDecOrNull(PreparedStatement ps, int idx, BigDecimal v) throws SQLException {
+        if (v == null) ps.setNull(idx, Types.NUMERIC);
+        else ps.setBigDecimal(idx, v);
+    }
+
+    private static void setIntOrNull(PreparedStatement ps, int idx, Integer v) throws SQLException {
+        if (v == null) ps.setNull(idx, Types.INTEGER);
+        else ps.setInt(idx, v.intValue());
+    }
+
+    private static int readSingleInt(ResultSet rs) throws SQLException {
+        return (rs != null && rs.next()) ? rs.getInt(1) : 0;
+    }
+
+    private String mapTipoProcesoToTipoDetalle(String tipoProceso) {
+        if (tipoProceso == null) return null;
+        if ("LI".equalsIgnoreCase(tipoProceso)) return WebKeysLiquidaciones.DEBITOS_LIQ_PENDIENTES;
+        if ("HO".equalsIgnoreCase(tipoProceso)) return WebKeysLiquidaciones.DEBITOS_HOSPITALES;
+        if ("RE".equalsIgnoreCase(tipoProceso)) return WebKeysLiquidaciones.DEBITOS_REINTEGROS;
+        if ("PR".equalsIgnoreCase(tipoProceso)) return WebKeysLiquidaciones.DEBITOS_PRESTADORES;
+        return null;
+    }
+
+    public int[] reabrirDebitosTercerizadorasPeriodo(
+            String tipoSel,
+            Date periodoFechaDesde,
+            Date periodoHasta,
+            String idTercerizadora,
+            String usuario
+    ) throws SystemException {
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        int inserted = 0;
+        int deleted = 0;
+
+        // ---------- Validaciones mínimas (fail-closed) ----------
+        String t = (tipoSel != null) ? tipoSel.trim().toUpperCase() : "";
+        if (!("LI".equals(t) || "HO".equals(t) || "RE".equals(t) || "PR".equals(t))) {
+            throw new SystemException(new Exception("tipoSel inválido: " + tipoSel));
+        }
+
+        if (periodoFechaDesde == null || periodoHasta == null) {
+            throw new SystemException(new Exception("Periodo inválido: desde/hasta null"));
+        }
+
+        if (idTercerizadora == null || idTercerizadora.trim().length() == 0) {
+            throw new SystemException(new Exception("Tercerizadora inválida"));
+        }
+
+        String terc = idTercerizadora.trim();
+        String u = (usuario != null && usuario.trim().length() > 0) ? usuario.trim() : "system";
+
+        // ---------- SQL ----------
+        final String sql =
+                "SELECT inserted_borrador, deleted_grabado " +
+                        "FROM public.reabrir_debitos_tercerizadoras_periodo(?::varchar, ?::timestamp, ?::date, ?::varchar, ?::varchar)";
+
+        try {
+            con = ConnectionHelper.getConnection();
+            ps = con.prepareStatement(sql);
+
+            ps.setString(1, t);
+            ps.setTimestamp(2, new java.sql.Timestamp(periodoFechaDesde.getTime()));
+            ps.setDate(3, new java.sql.Date(periodoHasta.getTime()));
+            ps.setString(4, terc);
+            ps.setString(5, u);
+
+            rs = ps.executeQuery();
+
+            if (rs != null && rs.next()) {
+                inserted = rs.getInt("inserted_borrador");
+                deleted  = rs.getInt("deleted_grabado");
+            } else {
+                throw new SystemException(new Exception("reabrir_debitos_tercerizadoras_periodo no devolvió fila"));
+            }
+
+            // return[0]=inserted_borrador, return[1]=deleted_grabado
+            return new int[] { inserted, deleted };
+
+        } catch (SystemException se) {
+            throw se;
+        } catch (Exception e) {
+            _log.error("Error ejecutando reabrir_debitos_tercerizadoras_periodo", e);
+            throw new SystemException(e);
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    public List<String> getBusquedaDebitosaGrabadosAllPeriodos(String tipoProceso, String idTercerizadoras)
+            throws SystemException {
+
+        final String rid = "ALL-KEYS#" + System.currentTimeMillis() + "-" + (int) (Math.random() * 10000);
+        final boolean dbg = _log.isDebugEnabled();
+
+        String tipo = (tipoProceso != null) ? tipoProceso.trim() : null;
+        String terc = (idTercerizadoras != null) ? idTercerizadoras.trim() : null;
+
+        // Normalización igual que antes (LI/HO/RE/PR -> DEBITOS_*)
+        String tipoDetalle = mapTipoProcesoToTipoDetalle(tipo);
+        if (tipoDetalle == null) tipoDetalle = tipo;
+
+        if (tipoDetalle == null || tipoDetalle.length() == 0) {
+            _log.warn(prefix(rid) + "tipoProceso vacío/null => devuelve lista vacía");
+            return new ArrayList<String>();
+        }
+        if (terc == null || terc.length() == 0) {
+            _log.warn(prefix(rid) + "idTercerizadoras vacío/null => devuelve lista vacía");
+            return new ArrayList<String>();
+        }
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        ArrayList<String> out = new ArrayList<String>();
+
+        final String sql =
+                "SELECT clave " +
+                        "FROM public.get_busqueda_debitos_grabados(?::varchar, ?::varchar)";
+
+        try {
+            _log.info(prefix(rid) + "[IN] tipoProceso=" + safe(tipoProceso)
+                    + " tipoDetalle=" + safe(tipoDetalle)
+                    + " terc=" + safe(terc));
+
+            if (dbg) _log.debug(prefix(rid) + "[SQL] " + sql);
+
+            con = ConnectionHelper.getConnection();
+            ps = con.prepareStatement(sql);
+
+            ps.setString(1, tipoDetalle);
+            ps.setString(2, terc);
+
+            rs = ps.executeQuery();
+
+            int rows = 0;
+            while (rs.next()) {
+                rows++;
+                String k = rs.getString("clave");
+                if (k != null) out.add(k);
+            }
+
+            _log.info(prefix(rid) + "[OUT] rows=" + rows + " keys=" + out.size());
+            return out;
+
+        } catch (SQLException e) {
+            _log.error(prefix(rid) + "Error en getBusquedaDebitosaGrabadosKeysAllPeriodos "
+                    + " tipoDetalle=" + tipoDetalle + " terc=" + terc, e);
+            throw new SystemException(e);
+
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    public int recalcularTotalesDebitos(Date periodo, String idTercerizadora, String usuario)
+            throws SystemException {
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            // SELECT para funciones que retornan scalar
+            final String sql = "SELECT public.recalcular_totales_debitos(?::date, ?::varchar, ?::varchar)";
+
+            ps = con.prepareStatement(sql);
+
+            if (periodo != null) ps.setDate(1, new java.sql.Date(periodo.getTime()));
+            else ps.setNull(1, Types.DATE);
+
+            ps.setString(2, idTercerizadora);
+            ps.setString(3, usuario);
+
+            rs = ps.executeQuery();
+            return (rs != null && rs.next()) ? rs.getInt(1) : 0;
+
+        } catch (SQLException e) {
+            _log.error("Error recalculando totales debitos", e);
+            throw new SystemException(e);
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignore) {}
+            ConnectionHelper.cerrar(ps, con);
+        }
+    }
+
+    private String normalizeTipoSel(String tipoSel) {
+        String t = (tipoSel != null) ? tipoSel.trim().toUpperCase() : "";
+        if ("LI".equals(t) || "HO".equals(t) || "RE".equals(t) || "PR".equals(t)) return t;
+        return ""; // <- no inventes LI
+    }
+
+}

@@ -1,0 +1,289 @@
+package ar.com.ospim.tesoreria.action;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.GregorianCalendar;
+
+import javax.portlet.ActionRequest;
+import javax.portlet.ActionResponse;
+import javax.portlet.PortletConfig;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
+import javax.servlet.http.HttpSession;
+
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+
+import ar.com.ospim.global.WebKeysGlobal;
+import ar.com.ospim.global.beans.Cheque;
+import ar.com.ospim.global.beans.Efectivo;
+import ar.com.ospim.global.services.TraeListasServiceUtil;
+import ar.com.ospim.tesoreria.WebKeysTesoreria;
+import ar.com.ospim.tesoreria.beans.Chequera;
+import ar.com.ospim.tesoreria.beans.CuentaBancaria;
+import ar.com.ospim.tesoreria.beans.MovimientoBancario;
+import ar.com.ospim.tesoreria.beans.MovimientoBancoCheque;
+import ar.com.ospim.tesoreria.beans.MovimientoBancoReciboIngreso;
+import ar.com.ospim.tesoreria.beans.TipoMovBcrio;
+import ar.com.ospim.tesoreria.services.MovimientoBancarioServiceUtil;
+import ar.com.ospim.util.StringUtils;
+
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.kernel.servlet.SessionMessages;
+import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.model.User;
+import com.liferay.portal.struts.PortletAction;
+import com.liferay.portal.util.PortalUtil;
+
+/**
+ * <a href="EditarMovBcrioEntryAction.java.html"><b><i>View Source</i></b></a>
+ * 
+ * @author Federico Brachi
+ * 
+ */
+public class EditarMovBcrioEntryAction extends PortletAction {
+
+	private static Log _log = LogFactoryUtil
+			.getLog(EditarMovBcrioEntryAction.class);
+
+	public void processAction(ActionMapping mapping, ActionForm form,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse) throws Exception {
+
+		try {
+			
+			int entidad=WebKeysGlobal.OSPIM;
+			
+			if(actionResponse.getNamespace().equals("_FAR_1_")){
+				entidad=WebKeysGlobal.AMTIMA;
+			}else if(actionResponse.getNamespace().equals("_UOM_1_")){
+				entidad=WebKeysGlobal.UOMA;
+			}
+			
+			User user = PortalUtil.getUser(actionRequest);
+			MovimientoBancario movBcrio = getMovimientoFromRequest(actionRequest);
+
+			// Nuevo registro
+			if (movBcrio.getId_movimiento() == 0) {
+				movBcrio = MovimientoBancarioServiceUtil
+						.grabaMovimientoBancario(movBcrio, user, entidad);
+			} else {// edita mov
+				movBcrio = MovimientoBancarioServiceUtil
+						.editaMovimientoBancario(movBcrio, user, entidad);
+			}
+			actionRequest.setAttribute("id_mov",
+					String.valueOf(movBcrio.getId_movimiento()));
+
+		} catch (Exception e) {
+			_log.error("Error al guardar", e);
+			SessionErrors.add(actionRequest, e.getClass().getName());
+		}
+
+		if (SessionErrors.isEmpty(actionRequest)) {
+			SessionMessages.add(actionRequest, "request_processed", "");
+		}
+
+	}
+
+	public ActionForward render(ActionMapping mapping, ActionForm form,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse) throws Exception {
+		
+		int entidad=WebKeysGlobal.OSPIM;
+		
+		if(renderResponse.getNamespace().equals("_FAR_1_")){
+			entidad=WebKeysGlobal.AMTIMA;
+		}else if(renderResponse.getNamespace().equals("_UOM_1_")){
+			entidad=WebKeysGlobal.UOMA;
+		}
+		
+
+		TraeListasServiceUtil.getTiposTrxBancarias(renderRequest,entidad);
+		TraeListasServiceUtil.getCtasBcrias(renderRequest);
+		TraeListasServiceUtil.getChequeras(renderRequest);
+		TraeListasServiceUtil.getBancos(renderRequest);
+
+		HttpSession session = PortalUtil.getHttpServletRequest(renderRequest)
+				.getSession();
+		String fromRedireccion = renderRequest.getParameter("fromRedireccion");
+		boolean redireccion = false;
+		if (StringUtils.checkNotEmpty(fromRedireccion)
+				&& fromRedireccion.equals("fromRedireccion")) {
+			redireccion = true;
+		}
+		 Date fecha = null;
+		if (SessionErrors.isEmpty(renderRequest)) {
+			session.removeAttribute(WebKeysTesoreria.MOV_BCRIO_EN_EDICION);
+			String id = renderRequest.getParameter("id_mov");
+			if (id == null || id.equals("")) {
+				id = (String) renderRequest.getAttribute("id_mov");
+			}
+			if (StringUtils.checkNotEmpty(id) && !redireccion) {
+				MovimientoBancario mov = MovimientoBancarioServiceUtil.get(Integer.parseInt(id), entidad);
+				fecha = mov.getFecha_movimiento();
+				session.setAttribute(WebKeysTesoreria.MOV_BCRIO_EN_EDICION, mov);
+			}
+		}
+		TraeListasServiceUtil.getTipoMovBcrio(renderRequest, fecha, entidad);
+		return mapping.findForward(getForward(renderRequest,
+				"portlet.tesoreria.editar_movimiento_bcrio_entry"));
+	}
+
+	private MovimientoBancario getMovimientoFromRequest(
+			ActionRequest actionRequest) {
+
+		HttpSession session = PortalUtil.getHttpServletRequest(actionRequest)
+				.getSession();
+		MovimientoBancario movBcrio = (MovimientoBancario) session
+				.getAttribute(WebKeysTesoreria.MOV_BCRIO_EN_EDICION);
+
+		if (movBcrio == null) {
+			movBcrio = new MovimientoBancario();
+		}
+
+		String descripcion = ParamUtil.getString(actionRequest, "descripcion");
+		int cta_bcria = ParamUtil.getInteger(actionRequest, "cta_bancaria");
+		int dia_mov = ParamUtil.getInteger(actionRequest, "fechaMovDia");
+		int mes_mov = ParamUtil.getInteger(actionRequest, "fechaMovMes");
+		int anio_mov = ParamUtil.getInteger(actionRequest, "fechaMovAnio");
+
+		GregorianCalendar fecha_movimiento = null;
+
+		if (dia_mov != 0 && anio_mov != 0) {
+			fecha_movimiento = new GregorianCalendar(anio_mov, mes_mov, dia_mov);
+		}
+
+		int tipo_mov = ParamUtil.getInteger(actionRequest, "tipo_mov",
+				movBcrio != null && movBcrio.getTipo_mov() != null ? movBcrio
+						.getTipo_mov().getId_tipo_mov() : 0);
+		if (tipo_mov == TipoMovBcrio.DEPOSITAR_CHEQUES) {
+			if (movBcrio.getEfectivoRecibido() != null) {
+				movBcrio.getEfectivoRecibido().clear();
+			}
+			if (movBcrio.getChequesDepositados() != null) {
+				movBcrio.getChequesDepositados().clear();
+			}
+		}
+
+		if (tipo_mov == TipoMovBcrio.RECHAZAR_CHEQUES) {
+			if (movBcrio.getEfectivoRecibido() != null) {
+				movBcrio.getEfectivoRecibido().clear();
+			}
+			if (movBcrio.getChequesRecibidos() != null) {
+				movBcrio.getChequesRecibidos().clear();
+			}
+		}
+
+		if (tipo_mov == TipoMovBcrio.DEPOSITAR_EFECTIVO) {
+			if (movBcrio.getChequesRecibidos() != null) {
+				movBcrio.getChequesRecibidos().clear();
+			}
+			if (movBcrio.getChequesDepositados() != null) {
+				movBcrio.getChequesDepositados().clear();
+			}
+		}
+		
+		if (tipo_mov == TipoMovBcrio.SUBSIDIOS_APE) {
+			GregorianCalendar fecha_sur = null;
+			int dia_sur = ParamUtil.getInteger(actionRequest, "fechaSurDia");
+			int mes_sur = ParamUtil.getInteger(actionRequest, "fechaSurMes");
+			int anio_sur = ParamUtil.getInteger(actionRequest, "fechaSurAnio");
+			
+			if (dia_sur != 0 && anio_sur != 0) {
+				fecha_sur = new GregorianCalendar(anio_sur, mes_sur, dia_sur);
+			}
+			movBcrio.setFechaSur(fecha_sur.getTime());
+			movBcrio.setNroExpedienteSur(ParamUtil.getString(actionRequest,"nro_exp_sur"));
+			
+		}
+
+		String debCredStr = ParamUtil.getString(actionRequest, "debcred", "");
+		boolean deb_cred = false;
+		if (debCredStr.equals("CREDITO")) {
+			deb_cred = false;
+		} else {
+			deb_cred = true;
+		}
+		// int trx = ParamUtil.getInteger(actionRequest, "tipotrxbcria");
+		int chequera = ParamUtil.getInteger(actionRequest, "id_chequera");
+		boolean imprimecheque = ParamUtil
+				.getBoolean(actionRequest, "imprimech");
+		boolean noalaorden = ParamUtil.getBoolean(actionRequest, "noorden");
+		String nrocompro = ParamUtil.getString(actionRequest, "nroComp");
+		int dia_comp = ParamUtil.getInteger(actionRequest, "fechaCompDia");
+		int mes_comp = ParamUtil.getInteger(actionRequest, "fechaCompMes");
+		int anio_comp = ParamUtil.getInteger(actionRequest, "fechaCompAnio");
+
+		GregorianCalendar fecha_compro = null;
+		if (dia_comp != 0 && anio_comp != 0) {
+			fecha_compro = new GregorianCalendar(anio_comp, mes_comp, dia_comp);
+		}
+		int id_mov = ParamUtil.getInteger(actionRequest, "id_mov");
+
+		double importe_mov = ParamUtil.getDouble(actionRequest, "importe");
+
+		movBcrio.setId_movimiento(id_mov);
+		movBcrio.setImporte(new BigDecimal(String.valueOf(importe_mov)));
+		movBcrio.setNro_comprobante(nrocompro);
+		movBcrio.setFecha_comprobante(fecha_compro.getTime());
+		movBcrio.setFecha_movimiento(fecha_movimiento.getTime());
+		movBcrio.setChequera(new Chequera(chequera));
+		movBcrio.setNo_a_la_orden(noalaorden);
+		movBcrio.setImprime_cheque(imprimecheque);
+		// movBcrio.setTipo_trx_bcria(new TipoTrxBancaria(trx));
+		movBcrio.setTipo_mov(new TipoMovBcrio(tipo_mov));
+		movBcrio.setDeb_cred(deb_cred);
+		movBcrio.setDescripcion(descripcion);
+		movBcrio.setCta_bcria(new CuentaBancaria(cta_bcria));
+
+		if (movBcrio.getEfectivoRecibido() != null
+				&& movBcrio.getEfectivoRecibido().size() > 0) {
+			movBcrio.setImporte(getImporteTotal(movBcrio));
+			movBcrio.setDeb_cred(false); // credito porque entra efectivo a bco
+		} else if (movBcrio.getChequesRecibidos() != null
+				&& movBcrio.getChequesRecibidos().size() > 0) {
+			movBcrio.setImporte(getImporteTotal(movBcrio));
+			movBcrio.setDeb_cred(false); // credito pq entra cheque a banco
+		} else if (movBcrio.getChequesDepositados() != null
+				&& movBcrio.getChequesDepositados().size() > 0) {
+			movBcrio.setImporte(getImporteTotal(movBcrio));
+			movBcrio.setDeb_cred(true);
+			// debito pq sale el cheque (esta rechazado)
+		}
+		return movBcrio;
+	}
+
+	private BigDecimal getImporteTotal(MovimientoBancario mov) {
+		BigDecimal total = BigDecimal.ZERO;
+		if (mov.getChequesDepositados() != null
+				&& mov.getChequesDepositados().size() > 0) {
+			for (MovimientoBancoCheque ch : mov.getChequesDepositados()) {
+				if (ch.getCheque().getEstado().getId() == Cheque.Estado.RECHAZADO) {
+					total = total.add(ch.getCheque().getImporte());
+				}
+			}
+		}
+		if (mov.getChequesRecibidos() != null
+				&& mov.getChequesRecibidos().size() > 0) {
+			for (MovimientoBancoCheque ch : mov.getChequesRecibidos()) {
+				if (ch.getCheque().getEstado().getId() == Cheque.Estado.DEPOSITADO) {
+					total = total.add(ch.getCheque().getImporte());
+				}
+			}
+		}
+		if (mov.getEfectivoRecibido() != null
+				&& mov.getEfectivoRecibido().size() > 0) {
+			for (MovimientoBancoReciboIngreso ri : mov.getEfectivoRecibido()) {
+				if (((Efectivo) ri.getReciboIngreso().getIngreso()).getEstado()
+						.getId() == Efectivo.Estado.DEPOSITADO) {
+					total = total.add(ri.getReciboIngreso().getIngreso()
+							.getImporte());
+				}
+			}
+		}
+		return total;
+	}
+}

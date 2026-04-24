@@ -11,14 +11,14 @@ String id_convenio_prest = String.valueOf(convenioPrest.getId());
 <c:if test="<%= showABMButtons %>">
 <liferay-ui:icon-menu>
 	<portlet:renderURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>" var="editURL">
-		<portlet:param name="struts_action" value="/liquidaciones/editar_convenio_prest_entry" />
+		<portlet:param name="struts_action" value="/prestadores/editar_convenio_prest_entry" />
 		<portlet:param name="id_convenio_prest" value="<%=id_convenio_prest%>" />
 		<portlet:param name="cmd" value="<%= Constants.EDIT %>" />
 	</portlet:renderURL>
 	<liferay-ui:icon image="edit" url="<%= editURL %>" />
 	
 <%-- 	<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>" var="deleteURL">
-		<portlet:param name="struts_action" value="/liquidaciones/editar_convenio_prest_entry" />
+		<portlet:param name="struts_action" value="/prestadores/editar_convenio_prest_entry" />
 		<portlet:param name="cmd" value="<%= Constants.DELETE %>" />
 		<portlet:param name="id_convenio_prest" value="<%=id_convenio_prest%>" />
 	</portlet:actionURL>

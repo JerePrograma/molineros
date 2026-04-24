@@ -10,9 +10,7 @@ import java.util.List;
 import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional;
 import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
 import ar.com.ospim.procesaArchivos.beans.vademecum.ArchivoListadoSSSalud;
-import ar.com.ospim.procesaArchivos.beans.vademecum.ArchivoManualDat;
 import ar.com.ospim.procesaArchivos.beans.vademecum.DetalleListadoSSSalud;
-import ar.com.ospim.procesaArchivos.beans.vademecum.DetalleManualDat;
 import ar.com.ospim.procesaArchivos.services.ProcesaArchivosFarmaciaServiceImpl;
 
 import com.liferay.portal.kernel.log.Log;
@@ -23,8 +21,8 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
  * this code will simply cause the system's default encoding to be used instead.
  */
 public final class ProcesaArchivosContratos {
-	private static Log _log = LogFactoryUtil.getLog(ProcesaArchivosContratos.class);
-
+	private static Log _log = LogFactoryUtil
+			.getLog(ProcesaArchivosContratos.class);
 
 	public void procesarArchivoImportaContrato(BufferedReader scanner)
 			throws IOException, ParseException, SQLException {
@@ -33,13 +31,15 @@ public final class ProcesaArchivosContratos {
 		String line = null;
 		while ((line = scanner.readLine()) != null) {
 			if (null != line && !line.trim().equals("")) {
-				ConvenioPrestacionalDetalle deta = new ConvenioPrestacionalDetalle(line);				
+				ConvenioPrestacionalDetalle deta = new ConvenioPrestacionalDetalle(
+						line);
 				detalleList.add(deta);
 			}
 		}
 		contrato.setConvenioPrestDetalle(detalleList);
-		//ProcesaArchivosFarmaciaServiceImpl servicio = new ProcesaArchivosFarmaciaServiceImpl();
-		//servicio.grabaArchivo(nuevoArchivo);
+		// ProcesaArchivosFarmaciaServiceImpl servicio = new
+		// ProcesaArchivosFarmaciaServiceImpl();
+		// servicio.grabaArchivo(nuevoArchivo);
 	}
 
 	public void procesarArchivoListadoActualizaValores(BufferedReader scanner)
@@ -47,13 +47,13 @@ public final class ProcesaArchivosContratos {
 		ArchivoListadoSSSalud nuevoArchivo = new ArchivoListadoSSSalud();
 		List<DetalleListadoSSSalud> detalleList = new ArrayList<DetalleListadoSSSalud>();
 		String line = null;
-		for(int i=0; i<5;i++){
+		for (int i = 0; i < 5; i++) {
 			scanner.readLine();
 		}
 		while ((line = scanner.readLine()) != null) {
-			System.out.println("LINE: "+line);
+			System.out.println("LINE: " + line);
 			if (null != line) {
-				DetalleListadoSSSalud deta = new DetalleListadoSSSalud(line);				
+				DetalleListadoSSSalud deta = new DetalleListadoSSSalud(line);
 				detalleList.add(deta);
 			}
 		}
@@ -63,11 +63,13 @@ public final class ProcesaArchivosContratos {
 		servicio.grabaArchivo(nuevoArchivo);
 
 	}
-	
-	/*public void actualizarVademecum()throws SQLException {
-		ProcesaArchivosFarmaciaServiceImpl servicio = new ProcesaArchivosFarmaciaServiceImpl();
-		servicio.actualizaVademecum();
-		
-	}*/
+
+	/*
+	 * public void actualizarVademecum()throws SQLException {
+	 * ProcesaArchivosFarmaciaServiceImpl servicio = new
+	 * ProcesaArchivosFarmaciaServiceImpl(); servicio.actualizaVademecum();
+	 * 
+	 * }
+	 */
 
 }

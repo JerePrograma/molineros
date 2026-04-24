@@ -1,0 +1,4315 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN" "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+
+<tiles-definitions>
+
+	<!-- Afiliados -->
+
+	<definition name="portlet.afiliados" extends="portlet" />
+	
+	<definition name="portlet.afiliados.view" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/preview.jsp" />
+		<!-- <put name="portlet_content" value="/portlet/afiliados/view.jsp" /> -->
+	</definition>
+	
+	<definition name="portlet.afiliados.empleador" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/otros_datos.jsp" />
+	</definition>
+
+	<definition name="portlet.document_library.search.documento"
+		extends="portlet.document_library">
+		<put name="portlet_content" value="/portlet/afiliados/search_documentos.jsp" />
+	</definition>
+	
+	<definition name="portlet.actividad.view" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/actividades_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.delegacion.view" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/delegaciones_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.ver.aportes" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/ver_aportes_afip.jsp" />
+	</definition>
+
+	<definition name="portlet.ver.aportes.filtrados" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/aportes_externos_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.documentacion.result" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/documentacion_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.documentacion_recuperar.result"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/documentacion_recuperar_result.jsp" />
+	</definition>
+
+	<definition name="portlet.motivo_baja.view" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/seleccion_motivo_baja.jsp" />
+	</definition>
+
+	<definition name="portlet.reincorporacion.view" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/reincorporaciones.jsp" />
+	</definition>
+
+	<definition name="portlet.documentacion.view" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/documentacion_adjunta.jsp" />
+	</definition>
+
+	<definition name="portlet.documentacion_recuperar.view"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/documentacion_recuperar.jsp" />
+	</definition>
+
+	<definition name="portlet.empleador.view" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/empleadores_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliado.buscar_afiliado_existente"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/afiliado_existente_result.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliado.buscar_afiliado_existente_con_fecha_vigen"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/afiliado_existente_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliado.buscar_afiliado_XCuil"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/afiliado_existente_result.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliado.editar_envio_bonos"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/editar_envio_bonos.jsp" />
+	</definition>
+
+	<definition name="portlet.ver.bonos.enviados" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/envio_bonos_result.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliado.buscar_afiliado_existente_popup"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/afiliado_existente_result_popup.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliado.buscar_afiliado_titular_existente"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/afiliado_titular_existente_result.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliado.buscar_afiliado_titular_existente_popup"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/afiliado_titular_existente_result_popup.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliado.afiliado_titular_existente_popup"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/afiliado_titular_existente_popup.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.editar_afiliado_entry"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/editar_afiliado_entry.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.busqueda"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/busqueda_afiliado.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.borrar.view"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/busqueda_afiliado.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.cargar_integrante_entry"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/cargar_integrante_entry.jsp" />
+	</definition>
+	
+	<definition name="portlet.borrar.error"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/busqueda_afiliado.jsp" />
+	</definition>	
+	
+	<definition name="portlet.afiliados.result.search" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/afiliados_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.credenciales.search"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/credenciales_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.credenciales.result"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/credenciales_pdf.jsp" />
+	</definition>
+	
+	
+		<definition name="portlet.afiliados.credenciales_exepcion_copago.result"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/credenciales_exepcion_copago_pdf.jsp" />
+	</definition>
+
+		<definition name="portlet.afiliados.credenciales_exepcion_copago.result"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/credenciales_exepcion_copago_pdf.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.credenciales_busqueda_afiliado_cred.result"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/busqueda_afiliado_cred.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.certificado.result"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/certificado_afiliacion_odt.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.odt_rtf.result" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/odt_rtf.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.reincorporaciones.result"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/reincorporaciones_result_popup.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.result.search.popup"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/afiliados_search_result_popup.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.opciones.result.search"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/afiliados_search_result_opciones.jsp" />
+	</definition>
+
+	<definition name="portlet.situlaboral.result.search"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/situlaboral_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.aporte.result.search" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/aportes_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tercerizadora.result.search"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/tercerizadoras_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.edit_framework_version"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/edit_framework_version.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.edit_license" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/edit_license.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.edit_product_version"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/edit_product_version.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.error" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/error.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.search" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/search.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.view_afiliado_entry"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/view_afiliado_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.calle.view" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/calle_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.codPostal.view" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/global/codPostal_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.historico.aporte.result.search"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/historico_aportes_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.historico.movimiento.result.search"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/reportes/historico_movimiento_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.historico.tercerizadora.result.search"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/historico_tercerizadoras_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.historico.domicilio.result.search"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/historico_domicilios_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.reporte_amtima_pmi_busqueda"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/reportes/busqueda_reporte_amtima_pmi.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.reporte_amtima_pmi"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/reportes/reporte_amtima_pmi_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.buscar.aportes.contrib"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/reportes/reporte_aportes_contrib.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.reportes" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/reportes/reporte_listado_bajas.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.reportes.listado_bajas.result"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/reportes/listado_bajas_result.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.editar_opcion_entry"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/editar_opcion_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.prevencion.ws.result.search" extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/prevencion_ws_search_result.jsp" />
+	</definition>
+	
+
+	<!-- Afiliaciones - Imagenes -->
+	<definition name="portlet.afiliados.imagenes_afiliado" extends="portlet.afiliados">
+		<put name="portlet_content"	value="/portlet/afiliados/afiliado_imagenes.jsp" />
+	</definition>
+	
+	<!-- Fin Afiliaciones - Imagenes -->
+	
+	<!-- Afiliados -> Empleadores -->
+		
+	<definition name="portlet.afiliados.nuevo_afi_plan" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/afiliado_plan_nuevo.jsp" />
+	</definition>
+		
+	<definition name="portlet.afiliados.afi_plan" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/afiliado_plan.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.nuevo_afi_plan" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/afiliado_plan_nuevo.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.ver.aportes" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/ver_afi_aportes.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.empleadores.result.search" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/empleadores/empleadores_search_result.jsp" />
+	</definition>
+	
+	<!--
+	<definition name="portlet.afiliados.empleadores.view_empleadores_entry"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/empleadores/view_empleadores_entry.jsp" />
+	</definition>
+    -->
+	<definition name="portlet.afiliados.empleadores.editar_empleadores_entry"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/empleadores/editar_empleadores_entry.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.afiliados.empleadores.editar_empleadores_popup_entry"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/empleadores/editar_empleadores_popup_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.reporte_afiliados_anses"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/reportes/reporte_afiliados_anses.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.reporte_padrones"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/reportes/reporte_padrones.jsp" />
+	</definition>
+	
+
+	<definition name="portlet.afiliados.reporte_desregulados_sin_aportes"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/reportes/reporte_desregulados_sin_aportes.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.result.desregulados_sin_aportes"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/desregulados_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.reportes.listados_ss"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/reportes/reporte_listados_ss.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.reportes.listados_tercerizadoras"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/reportes/reporte_listados_tercerizadoras.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.reportes.listados_credenciales_emitidas" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/reportes/reporte_listados_creden_emitidas.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.reportes.estadistica_novedades_procesadas" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/reportes/reporte_novedades_sss_procesadas.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.reportes.panel_control_afiliados"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/reportes/reporte_panel_control_afiliados.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.observacion.view" extends="portlet.cai">
+		<put name="portlet_content" value="/portlet/afiliados/afi_observaciones_view.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.observaciones.view" extends="portlet.cai">
+		<put name="portlet_content" value="/portlet/afiliados/afi_observaciones_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.precarga_suspension_cobertura.view" extends="portlet.cai">
+		<put name="portlet_content" value="/portlet/afiliados/precargar_suspension_cobertura_medica.jsp" />
+	</definition>
+	
+
+	<!-- Afiliados -> Novedades -->
+	
+	<definition name="portlet.buscar.archivos.importados.novedad" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/novedades/archivos_subidos_sss.jsp" />
+	</definition>	
+
+	<definition name="portlet.novedades.result.search" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/novedades/novedades_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.novedades.empleadores.result.search" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/novedades/novedades_empleadores_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.novedades.ver.detalle.popup" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/novedades/view_novedad.jsp" />
+	</definition>
+	
+	<definition name="portlet.novedades.empl.ver.detalle.popup" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/novedades/view_novedad_empleador.jsp" />
+	</definition>
+	
+	<definition name="portlet.novedades.cambio.cuil.popup" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/novedades/cambio_cuil_novedad.jsp" />
+	</definition>
+	
+	<definition name="portlet.pre.carga.afiliados.result.search" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/novedades/pre_carga_afiliados_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.selecc_alta_pre_afiliado.view" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/novedades/seleccion_pre_afiliado.jsp" />
+	</definition>
+	
+
+	<!--  -->
+	<!-- Liquidaciones -->
+
+	<definition name="portlet.liquidaciones" extends="portlet" />
+
+	<definition name="portlet.liquidaciones.buscar_cantidad_prestacion_afiliado"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/afiliados/buscar_cantidad_prestacion_afiliado.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.buscar_topes_discapacidad_afiliado"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/afiliados/buscar_topes_discapacidad_afiliado.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.buscar_cantidad_prestacion_protesis"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/afiliados/buscar_cantidad_prestacion_protesis.jsp" />
+	</definition>
+
+	<definition name="portlet.buscar_prestador.view" extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/buscar_prestador_contratos.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.debitos_liquidacion"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/debitos_liquidaciones.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.odo_catastro"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/odo_catastro.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.odo_cuotas" extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/odo_cuotas.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.liquidaciones.ver_tratamientos_discapacidad_afiliado"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ver_tratamientos_discapacidad_afiliado.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.generar_nota_debito_periodo"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/generar_nota_debito_periodo.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.odo_historico"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/odo_historico.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.odo_odontograma"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/odontograma.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.view" extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/view.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.reportes.reportes_reintegros"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/reportes/reporte_reintegros.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.editar_reintegro_entry"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/reintegros/editar_reintegro.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.editar_liquidacion_entry"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/editar_liquidacion.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.seccional.view"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/seccionales_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.seccional_reintegros.view"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/seccionales_reintegros_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.prestador.view"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/prestadores_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.reintegros.result.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/reintegros/reintegros_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.reintegros_detalle.result.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/reintegros/reintegros_detalle_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.conv_prestac.result.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/prestadores/convenios_prest/convenios_prestac_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.conv_prestac.result_rango.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/reintegros/contratos_por_rango_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.conv_prestac.result_codigo.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/reintegros/contratos_por_codigo_search_result.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.liquidaciones.buscar_debitos_periodo.result.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/debitos_periodo_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.debitos.result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/debitos_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.catastro.result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/catastro_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.cuota.result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/cuota_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.liquidacion_debitos_terceros.result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/tercerizadoras_nota_debito_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.liquidaciones.result.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/liquidaciones_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.discapacidad.result.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/tratamientos_discapacidad_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.prestaciones"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/reintegros/reintegro_prestaciones_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.discapacidad"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/busqueda_tratamientos_discapacidad.jsp" />
+	</definition>
+
+	<definition name="portlet.medicamento.result.search.popup"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/farmacia/medicamentos_search_result_popup.jsp" />
+	</definition>
+
+	<definition name="portlet.medicamento.result.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/farmacia/medicamentos_lista_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.error" extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/error.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.cuit_existente_search_result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/cuit_existente_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.aumento_prestaciones" extends="portlet.liquidaciones">
+		<put name="portlet_content"	value="/portlet/liquidaciones/administracion/prestadores/aumento_prestaciones.jsp" />
+	</definition>
+
+	<!-- Liquidaciones, cheques -->
+
+	<definition name="portlet.liquidaciones.cheques.result.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/cheques/cheques_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.alta_cheque_entry"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/cheques/alta_cheque.jsp" />
+	</definition>
+
+	<!-- Liquidaciones, ordenes pago -->
+	<definition name="portlet.liquidaciones.ordenes_pago.pagos.result.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/orden_pago_ospim_pagos_search_result.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.liquidaciones.ordenes_pago.anticipos.result.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/orden_pago_ospim_anticipos_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.ordenes_pago_ospim.result.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/orden_pago_ospim_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.ordenes_pago_ospim.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/busqueda_ordenes_pago_ospim.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.editar_orden_pago_ospim_entry"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/editar_orden_pago_ospim.jsp" />
+	</definition>
+
+    <definition name="portlet.liquidaciones.editar_orden_pago_ospim_forma_pago"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/editar_orden_pago_ospim_forma_pago.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.reintegros_lista_results_para_op"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/reintegros_lista_para_OP_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.farmacia.editar_uploaded_orden_pago_entry"
+		extends="portlet.farmacia">
+		<put name="portlet_content"
+			value="/portlet/farmacia/ordenes_pago/editar_uploaded_orden_pago.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.op_reintegros_search_result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/orden_pago_ospim_reintegros_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.anular.op" extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/anular_orden_pago.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.reactivar.op"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/reactivar_orden_pago_ospim.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.ordenes_pago.pagos.cheques"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/reutilizar_cheques_orden_pago_ospim.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.ordenes_pago.pagos.cheques.recibidos"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/reutilizar_cheques_recibidos_orden_pago.jsp" />
+	</definition>	
+	
+
+	<!-- Liquidaciones -> Prestadores -->
+
+	<!-- <definition name="portlet.liquidaciones.administracion.prestadores"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/administracion/prestadores/busqueda_prestadores.jsp" />
+	</definition> -->
+
+	<definition name="portlet.liquidaciones.administracion.archivos.vademecum"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/administracion/vademecum/upload_archivos_vademecum.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.liquidaciones.administracion.prestadores.result.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/administracion/prestadores/prestadores_search_result.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.liquidaciones.administracion.prestadores.view_empleadores_entry"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/administracion/prestadores/view_prestadores_entry.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.liquidaciones.administracion.prestadores.editar_empleadores_entry"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/administracion/prestadores/editar_prestadores_entry.jsp" />
+	</definition>
+	
+	
+
+	<definition name="portlet.liquidaciones.editar_prestadores_externos"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/administracion/prestadores/view_prestador_externo.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.prestador_externo.result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/administracion/prestadores/prestador_externo_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.profesion.prestador" 
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" 
+		value="/portlet/liquidaciones/administracion/prestadores/lista_especialidades_prestador.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.matricula.prestador" 
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" 
+		value="/portlet/liquidaciones/administracion/prestadores/lista_matriculas_prestador.jsp" />
+	</definition>
+	
+			
+	
+	
+	
+
+	<definition name="portlet.liquidaciones.lugar_at_telefonos.prestador" 
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" 
+		value="/portlet/liquidaciones/administracion/prestadores/lista_telefonos_prestador_lugar_atencion.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.lugar_at_contactos.prestador" 
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" 
+		value="/portlet/liquidaciones/administracion/prestadores/lista_contactoes_prestador_lugar_atencion.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.lugares_atencion.prestador" 
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" 
+		value="/portlet/liquidaciones/administracion/prestadores/lista_lugares_atencion_prestador.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.lugar_at_prestador_indirecto" 
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" 
+		value="/portlet/liquidaciones/administracion/prestadores/lista_lugares_atencion_prestador_indirecto.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.plan.prestador" 
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" 
+		value="/portlet/liquidaciones/administracion/prestadores/lista_planes_prestador.jsp" />
+	</definition>
+		
+	<definition name="portlet.liquidaciones.calle.view" extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/administracion/prestadores/calle_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.codPostal.view" extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/administracion/prestadores/codPostal_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.editar_tratamiento_discapacidad"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/administracion/view_tratamiento_discapacidad.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.tratamiento_discapacidad.result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/administracion/tratamiento_discapacidad_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.tratamiento_discapacidad.error"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/administracion/tratamiento_discapacidad_result_error.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.reporte.ordenes.pago.completo"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/reportes/reporte_ordenes_pago_completo.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.reporte.ordenes.pago"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/reportes/reporte_ordenes_pago.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.reintegros.busqueda_reintegro"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/reintegros/busqueda_reintegro.jsp" />
+	</definition>
+
+
+	<definition name="portlet.liquidaciones.reportes.reporte_reintegros"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/reportes/reporte_reintegros.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.reportes.ficha_de_consumo"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/reportes/ficha_de_consumo.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.reportes.liq_farmacia"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/reportes/reporte_liq_farmacia.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.reportes.reporte_discapacidad"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/reportes/reporte_discapacidad.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.liquidaciones.reportes.reporte_tratamiento_discapacidad"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/reportes/reporte_tratamiento_discapacidad.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.reporte.ordenes.pago.result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/reportes/reporte_ordenes_pago_search_result.jsp" />
+	</definition>
+
+
+<!-- Reintegros Prestaciones Reclamos -->
+
+<definition name="portlet.liquidaciones.prestaciones_reclamos_reintegro_entry"
+	extends="portlet.liquidaciones">
+	<put name="portlet_content" value="/portlet/liquidaciones/reintegros/reintegro_prestaciones_reclamos_search_result.jsp" />
+</definition>
+
+<definition name="portlet.liquidaciones.prestaciones_reclamos_reintegro_cuotas_entry"
+	extends="portlet.liquidaciones">
+	<put name="portlet_content" value="/portlet/liquidaciones/reintegros/reintegro_prestaciones_reclamos_search_result_cuotas.jsp" />
+</definition>
+
+<definition name="portlet.liquidaciones.prestaciones_reclamos_reintegro_por_lote_entry"
+	extends="portlet.liquidaciones">
+	<put name="portlet_content" value="/portlet/liquidaciones/reintegros/reintegro_prestaciones_reclamos_search_result_por_lote.jsp" />
+</definition>	
+
+	
+<!-- Reintegros Prestaciones Reclamos -->
+
+	<!-- Comprobantes -->
+	<definition
+		name="portlet.liquidaciones.comprobantes.conceptos.search.result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/comprobantes/conceptos_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.comprobantes.search.result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/comprobantes/comprobantes_search_result.jsp" />
+	</definition>
+
+    <definition name="portlet.liquidaciones.comprobantes.general.search.result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/comprobantes/comprobantes_general_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.comprobantes.editar_comprobante"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/comprobantes/editar_comprobantes.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.comprobantes.editar_comprobante_extendido"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/comprobantes/editar_comprobantes_extendido.jsp" />
+	</definition>
+	
+    <definition name="portlet.liquidaciones.comprobantes.editar_comprobante_general"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/comprobantes/comprobantes_general_edit.jsp" />
+	</definition>
+
+
+	<definition name="portlet.liquidaciones.cerrar_lote"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/ordenes_pago/fecha_cierre.jsp" />
+	</definition>
+	<definition name="portlet.liquidaciones.divlote" extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/ordenes_pago/div_lote.jsp" />
+	</definition>
+
+    <definition name="portlet.liquidaciones.comprobante.confirmar"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/confirmar_comprobante_liquidacion.jsp" />
+	</definition>	
+
+
+	<!-- Tesoreria -->
+	<definition name="portlet.tesoreria" extends="portlet" />
+
+	<definition name="portlet.tesoreria.reporte.estado_comprobantes"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/comprobantes/estado_comprobantes.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.acreditaciones_afip"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/libro_banco/acreditaciones_afip.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.libro_banco"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/libro_banco/busqueda_libro_banco.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.libro_caja"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/libro_caja/busqueda_libro_caja.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.listado_valores"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/listado_valores/busqueda_listado_valores.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.listado_de_deuda"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/listado_de_deuda/listado_de_deuda.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.reporte.cuentas_corrientes"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/cuentas_corrientes/busqueda_cuentas_corrientes.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.cuentas_corrientes_actas_conv"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/cuentas_corrientes_actas_conv/cuentas_corrientes_actas_conv.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.subdiario_egresos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/subdiarios/egresos.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.subdiario_ingresos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/subdiarios/ingresos.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.recibos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/recibos/listado_recibos.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.anticipos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/anticipos/reporte_anticipos.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.anticipos.op"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/anticipos/reporte_anticipos_op.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.comprobantes.conceptos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/egresos/reporte_egresos_conceptos.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.editar_movimiento_bcrio_entry"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/bancos/editar_mov_bcrio.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.mov_bcrio.cheques_depositados.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/bancos/mov_bcrio_cheques_depositados_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.mov_bcrio.cheques_recibidos.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/bancos/mov_bcrio_cheques_recibidos_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.mov_bcrio.efectivos_recibidos.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/bancos/mov_bcrio_efectivo_recibido_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.buscar.movs.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/bancos/mov_bcrios_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.buscar.movs.inicial"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/bancos/busqueda_movimientos_bcrios.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.buscar.canje.cheques.propios.inicial"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/canje_cheques_propios/busqueda_canje_cheques_propios.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.canje.cheques.propios"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/canje_cheques_propios/canje_cheques_propios.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.buscar.canje.cheques.propios.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/canje_cheques_propios/canje_cheques_propios_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.canje.cheques.propios.op.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/canje_cheques_propios/canje_cheques_propios_cheques_op.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.canje.cheques.propios.cheques.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/canje_cheques_propios/canje_cheques_agregados_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.view" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/view.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.actas" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/reportes/actas.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.convenios"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/reportes/convenios.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.aplicacion_cobranzas"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/reportes/aplicacion_cobranzas.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.boletas_portal_empleadores"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/boletas_portal_empleadores.jsp" />
+	</definition>
+
+	<!-- Tesoreria - Actas -->
+	<definition name="portlet.tesoreria.actas.result.search"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/actas/actas_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.actas.editar_actas_entry"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/actas/editar_actas_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.actas.view_actas_entry"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/actas/view_actas_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.anular.acta" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/actas/anular_acta.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.actas.detalle.acta.search.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/actas/detalle_acta_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.actas.inspectores.result.search"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/actas/inspectores_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.actas.acta.relacionada.search.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/actas/actas_asociadas_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.actas.periodos.view"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/actas/actas_periodos.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.actas.editar.periodos.view"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/actas/actas_periodos_editar.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.actas.cheques.view"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/actas/acta_cheques_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.error" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/error.jsp" />
+	</definition>
+
+	<!-- Tesoreria - Convenios -->
+	<definition name="portlet.tesoreria.convenios.result.search"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/convenios/convenios_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.convenios.editar_convenios_entry"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/convenios/editar_convenios_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.convenios.view_convenios_entry"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/convenios/view_convenios_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.convenios.pagos.view"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/convenios/convenio_pagos_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.convenios.depositos.bcrios.view"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/convenios/convenio_depositos_bcrios_search_result.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.tesoreria.convenios.acta.relacionada.search.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/convenios/convenios_actas_asociadas_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.liquidar.acta.convenio.search.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/liquida_acta_convenios/acta_convenios_liquidados.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.liquidar.desregulados.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/liquida_desregulados/div_liquida_desregulados.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.filtrar.desregulados.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/liquida_desregulados/desregula_liquidados.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.calc_deu_masivo_result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/actas/busqueda_calculo_deuda_masivo_procesar.jsp" />
+	</definition>
+	
+	<!-- Tesoreria - Recibos -->
+	<definition name="portlet.tesoreria.recibos.editar_recibos_entry"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/recibos/editar_recibos_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.recibos.result.search"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/recibos/recibos_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.recibos.recibo_actas.result.search"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/recibos/recibo_actas.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.recibos.recibo_convenios.result.search"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/recibos/recibo_convenios.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.tesoreria.recibos.cheques_a_sustituir.result.search"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/recibos/recibo_cheques_a_sustituir.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.tesoreria.recibos.cheques_rechazados.result.search"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/recibos/recibo_cheques_rechazados.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.recibos.ingresos.view"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/recibos/recibo_ingresos_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.recibos.formas.ingresos.view"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/recibos/formas_ingreso_agregar.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.recibos.anticipos.view"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/recibos/recibo_anticipos_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.recibos.depositos.bcrios.view"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/recibos/recibo_depositos_bcrios_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.recibos.otros_conceptos.result.search"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/recibos/otros_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.recibos.prestamos.result.search"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/recibos/recibo_prestamos_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.recibos.empleadores_aportes.result.search"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/recibos/recibo_aportes_empleadores.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.reporte.egresos_liquidacion"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_egresos_liquidacion.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.desempleo_ss"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/reportes/reporte_desempleo_ss.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.recibos.actualiza_otros_conceptos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/recibos/otros_conceptos.jsp" />
+	</definition>
+
+	<!-- Tesoreria - Conceptos -->
+	<definition name="portlet.tesoreria.equivalencia.conceptos_cuentas"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/equivalencias/conceptos_cuentas.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.equivalencia.editar_concepto_cuenta"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/equivalencias/editar_concepto_cuenta.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.equivalencia.prestaciones_conceptos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/equivalencias/prestaciones_conceptos.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.tesoreria.equivalencia.editar_prestaciones_conceptos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/equivalencias/editar_prestaciones_conceptos.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.equivalencia.plan_cuentas"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/equivalencias/plan_cuentas.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.equivalencia.plan_cuentas_amtima"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/equivalencias/plan_cuentas_amtima.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.equivalencia.editar_plan_cuentas"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/equivalencias/editar_plan_cuentas.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.equivalencia.parametros_especiales"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/equivalencias/parametros_especiales.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.equivalencia.editar_parametro_especial"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/equivalencias/editar_parametro_especial.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.tesoreria.equivalencia.editar_parametro_especial_cuenta"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/equivalencias/editar_parametro_especial_cuenta.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.equivalencia.equivalencias_mov_bcrios"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/equivalencias/tipos_mov_bcrios_conceptos.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.editar_tesoreria.equivalencia.equivalencias_mov_bcrios"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/equivalencias/editar_tipos_mov_bcrios_conceptos.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.tesoreria.equivalencia.equivalencias_conceptos_afip"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/equivalencias/conceptos_afip_conceptos.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.tesoreria.equivalencia.editar_equivalencias_conceptos_afip"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/equivalencias/editar_conceptos_afip_conceptos.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.medicamentos_search_result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/medicamentos/medicamentos_search_result.jsp" />
+	</definition>
+
+	<!-- Tesoreria - reportes -->
+	<definition name="portlet.tesoreria.buscar.aportes.contrib"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_aportes_contrib.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.aportes.contrib.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_aportes_contrib_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.deuda.empresas.periodo"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_deuda_empresa_periodo.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.deuda.empresa.periodo.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_deuda_empresa_periodo_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.progreso"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/reportes/progress_bar.jsp" />
+	</definition>
+
+	<!-- Contabilidad -->
+	<definition name="portlet.tesoreria.contabilidad.asientos_search_result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/contabilidad/asientos_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.contabilidad.editar_asientos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/contabilidad/editar_asientos.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.contabilidad.editar_asientos_sueldos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/contabilidad/editar_asientos_sueldos.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.contabilidad.editar_asientos_sueldos_search_result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/contabilidad/editar_asientos_sueldos_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.contabilidad.equivalencias_asientos_sueldos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/contabilidad/equivalencias_asientos_sueldos.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.contabilidad.visualizar_asiento_sueldo"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/contabilidad/view_asiento_sueldo.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.contabilidad.view_asientos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/contabilidad/view_asientos.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.tesoreria.contabilidad.generar_asientos_automaticos_init"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/contabilidad/asientos_automaticos.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.contabilidad.fechas_cierre_contable"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/contabilidad/fechas_cierre_contable.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.tesoreria.contabilidad.editar_fecha_cierre_gestion"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/contabilidad/editar_fechas_cierre_gestion.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.tesoreria.contabilidad.editar_fecha_cierre_asientos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/contabilidad/editar_fechas_cierre_asientos.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.contabilidad.contabilidad"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/contabilidad/busqueda_asientos.jsp" />
+	</definition>
+
+
+	<definition name="portlet.tesoreria.contabilidad.diario"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/contabilidad/diario.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.contabilidad.mayor_general"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/contabilidad/mayor_general.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.contabilidad.balance_sumas_saldos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/contabilidad/balance_sumas_saldos.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.contabilidad.balance_general"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/contabilidad/balance_general.jsp" />
+	</definition>
+	
+	
+	<definition name="portlet.tesoreria.contabilidad.asientos_apertura_cierre"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/contabilidad/editar_asientos_apertura_cierre.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.contabilidad.editar_asientos_apertura_cierre_search_result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/contabilidad/editar_asientos_apertura_cierre_search_result.jsp" />
+	</definition>
+	
+	
+	<definition name="portlet.tesoreria.reporte.retenciones_ganancias" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/reportes/reporte_retencion_ganancias.jsp" />
+	</definition>
+	
+	<definition name="portlet.debitos.a.tercerizadoras" extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/reportes/reporte_debitos_terciarizadoras.jsp" />
+	</definition>
+
+	<definition name="portlet.debitos.a.tercerizadoras.trabajadas" extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/reportes/reporte_debitos_terciarizadoras_trabajadas.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.anular.recibo" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/recibos/anular_recibo.jsp" />
+	</definition>
+	
+
+	<!-- Farmacia -->
+	<definition name="portlet.farmacia" extends="portlet" />
+
+	<definition name="portlet.farmacia.error" extends="portlet.farmacia">
+		<put name="portlet_content" value="/portlet/farmacia/error.jsp" />
+	</definition>
+
+	<definition name="portlet.farmacia.view" extends="portlet.farmacia">
+		<put name="portlet_content" value="/portlet/farmacia/view.jsp" />
+	</definition>
+
+	<!-- Farmacia - Reintegros -->
+
+	<definition name="portlet.farmacia.medicamento.result.search.popup"
+		extends="portlet.farmacia">
+		<put name="portlet_content" value="/portlet/farmacia/medicamentos_search_result_popup.jsp" />
+	</definition>
+
+	<definition name="portlet.farmacia.medicamento.result.search"
+		extends="portlet.farmacia">
+		<put name="portlet_content" value="/portlet/farmacia/medicamentos_lista_result.jsp" />
+	</definition>
+
+	<definition name="portlet.farmacia.editar_reintegro_entry"
+		extends="portlet.farmacia">
+		<put name="portlet_content" value="/portlet/farmacia/reintegros/editar_reintegro.jsp" />
+	</definition>
+
+	<definition name="portlet.farmacia.reintegros.result.search"
+		extends="portlet.farmacia">
+		<put name="portlet_content"
+			value="/portlet/farmacia/reintegros/reintegros_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.farmacia.prestaciones_reclamos_reintegro_entry"
+		extends="portlet.farmacia">
+		<put name="portlet_content" value="/portlet/farmacia/reintegros/reintegro_prestaciones_reclamos_search_result.jsp" />
+	</definition>
+	
+	
+	<definition name="portlet.farmacia.reintegros.busqueda_reintegro"
+		extends="portlet.farmacia">
+		<put name="portlet_content"
+			value="/portlet/farmacia/reintegros/busqueda_reintegro.jsp" />
+	</definition>
+	
+
+	<!-- Farmacia - Comprobantes -->
+	<definition name="portlet.farmacia.comprobantes.conceptos.search.result"
+		extends="portlet.farmacia">
+		<put name="portlet_content"
+			value="/portlet/farmacia/comprobantes/conceptos_amtima_search_result.jsp" />
+	</definition>
+
+
+	<definition name="portlet.farmacia.comprobantes.search.result"
+		extends="portlet.farmacia">
+		<put name="portlet_content"
+			value="/portlet/farmacia/comprobantes/comprobantes_amtima_search_result.jsp" />
+	</definition>
+
+
+	<definition name="portlet.farmacia.comprobantes.editar_comprobante"
+		extends="portlet.farmacia">
+		<put name="portlet_content"
+			value="/portlet/farmacia/comprobantes/editar_comprobantes_amtima.jsp" />
+	</definition>
+
+
+	<!-- Utils -->
+	<definition name="portlet.utils.empleador.view" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/utils/empleadores/empleadores_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.utils.prestador.view" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/utils/prestadores/prestadores_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.utils.prestador_externo.view"
+		extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/utils/prestadores/prestadores_externos_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.utils.prestacion.view" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/utils/prestaciones/prestaciones_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.utils.tipo_nom_prestacion.view"
+		extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/utils/prestaciones/tipo_nomencl_prestaciones_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.utils.obrasocial.view" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/utils/obrassociales/obrassociales_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.utils.comprobante.embebido.result.search"
+		extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/utils/comprobantes/comprobantes_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.utils.concepto_comprobante.embebido.result.search" extends="portlet">
+		<put name="portlet_content" value="/portlet/utils/comprobantes/editar_concepto_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.utils.padron.entidad.view"
+		extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/padron_entidades_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.utils.padron.entidad.afip.view"
+		extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/uoma/facturacion/padron_entidades_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.utils.seccional_reintegros.view"
+		extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/farmacia/seccionales_reintegros_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.utils.seccional.view" extends="portlet">
+		<put name="portlet_content" value="/portlet/farmacia/seccionales_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.utils.medicamento.view" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/utils/medicamentos/medicamentos_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.utils.medicamento.edit.view" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/utils/medicamentos_edit/medicamentos_search_result_edit.jsp" />
+	</definition>
+
+	<definition name="portlet.utils.detalle_discapacidad"
+		extends="portlet">
+		<put name="portlet_content" value="/portlet/utils/detalle_discapacidad.jsp" />
+	</definition>
+
+	<definition name="portlet.utils.detalle_discapacidad.result"
+		extends="portlet">
+		<put name="portlet_content" value="/portlet/utils/detalle_discapacidad_result.jsp" />
+	</definition>
+
+
+	<!-- Reportes Automaticos -->
+	<definition name="portlet.administracion" extends="portlet" />
+
+	<definition name="portlet.administracion.view" extends="portlet.administracion">
+		<put name="portlet_content" value="/portlet/administracion/view.jsp" />
+	</definition>
+
+	<definition name="portlet.administracion.editar_reporte"
+		extends="portlet.administracion">
+		<put name="portlet_content"
+			value="/portlet/administracion/reportes_automaticos/editar_reporte.jsp" />
+	</definition>
+
+	<definition name="portlet.administracion.editar_configuracion_reportes"
+		extends="portlet.administracion">
+		<put name="portlet_content"
+			value="/portlet/administracion/reportes_automaticos/editar_configuracion.jsp" />
+	</definition>
+
+    <definition name="portlet.administracion.reporte_situ_medica"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/patologias/reporte_situacion_medica.jsp" />
+	</definition>
+
+	<!-- Farmacia - OP -->
+	<definition name="portlet.farmacia.ordenes_pago.result.search"
+		extends="portlet.farmacia">
+		<put name="portlet_content"
+			value="/portlet/farmacia/ordenes_pago/orden_pago_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.farmacia.editar_orden_pago_entry"
+		extends="portlet.farmacia">
+		<put name="portlet_content" value="/portlet/farmacia/ordenes_pago/editar_orden_pago.jsp" />
+	</definition>
+	                   
+	<definition name="portlet.farmacia.editar_orden_pago_forma_pago"
+		extends="portlet.farmacia">
+		<put name="portlet_content" value="/portlet/farmacia/ordenes_pago/editar_orden_pago_forma_pago.jsp" />
+	</definition>
+	
+	<definition name="portlet.farmacia.equivalencia.editar_concepto_cuenta"
+		extends="portlet.farmacia">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/equivalencias/editar_concepto_cuenta.jsp" />
+	</definition>
+	
+	
+	<!-- UOMA -->
+	<definition name="portlet.uoma.equivalencia.editar_concepto_cuenta"
+		extends="portlet.uoma">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/equivalencias/editar_concepto_cuenta.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma" extends="portlet" />
+
+	<definition name="portlet.uoma.view" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/view.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma.error" extends="portlet.farmacia">
+		<put name="portlet_content" value="/portlet/uoma/error.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.seccional.view" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/seccionales_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.seccional_incidentes.view"
+		extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/seccionales_incidentes_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma.equivalencia.editar_concepto_cuenta"
+		extends="portlet.uoma">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/equivalencias/editar_concepto_cuenta.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.editar_incidente_entry"
+		extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/tabs_editar_incidente.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.calle.view" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/afiliados/calle_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.codPostal.view" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/global/codPostal_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.incidente.result.search"
+		extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/incidentes_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.correspondencia.result.search"
+		extends="portlet.uoma">
+		<put name="portlet_content"
+			value="/portlet/uoma/correspondencia/correspondencia_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.editar_correspondencia"
+		extends="portlet.uoma">
+		<put name="portlet_content"
+			value="/portlet/uoma/correspondencia/editar_correspondencia.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.editar_orden_pago_entry"	extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/editar_orden_pago.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma.equivalencia.conceptos_cuentas"
+		extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/tesoreria/equivalencias/conceptos_cuentas.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma.actas.editar.periodos.view" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/uoma/actasNoOS/actas_periodos_editar.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma.actas.periodos.view" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/actasNoOS/actas_periodos.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma.actas.editar.periodos.view" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/actasNoOS/actas_periodos_editar.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma.chequera.result.search" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/liquidaciones/cheques/chequeras_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma.borrar.convenio" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/tesoreria/convenios/anular_convenio.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma.reporte.actas_acuerdos"	extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/reportes/listado_actas_acuerdos.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.paritarias.result.search" extends="portlet.uoma">
+		<put name="portlet_content"	value="/portlet/uoma/paritarias/paritarias_search_result.jsp" />
+    </definition>
+	
+	<definition name="portlet.uoma.paritarias.alta_ver_paritaria"
+		extends="portlet.uoma">
+		<put name="portlet_content"
+			value="/portlet/uoma/paritarias/alta_ver_paritaria.jsp" />
+	</definition>
+
+   	<definition name="portlet.correspondencia.farmacia.view"
+		extends="portlet.uoma">
+		<put name="portlet_content"
+			value="/portlet/uoma/correspondencia/farmacias_search_result.jsp" />
+	</definition>
+		
+	<definition name="portlet.farmacia.equivalencia.conceptos_cuentas"
+		extends="portlet.farmacia">
+		<put name="portlet_content" value="/portlet/tesoreria/equivalencias/conceptos_cuentas.jsp" />
+	</definition>
+
+	<definition name="portlet.buscar.archivos.banco" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/tesoreria/afip/archivos_subidos_bco.jsp" />
+	</definition>
+	
+		<definition name="portlet.uoma.view_incidente_afiliado_entry" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/tabs_editar_incidente.jsp" />
+	</definition>
+	
+
+	<!-- portal empleadores -->
+	<definition name="portlet.portal_empleadores" extends="portlet" />
+
+	<definition name="portlet.portal_empleadores.view" extends="portlet.portal_empleadores">
+		<put name="portlet_content" value="/portlet/portal_empleadores/view.jsp" />
+	</definition>
+
+	<definition name="portlet.portal_empleadores.ctas_corrientes"
+		extends="portlet.portal_empleadores">
+		<put name="portlet_content"
+			value="/portlet/portal_empleadores/reportes/ctas_corrientes.jsp" />
+	</definition>
+
+
+	<!-- ESTUDIO ISIDRO -->
+	<definition name="portlet.estudio_isidro" extends="portlet" />
+
+	<definition name="portlet.estudio_isidro.view" extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/estudio_isidro/view.jsp" />
+	</definition>
+
+	<!-- Estudio Isidro -->
+	<definition name="portlet.estudio_isidro" extends="portlet" />
+
+	<definition name="portlet.estudio_isidro.empresa.result.search"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/empresas_seguimiento_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.seguimiento.deudas.result.search"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/deuda_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.seguimiento.actas.acuerdos.result.search"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/estudio_isidro/seguimiento_empresas/actas_acuerdo_search_result_seguimiento.jsp" />
+	</definition>
+	
+			
+	<definition name="portlet.estudio_isidro.error" extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/estudio_isidro/error.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.result.search"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/llamados_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.empresa.estado"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/estado_empresa.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.seguimiento_empresa_result"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/seguimiento_empresa.jsp" />
+	</definition>
+	
+	<definition name="portlet.estudio_isidro.seguimiento_empresa_molinera_result"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/seguimiento_empresa_molinera.jsp" />
+	</definition>
+	
+	<definition name="portlet.seguimiento.cheques.result.search" extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/cheques_seguimiento_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.actas_no_os.edit_actas_entry"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/uoma/actasNoOS/view_acta_no_os.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.actas.result.search"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/uoma/actasNoOS/actas_no_os_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.anular.acta"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/uoma/actasNoOS/anular_acta.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.actas.view_actas_entry"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/uoma/actasNoOS/view_actas_no_os_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.recibos.editar_recibos_no_os_entry"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/uoma/recibos/editar_recibos_no_os_entry.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.estudio_isidro.recibos_no_os.otros_conceptos.result.search"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/uoma/recibos/otros_no_os_search_result.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.estudio_isidro.recibos_no_os.recibo_actas.result.search"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/uoma/recibos/recibo_no_os_actas.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.recibos_no_os.anticipos.view"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/uoma/recibos/recibo_no_os_anticipos_search_result.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.estudio_isidro.recibos_no_os.recibo_convenios.result.search"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/uoma/recibos/recibo_no_os_convenios.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.recibos_no_os.ingresos.view"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/uoma/recibos/recibo_no_os_ingresos_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.recibos_no_os.result.search"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/uoma/recibos/recibos_no_os_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.cerrar_popup_acta"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/cerrar_acta_popup_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.convenios_no_os.result.search"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/uoma/conveniosNoOS/convenios_no_os_search_result.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.estudio_isidro.convenios_no_os.editar_convenios_entry"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/uoma/conveniosNoOS/editar_convenios_no_os_entry.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.estudio_isidro.convenios.acta_no_os.relacionada.search.result"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/uoma/conveniosNoOS/convenios_actas_no_os_asociadas_search_result.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.estudio_isidro.convenios.acta_no_os.relacionada.search.result"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/uoma/conveniosNoOS/convenios_actas_no_os_asociadas_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.convenios_no_os.pagos.view"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/uoma/conveniosNoOS/convenio_no_os_pagos_search_result.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.estudio_isidro.convenios_no_os.view_convenios_entry"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/uoma/conveniosNoOS/view_convenios_no_os_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.reporte_llamados"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/reportes/reporte_seguimiento_empresas.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.reporte.actas"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/reportes/busqueda_actas.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.reporte.convenios"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/reportes/busqueda_convenios.jsp" />
+	</definition>
+
+    <definition name="portlet.estudio_isidro.empresa.view"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/estudio_isidro/seguimiento_empresas/info_empresa.jsp" />
+	</definition>
+	
+	<definition name="portlet.estudio_isidro.empresa.molinera.view"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/estudio_isidro/seguimiento_empresas/info_cabecera_empresa_molinera.jsp" />
+	</definition>
+	<definition name="portlet.estudio_isidro.recibos.seguimiento.result.search"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content" value="/portlet/estudio_isidro/seguimiento_empresas/recibos_search_result_seguimiento.jsp" />
+	</definition>
+	
+	<!-- CGT DDHH -->
+	<definition name="portlet.cgt_ddhh" extends="portlet" />
+
+	<definition name="portlet.cgt_ddhh.view" extends="portlet.cgt_ddhh">
+		<put name="portlet_content" value="/portlet/cgt_ddhh/view.jsp" />
+	</definition>
+
+	<definition name="portlet.cgt_ddhh.error" extends="portlet.cgt_ddhh">
+		<put name="portlet_content" value="/portlet/cgt_ddhh/error.jsp" />
+	</definition>
+
+	<definition name="portlet.cgt_ddhh.editar_organismo_entry"
+		extends="portlet.cgt_ddhh">
+		<put name="portlet_content"
+			value="/portlet/cgt_ddhh/organismos/editar_organismo_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.cgt_ddhh.agregar_contacto"
+		extends="portlet.cgt_ddhh">
+		<put name="portlet_content"
+			value="/portlet/cgt_ddhh/organismos/contactos_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.cgt_ddhh.agregar_linea" extends="portlet.cgt_ddhh">
+		<put name="portlet_content" value="/portlet/cgt_ddhh/organismos/lineas_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.cgt_ddhh.agregar_comentario"
+		extends="portlet.cgt_ddhh">
+		<put name="portlet_content"
+			value="/portlet/cgt_ddhh/organismos/comentarios_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.cgt_ddhh.organismos_search_result"
+		extends="portlet.cgt_ddhh">
+		<put name="portlet_content"
+			value="/portlet/cgt_ddhh/organismos/organismos_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.cgt_ddhh.editar_area_entry"
+		extends="portlet.cgt_ddhh">
+		<put name="portlet_content" value="/portlet/cgt_ddhh/organismos/editar_area_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.cgt_ddhh.editar_norma_ddhh_entry"
+		extends="portlet.cgt_ddhh">
+		<put name="portlet_content"
+			value="/portlet/cgt_ddhh/normasDDHH/editar_norma_ddhh_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.cgt_ddhh.norma_ddhh_search_result"
+		extends="portlet.cgt_ddhh">
+		<put name="portlet_content"
+			value="/portlet/cgt_ddhh/normasDDHH/normas_ddhh_search_result.jsp" />
+	</definition>
+
+	<!-- RRHH -->
+	<definition name="portlet.rrhh" extends="portlet" />
+
+	<definition name="portlet.rrhh.error" extends="portlet.rrhh">
+		<put name="portlet_content" value="/portlet/rrhh/error.jsp" />
+	</definition>
+
+	<definition name="portlet.rrhh.view" extends="portlet.rrhh">
+		<put name="portlet_content" value="/portlet/rrhh/view.jsp" />
+	</definition>
+
+	<definition name="portlet.rrhh.lecturas.result.search"
+		extends="portlet.rrhh">
+		<put name="portlet_content" value="/portlet/rrhh/lecturas_accesos_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.rrhh.verificar.lecturas.result.search"
+		extends="portlet.rrhh">
+		<put name="portlet_content" value="/portlet/rrhh/verificar_lecturas_accesos_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.rrhh.informacion.result.search"
+		extends="portlet.rrhh">
+		<put name="portlet_content" value="/portlet/rrhh/informacion_personas_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.rrhh.tarjetas.result.search"
+		extends="portlet.rrhh">
+		<put name="portlet_content" value="/portlet/rrhh/tarjetas_search_result.jsp" />			
+	</definition>
+	
+	
+	<definition
+		name="portlet.rrhh.editar.tarjetas"
+		extends="portlet.rrhh">
+		<put name="portlet_content"
+			value="/portlet/rrhh/view_tarjeta.jsp" />
+	</definition>
+	
+	
+	<!-- BOLETIN -->
+	<definition name="portlet.mailing" extends="portlet" />
+
+	<definition name="portlet.mailing.error" extends="portlet.mailing">
+		<put name="portlet_content" value="/portlet/utils/error.jsp" />
+	</definition>
+
+	<definition name="portlet.global.editar_mailing_entry"
+		extends="portlet.mailing">
+		<put name="portlet_content" value="/portlet/utils/mailing/editar_mailing_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.global.agregar_mail_mailing"
+		extends="portlet.mailing">
+		<put name="portlet_content" value="/portlet/utils/mailing/mails_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.global.buscar_listas_mailing_result"
+		extends="portlet.mailing">
+		<put name="portlet_content" value="/portlet/utils/mailing/mailing_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.global.editar_subscriber" extends="portlet.mailing">
+		<put name="portlet_content" value="/portlet/utils/mailing/editar_subscriber.jsp" />
+	</definition>
+
+	<definition name="portlet.global.editar_boletin_entry"
+		extends="portlet.mailing">
+		<put name="portlet_content" value="/portlet/utils/mailing/editar_boletin_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.global.contenido_search_result"
+		extends="portlet.mailing">
+		<put name="portlet_content" value="/portlet/utils/mailing/contenido_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.global.boletines_search_result"
+		extends="portlet.mailing">
+		<put name="portlet_content" value="/portlet/utils/mailing/boletines_search_result.jsp" />
+	</definition>
+
+	<!-- CORRESPONDENCIA -->
+	<definition name="portlet.correspondencia" extends="portlet" />
+
+	<definition name="portlet.correspondencia.error" extends="portlet.correspondencia">
+		<put name="portlet_content" value="/portlet/utils/error.jsp" />
+	</definition>
+
+	<definition name="portlet.correspondencia.view" extends="portlet.correspondencia">
+		<put name="portlet_content" value="/portlet/correspondencia/view.jsp" />
+	</definition>
+
+	<definition name="portlet.ospim.correspondencia_inbox.result.search"
+		extends="portlet.correspondencia">
+		<put name="portlet_content"
+			value="/portlet/correspondencia/bandeja_de_entrada_detalle.jsp" />
+	</definition>
+
+	<definition name="portlet.ospim.correspondencia.result.search"
+		extends="portlet.correspondencia">
+		<put name="portlet_content"
+			value="/portlet/correspondencia/correspondencia_search_result.jsp" />
+	</definition>
+	
+	<!-- <definition name="portlet.ospim.correspondencia.entrada.detalle.result.search"
+		extends="portlet.correspondencia">
+		<put name="portlet_content"
+			value="/portlet/correspondencia/correspondencia_entrada_detalles_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.ospim.correspondencia.salida.detalle.result.search"
+		extends="portlet.correspondencia">
+		<put name="portlet_content"
+			value="/portlet/correspondencia/correspondencia_salida_detalles_search_result.jsp" />
+	</definition>
+ -->
+	<definition name="portlet.ospim.correspondencia.detalle.item_e"
+		extends="portlet.correspondencia">
+		<put name="portlet_content" value="/portlet/correspondencia/editar_entrada_remitente.jsp" />
+	</definition>
+
+	<definition name="portlet.ospim.correspondencia.detalle.item_s"
+		extends="portlet.correspondencia">
+		<put name="portlet_content"
+			value="/portlet/correspondencia/editar_salida_destinatario.jsp" />
+	</definition>
+
+	<definition name="portlet.ospim.correspondencia.paquetes.result.search"
+		extends="portlet.correspondencia">
+		<put name="portlet_content" value="/portlet/correspondencia/paquetes_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.correspondencia.editar_entrada_entry"
+		extends="portlet.correspondencia">
+		<put name="portlet_content" value="/portlet/correspondencia/editar_entrada.jsp" />
+	</definition>
+
+	<definition name="portlet.correspondencia.editar_salida_entry"
+		extends="portlet.correspondencia">
+		<put name="portlet_content" value="/portlet/correspondencia/editar_salida.jsp" />
+	</definition>
+
+	<definition name="portlet.correspondencia.test_ws"
+		extends="portlet.correspondencia">
+		<put name="portlet_content" value="/portlet/correspondencia/_test_ws.jsp" />
+	</definition>
+		
+	<definition name="portlet.preparar.paquete" extends="portlet.correspondencia">
+		<put name="portlet_content" value="/portlet/correspondencia/pre_empaquetado.jsp" />
+	</definition>
+
+	<!--AUTORIZACIONES -->
+	<definition name="portlet.autorizaciones" extends="portlet" />
+
+	<definition name="portlet.autorizaciones.view" extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/view.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.editar_autorizacion_pmi" extends="portlet.autorizaciones">
+ 		<put name="portlet_content"	value="/portlet/autorizaciones/recetas/editar_autorizacion.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.buscar_autorizacion_pmi" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/recetas/autorizaciones_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.buscar_nomenclador" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/nomenclador/nomenclador_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.editar_nomenclador" extends="portlet.autorizaciones">
+ 		<put name="portlet_content"	value="/portlet/autorizaciones/nomenclador/editar_nomenclador_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.reclamos_prestacionales.editar_observacion" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/reclamos_prestacionales/editar_observacion.jsp" />
+	</definition>
+	
+	<definition
+		name="portlet.autorizaciones.nomenclador.nomencladorplan.search.result"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/nomenclador/nomencladorPlan_search_result.jsp" />
+	</definition>
+	
+	<definition
+		name="portlet.autorizaciones.nomenclador.nomencladorplan_topesreintegros.search.result"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/nomenclador/nomencladorPlan_topesReintegros_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.nomenclador.view" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/nomenclador/nomenclador_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.nomenclador.search.view" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/nomenclador/nomenclador_search_result.jsp" />
+	</definition>
+		
+	<definition name="portlet.autorizaciones.editar_seguimientosur" extends="portlet.autorizaciones">
+ 		<put name="portlet_content"	value="/portlet/autorizaciones/seguimiento_sur/editar_seguimientosur.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.editar_comprobante_tercerizadora_seguimientosur" extends="portlet.autorizaciones">
+ 		<put name="portlet_content"	value="/portlet/autorizaciones/seguimiento_sur/editar_comprobante_tercerizadora_seguimientosur.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.discapacidad.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/seguimiento_sur/tratamientos_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.discapacidad.popup.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/seguimiento_sur/tratamientos_popup_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.seguimientosurdetalle.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/seguimiento_sur/seguimientosur_search_result.jsp" />
+	</definition>
+
+    <definition name="portlet.ciediez.result.search.popup"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/ciediez_search_result_popup.jsp" />
+	</definition>	
+	
+	<definition name="portlet.autorizaciones.buscar_seguimientosur" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/seguimiento_sur/seguimiento_sur_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.comprobantes.discapacidad.popup.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/seguimiento_sur/comprobantes_tratamientos_popup_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.error" extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/utils/error.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.cerrar_seguimientosur" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/seguimiento_sur/seguimiento_sur_cierre.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.opcion_pagos_seguimientosur" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/seguimiento_sur/seguimiento_sur_pagos_upload.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.imagenes_seguimientosur" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/seguimiento_sur/seguimiento_sur_imagenes.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.seguimientosur.medicamento.view" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/seguimiento_sur/medicamentos_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.medicamentosliquidaciones.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/seguimiento_sur/medicamentosliquidaciones_search_result.jsp" />
+	</definition>
+	<definition name="portlet.autorizaciones.medicamentosliquidaciones.popup.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/seguimiento_sur/medicamentosliquidaciones_popup_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.medicamentosliquidaciones.comprobante"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/seguimiento_sur/medicamentosliquidaciones_comprobante.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.seguimientosurestado.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/seguimiento_sur/seguimientosur_estados_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.eliminar_seguimientosur" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/seguimiento_sur/seguimiento_sur_elimina.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.seguimientosurprestador.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/seguimiento_sur/seguimientosur_prestadores_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.consultas_igs.search" extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/reportes/buscar_consultas_igs.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.consultas_igs.result.search" extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/reportes/consultas_igs_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.seguimientosurcodigonomenclador.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/seguimiento_sur/seguimientosur_codigos_nomenclador_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.comprobantesliquidados.popup.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/seguimiento_sur/comprobantesliquidados_seguimiento_sur_popup_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.comprobantesliquidados.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/seguimiento_sur/comprobantes_liquidados_search_result.jsp" />
+	</definition>
+		
+	
+	<!--LOGIN-->
+	<definition name="portlet.login-ext" extends="portlet" />
+	
+	<definition name="portlet.login-ext.login" extends="portlet.login-ext">
+		<put name="portlet_content" value="/portlet/login-ext/login.jsp" />
+	</definition>
+
+	<!-- NOVEDADES de la SSS -->
+	
+	<definition name="portlet.novedades" extends="portlet" />
+	
+	<definition name="portlet.novedades.view" extends="portlet.novedades">
+		<put name="portlet_content" value="/portlet/novedades/view.jsp" />
+	</definition>
+	
+	<!-- Novedades PRE CARGA AFILIADO -->
+	
+	<definition name="portlet.novedades.editar_pre_afiliado" extends="portlet.novedades">
+		<put name="portlet_content" value="/portlet/novedades/editar_pre_afiliado_entry.jsp" />
+	</definition>
+	<definition name="portlet.novedades.view_pre_afiliado" extends="portlet.novedades">
+		<put name="portlet_content" value="/portlet/novedades/view_pre_afiliado_entry.jsp" />
+	</definition>
+	
+	
+	<!-- CRM - Atencion al cliente -->
+	<definition name="portlet.crm" extends="portlet" />
+
+	<definition name="portlet.crm.error" extends="portlet.crm">
+		<put name="portlet_content" value="/portlet/utils/error.jsp" />
+	</definition>
+
+	<definition name="portlet.crm.view" extends="portlet.crm">
+		<put name="portlet_content" value="/portlet/crm/view.jsp" />
+	</definition>
+	
+	<definition name="portlet.crm.editar_contacto_entry" extends="portlet.crm">
+		<put name="portlet_content" value="/portlet/crm/editar_contacto.jsp" />
+	</definition>
+
+	<definition name="portlet.crm.view_seguimiento_contacto_entry" extends="portlet.crm">
+		<put name="portlet_content" value="/portlet/crm/editar_contacto_seguimiento.jsp" />
+	</definition>	
+	
+	<definition name="portlet.crm.volver.busqueda_afiliados" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/busqueda_afiliado.jsp" />
+	</definition>
+	
+	<definition name="portlet.crm.contacto.afi.result.search" extends="portlet.crm">
+		<put name="portlet_content" value="/portlet/crm/ultimos_contactos_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.selec_derivacion.view" extends="portlet.crm">
+		<put name="portlet_content" value="/portlet/crm/seleccion_usuario_derivacion.jsp" />
+	</definition>
+	
+	<definition name="portlet.historico.contacto.result.search"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/crm/historico_contacto_search_result.jsp" />
+	</definition>
+	
+	
+	<definition name="portlet.crm.contactos.result.search"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/crm/contactoscrm_search_result.jsp" /> 
+	</definition>
+	
+	<definition name="portlet.crm.actualiza.domicilio.popup" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/crm/actualiza_domicilio_afiliado.jsp" />
+	</definition>
+	
+	<definition name="portlet.completar_comentarios_cierre.view" extends="portlet.crm">
+		<put name="portlet_content" value="/portlet/crm/comentarios_cerrar_contacto.jsp" />
+	</definition>
+	
+	<definition name="portlet.crm.editar_eficacia_entry" extends="portlet.crm">
+		<put name="portlet_content" value="/portlet/crm/editar_contacto_eficacia.jsp" />
+	</definition>
+	
+	<definition name="portlet.seguimiento.crm.contacto.result.search" extends="portlet.crm">
+		<put name="portlet_content" value="/portlet/crm/seguimiento_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.crm.contacto.cierre" extends="portlet.crm">
+		<put name="portlet_content" value="/portlet/crm/editar_contacto_cierre.jsp" />
+	</definition>
+	
+	<!-- CRM Documentacion Legales (Reclamos) -->
+	<definition name="portlet.crm.editar_docum_legal" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/crm/editar_docum_legal_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.crm.view_docum_legal" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/crm/view_docum_legal_entry.jsp" />
+	</definition>
+		
+	<definition name="portlet.crm.reclamo.afi.result.search" extends="portlet.crm">
+		<put name="portlet_content" value="/portlet/crm/ultimos_reclamos_search_result.jsp" />
+	</definition>
+	
+<!-- 	<definition name="portlet.crm.imagenes_afiliado" extends="portlet.crm">
+		<put name="portlet_content"	value="/portlet/crm/doc_legal_imagenes.jsp" />
+	</definition> -->
+
+	<definition name="portlet.crm.reclamos.result.search"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/crm/reclamoscrm_search_result.jsp" /> 
+	</definition>
+	
+	<!--EMPRESAS-->	
+	<definition name="portlet.empresas" extends="portlet" />
+	
+	<definition name="portlet.seccional.view" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/global/seccionales_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.empresas.error" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/error.jsp" />
+	</definition>
+	
+	<definition name="portlet.empresas.tabla.resumen"
+		extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/tabla_resumen_empleador.jsp" />
+	</definition>
+	
+	<definition name="portlet.empresas.view" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/busqueda_empleadores.jsp" />
+	</definition>
+	
+	<definition name="portlet.empresas.result.search" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/empleadores_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.empresas.editar_empleadores_entry" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/editar_empleadores_entry.jsp" />
+	</definition>
+	
+	<definition name="portlet.empresas.agregar_contacto" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/contactos_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.empresas.agregar_domicilio" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/domicilios_search_result.jsp" />
+	</definition>		
+	
+	<definition name="portlet.afiliados.empleadores.result.search" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/empleadores_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.empleadores.view_empleadores_entry" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/view_empleadores_entry.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.empleadores.view_empleador" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/view_empleador.jsp" />
+	</definition>
+	
+	<definition name="portlet.empresas.editar_empleadores_popup_entry" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/editar_empleadores_popup_entry.jsp" />
+	</definition>
+	
+	<definition name="portlet.global.codPostal.view" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/global/codPostal_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.empresas.calle.view" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/calle_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.empresas.editar_seccionales_entry" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/view_seccional.jsp" />
+	</definition>
+	
+	<definition name="portlet.empresas.cuentas_bancarias_search_result" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/cuentas_bcrias_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.empresa.reporte_ent_cam_masa.result.search" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/reporte/reporte_entidad_camara_masa.jsp" />
+	</definition>
+	
+	<!-- Enterprise Admin -->
+	
+	<definition name="portlet.enterprise_admin-ext" extends="portlet" />
+	
+	<definition name="portlet.enterprise_admin-ext.view" extends="portlet.enterprise_admin-ext">
+		<put name="portlet_content" value="/portlet/enterprise_admin-ext/view.jsp" />
+	</definition>
+	
+	<definition name="portlet.enterprise_admin-ext.edit_user" extends="portlet.enterprise_admin-ext">
+		<put name="portlet_content" value="/portlet/enterprise_admin-ext/edit_user.jsp" />
+	</definition>
+	
+	<definition name="portlet.enterprise_admin-ext.select_organization" extends="portlet.enterprise_admin-ext">
+		<put name="portlet_content" value="/portlet/enterprise_admin-ext/select_organization.jsp" />
+	</definition>
+	
+	<definition name="portlet.enterprise_admin-ext.select_user_group" extends="portlet.enterprise_admin-ext">
+		<put name="portlet_content" value="/portlet/enterprise_admin-ext/select_user_group.jsp" />
+	</definition>
+	
+	<definition name="portlet.enterprise_admin-ext.select_community_role" extends="portlet.enterprise_admin-ext">
+		<put name="portlet_content" value="/portlet/enterprise_admin/select_community_role.jsp" />
+	</definition>
+
+	<definition name="portlet.enterprise_admin-ext.select_organization_role" extends="portlet.enterprise_admin-ext">
+		<put name="portlet_content" value="/portlet/enterprise_admin-ext/select_organization_role.jsp" />
+	</definition>
+
+	<definition name="portlet.enterprise_admin-ext.select_regular_role" extends="portlet.enterprise_admin-ext">
+		<put name="portlet_content" value="/portlet/enterprise_admin-ext/select_regular_role.jsp" />
+	</definition>
+	
+	<definition name="portlet.enterprise_admin-ext.select_community" extends="portlet.enterprise_admin-ext">
+		<put name="portlet_content" value="/portlet/enterprise_admin-ext/select_community.jsp" />
+	</definition>
+	
+	<definition name="portlet.enterprise_admin-ext.edit_user_portrait" extends="portlet.enterprise_admin-ext">
+		<put name="portlet_content" value="/portlet/enterprise_admin-ext/edit_user_portrait.jsp" />
+	</definition>
+	<!-- Fin Enterprise Admin -->
+
+	
+	
+	<!-- Caja Chica -->
+	<definition name="portlet.tesoreria.cajachica.editar_caja_chica"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/caja_chica/caja_chica_edicion.jsp" />
+	</definition>
+	<definition name="portlet.tesoreria.cajachica.caja_chica_adm"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/caja_chica/caja_chica_adm.jsp" />
+	</definition>
+	<definition name="portlet.tesoreria.cajachica.buscar_caja_chica" extends="portlet.tesoreria">
+		<put name="portlet_content"	value="/portlet/tesoreria/caja_chica/caja_chica_result.jsp" />
+	</definition>
+	
+	<!-- Adm intereses AFIP -->	
+	<definition name="portlet.tesoreria.intereses.editar_interes"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/intereses/interes_edicion.jsp" />
+	</definition>	
+	<definition name="portlet.tesoreria.intereses.eliminar_interes"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/intereses/interes_eliminar.jsp" />
+	</definition>
+	<definition name="portlet.tesoreria.intereses.interes_adm"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/intereses/interes_adm.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.intereses.buscar_interes" extends="portlet.tesoreria">
+		<put name="portlet_content"	value="/portlet/tesoreria/intereses/interes_result.jsp" />
+	</definition>
+	<!-- Fin Adm intereses AFIP -->
+	
+	<definition name="portlet.tesoreria.editar_orden_pago_ospim_entry"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/editar_orden_pago_ospim.jsp" />
+	</definition>
+	<definition name="portlet.tesoreria.ordenes_pago.pagos.cheques.recibidos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/reutilizar_cheques_recibidos_orden_pago.jsp" />
+	</definition>	
+	<definition name="portlet.tesoreria.ordenes_pago.pagos.cheques.recibidos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/reutilizar_cheques_recibidos_orden_pago.jsp" />
+	</definition>	
+
+	<definition name="portlet.tesoreria.ordenes_pago.pagos.result.search"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/orden_pago_ospim_pagos_search_result.jsp" />
+	</definition>
+	<definition name="portlet.tesoreria.cajachicausuarios.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/caja_chica/caja_chica_asigna_usuarios_result.jsp" />
+	</definition>
+	<definition name="portlet.tesoreria.cajachica.ejecutar_caja_chica"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/caja_chica/caja_chica_ejecucion.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.cajachica.ejecutar_caja_chica_extendida"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/caja_chica/caja_chica_ejecucion_extendida.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.cajachicaultimosmovimientos.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/caja_chica/caja_chica_ultimos_movimientos_container.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.cajachicarendicionmovimientos.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/caja_chica/caja_chica_rendicion_movimientos_container.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.caja_chica_ingresa_reposicion"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/caja_chica/caja_chica_ingresa_reposicion.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.ordenes_pago.pagos.cheques"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/reutilizar_cheques_orden_pago_ospim.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.cajachica.reporte_caja_chica"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/caja_chica/caja_chica_reporte.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma.cajachica.buscar_caja_chica" extends="portlet.uoma">
+		<put name="portlet_content"	value="/portlet/tesoreria/caja_chica/caja_chica_result.jsp" />
+	</definition>
+	
+	<!-- Fin Caja Chica -->
+	
+	<definition name="portlet.tesoreria.reporte.hospitales_autogestion"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_hospitales_autogestion.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.reporte.ranking_deuda_empresa_periodo"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_ranking_deuda_empresa_periodo.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.reporte.ranking_deuda_empresa_periodo_result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_ranking_deuda_empresa_periodo_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.reporte.aportes_pago_ramo"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_aportes_pago_ramo.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.reporte.aportes_pago_ramo_result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_aportes_pago_ramo_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.reporte.reporte_empresas_nuevos_afiliados"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_empresas_nuevos_afiliados_periodo.jsp" />
+	</definition>
+	
+<!-- Autorizacion Prestacional -->	
+	<definition name="portlet.autorizaciones.autorizacionesprestacionales.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/autorizaciones_prestacionales/autorizaciones_prestacionales_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.reclamosprestacionales.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/reclamos_prestacionales_search_result.jsp" />
+	</definition>
+
+
+	<definition
+		name="portlet.autorizaciones.reclamosprestacionales_seccional.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/reclamos_prestacionales_seccional_search_result.jsp" />
+	</definition>
+
+	<!-- Reclamos - Imagenes -->
+	<definition name="portlet.autorizaciones.reclamosprestacionales.imagen"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/reclamo_prestacional_imagen.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.reclamosprestacionales.searchdocuments"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/reclamo_prestacional_imagenes_search_documentos.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.reclamosprestacionales.entry"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/editar_reclamosprestacionales_entry.jsp" />
+	</definition>
+
+	<!-- Fin Reclamos - Imagenes -->
+
+
+	<definition name="portlet.autorizaciones.editar.reclamosprestacionales"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp" />
+	</definition>
+
+
+	<definition name="portlet.autorizaciones.reclamosprestacionales.busqueda.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/busqueda_reclamos_prestacionales.jsp" />
+	</definition>
+
+
+	
+	<definition name="portlet.autorizaciones.reclamosprestacionales.busqueda.search.seccional"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/busqueda_reclamos_prestacionales_seccional.jsp" />
+	</definition>
+
+
+	<definition name="portlet.autorizaciones.reclamosprestacionales.editar_reclamos_entry_seccionales_imagen"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/editar_reclamosprestacionales_seccional_entry.jsp" />
+	</definition>
+
+
+	<definition
+		name="portlet.autorizaciones.reclamosprestacionales.editar_reclamos_entry_imagen"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/editar_reclamosprestacionales_entry.jsp" />
+	</definition>
+	
+	<definition
+		name="portlet.autorizaciones.reclamosprestacionales.reclamo_prestacional_imagenes_search_documentos"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/reclamo_prestacional_imagenes_search_documentos.jsp" />
+	</definition>
+	
+	
+
+	<definition
+		name="portlet.autorizaciones.reclamosprestacionales.editar_reclamos_entry"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/editar_reclamosprestacionales_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.reclamosprestacionales_seccional.editar_reclamos_entry"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/editar_reclamosprestacionales_seccional_entry.jsp" />
+	</definition>
+
+
+	<definition
+		name="portlet.autorizaciones.reclamosprestacionales.BuscarAutorizacionReclamo"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/autorizaciones_prestacionales/busqueda_autorizaciones_prestacionales.jsp" />
+	</definition>
+
+
+
+
+	<definition
+		name="portlet.autorizaciones.reclamosprestacionales.view_reclamos_entry"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/view_reclamos_entry.jsp" />
+	</definition>
+
+
+	<definition name="portlet.autorizaciones.reclamosprestacionales.prestacion_reclamo" 
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/lista_prestaciones_reclamos.jsp" />
+	</definition>
+
+
+	<definition name="portlet.autorizaciones.reclamosprestacionales.prestacion_reclamo_seccional"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/lista_prestaciones_reclamos_seccional.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.reclamosprestacionales.edicion_prestacion_reclamo"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp" />
+	</definition>
+
+
+	<definition name="portlet.autorizaciones.reclamosprestacionales.revision.reclamo"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/lista_revisiones_reclamo.jsp" />
+	</definition>
+
+
+	<definition name="portlet.autorizaciones.reclamosprestacionales.contactos.reclamo"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/reclamos_prestacionales/lista_contactos_reclamo.jsp" />
+	</definition>
+
+
+
+
+
+
+	<definition name="portlet.autorizaciones.editar_autorizacion_prestacional"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/autorizaciones_prestacionales/editar_autorizacion_prestacional_entry.jsp" />
+	</definition>
+
+
+
+	<definition name="portlet.autorizaciones.editar_autorizacion_imagen"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/autorizaciones_prestacionales/editar_autorizacion_prestacional_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.autorizacion_prestacional.result"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/autorizaciones_prestacionales/autorizacion_prestacional_result.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.autorizacion_prestacional.error"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/autorizaciones_prestacionales/autorizacion_prestacional_result_error.jsp" />
+	</definition>
+	<!-- Fin Autorizacion Prestacional -->
+
+	<definition name="portlet.autorizaciones.buscar_cartilla" extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/cartilla_result.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.eliminar_cartilla" extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/cartilla_elimina.jsp" />
+	</definition>
+
+	<definition name="portlet.patologia.view" extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/seguimiento_sur/patologias_search_result.jsp" />
+	</definition>
+	<definition name="portlet.autorizaciones.nueva_patologia_sur" extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/patologias_agregar.jsp" />
+	</definition>
+
+
+	<definition name="portlet.tesoreria.reporte.reporte_ingresos_devengados_periodo"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_ingresos_devengados_periodo.jsp" />
+	</definition>
+
+	<definition name="portlet.empresas.agregar_contacto_personas" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/contactos_search_result_personas.jsp" />
+	</definition>
+
+	<definition name="portlet.empresas.view_empleadores_entry" extends="portlet.empresas">
+		<put name="portlet_content" value="/portlet/empresas/view_empleador.jsp" />
+	</definition>
+	<definition name="portlet.afiliados.reporte.reporte_informe_aportes_monotributo"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/reportes/reporte_informe_aportes_monotributistas.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.cheques_pendientes_cobro"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_cheques_pendientes_cobro.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.motivo_cambio_estado_autorizacion_prestacional" extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/autorizaciones_prestacionales/autorizacion_prestacional_motivo_cambio_estado.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.cajachica.recibo_caja_chica"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/caja_chica/caja_chica_recibo.jsp" />
+	</definition>
+
+	<definition name="portlet.estudio_isidro.reporte_estadistico_seguimiento"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/reportes/reporte_estadistico_seguimiento_empresas.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.eoaf"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_eoaf.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.reporte.esfc"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/reportes/reporte_esfc.jsp" />		
+	</definition>
+
+	<definition name="portlet.tesoreria.contabilidad.plan_cuentas_sss"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/contabilidad/plan_cuentas_sss.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.contabilidad.editar_plan_cuentas_sss"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/contabilidad/editar_plan_cuentas_sss.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.contabilidad.plan_cuentas_sss_cuentas.result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/contabilidad/plan_cuentas_sss_asigna_cuentas_result.jsp" />
+	</definition>
+
+	<!-- ABM Seccionales - Inicio -->
+	<definition name="portlet.afiliados.seccionales.result" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/seccionales_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.editar_abm_seccional" extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/editar_seccional_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.editar_seccional_delegaciones.result"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/editar_seccional_asigna_delegaciones_result.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.editar_seccional_contactos.result"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/editar_seccional_contactos_search_result.jsp" />
+
+	</definition>
+
+	<definition name="portlet.afiliados.editar_seccional_contactos_personal.result"
+		extends="portlet.afiliados">
+		<put name="portlet_content"
+			value="/portlet/afiliados/editar_seccional_asigna_contactos_result.jsp" />
+
+	</definition>
+	<!-- ABM Seccionales - Fin -->
+
+	<!-- Farmacia -->
+	<definition name="portlet.farmaciaospim" extends="portlet" />
+
+	<definition name="portlet.farmaciaospim.error" extends="portlet.farmaciaospim">
+		<put name="portlet_content" value="/portlet/farmacia_ospim/error.jsp" />
+	</definition>
+
+	<definition name="portlet.farmaciaospim.view" extends="portlet.farmaciaospim">
+		<put name="portlet_content" value="/portlet/farmacia_ospim/view.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.reporte.control_ingresos_egresos"
+		extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/reportes/control_ingresos_egresos.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.control_ingresos_egresos_explosion"
+		extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/reportes/control_ingresos_egresos_explosion.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.control_ingresos_egresos_explosion_cpte"
+		extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/reportes/control_ingresos_egresos_explosion_cpte.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.control_ingresos_egresos_explosion_declarado"
+		extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/reportes/control_ingresos_egresos_declarados.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.control_ingresos_egresos_explosion_declarado_result"
+		extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/reportes/control_ingresos_egresos_declarados_result.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.control_ingresos_egresos_explosion_declarado_ctacte"
+		extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/reportes/control_ingresos_egresos_declarados_ctacte.jsp" />
+	</definition>
+
+	<!-- CAI -->
+	<definition name="portlet.cai" extends="portlet" />
+
+	<definition name="portlet.cai.error" extends="portlet.cai">
+		<put name="portlet_content" value="/portlet/afiliados/error.jsp" />
+	</definition>
+
+	<definition name="portlet.cai.view" extends="portlet.cai">
+		<put name="portlet_content" value="/portlet/cai/view.jsp" />
+	</definition>
+
+	<definition name="portlet.cai.personal.seccional.result.search" extends="portlet.cai">
+		<put name="portlet_content" value="/portlet/cai/personal_seccional_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.cai.codPostal.view" extends="portlet.cai">
+		<put name="portlet_content" value="/portlet/global/codPostal_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.cai.prestadores.result.search" extends="portlet.cai">
+		<put name="portlet_content" value="/portlet/cai/prestadores_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.cai.empresas.result.search" extends="portlet.cai">
+		<put name="portlet_content" value="/portlet/cai/empleadores_search_result.jsp" />
+	</definition>
+	
+	<!-- FIN CAI -->
+	
+	<definition name="portlet.estudio_isidro.reporte.actas_convenios_estadistico"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/reportes/busqueda_actas_convenios_estadistico.jsp" />
+	</definition>
+	<definition name="portlet.autorizaciones.preautorizacion_editar" extends="portlet.autorizaciones">
+ 		<!--   <put name="portlet_content"	value="/portlet/autorizaciones/pre_autorizaciones/preautorizacion_edit.jsp" /> -->
+ 		<put name="portlet_content"	value="/portlet/autorizaciones/pre_autorizaciones/preautorizacion_solapas.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.preautorizacion_prestaciones_result" extends="portlet.autorizaciones">
+ 		<put name="portlet_content"	value="/portlet/autorizaciones/pre_autorizaciones/preautorizacion_prestaciones_result.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.buscar_preautorizacion" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/pre_autorizaciones/preautorizaciones_result.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.preautorizacion_result" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/pre_autorizaciones/preautorizaciones_result.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.imagenes_preautorizacion" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/pre_autorizaciones/preautorizacion_imagenes.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.reporte.preautorizaciones_estados"	extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/pre_autorizaciones/preautorizacion_estadistico_estados.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.preautorizacion_procesa_archivo"	extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/pre_autorizaciones/preautorizacion_procesa_archivo.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.preautorizacion.proceso.archivo" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/pre_autorizaciones/preautorizacion_procesa_archivo_upload.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.preautorizacion_medicamentos_result" extends="portlet.autorizaciones">
+ 		<put name="portlet_content"	value="/portlet/autorizaciones/pre_autorizaciones/medicamentos/preautorizacion_medicamentos_result.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.reporte.prestaciones_autorizadas"	extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/reportes/prestaciones_autorizadas_ps.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.reporte.gasto_medico"	extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/reportes/estadistica_gasto_medico.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.diagnosticos.view"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/diagnosticos_search_result.jsp" />
+	</definition>
+
+	<!-- EQUIPO INTERDISCIPLINARIO -->
+
+	<definition
+		name="portlet.autorizaciones.equipointerdisciplinario.editar_equipointerdisciplinarios_entry"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/equipo_interdisciplinario/editar_equipointerdisciplinarios_entry.jsp" />
+	</definition>
+
+
+	<definition name="portlet.autorizaciones.equipointerdisciplinario.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/equipo_interdisciplinario/equipo_interdisciplinario_search_result.jsp" />
+	</definition>
+
+
+
+	<definition name="portlet.autorizaciones.equipointerdisciplinario.prestacion_equipointer" 
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/equipo_interdisciplinario/lista_prestaciones_equipo.jsp" />
+	</definition>
+
+
+	<!--FIN EQUIPO INTERDISCIPLINARIO -->
+
+	<!-- Centro Costo UOMA -->
+	<definition name="portlet.uoma.centrocosto.abm" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/centro_costo/centro_costo_adm.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.centrocosto.editar_centro_costo"	extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/centro_costo/centro_costo_edicion.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.centrocosto.result" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/centro_costo/centro_costo_result.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.centrocosto.tablero" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/centro_costo/centro_costo_tablero.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.centrocosto.tablero.result"	extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/centro_costo/centro_costo_tablero_result.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.centrocosto.tablero.detalle"	extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/centro_costo/centro_costo_tablero_detalle.jsp" />
+	</definition>
+
+	<!-- Fin Centro Costo UOMA -->
+
+	<!-- Situaciones Medicas -->
+	<definition name="portlet.autorizaciones.situacionesmedicas.result.search"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/patologias/situaciones_medicas_search_result.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.autorizaciones.situacionmedica.editar_situacionmedica_entry"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/patologias/editar_situacionmedica_entry.jsp" />
+	</definition>
+
+
+	<definition
+		name="portlet.autorizaciones.situacionmedica.bajapatologiasituacionmedica"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/patologias/lista_patologias_situacionmedica.jsp" />
+	</definition>
+
+	<definition name="portlet.administracion.consulta_situ_medica"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/patologias/consulta_situ_medica.jsp" />
+	</definition>
+
+
+	<!-- Fin Situaciones Medicas -->
+
+
+	<!-- Inicio Medicacion Farmacia OSPIM -->
+
+	<definition name="portlet.farmaciaospim.medicamento.result.search"
+		extends="portlet.farmaciaospim">
+		<put name="portlet_content"
+			value="/portlet/farmacia_ospim/medicamentos/medicamentos_search_result.jsp" />
+	</definition>
+
+
+	<definition name="portlet.farmaciaospim.vademecum.result.search"
+		extends="portlet.farmaciaospim">
+		<put name="portlet_content"
+			value="/portlet/farmacia_ospim/medicamentos/vademecum_search_result.jsp" />
+	</definition>
+
+
+	<definition name="portlet.farmaciaospim.medicamento.editar_medicamento_entry"
+		extends="portlet.farmaciaospim">
+		<put name="portlet_content"
+			value="/portlet/farmacia_ospim/medicamentos/medicamentos_search_result.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.farmaciaospim.medicamento.medicamento_edicion_entry"
+		extends="portlet.farmaciaospim">
+		<put name="portlet_content"
+			value="/portlet/farmacia_ospim/medicamentos/view_medicacion.jsp" />
+	</definition>
+
+
+	<definition name="portlet.farmaciaospim.vademecum.editar_vademecum_entry"
+		extends="portlet.farmaciaospim">
+		<put name="portlet_content"
+			value="/portlet/farmacia_ospim/medicamentos/vademecum_search_result.jsp" />
+	</definition>
+
+
+	<definition
+		name="portlet.farmaciaospim.vademecum.vademecum_edicion_entry"
+		extends="portlet.farmaciaospim">
+		<put name="portlet_content"
+			value="/portlet/farmacia_ospim/medicamentos/view_vademecum.jsp" />
+	</definition>
+
+	<!-- Fin Medicacion Farmacia OSPIM -->
+
+	<!-- ABM Farmacia OSPIM -->
+
+	<definition name="portlet.farmaciaospim.farmacia.result.search"
+		extends="portlet.farmaciaospim">
+		<put name="portlet_content"
+			value="/portlet/farmacia_ospim/farmacias_search_result.jsp" />			
+	</definition>
+
+	<definition
+		name="portletportlet.farmaciaospim.farmacia._edicion_entry"
+		extends="portlet.farmaciaospim">
+		<put name="portlet_content"
+			value="/portlet/farmacia_ospim/view_farmacia.jsp" />
+	</definition>
+
+	<!-- Fin ABM Farmacia OSPIM -->
+
+	<!-- CONTROL BUSCADOR COLEGIO FARMACIA -->
+	<definition name="portlet.colegio.result.search.popup"	extends="portlet.farmaciaospim">
+		<put name="portlet_content" value="/portlet/farmacia_ospim/colegio_search_result_popup.jsp" />
+	</definition>
+	<!-- Fin CONTROL BUSCADOR COLEGIO FARMACIA -->
+
+	<definition name="portlet.farmaciaospim.nuevo_colegio_farmacia" extends="portlet.farmaciaospim">
+		<put name="portlet_content" value="/portlet/farmacia_ospim/colegios_agregar.jsp" />
+	</definition>
+
+
+	<definition name="portlet.autorizaciones.integracion_procesa_archivo" extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/integracion/integracion.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.integracion_procesa_archivo_result" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_archivos_result.jsp" />
+	</definition>
+
+
+	<definition name="portlet.autorizaciones.integracion_procesa_archivo_sss_result" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_archivos_sss_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.integracion_procesa_archivo_sss_result_cab" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_archivos_sss_result_by_cabecera.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.integracion_prepara_impresion_op" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_op_impresion.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.integracion_prepara_impresion_op_cabecera" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_op_impresion_by_cab.jsp" />
+	</definition>
+
+	<definition name="portlet.autorizaciones.integracion_detalle_liquidacion_op" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_detalle_liquidacion.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.integracion_detalle_liquidacion_op_cabecera" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_detalle_liquidacion_cabecera.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.integracion_upload_transferencias" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_upload_transferencias.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.integracion_op_aviso_transferencia" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_op_aviso_de_transferencia.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.integracion_op_ingreso_recibo" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_op_ingreso_recibos.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.integracion_planilla_superintendencia" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_informe_superintendencia_liquidacion.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.integracion_ajustes" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_ajustes.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.integracion_ajustes_debitos_result" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_debitos_result.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.integracion_recibos" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_recibos.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.integracion_rendicion" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_rendicion.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.integracion_rendicion_result" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_rendicion_result.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.integracion_devolucion" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_devolucion_gestion.jsp" />
+	</definition>
+
+   <definition name="portlet.autorizaciones.integracion_devolucion_pagina" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_devolucion_gestion_search_result.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.integracion_devolucion_registro" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_devolucion_dr_edit.jsp" />
+	</definition>
+
+    <definition name="portlet.autorizaciones.alerta_permanencia_afiliado" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/reclamos_prestacionales/alerta_permanencia_afiliado.jsp" />
+	</definition>
+
+	<!-- Gestión de Seccionales -->
+	<definition name="portlet.gest_seccional" extends="portlet" />
+
+	<definition name="portlet.gestion_seccional.view" extends="portlet.gest_seccional">
+		<put name="portlet_content" value="/portlet/afiliados/busqueda_abm_seccionales.jsp" />
+	</definition>
+
+	<definition name="portlet.gestion_seccional.tablero" extends="portlet.gest_seccional">
+		<put name="portlet_content" value="/portlet/seccional/tablero_gestion_seccional.jsp" />
+	</definition>
+
+    <definition name="portlet.seccional.imagenes_seccional" extends="portlet.gest_seccional">
+		<put name="portlet_content" value="/portlet/seccional/gestion_sec_imagenes.jsp" />
+	</definition>
+
+	<definition name="portlet.seccional.galeria_seccional" extends="portlet.gest_seccional">
+		<put name="portlet_content" value="/portlet/seccional/gestion_sec_galeria.jsp" />
+	</definition>
+
+	<definition name="portlet.gestion_seccional.results" extends="portlet.gest_seccional">
+		<put name="portlet_content"	value="/portlet/seccional/gestiones_seccional_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.seccional.empresa.result.search"
+		extends="portlet.gest_seccional">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/empresas_seguimiento_search_result.jsp" />
+	</definition>
+
+	<!-- Fin Gestion Empresas -->
+
+	<definition name="portlet.autorizaciones.integracion_liquidacion" extends="portlet.autorizaciones">
+		<put name="portlet_content"	value="/portlet/autorizaciones/integracion/integracion_liquidacion.jsp" />
+	</definition>
+
+
+	<!-- Proveedores UOMA/AMTIMA -->
+	<definition name="portlet.uoma.proveedores_editar"
+		extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/proveedores/proveedor_edit.jsp" />
+	</definition>
+
+    <definition name="portlet.uoma.proveedores_search_result" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/uoma/proveedores/proveedores_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.cuentacorriente.editar_saldoinicial"
+		extends="portlet.uoma">
+		<put name="portlet_content"
+			value="/portlet/uoma/cuentacorriente/saldoinicial_edicion.jsp" />
+	</definition>	
+
+	<definition name="portlet.uoma.cuentacorriente.eliminar_saldoinicial"
+		extends="portlet.uoma">
+		<put name="portlet_content"
+			value="/portlet/uoma/cuentacorriente/saldoinicial_eliminar.jsp" />
+	</definition>	
+
+	<definition name="portlet.uoma.cuentacorriente.saldoinicial_adm"
+		extends="portlet.uoma">
+		<put name="portlet_content"
+			value="/portlet/uoma/cuentacorriente/saldoinicial_adm.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.cuentacorriente.buscar_saldoinicial" extends="portlet">
+		<put name="portlet_content"	
+			value="/portlet/uoma/cuentacorriente/saldoinicial_result.jsp" />
+	</definition>
+	
+    <definition name="portlet.uoma.cuentacorriente_export_view" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/uoma/cuentacorriente/cuentacorriente_export_view.jsp" />
+	</definition>
+	
+    <definition name="portlet.uoma.cuentacorriente_search_result_v0" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/uoma/cuentacorriente/cuentacorriente_search_result_v0.jsp" />
+	</definition>
+
+    <definition name="portlet.uoma.cuentacorriente_search_result_cuit_v0" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/uoma/cuentacorriente/cuentacorriente_search_result_cuit_v0.jsp" />
+	</definition>
+
+    <definition name="portlet.uoma.cuentacorriente_search_result_v1" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/uoma/cuentacorriente/cuentacorriente_search_result_v1.jsp" />
+	</definition>
+
+    <definition name="portlet.uoma.cuentacorriente_search_result_cuit_v1" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/uoma/cuentacorriente/cuentacorriente_search_result_cuit_v1.jsp" />
+	</definition>
+
+    <definition name="portlet.uoma.cuentacorriente_search_result_v2" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/uoma/cuentacorriente/cuentacorriente_search_result_v2.jsp" />
+	</definition>
+
+    <definition name="portlet.uoma.cuentacorriente_search_result_cuit_v2" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/uoma/cuentacorriente/cuentacorriente_search_result_cuit_v2.jsp" />
+    </definition>
+
+	<definition name="portlet.farmacia.proveedores_editar"
+		extends="portlet.farmacia">
+		<put name="portlet_content" value="/portlet/uoma/proveedores/proveedor_edit.jsp" />
+	</definition>
+
+    <definition name="portlet.farmacia.proveedores_search_result" extends="portlet">
+		<put name="portlet_content"
+			value="/portlet/uoma/proveedores/proveedores_search_result.jsp" />
+	</definition>
+
+	<!-- Fin Proveedores AMTIMA -->
+
+
+	<!-- FACTURACION UOMA/AMTIMA -->
+
+	<definition name="portlet.uoma.facturacion_editar"
+		extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/facturacion/factura_edit.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.pers_fisica.view" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/facturacion/pers_fisica_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.facturacion_detalle" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/facturacion/factura_detalle_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma.facturacion_adelantos" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/facturacion/adelantos_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.pers_fisica.nuevo" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/facturacion/popup_nuevo_cliente.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.facturacion_search_result" extends="portlet.uoma">
+		<put name="portlet_content" value="/portlet/uoma/facturacion/facturas_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.uoma.factura.ingresos.view"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/uoma/facturacion/factura_ingresos_search_result.jsp" />
+	</definition>
+
+	<!-- FIN FACTURACION UOMA/AMTIMA -->
+
+	<!-- UOMA - PERCEPCIONES DE INGRESOS BRUTOS -->
+	<definition name="portlet.uoma.reporte.percepciones_ingresos_brutos"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/uoma/percepciones_iibb.jsp" />
+	</definition>
+
+	<!-- FIN UOMA - PERCEPCIONES DE INGRESOS BRUTOS -->
+
+
+	<!-- UOMA - IVA COMPRAS Y VENTAS -->
+    <definition name="portlet.uoma.reporte.libro_iva"
+		extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/uoma/reportes/libro_iva.jsp" />
+	</definition>
+
+	<definition
+		name="portlet.liquidaciones.comprobantes.conceptos.extendido.search.result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/comprobantes/conceptos_search_result_extendido.jsp" />
+	</definition>
+
+
+
+	<!-- FIN UOMA - PERCEPCIONES DE INGRESOS BRUTOS -->
+
+
+	<!-- AJUSTE POR INFLACION -->
+
+	<definition name="portlet.tesoreria.coeficientes_ajuste_inflacion_list"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"	value="/portlet/tesoreria/contabilidad/coeficientes_ajuste_inflacion_list.jsp" />
+	</definition>
+
+  <definition
+		name="portlet.tesoreria.coeficientes_ajuste_inflacion_result"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/contabilidad/coeficientes_ajuste_inflacion_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.tesoreria.coeficientes_ajuste_inflacion_edit"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"	value="/portlet/tesoreria/contabilidad/coeficientes_ajuste_inflacion_edit.jsp" />
+	</definition>
+
+	<!-- FIN AJUSTE POR INFLACION -->
+
+	<!-- HOTELES -->
+	<definition name="portlet.hoteles" extends="portlet" />
+
+	<definition name="portlet.hoteles.view" extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/view.jsp" />
+	</definition>
+
+   <definition name="portlet.hoteles.mesa_editar"
+		extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/mesa_edit.jsp" />
+	</definition>
+
+   <definition
+		name="portlet.hoteles.mesas_result"
+		extends="portlet.hoteles">
+		<put name="portlet_content"
+			value="/portlet/hoteles/mesas_result.jsp" />
+	</definition>
+
+	<definition name="portlet.hoteles.habitacion_editar"
+		extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/habitacion_edit.jsp" />
+	</definition>
+
+   <definition
+		name="portlet.hoteles.habitaciones_result"
+		extends="portlet.hoteles">
+		<put name="portlet_content"
+			value="/portlet/hoteles/habitaciones_result.jsp" />
+	</definition>
+
+
+	<definition name="portlet.hoteles.categoria_editar"
+		extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/categoria_producto_edit.jsp" />
+	</definition>
+
+   <definition
+		name="portlet.hoteles.categorias_result"
+		extends="portlet.hoteles">
+		<put name="portlet_content"
+			value="/portlet/hoteles/categorias_productos_result.jsp" />
+	</definition>
+
+   <definition name="portlet.hoteles.producto_editar"
+		extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/producto_edit.jsp" />
+	</definition>
+
+   <definition
+		name="portlet.hoteles.productos_result"
+		extends="portlet.hoteles">
+		<put name="portlet_content"
+			value="/portlet/hoteles/productos_result.jsp" />
+	</definition>
+
+	<definition name="portlet.hoteles.personal_editar"
+		extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/personal_edit.jsp" />
+	</definition>
+
+   <definition
+		name="portlet.hoteles.personal_result"
+		extends="portlet.hoteles">
+		<put name="portlet_content"
+			value="/portlet/hoteles/personal_result.jsp" />
+	</definition>
+
+	<definition name="portlet.hoteles.asignar_consumos_habitacion"
+		extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/asignar_consumos_habitacion.jsp" />
+	</definition>
+
+	<definition name="portlet.hoteles.facturar_consumos"
+		extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/uoma/facturacion/factura_edit.jsp" />
+	</definition>
+
+	<definition name="portlet.hoteles.ticket_consumos_habitacion"
+		extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/ticket_consumos_habitacion.jsp" />
+	</definition>
+
+
+	<definition name="portlet.ticket_reservas_habitacion"
+		extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/ticket_reservas_habitacion.jsp" />
+	</definition>
+
+	<definition name="portlet.hoteles.gestion_administrativa" extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/gestion_administrativa.jsp" />
+	</definition>
+
+
+	<definition name="portlet.hoteles.resumen_reservas_liquidacion" extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/reservas_resumen_liquidacion.jsp" />
+	</definition>
+
+
+	<definition name="portlet.hoteles.reservas_result" extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/reservas_result.jsp" />
+	</definition>
+
+    <definition name="portlet.hoteles.reporte_habitaciones_gobernanta" extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/reportes/habitaciones_gobernanta.jsp" />
+	</definition>
+
+    <definition name="portlet.hoteles.reporte_estadistica_desayunos" extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/reportes/estadistica_desayunos.jsp" />
+	</definition>
+	
+	<definition name="portlet.hoteles.recibos_gestion" extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/recibos_gestion.jsp" />
+	</definition>
+	
+	<definition name="portlet.hoteles.recibo_editar"
+		extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/recibo_edit.jsp" />
+	</definition>
+	
+	<definition
+		name="portlet.hoteles.recibos_result"
+		extends="portlet.hoteles">
+		<put name="portlet_content"
+			value="/portlet/hoteles/recibos_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.hoteles.recibo.ingresos.view"
+		extends="portlet.tesoreria">
+		<put name="portlet_content"
+			value="/portlet/hoteles/recibo_ingresos_search_result.jsp" />
+	</definition>
+
+
+    <definition name="portlet.hoteles.recibo_anular"
+		extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/recibo_anular.jsp" />
+	</definition>
+	
+	<definition name="portlet.hoteles.prestamos_editar"
+		extends="portlet.hoteles">
+		<put name="portlet_content" value="/portlet/hoteles/prestamosturismo/prestamos_edit.jsp" />
+	</definition>
+
+   <definition
+		name="portlet.hoteles.prestamos_result"
+		extends="portlet.hoteles">
+		<put name="portlet_content"
+			value="/portlet/hoteles/prestamosturismo/prestamos_turismo_result.jsp" />
+	</definition>
+	
+	<definition
+		name="portlet.hoteles.prestamos_pagos_result"
+		extends="portlet.hoteles">
+		<put name="portlet_content"
+			value="/portlet/hoteles/prestamosturismo/prestamos_turismo_pagos_result.jsp" />
+	</definition>
+	
+	<definition
+		name="portlet.hoteles.prestamos_cuotas_result"
+		extends="portlet.hoteles">
+		<put name="portlet_content"
+			value="/portlet/hoteles/prestamosturismo/prestamos_cuotas_result.jsp" />
+	</definition>
+	
+	 <definition
+		name="portlet.hoteles.prestamos_turismo_list"
+		extends="portlet.hoteles">
+		<put name="portlet_content"
+			value="/portlet/hoteles/prestamosturismo/prestamos_turismo_list.jsp" />
+	</definition>
+	<!-- FIN HOTELES -->
+	
+	<!-- Interbanking UOMA AMTIMA -->
+	<definition name="portlet.liquidaciones.interbanking" extends="portlet.liquidaciones">
+		<put name="portlet_content"	value="/portlet/liquidaciones/ordenes_pago/interbanking.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.interbanking_ops" extends="portlet.liquidaciones">
+		<put name="portlet_content"	value="/portlet/liquidaciones/ordenes_pago/interbanking_ordenes_pago_list.jsp" />
+	</definition>
+	
+	<definition name="portlet.interbanking.ordenes_pago.result.search"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/ordenes_pago/interbanking_orden_pago_search_result.jsp" />
+	</definition>
+	
+	<!-- FIN Interbanking -->
+	
+	<!-- COMPROBANTES -->
+	<definition name="portlet.comprobantes" extends="portlet" />
+	
+	
+	<definition name="portlet.comprobantes.comprobantes_proveedores" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_list.jsp" />
+	</definition>
+	
+
+	<definition name="portlet.comprobantes.view" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/view.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.seccional.view"
+		extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/seccionales_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobantes_search_result" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.imagenes" extends="portlet.comprobantes">
+		<put name="portlet_content"	value="/portlet/comprobantes/comprobante_imagenes.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobante_editar" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobante_edicion.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.usuarios.result"
+		extends="portlet.comprobantes">
+		<put name="portlet_content"
+			value="/portlet/comprobantes/sector_usuarios_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.download.result" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_download_ws_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobantes_search_result_integracion" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_search_result_integracion.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobantes_proveedores_integracion" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_list_integracion.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobante_integracion_editar" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobante_integracion_edicion.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.errores.view" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobante_integracion_errores_descripcion.jsp" />
+	</definition>
+	
+	
+	<definition name="portlet.comprobantes.comprobantes_search_result_acompanantes" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_search_result_acompanante_terapeutico.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobante_acompanante_editar" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobante_acompanante_edicion.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobantes_proveedores_acompanantes" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_list_acompanante_terapeutico.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.upload_op.result" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_upload_op_ws_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobante_hospitales_editar" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobante_hospitales_edicion.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobantes_search_result_hospitales" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_search_result_hospitales.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobantes_hospitales_list" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_list_hospitales.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobante_farmacia_editar" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobante_farmacia_edicion.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobantes_search_result_farmacia" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_search_result_farmacia.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobantes_farmacia_list" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_list_farmacia.jsp" />
+	</definition>
+	
+	
+	<definition name="portlet.comprobantes.comprobante_proveedores_editar" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobante_proveedores_edicion.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobantes_search_result_proveedores" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_search_result_proveedores.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobantes_proveedores_list" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_list_proveedores.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobante_gerenciadoras_editar" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobante_gerenciadoras_edicion.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobantes_search_result_gerenciadoras" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_search_result_gerenciadoras.jsp" />
+	</definition>
+	
+	<definition name="portlet.comprobantes.comprobantes_gerenciadoras_list" extends="portlet.comprobantes">
+		<put name="portlet_content" value="/portlet/comprobantes/comprobantes_list_gerenciadoras.jsp" />
+	</definition>
+	
+	
+	<!-- FIN Comprobantes -->
+	
+	<!-- Gestion Judicial -->
+	
+	<definition name="portlet.estudio_isidro.demanda_editar" extends="portlet.estudio_isidro">
+ 		<put name="portlet_content"	value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_solapas.jsp" />
+	</definition>
+	
+	<definition name="portlet.estudio_isidro.demandas.result.search"
+		extends="portlet.estudio_isidro">
+		<put name="portlet_content"
+			value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.estudio_isidro.demanda.imagenes_demanda" extends="portlet.estudio_isidro">
+		<put name="portlet_content"	value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_imagenes.jsp" />
+	</definition>
+	
+	<definition name="portlet.estudio_isidro.demanda_editar_actas" extends="portlet.estudio_isidro">
+		<put name="portlet_content"	value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_actas_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.estudio_isidro.demanda_editar_convenios" extends="portlet.estudio_isidro">
+		<put name="portlet_content"	value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_convenios_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.estudio_isidro.demanda_editar_cheques" extends="portlet.estudio_isidro">
+		<put name="portlet_content"	value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_cheques_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.estudio_isidro.demanda_editar_estados" extends="portlet.estudio_isidro">
+		<put name="portlet_content"	value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_estados_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.estudio_isidro.demanda_editar_asiento" extends="portlet.estudio_isidro">
+		<put name="portlet_content"	value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_asiento_edit.jsp" />
+	</definition>
+	
+	<definition name="portlet.estudio_isidro.demanda_editar_asiento_result" extends="portlet.estudio_isidro">
+		<put name="portlet_content"	value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_asiento_detalle_result.jsp" />
+	</definition>
+	
+	
+	<definition name="portlet.estudio_isidro.demanda_contabilidad" extends="portlet.estudio_isidro">
+		<put name="portlet_content"	value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_contabilidad.jsp" />
+	</definition>
+	
+	<definition name="portlet.estudio_isidro.demanda_contabilidad_result" extends="portlet.estudio_isidro">
+		<put name="portlet_content"	value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_contabilidad_result.jsp" />
+	</definition>
+	
+	<!-- Fin Gestión Judicial -->
+	
+	<definition name="portlet.autorizaciones.reporte.avisos_vencimientos_cud"	extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/reportes/avisos_vencimientos_cud.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.reporte.imagenes_reclamos"	extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/reportes/download_imagenes_reclamos.jsp" />
+	</definition>
+	
+	<definition name="portlet.autorizaciones.reporte.imagenes_preautorizaciones"	extends="portlet.autorizaciones">
+		<put name="portlet_content" value="/portlet/autorizaciones/reportes/download_imagenes_preautorizaciones.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.reporte.imagenes_liquidaciones"	extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/reportes/download_imagenes_liquidaciones.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.reporte.imagenes_ordenes_pago"	extends="portlet.liquidaciones">
+		<put name="portlet_content" value="/portlet/liquidaciones/reportes/download_imagenes_ordenes_pago.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.liquidar.jubilados"	extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/liquida_jubilados/liquida_jubilados.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.liquidar.jubilados.result"	extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/liquida_jubilados/liquida_jubilados_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliado.abm_categorias_monotributo"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/categorias_monotributo_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliado.abm_categorias_monotributo_edit"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/aportemonotributo_edit.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliado.abm_categorias_monotributo_clases_result"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/aportemonotributo_clases_result.jsp" />
+	</definition>
+	
+	
+	
+	<definition name="portlet.judicial" extends="portlet" />
+	
+	<definition name="portlet.judicial.view" extends="portlet.judicial">
+		<put name="portlet_content" value="/portlet/judicial/view.jsp" />
+	</definition>
+
+<!-- APP MOBILE -->	
+	<definition name="portlet.appmobile" extends="portlet" />
+	
+	<definition name="portlet.appmobile.view" extends="portlet.appmobile">
+		<put name="portlet_content" value="/portlet/appmobile/view.jsp" />
+	</definition>
+
+	<definition name="portlet.comprobantes.download.app" extends="portlet.appmobile">
+		<put name="portlet_content" value="/portlet/appmobile/comprobantes_download_app.jsp" />
+	</definition>
+<!-- FIN APP MOBILE -->		
+
+	<definition name="portlet.autorizaciones.historico.reclamo.result.search" extends="portlet.autorizaciones">
+  		<put name="portlet_content" value="/portlet/autorizaciones/reportes/historico_reclamo_search_result.jsp" />
+	</definition>
+	
+	<!-- Reimputacion de pagos -->
+	<definition name="portlet.uoma.empleadores_reimputacion_pagos_search_result"
+		extends="portlet.uoma">
+		<put name="portlet_content"
+			value="/portlet/uoma/cuentacorriente/empleadores_reimputacion_pagos_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma.empleadores_reimputacion_pagos_edit"
+		extends="portlet.uoma">
+		<put name="portlet_content"
+			value="/portlet/uoma/cuentacorriente/empleadores_reimputacion_pagos_edit.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma.empleadores_reimputacion_pagos_impagas"
+		extends="portlet.uoma">
+		<put name="portlet_content"
+			value="/portlet/tesoreria/recibos/recibo_aportes_empleadores_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.uoma.empleadores_reimputacion_pagos_edit_destino"
+		extends="portlet.uoma">
+		<put name="portlet_content"
+			value="/portlet/uoma/cuentacorriente/empleadores_reimputacion_pagos_edit_destino.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.result.search.cuenta_bancaria" extends="portlet.afiliados">
+	    <put name="portlet_content" value="/portlet/afiliados/afiliados_search_result_cuenta_bancaria.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.cuentas_bancarias" extends="portlet.afiliados">
+	    <put name="portlet_content" value="/portlet/afiliados/cuentas_bancarias.jsp" />
+	</definition>	
+	
+	<definition name="portlet.afiliados.historico_cuentas_bancarias" extends="portlet.afiliados">
+	    <put name="portlet_content" value="/portlet/afiliados/historico_cuentas_bancarias.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.debitos_tercerizadoras_search_result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/reportes/reporte_debitos_terciarizadoras_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.archivos_debitos_tercerizadoras"
+				extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			 value="/portlet/liquidaciones/reportes/archivos_debitos_tercerizadoras.jsp" />
+	</definition>
+
+	<!-- PRESTADORES -->
+	<definition name="portlet.prestadores" extends="portlet" />
+
+	<definition name="portlet.prestadores.view" extends="portlet.prestadores">
+		<put name="portlet_content" value="/portlet/prestadores/view.jsp" />
+	</definition>
+
+	<definition name="portlet.comprobantes.download.prestadores" extends="portlet.prestadores">
+		<put name="portlet_content" value="/portlet/prestadores/comprobantes_download_prestadores.jsp" />
+	</definition>
+
+	<!-- CARTILLA CONVENIO POR PLAN -->
+	<definition name="portlet.prestadores.cartilla_convenio_por_plan" extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/cartilla_convenio_por_plan.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.cartilla_convenio_por_plan_resultados" extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/cartilla_prestadores_por_plan_search_result.jsp" />
+	</definition>
+
+	<!-- CONVENIOS PRESTACIONALES -->
+	<definition name="portlet.prestadores.conv_prestac" extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/busqueda_convenios_prestacionales.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.editar_convenio_prest_entry" extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/editar_convenio_prest.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.lista_convenio_prest_detalle" extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/conv_prest_detalle_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.importar_contratos" extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/upload_archivos_contratos.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.administracion.prestadores"
+	            extends="portlet.liquidaciones">
+		<put name="portlet_content"
+		     value="/portlet/liquidaciones/administracion/prestadores/busqueda_prestadores.jsp" />
+	</definition>
+</tiles-definitions>

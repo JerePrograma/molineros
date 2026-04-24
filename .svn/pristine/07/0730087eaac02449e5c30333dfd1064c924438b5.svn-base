@@ -1,0 +1,675 @@
+package ar.com.ospim.procesaArchivos.beans.farmaciaospim;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+
+import ar.com.ospim.farmaciaOspim.action.UploadArchivosFarmOspimAction;
+
+
+public class DetalleDesglose {
+	
+	private String hasta ; 
+	private String cod_col; 
+	private String colegio;  
+	private String cod_farmacia ; 
+	private String farmacia ;  
+	private String cuit; 
+	private String localidad ; 
+	private String region ;  
+	private String orden ;  
+	private String env ;  
+	private String pvp ;  
+	private String entidad ;  
+	private String porcentaje ;  
+	private String troquel ;  
+	private String registro ;  
+	private String nombre_comercial ;  
+	private String pot ;  
+	private String forma_farm ;  
+	private String cont ;  
+	private String principio ;  
+	private String accion ;  
+	private String fecha ;  
+	private String dispensa ;  
+	private String matricula ;  
+	private String profesional ;  
+	private String grupo ;  
+	private String nombre_benef ;  
+	private String tp ;  
+	private boolean pmi ; 
+	private double monto_ospim;  
+	private double monto_uoma; 
+	private double monto_amtima;
+	private String plan ;
+	private int inte ; 
+	private String id_ospim; 
+	private String id_uoma ;
+	private String id_amtima;
+	private String id_seccional;
+	private String seccional ;
+	private String comentario ;
+	private String cuil_titular;
+	private String afiliado;
+	private String docu_numero; 	 
+	private Integer periodomes; 	 
+	private Integer periodoanio; 	 
+    private Integer idmedespecial ; 	
+    private String codReg;
+	private String codReceta;
+	private String direccion;
+	
+	private static Log logger = LogFactoryUtil
+			.getLog(UploadArchivosFarmOspimAction.class);
+	
+	public DetalleDesglose() {		
+	}
+
+	
+	public DetalleDesglose (String lineadatosfile) throws Exception {
+
+		String[] datos = null;
+		datos = lineadatosfile.split("\\|");
+		
+		try {
+				this.cod_col =datos[1];
+				this.colegio =datos[2];
+				this.cod_farmacia=datos[3];
+				this.farmacia=datos[4];
+				this.cuit=datos[5];
+				this.direccion=datos[6];
+				this.localidad=datos[7];
+				this.region=datos[8];
+				this.codReg=datos[9];
+				this.codReceta=datos[10];
+				this.orden=datos[11];
+				this.env=datos[12];
+				this.pvp=datos[13];
+				this.entidad=datos[14];
+				this.porcentaje=datos[15];
+				this.troquel=datos[16];
+				this.registro=datos[17];				
+				this.nombre_comercial= datos[18];
+				this.pot= datos[19];
+				this.forma_farm= datos[20];
+			    this.cont= datos[21];
+			    this.principio= datos[22];
+			    this.accion= datos[23];
+			    this.fecha=datos[24];
+			    this.dispensa=datos[25];
+			    this.matricula=datos[26];
+			    this.profesional=datos[27];
+			    this.grupo=datos[28]; 
+			    if (datos.length>29) {
+			    	this.nombre_benef=datos[29];	
+			    }else{
+			    	this.nombre_benef="";
+			    }			   
+			    int i;
+			    i=datos.length;
+			    if (i>30) {
+			    	this.tp=datos[30];	
+			    }else{
+			    	this.tp="";
+			    }
+			     
+			
+			}catch (Exception e) {
+				logger.debug("Error en el formato de los datos del archivo");
+				throw e;
+			}	
+		
+	}
+
+
+	public String getHasta() {
+		return hasta;
+	}
+
+
+	public void setHasta(String hasta) {
+		this.hasta = hasta;
+	}
+
+
+	public String getCod_col() {
+		return cod_col;
+	}
+
+
+	public void setCod_col(String cod_col) {
+		this.cod_col = cod_col;
+	}
+
+
+	public String getColegio() {
+		return colegio;
+	}
+
+
+	public void setColegio(String colegio) {
+		this.colegio = colegio;
+	}
+
+
+	public String getCod_farmacia() {
+		return cod_farmacia;
+	}
+
+
+	public void setCod_farmacia(String cod_farmacia) {
+		this.cod_farmacia = cod_farmacia;
+	}
+
+
+	public String getFarmacia() {
+		return farmacia;
+	}
+
+
+	public void setFarmacia(String farmacia) {
+		this.farmacia = farmacia;
+	}
+
+
+	public String getCuit() {
+		return cuit;
+	}
+
+
+	public void setCuit(String cuit) {
+		this.cuit = cuit;
+	}
+
+
+	public String getLocalidad() {
+		return localidad;
+	}
+
+
+	public void setLocalidad(String localidad) {
+		this.localidad = localidad;
+	}
+
+
+	public String getRegion() {
+		return region;
+	}
+
+
+	public void setRegion(String region) {
+		this.region = region;
+	}
+
+
+	public String getOrden() {
+		return orden;
+	}
+
+
+	public void setOrden(String orden) {
+		this.orden = orden;
+	}
+
+
+	public String getEnv() {
+		return env;
+	}
+
+
+	public void setEnv(String env) {
+		this.env = env;
+	}
+
+
+	public String getPvp() {
+		return pvp;
+	}
+
+
+	public void setPvp(String pvp) {
+		this.pvp = pvp;
+	}
+
+
+	public String getEntidad() {
+		return entidad;
+	}
+
+
+	public void setEntidad(String entidad) {
+		this.entidad = entidad;
+	}
+
+
+	public String getPorcentaje() {
+		return porcentaje;
+	}
+
+
+	public void setPorcentaje(String porcentaje) {
+		this.porcentaje = porcentaje;
+	}
+
+
+	public String getTroquel() {
+		return troquel;
+	}
+
+
+	public void setTroquel(String troquel) {
+		this.troquel = troquel;
+	}
+
+
+	public String getRegistro() {
+		return registro;
+	}
+
+
+	public void setRegistro(String registro) {
+		this.registro = registro;
+	}
+
+
+	public String getNombre_comercial() {
+		return nombre_comercial;
+	}
+
+
+	public void setNombre_comercial(String nombre_comercial) {
+		this.nombre_comercial = nombre_comercial;
+	}
+
+
+	public String getPot() {
+		return pot;
+	}
+
+
+	public void setPot(String pot) {
+		this.pot = pot;
+	}
+
+
+	public String getForma_farm() {
+		return forma_farm;
+	}
+
+
+	public void setForma_farm(String forma_farm) {
+		this.forma_farm = forma_farm;
+	}
+
+
+	public String getCont() {
+		return cont;
+	}
+
+
+	public void setCont(String cont) {
+		this.cont = cont;
+	}
+
+
+	public String getPrincipio() {
+		return principio;
+	}
+
+
+	public void setPrincipio(String principio) {
+		this.principio = principio;
+	}
+
+
+	public String getAccion() {
+		return accion;
+	}
+
+
+	public void setAccion(String accion) {
+		this.accion = accion;
+	}
+
+
+	public String getFecha() {
+		return fecha;
+	}
+
+
+	public void setFecha(String fecha) {
+		this.fecha = fecha;
+	}
+
+
+	public String getDispensa() {
+		return dispensa;
+	}
+
+
+	public void setDispensa(String dispensa) {
+		this.dispensa = dispensa;
+	}
+
+
+	public String getMatricula() {
+		return matricula;
+	}
+
+
+	public void setMatricula(String matricula) {
+		this.matricula = matricula;
+	}
+
+
+	public String getProfesional() {
+		return profesional;
+	}
+
+
+	public void setProfesional(String profesional) {
+		this.profesional = profesional;
+	}
+
+
+	public String getGrupo() {
+		return grupo;
+	}
+
+
+	public void setGrupo(String grupo) {
+		this.grupo = grupo;
+	}
+
+
+	public String getNombre_benef() {
+		return nombre_benef;
+	}
+
+
+	public void setNombre_benef(String nombre_benef) {
+		this.nombre_benef = nombre_benef;
+	}
+
+
+	public String getTp() {
+		return tp;
+	}
+
+
+	public void setTp(String tp) {
+		this.tp = tp;
+	}
+
+
+	public boolean isPmi() {
+		return pmi;
+	}
+
+
+	public void setPmi(boolean pmi) {
+		this.pmi = pmi;
+	}
+
+
+	public double getMonto_ospim() {
+		return monto_ospim;
+	}
+
+
+	public void setMonto_ospim(double monto_ospim) {
+		this.monto_ospim = monto_ospim;
+	}
+
+
+	public double getMonto_uoma() {
+		return monto_uoma;
+	}
+
+
+	public void setMonto_uoma(double monto_uoma) {
+		this.monto_uoma = monto_uoma;
+	}
+
+
+	public double getMonto_amtima() {
+		return monto_amtima;
+	}
+
+
+	public void setMonto_amtima(double monto_amtima) {
+		this.monto_amtima = monto_amtima;
+	}
+
+
+	public String getPlan() {
+		return plan;
+	}
+
+
+	public void setPlan(String plan) {
+		this.plan = plan;
+	}
+
+
+	public int getInte() {
+		return inte;
+	}
+
+
+	public void setInte(int inte) {
+		this.inte = inte;
+	}
+
+
+	public String getId_ospim() {
+		return id_ospim;
+	}
+
+
+	public void setId_ospim(String id_ospim) {
+		this.id_ospim = id_ospim;
+	}
+
+
+	public String getId_uoma() {
+		return id_uoma;
+	}
+
+
+	public void setId_uoma(String id_uoma) {
+		this.id_uoma = id_uoma;
+	}
+
+
+	public String getId_amtima() {
+		return id_amtima;
+	}
+
+
+	public void setId_amtima(String id_amtima) {
+		this.id_amtima = id_amtima;
+	}
+
+
+	public String getId_seccional() {
+		return id_seccional;
+	}
+
+
+	public void setId_seccional(String id_seccional) {
+		this.id_seccional = id_seccional;
+	}
+
+
+	public String getSeccional() {
+		return seccional;
+	}
+
+
+	public void setSeccional(String seccional) {
+		this.seccional = seccional;
+	}
+
+
+	public String getComentario() {
+		return comentario;
+	}
+
+
+	public void setComentario(String comentario) {
+		this.comentario = comentario;
+	}
+
+
+	public String getCuil_titular() {
+		return cuil_titular;
+	}
+
+
+	public void setCuil_titular(String cuil_titular) {
+		this.cuil_titular = cuil_titular;
+	}
+
+
+	public String getAfiliado() {
+		return afiliado;
+	}
+
+
+	public void setAfiliado(String afiliado) {
+		this.afiliado = afiliado;
+	}
+
+
+	public String getDocu_numero() {
+		return docu_numero;
+	}
+
+
+	public void setDocu_numero(String docu_numero) {
+		this.docu_numero = docu_numero;
+	}
+
+
+	public Integer getPeriodomes() {
+		return periodomes;
+	}
+
+
+	public void setPeriodomes(Integer periodomes) {
+		this.periodomes = periodomes;
+	}
+
+
+	public Integer getPeriodoanio() {
+		return periodoanio;
+	}
+
+
+	public void setPeriodoanio(Integer periodoanio) {
+		this.periodoanio = periodoanio;
+	}
+
+
+	public Integer getIdmedespecial() {
+		return idmedespecial;
+	}
+
+
+	public void setIdmedespecial(Integer idmedespecial) {
+		this.idmedespecial = idmedespecial;
+	}
+	
+	public String getCodReg() {
+		return codReg;
+	}
+
+
+	public void setCodReg(String codReg) {
+		this.codReg = codReg;
+	}
+
+
+	public String getCodReceta() {
+		return codReceta;
+	}
+
+
+	public void setCodReceta(String codReceta) {
+		this.codReceta = codReceta;
+	}
+
+	public String getDireccion() {
+		return direccion;
+	}
+
+	public void setDireccion(String direccion) {
+		this.direccion = direccion;
+	}
+
+
+	public static DetalleDesglose getMapping(ResultSet rs) throws SQLException {
+		DetalleDesglose archivo = new DetalleDesglose();
+		
+		try {	
+			archivo.setHasta(rs.getString("archfar_hasta"));
+			archivo.setCod_col(rs.getString("archfar_cod_col"));			
+			archivo.setFarmacia(rs.getString("archfar_farmacia"));
+			archivo.setCod_farmacia(rs.getString("archfar_cod_farmacia"));
+			archivo.setCuit(rs.getString("archfar_cuit"));
+			archivo.setDireccion(rs.getString("archfar_direccion"));
+			archivo.setLocalidad(rs.getString("archfar_localidad"));
+			archivo.setRegion(rs.getString("archfar_region"));
+			archivo.setCodReg(rs.getString("archfar_codReg"));
+			archivo.setCodReceta(rs.getString("archfar_codReceta"));
+			archivo.setOrden(rs.getString("archfar_orden"));
+			archivo.setEnv(rs.getString("archfar_env"));
+			archivo.setPvp(rs.getString("archfar_pvp"));
+			archivo.setEntidad(rs.getString("archfar_entidad"));
+			archivo.setPorcentaje(rs.getString("archfar_porcentaje"));
+			archivo.setTroquel(rs.getString("archfar_troquel"));
+			archivo.setRegion(rs.getString("archfar_region"));
+			archivo.setRegistro(rs.getString("archfar_registro"));
+			archivo.setNombre_comercial(rs.getString("archfar_nombre_comercial"));
+			archivo.setPot(rs.getString("archfar_pot"));
+			archivo.setForma_farm(rs.getString("archfar_forma_farm"));
+			archivo.setCont(rs.getString("archfar_cont"));
+			archivo.setPrincipio(rs.getString("archfar_principio"));
+			archivo.setAccion(rs.getString("archfar_accion"));
+			archivo.setFecha(rs.getString("archfar_fecha"));
+			archivo.setDispensa(rs.getString("archfar_dispensa"));
+			archivo.setMatricula(rs.getString("archfar_matricula"));
+			archivo.setProfesional(rs.getString("archfar_profesional"));
+			archivo.setGrupo(rs.getString("archfar_grupo"));
+			archivo.setNombre_benef(rs.getString("archfar_nombre_benef"));
+			archivo.setTp(rs.getString("archfar_tp"));
+			archivo.setPmi(rs.getBoolean("archfar_pmi"));
+			archivo.setMonto_ospim(rs.getDouble("archfar_monto_ospim"));
+			archivo.setMonto_uoma(rs.getDouble("archfar_monto_uoma"));
+			archivo.setMonto_amtima(rs.getDouble("archfar_monto_amtima"));
+			archivo.setPlan(rs.getString("archfar_plan"));
+			archivo.setInte(rs.getInt("archfar_inte"));
+			archivo.setId_ospim(rs.getString("archfar_id_ospim"));
+			archivo.setId_uoma(rs.getString("archfar_id_uoma"));
+			archivo.setId_amtima(rs.getString("archfar_id_amtima"));
+			archivo.setId_seccional(rs.getString("archfar_id_seccional"));
+			archivo.setSeccional(rs.getString("archfar_seccional"));
+			archivo.setComentario(rs.getString("archfar_comentario"));
+			archivo.setCuil_titular(rs.getString("archfar_cuil_titular"));
+			archivo.setColegio(rs.getString("archfar_colegio"));
+			
+		} catch (Exception e) {
+			logger.error(
+					"Error al generar reporte de archivo desglose farmacia prevencion",e);
+			return null;
+		}		
+		return archivo;
+	}
+
+	
+	   
+      
+}

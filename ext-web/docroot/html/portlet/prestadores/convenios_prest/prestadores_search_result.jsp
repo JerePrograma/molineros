@@ -34,7 +34,7 @@
 				 					ResultRow row = new ResultRow(prestador, prestador.getId_prestador(), i);
 					 				PortletURL rowURL = renderResponse.createRenderURL();		 				
 					 				rowURL.setWindowState(LiferayWindowState.MAXIMIZED);		 				
-					 				rowURL.setParameter("struts_action","/liquidaciones/editar_prestadores_entry");
+					 				rowURL.setParameter("struts_action","/prestadores/editar_prestadores_entry");
 					 				rowURL.setParameter("prestador_id", String.valueOf(prestador.getId_prestador()));
 					 				rowURL.setParameter("cmd","view");
 					 				row.addText(prestador.getId_prestadorString(), rowURL);

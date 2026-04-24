@@ -168,7 +168,7 @@
 		}		
 		jQuery('#<portlet:namespace />buscando').show();		
 		
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/buscar_prestadores" /></portlet:renderURL>';
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/prestadores/buscar_prestadores" /></portlet:renderURL>';
 		  
 		var busquedaPrest = { "id_prestador": id_prestador, "cuit":cuit, "descripcion": encodeURI(descripcion), "provincia":provincia,
 								"localidad":localidad, "profesion":profesion, "especialidad":especialidad, "subEspecialidad":subEspecialidad,
@@ -190,14 +190,14 @@
 	}
 
 	function <portlet:namespace />altaEmpleador() {
-		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/editar_prestadores_entry" /></portlet:renderURL>';
+		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/prestadores/editar_prestadores_entry" /></portlet:renderURL>';
 		document.<portlet:namespace />fm.method = 'post';
 		submitForm(document.<portlet:namespace />fm, url);
 	}     
 	
 	function manejarProfesion(){		
 		var idProfesion = jQuery('#<portlet:namespace/>profesion').val();		
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/id_profesion_especialidad&idProfesion='+idProfesion;
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/id_profesion_especialidad&idProfesion='+idProfesion;
 		jQuery.ajax({   
 			url: url,
 			success: function(data){
@@ -217,7 +217,7 @@
 	
 	function manejarEspecialidad(){
 		var idEspecialidad = jQuery('#<portlet:namespace/>especialidad').val();		
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/id_especialidad_subEspecialidad&idEspecialidad='+idEspecialidad;
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/id_especialidad_subEspecialidad&idEspecialidad='+idEspecialidad;
 		jQuery.ajax({   
 			url: url,
 			success: function(data){

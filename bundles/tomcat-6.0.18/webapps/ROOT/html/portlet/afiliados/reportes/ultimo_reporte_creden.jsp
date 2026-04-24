@@ -1,0 +1,50 @@
+<%@ include file="/html/portlet/afiliados/init.jsp" %>
+<%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
+<portlet:defineObjects/>
+			<%	    			 				
+												
+					List<PadronInformado> padrones= (ArrayList<PadronInformado>)renderRequest.getAttribute("ultimoReporte");
+					PortletURL portletURL = renderResponse.createRenderURL();				
+					String orderByCol = ParamUtil.getString(request, "orderByCol");
+					String orderByType = ParamUtil.getString(request, "orderByType");
+			 		List<String> headerNames = new ArrayList<String>();
+			 					 		
+			 		headerNames.add("fecha");
+			 		headerNames.add("cantidad");			 		
+			 		headerNames.add("print");					 		
+									
+					SearchContainer searchContainer = new SearchContainer(renderRequest, null, null,
+					SearchContainer.DEFAULT_CUR_PARAM,100, portletURL, headerNames,
+					LanguageUtil.get(pageContext, "no-reportes-were-found"));
+				
+					if(null!=padrones){
+					 	List resultRows = searchContainer.getResultRows();
+					 	for (int i = 0; i < padrones.size(); i++) {
+					 		PadronInformado padron = (PadronInformado) padrones.get(i);
+				 					ResultRow row = new ResultRow(padron, padron.getTercerizadora(), i);
+					 				PortletURL rowURL = renderResponse.createRenderURL();					 						 				
+					 				rowURL.setWindowState(WindowState.MAXIMIZED);		 
+					 				StringBuilder sb = new StringBuilder();									
+									sb.append(padron.getFechaAsString());									
+									row.addText(sb.toString());
+					 				StringBuilder sb2 = new StringBuilder();									
+									sb2.append(padron.getIdTerc());									
+									row.addText(sb2.toString());					 				
+									resultRows.add(row);
+									StringBuilder sb4= new StringBuilder();		 
+									sb4.append("<img alt=\"<liferay-ui:message key='rendir'/>\" src=\"");
+		 							sb4.append(themeDisplay.getPathThemeImages());
+		 							sb4.append("/common/print.png\" onClick=\"javascript:imprimirListadoAnterior('");				 					
+				 					sb4.append(padron.getTercerizadora());				 						 					
+				 					sb4.append("');\" /> ");
+				 					row.addText(sb4.toString());				 						 						
+					 	}
+					 				
+				 			
+					 }
+				 	
+			%>
+
+	<liferay-ui:search-iterator paginate="false" searchContainer="<%= searchContainer %>" />
+</form>
+

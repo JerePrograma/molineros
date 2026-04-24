@@ -1,0 +1,412 @@
+package ar.com.uoma.actasNoOS.service;
+
+import java.sql.Connection;
+import java.util.Date;
+import java.util.List;
+
+import ar.com.ospim.global.FechaMenorACierreContableException;
+import ar.com.ospim.global.beans.Cheque;
+import ar.com.ospim.global.services.ChequeServiceUtil;
+import ar.com.ospim.global.services.EmpresaServiceUtil;
+import ar.com.ospim.liquidaciones.DuplicateNumeroChequeException;
+import ar.com.ospim.tesoreria.ActaConReciboException;
+import ar.com.ospim.tesoreria.ActaRelacionadaException;
+import ar.com.ospim.tesoreria.DuplicateActaIdException;
+import ar.com.ospim.tesoreria.actas.action.InspectorWrapper;
+import ar.com.ospim.tesoreria.beans.Acta;
+import ar.com.ospim.tesoreria.beans.Acta.ActaPagoIngresado;
+import ar.com.ospim.tesoreria.beans.Acta.ActaRelacionada;
+import ar.com.ospim.tesoreria.beans.Acta.DetalleActaInspectores;
+import ar.com.ospim.tesoreria.beans.ActaPago;
+import ar.com.ospim.tesoreria.beans.ActaPeriodoDeudaEmpresa;
+import ar.com.ospim.tesoreria.beans.Inspector;
+import ar.com.ospim.tesoreria.beans.ReporteActaBean;
+import ar.com.ospim.tesoreria.beans.ReporteCobranzaActaBean;
+import ar.com.ospim.tesoreria.service.ContabilidadServiceUtil;
+import ar.com.ospim.util.ConnectionHelper;
+import ar.com.uoma.beans.ActasAcuerdos;
+
+import com.liferay.portal.model.User;
+
+public class ActaNoOSServiceUtil {
+
+	public static void save(Acta acta, User user,
+			List<InspectorWrapper> inspectoresWrapper, boolean cerrarActa, int entidad)
+			throws Exception {
+		Date fecha_cierre_periodo = ContabilidadServiceUtil
+				.getFechaUltimoPeriodoContable(entidad);
+		if (acta.getCierre_fecha().compareTo(fecha_cierre_periodo) <= 0) {
+			throw new FechaMenorACierreContableException();
+		}
+
+		Connection connection = null;
+		try {
+			if (acta.getNumero() != null && !acta.getNumero().equals("")) {
+				List<Acta> actas = ActaNoOSServiceImpl.getInstance().getActas(acta.getEntidad(),
+						acta.getNumero(), null, null,null, null);
+				if (actas != null && !actas.isEmpty()) {
+					throw new DuplicateActaIdException();
+				}
+			}
+
+			if (acta.getPagos() != null && acta.getPagos().size() > 0) {
+				for (ActaPago ap : acta.getPagos()) {
+					if (ap.getIngreso() != null
+							&& (ap.getIngreso() instanceof Cheque)) {
+						
+						Cheque chequeDuplicado = ChequeServiceUtil.getChequePorCuitBancoCtaBancariaNro((Cheque) ap.getIngreso(), entidad);
+						if (chequeDuplicado != null && ap.getId() == 0) {
+							throw new DuplicateNumeroChequeException(chequeDuplicado);
+						}
+//						List<Cheque> cheques = ChequeServiceUtil
+//								.getCheques((Cheque) ap.getIngreso(), entidad);
+//						if (cheques != null && !cheques.isEmpty()) {
+//							throw new DuplicateNumeroChequeException(
+//									(Cheque) ap.getIngreso());
+//						}
+					}
+				}
+			}
+
+			connection = ConnectionHelper.getConnection();
+			connection.setAutoCommit(false);
+
+			int id = ActaNoOSServiceImpl.getInstance().save(acta,
+					user.getScreenName(), connection);
+			acta.setId(id);
+			if (inspectoresWrapper != null) {
+				for (InspectorWrapper inspector : inspectoresWrapper) {
+					ActaNoOSServiceImpl.getInstance().saveInspectorFirmante(
+							acta.getId(), inspector.getId(), connection);
+				}
+			}
+
+			List<DetalleActaInspectores> detalles = acta.getDetallesActas();
+			if (detalles != null) {
+				for (DetalleActaInspectores detalle : detalles) {
+					ActaNoOSServiceImpl.getInstance().saveDetalleActa(acta,
+							detalle, connection);
+				}
+			}
+
+			List<ActaRelacionada> actas = acta.getActasRelacionadas();
+			if (actas != null) {
+				for (ActaRelacionada actaRel : actas) {
+					ActaNoOSServiceImpl.getInstance().saveActaRelacionada(actaRel,
+							user.getScreenName(), connection);
+				}
+			}
+
+			List<ActaPeriodoDeudaEmpresa> peris = acta.getPeriodos();
+			if (peris != null) {
+				for (ActaPeriodoDeudaEmpresa peri : peris) {
+					ActaNoOSServiceImpl.getInstance().saveActaPeriodo(acta, peri,
+							user.getScreenName(),peri.getTipoAporte(), connection);
+				}
+			}
+
+			List<ActaPago> pagos = acta.getPagos();
+			if (pagos != null) {
+				for (ActaPago p : pagos) {
+					if (p.getIngreso() != null
+							&& (p.getIngreso() instanceof Cheque)) {
+						Cheque cheque = new Cheque((Cheque) p.getIngreso());
+						cheque.setCuit(acta.getEmpresa().getCuit()); //aunque se a de terceros en nuestro sistema se cargan a la empresa
+						EmpresaServiceUtil.saveCuentaBancaria(cheque.getCuit(),"000", cheque.getCuentaBancaria(), user.getScreenName(), connection); 
+						ChequeServiceUtil.save(cheque, user.getScreenName(),
+								connection, entidad);
+					}
+					ActaNoOSServiceImpl.getInstance().saveActaPago(acta, p,
+							user.getScreenName(), connection);
+				}
+			}
+
+			if (cerrarActa) {
+				ActaNoOSServiceImpl.getInstance().cerrarActa(acta,
+						user.getScreenName(), connection);
+			}
+			connection.commit();
+		} catch (Exception e) {
+			if(null!=connection){
+				connection.rollback();
+			}
+			throw e;
+		} finally {
+			if (null!=connection) {
+				connection.close();
+			}
+		}
+	}
+
+	public static void update(Acta acta, User user,
+			List<InspectorWrapper> inspectoresWrapper, boolean cerrarActa, int entidad)
+			throws Exception {
+
+		Date fecha_cierre_periodo = ContabilidadServiceUtil
+				.getFechaUltimoPeriodoContable(entidad);
+		if (acta.getCierre_fecha().compareTo(fecha_cierre_periodo) <= 0) {
+			throw new FechaMenorACierreContableException();
+		}
+
+		if (acta.getPagos() != null && acta.getPagos().size() > 0) {
+			for (ActaPago ap : acta.getPagos()) {
+				if (ap.getIngreso() != null
+						&& (ap.getIngreso() instanceof Cheque)) {
+//					List<Cheque> cheques = ChequeServiceUtil
+//							.getCheques((Cheque) ap.getIngreso(), entidad);
+//					if (ap.getId() == 0 && cheques != null
+//							&& !cheques.isEmpty()) {
+//						throw new DuplicateNumeroChequeException(
+//								(Cheque) ap.getIngreso());
+//					}
+					Cheque chequeDuplicado = ChequeServiceUtil.getChequePorCuitBancoCtaBancariaNro((Cheque) ap.getIngreso(), entidad);
+					if (chequeDuplicado != null && ap.getId() == 0) {
+						throw new DuplicateNumeroChequeException(chequeDuplicado);
+					}
+				}
+			}
+		}
+		Connection connection = null;
+		try {
+			connection = ConnectionHelper.getConnection();
+			connection.setAutoCommit(false);
+			ActaNoOSServiceImpl.getInstance().update(acta, user.getScreenName(),
+					connection);
+
+			if (inspectoresWrapper != null) {
+				for (InspectorWrapper inspector : inspectoresWrapper) {
+					if (inspector.isRecienAgregado()) {
+						ActaNoOSServiceImpl.getInstance().saveInspectorFirmante(
+								acta.getId(), inspector.getId(), connection);
+					}
+					if (!inspector.isRecienAgregado()
+							&& inspector.isBorradoLogico()) {
+						ActaNoOSServiceImpl.getInstance().borrarInspectorFirmante(
+								acta.getId(), inspector.getId(), connection);
+					}
+				}
+			}
+
+			List<DetalleActaInspectores> detalles = acta.getDetallesActas();
+			if (detalles != null) {
+				for (DetalleActaInspectores detalle : detalles) {
+					if (detalle.getId() <= 0) {
+						ActaNoOSServiceImpl.getInstance().saveDetalleActa(acta,
+								detalle, connection);
+					} else {
+						if (detalle.isBorradoLogico()) {
+							ActaNoOSServiceImpl.getInstance().deleteDetalleActa(
+									detalle, connection);
+						}
+					}
+				}
+			}
+
+			List<ActaRelacionada> actas = acta.getActasRelacionadas();
+			if (actas != null) {
+				for (ActaRelacionada actaRel : actas) {
+					if (actaRel.isBorradoLogico()) {
+						ActaNoOSServiceImpl.getInstance().deleteActaRelacionada(
+								actaRel, connection);
+					} else {
+						if (actaRel.getId() == 0) {
+							ActaNoOSServiceImpl.getInstance().saveActaRelacionada(
+									actaRel, user.getScreenName(), connection);
+						} else {
+							ActaNoOSServiceImpl.getInstance()
+									.updateActaRelacionada(actaRel,
+											user.getScreenName(), connection);
+						}
+					}
+				}
+			}
+
+			List<ActaPeriodoDeudaEmpresa> peris = acta.getPeriodos();
+			if (peris != null) {
+				for (ActaPeriodoDeudaEmpresa peri : peris) {
+					ActaNoOSServiceImpl.getInstance().deleteActaPeriodo(peri,
+							connection);
+					if (peri.getDetalle().get(0).getId() <= 0) {
+						ActaNoOSServiceImpl.getInstance().saveActaPeriodo(acta,
+								peri, user.getScreenName(), peri.getTipoAporte(), connection);
+					} else {
+						ActaNoOSServiceImpl.getInstance().updateActaPeriodo(acta,
+								peri, user.getScreenName(), connection);
+					}
+				}
+			}
+
+			List<ActaPago> pagos = acta.getPagos();
+			if (pagos != null) {
+				for (ActaPago p : pagos) {
+					if (p.isBorradoLogico()) {
+						ActaNoOSServiceImpl.getInstance().deleteActaPago(p,
+								user.getScreenName(), connection);
+					} else {
+						if (p.getId() == 0) {
+							if (p.getIngreso() != null
+									&& (p.getIngreso() instanceof Cheque)) {
+								Cheque cheque = new Cheque(
+										(Cheque) p.getIngreso());
+								cheque.setCuit(acta.getEmpresa().getCuit());
+								ChequeServiceUtil.save(cheque,
+										user.getScreenName(), connection, entidad);
+							}
+							ActaNoOSServiceImpl.getInstance().saveActaPago(acta, p,
+									user.getScreenName(), connection);
+						} else {
+							ActaNoOSServiceImpl.getInstance().updateActaPago(acta,
+									p, user.getScreenName(), connection);
+						}
+					}
+				}
+			}
+
+			if (cerrarActa) {
+				ActaNoOSServiceImpl.getInstance().cerrarActa(acta,
+						user.getScreenName(), connection);
+			}
+			connection.commit();
+		} catch (Exception e) {
+			connection.rollback();
+			throw e;
+		} finally {
+			ConnectionHelper.cerrar(connection);
+		}
+	}
+	
+		
+	public static Acta getActa(int id, int reciboId) {
+		Acta acta = ActaNoOSServiceImpl.getInstance().get(id);
+		if (acta != null) {
+			List<Inspector> inspectoresFirmantes = ActaNoOSServiceImpl
+					.getInstance().getInspectoresFirmantes(id);
+			if (inspectoresFirmantes != null) {
+				acta.setInspectoresFirmantes(inspectoresFirmantes);
+			}
+			
+			List<ActaRelacionada> actasRelacionadas = ActaNoOSServiceImpl
+					.getInstance().getActasRelacionadas(id);
+			if (actasRelacionadas != null) {
+				acta.setActasRelacionadas(actasRelacionadas);
+			}
+			List<ActaPeriodoDeudaEmpresa> periodos = ActaNoOSServiceImpl
+					.getInstance().getPeriodosActas(id);
+			if (periodos != null) {
+				acta.setPeriodos(periodos);
+			}
+			List<ActaPago> pagos = ActaNoOSServiceImpl.getInstance().getPagosActas(
+					id);
+			if (pagos != null) {
+				acta.setPagos(pagos);
+			}
+			String entidad=acta.getEntidad();
+			List<ActaPagoIngresado> pagosIngresados = ActaNoOSServiceImpl
+					.getInstance().getPagosIngresados(id, reciboId, entidad);
+			if (pagosIngresados != null) {
+				acta.setPagosIngresados(pagosIngresados);
+			}
+		}			
+		return acta;
+	}
+
+	public static List<Acta> getActas(String entidad, String actaNro, String cuit,
+			String empresa, String estado) {
+		return ActaNoOSServiceImpl.getInstance().getActas(entidad, actaNro, cuit, empresa, estado,null);
+	}
+
+	public static List<Acta> getDeuda(String cuit, String empresa, String entidad) {
+		return ActaNoOSServiceImpl.getInstance().getDeuda(cuit, empresa, entidad,null);
+	}
+
+	public static void borrar(Integer actaId, Date fechaBaja, User user, int entidad)
+			throws Exception {
+
+		Date fecha_cierre_periodo = ContabilidadServiceUtil
+				.getFechaUltimoPeriodoContable(entidad);
+		if (fechaBaja.compareTo(fecha_cierre_periodo) <= 0) {
+			throw new FechaMenorACierreContableException();
+		}
+
+		Connection con = null;
+		try {
+			con = ConnectionHelper.getConnection();
+			con.setAutoCommit(false);
+			Acta acta = getActa(actaId,0);
+			if (acta.isActaCerrada()) {
+				if (isActaRelacionada(actaId, con)) {
+					throw new ActaRelacionadaException();
+				}
+				if (isActaConRecibo(actaId, con)) {
+					throw new ActaConReciboException();
+				}
+				ActaNoOSServiceImpl.getInstance().pasarACalculo(actaId, fechaBaja, user.getScreenName(), con);
+			}else{
+				ActaNoOSServiceImpl.getInstance().borrar(actaId, fechaBaja, user.getScreenName(), con);	
+			}
+			
+			
+			con.commit();
+		} catch (Exception e) {
+			ConnectionHelper.rollback(con);
+			throw e;
+		} finally {
+			ConnectionHelper.cerrar(con);
+		}
+	}
+
+	private static boolean isActaConRecibo(Integer actaId, Connection con)
+			throws Exception {
+		return ActaNoOSServiceImpl.getInstance().isActaConRecibo(actaId, null);
+	}
+
+	public static boolean isActaRelacionada(int actaId) throws Exception {
+		return ActaNoOSServiceImpl.getInstance().isActaRelacionada(actaId, null);
+	}
+
+	public static boolean isActaRelacionada(int actaId, Connection con)
+			throws Exception {
+		return ActaNoOSServiceImpl.getInstance().isActaRelacionada(actaId, con);
+	}
+
+	public static ActaRelacionada getActaARelacionar(String entidad, Acta actaOriginal,
+			String actaARelacionarNro) throws Exception{
+		ActaRelacionada ar = null;
+		List<Acta> actas = ActaNoOSServiceImpl.getInstance().getActas(entidad,
+				actaARelacionarNro, null, null,null,null);
+		Acta acta = null;
+		if (actas != null && actas.size() > 0) {
+			acta = ActaNoOSServiceUtil.getActa(actas.get(0).getId(),0);
+		}
+		if (acta != null) {
+			ar = new ActaRelacionada();
+			ar.setActaRelacionada(acta);
+			ar.setActa(actaOriginal);
+			ar.setImporte(acta.getTotal()
+					.subtract(acta.getTotalPagadoIngresado())
+					.subtract(acta.getTotalPagadoPorConvenioYActas()));
+		}
+		return ar;
+	}
+
+	public static List<Acta> getActasSinRecibo(String cuit, int entidad) {
+		List<Acta> ar = ActaNoOSServiceImpl.getInstance().getActasSinRecibo(cuit, entidad);
+		return ar;
+	}
+
+	public static List<ReporteActaBean> reporteActas(Date fechaIni,
+			Date fechaFin) {
+		return ActaNoOSServiceImpl.getInstance().reporteActas(fechaIni, fechaFin);
+	}
+
+	public static List<ReporteCobranzaActaBean> reporteCobranzaActas(
+			Date fechaIni, Date fechaFin) {
+		return ActaNoOSServiceImpl.getInstance().reporteCobranzaActas(fechaIni,
+				fechaFin);
+	}
+	
+	public static List<ActasAcuerdos> reporteActasNoOS(String cuit, String sucu, Date fechaIni, Date fechaFin, Date fechaPago, int conSaldo) {
+		return ActaNoOSServiceImpl.getInstance().reporteActasNoOS(cuit, sucu, fechaIni, fechaFin, fechaPago, conSaldo);		
+	}
+
+}

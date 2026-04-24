@@ -1,0 +1,369 @@
+package ar.com.ospim.liquidaciones.action;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.portlet.ActionRequest;
+import javax.portlet.ActionResponse;
+import javax.portlet.PortletConfig;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.apache.log4j.Logger;
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+
+import ar.com.ospim.global.beans.TipoPago;
+import ar.com.ospim.global.services.TraeListasServiceUtil;
+import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
+import ar.com.ospim.liquidaciones.beans.BusquedaConvenioPrestacionalFiltro;
+import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional;
+import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional.EstadosConvPrest;
+import ar.com.ospim.liquidaciones.beans.Prestador;
+import ar.com.ospim.liquidaciones.services.ConvenioPrestacionalServiceUtil;
+import ar.com.ospim.util.StringUtils;
+
+import com.liferay.portal.SystemException;
+import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.kernel.servlet.SessionMessages;
+import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.model.User;
+import com.liferay.portal.struts.PortletAction;
+import com.liferay.portal.util.PortalUtil;
+
+
+/**
+ * @author SVA
+ * 
+ */
+public class EditarConvPrestacionalAction extends PortletAction {
+	
+	private Logger _log = Logger.getLogger(this.getClass());
+		
+// redirige al render
+	public void processAction(ActionMapping mapping, ActionForm form,
+							  PortletConfig portletConfig, ActionRequest actionRequest,
+							  ActionResponse actionResponse) throws Exception {
+
+	// preferi no hacer nada x el processAction...
+//			System.out.println("pasando x el processAction");
+		
+	}
+
+	public ActionForward render(ActionMapping mapping, ActionForm form,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse) throws Exception {
+	
+		HttpServletRequest httpServletRequest = PortalUtil.getHttpServletRequest(renderRequest);
+		HttpSession session = (HttpSession) httpServletRequest.getSession();
+		User usuario = PortalUtil.getUser(renderRequest);
+		String cmd = ParamUtil.getString(renderRequest, Constants.CMD, null);
+		String msg = "";
+		int idConvPrestCab=0;
+		
+		ConvenioPrestacional convPrestacional = null;
+
+		cargarListas(renderRequest);
+		
+		if (!StringUtils.checkEmpty(cmd)) {
+			
+			List<ConvenioPrestacionalDetalle> detalles = (ArrayList<ConvenioPrestacionalDetalle>) session.getAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
+			
+			if(cmd.equals(Constants.ADD) ){ // prepara un convenio prest en blanco (vacio)
+				_log.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
+				
+//				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION);
+				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLE_EN_EDICION);
+				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
+				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE);
+				session.removeAttribute(WebKeysLiquidaciones.PLANES_PRESTADOR_EN_SESSION);
+				
+				renderRequest.setAttribute(Constants.CMD, Constants.SAVE);
+			}
+			
+			if(cmd.equals(Constants.SAVE) ){ // inserta nuevo
+				_log.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
+				
+				 convPrestacional = this.getConvenioPrestCabeceraFromRequest(renderRequest);
+				
+				 renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional); // que no quede vacio en caso de validacion error
+//				 validar si existe un Convenio vigente para el Prestador, solo puede tener 1
+				 if(ConvenioPrestacionalServiceUtil.validarConvenioPrestadorVigente(convPrestacional.getPrestador().getId_prestador())){
+					 SessionErrors.add(renderRequest, "conv-prest-duplicado");
+				
+					 renderRequest.setAttribute(Constants.CMD, Constants.ADD);
+				 }else{
+	
+					 if(detalles == null || (detalles != null && detalles.size() == 0)){
+						 SessionErrors.add(renderRequest, "conv-prest-sin-items");
+							
+						 renderRequest.setAttribute(Constants.CMD, Constants.ADD);
+					 }else{
+						 convPrestacional.setConvenioPrestDetalle(detalles);
+	//					 validar los detalles
+						 String mensaje = ConvenioPrestacionalServiceUtil.validarDetalleExistente(convPrestacional);
+						 
+						 if(mensaje != null){
+							 msg = mensaje ;
+							 
+							 SessionErrors.add(renderRequest, "conv-prest-validaciones");
+			
+							 renderRequest.setAttribute("msgConvenioFail", msg);
+							 
+							 renderRequest.setAttribute(Constants.CMD, Constants.ADD);
+						 }else{
+							 idConvPrestCab = ConvenioPrestacionalServiceUtil.insertarConvenioPrestacional(convPrestacional, usuario); 
+							 
+							 convPrestacional = ConvenioPrestacionalServiceUtil.getConvenioPrestacional(idConvPrestCab);
+							  
+							 msg = LanguageUtil.get(defaultLocale, "insert-convenio");
+							 
+							 msg = msg + " " + convPrestacional.getId();
+							 
+							 SessionMessages.add(renderRequest, "insertConvenioOk");
+							
+							 _log.debug("Usuario: " + usuario.getScreenName() 
+										+ " cmd: " + cmd 
+										+ " id convprest: " + idConvPrestCab);
+			
+							 renderRequest.setAttribute("msgConvenioOk", msg);
+//							 session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION);
+							 session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
+							 
+							 renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
+							 
+							 renderRequest.setAttribute(Constants.CMD, Constants.UPDATE);
+						 }	 
+					 }	 
+				 }
+			}
+//			
+			if(cmd.equals(Constants.VIEW) ){ 
+				_log.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
+	
+				idConvPrestCab = ParamUtil.getInteger(renderRequest, "id_convenio",0);
+				
+				convPrestacional = ConvenioPrestacionalServiceUtil.getConvenioPrestacional(idConvPrestCab);
+				
+				renderRequest.setAttribute(Constants.CMD, Constants.VIEW);
+
+				renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
+
+				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE);
+			}
+			
+			if(cmd.equals(Constants.DELETE) ){ 
+				_log.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
+	
+				idConvPrestCab = ParamUtil.getInteger(renderRequest, "id_convenio_prest",0);
+	
+				ConvenioPrestacionalServiceUtil.eliminarConvenioPrestacional(idConvPrestCab, usuario.getScreenName());
+				
+				msg = LanguageUtil.get(defaultLocale, "delete-convenio");
+				 
+				msg = msg + " " + idConvPrestCab;
+				 
+				SessionMessages.add(renderRequest, "deleteConvenioOk");
+				
+				_log.debug("Usuario: " + usuario.getScreenName() 
+							+ " cmd: " + cmd 
+							+ " id convprest: " + idConvPrestCab);
+
+				renderRequest.setAttribute("msgConvenioOk", msg);
+				 
+				BusquedaConvenioPrestacionalFiltro filtro = (BusquedaConvenioPrestacionalFiltro) session.getAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_FILTRO);
+				
+				List<ConvenioPrestacional> busqueda = ConvenioPrestacionalServiceUtil.buscarConveniosPrestacionales(filtro);
+
+				session.removeAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_RESULTS);
+				session.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_RESULTS, busqueda);
+				
+				return mapping.findForward(getForward(renderRequest,"portlet.liquidaciones.eliminar_convenio_prest_entry"));
+			}
+			
+			if(cmd.equals(Constants.APPROVE) || cmd.equals(Constants.REJECT) ){ // actualiza estado del conv. prest.
+				_log.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
+				
+				idConvPrestCab = ParamUtil.getInteger(renderRequest, "id_convenio_prest",0);
+		  
+				ConvenioPrestacionalServiceUtil.cambiarEstadoConvenioPrestacional(idConvPrestCab, 
+						cmd.equalsIgnoreCase(Constants.APPROVE)?ConvenioPrestacional.EstadosConvPrest.APROBADO.getIntValue()
+								:ConvenioPrestacional.EstadosConvPrest.RECHAZADO.getIntValue(), usuario.getScreenName());
+				
+				msg = LanguageUtil.get(defaultLocale, "update-estado-convenio");
+				
+				msg = msg + " " + idConvPrestCab;
+				 
+				SessionMessages.add(renderRequest, "updateEstadoConvPrestoOk");
+				
+				_log.debug("Usuario: " + usuario.getScreenName() 
+						+ " cmd: " + cmd 
+						+ " id convprest: " + idConvPrestCab);
+
+				renderRequest.setAttribute("msgConvenioOk", msg);
+//				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION);
+				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
+				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE);
+				
+				convPrestacional = ConvenioPrestacionalServiceUtil.getConvenioPrestacional(idConvPrestCab);
+				
+				renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
+				
+				renderRequest.setAttribute(Constants.CMD, Constants.VIEW);
+				
+			}
+			
+			if(cmd.equals(Constants.EDIT) ){ 
+				_log.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
+	
+				idConvPrestCab = ParamUtil.getInteger(renderRequest, "id_convenio_prest",0);
+				
+				convPrestacional = ConvenioPrestacionalServiceUtil.getConvenioPrestacional(idConvPrestCab);
+				
+				renderRequest.setAttribute(Constants.CMD, Constants.UPDATE);
+
+				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION);
+				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION);
+				session.removeAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE);
+				
+				renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
+				session.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION, convPrestacional.getConvenioPrestDetalle());
+			}
+
+			if(cmd.equals(Constants.UPDATE) ){ // actualiza
+				_log.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
+				
+				convPrestacional = this.getConvenioPrestCabeceraFromRequest(renderRequest);
+				convPrestacional.setEstado(EstadosConvPrest.CARGADO);
+								
+				if(detalles == null || (detalles != null && detalles.size() == 0)){
+					SessionErrors.add(renderRequest, "conv-prest-sin-items");
+						
+					renderRequest.setAttribute(Constants.CMD, Constants.ADD);
+				}else{
+					convPrestacional.setConvenioPrestDetalle(detalles);
+				}	 
+//				FIXME hay que informar alguien por cambios de convenios que ya estaban aprobados o rechazados??
+				
+				if(SessionErrors.isEmpty(renderRequest)){
+					ConvenioPrestacionalServiceUtil.actualizarConvenioPrestacional(convPrestacional, usuario.getScreenName());
+					 
+					idConvPrestCab = convPrestacional.getId();
+					convPrestacional = ConvenioPrestacionalServiceUtil.getConvenioPrestacional(idConvPrestCab);	
+	 
+					msg = LanguageUtil.get(defaultLocale, "update-convenio");
+					 
+					msg = msg + " " + idConvPrestCab;
+					  
+					SessionMessages.add(renderRequest, "updateConvenioOk");
+					
+					_log.debug("Usuario: " + usuario.getScreenName() 
+							+ " cmd: " + cmd 
+							+ " id conv prest: " + idConvPrestCab);
+	
+					renderRequest.setAttribute("msgConvenioOk", msg);
+				}	 
+				renderRequest.setAttribute(Constants.CMD, Constants.UPDATE);
+				renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
+				
+			}
+
+			session.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
+			session.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_DETALLES_EN_SESSION, convPrestacional!=null?convPrestacional.getConvenioPrestDetalle():null);
+
+		}else{
+//			renderRequest.setAttribute("tabs1", "afiliados");
+		}
+		
+		return mapping.findForward(getForward(renderRequest,"portlet.liquidaciones.editar_convenio_prest_entry"));
+
+	}
+
+	
+	
+	private void cargarListas(RenderRequest renderRequest) throws SystemException{
+
+		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
+		
+		boolean estanPreCargadasLasListas = session.getAttribute(WebKeysLiquidaciones.TIPOS_PAGO_CONVENIOS_PREST_EN_SESSION)!=null 
+				&& session.getAttribute(WebKeysLiquidaciones.PLANES_EN_SESSION)!=null
+				&& session.getAttribute(WebKeysLiquidaciones.TIPOS_NOMENCLADORES_EN_SESSION)!=null;
+		
+		if(!estanPreCargadasLasListas){
+			session.setAttribute(WebKeysLiquidaciones.TIPOS_PAGO_CONVENIOS_PREST_EN_SESSION, TraeListasServiceUtil.getTiposPagoContratos(renderRequest));
+			session.setAttribute(WebKeysLiquidaciones.PLANES_EN_SESSION, TraeListasServiceUtil.getPlanesOspim());
+			session.setAttribute(WebKeysLiquidaciones.TIPOS_NOMENCLADORES_EN_SESSION, TraeListasServiceUtil.getTiposNomenclador());
+		}
+//		no es en que momento sacarlas de memoria... pero son poquitos datos igualmente
+	}
+
+	private ConvenioPrestacional getConvenioPrestCabeceraFromRequest(RenderRequest renderRequest){
+		
+		SimpleDateFormat formatoDeFechas = new SimpleDateFormat("dd/MM/yyyy");
+		
+		ConvenioPrestacional convPres = new ConvenioPrestacional();
+
+		// Header
+		int idConvPrest = ParamUtil.getInteger(renderRequest, "id_convprest", 0);
+		int idPrestador = ParamUtil.getInteger(renderRequest, "id_prestador",0);
+		String cuitPrestador = ParamUtil.getString(renderRequest, "cuit_prestador","");
+		String nombrePrestador = ParamUtil.getString(renderRequest, "nombre_prestador","");
+		int estado = ParamUtil.getInteger(renderRequest, "estado", EstadosConvPrest.CARGADO.getIntValue());
+		int diaRecepcion = ParamUtil.getInteger(renderRequest, "dia_recepcion", 0);
+		String condicionPago = ParamUtil.getString(renderRequest, "condicion_pago", null);
+		int idFormaDePago = ParamUtil.getInteger(renderRequest, "forma_de_pago", 0);
+		
+		String fechaVigDia = ParamUtil.getString(renderRequest, "vigenciaDia");
+		String fechaVigMes = ParamUtil.getString(renderRequest, "vigenciaMes");
+		String fechaVigAnio = ParamUtil.getString(renderRequest, "vigenciaAnio");
+		Date fechaVigencia = null;
+		try {
+			fechaVigencia = formatoDeFechas.parse(fechaVigDia + "/"
+					+ (Integer.parseInt(fechaVigMes) + 1) + "/"
+					+ fechaVigAnio);
+		} catch (Exception e) {
+			fechaVigencia = null;
+		}
+		String fechaVencDia = ParamUtil.getString(renderRequest, "vencimientoDia");
+		String fechaVencMes = ParamUtil.getString(renderRequest, "vencimientoMes");
+		String fechaVencAnio = ParamUtil.getString(renderRequest, "vencimientoAnio");
+		Date fechaVencimiento = null;
+		try {
+			fechaVencimiento = formatoDeFechas.parse(fechaVencDia + "/"
+					+ (Integer.parseInt(fechaVencMes) + 1) + "/"
+					+ fechaVencAnio);
+		} catch (Exception e) {
+			fechaVencimiento = null;
+		}
+		
+		convPres.setId(idConvPrest);
+		switch (estado) {
+		case 1:
+			convPres.setEstado(EstadosConvPrest.CARGADO);
+			break;
+		case 2:
+			convPres.setEstado(EstadosConvPrest.APROBADO);
+			break;
+		case 3:
+			convPres.setEstado(EstadosConvPrest.RECHAZADO);
+			break;	
+		}
+		
+		convPres.setCondicionDePago(condicionPago);
+		convPres.setDiaRecepcion(diaRecepcion);
+		convPres.setTipo_pago(new TipoPago(idFormaDePago, ""));
+		convPres.setPrestador(new Prestador(cuitPrestador, idPrestador, nombrePrestador));
+		convPres.setVigencia(fechaVigencia);
+		convPres.setVencimiento(fechaVencimiento);
+
+		return convPres;
+	}
+}

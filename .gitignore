@@ -1,0 +1,65 @@
+# ------------------------------------------------------------
+# OSPIM / Liferay ext (Ant) - ignores solo de artefactos locales
+# ------------------------------------------------------------
+
+# --- Sistema operativo ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.Spotlight-V100/
+.Trashes/
+
+# --- Archivos temporales de editores ---
+*~
+*.swp
+*.swo
+*.tmp
+
+# --- IDEs / editores (manteniendo lo versionado del proyecto) ---
+.vscode/
+
+# IntelliJ IDEA: este repo ya versiona gran parte de .idea,
+# por eso solo se ignoran archivos de estado local.
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/shelf/
+.idea/httpRequests/
+.idea/dataSources/
+.idea/dataSources.local.xml
+
+# Eclipse / STS
+.classpath
+.project
+.settings/
+
+# NetBeans
+nbproject/private/
+
+# --- Build local / salidas temporales (no fuentes) ---
+**/tmp/
+**/work/
+**/logs/
+
+# Salidas comunes de build/test local
+out/
+target/
+build/
+
+# Reportes y volcados de runtime
+*.log
+hs_err_pid*
+replay_pid*
+
+# Cobertura / análisis
+coverage/
+.coverage
+
+# --- Tooling local opcional ---
+.gradle/
+node_modules/
+
+# --- Archivos de entorno local (si se crean en cada máquina) ---
+.env
+.env.*
+*.local

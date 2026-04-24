@@ -284,13 +284,13 @@ public class EditarConvPrestacionalAction extends PortletAction {
 
 		if (StringUtils.checkEmpty(cmd)) {
 			_log.debug("[EDIT-CONV-PREST][RENDER][NO-CMD] No vino CMD");
-			_log.info("[EDIT-CONV-PREST][RENDER][END] Fin render. Forward=portlet.liquidaciones.editar_convenio_prest_entry");
+			_log.info("[EDIT-CONV-PREST][RENDER][END] Fin render. Forward=portlet.prestadores.editar_convenio_prest_entry");
 			renderRequest.setAttribute(ATTR_MODO_EDICION, Boolean.valueOf(getModoEdicion(session)));
 			convPrestacional = (ConvenioPrestacional) session.getAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION);
 			if (convPrestacional != null) {
 				renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
 			}
-			return mapping.findForward(getForward(renderRequest, "portlet.liquidaciones.editar_convenio_prest_entry"));
+			return mapping.findForward(getForward(renderRequest, "portlet.prestadores.editar_convenio_prest_entry"));
 		}
 
 		if (CMD_EXPORT_XLS.equals(cmd) || CMD_DOWNLOAD_XLS_MODELO.equals(cmd)) {
@@ -307,7 +307,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 
 			_log.info("[EDIT-CONV-PREST][RENDER][END] Fin render skip " + cmd);
 			renderRequest.setAttribute(ATTR_MODO_EDICION, Boolean.valueOf(getModoEdicion(session)));
-			return mapping.findForward(getForward(renderRequest, "portlet.liquidaciones.editar_convenio_prest_entry"));
+			return mapping.findForward(getForward(renderRequest, "portlet.prestadores.editar_convenio_prest_entry"));
 		}
 
 		List<ConvenioPrestacionalDetalle> detalles = obtenerDetallesEnSession(session);
@@ -754,8 +754,8 @@ public class EditarConvPrestacionalAction extends PortletAction {
 				? convPrestacional.getConvenioPrestDetalle().size() : "null"));
 		_log.debug("[EDIT-CONV-PREST][RENDER][MODO] modoEdicionFinal=" + getModoEdicion(session));
 
-		_log.info("[EDIT-CONV-PREST][RENDER][END] Fin render. Forward=portlet.liquidaciones.editar_convenio_prest_entry");
-		return mapping.findForward(getForward(renderRequest, "portlet.liquidaciones.editar_convenio_prest_entry"));
+		_log.info("[EDIT-CONV-PREST][RENDER][END] Fin render. Forward=portlet.prestadores.editar_convenio_prest_entry");
+		return mapping.findForward(getForward(renderRequest, "portlet.prestadores.editar_convenio_prest_entry"));
 	}
 
 	private void procesarPreviewXls(ActionRequest actionRequest, ActionResponse actionResponse) throws Exception {

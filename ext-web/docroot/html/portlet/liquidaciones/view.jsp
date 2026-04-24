@@ -42,7 +42,7 @@ if(esLiquidadorExterno){
 
 if(esLiquidadorOSPIM){
   tabs1Values = "liquidaciones,reintegros,reintegro-farmacia";
-  tabs1Values += ",cheques,liquidacion-debitos-terceros,consulta-lista-reintegro,consulta-lista-reintegro-farmacia,reportes,administracion-tablas";
+  tabs1Values += ",cheques,liquidacion-debitos-terceros,consulta-lista-reintegro,consulta-lista-reintegro-farmacia,reportes";
   if (tabs1 == null || tabs1.equals("bandeja-de-entrada")){
     tabs1="liquidaciones";
   }  
@@ -186,7 +186,8 @@ currentURL = PortalUtil.getCurrentURL(request);
 	</c:when>	
 	<c:when test='<%= tabs1.equals("reportes") %>'>
 		<liferay-util:include page="/html/portlet/liquidaciones/reportes/reportes.jsp"/>	
-	</c:when
+	</c:when>
+
 </c:choose>
 
 </form>
