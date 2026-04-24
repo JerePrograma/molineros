@@ -7,7 +7,7 @@
  				PermissionUtil.userContainsRole(user,"ABM_PRESTADOR");
 		PortletURL portletURL = renderResponse.createRenderURL();
 		portletURL.setWindowState(LiferayWindowState.MAXIMIZED);
-		portletURL.setParameter("struts_action", "/prestadores/view");
+		portletURL.setParameter("struts_action", "/liquidaciones/view");
 
 	    List<Prestador.TipoPrestador> _tiposPrestador = TraeListasServiceUtil.getTiposPrestador();
 	
@@ -56,11 +56,11 @@
 				<td colspan="2">&nbsp; </td>
 			</tr>
 			<tr>
-				<td><label><liferay-ui:message key="Profesi�n" />:</label></td>
+				<td><label><liferay-ui:message key="Profesión" />:</label></td>
 				<td><select 
 					name="<portlet:namespace/>profesion"
 					id="<portlet:namespace/>profesion" onchange="manejarProfesion();">
-					<option selected value="0" >Seleccione una profesi�n</option>
+					<option selected value="0" >Seleccione una profesión</option>
 					<% for (ProfesionPrestador prof : profesionPrestador) { %>
 						<option
 							<%-- <%= prof != null && prof.getIdProfesion() != 0 && prof.getIdProfesion() == prof.getIdProfesion() ? "selected" : ""  %> --%>
@@ -101,7 +101,7 @@
 					<% } %>
 			</select></td>	
 			
-			<td>C�digo Hospital:</td>
+			<td>Código Hospital:</td>
 				<td><input id="<portlet:namespace />cod_hospital"
 					name="<portlet:namespace />cod_hospital" type="text" maxlength="10"
 					size="10" value="" /></td>
@@ -168,7 +168,7 @@
 		}		
 		jQuery('#<portlet:namespace />buscando').show();		
 		
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/prestadores/buscar_prestadores" /></portlet:renderURL>';
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/buscar_prestadores" /></portlet:renderURL>';
 		  
 		var busquedaPrest = { "id_prestador": id_prestador, "cuit":cuit, "descripcion": encodeURI(descripcion), "provincia":provincia,
 								"localidad":localidad, "profesion":profesion, "especialidad":especialidad, "subEspecialidad":subEspecialidad,
@@ -190,14 +190,14 @@
 	}
 
 	function <portlet:namespace />altaEmpleador() {
-		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/prestadores/editar_prestadores_entry" /></portlet:renderURL>';
+		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/editar_prestadores_entry" /></portlet:renderURL>';
 		document.<portlet:namespace />fm.method = 'post';
 		submitForm(document.<portlet:namespace />fm, url);
 	}     
 	
 	function manejarProfesion(){		
 		var idProfesion = jQuery('#<portlet:namespace/>profesion').val();		
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/id_profesion_especialidad&idProfesion='+idProfesion;
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/id_profesion_especialidad&idProfesion='+idProfesion;
 		jQuery.ajax({   
 			url: url,
 			success: function(data){
@@ -217,7 +217,7 @@
 	
 	function manejarEspecialidad(){
 		var idEspecialidad = jQuery('#<portlet:namespace/>especialidad').val();		
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/id_especialidad_subEspecialidad&idEspecialidad='+idEspecialidad;
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/id_especialidad_subEspecialidad&idEspecialidad='+idEspecialidad;
 		jQuery.ajax({   
 			url: url,
 			success: function(data){
@@ -235,10 +235,10 @@
 			
 	function addElementToSelect(id_combo, texto, valor) {
 		var combo = document.getElementById(id_combo);
-		var idxElemento = combo.options.length; //Numero de elementos de la combo si esta vacio es 0. Este indice ser� el del nuevo elemento
+		var idxElemento = combo.options.length; //Numero de elementos de la combo si esta vacio es 0. Este indice será el del nuevo elemento
 		combo.options[idxElemento] = new Option();
-		combo.options[idxElemento].text = texto; //Este es el texto que ver�s en la combo
-		combo.options[idxElemento].value = valor; //Este es el valor que se enviar� cuando hagas un submit del formulario que lo contiene
+		combo.options[idxElemento].text = texto; //Este es el texto que verás en la combo
+		combo.options[idxElemento].value = valor; //Este es el valor que se enviará cuando hagas un submit del formulario que lo contiene
 	}
 	
 </script>

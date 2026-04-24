@@ -642,7 +642,7 @@
 	</definition>
 
 	<definition name="portlet.liquidaciones.aumento_prestaciones" extends="portlet.liquidaciones">
-		<put name="portlet_content"	value="/portlet/liquidaciones/administracion/prestadores/aumento_prestaciones.jsp" />
+		<put name="portlet_content"	value="/portlet/prestadores/aumento_prestaciones.jsp" />
 	</definition>
 
 	<!-- Liquidaciones, cheques -->
@@ -743,7 +743,7 @@
 	<!-- <definition name="portlet.liquidaciones.administracion.prestadores"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/liquidaciones/administracion/prestadores/busqueda_prestadores.jsp" />
+			value="/portlet/prestadores/busqueda_prestadores.jsp" />
 	</definition> -->
 
 	<definition name="portlet.liquidaciones.administracion.archivos.vademecum"
@@ -756,21 +756,21 @@
 		name="portlet.liquidaciones.administracion.prestadores.result.search"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/liquidaciones/administracion/prestadores/prestadores_search_result.jsp" />
+			value="/portlet/prestadores/prestadores_search_result.jsp" />
 	</definition>
 
 	<definition
 		name="portlet.liquidaciones.administracion.prestadores.view_empleadores_entry"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/liquidaciones/administracion/prestadores/view_prestadores_entry.jsp" />
+			value="/portlet/prestadores/view_prestadores_entry.jsp" />
 	</definition>
 
 	<definition
 		name="portlet.liquidaciones.administracion.prestadores.editar_empleadores_entry"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/liquidaciones/administracion/prestadores/editar_prestadores_entry.jsp" />
+			value="/portlet/prestadores/editar_prestadores_entry.jsp" />
 	</definition>
 	
 	
@@ -778,25 +778,25 @@
 	<definition name="portlet.liquidaciones.editar_prestadores_externos"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/liquidaciones/administracion/prestadores/view_prestador_externo.jsp" />
+			value="/portlet/prestadores/view_prestador_externo.jsp" />
 	</definition>
 
 	<definition name="portlet.liquidaciones.prestador_externo.result"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/liquidaciones/administracion/prestadores/prestador_externo_result.jsp" />
+			value="/portlet/prestadores/prestador_externo_result.jsp" />
 	</definition>
 	
 	<definition name="portlet.liquidaciones.profesion.prestador" 
 		extends="portlet.liquidaciones">
 		<put name="portlet_content" 
-		value="/portlet/liquidaciones/administracion/prestadores/lista_especialidades_prestador.jsp" />
+		value="/portlet/prestadores/lista_especialidades_prestador.jsp" />
 	</definition>
 	
 	<definition name="portlet.liquidaciones.matricula.prestador" 
 		extends="portlet.liquidaciones">
 		<put name="portlet_content" 
-		value="/portlet/liquidaciones/administracion/prestadores/lista_matriculas_prestador.jsp" />
+		value="/portlet/prestadores/lista_matriculas_prestador.jsp" />
 	</definition>
 	
 			
@@ -807,39 +807,39 @@
 	<definition name="portlet.liquidaciones.lugar_at_telefonos.prestador" 
 		extends="portlet.liquidaciones">
 		<put name="portlet_content" 
-		value="/portlet/liquidaciones/administracion/prestadores/lista_telefonos_prestador_lugar_atencion.jsp" />
+		value="/portlet/prestadores/lista_telefonos_prestador_lugar_atencion.jsp" />
 	</definition>
 	
 	<definition name="portlet.liquidaciones.lugar_at_contactos.prestador" 
 		extends="portlet.liquidaciones">
 		<put name="portlet_content" 
-		value="/portlet/liquidaciones/administracion/prestadores/lista_contactoes_prestador_lugar_atencion.jsp" />
+		value="/portlet/prestadores/lista_contactoes_prestador_lugar_atencion.jsp" />
 	</definition>
 
 	<definition name="portlet.liquidaciones.lugares_atencion.prestador" 
 		extends="portlet.liquidaciones">
 		<put name="portlet_content" 
-		value="/portlet/liquidaciones/administracion/prestadores/lista_lugares_atencion_prestador.jsp" />
+		value="/portlet/prestadores/lista_lugares_atencion_prestador.jsp" />
 	</definition>
 	
 	<definition name="portlet.liquidaciones.lugar_at_prestador_indirecto" 
 		extends="portlet.liquidaciones">
 		<put name="portlet_content" 
-		value="/portlet/liquidaciones/administracion/prestadores/lista_lugares_atencion_prestador_indirecto.jsp" />
+		value="/portlet/prestadores/lista_lugares_atencion_prestador_indirecto.jsp" />
 	</definition>
 	
 	<definition name="portlet.liquidaciones.plan.prestador" 
 		extends="portlet.liquidaciones">
 		<put name="portlet_content" 
-		value="/portlet/liquidaciones/administracion/prestadores/lista_planes_prestador.jsp" />
+		value="/portlet/prestadores/lista_planes_prestador.jsp" />
 	</definition>
 		
 	<definition name="portlet.liquidaciones.calle.view" extends="portlet.liquidaciones">
-		<put name="portlet_content" value="/portlet/liquidaciones/administracion/prestadores/calle_search_result.jsp" />
+		<put name="portlet_content" value="/portlet/prestadores/calle_search_result.jsp" />
 	</definition>
 	
 	<definition name="portlet.liquidaciones.codPostal.view" extends="portlet.liquidaciones">
-		<put name="portlet_content" value="/portlet/liquidaciones/administracion/prestadores/codPostal_search_result.jsp" />
+		<put name="portlet_content" value="/portlet/prestadores/codPostal_search_result.jsp" />
 	</definition>
 	
 	<definition name="portlet.liquidaciones.editar_tratamiento_discapacidad"
@@ -3575,7 +3575,7 @@
 		<put name="portlet_content"	value="/portlet/autorizaciones/reclamos_prestacionales/alerta_permanencia_afiliado.jsp" />
 	</definition>
 
-	<!-- Gestión de Seccionales -->
+	<!-- GestiÃ³n de Seccionales -->
 	<definition name="portlet.gest_seccional" extends="portlet" />
 
 	<definition name="portlet.gestion_seccional.view" extends="portlet.gest_seccional">
@@ -4140,7 +4140,7 @@
 		<put name="portlet_content"	value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_contabilidad_result.jsp" />
 	</definition>
 	
-	<!-- Fin Gestión Judicial -->
+	<!-- Fin GestiÃ³n Judicial -->
 	
 	<definition name="portlet.autorizaciones.reporte.avisos_vencimientos_cud"	extends="portlet.autorizaciones">
 		<put name="portlet_content" value="/portlet/autorizaciones/reportes/avisos_vencimientos_cud.jsp" />
@@ -4304,7 +4304,31 @@
 	<definition name="portlet.liquidaciones.administracion.prestadores"
 	            extends="portlet.liquidaciones">
 		<put name="portlet_content"
-		     value="/portlet/liquidaciones/administracion/prestadores/busqueda_prestadores.jsp" />
+		     value="/portlet/prestadores/busqueda_prestadores.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.administracion.prestadores"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/busqueda_prestadores.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.administracion.prestadores.result.search"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/prestadores_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.administracion.prestadores.view_entry"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/view_prestadores_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.administracion.prestadores.editar_entry"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/editar_prestadores_entry.jsp" />
 	</definition>
 
 	<definition name="portlet.liquidaciones.conv_prestac.result.search"

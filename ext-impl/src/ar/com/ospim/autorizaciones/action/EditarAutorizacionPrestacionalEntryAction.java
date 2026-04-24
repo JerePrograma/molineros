@@ -46,7 +46,7 @@ import ar.com.ospim.autorizaciones.services.PreAutorizacionServiceUtil;
 import ar.com.ospim.liquidaciones.DuplicateTratamientoDiscapacidadIdException;
 import ar.com.ospim.liquidaciones.TopeCantidadIndividualExedidoException;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.util.StringUtils;
 import edu.emory.mathcs.backport.java.util.Collections;
 
@@ -222,7 +222,7 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 			
 			if(ret>0) {
 				SessionMessages.add(renderRequest, "request_processed",
-						"Se encontraron "+ ret +" afiliados a los cuales se les envió el aviso");
+						"Se encontraron "+ ret +" afiliados a los cuales se les enviÃ³ el aviso");
 			}else {
 				errores.add("No se encontraron afiliados con las condiciones para enviarles el aviso");
 				renderRequest.setAttribute("errores", errores);
@@ -512,14 +512,14 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 	private StringBuilder getPrestacionHechaError() {
 		StringBuilder error = new StringBuilder();
 		error
-				.append("La prestación ya fue realizada al afiliado y no puede hacerse dos veces");
+				.append("La prestaciÃ³n ya fue realizada al afiliado y no puede hacerse dos veces");
 		return error;
 	}
 
 	private StringBuilder getFechasError() {
 		StringBuilder error = new StringBuilder();
 		error
-				.append("La fecha de la prestación no puede ser posterior a la fecha de baja del afiliado");
+				.append("La fecha de la prestaciÃ³n no puede ser posterior a la fecha de baja del afiliado");
 		return error;
 	}
 

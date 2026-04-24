@@ -13,7 +13,7 @@ import java.util.List;
 import ar.com.ospim.global.beans.ContactoElectronico;
 import ar.com.ospim.global.beans.Telefono;
 import ar.com.ospim.liquidaciones.ImposibleBorrarPrestadorException;
-import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.liquidaciones.beans.EspecialidadPrestador;
 import ar.com.ospim.liquidaciones.beans.MatriculaPrestador;
 import ar.com.ospim.liquidaciones.beans.Prestador;
@@ -471,7 +471,7 @@ public class PrestadorServiceImpl {
 					}
 				}
 			}
-//			*** Lugar Atencion, La Direccion, Los telefonos y Contactos electr髇icos del mismo
+//			*** Lugar Atencion, La Direccion, Los telefonos y Contactos electr贸nicos del mismo
 			
 			for (Iterator<PrestadorLugarAtencion> iterator = prestador.getLugaresAtencion().iterator(); iterator.hasNext();) {
 				PrestadorLugarAtencion pla = iterator.next();
@@ -618,7 +618,7 @@ public class PrestadorServiceImpl {
 				lugaresAt.add(pla);
 			}
 		} catch (Exception e) {
-			_log.error("Error al buscar lugares de atenci髇 del prestador", e);
+			_log.error("Error al buscar lugares de atenci贸n del prestador", e);
 		} finally {
 			ConnectionHelper.cerrar(stmt, con);
 		}
@@ -641,7 +641,7 @@ public class PrestadorServiceImpl {
 				planesPrest.add(pla);
 			}
 		} catch (Exception e) {
-			_log.error("Error al buscar lugares de atenci髇 del prestador", e);
+			_log.error("Error al buscar lugares de atenci贸n del prestador", e);
 		} finally {
 			ConnectionHelper.cerrar(stmt, con);
 		}
@@ -845,7 +845,7 @@ public class PrestadorServiceImpl {
 					}
 				}
 			}
-//			*** Lugar Atencion, La Direccion, Los telefonos y Contactos electr髇icos del mismo
+//			*** Lugar Atencion, La Direccion, Los telefonos y Contactos electr贸nicos del mismo
 			
 //			(En la actualizacion, nos pueden dar de baja todo el lugar de atencion, 
 //			o editar el lugar de atencion(lugar de at y domicilio), altas o bajas de telefonos y contactos de ese lugar de atencion
