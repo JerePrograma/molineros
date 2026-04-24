@@ -40,8 +40,8 @@ public class BuscarConveniosPrestacAction extends PortletAction {
 							  PortletConfig portletConfig, ActionRequest actionRequest,
 							  ActionResponse actionResponse) throws Exception {
 		_log.info("[BUSCAR-CONV-PREST][ACTION][START] Inicio processAction");
-		_log.debug("[BUSCAR-CONV-PREST][ACTION][FORWARD] forward=portlet.liquidaciones.conv_prestac.result.search");
-		setForward(actionRequest, "portlet.liquidaciones.conv_prestac.result.search");
+		_log.debug("[BUSCAR-CONV-PREST][ACTION][FORWARD] forward=portlet.prestadores.conv_prestac.result.search");
+		setForward(actionRequest, "portlet.prestadores.conv_prestac.result.search");
 		_log.info("[BUSCAR-CONV-PREST][ACTION][END] Fin processAction");
 	}
 
@@ -84,7 +84,7 @@ public class BuscarConveniosPrestacAction extends PortletAction {
 			_log.error("[BUSCAR-CONV-PREST][RENDER][ERROR] Error en búsqueda de convenios prestacionales", e);
 		}
 
-		_log.info("[BUSCAR-CONV-PREST][RENDER][END] Fin render. Forward=portlet.liquidaciones.conv_prestac.result.search");
-		return mapping.findForward("portlet.liquidaciones.conv_prestac.result.search");
+		_log.info("[BUSCAR-CONV-PREST][RENDER][END] Fin render. Forward=portlet.prestadores.conv_prestac.result.search");
+		return mapping.findForward("portlet.prestadores.conv_prestac.result.search");
 	}
 }

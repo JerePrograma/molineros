@@ -3569,7 +3569,7 @@
 		<put name="portlet_content"	value="/portlet/autorizaciones/reclamos_prestacionales/alerta_permanencia_afiliado.jsp" />
 	</definition>
 
-	<!-- Gestión de Seccionales -->
+	<!-- GestiÃ³n de Seccionales -->
 	<definition name="portlet.gest_seccional" extends="portlet" />
 
 	<definition name="portlet.gestion_seccional.view" extends="portlet.gest_seccional">
@@ -4134,7 +4134,7 @@
 		<put name="portlet_content"	value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_contabilidad_result.jsp" />
 	</definition>
 	
-	<!-- Fin Gestión Judicial -->
+	<!-- Fin GestiÃ³n Judicial -->
 	
 	<definition name="portlet.autorizaciones.reporte.avisos_vencimientos_cud"	extends="portlet.autorizaciones">
 		<put name="portlet_content" value="/portlet/autorizaciones/reportes/avisos_vencimientos_cud.jsp" />
@@ -4285,6 +4285,11 @@
 		     value="/portlet/prestadores/convenios_prest/editar_convenio_prest.jsp" />
 	</definition>
 
+	<definition name="portlet.liquidaciones.editar_convenio_prest_entry" extends="portlet.liquidaciones">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/editar_convenio_prest.jsp" />
+	</definition>
+
 	<definition name="portlet.prestadores.lista_convenio_prest_detalle" extends="portlet.prestadores">
 		<put name="portlet_content"
 		     value="/portlet/prestadores/convenios_prest/conv_prest_detalle_search_result.jsp" />
@@ -4303,6 +4308,12 @@
 
 	<definition name="portlet.liquidaciones.conv_prestac.result.search"
 	            extends="portlet.liquidaciones">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/convenios_prestac_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.conv_prestac.result.search"
+	            extends="portlet.prestadores">
 		<put name="portlet_content"
 		     value="/portlet/prestadores/convenios_prest/convenios_prestac_search_result.jsp" />
 	</definition>
