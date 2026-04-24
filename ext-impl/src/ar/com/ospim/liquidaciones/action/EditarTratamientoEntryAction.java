@@ -20,7 +20,7 @@ import ar.com.ospim.afiliados.services.DocumentacionServiceUtil;
 import ar.com.ospim.liquidaciones.DuplicateTratamientoDiscapacidadIdException;
 import ar.com.ospim.liquidaciones.TopeCantidadIndividualExedidoException;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.liquidaciones.beans.TratamientoDiscapacidad;
 import ar.com.ospim.liquidaciones.services.TratamientoDiscapacidadServiceUtil;
 import ar.com.ospim.util.StringUtils;
@@ -345,14 +345,14 @@ public class EditarTratamientoEntryAction extends PortletAction {
 	private StringBuilder getPrestacionHechaError() {
 		StringBuilder error = new StringBuilder();
 		error
-				.append("La prestación ya fue realizada al afiliado y no puede hacerse dos veces");
+				.append("La prestaciÃ³n ya fue realizada al afiliado y no puede hacerse dos veces");
 		return error;
 	}
 
 	private StringBuilder getFechasError() {
 		StringBuilder error = new StringBuilder();
 		error
-				.append("La fecha de la prestación no puede ser posterior a la fecha de baja del afiliado");
+				.append("La fecha de la prestaciÃ³n no puede ser posterior a la fecha de baja del afiliado");
 		return error;
 	}
 

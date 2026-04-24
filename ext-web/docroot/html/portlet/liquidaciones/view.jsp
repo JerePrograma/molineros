@@ -176,7 +176,7 @@ currentURL = PortalUtil.getCurrentURL(request);
 		<liferay-util:include page="/html/portlet/liquidaciones/busqueda_nota_debito.jsp"/>
 	</c:when>
 	<c:when test='<%= tabs1.equals("prestador") %>'>	
-		<liferay-util:include page="/html/portlet/liquidaciones/administracion/prestadores/busqueda_prestadores.jsp"/>
+		<liferay-util:include page="/html/portlet/prestadores/busqueda_prestadores.jsp"/>
 	</c:when>	
 	<c:when test='<%= tabs1.equals("consulta-lista-reintegro") %>'>	
 		<liferay-util:include page="/html/portlet/liquidaciones/consulta_listas_reintegros/reporte_listas_reintegros.jsp"/>

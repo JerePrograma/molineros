@@ -19,7 +19,7 @@ import ar.com.ospim.farmaciaOspim.beans.TiposDeVentas;
 import ar.com.ospim.farmaciaOspim.exceptions.ImposibleBorrarFarmaciaOspimException;
 import ar.com.ospim.farmaciaOspim.exceptions.ImposibleCerrarVademecumFarmaciaOspimException;
 import ar.com.ospim.global.beans.Farmacia;
-import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.procesaArchivos.beans.farmaciaospim.ArchivoAdmifarm;
 import ar.com.ospim.procesaArchivos.beans.farmaciaospim.ArchivoDesglose;
 import ar.com.ospim.procesaArchivos.beans.farmaciaospim.DetalleAdmifarm;
@@ -427,7 +427,7 @@ import ar.com.ospim.util.ConnectionHelper;
 	    }
 
 	    if (farmacia != null) {
-	        // si el bean tiene id int, ac· vas a necesitar casteo o cambiar el tipo en el bean
+	        // si el bean tiene id int, ac√° vas a necesitar casteo o cambiar el tipo en el bean
 	        // farmacia.setId_farmacia((int) id);
 	        // ideal: farmacia.setId_farmacia(id);
 	    }

@@ -1,7 +1,7 @@
 <%@page import="com.liferay.portal.kernel.util.Constants"%>
 <%
 
-//String dinámico que a esta pagina para que sepa a que direccion redireccionar
+//String dinÃ¡mico que a esta pagina para que sepa a que direccion redireccionar
 //con el formato /<prestador_portlet>/buscar_prestador
 //ej: /tesoreria/buscar_prestador
 //esto se debe corresponder con el action definido en struts-config
@@ -83,7 +83,7 @@ if (ext == null) {
 				</td>
 				<td>
 					<div id="<portlet:namespace />divBtnMostrarLugarAtPrestador<%=ext%>">
-						<a href="javascript: void(0);" onclick="javascript:<portlet:namespace />mostrarLugaresAtIndirecto();" tabindex="-1">Mostrar Lugares de Atención</a>
+				<liferay-util:include page="/html/portlet/prestadores/lista_lugares_atencion_prestador_indirecto.jsp"></liferay-util:include>
 					</div>
 				</td>
 			</tr>			
@@ -95,7 +95,7 @@ if (ext == null) {
 				type="hidden" value=""/>
 	</td>
 	<%-- <td valign="top">	
-		<fieldset class="block-labels"><legend>Prestador indirecto lugares de atención</legend>
+		<fieldset class="block-labels"><legend>Prestador indirecto lugares de atenciÃ³n</legend>
 			<div id="divPrestador_Indirecto_LugaresAt<%=ext%>">
 				<liferay-util:include page="/html/portlet/liquidaciones/administracion/prestadores/lista_lugares_atencion_prestador_indirecto.jsp"></liferay-util:include>
 			</div>
@@ -140,7 +140,7 @@ function <portlet:namespace />buscarPrestador<%=ext%>() {
 }
 
 function <portlet:namespace />buscarPrestadorOnDiv<%=ext%>(e){	
-	//Se modificó el campo, debemos cambiar el selecc		
+	//Se modificÃ³ el campo, debemos cambiar el selecc		
 	var evtobj=window.event? event : e
 	var keyPressed= evtobj.keyCode? evtobj.keyCode : evtobj.charCode
 			
@@ -250,7 +250,7 @@ function <portlet:namespace />mostrarLugaresAtIndirecto(){
 	
 	var id_prest_indirecto = jQuery("#<portlet:namespace/>id_prestador<%=ext%>").val();
 	
-	popupInd= Liferay.Popup({title:"<liferay-ui:message key="Seleccionar lugar de atención indirecto" />",modal:true,width:700});
+	popupInd= Liferay.Popup({title:"<liferay-ui:message key="Seleccionar lugar de atenciÃ³n indirecto" />",modal:true,width:700});
 	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/lista_lugar_at_prestador_indirecto';
 	url = url+'&idPrestadorIn='+id_prest_indirecto+'&cmd=view';
 	
