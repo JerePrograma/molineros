@@ -1,4 +1,4 @@
-<%@ include file="/html/portlet/liquidaciones/init.jsp" %>
+<%@ include file="/html/portlet/prestadores/init.jsp" %>
 <script type="text/javascript">
 
 function pasarParametrosAParentcodPostal(param) {

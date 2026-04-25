@@ -23,7 +23,7 @@ String tabValues="datos,plan_prest,lugar_atencion" ;
 
 PortletURL portletURL = renderResponse.createRenderURL();
 portletURL.setWindowState(LiferayWindowState.MAXIMIZED);
-portletURL.setParameter("struts_action", "/liquidaciones/editar_prestadores_entry");
+portletURL.setParameter("struts_action", "/prestadores/editar_prestadores_entry");
 portletURL.setParameter("tabs1", tabValue);
 portletURL.setParameter("cmd", cmd);
 portletURL.setParameter("prestador_id", String.valueOf(idPrestAux));
@@ -45,7 +45,7 @@ portletURL.setParameter("prestador_id", String.valueOf(idPrestAux));
 
 
 <portlet:renderURL windowState="<%= WindowState.MAXIMIZED.toString() %>" var="volver">
-			<portlet:param name="struts_action" value="/liquidaciones/prestadores" />
+			<portlet:param name="struts_action" value="/prestadores/prestadores" />
 </portlet:renderURL>
 <p><a href="<%= volver %>">Volver</a>
 	

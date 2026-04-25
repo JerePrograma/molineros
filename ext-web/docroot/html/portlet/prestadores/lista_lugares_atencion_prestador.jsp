@@ -43,7 +43,7 @@
 		 					ResultRow row = new ResultRow(la,la.getId_domicilio(), i);
 			 				PortletURL rowURL = renderResponse.createRenderURL();		 				
 			 				rowURL.setWindowState(LiferayWindowState.MAXIMIZED);		 				
-			 				rowURL.setParameter("struts_action","/liquidaciones/lista_lugares_atencion_prestador");
+			 				rowURL.setParameter("struts_action","/prestadores/lista_lugares_atencion_prestador");
 			 				rowURL.setParameter("domicilio_id", String.valueOf(la.getId_domicilio()));
 			 				rowURL.setParameter("prestador_id", String.valueOf(la.getId_prestador()));
 			 				rowURL.setParameter("cmd","edit");
@@ -55,7 +55,7 @@
 			 			 	row.addText(direccion , rowURL);
 			 			 	row.addText(la.getCorreoElectronico() , rowURL);
 			 			 	row.addText(la.getTelefonosConcatenados() , rowURL);
-							row.addJSP( "left", SearchEntry.DEFAULT_VALIGN, "/html/portlet/liquidaciones/administracion/prestadores/editar_borrar_lugar_at_prestador.jsp");
+							row.addJSP( "left", SearchEntry.DEFAULT_VALIGN, "/html/portlet/prestadores/editar_borrar_lugar_at_prestador.jsp");
 						
 				 			resultRows.add(row);
 					 	}

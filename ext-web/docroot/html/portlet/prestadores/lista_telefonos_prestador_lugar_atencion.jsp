@@ -74,7 +74,7 @@ if (telefonosLugarAtPrestador != null && telefonosLugarAtPrestador.size()>0){
 
 <script>
 function borrarTelefonoLugarAt(idTel){
-	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/borrar_telefono_lugar_at_prestador';
+	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/prestadores/borrar_telefono_lugar_at_prestador';
 	url = url+'&idTelefono='+idTel;
 		jQuery("#<portlet:namespace />lista_telefonos").load(url);   
 	}

@@ -1,4 +1,4 @@
-<%@ include file="/html/portlet/liquidaciones/init.jsp"%>
+<%@ include file="/html/portlet/prestadores/init.jsp"%>
 
 <%
 PrestadorLugarAtencion lugarAtencion = (PrestadorLugarAtencion) request.getSession().getAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_PRESTADOR_EN_EDICION);
@@ -21,7 +21,7 @@ boolean esEditable = Boolean.parseBoolean(esEditableStr);
 
 <script type="text/javascript">
 	function <portlet:namespace />buscarCalleOnDiv(e) {
-		//Se modificó el campo, debemos cambiar el selecc	
+				  var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/prestadores/buscar_calle&calle='+calle;
 		var evtobj=window.event? event : e;
 		var keyPressed= evtobj.keyCode? evtobj.keyCode : evtobj.charCode;
 		if (jQuery("#<portlet:namespace/>localidad").val() == "265") {

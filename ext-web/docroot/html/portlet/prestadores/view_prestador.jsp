@@ -352,7 +352,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 			var accionEnCurso = document.<portlet:namespace />prestador_fm.<portlet:namespace /><%= Constants.CMD %>.value;
 			document.<portlet:namespace />prestador_fm.<portlet:namespace /><%= Constants.CMD %>.value='<%=Constants.MOVE %>';
 			
-			var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/editar_prestadores_entry" /></portlet:actionURL>';
+			var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/prestadores/editar_prestadores_entry" /></portlet:actionURL>';
 			url = url + '&accionEnCurso=' + accionEnCurso + '&moverATab=plan_prest' + "&esDatosTab=true";
 			
 			document.<portlet:namespace />prestador_fm.method = 'post';
@@ -372,7 +372,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 				tipoSelect.focus();
 				return false;
 			}
-			var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/buscar_cuit_existente&cuit='+cuit +'&tipo='+tipoSelect.value;
+			var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/prestadores/buscar_cuit_existente&cuit='+cuit +'&tipo='+tipoSelect.value;
 			jQuery("#validarExistenciaCuit").load(url);		
 			jQuery("#validarExistenciaCuit").show();				
 		}
@@ -497,7 +497,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 	function manejarProfesion(){		
 		var profesionArray = jQuery('#<portlet:namespace/>profesion').val().split("|");
 		var idProfesion=profesionArray[0];
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/id_profesion_especialidad&idProfesion='+idProfesion;
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/id_profesion_especialidad&idProfesion='+idProfesion;
 		jQuery.ajax({   
 			url: url,
 			success: function(data){
@@ -518,7 +518,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 	function manejarEspecialidad(){
 		var especialidadArray = jQuery('#<portlet:namespace/>especialidad').val().split("|");
 		var idEspecialidad = especialidadArray[0]; 
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/id_especialidad_subEspecialidad&idEspecialidad='+idEspecialidad;
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/id_especialidad_subEspecialidad&idEspecialidad='+idEspecialidad;
 		jQuery.ajax({   
 			url: url,
 			success: function(data){
@@ -566,7 +566,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 							   "matFechaVtoDia":matFechaVtoDia,
 							   "matFechaVtoMes":matFechaVtoMes,
 							   "matFechaVtoAnio":matFechaVtoAnio};
-	 	var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/lista_matricula_prestador" /></portlet:renderURL>';
+	 	var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/prestadores/lista_matricula_prestador" /></portlet:renderURL>';
 		
 	 	jQuery('#<portlet:namespace />lista_matriculas').load(url,params, function(){
 															jQuery('#<portlet:namespace />buscando').hide();            															
@@ -628,7 +628,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 			return false;
 		}
 		
-		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/lista_prof_especialidades_prestador';
+		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/prestadores/lista_prof_especialidades_prestador';
 		url = url+'&idProfesion='+idProfesion+
 		'&idEspecialidad='+idEspecialidad+
 		'&idSubEspecialidad='+idSubEspecialidad+

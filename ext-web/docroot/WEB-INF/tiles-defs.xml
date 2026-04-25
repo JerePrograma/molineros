@@ -4348,4 +4348,77 @@
 		<put name="portlet_content"
 		     value="/portlet/prestadores/convenios_prest/upload_archivos_contratos.jsp" />
 	</definition>
+
+	<!-- PRESTADORES / ALIASES DE VISTA PARA ABM LEGACY -->
+	<definition name="portlet.prestadores.aumento_prestaciones"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/aumento_prestaciones.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.cuit_existente_search_result"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/liquidaciones/cuit_existente_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.editar_prestadores_externos"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/view_prestador_externo.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.profesion.prestador"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/lista_especialidades_prestador.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.matricula.prestador"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/lista_matriculas_prestador.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.lugar_at_telefonos.prestador"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/lista_telefonos_prestador_lugar_atencion.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.lugar_at_contactos.prestador"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/lista_contactoes_prestador_lugar_atencion.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.lugares_atencion.prestador"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/lista_lugares_atencion_prestador.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.lugar_at_prestador_indirecto"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/lista_lugares_atencion_prestador_indirecto.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.plan.prestador"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/lista_planes_prestador.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.calle.view"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/calle_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.codPostal.view"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/codPostal_search_result.jsp" />
+	</definition>
 </tiles-definitions>

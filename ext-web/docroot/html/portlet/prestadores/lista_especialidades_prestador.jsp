@@ -79,7 +79,7 @@ if (profEspecSubEspDelPrestador != null && !profEspecSubEspDelPrestador.isEmpty(
 
 <script>
 function borrarProfesion(idPrestProf){
-	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/borrar_prestador_profesion';
+	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/prestadores/borrar_prestador_profesion';
 	url = url+'&idPrestProf='+idPrestProf;
 		jQuery("#<portlet:namespace />lista_especialidades").load(url);   
 	}

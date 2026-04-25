@@ -63,7 +63,7 @@
 
 <script>
 function borrarPlan(idPrestPlan){
-	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/borrar_prestador_plan';
+	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/prestadores/borrar_prestador_plan';
 	url = url+'&idPrestPlan='+idPrestPlan;
 		jQuery("#<portlet:namespace />lista_planes").load(url);   
 	}

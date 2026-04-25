@@ -39,7 +39,7 @@
 				ResultRow row = new ResultRow(la,la.getId_domicilio(), i);
 				/* PortletURL rowURL = renderResponse.createRenderURL();		 				
 				rowURL.setWindowState(LiferayWindowState.MAXIMIZED);		 				
-				rowURL.setParameter("struts_action","/liquidaciones/lista_lugares_atencion_prestador_indirecto");
+				rowURL.setParameter("struts_action","/prestadores/lista_lugares_atencion_prestador_indirecto");
 				rowURL.setParameter("domicilio_id", String.valueOf(la.getId_domicilio()));
 				rowURL.setParameter("cmd","view"); */
 				row.addText("<input type='radio' id='id_domicilio_indirecto' name='id_domicilio_indirecto' value1='"+la.getId_prestador()+"' value2='"+la.getId_domicilio()+"' onclick=\"mostrarDomIndirecto(this);\" onselect=\"mostrarDomIndirecto(this); \"/>" ); 
@@ -67,7 +67,7 @@ function mostrarDomIndirecto(lugarAtencion){
 	var domicilio_id = lugarAtencion.getAttribute("value2");
 	var accionEnCurso = document.<portlet:namespace />prestador_lugarat_fm.<portlet:namespace /><%= Constants.CMD %>.value;
 	
-	var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/lista_lugares_atencion_prestador" /></portlet:actionURL>';
+	var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/prestadores/lista_lugares_atencion_prestador" /></portlet:actionURL>';
 	url = url + '&<%=Constants.CMD %>='+'<%=Constants.COPY%>';
 	url = url + '&prestador_id='+prestador_id+'&domicilio_id='+domicilio_id;
 	url = url + '&accionEnCurso=' + accionEnCurso;
