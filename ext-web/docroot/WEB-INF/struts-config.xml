@@ -6703,6 +6703,9 @@
 		<action path="/prestadores/view"
 		        forward="portlet.prestadores.view" />
 
+		<action path="/prestadores/prestadores_externos"
+		        forward="portlet.prestadores.editar_prestadores_externos" />
+
 		<action path="/prestadores/prestadores"
 		        forward="portlet.prestadores.prestadores" />
 
