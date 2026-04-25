@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 import ar.com.ospim.global.beans.TipoPago;
+import ar.com.ospim.liquidaciones.beans.Prestador;
 
 /**
  * @version 1.0
@@ -414,4 +415,3 @@ public class ConvenioPrestacional implements Serializable{
 //	}
 	
 }
-
