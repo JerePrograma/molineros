@@ -1,4 +1,4 @@
-<%@ include file="/html/portlet/prestadores/convenios_prest/init.jsp" %>
+<%@ include file="/html/portlet/prestadores/init.jsp" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
 <%@ page import="java.util.ArrayList" %>
@@ -7,11 +7,6 @@
 <%@ page import="com.liferay.portal.kernel.util.Constants" %>
 <%@ page import="com.liferay.portal.kernel.util.HtmlUtil" %>
 <%@ page import="com.liferay.portal.kernel.portlet.LiferayWindowState" %>
-
-<%@ page import="ar.com.ospim.global.beans.Plan" %>
-<%@ page import="ar.com.ospim.global.beans.Provincia" %>
-<%@ page import="ar.com.ospim.global.beans.Localidad" %>
-<%@ page import="ar.com.ospim.liquidaciones.beans.EspecialidadPrestador" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
@@ -44,13 +39,7 @@
 
     List<Plan> planes =
             (List<Plan>) session.getAttribute(WebKeysPrestadores.PLANES_EN_SESSION);
-
-    List<Provincia> provincias =
-            (List<Provincia>) session.getAttribute(WebKeysPrestadores.PROVINCIAS_EN_SESSION);
-
-    List<Localidad> localidades =
-            (List<Localidad>) session.getAttribute(WebKeysPrestadores.LOCALIDADES_EN_SESSION);
-
+            
     List<EspecialidadPrestador> especialidades =
             (List<EspecialidadPrestador>) session.getAttribute(WebKeysPrestadores.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION);
 

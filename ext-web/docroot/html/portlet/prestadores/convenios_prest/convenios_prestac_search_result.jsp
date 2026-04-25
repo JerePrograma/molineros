@@ -60,9 +60,9 @@
 					 				//PortletURL rowURL = renderResponse.createRenderURL();
 					 				portletURL.setWindowState(LiferayWindowState.MAXIMIZED);
 					 				//portletURL.setParameter("struts_action","/liquidaciones/view_contrato_entry");
-					 				portletURL.setParameter("struts_action","/liquidaciones/editar_convenio_entry");
-					 				portletURL.setParameter("id_contrato", String.valueOf(convPrest.getId()));	
-					 				portletURL.setParameter("cmd", "view");	
+									portletURL.setParameter("struts_action", "/prestadores/editar_convenio_prest_entry");
+									portletURL.setParameter("id_convenio_prest", String.valueOf(convPrest.getId()));
+									portletURL.setParameter(Constants.CMD, Constants.VIEW);
 					 				//portletURL.setParameter("por_codigo", vistaView);
 					 				row.addText(String.valueOf(convPrest.getId()));
 					 				row.addText(String.valueOf(convPrest.getPrestador().getId_prestador()));
@@ -83,7 +83,7 @@
 					 				/* row.addText("<a href='#' onclick='redirigir(" +contrato.getId_contratoAsString()+ ");'>Ver</a>"); */
 							// Action
 							if (showABMButtons) {
-								row.addJSP("left", SearchEntry.DEFAULT_VALIGN, "/html/portlet/prestadores/editar_borrar_convenio_prest.jsp");
+								row.addJSP("left", SearchEntry.DEFAULT_VALIGN, "/html/portlet/prestadores/convenios_prest/editar_borrar_convenio_prest.jsp");
 							}							
 							else {
 								row.addText("");

@@ -8,7 +8,8 @@
  		boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysLiquidaciones.ROL_ABM_CONVENIO_PREST);
 		PortletURL portletURL = renderResponse.createRenderURL();
 		portletURL.setWindowState(LiferayWindowState.MAXIMIZED);
-		portletURL.setParameter("struts_action", "/liquidaciones/view");
+		portletURL.setParameter("struts_action", "/prestadores/view");
+		portletURL.setParameter("tabs1", "convenios-prestacionales");
 %>
 <form action="<%= portletURL %>" method="get" name="<portlet:namespace />fm" onSubmit="submitForm(this); return false;">
 		
@@ -21,7 +22,7 @@
 						<input id="<portlet:namespace />codPrest_bc" name="<portlet:namespace />codPrest_bc" size="6" maxlength="6" type="hidden" value="" />							
 						<td colspan="6">
 						    <liferay-util:include page="/html/portlet/utils/prestadores/busqueda_prestador.jsp">
-						  		<liferay-util:param name="search_url" value="/liquidaciones/buscar_prestador"/>
+						  		<liferay-util:param name="search_url" value="/prestadores/buscar_prestador"/>
 						  		<liferay-util:param name="cuit_prestador" value="<%=filtro!=null?filtro.getCuit():null %>"/>
 						  		<liferay-util:param name="nombre_prestador" value="<%=filtro!=null?filtro.getDescripcion():null %>"/>
 						  		<liferay-util:param name="id_prestador" value="<%=filtro!=null?String.valueOf(filtro.getIdPrestador()):null %>"/>
