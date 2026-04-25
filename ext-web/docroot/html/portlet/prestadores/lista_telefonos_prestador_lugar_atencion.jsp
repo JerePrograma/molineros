@@ -1,4 +1,4 @@
-<%@ include file="/html/portlet/liquidaciones/init.jsp"%>
+<%@ include file="/html/portlet/prestadores/init.jsp"%>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet"%>
 <portlet:defineObjects/>
 <%
@@ -11,10 +11,10 @@ telefonosLugarAtPrestador =  (ArrayList<TelefonoPrestador>) request.getSession()
 List<String> headerNames = new ArrayList<String>();
 
 headerNames.add("Tipo");
-headerNames.add("Código País");
-headerNames.add("Código Area");
-headerNames.add("Número");
-headerNames.add("Extensión");
+headerNames.add("Cï¿½digo Paï¿½s");
+headerNames.add("Cï¿½digo Area");
+headerNames.add("Nï¿½mero");
+headerNames.add("Extensiï¿½n");
 headerNames.add("Observaciones");
 headerNames.add("Eliminar");
 

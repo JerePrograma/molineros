@@ -1,4 +1,4 @@
-<%@ include file="/html/portlet/prestadores/convenios_prest/init.jsp" %>
+<%@ include file="/html/portlet/prestadores/init.jsp" %>
 
 <%
 boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysLiquidaciones.ROL_ABM_CONVENIO_PREST);

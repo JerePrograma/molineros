@@ -1,4 +1,4 @@
-<%@ include file="/html/portlet/liquidaciones/init.jsp" %>
+<%@ include file="/html/portlet/prestadores/init.jsp" %>
 <%
 Prestador prestador = (Prestador)request.getSession().getAttribute(WebKeysLiquidaciones.PRESTADOR_EN_EDICION);
 

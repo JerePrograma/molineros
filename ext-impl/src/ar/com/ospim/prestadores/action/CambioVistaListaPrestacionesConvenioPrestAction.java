@@ -1,7 +1,7 @@
 package ar.com.ospim.prestadores.action;
 
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
 import ar.com.ospim.prestadores.services.ConvenioPrestacionalServiceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;

@@ -4,17 +4,17 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import ar.com.ospim.liquidaciones.NoSuchConvenioPrestacionalEntryException;
+import ar.com.ospim.prestadores.NoSuchConvenioPrestacionalEntryException;
 import ar.com.ospim.liquidaciones.NoSuchReintegroEntryException;
-import ar.com.ospim.liquidaciones.beans.BusquedaConvenioPrestacionalFiltro;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.prestadores.beans.BusquedaConvenioPrestacionalFiltro;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacional;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
 
 import com.liferay.portal.SystemException;
 import com.liferay.portal.model.User;
 
 /**
- * Mascara del servicio que da acceso a los datos de la aplicación (BD).
+ * Mascara del servicio que da acceso a los datos de la aplicaciï¿½n (BD).
  */
 public class ConvenioPrestacionalServiceUtil {
 
@@ -117,11 +117,11 @@ public class ConvenioPrestacionalServiceUtil {
 			}
 			while(posActual != i && i < convenioPrestDetalleAux.size()){
 				ConvenioPrestacionalDetalle aux = convenioPrestDetalleAux.get(i);
-//				primero evaluamos los items estan dentro del período del convenio
+//				primero evaluamos los items estan dentro del perï¿½odo del convenio
 				if(cpd.getFechaDesde().before(convenioPrest.getVigencia()) || 
 						(cpd.getFechaHasta() !=null && convenioPrest.getVencimiento() !=null 
 						&& cpd.getFechaHasta().after(convenioPrest.getVencimiento()))){
-					mensaje = "El ítem nro: "+ (posActual+1) + " esta fuera del período de vigencia del Convenio. ";
+					mensaje = "El ï¿½tem nro: "+ (posActual+1) + " esta fuera del perï¿½odo de vigencia del Convenio. ";
 					
 					break; // cortamos el WHILE
 				}
@@ -141,7 +141,7 @@ public class ConvenioPrestacionalServiceUtil {
 							&& Integer.parseInt(cpd.getCodigoHasta()) >= Integer.parseInt(aux.getCodigoHasta()))	
 					)
 				){
-					mensaje = "El ítem nro: "+ (posActual+1) + " tiene solapamiento de códigos de prestaciones con el ítem nro: "+ (i+1);
+					mensaje = "El ï¿½tem nro: "+ (posActual+1) + " tiene solapamiento de cï¿½digos de prestaciones con el ï¿½tem nro: "+ (i+1);
 					break; // cortamos el WHILE
 				}
 				i++;

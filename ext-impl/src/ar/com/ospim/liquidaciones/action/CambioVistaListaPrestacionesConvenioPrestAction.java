@@ -15,7 +15,7 @@ import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.global.beans.Prestacion;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
 import ar.com.ospim.liquidaciones.services.ConvenioPrestacionalServiceUtil;
 
 import com.liferay.portal.kernel.log.Log;

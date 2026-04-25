@@ -1,5 +1,4 @@
 <%@page import="com.liferay.portal.kernel.util.Constants"%>
-<%@ include file="/html/portlet/liquidaciones/init.jsp"%>
 <%@ include file="/html/portlet/prestadores/init.jsp"%>
 
 <%

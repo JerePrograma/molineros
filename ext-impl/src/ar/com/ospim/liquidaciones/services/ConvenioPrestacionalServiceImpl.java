@@ -11,11 +11,11 @@ import java.util.Iterator;
 import java.util.List;
 
 import ar.com.ospim.global.WebKeysGlobal;
-import ar.com.ospim.liquidaciones.NoSuchConvenioPrestacionalEntryException;
-import ar.com.ospim.liquidaciones.beans.BusquedaConvenioPrestacionalFiltro;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle.ESTADOS;
+import ar.com.ospim.prestadores.NoSuchConvenioPrestacionalEntryException;
+import ar.com.ospim.prestadores.beans.BusquedaConvenioPrestacionalFiltro;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacional;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle.ESTADOS;
 import ar.com.ospim.util.ConnectionHelper;
 
 import com.liferay.portal.SystemException;
@@ -23,7 +23,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 /**
- * servicio test que nos da acceso a los datos de la aplicación (BD).
+ * servicio test que nos da acceso a los datos de la aplicaciï¿½n (BD).
  * 
  */
 public class ConvenioPrestacionalServiceImpl {
@@ -32,7 +32,7 @@ public class ConvenioPrestacionalServiceImpl {
 
 	/**
 	 * Metodo que obtiene un convenio prestacional a partir de la clave primaria, en caso de
-	 * que está dado de baja o de no encontrarlo retorna null
+	 * que estï¿½ dado de baja o de no encontrarlo retorna null
 	 * 
 	 * @throws SystemException
 	 * @throws NoSuchConvenioPrestacionalEntryException
@@ -64,7 +64,7 @@ public class ConvenioPrestacionalServiceImpl {
 
 	/**
 	 * Metodo que obtiene la lista de detalles a partir de la clave primaria del
-	 * conv.prestacional, en caso de no encontrarla arroja excepción
+	 * conv.prestacional, en caso de no encontrarla arroja excepciï¿½n
 	 * 
 	 * @throws SystemException
 	 * @throws NoSuchConvenioPrestacionalEntryException
@@ -228,7 +228,7 @@ public class ConvenioPrestacionalServiceImpl {
 	}
 
 	/**
-	 * Metodo que aplica borrado lógico de un convenio prestacional a partir de la clave
+	 * Metodo que aplica borrado lï¿½gico de un convenio prestacional a partir de la clave
 	 * primaria, no borra el reintegro convenio prestacional, solo lo da de baja
 	 * 
 	 * @throws NoSuchConvenioPrestacionalEntryException
@@ -464,8 +464,8 @@ public class ConvenioPrestacionalServiceImpl {
 	}		
 	
 	/**
-	 * Metodo que obtiene la lista de prestaciones por detalle del código a partir de la clave primaria del
-	 * conv.prestacional, en caso de no encontrarla arroja excepción
+	 * Metodo que obtiene la lista de prestaciones por detalle del cï¿½digo a partir de la clave primaria del
+	 * conv.prestacional, en caso de no encontrarla arroja excepciï¿½n
 	 * 
 	 * @throws SystemException
 	 * @throws NoSuchConvenioPrestacionalEntryException
@@ -490,7 +490,7 @@ public class ConvenioPrestacionalServiceImpl {
 				detalles.add(convPrestDet);
 			}
 		} catch (Exception e) {
-			_log.debug("Error al obtener prestaciones detalle por código", e);
+			_log.debug("Error al obtener prestaciones detalle por cï¿½digo", e);
 			throw new SystemException(e);
 		} finally {
 			ConnectionHelper.cerrar(stmt, con);
@@ -500,7 +500,7 @@ public class ConvenioPrestacionalServiceImpl {
 	
 	/**
 	 * Metodo que obtiene un convenio prestacional de un prestador, en caso de
-	 * que está dado de baja o de no encontrarlo retorna null
+	 * que estï¿½ dado de baja o de no encontrarlo retorna null
 	 * 
 	 * @throws SystemException
 	 * @throws NoSuchConvenioPrestacionalEntryException

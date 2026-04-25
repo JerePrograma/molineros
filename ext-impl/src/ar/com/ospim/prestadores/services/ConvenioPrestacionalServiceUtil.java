@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import ar.com.ospim.liquidaciones.NoSuchConvenioPrestacionalEntryException;
+import ar.com.ospim.prestadores.NoSuchConvenioPrestacionalEntryException;
 import ar.com.ospim.liquidaciones.NoSuchReintegroEntryException;
 import ar.com.ospim.prestadores.beans.BusquedaConvenioPrestacionalFiltro;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacional;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
 
 import com.liferay.portal.SystemException;
 

@@ -22,7 +22,7 @@ import ar.com.ospim.liquidaciones.DuplicateLiquidacionIdException;
 import ar.com.ospim.liquidaciones.NoSuchLiquidacionEntryException;
 import ar.com.ospim.liquidaciones.NoSuchLiquidacionPrestacionEntryException;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
 import ar.com.ospim.prestadores.services.ConvenioPrestacionalServiceUtil;
 import ar.com.uoma.beans.Correspondencia;
 import ar.com.uoma.beans.TipoCorrespondencia;

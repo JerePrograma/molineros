@@ -1,5 +1,26 @@
 <%@ include file="/html/portlet/init.jsp" %>
 
+<%@ page import="java.util.List" %>
+<%@ page import="ar.com.ospim.util.DateUtils" %>
+
+<%@ page import="ar.com.ospim.prestadores.WebKeysPrestadores" %>
+<%@ page import="ar.com.ospim.liquidaciones.WebKeysLiquidaciones" %>
+
+<%@ page import="ar.com.ospim.global.beans.Plan" %>
+<%@ page import="ar.com.ospim.global.beans.Provincia" %>
+<%@ page import="ar.com.ospim.global.beans.Localidad" %>
+<%@ page import="ar.com.ospim.global.services.TraeListasServiceUtil" %>
+
+<%@ page import="ar.com.ospim.liquidaciones.beans.EspecialidadPrestador" %>
+<%@ page import="ar.com.ospim.liquidaciones.beans.ProfesionPrestador" %>
+<%@ page import="ar.com.ospim.liquidaciones.beans.SubEspecialidadPrestador" %>
+<%@ page import="ar.com.ospim.liquidaciones.beans.Prestador.TipoPrestador" %>
+<%@ page import="ar.com.ospim.prestadores.beans.BusquedaCartillaConvenioFiltro" %>
+<%@ page import="ar.com.ospim.prestadores.beans.ConvenioPrestacional" %>
+<%@ page import="ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle" %>
+<%@ page import="ar.com.ospim.prestadores.beans.CartillaConvenioRow" %>
+<%@ page import="ar.com.ospim.prestadores.beans.BusquedaConvenioPrestacionalFiltro" %>
+
 <%@ page import="com.liferay.portal.kernel.search.Document" %>
 <%@ page import="com.liferay.portal.kernel.search.Field" %>
 <%@ page import="com.liferay.portal.kernel.search.DocumentComparator" %>
@@ -15,7 +36,6 @@
 <%@ page import="com.liferay.portal.plugin.PluginPackageUtil" %>
 <%@ page import="com.liferay.portlet.imagegallery.ImageSizeException" %>
 
-<%@ page import="com.liferay.portal.kernel.portlet.LiferayWindowState" %>
 <%@ page import="com.liferay.portal.kernel.dao.orm.QueryUtil" %>
 <%@ page import="com.liferay.portal.service.permission.RolePermissionUtil" %>
 <%@ page import="com.liferay.portal.service.OrganizationLocalServiceUtil" %>
@@ -47,17 +67,12 @@
 <%@ page import="ar.com.ospim.afiliados.WebKeysAfiliados" %>
 <%@ page import="ar.com.ospim.afiliados.empleadores.WebKeysEmpleadores" %>
 
-
 <%@ page import="ar.com.ospim.global.beans.Nacionalidad" %>
-<%@ page import="ar.com.ospim.global.beans.Localidad" %>
-<%@ page import="ar.com.ospim.global.beans.Provincia" %>
 <%@ page import="ar.com.ospim.global.beans.ObraSocialCampo" %>
 <%@ page import="ar.com.ospim.global.beans.Seccional" %>
 <%@ page import="ar.com.ospim.global.beans.Delegacion" %>
-<%@ page import="ar.com.ospim.global.beans.Plan" %>
 <%@ page import="ar.com.ospim.global.beans.Empresa" %>
 <%@ page import="ar.com.ospim.global.WebKeysGlobal" %>
-<%@ page import="ar.com.ospim.global.services.TraeListasServiceUtil" %>
 
 <%@ page import="ar.com.ospim.util.PermissionUtil" %>
 <%@ page import="ar.com.ospim.util.CuilUtils" %>
@@ -73,7 +88,6 @@
 <%@ page import="ar.com.ospim.global.beans.Parentesco" %>
 <%@ page import="ar.com.ospim.global.beans.EstadoCivil" %>
 
-<%@ page import="ar.com.ospim.afiliados.WebKeysAfiliados" %>
 <%@ page import="ar.com.ospim.crm.WebKeysCrm" %>
 
 <%@ page import="ar.com.empresas.beans.Contacto" %>
@@ -88,7 +102,6 @@
 <%@ page import="java.util.Calendar" %>
 <%@ page import="java.util.GregorianCalendar" %>
 <%@ page import="java.text.SimpleDateFormat" %>
-<%@ page import="java.util.List" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.HashMap" %>
@@ -108,6 +121,131 @@
 PortalPreferences portalPrefs = PortletPreferencesFactoryUtil.getPortalPreferences(request);
 
 DateFormat dateFormatDateTime = DateFormats.getDateTime(locale, timeZone);
+
+List<Provincia> provincias = (ArrayList<Provincia>) portletSession
+.getAttribute(WebKeysAfiliados.PROVINCIAS_EN_SESSION,
+		PortletSession.APPLICATION_SCOPE);
+
+if (provincias == null) {
+	provincias = TraeListasServiceUtil.getProvincias();
+	portletSession.setAttribute(WebKeysAfiliados.PROVINCIAS_EN_SESSION,
+	provincias,PortletSession.APPLICATION_SCOPE);	
+}
+
+List<Localidad> localidades = (ArrayList<Localidad>) portletSession
+.getAttribute(WebKeysAfiliados.LOCALIDADES_EN_SESSION,
+PortletSession.APPLICATION_SCOPE);
+
+if (localidades == null || localidades.size()==0) {
+	localidades = TraeListasServiceUtil.getLocalidades();
+	portletSession.setAttribute(WebKeysAfiliados.LOCALIDADES_EN_SESSION,
+	localidades,PortletSession.APPLICATION_SCOPE);	
+}
+
+/* List<Seccional> seccionales = (ArrayList<Seccional>) portletSession
+.getAttribute(WebKeysAfiliados.SECCIONALES_EN_SESSION,
+PortletSession.APPLICATION_SCOPE); */
+
+List<Prestador.TipoPrestador> tiposPrestador = (ArrayList<Prestador.TipoPrestador>) portletSession
+.getAttribute(WebKeysLiquidaciones.TIPOSPRESTADOR_EN_SESSION,
+PortletSession.APPLICATION_SCOPE);
+
+List<ProfesionPrestador> profesionPrestador = (ArrayList<ProfesionPrestador>) portletSession
+.getAttribute(WebKeysLiquidaciones.LISTAS_DE_PROFESION_PRESTADOR_EN_SESSION,
+		PortletSession.APPLICATION_SCOPE);
+
+if (profesionPrestador == null) {
+	profesionPrestador = TraeListasServiceUtil.getProfesionesPrestador();
+	portletSession.setAttribute(WebKeysLiquidaciones.LISTAS_DE_PROFESION_PRESTADOR_EN_SESSION ,
+	profesionPrestador, PortletSession.APPLICATION_SCOPE);
+}
+
+List<EspecialidadPrestador> especialidadPrestador = (ArrayList<EspecialidadPrestador>) portletSession
+.getAttribute(WebKeysLiquidaciones.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
+		PortletSession.APPLICATION_SCOPE);
+
+if (especialidadPrestador == null) {
+	especialidadPrestador = TraeListasServiceUtil.getEspecialidadesPrestador();
+	portletSession.setAttribute(WebKeysLiquidaciones.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
+	especialidadPrestador, PortletSession.APPLICATION_SCOPE);
+}
+
+List<SubEspecialidadPrestador> subEspecialidadPrestador = (ArrayList<SubEspecialidadPrestador>) portletSession
+.getAttribute(WebKeysLiquidaciones.LISTAS_DE_SUB_ESPECIALIDAD_PRESTADOR_EN_SESSION,
+		PortletSession.APPLICATION_SCOPE);
+
+if (subEspecialidadPrestador == null) {
+	subEspecialidadPrestador = TraeListasServiceUtil.getSubEspecialidadesPrestador();
+	portletSession.setAttribute(WebKeysLiquidaciones.LISTAS_DE_SUB_ESPECIALIDAD_PRESTADOR_EN_SESSION,
+	subEspecialidadPrestador, PortletSession.APPLICATION_SCOPE);
+}
+
+
+//DS - Manejo Localidades por Provincia
+//Map<Integer,List<Localidad>> localidadesPorProvincia = TraeListasServiceUtil.getLocalidadesAgrupadasPorProvincia();
+
+Map<Integer,List<Localidad>> localidadesPorProvincia = (Map<Integer,List<Localidad>>) portletSession
+.getAttribute(WebKeysAfiliados.LOCALIDADES_EN_SESSION_POR_PROVINCIA, PortletSession.APPLICATION_SCOPE);
+
+if (localidadesPorProvincia == null || localidadesPorProvincia.size()==0) {
+	localidadesPorProvincia = new HashMap<Integer,List<Localidad>>();	 
+		
+	for(Localidad l:localidades){
+		if(l!=null && l.getId_provincia()>0 && l.getDescripcion()!=null && !"".equalsIgnoreCase(l.getDescripcion().trim() )){
+			List<Localidad> lst =  new ArrayList<Localidad>();
+			try{
+			  lst = localidadesPorProvincia.get(l.getId_provincia());
+			  if(lst==null) lst =  new ArrayList<Localidad>();
+			}catch(Exception e){
+			  lst =  new ArrayList<Localidad>();
+			}
+			lst.add(l);
+			localidadesPorProvincia.put(l.getId_provincia(), lst);
+	   }
+	}
+	
+	portletSession.setAttribute(WebKeysAfiliados.LOCALIDADES_EN_SESSION_POR_PROVINCIA,
+			localidadesPorProvincia,PortletSession.APPLICATION_SCOPE);
+
+}
+
+//DS
+
+
+List<Plan> planesPrestadores =
+	(List<Plan>) session.getAttribute(WebKeysPrestadores.PLANES_EN_SESSION);
+
+if (planesPrestadores == null) {
+	planesPrestadores = TraeListasServiceUtil.getPlanesOspim();
+	session.setAttribute(WebKeysPrestadores.PLANES_EN_SESSION, planesPrestadores);
+}
+
+List<Provincia> provinciasPrestadores =
+	(List<Provincia>) session.getAttribute(WebKeysPrestadores.PROVINCIAS_EN_SESSION);
+
+if (provinciasPrestadores == null) {
+	provinciasPrestadores = TraeListasServiceUtil.getProvincias();
+	session.setAttribute(WebKeysPrestadores.PROVINCIAS_EN_SESSION, provinciasPrestadores);
+}
+
+List<Localidad> localidadesPrestadores =
+	(List<Localidad>) session.getAttribute(WebKeysPrestadores.LOCALIDADES_EN_SESSION);
+
+if (localidadesPrestadores == null) {
+	localidadesPrestadores = TraeListasServiceUtil.getLocalidades();
+	session.setAttribute(WebKeysPrestadores.LOCALIDADES_EN_SESSION, localidadesPrestadores);
+}
+
+List<EspecialidadPrestador> especialidadesPrestadores =
+	(List<EspecialidadPrestador>) session.getAttribute(WebKeysPrestadores.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION);
+
+if (especialidadesPrestadores == null) {
+	especialidadesPrestadores = TraeListasServiceUtil.getEspecialidadesPrestador();
+	session.setAttribute(
+		WebKeysPrestadores.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION,
+		especialidadesPrestadores
+	);
+}
 
 List<Nacionalidad> nacionalidades = (ArrayList<Nacionalidad>) portletSession
 .getAttribute(WebKeysAfiliados.NACIONALIDADES_EN_SESSION,

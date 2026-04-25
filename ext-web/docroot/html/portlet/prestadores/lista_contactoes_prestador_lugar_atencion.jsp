@@ -1,4 +1,4 @@
-<%@ include file="/html/portlet/liquidaciones/init.jsp"%>
+<%@ include file="/html/portlet/prestadores/init.jsp"%>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet"%>
 <portlet:defineObjects/>
 <%
@@ -32,7 +32,7 @@ if (contactoesLugarAtPrestador != null && contactoesLugarAtPrestador.size()>0){
 
 	 	ResultRow row = new ResultRow(ce,new Integer(1+i), i);
 	 	if (ce.getTipo().equals(ContactoElectronico.Tipo.EMAIL)){
-	 		row.addText("Correo Electrónico");
+	 		row.addText("Correo Electrï¿½nico");
  		}else if (ce.getTipo().equals(ContactoElectronico.Tipo.SITIOWEB)){
 	 		row.addText("Sitio Web");
  		}else if (ce.getTipo().equals(ContactoElectronico.Tipo.FAX)){

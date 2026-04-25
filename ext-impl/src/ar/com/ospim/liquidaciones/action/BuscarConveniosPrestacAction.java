@@ -14,8 +14,8 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.liquidaciones.beans.BusquedaConvenioPrestacionalFiltro;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional;
+import ar.com.ospim.prestadores.beans.BusquedaConvenioPrestacionalFiltro;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacional;
 import ar.com.ospim.liquidaciones.services.ConvenioPrestacionalServiceUtil;
 
 import com.liferay.portal.kernel.log.Log;
@@ -25,7 +25,7 @@ import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
 
 /**
- * Realiza la búsqueda de contratos según parámetros de entrada
+ * Realiza la bï¿½squeda de contratos segï¿½n parï¿½metros de entrada
  * 
  * @author Carlos Rivas
  * @modif SVA

@@ -1,4 +1,4 @@
-<%@ include file="/html/portlet/liquidaciones/init.jsp"%>
+<%@ include file="/html/portlet/prestadores/init.jsp"%>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet"%>
 <portlet:defineObjects/>
 <%
@@ -11,10 +11,10 @@ matriculasDelPrestador =  (ArrayList<MatriculaPrestador>) request.getSession().g
 
 List<String> headerNames = new ArrayList<String>();
 
-headerNames.add("Tipo Matrícula");
-headerNames.add("N° Matrícula");
+headerNames.add("Tipo Matrï¿½cula");
+headerNames.add("Nï¿½ Matrï¿½cula");
 headerNames.add("Provincia");
-headerNames.add("Presentó Matrícula");
+headerNames.add("Presentï¿½ Matrï¿½cula");
 headerNames.add("Fecha Vto.");
 headerNames.add("Eliminar");
 

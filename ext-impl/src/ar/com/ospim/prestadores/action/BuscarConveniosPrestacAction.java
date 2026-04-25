@@ -9,14 +9,14 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import javax.servlet.http.HttpSession;
 
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.prestadores.beans.BusquedaConvenioPrestacionalFiltro;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacional;
 import ar.com.ospim.prestadores.services.ConvenioPrestacionalServiceUtil;
 
 import com.liferay.portal.kernel.log.Log;
