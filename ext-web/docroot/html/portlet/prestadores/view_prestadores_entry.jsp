@@ -7,7 +7,7 @@ StringBuilder tabsAValues = new StringBuilder("datos");
 tabsAValues.append(",lugar-at");
 
 PortletURL portletURL = renderResponse.createRenderURL();
-portletURL.setParameter("struts_action", "/liquidaciones/editar_prestadores_entry");
+portletURL.setParameter("struts_action", "/prestadores/editar_prestadores_entry");
 portletURL.setParameter("tabs1", tabsA);
 portletURL.setParameter("view", "true");
 

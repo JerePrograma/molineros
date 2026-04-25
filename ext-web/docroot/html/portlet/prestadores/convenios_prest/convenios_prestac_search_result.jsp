@@ -59,7 +59,7 @@
 				 					ResultRow row = new ResultRow(convPrest,convPrest.getId(), i);
 					 				//PortletURL rowURL = renderResponse.createRenderURL();
 					 				portletURL.setWindowState(LiferayWindowState.MAXIMIZED);
-					 				//portletURL.setParameter("struts_action","/liquidaciones/view_contrato_entry");
+					 				//portletURL.setParameter("struts_action","/prestadores/view_contrato_entry");
 									portletURL.setParameter("struts_action", "/prestadores/editar_convenio_prest_entry");
 									portletURL.setParameter("id_convenio_prest", String.valueOf(convPrest.getId()));
 									portletURL.setParameter(Constants.CMD, Constants.VIEW);

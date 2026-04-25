@@ -100,7 +100,7 @@
 		<table class="lfr-table" style="border-collapse: separate; border-spacing: 5px;">
 			<tr>
 				<td colspan="6"><liferay-util:include page="/html/portlet/utils/prestadores/busqueda_prestador.jsp">
-					<liferay-util:param name="search_url" value="/liquidaciones/buscar_prestador" />
+					<liferay-util:param name="search_url" value="/prestadores/buscar_prestador" />
 					<liferay-util:param name="cuit_prestador"
 										value='<%= Validator.isNotNull(convenioPrest)&&convenioPrest.getPrestador()!=null ? convenioPrest.getPrestador().getCuit(): "" %>' />
 					<liferay-util:param name="nombre_prestador"
@@ -339,7 +339,7 @@
 								<div id="<portlet:namespace />buscadorPrestacionContainer">
 									<liferay-util:include page="/html/portlet/utils/prestaciones/busqueda_tipo_nomenclador_prestacion.jsp">
 										<liferay-util:param name="search_url"
-															value="/liquidaciones/buscar_tipo_nomenclador_prestacion" />
+															value="/prestadores/buscar_tipo_nomenclador_prestacion" />
 										<liferay-util:param name="codigo" value='' />
 										<liferay-util:param name="prestacion" value='' />
 										<liferay-util:param name="esEditable"
@@ -904,7 +904,7 @@
                 document.<portlet:namespace />convenios_prest_fm.<portlet:namespace /><%= Constants.CMD %>.value = "agregaDetalle";
                 var plan_text = jQuery("#<portlet:namespace />plan :selected").text();
                 document.getElementById("<portlet:namespace />plan_text").value = plan_text;
-                url = "<portlet:actionURL windowState='<%= LiferayWindowState.MAXIMIZED.toString() %>'><portlet:param name='struts_action' value='/liquidaciones/editar_contrato_entry' /></portlet:actionURL>";
+                url = "<portlet:actionURL windowState='<%= LiferayWindowState.MAXIMIZED.toString() %>'><portlet:param name='struts_action' value='/prestadores/editar_contrato_entry' /></portlet:actionURL>";
                 submitForm(document.<portlet:namespace />convenios_prest_fm, url);
                 return true;
     } --%>

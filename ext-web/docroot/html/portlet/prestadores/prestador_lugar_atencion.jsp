@@ -109,7 +109,7 @@ boolean showABMButtons = PermissionUtil.userContainsRole(user,"ABM_PRESTADOR");
 			<%-- <td colspan="4">
 				<div id="<portlet:namespace />divBuscarPrestador" name="<portlet:namespace />divBuscarPrestador">										
 					<liferay-util:include page="/html/portlet/utils/prestadores/busqueda_prestador_lugar_at.jsp">
-							<liferay-util:param name="search_url" value="/liquidaciones/buscar_prestador" />
+							<liferay-util:param name="search_url" value="/prestadores/buscar_prestador" />
 							<liferay-util:param name="cuit_prestador" value='' />
 							<liferay-util:param name="nombre_prestador" value='' />
 							<liferay-util:param name="id_prestador" value='<%=idPrestadorAtencion%>' />
@@ -124,7 +124,7 @@ boolean showABMButtons = PermissionUtil.userContainsRole(user,"ABM_PRESTADOR");
 	    	<td colspan="8">
 				<div id="<portlet:namespace />divBuscarPrestador" name="<portlet:namespace />divBuscarPrestador">										
 					<liferay-util:include page="/html/portlet/utils/prestadores/busqueda_prestador_lugar_at.jsp">
-							<liferay-util:param name="search_url" value="/liquidaciones/buscar_prestador" />
+							<liferay-util:param name="search_url" value="/prestadores/buscar_prestador" />
 							<liferay-util:param name="cuit_prestador" value='' />
 							<liferay-util:param name="nombre_prestador" value='' />
 							<liferay-util:param name="id_prestador" value='<%=idPrestadorAtencion%>' />
@@ -333,7 +333,7 @@ boolean showABMButtons = PermissionUtil.userContainsRole(user,"ABM_PRESTADOR");
 		<tr>
 			<td colspan="5">
 				<div id="<portlet:namespace />lista_telefonos">
-					<liferay-util:include page="/html/portlet/liquidaciones/administracion/prestadores/lista_telefonos_prestador_lugar_atencion.jsp">
+					<liferay-util:include page="/html/portlet/prestadores/lista_telefonos_prestador_lugar_atencion.jsp">
 					</liferay-util:include>
 				</div>
 			</td>
@@ -465,7 +465,7 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 		var cuit = jQuery("#<portlet:namespace />cuit").val();
 		
 		if (cuit.length > 0) {									
-			var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/buscar_cuit_existente&cuit='+cuit;
+			var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/prestadores/buscar_cuit_existente&cuit='+cuit;
 			jQuery("#validarExistenciaCuit").load(url);		
 			jQuery("#validarExistenciaCuit").show();				
 		}
@@ -479,14 +479,14 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 			}
 		} 
 
-<%-- 		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"/>&struts_action=/liquidaciones/editar_prestadores_entry';
+<%-- 		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"/>&struts_action=/prestadores/editar_prestadores_entry';
 		<% if(prestador==null || (prestador != null && prestador.getId_prestador() <= 0 ) ) {%>
 			url = url + '&<%=Constants.CMD %>='+'<%=Constants.ADD%>';
 		<% }else{ %>
 			url = url + '&<%=Constants.CMD %>='+'<%=Constants.UPDATE%>';
 		<% } %> --%>
 		
-		var xportletUrl = '/liquidaciones/editar_prestadores_entry';
+		var xportletUrl = '/prestadores/editar_prestadores_entry';
 		var cmdA = '<%=Constants.ADD%>';
 		var cmdU = '<%=Constants.UPDATE%>';
 		
@@ -518,7 +518,7 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 
 	function filtrarLocalidad() {
 		var idProvincia = jQuery('#<portlet:namespace/>provincia').val();
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/id_provincia_localidad&idProvincia='+idProvincia;
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/id_provincia_localidad&idProvincia='+idProvincia;
 		jQuery.ajax({   
 			url: url,
 			async: false,
@@ -540,7 +540,7 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 	
 	function filtrarCodPostal() {
 		var idLocalidad = jQuery('#<portlet:namespace/>localidad').val();
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/id_localidad_codpostal&idLocalidad='+idLocalidad;
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/id_localidad_codpostal&idLocalidad='+idLocalidad;
 		jQuery.ajax({   
 			url: url,
 			success: function(data){
@@ -558,7 +558,7 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 			var calle = jQuery("#<portlet:namespace />calle").val();
 			var numero = jQuery("#<portlet:namespace />numero").val();
 			if (calle.length > 0 && numero > 0) {				
-				var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/buscar_codPostal&calle='+escape(calle)+'&numero='+numero;
+				var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/prestadores/buscar_codPostal&calle='+escape(calle)+'&numero='+numero;
 				jQuery("#divCodPostal").load(url);		
 				jQuery("#divCodPostal").show();
 			} else {        
@@ -585,7 +585,7 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 	    	propio = "D";
 	    }
 		if(<portlet:namespace />validaLugarAtTelefono()){
-			<%-- var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/lista_telefonos_lugar_at_prestador';
+			<%-- var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/prestadores/lista_telefonos_lugar_at_prestador';
 			url = url+'&idTelefono='+idTel+
 			'&tipoTel='+tipoTel+
 			'&codPais='+codPais+
@@ -595,7 +595,7 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 			'&obs='+encodeURI(obs)+
 			'&propio='+propio; --%>
 			
-			var xportletUrl = '/liquidaciones/lista_telefonos_lugar_at_prestador';
+			var xportletUrl = '/prestadores/lista_telefonos_lugar_at_prestador';
 			
 			var url= '<liferay-portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString()%>">'+
 			'<liferay-portlet:param name="struts_action" value="__xportletUrl" />'+
@@ -657,14 +657,14 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 	    }
 		
 		if(<portlet:namespace />validaLugarAtContacto()){
-			<%-- var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/lista_contactos_lugar_at_prestador';
+			<%-- var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/prestadores/lista_contactos_lugar_at_prestador';
 			url = url+'&idContactoE='+idContE+
 			'&tipoContacto='+tipoContE+
 			'&descripcion='+descripcion+
 			'&obs='+encodeURI(obs)+
 			'&propio='+propio; --%>
 			
-			var xportletUrl = '/liquidaciones/lista_contactos_lugar_at_prestador';
+			var xportletUrl = '/prestadores/lista_contactos_lugar_at_prestador';
 			
 			var url= '<liferay-portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString()%>">'+
 			'<liferay-portlet:param name="struts_action" value="__xportletUrl" />'+
@@ -707,10 +707,10 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 	function <portlet:namespace />saveLugarAtencionCompleto(){
 	 	if(<portlet:namespace />validaLugarAtDomicilio()){
 	 
-			<%-- var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/lista_lugares_atencion_prestador" /></portlet:actionURL>';
+			<%-- var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/prestadores/lista_lugares_atencion_prestador" /></portlet:actionURL>';
 			url = url + '&<%=Constants.CMD %>='+'<%=Constants.ADD%>'; --%>
 			
-			var xportletUrl = '/liquidaciones/lista_lugares_atencion_prestador';
+			var xportletUrl = '/prestadores/lista_lugares_atencion_prestador';
 			var cmd_ = '<%=Constants.ADD%>';
 			
 			var url= '<liferay-portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString()%>">'+
@@ -841,10 +841,10 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 	
 	 	if(<portlet:namespace />validaLugarAtDomicilio()){
 			
-			<%-- var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/lista_lugares_atencion_prestador" /></portlet:actionURL>';
+			<%-- var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/prestadores/lista_lugares_atencion_prestador" /></portlet:actionURL>';
 			url = url + '&<%=Constants.CMD %>='+'<%=Constants.UPDATE%>'; --%>
 
-			var xportletUrl = '/liquidaciones/lista_lugares_atencion_prestador';
+			var xportletUrl = '/prestadores/lista_lugares_atencion_prestador';
 			var cmd_ = '<%=Constants.UPDATE%>';
 			
 			var url= '<liferay-portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString()%>">'+
@@ -862,9 +862,9 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 	
 	function <portlet:namespace />limpiarCamposLugarAt(){
 			
-		<%-- var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/lista_lugares_atencion_prestador" /></portlet:actionURL>';
+		<%-- var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/prestadores/lista_lugares_atencion_prestador" /></portlet:actionURL>';
 		url = url + '&<%=Constants.CMD %>='+'<%=Constants.RESET%>'; --%>
-		var xportletUrl = '/liquidaciones/lista_lugares_atencion_prestador';
+		var xportletUrl = '/prestadores/lista_lugares_atencion_prestador';
 		var cmd_ = '<%=Constants.RESET%>';
 		
 		var url= '<liferay-portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString()%>">'+
@@ -883,10 +883,10 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 			var accionEnCurso = document.<portlet:namespace />prestador_lugarat_fm.<portlet:namespace /><%= Constants.CMD %>.value;
 			document.<portlet:namespace />prestador_lugarat_fm.<portlet:namespace /><%= Constants.CMD %>.value='<%=Constants.MOVE %>';
 			
-<%-- 		var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/editar_prestadores_entry" /></portlet:actionURL>';
+<%-- 		var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/prestadores/editar_prestadores_entry" /></portlet:actionURL>';
 			url = url + '&accionEnCurso=' + accionEnCurso + '&moverATab=plan_prest'; --%>
 			
-			var xportletUrl = '/liquidaciones/editar_prestadores_entry';
+			var xportletUrl = '/prestadores/editar_prestadores_entry';
 			var cmd_ = '<%=Constants.MOVE%>';
 			
 			var url= '<liferay-portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString()%>">'+

@@ -7,7 +7,7 @@
 		boolean showAumentoNomenclador = PermissionUtil.userContainsRole(user,WebKeysLiquidaciones.ROL_AUMENTO_NOMENCLADOR);
 		PortletURL portletURL = renderResponse.createRenderURL();
 		portletURL.setWindowState(WindowState.MAXIMIZED);
-		portletURL.setParameter("struts_action", "/liquidaciones/view");
+		portletURL.setParameter("struts_action", "/prestadores/view");
 		
  		Calendar periodoDesde = CalendarFactoryUtil.getCalendar();
  		periodoDesde.setTime(DateUtils.getFirstDateOfYear(new Date(), true));
@@ -114,7 +114,7 @@ jQuery('#<portlet:namespace />guardar').click(function(){
 		var porciento = "1.";
 		var porc_aumento = porciento.concat(porcentaje);
 		
-		var url = '<portlet:renderURL windowState="<%= WindowState.MAXIMIZED.toString() %>"/>&struts_action=/liquidaciones/incrementarNomenclador&vigAumentoDia='+vigAumentoDia+'&vigAumentoMesAnio='+vigAumentoMesAnio+'&porc_aumento='+porc_aumento+'&resolucion='+resolucion+'&ttos='+ttos+'&nomenclador='+nomenclador+'&cod_desde='+cod_desde+'&cod_hasta='+cod_hasta+'&usuario_modi='+'<%=usuario_modi%>';
+		var url = '<portlet:renderURL windowState="<%= WindowState.MAXIMIZED.toString() %>"/>&struts_action=/prestadores/incrementarNomenclador&vigAumentoDia='+vigAumentoDia+'&vigAumentoMesAnio='+vigAumentoMesAnio+'&porc_aumento='+porc_aumento+'&resolucion='+resolucion+'&ttos='+ttos+'&nomenclador='+nomenclador+'&cod_desde='+cod_desde+'&cod_hasta='+cod_hasta+'&usuario_modi='+'<%=usuario_modi%>';
 		document.<portlet:namespace />fm.method = 'post';
 		submitForm(document.<portlet:namespace />fm, url);
 	}

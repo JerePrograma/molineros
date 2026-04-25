@@ -69,7 +69,7 @@ if (contactoesLugarAtPrestador != null && contactoesLugarAtPrestador.size()>0){
 
 <script>
 function borrarContactoLugarAt(idCE){
-	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/borrar_contactoe_lugar_at_prestador';
+	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/prestadores/borrar_contactoe_lugar_at_prestador';
 	url = url+'&idContactoe='+idCE;
 		jQuery("#<portlet:namespace />lista_contactoes").load(url);   
 	}

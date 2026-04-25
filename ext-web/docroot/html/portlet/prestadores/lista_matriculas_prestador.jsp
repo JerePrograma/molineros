@@ -81,7 +81,7 @@ if (matriculasDelPrestador != null && matriculasDelPrestador.size()>0){
 
 <script>
 function borrarMatricula(idMatricula){
-	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/borrar_matricula_prestador';
+	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/prestadores/borrar_matricula_prestador';
 	url = url+'&idMatricula='+idMatricula;
 		jQuery("#<portlet:namespace />lista_matriculas").load(url);   
 	}

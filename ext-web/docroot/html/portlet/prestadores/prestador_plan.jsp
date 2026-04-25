@@ -125,11 +125,11 @@ String tabValue = ParamUtil.getString(request, "tab", null); // "datos"
 			return false;
 		}
 
-<%-- 		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/lista_planes_prestador';
+<%-- 		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/prestadores/lista_planes_prestador';
 		url = url+'&idPlan='+idPlan+
 		'&vigenDesde='+fechaDesdeFinal+
 		'&vigenHasta='+fechaHastaFinal; --%>
-		var xportletUrl = '/liquidaciones/lista_planes_prestador';
+		var xportletUrl = '/prestadores/lista_planes_prestador';
 		
 		var url= '<liferay-portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString()%>">'+
 		'<liferay-portlet:param name="struts_action" value="__xportletUrl" />'+
@@ -152,9 +152,9 @@ String tabValue = ParamUtil.getString(request, "tab", null); // "datos"
 			var accionEnCurso = document.<portlet:namespace />prestador_fm.<portlet:namespace /><%= Constants.CMD %>.value;
 			document.<portlet:namespace />prestador_fm.<portlet:namespace /><%= Constants.CMD %>.value='<%=Constants.MOVE %>';
 			
-			<%-- var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/editar_prestadores_entry" /></portlet:actionURL>';
+			<%-- var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/prestadores/editar_prestadores_entry" /></portlet:actionURL>';
 			url = url + '&accionEnCurso=' + accionEnCurso + '&moverATab=lugar_atencion'; --%>
-			var xportletUrl = '/liquidaciones/editar_prestadores_entry';
+			var xportletUrl = '/prestadores/editar_prestadores_entry';
 			var cmd_ = '<%=Constants.MOVE%>';
 			
 			var url= '<liferay-portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString()%>">'+
@@ -178,9 +178,9 @@ String tabValue = ParamUtil.getString(request, "tab", null); // "datos"
 			var accionEnCurso = document.<portlet:namespace />prestador_fm.<portlet:namespace /><%= Constants.CMD %>.value;
 			document.<portlet:namespace />prestador_fm.<portlet:namespace /><%= Constants.CMD %>.value='<%=Constants.MOVE %>';
 			
-<%-- 		var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/editar_prestadores_entry" /></portlet:actionURL>';
+<%-- 		var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/prestadores/editar_prestadores_entry" /></portlet:actionURL>';
 			url = url + '&accionEnCurso=' + accionEnCurso + '&moverATab=datos'; --%>
-			var xportletUrl = '/liquidaciones/editar_prestadores_entry';
+			var xportletUrl = '/prestadores/editar_prestadores_entry';
 			var cmd_ = '<%=Constants.MOVE%>';
 			
 			var url= '<liferay-portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString()%>">'+
