@@ -26,6 +26,11 @@ public class ConvenioPrestacionalDetalle implements Serializable{
 //	private int id_prestacion_desde;
 	private Prestacion prestacion;
 	private String codigo;
+	private TipoNomenclador tipoNomenclador;
+	private Prestacion prestacionDesde;
+	private String codigoDesde;
+	private Prestacion prestacionHasta;
+	private String codigoHasta;
 //	private String descripcion_prestacion_desde;
 //	private int id_prestacion_hasta;
 //	private String descripcion_prestacion_hasta;
@@ -122,6 +127,15 @@ public class ConvenioPrestacionalDetalle implements Serializable{
 
 		det.setPrestacion(prestacion);
 		det.setCodigo(rs.getString(prefix + "codigo"));
+		det.setPrestacionDesde(prestacion);
+		det.setCodigoDesde(det.getCodigo());
+		det.setPrestacionHasta(prestacion);
+		det.setCodigoHasta(det.getCodigo());
+		try {
+			det.setTipoNomenclador(TipoNomenclador.getMapping(prefix + "tpno_", rs));
+		} catch (SQLException ignored) {
+			// compatibilidad con consultas que no incluyen tipo de nomenclador
+		}
 
 		det.setIdPlan(rs.getInt(prefix + "id_plan"));
 		det.setPlanDescripcion(rs.getString(prefix + "plan_descripcion"));
@@ -187,6 +201,12 @@ public class ConvenioPrestacionalDetalle implements Serializable{
 
 	public void setPrestacion(Prestacion prestacion) {
 		this.prestacion = prestacion;
+		if (this.prestacionDesde == null) {
+			this.prestacionDesde = prestacion;
+		}
+		if (this.prestacionHasta == null) {
+			this.prestacionHasta = prestacion;
+		}
 	}
 
 	public String getCodigo() {
@@ -195,6 +215,58 @@ public class ConvenioPrestacionalDetalle implements Serializable{
 
 	public void setCodigo(String codigo) {
 		this.codigo = codigo;
+		if (this.codigoDesde == null) {
+			this.codigoDesde = codigo;
+		}
+		if (this.codigoHasta == null) {
+			this.codigoHasta = codigo;
+		}
+	}
+
+	public TipoNomenclador getTipoNomenclador() {
+		return tipoNomenclador;
+	}
+
+	public void setTipoNomenclador(TipoNomenclador tipoNomenclador) {
+		this.tipoNomenclador = tipoNomenclador;
+	}
+
+	public Prestacion getPrestacionDesde() {
+		return prestacionDesde != null ? prestacionDesde : prestacion;
+	}
+
+	public void setPrestacionDesde(Prestacion prestacionDesde) {
+		this.prestacionDesde = prestacionDesde;
+		if (this.prestacion == null) {
+			this.prestacion = prestacionDesde;
+		}
+	}
+
+	public String getCodigoDesde() {
+		return codigoDesde != null ? codigoDesde : codigo;
+	}
+
+	public void setCodigoDesde(String codigoDesde) {
+		this.codigoDesde = codigoDesde;
+		if (this.codigo == null) {
+			this.codigo = codigoDesde;
+		}
+	}
+
+	public Prestacion getPrestacionHasta() {
+		return prestacionHasta != null ? prestacionHasta : prestacion;
+	}
+
+	public void setPrestacionHasta(Prestacion prestacionHasta) {
+		this.prestacionHasta = prestacionHasta;
+	}
+
+	public String getCodigoHasta() {
+		return codigoHasta != null ? codigoHasta : codigo;
+	}
+
+	public void setCodigoHasta(String codigoHasta) {
+		this.codigoHasta = codigoHasta;
 	}
 
 	public int getIdPlan() {
