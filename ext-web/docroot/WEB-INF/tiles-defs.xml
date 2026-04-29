@@ -3575,7 +3575,7 @@
 		<put name="portlet_content"	value="/portlet/autorizaciones/reclamos_prestacionales/alerta_permanencia_afiliado.jsp" />
 	</definition>
 
-	<!-- GestiÃ³n de Seccionales -->
+	<!-- Gestión de Seccionales -->
 	<definition name="portlet.gest_seccional" extends="portlet" />
 
 	<definition name="portlet.gestion_seccional.view" extends="portlet.gest_seccional">
@@ -4140,7 +4140,7 @@
 		<put name="portlet_content"	value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_contabilidad_result.jsp" />
 	</definition>
 	
-	<!-- Fin GestiÃ³n Judicial -->
+	<!-- Fin Gestión Judicial -->
 	
 	<definition name="portlet.autorizaciones.reporte.avisos_vencimientos_cud"	extends="portlet.autorizaciones">
 		<put name="portlet_content" value="/portlet/autorizaciones/reportes/avisos_vencimientos_cud.jsp" />

@@ -68,9 +68,6 @@
 <%@ page import="ar.com.ospim.liquidaciones.beans.PlanPrestacion" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.Catastro"%>
 <%@ page import="ar.com.ospim.liquidaciones.beans.TratamientoDiscapacidad"%>
-<%@ page import="ar.com.ospim.liquidaciones.beans.ConvenioPrestacional" %>
-<%@ page import="ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle" %>
-<%@ page import="ar.com.ospim.liquidaciones.beans.ConvenioPrestacional.EstadosConvPrest"%>
 <%@ page import="ar.com.ospim.liquidaciones.beans.MotivoAltaDiscapacidad" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.ProfesionPrestador" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.EspecialidadPrestador" %>
@@ -79,6 +76,9 @@
 <%@ page import="ar.com.ospim.liquidaciones.beans.TelefonoPrestador" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.ContactoElectronicoPrestador" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.TipoDiscapacidad" %>
+<%@ page import="ar.com.ospim.prestadores.beans.ConvenioPrestacional" %>
+<%@ page import="ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle" %>
+<%@ page import="ar.com.ospim.prestadores.beans.ConvenioPrestacional.EstadosConvPrest"%>
 <%@ page import="ar.com.ospim.prestadores.beans.BusquedaCartillaConvenioFiltro" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.TipoNomenclador" %>
 <%@ page import="ar.com.ospim.afiliados.services.CredencialesServiceUtil" %>

@@ -440,6 +440,7 @@
 		
 		<action path="/afiliados/pre_afiliados_buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>
 		
@@ -487,6 +488,7 @@
 				
 		<action path="/liquidaciones/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>
 		
@@ -555,6 +557,7 @@
 		
 		<action path="/liquidaciones/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>
 		
@@ -1736,6 +1739,7 @@
 
 		<action path="/farmacia/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>		
 
@@ -2680,6 +2684,7 @@
 		
 		<action path="/uoma/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>
 		
@@ -4075,6 +4080,7 @@
 		
 		<action path="/correspondencia/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>
 		
@@ -4274,6 +4280,7 @@
  		
 		<action path="/autorizaciones/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>
 
@@ -4470,6 +4477,7 @@
 			type="ar.com.ospim.global.actions.TraeBimestresDeEjercicioPorIdAction" />	
 		<action path="/autorizaciones/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>	
 		
@@ -4770,6 +4778,7 @@
 			
 	<action path="/tesoreria/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+		<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 	</action>
 				
@@ -6102,6 +6111,7 @@
 	
 	<action path="/hoteles/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+		<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 	</action> 
 	
@@ -6169,6 +6179,7 @@
     
     <action path="/comprobantes/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+		<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 	</action>
 	<action path="/comprobantes/buscar_seccional" forward="portlet.comprobantes.seccional.view" />
@@ -6259,6 +6270,7 @@
 	
 	<action path="/comprobantes/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+		<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 	</action>
 	
@@ -6431,6 +6443,7 @@
 	
 	<action path="/judicial/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+		<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 	</action>
     

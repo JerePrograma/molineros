@@ -1,8 +1,0 @@
-		<!-- PRE_1 -->
-		<action path="/prestadores/view" forward="portlet.prestadores.view" />
-
-		<action path="/prestadores/administracion_prestadores"
-		        type="ar.com.ospim.prestadores.action.ClientePrestadoresAction">
-			<forward name="portlet.comprobantes.download.prestadores"
-			         path="portlet.comprobantes.download.prestadores" />
-		</action>

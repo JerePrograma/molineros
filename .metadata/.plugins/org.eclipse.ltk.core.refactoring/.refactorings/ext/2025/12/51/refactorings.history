@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Rename resource &apos;ext/ext-web/docroot/html/portlet/liquidaciones/reportes/reporte_debitos_tercerizadoras_append_result.jsp&apos; to &apos;reporte_debitos_terciarizadoras_append_result.jsp&apos;" description="Rename resource &apos;reporte_debitos_tercerizadoras_append_result.jsp&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="ext-web/docroot/html/portlet/liquidaciones/reportes/reporte_debitos_tercerizadoras_append_result.jsp" name="reporte_debitos_terciarizadoras_append_result.jsp" stamp="1766088686093" updateReferences="true"/>
-</session>
