@@ -629,7 +629,7 @@
 							var hoy = new Date();
 							var vVto = fechaVto.split("-");
 							var vto = new Date(vVto[2], vVto[1], vVto[0]);
-							jQuery('#<portlet:namespace/>discapacidad_vto').html("Vto. Documentación" + fechaVto);
+							jQuery('#<portlet:namespace/>discapacidad_vto').html("Vto. Documentación " + fechaVto);
 							if (vto < hoy) {
 								alert("El certificado de Discapacidad Esta Vencido desde el " + fechaVto);
 							}

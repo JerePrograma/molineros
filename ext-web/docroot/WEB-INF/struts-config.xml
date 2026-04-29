@@ -566,7 +566,7 @@
 			<forward name="portlet.liquidaciones.view" path="portlet.liquidaciones.view" />
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 		</action>
-		
+
 		
 		
 		<action path="/liquidaciones/buscar_medicamento" type="ar.com.ospim.farmacia.action.BuscarMedicamentoComponenteAction">
