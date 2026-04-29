@@ -327,8 +327,11 @@ boolean showABMButtons = PermissionUtil.userContainsRole(user,"ABM_PRESTADOR");
 					<%="readonly='readonly'" %> <%}%>></textarea>
 			</td>		
 			<td align="right">
-					<liferay-util:include page="/html/portlet/prestadores/lista_telefonos_prestador_lugar_atencion.jsp">
-						onClick="<portlet:namespace />agregarLugarAtTelefono();"></td>
+			    <input type="button"
+			           value="Agregar Teléfono"
+			           <% if (!esEdicion) { %> disabled="disabled" <% } %>
+			           onClick="<portlet:namespace />agregarLugarAtTelefono();" />
+			</td>
 		</tr>
 		<tr>
 			<td colspan="5">

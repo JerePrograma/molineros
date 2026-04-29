@@ -129,7 +129,7 @@ public class ConvenioPrestacionalDetalle implements Serializable{
 		det.setPrestacion(prestacion);
 		det.setCodigo(rs.getString(prefix + "codigo"));
 		det.setPrestacionDesde(prestacion);
-		det.setCodigoDesde(det.getCodigo());
+		det.setCodigoDesde(det.getCodigo());	
 		det.setPrestacionHasta(prestacion);
 		det.setCodigoHasta(det.getCodigo());
 		try {
@@ -215,12 +215,15 @@ public class ConvenioPrestacionalDetalle implements Serializable{
 	}
 
 	public void setCodigo(String codigo) {
-		if (this.codigoDesde == null) {
-			this.codigoDesde = codigo;
-		}
-		if (this.codigoHasta == null) {
-			this.codigoHasta = codigo;
-		}
+	    this.codigo = codigo;
+
+	    if (this.codigoDesde == null) {
+	        this.codigoDesde = codigo;
+	    }
+
+	    if (this.codigoHasta == null) {
+	        this.codigoHasta = codigo;
+	    }
 	}
 
 	public TipoNomenclador getTipoNomenclador() {

@@ -1,7 +1,24 @@
 <%@ include file="/html/portlet/init.jsp" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
 <%@ page import="java.util.List" %>
 <%@ page import="ar.com.ospim.util.DateUtils" %>
+<%@ page import="ar.com.ospim.util.StringUtils" %>
+<%@ page import="java.util.Comparator" %>
+
+<%@ page import="ar.com.ospim.prestadores.exception.ProfesionEspecialidadSubEspecPrestadorException"%>
+<%@ page import="ar.com.ospim.prestadores.exception.MatriculaNacionalPrestadorException"%>
+<%@ page import="ar.com.ospim.prestadores.exception.MatriculaProvincialPrestadorException"%>
+<%@ page import="ar.com.ospim.prestadores.exception.PlanPrestadorDuplicadoException"%>
+<%@ page import="ar.com.ospim.prestadores.exception.LugarAtencionPrestadorException"%>
+<%@ page import="ar.com.ospim.global.beans.Telefono" %>
+<%@ page import="ar.com.ospim.global.beans.TipoPago" %>
+<%@ page import="ar.com.ospim.liquidaciones.beans.PrestadorPlan" %>
+<%@ page import="ar.com.ospim.liquidaciones.beans.PrestadorLugarAtencion" %>
+<%@ page import="ar.com.ospim.liquidaciones.beans.TelefonoPrestador" %>
+<%@ page import="ar.com.ospim.liquidaciones.beans.ContactoElectronicoPrestador" %>
+
+<%@ page import="ar.com.ospim.prestadores.beans.ConvenioPrestacional.EstadosConvPrest" %>
 
 <%@ page import="ar.com.ospim.prestadores.WebKeysPrestadores" %>
 <%@ page import="ar.com.ospim.liquidaciones.WebKeysLiquidaciones" %>
@@ -10,11 +27,13 @@
 <%@ page import="ar.com.ospim.global.beans.Provincia" %>
 <%@ page import="ar.com.ospim.global.beans.Localidad" %>
 <%@ page import="ar.com.ospim.global.services.TraeListasServiceUtil" %>
+<%@ page import="ar.com.ospim.global.beans.Domicilio" %>
 
 <%@ page import="ar.com.ospim.liquidaciones.beans.EspecialidadPrestador" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.ProfesionPrestador" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.SubEspecialidadPrestador" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.Prestador.TipoPrestador" %>
+<%@ page import="ar.com.ospim.liquidaciones.beans.MatriculaPrestador" %>
 <%@ page import="ar.com.ospim.prestadores.beans.BusquedaCartillaConvenioFiltro" %>
 <%@ page import="ar.com.ospim.prestadores.beans.ConvenioPrestacional" %>
 <%@ page import="ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle" %>
