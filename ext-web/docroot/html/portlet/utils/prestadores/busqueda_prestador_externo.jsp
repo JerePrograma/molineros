@@ -1,6 +1,6 @@
 
 <%
-	//String dinámico que se le debe pasar a esta pagina para que sepa a que direccion redireccionar
+	//String dinÃ¡mico que se le debe pasar a esta pagina para que sepa a que direccion redireccionar
 	//con el formato /<prestador_portlet>/buscar_prestador
 	//ej: /tesoreria/buscar_prestador
 	//esto se debe corresponder con el action definido en struts-config
@@ -124,7 +124,7 @@ function <portlet:namespace />buscarPrestador() {
 
 ('<liferay-ui:message key="ingrese-parametros-busqueda" />');
     }else {
-	    popupPD = Liferay.Popup({title:"Búsqueda profesional externo",modal:true,width:420});
+	    popupPD = Liferay.Popup({title:"BÃºsqueda profesional externo",modal:true,width:420});
 	    var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=<%=searchURL%>&id_prestador='+id_prestador+
 		  '&nombre_prestador='+encodeURI(prestador)+'&mat_tipo='+mat_tipo+'&mat_numero='+mat_numero+'&cuit='+cuit;
 		jQuery(popupPD).load(url);
@@ -132,7 +132,7 @@ function <portlet:namespace />buscarPrestador() {
 }
 
 function <portlet:namespace />buscarPrestadorOnDiv(e){
-	//Se modificó el campo, debemos cambiar el selecc		
+	//Se modificÃ³ el campo, debemos cambiar el selecc		
 	var evtobj=window.event? event : e
 	var keyPressed= evtobj.keyCode? evtobj.keyCode : evtobj.charCode
 
@@ -254,7 +254,7 @@ var popupPrestadoresExternos;
 function <portlet:namespace />prestadoresExternos() {
 	var id_prestador=jQuery("#<portlet:namespace />id_prestador").val();
 	popupPrestadoresExternos = Liferay.Popup({title:"Alta de Profesional",modal:true,width:1000});
-    var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/prestadores_externos&id_prestador_ext='+id_prestador;
+    var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/prestadores/prestadores_externos&id_prestador_ext='+id_prestador;
 	jQuery(popupPrestadoresExternos).load(url);
 }
 
