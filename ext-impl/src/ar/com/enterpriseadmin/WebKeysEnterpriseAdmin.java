@@ -11,7 +11,9 @@ public class WebKeysEnterpriseAdmin implements
 	
 	public static final String[][] IP_SEGUROS={ {"12.1.1.","San Juan"},
 //			{"10.1.1.","Mexico"},
-		{"127.0.0.1","LocalHost"} , 
+			{"12.10.1.", "Red Local WiFi"},
+			{"192.168.137.", "Hotspot Windows"},
+			{"127.0.0.1", "LocalHost"},
 //		{"200.123.168.61","Mexico IPLAN"},
 		{"190.210.131.129","Mexico IPLAN"},
 		{"181.111.218.139","Hotel Los Diques 1"},

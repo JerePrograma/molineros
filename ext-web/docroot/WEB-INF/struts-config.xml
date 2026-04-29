@@ -6697,7 +6697,8 @@
       </action>
       
       <action path="/tesoreria/facturacion_precios_verificar" type="ar.com.ospim.tesoreria.action.PrecioPlanSuperadorJSONAction"/>
-<!-- FIN FACTURACION OSPIM -->  
+<!-- FIN FACTURACION OSPIM -->
+
 		<!-- PRESTADORES / PRE_1 -->
 
 		<action path="/prestadores/view"
