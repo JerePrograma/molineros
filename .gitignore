@@ -90,3 +90,6 @@ classes/
 *.war
 app.server.*.properties
 build.*.properties
+# --- IDE metadata adicional ---
+.recommenders/
+*.iml
