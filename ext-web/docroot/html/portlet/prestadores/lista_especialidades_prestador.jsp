@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ include file="/html/portlet/prestadores/init.jsp"%>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
@@ -9,12 +10,12 @@ List<ProfesionPrestador> profEspecSubEspDelPrestador = (ArrayList<ProfesionPrest
 											request.getSession().getAttribute(WebKeysLiquidaciones.PROF_ESPEC_SUBESPEC_PRESTADOR_EN_SESSION);
 
 List<String> headerNames = new ArrayList<String>();
-headerNames.add("Profesi�n");
+headerNames.add("Profesión");
 headerNames.add("Especialidad");
 headerNames.add("Sub Especialidad");
 headerNames.add("Cat. Prof. Ospim");
-headerNames.add("T�tulo Profesional");
-headerNames.add("T�tulo Especialidad");
+headerNames.add("Título Profesional");
+headerNames.add("Título Especialidad");
 headerNames.add("Eliminar");
 
 SearchContainer searchContainer = new SearchContainer(renderRequest, null, null,

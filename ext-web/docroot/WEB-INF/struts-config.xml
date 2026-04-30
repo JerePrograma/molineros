@@ -1,4 +1,4 @@
-<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://jakarta.apache.org/struts/dtds/struts-config_1_2.dtd">
+﻿<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://jakarta.apache.org/struts/dtds/struts-config_1_2.dtd">
 
 <struts-config>
 	<action-mappings>
@@ -800,11 +800,11 @@
 		
 			
 		<action path="/liquidaciones/hay_reporte_tercerizadora" type="ar.com.ospim.liquidaciones.action.HayReporteTercerizadoraAction" />
-		
-		<action path="/liquidaciones/hay_reporte_tercerizadora_grabar" type="ar.com.ospim.liquidaciones.action.HayReporteTercerizadoraGrabadoAction" />
-		
-		
-		<action path="/liquidaciones/propone_lote_reclamo_prestacional" type="ar.com.ospim.liquidaciones.action.ReclamoPrestacionalProponeLoteAction" />
+                <action path="/liquidaciones/hay_reporte_tercerizadora_grabar"
+                                type="ar.com.ospim.liquidaciones.action.HayReporteTercerizadoraGrabadoAction">
+                        <forward name="success" path="/common/null.jsp"/>
+                </action>
+<action path="/liquidaciones/propone_lote_reclamo_prestacional" type="ar.com.ospim.liquidaciones.action.ReclamoPrestacionalProponeLoteAction" />
 		
 		
     
@@ -6650,11 +6650,6 @@
 					name="portlet.liquidaciones.debitos_tercerizadoras_trabajadas"
 					path="/portlet/liquidaciones/reportes/reporte_debitos_terciarizadoras_trabajadas.jsp"
 			/>
-		</action>
-
-		<action path="/liquidaciones/hay_reporte_tercerizadora_grabar"
-				type="ar.com.ospim.liquidaciones.action.HayReporteTercerizadoraGrabadoAction">
-			<forward name="success" path="/common/null.jsp"/>
 		</action>
 
  <action path="/farmaciaospim/upload_admifarm"                  

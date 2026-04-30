@@ -1,5 +1,6 @@
 <%@page import="java.text.SimpleDateFormat"%>
-<%@ include file="/html/portlet/prestadores/init.jsp" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ include file="/html/portlet/prestadores/init.jsp"%>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
 <portlet:renderURL var="volverIndiceConveniosURL" windowState="<%= LiferayWindowState.NORMAL.toString() %>">

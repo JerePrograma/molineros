@@ -16,8 +16,8 @@
 	portletURL.setParameter(Constants.CMD,"PopUp");
 
 	List<String> headerNames = new ArrayList<String>();	
-	headerNames.add("Matrícula Tipo");
-	headerNames.add("Matrícula Número");
+	headerNames.add("MatrÃ­cula Tipo");
+	headerNames.add("MatrÃ­cula Nï¿½mero");
 	headerNames.add("Cuit");
 	headerNames.add("prestador");
 	

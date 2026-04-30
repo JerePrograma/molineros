@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ include file="/html/portlet/prestadores/init.jsp"%>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet"%>
 <portlet:defineObjects />
@@ -55,7 +56,7 @@
 				<td colspan="2">&nbsp; </td>
 			</tr>
 			<tr>
-				<td><label><liferay-ui:message key="Profesi�n" />:</label></td>
+				<td><label><liferay-ui:message key="Profesión" />:</label></td>
 				<td><select 
 					name="<portlet:namespace/>profesion"
 					id="<portlet:namespace/>profesion" onchange="manejarProfesion();">
@@ -100,7 +101,7 @@
 					<% } %>
 			</select></td>	
 			
-			<td>C�digo Hospital:</td>
+			<td>Código Hospital:</td>
 				<td><input id="<portlet:namespace />cod_hospital"
 					name="<portlet:namespace />cod_hospital" type="text" maxlength="10"
 					size="10" value="" /></td>

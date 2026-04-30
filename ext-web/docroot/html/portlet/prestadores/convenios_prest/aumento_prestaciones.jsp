@@ -1,4 +1,5 @@
-<%@ include file="/html/portlet/prestadores/init.jsp" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ include file="/html/portlet/prestadores/init.jsp"%>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
     
@@ -83,24 +84,24 @@ jQuery('#<portlet:namespace />guardar').click(function(){
 	var cod_hasta = jQuery('#<portlet:namespace />cod_hasta').val();	
 
 	if (isNaN(porcentaje) || porcentaje == "") {
-		alert("El Porcentaje no es v�lido. Prueba de nuevo.");
+		alert("El Porcentaje no es válido. Prueba de nuevo.");
 		porcentaje.select();
 		porcentaje.focus();
 	}
 	
 	if (resolucion == "") {
-    	alert("Debes cargar la Resoluci�n, Prueba de nuevo.");
+    	alert("Debes cargar la Resolución, Prueba de nuevo.");
     	resolucion.select();
     	resolucion.focus();
     }	
 	
 	if (isNaN(cod_desde) || cod_desde == "") {
-	    alert("El Codigo Desde no es v�lido. Prueba de nuevo.");
+	    alert("El Codigo Desde no es válido. Prueba de nuevo.");
 	    cod_desde.select();
 	    cod_desde.focus();
 	}	
 	if (isNaN(cod_hasta) || cod_hasta == "") {
-	    	alert("El Codigo Hasta no es v�lido. Prueba de nuevo.");
+	    	alert("El Codigo Hasta no es válido. Prueba de nuevo.");
 	    	cod_hasta.select();
 	    	cod_hasta.focus();
 	}
