@@ -39,7 +39,6 @@
                 PortletURL iteratorURL = renderResponse.createRenderURL();
                 iteratorURL.setWindowState(LiferayWindowState.MAXIMIZED);
                 iteratorURL.setParameter("struts_action", "/prestadores/convenios_prestacionales");
-                iteratorURL.setParameter("restoreConvPrest", "true");
 
                 String orderByCol = ParamUtil.getString(request, "orderByCol");
                 String orderByType = ParamUtil.getString(request, "orderByType");

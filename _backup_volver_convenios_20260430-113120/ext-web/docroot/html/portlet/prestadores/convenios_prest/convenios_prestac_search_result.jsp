@@ -2,30 +2,22 @@
 <%@ include file="/html/portlet/prestadores/convenios_prest/init.jsp" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
-<portlet:renderURL var="volverIndiceConveniosURL" windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>">
-    <portlet:param name="struts_action" value="/prestadores/convenios_prestacionales" />
-    <portlet:param name="restoreConvPrest" value="true" />
-</portlet:renderURL>
 	
 	<script type="text/javascript">
 
-	function redirigir(codigo) {
-                        var boolcodigo=jQuery('#<portlet:namespace />por_codigo').is(':checked');
-                        var vistaView = "por_rango";
-                        if (boolcodigo == true) {
-                                vistaView = "por_codigo";
-                        }
-
-                        var backURL = '<%= volverIndiceConveniosURL.toString() %>'.replace(/&amp;/g, '&');
-
-                        var url = '<portlet:renderURL windowState="<%=LiferayWindowState.MAXIMIZED.toString()%>"/>&struts_action=/prestadores/editar_convenio_prest_entry';
-                        url = url + '&id_convenio='+codigo+'&por_codigo='+vistaView;
-                        url = url + '&<%=Constants.CMD%>='+'<%=Constants.VIEW%>';
-                        url = url + '&backURL=' + encodeURIComponent(backURL);
-
-                        document.<portlet:namespace />fm.method = 'post';
-                        submitForm(document.<portlet:namespace />fm, url);
-                }     										
+	function redirigir(codigo) {		
+			var boolcodigo=jQuery('#<portlet:namespace />por_codigo').is(':checked');
+			var vistaView = "por_rango";
+			if (boolcodigo == true) {
+				vistaView = "por_codigo";				
+			}			
+			
+			var url = '<portlet:renderURL windowState="<%=LiferayWindowState.MAXIMIZED.toString()%>"/>&struts_action=/prestadores/editar_convenio_prest_entry';
+			url = url + '&id_convenio='+codigo+'&por_codigo='+vistaView;
+			url = url + '&<%=Constants.CMD%>='+'<%=Constants.VIEW%>'
+			document.<portlet:namespace />fm.method = 'post';
+			submitForm(document.<portlet:namespace />fm, url);
+		}     										
 	</script>
 
 			<%
@@ -39,7 +31,6 @@
                 PortletURL iteratorURL = renderResponse.createRenderURL();
                 iteratorURL.setWindowState(LiferayWindowState.MAXIMIZED);
                 iteratorURL.setParameter("struts_action", "/prestadores/convenios_prestacionales");
-                iteratorURL.setParameter("restoreConvPrest", "true");
 
                 String orderByCol = ParamUtil.getString(request, "orderByCol");
                 String orderByType = ParamUtil.getString(request, "orderByType");

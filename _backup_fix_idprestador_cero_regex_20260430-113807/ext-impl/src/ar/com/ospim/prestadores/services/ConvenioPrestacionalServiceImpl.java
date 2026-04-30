@@ -124,44 +124,19 @@ public class ConvenioPrestacionalServiceImpl {
 			_log.debug("[CONV-PREST-SVC][SEARCH][SQL] " + sql);
 			con = ConnectionHelper.getConnection();
 			stmt = con.prepareCall(sql.toString());
-                        Integer idPrestadorParam = filtro != null ? filtro.getIdPrestador() : null;
-                        String cuitParam = filtro != null ? filtro.getCuit() : null;
-                        String descripcionParam = filtro != null ? filtro.getDescripcion() : null;
-                        int estadoParam = filtro != null ? filtro.getEstado() : 0;
-
-                        if (cuitParam != null && cuitParam.trim().length() == 0) {
-                                cuitParam = null;
-                        }
-
-                        if (descripcionParam != null && descripcionParam.trim().length() == 0) {
-                                descripcionParam = null;
-                        }
-
-                        if (idPrestadorParam == null || idPrestadorParam.intValue() <= 0) {
-                                stmt.setNull(1, Types.INTEGER);
-                                _log.debug("[CONV-PREST-SVC][SEARCH][PARAM] idPrestador=NULL");
-                        } else {
-                                stmt.setInt(1, idPrestadorParam.intValue());
-                                _log.debug("[CONV-PREST-SVC][SEARCH][PARAM] idPrestador=" + idPrestadorParam);
-                        }
-
-                        if (cuitParam == null) {
-                                stmt.setNull(2, Types.VARCHAR);
-                        } else {
-                                stmt.setString(2, cuitParam);
-                        }
-
-                        if (descripcionParam == null) {
-                                stmt.setNull(3, Types.VARCHAR);
-                        } else {
-                                stmt.setString(3, descripcionParam);
-                        }
-
-                        stmt.setInt(4, estadoParam);
-
-                        _log.debug("[CONV-PREST-SVC][SEARCH][PARAM] cuit=" + cuitParam
-                                        + ", descripcion=" + descripcionParam
-                                        + ", estado=" + estadoParam);
+			if(filtro.getIdPrestador()==null){
+				stmt.setNull(1, Types.INTEGER);
+				_log.debug("[CONV-PREST-SVC][SEARCH][PARAM] idPrestador=NULL");
+			}else{
+				stmt.setInt(1, filtro.getIdPrestador());
+				_log.debug("[CONV-PREST-SVC][SEARCH][PARAM] idPrestador=" + filtro.getIdPrestador());
+			}
+			stmt.setString(2, filtro.getCuit());
+			stmt.setString(3, filtro.getDescripcion());
+			stmt.setInt(4, filtro.getEstado());
+			_log.debug("[CONV-PREST-SVC][SEARCH][PARAM] cuit=" + filtro.getCuit()
+					+ ", descripcion=" + filtro.getDescripcion()
+					+ ", estado=" + filtro.getEstado());
 			ResultSet rs = stmt.executeQuery();
 
 			while (rs.next()) {

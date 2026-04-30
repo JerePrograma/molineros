@@ -161,6 +161,40 @@ if (localidades == null || localidades.size()==0) {
 	localidades,PortletSession.APPLICATION_SCOPE);	
 }
 
+Map<Integer, ArrayList<Localidad>> localidadesPorProvincia =
+        (Map<Integer, ArrayList<Localidad>>) portletSession.getAttribute(
+                WebKeysAfiliados.LOCALIDADES_EN_SESSION_POR_PROVINCIA,
+                PortletSession.APPLICATION_SCOPE
+        );
+
+if (localidadesPorProvincia == null || localidadesPorProvincia.size() == 0) {
+    localidadesPorProvincia = new HashMap<Integer, ArrayList<Localidad>>();
+
+    if (localidades != null) {
+        for (Localidad l : localidades) {
+            if (l == null) continue;
+            if (l.getId_provincia() <= 0) continue;
+            if (l.getDescripcion() == null || l.getDescripcion().trim().length() == 0) continue;
+
+            Integer idProvincia = Integer.valueOf(l.getId_provincia());
+
+            ArrayList<Localidad> lst = localidadesPorProvincia.get(idProvincia);
+            if (lst == null) {
+                lst = new ArrayList<Localidad>();
+                localidadesPorProvincia.put(idProvincia, lst);
+            }
+
+            lst.add(l);
+        }
+    }
+
+    portletSession.setAttribute(
+            WebKeysAfiliados.LOCALIDADES_EN_SESSION_POR_PROVINCIA,
+            localidadesPorProvincia,
+            PortletSession.APPLICATION_SCOPE
+    );
+}
+
 /* List<Seccional> seccionales = (ArrayList<Seccional>) portletSession
 .getAttribute(WebKeysAfiliados.SECCIONALES_EN_SESSION,
 PortletSession.APPLICATION_SCOPE); */
@@ -198,38 +232,6 @@ if (subEspecialidadPrestador == null) {
 	portletSession.setAttribute(WebKeysLiquidaciones.LISTAS_DE_SUB_ESPECIALIDAD_PRESTADOR_EN_SESSION,
 	subEspecialidadPrestador, PortletSession.APPLICATION_SCOPE);
 }
-
-
-//DS - Manejo Localidades por Provincia
-//Map<Integer,List<Localidad>> localidadesPorProvincia = TraeListasServiceUtil.getLocalidadesAgrupadasPorProvincia();
-
-Map<Integer,List<Localidad>> localidadesPorProvincia = (Map<Integer,List<Localidad>>) portletSession
-.getAttribute(WebKeysAfiliados.LOCALIDADES_EN_SESSION_POR_PROVINCIA, PortletSession.APPLICATION_SCOPE);
-
-if (localidadesPorProvincia == null || localidadesPorProvincia.size()==0) {
-	localidadesPorProvincia = new HashMap<Integer,List<Localidad>>();	 
-		
-	for(Localidad l:localidades){
-		if(l!=null && l.getId_provincia()>0 && l.getDescripcion()!=null && !"".equalsIgnoreCase(l.getDescripcion().trim() )){
-			List<Localidad> lst =  new ArrayList<Localidad>();
-			try{
-			  lst = localidadesPorProvincia.get(l.getId_provincia());
-			  if(lst==null) lst =  new ArrayList<Localidad>();
-			}catch(Exception e){
-			  lst =  new ArrayList<Localidad>();
-			}
-			lst.add(l);
-			localidadesPorProvincia.put(l.getId_provincia(), lst);
-	   }
-	}
-	
-	portletSession.setAttribute(WebKeysAfiliados.LOCALIDADES_EN_SESSION_POR_PROVINCIA,
-			localidadesPorProvincia,PortletSession.APPLICATION_SCOPE);
-
-}
-
-//DS
-
 
 List<Plan> planesPrestadores =
 	(List<Plan>) session.getAttribute(WebKeysPrestadores.PLANES_EN_SESSION);

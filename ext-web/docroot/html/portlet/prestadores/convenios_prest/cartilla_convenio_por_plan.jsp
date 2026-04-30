@@ -131,7 +131,9 @@
             <tr>
                 <td><label>Provincia:</label></td>
                 <td>
-                    <select name="idProvincia" id="<portlet:namespace />idProvincia">
+                    <select name="idProvincia"
+                    id="<portlet:namespace />idProvincia"
+                    onchange="<portlet:namespace/>filtrarLocalidadesCartilla();">
                         <option value="">-- Todas --</option>
                         <%
                             if (provincias != null) {
@@ -150,21 +152,45 @@
 
                 <td><label>Localidad:</label></td>
                 <td>
-                    <select name="idLocalidad" id="<portlet:namespace />idLocalidad">
-                        <option value="">-- Todas --</option>
-                        <%
-                            if (localidades != null) {
-                                for (Localidad l : localidades) {
-                        %>
-                        <option value="<%= l.getId() %>"
-                            <%= idLocalidadValue.equals(String.valueOf(l.getId())) ? "selected=\"selected\"" : "" %>>
-                            <%= HtmlUtil.escape(l.getDescripcion()) %>
-                        </option>
-                        <%
+                    <div class="selector-localidad-cartilla">
+                        <select name="idLocalidad" id="<portlet:namespace />idLocalidad">
+                            <option value="">-- Todas --</option>
+                            <%
+                                Integer idProvinciaFiltro = null;
+
+                                try {
+                                    if (idProvinciaValue != null && idProvinciaValue.trim().length() > 0) {
+                                        idProvinciaFiltro = Integer.valueOf(idProvinciaValue);
+                                    }
+                                } catch (Exception e) {
+                                    idProvinciaFiltro = null;
                                 }
-                            }
-                        %>
-                    </select>
+
+                                if (localidades != null && idProvinciaFiltro != null && idProvinciaFiltro.intValue() > 0) {
+                                    java.util.LinkedHashMap<Integer, Localidad> localidadesUnicas =
+                                            new java.util.LinkedHashMap<Integer, Localidad>();
+
+                                    for (Localidad l : localidades) {
+                                        if (l == null) continue;
+                                        if (l.getId() <= 0) continue;
+                                        if (l.getId_provincia() != idProvinciaFiltro.intValue()) continue;
+                                        if (l.getDescripcion() == null || l.getDescripcion().trim().length() == 0) continue;
+
+                                        localidadesUnicas.put(Integer.valueOf(l.getId()), l);
+                                    }
+
+                                    for (Localidad l : localidadesUnicas.values()) {
+                            %>
+                            <option value="<%= l.getId() %>"
+                                <%= idLocalidadValue.equals(String.valueOf(l.getId())) ? "selected=\"selected\"" : "" %>>
+                                <%= HtmlUtil.escape(l.getDescripcion()) %>
+                            </option>
+                            <%
+                                    }
+                                }
+                            %>
+                        </select>
+                    </div>
                 </td>
             </tr>
 
@@ -398,6 +424,7 @@
         jQuery("#" + nsKey("prestadorDescripcion")).val("");
         jQuery("#" + nsKey("idProvincia")).val("");
         jQuery("#" + nsKey("idLocalidad")).val("");
+        jQuery("#" + nsKey("idLocalidad")).html('<option value="">-- Todas --</option>');
         jQuery("#" + nsKey("idEspecialidad")).val("");
         jQuery("#" + nsKey("incluyeBajas")).prop("checked", false);
 
@@ -437,4 +464,58 @@
     jQuery(document).ready(function () {
         <portlet:namespace/>syncExportButton();
     });
+
+    function <portlet:namespace/>filtrarLocalidadesCartilla() {
+        var idProvincia = jQuery("#" + nsKey("idProvincia")).val();
+        var $localidad = jQuery("#" + nsKey("idLocalidad"));
+
+        $localidad.html('<option value="">-- Todas --</option>');
+        $localidad.val("");
+
+        if (!idProvincia || idProvincia === "0") {
+            return false;
+        }
+
+        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/id_provincia_localidad&idProvincia='
+            + encodeURIComponent(idProvincia);
+
+        jQuery.ajax({
+            url: fixUrl(url),
+            type: "GET",
+            async: false,
+            success: function(data) {
+                var obj = null;
+
+                try {
+                    obj = jQuery.parseJSON(data);
+                } catch (e) {
+                    obj = null;
+                }
+
+                if (obj && obj.listaFiltrada && obj.listaFiltrada.length) {
+                    $localidad.html(obj.listaFiltrada.join(""));
+                } else {
+                    $localidad.html('<option value="">-- Todas --</option>');
+                }
+
+                var $defaultOption = $localidad.find("option[value='0']").first();
+                if ($defaultOption.length) {
+                    $defaultOption.val("");
+                    $defaultOption.text("-- Todas --");
+                }
+
+                if ($localidad.find("option[value='']").length === 0) {
+                    $localidad.prepend('<option value="">-- Todas --</option>');
+                }
+
+                $localidad.val("");
+            },
+            error: function() {
+                $localidad.html('<option value="">-- Todas --</option>');
+                $localidad.val("");
+            }
+        });
+
+        return false;
+    }
 </script>

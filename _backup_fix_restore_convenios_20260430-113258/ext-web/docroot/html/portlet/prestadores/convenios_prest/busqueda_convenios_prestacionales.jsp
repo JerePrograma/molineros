@@ -3,12 +3,6 @@
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
 <%
-    boolean restoreConvPrest = ParamUtil.getBoolean(request, "restoreConvPrest", false);
-    boolean mostrarResultadosRestaurados =
-            restoreConvPrest
-            && request.getSession().getAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_RESULTS) != null;
-%>
-<%
 		BusquedaConvenioPrestacionalFiltro filtro = (BusquedaConvenioPrestacionalFiltro) request.getSession().getAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_FILTRO);
 		
  		boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysLiquidaciones.ROL_ABM_CONVENIO_PREST);
@@ -84,11 +78,9 @@
 				</table>
 			</div>
 			<div align="center" id="<portlet:namespace />busquedaConvPrestacDiv">
-                            <% if (mostrarResultadosRestaurados) { %>
-                                <liferay-util:include page="/html/portlet/prestadores/convenios_prest/convenios_prestac_search_result.jsp">
-                                </liferay-util:include>
-                            <% } %>
-                    </div>
+				<liferay-util:include page="/html/portlet/prestadores/convenios_prest/convenios_prestac_search_result.jsp">
+				</liferay-util:include>
+			</div>
 		</fieldset>
 </form>
 <script type="text/javascript">

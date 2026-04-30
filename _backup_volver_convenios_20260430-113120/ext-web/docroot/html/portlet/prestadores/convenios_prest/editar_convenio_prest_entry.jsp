@@ -500,8 +500,7 @@
 </form>
 
 <portlet:renderURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>" var="volverConveniosDefault">
-    <portlet:param name="struts_action" value="/prestadores/convenios_prestacionales" />
-    <portlet:param name="restoreConvPrest" value="true" />
+	<portlet:param name="struts_action" value="/prestadores/convenios_prestacionales" />
 </portlet:renderURL>
 
 <p>
@@ -1232,18 +1231,21 @@ jQuery('#<portlet:namespace />tipo_valorizacion').change(function(){
 	}
 
 	function <portlet:namespace />volverAConvenios() {
-        var backURL = jQuery.trim(jQuery("#<portlet:namespace />backURL").val() || "");
+		var backURL = jQuery.trim(jQuery("#<portlet:namespace />backURL").val() || "");
 
-        if (backURL !== ""
-                && backURL.indexOf("restoreConvPrest=true") >= 0
-                && backURL.indexOf("/prestadores/convenios_prestacionales") >= 0) {
-            window.location.href = backURL.replace(/&amp;/g, "&");
-            return false;
-        }
+		if (backURL !== "") {
+			window.location.href = backURL;
+			return false;
+		}
 
-        window.location.href = "<%= volverConveniosDefault %>".replace(/&amp;/g, "&");
-        return false;
-    }
+		if (window.history.length > 1) {
+			window.history.back();
+			return false;
+		}
+
+		window.location.href = "<%= volverConveniosDefault %>";
+		return false;
+	}
 
 	function <portlet:namespace />fechaParcialInformada(prefijo) {
 		var dia = jQuery.trim(jQuery("#<portlet:namespace />" + prefijo + "Dia").val() || "");

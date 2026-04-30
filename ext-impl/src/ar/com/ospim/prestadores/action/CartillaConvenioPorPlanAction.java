@@ -103,6 +103,10 @@ public class CartillaConvenioPorPlanAction extends PortletAction {
         int idLocalidad = ParamUtil.getInteger(request, "idLocalidad", 0);
         int idEspecialidad = ParamUtil.getInteger(request, "idEspecialidad", 0);
 
+        if (idProvincia <= 0) {
+            idLocalidad = 0;
+        }
+
         filtro.setIdPlan(idPlan > 0 ? Integer.valueOf(idPlan) : null);
         filtro.setIdPrestador(idPrestador > 0 ? Integer.valueOf(idPrestador) : null);
         filtro.setIdProvincia(idProvincia > 0 ? Integer.valueOf(idProvincia) : null);
