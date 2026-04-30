@@ -1,0 +1,91 @@
+# ------------------------------------------------------------
+# OSPIM / Liferay EXT (Ant) - artefactos locales, IDE y deploy
+# ------------------------------------------------------------
+
+# --- Sistema operativo ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.Spotlight-V100/
+.Trashes/
+
+# --- Archivos temporales de editores ---
+*~
+*.swp
+*.swo
+*.tmp
+
+# --- IDEs / editores ---
+.idea/
+.vscode/
+.recommenders/
+*.iml
+
+# Eclipse / STS
+.classpath
+.project
+.settings/
+
+# NetBeans
+nbproject/private/
+
+# SVN legacy
+.svn/
+
+# --- Build local / salidas temporales ---
+out/
+target/
+build/
+output/
+**/output/
+classes/
+**/classes/
+**/tmp/
+**/work/
+**/logs/
+
+# --- Reportes y volcados de runtime ---
+*.log
+hs_err_pid*
+replay_pid*
+
+# --- Cobertura / análisis ---
+coverage/
+.coverage
+
+# --- Tooling local opcional ---
+.gradle/
+node_modules/
+
+# --- Java / build artifacts ---
+*.class
+*.ser
+*.jar
+*.war
+*.ear
+
+# --- Liferay EXT deploy/build local ---
+/ext-impl/ext-impl.jar
+/ext-service/ext-service.jar
+/ext-web/docroot/WEB-INF/classes/
+ext-web/docroot/WEB-INF/classes/
+
+# --- Backups locales generados por scripts ---
+_backup_*/
+*.bak
+*.bak-*
+*.backup
+*.backup-*
+
+# --- Archivos de entorno local ---
+.env
+.env.*
+*.local
+
+# --- Configuraciones fuera del repositorio ---
+*.properties
+*.properties.*
+
+# --- Reportes locales de auditoria ---
+tracked-build-properties-audit.txt
