@@ -86,8 +86,29 @@ build.*.properties
 # --- Configuración sensible local ---
 ext-impl/src/portal-ext.properties
 ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client.properties
-ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client_inicial.properties# --- Configuracion local por desarrollador ---
+ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client_inicial.properties
+# --- Configuracion local por desarrollador ---
 # --- Configuracion sensible local ---
 .svn/
 ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client_inicial.properties
 ext-web/docroot/WEB-INF/classes/
+
+# --- Configuraciones fuera del repositorio ---
+*.properties
+*.properties.*
+.env
+.env.*
+*.local
+# --- Configuracion local Liferay / Ant ---
+app.server.properties
+app.server.*.properties
+build.properties
+build.*.properties
+portal-ext.properties
+ext-impl/src/portal-ext.properties
+ext-impl/src/system-ext.properties
+# --- Configuracion AFIP / credenciales locales ---
+ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client.properties
+ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client_inicial.properties
+# --- Reportes locales de auditoria ---
+tracked-build-properties-audit.txt
