@@ -79,4 +79,12 @@ _backup_*/
 *.bak
 *.bak-*
 *.backup
-*.backup-*
+*.backup-*# Artefactos locales / generados / IDE / deploy legacy
+.svn/
+.idea/
+**/output/
+classes/
+**/classes/
+*.war
+app.server.*.properties
+build.*.properties
