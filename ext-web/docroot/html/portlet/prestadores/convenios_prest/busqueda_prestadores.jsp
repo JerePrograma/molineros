@@ -1,4 +1,4 @@
-<%@ include file="/html/portlet/prestadores/convenios_prest/init.jsp"%>
+<%@ include file="/html/portlet/prestadores/init.jsp"%>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet"%>
 <portlet:defineObjects />
 <%
@@ -59,7 +59,7 @@
 				<td><select 
 					name="<portlet:namespace/>profesion"
 					id="<portlet:namespace/>profesion" onchange="manejarProfesion();">
-					<option selected value="0" >Seleccione una profesi�n</option>
+					<option selected value="0" >Seleccione una profesión</option>
 					<% for (ProfesionPrestador prof : profesionPrestador) { %>
 						<option
 							<%-- <%= prof != null && prof.getIdProfesion() != 0 && prof.getIdProfesion() == prof.getIdProfesion() ? "selected" : ""  %> --%>
