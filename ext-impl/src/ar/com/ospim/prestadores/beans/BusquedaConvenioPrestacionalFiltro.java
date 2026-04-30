@@ -20,15 +20,41 @@ public class BusquedaConvenioPrestacionalFiltro implements Serializable {
 	
 	
 	public BusquedaConvenioPrestacionalFiltro(String cuit, String descripcion,
-			int idPrestador, int estado, int pagina) {
-		
-		super();
-		this.cuit = cuit;
-		this.descripcion = descripcion;
-		this.idPrestador = idPrestador;
-		this.estado = estado;
-		this.pagina = pagina;
-	}
+                        int idPrestador, int estado, int pagina) {
+
+                this(
+                        cuit,
+                        descripcion,
+                        idPrestador > 0 ? Integer.valueOf(idPrestador) : null,
+                        estado,
+                        pagina
+                );
+        }
+
+
+        public BusquedaConvenioPrestacionalFiltro(String cuit, String descripcion,
+                        Integer idPrestador, int estado, int pagina) {
+
+                super();
+
+                if (cuit != null && cuit.trim().length() == 0) {
+                        cuit = null;
+                }
+
+                if (descripcion != null && descripcion.trim().length() == 0) {
+                        descripcion = null;
+                }
+
+                if (idPrestador != null && idPrestador.intValue() <= 0) {
+                        idPrestador = null;
+                }
+
+                this.cuit = cuit;
+                this.descripcion = descripcion;
+                this.idPrestador = idPrestador;
+                this.estado = estado;
+                this.pagina = pagina;
+        }
 	
 	public String getCuit() {
 		return cuit;

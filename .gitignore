@@ -16,7 +16,7 @@ $RECYCLE.BIN/
 *.swo
 *.tmp
 
-# --- IDEs / editores (manteniendo lo versionado del proyecto) ---
+# --- IDEs / editores ---
 .vscode/
 
 # IntelliJ IDEA: este repo ya versiona gran parte de .idea,
@@ -36,36 +36,47 @@ $RECYCLE.BIN/
 # NetBeans
 nbproject/private/
 
-# --- Build local / salidas temporales (no fuentes) ---
+# --- Build local / salidas temporales ---
 **/tmp/
 **/work/
 **/logs/
 
-# Salidas comunes de build/test local
 out/
 target/
 build/
+output/
 
-# Reportes y volcados de runtime
+# --- Reportes y volcados de runtime ---
 *.log
 hs_err_pid*
 replay_pid*
 
-# Cobertura / análisis
+# --- Cobertura / análisis ---
 coverage/
 .coverage
-
-output/
 
 # --- Tooling local opcional ---
 .gradle/
 node_modules/
 
-# --- Archivos de entorno local (si se crean en cada máquina) ---
+# --- Archivos de entorno local ---
 .env
 .env.*
 *.local
 
-# Java compiled bytecode
+# --- Java / build artifacts ---
 *.class
 *.ser
+*.jar
+
+# --- Liferay EXT deploy/build local ---
+/ext-impl/classes/
+/ext-impl/ext-impl.jar
+/ext-service/ext-service.jar
+
+# --- Backups locales generados por scripts ---
+_backup_*/
+*.bak
+*.bak-*
+*.backup
+*.backup-*

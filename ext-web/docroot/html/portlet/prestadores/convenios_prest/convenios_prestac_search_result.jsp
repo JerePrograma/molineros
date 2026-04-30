@@ -2,7 +2,7 @@
 <%@ include file="/html/portlet/prestadores/convenios_prest/init.jsp" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
-<portlet:renderURL var="volverIndiceConveniosURL" windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>">
+<portlet:renderURL var="volverIndiceConveniosURL" windowState="<%= LiferayWindowState.NORMAL.toString() %>">
     <portlet:param name="struts_action" value="/prestadores/convenios_prestacionales" />
     <portlet:param name="restoreConvPrest" value="true" />
 </portlet:renderURL>
@@ -23,8 +23,8 @@
                         url = url + '&<%=Constants.CMD%>='+'<%=Constants.VIEW%>';
                         url = url + '&backURL=' + encodeURIComponent(backURL);
 
-                        document.<portlet:namespace />fm.method = 'post';
-                        submitForm(document.<portlet:namespace />fm, url);
+                        window.location.href = url;
+                        return false;
                 }     										
 	</script>
 
@@ -37,7 +37,7 @@
 							convPresLista = new ArrayList<ConvenioPrestacional>();
 					}				
                 PortletURL iteratorURL = renderResponse.createRenderURL();
-                iteratorURL.setWindowState(LiferayWindowState.MAXIMIZED);
+                iteratorURL.setWindowState(LiferayWindowState.NORMAL);
                 iteratorURL.setParameter("struts_action", "/prestadores/convenios_prestacionales");
                 iteratorURL.setParameter("restoreConvPrest", "true");
 
@@ -83,10 +83,30 @@
 					 				//portletURL.setParameter("struts_action","/prestadores/view_contrato_entry");
 					 				//portletURL.setParameter("por_codigo", vistaView);
 					 				row.addText(String.valueOf(convPrest.getId()));
-					 				row.addText(String.valueOf(convPrest.getPrestador().getId_prestador()));
-					 				row.addText(convPrest.getPrestador().getDescripcion());
-					 				row.addText(convPrest.getPrestador().getCuit());
-					 				row.addText(convPrest.getPrestador().getTipo().getDescripcion());
+					 				String codPrestadorText = "";
+                                                                        String razonSocialText = "";
+                                                                        String cuitPrestadorText = "";
+                                                                        String tipoPrestadorText = "";
+
+                                                                        if (convPrest.getPrestador() != null) {
+                                                                                codPrestadorText = String.valueOf(convPrest.getPrestador().getId_prestador());
+
+                                                                                if ("null".equalsIgnoreCase(codPrestadorText) || "0".equals(codPrestadorText)) {
+                                                                                        codPrestadorText = "";
+                                                                                }
+
+                                                                                razonSocialText = convPrest.getPrestador().getDescripcion() != null ? convPrest.getPrestador().getDescripcion() : "";
+                                                                                cuitPrestadorText = convPrest.getPrestador().getCuit() != null ? convPrest.getPrestador().getCuit() : "";
+
+                                                                                if (convPrest.getPrestador().getTipo() != null && convPrest.getPrestador().getTipo().getDescripcion() != null) {
+                                                                                        tipoPrestadorText = convPrest.getPrestador().getTipo().getDescripcion();
+                                                                                }
+                                                                        }
+
+                                                                        row.addText(codPrestadorText);
+                                                                        row.addText(razonSocialText);
+                                                                        row.addText(cuitPrestadorText);
+                                                                        row.addText(tipoPrestadorText);
 					 				row.addText(convPrest.getEstado().toString());
 					 				row.addText(sdf.format(convPrest.getAltaFecha()));
 					 				row.addText(convPrest.getAltaUsr());

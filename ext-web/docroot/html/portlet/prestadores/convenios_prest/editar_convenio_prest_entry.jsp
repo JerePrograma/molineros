@@ -499,7 +499,7 @@
 	</table>
 </form>
 
-<portlet:renderURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>" var="volverConveniosDefault">
+<portlet:renderURL var="volverConveniosDefault" windowState="<%= LiferayWindowState.NORMAL.toString() %>">
     <portlet:param name="struts_action" value="/prestadores/convenios_prestacionales" />
     <portlet:param name="restoreConvPrest" value="true" />
 </portlet:renderURL>

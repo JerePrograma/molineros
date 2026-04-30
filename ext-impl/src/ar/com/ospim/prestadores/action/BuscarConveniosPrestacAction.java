@@ -57,16 +57,26 @@ public class BuscarConveniosPrestacAction extends PortletAction {
 		try {
 
 			String cuit = ParamUtil.getString(renderRequest, "cuit", null);
-			String descripcion = ParamUtil.getString(renderRequest,"descripcion", null);
-			int idPrestador = ParamUtil.getInteger(renderRequest, "id_prestador", 0);
-			int estado = ParamUtil.getInteger(renderRequest, "estado", 0);
+                    String descripcion = ParamUtil.getString(renderRequest,"descripcion", null);
+                    int idPrestador = ParamUtil.getInteger(renderRequest, "id_prestador", 0);
+                    int estado = ParamUtil.getInteger(renderRequest, "estado", 0);
+
+                    if (cuit != null && cuit.trim().length() == 0) {
+                            cuit = null;
+                    }
+
+                    if (descripcion != null && descripcion.trim().length() == 0) {
+                            descripcion = null;
+                    }
+
+                    Integer idPrestadorFiltro = idPrestador > 0 ? Integer.valueOf(idPrestador) : null;
 
 			_log.debug("[BUSCAR-CONV-PREST][RENDER][PARAMS] cuit=" + cuit
 					+ ", descripcion=" + descripcion
 					+ ", id_prestador=" + idPrestador
 					+ ", estado=" + estado);
 
-			BusquedaConvenioPrestacionalFiltro filtro = new BusquedaConvenioPrestacionalFiltro(cuit, descripcion, idPrestador, estado, 1);
+			BusquedaConvenioPrestacionalFiltro filtro = new BusquedaConvenioPrestacionalFiltro(cuit, descripcion, idPrestadorFiltro, estado, 1);
 			_log.debug("[BUSCAR-CONV-PREST][RENDER][FILTRO] filtro=" + filtro);
 
 			List<ConvenioPrestacional> busqueda = ConvenioPrestacionalServiceUtil.buscarConveniosPrestacionales(filtro);

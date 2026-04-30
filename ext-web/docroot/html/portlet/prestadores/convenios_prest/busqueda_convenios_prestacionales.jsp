@@ -10,8 +10,43 @@
 %>
 <%
 		BusquedaConvenioPrestacionalFiltro filtro = (BusquedaConvenioPrestacionalFiltro) request.getSession().getAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_FILTRO);
+
+            // CONV-PREST-FILTRO-NORMALIZACION
+            // Limpia sesiones viejas donde idPrestador quedó guardado como 0.
+            if (filtro != null) {
+                    if (filtro.getIdPrestador() != null && filtro.getIdPrestador().intValue() <= 0) {
+                            filtro.setIdPrestador(null);
+                    }
+
+                    if (filtro.getCuit() != null && filtro.getCuit().trim().length() == 0) {
+                            filtro.setCuit(null);
+                    }
+
+                    if (filtro.getDescripcion() != null && filtro.getDescripcion().trim().length() == 0) {
+                            filtro.setDescripcion(null);
+                    }
+
+                    request.getSession().setAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_FILTRO, filtro);
+            }
 		
- 		boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysLiquidaciones.ROL_ABM_CONVENIO_PREST);
+ 		            String idPrestadorFiltroValue = "";
+            String cuitFiltroValue = "";
+            String descripcionFiltroValue = "";
+
+            if (filtro != null) {
+                    if (filtro.getIdPrestador() != null && filtro.getIdPrestador().intValue() > 0) {
+                            idPrestadorFiltroValue = String.valueOf(filtro.getIdPrestador());
+                    }
+
+                    if (filtro.getCuit() != null) {
+                            cuitFiltroValue = filtro.getCuit();
+                    }
+
+                    if (filtro.getDescripcion() != null) {
+                            descripcionFiltroValue = filtro.getDescripcion();
+                    }
+            }
+            boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysLiquidaciones.ROL_ABM_CONVENIO_PREST);
 		PortletURL portletURL = renderResponse.createRenderURL();
 		portletURL.setWindowState(LiferayWindowState.MAXIMIZED);
 		portletURL.setParameter("struts_action", "/prestadores/view");
@@ -29,9 +64,9 @@
 						<td colspan="6">
 						    <liferay-util:include page="/html/portlet/utils/prestadores/busqueda_prestador.jsp">
 						  		<liferay-util:param name="search_url" value="/prestadores/buscar_prestador"/>
-						  		<liferay-util:param name="cuit_prestador" value="<%=filtro!=null?filtro.getCuit():null %>"/>
-						  		<liferay-util:param name="nombre_prestador" value="<%=filtro!=null?filtro.getDescripcion():null %>"/>
-						  		<liferay-util:param name="id_prestador" value="<%=filtro!=null?String.valueOf(filtro.getIdPrestador()):null %>"/>
+						  		<liferay-util:param name="cuit_prestador" value="<%= cuitFiltroValue %>"/>
+						  		<liferay-util:param name="nombre_prestador" value="<%= descripcionFiltroValue %>"/>
+						  		<liferay-util:param name="id_prestador" value="<%= idPrestadorFiltroValue %>"/>
 						  		<liferay-util:param name="esEditable" value='<%= String.valueOf(true) %>'/>
 						  		<liferay-util:param name="ext" value="_bc"/>
 							</liferay-util:include>
