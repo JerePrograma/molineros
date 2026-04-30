@@ -30,6 +30,9 @@ $RECYCLE.BIN/
 # NetBeans
 nbproject/private/
 
+# SVN legacy
+.svn/
+
 # --- Build local / salidas temporales ---
 out/
 target/
@@ -55,11 +58,6 @@ coverage/
 .gradle/
 node_modules/
 
-# --- Archivos de entorno local ---
-.env
-.env.*
-*.local
-
 # --- Java / build artifacts ---
 *.class
 *.ser
@@ -71,6 +69,7 @@ node_modules/
 /ext-impl/ext-impl.jar
 /ext-service/ext-service.jar
 /ext-web/docroot/WEB-INF/classes/
+ext-web/docroot/WEB-INF/classes/
 
 # --- Backups locales generados por scripts ---
 _backup_*/
@@ -79,50 +78,14 @@ _backup_*/
 *.backup
 *.backup-*
 
-# --- Configuración local por desarrollador ---
-app.server.*.properties
-build.*.properties
-
-# --- Configuración sensible local ---
-ext-impl/src/portal-ext.properties
-ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client.properties
-ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client_inicial.properties
-# --- Configuracion local por desarrollador ---
-# --- Configuracion sensible local ---
-.svn/
-ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client_inicial.properties
-ext-web/docroot/WEB-INF/classes/
+# --- Archivos de entorno local ---
+.env
+.env.*
+*.local
 
 # --- Configuraciones fuera del repositorio ---
 *.properties
 *.properties.*
-.env
-.env.*
-*.local
-# --- Configuracion local Liferay / Ant ---
-app.server.properties
-app.server.*.properties
-build.properties
-build.*.properties
-portal-ext.properties
-ext-impl/src/portal-ext.properties
-ext-impl/src/system-ext.properties
-# --- Configuracion AFIP / credenciales locales ---
-ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client.properties
-ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client_inicial.properties
+
 # --- Reportes locales de auditoria ---
-tracked-build-properties-audit.txt
-
-*.properties
-*.properties.*
-.env
-.env.*
-*.local
-tracked-build-properties-audit.txt
-
-*.properties
-*.properties.*
-.env
-.env.*
-*.local
 tracked-build-properties-audit.txt
