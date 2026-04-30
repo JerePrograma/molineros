@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ include file="/html/portlet/liquidaciones/init.jsp" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <%
@@ -579,7 +580,7 @@
 							var hoy = new Date();
 							var vVto = fechaVto.split("-");
 							var vto = new Date(vVto[2],vVto[1],vVto[0]);
-							jQuery('#<portlet:namespace/>discapacidad_vto').html("Vto. Documentación "+fechaVto);
+							jQuery('#<portlet:namespace/>discapacidad_vto').html("Vto. Documentaci\u00F3n "+fechaVto);
 							if(vto<hoy ){
 								alert("El certificado de Discapacidad Esta Vencido desde el " +fechaVto)
 							}

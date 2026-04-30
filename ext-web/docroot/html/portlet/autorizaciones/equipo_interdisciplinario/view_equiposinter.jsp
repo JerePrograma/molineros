@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ include file="/html/portlet/autorizaciones/init.jsp"%>
 <%@ include file="/html/portlet/autorizaciones/equipo_interdisciplinario/init.jsp"%>
 
@@ -602,7 +603,7 @@ div.divheaderNroReclamo {
 			<td colspan="3">				
 				<fieldset class="block-labels">
 				<legend>
-				<liferay-ui:message key="Psicóloga" />
+				<liferay-ui:message key="Psicï¿½loga" />
 				</legend>
 				<textarea  rows="4" cols="55" <% if (inHabilitar) { %><%="disabled='disabled'" %><%}%>  onkeyup="convertToUppercase(this)"   id="<portlet:namespace />observacion"  				
 				name="<portlet:namespace />dictamenAntecedentes" ><%=equipoInterdisciplinario!=null && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.ANTECEDENTES)   !=null ?equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.ANTECEDENTES) :""%></textarea>				
@@ -632,8 +633,8 @@ div.divheaderNroReclamo {
 		<tr>
 			<td colspan="3">
 				<% if (BtnFirmar == 0 && esFirmaPsicologo == false){  %>
-					<div   id="<portlet:namespace />id_firma_psicologo"  align="center"> <input type="button"  value="Firma Psicólogo"
-						      onClick="<portlet:namespace />agregarFirmaPrestacion(0);"  id="<portlet:namespace />buttonaddfirma" name="<portlet:namespace />buttonaddfirma"  title="Firma psicólogo"/>
+					<div   id="<portlet:namespace />id_firma_psicologo"  align="center"> <input type="button"  value="Firma Psicï¿½logo"
+						      onClick="<portlet:namespace />agregarFirmaPrestacion(0);"  id="<portlet:namespace />buttonaddfirma" name="<portlet:namespace />buttonaddfirma"  title="Firma psicï¿½logo"/>
 					</div>
 				<%}%>	
 			</td>
@@ -702,7 +703,7 @@ div.divheaderNroReclamo {
 		<tr>
 			<td colspan="3">
 				<% if (BtnFirmar == 3 && esFirmaTerapiaFisica == false){  %>
-					<div   id="<portlet:namespace />id_firma_terapia_fisica" align="center"> <input type="button"  value="<liferay-ui:message key="firma-dictamen-licenciado-kinesiología-terapia-fisica" />"
+					<div   id="<portlet:namespace />id_firma_terapia_fisica" align="center"> <input type="button"  value="<liferay-ui:message key="firma-dictamen-licenciado-kinesiologï¿½a-terapia-fisica" />"
 						      onClick="<portlet:namespace />agregarFirmaPrestacion(3);"  id="<portlet:namespace />buttonaddfirma" name="<portlet:namespace />buttonaddfirma"  title="<liferay-ui:message key="add-firma-terapia-fisica" />"/>
 					</div>	
 				<%}%>
@@ -961,7 +962,7 @@ function <portlet:namespace />buscarNomencladorAutocompletar(){
         alert('<liferay-ui:message key="ingrese-parametros-busqueda" />'); 
     }else {
     	if(popupMD==null)
-    		popupMD = Liferay.Popup({title:"Búsqueda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
+    		popupMD = Liferay.Popup({title:"Bï¿½squeda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
     	
     	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/buscar_nomenclador';    	
 	    url += '&descripcionnomenclador='+encodeURI(nombre_nomenclador)+'&tiponomenclador='+/*encodeURI(8)*/'' +'&marcareinliq='+/*encodeURI(6)*/ ''  +'&codigonomenclador='+encodeURI(codigo_nomenclador)+'&soloActivos=true';
@@ -1135,7 +1136,7 @@ function <portlet:namespace />editaEquipoInterdisciplinario() {
 			}		
 			
 			<%if(esFirmaAsistenteSocial && esFirmaAuditor && esFirmaTerapiaFisica){%>
-				alert('Se encuentran las firmas de los dictámenes, puede cerrar el caso.');
+				alert('Se encuentran las firmas de los dictï¿½menes, puede cerrar el caso.');
 			<%}%>
 			
 			var accionEnCurso = document.<portlet:namespace />equipo_fm.<portlet:namespace /><%= Constants.CMD %>.value;
