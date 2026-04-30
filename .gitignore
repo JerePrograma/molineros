@@ -1,5 +1,7 @@
 # ------------------------------------------------------------
-# OSPIM / Liferay EXT (Ant) - artefactos locales, IDE y deploy
+# OSPIM / Liferay EXT (Ant)
+# Ignorar solo basura local/generada.
+# Trackear configuraciones explícitas y deploy local.
 # ------------------------------------------------------------
 
 # --- Sistema operativo ---
@@ -10,19 +12,28 @@ $RECYCLE.BIN/
 .Spotlight-V100/
 .Trashes/
 
-# --- Archivos temporales de editores ---
+# --- Temporales de editores ---
 *~
 *.swp
 *.swo
 *.tmp
 
 # --- IDEs / editores ---
-.idea/
+# NO ignorar .idea completa: puede tener configuración útil del proyecto.
+# Se ignoran solo archivos volátiles/locales.
 .vscode/
 .recommenders/
-*.iml
 
-# Eclipse / STS
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/shelf/
+.idea/httpRequests/
+.idea/dataSources/
+.idea/dataSources.local.xml
+.idea/sonarlint/
+.idea/caches/
+
+# Eclipse / STS: normalmente local, no del proyecto.
 .classpath
 .project
 .settings/
@@ -33,14 +44,14 @@ nbproject/private/
 # SVN legacy
 .svn/
 
-# --- Build local / salidas temporales ---
+# --- Build local / salidas generadas ---
 out/
 target/
 build/
 output/
 **/output/
-classes/
 **/classes/
+
 **/tmp/
 **/work/
 **/logs/
@@ -58,14 +69,17 @@ coverage/
 .gradle/
 node_modules/
 
-# --- Java / build artifacts ---
+# --- Java / build artifacts generados ---
 *.class
 *.ser
-*.jar
-*.war
-*.ear
 
-# --- Liferay EXT deploy/build local ---
+# No ignorar *.jar globalmente:
+# en este proyecto legacy puede haber JARs necesarios en lib/, ext-lib/, etc.
+
+# No ignorar *.war globalmente:
+# ROOT.war queda trackeable si decidís versionarlo.
+
+# Artefactos puntuales generados por Liferay EXT
 /ext-impl/ext-impl.jar
 /ext-service/ext-service.jar
 /ext-web/docroot/WEB-INF/classes/
@@ -78,13 +92,11 @@ _backup_*/
 *.backup
 *.backup-*
 
-# --- Archivos de entorno local ---
+# --- Archivos de entorno sensibles genéricos ---
+# OJO: no se ignora app.server.* porque en este repo querés trackear deploy local explícito.
 .env
 .env.*
 *.local
 
-# --- Configuraciones fuera del repositorio ---
-app.server.*
-
-# --- Reportes locales de auditoria ---
+# --- Reportes locales de auditoría ---
 tracked-build-properties-audit.txt
