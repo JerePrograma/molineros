@@ -79,7 +79,9 @@ _backup_*/
 *.bak
 *.bak-*
 *.backup
-*.backup-*# Artefactos locales / generados / IDE / deploy legacy
+*.backup-*
+
+# Artefactos locales / generados / IDE / deploy legacy
 .svn/
 .idea/
 **/output/

@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="ext-service">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/ext-service/ext-service.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
