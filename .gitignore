@@ -84,8 +84,7 @@ _backup_*/
 *.local
 
 # --- Configuraciones fuera del repositorio ---
-*.properties
-*.properties.*
+app.server.*
 
 # --- Reportes locales de auditoria ---
 tracked-build-properties-audit.txt
