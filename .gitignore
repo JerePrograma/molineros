@@ -112,3 +112,10 @@ ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client.properties
 ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client_inicial.properties
 # --- Reportes locales de auditoria ---
 tracked-build-properties-audit.txt
+
+*.properties
+*.properties.*
+.env
+.env.*
+*.local
+tracked-build-properties-audit.txt
