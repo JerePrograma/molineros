@@ -3612,7 +3612,7 @@
 		<put name="portlet_content"	value="/portlet/autorizaciones/reclamos_prestacionales/alerta_permanencia_afiliado.jsp" />
 	</definition>
 
-	<!-- Gestión de Seccionales -->
+	<!-- Gestiï¿½n de Seccionales -->
 	<definition name="portlet.gest_seccional" extends="portlet" />
 
 	<definition name="portlet.gestion_seccional.view" extends="portlet.gest_seccional">
@@ -4177,7 +4177,7 @@
 		<put name="portlet_content"	value="/portlet/estudio_isidro/seguimiento_empresas/gestion_judicial_contabilidad_result.jsp" />
 	</definition>
 	
-	<!-- Fin Gestión Judicial -->
+	<!-- Fin Gestiï¿½n Judicial -->
 	
 	<definition name="portlet.autorizaciones.reporte.avisos_vencimientos_cud"	extends="portlet.autorizaciones">
 		<put name="portlet_content" value="/portlet/autorizaciones/reportes/avisos_vencimientos_cud.jsp" />
@@ -4386,6 +4386,8 @@
 	<definition name="portlet.afiliados.vendedor.detalle" extends="portlet.afiliados">
 	    <put name="portlet_content" value="/portlet/afiliados/vendedores_detalle.jsp" />
 	</definition>
+
+<definition name="portlet.prestadores" extends="portlet" />
 
 	<!-- PRESTADORES / ALIASES DE VISTA PARA ABM LEGACY -->
 	<definition name="portlet.prestadores.aumento_prestaciones"
