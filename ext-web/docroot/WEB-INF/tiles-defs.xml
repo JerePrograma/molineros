@@ -4387,25 +4387,84 @@
 	    <put name="portlet_content" value="/portlet/afiliados/vendedores_detalle.jsp" />
 	</definition>
 
-<definition name="portlet.prestadores" extends="portlet" />
+	<definition name="portlet.prestadores" extends="portlet" />
 
-	<!-- PRESTADORES / ALIASES DE VISTA PARA ABM LEGACY -->
-	<definition name="portlet.prestadores.aumento_prestaciones"
-	            extends="portlet.prestadores">
+	<definition name="portlet.prestadores.error"
+				extends="portlet.prestadores">
 		<put name="portlet_content"
-		     value="/portlet/prestadores/aumento_prestaciones.jsp" />
+			 value="/portlet/prestadores/error.jsp" />
 	</definition>
 
-	<definition name="portlet.prestadores.cuit_existente_search_result"
+	<definition name="portlet.prestadores.view"
 	            extends="portlet.prestadores">
 		<put name="portlet_content"
-		     value="/portlet/liquidaciones/cuit_existente_search_result.jsp" />
+		     value="/portlet/prestadores/view.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.prestadores"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/busqueda_prestadores.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.result.search"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/prestadores_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.view_prestadores_entry"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/view_prestadores_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.editar_prestadores_entry"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/editar_prestadores_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.view_prestador"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/view_prestador.jsp" />
 	</definition>
 
 	<definition name="portlet.prestadores.editar_prestadores_externos"
 	            extends="portlet.prestadores">
 		<put name="portlet_content"
 		     value="/portlet/prestadores/view_prestador_externo.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.prestador_externo.result"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/prestador_externo_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.aumento_prestaciones"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/aumento_prestaciones.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.calle.view"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/calle_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.codPostal.view"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/codPostal_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.busqueda_calle"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/busqueda_calle.jsp" />
 	</definition>
 
 	<definition name="portlet.prestadores.profesion.prestador"
@@ -4450,15 +4509,107 @@
 		     value="/portlet/prestadores/lista_planes_prestador.jsp" />
 	</definition>
 
-	<definition name="portlet.prestadores.calle.view"
+	<definition name="portlet.prestadores.prestador_lugar_atencion"
 	            extends="portlet.prestadores">
 		<put name="portlet_content"
-		     value="/portlet/prestadores/calle_search_result.jsp" />
+		     value="/portlet/prestadores/prestador_lugar_atencion.jsp" />
 	</definition>
 
-	<definition name="portlet.prestadores.codPostal.view"
+	<definition name="portlet.prestadores.prestador_plan"
 	            extends="portlet.prestadores">
 		<put name="portlet_content"
-		     value="/portlet/prestadores/codPostal_search_result.jsp" />
+		     value="/portlet/prestadores/prestador_plan.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.editar_borrar_prestador"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/editar_borrar_prestador.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.editar_borrar_lugar_at_prestador"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/editar_borrar_lugar_at_prestador.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.conv_prest_detalle_search_result"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/conv_prest_detalle_search_result.jsp" />
+	</definition>
+
+	<!-- PRESTADORES / CONVENIOS PRESTACIONALES -->
+
+	<definition name="portlet.prestadores.conv_prestac"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/busqueda_convenios_prestacionales.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.conv_prestac.result.search"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/convenios_prestac_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.cartilla_convenio_por_plan"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/cartilla_convenio_por_plan.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.cartilla_convenio_por_plan_resultados"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/cartilla_prestadores_por_plan_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.editar_convenio_prest_entry"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/editar_convenio_prest_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.editar_convenio_prest"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/editar_convenio_prest.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.lista_convenio_prest_detalle"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/conv_prest_detalle_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.importar_contratos"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/upload_archivos_contratos.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.administracion.prestadores.result.search"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/prestadores_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.convenios_prest.busqueda_prestadores"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/busqueda_prestadores.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.convenios_prest.editar_prestadores_entry"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/editar_prestadores_entry.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.eliminar_convenio_prest_entry"
+	            extends="portlet.prestadores">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/convenios_prestac_search_result.jsp" />
 	</definition>
 </tiles-definitions>
