@@ -1,0 +1,41 @@
+<%
+for (int assetIndex = 0; assetIndex < results.size(); assetIndex++) {
+	TagsAsset asset = (TagsAsset)results.get(assetIndex);
+
+	String className = PortalUtil.getClassName(asset.getClassNameId());
+	long classPK = asset.getClassPK();
+
+	String title = asset.getTitle();
+	String summary = StringPool.BLANK;
+	String viewURL = StringPool.BLANK;
+	String viewURLMessage = StringPool.BLANK;
+	String editURL = StringPool.BLANK;
+
+	boolean show = true;
+
+	request.setAttribute("view.jsp-assetIndex", new Integer(assetIndex));
+
+	request.setAttribute("view.jsp-asset", asset);
+
+	request.setAttribute("view.jsp-title", title);
+	request.setAttribute("view.jsp-summary", summary);
+	request.setAttribute("view.jsp-viewURL", viewURL);
+	request.setAttribute("view.jsp-viewURLMessage", viewURLMessage);
+
+	request.setAttribute("view.jsp-className", className);
+	request.setAttribute("view.jsp-classPK", new Long(classPK));
+
+	request.setAttribute("view.jsp-show", new Boolean(show));
+
+	try {
+%>
+
+		<%@ include file="/html/portlet/asset_publisher/view_display.jspf" %>
+
+<%
+	}
+	catch (Exception e) {
+		_log.error(e.getMessage());
+	}
+}
+%>
