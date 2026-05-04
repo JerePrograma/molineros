@@ -19,6 +19,27 @@ boolean showABMAfiliado = PermissionUtil.userContainsRole(user,WebKeysAfiliados.
 boolean showCuentasBancariasAfiliado = PermissionUtil.userContainsRole(user,WebKeysAfiliados.ROL_REPORTE_AFILIACIONES);
 boolean showReportePadronConsultaExterna =PermissionUtil.userContainsRole(user,"padron_afiliados_consulta_externa");
 
+
+boolean showComercialAdministrador =
+PermissionUtil.userContainsRole(user, WebKeysAfiliados.COMERCIAL_ADMINISTRADOR);
+
+boolean showComercialSeguimientoMolineros =
+PermissionUtil.userContainsRole(user, WebKeysAfiliados.COMERCIAL_SEGUIMIENTO_MOLINEROS);
+
+boolean showComercialSeguimientoNoMolineros =
+PermissionUtil.userContainsRole(user, WebKeysAfiliados.COMERCIAL_SEGUIMIENTO_NO_MOLINEROS);
+
+boolean showComercialConsulta =
+PermissionUtil.userContainsRole(user, WebKeysAfiliados.COMERCIAL_CONSULTA);
+
+boolean showSeguimientoFormulario =
+showComercialAdministrador ||
+showComercialSeguimientoMolineros ||
+showComercialSeguimientoNoMolineros ||
+showComercialConsulta;
+
+boolean showVendedores = showComercialAdministrador;
+
 if (tabs1 == null){
 	tabs1 = (String) request.getAttribute("tabs1");
 }
@@ -73,8 +94,15 @@ if(showCuentasBancariasAfiliado){
 	tabs1ValuesBuffer.append(",cuentas_bancarias");
 }
 
-String tabs1Values=tabs1ValuesBuffer.toString();
+if (showSeguimientoFormulario) {
+    tabs1ValuesBuffer.append(",seguimiento-formulario");
+}
 
+if (showVendedores) {
+    tabs1ValuesBuffer.append(",vendedores");
+}
+
+String tabs1Values=tabs1ValuesBuffer.toString();
 
 if(!showReportePadronConsultaExterna){
   if (tabs1 == null || (tabs1 != null && tabs1Values.indexOf(tabs1) < 0)){	
@@ -143,6 +171,13 @@ currentURL = PortalUtil.getCurrentURL(request);
    		<liferay-util:include page="/html/portlet/afiliados/busqueda_afiliado_cuenta_bancaria.jsp"/> 
 	</c:when>
 	
+	<c:when test='<%= tabs1.equals("seguimiento-formulario") %>'>
+		<liferay-util:include page="/html/portlet/afiliados/seguimiento_form.jsp"/>
+  	</c:when>
+  	
+  	<c:when test='<%= tabs1.equals("vendedores") %>'>
+		<liferay-util:include page="/html/portlet/afiliados/vendedores_list.jsp"/>
+  	</c:when>
 </c:choose>
 
 </form>

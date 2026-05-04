@@ -1363,7 +1363,8 @@ function <portlet:namespace />validarCampos(){
     */
 	
     var esAfiliadoPrevencion=true;
-    if( jQuery("#<portlet:namespace />afi_tercerizadora").val() != "MOLINEROS POR ENSALUD" &&
+    if( (jQuery("#<portlet:namespace />afi_tercerizadora").val() != "MOLINEROS POR ENSALUD" &&
+    		jQuery("#<portlet:namespace />afi_tercerizadora").val() != "MOLINEROS POR CES") &&
     	(esAfiliadoDiscapacitado && jQuery("#<portlet:namespace />afi_tercerizadora").val() != "MONOTRIBUTO")	
     ){
     	esAfiliadoPrevencion=false;
@@ -1380,7 +1381,7 @@ function <portlet:namespace />validarCampos(){
     }
 	
 	if(!esAfiliadoPrevencion ){
-		alert("El Afiliado no pertenece a ENSALUD"); 
+		alert("El Afiliado no pertenece a ENSALUD o a CES"); 
    	    return false;
 	}
 	
