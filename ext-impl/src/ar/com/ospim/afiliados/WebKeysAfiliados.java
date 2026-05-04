@@ -124,7 +124,7 @@ public class WebKeysAfiliados implements com.liferay.portal.kernel.util.WebKeys 
 	public static final String DIRECCIONES_EN_SESSION = "DIRECCIONES_EN_SESSION";
 	public static final String CUIT_DESEMPLEO_ANSES = "33637617449";
 	public static final String SUCU_DESEMPLEO_ANSES = "001";
-	public static final String REPORTE_AMTIMA_PMI = "REPORTE_AMTIMA_PMI";
+	public static final String REPORTE_AMTIMA_PMI = "REPORTE_AMTIMA_PMI";						
 	public static final String PLAN_OMINT = "PLAN_OMINT";
 	public static final String LISTA_AFILIADOS_EN_SESSION = "LISTA_AFILIADOS_EN_SESSION";
 	public static final String LISTA_AFILIADOS_OPCIONES_EN_SESSION = "LISTA_AFILIADOS_OPCIONES_EN_SESSION";
@@ -174,5 +174,10 @@ public class WebKeysAfiliados implements com.liferay.portal.kernel.util.WebKeys 
 	
 	public static final String ROL_MARCAR_ANTECEDENTES_JUDICIALES = "MARCAR_ANTECEDENTES_JUDICIALES";
 	
+    public static final String COMERCIAL_ADMINISTRADOR = "comercial_administrador";
+    public static final String COMERCIAL_SEGUIMIENTO_MOLINEROS = "comercial_seguimiento_molineros";
+    public static final String COMERCIAL_SEGUIMIENTO_NO_MOLINEROS = "comercial_seguimiento_no_molineros";
+    public static final String COMERCIAL_CONSULTA = "comercial_consulta";
+    
 	
 } 

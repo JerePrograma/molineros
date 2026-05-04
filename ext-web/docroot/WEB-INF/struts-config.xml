@@ -1,4 +1,4 @@
-﻿<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://jakarta.apache.org/struts/dtds/struts-config_1_2.dtd">
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://jakarta.apache.org/struts/dtds/struts-config_1_2.dtd">
 
 <struts-config>
 	<action-mappings>
@@ -70,7 +70,8 @@
 		<action path="/afiliados/genera_credencial" type="ar.com.ospim.afiliados.action.GenerarCredencialAction">
 			<forward name="portlet.afiliados.credenciales.search" path="portlet.afiliados.credenciales.search" />	
 			<forward name="portlet.afiliados.credenciales.result" path="portlet.afiliados.credenciales.result" />	
-			<forward name="portlet.afiliados.credenciales_exepcion_copago.result" path="portlet.afiliados.credenciales_exepcion_copago.result" />	
+			<forward name="portlet.afiliados.credenciales_exepcion_copago.result" path="portlet.afiliados.credenciales_exepcion_copago.result" />
+			<forward name="portlet.afiliados.credenciales_ces.result" path="portlet.afiliados.credenciales_ces.result" />	
 			<forward name="portlet.afiliados.credenciales_busqueda_afiliado_cred.result" path="portlet.afiliados.credenciales_busqueda_afiliado_cred.result" />	
 			<forward name="portlet.afiliados.result.planes" path="portlet.planes.view" />
 		</action>
@@ -440,7 +441,6 @@
 		
 		<action path="/afiliados/pre_afiliados_buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
-			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>
 		
@@ -488,7 +488,6 @@
 				
 		<action path="/liquidaciones/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
-			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>
 		
@@ -527,6 +526,14 @@
 			<forward name="portlet.liquidaciones.conv_prestac.result.search" path="portlet.liquidaciones.conv_prestac.result.search" />
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 		</action>
+				
+		<action path="/liquidaciones/editar_convenio_prest_entry" type="ar.com.ospim.liquidaciones.action.EditarConvPrestacionalAction">
+			<forward name="portlet.liquidaciones.editar_convenio_prest_entry" path="portlet.liquidaciones.editar_convenio_prest_entry" />
+			<forward name="portlet.liquidaciones.eliminar_convenio_prest_entry" path="portlet.liquidaciones.conv_prestac.result.search" />
+			<!-- <forward name="portlet.liquidaciones.eliminar_convenio_prest_entry" path="portlet.liquidaciones.conv_prestac" /> -->
+			<!-- <forward name="portlet.liquidaciones.conv_prestac.view" path="portlet.liquidaciones.conv_prestac.view" /> -->
+			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
+		</action>
 
 		<action path="/liquidaciones/buscar_conv_prestac_por_rango" type="ar.com.ospim.liquidaciones.action.BuscarContratosPorRangoDetalleAction">
 			<forward name="portlet.liquidaciones.conv_prestac.result_rango.search" path="portlet.liquidaciones.conv_prestac.result_rango.search" />
@@ -557,7 +564,6 @@
 		
 		<action path="/liquidaciones/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
-			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>
 		
@@ -566,7 +572,7 @@
 			<forward name="portlet.liquidaciones.view" path="portlet.liquidaciones.view" />
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 		</action>
-
+		
 		
 		
 		<action path="/liquidaciones/buscar_medicamento" type="ar.com.ospim.farmacia.action.BuscarMedicamentoComponenteAction">
@@ -661,18 +667,18 @@
 			
 		<!-- Liquidaciones -> Prestadores -->
 		
-		<action path="/liquidaciones/buscar_prestadores" type="ar.com.ospim.prestadores.action.BuscarPrestadoresAction">
+		<action path="/liquidaciones/buscar_prestadores" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BuscarPrestadoresAction">
 			<forward name="portlet.liquidaciones.administracion.prestadores.result.search" path="portlet.liquidaciones.administracion.prestadores.result.search" />
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 		</action>
 
-		<action path="/liquidaciones/editar_prestadores_entry" type="ar.com.ospim.prestadores.action.EditarPrestadoresEntryAction">
+		<action path="/liquidaciones/editar_prestadores_entry" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.EditarPrestadoresEntryAction">
 			<forward name="portlet.liquidaciones.administracion.prestadores.editar_empleadores_entry" path="portlet.liquidaciones.administracion.prestadores.editar_empleadores_entry" />
 			<forward name="portlet.liquidaciones.administracion.prestadores.view_empleadores_entry" path="portlet.liquidaciones.administracion.prestadores.view_empleadores_entry" />
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 		</action>
 		
-		<action path="/liquidaciones/borrar_prestadores_entry" type="ar.com.ospim.prestadores.action.BorrarPrestadorAction">
+		<action path="/liquidaciones/borrar_prestadores_entry" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BorrarPrestadorAction">
 			<forward name="portlet.liquidaciones.view" path="portlet.liquidaciones.view" />
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 		</action>
@@ -734,48 +740,48 @@
 		<action path="/liquidaciones/id_especialidad_subEspecialidad" type="ar.com.ospim.liquidaciones.action.IdEspecialidadSubespecialidadAction"/>
 			
 	
-		<action path="/liquidaciones/lista_prof_especialidades_prestador" type="ar.com.ospim.prestadores.action.ListaProfEspecialidadesAction">
+		<action path="/liquidaciones/lista_prof_especialidades_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaProfEspecialidadesAction">
 		 	<forward name="portlet.liquidaciones.profesion.prestador" path="portlet.liquidaciones.profesion.prestador" />  
 		</action>
 		
-		<action path="/liquidaciones/lista_matricula_prestador" type="ar.com.ospim.prestadores.action.ListaMatriculasAction">
+		<action path="/liquidaciones/lista_matricula_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaMatriculasAction">
 		 	<forward name="portlet.liquidaciones.matricula.prestador" path="portlet.liquidaciones.matricula.prestador" />  
 		</action>
 
-		<action path="/liquidaciones/lista_telefonos_lugar_at_prestador" type="ar.com.ospim.prestadores.action.ListaLugarAtTelefonosAction">
+		<action path="/liquidaciones/lista_telefonos_lugar_at_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaLugarAtTelefonosAction">
 		 	<forward name="portlet.liquidaciones.lugar_at_telefonos.prestador" path="portlet.liquidaciones.lugar_at_telefonos.prestador" />  
 		</action>
 		
-		<action path="/liquidaciones/lista_contactos_lugar_at_prestador" type="ar.com.ospim.prestadores.action.ListaLugarAtContactosAction">
+		<action path="/liquidaciones/lista_contactos_lugar_at_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaLugarAtContactosAction">
 		 	<forward name="portlet.liquidaciones.lugar_at_contactos.prestador" path="portlet.liquidaciones.lugar_at_contactos.prestador" />  
 		</action>
 
-		<action path="/liquidaciones/lista_lugares_atencion_prestador" type="ar.com.ospim.prestadores.action.ListaLugarAtencionAction">
+		<action path="/liquidaciones/lista_lugares_atencion_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaLugarAtencionAction">
 		 	<forward name="portlet.liquidaciones.lugar_atencion.prestador" path="portlet.liquidaciones.administracion.prestadores.editar_empleadores_entry" />
 		 	<forward name="portlet.liquidaciones.lugares_atencion.prestador" path="portlet.liquidaciones.lugares_atencion.prestador" />  
 		</action>	
 		 
-		<action path="/liquidaciones/lista_planes_prestador" type="ar.com.ospim.prestadores.action.ListaPrestadorPlanesAction">
+		<action path="/liquidaciones/lista_planes_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaPrestadorPlanesAction">
 		 	<forward name="portlet.liquidaciones.plan.prestador" path="portlet.liquidaciones.plan.prestador" />  
 		</action>
 		 
-		<action path="/liquidaciones/borrar_matricula_prestador" type="ar.com.ospim.prestadores.action.BorrarMatriculaAction">
+		<action path="/liquidaciones/borrar_matricula_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BorrarMatriculaAction">
 		 	<forward name="portlet.liquidaciones.matricula.prestador" path="portlet.liquidaciones.matricula.prestador" />  
 		</action>
 	
-		<action path="/liquidaciones/borrar_prestador_profesion" type="ar.com.ospim.prestadores.action.BorrarProfesionEspSubEspAction">
+		<action path="/liquidaciones/borrar_prestador_profesion" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BorrarProfesionEspSubEspAction">
 		 	<forward name="portlet.liquidaciones.profesion.prestador" path="portlet.liquidaciones.profesion.prestador" />  
 		</action>
 		
-		<action path="/liquidaciones/borrar_telefono_lugar_at_prestador" type="ar.com.ospim.prestadores.action.BorrarTelefonoLugarAtAction">
+		<action path="/liquidaciones/borrar_telefono_lugar_at_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BorrarTelefonoLugarAtAction">
 		 	<forward name="portlet.liquidaciones.lugar_at_telefonos.prestador" path="portlet.liquidaciones.lugar_at_telefonos.prestador" />  
 		</action> 
 		
-		<action path="/liquidaciones/borrar_contactoe_lugar_at_prestador" type="ar.com.ospim.prestadores.action.BorrarContactoElectronicoLugarAtAction">
+		<action path="/liquidaciones/borrar_contactoe_lugar_at_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BorrarContactoElectronicoLugarAtAction">
 		 	<forward name="portlet.liquidaciones.lugar_at_contactos.prestador" path="portlet.liquidaciones.lugar_at_contactos.prestador" />  
 		</action>
 		
-		<action path="/liquidaciones/borrar_prestador_plan" type="ar.com.ospim.prestadores.action.BorrarPrestadorPlanAction" >
+		<action path="/liquidaciones/borrar_prestador_plan" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BorrarPrestadorPlanAction" >
 		 	<forward name="portlet.liquidaciones.plan.prestador" path="portlet.liquidaciones.plan.prestador" />  
 		</action>
 		
@@ -787,7 +793,7 @@
 		
 		<action path="/liquidaciones/buscar_codPostal" forward="portlet.liquidaciones.codPostal.view" />
 		
-		<action path="/liquidaciones/lista_lugar_at_prestador_indirecto" type="ar.com.ospim.prestadores.action.ListaLugarAtencionIndirectoAction">
+		<action path="/liquidaciones/lista_lugar_at_prestador_indirecto" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaLugarAtencionIndirectoAction">
 		 	<forward name="portlet.liquidaciones.lugar_at_prestador_indirecto" path="portlet.liquidaciones.lugar_at_prestador_indirecto" />  
 		</action>
 		
@@ -800,11 +806,11 @@
 		
 			
 		<action path="/liquidaciones/hay_reporte_tercerizadora" type="ar.com.ospim.liquidaciones.action.HayReporteTercerizadoraAction" />
-                <action path="/liquidaciones/hay_reporte_tercerizadora_grabar"
-                                type="ar.com.ospim.liquidaciones.action.HayReporteTercerizadoraGrabadoAction">
-                        <forward name="success" path="/common/null.jsp"/>
-                </action>
-<action path="/liquidaciones/propone_lote_reclamo_prestacional" type="ar.com.ospim.liquidaciones.action.ReclamoPrestacionalProponeLoteAction" />
+		
+		<action path="/liquidaciones/hay_reporte_tercerizadora_grabar" type="ar.com.ospim.liquidaciones.action.HayReporteTercerizadoraGrabadoAction" />
+		
+		
+		<action path="/liquidaciones/propone_lote_reclamo_prestacional" type="ar.com.ospim.liquidaciones.action.ReclamoPrestacionalProponeLoteAction" />
 		
 		
     
@@ -1739,7 +1745,6 @@
 
 		<action path="/farmacia/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
-			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>		
 
@@ -2684,7 +2689,6 @@
 		
 		<action path="/uoma/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
-			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>
 		
@@ -4080,7 +4084,6 @@
 		
 		<action path="/correspondencia/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
-			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>
 		
@@ -4182,7 +4185,7 @@
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 		</action>
 		
-		<action path="/correspondencia/buscar_prestadores" type="ar.com.ospim.prestadores.action.BuscarPrestadoresAction">
+		<action path="/correspondencia/buscar_prestadores" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BuscarPrestadoresAction">
 			<forward name="portlet.liquidaciones.administracion.prestadores.result.search" path="portlet.liquidaciones.administracion.prestadores.result.search" />
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 		</action>
@@ -4280,7 +4283,6 @@
  		
 		<action path="/autorizaciones/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
-			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>
 
@@ -4477,7 +4479,6 @@
 			type="ar.com.ospim.global.actions.TraeBimestresDeEjercicioPorIdAction" />	
 		<action path="/autorizaciones/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
-			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 		</action>	
 		
@@ -4589,7 +4590,7 @@
 			
 		<action path="/autorizaciones/buscar_afiliado_fecha_vto_documentacion" type="ar.com.ospim.autorizaciones.action.BuscarAfiliadoFechaVtoDiscapacidad"/>
 		
-		
+		<action path="/tesoreria/buscar_afiliado_fecha_vto_documentacion" type="ar.com.ospim.autorizaciones.action.BuscarAfiliadoFechaVtoDiscapacidad"/>
 			
 		<action path="/autorizaciones/agregar_seguimientoSurCodigoNomenclador"
 			type="ar.com.ospim.autorizaciones.action.EditarSeguimientoSurCodigoNomencladorAction">
@@ -4778,7 +4779,6 @@
 			
 	<action path="/tesoreria/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
-		<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 	</action>
 				
@@ -5361,7 +5361,7 @@
 	  
 	 <action path="/cai/id_localidad_cod_area_tel" type="ar.com.ospim.afiliados.action.IdLocalidadCodAreaTelAction"/>
 	  
-	 <action path="/cai/buscar_prestadores" type="ar.com.ospim.prestadores.action.BuscarPrestadoresAction">
+	 <action path="/cai/buscar_prestadores" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BuscarPrestadoresAction">
 			<forward name="portlet.liquidaciones.administracion.prestadores.result.search" path="portlet.cai.prestadores.result.search" />
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 	</action>
@@ -5427,6 +5427,8 @@
 		</action>
 		
 		<action path="/autorizaciones/buscar_afiliado_datos" type="ar.com.ospim.autorizaciones.action.AfiliadoDatosJSONAction"/>
+		<action path="/tesoreria/buscar_afiliado_datos" type="ar.com.ospim.autorizaciones.action.AfiliadoDatosJSONAction"/>
+		<action path="/afiliados/buscar_afiliado_datos" type="ar.com.ospim.autorizaciones.action.AfiliadoDatosJSONAction"/>
 		
 		<!-- SE AGREGA  -->
 		<action path="/cai/buscar_afiliado_datos" type="ar.com.ospim.autorizaciones.action.AfiliadoDatosJSONAction" />
@@ -6111,7 +6113,6 @@
 	
 	<action path="/hoteles/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
-		<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 	</action> 
 	
@@ -6179,7 +6180,6 @@
     
     <action path="/comprobantes/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
-		<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 	</action>
 	<action path="/comprobantes/buscar_seccional" forward="portlet.comprobantes.seccional.view" />
@@ -6270,7 +6270,6 @@
 	
 	<action path="/comprobantes/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
-		<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 	</action>
 	
@@ -6443,7 +6442,6 @@
 	
 	<action path="/judicial/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
-		<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
 	</action>
     
@@ -6559,10 +6557,10 @@
 <!-- GENERACION ASIENTOS DE APERTURA/CIERRE -->
 
 <!--APP MOBILE -->
-    <action path="/appmobile/view" forward="portlet.appmobile.view" />
-    <action path="/appmobile/administracion_appmobile" type="ar.com.ospim.desarrolloAppMobile.action.ClienteAppMobileAction">
+<action path="/appmobile/view" forward="portlet.appmobile.view" />
+<action path="/appmobile/administracion_appmobile" type="ar.com.ospim.desarrolloAppMobile.action.ClienteAppMobileAction">
     <forward name="portlet.comprobantes.download.app" path="portlet.comprobantes.download.app" />
-	</action>
+</action>
 <!--FIN APP MOBILE -->
      
     <action path="/autorizaciones/historico_reclamo" type="ar.com.ospim.autorizaciones.action.HistoricoReclamoAction">
@@ -6652,6 +6650,11 @@
 			/>
 		</action>
 
+		<action path="/liquidaciones/hay_reporte_tercerizadora_grabar"
+				type="ar.com.ospim.liquidaciones.action.HayReporteTercerizadoraGrabadoAction">
+			<forward name="success" path="/common/null.jsp"/>
+		</action>
+
  <action path="/farmaciaospim/upload_admifarm"                  
         type="ar.com.ospim.farmaciaOspim.action.UploadAdmifarmAction">
 
@@ -6687,8 +6690,7 @@
 <!-- FIN CENTROS COSTO CONTABLE --> 
 
      <action path="/liquidaciones/prestadores" forward="portlet.liquidaciones.administracion.prestadores"/> 
-
-	 <action path="/prestadores/prestadores" forward="portlet.prestadores.administracion.prestadores"/> 
+     <action path="/autorizaciones/ficha_de_consumo" forward="portlet.liquidaciones.reportes.ficha_de_consumo" />	
 
 <!-- FACTURACION OSPIM --> 
       <action path="/tesoreria/facturacion_lista_precios" forward="portlet.tesoreria.facturacion.listaprecios" />
@@ -6705,8 +6707,23 @@
       </action>
       
       <action path="/tesoreria/facturacion_precios_verificar" type="ar.com.ospim.tesoreria.action.PrecioPlanSuperadorJSONAction"/>
-<!-- FIN FACTURACION OSPIM -->
+       <action path="/tesoreria/facturacion_lista_ajustes" forward="portlet.tesoreria.facturacion.listaajustes" />     
+<!-- FIN FACTURACION OSPIM -->  
 
+	<action path="/afiliados/solicitud_afiliacion" type="ar.com.ospim.afiliados.action.SolicitudAfiliacionAction">
+	    <forward name="portlet.afiliados.seguimiento.form" path="portlet.afiliados.seguimiento.form" />
+	    <forward name="portlet.afiliados.seguimiento.list" path="portlet.afiliados.seguimiento.list" />
+	    <forward name="portlet.afiliados.formulario.detalle" path="portlet.afiliados.formulario.detalle" />
+	</action>
+	
+	<action path="/afiliados/vendedor" type="ar.com.ospim.afiliados.action.VendedorAction">
+	    <forward name="portlet.afiliados.vendedor.list" path="portlet.afiliados.vendedor.list" />
+	    <forward name="portlet.afiliados.vendedores.result" path="portlet.afiliados.vendedores.result" />
+	    <forward name="portlet.afiliados.vendedor.detalle" path="portlet.afiliados.vendedor.detalle" />
+	</action>
+	
+	
+	
 		<!-- PRESTADORES / PRE_1 -->
 
 		<action path="/prestadores/view"
@@ -7063,6 +7080,8 @@
 		        forward="portlet.prestadores.importar_contratos" />
 
 		<!-- FIN PRESTADORES / PRE_1 -->
+
  </action-mappings>
   
 </struts-config>
+
