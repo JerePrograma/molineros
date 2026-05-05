@@ -20,7 +20,7 @@ import ar.com.ospim.afiliados.services.DocumentacionServiceUtil;
 import ar.com.ospim.liquidaciones.DuplicateTratamientoDiscapacidadIdException;
 import ar.com.ospim.liquidaciones.TopeCantidadIndividualExedidoException;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.liquidaciones.beans.TratamientoDiscapacidad;
 import ar.com.ospim.liquidaciones.services.TratamientoDiscapacidadServiceUtil;
 import ar.com.ospim.util.StringUtils;

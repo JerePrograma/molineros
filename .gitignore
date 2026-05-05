@@ -127,3 +127,7 @@ tracked-build-properties-audit.txt
 /ext-impl/src/ar/com/ospim/test/*.pdf
 
 .editorconfig
+
+ext-impl/src/ar/com/ospim/autorizaciones/action/BorrarPatologiaSituacionMedicaAction
+ext-impl/src/ar/com/ospim/autorizaciones/action/BorrarPatologiaSituacionMedicaAction.java
+ext-impl/src/ar/com/ospim/autorizaciones/action/BorrarPAtologiaSituacionMedicaAction.java

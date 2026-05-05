@@ -41,7 +41,7 @@ import ar.com.ospim.hoteles.beans.ProductoCategoria;
 import ar.com.ospim.hoteles.beans.ProductoConfiteria;
 import ar.com.ospim.hoteles.beans.Recibo;
 import ar.com.ospim.hoteles.beans.Reserva;
-import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.procesaArchivos.beans.farmaciaospim.ArchivoDesglose;
 import ar.com.ospim.procesaArchivos.beans.farmaciaospim.DetalleDesglose;
 import ar.com.ospim.tesoreria.beans.ReciboPrestamo;

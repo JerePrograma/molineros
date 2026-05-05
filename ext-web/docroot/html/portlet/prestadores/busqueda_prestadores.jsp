@@ -35,26 +35,33 @@
 					name="<portlet:namespace />descripcion" size="50" maxlength="50"
 					type="text" value="" /></td>
 			</tr>
-			<tr>
-				<td><label><liferay-ui:message key="provincia" />:</label></td>
-				<td><select name="<portlet:namespace/>provincia"
-					id="<portlet:namespace/>provincia">
-						<option value="0"></option>
-						<% for (Provincia provincia : provincias) { %>
-						<option value="<%= provincia.getId() %>"><%=provincia.getDescripcion()%></option>
-						<% } %>
-				</select></td>
+            <tr>
+                <td><label><liferay-ui:message key="provincia" />:</label></td>
+                <td>
+                    <select name="<portlet:namespace/>provincia"
+                            id="<portlet:namespace/>provincia"
+                            onchange="javascript:filtrarLocalidad();">
+                        <option value="0">Seleccione una provincia</option>
+                        <% for (Provincia provincia : provincias) { %>
+                            <option value="<%= provincia.getId() %>">
+                                <%= provincia.getDescripcion() %>
+                            </option>
+                        <% } %>
+                    </select>
+                </td>
 
-				<td><label><liferay-ui:message key="localidad" />:</label></td>
-				<td><select name="<portlet:namespace/>localidad"
-					id="<portlet:namespace/>localidad">
-						<option value="0"></option>
-						<% for (Localidad localidad : localidades) { %>
-						<option value="<%= localidad.getId() %>"><%=localidad.getDescripcion()%></option>
-						<% } %>
-				</select></td>
-				<td colspan="2">&nbsp; </td>
-			</tr>
+                <td><label><liferay-ui:message key="localidad" />:</label></td>
+                <td>
+                    <div class="selector-localidad">
+                        <select name="<portlet:namespace/>localidad"
+                                id="<portlet:namespace/>localidad">
+                            <option value="0">Seleccione una localidad</option>
+                        </select>
+                    </div>
+                </td>
+
+                <td colspan="2">&nbsp;</td>
+            </tr>
 			<tr>
 				<td><label><liferay-ui:message key="Profesión" />:</label></td>
 				<td><select 
@@ -240,5 +247,25 @@
 		combo.options[idxElemento].text = texto; //Este es el texto que verás en la combo
 		combo.options[idxElemento].value = valor; //Este es el valor que se enviará cuando hagas un submit del formulario que lo contiene
 	}
-	
+
+	function filtrarLocalidad() {
+    	var idProvincia = jQuery('#<portlet:namespace/>provincia').val();
+
+    	document.getElementById("<portlet:namespace/>localidad").length = 0;
+    	addElementToSelect("<portlet:namespace/>localidad", "Seleccione una localidad", 0);
+
+    	if (idProvincia == null || idProvincia == "" || idProvincia == "0") {
+    		return;
+    	}
+
+    	var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/id_provincia_localidad&idProvincia=' + idProvincia;
+
+    	jQuery.ajax({
+    		url: url,
+    		async: false,
+    		success: function(data) {
+    			jQuery('#<portlet:namespace/>localidad').html(data).fadeIn();
+    		}
+    	});
+    }
 </script>

@@ -150,7 +150,7 @@ currentURL = PortalUtil.getCurrentURL(request);
 
 		<c:choose>
 			<c:when test='<%= "prestadores".equals(tabs1) %>'>
-				<liferay-util:include page="/html/portlet/prestadores/convenios_prest/busqueda_prestadores.jsp" />
+				<liferay-util:include page="/html/portlet/prestadores/busqueda_prestadores.jsp" />
 			</c:when>
 
 			<c:when test='<%= "convenios-prestacionales".equals(tabs1) %>'>

@@ -16,7 +16,7 @@ import ar.com.ospim.autorizaciones.beans.AutoPrestacional;
 import ar.com.ospim.liquidaciones.DuplicateTratamientoDiscapacidadIdException;
 import ar.com.ospim.liquidaciones.ImposibleBorrarTratamientoDiscapacidadException;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.liquidaciones.beans.MotivoAltaDiscapacidad;
 import ar.com.ospim.liquidaciones.services.ReintegroServiceUtil;
 import ar.com.ospim.util.DateUtils;

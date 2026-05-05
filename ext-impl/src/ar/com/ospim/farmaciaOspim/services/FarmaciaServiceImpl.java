@@ -19,7 +19,7 @@ import ar.com.ospim.farmaciaOspim.beans.TiposDeVentas;
 import ar.com.ospim.farmaciaOspim.exceptions.ImposibleBorrarFarmaciaOspimException;
 import ar.com.ospim.farmaciaOspim.exceptions.ImposibleCerrarVademecumFarmaciaOspimException;
 import ar.com.ospim.global.beans.Farmacia;
-import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.procesaArchivos.beans.farmaciaospim.ArchivoAdmifarm;
 import ar.com.ospim.procesaArchivos.beans.farmaciaospim.ArchivoDesglose;
 import ar.com.ospim.procesaArchivos.beans.farmaciaospim.DetalleAdmifarm;
