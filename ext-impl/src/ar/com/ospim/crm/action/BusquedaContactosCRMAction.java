@@ -62,6 +62,7 @@ public class BusquedaContactosCRMAction extends PortletAction {
 			String sectorSel = ParamUtil.getString(renderRequest, "sector",null);
 			String usuarioSel = ParamUtil.getString(renderRequest, "usuario",null);
 			String noAfiliadoDocNumero = ParamUtil.getString(renderRequest, "noAfiliadoDocNumero",null);
+			int situacionMedica = ParamUtil.getInteger(renderRequest, "situacion_medica",0);
 
 			
 			if(StringUtils.checkEmpty(sectorSel)){
@@ -122,6 +123,7 @@ public class BusquedaContactosCRMAction extends PortletAction {
 			filtro.setEficaciaConformidad(eficaciaConformidad);
 			filtro.setSeccional(seccional);
 			filtro.setNoAfiliadoDocNumero(noAfiliadoDocNumero);
+			filtro.setSituacionMedica(situacionMedica);
 			
 			filtro.setPrestador(prestador);
 			if(cuit!=null) filtro.setCuit(cuit);

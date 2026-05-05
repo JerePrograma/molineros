@@ -34,6 +34,7 @@ public class BusquedaContactoFiltro implements Serializable {
 	private Integer prestador;
 	private String cuit;
 	private String sucursal;
+	private int situacionMedica;
 	
 	
 	public Date getFechaDesde() {
@@ -183,5 +184,12 @@ public class BusquedaContactoFiltro implements Serializable {
 	public void setSucursal(String sucursal) {
 		this.sucursal = sucursal;
 	}
+	public int getSituacionMedica() {
+		return situacionMedica;
+	}
+	public void setSituacionMedica(int situacionMedica) {
+		this.situacionMedica = situacionMedica;
+	}
+	
 	
 }

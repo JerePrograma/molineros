@@ -21,13 +21,20 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 
+import ar.com.ospim.afiliados.action.ActionUtil;
+import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.afiliados.services.AfiliadoServiceUtil;
+import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
+import ar.com.ospim.afiliados.services.EditarAfiliadoServiceUtil;
 import ar.com.ospim.afiliados.services.SeccionalServiceUtil;
 import ar.com.ospim.autorizaciones.beans.BusquedaReporteReclamoFiltro;
 import ar.com.ospim.autorizaciones.beans.EstadosReclamosPrestacionales;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacionalExcel;
 import ar.com.ospim.autorizaciones.beans.TiposDeGestionReclamosPrestacionales;
 import ar.com.ospim.autorizaciones.services.AutorizacionesServiceUtil;
+import ar.com.ospim.global.beans.Domicilio;
+import ar.com.ospim.global.beans.Localidad;
+import ar.com.ospim.global.beans.Provincia;
 import ar.com.ospim.global.beans.Seccional;
 import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.liquidaciones.ordenespago.reportes.ReporteXLS;
@@ -39,6 +46,10 @@ public class ReporteReclamosPrestacionales  extends ReporteXLS {
 
 	static List<EstadosReclamosPrestacionales> listaestados = TraeListasServiceUtil.getEstadosReclamos();
 	static List<TiposDeGestionReclamosPrestacionales> listatipogestionreclamos = TraeListasServiceUtil.getTiposGestionReclamosPrestacionales();
+	static List<Provincia>provincias =TraeListasServiceUtil.getProvincias();
+	static List<Localidad>localidades=TraeListasServiceUtil.getLocalidades();
+	
+	
 	
 	public static HSSFWorkbook generaReporteReclamosPrestacionales(
 			HttpServletRequest renderRequest, HttpServletResponse res) {
@@ -176,6 +187,29 @@ public class ReporteReclamosPrestacionales  extends ReporteXLS {
 		
 		try {
 			reclamosPrestacionales= AutorizacionesServiceUtil.getListaReclamosPrestacionales (filtro);
+			for(ReclamoPrestacionalExcel archivo:reclamosPrestacionales) {
+			    try {
+				   Afiliado a = ActionUtil.getAfiliadoInclusoDadoBajaByCuilInte(archivo.getAfiliado().getCuil(), archivo.getAfiliado().getInte());
+				   archivo.getAfiliado().setEmail(a.getEmail());
+				   archivo.getAfiliado().setDomicilios(a.getDomicilios());
+				   if(archivo.getAfiliado().getDomicilios()!=null) {
+				      int indice = provincias.indexOf(archivo.getAfiliado().getDomicilioDefault().getProvincia());
+				      if(indice!=-1) {
+				        archivo.getAfiliado().getDomicilioDefault().setProvincia(provincias.get(indice));
+				      }
+				      indice = localidades.indexOf(archivo.getAfiliado().getDomicilioDefault().getLocalidad());
+				      if(indice!=-1) {
+				        archivo.getAfiliado().getDomicilioDefault().setLocalidad(localidades.get(indice));
+				      }
+				   }else {
+					  Domicilio[] domicilios = null; 
+					  archivo.getAfiliado().setDomicilios( domicilios); 
+				   }
+				}catch(Exception e) {
+					_log.error("Error al generar reporte de reclamos prestacionales domicilios",e);
+				}   
+			}    
+			
 		} catch (Exception e) {
 			_log.error(
 					"Error al generar reporte de reclamos prestacionales",e);
@@ -471,7 +505,26 @@ public class ReporteReclamosPrestacionales  extends ReporteXLS {
 		cell17H.setCellValue(new HSSFRichTextString("Seccional Afiliado"));
 		cell17H.setCellStyle(styleBold);
 		
+		HSSFCell cell17H1 = rowHeader.createCell(++col);
+		cell17H1.setCellValue(new HSSFRichTextString("Provincia"));
+		cell17H1.setCellStyle(styleBold);
+		
+		HSSFCell cell17H2 = rowHeader.createCell(++col);
+		cell17H2.setCellValue(new HSSFRichTextString("Localidad"));
+		cell17H2.setCellStyle(styleBold);
+		
+		HSSFCell cell17H3 = rowHeader.createCell(++col);
+		cell17H3.setCellValue(new HSSFRichTextString("Domicilio"));
+		cell17H3.setCellStyle(styleBold);
+		
+		HSSFCell cell17H4 = rowHeader.createCell(++col);
+		cell17H4.setCellValue(new HSSFRichTextString("Email"));
+		cell17H4.setCellStyle(styleBold);
 	
+		HSSFCell cell17H5 = rowHeader.createCell(++col);
+		cell17H5.setCellValue(new HSSFRichTextString("Teléfono"));
+		cell17H5.setCellStyle(styleBold);
+		
 		HSSFCell cell18H = rowHeader.createCell(++col);
 		cell18H.setCellValue(new HSSFRichTextString("Plan Molineros"));
 		cell18H.setCellStyle(styleBold);
@@ -680,6 +733,11 @@ public class ReporteReclamosPrestacionales  extends ReporteXLS {
 		sheet.autoSizeColumn((short) 42);
 		sheet.autoSizeColumn((short) 43);
 		sheet.autoSizeColumn((short) 44);
+		sheet.autoSizeColumn((short) 45);
+		sheet.autoSizeColumn((short) 46);
+		sheet.autoSizeColumn((short) 47);
+		sheet.autoSizeColumn((short) 48);
+		sheet.autoSizeColumn((short) 49);
 		return wb;
 	}
 
@@ -774,6 +832,60 @@ public class ReporteReclamosPrestacionales  extends ReporteXLS {
 		HSSFCell cell18 = rowHeader.createCell(++col);
 		cell18.setCellValue(new HSSFRichTextString(autorizaciones.getTextoSeccional()   ));
 		cell18.setCellStyle(styleAll);
+		
+		HSSFCell cell181 = rowHeader.createCell(++col);
+		cell181.setCellValue(new HSSFRichTextString(autorizaciones.getAfiliado()!=null && autorizaciones.getAfiliado().getDomicilios()!=null &&
+				autorizaciones.getAfiliado().getDomicilioDefault().getProvinciaAsString()!=null ? autorizaciones.getAfiliado().getDomicilioDefault().getProvinciaAsString():"" ));
+		cell181.setCellStyle(styleAll);
+		
+		HSSFCell cell182 = rowHeader.createCell(++col);
+		cell182.setCellValue(new HSSFRichTextString(autorizaciones.getAfiliado()!=null && autorizaciones.getAfiliado().getDomicilios()!=null && autorizaciones.getAfiliado().getDomicilioDefault().getLocalidadAsString()!=null &&
+				autorizaciones.getAfiliado().getDomicilioDefault().getLocalidadAsString()!=null ? autorizaciones.getAfiliado().getDomicilioDefault().getLocalidadAsString():""));
+		cell182.setCellStyle(styleAll);
+		
+		String strDomicilio="";
+		if(autorizaciones.getAfiliado().getDomicilios()!=null) {
+			if(autorizaciones.getAfiliado().getDomicilioDefault().getCalle()!=null) {
+				strDomicilio +=autorizaciones.getAfiliado().getDomicilioDefault().getCalle();
+			}
+			if(autorizaciones.getAfiliado().getDomicilioDefault().getNumero()!=null) {
+				strDomicilio+= " " + autorizaciones.getAfiliado().getDomicilioDefault().getNumero();
+			}
+			if(autorizaciones.getAfiliado().getDomicilioDefault().getPiso()!=null) {
+				strDomicilio += " " + autorizaciones.getAfiliado().getDomicilioDefault().getPiso();
+			}
+			if(autorizaciones.getAfiliado().getDomicilioDefault().getDepto()!=null) {
+				strDomicilio += " " +autorizaciones.getAfiliado().getDomicilioDefault().getDepto();
+			}
+		}
+		HSSFCell cell183 = rowHeader.createCell(++col);
+		cell183.setCellValue(new HSSFRichTextString(strDomicilio));
+		cell183.setCellStyle(styleAll);
+		
+		HSSFCell cell184 = rowHeader.createCell(++col);
+		cell184.setCellValue(new HSSFRichTextString(autorizaciones.getAfiliado().getEmail()!=null ?autorizaciones.getAfiliado().getEmail():""));
+		cell184.setCellStyle(styleAll);
+		
+		String strTelefono=""; 
+		if(autorizaciones.getAfiliado().getDomicilios()!=null) {
+		   if(	autorizaciones.getAfiliado().getDomicilioDefault().getCod_area_telefono() !=null) {
+			   strTelefono+=autorizaciones.getAfiliado().getDomicilioDefault().getCod_area_telefono();
+		   }
+		   if(autorizaciones.getAfiliado().getDomicilioDefault().getTelefono()!=null) {
+			   strTelefono += autorizaciones.getAfiliado().getDomicilioDefault().getTelefono();
+		   }  
+		   
+		   if(	autorizaciones.getAfiliado().getDomicilioDefault().getCod_area_celular() !=null) {
+			   strTelefono+="  "+autorizaciones.getAfiliado().getDomicilioDefault().getCod_area_celular();
+		   }
+		   if(autorizaciones.getAfiliado().getDomicilioDefault().getCelular()!=null) {
+			   strTelefono += autorizaciones.getAfiliado().getDomicilioDefault().getCelular();
+		   } 
+		}       
+		HSSFCell cell185 = rowHeader.createCell(++col);
+		cell185.setCellValue(new HSSFRichTextString(strTelefono));
+		cell185.setCellStyle(styleAll);
+		
 		
 		HSSFCell cell19 = rowHeader.createCell(++col);
 		cell19.setCellValue(new HSSFRichTextString(autorizaciones.getAfiliado().getNombrePlan() ));

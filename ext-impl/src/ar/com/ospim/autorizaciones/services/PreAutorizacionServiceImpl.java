@@ -282,7 +282,7 @@ public class PreAutorizacionServiceImpl implements Serializable {
 		CallableStatement stmt = null;
 		List<PreAutorizacion> list = null;
 		try {
-			String sql = "{call autorizaciones.busca_preautorizaciones(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql = "{call autorizaciones.busca_preautorizaciones(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 			con = ConnectionHelper.getConnection();
 			stmt = con.prepareCall(sql.toString());
 			
@@ -397,6 +397,12 @@ public class PreAutorizacionServiceImpl implements Serializable {
 				stmt.setBoolean(19, filtro.isART());
 			} else {
 				stmt.setNull(19, Types.BOOLEAN );
+			}
+			
+			if (filtro.isDiabetes()) {
+				stmt.setBoolean(20, filtro.isDiabetes());
+			} else {
+				stmt.setNull(20, Types.BOOLEAN );
 			}
 			
 			ResultSet rs = stmt.executeQuery();
@@ -2220,7 +2226,7 @@ public class PreAutorizacionServiceImpl implements Serializable {
 		CallableStatement stmt = null;
 		List<PreAutorizacion> list = null;
 		try {
-			String sql = "{call autorizaciones.busca_preautorizaciones_xls(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql = "{call autorizaciones.busca_preautorizaciones_xls(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 			con = ConnectionHelper.getConnection();
 			stmt = con.prepareCall(sql.toString());
 			
@@ -2335,6 +2341,12 @@ public class PreAutorizacionServiceImpl implements Serializable {
 				stmt.setBoolean(19, filtro.isART());
 			} else {
 				stmt.setNull(19, Types.BOOLEAN );
+			}
+			
+			if (filtro.isDiabetes()) {
+				stmt.setBoolean(20, filtro.isDiabetes());
+			} else {
+				stmt.setNull(20, Types.BOOLEAN );
 			}
 			
 			ResultSet rs = stmt.executeQuery();

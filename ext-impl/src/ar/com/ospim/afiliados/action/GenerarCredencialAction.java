@@ -158,7 +158,14 @@ public class GenerarCredencialAction extends PortletAction {
 						return mapping.findForward("portlet.afiliados.credenciales_exepcion_copago.result");
 					}
 				}
-			} 
+			}else if (null != imprimir && imprimir.equals("CES")) {
+				// grabo las credenciales a imprimir
+				int id_lote = CredencialesServiceUtil.generaLoteAImprimir(
+						mapCredenciales, user);
+				renderRequest.setAttribute("id_lote", id_lote);
+				// Quito de session las listas
+				return mapping.findForward("portlet.afiliados.credenciales_ces.result");
+			}  
 		} catch (Exception e) {
 			_log.error(e);
 			e.printStackTrace();

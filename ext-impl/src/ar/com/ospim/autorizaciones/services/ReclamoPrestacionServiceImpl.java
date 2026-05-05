@@ -832,23 +832,29 @@ public class ReclamoPrestacionServiceImpl {
 			String sql9 ="{call autorizaciones.update_estados_prestaciones_encierre(?,?)}";
 			
 			con = ConnectionHelper.getConnectionForTransaction();
-		
-		
 			
-			if(reclamo.getEstado()>0 )
+		
+			if(reclamo.getEstado()>0 && insertarEstadoReclamo(con, idReclamo, reclamo.getEstado()))
 			{			
-						// dar de baja los registro de estado de este reclamo			
+				// dar de baja los registro de estado de este reclamo			
 			    stmt = con.prepareCall(sql5.toString()); 
 			    stmt.setInt(1, idReclamo   );			
 				stmt.setString(2, screenName);
 				stmt.executeUpdate();
-						// 	ingresar el nuevo registro de estado			   
+				// 	ingresar el nuevo registro de estado			   
 			    stmt = con.prepareCall(sql4.toString()); 
 			    stmt.setInt(1, idReclamo   );
 				stmt.setInt(2, reclamo.getEstado());
 				stmt.setString(3, screenName);
 				stmt.executeUpdate();
-			}
+			}else {
+			    _log.debug(
+			            "No se inserta estado porque no cambió. idReclamo="
+			            + idReclamo
+			            + ", estadoNuevo="
+			            + reclamo.getEstado()
+			        );
+			    }
 			
 	// actualiza datos de la fecha seccional en la base se analiza si la fecha es distinta a null 			   
 		    stmt = con.prepareCall(sql7.toString()); 
@@ -2054,6 +2060,34 @@ public class ReclamoPrestacionServiceImpl {
 	        return false;
 	    } finally {
 	        ConnectionHelper.cerrar(ps);
+	    }
+	}
+	
+	private boolean insertarEstadoReclamo(
+	        Connection con,
+	        int idReclamo,
+	        int idEstado) throws SQLException {
+
+	    CallableStatement stmt = null;
+	    ResultSet rs = null;
+
+	    try {
+	        String sql = "select autorizaciones.insertar_estado_reclamo(?, ?)";
+
+	        stmt = con.prepareCall(sql);
+	        stmt.setInt(1, idReclamo);
+	        stmt.setInt(2, idEstado);
+
+	        rs = stmt.executeQuery();
+
+	        if (rs.next()) {
+	            return rs.getBoolean(1);
+	        }
+
+	        return true;
+
+	    } finally {
+	        ConnectionHelper.cerrar(stmt);
 	    }
 	}
 

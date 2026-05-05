@@ -1,7 +1,0 @@
-CREATE SEQUENCE prestador_externo_id_seq
-  INCREMENT 1
-  MINVALUE 1
-  MAXVALUE 9223372036854775807
-  START 400
-  CACHE 1;
-ALTER TABLE prestador_externo_id_seq OWNER TO postgres;

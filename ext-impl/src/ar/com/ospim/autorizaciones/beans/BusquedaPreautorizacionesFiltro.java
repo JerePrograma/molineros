@@ -29,6 +29,7 @@ public class BusquedaPreautorizacionesFiltro implements Serializable {
 	private Integer idAutorizacion;
 	private boolean protesisOrt;
 	private boolean ART;
+	private boolean diabetes;
 	
 	private int pagina;
 	private int registrosTotal;
@@ -89,6 +90,35 @@ public class BusquedaPreautorizacionesFiltro implements Serializable {
 		this.protesisOrt = protesisOrt;
 		this.ART = ART;
 		this.pagina = pagina;
+		this.diabetes=diabetes;
+	}
+	
+	public BusquedaPreautorizacionesFiltro(Integer id, String cuil, Integer inte, Date fechaD, Date fechaH,
+			String estado, Date fechaEmail, Date fechaEmailH, Integer seccional, boolean alertaRoja,
+			boolean discapacidad, boolean supra, boolean cirugia, boolean medicamento, boolean sinReintento,
+			boolean alojamiento, Integer idAutorizacion, boolean protesisOrt, boolean ART,boolean diabetes, int pagina) {
+		super();
+		this.id = id;
+		this.cuil = cuil;
+		this.inte = inte;
+		this.fechaD = fechaD;
+		this.fechaH = fechaH;
+		this.estado = estado;
+		this.fechaEmail = fechaEmail;
+		this.fechaEmailH = fechaEmailH;
+		this.seccional = seccional;
+		this.alertaRoja = alertaRoja;
+		this.discapacidad = discapacidad;
+		this.supra = supra;
+		this.cirugia = cirugia;
+		this.medicamento = medicamento;
+		this.sinReintento = sinReintento;
+		this.alojamiento = alojamiento;
+		this.idAutorizacion = idAutorizacion;
+		this.protesisOrt = protesisOrt;
+		this.ART = ART;
+		this.pagina = pagina;
+		this.diabetes=diabetes;
 	}
 
 
@@ -265,4 +295,12 @@ public class BusquedaPreautorizacionesFiltro implements Serializable {
 		ART = aRT;
 	}
 
+	public boolean isDiabetes() {
+		return diabetes;
+	}
+
+	public void setDiabetes(boolean diabetes) {
+		this.diabetes = diabetes;
+	}
+	
 }

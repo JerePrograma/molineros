@@ -1,1 +1,0 @@
-drop table fact_liquidadas

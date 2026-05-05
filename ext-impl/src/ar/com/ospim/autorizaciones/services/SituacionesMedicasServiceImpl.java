@@ -20,7 +20,7 @@ import ar.com.ospim.autorizaciones.beans.ItemSituacionMedicaTotal;
 import ar.com.ospim.autorizaciones.beans.PatologiasSituacionMedica;
 import ar.com.ospim.autorizaciones.beans.SituacionMedica;
 import ar.com.ospim.autorizaciones.exceptions.ImposibleBorrarSituacionMedicaException;
-import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.util.ConnectionHelper;
 
 
@@ -160,7 +160,7 @@ public int insertar(SituacionMedica situacionMedica , User user ) throws SystemE
 public SituacionMedica    getSituacionMedica(int id , String   cuil , int inte ) throws SystemException {
 	Connection con = null;
 	CallableStatement stmt = null;
-	SituacionMedica sitMedica = null;
+	SituacionMedica sitMedica = new SituacionMedica(); // null;
 	
 	try {
 		String sql = "{call buscar_situaciones_medicas_by_id_o_cuil_inte(?,?,?)}";
@@ -191,9 +191,12 @@ public SituacionMedica    getSituacionMedica(int id , String   cuil , int inte )
 	} finally {
 		ConnectionHelper.cerrar(stmt, con);
 	}
+	
+	if(sitMedica!= null) {
 	// recupera las patologias del afiliado 
-	sitMedica.setPatologias(this.getPatologiasDelAfiliadoDeLaSituacionMedica(sitMedica.getAfiliado().getInte() , sitMedica.getAfiliado().getCuil_titular() ));		
-	sitMedica.setId(id);		
+	  sitMedica.setPatologias(this.getPatologiasDelAfiliadoDeLaSituacionMedica(sitMedica.getAfiliado().getInte() , sitMedica.getAfiliado().getCuil_titular() ));		
+	  sitMedica.setId(id);
+	}	  
 	return sitMedica ;
 }
  
@@ -318,6 +321,62 @@ throw e;
 } finally {
 ConnectionHelper.cerrar(stmt, con);
 }
+}
+
+
+public List<ItemSituacionMedicaTotal> buscarSituacionesMedicasVigente(BusquedaSituacionMedicaFiltro  filtro ) throws SystemException,
+NumberFormatException, ParseException {
+
+Connection con = null;
+CallableStatement stmt = null;
+ArrayList<ItemSituacionMedicaTotal> listaSituacionesMedicasTotales = null;
+listaSituacionesMedicasTotales  = new ArrayList<ItemSituacionMedicaTotal>();
+
+try {
+String sql="" ;
+sql = "{call buscar_situaciones_medicas_vigente(?,?,?,?)}";	
+	
+
+_log.debug("obteniendo conexion");
+con = ConnectionHelper.getConnection();
+
+stmt = con.prepareCall(sql.toString());										
+
+if (filtro.gettipoSituMedica()== 0) {
+	stmt.setNull(1, Types.INTEGER);
+} else {
+	stmt.setInt(1, filtro.gettipoSituMedica()); 
+	//pagina=0;
+}
+
+stmt.setDate(2, filtro.getFechaDesde()== null ? null : new java.sql.Date(
+		filtro.getFechaDesde().getTime()));  
+
+
+if (filtro.getCuilTitular()  ==null ||  filtro.getCuilTitular().equals("")   ) {
+	stmt.setNull(3, Types.VARCHAR );
+} else {
+	stmt.setString(3,filtro.getCuilTitular() ); 
+}
+
+
+if ( filtro.getCuilTitular() ==null ||  filtro.getCuilTitular().equals("")   ) {
+	stmt.setNull(4, Types.INTEGER);
+} else {
+	stmt.setInt(4, filtro.getInte()); 
+}			
+
+ResultSet rs = stmt.executeQuery();
+while (rs.next()) {
+	ItemSituacionMedicaTotal situacionMedica = ItemSituacionMedicaTotal.getMappingBuscadorTotal(rs, "sm_") ;
+	listaSituacionesMedicasTotales.add(situacionMedica );
+}
+} catch (Exception e) {
+_log.error(e);
+} finally {
+ConnectionHelper.cerrar(stmt, con);
+}
+return listaSituacionesMedicasTotales  ;
 }
 
 

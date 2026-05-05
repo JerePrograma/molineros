@@ -47,6 +47,9 @@ public class PdfServlet extends HttpServlet {
 	
 	private static final String CREDENCIALES_EXENTO = "jasper/afiliaciones/credencial_exepcion_copago.jasper";
 	private static final String CREDENCIAL_EXENTO_PDF_FILENAME = "credencial_exepcion_copago.pdf";
+	
+	private static final String CREDENCIALES_CES = "jasper/credencial/credencial_OSPIM_CES_A4.jasper";
+	private static final String CREDENCIAL_CES_PDF_FILENAME = "Credencial_CES.pdf";
 
 	private static final String CHEQUES = "jasper/cheque/chequeospim.jasper";
 	private static final String CHEQUE_PDF_FILENAME = "Cheque.pdf";
@@ -145,6 +148,10 @@ public class PdfServlet extends HttpServlet {
 			generarCredencialExentoCoPago(req, res);
 		}
 
+		if (accion.equals("credencialCES")) {
+			generarCredencialCES(req, res);
+		}
+		
 		if (accion.equals("cheque")) {
 			generaCheque(req, res);
 		}		
@@ -430,6 +437,24 @@ public class PdfServlet extends HttpServlet {
 		hm.put("inte", inte);
 		hm.put("SUBREPORT_DIR", "jasper/afiliaciones/");
 		crearPdf(req, res, CREDENCIALES_EXENTO, hm, CREDENCIAL_EXENTO_PDF_FILENAME);
+
+	}
+	
+	private void generarCredencialCES(HttpServletRequest req,
+			HttpServletResponse res) {
+		String id_lote = ParamUtil.getString(req, "id_lote");
+		HashMap<String, String> hm = new HashMap<String, String>();
+		hm.put("id_lote", id_lote);
+		Date vto =DateUtils.getLastDateOfMonth(new Date(), true);
+		
+		Calendar calendar = Calendar.getInstance(); 
+	    calendar.setLenient(false);
+	    calendar.setTime(vto); 
+//	    calendar.add(calendar.MONTH, 1);  
+		
+		hm.put("vto", new SimpleDateFormat("dd/MM/yyyy").format(calendar.getTime()));
+		hm.put("SUBREPORT_DIR", "jasper/credencial/");
+		crearPdf(req, res, CREDENCIALES_CES, hm, CREDENCIAL_CES_PDF_FILENAME);
 
 	}
 	

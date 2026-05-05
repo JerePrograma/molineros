@@ -9,6 +9,7 @@ import com.liferay.portal.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.model.User;
+import com.liferay.portal.model.UserGroup;
 import com.liferay.portal.service.UserServiceUtil;
 import com.liferay.portal.service.persistence.UserUtil;
 
@@ -117,23 +118,43 @@ public class ReclamosPrestacionesServiceUtil {
 	 Registra el contacto en CRM : tipo = 6  "CORREO SALIENTE" , descripcion =  "RECLAMO PRESTACIONAL NRO " NNNN
 	 campo estado CERRADO   categoria = 2  "RECLAMO"  id motivo = 5 PRESTACIONES MÉDICAS
 	 */
-	public static void grabarContactoCRM(ReclamoPrestacional reclamo , User user ) throws SystemException {
-		ContactoCRM contactoCrm = new ContactoCRM ();
-		try {
-			contactoCrm.setAfiliado(new Afiliado (reclamo.getCuit_titular(),reclamo.getInte()));		
-			contactoCrm.setAltaSector(UserUtil.getUserGroups(user.getUserId()).get(0).getGroup().getDescription() );		
-			contactoCrm.setTipo(new TipoContacto(6, "CORREO SALIENTE"));
-			contactoCrm.setCategoria(new CategoriaContacto(2,"RECLAMO") );
-			contactoCrm.setMotivo(new MotivoContacto (5,"PRESTACIONES MÉDICAS"));
-			contactoCrm.setDescripcion("RECLAMO PRESTACIONAL NRO::" + String.valueOf(reclamo.getId_reclamo())   );
-			contactoCrm.setIdCrmRelacionado(0);
-			contactoCrm.setComentarioCierre("Cierre automático por carga de reclamo prestacional");
-			contactoCrm.setEstado(ContactoCRM.ESTADOS.CERRADO);
-			CrmServiceUtil.insertaContacto(contactoCrm, user.getScreenName(),String.valueOf(UserUtil.getUserGroups(user.getUserId()).get(0).getUserGroupId()),null );	
-		}catch (Exception e) {
-			_log.error("Usuario: "+user.getScreenName());
-			_log.error(e);	
-		}		
+	public static void grabarContactoCRM(ReclamoPrestacional reclamo, User user) throws SystemException {
+	    ContactoCRM contactoCrm = new ContactoCRM();
+
+	    try {
+	        List<UserGroup> userGroups = UserUtil.getUserGroups(user.getUserId());
+
+	        String altaSector = "";
+	        String userGroupId = null;
+
+	        if (userGroups != null && !userGroups.isEmpty()) {
+	            altaSector = userGroups.get(0).getGroup().getDescription();
+	            userGroupId = String.valueOf(userGroups.get(0).getUserGroupId());
+	        } else {
+	            _log.warn("El usuario no tiene UserGroups asociados. Usuario: " + user.getScreenName());
+	        }
+
+	        contactoCrm.setAfiliado(new Afiliado(reclamo.getCuit_titular(), reclamo.getInte()));
+	        contactoCrm.setAltaSector(altaSector);
+	        contactoCrm.setTipo(new TipoContacto(6, "CORREO SALIENTE"));
+	        contactoCrm.setCategoria(new CategoriaContacto(2, "RECLAMO"));
+	        contactoCrm.setMotivo(new MotivoContacto(5, "PRESTACIONES MÉDICAS"));
+	        contactoCrm.setDescripcion("RECLAMO PRESTACIONAL NRO::" + String.valueOf(reclamo.getId_reclamo()));
+	        contactoCrm.setIdCrmRelacionado(0);
+	        contactoCrm.setComentarioCierre("Cierre automático por carga de reclamo prestacional");
+	        contactoCrm.setEstado(ContactoCRM.ESTADOS.CERRADO);
+
+	        CrmServiceUtil.insertaContacto(
+	            contactoCrm,
+	            user.getScreenName(),
+	            userGroupId,
+	            null
+	        );
+
+	    } catch (Exception e) {
+	        _log.error("Usuario: " + user.getScreenName());
+	        _log.error(e);
+	    }
 	}
 
 	private static void  enviarMailsCierreReclamoPrestacional (ReclamoPrestacional reclamo ,User user ){

@@ -67,7 +67,11 @@ public class SituacionesMedicasServiceUtil {
 	}
 	
 
-
+	public static List<ItemSituacionMedicaTotal> buscarSituacionesMedicasVigente(BusquedaSituacionMedicaFiltro filtro  
+			) throws Exception {
+		//, fechaDesde, fechaHasta, inte, cuilTitular, tipoSituMedica, pagina
+		return getInstance().buscarSituacionesMedicasVigente( filtro ); 
+	}
 	
 	
 }

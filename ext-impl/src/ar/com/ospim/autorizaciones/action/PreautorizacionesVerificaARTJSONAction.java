@@ -32,7 +32,7 @@ public class PreautorizacionesVerificaARTJSONAction extends JSONAction {
 			BusquedaPreautorizacionesFiltro filtro=new BusquedaPreautorizacionesFiltro(0,cuilTitular, inte, null, null,
 					null, null, null, null, false,
 					false, false, false, false, false,
-					false, 0, false, true,0);
+					false, 0, false, true,false,0);
 /*			
 			BusquedaPreautorizacionesFiltro(Integer id, String cuil, Integer inte, Date fechaD, Date fechaH,
 					String estado, Date fechaEmail, Date fechaEmailH, Integer seccional, boolean alertaRoja,

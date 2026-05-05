@@ -1,1 +1,0 @@
-drop table plan_de_pago;

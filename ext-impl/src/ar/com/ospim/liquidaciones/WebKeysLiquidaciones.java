@@ -49,7 +49,7 @@ public class WebKeysLiquidaciones implements
 	public static final int REINTEGRO_ESTADO_PENDIENTE = 4; // protesis,
 	// ortopedia_ortodoncia
 	// que se carga con
-	// la informaciï¿½n no
+	// la información no
 	// completa
 	
 	public static final Integer REINTEGRO_ODO_PROTESIS_MARCA = 4;
@@ -57,9 +57,9 @@ public class WebKeysLiquidaciones implements
 	public static final int REINTEGRO_ESTADO_AUTORIZADO = 5; // equivalente a
 	// cargado pero
 	// solo para
-	// prï¿½tesis,
+	// prótesis,
 	// ortopedia_ortodoncia
-	public static final int REINTEGRO_ESTADO_RECHAZADO = 6; // prï¿½tesis,
+	public static final int REINTEGRO_ESTADO_RECHAZADO = 6; // prótesis,
 	
 	
 	
@@ -112,7 +112,7 @@ public class WebKeysLiquidaciones implements
 	public static final int[] PRESTACIONES_CON_TOPES = { 630, 629, 628, 397,
 			2358, 2335, 2359, 94, 95 }; // (630, 629, 628); --psicoterapia,
 										// //(397); --
-	// kinesiologï¿½a, //(2358, 2335, 2359); --optica
+	// kinesiología, //(2358, 2335, 2359); --optica
 	public static final int TOPES_PROTESIS_FAMILIA = 12750; //8500;//6750;//4500; No olvidar tabla autorizaciones.nomenclador_topes_reintegro
 	public static final String ORDENES_PAGO_ARCHIVOS_DUPLICADOS = "ORDENES_PAGO_ARCHIVOS_DUPLICADOS";
 	public static final String ALTA_USR_REINTEGROS_EN_SESSION = "ALTA_USR_REINTEGROS_EN_SESSION";
@@ -227,10 +227,7 @@ public class WebKeysLiquidaciones implements
 	public static final String CONSULTA_COMPROBANTES_GLOBAL_TOTAL_REGISTROS="CONSULTA_COMPROBANTES_GLOBAL_TOTAL_REGISTROS";     
 	public static final String BUSQUEDA_COMPROBANTES_GLOBALES = "BUSQUEDA_COMPROBANTES_GLOBALES";
 	
-	public static final String ROL_LIQUIDACIONES_HOSPITALES = "liquidaciones_hospitales";
+	public static final String ROL_LIQUIDACIONES_HOSPITALES = "liquidaciones_hospitales";	
 
-	public static final String BUSQUEDA_CARTILLA_CONVENIO_FILTRO = "BUSQUEDA_CARTILLA_CONVENIO_FILTRO";
-	public static final String BUSQUEDA_CARTILLA_CONVENIO_RESULTS = "BUSQUEDA_CARTILLA_CONVENIO_RESULTS";
-	public static final String PROVINCIAS_EN_SESSION = "PROVINCIAS_EN_SESSION";
-	public static final String LOCALIDADES_EN_SESSION = "LOCALIDADES_EN_SESSION";
+		
 }

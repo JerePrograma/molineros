@@ -593,7 +593,7 @@ public class CrmServiceImpl {
 		List<ContactoCRMTotal> listaContactos = new ArrayList<ContactoCRMTotal>();
 		
 		try {
-			String sql = "{call crm.busqueda_contactos(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,? ,? , ?)}";
+			String sql = "{call crm.busqueda_contactos(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,? ,? , ?,?)}";
 			
 			con = ConnectionHelper.getConnection();
 			stmt = con.prepareCall(sql.toString());
@@ -649,6 +649,8 @@ public class CrmServiceImpl {
 				   stmt.setNull(25,Types.VARCHAR);	
 			}
 			
+			stmt.setInt(26, filtro.getSituacionMedica());
+			
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
 				contacto = ContactoCRMTotal.getMapping("con_", rs);
@@ -678,7 +680,7 @@ public class CrmServiceImpl {
 		try {
 			logger.debug("busqueda_contactos_xls: " + "desde: " + filtro.getFechaDesde() + " hasta: "+ filtro.getFechaHasta());
 			
-			String sql = "{call crm.busqueda_contactos_xls(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+			String sql = "{call crm.busqueda_contactos_xls(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)}";
 			
 			con = ConnectionHelper.getConnection();
 			stmt = con.prepareCall(sql.toString());
@@ -717,6 +719,7 @@ public class CrmServiceImpl {
 			stmt.setString(19, filtro.getNoAfiliadoDocNumero() );
 			stmt.setString(20, usuario.getScreenName());
 			stmt.setString(21,  String.valueOf(UserUtil.getUserGroups(usuario.getUserId()).get(0).getUserGroupId()));
+			stmt.setInt(22, filtro.getSituacionMedica());
 
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {

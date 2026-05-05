@@ -62,6 +62,9 @@ import ar.com.ospim.util.StringUtils;
 		
 	private Logger _log = Logger.getLogger(this.getClass());
 	
+	private static final String RECLAMO_PRESTACION_ESTADO_ORIGINAL =
+            "RECLAMO_PRESTACION_ESTADO_ORIGINAL";
+	
 	public void processAction(ActionMapping mapping, ActionForm form,
 			PortletConfig portletConfig, ActionRequest actionRequest,
 			ActionResponse actionResponse) throws Exception {
@@ -646,6 +649,79 @@ import ar.com.ospim.util.StringUtils;
 				    ReclamoPrestacional originalBD = ReclamosPrestacionesServiceUtil.getReclamoPrestacional(id);
 				    int estadoAnterior = (originalBD != null) ? originalBD.getEstado() : -99;
 					
+				    
+				    //se agrega
+				    Integer estadoOriginalPantalla =
+				            (Integer) session.getAttribute(RECLAMO_PRESTACION_ESTADO_ORIGINAL);
+
+				    if (originalBD != null && estadoOriginalPantalla != null) {
+
+				        int estadoActualBD = originalBD.getEstado();
+
+				        if (estadoActualBD != estadoOriginalPantalla.intValue()) {
+
+				            SessionErrors.add(renderRequest, "error-reclamo-modificado");
+				            renderRequest.setAttribute(
+				                "msgErrorReclamoModificado",
+				                "El reclamo fue modificado por otro usuario. Recargue la pantalla antes de guardar."
+				            );
+
+				            session.removeAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
+				            session.removeAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION);
+				            session.removeAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION);
+
+				            session.setAttribute(
+				                WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION,
+				                originalBD
+				            );
+				            session.setAttribute(
+				                WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION,
+				                originalBD.getPrestaciones()
+				            );
+				            session.setAttribute(
+				                WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION,
+				                originalBD.getRevisiones()
+				            );
+
+				            renderRequest.setAttribute(Constants.CMD, Constants.EDIT);
+
+				            return mapping.findForward(getForward(
+				                renderRequest,
+				                WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL.equals(cmdAction)
+				                    ? "portlet.autorizaciones.reclamosprestacionales_seccional.editar_reclamos_entry"
+				                    : "portlet.autorizaciones.reclamosprestacionales.editar_reclamos_entry"
+				            ));
+				        }
+				    }
+
+				    if (originalBD != null
+				            && originalBD.getEstado() == 3
+				            && reclamoPrestacional.getEstado() != 3) {
+
+				        SessionErrors.add(renderRequest, "error-reclamo-ya-cerrado");
+				        renderRequest.setAttribute(
+				            "msgErrorReclamoYaCerrado",
+				            "El reclamo ya fue cerrado por otro usuario. No se puede volver a guardar."
+				        );
+
+				        session.removeAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
+				        session.setAttribute(
+				            WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION,
+				            originalBD
+				        );
+
+				        renderRequest.setAttribute(Constants.CMD, Constants.EDIT);
+
+				        return mapping.findForward(getForward(
+				            renderRequest,
+				            WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL.equals(cmdAction)
+				                ? "portlet.autorizaciones.reclamosprestacionales_seccional.editar_reclamos_entry"
+				                : "portlet.autorizaciones.reclamosprestacionales.editar_reclamos_entry"
+				        ));
+				    }
+
+				    
+				    
 					int aux =  reclamoPrestacional.getId_reclamo();					
 					ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO resolucionAutorizado;
 					resolucionAutorizado=reclamoPrestacional.getEstadoResolucionAutorizada();
@@ -743,6 +819,13 @@ import ar.com.ospim.util.StringUtils;
 					session.setAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION, reclamoPrestacional );	
 					session.setAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION , reclamoPrestacional.getPrestaciones());
 					session.setAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION , reclamoPrestacional.getRevisiones());
+					
+					//se agrega
+					session.setAttribute(
+						    RECLAMO_PRESTACION_ESTADO_ORIGINAL,
+						    reclamoPrestacional.getEstado()
+						);
+					
 					if(reclamoPrestacional.getEstado() == 3 && !"REINTEGRO".equalsIgnoreCase(reclamoPrestacional.getTipoPedido()) ){
 						this.avisoPrestadorInexistente(reclamoPrestacional);
 					}					
@@ -904,7 +987,13 @@ import ar.com.ospim.util.StringUtils;
 			}
 		}
 		
-		reclamoPrestacional = ReclamosPrestacionesServiceUtil.getReclamoPrestacional(idReclamoDeBuscador);								
+		reclamoPrestacional = ReclamosPrestacionesServiceUtil.getReclamoPrestacional(idReclamoDeBuscador);	
+		
+		session.setAttribute(
+			    RECLAMO_PRESTACION_ESTADO_ORIGINAL,
+			    reclamoPrestacional.getEstado()
+			);
+		
 		if (reclamoPrestacional.getEstado()==3) {
 			ReclamosPrestacionesServiceUtil.setDatosOpReclamoPrestacional(reclamoPrestacional);						
 		}

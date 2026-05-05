@@ -86,6 +86,7 @@ public class ReporteCrmContactoExcel extends ReporteXLS {
 			String fechaHastaFinal = ParamUtil.getString(req,"fechaHastaFinal", null);
 			
 			String noAfiliadoDocNumero = ParamUtil.getString(req,"noAfiliadoDocNumero", null);
+			int situacionMedica = ParamUtil.getInteger(req, "situacion_medica",0);
 
 			
 			BusquedaContactoFiltro filtro = new BusquedaContactoFiltro();
@@ -124,6 +125,7 @@ public class ReporteCrmContactoExcel extends ReporteXLS {
 			filtro.setEficaciaConformidad(eficaciaConformidad);
 			filtro.setSeccional(seccional);
 			filtro.setNoAfiliadoDocNumero(noAfiliadoDocNumero);
+			filtro.setSituacionMedica(situacionMedica);
 
 			List<ContactoCRM> busqueda = CrmServiceUtil.busquedaContactosCRMxls(filtro, user);
 

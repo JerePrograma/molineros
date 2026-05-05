@@ -16,7 +16,7 @@ import ar.com.ospim.autorizaciones.beans.AutoPrestacional;
 import ar.com.ospim.liquidaciones.DuplicateTratamientoDiscapacidadIdException;
 import ar.com.ospim.liquidaciones.ImposibleBorrarTratamientoDiscapacidadException;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.liquidaciones.beans.MotivoAltaDiscapacidad;
 import ar.com.ospim.liquidaciones.services.ReintegroServiceUtil;
 import ar.com.ospim.util.DateUtils;
@@ -214,7 +214,7 @@ public class AutorizacionPrestacionalServiceUtil {
 								true).after(periodoDate)) {
 					periodoEntreFechas = true;
 						
-				// documentaci√≥n faltante
+				// documentaciÛn faltante
 				if (tratamientoDiscapacidad.getEstado() == 2) {
 					esDocumentacionFaltante = true;
 				}
@@ -307,9 +307,9 @@ public class AutorizacionPrestacionalServiceUtil {
 				mensaje.append("Ya ha cargado una cantidad total "
 						+ periodicidad + " de: "
 						+ cantidadPrestacionesPeriodo.toString()
-						+ " para dicha prestaci√≥n de discapacidad,\\n");
+						+ " para dicha prestaciÛn de discapacidad,\\n");
 				mensaje
-						.append("Se est√° excediendo la cantidad de prestaciones autorizadas para el tratamiento -"
+						.append("Se est· excediendo la cantidad de prestaciones autorizadas para el tratamiento -"
 								+ cantidadPrestacionesAutorizado.toString()
 								+ "- en el periodo\\n");
 			}
@@ -322,9 +322,9 @@ public class AutorizacionPrestacionalServiceUtil {
 						+ " de: "
 						+ totalPrestacionesPeriodo.setScale(2,
 								RoundingMode.HALF_DOWN).toString()
-						+ " para dicha prestaci√≥n de discapacidad,\\n");
+						+ " para dicha prestaciÛn de discapacidad,\\n");
 				mensaje
-						.append("Se est√° excediendo el importe total para la prestaci√≥n autorizadas -"
+						.append("Se est· excediendo el importe total para la prestaciÛn autorizadas -"
 								+ valorTotalPrestacionesAutorizado.setScale(2,
 										RoundingMode.HALF_DOWN).toString()
 								+ "- en el periodo\\n");
@@ -333,7 +333,7 @@ public class AutorizacionPrestacionalServiceUtil {
 		if (mensaje.length() > 0) {
 			if (esDocumentacionFaltante) {
 				mensaje
-						.append(" Adem√°s, Documentaci√≥n faltante para el afiliado con discapacidad.");
+						.append(" Adem·s, DocumentaciÛn faltante para el afiliado con discapacidad.");
 				motivoAlta
 						.setEstadoAlta(WebKeysLiquidaciones.MOTIVO_ALTA_POR_DISCAPACIDAD_ESTADO_DOC_FALTANTE_Y_PERIODO_DUPLICADO_EXCEDIDO);
 			} else {
@@ -346,7 +346,7 @@ public class AutorizacionPrestacionalServiceUtil {
 		}
 		if (esDocumentacionFaltante) {
 			mensaje
-					.append("Documentaci√≥n faltante para el afiliado con discapacidad.");
+					.append("DocumentaciÛn faltante para el afiliado con discapacidad.");
 			motivoAlta
 					.setEstadoAlta(WebKeysLiquidaciones.MOTIVO_ALTA_POR_DISCAPACIDAD_ESTADO_DOC_FALTANTE);
 			motivoAlta.setMensajeAltaEstado(mensaje.toString());
@@ -354,7 +354,7 @@ public class AutorizacionPrestacionalServiceUtil {
 		}
 		if (!prestacionEsTratamiento) {
 			mensaje
-					.append("No hay tratamiento de discapacidad para dicho afiliado, prestador y c√≥digo.");
+					.append("No hay tratamiento de discapacidad para dicho afiliado, prestador y cÛdigo.");
 			motivoAlta
 					.setEstadoAlta(WebKeysLiquidaciones.MOTIVO_ALTA_POR_DISCAPACIDAD_ESTADO_SIN_TRATAMIENTO);
 			motivoAlta.setMensajeAltaEstado(mensaje.toString());
@@ -362,7 +362,7 @@ public class AutorizacionPrestacionalServiceUtil {
 		}
 		if (!periodoEntreFechas) {
 			mensaje
-					.append("El periodo de la prestaci√≥n no est√° dentro de la fecha del tratamiento de discapacidad autorizado.");
+					.append("El periodo de la prestaciÛn no est· dentro de la fecha del tratamiento de discapacidad autorizado.");
 			motivoAlta
 					.setEstadoAlta(WebKeysLiquidaciones.MOTIVO_ALTA_POR_DISCAPACIDAD_ESTADO_PER_INCORRECTO);
 			motivoAlta.setMensajeAltaEstado(mensaje.toString());

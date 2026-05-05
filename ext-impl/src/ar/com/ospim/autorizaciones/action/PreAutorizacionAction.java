@@ -1,8 +1,6 @@
 package ar.com.ospim.autorizaciones.action;
 
 import java.io.InputStream;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -40,7 +38,6 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
 import com.liferay.portal.model.UserGroup;
 import com.liferay.portal.service.UserGroupLocalServiceUtil;
-import com.liferay.portal.service.persistence.UserUtil;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
@@ -49,8 +46,6 @@ import com.liferay.portlet.documentlibrary.model.impl.DLFileEntryImpl;
 import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
 
-import ar.com.ospim.afiliados.NoSuchAfiliadoEntryException;
-import ar.com.ospim.afiliados.beans.AfiPlan;
 import ar.com.ospim.afiliados.beans.AfiSuspencionCobertura;
 import ar.com.ospim.afiliados.beans.AfiTercerizadoraServicio;
 import ar.com.ospim.afiliados.beans.Afiliado;
@@ -59,11 +54,12 @@ import ar.com.ospim.afiliados.services.PlanServiceUtil;
 import ar.com.ospim.afiliados.services.SeccionalServiceUtil;
 import ar.com.ospim.afiliados.services.TercerizadoraServiceUtil;
 import ar.com.ospim.automatico.ReportesScheduler.ReportesAutomaticosConfiguracion;
-import ar.com.ospim.automatico.beans.ReporteAutomatico;
 import ar.com.ospim.automatico.service.ReportesServiceUtil;
 import ar.com.ospim.autorizaciones.beans.AutoPrestacional;
 import ar.com.ospim.autorizaciones.beans.BusquedaPreautorizacionesFiltro;
+import ar.com.ospim.autorizaciones.beans.BusquedaSituacionMedicaFiltro;
 import ar.com.ospim.autorizaciones.beans.Estado;
+import ar.com.ospim.autorizaciones.beans.ItemSituacionMedicaTotal;
 import ar.com.ospim.autorizaciones.beans.Nomenclador;
 import ar.com.ospim.autorizaciones.beans.OpcionesPrestacion;
 import ar.com.ospim.autorizaciones.beans.PreAutorizacion;
@@ -72,6 +68,7 @@ import ar.com.ospim.autorizaciones.beans.PreAutorizacionPrestacion;
 import ar.com.ospim.autorizaciones.services.AutorizacionPrestacionalServiceUtil;
 import ar.com.ospim.autorizaciones.services.NomencladorServiceUtil;
 import ar.com.ospim.autorizaciones.services.PreAutorizacionServiceUtil;
+import ar.com.ospim.autorizaciones.services.SituacionesMedicasServiceUtil;
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.desarrolloAppMobile.beans.ClienteAppMobile;
 import ar.com.ospim.desarrolloAppMobile.services.ClienteAppMobileServiceUtil;
@@ -89,7 +86,6 @@ public class PreAutorizacionAction extends PortletAction {
 	
 	private Logger _log = Logger.getLogger(this.getClass());
 	SimpleDateFormat formatoDeFechas = new SimpleDateFormat("dd/MM/yyyy");
-	private PlanServiceUtil planService = new PlanServiceUtil();
 
 	
 	public void processAction(ActionMapping mapping, ActionForm form,
@@ -1204,6 +1200,8 @@ public class PreAutorizacionAction extends PortletAction {
 		boolean alojamiento=ParamUtil.getBoolean(renderRequest, "alojamiento");
 		boolean protesisOrt=ParamUtil.getBoolean(renderRequest, "protesisOrtesis");
 		boolean art=ParamUtil.getBoolean(renderRequest, "posibleart");
+		boolean diabetes=ParamUtil.getBoolean(renderRequest, "diabetes");
+		
 		
 		Integer idAutorizacion = ParamUtil.getInteger(renderRequest, "idAutorizacion",0);
 		Date fechaEmail = null;
@@ -1236,7 +1234,7 @@ public class PreAutorizacionAction extends PortletAction {
 			
 		BusquedaPreautorizacionesFiltro filtro = new BusquedaPreautorizacionesFiltro(id, cuil, inte, fechaD, fechaH, estado, fechaEmail, 
 				fechaEmailH, idSeccional, alertaRoja, discapacidad, supra, cirugia, medicamento, sinReintento, 
-				alojamiento, idAutorizacion, protesisOrt,art, 0);
+				alojamiento, idAutorizacion, protesisOrt,art,diabetes, 0);
 		
 		List<PreAutorizacion> lista = PreAutorizacionServiceUtil.getListaPreAutorizacion(filtro);
 		
@@ -1306,10 +1304,20 @@ public class PreAutorizacionAction extends PortletAction {
 		String sizeValidoAdjuntos =TraeListasServiceUtil.getSystemConfig("GMAIL_SIZE_VALIDO_ADJUNTOS");
 		String planNuevaTercerizadora =TraeListasServiceUtil.getSystemConfig("EMAIL_PLAN_MONOTRIBUTO");
 		String seccionalesExceptuadas =TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_TERCERIZADORA_ESPECIAL_SECCIONALES_EXCEPTUADAS");
-		
+		String tercerizadoraAlternativa =TraeListasServiceUtil.getSystemConfig("TERCERIZADORA_ALTERNATIVA");
 		Double sizeValidoAdj=Double.valueOf(sizeValidoAdjuntos);
 		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 		boolean result = false;
+		
+		if(!preautorizacion.isAlojamiento() && preautorizacion.getAfiliado().getId_tercerizadora()==null) {
+	     try {		
+	        AfiTercerizadoraServicio ats = TercerizadoraServiceUtil.getInstance().buscarUltimaTercerizadoraDelAfiliado(null, preautorizacion.getAfiliado().getCuil_titular());
+	        preautorizacion.getAfiliado().setId_tercerizadora(ats.getTercerizadora().getId_tercerizadora());
+	     }catch(Exception e) {
+	    	 _log.error("Fallo al buscar tercerizadora del afiliado de la preatorizacion "+ preautorizacion.getId().toString());
+	     }
+		}
+		
 		if(preautorizacion.isAlojamiento()) {
 		   destino=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_ALOJAMIENTO");
  		}else if(preautorizacion.isProtesisOrtesis()|| preautorizacion.isCirugia() ){
@@ -1321,6 +1329,9 @@ public class PreAutorizacionAction extends PortletAction {
              		    !seccionalesExceptuadas.contains(String.valueOf(preautorizacion.getAfiliado().getSeccional().getId()))
         		   ) { 			
  		      destino=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_PROTESIS_TERCERIZADORA_ESPECIAL");
+           }else if(preautorizacion.getAfiliado()!=null &&   preautorizacion.getAfiliado().getId_tercerizadora()!=null  &&
+        		   preautorizacion.getAfiliado().getId_tercerizadora().equalsIgnoreCase(tercerizadoraAlternativa)) { 			
+ 		      destino=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_PROTESIS_TERCERIZADORA_ALTERNATIVA");
            }else {	
  		      destino=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_PROTESIS");
            }  
@@ -1334,6 +1345,9 @@ public class PreAutorizacionAction extends PortletAction {
         		    !seccionalesExceptuadas.contains(String.valueOf(preautorizacion.getAfiliado().getSeccional().getId()))
         		   ) {
  		     destino=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_DISCAPACIDAD_TERCERIZADORA_ESPECIAL");
+           }else if(preautorizacion.getAfiliado()!=null &&   preautorizacion.getAfiliado().getId_tercerizadora()!=null  &&
+        		   preautorizacion.getAfiliado().getId_tercerizadora().equalsIgnoreCase(tercerizadoraAlternativa)) { 			
+ 		      destino=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_DISCAPACIDAD_TERCERIZADORA_ALTERNATIVA");
            }else {
         	 destino=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_DISCAPACIDAD");  
            }
@@ -1346,6 +1360,9 @@ public class PreAutorizacionAction extends PortletAction {
             		    !seccionalesExceptuadas.contains(String.valueOf(preautorizacion.getAfiliado().getSeccional().getId()))
        		   ) { 			
 		      destino=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_MEDICAMENTOS_TERCERIZADORA_ESPECIAL");
+          }else if(preautorizacion.getAfiliado()!=null &&   preautorizacion.getAfiliado().getId_tercerizadora()!=null  &&
+       		   preautorizacion.getAfiliado().getId_tercerizadora().equalsIgnoreCase(tercerizadoraAlternativa)) { 			
+		      destino=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_MEDICAMENTOS_TERCERIZADORA_ALTERNATIVA");
           }else {	
 		      destino=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_MEDICAMENTOS");
           }  
@@ -1357,7 +1374,11 @@ public class PreAutorizacionAction extends PortletAction {
               		    !seccionalesExceptuadas.contains(String.valueOf(preautorizacion.getAfiliado().getSeccional().getId()))
          		   ) { 			
   		      destino=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_TERCERIZADORA_ESPECIAL");
-            }else {	
+            }else if(preautorizacion.getAfiliado()!=null &&   preautorizacion.getAfiliado().getId_tercerizadora()!=null  &&
+            		   preautorizacion.getAfiliado().getId_tercerizadora().equalsIgnoreCase(tercerizadoraAlternativa)) { 			
+  		      destino=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_TERCERIZADORA_ALTERNATIVA");
+            }
+ 			else {	
  		      destino=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO");
             }  
  		}   
@@ -1365,6 +1386,30 @@ public class PreAutorizacionAction extends PortletAction {
  		String idSecc = user.getExpandoBridge().getAttribute("id_seccional").toString();
  		
 // 		Seccional seccional =SeccionalServiceUtil.buscarSeccionalById(preautorizacion.getAfiliado().getSeccional().getId());
+ 		
+//Agregado para el manejo de DIABETES 	2026-04-10	
+ 		if(!preautorizacion.isAlojamiento()) {
+ 		   boolean esDiabetes=false;
+		   if(preautorizacion.getAfiliado()!=null) {
+			BusquedaSituacionMedicaFiltro   busquedaSituacionFiltro  = new BusquedaSituacionMedicaFiltro(preautorizacion.getFecha(), preautorizacion.getFecha(),
+					preautorizacion.getAfiliado().getInte() ,preautorizacion.getAfiliado().getCuil_titular(),2,0);
+			try {
+				List<ItemSituacionMedicaTotal> busqueda = SituacionesMedicasServiceUtil.buscarSituacionesMedicasVigente(busquedaSituacionFiltro ) ;
+				if(busqueda!=null && busqueda.size()>0) esDiabetes=true;
+			} catch (Exception e) {}
+		   }
+ 		
+ 		   if(esDiabetes) {
+ 			String destinoDIABETES=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_DIABETES");
+ 			if(destinoDIABETES!=null && destinoDIABETES.length()>0) {
+ 			  if(!destino.isEmpty() && !";".equals(destino.substring(destino.length() - 1))){
+ 				destino+=";";
+ 			  }
+ 			  destino +=destinoDIABETES;
+ 			}  
+ 		   }
+ 		}
+//Fin Agregado Manejo de DIABETES 		
  		String[] destinatarios = destino.split(";");
  		if(destinatarios.length<=1) {
  			emails.add(destino);

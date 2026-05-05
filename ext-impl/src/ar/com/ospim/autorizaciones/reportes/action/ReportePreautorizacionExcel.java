@@ -97,6 +97,7 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		boolean alojamiento=ParamUtil.getBoolean(renderRequest, "alojamiento");
 		boolean protesisOrt=ParamUtil.getBoolean(renderRequest, "protesisOrtesis");
 		boolean art=ParamUtil.getBoolean(renderRequest, "posibleart");
+		boolean diabetes=ParamUtil.getBoolean(renderRequest, "diabetes");
 		
 		Integer idAutorizacion = ParamUtil.getInteger(renderRequest, "idAutorizacion",0);
 		Date fechaEmail = null;
@@ -126,7 +127,7 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		
 	    BusquedaPreautorizacionesFiltro filtro = new BusquedaPreautorizacionesFiltro(id, cuil, inte, fechaD, fechaH, estado, fechaEmail, 
 				fechaEmailH, idSeccional, alertaRoja, discapacidad, supra, cirugia, medicamento, sinReintento, 
-				alojamiento, idAutorizacion, protesisOrt,art, 0);
+				alojamiento, idAutorizacion, protesisOrt,art,diabetes ,0);
 		
 		
 		List<PreAutorizacion> seguimientos = PreAutorizacionServiceUtil.getListaPreAutorizacionExtendido(filtro);

@@ -124,7 +124,7 @@ public class WebKeysAfiliados implements com.liferay.portal.kernel.util.WebKeys 
 	public static final String DIRECCIONES_EN_SESSION = "DIRECCIONES_EN_SESSION";
 	public static final String CUIT_DESEMPLEO_ANSES = "33637617449";
 	public static final String SUCU_DESEMPLEO_ANSES = "001";
-	public static final String REPORTE_AMTIMA_PMI = "REPORTE_AMTIMA_PMI";						
+	public static final String REPORTE_AMTIMA_PMI = "REPORTE_AMTIMA_PMI";
 	public static final String PLAN_OMINT = "PLAN_OMINT";
 	public static final String LISTA_AFILIADOS_EN_SESSION = "LISTA_AFILIADOS_EN_SESSION";
 	public static final String LISTA_AFILIADOS_OPCIONES_EN_SESSION = "LISTA_AFILIADOS_OPCIONES_EN_SESSION";

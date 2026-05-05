@@ -72,5 +72,5 @@ public class WebKeysCrm implements com.liferay.portal.kernel.util.WebKeys {
 	public static final String CRM_ES_COMPANIERO = "CRM_ES_COMPANIERO";
 	public static final String CRM_CIERRE_CONTACTO_PREDET = "CRM_CIERRE_CONTACTO_PREDETERMINADO";
 	
-
+	public static final String CRM_LISTA_SITUACIONES_MEDICAS = "CRM_LISTA_SITUACIONES_MEDICAS";
 } 

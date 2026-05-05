@@ -1,7 +1,6 @@
 # ------------------------------------------------------------
 # OSPIM / Liferay EXT (Ant)
-# Ignorar solo basura local/generada.
-# Trackear configuraciones explícitas y deploy local.
+# Ignorar basura local/generada + exclusiones completas pedidas.
 # ------------------------------------------------------------
 
 # --- Sistema operativo ---
@@ -100,4 +99,36 @@ _backup_*/
 
 # --- Reportes locales de auditoría ---
 tracked-build-properties-audit.txt
+
+# ------------------------------------------------------------
+# Exclusiones completas pedidas
+# ------------------------------------------------------------
+
+# Runtime / bundles locales
 /bundles/
+
+# Web docroot completo.
+# ADVERTENCIA: esto ignora JSP, JS, CSS, WEB-INF y recursos fuente dentro de ext-web/docroot.
+/ext-web/docroot/
+
+# Scripts SQL completos
+/sql-scripts/
+
+# ------------------------------------------------------------
+# Exclusiones completas adicionales
+# ------------------------------------------------------------
+
+# SQL legacy/base completo
+/sql/
+
+# Módulos auxiliares/build legacy
+/modules/
+
+# Tests locales / pruebas legacy
+/test/
+
+# Archivos puntuales/versiones generadas o locales
+/lib/versions.xml
+
+# PDFs de prueba dentro de src
+/ext-impl/src/ar/com/ospim/test/*.pdf
