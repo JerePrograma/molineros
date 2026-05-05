@@ -19,7 +19,7 @@
 
                         var backURL = '<%= volverIndiceConveniosURL.toString() %>'.replace(/&amp;/g, '&');
 
-                        var url = '<portlet:renderURL windowState="<%=LiferayWindowState.MAXIMIZED.toString()%>"/>&struts_action=/prestadores/editar_convenio_prest_entry';
+                        var url = '<portlet:renderURL windowState="<%=LiferayWindowState.MAXIMIZED.toString()%>"/>&struts_action=/prestadores/convenios_prest/editar_convenio_prest_entry';
                         url = url + '&id_convenio='+codigo+'&por_codigo='+vistaView;
                         url = url + '&<%=Constants.CMD%>='+'<%=Constants.VIEW%>';
                         url = url + '&backURL=' + encodeURIComponent(backURL);

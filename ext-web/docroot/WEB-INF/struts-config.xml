@@ -6681,7 +6681,7 @@
 
 		<!-- CONVENIOS PRESTACIONALES / EDICION CABECERA -->
 
-		<action path="/prestadores/editar_convenio_prest_entry"
+		<action path="/prestadores/convenios_prest/editar_convenio_prest_entry"
 		        type="ar.com.ospim.prestadores.action.EditarConvPrestacionalAction">
 			<forward name="portlet.prestadores.editar_convenio_prest_entry"
 			         path="portlet.prestadores.editar_convenio_prest_entry" />
@@ -6995,7 +6995,7 @@
                      path="portlet.prestadores.error" />
         </action>
 
-        <action path="/prestadores/editar_convenio_prest_entry"
+        <action path="/prestadores/convenios_prest/editar_convenio_prest_entry"
                 type="ar.com.ospim.prestadores.action.EditarConvPrestacionalAction">
             <forward name="portlet.prestadores.editar_convenio_prest_entry"
                      path="portlet.prestadores.editar_convenio_prest_entry" />

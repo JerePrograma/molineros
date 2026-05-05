@@ -25,7 +25,7 @@
 		<tr>
 			<td colspan="4">
 				<div id="<portlet:namespace />lista_lugares_atencion">
-					<jsp:include page='/html/portlet/liquidaciones/administracion/prestadores/lista_lugares_atencion_prestador.jsp' />
+					<jsp:include page='/html/portlet/prestadores/lista_lugares_atencion_prestador.jsp' />
 				</div>
 			</td>
 		</tr>
@@ -89,7 +89,7 @@
 		<tr>
 			<td colspan="5">
 				<div id="<portlet:namespace />lista_telefonos">
-					<liferay-util:include page="/html/portlet/liquidaciones/administracion/prestadores/lista_telefonos_prestador_lugar_atencion.jsp">
+					<liferay-util:include page="/html/portlet/prestadores/lista_telefonos_prestador_lugar_atencion.jsp">
 					</liferay-util:include>
 				</div>
 			</td>
@@ -108,7 +108,7 @@
 		<tr>
 			<td colspan="5">
 				<div id="<portlet:namespace />lista_contactoes">
-						<liferay-util:include page="/html/portlet/liquidaciones/administracion/prestadores/lista_contactoes_prestador_lugar_atencion.jsp">
+						<liferay-util:include page="/html/portlet/prestadores/lista_contactoes_prestador_lugar_atencion.jsp">
 					</liferay-util:include>
 				</div>
 			</td>

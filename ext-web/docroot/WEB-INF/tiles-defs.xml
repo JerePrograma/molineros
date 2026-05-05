@@ -4397,7 +4397,7 @@
 	<definition name="portlet.prestadores.conv_prest_detalle_search_result"
 	            extends="portlet.prestadores">
 		<put name="portlet_content"
-		     value="/portlet/prestadores/conv_prest_detalle_search_result.jsp" />
+		     value="/portlet/prestadores/convenios_prest/conv_prest_detalle_search_result.jsp" />
 	</definition>
 
 
@@ -4442,7 +4442,7 @@
 	<definition name="portlet.prestadores.lista_convenio_prest_detalle"
 	            extends="portlet.prestadores">
 		<put name="portlet_content"
-		     value="/portlet/prestadores/conv_prest_detalle_search_result.jsp" />
+		     value="/portlet/prestadores/convenios_prest/conv_prest_detalle_search_result.jsp" />
 	</definition>
 
 	<definition name="portlet.prestadores.importar_contratos"

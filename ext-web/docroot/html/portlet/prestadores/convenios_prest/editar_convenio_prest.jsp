@@ -461,7 +461,7 @@
 
 				<div id="<portlet:namespace />detalleConvenioContainer">
 					<div align="center" id="<portlet:namespace />convenio_prest_detalle">
-						<liferay-util:include page="/html/portlet/prestadores/conv_prest_detalle_search_result.jsp">
+						<liferay-util:include page="/html/portlet/prestadores/convenios_prest/conv_prest_detalle_search_result.jsp">
 							<liferay-util:param name="<%=WebKeysLiquidaciones.VIEW_CONVENIO_PREST%>" value="<%=String.valueOf(!esEdicion)%>"/>
 						</liferay-util:include>
 					</div>
@@ -561,7 +561,7 @@
 		var idConvPrest = parseInt(jQuery("#<portlet:namespace />id_convprest").val() || "0", 10);
 		var cmd_ = (idConvPrest > 0) ? '<%=Constants.UPDATE%>' : '<%=Constants.SAVE%>';
 
-		var xportletUrl = '/prestadores/editar_convenio_prest_entry';
+		var xportletUrl = '/prestadores/convenios_prest/editar_convenio_prest_entry';
 
 		var url = '<liferay-portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString()%>">' +
 				'<liferay-portlet:param name="struts_action" value="__xportletUrl" />' +
@@ -928,7 +928,7 @@
 		if(estado == 3){
 			document.<portlet:namespace />convenios_prest_fm.<portlet:namespace /><%= Constants.CMD %>.value = <%=Constants.REJECT%>;
 		} --%>
-		var url = "<portlet:actionURL windowState='<%= LiferayWindowState.MAXIMIZED.toString() %>'><portlet:param name='struts_action' value='/prestadores/editar_convenio_prest_entry' /></portlet:actionURL>";
+		var url = "<portlet:actionURL windowState='<%= LiferayWindowState.MAXIMIZED.toString() %>'><portlet:param name='struts_action' value='/prestadores/convenios_prest/editar_convenio_prest_entry' /></portlet:actionURL>";
 
 		if(<%=convenioPrest!=null%>){
 			url = url + '&id_convenio_prest='+'<%=convenioPrest!=null?convenioPrest.getId():0%>';
@@ -1131,7 +1131,7 @@ jQuery('#<portlet:namespace />tipo_valorizacion').change(function(){
 		}
 
 		var url = "<portlet:actionURL windowState='<%= LiferayWindowState.MAXIMIZED.toString() %>'>" +
-				"<portlet:param name='struts_action' value='/prestadores/editar_convenio_prest_entry' />" +
+				"<portlet:param name='struts_action' value='/prestadores/convenios_prest/editar_convenio_prest_entry' />" +
 				"<portlet:param name='cmd' value='uploadXlsPreview' />" +
 				"</portlet:actionURL>";
 
@@ -1144,7 +1144,7 @@ jQuery('#<portlet:namespace />tipo_valorizacion').change(function(){
 
 	function <portlet:namespace />exportarXlsConvenioPrest() {
 		var url = "<portlet:actionURL windowState='<%= LiferayWindowState.EXCLUSIVE.toString() %>'>" +
-				"<portlet:param name='struts_action' value='/prestadores/editar_convenio_prest_entry' />" +
+				"<portlet:param name='struts_action' value='/prestadores/convenios_prest/editar_convenio_prest_entry' />" +
 				"<portlet:param name='cmd' value='exportXls' />" +
 				"</portlet:actionURL>";
 
@@ -1153,7 +1153,7 @@ jQuery('#<portlet:namespace />tipo_valorizacion').change(function(){
 
 	function <portlet:namespace />descargarXlsModelo() {
 		var url = "<portlet:actionURL windowState='<%= LiferayWindowState.EXCLUSIVE.toString() %>'>" +
-				"<portlet:param name='struts_action' value='/prestadores/editar_convenio_prest_entry' />" +
+				"<portlet:param name='struts_action' value='/prestadores/convenios_prest/editar_convenio_prest_entry' />" +
 				"<portlet:param name='cmd' value='downloadXlsModelo' />" +
 				"</portlet:actionURL>";
 
