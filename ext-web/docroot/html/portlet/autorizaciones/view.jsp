@@ -109,7 +109,7 @@ currentURL = PortalUtil.getCurrentURL(request);
 	portletURL="<%= portletURL %>"
 	value="<%=tabs1%>"
 />
-<!-- REPRESENTACIï¿½N DE LOS TABS DE Autorizaciones -->
+<!-- REPRESENTACIóN DE LOS TABS DE Autorizaciones -->
 <c:choose>	
 
 	<c:when test='<%=tabs1.equals("recetas-pmi") %>'>
@@ -119,7 +119,7 @@ currentURL = PortalUtil.getCurrentURL(request);
 		<liferay-util:include page="/html/portlet/autorizaciones/nomenclador/nomenclador.jsp"/>	
 	</c:when>
 	<%-- <c:when test='<%=tabs1.equals("conv-prest") %>'>
-		<liferay-util:include page="/html/portlet/prestadoresconvenios_prest/busqueda_convenios_prestacionales.jsp"/>
+		<liferay-util:include page="/html/portlet/liquidaciones/administracion/convenios_prest/busqueda_convenios_prestacionales.jsp"/>	
 	</c:when> --%>
 	<c:when test='<%=tabs1.equals("seguimiento-sur") %>'>
 		<liferay-util:include page="/html/portlet/autorizaciones/seguimiento_sur/seguimiento_sur_list.jsp"/>	
