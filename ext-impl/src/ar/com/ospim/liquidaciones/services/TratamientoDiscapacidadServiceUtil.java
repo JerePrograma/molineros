@@ -245,7 +245,7 @@ public class TratamientoDiscapacidadServiceUtil {
 								true).after(periodoDate)) {
 					periodoEntreFechas = true;
 						
-				// documentaciï¿½n faltante
+				// documentación faltante
 				if (tratamientoDiscapacidad.getEstado() == 2) {
 					esDocumentacionFaltante = true;
 				}
@@ -338,9 +338,9 @@ public class TratamientoDiscapacidadServiceUtil {
 				mensaje.append("Ya ha cargado una cantidad total "
 						+ periodicidad + " de: "
 						+ cantidadPrestacionesPeriodo.toString()
-						+ " para dicha prestaciï¿½n de discapacidad,\\n");
+						+ " para dicha prestación de discapacidad,\\n");
 				mensaje
-						.append("Se estï¿½ excediendo la cantidad de prestaciones autorizadas para el tratamiento -"
+						.append("Se está excediendo la cantidad de prestaciones autorizadas para el tratamiento -"
 								+ cantidadPrestacionesAutorizado.toString()
 								+ "- en el periodo\\n");
 			}
@@ -353,9 +353,9 @@ public class TratamientoDiscapacidadServiceUtil {
 						+ " de: "
 						+ totalPrestacionesPeriodo.setScale(2,
 								RoundingMode.HALF_DOWN).toString()
-						+ " para dicha prestaciï¿½n de discapacidad,\\n");
+						+ " para dicha prestación de discapacidad,\\n");
 				mensaje
-						.append("Se estï¿½ excediendo el importe total para la prestaciï¿½n autorizadas -"
+						.append("Se está excediendo el importe total para la prestación autorizadas -"
 								+ valorTotalPrestacionesAutorizado.setScale(2,
 										RoundingMode.HALF_DOWN).toString()
 								+ "- en el periodo\\n");
@@ -364,7 +364,7 @@ public class TratamientoDiscapacidadServiceUtil {
 		if (mensaje.length() > 0) {
 			if (esDocumentacionFaltante) {
 				mensaje
-						.append(" Ademï¿½s, Documentaciï¿½n faltante para el afiliado con discapacidad.");
+						.append(" Además, Documentación faltante para el afiliado con discapacidad.");
 				motivoAlta
 						.setEstadoAlta(WebKeysLiquidaciones.MOTIVO_ALTA_POR_DISCAPACIDAD_ESTADO_DOC_FALTANTE_Y_PERIODO_DUPLICADO_EXCEDIDO);
 			} else {
@@ -377,7 +377,7 @@ public class TratamientoDiscapacidadServiceUtil {
 		}
 		if (esDocumentacionFaltante) {
 			mensaje
-					.append("Documentaciï¿½n faltante para el afiliado con discapacidad.");
+					.append("Documentación faltante para el afiliado con discapacidad.");
 			motivoAlta
 					.setEstadoAlta(WebKeysLiquidaciones.MOTIVO_ALTA_POR_DISCAPACIDAD_ESTADO_DOC_FALTANTE);
 			motivoAlta.setMensajeAltaEstado(mensaje.toString());
@@ -385,7 +385,7 @@ public class TratamientoDiscapacidadServiceUtil {
 		}
 		if (!prestacionEsTratamiento) {
 			mensaje
-					.append("No hay tratamiento de discapacidad para dicho afiliado, prestador y cï¿½digo.");
+					.append("No hay tratamiento de discapacidad para dicho afiliado, prestador y código.");
 			motivoAlta
 					.setEstadoAlta(WebKeysLiquidaciones.MOTIVO_ALTA_POR_DISCAPACIDAD_ESTADO_SIN_TRATAMIENTO);
 			motivoAlta.setMensajeAltaEstado(mensaje.toString());
@@ -393,7 +393,7 @@ public class TratamientoDiscapacidadServiceUtil {
 		}
 		if (!periodoEntreFechas) {
 			mensaje
-					.append("El periodo de la prestaciï¿½n no estï¿½ dentro de la fecha del tratamiento de discapacidad autorizado.");
+					.append("El periodo de la prestación no está dentro de la fecha del tratamiento de discapacidad autorizado.");
 			motivoAlta
 					.setEstadoAlta(WebKeysLiquidaciones.MOTIVO_ALTA_POR_DISCAPACIDAD_ESTADO_PER_INCORRECTO);
 			motivoAlta.setMensajeAltaEstado(mensaje.toString());

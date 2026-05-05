@@ -2196,13 +2196,14 @@ ConnectionHelper.cerrar(con1);
 		       Iterator<Cell> cellIterator = row.cellIterator();
 		       Cell celda;
 		       Integer qCel=0;
-		       
-		       while (cellIterator.hasNext()){
+		       int lastColumn = row.getLastCellNum();
+		       for ( qCel = 0; qCel < lastColumn; qCel++) {
+		       //while (cellIterator.hasNext()){
 		    	   
-				celda = cellIterator.next();
+				
 				try{
-				 
-				  
+				  celda = row.getCell(qCel, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+				  //celda = cellIterator.next();
 				  if(qCel==0){//Hotel
 					hotel=celda.getStringCellValue();
 					sucursal= TraeListasServiceUtil.getSystemConfig("HOTEL_SUCURSAL_"+hotel);
@@ -2221,17 +2222,17 @@ ConnectionHelper.cerrar(con1);
 				      importe=celda.getNumericCellValue();
 				  }else if(qCel==4) { //Forma de pago
 					  fPago=celda.getStringCellValue();
-				  }else if(qCel==5) { //Nro Recibo
+				  }else if(qCel==6) { //Nro Recibo
 					  nroRecibo=celda.getNumericCellValue();
-				  }else if(qCel==6) { //Comentario 
+				  }else if(qCel==8) { //Comentario 
 					  movimientoBco=celda.getStringCellValue();
-				  }else if(qCel==7) {// Nros facturas que aplica
+				  }else if(qCel==9) {// Nros facturas que aplica
 					  facturas =celda.getStringCellValue();
 				  }
 				}catch(Exception e){
 					_log.debug(e);
 				}
-				qCel++;
+				//qCel++;
 			  }
 		      claveRecibo=sucursal + String.format("%08d",nroRecibo.intValue()); 
 		      recibo = mRecibos.get(claveRecibo);

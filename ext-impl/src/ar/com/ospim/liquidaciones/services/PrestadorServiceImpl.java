@@ -471,7 +471,7 @@ public class PrestadorServiceImpl {
 					}
 				}
 			}
-//			*** Lugar Atencion, La Direccion, Los telefonos y Contactos electrï¿½nicos del mismo
+//			*** Lugar Atencion, La Direccion, Los telefonos y Contactos electrónicos del mismo
 			
 			for (Iterator<PrestadorLugarAtencion> iterator = prestador.getLugaresAtencion().iterator(); iterator.hasNext();) {
 				PrestadorLugarAtencion pla = iterator.next();
@@ -618,7 +618,7 @@ public class PrestadorServiceImpl {
 				lugaresAt.add(pla);
 			}
 		} catch (Exception e) {
-			_log.error("Error al buscar lugares de atenciï¿½n del prestador", e);
+			_log.error("Error al buscar lugares de atención del prestador", e);
 		} finally {
 			ConnectionHelper.cerrar(stmt, con);
 		}
@@ -641,7 +641,7 @@ public class PrestadorServiceImpl {
 				planesPrest.add(pla);
 			}
 		} catch (Exception e) {
-			_log.error("Error al buscar lugares de atenciï¿½n del prestador", e);
+			_log.error("Error al buscar lugares de atención del prestador", e);
 		} finally {
 			ConnectionHelper.cerrar(stmt, con);
 		}
@@ -845,7 +845,7 @@ public class PrestadorServiceImpl {
 					}
 				}
 			}
-//			*** Lugar Atencion, La Direccion, Los telefonos y Contactos electrï¿½nicos del mismo
+//			*** Lugar Atencion, La Direccion, Los telefonos y Contactos electrónicos del mismo
 			
 //			(En la actualizacion, nos pueden dar de baja todo el lugar de atencion, 
 //			o editar el lugar de atencion(lugar de at y domicilio), altas o bajas de telefonos y contactos de ese lugar de atencion
