@@ -525,14 +525,6 @@
 			<forward name="portlet.prestadores.conv_prestac.result.search" path="portlet.prestadores.conv_prestac.result.search" />
 			<forward name="portlet.prestadores.error" path="portlet.prestadores.error" />
 		</action>
-				
-		<action path="/prestadores/convenios_prest/editar_convenio_prest_entry" type="ar.com.ospim.prestadores.action.EditarConvPrestacionalAction">
-			<forward name="portlet.prestadores.editar_convenio_prest_entry" path="portlet.prestadores.editar_convenio_prest_entry" />
-			<forward name="portlet.prestadores.eliminar_convenio_prest_entry" path="portlet.prestadores.conv_prestac.result.search" />
-			<!-- <forward name="portlet.prestadores.eliminar_convenio_prest_entry" path="portlet.prestadores.conv_prestac" /> -->
-			<!-- <forward name="portlet.prestadores.conv_prestac.view" path="portlet.prestadores.conv_prestac.view" /> -->
-			<forward name="portlet.prestadores.error" path="portlet.prestadores.error" />
-		</action>
 
 		<action path="/prestadores/buscar_conv_prestac_por_rango" type="ar.com.ospim.liquidaciones.action.BuscarContratosPorRangoDetalleAction">
 			<forward name="portlet.prestadores.conv_prestac.result_rango.search" path="portlet.prestadores.conv_prestac.result_rango.search" />
@@ -545,21 +537,6 @@
 			<forward name="portlet.liquidaciones.importar_contratos" path="portlet.liquidaciones.importar_contratos" />
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 		</action>
-
-		<action path="/prestadores/buscar_conv_prestac_por_codigo" type="ar.com.ospim.liquidaciones.action.BuscarContratosPorCodigoDetalleAction">
-			<forward name="portlet.prestadores.conv_prestac.result_codigo.search" path="portlet.prestadores.conv_prestac.result_codigo.search" />
-			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
-		</action>
-		
-		<action path="/liquidaciones/lista_prestaciones_convenio_prest" type="ar.com.ospim.liquidaciones.action.ListaPrestacionesConvenioPrestAction">
-		 	<forward name="portlet.prestadores.lista_convenio_prest_detalle" path="portlet.prestadores.lista_convenio_prest_detalle" />
-		</action>
-
-		<action path="/prestadores/convenios_prest/cambio_vista_detalles_prestaciones_convenio_prest" type="ar.com.ospim.prestadores.action.CambioVistaListaPrestacionesConvenioPrestAction">
-		 	<forward name="portlet.prestadores.lista_convenio_prest_detalle" path="portlet.prestadores.lista_convenio_prest_detalle" />
-		</action>
-				
-		<action path="/liquidaciones/lista_planes_del_prestador" type="ar.com.ospim.liquidaciones.action.BuscarPlanesDelPrestadorAction"/>
 		
 		<action path="/liquidaciones/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
@@ -6681,6 +6658,22 @@
 
 		<!-- CONVENIOS PRESTACIONALES / EDICION CABECERA -->
 
+        <action path="/prestadores/convenios_prest/editar_convenio_prest_entry" type="ar.com.ospim.prestadores.action.EditarConvPrestacionalAction">
+            <forward name="portlet.prestadores.editar_convenio_prest_entry" path="portlet.prestadores.editar_convenio_prest_entry" />
+            <forward name="portlet.prestadores.eliminar_convenio_prest_entry" path="portlet.prestadores.conv_prestac.result.search" />
+            <!-- <forward name="portlet.prestadores.eliminar_convenio_prest_entry" path="portlet.prestadores.conv_prestac" /> -->
+            <!-- <forward name="portlet.prestadores.conv_prestac.view" path="portlet.prestadores.conv_prestac.view" /> -->
+            <forward name="portlet.prestadores.error" path="portlet.prestadores.error" />
+        </action>
+
+        <action path="/liquidaciones/lista_prestaciones_convenio_prest" type="ar.com.ospim.liquidaciones.action.ListaPrestacionesConvenioPrestAction">
+            <forward name="portlet.prestadores.lista_convenio_prest_detalle" path="portlet.prestadores.lista_convenio_prest_detalle" />
+        </action>
+
+        <action path="/prestadores/convenios_prest/cambio_vista_detalles_prestaciones_convenio_prest" type="ar.com.ospim.prestadores.action.CambioVistaListaPrestacionesConvenioPrestAction">
+            <forward name="portlet.prestadores.lista_convenio_prest_detalle" path="portlet.prestadores.lista_convenio_prest_detalle" />
+        </action>
+
 		<action path="/prestadores/convenios_prest/editar_convenio_prest_entry"
 		        type="ar.com.ospim.prestadores.action.EditarConvPrestacionalAction">
 			<forward name="portlet.prestadores.editar_convenio_prest_entry"
@@ -7054,6 +7047,13 @@
             <forward name="portlet.liquidaciones.importar_contratos"
                      path="portlet.prestadores.importar_contratos" />
         </action>
+
+        <action path="/prestadores/buscar_conv_prestac_por_codigo" type="ar.com.ospim.prestadores.action.BuscarContratosPorCodigoDetalleAction">
+            <forward name="portlet.prestadores.conv_prestac.result_codigo.search" path="portlet.prestadores.conv_prestac.result_codigo.search" />
+            <forward name="portlet.prestadores.error" path="portlet.prestadores.error" />
+        </action>
+
+        <action path="/prestadores/lista_planes_del_prestador" type="ar.com.ospim.prestadores.action.BuscarPlanesDelPrestadorAction"/>
  </action-mappings>
   
 </struts-config>
