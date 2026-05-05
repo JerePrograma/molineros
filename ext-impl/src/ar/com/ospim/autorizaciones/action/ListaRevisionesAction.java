@@ -20,9 +20,9 @@ import ar.com.ospim.autorizaciones.beans.RevisionesReclamo;
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.global.beans.Provincia;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaMatriculasAction;
-import ar.com.ospim.liquidaciones.administracion.prestadores.exception.MatriculaNacionalPrestadorException;
-import ar.com.ospim.liquidaciones.administracion.prestadores.exception.MatriculaProvincialPrestadorException;
+import ar.com.ospim.prestadores.action.ListaMatriculasAction;
+import ar.com.ospim.prestadores.exception.MatriculaNacionalPrestadorException;
+import ar.com.ospim.prestadores.exception.MatriculaProvincialPrestadorException;
 import ar.com.ospim.liquidaciones.beans.MatriculaPrestador;
 
 import com.liferay.portal.SystemException;

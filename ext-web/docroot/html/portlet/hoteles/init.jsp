@@ -101,11 +101,11 @@
 <%@ page import="ar.com.ospim.liquidaciones.DuplicateReintegroIdException" %>
 <%@ page import="ar.com.ospim.liquidaciones.NoSuchReintegroPrestacionEntryException" %>
 <%@ page import="ar.com.ospim.liquidaciones.DuplicateReintegroPrestacionIdException" %>
-<%@ page import="ar.com.ospim.liquidaciones.administracion.prestadores.exception.MatriculaProvincialPrestadorException"%>
-<%@ page import="ar.com.ospim.liquidaciones.administracion.prestadores.exception.MatriculaNacionalPrestadorException"%>
-<%@ page import="ar.com.ospim.liquidaciones.administracion.prestadores.exception.ProfesionEspecialidadSubEspecPrestadorException"%>
-<%@ page import="ar.com.ospim.liquidaciones.administracion.prestadores.exception.LugarAtencionPrestadorException"%>
-<%@ page import="ar.com.ospim.liquidaciones.administracion.prestadores.exception.PlanPrestadorDuplicadoException"%>
+<%@ page import="ar.com.ospim.prestadores.exception.MatriculaProvincialPrestadorException"%>
+<%@ page import="ar.com.ospim.prestadores.exception.MatriculaNacionalPrestadorException"%>
+<%@ page import="ar.com.ospim.prestadores.exception.ProfesionEspecialidadSubEspecPrestadorException"%>
+<%@ page import="ar.com.ospim.prestadores.exception.LugarAtencionPrestadorException"%>
+<%@ page import="ar.com.ospim.prestadores.exception.PlanPrestadorDuplicadoException"%>
 <%@ page import="ar.com.ospim.liquidaciones.PrestacionYaHechaAAfiliadoExcepcion"%>
 
 

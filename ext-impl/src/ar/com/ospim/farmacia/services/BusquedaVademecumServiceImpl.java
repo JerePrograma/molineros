@@ -13,7 +13,7 @@ import ar.com.ospim.farmacia.beans.Vademecum;
 import ar.com.ospim.farmaciaOspim.beans.BusquedaVademecumFiltro;
 import ar.com.ospim.farmaciaOspim.beans.ItemVademecumTotal;
 import ar.com.ospim.farmaciaOspim.exceptions.ImposibleBorrarMedicamentoOspimException;
-import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.util.ConnectionHelper;
 import com.liferay.portal.SystemException;
 import com.liferay.portal.kernel.log.Log;
