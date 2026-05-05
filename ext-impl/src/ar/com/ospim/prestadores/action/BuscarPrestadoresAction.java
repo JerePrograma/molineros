@@ -28,7 +28,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 /**
  * <a href="BuscarPrestadoresAction.java.html"><b><i>View Source</i></b></a>
  * <p>
-		setForward(actionRequest, "portlet.prestadores.administracion.prestadores.result.search");
+		setForward(actionRequest, "portlet.prestadores.result.search");
  * 
  * @author Martin Moreyra
  * @modif SVA
@@ -120,7 +120,7 @@ public class BuscarPrestadoresAction extends PrestadoresBaseAction {
 			_log.error("Error buscando prestadores", e);
 		}
 		
-		return mapping.findForward("portlet.prestadores.administracion.prestadores.result.search");
+		return mapping.findForward("portlet.prestadores.result.search");
 	}
 	
 }

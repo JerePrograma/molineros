@@ -6883,8 +6883,8 @@
 
 		<action path="/prestadores/buscar_prestadores"
 		        type="ar.com.ospim.prestadores.action.BuscarPrestadoresAction">
-			<forward name="portlet.prestadores.administracion.prestadores.result.search"
-			         path="portlet.prestadores.administracion.prestadores.result.search" />
+			<forward name="portlet.prestadores.result.search"
+			         path="portlet.prestadores.result.search" />
 			<forward name="portlet.prestadores.error"
 			         path="portlet.prestadores.error" />
 
@@ -6895,12 +6895,12 @@
 
 		<action path="/prestadores/editar_prestadores_entry"
 		        type="ar.com.ospim.prestadores.action.EditarPrestadoresEntryAction">
-			<forward name="portlet.prestadores.administracion.prestadores.editar_entry"
-			         path="portlet.prestadores.administracion.prestadores.editar_entry" />
-			<forward name="portlet.prestadores.administracion.prestadores.view_entry"
-			         path="portlet.prestadores.administracion.prestadores.view_entry" />
-			<forward name="portlet.prestadores.administracion.prestadores.result.search"
-			         path="portlet.prestadores.administracion.prestadores.result.search" />
+			<forward name="portlet.prestadores.editar_entry"
+			         path="portlet.prestadores.editar_entry" />
+			<forward name="portlet.prestadores.view_entry"
+			         path="portlet.prestadores.view_entry" />
+			<forward name="portlet.prestadores.result.search"
+			         path="portlet.prestadores.result.search" />
 			<forward name="portlet.prestadores.editar_convenio_prest_entry"
 			         path="portlet.prestadores.editar_convenio_prest_entry" />
 			<forward name="portlet.prestadores.eliminar_convenio_prest_entry"
@@ -6984,11 +6984,11 @@
 		<action path="/prestadores/lista_lugares_atencion_prestador"
 		        type="ar.com.ospim.prestadores.action.ListaLugarAtencionAction">
 			<forward name="portlet.prestadores.lugar_atencion.prestador"
-			         path="portlet.prestadores.administracion.prestadores.editar_entry" />
+			         path="portlet.prestadores.editar_entry" />
 			<forward name="portlet.prestadores.lugares_atencion.prestador"
 			         path="portlet.prestadores.lugares_atencion.prestador" />
 			<forward name="portlet.liquidaciones.lugar_atencion.prestador"
-			         path="portlet.prestadores.administracion.prestadores.editar_entry" />
+			         path="portlet.prestadores.editar_entry" />
 			<forward name="portlet.liquidaciones.lugares_atencion.prestador"
 			         path="portlet.prestadores.lugares_atencion.prestador" />
 		</action>

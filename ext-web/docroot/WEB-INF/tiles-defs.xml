@@ -4589,7 +4589,7 @@
 		     value="/portlet/prestadores/convenios_prest/upload_archivos_contratos.jsp" />
 	</definition>
 
-	<definition name="portlet.prestadores.administracion.prestadores.result.search"
+	<definition name="portlet.prestadores.result.search"
 	            extends="portlet.prestadores">
 		<put name="portlet_content"
 		     value="/portlet/prestadores/convenios_prest/prestadores_search_result.jsp" />

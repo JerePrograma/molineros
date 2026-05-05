@@ -436,7 +436,7 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 		renderRequest.setAttribute("tab", tabSel);
 		
 		return mapping.findForward(getForward(renderRequest,
-						"portlet.prestadores.administracion.prestadores.editar_entry"));
+						"portlet.prestadores.editar_entry"));
 	}
 	
 	private boolean estanTodasMatriculasdeBaja(List<MatriculaPrestador> matri){
