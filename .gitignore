@@ -117,9 +117,6 @@ tracked-build-properties-audit.txt
 # SQL legacy/base completo
 /sql/
 
-# Módulos auxiliares/build legacy
-/modules/
-
 # Tests locales / pruebas legacy
 /test/
 
