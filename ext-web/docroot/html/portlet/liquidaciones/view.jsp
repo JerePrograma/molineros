@@ -8,6 +8,8 @@ if (rolABMOP) {
 	rolVEROP = true;
 }
 
+boolean showCheques = true;
+boolean showOrdenPagoAmtima = true;
 boolean showOspim = true;
 boolean showOpcionesFarma = PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_ABM_FARMACIA);
 boolean showOpcionesOdo =
@@ -18,14 +20,18 @@ boolean showOpcionesAuditor =
 	!PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_ABM_ODONTOLOGIA) &&
 	PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_ABM_AUDITOR_ODO);
 
-boolean showComprobantesGral =
-	PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_BUSQUEDA_GENERAL_COMPROBANTES);
+boolean showComprobantesGral = PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_BUSQUEDA_GENERAL_COMPROBANTES);
+boolean esLiquidadorExterno = PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_LIQUIDACIONES_HOSPITALES);
+boolean esLiquidadorOSPIM = PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_ABM_LIQUIDACIONES);
 
-boolean esLiquidadorExterno =
-	PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_LIQUIDACIONES_HOSPITALES);
-
-boolean esLiquidadorOSPIM =
-	PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_ABM_LIQUIDACIONES);
+/*
+ * COMENTADO: lógica de permisos de prestador/prestadores/convenios.
+ * Esto se migra al JSP /html/portlet/prestadores/view.jsp.
+ *
+boolean showPrestador =
+	PermissionUtil.userContainsRole(user, "ABM_PRESTADOR") ||
+	PermissionUtil.userContainsRole(user, "VIEW_PRESTADOR");
+ */
 
 String tabs1 = ParamUtil.getString(request, "tabs1", null);
 
@@ -36,6 +42,12 @@ if (tabs1 == null) {
 if (tabs1 == null) {
 	tabs1 = (String) request.getSession().getAttribute("tabs1");
 }
+
+/*
+if (tabs1 == null || tabs1.equals("bandeja-de-entrada")) {
+	tabs1 = "liquidaciones";
+}
+*/
 
 String tabs1Values = null;
 
@@ -102,9 +114,25 @@ if (showOspim && rolVEROP) {
 	tabs1Values += "comprobantes-consulta-general";
 }
 
+/*
+ * COMENTADO: agregado de tab prestador/prestadores/convenios dentro de Liquidaciones.
+ * Esto queda en el JSP de Prestadores.
+ *
+if (showPrestador) {
+	if (tabs1Values != null) {
+		tabs1Values += (tabs1Values.length() > 0 ? "," : "") + "prestador";
+	} else {
+		tabs1Values = "prestador";
+		tabs1 = "prestador";
+	}
+}
+ */
+
 if (showOpcionesAuditor) {
 	if ("reintegros".equals(tabs1)) {
-		tabs1 = "protesis";
+		if (tabs1 == null || tabs1.equals("bandeja-de-entrada")) {
+			tabs1 = "protesis";
+		}
 	}
 }
 
@@ -115,10 +143,14 @@ if (tabs1Values == null) {
 if (tabs1Values.length() > 0) {
 	String[] vTab = tabs1Values.split(",");
 
-	if (tabs1 == null) {
-		tabs1 = vTab[0];
-	} else if (!tabs1Values.contains(tabs1)) {
-		tabs1 = vTab[0];
+	if (vTab.length > 0) {
+		if (tabs1 == null) {
+			tabs1 = vTab[0];
+		} else {
+			if (!tabs1Values.contains(tabs1)) {
+				tabs1 = vTab[0];
+			}
+		}
 	}
 }
 
@@ -154,6 +186,7 @@ currentURL = PortalUtil.getCurrentURL(request);
 				value="<%= tabs1 %>"
 			/>
 
+			<!-- REPRESENTACION DE LOS TABS DE Liquidaciones -->
 			<c:choose>
 				<c:when test='<%= "liquidaciones".equals(tabs1) %>'>
 					<liferay-util:include page="/html/portlet/liquidaciones/busqueda_liquidaciones.jsp">
@@ -203,6 +236,15 @@ currentURL = PortalUtil.getCurrentURL(request);
 					<liferay-util:include page="/html/portlet/liquidaciones/busqueda_nota_debito.jsp" />
 				</c:when>
 
+				<%--
+				COMENTADO: include del tab prestador/prestadores/convenios dentro de Liquidaciones.
+				Esto se mueve al JSP /html/portlet/prestadores/view.jsp.
+
+				<c:when test='<%= "prestador".equals(tabs1) %>'>
+					<liferay-util:include page="/html/portlet/prestadores/busqueda_prestadores.jsp" />
+				</c:when>
+				--%>
+
 				<c:when test='<%= "consulta-lista-reintegro".equals(tabs1) %>'>
 					<liferay-util:include page="/html/portlet/liquidaciones/consulta_listas_reintegros/reporte_listas_reintegros.jsp" />
 				</c:when>
@@ -243,3 +285,11 @@ currentURL = PortalUtil.getCurrentURL(request);
 		submitForm(document.<portlet:namespace />fm, url);
 	}
 </script>
+
+<%--
+<%
+if (!tabs1.equals("liquidaciones")) {
+	PortalUtil.setPageSubtitle(LanguageUtil.get(pageContext, StringUtil.replace(tabs1, StringPool.UNDERLINE, StringPool.DASH)), request);
+}
+%>
+--%>

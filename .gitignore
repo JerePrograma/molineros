@@ -100,3 +100,4 @@ _backup_*/
 
 # --- Reportes locales de auditoría ---
 tracked-build-properties-audit.txt
+/bundles/
