@@ -25,11 +25,11 @@
 		<tr>
 			<td colspan="4">
 				<div id="<portlet:namespace />lista_lugares_atencion">
-					<jsp:include page='/html/portlet/liquidaciones/administracion/prestadores/lista_lugares_atencion_prestador.jsp' />
+					<jsp:include page='/html/portlet/prestadores/lista_lugares_atencion_prestador.jsp' />
 				</div>
 			</td>
 		</tr>
-		<tr><td colspan="4">* Seleccione un lugar de atención para ver el detalle</td></tr>	
+		<tr><td colspan="4">* Seleccione un lugar de atenciï¿½n para ver el detalle</td></tr>	
 	</table>			
 </fieldset>	
 	
@@ -89,7 +89,7 @@
 		<tr>
 			<td colspan="5">
 				<div id="<portlet:namespace />lista_telefonos">
-					<liferay-util:include page="/html/portlet/liquidaciones/administracion/prestadores/lista_telefonos_prestador_lugar_atencion.jsp">
+					<liferay-util:include page="/html/portlet/prestadores/lista_telefonos_prestador_lugar_atencion.jsp">
 					</liferay-util:include>
 				</div>
 			</td>
@@ -108,7 +108,7 @@
 		<tr>
 			<td colspan="5">
 				<div id="<portlet:namespace />lista_contactoes">
-						<liferay-util:include page="/html/portlet/liquidaciones/administracion/prestadores/lista_contactoes_prestador_lugar_atencion.jsp">
+						<liferay-util:include page="/html/portlet/prestadores/lista_contactoes_prestador_lugar_atencion.jsp">
 					</liferay-util:include>
 				</div>
 			</td>
@@ -168,7 +168,7 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 	function <portlet:namespace />savePrestador() {
 		
 		if(<%=lugarAtencion != null %> ){
-			if (!confirm("Esta modificando un Lugar de Atención, se perderán su cambios recientes. ¿Desea continuar de todos modos?")){
+			if (!confirm("Esta modificando un Lugar de Atenciï¿½n, se perderï¿½n su cambios recientes. ï¿½Desea continuar de todos modos?")){
 				return false;
 			}
 		} 
@@ -186,10 +186,10 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 
 	function addElementToSelect(id_combo, texto, valor) {
 		var combo = document.getElementById(id_combo);
-		var idxElemento = combo.options.length; //Numero de elementos de la combo si esta vacio es 0. Este indice será el del nuevo elemento
+		var idxElemento = combo.options.length; //Numero de elementos de la combo si esta vacio es 0. Este indice serï¿½ el del nuevo elemento
 		combo.options[idxElemento] = new Option();
-		combo.options[idxElemento].text = texto; //Este es el texto que verás en la combo
-		combo.options[idxElemento].value = valor; //Este es el valor que se enviará cuando hagas un submit del formulario que lo contiene
+		combo.options[idxElemento].text = texto; //Este es el texto que verï¿½s en la combo
+		combo.options[idxElemento].value = valor; //Este es el valor que se enviarï¿½ cuando hagas un submit del formulario que lo contiene
 	}
 
 	function filtrarLocalidad() {
@@ -288,7 +288,7 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 		if (trim(jQuery('#<portlet:namespace />telefono_pais').val()) == '' ||
 			trim(jQuery('#<portlet:namespace />telefono_area').val()) == '' ||
 			trim(jQuery('#<portlet:namespace />telefono_numero').val()) == ''){
-				alert("El teléfono debe necesariamente tener el código de país, de area y el número");
+				alert("El telï¿½fono debe necesariamente tener el cï¿½digo de paï¿½s, de area y el nï¿½mero");
 				jQuery('#<portlet:namespace />telefono_numero').focus();
 				return false;
 		}
@@ -387,14 +387,14 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 		var email = jQuery('#<portlet:namespace/>contactoe_descripcion').val();
 	
 		if(trim(email).length == 0){
-			alert("El campo descripción del Email es Obligatorio");
+			alert("El campo descripciï¿½n del Email es Obligatorio");
 			jQuery("#<portlet:namespace />contactoe_descripcion").focus();
 			return false;
 		}
 		var expr = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
 		
 		if (!expr.test(email) ){
-		    alert("Error: La dirección de correo " + email + " es incorrecta.");
+		    alert("Error: La direcciï¿½n de correo " + email + " es incorrecta.");
 		    jQuery("#<portlet:namespace />contactoe_descripcion").focus();
 			return false;
 		}
@@ -405,7 +405,7 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 		var sitioWeb = jQuery('#<portlet:namespace/>contactoe_descripcion').val();
 	
 		if(trim(sitioWeb).length == 0){
-			alert("El campo descripción del Sitio WEb es Obligatorio");
+			alert("El campo descripciï¿½n del Sitio WEb es Obligatorio");
 			jQuery("#<portlet:namespace />contactoe_descripcion").focus();
 			return false;
 		}

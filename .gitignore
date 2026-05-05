@@ -125,3 +125,5 @@ tracked-build-properties-audit.txt
 
 # PDFs de prueba dentro de src
 /ext-impl/src/ar/com/ospim/test/*.pdf
+
+.editorconfig
