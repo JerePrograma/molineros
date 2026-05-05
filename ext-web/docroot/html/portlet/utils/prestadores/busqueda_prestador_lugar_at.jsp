@@ -97,7 +97,7 @@ if (ext == null) {
 	<%-- <td valign="top">	
 		<fieldset class="block-labels"><legend>Prestador indirecto lugares de atención</legend>
 			<div id="divPrestador_Indirecto_LugaresAt<%=ext%>">
-				<liferay-util:include page="/html/portlet/liquidaciones/administracion/prestadores/lista_lugares_atencion_prestador_indirecto.jsp"></liferay-util:include>
+				<liferay-util:include page="/html/portlet/prestadores/lista_lugares_atencion_prestador_indirecto.jsp"></liferay-util:include>
 			</div>
 		</fieldset>	
 	</td>	 --%>

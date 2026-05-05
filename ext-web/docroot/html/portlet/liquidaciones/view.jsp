@@ -43,21 +43,10 @@ if(esLiquidadorExterno){
 
 if(esLiquidadorOSPIM){
   tabs1Values = "liquidaciones,reintegros,reintegro-farmacia";
-  tabs1Values += ",cheques,liquidacion-debitos-terceros,consulta-lista-reintegro,consulta-lista-reintegro-farmacia,reportes,administracion-tablas";
+  tabs1Values += ",cheques,liquidacion-debitos-terceros,consulta-lista-reintegro,consulta-lista-reintegro-farmacia,reportes";
   if (tabs1 == null || tabs1.equals("bandeja-de-entrada")){
     tabs1="liquidaciones";
   }  
-}else{
-	if(showPrestador){
-		if(tabs1Values!=null){
-		   tabs1Values += (tabs1Values.length()>0?",":"") +"administracion-tablas";
-		} else{
-		   tabs1Values="administracion-tablas";
-		   if (tabs1 == null || tabs1.equals("bandeja-de-entrada")){
-			    tabs1="administracion-tablas";
-		   }  
-		}
-	}
 }
 
 if (showOpcionesOdo || showOpcionesAuditor) {
@@ -189,7 +178,7 @@ currentURL = PortalUtil.getCurrentURL(request);
 		<liferay-util:include page="/html/portlet/liquidaciones/busqueda_nota_debito.jsp"/>
 	</c:when>
 	<c:when test='<%= tabs1.equals("prestador") %>'>	
-		<liferay-util:include page="/html/portlet/liquidaciones/administracion/prestadores/busqueda_prestadores.jsp"/>
+		<liferay-util:include page="/html/portlet/prestadores/busqueda_prestadores.jsp"/>
 	</c:when>	
 	<c:when test='<%= tabs1.equals("consulta-lista-reintegro") %>'>	
 		<liferay-util:include page="/html/portlet/liquidaciones/consulta_listas_reintegros/reporte_listas_reintegros.jsp"/>
@@ -199,9 +188,6 @@ currentURL = PortalUtil.getCurrentURL(request);
 	</c:when>	
 	<c:when test='<%= tabs1.equals("reportes") %>'>
 		<liferay-util:include page="/html/portlet/liquidaciones/reportes/reportes.jsp"/>	
-	</c:when>	
-	<c:when test='<%= tabs1.equals("administracion-tablas") %>'>	
-		<liferay-util:include page="/html/portlet/liquidaciones/administracion/administracionTablas.jsp"/>		
 	</c:when>
 
 </c:choose>
