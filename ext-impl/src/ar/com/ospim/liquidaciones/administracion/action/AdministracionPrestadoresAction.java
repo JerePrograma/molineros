@@ -29,6 +29,6 @@ public class AdministracionPrestadoresAction extends PortletAction {
 //			session.removeAttribute(WebKeysLiquidaciones.ESPECIALIDADES_PRESTADOR_SESSION);
 		
 				return mapping.findForward(getForward(req,
-				"portlet.liquidaciones.administracion.prestadores"));
+				"portlet.prestadores"));
 	}
 }
