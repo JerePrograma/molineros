@@ -378,8 +378,21 @@
 		<render-weight>50</render-weight>		
 		<css-class-wrapper>portlet-software-catalog</css-class-wrapper>
 	</portlet>
-	
-	
+
+	<portlet>
+		<portlet-name>PRE_1</portlet-name>
+		<icon>/html/icons/search.png</icon>
+		<struts-path>prestadores</struts-path>
+		<control-panel-entry-category>content</control-panel-entry-category>
+		<control-panel-entry-weight>10.0</control-panel-entry-weight>
+		<use-default-template>false</use-default-template>
+		<restore-current-view>false</restore-current-view>
+		<scopeable>true</scopeable>
+		<private-request-attributes>false</private-request-attributes>
+		<private-session-attributes>false</private-session-attributes>
+		<render-weight>50</render-weight>
+		<css-class-wrapper>portlet-software-catalog</css-class-wrapper>
+	</portlet>
 	<!--
 	Liferay Portlets
 
