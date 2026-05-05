@@ -11,7 +11,7 @@
 		<put name="portlet_content" value="/portlet/afiliados/preview.jsp" />
 		<!-- <put name="portlet_content" value="/portlet/afiliados/view.jsp" /> -->
 	</definition>
-
+	
 	<definition name="portlet.afiliados.empleador" extends="portlet.afiliados">
 		<put name="portlet_content" value="/portlet/afiliados/otros_datos.jsp" />
 	</definition>
@@ -528,19 +528,19 @@
 	
  	<definition name="portlet.liquidaciones.conv_prestac" extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/prestadoresconvenios_prest/busqueda_convenios_prestacionales.jsp" />
+			value="/portlet/liquidaciones/administracion/convenios_prest/busqueda_convenios_prestacionales.jsp" />
 	</definition>
 	
 	<definition name="portlet.liquidaciones.editar_convenio_prest_entry"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/prestadoresconvenios_prest/editar_convenio_prest.jsp" />
+			value="/portlet/liquidaciones/administracion/convenios_prest/editar_convenio_prest.jsp" />
 	</definition>
 
 	<definition name="portlet.liquidaciones.lista_convenio_prest_detalle" 
 		extends="portlet.liquidaciones">
 		<put name="portlet_content" 
-		value="/portlet/prestadoresconvenios_prest/conv_prest_detalle_search_result.jsp" />
+		value="/portlet/liquidaciones/administracion/convenios_prest/conv_prest_detalle_search_result.jsp" />
 	</definition>
 	
 	<definition name="portlet.liquidaciones.farmacia.editar_reintegro_entry"
@@ -551,7 +551,7 @@
 	<definition name="portlet.liquidaciones.importar_contratos"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/prestadoresconvenios_prest/upload_archivos_contratos.jsp" />
+			value="/portlet/liquidaciones/administracion/convenios_prest/upload_archivos_contratos.jsp" />
 	</definition>
 
 	<definition name="portlet.liquidaciones.editar_liquidacion_entry"
@@ -590,7 +590,7 @@
 	<definition name="portlet.liquidaciones.conv_prestac.result.search"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/prestadoresconvenios_prest/convenios_prestac_search_result.jsp" />
+			value="/portlet/liquidaciones/administracion/convenios_prest/convenios_prestac_search_result.jsp" />
 	</definition>
 
 	<definition name="portlet.liquidaciones.conv_prestac.result_rango.search"
@@ -768,30 +768,30 @@
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
 			value="/portlet/liquidaciones/ordenes_pago/reutilizar_cheques_recibidos_orden_pago.jsp" />
-	</definition>
-
+	</definition>	
+	
 	<definition name="portlet.liquidaciones.administracion.archivos.vademecum"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/prestadoresvademecum/upload_archivos_vademecum.jsp" />
+			value="/portlet/liquidaciones/administracion/vademecum/upload_archivos_vademecum.jsp" />
 	</definition>
 
 	<definition name="portlet.liquidaciones.editar_tratamiento_discapacidad"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/prestadoresview_tratamiento_discapacidad.jsp" />
+			value="/portlet/liquidaciones/administracion/view_tratamiento_discapacidad.jsp" />
 	</definition>
 
 	<definition name="portlet.liquidaciones.tratamiento_discapacidad.result"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/prestadorestratamiento_discapacidad_result.jsp" />
+			value="/portlet/liquidaciones/administracion/tratamiento_discapacidad_result.jsp" />
 	</definition>
 
 	<definition name="portlet.liquidaciones.tratamiento_discapacidad.error"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
-			value="/portlet/prestadorestratamiento_discapacidad_result_error.jsp" />
+			value="/portlet/liquidaciones/administracion/tratamiento_discapacidad_result_error.jsp" />
 	</definition>
 
 	<definition name="portlet.liquidaciones.reporte.ordenes.pago.completo"

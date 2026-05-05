@@ -716,7 +716,7 @@
 		<action path="/liquidaciones/id_profesion_especialidad" type="ar.com.ospim.liquidaciones.action.IdProfesionEspecialidadAction"/>
 		
 		<action path="/liquidaciones/id_especialidad_subEspecialidad" type="ar.com.ospim.liquidaciones.action.IdEspecialidadSubespecialidadAction"/>
-			
+		
 		<action path="/liquidaciones/id_provincia_localidad" type="ar.com.ospim.afiliados.action.IdProvinciaLocalidadAction"/>
 		
 		<action path="/liquidaciones/id_localidad_codpostal" type="ar.com.ospim.afiliados.action.IdLocalidadCodPostalAction"/>
@@ -6607,7 +6607,7 @@
 			type="ar.com.ospim.global.actions.TraePlanCuentasDeEjercicioAction" />				
 <!-- FIN CENTROS COSTO CONTABLE --> 
 
-     <action path="/autorizaciones/ficha_de_consumo" forward="portlet.liquidaciones.reportes.ficha_de_consumo" />
+     <action path="/autorizaciones/ficha_de_consumo" forward="portlet.liquidaciones.reportes.ficha_de_consumo" />	
 
 <!-- FACTURACION OSPIM --> 
       <action path="/tesoreria/facturacion_lista_precios" forward="portlet.tesoreria.facturacion.listaprecios" />
@@ -6638,7 +6638,7 @@
 	    <forward name="portlet.afiliados.vendedores.result" path="portlet.afiliados.vendedores.result" />
 	    <forward name="portlet.afiliados.vendedor.detalle" path="portlet.afiliados.vendedor.detalle" />
 	</action>
-
+	
 		<!-- PRESTADORES / PRE_1 -->
 
 		<action path="/prestadores/view"
