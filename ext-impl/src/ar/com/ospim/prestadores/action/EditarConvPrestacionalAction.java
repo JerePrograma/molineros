@@ -563,7 +563,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 			_log.debug("[EDIT-CONV-PREST][DELETE][SESSION] Se actualiza BUSQUEDA_CONVENIOS_PRESTAC_RESULTS");
 			_log.info("[EDIT-CONV-PREST][DELETE][END] Fin flujo DELETE con forward eliminar_convenio_prest_entry");
 			limpiarSessionConvenio(session);
-			return mapping.findForward(getForward(renderRequest, "portlet.liquidaciones.eliminar_convenio_prest_entry"));
+			return mapping.findForward(getForward(renderRequest, "portlet.prestadores.eliminar_convenio_prest_entry"));
 		}
 
 		else if (Constants.APPROVE.equals(cmd) || Constants.REJECT.equals(cmd)) {

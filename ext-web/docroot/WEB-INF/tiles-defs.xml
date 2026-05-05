@@ -561,13 +561,13 @@
 			value="/portlet/liquidaciones/reintegros/reintegros_detalle_search_result.jsp" />
 	</definition>
 
-	<definition name="portlet.liquidaciones.conv_prestac.result_rango.search"
+	<definition name="portlet.prestadores.conv_prestac.result_rango.search"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
 			value="/portlet/liquidaciones/reintegros/contratos_por_rango_search_result.jsp" />
 	</definition>
 
-	<definition name="portlet.liquidaciones.conv_prestac.result_codigo.search"
+	<definition name="portlet.prestadores.conv_prestac.result_codigo.search"
 		extends="portlet.liquidaciones">
 		<put name="portlet_content"
 			value="/portlet/liquidaciones/reintegros/contratos_por_codigo_search_result.jsp" />

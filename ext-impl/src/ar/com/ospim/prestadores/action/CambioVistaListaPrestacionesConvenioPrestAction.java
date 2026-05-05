@@ -21,7 +21,6 @@ import java.util.List;
 /**
  * @author SVA
  */
-
 public class CambioVistaListaPrestacionesConvenioPrestAction extends PortletAction {
 
     private static Log _log = LogFactoryUtil.getLog(CambioVistaListaPrestacionesConvenioPrestAction.class);
@@ -54,7 +53,7 @@ public class CambioVistaListaPrestacionesConvenioPrestAction extends PortletActi
         }
 
         return mapping.findForward(getForward(renderRequest,
-                "portlet.liquidaciones.lista_convenio_prest_detalle"));
+                "portlet.prestadores.lista_convenio_prest_detalle"));
     }
 
 }
