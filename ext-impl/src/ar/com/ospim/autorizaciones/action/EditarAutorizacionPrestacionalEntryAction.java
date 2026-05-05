@@ -46,16 +46,16 @@ import ar.com.ospim.autorizaciones.services.PreAutorizacionServiceUtil;
 import ar.com.ospim.liquidaciones.DuplicateTratamientoDiscapacidadIdException;
 import ar.com.ospim.liquidaciones.TopeCantidadIndividualExedidoException;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.util.StringUtils;
 import edu.emory.mathcs.backport.java.util.Collections;
 
 /**
  * <a href="EditarTratamientoEntryAction.java.html"><b><i>View
  * Source</i></b></a>
- *
+ * 
  * @author Carlos Rivas
- *
+ * 
  */
 
 public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
@@ -64,14 +64,14 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 			.getLog(EditarAutorizacionPrestacionalEntryAction.class);
 
 	public void processAction(ActionMapping mapping, ActionForm form,
-	                          PortletConfig portletConfig, ActionRequest actionRequest,
-	                          ActionResponse actionResponse) throws Exception {
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse) throws Exception {
 //		setForward(actionRequest,
 //				"portlet.autorizaciones.autorizacion_prestacional.result");
 	}
 
 	public String validarDocumentacionDiscapacidad(RenderRequest renderRequest,
-	                                               String cmd) throws Exception {
+			String cmd) throws Exception {
 
 		SimpleDateFormat formatoDeFechas = new SimpleDateFormat("dd/MM/yyyy");
 		String fechaDesdeDia = ParamUtil.getString(renderRequest,
@@ -109,9 +109,9 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 		String cuil = ParamUtil.getString(renderRequest, "cuil", null);
 		int inte = ParamUtil.getInteger(renderRequest, "inte", 0);
 		Boolean disca= ParamUtil.getBoolean(renderRequest,"es_discapacitado");
-
+		
 		if (cmd.equalsIgnoreCase(Constants.UPDATE)) {
-
+			
 			AutorizacionPrestacional td = AutorizacionPrestacionalServiceUtil.getAutorizacionPrestacional(id_tratamiento);
 			cuil = td.getAfiliado().getCuil_titular();
 			inte = td.getAfiliado().getInte();
@@ -123,78 +123,78 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 
 		String mensajeDocumento = "";
 
-		if ( disca && (docList == null || docList.size() == 0)) {   ///----Nuevo Monotributo
+		if ( disca && (docList == null || docList.size() == 0)) {   ///----Nuevo Monotributo  
 			return "NO SE ENCUENTRA CERTIFICADO DE DISCAPACIDAD PARA DICHO AFILIADO";
 		}
 
 		if (disca && docList != null && docList.size() > 0) {
-			AfiDocumentacion ultimoVigente = (AfiDocumentacion) Collections.max(
-					docList, new Comparator<AfiDocumentacion>() {
-						public int compare(AfiDocumentacion o1, AfiDocumentacion o2) {
-							return o1.getFecha_baja().compareTo(o2.getFecha_baja());
-						}
-					});
+		   AfiDocumentacion ultimoVigente = (AfiDocumentacion) Collections.max(
+				docList, new Comparator<AfiDocumentacion>() {
+					public int compare(AfiDocumentacion o1, AfiDocumentacion o2) {
+						return o1.getFecha_baja().compareTo(o2.getFecha_baja());
+					}
+				});
 
-			AfiDocumentacion primeroVigente = (AfiDocumentacion) Collections.min(
-					docList, new Comparator<AfiDocumentacion>() {
-						public int compare(AfiDocumentacion o1, AfiDocumentacion o2) {
-							return o1.getFecha_baja().compareTo(o2.getFecha_baja());
-						}
-					});
+		   AfiDocumentacion primeroVigente = (AfiDocumentacion) Collections.min(
+				docList, new Comparator<AfiDocumentacion>() {
+					public int compare(AfiDocumentacion o1, AfiDocumentacion o2) {
+						return o1.getFecha_baja().compareTo(o2.getFecha_baja());
+					}
+				});
+		
+		
 
-
-
-			if (!((fechaDesde.after(primeroVigente.getFecha_ingre()) || fechaDesde
-					.equals(primeroVigente.getFecha_ingre()))
-					&& (ultimoVigente.getFecha_baja() == null
-					|| fechaHasta.before(ultimoVigente.getFecha_baja()) || fechaHasta
-					.equals(ultimoVigente.getFecha_baja())))) {
-				mensajeDocumento = "CERTIFICADO VIGENTE DESDE "
-						+ primeroVigente.getFecha_ingreAsString() + " HASTA "
-						+ ultimoVigente.getFecha_bajaAsString();
-			}
-
+		   if (!((fechaDesde.after(primeroVigente.getFecha_ingre()) || fechaDesde
+				.equals(primeroVigente.getFecha_ingre()))
+				&& (ultimoVigente.getFecha_baja() == null
+						|| fechaHasta.before(ultimoVigente.getFecha_baja()) || fechaHasta
+						.equals(ultimoVigente.getFecha_baja())))) {
+			  mensajeDocumento = "CERTIFICADO VIGENTE DESDE "
+					+ primeroVigente.getFecha_ingreAsString() + " HASTA "
+					+ ultimoVigente.getFecha_bajaAsString();
+		   }
+		
 		}
-
+		
 		return mensajeDocumento;
 	}
 
 	public ActionForward render(ActionMapping mapping, ActionForm form,
-	                            PortletConfig portletConfig, RenderRequest renderRequest,
-	                            RenderResponse renderResponse) throws Exception {
-
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse) throws Exception {
+		
 		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(
 				renderRequest).getSession();
 
 		String cmd = ParamUtil.getString(renderRequest, "accionOriginal");
 		String inteAux=ParamUtil.getString(renderRequest,"integrante");
-
+		
 		User user = PortalUtil.getUser(renderRequest);
 		List<String>errores = new ArrayList<String>();
-
+		
 		String tabSelec =  ParamUtil.getString(renderRequest, "tab", null);
-
+		
 
 		if (tabSelec != null){
 			session.setAttribute("tab", tabSelec);
 			int idTratamiento = ParamUtil.getInteger(renderRequest,"id_tratamiento", 0);
 			session.setAttribute("id_tratamiento", idTratamiento);
-
+			
 			if ("historial".equals(tabSelec) && idTratamiento != 0) {
 
-				AutorizacionPrestacional actual =
-						AutorizacionPrestacionalServiceUtil.getAutorizacionPrestacional(idTratamiento);
+		        AutorizacionPrestacional actual =
+		            AutorizacionPrestacionalServiceUtil.getAutorizacionPrestacional(idTratamiento);
 
-				List<AutorizacionPrestacional> histo =
-						AutorizacionPrestacionalServiceUtil.getHistoricoAutorizaciones(idTratamiento);
+		        List<AutorizacionPrestacional> histo =
+		            AutorizacionPrestacionalServiceUtil.getHistoricoAutorizaciones(idTratamiento);
 
-				renderRequest.setAttribute("AUTORIZACION_ACTUAL", actual);
-				renderRequest.setAttribute("HISTORICO_AUTORIZACIONES", histo);
-			}
-
+		        renderRequest.setAttribute("AUTORIZACION_ACTUAL", actual);
+		        renderRequest.setAttribute("HISTORICO_AUTORIZACIONES", histo);
+		    }
+			
 			return mapping.findForward("portlet.autorizaciones.editar_autorizacion_prestacional");
 		}
-
+		
 		if (cmd.equals("new")) {
 			session.setAttribute("id_tratamiento", 0);
 			session.setAttribute("cuil_titular",  ParamUtil.getString(renderRequest, "cuil_titular"));
@@ -202,46 +202,46 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 			session.setAttribute("esDiscapacitado",  ParamUtil.getString(renderRequest,"esdiscapacitado"));
 			return mapping.findForward("portlet.autorizaciones.editar_autorizacion_prestacional");
 		}
-
+		
 		if (cmd.equals(Constants.VIEW)) {
 			renderRequest.setAttribute("id_tratamiento", ParamUtil.getInteger(renderRequest,"id_tratamiento", 0));
 			session.setAttribute("cuil_titular",  ParamUtil.getString(renderRequest, "cuil_titular"));
 			if(inteAux!=null && !"".equalsIgnoreCase(inteAux)) {
-				session.setAttribute("inte", inteAux);
+			  session.setAttribute("inte", inteAux);
 			}else {
-				session.setAttribute("inte", ParamUtil.getString(renderRequest,"inte"));
-			}
+			  session.setAttribute("inte", ParamUtil.getString(renderRequest,"inte"));
+			}  
 			session.setAttribute("esDiscapacitado",  ParamUtil.getString(renderRequest,"esdiscapacitado"));
 			return mapping.findForward("portlet.autorizaciones.editar_autorizacion_prestacional");
 		}
-
-
+		
+		
 		if (cmd.equals("avisovencimientocud")) {
-
+			
 			Integer ret=avisosVencimientosCUD(renderRequest);
-
+			
 			if(ret>0) {
 				SessionMessages.add(renderRequest, "request_processed",
-						"Se encontraron "+ ret +" afiliados a los cuales se les enviÃ³ el aviso");
+						"Se encontraron "+ ret +" afiliados a los cuales se les envió el aviso");
 			}else {
 				errores.add("No se encontraron afiliados con las condiciones para enviarles el aviso");
 				renderRequest.setAttribute("errores", errores);
 			}
 			return mapping.findForward("portlet.autorizaciones.reporte.avisos_vencimientos_cud");
 		}
-
-
-
+		
+		
+		
 		if (cmd.equals(Constants.DELETE)) {
 			borraTratamientoDiscapacidadEntry(renderRequest);
 		}
 
-
+		
 		String mensaje = validarDocumentacionDiscapacidad(renderRequest, cmd);
 		if (mensaje.length() == 0) {
 			mensaje = validarAfiliadoPrestacion(renderRequest,cmd);
 		}
-
+		
 		int idtratamiento = 0;
 		if (mensaje.length() == 0) {
 			try {
@@ -258,16 +258,16 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 				SessionErrors.add(renderRequest, Exception.class.getName());
 			}
 		} else {
-
+			
 			errores.add(mensaje);
 			SessionErrors.add(renderRequest, "mensajeCertificado");
-			renderRequest.setAttribute("errores", errores);
-
+    		renderRequest.setAttribute("errores", errores);
+			
 			/*
 			renderRequest.setAttribute("mensajeCertificado", mensaje);
 			return mapping
 					.findForward("portlet.autorizaciones.autorizacion_prestacional.error");
-            */
+            */					
 		}
 		if (SessionErrors.isEmpty(renderRequest)) {
 			String successMessage = ParamUtil.getString(renderRequest,
@@ -276,39 +276,39 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 					successMessage);
 			renderRequest.setAttribute("id_tratamiento", idtratamiento);
 			session.setAttribute("id_tratamiento", idtratamiento);
-
+			
 			AutorizacionPrestacional tratamiento = null;
 			tratamiento = AutorizacionPrestacionalServiceUtil.getAutorizacionPrestacional(idtratamiento);
 			if (tratamiento.getIdPreautorizacion() != 0){
 				//Actualizamos el estado de la preautizacion
-				String out = null;
-				switch(tratamiento.getEstado())
-				{
-					case 1:
-						out = "AU"; //AUTORIZADO
-						break;
-					case 2:
-						out = "OB"; //OBSERVADO
-						break;
-					case 4:
-						out = "AU"; //AUTORIZADO
-						break;
-					default:
-				}
-				if (out !=  null){
-					PreAutorizacionServiceUtil.updateEstadoPreautorizacion(tratamiento.getIdPreautorizacion(),  out, user.getScreenName());
-					if(tratamiento.getPrestador()!=null  && tratamiento.getPrestador().getId_prestador()>0) {
-						PreAutorizacionServiceUtil.updatePrestadorPreautorizacion(tratamiento.getIdPreautorizacion(),
-								tratamiento.getPrestador().getId_prestador(), user.getScreenName());
-					}
-				}
+				String out = null; 
+		        switch(tratamiento.getEstado()) 
+		        { 
+		            case 1: 
+		                out = "AU"; //AUTORIZADO
+		                break; 
+		            case 2: 
+		                out = "OB"; //OBSERVADO
+		                break; 
+		            case 4: 
+		                out = "AU"; //AUTORIZADO
+		                break;
+		            default: 
+		        } 
+			    if (out !=  null){			    	
+			    	PreAutorizacionServiceUtil.updateEstadoPreautorizacion(tratamiento.getIdPreautorizacion(),  out, user.getScreenName());
+			    	if(tratamiento.getPrestador()!=null  && tratamiento.getPrestador().getId_prestador()>0) {
+			    		PreAutorizacionServiceUtil.updatePrestadorPreautorizacion(tratamiento.getIdPreautorizacion(), 
+			    				tratamiento.getPrestador().getId_prestador(), user.getScreenName());
+			    	}
+			    }
 			}
-
-			session.setAttribute("tab", "datos");
+			
+			session.setAttribute("tab", "datos");	
 		}
 
 		return mapping.findForward("portlet.autorizaciones.editar_autorizacion_prestacional");
-
+		
 	}
 
 	private int updateTratamientoEntry(RenderRequest actionRequest, String cmd)
@@ -368,19 +368,19 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 			fechaHasta = null;
 		}
 
-		int idPrestador = ParamUtil.getInteger(actionRequest,"id_prestador", 0);
-
+    	int idPrestador = ParamUtil.getInteger(actionRequest,"id_prestador", 0);
+    	
 		String cuitAcreedor = actionRequest.getParameter("cuit_entidad");
 		String sucuAcreedor = actionRequest.getParameter("sucursal_entidad");
 		String idSeccional = actionRequest.getParameter("id_seccional");
-
-
-
+		
+		
+		
 		//DS Inicio
 		sucuAcreedor = "000";
 		//DS Fin
 
-/*
+/*		
 		if (StringUtils.checkNotEmpty(idSeccional)
 				&& Integer.parseInt(idSeccional) != 0) {
 			sucuAcreedor = "000";
@@ -395,27 +395,27 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 		int estado = ParamUtil.getInteger(actionRequest, "estado", 0);
 		String documentacion = ParamUtil.getString(actionRequest,
 				"documentacion", "null");
-
+		
 		//DS -2023-08-25 Agregado porque no leia todos los documentos seleccionados. No encuentro motivo
 		String[] docs=actionRequest.getParameterValues("documentacion");
 		if(docs.length>0) {
-			documentacion=Arrays.toString(docs).replace("[","").replace("]","").replace(" ","");
+		   documentacion=Arrays.toString(docs).replace("[","").replace("]","").replace(" ","");
 		}else {
-			documentacion="null";
+		   documentacion="null";	
 		}
 
 		String cantidadViajesMes = ParamUtil.getString(actionRequest,
 				"cantidad_viajes_mes", "0").equals("") ? "0" : ParamUtil
-															   .getString(actionRequest, "cantidad_viajes_mes", "0");
+				.getString(actionRequest, "cantidad_viajes_mes", "0");
 		String cantidadKilometrosDia = ParamUtil.getString(actionRequest,
 				"cantidad_kilometros_dia", "0").equals("") ? "0" : ParamUtil
-																   .getString(actionRequest, "cantidad_kilometros_dia", "0");
+				.getString(actionRequest, "cantidad_kilometros_dia", "0");
 		String cantidadKilometrosMes = ParamUtil.getString(actionRequest,
 				"cantidad_kilometros_mes", "0").equals("") ? "0" : ParamUtil
-																   .getString(actionRequest, "cantidad_kilometros_mes", "0");
+				.getString(actionRequest, "cantidad_kilometros_mes", "0");
 		String importeKilometroUnit = ParamUtil.getString(actionRequest,
 				"importe_kilometro_unit", "0").equals("") ? "0" : ParamUtil
-																  .getString(actionRequest, "importe_kilometro_unit", "0");
+				.getString(actionRequest, "importe_kilometro_unit", "0");
 		String hsEsperaDia = ParamUtil.getString(actionRequest,
 				"hs_espera_dia", "0").equals("") ? "0" : ParamUtil.getString(
 				actionRequest, "hs_espera_dia", "0");
@@ -424,40 +424,40 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 				actionRequest, "hs_espera_mes", "0");
 		String importeHsEsperaUnit = ParamUtil.getString(actionRequest,
 				"importe_hs_espera_unit", "0").equals("") ? "0" : ParamUtil
-																  .getString(actionRequest, "importe_hs_espera_unit", "0");
+				.getString(actionRequest, "importe_hs_espera_unit", "0");
 
 		String importeTercerizado = ParamUtil.getString(actionRequest,
 				"importe_tercerizado", "0").equals("") ? "0" : ParamUtil
-															   .getString(actionRequest, "importe_tercerizado", "0");
+				.getString(actionRequest, "importe_tercerizado", "0");
 		String idTercerizadora = ParamUtil.getString(actionRequest,
 				"id_tercerizadora", "");
 
 		String esExcepcion = ParamUtil.getString(actionRequest,
 				"es_excepcion", "");
-
+		
 		boolean esDiscapacitado = ParamUtil.getBoolean(actionRequest,"es_discapacitado");
 		boolean esLeche = ParamUtil.getBoolean(actionRequest,"es_leche");
 		boolean esDependencia = ParamUtil.getBoolean(actionRequest,"es_dependencia");
-
+		
 		String motivoExcepcion = ParamUtil.getString(actionRequest,
 				"motivo_excepcion", "");
-
-
+		
+		
 		int idPreautorizacion = ParamUtil.getInteger(actionRequest,
 				"idPreautorizacionAux", 0);
-
-
+		
+		
 		User user = PortalUtil.getUser(actionRequest);
 		int idTratamientoOut = idTratamiento;
 		int copago = ParamUtil.getInteger(actionRequest, "copago", 0);
 		if (cmd.equals(Constants.ADD)) {
 			if (documentacion.equalsIgnoreCase("null")) {
 				estado = WebKeysLiquidaciones.TRATAMIENTO_DISCA_ESTADO_EN_CURSO;
-			} else {
-				estado = WebKeysLiquidaciones.TRATAMIENTO_DISCA_ESTADO_DOC_FALTANTE;
+			} else {	
+					estado = WebKeysLiquidaciones.TRATAMIENTO_DISCA_ESTADO_DOC_FALTANTE;
 			}
-
-			AutoPrestacional autorizacionesPrestacionales =
+			
+			AutoPrestacional autorizacionesPrestacionales =  
 					new AutoPrestacional(idTratamiento,idPrestacion, cuil, inte, cantidad, importeTotal,
 							periodicidad, fechaDesde, fechaHasta, user, cuitAcreedor,
 							sucuAcreedor, idSeccional, observaciones, recuperaApe,
@@ -466,9 +466,9 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 							importeKilometroUnit, hsEsperaDia, hsEsperaMes,
 							importeHsEsperaUnit, importeTercerizado,
 							idTercerizadora,idPrestador,esExcepcion,esDiscapacitado,motivoExcepcion,esLeche,esDependencia,observaciones_int);
-
+			
 			autorizacionesPrestacionales.setCopago(copago);
-
+			
 			idTratamientoOut = AutorizacionPrestacionalServiceUtil.save(autorizacionesPrestacionales, idPreautorizacion);
 			actionRequest.setAttribute("id_tratamiento", String
 					.valueOf(idTratamientoOut));
@@ -476,8 +476,8 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 		} else {
 			idTratamientoOut = ParamUtil.getInteger(actionRequest,
 					"id_tratamiento");
-
-			AutoPrestacional autorizacionesPrestacionales =
+			
+			AutoPrestacional autorizacionesPrestacionales =  
 					new AutoPrestacional(idTratamiento,idPrestacion, cuil, inte, cantidad, importeTotal,
 							periodicidad, fechaDesde, fechaHasta, user, cuitAcreedor,
 							sucuAcreedor, idSeccional, observaciones, recuperaApe,
@@ -486,13 +486,13 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 							importeKilometroUnit, hsEsperaDia, hsEsperaMes,
 							importeHsEsperaUnit, importeTercerizado,
 							idTercerizadora,idPrestador,esExcepcion,esDiscapacitado,motivoExcepcion,esLeche,esDependencia,observaciones_int);
-
+			
 			autorizacionesPrestacionales.setCopago(copago);
-
+			
 			AutorizacionPrestacionalServiceUtil.update(autorizacionesPrestacionales, idPreautorizacion );
-
-
-
+			
+			
+			
 		}
 		return idTratamientoOut;
 	}
@@ -512,14 +512,14 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 	private StringBuilder getPrestacionHechaError() {
 		StringBuilder error = new StringBuilder();
 		error
-				.append("La prestaciÃ³n ya fue realizada al afiliado y no puede hacerse dos veces");
+				.append("La prestación ya fue realizada al afiliado y no puede hacerse dos veces");
 		return error;
 	}
 
 	private StringBuilder getFechasError() {
 		StringBuilder error = new StringBuilder();
 		error
-				.append("La fecha de la prestaciÃ³n no puede ser posterior a la fecha de baja del afiliado");
+				.append("La fecha de la prestación no puede ser posterior a la fecha de baja del afiliado");
 		return error;
 	}
 
@@ -543,16 +543,16 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 				"id_tratamiento", 0);
 		int id_estado = ParamUtil.getInteger(renderRequest, "estado", 0);
 		String motivo =ParamUtil.getString(renderRequest, "motivo", "");
-
+						
 		User user = PortalUtil.getUser(renderRequest);
 		AutorizacionPrestacionalServiceUtil.cambiarEstadoAutorizacion(id_tratamiento, id_estado,user.getScreenName(),motivo);
-
+		
 //		TratamientoDiscapacidadServiceUtil.cambiarEstadoTratamiento(
 //				id_tratamiento, id_estado, user.getScreenName());
 		return id_tratamiento;
 	}
 
-
+	
 	public String validarAfiliadoPrestacion(RenderRequest renderRequest,String cmd) throws Exception {
 
 		SimpleDateFormat formatoDeFechas = new SimpleDateFormat("dd/MM/yyyy");
@@ -591,35 +591,35 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 		String cuil = ParamUtil.getString(renderRequest, "cuil", null);
 		int inte = ParamUtil.getInteger(renderRequest, "inte", 0);
 		if (cmd.equalsIgnoreCase(Constants.UPDATE)) {
-
+			
 			AutorizacionPrestacional td = AutorizacionPrestacionalServiceUtil.getAutorizacionPrestacional(id_tratamiento);
 			cuil = td.getAfiliado().getCuil_titular();
 			inte = td.getAfiliado().getInte();
 		}
-
-		Afiliado afiliado =EditarAfiliadoServiceUtil.getAfiliadoEntryInclusoDadoBaja(cuil, inte);
-
+        
+	    Afiliado afiliado =EditarAfiliadoServiceUtil.getAfiliadoEntryInclusoDadoBaja(cuil, inte);
+		
 		String mensajeDocumento = "";
 
 		if(afiliado.getBaja_fecha()!=null) {
-			if( (fechaDesde!=null && afiliado.getBaja_fecha().before(fechaDesde)) ||
-					(fechaHasta!=null && fechaHasta.after(afiliado.getBaja_fecha()))){
-				mensajeDocumento=getFechasError().toString();
-			}
-		}
+		  if( (fechaDesde!=null && afiliado.getBaja_fecha().before(fechaDesde)) || 
+				     (fechaHasta!=null && fechaHasta.after(afiliado.getBaja_fecha()))){
+		   mensajeDocumento=getFechasError().toString();
+		  }
+		}  
 		return mensajeDocumento;
 	}
-
-
+	
+	
 	////////////////////////
 	////////////////////////
-
+	
 	private Integer avisosVencimientosCUD(RenderRequest actionRequest)
 			throws Exception {
 
 		Integer qDias = ParamUtil.getInteger(actionRequest,
 				"qDias", 0);
-
+	
 		SimpleDateFormat formatoDeFechas = new SimpleDateFormat("dd/MM/yyyy");
 		String fechaDia = ParamUtil.getString(actionRequest,
 				"fechaDia");
@@ -636,20 +636,20 @@ public class EditarAutorizacionPrestacionalEntryAction extends PortletAction {
 			fecha = null;
 		}
 		User user = PortalUtil.getUser(actionRequest);
-
+		
 		CUDAvisoVencimiento cav = new CUDAvisoVencimiento();
 		cav.setDiasAlVencimiento(qDias);
 		cav.setFechaOrigen(fecha);
 		Integer ret=cav.generaAvisoVencimiento();
-
-
+		
+		
 		return ret;
 	}
-
+	
 	////////////////////////
 	////////////////////////
-
-
-
-
+	
+	
+	
+	
 }

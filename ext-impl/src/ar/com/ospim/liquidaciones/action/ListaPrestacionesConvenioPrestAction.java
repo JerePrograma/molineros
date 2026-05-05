@@ -16,7 +16,7 @@ import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.global.beans.Prestacion;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.prestadores.exception.ProfesionEspecialidadSubEspecPrestadorException;
+import ar.com.ospim.liquidaciones.administracion.prestadores.exception.ProfesionEspecialidadSubEspecPrestadorException;
 import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional;
 import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
 import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle.ESTADOS;

@@ -23,7 +23,7 @@ import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
 
 
-public class BorrarPatologiaSituacionMedicaAction extends PortletAction {
+public class BorrarPAtologiaSituacionMedicaAction extends PortletAction {
 	private static Log _log = LogFactoryUtil.getLog(BorrarPrestacionEquipoInterdisciplinarioAction.class);
 
 	public ActionForward render(
@@ -31,11 +31,30 @@ public class BorrarPatologiaSituacionMedicaAction extends PortletAction {
 			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws Exception {
 		
-	//	HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
+		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
 		
-		//int idPrestacion= ParamUtil.getInteger(renderRequest, "id_registro_sitmed");
-				
-		
+		int idPrestacion= ParamUtil.getInteger(renderRequest, "idPrestacion");
+		PrestacionesEquipoInterdisciplinario presta  = new PrestacionesEquipoInterdisciplinario();
+		presta.setIdregistro(idPrestacion);  				
+		_log.debug("Borrando prestacion id: " + idPrestacion);		
+		List<PrestacionesEquipoInterdisciplinario> listaPrestacionesReclamo = (ArrayList<PrestacionesEquipoInterdisciplinario>) session.getAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_EQUIPO_EN_SESION );
+		try {
+			
+			
+		int pos = listaPrestacionesReclamo.indexOf(presta);  
+//		reemplazo por el objeto de la lista
+		presta= listaPrestacionesReclamo.get(pos);
+		if(presta.getEstado()==null){ // esta prestacion esta en BD
+			presta.setEstado(PrestacionesEquipoInterdisciplinario.ESTADOS.BAJA);
+		}else{
+			listaPrestacionesReclamo.remove(pos);
+		}	
+		session.removeAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_EQUIPO_EN_SESION );
+		session.setAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_EQUIPO_EN_SESION , listaPrestacionesReclamo);
+		}
+		catch (Exception e) {
+			_log.error("Error borrando prestacion", e);	
+		}
 		return mapping.findForward("portlet.autorizaciones.equipointerdisciplinario.prestacion_equipointer");
 		                            
 	}
