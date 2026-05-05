@@ -665,6 +665,28 @@
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 		</action>
 			
+		<!-- Liquidaciones -> Prestadores -->
+		
+		<action path="/liquidaciones/buscar_prestadores" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BuscarPrestadoresAction">
+			<forward name="portlet.liquidaciones.administracion.prestadores.result.search" path="portlet.liquidaciones.administracion.prestadores.result.search" />
+			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
+		</action>
+
+		<action path="/liquidaciones/editar_prestadores_entry" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.EditarPrestadoresEntryAction">
+			<forward name="portlet.liquidaciones.administracion.prestadores.editar_empleadores_entry" path="portlet.liquidaciones.administracion.prestadores.editar_empleadores_entry" />
+			<forward name="portlet.liquidaciones.administracion.prestadores.view_empleadores_entry" path="portlet.liquidaciones.administracion.prestadores.view_empleadores_entry" />
+			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
+		</action>
+		
+		<action path="/liquidaciones/borrar_prestadores_entry" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BorrarPrestadorAction">
+			<forward name="portlet.liquidaciones.view" path="portlet.liquidaciones.view" />
+			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
+		</action>
+		
+<!-- 		<action path="/liquidaciones/prestadores" type="ar.com.ospim.liquidaciones.administracion.action.AdministracionPrestadoresAction">
+			<forward name="portlet.liquidaciones.administracion.prestadores" path="portlet.liquidaciones.administracion.prestadores" />			
+		</action> -->
+		
 		<action path="/liquidaciones/subir_archivos_vademecum" type="ar.com.ospim.liquidaciones.administracion.action.SubirArchivosVademecumAction">
 			<forward name="portlet.liquidaciones.administracion.archivos.vademecum" path="portlet.liquidaciones.administracion.archivos.vademecum" />			
 		</action>
@@ -717,6 +739,52 @@
 		
 		<action path="/liquidaciones/id_especialidad_subEspecialidad" type="ar.com.ospim.liquidaciones.action.IdEspecialidadSubespecialidadAction"/>
 			
+	
+		<action path="/liquidaciones/lista_prof_especialidades_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaProfEspecialidadesAction">
+		 	<forward name="portlet.liquidaciones.profesion.prestador" path="portlet.liquidaciones.profesion.prestador" />  
+		</action>
+		
+		<action path="/liquidaciones/lista_matricula_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaMatriculasAction">
+		 	<forward name="portlet.liquidaciones.matricula.prestador" path="portlet.liquidaciones.matricula.prestador" />  
+		</action>
+
+		<action path="/liquidaciones/lista_telefonos_lugar_at_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaLugarAtTelefonosAction">
+		 	<forward name="portlet.liquidaciones.lugar_at_telefonos.prestador" path="portlet.liquidaciones.lugar_at_telefonos.prestador" />  
+		</action>
+		
+		<action path="/liquidaciones/lista_contactos_lugar_at_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaLugarAtContactosAction">
+		 	<forward name="portlet.liquidaciones.lugar_at_contactos.prestador" path="portlet.liquidaciones.lugar_at_contactos.prestador" />  
+		</action>
+
+		<action path="/liquidaciones/lista_lugares_atencion_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaLugarAtencionAction">
+		 	<forward name="portlet.liquidaciones.lugar_atencion.prestador" path="portlet.liquidaciones.administracion.prestadores.editar_empleadores_entry" />
+		 	<forward name="portlet.liquidaciones.lugares_atencion.prestador" path="portlet.liquidaciones.lugares_atencion.prestador" />  
+		</action>	
+		 
+		<action path="/liquidaciones/lista_planes_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaPrestadorPlanesAction">
+		 	<forward name="portlet.liquidaciones.plan.prestador" path="portlet.liquidaciones.plan.prestador" />  
+		</action>
+		 
+		<action path="/liquidaciones/borrar_matricula_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BorrarMatriculaAction">
+		 	<forward name="portlet.liquidaciones.matricula.prestador" path="portlet.liquidaciones.matricula.prestador" />  
+		</action>
+	
+		<action path="/liquidaciones/borrar_prestador_profesion" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BorrarProfesionEspSubEspAction">
+		 	<forward name="portlet.liquidaciones.profesion.prestador" path="portlet.liquidaciones.profesion.prestador" />  
+		</action>
+		
+		<action path="/liquidaciones/borrar_telefono_lugar_at_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BorrarTelefonoLugarAtAction">
+		 	<forward name="portlet.liquidaciones.lugar_at_telefonos.prestador" path="portlet.liquidaciones.lugar_at_telefonos.prestador" />  
+		</action> 
+		
+		<action path="/liquidaciones/borrar_contactoe_lugar_at_prestador" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BorrarContactoElectronicoLugarAtAction">
+		 	<forward name="portlet.liquidaciones.lugar_at_contactos.prestador" path="portlet.liquidaciones.lugar_at_contactos.prestador" />  
+		</action>
+		
+		<action path="/liquidaciones/borrar_prestador_plan" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BorrarPrestadorPlanAction" >
+		 	<forward name="portlet.liquidaciones.plan.prestador" path="portlet.liquidaciones.plan.prestador" />  
+		</action>
+		
 		<action path="/liquidaciones/id_provincia_localidad" type="ar.com.ospim.afiliados.action.IdProvinciaLocalidadAction"/>
 		
 		<action path="/liquidaciones/id_localidad_codpostal" type="ar.com.ospim.afiliados.action.IdLocalidadCodPostalAction"/>
@@ -724,6 +792,10 @@
 		<action path="/liquidaciones/buscar_calle" forward="portlet.liquidaciones.calle.view" />
 		
 		<action path="/liquidaciones/buscar_codPostal" forward="portlet.liquidaciones.codPostal.view" />
+		
+		<action path="/liquidaciones/lista_lugar_at_prestador_indirecto" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.ListaLugarAtencionIndirectoAction">
+		 	<forward name="portlet.liquidaciones.lugar_at_prestador_indirecto" path="portlet.liquidaciones.lugar_at_prestador_indirecto" />  
+		</action>
 		
 		<action path="/liquidaciones/agregar_domicilio" type="ar.com.empresas.action.AgregarDomicilioEmpresaAction">
 			<forward name="portlet.empresas.agregar_domicilio" path="portlet.empresas.agregar_domicilio" />
@@ -4113,6 +4185,11 @@
 			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
 		</action>
 		
+		<action path="/correspondencia/buscar_prestadores" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BuscarPrestadoresAction">
+			<forward name="portlet.liquidaciones.administracion.prestadores.result.search" path="portlet.liquidaciones.administracion.prestadores.result.search" />
+			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
+		</action>
+		
 		<action path="/correspondencia/organization_groups" type="ar.com.ospim.correspondencia.action.OrganizationGroupAction"/>
 		<action path="/correspondencia/groups_users" type="ar.com.ospim.correspondencia.action.GroupUserAction"/>
 		
@@ -5283,7 +5360,12 @@
 	 <action path="/cai/buscar_codPostal" forward="portlet.cai.codPostal.view" />
 	  
 	 <action path="/cai/id_localidad_cod_area_tel" type="ar.com.ospim.afiliados.action.IdLocalidadCodAreaTelAction"/>
-
+	  
+	 <action path="/cai/buscar_prestadores" type="ar.com.ospim.liquidaciones.administracion.prestadores.action.BuscarPrestadoresAction">
+			<forward name="portlet.liquidaciones.administracion.prestadores.result.search" path="portlet.cai.prestadores.result.search" />
+			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
+	</action>
+		 
 	<action path="/cai/buscar_padron_entidad" type="ar.com.ospim.padronentidades.action.PadronEntidadesUnificadoAction">
 			<forward name="portlet.utils.padron.entidad.view" 
 			path="portlet.cai.empresas.result.search" />
@@ -6607,7 +6689,8 @@
 			type="ar.com.ospim.global.actions.TraePlanCuentasDeEjercicioAction" />				
 <!-- FIN CENTROS COSTO CONTABLE --> 
 
-     <action path="/autorizaciones/ficha_de_consumo" forward="portlet.liquidaciones.reportes.ficha_de_consumo" />
+     <action path="/liquidaciones/prestadores" forward="portlet.liquidaciones.administracion.prestadores"/> 
+     <action path="/autorizaciones/ficha_de_consumo" forward="portlet.liquidaciones.reportes.ficha_de_consumo" />	
 
 <!-- FACTURACION OSPIM --> 
       <action path="/tesoreria/facturacion_lista_precios" forward="portlet.tesoreria.facturacion.listaprecios" />
@@ -6639,339 +6722,6 @@
 	    <forward name="portlet.afiliados.vendedor.detalle" path="portlet.afiliados.vendedor.detalle" />
 	</action>
 
-		<!-- PRESTADORES / PRE_1 -->
-
-		<action path="/prestadores/view"
-		        forward="portlet.prestadores.view" />
-
-		<action path="/prestadores/prestadores_externos"
-		        forward="portlet.prestadores.editar_prestadores_externos" />
-
-		<action path="/prestadores/prestadores"
-		        forward="portlet.prestadores.prestadores" />
-
-		<action path="/prestadores/convenios_prestacionales"
-		        forward="portlet.prestadores.conv_prestac" />
-
-
-		<!-- CARTILLA CONVENIO POR PLAN -->
-
-		<action path="/prestadores/cartilla_convenio_por_plan"
-		        type="ar.com.ospim.prestadores.action.CartillaConvenioPorPlanAction">
-			<forward name="portlet.prestadores.cartilla_convenio_por_plan"
-			         path="portlet.prestadores.cartilla_convenio_por_plan" />
-			<forward name="portlet.prestadores.cartilla_convenio_por_plan_resultados"
-			         path="portlet.prestadores.cartilla_convenio_por_plan_resultados" />
-			<forward name="portlet.prestadores.error"
-			         path="portlet.prestadores.error" />
-		</action>
-
-
-		<!-- CONVENIOS PRESTACIONALES / BUSQUEDA -->
-
-		<action path="/prestadores/buscar_conv_prestac"
-		        type="ar.com.ospim.prestadores.action.BuscarConveniosPrestacAction">
-			<forward name="portlet.prestadores.conv_prestac"
-			         path="portlet.prestadores.conv_prestac" />
-			<forward name="portlet.prestadores.conv_prestac.result.search"
-			         path="portlet.prestadores.conv_prestac.result.search" />
-			<forward name="portlet.prestadores.error"
-			         path="portlet.prestadores.error" />
-		</action>
-
-
-		<!-- CONVENIOS PRESTACIONALES / EDICION CABECERA -->
-
-		<action path="/prestadores/editar_convenio_prest_entry"
-		        type="ar.com.ospim.prestadores.action.EditarConvPrestacionalAction">
-			<forward name="portlet.prestadores.editar_convenio_prest_entry"
-			         path="portlet.prestadores.editar_convenio_prest_entry" />
-			<forward name="portlet.prestadores.eliminar_convenio_prest_entry"
-			         path="portlet.prestadores.conv_prestac.result.search" />
-			<forward name="portlet.prestadores.conv_prestac.result.search"
-			         path="portlet.prestadores.conv_prestac.result.search" />
-			<forward name="portlet.prestadores.lista_convenio_prest_detalle"
-			         path="portlet.prestadores.lista_convenio_prest_detalle" />
-			<forward name="portlet.prestadores.importar_contratos"
-			         path="portlet.prestadores.importar_contratos" />
-			<forward name="portlet.prestadores.error"
-			         path="portlet.prestadores.error" />
-
-			<!-- Compatibilidad: esta action todavía devuelve este forward en DELETE -->
-			<forward name="portlet.liquidaciones.eliminar_convenio_prest_entry"
-			         path="portlet.prestadores.conv_prestac.result.search" />
-		</action>
-
-
-		<!-- CONVENIOS PRESTACIONALES / DETALLE -->
-
-		<action path="/prestadores/lista_prestaciones_convenio_prest"
-		        type="ar.com.ospim.liquidaciones.action.ListaPrestacionesConvenioPrestAction">
-			<forward name="portlet.prestadores.lista_convenio_prest_detalle"
-			         path="portlet.prestadores.lista_convenio_prest_detalle" />
-			<forward name="portlet.prestadores.editar_convenio_prest_entry"
-			         path="portlet.prestadores.editar_convenio_prest_entry" />
-			<forward name="portlet.prestadores.error"
-			         path="portlet.prestadores.error" />
-
-			<!-- Compatibilidad: esta action todavía devuelve este forward -->
-			<forward name="portlet.liquidaciones.lista_convenio_prest_detalle"
-			         path="portlet.prestadores.lista_convenio_prest_detalle" />
-		</action>
-
-		<action path="/prestadores/cambio_vista_detalles_prestaciones_convenio_prest"
-		        type="ar.com.ospim.prestadores.action.CambioVistaListaPrestacionesConvenioPrestAction">
-			<forward name="portlet.prestadores.lista_convenio_prest_detalle"
-			         path="portlet.prestadores.lista_convenio_prest_detalle" />
-			<forward name="portlet.prestadores.error"
-			         path="portlet.prestadores.error" />
-
-			<!-- Compatibilidad: esta action todavía devuelve este forward -->
-			<forward name="portlet.liquidaciones.lista_convenio_prest_detalle"
-			         path="portlet.prestadores.lista_convenio_prest_detalle" />
-		</action>
-
-
-		<!-- CONVENIOS PRESTACIONALES / IMPORTACION CONTRATOS LEGACY -->
-
-		<action path="/prestadores/upload_archivo_contratos"
-		        type="ar.com.ospim.liquidaciones.action.UploadArchivoContratosAction">
-			<forward name="portlet.prestadores.importar_contratos"
-			         path="portlet.prestadores.importar_contratos" />
-			<forward name="portlet.prestadores.editar_convenio_prest_entry"
-			         path="portlet.prestadores.editar_convenio_prest_entry" />
-			<forward name="portlet.prestadores.error"
-			         path="portlet.prestadores.error" />
-
-			<!-- Compatibilidad: esta action todavía hace setForward a este nombre -->
-			<forward name="portlet.liquidaciones.importar_contratos"
-			         path="portlet.prestadores.importar_contratos" />
-		</action>
-
-
-		<!-- BUSCADORES AUXILIARES -->
-
-		<action path="/prestadores/buscar_prestador_convenio_prest"
-		        forward="portlet.utils.prestador.view" />
-
-		<action path="/prestadores/lista_planes_del_prestador"
-		        type="ar.com.ospim.liquidaciones.action.BuscarPlanesDelPrestadorAction" />
-
-		<action path="/prestadores/id_profesion_especialidad"
-		        type="ar.com.ospim.liquidaciones.action.IdProfesionEspecialidadAction" />
-
-		<action path="/prestadores/id_especialidad_subEspecialidad"
-		        type="ar.com.ospim.liquidaciones.action.IdEspecialidadSubespecialidadAction" />
-
-
-		<!-- PRESTADORES / ABM -->
-
-		<action path="/prestadores/buscar_prestadores"
-		        type="ar.com.ospim.prestadores.action.BuscarPrestadoresAction">
-			<forward name="portlet.prestadores.result.search"
-			         path="portlet.prestadores.result.search" />
-			<forward name="portlet.prestadores.error"
-			         path="portlet.prestadores.error" />
-		</action>
-
-		<action path="/prestadores/editar_prestadores_entry"
-		        type="ar.com.ospim.prestadores.action.EditarPrestadoresEntryAction">
-			<forward name="portlet.prestadores.editar_entry"
-			         path="portlet.prestadores.editar_entry" />
-			<forward name="portlet.prestadores.view_entry"
-			         path="portlet.prestadores.view_entry" />
-			<forward name="portlet.prestadores.result.search"
-			         path="portlet.prestadores.result.search" />
-			<forward name="portlet.prestadores.editar_convenio_prest_entry"
-			         path="portlet.prestadores.editar_convenio_prest_entry" />
-			<forward name="portlet.prestadores.eliminar_convenio_prest_entry"
-			         path="portlet.prestadores.conv_prestac.result.search" />
-			<forward name="portlet.prestadores.error"
-			         path="portlet.prestadores.error" />
-		</action>
-
-		<action path="/prestadores/borrar_prestadores_entry"
-		        type="ar.com.ospim.prestadores.action.BorrarPrestadorAction">
-			<forward name="portlet.prestadores.view"
-			         path="portlet.prestadores.view" />
-			<forward name="portlet.prestadores.error"
-			         path="portlet.prestadores.error" />
-		</action>
-
-		<action path="/prestadores/editar_prestador_externo_entry"
-		        type="ar.com.ospim.liquidaciones.action.GrabarPrestadorExternoAction">
-			<forward name="portlet.prestadores.editar_prestadores_externos"
-			         path="portlet.prestadores.editar_prestadores_externos" />
-			<forward name="portlet.prestadores.error"
-			         path="portlet.prestadores.error" />
-
-			<!-- Compatibilidad: esta action todavía devuelve este forward -->
-			<forward name="portlet.liquidaciones.prestador_externo.result"
-			         path="portlet.prestadores.editar_prestadores_externos" />
-		</action>
-
-		<action path="/prestadores/incrementarNomenclador"
-		        type="ar.com.ospim.liquidaciones.action.IncrementarNomencladorAction">
-			<forward name="portlet.prestadores.aumento_prestaciones"
-			         path="portlet.prestadores.aumento_prestaciones" />
-			<forward name="portlet.prestadores.error"
-			         path="portlet.prestadores.error" />
-
-			<!-- Compatibilidad: esta action todavía devuelve este forward -->
-			<forward name="portlet.liquidaciones.aumento_prestaciones"
-			         path="portlet.prestadores.aumento_prestaciones" />
-		</action>
-
-		<action path="/prestadores/lista_prof_especialidades_prestador"
-		        type="ar.com.ospim.prestadores.action.ListaProfEspecialidadesAction">
-			<forward name="portlet.prestadores.profesion.prestador"
-			         path="portlet.prestadores.profesion.prestador" />
-			<forward name="portlet.liquidaciones.profesion.prestador"
-			         path="portlet.prestadores.profesion.prestador" />
-		</action>
-
-		<action path="/prestadores/lista_matricula_prestador"
-		        type="ar.com.ospim.prestadores.action.ListaMatriculasAction">
-			<forward name="portlet.prestadores.matricula.prestador"
-			         path="portlet.prestadores.matricula.prestador" />
-			<forward name="portlet.liquidaciones.matricula.prestador"
-			         path="portlet.prestadores.matricula.prestador" />
-		</action>
-
-		<action path="/prestadores/lista_telefonos_lugar_at_prestador"
-		        type="ar.com.ospim.prestadores.action.ListaLugarAtTelefonosAction">
-			<forward name="portlet.prestadores.lugar_at_telefonos.prestador"
-			         path="portlet.prestadores.lugar_at_telefonos.prestador" />
-			<forward name="portlet.liquidaciones.lugar_at_telefonos.prestador"
-			         path="portlet.prestadores.lugar_at_telefonos.prestador" />
-		</action>
-
-		<action path="/prestadores/lista_contactos_lugar_at_prestador"
-		        type="ar.com.ospim.prestadores.action.ListaLugarAtContactosAction">
-			<forward name="portlet.prestadores.lugar_at_contactos.prestador"
-			         path="portlet.prestadores.lugar_at_contactos.prestador" />
-			<forward name="portlet.liquidaciones.lugar_at_contactos.prestador"
-			         path="portlet.prestadores.lugar_at_contactos.prestador" />
-		</action>
-
-		<action path="/prestadores/lista_lugares_atencion_prestador"
-		        type="ar.com.ospim.prestadores.action.ListaLugarAtencionAction">
-			<forward name="portlet.prestadores.lugar_atencion.prestador"
-			         path="portlet.prestadores.editar_entry" />
-			<forward name="portlet.prestadores.lugares_atencion.prestador"
-			         path="portlet.prestadores.lugares_atencion.prestador" />
-			<forward name="portlet.liquidaciones.lugar_atencion.prestador"
-			         path="portlet.prestadores.editar_entry" />
-			<forward name="portlet.liquidaciones.lugares_atencion.prestador"
-			         path="portlet.prestadores.lugares_atencion.prestador" />
-		</action>
-
-		<action path="/prestadores/lista_planes_prestador"
-		        type="ar.com.ospim.prestadores.action.ListaPrestadorPlanesAction">
-			<forward name="portlet.prestadores.plan.prestador"
-			         path="portlet.prestadores.plan.prestador" />
-			<forward name="portlet.liquidaciones.plan.prestador"
-			         path="portlet.prestadores.plan.prestador" />
-		</action>
-
-		<action path="/prestadores/borrar_matricula_prestador"
-		        type="ar.com.ospim.prestadores.action.BorrarMatriculaAction">
-			<forward name="portlet.prestadores.matricula.prestador"
-			         path="portlet.prestadores.matricula.prestador" />
-			<forward name="portlet.liquidaciones.matricula.prestador"
-			         path="portlet.prestadores.matricula.prestador" />
-		</action>
-
-		<action path="/prestadores/borrar_prestador_profesion"
-		        type="ar.com.ospim.prestadores.action.BorrarProfesionEspSubEspAction">
-			<forward name="portlet.prestadores.profesion.prestador"
-			         path="portlet.prestadores.profesion.prestador" />
-			<forward name="portlet.liquidaciones.profesion.prestador"
-			         path="portlet.prestadores.profesion.prestador" />
-		</action>
-
-		<action path="/prestadores/borrar_telefono_lugar_at_prestador"
-		        type="ar.com.ospim.prestadores.action.BorrarTelefonoLugarAtAction">
-			<forward name="portlet.prestadores.lugar_at_telefonos.prestador"
-			         path="portlet.prestadores.lugar_at_telefonos.prestador" />
-			<forward name="portlet.liquidaciones.lugar_at_telefonos.prestador"
-			         path="portlet.prestadores.lugar_at_telefonos.prestador" />
-		</action>
-
-		<action path="/prestadores/borrar_contactoe_lugar_at_prestador"
-		        type="ar.com.ospim.prestadores.action.BorrarContactoElectronicoLugarAtAction">
-			<forward name="portlet.prestadores.lugar_at_contactos.prestador"
-			         path="portlet.prestadores.lugar_at_contactos.prestador" />
-			<forward name="portlet.liquidaciones.lugar_at_contactos.prestador"
-			         path="portlet.prestadores.lugar_at_contactos.prestador" />
-		</action>
-
-		<action path="/prestadores/borrar_prestador_plan"
-		        type="ar.com.ospim.prestadores.action.BorrarPrestadorPlanAction">
-			<forward name="portlet.prestadores.plan.prestador"
-			         path="portlet.prestadores.plan.prestador" />
-			<forward name="portlet.liquidaciones.plan.prestador"
-			         path="portlet.prestadores.plan.prestador" />
-		</action>
-
-		<action path="/prestadores/lista_lugar_at_prestador_indirecto"
-		        type="ar.com.ospim.prestadores.action.ListaLugarAtencionIndirectoAction">
-			<forward name="portlet.prestadores.lugar_at_prestador_indirecto"
-			         path="portlet.prestadores.lugar_at_prestador_indirecto" />
-			<forward name="portlet.liquidaciones.lugar_at_prestador_indirecto"
-			         path="portlet.prestadores.lugar_at_prestador_indirecto" />
-		</action>
-
-		<action path="/prestadores/lista_lugares_atencion_prestador_indirecto"
-		        forward="portlet.prestadores.lugar_at_prestador_indirecto" />
-
-		<action path="/prestadores/id_provincia_localidad"
-		        type="ar.com.ospim.afiliados.action.IdProvinciaLocalidadAction" />
-
-		<action path="/prestadores/id_localidad_codpostal"
-		        type="ar.com.ospim.afiliados.action.IdLocalidadCodPostalAction" />
-
-		<action path="/prestadores/buscar_calle"
-		        forward="portlet.prestadores.calle.view" />
-
-		<action path="/prestadores/buscar_codPostal"
-		        forward="portlet.prestadores.codPostal.view" />
-
-		<action path="/prestadores/buscar_cuit_existente"
-		        forward="portlet.prestadores.cuit_existente_search_result" />
-
-		<action path="/prestadores/buscar_prestador"
-		        forward="portlet.utils.prestador.view" />
-
-		<action path="/prestadores/buscar_tipo_nomenclador_prestacion"
-		        forward="portlet.utils.tipo_nom_prestacion.view" />
-
-		<action path="/prestadores/aumento_prestaciones"
-		        forward="portlet.prestadores.aumento_prestaciones" />
-
-		<action path="/prestadores/importar_contratos"
-		        forward="portlet.prestadores.importar_contratos" />
-
-
-		<!-- REUTILIZACION DEL BUSCADOR DE PRESTADORES FUERA DEL MODULO PRESTADORES -->
-
-		<action path="/cai/buscar_prestadores"
-		        type="ar.com.ospim.prestadores.action.BuscarPrestadoresAction">
-			<forward name="portlet.prestadores.result.search"
-			         path="portlet.cai.prestadores.result.search" />
-			<forward name="portlet.prestadores.error"
-			         path="portlet.prestadores.error" />
-		</action>
-
-		<action path="/correspondencia/buscar_prestadores"
-		        type="ar.com.ospim.prestadores.action.BuscarPrestadoresAction">
-			<forward name="portlet.prestadores.result.search"
-			         path="portlet.prestadores.result.search" />
-			<forward name="portlet.prestadores.error"
-			         path="portlet.prestadores.error" />
-		</action>
-
-		<!-- FIN PRESTADORES / PRE_1 -->
  </action-mappings>
   
 </struts-config>

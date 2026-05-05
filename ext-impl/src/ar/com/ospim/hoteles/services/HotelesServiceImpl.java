@@ -41,7 +41,7 @@ import ar.com.ospim.hoteles.beans.ProductoCategoria;
 import ar.com.ospim.hoteles.beans.ProductoConfiteria;
 import ar.com.ospim.hoteles.beans.Recibo;
 import ar.com.ospim.hoteles.beans.Reserva;
-import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.procesaArchivos.beans.farmaciaospim.ArchivoDesglose;
 import ar.com.ospim.procesaArchivos.beans.farmaciaospim.DetalleDesglose;
 import ar.com.ospim.tesoreria.beans.ReciboPrestamo;
@@ -1705,9 +1705,9 @@ public Long updateRecibo(Recibo recibo, String usuario) throws Exception{
 	
 				if (i.getTipo().equals("Cheque")) {
 					stmt3.setInt(3, i.getBanco().getId_banco());
-				} else if (i.getTipo().equalsIgnoreCase("Tarjeta Crï¿½dito") ) {
+				} else if (i.getTipo().equalsIgnoreCase("Tarjeta Crédito") ) {
 					stmt3.setInt(3, i.getBanco().getId_banco());
-				} else if (i.getTipo().equalsIgnoreCase("Tarjeta Dï¿½bito") ) {
+				} else if (i.getTipo().equalsIgnoreCase("Tarjeta Débito") ) {
 					stmt3.setInt(3, i.getBanco().getId_banco());
 				} else if (i.getTipo().equalsIgnoreCase("Transferencia Bancaria") ) {
 					stmt3.setNull(3, java.sql.Types.INTEGER);
@@ -1716,8 +1716,8 @@ public Long updateRecibo(Recibo recibo, String usuario) throws Exception{
 				}
 	
 				if (i.getTipo().equalsIgnoreCase("Transferencia Bancaria") || 
-						i.getTipo().equalsIgnoreCase("Tarjeta Crï¿½dito") ||
-						i.getTipo().equalsIgnoreCase("Tarjeta Dï¿½bito")) {
+						i.getTipo().equalsIgnoreCase("Tarjeta Crédito") ||
+						i.getTipo().equalsIgnoreCase("Tarjeta Débito")) {
 					stmt3.setString(4, i.getNumeroStr());
 				} else {
 					stmt3.setNull(4, Types.VARCHAR);
@@ -1739,22 +1739,22 @@ public Long updateRecibo(Recibo recibo, String usuario) throws Exception{
 				if (i.getTipo().equalsIgnoreCase("Transferencia Bancaria") ) {
 					stmt3.setInt(9, i.getCuentaBancaria().getId_cuenta_bcria());
 					stmt3.setInt(10, DepositoBancario.ID_TIPO_TRANSFERENCIA);
-				} else if (i.getTipo().equalsIgnoreCase("Tarjeta Crï¿½dito") ) {
+				} else if (i.getTipo().equalsIgnoreCase("Tarjeta Crédito") ) {
 					stmt3.setNull(9, Types.INTEGER);
 				 	stmt3.setInt(10, TarjetaDebitoCredito.ID_TIPO_CREDITO);
-				} else if (i.getTipo().equalsIgnoreCase("Tarjeta Dï¿½bito") ) {
+				} else if (i.getTipo().equalsIgnoreCase("Tarjeta Débito") ) {
 					stmt3.setNull(9, Types.INTEGER);
 					stmt3.setInt(10,  TarjetaDebitoCredito.ID_TIPO_DEBITO );
-				}else if (i.getTipo().equalsIgnoreCase("Retenciï¿½n No Identificada") ) {
+				}else if (i.getTipo().equalsIgnoreCase("Retención No Identificada") ) {
 					stmt3.setNull(9, Types.INTEGER);
 				 	stmt3.setInt(10, Retencion.GRAL);
-				}else if (i.getTipo().equalsIgnoreCase("Retenciï¿½n IVA") ) {
+				}else if (i.getTipo().equalsIgnoreCase("Retención IVA") ) {
 					stmt3.setNull(9, Types.INTEGER);
 				 	stmt3.setInt(10, Retencion.IVA);
-				} else if (i.getTipo().equalsIgnoreCase("Retenciï¿½n Ingresos Brutos") ) {
+				} else if (i.getTipo().equalsIgnoreCase("Retención Ingresos Brutos") ) {
 					stmt3.setNull(9, Types.INTEGER);
 				 	stmt3.setInt(10, Retencion.IIBB);
-				}else if (i.getTipo().equalsIgnoreCase("Retenciï¿½n Seguridad Social") ) {
+				}else if (i.getTipo().equalsIgnoreCase("Retención Seguridad Social") ) {
 					stmt3.setNull(9, Types.INTEGER);
 				 	stmt3.setInt(10, Retencion.SUSS);
 				}else {
@@ -1770,7 +1770,7 @@ public Long updateRecibo(Recibo recibo, String usuario) throws Exception{
 					stmt3.setNull(13, Types.INTEGER);
 				}
 				
-				if (i.getTipo().equalsIgnoreCase("Tarjeta Crï¿½dito") || i.getTipo().equalsIgnoreCase("Tarjeta Dï¿½bito")) {
+				if (i.getTipo().equalsIgnoreCase("Tarjeta Crédito") || i.getTipo().equalsIgnoreCase("Tarjeta Débito")) {
 					stmt3.setInt(14, i.getEmisor());
 				 	stmt3.setInt(15, i.getCuotas());
 				} else {
@@ -2200,9 +2200,9 @@ public Long sincronizaReciboCentral(Recibo recibo, String usuario) throws System
 
 			if (i.getTipo().equals("Cheque")) {
 				stmt3.setInt(3, i.getBanco().getId_banco());
-			} else if (i.getTipo().equalsIgnoreCase("Tarjeta Crï¿½dito") ) {
+			} else if (i.getTipo().equalsIgnoreCase("Tarjeta Crédito") ) {
 				stmt3.setInt(3, i.getBanco().getId_banco());
-			} else if (i.getTipo().equalsIgnoreCase("Tarjeta Dï¿½bito") ) {
+			} else if (i.getTipo().equalsIgnoreCase("Tarjeta Débito") ) {
 				stmt3.setInt(3, i.getBanco().getId_banco());
 			} else if (i.getTipo().equalsIgnoreCase("Transferencia Bancaria") ) {
 				stmt3.setNull(3, java.sql.Types.INTEGER);
@@ -2211,8 +2211,8 @@ public Long sincronizaReciboCentral(Recibo recibo, String usuario) throws System
 			}
 
 			if (i.getTipo().equalsIgnoreCase("Transferencia Bancaria") || 
-					i.getTipo().equalsIgnoreCase("Tarjeta Crï¿½dito") ||
-					i.getTipo().equalsIgnoreCase("Tarjeta Dï¿½bito")) {
+					i.getTipo().equalsIgnoreCase("Tarjeta Crédito") ||
+					i.getTipo().equalsIgnoreCase("Tarjeta Débito")) {
 				stmt3.setString(4, i.getNumeroStr());
 			} else {
 				stmt3.setNull(4, Types.VARCHAR);
@@ -2234,10 +2234,10 @@ public Long sincronizaReciboCentral(Recibo recibo, String usuario) throws System
 			if (i.getTipo().equalsIgnoreCase("Transferencia Bancaria") ) {
 				stmt3.setInt(9, i.getCuentaBancaria().getId_cuenta_bcria());
 				stmt3.setInt(10, DepositoBancario.ID_TIPO_TRANSFERENCIA);
-			} else if (i.getTipo().equalsIgnoreCase("Tarjeta Crï¿½dito") ) {
+			} else if (i.getTipo().equalsIgnoreCase("Tarjeta Crédito") ) {
 				stmt3.setNull(9, Types.INTEGER);
 			 	stmt3.setInt(10, TarjetaDebitoCredito.ID_TIPO_CREDITO);
-			} else if (i.getTipo().equalsIgnoreCase("Tarjeta Dï¿½bito") ) {
+			} else if (i.getTipo().equalsIgnoreCase("Tarjeta Débito") ) {
 				stmt3.setNull(9, Types.INTEGER);
 				stmt3.setInt(10,  TarjetaDebitoCredito.ID_TIPO_DEBITO );		
 			} else {
@@ -2253,7 +2253,7 @@ public Long sincronizaReciboCentral(Recibo recibo, String usuario) throws System
 				stmt3.setNull(13, Types.INTEGER);
 			}
 			
-			if (i.getTipo().equalsIgnoreCase("Tarjeta Crï¿½dito") || i.getTipo().equalsIgnoreCase("Tarjeta Dï¿½bito")) {
+			if (i.getTipo().equalsIgnoreCase("Tarjeta Crédito") || i.getTipo().equalsIgnoreCase("Tarjeta Débito")) {
 				stmt3.setInt(14, i.getEmisor());
 			 	stmt3.setInt(15, i.getCuotas());
 			} else {
@@ -2952,13 +2952,13 @@ public Long updateReciboRetencion(Recibo recibo, String usuario) throws Exceptio
 			stmt.setDate(3, new java.sql.Date(i.getFecha().getTime()));
 			stmt.setBigDecimal(4, i.getImporte());
 			
-			if (i.getTipo().equalsIgnoreCase("Retenciï¿½n No Identificada") ) {
+			if (i.getTipo().equalsIgnoreCase("Retención No Identificada") ) {
 			 	stmt.setInt(5, Retencion.GRAL);
-			}else if (i.getTipo().equalsIgnoreCase("Retenciï¿½n IVA") ) {
+			}else if (i.getTipo().equalsIgnoreCase("Retención IVA") ) {
 		 	    stmt.setInt(5, Retencion.IVA);
-			}else if (i.getTipo().equalsIgnoreCase("Retenciï¿½n Ingresos Brutos") ) {
+			}else if (i.getTipo().equalsIgnoreCase("Retención Ingresos Brutos") ) {
 			 	stmt.setInt(5, Retencion.IIBB);
-			}else if (i.getTipo().equalsIgnoreCase("Retenciï¿½n Seguridad Social") ) {
+			}else if (i.getTipo().equalsIgnoreCase("Retención Seguridad Social") ) {
 			 	stmt.setInt(5, Retencion.SUSS);
 			}
 			

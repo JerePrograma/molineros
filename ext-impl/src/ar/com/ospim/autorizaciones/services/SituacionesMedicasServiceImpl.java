@@ -20,7 +20,7 @@ import ar.com.ospim.autorizaciones.beans.ItemSituacionMedicaTotal;
 import ar.com.ospim.autorizaciones.beans.PatologiasSituacionMedica;
 import ar.com.ospim.autorizaciones.beans.SituacionMedica;
 import ar.com.ospim.autorizaciones.exceptions.ImposibleBorrarSituacionMedicaException;
-import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.util.ConnectionHelper;
 
 
