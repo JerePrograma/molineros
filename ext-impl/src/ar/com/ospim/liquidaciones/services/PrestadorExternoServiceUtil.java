@@ -3,7 +3,7 @@ package ar.com.ospim.liquidaciones.services;
 import java.util.List;
 
 import ar.com.ospim.liquidaciones.DuplicatePrestadorExternoIdException;
-import ar.com.ospim.liquidaciones.administracion.prestadores.exception.DuplicatePrestadorIdException;
+import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.liquidaciones.beans.PrestadorExterno;
 
 import com.liferay.portal.SystemException;

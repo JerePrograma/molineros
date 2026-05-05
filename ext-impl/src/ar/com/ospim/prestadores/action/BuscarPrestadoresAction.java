@@ -40,7 +40,7 @@ public class BuscarPrestadoresAction extends PrestadoresBaseAction {
 	public void processAction(ActionMapping mapping, ActionForm form,
 			PortletConfig portletConfig, ActionRequest actionRequest,
 			ActionResponse actionResponse) throws Exception {
-		setForward(actionRequest, "portlet.liquidaciones.administracion.prestadores.result.search");
+		setForward(actionRequest, "portlet.prestadores.result.search");
 	}
 
 	public ActionForward render(ActionMapping mapping, ActionForm form,
