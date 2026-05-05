@@ -1,0 +1,373 @@
+<%@page import="ar.com.ospim.util.DateUtils"%>
+<%@ include file="/html/portlet/afiliados/init.jsp" %>
+<%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
+
+<liferay-ui:error
+		exception="<%=IntegranteGrupoNoBorrableException.class %>"
+		message="the-integrante-no-puede-ser-borrado" />
+
+
+<p>
+	<liferay-ui:error
+			exception="<%=RestaurarCoberturaMedicaException.class %>"
+			message="restablecer-cob-med-fail" />
+
+	<liferay-ui:success
+			key="coberturaMedicaOk"
+			message="<%=(String)request.getAttribute(\"msgCoberturaMedicaOk\")  %>"  />
+
+	<%if(request.getAttribute("msgCoberturaMedicaOk") !=null){ %>
+	<i>Recuerde refrescar los resultados de la b�squeda para cambiar las opciones de la caja de acciones...</i>
+	<%} %>
+</p>
+
+<style type="text/css">
+	/* Visual real: toda la fila en rojo fuerte cuando tiene antecedentes */
+	tr.afiliado-antecedentes td {
+		background: #ff4d4d !important;
+		color: #ffffff !important;
+	}
+
+	tr.afiliado-antecedentes td a,
+	tr.afiliado-antecedentes td a:visited,
+	tr.afiliado-antecedentes td a:hover,
+	tr.afiliado-antecedentes td a:active {
+		color: #ffffff !important;
+		font-weight: bold;
+	}
+
+	/* SOLO editar-borrar siempre en negro */
+	tr.afiliado-antecedentes td:last-child a,
+	tr.afiliado-antecedentes td:last-child a:visited,
+	tr.afiliado-antecedentes td:last-child a:hover,
+	tr.afiliado-antecedentes td:last-child a:active,
+	tr.afiliado-antecedentes td:last-child span,
+	tr.afiliado-antecedentes td:last-child .taglib-text,
+	tr.afiliado-antecedentes td:last-child .lfr-menu-list a {
+		color: #000000 !important;
+	}
+
+	tr.afiliado-antecedentes:hover td {
+		background: #e60000 !important;
+		color: #ffffff !important;
+	}
+
+	tr.afiliado-antecedentes img {
+		vertical-align: middle;
+	}
+
+	.afiliados-leyenda-antecedentes {
+		margin: 0 0 10px 0;
+		padding: 8px 12px;
+		background: #fff4f4;
+		border: 1px solid #f0b3b3;
+		color: #8a1f1f;
+		font-weight: bold;
+	}
+
+	.afiliados-leyenda-antecedentes-color {
+		display: inline-block;
+		width: 12px;
+		height: 12px;
+		margin-right: 8px;
+		background: #ff4d4d;
+		border: 1px solid #cc0000;
+		vertical-align: middle;
+	}
+</style>
+
+<portlet:defineObjects/>
+
+<%
+	String portlet_name = ParamUtil.getString(request, "portlet_name");
+	if (portlet_name == null || portlet_name.trim().equals("")){
+		portlet_name = "afiliados";
+	}
+
+	List<Afiliado> afiliadosList = (ArrayList<Afiliado>)renderRequest.getAttribute(WebKeysAfiliados.BUSQUEDA_AFILIADO);
+	if (afiliadosList == null || afiliadosList.size() == 0) {
+		afiliadosList = (ArrayList<Afiliado>) portletSession.getAttribute(
+				WebKeysAfiliados.LISTA_AFILIADOS_EN_SESSION,
+				PortletSession.APPLICATION_SCOPE
+		);
+	}
+	
+	if (afiliadosList == null || afiliadosList.size() == 0) {
+		afiliadosList = (ArrayList<Afiliado>) portletSession.getAttribute(
+				WebKeysAfiliados.BUSQUEDA_AFILIADO,
+				PortletSession.APPLICATION_SCOPE
+		);
+	}
+
+	// Si debe mostrarse el btn de agregar afiliado
+	boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysAfiliados.ROL_ABM_AFILIADO);
+	/* // Permiso para cargar llamadas de att. al cliente */
+	boolean showABMCrm = PermissionUtil.userContainsRole(user,WebKeysCrm.ROL_ABM_CRM);
+	boolean showABMCrmLegales = PermissionUtil.userContainsRole(user,WebKeysCrm.ROL_ABM_CRM_LEGALES);
+	boolean showCAI = PermissionUtil.userContainsRole(user,WebKeysCrm.ROL_VER_PORTLET_CAI );
+	boolean showMarcarAntecedentesJudiciales = PermissionUtil.userContainsRole(user,WebKeysAfiliados.ROL_MARCAR_ANTECEDENTES_JUDICIALES);
+
+	PortletURL portletURL = renderResponse.createRenderURL();
+	String orderByCol = ParamUtil.getString(request, "orderByCol");
+	String orderByType = ParamUtil.getString(request, "orderByType");
+
+	List<String> headerNames = new ArrayList<String>();
+	headerNames.add("cuil");
+	headerNames.add("inte");
+	headerNames.add("apellido");
+	headerNames.add("nombre");
+	headerNames.add("parentesco");
+	headerNames.add("tipo-documento");
+	headerNames.add("nro-documento");
+	headerNames.add("seccional");
+	headerNames.add("id-ospim");
+	headerNames.add("id-uoma");
+	headerNames.add("id-amtima");
+	headerNames.add("vigen-fecha");
+	headerNames.add("plan");
+	/* headerNames.add("process-fecha"); */
+	headerNames.add("baja-fecha");
+	headerNames.add("motivo-baja");
+	headerNames.add("cob-med");
+
+	if(showABMButtons || showABMCrm || showABMCrmLegales || showCAI) {
+		headerNames.add("editar-borrar");
+	}
+
+	if(showMarcarAntecedentesJudiciales){
+		headerNames.add("Con Ant.Jud");	
+	}
+	SearchContainer searchContainer = new SearchContainer(
+			renderRequest,
+			null,
+			null,
+			SearchContainer.DEFAULT_CUR_PARAM,
+			Integer.MAX_VALUE,
+			portletURL,
+			headerNames,
+			LanguageUtil.get(pageContext, "no-afiliados-were-found")
+	);
+
+	String leyendaAntecedentes = "Las filas en rojo indican que el grupo familiar posee antecedentes judiciales en al menos uno de sus integrantes.";
+
+	if(null != afiliadosList){
+
+		int total = afiliadosList.size();
+		searchContainer.setTotal(total);
+
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+		List resultRows = searchContainer.getResultRows();
+
+		for (int i = 0; i < afiliadosList.size(); i++) {
+			Afiliado afiliado = (Afiliado) afiliadosList.get(i);
+
+			ResultRow row = new ResultRow(afiliado, afiliado.getCuil_titular(), i);
+
+			PortletURL rowURL = renderResponse.createRenderURL();
+			rowURL.setWindowState(LiferayWindowState.MAXIMIZED);
+			rowURL.setParameter("struts_action","/afiliados/view_afiliado_entry");
+			rowURL.setParameter("cuil_titular", afiliado.getCuil_titular());
+			rowURL.setParameter("inte", afiliado.getInteAsString());
+
+			boolean tieneAntecedentes = (afiliado != null && afiliado.getTieneAntecedentesJudiciales() == 1);
+
+			// Pinta toda la fila de rojo fuerte solo si realmente tiene antecedentes
+			if (tieneAntecedentes) {
+				row.setClassName("afiliado-antecedentes");
+			}
+
+			if(!"CAI".equalsIgnoreCase(portlet_name)){
+
+				row.addText(afiliado.getCuil_titularMasked(), rowURL);
+				row.addText(afiliado.getInteAsString(), rowURL);
+				row.addText(afiliado.getApellido(), rowURL);
+				row.addText(afiliado.getNombre(), rowURL);
+				row.addText(afiliado.getParentesco(), rowURL);
+				row.addText(afiliado.getDocumento_tipo(), rowURL);
+				row.addText(afiliado.getDocu_numero(), rowURL);
+				row.addText(
+						afiliado.getSeccional().getDescripcion()!=null
+								? afiliado.getSeccional().getDescripcion()
+								: "Sin Especificar",
+						rowURL
+				);
+
+				String ospim = String.valueOf(afiliado.getId_ospim());
+				Date ospimFechaBaja = afiliado.getId_ospim_baja_fecha();
+				if (ospimFechaBaja != null && ospimFechaBaja.before(new Date())){
+					ospim += "<img height='8' width='8' src='/html/themes/classic/images/common/close.png' alt='Baja el: "+ospimFechaBaja+"'/>";
+					ospim += sdf.format(ospimFechaBaja);
+				}
+				row.addText(ospim, rowURL);
+
+				String uoma = String.valueOf(afiliado.getId_uoma());
+				Date uomaFechaBaja = afiliado.getId_uoma_baja_fecha();
+				if (uomaFechaBaja != null && uomaFechaBaja.before(new Date())){
+					uoma += " <img height='8' width='8' src='/html/themes/classic/images/common/close.png' alt='Baja el: "+uomaFechaBaja+"'/>";
+					uoma += sdf.format(uomaFechaBaja);
+				}
+				row.addText(uoma, rowURL);
+
+				String amtima = String.valueOf(afiliado.getId_amtima());
+				Date amtimaFechaBaja = afiliado.getId_amtima_baja_fecha();
+				if (amtimaFechaBaja != null && amtimaFechaBaja.before(new Date())){
+					amtima += " <img height='8' width='8' src='/html/themes/classic/images/common/close.png' alt='Baja el: "+amtimaFechaBaja+"'/>";
+					amtima += sdf.format(amtimaFechaBaja);
+				}
+				row.addText(amtima, rowURL);
+
+				row.addText(afiliado.getVigen_fechaAsString(), rowURL);
+
+				row.addText(
+						(afiliado.getUltimo_plan() != null && afiliado.getUltimo_plan().getDescripcion() != null)
+								? afiliado.getUltimo_plan().getDescripcion()
+								: "",
+						rowURL
+				);
+
+				row.addText(afiliado.getBaja_fechaAsString(), rowURL);
+
+				String motivoBaja = "";
+				if (afiliado.getBaja_fecha()!=null && afiliado.getId_motivo_baja() != -1){
+					MotivoBaja m = new MotivoBaja(afiliado.getId_motivo_baja(), "");
+					int indexOf  = motivos.indexOf(m);
+					if (indexOf != -1){
+						motivoBaja = motivos.get(indexOf).getDescripcion();
+					}
+				}
+				row.addText(motivoBaja, rowURL);
+
+				if(afiliado.getSuspencionCobertura()!=null
+						&& (afiliado.getSuspencionCobertura().get(0).getVigenHasta()==null
+						|| (Validator.isNotNull(afiliado.getSuspencionCobertura().get(0).getVigenHasta())
+						&& afiliado.getSuspencionCobertura().get(0).getVigenHasta().getTime() >= DateUtils.getMismoDia_00_00hs(new Date()).getTime() ))) {
+
+					String cobertura = " <img height='16' width='16' src='/html/themes/classic/images/common/close.png' title='Suspendida la cobertura m�dica desde el: "+sdf.format(afiliado.getSuspencionCobertura().get(0).getVigenDesde())+"'/>";
+					row.addText(cobertura, rowURL);
+
+				}else if(afiliado.getBaja_fecha()==null || Validator.isNull(afiliado.getBaja_fecha())
+						|| (Validator.isNotNull(afiliado.getBaja_fecha())
+						&& afiliado.getBaja_fecha().getTime() >= DateUtils.getMismoDia_00_00hs(new Date()).getTime() )) {
+
+					row.addText("<img height='16' width='16' src='/html/themes/classic/images/common/checked.png' title='Cobertura m�dica vigente' />", rowURL);
+
+				}else{
+					row.addText("", rowURL);
+				}
+
+			}else{
+
+				row.addText(afiliado.getCuil_titularMasked());
+				row.addText(afiliado.getInteAsString());
+				row.addText(afiliado.getApellido());
+				row.addText(afiliado.getNombre());
+				row.addText(afiliado.getParentesco());
+				row.addText(afiliado.getDocumento_tipo());
+				row.addText(afiliado.getDocu_numero());
+				row.addText(
+						afiliado.getSeccional().getDescripcion()!=null
+								? afiliado.getSeccional().getDescripcion()
+								: "Sin Especificar"
+				);
+
+				String ospim = String.valueOf(afiliado.getId_ospim());
+				Date ospimFechaBaja = afiliado.getId_ospim_baja_fecha();
+				if (ospimFechaBaja != null && ospimFechaBaja.before(new Date())){
+					ospim += "<img height='8' width='8' src='/html/themes/classic/images/common/close.png' title='Baja el: "+ospimFechaBaja+"'/>";
+					ospim += sdf.format(ospimFechaBaja);
+				}
+				row.addText(ospim);
+
+				String uoma = String.valueOf(afiliado.getId_uoma());
+				Date uomaFechaBaja = afiliado.getId_uoma_baja_fecha();
+				if (uomaFechaBaja != null && uomaFechaBaja.before(new Date())){
+					uoma += " <img height='8' width='8' src='/html/themes/classic/images/common/close.png' title='Baja el: "+uomaFechaBaja+"'/>";
+					uoma += sdf.format(uomaFechaBaja);
+				}
+				row.addText(uoma);
+
+				String amtima = String.valueOf(afiliado.getId_amtima());
+				Date amtimaFechaBaja = afiliado.getId_amtima_baja_fecha();
+				if (amtimaFechaBaja != null && amtimaFechaBaja.before(new Date())){
+					amtima += " <img height='8' width='8' src='/html/themes/classic/images/common/close.png' title='Baja el: "+amtimaFechaBaja+"'/>";
+					amtima += sdf.format(amtimaFechaBaja);
+				}
+				row.addText(amtima);
+
+				row.addText(afiliado.getVigen_fechaAsString());
+
+				row.addText(
+						(afiliado.getUltimo_plan() != null && afiliado.getUltimo_plan().getDescripcion() != null)
+								? afiliado.getUltimo_plan().getDescripcion()
+								: ""
+				);
+
+				row.addText(afiliado.getBaja_fechaAsString());
+
+				String motivoBaja = "";
+				if (afiliado.getBaja_fecha()!=null && afiliado.getId_motivo_baja() != -1){
+					MotivoBaja m = new MotivoBaja(afiliado.getId_motivo_baja(), "");
+					int indexOf  = motivos.indexOf(m);
+					if (indexOf != -1){
+						motivoBaja = motivos.get(indexOf).getDescripcion();
+					}
+				}
+				row.addText(motivoBaja);
+
+				if(afiliado.getSuspencionCobertura()!=null
+						&& (afiliado.getSuspencionCobertura().get(0).getVigenHasta()==null
+						|| (Validator.isNotNull(afiliado.getSuspencionCobertura().get(0).getVigenHasta())
+						&& afiliado.getSuspencionCobertura().get(0).getVigenHasta().getTime() >= DateUtils.getMismoDia_00_00hs(new Date()).getTime() ))) {
+
+					row.addText("SUSPENDIDA");
+
+				}else if(afiliado.getBaja_fecha()==null || Validator.isNull(afiliado.getBaja_fecha())
+						|| (Validator.isNotNull(afiliado.getBaja_fecha())
+						&& afiliado.getBaja_fecha().getTime() >= DateUtils.getMismoDia_00_00hs(new Date()).getTime() )) {
+
+					row.addText("ACTIVA");
+
+				}else{
+					row.addText("");
+				}
+			}
+
+			// Action
+			if(showABMButtons || showABMCrm || showABMCrmLegales || showCAI) {
+				row.addJSP("right", SearchEntry.DEFAULT_VALIGN, "/html/portlet/afiliados/editar_borrar_afiliado.jsp");
+			}
+
+			
+			
+			if(showMarcarAntecedentesJudiciales ) {
+				
+				StringBuilder s = new StringBuilder();
+				if(afiliado.getTieneAntecedentesJudiciales()==0){
+				  s.append("<img alt=\"Marcar Antecedentes Judiciales\" src=\"");
+				  s.append(themeDisplay.getPathThemeImages());
+				  s.append("/common/unsubscribe.png\" onClick=\"javascript:marcarAntecedentes('");				 					
+				  s.append(String.valueOf(afiliado.getCuil_titular()));
+				  s.append("','");
+				  s.append(String.valueOf(afiliado.getInte()));
+				  s.append("');\" /> ");
+				}else{
+				  s.append("");
+				}
+				row.addText(s.toString());
+			}  
+			
+			resultRows.add(row);
+		}
+	}
+%>
+
+<% if (afiliadosList != null && afiliadosList.size() > 0) { %>
+<div class="afiliados-leyenda-antecedentes">
+	<span class="afiliados-leyenda-antecedentes-color"></span>
+	<%= leyendaAntecedentes %>
+</div>
+<% } %>
+
+<div class="afiliados-resultados">
+	<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
+</div>
