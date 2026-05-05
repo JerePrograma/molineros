@@ -107,10 +107,6 @@ tracked-build-properties-audit.txt
 # Runtime / bundles locales
 /bundles/
 
-# Web docroot completo.
-# ADVERTENCIA: esto ignora JSP, JS, CSS, WEB-INF y recursos fuente dentro de ext-web/docroot.
-/ext-web/docroot/
-
 # Scripts SQL completos
 /sql-scripts/
 
