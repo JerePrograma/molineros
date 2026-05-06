@@ -698,7 +698,7 @@
 		          ){%> 
                   <input id="<portlet:namespace />enviarPS"
 		             value="Enviar a PS"
-		             title="Enviar a Prevenciï¿½n Salud"
+		             title="Enviar a Prevención Salud"
 		             onClick="javascript: enviarPS();"
 		             type="button" />
 		      <%}%>        
@@ -968,7 +968,7 @@
 	<%if (preautorizacion != null && preautorizacion.getId() != null){ %>
 	<!--  
 	    <input id="<portlet:namespace />imagenes"
-		value="Imï¿½genes"
+		value="Imágenes"
 		title="<liferay-ui:message key="imagenes" />"
 		onClick="javascript: <portlet:namespace />imagenesPreautorizacion(<%=preautorizacion.getId()%>);"
 		type="button" 
@@ -1001,7 +1001,7 @@
 	   <table>
 	      <tr>
 	       <td>
-<!-- Se comenta la condiciï¿½n subyacente para que aparezca el botï¿½n Enviar Mail para los estados CARGADO,OBSERVADO,GESTION OSPIM -- DS 27/02/2020  -->	       
+<!-- Se comenta la condición subyacente para que aparezca el botï¿½n Enviar Mail para los estados CARGADO,OBSERVADO,GESTION OSPIM -- DS 27/02/2020  -->	       
 	            <%/*if (preautorizacion != null && preautorizacion.getId() != null 
 	            	      && preautorizacion.getFechaEmail() == null){*/%>
 	          
@@ -1187,7 +1187,7 @@ function <portlet:namespace />buscarPrestacionOnDiv(e){
 		    }    
 		    if(jQuery("#<portlet:namespace />nom_seleccionado").val() != "1" && nombre_nomenclador.length>=6 ){
 		    	if(popupNM==null)
-		    	    popupNM = Liferay.Popup({title:"Bï¿½squeda Nomenclador",modal:true,width:700,onClose: function() { popupNM = null;}});
+		    	    popupNM = Liferay.Popup({title:"Búsqueda Nomenclador",modal:true,width:700,onClose: function() { popupNM = null;}});
 		    	
 		    	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/buscar_nomenclador';
 			    url += '&descripcionnomenclador='+encodeURI(nombre_nomenclador);
@@ -1210,7 +1210,7 @@ function <portlet:namespace />buscarNomencladorAutocompletar(){
 	        alert('<liferay-ui:message key="ingrese-parametros-busqueda" />'); 
 	}else {
 	    	if(popupNM==null)
-	    		popupNM = Liferay.Popup({title:"Bï¿½squeda Nomenclador",modal:true,width:700,onClose: function() { popupNM = null;}});
+	    		popupNM = Liferay.Popup({title:"Búsqueda Nomenclador",modal:true,width:700,onClose: function() { popupNM = null;}});
 	    	
 		    var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/buscar_nomenclador';
 		    url += '&descripcionnomenclador='+encodeURI(nombre_nomenclador)+'&codigonomenclador='+encodeURI(codigo_nomenclador);
@@ -1379,7 +1379,7 @@ function <portlet:namespace />validarCampos(){
 	 }}});
 
 	if(diagnosticoId==null || diagnosticoId=="" || diagnosticoId=="null" || diagnosticoId.length==0 ){
-		alert("Debe cargar un diagnóstico o elegir la opciï¿½n OTROS si lo desconoce"); 
+		alert("Debe cargar un diagnóstico o elegir la opción OTROS si lo desconoce"); 
    	    return false;
 	}
 	
@@ -1476,11 +1476,11 @@ function <portlet:namespace />validarCampos(){
 	}else if(estado=="CA" && ((fechaRespuestaPSDia!="" && fechaRespuestaPSMes!="" && fechaRespuestaPSAnio!="") ||
 			                  (fechaEntregaDia!="" && fechaEntregaMes!="" && fechaEntregaAnio!="")
 	                          )){
-		alert("Debe cambiar el Estado de la Preautorizaciï¿½n");
+		alert("Debe cambiar el Estado de la Preautorización");
 		return false;
 		
 	}else if(estado=="GO" && !(isSupra || "SI"==habilitaGestionOspimMedicamentos)  ){
-            alert("No corresponde el Estado para esta Preautorizaciï¿½n");
+            alert("No corresponde el Estado para esta Preautorización");
             return false;
 	}else{
 		var actualizaDomicilio;
@@ -1524,7 +1524,7 @@ function <portlet:namespace />validarCampos(){
 	var estadoOspim=jQuery("#<portlet:namespace />estadoOSPIM").val();
 	
 	if(estado=="GO" && "" ==estadoOspim && fechaEmail!=null && ""!=fechaEmail){
-		alert("Debe Seleccionar un Estado de Gestiï¿½n OSPIM");
+		alert("Debe Seleccionar un Estado de Gestión OSPIM");
 		return false;
 	}
 */
@@ -1695,7 +1695,7 @@ function <portlet:namespace />validarEmail() {
 	var expr = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
 	
 	if ( !expr.test(email) ){
-	    alert("Error: La direcciï¿½n de correo " + email + " es incorrecta.");
+	    alert("Error: La dirección de correo " + email + " es incorrecta.");
 	    jQuery("#<portlet:namespace />email").focus();
 		return false;
 	}
@@ -1756,18 +1756,18 @@ function confirmaActualizacionDomicilioAfiliado(){
 		 (trim(d_cod_area_tel) == '' && trim(d_telefono) != '') ||
 		 (trim(d_cod_area_tel) != '' && trim(d_telefono) == '')
 		){
-		alert("El telï¿½fono debe necesariamente tener el cï¿½digo de area y el nï¿½mero");
+		alert("El teléfono debe necesariamente tener el código de area y el número");
 		jQuery('#<portlet:namespace />telefono').focus();
 		return false;
 	}
 	
 	if(trim(d_cod_area_tel).startsWith('0')){
-		alert("El cï¿½digo de area del telï¿½fono no debe iniciar con cero");
+		alert("El código de area del teléfono no debe iniciar con cero");
 		jQuery("#<portlet:namespace />cod_area_telefono").focus();
 		return false;
 	}
 	if(trim(d_telefono).startsWith('0')){
-		alert("El nï¿½mero del telï¿½fono no debe iniciar con cero");
+		alert("El número del teléfono no debe iniciar con cero");
 		jQuery("#<portlet:namespace />telefono").focus();
 		return false;
 	}
@@ -1775,7 +1775,7 @@ function confirmaActualizacionDomicilioAfiliado(){
 	
 	if(trim(d_cod_area_tel).length>0 || trim(d_telefono).length>0){
 		if(trim(d_cod_area_tel).length+trim(d_telefono).length!=10){
-			alert("La longitud del cï¿½digo de ï¿½rea + telï¿½fono debe de ser de 10 caracteres");
+			alert("La longitud del código de área + teléfono debe de ser de 10 caracteres");
 			jQuery("#<portlet:namespace />cod_area_telefono").focus();
 			return false;
 		}
@@ -1784,25 +1784,25 @@ function confirmaActualizacionDomicilioAfiliado(){
 /*if ((trim(d_cod_area_laboral) == '' && trim(d_laboral) != '') ||
 		(trim(d_cod_area_laboral) != '' && trim(d_laboral) == '')
 		){
-		alert("El telï¿½fono laboral debe necesariamente tener el cï¿½digo de area y el nï¿½mero");
+		alert("El teléfono laboral debe necesariamente tener el código de area y el número");
 		jQuery('#<portlet:namespace />tel_laboral').focus();
 		return false;
 	}
 	
 	if(trim(d_cod_area_laboral).startsWith('0')){
-		alert("El cï¿½digo de area laboral no debe iniciar con cero");
+		alert("El código de area laboral no debe iniciar con cero");
 		jQuery("#<portlet:namespace />cod_area_tel_laboral").focus();
 		return false;
 	}
 	if(trim(d_laboral).startsWith('0')){
-		alert("El nï¿½mero del telï¿½fono laboral no debe iniciar con cero");
+		alert("El número del teléfono laboral no debe iniciar con cero");
 		jQuery("#<portlet:namespace />tel_laboral").focus();
 		return false;
 	}
 	
 	if(trim(d_cod_area_laboral).length>0 || trim(d_laboral).length>0){
 		if(trim(d_cod_area_laboral).length+trim(d_laboral).length!=10){
-			alert("La longitud del cï¿½digo de ï¿½rea + telï¿½fono laboral debe de ser de 10 caracteres");
+			alert("La longitud del código de área + teléfono laboral debe de ser de 10 caracteres");
 			jQuery("#<portlet:namespace />cod_area_tel_laboral").focus();
 			return false;
 		}
@@ -1811,12 +1811,12 @@ function confirmaActualizacionDomicilioAfiliado(){
 	*/
 	
 	if(trim(d_cod_area_celu).startsWith('0')){
-		alert("El cï¿½digo de area del celular no debe iniciar con cero");
+		alert("El código de area del celular no debe iniciar con cero");
 		jQuery("#<portlet:namespace />cod_area_celular").focus();
 		return false;
 	}
 	if(trim(d_celular).startsWith('0')){
-		alert("El nï¿½mero del celular no debe iniciar con cero");
+		alert("El número del celular no debe iniciar con cero");
 		jQuery("#<portlet:namespace />celular").focus();
 		return false;
 	}
@@ -1824,7 +1824,7 @@ function confirmaActualizacionDomicilioAfiliado(){
 	
 	if(trim(d_cod_area_celu).length>0 || trim(d_celular).length>0){
 		if(trim(d_cod_area_celu).length+trim(d_celular).length!=10){
-			alert("La longitud del cï¿½digo de ï¿½rea + celular debe de ser de 10 caracteres");
+			alert("La longitud del código de área + celular debe de ser de 10 caracteres");
 			jQuery("#<portlet:namespace />cod_area_celular").focus();
 			return false;
 		}
@@ -2362,7 +2362,7 @@ function editarPreautorizacionMedicamento(idMod,idModAux,idMedicamento,descripci
 
 function <portlet:namespace />reintentarCaso() {
     
-    var respuesta=confirm ('Estï¿½ seguro que desea generar una nueva preautorizaciï¿½n copiando los datos de ï¿½sta misma '+'\nDesea continuar?');
+    var respuesta=confirm ('Está seguro que desea generar una nueva preautorizaciï¿½n copiando los datos de ï¿½sta misma '+'\nDesea continuar?');
 		   
 	if (respuesta) {
 		
