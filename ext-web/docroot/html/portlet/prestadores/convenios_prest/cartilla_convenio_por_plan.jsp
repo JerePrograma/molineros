@@ -240,7 +240,7 @@
                            id="<portlet:namespace />btnExportarCartilla"
                            value="Exportar XLS"
                            style="<%= hayResultadosIniciales ? "" : "display:none;" %>"
-                           onclick="javascript:<portlet:namespace/>exportarCartilla();" />
+                           onclick="return <portlet:namespace/>exportarCartilla();" />
 
                     &nbsp;&nbsp;
 
@@ -435,30 +435,44 @@
         return false;
     }
 
-    function appendUrlParam(url, key, value) {
-        var sep = (url.indexOf("?") >= 0) ? "&" : "?";
-        return url + sep + encodeURIComponent(key) + "=" + encodeURIComponent(value == null ? "" : value);
+    function addHidden($form, name, value) {
+        jQuery("<input/>", {
+            type: "hidden",
+            name: name,
+            value: value == null ? "" : value
+        }).appendTo($form);
     }
 
-    function appendPortletParam(url, key, value) {
-        url = appendUrlParam(url, key, value);
-        url = appendUrlParam(url, nsKey(key), value);
-        return url;
+    function addPortletHidden($form, key, value) {
+        addHidden($form, key, value);
+        addHidden($form, nsKey(key), value);
     }
 
     function <portlet:namespace/>exportarCartilla() {
-        var url = EXPORT_URL;
+        var $form = jQuery("<form/>", {
+            method: "post",
+            action: EXPORT_URL,
+            style: "display:none"
+        });
 
-        url = appendPortletParam(url, "idPlan", valById("idPlan"));
-        url = appendPortletParam(url, "idPrestador", valById("idPrestador"));
-        url = appendPortletParam(url, "cuitPrestador", valById("cuitPrestador"));
-        url = appendPortletParam(url, "prestadorDescripcion", valById("prestadorDescripcion"));
-        url = appendPortletParam(url, "idProvincia", valById("idProvincia"));
-        url = appendPortletParam(url, "idLocalidad", valById("idLocalidad"));
-        url = appendPortletParam(url, "idEspecialidad", valById("idEspecialidad"));
-        url = appendPortletParam(url, "incluyeBajas", jQuery("#" + nsKey("incluyeBajas")).is(":checked") ? "true" : "false");
+        addPortletHidden($form, "idPlan", valById("idPlan"));
+        addPortletHidden($form, "idPrestador", valById("idPrestador"));
+        addPortletHidden($form, "cuitPrestador", valById("cuitPrestador"));
+        addPortletHidden($form, "prestadorDescripcion", valById("prestadorDescripcion"));
+        addPortletHidden($form, "idProvincia", valById("idProvincia"));
+        addPortletHidden($form, "idLocalidad", valById("idLocalidad"));
+        addPortletHidden($form, "idEspecialidad", valById("idEspecialidad"));
+        addPortletHidden($form, "incluyeBajas", jQuery("#" + nsKey("incluyeBajas")).is(":checked") ? "true" : "false");
 
-        location.href = url;
+        jQuery(document.body).append($form);
+
+        $form.submit();
+
+        setTimeout(function() {
+            $form.remove();
+        }, 3000);
+
+        return false;
     }
 
     jQuery(document).ready(function () {
