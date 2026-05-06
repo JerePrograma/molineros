@@ -39,7 +39,7 @@
 
     List<Plan> planes =
             (List<Plan>) session.getAttribute(WebKeysPrestadores.PLANES_EN_SESSION);
-            
+
     List<EspecialidadPrestador> especialidades =
             (List<EspecialidadPrestador>) session.getAttribute(WebKeysPrestadores.LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION);
 
@@ -94,7 +94,7 @@
                     </select>
                 </td>
 
-                <td><label>CÃ³d. prestador:</label></td>
+                <td><label>Cód. prestador:</label></td>
                 <td>
                     <input type="text"
                            name="idPrestador"
@@ -132,8 +132,8 @@
                 <td><label>Provincia:</label></td>
                 <td>
                     <select name="idProvincia"
-                    id="<portlet:namespace />idProvincia"
-                    onchange="<portlet:namespace/>filtrarLocalidadesCartilla();">
+                            id="<portlet:namespace />idProvincia"
+                            onchange="<portlet:namespace/>filtrarLocalidadesCartilla();">
                         <option value="">-- Todas --</option>
                         <%
                             if (provincias != null) {
@@ -281,7 +281,7 @@
             <%
                 } else {
             %>
-                <div class="portlet-msg-info">EjecutÃ¡ una bÃºsqueda para ver resultados.</div>
+                <div class="portlet-msg-info">Ejecutá una búsqueda para ver resultados.</div>
             <%
                 }
             %>
@@ -428,7 +428,7 @@
         jQuery("#" + nsKey("idEspecialidad")).val("");
         jQuery("#" + nsKey("incluyeBajas")).prop("checked", false);
 
-        jQuery("#" + nsKey("cartilla_resultados")).html('<div class="portlet-msg-info">EjecutÃ¡ una bÃºsqueda para ver resultados.</div>');
+        jQuery("#" + nsKey("cartilla_resultados")).html('<div class="portlet-msg-info">Ejecutá una búsqueda para ver resultados.</div>');
         jQuery("#" + nsKey("btnExportarCartilla")).hide();
         showCartillaLoading(false);
 
