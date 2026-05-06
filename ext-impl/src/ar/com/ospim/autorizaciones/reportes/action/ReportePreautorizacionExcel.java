@@ -604,7 +604,7 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		HSSFCell cell018 = rowHeader.createCell(col++);
 		cell018.setCellValue(new HSSFRichTextString(String.valueOf(pre.getIdAutorizacionWS())));
 		cell018.setCellStyle(styleAll);
-		
+
 		HSSFCell cell021 = rowHeader.createCell(col++);
         cell021.setCellValue(new HSSFRichTextString(
                 pre.getUltimoEstado()!=null && pre.getUltimoEstado().getMotivoRechazo()!=null
