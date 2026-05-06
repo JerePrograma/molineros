@@ -435,49 +435,64 @@
         return false;
     }
 
-    function addHidden($form, name, value) {
-        jQuery("<input/>", {
-            type: "hidden",
-            name: name,
-            value: value == null ? "" : value
-        }).appendTo($form);
+    function appendHiddenToForm(form, name, value) {
+        var input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = value == null ? "" : value;
+        form.appendChild(input);
     }
 
-    function addPortletHidden($form, key, value) {
-        addHidden($form, key, value);
-        addHidden($form, nsKey(key), value);
+    function removeExportHiddenFields(form) {
+        var fields = jQuery(form).find("input.cartilla-export-hidden");
+        fields.remove();
+    }
+
+    function appendExportHidden(form, name, value) {
+        var input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = value == null ? "" : value;
+        input.className = "cartilla-export-hidden";
+        form.appendChild(input);
+    }
+
+    function appendExportPortletHidden(form, key, value) {
+        appendExportHidden(form, key, value);
+        appendExportHidden(form, nsKey(key), value);
     }
 
     function <portlet:namespace/>exportarCartilla() {
-        var $form = jQuery("<form/>", {
-            method: "post",
-            action: EXPORT_URL,
-            style: "display:none"
-        });
+        var form = document.<portlet:namespace />fm;
 
-        addPortletHidden($form, "idPlan", valById("idPlan"));
-        addPortletHidden($form, "idPrestador", valById("idPrestador"));
-        addPortletHidden($form, "cuitPrestador", valById("cuitPrestador"));
-        addPortletHidden($form, "prestadorDescripcion", valById("prestadorDescripcion"));
-        addPortletHidden($form, "idProvincia", valById("idProvincia"));
-        addPortletHidden($form, "idLocalidad", valById("idLocalidad"));
-        addPortletHidden($form, "idEspecialidad", valById("idEspecialidad"));
-        addPortletHidden($form, "incluyeBajas", jQuery("#" + nsKey("incluyeBajas")).is(":checked") ? "true" : "false");
+        if (!form) {
+            alert("No se encontró el formulario de cartilla.");
+            return false;
+        }
 
-        jQuery(document.body).append($form);
+        removeExportHiddenFields(form);
 
-        $form.submit();
+        appendExportPortletHidden(form, "cmd", "exportCartillaXls");
+        appendExportPortletHidden(form, "idPlan", valById("idPlan"));
+        appendExportPortletHidden(form, "idPrestador", valById("idPrestador"));
+        appendExportPortletHidden(form, "cuitPrestador", valById("cuitPrestador"));
+        appendExportPortletHidden(form, "prestadorDescripcion", valById("prestadorDescripcion"));
+        appendExportPortletHidden(form, "idProvincia", valById("idProvincia"));
+        appendExportPortletHidden(form, "idLocalidad", valById("idLocalidad"));
+        appendExportPortletHidden(form, "idEspecialidad", valById("idEspecialidad"));
+        appendExportPortletHidden(form, "incluyeBajas", jQuery("#" + nsKey("incluyeBajas")).is(":checked") ? "true" : "false");
 
-        setTimeout(function() {
-            $form.remove();
-        }, 3000);
+        form.method = "post";
+        form.action = EXPORT_URL;
+
+        if (typeof submitForm === "function") {
+            submitForm(form, EXPORT_URL);
+        } else {
+            form.submit();
+        }
 
         return false;
     }
-
-    jQuery(document).ready(function () {
-        <portlet:namespace/>syncExportButton();
-    });
 
     function <portlet:namespace/>filtrarLocalidadesCartilla() {
         var idProvincia = jQuery("#" + nsKey("idProvincia")).val();
