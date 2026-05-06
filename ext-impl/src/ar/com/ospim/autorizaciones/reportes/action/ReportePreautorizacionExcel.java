@@ -99,7 +99,7 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		boolean art=ParamUtil.getBoolean(renderRequest, "posibleart");
 		boolean diabetes=ParamUtil.getBoolean(renderRequest, "diabetes");
         boolean baja=ParamUtil.getBoolean(renderRequest, "baja");
-
+		
 		Integer idAutorizacion = ParamUtil.getInteger(renderRequest, "idAutorizacion",0);
 		Date fechaEmail = null;
 		try {

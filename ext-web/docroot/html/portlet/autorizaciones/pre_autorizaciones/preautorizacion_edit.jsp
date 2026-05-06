@@ -78,10 +78,12 @@
 	
 	String email = "";
 	String organizacionId = user.getOrganizations().size()>0?String.valueOf(user.getOrganizations().get(0).getOrganizationId()):"";
-	String tabValue = ParamUtil.getString(request, "tab", null); // "datos"
-	String prestacionPideTipoOpc=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_DISCAPACIDAD_PIDE_TIPO");
-	String marcaReinLiqDiscapacidad=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_DISCAPACIDAD_MARCA_REINLIQ");
-	boolean rolAlertaRoja = PermissionUtil.userContainsRole(user,WebKeysAutorizaciones.ROL_PREAUTORIZACION_ALERTA_ROJA );
+    String tabValue = ParamUtil.getString(request, "tab", null); // "datos"
+
+    boolean incluirBajas = ParamUtil.getBoolean(request, "incluir_bajas", false);
+
+    String prestacionPideTipoOpc=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_DISCAPACIDAD_PIDE_TIPO");
+    String marcaReinLiqDiscapacidad=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_DISCAPACIDAD_MARCA_REINLIQ");
 	boolean rolGestionOspim = PermissionUtil.userContainsRole(user,WebKeysAutorizaciones.ROL_PREAUTORIZACION_GESTION_OSPIM);
 	String nroreclamo ="Reclamo Nro : " + "000"+  String.valueOf(preautorizacion.getIdReclamoPrestacional());
 	/* List<ClaseBase>diagnosticos = TraeListasServiceUtil.getTraeDiagnosticos(); */
@@ -309,22 +311,46 @@
 							<legend>
 								<liferay-ui:message key="datos-afiliado" />
 							</legend>
-							<liferay-util:include
-								page='/html/portlet/autorizaciones/busqueda_afiliado_filtro_preautorizaciones.jsp'>
-								<liferay-util:param value="<%= String.valueOf(true) %>"
-									name="edit_mode" />
-								<liferay-util:param value="<%= String.valueOf(true) %>"
-									name="discapacidad" />
-								<liferay-util:param value="<%= String.valueOf(true) %>"
-									name="pag_reintegro" />
-								<liferay-util:param name="cuil" value='' />
-								<liferay-util:param name="inte" value='' />
-								<liferay-util:param value="" name="origen" />
-							</liferay-util:include>
-							&nbsp;
-							<label id="<portlet:namespace />discapacidad_1" style="display: none;"><font style="color: red">Discapacitado</font></label>
-						    &nbsp;
-						    <label id="<portlet:namespace />discapacidad_vto_1" style="display: none;">Vto. Certificado:</label>
+                            <liferay-util:include
+                                page='/html/portlet/autorizaciones/busqueda_afiliado_filtro_preautorizaciones.jsp'>
+                                <liferay-util:param value="<%= String.valueOf(true) %>"
+                                    name="edit_mode" />
+                                <liferay-util:param value="<%= String.valueOf(true) %>"
+                                    name="discapacidad" />
+                                <liferay-util:param value="<%= String.valueOf(true) %>"
+                                    name="pag_reintegro" />
+                                <liferay-util:param name="cuil" value='' />
+                                <liferay-util:param name="inte" value='' />
+                                <liferay-util:param value="" name="origen" />
+
+                                <%-- CAMBIO: permite que el include conozca si debe buscar/incluir afiliados dados de baja --%>
+                                <liferay-util:param name="incluir_bajas" value="<%= String.valueOf(incluirBajas) %>" />
+                                <liferay-util:param name="baja" value="<%= String.valueOf(incluirBajas) %>" />
+                            </liferay-util:include>
+                            &nbsp;
+
+                            <label>
+                                Incluir bajas:
+                            </label>
+
+                            <input type="checkbox"
+                                   id="<portlet:namespace />incluir_bajas"
+                                   name="<portlet:namespace />incluir_bajas"
+                                   value="true"
+                                   <%= incluirBajas ? "checked=\"checked\"" : "" %>
+                                   onclick="<portlet:namespace />sincronizarIncluirBajas();" />
+
+                            &nbsp;
+
+                            <label id="<portlet:namespace />discapacidad_1" style="display: none;">
+                                <font style="color: red">Discapacitado</font>
+                            </label>
+
+                            &nbsp;
+
+                            <label id="<portlet:namespace />discapacidad_vto_1" style="display: none;">
+                                Vto. Certificado:
+                            </label>
 						</fieldset>
 					</div>
 				</td>
@@ -492,7 +518,7 @@
 	</fieldset>
 	<%-- <br>
 	  <fieldset class="block-labels"> 
-		<legend>Diagnï¿½stico:</legend>
+		<legend>Diagn�stico:</legend>
 		  <table class="lfr-table">
 		  <tr>
 		  <td>Seleccione: </td>
@@ -672,7 +698,7 @@
 		          ){%> 
                   <input id="<portlet:namespace />enviarPS"
 		             value="Enviar a PS"
-		             title="Enviar a Prevenciï¿½n Salud"
+		             title="Enviar a Prevenci�n Salud"
 		             onClick="javascript: enviarPS();"
 		             type="button" />
 		      <%}%>        
@@ -902,7 +928,11 @@
 	<input type="hidden" name="<portlet:namespace />id_preautorizacion"
 		id="<portlet:namespace />id_preautorizacion" value="<%=id_preautorizacion%>" />
 		
-	<input type="hidden" value='<%=esEdicion?"EDIT":"VIEW"%>' name="view" id="view" /> 
+	<input type="hidden" value='<%=esEdicion?"EDIT":"VIEW"%>' name="view" id="view" />
+	<input type="hidden"
+    	   id="<portlet:namespace />baja"
+    	   name="<portlet:namespace />baja"
+    	   value="<%= incluirBajas ? "true" : "false" %>" />
 	<input
 		id="<portlet:namespace />nom_seleccionado"
 		name="<portlet:namespace />nom_seleccionado" type="hidden" value="" />
@@ -938,7 +968,7 @@
 	<%if (preautorizacion != null && preautorizacion.getId() != null){ %>
 	<!--  
 	    <input id="<portlet:namespace />imagenes"
-		value="Imï¿½genes"
+		value="Im�genes"
 		title="<liferay-ui:message key="imagenes" />"
 		onClick="javascript: <portlet:namespace />imagenesPreautorizacion(<%=preautorizacion.getId()%>);"
 		type="button" 
@@ -971,7 +1001,7 @@
 	   <table>
 	      <tr>
 	       <td>
-<!-- Se comenta la condiciï¿½n subyacente para que aparezca el botï¿½n Enviar Mail para los estados CARGADO,OBSERVADO,GESTION OSPIM -- DS 27/02/2020  -->	       
+<!-- Se comenta la condici�n subyacente para que aparezca el bot�n Enviar Mail para los estados CARGADO,OBSERVADO,GESTION OSPIM -- DS 27/02/2020  -->	       
 	            <%/*if (preautorizacion != null && preautorizacion.getId() != null 
 	            	      && preautorizacion.getFechaEmail() == null){*/%>
 	          
@@ -1058,6 +1088,7 @@ var popupImg;
 <portlet:namespace />initDateFields();
 <portlet:namespace />configuraCarga();
 <portlet:namespace />manejoDiscapacidad();
+<portlet:namespace />sincronizarIncluirBajas();
 
 function <portlet:namespace />initDateFields(){
 	jQuery('#<portlet:namespace />divResultadoActualizarOK').hide();
@@ -1082,7 +1113,7 @@ function <portlet:namespace />initDateFields(){
 		var fechaVto = obj.fechaVto;
 		var discapacitado =obj.discapacitado;
 		 if(discapacitado !=null && discapacitado=='1'){
-			jQuery('#<portlet:namespace/>discapacidad_vto_1').html("Vto.Documentación "+fechaVto);
+			jQuery('#<portlet:namespace/>discapacidad_vto_1').html("Vto.Documentaci�n "+fechaVto);
 			jQuery('#<portlet:namespace />discapacidad_1').show();
 			jQuery('#<portlet:namespace />discapacidad_vto_1').show();
 		 }else{
@@ -1156,7 +1187,7 @@ function <portlet:namespace />buscarPrestacionOnDiv(e){
 		    }    
 		    if(jQuery("#<portlet:namespace />nom_seleccionado").val() != "1" && nombre_nomenclador.length>=6 ){
 		    	if(popupNM==null)
-		    	    popupNM = Liferay.Popup({title:"Bï¿½squeda Nomenclador",modal:true,width:700,onClose: function() { popupNM = null;}});
+		    	    popupNM = Liferay.Popup({title:"B�squeda Nomenclador",modal:true,width:700,onClose: function() { popupNM = null;}});
 		    	
 		    	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/buscar_nomenclador';
 			    url += '&descripcionnomenclador='+encodeURI(nombre_nomenclador);
@@ -1179,7 +1210,7 @@ function <portlet:namespace />buscarNomencladorAutocompletar(){
 	        alert('<liferay-ui:message key="ingrese-parametros-busqueda" />'); 
 	}else {
 	    	if(popupNM==null)
-	    		popupNM = Liferay.Popup({title:"Bï¿½squeda Nomenclador",modal:true,width:700,onClose: function() { popupNM = null;}});
+	    		popupNM = Liferay.Popup({title:"B�squeda Nomenclador",modal:true,width:700,onClose: function() { popupNM = null;}});
 	    	
 		    var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/buscar_nomenclador';
 		    url += '&descripcionnomenclador='+encodeURI(nombre_nomenclador)+'&codigonomenclador='+encodeURI(codigo_nomenclador);
@@ -1299,13 +1330,21 @@ function <portlet:namespace />validarCampos(){
 	var esMedicamento=jQuery('#<portlet:namespace />medicamentoChk').attr('checked');
 	var esAlojamiento=jQuery('#<portlet:namespace />alojamientoChk').attr('checked');
 	var fechaEmail=('<%=preautorizacion.getFechaEnvioMail_string()%>');
-	if(baja_fecha !=null){
-    	var valuesStart=baja_fecha.split("/");
-    	var dateStart=new Date(valuesStart[2],(valuesStart[1]-1),valuesStart[0]);
-    	if(dateStart<date){
-     	  alert("Afiliado dado de Baja"); 
-     	  return false;
-    	}  
+    <portlet:namespace />sincronizarIncluirBajas();
+
+    var incluirBajas = jQuery("#<portlet:namespace />incluir_bajas").is(":checked");
+
+    if(baja_fecha != null && baja_fecha != "" && baja_fecha != "null"){
+        var valuesStart = baja_fecha.split("/");
+
+        if(valuesStart.length == 3){
+            var dateStart = new Date(valuesStart[2], (valuesStart[1] - 1), valuesStart[0]);
+
+            if(dateStart < date && !incluirBajas){
+                alert("Afiliado dado de baja. Para continuar, marque 'Incluir bajas'.");
+                return false;
+            }
+        }
     }
     
 	if (cuil_titu==null || cuil_titu=="" || cuil_titu=="null" || cuil_titu.length==0){
@@ -1340,7 +1379,7 @@ function <portlet:namespace />validarCampos(){
 	 }}});
 
 	if(diagnosticoId==null || diagnosticoId=="" || diagnosticoId=="null" || diagnosticoId.length==0 ){
-		alert("Debe cargar un diagnóstico o elegir la opciï¿½n OTROS si lo desconoce"); 
+		alert("Debe cargar un diagn�stico o elegir la opci�n OTROS si lo desconoce"); 
    	    return false;
 	}
 	
@@ -1437,11 +1476,11 @@ function <portlet:namespace />validarCampos(){
 	}else if(estado=="CA" && ((fechaRespuestaPSDia!="" && fechaRespuestaPSMes!="" && fechaRespuestaPSAnio!="") ||
 			                  (fechaEntregaDia!="" && fechaEntregaMes!="" && fechaEntregaAnio!="")
 	                          )){
-		alert("Debe cambiar el Estado de la Preautorizaciï¿½n");
+		alert("Debe cambiar el Estado de la Preautorizaci�n");
 		return false;
 		
 	}else if(estado=="GO" && !(isSupra || "SI"==habilitaGestionOspimMedicamentos)  ){
-            alert("No corresponde el Estado para esta Preautorizaciï¿½n");
+            alert("No corresponde el Estado para esta Preautorizaci�n");
             return false;
 	}else{
 		var actualizaDomicilio;
@@ -1485,17 +1524,21 @@ function <portlet:namespace />validarCampos(){
 	var estadoOspim=jQuery("#<portlet:namespace />estadoOSPIM").val();
 	
 	if(estado=="GO" && "" ==estadoOspim && fechaEmail!=null && ""!=fechaEmail){
-		alert("Debe Seleccionar un Estado de Gestiï¿½n OSPIM");
+		alert("Debe Seleccionar un Estado de Gesti�n OSPIM");
 		return false;
 	}
 */
 	return true;
 }
 
-function <portlet:namespace />salvarEdicion(){
-	window.onbeforeunload = null;
-	document.getElementById("<portlet:namespace />estadoPreautorizacion").disabled=false;
-	if (<portlet:namespace />validarCampos()) {
+    function <portlet:namespace />salvarEdicion(){
+        window.onbeforeunload = null;
+
+        <portlet:namespace />sincronizarIncluirBajas();
+
+        document.getElementById("<portlet:namespace />estadoPreautorizacion").disabled=false;
+
+        if (<portlet:namespace />validarCampos()) {
 		document.getElementById("<portlet:namespace/>discapacidadChk").disabled=false;
 		document.getElementById("<portlet:namespace/>medicamentoChk").disabled=false;
 		document.getElementById("<portlet:namespace/>alojamientoChk").disabled=false;
@@ -1528,7 +1571,7 @@ function <portlet:namespace />limpiarNomencladorAutocompletar(){
 }
 
 <c:if test='<%="N".equalsIgnoreCase((String)request.getSession().getAttribute("esPopUp"))%>'>
-//	window.onbeforeunload = function(){return "Esta seguro de abandonar la pï¿½gina?";};
+//	window.onbeforeunload = function(){return "Esta seguro de abandonar la p�gina?";};
 </c:if>
 
 function <portlet:namespace />configuraCarga(){
@@ -1652,7 +1695,7 @@ function <portlet:namespace />validarEmail() {
 	var expr = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
 	
 	if ( !expr.test(email) ){
-	    alert("Error: La direcciï¿½n de correo " + email + " es incorrecta.");
+	    alert("Error: La direcci�n de correo " + email + " es incorrecta.");
 	    jQuery("#<portlet:namespace />email").focus();
 		return false;
 	}
@@ -1713,18 +1756,18 @@ function confirmaActualizacionDomicilioAfiliado(){
 		 (trim(d_cod_area_tel) == '' && trim(d_telefono) != '') ||
 		 (trim(d_cod_area_tel) != '' && trim(d_telefono) == '')
 		){
-		alert("El telï¿½fono debe necesariamente tener el cï¿½digo de area y el nï¿½mero");
+		alert("El tel�fono debe necesariamente tener el c�digo de area y el n�mero");
 		jQuery('#<portlet:namespace />telefono').focus();
 		return false;
 	}
 	
 	if(trim(d_cod_area_tel).startsWith('0')){
-		alert("El cï¿½digo de area del telï¿½fono no debe iniciar con cero");
+		alert("El c�digo de area del tel�fono no debe iniciar con cero");
 		jQuery("#<portlet:namespace />cod_area_telefono").focus();
 		return false;
 	}
 	if(trim(d_telefono).startsWith('0')){
-		alert("El nï¿½mero del telï¿½fono no debe iniciar con cero");
+		alert("El n�mero del tel�fono no debe iniciar con cero");
 		jQuery("#<portlet:namespace />telefono").focus();
 		return false;
 	}
@@ -1732,7 +1775,7 @@ function confirmaActualizacionDomicilioAfiliado(){
 	
 	if(trim(d_cod_area_tel).length>0 || trim(d_telefono).length>0){
 		if(trim(d_cod_area_tel).length+trim(d_telefono).length!=10){
-			alert("La longitud del cï¿½digo de ï¿½rea + telï¿½fono debe de ser de 10 caracteres");
+			alert("La longitud del c�digo de �rea + tel�fono debe de ser de 10 caracteres");
 			jQuery("#<portlet:namespace />cod_area_telefono").focus();
 			return false;
 		}
@@ -1741,25 +1784,25 @@ function confirmaActualizacionDomicilioAfiliado(){
 /*if ((trim(d_cod_area_laboral) == '' && trim(d_laboral) != '') ||
 		(trim(d_cod_area_laboral) != '' && trim(d_laboral) == '')
 		){
-		alert("El telï¿½fono laboral debe necesariamente tener el cï¿½digo de area y el nï¿½mero");
+		alert("El tel�fono laboral debe necesariamente tener el c�digo de area y el n�mero");
 		jQuery('#<portlet:namespace />tel_laboral').focus();
 		return false;
 	}
 	
 	if(trim(d_cod_area_laboral).startsWith('0')){
-		alert("El cï¿½digo de area laboral no debe iniciar con cero");
+		alert("El c�digo de area laboral no debe iniciar con cero");
 		jQuery("#<portlet:namespace />cod_area_tel_laboral").focus();
 		return false;
 	}
 	if(trim(d_laboral).startsWith('0')){
-		alert("El nï¿½mero del telï¿½fono laboral no debe iniciar con cero");
+		alert("El n�mero del tel�fono laboral no debe iniciar con cero");
 		jQuery("#<portlet:namespace />tel_laboral").focus();
 		return false;
 	}
 	
 	if(trim(d_cod_area_laboral).length>0 || trim(d_laboral).length>0){
 		if(trim(d_cod_area_laboral).length+trim(d_laboral).length!=10){
-			alert("La longitud del cï¿½digo de ï¿½rea + telï¿½fono laboral debe de ser de 10 caracteres");
+			alert("La longitud del c�digo de �rea + tel�fono laboral debe de ser de 10 caracteres");
 			jQuery("#<portlet:namespace />cod_area_tel_laboral").focus();
 			return false;
 		}
@@ -1768,12 +1811,12 @@ function confirmaActualizacionDomicilioAfiliado(){
 	*/
 	
 	if(trim(d_cod_area_celu).startsWith('0')){
-		alert("El cï¿½digo de area del celular no debe iniciar con cero");
+		alert("El c�digo de area del celular no debe iniciar con cero");
 		jQuery("#<portlet:namespace />cod_area_celular").focus();
 		return false;
 	}
 	if(trim(d_celular).startsWith('0')){
-		alert("El nï¿½mero del celular no debe iniciar con cero");
+		alert("El n�mero del celular no debe iniciar con cero");
 		jQuery("#<portlet:namespace />celular").focus();
 		return false;
 	}
@@ -1781,7 +1824,7 @@ function confirmaActualizacionDomicilioAfiliado(){
 	
 	if(trim(d_cod_area_celu).length>0 || trim(d_celular).length>0){
 		if(trim(d_cod_area_celu).length+trim(d_celular).length!=10){
-			alert("La longitud del cï¿½digo de ï¿½rea + celular debe de ser de 10 caracteres");
+			alert("La longitud del c�digo de �rea + celular debe de ser de 10 caracteres");
 			jQuery("#<portlet:namespace />cod_area_celular").focus();
 			return false;
 		}
@@ -1999,6 +2042,8 @@ function borraPreautorizacionCodigoNomenclador(idMod){
 
 
 function <portlet:namespace />siguienteSolapa() {
+	<portlet:namespace />sincronizarIncluirBajas();
+
 	document.getElementById("<portlet:namespace/>discapacidadChk").disabled=false;
 	document.getElementById("<portlet:namespace />estadoPreautorizacion").disabled=false;
 	document.getElementById("<portlet:namespace/>medicamentoChk").disabled=false;
@@ -2317,7 +2362,7 @@ function editarPreautorizacionMedicamento(idMod,idModAux,idMedicamento,descripci
 
 function <portlet:namespace />reintentarCaso() {
     
-    var respuesta=confirm ('Estï¿½ seguro que desea generar una nueva preautorizaciï¿½n copiando los datos de ï¿½sta misma '+'\nDesea continuar?');
+    var respuesta=confirm ('Est� seguro que desea generar una nueva preautorizaci�n copiando los datos de �sta misma '+'\nDesea continuar?');
 		   
 	if (respuesta) {
 		
@@ -2374,6 +2419,22 @@ function <portlet:namespace />manejoAlojamiento(){
 	}
 }
 
+    function <portlet:namespace />sincronizarIncluirBajas(){
+        var incluirBajas = jQuery("#<portlet:namespace />incluir_bajas").is(":checked");
+
+        jQuery("#<portlet:namespace />baja").val(incluirBajas ? "true" : "false");
+
+        /*
+         * Compatibilidad defensiva:
+         * Si el JSP incluido de b�squeda de afiliado usa alg�n campo interno
+         * llamado baja, baja_filtro o incluir_bajas, intentamos sincronizarlo.
+         */
+        jQuery("#<portlet:namespace />baja_filtro").prop("checked", incluirBajas);
+        jQuery("#<portlet:namespace />baja_filtro").val(incluirBajas ? "true" : "false");
+
+        jQuery("#<portlet:namespace />incluir_bajas_filtro").prop("checked", incluirBajas);
+        jQuery("#<portlet:namespace />incluir_bajas_filtro").val(incluirBajas ? "true" : "false");
+    }
 </script>
 
 
