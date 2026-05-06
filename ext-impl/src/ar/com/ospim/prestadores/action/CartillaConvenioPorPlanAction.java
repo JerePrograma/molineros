@@ -1,9 +1,10 @@
 package ar.com.ospim.prestadores.action;
 
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.ByteArrayOutputStream;
 
+import com.liferay.util.servlet.ServletResponseUtil;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
@@ -32,7 +33,6 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.struts.ActionConstants;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
-import com.liferay.portlet.ActionResponseImpl;
 
 public class CartillaConvenioPorPlanAction extends PortletAction {
 
@@ -215,27 +215,40 @@ public class CartillaConvenioPorPlanAction extends PortletAction {
         List<CartillaConvenioRow> resultados = buscarResultados(filtro);
 
         HSSFWorkbook workbook = null;
-        OutputStream outputStream = null;
+        ByteArrayOutputStream baos = null;
 
         try {
             workbook = crearWorkbook(resultados);
+            baos = new ByteArrayOutputStream();
 
-            HttpServletResponse httpRes = getHttpServletResponse((ActionResponseImpl) actionResponse);
+            workbook.write(baos);
+            baos.flush();
 
-            outputStream = httpRes.getOutputStream();
-            workbook.write(outputStream);
-            outputStream.flush();
+            HttpServletResponse httpRes = PortalUtil.getHttpServletResponse(actionResponse);
+
+            httpRes.reset();
+
+            ServletResponseUtil.sendFile(
+                    httpRes,
+                    XLS_FILE_NAME,
+                    baos.toByteArray(),
+                    "application/vnd.ms-excel"
+            );
 
             setForward(actionRequest, ActionConstants.COMMON_NULL);
 
             log.info("[CARTILLA-CONV][EXPORT][OK] resultados=" + resultados.size());
 
+        } catch (Exception e) {
+            log.error("[CARTILLA-CONV][EXPORT][ERROR]", e);
+            throw e;
+
         } finally {
-            if (outputStream != null) {
+            if (baos != null) {
                 try {
-                    outputStream.close();
+                    baos.close();
                 } catch (Exception e) {
-                    log.warn("[CARTILLA-CONV][EXPORT][WARN] Error cerrando OutputStream", e);
+                    log.warn("[CARTILLA-CONV][EXPORT][WARN] Error cerrando ByteArrayOutputStream", e);
                 }
             }
 
@@ -247,19 +260,6 @@ public class CartillaConvenioPorPlanAction extends PortletAction {
                 }
             }
         }
-    }
-
-    private static HttpServletResponse getHttpServletResponse(ActionResponseImpl actionResponse) {
-        HttpServletResponse httpRes = actionResponse.getHttpServletResponse();
-
-        httpRes.reset();
-        httpRes.setContentType("application/vnd.ms-excel");
-        httpRes.setHeader("Content-Disposition", "attachment; filename=\"" + XLS_FILE_NAME + "\"");
-        httpRes.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-        httpRes.setHeader("Pragma", "no-cache");
-        httpRes.setDateHeader("Expires", 0);
-
-        return httpRes;
     }
 
     private HSSFWorkbook crearWorkbook(List<CartillaConvenioRow> resultados) {
