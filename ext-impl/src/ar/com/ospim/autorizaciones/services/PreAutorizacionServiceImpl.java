@@ -48,6 +48,8 @@ public class PreAutorizacionServiceImpl implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 2272911646924193886L;
+    private static final String SQL_BUSCA_PREAUTORIZACIONES =
+            "{call autorizaciones.busca_preautorizaciones(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 	private static Log _log = LogFactoryUtil
 			.getLog(PreAutorizacionServiceImpl.class);
 	
@@ -275,277 +277,288 @@ public class PreAutorizacionServiceImpl implements Serializable {
 		return id_preautorizacion;
 	}
 
-	
-	public List<PreAutorizacion> getListaPreAutorizacion(BusquedaPreautorizacionesFiltro filtro)
-			throws SystemException {
-		Connection con = null;
-		CallableStatement stmt = null;
-		List<PreAutorizacion> list = null;
-		try {
-			String sql = "{call autorizaciones.busca_preautorizaciones(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
-			con = ConnectionHelper.getConnection();
-			stmt = con.prepareCall(sql.toString());
-			
-			if (filtro.getId()>0) {
-				stmt.setInt(1, filtro.getId());
-			} else {
-				stmt.setNull(1, Types.INTEGER);
-			}
-			if (StringUtils.checkNotEmpty(filtro.getCuil())) {
-				stmt.setString(2, filtro.getCuil());
-			} else {
-				stmt.setNull(2, Types.VARCHAR);
-			}
-			if (filtro.getInte() != null) {
-				stmt.setInt(3, filtro.getInte());
-			} else {
-				stmt.setNull(3, Types.INTEGER);
-			}
-			
-			if (null != filtro.getFechaD()) {
-				stmt.setDate(4,  new java.sql.Date(filtro.getFechaD().getTime()));
-			} else {
-				stmt.setNull(4, Types.DATE);
-			}
-			
-			if (null != filtro.getFechaH()) {
-				stmt.setDate(5,  new java.sql.Date(filtro.getFechaH().getTime()));
-			} else {
-				stmt.setNull(5, Types.DATE);
-			}
-			
-			if (StringUtils.checkNotEmpty(filtro.getEstado())) {
-				stmt.setString(6, filtro.getEstado());
-			} else {
-				stmt.setNull(6, Types.VARCHAR);
-			}
-			
-			if (null != filtro.getFechaEmail()) {
-				stmt.setDate(7,  new java.sql.Date(filtro.getFechaEmail().getTime()));
-			} else {
-				stmt.setNull(7, Types.DATE);
-			}
-			
-			if (null != filtro.getFechaEmailH()) {
-				stmt.setTimestamp(8,  new java.sql.Timestamp(DateUtils.getMismoDia_23_59hs(filtro.getFechaEmailH()).getTime() ));
-				
-			} else {
-				stmt.setNull(8, Types.DATE);
-			}
-			
-			if (null != filtro.getSeccional()) {
-				stmt.setInt(9, filtro.getSeccional());
-			} else {
-				stmt.setNull(9, Types.INTEGER);
-			}
-			
-			if (filtro.isAlertaRoja()) {
-				stmt.setBoolean(10, filtro.isAlertaRoja());
-			} else {
-				stmt.setNull(10, Types.BOOLEAN );
-			}
-			
-			if (filtro.isDiscapacidad()) {
-				stmt.setBoolean(11, filtro.isDiscapacidad());
-			} else {
-				stmt.setNull(11, Types.BOOLEAN );
-			}
-			
-			if (filtro.isMedicamento()) {
-				stmt.setBoolean(12, filtro.isMedicamento());
-			} else {
-				stmt.setNull(12, Types.BOOLEAN );
-			}
-			
-			if (filtro.isSupra()) {
-				stmt.setBoolean(13, filtro.isSupra());
-			} else {
-				stmt.setNull(13, Types.BOOLEAN );
-			}
-			
-			if (filtro.isCirugia()) {
-				stmt.setBoolean(14, filtro.isCirugia());
-			} else {
-				stmt.setNull(14, Types.BOOLEAN );
-			}
-			
-			if (filtro.isSinReintento()) {
-				stmt.setBoolean(15, filtro.isSinReintento());
-			} else {
-				stmt.setNull(15, Types.BOOLEAN );
-			}
-			
-			if (filtro.getIdAutorizacion()>0) {
-				stmt.setInt(16, filtro.getIdAutorizacion());
-			} else {
-				stmt.setNull(16, Types.INTEGER );
-			}
-			
-			if (filtro.isAlojamiento()) {
-				stmt.setBoolean(17, filtro.isAlojamiento());
-			} else {
-				stmt.setNull(17, Types.BOOLEAN );
-			}
-			
-			if (filtro.isProtesisOrt()) {
-				stmt.setBoolean(18, filtro.isProtesisOrt());
-			} else {
-				stmt.setNull(18, Types.BOOLEAN );
-			}
-			
-			if (filtro.isART()) {
-				stmt.setBoolean(19, filtro.isART());
-			} else {
-				stmt.setNull(19, Types.BOOLEAN );
-			}
-			
-			if (filtro.isDiabetes()) {
-				stmt.setBoolean(20, filtro.isDiabetes());
-			} else {
-				stmt.setNull(20, Types.BOOLEAN );
-			}
-			
-			ResultSet rs = stmt.executeQuery();
-			list = new ArrayList<PreAutorizacion>();
-			while (rs.next()) {
-				PreAutorizacion archivo = PreAutorizacion.getMapping(rs);
-				list.add(archivo);
-			}
-		} catch (Exception e) {
-			_log.error("Error al buscar Preautorizaciones", e);
-			throw new SystemException(e);
-		} finally {
-			ConnectionHelper.cerrar(stmt, con);
-		}
-		return list;
-	}
-	
-	public PreAutorizacion buscarPreautorizacionPorId(
-			int id,Connection connectionParameter) throws SystemException {
+    private void cargarParametrosBusquedaPreautorizaciones(CallableStatement stmt, BusquedaPreautorizacionesFiltro filtro)
+            throws SQLException {
 
-		Connection con = null;
-		CallableStatement stmt = null,stmtp = null, stmtm = null;
-		
-		if (connectionParameter == null) {
-			con = ConnectionHelper.getConnection();
-		} else {
-			con = connectionParameter;
-		}
-		
-		PreAutorizacion preautorizacion = new PreAutorizacion();
-		try {
-			
-			String sql = "{call autorizaciones.busca_preautorizaciones(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
-							
-			stmt = con.prepareCall(sql.toString());
+        if (filtro.getId() != null && filtro.getId() > 0) {
+            stmt.setInt(1, filtro.getId());
+        } else {
+            stmt.setNull(1, Types.INTEGER);
+        }
 
-			stmt.setInt(1, id);
-			stmt.setNull(2, Types.VARCHAR);
-			stmt.setNull(3, Types.INTEGER);
-			stmt.setNull(4, Types.DATE);
-			stmt.setNull(5, Types.DATE);
-			stmt.setNull(6, Types.VARCHAR);
-			stmt.setNull(7, Types.DATE);
-			stmt.setNull(8, Types.DATE);
-			stmt.setNull(9, Types.INTEGER);
-			stmt.setNull(10, Types.BOOLEAN);
-			stmt.setNull(11, Types.BOOLEAN);
-			stmt.setNull(12, Types.BOOLEAN);
-			stmt.setNull(13, Types.BOOLEAN);
-			stmt.setNull(14, Types.BOOLEAN);
-			stmt.setNull(15, Types.BOOLEAN);
-			stmt.setNull(16, Types.INTEGER);
-			stmt.setNull(17, Types.BOOLEAN);
-			stmt.setNull(18, Types.BOOLEAN);
-			stmt.setNull(19, Types.BOOLEAN);
-			
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				preautorizacion = PreAutorizacion.getMapping(rs);
-				break;
-			}
-			
-			sql = "{ call autorizaciones.busca_preautorizacion_prestaciones_por_idpreautorizacion(?) }";
-			stmtp = con.prepareCall(sql.toString());
-			stmtp.setInt(1, id);
-			ResultSet rst = stmtp.executeQuery();
-			while (rst.next()) {
-				PreAutorizacionPrestacion pp= new PreAutorizacionPrestacion();
-				pp.setCantidad(rst.getDouble("cantidad"));
-				pp.setImporte(rst.getDouble("importe"));
-				Nomenclador nomenclador=new Nomenclador();
-				nomenclador.setCodigo(rst.getString("codigo"));
-				nomenclador.setDescripcion(rst.getString("descripcion"));
-				nomenclador.setId_prestacion(rst.getInt("prestacion_id"));
-				nomenclador.setId_tipo_nomenclador(rst.getInt("id_tipo_nomenclador"));
-				nomenclador.setRequiereAutorizacion(rst.getBoolean("requiere_autorizacion"));
-				nomenclador.setDescripcionTipoNomenclador(rst.getString("id_tipo_nomenclador_descripcion"));
-				nomenclador.setSupra(rst.getBoolean("supra"));
-				nomenclador.setCirugia(rst.getBoolean("cirugia"));
-				pp.setNomenclador(nomenclador);
-				pp.setFechaBaja(rst.getDate("baja_fecha"));
-				pp.setId(rst.getInt("id"));
-				OpcionesPrestacion tipoApoyo = new OpcionesPrestacion(rst.getInt("tipoapoyo_id"),rst.getString("tipoapoyo_descripcion"),"");
-				pp.setOpcionApoyo(tipoApoyo);
-				Integer rnd = 0;
-				Random r = new Random();
-				rnd=r.nextInt((1000 - 1) + 1) + 1;
-			    pp.setIdAux(rnd);	
-				preautorizacion.getCodigosPresentados().add(pp);
-			}
-			
-			sql = "{ call autorizaciones.busca_preautorizacion_medicamentos_por_idpreautorizacion(?) }";
-			stmtm = con.prepareCall(sql.toString());
-			stmtm.setInt(1, id);
-			ResultSet rsm = stmtm.executeQuery();
-			while (rsm.next()) {
-				PreAutorizacionMedicamento mm= new PreAutorizacionMedicamento();
-				
-				Medicamento med = new Medicamento();
-				med.setId_medicamento(rsm.getInt("troquel"));
-				med.setNombre(rsm.getString("nombre_medicamento"));
-								
-				mm.setCantidad(rsm.getDouble("cantidad"));
-				mm.setImporte(rsm.getDouble("importe"));
-				mm.setFechaBaja(rsm.getDate("baja_fecha"));
-				mm.setId(rsm.getInt("id"));
-				
-				mm.setMedicamento(med);
-				
-				Integer rnd = 0;
-				Random r = new Random();
-				rnd=r.nextInt((1000 - 1) + 1) + 1;
-			    mm.setIdAux(rnd);	
-				preautorizacion.getMedicamentosPresentados().add(mm);
-			}
-			
-			PreAutorizacion gestOspim = buscarPreautorizacionGestionOspimPorId(id,con);
-			if(gestOspim!=null) {
-			   preautorizacion.setTipoGestionOSPIM(gestOspim.getTipoGestionOSPIM());
-			   preautorizacion.setTipoPedidoGestionOSPIM(gestOspim.getTipoPedidoGestionOSPIM());
-			   preautorizacion.setObservacionesOSPIM(gestOspim.getObservacionesOSPIM());
-			   preautorizacion.setUltimoEstadoOSPIM(gestOspim.getUltimoEstadoOSPIM());
-			   preautorizacion.setIdReclamoPrestacional(gestOspim.getIdReclamoPrestacional());
-			}
-			
-			
-		} catch (Exception e) {
-			_log.error("error al buscar Preautorizacion por Id", e);
-			throw new SystemException(e);
-		} finally {
-			
-			if (connectionParameter == null) {
-				ConnectionHelper.cerrar(stmtp);
-				ConnectionHelper.cerrar(stmtm);
-				ConnectionHelper.cerrar(stmt, con);
-			}else{
-				ConnectionHelper.cerrar(stmt);
-				ConnectionHelper.cerrar(stmtp);
-				ConnectionHelper.cerrar(stmtm);
-			}
-		}
-		return preautorizacion;
-	}
+        if (StringUtils.checkNotEmpty(filtro.getCuil())) {
+            stmt.setString(2, filtro.getCuil());
+        } else {
+            stmt.setNull(2, Types.VARCHAR);
+        }
+
+        if (filtro.getInte() != null) {
+            stmt.setInt(3, filtro.getInte());
+        } else {
+            stmt.setNull(3, Types.INTEGER);
+        }
+
+        if (filtro.getFechaD() != null) {
+            stmt.setDate(4, new java.sql.Date(filtro.getFechaD().getTime()));
+        } else {
+            stmt.setNull(4, Types.DATE);
+        }
+
+        if (filtro.getFechaH() != null) {
+            stmt.setDate(5, new java.sql.Date(filtro.getFechaH().getTime()));
+        } else {
+            stmt.setNull(5, Types.DATE);
+        }
+
+        if (StringUtils.checkNotEmpty(filtro.getEstado())) {
+            stmt.setString(6, filtro.getEstado());
+        } else {
+            stmt.setNull(6, Types.VARCHAR);
+        }
+
+        if (filtro.getFechaEmail() != null) {
+            stmt.setDate(7, new java.sql.Date(filtro.getFechaEmail().getTime()));
+        } else {
+            stmt.setNull(7, Types.DATE);
+        }
+
+        if (filtro.getFechaEmailH() != null) {
+            stmt.setTimestamp(8, new java.sql.Timestamp(DateUtils.getMismoDia_23_59hs(filtro.getFechaEmailH()).getTime()));
+        } else {
+            stmt.setNull(8, Types.TIMESTAMP);
+        }
+
+        if (filtro.getSeccional() != null) {
+            stmt.setInt(9, filtro.getSeccional());
+        } else {
+            stmt.setNull(9, Types.INTEGER);
+        }
+
+        if (filtro.isAlertaRoja()) {
+            stmt.setBoolean(10, filtro.isAlertaRoja());
+        } else {
+            stmt.setNull(10, Types.BOOLEAN);
+        }
+
+        if (filtro.isDiscapacidad()) {
+            stmt.setBoolean(11, filtro.isDiscapacidad());
+        } else {
+            stmt.setNull(11, Types.BOOLEAN);
+        }
+
+        if (filtro.isMedicamento()) {
+            stmt.setBoolean(12, filtro.isMedicamento());
+        } else {
+            stmt.setNull(12, Types.BOOLEAN);
+        }
+
+        if (filtro.isSupra()) {
+            stmt.setBoolean(13, filtro.isSupra());
+        } else {
+            stmt.setNull(13, Types.BOOLEAN);
+        }
+
+        if (filtro.isCirugia()) {
+            stmt.setBoolean(14, filtro.isCirugia());
+        } else {
+            stmt.setNull(14, Types.BOOLEAN);
+        }
+
+        if (filtro.isSinReintento()) {
+            stmt.setBoolean(15, filtro.isSinReintento());
+        } else {
+            stmt.setNull(15, Types.BOOLEAN);
+        }
+
+        if (filtro.getIdAutorizacion() != null && filtro.getIdAutorizacion() > 0) {
+            stmt.setInt(16, filtro.getIdAutorizacion());
+        } else {
+            stmt.setNull(16, Types.INTEGER);
+        }
+
+        if (filtro.isAlojamiento()) {
+            stmt.setBoolean(17, filtro.isAlojamiento());
+        } else {
+            stmt.setNull(17, Types.BOOLEAN);
+        }
+
+        if (filtro.isProtesisOrt()) {
+            stmt.setBoolean(18, filtro.isProtesisOrt());
+        } else {
+            stmt.setNull(18, Types.BOOLEAN);
+        }
+
+        if (filtro.isART()) {
+            stmt.setBoolean(19, filtro.isART());
+        } else {
+            stmt.setNull(19, Types.BOOLEAN);
+        }
+
+        if (filtro.isDiabetes()) {
+            stmt.setBoolean(20, filtro.isDiabetes());
+        } else {
+            stmt.setNull(20, Types.BOOLEAN);
+        }
+
+        if (filtro.isBaja()) {
+            stmt.setBoolean(21, filtro.isBaja());
+        } else {
+            stmt.setNull(21, Types.BOOLEAN);
+        }
+    }
+
+    private List<PreAutorizacion> buscarPreautorizaciones(BusquedaPreautorizacionesFiltro filtro)
+            throws SystemException {
+        Connection con = null;
+        CallableStatement stmt = null;
+        List<PreAutorizacion> list = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_BUSCA_PREAUTORIZACIONES);
+
+            cargarParametrosBusquedaPreautorizaciones(stmt, filtro);
+
+            ResultSet rs = stmt.executeQuery();
+            list = new ArrayList<PreAutorizacion>();
+
+            while (rs.next()) {
+                PreAutorizacion archivo = PreAutorizacion.getMapping(rs);
+                list.add(archivo);
+            }
+
+        } catch (Exception e) {
+            _log.error("Error al buscar Preautorizaciones", e);
+            throw new SystemException(e);
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+
+        return list;
+    }
+
+    public List<PreAutorizacion> getListaPreAutorizacion(BusquedaPreautorizacionesFiltro filtro)
+            throws SystemException {
+        return buscarPreautorizaciones(filtro);
+    }
+
+    public List<PreAutorizacion> getListaPreAutorizacionExtendido(BusquedaPreautorizacionesFiltro filtro)
+            throws SystemException {
+        return buscarPreautorizaciones(filtro);
+    }
+
+    public PreAutorizacion buscarPreautorizacionPorId(
+            int id,Connection connectionParameter) throws SystemException {
+
+        Connection con = null;
+        CallableStatement stmt = null,stmtp = null, stmtm = null;
+
+        if (connectionParameter == null) {
+            con = ConnectionHelper.getConnection();
+        } else {
+            con = connectionParameter;
+        }
+
+        PreAutorizacion preautorizacion = new PreAutorizacion();
+        try {
+
+            String sql = SQL_BUSCA_PREAUTORIZACIONES;
+
+            stmt = con.prepareCall(sql);
+
+            BusquedaPreautorizacionesFiltro filtro = new BusquedaPreautorizacionesFiltro();
+            filtro.setId(id);
+            filtro.setBaja(true);
+
+            cargarParametrosBusquedaPreautorizaciones(stmt, filtro);
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                preautorizacion = PreAutorizacion.getMapping(rs);
+                break;
+            }
+
+            sql = "{ call autorizaciones.busca_preautorizacion_prestaciones_por_idpreautorizacion(?) }";
+            stmtp = con.prepareCall(sql.toString());
+            stmtp.setInt(1, id);
+            ResultSet rst = stmtp.executeQuery();
+            while (rst.next()) {
+                PreAutorizacionPrestacion pp= new PreAutorizacionPrestacion();
+                pp.setCantidad(rst.getDouble("cantidad"));
+                pp.setImporte(rst.getDouble("importe"));
+                Nomenclador nomenclador=new Nomenclador();
+                nomenclador.setCodigo(rst.getString("codigo"));
+                nomenclador.setDescripcion(rst.getString("descripcion"));
+                nomenclador.setId_prestacion(rst.getInt("prestacion_id"));
+                nomenclador.setId_tipo_nomenclador(rst.getInt("id_tipo_nomenclador"));
+                nomenclador.setRequiereAutorizacion(rst.getBoolean("requiere_autorizacion"));
+                nomenclador.setDescripcionTipoNomenclador(rst.getString("id_tipo_nomenclador_descripcion"));
+                nomenclador.setSupra(rst.getBoolean("supra"));
+                nomenclador.setCirugia(rst.getBoolean("cirugia"));
+                pp.setNomenclador(nomenclador);
+                pp.setFechaBaja(rst.getDate("baja_fecha"));
+                pp.setId(rst.getInt("id"));
+                OpcionesPrestacion tipoApoyo = new OpcionesPrestacion(rst.getInt("tipoapoyo_id"),rst.getString("tipoapoyo_descripcion"),"");
+                pp.setOpcionApoyo(tipoApoyo);
+                Integer rnd = 0;
+                Random r = new Random();
+                rnd=r.nextInt((1000 - 1) + 1) + 1;
+                pp.setIdAux(rnd);
+                preautorizacion.getCodigosPresentados().add(pp);
+            }
+
+            sql = "{ call autorizaciones.busca_preautorizacion_medicamentos_por_idpreautorizacion(?) }";
+            stmtm = con.prepareCall(sql.toString());
+            stmtm.setInt(1, id);
+            ResultSet rsm = stmtm.executeQuery();
+            while (rsm.next()) {
+                PreAutorizacionMedicamento mm= new PreAutorizacionMedicamento();
+
+                Medicamento med = new Medicamento();
+                med.setId_medicamento(rsm.getInt("troquel"));
+                med.setNombre(rsm.getString("nombre_medicamento"));
+
+                mm.setCantidad(rsm.getDouble("cantidad"));
+                mm.setImporte(rsm.getDouble("importe"));
+                mm.setFechaBaja(rsm.getDate("baja_fecha"));
+                mm.setId(rsm.getInt("id"));
+
+                mm.setMedicamento(med);
+
+                Integer rnd = 0;
+                Random r = new Random();
+                rnd=r.nextInt((1000 - 1) + 1) + 1;
+                mm.setIdAux(rnd);
+                preautorizacion.getMedicamentosPresentados().add(mm);
+            }
+
+            PreAutorizacion gestOspim = buscarPreautorizacionGestionOspimPorId(id,con);
+            if(gestOspim!=null) {
+                preautorizacion.setTipoGestionOSPIM(gestOspim.getTipoGestionOSPIM());
+                preautorizacion.setTipoPedidoGestionOSPIM(gestOspim.getTipoPedidoGestionOSPIM());
+                preautorizacion.setObservacionesOSPIM(gestOspim.getObservacionesOSPIM());
+                preautorizacion.setUltimoEstadoOSPIM(gestOspim.getUltimoEstadoOSPIM());
+                preautorizacion.setIdReclamoPrestacional(gestOspim.getIdReclamoPrestacional());
+            }
+
+
+        } catch (Exception e) {
+            _log.error("error al buscar Preautorizacion por Id", e);
+            throw new SystemException(e);
+        } finally {
+
+            if (connectionParameter == null) {
+                ConnectionHelper.cerrar(stmtp);
+                ConnectionHelper.cerrar(stmtm);
+                ConnectionHelper.cerrar(stmt, con);
+            }else{
+                ConnectionHelper.cerrar(stmt);
+                ConnectionHelper.cerrar(stmtp);
+                ConnectionHelper.cerrar(stmtm);
+            }
+        }
+        return preautorizacion;
+    }
 
 	
 	public Integer updatePreautorizacionPrestacion(Integer preAutorizacionPrestacionId,PreAutorizacionPrestacion detalle,String screenName,Connection connectionParameter) throws SystemException, SQLException {
@@ -2219,152 +2232,7 @@ public class PreAutorizacionServiceImpl implements Serializable {
 			ConnectionHelper.cerrar(stmt, con);
 		}
 	}
-	
-	public List<PreAutorizacion> getListaPreAutorizacionExtendido(BusquedaPreautorizacionesFiltro filtro)
-			throws SystemException {
-		Connection con = null;
-		CallableStatement stmt = null;
-		List<PreAutorizacion> list = null;
-		try {
-			String sql = "{call autorizaciones.busca_preautorizaciones_xls(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
-			con = ConnectionHelper.getConnection();
-			stmt = con.prepareCall(sql.toString());
-			
-			if (filtro.getId()>0) {
-				stmt.setInt(1, filtro.getId());
-			} else {
-				stmt.setNull(1, Types.INTEGER);
-			}
-			if (StringUtils.checkNotEmpty(filtro.getCuil())) {
-				stmt.setString(2, filtro.getCuil());
-			} else {
-				stmt.setNull(2, Types.VARCHAR);
-			}
-			if (filtro.getInte() != null) {
-				stmt.setInt(3, filtro.getInte());
-			} else {
-				stmt.setNull(3, Types.INTEGER);
-			}
-			
-			if (null != filtro.getFechaD()) {
-				stmt.setDate(4,  new java.sql.Date(filtro.getFechaD().getTime()));
-			} else {
-				stmt.setNull(4, Types.DATE);
-			}
-			
-			if (null != filtro.getFechaH()) {
-				stmt.setDate(5,  new java.sql.Date(filtro.getFechaH().getTime()));
-			} else {
-				stmt.setNull(5, Types.DATE);
-			}
-			
-			if (StringUtils.checkNotEmpty(filtro.getEstado())) {
-				stmt.setString(6, filtro.getEstado());
-			} else {
-				stmt.setNull(6, Types.VARCHAR);
-			}
-			
-			if (null != filtro.getFechaEmail()) {
-				stmt.setDate(7,  new java.sql.Date(filtro.getFechaEmail().getTime()));
-			} else {
-				stmt.setNull(7, Types.DATE);
-			}
-			
-			if (null != filtro.getFechaEmailH()) {
-				stmt.setTimestamp(8,  new java.sql.Timestamp(DateUtils.getMismoDia_23_59hs(filtro.getFechaEmailH()).getTime() ));
-				
-			} else {
-				stmt.setNull(8, Types.DATE);
-			}
-			
-			if (null != filtro.getSeccional()) {
-				stmt.setInt(9, filtro.getSeccional());
-			} else {
-				stmt.setNull(9, Types.INTEGER);
-			}
-			
-			if (filtro.isAlertaRoja()) {
-				stmt.setBoolean(10, filtro.isAlertaRoja());
-			} else {
-				stmt.setNull(10, Types.BOOLEAN );
-			}
-			
-			if (filtro.isDiscapacidad()) {
-				stmt.setBoolean(11, filtro.isDiscapacidad());
-			} else {
-				stmt.setNull(11, Types.BOOLEAN );
-			}
-			
-			if (filtro.isMedicamento()) {
-				stmt.setBoolean(12, filtro.isMedicamento());
-			} else {
-				stmt.setNull(12, Types.BOOLEAN );
-			}
-			
-			if (filtro.isSupra()) {
-				stmt.setBoolean(13, filtro.isSupra());
-			} else {
-				stmt.setNull(13, Types.BOOLEAN );
-			}
-			
-			if (filtro.isCirugia()) {
-				stmt.setBoolean(14, filtro.isCirugia());
-			} else {
-				stmt.setNull(14, Types.BOOLEAN );
-			}
-			
-			if (filtro.isSinReintento()) {
-				stmt.setBoolean(15, filtro.isSinReintento());
-			} else {
-				stmt.setNull(15, Types.BOOLEAN );
-			}
-			
-			if (filtro.getIdAutorizacion()>0) {
-				stmt.setInt(16, filtro.getIdAutorizacion());
-			} else {
-				stmt.setNull(16, Types.INTEGER );
-			}
-			
-			if (filtro.isAlojamiento()) {
-				stmt.setBoolean(17, filtro.isAlojamiento());
-			} else {
-				stmt.setNull(17, Types.BOOLEAN );
-			}
-			
-			if (filtro.isProtesisOrt()) {
-				stmt.setBoolean(18, filtro.isProtesisOrt());
-			} else {
-				stmt.setNull(18, Types.BOOLEAN );
-			}
-			
-			if (filtro.isART()) {
-				stmt.setBoolean(19, filtro.isART());
-			} else {
-				stmt.setNull(19, Types.BOOLEAN );
-			}
-			
-			if (filtro.isDiabetes()) {
-				stmt.setBoolean(20, filtro.isDiabetes());
-			} else {
-				stmt.setNull(20, Types.BOOLEAN );
-			}
-			
-			ResultSet rs = stmt.executeQuery();
-			list = new ArrayList<PreAutorizacion>();
-			while (rs.next()) {
-				PreAutorizacion archivo = PreAutorizacion.getMapping(rs);
 
-				list.add(archivo);
-			}
-		} catch (Exception e) {
-			_log.error("Error al buscar Preautorizaciones", e);
-			throw new SystemException(e);
-		} finally {
-			ConnectionHelper.cerrar(stmt, con);
-		}
-		return list;
-	}
-	
 	public long updatePrestadorPreAutorizacion(Integer preautorizacionId,Integer prestador,String screenName,Connection connectionParameter) throws SystemException, SQLException {
 		Connection con = null;
 		CallableStatement stmt = null;

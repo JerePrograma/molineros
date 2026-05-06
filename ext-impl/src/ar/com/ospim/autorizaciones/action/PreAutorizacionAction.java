@@ -1201,7 +1201,7 @@ public class PreAutorizacionAction extends PortletAction {
 		boolean protesisOrt=ParamUtil.getBoolean(renderRequest, "protesisOrtesis");
 		boolean art=ParamUtil.getBoolean(renderRequest, "posibleart");
 		boolean diabetes=ParamUtil.getBoolean(renderRequest, "diabetes");
-		
+        boolean baja=ParamUtil.getBoolean(renderRequest, "baja");
 		
 		Integer idAutorizacion = ParamUtil.getInteger(renderRequest, "idAutorizacion",0);
 		Date fechaEmail = null;
@@ -1234,7 +1234,7 @@ public class PreAutorizacionAction extends PortletAction {
 			
 		BusquedaPreautorizacionesFiltro filtro = new BusquedaPreautorizacionesFiltro(id, cuil, inte, fechaD, fechaH, estado, fechaEmail, 
 				fechaEmailH, idSeccional, alertaRoja, discapacidad, supra, cirugia, medicamento, sinReintento, 
-				alojamiento, idAutorizacion, protesisOrt,art,diabetes, 0);
+				alojamiento, idAutorizacion, protesisOrt,art,diabetes, 0, baja);
 		
 		List<PreAutorizacion> lista = PreAutorizacionServiceUtil.getListaPreAutorizacion(filtro);
 		

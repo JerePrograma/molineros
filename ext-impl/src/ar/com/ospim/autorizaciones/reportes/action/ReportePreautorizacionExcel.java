@@ -98,7 +98,8 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		boolean protesisOrt=ParamUtil.getBoolean(renderRequest, "protesisOrtesis");
 		boolean art=ParamUtil.getBoolean(renderRequest, "posibleart");
 		boolean diabetes=ParamUtil.getBoolean(renderRequest, "diabetes");
-		
+        boolean baja=ParamUtil.getBoolean(renderRequest, "baja");
+
 		Integer idAutorizacion = ParamUtil.getInteger(renderRequest, "idAutorizacion",0);
 		Date fechaEmail = null;
 		try {
@@ -127,7 +128,7 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		
 	    BusquedaPreautorizacionesFiltro filtro = new BusquedaPreautorizacionesFiltro(id, cuil, inte, fechaD, fechaH, estado, fechaEmail, 
 				fechaEmailH, idSeccional, alertaRoja, discapacidad, supra, cirugia, medicamento, sinReintento, 
-				alojamiento, idAutorizacion, protesisOrt,art,diabetes ,0);
+				alojamiento, idAutorizacion, protesisOrt,art,diabetes ,0, baja);
 		
 		
 		List<PreAutorizacion> seguimientos = PreAutorizacionServiceUtil.getListaPreAutorizacionExtendido(filtro);
@@ -291,7 +292,14 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 				if(filtro.isART()) {
 					aux.append(" Sólo posible ART ");
 				}
-				
+
+                if(filtro.isDiabetes()) {
+                    aux.append(" Sólo diabetes ");
+                }
+
+                if(filtro.isBaja()) {
+                    aux.append(" Incluye dadas de baja ");
+                }
 
 		cell2.setCellValue(new HSSFRichTextString(aux.toString()));
 		cell2.setCellStyle(styleHeaderEnca2);

@@ -30,19 +30,22 @@ public class BusquedaPreautorizacionesFiltro implements Serializable {
 	private boolean protesisOrt;
 	private boolean ART;
 	private boolean diabetes;
-	
-	private int pagina;
+    private boolean baja;
+
+    private int pagina;
 	private int registrosTotal;
 	private final int registrosPorPagina = 50;
-	
-	
-	
+
+    public BusquedaPreautorizacionesFiltro() {
+        super();
+    }
+
 
 	public BusquedaPreautorizacionesFiltro(Integer id, String cuil, Integer inte, Date fechaD, Date fechaH,
 			String estado, Date fechaEmail, Date fechaEmailH, Integer seccional, boolean alertaRoja,
 			boolean discapacidad, boolean supra, boolean cirugia, boolean medicamento, boolean sinReintento, boolean alojamiento,
 			Integer idAutorizacion, boolean protesisOrtesis, int pagina) {
-		
+
 		super();
 		this.id = id;
 		this.cuil = cuil;
@@ -90,13 +93,12 @@ public class BusquedaPreautorizacionesFiltro implements Serializable {
 		this.protesisOrt = protesisOrt;
 		this.ART = ART;
 		this.pagina = pagina;
-		this.diabetes=diabetes;
 	}
-	
+
 	public BusquedaPreautorizacionesFiltro(Integer id, String cuil, Integer inte, Date fechaD, Date fechaH,
 			String estado, Date fechaEmail, Date fechaEmailH, Integer seccional, boolean alertaRoja,
 			boolean discapacidad, boolean supra, boolean cirugia, boolean medicamento, boolean sinReintento,
-			boolean alojamiento, Integer idAutorizacion, boolean protesisOrt, boolean ART,boolean diabetes, int pagina) {
+			boolean alojamiento, Integer idAutorizacion, boolean protesisOrt, boolean ART,boolean diabetes, int pagina, boolean baja) {
 		super();
 		this.id = id;
 		this.cuil = cuil;
@@ -118,7 +120,8 @@ public class BusquedaPreautorizacionesFiltro implements Serializable {
 		this.protesisOrt = protesisOrt;
 		this.ART = ART;
 		this.pagina = pagina;
-		this.diabetes=diabetes;
+		this.diabetes = diabetes;
+        this.baja = baja;
 	}
 
 
@@ -302,5 +305,12 @@ public class BusquedaPreautorizacionesFiltro implements Serializable {
 	public void setDiabetes(boolean diabetes) {
 		this.diabetes = diabetes;
 	}
-	
+
+    public boolean isBaja() {
+        return baja;
+    }
+
+    public void setBaja(boolean baja) {
+        this.baja = baja;
+    }
 }
