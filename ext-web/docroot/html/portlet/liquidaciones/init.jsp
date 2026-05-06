@@ -68,9 +68,9 @@
 <%@ page import="ar.com.ospim.liquidaciones.beans.PlanPrestacion" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.Catastro"%>
 <%@ page import="ar.com.ospim.liquidaciones.beans.TratamientoDiscapacidad"%>
-<%@ page import="ar.com.ospim.liquidaciones.beans.ConvenioPrestacional" %>
-<%@ page import="ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle" %>
-<%@ page import="ar.com.ospim.liquidaciones.beans.ConvenioPrestacional.EstadosConvPrest"%>
+<%@ page import="ar.com.ospim.prestadores.beans.ConvenioPrestacional" %>
+<%@ page import="ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle" %>
+<%@ page import="ar.com.ospim.prestadores.beans.ConvenioPrestacional.EstadosConvPrest"%>
 <%@ page import="ar.com.ospim.liquidaciones.beans.MotivoAltaDiscapacidad" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.ProfesionPrestador" %>
 <%@ page import="ar.com.ospim.liquidaciones.beans.EspecialidadPrestador" %>
@@ -92,7 +92,7 @@
 <%@ page import="ar.com.ospim.liquidaciones.services.CatastroServiceUtil" %>
 <%@ page import="ar.com.ospim.liquidaciones.services.TratamientoDiscapacidadServiceUtil" %>
 <%@ page import="ar.com.ospim.liquidaciones.services.PrestadorExternoServiceUtil" %>
-<%@ page import="ar.com.ospim.liquidaciones.services.ConvenioPrestacionalServiceUtil" %>
+<%@ page import="ar.com.ospim.prestadores.services.ConvenioPrestacionalServiceUtil" %>
 <%@ page import="ar.com.ospim.liquidaciones.services.PrestadorServiceUtil" %>
 
 <%@ page import="ar.com.ospim.liquidaciones.action.LiquidacionDebitosActionUtil" %>

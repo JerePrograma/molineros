@@ -26,7 +26,7 @@ import ar.com.ospim.liquidaciones.DuplicateReintegroPrestacionIdException;
 import ar.com.ospim.liquidaciones.NoSuchReintegroEntryException;
 import ar.com.ospim.liquidaciones.NoSuchReintegroPrestacionEntryException;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
 import ar.com.ospim.liquidaciones.beans.DetalleCuota;
 import ar.com.ospim.liquidaciones.beans.PlanPrestacion;
 import ar.com.ospim.liquidaciones.beans.Reintegro;

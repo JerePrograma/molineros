@@ -7,8 +7,8 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacional;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacional;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
 import ar.com.ospim.procesaArchivos.beans.vademecum.ArchivoListadoSSSalud;
 import ar.com.ospim.procesaArchivos.beans.vademecum.ArchivoManualDat;
 import ar.com.ospim.procesaArchivos.beans.vademecum.DetalleListadoSSSalud;

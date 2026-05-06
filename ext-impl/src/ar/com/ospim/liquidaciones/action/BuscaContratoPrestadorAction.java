@@ -12,8 +12,8 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.global.services.TraeListasServiceUtil;
-import ar.com.ospim.liquidaciones.beans.ConvenioPrestacionalDetalle;
-import ar.com.ospim.liquidaciones.services.ConvenioPrestacionalServiceUtil;
+import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
+import ar.com.ospim.prestadores.services.ConvenioPrestacionalServiceUtil;
 import ar.com.ospim.tesoreria.beans.caja_chica.CajaChica;
 import ar.com.ospim.tesoreria.service.CajaChicaServiceUtil;
 import ar.com.ospim.util.StringUtils;
