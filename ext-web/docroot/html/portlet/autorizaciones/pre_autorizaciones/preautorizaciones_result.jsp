@@ -70,8 +70,8 @@ if (archivos != null && !archivos.isEmpty()){
 		  }
 		} */
 
-		boolean preautorizacionDadaDeBaja = Validator.isNotNull(paut.getBaja_Fecha()) && paut.getBaja_Fecha().getTime()<System.currentTimeMillis();
-
+        boolean preautorizacionDadaDeBaja = Validator.isNotNull(paut.getBaja_Fecha())
+                && paut.getBaja_Fecha().getTime() < System.currentTimeMillis();
 		StringBuilder sb0 = new StringBuilder();
  		sb0.append("<a href='javascript:editarPreautorizacion(\"");
  		sb0.append(paut.getId());
@@ -281,63 +281,59 @@ if (archivos != null && !archivos.isEmpty()){
  			row.addText("");
  		}
 */
-		if(preautorizacionDadaDeBaja){
-			StringBuilder sb=new StringBuilder();
-			sb.append("<div style=\"text-align:center;\">");
-			sb.append("<img alt=\"Preautorización dada de baja\" src=\"");
-			sb.append(themeDisplay.getPathThemeImages());
-			sb.append("/message_boards/ban_user.png\"");
-			sb.append(" title=\"Preautorización dada de baja\"");
-			sb.append("/>");
-			sb.append("</div>");
-			row.addText(sb.toString());
-		}else{
-			StringBuilder sb=new StringBuilder();
-			if(!"AU".equalsIgnoreCase(paut.getUltimoEstado().getId()) && !"RE".equalsIgnoreCase(paut.getUltimoEstado().getId()) ||
-				(("AU".equalsIgnoreCase(paut.getUltimoEstado().getId()) ||  "RE".equalsIgnoreCase(paut.getUltimoEstado().getId()))
-						&& paut.getFechaEntregaRespuesta() == null)
-				){
-		 		sb.append("&nbsp;&nbsp;<img alt=\"Editar Preautorizacion\" src=\"");
-		        sb.append(themeDisplay.getPathThemeImages());
- 		        sb.append("/common/edit.png\" onClick=\"javascript:editarPreautorizacion('");
- 		        sb.append(paut.getId() );
- 		        sb.append("','E'");
- 		        sb.append(");\"");
+        if(preautorizacionDadaDeBaja){
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("<div style=\"text-align:center;\">");
+            sb.append("<img alt=\"Preautorización dada de baja\" src=\"");
+            sb.append(themeDisplay.getPathThemeImages());
+            sb.append("/message_boards/ban_user.png\"");
+            sb.append(" title=\"Preautorización dada de baja\"");
+            sb.append("/>");
+            sb.append("</div>");
+
+            row.addText(sb.toString());
+        }else{
+            StringBuilder sb = new StringBuilder();
+
+            if(!"AU".equalsIgnoreCase(paut.getUltimoEstado().getId()) && !"RE".equalsIgnoreCase(paut.getUltimoEstado().getId()) ||
+                (("AU".equalsIgnoreCase(paut.getUltimoEstado().getId()) ||  "RE".equalsIgnoreCase(paut.getUltimoEstado().getId()))
+                        && paut.getFechaEntregaRespuesta() == null)
+                ){
+                sb.append("&nbsp;&nbsp;<img alt=\"Editar Preautorizacion\" src=\"");
+                sb.append(themeDisplay.getPathThemeImages());
+                sb.append("/common/edit.png\" onClick=\"javascript:editarPreautorizacion('");
+                sb.append(paut.getId() );
+                sb.append("','E'");
+                sb.append(");\"");
                 sb.append(" title=\"Editar\"");
- 		        sb.append("/>");
+                sb.append("/>");
+            } else {
+                sb.append("");
+            }
 
-			} else {
-				sb.append("");
-			}
-
-
-			if(!"AU".equalsIgnoreCase(paut.getUltimoEstado().getId()) && !"RE".equalsIgnoreCase(paut.getUltimoEstado().getId()) ){
-		 		sb.append("&nbsp;&nbsp;<img alt=\"Eliminar preautorizacion\" src=\"");
-				sb.append(themeDisplay.getPathThemeImages());
-		 		sb.append("/common/delete.png\" onClick=\"javascript:eliminarPreautorizacion('");
-		 		sb.append(paut.getId() );
-		 		sb.append("');\"");
+            if(!"AU".equalsIgnoreCase(paut.getUltimoEstado().getId()) && !"RE".equalsIgnoreCase(paut.getUltimoEstado().getId()) ){
+                sb.append("&nbsp;&nbsp;<img alt=\"Eliminar preautorizacion\" src=\"");
+                sb.append(themeDisplay.getPathThemeImages());
+                sb.append("/common/delete.png\" onClick=\"javascript:eliminarPreautorizacion('");
+                sb.append(paut.getId() );
+                sb.append("');\"");
                 sb.append(" title=\"Elimina\"");
-	 		    sb.append("/>");
-			}else{
-				sb.append("");
-			}
+                sb.append("/>");
+            }else{
+                sb.append("");
+            }
 
-//		 		sb.append("&nbsp;&nbsp");
-
-
-		 	sb.append("&nbsp;&nbsp;<img alt=\"Imagenes Preautorizacion\" src=\"");
-			sb.append(themeDisplay.getPathThemeImages());
-	 		sb.append("/common/preview.png\" onClick=\"javascript:imagenesPreautorizacion('");
-	 		sb.append(paut.getId() );
-	 		sb.append("');\"");
+            sb.append("&nbsp;&nbsp;<img alt=\"Imagenes Preautorizacion\" src=\"");
+            sb.append(themeDisplay.getPathThemeImages());
+            sb.append("/common/preview.png\" onClick=\"javascript:imagenesPreautorizacion('");
+            sb.append(paut.getId() );
+            sb.append("');\"");
             sb.append(" title=\"Imagenes\"");
- 		    sb.append("/>");
+            sb.append("/>");
 
-
-		 	row.addText(sb.toString());
-
-		}
+            row.addText(sb.toString());
+        }
 		resultRows.add(row);
 	}
 //	sb.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp");
