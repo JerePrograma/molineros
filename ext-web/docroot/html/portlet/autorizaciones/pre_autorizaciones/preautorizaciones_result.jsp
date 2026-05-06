@@ -27,7 +27,7 @@ headerNames.add("Plan");
 headerNames.add("Estado");
 headerNames.add("Prestaciones/Medicamentos");
 headerNames.add("Respuesta Terc.");
-//headerNames.add("Notificacion");
+headerNames.add("Notificacion");
 /* headerNames.add("Entrega");
 headerNames.add("T.Entrega"); */
 //headerNames.add("Alerta");
@@ -70,8 +70,6 @@ if (archivos != null && !archivos.isEmpty()){
 		  }
 		} */
 				
-        boolean preautorizacionDadaDeBaja = Validator.isNotNull(paut.getBaja_Fecha())
-                && paut.getBaja_Fecha().getTime() < System.currentTimeMillis();
 		StringBuilder sb0 = new StringBuilder();
  		sb0.append("<a href='javascript:editarPreautorizacion(\"");
  		sb0.append(paut.getId());
@@ -243,7 +241,7 @@ if (archivos != null && !archivos.isEmpty()){
  		row.addText(sb10.toString());
 		
 //		row.addText(paut.getFechaNotificacionAfiliado_string());
-		/*StringBuilder sb11 = new StringBuilder();
+		StringBuilder sb11 = new StringBuilder();
 		sb11.append("<a href='javascript:editarPreautorizacion(\"");
  		sb11.append(paut.getId());
  		sb11.append("\",\"");
@@ -251,7 +249,7 @@ if (archivos != null && !archivos.isEmpty()){
  		sb11.append("\")'>");			
  		sb11.append(paut.getFechaNotificacionAfiliado_string());
  		sb11.append("</a>");
- 		row.addText(sb11.toString());*/
+ 		row.addText(sb11.toString());
 		
 //		row.addText(paut.getFechaEntregaRespuesta_string());
 		/* StringBuilder sb12 = new StringBuilder();
