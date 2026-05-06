@@ -211,15 +211,15 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		cell.setCellValue(new HSSFRichTextString("Reporte Preautorizaciones"));
 		cell.setCellStyle(styleHeaderEnca);
 
-		sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 24));
-		
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 27));
+
 		HSSFRow row1 = sheet.createRow(index++);
 		HSSFCell cell1 = row1.createCell(0);
 		Calendar hoy = DateUtils.getCalendarGMTMenos3();
 		
 		cell1.setCellValue(new HSSFRichTextString("Fecha: " +sdf.format(hoy.getTime() )));
 		
-		sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 24));
+		sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 27));
 		
 		HSSFRow rowSeparador = sheet.createRow(index++);
 		
@@ -304,7 +304,7 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		cell2.setCellValue(new HSSFRichTextString(aux.toString()));
 		cell2.setCellStyle(styleHeaderEnca2);
 
-		sheet.addMergedRegion(new CellRangeAddress(3, 3, 0, 25));
+		sheet.addMergedRegion(new CellRangeAddress(3, 3, 0, 27));
 
 		HSSFRow rowHeader = sheet.createRow(index++);
 
@@ -417,7 +417,10 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		HSSFCell cell151H = rowHeader.createCell(col++);
 		cell151H.setCellValue(new HSSFRichTextString("Prestador"));
 		cell151H.setCellStyle(styleBold);
-		
+
+        HSSFCell cell152H = rowHeader.createCell(col++);
+        cell152H.setCellValue(new HSSFRichTextString("Dada de baja"));
+        cell152H.setCellStyle(styleBold);
 		return index;
 	}
 
@@ -484,14 +487,14 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		
 		*/
 //Nuevo
-		cirugia = cirugia.equalsIgnoreCase("NO")&& pre.isCirugia()?"SI":"NO";
-		protesis = protesis.equalsIgnoreCase("NO")&&pre.isProtesisOrtesis() ?"SI":"NO";
-		if(pre.isAlojamiento()) {
-			prestaciones="Solicitud de Alojamiento";
-		}else {
-			prestaciones=pre.getPrestaciones().replace(";", "\n");
-		}
-//Fin Nuevo		
+        cirugia = cirugia.equalsIgnoreCase("NO")&& pre.isCirugia()?"SI":"NO";
+        protesis = protesis.equalsIgnoreCase("NO")&&pre.isProtesisOrtesis() ?"SI":"NO";
+        if(pre.isAlojamiento()) {
+            prestaciones="Solicitud de Alojamiento";
+        }else {
+            prestaciones=pre.getPrestaciones()!=null?pre.getPrestaciones().replace(";", "\n"):"";
+        }
+//Fin Nuevo
 		
 		int col = 0;
 		HSSFRow rowHeader = sheet.createRow(index++);
@@ -603,14 +606,23 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		cell018.setCellStyle(styleAll);
 		
 		HSSFCell cell021 = rowHeader.createCell(col++);
-		cell021.setCellValue(new HSSFRichTextString(pre.getUltimoEstado().getMotivoRechazo()));
-		cell021.setCellStyle(styleAll);
+        cell021.setCellValue(new HSSFRichTextString(
+                pre.getUltimoEstado()!=null && pre.getUltimoEstado().getMotivoRechazo()!=null
+                        ? pre.getUltimoEstado().getMotivoRechazo()
+                        : ""
+        ));
+        cell021.setCellStyle(styleAll);
 		
 		HSSFCell cell027 = rowHeader.createCell(col++);
 		cell027.setCellValue(new HSSFRichTextString(pre.getPrestador()!=null && pre.getPrestador().getId_prestador()>0?pre.getPrestador().getCuit() +
 				"   " + pre.getPrestador().getDescripcion():""));
 		cell027.setCellStyle(styleAll);
-		
+
+        HSSFCell cell028 = rowHeader.createCell(col++);
+        cell028.setCellValue(new HSSFRichTextString(
+                pre.getBaja_Fecha()!=null && pre.getBaja_Fecha().getTime()<System.currentTimeMillis() ? "SI" : "NO"
+        ));
+        cell028.setCellStyle(styleAll);
 //        rowHeader.setHeight((short) 0);
 		return index++;
 	}
