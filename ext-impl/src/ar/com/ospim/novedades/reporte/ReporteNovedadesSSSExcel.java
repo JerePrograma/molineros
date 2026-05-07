@@ -165,7 +165,17 @@ public class ReporteNovedadesSSSExcel extends ReporteXLS {
 				cell6.setCellValue(new HSSFRichTextString(nov.getDetalle_novedad()));
 				cell6.setCellStyle(styleAllWithBorder);
 				
+				HSSFCell cell61 = row.createCell(column++);
+				cell61.setCellValue(new HSSFRichTextString(nov.getRazonSocial()));
+				cell61.setCellStyle(styleAllWithBorder);
 				
+				HSSFCell cell62 = row.createCell(column++);
+				cell62.setCellValue(new HSSFRichTextString(nov.getRamoEmpresa()));
+				cell62.setCellStyle(styleAllWithBorder);
+				
+				HSSFCell cell63 = row.createCell(column++);
+				cell63.setCellValue(new HSSFRichTextString(nov.getSeccional()));
+				cell63.setCellStyle(styleAllWithBorder);
 			}
 
 			sheet.autoSizeColumn((short) 0);
@@ -175,6 +185,9 @@ public class ReporteNovedadesSSSExcel extends ReporteXLS {
 			sheet.autoSizeColumn((short) 4);
 			sheet.autoSizeColumn((short) 5);
 			sheet.autoSizeColumn((short) 6);
+			sheet.autoSizeColumn((short) 7);
+			sheet.autoSizeColumn((short) 8);
+			sheet.autoSizeColumn((short) 9);
 
 		} catch (Exception e) {
 			_log.error(e);
@@ -271,6 +284,17 @@ public class ReporteNovedadesSSSExcel extends ReporteXLS {
 		cell26.setCellValue(new HSSFRichTextString("Detalle Novedad"));
 		cell26.setCellStyle(styleHeaderEnca2);
 
+		HSSFCell cell27 = row4.createCell(column++);
+		cell27.setCellValue(new HSSFRichTextString("Razón Social"));
+		cell27.setCellStyle(styleHeaderEnca2);
+		
+		HSSFCell cell28 = row4.createCell(column++);
+		cell28.setCellValue(new HSSFRichTextString("Ramo Empresa"));
+		cell28.setCellStyle(styleHeaderEnca2);
+		
+		HSSFCell cell29 = row4.createCell(column++);
+		cell29.setCellValue(new HSSFRichTextString("Seccional"));
+		cell29.setCellStyle(styleHeaderEnca2);
 		return index;
 	}
 	

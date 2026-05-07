@@ -48,7 +48,7 @@ import javax.portlet.PortletURL;
  * @author Brian Wing Shun Chan
  * @author Harry Mark
  * @author Bruno Farache
- * @author Raymond Augé
+ * @author Raymond AugÃ©
  *
  */
 public class Indexer

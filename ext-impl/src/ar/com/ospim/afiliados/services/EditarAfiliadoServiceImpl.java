@@ -1492,13 +1492,16 @@ public class EditarAfiliadoServiceImpl {
 		List<Afiliado> afiliados = new ArrayList<Afiliado>();
 
 		try {
-			String sql = "{call buscar_afiliado_por_doc_y_tipo(?,?)}";
+			String sql = "{call buscar_afiliado_por_doc_y_tipo(?,?,?)}";
 			con = ConnectionHelper.getConnection();
 			stmt = con.prepareCall(sql.toString());
 //			stmt.setString(1, nroDoc);
 //			stmt.setString(2, documento_tipo);
 			stmt.setString(1, documento_tipo);
 			stmt.setInt(2, Integer.parseInt(nroDoc));
+			
+			stmt.setDate(3, new java.sql.Date(1220227200));  //returns 1 Jan 1970
+			
 			ResultSet rs = stmt.executeQuery();
 			Afiliado afiliado = null;
 			while (rs.next()) {

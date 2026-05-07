@@ -567,30 +567,40 @@ public class DDJJServiceImpl {
         }
     }
 
-    public void setDocumentoFirmado(String token, String pdfDdjj, String urlDdjj) throws Exception {
-        Connection con = null;
-        CallableStatement cs = null;
+    public void setDocumentoFirmado(
+    	    String token,
+    	    String pdfDdjj,
+    	    String urlDdjj,
+    	    String pdfSolicitud,
+    	    String pdfContrato
+    	) throws Exception {
+    	    Connection con = null;
+    	    CallableStatement cs = null;
 
-        try {
-            con = ConnectionHelper.getConnection();
+    	    try {
+    	        con = ConnectionHelper.getConnection();
 
-            cs = con.prepareCall("{ ? = call comercial.ddjj_set_documento_firmado(?, ?, ?) }");
-            cs.registerOutParameter(1, Types.INTEGER);
-            cs.setString(2, token);
-            setNullableString(cs, 3, pdfDdjj);
-            setNullableString(cs, 4, urlDdjj);
-            cs.execute();
+    	        cs = con.prepareCall("{ ? = call comercial.ddjj_set_documento_firmado(?, ?, ?, ?, ?) }");
+    	        cs.registerOutParameter(1, Types.INTEGER);
 
-            int rows = cs.getInt(1);
-            if (rows < 1) {
-                throw new RuntimeException("No se pudo marcar documento como firmado");
-            }
+    	        cs.setString(2, token);
+    	        setNullableString(cs, 3, pdfDdjj);
+    	        setNullableString(cs, 4, urlDdjj);
+    	        setNullableString(cs, 5, pdfSolicitud);
+    	        setNullableString(cs, 6, pdfContrato);
 
-        } finally {
-            closeQuietly(cs);
-            closeQuietly(con);
-        }
-    }
+    	        cs.execute();
+
+    	        int rows = cs.getInt(1);
+    	        if (rows < 1) {
+    	            throw new RuntimeException("No se pudo marcar documento como firmado");
+    	        }
+
+    	    } finally {
+    	        closeQuietly(cs);
+    	        closeQuietly(con);
+    	    }
+    	}
 
     public void guardarMontoFinal(String token, String montoFinal, String actor) throws Exception {
         Connection con = null;

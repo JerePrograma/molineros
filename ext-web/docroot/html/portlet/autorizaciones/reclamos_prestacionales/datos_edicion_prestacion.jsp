@@ -222,7 +222,7 @@ jQuery("#<portlet:namespace />Autorizado").hide();
 					   yearParam="fechaComprobanteAnioEdicion"
 					   yearValue='<%=prestacionEnEdicion!=null && prestacionEnEdicion.getComprobanteFecha()!=null?fechaseccional.get(Calendar.YEAR):-1 %>'
 					   yearRangeStart="<%= fechaseccional.get(Calendar.YEAR)-5  %>"
-					   yearRangeEnd="<%= fechaseccional.get(Calendar.YEAR) +1 %>"
+					   yearRangeEnd="<%= fechaseccional.get(Calendar.YEAR) +5 %>"
 					   yearNullable="<%= true %>"
 					   firstDayOfWeek="<%= fechaseccional.getFirstDayOfWeek() - 1 %>"
 					   />
@@ -255,8 +255,8 @@ jQuery("#<portlet:namespace />Autorizado").hide();
 			     <td><label><liferay-ui:message key="Importe" />:</label> </td>
 			     <td><input id="<portlet:namespace />importeUnitarioFC_edicion"   
 				    name="<portlet:namespace />importeUnitarioFC_edicion" size="12" maxlength="20" 
-				    value ='<%=prestacionEnEdicion!=null && prestacionEnEdicion.getComprobanteImporte()!=null? 
-				    		new BigDecimal(prestacionEnEdicion.getComprobanteImporte()).toPlainString():"" %>' type="text"  
+				    value='<%= prestacionEnEdicion != null && prestacionEnEdicion.getComprobanteImporte() != null ?
+            				new BigDecimal(prestacionEnEdicion.getComprobanteImporte().toString()).setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString() : "" %>' type="text"  
 				    onkeydown="allowOnlyDigitsAndDecimals(event)"	
 				    onblur="calculatotalFCEdicion()"/> </td>
 			
@@ -266,7 +266,7 @@ jQuery("#<portlet:namespace />Autorizado").hide();
 			        <input id="<portlet:namespace />importeFC_edicion"   
 				    name="<portlet:namespace />importeFC_edicion" size="12" maxlength="20" 
 				    value ='<%=prestacionEnEdicion!=null && prestacionEnEdicion.getComprobanteTotal()!=null?
-				    		new BigDecimal(prestacionEnEdicion.getComprobanteTotal()).toPlainString():"" %>' 
+				    		new BigDecimal(prestacionEnEdicion.getComprobanteTotal().toString()).setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString():"" %>' 
 				    type="text" onkeydown="allowOnlyDigitsAndDecimals(event)" readonly="readonly"/>
 			     </td>
 				  

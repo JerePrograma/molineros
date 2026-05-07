@@ -636,6 +636,10 @@ import ar.com.ospim.util.StringUtils;
 					session.setAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION , reclamoPrestacional.getPrestaciones());
 					session.setAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION , reclamoPrestacional.getRevisiones());
 					
+					session.setAttribute(
+						    RECLAMO_PRESTACION_ESTADO_ORIGINAL,
+						    reclamoPrestacional.getEstado()
+						);
 				}
 				
 				if(cmd.equals(Constants.EDIT ) || cmd.equals(Constants.VIEW )){
@@ -847,6 +851,8 @@ import ar.com.ospim.util.StringUtils;
 				
 		}else{ // es Nuevo			
 			  
+				session.removeAttribute(RECLAMO_PRESTACION_ESTADO_ORIGINAL);
+			
 				session.removeAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
 				session.removeAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION);
 				session.removeAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION );

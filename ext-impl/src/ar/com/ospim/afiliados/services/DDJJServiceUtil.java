@@ -88,8 +88,8 @@ public class DDJJServiceUtil {
     return getInstance().getByEnvelopeId(envelopeId);
   }
 
-  public static void setDocumentoFirmado(String token, String pdfDdjj, String urlDdjj) throws Exception {
-    getInstance().setDocumentoFirmado(token, pdfDdjj, urlDdjj);
+  public static void setDocumentoFirmado(String token, String pdfDdjj, String urlDdjj, String pdfSolicitud, String pdfContrato) throws Exception {
+    getInstance().setDocumentoFirmado(token, pdfDdjj, urlDdjj, pdfSolicitud, pdfContrato);
   }
 
   public static void guardarMontoFinal(String token, String montoFinal, String actor) throws Exception {

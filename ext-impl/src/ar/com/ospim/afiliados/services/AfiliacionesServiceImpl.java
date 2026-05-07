@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
@@ -126,8 +127,8 @@ public class AfiliacionesServiceImpl {
     	            closeQuietly(cs);
 
     	            // INSERT SOLICITUD
-    	            String estadoSolicitudInicial = Boolean.TRUE.equals(esMolinero) ? "pendiente" : "incompleto";
-
+    	            String estadoSolicitudInicial = "incompleto";
+    	            
     	            cs = con.prepareCall("{ ? = call comercial.solicitud_insertar(?, ?) }");
     	            cs.registerOutParameter(1, Types.BIGINT);
     	            cs.setLong(2, idInteresado.longValue());
@@ -145,6 +146,35 @@ public class AfiliacionesServiceImpl {
     	                throw new Exception("Falta idSolicitud para actualizar la solicitud.");
     	            }
 
+    	            String estadoActual = null;
+    	            PreparedStatement psEstado = null;
+    	            ResultSet rsEstado = null;
+
+    	            try {
+    	                psEstado = con.prepareStatement("SELECT estado FROM comercial.solicitud_afiliacion WHERE id = ?");
+    	                psEstado.setLong(1, idSolicitud.longValue());
+    	                rsEstado = psEstado.executeQuery();
+
+    	                if (rsEstado.next()) {
+    	                    estadoActual = rsEstado.getString("estado");
+    	                }
+    	            } finally {
+    	                closeQuietly(rsEstado);
+    	                closeQuietly(psEstado);
+    	            }
+
+    	            if (!generarDdjj && estadoActual != null && !"incompleto".equalsIgnoreCase(estadoActual)) {
+    	                con.commit();
+
+    	                Map<String, Object> out = new HashMap<String, Object>();
+    	                out.put("idInteresado", idInteresado);
+    	                out.put("idSolicitud", idSolicitud);
+    	                out.put("idDdjj", null);
+    	                out.put("token", null);
+    	                out.put("ddjjUrl", null);
+    	                return out;
+    	            }
+    	            
     	            // UPDATE INTERESADO
     	            cs = con.prepareCall(
     	            	    "{ call comercial.interesado_actualizar(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }"
@@ -201,41 +231,71 @@ public class AfiliacionesServiceImpl {
     	            	cs.execute();
     	            	closeQuietly(cs);
 
-    	            	if (!Boolean.TRUE.equals(esMolinero)) {
-    	            	    cs = con.prepareCall("{ ? = call comercial.asignar_solicitud_automatica(?, ?, ?) }");
-    	            	    cs.registerOutParameter(1, Types.BIGINT);
-    	            	    cs.setLong(2, idSolicitud.longValue());
-    	            	    cs.setLong(3, idInteresado.longValue());
-    	            	    cs.setString(4, dni);
-    	            	    cs.execute();
-    	            	    closeQuietly(cs);
+    	            	if (generarDdjj) {
+    	            	    if (!Boolean.TRUE.equals(esMolinero)) {
+    	            	        cs = con.prepareCall("{ ? = call comercial.asignar_solicitud_automatica(?, ?, ?) }");
+    	            	        cs.registerOutParameter(1, Types.BIGINT);
+    	            	        cs.setLong(2, idSolicitud.longValue());
+    	            	        cs.setLong(3, idInteresado.longValue());
+    	            	        cs.setString(4, dni);
+    	            	        cs.execute();
+    	            	        closeQuietly(cs);
+    	            	    } else {
+    	            	        cs = con.prepareCall("{ call comercial.solicitud_actualizar(?, ?) }");
+    	            	        cs.setLong(1, idSolicitud);
+    	            	        cs.setString(2, "pendiente");
+    	            	        cs.execute();
+    	            	        closeQuietly(cs);
+    	            	    }
     	            	} else {
     	            	    cs = con.prepareCall("{ call comercial.solicitud_actualizar(?, ?) }");
     	            	    cs.setLong(1, idSolicitud);
-    	            	    cs.setString(2, "pendiente");
+    	            	    cs.setString(2, "incompleto");
     	            	    cs.execute();
     	            	    closeQuietly(cs);
     	            	}
     	        }
-
-    	        // CREAR DDJJ SI CORRESPONDE
+    	        
+    	     // CREAR O REUTILIZAR DDJJ SI CORRESPONDE
     	        if (generarDdjj) {
-    	            token = UUID.randomUUID().toString().replace("-", "");
-    	            //ddjjUrl = "http://localhost/ospim/alta-online/ddjj_form.php?token=" + token;
-    	            //ddjjUrl = "http://localhost:5173/ddjj/formulario?token=" + token;
-    	            
-    	            ddjjUrl = "https://lumasalud.ar/ddjj/formulario?token=" + token;
-    	            
-    	            cs = con.prepareCall("{ ? = call comercial.ddjj_insertar(?, ?, ?) }");
-    	            cs.registerOutParameter(1, Types.BIGINT);
-    	            cs.setLong(2, idSolicitud.longValue());
-    	            cs.setString(3, token);
-    	            cs.setString(4, ddjjUrl);
-    	            cs.execute();
-    	            idDdjj = Long.valueOf(cs.getLong(1));
-    	            closeQuietly(cs);
-    	        }
+    	            PreparedStatement psDdjj = null;
+    	            ResultSet rsDdjj = null;
 
+    	            try {
+    	                psDdjj = con.prepareStatement(
+    	                    "SELECT id, token, ddjj_url FROM comercial.declaracion_jurada WHERE id_solicitud = ? LIMIT 1"
+    	                );
+    	                psDdjj.setLong(1, idSolicitud.longValue());
+
+    	                rsDdjj = psDdjj.executeQuery();
+
+    	                if (rsDdjj.next()) {
+    	                    idDdjj = Long.valueOf(rsDdjj.getLong("id"));
+    	                    token = rsDdjj.getString("token");
+    	                    ddjjUrl = rsDdjj.getString("ddjj_url");
+    	                } else {
+    	                    token = UUID.randomUUID().toString().replace("-", "");
+    	                    //ddjjUrl = "http://localhost/ospim/alta-online/ddjj_form.php?token=" + token;
+    	    	            //ddjjUrl = "http://localhost:5173/ddjj/formulario?token=" + token;
+    	    	            
+    	                    ddjjUrl = "https://lumasalud.ar/ddjj/formulario?token=" + token;
+
+    	                    cs = con.prepareCall("{ ? = call comercial.ddjj_insertar(?, ?, ?) }");
+    	                    cs.registerOutParameter(1, Types.BIGINT);
+    	                    cs.setLong(2, idSolicitud.longValue());
+    	                    cs.setString(3, token);
+    	                    cs.setString(4, ddjjUrl);
+    	                    cs.execute();
+
+    	                    idDdjj = Long.valueOf(cs.getLong(1));
+    	                    closeQuietly(cs);
+    	                }
+    	            } finally {
+    	                closeQuietly(rsDdjj);
+    	                closeQuietly(psDdjj);
+    	            }
+    	        }
+    	        
     	        con.commit();
 
     	        Map<String, Object> out = new HashMap<String, Object>();
@@ -362,5 +422,17 @@ public class AfiliacionesServiceImpl {
 
     private void resetAutoCommitQuietly(Connection con) {
         try { if (con != null) con.setAutoCommit(true); } catch (Exception ignored) {}
+    }
+    
+    private void closeQuietly(ResultSet rs) {
+        try {
+            if (rs != null) rs.close();
+        } catch (Exception ignored) {}
+    }
+
+    private void closeQuietly(PreparedStatement ps) {
+        try {
+            if (ps != null) ps.close();
+        } catch (Exception ignored) {}
     }
 }

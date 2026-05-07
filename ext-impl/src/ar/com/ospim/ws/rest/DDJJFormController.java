@@ -452,6 +452,8 @@ public class DDJJFormController {
       @RequestParam("token") String token,
       @RequestParam(value="pdf_ddjj", required=false) String pdfDdjj,
       @RequestParam(value="url_ddjj", required=false) String urlDdjj,
+      @RequestParam(value="pdf_solicitud", required=false) String pdfSolicitud,
+      @RequestParam(value="pdf_contrato", required=false) String pdfContrato,
       @RequestParam(value="apiKey", required=false) String apiKey
   ) {
     Map<String, Object> model = new HashMap<String, Object>();
@@ -466,6 +468,8 @@ public class DDJJFormController {
       token = safe(token).trim();
       pdfDdjj = safe(pdfDdjj).trim();
       urlDdjj = safe(urlDdjj).trim();
+      pdfSolicitud = safe(pdfSolicitud).trim();
+      pdfContrato = safe(pdfContrato).trim();
 
       if (token.isEmpty()) {
         model.put("ok", false);
@@ -473,11 +477,21 @@ public class DDJJFormController {
         return new ModelAndView("jsonView", model);
       }
 
-      DDJJServiceUtil.setDocumentoFirmado(token, pdfDdjj, urlDdjj);
+      DDJJServiceUtil.setDocumentoFirmado(
+        token,
+        pdfDdjj,
+        urlDdjj,
+        pdfSolicitud,
+        pdfContrato
+      );
 
       model.put("ok", true);
       model.put("token", token);
       model.put("estado", "firmada");
+      model.put("pdf_ddjj", pdfDdjj);
+      model.put("pdf_solicitud", pdfSolicitud);
+      model.put("pdf_contrato", pdfContrato);
+
       return new ModelAndView("jsonView", model);
 
     } catch (Exception e) {

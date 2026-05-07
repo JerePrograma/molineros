@@ -17,7 +17,9 @@ public class NovedadTotal extends Novedad {
 	private String situacionRevistaDesc;
 	private String tipoNovedad;
 	private int inconsistencia;
-	
+	private String razonSocial;
+	private String ramoEmpresa;
+	private String seccional;
 	
 	public int getTotal_registros() {
 		return total_registros;
@@ -86,7 +88,13 @@ public class NovedadTotal extends Novedad {
 		}catch (Exception e) {
 		}
 		
-
+		try {
+			nov.setRazonSocial(rs.getString("razon_social"));
+			nov.setRamoEmpresa(rs.getString("actividad"));
+			nov.setSeccional(rs.getString("seccional"));
+					
+		}catch (Exception e) {
+		}
 
 		return nov;
 	}
@@ -142,6 +150,30 @@ public class NovedadTotal extends Novedad {
 
 	public void setInconsistencia(int inconsistencia) {
 		this.inconsistencia = inconsistencia;
+	}
+
+	public String getRazonSocial() {
+		return razonSocial;
+	}
+
+	public void setRazonSocial(String razonSocial) {
+		this.razonSocial = razonSocial;
+	}
+
+	public String getRamoEmpresa() {
+		return ramoEmpresa;
+	}
+
+	public void setRamoEmpresa(String ramoEmpresa) {
+		this.ramoEmpresa = ramoEmpresa;
+	}
+
+	public String getSeccional() {
+		return seccional;
+	}
+
+	public void setSeccional(String seccional) {
+		this.seccional = seccional;
 	}
 	
 	
