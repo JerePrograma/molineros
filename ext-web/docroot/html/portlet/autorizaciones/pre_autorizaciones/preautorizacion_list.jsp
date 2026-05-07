@@ -1,4 +1,3 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ include file="/html/portlet/autorizaciones/init.jsp" %>
 
 <%@ page import="ar.com.ospim.global.beans.Seccional" %>
