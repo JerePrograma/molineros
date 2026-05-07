@@ -38,7 +38,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
     private static final Logger _log = Logger.getLogger(DebitoTercerizadorasAction.class);
 
     // ============================================================================
-    // NUEVO: Estado √∫nico en sesi√≥n (sin cache multi-entry / sin LRU)
+    // NUEVO: Estado ˙nico en sesiÛn (sin cache multi-entry / sin LRU)
     // Mantiene compat con JSP: seguimos exponiendo REQ_CACHE_KEY/REQ_WORK_CACHE_KEY
     // pero con un valor fijo.
     // ============================================================================
@@ -102,7 +102,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
     // Flag: append render reusa staging actual (sin reseed desde source)
     private static final String PARAM_APPEND_REUSE = "reuseStaging";
 
-    // Flag en request para que el JSP hijo sepa si est√° en modo APPEND (staging)
+    // Flag en request para que el JSP hijo sepa si est· en modo APPEND (staging)
     private static final String REQ_APPEND_MODE = "DEBITOS_APPEND_MODE";
 
     // Request keys para el staging (nuevo JSP hijo)
@@ -169,7 +169,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
 
         // ============================================================
-        // GUARD: bloquear mutaciones si el per√≠odo WORK est√° cerrado
+        // GUARD: bloquear mutaciones si el perÌodo WORK est· cerrado
         // ============================================================
         if (isMutatingCmd(cmd) && !CMD_REABRIR_PERIODO.equals(cmd)) {
 
@@ -184,9 +184,9 @@ public class DebitoTercerizadorasAction extends PortletAction {
             }
 
             if (workCerrado) {
-                _log.warn(prefix(rid) + "[GUARD] cmd=" + cmd + " bloqueado: per√≠odo ya cerrado.");
+                _log.warn(prefix(rid) + "[GUARD] cmd=" + cmd + " bloqueado: perÌodo ya cerrado.");
 
-                // Volver a render en un estado ‚Äúseguro‚Äù
+                // Volver a render en un estado ?seguro?
                 actionResponse.setRenderParameter(Constants.CMD, "deleteDetalle");
                 actionResponse.setRenderParameter("cacheKey", WORK_KEY);
                 if (Validator.isNotNull(tipoSel)) {
@@ -221,7 +221,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
         } else {
             if (_log.isInfoEnabled()) {
-                _log.info(prefix(rid) + "[ACTION] cmd=" + cmd + " -> (sin acci√≥n) b√∫squedas corren por render/AJAX");
+                _log.info(prefix(rid) + "[ACTION] cmd=" + cmd + " -> (sin acciÛn) b˙squedas corren por render/AJAX");
             }
         }
 
@@ -276,7 +276,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
                     // Carga SOLO trabajados
                     doLoadPeriodosTrabajados(renderRequest, session, rid);
 
-                    // Mantiene pendientes previos o vac√≠o si es init
+                    // Mantiene pendientes previos o vacÌo si es init
                     hydratePopupPendientesFromSession(renderRequest, session);
 
                 } else {
@@ -290,14 +290,14 @@ public class DebitoTercerizadorasAction extends PortletAction {
                 _log.error(prefix(rid) + "[PERIODOS-POPUP] Error cargando popup cmd=" + cmd, e);
 
                 if (CMD_PERIODOS_TRABAJADOS.equalsIgnoreCase(cmd)) {
-                    session.setAttribute(SESSION_POPUP_PERIODOS_TRAB_ERROR, "Error cargando per√≠odos trabajados.");
+                    session.setAttribute(SESSION_POPUP_PERIODOS_TRAB_ERROR, "Error cargando perÌodos trabajados.");
                     session.setAttribute(SESSION_POPUP_PERIODOS_TRAB_CERRADOS, new ArrayList());
                     session.setAttribute(SESSION_POPUP_PERIODOS_TRAB_BORRADORES, new ArrayList());
 
                     hydratePopupTrabajadosFromSession(renderRequest, session);
                     hydratePopupPendientesFromSession(renderRequest, session);
                 } else {
-                    session.setAttribute(SESSION_POPUP_PERIODOS_PEND_ERROR, "Error cargando per√≠odos pendientes.");
+                    session.setAttribute(SESSION_POPUP_PERIODOS_PEND_ERROR, "Error cargando perÌodos pendientes.");
                     session.setAttribute(SESSION_POPUP_PERIODOS_PENDIENTES, new ArrayList());
 
                     hydratePopupTrabajadosFromSession(renderRequest, session);
@@ -329,7 +329,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         tipoSel = normalizeTipoSel(tipoSel);
 
         if (!tiposMap.containsKey(tipoSel)) {
-            _log.warn(prefix(rid) + "tipoSel inv√°lido='" + tipoSel + "'. Se fuerza a LI.");
+            _log.warn(prefix(rid) + "tipoSel inv·lido='" + tipoSel + "'. Se fuerza a LI.");
             tipoSel = "LI";
         }
 
@@ -355,7 +355,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
             _log.info(prefix(rid) + "[ARCHIVOS][RAW] name=" + FWD_ARCHIVOS
                     + " path=" + (rawPath != null ? rawPath : "null"));
 
-            // 2) Detectar el bug t√≠pico: forward path arrancando con /html/
+            // 2) Detectar el bug tÌpico: forward path arrancando con /html/
             if (rawPath != null && rawPath.startsWith("/html/")) {
                 _log.error(prefix(rid) + "[ARCHIVOS] FORWARD MAL CONFIGURADO/MUTADO: "
                         + FWD_ARCHIVOS + " path=" + rawPath + " (debe ser /portlet/... no /html/...)");
@@ -366,10 +366,10 @@ public class DebitoTercerizadorasAction extends PortletAction {
                 _log.info(prefix(rid) + "[RENDER][ARCHIVOS] cmd=" + cmd + " tipoSel=" + safe(tipoSel));
             }
 
-            // 3) Resolver forward con helper (que adem√°s te loguea detalle)
+            // 3) Resolver forward con helper (que adem·s te loguea detalle)
             ActionForward fwdArch = debugFindForward(mapping, FWD_ARCHIVOS, rid, dbg);
 
-            // 4) Si sigue null => cortar con un forward seguro para no ‚Äúromper‚Äù el request sin explicaci√≥n
+            // 4) Si sigue null => cortar con un forward seguro para no ?romper? el request sin explicaciÛn
             if (fwdArch == null) {
                 _log.error(prefix(rid) + "[ARCHIVOS] No se pudo resolver forward '"
                         + FWD_ARCHIVOS + "'. Devuelvo null.jsp para evitar crash.");
@@ -385,7 +385,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
 
         // ============================================================
-        // NUEVO: Evaluaci√≥n de cerrado del WORK SIEMPRE (post-actions)
+        // NUEVO: EvaluaciÛn de cerrado del WORK SIEMPRE (post-actions)
         // ============================================================
         boolean workCerrado = isWorkPeriodoCerrado(session, tipoSel);
 
@@ -407,7 +407,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         boolean isSearchCmd = (!StringUtils.checkEmpty(cmd) && Constants.SEARCH.equals(cmd));
 
         // ============================================================
-        // CASO A: cmd=search -> respeta el per√≠odo SOLICITADO (params)
+        // CASO A: cmd=search -> respeta el perÌodo SOLICITADO (params)
         // ============================================================
         if (isSearchCmd) {
 
@@ -419,7 +419,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
                 cerradoSolicitado = grabadosCountSolic > 0;
             }
 
-            // IMPORTANTE: PERIODO_CERRADO debe reflejar lo que se va a renderizar en esta b√∫squeda.
+            // IMPORTANTE: PERIODO_CERRADO debe reflejar lo que se va a renderizar en esta b˙squeda.
             renderRequest.setAttribute("PERIODO_CERRADO", Boolean.valueOf(cerradoSolicitado));
 
             if (_log.isInfoEnabled()) {
@@ -493,7 +493,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
         boolean finalWorkCerrado = isWorkPeriodoCerrado(session, tipoSel);
 
-        // Si estoy en APPEND, PERIODO_CERRADO debe reflejar el per√≠odo anexado (ya lo setea doAppendSearch).
+        // Si estoy en APPEND, PERIODO_CERRADO debe reflejar el perÌodo anexado (ya lo setea doAppendSearch).
         Boolean appendMode = (Boolean) renderRequest.getAttribute(REQ_APPEND_MODE);
         if (Boolean.TRUE.equals(appendMode)) {
             Object v = renderRequest.getAttribute("APPEND_EN_CERRADO");
@@ -502,7 +502,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
             }
             // si no existe APPEND_EN_CERRADO, NO lo pises
         } else {
-            // NO pises lo decidido por SEARCH (porque ah√≠ PERIODO_CERRADO representa el per√≠odo solicitado)
+            // NO pises lo decidido por SEARCH (porque ahÌ PERIODO_CERRADO representa el perÌodo solicitado)
             if (!isSearchCmd) {
                 renderRequest.setAttribute("PERIODO_CERRADO", Boolean.valueOf(finalWorkCerrado));
             }
@@ -513,7 +513,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
     }
 
     // =========================
-    // SEARCH (sin cache) -> DB y guardar "work" en sesi√≥n
+    // SEARCH (sin cache) -> DB y guardar "work" en sesiÛn
     // =========================
     @SuppressWarnings({"rawtypes", "unchecked"})
     private void doSearch(RenderRequest renderRequest, HttpSession session, String tipoSel, String rid) {
@@ -628,7 +628,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
         // -------------------------
         // 4) Flag real: cerrado por grabados (cache TTL corto)
-        //    (sirve como safety-net si doSearch es invocado cuando deber√≠a ir a persistido)
+        //    (sirve como safety-net si doSearch es invocado cuando deberÌa ir a persistido)
         // -------------------------
         int grabadosCount = getGrabadosCountCached(session, fechaHasta, tercerizadoras, tipoSel);
         boolean periodoCerrado = grabadosCount > 0;
@@ -709,7 +709,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
                         + " workKey=" + safe(workKey));
             }
 
-            // ---- Paso 2/2: ORIGINALES (si sigue vac√≠o)
+            // ---- Paso 2/2: ORIGINALES (si sigue vacÌo)
             yaTengoDatos = !isEmptySelByTipo(tipoSel, detalleLI, detalleHO, detalleRE, detallePR);
             if (!yaTengoDatos) {
                 boolean totalesDicenVacio = totalesIndicanVacio(debitosaTotal, tipoSel, rid); // fail-open
@@ -794,7 +794,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         sortListByTipo("RE", detalleRE, rid, "SEARCH");
         sortListByTipo("PR", detallePR, rid, "SEARCH");
         // -------------------------
-        // 6) Guardar en sesi√≥n + request
+        // 6) Guardar en sesiÛn + request
         // -------------------------
         session.setAttribute(SESSION_TOTALES_KEY, (totales != null) ? totales : new ArrayList());
 
@@ -824,22 +824,22 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
         applyWorkFromSessionToRequest(session, renderRequest, tipoSel);
 
-        // REQ_CACHE_KEY/REQ_WORK_CACHE_KEY: fijo por compat (no uses workKey ac√°)
+        // REQ_CACHE_KEY/REQ_WORK_CACHE_KEY: fijo por compat (no uses workKey ac·)
         renderRequest.setAttribute(REQ_CACHE_KEY, WORK_KEY);
         renderRequest.setAttribute(REQ_WORK_CACHE_KEY, WORK_KEY);
-        // Opcional: exponer el per√≠odo real al JSP para debug/telemetr√≠a
+        // Opcional: exponer el perÌodo real al JSP para debug/telemetrÌa
         renderRequest.setAttribute("DEBITOS_SOURCE_KEY", workKey);
 
         renderRequest.setAttribute("DEBITOS_BUSQUEDA_MODE", busquedaMode);
         renderRequest.removeAttribute(REQ_APPEND_MODE);
 
         if ("BORRADOR".equalsIgnoreCase(busquedaMode)) {
-            // si efectivamente hay borrador, no tiene sentido mantener ‚Äúcleared‚Äù
+            // si efectivamente hay borrador, no tiene sentido mantener ?cleared?
             session.setAttribute(SESSION_BORRADOR_CLEARED_KEY, null);
         }
 
         _log.info(prefix(rid) + "[SEARCH] END mode=" + busquedaMode
-                + " cerrado=NO(grabados=0)"  // si lleg√≥ ac√°, periodoCerrado=false
+                + " cerrado=NO(grabados=0)"  // si llegÛ ac·, periodoCerrado=false
                 + " borradorDb=" + (borradorDbHasRows ? "SI" : "NO")
                 + " sizes(LI/HO/RE/PR)=" + size((List) session.getAttribute(SESSION_WORK_LI)) + "/"
                 + size((List) session.getAttribute(SESSION_WORK_HO)) + "/"
@@ -867,7 +867,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
     }
 
     // =========================
-    // DELETE (sin cache) -> muta listas WORK en sesi√≥n
+    // DELETE (sin cache) -> muta listas WORK en sesiÛn
     // =========================
     @SuppressWarnings({"rawtypes", "unchecked"})
     private void doDeleteDetalle(ActionRequest actionRequest, ActionResponse actionResponse, String rid) {
@@ -895,7 +895,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
         tipoSel = normalizeTipoSel(tipoSel);
 
-        // Estado inicial (para diagn√≥stico)
+        // Estado inicial (para diagnÛstico)
         List li = (List) session.getAttribute(SESSION_WORK_LI);
         List ho = (List) session.getAttribute(SESSION_WORK_HO);
         List re = (List) session.getAttribute(SESSION_WORK_RE);
@@ -912,7 +912,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
                 + " ids.sample=" + safe(ids.length() > 300 ? ids.substring(0, 300) + "..." : ids));
 
         if (Validator.isNull(ids)) {
-            _log.warn(prefix(rid) + "[DELETE] ids vac√≠o. Nada para borrar.");
+            _log.warn(prefix(rid) + "[DELETE] ids vacÌo. Nada para borrar.");
             actionResponse.setRenderParameter(Constants.CMD, "deleteDetalle");
             actionResponse.setRenderParameter("cacheKey", WORK_KEY);
             if (Validator.isNotNull(tipoSel)) actionResponse.setRenderParameter("tipo_proceso", tipoSel);
@@ -960,7 +960,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
             }
         }
 
-        // Log de intenci√≥n
+        // Log de intenciÛn
         _log.info(prefix(rid) + "[DELETE][PARSE] tokens=" + tokens
                 + " parsed=" + parsed
                 + " bad=" + bad
@@ -1006,10 +1006,10 @@ public class DebitoTercerizadorasAction extends PortletAction {
     }
 
     // ============================================================
-    // APPEND SEARCH (FIX: excluir ocupados por BORRADOR en otros per√≠odos)
+    // APPEND SEARCH (FIX: excluir ocupados por BORRADOR en otros perÌodos)
     // - Mantiene TODO lo existente.
     // - Agrega un filtro adicional: ocupados globales (solo BORRADOR) usando get_busqueda_debitos_ocupados.
-    // - Comparaci√≥n por "clave m√≠nima": tipo + id + (factura/doc) para evitar acoplarse a itemKey().
+    // - ComparaciÛn por "clave mÌnima": tipo + id + (factura/doc) para evitar acoplarse a itemKey().
     // ============================================================
     @SuppressWarnings({"rawtypes", "unchecked"})
     private void doAppendSearch(RenderRequest renderRequest, HttpSession session, String tipoSel, String rid) {
@@ -1083,7 +1083,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
         String periodoLabel = (anio > 0 && mes0Based >= 0) ? (anio + "-" + pad2(mes0Based + 1)) : "??";
 
-        // Fail-safe m√≠nimo
+        // Fail-safe mÌnimo
         if (fechaHasta == null || Validator.isNull(tercerizadoras) || Validator.isNull(sourceKey)) {
             session.setAttribute(SESSION_STG_LI, new ArrayList());
             session.setAttribute(SESSION_STG_HO, new ArrayList());
@@ -1102,7 +1102,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
             applyWorkFromSessionToRequest(session, renderRequest, tipoSel);
             applyStagingFromSessionToRequest(session, renderRequest, tipoSel);
 
-            _log.warn(prefix(rid) + "[APPEND] STOP: params inv√°lidos"
+            _log.warn(prefix(rid) + "[APPEND] STOP: params inv·lidos"
                     + " tipoSel=" + safe(tipoSel)
                     + " terc=" + safe(tercerizadoras)
                     + " sourceKey=" + safe(sourceKey)
@@ -1129,7 +1129,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
         if (debitosaTotal == null) debitosaTotal = new DebitosaTotal();
 
-        // Flags control (diagn√≥stico / tuning)
+        // Flags control (diagnÛstico / tuning)
         boolean forceLegacyFallback = false;
         try { forceLegacyFallback = pB(renderRequest, ns, "appendForceLegacy", false); } catch (Exception ignore) {}
 
@@ -1142,8 +1142,8 @@ public class DebitoTercerizadorasAction extends PortletAction {
         boolean totalesDicenVacio = false;
         try { totalesDicenVacio = totalesIndicanVacio(debitosaTotal, tipoSel, rid); } catch (Exception ignore) { totalesDicenVacio = false; }
 
-        // Antes: depend√≠a de montoTipo>0 (gate incorrecto).
-        // Ahora: por defecto hacemos FAIL-OPEN (fallback a legacy si STATUS viene vac√≠o).
+        // Antes: dependÌa de montoTipo>0 (gate incorrecto).
+        // Ahora: por defecto hacemos FAIL-OPEN (fallback a legacy si STATUS viene vacÌo).
         boolean allowLegacyFallback = !disableLegacyFallback && (forceLegacyFallback || !skipHeavyWhenTotalsZero || !totalesDicenVacio);
 
         // -------------------------
@@ -1183,7 +1183,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
                 }
                 legacyMs = System.currentTimeMillis() - tLegacy0;
 
-                _log.warn(prefix(rid) + "[APPEND][BASE] STATUS vac√≠o -> fallback LEGACY (fail-open)"
+                _log.warn(prefix(rid) + "[APPEND][BASE] STATUS vacÌo -> fallback LEGACY (fail-open)"
                         + " tipoSel=" + safe(tipoSel)
                         + " terc=" + safe(tercerizadoras)
                         + " periodo=" + periodoLabel
@@ -1195,7 +1195,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
                         + " legacyMs=" + legacyMs
                         + " legacyRows=" + (baseSel != null ? baseSel.size() : -1));
             } else {
-                _log.info(prefix(rid) + "[APPEND][BASE] STATUS vac√≠o -> SKIP LEGACY (config)"
+                _log.info(prefix(rid) + "[APPEND][BASE] STATUS vacÌo -> SKIP LEGACY (config)"
                         + " tipoSel=" + safe(tipoSel)
                         + " terc=" + safe(tercerizadoras)
                         + " periodo=" + periodoLabel
@@ -1209,7 +1209,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
         int baseBeforeGlobal = (baseSel != null ? baseSel.size() : -1);
 
-        // EARLY EXIT: reci√©n despu√©s de intentar STATUS + (opcional) LEGACY
+        // EARLY EXIT: reciÈn despuÈs de intentar STATUS + (opcional) LEGACY
         if (baseSel == null || baseSel.isEmpty()) {
             session.setAttribute(SESSION_STG_LI, new ArrayList());
             session.setAttribute(SESSION_STG_HO, new ArrayList());
@@ -1245,7 +1245,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
 
         // -------------------------
-        // 4) Excluded keys (reci√©n ahora)
+        // 4) Excluded keys (reciÈn ahora)
         // -------------------------
         Set excludedKeys = new HashSet();
 
@@ -1330,8 +1330,8 @@ public class DebitoTercerizadorasAction extends PortletAction {
     }
 
     // ------------------------------------------------------------
-    // Ocupados globales (solo BORRADOR) -> devuelve "claves m√≠nimas"
-    // clave m√≠nima = tipoSel + '|' + id + '|' + factura/doc
+    // Ocupados globales (solo BORRADOR) -> devuelve "claves mÌnimas"
+    // clave mÌnima = tipoSel + '|' + id + '|' + factura/doc
     // ------------------------------------------------------------
     @SuppressWarnings({"rawtypes", "unchecked"})
     private Set buildOcupadosBorradorLooseKeys(String tipoSel, String terc, Date fechaDesde, Date fechaHasta, String rid) {
@@ -1339,8 +1339,8 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
         if (Validator.isNull(tipoSel) || Validator.isNull(terc)) return out;
 
-        // Rango acotado (performance): +/- 36 meses alrededor del per√≠odo consultado.
-        // Si falta per√≠odo, fallback conservador: +/- 36 meses desde hoy.
+        // Rango acotado (performance): +/- 36 meses alrededor del perÌodo consultado.
+        // Si falta perÌodo, fallback conservador: +/- 36 meses desde hoy.
         java.sql.Date sqlDesde;
         java.sql.Date sqlHasta;
 
@@ -1348,7 +1348,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         sqlDesde = r.sqlDesde;
         sqlHasta = r.sqlHasta;
 
-        // Solo borrador global (no estables, no cerrados) => resuelve el bug espec√≠fico.
+        // Solo borrador global (no estables, no cerrados) => resuelve el bug especÌfico.
         boolean incluirEstables = false;
         boolean incluirBorrador = true;
         boolean incluirCerrado = false;
@@ -1412,7 +1412,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
     }
 
     // ------------------------------------------------------------
-// JDBC directo a la funci√≥n public.get_busqueda_debitos_ocupados
+// JDBC directo a la funciÛn public.get_busqueda_debitos_ocupados
 // (aislado y fail-open)
 // ------------------------------------------------------------
     private List<String> queryGetBusquedaDebitosOcupados(
@@ -1472,7 +1472,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
     }
 
     // ------------------------------------------------------------
-// Convierte la clave SQL (tipo_norm|terc|id|factura/doc) a clave m√≠nima:
+// Convierte la clave SQL (tipo_norm|terc|id|factura/doc) a clave mÌnima:
 // tipoSel|id|factura/doc
 // - Verifica terc para evitar mezclar.
 // ------------------------------------------------------------
@@ -1497,8 +1497,8 @@ public class DebitoTercerizadorasAction extends PortletAction {
     }
 
     // ------------------------------------------------------------
-    // Filtra lista por clave m√≠nima derivada del √≠tem
-    // clave m√≠nima √≠tem = tipoSel|id|factura/doc (por tipo)
+    // Filtra lista por clave mÌnima derivada del Ìtem
+    // clave mÌnima Ìtem = tipoSel|id|factura/doc (por tipo)
     // ------------------------------------------------------------
     @SuppressWarnings({"rawtypes", "unchecked"})
     private List filterOutByLooseKeys(String tipoSel, List base, Set excludedLooseKeys, String rid, String tag) {
@@ -1562,14 +1562,14 @@ public class DebitoTercerizadorasAction extends PortletAction {
             // Preferir getNumero() (BigDecimal) si existe; fallback a idLiquidacion int
             id = firstNonEmptyNumeric(o, new String[]{"getNumero", "getIdLiquidacion", "getIdLiquidacionInt", "getVIdLiquidacion"});
         } else if ("HO".equals(t)) {
-            // En HO el SQL usa orden_pago_id. Si el bean no lo tiene, a veces viene en ordenPago como string num√©rico.
+            // En HO el SQL usa orden_pago_id. Si el bean no lo tiene, a veces viene en ordenPago como string numÈrico.
             id = firstNonEmptyNumeric(o, new String[]{"getNumero"}); // si existe, ideal
             if (Validator.isNull(id)) {
                 String op = firstNonEmptyUpper(o, new String[]{"getOrdenPago"});
                 id = parseNumericString(op);
             }
             if (Validator.isNull(id)) {
-                // √∫ltimo fallback (peor): idLiquidacion
+                // ˙ltimo fallback (peor): idLiquidacion
                 id = firstNonEmptyNumeric(o, new String[]{"getIdLiquidacion"});
             }
         } else if ("PR".equals(t)) {
@@ -1618,7 +1618,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         if (s == null) return null;
         String t = s.trim();
         if (t.length() == 0) return null;
-        // aceptar solo d√≠gitos (sin romper)
+        // aceptar solo dÌgitos (sin romper)
         for (int i = 0; i < t.length(); i++) {
             char c = t.charAt(i);
             if (c < '0' || c > '9') return null;
@@ -1676,9 +1676,9 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
     // ============================================================
 // ANEXAR (CORREGIDO)
-// - Ordena √≠ndices DESC por tipo para evitar corrimiento al remover por index
-// - Dedupe de √≠ndices
-// - Si staging queda vac√≠o total, limpia SESSION_STG_SOURCE_KEY
+// - Ordena Ìndices DESC por tipo para evitar corrimiento al remover por index
+// - Dedupe de Ìndices
+// - Si staging queda vacÌo total, limpia SESSION_STG_SOURCE_KEY
 // ============================================================
     @SuppressWarnings({"rawtypes", "unchecked"})
     private void doAnexarDetalle(ActionRequest actionRequest, ActionResponse actionResponse, String rid) {
@@ -1708,7 +1708,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         tipoSel = normalizeTipoSel(tipoSel);
 
         if (Validator.isNull(ids)) {
-            _log.warn(prefix(rid) + "[ANEXAR] ids vac√≠o. Nada para mover.");
+            _log.warn(prefix(rid) + "[ANEXAR] ids vacÌo. Nada para mover.");
             actionResponse.setRenderParameter(Constants.CMD, "deleteDetalle");
             actionResponse.setRenderParameter("cacheKey", WORK_KEY);
             if (Validator.isNotNull(tipoSel)) actionResponse.setRenderParameter("tipo_proceso", tipoSel);
@@ -1764,7 +1764,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
             }
         }
 
-        // Normalizar √≠ndices por tipo: unique + sort DESC (para no correrse al remover por √≠ndice)
+        // Normalizar Ìndices por tipo: unique + sort DESC (para no correrse al remover por Ìndice)
         normalizeMoveIndexes((List) toMoveByTipo.get("LI"));
         normalizeMoveIndexes((List) toMoveByTipo.get("HO"));
         normalizeMoveIndexes((List) toMoveByTipo.get("RE"));
@@ -1797,7 +1797,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         session.setAttribute(SESSION_WORK_RE, re);
         session.setAttribute(SESSION_WORK_PR, pr);
 
-        // Si no queda nada en staging, limpi√° source key para evitar REUSE fantasma
+        // Si no queda nada en staging, limpi· source key para evitar REUSE fantasma
         if (size(stgLI) == 0 && size(stgHO) == 0 && size(stgRE) == 0 && size(stgPR) == 0) {
             session.setAttribute(SESSION_STG_SOURCE_KEY, null);
         }
@@ -1816,7 +1816,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
     private void normalizeMoveIndexes(List idxs) {
         if (idxs == null || idxs.isEmpty()) return;
 
-        // dedupe manteniendo ints v√°lidos
+        // dedupe manteniendo ints v·lidos
         Set<Integer> uniq = new HashSet<Integer>();
         for (int i = 0; i < idxs.size(); i++) {
             Object o = idxs.get(i);
@@ -1833,7 +1833,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         try {
             Collections.sort(idxs, Collections.reverseOrder());
         } catch (Exception ignore) {
-            // si algo raro qued√≥, lo dejamos como est√©
+            // si algo raro quedÛ, lo dejamos como estÈ
         }
     }
 
@@ -1841,8 +1841,8 @@ public class DebitoTercerizadorasAction extends PortletAction {
     // SEED BASE (ABIERTO) (CORREGIDO)
     // - mode normalizado (BORRADOR/REABIERTO => NEW)
     // - fallback bidireccional:
-    //     * si NEW vac√≠o -> prueba LEGACY
-    //     * si LEGACY vac√≠o -> prueba NEW (porque tu fuente real hoy puede ser STATUS/S)
+    //     * si NEW vacÌo -> prueba LEGACY
+    //     * si LEGACY vacÌo -> prueba NEW (porque tu fuente real hoy puede ser STATUS/S)
     // ============================================================
     @SuppressWarnings({"rawtypes", "unchecked"})
     private List seedBaseForOpenAppend(String tipoSel, String mode, Date fechaDesde, Date fechaHasta,
@@ -1859,14 +1859,14 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
                 if (base == null || base.isEmpty()) {
                     base = loadBaseLegacy(tipoSel, fechaDesde, fechaHasta, debitosaTotal, tercerizadoras);
-                    _log.warn(prefix(rid) + "[APPEND][ABIERTO][BASE] NEW vac√≠o -> fallback LEGACY. tipoSel=" + safe(tipoSel));
+                    _log.warn(prefix(rid) + "[APPEND][ABIERTO][BASE] NEW vacÌo -> fallback LEGACY. tipoSel=" + safe(tipoSel));
                 }
             } else {
                 base = loadBaseLegacy(tipoSel, fechaDesde, fechaHasta, debitosaTotal, tercerizadoras);
 
                 if (base == null || base.isEmpty()) {
                     base = loadBaseStatus(tipoSel, fechaDesde, fechaHasta, debitosaTotal, tercerizadoras);
-                    _log.warn(prefix(rid) + "[APPEND][ABIERTO][BASE] LEGACY vac√≠o -> fallback NEW. tipoSel=" + safe(tipoSel));
+                    _log.warn(prefix(rid) + "[APPEND][ABIERTO][BASE] LEGACY vacÌo -> fallback NEW. tipoSel=" + safe(tipoSel));
                 }
             }
         } catch (Exception e) {
@@ -1883,7 +1883,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         String d = (defaultMode == null) ? "NEW" : defaultMode.trim().toUpperCase();
         String m = (raw == null) ? d : raw.trim().toUpperCase();
 
-        // Mapeos ‚Äúsucios‚Äù a lo que realmente significa para BASE OPEN
+        // Mapeos ?sucios? a lo que realmente significa para BASE OPEN
         if ("BORRADOR".equals(m) || "REABIERTO".equals(m)) return "NEW";
 
         if ("NEW".equals(m) || "LEGACY".equals(m)) return m;
@@ -1892,10 +1892,10 @@ public class DebitoTercerizadorasAction extends PortletAction {
     }
 
     // ============================================================================
-    // GUARDAR BORRADOR (sin cache) -> usa WORK en sesi√≥n
-    // - Tercerizadora y per√≠odo: WORK (sesi√≥n) first, fallback a request si falta.
+    // GUARDAR BORRADOR (sin cache) -> usa WORK en sesiÛn
+    // - Tercerizadora y perÌodo: WORK (sesiÛn) first, fallback a request si falta.
     // - IMPORTANTE: borrar SIEMPRE por tipo corto (LI/HO/RE/PR) para no caer en NO-OP silencioso.
-    // - Validaciones: si la workList tiene items pero ninguno del tipo esperado => NO borra, falla expl√≠cito.
+    // - Validaciones: si la workList tiene items pero ninguno del tipo esperado => NO borra, falla explÌcito.
     // - Logs: suficientes para diagnosticar scope, tipo de lista y resultados reales.
     // ============================================================================
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -1933,7 +1933,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         tipoSel = tipoSel.trim();
 
         if (!("LI".equals(tipoSel) || "HO".equals(tipoSel) || "RE".equals(tipoSel) || "PR".equals(tipoSel))) {
-            _log.warn(prefix(rid) + "[GUARDAR-BORRADOR] tipoSel inv√°lido: " + safe(tipoSel));
+            _log.warn(prefix(rid) + "[GUARDAR-BORRADOR] tipoSel inv·lido: " + safe(tipoSel));
 
             actionResponse.setRenderParameter(Constants.CMD, "deleteDetalle");
             actionResponse.setRenderParameter("cacheKey", WORK_KEY);
@@ -1945,7 +1945,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
 
         // -------------------------
-        // Tercerizadora: WORK (sesi√≥n) first
+        // Tercerizadora: WORK (sesiÛn) first
         // -------------------------
         String tercerizadoras = null;
         try {
@@ -1964,7 +1964,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         tercerizadoras = (tercerizadoras != null) ? tercerizadoras.trim() : "";
 
         if (Validator.isNull(tercerizadoras)) {
-            _log.warn(prefix(rid) + "[GUARDAR-BORRADOR] tercerizadoras vac√≠o/null. No guardo.");
+            _log.warn(prefix(rid) + "[GUARDAR-BORRADOR] tercerizadoras vacÌo/null. No guardo.");
 
             actionResponse.setRenderParameter(Constants.CMD, "deleteDetalle");
             actionResponse.setRenderParameter("cacheKey", WORK_KEY);
@@ -1976,7 +1976,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
 
         // -------------------------
-        // Per√≠odo: WORK (sesi√≥n) first
+        // PerÌodo: WORK (sesiÛn) first
         // -------------------------
         Date fechaDesdeSess = null;
         Date fechaHastaSess = null;
@@ -2062,7 +2062,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
                 fechaHasta = DateUtils.getLastDateOfMonth(fechaDesde, false);
                 periodoSource = "REQUEST_MS";
             } catch (Exception e) {
-                _log.error(prefix(rid) + "[GUARDAR-BORRADOR][PERIODO] Error armando per√≠odo desde REQUEST_MS=" + reqFechaHastaMs, e);
+                _log.error(prefix(rid) + "[GUARDAR-BORRADOR][PERIODO] Error armando perÌodo desde REQUEST_MS=" + reqFechaHastaMs, e);
             }
         }
 
@@ -2153,7 +2153,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         } catch (Exception ignore) {
         }
 
-        // Prioridad #2: sesi√≥n si exist√≠a (por compat)
+        // Prioridad #2: sesiÛn si existÌa (por compat)
         if (Validator.isNull(workScopeKey)) {
             try {
                 Object wk = session.getAttribute(SESSION_WORK_SOURCE_KEY);
@@ -2165,7 +2165,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         workScopeKey = (workScopeKey != null) ? workScopeKey.trim() : "";
 
         if (Validator.isNull(workScopeKey)) {
-            _log.error(prefix(rid) + "[GUARDAR-BORRADOR] workKey vac√≠o/null -> no borro/no inserto (fail-safe).");
+            _log.error(prefix(rid) + "[GUARDAR-BORRADOR] workKey vacÌo/null -> no borro/no inserto (fail-safe).");
 
             actionResponse.setRenderParameter(Constants.CMD, "deleteDetalle");
             actionResponse.setRenderParameter("cacheKey", WORK_KEY);
@@ -2193,7 +2193,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
         if (workList == null) workList = new ArrayList();
 
-        final boolean clearingIntent = workList.isEmpty(); // <- CLAVE: ‚Äúvaciar borrador‚Äù
+        final boolean clearingIntent = workList.isEmpty(); // <- CLAVE: ?vaciar borrador?
         String firstClass = "null";
         try {
             if (!workList.isEmpty() && workList.get(0) != null) firstClass = workList.get(0).getClass().getName();
@@ -2358,7 +2358,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
                         session.setAttribute(SESSION_WORK_BUSQUEDA_MODE, "NEW");
                         session.setAttribute(SESSION_WORK_CERRADO_TIPO, null);
 
-                        // Importante: vaciar lista de sesi√≥n del tipo para no re-renderizar ‚Äúestado borrador‚Äù con data vieja
+                        // Importante: vaciar lista de sesiÛn del tipo para no re-renderizar ?estado borrador? con data vieja
                         try {
                             session.setAttribute(workListKey, new ArrayList());
                         } catch (Exception ignore) {
@@ -2402,7 +2402,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
         actionResponse.setRenderParameter("afterBorrador", "1");
 
-        // Para doSearch (solo cuando necesitamos ‚Äúvolver a estado inicial‚Äù inmediatamente)
+        // Para doSearch (solo cuando necesitamos ?volver a estado inicial? inmediatamente)
         if (ok && clearingIntent) {
             actionResponse.setRenderParameter(PARAM_BORRADOR_CLEARED, "1");
             actionResponse.setRenderParameter("fechaDesdeAnio", String.valueOf(anioRp));
@@ -2421,7 +2421,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
     }
 
     // =========================
-    // CERRAR PERIODO (sin cache) -> usa WORK en sesi√≥n
+    // CERRAR PERIODO (sin cache) -> usa WORK en sesiÛn
     // =========================
     private void doCerrarPeriodo(ActionRequest actionRequest, ActionResponse actionResponse, String rid) {
         final long t0 = System.currentTimeMillis();
@@ -2451,7 +2451,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         tipoSel = normalizeTipoSel(tipoSel);
 
         // -------------------------
-        // Tercerizadora (sesi√≥n primero; fallback request)
+        // Tercerizadora (sesiÛn primero; fallback request)
         // -------------------------
         String tercerizadoras = null;
         try {
@@ -2470,9 +2470,9 @@ public class DebitoTercerizadorasAction extends PortletAction {
         tercerizadoras = (tercerizadoras != null) ? tercerizadoras.trim() : "";
 
         // -------------------------
-        // Per√≠odo: PRIORIDAD ABSOLUTA request -> fallback sesi√≥n
-        // La idea: si el request trae cualquier pista de per√≠odo (ms o YYYY-MM),
-        // se cierra el mes de ese per√≠odo (1er d√≠a a √∫ltimo d√≠a).
+        // PerÌodo: PRIORIDAD ABSOLUTA request -> fallback sesiÛn
+        // La idea: si el request trae cualquier pista de perÌodo (ms o YYYY-MM),
+        // se cierra el mes de ese perÌodo (1er dÌa a ˙ltimo dÌa).
         // -------------------------
         Date fechaDesdeSess = (Date) session.getAttribute(SESSION_WORK_FECHA_DESDE);
         Date fechaHastaSess = (Date) session.getAttribute(SESSION_WORK_FECHA_HASTA);
@@ -2495,7 +2495,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
                     ParamUtil.getLong(actionRequest, ns + "fechaHasta", 0L));
         }
 
-        // Intento por "periodo" estilo "2021-08" (por si el JSP lo manda as√≠)
+        // Intento por "periodo" estilo "2021-08" (por si el JSP lo manda asÌ)
         String reqPeriodo = ParamUtil.getString(actionRequest, "periodo",
                 ParamUtil.getString(actionRequest, "periodoSel",
                         ParamUtil.getString(actionRequest, "periodoSeleccionado", "")));
@@ -2532,7 +2532,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
                 periodoSource = "REQUEST_MS";
             } catch (Exception e) {
-                _log.error(prefix(rid) + "[CIERRE][PERIODO] Error armando per√≠odo desde REQUEST_MS=" + reqFechaHastaMs, e);
+                _log.error(prefix(rid) + "[CIERRE][PERIODO] Error armando perÌodo desde REQUEST_MS=" + reqFechaHastaMs, e);
             }
         }
 
@@ -2570,14 +2570,14 @@ public class DebitoTercerizadorasAction extends PortletAction {
             }
         }
 
-        // --- (C) fallback sesi√≥n por fechas directas ---
+        // --- (C) fallback sesiÛn por fechas directas ---
         if (fechaDesde == null || fechaHasta == null) {
             fechaDesde = fechaDesdeSess;
             fechaHasta = fechaHastaSess;
             if (fechaDesde != null && fechaHasta != null) periodoSource = "SESSION_DATES";
         }
 
-        // --- (D) fallback sesi√≥n por anio/mes0 ---
+        // --- (D) fallback sesiÛn por anio/mes0 ---
         if (fechaDesde == null || fechaHasta == null) {
             if (anioSess != null && mes0Sess != null && anioSess.intValue() > 0 && mes0Sess.intValue() >= 0) {
                 Calendar cal = DateUtils.getCalendarGMTMenos3();
@@ -2594,10 +2594,10 @@ public class DebitoTercerizadorasAction extends PortletAction {
             }
         }
 
-        // Warn si request y sesi√≥n se contradicen fuerte (solo informativo)
+        // Warn si request y sesiÛn se contradicen fuerte (solo informativo)
         try {
             if (reqFechaHastaMs > 0L && fechaHastaSess != null) {
-                // comparo el mes/a√±o, no el d√≠a: el request lo normalizamos a √∫ltimo del mes
+                // comparo el mes/aÒo, no el dÌa: el request lo normalizamos a ˙ltimo del mes
                 Calendar a = DateUtils.getCalendarGMTMenos3();
                 Calendar b = DateUtils.getCalendarGMTMenos3();
                 a.setTime(new Date(reqFechaHastaMs));
@@ -2643,7 +2643,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
 
         if (user == null) {
-            _log.error(prefix(rid) + "[CIERRE] Usuario nulo; no se puede cerrar el per√≠odo.");
+            _log.error(prefix(rid) + "[CIERRE] Usuario nulo; no se puede cerrar el perÌodo.");
 
             actionResponse.setRenderParameter(Constants.CMD, "deleteDetalle");
             actionResponse.setRenderParameter("cacheKey", WORK_KEY);
@@ -2665,7 +2665,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         List pr = (List) session.getAttribute(SESSION_WORK_PR);
 
         if (li == null && ho == null && re == null && pr == null) {
-            _log.warn(prefix(rid) + "[CIERRE] Listas en sesi√≥n NULL. No cierro."
+            _log.warn(prefix(rid) + "[CIERRE] Listas en sesiÛn NULL. No cierro."
                     + " tercerizadoras=" + safe(tercerizadoras)
                     + " fechaHasta(ms)=" + (fechaHasta != null ? String.valueOf(fechaHasta.getTime()) : "null")
                     + " tipoSel=" + safe(tipoSel)
@@ -2754,7 +2754,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
             try {
                 debitosaTotal = BusquedaDebitosTercerizadorasServiceUtil.getBuscarTotalesDebitos(fechaHasta, tercerizadoras);
             } catch (Exception e) {
-                _log.error(prefix(rid) + "[CIERRE][TOTALES] Error recalculando totales (se usar√° vac√≠o)", e);
+                _log.error(prefix(rid) + "[CIERRE][TOTALES] Error recalculando totales (se usar· vacÌo)", e);
             }
         }
         if (debitosaTotal == null) debitosaTotal = new DebitosaTotal();
@@ -2839,7 +2839,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
                                     _log.debug(prefix(rid) + "[CIERRE][HO][ITEM#" + processed + "][OK] inserted=" + ins);
                                 }
                             } else {
-                                // NO INSERT = NO CERR√ì ESTE ITEM (ej: SKIP por liquidacion_id)
+                                // NO INSERT = NO CERR” ESTE ITEM (ej: SKIP por liquidacion_id)
                                 errItems++;
                                 _log.warn(prefix(rid) + "[CIERRE][HO][ITEM#" + processed + "][NO-INSERT] inserted=" + ins
                                         + " op=" + safe(d.getOrdenPago())
@@ -2920,10 +2920,10 @@ public class DebitoTercerizadorasAction extends PortletAction {
                     }
                 }
             } else {
-                _log.warn(prefix(rid) + "[CIERRE] tipoSel inv√°lido/no soportado: " + safe(tipoSel));
+                _log.warn(prefix(rid) + "[CIERRE] tipoSel inv·lido/no soportado: " + safe(tipoSel));
             }
 
-            // IMPORTANTE: mantenemos el comportamiento original: ok=true si no explot√≥ el try global
+            // IMPORTANTE: mantenemos el comportamiento original: ok=true si no explotÛ el try global
             ok = (processed > 0 && errItems == 0 && okItems == processed && skippedType == 0);
         } catch (Exception e) {
             _log.error(prefix(rid) + "[CIERRE] Error general (POR TIPO)", e);
@@ -2944,13 +2944,13 @@ public class DebitoTercerizadorasAction extends PortletAction {
         actionResponse.setRenderParameter("tipo_proceso", tipoSel);
         if (!ok) actionResponse.setRenderParameter("cierrePeriodoError", "1");
 
-        // flags de auditor√≠a + gatillo para forzar persistido en render
+        // flags de auditorÌa + gatillo para forzar persistido en render
         actionResponse.setRenderParameter("cierrePeriodoOk", ok ? "1" : "0");
         actionResponse.setRenderParameter("workCerrado", ok ? "1" : "0");
         actionResponse.setRenderParameter("afterCerrar", "1");
 
         if (!ok) {
-            // No uses "1" gen√©rico: dej√° trazabilidad
+            // No uses "1" genÈrico: dej· trazabilidad
             String err = (processed == 0) ? "no_items"
                     : (errItems > 0) ? "some_items_not_inserted_or_failed"
                     : (skippedType > 0) ? "wrong_item_type"
@@ -2968,7 +2968,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
                 + " targetSize=" + target.size()
                 + " indicesSize=" + indices.size());
 
-        // dedup / sanitizaci√≥n (por si llegan repetidos)
+        // dedup / sanitizaciÛn (por si llegan repetidos)
         List cleaned = new ArrayList();
         for (int i = 0; i < indices.size(); i++) {
             Object o = indices.get(i);
@@ -3151,11 +3151,11 @@ public class DebitoTercerizadorasAction extends PortletAction {
             _log.info(prefix(rid) + "[debugFindForward] FORWARD OK: '" + forwardName + "' -> " + safe(p));
         }
 
-        // === CHECK CR√çTICO para tu caso (/html/html/...) ===
+        // === CHECK CRÕTICO para tu caso (/html/html/...) ===
         if (p != null && p.startsWith("/html/")) {
             _log.error(prefix(rid) + "[debugFindForward] FORWARD MAL CONFIGURADO/MUTADO: '"
                     + forwardName + "' path=" + p + " (NO debe empezar con /html/ en StrutsPortlet)");
-            // √∫til para ver si el mapping cargado es el esperado
+            // ˙til para ver si el mapping cargado es el esperado
             logMappingForwards(mapping, rid);
         }
 
@@ -3209,7 +3209,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
             _log.info(sb.toString());
         } catch (Exception e) {
-            _log.warn(prefix(rid) + "No pude dumpear par√°metros", e);
+            _log.warn(prefix(rid) + "No pude dumpear par·metros", e);
         } finally {
             _log.info(prefix(rid) + "Finalizando dumpAllRequestParams");
         }
@@ -3233,7 +3233,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
             }
             _log.info(sb.toString());
         } catch (Exception e) {
-            _log.warn(prefix(rid) + "No pude snapshot de sesi√≥n", e);
+            _log.warn(prefix(rid) + "No pude snapshot de sesiÛn", e);
         } finally {
             _log.info(prefix(rid) + "Finalizando logSessionSnapshot");
         }
@@ -3419,7 +3419,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
             fechaDesde = calDesde.getTime();
             fechaHasta = DateUtils.getLastDateOfMonth(fechaDesde, false);
         } catch (Exception e) {
-            _log.error(prefix(rid) + "[PERIODO] Error calculando fechas del per√≠odo", e);
+            _log.error(prefix(rid) + "[PERIODO] Error calculando fechas del perÌodo", e);
             return p;
         }
 
@@ -3466,7 +3466,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         PeriodCtx p = extractPeriodoFromRenderParams(renderRequest, ns, rid);
 
         if (p == null || !p.valid) {
-            _log.warn(prefix(rid) + "[CERRADO] params inv√°lidos. Fallback a doSearch normal.");
+            _log.warn(prefix(rid) + "[CERRADO] params inv·lidos. Fallback a doSearch normal.");
             doSearch(renderRequest, session, tipoSel, rid);
             return;
         }
@@ -3622,7 +3622,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
 
         if (fechaHasta == null || Validator.isNull(terc)) {
-            _log.warn(prefix(rid) + "[FORCE-CERRADO] No puedo forzar persistido: fechaHasta/terc inv√°lidos."
+            _log.warn(prefix(rid) + "[FORCE-CERRADO] No puedo forzar persistido: fechaHasta/terc inv·lidos."
                     + " fechaHasta=" + (fechaHasta != null ? String.valueOf(fechaHasta.getTime()) : "null")
                     + " terc=" + safe(terc));
             return false;
@@ -3633,12 +3633,12 @@ public class DebitoTercerizadorasAction extends PortletAction {
         boolean cerrado = grabadosCountWork > 0;
         if (!cerrado) {
             if (_log.isInfoEnabled()) {
-                _log.info(prefix(rid) + "[FORCE-CERRADO] WORK no est√° cerrado seg√∫n check actual. No fuerzo."
+                _log.info(prefix(rid) + "[FORCE-CERRADO] WORK no est· cerrado seg˙n check actual. No fuerzo."
                         + " tipoSel=" + safe(tipoSel)
                         + " fechaHasta(ms)=" + String.valueOf(fechaHasta.getTime())
                         + " terc=" + safe(terc));
             }
-            // A√∫n as√≠, dejamos PERIODO_CERRADO en false
+            // A˙n asÌ, dejamos PERIODO_CERRADO en false
             renderRequest.setAttribute("PERIODO_CERRADO", Boolean.FALSE);
             return false;
         }
@@ -3699,7 +3699,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         session.setAttribute(SESSION_WORK_RE, (detalleRE != null) ? detalleRE : new ArrayList());
         session.setAttribute(SESSION_WORK_PR, (detallePR != null) ? detallePR : new ArrayList());
 
-        // staging vac√≠o
+        // staging vacÌo
         session.setAttribute(SESSION_STG_LI, new ArrayList());
         session.setAttribute(SESSION_STG_HO, new ArrayList());
         session.setAttribute(SESSION_STG_RE, new ArrayList());
@@ -3759,14 +3759,14 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
             _log.info(sb.toString());
         } catch (Exception e) {
-            _log.warn(prefix(rid) + "No pude dumpear par√°metros de ACTION", e);
+            _log.warn(prefix(rid) + "No pude dumpear par·metros de ACTION", e);
         } finally {
             _log.info(prefix(rid) + "Finalizando dumpAllActionParams");
         }
     }
 
     // ============================================================================
-    // label del per√≠odo WORK para logs
+    // label del perÌodo WORK para logs
     // ============================================================================
     private String workPeriodoLabel(HttpSession session) {
         _log.info(prefix("NO-RID") + "Iniciando workPeriodoLabel");
@@ -3832,7 +3832,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         tipoSel = normalizeTipoSel(tipoSel);
 
         // -------------------------
-        // Tercerizadora (sesi√≥n primero; fallback request)
+        // Tercerizadora (sesiÛn primero; fallback request)
         // -------------------------
         String tercerizadoras = null;
         try {
@@ -3851,7 +3851,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         tercerizadoras = (tercerizadoras != null) ? tercerizadoras.trim() : "";
 
         // -------------------------
-        // Per√≠odo: MISMA l√≥gica que doCerrarPeriodo (request -> sesi√≥n)
+        // PerÌodo: MISMA lÛgica que doCerrarPeriodo (request -> sesiÛn)
         // -------------------------
         Date fechaDesdeSess = (Date) session.getAttribute(SESSION_WORK_FECHA_DESDE);
         Date fechaHastaSess = (Date) session.getAttribute(SESSION_WORK_FECHA_HASTA);
@@ -3909,7 +3909,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
                 periodoSource = "REQUEST_MS";
             } catch (Exception e) {
-                _log.error(prefix(rid) + "[REABRIR][PERIODO] Error armando per√≠odo desde REQUEST_MS=" + reqFechaHastaMs, e);
+                _log.error(prefix(rid) + "[REABRIR][PERIODO] Error armando perÌodo desde REQUEST_MS=" + reqFechaHastaMs, e);
             }
         }
 
@@ -3977,7 +3977,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
 
         if (fechaDesde == null || fechaHasta == null || Validator.isNull(tercerizadoras)) {
-            _log.warn(prefix(rid) + "[REABRIR] per√≠odo/tercerizadora inv√°lidos. No reabro.");
+            _log.warn(prefix(rid) + "[REABRIR] perÌodo/tercerizadora inv·lidos. No reabro.");
 
             actionResponse.setRenderParameter(Constants.CMD, "deleteDetalle");
             actionResponse.setRenderParameter("cacheKey", WORK_KEY);
@@ -4017,7 +4017,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
 
         // -------------------------
-        // Validar que est√© CERRADO (si no, no hay nada que reabrir)
+        // Validar que estÈ CERRADO (si no, no hay nada que reabrir)
         // -------------------------
         boolean yaCerrado = false;
         try {
@@ -4039,7 +4039,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
 
         if (!yaCerrado) {
-            _log.warn(prefix(rid) + "[REABRIR] El per√≠odo NO est√° cerrado para tipoSel. Nada que reabrir.");
+            _log.warn(prefix(rid) + "[REABRIR] El perÌodo NO est· cerrado para tipoSel. Nada que reabrir.");
 
             actionResponse.setRenderParameter(Constants.CMD, "deleteDetalle");
             actionResponse.setRenderParameter("cacheKey", WORK_KEY);
@@ -4053,7 +4053,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
 
         // -------------------------
-        // 1) Leer grabados (la ‚Äúmisma lista‚Äù pero desde DB)
+        // 1) Leer grabados (la ?misma lista? pero desde DB)
         // -------------------------
         String tipoKey = mapTipoSelToGrabadosKey(tipoSel);
         List grabados = null;
@@ -4065,7 +4065,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         if (grabados == null) grabados = new ArrayList();
 
         // -------------------------
-        // 2) Reabrir at√≥mico en DB (reconstruye borrador + borra grabado)
+        // 2) Reabrir atÛmico en DB (reconstruye borrador + borra grabado)
         // -------------------------
         boolean ok = false;
         int insertedBorrador = 0;
@@ -4080,7 +4080,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
                 deletedGrabado = r[1];
             }
 
-            // si estaba ‚Äúcerrado‚Äù, deletedGrabado deber√≠a ser > 0
+            // si estaba ?cerrado?, deletedGrabado deberÌa ser > 0
             ok = (deletedGrabado > 0 && insertedBorrador > 0);
 
         } catch (Exception e) {
@@ -4108,7 +4108,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         session.setAttribute(SESSION_WORK_MODE, "REABIERTO");
         session.setAttribute(SESSION_WORK_CERRADO_TIPO, null);
 
-        // staging vac√≠o (mismo criterio que cierres/persistidos)
+        // staging vacÌo (mismo criterio que cierres/persistidos)
         session.setAttribute(SESSION_STG_LI, new ArrayList());
         session.setAttribute(SESSION_STG_HO, new ArrayList());
         session.setAttribute(SESSION_STG_RE, new ArrayList());
@@ -4195,14 +4195,14 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
         if (noKey > 0) {
             _log.warn(prefix(rid) + "[APPEND][KEY] " + noKey + " items sin key (itemKey no pudo extraer campos). "
-                    + "Esto debilita el filtrado; defin√≠ una business key real por tipo.");
+                    + "Esto debilita el filtrado; definÌ una business key real por tipo.");
         }
 
         return out;
     }
 
     /**
-     * Clave estable por √≠tem.
+     * Clave estable por Ìtem.
      * La idea: usar campos que existen en tus beans (numero, factura, numeroOp, idReclamoPrestacional, documento, monto).
      * Si un getter no existe, se ignora.
      */
@@ -4217,7 +4217,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         String doc = getByReflection(o, new String[]{"getNumeroDocumento", "getDocumento"});
         String monto = getByReflection(o, new String[]{"getMontoDebitar", "getMonto"});
 
-        // Normalizaci√≥n m√≠nima
+        // NormalizaciÛn mÌnima
         numero = normKeyPart(numero);
         factura = normKeyPart(factura);
         op = normKeyPart(op);
@@ -4257,7 +4257,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         if (Validator.isNull(tipoDbKey)) return out;
 
         try {
-            // Traigo SOLO lo grabado en ESTE per√≠odo (no all-periodos)
+            // Traigo SOLO lo grabado en ESTE perÌodo (no all-periodos)
             List closedList = (List) BusquedaDebitosTercerizadorasServiceUtil.getBusquedaDebitosaGrabados(
                     tipoDbKey, fechaHasta, tercerizadoras
             );
@@ -4275,7 +4275,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
             }
 
         } catch (Exception e) {
-            _log.error(prefix(rid) + "[CERRADO-KEYS] Error leyendo grabados del per√≠odo", e);
+            _log.error(prefix(rid) + "[CERRADO-KEYS] Error leyendo grabados del perÌodo", e);
         }
 
         return out;
@@ -4286,7 +4286,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
             return java.util.Collections.<String>emptySet();
         }
 
-        // Orden determinista (√∫til para logs/diffs)
+        // Orden determinista (˙til para logs/diffs)
         Set<String> out = new java.util.LinkedHashSet<String>(
                 Math.max((int) (items.size() / 0.75f) + 1, 16)
         );
@@ -4323,7 +4323,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
     private List loadBaseLegacy(String tipoSel, Date fechaDesde, Date fechaHasta,
                                 DebitosaTotal debitosaTotal, String tercerizadoras) throws Exception {
 
-        // IMPORTANT√çSIMO: esto es ‚Äúbase original‚Äù, NO grabados.
+        // IMPORTANTÕSIMO: esto es ?base original?, NO grabados.
         if ("LI".equals(tipoSel)) return (List) BusquedaDebitosTercerizadorasServiceUtil
                 .getBusquedaDebitosaLiquidacionesPendientes(fechaDesde, fechaHasta, debitosaTotal, tercerizadoras);
 
@@ -4377,8 +4377,8 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
         String t = tipoSel.trim().toUpperCase();
 
-        // AJUSTAR: reemplaz√° getters por los reales de DebitosaTotal.
-        // La idea: devolver true SOLO si est√°s seguro que el total del tipo es 0.
+        // AJUSTAR: reemplaz· getters por los reales de DebitosaTotal.
+        // La idea: devolver true SOLO si est·s seguro que el total del tipo es 0.
         String[] getters = null;
         if ("LI".equals(t))
             getters = new String[]{"getTotalLiqPendientes", "getCantLiqPendientes", "getCantidadLiqPendientes"};
@@ -4393,7 +4393,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
         try {
             for (int i = 0; i < getters.length; i++) {
-                Object v = invoke0(dt, getters[i]); // us√°s reflection helpers en tu clase
+                Object v = invoke0(dt, getters[i]); // us·s reflection helpers en tu clase
                 if (v instanceof Number) {
                     int n = ((Number) v).intValue();
                     return n <= 0;
@@ -4437,7 +4437,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
         int count = 0;
         try {
-            // Ideal: que el DAO/Service devuelva count (ver secci√≥n B)
+            // Ideal: que el DAO/Service devuelva count (ver secciÛn B)
             count = BusquedaDebitosTercerizadorasServiceUtil
                     .cantidadReporteGrabadoDebitoTercerizadoras(fechaHasta, tercUp, tipoDb);
         } catch (Exception e) {
@@ -4450,7 +4450,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
     }
 
     private String buildGrabadosCacheKey(Date fechaHasta, String tercUp, String tipoDb) {
-        // fechaHasta ya viene fin de mes; aun as√≠ key por YYYY-MM por robustez
+        // fechaHasta ya viene fin de mes; aun asÌ key por YYYY-MM por robustez
         java.util.Calendar c = java.util.Calendar.getInstance();
         c.setTime(fechaHasta);
         int y = c.get(java.util.Calendar.YEAR);
@@ -4465,13 +4465,13 @@ public class DebitoTercerizadorasAction extends PortletAction {
         // si ya viene DEBITOS_* lo acepto
         if (t.startsWith("DEBITOS_")) return t;
 
-        // si viene LI/HO/RE/PR lo mapeo (CAN√ìNICO)
+        // si viene LI/HO/RE/PR lo mapeo (CAN”NICO)
         if ("LI".equals(t)) return WebKeysLiquidaciones.DEBITOS_LIQ_PENDIENTES;
         if ("HO".equals(t)) return WebKeysLiquidaciones.DEBITOS_HOSPITALES;
         if ("RE".equals(t)) return WebKeysLiquidaciones.DEBITOS_REINTEGROS;
         if ("PR".equals(t)) return WebKeysLiquidaciones.DEBITOS_PRESTADORES;
 
-        return t; // √∫ltimo fallback (si realmente us√°s otros)
+        return t; // ˙ltimo fallback (si realmente us·s otros)
     }
 
     private int getGrabadosCountNoCache(Date fechaHasta, String terc, String tipoSelOrDb) {
@@ -4855,7 +4855,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
 
         if (f == null) {
-             _log.warn(prefix(rid) + "[PERIODOS-TRAB][IN] filtro NULL -> retorno vac√≠o");
+             _log.warn(prefix(rid) + "[PERIODOS-TRAB][IN] filtro NULL -> retorno vacÌo");
             return rows;
         }
 
@@ -4913,7 +4913,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
             _log.error(prefix(rid) + "[PERIODOS-TRAB] Error consultando trabajados"
                     + " (terc=" + safe(fTrab != null ? fTrab.terc : null)
                     + " tipo=" + safe(fTrab != null ? fTrab.tipo : null) + ")", e);
-            trabajadosError = "Error cargando per√≠odos trabajados.";
+            trabajadosError = "Error cargando perÌodos trabajados.";
             rowsTrab = new ArrayList<Map<String, Object>>();
         }
 
@@ -4964,7 +4964,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         } catch (Exception e) {
             _log.error(prefix(rid) + "[PERIODOS-PEND] Error consultando pendientes (terc=" + safe(fPend.terc)
                     + " tipo=" + safe(fPend.tipo) + ")", e);
-            pendientesError = "Error cargando per√≠odos pendientes.";
+            pendientesError = "Error cargando perÌodos pendientes.";
             pendientes = new ArrayList<Map<String, Object>>();
         }
 

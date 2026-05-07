@@ -180,7 +180,7 @@ public class AfipWSFEaxis2Client implements Serializable {
 		FECAERequest requestCAE = new FECAERequest();
 		FECAECabRequest cabecera = new FECAECabRequest();
 		cabecera.setCantReg(1);
-		cabecera.setCbteTipo(6);  //1 Factura A, 2 Nota de DÃ©bito A, 3 Nota de CrÃ©dito A, 6 Factura B,
+		cabecera.setCbteTipo(6);  //1 Factura A, 2 Nota de Débito A, 3 Nota de Crédito A, 6 Factura B,
 		cabecera.setPtoVta(2);    //2 CAE - Monotributo
 		
 		requestCAE.setFeCabReq(cabecera);
@@ -206,18 +206,18 @@ public class AfipWSFEaxis2Client implements Serializable {
 		/**
 		 * Suma de los importes del array de IVA.
 		 * Para comprobantes tipo C debe ser igual a cero (0).
-		 * Para comprobantes tipo Bienes Usados â€“ Emisor Monotributista no debe informarse o debe ser igual a cero (0).
+		 * Para comprobantes tipo Bienes Usados ? Emisor Monotributista no debe informarse o debe ser igual a cero (0).
 		 */
 		d.setImpIVA(new BigDecimal(21).doubleValue());
 		/**
 		 * Importe neto gravado. Debe ser menor o igual a Importe total y no puede ser menor a cero. Para comprobantes tipo C este campo corresponde al Importe del Sub Total.
-		 * Para comprobantes tipo Bienes Usados â€“ Emisor Monotributista no debe informarse o debe ser igual a cero (0).
+		 * Para comprobantes tipo Bienes Usados ? Emisor Monotributista no debe informarse o debe ser igual a cero (0).
 		 */
 		d.setImpNeto(new BigDecimal(100).doubleValue()); 
 		/**
 		 * Importe exento. Debe ser menor o igual a Importe total y no puede ser menor a cero.
 		 * Para comprobantes tipo C debe ser igual a cero (0).
-		 * Para comprobantes tipo Bienes Usados â€“ Emisor Monotributista no debe informarse o debe ser igual a cero (0).
+		 * Para comprobantes tipo Bienes Usados ? Emisor Monotributista no debe informarse o debe ser igual a cero (0).
 		 */
 		d.setImpOpEx(new BigDecimal(0).doubleValue());
 		/**
@@ -226,8 +226,8 @@ public class AfipWSFEaxis2Client implements Serializable {
 		d.setImpTotal(new BigDecimal(121).doubleValue());
 		/**Importe neto no gravado.
 		 * Debe ser menor o igual a Importe total y no puede ser menor a cero.
-		 * No puede ser mayor al Importe total de la operaciÃ³n ni menor a cero (0).
-		 * Para comprobantes tipo C debe ser igual a cero (0). Para comprobantes tipo Bienes Usados â€“ Emisor Monotributista este campo corresponde al importe subtotal.
+		 * No puede ser mayor al Importe total de la operación ni menor a cero (0).
+		 * Para comprobantes tipo C debe ser igual a cero (0). Para comprobantes tipo Bienes Usados ? Emisor Monotributista este campo corresponde al importe subtotal.
 		 */
 		d.setImpTotConc(0);
 		/**
@@ -241,8 +241,8 @@ public class AfipWSFEaxis2Client implements Serializable {
 		alicIva.setImporte(new BigDecimal(21).doubleValue());
 		arrayIva.addAlicIva(alicIva );
 		d.setIva(arrayIva );
-		d.setMonCotiz(1); // CotizaciÃ³n de la moneda informada. Para PES, pesos argentinos la misma debe ser 1
-		d.setMonId("PES"); // PES Pesos Argentinos 20090403 NULL, DOL DÃ³lar Estadounidense 20090403 NULL
+		d.setMonCotiz(1); // Cotización de la moneda informada. Para PES, pesos argentinos la misma debe ser 1
+		d.setMonId("PES"); // PES Pesos Argentinos 20090403 NULL, DOL Dólar Estadounidense 20090403 NULL
 		d.setOpcionales(null);
 		d.setTributos(null);
 //			ArrayOfTributo at = new ArrayOfTributo();
@@ -253,7 +253,7 @@ public class AfipWSFEaxis2Client implements Serializable {
 //			tri[4].setId( (short) 99); //99 Otro
 //			tri[5].setImporte(new BigDecimal("10").doubleValue());
 //			at.setTributo(tri);
-//			d.setTributos(at); //6 PercepciÃ³n de IVA 20170719 NULL, 99 Otro 20100917 NULL, 
+//			d.setTributos(at); //6 Percepción de IVA 20170719 NULL, 99 Otro 20100917 NULL, 
 
 		detalle.addFECAEDetRequest(d);
 		
@@ -545,7 +545,7 @@ public class AfipWSFEaxis2Client implements Serializable {
 		/**
 		 * Suma de los importes del array de IVA.
 		 * Para comprobantes tipo C debe ser igual a cero (0).
-		 * Para comprobantes tipo Bienes Usados â€“ Emisor Monotributista no debe informarse o debe ser igual a cero (0).
+		 * Para comprobantes tipo Bienes Usados ? Emisor Monotributista no debe informarse o debe ser igual a cero (0).
 		 */
 		
 		if(fact.getLetra().equalsIgnoreCase("A") 
@@ -557,7 +557,7 @@ public class AfipWSFEaxis2Client implements Serializable {
 		}
 		/**
 		 * Importe neto gravado. Debe ser menor o igual a Importe total y no puede ser menor a cero. Para comprobantes tipo C este campo corresponde al Importe del Sub Total.
-		 * Para comprobantes tipo Bienes Usados â€“ Emisor Monotributista no debe informarse o debe ser igual a cero (0).
+		 * Para comprobantes tipo Bienes Usados ? Emisor Monotributista no debe informarse o debe ser igual a cero (0).
 		 */
 		if(fact.getLetra().equalsIgnoreCase("A")
 			|| (fact.getLetra().equalsIgnoreCase("B") && fact.getCliente().getTipo().equals(Cliente.TIPOS_CLIENTE.VISITA)  )
@@ -569,7 +569,7 @@ public class AfipWSFEaxis2Client implements Serializable {
 		/**
 		 * Importe exento. Debe ser menor o igual a Importe total y no puede ser menor a cero.
 		 * Para comprobantes tipo C debe ser igual a cero (0).
-		 * Para comprobantes tipo Bienes Usados â€“ Emisor Monotributista no debe informarse o debe ser igual a cero (0).
+		 * Para comprobantes tipo Bienes Usados ? Emisor Monotributista no debe informarse o debe ser igual a cero (0).
 		 */
 		if(fact.getLetra().equalsIgnoreCase("A")
 			|| (fact.getLetra().equalsIgnoreCase("B") && fact.getCliente().getTipo().equals(Cliente.TIPOS_CLIENTE.VISITA)  )	
@@ -584,8 +584,8 @@ public class AfipWSFEaxis2Client implements Serializable {
 		d.setImpTotal(fact.getImporteTotal().doubleValue());
 		/**Importe neto no gravado.
 		 * Debe ser menor o igual a Importe total y no puede ser menor a cero.
-		 * No puede ser mayor al Importe total de la operaciÃ³n ni menor a cero (0).
-		 * Para comprobantes tipo C debe ser igual a cero (0). Para comprobantes tipo Bienes Usados â€“ Emisor Monotributista este campo corresponde al importe subtotal.
+		 * No puede ser mayor al Importe total de la operación ni menor a cero (0).
+		 * Para comprobantes tipo C debe ser igual a cero (0). Para comprobantes tipo Bienes Usados ? Emisor Monotributista este campo corresponde al importe subtotal.
 		 */
 		d.setImpTotConc(0);
 		/**
@@ -606,8 +606,8 @@ public class AfipWSFEaxis2Client implements Serializable {
 			d.setIva(null);
 		}
 	
-		d.setMonCotiz(1); // CotizaciÃ³n de la moneda informada. Para PES, pesos argentinos la misma debe ser 1
-		d.setMonId("PES"); // PES Pesos Argentinos 20090403 NULL, DOL DÃ³lar Estadounidense 20090403 NULL
+		d.setMonCotiz(1); // Cotización de la moneda informada. Para PES, pesos argentinos la misma debe ser 1
+		d.setMonId("PES"); // PES Pesos Argentinos 20090403 NULL, DOL Dólar Estadounidense 20090403 NULL
 		d.setOpcionales(null);
 		d.setTributos(null);
 

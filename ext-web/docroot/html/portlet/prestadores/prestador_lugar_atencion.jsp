@@ -74,7 +74,7 @@ boolean showABMButtons = PermissionUtil.userContainsRole(user,"ABM_PRESTADOR");
 				</div>
 			</td>
 		</tr>
-		<tr><td colspan="4">* Seleccione un lugar de atenciÃ³n para ver el detalle</td></tr>	
+		<tr><td colspan="4">* Seleccione un lugar de atención para ver el detalle</td></tr>	
 	</table>			
 </fieldset>	
 	
@@ -276,7 +276,7 @@ boolean showABMButtons = PermissionUtil.userContainsRole(user,"ABM_PRESTADOR");
 				<%}%> name="<portlet:namespace/>reg_histo_clinica" id="<portlet:namespace/>reg_histo_clinica">
 					<option value=""></option>
 					<option value="WEB" <%if(lugarAtencion!=null && lugarAtencion.getRegistroHistoriaClinica().equals("WEB")){ %> selected="selected" <%} %>>WEB</option>
-					<option value="SOPORTE_MAGNETICO" <%if(lugarAtencion!=null && lugarAtencion.getRegistroHistoriaClinica().equals("SOPORTE_MAGNETICO")){ %> selected="selected" <%} %>>SOPORTE MAGNÃ‰TICO</option>
+					<option value="SOPORTE_MAGNETICO" <%if(lugarAtencion!=null && lugarAtencion.getRegistroHistoriaClinica().equals("SOPORTE_MAGNETICO")){ %> selected="selected" <%} %>>SOPORTE MAGNÉTICO</option>
 			</select></td>
 			<td colspan="6">&nbsp;</td>
 		</tr>	
@@ -329,7 +329,7 @@ boolean showABMButtons = PermissionUtil.userContainsRole(user,"ABM_PRESTADOR");
 			</td>		
 			<td align="right">
 			    <input type="button"
-			           value="Agregar TelÃ©fono"
+			           value="Agregar Teléfono"
 			           <% if (!esEdicion) { %> disabled="disabled" <% } %>
 			           onClick="<portlet:namespace />agregarLugarAtTelefono();" />
 			</td>
@@ -478,7 +478,7 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 	function <portlet:namespace />savePrestador() {
 		
 		if(<%=lugarAtencion != null %> ){
-			if (!confirm("Esta modificando un Lugar de AtenciÃ³n, se perderÃ¡n su cambios recientes. Â¿Desea continuar de todos modos?")){
+			if (!confirm("Esta modificando un Lugar de Atención, se perderán su cambios recientes. ¿Desea continuar de todos modos?")){
 				return false;
 			}
 		} 
@@ -514,10 +514,10 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 
 	function addElementToSelect(id_combo, texto, valor) {
 		var combo = document.getElementById(id_combo);
-		var idxElemento = combo.options.length; //Numero de elementos de la combo si esta vacio es 0. Este indice serÃ¡ el del nuevo elemento
+		var idxElemento = combo.options.length; //Numero de elementos de la combo si esta vacio es 0. Este indice será el del nuevo elemento
 		combo.options[idxElemento] = new Option();
-		combo.options[idxElemento].text = texto; //Este es el texto que verÃ¡s en la combo
-		combo.options[idxElemento].value = valor; //Este es el valor que se enviarÃ¡ cuando hagas un submit del formulario que lo contiene
+		combo.options[idxElemento].text = texto; //Este es el texto que verás en la combo
+		combo.options[idxElemento].value = valor; //Este es el valor que se enviará cuando hagas un submit del formulario que lo contiene
 	}
 
 	function filtrarLocalidad() {
@@ -642,7 +642,7 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 		if (trim(jQuery('#<portlet:namespace />telefono_pais').val()) == '' ||
 			trim(jQuery('#<portlet:namespace />telefono_area').val()) == '' ||
 			trim(jQuery('#<portlet:namespace />telefono_numero').val()) == ''){
-				alert("El telÃ©fono debe necesariamente tener el cÃ³digo de paÃ­s, de area y el nÃºmero");
+				alert("El teléfono debe necesariamente tener el código de país, de area y el número");
 				jQuery('#<portlet:namespace />telefono_numero').focus();
 				return false;
 		}
@@ -769,14 +769,14 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 		var email = jQuery('#<portlet:namespace/>contactoe_descripcion').val();
 	
 		if(trim(email).length == 0){
-			alert("El campo descripciÃ³n del Email es Obligatorio");
+			alert("El campo descripción del Email es Obligatorio");
 			jQuery("#<portlet:namespace />contactoe_descripcion").focus();
 			return false;
 		}
 		var expr = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
 		
 		if (!expr.test(email) ){
-		    alert("Error: La direcciÃ³n de correo " + email + " es incorrecta.");
+		    alert("Error: La dirección de correo " + email + " es incorrecta.");
 		    jQuery("#<portlet:namespace />contactoe_descripcion").focus();
 			return false;
 		}
@@ -787,7 +787,7 @@ jQuery("#<portlet:namespace/>lugarat_pres_copia_habilitacion").attr('checked', '
 		var sitioWeb = jQuery('#<portlet:namespace/>contactoe_descripcion').val();
 	
 		if(trim(sitioWeb).length == 0){
-			alert("El campo descripciÃ³n del Sitio WEb es Obligatorio");
+			alert("El campo descripción del Sitio WEb es Obligatorio");
 			jQuery("#<portlet:namespace />contactoe_descripcion").focus();
 			return false;
 		}

@@ -12,10 +12,10 @@ telefonosLugarAtPrestador =  (ArrayList<TelefonoPrestador>) request.getSession()
 List<String> headerNames = new ArrayList<String>();
 
 headerNames.add("Tipo");
-headerNames.add("CÃ³digo PaÃ­s");
-headerNames.add("CÃ³digo Area");
-headerNames.add("NÃºmero");
-headerNames.add("ExtensiÃ³n");
+headerNames.add("Código País");
+headerNames.add("Código Area");
+headerNames.add("Número");
+headerNames.add("Extensión");
 headerNames.add("Observaciones");
 headerNames.add("Eliminar");
 

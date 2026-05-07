@@ -91,7 +91,7 @@
 	<liferay-ui:success key="previewConvenioXlsOk" message="Archivo XLS previsualizado correctamente" />
 	<liferay-ui:error key="conv-prest-vigencia-obligatoria" message="Debe informar la vigencia del convenio antes de guardar." />
 	<liferay-ui:error key="conv-prest-xls-sin-archivo" message="Debe seleccionar un archivo XLS" />
-	<liferay-ui:error key="conv-prest-xls-extension" message="El archivo debe tener extensi√≥n .xls" />
+	<liferay-ui:error key="conv-prest-xls-extension" message="El archivo debe tener extensiÛn .xls" />
 	<liferay-ui:error key="conv-prest-xls-formato" message="<%= msgXlsFormato %>" />
 	<liferay-ui:error key="conv-prest-duplicado" message="conv-prest-duplicado" />
 	<liferay-ui:error key="conv-prest-sin-items" message="conv-prest-sin-items" />
@@ -159,10 +159,10 @@
 
 					<option value="30"
 							<%= convenioPrest != null && convenioPrest.getCondicionDePago() != null
-									? convenioPrest.getCondicionDePago().equals("30") ? "selected" : "" : ""  %>>30 d√≠as</option>
+									? convenioPrest.getCondicionDePago().equals("30") ? "selected" : "" : ""  %>>30 dÌas</option>
 					<option value="60"
 							<%= convenioPrest != null && convenioPrest.getCondicionDePago() != null
-									? convenioPrest.getCondicionDePago().equals("60") ? "selected" : "" : ""  %>>60 d√≠as</option>
+									? convenioPrest.getCondicionDePago().equals("60") ? "selected" : "" : ""  %>>60 dÌas</option>
 				</select></td>
 				<td><label><liferay-ui:message key="forma-pago" />:</label></td>
 				<td><select name="<portlet:namespace/>forma_de_pago"
@@ -333,7 +333,7 @@
 					<table style="width:100%; border-collapse:separate; border-spacing:8px 0;">
 						<tr>
 							<td style="width:95px; vertical-align:middle;">
-								<label>C√≥digo:</label>
+								<label>CÛdigo:</label>
 							</td>
 							<td style="padding-left:0;">
 								<div id="<portlet:namespace />buscadorPrestacionContainer">
@@ -604,13 +604,13 @@
 
 		var vigencia = <portlet:namespace />parsePickerDate("vigencia");
 		if (!vigencia) {
-			alert("La vigencia del convenio es inv√°lida");
+			alert("La vigencia del convenio es inv·lida");
 			jQuery("#<portlet:namespace />vigenciaDia").focus();
 			return false;
 		}
 
 		if (<portlet:namespace />fechaParcialInformada("vencimiento")) {
-			alert("La fecha de vencimiento est√° incompleta");
+			alert("La fecha de vencimiento est· incompleta");
 			jQuery("#<portlet:namespace />vencimientoDia").focus();
 			return false;
 		}
@@ -619,7 +619,7 @@
 			var vencimiento = <portlet:namespace />parsePickerDate("vencimiento");
 
 			if (!vencimiento) {
-				alert("La fecha de vencimiento es inv√°lida");
+				alert("La fecha de vencimiento es inv·lida");
 				jQuery("#<portlet:namespace />vencimientoDia").focus();
 				return false;
 			}
@@ -671,26 +671,26 @@
 		var fechaHasta = null;
 
 		if (codigo === "") {
-			alert("C√≥digo obligatorio");
+			alert("CÛdigo obligatorio");
 			jQuery("#<portlet:namespace />codigo").focus();
 			return false;
 		}
 
 		if (codigo.length > 10) {
-			alert("El c√≥digo no puede superar los 10 caracteres");
+			alert("El cÛdigo no puede superar los 10 caracteres");
 			jQuery("#<portlet:namespace />codigo").focus();
 			return false;
 		}
 
 		if (jQuery("#<portlet:namespace />pres_seleccionada").length > 0
 				&& jQuery("#<portlet:namespace />pres_seleccionada").val() != "1") {
-			alert("C√≥digo inv√°lido");
+			alert("CÛdigo inv·lido");
 			jQuery("#<portlet:namespace />codigo").focus();
 			return false;
 		}
 
 		if (!idPrestacion || idPrestacion === "0") {
-			alert("Debe seleccionar una prestaci√≥n v√°lida");
+			alert("Debe seleccionar una prestaciÛn v·lida");
 			return false;
 		}
 
@@ -707,13 +707,13 @@
 
 		fechaDesde = <portlet:namespace />parsePickerDate("prestacionFechaDesde");
 		if (!fechaDesde) {
-			alert("La fecha desde del detalle es inv√°lida");
+			alert("La fecha desde del detalle es inv·lida");
 			jQuery("#<portlet:namespace />prestacionFechaDesdeDia").focus();
 			return false;
 		}
 
 		if (<portlet:namespace />fechaParcialInformada("prestacionFechaHasta")) {
-			alert("La fecha hasta del detalle est√° incompleta");
+			alert("La fecha hasta del detalle est· incompleta");
 			jQuery("#<portlet:namespace />prestacionFechaHastaDia").focus();
 			return false;
 		}
@@ -722,7 +722,7 @@
 			fechaHasta = <portlet:namespace />parsePickerDate("prestacionFechaHasta");
 
 			if (!fechaHasta) {
-				alert("La fecha hasta del detalle es inv√°lida");
+				alert("La fecha hasta del detalle es inv·lida");
 				jQuery("#<portlet:namespace />prestacionFechaHastaDia").focus();
 				return false;
 			}
@@ -736,13 +736,13 @@
 
 		if (tipoValoriz === "porcentaje") {
 			if (isNaN(porcentaje) || porcentaje <= 0) {
-				alert("Ingrese un porcentaje v√°lido mayor a 0");
+				alert("Ingrese un porcentaje v·lido mayor a 0");
 				jQuery("#<portlet:namespace />porcentaje").focus();
 				return false;
 			}
 		} else {
 			if (isNaN(importe) || importe <= 0) {
-				alert("Ingrese un importe v√°lido mayor a 0");
+				alert("Ingrese un importe v·lido mayor a 0");
 				jQuery("#<portlet:namespace />importe").focus();
 				return false;
 			}
@@ -823,14 +823,14 @@
 		if (!idPrestador) {
 			<portlet:namespace />agregandoDetalle = false;
 			jQuery('#<portlet:namespace />buscandoDetalles').hide();
-			alert("Debe seleccionar un prestador v√°lido");
+			alert("Debe seleccionar un prestador v·lido");
 			return false;
 		}
 
 		if (!idPrest) {
 			<portlet:namespace />agregandoDetalle = false;
 			jQuery('#<portlet:namespace />buscandoDetalles').hide();
-			alert("Debe seleccionar una prestaci√≥n v√°lida");
+			alert("Debe seleccionar una prestaciÛn v·lida");
 			return false;
 		}
 
@@ -1019,7 +1019,7 @@ jQuery('#<portlet:namespace />tipo_valorizacion').change(function(){
 			return false;
 		}
 		if (id_prestador_convprest.length > 0 && id_prestador == id_prestador_convprest) {
-			alert("Prestador inv√°lido");
+			alert("Prestador inv·lido");
 			return false;
 		}
 
@@ -1037,10 +1037,10 @@ jQuery('#<portlet:namespace />tipo_valorizacion').change(function(){
 
 	function addElementToSelect(id_combo, texto, valor) {
 		var combo = document.getElementById(id_combo);
-		var idxElemento = combo.options.length; //Numero de elementos de la combo si esta vacio es 0. Este indice ser√° el del nuevo elemento
+		var idxElemento = combo.options.length; //Numero de elementos de la combo si esta vacio es 0. Este indice ser· el del nuevo elemento
 		combo.options[idxElemento] = new Option();
-		combo.options[idxElemento].text = texto; //Este es el texto que ver√°s en la combo
-		combo.options[idxElemento].value = valor; //Este es el valor que se enviar√° cuando hagas un submit del formulario que lo contiene
+		combo.options[idxElemento].text = texto; //Este es el texto que ver·s en la combo
+		combo.options[idxElemento].value = valor; //Este es el valor que se enviar· cuando hagas un submit del formulario que lo contiene
 	}
 
 	function <portlet:namespace />buscarPlanesDelPrestador(){
@@ -1380,14 +1380,14 @@ jQuery('#<portlet:namespace />tipo_valorizacion').change(function(){
 		if (fechaDesdeNueva <= hoy) {
 			return {
 				ok: false,
-				msg: "Ya existe un detalle cargado con la misma prestaci√≥n y plan. S√≥lo se permite agregar una nueva versi√≥n con fecha desde futura."
+				msg: "Ya existe un detalle cargado con la misma prestaciÛn y plan. SÛlo se permite agregar una nueva versiÛn con fecha desde futura."
 			};
 		}
 
 		if (hayVersionFutura) {
 			return {
 				ok: false,
-				msg: "Ya existe una versi√≥n futura cargada para esa prestaci√≥n y plan. No se permite m√°s de una versi√≥n futura."
+				msg: "Ya existe una versiÛn futura cargada para esa prestaciÛn y plan. No se permite m·s de una versiÛn futura."
 			};
 		}
 

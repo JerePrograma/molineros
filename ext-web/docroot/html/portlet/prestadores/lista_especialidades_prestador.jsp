@@ -10,12 +10,12 @@ List<ProfesionPrestador> profEspecSubEspDelPrestador = (ArrayList<ProfesionPrest
 											request.getSession().getAttribute(WebKeysLiquidaciones.PROF_ESPEC_SUBESPEC_PRESTADOR_EN_SESSION);
 
 List<String> headerNames = new ArrayList<String>();
-headerNames.add("ProfesiÃ³n");
+headerNames.add("Profesión");
 headerNames.add("Especialidad");
 headerNames.add("Sub Especialidad");
 headerNames.add("Cat. Prof. Ospim");
-headerNames.add("TÃ­tulo Profesional");
-headerNames.add("TÃ­tulo Especialidad");
+headerNames.add("Título Profesional");
+headerNames.add("Título Especialidad");
 headerNames.add("Eliminar");
 
 SearchContainer searchContainer = new SearchContainer(renderRequest, null, null,

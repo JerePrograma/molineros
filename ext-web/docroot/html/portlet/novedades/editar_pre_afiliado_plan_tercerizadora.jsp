@@ -73,10 +73,10 @@ if(afiliado != null && afiliado.getId_plan() != null){ // update
  --%>
 function addElementToSelectSel(id_combo, texto, valor, id) {
 	var combo = document.getElementById(id_combo);
-	var idxElemento = combo.options.length; //Numero de elementos de la combo si esta vacio es 0. Este indice ser√° el del nuevo elemento
+	var idxElemento = combo.options.length; //Numero de elementos de la combo si esta vacio es 0. Este indice ser· el del nuevo elemento
 	combo.options[idxElemento] = new Option();
-	combo.options[idxElemento].text = texto; //Este es el texto que ver√°s en la combo
-	combo.options[idxElemento].value = valor; //Este es el valor que se enviar√° cuando hagas un submit del formulario que lo contiene
+	combo.options[idxElemento].text = texto; //Este es el texto que ver·s en la combo
+	combo.options[idxElemento].value = valor; //Este es el valor que se enviar· cuando hagas un submit del formulario que lo contiene
 	if(valor == id){
 		combo.options[idxElemento].selected = true;
 	}

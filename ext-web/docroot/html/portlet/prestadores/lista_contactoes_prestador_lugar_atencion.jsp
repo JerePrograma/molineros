@@ -33,7 +33,7 @@ if (contactoesLugarAtPrestador != null && contactoesLugarAtPrestador.size()>0){
 
 	 	ResultRow row = new ResultRow(ce,new Integer(1+i), i);
 	 	if (ce.getTipo().equals(ContactoElectronico.Tipo.EMAIL)){
-	 		row.addText("Correo ElectrÃ³nico");
+	 		row.addText("Correo Electrónico");
  		}else if (ce.getTipo().equals(ContactoElectronico.Tipo.SITIOWEB)){
 	 		row.addText("Sitio Web");
  		}else if (ce.getTipo().equals(ContactoElectronico.Tipo.FAX)){

@@ -240,7 +240,7 @@
 								<td>&nbsp;</td>
 
 								<td style="background-color:#AEB6BF">
-									<label>CirugÃ­a:</label>
+									<label>Cirugía:</label>
 									<input type="checkbox"
 										   name="<portlet:namespace />cirugia_filtro"
 										   value="false">
@@ -276,7 +276,7 @@
 								<td>&nbsp;</td>
 
 								<td style="background-color:#AEB6BF">
-									<label>PrÃ³tesis/Ã“rtesis:</label>
+									<label>Prótesis/Órtesis:</label>
 									<input type="checkbox"
 										   name="<portlet:namespace />protesisOrtesis_filtro"
 										   value="false">
@@ -326,7 +326,7 @@
 						<input type="button" value="Reporte" onClick="<portlet:namespace />reportePreautorizacion();"/>&nbsp;
 					</c:if>
 					<%-- <c:if test="<%= showProcesaArchivo %>">
-						<input type="button" value="Procesa Archivo PrevenciÃ³n" onClick="<portlet:namespace />procesaArchivoPreAutorizacion();"/>&nbsp;
+						<input type="button" value="Procesa Archivo Prevención" onClick="<portlet:namespace />procesaArchivoPreAutorizacion();"/>&nbsp;
 					</c:if> --%>
 				</td>
 
@@ -425,7 +425,7 @@
 				&& fechaDesdeDia.value == '' && fechaDesdeMes.value == '' && fechaDesdeAnio.value == ''
 				&& seccional == '' && fechaDesdeEmailDia.value == '' && fechaDesdeEmailMes.value == '' && fechaDesdeEmailAnio.value == ''){
 
-			alert("Debe ingresar algï¿½n criterio de bï¿½squeda");
+			alert("Debe ingresar alg?n criterio de b?squeda");
 			return false;
 		}
 
@@ -511,7 +511,7 @@
 				&& fechaDesdeDia.value == '' && fechaDesdeMes.value == '' && fechaDesdeAnio.value == ''
 				&& seccional == '' && fechaDesdeEmailDia.value == '' && fechaDesdeEmailMes.value == '' && fechaDesdeEmailAnio.value == ''){
 
-			alert("Debe ingresar algï¿½n criterio de bï¿½squeda");
+			alert("Debe ingresar alg?n criterio de b?squeda");
 			return false;
 		}
 

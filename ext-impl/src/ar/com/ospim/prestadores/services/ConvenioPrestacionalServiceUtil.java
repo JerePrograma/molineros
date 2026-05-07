@@ -13,7 +13,7 @@ import ar.com.ospim.prestadores.beans.ConvenioPrestacionalDetalle;
 import com.liferay.portal.SystemException;
 
 /**
- * Mascara del servicio que da acceso a los datos de la aplicaciÃ³n (BD).
+ * Mascara del servicio que da acceso a los datos de la aplicación (BD).
  */
 public class ConvenioPrestacionalServiceUtil {
 
@@ -59,7 +59,7 @@ public class ConvenioPrestacionalServiceUtil {
 	}
 
 	/**
-	 * eliminar un convenio prestacional (baja lÃ³gica)
+	 * eliminar un convenio prestacional (baja lógica)
 	 *
 	 * @throws SystemException
 	 * @throws NoSuchReintegroEntryException

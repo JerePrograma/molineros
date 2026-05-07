@@ -12,10 +12,10 @@ matriculasDelPrestador =  (ArrayList<MatriculaPrestador>) request.getSession().g
 
 List<String> headerNames = new ArrayList<String>();
 
-headerNames.add("Tipo MatrÃ­cula");
-headerNames.add("NÂ° MatrÃ­cula");
+headerNames.add("Tipo Matrícula");
+headerNames.add("N° Matrícula");
 headerNames.add("Provincia");
-headerNames.add("PresentÃ³ MatrÃ­cula");
+headerNames.add("Presentó Matrícula");
 headerNames.add("Fecha Vto.");
 headerNames.add("Eliminar");
 

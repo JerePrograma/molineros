@@ -67,7 +67,7 @@
     headerNames.add("Zona");
     headerNames.add("Especialidad");
     headerNames.add("Domicilio");
-    headerNames.add("TelÃ©fono");
+    headerNames.add("Teléfono");
     headerNames.add("Localidad");
     headerNames.add("Provincia");
 

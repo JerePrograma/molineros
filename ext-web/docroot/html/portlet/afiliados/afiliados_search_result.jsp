@@ -17,7 +17,7 @@
 			message="<%=(String)request.getAttribute(\"msgCoberturaMedicaOk\")  %>"  />
 
 	<%if(request.getAttribute("msgCoberturaMedicaOk") !=null){ %>
-	<i>Recuerde refrescar los resultados de la b�squeda para cambiar las opciones de la caja de acciones...</i>
+	<i>Recuerde refrescar los resultados de la b?squeda para cambiar las opciones de la caja de acciones...</i>
 	<%} %>
 </p>
 
@@ -242,14 +242,14 @@
 						|| (Validator.isNotNull(afiliado.getSuspencionCobertura().get(0).getVigenHasta())
 						&& afiliado.getSuspencionCobertura().get(0).getVigenHasta().getTime() >= DateUtils.getMismoDia_00_00hs(new Date()).getTime() ))) {
 
-					String cobertura = " <img height='16' width='16' src='/html/themes/classic/images/common/close.png' title='Suspendida la cobertura m�dica desde el: "+sdf.format(afiliado.getSuspencionCobertura().get(0).getVigenDesde())+"'/>";
+					String cobertura = " <img height='16' width='16' src='/html/themes/classic/images/common/close.png' title='Suspendida la cobertura m?dica desde el: "+sdf.format(afiliado.getSuspencionCobertura().get(0).getVigenDesde())+"'/>";
 					row.addText(cobertura, rowURL);
 
 				}else if(afiliado.getBaja_fecha()==null || Validator.isNull(afiliado.getBaja_fecha())
 						|| (Validator.isNotNull(afiliado.getBaja_fecha())
 						&& afiliado.getBaja_fecha().getTime() >= DateUtils.getMismoDia_00_00hs(new Date()).getTime() )) {
 
-					row.addText("<img height='16' width='16' src='/html/themes/classic/images/common/checked.png' title='Cobertura m�dica vigente' />", rowURL);
+					row.addText("<img height='16' width='16' src='/html/themes/classic/images/common/checked.png' title='Cobertura m?dica vigente' />", rowURL);
 
 				}else{
 					row.addText("", rowURL);

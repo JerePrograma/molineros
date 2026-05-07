@@ -25,7 +25,7 @@ String id_convenio_prest = String.valueOf(convenioPrest.getId());
 	</portlet:actionURL>
 	<liferay-ui:icon-delete url="<%= deleteURL %>" /> --%>
 		<%	
-		String deleteURL="javascript:if(confirm('EstÃ¡s seguro que lo deseas dar de baja?')) { eliminarConvenioPrest('"+id_convenio_prest+"');}";
+		String deleteURL="javascript:if(confirm('Estás seguro que lo deseas dar de baja?')) { eliminarConvenioPrest('"+id_convenio_prest+"');}";
 		%>
 		<liferay-ui:icon image="delete" url="<%= deleteURL %>"/>	
 </liferay-ui:icon-menu>

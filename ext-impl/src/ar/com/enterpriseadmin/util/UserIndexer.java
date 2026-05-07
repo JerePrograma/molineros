@@ -51,7 +51,7 @@ import javax.portlet.PortletURL;
 /**
  * <a href="UserIndexer.java.html"><b><i>View Source</i></b></a>
  *
- * @author Raymond AugÃ©
+ * @author Raymond Augé
  *
  */
 public class UserIndexer implements Indexer {

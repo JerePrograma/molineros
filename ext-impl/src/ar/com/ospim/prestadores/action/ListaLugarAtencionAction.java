@@ -66,7 +66,7 @@ public class ListaLugarAtencionAction extends PortletAction {
 				
 			pla = getLugarAtencionCompletoFromRequest(renderRequest, session);
 			
-			_log.debug(cmd.equals(Constants.ADD)?"Agregar":"Actualizar" + " Lugar AtenciÃ³n: " + pla.toString());
+			_log.debug(cmd.equals(Constants.ADD)?"Agregar":"Actualizar" + " Lugar Atención: " + pla.toString());
 			
 			if(lugaresAtencion == null){
 				lugaresAtencion = new ArrayList<PrestadorLugarAtencion>();

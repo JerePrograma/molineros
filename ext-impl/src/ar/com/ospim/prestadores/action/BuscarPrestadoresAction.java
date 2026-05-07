@@ -68,10 +68,10 @@ public class BuscarPrestadoresAction extends PrestadoresBaseAction {
 //					descripcion.replace("%26", "&");
 //				}
 			
-//				FIXME sacar espacio en blanco y Ã±, Ã‘ de la busqueda, se podrÃ­a mejorar ? 		
+//				FIXME sacar espacio en blanco y ñ, Ñ de la busqueda, se podría mejorar ? 		
 				if(descripcion!=null && (descripcion.contains("%C3%B1") || descripcion.contains("%C3%91") ) ){
-//					descripcion.replace("%C3%B1", "Ã±");
-//					descripcion.replaceAll("%C3%B1", "Ã±");
+//					descripcion.replace("%C3%B1", "ñ");
+//					descripcion.replaceAll("%C3%B1", "ñ");
 				
 					String[] spliteoEnies = descripcion.split("%C3%B1");
 					if(spliteoEnies == null){
@@ -79,7 +79,7 @@ public class BuscarPrestadoresAction extends PrestadoresBaseAction {
 					}
 					descripcion = "";
 					for (int i = 0; i < spliteoEnies.length; i++) {
-						descripcion = descripcion + spliteoEnies[i] + (i < spliteoEnies.length-1?"Ã±":""); 
+						descripcion = descripcion + spliteoEnies[i] + (i < spliteoEnies.length-1?"ñ":""); 
 					}
 				}
 				if(descripcion!=null && descripcion.contains("%20")){

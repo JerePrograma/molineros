@@ -190,7 +190,7 @@ function <portlet:namespace />cargarEmpleador() {
 }
 
 function <portlet:namespace />buscarEmpleadorOnDiv(e){	
-	//Se modificÃ³ el campo, debemos cambiar el selecc	
+	//Se modificó el campo, debemos cambiar el selecc	
 	jQuery("#<portlet:namespace />empl_seleccionada").val("");
 	var evtobj=window.event? event : e
 	var keyPressed= evtobj.keyCode? evtobj.keyCode : evtobj.charCode

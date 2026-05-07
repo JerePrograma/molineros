@@ -111,7 +111,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 			return;
 		}
 
-		_log.debug("[EDIT-CONV-PREST][ACTION][INFO] No se realiza l√≥gica en processAction");
+		_log.debug("[EDIT-CONV-PREST][ACTION][INFO] No se realiza lÛgica en processAction");
 		_log.info("[EDIT-CONV-PREST][ACTION][END] Fin processAction");
 	}
 
@@ -150,7 +150,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 
 			setForward(actionRequest, ActionConstants.COMMON_NULL);
 
-			_log.info("[EDIT-CONV-PREST][XLS][EXPORT][OK] Exportaci√≥n XLS generada. fileName="
+			_log.info("[EDIT-CONV-PREST][XLS][EXPORT][OK] ExportaciÛn XLS generada. fileName="
 					+ fileName + ", cantidadDetalles=" + detalles.size());
 		}
 		finally {
@@ -365,7 +365,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 
 				SessionErrors.add(renderRequest, "conv-prest-xls-formato");
 				renderRequest.setAttribute(Constants.CMD, Constants.SAVE);
-				_log.debug("[EDIT-CONV-PREST][SAVE][ERROR] Cabecera inv√°lida o incompleta");
+				_log.debug("[EDIT-CONV-PREST][SAVE][ERROR] Cabecera inv·lida o incompleta");
 			}
 			else {
 
@@ -405,7 +405,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 						SessionErrors.add(renderRequest, errorCabecera);
 						renderRequest.setAttribute(Constants.CMD, Constants.SAVE);
 						renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
-						_log.debug("[EDIT-CONV-PREST][SAVE][ERROR] Cabecera m√≠nima inv√°lida. error=" + errorCabecera);
+						_log.debug("[EDIT-CONV-PREST][SAVE][ERROR] Cabecera mÌnima inv·lida. error=" + errorCabecera);
 					}
 					else {
 						try {
@@ -427,7 +427,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 								renderRequest.setAttribute(Constants.CMD, Constants.SAVE);
 								renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
 
-								_log.debug("[EDIT-CONV-PREST][SAVE][ERROR] Validaci√≥n detalle existente. mensaje=" + mensaje);
+								_log.debug("[EDIT-CONV-PREST][SAVE][ERROR] ValidaciÛn detalle existente. mensaje=" + mensaje);
 							}
 							else {
 								renderRequest.setAttribute(Constants.CMD, Constants.SAVE);
@@ -524,7 +524,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 
 			_log.debug("[EDIT-CONV-PREST][VIEW][SERVICE] convenioPrestacional=" + convPrestacional);
 			_log.debug("[EDIT-CONV-PREST][VIEW][RENDER] Se setea CMD=VIEW");
-			_log.debug("[EDIT-CONV-PREST][VIEW][RENDER] Se setea convenio en edici√≥n");
+			_log.debug("[EDIT-CONV-PREST][VIEW][RENDER] Se setea convenio en ediciÛn");
 			_log.debug("[EDIT-CONV-PREST][VIEW][SESSION] Se limpia CONVENIO_PREST_DETALLES_EN_SESSION_DESGLOSE");
 			_log.info("[EDIT-CONV-PREST][VIEW][END] Fin flujo VIEW");
 		}
@@ -555,7 +555,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 			session.removeAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_RESULTS);
 			session.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_RESULTS, busqueda);
 
-			_log.debug("[EDIT-CONV-PREST][DELETE][SERVICE] Convenio eliminado l√≥gicamente");
+			_log.debug("[EDIT-CONV-PREST][DELETE][SERVICE] Convenio eliminado lÛgicamente");
 			_log.debug("[EDIT-CONV-PREST][DELETE][OK] SessionMessage deleteConvenioOk");
 			_log.debug("[EDIT-CONV-PREST][DELETE][RENDER] msgConvenioOk=" + msg);
 			_log.debug("[EDIT-CONV-PREST][DELETE][SESSION] filtroBusqueda=" + filtro);
@@ -602,7 +602,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 			_log.debug("[EDIT-CONV-PREST][CHANGE-STATE][RENDER] msgConvenioOk=" + msg);
 			_log.debug("[EDIT-CONV-PREST][CHANGE-STATE][SESSION] Se limpian detalles en session");
 			_log.debug("[EDIT-CONV-PREST][CHANGE-STATE][SERVICE] convenio recargado=" + convPrestacional);
-			_log.debug("[EDIT-CONV-PREST][CHANGE-STATE][RENDER] Se setea convenio en edici√≥n");
+			_log.debug("[EDIT-CONV-PREST][CHANGE-STATE][RENDER] Se setea convenio en ediciÛn");
 			_log.debug("[EDIT-CONV-PREST][CHANGE-STATE][RENDER] Se setea CMD=VIEW");
 			_log.info("[EDIT-CONV-PREST][CHANGE-STATE][END] Fin flujo cambio de estado");
 		}
@@ -648,14 +648,14 @@ public class EditarConvPrestacionalAction extends PortletAction {
 
 			if (convPrestacional == null || convPrestacional.getId() <= 0) {
 				SessionErrors.add(renderRequest, "conv-prest-validaciones");
-				renderRequest.setAttribute("msgConvenioFail", "No se puede actualizar un convenio sin ID v√°lido");
+				renderRequest.setAttribute("msgConvenioFail", "No se puede actualizar un convenio sin ID v·lido");
 				renderRequest.setAttribute(Constants.CMD, Constants.SAVE);
 				renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
 
-				_log.debug("[EDIT-CONV-PREST][UPDATE][ERROR] Update inv√°lido. idConvenio="
+				_log.debug("[EDIT-CONV-PREST][UPDATE][ERROR] Update inv·lido. idConvenio="
 						+ (convPrestacional != null ? convPrestacional.getId() : "null"));
 
-				_log.info("[EDIT-CONV-PREST][UPDATE][END] Fin flujo UPDATE por id inv√°lido");
+				_log.info("[EDIT-CONV-PREST][UPDATE][END] Fin flujo UPDATE por id inv·lido");
 			}
 			else {
 				if (convPrestacional != null) {
@@ -686,7 +686,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 							SessionErrors.add(renderRequest, errorCabecera);
 							renderRequest.setAttribute(Constants.CMD, Constants.UPDATE);
 							renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
-							_log.debug("[EDIT-CONV-PREST][UPDATE][ERROR] Cabecera m√≠nima inv√°lida. error=" + errorCabecera);
+							_log.debug("[EDIT-CONV-PREST][UPDATE][ERROR] Cabecera mÌnima inv·lida. error=" + errorCabecera);
 						} else {
 							try {
 								aplicarDefaultsPersistencia(convPrestacional);
@@ -739,7 +739,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 					renderRequest.setAttribute(WebKeysLiquidaciones.CONVENIO_PREST_EN_EDICION, convPrestacional);
 				}
 			}
-			_log.debug("[EDIT-CONV-PREST][UPDATE][RENDER] Se setea CMD=UPDATE y convenio en edici√≥n");
+			_log.debug("[EDIT-CONV-PREST][UPDATE][RENDER] Se setea CMD=UPDATE y convenio en ediciÛn");
 			_log.info("[EDIT-CONV-PREST][UPDATE][END] Fin flujo UPDATE");
 		}
 
@@ -747,7 +747,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 
 		renderRequest.setAttribute(ATTR_MODO_EDICION, Boolean.valueOf(getModoEdicion(session)));
 
-		_log.debug("[EDIT-CONV-PREST][RENDER][SESSION] Se persiste convenio en edici√≥n y detalles en session");
+		_log.debug("[EDIT-CONV-PREST][RENDER][SESSION] Se persiste convenio en ediciÛn y detalles en session");
 		_log.debug("[EDIT-CONV-PREST][RENDER][SESSION] convPrestacional=" + convPrestacional
 				+ ", detallesSession="
 				+ (convPrestacional != null && convPrestacional.getConvenioPrestDetalle() != null
@@ -849,7 +849,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 
 		try {
 			if (fechaDesdeDefault == null) {
-				throw new IllegalArgumentException("La Fecha Desde de Datos Prestaci√≥n es obligatoria antes de importar el XLS");
+				throw new IllegalArgumentException("La Fecha Desde de Datos PrestaciÛn es obligatoria antes de importar el XLS");
 			}
 
 			fis = new FileInputStream(file);
@@ -871,7 +871,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 					parsearDetalles(sheetDet, fechaDesdeDefault, session, planesHabilitadosPrestador);
 
 			if (detalles == null || detalles.isEmpty()) {
-				throw new IllegalArgumentException("El XLS no contiene filas de detalle v√°lidas");
+				throw new IllegalArgumentException("El XLS no contiene filas de detalle v·lidas");
 			}
 
 			ConvenioPrestacional convenio = new ConvenioPrestacional();
@@ -910,7 +910,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 															  Map<Integer, String> planesHabilitadosPrestador) throws Exception {
 
 		if (fechaDesdeDefault == null) {
-			throw new IllegalArgumentException("La Fecha Desde de Datos Prestaci√≥n es obligatoria para construir fecha_desde");
+			throw new IllegalArgumentException("La Fecha Desde de Datos PrestaciÛn es obligatoria para construir fecha_desde");
 		}
 
 		List<ConvenioPrestacionalDetalle> detalles = new ArrayList<ConvenioPrestacionalDetalle>();
@@ -954,7 +954,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 			BigDecimal importe = toBigDecimal(cell(row, colImporte.intValue()), false);
 
 			if (StringUtils.checkEmpty(codigo)) {
-				throw new IllegalArgumentException("DETALLE fila " + (i + 1) + ": c√≥digo obligatorio");
+				throw new IllegalArgumentException("DETALLE fila " + (i + 1) + ": cÛdigo obligatorio");
 			}
 
 			validarCodigoSiInformado(codigo, i + 1);
@@ -1012,7 +1012,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 
 			if (!keysImportadas.add(key)) {
 				throw new IllegalArgumentException(
-						"El XLS contiene filas duplicadas por c√≥digo y plan. No se realiz√≥ la importaci√≥n. Clave duplicada: "
+						"El XLS contiene filas duplicadas por cÛdigo y plan. No se realizÛ la importaciÛn. Clave duplicada: "
 								+ key + " (fila " + (i + 1) + ")");
 			}
 
@@ -1085,7 +1085,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 
 			// IMPORTANTE:
 			// ya NO se hace det.setFechaHasta(null),
-			// porque romper√≠a la cadena temporal previamente normalizada.
+			// porque romperÌa la cadena temporal previamente normalizada.
 			aplicarDefaultsDetalle(det);
 		}
 	}
@@ -1123,7 +1123,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 
 				if (idPrestacion == null || idPrestacion.intValue() <= 0) {
 					throw new IllegalArgumentException("DETALLE fila " + nroFila
-							+ ": no se encontr√≥ id_prestacion para c√≥digo " + codigo);
+							+ ": no se encontrÛ id_prestacion para cÛdigo " + codigo);
 				}
 
 				cachePrestaciones.put(key, idPrestacion);
@@ -1536,7 +1536,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 			List<ConvenioPrestacionalDetalle> importados) {
 
 		if (importados == null || importados.isEmpty()) {
-			throw new IllegalArgumentException("El XLS no contiene filas v√°lidas para reemplazar la lista actual");
+			throw new IllegalArgumentException("El XLS no contiene filas v·lidas para reemplazar la lista actual");
 		}
 
 		List<ConvenioPrestacionalDetalle> resultado = new ArrayList<ConvenioPrestacionalDetalle>();
@@ -1553,8 +1553,8 @@ public class EditarConvPrestacionalAction extends PortletAction {
 			String key = buildBusinessKey(imp);
 
 			if (!keysImportadas.add(key)) {
-				_log.warn("[EDIT-CONV-PREST][XLS][REPLACE][ERROR] Se detect√≥ duplicado interno antes de reemplazar. key=" + key);
-				throw new IllegalArgumentException("El XLS contiene filas duplicadas por c√≥digo y plan. No se realiz√≥ la importaci√≥n. Clave duplicada: " + key);
+				_log.warn("[EDIT-CONV-PREST][XLS][REPLACE][ERROR] Se detectÛ duplicado interno antes de reemplazar. key=" + key);
+				throw new IllegalArgumentException("El XLS contiene filas duplicadas por cÛdigo y plan. No se realizÛ la importaciÛn. Clave duplicada: " + key);
 			}
 
 			imp.setId(nextTempId--);
@@ -1602,7 +1602,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 	private void validarPlanObligatorio(int idPlan, int nroFila, HttpSession session) {
 
 		if (idPlan <= 0) {
-			throw new IllegalArgumentException("DETALLE fila " + nroFila + ": id_plan inv√°lido");
+			throw new IllegalArgumentException("DETALLE fila " + nroFila + ": id_plan inv·lido");
 		}
 
 		Object planesObj = session.getAttribute(WebKeysLiquidaciones.PLANES_EN_SESSION);
@@ -1649,7 +1649,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 		}
 
 		if (codigo.trim().length() > 10) {
-			throw new IllegalArgumentException("DETALLE fila " + nroFila + ": c√≥digo supera longitud m√°xima (10)");
+			throw new IllegalArgumentException("DETALLE fila " + nroFila + ": cÛdigo supera longitud m·xima (10)");
 		}
 	}
 
@@ -1843,13 +1843,13 @@ public class EditarConvPrestacionalAction extends PortletAction {
 		String descNorm = StringUtils.checkNotEmpty(prestacionDesc) ? prestacionDesc.trim() : null;
 
 		if (codigoNorm == null) {
-			throw new IllegalArgumentException("DETALLE fila " + nroFila + ": c√≥digo obligatorio");
+			throw new IllegalArgumentException("DETALLE fila " + nroFila + ": cÛdigo obligatorio");
 		}
 
 		Integer idPrestacion = buscarIdPrestacionPorCodigo(codigoNorm);
 
 		if (idPrestacion == null || idPrestacion.intValue() <= 0) {
-			throw new IllegalArgumentException("DETALLE fila " + nroFila + ": no se encontr√≥ prestaci√≥n para c√≥digo " + codigoNorm);
+			throw new IllegalArgumentException("DETALLE fila " + nroFila + ": no se encontrÛ prestaciÛn para cÛdigo " + codigoNorm);
 		}
 
 		String descripcionResuelta = descNorm;
@@ -1885,21 +1885,21 @@ public class EditarConvPrestacionalAction extends PortletAction {
 		if (StringUtils.checkEmpty(dia)
 				|| StringUtils.checkEmpty(mes)
 				|| StringUtils.checkEmpty(anio)) {
-			throw new IllegalArgumentException("Debe informar la Fecha Desde en Datos Prestaci√≥n antes de importar el XLS");
+			throw new IllegalArgumentException("Debe informar la Fecha Desde en Datos PrestaciÛn antes de importar el XLS");
 		}
 
 		try {
 			SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
 			Date fecha = formato.parse(dia + "/" + (Integer.parseInt(mes) + 1) + "/" + anio);
 
-			_log.debug("[EDIT-CONV-PREST][XLS][FECHA-DESDE] Fecha desde importaci√≥n resuelta desde Datos Prestaci√≥n=" + fecha);
+			_log.debug("[EDIT-CONV-PREST][XLS][FECHA-DESDE] Fecha desde importaciÛn resuelta desde Datos PrestaciÛn=" + fecha);
 
 			return fecha;
 		}
 		catch (Exception e) {
-			_log.error("[EDIT-CONV-PREST][XLS][FECHA-DESDE][ERROR] Error parseando Fecha Desde de Datos Prestaci√≥n. valores="
+			_log.error("[EDIT-CONV-PREST][XLS][FECHA-DESDE][ERROR] Error parseando Fecha Desde de Datos PrestaciÛn. valores="
 					+ dia + "/" + mes + "/" + anio, e);
-			throw new IllegalArgumentException("La Fecha Desde de Datos Prestaci√≥n es inv√°lida");
+			throw new IllegalArgumentException("La Fecha Desde de Datos PrestaciÛn es inv·lida");
 		}
 	}
 
@@ -1996,7 +1996,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 			if (!keys.add(key)) {
 				throw new IllegalArgumentException(
 						"DETALLE fila " + nroFila
-								+ ": existe un √≠tem duplicado con misma prestaci√≥n/c√≥digo, misma fecha desde y mismo plan. Clave: " + key);
+								+ ": existe un Ìtem duplicado con misma prestaciÛn/cÛdigo, misma fecha desde y mismo plan. Clave: " + key);
 			}
 		}
 	}
@@ -2086,7 +2086,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 
 	private String validarDetalleExistenteConDiagnostico(ConvenioPrestacional convPrestacional) throws Exception {
 
-		_log.info("[EDIT-CONV-PREST][VALIDACION-DET][START] Inicio validaci√≥n de detalle con diagn√≥stico");
+		_log.info("[EDIT-CONV-PREST][VALIDACION-DET][START] Inicio validaciÛn de detalle con diagnÛstico");
 
 		if (convPrestacional == null) {
 			_log.warn("[EDIT-CONV-PREST][VALIDACION-DET][WARN] convPrestacional es null");
@@ -2111,7 +2111,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 			_log.debug("[EDIT-CONV-PREST][VALIDACION-DET][RESULT] Sin conflictos detectados");
 		}
 
-		_log.info("[EDIT-CONV-PREST][VALIDACION-DET][END] Fin validaci√≥n de detalle con diagn√≥stico");
+		_log.info("[EDIT-CONV-PREST][VALIDACION-DET][END] Fin validaciÛn de detalle con diagnÛstico");
 
 		return mensaje;
 	}
@@ -2272,7 +2272,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 			return;
 		}
 
-		// Regla pedida: s√≥lo para convenios nuevos, sin persistencia previa.
+		// Regla pedida: sÛlo para convenios nuevos, sin persistencia previa.
 		if (convenio.getId() > 0) {
 			return;
 		}
@@ -2311,19 +2311,19 @@ public class EditarConvPrestacionalAction extends PortletAction {
 			if (fechaNueva.equals(fechaActual)) {
 				throw new IllegalArgumentException(
 						"DETALLE fila " + nroFila
-								+ ": existe un √≠tem duplicado con misma prestaci√≥n/c√≥digo, misma fecha desde y mismo plan. Clave: "
+								+ ": existe un Ìtem duplicado con misma prestaciÛn/cÛdigo, misma fecha desde y mismo plan. Clave: "
 								+ keyOperativa + "|" + formatearFechaKey(fechaNueva));
 			}
 
-			// Regla de negocio: sobrevive la fecha_desde m√°s nueva
+			// Regla de negocio: sobrevive la fecha_desde m·s nueva
 			if (fechaNueva.after(fechaActual)) {
-				_log.warn("[EDIT-CONV-PREST][NORMALIZE][REPLACE] Se reemplaza detalle anterior por uno m√°s nuevo. keyOperativa="
+				_log.warn("[EDIT-CONV-PREST][NORMALIZE][REPLACE] Se reemplaza detalle anterior por uno m·s nuevo. keyOperativa="
 						+ keyOperativa
 						+ ", fechaAnterior=" + formatearFechaDebug(fechaActual)
 						+ ", fechaNueva=" + formatearFechaDebug(fechaNueva));
 				ganadoresPorClave.put(keyOperativa, det);
 			} else {
-				_log.warn("[EDIT-CONV-PREST][NORMALIZE][DROP] Se descarta detalle por existir otro m√°s nuevo. keyOperativa="
+				_log.warn("[EDIT-CONV-PREST][NORMALIZE][DROP] Se descarta detalle por existir otro m·s nuevo. keyOperativa="
 						+ keyOperativa
 						+ ", fechaDescartada=" + formatearFechaDebug(fechaNueva)
 						+ ", fechaGanadora=" + formatearFechaDebug(fechaActual));
@@ -2332,7 +2332,7 @@ public class EditarConvPrestacionalAction extends PortletAction {
 
 		convenio.setConvenioPrestDetalle(new ArrayList<ConvenioPrestacionalDetalle>(ganadoresPorClave.values()));
 
-		_log.info("[EDIT-CONV-PREST][NORMALIZE][END] Normalizaci√≥n de convenio nuevo aplicada. originales="
+		_log.info("[EDIT-CONV-PREST][NORMALIZE][END] NormalizaciÛn de convenio nuevo aplicada. originales="
 				+ originales.size()
 				+ ", normalizados=" + convenio.getConvenioPrestDetalle().size());
 	}

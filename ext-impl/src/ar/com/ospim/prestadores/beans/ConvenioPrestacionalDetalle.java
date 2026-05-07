@@ -35,7 +35,7 @@ public class ConvenioPrestacionalDetalle implements Serializable{
 //	private String descripcion_prestacion_desde;
 //	private int id_prestacion_hasta;
 //	private String descripcion_prestacion_hasta;
-	private int idPlan; // --todos los id_plan mas la opci�n 'todos' que es 0
+	private int idPlan; // --todos los id_plan mas la opci?n 'todos' que es 0
 	private String planDescripcion;
 //	private int idCartilla;
 	private BigDecimal coseguro;

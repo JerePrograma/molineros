@@ -18,8 +18,8 @@ $RECYCLE.BIN/
 *.tmp
 
 # --- IDEs / editores ---
-# NO ignorar .idea completa: puede tener configuraciÃ³n Ãºtil del proyecto.
-# Se ignoran solo archivos volÃ¡tiles/locales.
+# NO ignorar .idea completa: puede tener configuración útil del proyecto.
+# Se ignoran solo archivos volátiles/locales.
 .vscode/
 .recommenders/
 
@@ -60,7 +60,7 @@ output/
 hs_err_pid*
 replay_pid*
 
-# --- Cobertura / anÃ¡lisis ---
+# --- Cobertura / análisis ---
 coverage/
 .coverage
 
@@ -76,7 +76,7 @@ node_modules/
 # en este proyecto legacy puede haber JARs necesarios en lib/, ext-lib/, etc.
 
 # No ignorar *.war globalmente:
-# ROOT.war queda trackeable si decidÃ­s versionarlo.
+# ROOT.war queda trackeable si decidís versionarlo.
 
 # Artefactos puntuales generados por Liferay EXT
 /ext-impl/ext-impl.jar
@@ -91,13 +91,13 @@ _backup_*/
 *.backup
 *.backup-*
 
-# --- Archivos de entorno sensibles genÃ©ricos ---
-# OJO: no se ignora app.server.* porque en este repo querÃ©s trackear deploy local explÃ­cito.
+# --- Archivos de entorno sensibles genéricos ---
+# OJO: no se ignora app.server.* porque en este repo querés trackear deploy local explícito.
 .env
 .env.*
 *.local
 
-# --- Reportes locales de auditorÃ­a ---
+# --- Reportes locales de auditoría ---
 tracked-build-properties-audit.txt
 
 # ------------------------------------------------------------

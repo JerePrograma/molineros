@@ -20,12 +20,12 @@ if (tabs1 == null) {
  * Permisos migrados desde Liquidaciones.
  *
  * En el JSP original de Liquidaciones, el acceso al tab "prestador"
- * dependÃ­a exclusivamente de:
+ * dependía exclusivamente de:
  *
  * - ABM_PRESTADOR
  * - VIEW_PRESTADOR
  *
- * Como no habÃ­a roles especÃ­ficos para convenios en ese JSP,
+ * Como no había roles específicos para convenios en ese JSP,
  * se usa el mismo permiso base para Prestadores, Convenios y Cartilla.
  */
 boolean showPrestador =

@@ -50,13 +50,13 @@
 	PortletURL portletURLConvPrestDetalle = renderResponse.createRenderURL();
 
 	List<String> headerNamesConvPrestDetalle = new ArrayList<String>();
-	headerNamesConvPrestDetalle.add("PrestaciÃ³n");
-	headerNamesConvPrestDetalle.add("CÃ³digo");
+	headerNamesConvPrestDetalle.add("Prestación");
+	headerNamesConvPrestDetalle.add("Código");
 	headerNamesConvPrestDetalle.add("Fecha Desde/Hasta");
 	headerNamesConvPrestDetalle.add("Plan");
 	headerNamesConvPrestDetalle.add("Servicio");
 	headerNamesConvPrestDetalle.add("Coseguro");
-	headerNamesConvPrestDetalle.add("Tipo ValorizaciÃ³n");
+	headerNamesConvPrestDetalle.add("Tipo Valorización");
 	headerNamesConvPrestDetalle.add("Importe");
 	headerNamesConvPrestDetalle.add("Porcentaje");
 

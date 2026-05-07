@@ -13,7 +13,7 @@
 		BusquedaConvenioPrestacionalFiltro filtro = (BusquedaConvenioPrestacionalFiltro) request.getSession().getAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_FILTRO);
 
             // CONV-PREST-FILTRO-NORMALIZACION
-            // Limpia sesiones viejas donde idPrestador quedÃ³ guardado como 0.
+            // Limpia sesiones viejas donde idPrestador quedó guardado como 0.
             if (filtro != null) {
                     if (filtro.getIdPrestador() != null && filtro.getIdPrestador().intValue() <= 0) {
                             filtro.setIdPrestador(null);

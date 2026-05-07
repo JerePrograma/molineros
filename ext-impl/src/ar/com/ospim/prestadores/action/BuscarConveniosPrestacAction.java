@@ -26,7 +26,7 @@ import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
 
 /**
- * Realiza la bï¿½squeda de contratos segï¿½n parï¿½metros de entrada
+ * Realiza la b?squeda de contratos seg?n par?metros de entrada
  *
  * @author Carlos Rivas
  * @modif SVA
@@ -84,14 +84,14 @@ public class BuscarConveniosPrestacAction extends PortletAction {
 
 			session.removeAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_FILTRO);
 			session.removeAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_RESULTS);
-			_log.debug("[BUSCAR-CONV-PREST][RENDER][SESSION] Se limpian atributos previos de bÃºsqueda");
+			_log.debug("[BUSCAR-CONV-PREST][RENDER][SESSION] Se limpian atributos previos de búsqueda");
 
 			session.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_FILTRO, filtro);
 			session.setAttribute(WebKeysLiquidaciones.BUSQUEDA_CONVENIOS_PRESTAC_RESULTS, busqueda);
 			_log.debug("[BUSCAR-CONV-PREST][RENDER][SESSION] Se guardan filtro y resultados en session");
 
 		} catch (Exception e) {
-			_log.error("[BUSCAR-CONV-PREST][RENDER][ERROR] Error en bÃºsqueda de convenios prestacionales", e);
+			_log.error("[BUSCAR-CONV-PREST][RENDER][ERROR] Error en búsqueda de convenios prestacionales", e);
 		}
 
 		_log.info("[BUSCAR-CONV-PREST][RENDER][END] Fin render. Forward=portlet.prestadores.conv_prestac.result.search");

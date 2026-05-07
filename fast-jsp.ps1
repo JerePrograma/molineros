@@ -32,4 +32,4 @@ foreach ($file in $files) {
   Write-Host "COPIADO: $relative" -ForegroundColor Green
 }
 
-Write-Host "Fast deploy JSP/assets terminado. No se reiniciÃ³ Tomcat." -ForegroundColor Cyan
+Write-Host "Fast deploy JSP/assets terminado. No se reinició Tomcat." -ForegroundColor Cyan

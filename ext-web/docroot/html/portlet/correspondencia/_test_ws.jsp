@@ -5,7 +5,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Test WS PrevenciÃ³n</title>
+<title>Test WS Prevención</title>
 </head>
 <body>
 		<table>

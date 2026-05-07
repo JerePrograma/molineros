@@ -19,7 +19,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 /**
- * servicio test que nos da acceso a los datos de la aplicaciï¿½n (BD).
+ * servicio test que nos da acceso a los datos de la aplicaci?n (BD).
  *
  */
 public class ConvenioPrestacionalServiceImpl {
@@ -28,7 +28,7 @@ public class ConvenioPrestacionalServiceImpl {
 
 	/**
 	 * Metodo que obtiene un convenio prestacional a partir de la clave primaria, en caso de
-	 * que estï¿½ dado de baja o de no encontrarlo retorna null
+	 * que est? dado de baja o de no encontrarlo retorna null
 	 *
 	 * @throws SystemException
 	 * @throws NoSuchConvenioPrestacionalEntryException
@@ -45,7 +45,7 @@ public class ConvenioPrestacionalServiceImpl {
 			String sql = "{call convenio_prest.buscar_convenio_prestacional_cab(?)}";
 			_log.debug("[CONV-PREST-SVC][GET-CAB][SQL] " + sql);
 			con = ConnectionHelper.getConnection();
-			_log.debug("[CONV-PREST-SVC][GET-CAB][CONN] ConexiÃ³n obtenida=" + (con != null));
+			_log.debug("[CONV-PREST-SVC][GET-CAB][CONN] Conexión obtenida=" + (con != null));
 			stmt = con.prepareCall(sql.toString());
 			stmt.setInt(1, idConvenioPrest);
 			_log.debug("[CONV-PREST-SVC][GET-CAB][PARAM] idConvenioPrest=" + idConvenioPrest);
@@ -67,7 +67,7 @@ public class ConvenioPrestacionalServiceImpl {
 
 	/**
 	 * Metodo que obtiene la lista de detalles a partir de la clave primaria del
-	 * conv.prestacional, en caso de no encontrarla arroja excepciï¿½n
+	 * conv.prestacional, en caso de no encontrarla arroja excepci?n
 	 *
 	 * @throws SystemException
 	 * @throws NoSuchConvenioPrestacionalEntryException
@@ -87,7 +87,7 @@ public class ConvenioPrestacionalServiceImpl {
 			_log.debug("[CONV-PREST-SVC][GET-DET][SQL] " + sql);
 
 			con = ConnectionHelper.getConnection();
-			_log.debug("[CONV-PREST-SVC][GET-DET][CONN] ConexiÃ³n obtenida=" + (con != null));
+			_log.debug("[CONV-PREST-SVC][GET-DET][CONN] Conexión obtenida=" + (con != null));
 
 			stmt = con.prepareCall(sql);
 			stmt.setInt(1, idConvPrest);
@@ -217,11 +217,11 @@ public class ConvenioPrestacionalServiceImpl {
 		}
 
 		if (convPrest.getId() <= 0) {
-			throw new SystemException("No se puede actualizar un convenio con id invÃ¡lido: " + convPrest.getId());
+			throw new SystemException("No se puede actualizar un convenio con id inválido: " + convPrest.getId());
 		}
 
 		if (convPrest.getPrestador() == null || convPrest.getPrestador().getId_prestador() <= 0) {
-			throw new SystemException("No se puede actualizar un convenio sin prestador vÃ¡lido");
+			throw new SystemException("No se puede actualizar un convenio sin prestador válido");
 		}
 
 		Connection con = null;
@@ -233,7 +233,7 @@ public class ConvenioPrestacionalServiceImpl {
 			_log.debug("[CONV-PREST-SVC][UPDATE][SQL-CAB] " + sql);
 
 			con = ConnectionHelper.getConnectionForTransaction();
-			_log.debug("[CONV-PREST-SVC][UPDATE][CONN] ConexiÃ³n transaccional obtenida=" + (con != null));
+			_log.debug("[CONV-PREST-SVC][UPDATE][CONN] Conexión transaccional obtenida=" + (con != null));
 
 			// CABECERA
 			stmt = con.prepareCall(sql);
@@ -296,7 +296,7 @@ public class ConvenioPrestacionalServiceImpl {
 	}
 
 	/**
-	 * Metodo que aplica borrado lÃ³gico de un convenio prestacional a partir de la clave
+	 * Metodo que aplica borrado lógico de un convenio prestacional a partir de la clave
 	 * primaria, no borra el reintegro convenio prestacional, solo lo da de baja
 	 *
 	 * @throws NoSuchConvenioPrestacionalEntryException
@@ -316,7 +316,7 @@ public class ConvenioPrestacionalServiceImpl {
 			_log.debug("[CONV-PREST-SVC][DELETE][SQL] " + sql);
 
 			con = ConnectionHelper.getConnectionForTransaction();
-			_log.debug("[CONV-PREST-SVC][DELETE][CONN] ConexiÃ³n transaccional obtenida=" + (con != null));
+			_log.debug("[CONV-PREST-SVC][DELETE][CONN] Conexión transaccional obtenida=" + (con != null));
 
 			// HISTORIZAR DETALLES ACTUALES Y ELIMINARLOS DE LA TABLA OPERATIVA
 			int migrados = migrarDetallesConvenioAHistorico(
@@ -326,9 +326,9 @@ public class ConvenioPrestacionalServiceImpl {
 					"ELIMINACION_CONVENIO",
 					true);
 
-			_log.debug("[CONV-PREST-SVC][DELETE][HIS] Detalles migrados a histÃ³rico=" + migrados);
+			_log.debug("[CONV-PREST-SVC][DELETE][HIS] Detalles migrados a histórico=" + migrados);
 
-			// BAJA LÃ“GICA DE CABECERA
+			// BAJA LÓGICA DE CABECERA
 			stmt = con.prepareCall(sql);
 			stmt.setInt(1, idconvenioPrest);
 			stmt.setString(2, userName);
@@ -382,10 +382,10 @@ public class ConvenioPrestacionalServiceImpl {
 			con = ConnectionHelper.getConnection();
 
 			/*
-			 * NO se historizan detalles acÃ¡.
-			 * Este mÃ©todo modifica Ãºnicamente el estado de la cabecera del convenio.
-			 * Historizar detalle en este flujo mezclarÃ­a auditorÃ­a de cabecera con versionado
-			 * de detalle y podrÃ­a dejar inconsistente el convenio activo.
+			 * NO se historizan detalles acá.
+			 * Este método modifica únicamente el estado de la cabecera del convenio.
+			 * Historizar detalle en este flujo mezclaría auditoría de cabecera con versionado
+			 * de detalle y podría dejar inconsistente el convenio activo.
 			 */
 			String sql = "{call convenio_prest.cambio_estado_convenio_prest(?,?,?)}";
 
@@ -436,7 +436,7 @@ public class ConvenioPrestacionalServiceImpl {
 			_log.debug("[CONV-PREST-SVC][INSERT][SQL-CAB] " + sql);
 
 			con = ConnectionHelper.getConnectionForTransaction();
-			_log.debug("[CONV-PREST-SVC][INSERT][CONN] ConexiÃ³n transaccional obtenida=" + (con != null));
+			_log.debug("[CONV-PREST-SVC][INSERT][CONN] Conexión transaccional obtenida=" + (con != null));
 
 			stmt = con.prepareCall(sql);
 			stmt.setInt(1, convPrest.getPrestador().getId_prestador());
@@ -466,7 +466,7 @@ public class ConvenioPrestacionalServiceImpl {
 			}
 
 			if (idConvenioPrest <= 0) {
-				throw new SQLException("No se obtuvo un id_convenio_prest vÃ¡lido al insertar la cabecera");
+				throw new SQLException("No se obtuvo un id_convenio_prest válido al insertar la cabecera");
 			}
 
 			convPrest.setId(idConvenioPrest);
@@ -511,8 +511,8 @@ public class ConvenioPrestacionalServiceImpl {
 	}
 
 	/**
-	 * Metodo que obtiene la lista de prestaciones por detalle del cï¿½digo a partir de la clave primaria del
-	 * conv.prestacional, en caso de no encontrarla arroja excepciï¿½n
+	 * Metodo que obtiene la lista de prestaciones por detalle del c?digo a partir de la clave primaria del
+	 * conv.prestacional, en caso de no encontrarla arroja excepci?n
 	 *
 	 * @throws SystemException
 	 * @throws NoSuchConvenioPrestacionalEntryException
@@ -541,7 +541,7 @@ public class ConvenioPrestacionalServiceImpl {
 				_log.debug("[CONV-PREST-SVC][GET-DET-DESG][ROW] detalle agregado=" + convPrestDet);
 			}
 		} catch (Exception e) {
-			_log.debug("Error al obtener prestaciones detalle por cï¿½digo", e);
+			_log.debug("Error al obtener prestaciones detalle por c?digo", e);
 			throw new SystemException(e);
 		} finally {
 			ConnectionHelper.cerrar(stmt, con);
@@ -553,7 +553,7 @@ public class ConvenioPrestacionalServiceImpl {
 
 	/**
 	 * Metodo que obtiene un convenio prestacional de un prestador, en caso de
-	 * que estï¿½ dado de baja o de no encontrarlo retorna null
+	 * que est? dado de baja o de no encontrarlo retorna null
 	 *
 	 * @throws SystemException
 	 * @throws NoSuchConvenioPrestacionalEntryException
@@ -714,7 +714,7 @@ public class ConvenioPrestacionalServiceImpl {
 
 		} catch (Exception e) {
 			_log.debug(e);
-			throw new RuntimeException("Error buscando id_prestacion por cÃ³digo: " + codigo, e);
+			throw new RuntimeException("Error buscando id_prestacion por código: " + codigo, e);
 		} finally {
 			ConnectionHelper.cerrar(stmt, con);
 		}
@@ -747,7 +747,7 @@ public class ConvenioPrestacionalServiceImpl {
 
 		} catch (Exception e) {
 			_log.debug(e);
-			throw new RuntimeException("Error buscando descripciÃ³n de prestaciÃ³n por cÃ³digo: " + codigo, e);
+			throw new RuntimeException("Error buscando descripción de prestación por código: " + codigo, e);
 		} finally {
 			ConnectionHelper.cerrar(stmt, con);
 		}
@@ -803,13 +803,13 @@ public class ConvenioPrestacionalServiceImpl {
 				rsMigrar = stmtMigrar.executeQuery();
 
 				if (!rsMigrar.next()) {
-					throw new SQLException("No se obtuvo id histÃ³rico al migrar detalle id=" + idDetalle);
+					throw new SQLException("No se obtuvo id histórico al migrar detalle id=" + idDetalle);
 				}
 
 				int idHistorico = rsMigrar.getInt(1);
 
 				_log.debug("[CONV-PREST-SVC][HIS][OK] detalle id=" + idDetalle
-						+ " migrado a histÃ³rico idHistorico=" + idHistorico);
+						+ " migrado a histórico idHistorico=" + idHistorico);
 
 				rsMigrar.close();
 				rsMigrar = null;
@@ -924,26 +924,26 @@ public class ConvenioPrestacionalServiceImpl {
 			logDetalleServicio("VAL", nroItem, det);
 
 			if (det.getPrestacion() == null || det.getPrestacion().getId() <= 0) {
-				String msg = "El Ã­tem nro: " + nroItem + " no tiene id_prestacion resuelto";
+				String msg = "El ítem nro: " + nroItem + " no tiene id_prestacion resuelto";
 				_log.warn("[CONV-PREST-SVC][VALID-DET][ERROR] " + msg);
 				return msg;
 			}
 
 			if (det.getFechaDesde() == null) {
-				String msg = "El Ã­tem nro: " + nroItem + " no tiene fecha desde informada";
+				String msg = "El ítem nro: " + nroItem + " no tiene fecha desde informada";
 				_log.warn("[CONV-PREST-SVC][VALID-DET][ERROR] " + msg);
 				return msg;
 			}
 
 			if (det.getFechaHasta() != null && det.getFechaHasta().before(det.getFechaDesde())) {
-				String msg = "El Ã­tem nro: " + nroItem + " tiene fecha hasta menor a fecha desde";
+				String msg = "El ítem nro: " + nroItem + " tiene fecha hasta menor a fecha desde";
 				_log.warn("[CONV-PREST-SVC][VALID-DET][ERROR] " + msg);
 				return msg;
 			}
 
 			if (convenio.getVigencia() != null
 					&& truncarFechaValidacion(det.getFechaDesde()).before(truncarFechaValidacion(convenio.getVigencia()))) {
-				String msg = "El Ã­tem nro: " + nroItem + " tiene fecha desde anterior a la vigencia del convenio";
+				String msg = "El ítem nro: " + nroItem + " tiene fecha desde anterior a la vigencia del convenio";
 				_log.warn("[CONV-PREST-SVC][VALID-DET][ERROR] " + msg);
 				return msg;
 			}
@@ -953,7 +953,7 @@ public class ConvenioPrestacionalServiceImpl {
 				Date fechaVencConvenio = truncarFechaValidacion(convenio.getVencimiento());
 
 				if (fechaDesdeDet.after(fechaVencConvenio)) {
-					String msg = "El Ã­tem nro: " + nroItem + " tiene fecha desde posterior al vencimiento del convenio";
+					String msg = "El ítem nro: " + nroItem + " tiene fecha desde posterior al vencimiento del convenio";
 					_log.warn("[CONV-PREST-SVC][VALID-DET][ERROR] " + msg);
 					return msg;
 				}
@@ -961,7 +961,7 @@ public class ConvenioPrestacionalServiceImpl {
 				if (det.getFechaHasta() != null) {
 					Date fechaHastaDet = truncarFechaValidacion(det.getFechaHasta());
 					if (fechaHastaDet.after(fechaVencConvenio)) {
-						String msg = "El Ã­tem nro: " + nroItem + " tiene fecha hasta posterior al vencimiento del convenio";
+						String msg = "El ítem nro: " + nroItem + " tiene fecha hasta posterior al vencimiento del convenio";
 						_log.warn("[CONV-PREST-SVC][VALID-DET][ERROR] " + msg);
 						return msg;
 					}
@@ -1001,10 +1001,10 @@ public class ConvenioPrestacionalServiceImpl {
 				Date fechaDesdeSiguiente = truncarFechaValidacion(siguiente.detalle.getFechaDesde());
 
 				if (mismaFechaValidacion(fechaDesdeActual, fechaDesdeSiguiente)) {
-					String msg = "El Ã­tem nro: " + actual.nroItem
-							+ " tiene duplicado exacto con el Ã­tem nro: "
+					String msg = "El ítem nro: " + actual.nroItem
+							+ " tiene duplicado exacto con el ítem nro: "
 							+ siguiente.nroItem
-							+ " para la misma prestaciÃ³n y plan (misma fecha desde)";
+							+ " para la misma prestación y plan (misma fecha desde)";
 
 					_log.warn("[CONV-PREST-SVC][VALID-DET][ERROR] " + msg);
 					_log.warn("[CONV-PREST-SVC][VALID-DET][ERROR][DETAIL] "
@@ -1025,7 +1025,7 @@ public class ConvenioPrestacionalServiceImpl {
 				}
 
 				if (!fechaDesdeSiguiente.after(fechaDesdeActual)) {
-					String msg = "La secuencia temporal de la prestaciÃ³n/plan estÃ¡ desordenada entre los Ã­tems nro: "
+					String msg = "La secuencia temporal de la prestación/plan está desordenada entre los ítems nro: "
 							+ actual.nroItem + " y " + siguiente.nroItem;
 
 					_log.warn("[CONV-PREST-SVC][VALID-DET][ERROR] " + msg);
@@ -1034,12 +1034,12 @@ public class ConvenioPrestacionalServiceImpl {
 
 				Date fechaHastaActual = truncarFechaValidacion(actual.detalle.getFechaHasta());
 
-				// SÃ³lo rechazo solapamiento real.
-				// Si fechaHasta es null acÃ¡, todavÃ­a no es error: el service de sincronizaciÃ³n puede normalizar la cadena.
+				// Sólo rechazo solapamiento real.
+				// Si fechaHasta es null acá, todavía no es error: el service de sincronización puede normalizar la cadena.
 				if (fechaHastaActual != null && !fechaHastaActual.before(fechaDesdeSiguiente)) {
-					String msg = "El Ã­tem nro: " + actual.nroItem
-							+ " se superpone temporalmente con el Ã­tem nro: " + siguiente.nroItem
-							+ " para la misma prestaciÃ³n y plan";
+					String msg = "El ítem nro: " + actual.nroItem
+							+ " se superpone temporalmente con el ítem nro: " + siguiente.nroItem
+							+ " para la misma prestación y plan";
 
 					_log.warn("[CONV-PREST-SVC][VALID-DET][ERROR] " + msg);
 					_log.warn("[CONV-PREST-SVC][VALID-DET][ERROR][DETAIL] "
@@ -1246,8 +1246,8 @@ public class ConvenioPrestacionalServiceImpl {
 			finalOperativo = entrada.get(entrada.size() - 1);
 		}
 
-		// 1) Todo lo anterior al Ãºltimo se considera antecesor:
-		//    se actualiza (si hace falta) y se migra a histÃ³rico.
+		// 1) Todo lo anterior al último se considera antecesor:
+		//    se actualiza (si hace falta) y se migra a histórico.
 		for (int i = 0; entrada != null && i < entrada.size() - 1; i++) {
 			ConvenioPrestacionalDetalle detEntrada = entrada.get(i);
 
@@ -1257,7 +1257,7 @@ public class ConvenioPrestacionalServiceImpl {
 
 			if (detEntrada.getId() <= 0) {
 				throw new IllegalArgumentException(
-						"No se puede generar mÃ¡s de una versiÃ³n para la misma prestaciÃ³n/plan " +
+						"No se puede generar más de una versión para la misma prestación/plan " +
 								"si las versiones intermedias no existen previamente. " +
 								"id_prestacion=" + clave.idPrestacion + ", id_plan=" + clave.idPlan);
 			}
@@ -1266,14 +1266,14 @@ public class ConvenioPrestacionalServiceImpl {
 
 			if (actual == null) {
 				throw new IllegalArgumentException(
-						"Se intentÃ³ versionar un detalle inexistente. " +
+						"Se intentó versionar un detalle inexistente. " +
 								"id_prestacion=" + clave.idPrestacion + ", id_plan=" + clave.idPlan +
 								", id_detalle=" + detEntrada.getId());
 			}
 
 			if (!crearClave(actual).equals(crearClave(detEntrada))) {
 				throw new IllegalArgumentException(
-						"El detalle cambiÃ³ de clave funcional. " +
+						"El detalle cambió de clave funcional. " +
 								"id_detalle=" + detEntrada.getId());
 			}
 
@@ -1298,7 +1298,7 @@ public class ConvenioPrestacionalServiceImpl {
 		}
 
 		// 2) Todo actual que no va a ser el operativo final:
-		//    delete fÃ­sico si corresponde; si no, histÃ³rico.
+		//    delete físico si corresponde; si no, histórico.
 		for (ConvenioPrestacionalDetalle actual : actuales) {
 			if (actual == null || actual.getId() <= 0) {
 				continue;
@@ -1317,7 +1317,7 @@ public class ConvenioPrestacionalServiceImpl {
 				eliminarDetalleConvenioFisico(con, actual.getId());
 
 				_log.debug("[CONV-PREST-SVC][SYNC][DELETE-FISICO] detalle id=" + actual.getId()
-						+ " eliminado fÃ­sicamente. id_prestacion=" + clave.idPrestacion
+						+ " eliminado físicamente. id_prestacion=" + clave.idPrestacion
 						+ ", id_plan=" + clave.idPlan);
 
 				idsYaProcesados.add(actual.getId());
@@ -1334,7 +1334,7 @@ public class ConvenioPrestacionalServiceImpl {
 					"DETALLE_ELIMINADO_EN_UPDATE");
 
 			_log.debug("[CONV-PREST-SVC][SYNC][DELETE/HIS] detalle id=" + actual.getId()
-					+ " migrado a histÃ³rico. id_prestacion=" + clave.idPrestacion
+					+ " migrado a histórico. id_prestacion=" + clave.idPrestacion
 					+ ", id_plan=" + clave.idPlan
 					+ ", fechaHastaHistorico=" + formatearFechaServicio(fechaHastaHistorico));
 
@@ -1348,14 +1348,14 @@ public class ConvenioPrestacionalServiceImpl {
 
 				if (actualFinal == null) {
 					throw new IllegalArgumentException(
-							"Se intentÃ³ actualizar un detalle final inexistente. " +
+							"Se intentó actualizar un detalle final inexistente. " +
 									"id_prestacion=" + clave.idPrestacion + ", id_plan=" + clave.idPlan +
 									", id_detalle=" + finalOperativo.getId());
 				}
 
 				if (!crearClave(actualFinal).equals(crearClave(finalOperativo))) {
 					throw new IllegalArgumentException(
-							"El detalle final cambiÃ³ de clave funcional. " +
+							"El detalle final cambió de clave funcional. " +
 									"id_detalle=" + finalOperativo.getId());
 				}
 
@@ -1378,7 +1378,7 @@ public class ConvenioPrestacionalServiceImpl {
 			else {
 				if (!actuales.isEmpty() && !esPosteriorAHoy(finalOperativo.getFechaDesde())) {
 					throw new IllegalArgumentException(
-							"No se puede agregar un nuevo detalle con la misma prestaciÃ³n y plan " +
+							"No se puede agregar un nuevo detalle con la misma prestación y plan " +
 									"si la fecha desde es igual o menor a la actual. " +
 									"id_prestacion=" + clave.idPrestacion + ", id_plan=" + clave.idPlan +
 									", fecha_desde=" + formatearFechaServicio(finalOperativo.getFechaDesde()));
@@ -1420,7 +1420,7 @@ public class ConvenioPrestacionalServiceImpl {
 
 	private ClaveDetalle crearClave(ConvenioPrestacionalDetalle det) {
 		if (det == null || det.getPrestacion() == null) {
-			throw new IllegalArgumentException("Detalle sin prestaciÃ³n resuelta");
+			throw new IllegalArgumentException("Detalle sin prestación resuelta");
 		}
 		return new ClaveDetalle(det.getPrestacion().getId(), det.getIdPlan());
 	}
@@ -1582,13 +1582,13 @@ public class ConvenioPrestacionalServiceImpl {
 			rs = stmt.executeQuery();
 
 			if (!rs.next()) {
-				throw new SQLException("No se pudo migrar a histÃ³rico el detalle id=" + actual.getId());
+				throw new SQLException("No se pudo migrar a histórico el detalle id=" + actual.getId());
 			}
 
 			int idHistorico = rs.getInt(1);
 
 			_log.debug("[CONV-PREST-SVC][HIS][OK] detalle id=" + actual.getId()
-					+ " migrado a histÃ³rico idHistorico=" + idHistorico
+					+ " migrado a histórico idHistorico=" + idHistorico
 					+ ", fechaHastaHistorico=" + formatearFechaServicio(fechaHastaHistorico)
 					+ ", motivo=" + motivo);
 		}
@@ -1761,7 +1761,7 @@ public class ConvenioPrestacionalServiceImpl {
 
 				if (!siguiente.getFechaDesde().after(actual.getFechaDesde())) {
 					throw new IllegalArgumentException(
-							"Se detectaron fechas desde duplicadas o desordenadas para la misma prestaciÃ³n y plan. " +
+							"Se detectaron fechas desde duplicadas o desordenadas para la misma prestación y plan. " +
 									"id_prestacion=" + clave.idPrestacion + ", id_plan=" + clave.idPlan);
 				}
 
@@ -1769,14 +1769,14 @@ public class ConvenioPrestacionalServiceImpl {
 
 				if (nuevaFechaHasta.before(actual.getFechaDesde())) {
 					throw new IllegalArgumentException(
-							"Cadena temporal invÃ¡lida para la misma prestaciÃ³n y plan. " +
+							"Cadena temporal inválida para la misma prestación y plan. " +
 									"id_prestacion=" + clave.idPrestacion + ", id_plan=" + clave.idPlan);
 				}
 
 				actual.setFechaHasta(nuevaFechaHasta);
 			}
 			else {
-				// La Ãºltima versiÃ³n queda abierta.
+				// La última versión queda abierta.
 				actual.setFechaHasta(null);
 			}
 		}
@@ -1929,7 +1929,7 @@ public class ConvenioPrestacionalServiceImpl {
 			int afectados = stmt.executeUpdate();
 
 			if (afectados <= 0) {
-				throw new SQLException("No se pudo eliminar fÃ­sicamente el detalle id=" + idConvenioPrestDetalle);
+				throw new SQLException("No se pudo eliminar físicamente el detalle id=" + idConvenioPrestDetalle);
 			}
 		}
 		finally {
