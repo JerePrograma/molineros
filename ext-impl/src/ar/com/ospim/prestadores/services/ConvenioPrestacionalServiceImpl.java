@@ -28,7 +28,7 @@ public class ConvenioPrestacionalServiceImpl {
 
 	/**
 	 * Metodo que obtiene un convenio prestacional a partir de la clave primaria, en caso de
-	 * que est? dado de baja o de no encontrarlo retorna null
+	 * que está dado de baja o de no encontrarlo retorna null
 	 *
 	 * @throws SystemException
 	 * @throws NoSuchConvenioPrestacionalEntryException
@@ -553,7 +553,7 @@ public class ConvenioPrestacionalServiceImpl {
 
 	/**
 	 * Metodo que obtiene un convenio prestacional de un prestador, en caso de
-	 * que est? dado de baja o de no encontrarlo retorna null
+	 * que está dado de baja o de no encontrarlo retorna null
 	 *
 	 * @throws SystemException
 	 * @throws NoSuchConvenioPrestacionalEntryException
