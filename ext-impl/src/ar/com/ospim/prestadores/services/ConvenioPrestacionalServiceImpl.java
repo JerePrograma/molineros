@@ -19,7 +19,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 /**
- * servicio test que nos da acceso a los datos de la aplicaci?n (BD).
+ * servicio test que nos da acceso a los datos de la aplicación (BD).
  *
  */
 public class ConvenioPrestacionalServiceImpl {
@@ -67,7 +67,7 @@ public class ConvenioPrestacionalServiceImpl {
 
 	/**
 	 * Metodo que obtiene la lista de detalles a partir de la clave primaria del
-	 * conv.prestacional, en caso de no encontrarla arroja excepci?n
+	 * conv.prestacional, en caso de no encontrarla arroja excepción
 	 *
 	 * @throws SystemException
 	 * @throws NoSuchConvenioPrestacionalEntryException
@@ -511,8 +511,8 @@ public class ConvenioPrestacionalServiceImpl {
 	}
 
 	/**
-	 * Metodo que obtiene la lista de prestaciones por detalle del c?digo a partir de la clave primaria del
-	 * conv.prestacional, en caso de no encontrarla arroja excepci?n
+	 * Metodo que obtiene la lista de prestaciones por detalle del código a partir de la clave primaria del
+	 * conv.prestacional, en caso de no encontrarla arroja excepción
 	 *
 	 * @throws SystemException
 	 * @throws NoSuchConvenioPrestacionalEntryException
@@ -541,7 +541,7 @@ public class ConvenioPrestacionalServiceImpl {
 				_log.debug("[CONV-PREST-SVC][GET-DET-DESG][ROW] detalle agregado=" + convPrestDet);
 			}
 		} catch (Exception e) {
-			_log.debug("Error al obtener prestaciones detalle por c?digo", e);
+			_log.debug("Error al obtener prestaciones detalle por código", e);
 			throw new SystemException(e);
 		} finally {
 			ConnectionHelper.cerrar(stmt, con);

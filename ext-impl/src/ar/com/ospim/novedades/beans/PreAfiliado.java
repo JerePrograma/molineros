@@ -371,7 +371,7 @@ public class PreAfiliado implements Serializable {
 
 	@Override
 	public String toString() {
-		return "PreAfiliado [c?digo=" + id + ", cuil_titular=" + cuil_titular
+		return "PreAfiliado [código=" + id + ", cuil_titular=" + cuil_titular
 				+ ", inte=" + inte + ", apellido=" + apellido + ", nombre="
 				+ nombre + ", tipo_novedad=" + (tipo_novedad!=null&&tipo_novedad.equalsIgnoreCase("add")?"ALTA":"MODIFICACION") + ", alta_fecha="
 				+ alta_fecha + ", alta_usr=" + alta_usr + ", alta_empresa_usr="
@@ -445,7 +445,7 @@ public class PreAfiliado implements Serializable {
 			e.printStackTrace();
 		} 
 
-		return " C?digo: " + id + retornoCarro + 
+		return " código: " + id + retornoCarro + 
 			   " Cuil Titular: " + cuil_titular + retornoCarro +
 			   " Inte: " + inte + retornoCarro +
 			   " Apellido: " + apellido + retornoCarro +

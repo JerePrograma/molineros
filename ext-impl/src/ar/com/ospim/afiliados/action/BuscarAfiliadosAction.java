@@ -33,7 +33,7 @@ import com.liferay.portal.struts.PortletAction;
 /**
  * <a href="BuscarAfiliadosAction.java.html"><b><i>View Source</i></b></a>
  * <p>
- * Realiza la b?squeda de afiliados seg?n par?metros de entrada
+ * Realiza la búsqueda de afiliados según parámetros de entrada
  * 
  * @author Federico Brachi
  * 

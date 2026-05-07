@@ -26,7 +26,7 @@ import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
 
 /**
- * Realiza la b?squeda de contratos seg?n par?metros de entrada
+ * Realiza la búsqueda de contratos según parámetros de entrada
  *
  * @author Carlos Rivas
  * @modif SVA

@@ -17,7 +17,7 @@
 			message="<%=(String)request.getAttribute(\"msgCoberturaMedicaOk\")  %>"  />
 
 	<%if(request.getAttribute("msgCoberturaMedicaOk") !=null){ %>
-	<i>Recuerde refrescar los resultados de la b?squeda para cambiar las opciones de la caja de acciones...</i>
+	<i>Recuerde refrescar los resultados de la búsqueda para cambiar las opciones de la caja de acciones...</i>
 	<%} %>
 </p>
 

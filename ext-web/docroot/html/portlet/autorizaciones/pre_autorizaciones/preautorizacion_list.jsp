@@ -425,7 +425,7 @@
 				&& fechaDesdeDia.value == '' && fechaDesdeMes.value == '' && fechaDesdeAnio.value == ''
 				&& seccional == '' && fechaDesdeEmailDia.value == '' && fechaDesdeEmailMes.value == '' && fechaDesdeEmailAnio.value == ''){
 
-			alert("Debe ingresar alg?n criterio de b?squeda");
+			alert("Debe ingresar algún criterio de búsqueda");
 			return false;
 		}
 
@@ -511,7 +511,7 @@
 				&& fechaDesdeDia.value == '' && fechaDesdeMes.value == '' && fechaDesdeAnio.value == ''
 				&& seccional == '' && fechaDesdeEmailDia.value == '' && fechaDesdeEmailMes.value == '' && fechaDesdeEmailAnio.value == ''){
 
-			alert("Debe ingresar alg?n criterio de b?squeda");
+			alert("Debe ingresar algún criterio de búsqueda");
 			return false;
 		}
 

@@ -186,7 +186,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
             if (workCerrado) {
                 _log.warn(prefix(rid) + "[GUARD] cmd=" + cmd + " bloqueado: período ya cerrado.");
 
-                // Volver a render en un estado ?seguro?
+                // Volver a render en un estado seguro
                 actionResponse.setRenderParameter(Constants.CMD, "deleteDetalle");
                 actionResponse.setRenderParameter("cacheKey", WORK_KEY);
                 if (Validator.isNotNull(tipoSel)) {
@@ -369,7 +369,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
             // 3) Resolver forward con helper (que además te loguea detalle)
             ActionForward fwdArch = debugFindForward(mapping, FWD_ARCHIVOS, rid, dbg);
 
-            // 4) Si sigue null => cortar con un forward seguro para no ?romper? el request sin explicación
+            // 4) Si sigue null => cortar con un forward seguro para no romper el request sin explicación
             if (fwdArch == null) {
                 _log.error(prefix(rid) + "[ARCHIVOS] No se pudo resolver forward '"
                         + FWD_ARCHIVOS + "'. Devuelvo null.jsp para evitar crash.");
@@ -834,7 +834,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         renderRequest.removeAttribute(REQ_APPEND_MODE);
 
         if ("BORRADOR".equalsIgnoreCase(busquedaMode)) {
-            // si efectivamente hay borrador, no tiene sentido mantener ?cleared?
+            // si efectivamente hay borrador, no tiene sentido mantener cleared
             session.setAttribute(SESSION_BORRADOR_CLEARED_KEY, null);
         }
 
@@ -1883,7 +1883,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         String d = (defaultMode == null) ? "NEW" : defaultMode.trim().toUpperCase();
         String m = (raw == null) ? d : raw.trim().toUpperCase();
 
-        // Mapeos ?sucios? a lo que realmente significa para BASE OPEN
+        // Mapeos sucios a lo que realmente significa para BASE OPEN
         if ("BORRADOR".equals(m) || "REABIERTO".equals(m)) return "NEW";
 
         if ("NEW".equals(m) || "LEGACY".equals(m)) return m;
@@ -2193,7 +2193,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         }
         if (workList == null) workList = new ArrayList();
 
-        final boolean clearingIntent = workList.isEmpty(); // <- CLAVE: ?vaciar borrador?
+        final boolean clearingIntent = workList.isEmpty(); // <- CLAVE: vaciar borrador
         String firstClass = "null";
         try {
             if (!workList.isEmpty() && workList.get(0) != null) firstClass = workList.get(0).getClass().getName();
@@ -2358,7 +2358,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
                         session.setAttribute(SESSION_WORK_BUSQUEDA_MODE, "NEW");
                         session.setAttribute(SESSION_WORK_CERRADO_TIPO, null);
 
-                        // Importante: vaciar lista de sesión del tipo para no re-renderizar ?estado borrador? con data vieja
+                        // Importante: vaciar lista de sesión del tipo para no re-renderizar estado borrador con data vieja
                         try {
                             session.setAttribute(workListKey, new ArrayList());
                         } catch (Exception ignore) {
@@ -2402,7 +2402,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
 
         actionResponse.setRenderParameter("afterBorrador", "1");
 
-        // Para doSearch (solo cuando necesitamos ?volver a estado inicial? inmediatamente)
+        // Para doSearch (solo cuando necesitamos volver a estado inicial inmediatamente)
         if (ok && clearingIntent) {
             actionResponse.setRenderParameter(PARAM_BORRADOR_CLEARED, "1");
             actionResponse.setRenderParameter("fechaDesdeAnio", String.valueOf(anioRp));
@@ -2472,7 +2472,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
         // -------------------------
         // Período: PRIORIDAD ABSOLUTA request -> fallback sesión
         // La idea: si el request trae cualquier pista de período (ms o YYYY-MM),
-        // se cierra el mes de ese período (1er día a último día).
+        // se cierra el mes de ese período (1.er día a último día).
         // -------------------------
         Date fechaDesdeSess = (Date) session.getAttribute(SESSION_WORK_FECHA_DESDE);
         Date fechaHastaSess = (Date) session.getAttribute(SESSION_WORK_FECHA_HASTA);
@@ -4080,7 +4080,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
                 deletedGrabado = r[1];
             }
 
-            // si estaba ?cerrado?, deletedGrabado debería ser > 0
+            // si estaba cerrado, deletedGrabado debería ser > 0
             ok = (deletedGrabado > 0 && insertedBorrador > 0);
 
         } catch (Exception e) {
@@ -4323,7 +4323,7 @@ public class DebitoTercerizadorasAction extends PortletAction {
     private List loadBaseLegacy(String tipoSel, Date fechaDesde, Date fechaHasta,
                                 DebitosaTotal debitosaTotal, String tercerizadoras) throws Exception {
 
-        // IMPORTANTÍSIMO: esto es ?base original?, NO grabados.
+        // IMPORTANTÍSIMO: esto es base original, NO grabados.
         if ("LI".equals(tipoSel)) return (List) BusquedaDebitosTercerizadorasServiceUtil
                 .getBusquedaDebitosaLiquidacionesPendientes(fechaDesde, fechaHasta, debitosaTotal, tercerizadoras);
 
