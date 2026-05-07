@@ -638,7 +638,7 @@
 							var hoy = new Date();
 							var vVto = fechaVto.split("-");
 							var vto = new Date(vVto[2], vVto[1], vVto[0]);
-							jQuery('#<portlet:namespace/>discapacidad_vto').html("Vto. DocumentaciÃ³n" + fechaVto);
+							jQuery('#<portlet:namespace/>discapacidad_vto').html("Vto. Documentación" + fechaVto);
 							if (vto < hoy) {
 								alert("El certificado de Discapacidad Esta Vencido desde el " + fechaVto);
 							}
@@ -658,7 +658,7 @@
 		catch (err) {}
 
 		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
-		// llamar script que busca los tratamientos del afiliado en la pï¿½gina
+		// llamar script que busca los tratamientos del afiliado en la p?gina
 		</c:if>
 	}
 
