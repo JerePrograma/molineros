@@ -79,10 +79,11 @@
 	String organizacionId = user.getOrganizations().size()>0?String.valueOf(user.getOrganizations().get(0).getOrganizationId()):"";
     String tabValue = ParamUtil.getString(request, "tab", null); // "datos"
 
-    boolean incluirBajas = ParamUtil.getBoolean(request, "incluir_bajas", false);
+    //boolean incluirBajas = ParamUtil.getBoolean(request, "incluir_bajas", false);
 
     String prestacionPideTipoOpc=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_DISCAPACIDAD_PIDE_TIPO");
     String marcaReinLiqDiscapacidad=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_DISCAPACIDAD_MARCA_REINLIQ");
+    boolean rolAlertaRoja = PermissionUtil.userContainsRole(user,WebKeysAutorizaciones.ROL_PREAUTORIZACION_ALERTA_ROJA );
 	boolean rolGestionOspim = PermissionUtil.userContainsRole(user,WebKeysAutorizaciones.ROL_PREAUTORIZACION_GESTION_OSPIM);
 	String nroreclamo ="Reclamo Nro : " + "000"+  String.valueOf(preautorizacion.getIdReclamoPrestacional());
 	/* List<ClaseBase>diagnosticos = TraeListasServiceUtil.getTraeDiagnosticos(); */
@@ -322,23 +323,7 @@
                                 <liferay-util:param name="inte" value='' />
                                 <liferay-util:param value="" name="origen" />
 
-                                <%-- CAMBIO: permite que el include conozca si debe buscar/incluir afiliados dados de baja --%>
-                                <liferay-util:param name="incluir_bajas" value="<%= String.valueOf(incluirBajas) %>" />
-                                <liferay-util:param name="baja" value="<%= String.valueOf(incluirBajas) %>" />
                             </liferay-util:include>
-                            &nbsp;
-
-                            <label>
-                                Incluir bajas:
-                            </label>
-
-                            <input type="checkbox"
-                                   id="<portlet:namespace />incluir_bajas"
-                                   name="<portlet:namespace />incluir_bajas"
-                                   value="true"
-                                   <%= incluirBajas ? "checked=\"checked\"" : "" %>
-                                   onclick="<portlet:namespace />sincronizarIncluirBajas();" />
-
                             &nbsp;
 
                             <label id="<portlet:namespace />discapacidad_1" style="display: none;">
@@ -928,10 +913,7 @@
 		id="<portlet:namespace />id_preautorizacion" value="<%=id_preautorizacion%>" />
 		
 	<input type="hidden" value='<%=esEdicion?"EDIT":"VIEW"%>' name="view" id="view" />
-	<input type="hidden"
-    	   id="<portlet:namespace />baja"
-    	   name="<portlet:namespace />baja"
-    	   value="<%= incluirBajas ? "true" : "false" %>" />
+  	   
 	<input
 		id="<portlet:namespace />nom_seleccionado"
 		name="<portlet:namespace />nom_seleccionado" type="hidden" value="" />
@@ -1329,6 +1311,17 @@ function <portlet:namespace />validarCampos(){
 	var esMedicamento=jQuery('#<portlet:namespace />medicamentoChk').attr('checked');
 	var esAlojamiento=jQuery('#<portlet:namespace />alojamientoChk').attr('checked');
 	var fechaEmail=('<%=preautorizacion.getFechaEnvioMail_string()%>');
+	
+	if(baja_fecha !=null){
+    	var valuesStart=baja_fecha.split("/");
+    	var dateStart=new Date(valuesStart[2],(valuesStart[1]-1),valuesStart[0]);
+    	if(dateStart<date){
+     	  alert("Afiliado dado de Baja"); 
+     	  return false;
+    	}  
+    }
+	
+	/*
     <portlet:namespace />sincronizarIncluirBajas();
 
     var incluirBajas = jQuery("#<portlet:namespace />incluir_bajas").is(":checked");
@@ -1345,7 +1338,7 @@ function <portlet:namespace />validarCampos(){
             }
         }
     }
-    
+    */
 	if (cuil_titu==null || cuil_titu=="" || cuil_titu=="null" || cuil_titu.length==0){
 		
 		alert("Debe ingresar el Nro de Cuil.");
@@ -1533,7 +1526,7 @@ function <portlet:namespace />validarCampos(){
     function <portlet:namespace />salvarEdicion(){
         window.onbeforeunload = null;
 
-        <portlet:namespace />sincronizarIncluirBajas();
+        //<portlet:namespace />sincronizarIncluirBajas();
 
         document.getElementById("<portlet:namespace />estadoPreautorizacion").disabled=false;
 
@@ -2041,7 +2034,7 @@ function borraPreautorizacionCodigoNomenclador(idMod){
 
 
 function <portlet:namespace />siguienteSolapa() {
-	<portlet:namespace />sincronizarIncluirBajas();
+	//<portlet:namespace />sincronizarIncluirBajas();
 
 	document.getElementById("<portlet:namespace/>discapacidadChk").disabled=false;
 	document.getElementById("<portlet:namespace />estadoPreautorizacion").disabled=false;
@@ -2418,22 +2411,19 @@ function <portlet:namespace />manejoAlojamiento(){
 	}
 }
 
+/*
     function <portlet:namespace />sincronizarIncluirBajas(){
         var incluirBajas = jQuery("#<portlet:namespace />incluir_bajas").is(":checked");
 
         jQuery("#<portlet:namespace />baja").val(incluirBajas ? "true" : "false");
 
-        /*
-         * Compatibilidad defensiva:
-         * Si el JSP incluido de búsqueda de afiliado usa algún campo interno
-         * llamado baja, baja_filtro o incluir_bajas, intentamos sincronizarlo.
-         */
         jQuery("#<portlet:namespace />baja_filtro").prop("checked", incluirBajas);
         jQuery("#<portlet:namespace />baja_filtro").val(incluirBajas ? "true" : "false");
 
         jQuery("#<portlet:namespace />incluir_bajas_filtro").prop("checked", incluirBajas);
         jQuery("#<portlet:namespace />incluir_bajas_filtro").val(incluirBajas ? "true" : "false");
     }
+ */   
 </script>
 
 
