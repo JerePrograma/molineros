@@ -361,6 +361,7 @@
                         <option value="OMI" <%= "OMI".equals(ptwTerc) ? "selected" : "" %>>OMINT</option>
                         <option value="MPS" <%= "MPS".equals(ptwTerc) ? "selected" : "" %>>MOLINEROS POR PS</option>
                         <option value="MEN" <%= "MEN".equals(ptwTerc) ? "selected" : "" %>>MOLINEROS POR ENSALUD</option>
+                        <option value="MCE" <%= "MEN".equals(ptwTerc) ? "selected" : "" %>>MOLINEROS POR CES</option>
                         <option value="CEM" <%= "CEM".equals(ptwTerc) ? "selected" : "" %>>CEMIC</option>
                         <option value="MIM" <%= "MIM".equals(ptwTerc) ? "selected" : "" %>>IMESA</option>
                         <option value="MON" <%= "MON".equals(ptwTerc) ? "selected" : "" %>>MONOTRIBUTO</option>
@@ -616,6 +617,7 @@
                         <option value="OMI" <%= "OMI".equals(ptpTerc) ? "selected" : "" %>>OMINT</option>
                         <option value="MPS" <%= "MPS".equals(ptpTerc) ? "selected" : "" %>>MOLINEROS POR PS</option>
                         <option value="MEN" <%= "MEN".equals(ptpTerc) ? "selected" : "" %>>MOLINEROS POR ENSALUD</option>
+                        <option value="MCE" <%= "MCE".equals(ptpTerc) ? "selected" : "" %>>MOLINEROS POR CES</option>
                         <option value="CEM" <%= "CEM".equals(ptpTerc) ? "selected" : "" %>>CEMIC</option>
                         <option value="MIM" <%= "MIM".equals(ptpTerc) ? "selected" : "" %>>IMESA</option>
                         <option value="MON" <%= "MON".equals(ptpTerc) ? "selected" : "" %>>MONOTRIBUTO</option>

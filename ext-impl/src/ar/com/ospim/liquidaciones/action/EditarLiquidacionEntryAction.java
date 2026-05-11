@@ -665,6 +665,7 @@ public class EditarLiquidacionEntryAction extends PortletAction {
 		String cargoEnSalud = "0";
 		String cargoCemic="0";
 		String cargoImesa="0";
+		String cargoCes="0";
 		if ("1".equals(tercerizadoCab)) {
 			cargoOspim =  StringUtils.checkNotEmpty(ParamUtil.getString(actionRequest, "cargo_ospim_sin_detalle")) == true ? ParamUtil.getString(actionRequest, "cargo_ospim_sin_detalle") : "0.00";
 			cargoPrestadora = StringUtils.checkNotEmpty(ParamUtil.getString(actionRequest, "cargo_prestadora_sin_detalle")) == true ? ParamUtil.getString(actionRequest, "cargo_prestadora_sin_detalle") : "0.00";
@@ -673,6 +674,7 @@ public class EditarLiquidacionEntryAction extends PortletAction {
 			cargoEnSalud = StringUtils.checkNotEmpty(ParamUtil.getString(actionRequest,"cargo_prestadora_en_salud_sin_detalle", "0")) == true ?  ParamUtil.getString(actionRequest,"cargo_prestadora_en_salud_sin_detalle", "0") : "0.00";
 			cargoCemic = StringUtils.checkNotEmpty(ParamUtil.getString(actionRequest,"cargo_cemic_sin_detalle", "0")) == true ?  ParamUtil.getString(actionRequest,"cargo_cemic_sin_detalle", "0") : "0.00";
 			cargoImesa = StringUtils.checkNotEmpty(ParamUtil.getString(actionRequest,"cargo_imesa_sin_detalle", "0")) == true ?  ParamUtil.getString(actionRequest,"cargo_imesa_sin_detalle", "0") : "0.00";
+			cargoCes = StringUtils.checkNotEmpty(ParamUtil.getString(actionRequest,"cargo_ces_sin_detalle", "0")) == true ?  ParamUtil.getString(actionRequest,"cargo_ces_sin_detalle", "0") : "0.00";
 
 		}else {
 			cargoOspim = StringUtils.checkNotEmpty(ParamUtil.getString(actionRequest, "cargo_ospim")) == true ? ParamUtil.getString(actionRequest, "cargo_ospim") : "0.00";
@@ -718,7 +720,7 @@ public class EditarLiquidacionEntryAction extends PortletAction {
 					importe_concepto, periodoPrestacion, motivoAltaDiscapacidad,
 					idReclamo,idPrestacionReclamo , new BigDecimal(cargoOspim) ,
 					new BigDecimal(cargoPrestadora), 	new BigDecimal(cargoOmint) , new BigDecimal(cargoEnSalud),new BigDecimal(cargoCemic),
-					new BigDecimal(cargoImesa));
+					new BigDecimal(cargoImesa),new BigDecimal(cargoCes));
 			//Borro primero posibles daots de la sesión 
 			if (EditarLiquidacionServiceUtil.servicioEspecial(servicio)) {
 				session.setAttribute("cuil_titular_servicio", cuil_titular);
@@ -745,7 +747,7 @@ public class EditarLiquidacionEntryAction extends PortletAction {
 						,idPrestacionReclamo , new BigDecimal(cargoOspim) ,
 						new BigDecimal(cargoPrestadora) , new BigDecimal(cargoOmint), 
 						new BigDecimal(cargoEnSalud),new BigDecimal(cargoCemic),
-						new BigDecimal(cargoImesa));
+						new BigDecimal(cargoImesa),new BigDecimal(cargoCes));
 			} else {
 				int orden = ParamUtil.getInteger(actionRequest, "orden", 0);
 				EditarLiquidacionServiceUtil

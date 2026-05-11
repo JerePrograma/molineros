@@ -760,6 +760,14 @@ if(renderResponse.getNamespace().equals("_COR_1_")){
 							id="<portlet:namespace />cargo_imesa_sin_detalle"
 							onkeydown="allowOnlyDigitsAndDecimals(event)"
 							onchange="agregarCeros(this);"/></td>
+							
+						<td  colspan="1">&nbsp;<label>Cargo CES:&nbsp;&nbsp;</label></td>	
+					    <td colspan="1"><input type="text"
+							value='<%= Validator.isNotNull(liquidacion) ? liquidacion.getCargoCES() : "0.00" %>'
+							name="<portlet:namespace />cargo_ces_sin_detalle"
+							id="<portlet:namespace />cargo_ces_sin_detalle"
+							onkeydown="allowOnlyDigitsAndDecimals(event)"
+							onchange="agregarCeros(this);"/></td>	
 					
 					</tr>		
 
@@ -1946,6 +1954,7 @@ jQuery("#<portlet:namespace />cuit_entidad").blur(function(){ validaMontoOrigina
 			var cargo_prestadora_en_salud_sin_detalle = 0;
 			var cargo_cemic_sin_detalle=0;
 			var cargo_imesa_sin_detalle=0;
+			var cargo_ces_sin_detalle=0;
 			var importe = 0;
 			
 			if (IsNumeric(trim(jQuery('#<portlet:namespace />importe_concepto_sin_detalle').val()))){
@@ -1973,9 +1982,13 @@ jQuery("#<portlet:namespace />cuit_entidad").blur(function(){ validaMontoOrigina
 				cargo_imesa_sin_detalle = jQuery('#<portlet:namespace />cargo_imesa_sin_detalle').val();
 			}
 			
+			if (IsNumeric(trim(jQuery('#<portlet:namespace />cargo_ces_sin_detalle').val()))){
+				cargo_ces_sin_detalle = jQuery('#<portlet:namespace />cargo_ces_sin_detalle').val();
+			}
+			
 			var suma = parseFloat(cargo_ospim_sin_detalle) + parseFloat(cargo_prestadora_sin_detalle) 
 					   + parseFloat(cargo_omint_sin_detalle)   + parseFloat(cargo_prestadora_en_salud_sin_detalle) 
-					   + parseFloat(cargo_cemic_sin_detalle) + parseFloat(cargo_imesa_sin_detalle);
+					   + parseFloat(cargo_cemic_sin_detalle) + parseFloat(cargo_imesa_sin_detalle) + parseFloat(cargo_ces_sin_detalle);
 			
 			if (parseFloat(suma).toFixed(2) > parseFloat(importe).toFixed(2)){
 				alert('La suma de los cargos de tercerizadoras no pueden superar el importe de los conceptos o del comprobante' );

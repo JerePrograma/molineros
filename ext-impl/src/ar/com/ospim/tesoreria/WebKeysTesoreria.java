@@ -101,5 +101,19 @@ public class WebKeysTesoreria implements com.liferay.portal.kernel.util.WebKeys 
     
     public static final String EQUIVALENCIAS_SUELDOS_EN_EDICION="EQUIVALENCIAS_SUELDOS_EN_EDICION";
     public static final String ASIENTO_SUELDO_EN_SESSION="ASIENTO_SUELDO_EN_SESSION";
+    public static final String PRECIO_EN_SESSION="PRECIO_EN_SESSION";
+    public static final String PRECIO_EN_EDICION="PRECIO_EN_EDICION";
+    public static final String PRECIO_EN_SESSION_PARENTESCOS="PRECIO_EN_SESSION_PARENTESCOS";
+    public static final String PRECIO_EN_SESSION_PLANES="PRECIO_EN_SESSION_PLANES";
+    public static final String PRECIO_EN_SESSION_PROVINCIAS="PRECIO_EN_SESSION_PROVINCIAS";
+    public static final String PRECIOS_RESULT="PRECIOS_RESULT";
+    
+    public static final String AJUSTE_EN_SESSION="AJUSTE_EN_SESSION";
+    public static final String AJSUTE_EN_EDICION="AJUSTE_EN_EDICION";
+    public static final String AJUSTE_EN_SESSION_PARENTESCOS="AJUSTE_EN_SESSION_PARENTESCOS";
+    public static final String AJUSTE_EN_SESSION_PLANES="AJUSTE_EN_SESSION_PLANES";
+    public static final String AJUSTE_EN_SESSION_PROVINCIAS="AJSUTE_EN_SESSION_PROVINCIAS";
+    public static final String AJUSTES_RESULT="AJUSTES_RESULT";
+    
 	
 }

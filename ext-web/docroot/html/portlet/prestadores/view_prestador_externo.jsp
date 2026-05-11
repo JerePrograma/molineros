@@ -7,10 +7,11 @@ id_prestador_ext = ParamUtil.getInteger(request, "id_prestador_ext");
 PrestadorExterno prestador = null;
 prestador = PrestadorExternoServiceUtil.getPrestadorExterno(id_prestador_ext);
 
+/*
 List<Provincia> provincias = (ArrayList<Provincia>) portletSession
 		.getAttribute(WebKeysAfiliados.PROVINCIAS_EN_SESSION,
 				PortletSession.APPLICATION_SCOPE);
-
+*/
 List<PosicionIva> posicionesIva = (ArrayList<PosicionIva>) portletSession
 .getAttribute(WebKeysAfiliados.POSICIONESIVA_EN_SESSION,
 		PortletSession.APPLICATION_SCOPE);
@@ -150,8 +151,8 @@ if (prestador == null) {
 		if (<portlet:namespace />validarCamposBP()) {
 				jQuery('#<portlet:namespace />buscandoPrestador').show();
 
-			var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/editar_prestador_externo_entry&id_prestador_ext='+id_prestador_ext+'&desc='+encodeURI(desc)+'&cuit='+cuit+'&mat_tipo='+mat_tipo+'&mat_provincia='+mat_provincia+'&mat_categoria='+mat_categoria+'&mat_numero='+mat_numero+'&iva='+iva+'&accionOriginal='+accionOriginal;
-							
+			var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/editar_prestador_externo_entry&id_prestador_ext='+id_prestador_ext+'&desc='+encodeURI(desc)+'&cuit='+cuit+'&mat_tipo='+mat_tipo+'&mat_provincia='+mat_provincia+'&mat_categoria='+mat_categoria+'&mat_numero='+mat_numero+'&iva='+iva+'&accionOriginal='+accionOriginal;
+						
 			jQuery('#<portlet:namespace />prestadores_resultado').load(url, function() {
 				jQuery('#<portlet:namespace />buscandoPrestador').hide();});		
 		}

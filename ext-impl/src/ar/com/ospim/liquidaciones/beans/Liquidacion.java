@@ -62,6 +62,7 @@ public class Liquidacion {
 	private BigDecimal cargoEnSalud;
 	private BigDecimal cargoCemic;
 	private BigDecimal cargoImesa;
+	private BigDecimal cargoCES;
 	private List<DLFileEntryImpl> imagenes;
 	private Integer diasTranscurridos;
 	
@@ -522,6 +523,7 @@ public class Liquidacion {
 		liquidacion.setCargoEnSalud(rs.getBigDecimal(prefix+"cargo_ensalud"));
 		liquidacion.setCargoCemic(rs.getBigDecimal(prefix+"cargo_cemic"));
 		liquidacion.setCargoImesa(rs.getBigDecimal(prefix+"cargo_imesa"));
+		liquidacion.setCargoCES(rs.getBigDecimal(prefix+"cargo_ces"));
 		return liquidacion;
 	}
 	
@@ -780,6 +782,14 @@ public class Liquidacion {
 
 	public void setDiasTranscurridos(Integer diasTranscurridos) {
 		this.diasTranscurridos = diasTranscurridos;
+	}
+
+	public BigDecimal getCargoCES() {
+		return cargoCES;
+	}
+
+	public void setCargoCES(BigDecimal cargoCES) {
+		this.cargoCES = cargoCES;
 	}
 	
 	

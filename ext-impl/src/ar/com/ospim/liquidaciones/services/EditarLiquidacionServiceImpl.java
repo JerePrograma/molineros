@@ -148,13 +148,13 @@ public class EditarLiquidacionServiceImpl {
 			BigDecimal importe, BigDecimal debitado, String nroOC, 
 			String observaciones, String tercerizado, String cuit_prestador ,
 			BigDecimal cargoOspim, BigDecimal cargoPS, BigDecimal cargoOmint,
-			BigDecimal cargoEnSalud,BigDecimal cargoCemic,BigDecimal cargoImesa) throws SystemException,
+			BigDecimal cargoEnSalud,BigDecimal cargoCemic,BigDecimal cargoImesa,BigDecimal cargoCes) throws SystemException,
 			DuplicateLiquidacionIdException {
 		Connection con = null;
 		CallableStatement stmt = null;
 		int id_liquidacion = 0;
 		try {
-			String sql = "{call inserta_liquidacion (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql = "{call inserta_liquidacion (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 
 			con = ConnectionHelper.getConnection();
 			stmt = con.prepareCall(sql.toString());
@@ -185,7 +185,7 @@ public class EditarLiquidacionServiceImpl {
 			stmt.setBigDecimal(25, cargoEnSalud);
 			stmt.setBigDecimal(26, cargoCemic);
 			stmt.setBigDecimal(27, cargoImesa);
-			
+			stmt.setBigDecimal(28, cargoCes);
 			ResultSet rs = stmt.executeQuery();
 			
 			while (rs.next()) {
@@ -311,12 +311,12 @@ public class EditarLiquidacionServiceImpl {
 			BigDecimal importe_total, BigDecimal debitado_total, String nroOC,
 			String observaciones, String tercerizado_cab, String userName,
 			String cuit_prestador , BigDecimal cargoOspim, BigDecimal cargoPS, 
-			BigDecimal cargoOmint, BigDecimal cargoEnSalud,BigDecimal cargoCemic,BigDecimal cargoImesa) throws NoSuchLiquidacionEntryException,
+			BigDecimal cargoOmint, BigDecimal cargoEnSalud,BigDecimal cargoCemic,BigDecimal cargoImesa,BigDecimal cargoCes) throws NoSuchLiquidacionEntryException,
 			SystemException {
 		Connection con = null;
 		CallableStatement stmt = null;
 		try {
-			String sql = "{call actualiza_liquidacion_fecha (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql = "{call actualiza_liquidacion_fecha (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 			con = ConnectionHelper.getConnection();
 			stmt = con.prepareCall(sql.toString());
 			stmt.setInt(1, id_liquidacion);
@@ -344,6 +344,7 @@ public class EditarLiquidacionServiceImpl {
 			stmt.setBigDecimal(23, cargoEnSalud);
 			stmt.setBigDecimal(24, cargoCemic);
 			stmt.setBigDecimal(25, cargoImesa);
+			stmt.setBigDecimal(26, cargoCes);
 			
 			stmt.executeUpdate();
 		} catch (SQLException e) {

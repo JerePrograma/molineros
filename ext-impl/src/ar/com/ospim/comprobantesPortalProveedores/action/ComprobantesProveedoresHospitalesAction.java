@@ -754,7 +754,7 @@ private void generarLiquidaciones(RenderRequest renderRequest,HttpSession sessio
     						0, "0",cbte.getPeriodoPrestacion(), 
     						0,0,0, 
     						BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-    						BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO);
+    						BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO);
     				
     			 cbte.setLiquidacionId(new BigDecimal(idLiquidacion));
     			 cbte.setOrden(idLiquidacion);

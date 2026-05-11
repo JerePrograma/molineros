@@ -142,6 +142,7 @@
                     <option value="OMI">OMINT</option>
                     <option value="MPS">MOLINEROS POR PS</option>
                     <option value="MEN">MOLINEROS POR ENSALUD</option>
+                    <option value="MCE">MOLINEROS POR CES</option>
                     <option value="CEM">CEMIC</option>
                     <option value="MIM">IMESA</option>
                     <option value="MON">MONOTRIBUTO</option>

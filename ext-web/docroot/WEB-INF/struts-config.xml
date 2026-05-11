@@ -6601,6 +6601,18 @@
       
       <action path="/tesoreria/facturacion_precios_verificar" type="ar.com.ospim.tesoreria.action.PrecioPlanSuperadorJSONAction"/>
        <action path="/tesoreria/facturacion_lista_ajustes" forward="portlet.tesoreria.facturacion.listaajustes" />     
+       
+       
+      <action path="/tesoreria/facturacion_ajustes" type="ar.com.ospim.tesoreria.action.AjustePlanSuperadorAction">
+        <forward name="portlet.tesoreria.facturacion.listaajustes" path="portlet.tesoreria.facturacion.listaajustes" />
+        <forward name="portlet.tesoreria.facturacion.listaajustes.edit" path="portlet.tesoreria.facturacion.listaajustes.edit" />
+		<forward name="portlet.tesoreria.facturacion.listaajustes.parentescos" path="portlet.tesoreria.facturacion.listaajustes.parentescos" />
+		<forward name="portlet.tesoreria.facturacion.listaajustes.planes" path="portlet.tesoreria.facturacion.listaajustes.planes" />
+		<forward name="portlet.tesoreria.facturacion.listaajustes.localidades" path="portlet.tesoreria.facturacion.listaajustes.localidades" />
+		<forward name="portlet.tesoreria.facturacion.listaprecios.cuiles" path="portlet.tesoreria.facturacion.listaprecios.cuiles" />
+		<forward name="portlet.tesoreria.facturacion.listaajustes.result" path="portlet.tesoreria.facturacion.listaajustes.result" />
+		<forward name="portlet.tesoreria.error" path="portlet.tesoreria.error" />
+      </action>
 <!-- FIN FACTURACION OSPIM -->  
 
 	<action path="/afiliados/solicitud_afiliacion" type="ar.com.ospim.afiliados.action.SolicitudAfiliacionAction">

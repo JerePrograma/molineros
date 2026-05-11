@@ -111,6 +111,8 @@
 <%@ page import="ar.com.empresas.beans.Contacto" %>
 
 <%@ page import="ar.com.ospim.liquidaciones.beans.Prestador" %>
+<%@ page import="ar.com.ospim.liquidaciones.beans.PrestadorExterno" %>
+<%@ page import="ar.com.ospim.liquidaciones.services.PrestadorExternoServiceUtil" %>
 
 <%@ page import="ar.com.ospim.correspondencia.WebKeysCorrespondencia" %>
 <%@ page import="ar.com.ospim.correspondencia.services.EmpresaLiferay" %>

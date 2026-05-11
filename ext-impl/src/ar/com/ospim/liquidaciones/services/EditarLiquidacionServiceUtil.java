@@ -110,7 +110,7 @@ public class EditarLiquidacionServiceUtil {
 			int id_concepto, String importe_concepto, Date periodoPrestacion, 
 			int motivoAltaDiscapacidad,int idReclamo , int idPrestacionReclamo , 
 			BigDecimal cargoOspim, BigDecimal cargoPrestadora , BigDecimal cargoOmint,
-			BigDecimal cargoEnSalud,BigDecimal cargoCemic,BigDecimal cargoImesa) throws Exception {
+			BigDecimal cargoEnSalud,BigDecimal cargoCemic,BigDecimal cargoImesa,BigDecimal cargoCes) throws Exception {
 		
 		Empresa empresa = EmpresaServiceUtil.getEmpleadorCompleto(cuit_prestador, "000");
 		if (empresa == null) {
@@ -147,7 +147,7 @@ public class EditarLiquidacionServiceUtil {
 				id_domicilio, compro_a_debitar_tipo, compro_a_debitar_letra,
 				sucu, comprobante.getNroComprobante(), tipo_liquidacion, estado, user.getScreenName(), 
 				null, null, new BigDecimal(importe_total), new BigDecimal(debitado_total), nroOC, 
-				observaciones, tercerizado_cab, cuit_prestador , cargoOspim, cargoPrestadora, cargoOmint,cargoEnSalud,cargoCemic,cargoImesa);
+				observaciones, tercerizado_cab, cuit_prestador , cargoOspim, cargoPrestadora, cargoOmint,cargoEnSalud,cargoCemic,cargoImesa,cargoCes);
 		
 /*		
 		validaPrestacionLiquidacion(id_liquidacion,id_prestacion,cuil_titular,inte,id_prestador,compro_a_debitar_tipo,
@@ -217,7 +217,8 @@ public class EditarLiquidacionServiceUtil {
 			String tercerizado_cab, String cuit_prestador, int id_concepto, 
 			String importe_concepto, ActionRequest actionRequest, Date periodoPrestacion,
 			int motivoAltaDiscapacidad, int idReclamo , int idPrestacionReclamo , BigDecimal cargoOspim, 
-			BigDecimal cargoPrestadora , BigDecimal cargoOmin, BigDecimal cargoEnSalud , BigDecimal cargoCemic,BigDecimal cargoImesa) throws Exception {
+			BigDecimal cargoPrestadora , BigDecimal cargoOmin, BigDecimal cargoEnSalud , BigDecimal cargoCemic,BigDecimal cargoImesa,
+			BigDecimal cargoCes) throws Exception {
 		
 		List<Empresa> busqueda = EmpresaServiceUtil
 		.getEmpleadores(cuit_prestador, null, String.valueOf(id_prestador),0);
@@ -248,7 +249,7 @@ public class EditarLiquidacionServiceUtil {
 		getInstance().actualizaLiquidacionEntry(id_liquidacion, fecha, fechaE, fechaR, fechaV, periodo, 
 				id_prestador, id_domicilio, compro_a_debitar_tipo, letra_compro, sucu, compro_a_debitar_numero, 
 				new BigDecimal(importe_total), new BigDecimal(debitado_total), nroOC, observaciones, 
-				tercerizado_cab, user.getScreenName(), cuit_prestador, cargoOspim, cargoPrestadora, cargoOmin, cargoEnSalud,cargoCemic,cargoImesa);
+				tercerizado_cab, user.getScreenName(), cuit_prestador, cargoOspim, cargoPrestadora, cargoOmin, cargoEnSalud,cargoCemic,cargoImesa,cargoCes);
 		
 		getInstance().cambiarEstadoLiquidacionEntry(id_liquidacion, WebKeysLiquidaciones.LIQUIDACION_ESTADO_CARGADO, user.getScreenName());
 		//Actualiza comprobante y comprobante de liquidacion
@@ -620,7 +621,8 @@ public class EditarLiquidacionServiceUtil {
 			String tercerizado_cab, String cuit_prestador, int id_concepto, 
 			String importe_concepto, RenderRequest actionRequest, Date periodoPrestacion,
 			int motivoAltaDiscapacidad, int idReclamo , int idPrestacionReclamo , BigDecimal cargoOspim, 
-			BigDecimal cargoPrestadora , BigDecimal cargoOmin, BigDecimal cargoEnSalud , BigDecimal cargoCemic,BigDecimal cargoImesa) throws Exception {
+			BigDecimal cargoPrestadora , BigDecimal cargoOmin, BigDecimal cargoEnSalud , BigDecimal cargoCemic,
+			BigDecimal cargoImesa,BigDecimal cargoCes) throws Exception {
 		
 		List<Empresa> busqueda = EmpresaServiceUtil
 		.getEmpleadores(cuit_prestador, null, String.valueOf(id_prestador),0);
@@ -651,7 +653,7 @@ public class EditarLiquidacionServiceUtil {
 		getInstance().actualizaLiquidacionEntry(id_liquidacion, fecha, fechaE, fechaR, fechaV, periodo, 
 				id_prestador, id_domicilio, compro_a_debitar_tipo, letra_compro, sucu, compro_a_debitar_numero, 
 				new BigDecimal(importe_total), new BigDecimal(debitado_total), nroOC, observaciones, 
-				tercerizado_cab, user.getScreenName(), cuit_prestador, cargoOspim, cargoPrestadora, cargoOmin, cargoEnSalud,cargoCemic,cargoImesa);
+				tercerizado_cab, user.getScreenName(), cuit_prestador, cargoOspim, cargoPrestadora, cargoOmin, cargoEnSalud,cargoCemic,cargoImesa,cargoCes);
 		
 		getInstance().cambiarEstadoLiquidacionEntry(id_liquidacion, WebKeysLiquidaciones.LIQUIDACION_ESTADO_CARGADO, user.getScreenName());
 		//Actualiza comprobante y comprobante de liquidacion

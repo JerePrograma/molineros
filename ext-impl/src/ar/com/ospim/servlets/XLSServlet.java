@@ -123,6 +123,7 @@ import ar.com.ospim.tesoreria.reportes.ReporteListadoValoresExcel;
 import ar.com.ospim.tesoreria.reportes.ReporteListadodDeDeudasExcel;
 import ar.com.ospim.tesoreria.reportes.ReporteNomencladorConcepto;
 import ar.com.ospim.tesoreria.reportes.ReporteNuevosAfiliadosEmpresasExcel;
+import ar.com.ospim.tesoreria.reportes.ReportePreciosPlanesSuperadores;
 import ar.com.ospim.tesoreria.reportes.ReportePrestamosTurismoExcel;
 import ar.com.ospim.tesoreria.reportes.ReporteRankingDeudaEmpresasExcel;
 import ar.com.ospim.tesoreria.reportes.ReporteRecibosExcel;
@@ -297,6 +298,7 @@ public class XLSServlet extends HttpServlet {
 	private static final String REPORTE_CENTROS_COSTOS_CONTABLE = "REPORTE_CENTROS_COSTOS_CONTABLE";
 	private static final String	REPORTE_EXPORTAR_CENTROS_COSTOS_CONTABLES="REPORTE_EXPORTAR_CENTROS_COSTOS_CONTABLES";
 	private static final String REPORTE_UPLOAD_ARCHIVOS="REPORTE_UPLOAD_ARCHIVOS";
+	private static final String REPORTE_PRECIOS_FACTURACION="REPORTE_PRECIOS_FACTURACION";
 	
 
 	private static Log _log = LogFactoryUtil.getLog(XLSServlet.class);
@@ -844,6 +846,8 @@ public class XLSServlet extends HttpServlet {
 				tercerizadoraNombre = "IMESA";
 			}else if ("MON".equalsIgnoreCase(tercerizadora)) {
 				tercerizadoraNombre = "MONOTRIBUTO";
+			}else if ("MCE".equalsIgnoreCase(tercerizadora)) {
+				tercerizadoraNombre = "MOLINEROS POR CES";
 			}
 			String periodo = ParamUtil.getString(req, "periodo") + ".xls";
 			wb = ReporteDebitosaTercerizadorasExcel.generaReporte(req, res);
@@ -908,6 +912,9 @@ public class XLSServlet extends HttpServlet {
 				wb = ReporteAcreditacionesAFIPExcel.generaReporteSubsidios(req, res);
 			    res.setHeader("Content-Disposition", "attachment; filename=\"subsidiosAFIP.xls\"");
 			}    
+		}else if(reporte.equals(REPORTE_PRECIOS_FACTURACION)) {
+			wb = ReportePreciosPlanesSuperadores.generarListado(req, res);
+			res.setHeader("Content-Disposition", "attachment; filename=\"reportePreciosPlanesSuperadores.xls\"");
 		}else if (reporte.equals("test")) {
 			wb = test(req, res);
 		}

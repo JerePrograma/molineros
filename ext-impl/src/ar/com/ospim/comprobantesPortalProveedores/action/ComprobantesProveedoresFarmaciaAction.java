@@ -740,7 +740,7 @@ private void generarLiquidaciones(RenderRequest renderRequest,HttpSession sessio
     						   89, importeTotal,cbte.getPeriodoPrestacion(), 
     						   0,cbte.getReclamoId().intValue(),p.getIdRegistro() , 
     						   new BigDecimal(p.getCargo_ospim()), BigDecimal.ZERO,BigDecimal.ZERO, new BigDecimal(p.getCargo_ps() ),
-    						   BigDecimal.ZERO,new BigDecimal(p.getCargo_imesa()));
+    						   BigDecimal.ZERO,new BigDecimal(p.getCargo_imesa()),BigDecimal.ZERO);
     			           } else {
     			        	   EditarLiquidacionServiceUtil.actualizaLiquidacionEntry(idLiquidacion,
     			        			new Date(), cbte.getFechaEmision(), cbte.getFechaRecepcion(), cbte.getFechaVencimiento(),
@@ -754,7 +754,7 @@ private void generarLiquidaciones(RenderRequest renderRequest,HttpSession sessio
     								 cbte.getAcreedorEmpresa().getCuit(), 89, importeTotal, renderRequest, 
     								 cbte.getPeriodoPrestacion(), 0,cbte.getReclamoId().intValue()
     								,p.getIdRegistro() , new BigDecimal(p.getCargo_ospim()), BigDecimal.ZERO,BigDecimal.ZERO,
-    								new BigDecimal(p.getCargo_ps()),BigDecimal.ZERO,new BigDecimal(p.getCargo_imesa()));
+    								new BigDecimal(p.getCargo_ps()),BigDecimal.ZERO,new BigDecimal(p.getCargo_imesa()),BigDecimal.ZERO);
     			          }
     			    	}
     			    }

@@ -646,6 +646,12 @@
 			value="/portlet/liquidaciones/cuit_existente_search_result.jsp" />
 	</definition>
 
+    <definition name="portlet.prestadores.cuit_existente_search_result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/cuit_existente_search_result.jsp" />
+	</definition>
+
 	<!-- Liquidaciones, cheques -->
 
 	<definition name="portlet.liquidaciones.cheques.result.search"
@@ -4226,8 +4232,20 @@
 		<put name="portlet_content" value="/portlet/tesoreria/facturacion/facturacion_ajustes_edit.jsp" />
 	</definition>
 	
-	<definition name="portlet.tesoreria.facturacion.listaajustes" extends="portlet.tesoreria">
-		<put name="portlet_content" value="/portlet/tesoreria/facturacion/facturacion_ajustes_list.jsp" />
+	<definition name="portlet.tesoreria.facturacion.listaajustes.parentescos" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/facturacion/facturacion_ajustes_edit_parentescos.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.facturacion.listaajustes.planes" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/facturacion/facturacion_ajustes_edit_planes.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.facturacion.listaajustes.localidades" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/facturacion/facturacion_ajustes_edit_localidades.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.facturacion.listaajustes.valores" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/facturacion/facturacion_ajustes_edit_valores.jsp" />
 	</definition>
 	
 <!-- FIN FACTURACION OSPIM -->
@@ -4467,6 +4485,18 @@
 	            extends="portlet.prestadores">
 		<put name="portlet_content"
 		     value="/portlet/prestadores/convenios_prest/convenios_prestac_search_result.jsp" />
+	</definition>
+	
+	<definition name="portlet.liquidaciones.editar_prestadores_externos"
+	            extends="portlet.liquidaciones">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/view_prestador_externo.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.prestador_externo.result"
+	            extends="portlet.liquidaciones">
+		<put name="portlet_content"
+		     value="/portlet/prestadores/prestador_externo_result.jsp" />
 	</definition>
 
 	<!-- FIN PRESTADORES / PRE_1 -->
