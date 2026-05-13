@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report name" pageWidth="595" pageHeight="842" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="336"/>
+	<parameter name="id_ini" class="java.lang.String"/>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select td_id as td_id_tratamiento, td_importe_total,  a_nombre  || ', ' || a_apellido  as afiliado_string,  TO_CHAR(localtimestamp, 'DD/MM/YYYY') as fecha_actual, prestador_string,
+n_descripcion, cast (a_docu_numero as character varying) as a_id_ospim, s_descripcion, cast(TO_CHAR(td_periodo_desde,'YYYY') as character varying) as anio_actual,
+cast (td_cantidad as numeric) as td_cantidad, TO_CHAR(td_periodo_desde, 'DD/MM/YYYY') as td_periodo_desde,
+TO_CHAR(td_periodo_hasta, 'DD/MM/YYYY') as td_periodo_hasta, '(' || td_periodicidad || ')' as td_periodicidad,td_alta_fecha,
+coalesce(p.descripcion,'') as plan_molineros,coalesce(po.descripcion_prevencion,'') as plan_tercerizadora,n_codigo,td_cuit,td_razon_soc,td_observaciones,td_nro_autorizacion,td_dependencia,td_discapacitado,coalesce(td_copago,0) as td_copago
+from autorizaciones.buscar_autorizacion_prestacional_by_id(cast ($P{id_ini} as integer)) ap
+left join afiliado af on ap.a_cuil_titular=af.cuil_titular and ap.a_inte=af.inte
+left join afi_plan afp on afp.cuil_titular = ap.a_cuil_titular and 0=afp.inte and
+          afp.id in(select max(id) from afi_plan afp1 where afp.cuil_titular=afp1.cuil_titular and 0=afp1.inte)
+left join plan p on afp.id_plan=p.id_plan
+left join plan_omint po on afp.id_plan=po.id_plan
+where td_estado not in(6)]]>
+	</queryString>
+	<field name="td_id_tratamiento" class="java.lang.Integer"/>
+	<field name="td_importe_total" class="java.math.BigDecimal"/>
+	<field name="afiliado_string" class="java.lang.String"/>
+	<field name="fecha_actual" class="java.lang.String"/>
+	<field name="prestador_string" class="java.lang.String"/>
+	<field name="n_descripcion" class="java.lang.String"/>
+	<field name="a_id_ospim" class="java.lang.String"/>
+	<field name="s_descripcion" class="java.lang.String"/>
+	<field name="anio_actual" class="java.lang.String"/>
+	<field name="td_cantidad" class="java.math.BigDecimal"/>
+	<field name="td_periodo_desde" class="java.lang.String"/>
+	<field name="td_periodo_hasta" class="java.lang.String"/>
+	<field name="td_periodicidad" class="java.lang.String"/>
+	<field name="td_alta_fecha" class="java.sql.Timestamp"/>
+	<field name="plan_molineros" class="java.lang.String"/>
+	<field name="plan_tercerizadora" class="java.lang.String"/>
+	<field name="n_codigo" class="java.lang.String"/>
+	<field name="td_cuit" class="java.lang.String"/>
+	<field name="td_razon_soc" class="java.lang.String"/>
+	<field name="td_observaciones" class="java.lang.String"/>
+	<field name="td_nro_autorizacion" class="java.lang.Integer"/>
+	<field name="td_dependencia" class="java.lang.Boolean"/>
+	<field name="td_discapacitado" class="java.lang.Boolean"/>
+	<field name="td_copago" class="java.lang.Integer"/>
+	<variable name="vEmail" class="java.lang.String">
+		<variableExpression><![CDATA[$F{td_discapacitado}? "autorizaciones@ospim.org.ar":
+ !$F{td_discapacitado}  && !"MONOTRIBUTO".equals($F{plan_molineros})?
+"autorizaciones@ospim.org.ar":"info@ospim.org.ar"]]></variableExpression>
+	</variable>
+	<detail>
+		<band height="748" splitType="Stretch">
+			<line>
+				<reportElement x="22" y="103" width="537" height="1"/>
+			</line>
+			<staticText>
+				<reportElement x="159" y="47" width="179" height="18"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<text><![CDATA[OSPIM - R.N.O.S. - 1-1260-8]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="159" y="30" width="352" height="13"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[OBRA SOCIAL DEL PERSONAL DE LA INDUSTRIA MOLINERA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="225" y="110" width="184" height="20"/>
+				<textElement>
+					<font fontName="SansSerif" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ORDEN DE AUTORIZACIÓN]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="298" y="137" width="92" height="14"/>
+				<textElement/>
+				<text><![CDATA[Nro Autorización:]]></text>
+			</staticText>
+			<line>
+				<reportElement x="22" y="247" width="537" height="1"/>
+			</line>
+			<staticText>
+				<reportElement x="36" y="158" width="101" height="14"/>
+				<textElement/>
+				<text><![CDATA[Nombre y Apellido:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="147" y="222" width="256" height="14"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{s_descripcion}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="159" y="67" width="36" height="14"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<text><![CDATA[e-mail:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="30" y="345" width="210" height="14">
+					<printWhenExpression><![CDATA[$F{td_cuit}!=null && !"".equalsIgnoreCase($F{td_cuit})]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Prestador:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="38" y="222" width="102" height="14"/>
+				<textElement/>
+				<text><![CDATA[Seccional:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="147" y="157" width="412" height="16"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{afiliado_string}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="38" y="199" width="102" height="14"/>
+				<textElement/>
+				<text><![CDATA[Plan tercerizadora:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="147" y="177" width="211" height="14"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{a_id_ospim}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="365" y="279" width="48" height="14"/>
+				<textElement textAlignment="Right"/>
+				<text><![CDATA[Cantidad ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="61" y="327" width="122" height="14">
+					<printWhenExpression><![CDATA[$F{td_periodo_desde}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[Período de prestación:]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="195" y="328" width="70" height="13"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{td_periodo_desde}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="275" y="328" width="11" height="14">
+					<printWhenExpression><![CDATA[$F{td_periodo_desde}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[a]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="297" y="328" width="77" height="13"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{td_periodo_hasta}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="110" y="300" width="248" height="14"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{n_descripcion}]]></textFieldExpression>
+			</textField>
+			<image>
+				<reportElement x="29" y="23" width="128" height="72"/>
+				<imageExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "logo_negro.jpg"]]></imageExpression>
+			</image>
+			<textField pattern="###0" isBlankWhenNull="true">
+				<reportElement x="365" y="300" width="48" height="14"/>
+				<textElement textAlignment="Right">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{td_cantidad}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="36" y="137" width="112" height="14"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Fecha Autorización:]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="147" y="138" width="100" height="12"/>
+				<textElement/>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{td_alta_fecha}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="37" y="177" width="101" height="14"/>
+				<textElement/>
+				<text><![CDATA[Dni:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="327" y="199" width="74" height="14"/>
+				<textElement/>
+				<text><![CDATA[Plan molinero:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="148" y="199" width="149" height="14"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{plan_tercerizadora}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="406" y="199" width="149" height="14"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{plan_molineros}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="29" y="256" width="210" height="14"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Prestación autorizada:]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="38" y="300" width="59" height="14"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{n_codigo}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="22" y="409" width="537" height="2"/>
+			</line>
+			<staticText>
+				<reportElement x="30" y="421" width="412" height="14"/>
+				<textElement/>
+				<text><![CDATA[Validez: 30 días desde la fecha de autorización.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="30" y="458" width="80" height="14"/>
+				<textElement/>
+				<text><![CDATA[Observaciones:]]></text>
+			</staticText>
+			<line>
+				<reportElement positionType="Float" x="24" y="521" width="537" height="2"/>
+			</line>
+			<staticText>
+				<reportElement positionType="Float" x="29" y="530" width="526" height="14"/>
+				<textElement textAlignment="Center">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Prestación sujeta a auditoria de pos utilización de la OSPIM.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement positionType="Float" x="36" y="576" width="80" height="14"/>
+				<textElement/>
+				<text><![CDATA[Firma y Sello:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="30" y="371" width="67" height="14">
+					<printWhenExpression><![CDATA[$F{td_cuit}!=null && !"".equalsIgnoreCase($F{td_cuit})]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[Cuit
+]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="118" y="371" width="73" height="14">
+					<printWhenExpression><![CDATA[$F{td_cuit}!=null && !"".equalsIgnoreCase($F{td_cuit})]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[Razón Social]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="29" y="389" width="81" height="14"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{td_cuit}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="116" y="389" width="439" height="14"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{td_cuit}!=null && !"".equalsIgnoreCase($F{td_cuit})?$F{td_razon_soc}:""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="113" y="279" width="73" height="14"/>
+				<textElement/>
+				<text><![CDATA[Prestación]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="40" y="279" width="57" height="14"/>
+				<textElement/>
+				<text><![CDATA[Código]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="128" y="463" width="417" height="35"/>
+				<box>
+					<pen lineWidth="0.75"/>
+					<topPen lineWidth="0.75"/>
+					<leftPen lineWidth="0.75"/>
+					<bottomPen lineWidth="0.75"/>
+					<rightPen lineWidth="0.75"/>
+				</box>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{td_observaciones}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="401" y="138" width="100" height="14"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{td_nro_autorizacion}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00;-###0.00" isBlankWhenNull="true">
+				<reportElement x="425" y="300" width="62" height="14"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{td_importe_total}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="425" y="279" width="62" height="14"/>
+				<textElement textAlignment="Right"/>
+				<text><![CDATA[Importe]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="501" y="279" width="68" height="14"/>
+				<textElement textAlignment="Right"/>
+				<text><![CDATA[Total]]></text>
+			</staticText>
+			<textField pattern="###0.00;-###0.00" isBlankWhenNull="true">
+				<reportElement x="501" y="300" width="68" height="14"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{td_importe_total}.multiply($F{td_cantidad})]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="159" y="82" width="302" height="14"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<text><![CDATA[Tel: (011) 5238 - 3900]]></text>
+			</staticText>
+			<image>
+				<reportElement positionType="Float" x="201" y="586" width="157" height="128"/>
+				<imageExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "/equipo_interdisciplinario/firma_Jose.png"]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="389" y="327" width="72" height="14">
+					<printWhenExpression><![CDATA[$F{td_periodo_desde}!=null]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[Dependencia:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="469" y="327" width="18" height="14"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{td_dependencia}?"SI":"NO"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="195" y="67" width="350" height="14"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$V{vEmail}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="30" y="438" width="297" height="20">
+					<printWhenExpression><![CDATA[$F{td_copago}>0D]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Tickets Copagos Requeridos " + $F{td_copago}.toString()]]></textFieldExpression>
+			</textField>
+			<textField hyperlinkType="Reference">
+				<reportElement positionType="Float" x="338" y="438" width="207" height="20" forecolor="#2145E2">
+					<printWhenExpression><![CDATA[$F{td_copago}>0]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font isUnderline="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Compre sus ticket aqui"]]></textFieldExpression>
+				<hyperlinkReferenceExpression><![CDATA["https://www.ospim.org.ar/#copago"]]></hyperlinkReferenceExpression>
+				<hyperlinkTooltipExpression><![CDATA["https://www.ospim.org.ar/#copago"]]></hyperlinkTooltipExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="28">
+			<staticText>
+				<reportElement positionType="FixRelativeToBottom" x="374" y="3" width="63" height="20"/>
+				<textElement/>
+				<text><![CDATA[Impresión:]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy HH.mm.ss">
+				<reportElement positionType="FixRelativeToBottom" x="442" y="3" width="138" height="20"/>
+				<textElement/>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnFooter>
+</jasperReport>
