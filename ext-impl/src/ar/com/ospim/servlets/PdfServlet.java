@@ -282,6 +282,7 @@ public class PdfServlet extends HttpServlet {
 		HashMap<String, String> hm = new HashMap<String, String>();
 		//hm.put("id_ini", id_orden_pagoIni);		
 		hm.put("ID_ORDEN_PAGO", id_orden_pagoIni);
+		hm.put("pathimage", "jasper/firma_carolina.jpg");
 		crearPdf(req, res, ORDEN_PAGO_OSPIM, hm, ORDEN_PAGO_OSPIM_PDF_FILENAME);
 	}
 	

@@ -123,7 +123,6 @@ import ar.com.ospim.tesoreria.reportes.ReporteListadoValoresExcel;
 import ar.com.ospim.tesoreria.reportes.ReporteListadodDeDeudasExcel;
 import ar.com.ospim.tesoreria.reportes.ReporteNomencladorConcepto;
 import ar.com.ospim.tesoreria.reportes.ReporteNuevosAfiliadosEmpresasExcel;
-import ar.com.ospim.tesoreria.reportes.ReportePreciosPlanesSuperadores;
 import ar.com.ospim.tesoreria.reportes.ReportePrestamosTurismoExcel;
 import ar.com.ospim.tesoreria.reportes.ReporteRankingDeudaEmpresasExcel;
 import ar.com.ospim.tesoreria.reportes.ReporteRecibosExcel;
@@ -913,7 +912,6 @@ public class XLSServlet extends HttpServlet {
 			    res.setHeader("Content-Disposition", "attachment; filename=\"subsidiosAFIP.xls\"");
 			}    
 		}else if(reporte.equals(REPORTE_PRECIOS_FACTURACION)) {
-			wb = ReportePreciosPlanesSuperadores.generarListado(req, res);
 			res.setHeader("Content-Disposition", "attachment; filename=\"reportePreciosPlanesSuperadores.xls\"");
 		}else if (reporte.equals("test")) {
 			wb = test(req, res);
