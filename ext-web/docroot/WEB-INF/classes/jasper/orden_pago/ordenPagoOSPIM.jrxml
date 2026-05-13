@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ordenPagoUoma" pageWidth="596" pageHeight="842" columnWidth="556" leftMargin="20" rightMargin="20" topMargin="30" bottomMargin="30" isSummaryWithPageHeaderAndFooter="true" uuid="2397d532-89a9-4e91-92be-5e687493fc8d">
-	<property name="ireport.zoom" value="1.0000000000000016"/>
+	<property name="ireport.zoom" value="1.6105100000000032"/>
 	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="28"/>
+	<property name="ireport.y" value="231"/>
 	<style name="Title" forecolor="#FFFFFF" fontSize="50" isBold="false"/>
 	<style name="SubTitle" forecolor="#CCCCCC" fontSize="18" isBold="false"/>
 	<style name="Column header" forecolor="#666666" fontSize="14" isBold="true"/>
@@ -439,10 +439,6 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 				</textElement>
 				<textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
 			</textField>
-			<image isUsingCache="false">
-				<reportElement x="400" y="288" width="125" height="83" uuid="3f8cc36f-51d2-4cda-9e6b-268013a6b30a"/>
-				<imageExpression><![CDATA["C:\\Users\\Jerem\\Downloads\\Firma_Carolina Doumerc.jpg"]]></imageExpression>
-			</image>
 		</band>
 	</columnFooter>
 	<pageFooter>
@@ -496,7 +492,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 					<rightPen lineWidth="1.0"/>
 				</box>
 				<textField isBlankWhenNull="true">
-					<reportElement x="14" y="8" width="537" height="16" uuid="21eefd57-a3a0-4eed-bf37-7bbc4cd03cbc"/>
+					<reportElement x="-41" y="8" width="537" height="16" uuid="21eefd57-a3a0-4eed-bf37-7bbc4cd03cbc"/>
 					<textElement textAlignment="Center">
 						<font size="10"/>
 					</textElement>
@@ -524,6 +520,10 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 					<reportElement x="280" y="127" width="111" height="14" uuid="33969bf0-0660-452c-8a6f-680f79e0fa62"/>
 					<text><![CDATA[Aclaración de Firma:]]></text>
 				</staticText>
+				<image>
+					<reportElement x="434" y="44" width="147" height="116" uuid="e5917234-ec04-4263-9b06-e11fee29825a"/>
+					<imageExpression><![CDATA["C:\\devmolineros\\ext-web\\docroot\\WEB-INF\\classes\\jasper\\orden_pago\\firma_carolina.jpg"]]></imageExpression>
+				</image>
 			</frame>
 		</band>
 	</pageFooter>
