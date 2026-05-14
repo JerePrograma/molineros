@@ -492,7 +492,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 					<rightPen lineWidth="1.0"/>
 				</box>
 				<textField isBlankWhenNull="true">
-					<reportElement x="0" y="7" width="537" height="16" uuid="6a412faf-28db-4f6b-b12f-d9419ccdbf27"/>
+					<reportElement x="0" y="7" width="470" height="16" uuid="6a412faf-28db-4f6b-b12f-d9419ccdbf27"/>
 					<textElement textAlignment="Center">
 						<font size="10"/>
 					</textElement>
