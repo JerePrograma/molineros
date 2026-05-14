@@ -2,7 +2,7 @@
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ordenPagoUoma" pageWidth="596" pageHeight="842" columnWidth="556" leftMargin="20" rightMargin="20" topMargin="30" bottomMargin="30" isSummaryWithPageHeaderAndFooter="true">
 	<property name="ireport.zoom" value="1.0"/>
 	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="49"/>
+	<property name="ireport.y" value="145"/>
 	<style name="Title" forecolor="#FFFFFF" fontSize="50" isBold="false"/>
 	<style name="SubTitle" forecolor="#CCCCCC" fontSize="18" isBold="false"/>
 	<style name="Column header" forecolor="#666666" fontSize="14" isBold="true"/>
@@ -72,8 +72,8 @@
 		<field name="cc__descripcion" class="java.lang.String"/>
 		<field name="ccc__importe" class="java.math.BigDecimal"/>
 	</subDataset>
-	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
-		<defaultValueExpression><![CDATA["/home/usuario/apache-tomcat-8.5.20/webapps/ROOT/WEB-INF/classes/jasper/orden_pago/"]]></defaultValueExpression>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
 	<parameter name="ID_ORDEN_PAGO" class="java.lang.String"/>
 	<queryString>
@@ -224,7 +224,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 					<textElement>
 						<font fontName="SansSerif" isBold="true"/>
 					</textElement>
-					<text><![CDATA[NÂ° LOTE]]></text>
+					<text><![CDATA[N° LOTE]]></text>
 				</staticText>
 				<staticText>
 					<reportElement x="367" y="70" width="21" height="13"/>
@@ -338,7 +338,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 					<textElement>
 						<font size="8" isBold="true"/>
 					</textElement>
-					<text><![CDATA[EmisiÃ³n]]></text>
+					<text><![CDATA[Emisión]]></text>
 				</staticText>
 				<staticText>
 					<reportElement style="Column header" x="239" y="0" width="88" height="12" forecolor="#000000"/>
@@ -352,7 +352,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 					<textElement>
 						<font size="8" isBold="true"/>
 					</textElement>
-					<text><![CDATA[RecepciÃ³n]]></text>
+					<text><![CDATA[Recepción]]></text>
 				</staticText>
 				<staticText>
 					<reportElement style="Column header" x="434" y="0" width="93" height="12" forecolor="#000000"/>
@@ -418,7 +418,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 	</detail>
 	<columnFooter>
 		<band height="18" splitType="Immediate">
-			<textField evaluationTime="Page" pattern="Â¤ #,##0.00">
+			<textField evaluationTime="Page" pattern="¤ #,##0.00">
 				<reportElement stretchType="RelativeToBandHeight" x="316" y="2" width="100" height="13"/>
 				<textElement>
 					<font isBold="true"/>
@@ -430,7 +430,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 				<textElement textAlignment="Right">
 					<font size="8" isBold="true"/>
 				</textElement>
-				<text><![CDATA[Total comprobantes hasta pÃ¡gina]]></text>
+				<text><![CDATA[Total comprobantes hasta página]]></text>
 			</staticText>
 			<textField>
 				<reportElement x="286" y="3" width="27" height="12"/>
@@ -443,6 +443,52 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 	</columnFooter>
 	<pageFooter>
 		<band height="157" splitType="Stretch">
+			<frame>
+				<reportElement x="0" y="0" width="556" height="157"/>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<staticText>
+					<reportElement x="280" y="110" width="100" height="14"/>
+					<textElement/>
+					<text><![CDATA[Doc. Identidad:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="2" y="110" width="91" height="14"/>
+					<textElement/>
+					<text><![CDATA[Recibí Conforme:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="280" y="127" width="111" height="14"/>
+					<textElement/>
+					<text><![CDATA[Aclaración de Firma:]]></text>
+				</staticText>
+			</frame>
+			<frame>
+				<reportElement x="0" y="78" width="556" height="28"/>
+				<box>
+					<pen lineWidth="1.0"/>
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textField isBlankWhenNull="true">
+					<reportElement x="3" y="8" width="529" height="16"/>
+					<textElement textAlignment="Center">
+						<font size="10"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA["Confeccionó: " +($F{username}==null?"Roch, Fabiana     ":$F{username}) +"                                 Autorizó: Doumerc, Carolina"]]></textFieldExpression>
+				</textField>
+				<image>
+					<reportElement x="443" y="0" width="96" height="26"/>
+					<imageExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR}+"/firma_carolina.jpg"]]></imageExpression>
+				</image>
+			</frame>
 			<frame>
 				<reportElement x="0" y="0" width="556" height="78"/>
 				<box>
@@ -479,54 +525,8 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 					<textElement>
 						<font size="8"/>
 					</textElement>
-					<text><![CDATA[ObservaciÃ³n Interna:]]></text>
+					<text><![CDATA[Observación Interna:]]></text>
 				</staticText>
-			</frame>
-			<frame>
-				<reportElement x="0" y="78" width="556" height="28"/>
-				<box>
-					<pen lineWidth="1.0"/>
-					<topPen lineWidth="1.0"/>
-					<leftPen lineWidth="1.0"/>
-					<bottomPen lineWidth="1.0"/>
-					<rightPen lineWidth="1.0"/>
-				</box>
-				<textField isBlankWhenNull="true">
-					<reportElement x="14" y="8" width="537" height="16"/>
-					<textElement textAlignment="Center">
-						<font size="10"/>
-					</textElement>
-					<textFieldExpression class="java.lang.String"><![CDATA["ConfeccionÃ³: " +($F{username}==null?"Roch, Fabiana     ":$F{username}) +"                                 AutorizÃ³: Doumerc, Carolina"]]></textFieldExpression>
-				</textField>
-			</frame>
-			<frame>
-				<reportElement x="0" y="0" width="556" height="157"/>
-				<box>
-					<pen lineWidth="1.0"/>
-					<topPen lineWidth="1.0"/>
-					<leftPen lineWidth="1.0"/>
-					<bottomPen lineWidth="1.0"/>
-					<rightPen lineWidth="1.0"/>
-				</box>
-				<staticText>
-					<reportElement x="280" y="110" width="100" height="14"/>
-					<textElement/>
-					<text><![CDATA[Doc. Identidad:]]></text>
-				</staticText>
-				<staticText>
-					<reportElement x="2" y="110" width="91" height="14"/>
-					<textElement/>
-					<text><![CDATA[RecibÃ­ Conforme:]]></text>
-				</staticText>
-				<staticText>
-					<reportElement x="280" y="127" width="111" height="14"/>
-					<textElement/>
-					<text><![CDATA[AclaraciÃ³n de Firma:]]></text>
-				</staticText>
-				<image>
-					<reportElement x="446" y="62" width="105" height="48"/>
-					<imageExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "firma_carolina.jpg"]]></imageExpression>
-				</image>
 			</frame>
 		</band>
 	</pageFooter>
@@ -618,7 +618,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 								<textElement textAlignment="Center">
 									<font size="8" isBold="true"/>
 								</textElement>
-								<text><![CDATA[DescripciÃ³n]]></text>
+								<text><![CDATA[Descripción]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="table_TD" height="30" rowSpan="1">
