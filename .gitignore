@@ -49,7 +49,6 @@ target/
 build/
 output/
 **/output/
-**/classes/
 
 **/tmp/
 **/work/
