@@ -172,7 +172,7 @@ public class ReintegroServiceUtil {
 			boolean esExcepcion, int idReclamo, int idPrestacionReclamo,
 			String cargoOspim, String cargoPrestadora, String comproaDebitarSucursal, 
 			String comproaDebitarLetra, String cbu, String cuilCuenta,
-			String emailCuenta , String apellidoCuenta, String nombreCuenta,String cargoImesa)
+			String emailCuenta , String apellidoCuenta, String nombreCuenta,String cargoImesa, String idTecerizadora)
 			throws SystemException, DuplicateReintegroIdException,
 			DuplicateReintegroPrestacionIdException,
 			TopeCantidadIndividualExedidoException,
@@ -202,7 +202,7 @@ public class ReintegroServiceUtil {
 				idPrestacion, codigo, prestacionFecha, new BigDecimal(cantidad), new BigDecimal(importe), 
 				comproaDebitarTipo, comproaDebitarLetra, comproaDebitarSucursal, comproaDebitarNumero, tercerizado, periodo, userName, 
 				cuitEntidad, sucuEntidad, comprobanteFecha, new BigDecimal(importeComprobante), motivoAltaDiscapacidad, 
-				new BigDecimal(cargoOspim) , new BigDecimal(cargoPrestadora),new BigDecimal(cargoImesa), connection);
+				new BigDecimal(cargoOspim) , new BigDecimal(cargoPrestadora),new BigDecimal(cargoImesa), idTecerizadora, connection);
 				
 				// graba los datos del reclamo prestacional asociado 
 				if (idReclamo!=0 && idPrestacionReclamo!=0){
@@ -221,7 +221,7 @@ public class ReintegroServiceUtil {
 							comproaDebitarSucursal, comproaDebitarNumero, tercerizado, periodo, userName, pieza, cara, idPrestadorExterno, 
 							esExcepcion, 
 							idReclamo, idPrestacionReclamo, 
-							new BigDecimal(cargoOspim) , new BigDecimal(cargoPrestadora),new BigDecimal(cargoImesa), 
+							new BigDecimal(cargoOspim) , new BigDecimal(cargoPrestadora),new BigDecimal(cargoImesa), idTecerizadora,
 							connection);
 				}
 			} else if (tipoReintegro.equalsIgnoreCase(WebKeysLiquidaciones.REINTEGRO_ODO_ORTOPEDIA_ORTODONCIA)) {
@@ -348,7 +348,7 @@ public class ReintegroServiceUtil {
 		String obs, int pieza, String cara, String tipoReintegro, int idPrestadorExterno, String presupuesto, 
 		int nroCuotas, String cuitEntidad, String sucuEntidad, Date comprobanteFecha, String importeComprobante, 
 		int motivoAltaDiscapacidad, boolean esExcepcion, int idReclamo, int idPrestacionReclamo, String cargoOspim, 
-		String cargoOspimPrestadora,String cargoImesa) 
+		String cargoOspimPrestadora,String cargoImesa, String idTecerizadora) 
 		throws NoSuchReintegroEntryException, SystemException, DuplicateReintegroPrestacionIdException, TopeCantidadIndividualExedidoException, 
 			TopeImporteIndividualExedidoException, TopeCantidadTotalExedidoException, TopeImporteTotalExedidoException, AfiliadoSinPlanException,
 			FechaPrestacionMayorFechaBajaExcepcion, SQLException, Exception {
@@ -375,7 +375,7 @@ public class ReintegroServiceUtil {
 						new BigDecimal(importe), comproaDebitarTipo, comproaDebitarLetra, comproaDebitarSucursal, 
 						comproaDebitarNumero, tercerizado, periodo, userName, 
 						cuitEntidad, sucuEntidad, comprobanteFecha, new BigDecimal(importeComprobante), motivoAltaDiscapacidad, 
-						new BigDecimal(cargoOspim) , new BigDecimal(cargoOspimPrestadora),new BigDecimal(cargoImesa), connection);
+						new BigDecimal(cargoOspim) , new BigDecimal(cargoOspimPrestadora),new BigDecimal(cargoImesa), idTecerizadora, connection);
 				
 				// graba los datos del reclamo prestacional asociado 
 				if (idReclamo!=0 && idPrestacionReclamo!=0){
@@ -391,7 +391,7 @@ public class ReintegroServiceUtil {
 							comproaDebitarSucursal, comproaDebitarNumero, 
 							tercerizado, periodo, userName, pieza, cara, idPrestadorExterno, esExcepcion,
 							idReclamo, idPrestacionReclamo, 
-							new BigDecimal(cargoOspim) , new BigDecimal(cargoOspimPrestadora),new BigDecimal(cargoImesa),
+							new BigDecimal(cargoOspim) , new BigDecimal(cargoOspimPrestadora),new BigDecimal(cargoImesa), idTecerizadora,
 							connection);
 				}
 			} else if (tipoReintegro.equalsIgnoreCase(WebKeysLiquidaciones.REINTEGRO_ODO_ORTOPEDIA_ORTODONCIA)) {
@@ -431,7 +431,7 @@ public class ReintegroServiceUtil {
 		double topeIndivImporte, Date bajaFecha, int idSeccional, String obs, Date altaFecha, int idPrestacionAnterior, 
 		String codigoAnterior, String tipoReintegro, int pieza, String cara, int idPrestadorExterno, String honorarios, 
 		int nroCuotas, String cuitEntidad, String sucuEntidad, Date comprobanteFecha, String importeComprobante, 
-		int motivoAltaDiscapacidad,boolean esExcepcion, String cargoOspim, String cargoPrestadora,String cargoImesa) throws NoSuchReintegroEntryException, 
+		int motivoAltaDiscapacidad,boolean esExcepcion, String cargoOspim, String cargoPrestadora,String cargoImesa, String idTecerizadora) throws NoSuchReintegroEntryException, 
 	SystemException, DuplicateReintegroPrestacionIdException, TopeCantidadIndividualExedidoException, TopeImporteIndividualExedidoException, 
 	TopeCantidadTotalExedidoException, TopeImporteTotalExedidoException, AfiliadoSinPlanException, FechaPrestacionMayorFechaBajaExcepcion, 
 	Exception {
@@ -455,7 +455,7 @@ public class ReintegroServiceUtil {
 						comproaDebitarTipo, comproaDebitarLetra, comproaDebitarSucursal, comproaDebitarNumero, 
 						tercerizado, periodo, userName, altaFecha, idPrestacionAnterior, codigoAnterior, 
 						cuitEntidad, sucuEntidad, comprobanteFecha, new BigDecimal(importeComprobante), motivoAltaDiscapacidad, 
-						new BigDecimal(cargoOspim), new BigDecimal(cargoPrestadora),new BigDecimal(cargoImesa));
+						new BigDecimal(cargoOspim), new BigDecimal(cargoPrestadora),new BigDecimal(cargoImesa), idTecerizadora);
 				
 			} else if (tipoReintegro.equalsIgnoreCase(WebKeysLiquidaciones.REINTEGRO_ODO_PROTESIS)) {
 				
@@ -463,7 +463,7 @@ public class ReintegroServiceUtil {
 						idPrestacion, codigo, prestacionFecha, new BigDecimal(cantidad), new BigDecimal(importe), 
 						comproaDebitarTipo, comproaDebitarLetra, comproaDebitarSucursal, comproaDebitarNumero, 
 						tercerizado, periodo, userName, altaFecha, idPrestacionAnterior, codigoAnterior, pieza, cara, idPrestadorExterno, 
-						esExcepcion);
+						esExcepcion, idTecerizadora);
 				
 			} else if (tipoReintegro.equalsIgnoreCase(WebKeysLiquidaciones.REINTEGRO_ODO_ORTOPEDIA_ORTODONCIA)) {
 				

@@ -725,7 +725,7 @@ private void generarLiquidaciones(RenderRequest renderRequest,HttpSession sessio
     						  89, importeTotal,cbte.getPeriodoPrestacion(), 
     						  0,reclamo.getId_reclamo(),p.getIdRegistro() , 
     						  new BigDecimal(p.getCargo_ospim()), BigDecimal.ZERO,BigDecimal.ZERO, new BigDecimal(p.getCargo_ps() ),
-    						  BigDecimal.ZERO,new BigDecimal(p.getCargo_imesa()),BigDecimal.ZERO);
+    						  BigDecimal.ZERO,new BigDecimal(p.getCargo_imesa()),BigDecimal.ZERO,p.getIdTercerizadora());
     			             } else {
     			        	   EditarLiquidacionServiceUtil.actualizaLiquidacionEntry(idLiquidacion,
     			        			new Date(), cbte.getFechaEmision(), cbte.getFechaRecepcion(), cbte.getFechaVencimiento(),
@@ -739,7 +739,7 @@ private void generarLiquidaciones(RenderRequest renderRequest,HttpSession sessio
     								 cbte.getAcreedorEmpresa().getCuit(), 89, importeTotal, renderRequest, 
     								 cbte.getPeriodoPrestacion(), 0,reclamo.getId_reclamo()
     								,p.getIdRegistro() , new BigDecimal(p.getCargo_ospim()), BigDecimal.ZERO,BigDecimal.ZERO,
-    								new BigDecimal(p.getCargo_ps()),BigDecimal.ZERO,new BigDecimal(p.getCargo_imesa()),BigDecimal.ZERO);
+    								new BigDecimal(p.getCargo_ps()),BigDecimal.ZERO,new BigDecimal(p.getCargo_imesa()),BigDecimal.ZERO, p.getIdTercerizadora());
     			            }
     			    	 }  
     			       }
@@ -765,7 +765,7 @@ private void generarLiquidaciones(RenderRequest renderRequest,HttpSession sessio
         						0, "0",cbte.getPeriodoPrestacion(), 
         						0,0,0, 
         						BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-        						BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO);
+        						BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO, null);
     			    }
     			    
     			    cbte.setLiquidacionId(new BigDecimal(idLiquidacion));

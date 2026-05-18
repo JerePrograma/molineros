@@ -309,7 +309,7 @@ jQuery("#<portlet:namespace />Autorizado").hide();
 			    <td><input id="<portlet:namespace />cargoospimEdicion"
 				     name="<portlet:namespace />cargoospimEdicion" size="12" maxlength="20" value ='<%=Validator.isNotNull(prestacionEnEdicion)  ? new BigDecimal(prestacionEnEdicion.getCargo_ospim()).setScale(2, RoundingMode.HALF_UP).toPlainString() : ""  %>' 
 				    type="text" value=""  onkeypress="return validaMonto(event,this)" onkeydown="allowOnlyDigitsAndDecimals(event)"/></td>			
-			    <td><label><liferay-ui:message key="cargo-terc" />:</label></td>
+			    <td><label><liferay-ui:message key="Cargo Prestadora" />:</label></td>
 			    <td><input id="<portlet:namespace />cargopsEdicion"
 				    name="<portlet:namespace />cargopsEdicion" size="12" maxlength="20" value ='<%=Validator.isNotNull(prestacionEnEdicion)  ? new BigDecimal(prestacionEnEdicion.getCargo_ps()).setScale(2, RoundingMode.HALF_UP).toPlainString() : ""  %>'     
 				    type="text" value=""  onkeypress="return validaMonto(event,this)" /></td>

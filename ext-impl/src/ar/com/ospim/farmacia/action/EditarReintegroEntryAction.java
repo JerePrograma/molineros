@@ -26,6 +26,7 @@ import ar.com.ospim.liquidaciones.DuplicateReintegroIdException;
 import ar.com.ospim.liquidaciones.DuplicateReintegroPrestacionIdException;
 import ar.com.ospim.liquidaciones.NoSuchReintegroEntryException;
 import ar.com.ospim.liquidaciones.NoSuchReintegroPrestacionEntryException;
+import ar.com.ospim.util.StringUtils;
 
 import com.liferay.portal.PortalException;
 import com.liferay.portal.SystemException;
@@ -198,6 +199,14 @@ public class EditarReintegroEntryAction extends PortletAction {
 		String apellidoCuenta = ParamUtil.getString(actionRequest, "apellido_cuenta", null);
 		String nombreCuenta = ParamUtil.getString(actionRequest, "nombre_cuenta", null);
 
+		String idTecerizadora = ParamUtil.getString(actionRequest, "id_tercerizadora", "");
+
+		if (StringUtils.checkEmpty(idTecerizadora)
+		        || "null".equalsIgnoreCase(idTecerizadora)
+		        || "undefined".equalsIgnoreCase(idTecerizadora)) {
+		    idTecerizadora = null;
+		}
+		
 		ArrayList<ReintegroMedicamentoItem> medicamentos = (ArrayList<ReintegroMedicamentoItem>) session
 											.getAttribute(WebKeysFarmacia.REINTEGRO_PRESTACIONES_EN_EDICION);
 		
@@ -214,12 +223,12 @@ public class EditarReintegroEntryAction extends PortletAction {
 			numero = ReintegroFarmaciaServiceUtil.cargaReintegroFarmaciaEntry(
 					fecha, periodo, cuil_titular, inte, seccional,
 					medicamentos, user.getScreenName(),cbu,cuilCuenta,emailCuenta,
-					apellidoCuenta,nombreCuenta);
+					apellidoCuenta,nombreCuenta, idTecerizadora);
 		}
 		if (command.equals(Constants.UPDATE)) {
 			numero = ReintegroFarmaciaServiceUtil.actualizaReintegroFarmaciaEntry(numero,
 					fecha, periodo, cuil_titular, inte, seccional,
-					medicamentos, user.getScreenName());
+					medicamentos, user.getScreenName(), idTecerizadora);
 		}
 		return numero;
 	}

@@ -58,24 +58,24 @@ public class ReintegroFarmaciaServiceUtil {
 			String cuil_titular, int inte, int seccional,
 			ArrayList<ReintegroMedicamentoItem> medicamentos, String userName, 
 			String cbu, String cuilCuenta,String emailCuenta , 
-			String apellidoCuenta, String nombreCuenta)
+			String apellidoCuenta, String nombreCuenta, String idTecerizadora)
 			throws SystemException {
 		int id_reintegro = getInstance().cargaReintegroFarmaciaEntry(fecha,
 				periodo, cuil_titular, inte, seccional, medicamentos, userName
-				,cbu,cuilCuenta,emailCuenta,apellidoCuenta,nombreCuenta);
+				,cbu,cuilCuenta,emailCuenta,apellidoCuenta,nombreCuenta, idTecerizadora);
 		return id_reintegro;
 	}
 
 	public static int actualizaReintegroFarmaciaEntry(int id_reintegro,
 			Date fecha, Date periodo, String cuil_titular, int inte,
 			int seccional, ArrayList<ReintegroMedicamentoItem> medicamentos,
-			String userName) throws SystemException,
+			String userName, String idTecerizadora) throws SystemException,
 			NoSuchReintegroEntryException,
 			DuplicateReintegroPrestacionIdException, AfiliadoSinPlanException {
 		getInstance().actualizaReintegroFarmaciaEntry(id_reintegro, fecha,
 				periodo, cuil_titular, inte, seccional, medicamentos, userName);
 		getInstance().actualizaMedicamentoReintegroPrestacionEntry(
-				id_reintegro, medicamentos, userName);
+				id_reintegro, medicamentos, userName, idTecerizadora);
 		return id_reintegro;
 	}
 

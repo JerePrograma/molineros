@@ -279,7 +279,7 @@ public class ReclamoPrestacionServiceImpl {
 			
 			String sql  = "{call autorizaciones.inserta_reclamoprestacional(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 			String sql2 = "{call autorizaciones.inserta_reclamo_estado(?,?,?)}";
-			String sql3 ="{call autorizaciones.inserta_reclamo_prestaciones(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql3 ="{call autorizaciones.inserta_reclamo_prestaciones(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 			String sql4 ="{call autorizaciones.inserta_reclamo_revisiones (?,?,?,?,?,?,?)}";
 			String sql5 ="{call autorizaciones.inserta_reclamo_cierre (?,?,?,?,?,?,?,?,?, ?,?)}";
 			String sql6 ="{call autorizaciones.inserta_reclamo_contacto  (?,?,?)}";
@@ -481,6 +481,12 @@ public class ReclamoPrestacionServiceImpl {
 						stmt3.setDouble(24, prestrecla.getReconocidoSSS() ); 
 						
 						stmt3.setDouble(25, prestrecla.getCargo_imesa()  ); 
+						
+						if (!StringUtils.checkEmpty(prestrecla.getIdTercerizadora())) {
+						    stmt3.setString(26, prestrecla.getIdTercerizadora());
+						} else {
+						    stmt3.setNull(26, Types.VARCHAR);
+						}
 						stmt3.executeUpdate();
 					}
 				}
@@ -816,10 +822,10 @@ public class ReclamoPrestacionServiceImpl {
 			
 			String screenName = user.getScreenName();
 			
-			String sql1 ="{call autorizaciones.inserta_reclamo_prestaciones(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql1 ="{call autorizaciones.inserta_reclamo_prestaciones(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 			
 			String sql11  = "{call autorizaciones.borrar_prestacion_reclamoprestacional(?,?,?)}"; 
-			String sql111  = "{call autorizaciones.update_reclamo_prestaciones(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}"; 
+			String sql111  = "{call autorizaciones.update_reclamo_prestaciones(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}"; 
 			
 			String sql2 ="{call autorizaciones.inserta_reclamo_revisiones (?,?,?,?,?,?,?)}";
 			String sql21 = "{call autorizaciones.borrar_revision_reclamoprestacional(?,?)}";  
@@ -1122,7 +1128,13 @@ public class ReclamoPrestacionServiceImpl {
 						        stmt4.setNull(24,Types.DOUBLE);
 						    }
 
-						    stmt4.setDouble(25, pres.getCargo_imesa());						
+						    stmt4.setDouble(25, pres.getCargo_imesa());		
+						    
+						    if (!StringUtils.checkEmpty(pres.getIdTercerizadora())) {
+						        stmt4.setString(26, pres.getIdTercerizadora());
+						    } else {
+						        stmt4.setNull(26, Types.VARCHAR);
+						    }
 							
 						}else if(pres.getEstado().equals(PrestacionesReclamo.ESTADOS.MODIF  ) 
 								|| reclamo.getEstado()==3 ){
@@ -1272,6 +1284,11 @@ public class ReclamoPrestacionServiceImpl {
 								   stmt4.setNull(24,Types.DOUBLE);	
 							}
 							
+							if (!StringUtils.checkEmpty(pres.getIdTercerizadora())) {
+							    stmt4.setString(25, pres.getIdTercerizadora());
+							} else {
+							    stmt4.setNull(25, Types.VARCHAR);
+							}
 							
 						}
 						stmt4.executeUpdate();

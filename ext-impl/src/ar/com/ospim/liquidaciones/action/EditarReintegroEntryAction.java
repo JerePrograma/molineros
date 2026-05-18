@@ -37,6 +37,7 @@ import ar.com.ospim.liquidaciones.beans.ReintegroPrestacionOdo;
 import ar.com.ospim.liquidaciones.beans.ReintegroPrestacionOdoProtesis;
 import ar.com.ospim.liquidaciones.services.ReintegroServiceUtil;
 import ar.com.ospim.util.DateUtils;
+import ar.com.ospim.util.StringUtils;
 
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
@@ -476,7 +477,13 @@ public class EditarReintegroEntryAction extends PortletAction {
 		String apellidoCuenta = ParamUtil.getString(actionRequest, "apellido_cuenta", null);
 		String nombreCuenta = ParamUtil.getString(actionRequest, "nombre_cuenta", null);
 		
-		
+		String idTecerizadora = ParamUtil.getString(actionRequest, "id_tercerizadora", "");
+
+		if (StringUtils.checkEmpty(idTecerizadora)
+		        || "null".equalsIgnoreCase(idTecerizadora)
+		        || "undefined".equalsIgnoreCase(idTecerizadora)) {
+		    idTecerizadora = null;
+		}
 		
 
 		User user = PortalUtil.getUser(actionRequest);
@@ -501,7 +508,7 @@ public class EditarReintegroEntryAction extends PortletAction {
 					idPrestadorExterno, presupuesto, nroCuotas, cuitEntidad,
 					sucuEntidad, comproFecha, comproImporte, motivoAltaDiscapacidad,esExcepcion,idReclamo,
 					idPrestacionReclamo, cargoOspim,cargoPrestadora,comproaDebitarSucursal,comproaDebitarLetra,
-					cbu, cuilCuenta, emailCuenta,apellidoCuenta, nombreCuenta,cargoImesa );
+					cbu, cuilCuenta, emailCuenta,apellidoCuenta, nombreCuenta,cargoImesa, idTecerizadora );
 
 		} else {
 			if (editPrestaci.length() == 0) {
@@ -510,7 +517,7 @@ public class EditarReintegroEntryAction extends PortletAction {
 						comproaDebitarTipo, comproaDebitarLetra, comproaDebitarSucursal, comproaDebitarNumero, tercerizado, user.getScreenName(), periodo, topeCant,
 						topeImporte, topeIndivCant, topeIndivImporte, fechaBaja, seccional, obs, pieza, cara, tipoReintegro, 
 						idPrestadorExterno, presupuesto, nroCuotas, cuitEntidad, sucuEntidad, comproFecha, comproImporte, motivoAltaDiscapacidad, 
-						esExcepcion, idReclamo, idPrestacionReclamo, cargoOspim, cargoPrestadora,cargoImesa);
+						esExcepcion, idReclamo, idPrestacionReclamo, cargoOspim, cargoPrestadora,cargoImesa, idTecerizadora);
 			} else {
 				SimpleDateFormat formatoDeF = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss.S");
 				String altaFecha = ParamUtil.getString(actionRequest,"prestacion_alta_fecha", "");
@@ -527,7 +534,7 @@ public class EditarReintegroEntryAction extends PortletAction {
 						comproaDebitarTipo, comproaDebitarLetra, comproaDebitarSucursal, comproaDebitarNumero, tercerizado, user.getScreenName(), 
 						periodo, topeCant, topeImporte, topeIndivCant, topeIndivImporte, fechaBaja, seccional, obs, alta, idPrestacionAnterior, 
 						codigoAnterior, tipoReintegro, pieza, cara, idPrestadorExterno, presupuesto, nroCuotas, cuitEntidad, sucuEntidad, 
-						comproFecha, comproImporte, motivoAltaDiscapacidad, esExcepcion, cargoOspim, cargoPrestadora,cargoImesa);
+						comproFecha, comproImporte, motivoAltaDiscapacidad, esExcepcion, cargoOspim, cargoPrestadora,cargoImesa, idTecerizadora);
 			}
 		}
 		return numero;

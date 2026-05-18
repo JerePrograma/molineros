@@ -381,7 +381,7 @@ public class ReintegroServiceImpl {
 		String comproaDebitarTipo, String comproaDebitarLetra, String comproaDebitarSucu, String comproaDebitarNumero, 
 		String tercerizado, Date periodo, String userName, String cuitEntidad, String sucuEntidad, Date comprobanteFecha, 
 		BigDecimal importeComprobante, int motivoAltaDiscapacidad, BigDecimal cargoOspim, BigDecimal cargoOspimPrestadora, 
-		BigDecimal cargoImesa,Connection con) throws SystemException, DuplicateReintegroPrestacionIdException, AfiliadoSinPlanException {
+		BigDecimal cargoImesa, String idTecerizadora, Connection con) throws SystemException, DuplicateReintegroPrestacionIdException, AfiliadoSinPlanException {
 		
 		CallableStatement stmt = null;
 		// TEMPORAL, el plan por ahora es uno siempre, en la solución final
@@ -392,7 +392,7 @@ public class ReintegroServiceImpl {
 		
 		try {
 		
-			String sql = "{call inserta_prestacion (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql = "{call inserta_prestacion (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 			stmt = con.prepareCall(sql.toString());
 
 			// id_plan = aporteService.getPlanAfiliado(con, cuil_titular, inte,
@@ -422,6 +422,11 @@ public class ReintegroServiceImpl {
 			stmt.setString(23, comproaDebitarSucu);
 			stmt.setString(24, comproaDebitarLetra);
 			stmt.setBigDecimal(25, cargoImesa);
+			if (!StringUtils.checkEmpty(idTecerizadora)) {
+			    stmt.setString(26, idTecerizadora);
+			} else {
+			    stmt.setNull(26, Types.VARCHAR);
+			}
 			
 			ResultSet rs = stmt.executeQuery();
 			
@@ -509,7 +514,7 @@ public class ReintegroServiceImpl {
 		String comproaDebitarTipo, String comproaDebitarLetra, String comproaDebitarSucursal, String comproaDebitarNumero, 
 		String tercerizado, Date periodo, String userName, int pieza, String cara, int idPrestadorExterno, boolean esExcepcion,
 		int idReclamoPrestacional, int idReclamoPrestacionalPrestaciones,
-		BigDecimal cargoOspim , BigDecimal cargoPrestadora, BigDecimal cargoImesa,
+		BigDecimal cargoOspim , BigDecimal cargoPrestadora, BigDecimal cargoImesa, String idTercerizadora,
 		Connection con) 
 		throws SystemException, DuplicateReintegroPrestacionIdException, AfiliadoSinPlanException {
 		
@@ -520,7 +525,7 @@ public class ReintegroServiceImpl {
 		
 		try {	
 			
-			String sql = "{call inserta_prestacion_odo_protesis(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql = "{call inserta_prestacion_odo_protesis(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 			stmt = con.prepareCall(sql.toString());
 
 			stmt.setInt(1, idReintegro);
@@ -552,6 +557,12 @@ public class ReintegroServiceImpl {
 			stmt.setBigDecimal(23, cargoOspim);
 			stmt.setBigDecimal(24, cargoPrestadora);
 			stmt.setBigDecimal(25, cargoImesa);
+			if (!StringUtils.checkEmpty(idTercerizadora)) {
+			    stmt.setString(26, idTercerizadora);
+			} else {
+			    stmt.setNull(26, Types.VARCHAR);
+			}
+			
 			stmt.executeUpdate();
 			
 		} catch (SQLException e) {
@@ -654,7 +665,7 @@ public class ReintegroServiceImpl {
 		String comproaDebitarTipo, String comproaDebitarLetra, String comproaDebitarSucursal, String comproaDebitarNumero, 
 		String tercerizado, Date periodo, String userName, Date altaFecha, int idPrestacionAnterior, String codigoAnterior, 
 		String cuitEntidad, String sucuEntidad, Date comprobanteFecha, BigDecimal importeComprobante, int motivoAltaDiscapacidad, 
-		BigDecimal cargoOspim, BigDecimal cargoPrestadora, BigDecimal cargoImesa) throws SystemException, DuplicateReintegroPrestacionIdException, 
+		BigDecimal cargoOspim, BigDecimal cargoPrestadora, BigDecimal cargoImesa, String idTecerizadora) throws SystemException, DuplicateReintegroPrestacionIdException, 
 	 AfiliadoSinPlanException {
 
 		Connection con = null;
@@ -662,7 +673,7 @@ public class ReintegroServiceImpl {
 		int idPlan = 1;
 		try {
 			con = ConnectionHelper.getConnection();
-			String sql = "{call actualiza_prestacion (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql = "{call actualiza_prestacion (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 			stmt = con.prepareCall(sql.toString());
 
 			stmt.setInt(1, idReintegro);
@@ -698,6 +709,12 @@ public class ReintegroServiceImpl {
 			
 			stmt.setBigDecimal(27, cargoImesa);
 			
+			if (!StringUtils.checkEmpty(idTecerizadora)) {
+			    stmt.setString(28, idTecerizadora);
+			} else {
+			    stmt.setNull(28, Types.VARCHAR);
+			}
+			
 			stmt.executeUpdate();
 			
 		} catch (SQLException e) {
@@ -732,7 +749,7 @@ public class ReintegroServiceImpl {
 		int idPrestacion, String codigo, Date prestacionFecha, BigDecimal cantidad, BigDecimal importe, 
 		String comproaDebitarTipo, String comproaDebitarLetra, String comproaDebitarSucursal, String comproaDebitarNumero, 
 		String tercerizado, Date periodo, String userName, Date altaFecha, int idPrestacionAnterior, String codigoAnterior, 
-		int pieza, String cara, int idPrestadorExterno, boolean esExcepcion) throws SystemException, DuplicateReintegroPrestacionIdException, 
+		int pieza, String cara, int idPrestadorExterno, boolean esExcepcion, String idTecerizadora) throws SystemException, DuplicateReintegroPrestacionIdException, 
 	 AfiliadoSinPlanException {
 
 		Connection con = null;
@@ -740,7 +757,7 @@ public class ReintegroServiceImpl {
 		int id_plan = 1;
 		try {
 			con = ConnectionHelper.getConnection();
-			String sql = "{call actualiza_prestacion_odo_protesis (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql = "{call actualiza_prestacion_odo_protesis (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 			stmt = con.prepareCall(sql.toString());
 
 			stmt.setInt(1, idReintegro);
@@ -765,7 +782,12 @@ public class ReintegroServiceImpl {
 			stmt.setBoolean(20, esExcepcion);
 			stmt.setString(21, comproaDebitarSucursal);
 			stmt.setString(22, comproaDebitarLetra);
-
+			if (!StringUtils.checkEmpty(idTecerizadora)) {
+			    stmt.setString(23, idTecerizadora);
+			} else {
+			    stmt.setNull(23, Types.VARCHAR);
+			}
+			
 			stmt.executeUpdate();
 			
 		} catch (SQLException e) {

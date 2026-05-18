@@ -82,6 +82,8 @@ public class PrestacionesReclamo implements Serializable {
 	
 	private double cargoImesa;
 	
+	private String idTercerizadora;
+	
 	public enum ESTADOS {
 		NUEVO, MODIF, BAJA
 	};
@@ -233,7 +235,11 @@ public class PrestacionesReclamo implements Serializable {
 		prestacionesreclamo.setIdreclamoprestacional(rs.getInt(prefix + "id_recl_prest_prest"));
 		prestacionesreclamo.setReconocidoSSS(rs.getDouble(prefix + "reconocido_sss"));
 		
-		
+		try {
+		    prestacionesreclamo.setIdTercerizadora(rs.getString(prefix + "id_tecerizadora"));
+		} catch (Exception e) {
+		    prestacionesreclamo.setIdTercerizadora(null);
+		}
 		
 		if(rs.getString(prefix + "comprobante_tipo")!=null) {
 		  prestacionesreclamo.setComprobanteTipo(rs.getString(prefix + "comprobante_tipo"));
@@ -296,6 +302,13 @@ public class PrestacionesReclamo implements Serializable {
 		prestacionesreclamo.setId_prestacionrecord(rs.getInt(prefix + "id_prestacionrecord"));
 		prestacionesreclamo.setEstadoRechazoAprobado(rs.getInt(prefix + "estado_aprobacion"));
 		prestacionesreclamo.setCodigoPrestacion(rs.getString(prefix + "codigo_prestacion"));
+		
+		
+		try {
+		    prestacionesreclamo.setIdTercerizadora(rs.getString(prefix + "id_tercerizadora"));
+		} catch (Exception e) {
+		    prestacionesreclamo.setIdTercerizadora(null);
+		}
 		
 		prestacionesreclamo.setCantidad(rs.getDouble(prefix + "cantidad_prestacion"));
 		
@@ -936,6 +949,14 @@ public class PrestacionesReclamo implements Serializable {
 
 	public Double getCargo_imesa() {
 		return cargoImesa;
+	}
+	
+	public String getIdTercerizadora() {
+	    return idTercerizadora;
+	}
+
+	public void setIdTercerizadora(String idTercerizadora) {
+	    this.idTercerizadora = idTercerizadora;
 	}
 }
 

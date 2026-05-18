@@ -45,7 +45,7 @@ headerNames.add("Cant");
 headerNames.add("Importe");
 headerNames.add("Total Autorizado");
 headerNames.add("Cargo OSPIM");
-headerNames.add("Cargo EnSalud");
+headerNames.add("Cargo Prestadora");
 headerNames.add("Monotributo");
 headerNames.add("Reconocido SSS");
 headerNames.add("OP");

@@ -912,7 +912,10 @@ public class XLSServlet extends HttpServlet {
 			    res.setHeader("Content-Disposition", "attachment; filename=\"subsidiosAFIP.xls\"");
 			}    
 		}else if(reporte.equals(REPORTE_PRECIOS_FACTURACION)) {
+/*			
+			wb = ReportePreciosPlanesSuperadores.generarListado(req, res);
 			res.setHeader("Content-Disposition", "attachment; filename=\"reportePreciosPlanesSuperadores.xls\"");
+*/			
 		}else if (reporte.equals("test")) {
 			wb = test(req, res);
 		}

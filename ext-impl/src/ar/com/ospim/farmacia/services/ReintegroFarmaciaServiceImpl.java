@@ -30,6 +30,7 @@ import ar.com.ospim.liquidaciones.DuplicateReintegroPrestacionIdException;
 import ar.com.ospim.liquidaciones.NoSuchReintegroEntryException;
 import ar.com.ospim.liquidaciones.NoSuchReintegroPrestacionEntryException;
 import ar.com.ospim.util.ConnectionHelper;
+import ar.com.ospim.util.StringUtils;
 
 public class ReintegroFarmaciaServiceImpl {
 
@@ -221,7 +222,7 @@ public class ReintegroFarmaciaServiceImpl {
 			String cuil_titular, int inte, int seccional,
 			ArrayList<ReintegroMedicamentoItem> medicamentos, String userName ,
 			String cbu, String cuilCuenta,String emailCuenta , 
-			String apellidoCuenta, String nombreCuenta)
+			String apellidoCuenta, String nombreCuenta, String idTecerizadora)
 			throws SystemException {
 		Connection con = null;
 		CallableStatement stmt = null;
@@ -252,7 +253,7 @@ public class ReintegroFarmaciaServiceImpl {
 				if (med.getMedicamento().getNombre().equals("TOTAL") || med.isDelete()) {
 					continue;
 				}				
-				sql = "{call inserta_medicamento_reintegro_farmacia (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+				sql = "{call inserta_medicamento_reintegro_farmacia (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 				stmt = con.prepareCall(sql.toString());
 				stmt.setInt(1, id_reintegro);
 				stmt.setInt(2, med.getMedicamento().getId_medicamento());
@@ -301,6 +302,11 @@ public class ReintegroFarmaciaServiceImpl {
 				}
 				
 				stmt.setBigDecimal(30, med.getImporteCoberturaImesa());
+				if (!StringUtils.checkEmpty(idTecerizadora)) {
+				    stmt.setString(31, idTecerizadora);
+				} else {
+				    stmt.setNull(31, Types.VARCHAR);
+				}
 				
 				ResultSet rs1 = stmt.executeQuery();
 				while (rs1.next()) {
@@ -350,7 +356,7 @@ public class ReintegroFarmaciaServiceImpl {
 	 */
 
 	public void actualizaMedicamentoReintegroPrestacionEntry(int id_reintegro,
-			ArrayList<ReintegroMedicamentoItem> medicamentos, String userName) throws SystemException,
+			ArrayList<ReintegroMedicamentoItem> medicamentos, String userName, String idTercerizadora) throws SystemException,
 			DuplicateReintegroPrestacionIdException, AfiliadoSinPlanException {
 
 		Connection con = null;
@@ -375,7 +381,7 @@ public class ReintegroFarmaciaServiceImpl {
 				
 			} else if (item.isEdit() && item.getId() > 0) {
 				
-				String sql = "{call actualiza_prestacion_farmacia (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+				String sql = "{call actualiza_prestacion_farmacia (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 				stmt = con.prepareCall(sql.toString());
 				stmt.setInt(1, item.getId());	
 				stmt.setInt(2, item.getMedicamento().getId_medicamento());
@@ -410,12 +416,18 @@ public class ReintegroFarmaciaServiceImpl {
 				
 				stmt.setBigDecimal(20, item.getImporteCoberturaImesa());
 				
+				if (!StringUtils.checkEmpty(idTercerizadora)) {
+				    stmt.setString(21, idTercerizadora);
+				} else {
+				    stmt.setNull(21, Types.VARCHAR);
+				}
+				
 				stmt.executeUpdate();
 				stmt.close();
 				
 			} else if (item.getId() < 0) {
 				
-				String sql = "{call inserta_medicamento_reintegro_farmacia (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+				String sql = "{call inserta_medicamento_reintegro_farmacia (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 				stmt = con.prepareCall(sql.toString());
 				stmt.setInt(1, id_reintegro);
 				stmt.setInt(2, item.getMedicamento().getId_medicamento());
@@ -463,6 +475,12 @@ public class ReintegroFarmaciaServiceImpl {
 				}	
 				
 				stmt.setBigDecimal(30, item.getImporteCoberturaImesa());
+				
+				if (!StringUtils.checkEmpty(idTercerizadora)) {
+				    stmt.setString(31, idTercerizadora);
+				} else {
+				    stmt.setNull(31, Types.VARCHAR);
+				}
 				
 				ResultSet rs1 = stmt.executeQuery();
 				while (rs1.next()) {

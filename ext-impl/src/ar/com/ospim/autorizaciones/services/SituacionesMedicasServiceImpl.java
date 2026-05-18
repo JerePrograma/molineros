@@ -379,6 +379,34 @@ ConnectionHelper.cerrar(stmt, con);
 return listaSituacionesMedicasTotales  ;
 }
 
+public void generarFormularioSiNoExiste(
+        int idSituacionMedica,
+        int tipoSituMedica,
+        String usuario
+) throws Exception {
+
+    Connection con = null;
+    CallableStatement stmt = null;
+
+    try {
+        String sql = "{call generar_formulario_situacion_medica(?,?,?)}";
+
+        con = ConnectionHelper.getConnection();
+        stmt = con.prepareCall(sql);
+
+        stmt.setInt(1, idSituacionMedica);
+        stmt.setInt(2, tipoSituMedica);
+        stmt.setString(3, usuario);
+
+        stmt.executeUpdate();
+
+    } catch (Exception e) {
+        _log.error("Error al generar formulario de situacion medica", e);
+        throw e;
+    } finally {
+        ConnectionHelper.cerrar(stmt, con);
+    }
+}
 
 }
 

@@ -351,6 +351,26 @@ div.divHeaderNro {
 </div>		
 <% }%>
 </td>
+
+<%
+boolean tienePdfConfigurado = false;
+
+if (situacionMedica != null) {
+    int idTipoSituMedica = situacionMedica.getIdTipoSituMedica();
+    tienePdfConfigurado = (idTipoSituMedica == 1 || idTipoSituMedica == 6);
+}
+%>
+
+<td style="padding-left:10px;">
+          <span title="<%= tienePdfConfigurado ? "Imprime el formulario PDF de la situación médica" : "No hay pdf configurado para la situación médica" %>">
+    <input type="button"
+           id="<portlet:namespace />btnImprimirFormulario"
+           value="Imprimir Formulario"
+           onClick="<portlet:namespace />imprimirSituacionMedicaPdf();"
+           <%= !tienePdfConfigurado ? "disabled=\"disabled\"" : "" %> />
+</span>
+        </td>
+        
 </tr>
 </table>
 </div>
@@ -450,11 +470,21 @@ function validaDatos(){
 		respuesta= false;
 	}
 	
-    if ( (jQuery('#<portlet:namespace />codigoCie').val()==""  ||  jQuery('#<portlet:namespace />detalleCie').val()=="") && jQuery('#<portlet:namespace />diagnostico').val()==""     )  {    	
-    	alert ('El diagnostico del Afiliado es un dato obligatorio.');
-		jquery("<portlet:namespace />codigoCie").focus();
-		respuesta= false;
-    }    
+    var tipoSituacionMedica = jQuery('#<portlet:namespace/>situacionMedica').val();
+
+    if (
+        tipoSituacionMedica != "1" &&
+        (
+            jQuery('#<portlet:namespace />codigoCie').val() == "" ||
+            jQuery('#<portlet:namespace />detalleCie').val() == ""
+        ) &&
+        jQuery('#<portlet:namespace />diagnostico').val() == "" &&
+        jQuery('#<portlet:namespace />diagnosticonodiscapacitado').val() == ""
+    ) {
+        alert('El diagnostico del Afiliado es un dato obligatorio.');
+        jQuery('#<portlet:namespace />codigoCie').focus();
+        respuesta = false;
+    }   
     
     if ( jQuery('#<portlet:namespace/>situacionMedica').val()=="0" )  {    	
     	alert ('La situacion medíca es un dato obligatorio.');
@@ -505,6 +535,7 @@ function seleccionaCamposCieDiez(codigo,descripcion ){
 	jQuery('#<portlet:namespace />detalleCie').val(descripcion);		
 }
 
+/*
 function cambiacaption() {
 	valor = jQuery('#<portlet:namespace/>situacionMedica option:selected').html();
 	if (jQuery('#<portlet:namespace/>situacionMedica' ).val()==0){
@@ -512,7 +543,7 @@ function cambiacaption() {
 	}else {
 		jQuery("#<portlet:namespace/>captionsituacionmedicasel").html('Detalle ' + valor);	
 	}	
-}
+}*/
 
 function <portlet:namespace />saveSituacionMedica() {
 			
@@ -656,7 +687,22 @@ function editaRegistrodeGrilla(idSitMedica) {
 	submitForm(document.<portlet:namespace />sitmedica_fm, url);	
 }
 
-
+function <portlet:namespace />imprimirSituacionMedicaPdf() {
+    <% if (situacionMedica != null && (situacionMedica.getIdTipoSituMedica() == 1 || situacionMedica.getIdTipoSituMedica() == 6)) { %>
+        window.open(
+            "/pdfservlet/?accion=situacionMedicaPdf&id_situacion=<%= situacionMedica.getId_Situacion() %>",
+            "_blank"
+        );
+    <% } else { %>
+        alert("Esta situación médica no tiene formulario PDF configurado.");
+    <% } %>
+}
 
 </script>
 
+<style>
+input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+</style>

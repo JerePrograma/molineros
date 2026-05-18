@@ -601,6 +601,14 @@ public class EditarLiquidacionEntryAction extends PortletAction {
 		int seccional = ParamUtil.getInteger(actionRequest, "id_seccional", 0);
 		int numero = ParamUtil.getInteger(actionRequest, "numero", 0);
 
+		String idTercerizadora = ParamUtil.getString(actionRequest, "id_tercerizadora", "");
+
+		if (StringUtils.checkEmpty(idTercerizadora)
+		        || "null".equalsIgnoreCase(idTercerizadora)
+		        || "undefined".equalsIgnoreCase(idTercerizadora)) {
+		    idTercerizadora = null;
+		}
+		
 		String prestacionFechaDia = ParamUtil.getString(actionRequest,
 				"prestacionFechaDia");
 		String prestacionFechaMes = ParamUtil.getString(actionRequest,
@@ -720,7 +728,7 @@ public class EditarLiquidacionEntryAction extends PortletAction {
 					importe_concepto, periodoPrestacion, motivoAltaDiscapacidad,
 					idReclamo,idPrestacionReclamo , new BigDecimal(cargoOspim) ,
 					new BigDecimal(cargoPrestadora), 	new BigDecimal(cargoOmint) , new BigDecimal(cargoEnSalud),new BigDecimal(cargoCemic),
-					new BigDecimal(cargoImesa),new BigDecimal(cargoCes));
+					new BigDecimal(cargoImesa),new BigDecimal(cargoCes), idTercerizadora);
 			//Borro primero posibles daots de la sesión 
 			if (EditarLiquidacionServiceUtil.servicioEspecial(servicio)) {
 				session.setAttribute("cuil_titular_servicio", cuil_titular);
@@ -747,14 +755,14 @@ public class EditarLiquidacionEntryAction extends PortletAction {
 						,idPrestacionReclamo , new BigDecimal(cargoOspim) ,
 						new BigDecimal(cargoPrestadora) , new BigDecimal(cargoOmint), 
 						new BigDecimal(cargoEnSalud),new BigDecimal(cargoCemic),
-						new BigDecimal(cargoImesa),new BigDecimal(cargoCes));
+						new BigDecimal(cargoImesa),new BigDecimal(cargoCes), idTercerizadora);
 			} else {
 				int orden = ParamUtil.getInteger(actionRequest, "orden", 0);
 				EditarLiquidacionServiceUtil
 						.actualizaLiquidacionPrestacionEntry(numero, orden,
 								prestacionFecha, servicio, cuil_titular, inte,
 								id_prestacion, cantidad, importe, tercerizado,
-								user, periodoPrestacion, motivoAltaDiscapacidad,idPrestador);
+								user, periodoPrestacion, motivoAltaDiscapacidad,idPrestador, idTercerizadora);
 			}
 		}
 		return numero;
@@ -807,6 +815,16 @@ public class EditarLiquidacionEntryAction extends PortletAction {
 
 		int numero = ParamUtil.getInteger(actionRequest, "numero", 0);
 		liquidacionPrestacionAjuste.setId_liquidacion(numero);
+		
+		String idTercerizadora = ParamUtil.getString(actionRequest, "id_tercerizadora", "");
+
+		if (StringUtils.checkEmpty(idTercerizadora)
+		        || "null".equalsIgnoreCase(idTercerizadora)
+		        || "undefined".equalsIgnoreCase(idTercerizadora)) {
+		    idTercerizadora = null;
+		}
+
+		liquidacionPrestacionAjuste.setIdTercerizadora(idTercerizadora);
 
 		String prestacionFechaDia = ParamUtil.getString(actionRequest,
 				"prestacionFechaDia");

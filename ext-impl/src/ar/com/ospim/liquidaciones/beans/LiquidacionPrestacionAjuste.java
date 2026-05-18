@@ -11,6 +11,8 @@ public class LiquidacionPrestacionAjuste extends LiquidacionPrestacion {
 
 	private String ajuste; //ADD, EDIT, DELETE	
 	
+	private String idTercerizadora;
+	
 	public LiquidacionPrestacionAjuste(){
 
 	}
@@ -34,5 +36,13 @@ public class LiquidacionPrestacionAjuste extends LiquidacionPrestacion {
 	 */
 	public void setAjuste(String ajuste) {
 		this.ajuste = ajuste;
+	}
+	
+	public String getIdTercerizadora() {
+	    return idTercerizadora;
+	}
+
+	public void setIdTercerizadora(String idTercerizadora) {
+	    this.idTercerizadora = idTercerizadora;
 	}
 }

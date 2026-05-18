@@ -110,7 +110,7 @@ public class EditarLiquidacionServiceUtil {
 			int id_concepto, String importe_concepto, Date periodoPrestacion, 
 			int motivoAltaDiscapacidad,int idReclamo , int idPrestacionReclamo , 
 			BigDecimal cargoOspim, BigDecimal cargoPrestadora , BigDecimal cargoOmint,
-			BigDecimal cargoEnSalud,BigDecimal cargoCemic,BigDecimal cargoImesa,BigDecimal cargoCes) throws Exception {
+			BigDecimal cargoEnSalud,BigDecimal cargoCemic,BigDecimal cargoImesa,BigDecimal cargoCes, String idTercerizadora) throws Exception {
 		
 		Empresa empresa = EmpresaServiceUtil.getEmpleadorCompleto(cuit_prestador, "000");
 		if (empresa == null) {
@@ -183,7 +183,7 @@ public class EditarLiquidacionServiceUtil {
 			int[] idPrestacion = new int[1]; 
 			int orden = getInstance().cargaLiquidacionPrestacionEntry(id_liquidacion, cuil_titular, inte, id_prestacion, prestacionFecha, new BigDecimal(cantidad),
 					new BigDecimal(importe), servicio, new BigDecimal(solicitado), new BigDecimal(debitado), new BigDecimal(resultado), tercerizado, user.getScreenName(), periodoPrestacion, 
-					motivoAltaDiscapacidad,idPrestacion , cargoOspim,  cargoPrestadora.add(!cargoEnSalud.equals(BigDecimal.ZERO)?cargoEnSalud:BigDecimal.ZERO),cargoImesa);
+					motivoAltaDiscapacidad,idPrestacion , cargoOspim,  cargoPrestadora.add(!cargoEnSalud.equals(BigDecimal.ZERO)?cargoEnSalud:BigDecimal.ZERO),cargoImesa, idTercerizadora);
 			
 			// graba los datos del reclamo prestacional asociado 
 			if (idReclamo!=0 && idPrestacionReclamo!=0){
@@ -218,7 +218,7 @@ public class EditarLiquidacionServiceUtil {
 			String importe_concepto, ActionRequest actionRequest, Date periodoPrestacion,
 			int motivoAltaDiscapacidad, int idReclamo , int idPrestacionReclamo , BigDecimal cargoOspim, 
 			BigDecimal cargoPrestadora , BigDecimal cargoOmin, BigDecimal cargoEnSalud , BigDecimal cargoCemic,BigDecimal cargoImesa,
-			BigDecimal cargoCes) throws Exception {
+			BigDecimal cargoCes, String idTercerizadora) throws Exception {
 		
 		List<Empresa> busqueda = EmpresaServiceUtil
 		.getEmpleadores(cuit_prestador, null, String.valueOf(id_prestador),0);
@@ -297,7 +297,7 @@ public class EditarLiquidacionServiceUtil {
 				//Si es tercerizado carga la nueva prestación				
 				int orden = getInstance().cargaLiquidacionPrestacionEntry(id_liquidacion, cuil_titular, inte, id_prestacion, prestacionFecha, new BigDecimal(cantidad),
 					new BigDecimal(importe),servicio, new BigDecimal(solicitado), new BigDecimal(debitado), new BigDecimal(resultado), tercerizado, user.getScreenName(),
-					periodoPrestacion, motivoAltaDiscapacidad,idPrestacion , cargoOspim,  cargoPrestadora.add(!cargoEnSalud.equals(BigDecimal.ZERO)?cargoEnSalud:BigDecimal.ZERO),cargoImesa);
+					periodoPrestacion, motivoAltaDiscapacidad,idPrestacion , cargoOspim,  cargoPrestadora.add(!cargoEnSalud.equals(BigDecimal.ZERO)?cargoEnSalud:BigDecimal.ZERO),cargoImesa, idTercerizadora);
 				BigDecimal cant = new BigDecimal(cantidad);
 				
 				// graba los datos del reclamo prestacional asociado 
@@ -387,7 +387,7 @@ public class EditarLiquidacionServiceUtil {
 		int [] idPrestacion = new int[1];
 		int orden = getInstance().cargaLiquidacionPrestacionEntry(p.getId_liquidacion(), p.getCuil_titular(), p.getInte(), p.getId_prestacion(), p.getFecha_prestacion(), p.getCantidad(),
 				p.getImporte(), p.getServicio(), new BigDecimal(0), new BigDecimal(0), new BigDecimal(0),  p.getTercerizado(), u.getScreenName(), p.getPeriodo(), p.getMotivoAltaDiscapacidad(),idPrestacion ,
-				p.getCargoOspim(),p.getCargoPrestadora(),p.getCargoImesa());
+				p.getCargoOspim(),p.getCargoPrestadora(),p.getCargoImesa(), p.getIdTercerizadora());
 		
 		ComprobanteItem comprobanteItem = new ComprobanteItem(c.getSucuComprobante(), c.getTipoComprobante(), c.getNroComprobante(), c.getCuit(), c.getLetraComprobante(), 
 				c.getSucuComprobante(), orden, new BigDecimal(0), new BigDecimal(0), new BigDecimal(0), new BigDecimal(0), new BigDecimal(0), p.getCantidad().multiply(p.getImporte()), "", 0);
@@ -398,7 +398,7 @@ public class EditarLiquidacionServiceUtil {
 			LiquidacionPrestacionAjuste p, Comprobante c, User u) throws NoSuchLiquidacionPrestacionEntryException, SystemException, NoSuchLiquidacionEntryException, ComprobanteInexistenteException, ComprobanteExistenteException, PrestacionComprobanteExistenteException {			
 		actualizaLiquidacionPrestacionEntry(p.getId_liquidacion(), p.getOrden(), p.getFecha_prestacion(), p.getServicio(), 
 				p.getCuil_titular(), p.getInte(), p.getId_prestacion(), p.getCantidad().toPlainString(), p.getImporte().toPlainString(), p.getTercerizado(), u, 
-				p.getPeriodo(), p.getMotivoAltaDiscapacidad(),null);
+				p.getPeriodo(), p.getMotivoAltaDiscapacidad(),null, p.getIdTercerizadora());
 	}
 
 	private static void borraPrestacion(
@@ -546,10 +546,10 @@ public class EditarLiquidacionServiceUtil {
 	}
 	
 	public static void actualizaLiquidacionPrestacionEntry(int numero, int orden, Date prestacionFecha, String servicio, String cuil_titular, int inte, int id_prestacion,
-			String cantidad, String importe, String tercerizado, User user, Date periodoPrestacion, int motivoAltaDiscapacidad,Integer idPrestador) throws NoSuchLiquidacionPrestacionEntryException, SystemException, 
+			String cantidad, String importe, String tercerizado, User user, Date periodoPrestacion, int motivoAltaDiscapacidad,Integer idPrestador, String idTercerizadora) throws NoSuchLiquidacionPrestacionEntryException, SystemException, 
 			ComprobanteInexistenteException, NoSuchLiquidacionEntryException, ComprobanteExistenteException, PrestacionComprobanteExistenteException {
 		getInstance().actualizaLiquidacionPrestacionEntry(numero, orden, prestacionFecha, servicio, cuil_titular, inte, id_prestacion,
-				new BigDecimal(cantidad), new BigDecimal(importe), tercerizado, user.getScreenName(), periodoPrestacion, motivoAltaDiscapacidad);
+				new BigDecimal(cantidad), new BigDecimal(importe), tercerizado, user.getScreenName(), periodoPrestacion, motivoAltaDiscapacidad, idTercerizadora);
 		//Guarda el nuevo item de comprobante asociado a la prestación
 		
 		Comprobante comp = ComprobanteServiceUtil.getComprobanteLiquidacionPorId(numero);
@@ -622,7 +622,7 @@ public class EditarLiquidacionServiceUtil {
 			String importe_concepto, RenderRequest actionRequest, Date periodoPrestacion,
 			int motivoAltaDiscapacidad, int idReclamo , int idPrestacionReclamo , BigDecimal cargoOspim, 
 			BigDecimal cargoPrestadora , BigDecimal cargoOmin, BigDecimal cargoEnSalud , BigDecimal cargoCemic,
-			BigDecimal cargoImesa,BigDecimal cargoCes) throws Exception {
+			BigDecimal cargoImesa,BigDecimal cargoCes, String idTercerizadora) throws Exception {
 		
 		List<Empresa> busqueda = EmpresaServiceUtil
 		.getEmpleadores(cuit_prestador, null, String.valueOf(id_prestador),0);
@@ -701,7 +701,7 @@ public class EditarLiquidacionServiceUtil {
 				//Si es tercerizado carga la nueva prestación				
 				int orden = getInstance().cargaLiquidacionPrestacionEntry(id_liquidacion, cuil_titular, inte, id_prestacion, prestacionFecha, new BigDecimal(cantidad),
 					new BigDecimal(importe),servicio, new BigDecimal(solicitado), new BigDecimal(debitado), new BigDecimal(resultado), tercerizado, user.getScreenName(),
-					periodoPrestacion, motivoAltaDiscapacidad,idPrestacion , cargoOspim,  cargoPrestadora.add(!cargoEnSalud.equals(BigDecimal.ZERO)?cargoEnSalud:BigDecimal.ZERO),cargoImesa);
+					periodoPrestacion, motivoAltaDiscapacidad,idPrestacion , cargoOspim,  cargoPrestadora.add(!cargoEnSalud.equals(BigDecimal.ZERO)?cargoEnSalud:BigDecimal.ZERO),cargoImesa, idTercerizadora);
 				BigDecimal cant = new BigDecimal(cantidad);
 				
 				// graba los datos del reclamo prestacional asociado 

@@ -60,6 +60,14 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 		
 		String recuperableSurAux =   ParamUtil.getString(renderRequest, "recuperableSur","0");	
 		
+		String idTercerizadora = ParamUtil.getString(renderRequest, "id_tercerizadora", "");
+
+		if (StringUtils.checkEmpty(idTercerizadora)
+		        || "null".equalsIgnoreCase(idTercerizadora)
+		        || "undefined".equalsIgnoreCase(idTercerizadora)) {
+			idTercerizadora = null;
+		}
+		
 		/*
 		if ("1".equals(recuperableSurAux) || "3".equals(recuperableSurAux)){
 			recuperableSur =  true;
@@ -176,6 +184,11 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 			    presta.setCargo_ps(cargoPs);
 			    presta.setCargo_imesa(cargoImesa);
 //			    presta.setRecuperableSur(recuperableSur);
+			    if (!StringUtils.checkEmpty(idTercerizadora)
+			            && !"null".equalsIgnoreCase(idTercerizadora)
+			            && !"undefined".equalsIgnoreCase(idTercerizadora)) {
+			        presta.setIdTercerizadora(idTercerizadora);
+			    }
 			    presta.setRecuperable(recuperable);
 			    presta.setEstado(PrestacionesReclamo.ESTADOS.MODIF );
 			    presta.setEstadoRechazoAprobado(!PrestacionesReclamo.ESTADOS.BAJA.equals(presta.getEstado()) ? estadoAprobaRechazado : 0);

@@ -1054,7 +1054,7 @@ span-fixed-size {
 										value='' <% if (!esEdicion) { %> disabled='disabled' <%}%>
 										type="text" value=""
 										onkeydown="allowOnlyDigitsAndDecimals(event)" /></td>
-									<td><label><liferay-ui:message key="cargo-terc" />:</label>
+									<td><label><liferay-ui:message key="Cargo Prestadora" />:</label>
 									</td>
 									<td><input id="<portlet:namespace />cargops"
 										<% if (!esEdicion) { %> disabled='disabled' <%}%>
@@ -3011,6 +3011,9 @@ function <portlet:namespace />editarPrestacionSeleccionada(tipoAccion) {
     
     var cuil=jQuery('#<portlet:namespace />cuil').val();
 	var inte=jQuery('#<portlet:namespace />inte').val();	
+	
+	var idTecerizadora = jQuery('#<portlet:namespace />id_tercerizadora').val();
+	
 	var params = {"frecuencia":frecuencia,
 						   "importe":importe,	
 						   "cargoospim":cargoospim,
@@ -3047,7 +3050,8 @@ function <portlet:namespace />editarPrestacionSeleccionada(tipoAccion) {
 						   "tipoNomenclador_edit":tipoNomenclador_edit,
 						   "reconocidoSSS":reconocidoSSS,
 						   "cuil":cuil,
-						   "inte":inte
+						   "inte":inte,
+						   "id_tercerizadora": idTecerizadora
 						   };	
 	
  	var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones" /></portlet:renderURL>';

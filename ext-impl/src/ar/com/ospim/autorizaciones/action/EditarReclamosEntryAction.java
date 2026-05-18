@@ -11,6 +11,7 @@ import java.util.List;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
+import javax.portlet.PortletRequest;
 import javax.portlet.PortletSession;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
@@ -555,7 +556,8 @@ import ar.com.ospim.util.StringUtils;
 			}
 			
 			
-			List<PrestacionesReclamo> prestaciones= (List<PrestacionesReclamo>) session.getAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION);				
+			List<PrestacionesReclamo> prestaciones= (List<PrestacionesReclamo>) session.getAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION);
+			
 			reclamoPrestacional.setPrestaciones(prestaciones);
 			List<RevisionesReclamo> revisiones = (List<RevisionesReclamo>) session.getAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION );				
 			reclamoPrestacional.setRevisiones(revisiones);
@@ -613,6 +615,9 @@ import ar.com.ospim.util.StringUtils;
 				
 								
 				if(cmd.equals(Constants.SAVE)){
+					
+					asignarTercerizadoraAPrestaciones(renderRequest, prestaciones);//se agrega
+					
 					reclamoPrestacional.setPrestaciones(prestaciones);
 					reclamoPrestacional.setRevisiones(revisiones);
 					
@@ -733,7 +738,10 @@ import ar.com.ospim.util.StringUtils;
      				reclamoPrestacional = (ReclamoPrestacional) session.getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);	
 
 					reclamoPrestacional.setEstadoResolucionAutorizada(resolucionAutorizado);
-					reclamoPrestacional.setId(aux ); 									
+					reclamoPrestacional.setId(aux ); 
+					
+					asignarTercerizadoraAPrestaciones(renderRequest, prestaciones);//se agrega
+					
 					reclamoPrestacional.setPrestaciones(prestaciones);
 					reclamoPrestacional.setRevisiones(revisiones);			
 					// edita los contactos seleccionados en UI 
@@ -925,6 +933,28 @@ import ar.com.ospim.util.StringUtils;
 		}
 	}	
 
+	//se agrega
+	private void asignarTercerizadoraAPrestaciones(
+	        PortletRequest request,
+	        List<PrestacionesReclamo> prestaciones) {
+
+	    String idTercerizadora = ParamUtil.getString(request, "id_tercerizadora", "");
+
+	    if (StringUtils.checkEmpty(idTercerizadora)
+	            || "null".equalsIgnoreCase(idTercerizadora)
+	            || "undefined".equalsIgnoreCase(idTercerizadora)) {
+	        idTercerizadora = null;
+	    }
+
+	    if (prestaciones != null) {
+	        for (PrestacionesReclamo p : prestaciones) {
+	            if (p.getEstado() == null || !PrestacionesReclamo.ESTADOS.BAJA.equals(p.getEstado())) {
+	                p.setIdTercerizadora(idTercerizadora);
+	            }
+	        }
+	    }
+	}
+	
     private	void asignarReferenciasAlosContactos (HttpSession session, RenderRequest  renderRequest)
     {
     	
@@ -1215,7 +1245,6 @@ import ar.com.ospim.util.StringUtils;
 
 	    return cuenta;
 	}
-
 
 	
 }

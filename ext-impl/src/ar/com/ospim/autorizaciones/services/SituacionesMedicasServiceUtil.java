@@ -73,5 +73,16 @@ public class SituacionesMedicasServiceUtil {
 		return getInstance().buscarSituacionesMedicasVigente( filtro ); 
 	}
 	
-	
+	public static void generarFormularioSiNoExiste(
+	        int idSituacionMedica,
+	        int tipoSituMedica,
+	        String usuario
+	) throws Exception {
+
+	    getInstance().generarFormularioSiNoExiste(
+	        idSituacionMedica,
+	        tipoSituMedica,
+	        usuario
+	    );
+	}
 }

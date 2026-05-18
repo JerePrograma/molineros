@@ -134,7 +134,14 @@ import ar.com.ospim.util.StringUtils;
 			
 			if(cmd.equals(Constants.SAVE)){	
 				situacionMedica  =getSituacionMedicaFromRequest(PortalUtil.getHttpServletRequest(renderRequest),  situacionMedica);
-				idRegSituacionMedica = SituacionesMedicasServiceUtil.insertar(situacionMedica   , user);					
+				idRegSituacionMedica = SituacionesMedicasServiceUtil.insertar(situacionMedica   , user);
+				
+				SituacionesMedicasServiceUtil.generarFormularioSiNoExiste(
+				        idRegSituacionMedica,
+				        situacionMedica.getIdTipoSituMedica(),
+				        user.getScreenName()
+				    );
+				
 				situacionMedica = SituacionesMedicasServiceUtil.getSituacionMedica(idRegSituacionMedica,null,0);
 				if (situacionMedica.getIdTipoSituMedica() == 7 || situacionMedica.getIdTipoSituMedica() == 8 ){
 					AfiPlan afiPlan = planService.buscarUltimoPlanAportes(situacionMedica.getCuit_titular()); 
@@ -167,8 +174,12 @@ import ar.com.ospim.util.StringUtils;
 				session.setAttribute(WebKeysAutorizaciones.SITUACION_MEDICA_EN_EDICION , situacionMedica  );	
 				session.setAttribute(WebKeysAutorizaciones.LISTADO_PATOLOGIAS_SITUACION_MEDICA_EN_SESION   , situacionMedica.getPatologias());
 				BusquedaSituacionMedicaFiltro   busquedaSituacionFiltro  = (BusquedaSituacionMedicaFiltro  )session.getAttribute(WebKeysAutorizaciones.FILTRO_BUSQUEDA_SITUACIONMEDICA);
-				List<ItemSituacionMedicaTotal> busqueda = SituacionesMedicasServiceUtil.buscarSituacionesMedicasTotales(busquedaSituacionFiltro ) ;
-				portletSession.setAttribute(WebKeysAutorizaciones.BUSQUEDA_REGISTROS_SITUACIONES_MEDICAS,	busqueda);					
+				
+				if (busquedaSituacionFiltro != null) {
+					List<ItemSituacionMedicaTotal> busqueda = SituacionesMedicasServiceUtil.buscarSituacionesMedicasTotales(busquedaSituacionFiltro ) ;				
+					portletSession.setAttribute(WebKeysAutorizaciones.BUSQUEDA_REGISTROS_SITUACIONES_MEDICAS,	busqueda);					
+				}
+				
 				renderRequest.setAttribute(Constants.CMD, Constants.EDIT);										
 			}
 			

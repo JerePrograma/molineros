@@ -5,6 +5,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -223,13 +224,13 @@ public class EditarLiquidacionServiceImpl {
 			String servicio, BigDecimal solicitado, BigDecimal debitado,
 			BigDecimal resultado, String tercerizado, String usuario,
 			Date periodo, int motivoAltaDiscapacidad  , int[] idLiquidacionPrestacion , BigDecimal cargoOspim, BigDecimal cargoPrestadora,
-			BigDecimal cargoImesa) throws SystemException {
+			BigDecimal cargoImesa, String idTercerizadora) throws SystemException {
 		Connection con = null;
 		CallableStatement stmt = null;
 		int orden = 1;
 		try {
 			con = ConnectionHelper.getConnection();
-			String sql = "{call inserta_prestacion (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql = "{call inserta_prestacion (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 			stmt = con.prepareCall(sql.toString());
 			stmt.setInt(1, id_liquidacion);
 			stmt.setString(2, cuil_titular);
@@ -249,6 +250,12 @@ public class EditarLiquidacionServiceImpl {
 			stmt.setBigDecimal(16, cargoOspim);
 			stmt.setBigDecimal(17, cargoPrestadora);
 			stmt.setBigDecimal(18, cargoImesa);
+			if (!StringUtils.checkEmpty(idTercerizadora)) {
+			    stmt.setString(19, idTercerizadora);
+			} else {
+			    stmt.setNull(19, Types.VARCHAR);
+			}
+			
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
 				orden = rs.getInt(1);
@@ -475,13 +482,13 @@ public class EditarLiquidacionServiceImpl {
 	public void actualizaLiquidacionPrestacionEntry(int numero, int orden,
 			Date prestacionFecha, String servicio, String cuil_titular,
 			int inte, int id_prestacion, BigDecimal cantidad, BigDecimal importe,
-			String tercerizado, String userName, Date periodoPrestacion, int motivoAltaDiscapacidad)
+			String tercerizado, String userName, Date periodoPrestacion, int motivoAltaDiscapacidad, String idTercerizadora)
 			throws NoSuchLiquidacionPrestacionEntryException, SystemException {
 		Connection con = null;
 		CallableStatement stmt = null;
 		try {
 			con = ConnectionHelper.getConnection();
-			String sql = "{call actualiza_prestacion_liquidacion (?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql = "{call actualiza_prestacion_liquidacion (?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 			stmt = con.prepareCall(sql.toString());
 			stmt.setInt(1, numero);
 			stmt.setInt(2, orden);
@@ -496,6 +503,11 @@ public class EditarLiquidacionServiceImpl {
 			stmt.setString(11, userName);
 			stmt.setDate(12, new java.sql.Date(periodoPrestacion.getTime()));
 			stmt.setInt(13, motivoAltaDiscapacidad);
+			if (!StringUtils.checkEmpty(idTercerizadora)) {
+			    stmt.setString(14, idTercerizadora);
+			} else {
+			    stmt.setNull(14, Types.VARCHAR);
+			}
 			stmt.executeUpdate();
 		} catch (SQLException e) {
 			_log.error("Error al actualizar prestacion para liquidacion", e);

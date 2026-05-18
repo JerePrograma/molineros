@@ -75,7 +75,9 @@ public class WSAPPSController {
 				if(afs!=null && afs.size()>0) {
 				   afiliado = afs.get(0);
 				   if (null != afiliado) {
-					if (null != afiliado.getUltimo_plan().getDescripcion() && "INTEGRAL".equals(afiliado.getUltimo_plan().getDescripcion()) ) {
+					if (null != afiliado.getUltimo_plan().getDescripcion() && ("INTEGRAL".equals(afiliado.getUltimo_plan().getDescripcion()) ||
+							"OSPIM INTEGRAL".equals(afiliado.getUltimo_plan().getDescripcion()) )
+							) {
 						credencial =StringUtil.valueOf(afiliado.getId_ospim()) +"-"+StringUtil.valueOf(afiliado.getInte());
 						model.put("estado", "HABILITADO");
 						model.put("credencial", credencial);

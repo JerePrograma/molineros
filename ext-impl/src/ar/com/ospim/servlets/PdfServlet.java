@@ -27,6 +27,8 @@ import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.export.JRPdfExporter;
 import net.sf.jasperreports.engine.util.JRLoader;
+import ar.com.ospim.autorizaciones.beans.SituacionMedica;
+import ar.com.ospim.autorizaciones.services.SituacionesMedicasServiceUtil;
 import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.util.ConnectionHelper;
 import ar.com.ospim.util.DateUtils;
@@ -134,6 +136,12 @@ public class PdfServlet extends HttpServlet {
 	public static final String RECIBO_UOMA = "jasper/tesoreria/recibo_uoma.jasper";
 	public static final String RECIBO_UOMA_PDF_FILENAME = "ReciboUoma_xxx.pdf";
 	
+	private static final String SITUACION_MEDICA_ANTICONCEPCION = "jasper/situacion_medica/anticoncepcion_ospim.jasper";
+	private static final String SITUACION_MEDICA_ANTICONCEPCION_PDF_FILENAME = "Formulario Anticoncepción Ospim.pdf";
+	
+	private static final String SITUACION_MEDICA_CRONICOS = "jasper/situacion_medica/cronicos_ospim.jasper";
+	private static final String SITUACION_MEDICA_CRONICOS_PDF_FILENAME = "Formulario Crónicos Ospim.pdf";
+		
 	public void doPost(HttpServletRequest req, HttpServletResponse res)
 			throws ServletException, IOException {
 
@@ -274,6 +282,9 @@ public class PdfServlet extends HttpServlet {
 			generaReciboIngresoUoma(req, res);
 		}
 		
+		if (accion.equals("situacionMedicaPdf")) {
+		    generaSituacionMedicaPdf(req, res);
+		}
 	}
 
 	private void generaOrdenPagoOspim(HttpServletRequest req,
@@ -949,6 +960,74 @@ public class PdfServlet extends HttpServlet {
 			return null;
 		}
 		
+	}
+	
+	private void generaSituacionMedicaPdf(HttpServletRequest req, HttpServletResponse res) {
+	    String idSituacion = ParamUtil.getString(req, "id_situacion", "0");
+
+	    try {
+	        SituacionMedica situacionMedica =
+	            SituacionesMedicasServiceUtil.getSituacionMedica(
+	                Integer.valueOf(idSituacion),
+	                null,
+	                0
+	            );
+
+	        if (situacionMedica == null || situacionMedica.getIdTipoSituMedica() == 0) {
+	            _log.error("No se encontro situacion medica para id: " + idSituacion);
+	            return;
+	        }
+
+	        SituacionesMedicasServiceUtil.generarFormularioSiNoExiste(
+	            situacionMedica.getIdSituacionMedica(),
+	            situacionMedica.getIdTipoSituMedica(),
+	            "pdfservlet"
+	        );
+
+	        String jasperFile = null;
+	        String pdfFileName = null;
+
+	        switch (situacionMedica.getIdTipoSituMedica()) {
+
+	            case 1:
+	                jasperFile = SITUACION_MEDICA_ANTICONCEPCION;
+	                pdfFileName = SITUACION_MEDICA_ANTICONCEPCION_PDF_FILENAME;
+	                break;
+	                
+	            case 6:
+	                jasperFile = SITUACION_MEDICA_CRONICOS;
+	                pdfFileName = SITUACION_MEDICA_CRONICOS_PDF_FILENAME;
+	                break;
+
+	            default:
+	                _log.error(
+	                    "No hay reporte PDF configurado para tipo_situ_medica: "
+	                    + situacionMedica.getIdTipoSituMedica()
+	                    + " id_situacion: "
+	                    + idSituacion
+	                );
+	                return;
+	        }
+
+	        HashMap<String, String> hm = new HashMap<String, String>();
+	        hm.put("ID_SITUACION", idSituacion);
+	        hm.put("LOGO_OSPIM", "jasper/situacion_medica/logo_ospim.png");
+	        hm.put("SUBREPORT_DIR", "jasper/situacion_medica/");
+
+	        crearPdf(
+	            req,
+	            res,
+	            jasperFile,
+	            hm,
+	            pdfFileName
+	        );
+
+	    } catch (Exception e) {
+	        _log.error(
+	            "Error generando PDF de situacion medica. id_situacion: " + idSituacion,
+	            e
+	        );
+	    }
 	}
 
 }
