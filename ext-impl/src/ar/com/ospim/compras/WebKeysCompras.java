@@ -9,8 +9,8 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
     /*
      * Flujo: Requerimiento de compras.
-     * No usar nombres genéricos del módulo para datos específicos del flujo,
-     * porque Compras va a contener otros flujos: órdenes, proveedores,
+     * No usar nombres genï¿½ricos del mï¿½dulo para datos especï¿½ficos del flujo,
+     * porque Compras va a contener otros flujos: ï¿½rdenes, proveedores,
      * cotizaciones, facturas, etc.
      */
     public static final String BUSQUEDA_REQUERIMIENTOS_COMPRA = "BUSQUEDA_REQUERIMIENTOS_COMPRA";
@@ -44,7 +44,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             case ESTADO_BORRADOR:
                 return "Borrador";
             case ESTADO_PENDIENTE_APROBACION:
-                return "Pendiente aprobación";
+                return "Pendiente aprobaciï¿½n";
             case ESTADO_APROBADO:
                 return "Aprobado";
             case ESTADO_OBSERVADO:
@@ -100,3 +100,4 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     private WebKeysCompras() {
     }
 }
+
