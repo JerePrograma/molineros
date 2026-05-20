@@ -1,9 +1,9 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 
 <%
-RequerimientoCompra reqItems = (RequerimientoCompra) renderRequest.getAttribute(WebKeysRequerimientosCompras.COMPRA_EN_EDICION);
+RequerimientoCompra reqItems = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
 if (reqItems == null) {
-    reqItems = (RequerimientoCompra) renderRequest.getAttribute(WebKeysRequerimientosCompras.COMPRA_EN_VIEW);
+    reqItems = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.COMPRA_EN_VIEW);
 }
 if (reqItems == null) {
     int idReq = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
@@ -15,7 +15,7 @@ if (reqItems == null) {
     reqItems = new RequerimientoCompra();
 }
 
-boolean puedeABMItems = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_COMPRAS) && reqItems.isEditable();
+boolean puedeABMItems = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS) && reqItems.isEditable();
 List<RequerimientoCompraItem> items = reqItems.getItems();
 if (items == null) {
     items = new ArrayList<RequerimientoCompraItem>();

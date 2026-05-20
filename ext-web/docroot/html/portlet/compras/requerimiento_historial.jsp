@@ -2,7 +2,7 @@
 
 <%
 int idReqHistorial = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
-RequerimientoCompra reqHistorial = (RequerimientoCompra) renderRequest.getAttribute(WebKeysRequerimientosCompras.COMPRA_EN_EDICION);
+RequerimientoCompra reqHistorial = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
 if (reqHistorial == null && idReqHistorial > 0) {
     reqHistorial = BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idReqHistorial);
 }

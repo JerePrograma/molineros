@@ -27,7 +27,7 @@
 <%@ page import="ar.com.ospim.global.beans.ClaseBase" %>
 <%@ page import="ar.com.ospim.global.services.TraeListasServiceUtil" %>
 
-<%@ page import="ar.com.ospim.compras.WebKeysRequerimientosCompras" %>
+<%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
 <%@ page import="ar.com.ospim.compras.beans.RequerimientoCompra" %>
 <%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraItem" %>
 <%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraHistorial" %>

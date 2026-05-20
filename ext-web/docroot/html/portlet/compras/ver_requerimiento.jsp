@@ -2,7 +2,7 @@
 
 <%
 int idRequerimientoCompra = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
-Object idAttr = renderRequest.getAttribute(WebKeysRequerimientosCompras.ID_COMPRA_EN_EDICION);
+Object idAttr = renderRequest.getAttribute(WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION);
 if (idRequerimientoCompra == 0 && idAttr instanceof Integer) {
     idRequerimientoCompra = ((Integer) idAttr).intValue();
 }
@@ -15,8 +15,8 @@ if (req == null) {
     req = new RequerimientoCompra();
 }
 
-boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_COMPRAS);
-boolean puedeAprobar = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_APROBAR_COMPRAS);
+boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+boolean puedeAprobar = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_APROBAR_COMPRAS);
 
 PortletURL volverURL = renderResponse.createRenderURL();
 volverURL.setWindowState(WindowState.MAXIMIZED);
@@ -88,23 +88,23 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
                     <select name="<portlet:namespace />estado_nuevo" id="<portlet:namespace />estado_nuevo">
                         <option value="">Seleccione</option>
 
-                        <c:if test="<%= WebKeysRequerimientosCompras.puedeEnviarAprobacion(req.getEstado()) && puedeABM %>">
-                            <option value="<%= WebKeysRequerimientosCompras.ESTADO_PENDIENTE_APROBACION %>">Enviar a aprobacion</option>
+                        <c:if test="<%= WebKeysCompras.puedeEnviarAprobacion(req.getEstado()) && puedeABM %>">
+                            <option value="<%= WebKeysCompras.ESTADO_PENDIENTE_APROBACION %>">Enviar a aprobacion</option>
                         </c:if>
 
-                        <c:if test="<%= WebKeysRequerimientosCompras.puedeAprobar(req.getEstado()) && puedeAprobar %>">
-                            <option value="<%= WebKeysRequerimientosCompras.ESTADO_APROBADO %>">Aprobar</option>
-                            <option value="<%= WebKeysRequerimientosCompras.ESTADO_OBSERVADO %>">Observar</option>
-                            <option value="<%= WebKeysRequerimientosCompras.ESTADO_RECHAZADO %>">Rechazar</option>
+                        <c:if test="<%= WebKeysCompras.puedeAprobar(req.getEstado()) && puedeAprobar %>">
+                            <option value="<%= WebKeysCompras.ESTADO_APROBADO %>">Aprobar</option>
+                            <option value="<%= WebKeysCompras.ESTADO_OBSERVADO %>">Observar</option>
+                            <option value="<%= WebKeysCompras.ESTADO_RECHAZADO %>">Rechazar</option>
                         </c:if>
 
-                        <c:if test="<%= WebKeysRequerimientosCompras.puedeCerrar(req.getEstado()) && puedeABM %>">
-                            <option value="<%= WebKeysRequerimientosCompras.ESTADO_EN_COMPRA %>">Marcar en compra</option>
-                            <option value="<%= WebKeysRequerimientosCompras.ESTADO_CERRADO %>">Cerrar</option>
+                        <c:if test="<%= WebKeysCompras.puedeCerrar(req.getEstado()) && puedeABM %>">
+                            <option value="<%= WebKeysCompras.ESTADO_EN_COMPRA %>">Marcar en compra</option>
+                            <option value="<%= WebKeysCompras.ESTADO_CERRADO %>">Cerrar</option>
                         </c:if>
 
-                        <c:if test="<%= WebKeysRequerimientosCompras.puedeAnular(req.getEstado()) && puedeABM %>">
-                            <option value="<%= WebKeysRequerimientosCompras.ESTADO_ANULADO %>">Anular</option>
+                        <c:if test="<%= WebKeysCompras.puedeAnular(req.getEstado()) && puedeABM %>">
+                            <option value="<%= WebKeysCompras.ESTADO_ANULADO %>">Anular</option>
                         </c:if>
                     </select>
                 </td>

@@ -1,11 +1,11 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 
 <%
-boolean puedeVer = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_VIEW_COMPRAS)
-        || PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_COMPRAS)
-        || PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_APROBAR_COMPRAS);
+boolean puedeVer = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
+        || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
+        || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_APROBAR_COMPRAS);
 
-boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_COMPRAS);
+boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
 
 String tabs1 = ParamUtil.getString(request, "tabs1", "requerimientos");
 

@@ -1,12 +1,12 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 
 <%
-boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_COMPRAS);
-boolean puedeAprobar = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_APROBAR_COMPRAS);
+boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+boolean puedeAprobar = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_APROBAR_COMPRAS);
 
-List<RequerimientoCompra> requerimientos = (List<RequerimientoCompra>) renderRequest.getAttribute(WebKeysRequerimientosCompras.BUSQUEDA_COMPRAS);
+List<RequerimientoCompra> requerimientos = (List<RequerimientoCompra>) renderRequest.getAttribute(WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA);
 if (requerimientos == null) {
-    requerimientos = (List<RequerimientoCompra>) portletSession.getAttribute(WebKeysRequerimientosCompras.BUSQUEDA_COMPRAS, PortletSession.PORTLET_SCOPE);
+    requerimientos = (List<RequerimientoCompra>) portletSession.getAttribute(WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA, PortletSession.PORTLET_SCOPE);
 }
 if (requerimientos == null) {
     requerimientos = new ArrayList<RequerimientoCompra>();

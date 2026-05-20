@@ -14,9 +14,9 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.struts.PortletAction;
 
-public class ViewRequerimientosComprasAction extends PortletAction {
+public class ViewComprasAction extends PortletAction {
 
-    private static Log _log = LogFactoryUtil.getLog(ViewRequerimientosComprasAction.class);
+    private static Log _log = LogFactoryUtil.getLog(ViewComprasAction.class);
 
     public void processAction(ActionMapping mapping, ActionForm form,
                               PortletConfig portletConfig, ActionRequest actionRequest,

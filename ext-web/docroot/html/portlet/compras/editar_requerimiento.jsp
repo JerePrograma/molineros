@@ -1,13 +1,13 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 
 <%
-RequerimientoCompra req = (RequerimientoCompra) renderRequest.getAttribute(WebKeysRequerimientosCompras.COMPRA_EN_EDICION);
+RequerimientoCompra req = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
 if (req == null) {
     req = new RequerimientoCompra();
 }
 
 boolean esNuevo = req.getIdRequerimientoCompra() == 0;
-boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_COMPRAS);
+boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
 
 PortletURL volverURL = renderResponse.createRenderURL();
 volverURL.setWindowState(WindowState.MAXIMIZED);
@@ -56,10 +56,10 @@ actionURL.setParameter("struts_action", "/compras/editar_requerimiento");
                     <td><label>Prioridad:</label></td>
                     <td>
                         <select name="<portlet:namespace />prioridad" id="<portlet:namespace />prioridad">
-                            <option value="<%= WebKeysRequerimientosCompras.PRIORIDAD_BAJA %>" <%= req.getPrioridad() == WebKeysRequerimientosCompras.PRIORIDAD_BAJA ? "selected" : "" %>>Baja</option>
-                            <option value="<%= WebKeysRequerimientosCompras.PRIORIDAD_MEDIA %>" <%= req.getPrioridad() == WebKeysRequerimientosCompras.PRIORIDAD_MEDIA ? "selected" : "" %>>Media</option>
-                            <option value="<%= WebKeysRequerimientosCompras.PRIORIDAD_ALTA %>" <%= req.getPrioridad() == WebKeysRequerimientosCompras.PRIORIDAD_ALTA ? "selected" : "" %>>Alta</option>
-                            <option value="<%= WebKeysRequerimientosCompras.PRIORIDAD_URGENTE %>" <%= req.getPrioridad() == WebKeysRequerimientosCompras.PRIORIDAD_URGENTE ? "selected" : "" %>>Urgente</option>
+                            <option value="<%= WebKeysCompras.PRIORIDAD_BAJA %>" <%= req.getPrioridad() == WebKeysCompras.PRIORIDAD_BAJA ? "selected" : "" %>>Baja</option>
+                            <option value="<%= WebKeysCompras.PRIORIDAD_MEDIA %>" <%= req.getPrioridad() == WebKeysCompras.PRIORIDAD_MEDIA ? "selected" : "" %>>Media</option>
+                            <option value="<%= WebKeysCompras.PRIORIDAD_ALTA %>" <%= req.getPrioridad() == WebKeysCompras.PRIORIDAD_ALTA ? "selected" : "" %>>Alta</option>
+                            <option value="<%= WebKeysCompras.PRIORIDAD_URGENTE %>" <%= req.getPrioridad() == WebKeysCompras.PRIORIDAD_URGENTE ? "selected" : "" %>>Urgente</option>
                         </select>
                     </td>
                 </tr>

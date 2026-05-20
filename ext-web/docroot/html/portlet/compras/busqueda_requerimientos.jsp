@@ -5,7 +5,7 @@ response.setHeader("Cache-Control", "no-store");
 response.setHeader("Pragma", "no-cache");
 response.setDateHeader("Expires", 0);
 
-boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_COMPRAS);
+boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
 
 Calendar fechaDesde = Calendar.getInstance();
 fechaDesde.add(Calendar.MONTH, -1);
@@ -88,10 +88,10 @@ try {
             <td>
                 <select id="<portlet:namespace />prioridad" name="<portlet:namespace />prioridad">
                     <option value="0">Todas</option>
-                    <option value="<%= WebKeysRequerimientosCompras.PRIORIDAD_BAJA %>">Baja</option>
-                    <option value="<%= WebKeysRequerimientosCompras.PRIORIDAD_MEDIA %>">Media</option>
-                    <option value="<%= WebKeysRequerimientosCompras.PRIORIDAD_ALTA %>">Alta</option>
-                    <option value="<%= WebKeysRequerimientosCompras.PRIORIDAD_URGENTE %>">Urgente</option>
+                    <option value="<%= WebKeysCompras.PRIORIDAD_BAJA %>">Baja</option>
+                    <option value="<%= WebKeysCompras.PRIORIDAD_MEDIA %>">Media</option>
+                    <option value="<%= WebKeysCompras.PRIORIDAD_ALTA %>">Alta</option>
+                    <option value="<%= WebKeysCompras.PRIORIDAD_URGENTE %>">Urgente</option>
                 </select>
             </td>
 
@@ -99,14 +99,14 @@ try {
             <td>
                 <select id="<portlet:namespace />estado" name="<portlet:namespace />estado">
                     <option value="0">Todos</option>
-                    <option value="<%= WebKeysRequerimientosCompras.ESTADO_BORRADOR %>">Borrador</option>
-                    <option value="<%= WebKeysRequerimientosCompras.ESTADO_PENDIENTE_APROBACION %>">Pendiente aprobacion</option>
-                    <option value="<%= WebKeysRequerimientosCompras.ESTADO_APROBADO %>">Aprobado</option>
-                    <option value="<%= WebKeysRequerimientosCompras.ESTADO_OBSERVADO %>">Observado</option>
-                    <option value="<%= WebKeysRequerimientosCompras.ESTADO_RECHAZADO %>">Rechazado</option>
-                    <option value="<%= WebKeysRequerimientosCompras.ESTADO_EN_COMPRA %>">En compra</option>
-                    <option value="<%= WebKeysRequerimientosCompras.ESTADO_CERRADO %>">Cerrado</option>
-                    <option value="<%= WebKeysRequerimientosCompras.ESTADO_ANULADO %>">Anulado</option>
+                    <option value="<%= WebKeysCompras.ESTADO_BORRADOR %>">Borrador</option>
+                    <option value="<%= WebKeysCompras.ESTADO_PENDIENTE_APROBACION %>">Pendiente aprobacion</option>
+                    <option value="<%= WebKeysCompras.ESTADO_APROBADO %>">Aprobado</option>
+                    <option value="<%= WebKeysCompras.ESTADO_OBSERVADO %>">Observado</option>
+                    <option value="<%= WebKeysCompras.ESTADO_RECHAZADO %>">Rechazado</option>
+                    <option value="<%= WebKeysCompras.ESTADO_EN_COMPRA %>">En compra</option>
+                    <option value="<%= WebKeysCompras.ESTADO_CERRADO %>">Cerrado</option>
+                    <option value="<%= WebKeysCompras.ESTADO_ANULADO %>">Anulado</option>
                 </select>
             </td>
 

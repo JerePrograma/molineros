@@ -8,10 +8,13 @@ public class AprobacionRequerimientoCompraServiceUtil {
         if (instance == null) {
             instance = new AprobacionRequerimientoCompraServiceImpl();
         }
+
         return instance;
     }
 
-    public static void cambiarEstado(int idRequerimientoCompra, int estadoNuevo, String comentario, String usuario) throws Exception {
+    public static void cambiarEstado(int idRequerimientoCompra, int estadoNuevo, String comentario, String usuario)
+            throws Exception {
+
         getInstance().cambiarEstado(idRequerimientoCompra, estadoNuevo, comentario, usuario);
     }
 

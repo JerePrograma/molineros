@@ -2,7 +2,7 @@
 
 <%
 int idReqAdjuntos = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
-RequerimientoCompra reqAdjuntos = (RequerimientoCompra) renderRequest.getAttribute(WebKeysRequerimientosCompras.COMPRA_EN_EDICION);
+RequerimientoCompra reqAdjuntos = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
 if (reqAdjuntos == null && idReqAdjuntos > 0) {
     reqAdjuntos = BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idReqAdjuntos);
 }

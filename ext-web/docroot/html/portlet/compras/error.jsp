@@ -1,7 +1,7 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 
 <%
-String error = (String) renderRequest.getAttribute(WebKeysRequerimientosCompras.ERROR_PARA_ALERT);
+String error = (String) renderRequest.getAttribute(WebKeysCompras.ERROR_PARA_ALERT);
 %>
 
 <div class="portlet-msg-error">

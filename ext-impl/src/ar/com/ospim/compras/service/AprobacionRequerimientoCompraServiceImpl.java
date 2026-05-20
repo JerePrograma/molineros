@@ -4,6 +4,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 
 import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.beans.RequerimientoCompra;
 import ar.com.ospim.util.ConnectionHelper;
 
 import com.liferay.portal.kernel.log.Log;
@@ -13,18 +14,28 @@ public class AprobacionRequerimientoCompraServiceImpl {
 
     private static Log _log = LogFactoryUtil.getLog(AprobacionRequerimientoCompraServiceImpl.class);
 
-    public void cambiarEstado(int idRequerimientoCompra, int estadoNuevo, String comentario, String usuario) throws Exception {
+    public void cambiarEstado(int idRequerimientoCompra, int estadoNuevo, String comentario, String usuario)
+            throws Exception {
+
+        RequerimientoCompra requerimiento =
+                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimientoCompra);
+
+        validarCambioEstadoRequerimiento(requerimiento, estadoNuevo, comentario);
+
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
             String sql = "{call cambiar_estado_requerimiento_compra(?,?,?,?)}";
+
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(sql);
+
             stmt.setInt(1, idRequerimientoCompra);
             stmt.setInt(2, estadoNuevo);
             stmt.setString(3, comentario);
             stmt.setString(4, usuario);
+
             stmt.execute();
         } catch (Exception e) {
             _log.error(e);
@@ -64,5 +75,39 @@ public class AprobacionRequerimientoCompraServiceImpl {
         }
 
         return false;
+    }
+
+    private void validarCambioEstadoRequerimiento(RequerimientoCompra requerimiento, int estadoNuevo, String comentario)
+            throws Exception {
+
+        if (requerimiento == null || requerimiento.getIdRequerimientoCompra() <= 0) {
+            throw new Exception("No se encontró el requerimiento de compra.");
+        }
+
+        if (!validarCambioEstado(requerimiento.getEstado(), estadoNuevo)) {
+            throw new Exception(
+                    "Cambio de estado inválido: "
+                            + WebKeysCompras.getEstadoDescripcion(requerimiento.getEstado())
+                            + " -> "
+                            + WebKeysCompras.getEstadoDescripcion(estadoNuevo)
+            );
+        }
+
+        if (estadoNuevo == WebKeysCompras.ESTADO_PENDIENTE_APROBACION
+                || estadoNuevo == WebKeysCompras.ESTADO_APROBADO) {
+
+            if (requerimiento.getItems() == null || requerimiento.getItems().size() == 0) {
+                throw new Exception("El requerimiento debe tener al menos un item cargado.");
+            }
+        }
+
+        if (estadoNuevo == WebKeysCompras.ESTADO_OBSERVADO
+                || estadoNuevo == WebKeysCompras.ESTADO_RECHAZADO
+                || estadoNuevo == WebKeysCompras.ESTADO_ANULADO) {
+
+            if (comentario == null || comentario.trim().length() == 0) {
+                throw new Exception("Debe informar un comentario para observar, rechazar o anular.");
+            }
+        }
     }
 }

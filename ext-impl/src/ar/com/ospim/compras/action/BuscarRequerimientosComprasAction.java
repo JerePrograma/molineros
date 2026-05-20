@@ -42,14 +42,23 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
 
         try {
             RequerimientoCompraFiltro filtro = getFiltroFromRequest(renderRequest);
-            List<RequerimientoCompra> requerimientos = BusquedaRequerimientoCompraServiceUtil.buscarRequerimientos(filtro);
+            List<RequerimientoCompra> requerimientos =
+                    BusquedaRequerimientoCompraServiceUtil.buscarRequerimientos(filtro);
 
-            renderRequest.setAttribute(WebKeysCompras.FILTRO_COMPRAS, filtro);
-            renderRequest.setAttribute(WebKeysCompras.BUSQUEDA_COMPRAS, requerimientos);
+            renderRequest.setAttribute(WebKeysCompras.FILTRO_REQUERIMIENTOS_COMPRA, filtro);
+            renderRequest.setAttribute(WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA, requerimientos);
 
             PortletSession portletSession = renderRequest.getPortletSession();
-            portletSession.setAttribute(WebKeysCompras.FILTRO_COMPRAS, filtro, PortletSession.PORTLET_SCOPE);
-            portletSession.setAttribute(WebKeysCompras.BUSQUEDA_COMPRAS, requerimientos, PortletSession.PORTLET_SCOPE);
+            portletSession.setAttribute(
+                    WebKeysCompras.FILTRO_REQUERIMIENTOS_COMPRA,
+                    filtro,
+                    PortletSession.PORTLET_SCOPE
+            );
+            portletSession.setAttribute(
+                    WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA,
+                    requerimientos,
+                    PortletSession.PORTLET_SCOPE
+            );
         } catch (Exception e) {
             _log.error(e);
         }
@@ -97,7 +106,9 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
         String anio = ParamUtil.getString(request, prefix + "Anio");
 
         try {
-            if (dia == null || dia.length() == 0 || mes == null || mes.length() == 0 || anio == null || anio.length() == 0) {
+            if (dia == null || dia.length() == 0
+                    || mes == null || mes.length() == 0
+                    || anio == null || anio.length() == 0) {
                 return null;
             }
 

@@ -6963,7 +6963,7 @@
 
         <!-- Compras -->
         <action path="/compras/view"
-                type="ar.com.ospim.compras.action.ViewRequerimientosComprasAction">
+                type="ar.com.ospim.compras.action.ViewComprasAction">
             <forward name="portlet.compras.view" path="portlet.compras.view" />
             <forward name="portlet.compras.error" path="portlet.compras.error" />
         </action>
