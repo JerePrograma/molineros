@@ -1,11 +1,11 @@
-package ar.com.ospim.requerimientos_compras.beans;
+package ar.com.ospim.compras.beans;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import ar.com.ospim.requerimientos_compras.WebKeysRequerimientosCompras;
+import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.util.DateUtils;
 
 public class RequerimientoCompra {
@@ -35,8 +35,8 @@ public class RequerimientoCompra {
     private List<RequerimientoCompraAdjunto> adjuntos;
 
     public RequerimientoCompra() {
-        this.estado = WebKeysRequerimientosCompras.ESTADO_BORRADOR;
-        this.prioridad = WebKeysRequerimientosCompras.PRIORIDAD_MEDIA;
+        this.estado = WebKeysCompras.ESTADO_BORRADOR;
+        this.prioridad = WebKeysCompras.PRIORIDAD_MEDIA;
         this.importeEstimadoTotal = BigDecimal.ZERO;
         this.items = new ArrayList<RequerimientoCompraItem>();
         this.historial = new ArrayList<RequerimientoCompraHistorial>();
@@ -109,7 +109,7 @@ public class RequerimientoCompra {
     }
 
     public String getPrioridadDescripcion() {
-        return WebKeysRequerimientosCompras.getPrioridadDescripcion(prioridad);
+        return WebKeysCompras.getPrioridadDescripcion(prioridad);
     }
 
     public void setPrioridad(int prioridad) {
@@ -121,7 +121,7 @@ public class RequerimientoCompra {
     }
 
     public String getEstadoDescripcion() {
-        return WebKeysRequerimientosCompras.getEstadoDescripcion(estado);
+        return WebKeysCompras.getEstadoDescripcion(estado);
     }
 
     public void setEstado(int estado) {
@@ -261,10 +261,10 @@ public class RequerimientoCompra {
     }
 
     public boolean isEditable() {
-        return WebKeysRequerimientosCompras.esEditable(estado);
+        return WebKeysCompras.esEditable(estado);
     }
 
     public boolean isAnulado() {
-        return estado == WebKeysRequerimientosCompras.ESTADO_ANULADO || bajaFecha != null;
+        return estado == WebKeysCompras.ESTADO_ANULADO || bajaFecha != null;
     }
 }

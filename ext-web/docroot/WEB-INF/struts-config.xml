@@ -6961,33 +6961,33 @@
             <forward name="portlet.prestadores.error" path="portlet.prestadores.error" />
         </action>
 
-        <!-- Requerimientos de Compras -->
-        <action path="/requerimientos_compras/view"
-                type="ar.com.ospim.requerimientos_compras.action.ViewRequerimientosComprasAction">
-            <forward name="portlet.requerimientos_compras.view" path="portlet.requerimientos_compras.view" />
-            <forward name="portlet.requerimientos_compras.error" path="portlet.requerimientos_compras.error" />
+        <!-- Compras -->
+        <action path="/compras/view"
+                type="ar.com.ospim.compras.action.ViewRequerimientosComprasAction">
+            <forward name="portlet.compras.view" path="portlet.compras.view" />
+            <forward name="portlet.compras.error" path="portlet.compras.error" />
         </action>
 
-        <action path="/requerimientos_compras/buscar_requerimientos"
-                type="ar.com.ospim.requerimientos_compras.action.BuscarRequerimientosComprasAction">
-            <forward name="portlet.requerimientos_compras.result.search" path="portlet.requerimientos_compras.result.search" />
+        <action path="/compras/buscar_requerimientos"
+                type="ar.com.ospim.compras.action.BuscarRequerimientosComprasAction">
+            <forward name="portlet.compras.result.search" path="portlet.compras.result.search" />
         </action>
 
-        <action path="/requerimientos_compras/buscar_requerimientos_sesion"
-                forward="portlet.requerimientos_compras.result.search" />
+        <action path="/compras/buscar_requerimientos_sesion"
+                forward="portlet.compras.result.search" />
 
-        <action path="/requerimientos_compras/editar_requerimiento"
-                type="ar.com.ospim.requerimientos_compras.action.EditarRequerimientoCompraAction">
-            <forward name="portlet.requerimientos_compras.editar_requerimiento" path="portlet.requerimientos_compras.editar_requerimiento" />
-            <forward name="portlet.requerimientos_compras.view" path="portlet.requerimientos_compras.view" />
+        <action path="/compras/editar_requerimiento"
+                type="ar.com.ospim.compras.action.EditarRequerimientoCompraAction">
+            <forward name="portlet.compras.editar_requerimiento" path="portlet.compras.editar_requerimiento" />
+            <forward name="portlet.compras.view" path="portlet.compras.view" />
         </action>
 
-        <action path="/requerimientos_compras/ver_requerimiento"
-                forward="portlet.requerimientos_compras.ver_requerimiento" />
+        <action path="/compras/ver_requerimiento"
+                forward="portlet.compras.ver_requerimiento" />
 
-        <action path="/requerimientos_compras/cambiar_estado_requerimiento"
-                type="ar.com.ospim.requerimientos_compras.action.CambiarEstadoRequerimientoCompraAction">
-            <forward name="portlet.requerimientos_compras.ver_requerimiento" path="portlet.requerimientos_compras.ver_requerimiento" />
+        <action path="/compras/cambiar_estado_requerimiento"
+                type="ar.com.ospim.compras.action.CambiarEstadoRequerimientoCompraAction">
+            <forward name="portlet.compras.ver_requerimiento" path="portlet.compras.ver_requerimiento" />
         </action>
 
     </action-mappings>

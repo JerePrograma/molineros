@@ -1,4 +1,4 @@
-package ar.com.ospim.requerimientos_compras.beans;
+package ar.com.ospim.compras.beans;
 
 import java.math.BigDecimal;
 import java.util.Date;

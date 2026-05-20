@@ -1,22 +1,22 @@
-package ar.com.ospim.requerimientos_compras;
+package ar.com.ospim.compras;
 
-public class WebKeysRequerimientosCompras implements com.liferay.portal.kernel.util.WebKeys {
+public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
-    public static final String ROL_VIEW_REQUERIMIENTOS_COMPRAS = "VIEW_Requerimientos_Compras";
-    public static final String ROL_ABM_REQUERIMIENTOS_COMPRAS = "ABM_Requerimientos_Compras";
-    public static final String ROL_APROBAR_REQUERIMIENTOS_COMPRAS = "APROBAR_Requerimientos_Compras";
-    public static final String ROL_ANULAR_REQUERIMIENTOS_COMPRAS = "ANULAR_Requerimientos_Compras";
+    public static final String ROL_VIEW_COMPRAS = "VIEW_Compras";
+    public static final String ROL_ABM_COMPRAS = "ABM_Compras";
+    public static final String ROL_APROBAR_COMPRAS = "APROBAR_Compras";
+    public static final String ROL_ANULAR_COMPRAS = "ANULAR_Compras";
 
-    public static final String BUSQUEDA_REQUERIMIENTOS_COMPRAS = "BUSQUEDA_REQUERIMIENTOS_COMPRAS";
-    public static final String FILTRO_REQUERIMIENTOS_COMPRAS = "FILTRO_REQUERIMIENTOS_COMPRAS";
+    public static final String BUSQUEDA_COMPRAS = "BUSQUEDA_COMPRAS";
+    public static final String FILTRO_COMPRAS = "FILTRO_COMPRAS";
 
-    public static final String REQUERIMIENTO_COMPRA_EN_EDICION = "REQUERIMIENTO_COMPRA_EN_EDICION";
-    public static final String REQUERIMIENTO_COMPRA_EN_VIEW = "REQUERIMIENTO_COMPRA_EN_VIEW";
-    public static final String ID_REQUERIMIENTO_COMPRA_EN_EDICION = "id_requerimiento_compra";
+    public static final String COMPRA_EN_EDICION = "COMPRA_EN_EDICION";
+    public static final String COMPRA_EN_VIEW = "COMPRA_EN_VIEW";
+    public static final String ID_COMPRA_EN_EDICION = "id_requerimiento_compra";
 
-    public static final String ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION = "ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION";
-    public static final String HISTORIAL_REQUERIMIENTO_COMPRA = "HISTORIAL_REQUERIMIENTO_COMPRA";
-    public static final String ADJUNTOS_REQUERIMIENTO_COMPRA = "ADJUNTOS_REQUERIMIENTO_COMPRA";
+    public static final String ITEMS_COMPRA_EN_EDICION = "ITEMS_COMPRA_EN_EDICION";
+    public static final String HISTORIAL_COMPRA = "HISTORIAL_COMPRA";
+    public static final String ADJUNTOS_COMPRA = "ADJUNTOS_COMPRA";
 
     public static final String ERROR_PARA_ALERT = "ERROR_PARA_ALERT";
 
@@ -92,6 +92,6 @@ public class WebKeysRequerimientosCompras implements com.liferay.portal.kernel.u
         return estado != ESTADO_CERRADO && estado != ESTADO_ANULADO;
     }
 
-    private WebKeysRequerimientosCompras() {
+    private WebKeysCompras() {
     }
 }

@@ -1,4 +1,4 @@
-package ar.com.ospim.requerimientos_compras.action;
+package ar.com.ospim.compras.action;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -22,7 +22,7 @@ public class ViewRequerimientosComprasAction extends PortletAction {
                               PortletConfig portletConfig, ActionRequest actionRequest,
                               ActionResponse actionResponse) throws Exception {
 
-        setForward(actionRequest, "portlet.requerimientos_compras.view");
+        setForward(actionRequest, "portlet.compras.view");
     }
 
     public ActionForward render(ActionMapping mapping, ActionForm form,
@@ -30,10 +30,10 @@ public class ViewRequerimientosComprasAction extends PortletAction {
                                 RenderResponse renderResponse) throws Exception {
 
         try {
-            return mapping.findForward("portlet.requerimientos_compras.view");
+            return mapping.findForward("portlet.compras.view");
         } catch (Exception e) {
             _log.error(e);
-            return mapping.findForward("portlet.requerimientos_compras.error");
+            return mapping.findForward("portlet.compras.error");
         }
     }
 }

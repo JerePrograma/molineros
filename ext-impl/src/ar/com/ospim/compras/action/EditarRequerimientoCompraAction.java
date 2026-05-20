@@ -1,4 +1,4 @@
-package ar.com.ospim.requerimientos_compras.action;
+package ar.com.ospim.compras.action;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -16,11 +16,11 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import ar.com.ospim.requerimientos_compras.WebKeysRequerimientosCompras;
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompra;
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraItem;
-import ar.com.ospim.requerimientos_compras.service.BusquedaRequerimientoCompraServiceUtil;
-import ar.com.ospim.requerimientos_compras.service.EditarRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.beans.RequerimientoCompra;
+import ar.com.ospim.compras.beans.RequerimientoCompraItem;
+import ar.com.ospim.compras.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.service.EditarRequerimientoCompraServiceUtil;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -50,43 +50,43 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             if (Constants.ADD.equals(cmd) || Constants.UPDATE.equals(cmd)) {
                 RequerimientoCompra requerimiento = getRequerimientoFromRequest(actionRequest);
                 idRequerimientoCompra = EditarRequerimientoCompraServiceUtil.guardarRequerimientoCompra(requerimiento, usuario);
-                actionRequest.setAttribute(WebKeysRequerimientosCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION, Integer.valueOf(idRequerimientoCompra));
+                actionRequest.setAttribute(WebKeysCompras.ID_COMPRA_EN_EDICION, Integer.valueOf(idRequerimientoCompra));
                 SessionMessages.add(actionRequest, "requerimiento-compra-guardado");
-                setForward(actionRequest, "portlet.requerimientos_compras.editar_requerimiento");
+                setForward(actionRequest, "portlet.compras.editar_requerimiento");
                 return;
             }
 
             if ("addItem".equals(cmd) || "updateItem".equals(cmd)) {
                 RequerimientoCompraItem item = getItemFromRequest(actionRequest);
                 EditarRequerimientoCompraServiceUtil.guardarItem(item, usuario);
-                actionRequest.setAttribute(WebKeysRequerimientosCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION, Integer.valueOf(item.getIdRequerimientoCompra()));
+                actionRequest.setAttribute(WebKeysCompras.ID_COMPRA_EN_EDICION, Integer.valueOf(item.getIdRequerimientoCompra()));
                 SessionMessages.add(actionRequest, "requerimiento-compra-item-guardado");
-                setForward(actionRequest, "portlet.requerimientos_compras.editar_requerimiento");
+                setForward(actionRequest, "portlet.compras.editar_requerimiento");
                 return;
             }
 
             if ("deleteItem".equals(cmd)) {
                 int idItem = ParamUtil.getInteger(actionRequest, "id_item", 0);
                 EditarRequerimientoCompraServiceUtil.borrarItem(idItem, usuario);
-                actionRequest.setAttribute(WebKeysRequerimientosCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION, Integer.valueOf(idRequerimientoCompra));
+                actionRequest.setAttribute(WebKeysCompras.ID_COMPRA_EN_EDICION, Integer.valueOf(idRequerimientoCompra));
                 SessionMessages.add(actionRequest, "requerimiento-compra-item-borrado");
-                setForward(actionRequest, "portlet.requerimientos_compras.editar_requerimiento");
+                setForward(actionRequest, "portlet.compras.editar_requerimiento");
                 return;
             }
 
             if (Constants.DELETE.equals(cmd)) {
                 EditarRequerimientoCompraServiceUtil.borrarRequerimientoCompra(idRequerimientoCompra, usuario);
                 SessionMessages.add(actionRequest, "requerimiento-compra-borrado");
-                setForward(actionRequest, "portlet.requerimientos_compras.view");
+                setForward(actionRequest, "portlet.compras.view");
                 return;
             }
 
-            setForward(actionRequest, "portlet.requerimientos_compras.editar_requerimiento");
+            setForward(actionRequest, "portlet.compras.editar_requerimiento");
         } catch (Exception e) {
             _log.error(e);
             SessionErrors.add(actionRequest, e.getClass().getName());
-            actionRequest.setAttribute(WebKeysRequerimientosCompras.ERROR_PARA_ALERT, e.getMessage());
-            setForward(actionRequest, "portlet.requerimientos_compras.editar_requerimiento");
+            actionRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());
+            setForward(actionRequest, "portlet.compras.editar_requerimiento");
         }
     }
 
@@ -97,7 +97,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         try {
             int idRequerimientoCompra = ParamUtil.getInteger(renderRequest, "id_requerimiento_compra", 0);
 
-            Object idAttr = renderRequest.getAttribute(WebKeysRequerimientosCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION);
+            Object idAttr = renderRequest.getAttribute(WebKeysCompras.ID_COMPRA_EN_EDICION);
             if (idRequerimientoCompra == 0 && idAttr instanceof Integer) {
                 idRequerimientoCompra = ((Integer) idAttr).intValue();
             }
@@ -115,13 +115,13 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 }
             }
 
-            renderRequest.setAttribute(WebKeysRequerimientosCompras.REQUERIMIENTO_COMPRA_EN_EDICION, requerimiento);
+            renderRequest.setAttribute(WebKeysCompras.COMPRA_EN_EDICION, requerimiento);
         } catch (Exception e) {
             _log.error(e);
-            renderRequest.setAttribute(WebKeysRequerimientosCompras.ERROR_PARA_ALERT, e.getMessage());
+            renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());
         }
 
-        return mapping.findForward("portlet.requerimientos_compras.editar_requerimiento");
+        return mapping.findForward("portlet.compras.editar_requerimiento");
     }
 
     private RequerimientoCompra getRequerimientoFromRequest(ActionRequest request) {
@@ -134,7 +134,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         requerimiento.setSolicitanteUsr(ParamUtil.getString(request, "solicitante_usr", null));
         requerimiento.setEntidad(ParamUtil.getString(request, "entidad", null));
-        requerimiento.setPrioridad(ParamUtil.getInteger(request, "prioridad", WebKeysRequerimientosCompras.PRIORIDAD_MEDIA));
+        requerimiento.setPrioridad(ParamUtil.getInteger(request, "prioridad", WebKeysCompras.PRIORIDAD_MEDIA));
         requerimiento.setFechaNecesidad(parseDate(ParamUtil.getString(request, "fecha_necesidad", null)));
         requerimiento.setMotivo(ParamUtil.getString(request, "motivo", null));
         requerimiento.setObservaciones(ParamUtil.getString(request, "observaciones", null));

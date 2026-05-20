@@ -1,4 +1,4 @@
-package ar.com.ospim.requerimientos_compras.action;
+package ar.com.ospim.compras.action;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -10,8 +10,8 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import ar.com.ospim.requerimientos_compras.WebKeysRequerimientosCompras;
-import ar.com.ospim.requerimientos_compras.service.AprobacionRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.service.AprobacionRequerimientoCompraServiceUtil;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -40,14 +40,14 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
 
             AprobacionRequerimientoCompraServiceUtil.cambiarEstado(idRequerimientoCompra, estadoNuevo, comentario, usuario);
 
-            actionRequest.setAttribute(WebKeysRequerimientosCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION, Integer.valueOf(idRequerimientoCompra));
+            actionRequest.setAttribute(WebKeysCompras.ID_COMPRA_EN_EDICION, Integer.valueOf(idRequerimientoCompra));
             SessionMessages.add(actionRequest, "estado-requerimiento-compra-actualizado");
-            setForward(actionRequest, "portlet.requerimientos_compras.ver_requerimiento");
+            setForward(actionRequest, "portlet.compras.ver_requerimiento");
         } catch (Exception e) {
             _log.error(e);
             SessionErrors.add(actionRequest, e.getClass().getName());
-            actionRequest.setAttribute(WebKeysRequerimientosCompras.ERROR_PARA_ALERT, e.getMessage());
-            setForward(actionRequest, "portlet.requerimientos_compras.ver_requerimiento");
+            actionRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());
+            setForward(actionRequest, "portlet.compras.ver_requerimiento");
         }
     }
 
@@ -55,6 +55,6 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
                                 PortletConfig portletConfig, RenderRequest renderRequest,
                                 RenderResponse renderResponse) throws Exception {
 
-        return mapping.findForward("portlet.requerimientos_compras.ver_requerimiento");
+        return mapping.findForward("portlet.compras.ver_requerimiento");
     }
 }

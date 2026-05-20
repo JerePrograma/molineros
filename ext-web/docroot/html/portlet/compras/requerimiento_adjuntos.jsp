@@ -1,8 +1,8 @@
-<%@ include file="/html/portlet/requerimientos_compras/init.jsp" %>
+<%@ include file="/html/portlet/compras/init.jsp" %>
 
 <%
 int idReqAdjuntos = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
-RequerimientoCompra reqAdjuntos = (RequerimientoCompra) renderRequest.getAttribute(WebKeysRequerimientosCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
+RequerimientoCompra reqAdjuntos = (RequerimientoCompra) renderRequest.getAttribute(WebKeysRequerimientosCompras.COMPRA_EN_EDICION);
 if (reqAdjuntos == null && idReqAdjuntos > 0) {
     reqAdjuntos = BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idReqAdjuntos);
 }

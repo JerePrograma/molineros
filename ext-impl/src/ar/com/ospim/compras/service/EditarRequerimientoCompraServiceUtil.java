@@ -1,8 +1,8 @@
-package ar.com.ospim.requerimientos_compras.service;
+package ar.com.ospim.compras.service;
 
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompra;
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraAdjunto;
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraItem;
+import ar.com.ospim.compras.beans.RequerimientoCompra;
+import ar.com.ospim.compras.beans.RequerimientoCompraAdjunto;
+import ar.com.ospim.compras.beans.RequerimientoCompraItem;
 
 public class EditarRequerimientoCompraServiceUtil {
 

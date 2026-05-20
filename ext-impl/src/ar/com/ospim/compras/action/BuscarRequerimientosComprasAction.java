@@ -1,4 +1,4 @@
-package ar.com.ospim.requerimientos_compras.action;
+package ar.com.ospim.compras.action;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -15,10 +15,10 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import ar.com.ospim.requerimientos_compras.WebKeysRequerimientosCompras;
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompra;
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraFiltro;
-import ar.com.ospim.requerimientos_compras.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.beans.RequerimientoCompra;
+import ar.com.ospim.compras.beans.RequerimientoCompraFiltro;
+import ar.com.ospim.compras.service.BusquedaRequerimientoCompraServiceUtil;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -33,7 +33,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
                               PortletConfig portletConfig, ActionRequest actionRequest,
                               ActionResponse actionResponse) throws Exception {
 
-        setForward(actionRequest, "portlet.requerimientos_compras.result.search");
+        setForward(actionRequest, "portlet.compras.result.search");
     }
 
     public ActionForward render(ActionMapping mapping, ActionForm form,
@@ -44,17 +44,17 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             RequerimientoCompraFiltro filtro = getFiltroFromRequest(renderRequest);
             List<RequerimientoCompra> requerimientos = BusquedaRequerimientoCompraServiceUtil.buscarRequerimientos(filtro);
 
-            renderRequest.setAttribute(WebKeysRequerimientosCompras.FILTRO_REQUERIMIENTOS_COMPRAS, filtro);
-            renderRequest.setAttribute(WebKeysRequerimientosCompras.BUSQUEDA_REQUERIMIENTOS_COMPRAS, requerimientos);
+            renderRequest.setAttribute(WebKeysCompras.FILTRO_COMPRAS, filtro);
+            renderRequest.setAttribute(WebKeysCompras.BUSQUEDA_COMPRAS, requerimientos);
 
             PortletSession portletSession = renderRequest.getPortletSession();
-            portletSession.setAttribute(WebKeysRequerimientosCompras.FILTRO_REQUERIMIENTOS_COMPRAS, filtro, PortletSession.PORTLET_SCOPE);
-            portletSession.setAttribute(WebKeysRequerimientosCompras.BUSQUEDA_REQUERIMIENTOS_COMPRAS, requerimientos, PortletSession.PORTLET_SCOPE);
+            portletSession.setAttribute(WebKeysCompras.FILTRO_COMPRAS, filtro, PortletSession.PORTLET_SCOPE);
+            portletSession.setAttribute(WebKeysCompras.BUSQUEDA_COMPRAS, requerimientos, PortletSession.PORTLET_SCOPE);
         } catch (Exception e) {
             _log.error(e);
         }
 
-        return mapping.findForward("portlet.requerimientos_compras.result.search");
+        return mapping.findForward("portlet.compras.result.search");
     }
 
     private RequerimientoCompraFiltro getFiltroFromRequest(RenderRequest request) {

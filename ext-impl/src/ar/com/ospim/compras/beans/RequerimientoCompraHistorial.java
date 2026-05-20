@@ -1,8 +1,8 @@
-package ar.com.ospim.requerimientos_compras.beans;
+package ar.com.ospim.compras.beans;
 
 import java.util.Date;
 
-import ar.com.ospim.requerimientos_compras.WebKeysRequerimientosCompras;
+import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.util.DateUtils;
 
 public class RequerimientoCompraHistorial {
@@ -36,7 +36,7 @@ public class RequerimientoCompraHistorial {
     }
 
     public String getEstadoAnteriorDescripcion() {
-        return estadoAnterior != null ? WebKeysRequerimientosCompras.getEstadoDescripcion(estadoAnterior.intValue()) : "";
+        return estadoAnterior != null ? WebKeysCompras.getEstadoDescripcion(estadoAnterior.intValue()) : "";
     }
 
     public void setEstadoAnterior(Integer estadoAnterior) {
@@ -48,7 +48,7 @@ public class RequerimientoCompraHistorial {
     }
 
     public String getEstadoNuevoDescripcion() {
-        return WebKeysRequerimientosCompras.getEstadoDescripcion(estadoNuevo);
+        return WebKeysCompras.getEstadoDescripcion(estadoNuevo);
     }
 
     public void setEstadoNuevo(int estadoNuevo) {

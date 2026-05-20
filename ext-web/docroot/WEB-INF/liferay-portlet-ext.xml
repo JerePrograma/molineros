@@ -395,9 +395,9 @@
 	</portlet>
 
     <portlet>
-        <portlet-name>REQCOM_1</portlet-name>
+        <portlet-name>COMPRA_1</portlet-name>
         <icon>/html/icons/search.png</icon>
-        <struts-path>requerimientos_compras</struts-path>
+        <struts-path>compras</struts-path>
         <control-panel-entry-category>content</control-panel-entry-category>
         <control-panel-entry-weight>10.0</control-panel-entry-weight>
         <use-default-template>false</use-default-template>

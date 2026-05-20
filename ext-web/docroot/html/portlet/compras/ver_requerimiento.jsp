@@ -1,8 +1,8 @@
-<%@ include file="/html/portlet/requerimientos_compras/init.jsp" %>
+<%@ include file="/html/portlet/compras/init.jsp" %>
 
 <%
 int idRequerimientoCompra = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
-Object idAttr = renderRequest.getAttribute(WebKeysRequerimientosCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION);
+Object idAttr = renderRequest.getAttribute(WebKeysRequerimientosCompras.ID_COMPRA_EN_EDICION);
 if (idRequerimientoCompra == 0 && idAttr instanceof Integer) {
     idRequerimientoCompra = ((Integer) idAttr).intValue();
 }
@@ -15,21 +15,21 @@ if (req == null) {
     req = new RequerimientoCompra();
 }
 
-boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_REQUERIMIENTOS_COMPRAS);
-boolean puedeAprobar = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_APROBAR_REQUERIMIENTOS_COMPRAS);
+boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_COMPRAS);
+boolean puedeAprobar = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_APROBAR_COMPRAS);
 
 PortletURL volverURL = renderResponse.createRenderURL();
 volverURL.setWindowState(WindowState.MAXIMIZED);
-volverURL.setParameter("struts_action", "/requerimientos_compras/view");
+volverURL.setParameter("struts_action", "/compras/view");
 
 PortletURL editarURL = renderResponse.createRenderURL();
 editarURL.setWindowState(WindowState.MAXIMIZED);
-editarURL.setParameter("struts_action", "/requerimientos_compras/editar_requerimiento");
+editarURL.setParameter("struts_action", "/compras/editar_requerimiento");
 editarURL.setParameter("id_requerimiento_compra", req.getIdRequerimientoCompraString());
 
 PortletURL cambiarEstadoURL = renderResponse.createActionURL();
 cambiarEstadoURL.setWindowState(WindowState.MAXIMIZED);
-cambiarEstadoURL.setParameter("struts_action", "/requerimientos_compras/cambiar_estado_requerimiento");
+cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerimiento");
 %>
 
 <fieldset class="block-labels">
@@ -71,9 +71,9 @@ cambiarEstadoURL.setParameter("struts_action", "/requerimientos_compras/cambiar_
     </table>
 </fieldset>
 
-<liferay-util:include page="/html/portlet/requerimientos_compras/requerimiento_items.jsp" />
-<liferay-util:include page="/html/portlet/requerimientos_compras/requerimiento_adjuntos.jsp" />
-<liferay-util:include page="/html/portlet/requerimientos_compras/requerimiento_historial.jsp" />
+<liferay-util:include page="/html/portlet/compras/requerimiento_items.jsp" />
+<liferay-util:include page="/html/portlet/compras/requerimiento_adjuntos.jsp" />
+<liferay-util:include page="/html/portlet/compras/requerimiento_historial.jsp" />
 
 <form action="<%= cambiarEstadoURL.toString() %>" method="post" name="<portlet:namespace />cambioEstadoFm">
     <input type="hidden" name="<portlet:namespace />id_requerimiento_compra" value="<%= req.getIdRequerimientoCompra() %>" />

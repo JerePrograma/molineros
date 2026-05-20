@@ -1,12 +1,12 @@
-<%@ include file="/html/portlet/requerimientos_compras/init.jsp" %>
+<%@ include file="/html/portlet/compras/init.jsp" %>
 
 <%
-boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_REQUERIMIENTOS_COMPRAS);
-boolean puedeAprobar = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_APROBAR_REQUERIMIENTOS_COMPRAS);
+boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_COMPRAS);
+boolean puedeAprobar = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_APROBAR_COMPRAS);
 
-List<RequerimientoCompra> requerimientos = (List<RequerimientoCompra>) renderRequest.getAttribute(WebKeysRequerimientosCompras.BUSQUEDA_REQUERIMIENTOS_COMPRAS);
+List<RequerimientoCompra> requerimientos = (List<RequerimientoCompra>) renderRequest.getAttribute(WebKeysRequerimientosCompras.BUSQUEDA_COMPRAS);
 if (requerimientos == null) {
-    requerimientos = (List<RequerimientoCompra>) portletSession.getAttribute(WebKeysRequerimientosCompras.BUSQUEDA_REQUERIMIENTOS_COMPRAS, PortletSession.PORTLET_SCOPE);
+    requerimientos = (List<RequerimientoCompra>) portletSession.getAttribute(WebKeysRequerimientosCompras.BUSQUEDA_COMPRAS, PortletSession.PORTLET_SCOPE);
 }
 if (requerimientos == null) {
     requerimientos = new ArrayList<RequerimientoCompra>();
@@ -39,12 +39,12 @@ if (requerimientos == null) {
 
                 PortletURL verURL = renderResponse.createRenderURL();
                 verURL.setWindowState(WindowState.MAXIMIZED);
-                verURL.setParameter("struts_action", "/requerimientos_compras/ver_requerimiento");
+                verURL.setParameter("struts_action", "/compras/ver_requerimiento");
                 verURL.setParameter("id_requerimiento_compra", req.getIdRequerimientoCompraString());
 
                 PortletURL editarURL = renderResponse.createRenderURL();
                 editarURL.setWindowState(WindowState.MAXIMIZED);
-                editarURL.setParameter("struts_action", "/requerimientos_compras/editar_requerimiento");
+                editarURL.setParameter("struts_action", "/compras/editar_requerimiento");
                 editarURL.setParameter("id_requerimiento_compra", req.getIdRequerimientoCompraString());
             %>
                 <tr class="<%= (i % 2 == 0) ? "portlet-section-body results-row" : "portlet-section-alternate results-row alt" %>">

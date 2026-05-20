@@ -1,9 +1,9 @@
-<%@ include file="/html/portlet/requerimientos_compras/init.jsp" %>
+<%@ include file="/html/portlet/compras/init.jsp" %>
 
 <%
-RequerimientoCompra reqItems = (RequerimientoCompra) renderRequest.getAttribute(WebKeysRequerimientosCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
+RequerimientoCompra reqItems = (RequerimientoCompra) renderRequest.getAttribute(WebKeysRequerimientosCompras.COMPRA_EN_EDICION);
 if (reqItems == null) {
-    reqItems = (RequerimientoCompra) renderRequest.getAttribute(WebKeysRequerimientosCompras.REQUERIMIENTO_COMPRA_EN_VIEW);
+    reqItems = (RequerimientoCompra) renderRequest.getAttribute(WebKeysRequerimientosCompras.COMPRA_EN_VIEW);
 }
 if (reqItems == null) {
     int idReq = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
@@ -15,7 +15,7 @@ if (reqItems == null) {
     reqItems = new RequerimientoCompra();
 }
 
-boolean puedeABMItems = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_REQUERIMIENTOS_COMPRAS) && reqItems.isEditable();
+boolean puedeABMItems = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_COMPRAS) && reqItems.isEditable();
 List<RequerimientoCompraItem> items = reqItems.getItems();
 if (items == null) {
     items = new ArrayList<RequerimientoCompraItem>();
@@ -23,7 +23,7 @@ if (items == null) {
 
 PortletURL itemActionURL = renderResponse.createActionURL();
 itemActionURL.setWindowState(WindowState.MAXIMIZED);
-itemActionURL.setParameter("struts_action", "/requerimientos_compras/editar_requerimiento");
+itemActionURL.setParameter("struts_action", "/compras/editar_requerimiento");
 %>
 
 <fieldset class="block-labels">

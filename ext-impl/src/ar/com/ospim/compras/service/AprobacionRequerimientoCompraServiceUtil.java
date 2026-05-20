@@ -1,4 +1,4 @@
-package ar.com.ospim.requerimientos_compras.service;
+package ar.com.ospim.compras.service;
 
 public class AprobacionRequerimientoCompraServiceUtil {
 

@@ -1,12 +1,12 @@
-package ar.com.ospim.requerimientos_compras.service;
+package ar.com.ospim.compras.service;
 
 import java.util.List;
 
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompra;
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraAdjunto;
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraFiltro;
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraHistorial;
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraItem;
+import ar.com.ospim.compras.beans.RequerimientoCompra;
+import ar.com.ospim.compras.beans.RequerimientoCompraAdjunto;
+import ar.com.ospim.compras.beans.RequerimientoCompraFiltro;
+import ar.com.ospim.compras.beans.RequerimientoCompraHistorial;
+import ar.com.ospim.compras.beans.RequerimientoCompraItem;
 
 public class BusquedaRequerimientoCompraServiceUtil {
 

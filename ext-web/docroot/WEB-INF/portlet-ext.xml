@@ -569,12 +569,12 @@
 	</portlet>
 
     <portlet>
-        <portlet-name>REQCOM_1</portlet-name>
-        <display-name>Requerimientos de Compras</display-name>
+        <portlet-name>COMPRA_1</portlet-name>
+        <display-name>Compras</display-name>
         <portlet-class>com.liferay.portlet.StrutsPortlet</portlet-class>
         <init-param>
             <name>view-action</name>
-            <value>/requerimientos_compras/view</value>
+            <value>/compras/view</value>
         </init-param>
         <instanceable>true</instanceable>
         <private-request-attributes>false</private-request-attributes>

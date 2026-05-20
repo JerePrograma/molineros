@@ -1,11 +1,11 @@
-<%@ include file="/html/portlet/requerimientos_compras/init.jsp" %>
+<%@ include file="/html/portlet/compras/init.jsp" %>
 
 <%
 response.setHeader("Cache-Control", "no-store");
 response.setHeader("Pragma", "no-cache");
 response.setDateHeader("Expires", 0);
 
-boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_REQUERIMIENTOS_COMPRAS);
+boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_COMPRAS);
 
 Calendar fechaDesde = Calendar.getInstance();
 fechaDesde.add(Calendar.MONTH, -1);
@@ -142,7 +142,7 @@ try {
 
 <script type="text/javascript">
     function <portlet:namespace />buildUrl() {
-        var url = "<portlet:renderURL windowState='<%= LiferayWindowState.EXCLUSIVE.toString() %>' />&struts_action=/requerimientos_compras/buscar_requerimientos";
+        var url = "<portlet:renderURL windowState='<%= LiferayWindowState.EXCLUSIVE.toString() %>' />&struts_action=/compras/buscar_requerimientos";
 
         url += "&numero=" + jQuery("#<portlet:namespace />numero").val();
         url += "&fechaDesdeDia=" + jQuery("#<portlet:namespace />fechaDesdeDia").val();
@@ -173,7 +173,7 @@ try {
     });
 
     function <portlet:namespace />altaRequerimiento() {
-        var url = "<portlet:renderURL windowState='<%= WindowState.MAXIMIZED.toString() %>'><portlet:param name='struts_action' value='/requerimientos_compras/editar_requerimiento' /></portlet:renderURL>";
+        var url = "<portlet:renderURL windowState='<%= WindowState.MAXIMIZED.toString() %>'><portlet:param name='struts_action' value='/compras/editar_requerimiento' /></portlet:renderURL>";
         window.location.href = url;
     }
 

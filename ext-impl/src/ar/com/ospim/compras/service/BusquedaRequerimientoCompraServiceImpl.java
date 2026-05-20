@@ -1,4 +1,4 @@
-package ar.com.ospim.requerimientos_compras.service;
+package ar.com.ospim.compras.service;
 
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
@@ -8,11 +8,11 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompra;
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraAdjunto;
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraFiltro;
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraHistorial;
-import ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraItem;
+import ar.com.ospim.compras.beans.RequerimientoCompra;
+import ar.com.ospim.compras.beans.RequerimientoCompraAdjunto;
+import ar.com.ospim.compras.beans.RequerimientoCompraFiltro;
+import ar.com.ospim.compras.beans.RequerimientoCompraHistorial;
+import ar.com.ospim.compras.beans.RequerimientoCompraItem;
 import ar.com.ospim.util.ConnectionHelper;
 
 import com.liferay.portal.kernel.log.Log;

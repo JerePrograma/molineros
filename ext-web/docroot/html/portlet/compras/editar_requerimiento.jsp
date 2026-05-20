@@ -1,21 +1,21 @@
-<%@ include file="/html/portlet/requerimientos_compras/init.jsp" %>
+<%@ include file="/html/portlet/compras/init.jsp" %>
 
 <%
-RequerimientoCompra req = (RequerimientoCompra) renderRequest.getAttribute(WebKeysRequerimientosCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
+RequerimientoCompra req = (RequerimientoCompra) renderRequest.getAttribute(WebKeysRequerimientosCompras.COMPRA_EN_EDICION);
 if (req == null) {
     req = new RequerimientoCompra();
 }
 
 boolean esNuevo = req.getIdRequerimientoCompra() == 0;
-boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_REQUERIMIENTOS_COMPRAS);
+boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysRequerimientosCompras.ROL_ABM_COMPRAS);
 
 PortletURL volverURL = renderResponse.createRenderURL();
 volverURL.setWindowState(WindowState.MAXIMIZED);
-volverURL.setParameter("struts_action", "/requerimientos_compras/view");
+volverURL.setParameter("struts_action", "/compras/view");
 
 PortletURL actionURL = renderResponse.createActionURL();
 actionURL.setWindowState(WindowState.MAXIMIZED);
-actionURL.setParameter("struts_action", "/requerimientos_compras/editar_requerimiento");
+actionURL.setParameter("struts_action", "/compras/editar_requerimiento");
 %>
 
 <c:if test="<%= !puedeABM %>">
@@ -98,9 +98,9 @@ actionURL.setParameter("struts_action", "/requerimientos_compras/editar_requerim
     </form>
 
     <c:if test="<%= req.getIdRequerimientoCompra() > 0 %>">
-        <liferay-util:include page="/html/portlet/requerimientos_compras/requerimiento_items.jsp" />
-        <liferay-util:include page="/html/portlet/requerimientos_compras/requerimiento_adjuntos.jsp" />
-        <liferay-util:include page="/html/portlet/requerimientos_compras/requerimiento_historial.jsp" />
+        <liferay-util:include page="/html/portlet/compras/requerimiento_items.jsp" />
+        <liferay-util:include page="/html/portlet/compras/requerimiento_adjuntos.jsp" />
+        <liferay-util:include page="/html/portlet/compras/requerimiento_historial.jsp" />
     </c:if>
 </c:if>
 

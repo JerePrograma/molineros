@@ -27,13 +27,13 @@
 <%@ page import="ar.com.ospim.global.beans.ClaseBase" %>
 <%@ page import="ar.com.ospim.global.services.TraeListasServiceUtil" %>
 
-<%@ page import="ar.com.ospim.requerimientos_compras.WebKeysRequerimientosCompras" %>
-<%@ page import="ar.com.ospim.requerimientos_compras.beans.RequerimientoCompra" %>
-<%@ page import="ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraItem" %>
-<%@ page import="ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraHistorial" %>
-<%@ page import="ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraAdjunto" %>
-<%@ page import="ar.com.ospim.requerimientos_compras.beans.RequerimientoCompraFiltro" %>
-<%@ page import="ar.com.ospim.requerimientos_compras.service.BusquedaRequerimientoCompraServiceUtil" %>
+<%@ page import="ar.com.ospim.compras.WebKeysRequerimientosCompras" %>
+<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompra" %>
+<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraItem" %>
+<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraHistorial" %>
+<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraAdjunto" %>
+<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraFiltro" %>
+<%@ page import="ar.com.ospim.compras.service.BusquedaRequerimientoCompraServiceUtil" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <%@ taglib uri="http://liferay.com/tld/ui-custom" prefix="liferay-ui-custom" %>
