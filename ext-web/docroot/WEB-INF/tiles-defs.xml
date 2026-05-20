@@ -4500,4 +4500,27 @@
 	</definition>
 
 	<!-- FIN PRESTADORES / PRE_1 -->
+
+    <definition name="portlet.requerimientos_compras" extends="portlet" />
+
+    <definition name="portlet.requerimientos_compras.view" extends="portlet.requerimientos_compras">
+        <put name="portlet_content" value="/html/portlet/requerimientos_compras/view.jsp" />
+    </definition>
+
+    <definition name="portlet.requerimientos_compras.result.search" extends="portlet.requerimientos_compras">
+        <put name="portlet_content" value="/html/portlet/requerimientos_compras/requerimientos_search_result.jsp" />
+    </definition>
+
+    <definition name="portlet.requerimientos_compras.editar_requerimiento" extends="portlet.requerimientos_compras">
+        <put name="portlet_content" value="/html/portlet/requerimientos_compras/editar_requerimiento.jsp" />
+    </definition>
+
+    <definition name="portlet.requerimientos_compras.ver_requerimiento" extends="portlet.requerimientos_compras">
+        <put name="portlet_content" value="/html/portlet/requerimientos_compras/ver_requerimiento.jsp" />
+    </definition>
+
+    <definition name="portlet.requerimientos_compras.error" extends="portlet.requerimientos_compras">
+        <put name="portlet_content" value="/html/portlet/requerimientos_compras/error.jsp" />
+    </definition>
+
 </tiles-definitions>

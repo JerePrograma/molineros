@@ -134,5 +134,6 @@
 		<portlet id="JUD_1" />
 		<portlet id="APM_1" />
 		<portlet id="PRE_1" />
+        <portlet id="REQCOM_1" />
 	</category>
 </display>

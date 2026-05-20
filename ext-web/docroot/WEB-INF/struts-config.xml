@@ -6961,7 +6961,36 @@
             <forward name="portlet.prestadores.error" path="portlet.prestadores.error" />
         </action>
 
- </action-mappings>
+        <!-- Requerimientos de Compras -->
+        <action path="/requerimientos_compras/view"
+                type="ar.com.ospim.requerimientos_compras.action.ViewRequerimientosComprasAction">
+            <forward name="portlet.requerimientos_compras.view" path="portlet.requerimientos_compras.view" />
+            <forward name="portlet.requerimientos_compras.error" path="portlet.requerimientos_compras.error" />
+        </action>
+
+        <action path="/requerimientos_compras/buscar_requerimientos"
+                type="ar.com.ospim.requerimientos_compras.action.BuscarRequerimientosComprasAction">
+            <forward name="portlet.requerimientos_compras.result.search" path="portlet.requerimientos_compras.result.search" />
+        </action>
+
+        <action path="/requerimientos_compras/buscar_requerimientos_sesion"
+                forward="portlet.requerimientos_compras.result.search" />
+
+        <action path="/requerimientos_compras/editar_requerimiento"
+                type="ar.com.ospim.requerimientos_compras.action.EditarRequerimientoCompraAction">
+            <forward name="portlet.requerimientos_compras.editar_requerimiento" path="portlet.requerimientos_compras.editar_requerimiento" />
+            <forward name="portlet.requerimientos_compras.view" path="portlet.requerimientos_compras.view" />
+        </action>
+
+        <action path="/requerimientos_compras/ver_requerimiento"
+                forward="portlet.requerimientos_compras.ver_requerimiento" />
+
+        <action path="/requerimientos_compras/cambiar_estado_requerimiento"
+                type="ar.com.ospim.requerimientos_compras.action.CambiarEstadoRequerimientoCompraAction">
+            <forward name="portlet.requerimientos_compras.ver_requerimiento" path="portlet.requerimientos_compras.ver_requerimiento" />
+        </action>
+
+    </action-mappings>
   
 </struts-config>
 
