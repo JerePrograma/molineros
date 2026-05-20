@@ -8,9 +8,10 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String ROL_ANULAR_COMPRAS = "ANULAR_Compras";
 
     /*
-     * Flujo: Requerimiento de compras
-     * No usar nombres genéricos tipo REQUERIMIENTO_COMPRA_EN_EDICION porque el módulo Compras
-     * va a contener otros flujos: órdenes, proveedores, cotizaciones, facturas, etc.
+     * Flujo: Requerimiento de compras.
+     * No usar nombres genéricos del módulo para datos específicos del flujo,
+     * porque Compras va a contener otros flujos: órdenes, proveedores,
+     * cotizaciones, facturas, etc.
      */
     public static final String BUSQUEDA_REQUERIMIENTOS_COMPRA = "BUSQUEDA_REQUERIMIENTOS_COMPRA";
     public static final String FILTRO_REQUERIMIENTOS_COMPRA = "FILTRO_REQUERIMIENTOS_COMPRA";

@@ -16,6 +16,7 @@ if (req == null) {
 }
 
 boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+boolean puedeAnular = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS) || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
 boolean puedeAprobar = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_APROBAR_COMPRAS);
 
 PortletURL volverURL = renderResponse.createRenderURL();
@@ -103,7 +104,7 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
                             <option value="<%= WebKeysCompras.ESTADO_CERRADO %>">Cerrar</option>
                         </c:if>
 
-                        <c:if test="<%= WebKeysCompras.puedeAnular(req.getEstado()) && puedeABM %>">
+                        <c:if test="<%= WebKeysCompras.puedeAnular(req.getEstado()) && puedeAnular %>">
                             <option value="<%= WebKeysCompras.ESTADO_ANULADO %>">Anular</option>
                         </c:if>
                     </select>
