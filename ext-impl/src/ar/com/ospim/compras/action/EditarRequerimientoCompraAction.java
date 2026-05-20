@@ -56,7 +56,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                         EditarRequerimientoCompraServiceUtil.guardarRequerimientoCompra(requerimiento, usuario);
 
                 actionRequest.setAttribute(
-                        WebKeysCompras.ID_REQUERIMIENTO_REQUERIMIENTO_COMPRA_EN_EDICION,
+                        WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION,
                         Integer.valueOf(idRequerimientoCompra)
                 );
 
@@ -72,7 +72,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 EditarRequerimientoCompraServiceUtil.guardarItem(item, usuario);
 
                 actionRequest.setAttribute(
-                        WebKeysCompras.ID_REQUERIMIENTO_REQUERIMIENTO_COMPRA_EN_EDICION,
+                        WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION,
                         Integer.valueOf(item.getIdRequerimientoCompra())
                 );
 
@@ -90,7 +90,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 EditarRequerimientoCompraServiceUtil.borrarItem(idItem, usuario);
 
                 actionRequest.setAttribute(
-                        WebKeysCompras.ID_REQUERIMIENTO_REQUERIMIENTO_COMPRA_EN_EDICION,
+                        WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION,
                         Integer.valueOf(idRequerimientoCompra)
                 );
 
@@ -126,7 +126,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         try {
             int idRequerimientoCompra = ParamUtil.getInteger(renderRequest, "id_requerimiento_compra", 0);
 
-            Object idAttr = renderRequest.getAttribute(WebKeysCompras.ID_REQUERIMIENTO_REQUERIMIENTO_COMPRA_EN_EDICION);
+            Object idAttr = renderRequest.getAttribute(WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION);
             if (idRequerimientoCompra == 0 && idAttr instanceof Integer) {
                 idRequerimientoCompra = ((Integer) idAttr).intValue();
             }
@@ -144,7 +144,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 }
             }
 
-            renderRequest.setAttribute(WebKeysCompras.REQUERIMIENTO_REQUERIMIENTO_COMPRA_EN_EDICION, requerimiento);
+            renderRequest.setAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION, requerimiento);
         } catch (Exception e) {
             _log.error(e);
             renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());

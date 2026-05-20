@@ -50,7 +50,7 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             );
 
             actionRequest.setAttribute(
-                    WebKeysCompras.ID_REQUERIMIENTO_REQUERIMIENTO_COMPRA_EN_EDICION,
+                    WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION,
                     Integer.valueOf(idRequerimientoCompra)
             );
 

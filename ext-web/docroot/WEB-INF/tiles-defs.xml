@@ -4504,23 +4504,23 @@
     <definition name="portlet.compras" extends="portlet" />
 
     <definition name="portlet.compras.view" extends="portlet.compras">
-        <put name="portlet_content" value="/html/portlet/compras/view.jsp" />
+        <put name="portlet_content" value="portlet/compras/view.jsp" />
     </definition>
 
     <definition name="portlet.compras.result.search" extends="portlet.compras">
-        <put name="portlet_content" value="/html/portlet/compras/requerimientos_search_result.jsp" />
+        <put name="portlet_content" value="portlet/compras/requerimientos_search_result.jsp" />
     </definition>
 
     <definition name="portlet.compras.editar_requerimiento" extends="portlet.compras">
-        <put name="portlet_content" value="/html/portlet/compras/editar_requerimiento.jsp" />
+        <put name="portlet_content" value="portlet/compras/editar_requerimiento.jsp" />
     </definition>
 
     <definition name="portlet.compras.ver_requerimiento" extends="portlet.compras">
-        <put name="portlet_content" value="/html/portlet/compras/ver_requerimiento.jsp" />
+        <put name="portlet_content" value="portlet/compras/ver_requerimiento.jsp" />
     </definition>
 
     <definition name="portlet.compras.error" extends="portlet.compras">
-        <put name="portlet_content" value="/html/portlet/compras/error.jsp" />
+        <put name="portlet_content" value="portlet/compras/error.jsp" />
     </definition>
 
 </tiles-definitions>

@@ -3,7 +3,7 @@
 <%
 RequerimientoCompra reqItems = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
 if (reqItems == null) {
-    reqItems = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.COMPRA_EN_VIEW);
+    reqItems = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW);
 }
 if (reqItems == null) {
     int idReq = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
