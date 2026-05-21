@@ -24,7 +24,7 @@ portletURL.setParameter("tabs1", tabs1);
         <liferay-portlet:renderURLParams varImpl="portletURL" />
 
         <liferay-ui-custom:tabs
-            names="requerimientos"
+            names="Requerimientos"
             tabsValues="requerimientos"
             portletURL="<%= portletURL %>"
             value="<%= tabs1 %>"
