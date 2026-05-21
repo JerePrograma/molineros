@@ -2,10 +2,15 @@
 
 <%
 int idReqHistorial = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
+
 RequerimientoCompra reqHistorial = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
+if (reqHistorial == null) {
+    reqHistorial = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW);
+}
 if (reqHistorial == null && idReqHistorial > 0) {
     reqHistorial = BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idReqHistorial);
 }
+
 List<RequerimientoCompraHistorial> historial = reqHistorial != null && reqHistorial.getHistorial() != null
         ? reqHistorial.getHistorial()
         : new ArrayList<RequerimientoCompraHistorial>();
@@ -36,7 +41,9 @@ List<RequerimientoCompraHistorial> historial = reqHistorial != null && reqHistor
         <% } %>
 
         <c:if test="<%= historial.size() == 0 %>">
-            <tr><td colspan="5">Sin movimientos.</td></tr>
+            <tr>
+                <td colspan="5">Sin movimientos.</td>
+            </tr>
         </c:if>
     </table>
 </fieldset>

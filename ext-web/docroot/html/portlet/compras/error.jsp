@@ -5,7 +5,7 @@ String error = (String) renderRequest.getAttribute(WebKeysCompras.ERROR_PARA_ALE
 %>
 
 <div class="portlet-msg-error">
-    Ocurrió un error en Compras.
+    Ocurrio un error en Compras.
     <c:if test="<%= error != null && error.length() > 0 %>">
         <br /><%= error %>
     </c:if>

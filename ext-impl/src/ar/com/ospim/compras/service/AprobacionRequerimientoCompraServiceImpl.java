@@ -48,6 +48,7 @@ public class AprobacionRequerimientoCompraServiceImpl {
     public boolean validarCambioEstado(int estadoActual, int estadoNuevo) {
         if (estadoActual == WebKeysCompras.ESTADO_BORRADOR) {
             return estadoNuevo == WebKeysCompras.ESTADO_PENDIENTE_APROBACION
+                    || estadoNuevo == WebKeysCompras.ESTADO_PENDIENTE_COTIZACION
                     || estadoNuevo == WebKeysCompras.ESTADO_ANULADO;
         }
 
@@ -60,10 +61,26 @@ public class AprobacionRequerimientoCompraServiceImpl {
 
         if (estadoActual == WebKeysCompras.ESTADO_OBSERVADO) {
             return estadoNuevo == WebKeysCompras.ESTADO_PENDIENTE_APROBACION
+                    || estadoNuevo == WebKeysCompras.ESTADO_PENDIENTE_COTIZACION
                     || estadoNuevo == WebKeysCompras.ESTADO_ANULADO;
         }
 
         if (estadoActual == WebKeysCompras.ESTADO_APROBADO) {
+            return estadoNuevo == WebKeysCompras.ESTADO_PENDIENTE_COTIZACION
+                    || estadoNuevo == WebKeysCompras.ESTADO_COTIZADO
+                    || estadoNuevo == WebKeysCompras.ESTADO_EN_COMPRA
+                    || estadoNuevo == WebKeysCompras.ESTADO_CERRADO
+                    || estadoNuevo == WebKeysCompras.ESTADO_ANULADO;
+        }
+
+        if (estadoActual == WebKeysCompras.ESTADO_PENDIENTE_COTIZACION) {
+            return estadoNuevo == WebKeysCompras.ESTADO_COTIZADO
+                    || estadoNuevo == WebKeysCompras.ESTADO_EN_COMPRA
+                    || estadoNuevo == WebKeysCompras.ESTADO_CERRADO
+                    || estadoNuevo == WebKeysCompras.ESTADO_ANULADO;
+        }
+
+        if (estadoActual == WebKeysCompras.ESTADO_COTIZADO) {
             return estadoNuevo == WebKeysCompras.ESTADO_EN_COMPRA
                     || estadoNuevo == WebKeysCompras.ESTADO_CERRADO
                     || estadoNuevo == WebKeysCompras.ESTADO_ANULADO;
@@ -81,12 +98,12 @@ public class AprobacionRequerimientoCompraServiceImpl {
             throws Exception {
 
         if (requerimiento == null || requerimiento.getIdRequerimientoCompra() <= 0) {
-            throw new Exception("No se encontró el requerimiento de compra.");
+            throw new Exception("No se encontro el requerimiento de compra.");
         }
 
         if (!validarCambioEstado(requerimiento.getEstado(), estadoNuevo)) {
             throw new Exception(
-                    "Cambio de estado inválido: "
+                    "Cambio de estado invalido: "
                             + WebKeysCompras.getEstadoDescripcion(requerimiento.getEstado())
                             + " -> "
                             + WebKeysCompras.getEstadoDescripcion(estadoNuevo)
@@ -94,10 +111,13 @@ public class AprobacionRequerimientoCompraServiceImpl {
         }
 
         if (estadoNuevo == WebKeysCompras.ESTADO_PENDIENTE_APROBACION
-                || estadoNuevo == WebKeysCompras.ESTADO_APROBADO) {
+                || estadoNuevo == WebKeysCompras.ESTADO_APROBADO
+                || estadoNuevo == WebKeysCompras.ESTADO_PENDIENTE_COTIZACION
+                || estadoNuevo == WebKeysCompras.ESTADO_COTIZADO
+                || estadoNuevo == WebKeysCompras.ESTADO_EN_COMPRA) {
 
-            if (requerimiento.getItems() == null || requerimiento.getItems().size() == 0) {
-                throw new Exception("El requerimiento debe tener al menos un item cargado.");
+            if (isEmpty(requerimiento.getMotivo()) && isEmpty(requerimiento.getDetalleRequerimiento())) {
+                throw new Exception("El requerimiento debe tener detalle o motivo cargado.");
             }
         }
 
@@ -105,9 +125,13 @@ public class AprobacionRequerimientoCompraServiceImpl {
                 || estadoNuevo == WebKeysCompras.ESTADO_RECHAZADO
                 || estadoNuevo == WebKeysCompras.ESTADO_ANULADO) {
 
-            if (comentario == null || comentario.trim().length() == 0) {
+            if (isEmpty(comentario)) {
                 throw new Exception("Debe informar un comentario para observar, rechazar o anular.");
             }
         }
+    }
+
+    private boolean isEmpty(String value) {
+        return value == null || value.trim().length() == 0;
     }
 }

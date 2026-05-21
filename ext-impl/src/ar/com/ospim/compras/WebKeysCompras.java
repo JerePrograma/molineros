@@ -7,12 +7,6 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String ROL_APROBAR_COMPRAS = "APROBAR_Compras";
     public static final String ROL_ANULAR_COMPRAS = "ANULAR_Compras";
 
-    /*
-     * Flujo: Requerimiento de compras.
-     * No usar nombres gen�ricos del m�dulo para datos espec�ficos del flujo,
-     * porque Compras va a contener otros flujos: �rdenes, proveedores,
-     * cotizaciones, facturas, etc.
-     */
     public static final String BUSQUEDA_REQUERIMIENTOS_COMPRA = "BUSQUEDA_REQUERIMIENTOS_COMPRA";
     public static final String FILTRO_REQUERIMIENTOS_COMPRA = "FILTRO_REQUERIMIENTOS_COMPRA";
 
@@ -33,6 +27,8 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final int ESTADO_EN_COMPRA = 6;
     public static final int ESTADO_CERRADO = 7;
     public static final int ESTADO_ANULADO = 8;
+    public static final int ESTADO_PENDIENTE_COTIZACION = 9;
+    public static final int ESTADO_COTIZADO = 10;
 
     public static final int PRIORIDAD_BAJA = 1;
     public static final int PRIORIDAD_MEDIA = 2;
@@ -44,7 +40,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             case ESTADO_BORRADOR:
                 return "Borrador";
             case ESTADO_PENDIENTE_APROBACION:
-                return "Pendiente aprobaci�n";
+                return "Pendiente aprobacion";
             case ESTADO_APROBADO:
                 return "Aprobado";
             case ESTADO_OBSERVADO:
@@ -57,6 +53,10 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                 return "Cerrado";
             case ESTADO_ANULADO:
                 return "Anulado";
+            case ESTADO_PENDIENTE_COTIZACION:
+                return "Pendiente cotizacion";
+            case ESTADO_COTIZADO:
+                return "Cotizado";
             default:
                 return "";
         }
@@ -77,8 +77,20 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         }
     }
 
+    public static String getBooleanDescripcion(Boolean value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value.booleanValue() ? "SI" : "NO";
+    }
+
     public static boolean esEditable(int estado) {
-        return estado == ESTADO_BORRADOR || estado == ESTADO_OBSERVADO;
+        return estado == ESTADO_BORRADOR
+                || estado == ESTADO_OBSERVADO
+                || estado == ESTADO_PENDIENTE_COTIZACION
+                || estado == ESTADO_COTIZADO
+                || estado == ESTADO_EN_COMPRA;
     }
 
     public static boolean puedeEnviarAprobacion(int estado) {
@@ -89,8 +101,19 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return estado == ESTADO_PENDIENTE_APROBACION;
     }
 
+    public static boolean puedeEnviarACotizacion(int estado) {
+        return estado == ESTADO_APROBADO || estado == ESTADO_OBSERVADO;
+    }
+
+    public static boolean puedeMarcarCotizado(int estado) {
+        return estado == ESTADO_PENDIENTE_COTIZACION || estado == ESTADO_APROBADO;
+    }
+
     public static boolean puedeCerrar(int estado) {
-        return estado == ESTADO_APROBADO || estado == ESTADO_EN_COMPRA;
+        return estado == ESTADO_APROBADO
+                || estado == ESTADO_PENDIENTE_COTIZACION
+                || estado == ESTADO_COTIZADO
+                || estado == ESTADO_EN_COMPRA;
     }
 
     public static boolean puedeAnular(int estado) {
@@ -100,4 +123,3 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     private WebKeysCompras() {
     }
 }
-

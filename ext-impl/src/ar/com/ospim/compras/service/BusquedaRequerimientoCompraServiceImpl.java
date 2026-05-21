@@ -29,19 +29,37 @@ public class BusquedaRequerimientoCompraServiceImpl {
         List<RequerimientoCompra> requerimientos = new ArrayList<RequerimientoCompra>();
 
         try {
-            String sql = "{call buscar_requerimientos_compra(?,?,?,?,?,?,?,?,?)}";
+            String sql = "{call buscar_requerimientos_compra(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(sql);
 
             setNullableInteger(stmt, 1, filtro.getNumero());
-            stmt.setDate(2, filtro.getFechaDesde() == null ? null : new java.sql.Date(filtro.getFechaDesde().getTime()));
-            stmt.setDate(3, filtro.getFechaHasta() == null ? null : new java.sql.Date(filtro.getFechaHasta().getTime()));
+            setNullableDate(stmt, 2, filtro.getFechaDesde());
+            setNullableDate(stmt, 3, filtro.getFechaHasta());
             setNullableInteger(stmt, 4, filtro.getSectorId());
             stmt.setString(5, emptyToNull(filtro.getSolicitanteUsr()));
             stmt.setString(6, emptyToNull(filtro.getEntidad()));
             setNullableInteger(stmt, 7, filtro.getPrioridad());
             setNullableInteger(stmt, 8, filtro.getEstado());
             stmt.setString(9, emptyToNull(filtro.getTexto()));
+
+            stmt.setString(10, emptyToNull(filtro.getAfiliado()));
+            stmt.setString(11, emptyToNull(filtro.getDni()));
+            stmt.setString(12, emptyToNull(filtro.getDetalleRequerimiento()));
+            setNullableInteger(stmt, 13, filtro.getRpNumero());
+
+            Integer ordenCompra = filtro.getOrdenCompraNumero();
+            if ((ordenCompra == null || ordenCompra.intValue() <= 0) && filtro.getIdOrdenCompra() != null) {
+                ordenCompra = filtro.getIdOrdenCompra();
+            }
+            setNullableInteger(stmt, 14, ordenCompra);
+
+            setNullableBoolean(stmt, 15, filtro.getRecupero());
+            setNullableBoolean(stmt, 16, filtro.getCotizado());
+            setNullableDate(stmt, 17, filtro.getFechaPedidoCotizacionDesde());
+            setNullableDate(stmt, 18, filtro.getFechaPedidoCotizacionHasta());
+            stmt.setString(19, emptyToNull(filtro.getLocalidad()));
+            stmt.setString(20, emptyToNull(filtro.getProvincia()));
 
             rs = stmt.executeQuery();
             while (rs.next()) {
@@ -143,8 +161,10 @@ public class BusquedaRequerimientoCompraServiceImpl {
                 RequerimientoCompraHistorial h = new RequerimientoCompraHistorial();
                 h.setIdHistorial(rs.getInt("id_historial"));
                 h.setIdRequerimientoCompra(rs.getInt("id_requerimiento_compra"));
+
                 int estadoAnterior = rs.getInt("estado_anterior");
                 h.setEstadoAnterior(rs.wasNull() ? null : Integer.valueOf(estadoAnterior));
+
                 h.setEstadoNuevo(rs.getInt("estado_nuevo"));
                 h.setUsuario(rs.getString("usuario"));
                 h.setFecha(rs.getTimestamp("fecha"));
@@ -179,8 +199,10 @@ public class BusquedaRequerimientoCompraServiceImpl {
                 RequerimientoCompraAdjunto adjunto = new RequerimientoCompraAdjunto();
                 adjunto.setIdAdjunto(rs.getInt("id_adjunto"));
                 adjunto.setIdRequerimientoCompra(rs.getInt("id_requerimiento_compra"));
+
                 long fileEntryId = rs.getLong("file_entry_id");
                 adjunto.setFileEntryId(rs.wasNull() ? null : Long.valueOf(fileEntryId));
+
                 adjunto.setNombreArchivo(rs.getString("nombre_archivo"));
                 adjunto.setTipoArchivo(rs.getString("tipo_archivo"));
                 adjunto.setAltaUsr(rs.getString("alta_usr"));
@@ -202,35 +224,56 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
     private RequerimientoCompra mapRequerimiento(ResultSet rs) throws Exception {
         RequerimientoCompra r = new RequerimientoCompra();
+
         r.setIdRequerimientoCompra(rs.getInt("id_requerimiento_compra"));
         r.setNumero(rs.getInt("numero"));
 
+        r.setAfiliado(rs.getString("afiliado"));
+        r.setDni(rs.getString("dni"));
+
         int sectorId = rs.getInt("sector_id");
         r.setSectorId(rs.wasNull() ? null : Integer.valueOf(sectorId));
-
-        try {
-            r.setSectorDescripcion(rs.getString("sector_descripcion"));
-        } catch (Exception ignored) {
-            r.setSectorDescripcion(null);
-        }
+        r.setSectorDescripcion(rs.getString("sector_descripcion"));
 
         r.setSolicitanteUsr(rs.getString("solicitante_usr"));
         r.setEntidad(rs.getString("entidad"));
         r.setPrioridad(rs.getInt("prioridad"));
         r.setEstado(rs.getInt("estado"));
+
         r.setFechaAlta(rs.getTimestamp("fecha_alta"));
         r.setAltaUsr(rs.getString("alta_usr"));
         r.setFechaModi(rs.getTimestamp("fecha_modi"));
         r.setModiUsr(rs.getString("modi_usr"));
         r.setBajaFecha(rs.getTimestamp("baja_fecha"));
         r.setBajaUsr(rs.getString("baja_usr"));
+
+        r.setFechaSolicitud(rs.getDate("fecha_solicitud"));
         r.setFechaNecesidad(rs.getDate("fecha_necesidad"));
+        r.setFechaPedidoCotizacion(rs.getDate("fecha_pedido_cotizacion"));
+
+        r.setDetalleRequerimiento(rs.getString("detalle_requerimiento"));
         r.setMotivo(rs.getString("motivo"));
         r.setObservaciones(rs.getString("observaciones"));
-        r.setImporteEstimadoTotal(getBigDecimal(rs, "importe_estimado_total"));
 
-        int idOrdenCompra = rs.getInt("id_orden_compra");
-        r.setIdOrdenCompra(rs.wasNull() ? null : Integer.valueOf(idOrdenCompra));
+        r.setPedidosPresupuestos(rs.getString("pedidos_presupuestos"));
+        r.setComparativa(rs.getString("comparativa"));
+
+        r.setRpNumero(getNullableInteger(rs, "rp_numero"));
+        r.setRpObservacion(rs.getString("rp_observacion"));
+
+        r.setIdOrdenCompra(getNullableInteger(rs, "id_orden_compra"));
+        r.setOrdenCompraNumero(getNullableInteger(rs, "orden_compra_numero"));
+        r.setOrdenCompraObservacion(rs.getString("orden_compra_observacion"));
+
+        r.setCargoOspim(rs.getString("cargo_ospim"));
+        r.setCargoEnsalud(rs.getString("cargo_ensalud"));
+        r.setRecupero(getNullableBoolean(rs, "recupero"));
+        r.setCotizado(getNullableBoolean(rs, "cotizado"));
+
+        r.setLocalidad(rs.getString("localidad"));
+        r.setProvincia(rs.getString("provincia"));
+
+        r.setImporteEstimadoTotal(getBigDecimal(rs, "importe_estimado_total"));
 
         return r;
     }
@@ -243,10 +286,37 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
     }
 
+    private void setNullableDate(CallableStatement stmt, int index, java.util.Date value) throws Exception {
+        if (value == null) {
+            stmt.setNull(index, Types.DATE);
+        } else {
+            stmt.setDate(index, new java.sql.Date(value.getTime()));
+        }
+    }
+
+    private void setNullableBoolean(CallableStatement stmt, int index, Boolean value) throws Exception {
+        if (value == null) {
+            stmt.setNull(index, Types.BOOLEAN);
+        } else {
+            stmt.setBoolean(index, value.booleanValue());
+        }
+    }
+
+    private Integer getNullableInteger(ResultSet rs, String column) throws Exception {
+        int value = rs.getInt(column);
+        return rs.wasNull() ? null : Integer.valueOf(value);
+    }
+
+    private Boolean getNullableBoolean(ResultSet rs, String column) throws Exception {
+        boolean value = rs.getBoolean(column);
+        return rs.wasNull() ? null : Boolean.valueOf(value);
+    }
+
     private String emptyToNull(String value) {
         if (value == null || value.trim().length() == 0) {
             return null;
         }
+
         return value.trim();
     }
 

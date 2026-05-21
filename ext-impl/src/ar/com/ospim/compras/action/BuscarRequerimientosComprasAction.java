@@ -95,7 +95,35 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             filtro.setEstado(Integer.valueOf(estado));
         }
 
+        int idOrdenCompra = ParamUtil.getInteger(request, "id_orden_compra", 0);
+        if (idOrdenCompra > 0) {
+            filtro.setIdOrdenCompra(Integer.valueOf(idOrdenCompra));
+        }
+
         filtro.setTexto(ParamUtil.getString(request, "texto", null));
+
+        filtro.setAfiliado(ParamUtil.getString(request, "afiliado", null));
+        filtro.setDni(ParamUtil.getString(request, "dni", null));
+        filtro.setDetalleRequerimiento(ParamUtil.getString(request, "detalle_requerimiento", null));
+
+        int rpNumero = ParamUtil.getInteger(request, "rp_numero", 0);
+        if (rpNumero > 0) {
+            filtro.setRpNumero(Integer.valueOf(rpNumero));
+        }
+
+        int ordenCompraNumero = ParamUtil.getInteger(request, "orden_compra_numero", 0);
+        if (ordenCompraNumero > 0) {
+            filtro.setOrdenCompraNumero(Integer.valueOf(ordenCompraNumero));
+        }
+
+        filtro.setRecupero(parseBooleanNullable(ParamUtil.getString(request, "recupero", null)));
+        filtro.setCotizado(parseBooleanNullable(ParamUtil.getString(request, "cotizado", null)));
+
+        filtro.setFechaPedidoCotizacionDesde(parseInputDate(request, "fechaPedidoCotizacionDesde"));
+        filtro.setFechaPedidoCotizacionHasta(parseInputDate(request, "fechaPedidoCotizacionHasta"));
+
+        filtro.setLocalidad(ParamUtil.getString(request, "localidad", null));
+        filtro.setProvincia(ParamUtil.getString(request, "provincia", null));
 
         return filtro;
     }
@@ -117,5 +145,23 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private Boolean parseBooleanNullable(String value) {
+        if (value == null || value.trim().length() == 0 || "0".equals(value.trim())) {
+            return null;
+        }
+
+        String clean = value.trim().toUpperCase();
+
+        if ("SI".equals(clean) || "S".equals(clean) || "TRUE".equals(clean) || "1".equals(clean)) {
+            return Boolean.TRUE;
+        }
+
+        if ("NO".equals(clean) || "N".equals(clean) || "FALSE".equals(clean) || "2".equals(clean)) {
+            return Boolean.FALSE;
+        }
+
+        return null;
     }
 }

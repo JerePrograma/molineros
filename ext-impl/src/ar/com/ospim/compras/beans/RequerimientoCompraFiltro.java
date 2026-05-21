@@ -15,6 +15,18 @@ public class RequerimientoCompraFiltro {
     private Integer idOrdenCompra;
     private String texto;
 
+    private String afiliado;
+    private String dni;
+    private String detalleRequerimiento;
+    private Integer rpNumero;
+    private Integer ordenCompraNumero;
+    private Boolean recupero;
+    private Boolean cotizado;
+    private Date fechaPedidoCotizacionDesde;
+    private Date fechaPedidoCotizacionHasta;
+    private String localidad;
+    private String provincia;
+
     public Integer getNumero() {
         return numero;
     }
@@ -93,5 +105,93 @@ public class RequerimientoCompraFiltro {
 
     public void setTexto(String texto) {
         this.texto = texto;
+    }
+
+    public String getAfiliado() {
+        return afiliado;
+    }
+
+    public void setAfiliado(String afiliado) {
+        this.afiliado = afiliado;
+    }
+
+    public String getDni() {
+        return dni;
+    }
+
+    public void setDni(String dni) {
+        this.dni = dni;
+    }
+
+    public String getDetalleRequerimiento() {
+        return detalleRequerimiento;
+    }
+
+    public void setDetalleRequerimiento(String detalleRequerimiento) {
+        this.detalleRequerimiento = detalleRequerimiento;
+    }
+
+    public Integer getRpNumero() {
+        return rpNumero;
+    }
+
+    public void setRpNumero(Integer rpNumero) {
+        this.rpNumero = rpNumero;
+    }
+
+    public Integer getOrdenCompraNumero() {
+        return ordenCompraNumero;
+    }
+
+    public void setOrdenCompraNumero(Integer ordenCompraNumero) {
+        this.ordenCompraNumero = ordenCompraNumero;
+    }
+
+    public Boolean getRecupero() {
+        return recupero;
+    }
+
+    public void setRecupero(Boolean recupero) {
+        this.recupero = recupero;
+    }
+
+    public Boolean getCotizado() {
+        return cotizado;
+    }
+
+    public void setCotizado(Boolean cotizado) {
+        this.cotizado = cotizado;
+    }
+
+    public Date getFechaPedidoCotizacionDesde() {
+        return fechaPedidoCotizacionDesde;
+    }
+
+    public void setFechaPedidoCotizacionDesde(Date fechaPedidoCotizacionDesde) {
+        this.fechaPedidoCotizacionDesde = fechaPedidoCotizacionDesde;
+    }
+
+    public Date getFechaPedidoCotizacionHasta() {
+        return fechaPedidoCotizacionHasta;
+    }
+
+    public void setFechaPedidoCotizacionHasta(Date fechaPedidoCotizacionHasta) {
+        this.fechaPedidoCotizacionHasta = fechaPedidoCotizacionHasta;
+    }
+
+    public String getLocalidad() {
+        return localidad;
+    }
+
+    public void setLocalidad(String localidad) {
+        this.localidad = localidad;
+    }
+
+    public String getProvincia() {
+        return provincia;
+    }
+
+    public void setProvincia(String provincia) {
+        this.provincia = provincia;
     }
 }

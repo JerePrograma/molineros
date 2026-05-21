@@ -12,23 +12,51 @@ public class RequerimientoCompra {
 
     private int idRequerimientoCompra;
     private int numero;
+
+    private String afiliado;
+    private String dni;
+
     private Integer sectorId;
     private String sectorDescripcion;
     private String solicitanteUsr;
     private String entidad;
+
     private int prioridad;
     private int estado;
+
     private Date fechaAlta;
     private String altaUsr;
     private Date fechaModi;
     private String modiUsr;
     private Date bajaFecha;
     private String bajaUsr;
+
+    private Date fechaSolicitud;
     private Date fechaNecesidad;
+    private Date fechaPedidoCotizacion;
+
+    private String detalleRequerimiento;
     private String motivo;
     private String observaciones;
+
+    private String pedidosPresupuestos;
+    private String comparativa;
+
+    private Integer rpNumero;
+    private String rpObservacion;
+
     private BigDecimal importeEstimadoTotal;
     private Integer idOrdenCompra;
+    private Integer ordenCompraNumero;
+    private String ordenCompraObservacion;
+
+    private String cargoOspim;
+    private String cargoEnsalud;
+    private Boolean recupero;
+    private Boolean cotizado;
+
+    private String localidad;
+    private String provincia;
 
     private List<RequerimientoCompraItem> items;
     private List<RequerimientoCompraHistorial> historial;
@@ -70,6 +98,26 @@ public class RequerimientoCompra {
 
     public void setNumero(int numero) {
         this.numero = numero;
+    }
+
+    public String getAfiliado() {
+        return afiliado;
+    }
+
+    public void setAfiliado(String afiliado) {
+        this.afiliado = afiliado;
+    }
+
+    public String getDni() {
+        return dni;
+    }
+
+    public String getDniString() {
+        return dni != null ? dni : "";
+    }
+
+    public void setDni(String dni) {
+        this.dni = dni;
     }
 
     public Integer getSectorId() {
@@ -184,6 +232,18 @@ public class RequerimientoCompra {
         this.bajaUsr = bajaUsr;
     }
 
+    public Date getFechaSolicitud() {
+        return fechaSolicitud;
+    }
+
+    public String getFechaSolicitudAsString() {
+        return fechaSolicitud != null ? DateUtils.format(fechaSolicitud, DateUtils.SHORT) : "";
+    }
+
+    public void setFechaSolicitud(Date fechaSolicitud) {
+        this.fechaSolicitud = fechaSolicitud;
+    }
+
     public Date getFechaNecesidad() {
         return fechaNecesidad;
     }
@@ -196,8 +256,36 @@ public class RequerimientoCompra {
         this.fechaNecesidad = fechaNecesidad;
     }
 
+    public Date getFechaPedidoCotizacion() {
+        return fechaPedidoCotizacion;
+    }
+
+    public String getFechaPedidoCotizacionAsString() {
+        return fechaPedidoCotizacion != null ? DateUtils.format(fechaPedidoCotizacion, DateUtils.SHORT) : "";
+    }
+
+    public void setFechaPedidoCotizacion(Date fechaPedidoCotizacion) {
+        this.fechaPedidoCotizacion = fechaPedidoCotizacion;
+    }
+
+    public String getDetalleRequerimiento() {
+        return detalleRequerimiento;
+    }
+
+    public void setDetalleRequerimiento(String detalleRequerimiento) {
+        this.detalleRequerimiento = detalleRequerimiento;
+    }
+
     public String getMotivo() {
         return motivo;
+    }
+
+    public String getMotivoVisible() {
+        if (motivo != null && motivo.trim().length() > 0) {
+            return motivo;
+        }
+
+        return detalleRequerimiento != null ? detalleRequerimiento : "";
     }
 
     public void setMotivo(String motivo) {
@@ -210,6 +298,42 @@ public class RequerimientoCompra {
 
     public void setObservaciones(String observaciones) {
         this.observaciones = observaciones;
+    }
+
+    public String getPedidosPresupuestos() {
+        return pedidosPresupuestos;
+    }
+
+    public void setPedidosPresupuestos(String pedidosPresupuestos) {
+        this.pedidosPresupuestos = pedidosPresupuestos;
+    }
+
+    public String getComparativa() {
+        return comparativa;
+    }
+
+    public void setComparativa(String comparativa) {
+        this.comparativa = comparativa;
+    }
+
+    public Integer getRpNumero() {
+        return rpNumero;
+    }
+
+    public String getRpNumeroString() {
+        return rpNumero != null && rpNumero.intValue() > 0 ? String.valueOf(rpNumero) : "";
+    }
+
+    public void setRpNumero(Integer rpNumero) {
+        this.rpNumero = rpNumero;
+    }
+
+    public String getRpObservacion() {
+        return rpObservacion;
+    }
+
+    public void setRpObservacion(String rpObservacion) {
+        this.rpObservacion = rpObservacion;
     }
 
     public BigDecimal getImporteEstimadoTotal() {
@@ -234,6 +358,94 @@ public class RequerimientoCompra {
 
     public void setIdOrdenCompra(Integer idOrdenCompra) {
         this.idOrdenCompra = idOrdenCompra;
+    }
+
+    public Integer getOrdenCompraNumero() {
+        return ordenCompraNumero;
+    }
+
+    public String getOrdenCompraNumeroString() {
+        if (ordenCompraNumero != null && ordenCompraNumero.intValue() > 0) {
+            return String.valueOf(ordenCompraNumero);
+        }
+
+        return getIdOrdenCompraString();
+    }
+
+    public void setOrdenCompraNumero(Integer ordenCompraNumero) {
+        this.ordenCompraNumero = ordenCompraNumero;
+    }
+
+    public String getOrdenCompraObservacion() {
+        return ordenCompraObservacion;
+    }
+
+    public void setOrdenCompraObservacion(String ordenCompraObservacion) {
+        this.ordenCompraObservacion = ordenCompraObservacion;
+    }
+
+    public String getCargoOspim() {
+        return cargoOspim;
+    }
+
+    public void setCargoOspim(String cargoOspim) {
+        this.cargoOspim = cargoOspim;
+    }
+
+    public String getCargoEnsalud() {
+        return cargoEnsalud;
+    }
+
+    public void setCargoEnsalud(String cargoEnsalud) {
+        this.cargoEnsalud = cargoEnsalud;
+    }
+
+    public Boolean getRecupero() {
+        return recupero;
+    }
+
+    public String getRecuperoDescripcion() {
+        return WebKeysCompras.getBooleanDescripcion(recupero);
+    }
+
+    public void setRecupero(Boolean recupero) {
+        this.recupero = recupero;
+    }
+
+    public Boolean getCotizado() {
+        return cotizado;
+    }
+
+    public String getCotizadoDescripcion() {
+        return WebKeysCompras.getBooleanDescripcion(cotizado);
+    }
+
+    public void setCotizado(Boolean cotizado) {
+        this.cotizado = cotizado;
+    }
+
+    public boolean isCotizado() {
+        return Boolean.TRUE.equals(cotizado);
+    }
+
+    public boolean isRecupero() {
+        return Boolean.TRUE.equals(recupero);
+    }
+
+    public String getLocalidad() {
+        return localidad;
+    }
+
+    public void setLocalidad(String localidad) {
+        this.localidad = localidad;
+    }
+
+    public String getProvincia() {
+        return provincia;
+    }
+
+    public void setProvincia(String provincia) {
+        this.provincia = provincia;
     }
 
     public List<RequerimientoCompraItem> getItems() {

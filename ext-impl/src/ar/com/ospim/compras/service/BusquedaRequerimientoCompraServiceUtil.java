@@ -5,7 +5,6 @@ import java.util.List;
 import ar.com.ospim.compras.beans.RequerimientoCompra;
 import ar.com.ospim.compras.beans.RequerimientoCompraAdjunto;
 import ar.com.ospim.compras.beans.RequerimientoCompraFiltro;
-import ar.com.ospim.compras.beans.RequerimientoCompraHistorial;
 import ar.com.ospim.compras.beans.RequerimientoCompraItem;
 
 public class BusquedaRequerimientoCompraServiceUtil {
@@ -30,11 +29,6 @@ public class BusquedaRequerimientoCompraServiceUtil {
     public static List<RequerimientoCompraItem> getItems(int idRequerimientoCompra) throws Exception {
         return getInstance().getItems(idRequerimientoCompra);
     }
-
-    public static List<RequerimientoCompraHistorial> getHistorial(int idRequerimientoCompra) throws Exception {
-        return getInstance().getHistorial(idRequerimientoCompra);
-    }
-
     public static List<RequerimientoCompraAdjunto> getAdjuntos(int idRequerimientoCompra) throws Exception {
         return getInstance().getAdjuntos(idRequerimientoCompra);
     }

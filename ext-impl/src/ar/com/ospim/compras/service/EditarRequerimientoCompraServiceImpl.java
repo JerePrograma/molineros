@@ -21,22 +21,47 @@ public class EditarRequerimientoCompraServiceImpl {
         CallableStatement stmt = null;
 
         try {
-            String sql = "{ ? = call guardar_requerimiento_compra(?,?,?,?,?,?,?,?,?,?,?) }";
+            String sql = "{ ? = call guardar_requerimiento_compra(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(sql);
             stmt.registerOutParameter(1, Types.INTEGER);
 
             setNullableInteger(stmt, 2, requerimiento.getIdRequerimientoCompra() > 0 ? Integer.valueOf(requerimiento.getIdRequerimientoCompra()) : null);
-            setNullableInteger(stmt, 3, requerimiento.getSectorId());
-            stmt.setString(4, requerimiento.getSolicitanteUsr());
-            stmt.setString(5, requerimiento.getEntidad());
-            stmt.setInt(6, requerimiento.getPrioridad());
-            stmt.setDate(7, requerimiento.getFechaNecesidad() == null ? null : new java.sql.Date(requerimiento.getFechaNecesidad().getTime()));
-            stmt.setString(8, requerimiento.getMotivo());
-            stmt.setString(9, requerimiento.getObservaciones());
-            stmt.setBigDecimal(10, requerimiento.getImporteEstimadoTotal());
-            setNullableInteger(stmt, 11, requerimiento.getIdOrdenCompra());
-            stmt.setString(12, usuario);
+            setNullableInteger(stmt, 3, requerimiento.getNumero() > 0 ? Integer.valueOf(requerimiento.getNumero()) : null);
+            setNullableInteger(stmt, 4, requerimiento.getSectorId());
+            stmt.setString(5, emptyToNull(requerimiento.getSectorDescripcion()));
+            stmt.setString(6, emptyToNull(requerimiento.getSolicitanteUsr()));
+            stmt.setString(7, emptyToNull(requerimiento.getEntidad()));
+            stmt.setInt(8, requerimiento.getPrioridad());
+
+            setNullableDate(stmt, 9, requerimiento.getFechaSolicitud());
+            setNullableDate(stmt, 10, requerimiento.getFechaNecesidad());
+            setNullableDate(stmt, 11, requerimiento.getFechaPedidoCotizacion());
+
+            stmt.setString(12, emptyToNull(requerimiento.getDetalleRequerimiento()));
+            stmt.setString(13, emptyToNull(requerimiento.getMotivo()));
+            stmt.setString(14, requerimiento.getObservaciones());
+            stmt.setBigDecimal(15, requerimiento.getImporteEstimadoTotal());
+
+            Integer ordenCompra = requerimiento.getOrdenCompraNumero();
+            if ((ordenCompra == null || ordenCompra.intValue() <= 0) && requerimiento.getIdOrdenCompra() != null) {
+                ordenCompra = requerimiento.getIdOrdenCompra();
+            }
+
+            setNullableInteger(stmt, 16, ordenCompra);
+            stmt.setString(17, emptyToNull(requerimiento.getAfiliado()));
+            stmt.setString(18, emptyToNull(requerimiento.getDni()));
+            setNullableInteger(stmt, 19, requerimiento.getRpNumero());
+            stmt.setString(20, emptyToNull(requerimiento.getRpObservacion()));
+            stmt.setString(21, emptyToNull(requerimiento.getPedidosPresupuestos()));
+            stmt.setString(22, requerimiento.getComparativa());
+            stmt.setString(23, requerimiento.getCargoOspim());
+            stmt.setString(24, requerimiento.getCargoEnsalud());
+            setNullableBoolean(stmt, 25, requerimiento.getRecupero());
+            setNullableBoolean(stmt, 26, requerimiento.getCotizado());
+            stmt.setString(27, emptyToNull(requerimiento.getLocalidad()));
+            stmt.setString(28, emptyToNull(requerimiento.getProvincia()));
+            stmt.setString(29, usuario);
 
             stmt.execute();
             return stmt.getInt(1);
@@ -142,5 +167,29 @@ public class EditarRequerimientoCompraServiceImpl {
         } else {
             stmt.setInt(index, value.intValue());
         }
+    }
+
+    private void setNullableDate(CallableStatement stmt, int index, java.util.Date value) throws Exception {
+        if (value == null) {
+            stmt.setNull(index, Types.DATE);
+        } else {
+            stmt.setDate(index, new java.sql.Date(value.getTime()));
+        }
+    }
+
+    private void setNullableBoolean(CallableStatement stmt, int index, Boolean value) throws Exception {
+        if (value == null) {
+            stmt.setNull(index, Types.BOOLEAN);
+        } else {
+            stmt.setBoolean(index, value.booleanValue());
+        }
+    }
+
+    private String emptyToNull(String value) {
+        if (value == null || value.trim().length() == 0) {
+            return null;
+        }
+
+        return value.trim();
     }
 }

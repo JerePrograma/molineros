@@ -2,10 +2,15 @@
 
 <%
 int idReqAdjuntos = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
+
 RequerimientoCompra reqAdjuntos = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
+if (reqAdjuntos == null) {
+    reqAdjuntos = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW);
+}
 if (reqAdjuntos == null && idReqAdjuntos > 0) {
     reqAdjuntos = BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idReqAdjuntos);
 }
+
 List<RequerimientoCompraAdjunto> adjuntos = reqAdjuntos != null && reqAdjuntos.getAdjuntos() != null
         ? reqAdjuntos.getAdjuntos()
         : new ArrayList<RequerimientoCompraAdjunto>();
@@ -34,11 +39,13 @@ List<RequerimientoCompraAdjunto> adjuntos = reqAdjuntos != null && reqAdjuntos.g
         <% } %>
 
         <c:if test="<%= adjuntos.size() == 0 %>">
-            <tr><td colspan="4">Sin adjuntos.</td></tr>
+            <tr>
+                <td colspan="4">Sin adjuntos.</td>
+            </tr>
         </c:if>
     </table>
 
     <div class="portlet-msg-info">
-        Base preparada para adjuntos. La integración real debería hacerse contra Document Library y luego registrar file_entry_id en requerimiento_compra_adjunto.
+        Base preparada para adjuntos. La integracion real debe registrar file_entry_id en requerimiento_compra_adjunto.
     </div>
 </fieldset>

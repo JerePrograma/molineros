@@ -18,10 +18,6 @@ public class AprobacionRequerimientoCompraServiceUtil {
         getInstance().cambiarEstado(idRequerimientoCompra, estadoNuevo, comentario, usuario);
     }
 
-    public static boolean validarCambioEstado(int estadoActual, int estadoNuevo) {
-        return getInstance().validarCambioEstado(estadoActual, estadoNuevo);
-    }
-
     private AprobacionRequerimientoCompraServiceUtil() {
     }
 }
