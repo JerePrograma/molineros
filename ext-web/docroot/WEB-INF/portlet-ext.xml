@@ -567,8 +567,8 @@
 			<role-name>user</role-name>
 		</security-role-ref>
 	</portlet>
-
-    <portlet>
+	
+	    <portlet>
         <portlet-name>COMPRA_1</portlet-name>
         <display-name>Compras</display-name>
         <portlet-class>com.liferay.portlet.StrutsPortlet</portlet-class>
