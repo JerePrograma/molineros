@@ -46,7 +46,7 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
         <fieldset class="block-labels">
             <legend><%= esNuevo ? "Nuevo requerimiento de compra" : "Editar requerimiento de compra" %></legend>
 
-            <table class="lfr-table">
+            <table class="lfr-table" width="100%">
                 <tr>
                     <td><label>Numero:</label></td>
                     <td>
@@ -61,15 +61,23 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
                 </tr>
 
                 <tr>
+                    <td colspan="4">&nbsp;</td>
+                </tr>
+
+                <tr>
                     <td><label>Solicitante:</label></td>
                     <td>
-                        <input type="text" name="<portlet:namespace />solicitante_usr" id="<portlet:namespace />solicitante_usr" value="<%= solicitanteDefault %>" maxlength="75" />
+                        <input type="text" name="<portlet:namespace />solicitante_usr" id="<portlet:namespace />solicitante_usr" value="<%= solicitanteDefault %>" size="30" maxlength="75" />
                     </td>
 
                     <td><label>Entidad:</label></td>
                     <td>
-                        <input type="text" name="<portlet:namespace />entidad" id="<portlet:namespace />entidad" value="<%= entidadDefault %>" maxlength="75" />
+                        <input type="text" name="<portlet:namespace />entidad" id="<portlet:namespace />entidad" value="<%= entidadDefault %>" size="30" maxlength="75" />
                     </td>
+                </tr>
+
+                <tr>
+                    <td colspan="4">&nbsp;</td>
                 </tr>
 
                 <tr>
@@ -94,6 +102,10 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
                 </tr>
 
                 <tr>
+                    <td colspan="4">&nbsp;</td>
+                </tr>
+
+                <tr>
                     <td><label>Prioridad:</label></td>
                     <td>
                         <select name="<portlet:namespace />prioridad" id="<portlet:namespace />prioridad">
@@ -115,7 +127,7 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
         <fieldset class="block-labels">
             <legend>Afiliado</legend>
 
-            <table class="lfr-table">
+            <table class="lfr-table" width="100%">
                 <tr>
                     <td><label>Afiliado:</label></td>
                     <td>
@@ -126,6 +138,10 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
                     <td>
                         <input type="text" name="<portlet:namespace />dni" id="<portlet:namespace />dni" value="<%= req.getDniString() %>" size="14" maxlength="20" />
                     </td>
+                </tr>
+
+                <tr>
+                    <td colspan="4">&nbsp;</td>
                 </tr>
 
                 <tr>
@@ -145,7 +161,7 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
         <fieldset class="block-labels">
             <legend>Solicitud</legend>
 
-            <table class="lfr-table">
+            <table class="lfr-table" width="100%">
                 <tr>
                     <td><label>Fecha solicitud:</label></td>
                     <td>
@@ -156,6 +172,10 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
                     <td>
                         <input type="text" name="<portlet:namespace />fecha_necesidad" id="<portlet:namespace />fecha_necesidad" value="<%= req.getFechaNecesidadAsString() %>" size="10" maxlength="10" /> dd/MM/yyyy
                     </td>
+                </tr>
+
+                <tr>
+                    <td colspan="4">&nbsp;</td>
                 </tr>
 
                 <tr>
@@ -184,12 +204,16 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
         <fieldset class="block-labels">
             <legend>Cotizacion y presupuestos</legend>
 
-            <table class="lfr-table">
+            <table class="lfr-table" width="100%">
                 <tr>
                     <td><label>Pedidos presupuestos:</label></td>
                     <td colspan="3">
                         <input type="text" name="<portlet:namespace />pedidos_presupuestos" id="<portlet:namespace />pedidos_presupuestos" value="<%= req.getPedidosPresupuestos() != null ? req.getPedidosPresupuestos() : "" %>" size="90" maxlength="255" />
                     </td>
+                </tr>
+
+                <tr>
+                    <td colspan="4">&nbsp;</td>
                 </tr>
 
                 <tr>
@@ -220,7 +244,7 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
         <fieldset class="block-labels">
             <legend>RP y Orden de Compra</legend>
 
-            <table class="lfr-table">
+            <table class="lfr-table" width="100%">
                 <tr>
                     <td><label>RP:</label></td>
                     <td>
@@ -232,6 +256,10 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
                         <input type="text" name="<portlet:namespace />orden_compra_numero" id="<portlet:namespace />orden_compra_numero" value="<%= req.getOrdenCompraNumeroString() %>" size="12" maxlength="10" />
                         <input type="hidden" name="<portlet:namespace />id_orden_compra" id="<portlet:namespace />id_orden_compra" value="<%= req.getOrdenCompraNumeroString() %>" />
                     </td>
+                </tr>
+
+                <tr>
+                    <td colspan="4">&nbsp;</td>
                 </tr>
 
                 <tr>
@@ -251,7 +279,7 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
         <fieldset class="block-labels">
             <legend>Cargos y recupero</legend>
 
-            <table class="lfr-table">
+            <table class="lfr-table" width="100%">
                 <tr>
                     <td><label>Cargo OSPIM:</label></td>
                     <td>
@@ -262,6 +290,10 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
                     <td>
                         <input type="text" name="<portlet:namespace />cargo_ensalud" id="<portlet:namespace />cargo_ensalud" value="<%= req.getCargoEnsalud() != null ? req.getCargoEnsalud() : "" %>" size="40" maxlength="255" />
                     </td>
+                </tr>
+
+                <tr>
+                    <td colspan="4">&nbsp;</td>
                 </tr>
 
                 <tr>
@@ -280,16 +312,16 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
             </table>
         </fieldset>
 
-        <table>
+        <table class="lfr-table">
             <tr>
                 <td>
                     <input type="button" value="Guardar" onclick="<portlet:namespace />guardar();" />
 
                     <c:if test="<%= !esNuevo %>">
-                        <input type="button" value="Ver" onclick="window.location.href='<%= verURL.toString() %>';" />
+                        &nbsp;&nbsp;<input type="button" value="Ver" onclick="window.location.href='<%= verURL.toString() %>';" />
                     </c:if>
 
-                    <input type="button" value="Volver" onclick="window.location.href='<%= volverURL.toString() %>';" />
+                    &nbsp;&nbsp;<input type="button" value="Volver" onclick="window.location.href='<%= volverURL.toString() %>';" />
                 </td>
             </tr>
         </table>

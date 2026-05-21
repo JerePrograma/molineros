@@ -40,13 +40,17 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
 <fieldset class="block-labels">
     <legend>Requerimiento de compra</legend>
 
-    <table class="lfr-table">
+    <table class="lfr-table" width="100%">
         <tr>
             <td><label>Numero:</label></td>
             <td><%= req.getNumeroString() %></td>
 
             <td><label>Estado:</label></td>
             <td><strong><%= req.getEstadoDescripcion() %></strong></td>
+        </tr>
+
+        <tr>
+            <td colspan="4">&nbsp;</td>
         </tr>
 
         <tr>
@@ -58,11 +62,19 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
         </tr>
 
         <tr>
+            <td colspan="4">&nbsp;</td>
+        </tr>
+
+        <tr>
             <td><label>Solicitante:</label></td>
             <td><%= req.getSolicitanteUsr() != null ? req.getSolicitanteUsr() : "" %></td>
 
             <td><label>Entidad:</label></td>
             <td><%= req.getEntidad() != null ? req.getEntidad() : "" %></td>
+        </tr>
+
+        <tr>
+            <td colspan="4">&nbsp;</td>
         </tr>
 
         <tr>
@@ -78,13 +90,17 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
 <fieldset class="block-labels">
     <legend>Afiliado</legend>
 
-    <table class="lfr-table">
+    <table class="lfr-table" width="100%">
         <tr>
             <td><label>Afiliado:</label></td>
             <td><%= req.getAfiliado() != null ? req.getAfiliado() : "" %></td>
 
             <td><label>DNI:</label></td>
             <td><%= req.getDniString() %></td>
+        </tr>
+
+        <tr>
+            <td colspan="4">&nbsp;</td>
         </tr>
 
         <tr>
@@ -100,13 +116,17 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
 <fieldset class="block-labels">
     <legend>Solicitud</legend>
 
-    <table class="lfr-table">
+    <table class="lfr-table" width="100%">
         <tr>
             <td><label>Fecha necesidad:</label></td>
             <td><%= req.getFechaNecesidadAsString() %></td>
 
             <td><label>Importe estimado:</label></td>
             <td><%= req.getImporteEstimadoTotalString() %></td>
+        </tr>
+
+        <tr>
+            <td colspan="4">&nbsp;</td>
         </tr>
 
         <tr>
@@ -129,10 +149,14 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
 <fieldset class="block-labels">
     <legend>Cotizacion y presupuestos</legend>
 
-    <table class="lfr-table">
+    <table class="lfr-table" width="100%">
         <tr>
             <td><label>Pedidos presupuestos:</label></td>
             <td colspan="3"><%= req.getPedidosPresupuestos() != null ? req.getPedidosPresupuestos() : "" %></td>
+        </tr>
+
+        <tr>
+            <td colspan="4">&nbsp;</td>
         </tr>
 
         <tr>
@@ -153,13 +177,17 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
 <fieldset class="block-labels">
     <legend>RP y Orden de Compra</legend>
 
-    <table class="lfr-table">
+    <table class="lfr-table" width="100%">
         <tr>
             <td><label>RP:</label></td>
             <td><%= req.getRpNumeroString() %></td>
 
             <td><label>Orden compra:</label></td>
             <td><%= req.getOrdenCompraNumeroString() %></td>
+        </tr>
+
+        <tr>
+            <td colspan="4">&nbsp;</td>
         </tr>
 
         <tr>
@@ -175,13 +203,17 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
 <fieldset class="block-labels">
     <legend>Cargos y recupero</legend>
 
-    <table class="lfr-table">
+    <table class="lfr-table" width="100%">
         <tr>
             <td><label>Cargo OSPIM:</label></td>
             <td><%= req.getCargoOspim() != null ? req.getCargoOspim() : "" %></td>
 
             <td><label>Cargo Ensalud:</label></td>
             <td><%= req.getCargoEnsalud() != null ? req.getCargoEnsalud() : "" %></td>
+        </tr>
+
+        <tr>
+            <td colspan="4">&nbsp;</td>
         </tr>
 
         <tr>
@@ -204,7 +236,7 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
     <fieldset class="block-labels">
         <legend>Cambio de estado</legend>
 
-        <table class="lfr-table">
+        <table class="lfr-table" width="100%">
             <tr>
                 <td><label>Estado nuevo:</label></td>
                 <td>
@@ -249,11 +281,12 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
     </fieldset>
 </form>
 
-<table>
+<table class="lfr-table">
     <tr>
         <td>
             <c:if test="<%= puedeABM && req.isEditable() %>">
                 <input type="button" value="Editar" onclick="window.location.href='<%= editarURL.toString() %>';" />
+                &nbsp;&nbsp;
             </c:if>
 
             <input type="button" value="Volver" onclick="window.location.href='<%= volverURL.toString() %>';" />

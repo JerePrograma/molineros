@@ -28,7 +28,7 @@ try {
 <fieldset class="block-labels">
     <legend>Filtro de busqueda de requerimientos de compras</legend>
 
-    <table class="lfr-table">
+    <table class="lfr-table" width="100%">
         <tr>
             <td><label>Numero:</label></td>
             <td>
@@ -44,6 +44,10 @@ try {
             <td>
                 <input id="<portlet:namespace />dni" name="<portlet:namespace />dni" size="12" maxlength="20" type="text" />
             </td>
+        </tr>
+
+        <tr>
+            <td colspan="6">&nbsp;</td>
         </tr>
 
         <tr>
@@ -102,6 +106,10 @@ try {
         </tr>
 
         <tr>
+            <td colspan="6">&nbsp;</td>
+        </tr>
+
+        <tr>
             <td><label>Sector:</label></td>
             <td>
                 <select id="<portlet:namespace />sector_id" name="<portlet:namespace />sector_id">
@@ -124,6 +132,10 @@ try {
         </tr>
 
         <tr>
+            <td colspan="6">&nbsp;</td>
+        </tr>
+
+        <tr>
             <td><label>Detalle:</label></td>
             <td>
                 <input id="<portlet:namespace />detalle_requerimiento" name="<portlet:namespace />detalle_requerimiento" size="28" maxlength="255" type="text" />
@@ -138,6 +150,10 @@ try {
             <td>
                 <input id="<portlet:namespace />orden_compra_numero" name="<portlet:namespace />orden_compra_numero" size="10" maxlength="10" type="text" />
             </td>
+        </tr>
+
+        <tr>
+            <td colspan="6">&nbsp;</td>
         </tr>
 
         <tr>
@@ -169,6 +185,10 @@ try {
                     <option value="<%= WebKeysCompras.PRIORIDAD_URGENTE %>">Urgente</option>
                 </select>
             </td>
+        </tr>
+
+        <tr>
+            <td colspan="6">&nbsp;</td>
         </tr>
 
         <tr>
@@ -215,6 +235,10 @@ try {
         </tr>
 
         <tr>
+            <td colspan="6">&nbsp;</td>
+        </tr>
+
+        <tr>
             <td><label>Localidad:</label></td>
             <td>
                 <input id="<portlet:namespace />localidad" name="<portlet:namespace />localidad" size="22" maxlength="120" type="text" />
@@ -230,11 +254,15 @@ try {
         </tr>
 
         <tr>
-            <td>
-                <input id="<portlet:namespace />buscar" value="Buscar" type="button" />
-            </td>
-            <td colspan="5">
+            <td colspan="6">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td colspan="6" align="center">
+                <input id="<portlet:namespace />buscar" value="Buscar" title="Buscar" type="button" />
+
                 <c:if test="<%= puedeABM %>">
+                    &nbsp;&nbsp;
                     <input type="button" value="Nuevo requerimiento" onclick="<portlet:namespace />altaRequerimiento();" />
                 </c:if>
             </td>
@@ -244,10 +272,12 @@ try {
 
 <fieldset class="block-labels">
     <div align="center" id="<portlet:namespace />buscando" style="display:none;">
-        <table>
+        <table style="align:center;">
             <tr>
                 <td>Buscando</td>
-                <td><img alt="Buscando" src="<%= themeDisplay.getPathThemeImages() %>/progress_bar/loading_animation.gif" /></td>
+                <td align="center">
+                    <img alt="Buscando" src="<%= themeDisplay.getPathThemeImages() %>/progress_bar/loading_animation.gif" />
+                </td>
             </tr>
         </table>
     </div>
@@ -257,47 +287,29 @@ try {
 
 <script type="text/javascript">
     function <portlet:namespace />appendParam(url, name, value) {
-        return url + "&" + name + "=" + encodeURIComponent(value);
+        return url + "&" + name + "=" + encodeURIComponent(value == null ? "" : value);
+    }
+
+    function <portlet:namespace />fieldValue(name) {
+        return jQuery("#<portlet:namespace />" + name).val();
     }
 
     function <portlet:namespace />buildUrl() {
         var url = "<portlet:renderURL windowState='<%= LiferayWindowState.EXCLUSIVE.toString() %>' />&struts_action=/compras/buscar_requerimientos";
+        var params = [
+            "numero", "afiliado", "dni",
+            "fechaDesdeDia", "fechaDesdeMes", "fechaDesdeAnio",
+            "fechaHastaDia", "fechaHastaMes", "fechaHastaAnio",
+            "sector_id", "solicitante_usr", "entidad", "prioridad", "estado",
+            "detalle_requerimiento", "rp_numero", "orden_compra_numero", "cotizado", "recupero",
+            "fechaPedidoCotizacionDesdeDia", "fechaPedidoCotizacionDesdeMes", "fechaPedidoCotizacionDesdeAnio",
+            "fechaPedidoCotizacionHastaDia", "fechaPedidoCotizacionHastaMes", "fechaPedidoCotizacionHastaAnio",
+            "localidad", "provincia", "texto"
+        ];
 
-        url = <portlet:namespace />appendParam(url, "numero", jQuery("#<portlet:namespace />numero").val());
-        url = <portlet:namespace />appendParam(url, "afiliado", jQuery("#<portlet:namespace />afiliado").val());
-        url = <portlet:namespace />appendParam(url, "dni", jQuery("#<portlet:namespace />dni").val());
-
-        url = <portlet:namespace />appendParam(url, "fechaDesdeDia", jQuery("#<portlet:namespace />fechaDesdeDia").val());
-        url = <portlet:namespace />appendParam(url, "fechaDesdeMes", jQuery("#<portlet:namespace />fechaDesdeMes").val());
-        url = <portlet:namespace />appendParam(url, "fechaDesdeAnio", jQuery("#<portlet:namespace />fechaDesdeAnio").val());
-
-        url = <portlet:namespace />appendParam(url, "fechaHastaDia", jQuery("#<portlet:namespace />fechaHastaDia").val());
-        url = <portlet:namespace />appendParam(url, "fechaHastaMes", jQuery("#<portlet:namespace />fechaHastaMes").val());
-        url = <portlet:namespace />appendParam(url, "fechaHastaAnio", jQuery("#<portlet:namespace />fechaHastaAnio").val());
-
-        url = <portlet:namespace />appendParam(url, "sector_id", jQuery("#<portlet:namespace />sector_id").val());
-        url = <portlet:namespace />appendParam(url, "solicitante_usr", jQuery("#<portlet:namespace />solicitante_usr").val());
-        url = <portlet:namespace />appendParam(url, "entidad", jQuery("#<portlet:namespace />entidad").val());
-        url = <portlet:namespace />appendParam(url, "prioridad", jQuery("#<portlet:namespace />prioridad").val());
-        url = <portlet:namespace />appendParam(url, "estado", jQuery("#<portlet:namespace />estado").val());
-
-        url = <portlet:namespace />appendParam(url, "detalle_requerimiento", jQuery("#<portlet:namespace />detalle_requerimiento").val());
-        url = <portlet:namespace />appendParam(url, "rp_numero", jQuery("#<portlet:namespace />rp_numero").val());
-        url = <portlet:namespace />appendParam(url, "orden_compra_numero", jQuery("#<portlet:namespace />orden_compra_numero").val());
-        url = <portlet:namespace />appendParam(url, "cotizado", jQuery("#<portlet:namespace />cotizado").val());
-        url = <portlet:namespace />appendParam(url, "recupero", jQuery("#<portlet:namespace />recupero").val());
-
-        url = <portlet:namespace />appendParam(url, "fechaPedidoCotizacionDesdeDia", jQuery("#<portlet:namespace />fechaPedidoCotizacionDesdeDia").val());
-        url = <portlet:namespace />appendParam(url, "fechaPedidoCotizacionDesdeMes", jQuery("#<portlet:namespace />fechaPedidoCotizacionDesdeMes").val());
-        url = <portlet:namespace />appendParam(url, "fechaPedidoCotizacionDesdeAnio", jQuery("#<portlet:namespace />fechaPedidoCotizacionDesdeAnio").val());
-
-        url = <portlet:namespace />appendParam(url, "fechaPedidoCotizacionHastaDia", jQuery("#<portlet:namespace />fechaPedidoCotizacionHastaDia").val());
-        url = <portlet:namespace />appendParam(url, "fechaPedidoCotizacionHastaMes", jQuery("#<portlet:namespace />fechaPedidoCotizacionHastaMes").val());
-        url = <portlet:namespace />appendParam(url, "fechaPedidoCotizacionHastaAnio", jQuery("#<portlet:namespace />fechaPedidoCotizacionHastaAnio").val());
-
-        url = <portlet:namespace />appendParam(url, "localidad", jQuery("#<portlet:namespace />localidad").val());
-        url = <portlet:namespace />appendParam(url, "provincia", jQuery("#<portlet:namespace />provincia").val());
-        url = <portlet:namespace />appendParam(url, "texto", jQuery("#<portlet:namespace />texto").val());
+        for (var i = 0; i < params.length; i++) {
+            url = <portlet:namespace />appendParam(url, params[i], <portlet:namespace />fieldValue(params[i]));
+        }
 
         return url;
     }

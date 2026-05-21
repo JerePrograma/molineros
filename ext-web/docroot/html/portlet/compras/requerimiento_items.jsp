@@ -34,48 +34,51 @@ itemActionURL.setParameter("struts_action", "/compras/editar_requerimiento");
         Los items son complementarios. El detalle principal del requerimiento se carga en la cabecera.
     </div>
 
-    <table class="lfr-table">
-        <tr class="portlet-section-header results-header">
-            <th>Descripcion</th>
-            <th>Cantidad</th>
-            <th>Unidad</th>
-            <th>Importe estimado</th>
-            <th>Subtotal</th>
-            <th>Observaciones</th>
-            <c:if test="<%= puedeABMItems %>">
-                <th>Acciones</th>
-            </c:if>
-        </tr>
-
-        <% for (int i = 0; i < items.size(); i++) {
-            RequerimientoCompraItem item = items.get(i);
-        %>
-            <tr class="<%= (i % 2 == 0) ? "portlet-section-body results-row" : "portlet-section-alternate results-row alt" %>">
-                <td><%= item.getDescripcion() != null ? item.getDescripcion() : "" %></td>
-                <td><%= item.getCantidadString() %></td>
-                <td><%= item.getUnidadMedida() != null ? item.getUnidadMedida() : "" %></td>
-                <td><%= item.getImporteEstimadoString() %></td>
-                <td><%= item.getSubtotalEstimadoString() %></td>
-                <td><%= item.getObservaciones() != null ? item.getObservaciones() : "" %></td>
-
+    <table class="lfr-table taglib-search-iterator" width="100%">
+        <thead>
+            <tr class="portlet-section-header results-header">
+                <th>Descripcion</th>
+                <th>Cantidad</th>
+                <th>Unidad</th>
+                <th>Importe estimado</th>
+                <th>Subtotal</th>
+                <th>Observaciones</th>
                 <c:if test="<%= puedeABMItems %>">
-                    <td>
-                        <form action="<%= itemActionURL.toString() %>" method="post" name="<portlet:namespace />deleteItemFm<%= item.getIdItem() %>">
-                            <input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>" value="deleteItem" />
-                            <input type="hidden" name="<portlet:namespace />id_requerimiento_compra" value="<%= reqItems.getIdRequerimientoCompra() %>" />
-                            <input type="hidden" name="<portlet:namespace />id_item" value="<%= item.getIdItem() %>" />
-                            <input type="button" value="Borrar" onclick="if(confirm('Confirma borrar el item?')) submitForm(document.<portlet:namespace />deleteItemFm<%= item.getIdItem() %>);" />
-                        </form>
-                    </td>
+                    <th>Acciones</th>
                 </c:if>
             </tr>
-        <% } %>
+        </thead>
+        <tbody>
+            <% for (int i = 0; i < items.size(); i++) {
+                RequerimientoCompraItem item = items.get(i);
+            %>
+                <tr class="<%= (i % 2 == 0) ? "portlet-section-body results-row" : "portlet-section-alternate results-row alt" %>">
+                    <td><%= item.getDescripcion() != null ? item.getDescripcion() : "" %></td>
+                    <td><%= item.getCantidadString() %></td>
+                    <td><%= item.getUnidadMedida() != null ? item.getUnidadMedida() : "" %></td>
+                    <td><%= item.getImporteEstimadoString() %></td>
+                    <td><%= item.getSubtotalEstimadoString() %></td>
+                    <td><%= item.getObservaciones() != null ? item.getObservaciones() : "" %></td>
 
-        <c:if test="<%= items.size() == 0 %>">
-            <tr>
-                <td colspan="<%= puedeABMItems ? "7" : "6" %>">No hay items cargados.</td>
-            </tr>
-        </c:if>
+                    <c:if test="<%= puedeABMItems %>">
+                        <td>
+                            <form action="<%= itemActionURL.toString() %>" method="post" name="<portlet:namespace />deleteItemFm<%= item.getIdItem() %>">
+                                <input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>" value="deleteItem" />
+                                <input type="hidden" name="<portlet:namespace />id_requerimiento_compra" value="<%= reqItems.getIdRequerimientoCompra() %>" />
+                                <input type="hidden" name="<portlet:namespace />id_item" value="<%= item.getIdItem() %>" />
+                                <input type="button" value="Borrar" onclick="if(confirm('Confirma borrar el item?')) submitForm(document.<portlet:namespace />deleteItemFm<%= item.getIdItem() %>);" />
+                            </form>
+                        </td>
+                    </c:if>
+                </tr>
+            <% } %>
+
+            <c:if test="<%= items.size() == 0 %>">
+                <tr>
+                    <td colspan="<%= puedeABMItems ? "7" : "6" %>">No hay items cargados.</td>
+                </tr>
+            </c:if>
+        </tbody>
     </table>
 
     <c:if test="<%= puedeABMItems %>">
@@ -83,7 +86,7 @@ itemActionURL.setParameter("struts_action", "/compras/editar_requerimiento");
             <input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>" value="addItem" />
             <input type="hidden" name="<portlet:namespace />id_requerimiento_compra" value="<%= reqItems.getIdRequerimientoCompra() %>" />
 
-            <table class="lfr-table">
+            <table class="lfr-table" width="100%">
                 <tr>
                     <td><label>Descripcion:</label></td>
                     <td><input type="text" name="<portlet:namespace />item_descripcion" id="<portlet:namespace />item_descripcion" size="50" maxlength="255" /></td>
@@ -96,6 +99,10 @@ itemActionURL.setParameter("struts_action", "/compras/editar_requerimiento");
                 </tr>
 
                 <tr>
+                    <td colspan="6">&nbsp;</td>
+                </tr>
+
+                <tr>
                     <td><label>Importe estimado:</label></td>
                     <td><input type="text" name="<portlet:namespace />item_importe_estimado" id="<portlet:namespace />item_importe_estimado" size="12" value="0" /></td>
 
@@ -104,7 +111,11 @@ itemActionURL.setParameter("struts_action", "/compras/editar_requerimiento");
                 </tr>
 
                 <tr>
-                    <td colspan="6">
+                    <td colspan="6">&nbsp;</td>
+                </tr>
+
+                <tr>
+                    <td colspan="6" align="center">
                         <input type="button" value="Agregar item" onclick="<portlet:namespace />agregarItem();" />
                     </td>
                 </tr>

@@ -8,7 +8,7 @@ boolean puedeVer = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW
 String tabs1 = ParamUtil.getString(request, "tabs1", "requerimientos");
 
 PortletURL portletURL = renderResponse.createRenderURL();
-portletURL.setWindowState(LiferayWindowState.MAXIMIZED);
+portletURL.setWindowState(WindowState.MAXIMIZED);
 portletURL.setParameter("struts_action", "/compras/view");
 portletURL.setParameter("tabs1", tabs1);
 %>
@@ -18,7 +18,7 @@ portletURL.setParameter("tabs1", tabs1);
 </c:if>
 
 <c:if test="<%= puedeVer %>">
-    <form action="<%= portletURL.toString() %>" method="get" name="<portlet:namespace />fm">
+    <form action="<%= portletURL.toString() %>" method="get" name="<portlet:namespace />fm" onSubmit="submitForm(this); return false;">
         <liferay-portlet:renderURLParams varImpl="portletURL" />
 
         <liferay-ui-custom:tabs
