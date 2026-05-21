@@ -31,6 +31,7 @@ actionURL.setParameter("struts_action", "/compras/editar_requerimiento");
 
 String solicitanteDefault = req.getSolicitanteUsr() != null ? req.getSolicitanteUsr() : (user != null ? user.getScreenName() : "");
 String entidadDefault = req.getEntidad() != null ? req.getEntidad() : "O.S.P.I.M.";
+String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId().intValue()) : "";
 %>
 
 <c:if test="<%= !puedeABM %>">
@@ -76,8 +77,12 @@ String entidadDefault = req.getEntidad() != null ? req.getEntidad() : "O.S.P.I.M
                     <td>
                         <select name="<portlet:namespace />sector_id" id="<portlet:namespace />sector_id">
                             <option value="0">Seleccione</option>
-                            <% for (ClaseBase sector : sectores) { %>
-                                <option value="<%= sector.getId() %>" <%= req.getSectorId() != null && req.getSectorId().intValue() == sector.getId() ? "selected" : "" %>><%= sector.getDescripcion() %></option>
+                            <% for (ClaseBase sector : sectores) {
+                                String sectorId = sector.getId() != null ? sector.getId().trim() : "";
+                                String sectorDescripcion = sector.getDescripcion() != null ? sector.getDescripcion() : "";
+                                String selected = reqSectorId.equals(sectorId) ? "selected=\"selected\"" : "";
+                            %>
+                                <option value="<%= sectorId %>" <%= selected %>><%= sectorDescripcion %></option>
                             <% } %>
                         </select>
                     </td>
@@ -92,10 +97,10 @@ String entidadDefault = req.getEntidad() != null ? req.getEntidad() : "O.S.P.I.M
                     <td><label>Prioridad:</label></td>
                     <td>
                         <select name="<portlet:namespace />prioridad" id="<portlet:namespace />prioridad">
-                            <option value="<%= WebKeysCompras.PRIORIDAD_BAJA %>" <%= req.getPrioridad() == WebKeysCompras.PRIORIDAD_BAJA ? "selected" : "" %>>Baja</option>
-                            <option value="<%= WebKeysCompras.PRIORIDAD_MEDIA %>" <%= req.getPrioridad() == WebKeysCompras.PRIORIDAD_MEDIA ? "selected" : "" %>>Media</option>
-                            <option value="<%= WebKeysCompras.PRIORIDAD_ALTA %>" <%= req.getPrioridad() == WebKeysCompras.PRIORIDAD_ALTA ? "selected" : "" %>>Alta</option>
-                            <option value="<%= WebKeysCompras.PRIORIDAD_URGENTE %>" <%= req.getPrioridad() == WebKeysCompras.PRIORIDAD_URGENTE ? "selected" : "" %>>Urgente</option>
+                            <option value="<%= WebKeysCompras.PRIORIDAD_BAJA %>" <%= req.getPrioridad() == WebKeysCompras.PRIORIDAD_BAJA ? "selected=\"selected\"" : "" %>>Baja</option>
+                            <option value="<%= WebKeysCompras.PRIORIDAD_MEDIA %>" <%= req.getPrioridad() == WebKeysCompras.PRIORIDAD_MEDIA ? "selected=\"selected\"" : "" %>>Media</option>
+                            <option value="<%= WebKeysCompras.PRIORIDAD_ALTA %>" <%= req.getPrioridad() == WebKeysCompras.PRIORIDAD_ALTA ? "selected=\"selected\"" : "" %>>Alta</option>
+                            <option value="<%= WebKeysCompras.PRIORIDAD_URGENTE %>" <%= req.getPrioridad() == WebKeysCompras.PRIORIDAD_URGENTE ? "selected=\"selected\"" : "" %>>Urgente</option>
                         </select>
                     </td>
 
@@ -196,9 +201,9 @@ String entidadDefault = req.getEntidad() != null ? req.getEntidad() : "O.S.P.I.M
                     <td><label>Cotizado:</label></td>
                     <td>
                         <select name="<portlet:namespace />cotizado" id="<portlet:namespace />cotizado">
-                            <option value="0" <%= req.getCotizado() == null ? "selected" : "" %>>Sin informar</option>
-                            <option value="1" <%= Boolean.TRUE.equals(req.getCotizado()) ? "selected" : "" %>>SI</option>
-                            <option value="2" <%= Boolean.FALSE.equals(req.getCotizado()) ? "selected" : "" %>>NO</option>
+                            <option value="0" <%= req.getCotizado() == null ? "selected=\"selected\"" : "" %>>Sin informar</option>
+                            <option value="1" <%= Boolean.TRUE.equals(req.getCotizado()) ? "selected=\"selected\"" : "" %>>SI</option>
+                            <option value="2" <%= Boolean.FALSE.equals(req.getCotizado()) ? "selected=\"selected\"" : "" %>>NO</option>
                         </select>
                     </td>
                 </tr>
@@ -263,9 +268,9 @@ String entidadDefault = req.getEntidad() != null ? req.getEntidad() : "O.S.P.I.M
                     <td><label>Recupero:</label></td>
                     <td>
                         <select name="<portlet:namespace />recupero" id="<portlet:namespace />recupero">
-                            <option value="0" <%= req.getRecupero() == null ? "selected" : "" %>>Sin informar</option>
-                            <option value="1" <%= Boolean.TRUE.equals(req.getRecupero()) ? "selected" : "" %>>SI</option>
-                            <option value="2" <%= Boolean.FALSE.equals(req.getRecupero()) ? "selected" : "" %>>NO</option>
+                            <option value="0" <%= req.getRecupero() == null ? "selected=\"selected\"" : "" %>>Sin informar</option>
+                            <option value="1" <%= Boolean.TRUE.equals(req.getRecupero()) ? "selected=\"selected\"" : "" %>>SI</option>
+                            <option value="2" <%= Boolean.FALSE.equals(req.getRecupero()) ? "selected=\"selected\"" : "" %>>NO</option>
                         </select>
                     </td>
 
