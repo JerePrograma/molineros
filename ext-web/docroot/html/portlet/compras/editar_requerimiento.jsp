@@ -51,14 +51,6 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
 
             <table class="lfr-table" width="100%">
                 <tr>
-                    <td><label>Número:</label></td>
-                    <td>
-                        <input type="text" name="<portlet:namespace />numero" id="<portlet:namespace />numero" value="<%= HtmlUtil.escape(req.getNumeroString()) %>" size="10" maxlength="10" />
-                        <c:if test="<%= esNuevo %>">
-                            <span class="portlet-msg-info">Si queda vacío, se genera automáticamente.</span>
-                        </c:if>
-                    </td>
-
                     <td><label>Estado:</label></td>
                     <td><strong><%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %></strong></td>
                 </tr>
@@ -106,23 +98,7 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
             </table>
         </fieldset>
 
-        <fieldset class="block-labels">
-            <legend>Afiliado</legend>
-
-            <table class="lfr-table" width="100%">
-                <tr>
-                    <td><label>CUIL titular:</label></td>
-                    <td>
-                        <input type="text" name="<portlet:namespace />afiliado_cuil_titular" id="<portlet:namespace />afiliado_cuil_titular" value="<%= HtmlUtil.escape(req.getAfiliadoCuilTitularVisible()) %>" size="18" maxlength="20" />
-                    </td>
-
-                    <td><label>Integrante:</label></td>
-                    <td>
-                        <input type="text" name="<portlet:namespace />afiliado_inte" id="<portlet:namespace />afiliado_inte" value="<%= HtmlUtil.escape(req.getAfiliadoInteString()) %>" size="8" maxlength="8" />
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
+        <liferay-util:include page="/html/portlet/compras/busqueda_afiliado_requerimiento.jsp" />
 
         <fieldset class="block-labels">
             <legend>Solicitud</legend>
