@@ -3,13 +3,8 @@
 <%
 int idRequerimientoCompra = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
 
-Object idAttr = renderRequest.getAttribute(WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION);
-if (idRequerimientoCompra == 0 && idAttr instanceof Integer) {
-    idRequerimientoCompra = ((Integer) idAttr).intValue();
-}
-
-RequerimientoCompra req = null;
-if (idRequerimientoCompra > 0) {
+RequerimientoCompra req = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW);
+if (req == null && idRequerimientoCompra > 0) {
     req = BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimientoCompra);
 }
 if (req == null) {
@@ -17,11 +12,9 @@ if (req == null) {
 }
 
 renderRequest.setAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW, req);
-renderRequest.setAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION, req);
 
 boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
 boolean puedeAnular = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS) || puedeABM;
-boolean puedeAprobar = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_APROBAR_COMPRAS);
 
 PortletURL volverURL = renderResponse.createRenderURL();
 volverURL.setWindowState(WindowState.MAXIMIZED);
@@ -42,11 +35,11 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
 
     <table class="lfr-table" width="100%">
         <tr>
-            <td><label>Numero:</label></td>
-            <td><%= req.getNumeroString() %></td>
+            <td><label>Número:</label></td>
+            <td><%= HtmlUtil.escape(req.getNumeroVisible()) %></td>
 
             <td><label>Estado:</label></td>
-            <td><strong><%= req.getEstadoDescripcion() %></strong></td>
+            <td><strong><%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %></strong></td>
         </tr>
 
         <tr>
@@ -55,22 +48,10 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
 
         <tr>
             <td><label>Fecha solicitud:</label></td>
-            <td><%= req.getFechaSolicitudAsString() %></td>
+            <td><%= HtmlUtil.escape(req.getFechaSolicitudAsString()) %></td>
 
             <td><label>Fecha alta:</label></td>
-            <td><%= req.getFechaAltaAsString() %></td>
-        </tr>
-
-        <tr>
-            <td colspan="4">&nbsp;</td>
-        </tr>
-
-        <tr>
-            <td><label>Solicitante:</label></td>
-            <td><%= req.getSolicitanteUsr() != null ? req.getSolicitanteUsr() : "" %></td>
-
-            <td><label>Entidad:</label></td>
-            <td><%= req.getEntidad() != null ? req.getEntidad() : "" %></td>
+            <td><%= HtmlUtil.escape(req.getFechaAltaAsString()) %></td>
         </tr>
 
         <tr>
@@ -79,10 +60,22 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
 
         <tr>
             <td><label>Sector:</label></td>
-            <td><%= req.getSectorDescripcion() != null ? req.getSectorDescripcion() : "" %></td>
+            <td><%= HtmlUtil.escape(req.getSectorDescripcionVisible()) %></td>
 
-            <td><label>Prioridad:</label></td>
-            <td><%= req.getPrioridadDescripcion() %></td>
+            <td><label>Requiere afiliado:</label></td>
+            <td><%= HtmlUtil.escape(req.getRequiereAfiliadoDescripcion()) %></td>
+        </tr>
+
+        <tr>
+            <td colspan="4">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td><label>Solicitante:</label></td>
+            <td><%= HtmlUtil.escape(req.getSolicitanteVisible()) %></td>
+
+            <td><label>Usuario:</label></td>
+            <td><%= HtmlUtil.escape(req.getSolicitanteUsr() != null ? req.getSolicitanteUsr() : "") %></td>
         </tr>
     </table>
 </fieldset>
@@ -92,23 +85,11 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
 
     <table class="lfr-table" width="100%">
         <tr>
-            <td><label>Afiliado:</label></td>
-            <td><%= req.getAfiliado() != null ? req.getAfiliado() : "" %></td>
+            <td><label>CUIL titular:</label></td>
+            <td><%= HtmlUtil.escape(req.getAfiliadoCuilTitularVisible()) %></td>
 
-            <td><label>DNI:</label></td>
-            <td><%= req.getDniString() %></td>
-        </tr>
-
-        <tr>
-            <td colspan="4">&nbsp;</td>
-        </tr>
-
-        <tr>
-            <td><label>Localidad:</label></td>
-            <td><%= req.getLocalidad() != null ? req.getLocalidad() : "" %></td>
-
-            <td><label>Provincia:</label></td>
-            <td><%= req.getProvincia() != null ? req.getProvincia() : "" %></td>
+            <td><label>Integrante:</label></td>
+            <td><%= HtmlUtil.escape(req.getAfiliadoInteString()) %></td>
         </tr>
     </table>
 </fieldset>
@@ -118,117 +99,23 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
 
     <table class="lfr-table" width="100%">
         <tr>
-            <td><label>Fecha necesidad:</label></td>
-            <td><%= req.getFechaNecesidadAsString() %></td>
-
-            <td><label>Importe estimado:</label></td>
-            <td><%= req.getImporteEstimadoTotalString() %></td>
-        </tr>
-
-        <tr>
-            <td colspan="4">&nbsp;</td>
-        </tr>
-
-        <tr>
-            <td><label>Detalle:</label></td>
-            <td colspan="3"><%= req.getDetalleRequerimiento() != null ? req.getDetalleRequerimiento() : "" %></td>
-        </tr>
-
-        <tr>
-            <td><label>Motivo:</label></td>
-            <td colspan="3"><%= req.getMotivo() != null ? req.getMotivo() : "" %></td>
+            <td><label>Descripción:</label></td>
+            <td colspan="3"><%= HtmlUtil.escape(req.getDescripcionVisible()) %></td>
         </tr>
 
         <tr>
             <td><label>Observaciones:</label></td>
-            <td colspan="3"><%= req.getObservaciones() != null ? req.getObservaciones() : "" %></td>
+            <td colspan="3"><%= HtmlUtil.escape(req.getObservacionesVisible()) %></td>
+        </tr>
+
+        <tr>
+            <td><label>Total estimado:</label></td>
+            <td colspan="3"><%= HtmlUtil.escape(req.getTotalEstimadoString()) %></td>
         </tr>
     </table>
 </fieldset>
 
-<fieldset class="block-labels">
-    <legend>Cotizacion y presupuestos</legend>
-
-    <table class="lfr-table" width="100%">
-        <tr>
-            <td><label>Pedidos presupuestos:</label></td>
-            <td colspan="3"><%= req.getPedidosPresupuestos() != null ? req.getPedidosPresupuestos() : "" %></td>
-        </tr>
-
-        <tr>
-            <td colspan="4">&nbsp;</td>
-        </tr>
-
-        <tr>
-            <td><label>Fecha pedido cotizacion:</label></td>
-            <td><%= req.getFechaPedidoCotizacionAsString() %></td>
-
-            <td><label>Cotizado:</label></td>
-            <td><%= req.getCotizadoDescripcion() %></td>
-        </tr>
-
-        <tr>
-            <td><label>Comparativa:</label></td>
-            <td colspan="3"><%= req.getComparativa() != null ? req.getComparativa() : "" %></td>
-        </tr>
-    </table>
-</fieldset>
-
-<fieldset class="block-labels">
-    <legend>RP y Orden de Compra</legend>
-
-    <table class="lfr-table" width="100%">
-        <tr>
-            <td><label>RP:</label></td>
-            <td><%= req.getRpNumeroString() %></td>
-
-            <td><label>Orden compra:</label></td>
-            <td><%= req.getOrdenCompraNumeroString() %></td>
-        </tr>
-
-        <tr>
-            <td colspan="4">&nbsp;</td>
-        </tr>
-
-        <tr>
-            <td><label>Obs. RP:</label></td>
-            <td><%= req.getRpObservacion() != null ? req.getRpObservacion() : "" %></td>
-
-            <td><label>Obs. OC:</label></td>
-            <td><%= req.getOrdenCompraObservacion() != null ? req.getOrdenCompraObservacion() : "" %></td>
-        </tr>
-    </table>
-</fieldset>
-
-<fieldset class="block-labels">
-    <legend>Cargos y recupero</legend>
-
-    <table class="lfr-table" width="100%">
-        <tr>
-            <td><label>Cargo OSPIM:</label></td>
-            <td><%= req.getCargoOspim() != null ? req.getCargoOspim() : "" %></td>
-
-            <td><label>Cargo Ensalud:</label></td>
-            <td><%= req.getCargoEnsalud() != null ? req.getCargoEnsalud() : "" %></td>
-        </tr>
-
-        <tr>
-            <td colspan="4">&nbsp;</td>
-        </tr>
-
-        <tr>
-            <td><label>Recupero:</label></td>
-            <td><%= req.getRecuperoDescripcion() %></td>
-
-            <td></td>
-            <td></td>
-        </tr>
-    </table>
-</fieldset>
-
-<liferay-util:include page="/html/portlet/compras/requerimiento_items.jsp" />
-<liferay-util:include page="/html/portlet/compras/requerimiento_adjuntos.jsp" />
-<liferay-util:include page="/html/portlet/compras/requerimiento_historial.jsp" />
+<liferay-util:include page="/html/portlet/compras/requerimiento_detalle.jsp" />
 
 <form action="<%= cambiarEstadoURL.toString() %>" method="post" name="<portlet:namespace />cambioEstadoFm">
     <input type="hidden" name="<portlet:namespace />id_requerimiento_compra" value="<%= req.getIdRequerimientoCompra() %>" />
@@ -243,39 +130,19 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
                     <select name="<portlet:namespace />estado_nuevo" id="<portlet:namespace />estado_nuevo">
                         <option value="">Seleccione</option>
 
-                        <c:if test="<%= WebKeysCompras.puedeEnviarAprobacion(req.getEstado()) && puedeABM %>">
-                            <option value="<%= WebKeysCompras.ESTADO_PENDIENTE_APROBACION %>">Enviar a aprobacion</option>
+                        <c:if test="<%= req.puedeSolicitar() && puedeABM %>">
+                            <option value="<%= WebKeysCompras.ESTADO_SOLICITADO %>">Solicitar</option>
                         </c:if>
 
-                        <c:if test="<%= WebKeysCompras.puedeAprobar(req.getEstado()) && puedeAprobar %>">
-                            <option value="<%= WebKeysCompras.ESTADO_APROBADO %>">Aprobar</option>
-                            <option value="<%= WebKeysCompras.ESTADO_OBSERVADO %>">Observar</option>
-                            <option value="<%= WebKeysCompras.ESTADO_RECHAZADO %>">Rechazar</option>
-                        </c:if>
-
-                        <c:if test="<%= WebKeysCompras.puedeEnviarACotizacion(req.getEstado()) && puedeABM %>">
-                            <option value="<%= WebKeysCompras.ESTADO_PENDIENTE_COTIZACION %>">Enviar a cotizacion</option>
-                        </c:if>
-
-                        <c:if test="<%= WebKeysCompras.puedeMarcarCotizado(req.getEstado()) && puedeABM %>">
-                            <option value="<%= WebKeysCompras.ESTADO_COTIZADO %>">Marcar cotizado</option>
-                        </c:if>
-
-                        <c:if test="<%= WebKeysCompras.puedeCerrar(req.getEstado()) && puedeABM %>">
-                            <option value="<%= WebKeysCompras.ESTADO_EN_COMPRA %>">Marcar en compra</option>
-                            <option value="<%= WebKeysCompras.ESTADO_CERRADO %>">Cerrar</option>
-                        </c:if>
-
-                        <c:if test="<%= WebKeysCompras.puedeAnular(req.getEstado()) && puedeAnular %>">
+                        <c:if test="<%= req.puedeAnular() && puedeAnular %>">
                             <option value="<%= WebKeysCompras.ESTADO_ANULADO %>">Anular</option>
                         </c:if>
                     </select>
                 </td>
 
-                <td><label>Comentario:</label></td>
-                <td><input type="text" name="<portlet:namespace />comentario" id="<portlet:namespace />comentario" size="60" maxlength="500" /></td>
-
-                <td><input type="button" value="Aplicar" onclick="<portlet:namespace />cambiarEstado();" /></td>
+                <td>
+                    <input type="button" value="Aplicar" onclick="<portlet:namespace />cambiarEstado();" />
+                </td>
             </tr>
         </table>
     </fieldset>

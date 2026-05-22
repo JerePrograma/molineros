@@ -17,6 +17,7 @@
 <%@ page import="com.liferay.portal.kernel.util.Constants" %>
 <%@ page import="com.liferay.portal.kernel.util.ParamUtil" %>
 <%@ page import="com.liferay.portal.kernel.util.Validator" %>
+<%@ page import="com.liferay.portal.kernel.util.HtmlUtil" %>
 <%@ page import="com.liferay.portal.kernel.portlet.LiferayWindowState" %>
 <%@ page import="com.liferay.portal.kernel.language.LanguageUtil" %>
 <%@ page import="com.liferay.portal.util.PortalUtil" %>
@@ -24,15 +25,13 @@
 
 <%@ page import="ar.com.ospim.util.PermissionUtil" %>
 <%@ page import="ar.com.ospim.util.DateUtils" %>
-<%@ page import="ar.com.ospim.global.beans.ClaseBase" %>
-<%@ page import="ar.com.ospim.global.services.TraeListasServiceUtil" %>
 
 <%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
 <%@ page import="ar.com.ospim.compras.beans.RequerimientoCompra" %>
-<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraItem" %>
-<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraHistorial" %>
-<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraAdjunto" %>
+<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraDetalle" %>
 <%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraFiltro" %>
+<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraEstado" %>
+<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraSector" %>
 <%@ page import="ar.com.ospim.compras.service.BusquedaRequerimientoCompraServiceUtil" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>

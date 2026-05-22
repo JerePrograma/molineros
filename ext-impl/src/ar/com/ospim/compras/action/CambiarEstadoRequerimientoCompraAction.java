@@ -11,6 +11,8 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.beans.RequerimientoCompra;
+import ar.com.ospim.compras.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.service.EditarRequerimientoCompraServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 
@@ -40,6 +42,7 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
 
             validarParametrosCambioEstado(idRequerimientoCompra, estadoNuevo);
             validarPermisoCambioEstado(user, estadoNuevo);
+            validarTransicionEstado(idRequerimientoCompra, estadoNuevo);
 
             EditarRequerimientoCompraServiceUtil.cambiarEstado(
                     idRequerimientoCompra,
@@ -52,13 +55,20 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
                     Integer.valueOf(idRequerimientoCompra)
             );
 
+            actionResponse.setRenderParameter("id_requerimiento_compra", String.valueOf(idRequerimientoCompra));
+
             SessionMessages.add(actionRequest, "estado-requerimiento-compra-actualizado");
-            setForward(actionRequest, "portlet.compras.editar_requerimiento");
+            setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
         } catch (Exception e) {
             _log.error(e);
             SessionErrors.add(actionRequest, e.getClass().getName());
             actionRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());
-            setForward(actionRequest, "portlet.compras.editar_requerimiento");
+
+            if (idRequerimientoCompra > 0) {
+                actionResponse.setRenderParameter("id_requerimiento_compra", String.valueOf(idRequerimientoCompra));
+            }
+
+            setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
         }
     }
 
@@ -66,7 +76,7 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
                                 PortletConfig portletConfig, RenderRequest renderRequest,
                                 RenderResponse renderResponse) throws Exception {
 
-        return mapping.findForward("portlet.compras.editar_requerimiento");
+        return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
     }
 
     private void validarParametrosCambioEstado(int idRequerimientoCompra, int estadoNuevo) throws Exception {
@@ -76,6 +86,23 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
 
         if (!WebKeysCompras.esEstadoValido(estadoNuevo)) {
             throw new Exception("Estado de requerimiento invalido.");
+        }
+    }
+
+    private void validarTransicionEstado(int idRequerimientoCompra, int estadoNuevo) throws Exception {
+        RequerimientoCompra requerimiento =
+                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimientoCompra);
+
+        if (requerimiento == null) {
+            throw new Exception("No se encontro el requerimiento de compra informado.");
+        }
+
+        if (requerimiento.isAnulado()) {
+            throw new Exception("El requerimiento ya se encuentra anulado.");
+        }
+
+        if (!WebKeysCompras.puedeCambiarEstado(requerimiento.getIdEstado(), estadoNuevo)) {
+            throw new Exception("La transicion de estado solicitada no es valida.");
         }
     }
 

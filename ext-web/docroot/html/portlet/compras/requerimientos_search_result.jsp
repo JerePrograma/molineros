@@ -16,19 +16,15 @@ portletURL.setWindowState(WindowState.MAXIMIZED);
 portletURL.setParameter("struts_action", "/compras/buscar_requerimientos");
 
 List<String> headerNames = new ArrayList<String>();
-headerNames.add("Numero");
+headerNames.add("Número");
 headerNames.add("Fecha solicitud");
-headerNames.add("Afiliado");
-headerNames.add("DNI");
 headerNames.add("Sector");
-headerNames.add("Detalle");
+headerNames.add("Solicitante");
+headerNames.add("CUIL titular");
+headerNames.add("Integrante");
+headerNames.add("Descripción");
 headerNames.add("Estado");
-headerNames.add("RP");
-headerNames.add("OC");
-headerNames.add("Cotizado");
-headerNames.add("Recupero");
-headerNames.add("Localidad");
-headerNames.add("Provincia");
+headerNames.add("Total estimado");
 headerNames.add("Acciones");
 
 SearchContainer searchContainer = new SearchContainer(
@@ -59,25 +55,24 @@ for (int i = 0; i < requerimientos.size(); i++) {
     editarURL.setParameter("id_requerimiento_compra", req.getIdRequerimientoCompraString());
 
     ResultRow row = new ResultRow(req, req.getIdRequerimientoCompraString(), i);
-    row.addText(req.getNumeroString(), verURL);
-    row.addText(req.getFechaSolicitudAsString(), verURL);
-    row.addText(req.getAfiliado() != null ? req.getAfiliado() : "", verURL);
-    row.addText(req.getDniString(), verURL);
-    row.addText(req.getSectorDescripcion() != null ? req.getSectorDescripcion() : "", verURL);
-    row.addText(req.getDetalleRequerimiento() != null ? req.getDetalleRequerimiento() : req.getMotivoVisible(), verURL);
-    row.addText(req.getEstadoDescripcion(), verURL);
-    row.addText(req.getRpNumeroString(), verURL);
-    row.addText(req.getOrdenCompraNumeroString(), verURL);
-    row.addText(req.getCotizadoDescripcion(), verURL);
-    row.addText(req.getRecuperoDescripcion(), verURL);
-    row.addText(req.getLocalidad() != null ? req.getLocalidad() : "", verURL);
-    row.addText(req.getProvincia() != null ? req.getProvincia() : "", verURL);
+
+    row.addText(HtmlUtil.escape(req.getNumeroVisible()), verURL);
+    row.addText(HtmlUtil.escape(req.getFechaSolicitudAsString()), verURL);
+    row.addText(HtmlUtil.escape(req.getSectorDescripcionVisible()), verURL);
+    row.addText(HtmlUtil.escape(req.getSolicitanteVisible()), verURL);
+    row.addText(HtmlUtil.escape(req.getAfiliadoCuilTitularVisible()), verURL);
+    row.addText(HtmlUtil.escape(req.getAfiliadoInteString()), verURL);
+    row.addText(HtmlUtil.escape(req.getDescripcionVisible()), verURL);
+    row.addText(HtmlUtil.escape(req.getEstadoDescripcionVisible()), verURL);
+    row.addText(HtmlUtil.escape(req.getTotalEstimadoString()), verURL);
 
     StringBuffer acciones = new StringBuffer();
     acciones.append("<a href=\"").append(verURL.toString()).append("\">Ver</a>");
+
     if (puedeABM && req.isEditable()) {
         acciones.append("&nbsp;|&nbsp;<a href=\"").append(editarURL.toString()).append("\">Editar</a>");
     }
+
     row.addText(acciones.toString());
 
     resultRows.add(row);

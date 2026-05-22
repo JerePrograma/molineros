@@ -3,6 +3,7 @@ package ar.com.ospim.compras.beans;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.util.DateUtils;
 
 public class RequerimientoCompraDetalle {
@@ -32,7 +33,7 @@ public class RequerimientoCompraDetalle {
     public RequerimientoCompraDetalle() {
         this.cantidad = BigDecimal.ONE;
         this.precioUnitarioEstimado = BigDecimal.ZERO;
-        this.precioTotalEstimado = BigDecimal.ZERO;
+        this.precioTotalEstimado = null;
     }
 
     public RequerimientoCompraDetalle(int idRequerimientoDetalle) {
@@ -88,16 +89,24 @@ public class RequerimientoCompraDetalle {
         return tipoArticulo;
     }
 
+    public String getTipoArticuloVisible() {
+        return tipoArticulo != null ? tipoArticulo : "";
+    }
+
     public void setTipoArticulo(String tipoArticulo) {
-        this.tipoArticulo = tipoArticulo;
+        this.tipoArticulo = WebKeysCompras.trimToNull(tipoArticulo);
     }
 
     public String getArticulo() {
         return articulo;
     }
 
+    public String getArticuloVisible() {
+        return articulo != null ? articulo : "";
+    }
+
     public void setArticulo(String articulo) {
-        this.articulo = articulo;
+        this.articulo = WebKeysCompras.trimToNull(articulo);
     }
 
     public String getDescripcion() {
@@ -105,7 +114,7 @@ public class RequerimientoCompraDetalle {
     }
 
     public void setDescripcion(String descripcion) {
-        this.articulo = descripcion;
+        this.articulo = WebKeysCompras.trimToNull(descripcion);
     }
 
     public BigDecimal getCantidad() {
@@ -124,8 +133,12 @@ public class RequerimientoCompraDetalle {
         return unidadMedida;
     }
 
+    public String getUnidadMedidaVisible() {
+        return unidadMedida != null ? unidadMedida : "";
+    }
+
     public void setUnidadMedida(String unidadMedida) {
-        this.unidadMedida = unidadMedida;
+        this.unidadMedida = WebKeysCompras.trimToNull(unidadMedida);
     }
 
     public BigDecimal getPrecioUnitarioEstimado() {
@@ -189,8 +202,12 @@ public class RequerimientoCompraDetalle {
         return observaciones;
     }
 
+    public String getObservacionesVisible() {
+        return observaciones != null ? observaciones : "";
+    }
+
     public void setObservaciones(String observaciones) {
-        this.observaciones = observaciones;
+        this.observaciones = WebKeysCompras.trimToNull(observaciones);
     }
 
     public Date getAltaFecha() {
@@ -210,11 +227,15 @@ public class RequerimientoCompraDetalle {
     }
 
     public void setAltaUsr(String altaUsr) {
-        this.altaUsr = altaUsr;
+        this.altaUsr = WebKeysCompras.trimToNull(altaUsr);
     }
 
     public Date getModiFecha() {
         return modiFecha;
+    }
+
+    public String getModiFechaAsString() {
+        return modiFecha != null ? DateUtils.format(modiFecha, DateUtils.SHORT) : "";
     }
 
     public void setModiFecha(Date modiFecha) {
@@ -226,11 +247,15 @@ public class RequerimientoCompraDetalle {
     }
 
     public void setModiUsr(String modiUsr) {
-        this.modiUsr = modiUsr;
+        this.modiUsr = WebKeysCompras.trimToNull(modiUsr);
     }
 
     public Date getBajaFecha() {
         return bajaFecha;
+    }
+
+    public String getBajaFechaAsString() {
+        return bajaFecha != null ? DateUtils.format(bajaFecha, DateUtils.SHORT) : "";
     }
 
     public void setBajaFecha(Date bajaFecha) {
@@ -242,10 +267,14 @@ public class RequerimientoCompraDetalle {
     }
 
     public void setBajaUsr(String bajaUsr) {
-        this.bajaUsr = bajaUsr;
+        this.bajaUsr = WebKeysCompras.trimToNull(bajaUsr);
     }
 
     public boolean isBorrado() {
         return bajaFecha != null;
+    }
+
+    public boolean isActivo() {
+        return bajaFecha == null;
     }
 }

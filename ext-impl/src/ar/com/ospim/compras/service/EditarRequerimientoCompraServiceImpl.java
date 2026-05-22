@@ -1,5 +1,6 @@
 package ar.com.ospim.compras.service;
 
+import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Types;
@@ -16,15 +17,30 @@ public class EditarRequerimientoCompraServiceImpl {
 
     private static Log _log = LogFactoryUtil.getLog(EditarRequerimientoCompraServiceImpl.class);
 
+    private static final String SQL_GUARDAR_REQUERIMIENTO =
+            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?) }";
+
+    private static final String SQL_GUARDAR_REQUERIMIENTO_DETALLE =
+            "{ ? = call compras.guardar_requerimiento_detalle(?,?,?,?,?,?,?,?,?,?,?) }";
+
+    private static final String SQL_BORRAR_REQUERIMIENTO_DETALLE =
+            "{call compras.borrar_requerimiento_detalle(?,?)}";
+
+    private static final String SQL_BORRAR_REQUERIMIENTO =
+            "{call compras.borrar_requerimiento(?,?)}";
+
+    private static final String SQL_CAMBIAR_ESTADO =
+            "{call compras.cambiar_estado_requerimiento(?,?,?)}";
+
     public int guardarRequerimientoCompra(RequerimientoCompra requerimiento, String usuario) throws Exception {
+        validarRequerimientoParaGuardar(requerimiento);
+
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
-            String sql = "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?) }";
-
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(sql);
+            stmt = con.prepareCall(SQL_GUARDAR_REQUERIMIENTO);
             stmt.registerOutParameter(1, Types.INTEGER);
 
             setNullableInteger(
@@ -73,14 +89,14 @@ public class EditarRequerimientoCompraServiceImpl {
     }
 
     public int guardarDetalle(RequerimientoCompraDetalle detalle, String usuario) throws Exception {
+        validarDetalleParaGuardar(detalle);
+
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
-            String sql = "{ ? = call compras.guardar_requerimiento_detalle(?,?,?,?,?,?,?,?,?,?,?) }";
-
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(sql);
+            stmt = con.prepareCall(SQL_GUARDAR_REQUERIMIENTO_DETALLE);
             stmt.registerOutParameter(1, Types.INTEGER);
 
             setNullableInteger(
@@ -103,10 +119,10 @@ public class EditarRequerimientoCompraServiceImpl {
 
             stmt.setString(5, emptyToNull(detalle.getTipoArticulo()));
             stmt.setString(6, emptyToNull(detalle.getArticulo()));
-            stmt.setBigDecimal(7, detalle.getCantidad());
+            setNullableBigDecimal(stmt, 7, detalle.getCantidad());
             stmt.setString(8, emptyToNull(detalle.getUnidadMedida()));
-            stmt.setBigDecimal(9, detalle.getPrecioUnitarioEstimado());
-            stmt.setBigDecimal(10, detalle.getPrecioTotalEstimado());
+            setNullableBigDecimal(stmt, 9, detalle.getPrecioUnitarioEstimado());
+            setNullableBigDecimal(stmt, 10, detalle.getPrecioTotalEstimado());
             stmt.setString(11, emptyToNull(detalle.getObservaciones()));
             stmt.setString(12, emptyToNull(usuario));
 
@@ -122,14 +138,16 @@ public class EditarRequerimientoCompraServiceImpl {
     }
 
     public void borrarDetalle(int idRequerimientoDetalle, String usuario) throws Exception {
+        if (idRequerimientoDetalle <= 0) {
+            throw new Exception("Debe informar el renglon del requerimiento.");
+        }
+
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
-            String sql = "{call compras.borrar_requerimiento_detalle(?,?)}";
-
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(sql);
+            stmt = con.prepareCall(SQL_BORRAR_REQUERIMIENTO_DETALLE);
             stmt.setInt(1, idRequerimientoDetalle);
             stmt.setString(2, emptyToNull(usuario));
 
@@ -143,14 +161,16 @@ public class EditarRequerimientoCompraServiceImpl {
     }
 
     public void borrarRequerimientoCompra(int idRequerimientoCompra, String usuario) throws Exception {
+        if (idRequerimientoCompra <= 0) {
+            throw new Exception("Debe informar el requerimiento de compra.");
+        }
+
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
-            String sql = "{call compras.borrar_requerimiento(?,?)}";
-
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(sql);
+            stmt = con.prepareCall(SQL_BORRAR_REQUERIMIENTO);
             stmt.setInt(1, idRequerimientoCompra);
             stmt.setString(2, emptyToNull(usuario));
 
@@ -164,6 +184,10 @@ public class EditarRequerimientoCompraServiceImpl {
     }
 
     public void cambiarEstado(int idRequerimientoCompra, int idEstadoNuevo, String usuario) throws Exception {
+        if (idRequerimientoCompra <= 0) {
+            throw new Exception("Debe informar el requerimiento de compra.");
+        }
+
         if (!WebKeysCompras.esEstadoValido(idEstadoNuevo)) {
             throw new Exception("Estado de requerimiento invalido.");
         }
@@ -172,10 +196,8 @@ public class EditarRequerimientoCompraServiceImpl {
         CallableStatement stmt = null;
 
         try {
-            String sql = "{call compras.cambiar_estado_requerimiento(?,?,?)}";
-
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(sql);
+            stmt = con.prepareCall(SQL_CAMBIAR_ESTADO);
             stmt.setInt(1, idRequerimientoCompra);
             stmt.setInt(2, idEstadoNuevo);
             stmt.setString(3, emptyToNull(usuario));
@@ -186,6 +208,38 @@ public class EditarRequerimientoCompraServiceImpl {
             throw e;
         } finally {
             ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    private void validarRequerimientoParaGuardar(RequerimientoCompra requerimiento) throws Exception {
+        if (requerimiento == null) {
+            throw new Exception("Debe informar el requerimiento de compra.");
+        }
+
+        if (requerimiento.getIdEstado() <= 0) {
+            requerimiento.setIdEstado(WebKeysCompras.ESTADO_BORRADOR);
+        }
+
+        if (!WebKeysCompras.esEstadoValido(requerimiento.getIdEstado())) {
+            throw new Exception("Estado de requerimiento invalido.");
+        }
+    }
+
+    private void validarDetalleParaGuardar(RequerimientoCompraDetalle detalle) throws Exception {
+        if (detalle == null) {
+            throw new Exception("Debe informar el renglon del requerimiento.");
+        }
+
+        if (detalle.getIdRequerimientoCompra() <= 0) {
+            throw new Exception("Debe guardar primero la cabecera del requerimiento.");
+        }
+
+        if (detalle.getCantidad() == null) {
+            detalle.setCantidad(BigDecimal.ONE);
+        }
+
+        if (detalle.getPrecioUnitarioEstimado() == null) {
+            detalle.setPrecioUnitarioEstimado(BigDecimal.ZERO);
         }
     }
 
@@ -202,6 +256,14 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.setNull(index, Types.DATE);
         } else {
             stmt.setDate(index, new java.sql.Date(value.getTime()));
+        }
+    }
+
+    private void setNullableBigDecimal(CallableStatement stmt, int index, BigDecimal value) throws Exception {
+        if (value == null) {
+            stmt.setNull(index, Types.NUMERIC);
+        } else {
+            stmt.setBigDecimal(index, value);
         }
     }
 

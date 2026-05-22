@@ -6963,7 +6963,9 @@
 
         <!-- Compras -->
 
-        <action path="/compras/view" forward="portlet.compras.view" />
+        <action
+                path="/compras/view"
+                forward="portlet.compras.view" />
 
         <action
                 path="/compras/buscar_requerimientos"
@@ -6972,6 +6974,10 @@
             <forward
                     name="portlet.compras.result.search"
                     path="portlet.compras.result.search" />
+
+            <forward
+                    name="portlet.compras.view"
+                    path="portlet.compras.view" />
 
             <forward
                     name="portlet.compras.error"
@@ -6995,15 +7001,30 @@
                     path="portlet.compras.error" />
         </action>
 
-        <action path="/compras/ver_requerimiento" forward="portlet.compras.ver_requerimiento" />
+        <action
+                path="/compras/ver_requerimiento"
+                type="ar.com.ospim.compras.action.VerRequerimientoCompraAction">
+
+            <forward
+                    name="portlet.compras.ver_requerimiento"
+                    path="portlet.compras.ver_requerimiento" />
+
+            <forward
+                    name="portlet.compras.result.search"
+                    path="portlet.compras.result.search" />
+
+            <forward
+                    name="portlet.compras.error"
+                    path="portlet.compras.error" />
+        </action>
 
         <action
                 path="/compras/cambiar_estado_requerimiento"
                 type="ar.com.ospim.compras.action.CambiarEstadoRequerimientoCompraAction">
 
             <forward
-                    name="portlet.compras.ver_requerimiento"
-                    path="portlet.compras.ver_requerimiento" />
+                    name="portlet.compras.editar_requerimiento"
+                    path="portlet.compras.editar_requerimiento" />
 
             <forward
                     name="portlet.compras.error"

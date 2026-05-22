@@ -4504,7 +4504,6 @@
     <!-- Compras -->
 
     <definition name="portlet.compras" extends="portlet">
-        <put name="portlet_content" value="/portlet/compras/view.jsp" />
     </definition>
 
     <definition name="portlet.compras.view" extends="portlet.compras">
