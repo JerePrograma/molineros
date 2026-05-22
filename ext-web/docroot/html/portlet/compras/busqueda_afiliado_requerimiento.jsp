@@ -114,9 +114,9 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
                 <select id="<portlet:namespace />afi_req_entidad"
                         name="<portlet:namespace />afi_req_entidad">
                     <option value="">Todas</option>
-                    <option value="OSPIM" selected="selected">OSPIM</option>
-                    <option value="UOMA">UOMA</option>
-                    <option value="AMTIMA">AMTIMA</option>
+                    <option value="O.S.P.I.M." selected="selected">O.S.P.I.M.</option>
+                    <option value="A.M.T.I.M.A.">A.M.T.I.M.A.</option>
+                    <option value="U.O.M.A.">U.O.M.A.</option>
                 </select>
             </td>
         </tr>
