@@ -42,6 +42,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
 
         try {
             RequerimientoCompraFiltro filtro = getFiltroFromRequest(renderRequest);
+
             List<RequerimientoCompra> requerimientos =
                     BusquedaRequerimientoCompraServiceUtil.buscarRequerimientos(filtro);
 
@@ -49,11 +50,13 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             renderRequest.setAttribute(WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA, requerimientos);
 
             PortletSession portletSession = renderRequest.getPortletSession();
+
             portletSession.setAttribute(
                     WebKeysCompras.FILTRO_REQUERIMIENTOS_COMPRA,
                     filtro,
                     PortletSession.PORTLET_SCOPE
             );
+
             portletSession.setAttribute(
                     WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA,
                     requerimientos,
@@ -61,6 +64,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             );
         } catch (Exception e) {
             _log.error(e);
+            renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());
         }
 
         return mapping.findForward("portlet.compras.result.search");
@@ -77,53 +81,33 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
         filtro.setFechaDesde(parseInputDate(request, "fechaDesde"));
         filtro.setFechaHasta(parseInputDate(request, "fechaHasta"));
 
-        int sectorId = ParamUtil.getInteger(request, "sector_id", 0);
-        if (sectorId > 0) {
-            filtro.setSectorId(Integer.valueOf(sectorId));
+        int idSector = ParamUtil.getInteger(request, "id_sector", 0);
+        if (idSector <= 0) {
+            idSector = ParamUtil.getInteger(request, "sector_id", 0);
+        }
+        if (idSector > 0) {
+            filtro.setIdSector(Integer.valueOf(idSector));
+        }
+
+        int idEstado = ParamUtil.getInteger(request, "id_estado", 0);
+        if (idEstado <= 0) {
+            idEstado = ParamUtil.getInteger(request, "estado", 0);
+        }
+        if (idEstado > 0) {
+            filtro.setIdEstado(Integer.valueOf(idEstado));
         }
 
         filtro.setSolicitanteUsr(ParamUtil.getString(request, "solicitante_usr", null));
-        filtro.setEntidad(ParamUtil.getString(request, "entidad", null));
-
-        int prioridad = ParamUtil.getInteger(request, "prioridad", 0);
-        if (prioridad > 0) {
-            filtro.setPrioridad(Integer.valueOf(prioridad));
-        }
-
-        int estado = ParamUtil.getInteger(request, "estado", 0);
-        if (estado > 0) {
-            filtro.setEstado(Integer.valueOf(estado));
-        }
-
-        int idOrdenCompra = ParamUtil.getInteger(request, "id_orden_compra", 0);
-        if (idOrdenCompra > 0) {
-            filtro.setIdOrdenCompra(Integer.valueOf(idOrdenCompra));
-        }
-
         filtro.setTexto(ParamUtil.getString(request, "texto", null));
 
-        filtro.setAfiliado(ParamUtil.getString(request, "afiliado", null));
-        filtro.setDni(ParamUtil.getString(request, "dni", null));
-        filtro.setDetalleRequerimiento(ParamUtil.getString(request, "detalle_requerimiento", null));
+        filtro.setAfiliadoCuilTitular(ParamUtil.getString(request, "afiliado_cuil_titular", null));
 
-        int rpNumero = ParamUtil.getInteger(request, "rp_numero", 0);
-        if (rpNumero > 0) {
-            filtro.setRpNumero(Integer.valueOf(rpNumero));
+        int afiliadoInte = ParamUtil.getInteger(request, "afiliado_inte", -1);
+        if (afiliadoInte >= 0) {
+            filtro.setAfiliadoInte(Integer.valueOf(afiliadoInte));
         }
 
-        int ordenCompraNumero = ParamUtil.getInteger(request, "orden_compra_numero", 0);
-        if (ordenCompraNumero > 0) {
-            filtro.setOrdenCompraNumero(Integer.valueOf(ordenCompraNumero));
-        }
-
-        filtro.setRecupero(parseBooleanNullable(ParamUtil.getString(request, "recupero", null)));
-        filtro.setCotizado(parseBooleanNullable(ParamUtil.getString(request, "cotizado", null)));
-
-        filtro.setFechaPedidoCotizacionDesde(parseInputDate(request, "fechaPedidoCotizacionDesde"));
-        filtro.setFechaPedidoCotizacionHasta(parseInputDate(request, "fechaPedidoCotizacionHasta"));
-
-        filtro.setLocalidad(ParamUtil.getString(request, "localidad", null));
-        filtro.setProvincia(ParamUtil.getString(request, "provincia", null));
+        filtro.setTipoArticulo(ParamUtil.getString(request, "tipo_articulo", null));
 
         return filtro;
     }
@@ -145,23 +129,5 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    private Boolean parseBooleanNullable(String value) {
-        if (value == null || value.trim().length() == 0 || "0".equals(value.trim())) {
-            return null;
-        }
-
-        String clean = value.trim().toUpperCase();
-
-        if ("SI".equals(clean) || "S".equals(clean) || "TRUE".equals(clean) || "1".equals(clean)) {
-            return Boolean.TRUE;
-        }
-
-        if ("NO".equals(clean) || "N".equals(clean) || "FALSE".equals(clean) || "2".equals(clean)) {
-            return Boolean.FALSE;
-        }
-
-        return null;
     }
 }

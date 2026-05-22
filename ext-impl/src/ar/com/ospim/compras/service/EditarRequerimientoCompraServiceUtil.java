@@ -1,7 +1,7 @@
 package ar.com.ospim.compras.service;
 
 import ar.com.ospim.compras.beans.RequerimientoCompra;
-import ar.com.ospim.compras.beans.RequerimientoCompraItem;
+import ar.com.ospim.compras.beans.RequerimientoCompraDetalle;
 
 public class EditarRequerimientoCompraServiceUtil {
 
@@ -11,6 +11,7 @@ public class EditarRequerimientoCompraServiceUtil {
         if (instance == null) {
             instance = new EditarRequerimientoCompraServiceImpl();
         }
+
         return instance;
     }
 
@@ -18,16 +19,28 @@ public class EditarRequerimientoCompraServiceUtil {
         return getInstance().guardarRequerimientoCompra(requerimiento, usuario);
     }
 
-    public static void guardarItem(RequerimientoCompraItem item, String usuario) throws Exception {
-        getInstance().guardarItem(item, usuario);
+    public static int guardarDetalle(RequerimientoCompraDetalle detalle, String usuario) throws Exception {
+        return getInstance().guardarDetalle(detalle, usuario);
+    }
+
+    public static int guardarItem(RequerimientoCompraDetalle detalle, String usuario) throws Exception {
+        return guardarDetalle(detalle, usuario);
+    }
+
+    public static void borrarDetalle(int idRequerimientoDetalle, String usuario) throws Exception {
+        getInstance().borrarDetalle(idRequerimientoDetalle, usuario);
     }
 
     public static void borrarItem(int idItem, String usuario) throws Exception {
-        getInstance().borrarItem(idItem, usuario);
+        borrarDetalle(idItem, usuario);
     }
 
     public static void borrarRequerimientoCompra(int idRequerimientoCompra, String usuario) throws Exception {
         getInstance().borrarRequerimientoCompra(idRequerimientoCompra, usuario);
+    }
+
+    public static void cambiarEstado(int idRequerimientoCompra, int idEstadoNuevo, String usuario) throws Exception {
+        getInstance().cambiarEstado(idRequerimientoCompra, idEstadoNuevo, usuario);
     }
 
     private EditarRequerimientoCompraServiceUtil() {

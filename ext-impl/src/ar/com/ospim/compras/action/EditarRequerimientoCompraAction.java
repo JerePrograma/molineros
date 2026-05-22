@@ -16,7 +16,7 @@ import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.beans.RequerimientoCompra;
-import ar.com.ospim.compras.beans.RequerimientoCompraItem;
+import ar.com.ospim.compras.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.service.EditarRequerimientoCompraServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
@@ -66,14 +66,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             }
 
             if ("addItem".equals(cmd) || "updateItem".equals(cmd)) {
-                RequerimientoCompraItem item = getItemFromRequest(actionRequest);
-                validarItem(item);
+                RequerimientoCompraDetalle detalle = getDetalleFromRequest(actionRequest);
+                validarDetalle(detalle);
 
-                EditarRequerimientoCompraServiceUtil.guardarItem(item, usuario);
+                EditarRequerimientoCompraServiceUtil.guardarDetalle(detalle, usuario);
 
                 actionRequest.setAttribute(
                         WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION,
-                        Integer.valueOf(item.getIdRequerimientoCompra())
+                        Integer.valueOf(detalle.getIdRequerimientoCompra())
                 );
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-item-guardado");
@@ -82,12 +82,16 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             }
 
             if ("deleteItem".equals(cmd)) {
-                int idItem = ParamUtil.getInteger(actionRequest, "id_item", 0);
-                if (idItem <= 0) {
-                    throw new Exception("Debe informar el item a borrar.");
+                int idDetalle = ParamUtil.getInteger(actionRequest, "id_requerimiento_detalle", 0);
+                if (idDetalle <= 0) {
+                    idDetalle = ParamUtil.getInteger(actionRequest, "id_item", 0);
                 }
 
-                EditarRequerimientoCompraServiceUtil.borrarItem(idItem, usuario);
+                if (idDetalle <= 0) {
+                    throw new Exception("Debe informar el renglon a borrar.");
+                }
+
+                EditarRequerimientoCompraServiceUtil.borrarDetalle(idDetalle, usuario);
 
                 actionRequest.setAttribute(
                         WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION,
@@ -141,10 +145,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 User user = PortalUtil.getUser(renderRequest);
                 if (user != null) {
                     requerimiento.setSolicitanteUsr(user.getScreenName());
+                    requerimiento.setSolicitanteNombre(user.getFullName());
                 }
             }
 
             renderRequest.setAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION, requerimiento);
+            renderRequest.setAttribute(WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION, requerimiento.getDetalles());
         } catch (Exception e) {
             _log.error(e);
             renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());
@@ -168,38 +174,50 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             throw new Exception("Debe informar el requerimiento de compra.");
         }
 
+        if (requerimiento.getIdSector() == null || requerimiento.getIdSector().intValue() <= 0) {
+            throw new Exception("Debe informar el sector solicitante.");
+        }
+
         if (isEmpty(requerimiento.getSolicitanteUsr())) {
             throw new Exception("Debe informar el solicitante.");
         }
 
-        if (isEmpty(requerimiento.getMotivo()) && isEmpty(requerimiento.getDetalleRequerimiento())) {
-            throw new Exception("Debe informar el detalle del requerimiento.");
+        if (isEmpty(requerimiento.getDescripcion())) {
+            throw new Exception("Debe informar la descripcion del requerimiento.");
         }
 
-        if (requerimiento.getPrioridad() <= 0) {
-            throw new Exception("Debe informar la prioridad.");
+        if (requerimiento.isRequiereAfiliado()) {
+            if (isEmpty(requerimiento.getAfiliadoCuilTitular()) || requerimiento.getAfiliadoInte() == null) {
+                throw new Exception("Debe informar el afiliado del requerimiento.");
+            }
         }
     }
 
-    private void validarItem(RequerimientoCompraItem item) throws Exception {
-        if (item == null) {
-            throw new Exception("Debe informar el item del requerimiento.");
+    private void validarDetalle(RequerimientoCompraDetalle detalle) throws Exception {
+        if (detalle == null) {
+            throw new Exception("Debe informar el renglon del requerimiento.");
         }
 
-        if (item.getIdRequerimientoCompra() <= 0) {
+        if (detalle.getIdRequerimientoCompra() <= 0) {
             throw new Exception("Debe guardar primero la cabecera del requerimiento.");
         }
 
-        if (isEmpty(item.getDescripcion())) {
-            throw new Exception("Debe informar la descripcion del item.");
+        if (isEmpty(detalle.getArticulo())) {
+            throw new Exception("Debe informar el articulo.");
         }
 
-        if (item.getCantidad() == null || item.getCantidad().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new Exception("La cantidad del item debe ser mayor a cero.");
+        if (detalle.getCantidad() == null || detalle.getCantidad().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new Exception("La cantidad debe ser mayor a cero.");
         }
 
-        if (item.getImporteEstimado() == null || item.getImporteEstimado().compareTo(BigDecimal.ZERO) < 0) {
-            throw new Exception("El importe estimado del item no puede ser negativo.");
+        if (detalle.getPrecioUnitarioEstimado() != null
+                && detalle.getPrecioUnitarioEstimado().compareTo(BigDecimal.ZERO) < 0) {
+            throw new Exception("El precio unitario estimado no puede ser negativo.");
+        }
+
+        if (detalle.getPrecioTotalEstimado() != null
+                && detalle.getPrecioTotalEstimado().compareTo(BigDecimal.ZERO) < 0) {
+            throw new Exception("El precio total estimado no puede ser negativo.");
         }
     }
 
@@ -209,69 +227,71 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         requerimiento.setIdRequerimientoCompra(ParamUtil.getInteger(request, "id_requerimiento_compra", 0));
         requerimiento.setNumero(ParamUtil.getInteger(request, "numero", 0));
 
-        requerimiento.setAfiliado(ParamUtil.getString(request, "afiliado", null));
-        requerimiento.setDni(ParamUtil.getString(request, "dni", null));
+        int idEstado = ParamUtil.getInteger(request, "id_estado", WebKeysCompras.ESTADO_BORRADOR);
+        if (idEstado <= 0) {
+            idEstado = ParamUtil.getInteger(request, "estado", WebKeysCompras.ESTADO_BORRADOR);
+        }
+        requerimiento.setIdEstado(idEstado);
 
-        int sectorId = ParamUtil.getInteger(request, "sector_id", 0);
-        requerimiento.setSectorId(sectorId > 0 ? Integer.valueOf(sectorId) : null);
-        requerimiento.setSectorDescripcion(ParamUtil.getString(request, "sector_descripcion", null));
+        int idSector = ParamUtil.getInteger(request, "id_sector", 0);
+        if (idSector <= 0) {
+            idSector = ParamUtil.getInteger(request, "sector_id", 0);
+        }
+        requerimiento.setIdSector(idSector > 0 ? Integer.valueOf(idSector) : null);
+
+        requerimiento.setRequiereAfiliado(ParamUtil.getBoolean(request, "requiere_afiliado", false));
+        requerimiento.setFechaSolicitud(parseDate(ParamUtil.getString(request, "fecha_solicitud", null)));
 
         requerimiento.setSolicitanteUsr(ParamUtil.getString(request, "solicitante_usr", null));
-        requerimiento.setEntidad(ParamUtil.getString(request, "entidad", null));
-        requerimiento.setPrioridad(
-                ParamUtil.getInteger(request, "prioridad", WebKeysCompras.PRIORIDAD_MEDIA)
-        );
+        requerimiento.setSolicitanteNombre(ParamUtil.getString(request, "solicitante_nombre", null));
 
-        requerimiento.setFechaSolicitud(parseDate(ParamUtil.getString(request, "fecha_solicitud", null)));
-        requerimiento.setFechaNecesidad(parseDate(ParamUtil.getString(request, "fecha_necesidad", null)));
-        requerimiento.setFechaPedidoCotizacion(parseDate(ParamUtil.getString(request, "fecha_pedido_cotizacion", null)));
+        requerimiento.setAfiliadoCuilTitular(ParamUtil.getString(request, "afiliado_cuil_titular", null));
 
-        requerimiento.setDetalleRequerimiento(ParamUtil.getString(request, "detalle_requerimiento", null));
-        requerimiento.setMotivo(ParamUtil.getString(request, "motivo", null));
+        int afiliadoInte = ParamUtil.getInteger(request, "afiliado_inte", -1);
+        requerimiento.setAfiliadoInte(afiliadoInte >= 0 ? Integer.valueOf(afiliadoInte) : null);
+
+        requerimiento.setDescripcion(ParamUtil.getString(request, "descripcion", null));
         requerimiento.setObservaciones(ParamUtil.getString(request, "observaciones", null));
-
-        requerimiento.setPedidosPresupuestos(ParamUtil.getString(request, "pedidos_presupuestos", null));
-        requerimiento.setComparativa(ParamUtil.getString(request, "comparativa", null));
-
-        requerimiento.setRpNumero(parseIntegerNullable(ParamUtil.getString(request, "rp_numero", null)));
-        requerimiento.setRpObservacion(ParamUtil.getString(request, "rp_observacion", null));
-
-        Integer ordenCompraNumero = parseIntegerNullable(ParamUtil.getString(request, "orden_compra_numero", null));
-        if (ordenCompraNumero == null) {
-            ordenCompraNumero = parseIntegerNullable(ParamUtil.getString(request, "id_orden_compra", null));
-        }
-
-        requerimiento.setIdOrdenCompra(ordenCompraNumero);
-        requerimiento.setOrdenCompraNumero(ordenCompraNumero);
-        requerimiento.setOrdenCompraObservacion(ParamUtil.getString(request, "orden_compra_observacion", null));
-
-        requerimiento.setCargoOspim(ParamUtil.getString(request, "cargo_ospim", null));
-        requerimiento.setCargoEnsalud(ParamUtil.getString(request, "cargo_ensalud", null));
-        requerimiento.setRecupero(parseBooleanNullable(ParamUtil.getString(request, "recupero", null)));
-        requerimiento.setCotizado(parseBooleanNullable(ParamUtil.getString(request, "cotizado", null)));
-
-        requerimiento.setLocalidad(ParamUtil.getString(request, "localidad", null));
-        requerimiento.setProvincia(ParamUtil.getString(request, "provincia", null));
-
-        requerimiento.setImporteEstimadoTotal(
-                parseBigDecimal(ParamUtil.getString(request, "importe_estimado_total", "0"))
-        );
 
         return requerimiento;
     }
 
-    private RequerimientoCompraItem getItemFromRequest(ActionRequest request) {
-        RequerimientoCompraItem item = new RequerimientoCompraItem();
+    private RequerimientoCompraDetalle getDetalleFromRequest(ActionRequest request) {
+        RequerimientoCompraDetalle detalle = new RequerimientoCompraDetalle();
 
-        item.setIdItem(ParamUtil.getInteger(request, "id_item", 0));
-        item.setIdRequerimientoCompra(ParamUtil.getInteger(request, "id_requerimiento_compra", 0));
-        item.setDescripcion(ParamUtil.getString(request, "item_descripcion", null));
-        item.setCantidad(parseBigDecimal(ParamUtil.getString(request, "item_cantidad", "0")));
-        item.setUnidadMedida(ParamUtil.getString(request, "item_unidad_medida", null));
-        item.setImporteEstimado(parseBigDecimal(ParamUtil.getString(request, "item_importe_estimado", "0")));
-        item.setObservaciones(ParamUtil.getString(request, "item_observaciones", null));
+        int idDetalle = ParamUtil.getInteger(request, "id_requerimiento_detalle", 0);
+        if (idDetalle <= 0) {
+            idDetalle = ParamUtil.getInteger(request, "id_item", 0);
+        }
 
-        return item;
+        detalle.setIdRequerimientoDetalle(idDetalle);
+        detalle.setIdRequerimientoCompra(ParamUtil.getInteger(request, "id_requerimiento_compra", 0));
+        detalle.setRenglon(ParamUtil.getInteger(request, "renglon", 0));
+        detalle.setTipoArticulo(ParamUtil.getString(request, "tipo_articulo", null));
+
+        String articulo = ParamUtil.getString(request, "articulo", null);
+        if (isEmpty(articulo)) {
+            articulo = ParamUtil.getString(request, "item_descripcion", null);
+        }
+        detalle.setArticulo(articulo);
+
+        detalle.setCantidad(parseBigDecimal(ParamUtil.getString(request, "cantidad",
+                ParamUtil.getString(request, "item_cantidad", "1"))));
+
+        detalle.setUnidadMedida(ParamUtil.getString(request, "unidad_medida",
+                ParamUtil.getString(request, "item_unidad_medida", null)));
+
+        detalle.setPrecioUnitarioEstimado(parseBigDecimalNullable(
+                ParamUtil.getString(request, "precio_unitario_estimado",
+                        ParamUtil.getString(request, "item_importe_estimado", null))));
+
+        detalle.setPrecioTotalEstimado(parseBigDecimalNullable(
+                ParamUtil.getString(request, "precio_total_estimado", null)));
+
+        detalle.setObservaciones(ParamUtil.getString(request, "item_observaciones",
+                ParamUtil.getString(request, "observaciones_detalle", null)));
+
+        return detalle;
     }
 
     private Date parseDate(String value) {
@@ -295,48 +315,20 @@ public class EditarRequerimientoCompraAction extends PortletAction {
     }
 
     private BigDecimal parseBigDecimal(String value) {
-        try {
-            if (value == null || value.trim().length() == 0) {
-                return BigDecimal.ZERO;
-            }
-
-            return new BigDecimal(value.replace(".", "").replace(",", ".").trim());
-        } catch (Exception e) {
-            return BigDecimal.ZERO;
-        }
+        BigDecimal parsed = parseBigDecimalNullable(value);
+        return parsed != null ? parsed : BigDecimal.ZERO;
     }
 
-    private Integer parseIntegerNullable(String value) {
+    private BigDecimal parseBigDecimalNullable(String value) {
         try {
             if (value == null || value.trim().length() == 0) {
                 return null;
             }
 
-            String clean = value.trim().replace(".", "").replace(",", "");
-            int parsed = Integer.parseInt(clean);
-
-            return parsed > 0 ? Integer.valueOf(parsed) : null;
+            return new BigDecimal(value.replace(".", "").replace(",", ".").trim());
         } catch (Exception e) {
             return null;
         }
-    }
-
-    private Boolean parseBooleanNullable(String value) {
-        if (value == null || value.trim().length() == 0 || "0".equals(value.trim())) {
-            return null;
-        }
-
-        String clean = value.trim().toUpperCase();
-
-        if ("SI".equals(clean) || "S".equals(clean) || "TRUE".equals(clean) || "1".equals(clean)) {
-            return Boolean.TRUE;
-        }
-
-        if ("NO".equals(clean) || "N".equals(clean) || "FALSE".equals(clean) || "2".equals(clean)) {
-            return Boolean.FALSE;
-        }
-
-        return null;
     }
 
     private boolean isEmpty(String value) {

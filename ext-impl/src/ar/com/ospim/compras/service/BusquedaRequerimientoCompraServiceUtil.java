@@ -3,9 +3,8 @@ package ar.com.ospim.compras.service;
 import java.util.List;
 
 import ar.com.ospim.compras.beans.RequerimientoCompra;
-import ar.com.ospim.compras.beans.RequerimientoCompraAdjunto;
+import ar.com.ospim.compras.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.beans.RequerimientoCompraFiltro;
-import ar.com.ospim.compras.beans.RequerimientoCompraItem;
 
 public class BusquedaRequerimientoCompraServiceUtil {
 
@@ -15,6 +14,7 @@ public class BusquedaRequerimientoCompraServiceUtil {
         if (instance == null) {
             instance = new BusquedaRequerimientoCompraServiceImpl();
         }
+
         return instance;
     }
 
@@ -26,11 +26,12 @@ public class BusquedaRequerimientoCompraServiceUtil {
         return getInstance().getRequerimientoCompra(idRequerimientoCompra);
     }
 
-    public static List<RequerimientoCompraItem> getItems(int idRequerimientoCompra) throws Exception {
-        return getInstance().getItems(idRequerimientoCompra);
+    public static List<RequerimientoCompraDetalle> getDetalles(int idRequerimientoCompra) throws Exception {
+        return getInstance().getDetalles(idRequerimientoCompra);
     }
-    public static List<RequerimientoCompraAdjunto> getAdjuntos(int idRequerimientoCompra) throws Exception {
-        return getInstance().getAdjuntos(idRequerimientoCompra);
+
+    public static List<RequerimientoCompraDetalle> getItems(int idRequerimientoCompra) throws Exception {
+        return getInstance().getDetalles(idRequerimientoCompra);
     }
 
     private BusquedaRequerimientoCompraServiceUtil() {

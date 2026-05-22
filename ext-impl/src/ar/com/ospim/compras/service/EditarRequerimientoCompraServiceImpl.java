@@ -4,9 +4,9 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Types;
 
+import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.beans.RequerimientoCompra;
-import ar.com.ospim.compras.beans.RequerimientoCompraAdjunto;
-import ar.com.ospim.compras.beans.RequerimientoCompraItem;
+import ar.com.ospim.compras.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.util.ConnectionHelper;
 
 import com.liferay.portal.kernel.log.Log;
@@ -21,49 +21,48 @@ public class EditarRequerimientoCompraServiceImpl {
         CallableStatement stmt = null;
 
         try {
-            String sql = "{ ? = call guardar_requerimiento_compra(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
+            String sql = "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?) }";
+
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(sql);
             stmt.registerOutParameter(1, Types.INTEGER);
 
-            setNullableInteger(stmt, 2, requerimiento.getIdRequerimientoCompra() > 0 ? Integer.valueOf(requerimiento.getIdRequerimientoCompra()) : null);
-            setNullableInteger(stmt, 3, requerimiento.getNumero() > 0 ? Integer.valueOf(requerimiento.getNumero()) : null);
-            setNullableInteger(stmt, 4, requerimiento.getSectorId());
-            stmt.setString(5, emptyToNull(requerimiento.getSectorDescripcion()));
-            stmt.setString(6, emptyToNull(requerimiento.getSolicitanteUsr()));
-            stmt.setString(7, emptyToNull(requerimiento.getEntidad()));
-            stmt.setInt(8, requerimiento.getPrioridad());
+            setNullableInteger(
+                    stmt,
+                    2,
+                    requerimiento.getIdRequerimientoCompra() > 0
+                            ? Integer.valueOf(requerimiento.getIdRequerimientoCompra())
+                            : null
+            );
 
-            setNullableDate(stmt, 9, requerimiento.getFechaSolicitud());
-            setNullableDate(stmt, 10, requerimiento.getFechaNecesidad());
-            setNullableDate(stmt, 11, requerimiento.getFechaPedidoCotizacion());
+            setNullableInteger(
+                    stmt,
+                    3,
+                    requerimiento.getNumero() > 0
+                            ? Integer.valueOf(requerimiento.getNumero())
+                            : null
+            );
 
-            stmt.setString(12, emptyToNull(requerimiento.getDetalleRequerimiento()));
-            stmt.setString(13, emptyToNull(requerimiento.getMotivo()));
-            stmt.setString(14, requerimiento.getObservaciones());
-            stmt.setBigDecimal(15, requerimiento.getImporteEstimadoTotal());
+            stmt.setInt(
+                    4,
+                    requerimiento.getIdEstado() > 0
+                            ? requerimiento.getIdEstado()
+                            : WebKeysCompras.ESTADO_BORRADOR
+            );
 
-            Integer ordenCompra = requerimiento.getOrdenCompraNumero();
-            if ((ordenCompra == null || ordenCompra.intValue() <= 0) && requerimiento.getIdOrdenCompra() != null) {
-                ordenCompra = requerimiento.getIdOrdenCompra();
-            }
-
-            setNullableInteger(stmt, 16, ordenCompra);
-            stmt.setString(17, emptyToNull(requerimiento.getAfiliado()));
-            stmt.setString(18, emptyToNull(requerimiento.getDni()));
-            setNullableInteger(stmt, 19, requerimiento.getRpNumero());
-            stmt.setString(20, emptyToNull(requerimiento.getRpObservacion()));
-            stmt.setString(21, emptyToNull(requerimiento.getPedidosPresupuestos()));
-            stmt.setString(22, requerimiento.getComparativa());
-            stmt.setString(23, requerimiento.getCargoOspim());
-            stmt.setString(24, requerimiento.getCargoEnsalud());
-            setNullableBoolean(stmt, 25, requerimiento.getRecupero());
-            setNullableBoolean(stmt, 26, requerimiento.getCotizado());
-            stmt.setString(27, emptyToNull(requerimiento.getLocalidad()));
-            stmt.setString(28, emptyToNull(requerimiento.getProvincia()));
-            stmt.setString(29, usuario);
+            setNullableInteger(stmt, 5, requerimiento.getIdSector());
+            stmt.setBoolean(6, requerimiento.isRequiereAfiliado());
+            setNullableDate(stmt, 7, requerimiento.getFechaSolicitud());
+            stmt.setString(8, emptyToNull(requerimiento.getSolicitanteUsr()));
+            stmt.setString(9, emptyToNull(requerimiento.getSolicitanteNombre()));
+            stmt.setString(10, emptyToNull(requerimiento.getAfiliadoCuilTitular()));
+            setNullableInteger(stmt, 11, requerimiento.getAfiliadoInte());
+            stmt.setString(12, emptyToNull(requerimiento.getDescripcion()));
+            stmt.setString(13, emptyToNull(requerimiento.getObservaciones()));
+            stmt.setString(14, emptyToNull(usuario));
 
             stmt.execute();
+
             return stmt.getInt(1);
         } catch (Exception e) {
             _log.error(e);
@@ -73,25 +72,46 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
-    public int guardarItem(RequerimientoCompraItem item, String usuario) throws Exception {
+    public int guardarDetalle(RequerimientoCompraDetalle detalle, String usuario) throws Exception {
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
-            String sql = "{ ? = call guardar_requerimiento_compra_item(?,?,?,?,?,?,?) }";
+            String sql = "{ ? = call compras.guardar_requerimiento_detalle(?,?,?,?,?,?,?,?,?,?,?) }";
+
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(sql);
             stmt.registerOutParameter(1, Types.INTEGER);
 
-            setNullableInteger(stmt, 2, item.getIdItem() > 0 ? Integer.valueOf(item.getIdItem()) : null);
-            stmt.setInt(3, item.getIdRequerimientoCompra());
-            stmt.setString(4, item.getDescripcion());
-            stmt.setBigDecimal(5, item.getCantidad());
-            stmt.setString(6, item.getUnidadMedida());
-            stmt.setBigDecimal(7, item.getImporteEstimado());
-            stmt.setString(8, item.getObservaciones());
+            setNullableInteger(
+                    stmt,
+                    2,
+                    detalle.getIdRequerimientoDetalle() > 0
+                            ? Integer.valueOf(detalle.getIdRequerimientoDetalle())
+                            : null
+            );
+
+            stmt.setInt(3, detalle.getIdRequerimientoCompra());
+
+            setNullableInteger(
+                    stmt,
+                    4,
+                    detalle.getRenglon() > 0
+                            ? Integer.valueOf(detalle.getRenglon())
+                            : null
+            );
+
+            stmt.setString(5, emptyToNull(detalle.getTipoArticulo()));
+            stmt.setString(6, emptyToNull(detalle.getArticulo()));
+            stmt.setBigDecimal(7, detalle.getCantidad());
+            stmt.setString(8, emptyToNull(detalle.getUnidadMedida()));
+            stmt.setBigDecimal(9, detalle.getPrecioUnitarioEstimado());
+            stmt.setBigDecimal(10, detalle.getPrecioTotalEstimado());
+            stmt.setString(11, emptyToNull(detalle.getObservaciones()));
+            stmt.setString(12, emptyToNull(usuario));
 
             stmt.execute();
+
             return stmt.getInt(1);
         } catch (Exception e) {
             _log.error(e);
@@ -101,36 +121,40 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
-    public void borrarItem(int idItem, String usuario) throws Exception {
-        executeBaja("{call borrar_requerimiento_compra_item(?,?)}", idItem, usuario);
+    public void borrarDetalle(int idRequerimientoDetalle, String usuario) throws Exception {
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            String sql = "{call compras.borrar_requerimiento_detalle(?,?)}";
+
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql);
+            stmt.setInt(1, idRequerimientoDetalle);
+            stmt.setString(2, emptyToNull(usuario));
+
+            stmt.execute();
+        } catch (Exception e) {
+            _log.error(e);
+            throw e;
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
     }
 
     public void borrarRequerimientoCompra(int idRequerimientoCompra, String usuario) throws Exception {
-        executeBaja("{call borrar_requerimiento_compra(?,?)}", idRequerimientoCompra, usuario);
-    }
-
-    public int guardarAdjunto(RequerimientoCompraAdjunto adjunto, String usuario) throws Exception {
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
-            String sql = "{ ? = call guardar_requerimiento_compra_adjunto(?,?,?,?,?) }";
+            String sql = "{call compras.borrar_requerimiento(?,?)}";
+
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(sql);
-            stmt.registerOutParameter(1, Types.INTEGER);
-
-            stmt.setInt(2, adjunto.getIdRequerimientoCompra());
-            if (adjunto.getFileEntryId() == null) {
-                stmt.setNull(3, Types.BIGINT);
-            } else {
-                stmt.setLong(3, adjunto.getFileEntryId().longValue());
-            }
-            stmt.setString(4, adjunto.getNombreArchivo());
-            stmt.setString(5, adjunto.getTipoArchivo());
-            stmt.setString(6, usuario);
+            stmt.setInt(1, idRequerimientoCompra);
+            stmt.setString(2, emptyToNull(usuario));
 
             stmt.execute();
-            return stmt.getInt(1);
         } catch (Exception e) {
             _log.error(e);
             throw e;
@@ -139,19 +163,23 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
-    public void borrarAdjunto(int idAdjunto, String usuario) throws Exception {
-        executeBaja("{call borrar_requerimiento_compra_adjunto(?,?)}", idAdjunto, usuario);
-    }
+    public void cambiarEstado(int idRequerimientoCompra, int idEstadoNuevo, String usuario) throws Exception {
+        if (!WebKeysCompras.esEstadoValido(idEstadoNuevo)) {
+            throw new Exception("Estado de requerimiento invalido.");
+        }
 
-    private void executeBaja(String sql, int id, String usuario) throws Exception {
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
+            String sql = "{call compras.cambiar_estado_requerimiento(?,?,?)}";
+
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(sql);
-            stmt.setInt(1, id);
-            stmt.setString(2, usuario);
+            stmt.setInt(1, idRequerimientoCompra);
+            stmt.setInt(2, idEstadoNuevo);
+            stmt.setString(3, emptyToNull(usuario));
+
             stmt.execute();
         } catch (Exception e) {
             _log.error(e);
@@ -162,7 +190,7 @@ public class EditarRequerimientoCompraServiceImpl {
     }
 
     private void setNullableInteger(CallableStatement stmt, int index, Integer value) throws Exception {
-        if (value == null || value.intValue() <= 0) {
+        if (value == null) {
             stmt.setNull(index, Types.INTEGER);
         } else {
             stmt.setInt(index, value.intValue());
@@ -174,14 +202,6 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.setNull(index, Types.DATE);
         } else {
             stmt.setDate(index, new java.sql.Date(value.getTime()));
-        }
-    }
-
-    private void setNullableBoolean(CallableStatement stmt, int index, Boolean value) throws Exception {
-        if (value == null) {
-            stmt.setNull(index, Types.BOOLEAN);
-        } else {
-            stmt.setBoolean(index, value.booleanValue());
         }
     }
 

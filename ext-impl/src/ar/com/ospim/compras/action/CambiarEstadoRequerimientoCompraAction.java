@@ -11,7 +11,7 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.service.AprobacionRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.service.EditarRequerimientoCompraServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.kernel.log.Log;
@@ -33,7 +33,6 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
 
         int idRequerimientoCompra = ParamUtil.getInteger(actionRequest, "id_requerimiento_compra", 0);
         int estadoNuevo = ParamUtil.getInteger(actionRequest, "estado_nuevo", 0);
-        String comentario = ParamUtil.getString(actionRequest, "comentario", null);
 
         try {
             User user = PortalUtil.getUser(actionRequest);
@@ -42,10 +41,9 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             validarParametrosCambioEstado(idRequerimientoCompra, estadoNuevo);
             validarPermisoCambioEstado(user, estadoNuevo);
 
-            AprobacionRequerimientoCompraServiceUtil.cambiarEstado(
+            EditarRequerimientoCompraServiceUtil.cambiarEstado(
                     idRequerimientoCompra,
                     estadoNuevo,
-                    comentario,
                     usuario
             );
 
@@ -55,12 +53,12 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             );
 
             SessionMessages.add(actionRequest, "estado-requerimiento-compra-actualizado");
-            setForward(actionRequest, "portlet.compras.ver_requerimiento");
+            setForward(actionRequest, "portlet.compras.editar_requerimiento");
         } catch (Exception e) {
             _log.error(e);
             SessionErrors.add(actionRequest, e.getClass().getName());
             actionRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());
-            setForward(actionRequest, "portlet.compras.ver_requerimiento");
+            setForward(actionRequest, "portlet.compras.editar_requerimiento");
         }
     }
 
@@ -68,7 +66,7 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
                                 PortletConfig portletConfig, RenderRequest renderRequest,
                                 RenderResponse renderResponse) throws Exception {
 
-        return mapping.findForward("portlet.compras.ver_requerimiento");
+        return mapping.findForward("portlet.compras.editar_requerimiento");
     }
 
     private void validarParametrosCambioEstado(int idRequerimientoCompra, int estadoNuevo) throws Exception {
@@ -76,25 +74,14 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             throw new Exception("Debe informar el requerimiento de compra.");
         }
 
-        if (estadoNuevo <= 0) {
-            throw new Exception("Debe informar el estado nuevo.");
+        if (!WebKeysCompras.esEstadoValido(estadoNuevo)) {
+            throw new Exception("Estado de requerimiento invalido.");
         }
     }
 
     private void validarPermisoCambioEstado(User user, int estadoNuevo) throws Exception {
         if (user == null) {
             throw new Exception("No se pudo determinar el usuario actual.");
-        }
-
-        if (estadoNuevo == WebKeysCompras.ESTADO_APROBADO
-                || estadoNuevo == WebKeysCompras.ESTADO_OBSERVADO
-                || estadoNuevo == WebKeysCompras.ESTADO_RECHAZADO) {
-
-            if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_APROBAR_COMPRAS)) {
-                throw new Exception("No posee permisos para aprobar, observar o rechazar requerimientos de compras.");
-            }
-
-            return;
         }
 
         if (estadoNuevo == WebKeysCompras.ESTADO_ANULADO) {
@@ -107,7 +94,7 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
         }
 
         if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
-            throw new Exception("No posee permisos para modificar el estado del requerimiento de compra.");
+            throw new Exception("No posee permisos para modificar el requerimiento de compra.");
         }
     }
 }

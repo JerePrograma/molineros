@@ -1,6 +1,5 @@
 package ar.com.ospim.compras.beans;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -13,62 +12,40 @@ public class RequerimientoCompra {
     private int idRequerimientoCompra;
     private int numero;
 
-    private String afiliado;
-    private String dni;
+    private int idEstado;
+    private String estadoCodigo;
+    private String estadoDescripcion;
 
-    private Integer sectorId;
+    private Integer idSector;
+    private String sectorCodigo;
     private String sectorDescripcion;
+
+    private boolean requiereAfiliado;
+
+    private Date fechaSolicitud;
+
     private String solicitanteUsr;
-    private String entidad;
+    private String solicitanteNombre;
 
-    private int prioridad;
-    private int estado;
+    private String afiliadoCuilTitular;
+    private Integer afiliadoInte;
 
-    private Date fechaAlta;
+    private String descripcion;
+    private String observaciones;
+
+    private Date altaFecha;
     private String altaUsr;
-    private Date fechaModi;
+    private Date modiFecha;
     private String modiUsr;
     private Date bajaFecha;
     private String bajaUsr;
 
-    private Date fechaSolicitud;
-    private Date fechaNecesidad;
-    private Date fechaPedidoCotizacion;
-
-    private String detalleRequerimiento;
-    private String motivo;
-    private String observaciones;
-
-    private String pedidosPresupuestos;
-    private String comparativa;
-
-    private Integer rpNumero;
-    private String rpObservacion;
-
-    private BigDecimal importeEstimadoTotal;
-    private Integer idOrdenCompra;
-    private Integer ordenCompraNumero;
-    private String ordenCompraObservacion;
-
-    private String cargoOspim;
-    private String cargoEnsalud;
-    private Boolean recupero;
-    private Boolean cotizado;
-
-    private String localidad;
-    private String provincia;
-
-    private List<RequerimientoCompraItem> items;
-    private List<RequerimientoCompraHistorial> historial;
-    private List<RequerimientoCompraAdjunto> adjuntos;
+    private List<RequerimientoCompraDetalle> detalles;
 
     public RequerimientoCompra() {
-        this.estado = WebKeysCompras.ESTADO_BORRADOR;
-        this.prioridad = WebKeysCompras.PRIORIDAD_MEDIA;
-        this.importeEstimadoTotal = BigDecimal.ZERO;
-        this.items = new ArrayList<RequerimientoCompraItem>();
-        this.historial = new ArrayList<RequerimientoCompraHistorial>();
-        this.adjuntos = new ArrayList<RequerimientoCompraAdjunto>();
+        this.idEstado = WebKeysCompras.ESTADO_BORRADOR;
+        this.requiereAfiliado = false;
+        this.detalles = new ArrayList<RequerimientoCompraDetalle>();
     }
 
     public RequerimientoCompra(int idRequerimientoCompra) {
@@ -81,7 +58,7 @@ public class RequerimientoCompra {
     }
 
     public String getIdRequerimientoCompraString() {
-        return String.valueOf(idRequerimientoCompra);
+        return idRequerimientoCompra > 0 ? String.valueOf(idRequerimientoCompra) : "";
     }
 
     public void setIdRequerimientoCompra(int idRequerimientoCompra) {
@@ -100,32 +77,64 @@ public class RequerimientoCompra {
         this.numero = numero;
     }
 
-    public String getAfiliado() {
-        return afiliado;
+    public int getIdEstado() {
+        return idEstado;
     }
 
-    public void setAfiliado(String afiliado) {
-        this.afiliado = afiliado;
+    public int getEstado() {
+        return idEstado;
     }
 
-    public String getDni() {
-        return dni;
+    public void setIdEstado(int idEstado) {
+        this.idEstado = idEstado;
     }
 
-    public String getDniString() {
-        return dni != null ? dni : "";
+    public void setEstado(int estado) {
+        this.idEstado = estado;
     }
 
-    public void setDni(String dni) {
-        this.dni = dni;
+    public String getEstadoCodigo() {
+        return estadoCodigo;
+    }
+
+    public void setEstadoCodigo(String estadoCodigo) {
+        this.estadoCodigo = estadoCodigo;
+    }
+
+    public String getEstadoDescripcion() {
+        if (estadoDescripcion != null && estadoDescripcion.trim().length() > 0) {
+            return estadoDescripcion;
+        }
+
+        return WebKeysCompras.getEstadoDescripcion(idEstado);
+    }
+
+    public void setEstadoDescripcion(String estadoDescripcion) {
+        this.estadoDescripcion = estadoDescripcion;
+    }
+
+    public Integer getIdSector() {
+        return idSector;
     }
 
     public Integer getSectorId() {
-        return sectorId;
+        return idSector;
+    }
+
+    public void setIdSector(Integer idSector) {
+        this.idSector = idSector;
     }
 
     public void setSectorId(Integer sectorId) {
-        this.sectorId = sectorId;
+        this.idSector = sectorId;
+    }
+
+    public String getSectorCodigo() {
+        return sectorCodigo;
+    }
+
+    public void setSectorCodigo(String sectorCodigo) {
+        this.sectorCodigo = sectorCodigo;
     }
 
     public String getSectorDescripcion() {
@@ -136,6 +145,34 @@ public class RequerimientoCompra {
         this.sectorDescripcion = sectorDescripcion;
     }
 
+    public boolean isRequiereAfiliado() {
+        return requiereAfiliado;
+    }
+
+    public boolean getRequiereAfiliado() {
+        return requiereAfiliado;
+    }
+
+    public String getRequiereAfiliadoDescripcion() {
+        return requiereAfiliado ? "SI" : "NO";
+    }
+
+    public void setRequiereAfiliado(boolean requiereAfiliado) {
+        this.requiereAfiliado = requiereAfiliado;
+    }
+
+    public Date getFechaSolicitud() {
+        return fechaSolicitud;
+    }
+
+    public String getFechaSolicitudAsString() {
+        return fechaSolicitud != null ? DateUtils.format(fechaSolicitud, DateUtils.SHORT) : "";
+    }
+
+    public void setFechaSolicitud(Date fechaSolicitud) {
+        this.fechaSolicitud = fechaSolicitud;
+    }
+
     public String getSolicitanteUsr() {
         return solicitanteUsr;
     }
@@ -144,48 +181,76 @@ public class RequerimientoCompra {
         this.solicitanteUsr = solicitanteUsr;
     }
 
-    public String getEntidad() {
-        return entidad;
+    public String getSolicitanteNombre() {
+        return solicitanteNombre;
     }
 
-    public void setEntidad(String entidad) {
-        this.entidad = entidad;
+    public void setSolicitanteNombre(String solicitanteNombre) {
+        this.solicitanteNombre = solicitanteNombre;
     }
 
-    public int getPrioridad() {
-        return prioridad;
+    public String getAfiliadoCuilTitular() {
+        return afiliadoCuilTitular;
     }
 
-    public String getPrioridadDescripcion() {
-        return WebKeysCompras.getPrioridadDescripcion(prioridad);
+    public void setAfiliadoCuilTitular(String afiliadoCuilTitular) {
+        this.afiliadoCuilTitular = afiliadoCuilTitular;
     }
 
-    public void setPrioridad(int prioridad) {
-        this.prioridad = prioridad;
+    public Integer getAfiliadoInte() {
+        return afiliadoInte;
     }
 
-    public int getEstado() {
-        return estado;
+    public String getAfiliadoInteString() {
+        return afiliadoInte != null ? String.valueOf(afiliadoInte) : "";
     }
 
-    public String getEstadoDescripcion() {
-        return WebKeysCompras.getEstadoDescripcion(estado);
+    public void setAfiliadoInte(Integer afiliadoInte) {
+        this.afiliadoInte = afiliadoInte;
     }
 
-    public void setEstado(int estado) {
-        this.estado = estado;
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public String getDescripcionVisible() {
+        return descripcion != null ? descripcion : "";
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public String getObservaciones() {
+        return observaciones;
+    }
+
+    public void setObservaciones(String observaciones) {
+        this.observaciones = observaciones;
+    }
+
+    public Date getAltaFecha() {
+        return altaFecha;
     }
 
     public Date getFechaAlta() {
-        return fechaAlta;
+        return altaFecha;
+    }
+
+    public String getAltaFechaAsString() {
+        return altaFecha != null ? DateUtils.format(altaFecha, DateUtils.SHORT) : "";
     }
 
     public String getFechaAltaAsString() {
-        return fechaAlta != null ? DateUtils.format(fechaAlta, DateUtils.SHORT) : "";
+        return getAltaFechaAsString();
+    }
+
+    public void setAltaFecha(Date altaFecha) {
+        this.altaFecha = altaFecha;
     }
 
     public void setFechaAlta(Date fechaAlta) {
-        this.fechaAlta = fechaAlta;
+        this.altaFecha = fechaAlta;
     }
 
     public String getAltaUsr() {
@@ -196,12 +261,20 @@ public class RequerimientoCompra {
         this.altaUsr = altaUsr;
     }
 
+    public Date getModiFecha() {
+        return modiFecha;
+    }
+
     public Date getFechaModi() {
-        return fechaModi;
+        return modiFecha;
+    }
+
+    public void setModiFecha(Date modiFecha) {
+        this.modiFecha = modiFecha;
     }
 
     public void setFechaModi(Date fechaModi) {
-        this.fechaModi = fechaModi;
+        this.modiFecha = fechaModi;
     }
 
     public String getModiUsr() {
@@ -232,251 +305,35 @@ public class RequerimientoCompra {
         this.bajaUsr = bajaUsr;
     }
 
-    public Date getFechaSolicitud() {
-        return fechaSolicitud;
+    public List<RequerimientoCompraDetalle> getDetalles() {
+        return detalles;
     }
 
-    public String getFechaSolicitudAsString() {
-        return fechaSolicitud != null ? DateUtils.format(fechaSolicitud, DateUtils.SHORT) : "";
+    public void setDetalles(List<RequerimientoCompraDetalle> detalles) {
+        this.detalles = detalles != null ? detalles : new ArrayList<RequerimientoCompraDetalle>();
     }
 
-    public void setFechaSolicitud(Date fechaSolicitud) {
-        this.fechaSolicitud = fechaSolicitud;
+    public List<RequerimientoCompraDetalle> getItems() {
+        return detalles;
     }
 
-    public Date getFechaNecesidad() {
-        return fechaNecesidad;
-    }
-
-    public String getFechaNecesidadAsString() {
-        return fechaNecesidad != null ? DateUtils.format(fechaNecesidad, DateUtils.SHORT) : "";
-    }
-
-    public void setFechaNecesidad(Date fechaNecesidad) {
-        this.fechaNecesidad = fechaNecesidad;
-    }
-
-    public Date getFechaPedidoCotizacion() {
-        return fechaPedidoCotizacion;
-    }
-
-    public String getFechaPedidoCotizacionAsString() {
-        return fechaPedidoCotizacion != null ? DateUtils.format(fechaPedidoCotizacion, DateUtils.SHORT) : "";
-    }
-
-    public void setFechaPedidoCotizacion(Date fechaPedidoCotizacion) {
-        this.fechaPedidoCotizacion = fechaPedidoCotizacion;
-    }
-
-    public String getDetalleRequerimiento() {
-        return detalleRequerimiento;
-    }
-
-    public void setDetalleRequerimiento(String detalleRequerimiento) {
-        this.detalleRequerimiento = detalleRequerimiento;
-    }
-
-    public String getMotivo() {
-        return motivo;
-    }
-
-    public String getMotivoVisible() {
-        if (motivo != null && motivo.trim().length() > 0) {
-            return motivo;
-        }
-
-        return detalleRequerimiento != null ? detalleRequerimiento : "";
-    }
-
-    public void setMotivo(String motivo) {
-        this.motivo = motivo;
-    }
-
-    public String getObservaciones() {
-        return observaciones;
-    }
-
-    public void setObservaciones(String observaciones) {
-        this.observaciones = observaciones;
-    }
-
-    public String getPedidosPresupuestos() {
-        return pedidosPresupuestos;
-    }
-
-    public void setPedidosPresupuestos(String pedidosPresupuestos) {
-        this.pedidosPresupuestos = pedidosPresupuestos;
-    }
-
-    public String getComparativa() {
-        return comparativa;
-    }
-
-    public void setComparativa(String comparativa) {
-        this.comparativa = comparativa;
-    }
-
-    public Integer getRpNumero() {
-        return rpNumero;
-    }
-
-    public String getRpNumeroString() {
-        return rpNumero != null && rpNumero.intValue() > 0 ? String.valueOf(rpNumero) : "";
-    }
-
-    public void setRpNumero(Integer rpNumero) {
-        this.rpNumero = rpNumero;
-    }
-
-    public String getRpObservacion() {
-        return rpObservacion;
-    }
-
-    public void setRpObservacion(String rpObservacion) {
-        this.rpObservacion = rpObservacion;
-    }
-
-    public BigDecimal getImporteEstimadoTotal() {
-        return importeEstimadoTotal;
-    }
-
-    public String getImporteEstimadoTotalString() {
-        return importeEstimadoTotal != null ? importeEstimadoTotal.toString() : "0";
-    }
-
-    public void setImporteEstimadoTotal(BigDecimal importeEstimadoTotal) {
-        this.importeEstimadoTotal = importeEstimadoTotal;
-    }
-
-    public Integer getIdOrdenCompra() {
-        return idOrdenCompra;
-    }
-
-    public String getIdOrdenCompraString() {
-        return idOrdenCompra != null && idOrdenCompra.intValue() > 0 ? String.valueOf(idOrdenCompra) : "";
-    }
-
-    public void setIdOrdenCompra(Integer idOrdenCompra) {
-        this.idOrdenCompra = idOrdenCompra;
-    }
-
-    public Integer getOrdenCompraNumero() {
-        return ordenCompraNumero;
-    }
-
-    public String getOrdenCompraNumeroString() {
-        if (ordenCompraNumero != null && ordenCompraNumero.intValue() > 0) {
-            return String.valueOf(ordenCompraNumero);
-        }
-
-        return getIdOrdenCompraString();
-    }
-
-    public void setOrdenCompraNumero(Integer ordenCompraNumero) {
-        this.ordenCompraNumero = ordenCompraNumero;
-    }
-
-    public String getOrdenCompraObservacion() {
-        return ordenCompraObservacion;
-    }
-
-    public void setOrdenCompraObservacion(String ordenCompraObservacion) {
-        this.ordenCompraObservacion = ordenCompraObservacion;
-    }
-
-    public String getCargoOspim() {
-        return cargoOspim;
-    }
-
-    public void setCargoOspim(String cargoOspim) {
-        this.cargoOspim = cargoOspim;
-    }
-
-    public String getCargoEnsalud() {
-        return cargoEnsalud;
-    }
-
-    public void setCargoEnsalud(String cargoEnsalud) {
-        this.cargoEnsalud = cargoEnsalud;
-    }
-
-    public Boolean getRecupero() {
-        return recupero;
-    }
-
-    public String getRecuperoDescripcion() {
-        return WebKeysCompras.getBooleanDescripcion(recupero);
-    }
-
-    public void setRecupero(Boolean recupero) {
-        this.recupero = recupero;
-    }
-
-    public Boolean getCotizado() {
-        return cotizado;
-    }
-
-    public String getCotizadoDescripcion() {
-        return WebKeysCompras.getBooleanDescripcion(cotizado);
-    }
-
-    public void setCotizado(Boolean cotizado) {
-        this.cotizado = cotizado;
-    }
-
-    public boolean isCotizado() {
-        return Boolean.TRUE.equals(cotizado);
-    }
-
-    public boolean isRecupero() {
-        return Boolean.TRUE.equals(recupero);
-    }
-
-    public String getLocalidad() {
-        return localidad;
-    }
-
-    public void setLocalidad(String localidad) {
-        this.localidad = localidad;
-    }
-
-    public String getProvincia() {
-        return provincia;
-    }
-
-    public void setProvincia(String provincia) {
-        this.provincia = provincia;
-    }
-
-    public List<RequerimientoCompraItem> getItems() {
-        return items;
-    }
-
-    public void setItems(List<RequerimientoCompraItem> items) {
-        this.items = items;
-    }
-
-    public List<RequerimientoCompraHistorial> getHistorial() {
-        return historial;
-    }
-
-    public void setHistorial(List<RequerimientoCompraHistorial> historial) {
-        this.historial = historial;
-    }
-
-    public List<RequerimientoCompraAdjunto> getAdjuntos() {
-        return adjuntos;
-    }
-
-    public void setAdjuntos(List<RequerimientoCompraAdjunto> adjuntos) {
-        this.adjuntos = adjuntos;
+    public void setItems(List<RequerimientoCompraDetalle> items) {
+        setDetalles(items);
     }
 
     public boolean isEditable() {
-        return WebKeysCompras.esEditable(estado);
+        return WebKeysCompras.esEditable(idEstado) && bajaFecha == null;
     }
 
     public boolean isAnulado() {
-        return estado == WebKeysCompras.ESTADO_ANULADO || bajaFecha != null;
+        return idEstado == WebKeysCompras.ESTADO_ANULADO || bajaFecha != null;
+    }
+
+    public boolean puedeSolicitar() {
+        return WebKeysCompras.puedeSolicitar(idEstado) && bajaFecha == null;
+    }
+
+    public boolean puedeAnular() {
+        return WebKeysCompras.puedeAnular(idEstado) && bajaFecha == null;
     }
 }
