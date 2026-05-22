@@ -7031,6 +7031,9 @@
                     path="portlet.compras.error" />
         </action>
 
+        <action
+                path="/compras/buscar_afiliados_requerimiento_sesion"
+                forward="portlet.compras.afiliados.result.search" />
     </action-mappings>
   
 </struts-config>
