@@ -23,10 +23,12 @@ private String jsDetalleCompraAttr(String value) {
 %>
 
 <%
-RequerimientoCompra reqDetalle = (RequerimientoCompra)renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
+RequerimientoCompra reqDetalle =
+        (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
 
 if (reqDetalle == null) {
-    reqDetalle = (RequerimientoCompra)renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW);
+    reqDetalle =
+            (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW);
 }
 
 if (reqDetalle == null) {
@@ -41,7 +43,23 @@ if (reqDetalle == null) {
     reqDetalle = new RequerimientoCompra();
 }
 
-boolean puedeABMDetalle = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS) && reqDetalle.isEditable();
+Object soloLecturaAttrDetalle =
+        renderRequest.getAttribute(WebKeysCompras.SOLO_LECTURA_ATTR);
+
+String strutsActionDetalle = ParamUtil.getString(renderRequest, "struts_action", "");
+String modoDetalle = ParamUtil.getString(renderRequest, "modo", "");
+
+boolean soloLecturaDetalle =
+        Boolean.TRUE.equals(soloLecturaAttrDetalle)
+        || ParamUtil.getBoolean(request, "solo_lectura", false)
+        || "/compras/ver_requerimiento".equals(strutsActionDetalle)
+        || "ver".equalsIgnoreCase(modoDetalle);
+
+boolean puedeABMDetalle =
+        !soloLecturaDetalle
+        && user != null
+        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
+        && reqDetalle.isEditable();
 
 List<RequerimientoCompraDetalle> detalles = reqDetalle.getDetalles();
 
@@ -89,7 +107,9 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
             for (int i = 0; i < detalles.size(); i++) {
                 RequerimientoCompraDetalle detalle = detalles.get(i);
 
-                String rowClass = (i % 2 == 0) ? "portlet-section-body results-row" : "portlet-section-alternate results-row alt";
+                String rowClass = (i % 2 == 0)
+                        ? "portlet-section-body results-row"
+                        : "portlet-section-alternate results-row alt";
         %>
                 <tr class="<%= rowClass %>">
                     <td><%= HtmlUtil.escape(detalle.getRenglonString()) %></td>
@@ -111,10 +131,21 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
 
                             &nbsp;
 
-                            <form action="<%= detalleActionURL.toString() %>" method="post" name="<portlet:namespace />deleteDetalleFm<%= detalle.getIdRequerimientoDetalle() %>" style="display:inline;">
-                                <input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>" value="deleteItem" />
-                                <input type="hidden" name="<portlet:namespace />id_requerimiento_compra" value="<%= reqDetalle.getIdRequerimientoCompra() %>" />
-                                <input type="hidden" name="<portlet:namespace />id_requerimiento_detalle" value="<%= detalle.getIdRequerimientoDetalle() %>" />
+                            <form action="<%= detalleActionURL.toString() %>"
+                                  method="post"
+                                  name="<portlet:namespace />deleteDetalleFm<%= detalle.getIdRequerimientoDetalle() %>"
+                                  style="display:inline;">
+                                <input type="hidden"
+                                       name="<portlet:namespace /><%= Constants.CMD %>"
+                                       value="deleteItem" />
+
+                                <input type="hidden"
+                                       name="<portlet:namespace />id_requerimiento_compra"
+                                       value="<%= reqDetalle.getIdRequerimientoCompra() %>" />
+
+                                <input type="hidden"
+                                       name="<portlet:namespace />id_requerimiento_detalle"
+                                       value="<%= detalle.getIdRequerimientoDetalle() %>" />
 
                                 <input
                                     type="button"
@@ -134,10 +165,23 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
     <% if (puedeABMDetalle) { %>
         <br />
 
-        <form action="<%= detalleActionURL.toString() %>" method="post" name="<portlet:namespace />detalleFm">
-            <input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>" id="<portlet:namespace />detalle_cmd" value="addItem" />
-            <input type="hidden" name="<portlet:namespace />id_requerimiento_detalle" id="<portlet:namespace />id_requerimiento_detalle" value="0" />
-            <input type="hidden" name="<portlet:namespace />id_requerimiento_compra" value="<%= reqDetalle.getIdRequerimientoCompra() %>" />
+        <form action="<%= detalleActionURL.toString() %>"
+              method="post"
+              name="<portlet:namespace />detalleFm">
+
+            <input type="hidden"
+                   name="<portlet:namespace /><%= Constants.CMD %>"
+                   id="<portlet:namespace />detalle_cmd"
+                   value="addItem" />
+
+            <input type="hidden"
+                   name="<portlet:namespace />id_requerimiento_detalle"
+                   id="<portlet:namespace />id_requerimiento_detalle"
+                   value="0" />
+
+            <input type="hidden"
+                   name="<portlet:namespace />id_requerimiento_compra"
+                   value="<%= reqDetalle.getIdRequerimientoCompra() %>" />
 
             <table class="lfr-table" width="100%">
                 <tr>
@@ -265,6 +309,7 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
     <% } %>
 </fieldset>
 
+<% if (puedeABMDetalle) { %>
 <script type="text/javascript">
     function <portlet:namespace />detalleValue(value) {
         return value == null ? '' : value;
@@ -320,3 +365,4 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
         submitForm(document.<portlet:namespace />detalleFm);
     }
 </script>
+<% } %>

@@ -5,7 +5,8 @@
 <%
 int idRequerimientoCompra = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
 
-RequerimientoCompra req = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW);
+RequerimientoCompra req =
+        (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW);
 
 if (req == null && idRequerimientoCompra > 0) {
     req = BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimientoCompra);
@@ -16,10 +17,21 @@ if (req == null) {
 }
 
 renderRequest.setAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW, req);
+renderRequest.setAttribute(WebKeysCompras.SOLO_LECTURA_ATTR, Boolean.TRUE);
 
-boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
-boolean puedeAnular = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS) || puedeABM;
-boolean puedeCambiarEstado = (req.puedeSolicitar() && puedeABM) || (req.puedeAnular() && puedeAnular);
+boolean soloLectura = true;
+
+boolean puedeABM =
+        user != null
+        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+
+boolean puedeAnular =
+        user != null
+        && (PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS) || puedeABM);
+
+boolean puedeCambiarEstado =
+        !soloLectura
+        && ((req.puedeSolicitar() && puedeABM) || (req.puedeAnular() && puedeAnular));
 
 PortletURL volverURL = renderResponse.createRenderURL();
 volverURL.setWindowState(WindowState.MAXIMIZED);
@@ -130,11 +142,18 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
     </table>
 </fieldset>
 
-<liferay-util:include page="/html/portlet/compras/requerimiento_detalle.jsp" />
+<liferay-util:include page="/html/portlet/compras/requerimiento_detalle.jsp">
+    <liferay-util:param name="solo_lectura" value="true" />
+</liferay-util:include>
 
 <c:if test="<%= puedeCambiarEstado %>">
-    <form action="<%= cambiarEstadoURL.toString() %>" method="post" name="<portlet:namespace />cambioEstadoFm">
-        <input type="hidden" name="<portlet:namespace />id_requerimiento_compra" value="<%= req.getIdRequerimientoCompra() %>" />
+    <form action="<%= cambiarEstadoURL.toString() %>"
+          method="post"
+          name="<portlet:namespace />cambioEstadoFm">
+
+        <input type="hidden"
+               name="<portlet:namespace />id_requerimiento_compra"
+               value="<%= req.getIdRequerimientoCompra() %>" />
 
         <fieldset class="block-labels">
             <legend>Cambio de estado</legend>
@@ -143,7 +162,8 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
                 <tr>
                     <td><label>Estado nuevo:</label></td>
                     <td>
-                        <select name="<portlet:namespace />estado_nuevo" id="<portlet:namespace />estado_nuevo">
+                        <select name="<portlet:namespace />estado_nuevo"
+                                id="<portlet:namespace />estado_nuevo">
                             <option value="">Seleccione</option>
 
                             <c:if test="<%= req.puedeSolicitar() && puedeABM %>">
@@ -157,7 +177,9 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
                     </td>
 
                     <td>
-                        <input type="button" value="Aplicar" onClick="<portlet:namespace />cambiarEstado();" />
+                        <input type="button"
+                               value="Aplicar"
+                               onClick="<portlet:namespace />cambiarEstado();" />
                     </td>
                 </tr>
             </table>
@@ -169,15 +191,21 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
     <tr>
         <td>
             <c:if test="<%= puedeABM && req.isEditable() %>">
-                <input type="button" value="Editar" onClick="window.location.href='<%= editarURL.toString() %>';" />
+                <input type="button"
+                       value="Editar"
+                       onClick="window.location.href='<%= editarURL.toString() %>';" />
+
                 &nbsp;&nbsp;
             </c:if>
 
-            <input type="button" value="Volver" onClick="window.location.href='<%= volverURL.toString() %>';" />
+            <input type="button"
+                   value="Volver"
+                   onClick="window.location.href='<%= volverURL.toString() %>';" />
         </td>
     </tr>
 </table>
 
+<c:if test="<%= puedeCambiarEstado %>">
 <script type="text/javascript">
     function <portlet:namespace />cambiarEstado() {
         if (jQuery('#<portlet:namespace />estado_nuevo').val() == '') {
@@ -189,3 +217,4 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
         submitForm(document.<portlet:namespace />cambioEstadoFm);
     }
 </script>
+</c:if>

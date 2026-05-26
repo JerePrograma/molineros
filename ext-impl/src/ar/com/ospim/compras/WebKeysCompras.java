@@ -35,6 +35,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String ESTADO_CODIGO_BORRADOR = "BORRADOR";
     public static final String ESTADO_CODIGO_SOLICITADO = "SOLICITADO";
     public static final String ESTADO_CODIGO_ANULADO = "ANULADO";
+    public static final String SOLO_LECTURA_ATTR = "REQUERIMIENTO_COMPRA_SOLO_LECTURA";
 
     public static String getEstadoDescripcion(int estado) {
         switch (estado) {

@@ -3,17 +3,44 @@
 <portlet:defineObjects/>
 
 <%
-RequerimientoCompra req = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
+RequerimientoCompra req =
+        (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
+
+if (req == null) {
+    req = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW);
+}
 
 if (req == null) {
     req = new RequerimientoCompra();
 }
 
 boolean esNuevo = req.getIdRequerimientoCompra() == 0;
-boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
-boolean editable = esNuevo || req.isEditable();
+boolean puedeABM = user != null && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
 
-List<RequerimientoCompraSector> sectores = (List<RequerimientoCompraSector>) renderRequest.getAttribute(WebKeysCompras.SECTORES_REQUERIMIENTO_COMPRA);
+Object soloLecturaAttr = renderRequest.getAttribute(WebKeysCompras.SOLO_LECTURA_ATTR);
+
+String strutsActionActual = ParamUtil.getString(renderRequest, "struts_action", "");
+String modo = ParamUtil.getString(renderRequest, "modo", "");
+
+boolean soloLectura =
+        Boolean.TRUE.equals(soloLecturaAttr)
+        || "/compras/ver_requerimiento".equals(strutsActionActual)
+        || "ver".equalsIgnoreCase(modo);
+
+boolean editablePorEstado = esNuevo || req.isEditable();
+
+boolean puedeEditarPantalla =
+        puedeABM
+        && editablePorEstado
+        && !soloLectura;
+
+renderRequest.setAttribute(
+        WebKeysCompras.SOLO_LECTURA_ATTR,
+        Boolean.valueOf(soloLectura)
+);
+
+List<RequerimientoCompraSector> sectores =
+        (List<RequerimientoCompraSector>) renderRequest.getAttribute(WebKeysCompras.SECTORES_REQUERIMIENTO_COMPRA);
 
 if (sectores == null) {
     try {
@@ -32,13 +59,34 @@ verURL.setWindowState(WindowState.MAXIMIZED);
 verURL.setParameter("struts_action", "/compras/ver_requerimiento");
 verURL.setParameter("id_requerimiento_compra", req.getIdRequerimientoCompraString());
 
+PortletURL editarURL = renderResponse.createRenderURL();
+editarURL.setWindowState(WindowState.MAXIMIZED);
+editarURL.setParameter("struts_action", "/compras/editar_requerimiento");
+editarURL.setParameter("id_requerimiento_compra", req.getIdRequerimientoCompraString());
+
 PortletURL actionURL = renderResponse.createActionURL();
 actionURL.setWindowState(WindowState.MAXIMIZED);
 actionURL.setParameter("struts_action", "/compras/editar_requerimiento");
 
-String solicitanteDefault = req.getSolicitanteUsr() != null ? req.getSolicitanteUsr() : (user != null ? user.getScreenName() : "");
-String solicitanteNombreDefault = req.getSolicitanteNombre() != null ? req.getSolicitanteNombre() : (user != null ? user.getFullName() : "");
+String solicitanteDefault =
+        req.getSolicitanteUsr() != null ? req.getSolicitanteUsr() : (user != null ? user.getScreenName() : "");
+
+String solicitanteNombreDefault =
+        req.getSolicitanteNombre() != null ? req.getSolicitanteNombre() : (user != null ? user.getFullName() : "");
+
 String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId().intValue()) : "";
+
+String sectorDescripcionSoloLectura = "";
+
+for (int i = 0; i < sectores.size(); i++) {
+    RequerimientoCompraSector sector = sectores.get(i);
+    String sectorId = String.valueOf(sector.getIdSector());
+
+    if (reqSectorId.equals(sectorId)) {
+        sectorDescripcionSoloLectura = sector.getDescripcionVisible();
+        break;
+    }
+}
 
 String afiliadoCuilTitular = req.getAfiliadoCuilTitularVisible();
 
@@ -56,7 +104,8 @@ String afiliadoIdSeccional = "";
 String afiliadoSeccional = "";
 
 try {
-    Object valorAfiliadoIdSeccional = req.getClass().getMethod("getAfiliadoIdSeccionalString", new Class[0]).invoke(req, new Object[0]);
+    Object valorAfiliadoIdSeccional =
+            req.getClass().getMethod("getAfiliadoIdSeccionalString", new Class[0]).invoke(req, new Object[0]);
 
     if (valorAfiliadoIdSeccional != null) {
         afiliadoIdSeccional = String.valueOf(valorAfiliadoIdSeccional);
@@ -66,7 +115,8 @@ try {
 }
 
 try {
-    Object valorAfiliadoSeccional = req.getClass().getMethod("getAfiliadoSeccionalVisible", new Class[0]).invoke(req, new Object[0]);
+    Object valorAfiliadoSeccional =
+            req.getClass().getMethod("getAfiliadoSeccionalVisible", new Class[0]).invoke(req, new Object[0]);
 
     if (valorAfiliadoSeccional != null) {
         afiliadoSeccional = String.valueOf(valorAfiliadoSeccional);
@@ -76,11 +126,11 @@ try {
 }
 %>
 
-<c:if test="<%= !puedeABM %>">
+<c:if test="<%= !soloLectura && !puedeABM %>">
     <div class="portlet-msg-error">No posee permisos para editar requerimientos de compras.</div>
 </c:if>
 
-<c:if test="<%= puedeABM && !editable %>">
+<c:if test="<%= !soloLectura && puedeABM && !editablePorEstado %>">
     <div class="portlet-msg-info">El requerimiento solo puede editarse en estado Borrador.</div>
 
     <table class="lfr-table">
@@ -100,7 +150,106 @@ try {
     </table>
 </c:if>
 
-<c:if test="<%= puedeABM && editable %>">
+<c:if test="<%= soloLectura %>">
+    <fieldset class="block-labels">
+        <legend>Ver requerimiento de compra</legend>
+
+        <table class="lfr-table">
+            <tr>
+                <td><label>Estado:</label></td>
+                <td><strong><%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %></strong></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>Fecha solicitud:</label></td>
+                <td><%= HtmlUtil.escape(req.getFechaSolicitudAsString()) %></td>
+
+                <td><label>Sector:</label></td>
+                <td><%= HtmlUtil.escape(sectorDescripcionSoloLectura) %></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>Solicitante usuario:</label></td>
+                <td><%= HtmlUtil.escape(solicitanteDefault) %></td>
+
+                <td><label>Solicitante nombre:</label></td>
+                <td><%= HtmlUtil.escape(solicitanteNombreDefault) %></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>CUIL titular:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoCuilTitular) %></td>
+
+                <td><label>Integrante:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoInte) %></td>
+            </tr>
+
+            <tr>
+                <td><label>Seccional:</label></td>
+                <td colspan="3">
+                    <%= HtmlUtil.escape(afiliadoIdSeccional) %>
+                    <%= afiliadoSeccional.length() > 0 ? " - " + HtmlUtil.escape(afiliadoSeccional) : "" %>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>Descripci&oacute;n:</label></td>
+                <td colspan="3"><%= HtmlUtil.escape(req.getDescripcionVisible()) %></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>Observaciones:</label></td>
+                <td colspan="3"><%= HtmlUtil.escape(req.getObservacionesVisible()) %></td>
+            </tr>
+        </table>
+    </fieldset>
+
+    <table class="lfr-table">
+        <tr>
+            <td>
+                <c:if test="<%= puedeABM && editablePorEstado %>">
+                    <input type="button"
+                           value="Editar"
+                           onClick="window.location.href='<%= editarURL.toString() %>';" />
+
+                    &nbsp;&nbsp;
+                </c:if>
+
+                <input type="button"
+                       value="Volver"
+                       onClick="window.location.href='<%= volverURL.toString() %>';" />
+            </td>
+        </tr>
+    </table>
+
+    <c:if test="<%= req.getIdRequerimientoCompra() > 0 %>">
+        <liferay-util:include page="/html/portlet/compras/requerimiento_detalle.jsp">
+            <liferay-util:param name="solo_lectura" value="true" />
+        </liferay-util:include>
+    </c:if>
+</c:if>
+
+<c:if test="<%= puedeEditarPantalla %>">
     <form action="<%= actionURL.toString() %>" method="post" name="<portlet:namespace />fm">
         <input type="hidden"
                name="<portlet:namespace /><%= Constants.CMD %>"
@@ -196,7 +345,7 @@ try {
             <legend>Afiliado</legend>
 
             <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
-                <liferay-util:param name="edit_mode" value="<%= String.valueOf(true) %>" />
+                <liferay-util:param name="edit_mode" value="<%= String.valueOf(puedeEditarPantalla) %>" />
             </liferay-util:include>
 
             <input type="hidden"
@@ -278,15 +427,18 @@ try {
     </form>
 
     <c:if test="<%= req.getIdRequerimientoCompra() > 0 %>">
-        <liferay-util:include page="/html/portlet/compras/requerimiento_detalle.jsp" />
+        <liferay-util:include page="/html/portlet/compras/requerimiento_detalle.jsp">
+            <liferay-util:param name="solo_lectura" value="false" />
+        </liferay-util:include>
     </c:if>
 </c:if>
 
+<c:if test="<%= puedeEditarPantalla %>">
 <script type="text/javascript">
     /*
      * Overrides locales para Compras.
      *
-     * No se modifica el módulo Autorizaciones.
+     * No se modifica el modulo Autorizaciones.
      * No se crean actions duplicadas en Compras.
      * Se reutilizan:
      * - /autorizaciones/buscar_afiliados
@@ -476,14 +628,6 @@ try {
         }
     }
 
-    /*
-     * Override clave:
-     * El JSP de Autorizaciones llama a seleccionaAfiliado(),
-     * y seleccionaAfiliado() llama a seleccionaCamposAfiliado().
-     *
-     * Pisamos esta función para que Compras no ejecute lógica extra de Autorizaciones
-     * ni AJAX a /autorizaciones/buscar_afiliado_datos.
-     */
     function seleccionaCamposAfiliado(cuil, inte, docu_tipo, docu_nro, nombre, apellido, id_secc, desc_secc, ospim, uoma, amtima, bajaFecha, nombre_plan, id_plan, fecha_alta_af, incapacidad_af, id_tercerizadora, afi_tercerizadora, reclamoPrestacional, nroSocioPrev, nroCredenPrev, fechaRecepcion, tieneAntecedentes) {
         jQuery('#<portlet:namespace />cuil').val(cuil);
         jQuery('#<portlet:namespace />inte').val(inte);
@@ -616,7 +760,7 @@ try {
         }
 
         if (<portlet:namespace />trimValue('descripcion') == '') {
-            alert('Debe informar descripci&oacute;n del requerimiento.');
+            alert('Debe informar descripcion del requerimiento.');
             jQuery('#<portlet:namespace />descripcion').focus();
             return;
         }
@@ -666,3 +810,4 @@ try {
         });
     });
 </script>
+</c:if>

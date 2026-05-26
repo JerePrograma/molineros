@@ -55,6 +55,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 if (requerimiento.getIdRequerimientoCompra() > 0) {
                     RequerimientoCompra existente =
                             validarRequerimientoEditable(requerimiento.getIdRequerimientoCompra());
+
                     requerimiento.setIdEstado(existente.getIdEstado());
                 } else {
                     requerimiento.setIdEstado(WebKeysCompras.ESTADO_BORRADOR);
@@ -70,11 +71,13 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-guardado");
                 setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+
                 return;
             }
 
             if ("addItem".equals(cmd) || "updateItem".equals(cmd)) {
                 RequerimientoCompraDetalle detalle = getDetalleFromRequest(actionRequest);
+
                 validarRequerimientoEditable(detalle.getIdRequerimientoCompra());
                 validarDetalle(detalle);
 
@@ -84,6 +87,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-item-guardado");
                 setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+
                 return;
             }
 
@@ -99,12 +103,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 }
 
                 validarRequerimientoEditable(idRequerimientoCompra);
+
                 EditarRequerimientoCompraServiceUtil.borrarDetalle(idDetalle, usuario);
 
                 setIdRequerimientoEnRequest(actionRequest, actionResponse, idRequerimientoCompra);
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-item-borrado");
                 setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+
                 return;
             }
 
@@ -114,10 +120,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 }
 
                 validarRequerimientoPuedeAnular(idRequerimientoCompra);
+
                 EditarRequerimientoCompraServiceUtil.borrarRequerimientoCompra(idRequerimientoCompra, usuario);
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-borrado");
                 setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_VIEW);
+
                 return;
             }
 
@@ -128,6 +136,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
         } catch (Exception e) {
             _log.error(e);
+
             SessionErrors.add(actionRequest, e.getClass().getName());
             actionRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());
 
@@ -147,6 +156,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             int idRequerimientoCompra = ParamUtil.getInteger(renderRequest, "id_requerimiento_compra", 0);
 
             Object idAttr = renderRequest.getAttribute(WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION);
+
             if (idRequerimientoCompra == 0 && idAttr instanceof Integer) {
                 idRequerimientoCompra = ((Integer) idAttr).intValue();
             }
@@ -165,6 +175,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             cargarCatalogos(renderRequest);
 
+            boolean soloLectura = esModoSoloLectura(renderRequest);
+
+            renderRequest.setAttribute(WebKeysCompras.SOLO_LECTURA_ATTR, Boolean.valueOf(soloLectura));
             renderRequest.setAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION, requerimiento);
             renderRequest.setAttribute(WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION, requerimiento.getDetalles());
         } catch (Exception e) {
@@ -175,11 +188,21 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
     }
 
+    private boolean esModoSoloLectura(RenderRequest renderRequest) {
+        String strutsAction = ParamUtil.getString(renderRequest, "struts_action", "");
+        String modo = ParamUtil.getString(renderRequest, "modo", "");
+
+        return "/compras/ver_requerimiento".equals(strutsAction)
+                || "ver".equalsIgnoreCase(modo);
+    }
+
     private RequerimientoCompra crearRequerimientoNuevo(RenderRequest renderRequest) throws Exception {
         RequerimientoCompra requerimiento = new RequerimientoCompra();
+
         requerimiento.setFechaSolicitud(new Date());
 
         User user = PortalUtil.getUser(renderRequest);
+
         if (user != null) {
             requerimiento.setSolicitanteUsr(user.getScreenName());
             requerimiento.setSolicitanteNombre(user.getFullName());
@@ -341,15 +364,19 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         requerimiento.setNumero(ParamUtil.getInteger(request, "numero", 0));
 
         int idEstado = ParamUtil.getInteger(request, "id_estado", WebKeysCompras.ESTADO_BORRADOR);
+
         if (idEstado <= 0) {
             idEstado = ParamUtil.getInteger(request, "estado", WebKeysCompras.ESTADO_BORRADOR);
         }
+
         requerimiento.setIdEstado(idEstado);
 
         int idSector = ParamUtil.getInteger(request, "id_sector", 0);
+
         if (idSector <= 0) {
             idSector = ParamUtil.getInteger(request, "sector_id", 0);
         }
+
         requerimiento.setIdSector(idSector > 0 ? Integer.valueOf(idSector) : null);
 
         requerimiento.setRequiereAfiliado(ParamUtil.getBoolean(request, "requiere_afiliado", false));
@@ -361,6 +388,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         requerimiento.setAfiliadoCuilTitular(ParamUtil.getString(request, "afiliado_cuil_titular", null));
 
         int afiliadoInte = ParamUtil.getInteger(request, "afiliado_inte", -1);
+
         requerimiento.setAfiliadoInte(afiliadoInte >= 0 ? Integer.valueOf(afiliadoInte) : null);
 
         requerimiento.setDescripcion(ParamUtil.getString(request, "descripcion", null));
@@ -378,11 +406,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         detalle.setIdRequerimientoCompra(ParamUtil.getInteger(request, "id_requerimiento_compra", 0));
         detalle.setRenglon(ParamUtil.getInteger(request, "renglon", 0));
         detalle.setTipoArticulo(ParamUtil.getString(request, "tipo_articulo", null));
-
         detalle.setArticulo(ParamUtil.getString(request, "articulo", null));
-
         detalle.setCantidad(parseBigDecimal(ParamUtil.getString(request, "cantidad", "1")));
-
         detalle.setUnidadMedida(ParamUtil.getString(request, "unidad_medida", null));
 
         detalle.setPrecioUnitarioEstimado(parseBigDecimalNullable(
@@ -397,9 +422,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
     }
 
     private int getIdDetalleFromRequest(ActionRequest request) {
-        int idDetalle = ParamUtil.getInteger(request, "id_requerimiento_detalle", 0);
-
-        return idDetalle;
+        return ParamUtil.getInteger(request, "id_requerimiento_detalle", 0);
     }
 
     private Date parseDate(String value) {
@@ -424,6 +447,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
     private BigDecimal parseBigDecimal(String value) {
         BigDecimal parsed = parseBigDecimalNullable(value);
+
         return parsed != null ? parsed : BigDecimal.ZERO;
     }
 
