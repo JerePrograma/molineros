@@ -162,9 +162,11 @@
 		<tr>
 			<td><label><liferay-ui:message key="seccional" />:</label></td>
 			<td colspan="4" style="vertical-align:top" >
-				<liferay-util:include page='/html/portlet/autorizaciones/busqueda_seccional.jsp'>
-					<liferay-util:param value="<%=prefijo%>" name="prefijo" />
-				</liferay-util:include>
+                <liferay-util:include page='/html/portlet/compras/busqueda_seccional.jsp'>
+                    <liferay-util:param value="<%=prefijo%>" name="prefijo" />
+                    <liferay-util:param value="<%=idSeccional%>" name="id_seccional" />
+                    <liferay-util:param value="<%=seccionalDescripcion%>" name="seccional" />
+                </liferay-util:include>
 			</td>
 
 			<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
