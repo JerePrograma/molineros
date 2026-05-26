@@ -7,6 +7,11 @@
 <%@ page import="java.math.BigDecimal" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 
+<%@ page import="ar.com.ospim.global.WebKeysGlobal" %>
+
+<%@ page import="ar.com.ospim.afiliados.WebKeysAfiliados" %>
+
+<%@ page import="ar.com.ospim.liquidaciones.WebKeysLiquidaciones" %>
 <%@ page import="javax.portlet.PortletSession" %>
 <%@ page import="javax.portlet.PortletURL" %>
 <%@ page import="javax.portlet.WindowState" %>
