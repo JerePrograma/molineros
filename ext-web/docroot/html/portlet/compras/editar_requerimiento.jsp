@@ -51,6 +51,29 @@ String afiliadoInte = req.getAfiliadoInteString();
 if (afiliadoInte == null) {
     afiliadoInte = "";
 }
+
+String afiliadoIdSeccional = "";
+String afiliadoSeccional = "";
+
+try {
+    Object valorAfiliadoIdSeccional = req.getClass().getMethod("getAfiliadoIdSeccionalString", new Class[0]).invoke(req, new Object[0]);
+
+    if (valorAfiliadoIdSeccional != null) {
+        afiliadoIdSeccional = String.valueOf(valorAfiliadoIdSeccional);
+    }
+} catch (Exception e) {
+    afiliadoIdSeccional = "";
+}
+
+try {
+    Object valorAfiliadoSeccional = req.getClass().getMethod("getAfiliadoSeccionalVisible", new Class[0]).invoke(req, new Object[0]);
+
+    if (valorAfiliadoSeccional != null) {
+        afiliadoSeccional = String.valueOf(valorAfiliadoSeccional);
+    }
+} catch (Exception e) {
+    afiliadoSeccional = "";
+}
 %>
 
 <c:if test="<%= !puedeABM %>">
@@ -176,6 +199,8 @@ if (afiliadoInte == null) {
                 <liferay-util:param name="edit_mode" value="<%= String.valueOf(true) %>" />
                 <liferay-util:param name="cuil" value="<%= afiliadoCuilTitular %>" />
                 <liferay-util:param name="inte" value="<%= afiliadoInte %>" />
+                <liferay-util:param name="id_seccional" value="<%= afiliadoIdSeccional %>" />
+                <liferay-util:param name="seccional" value="<%= afiliadoSeccional %>" />
             </liferay-util:include>
 
             <input type="hidden"
@@ -187,6 +212,16 @@ if (afiliadoInte == null) {
                    name="<portlet:namespace />afiliado_inte"
                    id="<portlet:namespace />afiliado_inte"
                    value="<%= HtmlUtil.escape(afiliadoInte) %>" />
+
+            <input type="hidden"
+                   name="<portlet:namespace />afiliado_id_seccional"
+                   id="<portlet:namespace />afiliado_id_seccional"
+                   value="<%= HtmlUtil.escape(afiliadoIdSeccional) %>" />
+
+            <input type="hidden"
+                   name="<portlet:namespace />afiliado_seccional"
+                   id="<portlet:namespace />afiliado_seccional"
+                   value="<%= HtmlUtil.escape(afiliadoSeccional) %>" />
         </fieldset>
 
         <fieldset class="block-labels">
@@ -263,11 +298,15 @@ if (afiliadoInte == null) {
     function <portlet:namespace />sincronizarAfiliadoRequerimiento() {
         jQuery('#<portlet:namespace />afiliado_cuil_titular').val(<portlet:namespace />trimValue('cuil'));
         jQuery('#<portlet:namespace />afiliado_inte').val(<portlet:namespace />trimValue('inte'));
+        jQuery('#<portlet:namespace />afiliado_id_seccional').val(<portlet:namespace />trimValue('id_seccional'));
+        jQuery('#<portlet:namespace />afiliado_seccional').val(<portlet:namespace />trimValue('seccional'));
     }
 
     function <portlet:namespace />cargarAfiliadoInicial() {
         var afiliadoCuilTitular = jQuery('#<portlet:namespace />afiliado_cuil_titular').val();
         var afiliadoInte = jQuery('#<portlet:namespace />afiliado_inte').val();
+        var afiliadoIdSeccional = jQuery('#<portlet:namespace />afiliado_id_seccional').val();
+        var afiliadoSeccional = jQuery('#<portlet:namespace />afiliado_seccional').val();
 
         if (afiliadoCuilTitular != '') {
             jQuery('#<portlet:namespace />cuil').val(afiliadoCuilTitular);
@@ -275,6 +314,15 @@ if (afiliadoInte == null) {
 
         if (afiliadoInte != '') {
             jQuery('#<portlet:namespace />inte').val(afiliadoInte);
+        }
+
+        if (afiliadoIdSeccional != '') {
+            jQuery('#<portlet:namespace />id_seccional').val(afiliadoIdSeccional);
+            jQuery('#<portlet:namespace />secc_seleccionada').val('1');
+        }
+
+        if (afiliadoSeccional != '') {
+            jQuery('#<portlet:namespace />seccional').val(afiliadoSeccional);
         }
 
         <portlet:namespace />sincronizarAfiliadoRequerimiento();
@@ -322,10 +370,17 @@ if (afiliadoInte == null) {
 
             var afiliadoCuilTitular = <portlet:namespace />trimValue('afiliado_cuil_titular');
             var afiliadoInte = <portlet:namespace />trimValue('afiliado_inte');
+            var afiliadoIdSeccional = <portlet:namespace />trimValue('afiliado_id_seccional');
 
             if (afiliadoCuilTitular == '' || afiliadoInte == '') {
                 alert('Debe seleccionar un afiliado.');
                 jQuery('#<portlet:namespace />cuil').focus();
+                return;
+            }
+
+            if (afiliadoIdSeccional == '') {
+                alert('Debe informar seccional del afiliado.');
+                jQuery('#<portlet:namespace />seccional').focus();
                 return;
             }
         } else {
@@ -347,7 +402,7 @@ if (afiliadoInte == null) {
             <portlet:namespace />actualizarVisibilidadAfiliado(true);
         });
 
-        jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte').change(function() {
+        jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />id_seccional, #<portlet:namespace />seccional').change(function() {
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
         });
     });

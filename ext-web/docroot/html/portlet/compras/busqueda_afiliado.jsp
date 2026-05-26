@@ -34,6 +34,8 @@
 
 	String cuil = ParamUtil.getString(request, "cuil", "");
 	String inte = ParamUtil.getString(request, "inte", "");
+	String idSeccional = ParamUtil.getString(request, "id_seccional", "");
+	String seccionalDescripcion = ParamUtil.getString(request, "seccional", "");
 %>
 
 <style type="text/css">
@@ -302,7 +304,7 @@
 		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliados&cuil=' + cuil +
 				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi + '&popup=true&fecha_referencia=' + fecha_prestacion;
 		</c:if>
-		
+
 		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
 		var fecha_prestacion = 'null';
 
@@ -558,10 +560,24 @@
 
 	var cuilJS = "<%= cuil %>";
 	var inteJS = "<%= inte %>";
+	var idSeccionalJS = "<%= idSeccional %>";
+	var seccionalJS = "<%= seccionalDescripcion %>";
 
-	if (trim(cuilJS) != "" && trim(inteJS) != "") {
+	if (trim(cuilJS) != "") {
 		document.getElementById("<portlet:namespace />cuil<%=prefijo%>").value = cuilJS;
+	}
+
+	if (trim(inteJS) != "") {
 		document.getElementById("<portlet:namespace />inte<%=prefijo%>").value = inteJS;
+	}
+
+	if (trim(idSeccionalJS) != "") {
+		document.getElementById("<portlet:namespace />id_seccional<%=prefijo%>").value = idSeccionalJS;
+		document.getElementById("<portlet:namespace />secc_seleccionada<%=prefijo%>").value = "1";
+	}
+
+	if (trim(seccionalJS) != "") {
+		document.getElementById("<portlet:namespace />seccional<%=prefijo%>").value = seccionalJS;
 	}
 
 	<portlet:namespace />resetValid<%=prefijo%>();
@@ -578,7 +594,7 @@
 		jQuery('#<portlet:namespace />nombre<%=prefijo%>').val('');
 		document.getElementById('<portlet:namespace />entidad<%=prefijo%>').selectedIndex = 0;
 		jQuery('#<portlet:namespace />numero_afi<%=prefijo%>').val('');
-		jQuery("#<portlet:namespace />secc_seleccionada<%=prefijo%>").val("1");
+		jQuery("#<portlet:namespace />secc_seleccionada<%=prefijo%>").val("0");
 		jQuery("#<portlet:namespace />baja_fecha<%=prefijo%>").val('');
 		jQuery("#<portlet:namespace />nroSocioPrevencion<%=prefijo%>").val('');
 		jQuery("#<portlet:namespace />nroCredencialPrevencion<%=prefijo%>").val('');
