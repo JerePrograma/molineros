@@ -169,15 +169,7 @@ if (afiliadoInte == null) {
             </table>
         </fieldset>
 
-        <fieldset class="block-labels">
-            <legend>Afiliado</legend>
-
-            <liferay-util:include page="/html/portlet/compras/busqueda_afiliado_requerimiento.jsp" />
-                <liferay-util:param name="edit_mode" value="<%= String.valueOf(true) %>" />
-                <liferay-util:param name="cuil" value="<%= afiliadoCuilTitular %>" />
-                <liferay-util:param name="inte" value="<%= afiliadoInte %>" />
-            </liferay-util:include>
-
+        <div id="<portlet:namespace />afiliado_requerimiento_panel">
             <input type="hidden"
                    name="<portlet:namespace />afiliado_cuil_titular"
                    id="<portlet:namespace />afiliado_cuil_titular"
@@ -187,7 +179,9 @@ if (afiliadoInte == null) {
                    name="<portlet:namespace />afiliado_inte"
                    id="<portlet:namespace />afiliado_inte"
                    value="<%= HtmlUtil.escape(afiliadoInte) %>" />
-        </fieldset>
+
+            <liferay-util:include page="/html/portlet/afiliados/busqueda_afiliado.jsp" />
+        </div>
 
         <fieldset class="block-labels">
             <legend>Solicitud</legend>
@@ -265,18 +259,34 @@ if (afiliadoInte == null) {
         jQuery('#<portlet:namespace />afiliado_inte').val(<portlet:namespace />trimValue('inte'));
     }
 
+    function <portlet:namespace />cargarAfiliadoInicial() {
+        var afiliadoCuilTitular = jQuery('#<portlet:namespace />afiliado_cuil_titular').val();
+        var afiliadoInte = jQuery('#<portlet:namespace />afiliado_inte').val();
+
+        if (afiliadoCuilTitular != '') {
+            jQuery('#<portlet:namespace />cuil').val(afiliadoCuilTitular);
+        }
+
+        if (afiliadoInte != '') {
+            jQuery('#<portlet:namespace />inte').val(afiliadoInte);
+        }
+
+        <portlet:namespace />sincronizarAfiliadoRequerimiento();
+    }
+
     function <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere) {
         var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
 
         if (requiereAfiliado) {
-            jQuery('#<portlet:namespace />panelDatosAfiliado').show();
+            jQuery('#<portlet:namespace />afiliado_requerimiento_panel').show();
         } else {
-            if (limpiarSiNoRequiere && typeof <portlet:namespace />limpiarCamposAfiliado == 'function') {
-                <portlet:namespace />limpiarCamposAfiliado();
-                <portlet:namespace />sincronizarAfiliadoRequerimiento();
+            if (limpiarSiNoRequiere && typeof <portlet:namespace />limpiarCampos == 'function') {
+                <portlet:namespace />limpiarCampos();
             }
 
-            jQuery('#<portlet:namespace />panelDatosAfiliado').hide();
+            <portlet:namespace />sincronizarAfiliadoRequerimiento();
+
+            jQuery('#<portlet:namespace />afiliado_requerimiento_panel').hide();
         }
     }
 
@@ -302,9 +312,7 @@ if (afiliadoInte == null) {
         var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
 
         if (requiereAfiliado) {
-            if (typeof <portlet:namespace />sincronizarAfiliadoRequerimientoDesdeBusquedaAfiliados == 'function') {
-                <portlet:namespace />sincronizarAfiliadoRequerimientoDesdeBusquedaAfiliados();
-            }
+            <portlet:namespace />sincronizarAfiliadoRequerimiento();
 
             var afiliadoCuilTitular = <portlet:namespace />trimValue('afiliado_cuil_titular');
             var afiliadoInte = <portlet:namespace />trimValue('afiliado_inte');
@@ -314,27 +322,27 @@ if (afiliadoInte == null) {
                 jQuery('#<portlet:namespace />cuil').focus();
                 return;
             }
-
-            <portlet:namespace />sincronizarAfiliadoRequerimiento();
         } else {
             if (typeof <portlet:namespace />limpiarCampos == 'function') {
                 <portlet:namespace />limpiarCampos();
             }
 
-            if (typeof <portlet:namespace />sincronizarAfiliadoRequerimientoDesdeBusquedaAfiliados == 'function') {
-                <portlet:namespace />sincronizarAfiliadoRequerimientoDesdeBusquedaAfiliados();
-            }
+            <portlet:namespace />sincronizarAfiliadoRequerimiento();
         }
 
         submitForm(document.<portlet:namespace />fm);
     }
 
     jQuery(function() {
+        <portlet:namespace />cargarAfiliadoInicial();
         <portlet:namespace />actualizarVisibilidadAfiliado(false);
-        <portlet:namespace />sincronizarAfiliadoRequerimiento();
 
         jQuery('#<portlet:namespace />sector_id').change(function() {
             <portlet:namespace />actualizarVisibilidadAfiliado(true);
+        });
+
+        jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte').change(function() {
+            <portlet:namespace />sincronizarAfiliadoRequerimiento();
         });
     });
 </script>
