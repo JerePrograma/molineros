@@ -192,10 +192,10 @@ try {
             </table>
         </fieldset>
 
-        <fieldset class="block-labels">
+        <fieldset id="<portlet:namespace />afiliado_requerimiento_panel" class="block-labels">
             <legend>Afiliado</legend>
 
-            <liferay-util:include page="/html/portlet/compras/busqueda_afiliado.jsp">
+            <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
                 <liferay-util:param name="edit_mode" value="<%= String.valueOf(true) %>" />
                 <liferay-util:param name="cuil" value="<%= afiliadoCuilTitular %>" />
                 <liferay-util:param name="inte" value="<%= afiliadoInte %>" />
@@ -287,6 +287,197 @@ try {
 </c:if>
 
 <script type="text/javascript">
+    /*
+     * Overrides locales para Compras.
+     *
+     * No se modifica el módulo autorizaciones.
+     * Se reutilizan sus JSP, pero se pisan las funciones que arman URLs
+     * para forzar los Struts actions propios de Compras.
+     */
+
+    function <portlet:namespace />buscarAfiliados() {
+        jQuery('#<portlet:namespace />divObservacionesInternas').hide();
+
+        var cuil = jQuery('#<portlet:namespace />cuil').val();
+        var inte = jQuery('#<portlet:namespace />inte').val();
+        var tipoDoc = jQuery('#<portlet:namespace />tipoDoc').val();
+        var nroDoc = jQuery('#<portlet:namespace />nroDoc').val();
+        var seccional = jQuery('#<portlet:namespace />id_seccional').val();
+        var apellido = jQuery('#<portlet:namespace />apellido').val();
+        var nombre = jQuery('#<portlet:namespace />nombre').val();
+        var entidad = jQuery('#<portlet:namespace />entidad').val();
+        var numero_afi = jQuery('#<portlet:namespace />numero_afi').val();
+
+        if (!<portlet:namespace />validarBusqueda(cuil, inte, tipoDoc, nroDoc, seccional, apellido, nombre, entidad, numero_afi)) {
+            return false;
+        }
+
+        if (cuil.length > 0) {
+            if (!validarCuil(cuil, "<liferay-ui:message key='valida-cuil-mensaje-limpiar'/>")) {
+                jQuery('#<portlet:namespace />cuil').focus();
+                return false;
+            }
+        }
+
+        if (jQuery("#<portlet:namespace />secc_seleccionada").val() != "1") {
+            jQuery("#<portlet:namespace />seccional").val("");
+            jQuery("#<portlet:namespace />id_seccional").val("");
+        }
+
+        popupAfill = Liferay.Popup({
+            title: "<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />",
+            modal: true,
+            width: 830
+        });
+
+        var fecha_prestacion = 'null';
+
+        try {
+            fecha_prestacion = jQuery("#<portlet:namespace />fprest").val();
+        } catch (err) {
+            fecha_prestacion = 'null';
+        }
+
+        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
+            '&struts_action=/compras/buscar_afiliados' +
+            '&cuil=' + cuil +
+            '&inte=' + inte +
+            '&tipoDoc=' + tipoDoc +
+            '&nroDoc=' + nroDoc +
+            '&seccional=' + seccional +
+            '&nombre=' + encodeURI(nombre) +
+            '&apellido=' + encodeURI(apellido) +
+            '&entidad=' + entidad +
+            '&numero_afi=' + numero_afi +
+            '&fecha_referencia=' + fecha_prestacion +
+            '&origen=' +
+            '&popup=true';
+
+        jQuery(popupAfill).load(url);
+    }
+
+    function <portlet:namespace />buscarAfiliados_(fecha_prest) {
+        jQuery('#<portlet:namespace />divObservacionesInternas').hide();
+
+        var cuil = jQuery('#<portlet:namespace />cuil').val();
+        var inte = jQuery('#<portlet:namespace />inte').val();
+        var tipoDoc = jQuery('#<portlet:namespace />tipoDoc').val();
+        var nroDoc = jQuery('#<portlet:namespace />nroDoc').val();
+        var seccional = jQuery('#<portlet:namespace />id_seccional').val();
+        var apellido = jQuery('#<portlet:namespace />apellido').val();
+        var nombre = jQuery('#<portlet:namespace />nombre').val();
+        var entidad = jQuery('#<portlet:namespace />entidad').val();
+        var numero_afi = jQuery('#<portlet:namespace />numero_afi').val();
+
+        if (!<portlet:namespace />validarBusqueda(cuil, inte, tipoDoc, nroDoc, seccional, apellido, nombre, entidad, numero_afi)) {
+            return false;
+        }
+
+        if (cuil.length > 0) {
+            if (!validarCuil(cuil, "<liferay-ui:message key='valida-cuil-mensaje-limpiar'/>")) {
+                jQuery('#<portlet:namespace />cuil').focus();
+                return false;
+            }
+        }
+
+        if (jQuery("#<portlet:namespace />secc_seleccionada").val() != "1") {
+            jQuery("#<portlet:namespace />seccional").val("");
+            jQuery("#<portlet:namespace />id_seccional").val("");
+        }
+
+        popupAfill = Liferay.Popup({
+            title: "<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />",
+            modal: true,
+            width: 830
+        });
+
+        var fecha_prestacion = fecha_prest;
+
+        try {
+            fecha_prestacion = jQuery("#<portlet:namespace />fprest").val();
+        } catch (err) {
+            fecha_prestacion = fecha_prest;
+        }
+
+        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
+            '&struts_action=/compras/buscar_afiliados' +
+            '&cuil=' + cuil +
+            '&inte=' + inte +
+            '&tipoDoc=' + tipoDoc +
+            '&nroDoc=' + nroDoc +
+            '&seccional=' + seccional +
+            '&nombre=' + encodeURI(nombre) +
+            '&apellido=' + encodeURI(apellido) +
+            '&entidad=' + entidad +
+            '&numero_afi=' + numero_afi +
+            '&fecha_referencia=' + fecha_prestacion +
+            '&origen=' +
+            '&popup=true';
+
+        jQuery(popupAfill).load(url);
+    }
+
+    function <portlet:namespace />buscarSeccional() {
+        var id_seccional = jQuery("#<portlet:namespace />id_seccional").val();
+        var seccional = jQuery("#<portlet:namespace />seccional").val();
+
+        if (!<portlet:namespace />validaFormSecc(id_seccional, seccional)) {
+            return false;
+        }
+
+        popup = Liferay.Popup({
+            title: "<liferay-ui:message key="busqueda-seccionales" />",
+            modal: true,
+            width: 420
+        });
+
+        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
+            '&struts_action=/compras/buscar_seccional' +
+            '&id_seccional=' + id_seccional +
+            '&seccional=' + encodeURI(seccional) +
+            '&prefijo=';
+
+        jQuery(popup).load(url);
+    }
+
+    function <portlet:namespace />buscarSeccionalOnDiv(e) {
+        var evtobj = window.event ? event : e;
+        var keyPressed = evtobj.keyCode ? evtobj.keyCode : evtobj.charCode;
+
+        if (jQuery("#<portlet:namespace />secc_seleccionada").val() == "1" && (keyPressed != 9 && keyPressed != 16)) {
+            jQuery("#<portlet:namespace />seccional").val("");
+            jQuery("#<portlet:namespace />id_seccional").val("");
+            jQuery("#<portlet:namespace />secc_seleccionada").val("");
+            jQuery("#<portlet:namespace />btnBuscarSeccional").show();
+
+            <portlet:namespace />sincronizarAfiliadoRequerimiento();
+
+            return false;
+        }
+
+        var id_seccional = jQuery("#<portlet:namespace />id_seccional").val();
+        var seccional = jQuery("#<portlet:namespace />seccional").val();
+
+        if ((seccional.length >= 3 || id_seccional.length > 2) && (keyPressed != 9 && keyPressed != 16)) {
+            if (id_seccional.length > 2) {
+                jQuery("#<portlet:namespace />seccional").val("");
+            } else {
+                jQuery("#<portlet:namespace />id_seccional").val("");
+            }
+
+            var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
+                '&struts_action=/compras/buscar_seccional' +
+                '&id_seccional=' + id_seccional +
+                '&seccional=' + encodeURI(seccional) +
+                '&prefijo=';
+
+            jQuery("#divSeccional").load(url);
+            jQuery("#divSeccional").show();
+        } else {
+            jQuery("#divSeccional").hide("slow");
+        }
+    }
+
     function <portlet:namespace />trimValue(id) {
         return jQuery.trim(jQuery('#<portlet:namespace />' + id).val());
     }
@@ -328,14 +519,25 @@ try {
         <portlet:namespace />sincronizarAfiliadoRequerimiento();
     }
 
+    function <portlet:namespace />limpiarAfiliadoRequerimientoSiExiste() {
+        if (typeof <portlet:namespace />limpiarCamposAfiliado == 'function') {
+            <portlet:namespace />limpiarCamposAfiliado();
+        }
+
+        jQuery('#<portlet:namespace />afiliado_cuil_titular').val('');
+        jQuery('#<portlet:namespace />afiliado_inte').val('');
+        jQuery('#<portlet:namespace />afiliado_id_seccional').val('');
+        jQuery('#<portlet:namespace />afiliado_seccional').val('');
+    }
+
     function <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere) {
         var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
 
         if (requiereAfiliado) {
             jQuery('#<portlet:namespace />afiliado_requerimiento_panel').show();
         } else {
-            if (limpiarSiNoRequiere && typeof <portlet:namespace />limpiarCampos == 'function') {
-                <portlet:namespace />limpiarCampos();
+            if (limpiarSiNoRequiere) {
+                <portlet:namespace />limpiarAfiliadoRequerimientoSiExiste();
             }
 
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
@@ -384,10 +586,7 @@ try {
                 return;
             }
         } else {
-            if (typeof <portlet:namespace />limpiarCampos == 'function') {
-                <portlet:namespace />limpiarCampos();
-            }
-
+            <portlet:namespace />limpiarAfiliadoRequerimientoSiExiste();
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
         }
 
@@ -403,6 +602,10 @@ try {
         });
 
         jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />id_seccional, #<portlet:namespace />seccional').change(function() {
+            <portlet:namespace />sincronizarAfiliadoRequerimiento();
+        });
+
+        jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />id_seccional, #<portlet:namespace />seccional').keyup(function() {
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
         });
     });
