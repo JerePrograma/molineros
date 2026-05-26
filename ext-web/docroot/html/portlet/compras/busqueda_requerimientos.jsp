@@ -1,16 +1,17 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
+<%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
+<portlet:defineObjects/>
 
 <%
-response.setHeader("Cache-Control", "no-store");
-response.setHeader("Pragma", "no-cache");
-response.setDateHeader("Expires", 0);
+RequerimientoCompra req = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
 
+if (req == null) {
+    req = new RequerimientoCompra();
+}
+
+boolean esNuevo = req.getIdRequerimientoCompra() == 0;
 boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
-
-Calendar fechaDesde = Calendar.getInstance();
-fechaDesde.add(Calendar.MONTH, -1);
-
-Calendar fechaHasta = Calendar.getInstance();
+boolean editable = esNuevo || req.isEditable();
 
 List<RequerimientoCompraSector> sectores = (List<RequerimientoCompraSector>) renderRequest.getAttribute(WebKeysCompras.SECTORES_REQUERIMIENTO_COMPRA);
 
@@ -22,303 +23,326 @@ if (sectores == null) {
     }
 }
 
-List<RequerimientoCompraEstado> estados = (List<RequerimientoCompraEstado>) renderRequest.getAttribute(WebKeysCompras.ESTADOS_REQUERIMIENTO_COMPRA);
+PortletURL volverURL = renderResponse.createRenderURL();
+volverURL.setWindowState(WindowState.MAXIMIZED);
+volverURL.setParameter("struts_action", "/compras/view");
 
-if (estados == null) {
-    try {
-        estados = BusquedaRequerimientoCompraServiceUtil.listarEstados();
-    } catch (Exception e) {
-        estados = new ArrayList<RequerimientoCompraEstado>();
-    }
+PortletURL verURL = renderResponse.createRenderURL();
+verURL.setWindowState(WindowState.MAXIMIZED);
+verURL.setParameter("struts_action", "/compras/ver_requerimiento");
+verURL.setParameter("id_requerimiento_compra", req.getIdRequerimientoCompraString());
+
+PortletURL actionURL = renderResponse.createActionURL();
+actionURL.setWindowState(WindowState.MAXIMIZED);
+actionURL.setParameter("struts_action", "/compras/editar_requerimiento");
+
+String solicitanteDefault = req.getSolicitanteUsr() != null ? req.getSolicitanteUsr() : (user != null ? user.getScreenName() : "");
+String solicitanteNombreDefault = req.getSolicitanteNombre() != null ? req.getSolicitanteNombre() : (user != null ? user.getFullName() : "");
+String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId().intValue()) : "";
+
+String afiliadoCuilTitular = req.getAfiliadoCuilTitularVisible();
+
+if (afiliadoCuilTitular == null) {
+    afiliadoCuilTitular = "";
+}
+
+String afiliadoInte = req.getAfiliadoInteString();
+
+if (afiliadoInte == null) {
+    afiliadoInte = "";
 }
 %>
 
-<fieldset class="block-labels">
-    <legend>Filtro de búsqueda de requerimientos de compras</legend>
+<c:if test="<%= !puedeABM %>">
+    <div class="portlet-msg-error">No posee permisos para editar requerimientos de compras.</div>
+</c:if>
 
-    <table class="lfr-table" width="100%">
+<c:if test="<%= puedeABM && !editable %>">
+    <div class="portlet-msg-info">El requerimiento solo puede editarse en estado Borrador.</div>
+
+    <table class="lfr-table">
         <tr>
-            <td><label>Número:</label></td>
             <td>
-                <input id="<portlet:namespace />numero"
-                       name="<portlet:namespace />numero"
-                       size="10"
-                       maxlength="10"
-                       type="text" />
-            </td>
+                <input type="button"
+                       value="Ver"
+                       onClick="window.location.href='<%= verURL.toString() %>';" />
 
-            <td><label>Sector:</label></td>
-            <td>
-                <select id="<portlet:namespace />sector_id"
-                        name="<portlet:namespace />sector_id">
-                    <option value="0">Todos</option>
+                &nbsp;&nbsp;
 
-                    <%
-                    for (int i = 0; i < sectores.size(); i++) {
-                        RequerimientoCompraSector sector = sectores.get(i);
-                    %>
-                        <option value="<%= sector.getIdSector() %>">
-                            <%= HtmlUtil.escape(sector.getDescripcionVisible()) %>
-                        </option>
-                    <%
-                    }
-                    %>
-                </select>
-            </td>
-
-            <td><label>Estado:</label></td>
-            <td>
-                <select id="<portlet:namespace />estado"
-                        name="<portlet:namespace />estado">
-                    <option value="0">Todos</option>
-
-                    <%
-                    for (int i = 0; i < estados.size(); i++) {
-                        RequerimientoCompraEstado estado = estados.get(i);
-                    %>
-                        <option value="<%= estado.getIdEstado() %>">
-                            <%= HtmlUtil.escape(estado.getDescripcionVisible()) %>
-                        </option>
-                    <%
-                    }
-                    %>
-                </select>
-            </td>
-        </tr>
-
-        <tr>
-            <td colspan="6">&nbsp;</td>
-        </tr>
-
-        <tr>
-            <td><label>Fecha solicitud desde:</label></td>
-            <td>
-                <liferay-ui:input-date
-                    dayParam="fechaDesdeDia"
-                    dayValue="<%= fechaDesde.get(Calendar.DATE) %>"
-                    dayNullable="<%= true %>"
-                    monthParam="fechaDesdeMes"
-                    monthValue="<%= fechaDesde.get(Calendar.MONTH) %>"
-                    monthNullable="<%= true %>"
-                    yearParam="fechaDesdeAnio"
-                    yearValue="<%= fechaDesde.get(Calendar.YEAR) %>"
-                    yearNullable="<%= true %>"
-                    yearRangeStart="<%= fechaDesde.get(Calendar.YEAR) - 5 %>"
-                    yearRangeEnd="<%= fechaDesde.get(Calendar.YEAR) + 2 %>"
-                    firstDayOfWeek="<%= fechaDesde.getFirstDayOfWeek() - 1 %>"
-                    disabled="<%= false %>" />
-            </td>
-
-            <td><label>Fecha solicitud hasta:</label></td>
-            <td>
-                <liferay-ui:input-date
-                    dayParam="fechaHastaDia"
-                    dayValue="<%= fechaHasta.get(Calendar.DATE) %>"
-                    dayNullable="<%= true %>"
-                    monthParam="fechaHastaMes"
-                    monthValue="<%= fechaHasta.get(Calendar.MONTH) %>"
-                    monthNullable="<%= true %>"
-                    yearParam="fechaHastaAnio"
-                    yearValue="<%= fechaHasta.get(Calendar.YEAR) %>"
-                    yearNullable="<%= true %>"
-                    yearRangeStart="<%= fechaHasta.get(Calendar.YEAR) - 5 %>"
-                    yearRangeEnd="<%= fechaHasta.get(Calendar.YEAR) + 2 %>"
-                    firstDayOfWeek="<%= fechaHasta.getFirstDayOfWeek() - 1 %>"
-                    disabled="<%= false %>" />
-            </td>
-
-            <td><label>Solicitante:</label></td>
-            <td>
-                <input id="<portlet:namespace />solicitante_usr"
-                       name="<portlet:namespace />solicitante_usr"
-                       size="22"
-                       maxlength="75"
-                       type="text" />
-            </td>
-        </tr>
-
-        <tr>
-            <td colspan="6">&nbsp;</td>
-        </tr>
-
-        <tr>
-            <td><label>CUIL titular:</label></td>
-            <td>
-                <input id="<portlet:namespace />afiliado_cuil_titular"
-                       name="<portlet:namespace />afiliado_cuil_titular"
-                       size="18"
-                       maxlength="20"
-                       type="text" />
-            </td>
-
-            <td><label>Integrante:</label></td>
-            <td>
-                <input id="<portlet:namespace />afiliado_inte"
-                       name="<portlet:namespace />afiliado_inte"
-                       size="8"
-                       maxlength="8"
-                       type="text" />
-            </td>
-
-            <td><label>Tipo artículo:</label></td>
-            <td>
-                <input id="<portlet:namespace />tipo_articulo"
-                       name="<portlet:namespace />tipo_articulo"
-                       size="22"
-                       maxlength="80"
-                       type="text" />
-            </td>
-        </tr>
-
-        <tr>
-            <td colspan="6">&nbsp;</td>
-        </tr>
-
-        <tr>
-            <td><label>Texto:</label></td>
-            <td colspan="5">
-                <input id="<portlet:namespace />texto"
-                       name="<portlet:namespace />texto"
-                       size="90"
-                       maxlength="200"
-                       type="text" />
-            </td>
-        </tr>
-
-        <tr>
-            <td colspan="6">&nbsp;</td>
-        </tr>
-
-        <tr>
-            <td colspan="6" align="center">
-                <input id="<portlet:namespace />buscar"
-                       value="Buscar"
-                       title="Buscar"
-                       type="button" />
-
-                <c:if test="<%= puedeABM %>">
-                    &nbsp;&nbsp;
-
-                    <input type="button"
-                           value="Nuevo requerimiento"
-                           onclick="<portlet:namespace />altaRequerimiento();" />
-                </c:if>
+                <input type="button"
+                       value="Volver"
+                       onClick="window.location.href='<%= volverURL.toString() %>';" />
             </td>
         </tr>
     </table>
-</fieldset>
+</c:if>
 
-<fieldset class="block-labels">
-    <div align="center"
-         id="<portlet:namespace />buscando"
-         style="display:none;">
-        <table style="align:center;">
+<c:if test="<%= puedeABM && editable %>">
+    <form action="<%= actionURL.toString() %>" method="post" name="<portlet:namespace />fm">
+        <input type="hidden"
+               name="<portlet:namespace /><%= Constants.CMD %>"
+               id="<portlet:namespace /><%= Constants.CMD %>"
+               value="<%= esNuevo ? Constants.ADD : Constants.UPDATE %>" />
+
+        <input type="hidden"
+               name="<portlet:namespace />id_requerimiento_compra"
+               id="<portlet:namespace />id_requerimiento_compra"
+               value="<%= req.getIdRequerimientoCompra() %>" />
+
+        <input type="hidden"
+               name="<portlet:namespace />id_estado"
+               id="<portlet:namespace />id_estado"
+               value="<%= req.getIdEstado() %>" />
+
+        <fieldset class="block-labels">
+            <legend><%= esNuevo ? "Nuevo requerimiento de compra" : "Editar requerimiento de compra" %></legend>
+
+            <table class="lfr-table">
+                <tr>
+                    <td><label>Estado:</label></td>
+                    <td><strong><%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %></strong></td>
+                </tr>
+
+                <tr>
+                    <td colspan="4">&nbsp;</td>
+                </tr>
+
+                <tr>
+                    <td><label>Fecha solicitud:</label></td>
+                    <td>
+                        <input type="text"
+                               name="<portlet:namespace />fecha_solicitud"
+                               id="<portlet:namespace />fecha_solicitud"
+                               value="<%= HtmlUtil.escape(req.getFechaSolicitudAsString()) %>"
+                               size="10"
+                               maxlength="10" />
+                        dd/MM/yyyy
+                    </td>
+
+                    <td><label>Sector:</label></td>
+                    <td>
+                        <select name="<portlet:namespace />sector_id"
+                                id="<portlet:namespace />sector_id">
+                            <option value="0">Seleccione</option>
+
+                            <%
+                            for (int i = 0; i < sectores.size(); i++) {
+                                RequerimientoCompraSector sector = sectores.get(i);
+                                String sectorId = String.valueOf(sector.getIdSector());
+                                String selected = reqSectorId.equals(sectorId) ? "selected=\"selected\"" : "";
+                            %>
+                                <option value="<%= sectorId %>"
+                                        data-requiere-afiliado="<%= sector.isRequiereAfiliado() ? "true" : "false" %>"
+                                        <%= selected %>><%= HtmlUtil.escape(sector.getDescripcionVisible()) %></option>
+                            <%
+                            }
+                            %>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td colspan="4">&nbsp;</td>
+                </tr>
+
+                <tr>
+                    <td><label>Solicitante usuario:</label></td>
+                    <td>
+                        <input type="text"
+                               name="<portlet:namespace />solicitante_usr"
+                               id="<portlet:namespace />solicitante_usr"
+                               value="<%= HtmlUtil.escape(solicitanteDefault) %>"
+                               size="30"
+                               maxlength="75" />
+                    </td>
+
+                    <td><label>Solicitante nombre:</label></td>
+                    <td>
+                        <input type="text"
+                               name="<portlet:namespace />solicitante_nombre"
+                               id="<portlet:namespace />solicitante_nombre"
+                               value="<%= HtmlUtil.escape(solicitanteNombreDefault) %>"
+                               size="35"
+                               maxlength="120" />
+                    </td>
+                </tr>
+            </table>
+        </fieldset>
+
+        <div id="<portlet:namespace />afiliado_requerimiento_panel">
+            <input type="hidden"
+                   name="<portlet:namespace />afiliado_cuil_titular"
+                   id="<portlet:namespace />afiliado_cuil_titular"
+                   value="<%= HtmlUtil.escape(afiliadoCuilTitular) %>" />
+
+            <input type="hidden"
+                   name="<portlet:namespace />afiliado_inte"
+                   id="<portlet:namespace />afiliado_inte"
+                   value="<%= HtmlUtil.escape(afiliadoInte) %>" />
+
+            <liferay-util:include page="/html/portlet/afiliados/busqueda_afiliado.jsp" />
+        </div>
+
+        <fieldset class="block-labels">
+            <legend>Solicitud</legend>
+
+            <table class="lfr-table">
+                <tr>
+                    <td><label>Descripci&oacute;n:</label></td>
+                    <td colspan="3">
+                        <input type="text"
+                               name="<portlet:namespace />descripcion"
+                               id="<portlet:namespace />descripcion"
+                               value="<%= HtmlUtil.escape(req.getDescripcionVisible()) %>"
+                               size="100"
+                               maxlength="500" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td colspan="4">&nbsp;</td>
+                </tr>
+
+                <tr>
+                    <td><label>Observaciones:</label></td>
+                    <td colspan="3">
+                        <textarea name="<portlet:namespace />observaciones"
+                                  id="<portlet:namespace />observaciones"
+                                  cols="100"
+                                  rows="4"><%= HtmlUtil.escape(req.getObservacionesVisible()) %></textarea>
+                    </td>
+                </tr>
+            </table>
+        </fieldset>
+
+        <table class="lfr-table">
             <tr>
-                <td>Buscando</td>
-                <td align="center">
-                    <img alt="Buscando"
-                         src="<%= themeDisplay.getPathThemeImages() %>/progress_bar/loading_animation.gif" />
+                <td>
+                    <input type="button"
+                           value="Guardar"
+                           onClick="<portlet:namespace />guardar();" />
+
+                    <c:if test="<%= !esNuevo %>">
+                        &nbsp;&nbsp;
+
+                        <input type="button"
+                               value="Ver"
+                               onClick="window.location.href='<%= verURL.toString() %>';" />
+                    </c:if>
+
+                    &nbsp;&nbsp;
+
+                    <input type="button"
+                           value="Volver"
+                           onClick="window.location.href='<%= volverURL.toString() %>';" />
                 </td>
             </tr>
         </table>
-    </div>
+    </form>
 
-    <div align="center" id="<portlet:namespace />busquedaRequerimientosDiv"></div>
-</fieldset>
+    <c:if test="<%= req.getIdRequerimientoCompra() > 0 %>">
+        <liferay-util:include page="/html/portlet/compras/requerimiento_detalle.jsp" />
+    </c:if>
+</c:if>
 
 <script type="text/javascript">
-    function <portlet:namespace />appendParam(url, name, value) {
-        return url + "&" + name + "=" + encodeURIComponent(value == null ? "" : value);
+    function <portlet:namespace />trimValue(id) {
+        return jQuery.trim(jQuery('#<portlet:namespace />' + id).val());
     }
 
-    function <portlet:namespace />fieldValue(name) {
-        var item = jQuery("#<portlet:namespace />" + name);
+    function <portlet:namespace />sectorRequiereAfiliado() {
+        return jQuery('#<portlet:namespace />sector_id option:selected').attr('data-requiere-afiliado') == 'true';
+    }
 
-        if (item.length == 0) {
-            return "";
+    function <portlet:namespace />sincronizarAfiliadoRequerimiento() {
+        jQuery('#<portlet:namespace />afiliado_cuil_titular').val(<portlet:namespace />trimValue('cuil'));
+        jQuery('#<portlet:namespace />afiliado_inte').val(<portlet:namespace />trimValue('inte'));
+    }
+
+    function <portlet:namespace />cargarAfiliadoInicial() {
+        var afiliadoCuilTitular = jQuery('#<portlet:namespace />afiliado_cuil_titular').val();
+        var afiliadoInte = jQuery('#<portlet:namespace />afiliado_inte').val();
+
+        if (afiliadoCuilTitular != '') {
+            jQuery('#<portlet:namespace />cuil').val(afiliadoCuilTitular);
         }
 
-        return item.val();
+        if (afiliadoInte != '') {
+            jQuery('#<portlet:namespace />inte').val(afiliadoInte);
+        }
+
+        <portlet:namespace />sincronizarAfiliadoRequerimiento();
     }
 
-    function <portlet:namespace />validarFiltroBusqueda() {
-        var cuil = jQuery.trim(<portlet:namespace />fieldValue("afiliado_cuil_titular"));
+    function <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere) {
+        var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
 
-        if (cuil.length > 0 && cuil.length == 11 && typeof validarCuil == "function") {
-            if (!validarCuil(cuil, "CUIL titular inválido.")) {
-                jQuery("#<portlet:namespace />afiliado_cuil_titular").focus();
-                return false;
+        if (requiereAfiliado) {
+            jQuery('#<portlet:namespace />afiliado_requerimiento_panel').show();
+        } else {
+            if (limpiarSiNoRequiere && typeof <portlet:namespace />limpiarCampos == 'function') {
+                <portlet:namespace />limpiarCampos();
             }
-        }
 
-        return true;
+            <portlet:namespace />sincronizarAfiliadoRequerimiento();
+
+            jQuery('#<portlet:namespace />afiliado_requerimiento_panel').hide();
+        }
     }
 
-    function <portlet:namespace />buildUrl() {
-        var url = "<portlet:renderURL windowState='<%= LiferayWindowState.EXCLUSIVE.toString() %>' />";
-
-        url = <portlet:namespace />appendParam(url, "struts_action", "/compras/buscar_requerimientos");
-
-        var params = [
-            "numero",
-            "fechaDesdeDia",
-            "fechaDesdeMes",
-            "fechaDesdeAnio",
-            "fechaHastaDia",
-            "fechaHastaMes",
-            "fechaHastaAnio",
-            "sector_id",
-            "estado",
-            "solicitante_usr",
-            "afiliado_cuil_titular",
-            "afiliado_inte",
-            "tipo_articulo",
-            "texto"
-        ];
-
-        for (var i = 0; i < params.length; i++) {
-            url = <portlet:namespace />appendParam(url, params[i], <portlet:namespace />fieldValue(params[i]));
+    function <portlet:namespace />guardar() {
+        if (<portlet:namespace />trimValue('sector_id') == '0') {
+            alert('Debe informar sector.');
+            jQuery('#<portlet:namespace />sector_id').focus();
+            return;
         }
 
-        return url;
-    }
-
-    function <portlet:namespace />buscarRequerimientos() {
-        if (!<portlet:namespace />validarFiltroBusqueda()) {
-            return false;
+        if (<portlet:namespace />trimValue('solicitante_usr') == '') {
+            alert('Debe informar solicitante.');
+            jQuery('#<portlet:namespace />solicitante_usr').focus();
+            return;
         }
 
-        jQuery("#<portlet:namespace />buscando").show();
+        if (<portlet:namespace />trimValue('descripcion') == '') {
+            alert('Debe informar descripci&oacute;n del requerimiento.');
+            jQuery('#<portlet:namespace />descripcion').focus();
+            return;
+        }
 
-        jQuery("#<portlet:namespace />busquedaRequerimientosDiv").load(
-            <portlet:namespace />buildUrl(),
-            function() {
-                jQuery("#<portlet:namespace />buscando").hide();
+        var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
+
+        if (requiereAfiliado) {
+            <portlet:namespace />sincronizarAfiliadoRequerimiento();
+
+            var afiliadoCuilTitular = <portlet:namespace />trimValue('afiliado_cuil_titular');
+            var afiliadoInte = <portlet:namespace />trimValue('afiliado_inte');
+
+            if (afiliadoCuilTitular == '' || afiliadoInte == '') {
+                alert('Debe seleccionar un afiliado.');
+                jQuery('#<portlet:namespace />cuil').focus();
+                return;
             }
-        );
+        } else {
+            if (typeof <portlet:namespace />limpiarCampos == 'function') {
+                <portlet:namespace />limpiarCampos();
+            }
 
-        return false;
-    }
+            <portlet:namespace />sincronizarAfiliadoRequerimiento();
+        }
 
-    function <portlet:namespace />altaRequerimiento() {
-        var url = "<portlet:renderURL windowState='<%= WindowState.MAXIMIZED.toString() %>'><portlet:param name='struts_action' value='/compras/editar_requerimiento' /></portlet:renderURL>";
-        window.location.href = url;
+        submitForm(document.<portlet:namespace />fm);
     }
 
     jQuery(function() {
-        jQuery("#<portlet:namespace />buscar").click(function() {
-            <portlet:namespace />buscarRequerimientos();
+        <portlet:namespace />cargarAfiliadoInicial();
+        <portlet:namespace />actualizarVisibilidadAfiliado(false);
+
+        jQuery('#<portlet:namespace />sector_id').change(function() {
+            <portlet:namespace />actualizarVisibilidadAfiliado(true);
         });
 
-        jQuery("#<portlet:namespace />numero, #<portlet:namespace />solicitante_usr, #<portlet:namespace />afiliado_cuil_titular, #<portlet:namespace />afiliado_inte, #<portlet:namespace />tipo_articulo, #<portlet:namespace />texto").keypress(function(event) {
-            if (event.which == 13) {
-                <portlet:namespace />buscarRequerimientos();
-                return false;
-            }
-
-            return true;
+        jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte').change(function() {
+            <portlet:namespace />sincronizarAfiliadoRequerimiento();
         });
-
-        <portlet:namespace />buscarRequerimientos();
     });
 </script>
