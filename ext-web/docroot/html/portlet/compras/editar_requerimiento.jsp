@@ -172,7 +172,7 @@ if (afiliadoInte == null) {
         <fieldset class="block-labels">
             <legend>Afiliado</legend>
 
-            <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
+            <liferay-util:include page="/html/portlet/compras/busqueda_afiliado_requerimiento.jsp" />
                 <liferay-util:param name="edit_mode" value="<%= String.valueOf(true) %>" />
                 <liferay-util:param name="cuil" value="<%= afiliadoCuilTitular %>" />
                 <liferay-util:param name="inte" value="<%= afiliadoInte %>" />
@@ -302,8 +302,12 @@ if (afiliadoInte == null) {
         var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
 
         if (requiereAfiliado) {
-            var afiliadoCuilTitular = <portlet:namespace />trimValue('cuil');
-            var afiliadoInte = <portlet:namespace />trimValue('inte');
+            if (typeof <portlet:namespace />sincronizarAfiliadoRequerimientoDesdeBusquedaAfiliados == 'function') {
+                <portlet:namespace />sincronizarAfiliadoRequerimientoDesdeBusquedaAfiliados();
+            }
+
+            var afiliadoCuilTitular = <portlet:namespace />trimValue('afiliado_cuil_titular');
+            var afiliadoInte = <portlet:namespace />trimValue('afiliado_inte');
 
             if (afiliadoCuilTitular == '' || afiliadoInte == '') {
                 alert('Debe seleccionar un afiliado.');
@@ -313,11 +317,13 @@ if (afiliadoInte == null) {
 
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
         } else {
-            if (typeof <portlet:namespace />limpiarCamposAfiliado == 'function') {
-                <portlet:namespace />limpiarCamposAfiliado();
+            if (typeof <portlet:namespace />limpiarCampos == 'function') {
+                <portlet:namespace />limpiarCampos();
             }
 
-            <portlet:namespace />sincronizarAfiliadoRequerimiento();
+            if (typeof <portlet:namespace />sincronizarAfiliadoRequerimientoDesdeBusquedaAfiliados == 'function') {
+                <portlet:namespace />sincronizarAfiliadoRequerimientoDesdeBusquedaAfiliados();
+            }
         }
 
         submitForm(document.<portlet:namespace />fm);
