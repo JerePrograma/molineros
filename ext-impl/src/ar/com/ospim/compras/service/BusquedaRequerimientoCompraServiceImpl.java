@@ -3,9 +3,7 @@ package ar.com.ospim.compras.service;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,24 +32,16 @@ public class BusquedaRequerimientoCompraServiceImpl {
             "{call compras.get_requerimiento_detalle(?)}";
 
     private static final String SQL_LISTAR_ESTADOS =
-            "select id_estado, codigo, descripcion " +
-                    "from compras.requerimientos_estados " +
-                    "order by id_estado";
+            "{call compras.listar_requerimientos_estados()}";
 
     private static final String SQL_LISTAR_SECTORES =
-            "select id_sector, codigo, descripcion, requiere_afiliado " +
-                    "from compras.requerimientos_sectores " +
-                    "order by descripcion";
+            "{call compras.listar_requerimientos_sectores()}";
 
     private static final String SQL_GET_ESTADO =
-            "select id_estado, codigo, descripcion " +
-                    "from compras.requerimientos_estados " +
-                    "where id_estado = ?";
+            "{call compras.get_requerimiento_estado(?)}";
 
     private static final String SQL_GET_SECTOR =
-            "select id_sector, codigo, descripcion, requiere_afiliado " +
-                    "from compras.requerimientos_sectores " +
-                    "where id_sector = ?";
+            "{call compras.get_requerimiento_sector(?)}";
 
     public List<RequerimientoCompra> buscarRequerimientos(RequerimientoCompraFiltro filtro) throws Exception {
         Connection con = null;
@@ -154,14 +144,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
     public List<RequerimientoCompraEstado> listarEstados() throws Exception {
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
 
         List<RequerimientoCompraEstado> estados = new ArrayList<RequerimientoCompraEstado>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_LISTAR_ESTADOS);
+            stmt = con.prepareCall(SQL_LISTAR_ESTADOS);
             rs = stmt.executeQuery();
 
             while (rs.next()) {
@@ -180,14 +170,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
     public List<RequerimientoCompraSector> listarSectores() throws Exception {
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
 
         List<RequerimientoCompraSector> sectores = new ArrayList<RequerimientoCompraSector>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_LISTAR_SECTORES);
+            stmt = con.prepareCall(SQL_LISTAR_SECTORES);
             rs = stmt.executeQuery();
 
             while (rs.next()) {
@@ -206,12 +196,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
     public RequerimientoCompraEstado getEstado(int idEstado) throws Exception {
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_GET_ESTADO);
+            stmt = con.prepareCall(SQL_GET_ESTADO);
             stmt.setInt(1, idEstado);
             rs = stmt.executeQuery();
 
@@ -231,12 +221,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
     public RequerimientoCompraSector getSector(int idSector) throws Exception {
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_GET_SECTOR);
+            stmt = con.prepareCall(SQL_GET_SECTOR);
             stmt.setInt(1, idSector);
             rs = stmt.executeQuery();
 

@@ -51,6 +51,15 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             if (Constants.ADD.equals(cmd) || Constants.UPDATE.equals(cmd)) {
                 RequerimientoCompra requerimiento = getRequerimientoFromRequest(actionRequest);
+
+                if (requerimiento.getIdRequerimientoCompra() > 0) {
+                    RequerimientoCompra existente =
+                            validarRequerimientoEditable(requerimiento.getIdRequerimientoCompra());
+                    requerimiento.setIdEstado(existente.getIdEstado());
+                } else {
+                    requerimiento.setIdEstado(WebKeysCompras.ESTADO_BORRADOR);
+                }
+
                 prepararRequerimientoParaGuardar(requerimiento, user);
                 validarCabecera(requerimiento);
 
@@ -66,6 +75,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             if ("addItem".equals(cmd) || "updateItem".equals(cmd)) {
                 RequerimientoCompraDetalle detalle = getDetalleFromRequest(actionRequest);
+                validarRequerimientoEditable(detalle.getIdRequerimientoCompra());
                 validarDetalle(detalle);
 
                 EditarRequerimientoCompraServiceUtil.guardarDetalle(detalle, usuario);
@@ -84,6 +94,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     throw new Exception("Debe informar el renglon a borrar.");
                 }
 
+                if (idRequerimientoCompra <= 0) {
+                    throw new Exception("Debe informar el requerimiento de compra.");
+                }
+
+                validarRequerimientoEditable(idRequerimientoCompra);
                 EditarRequerimientoCompraServiceUtil.borrarDetalle(idDetalle, usuario);
 
                 setIdRequerimientoEnRequest(actionRequest, actionResponse, idRequerimientoCompra);
@@ -98,6 +113,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     throw new Exception("Debe informar el requerimiento de compra a borrar.");
                 }
 
+                validarRequerimientoPuedeAnular(idRequerimientoCompra);
                 EditarRequerimientoCompraServiceUtil.borrarRequerimientoCompra(idRequerimientoCompra, usuario);
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-borrado");
@@ -204,6 +220,38 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
             throw new Exception("No posee permisos para administrar requerimientos de compras.");
+        }
+    }
+
+    private RequerimientoCompra validarRequerimientoEditable(int idRequerimientoCompra) throws Exception {
+        if (idRequerimientoCompra <= 0) {
+            return null;
+        }
+
+        RequerimientoCompra requerimiento =
+                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimientoCompra);
+
+        if (requerimiento == null) {
+            throw new Exception("No se encontro el requerimiento de compra informado.");
+        }
+
+        if (!requerimiento.isEditable()) {
+            throw new Exception("Solo se pueden editar requerimientos en estado Borrador.");
+        }
+
+        return requerimiento;
+    }
+
+    private void validarRequerimientoPuedeAnular(int idRequerimientoCompra) throws Exception {
+        RequerimientoCompra requerimiento =
+                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimientoCompra);
+
+        if (requerimiento == null) {
+            throw new Exception("No se encontro el requerimiento de compra informado.");
+        }
+
+        if (!requerimiento.puedeAnular()) {
+            throw new Exception("El requerimiento no puede anularse en su estado actual.");
         }
     }
 
@@ -331,37 +379,25 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         detalle.setRenglon(ParamUtil.getInteger(request, "renglon", 0));
         detalle.setTipoArticulo(ParamUtil.getString(request, "tipo_articulo", null));
 
-        String articulo = ParamUtil.getString(request, "articulo", null);
-        if (WebKeysCompras.isEmpty(articulo)) {
-            articulo = ParamUtil.getString(request, "item_descripcion", null);
-        }
-        detalle.setArticulo(articulo);
+        detalle.setArticulo(ParamUtil.getString(request, "articulo", null));
 
-        detalle.setCantidad(parseBigDecimal(ParamUtil.getString(request, "cantidad",
-                ParamUtil.getString(request, "item_cantidad", "1"))));
+        detalle.setCantidad(parseBigDecimal(ParamUtil.getString(request, "cantidad", "1")));
 
-        detalle.setUnidadMedida(ParamUtil.getString(request, "unidad_medida",
-                ParamUtil.getString(request, "item_unidad_medida", null)));
+        detalle.setUnidadMedida(ParamUtil.getString(request, "unidad_medida", null));
 
         detalle.setPrecioUnitarioEstimado(parseBigDecimalNullable(
-                ParamUtil.getString(request, "precio_unitario_estimado",
-                        ParamUtil.getString(request, "item_importe_estimado", null))));
+                ParamUtil.getString(request, "precio_unitario_estimado", null)));
 
         detalle.setPrecioTotalEstimado(parseBigDecimalNullable(
                 ParamUtil.getString(request, "precio_total_estimado", null)));
 
-        detalle.setObservaciones(ParamUtil.getString(request, "item_observaciones",
-                ParamUtil.getString(request, "observaciones_detalle", null)));
+        detalle.setObservaciones(ParamUtil.getString(request, "observaciones_detalle", null));
 
         return detalle;
     }
 
     private int getIdDetalleFromRequest(ActionRequest request) {
         int idDetalle = ParamUtil.getInteger(request, "id_requerimiento_detalle", 0);
-
-        if (idDetalle <= 0) {
-            idDetalle = ParamUtil.getInteger(request, "id_item", 0);
-        }
 
         return idDetalle;
     }

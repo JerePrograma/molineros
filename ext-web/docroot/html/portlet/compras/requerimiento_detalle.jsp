@@ -1,5 +1,23 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 
+<%!
+private String jsDetalleCompra(String value) {
+    if (value == null) {
+        return "";
+    }
+
+    return value
+            .replace("\\", "\\\\")
+            .replace("'", "\\'")
+            .replace("\"", "\\\"")
+            .replace("\r", " ")
+            .replace("\n", " ");
+}
+
+private String jsDetalleCompraAttr(String value) {
+    return HtmlUtil.escape(jsDetalleCompra(value));
+}%>
+
 <%
 RequerimientoCompra reqDetalle = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
 if (reqDetalle == null) {
@@ -62,6 +80,10 @@ detalleActionURL.setParameter("struts_action", "/compras/editar_requerimiento");
 
                     <c:if test="<%= puedeABMDetalle %>">
                         <td>
+                            <input type="button"
+                                   value="Editar"
+                                   onclick="<portlet:namespace />editarDetalle('<%= detalle.getIdRequerimientoDetalle() %>', '<%= jsDetalleCompraAttr(detalle.getRenglonString()) %>', '<%= jsDetalleCompraAttr(detalle.getTipoArticuloVisible()) %>', '<%= jsDetalleCompraAttr(detalle.getArticuloVisible()) %>', '<%= jsDetalleCompraAttr(detalle.getCantidadString()) %>', '<%= jsDetalleCompraAttr(detalle.getUnidadMedidaVisible()) %>', '<%= jsDetalleCompraAttr(detalle.getPrecioUnitarioEstimadoString()) %>', '<%= jsDetalleCompraAttr(detalle.getPrecioTotalEstimadoString()) %>', '<%= jsDetalleCompraAttr(detalle.getObservacionesVisible()) %>');" />
+                            &nbsp;
                             <form action="<%= detalleActionURL.toString() %>" method="post" name="<portlet:namespace />deleteDetalleFm<%= detalle.getIdRequerimientoDetalle() %>">
                                 <input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>" value="deleteItem" />
                                 <input type="hidden" name="<portlet:namespace />id_requerimiento_compra" value="<%= reqDetalle.getIdRequerimientoCompra() %>" />
@@ -83,7 +105,8 @@ detalleActionURL.setParameter("struts_action", "/compras/editar_requerimiento");
 
     <c:if test="<%= puedeABMDetalle %>">
         <form action="<%= detalleActionURL.toString() %>" method="post" name="<portlet:namespace />detalleFm">
-            <input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>" value="addItem" />
+            <input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>" id="<portlet:namespace />detalle_cmd" value="addItem" />
+            <input type="hidden" name="<portlet:namespace />id_requerimiento_detalle" id="<portlet:namespace />id_requerimiento_detalle" value="0" />
             <input type="hidden" name="<portlet:namespace />id_requerimiento_compra" value="<%= reqDetalle.getIdRequerimientoCompra() %>" />
 
             <table class="lfr-table" width="100%">
@@ -147,7 +170,8 @@ detalleActionURL.setParameter("struts_action", "/compras/editar_requerimiento");
 
                 <tr>
                     <td colspan="6" align="center">
-                        <input type="button" value="Agregar renglón" onclick="<portlet:namespace />agregarDetalle();" />
+                        <input type="button" id="<portlet:namespace />detalle_submit" value="Agregar renglon" onclick="<portlet:namespace />agregarDetalle();" />
+                        &nbsp;&nbsp;<input type="button" id="<portlet:namespace />detalle_cancelar" value="Cancelar edicion" style="display:none;" onclick="<portlet:namespace />cancelarEdicionDetalle();" />
                     </td>
                 </tr>
             </table>
@@ -156,9 +180,44 @@ detalleActionURL.setParameter("struts_action", "/compras/editar_requerimiento");
 </fieldset>
 
 <script type="text/javascript">
+    function <portlet:namespace />detalleValue(value) {
+        return value == null ? "" : value;
+    }
+
+    function <portlet:namespace />editarDetalle(idDetalle, renglon, tipoArticulo, articulo, cantidad, unidadMedida, precioUnitario, precioTotal, observaciones) {
+        jQuery("#<portlet:namespace />detalle_cmd").val("updateItem");
+        jQuery("#<portlet:namespace />id_requerimiento_detalle").val(<portlet:namespace />detalleValue(idDetalle));
+        jQuery("#<portlet:namespace />renglon").val(<portlet:namespace />detalleValue(renglon));
+        jQuery("#<portlet:namespace />tipo_articulo").val(<portlet:namespace />detalleValue(tipoArticulo));
+        jQuery("#<portlet:namespace />articulo").val(<portlet:namespace />detalleValue(articulo));
+        jQuery("#<portlet:namespace />cantidad").val(<portlet:namespace />detalleValue(cantidad));
+        jQuery("#<portlet:namespace />unidad_medida").val(<portlet:namespace />detalleValue(unidadMedida));
+        jQuery("#<portlet:namespace />precio_unitario_estimado").val(<portlet:namespace />detalleValue(precioUnitario));
+        jQuery("#<portlet:namespace />precio_total_estimado").val(<portlet:namespace />detalleValue(precioTotal));
+        jQuery("#<portlet:namespace />observaciones_detalle").val(<portlet:namespace />detalleValue(observaciones));
+        jQuery("#<portlet:namespace />detalle_submit").val("Guardar renglon");
+        jQuery("#<portlet:namespace />detalle_cancelar").show();
+        jQuery("#<portlet:namespace />articulo").focus();
+    }
+
+    function <portlet:namespace />cancelarEdicionDetalle() {
+        jQuery("#<portlet:namespace />detalle_cmd").val("addItem");
+        jQuery("#<portlet:namespace />id_requerimiento_detalle").val("0");
+        jQuery("#<portlet:namespace />renglon").val("");
+        jQuery("#<portlet:namespace />tipo_articulo").val("");
+        jQuery("#<portlet:namespace />articulo").val("");
+        jQuery("#<portlet:namespace />cantidad").val("1");
+        jQuery("#<portlet:namespace />unidad_medida").val("");
+        jQuery("#<portlet:namespace />precio_unitario_estimado").val("0");
+        jQuery("#<portlet:namespace />precio_total_estimado").val("");
+        jQuery("#<portlet:namespace />observaciones_detalle").val("");
+        jQuery("#<portlet:namespace />detalle_submit").val("Agregar renglon");
+        jQuery("#<portlet:namespace />detalle_cancelar").hide();
+    }
+
     function <portlet:namespace />agregarDetalle() {
         if (jQuery("#<portlet:namespace />articulo").val() == "") {
-            alert("Debe informar artículo.");
+            alert("Debe informar articulo.");
             return;
         }
 

@@ -7027,6 +7027,10 @@
                     path="portlet.compras.editar_requerimiento" />
 
             <forward
+                    name="portlet.compras.ver_requerimiento"
+                    path="portlet.compras.ver_requerimiento" />
+
+            <forward
                     name="portlet.compras.error"
                     path="portlet.compras.error" />
         </action>
@@ -7062,4 +7066,3 @@
     </action-mappings>
   
 </struts-config>
-

@@ -24,7 +24,6 @@ headerNames.add("CUIL titular");
 headerNames.add("Integrante");
 headerNames.add("Descripción");
 headerNames.add("Estado");
-headerNames.add("Total estimado");
 headerNames.add("Acciones");
 
 SearchContainer searchContainer = new SearchContainer(
@@ -64,7 +63,6 @@ for (int i = 0; i < requerimientos.size(); i++) {
     row.addText(HtmlUtil.escape(req.getAfiliadoInteString()), verURL);
     row.addText(HtmlUtil.escape(req.getDescripcionVisible()), verURL);
     row.addText(HtmlUtil.escape(req.getEstadoDescripcionVisible()), verURL);
-    row.addText(HtmlUtil.escape(req.getTotalEstimadoString()), verURL);
 
     StringBuffer acciones = new StringBuffer();
     acciones.append("<a href=\"").append(verURL.toString()).append("\">Ver</a>");

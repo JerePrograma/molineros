@@ -58,7 +58,7 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             actionResponse.setRenderParameter("id_requerimiento_compra", String.valueOf(idRequerimientoCompra));
 
             SessionMessages.add(actionRequest, "estado-requerimiento-compra-actualizado");
-            setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+            setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
         } catch (Exception e) {
             _log.error(e);
             SessionErrors.add(actionRequest, e.getClass().getName());

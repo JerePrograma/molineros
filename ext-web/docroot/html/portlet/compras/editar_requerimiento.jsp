@@ -8,6 +8,7 @@ if (req == null) {
 
 boolean esNuevo = req.getIdRequerimientoCompra() == 0;
 boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+boolean editable = esNuevo || req.isEditable();
 
 List<RequerimientoCompraSector> sectores = (List<RequerimientoCompraSector>) renderRequest.getAttribute(WebKeysCompras.SECTORES_REQUERIMIENTO_COMPRA);
 if (sectores == null) {
@@ -40,7 +41,20 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
     <div class="portlet-msg-error">No posee permisos para editar requerimientos de compras.</div>
 </c:if>
 
-<c:if test="<%= puedeABM %>">
+<c:if test="<%= puedeABM && !editable %>">
+    <div class="portlet-msg-info">El requerimiento solo puede editarse en estado Borrador.</div>
+
+    <table class="lfr-table">
+        <tr>
+            <td>
+                <input type="button" value="Ver" onclick="window.location.href='<%= verURL.toString() %>';" />
+                &nbsp;&nbsp;<input type="button" value="Volver" onclick="window.location.href='<%= volverURL.toString() %>';" />
+            </td>
+        </tr>
+    </table>
+</c:if>
+
+<c:if test="<%= puedeABM && editable %>">
     <form action="<%= actionURL.toString() %>" method="post" name="<portlet:namespace />fm">
         <input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>" id="<portlet:namespace /><%= Constants.CMD %>" value="<%= esNuevo ? Constants.ADD : Constants.UPDATE %>" />
         <input type="hidden" name="<portlet:namespace />id_requerimiento_compra" id="<portlet:namespace />id_requerimiento_compra" value="<%= req.getIdRequerimientoCompra() %>" />
@@ -74,7 +88,7 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
                                 String sectorId = String.valueOf(sector.getIdSector());
                                 String selected = reqSectorId.equals(sectorId) ? "selected=\"selected\"" : "";
                             %>
-                                <option value="<%= sectorId %>" <%= selected %>><%= HtmlUtil.escape(sector.getDescripcionVisible()) %></option>
+                                <option value="<%= sectorId %>" data-requiere-afiliado="<%= sector.isRequiereAfiliado() ? "true" : "false" %>" <%= selected %>><%= HtmlUtil.escape(sector.getDescripcionVisible()) %></option>
                             <% } %>
                         </select>
                     </td>
@@ -159,6 +173,19 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
         if (jQuery("#<portlet:namespace />descripcion").val() == "") {
             alert("Debe informar descripción del requerimiento.");
             return;
+        }
+
+        var requiereAfiliado = jQuery("#<portlet:namespace />sector_id option:selected").attr("data-requiere-afiliado") == "true";
+        if (requiereAfiliado) {
+            if (jQuery("#<portlet:namespace />afiliado_cuil_titular").val() == "") {
+                alert("Debe informar CUIL titular del afiliado.");
+                return;
+            }
+
+            if (jQuery("#<portlet:namespace />afiliado_inte").val() == "") {
+                alert("Debe informar integrante del afiliado.");
+                return;
+            }
         }
 
         submitForm(document.<portlet:namespace />fm);

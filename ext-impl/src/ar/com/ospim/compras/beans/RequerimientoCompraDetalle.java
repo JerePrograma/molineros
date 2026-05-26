@@ -32,7 +32,7 @@ public class RequerimientoCompraDetalle {
 
     public RequerimientoCompraDetalle() {
         this.cantidad = BigDecimal.ONE;
-        this.precioUnitarioEstimado = BigDecimal.ZERO;
+        this.precioUnitarioEstimado = null;
         this.precioTotalEstimado = null;
     }
 
@@ -146,7 +146,7 @@ public class RequerimientoCompraDetalle {
     }
 
     public String getPrecioUnitarioEstimadoString() {
-        return precioUnitarioEstimado != null ? precioUnitarioEstimado.toString() : "0";
+        return precioUnitarioEstimado != null ? precioUnitarioEstimado.toString() : "";
     }
 
     public void setPrecioUnitarioEstimado(BigDecimal precioUnitarioEstimado) {
@@ -163,11 +163,15 @@ public class RequerimientoCompraDetalle {
 
     public String getPrecioTotalEstimadoString() {
         BigDecimal total = getPrecioTotalEstimado();
-        return total != null ? total.toString() : "0";
+        return total != null ? total.toString() : "";
     }
 
     public void setPrecioTotalEstimado(BigDecimal precioTotalEstimado) {
         this.precioTotalEstimado = precioTotalEstimado;
+    }
+
+    public BigDecimal getPrecioTotalEstimadoInformado() {
+        return precioTotalEstimado;
     }
 
     public BigDecimal getImporteEstimado() {
@@ -192,7 +196,7 @@ public class RequerimientoCompraDetalle {
 
     public BigDecimal calcularPrecioTotalEstimado() {
         if (cantidad == null || precioUnitarioEstimado == null) {
-            return BigDecimal.ZERO;
+            return null;
         }
 
         return cantidad.multiply(precioUnitarioEstimado);

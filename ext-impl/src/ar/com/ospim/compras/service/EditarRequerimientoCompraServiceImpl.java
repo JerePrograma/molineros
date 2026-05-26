@@ -122,7 +122,7 @@ public class EditarRequerimientoCompraServiceImpl {
             setNullableBigDecimal(stmt, 7, detalle.getCantidad());
             stmt.setString(8, emptyToNull(detalle.getUnidadMedida()));
             setNullableBigDecimal(stmt, 9, detalle.getPrecioUnitarioEstimado());
-            setNullableBigDecimal(stmt, 10, detalle.getPrecioTotalEstimado());
+            setNullableBigDecimal(stmt, 10, detalle.getPrecioTotalEstimadoInformado());
             stmt.setString(11, emptyToNull(detalle.getObservaciones()));
             stmt.setString(12, emptyToNull(usuario));
 
@@ -223,6 +223,32 @@ public class EditarRequerimientoCompraServiceImpl {
         if (!WebKeysCompras.esEstadoValido(requerimiento.getIdEstado())) {
             throw new Exception("Estado de requerimiento invalido.");
         }
+
+        if (requerimiento.getIdSector() == null || requerimiento.getIdSector().intValue() <= 0) {
+            throw new Exception("Debe informar el sector solicitante.");
+        }
+
+        if (requerimiento.getSolicitanteUsr() == null
+                || requerimiento.getSolicitanteUsr().trim().length() == 0) {
+            throw new Exception("Debe informar el solicitante.");
+        }
+
+        if (requerimiento.getDescripcion() == null
+                || requerimiento.getDescripcion().trim().length() == 0) {
+            throw new Exception("Debe informar la descripcion del requerimiento.");
+        }
+
+        if (requerimiento.isRequiereAfiliado()) {
+            if (requerimiento.getAfiliadoCuilTitular() == null
+                    || requerimiento.getAfiliadoCuilTitular().trim().length() == 0) {
+                throw new Exception("Debe informar el CUIL titular del afiliado.");
+            }
+
+            if (requerimiento.getAfiliadoInte() == null
+                    || requerimiento.getAfiliadoInte().intValue() < 0) {
+                throw new Exception("Debe informar el numero de integrante del afiliado.");
+            }
+        }
     }
 
     private void validarDetalleParaGuardar(RequerimientoCompraDetalle detalle) throws Exception {
@@ -238,8 +264,22 @@ public class EditarRequerimientoCompraServiceImpl {
             detalle.setCantidad(BigDecimal.ONE);
         }
 
-        if (detalle.getPrecioUnitarioEstimado() == null) {
-            detalle.setPrecioUnitarioEstimado(BigDecimal.ZERO);
+        if (detalle.getCantidad().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new Exception("La cantidad debe ser mayor a cero.");
+        }
+
+        if (detalle.getArticulo() == null || detalle.getArticulo().trim().length() == 0) {
+            throw new Exception("Debe informar el articulo.");
+        }
+
+        if (detalle.getPrecioUnitarioEstimado() != null
+                && detalle.getPrecioUnitarioEstimado().compareTo(BigDecimal.ZERO) < 0) {
+            throw new Exception("El precio unitario estimado no puede ser negativo.");
+        }
+
+        if (detalle.getPrecioTotalEstimadoInformado() != null
+                && detalle.getPrecioTotalEstimadoInformado().compareTo(BigDecimal.ZERO) < 0) {
+            throw new Exception("El precio total estimado no puede ser negativo.");
         }
     }
 
