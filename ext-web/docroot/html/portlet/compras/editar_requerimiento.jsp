@@ -39,6 +39,18 @@ actionURL.setParameter("struts_action", "/compras/editar_requerimiento");
 String solicitanteDefault = req.getSolicitanteUsr() != null ? req.getSolicitanteUsr() : (user != null ? user.getScreenName() : "");
 String solicitanteNombreDefault = req.getSolicitanteNombre() != null ? req.getSolicitanteNombre() : (user != null ? user.getFullName() : "");
 String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId().intValue()) : "";
+
+String afiliadoCuilTitular = req.getAfiliadoCuilTitularVisible();
+
+if (afiliadoCuilTitular == null) {
+    afiliadoCuilTitular = "";
+}
+
+String afiliadoInte = req.getAfiliadoInteString();
+
+if (afiliadoInte == null) {
+    afiliadoInte = "";
+}
 %>
 
 <c:if test="<%= !puedeABM %>">
@@ -157,7 +169,25 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
             </table>
         </fieldset>
 
-        <liferay-util:include page="/html/portlet/compras/busqueda_afiliado_requerimiento.jsp" />
+        <fieldset class="block-labels">
+            <legend>Afiliado</legend>
+
+            <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
+                <liferay-util:param name="edit_mode" value="<%= String.valueOf(true) %>" />
+                <liferay-util:param name="cuil" value="<%= afiliadoCuilTitular %>" />
+                <liferay-util:param name="inte" value="<%= afiliadoInte %>" />
+            </liferay-util:include>
+
+            <input type="hidden"
+                   name="<portlet:namespace />afiliado_cuil_titular"
+                   id="<portlet:namespace />afiliado_cuil_titular"
+                   value="<%= HtmlUtil.escape(afiliadoCuilTitular) %>" />
+
+            <input type="hidden"
+                   name="<portlet:namespace />afiliado_inte"
+                   id="<portlet:namespace />afiliado_inte"
+                   value="<%= HtmlUtil.escape(afiliadoInte) %>" />
+        </fieldset>
 
         <fieldset class="block-labels">
             <legend>Solicitud</legend>
@@ -230,17 +260,23 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
         return jQuery('#<portlet:namespace />sector_id option:selected').attr('data-requiere-afiliado') == 'true';
     }
 
+    function <portlet:namespace />sincronizarAfiliadoRequerimiento() {
+        jQuery('#<portlet:namespace />afiliado_cuil_titular').val(<portlet:namespace />trimValue('cuil'));
+        jQuery('#<portlet:namespace />afiliado_inte').val(<portlet:namespace />trimValue('inte'));
+    }
+
     function <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere) {
         var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
 
         if (requiereAfiliado) {
-            jQuery('#<portlet:namespace />afiliado_requerimiento_fieldset').show();
+            jQuery('#<portlet:namespace />panelDatosAfiliado').show();
         } else {
             if (limpiarSiNoRequiere && typeof <portlet:namespace />limpiarCamposAfiliado == 'function') {
                 <portlet:namespace />limpiarCamposAfiliado();
+                <portlet:namespace />sincronizarAfiliadoRequerimiento();
             }
 
-            jQuery('#<portlet:namespace />afiliado_requerimiento_fieldset').hide();
+            jQuery('#<portlet:namespace />panelDatosAfiliado').hide();
         }
     }
 
@@ -266,18 +302,22 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
         var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
 
         if (requiereAfiliado) {
-            var afiliadoCuilTitular = <portlet:namespace />trimValue('afiliado_cuil_titular');
-            var afiliadoInte = <portlet:namespace />trimValue('afiliado_inte');
+            var afiliadoCuilTitular = <portlet:namespace />trimValue('cuil');
+            var afiliadoInte = <portlet:namespace />trimValue('inte');
 
             if (afiliadoCuilTitular == '' || afiliadoInte == '') {
                 alert('Debe seleccionar un afiliado.');
                 jQuery('#<portlet:namespace />cuil').focus();
                 return;
             }
+
+            <portlet:namespace />sincronizarAfiliadoRequerimiento();
         } else {
             if (typeof <portlet:namespace />limpiarCamposAfiliado == 'function') {
                 <portlet:namespace />limpiarCamposAfiliado();
             }
+
+            <portlet:namespace />sincronizarAfiliadoRequerimiento();
         }
 
         submitForm(document.<portlet:namespace />fm);
@@ -285,6 +325,7 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
 
     jQuery(function() {
         <portlet:namespace />actualizarVisibilidadAfiliado(false);
+        <portlet:namespace />sincronizarAfiliadoRequerimiento();
 
         jQuery('#<portlet:namespace />sector_id').change(function() {
             <portlet:namespace />actualizarVisibilidadAfiliado(true);
