@@ -1,505 +1,657 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
+<%@ page import ="ar.com.ospim.afiliados.beans.AfiObservacion" %>
+
+<%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
+<portlet:defineObjects/>
 
 <%
-    String editModeParam = ParamUtil.getString(request, "edit_mode", "true");
-    boolean editMode = Boolean.parseBoolean(editModeParam);
+	String edit_mode = ParamUtil.getString(request, "edit_mode", null);
+	String discapacidad = ParamUtil.getString(request, "discapacidad", null);
+	String pag_reintegro = ParamUtil.getString(request, "pag_reintegro", null);
+	String prefijo = ParamUtil.getString(request, "origen", "");
+	String fromReclamo = ParamUtil.getString(request, "from_reclamo", "false");
 
-    String prefijo = ParamUtil.getString(request, "origen", "");
+	if (pag_reintegro != null) {
+		pag_reintegro = "true";
+	}
+	else {
+		pag_reintegro = "false";
+	}
 
-    String cuil = ParamUtil.getString(request, "cuil", "");
-    String inte = ParamUtil.getString(request, "inte", "");
-    String tipoDocSeleccionado = ParamUtil.getString(request, "tipoDoc", "");
-    String nroDoc = ParamUtil.getString(request, "nroDoc", "");
-    String apellido = ParamUtil.getString(request, "apellido", "");
-    String nombre = ParamUtil.getString(request, "nombre", "");
-    String entidadSeleccionada = ParamUtil.getString(request, "entidad", WebKeysGlobal.ENTIDAD_OSPIM);
-    String numeroAfi = ParamUtil.getString(request, "numero_afi", "");
-    String idSeccional = ParamUtil.getString(request, "id_seccional", "");
-    String seccional = ParamUtil.getString(request, "seccional", "");
-    String bajaFecha = ParamUtil.getString(request, "baja_fecha", "");
+	if (discapacidad != null) {
+		discapacidad = "true";
+	}
+	else {
+		discapacidad = "false";
+	}
 
-    PortletURL buscarAfiliadosURL = renderResponse.createRenderURL();
-    buscarAfiliadosURL.setWindowState(LiferayWindowState.EXCLUSIVE);
-    buscarAfiliadosURL.setParameter("struts_action", "/compras/buscar_afiliados");
+	String fecha_prestacion = ParamUtil.getString(request, "fecha_prestaci", "");
+	String tipo_reintegro = (String)request.getAttribute(WebKeysLiquidaciones.TIPO_REINTEGRO_EN_EDICION);
+
+	boolean showOspim = PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_ENTIDAD_OSPIM);
+	boolean showAmtima = PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_ENTIDAD_AMTIMA);
+	boolean showUoma = PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_ENTIDAD_UOMA);
+
+	String cuil = ParamUtil.getString(request, "cuil", "");
+	String inte = ParamUtil.getString(request, "inte", "");
 %>
 
 <style type="text/css">
-    #<portlet:namespace />afiliado_requerimiento_panel<%= prefijo %> {
-        position: relative;
-    }
+	#<portlet:namespace />panelDatosAfiliado<%=prefijo%> {
+		position: relative;
+	}
 
-    #<portlet:namespace />afiliado_requerimiento_panel<%= prefijo %> .compras-afiliado-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 5px;
-    }
+	#<portlet:namespace />panelDatosAfiliado<%=prefijo%>.afiliado-con-antecedentes-panel {
+		background: #fdeaea !important;
+		border: 1px solid #d9a3a3 !important;
+		border-left: 6px solid #c62828 !important;
+		border-radius: 4px;
+		padding: 6px;
+		padding-top: 34px;
+	}
 
-    #<portlet:namespace />afiliado_requerimiento_panel<%= prefijo %> .compras-afiliado-readonly {
-        background: #f3f3f3;
-    }
+	#<portlet:namespace />panelDatosAfiliado<%=prefijo%>.afiliado-con-antecedentes-panel td,
+	#<portlet:namespace />panelDatosAfiliado<%=prefijo%>.afiliado-con-antecedentes-panel span,
+	#<portlet:namespace />panelDatosAfiliado<%=prefijo%>.afiliado-con-antecedentes-panel b {
+		color: #333333 !important;
+	}
 
-    #<portlet:namespace />afiliado_requerimiento_panel<%= prefijo %> .compras-afiliado-baja {
-        background: #c62828 !important;
-        color: #ffffff !important;
-        font-weight: bold;
-    }
+	#<portlet:namespace />panelDatosAfiliado<%=prefijo%>.afiliado-con-antecedentes-panel label {
+		color: #7a1f1f !important;
+		font-weight: bold;
+	}
+
+	#<portlet:namespace />panelDatosAfiliado<%=prefijo%>.afiliado-con-antecedentes-panel input,
+	#<portlet:namespace />panelDatosAfiliado<%=prefijo%>.afiliado-con-antecedentes-panel select,
+	#<portlet:namespace />panelDatosAfiliado<%=prefijo%>.afiliado-con-antecedentes-panel textarea {
+		background: #ffffff !important;
+		color: #222222 !important;
+		border: 1px solid #c9c9c9 !important;
+	}
+
+	#<portlet:namespace />panelDatosAfiliado<%=prefijo%>.afiliado-con-antecedentes-panel input[readonly],
+	#<portlet:namespace />panelDatosAfiliado<%=prefijo%>.afiliado-con-antecedentes-panel select[disabled] {
+		background: #f3f3f3 !important;
+		color: #222222 !important;
+		border: 1px solid #d0d0d0 !important;
+	}
+
+	#<portlet:namespace />antecedentesJudicialesBox<%=prefijo%> {
+		display: none;
+		position: absolute;
+		top: 6px;
+		right: 12px;
+		z-index: 2;
+		white-space: nowrap;
+		font-weight: bold;
+	}
+
+	#<portlet:namespace />antecedentesJudicialesLabel<%=prefijo%> {
+		display: inline-block;
+		padding: 2px 8px;
+		background: #c62828;
+		border: 1px solid #8e0000;
+		border-radius: 4px;
+		color: #ffffff !important;
+		line-height: 1.2;
+	}
 </style>
 
-<div id="<portlet:namespace />afiliado_requerimiento_panel<%= prefijo %>">
-    <table class="lfr-table compras-afiliado-table">
-        <tr>
-            <td><label>Entidad:</label></td>
-            <td>
-                <select name="<portlet:namespace />entidad<%= prefijo %>"
-                        id="<portlet:namespace />entidad<%= prefijo %>"
-                        <%= !editMode ? "disabled=\"disabled\"" : "" %>>
-                    <%
-                        for (int i = 0; i < WebKeysGlobal.ENTIDADES_UOMA.length; i++) {
-                            String entidad = WebKeysGlobal.ENTIDADES_UOMA[i];
-                            String selected = entidad.equalsIgnoreCase(entidadSeleccionada) ? "selected=\"selected\"" : "";
-                    %>
-                        <option value="<%= HtmlUtil.escape(entidad) %>" <%= selected %>>
-                            <%= HtmlUtil.escape(entidad) %>
-                        </option>
-                    <%
-                        }
-                    %>
-                </select>
-            </td>
+<div id="<portlet:namespace />panelDatosAfiliado<%=prefijo%>">
+	<div id="<portlet:namespace />antecedentesJudicialesBox<%=prefijo%>">
+		<span id="<portlet:namespace />antecedentesJudicialesLabel<%=prefijo%>">
+			Antecedentes Judiciales
+		</span>
+	</div>
 
-            <td><label>N&uacute;mero afi.:</label></td>
-            <td>
-                <input type="text"
-                       name="<portlet:namespace />numero_afi<%= prefijo %>"
-                       id="<portlet:namespace />numero_afi<%= prefijo %>"
-                       value="<%= HtmlUtil.escape(numeroAfi) %>"
-                       size="8"
-                       maxlength="10"
-                       <%= !editMode ? "readonly=\"readonly\"" : "" %> />
-            </td>
+	<table class="lfr-table" style="width:100%; border-collapse: separate; border-spacing: 5px;">
+		<tr>
+			<td><label><liferay-ui:message key="entidad" />:</label></td>
+			<td>
+				<select name="<portlet:namespace/>entidad<%=prefijo%>" id="<portlet:namespace/>entidad<%=prefijo%>" <%= !Boolean.parseBoolean(edit_mode) ? " disabled='true'" : ""  %>>
+					<%
+						if (Boolean.parseBoolean(pag_reintegro) && tipo_reintegro != null && (tipo_reintegro.equalsIgnoreCase(WebKeysLiquidaciones.REINTEGRO_ODO_PROTESIS))) {
+					%>
+					<option value="<%= WebKeysGlobal.ENTIDAD_UOMA %>"><%=WebKeysGlobal.ENTIDAD_UOMA%></option>
+					<%
+					}
+					else if (Boolean.parseBoolean(pag_reintegro) && tipo_reintegro != null && (tipo_reintegro.equalsIgnoreCase(WebKeysLiquidaciones.REINTEGRO_ODO_ORTOPEDIA_ORTODONCIA))) {
+					%>
+					<option value="<%= WebKeysGlobal.ENTIDAD_OSPIM %>"><%=WebKeysGlobal.ENTIDAD_OSPIM%></option>
+					<%
+					}
+					else {
+						for (String entidad : WebKeysGlobal.ENTIDADES_UOMA) {
+					%>
+					<c:if test="<%=((showOspim && entidad.equalsIgnoreCase(WebKeysGlobal.ENTIDAD_OSPIM)) ||
+										(showAmtima && entidad.equalsIgnoreCase(WebKeysGlobal.ENTIDAD_AMTIMA)) ||
+										(showUoma && entidad.equalsIgnoreCase(WebKeysGlobal.ENTIDAD_UOMA)))%>">
+						<option value="<%= entidad %>"><%=entidad%></option>
+						<%= entidad == WebKeysLiquidaciones.ID_DEFAULT_ENTIDAD ? "selected" : ""  %>
+					</c:if>
+					<%
+							}
+						}
+					%>
+				</select>
+			</td>
+			<td><label><liferay-ui:message key="numero-afi" />:</label></td>
+			<td><input id="<portlet:namespace />numero_afi<%=prefijo%>" name="<portlet:namespace />numero_afi<%=prefijo%>" size="6" maxlength="10" type="text" value="" <%= !Boolean.parseBoolean(edit_mode) ? " readonly='readonly'" : ""  %>/></td>
+			<td><label><liferay-ui:message key="cuil" />:</label></td>
+			<td><input id="<portlet:namespace />cuil<%=prefijo%>" name="<portlet:namespace />cuil<%=prefijo%>" size="13" maxlength="11" type="text" value="" <%= !Boolean.parseBoolean(edit_mode) ? " readonly='readonly'" : ""  %>/></td>
+			<td><label><liferay-ui:message key="integrante" />:</label></td>
+			<td><input id="<portlet:namespace />inte<%=prefijo%>" name="<portlet:namespace />inte<%=prefijo%>" size="2" maxlength="2" type="text" value="" <%= !Boolean.parseBoolean(edit_mode) ? " readonly='readonly'" : ""  %>/></td>
+			<td><label><liferay-ui:message key="tipo-documento" />:</label>
+				<select name="<portlet:namespace/>tipoDoc<%=prefijo%>" id="<portlet:namespace/>tipoDoc<%=prefijo%>">
+					<option value=""></option>
+					<%
+						for (String tipoDoc : WebKeysAfiliados.TIPOS_DOCUMENTO) {
+					%>
+					<option value="<%= tipoDoc %>"><%=tipoDoc%></option>
+					<%
+						}
+					%>
+				</select>
+			</td>
+			<td><label><liferay-ui:message key="nro-documento" />:</label></td>
+			<td><input id="<portlet:namespace />nroDoc<%=prefijo%>" name="<portlet:namespace />nroDoc<%=prefijo%>" size="9" maxlength="8" type="text" value="" <%= !Boolean.parseBoolean(edit_mode) ? " readonly='readonly'" : ""  %>/></td>
+		</tr>
 
-            <td><label>CUIL:</label></td>
-            <td>
-                <input type="text"
-                       name="<portlet:namespace />cuil<%= prefijo %>"
-                       id="<portlet:namespace />cuil<%= prefijo %>"
-                       value="<%= HtmlUtil.escape(cuil) %>"
-                       size="13"
-                       maxlength="11"
-                       <%= !editMode ? "readonly=\"readonly\"" : "" %> />
-            </td>
+		<tr>
+			<td><label><liferay-ui:message key="seccional" />:</label></td>
+			<td colspan="4" style="vertical-align:top" >
+				<liferay-util:include page='/html/portlet/autorizaciones/busqueda_seccional.jsp'>
+					<liferay-util:param value="<%=prefijo%>" name="prefijo" />
+				</liferay-util:include>
+			</td>
 
-            <td><label>Integrante:</label></td>
-            <td>
-                <input type="text"
-                       name="<portlet:namespace />inte<%= prefijo %>"
-                       id="<portlet:namespace />inte<%= prefijo %>"
-                       value="<%= HtmlUtil.escape(inte) %>"
-                       size="2"
-                       maxlength="2"
-                       <%= !editMode ? "readonly=\"readonly\"" : "" %> />
-            </td>
-        </tr>
+			<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
+				<td colspan="4">
+					<table>
+						<tr>
+							<td><label><liferay-ui:message key="plan" />:</label></td>
+							<td><input type="text" readonly="readonly" id="<portlet:namespace />nombre_plan<%=prefijo%>" name="<portlet:namespace />nombre_plan<%=prefijo%>" /></td>
+							<td><label>Tercerizadora:</label></td>
+							<td><input type="text" readonly="readonly" id="<portlet:namespace />afi_tercerizadora<%=prefijo%>" name="<portlet:namespace />afi_tercerizadora<%=prefijo%>" /></td>
+						</tr>
+					</table>
+				</td>
+			</c:if>
 
-        <tr>
-            <td><label>Tipo doc.:</label></td>
-            <td>
-                <select name="<portlet:namespace />tipoDoc<%= prefijo %>"
-                        id="<portlet:namespace />tipoDoc<%= prefijo %>"
-                        <%= !editMode ? "disabled=\"disabled\"" : "" %>>
-                    <option value=""></option>
-                    <%
-                        for (int i = 0; i < WebKeysAfiliados.TIPOS_DOCUMENTO.length; i++) {
-                            String tipoDoc = WebKeysAfiliados.TIPOS_DOCUMENTO[i];
-                            String selected = tipoDoc.equalsIgnoreCase(tipoDocSeleccionado) ? "selected=\"selected\"" : "";
-                    %>
-                        <option value="<%= HtmlUtil.escape(tipoDoc) %>" <%= selected %>>
-                            <%= HtmlUtil.escape(tipoDoc) %>
-                        </option>
-                    <%
-                        }
-                    %>
-                </select>
-            </td>
+			<c:if test="<%= !Boolean.parseBoolean(pag_reintegro) %>">
+				<td colspan="4">&nbsp;</td>
+			</c:if>
 
-            <td><label>Nro. doc.:</label></td>
-            <td>
-                <input type="text"
-                       name="<portlet:namespace />nroDoc<%= prefijo %>"
-                       id="<portlet:namespace />nroDoc<%= prefijo %>"
-                       value="<%= HtmlUtil.escape(nroDoc) %>"
-                       size="10"
-                       maxlength="8"
-                       <%= !editMode ? "readonly=\"readonly\"" : "" %> />
-            </td>
+			<td><label id="<portlet:namespace />discapacidad" style="display: none;"><font style="color: red">Discapacitado</font></label></td>
+			<td><label id="<portlet:namespace />discapacidad_vto" style="display: none;">Vto. Certificado: </label></td>
+		</tr>
 
-            <td><label>Apellido:</label></td>
-            <td>
-                <input type="text"
-                       name="<portlet:namespace />apellido<%= prefijo %>"
-                       id="<portlet:namespace />apellido<%= prefijo %>"
-                       value="<%= HtmlUtil.escape(apellido) %>"
-                       size="22"
-                       maxlength="100"
-                       <%= !editMode ? "readonly=\"readonly\"" : "" %> />
-            </td>
+		<tr>
+			<td><label><liferay-ui:message key="apellido" />:</label></td>
+			<td colspan="2"><input id="<portlet:namespace />apellido<%=prefijo%>" name="<portlet:namespace />apellido<%=prefijo%>" size="20" maxlength="100" type="text" value="" <%= !Boolean.parseBoolean(edit_mode) ? " readonly='readonly'" : ""  %>/></td>
+			<td><label><liferay-ui:message key="nombre" />:</label></td>
+			<td colspan="2"><input id="<portlet:namespace />nombre<%=prefijo%>" name="<portlet:namespace />nombre<%=prefijo%>" size="20" maxlength="100" type="text" value="" <%= !Boolean.parseBoolean(edit_mode) ? " readonly='readonly'" : ""  %>/></td>
+			<td colspan="1"><label><liferay-ui:message key="baja-fecha" />:</label></td>
+			<td>
+				<input type="text" readonly="readonly" id="<portlet:namespace />baja_fecha<%=prefijo%>" name="<portlet:namespace />baja_fecha<%=prefijo%>" />
+			</td>
+			<td colspan="3">&nbsp;</td>
+		</tr>
 
-            <td><label>Nombre:</label></td>
-            <td>
-                <input type="text"
-                       name="<portlet:namespace />nombre<%= prefijo %>"
-                       id="<portlet:namespace />nombre<%= prefijo %>"
-                       value="<%= HtmlUtil.escape(nombre) %>"
-                       size="22"
-                       maxlength="100"
-                       <%= !editMode ? "readonly=\"readonly\"" : "" %> />
-            </td>
-        </tr>
+		<tr>
+			<td colspan="10" align="right">
+				<c:if test="<%= Boolean.parseBoolean(edit_mode) %>">
+					<input id="<portlet:namespace />buscarAfiliado" value="<liferay-ui:message key="buscar-afiliado"/>" title="<liferay-ui:message key="buscar-afiliado" />" type="button" onClick="javascript:<portlet:namespace />buscarAfiliados<%=prefijo%>();"/>
+					&nbsp;&nbsp;&nbsp;
+					<input id="<portlet:namespace />limpiarCampos" value="<liferay-ui:message key="limpiar-campos"/>" title="<liferay-ui:message key="buscar-afiliado" />" type="button" onClick="javascript:<portlet:namespace />limpiarCamposAfiliado<%=prefijo%>();"/>
+					&nbsp;&nbsp;&nbsp;
+				</c:if>
 
-        <tr>
-            <td><label>Seccional:</label></td>
-            <td colspan="3">
-                <input type="hidden"
-                       name="<portlet:namespace />id_seccional<%= prefijo %>"
-                       id="<portlet:namespace />id_seccional<%= prefijo %>"
-                       value="<%= HtmlUtil.escape(idSeccional) %>" />
+				<c:if test="<%= !Boolean.parseBoolean(edit_mode) %>">
+					&nbsp;&nbsp;&nbsp;
+				</c:if>
 
-                <input type="hidden"
-                       name="<portlet:namespace />secc_seleccionada<%= prefijo %>"
-                       id="<portlet:namespace />secc_seleccionada<%= prefijo %>"
-                       value="<%= Validator.isNotNull(idSeccional) ? "1" : "0" %>" />
+				<c:if test="<%= Boolean.parseBoolean(discapacidad) %>">
+					<input id="<portlet:namespace />detalle_discapacidad" value="Detalle Discapacidad" title="Detalle Discapacidad" type="button" onClick="javascript:<portlet:namespace />detalleDiscapacidad<%=prefijo%>();"/>
+				</c:if>
 
-                <input type="text"
-                       name="<portlet:namespace />seccional<%= prefijo %>"
-                       id="<portlet:namespace />seccional<%= prefijo %>"
-                       value="<%= HtmlUtil.escape(seccional) %>"
-                       size="40"
-                       maxlength="100"
-                       <%= !editMode ? "readonly=\"readonly\"" : "" %> />
-            </td>
-
-            <td><label>Baja:</label></td>
-            <td>
-                <input type="text"
-                       name="<portlet:namespace />baja_fecha<%= prefijo %>"
-                       id="<portlet:namespace />baja_fecha<%= prefijo %>"
-                       value="<%= HtmlUtil.escape(bajaFecha) %>"
-                       size="12"
-                       readonly="readonly"
-                       class="<%= Validator.isNotNull(bajaFecha) ? "compras-afiliado-baja" : "compras-afiliado-readonly" %>" />
-            </td>
-
-            <td colspan="2" align="right">
-                <c:if test="<%= editMode %>">
-                    <input type="button"
-                           id="<portlet:namespace />btnBuscarAfiliado<%= prefijo %>"
-                           value="Buscar afiliado"
-                           onClick="javascript:<portlet:namespace />buscarAfiliados<%= prefijo %>();" />
-
-                    &nbsp;&nbsp;
-
-                    <input type="button"
-                           id="<portlet:namespace />btnLimpiarAfiliado<%= prefijo %>"
-                           value="Limpiar campos"
-                           onClick="javascript:<portlet:namespace />limpiarCamposAfiliado<%= prefijo %>();" />
-                </c:if>
-            </td>
-        </tr>
-    </table>
+				<c:if test="<%= !Boolean.parseBoolean(discapacidad) %>">
+					&nbsp;
+				</c:if>
+			</td>
+			<td>
+				<div id="<portlet:namespace />divObservacionesInternas" style="background-color: orange; padding: 4px;">
+					<input type="button" value="Ver Observaciones Internas"
+						   onClick="javascript:<portlet:namespace />buscarObsInternas();">
+				</div>
+			</td>
+		</tr>
+	</table>
 </div>
 
-<input type="hidden"
-       name="<portlet:namespace />fecha_alta_af<%= prefijo %>"
-       id="<portlet:namespace />fecha_alta_af<%= prefijo %>"
-       value="" />
-
-<input type="hidden"
-       name="<portlet:namespace />incapacidad_af<%= prefijo %>"
-       id="<portlet:namespace />incapacidad_af<%= prefijo %>"
-       value="" />
-
-<input type="hidden"
-       name="<portlet:namespace />id_tercerizadora<%= prefijo %>"
-       id="<portlet:namespace />id_tercerizadora<%= prefijo %>"
-       value="" />
-
-<input type="hidden"
-       name="<portlet:namespace />nroSocioPrevencion<%= prefijo %>"
-       id="<portlet:namespace />nroSocioPrevencion<%= prefijo %>"
-       value="" />
-
-<input type="hidden"
-       name="<portlet:namespace />nroCredencialPrevencion<%= prefijo %>"
-       id="<portlet:namespace />nroCredencialPrevencion<%= prefijo %>"
-       value="" />
+<input id="<portlet:namespace />fecha_alta_af<%=prefijo%>" value="" type="hidden" name="<portlet:namespace />fecha_alta_af<%=prefijo%>"/>
+<input id="<portlet:namespace />incapacidad_af<%=prefijo%>" value="" type="hidden" name="<portlet:namespace />incapacidad_af<%=prefijo%>"/>
+<input id="<portlet:namespace />id_tercerizadora<%=prefijo%>" value="" type="hidden" name="<portlet:namespace />id_tercerizadora<%=prefijo%>"/>
+<input id="<portlet:namespace />nroSocioPrevencion<%=prefijo%>" value="" type="hidden" name="<portlet:namespace />nroSocioPrevencion<%=prefijo%>"/>
+<input id="<portlet:namespace />nroCredencialPrevencion<%=prefijo%>" value="" type="hidden" name="<portlet:namespace />nroCredencialPrevencion<%=prefijo%>"/>
+<input id="<portlet:namespace />tieneAntecedentes<%=prefijo%>" value="0" type="hidden" name="<portlet:namespace />tieneAntecedentes<%=prefijo%>"/>
 
 <script type="text/javascript">
-    var <portlet:namespace />popupAfiliadoCompras<%= prefijo %> = null;
+	var popupAfill;
+	var popupdd;
+	var popSituLab;
 
-    function <portlet:namespace />trimAfiliadoCompras<%= prefijo %>(value) {
-        if (value == null) {
-            return '';
-        }
+	jQuery('#<portlet:namespace />divObservacionesInternas').hide();
 
-        return jQuery.trim(String(value));
-    }
+	function <portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>(tieneAntecedentes){
+		var flag = (String(tieneAntecedentes) == '1');
 
-    function <portlet:namespace />getAfiliadoValue<%= prefijo %>(id) {
-        return <portlet:namespace />trimAfiliadoCompras<%= prefijo %>(
-            jQuery('#<portlet:namespace />' + id + '<%= prefijo %>').val()
-        );
-    }
+		jQuery('#<portlet:namespace />tieneAntecedentes<%=prefijo%>').val(flag ? '1' : '0');
 
-    function <portlet:namespace />setAfiliadoValue<%= prefijo %>(id, value) {
-        jQuery('#<portlet:namespace />' + id + '<%= prefijo %>').val(value == null || value == 'null' ? '' : value);
-    }
+		if (flag) {
+			jQuery('#<portlet:namespace />panelDatosAfiliado<%=prefijo%>').addClass('afiliado-con-antecedentes-panel');
+			jQuery('#<portlet:namespace />antecedentesJudicialesBox<%=prefijo%>').show();
+		}
+		else {
+			jQuery('#<portlet:namespace />panelDatosAfiliado<%=prefijo%>').removeClass('afiliado-con-antecedentes-panel');
+			jQuery('#<portlet:namespace />antecedentesJudicialesBox<%=prefijo%>').hide();
+		}
+	}
 
-    function <portlet:namespace />sincronizarConRequerimientoCompra<%= prefijo %>() {
-        if (typeof <portlet:namespace />sincronizarAfiliadoRequerimiento == 'function') {
-            <portlet:namespace />sincronizarAfiliadoRequerimiento();
-        }
-    }
+	function <portlet:namespace />buscarAfiliados<%=prefijo%>(){
 
-    function <portlet:namespace />validarBusquedaAfiliadoCompras<%= prefijo %>() {
-        var cuil = <portlet:namespace />getAfiliadoValue<%= prefijo %>('cuil');
-        var inte = <portlet:namespace />getAfiliadoValue<%= prefijo %>('inte');
-        var tipoDoc = <portlet:namespace />getAfiliadoValue<%= prefijo %>('tipoDoc');
-        var nroDoc = <portlet:namespace />getAfiliadoValue<%= prefijo %>('nroDoc');
-        var seccional = <portlet:namespace />getAfiliadoValue<%= prefijo %>('id_seccional');
-        var apellido = <portlet:namespace />getAfiliadoValue<%= prefijo %>('apellido');
-        var nombre = <portlet:namespace />getAfiliadoValue<%= prefijo %>('nombre');
-        var entidad = <portlet:namespace />getAfiliadoValue<%= prefijo %>('entidad');
-        var numeroAfi = <portlet:namespace />getAfiliadoValue<%= prefijo %>('numero_afi');
+		jQuery('#<portlet:namespace />divObservacionesInternas').hide();
 
-        if (cuil == '' &&
-            inte == '' &&
-            tipoDoc == '' &&
-            nroDoc == '' &&
-            seccional == '' &&
-            apellido == '' &&
-            nombre == '' &&
-            entidad == '' &&
-            numeroAfi == '') {
+		var cuil = jQuery('#<portlet:namespace />cuil<%=prefijo%>').val();
+		var inte = jQuery('#<portlet:namespace />inte<%=prefijo%>').val();
+		var tipoDoc = jQuery('#<portlet:namespace />tipoDoc<%=prefijo%>').val();
+		var nroDoc = jQuery('#<portlet:namespace />nroDoc<%=prefijo%>').val();
+		var seccional = jQuery('#<portlet:namespace />id_seccional<%=prefijo%>').val();
+		var apellido = jQuery('#<portlet:namespace />apellido<%=prefijo%>').val();
+		var nombre = jQuery('#<portlet:namespace />nombre<%=prefijo%>').val();
+		var entidad = jQuery('#<portlet:namespace />entidad<%=prefijo%>').val();
+		var numero_afi = jQuery('#<portlet:namespace />numero_afi<%=prefijo%>').val();
 
-            alert('Debe ingresar al menos un parámetro de búsqueda.');
-            return false;
-        }
+		if (!<portlet:namespace />validarBusqueda<%=prefijo%>(cuil, inte, tipoDoc, nroDoc, seccional, apellido, nombre, entidad, numero_afi)) {
+			return false;
+		}
 
-        if (cuil != '' && typeof validarCuil == 'function') {
-            if (!validarCuil(cuil, 'CUIL inválido. Verifique el dato ingresado.')) {
-                jQuery('#<portlet:namespace />cuil<%= prefijo %>').focus();
-                return false;
-            }
-        }
+		if (cuil.length > 0) {
+			if (!validarCuil(cuil, "<liferay-ui:message key='valida-cuil-mensaje-limpiar'/>")) {
+				jQuery('#<portlet:namespace />cuil<%=prefijo%>').focus();
+				return false;
+			}
+		}
 
-        return true;
-    }
+		if (jQuery("#<portlet:namespace />secc_seleccionada<%=prefijo%>").val() != "1") {
+			jQuery("#<portlet:namespace />seccional<%=prefijo%>").val("");
+			jQuery("#<portlet:namespace />id_seccional<%=prefijo%>").val("");
+		}
 
-    function <portlet:namespace />buscarAfiliados<%= prefijo %>() {
-        if (!<portlet:namespace />validarBusquedaAfiliadoCompras<%= prefijo %>()) {
-            return false;
-        }
+		popupAfill = Liferay.Popup({title:"<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />",modal:true,width:830});
 
-        var cuil = <portlet:namespace />getAfiliadoValue<%= prefijo %>('cuil');
-        var inte = <portlet:namespace />getAfiliadoValue<%= prefijo %>('inte');
-        var tipoDoc = <portlet:namespace />getAfiliadoValue<%= prefijo %>('tipoDoc');
-        var nroDoc = <portlet:namespace />getAfiliadoValue<%= prefijo %>('nroDoc');
-        var seccional = <portlet:namespace />getAfiliadoValue<%= prefijo %>('id_seccional');
-        var apellido = <portlet:namespace />getAfiliadoValue<%= prefijo %>('apellido');
-        var nombre = <portlet:namespace />getAfiliadoValue<%= prefijo %>('nombre');
-        var entidad = <portlet:namespace />getAfiliadoValue<%= prefijo %>('entidad');
-        var numeroAfi = <portlet:namespace />getAfiliadoValue<%= prefijo %>('numero_afi');
+		<c:if test="<%= !Boolean.parseBoolean(pag_reintegro) %>">
+		var fecha_prestacion = 'null';
+		try {
+			fecha_prestacion = jQuery("#<portlet:namespace />fprest<%=prefijo%>").val();
+		}
+		catch (err) {
+			fecha_prestacion = 'null';
+		}
 
-        if (jQuery('#<portlet:namespace />secc_seleccionada<%= prefijo %>').val() != '1') {
-            jQuery('#<portlet:namespace />seccional<%= prefijo %>').val('');
-            jQuery('#<portlet:namespace />id_seccional<%= prefijo %>').val('');
-            seccional = '';
-        }
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi + '&popup=true&fecha_referencia=' + fecha_prestacion;
+		</c:if>
+		
+		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
+		var fecha_prestacion = 'null';
 
-        <portlet:namespace />popupAfiliadoCompras<%= prefijo %> = Liferay.Popup({
-            title: 'Búsqueda de afiliado',
-            modal: true,
-            width: 830
-        });
+		<c:if test="<%= !Boolean.parseBoolean(discapacidad) %>">
+		try {
+			fecha_prestacion = jQuery("#<portlet:namespace />fprest").val();
+		}
+		catch (err) {
+			fecha_prestacion = 'null';
+		}
+		</c:if>
 
-        var url = '<%= HtmlUtil.escapeJS(buscarAfiliadosURL.toString()) %>';
-        url += '&cuil=' + encodeURIComponent(cuil);
-        url += '&inte=' + encodeURIComponent(inte);
-        url += '&tipoDoc=' + encodeURIComponent(tipoDoc);
-        url += '&nroDoc=' + encodeURIComponent(nroDoc);
-        url += '&seccional=' + encodeURIComponent(seccional);
-        url += '&apellido=' + encodeURIComponent(apellido);
-        url += '&nombre=' + encodeURIComponent(nombre);
-        url += '&entidad=' + encodeURIComponent(entidad);
-        url += '&numero_afi=' + encodeURIComponent(numeroAfi);
-        url += '&origen=' + encodeURIComponent('<%= prefijo %>');
-        url += '&popup=true';
+		<c:if test='<%= Boolean.parseBoolean(discapacidad) %>'>
+		var d = new Date();
+		var curr_date = d.getDate();
+		var curr_month = d.getMonth() + 1;
+		var curr_year = d.getFullYear();
+		fecha_prestacion = curr_date + "/" + curr_month + "/" + curr_year;
+		</c:if>
 
-        jQuery(<portlet:namespace />popupAfiliadoCompras<%= prefijo %>).load(url);
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true';
+		</c:if>
 
-        return false;
-    }
+		jQuery(popupAfill).load(url);
+	}
 
-    function seleccionaAfiliado<%= prefijo %>(
-        cuil,
-        inte,
-        docuTipo,
-        docuNro,
-        nombre,
-        apellido,
-        idSeccional,
-        descSeccional,
-        ospim,
-        uoma,
-        amtima,
-        bajaFecha,
-        nombrePlan,
-        idPlan,
-        fechaAltaAf,
-        incapacidadAf,
-        idTercerizadora,
-        afiTercerizadora,
-        reclamoPrestacional,
-        nroSocioPrev,
-        nroCredenPrev,
-        fechaRecepcion,
-        tieneAntecedentes
-    ) {
-        seleccionaCamposAfiliado<%= prefijo %>(
-            cuil,
-            inte,
-            docuTipo,
-            docuNro,
-            nombre,
-            apellido,
-            idSeccional,
-            descSeccional,
-            ospim,
-            uoma,
-            amtima,
-            bajaFecha,
-            nombrePlan,
-            idPlan,
-            fechaAltaAf,
-            incapacidadAf,
-            idTercerizadora,
-            afiTercerizadora,
-            reclamoPrestacional,
-            nroSocioPrev,
-            nroCredenPrev,
-            fechaRecepcion,
-            tieneAntecedentes
-        );
+	function <portlet:namespace />buscarAfiliados_<%=prefijo%>(fecha_prest){
 
-        if (<portlet:namespace />popupAfiliadoCompras<%= prefijo %> != null) {
-            Liferay.Popup.close(<portlet:namespace />popupAfiliadoCompras<%= prefijo %>);
-        }
-    }
+		jQuery('#<portlet:namespace />divObservacionesInternas').hide();
 
-    function seleccionaCamposAfiliado<%= prefijo %>(
-        cuil,
-        inte,
-        docuTipo,
-        docuNro,
-        nombre,
-        apellido,
-        idSeccional,
-        descSeccional,
-        ospim,
-        uoma,
-        amtima,
-        bajaFecha,
-        nombrePlan,
-        idPlan,
-        fechaAltaAf,
-        incapacidadAf,
-        idTercerizadora,
-        afiTercerizadora,
-        reclamoPrestacional,
-        nroSocioPrev,
-        nroCredenPrev,
-        fechaRecepcion,
-        tieneAntecedentes
-    ) {
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('cuil', cuil);
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('inte', inte);
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('tipoDoc', docuTipo);
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('nroDoc', docuNro);
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('apellido', apellido);
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('nombre', nombre);
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('id_seccional', idSeccional);
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('seccional', descSeccional);
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('baja_fecha', bajaFecha);
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('fecha_alta_af', fechaAltaAf);
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('incapacidad_af', incapacidadAf);
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('id_tercerizadora', idTercerizadora);
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('nroSocioPrevencion', nroSocioPrev);
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('nroCredencialPrevencion', nroCredenPrev);
+		var cuil = jQuery('#<portlet:namespace />cuil<%=prefijo%>').val();
+		var inte = jQuery('#<portlet:namespace />inte<%=prefijo%>').val();
+		var tipoDoc = jQuery('#<portlet:namespace />tipoDoc<%=prefijo%>').val();
+		var nroDoc = jQuery('#<portlet:namespace />nroDoc<%=prefijo%>').val();
+		var seccional = jQuery('#<portlet:namespace />id_seccional<%=prefijo%>').val();
+		var apellido = jQuery('#<portlet:namespace />apellido<%=prefijo%>').val();
+		var nombre = jQuery('#<portlet:namespace />nombre<%=prefijo%>').val();
+		var entidad = jQuery('#<portlet:namespace />entidad<%=prefijo%>').val();
+		var numero_afi = jQuery('#<portlet:namespace />numero_afi<%=prefijo%>').val();
 
-        jQuery('#<portlet:namespace />secc_seleccionada<%= prefijo %>').val(idSeccional == null || idSeccional == '' || idSeccional == 'null' ? '0' : '1');
+		if (!<portlet:namespace />validarBusqueda<%=prefijo%>(cuil, inte, tipoDoc, nroDoc, seccional, apellido, nombre, entidad, numero_afi)) {
+			return false;
+		}
 
-        var entidad = <portlet:namespace />getAfiliadoValue<%= prefijo %>('entidad');
-        var numeroAfi = '';
+		if (cuil.length > 0) {
+			if (!validarCuil(cuil, "<liferay-ui:message key='valida-cuil-mensaje-limpiar'/>")) {
+				jQuery('#<portlet:namespace />cuil<%=prefijo%>').focus();
+				return false;
+			}
+		}
 
-        if (entidad == '<%= HtmlUtil.escapeJS(WebKeysGlobal.ENTIDAD_OSPIM) %>') {
-            numeroAfi = ospim;
-        }
-        else if (entidad == '<%= HtmlUtil.escapeJS(WebKeysGlobal.ENTIDAD_UOMA) %>') {
-            numeroAfi = uoma;
-        }
-        else if (entidad == '<%= HtmlUtil.escapeJS(WebKeysGlobal.ENTIDAD_AMTIMA) %>') {
-            numeroAfi = amtima;
-        }
+		if (jQuery("#<portlet:namespace />secc_seleccionada<%=prefijo%>").val() != "1") {
+			jQuery("#<portlet:namespace />seccional<%=prefijo%>").val("");
+			jQuery("#<portlet:namespace />id_seccional<%=prefijo%>").val("");
+		}
 
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('numero_afi', numeroAfi);
+		var fecha_prestacion = fecha_prest;
+		try {
+			fecha_prestacion = jQuery("#<portlet:namespace />fprest<%=prefijo%>").val();
+		}
+		catch (err) {
+			fecha_prestacion = 'null';
+		}
 
-        if (<portlet:namespace />getAfiliadoValue<%= prefijo %>('baja_fecha') != '') {
-            jQuery('#<portlet:namespace />baja_fecha<%= prefijo %>').addClass('compras-afiliado-baja');
-        }
-        else {
-            jQuery('#<portlet:namespace />baja_fecha<%= prefijo %>').removeClass('compras-afiliado-baja');
-        }
+		popupAfill = Liferay.Popup({title:"<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />",modal:true,width:830});
 
-        <portlet:namespace />sincronizarConRequerimientoCompra<%= prefijo %>();
-    }
+		<c:if test="<%= !Boolean.parseBoolean(pag_reintegro) %>">
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi + '&origen=<%=prefijo%>&popup=true&fecha_referencia=' + fecha_prestacion;
+		</c:if>
 
-    function <portlet:namespace />limpiarCamposAfiliado<%= prefijo %>() {
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('cuil', '');
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('inte', '');
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('tipoDoc', '');
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('nroDoc', '');
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('apellido', '');
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('nombre', '');
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('numero_afi', '');
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('id_seccional', '');
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('seccional', '');
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('baja_fecha', '');
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('fecha_alta_af', '');
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('incapacidad_af', '');
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('id_tercerizadora', '');
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('nroSocioPrevencion', '');
-        <portlet:namespace />setAfiliadoValue<%= prefijo %>('nroCredencialPrevencion', '');
+		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
+		var numero_afi = jQuery('#<portlet:namespace />numero_afi').val();
+		var ext = '';
 
-        jQuery('#<portlet:namespace />secc_seleccionada<%= prefijo %>').val('0');
-        jQuery('#<portlet:namespace />baja_fecha<%= prefijo %>').removeClass('compras-afiliado-baja');
+		<c:if test="<%= tipo_reintegro != null && tipo_reintegro.equalsIgnoreCase(WebKeysLiquidaciones.REINTEGRO_ODO_PROTESIS) %>">
+		ext = '&ext=1';
+		</c:if>
 
-        <portlet:namespace />sincronizarConRequerimientoCompra<%= prefijo %>();
-    }
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true' + ext;
+		</c:if>
 
-    /*
-     * Alias intencional.
-     * El JSP padre de edición de requerimiento chequea/call-ea:
-     *   <portlet:namespace />limpiarCampos()
-     */
-    function <portlet:namespace />limpiarCampos() {
-        <portlet:namespace />limpiarCamposAfiliado<%= prefijo %>();
-    }
+		jQuery(popupAfill).load(url);
+	}
 
-    jQuery(function() {
-        if (<portlet:namespace />getAfiliadoValue<%= prefijo %>('baja_fecha') != '') {
-            jQuery('#<portlet:namespace />baja_fecha<%= prefijo %>').addClass('compras-afiliado-baja');
-        }
+	function <portlet:namespace />validarBusqueda<%=prefijo%>(cuil,inte,tipoDoc,nroDoc,seccional,apellido,nombre,entidad,numero_afi){
+		if (trim(cuil.length) == 0 && trim(inte.length) == 0 && trim(tipoDoc.length) == 0 && trim(nroDoc.length) == 0 && trim(seccional.length) == 0 &&
+				trim(apellido.length) == 0 && trim(nombre.length) == 0 && trim(entidad.length) == 0 && trim(numero_afi.length) == 0) {
+			alert('<liferay-ui:message key="ingrese-parametros-busqueda"/>');
+			return false;
+		}
+		else {
+			return true;
+		}
+	}
 
-        <portlet:namespace />sincronizarConRequerimientoCompra<%= prefijo %>();
-    });
+	function seleccionaAfiliado<%=prefijo%>(cuil,inte,docu_tipo,docu_nro,nombre,apellido,id_secc,desc_secc,ospim,uoma,amtima,bajaFecha,nombre_plan,id_plan,fecha_alta_af,incapacidad_af,id_tercerizadora,afi_tercerizadora,reclamoPrestacional,nroSocioPrev,nroCredenPrev,fechaRecepcion,tieneAntecedentes){
+		var clase = jQuery("#<portlet:namespace />claseExpediente").val();
+
+		if (clase != null && clase == 'DI') {
+			if (incapacidad_af != '1') {
+				alert("El Afiliado no es Discapacitado");
+				Liferay.Popup.close(popupAfill);
+			}
+		}
+
+		seleccionaCamposAfiliado<%=prefijo%>(
+				cuil, inte, docu_tipo, docu_nro, nombre, apellido, id_secc, desc_secc,
+				ospim, uoma, amtima, bajaFecha, nombre_plan, id_plan, fecha_alta_af,
+				incapacidad_af, id_tercerizadora, afi_tercerizadora, reclamoPrestacional,
+				nroSocioPrev, nroCredenPrev, fechaRecepcion, tieneAntecedentes
+		);
+
+		Liferay.Popup.close(popupAfill);
+
+		if ("true" == "<%=fromReclamo%>") {
+
+			var fechaOspimDia = jQuery('#<portlet:namespace />fechaospimDia').val();
+			var fechaOspimMes = jQuery('#<portlet:namespace />fechaospimMes').val();
+			var fechaOspimAnio = jQuery('#<portlet:namespace />fechaospimAnio').val();
+
+			var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/evalua_permanencia_afiliado&cuil=' + cuil;
+			url += '&inte=' + inte;
+			url += '&fechaOspimDia=' + fechaOspimDia + '&fechaOspimMes=' + fechaOspimMes + '&fechaOspimAnio=' + fechaOspimAnio;
+
+			jQuery.ajax({
+				url: url,
+				async: false,
+				success: function(data){
+					var obj = jQuery.parseJSON(data);
+					if ("true" == obj.mostrarAviso) {
+						popSituLab = Liferay.Popup({title:"Alerta de Permanencia / Cobertura", modal:true, width:530});
+						var urlAviso = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/mostrar_alerta_permanencia_afiliado&aviso=' + encodeURI(obj.aviso);
+						urlAviso += '&colorstr=' + encodeURI(obj.color);
+						jQuery(popSituLab).load(urlAviso);
+					}
+				}
+			});
+
+			var url2 = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/tiene_observaciones_afiliado&cuil_titular=' + cuil;
+			url2 += '&inte=' + inte;
+
+			jQuery.ajax({
+				url: url2,
+				async: false,
+				success: function(data){
+					var obj = jQuery.parseJSON(data);
+					if ("true" == obj.tieneObsInternas) {
+						jQuery('#<portlet:namespace />divObservacionesInternas').show();
+					}
+				}
+			});
+		}
+	}
+
+	function seleccionaCamposAfiliado<%=prefijo%>(cuil,inte,docu_tipo,docu_nro,nombre,apellido,id_secc,desc_secc,ospim,uoma,amtima,bajaFecha,nombre_plan,id_plan,fecha_alta_af,incapacidad_af,id_tercerizadora,afi_tercerizadora,reclamoPrestacional,nroSocioPrev,nroCredenPrev,fechaRecepcion,tieneAntecedentes){
+		jQuery('#<portlet:namespace />cuil<%=prefijo%>').val(cuil);
+		jQuery('#<portlet:namespace />inte<%=prefijo%>').val(inte);
+		jQuery('#<portlet:namespace />tipoDoc<%=prefijo%>').val(docu_tipo);
+		jQuery('#<portlet:namespace />nroDoc<%=prefijo%>').val(docu_nro);
+		jQuery('#<portlet:namespace />id_seccional<%=prefijo%>').val(id_secc);
+		jQuery('#<portlet:namespace />seccional<%=prefijo%>').val(desc_secc);
+		jQuery('#<portlet:namespace />apellido<%=prefijo%>').val(apellido);
+		jQuery('#<portlet:namespace />nombre<%=prefijo%>').val(nombre);
+
+		if (nroSocioPrev == 'null') {
+			nroSocioPrev = '';
+		}
+		if (nroCredenPrev == 'null') {
+			nroCredenPrev = '';
+		}
+
+		jQuery('#<portlet:namespace />nroSocioPrevencion<%=prefijo%>').val(nroSocioPrev);
+		jQuery('#<portlet:namespace />nroCredencialPrevencion<%=prefijo%>').val(nroCredenPrev);
+
+		if (jQuery('#<portlet:namespace />entidad<%=prefijo%>').val() == '<%= WebKeysGlobal.ENTIDADES_UOMA[0] %>') {
+			jQuery('#<portlet:namespace />numero_afi<%=prefijo%>').val(ospim);
+		}
+		if (jQuery('#<portlet:namespace />entidad<%=prefijo%>').val() == '<%= WebKeysGlobal.ENTIDADES_UOMA[2] %>') {
+			jQuery('#<portlet:namespace />numero_afi<%=prefijo%>').val(uoma);
+		}
+		if (jQuery('#<portlet:namespace />entidad<%=prefijo%>').val() == '<%= WebKeysGlobal.ENTIDADES_UOMA[1] %>') {
+			jQuery('#<portlet:namespace />numero_afi<%=prefijo%>').val(amtima);
+		}
+
+		jQuery("#<portlet:namespace />secc_seleccionada<%=prefijo%>").val("1");
+
+		document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.background = "white";
+		document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.color = "black";
+
+		if (document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>") != null && bajaFecha != null) {
+			document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").value = bajaFecha;
+			if ("" != bajaFecha) {
+				document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.background = "red";
+				document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.color = "white";
+			}
+		}
+
+		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
+		if (jQuery("#<portlet:namespace />id_seccional_r<%=prefijo%>").val() == "") {
+			jQuery("#<portlet:namespace />id_seccional_r<%=prefijo%>").val(id_secc);
+			jQuery("#<portlet:namespace />seccional_r<%=prefijo%>").val(desc_secc);
+			jQuery("#<portlet:namespace />secc_seleccionada_r<%=prefijo%>").val("1");
+		}
+		if (nombre_plan == 'null') {
+			nombre_plan = '';
+		}
+		if (afi_tercerizadora == 'null') {
+			afi_tercerizadora = '';
+		}
+		jQuery("#<portlet:namespace />nombre_plan<%=prefijo%>").val(nombre_plan);
+		jQuery("#<portlet:namespace />afi_tercerizadora<%=prefijo%>").val(afi_tercerizadora);
+		</c:if>
+
+		jQuery("#<portlet:namespace />fecha_alta_af<%=prefijo%>").val(fecha_alta_af);
+		jQuery("#<portlet:namespace />id_tercerizadora<%=prefijo%>").val(id_tercerizadora);
+		jQuery("#<portlet:namespace />incapacidad_af<%=prefijo%>").val(incapacidad_af);
+
+		<portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>(tieneAntecedentes);
+
+		try {
+			if (jQuery("#<portlet:namespace />incapacidad_af<%=prefijo%>").val() == '1') {
+				jQuery('#<portlet:namespace />div_tratamientos_discapacidad').show();
+				jQuery('#<portlet:namespace />discapacidad').show();
+				jQuery('#<portlet:namespace />discapacidad_vto').show();
+			}
+			else {
+				jQuery('#<portlet:namespace />div_tratamientos_discapacidad').hide();
+				jQuery('#<portlet:namespace />discapacidad').hide();
+				jQuery('#<portlet:namespace />discapacidad_vto').hide();
+			}
+		}
+		catch (err) {}
+
+		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
+		// llamar script que busca los tratamientos del afiliado en la p?gina
+		</c:if>
+
+		if (typeof <portlet:namespace />sincronizarAfiliadoRequerimiento == 'function') {
+			<portlet:namespace />sincronizarAfiliadoRequerimiento();
+		}
+	}
+
+	function <portlet:namespace />resetValid<%=prefijo%>() {
+		if (jQuery("#<portlet:namespace />id_seccional<%=prefijo%>").val() != "") {
+			jQuery("#<portlet:namespace />secc_seleccionada<%=prefijo%>").val("1");
+		}
+	}
+
+	var cuilJS = "<%= cuil %>";
+	var inteJS = "<%= inte %>";
+
+	if (trim(cuilJS) != "" && trim(inteJS) != "") {
+		document.getElementById("<portlet:namespace />cuil<%=prefijo%>").value = cuilJS;
+		document.getElementById("<portlet:namespace />inte<%=prefijo%>").value = inteJS;
+	}
+
+	<portlet:namespace />resetValid<%=prefijo%>();
+	<portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>(jQuery('#<portlet:namespace />tieneAntecedentes<%=prefijo%>').val());
+
+	function <portlet:namespace />limpiarCamposAfiliado<%=prefijo%>() {
+		jQuery('#<portlet:namespace />cuil<%=prefijo%>').val('');
+		jQuery('#<portlet:namespace />inte<%=prefijo%>').val('');
+		jQuery('#<portlet:namespace />tipoDoc<%=prefijo%>').val('');
+		jQuery('#<portlet:namespace />nroDoc<%=prefijo%>').val('');
+		jQuery('#<portlet:namespace />id_seccional<%=prefijo%>').val('');
+		jQuery('#<portlet:namespace />seccional<%=prefijo%>').val('');
+		jQuery('#<portlet:namespace />apellido<%=prefijo%>').val('');
+		jQuery('#<portlet:namespace />nombre<%=prefijo%>').val('');
+		document.getElementById('<portlet:namespace />entidad<%=prefijo%>').selectedIndex = 0;
+		jQuery('#<portlet:namespace />numero_afi<%=prefijo%>').val('');
+		jQuery("#<portlet:namespace />secc_seleccionada<%=prefijo%>").val("1");
+		jQuery("#<portlet:namespace />baja_fecha<%=prefijo%>").val('');
+		jQuery("#<portlet:namespace />nroSocioPrevencion<%=prefijo%>").val('');
+		jQuery("#<portlet:namespace />nroCredencialPrevencion<%=prefijo%>").val('');
+
+		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
+		jQuery("#<portlet:namespace />nombre_plan<%=prefijo%>").val('');
+		jQuery("#<portlet:namespace />afi_tercerizadora<%=prefijo%>").val('');
+		</c:if>
+
+		jQuery("#<portlet:namespace />fecha_alta_af<%=prefijo%>").val('');
+		jQuery("#<portlet:namespace />incapacidad_af<%=prefijo%>").val('');
+		jQuery("#<portlet:namespace />discapacidad<%=prefijo%>").hide();
+		jQuery("#<portlet:namespace />discapacidad_vto<%=prefijo%>").hide();
+		jQuery("#<portlet:namespace />tieneAntecedentes<%=prefijo%>").val('0');
+		jQuery('#<portlet:namespace />divObservacionesInternas').hide();
+
+		<portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>('0');
+
+		document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.background = "white";
+		document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.color = "black";
+
+		if (typeof <portlet:namespace />sincronizarAfiliadoRequerimiento == 'function') {
+			<portlet:namespace />sincronizarAfiliadoRequerimiento();
+		}
+	}
+
+	function <portlet:namespace />limpiarCampos() {
+		<portlet:namespace />limpiarCamposAfiliado<%=prefijo%>();
+	}
+
+	function <portlet:namespace />detalleDiscapacidad<%=prefijo%>() {
+		if (jQuery("#<portlet:namespace />incapacidad_af<%=prefijo%>").val() != '1') {
+			alert("Debe seleccionar un afiliado discapacitado");
+			return false;
+		}
+
+		var cuil = jQuery('#<portlet:namespace />cuil<%=prefijo%>').val();
+		var inte = jQuery('#<portlet:namespace />inte<%=prefijo%>').val();
+
+		if (trim(cuil).length == 0 || trim(inte).length == 0) {
+			alert("Primero debe seleccionar un afiliado");
+			return false;
+		}
+
+		popupdd = Liferay.Popup({title:"Detalle Discapacidad",modal:true,width:850});
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/detalle_discapacidad&cuil_titular=' + cuil + '&inte=' + inte + '&path=/compras/grabar_detalle_discapacidad';
+		jQuery(popupdd).load(url);
+	}
+
+	function <portlet:namespace />reloadPopupDetalle<%=prefijo%>() {
+		Liferay.Popup.close(popupdd);
+		<portlet:namespace />detalleDiscapacidad<%=prefijo%>();
+	}
+
+	function <portlet:namespace />buscarObsInternas(){
+
+		var cuil_titu = jQuery('#<portlet:namespace />cuil<%=prefijo%>').val();
+		var inte = jQuery('#<portlet:namespace />inte<%=prefijo%>').val();
+
+		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>">
+		<portlet:param name="struts_action" value="/compras/buscar_observaciones_internas" />
+		<portlet:param name="<%=Constants.CMD%>" value="<%=Constants.SEARCH %>" />
+		</portlet:renderURL>';
+
+		var params = {
+			"cuil_titular": cuil_titu,
+			"inte": inte
+		};
+
+		var popupoi = Liferay.Popup({title:"Lista de Observaciones Internas",modal:true,width:850});
+		jQuery(popupoi).load(url, params);
+	}
+
+	jQuery(document).ready(function(){
+	});
 </script>
