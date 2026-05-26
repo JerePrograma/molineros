@@ -1,4 +1,4 @@
-<%@ include file="/html/portlet/liquidaciones/init.jsp" %>
+<%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ page import ="ar.com.ospim.afiliados.beans.AfiObservacion" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
