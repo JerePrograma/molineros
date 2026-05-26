@@ -1,4 +1,6 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
+<%@ page import="ar.com.ospim.afiliados.WebKeysAfiliados" %>
+<%@ page import="ar.com.ospim.global.WebKeysGlobal" %>
 
 <%
 RequerimientoCompra reqAfi = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
@@ -30,17 +32,23 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
 
     <table class="lfr-table">
         <tr>
-            <td><label>Entidad:</label></td>
+            <td><label><liferay-ui:message key="entidad" />:</label></td>
             <td>
                 <select name="<portlet:namespace />entidad" id="<portlet:namespace />entidad">
                     <option value="">Todas</option>
-                    <option value="O.S.P.I.M." selected="selected">O.S.P.I.M.</option>
-                    <option value="A.M.T.I.M.A.">A.M.T.I.M.A.</option>
-                    <option value="U.O.M.A.">U.O.M.A.</option>
+                    <%
+                    for (String entidad : WebKeysGlobal.ENTIDADES_UOMA) {
+                    %>
+                        <option value="<%= entidad %>" <%= WebKeysGlobal.ID_DEFAULT_ENTIDAD.equals(entidad) ? "selected=\"selected\"" : "" %>>
+                            <%= entidad %>
+                        </option>
+                    <%
+                    }
+                    %>
                 </select>
             </td>
 
-            <td><label>Número afiliado:</label></td>
+            <td><label><liferay-ui:message key="numero-afi" />:</label></td>
             <td>
                 <input id="<portlet:namespace />numero_afi"
                        name="<portlet:namespace />numero_afi"
@@ -50,7 +58,7 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
                        value="" />
             </td>
 
-            <td><label>CUIL:</label></td>
+            <td><label><liferay-ui:message key="cuil" />:</label></td>
             <td>
                 <input id="<portlet:namespace />cuil"
                        name="<portlet:namespace />cuil"
@@ -60,7 +68,7 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
                        value="<%= HtmlUtil.escape(afiliadoCuilTitular) %>" />
             </td>
 
-            <td><label>Integrante:</label></td>
+            <td><label><liferay-ui:message key="integrante" />:</label></td>
             <td>
                 <input id="<portlet:namespace />inte"
                        name="<portlet:namespace />inte"
@@ -76,18 +84,21 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
         </tr>
 
         <tr>
-            <td><label>Tipo doc.:</label></td>
+            <td><label><liferay-ui:message key="tipo-documento" />:</label></td>
             <td>
                 <select name="<portlet:namespace />tipoDoc" id="<portlet:namespace />tipoDoc">
                     <option value=""></option>
-                    <option value="DNI">DNI</option>
-                    <option value="LC">LC</option>
-                    <option value="LE">LE</option>
-                    <option value="CI">CI</option>
+                    <%
+                    for (String tipoDoc : WebKeysAfiliados.TIPOS_DOCUMENTO) {
+                    %>
+                        <option value="<%= tipoDoc %>"><%= tipoDoc %></option>
+                    <%
+                    }
+                    %>
                 </select>
             </td>
 
-            <td><label>Nro. doc.:</label></td>
+            <td><label><liferay-ui:message key="nro-documento" />:</label></td>
             <td>
                 <input id="<portlet:namespace />nroDoc"
                        name="<portlet:namespace />nroDoc"
@@ -97,7 +108,7 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
                        value="" />
             </td>
 
-            <td><label>Apellido:</label></td>
+            <td><label><liferay-ui:message key="apellido" />:</label></td>
             <td>
                 <input id="<portlet:namespace />apellido"
                        name="<portlet:namespace />apellido"
@@ -107,7 +118,7 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
                        value="" />
             </td>
 
-            <td><label>Nombre:</label></td>
+            <td><label><liferay-ui:message key="nombre" />:</label></td>
             <td>
                 <input id="<portlet:namespace />nombre"
                        name="<portlet:namespace />nombre"
@@ -123,7 +134,7 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
         </tr>
 
         <tr>
-            <td><label>Baja fecha:</label></td>
+            <td><label><liferay-ui:message key="baja-fecha" />:</label></td>
             <td>
                 <input id="<portlet:namespace />baja_fecha"
                        name="<portlet:namespace />baja_fecha"
@@ -133,7 +144,7 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
                        value="" />
             </td>
 
-            <td><label>Plan:</label></td>
+            <td><label><liferay-ui:message key="plan" />:</label></td>
             <td>
                 <input id="<portlet:namespace />nombre_plan"
                        name="<portlet:namespace />nombre_plan"
@@ -145,18 +156,18 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
 
             <td colspan="4" align="right">
                 <input id="<portlet:namespace />buscarAfiliado"
-                       value="Buscar afiliado"
-                       title="Buscar afiliado"
+                       value="<liferay-ui:message key="buscar-afiliado" />"
+                       title="<liferay-ui:message key="buscar-afiliado" />"
                        type="button"
-                       onclick="javascript:<portlet:namespace />buscarAfiliados();" />
+                       onClick="javascript:<portlet:namespace />buscarAfiliados();" />
 
                 &nbsp;
 
                 <input id="<portlet:namespace />limpiarCampos"
-                       value="Limpiar campos"
-                       title="Limpiar campos"
+                       value="<liferay-ui:message key="limpiar-campos" />"
+                       title="<liferay-ui:message key="limpiar-campos" />"
                        type="button"
-                       onclick="javascript:<portlet:namespace />limpiarCamposAfiliado();" />
+                       onClick="javascript:<portlet:namespace />limpiarCamposAfiliado();" />
             </td>
         </tr>
     </table>
@@ -166,60 +177,44 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
     var popupAfill;
 
     function <portlet:namespace />buscarAfiliados() {
-        var cuil = jQuery("#<portlet:namespace />cuil").val();
-        var inte = jQuery("#<portlet:namespace />inte").val();
-        var tipoDoc = jQuery("#<portlet:namespace />tipoDoc").val();
-        var nroDoc = jQuery("#<portlet:namespace />nroDoc").val();
-        var apellido = jQuery("#<portlet:namespace />apellido").val();
-        var nombre = jQuery("#<portlet:namespace />nombre").val();
-        var entidad = jQuery("#<portlet:namespace />entidad").val();
-        var numero_afi = jQuery("#<portlet:namespace />numero_afi").val();
+        var cuil = jQuery('#<portlet:namespace />cuil').val();
+        var inte = jQuery('#<portlet:namespace />inte').val();
+        var tipoDoc = jQuery('#<portlet:namespace />tipoDoc').val();
+        var nroDoc = jQuery('#<portlet:namespace />nroDoc').val();
+        var apellido = jQuery('#<portlet:namespace />apellido').val();
+        var nombre = jQuery('#<portlet:namespace />nombre').val();
+        var entidad = jQuery('#<portlet:namespace />entidad').val();
+        var numero_afi = jQuery('#<portlet:namespace />numero_afi').val();
 
-        if (!<portlet:namespace />validarBusquedaAfiliado(cuil, inte, tipoDoc, nroDoc, apellido, nombre, entidad, numero_afi)) {
+        if (!<portlet:namespace />validarBusqueda(cuil, inte, tipoDoc, nroDoc, apellido, nombre, entidad, numero_afi)) {
             return false;
         }
 
         if (cuil.length > 0 && typeof validarCuil == "function") {
-            if (!validarCuil(cuil, "CUIL inválido.")) {
-                jQuery("#<portlet:namespace />cuil").focus();
+            if (!validarCuil(cuil, "<liferay-ui:message key='valida-cuil'/>")) {
+                jQuery('#<portlet:namespace />cuil').focus();
                 return false;
             }
         }
 
-        popupAfill = Liferay.Popup({
-            title: "Búsqueda de afiliado",
-            modal: true,
-            width: 830
-        });
+        popupAfill = Liferay.Popup({title:"<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />",modal:true,width:830});
 
-        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" />'
-            + '&struts_action=/compras/buscar_afiliados_requerimiento'
-            + '&cuil=' + encodeURIComponent(cuil)
-            + '&inte=' + encodeURIComponent(inte)
-            + '&tipoDoc=' + encodeURIComponent(tipoDoc)
-            + '&nroDoc=' + encodeURIComponent(nroDoc)
-            + '&apellido=' + encodeURIComponent(apellido)
-            + '&nombre=' + encodeURIComponent(nombre)
-            + '&entidad=' + encodeURIComponent(entidad)
-            + '&numero_afi=' + encodeURIComponent(numero_afi)
-            + '&popup=true';
+        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliados_requerimiento&cuil=' + cuil +
+                '&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&nombre=' + encodeURI(nombre) +
+                '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi + '&popup=true';
 
         jQuery(popupAfill).load(url);
 
         return false;
     }
 
-    function <portlet:namespace />validarBusquedaAfiliado(cuil, inte, tipoDoc, nroDoc, apellido, nombre, entidad, numero_afi) {
-        if (jQuery.trim(cuil).length == 0
-                && jQuery.trim(inte).length == 0
-                && jQuery.trim(tipoDoc).length == 0
-                && jQuery.trim(nroDoc).length == 0
-                && jQuery.trim(apellido).length == 0
-                && jQuery.trim(nombre).length == 0
-                && jQuery.trim(entidad).length == 0
-                && jQuery.trim(numero_afi).length == 0) {
+    function <portlet:namespace />validarBusqueda(cuil, inte, tipoDoc, nroDoc, apellido, nombre, entidad, numero_afi) {
+        if (jQuery.trim(cuil).length == 0 && jQuery.trim(inte).length == 0 &&
+                jQuery.trim(tipoDoc).length == 0 && jQuery.trim(nroDoc).length == 0 &&
+                jQuery.trim(apellido).length == 0 && jQuery.trim(nombre).length == 0 &&
+                jQuery.trim(entidad).length == 0 && jQuery.trim(numero_afi).length == 0) {
 
-            alert("Ingrese al menos un parámetro de búsqueda.");
+            alert('<liferay-ui:message key="ingrese-parametros-busqueda"/>');
             return false;
         }
 
@@ -243,8 +238,8 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
             id_plan,
             fecha_alta_af,
             incapacidad_af,
+            id_tercerizadora,
             afi_tercerizadora,
-            desc_tercerizadora,
             conreclamo,
             nroSocioPrevencion,
             nroCredencialPrevencion,
@@ -268,8 +263,8 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
                 id_plan,
                 fecha_alta_af,
                 incapacidad_af,
+                id_tercerizadora,
                 afi_tercerizadora,
-                desc_tercerizadora,
                 conreclamo,
                 nroSocioPrevencion,
                 nroCredencialPrevencion,
@@ -299,64 +294,69 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
             id_plan,
             fecha_alta_af,
             incapacidad_af,
+            id_tercerizadora,
             afi_tercerizadora,
-            desc_tercerizadora,
             conreclamo,
             nroSocioPrevencion,
             nroCredencialPrevencion,
             fechaIncidente,
             tieneAntecedentes) {
 
-        cuil = cuil == null ? "" : cuil;
-        inte = inte == null ? "" : inte;
-        docu_tipo = docu_tipo == null ? "" : docu_tipo;
-        docu_nro = docu_nro == null ? "" : docu_nro;
-        nombre = nombre == null ? "" : nombre;
-        apellido = apellido == null ? "" : apellido;
-        bajaFecha = bajaFecha == null ? "" : bajaFecha;
-        nombre_plan = nombre_plan == null || nombre_plan == "null" ? "" : nombre_plan;
+        cuil = <portlet:namespace />normalizarDatoAfiliado(cuil);
+        inte = <portlet:namespace />normalizarDatoAfiliado(inte);
+        docu_tipo = <portlet:namespace />normalizarDatoAfiliado(docu_tipo);
+        docu_nro = <portlet:namespace />normalizarDatoAfiliado(docu_nro);
+        nombre = <portlet:namespace />normalizarDatoAfiliado(nombre);
+        apellido = <portlet:namespace />normalizarDatoAfiliado(apellido);
+        bajaFecha = <portlet:namespace />normalizarDatoAfiliado(bajaFecha);
+        nombre_plan = <portlet:namespace />normalizarDatoAfiliado(nombre_plan);
+        ospim = <portlet:namespace />normalizarDatoAfiliado(ospim);
+        uoma = <portlet:namespace />normalizarDatoAfiliado(uoma);
+        amtima = <portlet:namespace />normalizarDatoAfiliado(amtima);
 
-        jQuery("#<portlet:namespace />cuil").val(cuil);
-        jQuery("#<portlet:namespace />inte").val(inte);
-        jQuery("#<portlet:namespace />tipoDoc").val(docu_tipo);
-        jQuery("#<portlet:namespace />nroDoc").val(docu_nro);
-        jQuery("#<portlet:namespace />apellido").val(apellido);
-        jQuery("#<portlet:namespace />nombre").val(nombre);
-        jQuery("#<portlet:namespace />baja_fecha").val(bajaFecha);
-        jQuery("#<portlet:namespace />nombre_plan").val(nombre_plan);
+        jQuery('#<portlet:namespace />cuil').val(cuil);
+        jQuery('#<portlet:namespace />inte').val(inte);
+        jQuery('#<portlet:namespace />tipoDoc').val(docu_tipo);
+        jQuery('#<portlet:namespace />nroDoc').val(docu_nro);
+        jQuery('#<portlet:namespace />apellido').val(apellido);
+        jQuery('#<portlet:namespace />nombre').val(nombre);
+        jQuery('#<portlet:namespace />baja_fecha').val(bajaFecha);
+        jQuery('#<portlet:namespace />nombre_plan').val(nombre_plan);
 
-        if (jQuery("#<portlet:namespace />entidad").val() == "O.S.P.I.M.") {
-            jQuery("#<portlet:namespace />numero_afi").val(ospim);
+        if (jQuery('#<portlet:namespace />entidad').val() == '<%= WebKeysGlobal.ENTIDAD_OSPIM %>') {
+            jQuery('#<portlet:namespace />numero_afi').val(ospim);
+        }
+        if (jQuery('#<portlet:namespace />entidad').val() == '<%= WebKeysGlobal.ENTIDAD_UOMA %>') {
+            jQuery('#<portlet:namespace />numero_afi').val(uoma);
+        }
+        if (jQuery('#<portlet:namespace />entidad').val() == '<%= WebKeysGlobal.ENTIDAD_AMTIMA %>') {
+            jQuery('#<portlet:namespace />numero_afi').val(amtima);
         }
 
-        if (jQuery("#<portlet:namespace />entidad").val() == "U.O.M.A.") {
-            jQuery("#<portlet:namespace />numero_afi").val(uoma);
-        }
-
-        if (jQuery("#<portlet:namespace />entidad").val() == "A.M.T.I.M.A.") {
-            jQuery("#<portlet:namespace />numero_afi").val(amtima);
-        }
-
-        jQuery("#<portlet:namespace />afiliado_cuil_titular").val(cuil);
-        jQuery("#<portlet:namespace />afiliado_inte").val(inte);
+        jQuery('#<portlet:namespace />afiliado_cuil_titular').val(cuil);
+        jQuery('#<portlet:namespace />afiliado_inte').val(inte);
 
         return false;
     }
 
-    function <portlet:namespace />limpiarCamposAfiliado() {
-        jQuery("#<portlet:namespace />afiliado_cuil_titular").val("");
-        jQuery("#<portlet:namespace />afiliado_inte").val("");
+    function <portlet:namespace />normalizarDatoAfiliado(value) {
+        return value == null || value == "null" ? "" : value;
+    }
 
-        jQuery("#<portlet:namespace />entidad").val("O.S.P.I.M.");
-        jQuery("#<portlet:namespace />numero_afi").val("");
-        jQuery("#<portlet:namespace />cuil").val("");
-        jQuery("#<portlet:namespace />inte").val("");
-        jQuery("#<portlet:namespace />tipoDoc").val("");
-        jQuery("#<portlet:namespace />nroDoc").val("");
-        jQuery("#<portlet:namespace />apellido").val("");
-        jQuery("#<portlet:namespace />nombre").val("");
-        jQuery("#<portlet:namespace />baja_fecha").val("");
-        jQuery("#<portlet:namespace />nombre_plan").val("");
+    function <portlet:namespace />limpiarCamposAfiliado() {
+        jQuery('#<portlet:namespace />afiliado_cuil_titular').val('');
+        jQuery('#<portlet:namespace />afiliado_inte').val('');
+
+        jQuery('#<portlet:namespace />entidad').val('<%= WebKeysGlobal.ENTIDAD_OSPIM %>');
+        jQuery('#<portlet:namespace />numero_afi').val('');
+        jQuery('#<portlet:namespace />cuil').val('');
+        jQuery('#<portlet:namespace />inte').val('');
+        jQuery('#<portlet:namespace />tipoDoc').val('');
+        jQuery('#<portlet:namespace />nroDoc').val('');
+        jQuery('#<portlet:namespace />apellido').val('');
+        jQuery('#<portlet:namespace />nombre').val('');
+        jQuery('#<portlet:namespace />baja_fecha').val('');
+        jQuery('#<portlet:namespace />nombre_plan').val('');
 
         return false;
     }

@@ -236,8 +236,8 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
         if (requiereAfiliado) {
             jQuery("#<portlet:namespace />afiliado_requerimiento_fieldset").show();
         } else {
-            if (limpiarSiNoRequiere && typeof <portlet:namespace />limpiarCamposAfiliadoComprasReq == "function") {
-                <portlet:namespace />limpiarCamposAfiliadoComprasReq();
+            if (limpiarSiNoRequiere && typeof <portlet:namespace />limpiarCamposAfiliado == "function") {
+                <portlet:namespace />limpiarCamposAfiliado();
             }
 
             jQuery("#<portlet:namespace />afiliado_requerimiento_fieldset").hide();
@@ -269,20 +269,14 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
             var afiliadoCuilTitular = <portlet:namespace />trimValue("afiliado_cuil_titular");
             var afiliadoInte = <portlet:namespace />trimValue("afiliado_inte");
 
-            if (afiliadoCuilTitular == "") {
-                alert("Debe seleccionar un afiliado.");
-                jQuery("#<portlet:namespace />cuilComprasReq").focus();
-                return;
-            }
-
-            if (afiliadoInte == "") {
-                alert("Debe seleccionar un integrante del afiliado.");
-                jQuery("#<portlet:namespace />inteComprasReq").focus();
+            if (afiliadoCuilTitular == "" || afiliadoInte == "") {
+                alert("Debe seleccionar un afiliado");
+                jQuery("#<portlet:namespace />cuil").focus();
                 return;
             }
         } else {
-            if (typeof <portlet:namespace />limpiarCamposAfiliadoComprasReq == "function") {
-                <portlet:namespace />limpiarCamposAfiliadoComprasReq();
+            if (typeof <portlet:namespace />limpiarCamposAfiliado == "function") {
+                <portlet:namespace />limpiarCamposAfiliado();
             }
         }
 
