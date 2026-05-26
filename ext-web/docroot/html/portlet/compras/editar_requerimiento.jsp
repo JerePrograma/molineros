@@ -172,7 +172,7 @@ if (afiliadoInte == null) {
         <fieldset class="block-labels">
             <legend>Afiliado</legend>
 
-            <liferay-util:include page="/html/portlet/compras/busqueda_afiliado.jsp" />
+            <liferay-util:include page="/html/portlet/compras/busqueda_afiliado.jsp">
                 <liferay-util:param name="edit_mode" value="<%= String.valueOf(true) %>" />
                 <liferay-util:param name="cuil" value="<%= afiliadoCuilTitular %>" />
                 <liferay-util:param name="inte" value="<%= afiliadoInte %>" />
