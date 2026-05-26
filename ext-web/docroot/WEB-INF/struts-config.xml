@@ -7034,6 +7034,13 @@
 					name="portlet.compras.error"
 					path="portlet.compras.error" />
 		</action>
+
+
+
+		<action path="/compras/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
+			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
+		</action>
     </action-mappings>
   
 </struts-config>

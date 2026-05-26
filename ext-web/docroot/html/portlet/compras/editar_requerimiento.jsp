@@ -169,7 +169,15 @@ if (afiliadoInte == null) {
             </table>
         </fieldset>
 
-        <div id="<portlet:namespace />afiliado_requerimiento_panel">
+        <fieldset class="block-labels">
+            <legend>Afiliado</legend>
+
+            <liferay-util:include page="/html/portlet/compras/busqueda_afiliado.jsp" />
+                <liferay-util:param name="edit_mode" value="<%= String.valueOf(true) %>" />
+                <liferay-util:param name="cuil" value="<%= afiliadoCuilTitular %>" />
+                <liferay-util:param name="inte" value="<%= afiliadoInte %>" />
+            </liferay-util:include>
+
             <input type="hidden"
                    name="<portlet:namespace />afiliado_cuil_titular"
                    id="<portlet:namespace />afiliado_cuil_titular"
@@ -179,9 +187,7 @@ if (afiliadoInte == null) {
                    name="<portlet:namespace />afiliado_inte"
                    id="<portlet:namespace />afiliado_inte"
                    value="<%= HtmlUtil.escape(afiliadoInte) %>" />
-
-            <liferay-util:include page="/html/portlet/afiliados/busqueda_afiliado.jsp" />
-        </div>
+        </fieldset>
 
         <fieldset class="block-labels">
             <legend>Solicitud</legend>
