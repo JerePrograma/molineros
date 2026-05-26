@@ -2,9 +2,11 @@
 
 <%
 RequerimientoCompra reqAfi = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
+
 if (reqAfi == null) {
     reqAfi = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW);
 }
+
 if (reqAfi == null) {
     reqAfi = new RequerimientoCompra();
 }
@@ -15,7 +17,7 @@ String afiliadoInte = reqAfi.getAfiliadoInteString();
 String origenAfiliadoCompras = "ComprasReq";
 %>
 
-<fieldset class="block-labels">
+<fieldset class="block-labels" id="<portlet:namespace />afiliado_requerimiento_fieldset">
     <legend>Afiliado</legend>
 
     <input type="hidden"
@@ -33,17 +35,24 @@ String origenAfiliadoCompras = "ComprasReq";
             <td><label>Seleccionado:</label></td>
             <td colspan="5">
                 <strong id="<portlet:namespace />afiliado_seleccionado_label">
-                    <c:choose>
-                        <c:when test="<%= Validator.isNotNull(afiliadoCuilTitular) %>">
-                            CUIL titular: <%= HtmlUtil.escape(afiliadoCuilTitular) %>
-                            <c:if test="<%= Validator.isNotNull(afiliadoInte) %>">
-                                &nbsp;-&nbsp;Integrante: <%= HtmlUtil.escape(afiliadoInte) %>
-                            </c:if>
-                        </c:when>
-                        <c:otherwise>
-                            Sin afiliado seleccionado
-                        </c:otherwise>
-                    </c:choose>
+                    <%
+                    if (Validator.isNotNull(afiliadoCuilTitular)) {
+                    %>
+                        CUIL titular: <%= HtmlUtil.escape(afiliadoCuilTitular) %>
+                        <%
+                        if (Validator.isNotNull(afiliadoInte)) {
+                        %>
+                            &nbsp;-&nbsp;Integrante: <%= HtmlUtil.escape(afiliadoInte) %>
+                        <%
+                        }
+                        %>
+                    <%
+                    } else {
+                    %>
+                        Sin afiliado seleccionado
+                    <%
+                    }
+                    %>
                 </strong>
             </td>
         </tr>
@@ -156,12 +165,6 @@ String origenAfiliadoCompras = "ComprasReq";
                 &nbsp;&nbsp;
 
                 <input type="button"
-                       value="Aplicar CUIL/Integrante"
-                       onclick="javascript:<portlet:namespace />aplicarAfiliadoManual<%= origenAfiliadoCompras %>();" />
-
-                &nbsp;&nbsp;
-
-                <input type="button"
                        value="Limpiar"
                        onclick="javascript:<portlet:namespace />limpiarCamposAfiliado<%= origenAfiliadoCompras %>();" />
             </td>
@@ -203,10 +206,21 @@ String origenAfiliadoCompras = "ComprasReq";
 </fieldset>
 
 <script type="text/javascript">
-    var popupAfill = null;
+    var <portlet:namespace />popupAfiliadoComprasReq = null;
 
     function <portlet:namespace />valorAfiliado<%= origenAfiliadoCompras %>(campo) {
-        return jQuery("#<portlet:namespace />" + campo + "<%= origenAfiliadoCompras %>").val();
+        var selector = "#<portlet:namespace />" + campo + "<%= origenAfiliadoCompras %>";
+        var item = jQuery(selector);
+
+        if (item.length == 0) {
+            return "";
+        }
+
+        return item.val();
+    }
+
+    function <portlet:namespace />appendAfiliadoParam<%= origenAfiliadoCompras %>(url, name, value) {
+        return url + "&" + name + "=" + encodeURIComponent(value == null ? "" : value);
     }
 
     function <portlet:namespace />validarBusqueda<%= origenAfiliadoCompras %>(
@@ -219,15 +233,19 @@ String origenAfiliadoCompras = "ComprasReq";
             entidad,
             numeroAfi) {
 
-        if (jQuery.trim(cuil).length == 0
-                && jQuery.trim(inte).length == 0
-                && jQuery.trim(tipoDoc).length == 0
-                && jQuery.trim(nroDoc).length == 0
-                && jQuery.trim(apellido).length == 0
-                && jQuery.trim(nombre).length == 0
-                && jQuery.trim(numeroAfi).length == 0) {
+        cuil = jQuery.trim(cuil);
+        nroDoc = jQuery.trim(nroDoc);
+        apellido = jQuery.trim(apellido);
+        nombre = jQuery.trim(nombre);
+        numeroAfi = jQuery.trim(numeroAfi);
 
-            alert("Ingrese al menos un parámetro de búsqueda.");
+        if (cuil.length == 0
+                && nroDoc.length == 0
+                && apellido.length == 0
+                && nombre.length == 0
+                && numeroAfi.length == 0) {
+
+            alert("Ingrese CUIL, documento, apellido, nombre o número de afiliado para buscar.");
             return false;
         }
 
@@ -256,78 +274,36 @@ String origenAfiliadoCompras = "ComprasReq";
             return false;
         }
 
-        if (jQuery.trim(cuil).length > 0 && typeof validarCuil == "function") {
+        cuil = jQuery.trim(cuil);
+
+        if (cuil.length > 0 && typeof validarCuil == "function") {
             if (!validarCuil(cuil, "CUIL inválido.")) {
                 jQuery("#<portlet:namespace />cuil<%= origenAfiliadoCompras %>").focus();
                 return false;
             }
         }
 
-        popupAfill = Liferay.Popup({
+        <portlet:namespace />popupAfiliadoComprasReq = Liferay.Popup({
             title: "Búsqueda de afiliado",
             modal: true,
             width: 830
         });
 
-        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" />'
-            + '&struts_action=/compras/buscar_afiliados_requerimiento'
-            + '&cuil=' + encodeURI(cuil)
-            + '&inte=' + encodeURI(inte)
-            + '&tipoDoc=' + encodeURI(tipoDoc)
-            + '&nroDoc=' + encodeURI(nroDoc)
-            + '&apellido=' + encodeURI(apellido)
-            + '&nombre=' + encodeURI(nombre)
-            + '&entidad=' + encodeURI(entidad)
-            + '&numero_afi=' + encodeURI(numeroAfi)
-            + '&origen=<%= origenAfiliadoCompras %>'
-            + '&popup=true';
+        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" />';
 
-        jQuery(popupAfill).load(url);
+        url = <portlet:namespace />appendAfiliadoParam<%= origenAfiliadoCompras %>(url, "struts_action", "/compras/buscar_afiliados_requerimiento");
+        url = <portlet:namespace />appendAfiliadoParam<%= origenAfiliadoCompras %>(url, "cuil", cuil);
+        url = <portlet:namespace />appendAfiliadoParam<%= origenAfiliadoCompras %>(url, "inte", inte);
+        url = <portlet:namespace />appendAfiliadoParam<%= origenAfiliadoCompras %>(url, "tipoDoc", tipoDoc);
+        url = <portlet:namespace />appendAfiliadoParam<%= origenAfiliadoCompras %>(url, "nroDoc", nroDoc);
+        url = <portlet:namespace />appendAfiliadoParam<%= origenAfiliadoCompras %>(url, "apellido", apellido);
+        url = <portlet:namespace />appendAfiliadoParam<%= origenAfiliadoCompras %>(url, "nombre", nombre);
+        url = <portlet:namespace />appendAfiliadoParam<%= origenAfiliadoCompras %>(url, "entidad", entidad);
+        url = <portlet:namespace />appendAfiliadoParam<%= origenAfiliadoCompras %>(url, "numero_afi", numeroAfi);
+        url = <portlet:namespace />appendAfiliadoParam<%= origenAfiliadoCompras %>(url, "origen", "<%= origenAfiliadoCompras %>");
+        url = <portlet:namespace />appendAfiliadoParam<%= origenAfiliadoCompras %>(url, "popup", "true");
 
-        return false;
-    }
-
-    function <portlet:namespace />aplicarAfiliadoManual<%= origenAfiliadoCompras %>() {
-        var cuil = jQuery.trim(<portlet:namespace />valorAfiliado<%= origenAfiliadoCompras %>("cuil"));
-        var inte = jQuery.trim(<portlet:namespace />valorAfiliado<%= origenAfiliadoCompras %>("inte"));
-
-        if (cuil == "") {
-            alert("Debe informar CUIL titular.");
-            jQuery("#<portlet:namespace />cuil<%= origenAfiliadoCompras %>").focus();
-            return false;
-        }
-
-        if (inte == "") {
-            alert("Debe informar integrante.");
-            jQuery("#<portlet:namespace />inte<%= origenAfiliadoCompras %>").focus();
-            return false;
-        }
-
-        seleccionaAfiliado<%= origenAfiliadoCompras %>(
-                cuil,
-                inte,
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "0"
-        );
+        jQuery(<portlet:namespace />popupAfiliadoComprasReq).load(url);
 
         return false;
     }
@@ -366,7 +342,15 @@ String origenAfiliadoCompras = "ComprasReq";
         bajaFecha = bajaFecha == null ? "" : bajaFecha;
         nombrePlan = nombrePlan == null ? "" : nombrePlan;
 
+        cuilTitular = jQuery.trim(cuilTitular);
+        integrante = jQuery.trim(integrante);
+
         var apellidoNombre = jQuery.trim(apellido + " " + nombre);
+
+        if (cuilTitular == "" || integrante == "") {
+            alert("No se pudo seleccionar el afiliado. La búsqueda no devolvió CUIL titular o integrante.");
+            return false;
+        }
 
         jQuery("#<portlet:namespace />afiliado_cuil_titular").val(cuilTitular);
         jQuery("#<portlet:namespace />afiliado_inte").val(integrante);
@@ -395,8 +379,8 @@ String origenAfiliadoCompras = "ComprasReq";
         jQuery("#<portlet:namespace />afiliado_requerimiento_resumen").show();
 
         try {
-            if (popupAfill != null) {
-                jQuery(popupAfill).dialog("close");
+            if (<portlet:namespace />popupAfiliadoComprasReq != null) {
+                jQuery(<portlet:namespace />popupAfiliadoComprasReq).dialog("close");
             }
         } catch (e) {
         }
@@ -408,11 +392,12 @@ String origenAfiliadoCompras = "ComprasReq";
         jQuery("#<portlet:namespace />afiliado_cuil_titular").val("");
         jQuery("#<portlet:namespace />afiliado_inte").val("");
 
+        jQuery("#<portlet:namespace />entidad<%= origenAfiliadoCompras %>").val("O.S.P.I.M.");
+        jQuery("#<portlet:namespace />numero_afi<%= origenAfiliadoCompras %>").val("");
         jQuery("#<portlet:namespace />cuil<%= origenAfiliadoCompras %>").val("");
         jQuery("#<portlet:namespace />inte<%= origenAfiliadoCompras %>").val("");
         jQuery("#<portlet:namespace />tipoDoc<%= origenAfiliadoCompras %>").val("");
         jQuery("#<portlet:namespace />nroDoc<%= origenAfiliadoCompras %>").val("");
-        jQuery("#<portlet:namespace />numero_afi<%= origenAfiliadoCompras %>").val("");
         jQuery("#<portlet:namespace />apellido<%= origenAfiliadoCompras %>").val("");
         jQuery("#<portlet:namespace />nombre<%= origenAfiliadoCompras %>").val("");
 

@@ -7044,10 +7044,6 @@
 					path="portlet.afiliados.result.search.popup" />
 
 			<forward
-					name="portlet.afiliados.result.search"
-					path="portlet.afiliados.result.search.popup" />
-
-			<forward
 					name="portlet.afiliados.error"
 					path="portlet.afiliados.error" />
 		</action>
