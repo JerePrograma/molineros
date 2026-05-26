@@ -15,6 +15,7 @@ renderRequest.setAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW, req);
 
 boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
 boolean puedeAnular = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS) || puedeABM;
+boolean puedeCambiarEstado = (req.puedeSolicitar() && puedeABM) || (req.puedeAnular() && puedeAnular);
 
 PortletURL volverURL = renderResponse.createRenderURL();
 volverURL.setWindowState(WindowState.MAXIMIZED);
@@ -80,6 +81,7 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
     </table>
 </fieldset>
 
+<c:if test="<%= req.isRequiereAfiliado() || req.tieneAfiliadoInformado() %>">
 <fieldset class="block-labels">
     <legend>Afiliado</legend>
 
@@ -93,6 +95,7 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
         </tr>
     </table>
 </fieldset>
+</c:if>
 
 <fieldset class="block-labels">
     <legend>Solicitud</legend>
@@ -117,6 +120,7 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
 
 <liferay-util:include page="/html/portlet/compras/requerimiento_detalle.jsp" />
 
+<c:if test="<%= puedeCambiarEstado %>">
 <form action="<%= cambiarEstadoURL.toString() %>" method="post" name="<portlet:namespace />cambioEstadoFm">
     <input type="hidden" name="<portlet:namespace />id_requerimiento_compra" value="<%= req.getIdRequerimientoCompra() %>" />
 
@@ -147,6 +151,7 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
         </table>
     </fieldset>
 </form>
+</c:if>
 
 <table class="lfr-table">
     <tr>
@@ -165,6 +170,7 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
     function <portlet:namespace />cambiarEstado() {
         if (jQuery("#<portlet:namespace />estado_nuevo").val() == "") {
             alert("Debe seleccionar un estado.");
+            jQuery("#<portlet:namespace />estado_nuevo").focus();
             return;
         }
 

@@ -218,11 +218,13 @@ detalleActionURL.setParameter("struts_action", "/compras/editar_requerimiento");
     function <portlet:namespace />agregarDetalle() {
         if (jQuery("#<portlet:namespace />articulo").val() == "") {
             alert("Debe informar articulo.");
+            jQuery("#<portlet:namespace />articulo").focus();
             return;
         }
 
         if (jQuery("#<portlet:namespace />cantidad").val() == "") {
             alert("Debe informar cantidad.");
+            jQuery("#<portlet:namespace />cantidad").focus();
             return;
         }
 
