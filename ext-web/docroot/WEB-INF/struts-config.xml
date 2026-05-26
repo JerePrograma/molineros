@@ -7037,7 +7037,7 @@
 
         <action
                 path="/compras/buscar_afiliados_requerimiento"
-                type="ar.com.ospim.afiliados.action.BuscarAfiliadosAction">
+                type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 
             <forward
                     name="portlet.afiliados.result.search"
