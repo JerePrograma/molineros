@@ -7035,34 +7035,22 @@
                     path="portlet.compras.error" />
         </action>
 
-        <action
-                path="/compras/buscar_afiliados_requerimiento"
-                type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
+		<action
+				path="/compras/buscar_afiliados_requerimiento"
+				type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 
-            <forward
-                    name="portlet.afiliados.result.search"
-                    path="portlet.compras.afiliados.result.search" />
+			<forward
+					name="portlet.afiliados.result.search.popup"
+					path="portlet.afiliados.result.search.popup" />
 
-            <forward
-                    name="portlet.afiliados.result.search.popup"
-                    path="portlet.compras.afiliados.result.search" />
+			<forward
+					name="portlet.afiliados.result.search"
+					path="portlet.afiliados.result.search.popup" />
 
-            <forward
-                    name="portlet.afiliados.opciones.result.search"
-                    path="portlet.compras.afiliados.result.search" />
-
-            <forward
-                    name="portlet.afiliados.editar_afiliado_entry"
-                    path="portlet.compras.afiliados.result.search" />
-
-            <forward
-                    name="portlet.afiliados.error"
-                    path="portlet.compras.error" />
-        </action>
-
-        <action
-                path="/compras/buscar_afiliados_requerimiento_sesion"
-                forward="portlet.compras.afiliados.result.search" />
+			<forward
+					name="portlet.afiliados.error"
+					path="portlet.afiliados.error" />
+		</action>
     </action-mappings>
   
 </struts-config>

@@ -11,7 +11,8 @@ if (reqAfi == null) {
 
 String afiliadoCuilTitular = reqAfi.getAfiliadoCuilTitularVisible();
 String afiliadoInte = reqAfi.getAfiliadoInteString();
-String namespace = renderResponse.getNamespace();
+
+String origenAfiliadoCompras = "ComprasReq";
 %>
 
 <fieldset class="block-labels">
@@ -52,34 +53,35 @@ String namespace = renderResponse.getNamespace();
         </tr>
 
         <tr>
-            <td><label>CUIL:</label></td>
+            <td><label>Entidad:</label></td>
             <td>
-                <input type="text"
-                       id="<portlet:namespace />afi_req_cuil"
-                       name="<portlet:namespace />afi_req_cuil"
-                       value="<%= HtmlUtil.escape(afiliadoCuilTitular) %>"
-                       size="13"
-                       maxlength="11" />
-            </td>
-
-            <td><label>Integrante:</label></td>
-            <td>
-                <input type="text"
-                       id="<portlet:namespace />afi_req_inte"
-                       name="<portlet:namespace />afi_req_inte"
-                       value="<%= HtmlUtil.escape(afiliadoInte) %>"
-                       size="3"
-                       maxlength="2" />
+                <select id="<portlet:namespace />entidad<%= origenAfiliadoCompras %>"
+                        name="<portlet:namespace />entidad<%= origenAfiliadoCompras %>">
+                    <option value="">Todas</option>
+                    <option value="O.S.P.I.M." selected="selected">O.S.P.I.M.</option>
+                    <option value="A.M.T.I.M.A.">A.M.T.I.M.A.</option>
+                    <option value="U.O.M.A.">U.O.M.A.</option>
+                </select>
             </td>
 
             <td><label>Número afiliado:</label></td>
             <td>
                 <input type="text"
-                       id="<portlet:namespace />afi_req_numero_afi"
-                       name="<portlet:namespace />afi_req_numero_afi"
+                       id="<portlet:namespace />numero_afi<%= origenAfiliadoCompras %>"
+                       name="<portlet:namespace />numero_afi<%= origenAfiliadoCompras %>"
                        value=""
                        size="8"
                        maxlength="10" />
+            </td>
+
+            <td><label>CUIL:</label></td>
+            <td>
+                <input type="text"
+                       id="<portlet:namespace />cuil<%= origenAfiliadoCompras %>"
+                       name="<portlet:namespace />cuil<%= origenAfiliadoCompras %>"
+                       value="<%= HtmlUtil.escape(afiliadoCuilTitular) %>"
+                       size="13"
+                       maxlength="11" />
             </td>
         </tr>
 
@@ -88,10 +90,20 @@ String namespace = renderResponse.getNamespace();
         </tr>
 
         <tr>
+            <td><label>Integrante:</label></td>
+            <td>
+                <input type="text"
+                       id="<portlet:namespace />inte<%= origenAfiliadoCompras %>"
+                       name="<portlet:namespace />inte<%= origenAfiliadoCompras %>"
+                       value="<%= HtmlUtil.escape(afiliadoInte) %>"
+                       size="3"
+                       maxlength="2" />
+            </td>
+
             <td><label>Tipo doc.:</label></td>
             <td>
-                <select id="<portlet:namespace />afi_req_tipoDoc"
-                        name="<portlet:namespace />afi_req_tipoDoc">
+                <select id="<portlet:namespace />tipoDoc<%= origenAfiliadoCompras %>"
+                        name="<portlet:namespace />tipoDoc<%= origenAfiliadoCompras %>">
                     <option value=""></option>
                     <option value="DNI">DNI</option>
                     <option value="LC">LC</option>
@@ -103,22 +115,11 @@ String namespace = renderResponse.getNamespace();
             <td><label>Nro. doc.:</label></td>
             <td>
                 <input type="text"
-                       id="<portlet:namespace />afi_req_nroDoc"
-                       name="<portlet:namespace />afi_req_nroDoc"
+                       id="<portlet:namespace />nroDoc<%= origenAfiliadoCompras %>"
+                       name="<portlet:namespace />nroDoc<%= origenAfiliadoCompras %>"
                        value=""
                        size="10"
                        maxlength="8" />
-            </td>
-
-            <td><label>Entidad:</label></td>
-            <td>
-                <select id="<portlet:namespace />afi_req_entidad"
-                        name="<portlet:namespace />afi_req_entidad">
-                    <option value="">Todas</option>
-                    <option value="O.S.P.I.M." selected="selected">O.S.P.I.M.</option>
-                    <option value="A.M.T.I.M.A.">A.M.T.I.M.A.</option>
-                    <option value="U.O.M.A.">U.O.M.A.</option>
-                </select>
             </td>
         </tr>
 
@@ -130,8 +131,8 @@ String namespace = renderResponse.getNamespace();
             <td><label>Apellido:</label></td>
             <td>
                 <input type="text"
-                       id="<portlet:namespace />afi_req_apellido"
-                       name="<portlet:namespace />afi_req_apellido"
+                       id="<portlet:namespace />apellido<%= origenAfiliadoCompras %>"
+                       name="<portlet:namespace />apellido<%= origenAfiliadoCompras %>"
                        value=""
                        size="24"
                        maxlength="100" />
@@ -140,29 +141,29 @@ String namespace = renderResponse.getNamespace();
             <td><label>Nombre:</label></td>
             <td>
                 <input type="text"
-                       id="<portlet:namespace />afi_req_nombre"
-                       name="<portlet:namespace />afi_req_nombre"
+                       id="<portlet:namespace />nombre<%= origenAfiliadoCompras %>"
+                       name="<portlet:namespace />nombre<%= origenAfiliadoCompras %>"
                        value=""
                        size="24"
                        maxlength="100" />
             </td>
 
-            <td colspan="2">
+            <td colspan="2" align="right">
                 <input type="button"
                        value="Buscar afiliado"
-                       onclick="<portlet:namespace />buscarAfiliadoRequerimiento();" />
+                       onclick="javascript:<portlet:namespace />buscarAfiliados<%= origenAfiliadoCompras %>();" />
 
                 &nbsp;&nbsp;
 
                 <input type="button"
                        value="Aplicar CUIL/Integrante"
-                       onclick="<portlet:namespace />aplicarAfiliadoManual();" />
+                       onclick="javascript:<portlet:namespace />aplicarAfiliadoManual<%= origenAfiliadoCompras %>();" />
 
                 &nbsp;&nbsp;
 
                 <input type="button"
                        value="Limpiar"
-                       onclick="<portlet:namespace />limpiarAfiliadoRequerimiento();" />
+                       onclick="javascript:<portlet:namespace />limpiarCamposAfiliado<%= origenAfiliadoCompras %>();" />
             </td>
         </tr>
     </table>
@@ -189,148 +190,242 @@ String namespace = renderResponse.getNamespace();
                 <td><label>DNI:</label></td>
                 <td id="<portlet:namespace />afiliado_resumen_dni"></td>
             </tr>
-        </table>
-    </div>
 
-    <br />
-
-    <div align="center" id="<portlet:namespace />buscando_afiliado_requerimiento" style="display:none;">
-        <table align="center">
             <tr>
-                <td>Buscando afiliado</td>
-                <td align="center">
-                    <img alt="Buscando" src="<%= themeDisplay.getPathThemeImages() %>/progress_bar/loading_animation.gif" />
-                </td>
+                <td><label>Baja:</label></td>
+                <td id="<portlet:namespace />afiliado_resumen_baja"></td>
+
+                <td><label>Plan:</label></td>
+                <td id="<portlet:namespace />afiliado_resumen_plan"></td>
             </tr>
         </table>
     </div>
-
-    <div align="center" id="<portlet:namespace />busqueda_afiliado_requerimiento_div"></div>
 </fieldset>
 
 <script type="text/javascript">
-    var <portlet:namespace />ns = "<%= namespace %>";
+    var popupAfill = null;
 
-    function <portlet:namespace />afiReqVal(name) {
-        return jQuery("#" + <portlet:namespace />ns + name).val();
+    function <portlet:namespace />valorAfiliado<%= origenAfiliadoCompras %>(campo) {
+        return jQuery("#<portlet:namespace />" + campo + "<%= origenAfiliadoCompras %>").val();
     }
 
-    function <portlet:namespace />hayFiltroAfiliado() {
-        return jQuery.trim(<portlet:namespace />afiReqVal("afi_req_cuil")).length > 0
-            || jQuery.trim(<portlet:namespace />afiReqVal("afi_req_inte")).length > 0
-            || jQuery.trim(<portlet:namespace />afiReqVal("afi_req_tipoDoc")).length > 0
-            || jQuery.trim(<portlet:namespace />afiReqVal("afi_req_nroDoc")).length > 0
-            || jQuery.trim(<portlet:namespace />afiReqVal("afi_req_numero_afi")).length > 0
-            || jQuery.trim(<portlet:namespace />afiReqVal("afi_req_apellido")).length > 0
-            || jQuery.trim(<portlet:namespace />afiReqVal("afi_req_nombre")).length > 0;
-    }
+    function <portlet:namespace />validarBusqueda<%= origenAfiliadoCompras %>(
+            cuil,
+            inte,
+            tipoDoc,
+            nroDoc,
+            apellido,
+            nombre,
+            entidad,
+            numeroAfi) {
 
-    function <portlet:namespace />buscarAfiliadoRequerimiento() {
-        var cuil = jQuery.trim(<portlet:namespace />afiReqVal("afi_req_cuil"));
+        if (jQuery.trim(cuil).length == 0
+                && jQuery.trim(inte).length == 0
+                && jQuery.trim(tipoDoc).length == 0
+                && jQuery.trim(nroDoc).length == 0
+                && jQuery.trim(apellido).length == 0
+                && jQuery.trim(nombre).length == 0
+                && jQuery.trim(numeroAfi).length == 0) {
 
-        if (!<portlet:namespace />hayFiltroAfiliado()) {
             alert("Ingrese al menos un parámetro de búsqueda.");
-            return;
+            return false;
         }
 
-        if (cuil.length > 0 && typeof validarCuil == "function") {
+        return true;
+    }
+
+    function <portlet:namespace />buscarAfiliados<%= origenAfiliadoCompras %>() {
+        var cuil = <portlet:namespace />valorAfiliado<%= origenAfiliadoCompras %>("cuil");
+        var inte = <portlet:namespace />valorAfiliado<%= origenAfiliadoCompras %>("inte");
+        var tipoDoc = <portlet:namespace />valorAfiliado<%= origenAfiliadoCompras %>("tipoDoc");
+        var nroDoc = <portlet:namespace />valorAfiliado<%= origenAfiliadoCompras %>("nroDoc");
+        var apellido = <portlet:namespace />valorAfiliado<%= origenAfiliadoCompras %>("apellido");
+        var nombre = <portlet:namespace />valorAfiliado<%= origenAfiliadoCompras %>("nombre");
+        var entidad = <portlet:namespace />valorAfiliado<%= origenAfiliadoCompras %>("entidad");
+        var numeroAfi = <portlet:namespace />valorAfiliado<%= origenAfiliadoCompras %>("numero_afi");
+
+        if (!<portlet:namespace />validarBusqueda<%= origenAfiliadoCompras %>(
+                cuil,
+                inte,
+                tipoDoc,
+                nroDoc,
+                apellido,
+                nombre,
+                entidad,
+                numeroAfi)) {
+            return false;
+        }
+
+        if (jQuery.trim(cuil).length > 0 && typeof validarCuil == "function") {
             if (!validarCuil(cuil, "CUIL inválido.")) {
-                jQuery("#" + <portlet:namespace />ns + "afi_req_cuil").focus();
-                return;
+                jQuery("#<portlet:namespace />cuil<%= origenAfiliadoCompras %>").focus();
+                return false;
             }
         }
 
-        jQuery("#" + <portlet:namespace />ns + "buscando_afiliado_requerimiento").show();
+        popupAfill = Liferay.Popup({
+            title: "Búsqueda de afiliado",
+            modal: true,
+            width: 830
+        });
 
-        var url = "<portlet:renderURL windowState='<%= LiferayWindowState.EXCLUSIVE.toString() %>' />&struts_action=/compras/buscar_afiliados_requerimiento";
+        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" />'
+            + '&struts_action=/compras/buscar_afiliados_requerimiento'
+            + '&cuil=' + encodeURI(cuil)
+            + '&inte=' + encodeURI(inte)
+            + '&tipoDoc=' + encodeURI(tipoDoc)
+            + '&nroDoc=' + encodeURI(nroDoc)
+            + '&apellido=' + encodeURI(apellido)
+            + '&nombre=' + encodeURI(nombre)
+            + '&entidad=' + encodeURI(entidad)
+            + '&numero_afi=' + encodeURI(numeroAfi)
+            + '&origen=<%= origenAfiliadoCompras %>'
+            + '&popup=true';
 
-        var paramsAfi = {
-            "cuil": cuil,
-            "inte": <portlet:namespace />afiReqVal("afi_req_inte"),
-            "tipoDoc": <portlet:namespace />afiReqVal("afi_req_tipoDoc"),
-            "nroDoc": <portlet:namespace />afiReqVal("afi_req_nroDoc"),
-            "apellido": <portlet:namespace />afiReqVal("afi_req_apellido"),
-            "nombre": <portlet:namespace />afiReqVal("afi_req_nombre"),
-            "entidad": <portlet:namespace />afiReqVal("afi_req_entidad"),
-            "numero_afi": <portlet:namespace />afiReqVal("afi_req_numero_afi"),
-            "portlet_name": "COMPRAS_REQUERIMIENTO"
-        };
+        jQuery(popupAfill).load(url);
 
-        jQuery("#" + <portlet:namespace />ns + "busqueda_afiliado_requerimiento_div")
-            .load(url, paramsAfi, function(responseText, status) {
-                jQuery("#" + <portlet:namespace />ns + "buscando_afiliado_requerimiento").hide();
-
-                if (status == "error") {
-                    jQuery("#" + <portlet:namespace />ns + "busqueda_afiliado_requerimiento_div")
-                        .html("<div class=\"portlet-msg-error\">No se pudo realizar la búsqueda de afiliados.</div>");
-                }
-            });
+        return false;
     }
 
-    function <portlet:namespace />aplicarAfiliadoManual() {
-        var cuil = jQuery.trim(<portlet:namespace />afiReqVal("afi_req_cuil"));
-        var inte = jQuery.trim(<portlet:namespace />afiReqVal("afi_req_inte"));
+    function <portlet:namespace />aplicarAfiliadoManual<%= origenAfiliadoCompras %>() {
+        var cuil = jQuery.trim(<portlet:namespace />valorAfiliado<%= origenAfiliadoCompras %>("cuil"));
+        var inte = jQuery.trim(<portlet:namespace />valorAfiliado<%= origenAfiliadoCompras %>("inte"));
 
         if (cuil == "") {
             alert("Debe informar CUIL titular.");
-            jQuery("#" + <portlet:namespace />ns + "afi_req_cuil").focus();
-            return;
+            jQuery("#<portlet:namespace />cuil<%= origenAfiliadoCompras %>").focus();
+            return false;
         }
 
         if (inte == "") {
             alert("Debe informar integrante.");
-            jQuery("#" + <portlet:namespace />ns + "afi_req_inte").focus();
-            return;
+            jQuery("#<portlet:namespace />inte<%= origenAfiliadoCompras %>").focus();
+            return false;
         }
 
-        <portlet:namespace />seleccionarAfiliadoRequerimiento(cuil, inte, "", "");
+        seleccionaAfiliado<%= origenAfiliadoCompras %>(
+                cuil,
+                inte,
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "0"
+        );
+
+        return false;
     }
 
-    function <portlet:namespace />seleccionarAfiliadoRequerimiento(cuilTitular, integrante, apellidoNombre, dni) {
+    function seleccionaAfiliado<%= origenAfiliadoCompras %>(
+            cuilTitular,
+            integrante,
+            tipoDoc,
+            nroDoc,
+            nombre,
+            apellido,
+            seccionalId,
+            seccionalDescripcion,
+            idOspim,
+            idUoma,
+            idAmtima,
+            bajaFecha,
+            nombrePlan,
+            idPlan,
+            altaFecha,
+            discapacitado,
+            idTercerizadora,
+            descTercerizadora,
+            conReclamoPrestacional,
+            nroSocioPrevencion,
+            nroCredencialPrevencion,
+            fechaIncidente,
+            tieneAntecedentes) {
+
         cuilTitular = cuilTitular == null ? "" : cuilTitular;
         integrante = integrante == null ? "" : integrante;
-        apellidoNombre = apellidoNombre == null ? "" : apellidoNombre;
-        dni = dni == null ? "" : dni;
+        tipoDoc = tipoDoc == null ? "" : tipoDoc;
+        nroDoc = nroDoc == null ? "" : nroDoc;
+        nombre = nombre == null ? "" : nombre;
+        apellido = apellido == null ? "" : apellido;
+        bajaFecha = bajaFecha == null ? "" : bajaFecha;
+        nombrePlan = nombrePlan == null ? "" : nombrePlan;
 
-        jQuery("#" + <portlet:namespace />ns + "afiliado_cuil_titular").val(cuilTitular);
-        jQuery("#" + <portlet:namespace />ns + "afiliado_inte").val(integrante);
+        var apellidoNombre = jQuery.trim(apellido + " " + nombre);
 
-        jQuery("#" + <portlet:namespace />ns + "afi_req_cuil").val(cuilTitular);
-        jQuery("#" + <portlet:namespace />ns + "afi_req_inte").val(integrante);
+        jQuery("#<portlet:namespace />afiliado_cuil_titular").val(cuilTitular);
+        jQuery("#<portlet:namespace />afiliado_inte").val(integrante);
 
-        jQuery("#" + <portlet:namespace />ns + "afiliado_resumen_cuil").text(cuilTitular);
-        jQuery("#" + <portlet:namespace />ns + "afiliado_resumen_inte").text(integrante);
-        jQuery("#" + <portlet:namespace />ns + "afiliado_resumen_nombre").text(apellidoNombre);
-        jQuery("#" + <portlet:namespace />ns + "afiliado_resumen_dni").text(dni);
+        jQuery("#<portlet:namespace />cuil<%= origenAfiliadoCompras %>").val(cuilTitular);
+        jQuery("#<portlet:namespace />inte<%= origenAfiliadoCompras %>").val(integrante);
+        jQuery("#<portlet:namespace />tipoDoc<%= origenAfiliadoCompras %>").val(tipoDoc);
+        jQuery("#<portlet:namespace />nroDoc<%= origenAfiliadoCompras %>").val(nroDoc);
+        jQuery("#<portlet:namespace />apellido<%= origenAfiliadoCompras %>").val(apellido);
+        jQuery("#<portlet:namespace />nombre<%= origenAfiliadoCompras %>").val(nombre);
+
+        jQuery("#<portlet:namespace />afiliado_resumen_cuil").text(cuilTitular);
+        jQuery("#<portlet:namespace />afiliado_resumen_inte").text(integrante);
+        jQuery("#<portlet:namespace />afiliado_resumen_nombre").text(apellidoNombre);
+        jQuery("#<portlet:namespace />afiliado_resumen_dni").text(nroDoc);
+        jQuery("#<portlet:namespace />afiliado_resumen_baja").text(bajaFecha);
+        jQuery("#<portlet:namespace />afiliado_resumen_plan").text(nombrePlan);
 
         var label = "CUIL titular: " + cuilTitular + " - Integrante: " + integrante;
+
         if (apellidoNombre != "") {
             label = label + " - " + apellidoNombre;
         }
 
-        jQuery("#" + <portlet:namespace />ns + "afiliado_seleccionado_label").text(label);
-        jQuery("#" + <portlet:namespace />ns + "afiliado_requerimiento_resumen").show();
+        jQuery("#<portlet:namespace />afiliado_seleccionado_label").text(label);
+        jQuery("#<portlet:namespace />afiliado_requerimiento_resumen").show();
+
+        try {
+            if (popupAfill != null) {
+                jQuery(popupAfill).dialog("close");
+            }
+        } catch (e) {
+        }
+
+        return false;
     }
 
-    function <portlet:namespace />limpiarAfiliadoRequerimiento() {
-        jQuery("#" + <portlet:namespace />ns + "afiliado_cuil_titular").val("");
-        jQuery("#" + <portlet:namespace />ns + "afiliado_inte").val("");
+    function <portlet:namespace />limpiarCamposAfiliado<%= origenAfiliadoCompras %>() {
+        jQuery("#<portlet:namespace />afiliado_cuil_titular").val("");
+        jQuery("#<portlet:namespace />afiliado_inte").val("");
 
-        jQuery("#" + <portlet:namespace />ns + "afi_req_cuil").val("");
-        jQuery("#" + <portlet:namespace />ns + "afi_req_inte").val("");
-        jQuery("#" + <portlet:namespace />ns + "afi_req_tipoDoc").val("");
-        jQuery("#" + <portlet:namespace />ns + "afi_req_nroDoc").val("");
-        jQuery("#" + <portlet:namespace />ns + "afi_req_numero_afi").val("");
-        jQuery("#" + <portlet:namespace />ns + "afi_req_apellido").val("");
-        jQuery("#" + <portlet:namespace />ns + "afi_req_nombre").val("");
+        jQuery("#<portlet:namespace />cuil<%= origenAfiliadoCompras %>").val("");
+        jQuery("#<portlet:namespace />inte<%= origenAfiliadoCompras %>").val("");
+        jQuery("#<portlet:namespace />tipoDoc<%= origenAfiliadoCompras %>").val("");
+        jQuery("#<portlet:namespace />nroDoc<%= origenAfiliadoCompras %>").val("");
+        jQuery("#<portlet:namespace />numero_afi<%= origenAfiliadoCompras %>").val("");
+        jQuery("#<portlet:namespace />apellido<%= origenAfiliadoCompras %>").val("");
+        jQuery("#<portlet:namespace />nombre<%= origenAfiliadoCompras %>").val("");
 
-        jQuery("#" + <portlet:namespace />ns + "afiliado_resumen_cuil").text("");
-        jQuery("#" + <portlet:namespace />ns + "afiliado_resumen_inte").text("");
-        jQuery("#" + <portlet:namespace />ns + "afiliado_resumen_nombre").text("");
-        jQuery("#" + <portlet:namespace />ns + "afiliado_resumen_dni").text("");
+        jQuery("#<portlet:namespace />afiliado_resumen_cuil").text("");
+        jQuery("#<portlet:namespace />afiliado_resumen_inte").text("");
+        jQuery("#<portlet:namespace />afiliado_resumen_nombre").text("");
+        jQuery("#<portlet:namespace />afiliado_resumen_dni").text("");
+        jQuery("#<portlet:namespace />afiliado_resumen_baja").text("");
+        jQuery("#<portlet:namespace />afiliado_resumen_plan").text("");
 
-        jQuery("#" + <portlet:namespace />ns + "afiliado_seleccionado_label").text("Sin afiliado seleccionado");
-        jQuery("#" + <portlet:namespace />ns + "afiliado_requerimiento_resumen").hide();
-        jQuery("#" + <portlet:namespace />ns + "busqueda_afiliado_requerimiento_div").html("");
+        jQuery("#<portlet:namespace />afiliado_seleccionado_label").text("Sin afiliado seleccionado");
+        jQuery("#<portlet:namespace />afiliado_requerimiento_resumen").hide();
+
+        return false;
     }
 </script>

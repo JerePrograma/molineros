@@ -4526,8 +4526,4 @@
         <put name="portlet_content" value="/portlet/compras/error.jsp" />
     </definition>
 
-    <definition name="portlet.compras.afiliados.result.search" extends="portlet.compras">
-        <put name="portlet_content" value="/portlet/compras/afiliados_search_result_requerimiento.jsp" />
-    </definition>
-
 </tiles-definitions>
