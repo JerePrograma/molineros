@@ -180,7 +180,7 @@ if (afiliadoInte == null) {
                    id="<portlet:namespace />afiliado_inte"
                    value="<%= HtmlUtil.escape(afiliadoInte) %>" />
 
-            <liferay-util:include page="/html/portlet/afiliados/busqueda_afiliado.jsp" />
+            <liferay-util:include page="/html/portlet/compras/busqueda_afiliado.jsp" />
         </div>
 
         <fieldset class="block-labels">
