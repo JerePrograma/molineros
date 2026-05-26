@@ -1,4 +1,6 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
+<%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
+<portlet:defineObjects/>
 
 <%
 RequerimientoCompra req = (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
@@ -51,13 +53,13 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
             <td>
                 <input type="button"
                        value="Ver"
-                       onclick="window.location.href='<%= verURL.toString() %>';" />
+                       onClick="window.location.href='<%= verURL.toString() %>';" />
 
                 &nbsp;&nbsp;
 
                 <input type="button"
                        value="Volver"
-                       onclick="window.location.href='<%= volverURL.toString() %>';" />
+                       onClick="window.location.href='<%= volverURL.toString() %>';" />
             </td>
         </tr>
     </table>
@@ -83,7 +85,7 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
         <fieldset class="block-labels">
             <legend><%= esNuevo ? "Nuevo requerimiento de compra" : "Editar requerimiento de compra" %></legend>
 
-            <table class="lfr-table" width="100%">
+            <table class="lfr-table">
                 <tr>
                     <td><label>Estado:</label></td>
                     <td><strong><%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %></strong></td>
@@ -119,9 +121,7 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
                             %>
                                 <option value="<%= sectorId %>"
                                         data-requiere-afiliado="<%= sector.isRequiereAfiliado() ? "true" : "false" %>"
-                                        <%= selected %>>
-                                    <%= HtmlUtil.escape(sector.getDescripcionVisible()) %>
-                                </option>
+                                        <%= selected %>><%= HtmlUtil.escape(sector.getDescripcionVisible()) %></option>
                             <%
                             }
                             %>
@@ -162,9 +162,9 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
         <fieldset class="block-labels">
             <legend>Solicitud</legend>
 
-            <table class="lfr-table" width="100%">
+            <table class="lfr-table">
                 <tr>
-                    <td><label>Descripción:</label></td>
+                    <td><label>Descripci&oacute;n:</label></td>
                     <td colspan="3">
                         <input type="text"
                                name="<portlet:namespace />descripcion"
@@ -196,21 +196,21 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
                 <td>
                     <input type="button"
                            value="Guardar"
-                           onclick="<portlet:namespace />guardar();" />
+                           onClick="<portlet:namespace />guardar();" />
 
                     <c:if test="<%= !esNuevo %>">
                         &nbsp;&nbsp;
 
                         <input type="button"
                                value="Ver"
-                               onclick="window.location.href='<%= verURL.toString() %>';" />
+                               onClick="window.location.href='<%= verURL.toString() %>';" />
                     </c:if>
 
                     &nbsp;&nbsp;
 
                     <input type="button"
                            value="Volver"
-                           onclick="window.location.href='<%= volverURL.toString() %>';" />
+                           onClick="window.location.href='<%= volverURL.toString() %>';" />
                 </td>
             </tr>
         </table>
@@ -223,59 +223,59 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
 
 <script type="text/javascript">
     function <portlet:namespace />trimValue(id) {
-        return jQuery.trim(jQuery("#<portlet:namespace />" + id).val());
+        return jQuery.trim(jQuery('#<portlet:namespace />' + id).val());
     }
 
     function <portlet:namespace />sectorRequiereAfiliado() {
-        return jQuery("#<portlet:namespace />sector_id option:selected").attr("data-requiere-afiliado") == "true";
+        return jQuery('#<portlet:namespace />sector_id option:selected').attr('data-requiere-afiliado') == 'true';
     }
 
     function <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere) {
         var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
 
         if (requiereAfiliado) {
-            jQuery("#<portlet:namespace />afiliado_requerimiento_fieldset").show();
+            jQuery('#<portlet:namespace />afiliado_requerimiento_fieldset').show();
         } else {
-            if (limpiarSiNoRequiere && typeof <portlet:namespace />limpiarCamposAfiliado == "function") {
+            if (limpiarSiNoRequiere && typeof <portlet:namespace />limpiarCamposAfiliado == 'function') {
                 <portlet:namespace />limpiarCamposAfiliado();
             }
 
-            jQuery("#<portlet:namespace />afiliado_requerimiento_fieldset").hide();
+            jQuery('#<portlet:namespace />afiliado_requerimiento_fieldset').hide();
         }
     }
 
     function <portlet:namespace />guardar() {
-        if (<portlet:namespace />trimValue("sector_id") == "0") {
-            alert("Debe informar sector.");
-            jQuery("#<portlet:namespace />sector_id").focus();
+        if (<portlet:namespace />trimValue('sector_id') == '0') {
+            alert('Debe informar sector.');
+            jQuery('#<portlet:namespace />sector_id').focus();
             return;
         }
 
-        if (<portlet:namespace />trimValue("solicitante_usr") == "") {
-            alert("Debe informar solicitante.");
-            jQuery("#<portlet:namespace />solicitante_usr").focus();
+        if (<portlet:namespace />trimValue('solicitante_usr') == '') {
+            alert('Debe informar solicitante.');
+            jQuery('#<portlet:namespace />solicitante_usr').focus();
             return;
         }
 
-        if (<portlet:namespace />trimValue("descripcion") == "") {
-            alert("Debe informar descripción del requerimiento.");
-            jQuery("#<portlet:namespace />descripcion").focus();
+        if (<portlet:namespace />trimValue('descripcion') == '') {
+            alert('Debe informar descripci&oacute;n del requerimiento.');
+            jQuery('#<portlet:namespace />descripcion').focus();
             return;
         }
 
         var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
 
         if (requiereAfiliado) {
-            var afiliadoCuilTitular = <portlet:namespace />trimValue("afiliado_cuil_titular");
-            var afiliadoInte = <portlet:namespace />trimValue("afiliado_inte");
+            var afiliadoCuilTitular = <portlet:namespace />trimValue('afiliado_cuil_titular');
+            var afiliadoInte = <portlet:namespace />trimValue('afiliado_inte');
 
-            if (afiliadoCuilTitular == "" || afiliadoInte == "") {
-                alert("Debe seleccionar un afiliado");
-                jQuery("#<portlet:namespace />cuil").focus();
+            if (afiliadoCuilTitular == '' || afiliadoInte == '') {
+                alert('Debe seleccionar un afiliado.');
+                jQuery('#<portlet:namespace />cuil').focus();
                 return;
             }
         } else {
-            if (typeof <portlet:namespace />limpiarCamposAfiliado == "function") {
+            if (typeof <portlet:namespace />limpiarCamposAfiliado == 'function') {
                 <portlet:namespace />limpiarCamposAfiliado();
             }
         }
@@ -286,7 +286,7 @@ String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId(
     jQuery(function() {
         <portlet:namespace />actualizarVisibilidadAfiliado(false);
 
-        jQuery("#<portlet:namespace />sector_id").change(function() {
+        jQuery('#<portlet:namespace />sector_id').change(function() {
             <portlet:namespace />actualizarVisibilidadAfiliado(true);
         });
     });

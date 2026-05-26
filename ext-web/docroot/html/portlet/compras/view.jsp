@@ -1,39 +1,311 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
+<%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
+<portlet:defineObjects/>
 
 <%
-boolean puedeVer = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
-        || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+response.setHeader("Cache-Control", "no-store");
+response.setHeader("Pragma", "no-cache");
+response.setDateHeader("Expires", 0);
 
-String tabs1 = ParamUtil.getString(request, "tabs1", "requerimientos");
+boolean showABMButtons = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
 
-PortletURL portletURL = renderResponse.createRenderURL();
-portletURL.setWindowState(WindowState.MAXIMIZED);
-portletURL.setParameter("struts_action", "/compras/view");
-portletURL.setParameter("tabs1", tabs1);
+Calendar fechaDesde = Calendar.getInstance();
+fechaDesde.add(Calendar.MONTH, -1);
+
+Calendar fechaHasta = Calendar.getInstance();
+
+List<RequerimientoCompraSector> sectores = (List<RequerimientoCompraSector>) renderRequest.getAttribute(WebKeysCompras.SECTORES_REQUERIMIENTO_COMPRA);
+
+if (sectores == null) {
+    try {
+        sectores = BusquedaRequerimientoCompraServiceUtil.listarSectores();
+    } catch (Exception e) {
+        sectores = new ArrayList<RequerimientoCompraSector>();
+    }
+}
+
+List<RequerimientoCompraEstado> estados = (List<RequerimientoCompraEstado>) renderRequest.getAttribute(WebKeysCompras.ESTADOS_REQUERIMIENTO_COMPRA);
+
+if (estados == null) {
+    try {
+        estados = BusquedaRequerimientoCompraServiceUtil.listarEstados();
+    } catch (Exception e) {
+        estados = new ArrayList<RequerimientoCompraEstado>();
+    }
+}
 %>
 
-<c:if test="<%= !puedeVer %>">
-    <div class="portlet-msg-error">No posee permisos para visualizar compras.</div>
-</c:if>
+<fieldset class="block-labels">
+    <legend>Filtro de b&uacute;squeda de requerimientos de compras</legend>
 
-<c:if test="<%= puedeVer %>">
-    <form action="<%= portletURL.toString() %>" method="get" name="<portlet:namespace />fm" onSubmit="submitForm(this); return false;">
-        <liferay-portlet:renderURLParams varImpl="portletURL" />
+    <table class="lfr-table">
+        <tr>
+            <td><label>N&uacute;mero:</label></td>
+            <td>
+                <input id="<portlet:namespace />numero"
+                       name="<portlet:namespace />numero"
+                       size="10"
+                       maxlength="10"
+                       type="text"
+                       value="" />
+            </td>
 
-        <liferay-ui-custom:tabs
-            names="Requerimientos"
-            tabsValues="requerimientos"
-            portletURL="<%= portletURL %>"
-            value="<%= tabs1 %>"
-        />
+            <td><label>Sector:</label></td>
+            <td>
+                <select id="<portlet:namespace />sector_id"
+                        name="<portlet:namespace />sector_id">
+                    <option value="0">Todos</option>
 
-        <c:choose>
-            <c:when test='<%= "requerimientos".equals(tabs1) %>'>
-                <liferay-util:include page="/html/portlet/compras/busqueda_requerimientos.jsp" />
-            </c:when>
-            <c:otherwise>
-                <liferay-util:include page="/html/portlet/compras/busqueda_requerimientos.jsp" />
-            </c:otherwise>
-        </c:choose>
-    </form>
-</c:if>
+                    <%
+                    for (int i = 0; i < sectores.size(); i++) {
+                        RequerimientoCompraSector sector = sectores.get(i);
+                    %>
+                        <option value="<%= sector.getIdSector() %>"><%= HtmlUtil.escape(sector.getDescripcionVisible()) %></option>
+                    <%
+                    }
+                    %>
+                </select>
+            </td>
+
+            <td><label>Estado:</label></td>
+            <td>
+                <select id="<portlet:namespace />estado"
+                        name="<portlet:namespace />estado">
+                    <option value="0">Todos</option>
+
+                    <%
+                    for (int i = 0; i < estados.size(); i++) {
+                        RequerimientoCompraEstado estado = estados.get(i);
+                    %>
+                        <option value="<%= estado.getIdEstado() %>"><%= HtmlUtil.escape(estado.getDescripcionVisible()) %></option>
+                    <%
+                    }
+                    %>
+                </select>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="6">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td><label>Fecha solicitud desde:</label></td>
+            <td>
+                <liferay-ui:input-date
+                    dayParam="fechaDesdeDia"
+                    dayValue="<%= fechaDesde.get(Calendar.DATE) %>"
+                    dayNullable="<%= true %>"
+                    monthParam="fechaDesdeMes"
+                    monthValue="<%= fechaDesde.get(Calendar.MONTH) %>"
+                    monthNullable="<%= true %>"
+                    yearParam="fechaDesdeAnio"
+                    yearValue="<%= fechaDesde.get(Calendar.YEAR) %>"
+                    yearNullable="<%= true %>"
+                    yearRangeStart="<%= fechaDesde.get(Calendar.YEAR) - 5 %>"
+                    yearRangeEnd="<%= fechaDesde.get(Calendar.YEAR) + 2 %>"
+                    firstDayOfWeek="<%= fechaDesde.getFirstDayOfWeek() - 1 %>"
+                    disabled="<%= false %>" />
+            </td>
+
+            <td><label>Fecha solicitud hasta:</label></td>
+            <td>
+                <liferay-ui:input-date
+                    dayParam="fechaHastaDia"
+                    dayValue="<%= fechaHasta.get(Calendar.DATE) %>"
+                    dayNullable="<%= true %>"
+                    monthParam="fechaHastaMes"
+                    monthValue="<%= fechaHasta.get(Calendar.MONTH) %>"
+                    monthNullable="<%= true %>"
+                    yearParam="fechaHastaAnio"
+                    yearValue="<%= fechaHasta.get(Calendar.YEAR) %>"
+                    yearNullable="<%= true %>"
+                    yearRangeStart="<%= fechaHasta.get(Calendar.YEAR) - 5 %>"
+                    yearRangeEnd="<%= fechaHasta.get(Calendar.YEAR) + 2 %>"
+                    firstDayOfWeek="<%= fechaHasta.getFirstDayOfWeek() - 1 %>"
+                    disabled="<%= false %>" />
+            </td>
+
+            <td><label>Solicitante:</label></td>
+            <td>
+                <input id="<portlet:namespace />solicitante_usr"
+                       name="<portlet:namespace />solicitante_usr"
+                       size="22"
+                       maxlength="75"
+                       type="text"
+                       value="" />
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="6">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td><label>CUIL titular:</label></td>
+            <td>
+                <input id="<portlet:namespace />afiliado_cuil_titular"
+                       name="<portlet:namespace />afiliado_cuil_titular"
+                       size="18"
+                       maxlength="20"
+                       type="text"
+                       value="" />
+            </td>
+
+            <td><label>Integrante:</label></td>
+            <td>
+                <input id="<portlet:namespace />afiliado_inte"
+                       name="<portlet:namespace />afiliado_inte"
+                       size="8"
+                       maxlength="8"
+                       type="text"
+                       value="" />
+            </td>
+
+            <td><label>Tipo art&iacute;culo:</label></td>
+            <td>
+                <input id="<portlet:namespace />tipo_articulo"
+                       name="<portlet:namespace />tipo_articulo"
+                       size="22"
+                       maxlength="80"
+                       type="text"
+                       value="" />
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="6">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td><label>Texto:</label></td>
+            <td colspan="5">
+                <input id="<portlet:namespace />texto"
+                       name="<portlet:namespace />texto"
+                       size="90"
+                       maxlength="200"
+                       type="text"
+                       value="" />
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="6">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td colspan="6" align="center">
+                <input id="<portlet:namespace />buscar"
+                       value="<liferay-ui:message key='buscar' />"
+                       title="<liferay-ui:message key='buscar' />"
+                       type="button" />
+
+                <c:if test="<%= showABMButtons %>">
+                    &nbsp;&nbsp;
+
+                    <input type="button"
+                           value="Nuevo requerimiento"
+                           onClick="<portlet:namespace />altaRequerimiento();" />
+                </c:if>
+            </td>
+        </tr>
+    </table>
+</fieldset>
+
+<fieldset class="block-labels">
+    <div align="center"
+         id="<portlet:namespace />buscando">
+        <table style="align:center;">
+            <tr>
+                <td><liferay-ui:message key="buscando" /></td>
+                <td align="center">
+                    <img alt="<liferay-ui:message key='buscando' />"
+                         src="<%= themeDisplay.getPathThemeImages() %>/progress_bar/loading_animation.gif" />
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div align="center" id="<portlet:namespace />busquedaRequerimientosDiv"></div>
+</fieldset>
+
+<script type="text/javascript">
+    function <portlet:namespace />validarFiltroBusqueda() {
+        var cuil = jQuery.trim(jQuery('#<portlet:namespace />afiliado_cuil_titular').val());
+
+        if (cuil.length > 0 && cuil.length == 11 && typeof validarCuil == "function") {
+            if (!validarCuil(cuil, "CUIL titular inv&aacute;lido.")) {
+                jQuery('#<portlet:namespace />afiliado_cuil_titular').focus();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function <portlet:namespace />buscarRequerimientos() {
+        if (!<portlet:namespace />validarFiltroBusqueda()) {
+            return false;
+        }
+
+        var numero = jQuery('#<portlet:namespace />numero').val();
+        var fechaDesdeDia = jQuery('#<portlet:namespace />fechaDesdeDia').val();
+        var fechaDesdeMes = jQuery('#<portlet:namespace />fechaDesdeMes').val();
+        var fechaDesdeAnio = jQuery('#<portlet:namespace />fechaDesdeAnio').val();
+        var fechaHastaDia = jQuery('#<portlet:namespace />fechaHastaDia').val();
+        var fechaHastaMes = jQuery('#<portlet:namespace />fechaHastaMes').val();
+        var fechaHastaAnio = jQuery('#<portlet:namespace />fechaHastaAnio').val();
+        var sector_id = jQuery('#<portlet:namespace />sector_id').val();
+        var estado = jQuery('#<portlet:namespace />estado').val();
+        var solicitante_usr = jQuery('#<portlet:namespace />solicitante_usr').val();
+        var afiliado_cuil_titular = jQuery('#<portlet:namespace />afiliado_cuil_titular').val();
+        var afiliado_inte = jQuery('#<portlet:namespace />afiliado_inte').val();
+        var tipo_articulo = jQuery('#<portlet:namespace />tipo_articulo').val();
+        var texto = jQuery('#<portlet:namespace />texto').val();
+
+        jQuery('#<portlet:namespace />buscando').show();
+
+        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" />&struts_action=/compras/buscar_requerimientos' +
+            '&numero=' + numero +
+            '&fechaDesdeDia=' + fechaDesdeDia +
+            '&fechaDesdeMes=' + fechaDesdeMes +
+            '&fechaDesdeAnio=' + fechaDesdeAnio +
+            '&fechaHastaDia=' + fechaHastaDia +
+            '&fechaHastaMes=' + fechaHastaMes +
+            '&fechaHastaAnio=' + fechaHastaAnio +
+            '&sector_id=' + sector_id +
+            '&estado=' + estado +
+            '&solicitante_usr=' + encodeURI(solicitante_usr) +
+            '&afiliado_cuil_titular=' + afiliado_cuil_titular +
+            '&afiliado_inte=' + afiliado_inte +
+            '&tipo_articulo=' + encodeURI(tipo_articulo) +
+            '&texto=' + encodeURI(texto);
+
+        jQuery('#<portlet:namespace />busquedaRequerimientosDiv').load(url, function() {
+            jQuery('#<portlet:namespace />buscando').hide();
+        });
+
+        return false;
+    }
+
+    function <portlet:namespace />altaRequerimiento() {
+        var url = '<portlet:renderURL windowState="<%= WindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/compras/editar_requerimiento" /></portlet:renderURL>';
+        window.location.href = url;
+    }
+
+    jQuery('#<portlet:namespace />buscar').click(function() {
+        <portlet:namespace />buscarRequerimientos();
+    });
+
+    jQuery('#<portlet:namespace />numero, #<portlet:namespace />solicitante_usr, #<portlet:namespace />afiliado_cuil_titular, #<portlet:namespace />afiliado_inte, #<portlet:namespace />tipo_articulo, #<portlet:namespace />texto').keypress(function(event) {
+        if (event.which == 13) {
+            <portlet:namespace />buscarRequerimientos();
+            return false;
+        }
+
+        return true;
+    });
+
+    jQuery('#<portlet:namespace />buscando').show();
+    <portlet:namespace />buscarRequerimientos();
+</script>

@@ -1,12 +1,16 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
+<%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
+<portlet:defineObjects/>
 
 <%
-boolean puedeABM = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+boolean showABMButtons = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
 
 List<RequerimientoCompra> requerimientos = (List<RequerimientoCompra>) renderRequest.getAttribute(WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA);
+
 if (requerimientos == null) {
     requerimientos = (List<RequerimientoCompra>) portletSession.getAttribute(WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA, PortletSession.PORTLET_SCOPE);
 }
+
 if (requerimientos == null) {
     requerimientos = new ArrayList<RequerimientoCompra>();
 }
@@ -16,15 +20,15 @@ portletURL.setWindowState(WindowState.MAXIMIZED);
 portletURL.setParameter("struts_action", "/compras/buscar_requerimientos");
 
 List<String> headerNames = new ArrayList<String>();
-headerNames.add("Número");
-headerNames.add("Fecha solicitud");
-headerNames.add("Sector");
-headerNames.add("Solicitante");
-headerNames.add("CUIL titular");
-headerNames.add("Integrante");
-headerNames.add("Descripción");
-headerNames.add("Estado");
-headerNames.add("Acciones");
+headerNames.add("numero");
+headerNames.add("fecha-solicitud");
+headerNames.add("sector");
+headerNames.add("solicitante");
+headerNames.add("cuil-titular");
+headerNames.add("integrante");
+headerNames.add("descripcion");
+headerNames.add("estado");
+headerNames.add("acciones");
 
 SearchContainer searchContainer = new SearchContainer(
         renderRequest,
@@ -67,7 +71,7 @@ for (int i = 0; i < requerimientos.size(); i++) {
     StringBuffer acciones = new StringBuffer();
     acciones.append("<a href=\"").append(verURL.toString()).append("\">Ver</a>");
 
-    if (puedeABM && req.isEditable()) {
+    if (showABMButtons && req.isEditable()) {
         acciones.append("&nbsp;|&nbsp;<a href=\"").append(editarURL.toString()).append("\">Editar</a>");
     }
 
