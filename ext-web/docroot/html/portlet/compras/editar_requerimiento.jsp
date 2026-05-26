@@ -197,10 +197,6 @@ try {
 
             <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
                 <liferay-util:param name="edit_mode" value="<%= String.valueOf(true) %>" />
-                <liferay-util:param name="cuil" value="<%= afiliadoCuilTitular %>" />
-                <liferay-util:param name="inte" value="<%= afiliadoInte %>" />
-                <liferay-util:param name="id_seccional" value="<%= afiliadoIdSeccional %>" />
-                <liferay-util:param name="seccional" value="<%= afiliadoSeccional %>" />
             </liferay-util:include>
 
             <input type="hidden"
@@ -290,9 +286,11 @@ try {
     /*
      * Overrides locales para Compras.
      *
-     * No se modifica el módulo autorizaciones.
-     * Se reutilizan sus JSP, pero se pisan las funciones que arman URLs
-     * para forzar los Struts actions propios de Compras.
+     * No se modifica el módulo Autorizaciones.
+     * No se crean actions duplicadas en Compras.
+     * Se reutilizan:
+     * - /autorizaciones/buscar_afiliados
+     * - /autorizaciones/buscar_seccional
      */
 
     function <portlet:namespace />buscarAfiliados() {
@@ -325,7 +323,7 @@ try {
         }
 
         popupAfill = Liferay.Popup({
-            title: "<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />",
+            title: '<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />',
             modal: true,
             width: 830
         });
@@ -340,16 +338,16 @@ try {
 
         var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
             '&struts_action=/compras/buscar_afiliados' +
-            '&cuil=' + cuil +
-            '&inte=' + inte +
-            '&tipoDoc=' + tipoDoc +
-            '&nroDoc=' + nroDoc +
-            '&seccional=' + seccional +
-            '&nombre=' + encodeURI(nombre) +
-            '&apellido=' + encodeURI(apellido) +
-            '&entidad=' + entidad +
-            '&numero_afi=' + numero_afi +
-            '&fecha_referencia=' + fecha_prestacion +
+            '&cuil=' + encodeURIComponent(cuil) +
+            '&inte=' + encodeURIComponent(inte) +
+            '&tipoDoc=' + encodeURIComponent(tipoDoc) +
+            '&nroDoc=' + encodeURIComponent(nroDoc) +
+            '&seccional=' + encodeURIComponent(seccional) +
+            '&nombre=' + encodeURIComponent(nombre) +
+            '&apellido=' + encodeURIComponent(apellido) +
+            '&entidad=' + encodeURIComponent(entidad) +
+            '&numero_afi=' + encodeURIComponent(numero_afi) +
+            '&fecha_referencia=' + encodeURIComponent(fecha_prestacion) +
             '&origen=' +
             '&popup=true';
 
@@ -386,7 +384,7 @@ try {
         }
 
         popupAfill = Liferay.Popup({
-            title: "<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />",
+            title: '<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />',
             modal: true,
             width: 830
         });
@@ -401,16 +399,16 @@ try {
 
         var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
             '&struts_action=/compras/buscar_afiliados' +
-            '&cuil=' + cuil +
-            '&inte=' + inte +
-            '&tipoDoc=' + tipoDoc +
-            '&nroDoc=' + nroDoc +
-            '&seccional=' + seccional +
-            '&nombre=' + encodeURI(nombre) +
-            '&apellido=' + encodeURI(apellido) +
-            '&entidad=' + entidad +
-            '&numero_afi=' + numero_afi +
-            '&fecha_referencia=' + fecha_prestacion +
+            '&cuil=' + encodeURIComponent(cuil) +
+            '&inte=' + encodeURIComponent(inte) +
+            '&tipoDoc=' + encodeURIComponent(tipoDoc) +
+            '&nroDoc=' + encodeURIComponent(nroDoc) +
+            '&seccional=' + encodeURIComponent(seccional) +
+            '&nombre=' + encodeURIComponent(nombre) +
+            '&apellido=' + encodeURIComponent(apellido) +
+            '&entidad=' + encodeURIComponent(entidad) +
+            '&numero_afi=' + encodeURIComponent(numero_afi) +
+            '&fecha_referencia=' + encodeURIComponent(fecha_prestacion) +
             '&origen=' +
             '&popup=true';
 
@@ -426,15 +424,15 @@ try {
         }
 
         popup = Liferay.Popup({
-            title: "<liferay-ui:message key="busqueda-seccionales" />",
+            title: '<liferay-ui:message key="busqueda-seccionales" />',
             modal: true,
             width: 420
         });
 
         var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-            '&struts_action=/compras/buscar_seccional' +
-            '&id_seccional=' + id_seccional +
-            '&seccional=' + encodeURI(seccional) +
+            '&struts_action=/autorizaciones/buscar_seccional' +
+            '&id_seccional=' + encodeURIComponent(id_seccional) +
+            '&seccional=' + encodeURIComponent(seccional) +
             '&prefijo=';
 
         jQuery(popup).load(url);
@@ -466,9 +464,9 @@ try {
             }
 
             var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-                '&struts_action=/compras/buscar_seccional' +
-                '&id_seccional=' + id_seccional +
-                '&seccional=' + encodeURI(seccional) +
+                '&struts_action=/autorizaciones/buscar_seccional' +
+                '&id_seccional=' + encodeURIComponent(id_seccional) +
+                '&seccional=' + encodeURIComponent(seccional) +
                 '&prefijo=';
 
             jQuery("#divSeccional").load(url);
@@ -476,6 +474,62 @@ try {
         } else {
             jQuery("#divSeccional").hide("slow");
         }
+    }
+
+    /*
+     * Override clave:
+     * El JSP de Autorizaciones llama a seleccionaAfiliado(),
+     * y seleccionaAfiliado() llama a seleccionaCamposAfiliado().
+     *
+     * Pisamos esta función para que Compras no ejecute lógica extra de Autorizaciones
+     * ni AJAX a /autorizaciones/buscar_afiliado_datos.
+     */
+    function seleccionaCamposAfiliado(cuil, inte, docu_tipo, docu_nro, nombre, apellido, id_secc, desc_secc, ospim, uoma, amtima, bajaFecha, nombre_plan, id_plan, fecha_alta_af, incapacidad_af, id_tercerizadora, afi_tercerizadora, reclamoPrestacional, nroSocioPrev, nroCredenPrev, fechaRecepcion, tieneAntecedentes) {
+        jQuery('#<portlet:namespace />cuil').val(cuil);
+        jQuery('#<portlet:namespace />inte').val(inte);
+        jQuery('#<portlet:namespace />tipoDoc').val(docu_tipo);
+        jQuery('#<portlet:namespace />nroDoc').val(docu_nro);
+        jQuery('#<portlet:namespace />id_seccional').val(id_secc);
+        jQuery('#<portlet:namespace />seccional').val(desc_secc);
+        jQuery('#<portlet:namespace />apellido').val(apellido);
+        jQuery('#<portlet:namespace />nombre').val(nombre);
+
+        jQuery('#<portlet:namespace />secc_seleccionada').val('1');
+
+        var entidadSeleccionada = jQuery('#<portlet:namespace />entidad').val();
+
+        if (entidadSeleccionada == 'OSPIM') {
+            jQuery('#<portlet:namespace />numero_afi').val(ospim != null && ospim != 'null' ? ospim : '');
+        } else if (entidadSeleccionada == 'UOMA') {
+            jQuery('#<portlet:namespace />numero_afi').val(uoma != null && uoma != 'null' ? uoma : '');
+        } else if (entidadSeleccionada == 'AMTIMA') {
+            jQuery('#<portlet:namespace />numero_afi').val(amtima != null && amtima != 'null' ? amtima : '');
+        }
+
+        if (bajaFecha != null && bajaFecha != 'null') {
+            jQuery('#<portlet:namespace />baja_fecha').val(bajaFecha);
+
+            if (bajaFecha != '') {
+                document.getElementById("<portlet:namespace />baja_fecha").style.background = "red";
+                document.getElementById("<portlet:namespace />baja_fecha").style.color = "white";
+            } else {
+                document.getElementById("<portlet:namespace />baja_fecha").style.background = "white";
+                document.getElementById("<portlet:namespace />baja_fecha").style.color = "black";
+            }
+        }
+
+        jQuery('#<portlet:namespace />fecha_alta_af').val(fecha_alta_af != null && fecha_alta_af != 'null' ? fecha_alta_af : '');
+        jQuery('#<portlet:namespace />incapacidad_af').val(incapacidad_af != null && incapacidad_af != 'null' ? incapacidad_af : '');
+        jQuery('#<portlet:namespace />id_tercerizadora').val(id_tercerizadora != null && id_tercerizadora != 'null' ? id_tercerizadora : '');
+        jQuery('#<portlet:namespace />nroSocioPrevencion').val(nroSocioPrev != null && nroSocioPrev != 'null' ? nroSocioPrev : '');
+        jQuery('#<portlet:namespace />nroCredencialPrevencion').val(nroCredenPrev != null && nroCredenPrev != 'null' ? nroCredenPrev : '');
+        jQuery('#<portlet:namespace />tieneAntecedentes').val(tieneAntecedentes == '1' ? '1' : '0');
+
+        if (typeof <portlet:namespace />aplicarAntecedentesAfiliado == 'function') {
+            <portlet:namespace />aplicarAntecedentesAfiliado(tieneAntecedentes);
+        }
+
+        <portlet:namespace />sincronizarAfiliadoRequerimiento();
     }
 
     function <portlet:namespace />trimValue(id) {
@@ -528,6 +582,8 @@ try {
         jQuery('#<portlet:namespace />afiliado_inte').val('');
         jQuery('#<portlet:namespace />afiliado_id_seccional').val('');
         jQuery('#<portlet:namespace />afiliado_seccional').val('');
+
+        <portlet:namespace />sincronizarAfiliadoRequerimiento();
     }
 
     function <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere) {
