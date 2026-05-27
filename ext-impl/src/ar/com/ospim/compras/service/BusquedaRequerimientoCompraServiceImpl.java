@@ -62,7 +62,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
             setNullableInteger(stmt, 2, filtro.getIdSector());
             stmt.setString(3, emptyToNull(filtro.getAfiliadoCuilTitular()));
             setNullableInteger(stmt, 4, filtro.getAfiliadoInt());
-            setNullableInteger(stmt, 5, filtro.getIdTercerizadora());
+            stmt.setString(5, emptyToNull(filtro.getIdTercerizadora()));
             setNullableBoolean(stmt, 6, filtro.getRecupero());
             stmt.setString(7, emptyToNull(filtro.getTexto()));
 
@@ -262,7 +262,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
         r.setCargoOspim(getInteger(rs, "cargo_ospim"));
         r.setCargoTercerizadora(getInteger(rs, "cargo_tercerizadora"));
-        r.setIdTercerizadora(getInteger(rs, "id_tercerizadora"));
+        r.setIdTercerizadora(getString(rs, "id_tercerizadora"));
 
         r.setRecupero(getBoolean(rs, "recupero"));
         r.setObservaciones(getString(rs, "observaciones"));

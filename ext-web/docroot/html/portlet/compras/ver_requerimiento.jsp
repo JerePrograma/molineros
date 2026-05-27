@@ -116,7 +116,7 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
 
         <tr>
             <td><label>Tercerizadora:</label></td>
-            <td><%= HtmlUtil.escape(req.getIdTercerizadoraString()) %></td>
+            <td><%= HtmlUtil.escape(req.getIdTercerizadora()) %></td>
 
             <td><label>Recupero:</label></td>
             <td><%= HtmlUtil.escape(req.getRecuperoDescripcion()) %></td>

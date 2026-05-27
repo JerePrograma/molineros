@@ -86,7 +86,12 @@ if (sectorDescripcionSoloLectura.length() == 0) {
 
 String afiliadoCuilTitular = req.getAfiliadoCuilTitularVisible();
 String afiliadoInt = req.getAfiliadoIntString();
-String idTercerizadora = req.getIdTercerizadoraString();
+String idTercerizadora = req.getIdTercerizadora();
+
+if (idTercerizadora == null) {
+    idTercerizadora = "";
+}
+
 String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
 %>
 
@@ -204,11 +209,9 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
         </tr>
     </table>
 
-    <c:if test="<%= req.getIdRequerimientoCompra() > 0 %>">
-        <liferay-util:include page="/html/portlet/compras/requerimiento_detalle.jsp">
-            <liferay-util:param name="solo_lectura" value="true" />
-        </liferay-util:include>
-    </c:if>
+    <liferay-util:include page="/html/portlet/compras/requerimiento_detalle_embebido.jsp">
+        <liferay-util:param name="solo_lectura" value="true" />
+    </liferay-util:include>
 </c:if>
 
 <c:if test="<%= puedeEditarPantalla %>">
@@ -228,8 +231,8 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
 
         <input type="hidden"
                name="<portlet:namespace /><%= Constants.CMD %>"
-               id="<portlet:namespace /><%= Constants.CMD %>"
-               value="<%= esNuevo ? Constants.ADD : Constants.UPDATE %>" />
+               id="<portlet:namespace />compras_cmd"
+               value="saveAll" />
 
         <input type="hidden"
                name="<portlet:namespace />id_requerimiento_compra"
@@ -354,11 +357,15 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
             </table>
         </fieldset>
 
+        <liferay-util:include page="/html/portlet/compras/requerimiento_detalle_embebido.jsp">
+            <liferay-util:param name="solo_lectura" value="false" />
+        </liferay-util:include>
+
         <table class="lfr-table">
             <tr>
                 <td>
                     <input type="button"
-                           value="Guardar"
+                           value="Guardar todo"
                            onClick="<portlet:namespace />guardar();" />
 
                     <c:if test="<%= !esNuevo %>">
@@ -378,22 +385,10 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
             </tr>
         </table>
     </form>
-
-    <c:if test="<%= req.getIdRequerimientoCompra() > 0 %>">
-        <liferay-util:include page="/html/portlet/compras/requerimiento_detalle.jsp">
-            <liferay-util:param name="solo_lectura" value="false" />
-        </liferay-util:include>
-    </c:if>
 </c:if>
 
 <c:if test="<%= puedeEditarPantalla %>">
 <script type="text/javascript">
-    /*
-     * Compras reutiliza /html/portlet/autorizaciones/busqueda_afiliado.jsp.
-     * Las URLs Struts se resuelven bajo /compras para respetar el struts-path
-     * del portlet COMPRA_1.
-     */
-
     var popupAfill = null;
     var popup = null;
 
@@ -591,9 +586,11 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
         jQuery('#<portlet:namespace />afiliado_int').val(<portlet:namespace />trimValue('inte'));
 
         var idTerc = jQuery('#<portlet:namespace />id_tercerizadora').val();
+
         if (idTerc == null) {
             idTerc = '';
         }
+
         jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val(jQuery.trim(idTerc));
     }
 
@@ -677,6 +674,12 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
             return;
         }
 
+        var cmdInput = document.getElementById('<portlet:namespace />compras_cmd');
+
+        if (cmdInput) {
+            cmdInput.value = 'saveAll';
+        }
+
         if (<portlet:namespace />trimValue('sector_id') == '0') {
             alert('Debe informar sector.');
             jQuery('#<portlet:namespace />sector_id').focus();
@@ -684,11 +687,13 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
         }
 
         var cargoOspim = <portlet:namespace />parsePorcentaje('cargo_ospim', 'Cargo OSPIM');
+
         if (cargoOspim == null) {
             return;
         }
 
         var cargoTercerizadora = <portlet:namespace />parsePorcentaje('cargo_tercerizadora', 'Cargo tercerizadora');
+
         if (cargoTercerizadora == null) {
             return;
         }
@@ -722,7 +727,20 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
             return;
         }
 
-        submitForm(form);
+        if (typeof window['<portlet:namespace />serializarDetallesCompras'] !== 'function') {
+            alert('No se encontro la funcion de serializacion de detalles. Revise que requerimiento_detalle_embebido.jsp este incluido dentro del formulario principal.');
+            return;
+        }
+
+        if (!window['<portlet:namespace />serializarDetallesCompras']()) {
+            return;
+        }
+
+        if (typeof submitForm == 'function') {
+            submitForm(form);
+        } else {
+            form.submit();
+        }
     }
 
     jQuery(function() {

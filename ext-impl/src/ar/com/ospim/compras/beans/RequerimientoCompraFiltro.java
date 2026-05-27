@@ -8,7 +8,7 @@ public class RequerimientoCompraFiltro {
     private Integer idSector;
     private String afiliadoCuilTitular;
     private Integer afiliadoInt;
-    private Integer idTercerizadora;
+    private String idTercerizadora;
     private Boolean recupero;
     private String texto;
 
@@ -72,18 +72,12 @@ public class RequerimientoCompraFiltro {
         this.afiliadoInt = afiliadoInt;
     }
 
-    public Integer getIdTercerizadora() {
+    public String getIdTercerizadora() {
         return idTercerizadora;
     }
 
-    public String getIdTercerizadoraString() {
-        return idTercerizadora != null && idTercerizadora.intValue() > 0
-                ? String.valueOf(idTercerizadora)
-                : "";
-    }
-
-    public void setIdTercerizadora(Integer idTercerizadora) {
-        this.idTercerizadora = idTercerizadora;
+    public void setIdTercerizadora(String idTercerizadora) {
+        this.idTercerizadora = WebKeysCompras.trimToNull(idTercerizadora);
     }
 
     public Boolean getRecupero() {
@@ -111,7 +105,7 @@ public class RequerimientoCompraFiltro {
                 || idSector != null
                 || !WebKeysCompras.isEmpty(afiliadoCuilTitular)
                 || afiliadoInt != null
-                || idTercerizadora != null
+                || !WebKeysCompras.isEmpty(idTercerizadora)
                 || recupero != null
                 || !WebKeysCompras.isEmpty(texto);
     }

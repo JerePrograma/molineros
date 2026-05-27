@@ -28,7 +28,7 @@ public class RequerimientoCompra {
 
     private Integer cargoOspim;
     private Integer cargoTercerizadora;
-    private Integer idTercerizadora;
+    private String idTercerizadora;
 
     private Boolean recupero;
     private String observaciones;
@@ -260,18 +260,12 @@ public class RequerimientoCompra {
         this.cargoTercerizadora = cargoTercerizadora != null ? cargoTercerizadora : Integer.valueOf(0);
     }
 
-    public Integer getIdTercerizadora() {
+    public String getIdTercerizadora() {
         return idTercerizadora;
     }
 
-    public String getIdTercerizadoraString() {
-        return idTercerizadora != null && idTercerizadora.intValue() > 0
-                ? String.valueOf(idTercerizadora)
-                : "";
-    }
-
-    public void setIdTercerizadora(Integer idTercerizadora) {
-        this.idTercerizadora = idTercerizadora;
+    public void setIdTercerizadora(String idTercerizadora) {
+        this.idTercerizadora = WebKeysCompras.trimToNull(idTercerizadora);
     }
 
     public Boolean getRecupero() {

@@ -49,7 +49,7 @@ public class EditarRequerimientoCompraServiceImpl {
             setNullableInteger(stmt, 5, requerimiento.getIdSector());
             setNullableInteger(stmt, 6, requerimiento.getCargoOspim());
             setNullableInteger(stmt, 7, requerimiento.getCargoTercerizadora());
-            setNullableInteger(stmt, 8, requerimiento.getIdTercerizadora());
+            stmt.setString(8, emptyToNull(requerimiento.getIdTercerizadora()));
             stmt.setBoolean(9, requerimiento.isRecupero());
             stmt.setString(10, emptyToNull(requerimiento.getObservaciones()));
             stmt.setString(11, emptyToNull(usuario));
@@ -192,8 +192,7 @@ public class EditarRequerimientoCompraServiceImpl {
         }
 
         if (cargoTercerizadora > 0
-                && (requerimiento.getIdTercerizadora() == null
-                || requerimiento.getIdTercerizadora().intValue() <= 0)) {
+                && WebKeysCompras.isEmpty(requerimiento.getIdTercerizadora())) {
             throw new Exception("Debe informar la tercerizadora cuando su cargo es mayor a cero.");
         }
 

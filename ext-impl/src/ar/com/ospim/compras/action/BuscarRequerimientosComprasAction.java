@@ -160,9 +160,12 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             filtro.setAfiliadoInt(Integer.valueOf(afiliadoInt));
         }
 
-        int idTercerizadora = ParamUtil.getInteger(request, "id_tercerizadora", 0);
-        if (idTercerizadora > 0) {
-            filtro.setIdTercerizadora(Integer.valueOf(idTercerizadora));
+        String idTercerizadora = ParamUtil.getString(request, "id_tercerizadora", null);
+
+        if (!WebKeysCompras.isEmpty(idTercerizadora)) {
+            filtro.setIdTercerizadora(idTercerizadora.trim());
+        } else {
+            filtro.setIdTercerizadora(null);
         }
 
         String recupero = ParamUtil.getString(request, "recupero", null);
