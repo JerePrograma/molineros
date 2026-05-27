@@ -27,8 +27,8 @@ public class EditarRequerimientoCompraServiceUtil {
         return guardarDetalle(detalle, usuario);
     }
 
-    public static void borrarDetalle(int idRequerimientoDetalle, String usuario) throws Exception {
-        getInstance().borrarDetalle(idRequerimientoDetalle, usuario);
+    public static void borrarDetalle(int idDetalle, String usuario) throws Exception {
+        getInstance().borrarDetalle(idDetalle, usuario);
     }
 
     public static void borrarItem(int idItem, String usuario) throws Exception {

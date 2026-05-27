@@ -19,8 +19,6 @@ if (req == null) {
 renderRequest.setAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW, req);
 renderRequest.setAttribute(WebKeysCompras.SOLO_LECTURA_ATTR, Boolean.TRUE);
 
-boolean soloLectura = true;
-
 boolean puedeABM =
         user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
@@ -29,9 +27,8 @@ boolean puedeAnular =
         user != null
         && (PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS) || puedeABM);
 
-boolean puedeCambiarEstado =
-        !soloLectura
-        && ((req.puedeSolicitar() && puedeABM) || (req.puedeAnular() && puedeAnular));
+boolean puedeCotizarEstado = req.puedeCotizar() && puedeABM;
+boolean puedeAnularEstado = req.puedeAnular() && puedeAnular;
 
 PortletURL volverURL = renderResponse.createRenderURL();
 volverURL.setWindowState(WindowState.MAXIMIZED);
@@ -52,23 +49,11 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
 
     <table class="lfr-table">
         <tr>
-            <td><label>N&uacute;mero:</label></td>
-            <td><%= HtmlUtil.escape(req.getNumeroVisible()) %></td>
+            <td><label>ID:</label></td>
+            <td><%= HtmlUtil.escape(req.getIdString()) %></td>
 
             <td><label>Estado:</label></td>
             <td><strong><%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %></strong></td>
-        </tr>
-
-        <tr>
-            <td colspan="4">&nbsp;</td>
-        </tr>
-
-        <tr>
-            <td><label>Fecha solicitud:</label></td>
-            <td><%= HtmlUtil.escape(req.getFechaSolicitudAsString()) %></td>
-
-            <td><label>Fecha alta:</label></td>
-            <td><%= HtmlUtil.escape(req.getFechaAltaAsString()) %></td>
         </tr>
 
         <tr>
@@ -88,11 +73,11 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
         </tr>
 
         <tr>
-            <td><label>Solicitante:</label></td>
-            <td><%= HtmlUtil.escape(req.getSolicitanteVisible()) %></td>
+            <td><label>Alta:</label></td>
+            <td><%= HtmlUtil.escape(req.getAltaFechaAsString()) %></td>
 
-            <td><label>Usuario:</label></td>
-            <td><%= HtmlUtil.escape(req.getSolicitanteUsr() != null ? req.getSolicitanteUsr() : "") %></td>
+            <td><label>Usuario alta:</label></td>
+            <td><%= HtmlUtil.escape(req.getAltaUsr() != null ? req.getAltaUsr() : "") %></td>
         </tr>
     </table>
 </fieldset>
@@ -107,19 +92,22 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
                 <td><%= HtmlUtil.escape(req.getAfiliadoCuilTitularVisible()) %></td>
 
                 <td><label>Integrante:</label></td>
-                <td><%= HtmlUtil.escape(req.getAfiliadoInteString()) %></td>
+                <td><%= HtmlUtil.escape(req.getAfiliadoIntString()) %></td>
             </tr>
         </table>
     </fieldset>
 </c:if>
 
 <fieldset class="block-labels">
-    <legend>Solicitud</legend>
+    <legend>Cargos y recupero</legend>
 
     <table class="lfr-table">
         <tr>
-            <td><label>Descripci&oacute;n:</label></td>
-            <td colspan="3"><%= HtmlUtil.escape(req.getDescripcionVisible()) %></td>
+            <td><label>Cargo OSPIM %:</label></td>
+            <td><%= HtmlUtil.escape(req.getCargoOspimString()) %></td>
+
+            <td><label>Cargo tercerizadora %:</label></td>
+            <td><%= HtmlUtil.escape(req.getCargoTercerizadoraString()) %></td>
         </tr>
 
         <tr>
@@ -127,17 +115,29 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
         </tr>
 
         <tr>
-            <td><label>Observaciones:</label></td>
-            <td colspan="3"><%= HtmlUtil.escape(req.getObservacionesVisible()) %></td>
+            <td><label>Tercerizadora:</label></td>
+            <td><%= HtmlUtil.escape(req.getIdTercerizadoraString()) %></td>
+
+            <td><label>Recupero:</label></td>
+            <td><%= HtmlUtil.escape(req.getRecuperoDescripcion()) %></td>
+        </tr>
+    </table>
+</fieldset>
+
+<fieldset class="block-labels">
+    <legend>Observaciones</legend>
+
+    <table class="lfr-table">
+        <tr>
+            <td><%= HtmlUtil.escape(req.getObservacionesVisible()) %></td>
         </tr>
 
         <tr>
-            <td colspan="4">&nbsp;</td>
+            <td>&nbsp;</td>
         </tr>
 
         <tr>
-            <td><label>Total estimado:</label></td>
-            <td colspan="3"><%= HtmlUtil.escape(req.getTotalEstimadoString()) %></td>
+            <td><label>Total estimado:</label> <%= HtmlUtil.escape(req.getTotalEstimadoString()) %></td>
         </tr>
     </table>
 </fieldset>
@@ -146,10 +146,11 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
     <liferay-util:param name="solo_lectura" value="true" />
 </liferay-util:include>
 
-<c:if test="<%= puedeCambiarEstado %>">
+<c:if test="<%= puedeCotizarEstado || puedeAnularEstado %>">
     <form action="<%= cambiarEstadoURL.toString() %>"
           method="post"
-          name="<portlet:namespace />cambioEstadoFm">
+          name="<portlet:namespace />cambioEstadoFm"
+          id="<portlet:namespace />cambioEstadoFm">
 
         <input type="hidden"
                name="<portlet:namespace />id_requerimiento_compra"
@@ -166,12 +167,12 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
                                 id="<portlet:namespace />estado_nuevo">
                             <option value="">Seleccione</option>
 
-                            <c:if test="<%= req.puedeSolicitar() && puedeABM %>">
-                                <option value="<%= WebKeysCompras.ESTADO_SOLICITADO %>">Solicitar</option>
+                            <c:if test="<%= puedeCotizarEstado %>">
+                                <option value="<%= WebKeysCompras.ESTADO_COTIZADO %>">Cotizado</option>
                             </c:if>
 
-                            <c:if test="<%= req.puedeAnular() && puedeAnular %>">
-                                <option value="<%= WebKeysCompras.ESTADO_ANULADO %>">Anular</option>
+                            <c:if test="<%= puedeAnularEstado %>">
+                                <option value="<%= WebKeysCompras.ESTADO_ANULADO %>">Anulado</option>
                             </c:if>
                         </select>
                     </td>
@@ -205,7 +206,7 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
     </tr>
 </table>
 
-<c:if test="<%= puedeCambiarEstado %>">
+<c:if test="<%= puedeCotizarEstado || puedeAnularEstado %>">
 <script type="text/javascript">
     function <portlet:namespace />cambiarEstado() {
         if (jQuery('#<portlet:namespace />estado_nuevo').val() == '') {
@@ -214,7 +215,7 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
             return;
         }
 
-        submitForm(document.<portlet:namespace />cambioEstadoFm);
+        submitForm(document.getElementById('<portlet:namespace />cambioEstadoFm'));
     }
 </script>
 </c:if>

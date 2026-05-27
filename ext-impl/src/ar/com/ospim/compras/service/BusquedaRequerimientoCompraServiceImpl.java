@@ -23,7 +23,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
     private static Log _log = LogFactoryUtil.getLog(BusquedaRequerimientoCompraServiceImpl.class);
 
     private static final String SQL_BUSCAR_REQUERIMIENTOS =
-            "{call compras.buscar_requerimientos(?,?,?,?,?,?,?,?,?,?)}";
+            "{call compras.buscar_requerimientos(?,?,?,?,?,?,?)}";
 
     private static final String SQL_GET_REQUERIMIENTO =
             "{call compras.get_requerimiento(?)}";
@@ -32,16 +32,16 @@ public class BusquedaRequerimientoCompraServiceImpl {
             "{call compras.get_requerimiento_detalle(?)}";
 
     private static final String SQL_LISTAR_ESTADOS =
-            "{call compras.listar_requerimientos_estados()}";
+            "{call compras.listar_estados_requerimiento()}";
 
     private static final String SQL_LISTAR_SECTORES =
-            "{call compras.listar_requerimientos_sectores()}";
+            "{call compras.listar_sector_requerimiento()}";
 
     private static final String SQL_GET_ESTADO =
-            "{call compras.get_requerimiento_estado(?)}";
+            "{call compras.get_estado_actual_requerimiento(?)}";
 
     private static final String SQL_GET_SECTOR =
-            "{call compras.get_requerimiento_sector(?)}";
+            "{call compras.get_sector_requerimiento(?)}";
 
     public List<RequerimientoCompra> buscarRequerimientos(RequerimientoCompraFiltro filtro) throws Exception {
         Connection con = null;
@@ -58,16 +58,13 @@ public class BusquedaRequerimientoCompraServiceImpl {
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(SQL_BUSCAR_REQUERIMIENTOS);
 
-            setNullableInteger(stmt, 1, filtro.getNumero());
-            setNullableDate(stmt, 2, filtro.getFechaDesde());
-            setNullableDate(stmt, 3, filtro.getFechaHasta());
-            setNullableInteger(stmt, 4, filtro.getIdSector());
-            setNullableInteger(stmt, 5, filtro.getIdEstado());
-            stmt.setString(6, emptyToNull(filtro.getSolicitanteUsr()));
-            stmt.setString(7, emptyToNull(filtro.getAfiliadoCuilTitular()));
-            setNullableInteger(stmt, 8, filtro.getAfiliadoInte());
-            stmt.setString(9, emptyToNull(filtro.getTipoArticulo()));
-            stmt.setString(10, emptyToNull(filtro.getTexto()));
+            setNullableInteger(stmt, 1, filtro.getIdEstado());
+            setNullableInteger(stmt, 2, filtro.getIdSector());
+            stmt.setString(3, emptyToNull(filtro.getAfiliadoCuilTitular()));
+            setNullableInteger(stmt, 4, filtro.getAfiliadoInt());
+            setNullableInteger(stmt, 5, filtro.getIdTercerizadora());
+            setNullableBoolean(stmt, 6, filtro.getRecupero());
+            stmt.setString(7, emptyToNull(filtro.getTexto()));
 
             rs = stmt.executeQuery();
 
@@ -194,7 +191,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
         return sectores;
     }
 
-    public RequerimientoCompraEstado getEstado(int idEstado) throws Exception {
+    public RequerimientoCompraEstado getEstado(int idRequerimientoCompra) throws Exception {
         Connection con = null;
         CallableStatement stmt = null;
         ResultSet rs = null;
@@ -202,7 +199,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
         try {
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(SQL_GET_ESTADO);
-            stmt.setInt(1, idEstado);
+            stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
             if (rs.next()) {
@@ -247,31 +244,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
     private RequerimientoCompra mapRequerimiento(ResultSet rs) throws Exception {
         RequerimientoCompra r = new RequerimientoCompra();
 
-        r.setIdRequerimientoCompra(rs.getInt("id_requerimiento"));
-        r.setNumero(rs.getInt("numero"));
-
-        r.setIdEstado(rs.getInt("id_estado"));
-        r.setEstadoCodigo(getString(rs, "estado_codigo"));
-        r.setEstadoDescripcion(getString(rs, "estado_descripcion"));
-
-        int idSector = rs.getInt("id_sector");
-        r.setIdSector(rs.wasNull() ? null : Integer.valueOf(idSector));
-        r.setSectorCodigo(getString(rs, "sector_codigo"));
-        r.setSectorDescripcion(getString(rs, "sector_descripcion"));
-
-        r.setRequiereAfiliado(rs.getBoolean("requiere_afiliado"));
-        r.setFechaSolicitud(rs.getDate("fecha_solicitud"));
-
-        r.setSolicitanteUsr(getString(rs, "solicitante_usr"));
-        r.setSolicitanteNombre(getString(rs, "solicitante_nombre"));
-
-        r.setAfiliadoCuilTitular(getString(rs, "afiliado_cuil_titular"));
-
-        int afiliadoInte = rs.getInt("afiliado_inte");
-        r.setAfiliadoInte(rs.wasNull() ? null : Integer.valueOf(afiliadoInte));
-
-        r.setDescripcion(getString(rs, "descripcion"));
-        r.setObservaciones(getString(rs, "observaciones"));
+        r.setId(getInteger(rs, "id"));
 
         r.setAltaFecha(rs.getTimestamp("alta_fecha"));
         r.setAltaUsr(getString(rs, "alta_usr"));
@@ -280,29 +253,36 @@ public class BusquedaRequerimientoCompraServiceImpl {
         r.setBajaFecha(rs.getTimestamp("baja_fecha"));
         r.setBajaUsr(getString(rs, "baja_usr"));
 
+        r.setAfiliadoCuilTitular(getString(rs, "afiliado_cuil_titular"));
+        r.setAfiliadoInt(getInteger(rs, "afiliado_int"));
+
+        r.setIdSector(getInteger(rs, "id_sector"));
+        r.setSectorDescripcion(getString(rs, "sector_descripcion"));
+        r.setRequiereAfiliado(getBoolean(rs, "requiere_afiliado"));
+
+        r.setCargoOspim(getInteger(rs, "cargo_ospim"));
+        r.setCargoTercerizadora(getInteger(rs, "cargo_tercerizadora"));
+        r.setIdTercerizadora(getInteger(rs, "id_tercerizadora"));
+
+        r.setRecupero(getBoolean(rs, "recupero"));
+        r.setObservaciones(getString(rs, "observaciones"));
+
+        r.setIdEstado(getInteger(rs, "id_estado"));
+        r.setEstadoDescripcion(getString(rs, "estado_descripcion"));
+
         return r;
     }
 
     private RequerimientoCompraDetalle mapDetalle(ResultSet rs) throws Exception {
         RequerimientoCompraDetalle d = new RequerimientoCompraDetalle();
 
-        d.setIdRequerimientoDetalle(rs.getInt("id_requerimiento_detalle"));
-        d.setIdRequerimientoCompra(rs.getInt("id_requerimiento"));
-        d.setRenglon(rs.getInt("renglon"));
-        d.setTipoArticulo(getString(rs, "tipo_articulo"));
+        d.setId(getInteger(rs, "id"));
+        d.setIdRequerimiento(getInteger(rs, "id_requerimiento"));
         d.setArticulo(getString(rs, "articulo"));
-        d.setCantidad(getBigDecimal(rs, "cantidad"));
-        d.setUnidadMedida(getString(rs, "unidad_medida"));
+        d.setCantidad(getInteger(rs, "cantidad"));
         d.setPrecioUnitarioEstimado(getNullableBigDecimal(rs, "precio_unitario_estimado"));
         d.setPrecioTotalEstimado(getNullableBigDecimal(rs, "precio_total_estimado"));
         d.setObservaciones(getString(rs, "observaciones"));
-
-        d.setAltaFecha(rs.getTimestamp("alta_fecha"));
-        d.setAltaUsr(getString(rs, "alta_usr"));
-        d.setModiFecha(rs.getTimestamp("modi_fecha"));
-        d.setModiUsr(getString(rs, "modi_usr"));
-        d.setBajaFecha(rs.getTimestamp("baja_fecha"));
-        d.setBajaUsr(getString(rs, "baja_usr"));
 
         return d;
     }
@@ -310,18 +290,8 @@ public class BusquedaRequerimientoCompraServiceImpl {
     private RequerimientoCompraEstado mapEstado(ResultSet rs) throws Exception {
         RequerimientoCompraEstado estado = new RequerimientoCompraEstado();
 
-        estado.setIdEstado(rs.getInt("id_estado"));
-        estado.setCodigo(getString(rs, "codigo"));
+        estado.setId(getInteger(rs, "id"));
         estado.setDescripcion(getString(rs, "descripcion"));
-
-        if (hasColumn(rs, "orden")) {
-            int orden = rs.getInt("orden");
-            estado.setOrden(rs.wasNull() ? null : Integer.valueOf(orden));
-        }
-
-        if (hasColumn(rs, "activo")) {
-            estado.setActivo(rs.getBoolean("activo"));
-        }
 
         return estado;
     }
@@ -329,14 +299,9 @@ public class BusquedaRequerimientoCompraServiceImpl {
     private RequerimientoCompraSector mapSector(ResultSet rs) throws Exception {
         RequerimientoCompraSector sector = new RequerimientoCompraSector();
 
-        sector.setIdSector(rs.getInt("id_sector"));
-        sector.setCodigo(getString(rs, "codigo"));
+        sector.setId(getInteger(rs, "id"));
         sector.setDescripcion(getString(rs, "descripcion"));
-        sector.setRequiereAfiliado(rs.getBoolean("requiere_afiliado"));
-
-        if (hasColumn(rs, "activo")) {
-            sector.setActivo(rs.getBoolean("activo"));
-        }
+        sector.setRequiereAfiliado(getBoolean(rs, "requiere_afiliado"));
 
         return sector;
     }
@@ -349,11 +314,11 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
     }
 
-    private void setNullableDate(CallableStatement stmt, int index, java.util.Date value) throws Exception {
+    private void setNullableBoolean(CallableStatement stmt, int index, Boolean value) throws Exception {
         if (value == null) {
-            stmt.setNull(index, Types.DATE);
+            stmt.setNull(index, Types.BOOLEAN);
         } else {
-            stmt.setDate(index, new java.sql.Date(value.getTime()));
+            stmt.setBoolean(index, value.booleanValue());
         }
     }
 
@@ -373,9 +338,22 @@ public class BusquedaRequerimientoCompraServiceImpl {
         return rs.getString(column);
     }
 
-    private BigDecimal getBigDecimal(ResultSet rs, String column) throws Exception {
-        BigDecimal value = getNullableBigDecimal(rs, column);
-        return value != null ? value : BigDecimal.ZERO;
+    private Integer getInteger(ResultSet rs, String column) throws Exception {
+        if (!hasColumn(rs, column)) {
+            return null;
+        }
+
+        int value = rs.getInt(column);
+        return rs.wasNull() ? null : Integer.valueOf(value);
+    }
+
+    private Boolean getBoolean(ResultSet rs, String column) throws Exception {
+        if (!hasColumn(rs, column)) {
+            return null;
+        }
+
+        boolean value = rs.getBoolean(column);
+        return rs.wasNull() ? null : Boolean.valueOf(value);
     }
 
     private BigDecimal getNullableBigDecimal(ResultSet rs, String column) throws Exception {

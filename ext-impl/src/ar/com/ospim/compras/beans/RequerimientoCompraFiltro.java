@@ -1,61 +1,35 @@
 package ar.com.ospim.compras.beans;
 
-import java.util.Date;
-
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.util.DateUtils;
 
 public class RequerimientoCompraFiltro {
 
-    private Integer numero;
-    private Date fechaDesde;
-    private Date fechaHasta;
-
-    private Integer idSector;
     private Integer idEstado;
-
-    private String solicitanteUsr;
+    private Integer idSector;
+    private String afiliadoCuilTitular;
+    private Integer afiliadoInt;
+    private Integer idTercerizadora;
+    private Boolean recupero;
     private String texto;
 
-    private String afiliadoCuilTitular;
-    private Integer afiliadoInte;
-
-    private String tipoArticulo;
-
-    public Integer getNumero() {
-        return numero;
+    public Integer getIdEstado() {
+        return idEstado;
     }
 
-    public String getNumeroString() {
-        return numero != null && numero.intValue() > 0 ? String.valueOf(numero) : "";
+    public Integer getEstado() {
+        return idEstado;
     }
 
-    public void setNumero(Integer numero) {
-        this.numero = numero;
+    public String getIdEstadoString() {
+        return idEstado != null && idEstado.intValue() > 0 ? String.valueOf(idEstado) : "";
     }
 
-    public Date getFechaDesde() {
-        return fechaDesde;
+    public void setIdEstado(Integer idEstado) {
+        this.idEstado = idEstado;
     }
 
-    public String getFechaDesdeAsString() {
-        return fechaDesde != null ? DateUtils.format(fechaDesde, DateUtils.SHORT) : "";
-    }
-
-    public void setFechaDesde(Date fechaDesde) {
-        this.fechaDesde = fechaDesde;
-    }
-
-    public Date getFechaHasta() {
-        return fechaHasta;
-    }
-
-    public String getFechaHastaAsString() {
-        return fechaHasta != null ? DateUtils.format(fechaHasta, DateUtils.SHORT) : "";
-    }
-
-    public void setFechaHasta(Date fechaHasta) {
-        this.fechaHasta = fechaHasta;
+    public void setEstado(Integer estado) {
+        this.idEstado = estado;
     }
 
     public Integer getIdSector() {
@@ -78,32 +52,50 @@ public class RequerimientoCompraFiltro {
         this.idSector = sectorId;
     }
 
-    public Integer getIdEstado() {
-        return idEstado;
+    public String getAfiliadoCuilTitular() {
+        return afiliadoCuilTitular;
     }
 
-    public Integer getEstado() {
-        return idEstado;
+    public void setAfiliadoCuilTitular(String afiliadoCuilTitular) {
+        this.afiliadoCuilTitular = WebKeysCompras.trimToNull(afiliadoCuilTitular);
     }
 
-    public String getIdEstadoString() {
-        return idEstado != null && idEstado.intValue() > 0 ? String.valueOf(idEstado) : "";
+    public Integer getAfiliadoInt() {
+        return afiliadoInt;
     }
 
-    public void setIdEstado(Integer idEstado) {
-        this.idEstado = idEstado;
+    public String getAfiliadoIntString() {
+        return afiliadoInt != null && afiliadoInt.intValue() >= 0 ? String.valueOf(afiliadoInt) : "";
     }
 
-    public void setEstado(Integer estado) {
-        this.idEstado = estado;
+    public void setAfiliadoInt(Integer afiliadoInt) {
+        this.afiliadoInt = afiliadoInt;
     }
 
-    public String getSolicitanteUsr() {
-        return solicitanteUsr;
+    public Integer getIdTercerizadora() {
+        return idTercerizadora;
     }
 
-    public void setSolicitanteUsr(String solicitanteUsr) {
-        this.solicitanteUsr = WebKeysCompras.trimToNull(solicitanteUsr);
+    public String getIdTercerizadoraString() {
+        return idTercerizadora != null && idTercerizadora.intValue() > 0
+                ? String.valueOf(idTercerizadora)
+                : "";
+    }
+
+    public void setIdTercerizadora(Integer idTercerizadora) {
+        this.idTercerizadora = idTercerizadora;
+    }
+
+    public Boolean getRecupero() {
+        return recupero;
+    }
+
+    public String getRecuperoString() {
+        return recupero != null ? recupero.toString() : "";
+    }
+
+    public void setRecupero(Boolean recupero) {
+        this.recupero = recupero;
     }
 
     public String getTexto() {
@@ -114,44 +106,13 @@ public class RequerimientoCompraFiltro {
         this.texto = WebKeysCompras.trimToNull(texto);
     }
 
-    public String getAfiliadoCuilTitular() {
-        return afiliadoCuilTitular;
-    }
-
-    public void setAfiliadoCuilTitular(String afiliadoCuilTitular) {
-        this.afiliadoCuilTitular = WebKeysCompras.trimToNull(afiliadoCuilTitular);
-    }
-
-    public Integer getAfiliadoInte() {
-        return afiliadoInte;
-    }
-
-    public String getAfiliadoInteString() {
-        return afiliadoInte != null && afiliadoInte.intValue() >= 0 ? String.valueOf(afiliadoInte) : "";
-    }
-
-    public void setAfiliadoInte(Integer afiliadoInte) {
-        this.afiliadoInte = afiliadoInte;
-    }
-
-    public String getTipoArticulo() {
-        return tipoArticulo;
-    }
-
-    public void setTipoArticulo(String tipoArticulo) {
-        this.tipoArticulo = WebKeysCompras.trimToNull(tipoArticulo);
-    }
-
     public boolean tieneFiltros() {
-        return numero != null
-                || fechaDesde != null
-                || fechaHasta != null
+        return idEstado != null
                 || idSector != null
-                || idEstado != null
-                || !WebKeysCompras.isEmpty(solicitanteUsr)
-                || !WebKeysCompras.isEmpty(texto)
                 || !WebKeysCompras.isEmpty(afiliadoCuilTitular)
-                || afiliadoInte != null
-                || !WebKeysCompras.isEmpty(tipoArticulo);
+                || afiliadoInt != null
+                || idTercerizadora != null
+                || recupero != null
+                || !WebKeysCompras.isEmpty(texto);
     }
 }

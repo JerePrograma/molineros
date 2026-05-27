@@ -4,65 +4,47 @@ import ar.com.ospim.compras.WebKeysCompras;
 
 public class RequerimientoCompraEstado {
 
-    private int idEstado;
-    private String codigo;
+    private Integer id;
     private String descripcion;
-    private Integer orden;
-    private boolean activo;
 
     public RequerimientoCompraEstado() {
-        this.activo = true;
     }
 
-    public RequerimientoCompraEstado(int idEstado) {
-        this();
-        this.idEstado = idEstado;
+    public RequerimientoCompraEstado(Integer id) {
+        this.id = id;
     }
 
-    public RequerimientoCompraEstado(int idEstado, String codigo, String descripcion) {
-        this(idEstado);
-        this.codigo = codigo;
+    public RequerimientoCompraEstado(Integer id, String descripcion) {
+        this.id = id;
         this.descripcion = descripcion;
     }
 
-    public int getIdEstado() {
-        return idEstado;
+    public Integer getId() {
+        return id;
     }
 
-    public int getId() {
-        return idEstado;
+    public int getIdEstado() {
+        return id != null ? id.intValue() : 0;
     }
 
     public int getEstado() {
-        return idEstado;
+        return getIdEstado();
     }
 
     public String getIdEstadoString() {
-        return idEstado > 0 ? String.valueOf(idEstado) : "";
+        return id != null && id.intValue() > 0 ? String.valueOf(id) : "";
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public void setIdEstado(int idEstado) {
-        this.idEstado = idEstado;
-    }
-
-    public void setId(int id) {
-        this.idEstado = id;
+        this.id = idEstado > 0 ? Integer.valueOf(idEstado) : null;
     }
 
     public void setEstado(int estado) {
-        this.idEstado = estado;
-    }
-
-    public String getCodigo() {
-        if (!WebKeysCompras.isEmpty(codigo)) {
-            return codigo;
-        }
-
-        return WebKeysCompras.getEstadoCodigo(idEstado);
-    }
-
-    public void setCodigo(String codigo) {
-        this.codigo = WebKeysCompras.trimToNull(codigo);
+        setIdEstado(estado);
     }
 
     public String getDescripcion() {
@@ -70,7 +52,7 @@ public class RequerimientoCompraEstado {
             return descripcion;
         }
 
-        return WebKeysCompras.getEstadoDescripcion(idEstado);
+        return WebKeysCompras.getEstadoDescripcion(getIdEstado());
     }
 
     public String getDescripcionVisible() {
@@ -82,47 +64,15 @@ public class RequerimientoCompraEstado {
         this.descripcion = WebKeysCompras.trimToNull(descripcion);
     }
 
-    public Integer getOrden() {
-        return orden;
-    }
-
-    public void setOrden(Integer orden) {
-        this.orden = orden;
-    }
-
-    public boolean isActivo() {
-        return activo;
-    }
-
-    public boolean getActivo() {
-        return activo;
-    }
-
-    public void setActivo(boolean activo) {
-        this.activo = activo;
-    }
-
     public boolean isBorrador() {
-        return idEstado == WebKeysCompras.ESTADO_BORRADOR;
+        return WebKeysCompras.esBorrador(getIdEstado());
     }
 
-    public boolean isSolicitado() {
-        return idEstado == WebKeysCompras.ESTADO_SOLICITADO;
+    public boolean isCotizado() {
+        return WebKeysCompras.esCotizado(getIdEstado());
     }
 
     public boolean isAnulado() {
-        return idEstado == WebKeysCompras.ESTADO_ANULADO;
-    }
-
-    public boolean isEditable() {
-        return WebKeysCompras.esEditable(idEstado);
-    }
-
-    public boolean puedeSolicitar() {
-        return WebKeysCompras.puedeSolicitar(idEstado);
-    }
-
-    public boolean puedeAnular() {
-        return WebKeysCompras.puedeAnular(idEstado);
+        return WebKeysCompras.esAnulado(getIdEstado());
     }
 }

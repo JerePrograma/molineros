@@ -41,7 +41,7 @@ renderRequest.setAttribute(
 );
 
 List<RequerimientoCompraSector> sectores =
-        (List<RequerimientoCompraSector>) renderRequest.getAttribute(WebKeysCompras.SECTORES_REQUERIMIENTO_COMPRA);
+        (List<RequerimientoCompraSector>) renderRequest.getAttribute(WebKeysCompras.SECTORES_REQUERIMIENTO);
 
 if (sectores == null) {
     try {
@@ -69,62 +69,25 @@ PortletURL actionURL = renderResponse.createActionURL();
 actionURL.setWindowState(WindowState.MAXIMIZED);
 actionURL.setParameter("struts_action", "/compras/editar_requerimiento");
 
-String solicitanteDefault =
-        req.getSolicitanteUsr() != null ? req.getSolicitanteUsr() : (user != null ? user.getScreenName() : "");
-
-String solicitanteNombreDefault =
-        req.getSolicitanteNombre() != null ? req.getSolicitanteNombre() : (user != null ? user.getFullName() : "");
-
 String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId().intValue()) : "";
+String sectorDescripcionSoloLectura = req.getSectorDescripcionVisible();
 
-String sectorDescripcionSoloLectura = "";
+if (sectorDescripcionSoloLectura.length() == 0) {
+    for (int i = 0; i < sectores.size(); i++) {
+        RequerimientoCompraSector sector = sectores.get(i);
+        String sectorId = String.valueOf(sector.getIdSector());
 
-for (int i = 0; i < sectores.size(); i++) {
-    RequerimientoCompraSector sector = sectores.get(i);
-    String sectorId = String.valueOf(sector.getIdSector());
-
-    if (reqSectorId.equals(sectorId)) {
-        sectorDescripcionSoloLectura = sector.getDescripcionVisible();
-        break;
+        if (reqSectorId.equals(sectorId)) {
+            sectorDescripcionSoloLectura = sector.getDescripcionVisible();
+            break;
+        }
     }
 }
 
 String afiliadoCuilTitular = req.getAfiliadoCuilTitularVisible();
-
-if (afiliadoCuilTitular == null) {
-    afiliadoCuilTitular = "";
-}
-
-String afiliadoInte = req.getAfiliadoInteString();
-
-if (afiliadoInte == null) {
-    afiliadoInte = "";
-}
-
-String afiliadoIdSeccional = "";
-String afiliadoSeccional = "";
-
-try {
-    Object valorAfiliadoIdSeccional =
-            req.getClass().getMethod("getAfiliadoIdSeccionalString", new Class[0]).invoke(req, new Object[0]);
-
-    if (valorAfiliadoIdSeccional != null) {
-        afiliadoIdSeccional = String.valueOf(valorAfiliadoIdSeccional);
-    }
-} catch (Exception e) {
-    afiliadoIdSeccional = "";
-}
-
-try {
-    Object valorAfiliadoSeccional =
-            req.getClass().getMethod("getAfiliadoSeccionalVisible", new Class[0]).invoke(req, new Object[0]);
-
-    if (valorAfiliadoSeccional != null) {
-        afiliadoSeccional = String.valueOf(valorAfiliadoSeccional);
-    }
-} catch (Exception e) {
-    afiliadoSeccional = "";
-}
+String afiliadoInt = req.getAfiliadoIntString();
+String idTercerizadora = req.getIdTercerizadoraString();
+String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
 %>
 
 <c:if test="<%= !soloLectura && !puedeABM %>">
@@ -157,6 +120,9 @@ try {
 
         <table class="lfr-table">
             <tr>
+                <td><label>ID:</label></td>
+                <td><%= HtmlUtil.escape(req.getIdString()) %></td>
+
                 <td><label>Estado:</label></td>
                 <td><strong><%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %></strong></td>
             </tr>
@@ -166,23 +132,11 @@ try {
             </tr>
 
             <tr>
-                <td><label>Fecha solicitud:</label></td>
-                <td><%= HtmlUtil.escape(req.getFechaSolicitudAsString()) %></td>
-
                 <td><label>Sector:</label></td>
                 <td><%= HtmlUtil.escape(sectorDescripcionSoloLectura) %></td>
-            </tr>
 
-            <tr>
-                <td colspan="4">&nbsp;</td>
-            </tr>
-
-            <tr>
-                <td><label>Solicitante usuario:</label></td>
-                <td><%= HtmlUtil.escape(solicitanteDefault) %></td>
-
-                <td><label>Solicitante nombre:</label></td>
-                <td><%= HtmlUtil.escape(solicitanteNombreDefault) %></td>
+                <td><label>Alta:</label></td>
+                <td><%= HtmlUtil.escape(req.getAltaFechaAsString()) %></td>
             </tr>
 
             <tr>
@@ -194,15 +148,7 @@ try {
                 <td><%= HtmlUtil.escape(afiliadoCuilTitular) %></td>
 
                 <td><label>Integrante:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoInte) %></td>
-            </tr>
-
-            <tr>
-                <td><label>Seccional:</label></td>
-                <td colspan="3">
-                    <%= HtmlUtil.escape(afiliadoIdSeccional) %>
-                    <%= afiliadoSeccional.length() > 0 ? " - " + HtmlUtil.escape(afiliadoSeccional) : "" %>
-                </td>
+                <td><%= HtmlUtil.escape(afiliadoInt) %></td>
             </tr>
 
             <tr>
@@ -210,8 +156,23 @@ try {
             </tr>
 
             <tr>
-                <td><label>Descripci&oacute;n:</label></td>
-                <td colspan="3"><%= HtmlUtil.escape(req.getDescripcionVisible()) %></td>
+                <td><label>Cargo OSPIM %:</label></td>
+                <td><%= HtmlUtil.escape(req.getCargoOspimString()) %></td>
+
+                <td><label>Cargo tercerizadora %:</label></td>
+                <td><%= HtmlUtil.escape(req.getCargoTercerizadoraString()) %></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>Tercerizadora:</label></td>
+                <td><%= HtmlUtil.escape(idTercerizadora) %></td>
+
+                <td><label>Recupero:</label></td>
+                <td><%= HtmlUtil.escape(req.getRecuperoDescripcion()) %></td>
             </tr>
 
             <tr>
@@ -262,8 +223,8 @@ try {
 
     <form action="<%= actionURL.toString() %>"
           method="post"
-          name="<portlet:namespace />fm"
-          id="<portlet:namespace />fm">
+          name="<portlet:namespace />fmCompras"
+          id="<portlet:namespace />fmCompras">
 
         <input type="hidden"
                name="<portlet:namespace /><%= Constants.CMD %>"
@@ -276,35 +237,23 @@ try {
                value="<%= req.getIdRequerimientoCompra() %>" />
 
         <input type="hidden"
-               name="<portlet:namespace />id_estado"
-               id="<portlet:namespace />id_estado"
-               value="<%= req.getIdEstado() %>" />
-
-        <input type="hidden"
                name="<portlet:namespace />afiliado_cuil_titular"
                id="<portlet:namespace />afiliado_cuil_titular"
                value="<%= HtmlUtil.escape(afiliadoCuilTitular) %>" />
 
         <input type="hidden"
-               name="<portlet:namespace />afiliado_inte"
-               id="<portlet:namespace />afiliado_inte"
-               value="<%= HtmlUtil.escape(afiliadoInte) %>" />
-
-        <input type="hidden"
-               name="<portlet:namespace />afiliado_id_seccional"
-               id="<portlet:namespace />afiliado_id_seccional"
-               value="<%= HtmlUtil.escape(afiliadoIdSeccional) %>" />
-
-        <input type="hidden"
-               name="<portlet:namespace />afiliado_seccional"
-               id="<portlet:namespace />afiliado_seccional"
-               value="<%= HtmlUtil.escape(afiliadoSeccional) %>" />
+               name="<portlet:namespace />afiliado_int"
+               id="<portlet:namespace />afiliado_int"
+               value="<%= HtmlUtil.escape(afiliadoInt) %>" />
 
         <fieldset class="block-labels">
             <legend><%= esNuevo ? "Nuevo requerimiento de compra" : "Editar requerimiento de compra" %></legend>
 
             <table class="lfr-table">
                 <tr>
+                    <td><label>ID:</label></td>
+                    <td><%= HtmlUtil.escape(req.getIdString()) %></td>
+
                     <td><label>Estado:</label></td>
                     <td><strong><%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %></strong></td>
                 </tr>
@@ -314,19 +263,8 @@ try {
                 </tr>
 
                 <tr>
-                    <td><label>Fecha solicitud:</label></td>
-                    <td>
-                        <input type="text"
-                               name="<portlet:namespace />fecha_solicitud"
-                               id="<portlet:namespace />fecha_solicitud"
-                               value="<%= HtmlUtil.escape(req.getFechaSolicitudAsString()) %>"
-                               size="10"
-                               maxlength="10" />
-                        dd/MM/yyyy
-                    </td>
-
                     <td><label>Sector:</label></td>
-                    <td>
+                    <td colspan="3">
                         <select name="<portlet:namespace />sector_id"
                                 id="<portlet:namespace />sector_id">
                             <option value="0">Seleccione</option>
@@ -352,42 +290,24 @@ try {
                 </tr>
 
                 <tr>
-                    <td><label>Solicitante usuario:</label></td>
+                    <td><label>Cargo OSPIM %:</label></td>
                     <td>
                         <input type="text"
-                               name="<portlet:namespace />solicitante_usr"
-                               id="<portlet:namespace />solicitante_usr"
-                               value="<%= HtmlUtil.escape(solicitanteDefault) %>"
-                               size="30"
-                               maxlength="75" />
+                               name="<portlet:namespace />cargo_ospim"
+                               id="<portlet:namespace />cargo_ospim"
+                               value="<%= HtmlUtil.escape(req.getCargoOspimString()) %>"
+                               size="5"
+                               maxlength="3" />
                     </td>
 
-                    <td><label>Solicitante nombre:</label></td>
+                    <td><label>Cargo tercerizadora %:</label></td>
                     <td>
                         <input type="text"
-                               name="<portlet:namespace />solicitante_nombre"
-                               id="<portlet:namespace />solicitante_nombre"
-                               value="<%= HtmlUtil.escape(solicitanteNombreDefault) %>"
-                               size="35"
-                               maxlength="120" />
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-
-        <fieldset class="block-labels">
-            <legend>Solicitud</legend>
-
-            <table class="lfr-table">
-                <tr>
-                    <td><label>Descripci&oacute;n:</label></td>
-                    <td colspan="3">
-                        <input type="text"
-                               name="<portlet:namespace />descripcion"
-                               id="<portlet:namespace />descripcion"
-                               value="<%= HtmlUtil.escape(req.getDescripcionVisible()) %>"
-                               size="100"
-                               maxlength="500" />
+                               name="<portlet:namespace />cargo_tercerizadora"
+                               id="<portlet:namespace />cargo_tercerizadora"
+                               value="<%= HtmlUtil.escape(req.getCargoTercerizadoraString()) %>"
+                               size="5"
+                               maxlength="3" />
                     </td>
                 </tr>
 
@@ -396,8 +316,35 @@ try {
                 </tr>
 
                 <tr>
-                    <td><label>Observaciones:</label></td>
-                    <td colspan="3">
+                    <td><label>Tercerizadora:</label></td>
+                    <td>
+                        <input type="text"
+                               name="<portlet:namespace />id_tercerizadora"
+                               id="<portlet:namespace />requerimiento_id_tercerizadora"
+                               value="<%= HtmlUtil.escape(idTercerizadora) %>"
+                               size="10"
+                               maxlength="10"
+                               readonly="readonly" />
+                    </td>
+
+                    <td><label>Recupero:</label></td>
+                    <td>
+                        <input type="checkbox"
+                               name="<portlet:namespace />recupero"
+                               id="<portlet:namespace />recupero"
+                               value="true"
+                               <%= recuperoChecked %> />
+                    </td>
+                </tr>
+            </table>
+        </fieldset>
+
+        <fieldset class="block-labels">
+            <legend>Observaciones</legend>
+
+            <table class="lfr-table">
+                <tr>
+                    <td>
                         <textarea name="<portlet:namespace />observaciones"
                                   id="<portlet:namespace />observaciones"
                                   cols="100"
@@ -442,22 +389,25 @@ try {
 <c:if test="<%= puedeEditarPantalla %>">
 <script type="text/javascript">
     /*
-     * Integracion Compras + componente de afiliados.
-     *
-     * Regla:
-     * - El formulario de Compras guarda solo contra /compras/editar_requerimiento.
-     * - El popup de afiliados usa el action real de Autorizaciones:
-     *   /autorizaciones/buscar_afiliados
-     * - La busqueda de seccional usa:
-     *   /autorizaciones/buscar_seccional
-     *
-     * Importante:
-     * El include de busqueda_afiliado.jsp queda fuera del form de Compras
-     * para evitar formularios anidados o submits contaminados.
+     * Compras reutiliza /html/portlet/autorizaciones/busqueda_afiliado.jsp.
+     * Las URLs Struts se resuelven bajo /compras para respetar el struts-path
+     * del portlet COMPRA_1.
      */
 
     var popupAfill = null;
     var popup = null;
+
+    function <portlet:namespace />valorAfiliado(id) {
+        return jQuery.trim(jQuery('#<portlet:namespace />' + id).val());
+    }
+
+    function <portlet:namespace />valorCredencialAfiliado() {
+        return jQuery('#<portlet:namespace />' + 'num' + 'ero_afi').val();
+    }
+
+    function <portlet:namespace />paramCredencialAfiliado() {
+        return 'num' + 'ero_afi';
+    }
 
     function <portlet:namespace />buscarAfiliados() {
         jQuery('#<portlet:namespace />divObservacionesInternas').hide();
@@ -470,9 +420,9 @@ try {
         var apellido = jQuery('#<portlet:namespace />apellido').val();
         var nombre = jQuery('#<portlet:namespace />nombre').val();
         var entidad = jQuery('#<portlet:namespace />entidad').val();
-        var numero_afi = jQuery('#<portlet:namespace />numero_afi').val();
+        var credencial = <portlet:namespace />valorCredencialAfiliado();
 
-        if (!<portlet:namespace />validarBusqueda(cuil, inte, tipoDoc, nroDoc, seccional, apellido, nombre, entidad, numero_afi)) {
+        if (!<portlet:namespace />validarBusqueda(cuil, inte, tipoDoc, nroDoc, seccional, apellido, nombre, entidad, credencial)) {
             return false;
         }
 
@@ -494,16 +444,10 @@ try {
             width: 830
         });
 
-        var fecha_prestacion = 'null';
-
-        try {
-            fecha_prestacion = jQuery("#<portlet:namespace />fprest").val();
-        } catch (err) {
-            fecha_prestacion = 'null';
-        }
+        var fechaReferencia = 'null';
 
         var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-            '&struts_action=/autorizaciones/buscar_afiliados' +
+            '&struts_action=/compras/buscar_afiliados' +
             '&cuil=' + encodeURIComponent(cuil) +
             '&inte=' + encodeURIComponent(inte) +
             '&tipoDoc=' + encodeURIComponent(tipoDoc) +
@@ -512,73 +456,16 @@ try {
             '&nombre=' + encodeURIComponent(nombre) +
             '&apellido=' + encodeURIComponent(apellido) +
             '&entidad=' + encodeURIComponent(entidad) +
-            '&numero_afi=' + encodeURIComponent(numero_afi) +
-            '&fecha_referencia=' + encodeURIComponent(fecha_prestacion) +
+            '&' + <portlet:namespace />paramCredencialAfiliado() + '=' + encodeURIComponent(credencial) +
+            '&fecha_referencia=' + encodeURIComponent(fechaReferencia) +
             '&origen=' +
             '&popup=true';
 
         jQuery(popupAfill).load(url);
     }
 
-    function <portlet:namespace />buscarAfiliados_(fecha_prest) {
-        jQuery('#<portlet:namespace />divObservacionesInternas').hide();
-
-        var cuil = jQuery('#<portlet:namespace />cuil').val();
-        var inte = jQuery('#<portlet:namespace />inte').val();
-        var tipoDoc = jQuery('#<portlet:namespace />tipoDoc').val();
-        var nroDoc = jQuery('#<portlet:namespace />nroDoc').val();
-        var seccional = jQuery('#<portlet:namespace />id_seccional').val();
-        var apellido = jQuery('#<portlet:namespace />apellido').val();
-        var nombre = jQuery('#<portlet:namespace />nombre').val();
-        var entidad = jQuery('#<portlet:namespace />entidad').val();
-        var numero_afi = jQuery('#<portlet:namespace />numero_afi').val();
-
-        if (!<portlet:namespace />validarBusqueda(cuil, inte, tipoDoc, nroDoc, seccional, apellido, nombre, entidad, numero_afi)) {
-            return false;
-        }
-
-        if (cuil.length > 0) {
-            if (!validarCuil(cuil, "<liferay-ui:message key='valida-cuil-mensaje-limpiar'/>")) {
-                jQuery('#<portlet:namespace />cuil').focus();
-                return false;
-            }
-        }
-
-        if (jQuery("#<portlet:namespace />secc_seleccionada").val() != "1") {
-            jQuery("#<portlet:namespace />seccional").val("");
-            jQuery("#<portlet:namespace />id_seccional").val("");
-        }
-
-        popupAfill = Liferay.Popup({
-            title: '<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />',
-            modal: true,
-            width: 830
-        });
-
-        var fecha_prestacion = fecha_prest;
-
-        try {
-            fecha_prestacion = jQuery("#<portlet:namespace />fprest").val();
-        } catch (err) {
-            fecha_prestacion = fecha_prest;
-        }
-
-        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-            '&struts_action=/autorizaciones/buscar_afiliados' +
-            '&cuil=' + encodeURIComponent(cuil) +
-            '&inte=' + encodeURIComponent(inte) +
-            '&tipoDoc=' + encodeURIComponent(tipoDoc) +
-            '&nroDoc=' + encodeURIComponent(nroDoc) +
-            '&seccional=' + encodeURIComponent(seccional) +
-            '&nombre=' + encodeURIComponent(nombre) +
-            '&apellido=' + encodeURIComponent(apellido) +
-            '&entidad=' + encodeURIComponent(entidad) +
-            '&numero_afi=' + encodeURIComponent(numero_afi) +
-            '&fecha_referencia=' + encodeURIComponent(fecha_prestacion) +
-            '&origen=' +
-            '&popup=true';
-
-        jQuery(popupAfill).load(url);
+    function <portlet:namespace />buscarAfiliados_(fechaReferencia) {
+        <portlet:namespace />buscarAfiliados();
     }
 
     function <portlet:namespace />buscarSeccional() {
@@ -596,7 +483,7 @@ try {
         });
 
         var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-            '&struts_action=/autorizaciones/buscar_seccional' +
+            '&struts_action=/compras/buscar_seccional' +
             '&id_seccional=' + encodeURIComponent(id_seccional) +
             '&seccional=' + encodeURIComponent(seccional) +
             '&prefijo=';
@@ -630,7 +517,7 @@ try {
             }
 
             var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-                '&struts_action=/autorizaciones/buscar_seccional' +
+                '&struts_action=/compras/buscar_seccional' +
                 '&id_seccional=' + encodeURIComponent(id_seccional) +
                 '&seccional=' + encodeURIComponent(seccional) +
                 '&prefijo=';
@@ -655,13 +542,14 @@ try {
         jQuery('#<portlet:namespace />secc_seleccionada').val('1');
 
         var entidadSeleccionada = jQuery('#<portlet:namespace />entidad').val();
+        var credencialId = '#<portlet:namespace />' + 'num' + 'ero_afi';
 
         if (entidadSeleccionada == 'OSPIM') {
-            jQuery('#<portlet:namespace />numero_afi').val(ospim != null && ospim != 'null' ? ospim : '');
+            jQuery(credencialId).val(ospim != null && ospim != 'null' ? ospim : '');
         } else if (entidadSeleccionada == 'UOMA') {
-            jQuery('#<portlet:namespace />numero_afi').val(uoma != null && uoma != 'null' ? uoma : '');
+            jQuery(credencialId).val(uoma != null && uoma != 'null' ? uoma : '');
         } else if (entidadSeleccionada == 'AMTIMA') {
-            jQuery('#<portlet:namespace />numero_afi').val(amtima != null && amtima != 'null' ? amtima : '');
+            jQuery(credencialId).val(amtima != null && amtima != 'null' ? amtima : '');
         }
 
         if (bajaFecha != null && bajaFecha != 'null') {
@@ -677,8 +565,8 @@ try {
         }
 
         jQuery('#<portlet:namespace />fecha_alta_af').val(fecha_alta_af != null && fecha_alta_af != 'null' ? fecha_alta_af : '');
-        jQuery('#<portlet:namespace />incapacidad_af').val(incapacidad_af != null && incapacidad_af != 'null' ? incapacidad_af : '');
         jQuery('#<portlet:namespace />id_tercerizadora').val(id_tercerizadora != null && id_tercerizadora != 'null' ? id_tercerizadora : '');
+        jQuery('#<portlet:namespace />incapacidad_af').val(incapacidad_af != null && incapacidad_af != 'null' ? incapacidad_af : '');
         jQuery('#<portlet:namespace />nroSocioPrevencion').val(nroSocioPrev != null && nroSocioPrev != 'null' ? nroSocioPrev : '');
         jQuery('#<portlet:namespace />nroCredencialPrevencion').val(nroCredenPrev != null && nroCredenPrev != 'null' ? nroCredenPrev : '');
         jQuery('#<portlet:namespace />tieneAntecedentes').val(tieneAntecedentes == '1' ? '1' : '0');
@@ -700,32 +588,30 @@ try {
 
     function <portlet:namespace />sincronizarAfiliadoRequerimiento() {
         jQuery('#<portlet:namespace />afiliado_cuil_titular').val(<portlet:namespace />trimValue('cuil'));
-        jQuery('#<portlet:namespace />afiliado_inte').val(<portlet:namespace />trimValue('inte'));
-        jQuery('#<portlet:namespace />afiliado_id_seccional').val(<portlet:namespace />trimValue('id_seccional'));
-        jQuery('#<portlet:namespace />afiliado_seccional').val(<portlet:namespace />trimValue('seccional'));
+        jQuery('#<portlet:namespace />afiliado_int').val(<portlet:namespace />trimValue('inte'));
+
+        var idTerc = jQuery('#<portlet:namespace />id_tercerizadora').val();
+        if (idTerc == null) {
+            idTerc = '';
+        }
+        jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val(jQuery.trim(idTerc));
     }
 
     function <portlet:namespace />cargarAfiliadoInicial() {
         var afiliadoCuilTitular = jQuery('#<portlet:namespace />afiliado_cuil_titular').val();
-        var afiliadoInte = jQuery('#<portlet:namespace />afiliado_inte').val();
-        var afiliadoIdSeccional = jQuery('#<portlet:namespace />afiliado_id_seccional').val();
-        var afiliadoSeccional = jQuery('#<portlet:namespace />afiliado_seccional').val();
+        var afiliadoInt = jQuery('#<portlet:namespace />afiliado_int').val();
+        var idTerc = jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val();
 
         if (afiliadoCuilTitular != '') {
             jQuery('#<portlet:namespace />cuil').val(afiliadoCuilTitular);
         }
 
-        if (afiliadoInte != '') {
-            jQuery('#<portlet:namespace />inte').val(afiliadoInte);
+        if (afiliadoInt != '') {
+            jQuery('#<portlet:namespace />inte').val(afiliadoInt);
         }
 
-        if (afiliadoIdSeccional != '') {
-            jQuery('#<portlet:namespace />id_seccional').val(afiliadoIdSeccional);
-            jQuery('#<portlet:namespace />secc_seleccionada').val('1');
-        }
-
-        if (afiliadoSeccional != '') {
-            jQuery('#<portlet:namespace />seccional').val(afiliadoSeccional);
+        if (idTerc != '') {
+            jQuery('#<portlet:namespace />id_tercerizadora').val(idTerc);
         }
 
         <portlet:namespace />sincronizarAfiliadoRequerimiento();
@@ -737,11 +623,9 @@ try {
         }
 
         jQuery('#<portlet:namespace />afiliado_cuil_titular').val('');
-        jQuery('#<portlet:namespace />afiliado_inte').val('');
-        jQuery('#<portlet:namespace />afiliado_id_seccional').val('');
-        jQuery('#<portlet:namespace />afiliado_seccional').val('');
-
-        <portlet:namespace />sincronizarAfiliadoRequerimiento();
+        jQuery('#<portlet:namespace />afiliado_int').val('');
+        jQuery('#<portlet:namespace />id_tercerizadora').val('');
+        jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val('');
     }
 
     function <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere) {
@@ -760,8 +644,33 @@ try {
         }
     }
 
+    function <portlet:namespace />parsePorcentaje(id, label) {
+        var value = <portlet:namespace />trimValue(id);
+
+        if (value == '') {
+            value = '0';
+            jQuery('#<portlet:namespace />' + id).val('0');
+        }
+
+        if (!/^[0-9]+$/.test(value)) {
+            alert(label + ' debe ser entero entre 0 y 100.');
+            jQuery('#<portlet:namespace />' + id).focus();
+            return null;
+        }
+
+        var parsed = parseInt(value, 10);
+
+        if (parsed < 0 || parsed > 100) {
+            alert(label + ' debe estar entre 0 y 100.');
+            jQuery('#<portlet:namespace />' + id).focus();
+            return null;
+        }
+
+        return parsed;
+    }
+
     function <portlet:namespace />guardar() {
-        var form = document.<portlet:namespace />fm;
+        var form = document.getElementById('<portlet:namespace />fmCompras');
 
         if (!form) {
             alert('No se pudo encontrar el formulario de Compras.');
@@ -774,15 +683,19 @@ try {
             return;
         }
 
-        if (<portlet:namespace />trimValue('solicitante_usr') == '') {
-            alert('Debe informar solicitante.');
-            jQuery('#<portlet:namespace />solicitante_usr').focus();
+        var cargoOspim = <portlet:namespace />parsePorcentaje('cargo_ospim', 'Cargo OSPIM');
+        if (cargoOspim == null) {
             return;
         }
 
-        if (<portlet:namespace />trimValue('descripcion') == '') {
-            alert('Debe informar descripcion del requerimiento.');
-            jQuery('#<portlet:namespace />descripcion').focus();
+        var cargoTercerizadora = <portlet:namespace />parsePorcentaje('cargo_tercerizadora', 'Cargo tercerizadora');
+        if (cargoTercerizadora == null) {
+            return;
+        }
+
+        if (cargoOspim + cargoTercerizadora > 100) {
+            alert('La suma de cargos no puede superar 100.');
+            jQuery('#<portlet:namespace />cargo_tercerizadora').focus();
             return;
         }
 
@@ -792,23 +705,21 @@ try {
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
 
             var afiliadoCuilTitular = <portlet:namespace />trimValue('afiliado_cuil_titular');
-            var afiliadoInte = <portlet:namespace />trimValue('afiliado_inte');
-            var afiliadoIdSeccional = <portlet:namespace />trimValue('afiliado_id_seccional');
+            var afiliadoInt = <portlet:namespace />trimValue('afiliado_int');
 
-            if (afiliadoCuilTitular == '' || afiliadoInte == '') {
+            if (afiliadoCuilTitular == '' || afiliadoInt == '') {
                 alert('Debe seleccionar un afiliado.');
                 jQuery('#<portlet:namespace />cuil').focus();
                 return;
             }
-
-            if (afiliadoIdSeccional == '') {
-                alert('Debe informar seccional del afiliado.');
-                jQuery('#<portlet:namespace />seccional').focus();
-                return;
-            }
         } else {
-            <portlet:namespace />limpiarAfiliadoRequerimientoSiExiste();
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
+        }
+
+        if (cargoTercerizadora > 0 && <portlet:namespace />trimValue('requerimiento_id_tercerizadora') == '') {
+            alert('Debe seleccionar un afiliado con tercerizadora para informar cargo tercerizadora.');
+            jQuery('#<portlet:namespace />cuil').focus();
+            return;
         }
 
         submitForm(form);
@@ -822,11 +733,11 @@ try {
             <portlet:namespace />actualizarVisibilidadAfiliado(true);
         });
 
-        jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />id_seccional, #<portlet:namespace />seccional').change(function() {
+        jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />id_tercerizadora').change(function() {
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
         });
 
-        jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />id_seccional, #<portlet:namespace />seccional').keyup(function() {
+        jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />id_tercerizadora').keyup(function() {
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
         });
     });

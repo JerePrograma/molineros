@@ -4,58 +4,43 @@ import ar.com.ospim.compras.WebKeysCompras;
 
 public class RequerimientoCompraSector {
 
-    private int idSector;
-    private String codigo;
+    private Integer id;
     private String descripcion;
-    private boolean requiereAfiliado;
-    private boolean activo;
+    private Boolean requiereAfiliado;
 
     public RequerimientoCompraSector() {
-        this.activo = true;
+        this.requiereAfiliado = Boolean.FALSE;
     }
 
-    public RequerimientoCompraSector(int idSector) {
+    public RequerimientoCompraSector(Integer id) {
         this();
-        this.idSector = idSector;
+        this.id = id;
     }
 
-    public RequerimientoCompraSector(int idSector, String codigo, String descripcion, boolean requiereAfiliado) {
-        this(idSector);
-        this.codigo = codigo;
+    public RequerimientoCompraSector(Integer id, String descripcion, Boolean requiereAfiliado) {
+        this.id = id;
         this.descripcion = descripcion;
-        this.requiereAfiliado = requiereAfiliado;
+        this.requiereAfiliado = requiereAfiliado != null ? requiereAfiliado : Boolean.FALSE;
+    }
+
+    public Integer getId() {
+        return id;
     }
 
     public int getIdSector() {
-        return idSector;
-    }
-
-    public int getId() {
-        return idSector;
+        return id != null ? id.intValue() : 0;
     }
 
     public String getIdSectorString() {
-        return idSector > 0 ? String.valueOf(idSector) : "";
+        return id != null && id.intValue() > 0 ? String.valueOf(id) : "";
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public void setIdSector(int idSector) {
-        this.idSector = idSector;
-    }
-
-    public void setId(int id) {
-        this.idSector = id;
-    }
-
-    public String getCodigo() {
-        return codigo;
-    }
-
-    public String getCodigoVisible() {
-        return codigo != null ? codigo : "";
-    }
-
-    public void setCodigo(String codigo) {
-        this.codigo = WebKeysCompras.trimToNull(codigo);
+        this.id = idSector > 0 ? Integer.valueOf(idSector) : null;
     }
 
     public String getDescripcion() {
@@ -70,31 +55,23 @@ public class RequerimientoCompraSector {
         this.descripcion = WebKeysCompras.trimToNull(descripcion);
     }
 
-    public boolean isRequiereAfiliado() {
+    public Boolean getRequiereAfiliado() {
         return requiereAfiliado;
     }
 
-    public boolean getRequiereAfiliado() {
-        return requiereAfiliado;
+    public boolean isRequiereAfiliado() {
+        return Boolean.TRUE.equals(requiereAfiliado);
     }
 
     public String getRequiereAfiliadoDescripcion() {
-        return WebKeysCompras.getBooleanDescripcion(Boolean.valueOf(requiereAfiliado));
+        return WebKeysCompras.getBooleanDescripcion(requiereAfiliado);
+    }
+
+    public void setRequiereAfiliado(Boolean requiereAfiliado) {
+        this.requiereAfiliado = requiereAfiliado != null ? requiereAfiliado : Boolean.FALSE;
     }
 
     public void setRequiereAfiliado(boolean requiereAfiliado) {
-        this.requiereAfiliado = requiereAfiliado;
-    }
-
-    public boolean isActivo() {
-        return activo;
-    }
-
-    public boolean getActivo() {
-        return activo;
-    }
-
-    public void setActivo(boolean activo) {
-        this.activo = activo;
+        this.requiereAfiliado = Boolean.valueOf(requiereAfiliado);
     }
 }

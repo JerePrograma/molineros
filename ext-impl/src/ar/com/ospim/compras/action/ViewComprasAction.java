@@ -10,6 +10,9 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.service.BusquedaRequerimientoCompraServiceUtil;
+
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.struts.PortletAction;
@@ -22,7 +25,7 @@ public class ViewComprasAction extends PortletAction {
                               PortletConfig portletConfig, ActionRequest actionRequest,
                               ActionResponse actionResponse) throws Exception {
 
-        setForward(actionRequest, "portlet.compras.view");
+        setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_VIEW);
     }
 
     public ActionForward render(ActionMapping mapping, ActionForm form,
@@ -30,10 +33,24 @@ public class ViewComprasAction extends PortletAction {
                                 RenderResponse renderResponse) throws Exception {
 
         try {
-            return mapping.findForward("portlet.compras.view");
+            cargarCatalogos(renderRequest);
+            return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_VIEW);
         } catch (Exception e) {
             _log.error(e);
-            return mapping.findForward("portlet.compras.error");
+            renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());
+            return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_ERROR);
         }
+    }
+
+    private void cargarCatalogos(RenderRequest request) throws Exception {
+        request.setAttribute(
+                WebKeysCompras.ESTADOS_REQUERIMIENTO,
+                BusquedaRequerimientoCompraServiceUtil.listarEstados()
+        );
+
+        request.setAttribute(
+                WebKeysCompras.SECTORES_REQUERIMIENTO,
+                BusquedaRequerimientoCompraServiceUtil.listarSectores()
+        );
     }
 }

@@ -7,14 +7,10 @@ response.setHeader("Cache-Control", "no-store");
 response.setHeader("Pragma", "no-cache");
 response.setDateHeader("Expires", 0);
 
-boolean showABMButtons = PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+boolean showABMButtons = user != null && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
 
-Calendar fechaDesde = Calendar.getInstance();
-fechaDesde.add(Calendar.MONTH, -1);
-
-Calendar fechaHasta = Calendar.getInstance();
-
-List<RequerimientoCompraSector> sectores = (List<RequerimientoCompraSector>) renderRequest.getAttribute(WebKeysCompras.SECTORES_REQUERIMIENTO_COMPRA);
+List<RequerimientoCompraSector> sectores =
+        (List<RequerimientoCompraSector>) renderRequest.getAttribute(WebKeysCompras.SECTORES_REQUERIMIENTO);
 
 if (sectores == null) {
     try {
@@ -24,7 +20,8 @@ if (sectores == null) {
     }
 }
 
-List<RequerimientoCompraEstado> estados = (List<RequerimientoCompraEstado>) renderRequest.getAttribute(WebKeysCompras.ESTADOS_REQUERIMIENTO_COMPRA);
+List<RequerimientoCompraEstado> estados =
+        (List<RequerimientoCompraEstado>) renderRequest.getAttribute(WebKeysCompras.ESTADOS_REQUERIMIENTO);
 
 if (estados == null) {
     try {
@@ -40,14 +37,21 @@ if (estados == null) {
 
     <table class="lfr-table">
         <tr>
-            <td><label>N&uacute;mero:</label></td>
+            <td><label>Estado:</label></td>
             <td>
-                <input id="<portlet:namespace />numero"
-                       name="<portlet:namespace />numero"
-                       size="10"
-                       maxlength="10"
-                       type="text"
-                       value="" />
+                <select id="<portlet:namespace />estado"
+                        name="<portlet:namespace />estado">
+                    <option value="0">Todos</option>
+
+                    <%
+                    for (int i = 0; i < estados.size(); i++) {
+                        RequerimientoCompraEstado estado = estados.get(i);
+                    %>
+                        <option value="<%= estado.getIdEstado() %>"><%= HtmlUtil.escape(estado.getDescripcionVisible()) %></option>
+                    <%
+                    }
+                    %>
+                </select>
             </td>
 
             <td><label>Sector:</label></td>
@@ -67,73 +71,14 @@ if (estados == null) {
                 </select>
             </td>
 
-            <td><label>Estado:</label></td>
+            <td><label>Recupero:</label></td>
             <td>
-                <select id="<portlet:namespace />estado"
-                        name="<portlet:namespace />estado">
-                    <option value="0">Todos</option>
-
-                    <%
-                    for (int i = 0; i < estados.size(); i++) {
-                        RequerimientoCompraEstado estado = estados.get(i);
-                    %>
-                        <option value="<%= estado.getIdEstado() %>"><%= HtmlUtil.escape(estado.getDescripcionVisible()) %></option>
-                    <%
-                    }
-                    %>
+                <select id="<portlet:namespace />recupero"
+                        name="<portlet:namespace />recupero">
+                    <option value="">Todos</option>
+                    <option value="true">SI</option>
+                    <option value="false">NO</option>
                 </select>
-            </td>
-        </tr>
-
-        <tr>
-            <td colspan="6">&nbsp;</td>
-        </tr>
-
-        <tr>
-            <td><label>Fecha solicitud desde:</label></td>
-            <td>
-                <liferay-ui:input-date
-                    dayParam="fechaDesdeDia"
-                    dayValue="<%= fechaDesde.get(Calendar.DATE) %>"
-                    dayNullable="<%= true %>"
-                    monthParam="fechaDesdeMes"
-                    monthValue="<%= fechaDesde.get(Calendar.MONTH) %>"
-                    monthNullable="<%= true %>"
-                    yearParam="fechaDesdeAnio"
-                    yearValue="<%= fechaDesde.get(Calendar.YEAR) %>"
-                    yearNullable="<%= true %>"
-                    yearRangeStart="<%= fechaDesde.get(Calendar.YEAR) - 5 %>"
-                    yearRangeEnd="<%= fechaDesde.get(Calendar.YEAR) + 2 %>"
-                    firstDayOfWeek="<%= fechaDesde.getFirstDayOfWeek() - 1 %>"
-                    disabled="<%= false %>" />
-            </td>
-
-            <td><label>Fecha solicitud hasta:</label></td>
-            <td>
-                <liferay-ui:input-date
-                    dayParam="fechaHastaDia"
-                    dayValue="<%= fechaHasta.get(Calendar.DATE) %>"
-                    dayNullable="<%= true %>"
-                    monthParam="fechaHastaMes"
-                    monthValue="<%= fechaHasta.get(Calendar.MONTH) %>"
-                    monthNullable="<%= true %>"
-                    yearParam="fechaHastaAnio"
-                    yearValue="<%= fechaHasta.get(Calendar.YEAR) %>"
-                    yearNullable="<%= true %>"
-                    yearRangeStart="<%= fechaHasta.get(Calendar.YEAR) - 5 %>"
-                    yearRangeEnd="<%= fechaHasta.get(Calendar.YEAR) + 2 %>"
-                    firstDayOfWeek="<%= fechaHasta.getFirstDayOfWeek() - 1 %>"
-                    disabled="<%= false %>" />
-            </td>
-
-            <td><label>Solicitante:</label></td>
-            <td>
-                <input id="<portlet:namespace />solicitante_usr"
-                       name="<portlet:namespace />solicitante_usr"
-                       size="22"
-                       maxlength="75"
-                       type="text"
-                       value="" />
             </td>
         </tr>
 
@@ -154,20 +99,20 @@ if (estados == null) {
 
             <td><label>Integrante:</label></td>
             <td>
-                <input id="<portlet:namespace />afiliado_inte"
-                       name="<portlet:namespace />afiliado_inte"
+                <input id="<portlet:namespace />afiliado_int"
+                       name="<portlet:namespace />afiliado_int"
                        size="8"
                        maxlength="8"
                        type="text"
                        value="" />
             </td>
 
-            <td><label>Tipo art&iacute;culo:</label></td>
+            <td><label>Tercerizadora:</label></td>
             <td>
-                <input id="<portlet:namespace />tipo_articulo"
-                       name="<portlet:namespace />tipo_articulo"
-                       size="22"
-                       maxlength="80"
+                <input id="<portlet:namespace />id_tercerizadora"
+                       name="<portlet:namespace />id_tercerizadora"
+                       size="10"
+                       maxlength="10"
                        type="text"
                        value="" />
             </td>
@@ -234,7 +179,7 @@ if (estados == null) {
         var cuil = jQuery.trim(jQuery('#<portlet:namespace />afiliado_cuil_titular').val());
 
         if (cuil.length > 0 && cuil.length == 11 && typeof validarCuil == "function") {
-            if (!validarCuil(cuil, "CUIL titular inv&aacute;lido.")) {
+            if (!validarCuil(cuil, "CUIL titular invalido.")) {
                 jQuery('#<portlet:namespace />afiliado_cuil_titular').focus();
                 return false;
             }
@@ -248,38 +193,24 @@ if (estados == null) {
             return false;
         }
 
-        var numero = jQuery('#<portlet:namespace />numero').val();
-        var fechaDesdeDia = jQuery('#<portlet:namespace />fechaDesdeDia').val();
-        var fechaDesdeMes = jQuery('#<portlet:namespace />fechaDesdeMes').val();
-        var fechaDesdeAnio = jQuery('#<portlet:namespace />fechaDesdeAnio').val();
-        var fechaHastaDia = jQuery('#<portlet:namespace />fechaHastaDia').val();
-        var fechaHastaMes = jQuery('#<portlet:namespace />fechaHastaMes').val();
-        var fechaHastaAnio = jQuery('#<portlet:namespace />fechaHastaAnio').val();
-        var sector_id = jQuery('#<portlet:namespace />sector_id').val();
         var estado = jQuery('#<portlet:namespace />estado').val();
-        var solicitante_usr = jQuery('#<portlet:namespace />solicitante_usr').val();
+        var sector_id = jQuery('#<portlet:namespace />sector_id').val();
         var afiliado_cuil_titular = jQuery('#<portlet:namespace />afiliado_cuil_titular').val();
-        var afiliado_inte = jQuery('#<portlet:namespace />afiliado_inte').val();
-        var tipo_articulo = jQuery('#<portlet:namespace />tipo_articulo').val();
+        var afiliado_int = jQuery('#<portlet:namespace />afiliado_int').val();
+        var id_tercerizadora = jQuery('#<portlet:namespace />id_tercerizadora').val();
+        var recupero = jQuery('#<portlet:namespace />recupero').val();
         var texto = jQuery('#<portlet:namespace />texto').val();
 
         jQuery('#<portlet:namespace />buscando').show();
 
         var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" />&struts_action=/compras/buscar_requerimientos' +
-            '&numero=' + numero +
-            '&fechaDesdeDia=' + fechaDesdeDia +
-            '&fechaDesdeMes=' + fechaDesdeMes +
-            '&fechaDesdeAnio=' + fechaDesdeAnio +
-            '&fechaHastaDia=' + fechaHastaDia +
-            '&fechaHastaMes=' + fechaHastaMes +
-            '&fechaHastaAnio=' + fechaHastaAnio +
-            '&sector_id=' + sector_id +
             '&estado=' + estado +
-            '&solicitante_usr=' + encodeURI(solicitante_usr) +
-            '&afiliado_cuil_titular=' + afiliado_cuil_titular +
-            '&afiliado_inte=' + afiliado_inte +
-            '&tipo_articulo=' + encodeURI(tipo_articulo) +
-            '&texto=' + encodeURI(texto);
+            '&sector_id=' + sector_id +
+            '&afiliado_cuil_titular=' + encodeURIComponent(afiliado_cuil_titular) +
+            '&afiliado_int=' + afiliado_int +
+            '&id_tercerizadora=' + id_tercerizadora +
+            '&recupero=' + recupero +
+            '&texto=' + encodeURIComponent(texto);
 
         jQuery('#<portlet:namespace />busquedaRequerimientosDiv').load(url, function() {
             jQuery('#<portlet:namespace />buscando').hide();
@@ -297,7 +228,7 @@ if (estados == null) {
         <portlet:namespace />buscarRequerimientos();
     });
 
-    jQuery('#<portlet:namespace />numero, #<portlet:namespace />solicitante_usr, #<portlet:namespace />afiliado_cuil_titular, #<portlet:namespace />afiliado_inte, #<portlet:namespace />tipo_articulo, #<portlet:namespace />texto').keypress(function(event) {
+    jQuery('#<portlet:namespace />afiliado_cuil_titular, #<portlet:namespace />afiliado_int, #<portlet:namespace />id_tercerizadora, #<portlet:namespace />texto').keypress(function(event) {
         if (event.which == 13) {
             <portlet:namespace />buscarRequerimientos();
             return false;

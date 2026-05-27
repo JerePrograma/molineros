@@ -17,10 +17,13 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
     public static final String ID_REQUERIMIENTO_COMPRA_EN_EDICION = "id_requerimiento_compra";
 
-    public static final String ESTADOS_REQUERIMIENTO_COMPRA = "ESTADOS_REQUERIMIENTO_COMPRA";
-    public static final String SECTORES_REQUERIMIENTO_COMPRA = "SECTORES_REQUERIMIENTO_COMPRA";
+    public static final String ESTADOS_REQUERIMIENTO = "ESTADOS_REQUERIMIENTO";
+    public static final String SECTORES_REQUERIMIENTO = "SECTORES_REQUERIMIENTO";
+    public static final String ESTADOS_REQUERIMIENTO_COMPRA = ESTADOS_REQUERIMIENTO;
+    public static final String SECTORES_REQUERIMIENTO_COMPRA = SECTORES_REQUERIMIENTO;
 
     public static final String ERROR_PARA_ALERT = "ERROR_PARA_ALERT";
+    public static final String SOLO_LECTURA_ATTR = "REQUERIMIENTO_COMPRA_SOLO_LECTURA";
 
     public static final String FORWARD_COMPRAS_VIEW = "portlet.compras.view";
     public static final String FORWARD_COMPRAS_ERROR = "portlet.compras.error";
@@ -29,20 +32,15 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String FORWARD_COMPRAS_VER_REQUERIMIENTO = "portlet.compras.ver_requerimiento";
 
     public static final int ESTADO_BORRADOR = 1;
-    public static final int ESTADO_SOLICITADO = 2;
-    public static final int ESTADO_ANULADO = 9;
-
-    public static final String ESTADO_CODIGO_BORRADOR = "BORRADOR";
-    public static final String ESTADO_CODIGO_SOLICITADO = "SOLICITADO";
-    public static final String ESTADO_CODIGO_ANULADO = "ANULADO";
-    public static final String SOLO_LECTURA_ATTR = "REQUERIMIENTO_COMPRA_SOLO_LECTURA";
+    public static final int ESTADO_COTIZADO = 2;
+    public static final int ESTADO_ANULADO = 3;
 
     public static String getEstadoDescripcion(int estado) {
         switch (estado) {
             case ESTADO_BORRADOR:
                 return "Borrador";
-            case ESTADO_SOLICITADO:
-                return "Solicitado";
+            case ESTADO_COTIZADO:
+                return "Cotizado";
             case ESTADO_ANULADO:
                 return "Anulado";
             default:
@@ -50,38 +48,39 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         }
     }
 
-    public static String getEstadoCodigo(int estado) {
-        switch (estado) {
-            case ESTADO_BORRADOR:
-                return ESTADO_CODIGO_BORRADOR;
-            case ESTADO_SOLICITADO:
-                return ESTADO_CODIGO_SOLICITADO;
-            case ESTADO_ANULADO:
-                return ESTADO_CODIGO_ANULADO;
-            default:
-                return "";
-        }
+    public static boolean esEstadoValido(int estado) {
+        return esBorrador(estado) || esCotizado(estado) || esAnulado(estado);
     }
 
-    public static boolean esEstadoValido(int estado) {
-        return estado == ESTADO_BORRADOR
-                || estado == ESTADO_SOLICITADO
-                || estado == ESTADO_ANULADO;
+    public static boolean esBorrador(int estado) {
+        return estado == ESTADO_BORRADOR;
+    }
+
+    public static boolean esCotizado(int estado) {
+        return estado == ESTADO_COTIZADO;
+    }
+
+    public static boolean esAnulado(int estado) {
+        return estado == ESTADO_ANULADO;
+    }
+
+    public static boolean puedeEditar(int estado) {
+        return esBorrador(estado);
     }
 
     public static boolean esEditable(int estado) {
-        return estado == ESTADO_BORRADOR;
+        return puedeEditar(estado);
     }
 
-    public static boolean puedeSolicitar(int estado) {
-        return estado == ESTADO_BORRADOR;
+    public static boolean puedeCotizar(int estado) {
+        return esBorrador(estado);
     }
 
     public static boolean puedeAnular(int estado) {
-        return estado == ESTADO_BORRADOR || estado == ESTADO_SOLICITADO;
+        return esBorrador(estado) || esCotizado(estado);
     }
 
-    public static boolean puedeCambiarEstado(int estadoActual, int estadoNuevo) {
+    public static boolean validarTransicionEstado(int estadoActual, int estadoNuevo) {
         if (!esEstadoValido(estadoActual) || !esEstadoValido(estadoNuevo)) {
             return false;
         }
@@ -90,19 +89,19 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             return true;
         }
 
-        if (estadoActual == ESTADO_ANULADO) {
+        if (esAnulado(estadoActual)) {
             return false;
         }
 
-        if (estadoNuevo == ESTADO_ANULADO) {
+        if (esAnulado(estadoNuevo)) {
             return puedeAnular(estadoActual);
         }
 
-        if (estadoActual == ESTADO_BORRADOR && estadoNuevo == ESTADO_SOLICITADO) {
-            return true;
-        }
+        return esBorrador(estadoActual) && esCotizado(estadoNuevo);
+    }
 
-        return false;
+    public static boolean puedeCambiarEstado(int estadoActual, int estadoNuevo) {
+        return validarTransicionEstado(estadoActual, estadoNuevo);
     }
 
     public static String getBooleanDescripcion(Boolean value) {

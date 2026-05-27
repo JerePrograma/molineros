@@ -6965,7 +6965,16 @@
 
 		<action
 				path="/compras/view"
-				forward="portlet.compras.view" />
+				type="ar.com.ospim.compras.action.ViewComprasAction">
+
+			<forward
+					name="portlet.compras.view"
+					path="portlet.compras.view" />
+
+			<forward
+					name="portlet.compras.error"
+					path="portlet.compras.error" />
+		</action>
 
 		<action
 				path="/compras/buscar_requerimientos"
@@ -7034,6 +7043,17 @@
 					name="portlet.compras.error"
 					path="portlet.compras.error" />
 		</action>
+
+		<action path="/compras/buscar_afiliados"
+		        type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
+			<forward name="portlet.afiliados.result.search.popup"
+			         path="portlet.afiliados.result.search.popup" />
+			<forward name="portlet.afiliados.error"
+			         path="portlet.afiliados.error" />
+		</action>
+
+		<action path="/compras/buscar_seccional"
+		        forward="portlet.seccional.view" />
     </action-mappings>
   
 </struts-config>

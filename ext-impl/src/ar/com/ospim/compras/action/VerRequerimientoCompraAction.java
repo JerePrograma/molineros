@@ -74,6 +74,7 @@ public class VerRequerimientoCompraAction extends PortletAction {
 
             renderRequest.setAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW, requerimiento);
             renderRequest.setAttribute(WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_VIEW, requerimiento.getDetalles());
+            renderRequest.setAttribute(WebKeysCompras.SOLO_LECTURA_ATTR, Boolean.TRUE);
         } catch (Exception e) {
             _log.error(e);
             renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());

@@ -1,8 +1,6 @@
 package ar.com.ospim.compras.action;
 
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -47,9 +45,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             User user = PortalUtil.getUser(actionRequest);
             String usuario = getUsuario(user);
 
-            validarPermisoABM(user);
-
             if (Constants.ADD.equals(cmd) || Constants.UPDATE.equals(cmd)) {
+                validarPermisoABM(user);
+
                 RequerimientoCompra requerimiento = getRequerimientoFromRequest(actionRequest);
 
                 if (requerimiento.getIdRequerimientoCompra() > 0) {
@@ -61,7 +59,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     requerimiento.setIdEstado(WebKeysCompras.ESTADO_BORRADOR);
                 }
 
-                prepararRequerimientoParaGuardar(requerimiento, user);
+                prepararRequerimientoParaGuardar(requerimiento);
                 validarCabecera(requerimiento);
 
                 idRequerimientoCompra =
@@ -76,6 +74,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             }
 
             if ("addItem".equals(cmd) || "updateItem".equals(cmd)) {
+                validarPermisoABM(user);
+
                 RequerimientoCompraDetalle detalle = getDetalleFromRequest(actionRequest);
 
                 validarRequerimientoEditable(detalle.getIdRequerimientoCompra());
@@ -92,10 +92,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             }
 
             if ("deleteItem".equals(cmd)) {
+                validarPermisoABM(user);
+
                 int idDetalle = getIdDetalleFromRequest(actionRequest);
 
                 if (idDetalle <= 0) {
-                    throw new Exception("Debe informar el renglon a borrar.");
+                    throw new Exception("Debe informar el detalle a borrar.");
                 }
 
                 if (idRequerimientoCompra <= 0) {
@@ -115,15 +117,21 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             }
 
             if (Constants.DELETE.equals(cmd)) {
+                validarPermisoAnular(user);
+
                 if (idRequerimientoCompra <= 0) {
-                    throw new Exception("Debe informar el requerimiento de compra a borrar.");
+                    throw new Exception("Debe informar el requerimiento de compra a anular.");
                 }
 
                 validarRequerimientoPuedeAnular(idRequerimientoCompra);
 
-                EditarRequerimientoCompraServiceUtil.borrarRequerimientoCompra(idRequerimientoCompra, usuario);
+                EditarRequerimientoCompraServiceUtil.cambiarEstado(
+                        idRequerimientoCompra,
+                        WebKeysCompras.ESTADO_ANULADO,
+                        usuario
+                );
 
-                SessionMessages.add(actionRequest, "requerimiento-compra-borrado");
+                SessionMessages.add(actionRequest, "requerimiento-compra-anulado");
                 setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_VIEW);
 
                 return;
@@ -170,7 +178,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     throw new Exception("No se encontro el requerimiento de compra informado.");
                 }
             } else {
-                requerimiento = crearRequerimientoNuevo(renderRequest);
+                requerimiento = new RequerimientoCompra();
             }
 
             cargarCatalogos(renderRequest);
@@ -196,29 +204,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 || "ver".equalsIgnoreCase(modo);
     }
 
-    private RequerimientoCompra crearRequerimientoNuevo(RenderRequest renderRequest) throws Exception {
-        RequerimientoCompra requerimiento = new RequerimientoCompra();
-
-        requerimiento.setFechaSolicitud(new Date());
-
-        User user = PortalUtil.getUser(renderRequest);
-
-        if (user != null) {
-            requerimiento.setSolicitanteUsr(user.getScreenName());
-            requerimiento.setSolicitanteNombre(user.getFullName());
-        }
-
-        return requerimiento;
-    }
-
     private void cargarCatalogos(RenderRequest request) throws Exception {
         request.setAttribute(
-                WebKeysCompras.ESTADOS_REQUERIMIENTO_COMPRA,
+                WebKeysCompras.ESTADOS_REQUERIMIENTO,
                 BusquedaRequerimientoCompraServiceUtil.listarEstados()
         );
 
         request.setAttribute(
-                WebKeysCompras.SECTORES_REQUERIMIENTO_COMPRA,
+                WebKeysCompras.SECTORES_REQUERIMIENTO,
                 BusquedaRequerimientoCompraServiceUtil.listarSectores()
         );
     }
@@ -243,6 +236,17 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
             throw new Exception("No posee permisos para administrar requerimientos de compras.");
+        }
+    }
+
+    private void validarPermisoAnular(User user) throws Exception {
+        if (user == null) {
+            throw new Exception("No se pudo determinar el usuario actual.");
+        }
+
+        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS)
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
+            throw new Exception("No posee permisos para anular requerimientos de compras.");
         }
     }
 
@@ -278,21 +282,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
     }
 
-    private void prepararRequerimientoParaGuardar(RequerimientoCompra requerimiento, User user) throws Exception {
+    private void prepararRequerimientoParaGuardar(RequerimientoCompra requerimiento) throws Exception {
         if (requerimiento == null) {
             return;
-        }
-
-        if (requerimiento.getFechaSolicitud() == null) {
-            requerimiento.setFechaSolicitud(new Date());
-        }
-
-        if (WebKeysCompras.isEmpty(requerimiento.getSolicitanteUsr()) && user != null) {
-            requerimiento.setSolicitanteUsr(user.getScreenName());
-        }
-
-        if (WebKeysCompras.isEmpty(requerimiento.getSolicitanteNombre()) && user != null) {
-            requerimiento.setSolicitanteNombre(user.getFullName());
         }
 
         if (requerimiento.getIdSector() != null && requerimiento.getIdSector().intValue() > 0) {
@@ -300,7 +292,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     BusquedaRequerimientoCompraServiceUtil.getSector(requerimiento.getIdSector().intValue());
 
             if (sector != null) {
-                requerimiento.setSectorCodigo(sector.getCodigo());
                 requerimiento.setSectorDescripcion(sector.getDescripcion());
                 requerimiento.setRequiereAfiliado(sector.isRequiereAfiliado());
             }
@@ -313,15 +304,25 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         if (requerimiento.getIdSector() == null || requerimiento.getIdSector().intValue() <= 0) {
-            throw new Exception("Debe informar el sector solicitante.");
+            throw new Exception("Debe informar el sector.");
         }
 
-        if (WebKeysCompras.isEmpty(requerimiento.getSolicitanteUsr())) {
-            throw new Exception("Debe informar el solicitante.");
+        validarPorcentaje(requerimiento.getCargoOspim(), "Cargo OSPIM");
+        validarPorcentaje(requerimiento.getCargoTercerizadora(), "Cargo tercerizadora");
+
+        int cargoOspim = requerimiento.getCargoOspim() != null ? requerimiento.getCargoOspim().intValue() : 0;
+        int cargoTercerizadora = requerimiento.getCargoTercerizadora() != null
+                ? requerimiento.getCargoTercerizadora().intValue()
+                : 0;
+
+        if (cargoOspim + cargoTercerizadora > 100) {
+            throw new Exception("La suma de cargos no puede superar 100.");
         }
 
-        if (WebKeysCompras.isEmpty(requerimiento.getDescripcion())) {
-            throw new Exception("Debe informar la descripcion del requerimiento.");
+        if (cargoTercerizadora > 0
+                && (requerimiento.getIdTercerizadora() == null
+                || requerimiento.getIdTercerizadora().intValue() <= 0)) {
+            throw new Exception("Debe informar la tercerizadora cuando su cargo es mayor a cero.");
         }
 
         if (requerimiento.isRequiereAfiliado() && !requerimiento.tieneAfiliadoInformado()) {
@@ -331,7 +332,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
     private void validarDetalle(RequerimientoCompraDetalle detalle) throws Exception {
         if (detalle == null) {
-            throw new Exception("Debe informar el renglon del requerimiento.");
+            throw new Exception("Debe informar el detalle del requerimiento.");
         }
 
         if (detalle.getIdRequerimientoCompra() <= 0) {
@@ -342,7 +343,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             throw new Exception("Debe informar el articulo.");
         }
 
-        if (detalle.getCantidad() == null || detalle.getCantidad().compareTo(BigDecimal.ZERO) <= 0) {
+        if (detalle.getCantidad() == null || detalle.getCantidad().intValue() <= 0) {
             throw new Exception("La cantidad debe ser mayor a cero.");
         }
 
@@ -357,19 +358,18 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
     }
 
+    private void validarPorcentaje(Integer value, String label) throws Exception {
+        int parsed = value != null ? value.intValue() : 0;
+
+        if (parsed < 0 || parsed > 100) {
+            throw new Exception(label + " debe estar entre 0 y 100.");
+        }
+    }
+
     private RequerimientoCompra getRequerimientoFromRequest(ActionRequest request) {
         RequerimientoCompra requerimiento = new RequerimientoCompra();
 
         requerimiento.setIdRequerimientoCompra(ParamUtil.getInteger(request, "id_requerimiento_compra", 0));
-        requerimiento.setNumero(ParamUtil.getInteger(request, "numero", 0));
-
-        int idEstado = ParamUtil.getInteger(request, "id_estado", WebKeysCompras.ESTADO_BORRADOR);
-
-        if (idEstado <= 0) {
-            idEstado = ParamUtil.getInteger(request, "estado", WebKeysCompras.ESTADO_BORRADOR);
-        }
-
-        requerimiento.setIdEstado(idEstado);
 
         int idSector = ParamUtil.getInteger(request, "id_sector", 0);
 
@@ -378,20 +378,18 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         requerimiento.setIdSector(idSector > 0 ? Integer.valueOf(idSector) : null);
-
-        requerimiento.setRequiereAfiliado(ParamUtil.getBoolean(request, "requiere_afiliado", false));
-        requerimiento.setFechaSolicitud(parseDate(ParamUtil.getString(request, "fecha_solicitud", null)));
-
-        requerimiento.setSolicitanteUsr(ParamUtil.getString(request, "solicitante_usr", null));
-        requerimiento.setSolicitanteNombre(ParamUtil.getString(request, "solicitante_nombre", null));
-
         requerimiento.setAfiliadoCuilTitular(ParamUtil.getString(request, "afiliado_cuil_titular", null));
 
-        int afiliadoInte = ParamUtil.getInteger(request, "afiliado_inte", -1);
+        int afiliadoInt = ParamUtil.getInteger(request, "afiliado_int", -1);
+        requerimiento.setAfiliadoInt(afiliadoInt >= 0 ? Integer.valueOf(afiliadoInt) : null);
 
-        requerimiento.setAfiliadoInte(afiliadoInte >= 0 ? Integer.valueOf(afiliadoInte) : null);
+        requerimiento.setCargoOspim(Integer.valueOf(ParamUtil.getInteger(request, "cargo_ospim", 0)));
+        requerimiento.setCargoTercerizadora(Integer.valueOf(ParamUtil.getInteger(request, "cargo_tercerizadora", 0)));
 
-        requerimiento.setDescripcion(ParamUtil.getString(request, "descripcion", null));
+        int idTercerizadora = ParamUtil.getInteger(request, "id_tercerizadora", 0);
+        requerimiento.setIdTercerizadora(idTercerizadora > 0 ? Integer.valueOf(idTercerizadora) : null);
+
+        requerimiento.setRecupero(ParamUtil.getBoolean(request, "recupero", false));
         requerimiento.setObservaciones(ParamUtil.getString(request, "observaciones", null));
 
         return requerimiento;
@@ -402,13 +400,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         int idDetalle = getIdDetalleFromRequest(request);
 
-        detalle.setIdRequerimientoDetalle(idDetalle);
+        detalle.setId(idDetalle > 0 ? Integer.valueOf(idDetalle) : null);
         detalle.setIdRequerimientoCompra(ParamUtil.getInteger(request, "id_requerimiento_compra", 0));
-        detalle.setRenglon(ParamUtil.getInteger(request, "renglon", 0));
-        detalle.setTipoArticulo(ParamUtil.getString(request, "tipo_articulo", null));
         detalle.setArticulo(ParamUtil.getString(request, "articulo", null));
-        detalle.setCantidad(parseBigDecimal(ParamUtil.getString(request, "cantidad", "1")));
-        detalle.setUnidadMedida(ParamUtil.getString(request, "unidad_medida", null));
+        detalle.setCantidad(Integer.valueOf(ParamUtil.getInteger(request, "cantidad", 1)));
 
         detalle.setPrecioUnitarioEstimado(parseBigDecimalNullable(
                 ParamUtil.getString(request, "precio_unitario_estimado", null)));
@@ -422,33 +417,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
     }
 
     private int getIdDetalleFromRequest(ActionRequest request) {
-        return ParamUtil.getInteger(request, "id_requerimiento_detalle", 0);
-    }
-
-    private Date parseDate(String value) {
-        if (WebKeysCompras.isEmpty(value)) {
-            return null;
-        }
-
-        String clean = value.trim();
-
-        try {
-            return new SimpleDateFormat("dd/MM/yyyy").parse(clean);
-        } catch (Exception ignored) {
-        }
-
-        try {
-            return new SimpleDateFormat("yyyy-MM-dd").parse(clean);
-        } catch (Exception ignored) {
-        }
-
-        return null;
-    }
-
-    private BigDecimal parseBigDecimal(String value) {
-        BigDecimal parsed = parseBigDecimalNullable(value);
-
-        return parsed != null ? parsed : BigDecimal.ZERO;
+        return ParamUtil.getInteger(request, "id_detalle", 0);
     }
 
     private BigDecimal parseBigDecimalNullable(String value) {

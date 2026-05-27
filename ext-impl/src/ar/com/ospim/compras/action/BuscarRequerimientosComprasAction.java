@@ -1,7 +1,5 @@
 package ar.com.ospim.compras.action;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 import javax.portlet.ActionRequest;
@@ -34,24 +32,15 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
     private static Log _log = LogFactoryUtil.getLog(BuscarRequerimientosComprasAction.class);
 
     private static final String[] SEARCH_PARAMS = new String[] {
-            "numero",
-            "fechaDesde",
-            "fechaDesdeDia",
-            "fechaDesdeMes",
-            "fechaDesdeAnio",
-            "fechaHasta",
-            "fechaHastaDia",
-            "fechaHastaMes",
-            "fechaHastaAnio",
-            "id_sector",
-            "sector_id",
             "id_estado",
             "estado",
-            "solicitante_usr",
-            "texto",
+            "id_sector",
+            "sector_id",
             "afiliado_cuil_titular",
-            "afiliado_inte",
-            "tipo_articulo"
+            "afiliado_int",
+            "id_tercerizadora",
+            "recupero",
+            "texto"
     };
 
     public void processAction(ActionMapping mapping, ActionForm form,
@@ -124,12 +113,12 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
 
     private void cargarCatalogos(RenderRequest request) throws Exception {
         request.setAttribute(
-                WebKeysCompras.ESTADOS_REQUERIMIENTO_COMPRA,
+                WebKeysCompras.ESTADOS_REQUERIMIENTO,
                 BusquedaRequerimientoCompraServiceUtil.listarEstados()
         );
 
         request.setAttribute(
-                WebKeysCompras.SECTORES_REQUERIMIENTO_COMPRA,
+                WebKeysCompras.SECTORES_REQUERIMIENTO,
                 BusquedaRequerimientoCompraServiceUtil.listarSectores()
         );
     }
@@ -148,13 +137,13 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
     private RequerimientoCompraFiltro getFiltroFromRequest(RenderRequest request) {
         RequerimientoCompraFiltro filtro = new RequerimientoCompraFiltro();
 
-        int numero = ParamUtil.getInteger(request, "numero", 0);
-        if (numero > 0) {
-            filtro.setNumero(Integer.valueOf(numero));
+        int idEstado = ParamUtil.getInteger(request, "id_estado", 0);
+        if (idEstado <= 0) {
+            idEstado = ParamUtil.getInteger(request, "estado", 0);
         }
-
-        filtro.setFechaDesde(parseInputDate(request, "fechaDesde"));
-        filtro.setFechaHasta(parseInputDate(request, "fechaHasta"));
+        if (idEstado > 0) {
+            filtro.setIdEstado(Integer.valueOf(idEstado));
+        }
 
         int idSector = ParamUtil.getInteger(request, "id_sector", 0);
         if (idSector <= 0) {
@@ -164,76 +153,25 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             filtro.setIdSector(Integer.valueOf(idSector));
         }
 
-        int idEstado = ParamUtil.getInteger(request, "id_estado", 0);
-        if (idEstado <= 0) {
-            idEstado = ParamUtil.getInteger(request, "estado", 0);
-        }
-        if (idEstado > 0) {
-            filtro.setIdEstado(Integer.valueOf(idEstado));
-        }
-
-        filtro.setSolicitanteUsr(ParamUtil.getString(request, "solicitante_usr", null));
-        filtro.setTexto(ParamUtil.getString(request, "texto", null));
         filtro.setAfiliadoCuilTitular(ParamUtil.getString(request, "afiliado_cuil_titular", null));
 
-        int afiliadoInte = ParamUtil.getInteger(request, "afiliado_inte", -1);
-        if (afiliadoInte >= 0) {
-            filtro.setAfiliadoInte(Integer.valueOf(afiliadoInte));
+        int afiliadoInt = ParamUtil.getInteger(request, "afiliado_int", -1);
+        if (afiliadoInt >= 0) {
+            filtro.setAfiliadoInt(Integer.valueOf(afiliadoInt));
         }
 
-        filtro.setTipoArticulo(ParamUtil.getString(request, "tipo_articulo", null));
+        int idTercerizadora = ParamUtil.getInteger(request, "id_tercerizadora", 0);
+        if (idTercerizadora > 0) {
+            filtro.setIdTercerizadora(Integer.valueOf(idTercerizadora));
+        }
+
+        String recupero = ParamUtil.getString(request, "recupero", null);
+        if (!WebKeysCompras.isEmpty(recupero)) {
+            filtro.setRecupero(Boolean.valueOf("true".equalsIgnoreCase(recupero) || "1".equals(recupero)));
+        }
+
+        filtro.setTexto(ParamUtil.getString(request, "texto", null));
 
         return filtro;
-    }
-
-    private Date parseInputDate(RenderRequest request, String prefix) {
-        String value = ParamUtil.getString(request, prefix, null);
-        Date parsed = parseDate(value);
-
-        if (parsed != null) {
-            return parsed;
-        }
-
-        String dia = ParamUtil.getString(request, prefix + "Dia");
-        String mes = ParamUtil.getString(request, prefix + "Mes");
-        String anio = ParamUtil.getString(request, prefix + "Anio");
-
-        try {
-            if (WebKeysCompras.isEmpty(dia)
-                    || WebKeysCompras.isEmpty(mes)
-                    || WebKeysCompras.isEmpty(anio)) {
-                return null;
-            }
-
-            int mesInt = Integer.parseInt(mes);
-
-            if (mesInt >= 0 && mesInt <= 11) {
-                mesInt = mesInt + 1;
-            }
-
-            return new SimpleDateFormat("dd/MM/yyyy").parse(dia + "/" + mesInt + "/" + anio);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private Date parseDate(String value) {
-        if (WebKeysCompras.isEmpty(value)) {
-            return null;
-        }
-
-        String clean = value.trim();
-
-        try {
-            return new SimpleDateFormat("dd/MM/yyyy").parse(clean);
-        } catch (Exception ignored) {
-        }
-
-        try {
-            return new SimpleDateFormat("yyyy-MM-dd").parse(clean);
-        } catch (Exception ignored) {
-        }
-
-        return null;
     }
 }

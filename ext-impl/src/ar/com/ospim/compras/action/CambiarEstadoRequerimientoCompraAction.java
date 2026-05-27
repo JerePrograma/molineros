@@ -68,7 +68,7 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
                 actionResponse.setRenderParameter("id_requerimiento_compra", String.valueOf(idRequerimientoCompra));
             }
 
-            setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+            setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
         }
     }
 
@@ -76,7 +76,7 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
                                 PortletConfig portletConfig, RenderRequest renderRequest,
                                 RenderResponse renderResponse) throws Exception {
 
-        return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+        return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
     }
 
     private void validarParametrosCambioEstado(int idRequerimientoCompra, int estadoNuevo) throws Exception {
@@ -101,7 +101,7 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             throw new Exception("El requerimiento ya se encuentra anulado.");
         }
 
-        if (!WebKeysCompras.puedeCambiarEstado(requerimiento.getIdEstado(), estadoNuevo)) {
+        if (!WebKeysCompras.validarTransicionEstado(requerimiento.getEstado(), estadoNuevo)) {
             throw new Exception("La transicion de estado solicitada no es valida.");
         }
     }
@@ -120,8 +120,9 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             return;
         }
 
-        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
-            throw new Exception("No posee permisos para modificar el requerimiento de compra.");
+        if (estadoNuevo == WebKeysCompras.ESTADO_COTIZADO
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
+            throw new Exception("No posee permisos para cotizar requerimientos de compras.");
         }
     }
 }

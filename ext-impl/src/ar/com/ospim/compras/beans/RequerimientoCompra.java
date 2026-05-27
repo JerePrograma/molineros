@@ -10,29 +10,7 @@ import ar.com.ospim.util.DateUtils;
 
 public class RequerimientoCompra {
 
-    private int idRequerimientoCompra;
-    private int numero;
-
-    private int idEstado;
-    private String estadoCodigo;
-    private String estadoDescripcion;
-
-    private Integer idSector;
-    private String sectorCodigo;
-    private String sectorDescripcion;
-
-    private boolean requiereAfiliado;
-
-    private Date fechaSolicitud;
-
-    private String solicitanteUsr;
-    private String solicitanteNombre;
-
-    private String afiliadoCuilTitular;
-    private Integer afiliadoInte;
-
-    private String descripcion;
-    private String observaciones;
+    private Integer id;
 
     private Date altaFecha;
     private String altaUsr;
@@ -41,238 +19,61 @@ public class RequerimientoCompra {
     private Date bajaFecha;
     private String bajaUsr;
 
+    private String afiliadoCuilTitular;
+    private Integer afiliadoInt;
+
+    private Integer idSector;
+    private String sectorDescripcion;
+    private Boolean requiereAfiliado;
+
+    private Integer cargoOspim;
+    private Integer cargoTercerizadora;
+    private Integer idTercerizadora;
+
+    private Boolean recupero;
+    private String observaciones;
+
+    private Integer idEstado;
+    private String estadoDescripcion;
+
     private List<RequerimientoCompraDetalle> detalles;
 
     public RequerimientoCompra() {
-        this.idEstado = WebKeysCompras.ESTADO_BORRADOR;
-        this.requiereAfiliado = false;
+        this.idEstado = Integer.valueOf(WebKeysCompras.ESTADO_BORRADOR);
+        this.requiereAfiliado = Boolean.FALSE;
+        this.cargoOspim = Integer.valueOf(0);
+        this.cargoTercerizadora = Integer.valueOf(0);
+        this.recupero = Boolean.FALSE;
         this.detalles = new ArrayList<RequerimientoCompraDetalle>();
     }
 
-    public RequerimientoCompra(int idRequerimientoCompra) {
+    public RequerimientoCompra(Integer id) {
         this();
-        this.idRequerimientoCompra = idRequerimientoCompra;
+        this.id = id;
+    }
+
+    public Integer getId() {
+        return id;
     }
 
     public int getIdRequerimientoCompra() {
-        return idRequerimientoCompra;
+        return id != null ? id.intValue() : 0;
+    }
+
+    public String getIdString() {
+        return id != null && id.intValue() > 0 ? String.valueOf(id) : "";
     }
 
     public String getIdRequerimientoCompraString() {
-        return idRequerimientoCompra > 0 ? String.valueOf(idRequerimientoCompra) : "";
+        return getIdString();
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public void setIdRequerimientoCompra(int idRequerimientoCompra) {
-        this.idRequerimientoCompra = idRequerimientoCompra;
-    }
-
-    public int getNumero() {
-        return numero;
-    }
-
-    public String getNumeroString() {
-        return numero > 0 ? String.valueOf(numero) : "";
-    }
-
-    public String getNumeroVisible() {
-        return numero > 0 ? String.valueOf(numero) : "Sin numero";
-    }
-
-    public void setNumero(int numero) {
-        this.numero = numero;
-    }
-
-    public int getIdEstado() {
-        return idEstado;
-    }
-
-    public int getEstado() {
-        return idEstado;
-    }
-
-    public void setIdEstado(int idEstado) {
-        this.idEstado = idEstado;
-    }
-
-    public void setEstado(int estado) {
-        this.idEstado = estado;
-    }
-
-    public String getEstadoCodigo() {
-        if (!WebKeysCompras.isEmpty(estadoCodigo)) {
-            return estadoCodigo;
-        }
-
-        return WebKeysCompras.getEstadoCodigo(idEstado);
-    }
-
-    public void setEstadoCodigo(String estadoCodigo) {
-        this.estadoCodigo = WebKeysCompras.trimToNull(estadoCodigo);
-    }
-
-    public String getEstadoDescripcion() {
-        if (!WebKeysCompras.isEmpty(estadoDescripcion)) {
-            return estadoDescripcion;
-        }
-
-        return WebKeysCompras.getEstadoDescripcion(idEstado);
-    }
-
-    public String getEstadoDescripcionVisible() {
-        String value = getEstadoDescripcion();
-        return value != null ? value : "";
-    }
-
-    public void setEstadoDescripcion(String estadoDescripcion) {
-        this.estadoDescripcion = WebKeysCompras.trimToNull(estadoDescripcion);
-    }
-
-    public Integer getIdSector() {
-        return idSector;
-    }
-
-    public Integer getSectorId() {
-        return idSector;
-    }
-
-    public String getIdSectorString() {
-        return idSector != null && idSector.intValue() > 0 ? String.valueOf(idSector) : "";
-    }
-
-    public void setIdSector(Integer idSector) {
-        this.idSector = idSector;
-    }
-
-    public void setSectorId(Integer sectorId) {
-        this.idSector = sectorId;
-    }
-
-    public String getSectorCodigo() {
-        return sectorCodigo;
-    }
-
-    public String getSectorCodigoVisible() {
-        return sectorCodigo != null ? sectorCodigo : "";
-    }
-
-    public void setSectorCodigo(String sectorCodigo) {
-        this.sectorCodigo = WebKeysCompras.trimToNull(sectorCodigo);
-    }
-
-    public String getSectorDescripcion() {
-        return sectorDescripcion;
-    }
-
-    public String getSectorDescripcionVisible() {
-        return sectorDescripcion != null ? sectorDescripcion : "";
-    }
-
-    public void setSectorDescripcion(String sectorDescripcion) {
-        this.sectorDescripcion = WebKeysCompras.trimToNull(sectorDescripcion);
-    }
-
-    public boolean isRequiereAfiliado() {
-        return requiereAfiliado;
-    }
-
-    public boolean getRequiereAfiliado() {
-        return requiereAfiliado;
-    }
-
-    public String getRequiereAfiliadoDescripcion() {
-        return requiereAfiliado ? "SI" : "NO";
-    }
-
-    public void setRequiereAfiliado(boolean requiereAfiliado) {
-        this.requiereAfiliado = requiereAfiliado;
-    }
-
-    public Date getFechaSolicitud() {
-        return fechaSolicitud;
-    }
-
-    public String getFechaSolicitudAsString() {
-        return fechaSolicitud != null ? DateUtils.format(fechaSolicitud, DateUtils.SHORT) : "";
-    }
-
-    public void setFechaSolicitud(Date fechaSolicitud) {
-        this.fechaSolicitud = fechaSolicitud;
-    }
-
-    public String getSolicitanteUsr() {
-        return solicitanteUsr;
-    }
-
-    public void setSolicitanteUsr(String solicitanteUsr) {
-        this.solicitanteUsr = WebKeysCompras.trimToNull(solicitanteUsr);
-    }
-
-    public String getSolicitanteNombre() {
-        return solicitanteNombre;
-    }
-
-    public String getSolicitanteVisible() {
-        if (!WebKeysCompras.isEmpty(solicitanteNombre)) {
-            return solicitanteNombre;
-        }
-
-        return solicitanteUsr != null ? solicitanteUsr : "";
-    }
-
-    public void setSolicitanteNombre(String solicitanteNombre) {
-        this.solicitanteNombre = WebKeysCompras.trimToNull(solicitanteNombre);
-    }
-
-    public String getAfiliadoCuilTitular() {
-        return afiliadoCuilTitular;
-    }
-
-    public String getAfiliadoCuilTitularVisible() {
-        return afiliadoCuilTitular != null ? afiliadoCuilTitular : "";
-    }
-
-    public void setAfiliadoCuilTitular(String afiliadoCuilTitular) {
-        this.afiliadoCuilTitular = WebKeysCompras.trimToNull(afiliadoCuilTitular);
-    }
-
-    public Integer getAfiliadoInte() {
-        return afiliadoInte;
-    }
-
-    public String getAfiliadoInteString() {
-        return afiliadoInte != null ? String.valueOf(afiliadoInte) : "";
-    }
-
-    public void setAfiliadoInte(Integer afiliadoInte) {
-        this.afiliadoInte = afiliadoInte;
-    }
-
-    public boolean tieneAfiliadoInformado() {
-        return !WebKeysCompras.isEmpty(afiliadoCuilTitular) && afiliadoInte != null;
-    }
-
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public String getDescripcionVisible() {
-        return descripcion != null ? descripcion : "";
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = WebKeysCompras.trimToNull(descripcion);
-    }
-
-    public String getObservaciones() {
-        return observaciones;
-    }
-
-    public String getObservacionesVisible() {
-        return observaciones != null ? observaciones : "";
-    }
-
-    public void setObservaciones(String observaciones) {
-        this.observaciones = WebKeysCompras.trimToNull(observaciones);
+        this.id = idRequerimientoCompra > 0 ? Integer.valueOf(idRequerimientoCompra) : null;
     }
 
     public Date getAltaFecha() {
@@ -355,6 +156,193 @@ public class RequerimientoCompra {
         this.bajaUsr = WebKeysCompras.trimToNull(bajaUsr);
     }
 
+    public String getAfiliadoCuilTitular() {
+        return afiliadoCuilTitular;
+    }
+
+    public String getAfiliadoCuilTitularVisible() {
+        return afiliadoCuilTitular != null ? afiliadoCuilTitular : "";
+    }
+
+    public void setAfiliadoCuilTitular(String afiliadoCuilTitular) {
+        this.afiliadoCuilTitular = WebKeysCompras.trimToNull(afiliadoCuilTitular);
+    }
+
+    public Integer getAfiliadoInt() {
+        return afiliadoInt;
+    }
+
+    public String getAfiliadoIntString() {
+        return afiliadoInt != null ? String.valueOf(afiliadoInt) : "";
+    }
+
+    public void setAfiliadoInt(Integer afiliadoInt) {
+        this.afiliadoInt = afiliadoInt;
+    }
+
+    public boolean tieneAfiliadoInformado() {
+        return !WebKeysCompras.isEmpty(afiliadoCuilTitular) && afiliadoInt != null;
+    }
+
+    public Integer getIdSector() {
+        return idSector;
+    }
+
+    public Integer getSectorId() {
+        return idSector;
+    }
+
+    public String getIdSectorString() {
+        return idSector != null && idSector.intValue() > 0 ? String.valueOf(idSector) : "";
+    }
+
+    public void setIdSector(Integer idSector) {
+        this.idSector = idSector;
+    }
+
+    public void setSectorId(Integer sectorId) {
+        this.idSector = sectorId;
+    }
+
+    public String getSectorDescripcion() {
+        return sectorDescripcion;
+    }
+
+    public String getSectorDescripcionVisible() {
+        return sectorDescripcion != null ? sectorDescripcion : "";
+    }
+
+    public void setSectorDescripcion(String sectorDescripcion) {
+        this.sectorDescripcion = WebKeysCompras.trimToNull(sectorDescripcion);
+    }
+
+    public Boolean getRequiereAfiliado() {
+        return requiereAfiliado;
+    }
+
+    public boolean isRequiereAfiliado() {
+        return Boolean.TRUE.equals(requiereAfiliado);
+    }
+
+    public String getRequiereAfiliadoDescripcion() {
+        return WebKeysCompras.getBooleanDescripcion(requiereAfiliado);
+    }
+
+    public void setRequiereAfiliado(Boolean requiereAfiliado) {
+        this.requiereAfiliado = requiereAfiliado != null ? requiereAfiliado : Boolean.FALSE;
+    }
+
+    public void setRequiereAfiliado(boolean requiereAfiliado) {
+        this.requiereAfiliado = Boolean.valueOf(requiereAfiliado);
+    }
+
+    public Integer getCargoOspim() {
+        return cargoOspim;
+    }
+
+    public String getCargoOspimString() {
+        return cargoOspim != null ? String.valueOf(cargoOspim) : "0";
+    }
+
+    public void setCargoOspim(Integer cargoOspim) {
+        this.cargoOspim = cargoOspim != null ? cargoOspim : Integer.valueOf(0);
+    }
+
+    public Integer getCargoTercerizadora() {
+        return cargoTercerizadora;
+    }
+
+    public String getCargoTercerizadoraString() {
+        return cargoTercerizadora != null ? String.valueOf(cargoTercerizadora) : "0";
+    }
+
+    public void setCargoTercerizadora(Integer cargoTercerizadora) {
+        this.cargoTercerizadora = cargoTercerizadora != null ? cargoTercerizadora : Integer.valueOf(0);
+    }
+
+    public Integer getIdTercerizadora() {
+        return idTercerizadora;
+    }
+
+    public String getIdTercerizadoraString() {
+        return idTercerizadora != null && idTercerizadora.intValue() > 0
+                ? String.valueOf(idTercerizadora)
+                : "";
+    }
+
+    public void setIdTercerizadora(Integer idTercerizadora) {
+        this.idTercerizadora = idTercerizadora;
+    }
+
+    public Boolean getRecupero() {
+        return recupero;
+    }
+
+    public boolean isRecupero() {
+        return Boolean.TRUE.equals(recupero);
+    }
+
+    public String getRecuperoDescripcion() {
+        return WebKeysCompras.getBooleanDescripcion(recupero);
+    }
+
+    public void setRecupero(Boolean recupero) {
+        this.recupero = recupero != null ? recupero : Boolean.FALSE;
+    }
+
+    public void setRecupero(boolean recupero) {
+        this.recupero = Boolean.valueOf(recupero);
+    }
+
+    public String getObservaciones() {
+        return observaciones;
+    }
+
+    public String getObservacionesVisible() {
+        return observaciones != null ? observaciones : "";
+    }
+
+    public void setObservaciones(String observaciones) {
+        this.observaciones = WebKeysCompras.trimToNull(observaciones);
+    }
+
+    public Integer getIdEstado() {
+        return idEstado;
+    }
+
+    public int getEstado() {
+        return idEstado != null ? idEstado.intValue() : 0;
+    }
+
+    public void setIdEstado(Integer idEstado) {
+        this.idEstado = idEstado;
+    }
+
+    public void setIdEstado(int idEstado) {
+        this.idEstado = Integer.valueOf(idEstado);
+    }
+
+    public void setEstado(int estado) {
+        this.idEstado = Integer.valueOf(estado);
+    }
+
+    public String getEstadoDescripcion() {
+        if (!WebKeysCompras.isEmpty(estadoDescripcion)) {
+            return estadoDescripcion;
+        }
+
+        return WebKeysCompras.getEstadoDescripcion(getEstado());
+    }
+
+    public String getEstadoDescripcionVisible() {
+        String value = getEstadoDescripcion();
+        return value != null ? value : "";
+    }
+
+    public void setEstadoDescripcion(String estadoDescripcion) {
+        this.estadoDescripcion = WebKeysCompras.trimToNull(estadoDescripcion);
+    }
+
     public List<RequerimientoCompraDetalle> getDetalles() {
         return detalles;
     }
@@ -385,7 +373,7 @@ public class RequerimientoCompra {
         for (int i = 0; i < detalles.size(); i++) {
             RequerimientoCompraDetalle detalle = detalles.get(i);
 
-            if (detalle != null && !detalle.isBorrado() && detalle.getPrecioTotalEstimado() != null) {
+            if (detalle != null && detalle.getPrecioTotalEstimado() != null) {
                 total = total.add(detalle.getPrecioTotalEstimado());
             }
         }
@@ -399,22 +387,30 @@ public class RequerimientoCompra {
     }
 
     public boolean isEditable() {
-        return WebKeysCompras.esEditable(idEstado) && bajaFecha == null;
+        return WebKeysCompras.puedeEditar(getEstado()) && bajaFecha == null;
+    }
+
+    public boolean isBorrador() {
+        return WebKeysCompras.esBorrador(getEstado());
+    }
+
+    public boolean isCotizado() {
+        return WebKeysCompras.esCotizado(getEstado());
     }
 
     public boolean isAnulado() {
-        return idEstado == WebKeysCompras.ESTADO_ANULADO || bajaFecha != null;
+        return WebKeysCompras.esAnulado(getEstado());
     }
 
     public boolean isActivo() {
         return bajaFecha == null;
     }
 
-    public boolean puedeSolicitar() {
-        return WebKeysCompras.puedeSolicitar(idEstado) && bajaFecha == null;
+    public boolean puedeCotizar() {
+        return WebKeysCompras.puedeCotizar(getEstado()) && bajaFecha == null;
     }
 
     public boolean puedeAnular() {
-        return WebKeysCompras.puedeAnular(idEstado) && bajaFecha == null;
+        return WebKeysCompras.puedeAnular(getEstado()) && bajaFecha == null;
     }
 }

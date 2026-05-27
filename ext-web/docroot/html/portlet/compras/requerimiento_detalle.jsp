@@ -71,7 +71,8 @@ PortletURL detalleActionURL = renderResponse.createActionURL();
 detalleActionURL.setWindowState(WindowState.MAXIMIZED);
 detalleActionURL.setParameter("struts_action", "/compras/editar_requerimiento");
 
-int detalleColspan = puedeABMDetalle ? 9 : 8;
+int detalleColspan = puedeABMDetalle ? 7 : 6;
+String nsDetalle = renderResponse.getNamespace();
 %>
 
 <fieldset class="block-labels">
@@ -79,11 +80,9 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
 
     <table class="lfr-table taglib-search-iterator" width="100%">
         <tr class="portlet-section-header results-header">
-            <th>Rengl&oacute;n</th>
-            <th>Tipo art&iacute;culo</th>
+            <th>ID</th>
             <th>Art&iacute;culo</th>
             <th>Cantidad</th>
-            <th>Unidad</th>
             <th>Precio unitario estimado</th>
             <th>Total estimado</th>
             <th>Observaciones</th>
@@ -112,11 +111,9 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
                         : "portlet-section-alternate results-row alt";
         %>
                 <tr class="<%= rowClass %>">
-                    <td><%= HtmlUtil.escape(detalle.getRenglonString()) %></td>
-                    <td><%= HtmlUtil.escape(detalle.getTipoArticuloVisible()) %></td>
+                    <td><%= HtmlUtil.escape(detalle.getIdString()) %></td>
                     <td><%= HtmlUtil.escape(detalle.getArticuloVisible()) %></td>
                     <td><%= HtmlUtil.escape(detalle.getCantidadString()) %></td>
-                    <td><%= HtmlUtil.escape(detalle.getUnidadMedidaVisible()) %></td>
                     <td><%= HtmlUtil.escape(detalle.getPrecioUnitarioEstimadoString()) %></td>
                     <td><%= HtmlUtil.escape(detalle.getPrecioTotalEstimadoString()) %></td>
                     <td><%= HtmlUtil.escape(detalle.getObservacionesVisible()) %></td>
@@ -126,14 +123,14 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
                             <input
                                 type="button"
                                 value="Editar"
-                                onClick="<portlet:namespace />editarDetalle('<%= detalle.getIdRequerimientoDetalle() %>', '<%= jsDetalleCompraAttr(detalle.getTipoArticuloVisible()) %>', '<%= jsDetalleCompraAttr(detalle.getArticuloVisible()) %>', '<%= jsDetalleCompraAttr(detalle.getCantidadString()) %>', '<%= jsDetalleCompraAttr(detalle.getUnidadMedidaVisible()) %>', '<%= jsDetalleCompraAttr(detalle.getPrecioUnitarioEstimadoString()) %>', '<%= jsDetalleCompraAttr(detalle.getPrecioTotalEstimadoString()) %>', '<%= jsDetalleCompraAttr(detalle.getObservacionesVisible()) %>');"
+                                onClick="<portlet:namespace />editarDetalle('<%= detalle.getIdString() %>', '<%= jsDetalleCompraAttr(detalle.getArticuloVisible()) %>', '<%= jsDetalleCompraAttr(detalle.getCantidadString()) %>', '<%= jsDetalleCompraAttr(detalle.getPrecioUnitarioEstimadoString()) %>', '<%= jsDetalleCompraAttr(detalle.getPrecioTotalEstimadoString()) %>', '<%= jsDetalleCompraAttr(detalle.getObservacionesVisible()) %>');"
                             />
 
                             &nbsp;
 
                             <form action="<%= detalleActionURL.toString() %>"
                                   method="post"
-                                  name="<portlet:namespace />deleteDetalleFm<%= detalle.getIdRequerimientoDetalle() %>"
+                                  id="<%= nsDetalle %>deleteDetalleFm<%= detalle.getIdString() %>"
                                   style="display:inline;">
                                 <input type="hidden"
                                        name="<portlet:namespace /><%= Constants.CMD %>"
@@ -144,13 +141,13 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
                                        value="<%= reqDetalle.getIdRequerimientoCompra() %>" />
 
                                 <input type="hidden"
-                                       name="<portlet:namespace />id_requerimiento_detalle"
-                                       value="<%= detalle.getIdRequerimientoDetalle() %>" />
+                                       name="<portlet:namespace />id_detalle"
+                                       value="<%= detalle.getIdString() %>" />
 
                                 <input
                                     type="button"
                                     value="Borrar"
-                                    onClick="if (confirm('&iquest;Confirma borrar el detalle?')) submitForm(document.<portlet:namespace />deleteDetalleFm<%= detalle.getIdRequerimientoDetalle() %>);"
+                                    onClick="if (confirm('Confirma borrar el detalle?')) submitForm(document.getElementById('<%= nsDetalle %>deleteDetalleFm<%= detalle.getIdString() %>'));"
                                 />
                             </form>
                         </td>
@@ -167,7 +164,8 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
 
         <form action="<%= detalleActionURL.toString() %>"
               method="post"
-              name="<portlet:namespace />detalleFm">
+              name="<portlet:namespace />detalleFm"
+              id="<portlet:namespace />detalleFm">
 
             <input type="hidden"
                    name="<portlet:namespace /><%= Constants.CMD %>"
@@ -175,8 +173,8 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
                    value="addItem" />
 
             <input type="hidden"
-                   name="<portlet:namespace />id_requerimiento_detalle"
-                   id="<portlet:namespace />id_requerimiento_detalle"
+                   name="<portlet:namespace />id_detalle"
+                   id="<portlet:namespace />id_detalle"
                    value="0" />
 
             <input type="hidden"
@@ -185,24 +183,13 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
 
             <table class="lfr-table" width="100%">
                 <tr>
-                    <td><label for="<portlet:namespace />tipo_articulo">Tipo art&iacute;culo:</label></td>
-                    <td>
-                        <input
-                            type="text"
-                            name="<portlet:namespace />tipo_articulo"
-                            id="<portlet:namespace />tipo_articulo"
-                            size="25"
-                            maxlength="80"
-                        />
-                    </td>
-
                     <td><label for="<portlet:namespace />articulo">Art&iacute;culo:</label></td>
-                    <td>
+                    <td colspan="3">
                         <input
                             type="text"
                             name="<portlet:namespace />articulo"
                             id="<portlet:namespace />articulo"
-                            size="45"
+                            size="80"
                             maxlength="255"
                         />
                     </td>
@@ -224,14 +211,14 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
                         />
                     </td>
 
-                    <td><label for="<portlet:namespace />unidad_medida">Unidad:</label></td>
+                    <td><label for="<portlet:namespace />precio_unitario_estimado">Precio unitario:</label></td>
                     <td>
                         <input
                             type="text"
-                            name="<portlet:namespace />unidad_medida"
-                            id="<portlet:namespace />unidad_medida"
+                            name="<portlet:namespace />precio_unitario_estimado"
+                            id="<portlet:namespace />precio_unitario_estimado"
                             size="12"
-                            maxlength="30"
+                            value=""
                         />
                     </td>
                 </tr>
@@ -241,17 +228,6 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
                 </tr>
 
                 <tr>
-                    <td><label for="<portlet:namespace />precio_unitario_estimado">Precio unitario:</label></td>
-                    <td>
-                        <input
-                            type="text"
-                            name="<portlet:namespace />precio_unitario_estimado"
-                            id="<portlet:namespace />precio_unitario_estimado"
-                            size="12"
-                            value="0"
-                        />
-                    </td>
-
                     <td><label for="<portlet:namespace />precio_total_estimado">Total estimado:</label></td>
                     <td>
                         <input
@@ -261,20 +237,14 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
                             size="12"
                         />
                     </td>
-                </tr>
 
-                <tr>
-                    <td colspan="4">&nbsp;</td>
-                </tr>
-
-                <tr>
                     <td><label for="<portlet:namespace />observaciones_detalle">Observaciones:</label></td>
-                    <td colspan="3">
+                    <td>
                         <input
                             type="text"
                             name="<portlet:namespace />observaciones_detalle"
                             id="<portlet:namespace />observaciones_detalle"
-                            size="80"
+                            size="60"
                             maxlength="500"
                         />
                     </td>
@@ -315,13 +285,42 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
         return value == null ? '' : value;
     }
 
-    function <portlet:namespace />editarDetalle(idDetalle, tipoArticulo, articulo, cantidad, unidadMedida, precioUnitario, precioTotal, observaciones) {
+    function <portlet:namespace />normalizarImporte(value) {
+        value = jQuery.trim(value);
+
+        if (value == '') {
+            return null;
+        }
+
+        if (value.indexOf(',') >= 0) {
+            value = value.replace(/\./g, '').replace(',', '.');
+        }
+
+        var parsed = parseFloat(value);
+
+        if (isNaN(parsed)) {
+            return null;
+        }
+
+        return parsed;
+    }
+
+    function <portlet:namespace />calcularTotalDetalle() {
+        var cantidad = parseInt(jQuery.trim(jQuery('#<portlet:namespace />cantidad').val()), 10);
+        var precioUnitario = <portlet:namespace />normalizarImporte(jQuery('#<portlet:namespace />precio_unitario_estimado').val());
+
+        if (isNaN(cantidad) || cantidad <= 0 || precioUnitario == null) {
+            return;
+        }
+
+        jQuery('#<portlet:namespace />precio_total_estimado').val((cantidad * precioUnitario).toFixed(2));
+    }
+
+    function <portlet:namespace />editarDetalle(idDetalle, articulo, cantidad, precioUnitario, precioTotal, observaciones) {
         jQuery('#<portlet:namespace />detalle_cmd').val('updateItem');
-        jQuery('#<portlet:namespace />id_requerimiento_detalle').val(<portlet:namespace />detalleValue(idDetalle));
-        jQuery('#<portlet:namespace />tipo_articulo').val(<portlet:namespace />detalleValue(tipoArticulo));
+        jQuery('#<portlet:namespace />id_detalle').val(<portlet:namespace />detalleValue(idDetalle));
         jQuery('#<portlet:namespace />articulo').val(<portlet:namespace />detalleValue(articulo));
         jQuery('#<portlet:namespace />cantidad').val(<portlet:namespace />detalleValue(cantidad));
-        jQuery('#<portlet:namespace />unidad_medida').val(<portlet:namespace />detalleValue(unidadMedida));
         jQuery('#<portlet:namespace />precio_unitario_estimado').val(<portlet:namespace />detalleValue(precioUnitario));
         jQuery('#<portlet:namespace />precio_total_estimado').val(<portlet:namespace />detalleValue(precioTotal));
         jQuery('#<portlet:namespace />observaciones_detalle').val(<portlet:namespace />detalleValue(observaciones));
@@ -333,12 +332,10 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
 
     function <portlet:namespace />cancelarEdicionDetalle() {
         jQuery('#<portlet:namespace />detalle_cmd').val('addItem');
-        jQuery('#<portlet:namespace />id_requerimiento_detalle').val('0');
-        jQuery('#<portlet:namespace />tipo_articulo').val('');
+        jQuery('#<portlet:namespace />id_detalle').val('0');
         jQuery('#<portlet:namespace />articulo').val('');
         jQuery('#<portlet:namespace />cantidad').val('1');
-        jQuery('#<portlet:namespace />unidad_medida').val('');
-        jQuery('#<portlet:namespace />precio_unitario_estimado').val('0');
+        jQuery('#<portlet:namespace />precio_unitario_estimado').val('');
         jQuery('#<portlet:namespace />precio_total_estimado').val('');
         jQuery('#<portlet:namespace />observaciones_detalle').val('');
 
@@ -351,18 +348,22 @@ int detalleColspan = puedeABMDetalle ? 9 : 8;
         var cantidad = jQuery.trim(jQuery('#<portlet:namespace />cantidad').val());
 
         if (articulo == '') {
-            alert('Debe informar art&iacute;culo.');
+            alert('Debe informar articulo.');
             jQuery('#<portlet:namespace />articulo').focus();
             return;
         }
 
-        if (cantidad == '') {
-            alert('Debe informar cantidad.');
+        if (cantidad == '' || !/^[0-9]+$/.test(cantidad) || parseInt(cantidad, 10) <= 0) {
+            alert('La cantidad debe ser entera y mayor a cero.');
             jQuery('#<portlet:namespace />cantidad').focus();
             return;
         }
 
-        submitForm(document.<portlet:namespace />detalleFm);
+        submitForm(document.getElementById('<portlet:namespace />detalleFm'));
     }
+
+    jQuery('#<portlet:namespace />cantidad, #<portlet:namespace />precio_unitario_estimado').change(function() {
+        <portlet:namespace />calcularTotalDetalle();
+    });
 </script>
 <% } %>

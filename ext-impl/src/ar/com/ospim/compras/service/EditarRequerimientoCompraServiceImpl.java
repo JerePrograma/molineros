@@ -18,10 +18,10 @@ public class EditarRequerimientoCompraServiceImpl {
     private static Log _log = LogFactoryUtil.getLog(EditarRequerimientoCompraServiceImpl.class);
 
     private static final String SQL_GUARDAR_REQUERIMIENTO =
-            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?) }";
+            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_GUARDAR_REQUERIMIENTO_DETALLE =
-            "{ ? = call compras.guardar_requerimiento_detalle(?,?,?,?,?,?,?,?,?,?,?) }";
+            "{ ? = call compras.guardar_requerimiento_detalle(?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_BORRAR_REQUERIMIENTO_DETALLE =
             "{call compras.borrar_requerimiento_detalle(?,?)}";
@@ -43,39 +43,16 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt = con.prepareCall(SQL_GUARDAR_REQUERIMIENTO);
             stmt.registerOutParameter(1, Types.INTEGER);
 
-            setNullableInteger(
-                    stmt,
-                    2,
-                    requerimiento.getIdRequerimientoCompra() > 0
-                            ? Integer.valueOf(requerimiento.getIdRequerimientoCompra())
-                            : null
-            );
-
-            setNullableInteger(
-                    stmt,
-                    3,
-                    requerimiento.getNumero() > 0
-                            ? Integer.valueOf(requerimiento.getNumero())
-                            : null
-            );
-
-            stmt.setInt(
-                    4,
-                    requerimiento.getIdEstado() > 0
-                            ? requerimiento.getIdEstado()
-                            : WebKeysCompras.ESTADO_BORRADOR
-            );
-
+            setNullableInteger(stmt, 2, requerimiento.getId());
+            stmt.setString(3, emptyToNull(requerimiento.getAfiliadoCuilTitular()));
+            setNullableInteger(stmt, 4, requerimiento.getAfiliadoInt());
             setNullableInteger(stmt, 5, requerimiento.getIdSector());
-            stmt.setBoolean(6, requerimiento.isRequiereAfiliado());
-            setNullableDate(stmt, 7, requerimiento.getFechaSolicitud());
-            stmt.setString(8, emptyToNull(requerimiento.getSolicitanteUsr()));
-            stmt.setString(9, emptyToNull(requerimiento.getSolicitanteNombre()));
-            stmt.setString(10, emptyToNull(requerimiento.getAfiliadoCuilTitular()));
-            setNullableInteger(stmt, 11, requerimiento.getAfiliadoInte());
-            stmt.setString(12, emptyToNull(requerimiento.getDescripcion()));
-            stmt.setString(13, emptyToNull(requerimiento.getObservaciones()));
-            stmt.setString(14, emptyToNull(usuario));
+            setNullableInteger(stmt, 6, requerimiento.getCargoOspim());
+            setNullableInteger(stmt, 7, requerimiento.getCargoTercerizadora());
+            setNullableInteger(stmt, 8, requerimiento.getIdTercerizadora());
+            stmt.setBoolean(9, requerimiento.isRecupero());
+            stmt.setString(10, emptyToNull(requerimiento.getObservaciones()));
+            stmt.setString(11, emptyToNull(usuario));
 
             stmt.execute();
 
@@ -99,32 +76,14 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt = con.prepareCall(SQL_GUARDAR_REQUERIMIENTO_DETALLE);
             stmt.registerOutParameter(1, Types.INTEGER);
 
-            setNullableInteger(
-                    stmt,
-                    2,
-                    detalle.getIdRequerimientoDetalle() > 0
-                            ? Integer.valueOf(detalle.getIdRequerimientoDetalle())
-                            : null
-            );
-
-            stmt.setInt(3, detalle.getIdRequerimientoCompra());
-
-            setNullableInteger(
-                    stmt,
-                    4,
-                    detalle.getRenglon() > 0
-                            ? Integer.valueOf(detalle.getRenglon())
-                            : null
-            );
-
-            stmt.setString(5, emptyToNull(detalle.getTipoArticulo()));
-            stmt.setString(6, emptyToNull(detalle.getArticulo()));
-            setNullableBigDecimal(stmt, 7, detalle.getCantidad());
-            stmt.setString(8, emptyToNull(detalle.getUnidadMedida()));
-            setNullableBigDecimal(stmt, 9, detalle.getPrecioUnitarioEstimado());
-            setNullableBigDecimal(stmt, 10, detalle.getPrecioTotalEstimadoInformado());
-            stmt.setString(11, emptyToNull(detalle.getObservaciones()));
-            stmt.setString(12, emptyToNull(usuario));
+            setNullableInteger(stmt, 2, detalle.getId());
+            setNullableInteger(stmt, 3, detalle.getIdRequerimiento());
+            stmt.setString(4, emptyToNull(detalle.getArticulo()));
+            setNullableInteger(stmt, 5, detalle.getCantidad());
+            setNullableBigDecimal(stmt, 6, detalle.getPrecioUnitarioEstimado());
+            setNullableBigDecimal(stmt, 7, detalle.getPrecioTotalEstimadoInformado());
+            stmt.setString(8, emptyToNull(detalle.getObservaciones()));
+            stmt.setString(9, emptyToNull(usuario));
 
             stmt.execute();
 
@@ -137,9 +96,9 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
-    public void borrarDetalle(int idRequerimientoDetalle, String usuario) throws Exception {
-        if (idRequerimientoDetalle <= 0) {
-            throw new Exception("Debe informar el renglon del requerimiento.");
+    public void borrarDetalle(int idDetalle, String usuario) throws Exception {
+        if (idDetalle <= 0) {
+            throw new Exception("Debe informar el detalle del requerimiento.");
         }
 
         Connection con = null;
@@ -148,7 +107,7 @@ public class EditarRequerimientoCompraServiceImpl {
         try {
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(SQL_BORRAR_REQUERIMIENTO_DETALLE);
-            stmt.setInt(1, idRequerimientoDetalle);
+            stmt.setInt(1, idDetalle);
             stmt.setString(2, emptyToNull(usuario));
 
             stmt.execute();
@@ -216,44 +175,42 @@ public class EditarRequerimientoCompraServiceImpl {
             throw new Exception("Debe informar el requerimiento de compra.");
         }
 
-        if (requerimiento.getIdEstado() <= 0) {
-            requerimiento.setIdEstado(WebKeysCompras.ESTADO_BORRADOR);
-        }
-
-        if (!WebKeysCompras.esEstadoValido(requerimiento.getIdEstado())) {
-            throw new Exception("Estado de requerimiento invalido.");
-        }
-
         if (requerimiento.getIdSector() == null || requerimiento.getIdSector().intValue() <= 0) {
-            throw new Exception("Debe informar el sector solicitante.");
+            throw new Exception("Debe informar el sector.");
         }
 
-        if (requerimiento.getSolicitanteUsr() == null
-                || requerimiento.getSolicitanteUsr().trim().length() == 0) {
-            throw new Exception("Debe informar el solicitante.");
+        validarPorcentaje(requerimiento.getCargoOspim(), "Cargo OSPIM");
+        validarPorcentaje(requerimiento.getCargoTercerizadora(), "Cargo tercerizadora");
+
+        int cargoOspim = requerimiento.getCargoOspim() != null ? requerimiento.getCargoOspim().intValue() : 0;
+        int cargoTercerizadora = requerimiento.getCargoTercerizadora() != null
+                ? requerimiento.getCargoTercerizadora().intValue()
+                : 0;
+
+        if (cargoOspim + cargoTercerizadora > 100) {
+            throw new Exception("La suma de cargos no puede superar 100.");
         }
 
-        if (requerimiento.getDescripcion() == null
-                || requerimiento.getDescripcion().trim().length() == 0) {
-            throw new Exception("Debe informar la descripcion del requerimiento.");
+        if (cargoTercerizadora > 0
+                && (requerimiento.getIdTercerizadora() == null
+                || requerimiento.getIdTercerizadora().intValue() <= 0)) {
+            throw new Exception("Debe informar la tercerizadora cuando su cargo es mayor a cero.");
         }
 
         if (requerimiento.isRequiereAfiliado()) {
-            if (requerimiento.getAfiliadoCuilTitular() == null
-                    || requerimiento.getAfiliadoCuilTitular().trim().length() == 0) {
+            if (WebKeysCompras.isEmpty(requerimiento.getAfiliadoCuilTitular())) {
                 throw new Exception("Debe informar el CUIL titular del afiliado.");
             }
 
-            if (requerimiento.getAfiliadoInte() == null
-                    || requerimiento.getAfiliadoInte().intValue() < 0) {
-                throw new Exception("Debe informar el numero de integrante del afiliado.");
+            if (requerimiento.getAfiliadoInt() == null || requerimiento.getAfiliadoInt().intValue() < 0) {
+                throw new Exception("Debe informar el integrante del afiliado.");
             }
         }
     }
 
     private void validarDetalleParaGuardar(RequerimientoCompraDetalle detalle) throws Exception {
         if (detalle == null) {
-            throw new Exception("Debe informar el renglon del requerimiento.");
+            throw new Exception("Debe informar el detalle del requerimiento.");
         }
 
         if (detalle.getIdRequerimientoCompra() <= 0) {
@@ -261,14 +218,14 @@ public class EditarRequerimientoCompraServiceImpl {
         }
 
         if (detalle.getCantidad() == null) {
-            detalle.setCantidad(BigDecimal.ONE);
+            detalle.setCantidad(Integer.valueOf(1));
         }
 
-        if (detalle.getCantidad().compareTo(BigDecimal.ZERO) <= 0) {
+        if (detalle.getCantidad().intValue() <= 0) {
             throw new Exception("La cantidad debe ser mayor a cero.");
         }
 
-        if (detalle.getArticulo() == null || detalle.getArticulo().trim().length() == 0) {
+        if (WebKeysCompras.isEmpty(detalle.getArticulo())) {
             throw new Exception("Debe informar el articulo.");
         }
 
@@ -283,19 +240,19 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
+    private void validarPorcentaje(Integer value, String label) throws Exception {
+        int parsed = value != null ? value.intValue() : 0;
+
+        if (parsed < 0 || parsed > 100) {
+            throw new Exception(label + " debe estar entre 0 y 100.");
+        }
+    }
+
     private void setNullableInteger(CallableStatement stmt, int index, Integer value) throws Exception {
         if (value == null) {
             stmt.setNull(index, Types.INTEGER);
         } else {
             stmt.setInt(index, value.intValue());
-        }
-    }
-
-    private void setNullableDate(CallableStatement stmt, int index, java.util.Date value) throws Exception {
-        if (value == null) {
-            stmt.setNull(index, Types.DATE);
-        } else {
-            stmt.setDate(index, new java.sql.Date(value.getTime()));
         }
     }
 
