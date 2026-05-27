@@ -1,5 +1,6 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
+
 <portlet:defineObjects/>
 
 <%
@@ -250,7 +251,20 @@ try {
 </c:if>
 
 <c:if test="<%= puedeEditarPantalla %>">
-    <form action="<%= actionURL.toString() %>" method="post" name="<portlet:namespace />fm">
+
+    <fieldset id="<portlet:namespace />afiliado_requerimiento_panel" class="block-labels">
+        <legend>Afiliado</legend>
+
+        <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
+            <liferay-util:param name="edit_mode" value="<%= String.valueOf(puedeEditarPantalla) %>" />
+        </liferay-util:include>
+    </fieldset>
+
+    <form action="<%= actionURL.toString() %>"
+          method="post"
+          name="<portlet:namespace />fm"
+          id="<portlet:namespace />fm">
+
         <input type="hidden"
                name="<portlet:namespace /><%= Constants.CMD %>"
                id="<portlet:namespace /><%= Constants.CMD %>"
@@ -265,6 +279,26 @@ try {
                name="<portlet:namespace />id_estado"
                id="<portlet:namespace />id_estado"
                value="<%= req.getIdEstado() %>" />
+
+        <input type="hidden"
+               name="<portlet:namespace />afiliado_cuil_titular"
+               id="<portlet:namespace />afiliado_cuil_titular"
+               value="<%= HtmlUtil.escape(afiliadoCuilTitular) %>" />
+
+        <input type="hidden"
+               name="<portlet:namespace />afiliado_inte"
+               id="<portlet:namespace />afiliado_inte"
+               value="<%= HtmlUtil.escape(afiliadoInte) %>" />
+
+        <input type="hidden"
+               name="<portlet:namespace />afiliado_id_seccional"
+               id="<portlet:namespace />afiliado_id_seccional"
+               value="<%= HtmlUtil.escape(afiliadoIdSeccional) %>" />
+
+        <input type="hidden"
+               name="<portlet:namespace />afiliado_seccional"
+               id="<portlet:namespace />afiliado_seccional"
+               value="<%= HtmlUtil.escape(afiliadoSeccional) %>" />
 
         <fieldset class="block-labels">
             <legend><%= esNuevo ? "Nuevo requerimiento de compra" : "Editar requerimiento de compra" %></legend>
@@ -341,34 +375,6 @@ try {
             </table>
         </fieldset>
 
-        <fieldset id="<portlet:namespace />afiliado_requerimiento_panel" class="block-labels">
-            <legend>Afiliado</legend>
-
-            <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
-                <liferay-util:param name="edit_mode" value="<%= String.valueOf(puedeEditarPantalla) %>" />
-            </liferay-util:include>
-
-            <input type="hidden"
-                   name="<portlet:namespace />afiliado_cuil_titular"
-                   id="<portlet:namespace />afiliado_cuil_titular"
-                   value="<%= HtmlUtil.escape(afiliadoCuilTitular) %>" />
-
-            <input type="hidden"
-                   name="<portlet:namespace />afiliado_inte"
-                   id="<portlet:namespace />afiliado_inte"
-                   value="<%= HtmlUtil.escape(afiliadoInte) %>" />
-
-            <input type="hidden"
-                   name="<portlet:namespace />afiliado_id_seccional"
-                   id="<portlet:namespace />afiliado_id_seccional"
-                   value="<%= HtmlUtil.escape(afiliadoIdSeccional) %>" />
-
-            <input type="hidden"
-                   name="<portlet:namespace />afiliado_seccional"
-                   id="<portlet:namespace />afiliado_seccional"
-                   value="<%= HtmlUtil.escape(afiliadoSeccional) %>" />
-        </fieldset>
-
         <fieldset class="block-labels">
             <legend>Solicitud</legend>
 
@@ -436,14 +442,22 @@ try {
 <c:if test="<%= puedeEditarPantalla %>">
 <script type="text/javascript">
     /*
-     * Overrides locales para Compras.
+     * Integracion Compras + componente de afiliados.
      *
-     * No se modifica el modulo Autorizaciones.
-     * No se crean actions duplicadas en Compras.
-     * Se reutilizan:
-     * - /autorizaciones/buscar_afiliados
-     * - /autorizaciones/buscar_seccional
+     * Regla:
+     * - El formulario de Compras guarda solo contra /compras/editar_requerimiento.
+     * - El popup de afiliados usa el action real de Autorizaciones:
+     *   /autorizaciones/buscar_afiliados
+     * - La busqueda de seccional usa:
+     *   /autorizaciones/buscar_seccional
+     *
+     * Importante:
+     * El include de busqueda_afiliado.jsp queda fuera del form de Compras
+     * para evitar formularios anidados o submits contaminados.
      */
+
+    var popupAfill = null;
+    var popup = null;
 
     function <portlet:namespace />buscarAfiliados() {
         jQuery('#<portlet:namespace />divObservacionesInternas').hide();
@@ -489,7 +503,7 @@ try {
         }
 
         var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-            '&struts_action=/compras/buscar_afiliados' +
+            '&struts_action=/autorizaciones/buscar_afiliados' +
             '&cuil=' + encodeURIComponent(cuil) +
             '&inte=' + encodeURIComponent(inte) +
             '&tipoDoc=' + encodeURIComponent(tipoDoc) +
@@ -550,7 +564,7 @@ try {
         }
 
         var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-            '&struts_action=/compras/buscar_afiliados' +
+            '&struts_action=/autorizaciones/buscar_afiliados' +
             '&cuil=' + encodeURIComponent(cuil) +
             '&inte=' + encodeURIComponent(inte) +
             '&tipoDoc=' + encodeURIComponent(tipoDoc) +
@@ -747,6 +761,13 @@ try {
     }
 
     function <portlet:namespace />guardar() {
+        var form = document.<portlet:namespace />fm;
+
+        if (!form) {
+            alert('No se pudo encontrar el formulario de Compras.');
+            return;
+        }
+
         if (<portlet:namespace />trimValue('sector_id') == '0') {
             alert('Debe informar sector.');
             jQuery('#<portlet:namespace />sector_id').focus();
@@ -790,7 +811,7 @@ try {
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
         }
 
-        submitForm(document.<portlet:namespace />fm);
+        submitForm(form);
     }
 
     jQuery(function() {
