@@ -93,7 +93,29 @@ if (idTercerizadora == null) {
 }
 
 String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
+
+String errorParaAlert =
+        (String) renderRequest.getAttribute(WebKeysCompras.ERROR_PARA_ALERT);
+
+if (errorParaAlert == null) {
+    errorParaAlert = "";
+}
+
+String errorCampoCompra =
+        (String) renderRequest.getAttribute(WebKeysCompras.ERROR_CAMPO_COMPRA);
+
+if (errorCampoCompra == null) {
+    errorCampoCompra = "";
+}
 %>
+
+<c:if test="<%= !WebKeysCompras.isEmpty(errorParaAlert) %>">
+    <div class="portlet-msg-error">
+        <strong>No se pudo guardar el requerimiento.</strong>
+        <br />
+        <%= HtmlUtil.escape(errorParaAlert) %>
+    </div>
+</c:if>
 
 <c:if test="<%= !soloLectura && !puedeABM %>">
     <div class="portlet-msg-error">No posee permisos para editar requerimientos de compras.</div>
@@ -650,7 +672,7 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
         }
 
         if (!/^[0-9]+$/.test(value)) {
-            alert(label + ' debe ser entero entre 0 y 100.');
+            alert(label + ': debe ser un numero entero entre 0 y 100. Valor recibido: "' + value + '".');
             jQuery('#<portlet:namespace />' + id).focus();
             return null;
         }
@@ -658,7 +680,7 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
         var parsed = parseInt(value, 10);
 
         if (parsed < 0 || parsed > 100) {
-            alert(label + ' debe estar entre 0 y 100.');
+            alert(label + ': debe estar entre 0 y 100. Valor recibido: ' + parsed + '.');
             jQuery('#<portlet:namespace />' + id).focus();
             return null;
         }
@@ -670,7 +692,7 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
         var form = document.getElementById('<portlet:namespace />fmCompras');
 
         if (!form) {
-            alert('No se pudo encontrar el formulario de Compras.');
+            alert('No se pudo encontrar el formulario principal de Compras. No se puede guardar el requerimiento.');
             return;
         }
 
@@ -680,8 +702,10 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
             cmdInput.value = 'saveAll';
         }
 
-        if (<portlet:namespace />trimValue('sector_id') == '0') {
-            alert('Debe informar sector.');
+        var sectorId = <portlet:namespace />trimValue('sector_id');
+
+        if (sectorId == '' || sectorId == '0') {
+            alert('Sector: debe seleccionar un sector.');
             jQuery('#<portlet:namespace />sector_id').focus();
             return;
         }
@@ -699,7 +723,12 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
         }
 
         if (cargoOspim + cargoTercerizadora > 100) {
-            alert('La suma de cargos no puede superar 100.');
+            alert(
+                'Cargos: la suma de Cargo OSPIM (' + cargoOspim +
+                ') y Cargo tercerizadora (' + cargoTercerizadora +
+                ') es ' + (cargoOspim + cargoTercerizadora) +
+                '. No puede superar 100.'
+            );
             jQuery('#<portlet:namespace />cargo_tercerizadora').focus();
             return;
         }
@@ -712,9 +741,15 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
             var afiliadoCuilTitular = <portlet:namespace />trimValue('afiliado_cuil_titular');
             var afiliadoInt = <portlet:namespace />trimValue('afiliado_int');
 
-            if (afiliadoCuilTitular == '' || afiliadoInt == '') {
-                alert('Debe seleccionar un afiliado.');
+            if (afiliadoCuilTitular == '') {
+                alert('Afiliado: debe seleccionar un afiliado. Falta CUIL titular.');
                 jQuery('#<portlet:namespace />cuil').focus();
+                return;
+            }
+
+            if (afiliadoInt == '') {
+                alert('Afiliado: debe seleccionar un afiliado. Falta integrante.');
+                jQuery('#<portlet:namespace />inte').focus();
                 return;
             }
         } else {
@@ -722,13 +757,13 @@ String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
         }
 
         if (cargoTercerizadora > 0 && <portlet:namespace />trimValue('requerimiento_id_tercerizadora') == '') {
-            alert('Debe seleccionar un afiliado con tercerizadora para informar cargo tercerizadora.');
+            alert('Tercerizadora: debe seleccionar un afiliado con tercerizadora porque Cargo tercerizadora es mayor a cero.');
             jQuery('#<portlet:namespace />cuil').focus();
             return;
         }
 
         if (typeof window['<portlet:namespace />serializarDetallesCompras'] !== 'function') {
-            alert('No se encontro la funcion de serializacion de detalles. Revise que requerimiento_detalle_embebido.jsp este incluido dentro del formulario principal.');
+            alert('Detalles: no se encontro la funcion de serializacion. Revise que requerimiento_detalle_embebido.jsp este incluido dentro del formulario principal.');
             return;
         }
 

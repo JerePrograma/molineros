@@ -23,6 +23,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String SECTORES_REQUERIMIENTO_COMPRA = SECTORES_REQUERIMIENTO;
 
     public static final String ERROR_PARA_ALERT = "ERROR_PARA_ALERT";
+    public static final String ERROR_CAMPO_COMPRA = "ERROR_CAMPO_COMPRA";
     public static final String SOLO_LECTURA_ATTR = "REQUERIMIENTO_COMPRA_SOLO_LECTURA";
 
     public static final String FORWARD_COMPRAS_VIEW = "portlet.compras.view";
