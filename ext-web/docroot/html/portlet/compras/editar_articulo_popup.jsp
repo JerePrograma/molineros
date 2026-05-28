@@ -3,6 +3,23 @@
 
 <portlet:defineObjects />
 
+<%!
+private String jsArticuloPopup(String value) {
+    if (value == null) {
+        return "";
+    }
+
+    return value
+            .replace("\\", "\\\\")
+            .replace("'", "\\'")
+            .replace("\"", "\\\"")
+            .replace("\r", " ")
+            .replace("\n", " ")
+            .replace("<", "\\x3C")
+            .replace(">", "\\x3E");
+}
+%>
+
 <%
 String articulo = ParamUtil.getString(request, "articulo", "");
 String callback = ParamUtil.getString(request, "callback", "");
@@ -12,6 +29,7 @@ int idSector = ParamUtil.getInteger(request, "id_sector", 0);
 
 boolean articuloGuardado = ParamUtil.getBoolean(request, "articulo_guardado", false);
 int idArticuloGuardado = ParamUtil.getInteger(request, "id_articulo_guardado", 0);
+
 String articuloDescripcionGuardada =
         ParamUtil.getString(request, "articulo_descripcion_guardada", "");
 
@@ -29,7 +47,7 @@ guardarArticuloURL.setParameter("struts_action", "/compras/alta_articulo_popup")
         if (typeof window['<%= callback %>'] == 'function') {
             window['<%= callback %>'](
                 '<%= idArticuloGuardado %>',
-                '<%= HtmlUtil.escapeJS(articuloDescripcionGuardada) %>',
+                '<%= jsArticuloPopup(articuloDescripcionGuardada) %>',
                 '<%= idSector %>'
             );
         } else {
@@ -75,7 +93,11 @@ guardarArticuloURL.setParameter("struts_action", "/compras/alta_articulo_popup")
             </tr>
 
             <tr>
-                <td><label for="<portlet:namespace />articulo_descripcion">Art&iacute;culo:</label></td>
+                <td>
+                    <label for="<portlet:namespace />articulo_descripcion">
+                        Art&iacute;culo:
+                    </label>
+                </td>
                 <td>
                     <input type="text"
                            id="<portlet:namespace />articulo_descripcion"
@@ -124,7 +146,18 @@ guardarArticuloURL.setParameter("struts_action", "/compras/alta_articulo_popup")
             return false;
         }
 
-        submitForm(document.getElementById('<portlet:namespace />articuloFm'));
+        var form = document.getElementById('<portlet:namespace />articuloFm');
+
+        if (!form) {
+            alert('No se encontró el formulario de alta de artículo.');
+            return false;
+        }
+
+        if (typeof submitForm == 'function') {
+            submitForm(form);
+        } else {
+            form.submit();
+        }
 
         return false;
     }
