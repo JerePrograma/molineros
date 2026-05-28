@@ -87,9 +87,47 @@ if (sectorDescripcionSoloLectura.length() == 0) {
 String afiliadoCuilTitular = req.getAfiliadoCuilTitularVisible();
 String afiliadoInt = req.getAfiliadoIntString();
 String idTercerizadora = req.getIdTercerizadora();
+Afiliado afiliadoRequerimiento =
+        (Afiliado) renderRequest.getAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA);
 
 if (idTercerizadora == null) {
     idTercerizadora = "";
+}
+
+String afiliadoCuilVisible = afiliadoCuilTitular;
+String afiliadoIntVisible = afiliadoInt;
+String afiliadoTipoDocumento = "";
+String afiliadoNumeroDocumento = "";
+String afiliadoApellido = "";
+String afiliadoNombre = "";
+String afiliadoSeccional = "";
+String afiliadoBajaFecha = "";
+String afiliadoFechaAlta = "";
+String afiliadoIdTercerizadora = idTercerizadora;
+String afiliadoIncapacidad = "";
+String afiliadoAntecedentes = "";
+
+if (afiliadoRequerimiento != null) {
+    afiliadoCuilVisible = afiliadoRequerimiento.getCuil_titular() != null ? afiliadoRequerimiento.getCuil_titular() : afiliadoCuilTitular;
+    afiliadoIntVisible = afiliadoRequerimiento.getInteAsString();
+    afiliadoTipoDocumento = afiliadoRequerimiento.getDocumento_tipo() != null ? afiliadoRequerimiento.getDocumento_tipo() : "";
+    afiliadoNumeroDocumento = afiliadoRequerimiento.getDocu_numero() != null ? afiliadoRequerimiento.getDocu_numero() : "";
+    afiliadoApellido = afiliadoRequerimiento.getApellido() != null ? afiliadoRequerimiento.getApellido() : "";
+    afiliadoNombre = afiliadoRequerimiento.getNombre() != null ? afiliadoRequerimiento.getNombre() : "";
+
+    if (afiliadoRequerimiento.getSeccional() != null) {
+        afiliadoSeccional = afiliadoRequerimiento.getSeccional().getDescripcion() != null
+                ? afiliadoRequerimiento.getSeccional().getDescripcion()
+                : "";
+    }
+
+    afiliadoBajaFecha = afiliadoRequerimiento.getBaja_fechaAsString();
+    afiliadoFechaAlta = afiliadoRequerimiento.getAlta_fechaAsString();
+    afiliadoIdTercerizadora = afiliadoRequerimiento.getId_tercerizadora() != null
+            ? afiliadoRequerimiento.getId_tercerizadora()
+            : idTercerizadora;
+    afiliadoIncapacidad = afiliadoRequerimiento.getDiscapacitado() != null ? afiliadoRequerimiento.getDiscapacitado() : "";
+    afiliadoAntecedentes = afiliadoRequerimiento.getTieneAntecedentesJudiciales() == 1 ? "SI" : "NO";
 }
 
 String recuperoChecked = req.isRecupero() ? "checked=\"checked\"" : "";
@@ -172,10 +210,70 @@ if (errorCampoCompra == null) {
 
             <tr>
                 <td><label>CUIL titular:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoCuilTitular) %></td>
+                <td><%= HtmlUtil.escape(afiliadoCuilVisible) %></td>
 
                 <td><label>Integrante:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoInt) %></td>
+                <td><%= HtmlUtil.escape(afiliadoIntVisible) %></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>Tipo documento:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoTipoDocumento) %></td>
+
+                <td><label>Nro. documento:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoNumeroDocumento) %></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>Apellido:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoApellido) %></td>
+
+                <td><label>Nombre:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoNombre) %></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>Seccional:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoSeccional) %></td>
+
+                <td><label>Baja:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoBajaFecha) %></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>Fecha alta afiliado:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoFechaAlta) %></td>
+
+                <td><label>Incapacidad:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoIncapacidad) %></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>ID tercerizadora:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoIdTercerizadora) %></td>
+
+                <td><label>Antecedentes:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoAntecedentes) %></td>
             </tr>
 
             <tr>
@@ -691,7 +789,7 @@ if (errorCampoCompra == null) {
         var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
             '&struts_action=/compras/buscar_afiliados' +
             '&auto_select=true' +
-            '&popup=false' +
+            '&funcion_seleccion=seleccionaCamposAfiliado' +
             '&cuil=' + encodeURIComponent(afiliadoCuilTitular) +
             '&inte=' + encodeURIComponent(afiliadoInt) +
             '&entidad=' + encodeURIComponent(entidad) +

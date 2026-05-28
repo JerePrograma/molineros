@@ -193,10 +193,24 @@ public class BuscarAfiliadosComponenteAction extends PortletAction {
 		if (autoSelect) {
 			return mapping.findForward("portlet.afiliados.result.search.auto_select");
 		}
-		if (null != popup && !popup.trim().equals("")) {
+		if (esPopup(popup)) {
 			return mapping.findForward("portlet.afiliados.result.search.popup");
 		} else {
 			return mapping.findForward("portlet.afiliados.result.search");
 		}
+	}
+
+	private boolean esPopup(String popup) {
+		if (popup == null) {
+			return false;
+		}
+
+		String value = popup.trim();
+
+		return "true".equalsIgnoreCase(value)
+				|| "1".equals(value)
+				|| "popup".equalsIgnoreCase(value)
+				|| "yes".equalsIgnoreCase(value)
+				|| "si".equalsIgnoreCase(value);
 	}
 }

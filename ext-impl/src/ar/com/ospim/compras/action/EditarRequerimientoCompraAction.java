@@ -2,6 +2,7 @@ package ar.com.ospim.compras.action;
 
 import java.math.BigDecimal;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.portlet.ActionRequest;
@@ -14,12 +15,15 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import ar.com.ospim.afiliados.beans.Afiliado;
+import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.beans.RequerimientoCompra;
 import ar.com.ospim.compras.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.service.EditarRequerimientoCompraServiceUtil;
+import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.kernel.servlet.SessionErrors;
@@ -236,6 +240,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             boolean soloLectura = esModoSoloLectura(renderRequest);
 
+            if (soloLectura) {
+                cargarAfiliadoRequerimiento(renderRequest, requerimiento);
+            } else {
+                renderRequest.removeAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA);
+            }
+
             renderRequest.setAttribute(WebKeysCompras.SOLO_LECTURA_ATTR, Boolean.valueOf(soloLectura));
             renderRequest.setAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION, requerimiento);
             renderRequest.setAttribute(WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION, requerimiento.getDetalles());
@@ -270,6 +280,35 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 WebKeysCompras.SECTORES_REQUERIMIENTO,
                 BusquedaRequerimientoCompraServiceUtil.listarSectores()
         );
+    }
+
+    private void cargarAfiliadoRequerimiento(RenderRequest renderRequest, RequerimientoCompra requerimiento) {
+        renderRequest.removeAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA);
+
+        if (requerimiento == null || !requerimiento.tieneAfiliadoInformado()) {
+            return;
+        }
+
+        try {
+            List<Afiliado> afiliados = BusquedaAfiliadoServiceUtil.getBusquedaAfiliadosComponente(
+                    requerimiento.getAfiliadoCuilTitular(),
+                    requerimiento.getAfiliadoIntString(),
+                    null,
+                    null,
+                    0,
+                    null,
+                    null,
+                    WebKeysGlobal.ID_DEFAULT_ENTIDAD,
+                    0,
+                    0,
+                    new BigDecimal(0)
+            );
+
+            if (afiliados != null && afiliados.size() == 1) {
+                renderRequest.setAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA, afiliados.get(0));
+            }
+        } catch (Exception e) {
+        }
     }
 
     private void setIdRequerimientoEnRequest(ActionRequest request, ActionResponse response, int idRequerimientoCompra) {

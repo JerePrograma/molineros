@@ -19,6 +19,45 @@ if (req == null) {
 renderRequest.setAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW, req);
 renderRequest.setAttribute(WebKeysCompras.SOLO_LECTURA_ATTR, Boolean.TRUE);
 
+Afiliado afiliadoRequerimiento =
+        (Afiliado) renderRequest.getAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA);
+
+String afiliadoCuilVisible = req.getAfiliadoCuilTitularVisible();
+String afiliadoIntVisible = req.getAfiliadoIntString();
+String afiliadoTipoDocumento = "";
+String afiliadoNumeroDocumento = "";
+String afiliadoApellido = "";
+String afiliadoNombre = "";
+String afiliadoSeccional = "";
+String afiliadoBajaFecha = "";
+String afiliadoFechaAlta = "";
+String afiliadoIdTercerizadora = req.getIdTercerizadora() != null ? req.getIdTercerizadora() : "";
+String afiliadoIncapacidad = "";
+String afiliadoAntecedentes = "";
+
+if (afiliadoRequerimiento != null) {
+    afiliadoCuilVisible = afiliadoRequerimiento.getCuil_titular() != null ? afiliadoRequerimiento.getCuil_titular() : afiliadoCuilVisible;
+    afiliadoIntVisible = afiliadoRequerimiento.getInteAsString();
+    afiliadoTipoDocumento = afiliadoRequerimiento.getDocumento_tipo() != null ? afiliadoRequerimiento.getDocumento_tipo() : "";
+    afiliadoNumeroDocumento = afiliadoRequerimiento.getDocu_numero() != null ? afiliadoRequerimiento.getDocu_numero() : "";
+    afiliadoApellido = afiliadoRequerimiento.getApellido() != null ? afiliadoRequerimiento.getApellido() : "";
+    afiliadoNombre = afiliadoRequerimiento.getNombre() != null ? afiliadoRequerimiento.getNombre() : "";
+
+    if (afiliadoRequerimiento.getSeccional() != null) {
+        afiliadoSeccional = afiliadoRequerimiento.getSeccional().getDescripcion() != null
+                ? afiliadoRequerimiento.getSeccional().getDescripcion()
+                : "";
+    }
+
+    afiliadoBajaFecha = afiliadoRequerimiento.getBaja_fechaAsString();
+    afiliadoFechaAlta = afiliadoRequerimiento.getAlta_fechaAsString();
+    afiliadoIdTercerizadora = afiliadoRequerimiento.getId_tercerizadora() != null
+            ? afiliadoRequerimiento.getId_tercerizadora()
+            : afiliadoIdTercerizadora;
+    afiliadoIncapacidad = afiliadoRequerimiento.getDiscapacitado() != null ? afiliadoRequerimiento.getDiscapacitado() : "";
+    afiliadoAntecedentes = afiliadoRequerimiento.getTieneAntecedentesJudiciales() == 1 ? "SI" : "NO";
+}
+
 boolean puedeABM =
         user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
@@ -89,10 +128,70 @@ cambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerim
         <table class="lfr-table">
             <tr>
                 <td><label>CUIL titular:</label></td>
-                <td><%= HtmlUtil.escape(req.getAfiliadoCuilTitularVisible()) %></td>
+                <td><%= HtmlUtil.escape(afiliadoCuilVisible) %></td>
 
                 <td><label>Integrante:</label></td>
-                <td><%= HtmlUtil.escape(req.getAfiliadoIntString()) %></td>
+                <td><%= HtmlUtil.escape(afiliadoIntVisible) %></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>Tipo documento:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoTipoDocumento) %></td>
+
+                <td><label>Nro. documento:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoNumeroDocumento) %></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>Apellido:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoApellido) %></td>
+
+                <td><label>Nombre:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoNombre) %></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>Seccional:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoSeccional) %></td>
+
+                <td><label>Baja:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoBajaFecha) %></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>Fecha alta afiliado:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoFechaAlta) %></td>
+
+                <td><label>Incapacidad:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoIncapacidad) %></td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr>
+                <td><label>ID tercerizadora:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoIdTercerizadora) %></td>
+
+                <td><label>Antecedentes:</label></td>
+                <td><%= HtmlUtil.escape(afiliadoAntecedentes) %></td>
             </tr>
         </table>
     </fieldset>

@@ -87,6 +87,7 @@
 		
 		<action path="/afiliados/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosAction">
 			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
+			<forward name="portlet.afiliados.result.search.auto_select" path="portlet.afiliados.result.search.auto_select" />
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
 			<forward name="portlet.afiliados.opciones.result.search" path="portlet.afiliados.opciones.result.search" />
 			<forward name="portlet.afiliados.editar_afiliado_entry" path="portlet.afiliados.editar_afiliado_entry" />
@@ -95,6 +96,7 @@
 		
 		<action path="/afiliados/buscar_afiliados_cred" type="ar.com.ospim.afiliados.action.BuscarAfiliadosAction">
 			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
+			<forward name="portlet.afiliados.result.search.auto_select" path="portlet.afiliados.result.search.auto_select" />
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
 			<forward name="portlet.afiliados.opciones.result.search" path="portlet.afiliados.opciones.result.search" />
 			<forward name="portlet.afiliados.editar_afiliado_entry" path="portlet.afiliados.editar_afiliado_entry" />
@@ -5198,6 +5200,7 @@
 	  <action path="/cai/buscar_afiliados_sesion" forward="portlet.afiliados.result.search" />
 	  <action path="/cai/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosAction">
 			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
+			<forward name="portlet.afiliados.result.search.auto_select" path="portlet.afiliados.result.search.auto_select" />
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
 			<forward name="portlet.afiliados.opciones.result.search" path="portlet.afiliados.opciones.result.search" />
 			<forward name="portlet.afiliados.editar_afiliado_entry" path="portlet.cai.editar_afiliado_entry" />
@@ -7046,8 +7049,10 @@
 
 		<action path="/compras/buscar_afiliados"
 		        type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
+			<forward name="portlet.afiliados.result.search"
+			         path="portlet.afiliados.result.search" />
 			<forward name="portlet.afiliados.result.search.auto_select"
-			         path="portlet.compras.afiliado_auto_select_result" />
+			         path="portlet.afiliados.result.search.auto_select" />
 			<forward name="portlet.afiliados.result.search.popup"
 			         path="portlet.afiliados.result.search.popup" />
 			<forward name="portlet.afiliados.error"

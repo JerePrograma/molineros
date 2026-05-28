@@ -10,6 +10,7 @@
 <%@ page import="ar.com.ospim.global.WebKeysGlobal" %>
 
 <%@ page import="ar.com.ospim.afiliados.WebKeysAfiliados" %>
+<%@ page import="ar.com.ospim.afiliados.beans.Afiliado" %>
 
 <%@ page import="ar.com.ospim.liquidaciones.WebKeysLiquidaciones" %>
 <%@ page import="javax.portlet.PortletSession" %>

@@ -188,6 +188,11 @@
 		<put name="portlet_content" value="/portlet/afiliados/afiliados_search_result_popup.jsp" />
 	</definition>
 
+	<definition name="portlet.afiliados.result.search.auto_select"
+		extends="portlet.afiliados">
+		<put name="portlet_content" value="/portlet/afiliados/afiliado_auto_select_result.jsp" />
+	</definition>
+
 	<definition name="portlet.afiliados.opciones.result.search"
 		extends="portlet.afiliados">
 		<put name="portlet_content"
@@ -4519,7 +4524,7 @@
 	</definition>
 
 	<definition name="portlet.compras.afiliado_auto_select_result" extends="portlet.compras">
-		<put name="portlet_content" value="/portlet/compras/afiliado_auto_select_result.jsp" />
+		<put name="portlet_content" value="/portlet/afiliados/afiliado_auto_select_result.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.ver_requerimiento" extends="portlet.compras">
