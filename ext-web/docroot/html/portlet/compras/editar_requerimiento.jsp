@@ -336,20 +336,6 @@ if (errorCampoCompra == null) {
 
 <c:if test="<%= puedeEditarPantalla %>">
 
-    <fieldset id="<portlet:namespace />afiliado_requerimiento_panel" class="block-labels">
-        <legend>Afiliado</legend>
-
-        <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
-            <liferay-util:param name="edit_mode" value="<%= String.valueOf(puedeEditarPantalla) %>" />
-        </liferay-util:include>
-
-        <div id="<portlet:namespace />afiliadoInicialMensaje"
-             class="portlet-msg-info"
-             style="display:none;"></div>
-        <div id="<portlet:namespace />afiliadoInicialAutoSelect"
-             style="display:none;"></div>
-    </fieldset>
-
     <form action="<%= actionURL.toString() %>"
           method="post"
           name="<portlet:namespace />fmCompras"
@@ -466,6 +452,20 @@ if (errorCampoCompra == null) {
                     </td>
                 </tr>
             </table>
+        </fieldset>
+
+        <fieldset id="<portlet:namespace />afiliado_requerimiento_panel" class="block-labels">
+            <legend>Afiliado</legend>
+
+            <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
+                <liferay-util:param name="edit_mode" value="<%= String.valueOf(puedeEditarPantalla) %>" />
+            </liferay-util:include>
+
+            <div id="<portlet:namespace />afiliadoInicialMensaje"
+                 class="portlet-msg-info"
+                 style="display:none;"></div>
+            <div id="<portlet:namespace />afiliadoInicialAutoSelect"
+                 style="display:none;"></div>
         </fieldset>
 
         <fieldset class="block-labels">
