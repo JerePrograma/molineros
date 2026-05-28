@@ -2,7 +2,7 @@
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
-<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraArticulo" %>
+<%@ page import="ar.com.ospim.compras.beans.CompraArticulo" %>
 <%@ page import="ar.com.ospim.compras.service.EditarRequerimientoCompraServiceUtil" %>
 
 <portlet:defineObjects />
@@ -72,14 +72,14 @@ if (detalles == null) {
     detalles = new ArrayList<RequerimientoCompraDetalle>();
 }
 
-List<RequerimientoCompraArticulo> articulos =
-        (List<RequerimientoCompraArticulo>) renderRequest.getAttribute("ARTICULOS_REQUERIMIENTO_COMPRA");
+List<CompraArticulo> articulos =
+        (List<CompraArticulo>) renderRequest.getAttribute("ARTICULOS_COMPRA");
 
 if (articulos == null) {
     try {
         articulos = EditarRequerimientoCompraServiceUtil.listarArticulos(null, null);
     } catch (Exception e) {
-        articulos = new ArrayList<RequerimientoCompraArticulo>();
+        articulos = new ArrayList<CompraArticulo>();
     }
 }
 
@@ -150,7 +150,7 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
 
                             <%
                             for (int i = 0; i < articulos.size(); i++) {
-                                RequerimientoCompraArticulo articulo = articulos.get(i);
+                                CompraArticulo articulo = articulos.get(i);
 
                                 String idArticulo = articulo.getId() != null
                                         ? String.valueOf(articulo.getId().intValue())

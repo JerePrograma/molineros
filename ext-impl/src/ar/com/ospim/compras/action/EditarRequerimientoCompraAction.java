@@ -39,8 +39,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
     private static final String FORWARD_ALTA_ARTICULO_POPUP = "portlet.compras.alta_articulo_popup";
 
-    private static final String ARTICULOS_REQUERIMIENTO_COMPRA =
-            "ARTICULOS_REQUERIMIENTO_COMPRA";
+    private static final String ARTICULOS_COMPRA =
+            "ARTICULOS_COMPRA";
 
     private static class ValidacionCompraException extends Exception {
 
@@ -503,7 +503,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         );
 
         request.setAttribute(
-                ARTICULOS_REQUERIMIENTO_COMPRA,
+                ARTICULOS_COMPRA,
                 EditarRequerimientoCompraServiceUtil.listarArticulos(null, null)
         );
     }
