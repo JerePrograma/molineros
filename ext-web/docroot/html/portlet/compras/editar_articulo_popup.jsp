@@ -92,13 +92,6 @@ guardarArticuloURL.setParameter("struts_action", "/compras/alta_articulo_popup")
 
             <table class="lfr-table" style="border-collapse: separate; border-spacing: 5px;">
                 <tr>
-                    <td><label>Sector:</label></td>
-                    <td>
-                        <strong>ID <%= idSector %></strong>
-                    </td>
-                </tr>
-
-                <tr>
                     <td>
                         <label for="<portlet:namespace />articulo_descripcion">
                             Art&iacute;culo:
