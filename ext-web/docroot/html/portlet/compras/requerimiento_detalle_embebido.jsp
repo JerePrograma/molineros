@@ -73,7 +73,7 @@ if (detalles == null) {
 }
 
 List<CompraArticulo> articulos =
-        (List<CompraArticulo>) renderRequest.getAttribute("ARTICULOS_COMPRA");
+        (List<CompraArticulo>) renderRequest.getAttribute("ARTICULOS_REQUERIMIENTO_COMPRA");
 
 if (articulos == null) {
     try {
@@ -585,6 +585,11 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
         function <portlet:namespace />seleccionarArticuloCompra(idArticulo, descripcion, idSector) {
             var select = jQuery('#<portlet:namespace />detalle_id_articulo');
 
+            if (select.length == 0) {
+                alert('No se encontró el selector de artículos.');
+                return false;
+            }
+
             if (select.find('option[value="' + idArticulo + '"]').length == 0) {
                 select.append(
                     '<option value="' + <portlet:namespace />detalleEscapeHtml(idArticulo) +
@@ -600,16 +605,22 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
             <portlet:namespace />cerrarAltaArticuloCompra();
 
             jQuery('#<portlet:namespace />detalle_cantidad').focus();
+
+            return true;
         }
 
         function <portlet:namespace />seleccionarArticuloCompraCerrar() {
             <portlet:namespace />cerrarAltaArticuloCompra();
+            return false;
         }
 
         function <portlet:namespace />cerrarAltaArticuloCompra() {
             if (<portlet:namespace />popupArticuloCompra) {
                 Liferay.Popup.close(<portlet:namespace />popupArticuloCompra);
+                <portlet:namespace />popupArticuloCompra = null;
             }
+
+            return false;
         }
 
         function <portlet:namespace />limpiarEditorDetalle() {
@@ -797,6 +808,12 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
 
     window['<portlet:namespace />filtrarArticulosPorSector'] =
             <portlet:namespace />filtrarArticulosPorSector;
+
+    window['<portlet:namespace />seleccionarArticuloCompra'] =
+            <portlet:namespace />seleccionarArticuloCompra;
+
+    window['<portlet:namespace />seleccionarArticuloCompraCerrar'] =
+            <portlet:namespace />seleccionarArticuloCompraCerrar;
 
     window['<portlet:namespace />requerimientoDetalleEmbebidoCargado'] = true;
 

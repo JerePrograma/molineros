@@ -38,137 +38,154 @@ if (callback == null || !callback.matches("[A-Za-z0-9_]+")) {
 }
 
 PortletURL guardarArticuloURL = renderResponse.createActionURL();
-guardarArticuloURL.setWindowState(WindowState.MAXIMIZED);
+guardarArticuloURL.setWindowState(LiferayWindowState.EXCLUSIVE);
 guardarArticuloURL.setParameter("struts_action", "/compras/alta_articulo_popup");
 %>
 
 <% if (articuloGuardado && idArticuloGuardado > 0 && callback.length() > 0) { %>
     <script type="text/javascript">
-        if (typeof window['<%= callback %>'] == 'function') {
-            window['<%= callback %>'](
-                '<%= idArticuloGuardado %>',
-                '<%= jsArticuloPopup(articuloDescripcionGuardada) %>',
-                '<%= idSector %>'
-            );
-        } else {
-            alert('No se encontró la función de retorno del artículo.');
-        }
+        (function() {
+            var callback = '<%= callback %>';
+
+            if (typeof window[callback] == 'function') {
+                window[callback](
+                    '<%= idArticuloGuardado %>',
+                    '<%= jsArticuloPopup(articuloDescripcionGuardada) %>',
+                    '<%= idSector %>'
+                );
+            } else {
+                alert('No se encontró la función de retorno del artículo.');
+            }
+        })();
     </script>
-<% } %>
+<% } else { %>
 
-<fieldset class="block-labels">
-    <legend>Alta de art&iacute;culo</legend>
+<div id="<portlet:namespace />articulo_popup_content">
 
-    <% if (!WebKeysCompras.isEmpty(articuloError)) { %>
-        <div class="portlet-msg-error">
-            <%= HtmlUtil.escape(articuloError) %>
-        </div>
+    <fieldset class="block-labels">
+        <legend>Alta de art&iacute;culo</legend>
 
-        <br />
-    <% } %>
+        <% if (!WebKeysCompras.isEmpty(articuloError)) { %>
+            <div class="portlet-msg-error">
+                <%= HtmlUtil.escape(articuloError) %>
+            </div>
 
-    <form action="<%= guardarArticuloURL.toString() %>"
-          method="post"
-          name="<portlet:namespace />articuloFm"
-          id="<portlet:namespace />articuloFm">
+            <br />
+        <% } %>
 
-        <input type="hidden"
-               name="<portlet:namespace /><%= Constants.CMD %>"
-               value="saveArticuloPopup" />
+        <form action="<%= guardarArticuloURL.toString() %>"
+              method="post"
+              name="<portlet:namespace />articuloFm"
+              id="<portlet:namespace />articuloFm">
 
-        <input type="hidden"
-               name="<portlet:namespace />callback"
-               value="<%= HtmlUtil.escape(callback) %>" />
+            <input type="hidden"
+                   name="<portlet:namespace /><%= Constants.CMD %>"
+                   value="saveArticuloPopup" />
 
-        <input type="hidden"
-               name="<portlet:namespace />id_sector"
-               value="<%= idSector %>" />
+            <input type="hidden"
+                   name="<portlet:namespace />callback"
+                   value="<%= HtmlUtil.escape(callback) %>" />
 
-        <table class="lfr-table" style="border-collapse: separate; border-spacing: 5px;">
-            <tr>
-                <td><label>Sector:</label></td>
-                <td>
-                    <strong>ID <%= idSector %></strong>
-                </td>
-            </tr>
+            <input type="hidden"
+                   name="<portlet:namespace />id_sector"
+                   value="<%= idSector %>" />
 
-            <tr>
-                <td>
-                    <label for="<portlet:namespace />articulo_descripcion">
-                        Art&iacute;culo:
-                    </label>
-                </td>
-                <td>
-                    <input type="text"
-                           id="<portlet:namespace />articulo_descripcion"
-                           name="<portlet:namespace />articulo_descripcion"
-                           size="70"
-                           maxlength="180"
-                           value="<%= HtmlUtil.escape(articulo) %>" />
-                </td>
-            </tr>
+            <table class="lfr-table" style="border-collapse: separate; border-spacing: 5px;">
+                <tr>
+                    <td><label>Sector:</label></td>
+                    <td>
+                        <strong>ID <%= idSector %></strong>
+                    </td>
+                </tr>
 
-            <tr>
-                <td colspan="2">&nbsp;</td>
-            </tr>
+                <tr>
+                    <td>
+                        <label for="<portlet:namespace />articulo_descripcion">
+                            Art&iacute;culo:
+                        </label>
+                    </td>
+                    <td>
+                        <input type="text"
+                               id="<portlet:namespace />articulo_descripcion"
+                               name="<portlet:namespace />articulo_descripcion"
+                               size="70"
+                               maxlength="180"
+                               value="<%= HtmlUtil.escape(articulo) %>" />
+                    </td>
+                </tr>
 
-            <tr>
-                <td colspan="2" align="center">
-                    <input type="button"
-                           value="Aceptar"
-                           onClick="<portlet:namespace />guardarArticuloCompra();" />
+                <tr>
+                    <td colspan="2">&nbsp;</td>
+                </tr>
 
-                    &nbsp;&nbsp;
+                <tr>
+                    <td colspan="2" align="center">
+                        <input type="button"
+                               value="Aceptar"
+                               onClick="<portlet:namespace />guardarArticuloCompra();" />
 
-                    <input type="button"
-                           value="Cancelar"
-                           onClick="<portlet:namespace />cerrarPopupArticuloCompra();" />
-                </td>
-            </tr>
-        </table>
-    </form>
-</fieldset>
+                        &nbsp;&nbsp;
 
-<script type="text/javascript">
-    function <portlet:namespace />guardarArticuloCompra() {
-        var descripcion = jQuery.trim(
-                jQuery('#<portlet:namespace />articulo_descripcion').val()
-        );
+                        <input type="button"
+                               value="Cancelar"
+                               onClick="<portlet:namespace />cerrarPopupArticuloCompra();" />
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </fieldset>
 
-        if (descripcion == '') {
-            alert('Debe informar el artículo.');
+    <script type="text/javascript">
+        function <portlet:namespace />guardarArticuloCompra() {
+            var descripcion = jQuery.trim(
+                    jQuery('#<portlet:namespace />articulo_descripcion').val()
+            );
+
+            if (descripcion == '') {
+                alert('Debe informar el artículo.');
+                jQuery('#<portlet:namespace />articulo_descripcion').focus();
+                return false;
+            }
+
+            if (<%= idSector %> <= 0) {
+                alert('No se recibió el sector del artículo.');
+                return false;
+            }
+
+            var form = document.getElementById('<portlet:namespace />articuloFm');
+
+            if (!form) {
+                alert('No se encontró el formulario de alta de artículo.');
+                return false;
+            }
+
+            jQuery('#<portlet:namespace />articulo_popup_content').load(
+                form.action,
+                jQuery(form).serialize()
+            );
+
+            return false;
+        }
+
+        function <portlet:namespace />cerrarPopupArticuloCompra() {
+            var callbackCerrar = '<%= callback %>Cerrar';
+
+            if (typeof window[callbackCerrar] == 'function') {
+                window[callbackCerrar]();
+            }
+        }
+
+        window['<portlet:namespace />guardarArticuloCompra'] =
+                <portlet:namespace />guardarArticuloCompra;
+
+        window['<portlet:namespace />cerrarPopupArticuloCompra'] =
+                <portlet:namespace />cerrarPopupArticuloCompra;
+
+        jQuery(function() {
             jQuery('#<portlet:namespace />articulo_descripcion').focus();
-            return false;
-        }
+        });
+    </script>
 
-        if (<%= idSector %> <= 0) {
-            alert('No se recibió el sector del artículo.');
-            return false;
-        }
+</div>
 
-        var form = document.getElementById('<portlet:namespace />articuloFm');
-
-        if (!form) {
-            alert('No se encontró el formulario de alta de artículo.');
-            return false;
-        }
-
-        if (typeof submitForm == 'function') {
-            submitForm(form);
-        } else {
-            form.submit();
-        }
-
-        return false;
-    }
-
-    function <portlet:namespace />cerrarPopupArticuloCompra() {
-        if (typeof window['<%= callback %>Cerrar'] == 'function') {
-            window['<%= callback %>Cerrar']();
-        }
-    }
-
-    jQuery(function() {
-        jQuery('#<portlet:namespace />articulo_descripcion').focus();
-    });
-</script>
+<% } %>
