@@ -454,19 +454,15 @@ if (errorCampoCompra == null) {
             </table>
         </fieldset>
 
-        <fieldset id="<portlet:namespace />afiliado_requerimiento_panel" class="block-labels">
-            <legend>Afiliado</legend>
-
-            <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
-                <liferay-util:param name="edit_mode" value="<%= String.valueOf(puedeEditarPantalla) %>" />
-            </liferay-util:include>
-
-            <div id="<portlet:namespace />afiliadoInicialMensaje"
-                 class="portlet-msg-info"
-                 style="display:none;"></div>
-            <div id="<portlet:namespace />afiliadoInicialAutoSelect"
-                 style="display:none;"></div>
-        </fieldset>
+		<fieldset class="block-labels"><legend><liferay-ui:message
+			key="datos-afiliado" /></legend> <liferay-util:include
+			page='/html/portlet/autorizaciones/busqueda_afiliado.jsp'>
+			<liferay-util:param value="<%=String.valueOf(true)%>"
+				name="edit_mode" />
+			<liferay-util:param value="<%=String.valueOf(true)%>"
+				name="discapacidad" />
+			<liferay-util:param name="pag_reintegro" value='1' />
+		</liferay-util:include></fieldset>
 
         <fieldset class="block-labels">
             <legend>Observaciones</legend>
