@@ -454,15 +454,29 @@ if (errorCampoCompra == null) {
             </table>
         </fieldset>
 
-		<fieldset class="block-labels"><legend><liferay-ui:message
-			key="datos-afiliado" /></legend> <liferay-util:include
-			page='/html/portlet/autorizaciones/busqueda_afiliado.jsp'>
-			<liferay-util:param value="<%=String.valueOf(true)%>"
-				name="edit_mode" />
-			<liferay-util:param value="<%=String.valueOf(true)%>"
-				name="discapacidad" />
-			<liferay-util:param name="pag_reintegro" value='1' />
-		</liferay-util:include></fieldset>
+        <div id="<portlet:namespace />afiliado_requerimiento_panel" style="display:none;">
+            <fieldset class="block-labels">
+                <legend>
+                    <liferay-ui:message key="datos-afiliado" />
+                </legend>
+
+                <div id="<portlet:namespace />afiliadoInicialMensaje"
+                     class="portlet-msg-info"
+                     style="display:none;"></div>
+
+                <div id="<portlet:namespace />afiliadoInicialAutoSelect"
+                     style="display:none;"></div>
+
+                <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
+                    <liferay-util:param value="<%= String.valueOf(true) %>"
+                                        name="edit_mode" />
+                    <liferay-util:param value="<%= String.valueOf(true) %>"
+                                        name="discapacidad" />
+                    <liferay-util:param name="pag_reintegro"
+                                        value="1" />
+                </liferay-util:include>
+            </fieldset>
+        </div>
 
         <fieldset class="block-labels">
             <legend>Observaciones</legend>
@@ -921,12 +935,23 @@ if (errorCampoCompra == null) {
             return;
         }
 
-        if (typeof window['<portlet:namespace />serializarDetallesCompras'] !== 'function') {
-            alert('Detalles: no se encontro la funcion de serializacion. Revise que requerimiento_detalle_embebido.jsp este incluido dentro del formulario principal.');
+        var serializadorDetalles = null;
+
+        if (typeof <portlet:namespace />serializarDetallesCompras == 'function') {
+            serializadorDetalles = <portlet:namespace />serializarDetallesCompras;
+        } else if (typeof window['<portlet:namespace />serializarDetallesCompras'] == 'function') {
+            serializadorDetalles = window['<portlet:namespace />serializarDetallesCompras'];
+        }
+
+        if (serializadorDetalles == null) {
+            alert(
+                'Detalles: no se encontro la funcion <portlet:namespace />serializarDetallesCompras(). ' +
+                'El JSP embebido no se esta renderizando correctamente o Liferay esta usando una version vieja compilada.'
+            );
             return;
         }
 
-        if (!window['<portlet:namespace />serializarDetallesCompras']()) {
+        if (!serializadorDetalles()) {
             return;
         }
 
@@ -944,6 +969,10 @@ if (errorCampoCompra == null) {
 
         jQuery('#<portlet:namespace />sector_id').change(function() {
             <portlet:namespace />actualizarVisibilidadAfiliado(true);
+
+            if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
+                window['<portlet:namespace />filtrarArticulosPorSector']();
+            }
         });
 
         jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />id_tercerizadora').change(function() {

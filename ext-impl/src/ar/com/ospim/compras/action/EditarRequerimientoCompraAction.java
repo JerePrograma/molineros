@@ -19,6 +19,7 @@ import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.beans.RequerimientoCompra;
+import ar.com.ospim.compras.beans.CompraArticulo;
 import ar.com.ospim.compras.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.service.BusquedaRequerimientoCompraServiceUtil;
@@ -35,6 +36,11 @@ import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
 
 public class EditarRequerimientoCompraAction extends PortletAction {
+
+    private static final String FORWARD_ALTA_ARTICULO_POPUP = "portlet.compras.alta_articulo_popup";
+
+    private static final String ARTICULOS_REQUERIMIENTO_COMPRA =
+            "ARTICULOS_REQUERIMIENTO_COMPRA";
 
     private static class ValidacionCompraException extends Exception {
 
@@ -55,11 +61,145 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                               ActionResponse actionResponse) throws Exception {
 
         String cmd = ParamUtil.getString(actionRequest, Constants.CMD, null);
-        int idRequerimientoCompra = ParamUtil.getInteger(actionRequest, "id_requerimiento_compra", 0);
+        String strutsAction = ParamUtil.getString(actionRequest, "struts_action", "");
+
+        int idRequerimientoCompra =
+                ParamUtil.getInteger(actionRequest, "id_requerimiento_compra", 0);
+
+        boolean accionPopupArticulo =
+                "saveArticuloPopup".equals(cmd)
+                        || "/compras/alta_articulo_popup".equals(strutsAction);
 
         try {
             User user = PortalUtil.getUser(actionRequest);
             String usuario = getUsuario(user);
+
+            if ("saveArticuloPopup".equals(cmd)) {
+                validarPermisoABM(user);
+
+                int idSector = parseEnteroConDefault(
+                        actionRequest,
+                        "id_sector",
+                        "Sector del articulo",
+                        0
+                );
+
+                String descripcion = ParamUtil.getString(
+                        actionRequest,
+                        "articulo_descripcion",
+                        null
+                );
+
+                String callback = sanitizarCallback(
+                        ParamUtil.getString(actionRequest, "callback", "")
+                );
+
+                validarArticuloPopup(idSector, descripcion);
+
+                int idArticulo = EditarRequerimientoCompraServiceUtil.guardarArticulo(
+                        null,
+                        Integer.valueOf(idSector),
+                        descripcion
+                );
+
+                CompraArticulo articulo =
+                        EditarRequerimientoCompraServiceUtil.getArticulo(idArticulo);
+
+                actionResponse.setRenderParameter("struts_action", "/compras/alta_articulo_popup");
+                actionResponse.setRenderParameter("callback", callback);
+                actionResponse.setRenderParameter("id_sector", String.valueOf(idSector));
+                actionResponse.setRenderParameter("articulo_guardado", "true");
+                actionResponse.setRenderParameter("id_articulo_guardado", String.valueOf(idArticulo));
+
+                if (articulo != null) {
+                    actionResponse.setRenderParameter(
+                            "articulo_descripcion_guardada",
+                            articulo.getDescripcion()
+                    );
+                } else {
+                    actionResponse.setRenderParameter(
+                            "articulo_descripcion_guardada",
+                            descripcion
+                    );
+                }
+
+                setForward(actionRequest, FORWARD_ALTA_ARTICULO_POPUP);
+
+                return;
+            }
+
+            if ("saveArticulo".equals(cmd)) {
+                validarPermisoABM(user);
+
+                int idArticulo = parseEnteroConDefault(
+                        actionRequest,
+                        "id_articulo",
+                        "Articulo",
+                        0
+                );
+
+                int idSector = parseEnteroConDefault(
+                        actionRequest,
+                        "id_sector",
+                        "Sector del articulo",
+                        0
+                );
+
+                String descripcion = ParamUtil.getString(
+                        actionRequest,
+                        "articulo_descripcion",
+                        null
+                );
+
+                validarArticuloPopup(idSector, descripcion);
+
+                EditarRequerimientoCompraServiceUtil.guardarArticulo(
+                        idArticulo > 0 ? Integer.valueOf(idArticulo) : null,
+                        Integer.valueOf(idSector),
+                        descripcion
+                );
+
+                if (idRequerimientoCompra > 0) {
+                    actionResponse.setRenderParameter(
+                            "id_requerimiento_compra",
+                            String.valueOf(idRequerimientoCompra)
+                    );
+                }
+
+                SessionMessages.add(actionRequest, "requerimiento-compra-articulo-guardado");
+                setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+
+                return;
+            }
+
+            if ("deleteArticulo".equals(cmd)) {
+                validarPermisoABM(user);
+
+                int idArticulo = parseEnteroConDefault(
+                        actionRequest,
+                        "id_articulo",
+                        "Articulo",
+                        0
+                );
+
+                if (idArticulo <= 0) {
+                    errorCampo("id_articulo", "Debe informar el articulo a borrar.");
+                }
+
+                EditarRequerimientoCompraServiceUtil.borrarArticulo(idArticulo);
+
+                if (idRequerimientoCompra > 0) {
+                    actionResponse.setRenderParameter(
+                            "id_requerimiento_compra",
+                            String.valueOf(idRequerimientoCompra)
+                    );
+                }
+
+                SessionMessages.add(actionRequest, "requerimiento-compra-articulo-borrado");
+                setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+
+                return;
+            }
 
             if ("saveAll".equals(cmd)) {
                 validarPermisoABM(user);
@@ -79,11 +219,18 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 validarCabecera(requerimiento);
 
                 idRequerimientoCompra =
-                        EditarRequerimientoCompraServiceUtil.guardarRequerimientoCompra(requerimiento, usuario);
+                        EditarRequerimientoCompraServiceUtil.guardarRequerimientoCompra(
+                                requerimiento,
+                                usuario
+                        );
 
                 guardarDetallesDesdeRequest(actionRequest, idRequerimientoCompra, usuario);
 
-                setIdRequerimientoEnRequest(actionRequest, actionResponse, idRequerimientoCompra);
+                setIdRequerimientoEnRequest(
+                        actionRequest,
+                        actionResponse,
+                        idRequerimientoCompra
+                );
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-guardado");
                 setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
@@ -109,9 +256,16 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 validarCabecera(requerimiento);
 
                 idRequerimientoCompra =
-                        EditarRequerimientoCompraServiceUtil.guardarRequerimientoCompra(requerimiento, usuario);
+                        EditarRequerimientoCompraServiceUtil.guardarRequerimientoCompra(
+                                requerimiento,
+                                usuario
+                        );
 
-                setIdRequerimientoEnRequest(actionRequest, actionResponse, idRequerimientoCompra);
+                setIdRequerimientoEnRequest(
+                        actionRequest,
+                        actionResponse,
+                        idRequerimientoCompra
+                );
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-guardado");
                 setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
@@ -129,7 +283,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 EditarRequerimientoCompraServiceUtil.guardarDetalle(detalle, usuario);
 
-                setIdRequerimientoEnRequest(actionRequest, actionResponse, detalle.getIdRequerimientoCompra());
+                setIdRequerimientoEnRequest(
+                        actionRequest,
+                        actionResponse,
+                        detalle.getIdRequerimientoCompra()
+                );
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-item-guardado");
                 setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
@@ -147,14 +305,21 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 }
 
                 if (idRequerimientoCompra <= 0) {
-                    errorCampo("id_requerimiento_compra", "Debe informar el requerimiento de compra.");
+                    errorCampo(
+                            "id_requerimiento_compra",
+                            "Debe informar el requerimiento de compra."
+                    );
                 }
 
                 validarRequerimientoEditable(idRequerimientoCompra);
 
                 EditarRequerimientoCompraServiceUtil.borrarDetalle(idDetalle, usuario);
 
-                setIdRequerimientoEnRequest(actionRequest, actionResponse, idRequerimientoCompra);
+                setIdRequerimientoEnRequest(
+                        actionRequest,
+                        actionResponse,
+                        idRequerimientoCompra
+                );
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-item-borrado");
                 setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
@@ -166,7 +331,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 validarPermisoAnular(user);
 
                 if (idRequerimientoCompra <= 0) {
-                    errorCampo("id_requerimiento_compra", "Debe informar el requerimiento de compra a anular.");
+                    errorCampo(
+                            "id_requerimiento_compra",
+                            "Debe informar el requerimiento de compra a anular."
+                    );
                 }
 
                 validarRequerimientoPuedeAnular(idRequerimientoCompra);
@@ -184,7 +352,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             }
 
             if (idRequerimientoCompra > 0) {
-                actionResponse.setRenderParameter("id_requerimiento_compra", String.valueOf(idRequerimientoCompra));
+                actionResponse.setRenderParameter(
+                        "id_requerimiento_compra",
+                        String.valueOf(idRequerimientoCompra)
+                );
             }
 
             setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
@@ -195,16 +366,44 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 mensaje = "No se pudo procesar el requerimiento de compra.";
             }
 
+            if (accionPopupArticulo) {
+                actionResponse.setRenderParameter("struts_action", "/compras/alta_articulo_popup");
+                actionResponse.setRenderParameter(
+                        "callback",
+                        sanitizarCallback(ParamUtil.getString(actionRequest, "callback", ""))
+                );
+                actionResponse.setRenderParameter(
+                        "id_sector",
+                        ParamUtil.getString(actionRequest, "id_sector", "")
+                );
+                actionResponse.setRenderParameter(
+                        "articulo",
+                        ParamUtil.getString(actionRequest, "articulo_descripcion",
+                                ParamUtil.getString(actionRequest, "articulo", ""))
+                );
+                actionResponse.setRenderParameter("articulo_error", mensaje);
+
+                setForward(actionRequest, FORWARD_ALTA_ARTICULO_POPUP);
+
+                return;
+            }
+
             SessionErrors.add(actionRequest, "requerimiento-compra-error");
             actionRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, mensaje);
 
             if (e instanceof ValidacionCompraException) {
                 ValidacionCompraException validacion = (ValidacionCompraException) e;
-                actionRequest.setAttribute(WebKeysCompras.ERROR_CAMPO_COMPRA, validacion.getCampo());
+                actionRequest.setAttribute(
+                        WebKeysCompras.ERROR_CAMPO_COMPRA,
+                        validacion.getCampo()
+                );
             }
 
             if (idRequerimientoCompra > 0) {
-                actionResponse.setRenderParameter("id_requerimiento_compra", String.valueOf(idRequerimientoCompra));
+                actionResponse.setRenderParameter(
+                        "id_requerimiento_compra",
+                        String.valueOf(idRequerimientoCompra)
+                );
             }
 
             setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
@@ -215,10 +414,18 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                                 PortletConfig portletConfig, RenderRequest renderRequest,
                                 RenderResponse renderResponse) throws Exception {
 
-        try {
-            int idRequerimientoCompra = ParamUtil.getInteger(renderRequest, "id_requerimiento_compra", 0);
+        String strutsAction = ParamUtil.getString(renderRequest, "struts_action", "");
 
-            Object idAttr = renderRequest.getAttribute(WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION);
+        if ("/compras/alta_articulo_popup".equals(strutsAction)) {
+            return mapping.findForward(FORWARD_ALTA_ARTICULO_POPUP);
+        }
+
+        try {
+            int idRequerimientoCompra =
+                    ParamUtil.getInteger(renderRequest, "id_requerimiento_compra", 0);
+
+            Object idAttr =
+                    renderRequest.getAttribute(WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION);
 
             if (idRequerimientoCompra == 0 && idAttr instanceof Integer) {
                 idRequerimientoCompra = ((Integer) idAttr).intValue();
@@ -227,7 +434,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             RequerimientoCompra requerimiento;
 
             if (idRequerimientoCompra > 0) {
-                requerimiento = BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimientoCompra);
+                requerimiento =
+                        BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(
+                                idRequerimientoCompra
+                        );
 
                 if (requerimiento == null) {
                     throw new Exception("No se encontro el requerimiento de compra informado.");
@@ -246,9 +456,20 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 renderRequest.removeAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA);
             }
 
-            renderRequest.setAttribute(WebKeysCompras.SOLO_LECTURA_ATTR, Boolean.valueOf(soloLectura));
-            renderRequest.setAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION, requerimiento);
-            renderRequest.setAttribute(WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION, requerimiento.getDetalles());
+            renderRequest.setAttribute(
+                    WebKeysCompras.SOLO_LECTURA_ATTR,
+                    Boolean.valueOf(soloLectura)
+            );
+
+            renderRequest.setAttribute(
+                    WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION,
+                    requerimiento
+            );
+
+            renderRequest.setAttribute(
+                    WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION,
+                    requerimiento.getDetalles()
+            );
         } catch (Exception e) {
             String mensaje = e.getMessage();
 
@@ -280,9 +501,16 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 WebKeysCompras.SECTORES_REQUERIMIENTO,
                 BusquedaRequerimientoCompraServiceUtil.listarSectores()
         );
+
+        request.setAttribute(
+                ARTICULOS_REQUERIMIENTO_COMPRA,
+                EditarRequerimientoCompraServiceUtil.listarArticulos(null, null)
+        );
     }
 
-    private void cargarAfiliadoRequerimiento(RenderRequest renderRequest, RequerimientoCompra requerimiento) {
+    private void cargarAfiliadoRequerimiento(RenderRequest renderRequest,
+                                             RequerimientoCompra requerimiento) {
+
         renderRequest.removeAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA);
 
         if (requerimiento == null || !requerimiento.tieneAfiliadoInformado()) {
@@ -290,34 +518,44 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         try {
-            List<Afiliado> afiliados = BusquedaAfiliadoServiceUtil.getBusquedaAfiliadosComponente(
-                    requerimiento.getAfiliadoCuilTitular(),
-                    requerimiento.getAfiliadoIntString(),
-                    null,
-                    null,
-                    0,
-                    null,
-                    null,
-                    WebKeysGlobal.ID_DEFAULT_ENTIDAD,
-                    0,
-                    0,
-                    new BigDecimal(0)
-            );
+            List<Afiliado> afiliados =
+                    BusquedaAfiliadoServiceUtil.getBusquedaAfiliadosComponente(
+                            requerimiento.getAfiliadoCuilTitular(),
+                            requerimiento.getAfiliadoIntString(),
+                            null,
+                            null,
+                            0,
+                            null,
+                            null,
+                            WebKeysGlobal.ID_DEFAULT_ENTIDAD,
+                            0,
+                            0,
+                            new BigDecimal(0)
+                    );
 
             if (afiliados != null && afiliados.size() == 1) {
-                renderRequest.setAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA, afiliados.get(0));
+                renderRequest.setAttribute(
+                        WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA,
+                        afiliados.get(0)
+                );
             }
         } catch (Exception e) {
         }
     }
 
-    private void setIdRequerimientoEnRequest(ActionRequest request, ActionResponse response, int idRequerimientoCompra) {
+    private void setIdRequerimientoEnRequest(ActionRequest request,
+                                             ActionResponse response,
+                                             int idRequerimientoCompra) {
+
         request.setAttribute(
                 WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION,
                 Integer.valueOf(idRequerimientoCompra)
         );
 
-        response.setRenderParameter("id_requerimiento_compra", String.valueOf(idRequerimientoCompra));
+        response.setRenderParameter(
+                "id_requerimiento_compra",
+                String.valueOf(idRequerimientoCompra)
+        );
     }
 
     private String getUsuario(User user) {
@@ -330,7 +568,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
-            errorCampo("permisos", "No posee permisos para administrar requerimientos de compras.");
+            errorCampo(
+                    "permisos",
+                    "No posee permisos para administrar requerimientos de compras."
+            );
         }
     }
 
@@ -341,22 +582,31 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS)
                 && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
-            errorCampo("permisos", "No posee permisos para anular requerimientos de compras.");
+
+            errorCampo(
+                    "permisos",
+                    "No posee permisos para anular requerimientos de compras."
+            );
         }
     }
 
-    private RequerimientoCompra validarRequerimientoEditable(int idRequerimientoCompra) throws Exception {
+    private RequerimientoCompra validarRequerimientoEditable(int idRequerimientoCompra)
+            throws Exception {
+
         if (idRequerimientoCompra <= 0) {
             return null;
         }
 
         RequerimientoCompra requerimiento =
-                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimientoCompra);
+                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(
+                        idRequerimientoCompra
+                );
 
         if (requerimiento == null) {
             errorCampo(
                     "id_requerimiento_compra",
-                    "No se encontro el requerimiento de compra informado. ID recibido: " + idRequerimientoCompra + "."
+                    "No se encontro el requerimiento de compra informado. ID recibido: "
+                            + idRequerimientoCompra + "."
             );
         }
 
@@ -371,14 +621,19 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         return requerimiento;
     }
 
-    private void validarRequerimientoPuedeAnular(int idRequerimientoCompra) throws Exception {
+    private void validarRequerimientoPuedeAnular(int idRequerimientoCompra)
+            throws Exception {
+
         RequerimientoCompra requerimiento =
-                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimientoCompra);
+                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(
+                        idRequerimientoCompra
+                );
 
         if (requerimiento == null) {
             errorCampo(
                     "id_requerimiento_compra",
-                    "No se encontro el requerimiento de compra informado. ID recibido: " + idRequerimientoCompra + "."
+                    "No se encontro el requerimiento de compra informado. ID recibido: "
+                            + idRequerimientoCompra + "."
             );
         }
 
@@ -391,14 +646,20 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
     }
 
-    private void prepararRequerimientoParaGuardar(RequerimientoCompra requerimiento) throws Exception {
+    private void prepararRequerimientoParaGuardar(RequerimientoCompra requerimiento)
+            throws Exception {
+
         if (requerimiento == null) {
             return;
         }
 
-        if (requerimiento.getIdSector() != null && requerimiento.getIdSector().intValue() > 0) {
+        if (requerimiento.getIdSector() != null
+                && requerimiento.getIdSector().intValue() > 0) {
+
             RequerimientoCompraSector sector =
-                    BusquedaRequerimientoCompraServiceUtil.getSector(requerimiento.getIdSector().intValue());
+                    BusquedaRequerimientoCompraServiceUtil.getSector(
+                            requerimiento.getIdSector().intValue()
+                    );
 
             if (sector == null) {
                 errorCampo(
@@ -418,14 +679,19 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             errorCampo("requerimiento", "Debe informar el requerimiento de compra.");
         }
 
-        if (requerimiento.getIdSector() == null || requerimiento.getIdSector().intValue() <= 0) {
+        if (requerimiento.getIdSector() == null
+                || requerimiento.getIdSector().intValue() <= 0) {
+
             errorCampo("sector_id", "Sector: debe seleccionar un sector.");
         }
 
         validarPorcentaje(requerimiento.getCargoOspim(), "Cargo OSPIM");
         validarPorcentaje(requerimiento.getCargoTercerizadora(), "Cargo tercerizadora");
 
-        int cargoOspim = requerimiento.getCargoOspim() != null ? requerimiento.getCargoOspim().intValue() : 0;
+        int cargoOspim = requerimiento.getCargoOspim() != null
+                ? requerimiento.getCargoOspim().intValue()
+                : 0;
+
         int cargoTercerizadora = requerimiento.getCargoTercerizadora() != null
                 ? requerimiento.getCargoTercerizadora().intValue()
                 : 0;
@@ -443,6 +709,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (cargoTercerizadora > 0
                 && WebKeysCompras.isEmpty(requerimiento.getIdTercerizadora())) {
+
             errorCampo(
                     "id_tercerizadora",
                     "Tercerizadora: debe seleccionar un afiliado con tercerizadora cuando Cargo tercerizadora es mayor a cero."
@@ -451,11 +718,17 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (requerimiento.isRequiereAfiliado()) {
             if (WebKeysCompras.isEmpty(requerimiento.getAfiliadoCuilTitular())) {
-                errorCampo("afiliado_cuil_titular", "Afiliado: debe seleccionar un afiliado. Falta CUIL titular.");
+                errorCampo(
+                        "afiliado_cuil_titular",
+                        "Afiliado: debe seleccionar un afiliado. Falta CUIL titular."
+                );
             }
 
             if (requerimiento.getAfiliadoInt() == null) {
-                errorCampo("afiliado_int", "Afiliado: debe seleccionar un afiliado. Falta integrante.");
+                errorCampo(
+                        "afiliado_int",
+                        "Afiliado: debe seleccionar un afiliado. Falta integrante."
+                );
             }
         }
     }
@@ -464,25 +737,41 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         validarDetalle(detalle, "Detalle");
     }
 
-    private void validarDetalle(RequerimientoCompraDetalle detalle, String contexto) throws Exception {
+    private void validarDetalle(RequerimientoCompraDetalle detalle, String contexto)
+            throws Exception {
+
         if (detalle == null) {
             errorCampo(contexto, contexto + ": debe informar el detalle del requerimiento.");
         }
 
         if (detalle.getIdRequerimientoCompra() <= 0) {
-            errorCampo(contexto, contexto + ": debe guardar primero la cabecera del requerimiento.");
+            errorCampo(
+                    contexto,
+                    contexto + ": debe guardar primero la cabecera del requerimiento."
+            );
         }
 
-        if (WebKeysCompras.isEmpty(detalle.getArticulo())) {
-            errorCampo(contexto + " - articulo", contexto + ": el campo Articulo es obligatorio.");
+        if (detalle.getIdArticulo() == null
+                || detalle.getIdArticulo().intValue() <= 0) {
+
+            errorCampo(
+                    contexto + " - id_articulo",
+                    contexto + ": debe seleccionar un articulo."
+            );
         }
 
-        if (detalle.getCantidad() == null || detalle.getCantidad().intValue() <= 0) {
-            errorCampo(contexto + " - cantidad", contexto + ": la Cantidad debe ser mayor a cero.");
+        if (detalle.getCantidad() == null
+                || detalle.getCantidad().intValue() <= 0) {
+
+            errorCampo(
+                    contexto + " - cantidad",
+                    contexto + ": la Cantidad debe ser mayor a cero."
+            );
         }
 
         if (detalle.getPrecioUnitarioEstimado() != null
                 && detalle.getPrecioUnitarioEstimado().compareTo(BigDecimal.ZERO) < 0) {
+
             errorCampo(
                     contexto + " - precio_unitario_estimado",
                     contexto + ": el Precio unitario estimado no puede ser negativo."
@@ -491,6 +780,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (detalle.getPrecioTotalEstimado() != null
                 && detalle.getPrecioTotalEstimado().compareTo(BigDecimal.ZERO) < 0) {
+
             errorCampo(
                     contexto + " - precio_total_estimado",
                     contexto + ": el Precio total estimado no puede ser negativo."
@@ -498,15 +788,30 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
     }
 
+    private void validarArticuloPopup(int idSector, String descripcion) throws Exception {
+        if (idSector <= 0) {
+            errorCampo("id_sector", "Debe informar el sector del articulo.");
+        }
+
+        if (WebKeysCompras.isEmpty(descripcion)) {
+            errorCampo("articulo_descripcion", "Debe informar la descripcion del articulo.");
+        }
+    }
+
     private void validarPorcentaje(Integer value, String label) throws Exception {
         int parsed = value != null ? value.intValue() : 0;
 
         if (parsed < 0 || parsed > 100) {
-            errorCampo(label, label + ": debe estar entre 0 y 100. Valor recibido: " + parsed + ".");
+            errorCampo(
+                    label,
+                    label + ": debe estar entre 0 y 100. Valor recibido: " + parsed + "."
+            );
         }
     }
 
-    private RequerimientoCompra getRequerimientoFromRequest(ActionRequest request) throws Exception {
+    private RequerimientoCompra getRequerimientoFromRequest(ActionRequest request)
+            throws Exception {
+
         RequerimientoCompra requerimiento = new RequerimientoCompra();
 
         requerimiento.setIdRequerimientoCompra(
@@ -525,8 +830,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         requerimiento.setIdSector(idSector > 0 ? Integer.valueOf(idSector) : null);
+
         requerimiento.setAfiliadoCuilTitular(
-                WebKeysCompras.trimToNull(ParamUtil.getString(request, "afiliado_cuil_titular", null))
+                WebKeysCompras.trimToNull(
+                        ParamUtil.getString(request, "afiliado_cuil_titular", null)
+                )
         );
 
         String afiliadoIntRaw = getParametroTrim(request, "afiliado_int");
@@ -544,7 +852,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         );
 
         requerimiento.setCargoTercerizadora(
-                parsePorcentajeDesdeRequest(request, "cargo_tercerizadora", "Cargo tercerizadora")
+                parsePorcentajeDesdeRequest(
+                        request,
+                        "cargo_tercerizadora",
+                        "Cargo tercerizadora"
+                )
         );
 
         String idTercerizadora = ParamUtil.getString(request, "id_tercerizadora", null);
@@ -561,7 +873,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         return requerimiento;
     }
 
-    private RequerimientoCompraDetalle getDetalleFromRequest(ActionRequest request) throws Exception {
+    private RequerimientoCompraDetalle getDetalleFromRequest(ActionRequest request)
+            throws Exception {
+
         RequerimientoCompraDetalle detalle = new RequerimientoCompraDetalle();
 
         int idDetalle = getIdDetalleFromRequest(request);
@@ -577,7 +891,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 )
         );
 
-        detalle.setArticulo(ParamUtil.getString(request, "articulo", null));
+        int idArticulo = parseEnteroConDefault(
+                request,
+                "id_articulo",
+                "Articulo",
+                0
+        );
+
+        detalle.setIdArticulo(idArticulo > 0 ? Integer.valueOf(idArticulo) : null);
 
         detalle.setCantidad(
                 parseCantidadDesdeRequest(request, "cantidad", "Cantidad")
@@ -597,7 +918,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 )
         );
 
-        detalle.setObservaciones(ParamUtil.getString(request, "observaciones_detalle", null));
+        detalle.setObservaciones(
+                ParamUtil.getString(request, "observaciones_detalle", null)
+        );
 
         return detalle;
     }
@@ -606,9 +929,15 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         return parseEnteroConDefault(request, "id_detalle", "ID del detalle", 0);
     }
 
-    private void guardarDetallesDesdeRequest(ActionRequest request, int idRequerimientoCompra, String usuario) throws Exception {
+    private void guardarDetallesDesdeRequest(ActionRequest request,
+                                             int idRequerimientoCompra,
+                                             String usuario) throws Exception {
+
         if (idRequerimientoCompra <= 0) {
-            errorCampo("id_requerimiento_compra", "Debe guardar primero la cabecera del requerimiento.");
+            errorCampo(
+                    "id_requerimiento_compra",
+                    "Debe guardar primero la cabecera del requerimiento."
+            );
         }
 
         String deletedIds = ParamUtil.getString(request, "detalle_deleted_ids", "");
@@ -634,14 +963,25 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 int idDetalleBorrado = Integer.parseInt(rawId);
 
-                if (idDetalleBorrado > 0 && !borrados.contains(Integer.valueOf(idDetalleBorrado))) {
-                    EditarRequerimientoCompraServiceUtil.borrarDetalle(idDetalleBorrado, usuario);
+                if (idDetalleBorrado > 0
+                        && !borrados.contains(Integer.valueOf(idDetalleBorrado))) {
+
+                    EditarRequerimientoCompraServiceUtil.borrarDetalle(
+                            idDetalleBorrado,
+                            usuario
+                    );
+
                     borrados.add(Integer.valueOf(idDetalleBorrado));
                 }
             }
         }
 
-        int count = parseEnteroConDefault(request, "detalle_count", "Cantidad de detalles", 0);
+        int count = parseEnteroConDefault(
+                request,
+                "detalle_count",
+                "Cantidad de detalles",
+                0
+        );
 
         for (int i = 0; i < count; i++) {
             String prefix = "detalle_" + i + "_";
@@ -662,13 +1002,18 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 continue;
             }
 
-            String articulo = ParamUtil.getString(request, prefix + "articulo", null);
+            int idArticulo = parseEnteroConDefault(
+                    request,
+                    prefix + "id_articulo",
+                    contexto + " - Articulo",
+                    0
+            );
 
             RequerimientoCompraDetalle detalle = new RequerimientoCompraDetalle();
 
             detalle.setId(idDetalle > 0 ? Integer.valueOf(idDetalle) : null);
             detalle.setIdRequerimientoCompra(idRequerimientoCompra);
-            detalle.setArticulo(articulo);
+            detalle.setIdArticulo(idArticulo > 0 ? Integer.valueOf(idArticulo) : null);
 
             detalle.setCantidad(
                     parseCantidadDesdeRequest(
@@ -680,19 +1025,29 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             detalle.setPrecioUnitarioEstimado(
                     parseBigDecimalNullable(
-                            ParamUtil.getString(request, prefix + "precio_unitario_estimado", null),
+                            ParamUtil.getString(
+                                    request,
+                                    prefix + "precio_unitario_estimado",
+                                    null
+                            ),
                             contexto + " - Precio unitario estimado"
                     )
             );
 
             detalle.setPrecioTotalEstimado(
                     parseBigDecimalNullable(
-                            ParamUtil.getString(request, prefix + "precio_total_estimado", null),
+                            ParamUtil.getString(
+                                    request,
+                                    prefix + "precio_total_estimado",
+                                    null
+                            ),
                             contexto + " - Precio total estimado"
                     )
             );
 
-            detalle.setObservaciones(ParamUtil.getString(request, prefix + "observaciones", null));
+            detalle.setObservaciones(
+                    ParamUtil.getString(request, prefix + "observaciones", null)
+            );
 
             validarDetalle(detalle, contexto);
 
@@ -700,7 +1055,22 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
     }
 
-    private void errorCampo(String campo, String mensaje) throws ValidacionCompraException {
+    private boolean filaDetalleVacia(ActionRequest request, String prefix) {
+        return WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "id"))
+                && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "id_articulo"))
+                && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "cantidad"))
+                && WebKeysCompras.isEmpty(
+                getParametroTrim(request, prefix + "precio_unitario_estimado")
+        )
+                && WebKeysCompras.isEmpty(
+                getParametroTrim(request, prefix + "precio_total_estimado")
+        )
+                && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "observaciones"));
+    }
+
+    private void errorCampo(String campo, String mensaje)
+            throws ValidacionCompraException {
+
         throw new ValidacionCompraException(campo, mensaje);
     }
 
@@ -714,7 +1084,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         return value.trim();
     }
 
-    private Integer parseEnteroOpcional(ActionRequest request, String nombre, String label)
+    private Integer parseEnteroOpcional(ActionRequest request,
+                                        String nombre,
+                                        String label)
             throws ValidacionCompraException {
 
         String value = getParametroTrim(request, nombre);
@@ -724,19 +1096,30 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         if (!value.matches("^[0-9]+$")) {
-            errorCampo(nombre, label + ": el valor ingresado '" + value + "' no es un numero entero valido.");
+            errorCampo(
+                    nombre,
+                    label + ": el valor ingresado '" + value
+                            + "' no es un numero entero valido."
+            );
         }
 
         try {
             return Integer.valueOf(Integer.parseInt(value));
         } catch (Exception e) {
-            errorCampo(nombre, label + ": el valor ingresado '" + value + "' esta fuera del rango permitido.");
+            errorCampo(
+                    nombre,
+                    label + ": el valor ingresado '" + value
+                            + "' esta fuera del rango permitido."
+            );
         }
 
         return null;
     }
 
-    private int parseEnteroConDefault(ActionRequest request, String nombre, String label, int defaultValue)
+    private int parseEnteroConDefault(ActionRequest request,
+                                      String nombre,
+                                      String label,
+                                      int defaultValue)
             throws ValidacionCompraException {
 
         Integer parsed = parseEnteroOpcional(request, nombre, label);
@@ -748,7 +1131,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         return parsed.intValue();
     }
 
-    private Integer parsePorcentajeDesdeRequest(ActionRequest request, String nombre, String label)
+    private Integer parsePorcentajeDesdeRequest(ActionRequest request,
+                                                String nombre,
+                                                String label)
             throws ValidacionCompraException {
 
         String value = getParametroTrim(request, nombre);
@@ -758,7 +1143,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         if (!value.matches("^[0-9]+$")) {
-            errorCampo(nombre, label + ": debe ser un numero entero entre 0 y 100. Valor recibido: '" + value + "'.");
+            errorCampo(
+                    nombre,
+                    label + ": debe ser un numero entero entre 0 y 100. Valor recibido: '"
+                            + value + "'."
+            );
         }
 
         int parsed;
@@ -766,18 +1155,27 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         try {
             parsed = Integer.parseInt(value);
         } catch (Exception e) {
-            errorCampo(nombre, label + ": el valor ingresado '" + value + "' esta fuera del rango permitido.");
+            errorCampo(
+                    nombre,
+                    label + ": el valor ingresado '" + value
+                            + "' esta fuera del rango permitido."
+            );
             return null;
         }
 
         if (parsed < 0 || parsed > 100) {
-            errorCampo(nombre, label + ": debe estar entre 0 y 100. Valor recibido: " + parsed + ".");
+            errorCampo(
+                    nombre,
+                    label + ": debe estar entre 0 y 100. Valor recibido: " + parsed + "."
+            );
         }
 
         return Integer.valueOf(parsed);
     }
 
-    private Integer parseCantidadDesdeRequest(ActionRequest request, String nombre, String label)
+    private Integer parseCantidadDesdeRequest(ActionRequest request,
+                                              String nombre,
+                                              String label)
             throws ValidacionCompraException {
 
         String value = getParametroTrim(request, nombre);
@@ -787,7 +1185,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         if (!value.matches("^[0-9]+$")) {
-            errorCampo(nombre, label + ": debe ser un numero entero mayor a cero. Valor recibido: '" + value + "'.");
+            errorCampo(
+                    nombre,
+                    label + ": debe ser un numero entero mayor a cero. Valor recibido: '"
+                            + value + "'."
+            );
         }
 
         int parsed;
@@ -795,12 +1197,19 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         try {
             parsed = Integer.parseInt(value);
         } catch (Exception e) {
-            errorCampo(nombre, label + ": el valor ingresado '" + value + "' esta fuera del rango permitido.");
+            errorCampo(
+                    nombre,
+                    label + ": el valor ingresado '" + value
+                            + "' esta fuera del rango permitido."
+            );
             return null;
         }
 
         if (parsed <= 0) {
-            errorCampo(nombre, label + ": debe ser mayor a cero. Valor recibido: " + parsed + ".");
+            errorCampo(
+                    nombre,
+                    label + ": debe ser mayor a cero. Valor recibido: " + parsed + "."
+            );
         }
 
         return Integer.valueOf(parsed);
@@ -837,12 +1246,17 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         return null;
     }
 
-    private boolean filaDetalleVacia(ActionRequest request, String prefix) {
-        return WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "id"))
-                && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "articulo"))
-                && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "cantidad"))
-                && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "precio_unitario_estimado"))
-                && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "precio_total_estimado"))
-                && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "observaciones"));
+    private String sanitizarCallback(String callback) {
+        if (callback == null) {
+            return "";
+        }
+
+        callback = callback.trim();
+
+        if (!callback.matches("[A-Za-z0-9_]+")) {
+            return "";
+        }
+
+        return callback;
     }
 }

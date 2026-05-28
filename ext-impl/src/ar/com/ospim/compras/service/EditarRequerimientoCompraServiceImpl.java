@@ -3,10 +3,15 @@ package ar.com.ospim.compras.service;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.List;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.beans.RequerimientoCompra;
+import ar.com.ospim.compras.beans.CompraArticulo;
 import ar.com.ospim.compras.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.util.ConnectionHelper;
 
@@ -24,13 +29,27 @@ public class EditarRequerimientoCompraServiceImpl {
             "{ ? = call compras.guardar_requerimiento_detalle(?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_BORRAR_REQUERIMIENTO_DETALLE =
-            "{call compras.borrar_requerimiento_detalle(?,?)}";
+            "{ call compras.borrar_requerimiento_detalle(?,?) }";
 
     private static final String SQL_BORRAR_REQUERIMIENTO =
-            "{call compras.borrar_requerimiento(?,?)}";
+            "{ call compras.borrar_requerimiento(?,?) }";
 
     private static final String SQL_CAMBIAR_ESTADO =
-            "{call compras.cambiar_estado_requerimiento(?,?,?)}";
+            "{ call compras.cambiar_estado_requerimiento(?,?,?) }";
+
+    private static final String SQL_LISTAR_ARTICULOS =
+            "SELECT id, id_sector, sector_descripcion, descripcion " +
+                    "FROM compras.listar_articulos(?, ?)";
+
+    private static final String SQL_GET_ARTICULO =
+            "SELECT id, id_sector, sector_descripcion, descripcion " +
+                    "FROM compras.get_articulo(?)";
+
+    private static final String SQL_GUARDAR_ARTICULO =
+            "{ ? = call compras.guardar_articulo(?,?,?) }";
+
+    private static final String SQL_BORRAR_ARTICULO =
+            "{ call compras.borrar_articulo(?) }";
 
     public int guardarRequerimientoCompra(RequerimientoCompra requerimiento, String usuario) throws Exception {
         validarRequerimientoParaGuardar(requerimiento);
@@ -77,8 +96,8 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.registerOutParameter(1, Types.INTEGER);
 
             setNullableInteger(stmt, 2, detalle.getId());
-            setNullableInteger(stmt, 3, detalle.getIdRequerimiento());
-            stmt.setString(4, emptyToNull(detalle.getArticulo()));
+            setNullableInteger(stmt, 3, getIdRequerimientoDetalle(detalle));
+            setNullableInteger(stmt, 4, detalle.getIdArticulo());
             setNullableInteger(stmt, 5, detalle.getCantidad());
             setNullableBigDecimal(stmt, 6, detalle.getPrecioUnitarioEstimado());
             setNullableBigDecimal(stmt, 7, detalle.getPrecioTotalEstimadoInformado());
@@ -170,6 +189,137 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
+    public List<CompraArticulo> listarArticulos(Integer idSector, String texto) throws Exception {
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        List<CompraArticulo> articulos = new ArrayList<CompraArticulo>();
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(SQL_LISTAR_ARTICULOS);
+
+            setNullableInteger(stmt, 1, idSector);
+            stmt.setString(2, emptyToNull(texto));
+
+            rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                articulos.add(mapearArticulo(rs));
+            }
+
+            return articulos;
+        } catch (Exception e) {
+            _log.error(e);
+            throw e;
+        } finally {
+            cerrar(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public List<CompraArticulo> listarArticulosPorSector(int idSector) throws Exception {
+        if (idSector <= 0) {
+            throw new Exception("Debe informar el sector.");
+        }
+
+        return listarArticulos(Integer.valueOf(idSector), null);
+    }
+
+    public CompraArticulo getArticulo(int idArticulo) throws Exception {
+        if (idArticulo <= 0) {
+            throw new Exception("Debe informar el articulo.");
+        }
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(SQL_GET_ARTICULO);
+            stmt.setInt(1, idArticulo);
+
+            rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return mapearArticulo(rs);
+            }
+
+            return null;
+        } catch (Exception e) {
+            _log.error(e);
+            throw e;
+        } finally {
+            cerrar(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public int guardarArticulo(CompraArticulo articulo) throws Exception {
+        validarArticuloParaGuardar(articulo);
+
+        return guardarArticulo(
+                articulo.getId(),
+                articulo.getIdSector(),
+                articulo.getDescripcion()
+        );
+    }
+
+    public int guardarArticulo(Integer idArticulo, Integer idSector, String descripcion) throws Exception {
+        CompraArticulo articulo = new CompraArticulo();
+        articulo.setId(idArticulo);
+        articulo.setIdSector(idSector);
+        articulo.setDescripcion(descripcion);
+
+        validarArticuloParaGuardar(articulo);
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_GUARDAR_ARTICULO);
+            stmt.registerOutParameter(1, Types.INTEGER);
+
+            setNullableInteger(stmt, 2, idArticulo);
+            setNullableInteger(stmt, 3, idSector);
+            stmt.setString(4, emptyToNull(descripcion));
+
+            stmt.execute();
+
+            return stmt.getInt(1);
+        } catch (Exception e) {
+            _log.error(e);
+            throw e;
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public void borrarArticulo(int idArticulo) throws Exception {
+        if (idArticulo <= 0) {
+            throw new Exception("Debe informar el articulo.");
+        }
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_BORRAR_ARTICULO);
+            stmt.setInt(1, idArticulo);
+
+            stmt.execute();
+        } catch (Exception e) {
+            _log.error(e);
+            throw e;
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
     private void validarRequerimientoParaGuardar(RequerimientoCompra requerimiento) throws Exception {
         if (requerimiento == null) {
             throw new Exception("Debe informar el requerimiento de compra.");
@@ -182,7 +332,10 @@ public class EditarRequerimientoCompraServiceImpl {
         validarPorcentaje(requerimiento.getCargoOspim(), "Cargo OSPIM");
         validarPorcentaje(requerimiento.getCargoTercerizadora(), "Cargo tercerizadora");
 
-        int cargoOspim = requerimiento.getCargoOspim() != null ? requerimiento.getCargoOspim().intValue() : 0;
+        int cargoOspim = requerimiento.getCargoOspim() != null
+                ? requerimiento.getCargoOspim().intValue()
+                : 0;
+
         int cargoTercerizadora = requerimiento.getCargoTercerizadora() != null
                 ? requerimiento.getCargoTercerizadora().intValue()
                 : 0;
@@ -212,8 +365,14 @@ public class EditarRequerimientoCompraServiceImpl {
             throw new Exception("Debe informar el detalle del requerimiento.");
         }
 
-        if (detalle.getIdRequerimientoCompra() <= 0) {
+        Integer idRequerimiento = getIdRequerimientoDetalle(detalle);
+
+        if (idRequerimiento == null || idRequerimiento.intValue() <= 0) {
             throw new Exception("Debe guardar primero la cabecera del requerimiento.");
+        }
+
+        if (detalle.getIdArticulo() == null || detalle.getIdArticulo().intValue() <= 0) {
+            throw new Exception("Debe informar el articulo.");
         }
 
         if (detalle.getCantidad() == null) {
@@ -222,10 +381,6 @@ public class EditarRequerimientoCompraServiceImpl {
 
         if (detalle.getCantidad().intValue() <= 0) {
             throw new Exception("La cantidad debe ser mayor a cero.");
-        }
-
-        if (WebKeysCompras.isEmpty(detalle.getArticulo())) {
-            throw new Exception("Debe informar el articulo.");
         }
 
         if (detalle.getPrecioUnitarioEstimado() != null
@@ -239,6 +394,43 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
+    private void validarArticuloParaGuardar(CompraArticulo articulo) throws Exception {
+        if (articulo == null) {
+            throw new Exception("Debe informar el articulo.");
+        }
+
+        if (articulo.getIdSector() == null || articulo.getIdSector().intValue() <= 0) {
+            throw new Exception("Debe informar el sector del articulo.");
+        }
+
+        if (WebKeysCompras.isEmpty(articulo.getDescripcion())) {
+            throw new Exception("Debe informar la descripcion del articulo.");
+        }
+    }
+
+    private CompraArticulo mapearArticulo(ResultSet rs) throws Exception {
+        CompraArticulo articulo = new CompraArticulo();
+
+        articulo.setId(Integer.valueOf(rs.getInt("id")));
+        articulo.setIdSector(Integer.valueOf(rs.getInt("id_sector")));
+        articulo.setSectorDescripcion(rs.getString("sector_descripcion"));
+        articulo.setDescripcion(rs.getString("descripcion"));
+
+        return articulo;
+    }
+
+    private Integer getIdRequerimientoDetalle(RequerimientoCompraDetalle detalle) {
+        if (detalle.getIdRequerimiento() != null && detalle.getIdRequerimiento().intValue() > 0) {
+            return detalle.getIdRequerimiento();
+        }
+
+        if (detalle.getIdRequerimientoCompra() > 0) {
+            return Integer.valueOf(detalle.getIdRequerimientoCompra());
+        }
+
+        return null;
+    }
+
     private void validarPorcentaje(Integer value, String label) throws Exception {
         int parsed = value != null ? value.intValue() : 0;
 
@@ -248,6 +440,14 @@ public class EditarRequerimientoCompraServiceImpl {
     }
 
     private void setNullableInteger(CallableStatement stmt, int index, Integer value) throws Exception {
+        if (value == null) {
+            stmt.setNull(index, Types.INTEGER);
+        } else {
+            stmt.setInt(index, value.intValue());
+        }
+    }
+
+    private void setNullableInteger(PreparedStatement stmt, int index, Integer value) throws Exception {
         if (value == null) {
             stmt.setNull(index, Types.INTEGER);
         } else {
@@ -269,5 +469,16 @@ public class EditarRequerimientoCompraServiceImpl {
         }
 
         return value.trim();
+    }
+
+    private void cerrar(ResultSet rs) {
+        if (rs == null) {
+            return;
+        }
+
+        try {
+            rs.close();
+        } catch (Exception ignored) {
+        }
     }
 }

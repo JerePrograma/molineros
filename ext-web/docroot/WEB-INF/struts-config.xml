@@ -7063,7 +7063,12 @@
 		        forward="portlet.seccional.view" />
 
 		<action path="/compras/alta_articulo_popup"
-		        forward="portlet.compras.alta_articulo_popup" />
+		        type="ar.com.ospim.compras.action.EditarRequerimientoCompraAction">
+			<forward name="portlet.compras.alta_articulo_popup"
+			         path="portlet.compras.alta_articulo_popup" />
+			<forward name="portlet.compras.editar_requerimiento"
+			         path="portlet.compras.editar_requerimiento" />
+		</action>
     </action-mappings>
   
 </struts-config>

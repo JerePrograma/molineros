@@ -1,5 +1,8 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.List" %>
+<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraArticulo" %>
 
 <portlet:defineObjects />
 
@@ -14,11 +17,9 @@ private String jsDetalleCompra(String value) {
             .replace("'", "\\'")
             .replace("\"", "\\\"")
             .replace("\r", " ")
-            .replace("\n", " ");
-}
-
-private String jsDetalleCompraAttr(String value) {
-    return HtmlUtil.escape(jsDetalleCompra(value));
+            .replace("\n", " ")
+            .replace("<", "\\x3C")
+            .replace(">", "\\x3E");
 }
 %>
 
@@ -67,12 +68,17 @@ if (detalles == null) {
     detalles = new ArrayList<RequerimientoCompraDetalle>();
 }
 
-PortletURL detalleActionURL = renderResponse.createActionURL();
-detalleActionURL.setWindowState(WindowState.MAXIMIZED);
-detalleActionURL.setParameter("struts_action", "/compras/editar_requerimiento");
+List<RequerimientoCompraArticulo> articulos =
+        (List<RequerimientoCompraArticulo>) renderRequest.getAttribute("ARTICULOS_REQUERIMIENTO_COMPRA");
+
+if (articulos == null) {
+    articulos = new ArrayList<RequerimientoCompraArticulo>();
+}
 
 int detalleColspan = puedeABMDetalle ? 7 : 6;
-String nsDetalle = renderResponse.getNamespace();
+
+Integer idSectorActual = reqDetalle.getIdSector();
+String idSectorActualString = idSectorActual != null ? String.valueOf(idSectorActual.intValue()) : "";
 %>
 
 <fieldset class="block-labels">
@@ -92,117 +98,78 @@ String nsDetalle = renderResponse.getNamespace();
             <% } %>
         </tr>
 
-        <%
-        if (detalles.size() == 0) {
-        %>
+        <tbody id="<portlet:namespace />detalle_body">
             <tr class="portlet-section-body results-row">
                 <td colspan="<%= detalleColspan %>">
-                    No hay detalles cargados.
+                    Cargando detalles...
                 </td>
             </tr>
-        <%
-        }
-        else {
-            for (int i = 0; i < detalles.size(); i++) {
-                RequerimientoCompraDetalle detalle = detalles.get(i);
-
-                String rowClass = (i % 2 == 0)
-                        ? "portlet-section-body results-row"
-                        : "portlet-section-alternate results-row alt";
-        %>
-                <tr class="<%= rowClass %>">
-                    <td><%= HtmlUtil.escape(detalle.getIdString()) %></td>
-                    <td><%= HtmlUtil.escape(detalle.getArticuloVisible()) %></td>
-                    <td><%= HtmlUtil.escape(detalle.getCantidadString()) %></td>
-                    <td><%= HtmlUtil.escape(detalle.getPrecioUnitarioEstimadoString()) %></td>
-                    <td><%= HtmlUtil.escape(detalle.getPrecioTotalEstimadoString()) %></td>
-                    <td><%= HtmlUtil.escape(detalle.getObservacionesVisible()) %></td>
-
-                    <% if (puedeABMDetalle) { %>
-                        <td>
-                            <input
-                                type="button"
-                                value="Editar"
-                                onClick="<portlet:namespace />editarDetalle('<%= detalle.getIdString() %>', '<%= jsDetalleCompraAttr(detalle.getArticuloVisible()) %>', '<%= jsDetalleCompraAttr(detalle.getCantidadString()) %>', '<%= jsDetalleCompraAttr(detalle.getPrecioUnitarioEstimadoString()) %>', '<%= jsDetalleCompraAttr(detalle.getPrecioTotalEstimadoString()) %>', '<%= jsDetalleCompraAttr(detalle.getObservacionesVisible()) %>');"
-                            />
-
-                            &nbsp;
-
-                            <form action="<%= detalleActionURL.toString() %>"
-                                  method="post"
-                                  id="<%= nsDetalle %>deleteDetalleFm<%= detalle.getIdString() %>"
-                                  style="display:inline;">
-                                <input type="hidden"
-                                       name="<portlet:namespace /><%= Constants.CMD %>"
-                                       value="deleteItem" />
-
-                                <input type="hidden"
-                                       name="<portlet:namespace />id_requerimiento_compra"
-                                       value="<%= reqDetalle.getIdRequerimientoCompra() %>" />
-
-                                <input type="hidden"
-                                       name="<portlet:namespace />id_detalle"
-                                       value="<%= detalle.getIdString() %>" />
-
-                                <input
-                                    type="button"
-                                    value="Borrar"
-                                    onClick="if (confirm('Confirma borrar el detalle?')) submitForm(document.getElementById('<%= nsDetalle %>deleteDetalleFm<%= detalle.getIdString() %>'));"
-                                />
-                            </form>
-                        </td>
-                    <% } %>
-                </tr>
-        <%
-            }
-        }
-        %>
+        </tbody>
     </table>
 
     <% if (puedeABMDetalle) { %>
+        <div id="<portlet:namespace />detalle_payload"></div>
+
+        <input type="hidden"
+               name="<portlet:namespace />detalle_count"
+               id="<portlet:namespace />detalle_count"
+               value="0" />
+
+        <input type="hidden"
+               name="<portlet:namespace />detalle_deleted_ids"
+               id="<portlet:namespace />detalle_deleted_ids"
+               value="" />
+
         <br />
 
-        <form action="<%= detalleActionURL.toString() %>"
-              method="post"
-              name="<portlet:namespace />detalleFm"
-              id="<portlet:namespace />detalleFm">
+        <fieldset class="block-labels">
+            <legend>Agregar / editar detalle</legend>
 
             <input type="hidden"
-                   name="<portlet:namespace /><%= Constants.CMD %>"
-                   id="<portlet:namespace />detalle_cmd"
-                   value="addItem" />
-
-            <input type="hidden"
-                   name="<portlet:namespace />id_detalle"
-                   id="<portlet:namespace />id_detalle"
-                   value="0" />
-
-            <input type="hidden"
-                   name="<portlet:namespace />id_requerimiento_compra"
-                   value="<%= reqDetalle.getIdRequerimientoCompra() %>" />
+                   id="<portlet:namespace />detalle_edit_index"
+                   value="-1" />
 
             <table class="lfr-table" width="100%">
                 <tr>
-                    <td><label for="<portlet:namespace />articulo">Art&iacute;culo:</label></td>
+                    <td><label for="<portlet:namespace />detalle_id_articulo">Art&iacute;culo:</label></td>
                     <td colspan="3">
-                        <input
-                            type="text"
-                            name="<portlet:namespace />articulo"
-                            id="<portlet:namespace />articulo"
-                            size="80"
-                            maxlength="255"
-                        />
+                        <select id="<portlet:namespace />detalle_id_articulo"
+                                style="min-width: 420px;">
+                            <option value="">Seleccione...</option>
+
+                            <%
+                            for (int i = 0; i < articulos.size(); i++) {
+                                RequerimientoCompraArticulo articulo = articulos.get(i);
+
+                                String idArticulo = articulo.getId() != null
+                                        ? String.valueOf(articulo.getId().intValue())
+                                        : "";
+
+                                String idSectorArticulo = articulo.getIdSector() != null
+                                        ? String.valueOf(articulo.getIdSector().intValue())
+                                        : "";
+
+                                String descripcionArticulo = articulo.getDescripcion() != null
+                                        ? articulo.getDescripcion()
+                                        : "";
+                            %>
+                                <option value="<%= HtmlUtil.escape(idArticulo) %>"
+                                        data-sector="<%= HtmlUtil.escape(idSectorArticulo) %>">
+                                    <%= HtmlUtil.escape(descripcionArticulo) %>
+                                </option>
+                            <%
+                            }
+                            %>
+                        </select>
 
                         &nbsp;
 
-                        <% if (puedeABMDetalle) { %>
-                            <img alt="Nuevo artículo"
-                                 title="Nuevo artículo"
-                                 align="absmiddle"
-                                 src="<%= themeDisplay.getPathThemeImages() %>/common/add.png"
-                                 style="cursor:pointer;"
-                                 onClick="<portlet:namespace />abrirAltaArticuloCompra();" />
-                        <% } %>
+                        <img alt="Nuevo artículo"
+                             title="Nuevo artículo"
+                             align="absmiddle"
+                             src="<%= themeDisplay.getPathThemeImages() %>/common/add.png"
+                             style="cursor:pointer;"
+                             onClick="<portlet:namespace />abrirAltaArticuloCompra();" />
                     </td>
                 </tr>
 
@@ -211,26 +178,20 @@ String nsDetalle = renderResponse.getNamespace();
                 </tr>
 
                 <tr>
-                    <td><label for="<portlet:namespace />cantidad">Cantidad:</label></td>
+                    <td><label for="<portlet:namespace />detalle_cantidad">Cantidad:</label></td>
                     <td>
-                        <input
-                            type="text"
-                            name="<portlet:namespace />cantidad"
-                            id="<portlet:namespace />cantidad"
-                            size="8"
-                            value="1"
-                        />
+                        <input type="text"
+                               id="<portlet:namespace />detalle_cantidad"
+                               size="8"
+                               value="1" />
                     </td>
 
-                    <td><label for="<portlet:namespace />precio_unitario_estimado">Precio unitario:</label></td>
+                    <td><label for="<portlet:namespace />detalle_precio_unitario_estimado">Precio unitario:</label></td>
                     <td>
-                        <input
-                            type="text"
-                            name="<portlet:namespace />precio_unitario_estimado"
-                            id="<portlet:namespace />precio_unitario_estimado"
-                            size="12"
-                            value=""
-                        />
+                        <input type="text"
+                               id="<portlet:namespace />detalle_precio_unitario_estimado"
+                               size="12"
+                               value="" />
                     </td>
                 </tr>
 
@@ -239,25 +200,21 @@ String nsDetalle = renderResponse.getNamespace();
                 </tr>
 
                 <tr>
-                    <td><label for="<portlet:namespace />precio_total_estimado">Total estimado:</label></td>
+                    <td><label for="<portlet:namespace />detalle_precio_total_estimado">Total estimado:</label></td>
                     <td>
-                        <input
-                            type="text"
-                            name="<portlet:namespace />precio_total_estimado"
-                            id="<portlet:namespace />precio_total_estimado"
-                            size="12"
-                        />
+                        <input type="text"
+                               id="<portlet:namespace />detalle_precio_total_estimado"
+                               size="12"
+                               value="" />
                     </td>
 
-                    <td><label for="<portlet:namespace />observaciones_detalle">Observaciones:</label></td>
+                    <td><label for="<portlet:namespace />detalle_observaciones">Observaciones:</label></td>
                     <td>
-                        <input
-                            type="text"
-                            name="<portlet:namespace />observaciones_detalle"
-                            id="<portlet:namespace />observaciones_detalle"
-                            size="60"
-                            maxlength="500"
-                        />
+                        <input type="text"
+                               id="<portlet:namespace />detalle_observaciones"
+                               size="60"
+                               maxlength="500"
+                               value="" />
                     </td>
                 </tr>
 
@@ -267,69 +224,120 @@ String nsDetalle = renderResponse.getNamespace();
 
                 <tr>
                     <td colspan="4" align="center">
-                        <input
-                            type="button"
-                            id="<portlet:namespace />detalle_submit"
-                            value="Agregar detalle"
-                            onClick="<portlet:namespace />guardarDetalle();"
-                        />
+                        <input type="button"
+                               id="<portlet:namespace />detalle_submit"
+                               value="Agregar detalle"
+                               onClick="<portlet:namespace />agregarOActualizarDetalle();" />
 
                         &nbsp;&nbsp;
 
-                        <input
-                            type="button"
-                            id="<portlet:namespace />detalle_cancelar"
-                            value="Cancelar edici&oacute;n"
-                            style="display:none;"
-                            onClick="<portlet:namespace />cancelarEdicionDetalle();"
-                        />
+                        <input type="button"
+                               id="<portlet:namespace />detalle_cancelar"
+                               value="Cancelar edici&oacute;n"
+                               style="display:none;"
+                               onClick="<portlet:namespace />cancelarEdicionDetalle();" />
                     </td>
                 </tr>
             </table>
-        </form>
+        </fieldset>
     <% } %>
 </fieldset>
 
-<% if (puedeABMDetalle) { %>
 <script type="text/javascript">
+    var <portlet:namespace />detallesCompra = [];
+    var <portlet:namespace />detalleDeletedIds = [];
 
-    var <portlet:namespace />popupArticuloCompra = null;
+    <%
+    for (int i = 0; i < detalles.size(); i++) {
+        RequerimientoCompraDetalle detalle = detalles.get(i);
 
-    function <portlet:namespace />abrirAltaArticuloCompra() {
-        var articuloActual = jQuery.trim(jQuery('#<portlet:namespace />articulo').val());
+        String idArticuloDetalle = "";
 
-        <portlet:namespace />popupArticuloCompra = Liferay.Popup({
-            title: 'Alta de artículo',
-            modal: true,
-            width: 700
-        });
-
-        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-            '&struts_action=/compras/alta_articulo_popup' +
-            '&articulo=' + encodeURIComponent(articuloActual) +
-            '&callback=' + encodeURIComponent('<portlet:namespace />seleccionarArticuloCompra');
-
-        jQuery(<portlet:namespace />popupArticuloCompra).load(url);
-    }
-
-    function <portlet:namespace />seleccionarArticuloCompra(descripcion) {
-        jQuery('#<portlet:namespace />articulo').val(descripcion);
-        <portlet:namespace />cerrarAltaArticuloCompra();
-        jQuery('#<portlet:namespace />cantidad').focus();
-    }
-
-    function <portlet:namespace />seleccionarArticuloCompraCerrar() {
-        <portlet:namespace />cerrarAltaArticuloCompra();
-    }
-
-    function <portlet:namespace />cerrarAltaArticuloCompra() {
-        if (<portlet:namespace />popupArticuloCompra) {
-            Liferay.Popup.close(<portlet:namespace />popupArticuloCompra);
+        if (detalle.getIdArticulo() != null) {
+            idArticuloDetalle = String.valueOf(detalle.getIdArticulo().intValue());
         }
+    %>
+        <portlet:namespace />detallesCompra.push({
+            id: '<%= jsDetalleCompra(detalle.getIdString()) %>',
+            idArticulo: '<%= jsDetalleCompra(idArticuloDetalle) %>',
+            articulo: '<%= jsDetalleCompra(detalle.getArticuloVisible()) %>',
+            cantidad: '<%= jsDetalleCompra(detalle.getCantidadString()) %>',
+            precioUnitario: '<%= jsDetalleCompra(detalle.getPrecioUnitarioEstimadoString()) %>',
+            precioTotal: '<%= jsDetalleCompra(detalle.getPrecioTotalEstimadoString()) %>',
+            observaciones: '<%= jsDetalleCompra(detalle.getObservacionesVisible()) %>'
+        });
+    <%
+    }
+    %>
+
+    function <portlet:namespace />detalleEscapeHtml(value) {
+        if (value == null) {
+            return '';
+        }
+
+        return jQuery('<div/>').text(value).html();
     }
 
     function <portlet:namespace />detalleValue(value) {
         return value == null ? '' : value;
+    }
+
+    function <portlet:namespace />getSectorSeleccionadoCompra() {
+        var sector = '';
+
+        var byIdSector = jQuery('#<portlet:namespace />id_sector');
+
+        if (byIdSector.length > 0) {
+            sector = jQuery.trim(byIdSector.val());
+        }
+
+        if (sector == '') {
+            var bySectorId = jQuery('#<portlet:namespace />sector_id');
+
+            if (bySectorId.length > 0) {
+                sector = jQuery.trim(bySectorId.val());
+            }
+        }
+
+        if (sector == '') {
+            sector = '<%= HtmlUtil.escape(idSectorActualString) %>';
+        }
+
+        return sector;
+    }
+
+    function <portlet:namespace />filtrarArticulosPorSector() {
+        var sectorSeleccionado = <portlet:namespace />getSectorSeleccionadoCompra();
+        var select = jQuery('#<portlet:namespace />detalle_id_articulo');
+
+        var valorActual = select.val();
+        var valorActualPermitido = false;
+
+        select.find('option').each(function() {
+            var option = jQuery(this);
+            var value = option.val();
+
+            if (value == '') {
+                option.show();
+                return;
+            }
+
+            var sectorArticulo = option.attr('data-sector');
+
+            if (sectorSeleccionado == '' || sectorArticulo == sectorSeleccionado) {
+                option.show();
+
+                if (value == valorActual) {
+                    valorActualPermitido = true;
+                }
+            } else {
+                option.hide();
+            }
+        });
+
+        if (!valorActualPermitido) {
+            select.val('');
+        }
     }
 
     function <portlet:namespace />normalizarImporte(value) {
@@ -353,64 +361,362 @@ String nsDetalle = renderResponse.getNamespace();
     }
 
     function <portlet:namespace />calcularTotalDetalle() {
-        var cantidad = parseInt(jQuery.trim(jQuery('#<portlet:namespace />cantidad').val()), 10);
-        var precioUnitario = <portlet:namespace />normalizarImporte(jQuery('#<portlet:namespace />precio_unitario_estimado').val());
+        var cantidad = parseInt(
+                jQuery.trim(jQuery('#<portlet:namespace />detalle_cantidad').val()),
+                10
+        );
+
+        var precioUnitario =
+                <portlet:namespace />normalizarImporte(
+                        jQuery('#<portlet:namespace />detalle_precio_unitario_estimado').val()
+                );
 
         if (isNaN(cantidad) || cantidad <= 0 || precioUnitario == null) {
             return;
         }
 
-        jQuery('#<portlet:namespace />precio_total_estimado').val((cantidad * precioUnitario).toFixed(2));
+        jQuery('#<portlet:namespace />detalle_precio_total_estimado').val(
+                (cantidad * precioUnitario).toFixed(2)
+        );
     }
 
-    function <portlet:namespace />editarDetalle(idDetalle, articulo, cantidad, precioUnitario, precioTotal, observaciones) {
-        jQuery('#<portlet:namespace />detalle_cmd').val('updateItem');
-        jQuery('#<portlet:namespace />id_detalle').val(<portlet:namespace />detalleValue(idDetalle));
-        jQuery('#<portlet:namespace />articulo').val(<portlet:namespace />detalleValue(articulo));
-        jQuery('#<portlet:namespace />cantidad').val(<portlet:namespace />detalleValue(cantidad));
-        jQuery('#<portlet:namespace />precio_unitario_estimado').val(<portlet:namespace />detalleValue(precioUnitario));
-        jQuery('#<portlet:namespace />precio_total_estimado').val(<portlet:namespace />detalleValue(precioTotal));
-        jQuery('#<portlet:namespace />observaciones_detalle').val(<portlet:namespace />detalleValue(observaciones));
+    function <portlet:namespace />renderDetallesCompra() {
+        var tbody = jQuery('#<portlet:namespace />detalle_body');
 
-        jQuery('#<portlet:namespace />detalle_submit').val('Guardar detalle');
-        jQuery('#<portlet:namespace />detalle_cancelar').show();
-        jQuery('#<portlet:namespace />articulo').focus();
-    }
+        tbody.empty();
 
-    function <portlet:namespace />cancelarEdicionDetalle() {
-        jQuery('#<portlet:namespace />detalle_cmd').val('addItem');
-        jQuery('#<portlet:namespace />id_detalle').val('0');
-        jQuery('#<portlet:namespace />articulo').val('');
-        jQuery('#<portlet:namespace />cantidad').val('1');
-        jQuery('#<portlet:namespace />precio_unitario_estimado').val('');
-        jQuery('#<portlet:namespace />precio_total_estimado').val('');
-        jQuery('#<portlet:namespace />observaciones_detalle').val('');
+        if (<portlet:namespace />detallesCompra.length == 0) {
+            tbody.append(
+                '<tr class="portlet-section-body results-row">' +
+                    '<td colspan="<%= detalleColspan %>">No hay detalles cargados.</td>' +
+                '</tr>'
+            );
 
-        jQuery('#<portlet:namespace />detalle_submit').val('Agregar detalle');
-        jQuery('#<portlet:namespace />detalle_cancelar').hide();
-    }
-
-    function <portlet:namespace />guardarDetalle() {
-        var articulo = jQuery.trim(jQuery('#<portlet:namespace />articulo').val());
-        var cantidad = jQuery.trim(jQuery('#<portlet:namespace />cantidad').val());
-
-        if (articulo == '') {
-            alert('Debe informar articulo.');
-            jQuery('#<portlet:namespace />articulo').focus();
             return;
         }
 
-        if (cantidad == '' || !/^[0-9]+$/.test(cantidad) || parseInt(cantidad, 10) <= 0) {
-            alert('La cantidad debe ser entera y mayor a cero.');
-            jQuery('#<portlet:namespace />cantidad').focus();
-            return;
-        }
+        for (var i = 0; i < <portlet:namespace />detallesCompra.length; i++) {
+            var detalle = <portlet:namespace />detallesCompra[i];
 
-        submitForm(document.getElementById('<portlet:namespace />detalleFm'));
+            var rowClass = (i % 2 == 0)
+                    ? 'portlet-section-body results-row'
+                    : 'portlet-section-alternate results-row alt';
+
+            var html = '';
+
+            html += '<tr class="' + rowClass + '">';
+            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.id) + '</td>';
+            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.articulo) + '</td>';
+            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.cantidad) + '</td>';
+            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.precioUnitario) + '</td>';
+            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.precioTotal) + '</td>';
+            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.observaciones) + '</td>';
+
+            <% if (puedeABMDetalle) { %>
+                html += '<td>';
+                html += '<input type="button" value="Editar" onclick="<portlet:namespace />editarDetalleEnPantalla(' + i + ');" />';
+                html += '&nbsp;';
+                html += '<input type="button" value="Quitar" onclick="<portlet:namespace />quitarDetalleEnPantalla(' + i + ');" />';
+                html += '</td>';
+            <% } %>
+
+            html += '</tr>';
+
+            tbody.append(html);
+        }
     }
 
-    jQuery('#<portlet:namespace />cantidad, #<portlet:namespace />precio_unitario_estimado').change(function() {
-        <portlet:namespace />calcularTotalDetalle();
+    <% if (puedeABMDetalle) { %>
+        var <portlet:namespace />popupArticuloCompra = null;
+
+        function <portlet:namespace />abrirAltaArticuloCompra() {
+            var idSector = <portlet:namespace />getSectorSeleccionadoCompra();
+
+            if (idSector == '' || !/^[0-9]+$/.test(idSector) || parseInt(idSector, 10) <= 0) {
+                alert('Debe seleccionar un sector antes de cargar un artículo.');
+                return;
+            }
+
+            <portlet:namespace />popupArticuloCompra = Liferay.Popup({
+                title: 'Alta de artículo',
+                modal: true,
+                width: 700
+            });
+
+            var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
+                '&struts_action=/compras/alta_articulo_popup' +
+                '&id_sector=' + encodeURIComponent(idSector) +
+                '&callback=' + encodeURIComponent('<portlet:namespace />seleccionarArticuloCompra');
+
+            jQuery(<portlet:namespace />popupArticuloCompra).load(url);
+        }
+
+        function <portlet:namespace />seleccionarArticuloCompra(idArticulo, descripcion, idSector) {
+            var select = jQuery('#<portlet:namespace />detalle_id_articulo');
+
+            if (select.find('option[value="' + idArticulo + '"]').length == 0) {
+                select.append(
+                    '<option value="' + <portlet:namespace />detalleEscapeHtml(idArticulo) + '" data-sector="' +
+                    <portlet:namespace />detalleEscapeHtml(idSector) + '">' +
+                    <portlet:namespace />detalleEscapeHtml(descripcion) +
+                    '</option>'
+                );
+            }
+
+            <portlet:namespace />filtrarArticulosPorSector();
+
+            select.val(idArticulo);
+
+            <portlet:namespace />cerrarAltaArticuloCompra();
+
+            jQuery('#<portlet:namespace />detalle_cantidad').focus();
+        }
+
+        function <portlet:namespace />seleccionarArticuloCompraCerrar() {
+            <portlet:namespace />cerrarAltaArticuloCompra();
+        }
+
+        function <portlet:namespace />cerrarAltaArticuloCompra() {
+            if (<portlet:namespace />popupArticuloCompra) {
+                Liferay.Popup.close(<portlet:namespace />popupArticuloCompra);
+            }
+        }
+
+        function <portlet:namespace />limpiarEditorDetalle() {
+            jQuery('#<portlet:namespace />detalle_edit_index').val('-1');
+            jQuery('#<portlet:namespace />detalle_id_articulo').val('');
+            jQuery('#<portlet:namespace />detalle_cantidad').val('1');
+            jQuery('#<portlet:namespace />detalle_precio_unitario_estimado').val('');
+            jQuery('#<portlet:namespace />detalle_precio_total_estimado').val('');
+            jQuery('#<portlet:namespace />detalle_observaciones').val('');
+            jQuery('#<portlet:namespace />detalle_submit').val('Agregar detalle');
+            jQuery('#<portlet:namespace />detalle_cancelar').hide();
+
+            <portlet:namespace />filtrarArticulosPorSector();
+        }
+
+        function <portlet:namespace />editarDetalleEnPantalla(index) {
+            var detalle = <portlet:namespace />detallesCompra[index];
+
+            if (!detalle) {
+                return;
+            }
+
+            jQuery('#<portlet:namespace />detalle_edit_index').val(index);
+            jQuery('#<portlet:namespace />detalle_id_articulo').val(<portlet:namespace />detalleValue(detalle.idArticulo));
+            jQuery('#<portlet:namespace />detalle_cantidad').val(<portlet:namespace />detalleValue(detalle.cantidad));
+            jQuery('#<portlet:namespace />detalle_precio_unitario_estimado').val(<portlet:namespace />detalleValue(detalle.precioUnitario));
+            jQuery('#<portlet:namespace />detalle_precio_total_estimado').val(<portlet:namespace />detalleValue(detalle.precioTotal));
+            jQuery('#<portlet:namespace />detalle_observaciones').val(<portlet:namespace />detalleValue(detalle.observaciones));
+
+            jQuery('#<portlet:namespace />detalle_submit').val('Guardar detalle');
+            jQuery('#<portlet:namespace />detalle_cancelar').show();
+
+            <portlet:namespace />filtrarArticulosPorSector();
+
+            jQuery('#<portlet:namespace />detalle_id_articulo').focus();
+        }
+
+        function <portlet:namespace />cancelarEdicionDetalle() {
+            <portlet:namespace />limpiarEditorDetalle();
+        }
+
+        function <portlet:namespace />agregarOActualizarDetalle() {
+            var idArticulo = jQuery.trim(jQuery('#<portlet:namespace />detalle_id_articulo').val());
+            var articulo = jQuery.trim(jQuery('#<portlet:namespace />detalle_id_articulo option:selected').text());
+            var cantidad = jQuery.trim(jQuery('#<portlet:namespace />detalle_cantidad').val());
+            var precioUnitario = jQuery.trim(jQuery('#<portlet:namespace />detalle_precio_unitario_estimado').val());
+            var precioTotal = jQuery.trim(jQuery('#<portlet:namespace />detalle_precio_total_estimado').val());
+            var observaciones = jQuery.trim(jQuery('#<portlet:namespace />detalle_observaciones').val());
+
+            if (idArticulo == '' || !/^[0-9]+$/.test(idArticulo) || parseInt(idArticulo, 10) <= 0) {
+                alert('Debe seleccionar un artículo.');
+                jQuery('#<portlet:namespace />detalle_id_articulo').focus();
+                return;
+            }
+
+            if (cantidad == '' || !/^[0-9]+$/.test(cantidad) || parseInt(cantidad, 10) <= 0) {
+                alert('La cantidad debe ser entera y mayor a cero.');
+                jQuery('#<portlet:namespace />detalle_cantidad').focus();
+                return;
+            }
+
+            var precioUnitarioNormalizado =
+                    <portlet:namespace />normalizarImporte(precioUnitario);
+
+            var precioTotalNormalizado =
+                    <portlet:namespace />normalizarImporte(precioTotal);
+
+            if (precioUnitario != '' && precioUnitarioNormalizado == null) {
+                alert('El precio unitario estimado no es valido.');
+                jQuery('#<portlet:namespace />detalle_precio_unitario_estimado').focus();
+                return;
+            }
+
+            if (precioTotal != '' && precioTotalNormalizado == null) {
+                alert('El precio total estimado no es valido.');
+                jQuery('#<portlet:namespace />detalle_precio_total_estimado').focus();
+                return;
+            }
+
+            if (precioTotal == '' && precioUnitarioNormalizado != null) {
+                precioTotal = (parseInt(cantidad, 10) * precioUnitarioNormalizado).toFixed(2);
+                jQuery('#<portlet:namespace />detalle_precio_total_estimado').val(precioTotal);
+            }
+
+            var detalle = {
+                id: '',
+                idArticulo: idArticulo,
+                articulo: articulo,
+                cantidad: cantidad,
+                precioUnitario: precioUnitario,
+                precioTotal: precioTotal,
+                observaciones: observaciones
+            };
+
+            var editIndex = parseInt(
+                    jQuery('#<portlet:namespace />detalle_edit_index').val(),
+                    10
+            );
+
+            if (!isNaN(editIndex)
+                    && editIndex >= 0
+                    && <portlet:namespace />detallesCompra[editIndex]) {
+
+                detalle.id = <portlet:namespace />detallesCompra[editIndex].id;
+                <portlet:namespace />detallesCompra[editIndex] = detalle;
+            } else {
+                <portlet:namespace />detallesCompra.push(detalle);
+            }
+
+            <portlet:namespace />limpiarEditorDetalle();
+            <portlet:namespace />renderDetallesCompra();
+        }
+
+        function <portlet:namespace />quitarDetalleEnPantalla(index) {
+            var detalle = <portlet:namespace />detallesCompra[index];
+
+            if (!detalle) {
+                return;
+            }
+
+            if (!confirm('Confirma quitar el detalle?')) {
+                return;
+            }
+
+            if (detalle.id != null && detalle.id != '' && parseInt(detalle.id, 10) > 0) {
+                <portlet:namespace />detalleDeletedIds.push(detalle.id);
+            }
+
+            <portlet:namespace />detallesCompra.splice(index, 1);
+            <portlet:namespace />limpiarEditorDetalle();
+            <portlet:namespace />renderDetallesCompra();
+        }
+
+        function <portlet:namespace />crearHiddenDetalle(name, value) {
+            var form = document.getElementById('<portlet:namespace />fmCompras');
+
+            if (!form) {
+                alert('No se encontro el formulario principal para serializar detalles.');
+                return false;
+            }
+
+            var input = document.createElement('input');
+
+            input.type = 'hidden';
+            input.name = '<portlet:namespace />' + name;
+            input.value = value == null ? '' : value;
+            input.className = '<portlet:namespace />detalle_serializado';
+
+            form.appendChild(input);
+
+            return true;
+        }
+
+        function <portlet:namespace />serializarDetallesCompras() {
+            var form = document.getElementById('<portlet:namespace />fmCompras');
+
+            if (!form) {
+                alert('No se encontro el formulario principal de Compras.');
+                return false;
+            }
+
+            jQuery('.<portlet:namespace />detalle_serializado').remove();
+
+            if (!<portlet:namespace />crearHiddenDetalle('detalle_count', <portlet:namespace />detallesCompra.length)) {
+                return false;
+            }
+
+            if (!<portlet:namespace />crearHiddenDetalle('detalle_deleted_ids', <portlet:namespace />detalleDeletedIds.join(','))) {
+                return false;
+            }
+
+            for (var i = 0; i < <portlet:namespace />detallesCompra.length; i++) {
+                var detalle = <portlet:namespace />detallesCompra[i];
+                var prefix = 'detalle_' + i + '_';
+
+                if (jQuery.trim(detalle.idArticulo) == ''
+                        || !/^[0-9]+$/.test(jQuery.trim(detalle.idArticulo))
+                        || parseInt(detalle.idArticulo, 10) <= 0) {
+
+                    alert('Hay un detalle sin artículo.');
+                    return false;
+                }
+
+                if (jQuery.trim(detalle.cantidad) == ''
+                        || !/^[0-9]+$/.test(jQuery.trim(detalle.cantidad))
+                        || parseInt(detalle.cantidad, 10) <= 0) {
+
+                    alert('Hay un detalle con cantidad invalida.');
+                    return false;
+                }
+
+                if (!<portlet:namespace />crearHiddenDetalle(prefix + 'id', detalle.id)) {
+                    return false;
+                }
+
+                if (!<portlet:namespace />crearHiddenDetalle(prefix + 'id_articulo', detalle.idArticulo)) {
+                    return false;
+                }
+
+                if (!<portlet:namespace />crearHiddenDetalle(prefix + 'cantidad', detalle.cantidad)) {
+                    return false;
+                }
+
+                if (!<portlet:namespace />crearHiddenDetalle(prefix + 'precio_unitario_estimado', detalle.precioUnitario)) {
+                    return false;
+                }
+
+                if (!<portlet:namespace />crearHiddenDetalle(prefix + 'precio_total_estimado', detalle.precioTotal)) {
+                    return false;
+                }
+
+                if (!<portlet:namespace />crearHiddenDetalle(prefix + 'observaciones', detalle.observaciones)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        jQuery(function() {
+            jQuery('#<portlet:namespace />detalle_cantidad, #<portlet:namespace />detalle_precio_unitario_estimado').change(function() {
+                <portlet:namespace />calcularTotalDetalle();
+            });
+
+            jQuery('#<portlet:namespace />id_sector, #<portlet:namespace />sector_id').change(function() {
+                <portlet:namespace />filtrarArticulosPorSector();
+            });
+
+            <portlet:namespace />filtrarArticulosPorSector();
+        });
+    <% } %>
+
+    jQuery(function() {
+        <portlet:namespace />renderDetallesCompra();
+
+        <% if (puedeABMDetalle) { %>
+            <portlet:namespace />filtrarArticulosPorSector();
+        <% } %>
     });
 </script>
-<% } %>

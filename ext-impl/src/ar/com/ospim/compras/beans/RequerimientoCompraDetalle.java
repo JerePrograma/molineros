@@ -8,7 +8,7 @@ public class RequerimientoCompraDetalle {
 
     private Integer id;
     private Integer idRequerimiento;
-    private String articulo;
+    private Integer idArticulo;
     private Integer cantidad;
     private BigDecimal precioUnitarioEstimado;
     private BigDecimal precioTotalEstimado;
@@ -55,16 +55,12 @@ public class RequerimientoCompraDetalle {
         this.idRequerimiento = idRequerimientoCompra > 0 ? Integer.valueOf(idRequerimientoCompra) : null;
     }
 
-    public String getArticulo() {
-        return articulo;
+    public Integer getIdArticulo() {
+        return idArticulo;
     }
 
-    public String getArticuloVisible() {
-        return articulo != null ? articulo : "";
-    }
-
-    public void setArticulo(String articulo) {
-        this.articulo = WebKeysCompras.trimToNull(articulo);
+    public void setIdArticulo(Integer idArticulo) {
+        this.idArticulo = idArticulo;
     }
 
     public Integer getCantidad() {
