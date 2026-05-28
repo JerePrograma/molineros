@@ -285,6 +285,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
         d.setId(getInteger(rs, "id"));
         d.setIdRequerimiento(getInteger(rs, "id_requerimiento"));
+        d.setIdArticulo(getInteger(rs, "id_articulo"));
         d.setArticulo(getString(rs, "articulo"));
         d.setCantidad(getInteger(rs, "cantidad"));
         d.setPrecioUnitarioEstimado(getNullableBigDecimal(rs, "precio_unitario_estimado"));
