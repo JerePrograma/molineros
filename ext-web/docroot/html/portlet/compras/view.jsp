@@ -139,15 +139,14 @@ if (estados == null) {
         </tr>
 
         <tr>
-            <td colspan="6" align="center">
+            <td colspan="1">
                 <input id="<portlet:namespace />buscar"
                        value="<liferay-ui:message key='buscar' />"
                        title="<liferay-ui:message key='buscar' />"
                        type="button" />
-
+            </td>
+            <td colspan="5">
                 <c:if test="<%= showABMButtons %>">
-                    &nbsp;&nbsp;
-
                     <input type="button"
                            value="Nuevo requerimiento"
                            onClick="<portlet:namespace />altaRequerimiento();" />

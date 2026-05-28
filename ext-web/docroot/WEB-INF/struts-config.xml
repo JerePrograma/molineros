@@ -7046,6 +7046,8 @@
 
 		<action path="/compras/buscar_afiliados"
 		        type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
+			<forward name="portlet.afiliados.result.search.auto_select"
+			         path="portlet.compras.afiliado_auto_select_result" />
 			<forward name="portlet.afiliados.result.search.popup"
 			         path="portlet.afiliados.result.search.popup" />
 			<forward name="portlet.afiliados.error"

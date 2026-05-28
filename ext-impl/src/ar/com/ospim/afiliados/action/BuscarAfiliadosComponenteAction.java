@@ -186,9 +186,13 @@ public class BuscarAfiliadosComponenteAction extends PortletAction {
 			_log.error("[ERROR] Error en render BuscarAfiliadosComponenteAction", e);
 		}
 
+		boolean autoSelect = ParamUtil.getBoolean(renderRequest, "auto_select", false);
 		popup = ParamUtil.getString(renderRequest, "popup");
 		String origen = ParamUtil.getString(renderRequest, "origen");
 		renderRequest.setAttribute("origen", origen);
+		if (autoSelect) {
+			return mapping.findForward("portlet.afiliados.result.search.auto_select");
+		}
 		if (null != popup && !popup.trim().equals("")) {
 			return mapping.findForward("portlet.afiliados.result.search.popup");
 		} else {

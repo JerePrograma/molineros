@@ -4518,6 +4518,10 @@
 		<put name="portlet_content" value="/portlet/compras/editar_requerimiento.jsp" />
 	</definition>
 
+	<definition name="portlet.compras.afiliado_auto_select_result" extends="portlet.compras">
+		<put name="portlet_content" value="/portlet/compras/afiliado_auto_select_result.jsp" />
+	</definition>
+
 	<definition name="portlet.compras.ver_requerimiento" extends="portlet.compras">
 		<put name="portlet_content" value="/portlet/compras/ver_requerimiento.jsp" />
 	</definition>

@@ -244,6 +244,12 @@ if (errorCampoCompra == null) {
         <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
             <liferay-util:param name="edit_mode" value="<%= String.valueOf(puedeEditarPantalla) %>" />
         </liferay-util:include>
+
+        <div id="<portlet:namespace />afiliadoInicialMensaje"
+             class="portlet-msg-info"
+             style="display:none;"></div>
+        <div id="<portlet:namespace />afiliadoInicialAutoSelect"
+             style="display:none;"></div>
     </fieldset>
 
     <form action="<%= actionURL.toString() %>"
@@ -413,6 +419,7 @@ if (errorCampoCompra == null) {
 <script type="text/javascript">
     var popupAfill = null;
     var popup = null;
+    var afiliadoInicialBuscado = false;
 
     function <portlet:namespace />valorAfiliado(id) {
         return jQuery.trim(jQuery('#<portlet:namespace />' + id).val());
@@ -593,6 +600,10 @@ if (errorCampoCompra == null) {
         }
 
         <portlet:namespace />sincronizarAfiliadoRequerimiento();
+
+        if (typeof <portlet:namespace />mostrarMensajeAfiliadoInicial == 'function') {
+            <portlet:namespace />mostrarMensajeAfiliadoInicial('');
+        }
     }
 
     function <portlet:namespace />trimValue(id) {
@@ -636,6 +647,59 @@ if (errorCampoCompra == null) {
         <portlet:namespace />sincronizarAfiliadoRequerimiento();
     }
 
+    function <portlet:namespace />mostrarMensajeAfiliadoInicial(mensaje) {
+        var panel = jQuery('#<portlet:namespace />afiliadoInicialMensaje');
+
+        if (mensaje == null || jQuery.trim(mensaje) == '') {
+            panel.hide();
+            panel.text('');
+            return;
+        }
+
+        panel.text(mensaje);
+        panel.show();
+    }
+
+    function <portlet:namespace />cargarDatosAfiliadoInicial() {
+        if (afiliadoInicialBuscado) {
+            return;
+        }
+
+        afiliadoInicialBuscado = true;
+
+        var puedeBuscarAfiliadoInicial = <%= (!esNuevo && puedeEditarPantalla) ? "true" : "false" %>;
+
+        if (!puedeBuscarAfiliadoInicial || !<portlet:namespace />sectorRequiereAfiliado()) {
+            return;
+        }
+
+        var afiliadoCuilTitular = jQuery.trim(jQuery('#<portlet:namespace />afiliado_cuil_titular').val());
+        var afiliadoInt = jQuery.trim(jQuery('#<portlet:namespace />afiliado_int').val());
+
+        if (afiliadoCuilTitular == '' || afiliadoInt == '') {
+            return;
+        }
+
+        var entidad = jQuery('#<portlet:namespace />entidad').val();
+
+        if (entidad == null) {
+            entidad = '';
+        }
+
+        <portlet:namespace />mostrarMensajeAfiliadoInicial('');
+
+        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
+            '&struts_action=/compras/buscar_afiliados' +
+            '&auto_select=true' +
+            '&popup=false' +
+            '&cuil=' + encodeURIComponent(afiliadoCuilTitular) +
+            '&inte=' + encodeURIComponent(afiliadoInt) +
+            '&entidad=' + encodeURIComponent(entidad) +
+            '&fecha_referencia=null';
+
+        jQuery('#<portlet:namespace />afiliadoInicialAutoSelect').load(url);
+    }
+
     function <portlet:namespace />limpiarAfiliadoRequerimientoSiExiste() {
         if (typeof <portlet:namespace />limpiarCamposAfiliado == 'function') {
             <portlet:namespace />limpiarCamposAfiliado();
@@ -645,6 +709,7 @@ if (errorCampoCompra == null) {
         jQuery('#<portlet:namespace />afiliado_int').val('');
         jQuery('#<portlet:namespace />id_tercerizadora').val('');
         jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val('');
+        <portlet:namespace />mostrarMensajeAfiliadoInicial('');
     }
 
     function <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere) {
@@ -781,6 +846,7 @@ if (errorCampoCompra == null) {
     jQuery(function() {
         <portlet:namespace />cargarAfiliadoInicial();
         <portlet:namespace />actualizarVisibilidadAfiliado(false);
+        <portlet:namespace />cargarDatosAfiliadoInicial();
 
         jQuery('#<portlet:namespace />sector_id').change(function() {
             <portlet:namespace />actualizarVisibilidadAfiliado(true);
