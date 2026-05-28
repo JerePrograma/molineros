@@ -367,21 +367,47 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             }
 
             if (accionPopupArticulo) {
-                actionResponse.setRenderParameter("struts_action", "/compras/alta_articulo_popup");
+                String callback = sanitizarCallback(
+                        ParamUtil.getString(actionRequest, "callback", "")
+                );
+
+                String idSector = ParamUtil.getString(actionRequest, "id_sector", "");
+
+                String descripcionArticulo = ParamUtil.getString(
+                        actionRequest,
+                        "articulo_descripcion",
+                        ParamUtil.getString(actionRequest, "articulo", "")
+                );
+
+                actionResponse.setRenderParameter(
+                        "struts_action",
+                        "/compras/alta_articulo_popup"
+                );
+
                 actionResponse.setRenderParameter(
                         "callback",
-                        sanitizarCallback(ParamUtil.getString(actionRequest, "callback", ""))
+                        callback
                 );
+
                 actionResponse.setRenderParameter(
                         "id_sector",
-                        ParamUtil.getString(actionRequest, "id_sector", "")
+                        idSector
                 );
+
                 actionResponse.setRenderParameter(
                         "articulo",
-                        ParamUtil.getString(actionRequest, "articulo_descripcion",
-                                ParamUtil.getString(actionRequest, "articulo", ""))
+                        descripcionArticulo
                 );
-                actionResponse.setRenderParameter("articulo_error", mensaje);
+
+                actionResponse.setRenderParameter(
+                        "articulo_error",
+                        mensaje
+                );
+
+                actionResponse.setRenderParameter(
+                        "articulo_guardado",
+                        "false"
+                );
 
                 setForward(actionRequest, FORWARD_ALTA_ARTICULO_POPUP);
 

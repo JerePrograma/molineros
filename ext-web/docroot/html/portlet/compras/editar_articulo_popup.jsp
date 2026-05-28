@@ -43,6 +43,11 @@ guardarArticuloURL.setParameter("struts_action", "/compras/alta_articulo_popup")
 %>
 
 <% if (articuloGuardado && idArticuloGuardado > 0 && callback.length() > 0) { %>
+
+    <div class="portlet-msg-success">
+        Art&iacute;culo guardado correctamente.
+    </div>
+
     <script type="text/javascript">
         (function() {
             var callback = '<%= callback %>';
@@ -54,16 +59,20 @@ guardarArticuloURL.setParameter("struts_action", "/compras/alta_articulo_popup")
                     '<%= idSector %>'
                 );
             } else {
-                alert('No se encontró la función de retorno del artículo.');
+                alert('No se encontró la función de retorno del artículo: ' + callback);
             }
         })();
     </script>
+
 <% } else { %>
 
 <div id="<portlet:namespace />articulo_popup_content">
 
     <fieldset class="block-labels">
         <legend>Alta de art&iacute;culo</legend>
+
+        <div id="<portlet:namespace />articulo_popup_feedback"
+             style="display:none; margin-bottom:10px;"></div>
 
         <% if (!WebKeysCompras.isEmpty(articuloError)) { %>
             <div class="portlet-msg-error">
@@ -114,12 +123,14 @@ guardarArticuloURL.setParameter("struts_action", "/compras/alta_articulo_popup")
                 <tr>
                     <td colspan="2" align="center">
                         <input type="button"
+                               id="<portlet:namespace />btnAceptarArticulo"
                                value="Aceptar"
                                onClick="<portlet:namespace />guardarArticuloCompra();" />
 
                         &nbsp;&nbsp;
 
                         <input type="button"
+                               id="<portlet:namespace />btnCancelarArticulo"
                                value="Cancelar"
                                onClick="<portlet:namespace />cerrarPopupArticuloCompra();" />
                     </td>
@@ -129,6 +140,26 @@ guardarArticuloURL.setParameter("struts_action", "/compras/alta_articulo_popup")
     </fieldset>
 
     <script type="text/javascript">
+        function <portlet:namespace />mostrarFeedbackArticulo(tipo, mensaje) {
+            var feedback = jQuery('#<portlet:namespace />articulo_popup_feedback');
+
+            feedback
+                    .removeClass('portlet-msg-error')
+                    .removeClass('portlet-msg-success')
+                    .removeClass('portlet-msg-info');
+
+            if (tipo == 'error') {
+                feedback.addClass('portlet-msg-error');
+            } else if (tipo == 'success') {
+                feedback.addClass('portlet-msg-success');
+            } else {
+                feedback.addClass('portlet-msg-info');
+            }
+
+            feedback.html(mensaje);
+            feedback.show();
+        }
+
         function <portlet:namespace />guardarArticuloCompra() {
             var descripcion = jQuery.trim(
                     jQuery('#<portlet:namespace />articulo_descripcion').val()
@@ -152,10 +183,65 @@ guardarArticuloURL.setParameter("struts_action", "/compras/alta_articulo_popup")
                 return false;
             }
 
-            jQuery('#<portlet:namespace />articulo_popup_content').load(
-                form.action,
-                jQuery(form).serialize()
+            jQuery('#<portlet:namespace />btnAceptarArticulo').attr('disabled', 'disabled');
+            jQuery('#<portlet:namespace />btnCancelarArticulo').attr('disabled', 'disabled');
+
+            <portlet:namespace />mostrarFeedbackArticulo(
+                    'info',
+                    'Guardando artículo...'
             );
+
+            jQuery.ajax({
+                type: 'POST',
+                url: form.action,
+                data: jQuery(form).serialize(),
+                cache: false,
+                success: function(html) {
+                    if (html == null || jQuery.trim(html) == '') {
+                        <portlet:namespace />mostrarFeedbackArticulo(
+                                'error',
+                                'El servidor respondió vacío. Revisá el Action /compras/alta_articulo_popup.'
+                        );
+
+                        jQuery('#<portlet:namespace />btnAceptarArticulo').removeAttr('disabled');
+                        jQuery('#<portlet:namespace />btnCancelarArticulo').removeAttr('disabled');
+
+                        return;
+                    }
+
+                    jQuery('#<portlet:namespace />articulo_popup_content').html(html);
+
+                    jQuery('#<portlet:namespace />articulo_popup_content script').each(function() {
+                        var script = this.text || this.textContent || this.innerHTML || '';
+
+                        if (script != '') {
+                            jQuery.globalEval(script);
+                        }
+                    });
+                },
+                error: function(xhr, status, error) {
+                    var detalle = '';
+
+                    if (xhr && xhr.responseText) {
+                        detalle = '<br /><br /><pre style="white-space:pre-wrap; max-height:220px; overflow:auto;">'
+                                + jQuery('<div/>').text(xhr.responseText).html()
+                                + '</pre>';
+                    }
+
+                    <portlet:namespace />mostrarFeedbackArticulo(
+                            'error',
+                            'No se pudo guardar el artículo. Estado: '
+                            + status
+                            + '. Error: '
+                            + error
+                            + '.'
+                            + detalle
+                    );
+
+                    jQuery('#<portlet:namespace />btnAceptarArticulo').removeAttr('disabled');
+                    jQuery('#<portlet:namespace />btnCancelarArticulo').removeAttr('disabled');
+                }
+            });
 
             return false;
         }
@@ -165,7 +251,11 @@ guardarArticuloURL.setParameter("struts_action", "/compras/alta_articulo_popup")
 
             if (typeof window[callbackCerrar] == 'function') {
                 window[callbackCerrar]();
+            } else {
+                alert('No se encontró la función para cerrar el popup: ' + callbackCerrar);
             }
+
+            return false;
         }
 
         window['<portlet:namespace />guardarArticuloCompra'] =
