@@ -1,5 +1,6 @@
 package ar.com.ospim.compras.action;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.portlet.ActionRequest;
@@ -52,12 +53,19 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             validarPermisoView(user);
 
             copiarParametrosBusqueda(actionRequest, actionResponse);
+
             setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_RESULT_SEARCH);
         } catch (Exception e) {
             _log.error(e);
-            SessionErrors.add(actionRequest, e.getClass().getName());
-            actionRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());
-            setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_VIEW);
+
+            SessionErrors.add(actionRequest, "requerimientos-compra-error");
+
+            actionRequest.setAttribute(
+                    WebKeysCompras.ERROR_PARA_ALERT,
+                    getMensajeError(e)
+            );
+
+            setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_RESULT_SEARCH);
         }
     }
 
@@ -74,27 +82,25 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             List<RequerimientoCompra> requerimientos =
                     BusquedaRequerimientoCompraServiceUtil.buscarRequerimientos(filtro);
 
+            if (requerimientos == null) {
+                requerimientos = new ArrayList<RequerimientoCompra>();
+            }
+
             cargarCatalogos(renderRequest);
-
-            renderRequest.setAttribute(WebKeysCompras.FILTRO_REQUERIMIENTOS_COMPRA, filtro);
-            renderRequest.setAttribute(WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA, requerimientos);
-
-            PortletSession portletSession = renderRequest.getPortletSession();
-
-            portletSession.setAttribute(
-                    WebKeysCompras.FILTRO_REQUERIMIENTOS_COMPRA,
-                    filtro,
-                    PortletSession.PORTLET_SCOPE
-            );
-
-            portletSession.setAttribute(
-                    WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA,
-                    requerimientos,
-                    PortletSession.PORTLET_SCOPE
-            );
+            setResultadoBusqueda(renderRequest, filtro, requerimientos);
         } catch (Exception e) {
             _log.error(e);
-            renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());
+
+            renderRequest.setAttribute(
+                    WebKeysCompras.ERROR_PARA_ALERT,
+                    getMensajeError(e)
+            );
+
+            setResultadoBusqueda(
+                    renderRequest,
+                    new RequerimientoCompraFiltro(),
+                    new ArrayList<RequerimientoCompra>()
+            );
         }
 
         return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_RESULT_SEARCH);
@@ -111,16 +117,30 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
         }
     }
 
-    private void cargarCatalogos(RenderRequest request) throws Exception {
-        request.setAttribute(
-                WebKeysCompras.ESTADOS_REQUERIMIENTO,
-                BusquedaRequerimientoCompraServiceUtil.listarEstados()
-        );
+    private void cargarCatalogos(RenderRequest request) {
+        try {
+            request.setAttribute(
+                    WebKeysCompras.ESTADOS_REQUERIMIENTO,
+                    BusquedaRequerimientoCompraServiceUtil.listarEstados()
+            );
+        } catch (Exception e) {
+            request.setAttribute(
+                    WebKeysCompras.ESTADOS_REQUERIMIENTO,
+                    new ArrayList()
+            );
+        }
 
-        request.setAttribute(
-                WebKeysCompras.SECTORES_REQUERIMIENTO,
-                BusquedaRequerimientoCompraServiceUtil.listarSectores()
-        );
+        try {
+            request.setAttribute(
+                    WebKeysCompras.SECTORES_REQUERIMIENTO,
+                    BusquedaRequerimientoCompraServiceUtil.listarSectores()
+            );
+        } catch (Exception e) {
+            request.setAttribute(
+                    WebKeysCompras.SECTORES_REQUERIMIENTO,
+                    new ArrayList()
+            );
+        }
     }
 
     private void copiarParametrosBusqueda(ActionRequest actionRequest, ActionResponse actionResponse) {
@@ -134,47 +154,108 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
         }
     }
 
+    private void setResultadoBusqueda(RenderRequest renderRequest,
+                                      RequerimientoCompraFiltro filtro,
+                                      List<RequerimientoCompra> requerimientos) {
+
+        if (filtro == null) {
+            filtro = new RequerimientoCompraFiltro();
+        }
+
+        if (requerimientos == null) {
+            requerimientos = new ArrayList<RequerimientoCompra>();
+        }
+
+        renderRequest.setAttribute(
+                WebKeysCompras.FILTRO_REQUERIMIENTOS_COMPRA,
+                filtro
+        );
+
+        renderRequest.setAttribute(
+                WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA,
+                requerimientos
+        );
+
+        PortletSession portletSession = renderRequest.getPortletSession();
+
+        portletSession.setAttribute(
+                WebKeysCompras.FILTRO_REQUERIMIENTOS_COMPRA,
+                filtro,
+                PortletSession.PORTLET_SCOPE
+        );
+
+        portletSession.setAttribute(
+                WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA,
+                requerimientos,
+                PortletSession.PORTLET_SCOPE
+        );
+    }
+
     private RequerimientoCompraFiltro getFiltroFromRequest(RenderRequest request) {
         RequerimientoCompraFiltro filtro = new RequerimientoCompraFiltro();
 
         int idEstado = ParamUtil.getInteger(request, "id_estado", 0);
+
         if (idEstado <= 0) {
             idEstado = ParamUtil.getInteger(request, "estado", 0);
         }
+
         if (idEstado > 0) {
             filtro.setIdEstado(Integer.valueOf(idEstado));
         }
 
         int idSector = ParamUtil.getInteger(request, "id_sector", 0);
+
         if (idSector <= 0) {
             idSector = ParamUtil.getInteger(request, "sector_id", 0);
         }
+
         if (idSector > 0) {
             filtro.setIdSector(Integer.valueOf(idSector));
         }
 
-        filtro.setAfiliadoCuilTitular(ParamUtil.getString(request, "afiliado_cuil_titular", null));
+        String afiliadoCuilTitular = ParamUtil.getString(request, "afiliado_cuil_titular", null);
 
-        int afiliadoInt = ParamUtil.getInteger(request, "afiliado_int", -1);
-        if (afiliadoInt >= 0) {
-            filtro.setAfiliadoInt(Integer.valueOf(afiliadoInt));
+        if (!WebKeysCompras.isEmpty(afiliadoCuilTitular)) {
+            filtro.setAfiliadoCuilTitular(afiliadoCuilTitular);
+        }
+
+        String afiliadoIntRaw = ParamUtil.getString(request, "afiliado_int", null);
+
+        if (!WebKeysCompras.isEmpty(afiliadoIntRaw)) {
+            afiliadoIntRaw = afiliadoIntRaw.trim();
+
+            if (afiliadoIntRaw.matches("^[0-9]+$")) {
+                filtro.setAfiliadoInt(Integer.valueOf(Integer.parseInt(afiliadoIntRaw)));
+            }
         }
 
         String idTercerizadora = ParamUtil.getString(request, "id_tercerizadora", null);
 
         if (!WebKeysCompras.isEmpty(idTercerizadora)) {
-            filtro.setIdTercerizadora(idTercerizadora.trim());
-        } else {
-            filtro.setIdTercerizadora(null);
+            filtro.setIdTercerizadora(idTercerizadora);
         }
 
         String recupero = ParamUtil.getString(request, "recupero", null);
+
         if (!WebKeysCompras.isEmpty(recupero)) {
             filtro.setRecupero(Boolean.valueOf("true".equalsIgnoreCase(recupero) || "1".equals(recupero)));
         }
 
-        filtro.setTexto(ParamUtil.getString(request, "texto", null));
+        String texto = ParamUtil.getString(request, "texto", null);
+
+        if (!WebKeysCompras.isEmpty(texto)) {
+            filtro.setTexto(texto);
+        }
 
         return filtro;
+    }
+
+    private String getMensajeError(Exception e) {
+        if (e == null || WebKeysCompras.isEmpty(e.getMessage())) {
+            return "No se pudo buscar requerimientos de compras.";
+        }
+
+        return e.getMessage();
     }
 }

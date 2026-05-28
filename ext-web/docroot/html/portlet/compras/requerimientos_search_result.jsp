@@ -26,8 +26,8 @@ List<String> headerNames = new ArrayList<String>();
 headerNames.add("id");
 headerNames.add("estado");
 headerNames.add("sector");
-headerNames.add("cuil-titular");
-headerNames.add("integrante");
+headerNames.add("afiliado-nombre");
+headerNames.add("dni-afiliado");
 headerNames.add("cargo-ospim");
 headerNames.add("cargo-tercerizadora");
 headerNames.add("recupero");
@@ -56,13 +56,25 @@ for (int i = 0; i < requerimientos.size(); i++) {
     verURL.setParameter("struts_action", "/compras/ver_requerimiento");
     verURL.setParameter("id_requerimiento_compra", req.getIdRequerimientoCompraString());
 
+    String afiliadoNombreApellido = req.getAfiliadoNombreApellidoVisible();
+
+    if (WebKeysCompras.isEmpty(afiliadoNombreApellido)) {
+        afiliadoNombreApellido = req.getAfiliadoCuilTitularVisible();
+
+        if (!WebKeysCompras.isEmpty(req.getAfiliadoIntString())) {
+            afiliadoNombreApellido += " / " + req.getAfiliadoIntString();
+        }
+    }
+
+    String afiliadoDocumento = req.getAfiliadoDocumentoVisible();
+
     ResultRow row = new ResultRow(req, req.getIdRequerimientoCompraString(), i);
 
     row.addText(HtmlUtil.escape(req.getIdString()), verURL);
     row.addText(HtmlUtil.escape(req.getEstadoDescripcionVisible()), verURL);
     row.addText(HtmlUtil.escape(req.getSectorDescripcionVisible()), verURL);
-    row.addText(HtmlUtil.escape(req.getAfiliadoCuilTitularVisible()), verURL);
-    row.addText(HtmlUtil.escape(req.getAfiliadoIntString()), verURL);
+    row.addText(HtmlUtil.escape(afiliadoNombreApellido), verURL);
+    row.addText(HtmlUtil.escape(afiliadoDocumento), verURL);
     row.addText(HtmlUtil.escape(req.getCargoOspimString()) + "%", verURL);
     row.addText(HtmlUtil.escape(req.getCargoTercerizadoraString()) + "%", verURL);
     row.addText(HtmlUtil.escape(req.getRecuperoDescripcion()), verURL);

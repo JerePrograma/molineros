@@ -38,6 +38,13 @@ public class RequerimientoCompra {
 
     private List<RequerimientoCompraDetalle> detalles;
 
+    private String afiliadoNombre;
+    private String afiliadoApellido;
+    private String afiliadoNombreApellido;
+    private String afiliadoDocumentoTipo;
+    private String afiliadoDocumentoNro;
+    private String afiliadoDocumento;
+
     public RequerimientoCompra() {
         this.idEstado = Integer.valueOf(WebKeysCompras.ESTADO_BORRADOR);
         this.requiereAfiliado = Boolean.FALSE;
@@ -406,5 +413,103 @@ public class RequerimientoCompra {
 
     public boolean puedeAnular() {
         return WebKeysCompras.puedeAnular(getEstado()) && bajaFecha == null;
+    }
+
+    public String getAfiliadoNombre() {
+        return afiliadoNombre;
+    }
+
+    public String getAfiliadoNombreVisible() {
+        return afiliadoNombre != null ? afiliadoNombre : "";
+    }
+
+    public void setAfiliadoNombre(String afiliadoNombre) {
+        this.afiliadoNombre = WebKeysCompras.trimToNull(afiliadoNombre);
+    }
+
+    public String getAfiliadoApellido() {
+        return afiliadoApellido;
+    }
+
+    public String getAfiliadoApellidoVisible() {
+        return afiliadoApellido != null ? afiliadoApellido : "";
+    }
+
+    public void setAfiliadoApellido(String afiliadoApellido) {
+        this.afiliadoApellido = WebKeysCompras.trimToNull(afiliadoApellido);
+    }
+
+    public String getAfiliadoNombreApellido() {
+        return afiliadoNombreApellido;
+    }
+
+    public String getAfiliadoNombreApellidoVisible() {
+        if (!WebKeysCompras.isEmpty(afiliadoNombreApellido)) {
+            return afiliadoNombreApellido;
+        }
+
+        String apellido = getAfiliadoApellidoVisible();
+        String nombre = getAfiliadoNombreVisible();
+
+        if (!WebKeysCompras.isEmpty(apellido) && !WebKeysCompras.isEmpty(nombre)) {
+            return apellido + ", " + nombre;
+        }
+
+        if (!WebKeysCompras.isEmpty(apellido)) {
+            return apellido;
+        }
+
+        return nombre;
+    }
+
+    public void setAfiliadoNombreApellido(String afiliadoNombreApellido) {
+        this.afiliadoNombreApellido = WebKeysCompras.trimToNull(afiliadoNombreApellido);
+    }
+
+    public String getAfiliadoDocumentoTipo() {
+        return afiliadoDocumentoTipo;
+    }
+
+    public String getAfiliadoDocumentoTipoVisible() {
+        return afiliadoDocumentoTipo != null ? afiliadoDocumentoTipo : "";
+    }
+
+    public void setAfiliadoDocumentoTipo(String afiliadoDocumentoTipo) {
+        this.afiliadoDocumentoTipo = WebKeysCompras.trimToNull(afiliadoDocumentoTipo);
+    }
+
+    public String getAfiliadoDocumentoNro() {
+        return afiliadoDocumentoNro;
+    }
+
+    public String getAfiliadoDocumentoNroVisible() {
+        return afiliadoDocumentoNro != null ? afiliadoDocumentoNro : "";
+    }
+
+    public void setAfiliadoDocumentoNro(String afiliadoDocumentoNro) {
+        this.afiliadoDocumentoNro = WebKeysCompras.trimToNull(afiliadoDocumentoNro);
+    }
+
+    public String getAfiliadoDocumento() {
+        return afiliadoDocumento;
+    }
+
+    public String getAfiliadoDocumentoVisible() {
+        if (!WebKeysCompras.isEmpty(afiliadoDocumento)) {
+            return afiliadoDocumento;
+        }
+
+        String tipo = getAfiliadoDocumentoTipoVisible();
+        String nro = getAfiliadoDocumentoNroVisible();
+
+        if (!WebKeysCompras.isEmpty(tipo) && !WebKeysCompras.isEmpty(nro)) {
+            return tipo + " " + nro;
+        }
+
+        return nro;
+    }
+
+    public void setAfiliadoDocumento(String afiliadoDocumento) {
+        this.afiliadoDocumento = WebKeysCompras.trimToNull(afiliadoDocumento);
     }
 }

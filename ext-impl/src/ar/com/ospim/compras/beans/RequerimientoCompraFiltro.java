@@ -11,6 +11,11 @@ public class RequerimientoCompraFiltro {
     private String idTercerizadora;
     private Boolean recupero;
     private String texto;
+    private String afiliadoTipoDoc;
+    private String afiliadoNroDoc;
+    private String afiliadoApellido;
+    private String afiliadoNombre;
+    private Integer afiliadoIdSeccional;
 
     public Integer getIdEstado() {
         return idEstado;
@@ -108,5 +113,45 @@ public class RequerimientoCompraFiltro {
                 || !WebKeysCompras.isEmpty(idTercerizadora)
                 || recupero != null
                 || !WebKeysCompras.isEmpty(texto);
+    }
+
+    public String getAfiliadoTipoDoc() {
+        return afiliadoTipoDoc;
+    }
+
+    public void setAfiliadoTipoDoc(String afiliadoTipoDoc) {
+        this.afiliadoTipoDoc = afiliadoTipoDoc;
+    }
+
+    public String getAfiliadoNroDoc() {
+        return afiliadoNroDoc;
+    }
+
+    public void setAfiliadoNroDoc(String afiliadoNroDoc) {
+        this.afiliadoNroDoc = afiliadoNroDoc;
+    }
+
+    public String getAfiliadoApellido() {
+        return afiliadoApellido;
+    }
+
+    public void setAfiliadoApellido(String afiliadoApellido) {
+        this.afiliadoApellido = afiliadoApellido;
+    }
+
+    public String getAfiliadoNombre() {
+        return afiliadoNombre;
+    }
+
+    public void setAfiliadoNombre(String afiliadoNombre) {
+        this.afiliadoNombre = afiliadoNombre;
+    }
+
+    public Integer getAfiliadoIdSeccional() {
+        return afiliadoIdSeccional;
+    }
+
+    public void setAfiliadoIdSeccional(Integer afiliadoIdSeccional) {
+        this.afiliadoIdSeccional = afiliadoIdSeccional;
     }
 }

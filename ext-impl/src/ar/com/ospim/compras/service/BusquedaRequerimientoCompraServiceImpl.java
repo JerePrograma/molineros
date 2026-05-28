@@ -256,6 +256,13 @@ public class BusquedaRequerimientoCompraServiceImpl {
         r.setAfiliadoCuilTitular(getString(rs, "afiliado_cuil_titular"));
         r.setAfiliadoInt(getInteger(rs, "afiliado_int"));
 
+        r.setAfiliadoNombre(getString(rs, "afiliado_nombre"));
+        r.setAfiliadoApellido(getString(rs, "afiliado_apellido"));
+        r.setAfiliadoNombreApellido(getString(rs, "afiliado_nombre_apellido"));
+        r.setAfiliadoDocumentoTipo(getString(rs, "afiliado_documento_tipo"));
+        r.setAfiliadoDocumentoNro(getString(rs, "afiliado_documento_nro"));
+        r.setAfiliadoDocumento(getString(rs, "afiliado_documento"));
+
         r.setIdSector(getInteger(rs, "id_sector"));
         r.setSectorDescripcion(getString(rs, "sector_descripcion"));
         r.setRequiereAfiliado(getBoolean(rs, "requiere_afiliado"));
