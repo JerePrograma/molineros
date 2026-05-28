@@ -118,12 +118,22 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
 
             <table class="lfr-table" width="100%">
                 <tr>
-                    <td><label for="<portlet:namespace />detalle_articulo">Art&iacute;culo:</label></td>
                     <td colspan="3">
                         <input type="text"
                                id="<portlet:namespace />detalle_articulo"
                                size="80"
                                maxlength="255" />
+
+                        &nbsp;
+
+                        <% if (puedeABMDetalle) { %>
+                            <img alt="Nuevo artículo"
+                                 title="Nuevo artículo"
+                                 align="absmiddle"
+                                 src="<%= themeDisplay.getPathThemeImages() %>/common/add.png"
+                                 style="cursor:pointer;"
+                                 onClick="<portlet:namespace />abrirAltaArticuloCompra();" />
+                        <% } %>
                     </td>
                 </tr>
 
@@ -303,6 +313,41 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
     }
 
     <% if (puedeABMDetalle) { %>
+        var <portlet:namespace />popupArticuloCompra = null;
+
+        function <portlet:namespace />abrirAltaArticuloCompra() {
+            var articuloActual = jQuery.trim(jQuery('#<portlet:namespace />detalle_articulo').val());
+
+            <portlet:namespace />popupArticuloCompra = Liferay.Popup({
+                title: 'Alta de artículo',
+                modal: true,
+                width: 700
+            });
+
+            var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
+                '&struts_action=/compras/alta_articulo_popup' +
+                '&articulo=' + encodeURIComponent(articuloActual) +
+                '&callback=' + encodeURIComponent('<portlet:namespace />seleccionarArticuloCompra');
+
+            jQuery(<portlet:namespace />popupArticuloCompra).load(url);
+        }
+
+        function <portlet:namespace />seleccionarArticuloCompra(descripcion) {
+            jQuery('#<portlet:namespace />detalle_articulo').val(descripcion);
+            <portlet:namespace />cerrarAltaArticuloCompra();
+            jQuery('#<portlet:namespace />detalle_cantidad').focus();
+        }
+
+        function <portlet:namespace />seleccionarArticuloCompraCerrar() {
+            <portlet:namespace />cerrarAltaArticuloCompra();
+        }
+
+        function <portlet:namespace />cerrarAltaArticuloCompra() {
+            if (<portlet:namespace />popupArticuloCompra) {
+                Liferay.Popup.close(<portlet:namespace />popupArticuloCompra);
+            }
+        }
+
         function <portlet:namespace />limpiarEditorDetalle() {
             jQuery('#<portlet:namespace />detalle_edit_index').val('-1');
             jQuery('#<portlet:namespace />detalle_articulo').val('');

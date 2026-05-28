@@ -4535,4 +4535,9 @@
 		<put name="portlet_content" value="/portlet/compras/error.jsp" />
 	</definition>
 
+	<definition name="portlet.compras.alta_articulo_popup"
+	            extends="portlet.compras">
+		<put name="portlet_content"
+		     value="/portlet/compras/editar_articulo_popup.jsp" />
+	</definition>
 </tiles-definitions>

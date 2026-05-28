@@ -192,6 +192,17 @@ String nsDetalle = renderResponse.getNamespace();
                             size="80"
                             maxlength="255"
                         />
+
+                        &nbsp;
+
+                        <% if (puedeABMDetalle) { %>
+                            <img alt="Nuevo artículo"
+                                 title="Nuevo artículo"
+                                 align="absmiddle"
+                                 src="<%= themeDisplay.getPathThemeImages() %>/common/add.png"
+                                 style="cursor:pointer;"
+                                 onClick="<portlet:namespace />abrirAltaArticuloCompra();" />
+                        <% } %>
                     </td>
                 </tr>
 
@@ -281,6 +292,42 @@ String nsDetalle = renderResponse.getNamespace();
 
 <% if (puedeABMDetalle) { %>
 <script type="text/javascript">
+
+    var <portlet:namespace />popupArticuloCompra = null;
+
+    function <portlet:namespace />abrirAltaArticuloCompra() {
+        var articuloActual = jQuery.trim(jQuery('#<portlet:namespace />articulo').val());
+
+        <portlet:namespace />popupArticuloCompra = Liferay.Popup({
+            title: 'Alta de artículo',
+            modal: true,
+            width: 700
+        });
+
+        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
+            '&struts_action=/compras/alta_articulo_popup' +
+            '&articulo=' + encodeURIComponent(articuloActual) +
+            '&callback=' + encodeURIComponent('<portlet:namespace />seleccionarArticuloCompra');
+
+        jQuery(<portlet:namespace />popupArticuloCompra).load(url);
+    }
+
+    function <portlet:namespace />seleccionarArticuloCompra(descripcion) {
+        jQuery('#<portlet:namespace />articulo').val(descripcion);
+        <portlet:namespace />cerrarAltaArticuloCompra();
+        jQuery('#<portlet:namespace />cantidad').focus();
+    }
+
+    function <portlet:namespace />seleccionarArticuloCompraCerrar() {
+        <portlet:namespace />cerrarAltaArticuloCompra();
+    }
+
+    function <portlet:namespace />cerrarAltaArticuloCompra() {
+        if (<portlet:namespace />popupArticuloCompra) {
+            Liferay.Popup.close(<portlet:namespace />popupArticuloCompra);
+        }
+    }
+
     function <portlet:namespace />detalleValue(value) {
         return value == null ? '' : value;
     }

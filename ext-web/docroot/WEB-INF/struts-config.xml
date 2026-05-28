@@ -7061,6 +7061,9 @@
 
 		<action path="/compras/buscar_seccional"
 		        forward="portlet.seccional.view" />
+
+		<action path="/compras/alta_articulo_popup"
+		        forward="portlet.compras.alta_articulo_popup" />
     </action-mappings>
   
 </struts-config>
