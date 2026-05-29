@@ -87,6 +87,7 @@ if (sectorDescripcionSoloLectura.length() == 0) {
 String afiliadoCuilTitular = req.getAfiliadoCuilTitularVisible();
 String afiliadoInt = req.getAfiliadoIntString();
 String idTercerizadora = req.getIdTercerizadora();
+
 int cargoOspimActual = req.getCargoOspim() != null
         ? req.getCargoOspim().intValue()
         : 0;
@@ -97,6 +98,7 @@ int cargoTercerizadoraActual = req.getCargoTercerizadora() != null
 
 boolean mostrarTercerizadoraPorCargos =
         !(cargoOspimActual == 100 && cargoTercerizadoraActual == 0);
+
 Afiliado afiliadoRequerimiento =
         (Afiliado) renderRequest.getAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA);
 
@@ -317,10 +319,6 @@ if (errorCampoCompra == null) {
             <% } %>
 
             <tr>
-                <td colspan="4">&nbsp;</td>
-            </tr>
-
-            <tr>
                 <td><label>Observaciones:</label></td>
                 <td colspan="3"><%= HtmlUtil.escape(req.getObservacionesVisible()) %></td>
             </tr>
@@ -491,8 +489,6 @@ if (errorCampoCompra == null) {
                                         name="discapacidad" />
                     <liferay-util:param name="pag_reintegro"
                                         value="1" />
-                    <liferay-util:param name="struts_action_buscar_afiliados"
-                                        value="/compras/buscar_afiliados" />
                 </liferay-util:include>
             </fieldset>
         </div>
@@ -544,9 +540,7 @@ if (errorCampoCompra == null) {
 
 <c:if test="<%= puedeEditarPantalla %>">
 <script type="text/javascript">
-    var popupAfill = null;
     var popup = null;
-    var afiliadoInicialBuscado = false;
 
     function <portlet:namespace />valorAfiliado(id) {
         return jQuery.trim(jQuery('#<portlet:namespace />' + id).val());
@@ -560,64 +554,16 @@ if (errorCampoCompra == null) {
         return 'num' + 'ero_afi';
     }
 
-    function <portlet:namespace />buscarAfiliados() {
-        jQuery('#<portlet:namespace />divObservacionesInternas').hide();
-
-        var cuil = jQuery('#<portlet:namespace />cuil').val();
-        var inte = jQuery('#<portlet:namespace />inte').val();
-        var tipoDoc = jQuery('#<portlet:namespace />tipoDoc').val();
-        var nroDoc = jQuery('#<portlet:namespace />nroDoc').val();
-        var seccional = jQuery('#<portlet:namespace />id_seccional').val();
-        var apellido = jQuery('#<portlet:namespace />apellido').val();
-        var nombre = jQuery('#<portlet:namespace />nombre').val();
-        var entidad = jQuery('#<portlet:namespace />entidad').val();
-        var credencial = <portlet:namespace />valorCredencialAfiliado();
-
-        if (!<portlet:namespace />validarBusqueda(cuil, inte, tipoDoc, nroDoc, seccional, apellido, nombre, entidad, credencial)) {
-            return false;
-        }
-
-        if (cuil.length > 0) {
-            if (!validarCuil(cuil, "<liferay-ui:message key='valida-cuil-mensaje-limpiar'/>")) {
-                jQuery('#<portlet:namespace />cuil').focus();
-                return false;
-            }
-        }
-
-        if (jQuery("#<portlet:namespace />secc_seleccionada").val() != "1") {
-            jQuery("#<portlet:namespace />seccional").val("");
-            jQuery("#<portlet:namespace />id_seccional").val("");
-        }
-
-        popupAfill = Liferay.Popup({
-            title: '<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />',
-            modal: true,
-            width: 830
-        });
-
-        var fechaReferencia = 'null';
-
-        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-            '&struts_action=/compras/buscar_afiliados' +
-            '&cuil=' + encodeURIComponent(cuil) +
-            '&inte=' + encodeURIComponent(inte) +
-            '&tipoDoc=' + encodeURIComponent(tipoDoc) +
-            '&nroDoc=' + encodeURIComponent(nroDoc) +
-            '&seccional=' + encodeURIComponent(seccional) +
-            '&nombre=' + encodeURIComponent(nombre) +
-            '&apellido=' + encodeURIComponent(apellido) +
-            '&entidad=' + encodeURIComponent(entidad) +
-            '&' + <portlet:namespace />paramCredencialAfiliado() + '=' + encodeURIComponent(credencial) +
-            '&fecha_referencia=' + encodeURIComponent(fechaReferencia) +
-            '&origen=' +
-            '&popup=true';
-
-        jQuery(popupAfill).load(url);
-    }
-
-    function <portlet:namespace />buscarAfiliados_(fechaReferencia) {
-        <portlet:namespace />buscarAfiliados();
-    }
+    /*
+     * NO definir <portlet:namespace />buscarAfiliados ni
+     * <portlet:namespace />buscarAfiliados_ en este JSP.
+     *
+     * Esas funciones pertenecen al componente incluido:
+     * /html/portlet/autorizaciones/busqueda_afiliado.jsp
+     *
+     * Si las definimos aca, pisamos el flujo manual que ya funciona
+     * y podemos forzar un render de resultado de otro portlet.
+     */
 
     function <portlet:namespace />buscarSeccional() {
         var id_seccional = jQuery("#<portlet:namespace />id_seccional").val();
@@ -640,6 +586,8 @@ if (errorCampoCompra == null) {
             '&prefijo=';
 
         jQuery(popup).load(url);
+
+        return false;
     }
 
     function <portlet:namespace />buscarSeccionalOnDiv(e) {
@@ -678,6 +626,8 @@ if (errorCampoCompra == null) {
         } else {
             jQuery("#divSeccional").hide("slow");
         }
+
+        return false;
     }
 
     function seleccionaCamposAfiliado(cuil, inte, docu_tipo, docu_nro, nombre, apellido, id_secc, desc_secc, ospim, uoma, amtima, bajaFecha, nombre_plan, id_plan, fecha_alta_af, incapacidad_af, id_tercerizadora, afi_tercerizadora, reclamoPrestacional, nroSocioPrev, nroCredenPrev, fechaRecepcion, tieneAntecedentes) {
@@ -737,13 +687,33 @@ if (errorCampoCompra == null) {
         return jQuery.trim(jQuery('#<portlet:namespace />' + id).val());
     }
 
+    function <portlet:namespace />parsePorcentajeSilencioso(id) {
+        var value = <portlet:namespace />trimValue(id);
+
+        if (value == '') {
+            return 0;
+        }
+
+        if (!/^[0-9]+$/.test(value)) {
+            return null;
+        }
+
+        var parsed = parseInt(value, 10);
+
+        if (isNaN(parsed) || parsed < 0 || parsed > 100) {
+            return null;
+        }
+
+        return parsed;
+    }
+
     function <portlet:namespace />usaTercerizadoraPorCargos(cargoOspim, cargoTercerizadora) {
         return !(cargoOspim == 100 && cargoTercerizadora == 0);
     }
 
     function <portlet:namespace />actualizarVisibilidadTercerizadora() {
-        var cargoOspim = <portlet:namespace />parsePorcentaje('cargo_ospim', 'Cargo OSPIM');
-        var cargoTercerizadora = <portlet:namespace />parsePorcentaje('cargo_tercerizadora', 'Cargo tercerizadora');
+        var cargoOspim = <portlet:namespace />parsePorcentajeSilencioso('cargo_ospim');
+        var cargoTercerizadora = <portlet:namespace />parsePorcentajeSilencioso('cargo_tercerizadora');
 
         if (cargoOspim == null || cargoTercerizadora == null) {
             return false;
@@ -777,8 +747,8 @@ if (errorCampoCompra == null) {
         jQuery('#<portlet:namespace />afiliado_cuil_titular').val(<portlet:namespace />trimValue('cuil'));
         jQuery('#<portlet:namespace />afiliado_int').val(<portlet:namespace />trimValue('inte'));
 
-        var cargoOspim = <portlet:namespace />parsePorcentaje('cargo_ospim', 'Cargo OSPIM');
-        var cargoTercerizadora = <portlet:namespace />parsePorcentaje('cargo_tercerizadora', 'Cargo tercerizadora');
+        var cargoOspim = <portlet:namespace />parsePorcentajeSilencioso('cargo_ospim');
+        var cargoTercerizadora = <portlet:namespace />parsePorcentajeSilencioso('cargo_tercerizadora');
 
         var usaTercerizadora = true;
 
@@ -838,6 +808,11 @@ if (errorCampoCompra == null) {
         panel.show();
     }
 
+    /*
+     * Guardado seguro:
+     * Esta funcion queda anulada para evitar cualquier busqueda automatica
+     * al renderizar la pantalla luego de Guardar todo.
+     */
     function <portlet:namespace />cargarDatosAfiliadoInicial() {
         return false;
     }
@@ -1014,6 +989,14 @@ if (errorCampoCompra == null) {
         <portlet:namespace />cargarAfiliadoInicial();
         <portlet:namespace />actualizarVisibilidadAfiliado(false);
         <portlet:namespace />actualizarVisibilidadTercerizadora();
+
+        /*
+         * NO llamar:
+         * <portlet:namespace />cargarDatosAfiliadoInicial();
+         *
+         * Esa llamada genera un render/AJAX adicional de busqueda de afiliados
+         * despues de Guardar todo. La busqueda manual queda a cargo del componente.
+         */
 
         jQuery('#<portlet:namespace />cargo_ospim, #<portlet:namespace />cargo_tercerizadora').change(function() {
             <portlet:namespace />actualizarVisibilidadTercerizadora();
