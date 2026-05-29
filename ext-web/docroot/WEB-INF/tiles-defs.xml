@@ -4540,4 +4540,28 @@
 		<put name="portlet_content"
 		     value="/portlet/compras/editar_articulo_popup.jsp" />
 	</definition>
+
+	<definition name="portlet.compras.afiliados.result.search"
+	            extends="portlet.compras">
+		<put name="portlet_content"
+		     value="/portlet/afiliados/afiliados_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.compras.afiliados.result.search.auto_select"
+	            extends="portlet.compras">
+		<put name="portlet_content"
+		     value="/portlet/afiliados/afiliado_auto_select_result.jsp" />
+	</definition>
+
+	<definition name="portlet.compras.afiliados.result.search.popup"
+	            extends="portlet.compras">
+		<put name="portlet_content"
+		     value="/portlet/afiliados/afiliados_search_result_popup.jsp" />
+	</definition>
+
+	<definition name="portlet.compras.afiliados.error"
+	            extends="portlet.compras">
+		<put name="portlet_content"
+		     value="/portlet/afiliados/error.jsp" />
+	</definition>
 </tiles-definitions>

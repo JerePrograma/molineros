@@ -7050,13 +7050,13 @@
 		<action path="/compras/buscar_afiliados"
 		        type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
 			<forward name="portlet.afiliados.result.search"
-			         path="portlet.afiliados.result.search" />
+			         path="portlet.compras.afiliados.result.search" />
 			<forward name="portlet.afiliados.result.search.auto_select"
-			         path="portlet.afiliados.result.search.auto_select" />
+			         path="portlet.compras.afiliados.result.search.auto_select" />
 			<forward name="portlet.afiliados.result.search.popup"
-			         path="portlet.afiliados.result.search.popup" />
+			         path="portlet.compras.afiliados.result.search.popup" />
 			<forward name="portlet.afiliados.error"
-			         path="portlet.afiliados.error" />
+			         path="portlet.compras.afiliados.error" />
 		</action>
 
 		<action path="/compras/buscar_seccional"
