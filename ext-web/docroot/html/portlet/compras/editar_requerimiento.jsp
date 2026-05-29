@@ -839,43 +839,7 @@ if (errorCampoCompra == null) {
     }
 
     function <portlet:namespace />cargarDatosAfiliadoInicial() {
-        if (afiliadoInicialBuscado) {
-            return;
-        }
-
-        afiliadoInicialBuscado = true;
-
-        var puedeBuscarAfiliadoInicial = <%= (!esNuevo && puedeEditarPantalla) ? "true" : "false" %>;
-
-        if (!puedeBuscarAfiliadoInicial || !<portlet:namespace />sectorRequiereAfiliado()) {
-            return;
-        }
-
-        var afiliadoCuilTitular = jQuery.trim(jQuery('#<portlet:namespace />afiliado_cuil_titular').val());
-        var afiliadoInt = jQuery.trim(jQuery('#<portlet:namespace />afiliado_int').val());
-
-        if (afiliadoCuilTitular == '' || afiliadoInt == '') {
-            return;
-        }
-
-        var entidad = jQuery('#<portlet:namespace />entidad').val();
-
-        if (entidad == null) {
-            entidad = '';
-        }
-
-        <portlet:namespace />mostrarMensajeAfiliadoInicial('');
-
-        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-            '&struts_action=/compras/buscar_afiliados' +
-            '&auto_select=true' +
-            '&funcion_seleccion=seleccionaCamposAfiliado' +
-            '&cuil=' + encodeURIComponent(afiliadoCuilTitular) +
-            '&inte=' + encodeURIComponent(afiliadoInt) +
-            '&entidad=' + encodeURIComponent(entidad) +
-            '&fecha_referencia=null';
-
-        jQuery('#<portlet:namespace />afiliadoInicialAutoSelect').load(url);
+        return false;
     }
 
     function <portlet:namespace />limpiarAfiliadoRequerimientoSiExiste() {
