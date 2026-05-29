@@ -1,8 +1,12 @@
 package ar.com.ospim.compras.beans;
 
+import java.io.Serializable;
+
 import ar.com.ospim.compras.WebKeysCompras;
 
-public class RequerimientoCompraFiltro {
+public class RequerimientoCompraFiltro implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private Integer idEstado;
     private Integer idSector;
@@ -120,7 +124,7 @@ public class RequerimientoCompraFiltro {
     }
 
     public void setAfiliadoTipoDoc(String afiliadoTipoDoc) {
-        this.afiliadoTipoDoc = afiliadoTipoDoc;
+        this.afiliadoTipoDoc = WebKeysCompras.trimToNull(afiliadoTipoDoc);
     }
 
     public String getAfiliadoNroDoc() {
@@ -128,7 +132,7 @@ public class RequerimientoCompraFiltro {
     }
 
     public void setAfiliadoNroDoc(String afiliadoNroDoc) {
-        this.afiliadoNroDoc = afiliadoNroDoc;
+        this.afiliadoNroDoc = WebKeysCompras.trimToNull(afiliadoNroDoc);
     }
 
     public String getAfiliadoApellido() {
@@ -136,7 +140,7 @@ public class RequerimientoCompraFiltro {
     }
 
     public void setAfiliadoApellido(String afiliadoApellido) {
-        this.afiliadoApellido = afiliadoApellido;
+        this.afiliadoApellido = WebKeysCompras.trimToNull(afiliadoApellido);
     }
 
     public String getAfiliadoNombre() {
@@ -144,7 +148,7 @@ public class RequerimientoCompraFiltro {
     }
 
     public void setAfiliadoNombre(String afiliadoNombre) {
-        this.afiliadoNombre = afiliadoNombre;
+        this.afiliadoNombre = WebKeysCompras.trimToNull(afiliadoNombre);
     }
 
     public Integer getAfiliadoIdSeccional() {

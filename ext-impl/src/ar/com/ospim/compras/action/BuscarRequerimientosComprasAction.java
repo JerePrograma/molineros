@@ -6,7 +6,6 @@ import java.util.List;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
-import javax.portlet.PortletSession;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
@@ -174,20 +173,6 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
         renderRequest.setAttribute(
                 WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA,
                 requerimientos
-        );
-
-        PortletSession portletSession = renderRequest.getPortletSession();
-
-        portletSession.setAttribute(
-                WebKeysCompras.FILTRO_REQUERIMIENTOS_COMPRA,
-                filtro,
-                PortletSession.PORTLET_SCOPE
-        );
-
-        portletSession.setAttribute(
-                WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA,
-                requerimientos,
-                PortletSession.PORTLET_SCOPE
         );
     }
 

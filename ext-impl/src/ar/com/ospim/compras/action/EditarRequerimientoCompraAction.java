@@ -1,6 +1,7 @@
 package ar.com.ospim.compras.action;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -472,7 +473,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 requerimiento = new RequerimientoCompra();
             }
 
-            cargarCatalogos(renderRequest);
+            cargarCatalogos(renderRequest, requerimiento);
 
             boolean soloLectura = esModoSoloLectura(renderRequest);
 
@@ -517,7 +518,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 || "ver".equalsIgnoreCase(modo);
     }
 
-    private void cargarCatalogos(RenderRequest request) throws Exception {
+    private void cargarCatalogos(RenderRequest request,
+                                 RequerimientoCompra requerimiento) throws Exception {
+
         request.setAttribute(
                 WebKeysCompras.ESTADOS_REQUERIMIENTO,
                 BusquedaRequerimientoCompraServiceUtil.listarEstados()
@@ -528,9 +531,24 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 BusquedaRequerimientoCompraServiceUtil.listarSectores()
         );
 
+        List<CompraArticulo> articulos = new ArrayList<CompraArticulo>();
+
+        Integer idSector = null;
+
+        if (requerimiento != null) {
+            idSector = requerimiento.getIdSector();
+        }
+
+        if (idSector != null && idSector.intValue() > 0) {
+            articulos = EditarRequerimientoCompraServiceUtil.listarArticulos(
+                    idSector,
+                    null
+            );
+        }
+
         request.setAttribute(
                 ARTICULOS_COMPRA,
-                EditarRequerimientoCompraServiceUtil.listarArticulos(null, null)
+                articulos
         );
     }
 
@@ -733,13 +751,21 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             );
         }
 
-        if (cargoTercerizadora > 0
-                && WebKeysCompras.isEmpty(requerimiento.getIdTercerizadora())) {
+        boolean usaTercerizadora =
+                !(cargoOspim == 100 && cargoTercerizadora == 0);
 
-            errorCampo(
-                    "id_tercerizadora",
-                    "Tercerizadora: debe seleccionar un afiliado con tercerizadora cuando Cargo tercerizadora es mayor a cero."
-            );
+        if (usaTercerizadora) {
+            requerimiento.setRecupero(true);
+
+            if (WebKeysCompras.isEmpty(requerimiento.getIdTercerizadora())) {
+                errorCampo(
+                        "id_tercerizadora",
+                        "Tercerizadora: debe seleccionar un afiliado con tercerizadora cuando la distribución de cargos no es OSPIM 100% / Tercerizadora 0%."
+                );
+            }
+        } else {
+            requerimiento.setRecupero(false);
+            requerimiento.setIdTercerizadora(null);
         }
 
         if (requerimiento.isRequiereAfiliado()) {
