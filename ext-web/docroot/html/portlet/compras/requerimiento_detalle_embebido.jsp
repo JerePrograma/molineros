@@ -73,7 +73,7 @@ if (detalles == null) {
 }
 
 List<CompraArticulo> articulos =
-        (List<CompraArticulo>) renderRequest.getAttribute("ARTICULOS_COMPRA");
+        (List<CompraArticulo>) renderRequest.getAttribute("ARTICULOS_REQUERIMIENTO_COMPRA");
 
 if (articulos == null) {
     try {
