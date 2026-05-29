@@ -491,6 +491,8 @@ if (errorCampoCompra == null) {
                                         name="discapacidad" />
                     <liferay-util:param name="pag_reintegro"
                                         value="1" />
+                    <liferay-util:param name="struts_action_buscar_afiliados"
+                                        value="/compras/buscar_afiliados" />
                 </liferay-util:include>
             </fieldset>
         </div>
