@@ -554,16 +554,60 @@ if (errorCampoCompra == null) {
         return 'num' + 'ero_afi';
     }
 
-    /*
-     * NO definir <portlet:namespace />buscarAfiliados ni
-     * <portlet:namespace />buscarAfiliados_ en este JSP.
-     *
-     * Esas funciones pertenecen al componente incluido:
-     * /html/portlet/autorizaciones/busqueda_afiliado.jsp
-     *
-     * Si las definimos aca, pisamos el flujo manual que ya funciona
-     * y podemos forzar un render de resultado de otro portlet.
-     */
+
+
+    function <portlet:namespace />buscarAfiliados() {
+        var cuil = jQuery('#<portlet:namespace />cuil').val();
+        var inte = jQuery('#<portlet:namespace />inte').val();
+        var tipoDoc = jQuery('#<portlet:namespace />tipoDoc').val();
+        var nroDoc = jQuery('#<portlet:namespace />nroDoc').val();
+        var seccional = jQuery('#<portlet:namespace />id_seccional').val();
+        var apellido = jQuery('#<portlet:namespace />apellido').val();
+        var nombre = jQuery('#<portlet:namespace />nombre').val();
+        var entidad = jQuery('#<portlet:namespace />entidad').val();
+        var numeroAfi = jQuery('#<portlet:namespace />numero_afi').val();
+
+        if (!<portlet:namespace />validarBusqueda(cuil, inte, tipoDoc, nroDoc, seccional, apellido, nombre, entidad, numeroAfi)) {
+            return false;
+        }
+
+        if (cuil.length > 0) {
+            if (typeof validarCuil == "function" && !validarCuil(cuil, "<liferay-ui:message key='valida-cuil-mensaje-limpiar'/>")) {
+                jQuery('#<portlet:namespace />cuil').focus();
+                return false;
+            }
+        }
+
+        if (jQuery("#<portlet:namespace />secc_seleccionada").val() != "1") {
+            jQuery("#<portlet:namespace />seccional").val("");
+            jQuery("#<portlet:namespace />id_seccional").val("");
+        }
+
+        popupAfill = Liferay.Popup({
+            title: '<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />',
+            modal: true,
+            width: 830
+        });
+
+        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
+            '&struts_action=/compras/buscar_afiliados' +
+            '&cuil=' + encodeURIComponent(cuil) +
+            '&inte=' + encodeURIComponent(inte) +
+            '&tipoDoc=' + encodeURIComponent(tipoDoc) +
+            '&nroDoc=' + encodeURIComponent(nroDoc) +
+            '&seccional=' + encodeURIComponent(seccional) +
+            '&nombre=' + encodeURIComponent(nombre) +
+            '&apellido=' + encodeURIComponent(apellido) +
+            '&entidad=' + encodeURIComponent(entidad) +
+            '&numero_afi=' + encodeURIComponent(numeroAfi) +
+            '&fecha_referencia=null' +
+            '&origen=' +
+            '&popup=true';
+
+        jQuery(popupAfill).load(url);
+
+        return false;
+    }
 
     function <portlet:namespace />buscarSeccional() {
         var id_seccional = jQuery("#<portlet:namespace />id_seccional").val();
