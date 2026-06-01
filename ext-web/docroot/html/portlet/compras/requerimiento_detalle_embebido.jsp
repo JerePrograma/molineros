@@ -69,7 +69,24 @@ if (detalles == null) {
     detalles = new ArrayList<RequerimientoCompraDetalle>();
 }
 
+Integer idSectorActual = reqDetalle.getSectorId();
+
+int sectorIdParametro = ParamUtil.getInteger(request, "sector_id", 0);
+
+if ((idSectorActual == null || idSectorActual.intValue() <= 0) && sectorIdParametro > 0) {
+    idSectorActual = Integer.valueOf(sectorIdParametro);
+}
+
+String idSectorActualString =
+        idSectorActual != null && idSectorActual.intValue() > 0
+                ? String.valueOf(idSectorActual.intValue())
+                : "";
+
 Object articulosAttr = renderRequest.getAttribute("ARTICULOS_COMPRA");
+
+if (articulosAttr == null) {
+    articulosAttr = request.getAttribute("ARTICULOS_COMPRA");
+}
 
 List<CompraArticulo> articulos = null;
 
@@ -77,10 +94,16 @@ if (articulosAttr instanceof List) {
     articulos = (List<CompraArticulo>) articulosAttr;
 }
 
-if (articulos == null || articulos.size() == 0) {
+if (articulos == null) {
     articulos = new ArrayList<CompraArticulo>();
+}
 
-    String[] metodosArticulos = new String[] {
+/*
+ * Primero intenta métodos SIN parámetro: idealmente deberían traer todos los artículos,
+ * así el filtro por sector funciona 100% del lado cliente.
+ */
+if (articulos.size() == 0) {
+    String[] metodosArticulosSinParametro = new String[] {
             "listarArticulos",
             "listarArticulosCompra",
             "listarCompraArticulos",
@@ -89,11 +112,11 @@ if (articulos == null || articulos.size() == 0) {
             "getArticulosCompra"
     };
 
-    for (int i = 0; i < metodosArticulos.length && articulos.size() == 0; i++) {
+    for (int i = 0; i < metodosArticulosSinParametro.length && articulos.size() == 0; i++) {
         try {
             Method metodo =
                     BusquedaRequerimientoCompraServiceUtil.class.getMethod(
-                            metodosArticulos[i],
+                            metodosArticulosSinParametro[i],
                             new Class[0]
                     );
 
@@ -103,17 +126,73 @@ if (articulos == null || articulos.size() == 0) {
                 articulos = (List<CompraArticulo>) resultado;
             }
         } catch (NoSuchMethodException nsme) {
-            // Intencional: compatibilidad con distintos nombres de service.
+            // No existe este nombre en esta versión del service.
         } catch (Exception e) {
-            // Intencional: si un nombre existe pero falla, se intenta el siguiente.
+            // Existe pero falló. Se prueba el siguiente.
+        }
+    }
+}
+
+/*
+ * Si no hay método global, intenta métodos POR SECTOR.
+ * Esto al menos permite cargar los artículos del sector actual.
+ */
+if (articulos.size() == 0 && idSectorActual != null && idSectorActual.intValue() > 0) {
+    String[] metodosArticulosPorSector = new String[] {
+            "listarArticulosPorSector",
+            "listarArticulosCompraPorSector",
+            "listarCompraArticulosPorSector",
+            "listarArticulosSector",
+            "getArticulosCompraPorSector",
+            "getArticulosPorSector"
+    };
+
+    for (int i = 0; i < metodosArticulosPorSector.length && articulos.size() == 0; i++) {
+        try {
+            Method metodo =
+                    BusquedaRequerimientoCompraServiceUtil.class.getMethod(
+                            metodosArticulosPorSector[i],
+                            new Class[] { Integer.class }
+                    );
+
+            Object resultado =
+                    metodo.invoke(
+                            null,
+                            new Object[] { Integer.valueOf(idSectorActual.intValue()) }
+                    );
+
+            if (resultado instanceof List) {
+                articulos = (List<CompraArticulo>) resultado;
+            }
+        } catch (NoSuchMethodException nsme) {
+            try {
+                Method metodo =
+                        BusquedaRequerimientoCompraServiceUtil.class.getMethod(
+                                metodosArticulosPorSector[i],
+                                new Class[] { int.class }
+                        );
+
+                Object resultado =
+                        metodo.invoke(
+                                null,
+                                new Object[] { Integer.valueOf(idSectorActual.intValue()) }
+                        );
+
+                if (resultado instanceof List) {
+                    articulos = (List<CompraArticulo>) resultado;
+                }
+            } catch (NoSuchMethodException nsme2) {
+                // No existe este nombre/firma.
+            } catch (Exception e2) {
+                // Existe pero falló. Se prueba el siguiente.
+            }
+        } catch (Exception e) {
+            // Existe pero falló. Se prueba el siguiente.
         }
     }
 }
 
 int detalleColspan = puedeABMDetalle ? 7 : 6;
-
-Integer idSectorActual = reqDetalle.getSectorId();
-String idSectorActualString = idSectorActual != null ? String.valueOf(idSectorActual.intValue()) : "";
 %>
 
 <fieldset class="block-labels">
@@ -138,30 +217,6 @@ String idSectorActualString = idSectorActual != null ? String.valueOf(idSectorAc
                         <select id="<portlet:namespace />detalle_id_articulo"
                                 style="min-width: 420px;">
                             <option value="">Seleccione...</option>
-
-                            <%
-                            for (int i = 0; i < articulos.size(); i++) {
-                                CompraArticulo articulo = articulos.get(i);
-
-                                String idArticulo = articulo.getId() != null
-                                        ? String.valueOf(articulo.getId().intValue())
-                                        : "";
-
-                                String idSectorArticulo = articulo.getIdSector() != null
-                                        ? String.valueOf(articulo.getIdSector().intValue())
-                                        : "";
-
-                                String descripcionArticulo = articulo.getDescripcion() != null
-                                        ? articulo.getDescripcion()
-                                        : "";
-                            %>
-                                <option value="<%= HtmlUtil.escape(idArticulo) %>"
-                                        data-sector="<%= HtmlUtil.escape(idSectorArticulo) %>">
-                                    <%= HtmlUtil.escape(descripcionArticulo) %>
-                                </option>
-                            <%
-                            }
-                            %>
                         </select>
 
                         &nbsp;
@@ -306,6 +361,34 @@ String idSectorActualString = idSectorActual != null ? String.valueOf(idSectorAc
     var <portlet:namespace />articulosCompraCache = [];
 
     <%
+    for (int i = 0; i < articulos.size(); i++) {
+        CompraArticulo articulo = articulos.get(i);
+
+        String idArticulo = articulo.getId() != null
+                ? String.valueOf(articulo.getId().intValue())
+                : "";
+
+        String idSectorArticulo = articulo.getIdSector() != null
+                ? String.valueOf(articulo.getIdSector().intValue())
+                : "";
+
+        String descripcionArticulo = articulo.getDescripcion() != null
+                ? articulo.getDescripcion()
+                : "";
+
+        if (idArticulo.length() > 0 && descripcionArticulo.length() > 0) {
+    %>
+            <portlet:namespace />articulosCompraCache.push({
+                id: '<%= jsDetalleCompra(idArticulo) %>',
+                sector: '<%= jsDetalleCompra(idSectorArticulo) %>',
+                descripcion: '<%= jsDetalleCompra(descripcionArticulo) %>'
+            });
+    <%
+        }
+    }
+    %>
+
+    <%
     for (int i = 0; i < detalles.size(); i++) {
         RequerimientoCompraDetalle detalle = detalles.get(i);
 
@@ -364,33 +447,6 @@ String idSectorActualString = idSectorActual != null ? String.valueOf(idSectorAc
         return sector;
     }
 
-    function <portlet:namespace />inicializarCacheArticulosCompra() {
-        if (<portlet:namespace />articulosCompraCache.length > 0) {
-            return;
-        }
-
-        var select = jQuery('#<portlet:namespace />detalle_id_articulo');
-
-        if (select.length == 0) {
-            return;
-        }
-
-        select.find('option').each(function() {
-            var option = jQuery(this);
-            var value = option.val();
-
-            if (value == '') {
-                return;
-            }
-
-            <portlet:namespace />articulosCompraCache.push({
-                id: value,
-                sector: option.attr('data-sector'),
-                descripcion: option.text()
-            });
-        });
-    }
-
     function <portlet:namespace />agregarOActualizarArticuloCache(idArticulo, descripcion, idSector) {
         idArticulo = idArticulo == null ? '' : String(idArticulo);
         descripcion = descripcion == null ? '' : String(descripcion);
@@ -416,8 +472,6 @@ String idSectorActualString = idSectorActual != null ? String.valueOf(idSectorAc
     }
 
     function <portlet:namespace />filtrarArticulosPorSector() {
-        <portlet:namespace />inicializarCacheArticulosCompra();
-
         var select = jQuery('#<portlet:namespace />detalle_id_articulo');
 
         if (select.length == 0) {
@@ -430,19 +484,22 @@ String idSectorActualString = idSectorActual != null ? String.valueOf(idSectorAc
         var valorActualPermitido = false;
 
         select.empty();
-
-        select.append(
-            '<option value="">Seleccione...</option>'
-        );
+        select.append('<option value="">Seleccione...</option>');
 
         for (var i = 0; i < <portlet:namespace />articulosCompraCache.length; i++) {
             var articulo = <portlet:namespace />articulosCompraCache[i];
 
             var sectorArticuloNum = parseInt(articulo.sector, 10);
 
+            /*
+             * Si el artículo vino sin idSector, se muestra igual.
+             * Eso evita combo vacío cuando el mapper no está seteando CompraArticulo.idSector.
+             * Idealmente, el mapper debe setear idSector correctamente.
+             */
             var mostrar =
                     isNaN(sectorSeleccionadoNum)
                     || sectorSeleccionadoNum <= 0
+                    || articulo.sector == ''
                     || (!isNaN(sectorArticuloNum) && sectorArticuloNum == sectorSeleccionadoNum);
 
             if (mostrar) {
@@ -582,8 +639,6 @@ String idSectorActualString = idSectorActual != null ? String.valueOf(idSectorAc
         }
 
         function <portlet:namespace />seleccionarArticuloCompra(idArticulo, descripcion, idSector) {
-            <portlet:namespace />inicializarCacheArticulosCompra();
-
             <portlet:namespace />agregarOActualizarArticuloCache(
                     idArticulo,
                     descripcion,
@@ -841,7 +896,6 @@ String idSectorActualString = idSectorActual != null ? String.valueOf(idSectorAc
                 <portlet:namespace />filtrarArticulosPorSector();
             });
 
-            <portlet:namespace />inicializarCacheArticulosCompra();
             <portlet:namespace />filtrarArticulosPorSector();
         });
     <% } %>
@@ -850,7 +904,6 @@ String idSectorActualString = idSectorActual != null ? String.valueOf(idSectorAc
         <portlet:namespace />renderDetallesCompra();
 
         <% if (puedeABMDetalle) { %>
-            <portlet:namespace />inicializarCacheArticulosCompra();
             <portlet:namespace />filtrarArticulosPorSector();
         <% } %>
     });
