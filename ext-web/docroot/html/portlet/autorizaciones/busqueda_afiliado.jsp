@@ -1,5 +1,5 @@
 <%@ include file="/html/portlet/liquidaciones/init.jsp" %>
-<%@ page import="ar.com.ospim.afiliados.beans.AfiObservacion" %>
+<%@ page import ="ar.com.ospim.afiliados.beans.AfiObservacion" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
@@ -42,62 +42,6 @@
 	}
 
 	boolean esCompras = namespaceActual.indexOf("COMPRA") >= 0;
-	boolean esAutorizaciones = namespaceActual.equals("_AUT_1_");
-	boolean esCorrespondencia = namespaceActual.equals("_COR_1_");
-	boolean esAfiliados = namespaceActual.equals("_AFI_1_");
-	boolean esTesoreria = namespaceActual.equals("_TES_1_");
-	boolean esHoteles = namespaceActual.equals("_HOT_1_");
-
-	String buscarAfiliadosDefaultAction = "/liquidaciones/buscar_afiliados";
-
-	if (esCompras) {
-		buscarAfiliadosDefaultAction = "/compras/buscar_afiliados";
-	}
-	else if (esAutorizaciones) {
-		buscarAfiliadosDefaultAction = "/autorizaciones/buscar_afiliados";
-	}
-	else if (esCorrespondencia) {
-		buscarAfiliadosDefaultAction = "/correspondencia/buscar_afiliados";
-	}
-	else if (esAfiliados) {
-		buscarAfiliadosDefaultAction = "/afiliados/buscar_afiliados";
-	}
-	else if (esTesoreria) {
-		buscarAfiliadosDefaultAction = "/tesoreria/buscar_afiliados";
-	}
-	else if (esHoteles) {
-		buscarAfiliadosDefaultAction = "/hoteles/buscar_afiliados";
-	}
-
-	String buscarAfiliadoDatosDefaultAction = "/autorizaciones/buscar_afiliado_datos";
-
-	if (esTesoreria) {
-		buscarAfiliadoDatosDefaultAction = "/tesoreria/buscar_afiliado_datos";
-	}
-	else if (esCompras) {
-		buscarAfiliadoDatosDefaultAction = "/compras/buscar_afiliado_datos";
-	}
-
-	String buscarAfiliadoFechaVtoDocumentacionDefaultAction = "/autorizaciones/buscar_afiliado_fecha_vto_documentacion";
-
-	if (esTesoreria) {
-		buscarAfiliadoFechaVtoDocumentacionDefaultAction = "/tesoreria/buscar_afiliado_fecha_vto_documentacion";
-	}
-	else if (esCompras) {
-		buscarAfiliadoFechaVtoDocumentacionDefaultAction = "/compras/buscar_afiliado_fecha_vto_documentacion";
-	}
-
-	String buscarAfiliadosAction = ParamUtil.getString(request, "buscar_afiliados_action", buscarAfiliadosDefaultAction);
-	String buscarAfiliadoDatosAction = ParamUtil.getString(request, "buscar_afiliado_datos_action", buscarAfiliadoDatosDefaultAction);
-	String buscarAfiliadoFechaVtoDocumentacionAction = ParamUtil.getString(request, "buscar_afiliado_fecha_vto_documentacion_action", buscarAfiliadoFechaVtoDocumentacionDefaultAction);
-
-	String detalleDiscapacidadAction = ParamUtil.getString(request, "detalle_discapacidad_action", "/autorizaciones/detalle_discapacidad");
-	String grabarDetalleDiscapacidadPath = ParamUtil.getString(request, "grabar_detalle_discapacidad_path", "/autorizaciones/grabar_detalle_discapacidad");
-
-	String evaluaPermanenciaAfiliadoAction = ParamUtil.getString(request, "evalua_permanencia_afiliado_action", "/autorizaciones/evalua_permanencia_afiliado");
-	String mostrarAlertaPermanenciaAfiliadoAction = ParamUtil.getString(request, "mostrar_alerta_permanencia_afiliado_action", "/autorizaciones/mostrar_alerta_permanencia_afiliado");
-	String tieneObservacionesAfiliadoAction = ParamUtil.getString(request, "tiene_observaciones_afiliado_action", "/autorizaciones/tiene_observaciones_afiliado");
-	String buscarObservacionesInternasAction = ParamUtil.getString(request, "buscar_observaciones_internas_action", "/autorizaciones/buscar_observaciones_internas");
 %>
 
 <style type="text/css">
@@ -174,61 +118,56 @@
 			<td>
 				<select name="<portlet:namespace/>entidad<%=prefijo%>" id="<portlet:namespace/>entidad<%=prefijo%>" <%= !Boolean.parseBoolean(edit_mode) ? " disabled='true'" : ""  %>>
 					<%
-						if (Boolean.parseBoolean(pag_reintegro) && tipo_reintegro != null && tipo_reintegro.equalsIgnoreCase(WebKeysLiquidaciones.REINTEGRO_ODO_PROTESIS)) {
+						if (Boolean.parseBoolean(pag_reintegro) && tipo_reintegro != null && (tipo_reintegro.equalsIgnoreCase(WebKeysLiquidaciones.REINTEGRO_ODO_PROTESIS))) {
 					%>
-						<option value="<%= WebKeysGlobal.ENTIDAD_UOMA %>"><%=WebKeysGlobal.ENTIDAD_UOMA%></option>
+					<option value="<%= WebKeysGlobal.ENTIDAD_UOMA %>"><%=WebKeysGlobal.ENTIDAD_UOMA%></option>
 					<%
-						}
-						else if (Boolean.parseBoolean(pag_reintegro) && tipo_reintegro != null && tipo_reintegro.equalsIgnoreCase(WebKeysLiquidaciones.REINTEGRO_ODO_ORTOPEDIA_ORTODONCIA)) {
+					}
+					else if (Boolean.parseBoolean(pag_reintegro) && tipo_reintegro != null && (tipo_reintegro.equalsIgnoreCase(WebKeysLiquidaciones.REINTEGRO_ODO_ORTOPEDIA_ORTODONCIA))) {
 					%>
-						<option value="<%= WebKeysGlobal.ENTIDAD_OSPIM %>"><%=WebKeysGlobal.ENTIDAD_OSPIM%></option>
+					<option value="<%= WebKeysGlobal.ENTIDAD_OSPIM %>"><%=WebKeysGlobal.ENTIDAD_OSPIM%></option>
 					<%
-						}
-						else {
-							for (String entidad : WebKeysGlobal.ENTIDADES_UOMA) {
+					}
+					else {
+						for (String entidad : WebKeysGlobal.ENTIDADES_UOMA) {
 					%>
-						<c:if test="<%=((showOspim && entidad.equalsIgnoreCase(WebKeysGlobal.ENTIDAD_OSPIM)) ||
+					<c:if test="<%=((showOspim && entidad.equalsIgnoreCase(WebKeysGlobal.ENTIDAD_OSPIM)) ||
 										(showAmtima && entidad.equalsIgnoreCase(WebKeysGlobal.ENTIDAD_AMTIMA)) ||
 										(showUoma && entidad.equalsIgnoreCase(WebKeysGlobal.ENTIDAD_UOMA)))%>">
-							<option value="<%= entidad %>" <%= entidad == WebKeysLiquidaciones.ID_DEFAULT_ENTIDAD ? "selected" : ""  %>><%=entidad%></option>
-						</c:if>
+						<option value="<%= entidad %>"><%=entidad%></option>
+						<%= entidad == WebKeysLiquidaciones.ID_DEFAULT_ENTIDAD ? "selected" : ""  %>
+					</c:if>
 					<%
 							}
 						}
 					%>
 				</select>
 			</td>
-
 			<td><label><liferay-ui:message key="numero-afi" />:</label></td>
 			<td><input id="<portlet:namespace />numero_afi<%=prefijo%>" name="<portlet:namespace />numero_afi<%=prefijo%>" size="6" maxlength="10" type="text" value="" <%= !Boolean.parseBoolean(edit_mode) ? " readonly='readonly'" : ""  %>/></td>
-
 			<td><label><liferay-ui:message key="cuil" />:</label></td>
 			<td><input id="<portlet:namespace />cuil<%=prefijo%>" name="<portlet:namespace />cuil<%=prefijo%>" size="13" maxlength="11" type="text" value="" <%= !Boolean.parseBoolean(edit_mode) ? " readonly='readonly'" : ""  %>/></td>
-
 			<td><label><liferay-ui:message key="integrante" />:</label></td>
 			<td><input id="<portlet:namespace />inte<%=prefijo%>" name="<portlet:namespace />inte<%=prefijo%>" size="2" maxlength="2" type="text" value="" <%= !Boolean.parseBoolean(edit_mode) ? " readonly='readonly'" : ""  %>/></td>
-
-			<td>
-				<label><liferay-ui:message key="tipo-documento" />:</label>
+			<td><label><liferay-ui:message key="tipo-documento" />:</label>
 				<select name="<portlet:namespace/>tipoDoc<%=prefijo%>" id="<portlet:namespace/>tipoDoc<%=prefijo%>">
 					<option value=""></option>
 					<%
 						for (String tipoDoc : WebKeysAfiliados.TIPOS_DOCUMENTO) {
 					%>
-						<option value="<%= tipoDoc %>"><%=tipoDoc%></option>
+					<option value="<%= tipoDoc %>"><%=tipoDoc%></option>
 					<%
 						}
 					%>
 				</select>
 			</td>
-
 			<td><label><liferay-ui:message key="nro-documento" />:</label></td>
 			<td><input id="<portlet:namespace />nroDoc<%=prefijo%>" name="<portlet:namespace />nroDoc<%=prefijo%>" size="9" maxlength="8" type="text" value="" <%= !Boolean.parseBoolean(edit_mode) ? " readonly='readonly'" : ""  %>/></td>
 		</tr>
 
 		<tr>
 			<td><label><liferay-ui:message key="seccional" />:</label></td>
-			<td colspan="4" style="vertical-align:top">
+			<td colspan="4" style="vertical-align:top" >
 				<liferay-util:include page='/html/portlet/autorizaciones/busqueda_seccional.jsp'>
 					<liferay-util:param value="<%=prefijo%>" name="prefijo" />
 				</liferay-util:include>
@@ -258,10 +197,8 @@
 		<tr>
 			<td><label><liferay-ui:message key="apellido" />:</label></td>
 			<td colspan="2"><input id="<portlet:namespace />apellido<%=prefijo%>" name="<portlet:namespace />apellido<%=prefijo%>" size="20" maxlength="100" type="text" value="" <%= !Boolean.parseBoolean(edit_mode) ? " readonly='readonly'" : ""  %>/></td>
-
 			<td><label><liferay-ui:message key="nombre" />:</label></td>
 			<td colspan="2"><input id="<portlet:namespace />nombre<%=prefijo%>" name="<portlet:namespace />nombre<%=prefijo%>" size="20" maxlength="100" type="text" value="" <%= !Boolean.parseBoolean(edit_mode) ? " readonly='readonly'" : ""  %>/></td>
-
 			<td colspan="1"><label><liferay-ui:message key="baja-fecha" />:</label></td>
 			<td>
 				<input type="text" readonly="readonly" id="<portlet:namespace />baja_fecha<%=prefijo%>" name="<portlet:namespace />baja_fecha<%=prefijo%>" />
@@ -292,7 +229,8 @@
 			</td>
 			<td>
 				<div id="<portlet:namespace />divObservacionesInternas" style="background-color: orange; padding: 4px;">
-					<input type="button" value="Ver Observaciones Internas" onClick="javascript:<portlet:namespace />buscarObsInternas();">
+					<input type="button" value="Ver Observaciones Internas"
+						   onClick="javascript:<portlet:namespace />buscarObsInternas();">
 				</div>
 			</td>
 		</tr>
@@ -311,19 +249,9 @@
 	var popupdd;
 	var popSituLab;
 
-	var <portlet:namespace />buscarAfiliadosAction<%=prefijo%> = '<%= buscarAfiliadosAction %>';
-	var <portlet:namespace />buscarAfiliadoDatosAction<%=prefijo%> = '<%= buscarAfiliadoDatosAction %>';
-	var <portlet:namespace />buscarAfiliadoFechaVtoDocumentacionAction<%=prefijo%> = '<%= buscarAfiliadoFechaVtoDocumentacionAction %>';
-	var <portlet:namespace />detalleDiscapacidadAction<%=prefijo%> = '<%= detalleDiscapacidadAction %>';
-	var <portlet:namespace />grabarDetalleDiscapacidadPath<%=prefijo%> = '<%= grabarDetalleDiscapacidadPath %>';
-	var <portlet:namespace />evaluaPermanenciaAfiliadoAction<%=prefijo%> = '<%= evaluaPermanenciaAfiliadoAction %>';
-	var <portlet:namespace />mostrarAlertaPermanenciaAfiliadoAction<%=prefijo%> = '<%= mostrarAlertaPermanenciaAfiliadoAction %>';
-	var <portlet:namespace />tieneObservacionesAfiliadoAction<%=prefijo%> = '<%= tieneObservacionesAfiliadoAction %>';
-	var <portlet:namespace />buscarObservacionesInternasAction<%=prefijo%> = '<%= buscarObservacionesInternasAction %>';
-
 	jQuery('#<portlet:namespace />divObservacionesInternas').hide();
 
-	function <portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>(tieneAntecedentes) {
+	function <portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>(tieneAntecedentes){
 		var flag = (String(tieneAntecedentes) == '1');
 
 		jQuery('#<portlet:namespace />tieneAntecedentes<%=prefijo%>').val(flag ? '1' : '0');
@@ -338,43 +266,7 @@
 		}
 	}
 
-	function <portlet:namespace />armarUrlBusquedaAfiliados<%=prefijo%>(
-		cuil,
-		inte,
-		tipoDoc,
-		nroDoc,
-		seccional,
-		nombre,
-		apellido,
-		entidad,
-		numero_afi,
-		fecha_prestacion,
-		ext
-	) {
-		if (ext == null) {
-			ext = '';
-		}
-
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-			'&struts_action=' + <portlet:namespace />buscarAfiliadosAction<%=prefijo%> +
-			'&cuil=' + encodeURIComponent(cuil) +
-			'&inte=' + encodeURIComponent(inte) +
-			'&tipoDoc=' + encodeURIComponent(tipoDoc) +
-			'&nroDoc=' + encodeURIComponent(nroDoc) +
-			'&seccional=' + encodeURIComponent(seccional) +
-			'&nombre=' + encodeURIComponent(nombre) +
-			'&apellido=' + encodeURIComponent(apellido) +
-			'&entidad=' + encodeURIComponent(entidad) +
-			'&numero_afi=' + encodeURIComponent(numero_afi) +
-			'&fecha_referencia=' + encodeURIComponent(fecha_prestacion) +
-			'&origen=<%=prefijo%>' +
-			'&popup=true' +
-			ext;
-
-		return url;
-	}
-
-	function <portlet:namespace />buscarAfiliados<%=prefijo%>() {
+	function <portlet:namespace />buscarAfiliados<%=prefijo%>(){
 
 		jQuery('#<portlet:namespace />divObservacionesInternas').hide();
 
@@ -404,67 +296,105 @@
 			jQuery("#<portlet:namespace />id_seccional<%=prefijo%>").val("");
 		}
 
-		popupAfill = Liferay.Popup({
-			title: "<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />",
-			modal: true,
-			width: 830
-		});
-
-		var fecha_prestacion = 'null';
+		popupAfill = Liferay.Popup({title:"<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />",modal:true,width:830});
 
 		<c:if test="<%= !Boolean.parseBoolean(pag_reintegro) %>">
-			try {
-				fecha_prestacion = jQuery("#<portlet:namespace />fprest<%=prefijo%>").val();
-			}
-			catch (err) {
-				fecha_prestacion = 'null';
-			}
-		</c:if>
-
-		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
-			<c:if test="<%= !Boolean.parseBoolean(discapacidad) %>">
-				try {
-					fecha_prestacion = jQuery("#<portlet:namespace />fprest").val();
-				}
-				catch (err) {
-					fecha_prestacion = 'null';
-				}
-			</c:if>
-
-			<c:if test='<%= Boolean.parseBoolean(discapacidad) || esAutorizaciones %>'>
-				var d = new Date();
-				var curr_date = d.getDate();
-				var curr_month = d.getMonth() + 1;
-				var curr_year = d.getFullYear();
-
-				fecha_prestacion = curr_date + "/" + curr_month + "/" + curr_year;
-			</c:if>
-		</c:if>
-
-		var url = <portlet:namespace />armarUrlBusquedaAfiliados<%=prefijo%>(
-			cuil,
-			inte,
-			tipoDoc,
-			nroDoc,
-			seccional,
-			nombre,
-			apellido,
-			entidad,
-			numero_afi,
-			fecha_prestacion,
-			''
-		);
-
-		if (window.console) {
-			console.log("Namespace actual:", "<%= namespaceActual %>");
-			console.log("Action buscar afiliados:", <portlet:namespace />buscarAfiliadosAction<%=prefijo%>);
-			console.log("URL buscar afiliados:", url);
+		var fecha_prestacion = 'null';
+		try {
+			fecha_prestacion = jQuery("#<portlet:namespace />fprest<%=prefijo%>").val();
 		}
+		catch (err) {
+			fecha_prestacion = 'null';
+		}
+
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi + '&popup=true&fecha_referencia=' + fecha_prestacion;
+
+		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_COR_1_"))%>'>
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/correspondencia/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&popup=true';
+		</c:if>
+
+		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_AFI_1_"))%>'>
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/afiliados/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&popup=true';
+		</c:if>
+
+		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_TES_1_"))%>'>
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/tesoreria/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true';
+		</c:if>
+
+		<c:if test="<%= esCompras %>">
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true';
+		</c:if>
+		</c:if>
+
+		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_HOT_1_"))%>'>
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/hoteles/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true';
+		</c:if>
+		
+		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
+		var fecha_prestacion = 'null';
+
+		<c:if test="<%= !Boolean.parseBoolean(discapacidad) %>">
+		fecha_prestacion = jQuery("#<portlet:namespace />fprest").val();
+		</c:if>
+
+		<c:if test='<%= Boolean.parseBoolean(discapacidad) || renderResponse.getNamespace().equals("_AUT_1_")%>'>
+		var d = new Date();
+		var curr_date = d.getDate();
+		var curr_month = d.getMonth() + 1;
+		var curr_year = d.getFullYear();
+		fecha_prestacion = curr_date + "/" + curr_month + "/" + curr_year;
+		</c:if>
+
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&popup=true';
+
+		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_COR_1_"))%>'>
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/correspondencia/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&popup=true';
+		</c:if>
+
+		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_AUT_1_"))%>'>
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true';
+		</c:if>
+
+		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_TES_1_"))%>'>
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/tesoreria/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true';
+		</c:if>
+
+		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_HOT_1_"))%>'>
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/hoteles/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true';
+		</c:if>
+
+		<c:if test="<%= esCompras %>">
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true';
+		</c:if>
+		</c:if>
 
 		jQuery(popupAfill).load(url);
 	}
 
-	function <portlet:namespace />buscarAfiliados_<%=prefijo%>(fecha_prest) {
+	function <portlet:namespace />buscarAfiliados_<%=prefijo%>(fecha_prest){
 
 		jQuery('#<portlet:namespace />divObservacionesInternas').hide();
 
@@ -495,96 +425,78 @@
 		}
 
 		var fecha_prestacion = fecha_prest;
-
 		try {
 			fecha_prestacion = jQuery("#<portlet:namespace />fprest<%=prefijo%>").val();
 		}
 		catch (err) {
-			if (fecha_prestacion == null || fecha_prestacion == '') {
-				fecha_prestacion = 'null';
-			}
+			fecha_prestacion = 'null';
 		}
 
-		popupAfill = Liferay.Popup({
-			title: "<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />",
-			modal: true,
-			width: 830
-		});
+		popupAfill = Liferay.Popup({title:"<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />",modal:true,width:830});
 
-		var ext = '';
+		<c:if test="<%= !Boolean.parseBoolean(pag_reintegro) %>">
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi + '&origen=<%=prefijo%>&popup=true&fecha_referencia=' + fecha_prestacion;
 
-		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
-			<c:if test="<%= tipo_reintegro != null && tipo_reintegro.equalsIgnoreCase(WebKeysLiquidaciones.REINTEGRO_ODO_PROTESIS) %>">
-				ext = '&ext=1';
-			</c:if>
+		<c:if test="<%= esCompras %>">
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true';
+		</c:if>
 		</c:if>
 
-		var url = <portlet:namespace />armarUrlBusquedaAfiliados<%=prefijo%>(
-			cuil,
-			inte,
-			tipoDoc,
-			nroDoc,
-			seccional,
-			nombre,
-			apellido,
-			entidad,
-			numero_afi,
-			fecha_prestacion,
-			ext
-		);
+		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
+		var numero_afi = jQuery('#<portlet:namespace />numero_afi').val();
+		var ext = '';
 
-		if (window.console) {
-			console.log("Namespace actual:", "<%= namespaceActual %>");
-			console.log("Action buscar afiliados:", <portlet:namespace />buscarAfiliadosAction<%=prefijo%>);
-			console.log("URL buscar afiliados:", url);
-		}
+		<c:if test="<%= tipo_reintegro != null && tipo_reintegro.equalsIgnoreCase(WebKeysLiquidaciones.REINTEGRO_ODO_PROTESIS) %>">
+		ext = '&ext=1';
+		</c:if>
+
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true' + ext;
+
+		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_COR_1_"))%>'>
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/correspondencia/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true' + ext;
+		</c:if>
+
+		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_AUT_1_"))%>'>
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true' + ext;
+		</c:if>
+
+		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_HOT_1_"))%>'>
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/hoteles/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true' + ext;
+		</c:if>
+
+		<c:if test="<%= esCompras %>">
+		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliados&cuil=' + cuil +
+				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
+				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true' + ext;
+		</c:if>
+		</c:if>
 
 		jQuery(popupAfill).load(url);
 	}
 
-	function <portlet:namespace />validarBusqueda<%=prefijo%>(cuil, inte, tipoDoc, nroDoc, seccional, apellido, nombre, entidad, numero_afi) {
-		if (trim(cuil).length == 0 &&
-				trim(inte).length == 0 &&
-				trim(tipoDoc).length == 0 &&
-				trim(nroDoc).length == 0 &&
-				trim(seccional).length == 0 &&
-				trim(apellido).length == 0 &&
-				trim(nombre).length == 0 &&
-				trim(entidad).length == 0 &&
-				trim(numero_afi).length == 0) {
-
+	function <portlet:namespace />validarBusqueda<%=prefijo%>(cuil,inte,tipoDoc,nroDoc,seccional,apellido,nombre,entidad,numero_afi){
+		if (trim(cuil.length) == 0 && trim(inte.length) == 0 && trim(tipoDoc.length) == 0 && trim(nroDoc.length) == 0 && trim(seccional.length) == 0 &&
+				trim(apellido.length) == 0 && trim(nombre.length) == 0 && trim(entidad.length) == 0 && trim(numero_afi.length) == 0) {
 			alert('<liferay-ui:message key="ingrese-parametros-busqueda"/>');
 			return false;
 		}
-
-		return true;
+		else {
+			return true;
+		}
 	}
 
-	function seleccionaAfiliado<%=prefijo%>(
-		cuil,
-		inte,
-		docu_tipo,
-		docu_nro,
-		nombre,
-		apellido,
-		id_secc,
-		desc_secc,
-		ospim,
-		uoma,
-		amtima,
-		bajaFecha,
-		nombre_plan,
-		id_plan,
-		fecha_alta_af,
-		incapacidad_af,
-		id_tercerizadora,
-		afi_tercerizadora,
-		reclamoPrestacional,
-		nroSocioPrev,
-		nroCredenPrev,
-		fechaRecepcion,
-		tieneAntecedentes
-	) {
+	function seleccionaAfiliado<%=prefijo%>(cuil,inte,docu_tipo,docu_nro,nombre,apellido,id_secc,desc_secc,ospim,uoma,amtima,bajaFecha,nombre_plan,id_plan,fecha_alta_af,incapacidad_af,id_tercerizadora,afi_tercerizadora,reclamoPrestacional,nroSocioPrev,nroCredenPrev,fechaRecepcion,tieneAntecedentes){
 		var clase = jQuery("#<portlet:namespace />claseExpediente").val();
 
 		if (clase != null && clase == 'DI') {
@@ -595,29 +507,10 @@
 		}
 
 		seleccionaCamposAfiliado<%=prefijo%>(
-			cuil,
-			inte,
-			docu_tipo,
-			docu_nro,
-			nombre,
-			apellido,
-			id_secc,
-			desc_secc,
-			ospim,
-			uoma,
-			amtima,
-			bajaFecha,
-			nombre_plan,
-			id_plan,
-			fecha_alta_af,
-			incapacidad_af,
-			id_tercerizadora,
-			afi_tercerizadora,
-			reclamoPrestacional,
-			nroSocioPrev,
-			nroCredenPrev,
-			fechaRecepcion,
-			tieneAntecedentes
+				cuil, inte, docu_tipo, docu_nro, nombre, apellido, id_secc, desc_secc,
+				ospim, uoma, amtima, bajaFecha, nombre_plan, id_plan, fecha_alta_af,
+				incapacidad_af, id_tercerizadora, afi_tercerizadora, reclamoPrestacional,
+				nroSocioPrev, nroCredenPrev, fechaRecepcion, tieneAntecedentes
 		);
 
 		Liferay.Popup.close(popupAfill);
@@ -628,48 +521,32 @@
 			var fechaOspimMes = jQuery('#<portlet:namespace />fechaospimMes').val();
 			var fechaOspimAnio = jQuery('#<portlet:namespace />fechaospimAnio').val();
 
-			var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-				'&struts_action=' + <portlet:namespace />evaluaPermanenciaAfiliadoAction<%=prefijo%> +
-				'&cuil=' + encodeURIComponent(cuil) +
-				'&inte=' + encodeURIComponent(inte) +
-				'&fechaOspimDia=' + encodeURIComponent(fechaOspimDia) +
-				'&fechaOspimMes=' + encodeURIComponent(fechaOspimMes) +
-				'&fechaOspimAnio=' + encodeURIComponent(fechaOspimAnio);
+			var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/evalua_permanencia_afiliado&cuil=' + cuil;
+			url += '&inte=' + inte;
+			url += '&fechaOspimDia=' + fechaOspimDia + '&fechaOspimMes=' + fechaOspimMes + '&fechaOspimAnio=' + fechaOspimAnio;
 
 			jQuery.ajax({
 				url: url,
 				async: false,
-				success: function(data) {
+				success: function(data){
 					var obj = jQuery.parseJSON(data);
-
 					if ("true" == obj.mostrarAviso) {
-						popSituLab = Liferay.Popup({
-							title: "Alerta de Permanencia / Cobertura",
-							modal: true,
-							width: 530
-						});
-
-						var urlAviso = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-							'&struts_action=' + <portlet:namespace />mostrarAlertaPermanenciaAfiliadoAction<%=prefijo%> +
-							'&aviso=' + encodeURIComponent(obj.aviso) +
-							'&colorstr=' + encodeURIComponent(obj.color);
-
+						popSituLab = Liferay.Popup({title:"Alerta de Permanencia / Cobertura", modal:true, width:530});
+						var urlAviso = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/mostrar_alerta_permanencia_afiliado&aviso=' + encodeURI(obj.aviso);
+						urlAviso += '&colorstr=' + encodeURI(obj.color);
 						jQuery(popSituLab).load(urlAviso);
 					}
 				}
 			});
 
-			var url2 = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-				'&struts_action=' + <portlet:namespace />tieneObservacionesAfiliadoAction<%=prefijo%> +
-				'&cuil_titular=' + encodeURIComponent(cuil) +
-				'&inte=' + encodeURIComponent(inte);
+			var url2 = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/tiene_observaciones_afiliado&cuil_titular=' + cuil;
+			url2 += '&inte=' + inte;
 
 			jQuery.ajax({
 				url: url2,
 				async: false,
-				success: function(data) {
+				success: function(data){
 					var obj = jQuery.parseJSON(data);
-
 					if ("true" == obj.tieneObsInternas) {
 						jQuery('#<portlet:namespace />divObservacionesInternas').show();
 					}
@@ -678,31 +555,7 @@
 		}
 	}
 
-	function seleccionaCamposAfiliado<%=prefijo%>(
-		cuil,
-		inte,
-		docu_tipo,
-		docu_nro,
-		nombre,
-		apellido,
-		id_secc,
-		desc_secc,
-		ospim,
-		uoma,
-		amtima,
-		bajaFecha,
-		nombre_plan,
-		id_plan,
-		fecha_alta_af,
-		incapacidad_af,
-		id_tercerizadora,
-		afi_tercerizadora,
-		reclamoPrestacional,
-		nroSocioPrev,
-		nroCredenPrev,
-		fechaRecepcion,
-		tieneAntecedentes
-	) {
+	function seleccionaCamposAfiliado<%=prefijo%>(cuil,inte,docu_tipo,docu_nro,nombre,apellido,id_secc,desc_secc,ospim,uoma,amtima,bajaFecha,nombre_plan,id_plan,fecha_alta_af,incapacidad_af,id_tercerizadora,afi_tercerizadora,reclamoPrestacional,nroSocioPrev,nroCredenPrev,fechaRecepcion,tieneAntecedentes){
 		jQuery('#<portlet:namespace />cuil<%=prefijo%>').val(cuil);
 		jQuery('#<portlet:namespace />inte<%=prefijo%>').val(inte);
 		jQuery('#<portlet:namespace />tipoDoc<%=prefijo%>').val(docu_tipo);
@@ -715,7 +568,6 @@
 		if (nroSocioPrev == 'null') {
 			nroSocioPrev = '';
 		}
-
 		if (nroCredenPrev == 'null') {
 			nroCredenPrev = '';
 		}
@@ -724,28 +576,30 @@
 		jQuery('#<portlet:namespace />nroCredencialPrevencion<%=prefijo%>').val(nroCredenPrev);
 
 		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-			'&struts_action=' + <portlet:namespace />buscarAfiliadoDatosAction<%=prefijo%> +
-			'&cuil_titular=' + encodeURIComponent(cuil) +
-			'&inte=' + encodeURIComponent(inte);
+				'&struts_action=/autorizaciones/buscar_afiliado_datos&cuil_titular=' + cuil +
+				'&inte=' + inte;
+		
+		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_TES_1_"))%>'>
+		     url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
+		            '&struts_action=/tesoreria/buscar_afiliado_datos&cuil_titular=' + cuil +
+		            '&inte=' + inte;
+		</c:if>
 
-		if (window.console) {
-			console.log("Action datos afiliado:", <portlet:namespace />buscarAfiliadoDatosAction<%=prefijo%>);
-			console.log("URL datos afiliado:", url);
-		}
+		<c:if test="<%= esCompras %>">
+		     url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
+		            '&struts_action=/compras/buscar_afiliado_datos&cuil_titular=' + cuil +
+		            '&inte=' + inte;
+		</c:if>
+		
 
 		jQuery.ajax({
 			url: url,
 			async: false,
-			success: function(data) {
+			success: function(data){
 				var obj = jQuery.parseJSON(data);
 				var actualizaDomicilio = obj.actualizadomicilio;
 				var actualizaTelefono = obj.actualizatelefono;
-
-				if (actualizaDomicilio === true ||
-						actualizaDomicilio === "true" ||
-						actualizaTelefono === true ||
-						actualizaTelefono === "true") {
-
+				if (actualizaDomicilio === true || actualizaDomicilio === "true" || actualizaTelefono === true || actualizaTelefono === "true") {
 					jQuery("#<portlet:namespace />divBotonActualizar").show();
 					jQuery("#<portlet:namespace />divResultadoActualizarOK").hide();
 					jQuery("#<portlet:namespace />seccionVerificarDomicilio").show();
@@ -761,25 +615,20 @@
 		if (jQuery('#<portlet:namespace />entidad<%=prefijo%>').val() == '<%= WebKeysGlobal.ENTIDADES_UOMA[0] %>') {
 			jQuery('#<portlet:namespace />numero_afi<%=prefijo%>').val(ospim);
 		}
-
 		if (jQuery('#<portlet:namespace />entidad<%=prefijo%>').val() == '<%= WebKeysGlobal.ENTIDADES_UOMA[2] %>') {
 			jQuery('#<portlet:namespace />numero_afi<%=prefijo%>').val(uoma);
 		}
-
 		if (jQuery('#<portlet:namespace />entidad<%=prefijo%>').val() == '<%= WebKeysGlobal.ENTIDADES_UOMA[1] %>') {
 			jQuery('#<portlet:namespace />numero_afi<%=prefijo%>').val(amtima);
 		}
 
 		jQuery("#<portlet:namespace />secc_seleccionada<%=prefijo%>").val("1");
 
-		if (document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>") != null) {
-			document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.background = "white";
-			document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.color = "black";
-		}
+		document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.background = "white";
+		document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.color = "black";
 
 		if (document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>") != null && bajaFecha != null) {
 			document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").value = bajaFecha;
-
 			if ("" != bajaFecha) {
 				document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.background = "red";
 				document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.color = "white";
@@ -787,22 +636,19 @@
 		}
 
 		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
-			if (jQuery("#<portlet:namespace />id_seccional_r<%=prefijo%>").val() == "") {
-				jQuery("#<portlet:namespace />id_seccional_r<%=prefijo%>").val(id_secc);
-				jQuery("#<portlet:namespace />seccional_r<%=prefijo%>").val(desc_secc);
-				jQuery("#<portlet:namespace />secc_seleccionada_r<%=prefijo%>").val("1");
-			}
-
-			if (nombre_plan == 'null') {
-				nombre_plan = '';
-			}
-
-			if (afi_tercerizadora == 'null') {
-				afi_tercerizadora = '';
-			}
-
-			jQuery("#<portlet:namespace />nombre_plan<%=prefijo%>").val(nombre_plan);
-			jQuery("#<portlet:namespace />afi_tercerizadora<%=prefijo%>").val(afi_tercerizadora);
+		if (jQuery("#<portlet:namespace />id_seccional_r<%=prefijo%>").val() == "") {
+			jQuery("#<portlet:namespace />id_seccional_r<%=prefijo%>").val(id_secc);
+			jQuery("#<portlet:namespace />seccional_r<%=prefijo%>").val(desc_secc);
+			jQuery("#<portlet:namespace />secc_seleccionada_r<%=prefijo%>").val("1");
+		}
+		if (nombre_plan == 'null') {
+			nombre_plan = '';
+		}
+		if (afi_tercerizadora == 'null') {
+			afi_tercerizadora = '';
+		}
+		jQuery("#<portlet:namespace />nombre_plan<%=prefijo%>").val(nombre_plan);
+		jQuery("#<portlet:namespace />afi_tercerizadora<%=prefijo%>").val(afi_tercerizadora);
 		</c:if>
 
 		jQuery("#<portlet:namespace />fecha_alta_af<%=prefijo%>").val(fecha_alta_af);
@@ -817,29 +663,23 @@
 				jQuery('#<portlet:namespace />discapacidad').show();
 				jQuery('#<portlet:namespace />discapacidad_vto').show();
 
-				var urlFechaVto = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-					'&struts_action=' + <portlet:namespace />buscarAfiliadoFechaVtoDocumentacionAction<%=prefijo%> +
-					'&cuil_titular=' + encodeURIComponent(cuil) +
-					'&inte=' + encodeURIComponent(inte);
-
-				if (window.console) {
-					console.log("Action fecha vto documentación:", <portlet:namespace />buscarAfiliadoFechaVtoDocumentacionAction<%=prefijo%>);
-					console.log("URL fecha vto documentación:", urlFechaVto);
-				}
-
+				var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/buscar_afiliado_fecha_vto_documentacion&cuil_titular=' + cuil + '&inte=' + inte;
+				<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_TES_1_"))%>'>
+				url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/tesoreria/buscar_afiliado_fecha_vto_documentacion&cuil_titular=' + cuil + '&inte=' + inte;
+				</c:if>
+				<c:if test="<%= esCompras %>">
+				url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliado_fecha_vto_documentacion&cuil_titular=' + cuil + '&inte=' + inte;
+				</c:if>
 				jQuery.ajax({
-					url: urlFechaVto,
-					success: function(data) {
+					url: url,
+					success: function(data){
 						var obj = jQuery.parseJSON(data);
 						var fechaVto = obj.fechaVto;
-
 						if (fechaVto != null) {
 							var hoy = new Date();
 							var vVto = fechaVto.split("-");
 							var vto = new Date(vVto[2], vVto[1], vVto[0]);
-
 							jQuery('#<portlet:namespace/>discapacidad_vto').html("Vto. Documentación " + fechaVto);
-
 							if (vto < hoy) {
 								alert("El certificado de Discapacidad Esta Vencido desde el " + fechaVto);
 							}
@@ -859,7 +699,7 @@
 		catch (err) {}
 
 		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
-			// llamar script que busca los tratamientos del afiliado en la página
+		// llamar script que busca los tratamientos del afiliado en la p?gina
 		</c:if>
 	}
 
@@ -877,11 +717,11 @@
 		document.getElementById("<portlet:namespace />inte<%=prefijo%>").value = inteJS;
 
 		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
-			<portlet:namespace />buscarAfiliados_<%=prefijo%>(jQuery("#<portlet:namespace />fprest<%=prefijo%>").val());
+		<portlet:namespace />buscarAfiliados_<%=prefijo%>(jQuery("#<portlet:namespace />fprest<%=prefijo%>").val());
 		</c:if>
 
 		<c:if test="<%= !Boolean.parseBoolean(pag_reintegro) %>">
-			<portlet:namespace />buscarAfiliados<%=prefijo%>();
+		<portlet:namespace />buscarAfiliados<%=prefijo%>();
 		</c:if>
 	}
 
@@ -897,11 +737,7 @@
 		jQuery('#<portlet:namespace />seccional<%=prefijo%>').val('');
 		jQuery('#<portlet:namespace />apellido<%=prefijo%>').val('');
 		jQuery('#<portlet:namespace />nombre<%=prefijo%>').val('');
-
-		if (document.getElementById('<portlet:namespace />entidad<%=prefijo%>') != null) {
-			document.getElementById('<portlet:namespace />entidad<%=prefijo%>').selectedIndex = 0;
-		}
-
+		document.getElementById('<portlet:namespace />entidad<%=prefijo%>').selectedIndex = 0;
 		jQuery('#<portlet:namespace />numero_afi<%=prefijo%>').val('');
 		jQuery("#<portlet:namespace />secc_seleccionada<%=prefijo%>").val("1");
 		jQuery("#<portlet:namespace />baja_fecha<%=prefijo%>").val('');
@@ -909,8 +745,8 @@
 		jQuery("#<portlet:namespace />nroCredencialPrevencion<%=prefijo%>").val('');
 
 		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
-			jQuery("#<portlet:namespace />nombre_plan<%=prefijo%>").val('');
-			jQuery("#<portlet:namespace />afi_tercerizadora<%=prefijo%>").val('');
+		jQuery("#<portlet:namespace />nombre_plan<%=prefijo%>").val('');
+		jQuery("#<portlet:namespace />afi_tercerizadora<%=prefijo%>").val('');
 		</c:if>
 
 		jQuery("#<portlet:namespace />fecha_alta_af<%=prefijo%>").val('');
@@ -922,10 +758,8 @@
 
 		<portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>('0');
 
-		if (document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>") != null) {
-			document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.background = "white";
-			document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.color = "black";
-		}
+		document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.background = "white";
+		document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.color = "black";
 	}
 
 	function <portlet:namespace />detalleDiscapacidad<%=prefijo%>() {
@@ -942,18 +776,8 @@
 			return false;
 		}
 
-		popupdd = Liferay.Popup({
-			title: "Detalle Discapacidad",
-			modal: true,
-			width: 850
-		});
-
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-			'&struts_action=' + <portlet:namespace />detalleDiscapacidadAction<%=prefijo%> +
-			'&cuil_titular=' + encodeURIComponent(cuil) +
-			'&inte=' + encodeURIComponent(inte) +
-			'&path=' + encodeURIComponent(<portlet:namespace />grabarDetalleDiscapacidadPath<%=prefijo%>);
-
+		popupdd = Liferay.Popup({title:"Detalle Discapacidad",modal:true,width:850});
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/detalle_discapacidad&cuil_titular=' + cuil + '&inte=' + inte + '&path=/autorizaciones/grabar_detalle_discapacidad';
 		jQuery(popupdd).load(url);
 	}
 
@@ -962,29 +786,25 @@
 		<portlet:namespace />detalleDiscapacidad<%=prefijo%>();
 	}
 
-	function <portlet:namespace />buscarObsInternas() {
+	function <portlet:namespace />buscarObsInternas(){
 
 		var cuil_titu = jQuery('#<portlet:namespace />cuil<%=prefijo%>').val();
 		var inte = jQuery('#<portlet:namespace />inte<%=prefijo%>').val();
 
-		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>' +
-			'&struts_action=' + <portlet:namespace />buscarObservacionesInternasAction<%=prefijo%> +
-			'&<%=Constants.CMD%>=<%=Constants.SEARCH %>';
+		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>">
+		<portlet:param name="struts_action" value="/autorizaciones/buscar_observaciones_internas" />
+		<portlet:param name="<%=Constants.CMD%>" value="<%=Constants.SEARCH %>" />
+		</portlet:renderURL>';
 
 		var params = {
 			"cuil_titular": cuil_titu,
 			"inte": inte
 		};
 
-		var popupoi = Liferay.Popup({
-			title: "Lista de Observaciones Internas",
-			modal: true,
-			width: 850
-		});
-
+		var popupoi = Liferay.Popup({title:"Lista de Observaciones Internas",modal:true,width:850});
 		jQuery(popupoi).load(url, params);
 	}
 
-	jQuery(document).ready(function() {
+	jQuery(document).ready(function(){
 	});
 </script>

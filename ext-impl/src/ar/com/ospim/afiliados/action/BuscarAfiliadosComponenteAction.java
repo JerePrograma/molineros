@@ -186,31 +186,13 @@ public class BuscarAfiliadosComponenteAction extends PortletAction {
 			_log.error("[ERROR] Error en render BuscarAfiliadosComponenteAction", e);
 		}
 
-		boolean autoSelect = ParamUtil.getBoolean(renderRequest, "auto_select", false);
 		popup = ParamUtil.getString(renderRequest, "popup");
 		String origen = ParamUtil.getString(renderRequest, "origen");
 		renderRequest.setAttribute("origen", origen);
-		if (autoSelect) {
-			return mapping.findForward("portlet.afiliados.result.search.auto_select");
-		}
-		if (esPopup(popup)) {
+		if (null != popup && !popup.trim().equals("")) {
 			return mapping.findForward("portlet.afiliados.result.search.popup");
 		} else {
 			return mapping.findForward("portlet.afiliados.result.search");
 		}
-	}
-
-	private boolean esPopup(String popup) {
-		if (popup == null) {
-			return false;
-		}
-
-		String value = popup.trim();
-
-		return "true".equalsIgnoreCase(value)
-				|| "1".equals(value)
-				|| "popup".equalsIgnoreCase(value)
-				|| "yes".equalsIgnoreCase(value)
-				|| "si".equalsIgnoreCase(value);
 	}
 }

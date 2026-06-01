@@ -54,7 +54,6 @@ public class BuscarAfiliadosAction extends PortletAction {
 								RenderResponse renderResponse) throws Exception {
 
 		String popup = null;
-		boolean autoSelect = ParamUtil.getBoolean(renderRequest, "auto_select", false);
 		
 		try {
 			String cuil = null;
@@ -167,9 +166,7 @@ public class BuscarAfiliadosAction extends PortletAction {
 				}
 				renderRequest.removeAttribute(WebKeysAfiliados.BUSQUEDA_AFILIADO);
 				renderRequest.setAttribute(WebKeysAfiliados.BUSQUEDA_AFILIADO, busqueda);
-				if (!autoSelect) {
-					renderRequest.getPortletSession().setAttribute(WebKeysAfiliados.BUSQUEDA_AFILIADO, busqueda, PortletSession.APPLICATION_SCOPE);
-				}
+				renderRequest.getPortletSession().setAttribute(WebKeysAfiliados.BUSQUEDA_AFILIADO, busqueda, PortletSession.APPLICATION_SCOPE);
 				
 				
 			} else {
@@ -184,9 +181,7 @@ public class BuscarAfiliadosAction extends PortletAction {
 				}
 				renderRequest.removeAttribute(WebKeysAfiliados.BUSQUEDA_AFILIADO);
 				renderRequest.setAttribute(WebKeysAfiliados.BUSQUEDA_AFILIADO, busqueda);
-				if (!autoSelect) {
-					renderRequest.getPortletSession().setAttribute(WebKeysAfiliados.BUSQUEDA_AFILIADO, busqueda, PortletSession.APPLICATION_SCOPE);
-				}
+				renderRequest.getPortletSession().setAttribute(WebKeysAfiliados.BUSQUEDA_AFILIADO, busqueda, PortletSession.APPLICATION_SCOPE);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -196,29 +191,12 @@ public class BuscarAfiliadosAction extends PortletAction {
 		String origen = ParamUtil.getString(renderRequest, "origen");
 		renderRequest.setAttribute("origen", origen);
 
-		if (autoSelect) {
-			return mapping.findForward("portlet.afiliados.result.search.auto_select");
-		}
 
-		if (esPopup(popup)) {
+		if (null != popup && !popup.trim().equals("")) {
 			return mapping.findForward("portlet.afiliados.result.search.popup");
 		} else {
 			return mapping.findForward("portlet.afiliados.result.search");
 		}
-	}
-
-	private boolean esPopup(String popup) {
-		if (popup == null) {
-			return false;
-		}
-
-		String value = popup.trim();
-
-		return "true".equalsIgnoreCase(value)
-				|| "1".equals(value)
-				|| "popup".equalsIgnoreCase(value)
-				|| "yes".equalsIgnoreCase(value)
-				|| "si".equalsIgnoreCase(value);
 	}
 
 }
