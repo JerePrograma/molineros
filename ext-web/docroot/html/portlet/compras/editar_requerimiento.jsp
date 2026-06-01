@@ -578,7 +578,7 @@ if (modoVista) {
     </fieldset>
 
     <liferay-util:include page="/html/portlet/compras/requerimiento_detalle_embebido.jsp">
-        <liferay-util:param name="solo_lectura" value="<%= modoVista ? "true" : "false" %>" />
+        <liferay-util:param name="solo_lectura" value="<%= soloLecturaDetalleParam %>" />
     </liferay-util:include>
 
     <table class="lfr-table">
@@ -588,14 +588,6 @@ if (modoVista) {
                     <input type="button"
                            value="Guardar"
                            onClick="<portlet:namespace />guardar();" />
-
-                    <c:if test="<%= !esNuevo %>">
-                        &nbsp;&nbsp;
-
-                        <input type="button"
-                               value="Ver"
-                               onClick="window.location.href='<%= verURL.toString() %>';" />
-                    </c:if>
 
                     &nbsp;&nbsp;
                 </c:if>
