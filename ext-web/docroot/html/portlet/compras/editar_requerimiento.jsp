@@ -723,15 +723,6 @@ if (errorCampoCompra == null) {
             fechaRecepcion,
             tieneAntecedentes
         );
-alert(
-    'ospim=' + ospim +
-    '\nuoma=' + uoma +
-    '\namtima=' + amtima +
-    '\nnombre_plan=' + nombre_plan +
-    '\nid_plan=' + id_plan +
-    '\nid_tercerizadora=' + id_tercerizadora +
-    '\nafi_tercerizadora=' + afi_tercerizadora
-);
         if (popupAfill != null) {
             Liferay.Popup.close(popupAfill);
         }
