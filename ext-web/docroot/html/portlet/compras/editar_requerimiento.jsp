@@ -578,7 +578,7 @@ if (modoVista) {
     </fieldset>
 
     <liferay-util:include page="/html/portlet/compras/requerimiento_detalle_embebido.jsp">
-        <liferay-util:param name="solo_lectura" value="<%= soloLecturaDetalleParam %>" />
+        <liferay-util:param name="solo_lectura" value="<%= Boolean.toString(modoVista) %>" />
     </liferay-util:include>
 
     <table class="lfr-table">
