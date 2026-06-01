@@ -24,6 +24,8 @@ private String jsDetalleCompra(String value) {
 %>
 
 <%
+String namespaceDetalleCompra = renderResponse.getNamespace();
+
 RequerimientoCompra reqDetalle =
         (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
 
@@ -56,11 +58,24 @@ boolean soloLecturaDetalle =
         || "/compras/ver_requerimiento".equals(strutsActionDetalle)
         || "ver".equalsIgnoreCase(modoDetalle);
 
-boolean puedeABMDetalle =
-        !soloLecturaDetalle
-        && user != null
+boolean usuarioPuedeABMDetalle =
+        user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
         && reqDetalle.isEditable();
+
+boolean layoutEdicionDetalle = usuarioPuedeABMDetalle;
+
+boolean puedeABMDetalle =
+        layoutEdicionDetalle
+        && !soloLecturaDetalle;
+
+String readonlyDetalleVista = soloLecturaDetalle
+        ? " readonly=\"readonly\""
+        : "";
+
+String bloqueoDetalleVista = soloLecturaDetalle
+        ? " class=\"compras-bloqueado-sin-estilo\" tabindex=\"-1\" onmousedown=\"return false;\" onkeydown=\"return false;\" onclick=\"return false;\""
+        : "";
 
 List<RequerimientoCompraDetalle> detalles = reqDetalle.getDetalles();
 
@@ -97,25 +112,19 @@ if (articulos == null) {
     articulos = new ArrayList<CompraArticulo>();
 }
 
-for (int i = 0; articulos != null && i < articulos.size(); i++) {
-    CompraArticulo articuloDebug = articulos.get(i);
-
-    System.out.println(
-            "DEBUG_COMPRAS_ART JSP articulo[" + i + "]"
-            + " id=" + articuloDebug.getId()
-            + " idSector=" + articuloDebug.getIdSector()
-            + " descripcion=" + articuloDebug.getDescripcion()
-            + " sectorDescripcion=" + articuloDebug.getSectorDescripcion()
-    );
-}
-
-int detalleColspan = puedeABMDetalle ? 7 : 6;
+int detalleColspan = layoutEdicionDetalle ? 7 : 6;
 %>
+
+<style type="text/css">
+    .compras-bloqueado-sin-estilo {
+        pointer-events: none;
+    }
+</style>
 
 <fieldset class="block-labels">
     <legend>Detalle del requerimiento</legend>
 
-    <% if (puedeABMDetalle) { %>
+    <% if (layoutEdicionDetalle) { %>
         <fieldset class="block-labels">
             <legend>Agregar / editar detalle</legend>
 
@@ -132,7 +141,8 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
                     </td>
                     <td colspan="3">
                         <select id="<portlet:namespace />detalle_id_articulo"
-                                style="min-width: 420px;">
+                                style="min-width: 420px;"
+                                <%= bloqueoDetalleVista %>>
                             <option value="">Seleccione...</option>
                         </select>
 
@@ -143,7 +153,7 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
                              align="absmiddle"
                              src="<%= themeDisplay.getPathThemeImages() %>/common/add.png"
                              style="cursor:pointer;"
-                             onClick="<portlet:namespace />abrirAltaArticuloCompra();" />
+                             onClick="<%= puedeABMDetalle ? namespaceDetalleCompra + "abrirAltaArticuloCompra();" : "return false;" %>" />
                     </td>
                 </tr>
 
@@ -161,7 +171,8 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
                         <input type="text"
                                id="<portlet:namespace />detalle_cantidad"
                                size="8"
-                               value="1" />
+                               value="1"
+                               <%= readonlyDetalleVista %> />
                     </td>
 
                     <td>
@@ -173,7 +184,8 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
                         <input type="text"
                                id="<portlet:namespace />detalle_precio_unitario_estimado"
                                size="12"
-                               value="" />
+                               value=""
+                               <%= readonlyDetalleVista %> />
                     </td>
                 </tr>
 
@@ -191,7 +203,8 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
                         <input type="text"
                                id="<portlet:namespace />detalle_precio_total_estimado"
                                size="12"
-                               value="" />
+                               value=""
+                               <%= readonlyDetalleVista %> />
                     </td>
 
                     <td>
@@ -204,7 +217,8 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
                                id="<portlet:namespace />detalle_observaciones"
                                size="60"
                                maxlength="500"
-                               value="" />
+                               value=""
+                               <%= readonlyDetalleVista %> />
                     </td>
                 </tr>
 
@@ -217,7 +231,7 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
                         <input type="button"
                                id="<portlet:namespace />detalle_submit"
                                value="Agregar detalle"
-                               onClick="<portlet:namespace />agregarOActualizarDetalle();" />
+                               onClick="<%= puedeABMDetalle ? namespaceDetalleCompra + "agregarOActualizarDetalle();" : "return false;" %>" />
 
                         &nbsp;&nbsp;
 
@@ -225,7 +239,7 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
                                id="<portlet:namespace />detalle_cancelar"
                                value="Cancelar edici&oacute;n"
                                style="display:none;"
-                               onClick="<portlet:namespace />cancelarEdicionDetalle();" />
+                               onClick="<%= puedeABMDetalle ? namespaceDetalleCompra + "cancelarEdicionDetalle();" : "return false;" %>" />
                     </td>
                 </tr>
             </table>
@@ -243,7 +257,7 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
             <th>Total estimado</th>
             <th>Observaciones</th>
 
-            <% if (puedeABMDetalle) { %>
+            <% if (layoutEdicionDetalle) { %>
                 <th>Acciones</th>
             <% } %>
         </tr>
@@ -408,11 +422,6 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
 
             var sectorArticuloNum = parseInt(articulo.sector, 10);
 
-            /*
-             * Si el artículo vino sin idSector, se muestra igual.
-             * Eso evita combo vacío cuando el mapper no está seteando CompraArticulo.idSector.
-             * Idealmente, el mapper debe setear idSector correctamente.
-             */
             var mostrar =
                     isNaN(sectorSeleccionadoNum)
                     || sectorSeleccionadoNum <= 0
@@ -516,11 +525,19 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.precioTotal) + '</td>';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.observaciones) + '</td>';
 
-            <% if (puedeABMDetalle) { %>
+            <% if (layoutEdicionDetalle) { %>
                 html += '<td>';
-                html += '<input type="button" value="Editar" onclick="<portlet:namespace />editarDetalleEnPantalla(' + i + ');" />';
-                html += '&nbsp;';
-                html += '<input type="button" value="Quitar" onclick="<portlet:namespace />quitarDetalleEnPantalla(' + i + ');" />';
+
+                <% if (puedeABMDetalle) { %>
+                    html += '<input type="button" value="Editar" onclick="<portlet:namespace />editarDetalleEnPantalla(' + i + ');" />';
+                    html += '&nbsp;';
+                    html += '<input type="button" value="Quitar" onclick="<portlet:namespace />quitarDetalleEnPantalla(' + i + ');" />';
+                <% } else { %>
+                    html += '<input type="button" value="Editar" onclick="return false;" />';
+                    html += '&nbsp;';
+                    html += '<input type="button" value="Quitar" onclick="return false;" />';
+                <% } %>
+
                 html += '</td>';
             <% } %>
 
@@ -820,7 +837,7 @@ int detalleColspan = puedeABMDetalle ? 7 : 6;
     jQuery(function() {
         <portlet:namespace />renderDetallesCompra();
 
-        <% if (puedeABMDetalle) { %>
+        <% if (layoutEdicionDetalle) { %>
             <portlet:namespace />filtrarArticulosPorSector();
         <% } %>
     });
