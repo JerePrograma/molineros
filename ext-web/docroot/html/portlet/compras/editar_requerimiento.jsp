@@ -22,6 +22,46 @@ private String jsCompra(String value) {
             .replace("<", "\\x3C")
             .replace(">", "\\x3E");
 }
+private String valorMetodoCompra(Object bean, String metodoNombre) {
+    if (bean == null || metodoNombre == null) {
+        return "";
+    }
+
+    try {
+        Method metodo = bean.getClass().getMethod(metodoNombre, new Class[0]);
+        Object value = metodo.invoke(bean, new Object[0]);
+
+        if (value == null) {
+            return "";
+        }
+
+        String stringValue = String.valueOf(value);
+
+        if ("null".equalsIgnoreCase(stringValue)) {
+            return "";
+        }
+
+        return stringValue.trim();
+    } catch (Exception e) {
+        return "";
+    }
+}
+
+private String primerValorMetodoCompra(Object bean, String[] metodos) {
+    if (bean == null || metodos == null) {
+        return "";
+    }
+
+    for (int i = 0; i < metodos.length; i++) {
+        String value = valorMetodoCompra(bean, metodos[i]);
+
+        if (value != null && value.trim().length() > 0) {
+            return value.trim();
+        }
+    }
+
+    return "";
+}
 %>
 
 <%
@@ -195,6 +235,14 @@ String afiliadoFechaAlta = "";
 String afiliadoIdTercerizadora = idTercerizadora;
 String afiliadoIncapacidad = "";
 String afiliadoAntecedentes = "";
+String afiliadoIdSeccional = "";
+String afiliadoNumeroOspim = "";
+String afiliadoNumeroUoma = "";
+String afiliadoNumeroAmtima = "";
+String afiliadoNumeroAfiliado = "";
+String afiliadoNombrePlan = "";
+String afiliadoIdPlan = "";
+String afiliadoAfiTercerizadora = "";
 
 if (afiliadoRequerimiento != null) {
     afiliadoCuilVisible = afiliadoRequerimiento.getCuil_titular() != null ? afiliadoRequerimiento.getCuil_titular() : afiliadoCuilTitular;
@@ -208,6 +256,16 @@ if (afiliadoRequerimiento != null) {
         afiliadoSeccional = afiliadoRequerimiento.getSeccional().getDescripcion() != null
                 ? afiliadoRequerimiento.getSeccional().getDescripcion()
                 : "";
+
+        afiliadoIdSeccional = primerValorMetodoCompra(
+                afiliadoRequerimiento.getSeccional(),
+                new String[] {
+                        "getId_seccional",
+                        "getIdSeccional",
+                        "getId",
+                        "getCodigo"
+                }
+        );
     }
 
     afiliadoBajaFecha = afiliadoRequerimiento.getBaja_fechaAsString();
@@ -217,6 +275,85 @@ if (afiliadoRequerimiento != null) {
             : idTercerizadora;
     afiliadoIncapacidad = afiliadoRequerimiento.getDiscapacitado() != null ? afiliadoRequerimiento.getDiscapacitado() : "";
     afiliadoAntecedentes = afiliadoRequerimiento.getTieneAntecedentesJudiciales() == 1 ? "SI" : "NO";
+    afiliadoNumeroOspim = primerValorMetodoCompra(
+            afiliadoRequerimiento,
+            new String[] {
+                    "getOspim",
+                    "getOspimString",
+                    "getOSPIM",
+                    "getNroOspim",
+                    "getNumeroOspim",
+                    "getNumero_ospim"
+            }
+    );
+
+    afiliadoNumeroUoma = primerValorMetodoCompra(
+            afiliadoRequerimiento,
+            new String[] {
+                    "getUoma",
+                    "getUomaString",
+                    "getUOMA",
+                    "getNroUoma",
+                    "getNumeroUoma",
+                    "getNumero_uoma"
+            }
+    );
+
+    afiliadoNumeroAmtima = primerValorMetodoCompra(
+            afiliadoRequerimiento,
+            new String[] {
+                    "getAmtima",
+                    "getAmtimaString",
+                    "getAMTIMA",
+                    "getNroAmtima",
+                    "getNumeroAmtima",
+                    "getNumero_amtima"
+            }
+    );
+
+    afiliadoNumeroAfiliado = primerValorMetodoCompra(
+            afiliadoRequerimiento,
+            new String[] {
+                    "getNumero_afi",
+                    "getNumeroAfi",
+                    "getNumeroAfiliado",
+                    "getNroAfiliado",
+                    "getNro_afiliado"
+            }
+    );
+
+    if (WebKeysCompras.isEmpty(afiliadoNumeroAfiliado)) {
+        afiliadoNumeroAfiliado = afiliadoNumeroOspim;
+    }
+
+    afiliadoNombrePlan = primerValorMetodoCompra(
+            afiliadoRequerimiento,
+            new String[] {
+                    "getNombre_plan",
+                    "getNombrePlan",
+                    "getPlanDescripcion",
+                    "getDescripcionPlan"
+            }
+    );
+
+    afiliadoIdPlan = primerValorMetodoCompra(
+            afiliadoRequerimiento,
+            new String[] {
+                    "getId_plan",
+                    "getIdPlan"
+            }
+    );
+
+    afiliadoAfiTercerizadora = primerValorMetodoCompra(
+            afiliadoRequerimiento,
+            new String[] {
+                    "getAfi_tercerizadora",
+                    "getAfiTercerizadora",
+                    "getTercerizadora",
+                    "getTercerizadoraDescripcion",
+                    "getNombreTercerizadora"
+            }
+    );
 }
 
 boolean tieneAfiliadoVisible =
@@ -226,7 +363,15 @@ boolean tieneAfiliadoVisible =
         || !WebKeysCompras.isEmpty(afiliadoNumeroDocumento)
         || !WebKeysCompras.isEmpty(afiliadoApellido)
         || !WebKeysCompras.isEmpty(afiliadoNombre)
+        || !WebKeysCompras.isEmpty(afiliadoIdSeccional)
         || !WebKeysCompras.isEmpty(afiliadoSeccional)
+        || !WebKeysCompras.isEmpty(afiliadoNumeroAfiliado)
+        || !WebKeysCompras.isEmpty(afiliadoNumeroOspim)
+        || !WebKeysCompras.isEmpty(afiliadoNumeroUoma)
+        || !WebKeysCompras.isEmpty(afiliadoNumeroAmtima)
+        || !WebKeysCompras.isEmpty(afiliadoNombrePlan)
+        || !WebKeysCompras.isEmpty(afiliadoIdPlan)
+        || !WebKeysCompras.isEmpty(afiliadoAfiTercerizadora)
         || !WebKeysCompras.isEmpty(afiliadoBajaFecha)
         || !WebKeysCompras.isEmpty(afiliadoFechaAlta)
         || !WebKeysCompras.isEmpty(afiliadoIdTercerizadora)
@@ -470,12 +615,37 @@ if (modoVista) {
                 setAfiliadoValue('nroDoc', '<%= jsCompra(afiliadoNumeroDocumento) %>');
                 setAfiliadoValue('apellido', '<%= jsCompra(afiliadoApellido) %>');
                 setAfiliadoValue('nombre', '<%= jsCompra(afiliadoNombre) %>');
+                setAfiliadoValue('id_seccional', '<%= jsCompra(afiliadoIdSeccional) %>');
                 setAfiliadoValue('seccional', '<%= jsCompra(afiliadoSeccional) %>');
                 setAfiliadoValue('baja_fecha', '<%= jsCompra(afiliadoBajaFecha) %>');
                 setAfiliadoValue('fecha_alta_af', '<%= jsCompra(afiliadoFechaAlta) %>');
                 setAfiliadoValue('id_tercerizadora', '<%= jsCompra(afiliadoIdTercerizadora) %>');
                 setAfiliadoValue('requerimiento_id_tercerizadora', '<%= jsCompra(afiliadoIdTercerizadora) %>');
                 setAfiliadoValue('incapacidad_af', '<%= jsCompra(afiliadoIncapacidad) %>');
+
+                setAfiliadoValue('nombre_plan', '<%= jsCompra(afiliadoNombrePlan) %>');
+                setAfiliadoValue('id_plan', '<%= jsCompra(afiliadoIdPlan) %>');
+                setAfiliadoValue('afi_tercerizadora', '<%= jsCompra(afiliadoAfiTercerizadora) %>');
+
+                var entidadSeleccionadaInicial = jQuery('#' + ns + 'entidad').val();
+                var numeroAfiliadoInicial = '<%= jsCompra(afiliadoNumeroAfiliado) %>';
+
+                if (entidadSeleccionadaInicial == '<%= WebKeysGlobal.ENTIDADES_UOMA[0] %>'
+                        && '<%= jsCompra(afiliadoNumeroOspim) %>' != '') {
+                    numeroAfiliadoInicial = '<%= jsCompra(afiliadoNumeroOspim) %>';
+                }
+
+                if (entidadSeleccionadaInicial == '<%= WebKeysGlobal.ENTIDADES_UOMA[1] %>'
+                        && '<%= jsCompra(afiliadoNumeroUoma) %>' != '') {
+                    numeroAfiliadoInicial = '<%= jsCompra(afiliadoNumeroUoma) %>';
+                }
+
+                if (entidadSeleccionadaInicial == '<%= WebKeysGlobal.ENTIDADES_UOMA[2] %>'
+                        && '<%= jsCompra(afiliadoNumeroAmtima) %>' != '') {
+                    numeroAfiliadoInicial = '<%= jsCompra(afiliadoNumeroAmtima) %>';
+                }
+
+                setAfiliadoValue('numero_afi', numeroAfiliadoInicial);
 
                 if ('<%= jsCompra(afiliadoSeccional) %>' != '') {
                     setAfiliadoValue('secc_seleccionada', '1');
@@ -1020,12 +1190,37 @@ if (modoVista) {
         <portlet:namespace />setAfiliadoValue('nroDoc', '<%= jsCompra(afiliadoNumeroDocumento) %>');
         <portlet:namespace />setAfiliadoValue('apellido', '<%= jsCompra(afiliadoApellido) %>');
         <portlet:namespace />setAfiliadoValue('nombre', '<%= jsCompra(afiliadoNombre) %>');
+        <portlet:namespace />setAfiliadoValue('id_seccional', '<%= jsCompra(afiliadoIdSeccional) %>');
         <portlet:namespace />setAfiliadoValue('seccional', '<%= jsCompra(afiliadoSeccional) %>');
         <portlet:namespace />setAfiliadoValue('baja_fecha', '<%= jsCompra(afiliadoBajaFecha) %>');
         <portlet:namespace />setAfiliadoValue('fecha_alta_af', '<%= jsCompra(afiliadoFechaAlta) %>');
         <portlet:namespace />setAfiliadoValue('id_tercerizadora', '<%= jsCompra(afiliadoIdTercerizadora) %>');
         <portlet:namespace />setAfiliadoValue('requerimiento_id_tercerizadora', '<%= jsCompra(afiliadoIdTercerizadora) %>');
         <portlet:namespace />setAfiliadoValue('incapacidad_af', '<%= jsCompra(afiliadoIncapacidad) %>');
+
+        <portlet:namespace />setAfiliadoValue('nombre_plan', '<%= jsCompra(afiliadoNombrePlan) %>');
+        <portlet:namespace />setAfiliadoValue('id_plan', '<%= jsCompra(afiliadoIdPlan) %>');
+        <portlet:namespace />setAfiliadoValue('afi_tercerizadora', '<%= jsCompra(afiliadoAfiTercerizadora) %>');
+
+        var entidadSeleccionadaInicial = jQuery('#<portlet:namespace />entidad').val();
+        var numeroAfiliadoInicial = '<%= jsCompra(afiliadoNumeroAfiliado) %>';
+
+        if (entidadSeleccionadaInicial == '<%= WebKeysGlobal.ENTIDADES_UOMA[0] %>'
+                && '<%= jsCompra(afiliadoNumeroOspim) %>' != '') {
+            numeroAfiliadoInicial = '<%= jsCompra(afiliadoNumeroOspim) %>';
+        }
+
+        if (entidadSeleccionadaInicial == '<%= WebKeysGlobal.ENTIDADES_UOMA[1] %>'
+                && '<%= jsCompra(afiliadoNumeroUoma) %>' != '') {
+            numeroAfiliadoInicial = '<%= jsCompra(afiliadoNumeroUoma) %>';
+        }
+
+        if (entidadSeleccionadaInicial == '<%= WebKeysGlobal.ENTIDADES_UOMA[2] %>'
+                && '<%= jsCompra(afiliadoNumeroAmtima) %>' != '') {
+            numeroAfiliadoInicial = '<%= jsCompra(afiliadoNumeroAmtima) %>';
+        }
+
+        <portlet:namespace />setAfiliadoValue('numero_afi', numeroAfiliadoInicial);
 
         if ('<%= jsCompra(afiliadoSeccional) %>' != '') {
             <portlet:namespace />setAfiliadoValue('secc_seleccionada', '1');
@@ -1072,9 +1267,13 @@ if (modoVista) {
 
         jQuery('#<portlet:namespace />afiliado_cuil_titular').val('');
         jQuery('#<portlet:namespace />afiliado_int').val('');
+        jQuery('#<portlet:namespace />id_seccional').val('');
+        jQuery('#<portlet:namespace />seccional').val('');
+        jQuery('#<portlet:namespace />numero_afi').val('');
         jQuery('#<portlet:namespace />id_tercerizadora').val('');
         jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val('');
         jQuery('#<portlet:namespace />nombre_plan').val('');
+        jQuery('#<portlet:namespace />id_plan').val('');
         jQuery('#<portlet:namespace />afi_tercerizadora').val('');
 
         <portlet:namespace />mostrarMensajeAfiliadoInicial('');
