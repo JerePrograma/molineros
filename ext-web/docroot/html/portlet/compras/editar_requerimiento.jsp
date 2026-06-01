@@ -446,10 +446,10 @@ if (errorCampoCompra == null) {
 
                 <tr id="<portlet:namespace />tercerizadora_row"
                     style="<%= mostrarTercerizadoraPorCargos ? "" : "display:none;" %>">
-                    <td><label>Tercerizadora:</label></td>
+                    <td><label>ID tercerizadora:</label></td>
                     <td>
                         <input type="text"
-                               name="<portlet:namespace />id_tercerizadora"
+                               name="<portlet:namespace />requerimiento_id_tercerizadora_visible"
                                id="<portlet:namespace />requerimiento_id_tercerizadora"
                                value="<%= HtmlUtil.escape(idTercerizadora) %>"
                                size="10"
@@ -489,6 +489,8 @@ if (errorCampoCompra == null) {
                                         name="discapacidad" />
                     <liferay-util:param name="pag_reintegro"
                                         value="1" />
+                    <liferay-util:param name="origen"
+                                        value="" />
                 </liferay-util:include>
             </fieldset>
         </div>
@@ -541,6 +543,24 @@ if (errorCampoCompra == null) {
 <c:if test="<%= puedeEditarPantalla %>">
 <script type="text/javascript">
     var popup = null;
+    var popupAfill = null;
+
+    function <portlet:namespace />valorSeguroAfiliado(value) {
+        if (value == null || typeof value == 'undefined' || value == 'null') {
+            return '';
+        }
+
+        return value;
+    }
+
+    function <portlet:namespace />fechaReferenciaAfiliado() {
+        var d = new Date();
+        var currDate = d.getDate();
+        var currMonth = d.getMonth() + 1;
+        var currYear = d.getFullYear();
+
+        return currDate + "/" + currMonth + "/" + currYear;
+    }
 
     function <portlet:namespace />valorAfiliado(id) {
         return jQuery.trim(jQuery('#<portlet:namespace />' + id).val());
@@ -554,8 +574,6 @@ if (errorCampoCompra == null) {
         return 'num' + 'ero_afi';
     }
 
-
-
     function <portlet:namespace />buscarAfiliados() {
         var cuil = jQuery('#<portlet:namespace />cuil').val();
         var inte = jQuery('#<portlet:namespace />inte').val();
@@ -566,6 +584,9 @@ if (errorCampoCompra == null) {
         var nombre = jQuery('#<portlet:namespace />nombre').val();
         var entidad = jQuery('#<portlet:namespace />entidad').val();
         var numeroAfi = jQuery('#<portlet:namespace />numero_afi').val();
+        var nroCredencialPrevencion = jQuery('#<portlet:namespace />nroCredencialPrevencion').val();
+        var nroSocioPrevencion = jQuery('#<portlet:namespace />nroSocioPrevencion').val();
+        var fechaReferencia = <portlet:namespace />fechaReferenciaAfiliado();
 
         if (!<portlet:namespace />validarBusqueda(cuil, inte, tipoDoc, nroDoc, seccional, apellido, nombre, entidad, numeroAfi)) {
             return false;
@@ -600,7 +621,9 @@ if (errorCampoCompra == null) {
             '&apellido=' + encodeURIComponent(apellido) +
             '&entidad=' + encodeURIComponent(entidad) +
             '&numero_afi=' + encodeURIComponent(numeroAfi) +
-            '&fecha_referencia=null' +
+            '&fecha_referencia=' + encodeURIComponent(fechaReferencia) +
+            '&nroCredencialPrevencion=' + encodeURIComponent(nroCredencialPrevencion) +
+            '&nroSocioPrevencion=' + encodeURIComponent(nroSocioPrevencion) +
             '&origen=' +
             '&popup=true';
 
@@ -674,7 +697,49 @@ if (errorCampoCompra == null) {
         return false;
     }
 
+    function seleccionaAfiliado(cuil, inte, docu_tipo, docu_nro, nombre, apellido, id_secc, desc_secc, ospim, uoma, amtima, bajaFecha, nombre_plan, id_plan, fecha_alta_af, incapacidad_af, id_tercerizadora, afi_tercerizadora, reclamoPrestacional, nroSocioPrev, nroCredenPrev, fechaRecepcion, tieneAntecedentes) {
+        seleccionaCamposAfiliado(
+            cuil,
+            inte,
+            docu_tipo,
+            docu_nro,
+            nombre,
+            apellido,
+            id_secc,
+            desc_secc,
+            ospim,
+            uoma,
+            amtima,
+            bajaFecha,
+            nombre_plan,
+            id_plan,
+            fecha_alta_af,
+            incapacidad_af,
+            id_tercerizadora,
+            afi_tercerizadora,
+            reclamoPrestacional,
+            nroSocioPrev,
+            nroCredenPrev,
+            fechaRecepcion,
+            tieneAntecedentes
+        );
+
+        if (popupAfill != null) {
+            Liferay.Popup.close(popupAfill);
+        }
+    }
+
     function seleccionaCamposAfiliado(cuil, inte, docu_tipo, docu_nro, nombre, apellido, id_secc, desc_secc, ospim, uoma, amtima, bajaFecha, nombre_plan, id_plan, fecha_alta_af, incapacidad_af, id_tercerizadora, afi_tercerizadora, reclamoPrestacional, nroSocioPrev, nroCredenPrev, fechaRecepcion, tieneAntecedentes) {
+        nombre_plan = <portlet:namespace />valorSeguroAfiliado(nombre_plan);
+        id_plan = <portlet:namespace />valorSeguroAfiliado(id_plan);
+        id_tercerizadora = <portlet:namespace />valorSeguroAfiliado(id_tercerizadora);
+        afi_tercerizadora = <portlet:namespace />valorSeguroAfiliado(afi_tercerizadora);
+        fecha_alta_af = <portlet:namespace />valorSeguroAfiliado(fecha_alta_af);
+        incapacidad_af = <portlet:namespace />valorSeguroAfiliado(incapacidad_af);
+        nroSocioPrev = <portlet:namespace />valorSeguroAfiliado(nroSocioPrev);
+        nroCredenPrev = <portlet:namespace />valorSeguroAfiliado(nroCredenPrev);
+        bajaFecha = <portlet:namespace />valorSeguroAfiliado(bajaFecha);
+
         jQuery('#<portlet:namespace />cuil').val(cuil);
         jQuery('#<portlet:namespace />inte').val(inte);
         jQuery('#<portlet:namespace />tipoDoc').val(docu_tipo);
@@ -689,31 +754,37 @@ if (errorCampoCompra == null) {
         var entidadSeleccionada = jQuery('#<portlet:namespace />entidad').val();
         var credencialId = '#<portlet:namespace />' + 'num' + 'ero_afi';
 
-        if (entidadSeleccionada == 'OSPIM') {
-            jQuery(credencialId).val(ospim != null && ospim != 'null' ? ospim : '');
-        } else if (entidadSeleccionada == 'UOMA') {
-            jQuery(credencialId).val(uoma != null && uoma != 'null' ? uoma : '');
-        } else if (entidadSeleccionada == 'AMTIMA') {
-            jQuery(credencialId).val(amtima != null && amtima != 'null' ? amtima : '');
+        if (entidadSeleccionada == '<%= WebKeysGlobal.ENTIDADES_UOMA[0] %>') {
+            jQuery(credencialId).val(<portlet:namespace />valorSeguroAfiliado(ospim));
         }
 
-        if (bajaFecha != null && bajaFecha != 'null') {
-            jQuery('#<portlet:namespace />baja_fecha').val(bajaFecha);
-
-            if (bajaFecha != '') {
-                document.getElementById("<portlet:namespace />baja_fecha").style.background = "red";
-                document.getElementById("<portlet:namespace />baja_fecha").style.color = "white";
-            } else {
-                document.getElementById("<portlet:namespace />baja_fecha").style.background = "white";
-                document.getElementById("<portlet:namespace />baja_fecha").style.color = "black";
-            }
+        if (entidadSeleccionada == '<%= WebKeysGlobal.ENTIDADES_UOMA[1] %>') {
+            jQuery(credencialId).val(<portlet:namespace />valorSeguroAfiliado(uoma));
         }
 
-        jQuery('#<portlet:namespace />fecha_alta_af').val(fecha_alta_af != null && fecha_alta_af != 'null' ? fecha_alta_af : '');
-        jQuery('#<portlet:namespace />id_tercerizadora').val(id_tercerizadora != null && id_tercerizadora != 'null' ? id_tercerizadora : '');
-        jQuery('#<portlet:namespace />incapacidad_af').val(incapacidad_af != null && incapacidad_af != 'null' ? incapacidad_af : '');
-        jQuery('#<portlet:namespace />nroSocioPrevencion').val(nroSocioPrev != null && nroSocioPrev != 'null' ? nroSocioPrev : '');
-        jQuery('#<portlet:namespace />nroCredencialPrevencion').val(nroCredenPrev != null && nroCredenPrev != 'null' ? nroCredenPrev : '');
+        if (entidadSeleccionada == '<%= WebKeysGlobal.ENTIDADES_UOMA[2] %>') {
+            jQuery(credencialId).val(<portlet:namespace />valorSeguroAfiliado(amtima));
+        }
+
+        jQuery('#<portlet:namespace />baja_fecha').val(bajaFecha);
+
+        if (bajaFecha != '') {
+            document.getElementById("<portlet:namespace />baja_fecha").style.background = "red";
+            document.getElementById("<portlet:namespace />baja_fecha").style.color = "white";
+        } else {
+            document.getElementById("<portlet:namespace />baja_fecha").style.background = "white";
+            document.getElementById("<portlet:namespace />baja_fecha").style.color = "black";
+        }
+
+        jQuery('#<portlet:namespace />nombre_plan').val(nombre_plan);
+        jQuery('#<portlet:namespace />afi_tercerizadora').val(afi_tercerizadora);
+
+        jQuery('#<portlet:namespace />fecha_alta_af').val(fecha_alta_af);
+        jQuery('#<portlet:namespace />id_tercerizadora').val(id_tercerizadora);
+        jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val(id_tercerizadora);
+        jQuery('#<portlet:namespace />incapacidad_af').val(incapacidad_af);
+        jQuery('#<portlet:namespace />nroSocioPrevencion').val(nroSocioPrev);
+        jQuery('#<portlet:namespace />nroCredencialPrevencion').val(nroCredenPrev);
         jQuery('#<portlet:namespace />tieneAntecedentes').val(tieneAntecedentes == '1' ? '1' : '0');
 
         if (typeof <portlet:namespace />aplicarAntecedentesAfiliado == 'function') {
@@ -852,11 +923,6 @@ if (errorCampoCompra == null) {
         panel.show();
     }
 
-    /*
-     * Guardado seguro:
-     * Esta funcion queda anulada para evitar cualquier busqueda automatica
-     * al renderizar la pantalla luego de Guardar todo.
-     */
     function <portlet:namespace />cargarDatosAfiliadoInicial() {
         return false;
     }
@@ -870,6 +936,8 @@ if (errorCampoCompra == null) {
         jQuery('#<portlet:namespace />afiliado_int').val('');
         jQuery('#<portlet:namespace />id_tercerizadora').val('');
         jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val('');
+        jQuery('#<portlet:namespace />nombre_plan').val('');
+        jQuery('#<portlet:namespace />afi_tercerizadora').val('');
         <portlet:namespace />mostrarMensajeAfiliadoInicial('');
     }
 
@@ -1033,14 +1101,6 @@ if (errorCampoCompra == null) {
         <portlet:namespace />cargarAfiliadoInicial();
         <portlet:namespace />actualizarVisibilidadAfiliado(false);
         <portlet:namespace />actualizarVisibilidadTercerizadora();
-
-        /*
-         * NO llamar:
-         * <portlet:namespace />cargarDatosAfiliadoInicial();
-         *
-         * Esa llamada genera un render/AJAX adicional de busqueda de afiliados
-         * despues de Guardar todo. La busqueda manual queda a cargo del componente.
-         */
 
         jQuery('#<portlet:namespace />cargo_ospim, #<portlet:namespace />cargo_tercerizadora').change(function() {
             <portlet:namespace />actualizarVisibilidadTercerizadora();
