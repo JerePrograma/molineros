@@ -423,7 +423,7 @@ if (modoVista) {
 
     <c:if test="<%= layoutEdicion || (modoVista && mostrarPanelAfiliadoEnVista) %>">
         <div id="<portlet:namespace />afiliado_requerimiento_panel"
-             style="<%= modoEditable ? "display:none;" : "" %>">
+             style="<%= modoEditable && !mostrarPanelAfiliadoEnVista ? "display:none;" : "" %>">
             <fieldset class="block-labels">
                 <legend>
                     <liferay-ui:message key="datos-afiliado" />
@@ -1083,7 +1083,16 @@ if (modoVista) {
     function <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere) {
         var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
 
-        if (requiereAfiliado) {
+        var tieneAfiliadoExistente =
+                !<%= esNuevo ? "true" : "false" %>
+                && (
+                        jQuery.trim(jQuery('#<portlet:namespace />afiliado_cuil_titular').val()) != ''
+                        || jQuery.trim(jQuery('#<portlet:namespace />afiliado_int').val()) != ''
+                        || jQuery.trim(jQuery('#<portlet:namespace />cuil').val()) != ''
+                        || jQuery.trim(jQuery('#<portlet:namespace />inte').val()) != ''
+                );
+
+        if (requiereAfiliado || tieneAfiliadoExistente) {
             jQuery('#<portlet:namespace />afiliado_requerimiento_panel').show();
         } else {
             if (limpiarSiNoRequiere) {

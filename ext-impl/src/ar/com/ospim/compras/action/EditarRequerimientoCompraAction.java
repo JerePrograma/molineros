@@ -478,11 +478,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             boolean soloLectura = esModoSoloLectura(renderRequest);
 
-            if (soloLectura) {
-                cargarAfiliadoRequerimiento(renderRequest, requerimiento);
-            } else {
-                renderRequest.removeAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA);
-            }
+            cargarAfiliadoRequerimiento(renderRequest, requerimiento);
 
             renderRequest.setAttribute(
                     WebKeysCompras.SOLO_LECTURA_ATTR,
