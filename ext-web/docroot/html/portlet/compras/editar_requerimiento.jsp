@@ -891,6 +891,20 @@ if (modoVista) {
     var popupAfill = null;
     var <portlet:namespace />guardandoCompra = false;
 
+    function <portlet:namespace />cancelarGuardadoCompra() {
+        setTimeout(function() {
+            <portlet:namespace />guardandoCompra = false;
+        }, 1200);
+
+        return false;
+    }
+
+    function <portlet:namespace />focusSeguroCompra(selector) {
+        setTimeout(function() {
+            jQuery(selector).focus();
+        }, 200);
+    }
+
     var <portlet:namespace />sectorRequiereAfiliadoMap = {};
 
     <%
@@ -1475,11 +1489,13 @@ if (modoVista) {
     }
 
     function <portlet:namespace />guardar() {
+        <portlet:namespace />guardandoCompra = true;
+
         var form = document.getElementById('<portlet:namespace />fmCompras');
 
         if (!form) {
             alert('No se pudo encontrar el formulario principal de Compras. No se puede guardar el requerimiento.');
-            return;
+            return <portlet:namespace />cancelarGuardadoCompra();
         }
 
         var cmdInput = document.getElementById('<portlet:namespace />compras_cmd');
@@ -1492,20 +1508,20 @@ if (modoVista) {
 
         if (sectorId == '' || sectorId == '0') {
             alert('Sector: debe seleccionar un sector.');
-            jQuery('#<portlet:namespace />sector_id').focus();
-            return;
+            <portlet:namespace />focusSeguroCompra('#<portlet:namespace />sector_id');
+            return <portlet:namespace />cancelarGuardadoCompra();
         }
 
         var cargoOspim = <portlet:namespace />parsePorcentaje('cargo_ospim', 'Cargo OSPIM');
 
         if (cargoOspim == null) {
-            return;
+            return <portlet:namespace />cancelarGuardadoCompra();
         }
 
         var cargoTercerizadora = <portlet:namespace />parsePorcentaje('cargo_tercerizadora', 'Cargo tercerizadora');
 
         if (cargoTercerizadora == null) {
-            return;
+            return <portlet:namespace />cancelarGuardadoCompra();
         }
 
         if (cargoOspim + cargoTercerizadora > 100) {
@@ -1515,8 +1531,9 @@ if (modoVista) {
                 ') es ' + (cargoOspim + cargoTercerizadora) +
                 '. No puede superar 100.'
             );
-            jQuery('#<portlet:namespace />cargo_tercerizadora').focus();
-            return;
+
+            <portlet:namespace />focusSeguroCompra('#<portlet:namespace />cargo_tercerizadora');
+            return <portlet:namespace />cancelarGuardadoCompra();
         }
 
         var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
@@ -1529,14 +1546,21 @@ if (modoVista) {
 
             if (afiliadoCuilTitular == '') {
                 alert('Afiliado: debe seleccionar un afiliado. Falta CUIL titular.');
-                jQuery('#<portlet:namespace />cuil').focus();
-                return;
+
+                /*
+                 * No se hace focus directo sobre #cuil porque el componente de búsqueda
+                 * puede disparar el popup al recibir foco.
+                 */
+                return <portlet:namespace />cancelarGuardadoCompra();
             }
 
             if (afiliadoInt == '') {
                 alert('Afiliado: debe seleccionar un afiliado. Falta integrante.');
-                jQuery('#<portlet:namespace />inte').focus();
-                return;
+
+                /*
+                 * No se hace focus directo sobre #inte por el mismo motivo.
+                 */
+                return <portlet:namespace />cancelarGuardadoCompra();
             }
         } else {
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
@@ -1553,8 +1577,11 @@ if (modoVista) {
 
             if (<portlet:namespace />trimValue('requerimiento_id_tercerizadora') == '') {
                 alert('Tercerizadora: debe seleccionar un afiliado con tercerizadora porque la distribución de cargos no es OSPIM 100% / Tercerizadora 0%.');
-                jQuery('#<portlet:namespace />cuil').focus();
-                return;
+
+                /*
+                 * Tampoco se enfoca #cuil acá para evitar que se abra el popup automáticamente.
+                 */
+                return <portlet:namespace />cancelarGuardadoCompra();
             }
         } else {
             jQuery('#<portlet:namespace />recupero').removeAttr('checked');
@@ -1575,14 +1602,13 @@ if (modoVista) {
                 'Detalles: no se encontro la funcion <portlet:namespace />serializarDetallesCompras(). ' +
                 'El JSP embebido no se esta renderizando correctamente o Liferay esta usando una version vieja compilada.'
             );
-            return;
+
+            return <portlet:namespace />cancelarGuardadoCompra();
         }
 
         if (!serializadorDetalles()) {
-            return;
+            return <portlet:namespace />cancelarGuardadoCompra();
         }
-
-        <portlet:namespace />guardandoCompra = true;
 
         form.submit();
     }
