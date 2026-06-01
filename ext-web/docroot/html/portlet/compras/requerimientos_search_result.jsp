@@ -2,6 +2,22 @@
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
 
+<%!
+private String normalizarDocumentoAfiliado(String value) {
+    if (value == null) {
+        return "";
+    }
+
+    value = value.trim();
+
+    if (value.length() == 0) {
+        return "";
+    }
+
+    return value.replaceAll("[^0-9]", "");
+}
+%>
+
 <%
 List<RequerimientoCompra> requerimientos =
         (List<RequerimientoCompra>) renderRequest.getAttribute(WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA);
@@ -27,7 +43,7 @@ headerNames.add("id");
 headerNames.add("estado");
 headerNames.add("sector");
 headerNames.add("afiliado-nombre");
-headerNames.add("dni-afiliado");
+headerNames.add("afiliado-dni");
 headerNames.add("cargo-ospim");
 headerNames.add("cargo-tercerizadora");
 headerNames.add("recupero");
@@ -66,7 +82,13 @@ for (int i = 0; i < requerimientos.size(); i++) {
         }
     }
 
-    String afiliadoDocumento = req.getAfiliadoDocumentoVisible();
+    String afiliadoDocumento = req.getAfiliadoDocumentoNroVisible();
+
+    if (WebKeysCompras.isEmpty(afiliadoDocumento)) {
+        afiliadoDocumento = req.getAfiliadoDocumentoVisible();
+    }
+
+    afiliadoDocumento = normalizarDocumentoAfiliado(afiliadoDocumento);
 
     ResultRow row = new ResultRow(req, req.getIdRequerimientoCompraString(), i);
 

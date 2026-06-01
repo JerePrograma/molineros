@@ -27,21 +27,23 @@ Object soloLecturaAttr = renderRequest.getAttribute(WebKeysCompras.SOLO_LECTURA_
 String strutsActionActual = ParamUtil.getString(renderRequest, "struts_action", "");
 String modo = ParamUtil.getString(renderRequest, "modo", "");
 
-boolean soloLectura =
+boolean soloLecturaSolicitada =
         Boolean.TRUE.equals(soloLecturaAttr)
         || "/compras/ver_requerimiento".equals(strutsActionActual)
         || "ver".equalsIgnoreCase(modo);
 
 boolean editablePorEstado = esNuevo || req.isEditable();
 
-boolean puedeEditarPantalla =
+boolean modoEditable =
         puedeABM
         && editablePorEstado
-        && !soloLectura;
+        && !soloLecturaSolicitada;
+
+boolean modoVista = !modoEditable;
 
 renderRequest.setAttribute(
         WebKeysCompras.SOLO_LECTURA_ATTR,
-        Boolean.valueOf(soloLectura)
+        Boolean.valueOf(modoVista)
 );
 
 List<RequerimientoCompraSector> sectores =
@@ -119,13 +121,19 @@ actionURL.setParameter("struts_action", "/compras/editar_requerimiento");
 String reqSectorId = req.getSectorId() != null ? String.valueOf(req.getSectorId().intValue()) : "";
 String sectorDescripcionSoloLectura = req.getSectorDescripcionVisible();
 
-if (sectorDescripcionSoloLectura.length() == 0) {
+boolean sectorRequiereAfiliadoActual = req.isRequiereAfiliado();
+
+if (sectorDescripcionSoloLectura.length() == 0 || !sectorRequiereAfiliadoActual) {
     for (int i = 0; i < sectores.size(); i++) {
         RequerimientoCompraSector sector = sectores.get(i);
         String sectorId = String.valueOf(sector.getIdSector());
 
         if (reqSectorId.equals(sectorId)) {
-            sectorDescripcionSoloLectura = sector.getDescripcionVisible();
+            if (sectorDescripcionSoloLectura.length() == 0) {
+                sectorDescripcionSoloLectura = sector.getDescripcionVisible();
+            }
+
+            sectorRequiereAfiliadoActual = sector.isRequiereAfiliado();
             break;
         }
     }
@@ -189,7 +197,25 @@ if (afiliadoRequerimiento != null) {
     afiliadoAntecedentes = afiliadoRequerimiento.getTieneAntecedentesJudiciales() == 1 ? "SI" : "NO";
 }
 
+boolean tieneAfiliadoVisible =
+        !WebKeysCompras.isEmpty(afiliadoCuilVisible)
+        || !WebKeysCompras.isEmpty(afiliadoIntVisible)
+        || !WebKeysCompras.isEmpty(afiliadoTipoDocumento)
+        || !WebKeysCompras.isEmpty(afiliadoNumeroDocumento)
+        || !WebKeysCompras.isEmpty(afiliadoApellido)
+        || !WebKeysCompras.isEmpty(afiliadoNombre)
+        || !WebKeysCompras.isEmpty(afiliadoSeccional)
+        || !WebKeysCompras.isEmpty(afiliadoBajaFecha)
+        || !WebKeysCompras.isEmpty(afiliadoFechaAlta)
+        || !WebKeysCompras.isEmpty(afiliadoIdTercerizadora)
+        || !WebKeysCompras.isEmpty(afiliadoIncapacidad)
+        || !WebKeysCompras.isEmpty(afiliadoAntecedentes);
+
+boolean mostrarPanelAfiliadoEnVista = sectorRequiereAfiliadoActual || tieneAfiliadoVisible;
+
 String recuperoChecked = mostrarTercerizadoraPorCargos ? "checked=\"checked\"" : "";
+String camposVistaReadOnly = modoVista ? "readonly=\"readonly\"" : "";
+String camposVistaDisabled = modoVista ? "disabled=\"disabled\"" : "";
 
 String errorParaAlert =
         (String) renderRequest.getAttribute(WebKeysCompras.ERROR_PARA_ALERT);
@@ -204,6 +230,16 @@ String errorCampoCompra =
 if (errorCampoCompra == null) {
     errorCampoCompra = "";
 }
+
+String tituloPantalla = "";
+
+if (modoVista) {
+    tituloPantalla = "Ver requerimiento de compra";
+} else if (esNuevo) {
+    tituloPantalla = "Nuevo requerimiento de compra";
+} else {
+    tituloPantalla = "Editar requerimiento de compra";
+}
 %>
 
 <c:if test="<%= !WebKeysCompras.isEmpty(errorParaAlert) %>">
@@ -214,33 +250,41 @@ if (errorCampoCompra == null) {
     </div>
 </c:if>
 
-<c:if test="<%= !soloLectura && !puedeABM %>">
+<c:if test="<%= !soloLecturaSolicitada && !puedeABM %>">
     <div class="portlet-msg-error">No posee permisos para editar requerimientos de compras.</div>
 </c:if>
 
-<c:if test="<%= !soloLectura && puedeABM && !editablePorEstado %>">
+<c:if test="<%= !soloLecturaSolicitada && puedeABM && !editablePorEstado %>">
     <div class="portlet-msg-info">El requerimiento solo puede editarse en estado Borrador.</div>
-
-    <table class="lfr-table">
-        <tr>
-            <td>
-                <input type="button"
-                       value="Ver"
-                       onClick="window.location.href='<%= verURL.toString() %>';" />
-
-                &nbsp;&nbsp;
-
-                <input type="button"
-                       value="Volver"
-                       onClick="window.location.href='<%= volverURL.toString() %>';" />
-            </td>
-        </tr>
-    </table>
 </c:if>
 
-<c:if test="<%= soloLectura %>">
+<form action="<%= actionURL.toString() %>"
+      method="post"
+      name="<portlet:namespace />fmCompras"
+      id="<portlet:namespace />fmCompras">
+
+    <input type="hidden"
+           name="<portlet:namespace /><%= Constants.CMD %>"
+           id="<portlet:namespace />compras_cmd"
+           value="saveAll" />
+
+    <input type="hidden"
+           name="<portlet:namespace />id_requerimiento_compra"
+           id="<portlet:namespace />id_requerimiento_compra"
+           value="<%= req.getIdRequerimientoCompra() %>" />
+
+    <input type="hidden"
+           name="<portlet:namespace />afiliado_cuil_titular"
+           id="<portlet:namespace />afiliado_cuil_titular"
+           value="<%= HtmlUtil.escape(afiliadoCuilTitular) %>" />
+
+    <input type="hidden"
+           name="<portlet:namespace />afiliado_int"
+           id="<portlet:namespace />afiliado_int"
+           value="<%= HtmlUtil.escape(afiliadoInt) %>" />
+
     <fieldset class="block-labels">
-        <legend>Ver requerimiento de compra</legend>
+        <legend><%= tituloPantalla %></legend>
 
         <table class="lfr-table">
             <tr>
@@ -257,190 +301,8 @@ if (errorCampoCompra == null) {
 
             <tr>
                 <td><label>Sector:</label></td>
-                <td><%= HtmlUtil.escape(sectorDescripcionSoloLectura) %></td>
-
-                <td><label>Alta:</label></td>
-                <td><%= HtmlUtil.escape(req.getAltaFechaAsString()) %></td>
-            </tr>
-
-            <tr>
-                <td colspan="4">&nbsp;</td>
-            </tr>
-
-            <tr>
-                <td><label>CUIL titular:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoCuilVisible) %></td>
-
-                <td><label>Integrante:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoIntVisible) %></td>
-            </tr>
-
-            <tr>
-                <td colspan="4">&nbsp;</td>
-            </tr>
-
-            <tr>
-                <td><label>Tipo documento:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoTipoDocumento) %></td>
-
-                <td><label>Nro. documento:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoNumeroDocumento) %></td>
-            </tr>
-
-            <tr>
-                <td colspan="4">&nbsp;</td>
-            </tr>
-
-            <tr>
-                <td><label>Apellido:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoApellido) %></td>
-
-                <td><label>Nombre:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoNombre) %></td>
-            </tr>
-
-            <tr>
-                <td colspan="4">&nbsp;</td>
-            </tr>
-
-            <tr>
-                <td><label>Seccional:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoSeccional) %></td>
-
-                <td><label>Baja:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoBajaFecha) %></td>
-            </tr>
-
-            <tr>
-                <td colspan="4">&nbsp;</td>
-            </tr>
-
-            <tr>
-                <td><label>Fecha alta afiliado:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoFechaAlta) %></td>
-
-                <td><label>Incapacidad:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoIncapacidad) %></td>
-            </tr>
-
-            <tr>
-                <td colspan="4">&nbsp;</td>
-            </tr>
-
-            <tr>
-                <td><label>ID tercerizadora:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoIdTercerizadora) %></td>
-
-                <td><label>Antecedentes:</label></td>
-                <td><%= HtmlUtil.escape(afiliadoAntecedentes) %></td>
-            </tr>
-
-            <tr>
-                <td colspan="4">&nbsp;</td>
-            </tr>
-
-            <tr>
-                <td><label>Cargo OSPIM %:</label></td>
-                <td><%= HtmlUtil.escape(req.getCargoOspimString()) %></td>
-
-                <td><label>Cargo tercerizadora %:</label></td>
-                <td><%= HtmlUtil.escape(req.getCargoTercerizadoraString()) %></td>
-            </tr>
-
-            <tr>
-                <td colspan="4">&nbsp;</td>
-            </tr>
-
-            <% if (mostrarTercerizadoraPorCargos) { %>
-                <tr>
-                    <td><label>Tercerizadora:</label></td>
-                    <td><%= HtmlUtil.escape(idTercerizadora) %></td>
-
-                    <td><label>Recupero:</label></td>
-                    <td>SI</td>
-                </tr>
-
-                <tr>
-                    <td colspan="4">&nbsp;</td>
-                </tr>
-            <% } %>
-
-            <tr>
-                <td><label>Observaciones:</label></td>
-                <td colspan="3"><%= HtmlUtil.escape(req.getObservacionesVisible()) %></td>
-            </tr>
-        </table>
-    </fieldset>
-
-    <table class="lfr-table">
-        <tr>
-            <td>
-                <c:if test="<%= puedeABM && editablePorEstado %>">
-                    <input type="button"
-                           value="Editar"
-                           onClick="window.location.href='<%= editarURL.toString() %>';" />
-
-                    &nbsp;&nbsp;
-                </c:if>
-
-                <input type="button"
-                       value="Volver"
-                       onClick="window.location.href='<%= volverURL.toString() %>';" />
-            </td>
-        </tr>
-    </table>
-
-    <liferay-util:include page="/html/portlet/compras/requerimiento_detalle_embebido.jsp">
-        <liferay-util:param name="solo_lectura" value="true" />
-    </liferay-util:include>
-</c:if>
-
-<c:if test="<%= puedeEditarPantalla %>">
-
-    <form action="<%= actionURL.toString() %>"
-          method="post"
-          name="<portlet:namespace />fmCompras"
-          id="<portlet:namespace />fmCompras">
-
-        <input type="hidden"
-               name="<portlet:namespace /><%= Constants.CMD %>"
-               id="<portlet:namespace />compras_cmd"
-               value="saveAll" />
-
-        <input type="hidden"
-               name="<portlet:namespace />id_requerimiento_compra"
-               id="<portlet:namespace />id_requerimiento_compra"
-               value="<%= req.getIdRequerimientoCompra() %>" />
-
-        <input type="hidden"
-               name="<portlet:namespace />afiliado_cuil_titular"
-               id="<portlet:namespace />afiliado_cuil_titular"
-               value="<%= HtmlUtil.escape(afiliadoCuilTitular) %>" />
-
-        <input type="hidden"
-               name="<portlet:namespace />afiliado_int"
-               id="<portlet:namespace />afiliado_int"
-               value="<%= HtmlUtil.escape(afiliadoInt) %>" />
-
-        <fieldset class="block-labels">
-            <legend><%= esNuevo ? "Nuevo requerimiento de compra" : "Editar requerimiento de compra" %></legend>
-
-            <table class="lfr-table">
-                <tr>
-                    <td><label>ID:</label></td>
-                    <td><%= HtmlUtil.escape(req.getIdString()) %></td>
-
-                    <td><label>Estado:</label></td>
-                    <td><strong><%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %></strong></td>
-                </tr>
-
-                <tr>
-                    <td colspan="4">&nbsp;</td>
-                </tr>
-
-                <tr>
-                    <td><label>Sector:</label></td>
-                    <td colspan="3">
+                <td colspan="3">
+                    <c:if test="<%= modoEditable %>">
                         <select name="<portlet:namespace />sector_id"
                                 id="<portlet:namespace />sector_id"
                                 onChange="<portlet:namespace />cambiarSectorCompra(true);">
@@ -462,64 +324,76 @@ if (errorCampoCompra == null) {
                             }
                             %>
                         </select>
-                    </td>
-                </tr>
+                    </c:if>
 
-                <tr>
-                    <td colspan="4">&nbsp;</td>
-                </tr>
-
-                <tr>
-                    <td><label>Cargo OSPIM %:</label></td>
-                    <td>
+                    <c:if test="<%= modoVista %>">
                         <input type="text"
-                               name="<portlet:namespace />cargo_ospim"
-                               id="<portlet:namespace />cargo_ospim"
-                               value="<%= HtmlUtil.escape(req.getCargoOspimString()) %>"
-                               size="5"
-                               maxlength="3" />
-                    </td>
-
-                    <td><label>Cargo tercerizadora %:</label></td>
-                    <td>
-                        <input type="text"
-                               name="<portlet:namespace />cargo_tercerizadora"
-                               id="<portlet:namespace />cargo_tercerizadora"
-                               value="<%= HtmlUtil.escape(req.getCargoTercerizadoraString()) %>"
-                               size="5"
-                               maxlength="3" />
-                    </td>
-                </tr>
-
-                <tr>
-                    <td colspan="4">&nbsp;</td>
-                </tr>
-
-                <tr id="<portlet:namespace />tercerizadora_row"
-                    style="<%= mostrarTercerizadoraPorCargos ? "" : "display:none;" %>">
-                    <td><label>ID tercerizadora:</label></td>
-                    <td>
-                        <input type="text"
-                               name="<portlet:namespace />requerimiento_id_tercerizadora_visible"
-                               id="<portlet:namespace />requerimiento_id_tercerizadora"
-                               value="<%= HtmlUtil.escape(idTercerizadora) %>"
-                               size="10"
-                               maxlength="10"
+                               value="<%= HtmlUtil.escape(sectorDescripcionSoloLectura) %>"
+                               size="60"
                                readonly="readonly" />
-                    </td>
+                    </c:if>
+                </td>
+            </tr>
 
-                    <td><label>Recupero:</label></td>
-                    <td>
-                        <input type="checkbox"
-                               name="<portlet:namespace />recupero"
-                               id="<portlet:namespace />recupero"
-                               value="true"
-                               <%= recuperoChecked %> />
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
 
+            <tr>
+                <td><label>Cargo OSPIM %:</label></td>
+                <td>
+                    <input type="text"
+                           name="<portlet:namespace />cargo_ospim"
+                           id="<portlet:namespace />cargo_ospim"
+                           value="<%= HtmlUtil.escape(req.getCargoOspimString()) %>"
+                           size="5"
+                           maxlength="3"
+                           <%= camposVistaReadOnly %> />
+                </td>
+
+                <td><label>Cargo tercerizadora %:</label></td>
+                <td>
+                    <input type="text"
+                           name="<portlet:namespace />cargo_tercerizadora"
+                           id="<portlet:namespace />cargo_tercerizadora"
+                           value="<%= HtmlUtil.escape(req.getCargoTercerizadoraString()) %>"
+                           size="5"
+                           maxlength="3"
+                           <%= camposVistaReadOnly %> />
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+
+            <tr id="<portlet:namespace />tercerizadora_row"
+                style="<%= mostrarTercerizadoraPorCargos ? "" : "display:none;" %>">
+                <td><label>ID tercerizadora:</label></td>
+                <td>
+                    <input type="text"
+                           name="<portlet:namespace />requerimiento_id_tercerizadora_visible"
+                           id="<portlet:namespace />requerimiento_id_tercerizadora"
+                           value="<%= HtmlUtil.escape(idTercerizadora) %>"
+                           size="10"
+                           maxlength="10"
+                           readonly="readonly" />
+                </td>
+
+                <td><label>Recupero:</label></td>
+                <td>
+                    <input type="checkbox"
+                           name="<portlet:namespace />recupero"
+                           id="<portlet:namespace />recupero"
+                           value="true"
+                           <%= recuperoChecked %>
+                           <%= camposVistaDisabled %> />
+                </td>
+            </tr>
+        </table>
+    </fieldset>
+
+    <c:if test="<%= modoEditable %>">
         <div id="<portlet:namespace />afiliado_requerimiento_panel" style="display:none;">
             <fieldset class="block-labels">
                 <legend>
@@ -545,31 +419,174 @@ if (errorCampoCompra == null) {
                 </liferay-util:include>
             </fieldset>
         </div>
+    </c:if>
 
-        <fieldset class="block-labels">
-            <legend>Observaciones</legend>
+    <c:if test="<%= modoVista && mostrarPanelAfiliadoEnVista %>">
+        <div id="<portlet:namespace />afiliado_requerimiento_panel">
+            <fieldset class="block-labels">
+                <legend>
+                    <liferay-ui:message key="datos-afiliado" />
+                </legend>
 
-            <table class="lfr-table">
-                <tr>
-                    <td>
-                        <textarea name="<portlet:namespace />observaciones"
-                                  id="<portlet:namespace />observaciones"
-                                  cols="100"
-                                  rows="4"><%= HtmlUtil.escape(req.getObservacionesVisible()) %></textarea>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
+                <table class="lfr-table">
+                    <tr>
+                        <td><label>CUIL titular:</label></td>
+                        <td>
+                            <input type="text"
+                                   value="<%= HtmlUtil.escape(afiliadoCuilVisible) %>"
+                                   size="15"
+                                   readonly="readonly" />
+                        </td>
 
-        <liferay-util:include page="/html/portlet/compras/requerimiento_detalle_embebido.jsp">
-            <liferay-util:param name="solo_lectura" value="false" />
-        </liferay-util:include>
+                        <td><label>Integrante:</label></td>
+                        <td>
+                            <input type="text"
+                                   value="<%= HtmlUtil.escape(afiliadoIntVisible) %>"
+                                   size="5"
+                                   readonly="readonly" />
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="4">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td><label>Tipo documento:</label></td>
+                        <td>
+                            <input type="text"
+                                   value="<%= HtmlUtil.escape(afiliadoTipoDocumento) %>"
+                                   size="8"
+                                   readonly="readonly" />
+                        </td>
+
+                        <td><label>Nro. documento:</label></td>
+                        <td>
+                            <input type="text"
+                                   value="<%= HtmlUtil.escape(afiliadoNumeroDocumento) %>"
+                                   size="15"
+                                   readonly="readonly" />
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="4">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td><label>Apellido:</label></td>
+                        <td>
+                            <input type="text"
+                                   value="<%= HtmlUtil.escape(afiliadoApellido) %>"
+                                   size="35"
+                                   readonly="readonly" />
+                        </td>
+
+                        <td><label>Nombre:</label></td>
+                        <td>
+                            <input type="text"
+                                   value="<%= HtmlUtil.escape(afiliadoNombre) %>"
+                                   size="35"
+                                   readonly="readonly" />
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="4">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td><label>Seccional:</label></td>
+                        <td>
+                            <input type="text"
+                                   value="<%= HtmlUtil.escape(afiliadoSeccional) %>"
+                                   size="35"
+                                   readonly="readonly" />
+                        </td>
+
+                        <td><label>Baja:</label></td>
+                        <td>
+                            <input type="text"
+                                   value="<%= HtmlUtil.escape(afiliadoBajaFecha) %>"
+                                   size="15"
+                                   readonly="readonly" />
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="4">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td><label>Fecha alta afiliado:</label></td>
+                        <td>
+                            <input type="text"
+                                   value="<%= HtmlUtil.escape(afiliadoFechaAlta) %>"
+                                   size="15"
+                                   readonly="readonly" />
+                        </td>
+
+                        <td><label>Incapacidad:</label></td>
+                        <td>
+                            <input type="text"
+                                   value="<%= HtmlUtil.escape(afiliadoIncapacidad) %>"
+                                   size="10"
+                                   readonly="readonly" />
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="4">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td><label>ID tercerizadora:</label></td>
+                        <td>
+                            <input type="text"
+                                   value="<%= HtmlUtil.escape(afiliadoIdTercerizadora) %>"
+                                   size="10"
+                                   readonly="readonly" />
+                        </td>
+
+                        <td><label>Antecedentes:</label></td>
+                        <td>
+                            <input type="text"
+                                   value="<%= HtmlUtil.escape(afiliadoAntecedentes) %>"
+                                   size="10"
+                                   readonly="readonly" />
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </div>
+    </c:if>
+
+    <fieldset class="block-labels">
+        <legend>Observaciones</legend>
 
         <table class="lfr-table">
             <tr>
                 <td>
+                    <textarea name="<portlet:namespace />observaciones"
+                              id="<portlet:namespace />observaciones"
+                              cols="100"
+                              rows="4"
+                              <%= camposVistaReadOnly %>><%= HtmlUtil.escape(req.getObservacionesVisible()) %></textarea>
+                </td>
+            </tr>
+        </table>
+    </fieldset>
+
+    <liferay-util:include page="/html/portlet/compras/requerimiento_detalle_embebido.jsp">
+        <liferay-util:param name="solo_lectura" value="<%= modoVista ? "true" : "false" %>" />
+    </liferay-util:include>
+
+    <table class="lfr-table">
+        <tr>
+            <td>
+                <c:if test="<%= modoEditable %>">
                     <input type="button"
-                           value="Guardar todo"
+                           value="Guardar"
                            onClick="<portlet:namespace />guardar();" />
 
                     <c:if test="<%= !esNuevo %>">
@@ -581,17 +598,17 @@ if (errorCampoCompra == null) {
                     </c:if>
 
                     &nbsp;&nbsp;
+                </c:if>
 
-                    <input type="button"
-                           value="Volver"
-                           onClick="window.location.href='<%= volverURL.toString() %>';" />
-                </td>
-            </tr>
-        </table>
-    </form>
-</c:if>
+                <input type="button"
+                       value="Volver"
+                       onClick="window.location.href='<%= volverURL.toString() %>';" />
+            </td>
+        </tr>
+    </table>
+</form>
 
-<c:if test="<%= puedeEditarPantalla %>">
+<c:if test="<%= modoEditable %>">
 <script type="text/javascript">
     var popup = null;
     var popupAfill = null;
@@ -1033,22 +1050,10 @@ if (errorCampoCompra == null) {
     }
 
     function <portlet:namespace />cambiarSectorCompra(limpiarSiNoRequiere) {
-        if (window.console) {
-            console.log('DEBUG_COMPRAS_ART JS cambiarSectorCompra()');
-            console.log('DEBUG_COMPRAS_ART JS sector_id.val=', jQuery('#<portlet:namespace />sector_id').val());
-            console.log('DEBUG_COMPRAS_ART JS sector seleccionado text=', jQuery('#<portlet:namespace />sector_id option:selected').text());
-            console.log('DEBUG_COMPRAS_ART JS requiere afiliado attr=', jQuery('#<portlet:namespace />sector_id option:selected').attr('data-requiere-afiliado'));
-            console.log('DEBUG_COMPRAS_ART JS existe filtro articulos=', typeof window['<portlet:namespace />filtrarArticulosPorSector']);
-        }
-
         <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere);
 
         if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
             window['<portlet:namespace />filtrarArticulosPorSector']();
-        } else {
-            if (window.console) {
-                console.log('DEBUG_COMPRAS_ART JS NO existe window["<portlet:namespace />filtrarArticulosPorSector"]');
-            }
         }
     }
 
