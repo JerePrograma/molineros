@@ -532,11 +532,43 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 BusquedaRequerimientoCompraServiceUtil.listarSectores()
         );
 
+        Integer idSectorRequerimiento = null;
+
+        if (requerimiento != null) {
+            idSectorRequerimiento = requerimiento.getIdSector();
+        }
+
+        if (DEBUG_ARTICULOS_COMPRA) {
+            System.out.println("DEBUG_COMPRAS_ART ACTION cargarCatalogos()");
+            System.out.println("DEBUG_COMPRAS_ART req.id = "
+                    + (requerimiento != null ? requerimiento.getIdRequerimientoCompra() : null));
+            System.out.println("DEBUG_COMPRAS_ART req.idSector = " + idSectorRequerimiento);
+        }
+
         List<CompraArticulo> articulos =
                 EditarRequerimientoCompraServiceUtil.listarArticulos(
                         null,
                         null
                 );
+
+        if (DEBUG_ARTICULOS_COMPRA) {
+            System.out.println("DEBUG_COMPRAS_ART articulos.size = "
+                    + (articulos != null ? articulos.size() : -1));
+
+            if (articulos != null) {
+                for (int i = 0; i < articulos.size(); i++) {
+                    CompraArticulo articulo = articulos.get(i);
+
+                    System.out.println(
+                            "DEBUG_COMPRAS_ART articulo[" + i + "]"
+                                    + " id=" + articulo.getId()
+                                    + " idSector=" + articulo.getIdSector()
+                                    + " descripcion=" + articulo.getDescripcion()
+                                    + " sectorDescripcion=" + articulo.getSectorDescripcion()
+                    );
+                }
+            }
+        }
 
         request.setAttribute(
                 ARTICULOS_COMPRA,
