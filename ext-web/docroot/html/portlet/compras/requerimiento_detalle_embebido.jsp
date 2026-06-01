@@ -307,17 +307,17 @@ String idSectorActualString = idSectorActual != null ? String.valueOf(idSectorAc
     function <portlet:namespace />getSectorSeleccionadoCompra() {
         var sector = '';
 
-        var byIdSector = jQuery('#<portlet:namespace />id_sector');
+        var bySectorId = jQuery('#<portlet:namespace />sector_id');
 
-        if (byIdSector.length > 0) {
-            sector = jQuery.trim(byIdSector.val());
+        if (bySectorId.length > 0) {
+            sector = jQuery.trim(bySectorId.val());
         }
 
         if (sector == '') {
-            var bySectorId = jQuery('#<portlet:namespace />sector_id');
+            var byIdSector = jQuery('#<portlet:namespace />id_sector');
 
-            if (bySectorId.length > 0) {
-                sector = jQuery.trim(bySectorId.val());
+            if (byIdSector.length > 0) {
+                sector = jQuery.trim(byIdSector.val());
             }
         }
 
@@ -335,29 +335,40 @@ String idSectorActualString = idSectorActual != null ? String.valueOf(idSectorAc
         var valorActual = select.val();
         var valorActualPermitido = false;
 
+        var sectorSeleccionadoNum = parseInt(sectorSeleccionado, 10);
+
         select.find('option').each(function() {
             var option = jQuery(this);
             var value = option.val();
 
             if (value == '') {
                 option.show();
+                option.prop('disabled', false);
                 return;
             }
 
             var sectorArticulo = option.attr('data-sector');
+            var sectorArticuloNum = parseInt(sectorArticulo, 10);
 
-            if (sectorSeleccionado == '' || sectorArticulo == sectorSeleccionado) {
+            var mostrar =
+                    isNaN(sectorSeleccionadoNum)
+                    || sectorSeleccionadoNum <= 0
+                    || (!isNaN(sectorArticuloNum) && sectorArticuloNum == sectorSeleccionadoNum);
+
+            if (mostrar) {
                 option.show();
+                option.prop('disabled', false);
 
                 if (value == valorActual) {
                     valorActualPermitido = true;
                 }
             } else {
                 option.hide();
+                option.prop('disabled', true);
             }
         });
 
-        if (!valorActualPermitido) {
+        if (valorActual != '' && !valorActualPermitido) {
             select.val('');
         }
     }

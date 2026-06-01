@@ -1111,7 +1111,7 @@ if (errorCampoCompra == null) {
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
         });
 
-        jQuery('#<portlet:namespace />sector_id').change(function() {
+        jQuery('#<portlet:namespace />sector_id, #<portlet:namespace />id_sector').change(function() {
             <portlet:namespace />actualizarVisibilidadAfiliado(true);
 
             if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
@@ -1126,6 +1126,16 @@ if (errorCampoCompra == null) {
         jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />id_tercerizadora').keyup(function() {
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
         });
+
+        if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
+            window['<portlet:namespace />filtrarArticulosPorSector']();
+        }
+
+        setTimeout(function() {
+            if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
+                window['<portlet:namespace />filtrarArticulosPorSector']();
+            }
+        }, 300);
     });
 </script>
 </c:if>
