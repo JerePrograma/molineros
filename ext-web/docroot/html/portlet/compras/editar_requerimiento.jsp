@@ -552,20 +552,46 @@ if (modoVista) {
     <table class="lfr-table">
         <tr>
             <td>
-                <c:if test="<%= layoutEdicion %>">
+                <c:if test="<%= modoEditable %>">
                     <input type="button"
                            value="Guardar"
-                           onClick="<%= modoEditable ? namespaceCompra + "guardar();" : "return false;" %>" />
+                           onClick="<%= namespaceCompra %>guardar();" />
 
                     &nbsp;&nbsp;
                 </c:if>
 
                 <input type="button"
+                       id="<portlet:namespace />btnVolverCompras"
+                       class="compras-btn-volver"
                        value="Volver"
                        onClick="window.location.href='<%= volverURL.toString() %>';" />
             </td>
         </tr>
     </table>
+    <c:if test="<%= modoVista %>">
+        <script type="text/javascript">
+            jQuery(function() {
+                var ns = '<portlet:namespace />';
+                var form = jQuery('#' + ns + 'fmCompras');
+
+                function ocultarBotonesModoVista() {
+                    form.find('input[type="button"], input[type="submit"], button')
+                            .not('#' + ns + 'btnVolverCompras')
+                            .hide();
+
+                    form.find('a[onclick], img[onclick]')
+                            .hide();
+
+                    jQuery('#' + ns + 'btnVolverCompras').show();
+                }
+
+                ocultarBotonesModoVista();
+
+                setTimeout(ocultarBotonesModoVista, 300);
+                setTimeout(ocultarBotonesModoVista, 1000);
+            });
+        </script>
+    </c:if>
 </form>
 
 <c:if test="<%= modoEditable %>">
@@ -961,6 +987,67 @@ if (modoVista) {
         <portlet:namespace />sincronizarAfiliadoRequerimiento();
     }
 
+    function <portlet:namespace />setAfiliadoValue(id, value) {
+        var input = jQuery('#<portlet:namespace />' + id);
+
+        if (input.length > 0) {
+            input.val(value == null ? '' : value);
+        }
+    }
+
+    function <portlet:namespace />aplicarColorBajaAfiliadoExistente() {
+        var bajaInput = jQuery('#<portlet:namespace />baja_fecha');
+
+        if (bajaInput.length > 0) {
+            if (jQuery.trim(bajaInput.val()) != '') {
+                bajaInput.css('background', 'red');
+                bajaInput.css('color', 'white');
+            } else {
+                bajaInput.css('background', 'white');
+                bajaInput.css('color', 'black');
+            }
+        }
+    }
+
+    function <portlet:namespace />cargarAfiliadoExistenteEnEdicion() {
+        if (<%= esNuevo ? "true" : "false" %>) {
+            return;
+        }
+
+        <portlet:namespace />setAfiliadoValue('cuil', '<%= jsCompra(afiliadoCuilVisible) %>');
+        <portlet:namespace />setAfiliadoValue('inte', '<%= jsCompra(afiliadoIntVisible) %>');
+        <portlet:namespace />setAfiliadoValue('tipoDoc', '<%= jsCompra(afiliadoTipoDocumento) %>');
+        <portlet:namespace />setAfiliadoValue('nroDoc', '<%= jsCompra(afiliadoNumeroDocumento) %>');
+        <portlet:namespace />setAfiliadoValue('apellido', '<%= jsCompra(afiliadoApellido) %>');
+        <portlet:namespace />setAfiliadoValue('nombre', '<%= jsCompra(afiliadoNombre) %>');
+        <portlet:namespace />setAfiliadoValue('seccional', '<%= jsCompra(afiliadoSeccional) %>');
+        <portlet:namespace />setAfiliadoValue('baja_fecha', '<%= jsCompra(afiliadoBajaFecha) %>');
+        <portlet:namespace />setAfiliadoValue('fecha_alta_af', '<%= jsCompra(afiliadoFechaAlta) %>');
+        <portlet:namespace />setAfiliadoValue('id_tercerizadora', '<%= jsCompra(afiliadoIdTercerizadora) %>');
+        <portlet:namespace />setAfiliadoValue('requerimiento_id_tercerizadora', '<%= jsCompra(afiliadoIdTercerizadora) %>');
+        <portlet:namespace />setAfiliadoValue('incapacidad_af', '<%= jsCompra(afiliadoIncapacidad) %>');
+
+        if ('<%= jsCompra(afiliadoSeccional) %>' != '') {
+            <portlet:namespace />setAfiliadoValue('secc_seleccionada', '1');
+        }
+
+        if ('<%= jsCompra(afiliadoAntecedentes) %>' == 'SI') {
+            <portlet:namespace />setAfiliadoValue('tieneAntecedentes', '1');
+        } else {
+            <portlet:namespace />setAfiliadoValue('tieneAntecedentes', '0');
+        }
+
+        <portlet:namespace />aplicarColorBajaAfiliadoExistente();
+
+        if (typeof <portlet:namespace />aplicarAntecedentesAfiliado == 'function') {
+            <portlet:namespace />aplicarAntecedentesAfiliado(
+                    '<%= jsCompra(afiliadoAntecedentes) %>' == 'SI' ? '1' : '0'
+            );
+        }
+
+        <portlet:namespace />sincronizarAfiliadoRequerimiento();
+    }
+
     function <portlet:namespace />mostrarMensajeAfiliadoInicial(mensaje) {
         var panel = jQuery('#<portlet:namespace />afiliadoInicialMensaje');
 
@@ -1159,6 +1246,11 @@ if (modoVista) {
 
     jQuery(function() {
         <portlet:namespace />cargarAfiliadoInicial();
+
+        <c:if test="<%= !esNuevo %>">
+            <portlet:namespace />cargarAfiliadoExistenteEnEdicion();
+        </c:if>
+
         <portlet:namespace />actualizarVisibilidadAfiliado(false);
         <portlet:namespace />actualizarVisibilidadTercerizadora();
 
