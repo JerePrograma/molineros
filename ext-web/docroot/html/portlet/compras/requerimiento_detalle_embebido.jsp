@@ -191,7 +191,28 @@ if (articulos.size() == 0 && idSectorActual != null && idSectorActual.intValue()
         }
     }
 }
+<%
+System.out.println("DEBUG_COMPRAS_ART JSP requerimiento_detalle_embebido.jsp");
+System.out.println("DEBUG_COMPRAS_ART JSP reqDetalle.id = " + reqDetalle.getIdRequerimientoCompra());
+System.out.println("DEBUG_COMPRAS_ART JSP reqDetalle.idSector = " + reqDetalle.getIdSector());
+System.out.println("DEBUG_COMPRAS_ART JSP idSectorActualString = " + idSectorActualString);
+System.out.println("DEBUG_COMPRAS_ART JSP articulosAttr.type = " +
+        (articulosAttr != null ? articulosAttr.getClass().getName() : "null"));
+System.out.println("DEBUG_COMPRAS_ART JSP articulos.size = " +
+        (articulos != null ? articulos.size() : -1));
 
+for (int i = 0; articulos != null && i < articulos.size(); i++) {
+    CompraArticulo articuloDebug = articulos.get(i);
+
+    System.out.println(
+            "DEBUG_COMPRAS_ART JSP articulo[" + i + "]"
+            + " id=" + articuloDebug.getId()
+            + " idSector=" + articuloDebug.getIdSector()
+            + " descripcion=" + articuloDebug.getDescripcion()
+            + " sectorDescripcion=" + articuloDebug.getSectorDescripcion()
+    );
+}
+%>
 int detalleColspan = puedeABMDetalle ? 7 : 6;
 %>
 

@@ -1033,10 +1033,22 @@ if (errorCampoCompra == null) {
     }
 
     function <portlet:namespace />cambiarSectorCompra(limpiarSiNoRequiere) {
+        if (window.console) {
+            console.log('DEBUG_COMPRAS_ART JS cambiarSectorCompra()');
+            console.log('DEBUG_COMPRAS_ART JS sector_id.val=', jQuery('#<portlet:namespace />sector_id').val());
+            console.log('DEBUG_COMPRAS_ART JS sector seleccionado text=', jQuery('#<portlet:namespace />sector_id option:selected').text());
+            console.log('DEBUG_COMPRAS_ART JS requiere afiliado attr=', jQuery('#<portlet:namespace />sector_id option:selected').attr('data-requiere-afiliado'));
+            console.log('DEBUG_COMPRAS_ART JS existe filtro articulos=', typeof window['<portlet:namespace />filtrarArticulosPorSector']);
+        }
+
         <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere);
 
         if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
             window['<portlet:namespace />filtrarArticulosPorSector']();
+        } else {
+            if (window.console) {
+                console.log('DEBUG_COMPRAS_ART JS NO existe window["<portlet:namespace />filtrarArticulosPorSector"]');
+            }
         }
     }
 

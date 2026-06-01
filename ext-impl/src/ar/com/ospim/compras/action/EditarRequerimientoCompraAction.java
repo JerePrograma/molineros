@@ -39,6 +39,7 @@ import com.liferay.portal.util.PortalUtil;
 public class EditarRequerimientoCompraAction extends PortletAction {
 
     private static final String FORWARD_ALTA_ARTICULO_POPUP = "portlet.compras.alta_articulo_popup";
+    private static final boolean DEBUG_ARTICULOS_COMPRA = true;
 
     private static final String ARTICULOS_COMPRA =
             "ARTICULOS_COMPRA";
@@ -531,20 +532,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 BusquedaRequerimientoCompraServiceUtil.listarSectores()
         );
 
-        List<CompraArticulo> articulos = new ArrayList<CompraArticulo>();
-
-        Integer idSector = null;
-
-        if (requerimiento != null) {
-            idSector = requerimiento.getIdSector();
-        }
-
-        if (idSector != null && idSector.intValue() > 0) {
-            articulos = EditarRequerimientoCompraServiceUtil.listarArticulos(
-                    idSector,
-                    null
-            );
-        }
+        List<CompraArticulo> articulos =
+                EditarRequerimientoCompraServiceUtil.listarArticulos(
+                        null,
+                        null
+                );
 
         request.setAttribute(
                 ARTICULOS_COMPRA,
