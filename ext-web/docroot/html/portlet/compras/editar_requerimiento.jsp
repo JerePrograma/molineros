@@ -604,7 +604,7 @@ if (errorCampoCompra == null) {
         String sectorId = String.valueOf(sector.getIdSector());
         String requiereAfiliado = sector.isRequiereAfiliado() ? "true" : "false";
     %>
-        <portlet:namespace />sectorRequiereAfiliadoMap['<%= HtmlUtil.escapeJS(sectorId) %>'] = <%= requiereAfiliado %>;
+        <portlet:namespace />sectorRequiereAfiliadoMap['<%= sectorId %>'] = <%= requiereAfiliado %>;
     <%
     }
     %>
