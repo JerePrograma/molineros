@@ -62,6 +62,75 @@ private String primerValorMetodoCompra(Object bean, String[] metodos) {
 
     return "";
 }
+private String primerValorGetterPorCoincidenciaCompra(Object bean, String[] debeContener, String[] noDebeContener) {
+    if (bean == null) {
+        return "";
+    }
+
+    try {
+        Method[] metodos = bean.getClass().getMethods();
+
+        for (int i = 0; i < metodos.length; i++) {
+            Method metodo = metodos[i];
+
+            if (metodo.getParameterTypes().length != 0) {
+                continue;
+            }
+
+            String nombre = metodo.getName();
+
+            if (!nombre.startsWith("get") && !nombre.startsWith("is")) {
+                continue;
+            }
+
+            String nombreLower = nombre.toLowerCase();
+
+            boolean coincide = true;
+
+            if (debeContener != null) {
+                for (int j = 0; j < debeContener.length; j++) {
+                    if (debeContener[j] != null
+                            && nombreLower.indexOf(debeContener[j].toLowerCase()) < 0) {
+                        coincide = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!coincide) {
+                continue;
+            }
+
+            if (noDebeContener != null) {
+                for (int j = 0; j < noDebeContener.length; j++) {
+                    if (noDebeContener[j] != null
+                            && nombreLower.indexOf(noDebeContener[j].toLowerCase()) >= 0) {
+                        coincide = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!coincide) {
+                continue;
+            }
+
+            Object value = metodo.invoke(bean, new Object[0]);
+
+            if (value != null) {
+                String stringValue = String.valueOf(value).trim();
+
+                if (stringValue.length() > 0 && !"null".equalsIgnoreCase(stringValue)) {
+                    return stringValue;
+                }
+            }
+        }
+    } catch (Exception e) {
+        return "";
+    }
+
+    return "";
+}
 %>
 
 <%
@@ -279,37 +348,70 @@ if (afiliadoRequerimiento != null) {
             afiliadoRequerimiento,
             new String[] {
                     "getOspim",
-                    "getOspimString",
                     "getOSPIM",
+                    "getOspimString",
                     "getNroOspim",
                     "getNumeroOspim",
-                    "getNumero_ospim"
+                    "getNumero_ospim",
+                    "getNro_ospim",
+                    "getNroAfiliadoOspim",
+                    "getNro_afiliado_ospim"
             }
     );
+
+    if (WebKeysCompras.isEmpty(afiliadoNumeroOspim)) {
+        afiliadoNumeroOspim = primerValorGetterPorCoincidenciaCompra(
+                afiliadoRequerimiento,
+                new String[] { "ospim" },
+                new String[] { "entidad", "rol", "permiso" }
+        );
+    }
 
     afiliadoNumeroUoma = primerValorMetodoCompra(
             afiliadoRequerimiento,
             new String[] {
                     "getUoma",
-                    "getUomaString",
                     "getUOMA",
+                    "getUomaString",
                     "getNroUoma",
                     "getNumeroUoma",
-                    "getNumero_uoma"
+                    "getNumero_uoma",
+                    "getNro_uoma",
+                    "getNroAfiliadoUoma",
+                    "getNro_afiliado_uoma"
             }
     );
+
+    if (WebKeysCompras.isEmpty(afiliadoNumeroUoma)) {
+        afiliadoNumeroUoma = primerValorGetterPorCoincidenciaCompra(
+                afiliadoRequerimiento,
+                new String[] { "uoma" },
+                new String[] { "entidad", "rol", "permiso" }
+        );
+    }
 
     afiliadoNumeroAmtima = primerValorMetodoCompra(
             afiliadoRequerimiento,
             new String[] {
                     "getAmtima",
-                    "getAmtimaString",
                     "getAMTIMA",
+                    "getAmtimaString",
                     "getNroAmtima",
                     "getNumeroAmtima",
-                    "getNumero_amtima"
+                    "getNumero_amtima",
+                    "getNro_amtima",
+                    "getNroAfiliadoAmtima",
+                    "getNro_afiliado_amtima"
             }
     );
+
+    if (WebKeysCompras.isEmpty(afiliadoNumeroAmtima)) {
+        afiliadoNumeroAmtima = primerValorGetterPorCoincidenciaCompra(
+                afiliadoRequerimiento,
+                new String[] { "amtima" },
+                new String[] { "entidad", "rol", "permiso" }
+        );
+    }
 
     afiliadoNumeroAfiliado = primerValorMetodoCompra(
             afiliadoRequerimiento,
@@ -326,15 +428,28 @@ if (afiliadoRequerimiento != null) {
         afiliadoNumeroAfiliado = afiliadoNumeroOspim;
     }
 
+    if (WebKeysCompras.isEmpty(afiliadoNumeroOspim)) {
+        afiliadoNumeroOspim = afiliadoNumeroAfiliado;
+    }
+
     afiliadoNombrePlan = primerValorMetodoCompra(
             afiliadoRequerimiento,
             new String[] {
                     "getNombre_plan",
                     "getNombrePlan",
                     "getPlanDescripcion",
-                    "getDescripcionPlan"
+                    "getDescripcionPlan",
+                    "getPlan"
             }
     );
+
+    if (WebKeysCompras.isEmpty(afiliadoNombrePlan)) {
+        afiliadoNombrePlan = primerValorGetterPorCoincidenciaCompra(
+                afiliadoRequerimiento,
+                new String[] { "plan" },
+                new String[] { "id" }
+        );
+    }
 
     afiliadoIdPlan = primerValorMetodoCompra(
             afiliadoRequerimiento,
@@ -349,11 +464,19 @@ if (afiliadoRequerimiento != null) {
             new String[] {
                     "getAfi_tercerizadora",
                     "getAfiTercerizadora",
-                    "getTercerizadora",
                     "getTercerizadoraDescripcion",
+                    "getDescripcionTercerizadora",
                     "getNombreTercerizadora"
             }
     );
+
+    if (WebKeysCompras.isEmpty(afiliadoAfiTercerizadora)) {
+        afiliadoAfiTercerizadora = primerValorGetterPorCoincidenciaCompra(
+                afiliadoRequerimiento,
+                new String[] { "tercerizadora" },
+                new String[] { "id" }
+        );
+    }
 }
 
 boolean tieneAfiliadoVisible =
@@ -635,12 +758,12 @@ if (modoVista) {
                     numeroAfiliadoInicial = '<%= jsCompra(afiliadoNumeroOspim) %>';
                 }
 
-                if (entidadSeleccionadaInicial == '<%= WebKeysGlobal.ENTIDADES_UOMA[1] %>'
+                if (entidadSeleccionadaInicial == '<%= WebKeysGlobal.ENTIDADES_UOMA[2] %>'
                         && '<%= jsCompra(afiliadoNumeroUoma) %>' != '') {
                     numeroAfiliadoInicial = '<%= jsCompra(afiliadoNumeroUoma) %>';
                 }
 
-                if (entidadSeleccionadaInicial == '<%= WebKeysGlobal.ENTIDADES_UOMA[2] %>'
+                if (entidadSeleccionadaInicial == '<%= WebKeysGlobal.ENTIDADES_UOMA[1] %>'
                         && '<%= jsCompra(afiliadoNumeroAmtima) %>' != '') {
                     numeroAfiliadoInicial = '<%= jsCompra(afiliadoNumeroAmtima) %>';
                 }
@@ -995,11 +1118,11 @@ if (modoVista) {
             jQuery(credencialId).val(<portlet:namespace />valorSeguroAfiliado(ospim));
         }
 
-        if (entidadSeleccionada == '<%= WebKeysGlobal.ENTIDADES_UOMA[1] %>') {
+        if (entidadSeleccionada == '<%= WebKeysGlobal.ENTIDADES_UOMA[2] %>') {
             jQuery(credencialId).val(<portlet:namespace />valorSeguroAfiliado(uoma));
         }
 
-        if (entidadSeleccionada == '<%= WebKeysGlobal.ENTIDADES_UOMA[2] %>') {
+        if (entidadSeleccionada == '<%= WebKeysGlobal.ENTIDADES_UOMA[1] %>') {
             jQuery(credencialId).val(<portlet:namespace />valorSeguroAfiliado(amtima));
         }
 
@@ -1127,11 +1250,18 @@ if (modoVista) {
         if (usaTercerizadora) {
             idTerc = jQuery('#<portlet:namespace />id_tercerizadora').val();
 
-            if (idTerc == null) {
-                idTerc = '';
+            if (idTerc == null || jQuery.trim(idTerc) == '') {
+                idTerc = '<%= jsCompra(afiliadoIdTercerizadora) %>';
+                jQuery('#<portlet:namespace />id_tercerizadora').val(idTerc);
+            }
+
+            if (jQuery('#<portlet:namespace />afi_tercerizadora').length > 0
+                    && jQuery.trim(jQuery('#<portlet:namespace />afi_tercerizadora').val()) == '') {
+                jQuery('#<portlet:namespace />afi_tercerizadora').val('<%= jsCompra(afiliadoAfiTercerizadora) %>');
             }
         } else {
             jQuery('#<portlet:namespace />id_tercerizadora').val('');
+            jQuery('#<portlet:namespace />afi_tercerizadora').val('');
         }
 
         jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val(jQuery.trim(idTerc));
@@ -1210,12 +1340,12 @@ if (modoVista) {
             numeroAfiliadoInicial = '<%= jsCompra(afiliadoNumeroOspim) %>';
         }
 
-        if (entidadSeleccionadaInicial == '<%= WebKeysGlobal.ENTIDADES_UOMA[1] %>'
+        if (entidadSeleccionadaInicial == '<%= WebKeysGlobal.ENTIDADES_UOMA[2] %>'
                 && '<%= jsCompra(afiliadoNumeroUoma) %>' != '') {
             numeroAfiliadoInicial = '<%= jsCompra(afiliadoNumeroUoma) %>';
         }
 
-        if (entidadSeleccionadaInicial == '<%= WebKeysGlobal.ENTIDADES_UOMA[2] %>'
+        if (entidadSeleccionadaInicial == '<%= WebKeysGlobal.ENTIDADES_UOMA[1] %>'
                 && '<%= jsCompra(afiliadoNumeroAmtima) %>' != '') {
             numeroAfiliadoInicial = '<%= jsCompra(afiliadoNumeroAmtima) %>';
         }
