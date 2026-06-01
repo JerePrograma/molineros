@@ -1,5 +1,9 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
+<%@ page import="java.lang.reflect.Method" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.List" %>
+<%@ page import="ar.com.ospim.compras.beans.CompraArticulo" %>
 
 <portlet:defineObjects/>
 
@@ -50,6 +54,49 @@ if (sectores == null) {
         sectores = new ArrayList<RequerimientoCompraSector>();
     }
 }
+
+Object articulosAttr = renderRequest.getAttribute("ARTICULOS_COMPRA");
+
+List<CompraArticulo> articulosCompra = null;
+
+if (articulosAttr instanceof List) {
+    articulosCompra = (List<CompraArticulo>) articulosAttr;
+}
+
+if (articulosCompra == null || articulosCompra.size() == 0) {
+    articulosCompra = new ArrayList<CompraArticulo>();
+
+    String[] metodosArticulos = new String[] {
+            "listarArticulos",
+            "listarArticulosCompra",
+            "listarCompraArticulos",
+            "listarArticulosRequerimientoCompra",
+            "listarRequerimientoCompraArticulos",
+            "getArticulosCompra"
+    };
+
+    for (int i = 0; i < metodosArticulos.length && articulosCompra.size() == 0; i++) {
+        try {
+            Method metodo =
+                    BusquedaRequerimientoCompraServiceUtil.class.getMethod(
+                            metodosArticulos[i],
+                            new Class[0]
+                    );
+
+            Object resultado = metodo.invoke(null, new Object[0]);
+
+            if (resultado instanceof List) {
+                articulosCompra = (List<CompraArticulo>) resultado;
+            }
+        } catch (NoSuchMethodException nsme) {
+            // Intencional: compatibilidad con distintos nombres de service.
+        } catch (Exception e) {
+            // Intencional: si un nombre existe pero falla, se intenta el siguiente.
+        }
+    }
+}
+
+renderRequest.setAttribute("ARTICULOS_COMPRA", articulosCompra);
 
 PortletURL volverURL = renderResponse.createRenderURL();
 volverURL.setWindowState(WindowState.MAXIMIZED);
@@ -395,18 +442,22 @@ if (errorCampoCompra == null) {
                     <td><label>Sector:</label></td>
                     <td colspan="3">
                         <select name="<portlet:namespace />sector_id"
-                                id="<portlet:namespace />sector_id">
-                            <option value="0">Seleccione</option>
+                                id="<portlet:namespace />sector_id"
+                                onChange="<portlet:namespace />cambiarSectorCompra(true);">
+                            <option value="0" data-requiere-afiliado="false">Seleccione</option>
 
                             <%
                             for (int i = 0; i < sectores.size(); i++) {
                                 RequerimientoCompraSector sector = sectores.get(i);
                                 String sectorId = String.valueOf(sector.getIdSector());
                                 String selected = reqSectorId.equals(sectorId) ? "selected=\"selected\"" : "";
+                                String requiereAfiliado = sector.isRequiereAfiliado() ? "true" : "false";
                             %>
                                 <option value="<%= sectorId %>"
-                                        data-requiere-afiliado="<%= sector.isRequiereAfiliado() ? "true" : "false" %>"
-                                        <%= selected %>><%= HtmlUtil.escape(sector.getDescripcionVisible()) %></option>
+                                        data-requiere-afiliado="<%= requiereAfiliado %>"
+                                        <%= selected %>>
+                                    <%= HtmlUtil.escape(sector.getDescripcionVisible()) %>
+                                </option>
                             <%
                             }
                             %>
@@ -544,6 +595,19 @@ if (errorCampoCompra == null) {
 <script type="text/javascript">
     var popup = null;
     var popupAfill = null;
+
+    var <portlet:namespace />sectorRequiereAfiliadoMap = {};
+
+    <%
+    for (int i = 0; i < sectores.size(); i++) {
+        RequerimientoCompraSector sector = sectores.get(i);
+        String sectorId = String.valueOf(sector.getIdSector());
+        String requiereAfiliado = sector.isRequiereAfiliado() ? "true" : "false";
+    %>
+        <portlet:namespace />sectorRequiereAfiliadoMap['<%= HtmlUtil.escapeJS(sectorId) %>'] = <%= requiereAfiliado %>;
+    <%
+    }
+    %>
 
     function <portlet:namespace />valorSeguroAfiliado(value) {
         if (value == null || typeof value == 'undefined' || value == 'null') {
@@ -723,6 +787,7 @@ if (errorCampoCompra == null) {
             fechaRecepcion,
             tieneAntecedentes
         );
+
         if (popupAfill != null) {
             Liferay.Popup.close(popupAfill);
         }
@@ -777,7 +842,6 @@ if (errorCampoCompra == null) {
 
         jQuery('#<portlet:namespace />nombre_plan').val(nombre_plan);
         jQuery('#<portlet:namespace />afi_tercerizadora').val(afi_tercerizadora);
-
         jQuery('#<portlet:namespace />fecha_alta_af').val(fecha_alta_af);
         jQuery('#<portlet:namespace />id_tercerizadora').val(id_tercerizadora);
         jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val(id_tercerizadora);
@@ -854,7 +918,18 @@ if (errorCampoCompra == null) {
     }
 
     function <portlet:namespace />sectorRequiereAfiliado() {
-        return jQuery('#<portlet:namespace />sector_id option:selected').attr('data-requiere-afiliado') == 'true';
+        var sectorId = jQuery.trim(jQuery('#<portlet:namespace />sector_id').val());
+
+        if (sectorId != '' && sectorId != '0') {
+            if (typeof <portlet:namespace />sectorRequiereAfiliadoMap[sectorId] != 'undefined') {
+                return <portlet:namespace />sectorRequiereAfiliadoMap[sectorId] === true;
+            }
+        }
+
+        var selected = jQuery('#<portlet:namespace />sector_id option:selected');
+        var attr = selected.attr('data-requiere-afiliado');
+
+        return attr == 'true' || attr == '1' || attr == 'SI' || attr == 'S';
     }
 
     function <portlet:namespace />sincronizarAfiliadoRequerimiento() {
@@ -937,6 +1012,7 @@ if (errorCampoCompra == null) {
         jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val('');
         jQuery('#<portlet:namespace />nombre_plan').val('');
         jQuery('#<portlet:namespace />afi_tercerizadora').val('');
+
         <portlet:namespace />mostrarMensajeAfiliadoInicial('');
     }
 
@@ -953,6 +1029,14 @@ if (errorCampoCompra == null) {
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
 
             jQuery('#<portlet:namespace />afiliado_requerimiento_panel').hide();
+        }
+    }
+
+    function <portlet:namespace />cambiarSectorCompra(limpiarSiNoRequiere) {
+        <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere);
+
+        if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
+            window['<portlet:namespace />filtrarArticulosPorSector']();
         }
     }
 
@@ -1112,11 +1196,7 @@ if (errorCampoCompra == null) {
         });
 
         jQuery('#<portlet:namespace />sector_id, #<portlet:namespace />id_sector').change(function() {
-            <portlet:namespace />actualizarVisibilidadAfiliado(true);
-
-            if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
-                window['<portlet:namespace />filtrarArticulosPorSector']();
-            }
+            <portlet:namespace />cambiarSectorCompra(true);
         });
 
         jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />id_tercerizadora').change(function() {
@@ -1132,6 +1212,8 @@ if (errorCampoCompra == null) {
         }
 
         setTimeout(function() {
+            <portlet:namespace />actualizarVisibilidadAfiliado(false);
+
             if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
                 window['<portlet:namespace />filtrarArticulosPorSector']();
             }
