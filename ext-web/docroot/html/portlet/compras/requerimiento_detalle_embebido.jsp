@@ -1,6 +1,5 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
-<%@ page import="java.lang.reflect.Method" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
 <%@ page import="ar.com.ospim.compras.beans.CompraArticulo" %>
@@ -98,100 +97,6 @@ if (articulos == null) {
     articulos = new ArrayList<CompraArticulo>();
 }
 
-/*
- * Primero intenta métodos SIN parámetro: idealmente deberían traer todos los artículos,
- * así el filtro por sector funciona 100% del lado cliente.
- */
-if (articulos.size() == 0) {
-    String[] metodosArticulosSinParametro = new String[] {
-            "listarArticulos",
-            "listarArticulosCompra",
-            "listarCompraArticulos",
-            "listarArticulosRequerimientoCompra",
-            "listarRequerimientoCompraArticulos",
-            "getArticulosCompra"
-    };
-
-    for (int i = 0; i < metodosArticulosSinParametro.length && articulos.size() == 0; i++) {
-        try {
-            Method metodo =
-                    BusquedaRequerimientoCompraServiceUtil.class.getMethod(
-                            metodosArticulosSinParametro[i],
-                            new Class[0]
-                    );
-
-            Object resultado = metodo.invoke(null, new Object[0]);
-
-            if (resultado instanceof List) {
-                articulos = (List<CompraArticulo>) resultado;
-            }
-        } catch (NoSuchMethodException nsme) {
-            // No existe este nombre en esta versión del service.
-        } catch (Exception e) {
-            // Existe pero falló. Se prueba el siguiente.
-        }
-    }
-}
-
-/*
- * Si no hay método global, intenta métodos POR SECTOR.
- * Esto al menos permite cargar los artículos del sector actual.
- */
-if (articulos.size() == 0 && idSectorActual != null && idSectorActual.intValue() > 0) {
-    String[] metodosArticulosPorSector = new String[] {
-            "listarArticulosPorSector",
-            "listarArticulosCompraPorSector",
-            "listarCompraArticulosPorSector",
-            "listarArticulosSector",
-            "getArticulosCompraPorSector",
-            "getArticulosPorSector"
-    };
-
-    for (int i = 0; i < metodosArticulosPorSector.length && articulos.size() == 0; i++) {
-        try {
-            Method metodo =
-                    BusquedaRequerimientoCompraServiceUtil.class.getMethod(
-                            metodosArticulosPorSector[i],
-                            new Class[] { Integer.class }
-                    );
-
-            Object resultado =
-                    metodo.invoke(
-                            null,
-                            new Object[] { Integer.valueOf(idSectorActual.intValue()) }
-                    );
-
-            if (resultado instanceof List) {
-                articulos = (List<CompraArticulo>) resultado;
-            }
-        } catch (NoSuchMethodException nsme) {
-            try {
-                Method metodo =
-                        BusquedaRequerimientoCompraServiceUtil.class.getMethod(
-                                metodosArticulosPorSector[i],
-                                new Class[] { int.class }
-                        );
-
-                Object resultado =
-                        metodo.invoke(
-                                null,
-                                new Object[] { Integer.valueOf(idSectorActual.intValue()) }
-                        );
-
-                if (resultado instanceof List) {
-                    articulos = (List<CompraArticulo>) resultado;
-                }
-            } catch (NoSuchMethodException nsme2) {
-                // No existe este nombre/firma.
-            } catch (Exception e2) {
-                // Existe pero falló. Se prueba el siguiente.
-            }
-        } catch (Exception e) {
-            // Existe pero falló. Se prueba el siguiente.
-        }
-    }
-}
-<%
 System.out.println("DEBUG_COMPRAS_ART JSP requerimiento_detalle_embebido.jsp");
 System.out.println("DEBUG_COMPRAS_ART JSP reqDetalle.id = " + reqDetalle.getIdRequerimientoCompra());
 System.out.println("DEBUG_COMPRAS_ART JSP reqDetalle.idSector = " + reqDetalle.getIdSector());
@@ -212,7 +117,7 @@ for (int i = 0; articulos != null && i < articulos.size(); i++) {
             + " sectorDescripcion=" + articuloDebug.getSectorDescripcion()
     );
 }
-%>
+
 int detalleColspan = puedeABMDetalle ? 7 : 6;
 %>
 
