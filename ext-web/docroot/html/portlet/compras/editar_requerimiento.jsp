@@ -846,7 +846,7 @@ if (modoVista) {
                 <c:if test="<%= modoEditable %>">
                     <input type="button"
                            value="Guardar"
-                           onClick="<%= namespaceCompra %>guardar();" />
+                           onClick="<%= namespaceCompra %>guardar(); return false;" />
 
                     &nbsp;&nbsp;
                 </c:if>
@@ -889,6 +889,7 @@ if (modoVista) {
 <script type="text/javascript">
     var popup = null;
     var popupAfill = null;
+    var <portlet:namespace />guardandoCompra = false;
 
     var <portlet:namespace />sectorRequiereAfiliadoMap = {};
 
@@ -933,6 +934,14 @@ if (modoVista) {
     }
 
     function <portlet:namespace />buscarAfiliados() {
+        if (<portlet:namespace />guardandoCompra) {
+            if (window.console) {
+                console.log('COMPRAS: se bloqueo buscarAfiliados() porque se esta guardando el requerimiento.');
+            }
+
+            return false;
+        }
+
         var cuil = jQuery('#<portlet:namespace />cuil').val();
         var inte = jQuery('#<portlet:namespace />inte').val();
         var tipoDoc = jQuery('#<portlet:namespace />tipoDoc').val();
@@ -1573,11 +1582,9 @@ if (modoVista) {
             return;
         }
 
-        if (typeof submitForm == 'function') {
-            submitForm(form);
-        } else {
-            form.submit();
-        }
+        <portlet:namespace />guardandoCompra = true;
+
+        form.submit();
     }
 
     jQuery(function() {
