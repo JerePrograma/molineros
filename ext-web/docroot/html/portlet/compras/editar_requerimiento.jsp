@@ -723,7 +723,6 @@ if (errorCampoCompra == null) {
             fechaRecepcion,
             tieneAntecedentes
         );
-
         if (popupAfill != null) {
             Liferay.Popup.close(popupAfill);
         }
