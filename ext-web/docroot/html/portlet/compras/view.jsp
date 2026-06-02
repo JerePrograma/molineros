@@ -51,6 +51,10 @@ if (!"true".equals(recuperoFiltro) && !"false".equals(recuperoFiltro)) {
 
 String idTercerizadoraFiltro = ParamUtil.getString(renderRequest, "id_tercerizadora", "");
 
+if (WebKeysCompras.isEmpty(idTercerizadoraFiltro)) {
+    idTercerizadoraFiltro = ParamUtil.getString(renderRequest, renderResponse.getNamespace() + "id_tercerizadora", "");
+}
+
 if (idTercerizadoraFiltro != null) {
     idTercerizadoraFiltro = idTercerizadoraFiltro.trim().toUpperCase();
 }
@@ -174,8 +178,8 @@ if ("0".equals(idTercerizadoraFiltro)) {
         <tr>
             <td><label>Tercerizadora:</label></td>
             <td>
-                <select id="<portlet:namespace />id_tercerizadora"
-                        name="<portlet:namespace />id_tercerizadora">
+                <select id="<portlet:namespace />id_tercerizadora_combo"
+                        name="<portlet:namespace />id_tercerizadora_combo">
                     <option value="" <%= WebKeysCompras.isEmpty(idTercerizadoraFiltro) ? "selected" : "" %>>Todas</option>
                     <option value="OMI" <%= "OMI".equals(idTercerizadoraFiltro) ? "selected" : "" %>>OMINT</option>
                     <option value="MPS" <%= "MPS".equals(idTercerizadoraFiltro) ? "selected" : "" %>>MOLINEROS POR PS</option>
@@ -185,6 +189,11 @@ if ("0".equals(idTercerizadoraFiltro)) {
                     <option value="MIM" <%= "MIM".equals(idTercerizadoraFiltro) ? "selected" : "" %>>IMESA</option>
                     <option value="MON" <%= "MON".equals(idTercerizadoraFiltro) ? "selected" : "" %>>MONOTRIBUTO</option>
                 </select>
+
+                <input id="<portlet:namespace />id_tercerizadora"
+                       name="<portlet:namespace />id_tercerizadora"
+                       type="hidden"
+                       value="<%= HtmlUtil.escape(idTercerizadoraFiltro) %>" />
             </td>
 
             <td colspan="4">&nbsp;</td>
@@ -248,6 +257,56 @@ if ("0".equals(idTercerizadoraFiltro)) {
         return jQuery('#<portlet:namespace />numero_afi').val();
     }
 
+    function <portlet:namespace />normalizarTercerizadora(value) {
+        if (value == null || value == 'null') {
+            return '';
+        }
+
+        return jQuery.trim(value).toUpperCase();
+    }
+
+    function <portlet:namespace />hayAfiliadoSeleccionado() {
+        var cuil = jQuery.trim(jQuery('#<portlet:namespace />cuil').val());
+        var inte = jQuery.trim(jQuery('#<portlet:namespace />inte').val());
+
+        return cuil != '' || inte != '';
+    }
+
+    function <portlet:namespace />sincronizarTercerizadoraFiltro() {
+        var idTercerizadora = <portlet:namespace />normalizarTercerizadora(
+                jQuery('#<portlet:namespace />id_tercerizadora_combo').val()
+        );
+
+        jQuery('#<portlet:namespace />id_tercerizadora_combo').val(idTercerizadora);
+        jQuery('#<portlet:namespace />id_tercerizadora').val(idTercerizadora);
+
+        return idTercerizadora;
+    }
+
+    function <portlet:namespace />bloquearTercerizadoraPorAfiliado(idTercerizadora) {
+        idTercerizadora = <portlet:namespace />normalizarTercerizadora(idTercerizadora);
+
+        jQuery('#<portlet:namespace />id_tercerizadora_combo').val(idTercerizadora);
+        jQuery('#<portlet:namespace />id_tercerizadora').val(idTercerizadora);
+
+        if (idTercerizadora != '') {
+            jQuery('#<portlet:namespace />id_tercerizadora_combo').attr('disabled', 'disabled');
+        } else {
+            jQuery('#<portlet:namespace />id_tercerizadora_combo').removeAttr('disabled');
+        }
+    }
+
+    function <portlet:namespace />desbloquearTercerizadoraFiltro(limpiar) {
+        jQuery('#<portlet:namespace />id_tercerizadora_combo').removeAttr('disabled');
+
+        if (limpiar) {
+            jQuery('#<portlet:namespace />id_tercerizadora_combo').val('');
+            jQuery('#<portlet:namespace />id_tercerizadora').val('');
+        } else {
+            <portlet:namespace />sincronizarTercerizadoraFiltro();
+        }
+    }
+
     function <portlet:namespace />sincronizarAfiliadoFiltro() {
         jQuery('#<portlet:namespace />afiliado_cuil_titular').val(<portlet:namespace />trimValue('cuil'));
         jQuery('#<portlet:namespace />afiliado_int').val(<portlet:namespace />trimValue('inte'));
@@ -282,11 +341,15 @@ if ("0".equals(idTercerizadoraFiltro)) {
         jQuery('#<portlet:namespace />afiliado_nombre').val('');
         jQuery('#<portlet:namespace />afiliado_id_seccional').val('');
 
-        jQuery('#<portlet:namespace />id_tercerizadora').val('');
+        <portlet:namespace />desbloquearTercerizadoraFiltro(true);
     }
 
     function <portlet:namespace />validarFiltroBusqueda() {
         <portlet:namespace />sincronizarAfiliadoFiltro();
+
+        if (!<portlet:namespace />hayAfiliadoSeleccionado()) {
+            <portlet:namespace />desbloquearTercerizadoraFiltro(false);
+        }
 
         var cuil = jQuery.trim(jQuery('#<portlet:namespace />afiliado_cuil_titular').val());
 
@@ -447,12 +510,7 @@ if ("0".equals(idTercerizadoraFiltro)) {
 
         jQuery('#<portlet:namespace />fecha_alta_af').val(fecha_alta_af != null && fecha_alta_af != 'null' ? fecha_alta_af : '');
 
-        if (id_tercerizadora != null && id_tercerizadora != 'null' && jQuery.trim(id_tercerizadora) != '') {
-            jQuery('#<portlet:namespace />id_tercerizadora').val(jQuery.trim(id_tercerizadora).toUpperCase());
-        } else {
-            jQuery('#<portlet:namespace />id_tercerizadora').val('');
-        }
-
+        <portlet:namespace />bloquearTercerizadoraPorAfiliado(id_tercerizadora);
         <portlet:namespace />sincronizarAfiliadoFiltro();
 
         if (popupAfill != null) {
@@ -474,13 +532,24 @@ if ("0".equals(idTercerizadoraFiltro)) {
         var afiliado_apellido = jQuery('#<portlet:namespace />afiliado_apellido').val();
         var afiliado_nombre = jQuery('#<portlet:namespace />afiliado_nombre').val();
         var afiliado_id_seccional = jQuery('#<portlet:namespace />afiliado_id_seccional').val();
-        var id_tercerizadora = jQuery('#<portlet:namespace />id_tercerizadora').val();
+        var id_tercerizadora = <portlet:namespace />sincronizarTercerizadoraFiltro();
         var recupero = jQuery('#<portlet:namespace />recupero').val();
 
         jQuery('#<portlet:namespace />buscando').show();
 
         var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" />' +
-            '&<portlet:namespace />struts_action=/compras/buscar_requerimientos' +
+            '&struts_action=/compras/buscar_requerimientos' +
+            '&estado=' + encodeURIComponent(estado) +
+            '&sector_id=' + encodeURIComponent(sector_id) +
+            '&afiliado_cuil_titular=' + encodeURIComponent(afiliado_cuil_titular) +
+            '&afiliado_int=' + encodeURIComponent(afiliado_int) +
+            '&afiliado_tipo_doc=' + encodeURIComponent(afiliado_tipo_doc) +
+            '&afiliado_nro_doc=' + encodeURIComponent(afiliado_nro_doc) +
+            '&afiliado_apellido=' + encodeURIComponent(afiliado_apellido) +
+            '&afiliado_nombre=' + encodeURIComponent(afiliado_nombre) +
+            '&afiliado_id_seccional=' + encodeURIComponent(afiliado_id_seccional) +
+            '&id_tercerizadora=' + encodeURIComponent(id_tercerizadora) +
+            '&recupero=' + encodeURIComponent(recupero) +
             '&<portlet:namespace />estado=' + encodeURIComponent(estado) +
             '&<portlet:namespace />sector_id=' + encodeURIComponent(sector_id) +
             '&<portlet:namespace />afiliado_cuil_titular=' + encodeURIComponent(afiliado_cuil_titular) +
@@ -510,16 +579,29 @@ if ("0".equals(idTercerizadoraFiltro)) {
             <portlet:namespace />buscarRequerimientos();
         });
 
-        jQuery('#<portlet:namespace />estado, #<portlet:namespace />sector_id, #<portlet:namespace />recupero, #<portlet:namespace />id_tercerizadora').change(function() {
+        jQuery('#<portlet:namespace />estado, #<portlet:namespace />sector_id, #<portlet:namespace />recupero').change(function() {
+            <portlet:namespace />buscarRequerimientos();
+        });
+
+        jQuery('#<portlet:namespace />id_tercerizadora_combo').change(function() {
+            <portlet:namespace />sincronizarTercerizadoraFiltro();
             <portlet:namespace />buscarRequerimientos();
         });
 
         jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />tipoDoc, #<portlet:namespace />nroDoc, #<portlet:namespace />apellido, #<portlet:namespace />nombre, #<portlet:namespace />id_seccional').change(function() {
             <portlet:namespace />sincronizarAfiliadoFiltro();
+
+            if (!<portlet:namespace />hayAfiliadoSeleccionado()) {
+                <portlet:namespace />desbloquearTercerizadoraFiltro(false);
+            }
         });
 
         jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />tipoDoc, #<portlet:namespace />nroDoc, #<portlet:namespace />apellido, #<portlet:namespace />nombre, #<portlet:namespace />id_seccional').keyup(function() {
             <portlet:namespace />sincronizarAfiliadoFiltro();
+
+            if (!<portlet:namespace />hayAfiliadoSeleccionado()) {
+                <portlet:namespace />desbloquearTercerizadoraFiltro(false);
+            }
         });
 
         jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />tipoDoc, #<portlet:namespace />nroDoc, #<portlet:namespace />apellido, #<portlet:namespace />nombre').keypress(function(event) {
@@ -530,6 +612,8 @@ if ("0".equals(idTercerizadoraFiltro)) {
 
             return true;
         });
+
+        <portlet:namespace />sincronizarTercerizadoraFiltro();
 
         jQuery('#<portlet:namespace />buscando').show();
         <portlet:namespace />buscarRequerimientos();
