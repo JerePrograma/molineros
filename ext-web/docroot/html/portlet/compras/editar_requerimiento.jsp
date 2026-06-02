@@ -561,6 +561,33 @@ if (modoVista) {
     <div class="portlet-msg-info">El requerimiento solo puede editarse en estado Borrador.</div>
 </c:if>
 
+<c:if test="<%= layoutEdicion || (modoVista && mostrarPanelAfiliadoEnVista) %>">
+    <div id="<portlet:namespace />afiliado_requerimiento_panel"
+         style="<%= modoEditable && !mostrarPanelAfiliadoEnVista ? "display:none;" : "" %>">
+        <fieldset class="block-labels">
+            <legend>
+                <liferay-ui:message key="datos-afiliado" />
+            </legend>
+
+            <div id="<portlet:namespace />afiliadoInicialMensaje"
+                 class="portlet-msg-info"
+                 style="display:none;"></div>
+
+            <div id="<portlet:namespace />afiliadoInicialAutoSelect"
+                 style="display:none;"></div>
+
+            <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
+                <liferay-util:param value="<%= String.valueOf(true) %>"
+                                    name="edit_mode" />
+                <liferay-util:param name="pag_reintegro"
+                                    value="1" />
+                <liferay-util:param name="origen"
+                                    value="" />
+            </liferay-util:include>
+        </fieldset>
+    </div>
+</c:if>
+
 <form action="<%= actionURL.toString() %>"
       method="post"
       name="<portlet:namespace />fmCompras"
@@ -688,33 +715,6 @@ if (modoVista) {
             </tr>
         </table>
     </fieldset>
-
-    <c:if test="<%= layoutEdicion || (modoVista && mostrarPanelAfiliadoEnVista) %>">
-        <div id="<portlet:namespace />afiliado_requerimiento_panel"
-             style="<%= modoEditable && !mostrarPanelAfiliadoEnVista ? "display:none;" : "" %>">
-            <fieldset class="block-labels">
-                <legend>
-                    <liferay-ui:message key="datos-afiliado" />
-                </legend>
-
-                <div id="<portlet:namespace />afiliadoInicialMensaje"
-                     class="portlet-msg-info"
-                     style="display:none;"></div>
-
-                <div id="<portlet:namespace />afiliadoInicialAutoSelect"
-                     style="display:none;"></div>
-
-                <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
-                    <liferay-util:param value="<%= String.valueOf(true) %>"
-                                        name="edit_mode" />
-                    <liferay-util:param name="pag_reintegro"
-                                        value="1" />
-                    <liferay-util:param name="origen"
-                                        value="" />
-                </liferay-util:include>
-            </fieldset>
-        </div>
-    </c:if>
 
     <c:if test="<%= modoVista && mostrarPanelAfiliadoEnVista %>">
         <script type="text/javascript">
@@ -949,9 +949,6 @@ if (modoVista) {
 
     function <portlet:namespace />buscarAfiliados() {
         if (<portlet:namespace />guardandoCompra) {
-            if (window.console) {
-                console.log('COMPRAS: se bloqueo buscarAfiliados() porque se esta guardando el requerimiento.');
-            }
 
             return false;
         }
@@ -1610,7 +1607,33 @@ if (modoVista) {
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
-        form.submit();
+        var detalleCountInput = jQuery(form).find('input[name$="detalle_count"]');
+
+        if (detalleCountInput.length == 0) {
+
+            alert(
+                'Detalles: serializarDetallesCompras() se ejecuto, pero no dejo detalle_count dentro del formulario principal. ' +
+                'Revisar que el JSP embebido agregue los hidden a #<portlet:namespace />fmCompras y que no haya formularios anidados.'
+            );
+
+            return <portlet:namespace />cancelarGuardadoCompra();
+        }
+
+        var detalleCount = parseInt(detalleCountInput.val(), 10);
+
+        if (isNaN(detalleCount) || detalleCount <= 0) {
+            alert(
+                'Detalles: no hay detalles para guardar. detalle_count=' + detalleCountInput.val()
+            );
+
+            return <portlet:namespace />cancelarGuardadoCompra();
+        }
+
+        if (form.submit) {
+            HTMLFormElement.prototype.submit.call(form);
+        } else {
+            jQuery(form).submit();
+        }
     }
 
     jQuery(function() {

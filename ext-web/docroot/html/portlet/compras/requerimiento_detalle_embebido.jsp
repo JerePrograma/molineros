@@ -273,16 +273,6 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
 
     <% if (puedeABMDetalle) { %>
         <div id="<portlet:namespace />detalle_payload"></div>
-
-        <input type="hidden"
-               name="<portlet:namespace />detalle_count"
-               id="<portlet:namespace />detalle_count"
-               value="0" />
-
-        <input type="hidden"
-               name="<portlet:namespace />detalle_deleted_ids"
-               id="<portlet:namespace />detalle_deleted_ids"
-               value="" />
     <% } %>
 </fieldset>
 
@@ -740,16 +730,38 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
                 return false;
             }
 
+            var payload = document.getElementById('<portlet:namespace />detalle_payload');
+
+            if (!payload) {
+                payload = form;
+            }
+
             var input = document.createElement('input');
 
             input.type = 'hidden';
             input.name = '<portlet:namespace />' + name;
+            input.id = '<portlet:namespace />serializado_' + name;
             input.value = value == null ? '' : value;
             input.className = '<portlet:namespace />detalle_serializado';
 
-            form.appendChild(input);
+            payload.appendChild(input);
 
             return true;
+        }
+
+        function <portlet:namespace />limpiarPayloadDetallesCompra() {
+            var form = jQuery('#<portlet:namespace />fmCompras');
+
+            /*
+             * Limpieza agresiva e intencional:
+             * borra cualquier detalle_count viejo, incluido el hidden fijo value="0"
+             * que estaba rompiendo el guardado.
+             */
+            form.find('input[name="<portlet:namespace />detalle_count"]').remove();
+            form.find('input[name="<portlet:namespace />detalle_deleted_ids"]').remove();
+            form.find('input[name^="<portlet:namespace />detalle_"]').remove();
+
+            jQuery('#<portlet:namespace />detalle_payload').empty();
         }
 
         function <portlet:namespace />serializarDetallesCompras() {
@@ -760,7 +772,12 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
                 return false;
             }
 
-            jQuery('.<portlet:namespace />detalle_serializado').remove();
+            <portlet:namespace />limpiarPayloadDetallesCompra();
+
+            if (<portlet:namespace />detallesCompra.length <= 0) {
+                alert('Debe cargar al menos un detalle antes de guardar el requerimiento.');
+                return false;
+            }
 
             if (!<portlet:namespace />crearHiddenDetalle('detalle_count', <portlet:namespace />detallesCompra.length)) {
                 return false;
@@ -774,19 +791,22 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
                 var detalle = <portlet:namespace />detallesCompra[i];
                 var prefix = 'detalle_' + i + '_';
 
-                if (jQuery.trim(detalle.idArticulo) == ''
-                        || !/^[0-9]+$/.test(jQuery.trim(detalle.idArticulo))
-                        || parseInt(detalle.idArticulo, 10) <= 0) {
+                var idArticulo = jQuery.trim(detalle.idArticulo);
+                var cantidad = jQuery.trim(detalle.cantidad);
 
-                    alert('Hay un detalle sin artículo.');
+                if (idArticulo == ''
+                        || !/^[0-9]+$/.test(idArticulo)
+                        || parseInt(idArticulo, 10) <= 0) {
+
+                    alert('Detalle #' + (i + 1) + ': debe seleccionar un artículo.');
                     return false;
                 }
 
-                if (jQuery.trim(detalle.cantidad) == ''
-                        || !/^[0-9]+$/.test(jQuery.trim(detalle.cantidad))
-                        || parseInt(detalle.cantidad, 10) <= 0) {
+                if (cantidad == ''
+                        || !/^[0-9]+$/.test(cantidad)
+                        || parseInt(cantidad, 10) <= 0) {
 
-                    alert('Hay un detalle con cantidad invalida.');
+                    alert('Detalle #' + (i + 1) + ': la cantidad debe ser entera y mayor a cero.');
                     return false;
                 }
 

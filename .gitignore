@@ -129,4 +129,4 @@ ext-impl/src/ar/com/ospim/autorizaciones/action/BorrarPatologiaSituacionMedicaAc
 ext-impl/src/ar/com/ospim/autorizaciones/action/BorrarPatologiaSituacionMedicaAction.java
 ext-impl/src/ar/com/ospim/autorizaciones/action/BorrarPAtologiaSituacionMedicaAction.java
 
-ext-impl/classes
+ext-impl/classes/
