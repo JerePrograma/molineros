@@ -30,6 +30,34 @@ if (estados == null) {
         estados = new ArrayList<RequerimientoCompraEstado>();
     }
 }
+
+String estadoFiltro = ParamUtil.getString(renderRequest, "estado", "0");
+
+if (WebKeysCompras.isEmpty(estadoFiltro)) {
+    estadoFiltro = "0";
+}
+
+String sectorFiltro = ParamUtil.getString(renderRequest, "sector_id", "0");
+
+if (WebKeysCompras.isEmpty(sectorFiltro)) {
+    sectorFiltro = "0";
+}
+
+String recuperoFiltro = ParamUtil.getString(renderRequest, "recupero", "");
+
+if (!"true".equals(recuperoFiltro) && !"false".equals(recuperoFiltro)) {
+    recuperoFiltro = "";
+}
+
+String idTercerizadoraFiltro = ParamUtil.getString(renderRequest, "id_tercerizadora", "");
+
+if (idTercerizadoraFiltro != null) {
+    idTercerizadoraFiltro = idTercerizadoraFiltro.trim().toUpperCase();
+}
+
+if ("0".equals(idTercerizadoraFiltro)) {
+    idTercerizadoraFiltro = "";
+}
 %>
 
 <fieldset class="block-labels">
@@ -41,13 +69,16 @@ if (estados == null) {
             <td>
                 <select id="<portlet:namespace />estado"
                         name="<portlet:namespace />estado">
-                    <option value="0">Todos</option>
+                    <option value="0" <%= "0".equals(estadoFiltro) ? "selected" : "" %>>Todos</option>
 
                     <%
                     for (int i = 0; i < estados.size(); i++) {
                         RequerimientoCompraEstado estado = estados.get(i);
+                        String idEstado = String.valueOf(estado.getIdEstado());
                     %>
-                        <option value="<%= estado.getIdEstado() %>"><%= HtmlUtil.escape(estado.getDescripcionVisible()) %></option>
+                        <option value="<%= idEstado %>" <%= idEstado.equals(estadoFiltro) ? "selected" : "" %>>
+                            <%= HtmlUtil.escape(estado.getDescripcionVisible()) %>
+                        </option>
                     <%
                     }
                     %>
@@ -58,13 +89,16 @@ if (estados == null) {
             <td>
                 <select id="<portlet:namespace />sector_id"
                         name="<portlet:namespace />sector_id">
-                    <option value="0">Todos</option>
+                    <option value="0" <%= "0".equals(sectorFiltro) ? "selected" : "" %>>Todos</option>
 
                     <%
                     for (int i = 0; i < sectores.size(); i++) {
                         RequerimientoCompraSector sector = sectores.get(i);
+                        String idSector = String.valueOf(sector.getIdSector());
                     %>
-                        <option value="<%= sector.getIdSector() %>"><%= HtmlUtil.escape(sector.getDescripcionVisible()) %></option>
+                        <option value="<%= idSector %>" <%= idSector.equals(sectorFiltro) ? "selected" : "" %>>
+                            <%= HtmlUtil.escape(sector.getDescripcionVisible()) %>
+                        </option>
                     <%
                     }
                     %>
@@ -75,9 +109,9 @@ if (estados == null) {
             <td>
                 <select id="<portlet:namespace />recupero"
                         name="<portlet:namespace />recupero">
-                    <option value="">Todos</option>
-                    <option value="true">SI</option>
-                    <option value="false">NO</option>
+                    <option value="" <%= "".equals(recuperoFiltro) ? "selected" : "" %>>Todos</option>
+                    <option value="true" <%= "true".equals(recuperoFiltro) ? "selected" : "" %>>SI</option>
+                    <option value="false" <%= "false".equals(recuperoFiltro) ? "selected" : "" %>>NO</option>
                 </select>
             </td>
         </tr>
@@ -140,12 +174,17 @@ if (estados == null) {
         <tr>
             <td><label>Tercerizadora:</label></td>
             <td>
-                <input id="<portlet:namespace />id_tercerizadora"
-                       name="<portlet:namespace />id_tercerizadora"
-                       size="10"
-                       maxlength="10"
-                       type="text"
-                       value="" />
+                <select id="<portlet:namespace />id_tercerizadora"
+                        name="<portlet:namespace />id_tercerizadora">
+                    <option value="" <%= WebKeysCompras.isEmpty(idTercerizadoraFiltro) ? "selected" : "" %>>Todas</option>
+                    <option value="OMI" <%= "OMI".equals(idTercerizadoraFiltro) ? "selected" : "" %>>OMINT</option>
+                    <option value="MPS" <%= "MPS".equals(idTercerizadoraFiltro) ? "selected" : "" %>>MOLINEROS POR PS</option>
+                    <option value="MEN" <%= "MEN".equals(idTercerizadoraFiltro) ? "selected" : "" %>>MOLINEROS POR ENSALUD</option>
+                    <option value="MCE" <%= "MCE".equals(idTercerizadoraFiltro) ? "selected" : "" %>>MOLINEROS POR CES</option>
+                    <option value="CEM" <%= "CEM".equals(idTercerizadoraFiltro) ? "selected" : "" %>>CEMIC</option>
+                    <option value="MIM" <%= "MIM".equals(idTercerizadoraFiltro) ? "selected" : "" %>>IMESA</option>
+                    <option value="MON" <%= "MON".equals(idTercerizadoraFiltro) ? "selected" : "" %>>MONOTRIBUTO</option>
+                </select>
             </td>
 
             <td colspan="4">&nbsp;</td>
@@ -242,6 +281,8 @@ if (estados == null) {
         jQuery('#<portlet:namespace />afiliado_apellido').val('');
         jQuery('#<portlet:namespace />afiliado_nombre').val('');
         jQuery('#<portlet:namespace />afiliado_id_seccional').val('');
+
+        jQuery('#<portlet:namespace />id_tercerizadora').val('');
     }
 
     function <portlet:namespace />validarFiltroBusqueda() {
@@ -406,8 +447,10 @@ if (estados == null) {
 
         jQuery('#<portlet:namespace />fecha_alta_af').val(fecha_alta_af != null && fecha_alta_af != 'null' ? fecha_alta_af : '');
 
-        if (id_tercerizadora != null && id_tercerizadora != 'null' && id_tercerizadora != '') {
-            jQuery('#<portlet:namespace />id_tercerizadora').val(id_tercerizadora);
+        if (id_tercerizadora != null && id_tercerizadora != 'null' && jQuery.trim(id_tercerizadora) != '') {
+            jQuery('#<portlet:namespace />id_tercerizadora').val(jQuery.trim(id_tercerizadora).toUpperCase());
+        } else {
+            jQuery('#<portlet:namespace />id_tercerizadora').val('');
         }
 
         <portlet:namespace />sincronizarAfiliadoFiltro();
@@ -466,6 +509,10 @@ if (estados == null) {
             <portlet:namespace />buscarRequerimientos();
         });
 
+        jQuery('#<portlet:namespace />estado, #<portlet:namespace />sector_id, #<portlet:namespace />recupero, #<portlet:namespace />id_tercerizadora').change(function() {
+            <portlet:namespace />buscarRequerimientos();
+        });
+
         jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />tipoDoc, #<portlet:namespace />nroDoc, #<portlet:namespace />apellido, #<portlet:namespace />nombre, #<portlet:namespace />id_seccional').change(function() {
             <portlet:namespace />sincronizarAfiliadoFiltro();
         });
@@ -474,7 +521,7 @@ if (estados == null) {
             <portlet:namespace />sincronizarAfiliadoFiltro();
         });
 
-        jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />tipoDoc, #<portlet:namespace />nroDoc, #<portlet:namespace />apellido, #<portlet:namespace />nombre, #<portlet:namespace />id_tercerizadora').keypress(function(event) {
+        jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />tipoDoc, #<portlet:namespace />nroDoc, #<portlet:namespace />apellido, #<portlet:namespace />nombre').keypress(function(event) {
             if (event.which == 13) {
                 <portlet:namespace />buscarRequerimientos();
                 return false;
