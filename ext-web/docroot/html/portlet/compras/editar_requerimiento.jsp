@@ -22,6 +22,7 @@ private String jsCompra(String value) {
             .replace("<", "\\x3C")
             .replace(">", "\\x3E");
 }
+
 private String valorMetodoCompra(Object bean, String metodoNombre) {
     if (bean == null || metodoNombre == null) {
         return "";
@@ -62,6 +63,7 @@ private String primerValorMetodoCompra(Object bean, String[] metodos) {
 
     return "";
 }
+
 private String primerValorGetterPorCoincidenciaCompra(Object bean, String[] debeContener, String[] noDebeContener) {
     if (bean == null) {
         return "";
@@ -344,6 +346,7 @@ if (afiliadoRequerimiento != null) {
             : idTercerizadora;
     afiliadoIncapacidad = afiliadoRequerimiento.getDiscapacitado() != null ? afiliadoRequerimiento.getDiscapacitado() : "";
     afiliadoAntecedentes = afiliadoRequerimiento.getTieneAntecedentesJudiciales() == 1 ? "SI" : "NO";
+
     afiliadoNumeroOspim = primerValorMetodoCompra(
             afiliadoRequerimiento,
             new String[] {
@@ -543,6 +546,10 @@ if (modoVista) {
     .compras-bloqueado-sin-estilo {
         pointer-events: none;
     }
+
+    .compras-form-colector {
+        display: none;
+    }
 </style>
 
 <c:if test="<%= !WebKeysCompras.isEmpty(errorParaAlert) %>">
@@ -561,38 +568,11 @@ if (modoVista) {
     <div class="portlet-msg-info">El requerimiento solo puede editarse en estado Borrador.</div>
 </c:if>
 
-<c:if test="<%= layoutEdicion || (modoVista && mostrarPanelAfiliadoEnVista) %>">
-    <div id="<portlet:namespace />afiliado_requerimiento_panel"
-         style="<%= modoEditable && !mostrarPanelAfiliadoEnVista ? "display:none;" : "" %>">
-        <fieldset class="block-labels">
-            <legend>
-                <liferay-ui:message key="datos-afiliado" />
-            </legend>
-
-            <div id="<portlet:namespace />afiliadoInicialMensaje"
-                 class="portlet-msg-info"
-                 style="display:none;"></div>
-
-            <div id="<portlet:namespace />afiliadoInicialAutoSelect"
-                 style="display:none;"></div>
-
-            <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
-                <liferay-util:param value="<%= String.valueOf(true) %>"
-                                    name="edit_mode" />
-                <liferay-util:param name="pag_reintegro"
-                                    value="1" />
-                <liferay-util:param name="origen"
-                                    value="" />
-            </liferay-util:include>
-        </fieldset>
-    </div>
-</c:if>
-
 <form action="<%= actionURL.toString() %>"
       method="post"
       name="<portlet:namespace />fmCompras"
       id="<portlet:namespace />fmCompras"
-      class="<%= modoVista ? "compras-modo-vista" : "" %>">
+      class="compras-form-colector">
 
     <input type="hidden"
            name="<portlet:namespace /><%= Constants.CMD %>"
@@ -605,6 +585,26 @@ if (modoVista) {
            value="<%= req.getIdRequerimientoCompra() %>" />
 
     <input type="hidden"
+           name="<portlet:namespace />sector_id"
+           id="<portlet:namespace />sector_id_hidden"
+           value="<%= HtmlUtil.escape(reqSectorId) %>" />
+
+    <input type="hidden"
+           name="<portlet:namespace />cargo_ospim"
+           id="<portlet:namespace />cargo_ospim_hidden"
+           value="<%= HtmlUtil.escape(req.getCargoOspimString()) %>" />
+
+    <input type="hidden"
+           name="<portlet:namespace />cargo_tercerizadora"
+           id="<portlet:namespace />cargo_tercerizadora_hidden"
+           value="<%= HtmlUtil.escape(req.getCargoTercerizadoraString()) %>" />
+
+    <input type="hidden"
+           name="<portlet:namespace />recupero"
+           id="<portlet:namespace />recupero_hidden"
+           value="<%= mostrarTercerizadoraPorCargos ? "true" : "false" %>" />
+
+    <input type="hidden"
            name="<portlet:namespace />afiliado_cuil_titular"
            id="<portlet:namespace />afiliado_cuil_titular"
            value="<%= HtmlUtil.escape(afiliadoCuilTitular) %>" />
@@ -613,6 +613,22 @@ if (modoVista) {
            name="<portlet:namespace />afiliado_int"
            id="<portlet:namespace />afiliado_int"
            value="<%= HtmlUtil.escape(afiliadoInt) %>" />
+
+    <input type="hidden"
+           name="<portlet:namespace />id_tercerizadora"
+           id="<portlet:namespace />requerimiento_id_tercerizadora_hidden"
+           value="<%= HtmlUtil.escape(idTercerizadora) %>" />
+
+    <input type="hidden"
+           name="<portlet:namespace />observaciones"
+           id="<portlet:namespace />observaciones_hidden"
+           value="<%= HtmlUtil.escape(req.getObservacionesVisible()) %>" />
+
+    <div id="<portlet:namespace />detalle_payload"></div>
+</form>
+
+<div id="<portlet:namespace />compras_layout"
+     class="<%= modoVista ? "compras-modo-vista" : "" %>">
 
     <fieldset class="block-labels">
         <legend><%= tituloPantalla %></legend>
@@ -633,8 +649,7 @@ if (modoVista) {
             <tr>
                 <td><label>Sector:</label></td>
                 <td colspan="3">
-                    <select name="<portlet:namespace />sector_id"
-                            id="<portlet:namespace />sector_id"
+                    <select id="<portlet:namespace />sector_id"
                             onChange="<portlet:namespace />cambiarSectorCompra(true);"
                             <%= bloqueoSinEstiloVista %>>
                         <option value="0" data-requiere-afiliado="false">Seleccione</option>
@@ -666,7 +681,6 @@ if (modoVista) {
                 <td><label>Cargo OSPIM %:</label></td>
                 <td>
                     <input type="text"
-                           name="<portlet:namespace />cargo_ospim"
                            id="<portlet:namespace />cargo_ospim"
                            value="<%= HtmlUtil.escape(req.getCargoOspimString()) %>"
                            size="5"
@@ -677,7 +691,6 @@ if (modoVista) {
                 <td><label>Cargo tercerizadora %:</label></td>
                 <td>
                     <input type="text"
-                           name="<portlet:namespace />cargo_tercerizadora"
                            id="<portlet:namespace />cargo_tercerizadora"
                            value="<%= HtmlUtil.escape(req.getCargoTercerizadoraString()) %>"
                            size="5"
@@ -695,7 +708,6 @@ if (modoVista) {
                 <td><label>ID tercerizadora:</label></td>
                 <td>
                     <input type="text"
-                           name="<portlet:namespace />requerimiento_id_tercerizadora_visible"
                            id="<portlet:namespace />requerimiento_id_tercerizadora"
                            value="<%= HtmlUtil.escape(idTercerizadora) %>"
                            size="10"
@@ -706,7 +718,6 @@ if (modoVista) {
                 <td><label>Recupero:</label></td>
                 <td>
                     <input type="checkbox"
-                           name="<portlet:namespace />recupero"
                            id="<portlet:namespace />recupero"
                            value="true"
                            <%= recuperoChecked %>
@@ -715,6 +726,33 @@ if (modoVista) {
             </tr>
         </table>
     </fieldset>
+
+    <c:if test="<%= layoutEdicion || (modoVista && mostrarPanelAfiliadoEnVista) %>">
+        <div id="<portlet:namespace />afiliado_requerimiento_panel"
+             style="<%= modoEditable && !mostrarPanelAfiliadoEnVista ? "display:none;" : "" %>">
+            <fieldset class="block-labels">
+                <legend>
+                    <liferay-ui:message key="datos-afiliado" />
+                </legend>
+
+                <div id="<portlet:namespace />afiliadoInicialMensaje"
+                     class="portlet-msg-info"
+                     style="display:none;"></div>
+
+                <div id="<portlet:namespace />afiliadoInicialAutoSelect"
+                     style="display:none;"></div>
+
+                <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
+                    <liferay-util:param value="<%= String.valueOf(true) %>"
+                                        name="edit_mode" />
+                    <liferay-util:param name="pag_reintegro"
+                                        value="1" />
+                    <liferay-util:param name="origen"
+                                        value="" />
+                </liferay-util:include>
+            </fieldset>
+        </div>
+    </c:if>
 
     <c:if test="<%= modoVista && mostrarPanelAfiliadoEnVista %>">
         <script type="text/javascript">
@@ -742,6 +780,7 @@ if (modoVista) {
                 setAfiliadoValue('fecha_alta_af', '<%= jsCompra(afiliadoFechaAlta) %>');
                 setAfiliadoValue('id_tercerizadora', '<%= jsCompra(afiliadoIdTercerizadora) %>');
                 setAfiliadoValue('requerimiento_id_tercerizadora', '<%= jsCompra(afiliadoIdTercerizadora) %>');
+                setAfiliadoValue('requerimiento_id_tercerizadora_hidden', '<%= jsCompra(afiliadoIdTercerizadora) %>');
                 setAfiliadoValue('incapacidad_af', '<%= jsCompra(afiliadoIncapacidad) %>');
 
                 setAfiliadoValue('nombre_plan', '<%= jsCompra(afiliadoNombrePlan) %>');
@@ -826,8 +865,7 @@ if (modoVista) {
         <table class="lfr-table">
             <tr>
                 <td>
-                    <textarea name="<portlet:namespace />observaciones"
-                              id="<portlet:namespace />observaciones"
+                    <textarea id="<portlet:namespace />observaciones"
                               cols="100"
                               rows="4"
                               <%= camposVistaReadOnly %>><%= HtmlUtil.escape(req.getObservacionesVisible()) %></textarea>
@@ -859,18 +897,19 @@ if (modoVista) {
             </td>
         </tr>
     </table>
+
     <c:if test="<%= modoVista %>">
         <script type="text/javascript">
             jQuery(function() {
                 var ns = '<portlet:namespace />';
-                var form = jQuery('#' + ns + 'fmCompras');
+                var layout = jQuery('#' + ns + 'compras_layout');
 
                 function ocultarBotonesModoVista() {
-                    form.find('input[type="button"], input[type="submit"], button')
+                    layout.find('input[type="button"], input[type="submit"], button')
                             .not('#' + ns + 'btnVolverCompras')
                             .hide();
 
-                    form.find('a[onclick], img[onclick]')
+                    layout.find('a[onclick], img[onclick]')
                             .hide();
 
                     jQuery('#' + ns + 'btnVolverCompras').show();
@@ -883,7 +922,7 @@ if (modoVista) {
             });
         </script>
     </c:if>
-</form>
+</div>
 
 <c:if test="<%= modoEditable %>">
 <script type="text/javascript">
@@ -935,8 +974,18 @@ if (modoVista) {
         return currDate + "/" + currMonth + "/" + currYear;
     }
 
+    function <portlet:namespace />trimValue(id) {
+        var input = jQuery('#<portlet:namespace />' + id);
+
+        if (input.length == 0) {
+            return '';
+        }
+
+        return jQuery.trim(input.val());
+    }
+
     function <portlet:namespace />valorAfiliado(id) {
-        return jQuery.trim(jQuery('#<portlet:namespace />' + id).val());
+        return <portlet:namespace />trimValue(id);
     }
 
     function <portlet:namespace />valorCredencialAfiliado() {
@@ -949,7 +998,6 @@ if (modoVista) {
 
     function <portlet:namespace />buscarAfiliados() {
         if (<portlet:namespace />guardandoCompra) {
-
             return false;
         }
 
@@ -1159,6 +1207,7 @@ if (modoVista) {
         jQuery('#<portlet:namespace />fecha_alta_af').val(fecha_alta_af);
         jQuery('#<portlet:namespace />id_tercerizadora').val(id_tercerizadora);
         jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val(id_tercerizadora);
+        jQuery('#<portlet:namespace />requerimiento_id_tercerizadora_hidden').val(id_tercerizadora);
         jQuery('#<portlet:namespace />incapacidad_af').val(incapacidad_af);
         jQuery('#<portlet:namespace />nroSocioPrevencion').val(nroSocioPrev);
         jQuery('#<portlet:namespace />nroCredencialPrevencion').val(nroCredenPrev);
@@ -1173,10 +1222,6 @@ if (modoVista) {
         if (typeof <portlet:namespace />mostrarMensajeAfiliadoInicial == 'function') {
             <portlet:namespace />mostrarMensajeAfiliadoInicial('');
         }
-    }
-
-    function <portlet:namespace />trimValue(id) {
-        return jQuery.trim(jQuery('#<portlet:namespace />' + id).val());
     }
 
     function <portlet:namespace />parsePorcentajeSilencioso(id) {
@@ -1220,12 +1265,15 @@ if (modoVista) {
         if (usaTercerizadora) {
             jQuery('#<portlet:namespace />tercerizadora_row').show();
             jQuery('#<portlet:namespace />recupero').attr('checked', 'checked');
+            jQuery('#<portlet:namespace />recupero_hidden').val('true');
         } else {
             jQuery('#<portlet:namespace />tercerizadora_row').hide();
             jQuery('#<portlet:namespace />recupero').removeAttr('checked');
+            jQuery('#<portlet:namespace />recupero_hidden').val('false');
 
             jQuery('#<portlet:namespace />id_tercerizadora').val('');
             jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val('');
+            jQuery('#<portlet:namespace />requerimiento_id_tercerizadora_hidden').val('');
         }
 
         return true;
@@ -1283,12 +1331,28 @@ if (modoVista) {
         }
 
         jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val(jQuery.trim(idTerc));
+        jQuery('#<portlet:namespace />requerimiento_id_tercerizadora_hidden').val(jQuery.trim(idTerc));
+    }
+
+    function <portlet:namespace />sincronizarFormularioCompra() {
+        <portlet:namespace />sincronizarAfiliadoRequerimiento();
+
+        jQuery('#<portlet:namespace />sector_id_hidden').val(<portlet:namespace />trimValue('sector_id'));
+        jQuery('#<portlet:namespace />cargo_ospim_hidden').val(<portlet:namespace />trimValue('cargo_ospim'));
+        jQuery('#<portlet:namespace />cargo_tercerizadora_hidden').val(<portlet:namespace />trimValue('cargo_tercerizadora'));
+        jQuery('#<portlet:namespace />observaciones_hidden').val(jQuery('#<portlet:namespace />observaciones').val());
+
+        if (jQuery('#<portlet:namespace />recupero').is(':checked')) {
+            jQuery('#<portlet:namespace />recupero_hidden').val('true');
+        } else {
+            jQuery('#<portlet:namespace />recupero_hidden').val('false');
+        }
     }
 
     function <portlet:namespace />cargarAfiliadoInicial() {
         var afiliadoCuilTitular = jQuery('#<portlet:namespace />afiliado_cuil_titular').val();
         var afiliadoInt = jQuery('#<portlet:namespace />afiliado_int').val();
-        var idTerc = jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val();
+        var idTerc = jQuery('#<portlet:namespace />requerimiento_id_tercerizadora_hidden').val();
 
         if (afiliadoCuilTitular != '') {
             jQuery('#<portlet:namespace />cuil').val(afiliadoCuilTitular);
@@ -1300,6 +1364,7 @@ if (modoVista) {
 
         if (idTerc != '') {
             jQuery('#<portlet:namespace />id_tercerizadora').val(idTerc);
+            jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val(idTerc);
         }
 
         <portlet:namespace />sincronizarAfiliadoRequerimiento();
@@ -1344,6 +1409,7 @@ if (modoVista) {
         <portlet:namespace />setAfiliadoValue('fecha_alta_af', '<%= jsCompra(afiliadoFechaAlta) %>');
         <portlet:namespace />setAfiliadoValue('id_tercerizadora', '<%= jsCompra(afiliadoIdTercerizadora) %>');
         <portlet:namespace />setAfiliadoValue('requerimiento_id_tercerizadora', '<%= jsCompra(afiliadoIdTercerizadora) %>');
+        <portlet:namespace />setAfiliadoValue('requerimiento_id_tercerizadora_hidden', '<%= jsCompra(afiliadoIdTercerizadora) %>');
         <portlet:namespace />setAfiliadoValue('incapacidad_af', '<%= jsCompra(afiliadoIncapacidad) %>');
 
         <portlet:namespace />setAfiliadoValue('nombre_plan', '<%= jsCompra(afiliadoNombrePlan) %>');
@@ -1420,6 +1486,7 @@ if (modoVista) {
         jQuery('#<portlet:namespace />numero_afi').val('');
         jQuery('#<portlet:namespace />id_tercerizadora').val('');
         jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val('');
+        jQuery('#<portlet:namespace />requerimiento_id_tercerizadora_hidden').val('');
         jQuery('#<portlet:namespace />nombre_plan').val('');
         jQuery('#<portlet:namespace />id_plan').val('');
         jQuery('#<portlet:namespace />afi_tercerizadora').val('');
@@ -1454,6 +1521,7 @@ if (modoVista) {
 
     function <portlet:namespace />cambiarSectorCompra(limpiarSiNoRequiere) {
         <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere);
+        <portlet:namespace />sincronizarFormularioCompra();
 
         if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
             window['<portlet:namespace />filtrarArticulosPorSector']();
@@ -1543,20 +1611,11 @@ if (modoVista) {
 
             if (afiliadoCuilTitular == '') {
                 alert('Afiliado: debe seleccionar un afiliado. Falta CUIL titular.');
-
-                /*
-                 * No se hace focus directo sobre #cuil porque el componente de búsqueda
-                 * puede disparar el popup al recibir foco.
-                 */
                 return <portlet:namespace />cancelarGuardadoCompra();
             }
 
             if (afiliadoInt == '') {
                 alert('Afiliado: debe seleccionar un afiliado. Falta integrante.');
-
-                /*
-                 * No se hace focus directo sobre #inte por el mismo motivo.
-                 */
                 return <portlet:namespace />cancelarGuardadoCompra();
             }
         } else {
@@ -1571,20 +1630,22 @@ if (modoVista) {
 
         if (usaTercerizadora) {
             jQuery('#<portlet:namespace />recupero').attr('checked', 'checked');
+            jQuery('#<portlet:namespace />recupero_hidden').val('true');
 
             if (<portlet:namespace />trimValue('requerimiento_id_tercerizadora') == '') {
                 alert('Tercerizadora: debe seleccionar un afiliado con tercerizadora porque la distribución de cargos no es OSPIM 100% / Tercerizadora 0%.');
-
-                /*
-                 * Tampoco se enfoca #cuil acá para evitar que se abra el popup automáticamente.
-                 */
                 return <portlet:namespace />cancelarGuardadoCompra();
             }
         } else {
             jQuery('#<portlet:namespace />recupero').removeAttr('checked');
+            jQuery('#<portlet:namespace />recupero_hidden').val('false');
+
             jQuery('#<portlet:namespace />id_tercerizadora').val('');
             jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val('');
+            jQuery('#<portlet:namespace />requerimiento_id_tercerizadora_hidden').val('');
         }
+
+        <portlet:namespace />sincronizarFormularioCompra();
 
         var serializadorDetalles = null;
 
@@ -1610,10 +1671,9 @@ if (modoVista) {
         var detalleCountInput = jQuery(form).find('input[name$="detalle_count"]');
 
         if (detalleCountInput.length == 0) {
-
             alert(
                 'Detalles: serializarDetallesCompras() se ejecuto, pero no dejo detalle_count dentro del formulario principal. ' +
-                'Revisar que el JSP embebido agregue los hidden a #<portlet:namespace />fmCompras y que no haya formularios anidados.'
+                'Revisar que el JSP embebido agregue los hidden a #<portlet:namespace />fmCompras.'
             );
 
             return <portlet:namespace />cancelarGuardadoCompra();
@@ -1645,27 +1705,41 @@ if (modoVista) {
 
         <portlet:namespace />actualizarVisibilidadAfiliado(false);
         <portlet:namespace />actualizarVisibilidadTercerizadora();
+        <portlet:namespace />sincronizarFormularioCompra();
 
         jQuery('#<portlet:namespace />cargo_ospim, #<portlet:namespace />cargo_tercerizadora').change(function() {
             <portlet:namespace />actualizarVisibilidadTercerizadora();
-            <portlet:namespace />sincronizarAfiliadoRequerimiento();
+            <portlet:namespace />sincronizarFormularioCompra();
         });
 
         jQuery('#<portlet:namespace />cargo_ospim, #<portlet:namespace />cargo_tercerizadora').keyup(function() {
             <portlet:namespace />actualizarVisibilidadTercerizadora();
-            <portlet:namespace />sincronizarAfiliadoRequerimiento();
+            <portlet:namespace />sincronizarFormularioCompra();
         });
 
         jQuery('#<portlet:namespace />sector_id, #<portlet:namespace />id_sector').change(function() {
             <portlet:namespace />cambiarSectorCompra(true);
+            <portlet:namespace />sincronizarFormularioCompra();
+        });
+
+        jQuery('#<portlet:namespace />observaciones').change(function() {
+            <portlet:namespace />sincronizarFormularioCompra();
+        });
+
+        jQuery('#<portlet:namespace />observaciones').keyup(function() {
+            <portlet:namespace />sincronizarFormularioCompra();
+        });
+
+        jQuery('#<portlet:namespace />recupero').change(function() {
+            <portlet:namespace />sincronizarFormularioCompra();
         });
 
         jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />id_tercerizadora').change(function() {
-            <portlet:namespace />sincronizarAfiliadoRequerimiento();
+            <portlet:namespace />sincronizarFormularioCompra();
         });
 
         jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />id_tercerizadora').keyup(function() {
-            <portlet:namespace />sincronizarAfiliadoRequerimiento();
+            <portlet:namespace />sincronizarFormularioCompra();
         });
 
         if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
@@ -1674,6 +1748,7 @@ if (modoVista) {
 
         setTimeout(function() {
             <portlet:namespace />actualizarVisibilidadAfiliado(false);
+            <portlet:namespace />sincronizarFormularioCompra();
 
             if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
                 window['<portlet:namespace />filtrarArticulosPorSector']();
