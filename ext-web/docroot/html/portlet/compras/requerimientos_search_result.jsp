@@ -44,6 +44,7 @@ headerNames.add("estado");
 headerNames.add("sector");
 headerNames.add("afiliado-nombre");
 headerNames.add("afiliado-dni");
+headerNames.add("tercerizadora");
 headerNames.add("cargo-ospim");
 headerNames.add("cargo-tercerizadora");
 headerNames.add("recupero");
@@ -97,6 +98,7 @@ for (int i = 0; i < requerimientos.size(); i++) {
     row.addText(HtmlUtil.escape(req.getSectorDescripcionVisible()), verURL);
     row.addText(HtmlUtil.escape(afiliadoNombreApellido), verURL);
     row.addText(HtmlUtil.escape(afiliadoDocumento), verURL);
+    row.addText(HtmlUtil.escape(req.getIdTercerizadora() != null ? req.getIdTercerizadora() : ""), verURL);
     row.addText(HtmlUtil.escape(req.getCargoOspimString()) + "%", verURL);
     row.addText(HtmlUtil.escape(req.getCargoTercerizadoraString()) + "%", verURL);
     row.addText(HtmlUtil.escape(req.getRecuperoDescripcion()), verURL);
