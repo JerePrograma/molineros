@@ -479,18 +479,19 @@ if ("0".equals(idTercerizadoraFiltro)) {
 
         jQuery('#<portlet:namespace />buscando').show();
 
-        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" />&struts_action=/compras/buscar_requerimientos' +
-            '&estado=' + encodeURIComponent(estado) +
-            '&sector_id=' + encodeURIComponent(sector_id) +
-            '&afiliado_cuil_titular=' + encodeURIComponent(afiliado_cuil_titular) +
-            '&afiliado_int=' + encodeURIComponent(afiliado_int) +
-            '&afiliado_tipo_doc=' + encodeURIComponent(afiliado_tipo_doc) +
-            '&afiliado_nro_doc=' + encodeURIComponent(afiliado_nro_doc) +
-            '&afiliado_apellido=' + encodeURIComponent(afiliado_apellido) +
-            '&afiliado_nombre=' + encodeURIComponent(afiliado_nombre) +
-            '&afiliado_id_seccional=' + encodeURIComponent(afiliado_id_seccional) +
-            '&id_tercerizadora=' + encodeURIComponent(id_tercerizadora) +
-            '&recupero=' + encodeURIComponent(recupero);
+        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" />' +
+            '&<portlet:namespace />struts_action=/compras/buscar_requerimientos' +
+            '&<portlet:namespace />estado=' + encodeURIComponent(estado) +
+            '&<portlet:namespace />sector_id=' + encodeURIComponent(sector_id) +
+            '&<portlet:namespace />afiliado_cuil_titular=' + encodeURIComponent(afiliado_cuil_titular) +
+            '&<portlet:namespace />afiliado_int=' + encodeURIComponent(afiliado_int) +
+            '&<portlet:namespace />afiliado_tipo_doc=' + encodeURIComponent(afiliado_tipo_doc) +
+            '&<portlet:namespace />afiliado_nro_doc=' + encodeURIComponent(afiliado_nro_doc) +
+            '&<portlet:namespace />afiliado_apellido=' + encodeURIComponent(afiliado_apellido) +
+            '&<portlet:namespace />afiliado_nombre=' + encodeURIComponent(afiliado_nombre) +
+            '&<portlet:namespace />afiliado_id_seccional=' + encodeURIComponent(afiliado_id_seccional) +
+            '&<portlet:namespace />id_tercerizadora=' + encodeURIComponent(id_tercerizadora) +
+            '&<portlet:namespace />recupero=' + encodeURIComponent(recupero);
 
         jQuery('#<portlet:namespace />busquedaRequerimientosDiv').load(url, function() {
             jQuery('#<portlet:namespace />buscando').hide();

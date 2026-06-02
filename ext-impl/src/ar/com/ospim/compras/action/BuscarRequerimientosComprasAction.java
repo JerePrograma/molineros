@@ -215,12 +215,16 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             }
         }
 
-        String idTercerizadora = ParamUtil.getString(request, "id_tercerizadora", null);
-
+        String idTercerizadora = getParametro(request, "id_tercerizadora");
+        _log.info("FILTRO TERCERIZADORA REQUEST = [" + idTercerizadora + "]");
         if (!WebKeysCompras.isEmpty(idTercerizadora)) {
-            filtro.setIdTercerizadora(idTercerizadora);
-        }
+            idTercerizadora = idTercerizadora.trim();
 
+            if (!"0".equals(idTercerizadora)) {
+                filtro.setIdTercerizadora(idTercerizadora.toUpperCase());
+            }
+        }
+        _log.info("FILTRO TERCERIZADORA SERVICE = [" + filtro.getIdTercerizadora() + "]");
         String recupero = ParamUtil.getString(request, "recupero", null);
 
         if (!WebKeysCompras.isEmpty(recupero)) {
@@ -242,5 +246,23 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
         }
 
         return e.getMessage();
+    }
+
+    private String getParametro(RenderRequest request, String name) {
+        String value = ParamUtil.getString(request, name, null);
+
+        if (!WebKeysCompras.isEmpty(value)) {
+            return value;
+        }
+
+        String namespace = PortalUtil.getPortletNamespace(PortalUtil.getPortletId(request));
+
+        value = ParamUtil.getString(request, namespace + name, null);
+
+        if (!WebKeysCompras.isEmpty(value)) {
+            return value;
+        }
+
+        return null;
     }
 }
