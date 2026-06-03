@@ -639,16 +639,18 @@ if (modoVista) {
                 <td><%= HtmlUtil.escape(req.getIdString()) %></td>
 
                 <td><label>Estado:</label></td>
-                <td><strong><%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %></strong></td>
+                <td colspan="3">
+                    <strong><%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %></strong>
+                </td>
             </tr>
 
             <tr>
-                <td colspan="4">&nbsp;</td>
+                <td colspan="6">&nbsp;</td>
             </tr>
 
             <tr>
                 <td><label>Sector:</label></td>
-                <td colspan="3">
+                <td colspan="5">
                     <select id="<portlet:namespace />sector_id"
                             onChange="<portlet:namespace />cambiarSectorCompra(true);"
                             <%= bloqueoSinEstiloVista %>>
@@ -674,7 +676,7 @@ if (modoVista) {
             </tr>
 
             <tr>
-                <td colspan="4">&nbsp;</td>
+                <td colspan="6">&nbsp;</td>
             </tr>
 
             <tr>
@@ -697,23 +699,6 @@ if (modoVista) {
                            maxlength="3"
                            <%= camposVistaReadOnly %> />
                 </td>
-            </tr>
-
-            <tr>
-                <td colspan="4">&nbsp;</td>
-            </tr>
-
-            <tr id="<portlet:namespace />tercerizadora_row"
-                style="<%= mostrarTercerizadoraPorCargos ? "" : "display:none;" %>">
-                <td><label>ID tercerizadora:</label></td>
-                <td>
-                    <input type="text"
-                           id="<portlet:namespace />requerimiento_id_tercerizadora"
-                           value="<%= HtmlUtil.escape(idTercerizadora) %>"
-                           size="10"
-                           maxlength="10"
-                           readonly="readonly" />
-                </td>
 
                 <td><label>Recupero:</label></td>
                 <td>
@@ -721,10 +706,17 @@ if (modoVista) {
                            id="<portlet:namespace />recupero"
                            value="true"
                            <%= recuperoChecked %>
-                           <%= bloqueoCheckboxVista %> />
+                           onclick="return false;"
+                           onkeydown="return false;"
+                           tabindex="-1"
+                           aria-disabled="true" />
                 </td>
             </tr>
         </table>
+
+        <input type="hidden"
+               id="<portlet:namespace />requerimiento_id_tercerizadora"
+               value="<%= HtmlUtil.escape(idTercerizadora) %>" />
     </fieldset>
 
     <c:if test="<%= layoutEdicion || (modoVista && mostrarPanelAfiliadoEnVista) %>">
@@ -1248,37 +1240,6 @@ if (modoVista) {
         return !(cargoOspim == 100 && cargoTercerizadora == 0);
     }
 
-    function <portlet:namespace />actualizarVisibilidadTercerizadora() {
-        var cargoOspim = <portlet:namespace />parsePorcentajeSilencioso('cargo_ospim');
-        var cargoTercerizadora = <portlet:namespace />parsePorcentajeSilencioso('cargo_tercerizadora');
-
-        if (cargoOspim == null || cargoTercerizadora == null) {
-            return false;
-        }
-
-        var usaTercerizadora =
-                <portlet:namespace />usaTercerizadoraPorCargos(
-                        cargoOspim,
-                        cargoTercerizadora
-                );
-
-        if (usaTercerizadora) {
-            jQuery('#<portlet:namespace />tercerizadora_row').show();
-            jQuery('#<portlet:namespace />recupero').attr('checked', 'checked');
-            jQuery('#<portlet:namespace />recupero_hidden').val('true');
-        } else {
-            jQuery('#<portlet:namespace />tercerizadora_row').hide();
-            jQuery('#<portlet:namespace />recupero').removeAttr('checked');
-            jQuery('#<portlet:namespace />recupero_hidden').val('false');
-
-            jQuery('#<portlet:namespace />id_tercerizadora').val('');
-            jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val('');
-            jQuery('#<portlet:namespace />requerimiento_id_tercerizadora_hidden').val('');
-        }
-
-        return true;
-    }
-
     function <portlet:namespace />sectorRequiereAfiliado() {
         var sectorId = jQuery.trim(jQuery('#<portlet:namespace />sector_id').val());
 
@@ -1704,16 +1665,14 @@ if (modoVista) {
         </c:if>
 
         <portlet:namespace />actualizarVisibilidadAfiliado(false);
-        <portlet:namespace />actualizarVisibilidadTercerizadora();
+
         <portlet:namespace />sincronizarFormularioCompra();
 
         jQuery('#<portlet:namespace />cargo_ospim, #<portlet:namespace />cargo_tercerizadora').change(function() {
-            <portlet:namespace />actualizarVisibilidadTercerizadora();
             <portlet:namespace />sincronizarFormularioCompra();
         });
 
         jQuery('#<portlet:namespace />cargo_ospim, #<portlet:namespace />cargo_tercerizadora').keyup(function() {
-            <portlet:namespace />actualizarVisibilidadTercerizadora();
             <portlet:namespace />sincronizarFormularioCompra();
         });
 
@@ -1730,10 +1689,10 @@ if (modoVista) {
             <portlet:namespace />sincronizarFormularioCompra();
         });
 
-        jQuery('#<portlet:namespace />recupero').change(function() {
-            <portlet:namespace />sincronizarFormularioCompra();
-        });
-
+        /*
+         * El checkbox recupero queda visual, pero NO clickeable.
+         * Por eso no conviene escuchar su change como fuente de verdad.
+         */
         jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />id_tercerizadora').change(function() {
             <portlet:namespace />sincronizarFormularioCompra();
         });
