@@ -740,6 +740,19 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             return;
         }
 
+        /*
+         * Regla única de negocio:
+         * Recupero debe ser true solamente si Cargo OSPIM es exactamente 100.
+         * Para cualquier otro valor debe ser false.
+         *
+         * Esto pisa cualquier valor que venga del JSP/request.
+         */
+        Integer cargoOspim = requerimiento.getCargoOspim();
+
+        requerimiento.setRecupero(
+                cargoOspim != null && cargoOspim.intValue() == 100
+        );
+
         if (requerimiento.getIdSector() != null
                 && requerimiento.getIdSector().intValue() > 0) {
 
@@ -942,17 +955,20 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             );
         }
 
-        requerimiento.setCargoOspim(
-                parsePorcentajeDesdeRequest(request, "cargo_ospim", "Cargo OSPIM")
+        Integer cargoOspim = parsePorcentajeDesdeRequest(
+                request,
+                "cargo_ospim",
+                "Cargo OSPIM"
         );
 
-        requerimiento.setCargoTercerizadora(
-                parsePorcentajeDesdeRequest(
-                        request,
-                        "cargo_tercerizadora",
-                        "Cargo tercerizadora"
-                )
+        Integer cargoTercerizadora = parsePorcentajeDesdeRequest(
+                request,
+                "cargo_tercerizadora",
+                "Cargo tercerizadora"
         );
+
+        requerimiento.setCargoOspim(cargoOspim);
+        requerimiento.setCargoTercerizadora(cargoTercerizadora);
 
         String idTercerizadora = getParametroTrim(request, "id_tercerizadora");
 
@@ -970,7 +986,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             requerimiento.setIdTercerizadora(null);
         }
 
-        requerimiento.setRecupero(ParamUtil.getBoolean(request, "recupero", false));
+        requerimiento.setRecupero(
+                cargoOspim != null && cargoOspim.intValue() == 100
+        );
         requerimiento.setObservaciones(getParametroRaw(request, "observaciones", null));
 
         return requerimiento;
@@ -1463,25 +1481,5 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         return callback;
-    }
-
-    private boolean esParametroCompraRelevante(String key) {
-        if (key == null) {
-            return false;
-        }
-
-        return key.indexOf("cmd") >= 0
-                || key.indexOf("struts_action") >= 0
-                || key.indexOf("requerimiento") >= 0
-                || key.indexOf("sector") >= 0
-                || key.indexOf("cargo") >= 0
-                || key.indexOf("afiliado") >= 0
-                || key.indexOf("tercerizadora") >= 0
-                || key.indexOf("recupero") >= 0
-                || key.indexOf("observaciones") >= 0
-                || key.indexOf("detalle") >= 0
-                || key.indexOf("articulo") >= 0
-                || key.indexOf("cantidad") >= 0
-                || key.indexOf("precio") >= 0;
     }
 }
