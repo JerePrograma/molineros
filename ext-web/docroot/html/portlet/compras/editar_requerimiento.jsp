@@ -1510,13 +1510,14 @@ if (modoVista) {
         jQuery('#<portlet:namespace />id_seccional').val('');
         jQuery('#<portlet:namespace />seccional').val('');
         jQuery('#<portlet:namespace />numero_afi').val('');
-        jQuery('#<portlet:namespace />id_tercerizadora').val('');
-        jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val('');
-        jQuery('#<portlet:namespace />requerimiento_id_tercerizadora_hidden').val('');
         jQuery('#<portlet:namespace />nombre_plan').val('');
         jQuery('#<portlet:namespace />id_plan').val('');
-        jQuery('#<portlet:namespace />afi_tercerizadora').val('');
 
+        /*
+         * NO limpiar tercerizadora acá.
+         * La tercerizadora pertenece al afiliado seleccionado y no debe depender
+         * de la visibilidad del panel ni de los cargos OSPIM / tercerizadora.
+         */
         <portlet:namespace />mantenerVisibleTercerizadoraAfiliado();
         <portlet:namespace />mostrarMensajeAfiliadoInicial('');
     }
