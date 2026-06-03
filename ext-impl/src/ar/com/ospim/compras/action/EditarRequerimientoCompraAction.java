@@ -807,21 +807,26 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             );
         }
 
-        boolean usaTercerizadora =
-                !(cargoOspim == 100 && cargoTercerizadora == 0);
+        /*
+         * Regla única de negocio:
+         * Recupero es true solamente cuando Cargo OSPIM es exactamente 100.
+         * En cualquier otro caso debe quedar false.
+         */
+        requerimiento.setRecupero(cargoOspim == 100);
 
-        if (usaTercerizadora) {
-            requerimiento.setRecupero(true);
+        /*
+         * No se limpia tercerizadora automáticamente por cargos.
+         * La tercerizadora queda como vino del afiliado/formulario.
+         *
+         * Si hay cargo a tercerizadora, sí se exige que exista tercerizadora.
+         */
+        if (cargoTercerizadora > 0
+                && WebKeysCompras.isEmpty(requerimiento.getIdTercerizadora())) {
 
-            if (WebKeysCompras.isEmpty(requerimiento.getIdTercerizadora())) {
-                errorCampo(
-                        "id_tercerizadora",
-                        "Tercerizadora: debe seleccionar un afiliado con tercerizadora cuando la distribución de cargos no es OSPIM 100% / Tercerizadora 0%."
-                );
-            }
-        } else {
-            requerimiento.setRecupero(false);
-            requerimiento.setIdTercerizadora(null);
+            errorCampo(
+                    "id_tercerizadora",
+                    "Tercerizadora: debe seleccionar un afiliado con tercerizadora porque Cargo tercerizadora es mayor a 0."
+            );
         }
 
         if (requerimiento.isRequiereAfiliado()) {
