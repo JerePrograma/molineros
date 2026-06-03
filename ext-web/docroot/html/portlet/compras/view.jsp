@@ -533,6 +533,27 @@ if ("0".equals(idTercerizadoraFiltro)) {
         jQuery('#<portlet:namespace />nombre').val(nombre);
         jQuery('#<portlet:namespace />secc_seleccionada').val('1');
 
+        var entidadSeleccionada = jQuery('#<portlet:namespace />entidad').val();
+        var numeroAfiliado = '';
+
+        if (entidadSeleccionada == '<%= WebKeysGlobal.ENTIDADES_UOMA[0] %>') {
+            numeroAfiliado = ospim;
+        }
+
+        if (entidadSeleccionada == '<%= WebKeysGlobal.ENTIDADES_UOMA[2] %>') {
+            numeroAfiliado = uoma;
+        }
+
+        if (entidadSeleccionada == '<%= WebKeysGlobal.ENTIDADES_UOMA[1] %>') {
+            numeroAfiliado = amtima;
+        }
+
+        if (numeroAfiliado == null || numeroAfiliado == 'null') {
+            numeroAfiliado = '';
+        }
+
+        jQuery('#<portlet:namespace />numero_afi').val(numeroAfiliado);
+
         if (bajaFecha != null && bajaFecha != 'null') {
             jQuery('#<portlet:namespace />baja_fecha').val(bajaFecha);
 
