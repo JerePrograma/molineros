@@ -513,10 +513,6 @@ String bloqueoSinEstiloVista = modoVista
         ? " class=\"compras-bloqueado-sin-estilo\" tabindex=\"-1\" onmousedown=\"return false;\" onkeydown=\"return false;\" onclick=\"return false;\""
         : "";
 
-String bloqueoCheckboxVista = modoVista
-        ? " tabindex=\"-1\" onclick=\"return false;\" onkeydown=\"return false;\""
-        : "";
-
 String errorParaAlert =
         (String) renderRequest.getAttribute(WebKeysCompras.ERROR_PARA_ALERT);
 
@@ -702,10 +698,14 @@ if (modoVista) {
 
                 <td><label>Recupero:</label></td>
                 <td>
-                    <input type="hidden"
-                           name="<portlet:namespace />recupero"
-                           id="<portlet:namespace />recupero_hidden"
-                           value="<%= recuperoPorCargoOspimActual ? "true" : "false" %>" />
+                    <input type="checkbox"
+                           id="<portlet:namespace />recupero"
+                           value="true"
+                           <%= recuperoChecked %>
+                           onclick="return false;"
+                           onkeydown="return false;"
+                           tabindex="-1"
+                           aria-disabled="true" />
                 </td>
             </tr>
         </table>
@@ -1239,25 +1239,26 @@ if (modoVista) {
                 cargoOspim != null
                 && cargoOspim == 100;
 
-        var recupero = jQuery('#<portlet:namespace />recupero');
+        var recuperoVisual = jQuery('#<portlet:namespace />recupero');
 
-        if (recupero.length > 0) {
-            if (recuperoActivo) {
-                recupero.attr('checked', 'checked');
-            } else {
-                recupero.removeAttr('checked');
+        if (recuperoVisual.length > 0) {
+            recuperoVisual.show();
+            recuperoVisual.closest('td').show();
+            recuperoVisual.closest('tr').show();
+
+            recuperoVisual.prop('checked', recuperoActivo);
+            recuperoVisual.attr('checked', recuperoActivo ? 'checked' : false);
+
+            if (recuperoVisual[0]) {
+                recuperoVisual[0].checked = recuperoActivo;
             }
-
-            /*
-             * Compatibilidad con jQuery viejo/Liferay viejo:
-             * attr/removeAttr a veces no alcanza para actualizar el estado visual real.
-             */
-            recupero[0].checked = recuperoActivo;
         }
 
-        jQuery('#<portlet:namespace />recupero_hidden').val(
-                recuperoActivo ? 'true' : 'false'
-        );
+        var recuperoHidden = jQuery('#<portlet:namespace />recupero_hidden');
+
+        if (recuperoHidden.length > 0) {
+            recuperoHidden.val(recuperoActivo ? 'true' : 'false');
+        }
 
         return recuperoActivo;
     }
