@@ -947,12 +947,16 @@ if (modoVista) {
         return parsed;
     }
 
-    function <portlet:namespace />actualizarRecuperoPorCargoOspim() {
-        var cargoOspim = <portlet:namespace />parsePorcentajeSilencioso('cargo_ospim');
+    function <portlet:namespace />actualizarRecuperoPorCargoOspim(cargoOspimForzado) {
+        var cargoOspim = null;
 
-        var recuperoActivo =
-                cargoOspim != null
-                && cargoOspim == 100;
+        if (typeof cargoOspimForzado != 'undefined' && cargoOspimForzado != null) {
+            cargoOspim = cargoOspimForzado;
+        } else {
+            cargoOspim = <portlet:namespace />parsePorcentajeSilencioso('cargo_ospim');
+        }
+
+        var recuperoActivo = cargoOspim === 100;
 
         var recuperoEl = document.getElementById('<portlet:namespace />recupero');
 
@@ -1598,6 +1602,8 @@ if (modoVista) {
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
+        <portlet:namespace />actualizarRecuperoPorCargoOspim(cargoOspim);
+
         var cargoTercerizadora = <portlet:namespace />parsePorcentaje('cargo_tercerizadora', 'Cargo tercerizadora');
 
         if (cargoTercerizadora == null) {
@@ -1639,9 +1645,10 @@ if (modoVista) {
 
         /*
          * Recupero se calcula únicamente por Cargo OSPIM.
+         * Si Cargo OSPIM no es 100, se envía recupero=false.
          * No se limpia tercerizadora por cargos.
          */
-        <portlet:namespace />actualizarRecuperoPorCargoOspim();
+        <portlet:namespace />actualizarRecuperoPorCargoOspim(cargoOspim);
 
         /*
          * Validación opcional de negocio:

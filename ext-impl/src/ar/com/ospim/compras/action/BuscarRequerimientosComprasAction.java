@@ -216,7 +216,6 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
         }
 
         String idTercerizadora = getParametro(request, "id_tercerizadora");
-        _log.info("FILTRO TERCERIZADORA REQUEST = [" + idTercerizadora + "]");
         if (!WebKeysCompras.isEmpty(idTercerizadora)) {
             idTercerizadora = idTercerizadora.trim();
 
@@ -224,7 +223,6 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
                 filtro.setIdTercerizadora(idTercerizadora.toUpperCase());
             }
         }
-        _log.info("FILTRO TERCERIZADORA SERVICE = [" + filtro.getIdTercerizadora() + "]");
         String recupero = ParamUtil.getString(request, "recupero", null);
 
         if (!WebKeysCompras.isEmpty(recupero)) {
