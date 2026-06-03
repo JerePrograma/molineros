@@ -1005,6 +1005,20 @@ if (modoVista) {
         var nroSocioPrevencion = jQuery('#<portlet:namespace />nroSocioPrevencion').val();
         var fechaReferencia = <portlet:namespace />fechaReferenciaAfiliado();
 
+        var busquedaExactaPorCuilInte =
+                jQuery.trim(cuil) != ''
+                && jQuery.trim(inte) != ''
+                && jQuery.trim(tipoDoc) == ''
+                && jQuery.trim(nroDoc) == ''
+                && jQuery.trim(seccional) == ''
+                && jQuery.trim(apellido) == ''
+                && jQuery.trim(nombre) == ''
+                && jQuery.trim(numeroAfi) == '';
+
+        if (busquedaExactaPorCuilInte) {
+            return <portlet:namespace />cargarDatosAfiliadoInicial();
+        }
+
         if (!<portlet:namespace />validarBusqueda(cuil, inte, tipoDoc, nroDoc, seccional, apellido, nombre, entidad, numeroAfi)) {
             return false;
         }
@@ -1240,25 +1254,30 @@ if (modoVista) {
     }
 
     function <portlet:namespace />actualizarRecuperoPorCargoOspim() {
-        var cargoOspim = <portlet:namespace />parsePorcentajeSilencioso('cargo_ospim');
-        var checked = cargoOspim != null && cargoOspim == 100;
-        var checkbox = jQuery('#<portlet:namespace />recupero');
+        var raw = jQuery.trim(jQuery('#<portlet:namespace />cargo_ospim').val());
 
-        if (checked) {
-            checkbox.attr('checked', 'checked');
-            checkbox.each(function() {
-                this.checked = true;
-            });
-
-            jQuery('#<portlet:namespace />recupero_hidden').val('true');
-        } else {
-            checkbox.removeAttr('checked');
-            checkbox.each(function() {
-                this.checked = false;
-            });
-
-            jQuery('#<portlet:namespace />recupero_hidden').val('false');
+        if (raw == '') {
+            raw = '0';
         }
+
+        var cargoOspim = parseInt(raw, 10);
+        var checked = !isNaN(cargoOspim) && cargoOspim === 100;
+
+        var checkbox = document.getElementById('<portlet:namespace />recupero');
+
+        if (checkbox) {
+            checkbox.checked = checked;
+
+            if (checked) {
+                checkbox.setAttribute('checked', 'checked');
+            } else {
+                checkbox.removeAttribute('checked');
+            }
+        }
+
+        jQuery('#<portlet:namespace />recupero_hidden').val(checked ? 'true' : 'false');
+
+        return checked;
     }
 
     function <portlet:namespace />mantenerVisibleTercerizadoraAfiliado() {
@@ -1317,6 +1336,8 @@ if (modoVista) {
     }
 
     function <portlet:namespace />sincronizarFormularioCompra() {
+        <portlet:namespace />actualizarRecuperoPorCargoOspim();
+
         <portlet:namespace />sincronizarAfiliadoRequerimiento();
 
         jQuery('#<portlet:namespace />sector_id_hidden').val(<portlet:namespace />trimValue('sector_id'));
@@ -1450,6 +1471,32 @@ if (modoVista) {
     }
 
     function <portlet:namespace />cargarDatosAfiliadoInicial() {
+        var cuil = jQuery.trim(jQuery('#<portlet:namespace />cuil').val());
+        var inte = jQuery.trim(jQuery('#<portlet:namespace />inte').val());
+
+        if (cuil == '' || inte == '') {
+            return false;
+        }
+
+        var contenedor = jQuery('#<portlet:namespace />afiliadoInicialAutoSelect');
+
+        if (contenedor.length == 0) {
+            return false;
+        }
+
+        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
+            '&struts_action=/compras/buscar_afiliado_datos' +
+            '&cuil=' + encodeURIComponent(cuil) +
+            '&inte=' + encodeURIComponent(inte) +
+            '&fecha_referencia=' + encodeURIComponent(<portlet:namespace />fechaReferenciaAfiliado()) +
+            '&origen=' +
+            '&popup=false';
+
+        contenedor.load(url, function() {
+            <portlet:namespace />sincronizarAfiliadoRequerimiento();
+            <portlet:namespace />mantenerVisibleTercerizadoraAfiliado();
+        });
+
         return false;
     }
 
@@ -1610,6 +1657,8 @@ if (modoVista) {
                         cargoTercerizadora
                 );
 
+        <portlet:namespace />actualizarRecuperoPorCargoOspim();
+
         if (usaTercerizadora) {
             if (<portlet:namespace />trimValue('requerimiento_id_tercerizadora') == '') {
                 alert('Tercerizadora: debe seleccionar un afiliado con tercerizadora porque la distribución de cargos no es OSPIM 100% / Tercerizadora 0%.');
@@ -1679,15 +1728,14 @@ if (modoVista) {
         <portlet:namespace />sincronizarFormularioCompra();
         <portlet:namespace />mantenerVisibleTercerizadoraAfiliado();
 
-        jQuery('#<portlet:namespace />cargo_ospim, #<portlet:namespace />cargo_tercerizadora').change(function() {
-            <portlet:namespace />sincronizarFormularioCompra();
-            <portlet:namespace />mantenerVisibleTercerizadoraAfiliado();
-        });
-
-        jQuery('#<portlet:namespace />cargo_ospim, #<portlet:namespace />cargo_tercerizadora').keyup(function() {
-            <portlet:namespace />sincronizarFormularioCompra();
-            <portlet:namespace />mantenerVisibleTercerizadoraAfiliado();
-        });
+        jQuery('#<portlet:namespace />cargo_ospim, #<portlet:namespace />cargo_tercerizadora')
+                .bind('keyup change input paste', function() {
+                    setTimeout(function() {
+                        <portlet:namespace />actualizarRecuperoPorCargoOspim();
+                        <portlet:namespace />sincronizarFormularioCompra();
+                        <portlet:namespace />mantenerVisibleTercerizadoraAfiliado();
+                    }, 0);
+                });
 
         jQuery('#<portlet:namespace />sector_id, #<portlet:namespace />id_sector').change(function() {
             <portlet:namespace />cambiarSectorCompra(true);
