@@ -916,7 +916,66 @@ if (modoVista) {
         </script>
     </c:if>
 </div>
+<script type="text/javascript">
+    function <portlet:namespace />valorInputCompra(id) {
+        var el = document.getElementById('<portlet:namespace />' + id);
 
+        if (!el || typeof el.value == 'undefined' || el.value == null) {
+            return '';
+        }
+
+        return String(el.value).replace(/^\s+|\s+$/g, '');
+    }
+
+    function <portlet:namespace />parsePorcentajeSilencioso(id) {
+        var value = <portlet:namespace />valorInputCompra(id);
+
+        if (value == '') {
+            return null;
+        }
+
+        if (!/^[0-9]+$/.test(value)) {
+            return null;
+        }
+
+        var parsed = parseInt(value, 10);
+
+        if (isNaN(parsed) || parsed < 0 || parsed > 100) {
+            return null;
+        }
+
+        return parsed;
+    }
+
+    function <portlet:namespace />actualizarRecuperoPorCargoOspim() {
+        var cargoOspim = <portlet:namespace />parsePorcentajeSilencioso('cargo_ospim');
+
+        var recuperoActivo =
+                cargoOspim != null
+                && cargoOspim == 100;
+
+        var recuperoEl = document.getElementById('<portlet:namespace />recupero');
+
+        if (recuperoEl) {
+            recuperoEl.checked = recuperoActivo;
+            recuperoEl.defaultChecked = recuperoActivo;
+
+            if (recuperoActivo) {
+                recuperoEl.setAttribute('checked', 'checked');
+            } else {
+                recuperoEl.removeAttribute('checked');
+            }
+        }
+
+        var recuperoHiddenEl = document.getElementById('<portlet:namespace />recupero_hidden');
+
+        if (recuperoHiddenEl) {
+            recuperoHiddenEl.value = recuperoActivo ? 'true' : 'false';
+        }
+
+        return recuperoActivo;
+    }
+</script>
 <c:if test="<%= modoEditable %>">
 <script type="text/javascript">
     var popup = null;
@@ -1215,59 +1274,6 @@ if (modoVista) {
         if (typeof <portlet:namespace />mostrarMensajeAfiliadoInicial == 'function') {
             <portlet:namespace />mostrarMensajeAfiliadoInicial('');
         }
-    }
-
-    function <portlet:namespace />parsePorcentajeSilencioso(id) {
-        var value = <portlet:namespace />trimValue(id);
-
-        if (value == '') {
-            return 0;
-        }
-
-        if (!/^[0-9]+$/.test(value)) {
-            return null;
-        }
-
-        var parsed = parseInt(value, 10);
-
-        if (isNaN(parsed) || parsed < 0 || parsed > 100) {
-            return null;
-        }
-
-        return parsed;
-    }
-
-    function <portlet:namespace />actualizarRecuperoPorCargoOspim() {
-        var cargoOspim = <portlet:namespace />parsePorcentajeSilencioso('cargo_ospim');
-
-        var recuperoActivo =
-                cargoOspim != null
-                && cargoOspim == 100;
-
-        var recuperoEl = document.getElementById('<portlet:namespace />recupero');
-
-        if (recuperoEl) {
-            recuperoEl.checked = recuperoActivo;
-            recuperoEl.defaultChecked = recuperoActivo;
-
-            if (recuperoActivo) {
-                recuperoEl.setAttribute('checked', 'checked');
-            } else {
-                recuperoEl.removeAttribute('checked');
-            }
-
-            jQuery(recuperoEl).show();
-            jQuery(recuperoEl).closest('td').show();
-            jQuery(recuperoEl).closest('tr').show();
-        }
-
-        var recuperoHiddenEl = document.getElementById('<portlet:namespace />recupero_hidden');
-
-        if (recuperoHiddenEl) {
-            recuperoHiddenEl.value = recuperoActivo ? 'true' : 'false';
-        }
-
-        return recuperoActivo;
     }
 
     function <portlet:namespace />sectorRequiereAfiliado() {
