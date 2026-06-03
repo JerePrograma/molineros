@@ -683,6 +683,9 @@ if (modoVista) {
                            value="<%= HtmlUtil.escape(req.getCargoOspimString()) %>"
                            size="5"
                            maxlength="3"
+                           onkeyup="<portlet:namespace />actualizarRecuperoPorCargoOspim(); <portlet:namespace />sincronizarFormularioCompra();"
+                           onchange="<portlet:namespace />actualizarRecuperoPorCargoOspim(); <portlet:namespace />sincronizarFormularioCompra();"
+                           onblur="<portlet:namespace />actualizarRecuperoPorCargoOspim(); <portlet:namespace />sincronizarFormularioCompra();"
                            <%= camposVistaReadOnly %> />
                 </td>
 
@@ -693,6 +696,8 @@ if (modoVista) {
                            value="<%= HtmlUtil.escape(req.getCargoTercerizadoraString()) %>"
                            size="5"
                            maxlength="3"
+                           onchange="<portlet:namespace />sincronizarFormularioCompra();"
+                           onblur="<portlet:namespace />sincronizarFormularioCompra();"
                            <%= camposVistaReadOnly %> />
                 </td>
 
@@ -1239,25 +1244,27 @@ if (modoVista) {
                 cargoOspim != null
                 && cargoOspim == 100;
 
-        var recuperoVisual = jQuery('#<portlet:namespace />recupero');
+        var recuperoEl = document.getElementById('<portlet:namespace />recupero');
 
-        if (recuperoVisual.length > 0) {
-            recuperoVisual.show();
-            recuperoVisual.closest('td').show();
-            recuperoVisual.closest('tr').show();
+        if (recuperoEl) {
+            recuperoEl.checked = recuperoActivo;
+            recuperoEl.defaultChecked = recuperoActivo;
 
-            recuperoVisual.prop('checked', recuperoActivo);
-            recuperoVisual.attr('checked', recuperoActivo ? 'checked' : false);
-
-            if (recuperoVisual[0]) {
-                recuperoVisual[0].checked = recuperoActivo;
+            if (recuperoActivo) {
+                recuperoEl.setAttribute('checked', 'checked');
+            } else {
+                recuperoEl.removeAttribute('checked');
             }
+
+            jQuery(recuperoEl).show();
+            jQuery(recuperoEl).closest('td').show();
+            jQuery(recuperoEl).closest('tr').show();
         }
 
-        var recuperoHidden = jQuery('#<portlet:namespace />recupero_hidden');
+        var recuperoHiddenEl = document.getElementById('<portlet:namespace />recupero_hidden');
 
-        if (recuperoHidden.length > 0) {
-            recuperoHidden.val(recuperoActivo ? 'true' : 'false');
+        if (recuperoHiddenEl) {
+            recuperoHiddenEl.value = recuperoActivo ? 'true' : 'false';
         }
 
         return recuperoActivo;
