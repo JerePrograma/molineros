@@ -104,7 +104,7 @@ for (int i = 0; i < requerimientos.size(); i++) {
     row.addText(HtmlUtil.escape(req.getRecuperoDescripcion()), verURL);
     row.addText(HtmlUtil.escape(req.getAltaFechaAsString()), verURL);
 
-    row.addJSP("right", SearchEntry.DEFAULT_VALIGN, "/html/portlet/compras/editar_borrar_requerimiento.jsp");
+    row.addJSP("right", SearchEntry.DEFAULT_VALIGN, "/html/portlet/compras/requerimientos/editar_borrar_requerimiento.jsp");
 
     resultRows.add(row);
 }

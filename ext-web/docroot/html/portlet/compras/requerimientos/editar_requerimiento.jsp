@@ -276,6 +276,14 @@ String afiliadoCuilTitular = req.getAfiliadoCuilTitularVisible();
 String afiliadoInt = req.getAfiliadoIntString();
 String idTercerizadora = req.getIdTercerizadora();
 
+boolean sectorSeleccionadoValido =
+        !WebKeysCompras.isEmpty(reqSectorId)
+        && !"0".equals(reqSectorId);
+
+boolean sectorSinAfiliadoForzaCargoOspim =
+        sectorSeleccionadoValido
+        && !sectorRequiereAfiliadoActual;
+
 int cargoOspimActual = req.getCargoOspim() != null
         ? req.getCargoOspim().intValue()
         : 0;
@@ -284,8 +292,19 @@ int cargoTercerizadoraActual = req.getCargoTercerizadora() != null
         ? req.getCargoTercerizadora().intValue()
         : 0;
 
-boolean recuperoPorCargoOspimActual =
-        cargoOspimActual == 100;
+String cargoOspimVisible =
+        sectorSinAfiliadoForzaCargoOspim
+                ? "100"
+                : req.getCargoOspimString();
+
+String cargoTercerizadoraVisible =
+        sectorSinAfiliadoForzaCargoOspim
+                ? "0"
+                : req.getCargoTercerizadoraString();
+
+boolean recuperoPorCargoTercerizadoraActual =
+        !sectorSinAfiliadoForzaCargoOspim
+        && cargoTercerizadoraActual == 100;
 
 Afiliado afiliadoRequerimiento =
         (Afiliado) renderRequest.getAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA);
@@ -506,7 +525,7 @@ boolean tieneAfiliadoVisible =
 
 boolean mostrarPanelAfiliadoEnVista = sectorRequiereAfiliadoActual || tieneAfiliadoVisible;
 
-String recuperoChecked = recuperoPorCargoOspimActual ? "checked=\"checked\"" : "";
+String recuperoChecked = recuperoPorCargoTercerizadoraActual ? "checked=\"checked\"" : "";
 String camposVistaReadOnly = modoVista ? "readonly=\"readonly\"" : "";
 
 String bloqueoSinEstiloVista = modoVista
@@ -527,6 +546,66 @@ if (errorCampoCompra == null) {
     errorCampoCompra = "";
 }
 
+boolean msgRequerimientoGuardado =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "requerimiento-compra-guardado"
+        );
+
+boolean msgDetalleGuardado =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "requerimiento-compra-item-guardado"
+        );
+
+boolean msgDetalleBorrado =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "requerimiento-compra-item-borrado"
+        );
+
+boolean msgArticuloGuardado =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "requerimiento-compra-articulo-guardado"
+        );
+
+boolean msgArticuloBorrado =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "requerimiento-compra-articulo-borrado"
+        );
+
+boolean msgRequerimientoAnulado =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "requerimiento-compra-anulado"
+        );
+
+boolean errorRequerimientoCompra =
+        com.liferay.portal.kernel.servlet.SessionErrors.contains(
+                renderRequest,
+                "requerimiento-compra-error"
+        );
+
+String comprasGuardado = ParamUtil.getString(renderRequest, "compras_guardado", "");
+String comprasDetallesGuardados = ParamUtil.getString(renderRequest, "compras_detalles_guardados", "");
+String comprasOperacion = ParamUtil.getString(renderRequest, "compras_operacion", "");
+
+boolean comprasGuardadoPorParametro =
+        "true".equalsIgnoreCase(comprasGuardado);
+
+boolean mostrarMensajeRequerimientoGuardado =
+        msgRequerimientoGuardado || comprasGuardadoPorParametro;
+
+boolean mostrarErrorGenericoCompra =
+        errorRequerimientoCompra && WebKeysCompras.isEmpty(errorParaAlert);
+
+String idRequerimientoMensaje =
+        req != null && req.getIdRequerimientoCompra() > 0
+                ? req.getIdRequerimientoCompraString()
+                : ParamUtil.getString(renderRequest, "id_requerimiento_compra", "");
+
 String tituloPantalla = "";
 
 if (modoVista) {
@@ -546,13 +625,82 @@ if (modoVista) {
     .compras-form-colector {
         display: none;
     }
+
+    .compras-btn-guardando {
+        opacity: 0.65;
+        cursor: wait;
+    }
 </style>
+
+<c:if test="<%= mostrarMensajeRequerimientoGuardado %>">
+    <div class="portlet-msg-success">
+        <strong>Requerimiento de compra guardado correctamente.</strong>
+
+        <c:if test="<%= !WebKeysCompras.isEmpty(idRequerimientoMensaje) %>">
+            <br />
+            ID del requerimiento: <%= HtmlUtil.escape(idRequerimientoMensaje) %>
+        </c:if>
+
+        <c:if test="<%= !WebKeysCompras.isEmpty(comprasDetallesGuardados) %>">
+            <br />
+            Detalles guardados/procesados: <%= HtmlUtil.escape(comprasDetallesGuardados) %>
+        </c:if>
+
+        <br />
+    </div>
+</c:if>
+
+<c:if test="<%= msgDetalleGuardado %>">
+    <div class="portlet-msg-success">
+        Detalle del requerimiento guardado correctamente.
+    </div>
+</c:if>
+
+<c:if test="<%= msgDetalleBorrado %>">
+    <div class="portlet-msg-success">
+        Detalle del requerimiento eliminado correctamente.
+    </div>
+</c:if>
+
+<c:if test="<%= msgArticuloGuardado %>">
+    <div class="portlet-msg-success">
+        Articulo de compra guardado correctamente.
+    </div>
+</c:if>
+
+<c:if test="<%= msgArticuloBorrado %>">
+    <div class="portlet-msg-success">
+        Articulo de compra eliminado correctamente.
+    </div>
+</c:if>
+
+<c:if test="<%= msgRequerimientoAnulado %>">
+    <div class="portlet-msg-success">
+        Requerimiento de compra anulado correctamente.
+    </div>
+</c:if>
+
+<c:if test="<%= mostrarErrorGenericoCompra %>">
+    <div class="portlet-msg-error">
+        <strong>No se pudo procesar el requerimiento de compra.</strong>
+    </div>
+</c:if>
 
 <c:if test="<%= !WebKeysCompras.isEmpty(errorParaAlert) %>">
     <div class="portlet-msg-error">
-        <strong>No se pudo guardar el requerimiento.</strong>
+        <strong>No se pudo guardar/procesar el requerimiento de compra.</strong>
         <br />
         <%= HtmlUtil.escape(errorParaAlert) %>
+
+        <c:if test="<%= !WebKeysCompras.isEmpty(errorCampoCompra) %>">
+            <br />
+            Campo relacionado: <strong><%= HtmlUtil.escape(errorCampoCompra) %></strong>
+        </c:if>
+
+        <c:if test="<%= !WebKeysCompras.isEmpty(idRequerimientoMensaje) %>">
+            <br />
+            ID activo: <%= HtmlUtil.escape(idRequerimientoMensaje) %>
+        </c:if>
     </div>
 </c:if>
 
@@ -569,6 +717,11 @@ if (modoVista) {
       name="<portlet:namespace />fmCompras"
       id="<portlet:namespace />fmCompras"
       class="compras-form-colector">
+
+    <input type="hidden"
+           name="<portlet:namespace />compras_save_token"
+           id="<portlet:namespace />compras_save_token"
+           value="<%= HtmlUtil.escape(String.valueOf(renderRequest.getAttribute("COMPRAS_SAVE_TOKEN"))) %>" />
 
     <input type="hidden"
            name="<portlet:namespace /><%= Constants.CMD %>"
@@ -588,17 +741,17 @@ if (modoVista) {
     <input type="hidden"
            name="<portlet:namespace />cargo_ospim"
            id="<portlet:namespace />cargo_ospim_hidden"
-           value="<%= HtmlUtil.escape(req.getCargoOspimString()) %>" />
+           value="<%= HtmlUtil.escape(cargoOspimVisible) %>" />
 
     <input type="hidden"
            name="<portlet:namespace />cargo_tercerizadora"
            id="<portlet:namespace />cargo_tercerizadora_hidden"
-           value="<%= HtmlUtil.escape(req.getCargoTercerizadoraString()) %>" />
+           value="<%= HtmlUtil.escape(cargoTercerizadoraVisible) %>" />
 
     <input type="hidden"
            name="<portlet:namespace />recupero"
            id="<portlet:namespace />recupero_hidden"
-           value="<%= recuperoPorCargoOspimActual ? "true" : "false" %>" />
+           value="<%= recuperoPorCargoTercerizadoraActual ? "true" : "false" %>" />
 
     <input type="hidden"
            name="<portlet:namespace />afiliado_cuil_titular"
@@ -675,17 +828,18 @@ if (modoVista) {
                 <td colspan="6">&nbsp;</td>
             </tr>
 
-            <tr>
+            <tr id="<portlet:namespace />fila_cargos_compra"
+                style="<%= sectorSinAfiliadoForzaCargoOspim ? "display:none;" : "" %>">
                 <td><label>Cargo OSPIM %:</label></td>
                 <td>
                     <input type="text"
                            id="<portlet:namespace />cargo_ospim"
-                           value="<%= HtmlUtil.escape(req.getCargoOspimString()) %>"
+                           value="<%= HtmlUtil.escape(cargoOspimVisible) %>"
                            size="5"
                            maxlength="3"
-                           onkeyup="<portlet:namespace />actualizarRecuperoPorCargoOspim(); <portlet:namespace />sincronizarFormularioCompra();"
-                           onchange="<portlet:namespace />actualizarRecuperoPorCargoOspim(); <portlet:namespace />sincronizarFormularioCompra();"
-                           onblur="<portlet:namespace />actualizarRecuperoPorCargoOspim(); <portlet:namespace />sincronizarFormularioCompra();"
+                           onkeyup="<portlet:namespace />sincronizarFormularioCompra();"
+                           onchange="<portlet:namespace />sincronizarFormularioCompra();"
+                           onblur="<portlet:namespace />sincronizarFormularioCompra();"
                            <%= camposVistaReadOnly %> />
                 </td>
 
@@ -693,7 +847,7 @@ if (modoVista) {
                 <td>
                     <input type="text"
                            id="<portlet:namespace />cargo_tercerizadora"
-                           value="<%= HtmlUtil.escape(req.getCargoTercerizadoraString()) %>"
+                           value="<%= HtmlUtil.escape(cargoTercerizadoraVisible) %>"
                            size="5"
                            maxlength="3"
                            onchange="<portlet:namespace />sincronizarFormularioCompra();"
@@ -867,7 +1021,7 @@ if (modoVista) {
         </table>
     </fieldset>
 
-    <liferay-util:include page="/html/portlet/compras/requerimiento_detalle_embebido.jsp">
+    <liferay-util:include page="/html/portlet/compras/requerimientos/requerimiento_detalle_embebido.jsp">
         <liferay-util:param name="solo_lectura" value="<%= Boolean.toString(modoVista) %>" />
     </liferay-util:include>
 
@@ -876,8 +1030,9 @@ if (modoVista) {
             <td>
                 <c:if test="<%= modoEditable %>">
                     <input type="button"
+                           id="<portlet:namespace />btnGuardarCompras"
                            value="Guardar"
-                           onClick="<%= namespaceCompra %>guardar(); return false;" />
+                           onClick="return <%= namespaceCompra %>guardar();" />
 
                     &nbsp;&nbsp;
                 </c:if>
@@ -947,16 +1102,17 @@ if (modoVista) {
         return parsed;
     }
 
-    function <portlet:namespace />actualizarRecuperoPorCargoOspim(cargoOspimForzado) {
-        var cargoOspim = null;
+    function <portlet:namespace />actualizarRecuperoPorCargoTercerizadora(cargoTercerizadoraForzado) {
+        var cargoTercerizadora = null;
 
-        if (typeof cargoOspimForzado != 'undefined' && cargoOspimForzado != null) {
-            cargoOspim = cargoOspimForzado;
+        if (typeof cargoTercerizadoraForzado != 'undefined'
+                && cargoTercerizadoraForzado != null) {
+            cargoTercerizadora = cargoTercerizadoraForzado;
         } else {
-            cargoOspim = <portlet:namespace />parsePorcentajeSilencioso('cargo_ospim');
+            cargoTercerizadora = <portlet:namespace />parsePorcentajeSilencioso('cargo_tercerizadora');
         }
 
-        var recuperoActivo = cargoOspim === 100;
+        var recuperoActivo = cargoTercerizadora === 100;
 
         var recuperoEl = document.getElementById('<portlet:namespace />recupero');
 
@@ -986,11 +1142,30 @@ if (modoVista) {
     var popupAfill = null;
     var <portlet:namespace />guardandoCompra = false;
 
-    function <portlet:namespace />cancelarGuardadoCompra() {
-        setTimeout(function() {
-            <portlet:namespace />guardandoCompra = false;
-        }, 1200);
+    function <portlet:namespace />setGuardandoCompraActivo(activo) {
+        <portlet:namespace />guardandoCompra = activo;
 
+        var botonGuardar = document.getElementById('<portlet:namespace />btnGuardarCompras');
+
+        if (botonGuardar) {
+            if (activo) {
+                botonGuardar.disabled = true;
+                botonGuardar.setAttribute('disabled', 'disabled');
+                botonGuardar.value = 'Guardando...';
+
+                jQuery(botonGuardar).addClass('compras-btn-guardando');
+            } else {
+                botonGuardar.disabled = false;
+                botonGuardar.removeAttribute('disabled');
+                botonGuardar.value = 'Guardar';
+
+                jQuery(botonGuardar).removeClass('compras-btn-guardando');
+            }
+        }
+    }
+
+    function <portlet:namespace />cancelarGuardadoCompra() {
+        <portlet:namespace />setGuardandoCompraActivo(false);
         return false;
     }
 
@@ -1341,8 +1516,47 @@ if (modoVista) {
          */
     }
 
+    function <portlet:namespace />sectorSinAfiliadoForzaCargoOspim() {
+        var sectorId = <portlet:namespace />trimValue('sector_id');
+
+        return sectorId != ''
+                && sectorId != '0'
+                && !<portlet:namespace />sectorRequiereAfiliado();
+    }
+
+    function <portlet:namespace />aplicarReglaCargosPorSector() {
+        var forzarCargoOspim = <portlet:namespace />sectorSinAfiliadoForzaCargoOspim();
+
+        if (forzarCargoOspim) {
+            jQuery('#<portlet:namespace />cargo_ospim').val('100');
+            jQuery('#<portlet:namespace />cargo_tercerizadora').val('0');
+
+            jQuery('#<portlet:namespace />cargo_ospim_hidden').val('100');
+            jQuery('#<portlet:namespace />cargo_tercerizadora_hidden').val('0');
+
+            jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val('');
+            jQuery('#<portlet:namespace />requerimiento_id_tercerizadora_hidden').val('');
+
+            if (jQuery('#<portlet:namespace />id_tercerizadora').length > 0) {
+                jQuery('#<portlet:namespace />id_tercerizadora').val('');
+            }
+
+            <portlet:namespace />actualizarRecuperoPorCargoTercerizadora(0);
+
+            jQuery('#<portlet:namespace />fila_cargos_compra').hide();
+        } else {
+            jQuery('#<portlet:namespace />fila_cargos_compra').show();
+            jQuery('#<portlet:namespace />fila_cargos_forzados_compra').hide();
+        }
+
+        return forzarCargoOspim;
+    }
+
     function <portlet:namespace />sincronizarFormularioCompra() {
         <portlet:namespace />sincronizarAfiliadoRequerimiento();
+
+        var cargoForzadoPorSector =
+                <portlet:namespace />aplicarReglaCargosPorSector();
 
         jQuery('#<portlet:namespace />sector_id_hidden').val(
                 <portlet:namespace />trimValue('sector_id')
@@ -1363,9 +1577,13 @@ if (modoVista) {
         /*
          * Recupero NO se toma del click del checkbox.
          * El checkbox no es fuente de verdad.
-         * La fuente de verdad es cargo_ospim == 100.
+         * La fuente de verdad es cargo_tercerizadora == 100.
          */
-        <portlet:namespace />actualizarRecuperoPorCargoOspim();
+        if (cargoForzadoPorSector) {
+            <portlet:namespace />actualizarRecuperoPorCargoTercerizadora(0);
+        } else {
+            <portlet:namespace />actualizarRecuperoPorCargoTercerizadora();
+        }
     }
 
     function <portlet:namespace />cargarAfiliadoInicial() {
@@ -1540,6 +1758,7 @@ if (modoVista) {
 
     function <portlet:namespace />cambiarSectorCompra(limpiarSiNoRequiere) {
         <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere);
+        <portlet:namespace />aplicarReglaCargosPorSector();
         <portlet:namespace />sincronizarFormularioCompra();
 
         if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
@@ -1572,8 +1791,36 @@ if (modoVista) {
         return parsed;
     }
 
+    function <portlet:namespace />submitFormularioCompra(form) {
+        if (!form) {
+            alert('No se pudo encontrar el formulario principal de Compras.');
+            return false;
+        }
+
+        try {
+            form.submit();
+            return true;
+        } catch (e) {
+            try {
+                jQuery(form).submit();
+                return true;
+            } catch (e2) {
+                alert(
+                    'No se pudo enviar el formulario de Compras. ' +
+                    'Error: ' + (e2 && e2.message ? e2.message : e2)
+                );
+
+                return false;
+            }
+        }
+    }
+
     function <portlet:namespace />guardar() {
-        <portlet:namespace />guardandoCompra = true;
+        if (<portlet:namespace />guardandoCompra) {
+            return false;
+        }
+
+        <portlet:namespace />setGuardandoCompraActivo(true);
 
         var form = document.getElementById('<portlet:namespace />fmCompras');
 
@@ -1588,6 +1835,21 @@ if (modoVista) {
             cmdInput.value = 'saveAll';
         }
 
+        var tokenInput = document.getElementById('<portlet:namespace />compras_save_token');
+
+        if (!tokenInput
+                || tokenInput.value == null
+                || jQuery.trim(tokenInput.value) == ''
+                || jQuery.trim(tokenInput.value) == 'null') {
+
+            alert(
+                'No se pudo preparar el guardado seguro del requerimiento. ' +
+                'Falta el token de guardado. Vuelva a cargar la pantalla e intente nuevamente.'
+            );
+
+            return <portlet:namespace />cancelarGuardadoCompra();
+        }
+
         var sectorId = <portlet:namespace />trimValue('sector_id');
 
         if (sectorId == '' || sectorId == '0') {
@@ -1596,19 +1858,26 @@ if (modoVista) {
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
+        var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
+
+        if (!requiereAfiliado) {
+            <portlet:namespace />limpiarAfiliadoRequerimientoSiExiste();
+            <portlet:namespace />aplicarReglaCargosPorSector();
+        }
+
         var cargoOspim = <portlet:namespace />parsePorcentaje('cargo_ospim', 'Cargo OSPIM');
 
         if (cargoOspim == null) {
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
-        <portlet:namespace />actualizarRecuperoPorCargoOspim(cargoOspim);
-
         var cargoTercerizadora = <portlet:namespace />parsePorcentaje('cargo_tercerizadora', 'Cargo tercerizadora');
 
         if (cargoTercerizadora == null) {
             return <portlet:namespace />cancelarGuardadoCompra();
         }
+
+        <portlet:namespace />actualizarRecuperoPorCargoTercerizadora(cargoTercerizadora);
 
         if (cargoOspim + cargoTercerizadora > 100) {
             alert(
@@ -1621,8 +1890,6 @@ if (modoVista) {
             <portlet:namespace />focusSeguroCompra('#<portlet:namespace />cargo_tercerizadora');
             return <portlet:namespace />cancelarGuardadoCompra();
         }
-
-        var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
 
         if (requiereAfiliado) {
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
@@ -1644,18 +1911,19 @@ if (modoVista) {
         }
 
         /*
-         * Recupero se calcula únicamente por Cargo OSPIM.
-         * Si Cargo OSPIM no es 100, se envía recupero=false.
+         * Recupero se calcula únicamente por Cargo tercerizadora.
+         * Si Cargo tercerizadora no es 100, se envía recupero=false.
          * No se limpia tercerizadora por cargos.
          */
-        <portlet:namespace />actualizarRecuperoPorCargoOspim(cargoOspim);
+        <portlet:namespace />actualizarRecuperoPorCargoTercerizadora(cargoTercerizadora);
 
         /*
          * Validación opcional de negocio:
          * Si hay cargo a tercerizadora, debería existir afiliado con tercerizadora.
          * Pero NO se muestra/oculta ni se limpia nada automáticamente.
          */
-        if (cargoTercerizadora > 0
+        if (requiereAfiliado
+                && cargoTercerizadora > 0
                 && <portlet:namespace />trimValue('requerimiento_id_tercerizadora') == '') {
             alert('Tercerizadora: debe seleccionar un afiliado con tercerizadora porque Cargo tercerizadora es mayor a 0.');
             return <portlet:namespace />cancelarGuardadoCompra();
@@ -1705,11 +1973,11 @@ if (modoVista) {
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
-        if (form.submit) {
-            HTMLFormElement.prototype.submit.call(form);
-        } else {
-            jQuery(form).submit();
+        if (!<portlet:namespace />submitFormularioCompra(form)) {
+            return <portlet:namespace />cancelarGuardadoCompra();
         }
+
+        return false;
     }
 
     jQuery(function() {
@@ -1719,23 +1987,37 @@ if (modoVista) {
             <portlet:namespace />cargarAfiliadoExistenteEnEdicion();
         </c:if>
 
+        /*
+         * Orden correcto:
+         * 1) ajustar panel afiliado según sector
+         * 2) aplicar regla de cargos por sector
+         * 3) sincronizar hidden del formulario
+         */
         <portlet:namespace />actualizarVisibilidadAfiliado(false);
-        <portlet:namespace />actualizarRecuperoPorCargoOspim();
+        <portlet:namespace />aplicarReglaCargosPorSector();
         <portlet:namespace />sincronizarFormularioCompra();
 
         jQuery('#<portlet:namespace />cargo_ospim, #<portlet:namespace />cargo_tercerizadora').change(function() {
-            <portlet:namespace />actualizarRecuperoPorCargoOspim();
+            /*
+             * No calcular recupero desde Cargo OSPIM.
+             * sincronizarFormularioCompra() ya calcula recupero desde Cargo tercerizadora.
+             */
             <portlet:namespace />sincronizarFormularioCompra();
         });
 
         jQuery('#<portlet:namespace />cargo_ospim, #<portlet:namespace />cargo_tercerizadora').keyup(function() {
-            <portlet:namespace />actualizarRecuperoPorCargoOspim();
             <portlet:namespace />sincronizarFormularioCompra();
         });
 
         jQuery('#<portlet:namespace />sector_id, #<portlet:namespace />id_sector').change(function() {
+            /*
+             * cambiarSectorCompra() ya hace:
+             * - actualizarVisibilidadAfiliado()
+             * - aplicarReglaCargosPorSector()
+             * - sincronizarFormularioCompra()
+             * - filtrarArticulosPorSector()
+             */
             <portlet:namespace />cambiarSectorCompra(true);
-            <portlet:namespace />sincronizarFormularioCompra();
         });
 
         jQuery('#<portlet:namespace />observaciones').change(function() {
@@ -1763,8 +2045,13 @@ if (modoVista) {
         }
 
         setTimeout(function() {
+            /*
+             * Segundo pase defensivo.
+             * Necesario porque busqueda_afiliado.jsp puede terminar de inicializar
+             * campos después del document ready principal.
+             */
             <portlet:namespace />actualizarVisibilidadAfiliado(false);
-            <portlet:namespace />actualizarRecuperoPorCargoOspim();
+            <portlet:namespace />aplicarReglaCargosPorSector();
             <portlet:namespace />sincronizarFormularioCompra();
 
             if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {

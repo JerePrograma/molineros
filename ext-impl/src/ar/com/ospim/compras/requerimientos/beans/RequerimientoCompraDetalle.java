@@ -1,8 +1,8 @@
-package ar.com.ospim.compras.beans;
-
-import java.math.BigDecimal;
+package ar.com.ospim.compras.requerimientos.beans;
 
 import ar.com.ospim.compras.WebKeysCompras;
+
+import java.math.BigDecimal;
 
 public class RequerimientoCompraDetalle {
 

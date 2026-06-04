@@ -1,4 +1,9 @@
-package ar.com.ospim.compras.service;
+package ar.com.ospim.compras.requerimientos.service;
+
+import ar.com.ospim.compras.requerimientos.beans.*;
+import ar.com.ospim.util.ConnectionHelper;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
@@ -7,16 +12,6 @@ import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
-
-import ar.com.ospim.compras.beans.RequerimientoCompra;
-import ar.com.ospim.compras.beans.RequerimientoCompraDetalle;
-import ar.com.ospim.compras.beans.RequerimientoCompraEstado;
-import ar.com.ospim.compras.beans.RequerimientoCompraFiltro;
-import ar.com.ospim.compras.beans.RequerimientoCompraSector;
-import ar.com.ospim.util.ConnectionHelper;
-
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 public class BusquedaRequerimientoCompraServiceImpl {
 

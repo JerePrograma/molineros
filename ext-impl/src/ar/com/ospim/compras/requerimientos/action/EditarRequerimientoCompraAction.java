@@ -1,30 +1,16 @@
-package ar.com.ospim.compras.action;
-
-import java.math.BigDecimal;
-import java.util.*;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.PortletConfig;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
-import org.apache.struts.action.ActionForm;
-import org.apache.struts.action.ActionForward;
-import org.apache.struts.action.ActionMapping;
+package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.beans.RequerimientoCompra;
 import ar.com.ospim.compras.beans.CompraArticulo;
-import ar.com.ospim.compras.beans.RequerimientoCompraDetalle;
-import ar.com.ospim.compras.beans.RequerimientoCompraSector;
-import ar.com.ospim.compras.service.BusquedaRequerimientoCompraServiceUtil;
-import ar.com.ospim.compras.service.EditarRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
+import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
 import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.util.PermissionUtil;
-
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.util.Constants;
@@ -32,6 +18,23 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+
+import javax.portlet.ActionRequest;
+import javax.portlet.ActionResponse;
+import javax.portlet.PortletConfig;
+import javax.portlet.PortletSession;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
+import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 public class EditarRequerimientoCompraAction extends PortletAction {
 
@@ -41,6 +44,24 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
     private static final String ARTICULOS_COMPRA =
             "ARTICULOS_COMPRA";
+
+    /*
+     * Blindaje anti doble envio.
+     *
+     * Se usa un SET de tokens, no un unico token, para no romper pantallas
+     * abiertas en multiples tabs. Cada render agrega un token valido.
+     * Cada save consume exactamente un token.
+     */
+    private static final String PARAM_COMPRAS_SAVE_TOKEN =
+            "compras_save_token";
+
+    private static final String ATTR_COMPRAS_SAVE_TOKEN =
+            "COMPRAS_SAVE_TOKEN";
+
+    private static final String SESSION_COMPRAS_SAVE_TOKENS =
+            "COMPRAS_SAVE_TOKENS";
+
+    private static final int MAX_TOKENS_GUARDADO_COMPRA = 20;
 
     private static class ValidacionCompraException extends Exception {
 
@@ -214,6 +235,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             if ("saveAll".equals(cmd)) {
                 validarPermisoABM(user);
 
+                /*
+                 * Blindaje anti doble click / doble submit.
+                 * Debe ejecutarse despues del permiso y antes de guardar cualquier cosa.
+                 */
+                consumirTokenGuardadoCompra(actionRequest);
+
                 RequerimientoCompra requerimiento = getRequerimientoFromRequest(actionRequest);
 
                 if (requerimiento.getIdRequerimientoCompra() > 0) {
@@ -241,6 +268,13 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                                 usuario
                         );
 
+                actionResponse.setRenderParameter("compras_guardado", "true");
+                actionResponse.setRenderParameter("compras_operacion", "saveAll");
+                actionResponse.setRenderParameter(
+                        "compras_detalles_guardados",
+                        String.valueOf(detallesGuardados)
+                );
+
                 setIdRequerimientoEnRequest(
                         actionRequest,
                         actionResponse,
@@ -260,6 +294,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             if (Constants.ADD.equals(cmd) || Constants.UPDATE.equals(cmd)) {
                 validarPermisoABM(user);
+
+                /*
+                 * Blindaje tambien para flujos legacy ADD/UPDATE.
+                 * Si siguen vivos, tambien guardan cabecera.
+                 */
+                consumirTokenGuardadoCompra(actionRequest);
 
                 RequerimientoCompra requerimiento = getRequerimientoFromRequest(actionRequest);
 
@@ -281,10 +321,18 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                                 usuario
                         );
 
+                actionResponse.setRenderParameter("compras_guardado", "true");
+                actionResponse.setRenderParameter("compras_operacion", cmd);
+
                 setIdRequerimientoEnRequest(
                         actionRequest,
                         actionResponse,
                         idRequerimientoCompra
+                );
+
+                actionResponse.setRenderParameter(
+                        "struts_action",
+                        "/compras/editar_requerimiento"
                 );
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-guardado");
@@ -457,6 +505,16 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     "/compras/editar_requerimiento"
             );
 
+            actionResponse.setRenderParameter(
+                    "compras_error",
+                    "true"
+            );
+
+            actionResponse.setRenderParameter(
+                    "compras_operacion",
+                    cmd != null ? cmd : ""
+            );
+
             setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
         }
     }
@@ -470,6 +528,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if ("/compras/alta_articulo_popup".equals(strutsAction)) {
             return mapping.findForward(FORWARD_ALTA_ARTICULO_POPUP);
         }
+
+        /*
+         * Cada render de la pantalla de edicion genera un token nuevo.
+         * El JSP debe enviarlo en un hidden llamado compras_save_token.
+         */
+        generarTokenGuardadoCompra(renderRequest);
 
         try {
             int idRequerimientoCompra =
@@ -528,6 +592,85 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+    }
+
+    private void generarTokenGuardadoCompra(RenderRequest renderRequest) {
+        if (renderRequest == null) {
+            return;
+        }
+
+        String token = UUID.randomUUID().toString();
+
+        PortletSession session = renderRequest.getPortletSession();
+
+        synchronized (session) {
+            Set tokens = null;
+
+            Object tokensObj = session.getAttribute(SESSION_COMPRAS_SAVE_TOKENS);
+
+            if (tokensObj instanceof Set) {
+                tokens = (Set) tokensObj;
+            }
+
+            if (tokens == null || tokens.size() >= MAX_TOKENS_GUARDADO_COMPRA) {
+                tokens = new HashSet();
+            }
+
+            tokens.add(token);
+
+            session.setAttribute(
+                    SESSION_COMPRAS_SAVE_TOKENS,
+                    tokens
+            );
+        }
+
+        renderRequest.setAttribute(
+                ATTR_COMPRAS_SAVE_TOKEN,
+                token
+        );
+    }
+
+    private void consumirTokenGuardadoCompra(ActionRequest actionRequest)
+            throws ValidacionCompraException {
+
+        String tokenRequest = getParametroTrim(actionRequest, PARAM_COMPRAS_SAVE_TOKEN);
+
+        PortletSession session = actionRequest.getPortletSession();
+
+        synchronized (session) {
+            Object tokensObj = session.getAttribute(SESSION_COMPRAS_SAVE_TOKENS);
+
+            if (!(tokensObj instanceof Set)) {
+                errorCampo(
+                        "guardar",
+                        "El requerimiento ya fue enviado o la pantalla esta desactualizada. "
+                                + "Vuelva a cargar la pantalla antes de guardar nuevamente."
+                );
+            }
+
+            Set tokens = (Set) tokensObj;
+
+            if (WebKeysCompras.isEmpty(tokenRequest)
+                    || !tokens.contains(tokenRequest)) {
+
+                errorCampo(
+                        "guardar",
+                        "El requerimiento ya fue enviado o la pantalla esta desactualizada. "
+                                + "Vuelva a cargar la pantalla antes de guardar nuevamente."
+                );
+            }
+
+            tokens.remove(tokenRequest);
+
+            if (tokens.isEmpty()) {
+                session.removeAttribute(SESSION_COMPRAS_SAVE_TOKENS);
+            } else {
+                session.setAttribute(
+                        SESSION_COMPRAS_SAVE_TOKENS,
+                        tokens
+                );
+            }
+        }
     }
 
     private boolean esModoSoloLectura(RenderRequest renderRequest) {
@@ -740,19 +883,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             return;
         }
 
-        /*
-         * Regla única de negocio:
-         * Recupero debe ser true solamente si Cargo OSPIM es exactamente 100.
-         * Para cualquier otro valor debe ser false.
-         *
-         * Esto pisa cualquier valor que venga del JSP/request.
-         */
-        Integer cargoOspim = requerimiento.getCargoOspim();
-
-        requerimiento.setRecupero(
-                cargoOspim != null && cargoOspim.intValue() == 100
-        );
-
         if (requerimiento.getIdSector() != null
                 && requerimiento.getIdSector().intValue() > 0) {
 
@@ -771,7 +901,27 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             requerimiento.setSectorDescripcion(sector.getDescripcion());
             requerimiento.setRequiereAfiliado(sector.isRequiereAfiliado());
+
+            /*
+             * Regla de negocio:
+             * Si el sector no requiere afiliado, no hay reparto de cargos.
+             * Todo queda 100% a cargo de OSPIM y no se guarda afiliado ni tercerizadora.
+             */
+            if (!sector.isRequiereAfiliado()) {
+                aplicarReglaSectorSinAfiliado(requerimiento);
+                return;
+            }
         }
+
+        /*
+         * Para sectores que SI requieren afiliado:
+         * Recupero debe ser true solamente si Cargo tercerizadora es exactamente 100.
+         */
+        Integer cargoTercerizadora = requerimiento.getCargoTercerizadora();
+
+        requerimiento.setRecupero(
+                cargoTercerizadora != null && cargoTercerizadora.intValue() == 100
+        );
     }
 
     private void validarCabecera(RequerimientoCompra requerimiento) throws Exception {
@@ -783,6 +933,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 || requerimiento.getIdSector().intValue() <= 0) {
 
             errorCampo("sector_id", "Sector: debe seleccionar un sector.");
+        }
+
+        if (!requerimiento.isRequiereAfiliado()) {
+            aplicarReglaSectorSinAfiliado(requerimiento);
         }
 
         validarPorcentaje(requerimiento.getCargoOspim(), "Cargo OSPIM");
@@ -808,19 +962,20 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         /*
-         * Regla única de negocio:
-         * Recupero es true solamente cuando Cargo OSPIM es exactamente 100.
+         * Regla unica de negocio:
+         * Recupero es true solamente cuando Cargo tercerizadora es exactamente 100.
          * En cualquier otro caso debe quedar false.
          */
-        requerimiento.setRecupero(cargoOspim == 100);
+        requerimiento.setRecupero(cargoTercerizadora == 100);
 
         /*
-         * No se limpia tercerizadora automáticamente por cargos.
+         * No se limpia tercerizadora automaticamente por cargos.
          * La tercerizadora queda como vino del afiliado/formulario.
          *
-         * Si hay cargo a tercerizadora, sí se exige que exista tercerizadora.
+         * Si hay cargo a tercerizadora, si se exige que exista tercerizadora.
          */
-        if (cargoTercerizadora > 0
+        if (requerimiento.isRequiereAfiliado()
+                && cargoTercerizadora > 0
                 && WebKeysCompras.isEmpty(requerimiento.getIdTercerizadora())) {
 
             errorCampo(
@@ -992,8 +1147,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         requerimiento.setRecupero(
-                cargoOspim != null && cargoOspim.intValue() == 100
+                cargoTercerizadora != null && cargoTercerizadora.intValue() == 100
         );
+
         requerimiento.setObservaciones(getParametroRaw(request, "observaciones", null));
 
         return requerimiento;
@@ -1101,8 +1257,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 }
             }
         }
-
-        String detalleCountRaw = getParametroTrim(request, "detalle_count");
 
         int count = parseEnteroConDefault(
                 request,
@@ -1486,5 +1640,19 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         return callback;
+    }
+
+    private void aplicarReglaSectorSinAfiliado(RequerimientoCompra requerimiento) {
+        if (requerimiento == null) {
+            return;
+        }
+
+        requerimiento.setAfiliadoCuilTitular(null);
+        requerimiento.setAfiliadoInt(null);
+        requerimiento.setIdTercerizadora(null);
+
+        requerimiento.setCargoOspim(Integer.valueOf(100));
+        requerimiento.setCargoTercerizadora(Integer.valueOf(0));
+        requerimiento.setRecupero(false);
     }
 }

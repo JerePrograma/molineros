@@ -6981,7 +6981,7 @@
 
 		<action
 				path="/compras/buscar_requerimientos"
-				type="ar.com.ospim.compras.action.BuscarRequerimientosComprasAction">
+				type="ar.com.ospim.compras.requerimientos.action.BuscarRequerimientosComprasAction">
 
 			<forward
 					name="portlet.compras.result.search"
@@ -6998,7 +6998,7 @@
 
 		<action
 				path="/compras/editar_requerimiento"
-				type="ar.com.ospim.compras.action.EditarRequerimientoCompraAction">
+				type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraAction">
 
 			<forward
 					name="portlet.compras.editar_requerimiento"
@@ -7015,7 +7015,7 @@
 
 		<action
 				path="/compras/ver_requerimiento"
-				type="ar.com.ospim.compras.action.VerRequerimientoCompraAction">
+				type="ar.com.ospim.compras.requerimientos.action.VerRequerimientoCompraAction">
 
 			<forward
 					name="portlet.compras.ver_requerimiento"
@@ -7032,7 +7032,7 @@
 
 		<action
 				path="/compras/cambiar_estado_requerimiento"
-				type="ar.com.ospim.compras.action.CambiarEstadoRequerimientoCompraAction">
+				type="ar.com.ospim.compras.requerimientos.action.CambiarEstadoRequerimientoCompraAction">
 
 			<forward
 					name="portlet.compras.editar_requerimiento"
@@ -7063,7 +7063,7 @@
 		        forward="portlet.seccional.view" />
 
 		<action path="/compras/alta_articulo_popup"
-		        type="ar.com.ospim.compras.action.EditarRequerimientoCompraAction">
+		        type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraAction">
 			<forward name="portlet.compras.alta_articulo_popup"
 			         path="portlet.compras.alta_articulo_popup" />
 			<forward name="portlet.compras.editar_requerimiento"

@@ -1,10 +1,10 @@
-package ar.com.ospim.compras.service;
+package ar.com.ospim.compras.requerimientos.service;
+
+import ar.com.ospim.compras.beans.CompraArticulo;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 
 import java.util.List;
-
-import ar.com.ospim.compras.beans.RequerimientoCompra;
-import ar.com.ospim.compras.beans.CompraArticulo;
-import ar.com.ospim.compras.beans.RequerimientoCompraDetalle;
 
 public class EditarRequerimientoCompraServiceUtil {
 

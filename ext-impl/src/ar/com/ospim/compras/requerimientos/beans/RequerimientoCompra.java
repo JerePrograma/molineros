@@ -1,12 +1,12 @@
-package ar.com.ospim.compras.beans;
+package ar.com.ospim.compras.requerimientos.beans;
+
+import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.util.DateUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.util.DateUtils;
 
 public class RequerimientoCompra {
 

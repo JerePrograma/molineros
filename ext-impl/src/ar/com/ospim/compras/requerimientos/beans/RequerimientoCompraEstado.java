@@ -1,4 +1,4 @@
-package ar.com.ospim.compras.beans;
+package ar.com.ospim.compras.requerimientos.beans;
 
 import ar.com.ospim.compras.WebKeysCompras;
 

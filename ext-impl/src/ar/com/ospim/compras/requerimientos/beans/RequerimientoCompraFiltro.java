@@ -1,8 +1,8 @@
-package ar.com.ospim.compras.beans;
-
-import java.io.Serializable;
+package ar.com.ospim.compras.requerimientos.beans;
 
 import ar.com.ospim.compras.WebKeysCompras;
+
+import java.io.Serializable;
 
 public class RequerimientoCompraFiltro implements Serializable {
 

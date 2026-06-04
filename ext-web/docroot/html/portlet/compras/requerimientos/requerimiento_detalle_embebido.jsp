@@ -174,19 +174,6 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
                                value="1"
                                <%= readonlyDetalleVista %> />
                     </td>
-
-                    <td>
-                        <label for="<portlet:namespace />detalle_precio_unitario_estimado">
-                            Precio unitario:
-                        </label>
-                    </td>
-                    <td>
-                        <input type="text"
-                               id="<portlet:namespace />detalle_precio_unitario_estimado"
-                               size="12"
-                               value=""
-                               <%= readonlyDetalleVista %> />
-                    </td>
                 </tr>
 
                 <tr>
@@ -194,19 +181,6 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
                 </tr>
 
                 <tr>
-                    <td>
-                        <label for="<portlet:namespace />detalle_precio_total_estimado">
-                            Total estimado:
-                        </label>
-                    </td>
-                    <td>
-                        <input type="text"
-                               id="<portlet:namespace />detalle_precio_total_estimado"
-                               size="12"
-                               value=""
-                               <%= readonlyDetalleVista %> />
-                    </td>
-
                     <td>
                         <label for="<portlet:namespace />detalle_observaciones">
                             Observaciones:
@@ -231,7 +205,7 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
                         <input type="button"
                                id="<portlet:namespace />detalle_submit"
                                value="Agregar detalle"
-                               onClick="<%= puedeABMDetalle ? namespaceDetalleCompra + "agregarOActualizarDetalle();" : "return false;" %>" />
+                               onClick="<%= puedeABMDetalle ? "return " + namespaceDetalleCompra + "agregarOActualizarDetalle();" : "return false;" %>" />
 
                         &nbsp;&nbsp;
 
@@ -239,7 +213,7 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
                                id="<portlet:namespace />detalle_cancelar"
                                value="Cancelar edici&oacute;n"
                                style="display:none;"
-                               onClick="<%= puedeABMDetalle ? namespaceDetalleCompra + "cancelarEdicionDetalle();" : "return false;" %>" />
+                               onClick="<%= puedeABMDetalle ? "return " + namespaceDetalleCompra + "cancelarEdicionDetalle();" : "return false;" %>" />
                     </td>
                 </tr>
             </table>
@@ -253,8 +227,6 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
             <th>ID</th>
             <th>Art&iacute;culo</th>
             <th>Cantidad</th>
-            <th>Precio unitario estimado</th>
-            <th>Total estimado</th>
             <th>Observaciones</th>
 
             <% if (layoutEdicionDetalle) { %>
@@ -280,6 +252,9 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
     var <portlet:namespace />detallesCompra = [];
     var <portlet:namespace />detalleDeletedIds = [];
     var <portlet:namespace />articulosCompraCache = [];
+
+    var <portlet:namespace />detalleAccionEnCurso = false;
+    var <portlet:namespace />popupArticuloCompraAbriendo = false;
 
     <%
     for (int i = 0; i < articulos.size(); i++) {
@@ -324,8 +299,6 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
             idArticulo: '<%= jsDetalleCompra(idArticuloDetalle) %>',
             articulo: '<%= jsDetalleCompra(detalle.getArticuloVisible()) %>',
             cantidad: '<%= jsDetalleCompra(detalle.getCantidadString()) %>',
-            precioUnitario: '<%= jsDetalleCompra(detalle.getPrecioUnitarioEstimadoString()) %>',
-            precioTotal: '<%= jsDetalleCompra(detalle.getPrecioTotalEstimadoString()) %>',
             observaciones: '<%= jsDetalleCompra(detalle.getObservacionesVisible()) %>'
         });
     <%
@@ -463,26 +436,6 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
         return parsed;
     }
 
-    function <portlet:namespace />calcularTotalDetalle() {
-        var cantidad = parseInt(
-                jQuery.trim(jQuery('#<portlet:namespace />detalle_cantidad').val()),
-                10
-        );
-
-        var precioUnitario =
-                <portlet:namespace />normalizarImporte(
-                        jQuery('#<portlet:namespace />detalle_precio_unitario_estimado').val()
-                );
-
-        if (isNaN(cantidad) || cantidad <= 0 || precioUnitario == null) {
-            return;
-        }
-
-        jQuery('#<portlet:namespace />detalle_precio_total_estimado').val(
-                (cantidad * precioUnitario).toFixed(2)
-        );
-    }
-
     function <portlet:namespace />renderDetallesCompra() {
         var tbody = jQuery('#<portlet:namespace />detalle_body');
 
@@ -511,8 +464,6 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.id) + '</td>';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.articulo) + '</td>';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.cantidad) + '</td>';
-            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.precioUnitario) + '</td>';
-            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.precioTotal) + '</td>';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.observaciones) + '</td>';
 
             <% if (layoutEdicionDetalle) { %>
@@ -541,15 +492,22 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
         var <portlet:namespace />popupArticuloCompra = null;
 
         function <portlet:namespace />abrirAltaArticuloCompra() {
+            if (<portlet:namespace />popupArticuloCompraAbriendo) {
+                return false;
+            }
+
+            <portlet:namespace />popupArticuloCompraAbriendo = true;
+
             var idSector = <portlet:namespace />getSectorSeleccionadoCompra();
 
             if (idSector == '' || !/^[0-9]+$/.test(idSector) || parseInt(idSector, 10) <= 0) {
-                alert('Debe seleccionar un sector antes de cargar un artículo.');
-                return;
+                alert('Debe seleccionar un sector antes de cargar un articulo.');
+                <portlet:namespace />popupArticuloCompraAbriendo = false;
+                return false;
             }
 
             <portlet:namespace />popupArticuloCompra = Liferay.Popup({
-                title: 'Alta de artículo',
+                title: 'Alta de articulo',
                 modal: true,
                 width: 700
             });
@@ -559,7 +517,11 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
                     '&id_sector=' + encodeURIComponent(idSector) +
                     '&callback=' + encodeURIComponent('<portlet:namespace />seleccionarArticuloCompra');
 
-            jQuery(<portlet:namespace />popupArticuloCompra).load(url);
+            jQuery(<portlet:namespace />popupArticuloCompra).load(url, function() {
+                <portlet:namespace />popupArticuloCompraAbriendo = false;
+            });
+
+            return false;
         }
 
         function <portlet:namespace />seleccionarArticuloCompra(idArticulo, descripcion, idSector) {
@@ -585,8 +547,11 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
         }
 
         function <portlet:namespace />cerrarAltaArticuloCompra() {
+            <portlet:namespace />popupArticuloCompraAbriendo = false;
+
             if (<portlet:namespace />popupArticuloCompra) {
                 Liferay.Popup.close(<portlet:namespace />popupArticuloCompra);
+                <portlet:namespace />popupArticuloCompra = null;
             }
         }
 
@@ -594,8 +559,6 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
             jQuery('#<portlet:namespace />detalle_edit_index').val('-1');
             jQuery('#<portlet:namespace />detalle_id_articulo').val('');
             jQuery('#<portlet:namespace />detalle_cantidad').val('1');
-            jQuery('#<portlet:namespace />detalle_precio_unitario_estimado').val('');
-            jQuery('#<portlet:namespace />detalle_precio_total_estimado').val('');
             jQuery('#<portlet:namespace />detalle_observaciones').val('');
             jQuery('#<portlet:namespace />detalle_submit').val('Agregar detalle');
             jQuery('#<portlet:namespace />detalle_cancelar').hide();
@@ -616,8 +579,6 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
 
             jQuery('#<portlet:namespace />detalle_id_articulo').val(<portlet:namespace />detalleValue(detalle.idArticulo));
             jQuery('#<portlet:namespace />detalle_cantidad').val(<portlet:namespace />detalleValue(detalle.cantidad));
-            jQuery('#<portlet:namespace />detalle_precio_unitario_estimado').val(<portlet:namespace />detalleValue(detalle.precioUnitario));
-            jQuery('#<portlet:namespace />detalle_precio_total_estimado').val(<portlet:namespace />detalleValue(detalle.precioTotal));
             jQuery('#<portlet:namespace />detalle_observaciones').val(<portlet:namespace />detalleValue(detalle.observaciones));
 
             jQuery('#<portlet:namespace />detalle_submit').val('Guardar detalle');
@@ -627,71 +588,136 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
         }
 
         function <portlet:namespace />cancelarEdicionDetalle() {
+            if (<portlet:namespace />detalleAccionEnCurso) {
+                return false;
+            }
+
             <portlet:namespace />limpiarEditorDetalle();
+
+            return false;
+        }
+
+        function <portlet:namespace />setDetalleAccionEnCurso(activo) {
+            <portlet:namespace />detalleAccionEnCurso = activo;
+
+            var botonAgregar = jQuery('#<portlet:namespace />detalle_submit');
+            var botonCancelar = jQuery('#<portlet:namespace />detalle_cancelar');
+
+            if (botonAgregar.length > 0) {
+                if (activo) {
+                    if (botonAgregar.attr('data-texto-original') == null
+                            || botonAgregar.attr('data-texto-original') == '') {
+                        botonAgregar.attr('data-texto-original', botonAgregar.val());
+                    }
+
+                    botonAgregar.attr('disabled', 'disabled');
+                    botonAgregar.val('Procesando...');
+                } else {
+                    botonAgregar.removeAttr('disabled');
+
+                    var textoOriginal = botonAgregar.attr('data-texto-original');
+
+                    if (textoOriginal != null && textoOriginal != '') {
+                        botonAgregar.val(textoOriginal);
+                    }
+
+                    botonAgregar.removeAttr('data-texto-original');
+                }
+            }
+
+            if (botonCancelar.length > 0) {
+                if (activo) {
+                    botonCancelar.attr('disabled', 'disabled');
+                } else {
+                    botonCancelar.removeAttr('disabled');
+                }
+            }
+        }
+
+        function <portlet:namespace />liberarDetalleAccion(delay) {
+            if (typeof delay == 'undefined' || delay == null) {
+                delay = 0;
+            }
+
+            window.setTimeout(function() {
+                <portlet:namespace />setDetalleAccionEnCurso(false);
+            }, delay);
+
+            return false;
+        }
+
+        function <portlet:namespace />existeDetalleConArticulo(idArticulo, ignorarIndex) {
+            idArticulo = idArticulo == null ? '' : String(idArticulo);
+
+            for (var i = 0; i < <portlet:namespace />detallesCompra.length; i++) {
+                if (typeof ignorarIndex != 'undefined'
+                        && ignorarIndex != null
+                        && i == ignorarIndex) {
+                    continue;
+                }
+
+                var detalle = <portlet:namespace />detallesCompra[i];
+
+                if (detalle != null && String(detalle.idArticulo) == idArticulo) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         function <portlet:namespace />agregarOActualizarDetalle() {
+            if (<portlet:namespace />detalleAccionEnCurso) {
+                return false;
+            }
+
             var idArticulo = jQuery.trim(jQuery('#<portlet:namespace />detalle_id_articulo').val());
             var articulo = jQuery.trim(jQuery('#<portlet:namespace />detalle_id_articulo option:selected').text());
             var cantidad = jQuery.trim(jQuery('#<portlet:namespace />detalle_cantidad').val());
-            var precioUnitario = jQuery.trim(jQuery('#<portlet:namespace />detalle_precio_unitario_estimado').val());
-            var precioTotal = jQuery.trim(jQuery('#<portlet:namespace />detalle_precio_total_estimado').val());
             var observaciones = jQuery.trim(jQuery('#<portlet:namespace />detalle_observaciones').val());
 
             if (idArticulo == '' || !/^[0-9]+$/.test(idArticulo) || parseInt(idArticulo, 10) <= 0) {
-                alert('Debe seleccionar un artículo.');
+                alert('Debe seleccionar un articulo.');
                 jQuery('#<portlet:namespace />detalle_id_articulo').focus();
-                return;
+                return false;
             }
 
             if (cantidad == '' || !/^[0-9]+$/.test(cantidad) || parseInt(cantidad, 10) <= 0) {
                 alert('La cantidad debe ser entera y mayor a cero.');
                 jQuery('#<portlet:namespace />detalle_cantidad').focus();
-                return;
+                return false;
             }
-
-            var precioUnitarioNormalizado =
-                    <portlet:namespace />normalizarImporte(precioUnitario);
-
-            var precioTotalNormalizado =
-                    <portlet:namespace />normalizarImporte(precioTotal);
-
-            if (precioUnitario != '' && precioUnitarioNormalizado == null) {
-                alert('El precio unitario estimado no es valido.');
-                jQuery('#<portlet:namespace />detalle_precio_unitario_estimado').focus();
-                return;
-            }
-
-            if (precioTotal != '' && precioTotalNormalizado == null) {
-                alert('El precio total estimado no es valido.');
-                jQuery('#<portlet:namespace />detalle_precio_total_estimado').focus();
-                return;
-            }
-
-            if (precioTotal == '' && precioUnitarioNormalizado != null) {
-                precioTotal = (parseInt(cantidad, 10) * precioUnitarioNormalizado).toFixed(2);
-                jQuery('#<portlet:namespace />detalle_precio_total_estimado').val(precioTotal);
-            }
-
-            var detalle = {
-                id: '',
-                idArticulo: idArticulo,
-                articulo: articulo,
-                cantidad: cantidad,
-                precioUnitario: precioUnitario,
-                precioTotal: precioTotal,
-                observaciones: observaciones
-            };
 
             var editIndex = parseInt(
                     jQuery('#<portlet:namespace />detalle_edit_index').val(),
                     10
             );
 
-            if (!isNaN(editIndex)
+            var esEdicion =
+                    !isNaN(editIndex)
                     && editIndex >= 0
-                    && <portlet:namespace />detallesCompra[editIndex]) {
+                    && <portlet:namespace />detallesCompra[editIndex];
 
+            if (<portlet:namespace />existeDetalleConArticulo(
+                    idArticulo,
+                    esEdicion ? editIndex : -1
+            )) {
+                alert('Ya existe un detalle cargado para este articulo. Edite la fila existente en lugar de agregar otra.');
+                jQuery('#<portlet:namespace />detalle_id_articulo').focus();
+                return false;
+            }
+
+            <portlet:namespace />setDetalleAccionEnCurso(true);
+
+            var detalle = {
+                id: '',
+                idArticulo: idArticulo,
+                articulo: articulo,
+                cantidad: cantidad,
+                observaciones: observaciones
+            };
+
+            if (esEdicion) {
                 detalle.id = <portlet:namespace />detallesCompra[editIndex].id;
                 <portlet:namespace />detallesCompra[editIndex] = detalle;
             } else {
@@ -700,17 +726,25 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
 
             <portlet:namespace />limpiarEditorDetalle();
             <portlet:namespace />renderDetallesCompra();
+
+            return <portlet:namespace />liberarDetalleAccion(300);
         }
 
         function <portlet:namespace />quitarDetalleEnPantalla(index) {
+            if (<portlet:namespace />detalleAccionEnCurso) {
+                return false;
+            }
+
+            <portlet:namespace />setDetalleAccionEnCurso(true);
+
             var detalle = <portlet:namespace />detallesCompra[index];
 
             if (!detalle) {
-                return;
+                return <portlet:namespace />liberarDetalleAccion(0);
             }
 
             if (!confirm('Confirma quitar el detalle?')) {
-                return;
+                return <portlet:namespace />liberarDetalleAccion(0);
             }
 
             if (detalle.id != null && detalle.id != '' && parseInt(detalle.id, 10) > 0) {
@@ -720,6 +754,8 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
             <portlet:namespace />detallesCompra.splice(index, 1);
             <portlet:namespace />limpiarEditorDetalle();
             <portlet:namespace />renderDetallesCompra();
+
+            return <portlet:namespace />liberarDetalleAccion(700);
         }
 
         function <portlet:namespace />crearHiddenDetalle(name, value) {
@@ -779,6 +815,34 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
                 return false;
             }
 
+            var articulosSerializados = {};
+
+            for (var d = 0; d < <portlet:namespace />detallesCompra.length; d++) {
+                var detalleValidacion = <portlet:namespace />detallesCompra[d];
+
+                if (detalleValidacion == null) {
+                    continue;
+                }
+
+                var idArticuloValidacion = jQuery.trim(detalleValidacion.idArticulo);
+
+                if (idArticuloValidacion == '') {
+                    continue;
+                }
+
+                if (articulosSerializados[idArticuloValidacion]) {
+                    alert(
+                        'Detalle #' + (d + 1) +
+                        ': el articulo ya fue cargado en otro detalle. ' +
+                        'Edite la fila existente en lugar de duplicarlo.'
+                    );
+
+                    return false;
+                }
+
+                articulosSerializados[idArticuloValidacion] = true;
+            }
+
             if (!<portlet:namespace />crearHiddenDetalle('detalle_count', <portlet:namespace />detallesCompra.length)) {
                 return false;
             }
@@ -822,14 +886,6 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
                     return false;
                 }
 
-                if (!<portlet:namespace />crearHiddenDetalle(prefix + 'precio_unitario_estimado', detalle.precioUnitario)) {
-                    return false;
-                }
-
-                if (!<portlet:namespace />crearHiddenDetalle(prefix + 'precio_total_estimado', detalle.precioTotal)) {
-                    return false;
-                }
-
                 if (!<portlet:namespace />crearHiddenDetalle(prefix + 'observaciones', detalle.observaciones)) {
                     return false;
                 }
@@ -842,10 +898,6 @@ int detalleColspan = layoutEdicionDetalle ? 7 : 6;
                 <portlet:namespace />serializarDetallesCompras;
 
         jQuery(function() {
-            jQuery('#<portlet:namespace />detalle_cantidad, #<portlet:namespace />detalle_precio_unitario_estimado').change(function() {
-                <portlet:namespace />calcularTotalDetalle();
-            });
-
             jQuery('#<portlet:namespace />id_sector, #<portlet:namespace />sector_id').change(function() {
                 <portlet:namespace />filtrarArticulosPorSector();
             });

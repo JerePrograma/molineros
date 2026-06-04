@@ -1,22 +1,17 @@
-package ar.com.ospim.compras.service;
-
-import java.math.BigDecimal;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.List;
+package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.beans.RequerimientoCompra;
 import ar.com.ospim.compras.beans.CompraArticulo;
-import ar.com.ospim.compras.beans.RequerimientoCompraDetalle;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.util.ConnectionHelper;
-
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+
+import java.math.BigDecimal;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class EditarRequerimientoCompraServiceImpl {
 

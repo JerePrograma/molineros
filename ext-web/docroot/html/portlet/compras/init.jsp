@@ -33,12 +33,12 @@
 <%@ page import="ar.com.ospim.util.DateUtils" %>
 
 <%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
-<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompra" %>
-<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraDetalle" %>
-<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraFiltro" %>
-<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraEstado" %>
-<%@ page import="ar.com.ospim.compras.beans.RequerimientoCompraSector" %>
-<%@ page import="ar.com.ospim.compras.service.BusquedaRequerimientoCompraServiceUtil" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraFiltro" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraEstado" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <%@ taglib uri="http://liferay.com/tld/ui-custom" prefix="liferay-ui-custom" %>
