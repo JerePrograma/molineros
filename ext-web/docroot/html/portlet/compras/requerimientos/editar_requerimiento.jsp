@@ -1027,6 +1027,16 @@ if (modoVista) {
 
     <c:if test="<%= !esNuevo %>">
         <liferay-util:include page="/html/portlet/compras/requerimientos/requerimiento_imagenes.jsp" />
+        <form method="get"
+              action="<%= request.getContextPath() %>/pdfservlet"
+              target="_blank"
+              style="display:inline;">
+
+            <input type="hidden" name="accion" value="requerimientoCompra" />
+            <input type="hidden" name="id_requerimiento" value="<%= req.getId() %>" />
+
+            <input type="submit" value="Imprimir PDF" />
+        </form>
     </c:if>
 
     <table class="lfr-table">

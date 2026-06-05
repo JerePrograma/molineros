@@ -141,11 +141,22 @@ public class PdfServlet extends HttpServlet {
 	
 	private static final String SITUACION_MEDICA_CRONICOS = "jasper/situacion_medica/cronicos_ospim.jasper";
 	private static final String SITUACION_MEDICA_CRONICOS_PDF_FILENAME = "Formulario Crónicos Ospim.pdf";
-		
+
+	private static final String REQUERIMIENTO_COMPRA =
+			"jasper/compras/requerimiento_compra.jasper";
+
+	private static final String REQUERIMIENTO_COMPRA_PDF_FILENAME =
+			"RequerimientoCompra.pdf";
+
 	public void doPost(HttpServletRequest req, HttpServletResponse res)
 			throws ServletException, IOException {
 
 		String accion = ParamUtil.getString(req, "accion");
+
+		if ("requerimientoCompra".equals(accion)) {
+			generaRequerimientoCompra(req, res);
+			return;
+		}
 
 		if (accion.equals("credencial")) {
 			generaCredencial(req, res);
@@ -1030,4 +1041,30 @@ public class PdfServlet extends HttpServlet {
 	    }
 	}
 
+	private void generaRequerimientoCompra(HttpServletRequest req,
+	                                       HttpServletResponse res) throws IOException {
+
+		int idRequerimiento = ParamUtil.getInteger(req, "id_requerimiento", 0);
+
+		if (idRequerimiento <= 0) {
+			res.sendError(
+					HttpServletResponse.SC_BAD_REQUEST,
+					"Parametro id_requerimiento obligatorio"
+			);
+			return;
+		}
+
+		HashMap<String, String> hm = new HashMap<String, String>();
+		hm.put("ID_REQUERIMIENTO", String.valueOf(idRequerimiento));
+		hm.put("SUBREPORT_DIR", "jasper/compras/");
+		hm.put("pathimage", "jasper/logo_negro.jpg");
+
+		crearPdf(
+				req,
+				res,
+				REQUERIMIENTO_COMPRA,
+				hm,
+				"RequerimientoCompra_" + idRequerimiento + ".pdf"
+		);
+	}
 }
