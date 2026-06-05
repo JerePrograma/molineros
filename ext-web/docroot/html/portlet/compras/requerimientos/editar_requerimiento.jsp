@@ -1025,6 +1025,10 @@ if (modoVista) {
         <liferay-util:param name="solo_lectura" value="<%= Boolean.toString(modoVista) %>" />
     </liferay-util:include>
 
+    <c:if test="<%= !esNuevo %>">
+        <liferay-util:include page="/html/portlet/compras/requerimientos/requerimiento_imagenes.jsp" />
+    </c:if>
+
     <table class="lfr-table">
         <tr>
             <td>

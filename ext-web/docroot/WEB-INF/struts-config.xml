@@ -7069,6 +7069,16 @@
 			<forward name="portlet.compras.editar_requerimiento"
 			         path="portlet.compras.editar_requerimiento" />
 		</action>
+
+		<action path="/compras/upload_imagenes_requerimiento"
+		        type="ar.com.ospim.compras.requerimientos.action.UploadImagenesComprasAction">
+			<forward name="portlet.compras.editar_requerimiento"
+			         path="portlet.compras.editar_requerimiento" />
+			<forward name="portlet.compras.ver_requerimiento"
+			         path="portlet.compras.ver_requerimiento" />
+			<forward name="portlet.compras.error"
+			         path="portlet.compras.error" />
+		</action>
     </action-mappings>
   
 </struts-config>
