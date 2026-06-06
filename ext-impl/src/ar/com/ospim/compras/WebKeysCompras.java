@@ -33,9 +33,32 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String FORWARD_COMPRAS_EDITAR_REQUERIMIENTO = "portlet.compras.editar_requerimiento";
     public static final String FORWARD_COMPRAS_VER_REQUERIMIENTO = "portlet.compras.ver_requerimiento";
 
+    /*
+     * Document Library - Adjuntos de requerimientos de compra.
+     *
+     * Se replica el mecanismo legacy de Reclamos:
+     * - Carpeta fija en Document Library.
+     * - Relacion por title con prefijo.
+     * - Sin tabla propia de adjuntos.
+     */
+    public static final long DOCUMENT_LIBRARY_GROUP_ID_COMPRAS = 10136L;
+    public static final long DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS = 0L;
+    public static final String DOCUMENT_LIBRARY_FOLDER_REQUERIMIENTOS_COMPRAS = "RequerimientosCompras";
+    public static final String DOCUMENT_LIBRARY_PREFIJO_REQUERIMIENTO_COMPRA = "RC-";
+
     public static final int ESTADO_BORRADOR = 1;
     public static final int ESTADO_COTIZADO = 2;
     public static final int ESTADO_ANULADO = 3;
+
+    public static String getPrefijoDocumentoRequerimientoCompra(int idRequerimientoCompra) {
+        if (idRequerimientoCompra <= 0) {
+            return DOCUMENT_LIBRARY_PREFIJO_REQUERIMIENTO_COMPRA;
+        }
+
+        return DOCUMENT_LIBRARY_PREFIJO_REQUERIMIENTO_COMPRA
+                + idRequerimientoCompra
+                + "-";
+    }
 
     public static String getEstadoDescripcion(int estado) {
         switch (estado) {
