@@ -6,15 +6,22 @@
 <%@ page import="com.liferay.portal.kernel.dao.orm.DynamicQuery" %>
 <%@ page import="com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil" %>
 <%@ page import="com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil" %>
+<%@ page import="com.liferay.portal.kernel.portlet.LiferayWindowState" %>
 <%@ page import="com.liferay.portal.kernel.portlet.PortletClassLoaderUtil" %>
 <%@ page import="com.liferay.portal.kernel.util.HtmlUtil" %>
 <%@ page import="com.liferay.portal.kernel.util.HttpUtil" %>
 <%@ page import="com.liferay.portal.kernel.util.ParamUtil" %>
 <%@ page import="com.liferay.portal.kernel.util.StringPool" %>
+<%@ page import="com.liferay.portal.kernel.language.LanguageUtil" %>
+<%@ page import="com.liferay.portal.kernel.dao.search.SearchContainer" %>
+<%@ page import="com.liferay.portal.kernel.dao.search.ResultRow" %>
+<%@ page import="com.liferay.portal.kernel.log.Log" %>
+<%@ page import="com.liferay.portal.kernel.log.LogFactoryUtil" %>
 <%@ page import="com.liferay.portlet.documentlibrary.model.DLFileEntry" %>
 <%@ page import="com.liferay.portlet.documentlibrary.model.DLFolder" %>
 <%@ page import="com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil" %>
 <%@ page import="com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil" %>
+<%@ page import="javax.portlet.PortletURL" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
 
@@ -36,6 +43,8 @@ private String jsCompraAdjunto(String value) {
 %>
 
 <%
+String namespaceAdjuntos = renderResponse.getNamespace();
+
 RequerimientoCompra reqImagenes =
         (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
 
@@ -159,9 +168,9 @@ try {
             row.setObject(fileEntry);
 
             row.addText(searchContainer.getStart() + i + 1 + StringPool.PERIOD);
-            row.addText(fileEntry.getFolder().getName());
-            row.addText(fileEntry.getTitle());
-            row.addText(fileEntry.getDescription());
+            row.addText(HtmlUtil.escape(fileEntry.getFolder().getName()));
+            row.addText(HtmlUtil.escape(fileEntry.getTitle()));
+            row.addText(HtmlUtil.escape(fileEntry.getDescription()));
 
             String downloadURL =
                     themeDisplay.getPathMain()
@@ -173,7 +182,7 @@ try {
             StringBuilder ver = new StringBuilder();
 
             ver.append("<a href=\"");
-            ver.append(downloadURL);
+            ver.append(HtmlUtil.escape(downloadURL));
             ver.append("\" target=\"_blank\">");
             ver.append("<img alt=\"Ver archivo\" src=\"");
             ver.append(themeDisplay.getPathThemeImages());
@@ -187,7 +196,9 @@ try {
             if (puedeEliminarImagenes) {
                 borrar.append("<img alt=\"Eliminar archivo\" src=\"");
                 borrar.append(themeDisplay.getPathThemeImages());
-                borrar.append("/common/delete.png\" onclick=\"return <portlet:namespace />deleteImagenRequerimientoCompra('");
+                borrar.append("/common/delete.png\" onclick=\"return ");
+                borrar.append(namespaceAdjuntos);
+                borrar.append("deleteImagenRequerimientoCompra('");
                 borrar.append(String.valueOf(folderId));
                 borrar.append("','");
                 borrar.append(jsCompraAdjunto(fileEntry.getName()));

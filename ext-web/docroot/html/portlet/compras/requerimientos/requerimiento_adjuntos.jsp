@@ -3,6 +3,7 @@
 <%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra" %>
 <%@ page import="ar.com.ospim.util.PermissionUtil" %>
+<%@ page import="com.liferay.portal.kernel.servlet.SessionMessages" %>
 <%@ page import="com.liferay.portal.kernel.util.Constants" %>
 <%@ page import="com.liferay.portal.kernel.util.HtmlUtil" %>
 <%@ page import="com.liferay.portal.kernel.util.ParamUtil" %>
@@ -52,6 +53,25 @@ uploadImagenesURL.setWindowState(WindowState.MAXIMIZED);
 uploadImagenesURL.setParameter("struts_action", "/compras/upload_imagenes_requerimiento");
 
 String modoRetornoImagenes = soloLecturaImagenes ? "ver" : "";
+
+String msgInsertErrorImagenes =
+        (String) request.getAttribute("msgInsertError");
+
+if (msgInsertErrorImagenes == null) {
+    msgInsertErrorImagenes = "";
+}
+
+boolean msgArchivoGuardadoImagenes =
+        SessionMessages.contains(
+                renderRequest,
+                "requerimiento-compra-archivo-guardado"
+        );
+
+boolean msgArchivoBorradoImagenes =
+        SessionMessages.contains(
+                renderRequest,
+                "requerimiento-compra-archivo-borrado"
+        );
 %>
 
 <form action="<%= uploadImagenesURL.toString() %>"
@@ -64,15 +84,15 @@ String modoRetornoImagenes = soloLecturaImagenes ? "ver" : "";
         <legend>Archivos del requerimiento</legend>
 
         <liferay-ui:error key="errorUploadFile"
-                          message="<%=(String) request.getAttribute(\"msgInsertError\") %>" />
+                          message="<%= HtmlUtil.escape(msgInsertErrorImagenes) %>" />
 
-        <c:if test="<%= com.liferay.portal.kernel.servlet.SessionMessages.contains(renderRequest, "requerimiento-compra-archivo-guardado") %>">
+        <c:if test="<%= msgArchivoGuardadoImagenes %>">
             <div class="portlet-msg-success">
                 Archivo del requerimiento guardado correctamente.
             </div>
         </c:if>
 
-        <c:if test="<%= com.liferay.portal.kernel.servlet.SessionMessages.contains(renderRequest, "requerimiento-compra-archivo-borrado") %>">
+        <c:if test="<%= msgArchivoBorradoImagenes %>">
             <div class="portlet-msg-success">
                 Archivo del requerimiento eliminado correctamente.
             </div>
