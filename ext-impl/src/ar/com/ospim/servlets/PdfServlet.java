@@ -46,99 +46,99 @@ public class PdfServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final String CREDENCIALES = "jasper/credencial/credencial_OSPIM_A4.jasper";
 	private static final String CREDENCIAL_PDF_FILENAME = "Credencial.pdf";
-	
+
 	private static final String CREDENCIALES_EXENTO = "jasper/afiliaciones/credencial_exepcion_copago.jasper";
 	private static final String CREDENCIAL_EXENTO_PDF_FILENAME = "credencial_exepcion_copago.pdf";
-	
+
 	private static final String CREDENCIALES_CES = "jasper/credencial/credencial_OSPIM_CES_A4.jasper";
 	private static final String CREDENCIAL_CES_PDF_FILENAME = "Credencial_CES.pdf";
 
 	private static final String CHEQUES = "jasper/cheque/chequeospim.jasper";
 	private static final String CHEQUE_PDF_FILENAME = "Cheque.pdf";
-	
+
 	private static final String ORDEN_PAGO = "jasper/orden_pago/ordenPagoAmtima.jasper";
 	private static final String ORDEN_PAGO_PDF_FILENAME = "OrdenPago.pdf";
-	
+
 	private static final String ORDEN_PAGO_FARMACIA = "jasper/orden_pago/ordenPagoAmtimaFarmacia.jasper";
 	private static final String ORDEN_PAGO_FARMACIA_PDF_FILENAME = "OrdenPagoFarmacia.pdf";
-	
+
 	//public static final String ORDEN_PAGO_OSPIM = "jasper/orden_pago/ordenPagoOspim.jasper";
 	public static final String ORDEN_PAGO_OSPIM = "jasper/orden_pago/ordenPagoOSPIM.jasper";
 	public static final String ORDEN_PAGO_OSPIM_INTEGRACION = "jasper/orden_pago/ordenPagoOSPIM_Integracion_v1.jasper";
 	public static final String ORDEN_PAGO_OSPIM_PDF_FILENAME = "OrdenPagoOspim.pdf";
-	
+
 	public static final String COMPROBANTE_RETEN_GANANCIAS = "jasper/orden_pago/certificadoRetencion.jasper";
 	public static final String COMPROBANTE_RETEN_GANANCIAS_PDF_FILENAME = "certificadoRetencion.pdf";
-	
+
 	public static final String COMPROBANTE_RETEN_IIBB = "jasper/orden_pago/certificadoRetencionIIBB.jasper";
 	public static final String COMPROBANTE_RETEN_IIBB_PDF_FILENAME = "certificadoRetencionIIBB.pdf";
-	
+
 	public static final String COMPROBANTE_RETEN_IVA = "jasper/orden_pago/certificadoRetencionIVA.jasper";
 	public static final String COMPROBANTE_RETEN_IVA_PDF_FILENAME = "certificadoRetencionIVA.pdf";
-		
+
 	private static final String ORDEN_PAGO_UOMA = "jasper/orden_pago/ordenPagoUOMA.jasper";
 	private static final String ORDEN_PAGO_UOMA_PDF_FILENAME = "OrdenPagoUoma.pdf";
-	
+
 	private static final String ORDEN_PAGO_OSPIM_FARMACIA = "jasper/orden_pago/ordenPagoOSFar.jasper";
 	//private static final String ORDEN_PAGO_OSPIM_FARMACIA = "jasper/orden_pago/ordenPagoOspimFarmacia.jasper";
-	
+
 	private static final String NOTA_DEBITO_LIQUIDACION = "jasper/orden_pago/notaDebitoTerceros.jasper";
-	
+
 	private static final String NOTA_DEBITO_LIQUIDACION_PDF_FILENAME = "NotaDebito.pdf";
 
 	private static final String DOCUMENTACION_FALTANTE = "jasper/tratamientos_discapacidad/documentosFaltantes.jasper";
 	private static final String DOCUMENTACION_FALTANTE_PDF_FILENAME = "DocumentacionFaltante.pdf";
-	
+
 	public static final String AUTORIZACION_TRATAMIENTO_JASPER = "jasper/tratamientos_discapacidad/autorizacionPrestacional.jasper";
 	public static final String AUTORIZACION_TRATAMIENTO_ODT_FILENAME = "autorizacionTratamiento.pdf";
-	
+
 	private static final String AUTORIZACION_RECETAS_PMI_JASPER = "jasper/autorizaciones/recetasPmi.jasper";
 	private static final String AUTORIZACION_RECETAS_PMI_PDF_FILENAME = "RecetasPmi.pdf";
 
 	private static final String TARJETACOORDENADAS = "jasper/credencial/tarjetacoordenadas_v01.jasper";
 	private static final String TARJETACOORDENADAS_PDF_FILENAME = "TarjetaCoordenadas.pdf";
-	
+
 	private static final String CAJA_CHICA_RECIBO_UOMA = "jasper/caja_chica/reciboCajaChicaUOMAContenedor.jasper";
 	private static final String CAJA_CHICA_RECIBO_OSPIM = "jasper/caja_chica/reciboCajaChicaOspim.jasper";
-	private static final String CAJA_CHICA_RECIBO_PDF_FILENAME = "ReciboCajaChica.pdf";	
-	
+	private static final String CAJA_CHICA_RECIBO_PDF_FILENAME = "ReciboCajaChica.pdf";
+
 	private static final String RPTRECLAMOPRESTACIONAL= "jasper/reclamo_prestacionales/reclamoprestacional.jasper";
 	private static final String RPTRECLAMOPRESTACIONAL_PDF_FILENAME = "ReclamoPrestacional.pdf";
-	
+
 	private static final String RPTEQUIPODISCIPLINARIO = "jasper/equipo_interdisciplinario/equipointer.jasper";
 	private static final String RPTEQUIPOINTERDISCIPLINARIO_PDF_FILENAME = "EquipoInterdisciplinario.pdf";
-	
-	
+
+
 	private static final String RPTRECLAMOPRESTACIONALLOTE= "jasper/reclamo_prestacionales/reclamos_prestacionales_por_lote.jasper";
 	private static final String RPTRECLAMOPRESTACIONAL_PDF_FILENAME_LOTE = "ReclamoPrestacionalLote.pdf";
-	
+
 	private static final String UOMA_FACTURA= "jasper/facturacion/factura.jasper";
 	private static final String UOMA_FACTURA_PDF_FILENAME = "factura.pdf";
-	
+
 	private static final String RESUMEN_LIQUIDACION_RESERVA= "jasper/hoteles/resumen_gastos_por_reserva.jasper";
 	private static final String RESUMEN_LIQUIDACION_RESERVA_PDF_FILENAME = "reserva_resumen.pdf";
-	
+
 	private static final String RESUMEN_LIQUIDACION_RESERVA_GENERAL= "jasper/hoteles/resumen_gastos_por_reserva_general.jasper";
 	private static final String RESUMEN_LIQUIDACION_RESERVA_GENERAL_PDF_FILENAME = "reserva_resumen_general.pdf";
-	
+
 	private static final String RESUMEN_GOBERNANTA_RESERVA= "jasper/hoteles/resumen_hab_gobernanta.jasper";
 	private static final String RESUMEN_GOBERNANTA_RESERVA_PDF_FILENAME = "habitaciones_gobernanta.pdf";
-	
+
 	private static final String ESTADISTICA_DESAYUNO_HOTELES= "jasper/hoteles/estadistica_desayunos.jasper";
 	private static final String ESTADISTICA_DESAYUNO_HOTELES_PDF_FILENAME = "estadistica_desayunos.pdf";
-	
+
 	public static final String RECIBO_OSPIM = "jasper/tesoreria/recibo_ospim.jasper";
 	public static final String RECIBO_OSPIM_PDF_FILENAME = "ReciboOspim_xxx.pdf";
-	
+
 	public static final String RECIBO_AMTIMA = "jasper/tesoreria/recibo_amtima.jasper";
 	public static final String RECIBO_AMTIMA_PDF_FILENAME = "ReciboAmtima_xxx.pdf";
-	
+
 	public static final String RECIBO_UOMA = "jasper/tesoreria/recibo_uoma.jasper";
 	public static final String RECIBO_UOMA_PDF_FILENAME = "ReciboUoma_xxx.pdf";
-	
+
 	private static final String SITUACION_MEDICA_ANTICONCEPCION = "jasper/situacion_medica/anticoncepcion_ospim.jasper";
 	private static final String SITUACION_MEDICA_ANTICONCEPCION_PDF_FILENAME = "Formulario Anticoncepción Ospim.pdf";
-	
+
 	private static final String SITUACION_MEDICA_CRONICOS = "jasper/situacion_medica/cronicos_ospim.jasper";
 	private static final String SITUACION_MEDICA_CRONICOS_PDF_FILENAME = "Formulario Crónicos Ospim.pdf";
 
@@ -161,7 +161,7 @@ public class PdfServlet extends HttpServlet {
 		if (accion.equals("credencial")) {
 			generaCredencial(req, res);
 		}
-		
+
 
 		if (accion.equals("credencialExentoCoPago")) {
 			generarCredencialExentoCoPago(req, res);
@@ -170,27 +170,27 @@ public class PdfServlet extends HttpServlet {
 		if (accion.equals("credencialCES")) {
 			generarCredencialCES(req, res);
 		}
-		
+
 		if (accion.equals("cheque")) {
 			generaCheque(req, res);
-		}		
+		}
 
 		if (accion.equals("ordenPago")) {
 			generaOrdenPago(req, res);
 		}
-		
+
 		if (accion.equals("ordenPagoFarmacia")) {
 			generaOrdenPagoFarmacia(req, res);
 		}
-		
+
 		if (accion.equals("ordenPagoUoma")) {
 			generaOrdenPagoUoma(req, res);
 		}
-		
+
 		if (accion.equals("ordenPagoOspimFarmacia")) {
 			generaOrdenPagoOspimFarmacia(req, res);
 		}
-		
+
 		if (accion.equals("ordenPagoOspim")) {
 			generaOrdenPagoOspim(req, res);
 		}
@@ -201,87 +201,87 @@ public class PdfServlet extends HttpServlet {
 		if(accion.equals("notaDebitoLiquidacionxOP")){
 			generaNotaDebitoXOp(req, res);
 		}
-		
+
 		if (accion.equals("documentacionFaltante")) {
 			generaDocumentacionFaltante(req, res);
 		}
 		if (accion.equals("autorizacionTratamiento")) {
 			autorizacionTratamiento(req, res);
-		}	
-		
+		}
+
 		if (accion.equals("autorizacionRecetaPmi")) {
 			autorizacionRecetaPmi(req, res);
 		}
-		
+
 		if (accion.equals("comproRetenGanancias")){
 			generaComprobanteRetencion(req, res);
 		}
-		
+
 		if (accion.equals("comproRetenIIBB")){
 			generaComprobanteRetencionIIBB(req, res);
 		}
-		
+
 		if (accion.equals("comproRetenIVA")){
 			generaComprobanteRetencionIVA(req, res);
 		}
-		
+
 		if (accion.equals("tarjetacoordenadas")) {
 			generaTarjetaCoordenadas(req, res);
 		}
-		
+
 		if (accion.equals("recibocajachica")) {
 			generaReciboCajaChica(req, res);
 		}
-		
-		
+
+
 		if (accion.equals("reclamoprestacional")) {
 			generaRptReclamoPrestacional(req, res);
 		}
-		
+
 		if (accion.equals("equipointerdisciplinario")) {
 			generaRptEquipoInterdisciplinario(req, res);
 		}
-		
+
 		if (accion.equals("ordenPagoOspimIntegracion")) {
 			generaOrdenPagoOspimIntegracion(req, res);
 		}
-		
+
 		if (accion.equals("reclamoprestacionallote")) {
 			generaRptReclamoPrestacionalLote(req, res);
 		}
-		
+
 		if (accion.equals("generarFacturaUOMA")) {
 			generaPdfFacturaUOMA(req, res);
 		}
-		
+
 		if (accion.equals("resumenliquidacionreserva")) {
 			generaPdfResumenLiquidacionReserva(req, res);
 		}
-		
+
 		if (accion.equals("resumenliquidacionreservageneral")) {
 			try {
 				generaPdfResumenLiquidacionReservaGeneral(req, res);
 			} catch (Exception e) {
 				_log.error(e);
-			} 
+			}
 		}
-		
+
 		if (accion.equals("reportediariohabitacionesgobernanta")) {
 			try {
 				generaPdfHabitacionesGobernanta(req, res);
 			} catch (Exception e) {
 				_log.error(e);
-			} 
+			}
 		}
-		
+
 		if (accion.equals("estadisticadesayunohoteles")) {
 			try {
 				generaEstadisticaDesayunoHoteles(req, res);
 			} catch (Exception e) {
 				_log.error(e);
-			} 
+			}
 		}
-		
+
 		if (accion.equals("reciboIngresoOspim")) {
 			generaReciboIngresoOspim(req, res);
 		}
@@ -292,7 +292,7 @@ public class PdfServlet extends HttpServlet {
 		if (accion.equals("reciboIngresoUoma")) {
 			generaReciboIngresoUoma(req, res);
 		}
-		
+
 		if (accion.equals("situacionMedicaPdf")) {
 		    generaSituacionMedicaPdf(req, res);
 		}
@@ -300,22 +300,22 @@ public class PdfServlet extends HttpServlet {
 
 	private void generaOrdenPagoOspim(HttpServletRequest req,
 			HttpServletResponse res) {
-		String id_orden_pagoIni = ParamUtil.getString(req, "id_ini");		
+		String id_orden_pagoIni = ParamUtil.getString(req, "id_ini");
 		HashMap<String, String> hm = new HashMap<String, String>();
-		//hm.put("id_ini", id_orden_pagoIni);		
+		//hm.put("id_ini", id_orden_pagoIni);
 		hm.put("ID_ORDEN_PAGO", id_orden_pagoIni);
         hm.put("SUBREPORT_DIR", "jasper/");
 		hm.put("pathimage", "jasper/firma_carolina.jpg");
 		crearPdf(req, res, ORDEN_PAGO_OSPIM, hm, ORDEN_PAGO_OSPIM_PDF_FILENAME);
 	}
-	
+
 	private void generaOrdenPagoOspimFarmacia(HttpServletRequest req,
 			HttpServletResponse res) {
-		String id_orden_pagoIni = ParamUtil.getString(req, "id_ini");		
+		String id_orden_pagoIni = ParamUtil.getString(req, "id_ini");
 		String id_orden_pagoFin = ParamUtil.getString(req, "id_fin");
 		HashMap<String, String> hm = new HashMap<String, String>();
 		hm.put("id_op_ini", id_orden_pagoIni);
-		hm.put("id_op_fin", id_orden_pagoFin);		
+		hm.put("id_op_fin", id_orden_pagoFin);
 		crearPdf(req, res, ORDEN_PAGO_OSPIM_FARMACIA, hm, ORDEN_PAGO_OSPIM_PDF_FILENAME);
 	}
 
@@ -327,7 +327,7 @@ public class PdfServlet extends HttpServlet {
 		HashMap<String, String> hm = new HashMap<String, String>();
 		hm.put("id_ini", id_nota_debitoIni);
 		hm.put("terceros", terceros);
-		hm.put("importe_terceros", importe_terceros);		
+		hm.put("importe_terceros", importe_terceros);
 		crearPdf(req, res, NOTA_DEBITO_LIQUIDACION, hm, NOTA_DEBITO_LIQUIDACION_PDF_FILENAME);
 	}
 
@@ -336,7 +336,7 @@ public class PdfServlet extends HttpServlet {
 			HttpServletResponse res) {
 		String cuil_titular = ParamUtil.getString(req, "cuil_titular", "");
 		int inte = ParamUtil.getInteger(req, "inte", 0);
-		
+
 		SimpleDateFormat formatoDeFechas = new SimpleDateFormat("dd/MM/yyyy");
 		String fechaDesdeDia = ParamUtil.getString(req,
 				"fechaDesdeDia");
@@ -366,16 +366,16 @@ public class PdfServlet extends HttpServlet {
 		} catch (Exception e) {
 			fechaHasta = null;
 		}
-		
+
 		HashMap<String, String> hm = new HashMap<String, String>();
 		hm.put("cuil_titular", cuil_titular);
-		hm.put("inte", String.valueOf(inte));		
+		hm.put("inte", String.valueOf(inte));
 		hm.put("fecha_desde", DateUtils.format(fechaDesde, DateUtils.SHORT));
 		hm.put("fecha_hasta", DateUtils.format(fechaHasta, DateUtils.SHORT));
 		hm.put("SUBREPORT_DIR", "jasper/tratamientos_discapacidad/");
 		crearPdf(req, res, DOCUMENTACION_FALTANTE, hm, DOCUMENTACION_FALTANTE_PDF_FILENAME);
 	}
-	
+
 	private void autorizacionRecetaPmi(HttpServletRequest req,
 			HttpServletResponse res) {
 		String id_autorizacion_pmi = ParamUtil.getString(req, "id_autorizacion_pmi");
@@ -383,17 +383,17 @@ public class PdfServlet extends HttpServlet {
 		hm.put("id_autorizacion_pmi", id_autorizacion_pmi);
 		hm.put("SUBREPORT_DIR", "jasper/");
 		crearPdf(req, res, AUTORIZACION_RECETAS_PMI_JASPER, hm, AUTORIZACION_RECETAS_PMI_PDF_FILENAME);
-	}	
-	
+	}
+
 	private void autorizacionTratamiento(HttpServletRequest req,
 			HttpServletResponse res) {
-		String id_tratamiento = ParamUtil.getString(req, "id_tratamiento", "0");				
+		String id_tratamiento = ParamUtil.getString(req, "id_tratamiento", "0");
 		HashMap<String, String> hm = new HashMap<String, String>();
 		hm.put("id_ini", id_tratamiento);
 		hm.put("SUBREPORT_DIR", "jasper/");
 		crearPdf(req, res, AUTORIZACION_TRATAMIENTO_JASPER, hm, AUTORIZACION_TRATAMIENTO_ODT_FILENAME);
 	}
-	
+
 	private void generaCheque(HttpServletRequest req, HttpServletResponse res) {
 		String numero = ParamUtil.getString(req, "numero");
 		HashMap<String, String> hm = new HashMap<String, String>();
@@ -407,14 +407,14 @@ public class PdfServlet extends HttpServlet {
 		hm.put("id_ini", id_orden_pagoIni);
 		crearPdf(req, res, ORDEN_PAGO, hm, ORDEN_PAGO_PDF_FILENAME);
 	}
-	
+
 	private void generaOrdenPagoUoma(HttpServletRequest req, HttpServletResponse res) {
-		String id_orden_pagoIni = ParamUtil.getString(req, "id_orden_pago_ini");		
+		String id_orden_pagoIni = ParamUtil.getString(req, "id_orden_pago_ini");
 		HashMap<String, String> hm = new HashMap<String, String>();
-		hm.put("ID_ORDEN_PAGO", id_orden_pagoIni);		
+		hm.put("ID_ORDEN_PAGO", id_orden_pagoIni);
 		crearPdf(req, res, ORDEN_PAGO_UOMA, hm,"OrdenPagoUoma_" +id_orden_pagoIni+".pdf");
 	}
-	
+
 	private void generaOrdenPagoFarmacia(HttpServletRequest req, HttpServletResponse res) {
 		String id_orden_pagoIni = ParamUtil.getString(req, "id_orden_pago_ini");
 		String id_orden_pagoFin = ParamUtil.getString(req, "id_orden_pago_fin");
@@ -423,7 +423,7 @@ public class PdfServlet extends HttpServlet {
 		hm.put("id_fin", id_orden_pagoFin);
 		crearPdf(req, res, ORDEN_PAGO_FARMACIA, hm, ORDEN_PAGO_FARMACIA_PDF_FILENAME);
 	}
-	
+
 	private void generaOrdenPagoOspimIntegracion(HttpServletRequest req, HttpServletResponse res) {
 		String id_orden_pagoIni = ParamUtil.getString(req, "op_desde");
 		String id_orden_pagoFin = ParamUtil.getString(req, "op_hasta");
@@ -433,25 +433,25 @@ public class PdfServlet extends HttpServlet {
 		hm.put("SUBREPORT_DIR", "jasper/orden_pago/");
 		crearPdf(req, res, ORDEN_PAGO_OSPIM_INTEGRACION, hm, ORDEN_PAGO_OSPIM_PDF_FILENAME);
 	}
-	
+
 	private void generaCredencial(HttpServletRequest req,
 			HttpServletResponse res) {
 		String id_lote = ParamUtil.getString(req, "id_lote");
 		HashMap<String, String> hm = new HashMap<String, String>();
 		hm.put("id_lote", id_lote);
 		Date vto =DateUtils.getLastDateOfMonth(new Date(), true);
-		
-		Calendar calendar = Calendar.getInstance(); 
+
+		Calendar calendar = Calendar.getInstance();
 	    calendar.setLenient(false);
-	    calendar.setTime(vto); 
-	    calendar.add(calendar.MONTH, 1);  
-		
+	    calendar.setTime(vto);
+	    calendar.add(calendar.MONTH, 1);
+
 		hm.put("vto", new SimpleDateFormat("dd/MM/yyyy").format(calendar.getTime()));
 		hm.put("SUBREPORT_DIR", "jasper/");
 		crearPdf(req, res, CREDENCIALES, hm, CREDENCIAL_PDF_FILENAME);
 
 	}
-	
+
 	private void generarCredencialExentoCoPago(HttpServletRequest req,
 			HttpServletResponse res) {
 		String cuil_titular = ParamUtil.getString(req, "cuil");
@@ -463,43 +463,43 @@ public class PdfServlet extends HttpServlet {
 		crearPdf(req, res, CREDENCIALES_EXENTO, hm, CREDENCIAL_EXENTO_PDF_FILENAME);
 
 	}
-	
+
 	private void generarCredencialCES(HttpServletRequest req,
 			HttpServletResponse res) {
 		String id_lote = ParamUtil.getString(req, "id_lote");
 		HashMap<String, String> hm = new HashMap<String, String>();
 		hm.put("id_lote", id_lote);
 		Date vto =DateUtils.getLastDateOfMonth(new Date(), true);
-		
-		Calendar calendar = Calendar.getInstance(); 
+
+		Calendar calendar = Calendar.getInstance();
 	    calendar.setLenient(false);
-	    calendar.setTime(vto); 
-//	    calendar.add(calendar.MONTH, 1);  
-		
+	    calendar.setTime(vto);
+//	    calendar.add(calendar.MONTH, 1);
+
 		hm.put("vto", new SimpleDateFormat("dd/MM/yyyy").format(calendar.getTime()));
 		hm.put("SUBREPORT_DIR", "jasper/credencial/");
 		crearPdf(req, res, CREDENCIALES_CES, hm, CREDENCIAL_CES_PDF_FILENAME);
 
 	}
-	
+
 	private void generaComprobanteRetencion(HttpServletRequest req,
 			HttpServletResponse res) {
 		String id_orden_pagoIni = ParamUtil.getString(req, "id_ini");
-		String entidad = ParamUtil.getString(req, "entidad");	
+		String entidad = ParamUtil.getString(req, "entidad");
 		HashMap<String, String> hm = new HashMap<String, String>();
 		hm.put("id_op_p", id_orden_pagoIni);
-		hm.put("entidad_p", entidad);		
+		hm.put("entidad_p", entidad);
 		crearPdf(req, res, COMPROBANTE_RETEN_GANANCIAS, hm, COMPROBANTE_RETEN_GANANCIAS_PDF_FILENAME);
 	}
-	
+
 	private void generaComprobanteRetencionIIBB(HttpServletRequest req,
 			HttpServletResponse res) {
 		String id_orden_pagoIni = ParamUtil.getString(req, "id_ini");
-		String entidad = ParamUtil.getString(req, "entidad");	
+		String entidad = ParamUtil.getString(req, "entidad");
 		String tipo = ParamUtil.getString(req, "tipo");
 		HashMap<String, String> hm = new HashMap<String, String>();
 		hm.put("id_op_p", id_orden_pagoIni);
-		hm.put("entidad_p", entidad);	
+		hm.put("entidad_p", entidad);
 		hm.put("tipo_p", tipo);
 		hm.put("jurisdiccion_p", null);
 		crearPdf(req, res, COMPROBANTE_RETEN_IIBB, hm, COMPROBANTE_RETEN_IIBB_PDF_FILENAME);
@@ -508,21 +508,21 @@ public class PdfServlet extends HttpServlet {
 	private void generaComprobanteRetencionIVA(HttpServletRequest req,
 			HttpServletResponse res) {
 		String id_orden_pagoIni = ParamUtil.getString(req, "id_ini");
-		String entidad = ParamUtil.getString(req, "entidad");	
+		String entidad = ParamUtil.getString(req, "entidad");
 		String tipo = ParamUtil.getString(req, "tipo");
 		HashMap<String, String> hm = new HashMap<String, String>();
 		hm.put("id_op_p", id_orden_pagoIni);
-		hm.put("entidad_p", entidad);	
+		hm.put("entidad_p", entidad);
 		hm.put("tipo_p", tipo);
 		hm.put("jurisdiccion_p", null);
 		crearPdf(req, res, COMPROBANTE_RETEN_IVA, hm, COMPROBANTE_RETEN_IVA_PDF_FILENAME);
 	}
-	
-	
+
+
 	private void generaTarjetaCoordenadas(HttpServletRequest req,
 			HttpServletResponse res) {
 		String id_user = ParamUtil.getString(req, "id_user");
-		
+
 		try {
 			User usr = UserServiceUtil.getUserById(Long.parseLong(id_user));
 			HashMap<String, String> hm = new HashMap<String, String>();
@@ -538,11 +538,11 @@ public class PdfServlet extends HttpServlet {
 		}
 	}
 
-	
+
 	private void generaRptReclamoPrestacional(HttpServletRequest req,
 			HttpServletResponse res) {
-		String id_reclamo = ParamUtil.getString(req, "idreclamo");		
-		try {			
+		String id_reclamo = ParamUtil.getString(req, "idreclamo");
+		try {
 			HashMap<String, String> hm = new HashMap<String, String>();
 			hm.put("idreclamo", id_reclamo );
 			hm.put("SUBREPORT_DIR", "jasper/reclamo_prestacionales/");
@@ -552,11 +552,11 @@ public class PdfServlet extends HttpServlet {
 			_log.error(e);
 		}
 	}
-	
+
 	private void generaRptEquipoInterdisciplinario(HttpServletRequest req,
 			HttpServletResponse res) {
-		String id_equipo= ParamUtil.getString(req, "idequipo");		
-		try {			
+		String id_equipo= ParamUtil.getString(req, "idequipo");
+		try {
 			HashMap<String, String> hm = new HashMap<String, String>();
 			hm.put("idequipo", id_equipo);
 			hm.put("SUBREPORT_DIR", "jasper/equipo_interdisciplinario/");
@@ -587,6 +587,41 @@ public class PdfServlet extends HttpServlet {
 
 			_log.info("Generando PDF. jasperFile=" + jasperFile + " params=" + params);
 
+			try {
+				_log.info("java.awt.headless=" + System.getProperty("java.awt.headless"));
+				_log.info("java.version=" + System.getProperty("java.version"));
+				_log.info("java.home=" + System.getProperty("java.home"));
+
+				_log.info("JasperFillManager loaded from: " +
+						net.sf.jasperreports.engine.JasperFillManager.class
+								.getProtectionDomain()
+								.getCodeSource()
+								.getLocation()
+				);
+
+				Class cls = Class.forName(
+						"net.sf.jasperreports.engine.util.JRStyledTextParser",
+						false,
+						Thread.currentThread().getContextClassLoader()
+				);
+
+				_log.info("JRStyledTextParser loaded from: " +
+						cls.getProtectionDomain()
+								.getCodeSource()
+								.getLocation()
+				);
+
+				Class.forName(
+						"net.sf.jasperreports.engine.util.JRStyledTextParser",
+						true,
+						Thread.currentThread().getContextClassLoader()
+				);
+
+				_log.info("JRStyledTextParser initialized OK");
+
+			} catch (Throwable t) {
+				_log.error("ERROR inicializando JRStyledTextParser antes de fillReport", t);
+			}
 			JasperPrint print = JasperFillManager.fillReport(in, params, con);
 
 			res.setContentType("application/pdf");
