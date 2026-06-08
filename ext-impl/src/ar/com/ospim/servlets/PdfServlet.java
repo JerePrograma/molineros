@@ -566,34 +566,63 @@ public class PdfServlet extends HttpServlet {
 			_log.error(e);
 		}
 	}
-	
+
 	private void crearPdf(HttpServletRequest req, HttpServletResponse res,
-			String jasperFile, HashMap<String, String> params,
-			String outPdfFileName) {
-		Connection con = ConnectionHelper.getConnection();
-		InputStream in = getClass().getClassLoader().getResourceAsStream(
-				jasperFile);
+	                      String jasperFile, HashMap<String, String> params,
+	                      String outPdfFileName) {
+
+		Connection con = null;
+		InputStream in = null;
+
 		try {
+			con = ConnectionHelper.getConnection();
+			in = getClass().getClassLoader().getResourceAsStream(jasperFile);
+
+			if (in == null) {
+				_log.error("No se encontro jasper en classpath: " + jasperFile);
+				res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+						"No se encontro jasper: " + jasperFile);
+				return;
+			}
+
+			_log.info("Generando PDF. jasperFile=" + jasperFile + " params=" + params);
+
 			JasperPrint print = JasperFillManager.fillReport(in, params, con);
+
 			res.setContentType("application/pdf");
-			res.setHeader("Content-Disposition", "attachment; filename=\""
-					+ outPdfFileName + "\"");
+			res.setHeader("Content-Disposition", "attachment; filename=\"" + outPdfFileName + "\"");
 			res.setHeader("Cache-Control", "no-cache");
 
 			OutputStream outStream = res.getOutputStream();
 			JasperExportManager.exportReportToPdfStream(print, outStream);
 			outStream.flush();
 			outStream.close();
-		} catch (Exception e) {
-			_log.error(e);
-		} finally {
+
+		} catch (Throwable t) {
+			_log.error("Error grave generando PDF. jasperFile=" + jasperFile + " params=" + params, t);
 			try {
-				in.close();
-				con.close();
-			} catch (SQLException e) {
-				_log.error("Error cerrando conexion", e);
-			} catch (IOException e) {
-				_log.error("Error cerrando conexion", e);			
+				if (!res.isCommitted()) {
+					res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+							"Error generando PDF: " + jasperFile);
+				}
+			} catch (IOException ioe) {
+				_log.error("Error enviando respuesta de error", ioe);
+			}
+		} finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (IOException e) {
+					_log.error("Error cerrando jasper input stream", e);
+				}
+			}
+
+			if (con != null) {
+				try {
+					con.close();
+				} catch (SQLException e) {
+					_log.error("Error cerrando conexion", e);
+				}
 			}
 		}
 	}
@@ -1056,8 +1085,6 @@ public class PdfServlet extends HttpServlet {
 
 		HashMap<String, String> hm = new HashMap<String, String>();
 		hm.put("ID_REQUERIMIENTO", String.valueOf(idRequerimiento));
-		hm.put("SUBREPORT_DIR", "jasper/compras/");
-		hm.put("pathimage", "jasper/logo_negro.jpg");
 
 		crearPdf(
 				req,
