@@ -247,6 +247,11 @@ editarURL.setWindowState(WindowState.MAXIMIZED);
 editarURL.setParameter("struts_action", "/compras/editar_requerimiento");
 editarURL.setParameter("id_requerimiento_compra", req.getIdRequerimientoCompraString());
 
+PortletURL imprimirURL = renderResponse.createRenderURL();
+imprimirURL.setWindowState(WindowState.MAXIMIZED);
+imprimirURL.setParameter("struts_action", "/compras/imprimir_requerimiento");
+imprimirURL.setParameter("id_requerimiento_compra", req.getIdRequerimientoCompraString());
+
 PortletURL actionURL = renderResponse.createActionURL();
 actionURL.setWindowState(WindowState.MAXIMIZED);
 actionURL.setParameter("struts_action", "/compras/editar_requerimiento");
@@ -1041,6 +1046,15 @@ if (modoVista) {
                     &nbsp;&nbsp;
                 </c:if>
 
+                <c:if test="<%= req.getIdRequerimientoCompra() > 0 %>">
+                    <input type="button"
+                           id="<portlet:namespace />btnImprimirRequerimientoCompra"
+                           value="Imprimir PDF"
+                           onClick="window.open('<%= imprimirURL.toString() %>', '_blank'); return false;" />
+
+                    &nbsp;&nbsp;
+                </c:if>
+
                 <input type="button"
                        id="<portlet:namespace />btnVolverCompras"
                        class="compras-btn-volver"
@@ -1059,12 +1073,14 @@ if (modoVista) {
                 function ocultarBotonesModoVista() {
                     layout.find('input[type="button"], input[type="submit"], button')
                             .not('#' + ns + 'btnVolverCompras')
+                            .not('#' + ns + 'btnImprimirRequerimientoCompra')
                             .hide();
 
                     layout.find('a[onclick], img[onclick]')
                             .hide();
 
                     jQuery('#' + ns + 'btnVolverCompras').show();
+                    jQuery('#' + ns + 'btnImprimirRequerimientoCompra').show();
                 }
 
                 ocultarBotonesModoVista();

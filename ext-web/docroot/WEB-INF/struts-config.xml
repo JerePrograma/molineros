@@ -7031,6 +7031,19 @@
 		</action>
 
 		<action
+				path="/compras/imprimir_requerimiento"
+				type="ar.com.ospim.compras.requerimientos.action.ImprimirRequerimientoCompraAction">
+
+			<forward
+					name="portlet.compras.imprimir_requerimiento"
+					path="portlet.compras.imprimir_requerimiento" />
+
+			<forward
+					name="portlet.compras.error"
+					path="portlet.compras.error" />
+		</action>
+
+		<action
 				path="/compras/cambiar_estado_requerimiento"
 				type="ar.com.ospim.compras.requerimientos.action.CambiarEstadoRequerimientoCompraAction">
 

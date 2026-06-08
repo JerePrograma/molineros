@@ -4531,6 +4531,10 @@
 		<put name="portlet_content" value="/portlet/compras/requerimientos/editar_requerimiento.jsp" />
 	</definition>
 
+	<definition name="portlet.compras.imprimir_requerimiento" extends="portlet.compras">
+		<put name="portlet_content" value="/portlet/compras/requerimientos/imprimir_requerimiento_pdf.jsp" />
+	</definition>
+
 	<definition name="portlet.compras.error" extends="portlet.compras">
 		<put name="portlet_content" value="/portlet/compras/error.jsp" />
 	</definition>
