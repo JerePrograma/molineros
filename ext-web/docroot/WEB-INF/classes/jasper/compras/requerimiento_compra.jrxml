@@ -5,8 +5,7 @@
 	<property name="ireport.y" value="0"/>
 	<parameter name="ID_REQUERIMIENTO" class="java.lang.String"/>
 	<queryString>
-		<![CDATA[SELECT *
-FROM compras.get_requerimiento_compra_pdf(CAST($P{ID_REQUERIMIENTO} AS INTEGER))]]>
+		<![CDATA[SELECT * FROM compras.get_requerimiento_compra_pdf(CAST($P{ID_REQUERIMIENTO} AS INTEGER))]]>
 	</queryString>
 	<field name="id_requerimiento" class="java.lang.Integer"/>
 	<field name="alta_fecha" class="java.sql.Timestamp"/>
@@ -41,9 +40,7 @@ FROM compras.get_requerimiento_compra_pdf(CAST($P{ID_REQUERIMIENTO} AS INTEGER))
 	<field name="detalle_observaciones" class="java.lang.String"/>
 	<field name="total_estimado" class="java.math.BigDecimal"/>
 	<variable name="TOTAL_ESTIMADO" class="java.math.BigDecimal" calculation="Sum">
-		<variableExpression><![CDATA[$F{detalle_id} == null || $F{precio_total_estimado} == null
-    ? new java.math.BigDecimal("0")
-    : $F{precio_total_estimado}]]></variableExpression>
+		<variableExpression><![CDATA[$F{detalle_id} == null || $F{precio_total_estimado} == null ? new java.math.BigDecimal("0") : $F{precio_total_estimado}]]></variableExpression>
 		<initialValueExpression><![CDATA[new java.math.BigDecimal("0")]]></initialValueExpression>
 	</variable>
 	<background>
@@ -132,9 +129,7 @@ FROM compras.get_requerimiento_compra_pdf(CAST($P{ID_REQUERIMIENTO} AS INTEGER))
 				<textElement>
 					<font fontName="SansSerif" size="8"/>
 				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{afiliado_nombre_apellido} == null || $F{afiliado_nombre_apellido}.trim().equals("")
-    ? "SIN AFILIADO ASOCIADO"
-    : $F{afiliado_nombre_apellido}]]></textFieldExpression>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{afiliado_nombre_apellido} == null || $F{afiliado_nombre_apellido}.trim().equals("") ? "SIN AFILIADO ASOCIADO" : $F{afiliado_nombre_apellido}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement x="420" y="82" width="45" height="14"/>
