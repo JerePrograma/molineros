@@ -903,9 +903,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             requerimiento.setRequiereAfiliado(sector.isRequiereAfiliado());
 
             /*
-             * Regla de negocio:
-             * Si el sector no requiere afiliado, no hay reparto de cargos.
-             * Todo queda 100% a cargo de OSPIM y no se guarda afiliado ni tercerizadora.
+             * Si el sector no requiere afiliado, no hay reparto de cargos:
+             * OSPIM 100%, tercerizadora 0%, recupero false.
+             *
+             * Importante:
+             * No borrar idTercerizadora en requerimientos existentes.
+             * Si se borra automaticamente, se pisan datos historicos.
              */
             if (!sector.isRequiereAfiliado()) {
                 aplicarReglaSectorSinAfiliado(requerimiento);
@@ -914,13 +917,13 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         /*
-         * Para sectores que SI requieren afiliado:
-         * Recupero debe ser true solamente si Cargo tercerizadora es exactamente 100.
+         * Regla unica:
+         * Si hay cualquier porcentaje a cargo de tercerizadora, hay recupero.
          */
         Integer cargoTercerizadora = requerimiento.getCargoTercerizadora();
 
         requerimiento.setRecupero(
-                cargoTercerizadora != null && cargoTercerizadora.intValue() == 100
+                cargoTercerizadora != null && cargoTercerizadora.intValue() > 0
         );
     }
 
@@ -962,15 +965,15 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         /*
-         * Regla unica de negocio:
-         * Recupero es true solamente cuando Cargo tercerizadora es exactamente 100.
-         * En cualquier otro caso debe quedar false.
+         * Regla unica:
+         * Recupero es true cuando Cargo tercerizadora es mayor a 0.
          */
-        requerimiento.setRecupero(cargoTercerizadora == 100);
+        requerimiento.setRecupero(cargoTercerizadora > 0);
 
         /*
          * No se limpia tercerizadora automaticamente por cargos.
-         * La tercerizadora queda como vino del afiliado/formulario.
+         * La tercerizadora queda como vino del afiliado/formulario
+         * o como estaba guardada si el afiliado no cambio.
          *
          * Si hay cargo a tercerizadora, si se exige que exista tercerizadora.
          */
@@ -1082,14 +1085,15 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         RequerimientoCompra requerimiento = new RequerimientoCompra();
 
-        requerimiento.setIdRequerimientoCompra(
+        int idRequerimientoCompra =
                 parseEnteroConDefault(
                         request,
                         "id_requerimiento_compra",
                         "ID del requerimiento",
                         0
-                )
-        );
+                );
+
+        requerimiento.setIdRequerimientoCompra(idRequerimientoCompra);
 
         int idSector = parseEnteroConDefault(request, "id_sector", "Sector", 0);
 
@@ -1141,13 +1145,24 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         if (!WebKeysCompras.isEmpty(idTercerizadora)) {
-            requerimiento.setIdTercerizadora(idTercerizadora.trim());
+            requerimiento.setIdTercerizadora(idTercerizadora.trim().toUpperCase());
         } else {
             requerimiento.setIdTercerizadora(null);
         }
 
+        /*
+         * Blindaje contra pisado de tercerizadora:
+         * si el requerimiento ya existia y el afiliado no cambio,
+         * se conserva la tercerizadora persistida.
+         */
+        preservarTercerizadoraExistenteSiNoCambioAfiliado(requerimiento);
+
+        /*
+         * Regla unica:
+         * recupero true si hay cualquier cargo a tercerizadora.
+         */
         requerimiento.setRecupero(
-                cargoTercerizadora != null && cargoTercerizadora.intValue() == 100
+                cargoTercerizadora != null && cargoTercerizadora.intValue() > 0
         );
 
         requerimiento.setObservaciones(getParametroRaw(request, "observaciones", null));
@@ -1649,10 +1664,78 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         requerimiento.setAfiliadoCuilTitular(null);
         requerimiento.setAfiliadoInt(null);
-        requerimiento.setIdTercerizadora(null);
+
+        /*
+         * En requerimientos nuevos sin afiliado, no corresponde guardar tercerizadora.
+         * En requerimientos existentes, NO se limpia para evitar pisar datos historicos.
+         */
+        if (requerimiento.getIdRequerimientoCompra() <= 0) {
+            requerimiento.setIdTercerizadora(null);
+        }
 
         requerimiento.setCargoOspim(Integer.valueOf(100));
         requerimiento.setCargoTercerizadora(Integer.valueOf(0));
         requerimiento.setRecupero(false);
+    }
+
+    private void preservarTercerizadoraExistenteSiNoCambioAfiliado(
+            RequerimientoCompra requerimiento) throws Exception {
+
+        if (requerimiento == null
+                || requerimiento.getIdRequerimientoCompra() <= 0) {
+            return;
+        }
+
+        RequerimientoCompra existente =
+                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(
+                        requerimiento.getIdRequerimientoCompra()
+                );
+
+        if (existente == null) {
+            return;
+        }
+
+        boolean mismoAfiliado =
+                mismoTexto(
+                        existente.getAfiliadoCuilTitular(),
+                        requerimiento.getAfiliadoCuilTitular()
+                )
+                        && mismoInteger(
+                        existente.getAfiliadoInt(),
+                        requerimiento.getAfiliadoInt()
+                );
+
+        if (!mismoAfiliado) {
+            return;
+        }
+
+        /*
+         * Si el afiliado no cambio, no aceptamos que el componente visual
+         * reemplace automaticamente CSA por MCE u otra tercerizadora.
+         */
+        if (!WebKeysCompras.isEmpty(existente.getIdTercerizadora())) {
+            requerimiento.setIdTercerizadora(
+                    existente.getIdTercerizadora().trim().toUpperCase()
+            );
+        }
+    }
+
+    private boolean mismoTexto(String a, String b) {
+        String aa = a != null ? a.trim() : "";
+        String bb = b != null ? b.trim() : "";
+
+        return aa.equalsIgnoreCase(bb);
+    }
+
+    private boolean mismoInteger(Integer a, Integer b) {
+        if (a == null && b == null) {
+            return true;
+        }
+
+        if (a == null || b == null) {
+            return false;
+        }
+
+        return a.intValue() == b.intValue();
     }
 }

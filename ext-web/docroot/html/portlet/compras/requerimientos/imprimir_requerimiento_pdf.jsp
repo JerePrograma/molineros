@@ -8,13 +8,21 @@ if (WebKeysCompras.isEmpty(idRequerimientoCompra)) {
     idRequerimientoCompra =
             ParamUtil.getString(renderRequest, "id_requerimiento_compra", "");
 }
+
+if (idRequerimientoCompra != null) {
+    idRequerimientoCompra = idRequerimientoCompra.trim();
+}
+
+boolean idValido =
+        !WebKeysCompras.isEmpty(idRequerimientoCompra)
+        && idRequerimientoCompra.matches("^[0-9]+$");
 %>
 
 <c:choose>
-    <c:when test="<%= !WebKeysCompras.isEmpty(idRequerimientoCompra) %>">
+    <c:when test="<%= idValido %>">
         <script type="text/javascript">
             window.location.href =
-                    "/pdfservlet/?accion=requerimientoCompra&id_requerimiento=<%= HtmlUtil.escapeURL(idRequerimientoCompra) %>";
+                    "/pdfservlet/?accion=requerimientoCompra&id_requerimiento=<%= idRequerimientoCompra %>";
         </script>
     </c:when>
     <c:otherwise>

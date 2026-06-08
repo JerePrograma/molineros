@@ -365,9 +365,9 @@ if (afiliadoRequerimiento != null) {
 
     afiliadoBajaFecha = afiliadoRequerimiento.getBaja_fechaAsString();
     afiliadoFechaAlta = afiliadoRequerimiento.getAlta_fechaAsString();
-    afiliadoIdTercerizadora = afiliadoRequerimiento.getId_tercerizadora() != null
-            ? afiliadoRequerimiento.getId_tercerizadora()
-            : idTercerizadora;
+    if (WebKeysCompras.isEmpty(afiliadoIdTercerizadora)) {
+        afiliadoIdTercerizadora = idTercerizadora;
+    }
     afiliadoIncapacidad = afiliadoRequerimiento.getDiscapacitado() != null ? afiliadoRequerimiento.getDiscapacitado() : "";
     afiliadoAntecedentes = afiliadoRequerimiento.getTieneAntecedentesJudiciales() == 1 ? "SI" : "NO";
 
@@ -1132,7 +1132,7 @@ if (modoVista) {
             cargoTercerizadora = <portlet:namespace />parsePorcentajeSilencioso('cargo_tercerizadora');
         }
 
-        var recuperoActivo = cargoTercerizadora === 100;
+        var recuperoActivo = cargoTercerizadora != null && cargoTercerizadora > 0;
 
         var recuperoEl = document.getElementById('<portlet:namespace />recupero');
 
@@ -1553,13 +1553,6 @@ if (modoVista) {
 
             jQuery('#<portlet:namespace />cargo_ospim_hidden').val('100');
             jQuery('#<portlet:namespace />cargo_tercerizadora_hidden').val('0');
-
-            jQuery('#<portlet:namespace />requerimiento_id_tercerizadora').val('');
-            jQuery('#<portlet:namespace />requerimiento_id_tercerizadora_hidden').val('');
-
-            if (jQuery('#<portlet:namespace />id_tercerizadora').length > 0) {
-                jQuery('#<portlet:namespace />id_tercerizadora').val('');
-            }
 
             <portlet:namespace />actualizarRecuperoPorCargoTercerizadora(0);
 
