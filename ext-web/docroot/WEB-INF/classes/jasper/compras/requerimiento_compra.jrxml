@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
@@ -12,6 +13,7 @@
               topMargin="20"
               bottomMargin="20"
               isSummaryWithPageHeaderAndFooter="true">
+
 	<property name="ireport.zoom" value="1.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
@@ -98,7 +100,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="10" isBold="true"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{id_requerimiento}]]></textFieldExpression>
+					<textFieldExpression class="java.lang.Integer"><![CDATA[$F{id_requerimiento}]]></textFieldExpression>
 				</textField>
 
 				<line>
@@ -118,7 +120,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{alta_fecha}]]></textFieldExpression>
+					<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{alta_fecha}]]></textFieldExpression>
 				</textField>
 
 				<staticText>
@@ -134,7 +136,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{estado_descripcion}]]></textFieldExpression>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{estado_descripcion}]]></textFieldExpression>
 				</textField>
 
 				<staticText>
@@ -150,7 +152,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{sector_descripcion}]]></textFieldExpression>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{sector_descripcion}]]></textFieldExpression>
 				</textField>
 
 				<staticText>
@@ -166,7 +168,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[
+					<textFieldExpression class="java.lang.String"><![CDATA[
 					$F{afiliado_nombre_apellido} == null || $F{afiliado_nombre_apellido}.trim().equals("")
 					? "SIN AFILIADO ASOCIADO"
 					: $F{afiliado_nombre_apellido}
@@ -186,7 +188,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{afiliado_cuil_titular}]]></textFieldExpression>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{afiliado_cuil_titular}]]></textFieldExpression>
 				</textField>
 
 				<staticText>
@@ -202,7 +204,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{afiliado_int}]]></textFieldExpression>
+					<textFieldExpression class="java.lang.Integer"><![CDATA[$F{afiliado_int}]]></textFieldExpression>
 				</textField>
 
 				<staticText>
@@ -218,7 +220,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{afiliado_documento}]]></textFieldExpression>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{afiliado_documento}]]></textFieldExpression>
 				</textField>
 
 				<line>
@@ -238,7 +240,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[
+					<textFieldExpression class="java.lang.String"><![CDATA[
 					$F{cargo_ospim} == null ? "" : String.valueOf($F{cargo_ospim}) + " %"
 				]]></textFieldExpression>
 				</textField>
@@ -256,7 +258,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[
+					<textFieldExpression class="java.lang.String"><![CDATA[
 					$F{cargo_tercerizadora} == null ? "" : String.valueOf($F{cargo_tercerizadora}) + " %"
 				]]></textFieldExpression>
 				</textField>
@@ -274,7 +276,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{id_tercerizadora}]]></textFieldExpression>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{id_tercerizadora}]]></textFieldExpression>
 				</textField>
 
 				<staticText>
@@ -290,7 +292,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[
+					<textFieldExpression class="java.lang.String"><![CDATA[
 					Boolean.TRUE.equals($F{recupero}) ? "SI" : "NO"
 				]]></textFieldExpression>
 				</textField>
@@ -308,7 +310,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{alta_usr}]]></textFieldExpression>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{alta_usr}]]></textFieldExpression>
 				</textField>
 
 				<line>
@@ -328,7 +330,7 @@
 					<textElement verticalAlignment="Top">
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{observaciones}]]></textFieldExpression>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{observaciones}]]></textFieldExpression>
 				</textField>
 
 				<line>
@@ -442,7 +444,7 @@
 					<textElement textAlignment="Center">
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{detalle_orden}]]></textFieldExpression>
+					<textFieldExpression class="java.lang.Integer"><![CDATA[$F{detalle_orden}]]></textFieldExpression>
 				</textField>
 
 				<textField isBlankWhenNull="true">
@@ -450,7 +452,7 @@
 					<textElement textAlignment="Center">
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{cantidad}]]></textFieldExpression>
+					<textFieldExpression class="java.lang.Integer"><![CDATA[$F{cantidad}]]></textFieldExpression>
 				</textField>
 
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
@@ -458,7 +460,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{articulo}]]></textFieldExpression>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{articulo}]]></textFieldExpression>
 				</textField>
 
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
@@ -466,7 +468,7 @@
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{detalle_observaciones}]]></textFieldExpression>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{detalle_observaciones}]]></textFieldExpression>
 				</textField>
 
 			</frame>
@@ -482,7 +484,7 @@
 				<textElement>
 					<font fontName="SansSerif" size="7"/>
 				</textElement>
-				<textFieldExpression><![CDATA[
+				<textFieldExpression class="java.lang.String"><![CDATA[
 				"Documento generado automaticamente por el modulo de Compras."
 			]]></textFieldExpression>
 			</textField>
@@ -500,7 +502,7 @@
 				<textElement textAlignment="Right">
 					<font fontName="SansSerif" size="7"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
 			</textField>
 
 		</band>
@@ -530,7 +532,7 @@
 				<textElement textAlignment="Center">
 					<font fontName="SansSerif" size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{alta_usr}]]></textFieldExpression>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{alta_usr}]]></textFieldExpression>
 			</textField>
 
 			<staticText>
