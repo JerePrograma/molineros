@@ -210,7 +210,7 @@ if ("0".equals(idTercerizadoraFiltro)) {
 
             <td colspan="5">
                 <input type="button"
-                       value="Limpiar todos los campos"
+                       value="Limpiar"
                        onClick="<portlet:namespace />limpiarTodosCamposFiltro();" />
 
                 <c:if test="<%= showABMButtons %>">
