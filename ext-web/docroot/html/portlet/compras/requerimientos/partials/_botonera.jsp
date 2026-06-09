@@ -1,77 +1,144 @@
 <%
-boolean puedeCotizarRequerimiento =
+/*
+ * ============================================================
+ * BOTONERA REQUERIMIENTO COMPRA
+ * ============================================================
+ */
+
+String namespaceCompra = renderResponse.getNamespace();
+
+/*
+ * Activar en true temporalmente si no aparece el boton Cotizar.
+ */
+boolean debugCotizarRequerimiento = false;
+
+int idRequerimientoActual = 0;
+int estadoActual = 0;
+
+if (req != null) {
+    idRequerimientoActual = req.getIdRequerimientoCompra();
+    estadoActual = req.getEstado();
+}
+
+boolean requerimientoPersistido =
         req != null
-        && req.getIdRequerimientoCompra() > 0
+        && idRequerimientoActual > 0;
+
+boolean puedeCotizarPorEstado =
+        requerimientoPersistido
+        && WebKeysCompras.validarTransicionEstado(
+                estadoActual,
+                WebKeysCompras.ESTADO_COTIZADO
+        );
+
+boolean puedeCotizarRequerimiento =
+        requerimientoPersistido
+        && modoVista
+        && !modoEditable
         && puedeABM
-        && req.puedeCotizar()
-        && !modoEditable;
+        && puedeCotizarPorEstado;
 
 String cotizarFormId =
-        renderResponse.getNamespace() + "cotizarRequerimientoCompraForm";
+        namespaceCompra + "cotizarRequerimientoCompraForm";
 
-javax.portlet.PortletURL cotizarRequerimientoURL =
+PortletURL cotizarRequerimientoURL =
         renderResponse.createActionURL();
 
-cotizarRequerimientoURL.setWindowState(javax.portlet.WindowState.MAXIMIZED);
+cotizarRequerimientoURL.setWindowState(WindowState.MAXIMIZED);
+
 cotizarRequerimientoURL.setParameter(
         "struts_action",
         "/compras/cambiar_estado_requerimiento"
 );
 %>
 
-<c:if test="<%= puedeCotizarRequerimiento %>">
+<% if (debugCotizarRequerimiento) { %>
+    <div style="margin:10px 0; padding:10px; border:1px solid #999; background:#ffffe0;">
+        <strong>DEBUG COTIZAR REQUERIMIENTO</strong><br />
+
+        req != null:
+        <%= String.valueOf(req != null) %><br />
+
+        idRequerimientoActual:
+        <%= String.valueOf(idRequerimientoActual) %><br />
+
+        estadoActual:
+        <%= String.valueOf(estadoActual) %><br />
+
+        modoVista:
+        <%= String.valueOf(modoVista) %><br />
+
+        modoEditable:
+        <%= String.valueOf(modoEditable) %><br />
+
+        puedeABM:
+        <%= String.valueOf(puedeABM) %><br />
+
+        requerimientoPersistido:
+        <%= String.valueOf(requerimientoPersistido) %><br />
+
+        puedeCotizarPorEstado:
+        <%= String.valueOf(puedeCotizarPorEstado) %><br />
+
+        puedeCotizarRequerimiento:
+        <%= String.valueOf(puedeCotizarRequerimiento) %><br />
+    </div>
+<% } %>
+
+<% if (puedeCotizarRequerimiento) { %>
     <form action="<%= cotizarRequerimientoURL.toString() %>"
           method="post"
           id="<%= cotizarFormId %>"
           style="display:none;">
+
         <input type="hidden"
                name="<portlet:namespace />id_requerimiento_compra"
-               value="<%= String.valueOf(req.getIdRequerimientoCompra()) %>" />
+               value="<%= String.valueOf(idRequerimientoActual) %>" />
 
         <input type="hidden"
                name="<portlet:namespace />estado_nuevo"
                value="<%= String.valueOf(WebKeysCompras.ESTADO_COTIZADO) %>" />
     </form>
-</c:if>
+<% } %>
 
 <table class="lfr-table">
     <tr>
         <td>
-            <c:if test="<%= modoEditable %>">
+            <% if (modoEditable) { %>
                 <input type="button"
                        id="<portlet:namespace />btnGuardarCompras"
                        value="Guardar"
                        onClick="return <%= namespaceCompra %>guardar();" />
 
                 &nbsp;&nbsp;
-            </c:if>
+            <% } %>
 
-            <c:if test="<%= modoVista && puedeABM && editablePorEstado && req.getIdRequerimientoCompra() > 0 %>">
+            <% if (modoVista && puedeABM && editablePorEstado && requerimientoPersistido) { %>
                 <input type="button"
                        id="<portlet:namespace />btnEditarRequerimientoCompra"
                        value="Editar"
                        onClick="window.location.href='<%= editarURL.toString() %>';" />
 
                 &nbsp;&nbsp;
-            </c:if>
+            <% } %>
 
-            <c:if test="<%= puedeCotizarRequerimiento %>">
+            <% if (puedeCotizarRequerimiento) { %>
                 <input type="button"
                        id="<portlet:namespace />btnCotizarRequerimientoCompra"
                        value="Cotizar"
-                       onClick="return <portlet:namespace />cotizarRequerimientoCompra();" />
+                       onClick="return <%= namespaceCompra %>cotizarRequerimientoCompra();" />
 
                 &nbsp;&nbsp;
-            </c:if>
+            <% } %>
 
-            <c:if test="<%= req != null && req.getIdRequerimientoCompra() > 0 %>">
+            <% if (requerimientoPersistido) { %>
                 <input type="button"
                        id="<portlet:namespace />btnImprimirRequerimientoCompra"
                        value="Imprimir PDF"
-                       onClick="return <portlet:namespace />imprimirRequerimientoCompra();" />
+                       onClick="return <%= namespaceCompra %>imprimirRequerimientoCompra();" />
 
                 &nbsp;&nbsp;
-            </c:if>
+            <% } %>
 
             <input type="button"
                    id="<portlet:namespace />btnVolverCompras"
@@ -88,22 +155,30 @@ cotizarRequerimientoURL.setParameter(
 </iframe>
 
 <script type="text/javascript">
-    function <portlet:namespace />cotizarRequerimientoCompra() {
+    function <%= namespaceCompra %>cotizarRequerimientoCompra() {
         var form = document.getElementById('<%= cotizarFormId %>');
+        var btn = document.getElementById('<portlet:namespace />btnCotizarRequerimientoCompra');
 
         if (!form) {
             alert('No se pudo preparar la cotización del requerimiento.');
             return false;
         }
 
-        if (confirm('Confirma cotizar el requerimiento?')) {
-            submitForm(form);
+        if (!confirm('Confirma cotizar el requerimiento?')) {
+            return false;
         }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.value = 'Cotizando...';
+        }
+
+        submitForm(form);
 
         return false;
     }
 
-    function <portlet:namespace />imprimirRequerimientoCompra() {
+    function <%= namespaceCompra %>imprimirRequerimientoCompra() {
         var iframe = document.getElementById('<portlet:namespace />iframeImpresionRequerimientoCompra');
 
         if (!iframe) {
@@ -113,9 +188,6 @@ cotizarRequerimientoURL.setParameter(
 
         var url = '<%= imprimirURL.toString() %>';
 
-        /*
-         * Cache buster para evitar que el navegador reutilice un PDF viejo.
-         */
         url += (url.indexOf('?') >= 0 ? '&' : '?') + '_ts=' + new Date().getTime();
 
         iframe.onload = function() {
