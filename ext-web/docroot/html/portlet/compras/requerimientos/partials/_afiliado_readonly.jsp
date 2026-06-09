@@ -15,7 +15,7 @@
             <tr>
                 <td><label>Tipo documento:</label></td>
                 <td><%= HtmlUtil.escape(afiliadoTipoDocumento) %></td>
-                <td><label>NÃºmero documento:</label></td>
+                <td><label>Número documento:</label></td>
                 <td><%= HtmlUtil.escape(afiliadoNumeroDocumento) %></td>
             </tr>
 
@@ -34,7 +34,7 @@
             </tr>
 
             <tr>
-                <td><label>NÃºmero afiliado:</label></td>
+                <td><label>Número afiliado:</label></td>
                 <td><%= HtmlUtil.escape(afiliadoNumeroAfiliado) %></td>
                 <td><label>OSPIM:</label></td>
                 <td><%= HtmlUtil.escape(afiliadoNumeroOspim) %></td>

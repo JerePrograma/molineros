@@ -320,7 +320,7 @@ String cargoTercerizadoraVisible =
 /*
  * Regla centralizada para la pantalla:
  * recupero = true si existe cargo a tercerizadora mayor a 0.
- * Si negocio exige exactamente 100, cambiar ac√° y en actualizarRecuperoPorCargoTercerizadora().
+ * Si negocio exige exactamente 100, cambiar ac· y en actualizarRecuperoPorCargoTercerizadora().
  */
 boolean recuperoPorCargoTercerizadoraActual =
         !sectorSinAfiliadoForzaCargoOspim
