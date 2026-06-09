@@ -16,12 +16,6 @@
  * - PortletURL volverURL
  * - PortletURL imprimirURL
  */
-
-/*
- * Activar temporalmente en true si no aparece el botón Cotizar.
- */
-boolean botoneraDebugCotizarRequerimiento = true;
-
 int botoneraIdRequerimientoActual = 0;
 int botoneraEstadoActual = 0;
 
@@ -59,45 +53,6 @@ botoneraCotizarRequerimientoURL.setParameter(
         "/compras/cambiar_estado_requerimiento"
 );
 %>
-
-<% if (botoneraDebugCotizarRequerimiento) { %>
-    <div style="margin:10px 0; padding:10px; border:1px solid #999; background:#ffffe0;">
-        <strong>DEBUG COTIZAR REQUERIMIENTO</strong><br />
-
-        struts_action:
-        <%= ParamUtil.getString(renderRequest, "struts_action", "") %><br />
-
-        req != null:
-        <%= String.valueOf(req != null) %><br />
-
-        botoneraIdRequerimientoActual:
-        <%= String.valueOf(botoneraIdRequerimientoActual) %><br />
-
-        botoneraEstadoActual:
-        <%= String.valueOf(botoneraEstadoActual) %><br />
-
-        modoVista:
-        <%= String.valueOf(modoVista) %><br />
-
-        modoEditable:
-        <%= String.valueOf(modoEditable) %><br />
-
-        puedeABM:
-        <%= String.valueOf(puedeABM) %><br />
-
-        editablePorEstado:
-        <%= String.valueOf(editablePorEstado) %><br />
-
-        botoneraRequerimientoPersistido:
-        <%= String.valueOf(botoneraRequerimientoPersistido) %><br />
-
-        botoneraPuedeCotizarPorEstado:
-        <%= String.valueOf(botoneraPuedeCotizarPorEstado) %><br />
-
-        botoneraPuedeCotizarRequerimiento:
-        <%= String.valueOf(botoneraPuedeCotizarRequerimiento) %><br />
-    </div>
-<% } %>
 
 <% if (botoneraPuedeCotizarRequerimiento) { %>
     <form action="<%= botoneraCotizarRequerimientoURL.toString() %>"
