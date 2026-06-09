@@ -19,6 +19,15 @@
                 &nbsp;&nbsp;
             </c:if>
 
+            <c:if test="<%= puedeCotizarRequerimiento %>">
+                <input type="button"
+                       id="<portlet:namespace />btnCotizarRequerimientoCompra"
+                       value="Cotizar"
+                       onClick="return <portlet:namespace />cotizarRequerimientoCompra();" />
+
+                &nbsp;&nbsp;
+            </c:if>
+
             <c:if test="<%= req.getIdRequerimientoCompra() > 0 %>">
                 <input type="button"
                        id="<portlet:namespace />btnImprimirRequerimientoCompra"
@@ -43,6 +52,14 @@
 </iframe>
 
 <script type="text/javascript">
+    function <portlet:namespace />cotizarRequerimientoCompra() {
+        if (confirm('Confirma cotizar el requerimiento?')) {
+            submitForm(document.getElementById('<%= cotizarFormId %>'));
+        }
+
+        return false;
+    }
+
     function <portlet:namespace />imprimirRequerimientoCompra() {
         var iframe = document.getElementById('<portlet:namespace />iframeImpresionRequerimientoCompra');
 

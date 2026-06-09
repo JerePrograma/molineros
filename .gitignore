@@ -130,3 +130,6 @@ ext-impl/src/ar/com/ospim/autorizaciones/action/BorrarPatologiaSituacionMedicaAc
 ext-impl/src/ar/com/ospim/autorizaciones/action/BorrarPAtologiaSituacionMedicaAction.java
 
 ext-impl/classes/
+# Build artifacts
+*.war
+ROOT.war

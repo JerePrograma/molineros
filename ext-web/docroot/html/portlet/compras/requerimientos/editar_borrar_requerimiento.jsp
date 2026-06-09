@@ -14,9 +14,7 @@ boolean showAnularButtons =
 String idRequerimiento = req.getIdRequerimientoCompraString();
 String idRequerimientoForm = req.getIdString();
 String ns = renderResponse.getNamespace();
-String cotizarFormId = ns + "cotizar_" + idRequerimientoForm;
 String anularFormId = ns + "anular_" + idRequerimientoForm;
-String cotizarURL = "javascript:submitForm(document.getElementById('" + cotizarFormId + "'));";
 String anularURL = "javascript:if(confirm('Confirma anular el requerimiento?')) submitForm(document.getElementById('" + anularFormId + "'));";
 %>
 
@@ -33,20 +31,6 @@ String anularURL = "javascript:if(confirm('Confirma anular el requerimiento?')) 
 <portlet:actionURL windowState="<%= WindowState.MAXIMIZED.toString() %>" var="cambiarEstadoURL">
     <portlet:param name="struts_action" value="/compras/cambiar_estado_requerimiento" />
 </portlet:actionURL>
-
-<c:if test="<%= showABMButtons && req.puedeCotizar() %>">
-    <form action="<%= cambiarEstadoURL %>"
-          method="post"
-          id="<%= cotizarFormId %>"
-          style="display:none;">
-        <input type="hidden"
-               name="<portlet:namespace />id_requerimiento_compra"
-               value="<%= idRequerimientoForm %>" />
-        <input type="hidden"
-               name="<portlet:namespace />estado_nuevo"
-               value="<%= WebKeysCompras.ESTADO_COTIZADO %>" />
-    </form>
-</c:if>
 
 <c:if test="<%= showAnularButtons && req.puedeAnular() %>">
     <form action="<%= cambiarEstadoURL %>"
@@ -67,10 +51,6 @@ String anularURL = "javascript:if(confirm('Confirma anular el requerimiento?')) 
 
     <c:if test="<%= showABMButtons && req.isEditable() %>">
         <liferay-ui:icon image="edit" message="Editar" url="<%= editarURL %>" />
-    </c:if>
-
-    <c:if test="<%= showABMButtons && req.puedeCotizar() %>">
-        <liferay-ui:icon image="../common/checked" message="Cotizar" url="<%= cotizarURL %>" />
     </c:if>
 
     <c:if test="<%= showAnularButtons && req.puedeAnular() %>">
