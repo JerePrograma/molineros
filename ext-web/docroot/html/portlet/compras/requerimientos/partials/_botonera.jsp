@@ -1,3 +1,39 @@
+<%
+boolean puedeCotizarRequerimiento =
+        req != null
+        && req.getIdRequerimientoCompra() > 0
+        && puedeABM
+        && req.puedeCotizar()
+        && !modoEditable;
+
+String cotizarFormId =
+        renderResponse.getNamespace() + "cotizarRequerimientoCompraForm";
+
+javax.portlet.PortletURL cotizarRequerimientoURL =
+        renderResponse.createActionURL();
+
+cotizarRequerimientoURL.setWindowState(javax.portlet.WindowState.MAXIMIZED);
+cotizarRequerimientoURL.setParameter(
+        "struts_action",
+        "/compras/cambiar_estado_requerimiento"
+);
+%>
+
+<c:if test="<%= puedeCotizarRequerimiento %>">
+    <form action="<%= cotizarRequerimientoURL.toString() %>"
+          method="post"
+          id="<%= cotizarFormId %>"
+          style="display:none;">
+        <input type="hidden"
+               name="<portlet:namespace />id_requerimiento_compra"
+               value="<%= String.valueOf(req.getIdRequerimientoCompra()) %>" />
+
+        <input type="hidden"
+               name="<portlet:namespace />estado_nuevo"
+               value="<%= String.valueOf(WebKeysCompras.ESTADO_COTIZADO) %>" />
+    </form>
+</c:if>
+
 <table class="lfr-table">
     <tr>
         <td>
@@ -28,7 +64,7 @@
                 &nbsp;&nbsp;
             </c:if>
 
-            <c:if test="<%= req.getIdRequerimientoCompra() > 0 %>">
+            <c:if test="<%= req != null && req.getIdRequerimientoCompra() > 0 %>">
                 <input type="button"
                        id="<portlet:namespace />btnImprimirRequerimientoCompra"
                        value="Imprimir PDF"
@@ -53,8 +89,15 @@
 
 <script type="text/javascript">
     function <portlet:namespace />cotizarRequerimientoCompra() {
+        var form = document.getElementById('<%= cotizarFormId %>');
+
+        if (!form) {
+            alert('No se pudo preparar la cotización del requerimiento.');
+            return false;
+        }
+
         if (confirm('Confirma cotizar el requerimiento?')) {
-            submitForm(document.getElementById('<%= cotizarFormId %>'));
+            submitForm(form);
         }
 
         return false;
