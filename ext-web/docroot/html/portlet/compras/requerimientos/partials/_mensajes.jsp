@@ -1,0 +1,67 @@
+<c:if test="<%= mostrarMensajeRequerimientoGuardado %>">
+    <div class="portlet-msg-success">
+        <strong>Requerimiento de compra guardado correctamente.</strong>
+
+        <c:if test="<%= !WebKeysCompras.isEmpty(idRequerimientoMensaje) %>">
+            <br />
+            ID del requerimiento: <%= HtmlUtil.escape(idRequerimientoMensaje) %>
+        </c:if>
+
+        <c:if test="<%= !WebKeysCompras.isEmpty(comprasDetallesGuardados) %>">
+            <br />
+            Detalles guardados/procesados: <%= HtmlUtil.escape(comprasDetallesGuardados) %>
+        </c:if>
+    </div>
+</c:if>
+
+<c:if test="<%= msgDetalleGuardado %>">
+    <div class="portlet-msg-success">Detalle del requerimiento guardado correctamente.</div>
+</c:if>
+
+<c:if test="<%= msgDetalleBorrado %>">
+    <div class="portlet-msg-success">Detalle del requerimiento eliminado correctamente.</div>
+</c:if>
+
+<c:if test="<%= msgArticuloGuardado %>">
+    <div class="portlet-msg-success">Articulo de compra guardado correctamente.</div>
+</c:if>
+
+<c:if test="<%= msgArticuloBorrado %>">
+    <div class="portlet-msg-success">Articulo de compra eliminado correctamente.</div>
+</c:if>
+
+<c:if test="<%= msgRequerimientoAnulado %>">
+    <div class="portlet-msg-success">Requerimiento de compra anulado correctamente.</div>
+</c:if>
+
+<c:if test="<%= mostrarErrorGenericoCompra %>">
+    <div class="portlet-msg-error">
+        <strong>No se pudo procesar el requerimiento de compra.</strong>
+    </div>
+</c:if>
+
+<c:if test="<%= !WebKeysCompras.isEmpty(errorParaAlert) %>">
+    <div class="portlet-msg-error">
+        <strong>No se pudo guardar/procesar el requerimiento de compra.</strong>
+        <br />
+        <%= HtmlUtil.escape(errorParaAlert) %>
+
+        <c:if test="<%= !WebKeysCompras.isEmpty(errorCampoCompra) %>">
+            <br />
+            Campo relacionado: <strong><%= HtmlUtil.escape(errorCampoCompra) %></strong>
+        </c:if>
+
+        <c:if test="<%= !WebKeysCompras.isEmpty(idRequerimientoMensaje) %>">
+            <br />
+            ID activo: <%= HtmlUtil.escape(idRequerimientoMensaje) %>
+        </c:if>
+    </div>
+</c:if>
+
+<c:if test="<%= !soloLecturaSolicitada && !puedeABM %>">
+    <div class="portlet-msg-error">No posee permisos para editar requerimientos de compras.</div>
+</c:if>
+
+<c:if test="<%= !soloLecturaSolicitada && puedeABM && !editablePorEstado %>">
+    <div class="portlet-msg-info">El requerimiento solo puede editarse en estado Borrador.</div>
+</c:if>

@@ -18,19 +18,28 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import javax.portlet.*;
+import javax.portlet.ActionRequest;
+import javax.portlet.ActionResponse;
+import javax.portlet.PortletConfig;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 public class VerRequerimientoCompraAction extends PortletAction {
 
-    private static Log _log = LogFactoryUtil.getLog(VerRequerimientoCompraAction.class);
+    private static final Log _log =
+            LogFactoryUtil.getLog(VerRequerimientoCompraAction.class);
 
-    public void processAction(ActionMapping mapping, ActionForm form,
-                              PortletConfig portletConfig, ActionRequest actionRequest,
+    public void processAction(ActionMapping mapping,
+                              ActionForm form,
+                              PortletConfig portletConfig,
+                              ActionRequest actionRequest,
                               ActionResponse actionResponse) throws Exception {
 
-        int idRequerimientoCompra = ParamUtil.getInteger(actionRequest, "id_requerimiento_compra", 0);
+        int idRequerimientoCompra =
+                ParamUtil.getInteger(actionRequest, "id_requerimiento_compra", 0);
 
         try {
             User user = PortalUtil.getUser(actionRequest);
@@ -40,44 +49,92 @@ public class VerRequerimientoCompraAction extends PortletAction {
                 throw new Exception("Debe informar el requerimiento de compra.");
             }
 
-            actionResponse.setRenderParameter("id_requerimiento_compra", String.valueOf(idRequerimientoCompra));
+            actionResponse.setRenderParameter(
+                    "id_requerimiento_compra",
+                    String.valueOf(idRequerimientoCompra)
+            );
+
+            actionResponse.setRenderParameter(
+                    "struts_action",
+                    "/compras/ver_requerimiento"
+            );
+
+            actionResponse.setRenderParameter(
+                    "modo",
+                    "ver"
+            );
+
             setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
         } catch (Exception e) {
             _log.error(e);
+
             SessionErrors.add(actionRequest, e.getClass().getName());
-            actionRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());
+
+            String mensaje = e.getMessage();
+
+            if (WebKeysCompras.isEmpty(mensaje)) {
+                mensaje = "No se pudo visualizar el requerimiento de compra.";
+            }
+
+            actionRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, mensaje);
+
             setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_RESULT_SEARCH);
         }
     }
 
-    public ActionForward render(ActionMapping mapping, ActionForm form,
-                                PortletConfig portletConfig, RenderRequest renderRequest,
+    public ActionForward render(ActionMapping mapping,
+                                ActionForm form,
+                                PortletConfig portletConfig,
+                                RenderRequest renderRequest,
                                 RenderResponse renderResponse) throws Exception {
 
         try {
             User user = PortalUtil.getUser(renderRequest);
             validarPermisoView(user);
 
-            int idRequerimientoCompra = ParamUtil.getInteger(renderRequest, "id_requerimiento_compra", 0);
+            int idRequerimientoCompra =
+                    ParamUtil.getInteger(renderRequest, "id_requerimiento_compra", 0);
 
             if (idRequerimientoCompra <= 0) {
                 throw new Exception("Debe informar el requerimiento de compra.");
             }
 
             RequerimientoCompra requerimiento =
-                    BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimientoCompra);
+                    BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(
+                            idRequerimientoCompra
+                    );
 
             if (requerimiento == null) {
                 throw new Exception("No se encontro el requerimiento de compra informado.");
             }
 
-            renderRequest.setAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW, requerimiento);
-            renderRequest.setAttribute(WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_VIEW, requerimiento.getDetalles());
-            renderRequest.setAttribute(WebKeysCompras.SOLO_LECTURA_ATTR, Boolean.TRUE);
+            cargarCatalogos(renderRequest);
             cargarAfiliadoRequerimiento(renderRequest, requerimiento);
+
+            renderRequest.setAttribute(
+                    WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW,
+                    requerimiento
+            );
+
+            renderRequest.setAttribute(
+                    WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_VIEW,
+                    requerimiento.getDetalles()
+            );
+
+            renderRequest.setAttribute(
+                    WebKeysCompras.SOLO_LECTURA_ATTR,
+                    Boolean.TRUE
+            );
         } catch (Exception e) {
             _log.error(e);
-            renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, e.getMessage());
+
+            String mensaje = e.getMessage();
+
+            if (WebKeysCompras.isEmpty(mensaje)) {
+                mensaje = "No se pudo cargar la vista del requerimiento de compra.";
+            }
+
+            renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, mensaje);
         }
 
         return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
@@ -90,11 +147,44 @@ public class VerRequerimientoCompraAction extends PortletAction {
 
         if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
                 && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
+
             throw new Exception("No posee permisos para consultar requerimientos de compras.");
         }
     }
 
-    private void cargarAfiliadoRequerimiento(RenderRequest renderRequest, RequerimientoCompra requerimiento) {
+    private void cargarCatalogos(RenderRequest renderRequest) {
+        try {
+            renderRequest.setAttribute(
+                    WebKeysCompras.ESTADOS_REQUERIMIENTO,
+                    BusquedaRequerimientoCompraServiceUtil.listarEstados()
+            );
+        } catch (Exception e) {
+            _log.error(e);
+
+            renderRequest.setAttribute(
+                    WebKeysCompras.ESTADOS_REQUERIMIENTO,
+                    new ArrayList()
+            );
+        }
+
+        try {
+            renderRequest.setAttribute(
+                    WebKeysCompras.SECTORES_REQUERIMIENTO,
+                    BusquedaRequerimientoCompraServiceUtil.listarSectores()
+            );
+        } catch (Exception e) {
+            _log.error(e);
+
+            renderRequest.setAttribute(
+                    WebKeysCompras.SECTORES_REQUERIMIENTO,
+                    new ArrayList()
+            );
+        }
+    }
+
+    private void cargarAfiliadoRequerimiento(RenderRequest renderRequest,
+                                             RequerimientoCompra requerimiento) {
+
         renderRequest.removeAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA);
 
         if (requerimiento == null || !requerimiento.tieneAfiliadoInformado()) {
@@ -102,24 +192,29 @@ public class VerRequerimientoCompraAction extends PortletAction {
         }
 
         try {
-            List<Afiliado> afiliados = BusquedaAfiliadoServiceUtil.getBusquedaAfiliadosComponente(
-                    requerimiento.getAfiliadoCuilTitular(),
-                    requerimiento.getAfiliadoIntString(),
-                    null,
-                    null,
-                    0,
-                    null,
-                    null,
-                    WebKeysGlobal.ID_DEFAULT_ENTIDAD,
-                    0,
-                    0,
-                    new BigDecimal(0)
-            );
+            List<Afiliado> afiliados =
+                    BusquedaAfiliadoServiceUtil.getBusquedaAfiliadosComponente(
+                            requerimiento.getAfiliadoCuilTitular(),
+                            requerimiento.getAfiliadoIntString(),
+                            null,
+                            null,
+                            0,
+                            null,
+                            null,
+                            WebKeysGlobal.ID_DEFAULT_ENTIDAD,
+                            0,
+                            0,
+                            new BigDecimal(0)
+                    );
 
             if (afiliados != null && afiliados.size() == 1) {
-                renderRequest.setAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA, afiliados.get(0));
+                renderRequest.setAttribute(
+                        WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA,
+                        afiliados.get(0)
+                );
             }
         } catch (Exception e) {
+            _log.error(e);
         }
     }
 }

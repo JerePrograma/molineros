@@ -63,6 +63,54 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
     private static final int MAX_TOKENS_GUARDADO_COMPRA = 20;
 
+    private static final String STRUTS_ACTION_NUEVO_REQUERIMIENTO =
+            "/compras/nuevo_requerimiento";
+
+    private static final String STRUTS_ACTION_EDITAR_REQUERIMIENTO =
+            "/compras/editar_requerimiento";
+
+    private boolean esAltaRequerimiento(RenderRequest renderRequest) {
+        String strutsAction = ParamUtil.getString(renderRequest, "struts_action", "");
+        String modo = ParamUtil.getString(renderRequest, "modo", "");
+
+        int idRequerimientoCompra =
+                ParamUtil.getInteger(renderRequest, "id_requerimiento_compra", 0);
+
+        Object idAttr =
+                renderRequest.getAttribute(WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION);
+
+        if (idRequerimientoCompra == 0 && idAttr instanceof Integer) {
+            idRequerimientoCompra = ((Integer) idAttr).intValue();
+        }
+
+        return STRUTS_ACTION_NUEVO_REQUERIMIENTO.equals(strutsAction)
+                || "alta".equalsIgnoreCase(modo)
+                || idRequerimientoCompra <= 0;
+    }
+
+    private boolean vieneDeAlta(ActionRequest actionRequest) {
+        String strutsAction = getParametroTrim(actionRequest, "struts_action");
+        String modo = getParametroTrim(actionRequest, "modo");
+
+        int idRequerimientoCompra = 0;
+
+        try {
+            idRequerimientoCompra =
+                    parseEnteroConDefault(
+                            actionRequest,
+                            "id_requerimiento_compra",
+                            "ID del requerimiento",
+                            0
+                    );
+        } catch (Exception e) {
+            idRequerimientoCompra = 0;
+        }
+
+        return STRUTS_ACTION_NUEVO_REQUERIMIENTO.equals(strutsAction)
+                || "alta".equalsIgnoreCase(modo)
+                || idRequerimientoCompra <= 0;
+    }
+
     private static class ValidacionCompraException extends Exception {
 
         private final String campo;
@@ -82,7 +130,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                               ActionResponse actionResponse) throws Exception {
 
         String cmd = getParametroTrim(actionRequest, Constants.CMD);
-        String strutsAction = getParametroTrim(actionRequest, "struts_action");
 
         int idRequerimientoCompra =
                 parseEnteroConDefault(
@@ -91,6 +138,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                         "ID del requerimiento",
                         0
                 );
+
+        boolean altaOriginal = vieneDeAlta(actionRequest);
 
         /*
          * Importante:
@@ -198,7 +247,27 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 }
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-articulo-guardado");
-                setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+
+                if (altaOriginal && idRequerimientoCompra <= 0) {
+                    actionResponse.setRenderParameter(
+                            "struts_action",
+                            STRUTS_ACTION_NUEVO_REQUERIMIENTO
+                    );
+
+                    actionResponse.setRenderParameter(
+                            "modo",
+                            "alta"
+                    );
+
+                    setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_ALTA_REQUERIMIENTO);
+                } else {
+                    actionResponse.setRenderParameter(
+                            "struts_action",
+                            STRUTS_ACTION_EDITAR_REQUERIMIENTO
+                    );
+
+                    setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+                }
 
                 return;
             }
@@ -227,7 +296,27 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 }
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-articulo-borrado");
-                setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+
+                if (altaOriginal && idRequerimientoCompra <= 0) {
+                    actionResponse.setRenderParameter(
+                            "struts_action",
+                            STRUTS_ACTION_NUEVO_REQUERIMIENTO
+                    );
+
+                    actionResponse.setRenderParameter(
+                            "modo",
+                            "alta"
+                    );
+
+                    setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_ALTA_REQUERIMIENTO);
+                } else {
+                    actionResponse.setRenderParameter(
+                            "struts_action",
+                            STRUTS_ACTION_EDITAR_REQUERIMIENTO
+                    );
+
+                    setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+                }
 
                 return;
             }
@@ -283,7 +372,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 actionResponse.setRenderParameter(
                         "struts_action",
-                        "/compras/editar_requerimiento"
+                        STRUTS_ACTION_EDITAR_REQUERIMIENTO
                 );
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-guardado");
@@ -332,7 +421,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 actionResponse.setRenderParameter(
                         "struts_action",
-                        "/compras/editar_requerimiento"
+                        STRUTS_ACTION_EDITAR_REQUERIMIENTO
                 );
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-guardado");
@@ -500,10 +589,32 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 );
             }
 
-            actionResponse.setRenderParameter(
-                    "struts_action",
-                    "/compras/editar_requerimiento"
-            );
+            if (altaOriginal && idRequerimientoCompra <= 0) {
+                actionResponse.setRenderParameter(
+                        "struts_action",
+                        STRUTS_ACTION_NUEVO_REQUERIMIENTO
+                );
+
+                actionResponse.setRenderParameter(
+                        "modo",
+                        "alta"
+                );
+
+                setForward(
+                        actionRequest,
+                        WebKeysCompras.FORWARD_COMPRAS_ALTA_REQUERIMIENTO
+                );
+            } else {
+                actionResponse.setRenderParameter(
+                        "struts_action",
+                        STRUTS_ACTION_EDITAR_REQUERIMIENTO
+                );
+
+                setForward(
+                        actionRequest,
+                        WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO
+                );
+            }
 
             actionResponse.setRenderParameter(
                     "compras_error",
@@ -514,8 +625,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     "compras_operacion",
                     cmd != null ? cmd : ""
             );
-
-            setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
         }
     }
 
@@ -567,15 +676,27 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             cargarAfiliadoRequerimiento(renderRequest, requerimiento);
 
-            renderRequest.setAttribute(
-                    WebKeysCompras.SOLO_LECTURA_ATTR,
-                    Boolean.valueOf(soloLectura)
-            );
+            if (soloLectura) {
+                renderRequest.setAttribute(
+                        WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW,
+                        requerimiento
+                );
 
-            renderRequest.setAttribute(
-                    WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION,
-                    requerimiento
-            );
+                renderRequest.setAttribute(
+                        WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_VIEW,
+                        requerimiento.getDetalles()
+                );
+            } else {
+                renderRequest.setAttribute(
+                        WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION,
+                        requerimiento
+                );
+
+                renderRequest.setAttribute(
+                        WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION,
+                        requerimiento.getDetalles()
+                );
+            }
 
             renderRequest.setAttribute(
                     WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION,
@@ -589,6 +710,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             }
 
             renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, mensaje);
+        }
+
+        if (esModoSoloLectura(renderRequest)) {
+            return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
+        }
+
+        if (esAltaRequerimiento(renderRequest)) {
+            return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_ALTA_REQUERIMIENTO);
         }
 
         return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
@@ -955,12 +1084,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         int sumaCargos = cargoOspim + cargoTercerizadora;
 
-        if (sumaCargos > 100) {
+        if (sumaCargos != 100) {
             errorCampo(
                     "cargo_tercerizadora",
                     "Cargos: la suma de Cargo OSPIM (" + cargoOspim
                             + ") y Cargo tercerizadora (" + cargoTercerizadora
-                            + ") es " + sumaCargos + ". No puede superar 100."
+                            + ") es " + sumaCargos + ". Debe ser exactamente 100."
             );
         }
 

@@ -4519,16 +4519,20 @@
 		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimientos_search_result.jsp" />
 	</definition>
 
+	<definition name="portlet.compras.alta_requerimiento" extends="portlet.compras">
+		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_alta.jsp" />
+	</definition>
+
 	<definition name="portlet.compras.editar_requerimiento" extends="portlet.compras">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/editar_requerimiento.jsp" />
+		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_edicion.jsp" />
+	</definition>
+
+	<definition name="portlet.compras.ver_requerimiento" extends="portlet.compras">
+		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_vista.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.afiliado_auto_select_result" extends="portlet.compras">
 		<put name="portlet_content" value="/portlet/compras/requerimientos/afiliado_auto_select_result.jsp" />
-	</definition>
-
-	<definition name="portlet.compras.ver_requerimiento" extends="portlet.compras">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/editar_requerimiento.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.imprimir_requerimiento" extends="portlet.compras">

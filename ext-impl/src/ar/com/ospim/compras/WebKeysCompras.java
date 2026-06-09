@@ -30,6 +30,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String FORWARD_COMPRAS_VIEW = "portlet.compras.view";
     public static final String FORWARD_COMPRAS_ERROR = "portlet.compras.error";
     public static final String FORWARD_COMPRAS_RESULT_SEARCH = "portlet.compras.result.search";
+    public static final String FORWARD_COMPRAS_ALTA_REQUERIMIENTO = "portlet.compras.alta_requerimiento";
     public static final String FORWARD_COMPRAS_EDITAR_REQUERIMIENTO = "portlet.compras.editar_requerimiento";
     public static final String FORWARD_COMPRAS_VER_REQUERIMIENTO = "portlet.compras.ver_requerimiento";
     public static final String FORWARD_COMPRAS_IMPRIMIR_REQUERIMIENTO = "portlet.compras.imprimir_requerimiento";

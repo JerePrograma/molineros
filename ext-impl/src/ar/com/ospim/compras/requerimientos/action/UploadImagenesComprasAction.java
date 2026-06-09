@@ -164,6 +164,11 @@ public class UploadImagenesComprasAction extends PortletAction {
         generarTokenGuardadoCompra(renderRequest);
 
         String modo = ParamUtil.getString(renderRequest, "modo", "");
+        String strutsAction = ParamUtil.getString(renderRequest, "struts_action", "");
+
+        boolean soloLectura =
+                "ver".equalsIgnoreCase(modo)
+                        || "/compras/ver_requerimiento".equals(strutsAction);
 
         try {
             int idRequerimientoCompra =
@@ -185,26 +190,37 @@ public class UploadImagenesComprasAction extends PortletAction {
             cargarCatalogos(renderRequest, requerimiento);
             cargarAfiliadoRequerimiento(renderRequest, requerimiento);
 
-            boolean soloLectura =
-                    "ver".equalsIgnoreCase(modo)
-                            || "/compras/ver_requerimiento".equals(
-                            ParamUtil.getString(renderRequest, "struts_action", "")
-                    );
-
             renderRequest.setAttribute(
                     WebKeysCompras.SOLO_LECTURA_ATTR,
                     Boolean.valueOf(soloLectura)
             );
 
-            renderRequest.setAttribute(
-                    WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION,
-                    requerimiento
-            );
+            /*
+             * Importante para el nuevo Tiles/JSP:
+             * - Vista usa atributos EN_VIEW.
+             * - Edicion usa atributos EN_EDICION.
+             */
+            if (soloLectura) {
+                renderRequest.setAttribute(
+                        WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW,
+                        requerimiento
+                );
 
-            renderRequest.setAttribute(
-                    WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION,
-                    requerimiento.getDetalles()
-            );
+                renderRequest.setAttribute(
+                        WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_VIEW,
+                        requerimiento.getDetalles()
+                );
+            } else {
+                renderRequest.setAttribute(
+                        WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION,
+                        requerimiento
+                );
+
+                renderRequest.setAttribute(
+                        WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION,
+                        requerimiento.getDetalles()
+                );
+            }
         } catch (Exception e) {
             logger.error(e);
 
@@ -217,7 +233,7 @@ public class UploadImagenesComprasAction extends PortletAction {
             renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, mensaje);
         }
 
-        if ("ver".equalsIgnoreCase(modo)) {
+        if (soloLectura) {
             return mapping.findForward(
                     getForward(renderRequest, WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO)
             );
@@ -397,6 +413,7 @@ public class UploadImagenesComprasAction extends PortletAction {
         }
 
         request.setAttribute("msgInsertError", mensaje);
+        request.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, mensaje);
     }
 
     private void validarPermisoABM(User user) throws Exception {
