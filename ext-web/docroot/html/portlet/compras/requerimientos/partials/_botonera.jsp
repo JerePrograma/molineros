@@ -3,67 +3,78 @@
  * ============================================================
  * BOTONERA REQUERIMIENTO COMPRA
  * ============================================================
+ *
+ * Este partial asume que el JSP padre ya declaró:
+ *
+ * - String namespaceCompra
+ * - RequerimientoCompra req
+ * - boolean modoEditable
+ * - boolean modoVista
+ * - boolean puedeABM
+ * - boolean editablePorEstado
+ * - PortletURL editarURL
+ * - PortletURL volverURL
+ * - PortletURL imprimirURL
  */
-
-String namespaceCompra = renderResponse.getNamespace();
 
 /*
- * Activar en true temporalmente si no aparece el boton Cotizar.
+ * Activar temporalmente en true si no aparece el botón Cotizar.
  */
-boolean debugCotizarRequerimiento = false;
+boolean botoneraDebugCotizarRequerimiento = true;
 
-int idRequerimientoActual = 0;
-int estadoActual = 0;
+int botoneraIdRequerimientoActual = 0;
+int botoneraEstadoActual = 0;
 
 if (req != null) {
-    idRequerimientoActual = req.getIdRequerimientoCompra();
-    estadoActual = req.getEstado();
+    botoneraIdRequerimientoActual = req.getIdRequerimientoCompra();
+    botoneraEstadoActual = req.getEstado();
 }
 
-boolean requerimientoPersistido =
+boolean botoneraRequerimientoPersistido =
         req != null
-        && idRequerimientoActual > 0;
+        && botoneraIdRequerimientoActual > 0;
 
-boolean puedeCotizarPorEstado =
-        requerimientoPersistido
+boolean botoneraPuedeCotizarPorEstado =
+        botoneraRequerimientoPersistido
         && WebKeysCompras.validarTransicionEstado(
-                estadoActual,
+                botoneraEstadoActual,
                 WebKeysCompras.ESTADO_COTIZADO
         );
 
-boolean puedeCotizarRequerimiento =
-        requerimientoPersistido
-        && modoVista
-        && !modoEditable
+boolean botoneraPuedeCotizarRequerimiento =
+        botoneraRequerimientoPersistido
         && puedeABM
-        && puedeCotizarPorEstado;
+        && botoneraPuedeCotizarPorEstado;
 
-String cotizarFormId =
+String botoneraCotizarFormId =
         namespaceCompra + "cotizarRequerimientoCompraForm";
 
-PortletURL cotizarRequerimientoURL =
+PortletURL botoneraCotizarRequerimientoURL =
         renderResponse.createActionURL();
 
-cotizarRequerimientoURL.setWindowState(WindowState.MAXIMIZED);
+botoneraCotizarRequerimientoURL.setWindowState(WindowState.MAXIMIZED);
 
-cotizarRequerimientoURL.setParameter(
+botoneraCotizarRequerimientoURL.setParameter(
         "struts_action",
         "/compras/cambiar_estado_requerimiento"
 );
 %>
 
-<% if (debugCotizarRequerimiento) { %>
+<% if (botoneraDebugCotizarRequerimiento) { %>
     <div style="margin:10px 0; padding:10px; border:1px solid #999; background:#ffffe0;">
         <strong>DEBUG COTIZAR REQUERIMIENTO</strong><br />
+
+        struts_action:
+        <%= ParamUtil.getString(renderRequest, "struts_action", "") %><br />
 
         req != null:
         <%= String.valueOf(req != null) %><br />
 
-        idRequerimientoActual:
-        <%= String.valueOf(idRequerimientoActual) %><br />
+        botoneraIdRequerimientoActual:
+        <%= String.valueOf(botoneraIdRequerimientoActual) %><br />
 
-        estadoActual:
-        <%= String.valueOf(estadoActual) %><br />
+        botoneraEstadoActual:
+        <%= String.valueOf(botoneraEstadoActual) %><br />
 
         modoVista:
         <%= String.valueOf(modoVista) %><br />
@@ -74,26 +85,29 @@ cotizarRequerimientoURL.setParameter(
         puedeABM:
         <%= String.valueOf(puedeABM) %><br />
 
-        requerimientoPersistido:
-        <%= String.valueOf(requerimientoPersistido) %><br />
+        editablePorEstado:
+        <%= String.valueOf(editablePorEstado) %><br />
 
-        puedeCotizarPorEstado:
-        <%= String.valueOf(puedeCotizarPorEstado) %><br />
+        botoneraRequerimientoPersistido:
+        <%= String.valueOf(botoneraRequerimientoPersistido) %><br />
 
-        puedeCotizarRequerimiento:
-        <%= String.valueOf(puedeCotizarRequerimiento) %><br />
+        botoneraPuedeCotizarPorEstado:
+        <%= String.valueOf(botoneraPuedeCotizarPorEstado) %><br />
+
+        botoneraPuedeCotizarRequerimiento:
+        <%= String.valueOf(botoneraPuedeCotizarRequerimiento) %><br />
     </div>
 <% } %>
 
-<% if (puedeCotizarRequerimiento) { %>
-    <form action="<%= cotizarRequerimientoURL.toString() %>"
+<% if (botoneraPuedeCotizarRequerimiento) { %>
+    <form action="<%= botoneraCotizarRequerimientoURL.toString() %>"
           method="post"
-          id="<%= cotizarFormId %>"
+          id="<%= botoneraCotizarFormId %>"
           style="display:none;">
 
         <input type="hidden"
                name="<portlet:namespace />id_requerimiento_compra"
-               value="<%= String.valueOf(idRequerimientoActual) %>" />
+               value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
 
         <input type="hidden"
                name="<portlet:namespace />estado_nuevo"
@@ -113,7 +127,7 @@ cotizarRequerimientoURL.setParameter(
                 &nbsp;&nbsp;
             <% } %>
 
-            <% if (modoVista && puedeABM && editablePorEstado && requerimientoPersistido) { %>
+            <% if (modoVista && puedeABM && editablePorEstado && botoneraRequerimientoPersistido) { %>
                 <input type="button"
                        id="<portlet:namespace />btnEditarRequerimientoCompra"
                        value="Editar"
@@ -122,7 +136,7 @@ cotizarRequerimientoURL.setParameter(
                 &nbsp;&nbsp;
             <% } %>
 
-            <% if (puedeCotizarRequerimiento) { %>
+            <% if (botoneraPuedeCotizarRequerimiento) { %>
                 <input type="button"
                        id="<portlet:namespace />btnCotizarRequerimientoCompra"
                        value="Cotizar"
@@ -131,7 +145,7 @@ cotizarRequerimientoURL.setParameter(
                 &nbsp;&nbsp;
             <% } %>
 
-            <% if (requerimientoPersistido) { %>
+            <% if (botoneraRequerimientoPersistido) { %>
                 <input type="button"
                        id="<portlet:namespace />btnImprimirRequerimientoCompra"
                        value="Imprimir PDF"
@@ -156,7 +170,7 @@ cotizarRequerimientoURL.setParameter(
 
 <script type="text/javascript">
     function <%= namespaceCompra %>cotizarRequerimientoCompra() {
-        var form = document.getElementById('<%= cotizarFormId %>');
+        var form = document.getElementById('<%= botoneraCotizarFormId %>');
         var btn = document.getElementById('<portlet:namespace />btnCotizarRequerimientoCompra');
 
         if (!form) {
