@@ -10,12 +10,19 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 import java.math.BigDecimal;
 import java.sql.*;
+import java.text.Normalizer;
+import java.util.Locale;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class EditarRequerimientoCompraServiceImpl {
 
     private static Log _log = LogFactoryUtil.getLog(EditarRequerimientoCompraServiceImpl.class);
+
+
+    private static final Pattern DIACRITICOS =
+            Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
     private static final String SQL_GUARDAR_REQUERIMIENTO =
             "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?) }";
@@ -252,23 +259,19 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
-    public int guardarArticulo(CompraArticulo articulo) throws Exception {
-        validarArticuloParaGuardar(articulo);
+    public int guardarArticulo(Integer idArticulo,
+                               Integer idSector,
+                               String descripcion) throws Exception {
 
-        return guardarArticulo(
-                articulo.getId(),
-                articulo.getIdSector(),
-                articulo.getDescripcion()
-        );
-    }
+        String descripcionNormalizada = normalizarDescripcionArticulo(descripcion);
 
-    public int guardarArticulo(Integer idArticulo, Integer idSector, String descripcion) throws Exception {
         CompraArticulo articulo = new CompraArticulo();
         articulo.setId(idArticulo);
         articulo.setIdSector(idSector);
-        articulo.setDescripcion(descripcion);
+        articulo.setDescripcion(descripcionNormalizada);
 
         validarArticuloParaGuardar(articulo);
+        validarArticuloDuplicado(articulo);
 
         Connection con = null;
         CallableStatement stmt = null;
@@ -280,7 +283,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
             setNullableInteger(stmt, 2, idArticulo);
             setNullableInteger(stmt, 3, idSector);
-            stmt.setString(4, emptyToNull(descripcion));
+            stmt.setString(4, emptyToNull(descripcionNormalizada));
 
             stmt.execute();
 
@@ -474,6 +477,75 @@ public class EditarRequerimientoCompraServiceImpl {
         try {
             rs.close();
         } catch (Exception ignored) {
+        }
+    }
+
+    private String normalizarDescripcionArticulo(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        value = value.trim();
+
+        if (value.length() == 0) {
+            return null;
+        }
+
+        String normalizado = Normalizer.normalize(value, Normalizer.Form.NFD);
+        normalizado = DIACRITICOS.matcher(normalizado).replaceAll("");
+        normalizado = normalizado.replaceAll("\\s+", " ");
+
+        return normalizado.toUpperCase(Locale.ROOT).trim();
+    }
+
+    private void validarArticuloDuplicado(CompraArticulo articulo) throws Exception {
+        if (articulo == null
+                || articulo.getIdSector() == null
+                || articulo.getIdSector().intValue() <= 0
+                || WebKeysCompras.isEmpty(articulo.getDescripcion())) {
+
+            return;
+        }
+
+        String descripcionNormalizada =
+                normalizarDescripcionArticulo(articulo.getDescripcion());
+
+        List<CompraArticulo> existentes =
+                listarArticulos(
+                        articulo.getIdSector(),
+                        null
+                );
+
+        if (existentes == null) {
+            return;
+        }
+
+        for (int i = 0; i < existentes.size(); i++) {
+            CompraArticulo existente = existentes.get(i);
+
+            if (existente == null) {
+                continue;
+            }
+
+            if (articulo.getId() != null
+                    && existente.getId() != null
+                    && articulo.getId().intValue() == existente.getId().intValue()) {
+
+                continue;
+            }
+
+            String descripcionExistente =
+                    normalizarDescripcionArticulo(existente.getDescripcion());
+
+            if (descripcionNormalizada != null
+                    && descripcionNormalizada.equals(descripcionExistente)) {
+
+                throw new Exception(
+                        "Ya existe un articulo con la descripcion '"
+                                + descripcionNormalizada
+                                + "' para el sector seleccionado."
+                );
+            }
         }
     }
 }

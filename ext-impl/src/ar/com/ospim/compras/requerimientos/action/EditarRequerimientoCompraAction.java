@@ -32,16 +32,8 @@ import java.util.*;
 
 public class EditarRequerimientoCompraAction extends PortletAction {
 
-    private static final String FORWARD_ALTA_ARTICULO_POPUP = "portlet.compras.alta_articulo_popup";
-
     private static final String ARTICULOS_COMPRA =
             "ARTICULOS_COMPRA";
-
-    private static final String STRUTS_ACTION_LISTAR_ARTICULOS_SECTOR =
-            "/compras/listar_articulos_sector";
-
-    private static final String FORWARD_ARTICULOS_SECTOR =
-            "portlet.compras.articulos_sector";
 
     /*
      * Blindaje anti doble envio.
@@ -164,173 +156,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             User user = PortalUtil.getUser(actionRequest);
             String usuario = getUsuario(user);
 
-            if ("saveArticuloPopup".equals(cmd)) {
-                validarPermisoABM(user);
-
-                int idSector = parseEnteroConDefault(
-                        actionRequest,
-                        "id_sector",
-                        "Sector del articulo",
-                        0
-                );
-
-                String descripcion = ParamUtil.getString(
-                        actionRequest,
-                        "articulo_descripcion",
-                        null
-                );
-
-                String callback = sanitizarCallback(
-                        ParamUtil.getString(actionRequest, "callback", "")
-                );
-
-                validarArticuloPopup(idSector, descripcion);
-
-                int idArticulo = EditarRequerimientoCompraServiceUtil.guardarArticulo(
-                        null,
-                        Integer.valueOf(idSector),
-                        descripcion
-                );
-
-                CompraArticulo articulo =
-                        EditarRequerimientoCompraServiceUtil.getArticulo(idArticulo);
-
-                actionResponse.setRenderParameter("struts_action", "/compras/alta_articulo_popup");
-                actionResponse.setRenderParameter("callback", callback);
-                actionResponse.setRenderParameter("id_sector", String.valueOf(idSector));
-                actionResponse.setRenderParameter("articulo_guardado", "true");
-                actionResponse.setRenderParameter("id_articulo_guardado", String.valueOf(idArticulo));
-
-                if (articulo != null) {
-                    actionResponse.setRenderParameter(
-                            "articulo_descripcion_guardada",
-                            articulo.getDescripcion()
-                    );
-                } else {
-                    actionResponse.setRenderParameter(
-                            "articulo_descripcion_guardada",
-                            descripcion
-                    );
-                }
-
-                setForward(actionRequest, FORWARD_ALTA_ARTICULO_POPUP);
-
-                return;
-            }
-
-            if ("saveArticulo".equals(cmd)) {
-                validarPermisoABM(user);
-
-                int idArticulo = parseEnteroConDefault(
-                        actionRequest,
-                        "id_articulo",
-                        "Articulo",
-                        0
-                );
-
-                int idSector = parseEnteroConDefault(
-                        actionRequest,
-                        "id_sector",
-                        "Sector del articulo",
-                        0
-                );
-
-                String descripcion = ParamUtil.getString(
-                        actionRequest,
-                        "articulo_descripcion",
-                        null
-                );
-
-                validarArticuloPopup(idSector, descripcion);
-
-                EditarRequerimientoCompraServiceUtil.guardarArticulo(
-                        idArticulo > 0 ? Integer.valueOf(idArticulo) : null,
-                        Integer.valueOf(idSector),
-                        descripcion
-                );
-
-                if (idRequerimientoCompra > 0) {
-                    actionResponse.setRenderParameter(
-                            "id_requerimiento_compra",
-                            String.valueOf(idRequerimientoCompra)
-                    );
-                }
-
-                SessionMessages.add(actionRequest, "requerimiento-compra-articulo-guardado");
-
-                if (altaOriginal && idRequerimientoCompra <= 0) {
-                    actionResponse.setRenderParameter(
-                            "struts_action",
-                            STRUTS_ACTION_NUEVO_REQUERIMIENTO
-                    );
-
-                    actionResponse.setRenderParameter(
-                            "modo",
-                            "alta"
-                    );
-
-                    setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_ALTA_REQUERIMIENTO);
-                } else {
-                    actionResponse.setRenderParameter(
-                            "struts_action",
-                            STRUTS_ACTION_EDITAR_REQUERIMIENTO
-                    );
-
-                    setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
-                }
-
-                return;
-            }
-
-            if ("deleteArticulo".equals(cmd)) {
-                validarPermisoABM(user);
-
-                int idArticulo = parseEnteroConDefault(
-                        actionRequest,
-                        "id_articulo",
-                        "Articulo",
-                        0
-                );
-
-                if (idArticulo <= 0) {
-                    errorCampo("id_articulo", "Debe informar el articulo a borrar.");
-                }
-
-                EditarRequerimientoCompraServiceUtil.borrarArticulo(idArticulo);
-
-                if (idRequerimientoCompra > 0) {
-                    actionResponse.setRenderParameter(
-                            "id_requerimiento_compra",
-                            String.valueOf(idRequerimientoCompra)
-                    );
-                }
-
-                SessionMessages.add(actionRequest, "requerimiento-compra-articulo-borrado");
-
-                if (altaOriginal && idRequerimientoCompra <= 0) {
-                    actionResponse.setRenderParameter(
-                            "struts_action",
-                            STRUTS_ACTION_NUEVO_REQUERIMIENTO
-                    );
-
-                    actionResponse.setRenderParameter(
-                            "modo",
-                            "alta"
-                    );
-
-                    setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_ALTA_REQUERIMIENTO);
-                } else {
-                    actionResponse.setRenderParameter(
-                            "struts_action",
-                            STRUTS_ACTION_EDITAR_REQUERIMIENTO
-                    );
-
-                    setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
-                }
-
-                return;
-            }
-
             if ("saveAll".equals(cmd)) {
                 validarPermisoABM(user);
 
@@ -440,45 +265,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 return;
             }
 
-            /*
-             * Compatibilidad temporal:
-             * si algun JSP viejo todavia postea addItem/updateItem/deleteItem
-             * contra /compras/editar_requerimiento, no se rompe.
-             *
-             * La logica real ya vive en RequerimientoCompraDetalleHelper.
-             * Cuando el JSP/JS apunte a /compras/editar_requerimiento_detalle,
-             * este bloque puede eliminarse.
-             */
-            if ("addItem".equals(cmd) || "updateItem".equals(cmd)) {
-                validarPermisoABM(user);
-
-                detalleHelper.guardarDetalleDesdeRequest(
-                        actionRequest,
-                        actionResponse,
-                        usuario
-                );
-
-                SessionMessages.add(actionRequest, "requerimiento-compra-item-guardado");
-                setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
-
-                return;
-            }
-
-            if ("deleteItem".equals(cmd)) {
-                validarPermisoABM(user);
-
-                detalleHelper.borrarDetalleDesdeRequest(
-                        actionRequest,
-                        actionResponse,
-                        usuario
-                );
-
-                SessionMessages.add(actionRequest, "requerimiento-compra-item-borrado");
-                setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
-
-                return;
-            }
-
             if (Constants.DELETE.equals(cmd)) {
                 validarPermisoAnular(user);
 
@@ -516,54 +302,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             if (WebKeysCompras.isEmpty(mensaje)) {
                 mensaje = "No se pudo procesar el requerimiento de compra.";
-            }
-
-            if (accionPopupArticulo) {
-                String callback = sanitizarCallback(
-                        getParametroTrim(actionRequest, "callback")
-                );
-
-                String idSector = getParametroTrim(actionRequest, "id_sector");
-
-                String descripcionArticulo = getParametroTrim(actionRequest, "articulo_descripcion");
-
-                if (WebKeysCompras.isEmpty(descripcionArticulo)) {
-                    descripcionArticulo = getParametroTrim(actionRequest, "articulo");
-                }
-
-                actionResponse.setRenderParameter(
-                        "struts_action",
-                        "/compras/alta_articulo_popup"
-                );
-
-                actionResponse.setRenderParameter(
-                        "callback",
-                        callback
-                );
-
-                actionResponse.setRenderParameter(
-                        "id_sector",
-                        idSector
-                );
-
-                actionResponse.setRenderParameter(
-                        "articulo",
-                        descripcionArticulo
-                );
-
-                actionResponse.setRenderParameter(
-                        "articulo_error",
-                        mensaje
-                );
-
-                actionResponse.setRenderParameter(
-                        "articulo_guardado",
-                        "false"
-                );
-
-                setForward(actionRequest, FORWARD_ALTA_ARTICULO_POPUP);
-
-                return;
             }
 
             SessionErrors.add(actionRequest, "requerimiento-compra-error");
@@ -638,18 +376,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                                 PortletConfig portletConfig,
                                 RenderRequest renderRequest,
                                 RenderResponse renderResponse) throws Exception {
-
-        String strutsAction = ParamUtil.getString(renderRequest, "struts_action", "");
-
-        if ("/compras/alta_articulo_popup".equals(strutsAction)) {
-            return mapping.findForward(FORWARD_ALTA_ARTICULO_POPUP);
-        }
-
-        if (STRUTS_ACTION_LISTAR_ARTICULOS_SECTOR.equals(strutsAction)) {
-            cargarArticulosSector(renderRequest);
-
-            return mapping.findForward(FORWARD_ARTICULOS_SECTOR);
-        }
 
         /*
          * Cada render de la pantalla de edicion genera un token nuevo.
@@ -833,49 +559,26 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                                  RequerimientoCompra requerimiento) throws Exception {
 
         request.setAttribute(
-                WebKeysCompras.ESTADOS_REQUERIMIENTO,
+                WebKeysCompras.ESTADOS_REQUERIMIENTO_COMPRA,
                 BusquedaRequerimientoCompraServiceUtil.listarEstados()
         );
 
         request.setAttribute(
-                WebKeysCompras.SECTORES_REQUERIMIENTO,
+                WebKeysCompras.SECTORES_REQUERIMIENTO_COMPRA,
                 BusquedaRequerimientoCompraServiceUtil.listarSectores()
         );
 
-        Integer idSectorRequerimiento = null;
-
-        if (requerimiento != null) {
-            idSectorRequerimiento = requerimiento.getIdSector();
-        }
-
-        if ((idSectorRequerimiento == null || idSectorRequerimiento.intValue() <= 0)
-                && request != null) {
-
-            int idSectorParam = ParamUtil.getInteger(request, "sector_id", 0);
-
-            if (idSectorParam > 0) {
-                idSectorRequerimiento = Integer.valueOf(idSectorParam);
-            }
-        }
-
-        List<CompraArticulo> articulos = new ArrayList<CompraArticulo>();
-
         /*
          * Performance:
-         * No listar todos los articulos en alta inicial.
-         * Solo cargar articulos cuando hay sector informado.
+         * No precargar articulos en render.
+         *
+         * La lista puede ser grande y termina serializada en JS por
+         * _detalle_scripts_comunes.jsp. Los articulos deben cargarse
+         * bajo demanda por /compras/listar_articulos_sector.
          */
-        if (idSectorRequerimiento != null && idSectorRequerimiento.intValue() > 0) {
-            articulos =
-                    EditarRequerimientoCompraServiceUtil.listarArticulos(
-                            idSectorRequerimiento,
-                            null
-                    );
-        }
-
         request.setAttribute(
                 ARTICULOS_COMPRA,
-                articulos
+                new ArrayList<CompraArticulo>()
         );
     }
 
@@ -1142,16 +845,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                         "Afiliado: debe seleccionar un afiliado. Falta integrante."
                 );
             }
-        }
-    }
-
-    private void validarArticuloPopup(int idSector, String descripcion) throws Exception {
-        if (idSector <= 0) {
-            errorCampo("id_sector", "Debe informar el sector del articulo.");
-        }
-
-        if (WebKeysCompras.isEmpty(descripcion)) {
-            errorCampo("articulo_descripcion", "Debe informar la descripcion del articulo.");
         }
     }
 
@@ -1434,20 +1127,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         return Integer.valueOf(parsed);
     }
 
-    private String sanitizarCallback(String callback) {
-        if (callback == null) {
-            return "";
-        }
-
-        callback = callback.trim();
-
-        if (!callback.matches("[A-Za-z0-9_]+")) {
-            return "";
-        }
-
-        return callback;
-    }
-
     private void aplicarReglaSectorSinAfiliado(RequerimientoCompra requerimiento) {
         if (requerimiento == null) {
             return;
@@ -1530,27 +1209,4 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         return a.intValue() == b.intValue();
     }
 
-    private void cargarArticulosSector(RenderRequest request) throws Exception {
-        int idSector = ParamUtil.getInteger(request, "sector_id", 0);
-
-        List<CompraArticulo> articulos = new ArrayList<CompraArticulo>();
-
-        if (idSector > 0) {
-            articulos =
-                    EditarRequerimientoCompraServiceUtil.listarArticulos(
-                            Integer.valueOf(idSector),
-                            null
-                    );
-        }
-
-        request.setAttribute(
-                ARTICULOS_COMPRA,
-                articulos
-        );
-
-        request.setAttribute(
-                "ID_SECTOR_ARTICULOS_COMPRA",
-                String.valueOf(idSector)
-        );
-    }
 }

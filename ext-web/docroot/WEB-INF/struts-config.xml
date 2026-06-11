@@ -7044,7 +7044,7 @@
 					path="portlet.compras.error" />
 		</action>
 
-		<!-- DETALLES de requerimiento: addItem / updateItem / deleteItem -->
+		<!-- DETALLES + ABM de articulos/items -->
 		<action
 				path="/compras/editar_requerimiento_detalle"
 				type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraDetalleAction">
@@ -7052,6 +7052,46 @@
 			<forward
 					name="portlet.compras.editar_requerimiento"
 					path="portlet.compras.editar_requerimiento" />
+
+			<forward
+					name="portlet.compras.alta_articulo_popup"
+					path="portlet.compras.alta_articulo_popup" />
+
+			<forward
+					name="portlet.compras.articulos_sector"
+					path="portlet.compras.articulos_sector" />
+
+			<forward
+					name="portlet.compras.error"
+					path="portlet.compras.error" />
+		</action>
+
+		<!-- Popup alta articulo: responsabilidad del action de detalle -->
+		<action
+				path="/compras/alta_articulo_popup"
+				type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraDetalleAction">
+
+			<forward
+					name="portlet.compras.alta_articulo_popup"
+					path="portlet.compras.alta_articulo_popup" />
+
+			<forward
+					name="portlet.compras.editar_requerimiento"
+					path="portlet.compras.editar_requerimiento" />
+
+			<forward
+					name="portlet.compras.error"
+					path="portlet.compras.error" />
+		</action>
+
+		<!-- AJAX articulos por sector: responsabilidad del action de detalle -->
+		<action
+				path="/compras/listar_articulos_sector"
+				type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraDetalleAction">
+
+			<forward
+					name="portlet.compras.articulos_sector"
+					path="portlet.compras.articulos_sector" />
 
 			<forward
 					name="portlet.compras.error"
@@ -7138,31 +7178,6 @@
 		<action
 				path="/compras/buscar_seccional"
 				forward="portlet.seccional.view" />
-
-		<action
-				path="/compras/alta_articulo_popup"
-				type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraAction">
-
-			<forward
-					name="portlet.compras.alta_articulo_popup"
-					path="portlet.compras.alta_articulo_popup" />
-
-			<forward
-					name="portlet.compras.alta_requerimiento"
-					path="portlet.compras.alta_requerimiento" />
-
-			<forward
-					name="portlet.compras.editar_requerimiento"
-					path="portlet.compras.editar_requerimiento" />
-
-			<forward
-					name="portlet.compras.ver_requerimiento"
-					path="portlet.compras.ver_requerimiento" />
-
-			<forward
-					name="portlet.compras.error"
-					path="portlet.compras.error" />
-		</action>
 
 		<action
 				path="/compras/upload_imagenes_requerimiento"

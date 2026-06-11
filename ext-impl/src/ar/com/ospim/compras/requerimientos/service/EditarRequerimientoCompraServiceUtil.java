@@ -58,10 +58,6 @@ public class EditarRequerimientoCompraServiceUtil {
         return getInstance().getArticulo(idArticulo);
     }
 
-    public static int guardarArticulo(CompraArticulo articulo) throws Exception {
-        return getInstance().guardarArticulo(articulo);
-    }
-
     public static int guardarArticulo(Integer idArticulo, Integer idSector, String descripcion) throws Exception {
         return getInstance().guardarArticulo(idArticulo, idSector, descripcion);
     }

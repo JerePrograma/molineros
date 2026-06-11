@@ -4549,6 +4549,12 @@
 		     value="/portlet/compras/requerimientos/editar_articulo_popup.jsp" />
 	</definition>
 
+	<definition name="portlet.compras.articulos_sector"
+	            extends="portlet.compras">
+		<put name="portlet_content"
+		     value="/portlet/compras/requerimientos/articulos_sector.jsp" />
+	</definition>
+
 	<definition name="portlet.compras.afiliados.result.search"
 	            extends="portlet.compras">
 		<put name="portlet_content"

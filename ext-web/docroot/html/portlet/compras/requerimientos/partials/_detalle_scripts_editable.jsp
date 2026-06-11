@@ -58,21 +58,29 @@
     }
 
     function <portlet:namespace />seleccionarArticuloCompra(idArticulo, descripcion, idSector) {
+        var sectorKey = idSector == null ? '' : String(idSector);
+        var sectorYaCargado =
+                sectorKey != ''
+                && <portlet:namespace />articulosCompraSectorCargado[sectorKey];
+
         <portlet:namespace />agregarOActualizarArticuloCache(
                 idArticulo,
                 descripcion,
                 idSector
         );
 
-        <portlet:namespace />cargarArticulosPorSectorSiHaceFalta();
+        <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(
+                sectorYaCargado,
+                function() {
+                    var select = jQuery('#<portlet:namespace />detalle_id_articulo');
 
-        var select = jQuery('#<portlet:namespace />detalle_id_articulo');
+                    select.val(idArticulo);
 
-        select.val(idArticulo);
+                    <portlet:namespace />cerrarAltaArticuloCompra();
 
-        <portlet:namespace />cerrarAltaArticuloCompra();
-
-        jQuery('#<portlet:namespace />detalle_cantidad').focus();
+                    jQuery('#<portlet:namespace />detalle_cantidad').focus();
+                }
+        );
     }
 
     function <portlet:namespace />seleccionarArticuloCompraCerrar() {
@@ -88,7 +96,7 @@
         }
     }
 
-    function <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(idSector, callback) {
+    function <portlet:namespace />cargarArticulosPorSectorRemoto(idSector, callback) {
         idSector = idSector == null ? '' : String(idSector);
 
         if (idSector == '' || !/^[0-9]+$/.test(idSector) || parseInt(idSector, 10) <= 0) {
@@ -143,10 +151,14 @@
         });
     }
 
-    function <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(sinCargaRemota) {
+    function <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(sinCargaRemota, callback) {
         var select = jQuery('#<portlet:namespace />detalle_id_articulo');
 
         if (select.length == 0) {
+            if (typeof callback == 'function') {
+                callback();
+            }
+
             return;
         }
 
@@ -156,18 +168,19 @@
         if (!sinCargaRemota
                 && sectorSeleccionado != ''
                 && /^[0-9]+$/.test(sectorSeleccionado)
-                && parseInt(sectorSeleccionado, 10) > 0
+                && sectorSeleccionadoNum > 0
                 && !<portlet:namespace />articulosCompraSectorCargado[sectorSeleccionado]) {
 
             select.empty();
             select.append('<option value="">Cargando articulos...</option>');
             select.attr('disabled', 'disabled');
 
-            <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(
+            <portlet:namespace />cargarArticulosPorSectorRemoto(
                     sectorSeleccionado,
                     function() {
                         select.removeAttr('disabled');
-                        <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(true);
+
+                        <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(true, callback);
                     }
             );
 
@@ -210,9 +223,16 @@
         } else {
             select.val('');
         }
+
+        if (typeof callback == 'function') {
+            callback();
+        }
     }
 
     window['<portlet:namespace />cargarArticulosPorSectorSiHaceFalta'] =
+            <portlet:namespace />cargarArticulosPorSectorSiHaceFalta;
+
+    window['<portlet:namespace />filtrarArticulosPorSector'] =
             <portlet:namespace />cargarArticulosPorSectorSiHaceFalta;
 
     function <portlet:namespace />limpiarEditorDetalle() {
@@ -235,16 +255,27 @@
 
         jQuery('#<portlet:namespace />detalle_edit_index').val(index);
 
-        <portlet:namespace />cargarArticulosPorSectorSiHaceFalta();
+        <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(
+                false,
+                function() {
+                    jQuery('#<portlet:namespace />detalle_id_articulo').val(
+                            <portlet:namespace />detalleValue(detalle.idArticulo)
+                    );
 
-        jQuery('#<portlet:namespace />detalle_id_articulo').val(<portlet:namespace />detalleValue(detalle.idArticulo));
-        jQuery('#<portlet:namespace />detalle_cantidad').val(<portlet:namespace />detalleValue(detalle.cantidad));
-        jQuery('#<portlet:namespace />detalle_observaciones').val(<portlet:namespace />detalleValue(detalle.observaciones));
+                    jQuery('#<portlet:namespace />detalle_cantidad').val(
+                            <portlet:namespace />detalleValue(detalle.cantidad)
+                    );
 
-        jQuery('#<portlet:namespace />detalle_submit').val('Guardar detalle');
-        jQuery('#<portlet:namespace />detalle_cancelar').show();
+                    jQuery('#<portlet:namespace />detalle_observaciones').val(
+                            <portlet:namespace />detalleValue(detalle.observaciones)
+                    );
 
-        jQuery('#<portlet:namespace />detalle_id_articulo').focus();
+                    jQuery('#<portlet:namespace />detalle_submit').val('Guardar detalle');
+                    jQuery('#<portlet:namespace />detalle_cancelar').show();
+
+                    jQuery('#<portlet:namespace />detalle_id_articulo').focus();
+                }
+        );
     }
 
     function <portlet:namespace />cancelarEdicionDetalle() {
