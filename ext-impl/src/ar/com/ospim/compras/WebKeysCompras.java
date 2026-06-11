@@ -5,6 +5,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String ROL_VIEW_COMPRAS = "VIEW_Compras";
     public static final String ROL_ABM_COMPRAS = "ABM_Compras";
     public static final String ROL_ANULAR_COMPRAS = "ANULAR_Compras";
+    public static final String ROL_AUTORIZAR_COMPRAS = "AUTORIZAR_Compras";
+    public static final String ROL_COTIZAR_COMPRAS = "COTIZAR_Compras";
+    public static final String ROL_ORDEN_COMPRA_COMPRAS = "ORDEN_COMPRA_Compras";
 
     public static final String BUSQUEDA_REQUERIMIENTOS_COMPRA = "BUSQUEDA_REQUERIMIENTOS_COMPRA";
     public static final String FILTRO_REQUERIMIENTOS_COMPRA = "FILTRO_REQUERIMIENTOS_COMPRA";
@@ -21,6 +24,31 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String SECTORES_REQUERIMIENTO = "SECTORES_REQUERIMIENTO";
     public static final String ESTADOS_REQUERIMIENTO_COMPRA = ESTADOS_REQUERIMIENTO;
     public static final String SECTORES_REQUERIMIENTO_COMPRA = SECTORES_REQUERIMIENTO;
+
+    /*
+     * Flujo nuevo:
+     *
+     * Borrador
+     *   -> Requerimiento
+     *   -> Autorizado
+     *   -> Cotizaciones
+     *   -> Orden de compra
+     *
+     * Anulado es estado terminal lateral.
+     */
+    public static final int ESTADO_BORRADOR = 1;
+    public static final int ESTADO_REQUERIMIENTO = 2;
+    public static final int ESTADO_AUTORIZADO = 3;
+    public static final int ESTADO_COTIZACIONES = 4;
+    public static final int ESTADO_ORDEN_COMPRA = 5;
+    public static final int ESTADO_ANULADO = 99;
+
+    /*
+     * Alias legacy para reducir roturas en JSPs/clases existentes.
+     * Antes ESTADO_COTIZADO significaba "finalizado/cotizado".
+     * En el flujo nuevo se interpreta como etapa de Cotizaciones.
+     */
+    public static final int ESTADO_COTIZADO = ESTADO_COTIZACIONES;
 
     public static final String ERROR_PARA_ALERT = "ERROR_PARA_ALERT";
     public static final String ERROR_CAMPO_COMPRA = "ERROR_CAMPO_COMPRA";
@@ -48,10 +76,6 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String DOCUMENT_LIBRARY_FOLDER_REQUERIMIENTOS_COMPRAS = "RequerimientosCompras";
     public static final String DOCUMENT_LIBRARY_PREFIJO_REQUERIMIENTO_COMPRA = "RC-";
 
-    public static final int ESTADO_BORRADOR = 1;
-    public static final int ESTADO_COTIZADO = 2;
-    public static final int ESTADO_ANULADO = 3;
-
     public static String getPrefijoDocumentoRequerimientoCompra(int idRequerimientoCompra) {
         if (idRequerimientoCompra <= 0) {
             return DOCUMENT_LIBRARY_PREFIJO_REQUERIMIENTO_COMPRA;
@@ -66,8 +90,14 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         switch (estado) {
             case ESTADO_BORRADOR:
                 return "Borrador";
-            case ESTADO_COTIZADO:
-                return "Cotizado";
+            case ESTADO_REQUERIMIENTO:
+                return "Requerimiento";
+            case ESTADO_AUTORIZADO:
+                return "Autorizado";
+            case ESTADO_COTIZACIONES:
+                return "Cotizaciones";
+            case ESTADO_ORDEN_COMPRA:
+                return "Orden de compra";
             case ESTADO_ANULADO:
                 return "Anulado";
             default:
@@ -76,19 +106,43 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     }
 
     public static boolean esEstadoValido(int estado) {
-        return esBorrador(estado) || esCotizado(estado) || esAnulado(estado);
+        return esBorrador(estado)
+                || esRequerimiento(estado)
+                || esAutorizado(estado)
+                || esCotizaciones(estado)
+                || esOrdenCompra(estado)
+                || esAnulado(estado);
     }
 
     public static boolean esBorrador(int estado) {
         return estado == ESTADO_BORRADOR;
     }
 
-    public static boolean esCotizado(int estado) {
-        return estado == ESTADO_COTIZADO;
+    public static boolean esRequerimiento(int estado) {
+        return estado == ESTADO_REQUERIMIENTO;
+    }
+
+    public static boolean esAutorizado(int estado) {
+        return estado == ESTADO_AUTORIZADO;
+    }
+
+    public static boolean esCotizaciones(int estado) {
+        return estado == ESTADO_COTIZACIONES;
+    }
+
+    public static boolean esOrdenCompra(int estado) {
+        return estado == ESTADO_ORDEN_COMPRA;
     }
 
     public static boolean esAnulado(int estado) {
         return estado == ESTADO_ANULADO;
+    }
+
+    /*
+     * Compatibilidad legacy.
+     */
+    public static boolean esCotizado(int estado) {
+        return esCotizaciones(estado);
     }
 
     public static boolean puedeEditar(int estado) {
@@ -99,12 +153,34 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return puedeEditar(estado);
     }
 
-    public static boolean puedeCotizar(int estado) {
+    public static boolean puedeEnviarAAutorizar(int estado) {
         return esBorrador(estado);
     }
 
+    public static boolean puedeAutorizar(int estado) {
+        return esRequerimiento(estado);
+    }
+
+    public static boolean puedeIniciarCotizaciones(int estado) {
+        return esAutorizado(estado);
+    }
+
+    /*
+     * Compatibilidad legacy.
+     */
+    public static boolean puedeCotizar(int estado) {
+        return puedeIniciarCotizaciones(estado);
+    }
+
+    public static boolean puedeGenerarOrdenCompra(int estado) {
+        return esCotizaciones(estado);
+    }
+
     public static boolean puedeAnular(int estado) {
-        return esBorrador(estado) || esCotizado(estado);
+        return esBorrador(estado)
+                || esRequerimiento(estado)
+                || esAutorizado(estado)
+                || esCotizaciones(estado);
     }
 
     public static boolean validarTransicionEstado(int estadoActual, int estadoNuevo) {
@@ -120,11 +196,31 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             return false;
         }
 
+        if (esOrdenCompra(estadoActual)) {
+            return false;
+        }
+
         if (esAnulado(estadoNuevo)) {
             return puedeAnular(estadoActual);
         }
 
-        return esBorrador(estadoActual) && esCotizado(estadoNuevo);
+        if (esBorrador(estadoActual) && esRequerimiento(estadoNuevo)) {
+            return true;
+        }
+
+        if (esRequerimiento(estadoActual) && esAutorizado(estadoNuevo)) {
+            return true;
+        }
+
+        if (esAutorizado(estadoActual) && esCotizaciones(estadoNuevo)) {
+            return true;
+        }
+
+        if (esCotizaciones(estadoActual) && esOrdenCompra(estadoNuevo)) {
+            return true;
+        }
+
+        return false;
     }
 
     public static boolean puedeCambiarEstado(int estadoActual, int estadoNuevo) {

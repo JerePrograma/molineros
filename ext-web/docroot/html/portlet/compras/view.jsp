@@ -17,10 +17,16 @@ if (tabs1 == null) {
     tabs1 = (String) request.getSession().getAttribute("compras_tabs1");
 }
 
-String tabs1Values = "requerimientos";
-String tabs1Names = "Requerimientos";
+String tabs1Values = "requerimientos,autorizaciones,cotizaciones,orden-de-comrpa";
+String tabs1Names = "Requerimientos,Autorizaciones,Cotizaciones,Ordenes de Compras";
 
-if (tabs1 == null || !"requerimientos".equals(tabs1)) {
+boolean tabValida =
+        "requerimientos".equals(tabs1)
+        || "autorizaciones".equals(tabs1)
+        || "cotizaciones".equals(tabs1)
+        || "ordenes-de-compra".equals(tabs1);
+
+if (tabs1 == null || !tabValida) {
     tabs1 = "requerimientos";
 }
 
@@ -51,6 +57,18 @@ currentURL = PortalUtil.getCurrentURL(request);
     <c:choose>
         <c:when test='<%= "requerimientos".equals(tabs1) %>'>
             <liferay-util:include page="/html/portlet/compras/requerimientos/requerimientos.jsp" />
+        </c:when>
+
+        <c:when test='<%= "autorizaciones".equals(tabs1) %>'>
+            <liferay-util:include page="/html/portlet/compras/autorizaciones/autorizaciones.jsp" />
+        </c:when>
+
+        <c:when test='<%= "cotizaciones".equals(tabs1) %>'>
+            <liferay-util:include page="/html/portlet/compras/cotizaciones/cotizaciones.jsp" />
+        </c:when>
+
+        <c:when test='<%= "ordenes-de-compra".equals(tabs1) %>'>
+            <liferay-util:include page="/html/portlet/compras/ordenes-de-compra/ordenes-de-compra.jsp" />
         </c:when>
 
         <c:otherwise>

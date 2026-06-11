@@ -58,8 +58,8 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             String usuario = user != null ? user.getScreenName() : "sistema";
 
             validarParametrosCambioEstado(idRequerimientoCompra, estadoNuevo);
-            validarPermisoCambioEstado(user, estadoNuevo);
             validarTransicionEstado(idRequerimientoCompra, estadoNuevo);
+            validarPermisoCambioEstado(user, estadoNuevo);
 
             EditarRequerimientoCompraServiceUtil.cambiarEstado(
                     idRequerimientoCompra,
@@ -184,13 +184,9 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
         }
 
         if (estadoNuevo == WebKeysCompras.ESTADO_ANULADO) {
-            if (!PermissionUtil.userContainsRole(
-                    user,
-                    WebKeysCompras.ROL_ANULAR_COMPRAS
-            ) && !PermissionUtil.userContainsRole(
-                    user,
-                    WebKeysCompras.ROL_ABM_COMPRAS
-            )) {
+            if (!userTieneRol(user, WebKeysCompras.ROL_ANULAR_COMPRAS)
+                    && !userTieneRol(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
+
                 throw new Exception(
                         "No posee permisos para anular requerimientos de compras."
                 );
@@ -199,16 +195,53 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             return;
         }
 
-        if (estadoNuevo == WebKeysCompras.ESTADO_COTIZADO
-                && !PermissionUtil.userContainsRole(
-                user,
-                WebKeysCompras.ROL_ABM_COMPRAS
-        )) {
+        if (estadoNuevo == WebKeysCompras.ESTADO_REQUERIMIENTO) {
+            if (!userTieneRol(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
+                throw new Exception(
+                        "No posee permisos para enviar requerimientos a autorizacion."
+                );
+            }
 
-            throw new Exception(
-                    "No posee permisos para cotizar requerimientos de compras."
-            );
+            return;
         }
+
+        if (estadoNuevo == WebKeysCompras.ESTADO_AUTORIZADO) {
+            if (!userTieneRol(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS)) {
+                throw new Exception(
+                        "No posee permisos para autorizar requerimientos de compra."
+                );
+            }
+
+            return;
+        }
+
+        if (estadoNuevo == WebKeysCompras.ESTADO_COTIZACIONES) {
+            if (!userTieneRol(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)) {
+                throw new Exception(
+                        "No posee permisos para iniciar cotizaciones de requerimientos de compra."
+                );
+            }
+
+            return;
+        }
+
+        if (estadoNuevo == WebKeysCompras.ESTADO_ORDEN_COMPRA) {
+            if (!userTieneRol(user, WebKeysCompras.ROL_ORDEN_COMPRA_COMPRAS)) {
+                throw new Exception(
+                        "No posee permisos para generar orden de compra."
+                );
+            }
+
+            return;
+        }
+
+        throw new Exception("No posee permisos para cambiar el estado solicitado.");
+    }
+
+    private boolean userTieneRol(User user, String rol) throws Exception {
+        return user != null
+                && rol != null
+                && PermissionUtil.userContainsRole(user, rol);
     }
 
     private int getIntegerParam(ActionRequest actionRequest,
