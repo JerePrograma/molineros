@@ -3,7 +3,7 @@
         <th>ID</th>
         <th>Art&iacute;culo</th>
         <th>Cantidad</th>
-        <th>Observaciones</th>
+        <th>Descripcion</th>
 
         <% if (puedeABMDetalle) { %>
             <th>Acciones</th>

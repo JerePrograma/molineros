@@ -206,15 +206,16 @@ if ("0".equals(idTercerizadoraFiltro)) {
                        value="<liferay-ui:message key='buscar' />"
                        title="<liferay-ui:message key='buscar' />"
                        type="button" />
-            </td>
+                    &nbsp;&nbsp;
 
-            <td colspan="5">
                 <input type="button"
                        value="Limpiar"
                        onClick="<portlet:namespace />limpiarTodosCamposFiltro();" />
+            </td>
+
+            <td colspan="5">
 
                 <c:if test="<%= showABMButtons %>">
-                    &nbsp;&nbsp;
 
                     <input type="button"
                            value="Nuevo requerimiento"

@@ -54,7 +54,7 @@
         <tr>
             <td>
                 <label for="<portlet:namespace />detalle_observaciones">
-                    Observaciones:
+                    Descripcion:
                 </label>
             </td>
             <td>
