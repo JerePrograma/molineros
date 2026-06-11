@@ -5,7 +5,6 @@ import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.beans.CompraArticulo;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
@@ -40,7 +39,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
     private static final String FORWARD_ALTA_ARTICULO_POPUP = "portlet.compras.alta_articulo_popup";
     private static final boolean DEBUG_ARTICULOS_COMPRA = true;
-    private static final boolean EXIGIR_DETALLES_EN_SAVE_ALL = true;
 
     private static final String ARTICULOS_COMPRA =
             "ARTICULOS_COMPRA";
@@ -68,6 +66,16 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
     private static final String STRUTS_ACTION_EDITAR_REQUERIMIENTO =
             "/compras/editar_requerimiento";
+
+    /*
+     * La logica de detalles queda separada en helper:
+     * - parseo de detalle
+     * - validacion de detalle
+     * - guardado/borrado de detalles
+     * - normalizacion de textos nuevos
+     */
+    private final RequerimientoCompraDetalleHelper detalleHelper =
+            new RequerimientoCompraDetalleHelper();
 
     private boolean esAltaRequerimiento(RenderRequest renderRequest) {
         String strutsAction = ParamUtil.getString(renderRequest, "struts_action", "");
@@ -125,8 +133,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
     }
 
-    public void processAction(ActionMapping mapping, ActionForm form,
-                              PortletConfig portletConfig, ActionRequest actionRequest,
+    public void processAction(ActionMapping mapping,
+                              ActionForm form,
+                              PortletConfig portletConfig,
+                              ActionRequest actionRequest,
                               ActionResponse actionResponse) throws Exception {
 
         String cmd = getParametroTrim(actionRequest, Constants.CMD);
@@ -351,7 +361,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                         );
 
                 int detallesGuardados =
-                        guardarDetallesDesdeRequest(
+                        detalleHelper.guardarDetallesDesdeRequest(
                                 actionRequest,
                                 idRequerimientoCompra,
                                 usuario
@@ -430,20 +440,22 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 return;
             }
 
+            /*
+             * Compatibilidad temporal:
+             * si algun JSP viejo todavia postea addItem/updateItem/deleteItem
+             * contra /compras/editar_requerimiento, no se rompe.
+             *
+             * La logica real ya vive en RequerimientoCompraDetalleHelper.
+             * Cuando el JSP/JS apunte a /compras/editar_requerimiento_detalle,
+             * este bloque puede eliminarse.
+             */
             if ("addItem".equals(cmd) || "updateItem".equals(cmd)) {
                 validarPermisoABM(user);
 
-                RequerimientoCompraDetalle detalle = getDetalleFromRequest(actionRequest);
-
-                validarRequerimientoEditable(detalle.getIdRequerimientoCompra());
-                validarDetalle(detalle);
-
-                EditarRequerimientoCompraServiceUtil.guardarDetalle(detalle, usuario);
-
-                setIdRequerimientoEnRequest(
+                detalleHelper.guardarDetalleDesdeRequest(
                         actionRequest,
                         actionResponse,
-                        detalle.getIdRequerimientoCompra()
+                        usuario
                 );
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-item-guardado");
@@ -455,27 +467,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             if ("deleteItem".equals(cmd)) {
                 validarPermisoABM(user);
 
-                int idDetalle = getIdDetalleFromRequest(actionRequest);
-
-                if (idDetalle <= 0) {
-                    errorCampo("id_detalle", "Debe informar el detalle a borrar.");
-                }
-
-                if (idRequerimientoCompra <= 0) {
-                    errorCampo(
-                            "id_requerimiento_compra",
-                            "Debe informar el requerimiento de compra."
-                    );
-                }
-
-                validarRequerimientoEditable(idRequerimientoCompra);
-
-                EditarRequerimientoCompraServiceUtil.borrarDetalle(idDetalle, usuario);
-
-                setIdRequerimientoEnRequest(
+                detalleHelper.borrarDetalleDesdeRequest(
                         actionRequest,
                         actionResponse,
-                        idRequerimientoCompra
+                        usuario
                 );
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-item-borrado");
@@ -582,6 +577,16 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 );
             }
 
+            if (e instanceof RequerimientoCompraDetalleHelper.ValidacionCompraException) {
+                RequerimientoCompraDetalleHelper.ValidacionCompraException validacion =
+                        (RequerimientoCompraDetalleHelper.ValidacionCompraException) e;
+
+                actionRequest.setAttribute(
+                        WebKeysCompras.ERROR_CAMPO_COMPRA,
+                        validacion.getCampo()
+                );
+            }
+
             if (idRequerimientoCompra > 0) {
                 actionResponse.setRenderParameter(
                         "id_requerimiento_compra",
@@ -628,8 +633,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
     }
 
-    public ActionForward render(ActionMapping mapping, ActionForm form,
-                                PortletConfig portletConfig, RenderRequest renderRequest,
+    public ActionForward render(ActionMapping mapping,
+                                ActionForm form,
+                                PortletConfig portletConfig,
+                                RenderRequest renderRequest,
                                 RenderResponse renderResponse) throws Exception {
 
         String strutsAction = ParamUtil.getString(renderRequest, "struts_action", "");
@@ -1133,61 +1140,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
     }
 
-    private void validarDetalle(RequerimientoCompraDetalle detalle) throws Exception {
-        validarDetalle(detalle, "Detalle");
-    }
-
-    private void validarDetalle(RequerimientoCompraDetalle detalle, String contexto)
-            throws Exception {
-
-        if (detalle == null) {
-            errorCampo(contexto, contexto + ": debe informar el detalle del requerimiento.");
-        }
-
-        if (detalle.getIdRequerimientoCompra() <= 0) {
-            errorCampo(
-                    contexto,
-                    contexto + ": debe guardar primero la cabecera del requerimiento."
-            );
-        }
-
-        if (detalle.getIdArticulo() == null
-                || detalle.getIdArticulo().intValue() <= 0) {
-
-            errorCampo(
-                    contexto + " - id_articulo",
-                    contexto + ": debe seleccionar un articulo."
-            );
-        }
-
-        if (detalle.getCantidad() == null
-                || detalle.getCantidad().intValue() <= 0) {
-
-            errorCampo(
-                    contexto + " - cantidad",
-                    contexto + ": la Cantidad debe ser mayor a cero."
-            );
-        }
-
-        if (detalle.getPrecioUnitarioEstimado() != null
-                && detalle.getPrecioUnitarioEstimado().compareTo(BigDecimal.ZERO) < 0) {
-
-            errorCampo(
-                    contexto + " - precio_unitario_estimado",
-                    contexto + ": el Precio unitario estimado no puede ser negativo."
-            );
-        }
-
-        if (detalle.getPrecioTotalEstimado() != null
-                && detalle.getPrecioTotalEstimado().compareTo(BigDecimal.ZERO) < 0) {
-
-            errorCampo(
-                    contexto + " - precio_total_estimado",
-                    contexto + ": el Precio total estimado no puede ser negativo."
-            );
-        }
-    }
-
     private void validarArticuloPopup(int idSector, String descripcion) throws Exception {
         if (idSector <= 0) {
             errorCampo("id_sector", "Debe informar el sector del articulo.");
@@ -1297,228 +1249,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         requerimiento.setObservaciones(getParametroRaw(request, "observaciones", null));
 
         return requerimiento;
-    }
-
-    private RequerimientoCompraDetalle getDetalleFromRequest(ActionRequest request)
-            throws Exception {
-
-        RequerimientoCompraDetalle detalle = new RequerimientoCompraDetalle();
-
-        int idDetalle = getIdDetalleFromRequest(request);
-
-        detalle.setId(idDetalle > 0 ? Integer.valueOf(idDetalle) : null);
-
-        detalle.setIdRequerimientoCompra(
-                parseEnteroConDefault(
-                        request,
-                        "id_requerimiento_compra",
-                        "ID del requerimiento",
-                        0
-                )
-        );
-
-        int idArticulo = parseEnteroConDefault(
-                request,
-                "id_articulo",
-                "Articulo",
-                0
-        );
-
-        detalle.setIdArticulo(idArticulo > 0 ? Integer.valueOf(idArticulo) : null);
-
-        detalle.setCantidad(
-                parseCantidadDesdeRequest(request, "cantidad", "Cantidad")
-        );
-
-        detalle.setPrecioUnitarioEstimado(
-                parseBigDecimalNullable(
-                        ParamUtil.getString(request, "precio_unitario_estimado", null),
-                        "Precio unitario estimado"
-                )
-        );
-
-        detalle.setPrecioTotalEstimado(
-                parseBigDecimalNullable(
-                        ParamUtil.getString(request, "precio_total_estimado", null),
-                        "Precio total estimado"
-                )
-        );
-
-        detalle.setObservaciones(
-                ParamUtil.getString(request, "observaciones_detalle", null)
-        );
-
-        return detalle;
-    }
-
-    private int getIdDetalleFromRequest(ActionRequest request) throws Exception {
-        return parseEnteroConDefault(request, "id_detalle", "ID del detalle", 0);
-    }
-
-    private int guardarDetallesDesdeRequest(ActionRequest request,
-                                            int idRequerimientoCompra,
-                                            String usuario) throws Exception {
-
-        if (idRequerimientoCompra <= 0) {
-            errorCampo(
-                    "id_requerimiento_compra",
-                    "Debe guardar primero la cabecera del requerimiento."
-            );
-        }
-
-        String deletedIds = getParametroTrim(request, "detalle_deleted_ids");
-
-        Set<Integer> borrados = new HashSet<Integer>();
-
-        if (!WebKeysCompras.isEmpty(deletedIds)) {
-            String[] ids = deletedIds.split(",");
-
-            for (int i = 0; i < ids.length; i++) {
-                String rawId = ids[i] != null ? ids[i].trim() : "";
-
-                if (WebKeysCompras.isEmpty(rawId)) {
-                    continue;
-                }
-
-                if (!rawId.matches("^[0-9]+$")) {
-                    errorCampo(
-                            "detalle_deleted_ids",
-                            "Detalle a borrar: ID invalido recibido: '" + rawId + "'."
-                    );
-                }
-
-                int idDetalleBorrado = Integer.parseInt(rawId);
-
-                if (idDetalleBorrado > 0
-                        && !borrados.contains(Integer.valueOf(idDetalleBorrado))) {
-
-                    EditarRequerimientoCompraServiceUtil.borrarDetalle(
-                            idDetalleBorrado,
-                            usuario
-                    );
-
-                    borrados.add(Integer.valueOf(idDetalleBorrado));
-                }
-            }
-        }
-
-        int count = parseEnteroConDefault(
-                request,
-                "detalle_count",
-                "Cantidad de detalles",
-                0
-        );
-
-        if (EXIGIR_DETALLES_EN_SAVE_ALL && count <= 0) {
-            errorCampo(
-                    "detalle_count",
-                    "Detalles: no llego ningun detalle al Action. "
-                            + "detalle_count vino vacio o en cero. "
-                            + "Esto normalmente indica que serializarDetallesCompras() no genero los hidden inputs, "
-                            + "que los inputs quedaron fuera del form principal, "
-                            + "o que el formulario se rompio por incluir busqueda_afiliado.jsp dentro del form."
-            );
-        }
-
-        int guardados = 0;
-        int omitidos = 0;
-
-        for (int i = 0; i < count; i++) {
-            String prefix = "detalle_" + i + "_";
-            String contexto = "Detalle #" + (i + 1);
-
-            if (filaDetalleVacia(request, prefix)) {
-                omitidos++;
-                continue;
-            }
-
-            int idDetalle = parseEnteroConDefault(
-                    request,
-                    prefix + "id",
-                    contexto + " - ID",
-                    0
-            );
-
-            if (idDetalle > 0 && borrados.contains(Integer.valueOf(idDetalle))) {
-                omitidos++;
-                continue;
-            }
-
-            int idArticulo = parseEnteroConDefault(
-                    request,
-                    prefix + "id_articulo",
-                    contexto + " - Articulo",
-                    0
-            );
-
-            RequerimientoCompraDetalle detalle = new RequerimientoCompraDetalle();
-
-            detalle.setId(idDetalle > 0 ? Integer.valueOf(idDetalle) : null);
-            detalle.setIdRequerimientoCompra(idRequerimientoCompra);
-            detalle.setIdArticulo(idArticulo > 0 ? Integer.valueOf(idArticulo) : null);
-
-            detalle.setCantidad(
-                    parseCantidadDesdeRequest(
-                            request,
-                            prefix + "cantidad",
-                            contexto + " - Cantidad"
-                    )
-            );
-
-            detalle.setPrecioUnitarioEstimado(
-                    parseBigDecimalNullable(
-                            getParametroTrim(
-                                    request,
-                                    prefix + "precio_unitario_estimado"
-                            ),
-                            contexto + " - Precio unitario estimado"
-                    )
-            );
-
-            detalle.setPrecioTotalEstimado(
-                    parseBigDecimalNullable(
-                            getParametroTrim(
-                                    request,
-                                    prefix + "precio_total_estimado"
-                            ),
-                            contexto + " - Precio total estimado"
-                    )
-            );
-
-            detalle.setObservaciones(
-                    getParametroRaw(request, prefix + "observaciones", null)
-            );
-
-            validarDetalle(detalle, contexto);
-
-            EditarRequerimientoCompraServiceUtil.guardarDetalle(detalle, usuario);
-
-            guardados++;
-        }
-
-        if (EXIGIR_DETALLES_EN_SAVE_ALL && guardados == 0 && borrados.size() == 0) {
-            errorCampo(
-                    "detalles",
-                    "Detalles: el Action recibio detalle_count=" + count
-                            + ", pero no guardo ningun detalle. "
-                            + "Revisar los nombres de parametros generados por serializarDetallesCompras()."
-            );
-        }
-
-        return guardados;
-    }
-
-    private boolean filaDetalleVacia(ActionRequest request, String prefix) {
-        return WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "id"))
-                && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "id_articulo"))
-                && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "cantidad"))
-                && WebKeysCompras.isEmpty(
-                getParametroTrim(request, prefix + "precio_unitario_estimado")
-        )
-                && WebKeysCompras.isEmpty(
-                getParametroTrim(request, prefix + "precio_total_estimado")
-        )
-                && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "observaciones"));
     }
 
     private void errorCampo(String campo, String mensaje)
@@ -1697,79 +1427,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         return Integer.valueOf(parsed);
-    }
-
-    private Integer parseCantidadDesdeRequest(ActionRequest request,
-                                              String nombre,
-                                              String label)
-            throws ValidacionCompraException {
-
-        String value = getParametroTrim(request, nombre);
-
-        if (WebKeysCompras.isEmpty(value)) {
-            errorCampo(nombre, label + ": debe informar una cantidad.");
-        }
-
-        if (!value.matches("^[0-9]+$")) {
-            errorCampo(
-                    nombre,
-                    label + ": debe ser un numero entero mayor a cero. Valor recibido: '"
-                            + value + "'."
-            );
-        }
-
-        int parsed;
-
-        try {
-            parsed = Integer.parseInt(value);
-        } catch (Exception e) {
-            errorCampo(
-                    nombre,
-                    label + ": el valor ingresado '" + value
-                            + "' esta fuera del rango permitido."
-            );
-            return null;
-        }
-
-        if (parsed <= 0) {
-            errorCampo(
-                    nombre,
-                    label + ": debe ser mayor a cero. Valor recibido: " + parsed + "."
-            );
-        }
-
-        return Integer.valueOf(parsed);
-    }
-
-    private BigDecimal parseBigDecimalNullable(String value, String label)
-            throws ValidacionCompraException {
-
-        if (WebKeysCompras.isEmpty(value)) {
-            return null;
-        }
-
-        String original = value.trim();
-        String clean = original.replace(" ", "");
-
-        if (clean.indexOf(',') >= 0) {
-            clean = clean.replace(".", "").replace(",", ".");
-        }
-
-        if (!clean.matches("^-?[0-9]+(\\.[0-9]+)?$")) {
-            errorCampo(
-                    label,
-                    label + ": importe invalido. Valor recibido: '" + original
-                            + "'. Use formatos como 1234.56 o 1.234,56."
-            );
-        }
-
-        try {
-            return new BigDecimal(clean);
-        } catch (Exception e) {
-            errorCampo(label, label + ": no se pudo interpretar el importe '" + original + "'.");
-        }
-
-        return null;
     }
 
     private String sanitizarCallback(String callback) {

@@ -3,6 +3,15 @@
     var <portlet:namespace />popupArticuloCompraAbriendo = false;
     var <portlet:namespace />popupArticuloCompra = null;
 
+    var <portlet:namespace />detalleActionURL =
+            '<%= detalleActionURL.toString() %>';
+
+    var <portlet:namespace />requerimientoPersistidoDetalle =
+            <%= requerimientoPersistidoDetalle ? "true" : "false" %>;
+
+    var <portlet:namespace />idRequerimientoCompraDetalle =
+            '<%= idRequerimientoCompraDetalle %>';
+
     function <portlet:namespace />abrirAltaArticuloCompra() {
         if (<portlet:namespace />popupArticuloCompraAbriendo) {
             return false;
@@ -228,6 +237,44 @@
         return false;
     }
 
+    function <portlet:namespace />postDetalleServidor(cmd, idDetalle, idArticulo, cantidad, observaciones) {
+        var idReq = <portlet:namespace />idRequerimientoCompraDetalle;
+
+        if (idReq == null || idReq == '' || !/^[0-9]+$/.test(String(idReq)) || parseInt(idReq, 10) <= 0) {
+            alert('Debe guardar primero la cabecera del requerimiento.');
+            return <portlet:namespace />liberarDetalleAccion(0);
+        }
+
+        var form = document.createElement('form');
+
+        form.method = 'post';
+        form.action = <portlet:namespace />detalleActionURL;
+        form.style.display = 'none';
+
+        function addHidden(name, value) {
+            var input = document.createElement('input');
+
+            input.type = 'hidden';
+            input.name = '<portlet:namespace />' + name;
+            input.value = value == null ? '' : value;
+
+            form.appendChild(input);
+        }
+
+        addHidden('<%= Constants.CMD %>', cmd);
+        addHidden('id_requerimiento_compra', idReq);
+        addHidden('id_detalle', idDetalle);
+        addHidden('id_articulo', idArticulo);
+        addHidden('cantidad', cantidad);
+        addHidden('observaciones_detalle', observaciones);
+
+        document.body.appendChild(form);
+
+        form.submit();
+
+        return false;
+    }
+
     function <portlet:namespace />agregarOActualizarDetalle() {
         if (<portlet:namespace />detalleAccionEnCurso) {
             return false;
@@ -281,6 +328,28 @@
 
         if (esEdicion) {
             detalle.id = <portlet:namespace />detallesCompra[editIndex].id;
+        }
+
+        /*
+         * Requerimiento ya guardado:
+         * el detalle se persiste con la action modular nueva.
+         */
+        if (<portlet:namespace />requerimientoPersistidoDetalle) {
+            return <portlet:namespace />postDetalleServidor(
+                    esEdicion ? 'updateItem' : 'addItem',
+                    detalle.id,
+                    detalle.idArticulo,
+                    detalle.cantidad,
+                    detalle.observaciones
+            );
+        }
+
+        /*
+         * Requerimiento nuevo:
+         * se conserva el comportamiento anterior en memoria.
+         * El saveAll guarda cabecera + detalles serializados.
+         */
+        if (esEdicion) {
             <portlet:namespace />detallesCompra[editIndex] = detalle;
         } else {
             <portlet:namespace />detallesCompra.push(detalle);
@@ -309,6 +378,28 @@
             return <portlet:namespace />liberarDetalleAccion(0);
         }
 
+        /*
+         * Requerimiento ya guardado + detalle persistido:
+         * borrar inmediatamente con action modular.
+         */
+        if (<portlet:namespace />requerimientoPersistidoDetalle
+                && detalle.id != null
+                && detalle.id != ''
+                && parseInt(detalle.id, 10) > 0) {
+
+            return <portlet:namespace />postDetalleServidor(
+                    'deleteItem',
+                    detalle.id,
+                    '',
+                    '',
+                    ''
+            );
+        }
+
+        /*
+         * Requerimiento nuevo o detalle no persistido:
+         * se borra solo de memoria y luego saveAll define el estado final.
+         */
         if (detalle.id != null && detalle.id != '' && parseInt(detalle.id, 10) > 0) {
             <portlet:namespace />detalleDeletedIds.push(detalle.id);
         }

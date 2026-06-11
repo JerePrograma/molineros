@@ -7044,6 +7044,20 @@
 					path="portlet.compras.error" />
 		</action>
 
+		<!-- DETALLES de requerimiento: addItem / updateItem / deleteItem -->
+		<action
+				path="/compras/editar_requerimiento_detalle"
+				type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraDetalleAction">
+
+			<forward
+					name="portlet.compras.editar_requerimiento"
+					path="portlet.compras.editar_requerimiento" />
+
+			<forward
+					name="portlet.compras.error"
+					path="portlet.compras.error" />
+		</action>
+
 		<!-- VER requerimiento: renderiza requerimiento_vista.jsp -->
 		<action
 				path="/compras/ver_requerimiento"

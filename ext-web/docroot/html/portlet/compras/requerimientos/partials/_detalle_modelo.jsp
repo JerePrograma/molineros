@@ -1,5 +1,7 @@
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
+<%@ page import="javax.portlet.PortletURL" %>
+<%@ page import="javax.portlet.WindowState" %>
 <%@ page import="ar.com.ospim.compras.beans.CompraArticulo" %>
 
 <%!
@@ -87,6 +89,14 @@ if (articulosAttr instanceof List) {
 if (articulos == null) {
     articulos = new ArrayList<CompraArticulo>();
 }
+
+PortletURL detalleActionURL = renderResponse.createActionURL();
+detalleActionURL.setWindowState(WindowState.MAXIMIZED);
+detalleActionURL.setParameter("struts_action", "/compras/editar_requerimiento_detalle");
+
+int idRequerimientoCompraDetalle = reqDetalle.getIdRequerimientoCompra();
+
+boolean requerimientoPersistidoDetalle = idRequerimientoCompraDetalle > 0;
 
 int detalleColspan = 4 + (puedeABMDetalle ? 1 : 0);
 %>
