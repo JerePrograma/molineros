@@ -28,20 +28,20 @@ import javax.portlet.PortletSession;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class EditarRequerimientoCompraAction extends PortletAction {
 
     private static final String FORWARD_ALTA_ARTICULO_POPUP = "portlet.compras.alta_articulo_popup";
-    private static final boolean DEBUG_ARTICULOS_COMPRA = true;
 
     private static final String ARTICULOS_COMPRA =
             "ARTICULOS_COMPRA";
+
+    private static final String STRUTS_ACTION_LISTAR_ARTICULOS_SECTOR =
+            "/compras/listar_articulos_sector";
+
+    private static final String FORWARD_ARTICULOS_SECTOR =
+            "portlet.compras.articulos_sector";
 
     /*
      * Blindaje anti doble envio.
@@ -645,6 +645,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             return mapping.findForward(FORWARD_ALTA_ARTICULO_POPUP);
         }
 
+        if (STRUTS_ACTION_LISTAR_ARTICULOS_SECTOR.equals(strutsAction)) {
+            cargarArticulosSector(renderRequest);
+
+            return mapping.findForward(FORWARD_ARTICULOS_SECTOR);
+        }
+
         /*
          * Cada render de la pantalla de edicion genera un token nuevo.
          * El JSP debe enviarlo en un hidden llamado compras_save_token.
@@ -675,6 +681,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 }
             } else {
                 requerimiento = new RequerimientoCompra();
+
+                int idSectorParam = ParamUtil.getInteger(renderRequest, "sector_id", 0);
+
+                if (idSectorParam > 0) {
+                    requerimiento.setIdSector(Integer.valueOf(idSectorParam));
+                }
             }
 
             cargarCatalogos(renderRequest, requerimiento);
@@ -836,36 +848,29 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             idSectorRequerimiento = requerimiento.getIdSector();
         }
 
-        if (DEBUG_ARTICULOS_COMPRA) {
-            System.out.println("DEBUG_COMPRAS_ART ACTION cargarCatalogos()");
-            System.out.println("DEBUG_COMPRAS_ART req.id = "
-                    + (requerimiento != null ? requerimiento.getIdRequerimientoCompra() : null));
-            System.out.println("DEBUG_COMPRAS_ART req.idSector = " + idSectorRequerimiento);
+        if ((idSectorRequerimiento == null || idSectorRequerimiento.intValue() <= 0)
+                && request != null) {
+
+            int idSectorParam = ParamUtil.getInteger(request, "sector_id", 0);
+
+            if (idSectorParam > 0) {
+                idSectorRequerimiento = Integer.valueOf(idSectorParam);
+            }
         }
 
-        List<CompraArticulo> articulos =
-                EditarRequerimientoCompraServiceUtil.listarArticulos(
-                        null,
-                        null
-                );
+        List<CompraArticulo> articulos = new ArrayList<CompraArticulo>();
 
-        if (DEBUG_ARTICULOS_COMPRA) {
-            System.out.println("DEBUG_COMPRAS_ART articulos.size = "
-                    + (articulos != null ? articulos.size() : -1));
-
-            if (articulos != null) {
-                for (int i = 0; i < articulos.size(); i++) {
-                    CompraArticulo articulo = articulos.get(i);
-
-                    System.out.println(
-                            "DEBUG_COMPRAS_ART articulo[" + i + "]"
-                                    + " id=" + articulo.getId()
-                                    + " idSector=" + articulo.getIdSector()
-                                    + " descripcion=" + articulo.getDescripcion()
-                                    + " sectorDescripcion=" + articulo.getSectorDescripcion()
+        /*
+         * Performance:
+         * No listar todos los articulos en alta inicial.
+         * Solo cargar articulos cuando hay sector informado.
+         */
+        if (idSectorRequerimiento != null && idSectorRequerimiento.intValue() > 0) {
+            articulos =
+                    EditarRequerimientoCompraServiceUtil.listarArticulos(
+                            idSectorRequerimiento,
+                            null
                     );
-                }
-            }
         }
 
         request.setAttribute(
@@ -1523,5 +1528,29 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         return a.intValue() == b.intValue();
+    }
+
+    private void cargarArticulosSector(RenderRequest request) throws Exception {
+        int idSector = ParamUtil.getInteger(request, "sector_id", 0);
+
+        List<CompraArticulo> articulos = new ArrayList<CompraArticulo>();
+
+        if (idSector > 0) {
+            articulos =
+                    EditarRequerimientoCompraServiceUtil.listarArticulos(
+                            Integer.valueOf(idSector),
+                            null
+                    );
+        }
+
+        request.setAttribute(
+                ARTICULOS_COMPRA,
+                articulos
+        );
+
+        request.setAttribute(
+                "ID_SECTOR_ARTICULOS_COMPRA",
+                String.valueOf(idSector)
+        );
     }
 }

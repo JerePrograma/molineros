@@ -12,6 +12,18 @@
     var <portlet:namespace />idRequerimientoCompraDetalle =
             '<%= idRequerimientoCompraDetalle %>';
 
+    var <portlet:namespace />articulosCompraSectorCargado = {};
+
+    <% if (idSectorActualString != null
+            && idSectorActualString.length() > 0
+            && articulos != null
+            && articulos.size() > 0) { %>
+        <portlet:namespace />articulosCompraSectorCargado['<%= idSectorActualString %>'] = true;
+    <% } %>
+
+    var <portlet:namespace />articulosSectorURL =
+            '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/compras/listar_articulos_sector" /></portlet:renderURL>';
+
     function <portlet:namespace />abrirAltaArticuloCompra() {
         if (<portlet:namespace />popupArticuloCompraAbriendo) {
             return false;
@@ -52,7 +64,7 @@
                 idSector
         );
 
-        <portlet:namespace />filtrarArticulosPorSector();
+        <portlet:namespace />cargarArticulosPorSectorSiHaceFalta();
 
         var select = jQuery('#<portlet:namespace />detalle_id_articulo');
 
@@ -76,7 +88,62 @@
         }
     }
 
-    function <portlet:namespace />filtrarArticulosPorSector() {
+    function <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(idSector, callback) {
+        idSector = idSector == null ? '' : String(idSector);
+
+        if (idSector == '' || !/^[0-9]+$/.test(idSector) || parseInt(idSector, 10) <= 0) {
+            if (typeof callback == 'function') {
+                callback();
+            }
+
+            return;
+        }
+
+        if (<portlet:namespace />articulosCompraSectorCargado[idSector]) {
+            if (typeof callback == 'function') {
+                callback();
+            }
+
+            return;
+        }
+
+        jQuery.ajax({
+            type: 'GET',
+            url: <portlet:namespace />articulosSectorURL
+                    + '&sector_id=' + encodeURIComponent(idSector)
+                    + '&_ts=' + new Date().getTime(),
+            dataType: 'json',
+            cache: false,
+            success: function(data) {
+                if (data && data.articulos) {
+                    for (var i = 0; i < data.articulos.length; i++) {
+                        var articulo = data.articulos[i];
+
+                        <portlet:namespace />agregarOActualizarArticuloCache(
+                                articulo.id,
+                                articulo.descripcion,
+                                articulo.sector
+                        );
+                    }
+                }
+
+                <portlet:namespace />articulosCompraSectorCargado[idSector] = true;
+
+                if (typeof callback == 'function') {
+                    callback();
+                }
+            },
+            error: function() {
+                alert('No se pudieron cargar los articulos del sector seleccionado.');
+
+                if (typeof callback == 'function') {
+                    callback();
+                }
+            }
+        });
+    }
+
+    function <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(sinCargaRemota) {
         var select = jQuery('#<portlet:namespace />detalle_id_articulo');
 
         if (select.length == 0) {
@@ -85,6 +152,28 @@
 
         var sectorSeleccionado = <portlet:namespace />getSectorSeleccionadoCompra();
         var sectorSeleccionadoNum = parseInt(sectorSeleccionado, 10);
+
+        if (!sinCargaRemota
+                && sectorSeleccionado != ''
+                && /^[0-9]+$/.test(sectorSeleccionado)
+                && parseInt(sectorSeleccionado, 10) > 0
+                && !<portlet:namespace />articulosCompraSectorCargado[sectorSeleccionado]) {
+
+            select.empty();
+            select.append('<option value="">Cargando articulos...</option>');
+            select.attr('disabled', 'disabled');
+
+            <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(
+                    sectorSeleccionado,
+                    function() {
+                        select.removeAttr('disabled');
+                        <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(true);
+                    }
+            );
+
+            return;
+        }
+
         var valorActual = select.val();
         var valorActualPermitido = false;
 
@@ -96,10 +185,10 @@
             var sectorArticuloNum = parseInt(articulo.sector, 10);
 
             var mostrar =
-                    isNaN(sectorSeleccionadoNum)
-                    || sectorSeleccionadoNum <= 0
-                    || articulo.sector == ''
-                    || (!isNaN(sectorArticuloNum) && sectorArticuloNum == sectorSeleccionadoNum);
+                    !isNaN(sectorSeleccionadoNum)
+                    && sectorSeleccionadoNum > 0
+                    && !isNaN(sectorArticuloNum)
+                    && sectorArticuloNum == sectorSeleccionadoNum;
 
             if (mostrar) {
                 var option = jQuery('<option></option>');
@@ -123,8 +212,8 @@
         }
     }
 
-    window['<portlet:namespace />filtrarArticulosPorSector'] =
-            <portlet:namespace />filtrarArticulosPorSector;
+    window['<portlet:namespace />cargarArticulosPorSectorSiHaceFalta'] =
+            <portlet:namespace />cargarArticulosPorSectorSiHaceFalta;
 
     function <portlet:namespace />limpiarEditorDetalle() {
         jQuery('#<portlet:namespace />detalle_edit_index').val('-1');
@@ -134,7 +223,7 @@
         jQuery('#<portlet:namespace />detalle_submit').val('Agregar detalle');
         jQuery('#<portlet:namespace />detalle_cancelar').hide();
 
-        <portlet:namespace />filtrarArticulosPorSector();
+        <portlet:namespace />cargarArticulosPorSectorSiHaceFalta();
     }
 
     function <portlet:namespace />editarDetalleEnPantalla(index) {
@@ -146,7 +235,7 @@
 
         jQuery('#<portlet:namespace />detalle_edit_index').val(index);
 
-        <portlet:namespace />filtrarArticulosPorSector();
+        <portlet:namespace />cargarArticulosPorSectorSiHaceFalta();
 
         jQuery('#<portlet:namespace />detalle_id_articulo').val(<portlet:namespace />detalleValue(detalle.idArticulo));
         jQuery('#<portlet:namespace />detalle_cantidad').val(<portlet:namespace />detalleValue(detalle.cantidad));

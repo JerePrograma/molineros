@@ -208,37 +208,8 @@ if (articulosAttr instanceof List) {
     articulosCompra = (List<CompraArticulo>) articulosAttr;
 }
 
-if (articulosCompra == null || articulosCompra.size() == 0) {
+if (articulosCompra == null) {
     articulosCompra = new ArrayList<CompraArticulo>();
-
-    String[] metodosArticulos = new String[] {
-            "listarArticulosCompra",
-            "listarArticulos",
-            "listarCompraArticulos",
-            "listarArticulosRequerimientoCompra",
-            "listarRequerimientoCompraArticulos",
-            "getArticulosCompra"
-    };
-
-    for (int i = 0; i < metodosArticulos.length && articulosCompra.size() == 0; i++) {
-        try {
-            Method metodo =
-                    BusquedaRequerimientoCompraServiceUtil.class.getMethod(
-                            metodosArticulos[i],
-                            new Class[0]
-                    );
-
-            Object resultado = metodo.invoke(null, new Object[0]);
-
-            if (resultado instanceof List) {
-                articulosCompra = (List<CompraArticulo>) resultado;
-            }
-        } catch (NoSuchMethodException nsme) {
-            // Compatibilidad temporal con distintos nombres del service.
-        } catch (Exception e) {
-            // Si un nombre existe pero falla, se intenta el siguiente.
-        }
-    }
 }
 
 renderRequest.setAttribute("ARTICULOS_COMPRA", articulosCompra);

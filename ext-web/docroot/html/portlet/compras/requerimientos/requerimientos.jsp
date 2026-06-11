@@ -678,7 +678,7 @@ if ("0".equals(idTercerizadoraFiltro)) {
     }
 
     function <portlet:namespace />altaRequerimiento() {
-        var url = '<portlet:renderURL windowState="<%= WindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/compras/editar_requerimiento" /></portlet:renderURL>';
+        var url = '<portlet:renderURL windowState="<%= WindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/compras/nuevo_requerimiento" /><portlet:param name="modo" value="alta" /></portlet:renderURL>';
         window.location.href = url;
     }
 

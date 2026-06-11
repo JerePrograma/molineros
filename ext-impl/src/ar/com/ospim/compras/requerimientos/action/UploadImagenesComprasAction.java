@@ -41,11 +41,7 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import java.io.File;
 import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class UploadImagenesComprasAction extends PortletAction {
 
@@ -477,11 +473,36 @@ public class UploadImagenesComprasAction extends PortletAction {
                 BusquedaRequerimientoCompraServiceUtil.listarSectores()
         );
 
-        List<CompraArticulo> articulos =
-                EditarRequerimientoCompraServiceUtil.listarArticulos(
-                        null,
-                        null
-                );
+        Integer idSectorRequerimiento = null;
+
+        if (requerimiento != null) {
+            idSectorRequerimiento = requerimiento.getIdSector();
+        }
+
+        if ((idSectorRequerimiento == null || idSectorRequerimiento.intValue() <= 0)
+                && request != null) {
+
+            int idSectorParam = ParamUtil.getInteger(request, "sector_id", 0);
+
+            if (idSectorParam > 0) {
+                idSectorRequerimiento = Integer.valueOf(idSectorParam);
+            }
+        }
+
+        List<CompraArticulo> articulos = new ArrayList<CompraArticulo>();
+
+        /*
+         * Performance:
+         * No listar todos los articulos al volver de subir/borrar archivos.
+         * Solo cargar articulos del sector del requerimiento.
+         */
+        if (idSectorRequerimiento != null && idSectorRequerimiento.intValue() > 0) {
+            articulos =
+                    EditarRequerimientoCompraServiceUtil.listarArticulos(
+                            idSectorRequerimiento,
+                            null
+                    );
+        }
 
         request.setAttribute(
                 ARTICULOS_COMPRA,
