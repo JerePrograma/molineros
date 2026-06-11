@@ -1,5 +1,5 @@
 <%
-request.setAttribute("COMPRAS_ESTADO_FORZADO", String.valueOf(WebKeysCompras.ESTADO_REQUERIMIENTO));
+request.setAttribute("COMPRAS_ESTADO_FORZADO", String.valueOf(WebKeysCompras.ESTADO_AUTORIZADO));
 request.setAttribute("COMPRAS_MODO_COTIZACION", Boolean.TRUE);
 %>
 

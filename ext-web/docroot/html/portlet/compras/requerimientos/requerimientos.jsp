@@ -34,6 +34,14 @@ if (WebKeysCompras.isEmpty(estadoFiltro)) {
     estadoFiltro = "0";
 }
 
+String estadoForzado = (String) request.getAttribute("COMPRAS_ESTADO_FORZADO");
+
+boolean estadoForzadoActivo = !WebKeysCompras.isEmpty(estadoForzado);
+
+if (estadoForzadoActivo) {
+    estadoFiltro = estadoForzado;
+}
+
 String sectorFiltro = ParamUtil.getString(renderRequest, "sector_id", "0");
 
 if (WebKeysCompras.isEmpty(sectorFiltro)) {
@@ -69,7 +77,8 @@ if ("0".equals(idTercerizadoraFiltro)) {
             <td><label>Estado:</label></td>
             <td>
                 <select id="<portlet:namespace />estado"
-                        name="<portlet:namespace />estado">
+                        name="<portlet:namespace />estado"
+                        <%= estadoForzadoActivo ? "disabled=\"disabled\"" : "" %>>
                     <option value="0" <%= "0".equals(estadoFiltro) ? "selected" : "" %>>Todos</option>
 
                     <%
@@ -215,7 +224,7 @@ if ("0".equals(idTercerizadoraFiltro)) {
 
             <td colspan="5">
 
-                <c:if test="<%= showABMButtons %>">
+                <c:if test="<%= showABMButtons && !estadoForzadoActivo %>">
 
                     <input type="button"
                            value="Nuevo requerimiento"
@@ -326,7 +335,7 @@ if ("0".equals(idTercerizadoraFiltro)) {
             <portlet:namespace />limpiarCamposAfiliado();
         }
 
-        jQuery('#<portlet:namespace />estado').val('0');
+        jQuery('#<portlet:namespace />estado').val('<%= estadoForzadoActivo ? estadoFiltro : "0" %>');
         jQuery('#<portlet:namespace />sector_id').val('0');
         jQuery('#<portlet:namespace />recupero').val('');
 
@@ -617,7 +626,12 @@ if ("0".equals(idTercerizadoraFiltro)) {
             return false;
         }
 
-        var estado = jQuery('#<portlet:namespace />estado').val();
+        var estado = '<%= estadoForzadoActivo ? estadoFiltro : "" %>';
+
+        if (estado == '') {
+            estado = jQuery('#<portlet:namespace />estado').val();
+        }
+
         var sector_id = jQuery('#<portlet:namespace />sector_id').val();
         var afiliado_cuil_titular = jQuery('#<portlet:namespace />afiliado_cuil_titular').val();
         var afiliado_int = jQuery('#<portlet:namespace />afiliado_int').val();

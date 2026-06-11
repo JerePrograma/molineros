@@ -17,7 +17,7 @@ if (tabs1 == null) {
     tabs1 = (String) request.getSession().getAttribute("compras_tabs1");
 }
 
-String tabs1Values = "requerimientos,autorizaciones,cotizaciones,orden-de-comrpa";
+String tabs1Values = "requerimientos,autorizaciones,cotizaciones,orden-de-compra";
 String tabs1Names = "Requerimientos,Autorizaciones,Cotizaciones,Ordenes de Compras";
 
 boolean tabValida =
