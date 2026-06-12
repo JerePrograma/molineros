@@ -1,10 +1,13 @@
 package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.service.NotificarCotizacionPrestadorServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
+
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
@@ -13,6 +16,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -22,6 +26,7 @@ import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
+
 import java.util.Map;
 
 public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
@@ -61,11 +66,22 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             validarTransicionEstado(idRequerimientoCompra, estadoNuevo);
             validarPermisoCambioEstado(user, estadoNuevo);
 
+            long companyId = user.getCompanyId();
+
             EditarRequerimientoCompraServiceUtil.cambiarEstado(
                     idRequerimientoCompra,
                     estadoNuevo,
                     usuario
             );
+
+            if (estadoNuevo == WebKeysCompras.ESTADO_COTIZACIONES) {
+                notificarPrestadoresCotizacion(
+                        actionRequest,
+                        idRequerimientoCompra,
+                        usuario,
+                        companyId
+                );
+            }
 
             SessionMessages.add(
                     actionRequest,
@@ -116,6 +132,107 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
         return mapping.findForward(
                 WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO
         );
+    }
+
+    private void notificarPrestadoresCotizacion(ActionRequest actionRequest,
+                                                int idRequerimientoCompra,
+                                                String usuario,
+                                                long companyId) {
+
+        try {
+            NotificacionCotizacionResultado resultado =
+                    NotificarCotizacionPrestadorServiceUtil.notificarPrestadores(
+                            idRequerimientoCompra,
+                            usuario,
+                            companyId
+                    );
+
+            if (resultado == null) {
+                _log.warn(
+                        "La notificacion de cotizaciones no devolvio resultado. id="
+                                + idRequerimientoCompra
+                );
+
+                SessionMessages.add(
+                        actionRequest,
+                        "cotizaciones-prestadores-sin-resultado"
+                );
+
+                return;
+            }
+
+            if (resultado.getTotalCandidatos() == 0) {
+                if (_log.isInfoEnabled()) {
+                    _log.info(
+                            "El requerimiento paso a cotizaciones sin prestadores candidatos. id="
+                                    + idRequerimientoCompra
+                    );
+                }
+
+                SessionMessages.add(
+                        actionRequest,
+                        "cotizaciones-prestadores-sin-destinatarios"
+                );
+
+                return;
+            }
+
+            if (_log.isInfoEnabled()) {
+                _log.info(
+                        "Notificacion de cotizaciones finalizada. id="
+                                + idRequerimientoCompra
+                                + ", candidatos="
+                                + resultado.getTotalCandidatos()
+                                + ", enviados="
+                                + resultado.getEnviados()
+                                + ", errores="
+                                + resultado.getErrores()
+                                + ", omitidos="
+                                + resultado.getOmitidos()
+                );
+            }
+
+            actionRequest.setAttribute(
+                    "RESULTADO_NOTIFICACION_COTIZACIONES",
+                    resultado
+            );
+
+            if (resultado.getErrores() > 0) {
+                SessionMessages.add(
+                        actionRequest,
+                        "cotizaciones-prestadores-notificados-con-errores"
+                );
+            } else {
+                SessionMessages.add(
+                        actionRequest,
+                        "cotizaciones-prestadores-notificados"
+                );
+            }
+
+        } catch (Exception e) {
+            /*
+             * No relanzar.
+             *
+             * El cambio de estado ya fue exitoso. Si falla la busqueda de prestadores,
+             * la auditoria de cotizacion o SMTP, no se debe romper el flujo principal.
+             */
+            _log.error(
+                    "El requerimiento paso a cotizaciones, pero fallo la notificacion de prestadores. id="
+                            + idRequerimientoCompra,
+                    e
+            );
+
+            SessionMessages.add(
+                    actionRequest,
+                    "cotizaciones-prestadores-error"
+            );
+
+            actionRequest.setAttribute(
+                    WebKeysCompras.ERROR_PARA_ALERT,
+                    "El requerimiento paso a cotizaciones, pero no se pudieron notificar prestadores: "
+                            + e.getMessage()
+            );
+        }
     }
 
     private void prepararRenderVerRequerimiento(ActionResponse actionResponse,
