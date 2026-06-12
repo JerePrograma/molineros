@@ -10,6 +10,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.liquidaciones.services.PrestadorServiceUtil;
+import ar.com.ospim.prestadores.WebKeysPrestadores;
 
 import com.liferay.portal.SystemException;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -21,8 +22,6 @@ import com.liferay.portal.util.PortalUtil;
 
 public class ActualizarSolicitarCotizacionPrestadorAction extends PrestadoresBaseAction {
 
-    private static final String ROL_COTIZACION = "COTIZACION";
-
     @Override
     public void processAction(
             ActionMapping mapping,
@@ -33,10 +32,7 @@ public class ActualizarSolicitarCotizacionPrestadorAction extends PrestadoresBas
 
         User user = PortalUtil.getUser(actionRequest);
 
-        boolean puedeModificar =
-                puedeModificarSolicitarCotizacion(user);
-
-        if (!puedeModificar) {
+        if (!puedeModificarSolicitarCotizacion(user)) {
             throw new PrincipalException();
         }
 
@@ -58,8 +54,10 @@ public class ActualizarSolicitarCotizacionPrestadorAction extends PrestadoresBas
 
         if (actualizados != 1) {
             throw new SystemException(
-                    "No se actualizó solicitar_cotizacion para idPrestador=" + idPrestador +
-                            ". Filas actualizadas=" + actualizados
+                    "No se actualizó solicitar_cotizacion para idPrestador=" +
+                            idPrestador +
+                            ". Filas actualizadas=" +
+                            actualizados
             );
         }
     }
@@ -69,12 +67,15 @@ public class ActualizarSolicitarCotizacionPrestadorAction extends PrestadoresBas
             return false;
         }
 
+        String rolSolicitarCotizacion =
+                WebKeysPrestadores.ROL_SOLICITAR_COTIZACION_PRESTADOR;
+
         try {
             boolean tieneRol =
                     RoleLocalServiceUtil.hasUserRole(
                             user.getUserId(),
                             user.getCompanyId(),
-                            ROL_COTIZACION,
+                            rolSolicitarCotizacion,
                             true
                     );
 
@@ -92,7 +93,7 @@ public class ActualizarSolicitarCotizacionPrestadorAction extends PrestadoresBas
                 for (Role role : rolesUsuario) {
                     if (role != null &&
                             role.getName() != null &&
-                            ROL_COTIZACION.equals(role.getName().trim())) {
+                            rolSolicitarCotizacion.equals(role.getName().trim())) {
 
                         return true;
                     }

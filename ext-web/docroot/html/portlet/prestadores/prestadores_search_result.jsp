@@ -11,7 +11,8 @@
 	boolean showABMButtons =
 		PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_ABM_ADMINISTRACION);
 
-	String rolSolicitarCotizacion = "COTIZACION";
+	String rolSolicitarCotizacion =
+		WebKeysPrestadores.ROL_SOLICITAR_COTIZACION_PRESTADOR;
 
 	boolean puedeModificarSolicitarCotizacion = false;
 
@@ -131,7 +132,9 @@
 			}
 
 			String solicitarCotizacionCheckId =
-				renderResponse.getNamespace() + "solicitarCotizacion_" + prestador.getId_prestador();
+				renderResponse.getNamespace() +
+					"solicitarCotizacion_" +
+					prestador.getId_prestador();
 
 			boolean solicitarCotizacion = prestador.isSolicitarCotizacion();
 
