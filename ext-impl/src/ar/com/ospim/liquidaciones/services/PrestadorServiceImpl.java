@@ -1123,4 +1123,38 @@ public class PrestadorServiceImpl {
 		return listaPrestadores;
 	}
 
+	public int actualizarSolicitarCotizacionPrestador(
+			int idPrestador,
+			boolean solicitarCotizacion,
+			String screenName) throws SystemException {
+
+		Connection con = null;
+		CallableStatement stmt = null;
+		int resultado = 0;
+
+		try {
+			String sql = "{call autorizaciones.actualizar_solicitar_cotizacion_prestador(?,?,?)}";
+
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql);
+
+			stmt.setInt(1, idPrestador);
+			stmt.setBoolean(2, solicitarCotizacion);
+			stmt.setString(3, screenName);
+
+			ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				resultado = rs.getInt(1);
+			}
+
+		} catch (SQLException e) {
+			_log.error("Error al actualizar solicitar cotizacion del prestador", e);
+			throw new SystemException(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+
+		return resultado;
+	}
 }

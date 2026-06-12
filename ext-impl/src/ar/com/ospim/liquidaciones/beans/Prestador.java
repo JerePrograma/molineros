@@ -41,6 +41,7 @@ public class Prestador implements Serializable {
 	private String ciaSeguro;
 	private boolean seguroCobertura;
 	private boolean certificacionProfesional;
+	private boolean solicitarCotizacion;
 	private String otorgaCertificacion;
 	private Date fechaVtoSeguro;
 	private Date fechaVtoCertificacion;
@@ -481,6 +482,7 @@ public class Prestador implements Serializable {
 		prestador.setFechaVtoSeguro(rs.getDate(prefix + "vto_cobertura_seguro"));
 		prestador.setOtorgaCertificacion(rs.getString(prefix + "otorga_cert"));
 		prestador.setEmpresaCaiCaeNumero(rs.getString(prefix +"cai_cae_numero_completo"));
+		prestador.setSolicitarCotizacion(rs.getBoolean(prefix + "solicitar_cotizacion"));
 
 		return prestador;
 		
@@ -513,7 +515,7 @@ public class Prestador implements Serializable {
 		prestador.setCiaSeguro(rs.getString(prefix + "cia_seguro"));
 		prestador.setFechaVtoSeguro(rs.getDate(prefix + "vto_cobertura_seguro"));
 		prestador.setOtorgaCertificacion(rs.getString(prefix + "otorga_cert"));
-
+		prestador.setSolicitarCotizacion(rs.getBoolean(prefix + "solicitar_cotizacion"));
 		return prestador;
 		
 	}
@@ -633,8 +635,14 @@ public class Prestador implements Serializable {
 	public void setConvenioDirecto(Boolean convenioDirecto) {
 		this.convenioDirecto = convenioDirecto;
 	}
-	
-	
+
+	public boolean isSolicitarCotizacion() {
+		return solicitarCotizacion;
+	}
+
+	public void setSolicitarCotizacion(boolean solicitarCotizacion) {
+		this.solicitarCotizacion = solicitarCotizacion;
+	}
 }
 
 
