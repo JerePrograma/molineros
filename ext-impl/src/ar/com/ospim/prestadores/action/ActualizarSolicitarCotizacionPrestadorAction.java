@@ -1,5 +1,7 @@
 package ar.com.ospim.prestadores.action;
 
+import java.util.List;
+
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
@@ -8,16 +10,18 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.liquidaciones.services.PrestadorServiceUtil;
-import ar.com.ospim.prestadores.WebKeysPrestadores;
 
 import com.liferay.portal.SystemException;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.model.Role;
 import com.liferay.portal.model.User;
 import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.service.RoleLocalServiceUtil;
 import com.liferay.portal.util.PortalUtil;
 
 public class ActualizarSolicitarCotizacionPrestadorAction extends PrestadoresBaseAction {
+
+    private static final String ROL_COTIZACION = "COTIZACION";
 
     @Override
     public void processAction(
@@ -30,12 +34,7 @@ public class ActualizarSolicitarCotizacionPrestadorAction extends PrestadoresBas
         User user = PortalUtil.getUser(actionRequest);
 
         boolean puedeModificar =
-                RoleLocalServiceUtil.hasUserRole(
-                        user.getUserId(),
-                        user.getCompanyId(),
-                        WebKeysPrestadores.ROL_ABM_COTIZACION,
-                        true
-                );
+                puedeModificarSolicitarCotizacion(user);
 
         if (!puedeModificar) {
             throw new PrincipalException();
@@ -63,5 +62,46 @@ public class ActualizarSolicitarCotizacionPrestadorAction extends PrestadoresBas
                             ". Filas actualizadas=" + actualizados
             );
         }
+    }
+
+    private boolean puedeModificarSolicitarCotizacion(User user) {
+        if (user == null) {
+            return false;
+        }
+
+        try {
+            boolean tieneRol =
+                    RoleLocalServiceUtil.hasUserRole(
+                            user.getUserId(),
+                            user.getCompanyId(),
+                            ROL_COTIZACION,
+                            true
+                    );
+
+            if (tieneRol) {
+                return true;
+            }
+        } catch (Exception e) {
+            // seguir con fallback
+        }
+
+        try {
+            List<Role> rolesUsuario = user.getRoles();
+
+            if (rolesUsuario != null) {
+                for (Role role : rolesUsuario) {
+                    if (role != null &&
+                            role.getName() != null &&
+                            ROL_COTIZACION.equals(role.getName().trim())) {
+
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // sin permiso
+        }
+
+        return false;
     }
 }

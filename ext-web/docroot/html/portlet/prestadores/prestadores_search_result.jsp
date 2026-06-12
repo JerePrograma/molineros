@@ -1,6 +1,9 @@
 <%@ include file="/html/portlet/prestadores/init.jsp"%>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 
+<%@ page import="com.liferay.portal.model.Role" %>
+<%@ page import="com.liferay.portal.service.RoleLocalServiceUtil" %>
+
 <portlet:defineObjects/>
 
 <%
@@ -8,20 +11,41 @@
 	boolean showABMButtons =
 		PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_ABM_ADMINISTRACION);
 
-	// Permiso específico para modificar el check Solicitar Cotización
+	String rolSolicitarCotizacion = "COTIZACION";
+
 	boolean puedeModificarSolicitarCotizacion = false;
 
-    try {
-    	puedeModificarSolicitarCotizacion =
-    		RoleLocalServiceUtil.hasUserRole(
-    			user.getUserId(),
-    			user.getCompanyId(),
-    			WebKeysPrestadores.ROL_ABM_COTIZACION,
-    			true
-    		);
-    } catch (Exception e) {
-    	puedeModificarSolicitarCotizacion = false;
-    }
+	try {
+		puedeModificarSolicitarCotizacion =
+			RoleLocalServiceUtil.hasUserRole(
+				user.getUserId(),
+				user.getCompanyId(),
+				rolSolicitarCotizacion,
+				true
+			);
+	} catch (Exception e) {
+		puedeModificarSolicitarCotizacion = false;
+	}
+
+	if (!puedeModificarSolicitarCotizacion && user != null) {
+		try {
+			List<Role> rolesUsuario = user.getRoles();
+
+			if (rolesUsuario != null) {
+				for (Role role : rolesUsuario) {
+					if (role != null &&
+						role.getName() != null &&
+						rolSolicitarCotizacion.equals(role.getName().trim())) {
+
+						puedeModificarSolicitarCotizacion = true;
+						break;
+					}
+				}
+			}
+		} catch (Exception e) {
+			puedeModificarSolicitarCotizacion = false;
+		}
+	}
 
 	List<Prestador> prestadores =
 		(ArrayList<Prestador>) renderRequest.getAttribute(WebKeysLiquidaciones.BUSQUEDA_PRESTADORES);
@@ -33,8 +57,9 @@
 		"struts_action",
 		"/prestadores/actualizar_solicitar_cotizacion_prestador"
 	);
+
 	String actualizarSolicitarCotizacionURLString =
-    	actualizarSolicitarCotizacionURL.toString().replace("&amp;", "&");
+		actualizarSolicitarCotizacionURL.toString().replace("&amp;", "&");
 
 	String orderByCol = ParamUtil.getString(request, "orderByCol");
 	String orderByType = ParamUtil.getString(request, "orderByType");
@@ -51,6 +76,7 @@
 	if (showABMButtons) {
 		headerNames.add("editar-borrar");
 	}
+
 	headerNames.add("solicitar-cotizacion");
 
 	SearchContainer searchContainer = new SearchContainer(
@@ -96,6 +122,14 @@
 			row.addText(prestador.getCodigoHospital(), rowURL);
 			row.addText(prestador.getBaja_fechaAsString(), rowURL);
 
+			if (showABMButtons) {
+				row.addJSP(
+					"left",
+					SearchEntry.DEFAULT_VALIGN,
+					"/html/portlet/prestadores/editar_borrar_prestador.jsp"
+				);
+			}
+
 			String solicitarCotizacionCheckId =
 				renderResponse.getNamespace() + "solicitarCotizacion_" + prestador.getId_prestador();
 
@@ -105,21 +139,12 @@
 				solicitarCotizacion ? " checked=\"checked\" " : "";
 
 			String disabledSolicitarCotizacion =
-            	puedeModificarSolicitarCotizacion ? "" : " disabled=\"disabled\" ";
+				puedeModificarSolicitarCotizacion ? "" : " disabled=\"disabled\" ";
 
 			String titleSolicitarCotizacion =
 				puedeModificarSolicitarCotizacion
-					? ""
+					? " title=\"Solicitar Cotización\" "
 					: " title=\"No posee permisos para modificar Solicitar Cotización\" ";
-
-			// Action
-			if (showABMButtons) {
-				row.addJSP(
-					"left",
-					SearchEntry.DEFAULT_VALIGN,
-					"/html/portlet/prestadores/editar_borrar_prestador.jsp"
-				);
-			}
 
 			String solicitarCotizacionHtml =
 				"<input type=\"checkbox\" " +
@@ -130,7 +155,7 @@
 					checkedSolicitarCotizacion +
 					disabledSolicitarCotizacion +
 					titleSolicitarCotizacion +
-					"onclick=\"event.stopPropagation();\" />";
+					"onclick=\"return actualizarSolicitarCotizacionPrestador(this, event);\" />";
 
 			row.addText(
 				"center",
@@ -147,62 +172,84 @@
 var puedeModificarSolicitarCotizacion =
 	<%= puedeModificarSolicitarCotizacion ? "true" : "false" %>;
 
-function setSolicitarCotizacionChecked(check, checked) {
+var actualizarSolicitarCotizacionURL =
+	'<%= actualizarSolicitarCotizacionURLString %>';
+
+function setSolicitarCotizacionCheckedNative(check, checked) {
+	check.checked = checked;
+
 	if (checked) {
-		check.attr('checked', 'checked');
-		check[0].checked = true;
+		check.setAttribute('checked', 'checked');
 	} else {
-		check.removeAttr('checked');
-		check[0].checked = false;
+		check.removeAttribute('checked');
 	}
 }
 
-jQuery(document).on('change', '.solicitar-cotizacion-check', function(event) {
-	event.stopPropagation();
+function actualizarSolicitarCotizacionPrestador(check, event) {
+	if (event) {
+		if (event.stopPropagation) {
+			event.stopPropagation();
+		}
 
-	var check = jQuery(this);
+		event.cancelBubble = true;
+	}
 
 	if (!puedeModificarSolicitarCotizacion) {
-		event.preventDefault();
-		setSolicitarCotizacionChecked(check, !check.is(':checked'));
+		setSolicitarCotizacionCheckedNative(check, !check.checked);
 		return false;
 	}
 
-	var prestadorId = check.val();
-	var solicitarCotizacion = check.is(':checked');
+	var prestadorId = check.value;
+	var solicitarCotizacion = check.checked;
 	var estadoAnterior = !solicitarCotizacion;
 
-	check.attr('disabled', 'disabled');
+	check.disabled = true;
 
-	var data = {};
+	var params =
+		'idPrestador=' + encodeURIComponent(prestadorId) +
+		'&solicitarCotizacion=' + encodeURIComponent(solicitarCotizacion ? 'true' : 'false') +
+		'&<portlet:namespace />idPrestador=' + encodeURIComponent(prestadorId) +
+		'&<portlet:namespace />solicitarCotizacion=' + encodeURIComponent(solicitarCotizacion ? 'true' : 'false');
 
-	data['idPrestador'] = prestadorId;
-	data['solicitarCotizacion'] = solicitarCotizacion ? 'true' : 'false';
+	var xhr = null;
 
-	data['<portlet:namespace />idPrestador'] = prestadorId;
-	data['<portlet:namespace />solicitarCotizacion'] = solicitarCotizacion ? 'true' : 'false';
+	if (window.XMLHttpRequest) {
+		xhr = new XMLHttpRequest();
+	} else if (window.ActiveXObject) {
+		xhr = new ActiveXObject('Microsoft.XMLHTTP');
+	}
 
-	jQuery.ajax({
-		type: 'POST',
-		url: '<%= actualizarSolicitarCotizacionURLString %>',
-		data: data,
-		cache: false,
-		success: function() {
-			if (puedeModificarSolicitarCotizacion) {
-				check.removeAttr('disabled');
-			}
-		},
-		error: function() {
-			setSolicitarCotizacionChecked(check, estadoAnterior);
+	if (xhr == null) {
+		setSolicitarCotizacionCheckedNative(check, estadoAnterior);
+		check.disabled = false;
+		alert('El navegador no permite ejecutar la actualización.');
+		return false;
+	}
 
-			if (puedeModificarSolicitarCotizacion) {
-				check.removeAttr('disabled');
-			}
+	xhr.open('POST', actualizarSolicitarCotizacionURL, true);
+	xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
 
-			alert('No se pudo actualizar Solicitar Cotización.');
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState != 4) {
+			return;
 		}
-	});
-});
+
+		if (xhr.status >= 200 && xhr.status < 300) {
+			setSolicitarCotizacionCheckedNative(check, solicitarCotizacion);
+			check.disabled = false;
+			return;
+		}
+
+		setSolicitarCotizacionCheckedNative(check, estadoAnterior);
+		check.disabled = false;
+
+		alert('No se pudo actualizar Solicitar Cotización.');
+	};
+
+	xhr.send(params);
+
+	return true;
+}
 </script>
 
 <liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
