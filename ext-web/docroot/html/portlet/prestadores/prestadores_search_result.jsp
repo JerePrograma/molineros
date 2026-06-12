@@ -9,8 +9,19 @@
 		PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_ABM_ADMINISTRACION);
 
 	// Permiso específico para modificar el check Solicitar Cotización
-	boolean puedeModificarSolicitarCotizacion =
-		PermissionUtil.userContainsRole(user, WebKeysPrestadores.ROL_ABM_COTIZACION);
+	boolean puedeModificarSolicitarCotizacion = false;
+
+    try {
+    	puedeModificarSolicitarCotizacion =
+    		RoleLocalServiceUtil.hasUserRole(
+    			user.getUserId(),
+    			user.getCompanyId(),
+    			WebKeysPrestadores.ROL_ABM_COTIZACION,
+    			true
+    		);
+    } catch (Exception e) {
+    	puedeModificarSolicitarCotizacion = false;
+    }
 
 	List<Prestador> prestadores =
 		(ArrayList<Prestador>) renderRequest.getAttribute(WebKeysLiquidaciones.BUSQUEDA_PRESTADORES);
@@ -22,6 +33,8 @@
 		"struts_action",
 		"/prestadores/actualizar_solicitar_cotizacion_prestador"
 	);
+	String actualizarSolicitarCotizacionURLString =
+    	actualizarSolicitarCotizacionURL.toString().replace("&amp;", "&");
 
 	String orderByCol = ParamUtil.getString(request, "orderByCol");
 	String orderByType = ParamUtil.getString(request, "orderByType");
@@ -34,11 +47,11 @@
 	headerNames.add("tipo");
 	headerNames.add("Cod.Hospital");
 	headerNames.add("baja-fecha");
-	headerNames.add("solicitar-cotizacion");
 
 	if (showABMButtons) {
 		headerNames.add("editar-borrar");
 	}
+	headerNames.add("solicitar-cotizacion");
 
 	SearchContainer searchContainer = new SearchContainer(
 		renderRequest,
@@ -92,7 +105,7 @@
 				solicitarCotizacion ? " checked=\"checked\" " : "";
 
 			String disabledSolicitarCotizacion =
-				puedeModificarSolicitarCotizacion ? "" : " disabled=\"disabled\" ";
+            	puedeModificarSolicitarCotizacion ? "" : " disabled=\"disabled\" ";
 
 			String titleSolicitarCotizacion =
 				puedeModificarSolicitarCotizacion
@@ -171,7 +184,7 @@ jQuery(document).on('change', '.solicitar-cotizacion-check', function(event) {
 
 	jQuery.ajax({
 		type: 'POST',
-		url: '<%= actualizarSolicitarCotizacionURL.toString() %>',
+		url: '<%= actualizarSolicitarCotizacionURLString %>',
 		data: data,
 		cache: false,
 		success: function() {

@@ -4,20 +4,22 @@ import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
 
-import com.liferay.portal.security.auth.PrincipalException;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.liquidaciones.services.PrestadorServiceUtil;
 import ar.com.ospim.prestadores.WebKeysPrestadores;
-import ar.com.ospim.util.PermissionUtil;
 
+import com.liferay.portal.SystemException;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
+import com.liferay.portal.security.auth.PrincipalException;
+import com.liferay.portal.service.RoleLocalServiceUtil;
 import com.liferay.portal.util.PortalUtil;
 
 public class ActualizarSolicitarCotizacionPrestadorAction extends PrestadoresBaseAction {
 
+    @Override
     public void processAction(
             ActionMapping mapping,
             ActionForm form,
@@ -28,9 +30,11 @@ public class ActualizarSolicitarCotizacionPrestadorAction extends PrestadoresBas
         User user = PortalUtil.getUser(actionRequest);
 
         boolean puedeModificar =
-                PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysPrestadores.ROL_ABM_COTIZACION
+                RoleLocalServiceUtil.hasUserRole(
+                        user.getUserId(),
+                        user.getCompanyId(),
+                        WebKeysPrestadores.ROL_ABM_COTIZACION,
+                        true
                 );
 
         if (!puedeModificar) {
@@ -38,13 +42,26 @@ public class ActualizarSolicitarCotizacionPrestadorAction extends PrestadoresBas
         }
 
         int idPrestador = ParamUtil.getInteger(actionRequest, "idPrestador");
+
+        if (idPrestador <= 0) {
+            throw new IllegalArgumentException("idPrestador inválido: " + idPrestador);
+        }
+
         boolean solicitarCotizacion =
                 ParamUtil.getBoolean(actionRequest, "solicitarCotizacion");
 
-        PrestadorServiceUtil.actualizarSolicitarCotizacionPrestador(
-                idPrestador,
-                solicitarCotizacion,
-                user
-        );
+        int actualizados =
+                PrestadorServiceUtil.actualizarSolicitarCotizacionPrestador(
+                        idPrestador,
+                        solicitarCotizacion,
+                        user
+                );
+
+        if (actualizados != 1) {
+            throw new SystemException(
+                    "No se actualizó solicitar_cotizacion para idPrestador=" + idPrestador +
+                            ". Filas actualizadas=" + actualizados
+            );
+        }
     }
 }
