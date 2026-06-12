@@ -9,5 +9,5 @@ public class WebKeysPrestadores implements
     public static final String LOCALIDADES_EN_SESSION = "LOCALIDADES_EN_SESSION";
     public static final String LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION = "LISTAS_DE_ESPECIALIDAD_PRESTADOR_EN_SESSION";
     public static final String PLANES_EN_SESSION  = "PLANES_EN_SESSION";
-    public static final String ROL_ABM_COTAZACION = "SOLICITAR_COTIZACION_PRESTADOR";
+    public static final String ROL_ABM_COTIZACION = "SOLICITAR_COTIZACION_PRESTADOR";
 }

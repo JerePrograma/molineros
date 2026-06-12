@@ -136,4 +136,16 @@ public class PrestadorServiceUtil {
 		return getInstance().getPrestadores(id, cuit, descripcion, provincia, localidad, soloVigentes,
 				profesion, especialidad, subEspecialidad, tipoPrestador,hospital );
 	}
+
+	public static int actualizarSolicitarCotizacionPrestador(
+			int idPrestador,
+			boolean solicitarCotizacion,
+			User user) throws Exception {
+
+		return getInstance().actualizarSolicitarCotizacionPrestador(
+				idPrestador,
+				solicitarCotizacion,
+				user.getScreenName()
+		);
+	}
 }

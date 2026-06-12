@@ -6776,6 +6776,10 @@
 			         path="portlet.prestadores.error" />
 		</action>
 
+		<action
+				path="/prestadores/actualizar_solicitar_cotizacion_prestador"
+				type="ar.com.ospim.prestadores.action.ActualizarSolicitarCotizacionPrestadorAction" />
+
 		<action path="/prestadores/borrar_prestadores_entry"
 		        type="ar.com.ospim.prestadores.action.BorrarPrestadorAction">
 			<forward name="portlet.prestadores.view"
@@ -7200,5 +7204,5 @@
 					path="portlet.compras.error" />
 		</action>
     </action-mappings>
-  
+
 </struts-config>

@@ -10,12 +10,18 @@
 
 	// Permiso específico para modificar el check Solicitar Cotización
 	boolean puedeModificarSolicitarCotizacion =
-		PermissionUtil.userContainsRole(user, WebKeysPrestadores.ROL_ABM_COTAZACION);
+		PermissionUtil.userContainsRole(user, WebKeysPrestadores.ROL_ABM_COTIZACION);
 
 	List<Prestador> prestadores =
 		(ArrayList<Prestador>) renderRequest.getAttribute(WebKeysLiquidaciones.BUSQUEDA_PRESTADORES);
 
 	PortletURL portletURL = renderResponse.createRenderURL();
+
+	PortletURL actualizarSolicitarCotizacionURL = renderResponse.createActionURL();
+	actualizarSolicitarCotizacionURL.setParameter(
+		"struts_action",
+		"/prestadores/actualizar_solicitar_cotizacion_prestador"
+	);
 
 	String orderByCol = ParamUtil.getString(request, "orderByCol");
 	String orderByType = ParamUtil.getString(request, "orderByType");
@@ -82,9 +88,6 @@
 
 			boolean solicitarCotizacion = prestador.isSolicitarCotizacion();
 
-			// Futuro:
-			// boolean solicitarCotizacion = prestador.isSolicitarCotizacion();
-
 			String checkedSolicitarCotizacion =
 				solicitarCotizacion ? " checked=\"checked\" " : "";
 
@@ -95,6 +98,15 @@
 				puedeModificarSolicitarCotizacion
 					? ""
 					: " title=\"No posee permisos para modificar Solicitar Cotización\" ";
+
+			// Action
+			if (showABMButtons) {
+				row.addJSP(
+					"left",
+					SearchEntry.DEFAULT_VALIGN,
+					"/html/portlet/prestadores/editar_borrar_prestador.jsp"
+				);
+			}
 
 			String solicitarCotizacionHtml =
 				"<input type=\"checkbox\" " +
@@ -113,15 +125,6 @@
 				solicitarCotizacionHtml
 			);
 
-			// Action
-			if (showABMButtons) {
-				row.addJSP(
-					"left",
-					SearchEntry.DEFAULT_VALIGN,
-					"/html/portlet/prestadores/editar_borrar_prestador.jsp"
-				);
-			}
-
 			resultRows.add(row);
 		}
 	}
@@ -131,19 +134,61 @@
 var puedeModificarSolicitarCotizacion =
 	<%= puedeModificarSolicitarCotizacion ? "true" : "false" %>;
 
+function setSolicitarCotizacionChecked(check, checked) {
+	if (checked) {
+		check.attr('checked', 'checked');
+		check[0].checked = true;
+	} else {
+		check.removeAttr('checked');
+		check[0].checked = false;
+	}
+}
+
 jQuery(document).on('change', '.solicitar-cotizacion-check', function(event) {
 	event.stopPropagation();
 
+	var check = jQuery(this);
+
 	if (!puedeModificarSolicitarCotizacion) {
 		event.preventDefault();
+		setSolicitarCotizacionChecked(check, !check.is(':checked'));
 		return false;
 	}
 
-	var prestadorId = jQuery(this).val();
-	var solicitarCotizacion = jQuery(this).is(':checked');
+	var prestadorId = check.val();
+	var solicitarCotizacion = check.is(':checked');
+	var estadoAnterior = !solicitarCotizacion;
 
-	// Futuro:
-	// llamar action/renderURL con prestadorId + solicitarCotizacion
+	check.attr('disabled', 'disabled');
+
+	var data = {};
+
+	data['idPrestador'] = prestadorId;
+	data['solicitarCotizacion'] = solicitarCotizacion ? 'true' : 'false';
+
+	data['<portlet:namespace />idPrestador'] = prestadorId;
+	data['<portlet:namespace />solicitarCotizacion'] = solicitarCotizacion ? 'true' : 'false';
+
+	jQuery.ajax({
+		type: 'POST',
+		url: '<%= actualizarSolicitarCotizacionURL.toString() %>',
+		data: data,
+		cache: false,
+		success: function() {
+			if (puedeModificarSolicitarCotizacion) {
+				check.removeAttr('disabled');
+			}
+		},
+		error: function() {
+			setSolicitarCotizacionChecked(check, estadoAnterior);
+
+			if (puedeModificarSolicitarCotizacion) {
+				check.removeAttr('disabled');
+			}
+
+			alert('No se pudo actualizar Solicitar Cotización.');
+		}
+	});
 });
 </script>
 
