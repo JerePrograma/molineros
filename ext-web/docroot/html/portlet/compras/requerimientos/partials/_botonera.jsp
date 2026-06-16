@@ -280,12 +280,12 @@ String botoneraAnularFormId =
             <% if (botoneraPuedeReintentarCotizaciones) { %>
                 <input type="button"
                        id="<portlet:namespace />btnReintentarCotizacionesRequerimientoCompra"
-                       value="Reintentar notificaciones"
+                       value="Notificar prestadores pendientes"
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
                                '<%= botoneraReintentarCotizacionesFormId %>',
                                '<portlet:namespace />btnReintentarCotizacionesRequerimientoCompra',
-                               'Confirma reintentar las notificaciones pendientes o fallidas?',
-                               'Reintentando...'
+                               'Confirma notificar nuevamente a los prestadores pendientes?',
+                               'Notificando...'
                        );" />
 
                 &nbsp;&nbsp;

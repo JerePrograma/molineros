@@ -10,7 +10,7 @@
 <%@ page import="javax.portlet.PortletURL" %>
 <%@ page import="javax.portlet.WindowState" %>
 
-<portlet:defineObjects/>
+
 
 <%
 RequerimientoCompra reqImagenes =

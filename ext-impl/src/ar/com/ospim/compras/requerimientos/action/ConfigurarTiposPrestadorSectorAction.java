@@ -2,6 +2,7 @@ package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
+import ar.com.ospim.compras.requerimientos.beans.TipoPrestadorSector;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.ConfiguracionCotizacionPrestadorServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
@@ -81,6 +82,18 @@ public class ConfigurarTiposPrestadorSectorAction
                     "configuracion-cotizaciones-actualizada"
             );
 
+            if (_log.isInfoEnabled()) {
+                _log.info(
+                        "Configuracion de cotizaciones actualizada. "
+                                + "idSector="
+                                + idSector
+                                + ", cantidadTipos="
+                                + idsTiposSeleccionados.length
+                                + ", usuario="
+                                + user.getScreenName()
+                );
+            }
+
         } catch (Exception e) {
             _log.error(
                     "Error guardando configuracion sector/tipo prestador. "
@@ -89,14 +102,14 @@ public class ConfigurarTiposPrestadorSectorAction
                     e
             );
 
+            /*
+             * Se guarda el mensaje como valor del SessionError para que
+             * permanezca disponible durante el render posterior.
+             */
             SessionErrors.add(
                     actionRequest,
-                    "configuracion-cotizaciones-error"
-            );
-
-            actionRequest.setAttribute(
-                    WebKeysCompras.ERROR_PARA_ALERT,
-                    e.getMessage()
+                    "configuracion-cotizaciones-error",
+                    getMensajeError(e)
             );
         }
 
@@ -128,6 +141,11 @@ public class ConfigurarTiposPrestadorSectorAction
                     BusquedaRequerimientoCompraServiceUtil
                             .listarSectores();
 
+            if (sectores == null) {
+                sectores =
+                        new ArrayList<RequerimientoCompraSector>();
+            }
+
             int idSector =
                     getIntegerParam(
                             renderRequest,
@@ -136,7 +154,8 @@ public class ConfigurarTiposPrestadorSectorAction
                     );
 
             if (idSector <= 0) {
-                idSector = obtenerPrimerSector(sectores);
+                idSector =
+                        obtenerPrimerSector(sectores);
             }
 
             renderRequest.setAttribute(
@@ -150,18 +169,26 @@ public class ConfigurarTiposPrestadorSectorAction
                     Integer.valueOf(idSector)
             );
 
+            List<TipoPrestadorSector> tipos =
+                    new ArrayList<TipoPrestadorSector>();
+
             if (idSector > 0) {
-                renderRequest.setAttribute(
-                        WebKeysCompras.TIPOS_PRESTADOR_SECTOR,
+                tipos =
                         ConfiguracionCotizacionPrestadorServiceUtil
-                                .listarTiposPrestadorSector(idSector)
-                );
-            } else {
-                renderRequest.setAttribute(
-                        WebKeysCompras.TIPOS_PRESTADOR_SECTOR,
-                        new ArrayList()
-                );
+                                .listarTiposPrestadorSector(
+                                        idSector
+                                );
             }
+
+            if (tipos == null) {
+                tipos =
+                        new ArrayList<TipoPrestadorSector>();
+            }
+
+            renderRequest.setAttribute(
+                    WebKeysCompras.TIPOS_PRESTADOR_SECTOR,
+                    tipos
+            );
 
             return mapping.findForward(
                     WebKeysCompras
@@ -170,13 +197,14 @@ public class ConfigurarTiposPrestadorSectorAction
 
         } catch (Exception e) {
             _log.error(
-                    "Error cargando configuracion sector/tipo prestador.",
+                    "Error cargando configuracion "
+                            + "sector/tipo prestador.",
                     e
             );
 
             renderRequest.setAttribute(
                     WebKeysCompras.ERROR_PARA_ALERT,
-                    e.getMessage()
+                    getMensajeError(e)
             );
 
             return mapping.findForward(
@@ -221,10 +249,24 @@ public class ConfigurarTiposPrestadorSectorAction
         }
     }
 
-    private void validarSector(int idSector) throws Exception {
+    private void validarSector(int idSector)
+            throws Exception {
+
         if (idSector <= 0) {
             throw new Exception(
                     "Debe seleccionar un sector."
+            );
+        }
+
+        RequerimientoCompraSector sector =
+                BusquedaRequerimientoCompraServiceUtil
+                        .getSector(idSector);
+
+        if (sector == null
+                || sector.getIdSector() <= 0) {
+
+            throw new Exception(
+                    "El sector seleccionado no existe."
             );
         }
     }
@@ -232,33 +274,46 @@ public class ConfigurarTiposPrestadorSectorAction
     private int obtenerPrimerSector(
             List<RequerimientoCompraSector> sectores) {
 
-        if (sectores == null || sectores.isEmpty()) {
+        if (sectores == null
+                || sectores.isEmpty()) {
+
             return 0;
         }
 
-        RequerimientoCompraSector sector = sectores.get(0);
+        for (int i = 0; i < sectores.size(); i++) {
+            RequerimientoCompraSector sector =
+                    sectores.get(i);
 
-        return sector != null
-                ? sector.getIdSector()
-                : 0;
+            if (sector != null
+                    && sector.getIdSector() > 0) {
+
+                return sector.getIdSector();
+            }
+        }
+
+        return 0;
     }
 
     private int getIntegerParam(PortletRequest request,
                                 String paramName,
                                 int defaultValue) {
 
-        int value = ParamUtil.getInteger(
-                request,
-                paramName,
-                defaultValue
-        );
+        int value =
+                ParamUtil.getInteger(
+                        request,
+                        paramName,
+                        defaultValue
+                );
 
         if (value != defaultValue) {
             return value;
         }
 
         String[] values =
-                getParameterValues(request, paramName);
+                getParameterValues(
+                        request,
+                        paramName
+                );
 
         if (values == null
                 || values.length == 0
@@ -268,19 +323,28 @@ public class ConfigurarTiposPrestadorSectorAction
         }
 
         try {
-            return Integer.parseInt(values[0]);
+            return Integer.parseInt(
+                    values[0].trim()
+            );
+
         } catch (NumberFormatException ignored) {
             return defaultValue;
         }
     }
 
-    private int[] getIntegerArrayParam(PortletRequest request,
-                                       String paramName) {
+    private int[] getIntegerArrayParam(
+            PortletRequest request,
+            String paramName) {
 
         String[] values =
-                getParameterValues(request, paramName);
+                getParameterValues(
+                        request,
+                        paramName
+                );
 
-        if (values == null || values.length == 0) {
+        if (values == null
+                || values.length == 0) {
+
             return new int[0];
         }
 
@@ -288,64 +352,87 @@ public class ConfigurarTiposPrestadorSectorAction
                 new LinkedHashSet<Integer>();
 
         for (int i = 0; i < values.length; i++) {
-            if (values[i] == null) {
+            String value = values[i];
+
+            if (value == null
+                    || value.trim().length() == 0) {
+
                 continue;
             }
 
             try {
-                int id = Integer.parseInt(
-                        values[i].trim()
-                );
+                int id =
+                        Integer.parseInt(
+                                value.trim()
+                        );
 
                 if (id > 0) {
-                    ids.add(Integer.valueOf(id));
+                    ids.add(
+                            Integer.valueOf(id)
+                    );
                 }
+
             } catch (NumberFormatException ignored) {
             }
         }
 
-        int[] resultado = new int[ids.size()];
+        int[] resultado =
+                new int[ids.size()];
+
         int index = 0;
 
         for (Integer id : ids) {
-            resultado[index++] = id.intValue();
+            resultado[index++] =
+                    id.intValue();
         }
 
         return resultado;
     }
 
-    private String[] getParameterValues(PortletRequest request,
-                                        String paramName) {
+    private String[] getParameterValues(
+            PortletRequest request,
+            String paramName) {
 
         String[] directValues =
-                request.getParameterValues(paramName);
+                request.getParameterValues(
+                        paramName
+                );
 
         if (directValues != null) {
             return directValues;
         }
 
-        Map parameterMap = request.getParameterMap();
+        Map parameterMap =
+                request.getParameterMap();
 
-        if (parameterMap == null || parameterMap.isEmpty()) {
+        if (parameterMap == null
+                || parameterMap.isEmpty()) {
+
             return null;
         }
 
-        for (Object entryObject : parameterMap.entrySet()) {
-            Map.Entry entry = (Map.Entry) entryObject;
+        for (Object entryObject :
+                parameterMap.entrySet()) {
 
-            Object keyObject = entry.getKey();
+            Map.Entry entry =
+                    (Map.Entry) entryObject;
+
+            Object keyObject =
+                    entry.getKey();
 
             if (keyObject == null) {
                 continue;
             }
 
-            String key = String.valueOf(keyObject);
+            String key =
+                    String.valueOf(keyObject);
 
             if (!key.endsWith(paramName)) {
                 continue;
             }
 
-            Object valueObject = entry.getValue();
+            Object valueObject =
+                    entry.getValue();
 
             if (valueObject instanceof String[]) {
                 return (String[]) valueObject;
@@ -353,5 +440,17 @@ public class ConfigurarTiposPrestadorSectorAction
         }
 
         return null;
+    }
+
+    private String getMensajeError(Exception e) {
+        if (e == null
+                || e.getMessage() == null
+                || e.getMessage().trim().length() == 0) {
+
+            return "Ocurrio un error procesando "
+                    + "la configuracion de cotizaciones.";
+        }
+
+        return e.getMessage().trim();
     }
 }

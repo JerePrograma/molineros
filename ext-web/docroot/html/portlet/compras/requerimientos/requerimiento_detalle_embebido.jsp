@@ -1,7 +1,7 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 
-<portlet:defineObjects />
+
 
 <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle_modelo.jsp" %>
 

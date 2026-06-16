@@ -3,7 +3,7 @@
 <%@ page import="ar.com.uoma.beans.Incidente" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 
-<portlet:defineObjects />
+
 
 <%!
 private String jsAfiliadoCompra(Object value) {

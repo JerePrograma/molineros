@@ -1,7 +1,5 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 
-<portlet:defineObjects/>
-
 <%
 response.setHeader("Cache-Control", "no-store");
 response.setHeader("Pragma", "no-cache");
@@ -17,8 +15,11 @@ if (tabs1 == null) {
     tabs1 = (String) request.getSession().getAttribute("compras_tabs1");
 }
 
-String tabs1Values = "requerimientos,autorizaciones,cotizaciones,orden-de-compra";
-String tabs1Names = "Requerimientos,Autorizaciones,Cotizaciones,Ordenes de Compras";
+String tabs1Values =
+        "requerimientos,autorizaciones,cotizaciones,ordenes-de-compra";
+
+String tabs1Names =
+        "Requerimientos,Autorizaciones,Cotizaciones,Ordenes de Compras";
 
 boolean tabValida =
         "requerimientos".equals(tabs1)
@@ -39,7 +40,34 @@ portletURL.setParameter("tabs1", tabs1);
 
 currentURL = PortalUtil.getCurrentURL(request);
 %>
+<%
+boolean puedeConfigurarCotizaciones =
+        user != null
+        && PermissionUtil.userContainsRole(
+                user,
+                WebKeysCompras.ROL_ABM_COMPRAS
+        );
 
+PortletURL configurarCotizacionesURL =
+        renderResponse.createRenderURL();
+
+configurarCotizacionesURL.setWindowState(
+        LiferayWindowState.MAXIMIZED
+);
+
+configurarCotizacionesURL.setParameter(
+        "struts_action",
+        "/compras/configurar_tipos_prestador_sector"
+);
+%>
+
+<% if (puedeConfigurarCotizaciones) { %>
+    <div style="margin-bottom: 15px; text-align: right;">
+        <input type="button"
+               value="Configurar cotizaciones por sector"
+               onclick="window.location.href='<%= configurarCotizacionesURL.toString() %>';" />
+    </div>
+<% } %>
 <form action="<%= portletURL %>"
       method="get"
       name="<portlet:namespace />fm"

@@ -38,6 +38,7 @@
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraFiltro" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraEstado" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.TipoPrestadorSector" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>

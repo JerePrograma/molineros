@@ -20,9 +20,7 @@ public class ConfiguracionCotizacionPrestadorServiceUtil {
     public static List<TipoPrestadorSector>
     listarTiposPrestadorSector(int idSector) throws Exception {
 
-        return getInstance().listarTiposPrestadorSector(
-                idSector
-        );
+        return getInstance().listarTiposPrestadorSector(idSector);
     }
 
     public static void guardarConfiguracion(

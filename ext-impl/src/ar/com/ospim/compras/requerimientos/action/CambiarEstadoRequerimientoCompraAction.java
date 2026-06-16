@@ -85,6 +85,7 @@ public class CambiarEstadoRequerimientoCompraAction
                         usuario,
                         user
                 );
+
             } else {
                 procesarCambioEstado(
                         actionRequest,
@@ -98,7 +99,13 @@ public class CambiarEstadoRequerimientoCompraAction
         } catch (Exception e) {
             _log.error(
                     "Error procesando estado/cotizaciones "
-                            + "del requerimiento.",
+                            + "del requerimiento. "
+                            + "idRequerimiento="
+                            + idRequerimientoCompra
+                            + ", estadoNuevo="
+                            + estadoNuevo
+                            + ", reintentar="
+                            + reintentarNotificaciones,
                     e
             );
 
@@ -109,7 +116,7 @@ public class CambiarEstadoRequerimientoCompraAction
 
             actionRequest.setAttribute(
                     WebKeysCompras.ERROR_PARA_ALERT,
-                    e.getMessage()
+                    getMensajeError(e)
             );
         }
 
@@ -167,6 +174,10 @@ public class CambiarEstadoRequerimientoCompraAction
                         usuario
                 );
 
+        /*
+         * La notificacion se realiza despues de que el requerimiento
+         * haya quedado efectivamente en estado Cotizaciones.
+         */
         if (estadoNuevo
                 == WebKeysCompras.ESTADO_COTIZACIONES) {
 
@@ -219,6 +230,13 @@ public class CambiarEstadoRequerimientoCompraAction
                             );
 
             if (resultado == null) {
+                _log.warn(
+                        "La notificacion de cotizaciones "
+                                + "no devolvio resultado. "
+                                + "idRequerimiento="
+                                + idRequerimientoCompra
+                );
+
                 SessionMessages.add(
                         actionRequest,
                         "cotizaciones-prestadores-sin-resultado"
@@ -234,6 +252,15 @@ public class CambiarEstadoRequerimientoCompraAction
             );
 
             if (resultado.getTotalCandidatos() == 0) {
+                if (_log.isInfoEnabled()) {
+                    _log.info(
+                            "No hay prestadores pendientes "
+                                    + "de notificacion. "
+                                    + "idRequerimiento="
+                                    + idRequerimientoCompra
+                    );
+                }
+
                 SessionMessages.add(
                         actionRequest,
                         "cotizaciones-prestadores-sin-destinatarios"
@@ -247,6 +274,7 @@ public class CambiarEstadoRequerimientoCompraAction
                         actionRequest,
                         "cotizaciones-prestadores-notificados-con-errores"
                 );
+
             } else {
                 SessionMessages.add(
                         actionRequest,
@@ -272,9 +300,11 @@ public class CambiarEstadoRequerimientoCompraAction
 
         } catch (Exception e) {
             /*
-             * El cambio de estado ya fue exitoso.
-             * Una falla de mail o auditoria no revierte
-             * automaticamente el requerimiento.
+             * No relanzar.
+             *
+             * El cambio de estado ya pudo haberse realizado correctamente.
+             * La falla de correo, consulta o auditoria no debe presentarse
+             * como una falla del cambio de estado ni revertirlo.
              */
             _log.error(
                     "Fallo la notificacion de prestadores. "
@@ -286,12 +316,6 @@ public class CambiarEstadoRequerimientoCompraAction
             SessionMessages.add(
                     actionRequest,
                     "cotizaciones-prestadores-error"
-            );
-
-            actionRequest.setAttribute(
-                    WebKeysCompras.ERROR_PARA_ALERT,
-                    "No se pudieron notificar prestadores: "
-                            + e.getMessage()
             );
         }
     }
@@ -379,8 +403,9 @@ public class CambiarEstadoRequerimientoCompraAction
                 != WebKeysCompras.ESTADO_COTIZACIONES) {
 
             throw new Exception(
-                    "Solo se pueden reintentar notificaciones "
-                            + "de requerimientos en Cotizaciones."
+                    "Solo se pueden notificar prestadores "
+                            + "pendientes de requerimientos "
+                            + "en estado Cotizaciones."
             );
         }
     }
@@ -395,7 +420,9 @@ public class CambiarEstadoRequerimientoCompraAction
             );
         }
 
-        if (estadoNuevo == WebKeysCompras.ESTADO_ANULADO) {
+        if (estadoNuevo
+                == WebKeysCompras.ESTADO_ANULADO) {
+
             if (!userTieneRol(
                     user,
                     WebKeysCompras.ROL_ANULAR_COMPRAS
@@ -503,7 +530,9 @@ public class CambiarEstadoRequerimientoCompraAction
         if (idRequerimientoCompra > 0) {
             actionResponse.setRenderParameter(
                     "id_requerimiento_compra",
-                    String.valueOf(idRequerimientoCompra)
+                    String.valueOf(
+                            idRequerimientoCompra
+                    )
             );
         }
     }
@@ -513,11 +542,12 @@ public class CambiarEstadoRequerimientoCompraAction
             String paramName,
             int defaultValue) {
 
-        int value = ParamUtil.getInteger(
-                actionRequest,
-                paramName,
-                defaultValue
-        );
+        int value =
+                ParamUtil.getInteger(
+                        actionRequest,
+                        paramName,
+                        defaultValue
+                );
 
         if (value != defaultValue) {
             return value;
@@ -534,7 +564,10 @@ public class CambiarEstadoRequerimientoCompraAction
         }
 
         try {
-            return Integer.parseInt(rawValue);
+            return Integer.parseInt(
+                    rawValue.trim()
+            );
+
         } catch (NumberFormatException ignored) {
             return defaultValue;
         }
@@ -546,7 +579,9 @@ public class CambiarEstadoRequerimientoCompraAction
             boolean defaultValue) {
 
         String directValue =
-                actionRequest.getParameter(paramName);
+                actionRequest.getParameter(
+                        paramName
+                );
 
         if (directValue != null) {
             return parseBoolean(
@@ -555,11 +590,14 @@ public class CambiarEstadoRequerimientoCompraAction
             );
         }
 
-        return parseBoolean(
+        String rawValue =
                 getNamespacedParam(
                         actionRequest,
                         paramName
-                ),
+                );
+
+        return parseBoolean(
+                rawValue,
                 defaultValue
         );
     }
@@ -583,8 +621,15 @@ public class CambiarEstadoRequerimientoCompraAction
             Map.Entry entry =
                     (Map.Entry) entryObject;
 
+            Object keyObject =
+                    entry.getKey();
+
+            if (keyObject == null) {
+                continue;
+            }
+
             String key =
-                    String.valueOf(entry.getKey());
+                    String.valueOf(keyObject);
 
             if (!key.endsWith(paramName)) {
                 continue;
@@ -600,9 +645,13 @@ public class CambiarEstadoRequerimientoCompraAction
             String[] values =
                     (String[]) valueObject;
 
-            if (values.length > 0) {
-                return values[0];
+            if (values.length == 0
+                    || values[0] == null) {
+
+                return null;
             }
+
+            return values[0];
         }
 
         return null;
@@ -635,5 +684,17 @@ public class CambiarEstadoRequerimientoCompraAction
         }
 
         return defaultValue;
+    }
+
+    private String getMensajeError(Exception e) {
+        if (e == null
+                || e.getMessage() == null
+                || e.getMessage().trim().length() == 0) {
+
+            return "Ocurrio un error procesando "
+                    + "el requerimiento de compra.";
+        }
+
+        return e.getMessage().trim();
     }
 }
