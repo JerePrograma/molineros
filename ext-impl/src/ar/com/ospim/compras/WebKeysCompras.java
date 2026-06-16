@@ -24,6 +24,16 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String SECTORES_REQUERIMIENTO = "SECTORES_REQUERIMIENTO";
     public static final String ESTADOS_REQUERIMIENTO_COMPRA = ESTADOS_REQUERIMIENTO;
     public static final String SECTORES_REQUERIMIENTO_COMPRA = SECTORES_REQUERIMIENTO;
+    public static final String TIPOS_PRESTADOR_SECTOR =
+            "TIPOS_PRESTADOR_SECTOR";
+
+    public static final String
+            ID_SECTOR_CONFIGURACION_COTIZACION =
+            "ID_SECTOR_CONFIGURACION_COTIZACION";
+
+    public static final String
+            RESULTADO_NOTIFICACION_COTIZACIONES =
+            "RESULTADO_NOTIFICACION_COTIZACIONES";
 
     /*
      * Flujo nuevo:
@@ -62,6 +72,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String FORWARD_COMPRAS_EDITAR_REQUERIMIENTO = "portlet.compras.editar_requerimiento";
     public static final String FORWARD_COMPRAS_VER_REQUERIMIENTO = "portlet.compras.ver_requerimiento";
     public static final String FORWARD_COMPRAS_IMPRIMIR_REQUERIMIENTO = "portlet.compras.imprimir_requerimiento";
+    public static final String
+            FORWARD_COMPRAS_CONFIGURAR_TIPOS_PRESTADOR =
+            "portlet.compras.configurar_tipos_prestador";
 
     /*
      * Document Library - Adjuntos de requerimientos de compra.

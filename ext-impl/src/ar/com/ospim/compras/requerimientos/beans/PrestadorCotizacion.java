@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.beans;
 
+import ar.com.ospim.compras.WebKeysCompras;
+
 public class PrestadorCotizacion {
 
     private int idPrestador;
@@ -26,7 +28,8 @@ public class PrestadorCotizacion {
     }
 
     public void setDescripcion(String descripcion) {
-        this.descripcion = trimToNull(descripcion);
+        this.descripcion =
+                WebKeysCompras.trimToNull(descripcion);
     }
 
     public String getCuit() {
@@ -38,7 +41,8 @@ public class PrestadorCotizacion {
     }
 
     public void setCuit(String cuit) {
-        this.cuit = trimToNull(cuit);
+        this.cuit =
+                WebKeysCompras.trimToNull(cuit);
     }
 
     public String getEmail() {
@@ -50,15 +54,19 @@ public class PrestadorCotizacion {
     }
 
     public void setEmail(String email) {
-        this.email = trimToNull(email);
+        this.email =
+                WebKeysCompras.trimToNull(email);
     }
 
     public int getIdTipoPrestador() {
         return idTipoPrestador;
     }
 
-    public void setIdTipoPrestador(int idTipoPrestador) {
-        this.idTipoPrestador = idTipoPrestador;
+    public void setIdTipoPrestador(
+            int idTipoPrestador) {
+
+        this.idTipoPrestador =
+                idTipoPrestador;
     }
 
     public String getTipoPrestador() {
@@ -66,18 +74,17 @@ public class PrestadorCotizacion {
     }
 
     public String getTipoPrestadorVisible() {
-        return tipoPrestador != null ? tipoPrestador : "";
+        return tipoPrestador != null
+                ? tipoPrestador
+                : "";
     }
 
-    public void setTipoPrestador(String tipoPrestador) {
-        this.tipoPrestador = trimToNull(tipoPrestador);
-    }
+    public void setTipoPrestador(
+            String tipoPrestador) {
 
-    private String trimToNull(String value) {
-        if (value == null || value.trim().length() == 0) {
-            return null;
-        }
-
-        return value.trim();
+        this.tipoPrestador =
+                WebKeysCompras.trimToNull(
+                        tipoPrestador
+                );
     }
 }

@@ -57,21 +57,27 @@ public class CotizacionPrestadorMailHelper {
         MailServiceUtil.sendEmail(mailMessage);
     }
 
-    private void validarEmailDestino(String emailDestino) throws Exception {
+    private void validarEmailDestino(String emailDestino)
+            throws Exception {
+
         if (isEmpty(emailDestino)) {
-            throw new Exception("Debe informar email destino.");
+            throw new Exception(
+                    "Debe informar email destino."
+            );
         }
 
-        /*
-         * Validacion deliberadamente simple.
-         * InternetAddress tambien valida formato basico al construir.
-         */
-        if (emailDestino.indexOf("@") < 0 || emailDestino.indexOf(".") < 0) {
-            throw new Exception("Email destino invalido: " + emailDestino);
+        if (emailDestino.indexOf("@") < 0
+                || emailDestino.indexOf(".") < 0) {
+
+            throw new Exception(
+                    "Email destino invalido: "
+                            + emailDestino
+            );
         }
     }
 
     private boolean isEmpty(String value) {
-        return value == null || value.trim().length() == 0;
+        return value == null
+                || value.trim().length() == 0;
     }
 }

@@ -11,12 +11,19 @@ public class NotificacionCotizacionResultado {
         return totalCandidatos;
     }
 
-    public void setTotalCandidatos(int totalCandidatos) {
-        this.totalCandidatos = totalCandidatos;
+    public void setTotalCandidatos(
+            int totalCandidatos) {
+
+        this.totalCandidatos =
+                totalCandidatos;
     }
 
     public int getEnviados() {
         return enviados;
+    }
+
+    public void setEnviados(int enviados) {
+        this.enviados = enviados;
     }
 
     public void incrementarEnviados() {
@@ -27,6 +34,10 @@ public class NotificacionCotizacionResultado {
         return errores;
     }
 
+    public void setErrores(int errores) {
+        this.errores = errores;
+    }
+
     public void incrementarErrores() {
         errores++;
     }
@@ -35,7 +46,19 @@ public class NotificacionCotizacionResultado {
         return omitidos;
     }
 
+    public void setOmitidos(int omitidos) {
+        this.omitidos = omitidos;
+    }
+
     public void incrementarOmitidos() {
         omitidos++;
+    }
+
+    public int getTotalProcesados() {
+        return enviados + errores + omitidos;
+    }
+
+    public boolean tieneErrores() {
+        return errores > 0;
     }
 }
