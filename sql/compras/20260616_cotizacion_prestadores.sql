@@ -145,9 +145,7 @@ BEGIN
          )
       )
 
-    ORDER BY
-        tp.descripcion,
-        p.descripcion;
+    ORDER BY 6, 2;
 END;
 $$ LANGUAGE plpgsql;
 
