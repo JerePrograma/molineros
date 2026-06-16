@@ -58,18 +58,6 @@ String errorConfiguracion =
                 ? String.valueOf(errorConfiguracionObject)
                 : null;
 
-PortletURL seleccionarSectorURL =
-        renderResponse.createRenderURL();
-
-seleccionarSectorURL.setWindowState(
-        LiferayWindowState.MAXIMIZED
-);
-
-seleccionarSectorURL.setParameter(
-        "struts_action",
-        "/compras/configurar_tipos_prestador_sector"
-);
-
 PortletURL guardarConfiguracionURL =
         renderResponse.createActionURL();
 
@@ -184,62 +172,71 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
     <fieldset class="block-labels">
         <legend>Sector de compras</legend>
 
-        <form action="<%= seleccionarSectorURL.toString() %>"
-              method="get"
-              id="<portlet:namespace />seleccionarSectorForm">
+        <table class="lfr-table">
+            <tr>
+                <td>
+                    <label for="<portlet:namespace />id_sector_selector">
+                        Sector:
+                    </label>
+                </td>
 
-            <liferay-portlet:renderURLParams
-                    varImpl="seleccionarSectorURL" />
+                <td>
+                    <select id="<portlet:namespace />id_sector_selector"
+                            onchange="<%= namespaceConfiguracion %>cambiarSector(this);">
 
-            <table class="lfr-table">
-                <tr>
-                    <td>
-                        <label for="<portlet:namespace />id_sector_selector">
-                            Sector:
-                        </label>
-                    </td>
+                        <% if (sectores.isEmpty()) { %>
+                            <option value="">
+                                No existen sectores configurados
+                            </option>
+                        <% } %>
 
-                    <td>
-                        <select id="<portlet:namespace />id_sector_selector"
-                                name="<portlet:namespace />id_sector"
-                                onchange="this.form.submit();">
+                        <%
+                        for (int i = 0; i < sectores.size(); i++) {
+                            RequerimientoCompraSector sector =
+                                    sectores.get(i);
 
-                            <% if (sectores.isEmpty()) { %>
-                                <option value="0">
-                                    No existen sectores configurados
-                                </option>
-                            <% } %>
+                            if (sector == null
+                                    || sector.getIdSector() <= 0) {
 
-                            <%
-                            for (int i = 0; i < sectores.size(); i++) {
-                                RequerimientoCompraSector sector =
-                                        sectores.get(i);
-
-                                if (sector == null) {
-                                    continue;
-                                }
-
-                                int idSector =
-                                        sector.getIdSector();
-                            %>
-                                <option
-                                        value="<%= idSector %>"
-                                        <%= idSector == idSectorSeleccionado
-                                                ? "selected=\"selected\""
-                                                : "" %>>
-
-                                    <%= HtmlUtil.escape(
-                                            sector.getDescripcionVisible()
-                                    ) %>
-                                </option>
-                            <%
+                                continue;
                             }
-                            %>
-                        </select>
-                    </td>
-                </tr>
-            </table>
-        </form>
+
+                            int idSector = sector.getIdSector();
+
+                            PortletURL sectorURL =
+                                    renderResponse.createRenderURL();
+
+                            sectorURL.setWindowState(
+                                    LiferayWindowState.MAXIMIZED
+                            );
+
+                            sectorURL.setParameter(
+                                    "struts_action",
+                                    "/compras/configurar_tipos_prestador_sector"
+                            );
+
+                            sectorURL.setParameter(
+                                    "id_sector",
+                                    String.valueOf(idSector)
+                            );
+                        %>
+                            <option
+                                    value="<%= HtmlUtil.escape(sectorURL.toString()) %>"
+                                    <%= idSector == idSectorSeleccionado
+                                            ? "selected=\"selected\""
+                                            : "" %>>
+
+                                <%= HtmlUtil.escape(
+                                        sector.getDescripcionVisible()
+                                ) %>
+                            </option>
+                        <%
+                        }
+                        %>
+                    </select>
+                </td>
+            </tr>
+        </table>
     </fieldset>
 
     <% if (idSectorSeleccionado > 0) { %>
@@ -379,6 +376,39 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
 </div>
 
 <script type="text/javascript">
+
+        function <%= namespaceConfiguracion %>cambiarSector(selector) {
+            if (selector == null) {
+                return;
+            }
+
+            var url = selector.value;
+
+            if (url == null || url.length == 0) {
+                return;
+            }
+
+            window.location.href = url;
+        }
+
+        function <%= namespaceConfiguracion %>obtenerCheckboxes() {
+            var elementos = document.getElementsByTagName('input');
+            var resultado = [];
+
+            for (var i = 0; i < elementos.length; i++) {
+                var elemento = elementos[i];
+
+                if (elemento.type == 'checkbox'
+                        && elemento.className.indexOf(
+                                '<portlet:namespace />tipoPrestadorCheckbox'
+                        ) >= 0) {
+
+                    resultado.push(elemento);
+                }
+            }
+
+            return resultado;
+        }
 
     function <%= namespaceConfiguracion %>obtenerCheckboxes() {
         var elementos = document.getElementsByTagName('input');

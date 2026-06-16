@@ -119,18 +119,6 @@ public class ConfiguracionCotizacionPrestadorServiceImpl {
 
             con.commit();
 
-            if (_log.isInfoEnabled()) {
-                _log.info(
-                        "Configuracion sector/tipo prestador guardada. "
-                                + "idSector="
-                                + idSector
-                                + ", tiposActivos="
-                                + idsNormalizados.size()
-                                + ", usuario="
-                                + usuarioNormalizado
-                );
-            }
-
         } catch (Exception e) {
             if (con != null) {
                 ConnectionHelper.rollback(con);

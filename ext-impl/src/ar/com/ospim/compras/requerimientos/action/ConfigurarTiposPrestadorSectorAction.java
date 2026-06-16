@@ -82,18 +82,6 @@ public class ConfigurarTiposPrestadorSectorAction
                     "configuracion-cotizaciones-actualizada"
             );
 
-            if (_log.isInfoEnabled()) {
-                _log.info(
-                        "Configuracion de cotizaciones actualizada. "
-                                + "idSector="
-                                + idSector
-                                + ", cantidadTipos="
-                                + idsTiposSeleccionados.length
-                                + ", usuario="
-                                + user.getScreenName()
-                );
-            }
-
         } catch (Exception e) {
             _log.error(
                     "Error guardando configuracion sector/tipo prestador. "
