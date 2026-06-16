@@ -14,6 +14,41 @@
     </div>
 </c:if>
 
+<c:if test="<%= com.liferay.portal.kernel.servlet.SessionMessages.contains(renderRequest, "estado-requerimiento-compra-actualizado") %>">
+    <div class="portlet-msg-success">El estado del requerimiento fue actualizado correctamente.</div>
+</c:if>
+
+<c:if test="<%= com.liferay.portal.kernel.servlet.SessionMessages.contains(renderRequest, "cotizaciones-prestadores-notificados") %>">
+    <div class="portlet-msg-success">
+        El requerimiento paso a cotizaciones y se notifico a todos los prestadores candidatos.
+    </div>
+</c:if>
+
+<c:if test="<%= com.liferay.portal.kernel.servlet.SessionMessages.contains(renderRequest, "cotizaciones-prestadores-notificados-con-errores") %>">
+    <div class="portlet-msg-error">
+        El requerimiento paso a cotizaciones, pero uno o mas prestadores no pudieron ser notificados.
+        Revise el estado de los envios registrados para el requerimiento.
+    </div>
+</c:if>
+
+<c:if test="<%= com.liferay.portal.kernel.servlet.SessionMessages.contains(renderRequest, "cotizaciones-prestadores-sin-destinatarios") %>">
+    <div class="portlet-msg-info">
+        El requerimiento paso a cotizaciones, pero no existen prestadores habilitados pendientes de notificacion para su sector.
+    </div>
+</c:if>
+
+<c:if test="<%= com.liferay.portal.kernel.servlet.SessionMessages.contains(renderRequest, "cotizaciones-prestadores-error") %>">
+    <div class="portlet-msg-error">
+        El requerimiento paso a cotizaciones, pero fallo el proceso general de notificacion a prestadores.
+    </div>
+</c:if>
+
+<c:if test="<%= com.liferay.portal.kernel.servlet.SessionMessages.contains(renderRequest, "cotizaciones-prestadores-sin-resultado") %>">
+    <div class="portlet-msg-error">
+        El proceso de notificacion finalizo sin devolver un resultado verificable.
+    </div>
+</c:if>
+
 <c:if test="<%= msgDetalleGuardado %>">
     <div class="portlet-msg-success">Detalle del requerimiento guardado correctamente.</div>
 </c:if>
