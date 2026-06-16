@@ -49,6 +49,13 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
         int estadoNuevo =
                 getIntegerParam(actionRequest, "estado_nuevo", 0);
 
+        boolean reintentarNotificaciones =
+                getBooleanParam(
+                        actionRequest,
+                        "reintentar_notificaciones",
+                        false
+                );
+
         try {
             if (_log.isInfoEnabled()) {
                 _log.info(
@@ -56,37 +63,30 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
                                 + idRequerimientoCompra
                                 + ", estadoNuevo="
                                 + estadoNuevo
+                                + ", reintentarNotificaciones="
+                                + reintentarNotificaciones
                 );
             }
 
             User user = PortalUtil.getUser(actionRequest);
             String usuario = user != null ? user.getScreenName() : "sistema";
 
-            validarParametrosCambioEstado(idRequerimientoCompra, estadoNuevo);
-            validarTransicionEstado(idRequerimientoCompra, estadoNuevo);
-            validarPermisoCambioEstado(user, estadoNuevo);
-
-            long companyId = user.getCompanyId();
-
-            EditarRequerimientoCompraServiceUtil.cambiarEstado(
-                    idRequerimientoCompra,
-                    estadoNuevo,
-                    usuario
-            );
-
-            if (estadoNuevo == WebKeysCompras.ESTADO_COTIZACIONES) {
-                notificarPrestadoresCotizacion(
+            if (reintentarNotificaciones) {
+                procesarReintentoCotizaciones(
                         actionRequest,
                         idRequerimientoCompra,
                         usuario,
-                        companyId
+                        user
+                );
+            } else {
+                procesarCambioEstado(
+                        actionRequest,
+                        idRequerimientoCompra,
+                        estadoNuevo,
+                        usuario,
+                        user
                 );
             }
-
-            SessionMessages.add(
-                    actionRequest,
-                    "estado-requerimiento-compra-actualizado"
-            );
 
             prepararRenderVerRequerimiento(
                     actionResponse,
@@ -134,6 +134,54 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
         );
     }
 
+    private void procesarCambioEstado(ActionRequest actionRequest,
+                                      int idRequerimientoCompra,
+                                      int estadoNuevo,
+                                      String usuario,
+                                      User user) throws Exception {
+
+        validarParametrosCambioEstado(idRequerimientoCompra, estadoNuevo);
+        validarTransicionEstado(idRequerimientoCompra, estadoNuevo);
+        validarPermisoCambioEstado(user, estadoNuevo);
+
+        long companyId = user.getCompanyId();
+
+        EditarRequerimientoCompraServiceUtil.cambiarEstado(
+                idRequerimientoCompra,
+                estadoNuevo,
+                usuario
+        );
+
+        if (estadoNuevo == WebKeysCompras.ESTADO_COTIZACIONES) {
+            notificarPrestadoresCotizacion(
+                    actionRequest,
+                    idRequerimientoCompra,
+                    usuario,
+                    companyId
+            );
+        }
+
+        SessionMessages.add(
+                actionRequest,
+                "estado-requerimiento-compra-actualizado"
+        );
+    }
+
+    private void procesarReintentoCotizaciones(ActionRequest actionRequest,
+                                               int idRequerimientoCompra,
+                                               String usuario,
+                                               User user) throws Exception {
+
+        validarReintentoCotizaciones(idRequerimientoCompra, user);
+
+        notificarPrestadoresCotizacion(
+                actionRequest,
+                idRequerimientoCompra,
+                usuario,
+                user.getCompanyId()
+        );
+    }
+
     private void notificarPrestadoresCotizacion(ActionRequest actionRequest,
                                                 int idRequerimientoCompra,
                                                 String usuario,
@@ -164,7 +212,7 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             if (resultado.getTotalCandidatos() == 0) {
                 if (_log.isInfoEnabled()) {
                     _log.info(
-                            "El requerimiento paso a cotizaciones sin prestadores candidatos. id="
+                            "No hay prestadores pendientes de notificacion. id="
                                     + idRequerimientoCompra
                     );
                 }
@@ -213,11 +261,12 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             /*
              * No relanzar.
              *
-             * El cambio de estado ya fue exitoso. Si falla la busqueda de prestadores,
-             * la auditoria de cotizacion o SMTP, no se debe romper el flujo principal.
+             * El cambio de estado, cuando corresponde, ya fue exitoso. Si falla
+             * la busqueda de prestadores, la auditoria o el servicio de mail, el
+             * requerimiento no debe volver automaticamente al estado anterior.
              */
             _log.error(
-                    "El requerimiento paso a cotizaciones, pero fallo la notificacion de prestadores. id="
+                    "Fallo la notificacion de prestadores para cotizacion. id="
                             + idRequerimientoCompra,
                     e
             );
@@ -229,7 +278,7 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
 
             actionRequest.setAttribute(
                     WebKeysCompras.ERROR_PARA_ALERT,
-                    "El requerimiento paso a cotizaciones, pero no se pudieron notificar prestadores: "
+                    "No se pudieron notificar prestadores: "
                             + e.getMessage()
             );
         }
@@ -289,6 +338,36 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
         )) {
             throw new Exception(
                     "La transicion de estado solicitada no es valida."
+            );
+        }
+    }
+
+    private void validarReintentoCotizaciones(int idRequerimientoCompra,
+                                              User user) throws Exception {
+
+        if (idRequerimientoCompra <= 0) {
+            throw new Exception("Debe informar el requerimiento de compra.");
+        }
+
+        validarPermisoCambioEstado(
+                user,
+                WebKeysCompras.ESTADO_COTIZACIONES
+        );
+
+        RequerimientoCompra requerimiento =
+                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(
+                        idRequerimientoCompra
+                );
+
+        if (requerimiento == null) {
+            throw new Exception(
+                    "No se encontro el requerimiento de compra informado."
+            );
+        }
+
+        if (requerimiento.getEstado() != WebKeysCompras.ESTADO_COTIZACIONES) {
+            throw new Exception(
+                    "Solo se pueden reintentar notificaciones de requerimientos en Cotizaciones."
             );
         }
     }
@@ -375,10 +454,41 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             return value;
         }
 
+        String rawValue = getNamespacedParam(actionRequest, paramName);
+
+        if (rawValue == null) {
+            return defaultValue;
+        }
+
+        try {
+            return Integer.parseInt(rawValue);
+        } catch (NumberFormatException ignored) {
+            return defaultValue;
+        }
+    }
+
+    private boolean getBooleanParam(ActionRequest actionRequest,
+                                    String paramName,
+                                    boolean defaultValue) {
+
+        String directValue = actionRequest.getParameter(paramName);
+
+        if (directValue != null) {
+            return parseBoolean(directValue, defaultValue);
+        }
+
+        String rawValue = getNamespacedParam(actionRequest, paramName);
+
+        return parseBoolean(rawValue, defaultValue);
+    }
+
+    private String getNamespacedParam(ActionRequest actionRequest,
+                                      String paramName) {
+
         Map parameterMap = actionRequest.getParameterMap();
 
         if (parameterMap == null || parameterMap.isEmpty()) {
-            return defaultValue;
+            return null;
         }
 
         for (Object entryObject : parameterMap.entrySet()) {
@@ -405,14 +515,35 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             String[] values = (String[]) valueObject;
 
             if (values.length == 0 || values[0] == null) {
-                continue;
+                return null;
             }
 
-            try {
-                return Integer.parseInt(values[0]);
-            } catch (NumberFormatException ignored) {
-                return defaultValue;
-            }
+            return values[0];
+        }
+
+        return null;
+    }
+
+    private boolean parseBoolean(String value,
+                                 boolean defaultValue) {
+
+        if (value == null) {
+            return defaultValue;
+        }
+
+        String normalized = value.trim();
+
+        if ("true".equalsIgnoreCase(normalized)
+                || "1".equals(normalized)
+                || "si".equalsIgnoreCase(normalized)
+                || "yes".equalsIgnoreCase(normalized)) {
+            return true;
+        }
+
+        if ("false".equalsIgnoreCase(normalized)
+                || "0".equals(normalized)
+                || "no".equalsIgnoreCase(normalized)) {
+            return false;
         }
 
         return defaultValue;
