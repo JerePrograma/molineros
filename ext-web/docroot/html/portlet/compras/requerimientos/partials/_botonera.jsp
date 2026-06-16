@@ -4,7 +4,7 @@
  * BOTONERA REQUERIMIENTO COMPRA
  * ============================================================
  *
- * Este partial asume que el JSP padre ya declaró:
+ * Este partial asume que el JSP padre ya declaro:
  *
  * - String namespaceCompra
  * - RequerimientoCompra req
@@ -68,6 +68,11 @@ boolean botoneraPuedeIniciarCotizaciones =
                 WebKeysCompras.ESTADO_COTIZACIONES
         );
 
+boolean botoneraPuedeReintentarCotizaciones =
+        botoneraRequerimientoPersistido
+        && botoneraTieneRolCotizar
+        && botoneraEstadoActual == WebKeysCompras.ESTADO_COTIZACIONES;
+
 boolean botoneraPuedeGenerarOrdenCompra =
         botoneraRequerimientoPersistido
         && botoneraTieneRolOrdenCompra
@@ -102,6 +107,9 @@ String botoneraAutorizarFormId =
 
 String botoneraIniciarCotizacionesFormId =
         namespaceCompra + "iniciarCotizacionesRequerimientoCompraForm";
+
+String botoneraReintentarCotizacionesFormId =
+        namespaceCompra + "reintentarCotizacionesRequerimientoCompraForm";
 
 String botoneraGenerarOrdenFormId =
         namespaceCompra + "generarOrdenCompraForm";
@@ -155,6 +163,22 @@ String botoneraAnularFormId =
         <input type="hidden"
                name="<portlet:namespace />estado_nuevo"
                value="<%= String.valueOf(WebKeysCompras.ESTADO_COTIZACIONES) %>" />
+    </form>
+<% } %>
+
+<% if (botoneraPuedeReintentarCotizaciones) { %>
+    <form action="<%= botoneraCambiarEstadoURL.toString() %>"
+          method="post"
+          id="<%= botoneraReintentarCotizacionesFormId %>"
+          style="display:none;">
+
+        <input type="hidden"
+               name="<portlet:namespace />id_requerimiento_compra"
+               value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
+
+        <input type="hidden"
+               name="<portlet:namespace />reintentar_notificaciones"
+               value="true" />
     </form>
 <% } %>
 
@@ -246,8 +270,22 @@ String botoneraAnularFormId =
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
                                '<%= botoneraIniciarCotizacionesFormId %>',
                                '<portlet:namespace />btnIniciarCotizacionesRequerimientoCompra',
-                               'Confirma iniciar cotizaciones para el requerimiento?',
-                               'Iniciando...'
+                               'Confirma iniciar cotizaciones y notificar a los prestadores habilitados?',
+                               'Notificando...'
+                       );" />
+
+                &nbsp;&nbsp;
+            <% } %>
+
+            <% if (botoneraPuedeReintentarCotizaciones) { %>
+                <input type="button"
+                       id="<portlet:namespace />btnReintentarCotizacionesRequerimientoCompra"
+                       value="Reintentar notificaciones"
+                       onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
+                               '<%= botoneraReintentarCotizacionesFormId %>',
+                               '<portlet:namespace />btnReintentarCotizacionesRequerimientoCompra',
+                               'Confirma reintentar las notificaciones pendientes o fallidas?',
+                               'Reintentando...'
                        );" />
 
                 &nbsp;&nbsp;
