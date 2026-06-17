@@ -189,6 +189,10 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return esCotizaciones(estado);
     }
 
+    public static boolean puedeReintentarNotificacionesCotizaciones(int estado) {
+        return esCotizaciones(estado);
+    }
+
     public static boolean puedeAnular(int estado) {
         return esBorrador(estado)
                 || esRequerimiento(estado)
@@ -199,10 +203,6 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static boolean validarTransicionEstado(int estadoActual, int estadoNuevo) {
         if (!esEstadoValido(estadoActual) || !esEstadoValido(estadoNuevo)) {
             return false;
-        }
-
-        if (estadoActual == estadoNuevo) {
-            return true;
         }
 
         if (esAnulado(estadoActual)) {

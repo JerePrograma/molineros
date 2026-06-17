@@ -23,14 +23,6 @@ List<RequerimientoCompra> requerimientos =
         (List<RequerimientoCompra>) renderRequest.getAttribute(WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA);
 
 if (requerimientos == null) {
-    requerimientos =
-            (List<RequerimientoCompra>) portletSession.getAttribute(
-                    WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA,
-                    PortletSession.PORTLET_SCOPE
-            );
-}
-
-if (requerimientos == null) {
     requerimientos = new ArrayList<RequerimientoCompra>();
 }
 

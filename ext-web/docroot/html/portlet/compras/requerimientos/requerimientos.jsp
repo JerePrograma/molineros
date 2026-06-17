@@ -5,6 +5,8 @@
 <%
 
 boolean showABMButtons = user != null && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+boolean modoRequerimientos =
+        Boolean.TRUE.equals(request.getAttribute("COMPRAS_MODO_REQUERIMIENTO"));
 
 List<RequerimientoCompraSector> sectores =
         (List<RequerimientoCompraSector>) renderRequest.getAttribute(WebKeysCompras.SECTORES_REQUERIMIENTO);
@@ -224,7 +226,7 @@ if ("0".equals(idTercerizadoraFiltro)) {
 
             <td colspan="5">
 
-                <c:if test="<%= showABMButtons && !estadoForzadoActivo %>">
+                <c:if test="<%= showABMButtons && modoRequerimientos %>">
 
                     <input type="button"
                            value="Nuevo requerimiento"

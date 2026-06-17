@@ -1,0 +1,388 @@
+diff --git a/ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java b/ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java
+index d0cf8016..7525bc2d 100644
+--- a/ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java
++++ b/ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java
+@@ -189,6 +189,10 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
+         return esCotizaciones(estado);
+     }
+ 
++    public static boolean puedeReintentarNotificacionesCotizaciones(int estado) {
++        return esCotizaciones(estado);
++    }
++
+     public static boolean puedeAnular(int estado) {
+         return esBorrador(estado)
+                 || esRequerimiento(estado)
+@@ -201,10 +205,6 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
+             return false;
+         }
+ 
+-        if (estadoActual == estadoNuevo) {
+-            return true;
+-        }
+-
+         if (esAnulado(estadoActual)) {
+             return false;
+         }
+@@ -262,4 +262,4 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
+ 
+     private WebKeysCompras() {
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/ext-impl/src/ar/com/ospim/compras/requerimientos/action/CambiarEstadoRequerimientoCompraAction.java b/ext-impl/src/ar/com/ospim/compras/requerimientos/action/CambiarEstadoRequerimientoCompraAction.java
+index 0d952e82..3cc42a40 100644
+--- a/ext-impl/src/ar/com/ospim/compras/requerimientos/action/CambiarEstadoRequerimientoCompraAction.java
++++ b/ext-impl/src/ar/com/ospim/compras/requerimientos/action/CambiarEstadoRequerimientoCompraAction.java
+@@ -157,13 +157,15 @@ public class CambiarEstadoRequerimientoCompraAction
+                 estadoNuevo
+         );
+ 
+-        validarTransicionEstado(
+-                idRequerimientoCompra,
+-                estadoNuevo
+-        );
++        RequerimientoCompra requerimiento =
++                validarTransicionEstado(
++                        idRequerimientoCompra,
++                        estadoNuevo
++                );
+ 
+         validarPermisoCambioEstado(
+                 user,
++                requerimiento.getEstado(),
+                 estadoNuevo
+         );
+ 
+@@ -339,7 +341,7 @@ public class CambiarEstadoRequerimientoCompraAction
+         }
+     }
+ 
+-    private void validarTransicionEstado(
++    private RequerimientoCompra validarTransicionEstado(
+             int idRequerimientoCompra,
+             int estadoNuevo) throws Exception {
+ 
+@@ -370,6 +372,8 @@ public class CambiarEstadoRequerimientoCompraAction
+                             + "no es valida."
+             );
+         }
++
++        return requerimiento;
+     }
+ 
+     private void validarReintentoCotizaciones(
+@@ -382,11 +386,6 @@ public class CambiarEstadoRequerimientoCompraAction
+             );
+         }
+ 
+-        validarPermisoCambioEstado(
+-                user,
+-                WebKeysCompras.ESTADO_COTIZACIONES
+-        );
+-
+         RequerimientoCompra requerimiento =
+                 BusquedaRequerimientoCompraServiceUtil
+                         .getRequerimientoCompra(
+@@ -408,10 +407,13 @@ public class CambiarEstadoRequerimientoCompraAction
+                             + "en estado Cotizaciones."
+             );
+         }
++
++        validarPermisoReintentoCotizaciones(user);
+     }
+ 
+     private void validarPermisoCambioEstado(
+             User user,
++            int estadoActual,
+             int estadoNuevo) throws Exception {
+ 
+         if (user == null) {
+@@ -421,14 +423,12 @@ public class CambiarEstadoRequerimientoCompraAction
+         }
+ 
+         if (estadoNuevo
+-                == WebKeysCompras.ESTADO_ANULADO) {
++                == WebKeysCompras.ESTADO_ANULADO
++                && WebKeysCompras.puedeAnular(estadoActual)) {
+ 
+             if (!userTieneRol(
+                     user,
+                     WebKeysCompras.ROL_ANULAR_COMPRAS
+-            ) && !userTieneRol(
+-                    user,
+-                    WebKeysCompras.ROL_ABM_COMPRAS
+             )) {
+                 throw new Exception(
+                         "No posee permisos para anular "
+@@ -440,7 +440,8 @@ public class CambiarEstadoRequerimientoCompraAction
+         }
+ 
+         if (estadoNuevo
+-                == WebKeysCompras.ESTADO_REQUERIMIENTO) {
++                == WebKeysCompras.ESTADO_REQUERIMIENTO
++                && WebKeysCompras.puedeEnviarAAutorizar(estadoActual)) {
+ 
+             validarRol(
+                     user,
+@@ -453,7 +454,8 @@ public class CambiarEstadoRequerimientoCompraAction
+         }
+ 
+         if (estadoNuevo
+-                == WebKeysCompras.ESTADO_AUTORIZADO) {
++                == WebKeysCompras.ESTADO_AUTORIZADO
++                && WebKeysCompras.puedeAutorizar(estadoActual)) {
+ 
+             validarRol(
+                     user,
+@@ -466,7 +468,8 @@ public class CambiarEstadoRequerimientoCompraAction
+         }
+ 
+         if (estadoNuevo
+-                == WebKeysCompras.ESTADO_COTIZACIONES) {
++                == WebKeysCompras.ESTADO_COTIZACIONES
++                && WebKeysCompras.puedeIniciarCotizaciones(estadoActual)) {
+ 
+             validarRol(
+                     user,
+@@ -479,7 +482,8 @@ public class CambiarEstadoRequerimientoCompraAction
+         }
+ 
+         if (estadoNuevo
+-                == WebKeysCompras.ESTADO_ORDEN_COMPRA) {
++                == WebKeysCompras.ESTADO_ORDEN_COMPRA
++                && WebKeysCompras.puedeGenerarOrdenCompra(estadoActual)) {
+ 
+             validarRol(
+                     user,
+@@ -498,6 +502,23 @@ public class CambiarEstadoRequerimientoCompraAction
+         );
+     }
+ 
++    private void validarPermisoReintentoCotizaciones(User user)
++            throws Exception {
++
++        if (user == null) {
++            throw new Exception(
++                    "No se pudo determinar el usuario actual."
++            );
++        }
++
++        validarRol(
++                user,
++                WebKeysCompras.ROL_COTIZAR_COMPRAS,
++                "No posee permisos para notificar "
++                        + "prestadores pendientes."
++        );
++    }
++
+     private void validarRol(User user,
+                             String rol,
+                             String mensaje) throws Exception {
+@@ -697,4 +718,4 @@ public class CambiarEstadoRequerimientoCompraAction
+ 
+         return e.getMessage().trim();
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/ext-impl/src/ar/com/ospim/compras/requerimientos/action/EditarRequerimientoCompraAction.java b/ext-impl/src/ar/com/ospim/compras/requerimientos/action/EditarRequerimientoCompraAction.java
+index 89356681..4b091233 100644
+--- a/ext-impl/src/ar/com/ospim/compras/requerimientos/action/EditarRequerimientoCompraAction.java
++++ b/ext-impl/src/ar/com/ospim/compras/requerimientos/action/EditarRequerimientoCompraAction.java
+@@ -654,8 +654,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
+             errorCampo("usuario", "No se pudo determinar el usuario actual.");
+         }
+ 
+-        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS)
+-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
++        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS)) {
+ 
+             errorCampo(
+                     "permisos",
+@@ -1209,4 +1208,4 @@ public class EditarRequerimientoCompraAction extends PortletAction {
+         return a.intValue() == b.intValue();
+     }
+ 
+-}
+\ No newline at end of file
++}
+diff --git a/ext-impl/src/ar/com/ospim/compras/requerimientos/action/ImprimirRequerimientoCompraAction.java b/ext-impl/src/ar/com/ospim/compras/requerimientos/action/ImprimirRequerimientoCompraAction.java
+index 64bc52ba..bdbd7bf4 100644
+--- a/ext-impl/src/ar/com/ospim/compras/requerimientos/action/ImprimirRequerimientoCompraAction.java
++++ b/ext-impl/src/ar/com/ospim/compras/requerimientos/action/ImprimirRequerimientoCompraAction.java
+@@ -139,7 +139,10 @@ public class ImprimirRequerimientoCompraAction extends PortletAction {
+         }
+ 
+         if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
+-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
++                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
++                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS)
++                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
++                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ORDEN_COMPRA_COMPRAS)) {
+             throw new Exception("No posee permisos para imprimir requerimientos de compras.");
+         }
+     }
+diff --git a/ext-web/docroot/html/portlet/compras/requerimientos/editar_borrar_requerimiento.jsp b/ext-web/docroot/html/portlet/compras/requerimientos/editar_borrar_requerimiento.jsp
+index 4de5b27c..2dee43b9 100644
+--- a/ext-web/docroot/html/portlet/compras/requerimientos/editar_borrar_requerimiento.jsp
++++ b/ext-web/docroot/html/portlet/compras/requerimientos/editar_borrar_requerimiento.jsp
+@@ -9,7 +9,7 @@ boolean showABMButtons =
+         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+ boolean showAnularButtons =
+         user != null
+-        && (PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS) || showABMButtons);
++        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS);
+ 
+ String idRequerimiento = req.getIdRequerimientoCompraString();
+ String idRequerimientoForm = req.getIdString();
+diff --git a/ext-web/docroot/html/portlet/compras/requerimientos/partials/_botonera.jsp b/ext-web/docroot/html/portlet/compras/requerimientos/partials/_botonera.jsp
+index 5da0dd06..409d3476 100644
+--- a/ext-web/docroot/html/portlet/compras/requerimientos/partials/_botonera.jsp
++++ b/ext-web/docroot/html/portlet/compras/requerimientos/partials/_botonera.jsp
+@@ -32,6 +32,10 @@ boolean botoneraTieneRolAnular =
+         user != null
+         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS);
+ 
++boolean botoneraTieneRolView =
++        user != null
++        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS);
++
+ boolean botoneraTieneRolAutorizar =
+         user != null
+         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS);
+@@ -47,47 +51,40 @@ boolean botoneraTieneRolOrdenCompra =
+ boolean botoneraPuedeEnviarAAutorizar =
+         botoneraRequerimientoPersistido
+         && puedeABM
+-        && WebKeysCompras.validarTransicionEstado(
+-                botoneraEstadoActual,
+-                WebKeysCompras.ESTADO_REQUERIMIENTO
+-        );
++        && WebKeysCompras.puedeEnviarAAutorizar(botoneraEstadoActual);
+ 
+ boolean botoneraPuedeAutorizar =
+         botoneraRequerimientoPersistido
+         && botoneraTieneRolAutorizar
+-        && WebKeysCompras.validarTransicionEstado(
+-                botoneraEstadoActual,
+-                WebKeysCompras.ESTADO_AUTORIZADO
+-        );
++        && WebKeysCompras.puedeAutorizar(botoneraEstadoActual);
+ 
+ boolean botoneraPuedeIniciarCotizaciones =
+         botoneraRequerimientoPersistido
+         && botoneraTieneRolCotizar
+-        && WebKeysCompras.validarTransicionEstado(
+-                botoneraEstadoActual,
+-                WebKeysCompras.ESTADO_COTIZACIONES
+-        );
++        && WebKeysCompras.puedeIniciarCotizaciones(botoneraEstadoActual);
+ 
+ boolean botoneraPuedeReintentarCotizaciones =
+         botoneraRequerimientoPersistido
+         && botoneraTieneRolCotizar
+-        && botoneraEstadoActual == WebKeysCompras.ESTADO_COTIZACIONES;
++        && WebKeysCompras.puedeReintentarNotificacionesCotizaciones(botoneraEstadoActual);
+ 
+ boolean botoneraPuedeGenerarOrdenCompra =
+         botoneraRequerimientoPersistido
+         && botoneraTieneRolOrdenCompra
+-        && WebKeysCompras.validarTransicionEstado(
+-                botoneraEstadoActual,
+-                WebKeysCompras.ESTADO_ORDEN_COMPRA
+-        );
++        && WebKeysCompras.puedeGenerarOrdenCompra(botoneraEstadoActual);
+ 
+ boolean botoneraPuedeAnular =
+         botoneraRequerimientoPersistido
+-        && (puedeABM || botoneraTieneRolAnular)
+-        && WebKeysCompras.validarTransicionEstado(
+-                botoneraEstadoActual,
+-                WebKeysCompras.ESTADO_ANULADO
+-        );
++        && botoneraTieneRolAnular
++        && WebKeysCompras.puedeAnular(botoneraEstadoActual);
++
++boolean botoneraPuedeImprimir =
++        botoneraRequerimientoPersistido
++        && (botoneraTieneRolView
++            || puedeABM
++            || botoneraTieneRolAutorizar
++            || botoneraTieneRolCotizar
++            || botoneraTieneRolOrdenCompra);
+ 
+ PortletURL botoneraCambiarEstadoURL =
+         renderResponse.createActionURL();
+@@ -266,11 +263,11 @@ String botoneraAnularFormId =
+             <% if (botoneraPuedeIniciarCotizaciones) { %>
+                 <input type="button"
+                        id="<portlet:namespace />btnIniciarCotizacionesRequerimientoCompra"
+-                       value="Iniciar cotizaciones"
++                       value="Enviar a cotizar"
+                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
+                                '<%= botoneraIniciarCotizacionesFormId %>',
+                                '<portlet:namespace />btnIniciarCotizacionesRequerimientoCompra',
+-                               'Confirma iniciar cotizaciones y notificar a los prestadores habilitados?',
++                               'Confirma enviar a cotizar y notificar a los prestadores habilitados?',
+                                'Notificando...'
+                        );" />
+ 
+@@ -319,7 +316,7 @@ String botoneraAnularFormId =
+                 &nbsp;&nbsp;
+             <% } %>
+ 
+-            <% if (botoneraRequerimientoPersistido) { %>
++            <% if (botoneraPuedeImprimir) { %>
+                 <input type="button"
+                        id="<portlet:namespace />btnImprimirRequerimientoCompra"
+                        value="Imprimir PDF"
+diff --git a/ext-web/docroot/html/portlet/compras/requerimientos/requerimientos.jsp b/ext-web/docroot/html/portlet/compras/requerimientos/requerimientos.jsp
+index 7a06ce16..14f82830 100644
+--- a/ext-web/docroot/html/portlet/compras/requerimientos/requerimientos.jsp
++++ b/ext-web/docroot/html/portlet/compras/requerimientos/requerimientos.jsp
+@@ -5,6 +5,8 @@
+ <%
+ 
+ boolean showABMButtons = user != null && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
++boolean modoRequerimientos =
++        Boolean.TRUE.equals(request.getAttribute("COMPRAS_MODO_REQUERIMIENTO"));
+ 
+ List<RequerimientoCompraSector> sectores =
+         (List<RequerimientoCompraSector>) renderRequest.getAttribute(WebKeysCompras.SECTORES_REQUERIMIENTO);
+@@ -224,7 +226,7 @@ if ("0".equals(idTercerizadoraFiltro)) {
+ 
+             <td colspan="5">
+ 
+-                <c:if test="<%= showABMButtons && !estadoForzadoActivo %>">
++                <c:if test="<%= showABMButtons && modoRequerimientos %>">
+ 
+                     <input type="button"
+                            value="Nuevo requerimiento"
+diff --git a/ext-web/docroot/html/portlet/compras/requerimientos/requerimientos_search_result.jsp b/ext-web/docroot/html/portlet/compras/requerimientos/requerimientos_search_result.jsp
+index 2a11f596..8894dc85 100644
+--- a/ext-web/docroot/html/portlet/compras/requerimientos/requerimientos_search_result.jsp
++++ b/ext-web/docroot/html/portlet/compras/requerimientos/requerimientos_search_result.jsp
+@@ -22,14 +22,6 @@ private String normalizarDocumentoAfiliado(String value) {
+ List<RequerimientoCompra> requerimientos =
+         (List<RequerimientoCompra>) renderRequest.getAttribute(WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA);
+ 
+-if (requerimientos == null) {
+-    requerimientos =
+-            (List<RequerimientoCompra>) portletSession.getAttribute(
+-                    WebKeysCompras.BUSQUEDA_REQUERIMIENTOS_COMPRA,
+-                    PortletSession.PORTLET_SCOPE
+-            );
+-}
+-
+ if (requerimientos == null) {
+     requerimientos = new ArrayList<RequerimientoCompra>();
+ }
+@@ -110,4 +102,4 @@ for (int i = 0; i < requerimientos.size(); i++) {
+ }
+ %>
+ 
+-<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
+\ No newline at end of file
++<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />

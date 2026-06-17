@@ -9,7 +9,7 @@ boolean showABMButtons =
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
 boolean showAnularButtons =
         user != null
-        && (PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS) || showABMButtons);
+        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS);
 
 String idRequerimiento = req.getIdRequerimientoCompraString();
 String idRequerimientoForm = req.getIdString();

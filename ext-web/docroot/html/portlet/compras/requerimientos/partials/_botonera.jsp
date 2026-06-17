@@ -32,6 +32,10 @@ boolean botoneraTieneRolAnular =
         user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS);
 
+boolean botoneraTieneRolView =
+        user != null
+        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS);
+
 boolean botoneraTieneRolAutorizar =
         user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS);
@@ -47,47 +51,40 @@ boolean botoneraTieneRolOrdenCompra =
 boolean botoneraPuedeEnviarAAutorizar =
         botoneraRequerimientoPersistido
         && puedeABM
-        && WebKeysCompras.validarTransicionEstado(
-                botoneraEstadoActual,
-                WebKeysCompras.ESTADO_REQUERIMIENTO
-        );
+        && WebKeysCompras.puedeEnviarAAutorizar(botoneraEstadoActual);
 
 boolean botoneraPuedeAutorizar =
         botoneraRequerimientoPersistido
         && botoneraTieneRolAutorizar
-        && WebKeysCompras.validarTransicionEstado(
-                botoneraEstadoActual,
-                WebKeysCompras.ESTADO_AUTORIZADO
-        );
+        && WebKeysCompras.puedeAutorizar(botoneraEstadoActual);
 
 boolean botoneraPuedeIniciarCotizaciones =
         botoneraRequerimientoPersistido
         && botoneraTieneRolCotizar
-        && WebKeysCompras.validarTransicionEstado(
-                botoneraEstadoActual,
-                WebKeysCompras.ESTADO_COTIZACIONES
-        );
+        && WebKeysCompras.puedeIniciarCotizaciones(botoneraEstadoActual);
 
 boolean botoneraPuedeReintentarCotizaciones =
         botoneraRequerimientoPersistido
         && botoneraTieneRolCotizar
-        && botoneraEstadoActual == WebKeysCompras.ESTADO_COTIZACIONES;
+        && WebKeysCompras.puedeReintentarNotificacionesCotizaciones(botoneraEstadoActual);
 
 boolean botoneraPuedeGenerarOrdenCompra =
         botoneraRequerimientoPersistido
         && botoneraTieneRolOrdenCompra
-        && WebKeysCompras.validarTransicionEstado(
-                botoneraEstadoActual,
-                WebKeysCompras.ESTADO_ORDEN_COMPRA
-        );
+        && WebKeysCompras.puedeGenerarOrdenCompra(botoneraEstadoActual);
 
 boolean botoneraPuedeAnular =
         botoneraRequerimientoPersistido
-        && (puedeABM || botoneraTieneRolAnular)
-        && WebKeysCompras.validarTransicionEstado(
-                botoneraEstadoActual,
-                WebKeysCompras.ESTADO_ANULADO
-        );
+        && botoneraTieneRolAnular
+        && WebKeysCompras.puedeAnular(botoneraEstadoActual);
+
+boolean botoneraPuedeImprimir =
+        botoneraRequerimientoPersistido
+        && (botoneraTieneRolView
+            || puedeABM
+            || botoneraTieneRolAutorizar
+            || botoneraTieneRolCotizar
+            || botoneraTieneRolOrdenCompra);
 
 PortletURL botoneraCambiarEstadoURL =
         renderResponse.createActionURL();
@@ -266,11 +263,11 @@ String botoneraAnularFormId =
             <% if (botoneraPuedeIniciarCotizaciones) { %>
                 <input type="button"
                        id="<portlet:namespace />btnIniciarCotizacionesRequerimientoCompra"
-                       value="Iniciar cotizaciones"
+                       value="Enviar a cotizar"
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
                                '<%= botoneraIniciarCotizacionesFormId %>',
                                '<portlet:namespace />btnIniciarCotizacionesRequerimientoCompra',
-                               'Confirma iniciar cotizaciones y notificar a los prestadores habilitados?',
+                               'Confirma enviar a cotizar y notificar a los prestadores habilitados?',
                                'Notificando...'
                        );" />
 
@@ -319,7 +316,7 @@ String botoneraAnularFormId =
                 &nbsp;&nbsp;
             <% } %>
 
-            <% if (botoneraRequerimientoPersistido) { %>
+            <% if (botoneraPuedeImprimir) { %>
                 <input type="button"
                        id="<portlet:namespace />btnImprimirRequerimientoCompra"
                        value="Imprimir PDF"

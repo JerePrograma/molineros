@@ -157,13 +157,15 @@ public class CambiarEstadoRequerimientoCompraAction
                 estadoNuevo
         );
 
-        validarTransicionEstado(
-                idRequerimientoCompra,
-                estadoNuevo
-        );
+        RequerimientoCompra requerimiento =
+                validarTransicionEstado(
+                        idRequerimientoCompra,
+                        estadoNuevo
+                );
 
         validarPermisoCambioEstado(
                 user,
+                requerimiento.getEstado(),
                 estadoNuevo
         );
 
@@ -339,7 +341,7 @@ public class CambiarEstadoRequerimientoCompraAction
         }
     }
 
-    private void validarTransicionEstado(
+    private RequerimientoCompra validarTransicionEstado(
             int idRequerimientoCompra,
             int estadoNuevo) throws Exception {
 
@@ -370,6 +372,8 @@ public class CambiarEstadoRequerimientoCompraAction
                             + "no es valida."
             );
         }
+
+        return requerimiento;
     }
 
     private void validarReintentoCotizaciones(
@@ -381,11 +385,6 @@ public class CambiarEstadoRequerimientoCompraAction
                     "Debe informar el requerimiento de compra."
             );
         }
-
-        validarPermisoCambioEstado(
-                user,
-                WebKeysCompras.ESTADO_COTIZACIONES
-        );
 
         RequerimientoCompra requerimiento =
                 BusquedaRequerimientoCompraServiceUtil
@@ -408,10 +407,13 @@ public class CambiarEstadoRequerimientoCompraAction
                             + "en estado Cotizaciones."
             );
         }
+
+        validarPermisoReintentoCotizaciones(user);
     }
 
     private void validarPermisoCambioEstado(
             User user,
+            int estadoActual,
             int estadoNuevo) throws Exception {
 
         if (user == null) {
@@ -421,14 +423,12 @@ public class CambiarEstadoRequerimientoCompraAction
         }
 
         if (estadoNuevo
-                == WebKeysCompras.ESTADO_ANULADO) {
+                == WebKeysCompras.ESTADO_ANULADO
+                && WebKeysCompras.puedeAnular(estadoActual)) {
 
             if (!userTieneRol(
                     user,
                     WebKeysCompras.ROL_ANULAR_COMPRAS
-            ) && !userTieneRol(
-                    user,
-                    WebKeysCompras.ROL_ABM_COMPRAS
             )) {
                 throw new Exception(
                         "No posee permisos para anular "
@@ -440,7 +440,8 @@ public class CambiarEstadoRequerimientoCompraAction
         }
 
         if (estadoNuevo
-                == WebKeysCompras.ESTADO_REQUERIMIENTO) {
+                == WebKeysCompras.ESTADO_REQUERIMIENTO
+                && WebKeysCompras.puedeEnviarAAutorizar(estadoActual)) {
 
             validarRol(
                     user,
@@ -453,7 +454,8 @@ public class CambiarEstadoRequerimientoCompraAction
         }
 
         if (estadoNuevo
-                == WebKeysCompras.ESTADO_AUTORIZADO) {
+                == WebKeysCompras.ESTADO_AUTORIZADO
+                && WebKeysCompras.puedeAutorizar(estadoActual)) {
 
             validarRol(
                     user,
@@ -466,7 +468,8 @@ public class CambiarEstadoRequerimientoCompraAction
         }
 
         if (estadoNuevo
-                == WebKeysCompras.ESTADO_COTIZACIONES) {
+                == WebKeysCompras.ESTADO_COTIZACIONES
+                && WebKeysCompras.puedeIniciarCotizaciones(estadoActual)) {
 
             validarRol(
                     user,
@@ -479,7 +482,8 @@ public class CambiarEstadoRequerimientoCompraAction
         }
 
         if (estadoNuevo
-                == WebKeysCompras.ESTADO_ORDEN_COMPRA) {
+                == WebKeysCompras.ESTADO_ORDEN_COMPRA
+                && WebKeysCompras.puedeGenerarOrdenCompra(estadoActual)) {
 
             validarRol(
                     user,
@@ -495,6 +499,23 @@ public class CambiarEstadoRequerimientoCompraAction
         throw new Exception(
                 "No posee permisos para cambiar "
                         + "el estado solicitado."
+        );
+    }
+
+    private void validarPermisoReintentoCotizaciones(User user)
+            throws Exception {
+
+        if (user == null) {
+            throw new Exception(
+                    "No se pudo determinar el usuario actual."
+            );
+        }
+
+        validarRol(
+                user,
+                WebKeysCompras.ROL_COTIZAR_COMPRAS,
+                "No posee permisos para notificar "
+                        + "prestadores pendientes."
         );
     }
 

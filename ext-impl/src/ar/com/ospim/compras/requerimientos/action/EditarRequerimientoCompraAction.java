@@ -654,8 +654,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             errorCampo("usuario", "No se pudo determinar el usuario actual.");
         }
 
-        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
+        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS)) {
 
             errorCampo(
                     "permisos",
