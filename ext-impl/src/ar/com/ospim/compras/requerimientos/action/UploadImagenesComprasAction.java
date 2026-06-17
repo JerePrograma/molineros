@@ -157,8 +157,6 @@ public class UploadImagenesComprasAction extends PortletAction {
                                 RenderRequest renderRequest,
                                 RenderResponse renderResponse) throws Exception {
 
-        generarTokenGuardadoCompra(renderRequest);
-
         String modo = ParamUtil.getString(renderRequest, "modo", "");
         String strutsAction = ParamUtil.getString(renderRequest, "struts_action", "");
 
@@ -167,6 +165,14 @@ public class UploadImagenesComprasAction extends PortletAction {
                         || "/compras/ver_requerimiento".equals(strutsAction);
 
         try {
+            User user = PortalUtil.getUser(renderRequest);
+
+            if (soloLectura) {
+                validarPermisoConsulta(user);
+            } else {
+                validarPermisoABM(user);
+            }
+
             int idRequerimientoCompra =
                     ParamUtil.getInteger(renderRequest, "id_requerimiento_compra", 0);
 
@@ -180,16 +186,30 @@ public class UploadImagenesComprasAction extends PortletAction {
             }
 
             if (requerimiento == null) {
+                if (idRequerimientoCompra > 0) {
+                    throw new Exception(
+                            "No se encontro el requerimiento de compra informado."
+                    );
+                }
+
                 requerimiento = new RequerimientoCompra();
             }
 
-            cargarCatalogos(renderRequest, requerimiento);
-            cargarAfiliadoRequerimiento(renderRequest, requerimiento);
+            if (!soloLectura && !requerimiento.isEditable()) {
+                soloLectura = true;
+            }
 
             renderRequest.setAttribute(
                     WebKeysCompras.SOLO_LECTURA_ATTR,
                     Boolean.valueOf(soloLectura)
             );
+
+            if (!soloLectura) {
+                generarTokenGuardadoCompra(renderRequest);
+            }
+
+            cargarCatalogos(renderRequest, requerimiento);
+            cargarAfiliadoRequerimiento(renderRequest, requerimiento);
 
             /*
              * Importante para el nuevo Tiles/JSP:
@@ -227,6 +247,8 @@ public class UploadImagenesComprasAction extends PortletAction {
             }
 
             renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, mensaje);
+
+            return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_ERROR);
         }
 
         if (soloLectura) {
@@ -333,13 +355,51 @@ public class UploadImagenesComprasAction extends PortletAction {
 
         long folderId = ParamUtil.getLong(uploadReq, "folderid", 0L);
         String name = ParamUtil.getString(uploadReq, "filename", "");
+        String title = ParamUtil.getString(uploadReq, "filetitle", "");
 
-        if (folderId <= 0 || WebKeysCompras.isEmpty(name)) {
+        if (folderId <= 0
+                || WebKeysCompras.isEmpty(name)
+                || WebKeysCompras.isEmpty(title)) {
+
             errorUpload(actionRequest, "Debe informar el archivo a eliminar.");
             return;
         }
 
         try {
+            DLFolder folderCompras = getFolderCompras();
+
+            if (folderId != folderCompras.getFolderId()) {
+                throw new Exception(
+                        "El archivo informado no pertenece a la carpeta de Compras."
+                );
+            }
+
+            String prefijoEsperado =
+                    WebKeysCompras.getPrefijoDocumentoRequerimientoCompra(
+                            requerimiento.getIdRequerimientoCompra()
+                    );
+
+            DLFileEntry fileEntry =
+                    DLFileEntryLocalServiceUtil.getFileEntryByTitle(
+                            folderId,
+                            title
+                    );
+
+            if (fileEntry == null
+                    || fileEntry.getFolderId() != folderId
+                    || !fileEntry.getTitle().startsWith(prefijoEsperado)) {
+
+                throw new Exception(
+                        "El archivo informado no pertenece al requerimiento actual."
+                );
+            }
+
+            if (!name.equals(fileEntry.getName())) {
+                throw new Exception(
+                        "El archivo informado no coincide con el documento persistido."
+                );
+            }
+
             DLFileEntryLocalServiceUtil.deleteFileEntry(folderId, name);
 
             SessionMessages.add(actionRequest, "requerimiento-compra-archivo-borrado");
@@ -410,6 +470,24 @@ public class UploadImagenesComprasAction extends PortletAction {
 
         request.setAttribute("msgInsertError", mensaje);
         request.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, mensaje);
+    }
+
+    private void validarPermisoConsulta(User user) throws Exception {
+        if (user == null) {
+            throw new Exception("No se pudo determinar el usuario actual.");
+        }
+
+        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS)
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ORDEN_COMPRA_COMPRAS)) {
+
+            throw new Exception(
+                    "No posee permisos para consultar archivos "
+                            + "de requerimientos de compra."
+            );
+        }
     }
 
     private void validarPermisoABM(User user) throws Exception {

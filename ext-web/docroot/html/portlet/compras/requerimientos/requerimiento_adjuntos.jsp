@@ -168,6 +168,11 @@ boolean msgArchivoBorradoImagenes =
            value="" />
 
     <input type="hidden"
+           name="<portlet:namespace />filetitle"
+           id="<portlet:namespace />filetitle"
+           value="" />
+
+    <input type="hidden"
            name="<portlet:namespace />modo"
            id="<portlet:namespace />modo_img"
            value="<%= HtmlUtil.escape(modoRetornoImagenes) %>" />
@@ -196,13 +201,14 @@ boolean msgArchivoBorradoImagenes =
         document.getElementById('<portlet:namespace />imagen').value = '<%= Constants.ADD %>';
         document.getElementById('<portlet:namespace />folderid').value = '';
         document.getElementById('<portlet:namespace />filename').value = '';
+        document.getElementById('<portlet:namespace />filetitle').value = '';
 
         form.submit();
 
         return false;
     }
 
-    function <portlet:namespace />deleteImagenRequerimientoCompra(folderId, filename) {
+    function <portlet:namespace />deleteImagenRequerimientoCompra(folderId, filename, filetitle) {
         var form = document.getElementById('<portlet:namespace />compra_img_fm');
 
         if (!form) {
@@ -217,6 +223,7 @@ boolean msgArchivoBorradoImagenes =
         document.getElementById('<portlet:namespace />imagen').value = '<%= Constants.DELETE %>';
         document.getElementById('<portlet:namespace />folderid').value = folderId;
         document.getElementById('<portlet:namespace />filename').value = filename;
+        document.getElementById('<portlet:namespace />filetitle').value = filetitle;
 
         form.submit();
 

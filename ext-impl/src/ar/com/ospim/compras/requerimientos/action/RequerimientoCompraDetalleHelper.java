@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.text.Normalizer;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -56,7 +57,8 @@ public class RequerimientoCompraDetalleHelper {
             );
         }
 
-        validarRequerimientoEditable(idRequerimientoCompra);
+        RequerimientoCompra requerimiento =
+                validarRequerimientoEditable(idRequerimientoCompra);
 
         String deletedIds = getParametroTrim(request, "detalle_deleted_ids");
 
@@ -83,6 +85,12 @@ public class RequerimientoCompraDetalleHelper {
 
                 if (idDetalleBorrado > 0
                         && !borrados.contains(Integer.valueOf(idDetalleBorrado))) {
+
+                    validarDetallePerteneceARequerimiento(
+                            requerimiento,
+                            idDetalleBorrado,
+                            "detalle_deleted_ids"
+                    );
 
                     EditarRequerimientoCompraServiceUtil.borrarDetalle(
                             idDetalleBorrado,
@@ -134,6 +142,14 @@ public class RequerimientoCompraDetalleHelper {
             if (idDetalle > 0 && borrados.contains(Integer.valueOf(idDetalle))) {
                 omitidos++;
                 continue;
+            }
+
+            if (idDetalle > 0) {
+                validarDetallePerteneceARequerimiento(
+                        requerimiento,
+                        idDetalle,
+                        prefix + "id"
+                );
             }
 
             int idArticulo = parseEnteroConDefault(
@@ -210,7 +226,17 @@ public class RequerimientoCompraDetalleHelper {
 
         normalizarDetalleNuevo(detalle);
 
-        validarRequerimientoEditable(detalle.getIdRequerimientoCompra());
+        RequerimientoCompra requerimiento =
+                validarRequerimientoEditable(detalle.getIdRequerimientoCompra());
+
+        if (detalle.getIdInt() > 0) {
+            validarDetallePerteneceARequerimiento(
+                    requerimiento,
+                    detalle.getIdInt(),
+                    "id_detalle"
+            );
+        }
+
         validarDetalle(detalle);
 
         EditarRequerimientoCompraServiceUtil.guardarDetalle(detalle, usuario);
@@ -247,7 +273,14 @@ public class RequerimientoCompraDetalleHelper {
             );
         }
 
-        validarRequerimientoEditable(idRequerimientoCompra);
+        RequerimientoCompra requerimiento =
+                validarRequerimientoEditable(idRequerimientoCompra);
+
+        validarDetallePerteneceARequerimiento(
+                requerimiento,
+                idDetalle,
+                "id_detalle"
+        );
 
         EditarRequerimientoCompraServiceUtil.borrarDetalle(idDetalle, usuario);
 
@@ -442,6 +475,45 @@ public class RequerimientoCompraDetalleHelper {
         }
 
         return requerimiento;
+    }
+
+    private void validarDetallePerteneceARequerimiento(
+            RequerimientoCompra requerimiento,
+            int idDetalle,
+            String campo) throws Exception {
+
+        if (requerimiento == null || idDetalle <= 0) {
+            errorCampo(
+                    campo,
+                    "No se pudo validar el detalle informado."
+            );
+        }
+
+        List<RequerimientoCompraDetalle> detalles =
+                requerimiento.getDetalles();
+
+        if (detalles != null) {
+            for (int i = 0; i < detalles.size(); i++) {
+                RequerimientoCompraDetalle detalle = detalles.get(i);
+
+                if (detalle != null
+                        && detalle.getIdInt() == idDetalle
+                        && detalle.getIdRequerimientoCompra()
+                        == requerimiento.getIdRequerimientoCompra()) {
+
+                    return;
+                }
+            }
+        }
+
+        errorCampo(
+                campo,
+                "El detalle informado no pertenece al requerimiento "
+                        + requerimiento.getIdRequerimientoCompra()
+                        + " o ya no existe. ID de detalle recibido: "
+                        + idDetalle
+                        + "."
+        );
     }
 
     private int getIdDetalleFromRequest(ActionRequest request) throws Exception {

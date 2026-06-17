@@ -28,6 +28,76 @@ public class WebKeysComprasTransicionesTest {
         assertTransicion(2, 99, true);
         assertTransicion(3, 99, true);
         assertTransicion(4, 99, true);
+
+        assertAccionesEstado(1, true, false, false, false, false, true, true);
+        assertAccionesEstado(2, false, true, false, false, false, true, false);
+        assertAccionesEstado(3, false, false, true, false, false, true, false);
+        assertAccionesEstado(4, false, false, false, true, true, true, false);
+        assertAccionesEstado(5, false, false, false, false, false, false, false);
+        assertAccionesEstado(99, false, false, false, false, false, false, false);
+    }
+
+    private static void assertAccionesEstado(
+            int estado,
+            boolean enviarAAutorizar,
+            boolean autorizar,
+            boolean iniciarCotizaciones,
+            boolean reintentarNotificaciones,
+            boolean generarOrdenCompra,
+            boolean anular,
+            boolean editar) {
+
+        assertBoolean(
+                "puedeEnviarAAutorizar(" + estado + ")",
+                enviarAAutorizar,
+                WebKeysCompras.puedeEnviarAAutorizar(estado)
+        );
+        assertBoolean(
+                "puedeAutorizar(" + estado + ")",
+                autorizar,
+                WebKeysCompras.puedeAutorizar(estado)
+        );
+        assertBoolean(
+                "puedeIniciarCotizaciones(" + estado + ")",
+                iniciarCotizaciones,
+                WebKeysCompras.puedeIniciarCotizaciones(estado)
+        );
+        assertBoolean(
+                "puedeReintentarNotificacionesCotizaciones(" + estado + ")",
+                reintentarNotificaciones,
+                WebKeysCompras.puedeReintentarNotificacionesCotizaciones(estado)
+        );
+        assertBoolean(
+                "puedeGenerarOrdenCompra(" + estado + ")",
+                generarOrdenCompra,
+                WebKeysCompras.puedeGenerarOrdenCompra(estado)
+        );
+        assertBoolean(
+                "puedeAnular(" + estado + ")",
+                anular,
+                WebKeysCompras.puedeAnular(estado)
+        );
+        assertBoolean(
+                "puedeEditar(" + estado + ")",
+                editar,
+                WebKeysCompras.puedeEditar(estado)
+        );
+    }
+
+    private static void assertBoolean(
+            String descripcion,
+            boolean esperado,
+            boolean actual) {
+
+        if (actual != esperado) {
+            throw new AssertionError(
+                    descripcion
+                            + ": esperado="
+                            + esperado
+                            + ", actual="
+                            + actual
+            );
+        }
     }
 
     private static void assertTransicion(int actual,

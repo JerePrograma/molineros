@@ -335,21 +335,40 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                                 RenderRequest renderRequest,
                                 RenderResponse renderResponse) throws Exception {
 
-        String strutsAction = ParamUtil.getString(renderRequest, "struts_action", "");
+        try {
+            User user = PortalUtil.getUser(renderRequest);
 
-        if (STRUTS_ACTION_ALTA_ARTICULO_POPUP.equals(strutsAction)) {
-            return mapping.findForward(FORWARD_ALTA_ARTICULO_POPUP);
+            detalleHelper.validarPermisoABM(user);
+
+            String strutsAction = ParamUtil.getString(renderRequest, "struts_action", "");
+
+            if (STRUTS_ACTION_ALTA_ARTICULO_POPUP.equals(strutsAction)) {
+                return mapping.findForward(FORWARD_ALTA_ARTICULO_POPUP);
+            }
+
+            if (STRUTS_ACTION_LISTAR_ARTICULOS_SECTOR.equals(strutsAction)) {
+                cargarArticulosSector(renderRequest);
+
+                return mapping.findForward(FORWARD_ARTICULOS_SECTOR);
+            }
+
+            return mapping.findForward(
+                    WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO
+            );
+        } catch (Exception e) {
+            String mensaje = e.getMessage();
+
+            if (WebKeysCompras.isEmpty(mensaje)) {
+                mensaje = "No posee permisos para administrar detalles de compras.";
+            }
+
+            renderRequest.setAttribute(
+                    WebKeysCompras.ERROR_PARA_ALERT,
+                    mensaje
+            );
+
+            return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_ERROR);
         }
-
-        if (STRUTS_ACTION_LISTAR_ARTICULOS_SECTOR.equals(strutsAction)) {
-            cargarArticulosSector(renderRequest);
-
-            return mapping.findForward(FORWARD_ARTICULOS_SECTOR);
-        }
-
-        return mapping.findForward(
-                WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO
-        );
     }
 
     private void cargarArticulosSector(RenderRequest request) throws Exception {

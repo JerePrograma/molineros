@@ -172,6 +172,25 @@ public class EditarRequerimientoCompraServiceImpl {
             throw new Exception("Estado de requerimiento invalido.");
         }
 
+        RequerimientoCompra requerimientoActual =
+                BusquedaRequerimientoCompraServiceUtil
+                        .getRequerimientoCompra(idRequerimientoCompra);
+
+        if (requerimientoActual == null) {
+            throw new Exception(
+                    "No se encontro el requerimiento de compra informado."
+            );
+        }
+
+        if (!WebKeysCompras.validarTransicionEstado(
+                requerimientoActual.getEstado(),
+                idEstadoNuevo
+        )) {
+            throw new Exception(
+                    "La transicion de estado solicitada no es valida."
+            );
+        }
+
         Connection con = null;
         CallableStatement stmt = null;
 

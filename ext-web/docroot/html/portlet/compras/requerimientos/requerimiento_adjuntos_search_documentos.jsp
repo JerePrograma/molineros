@@ -200,8 +200,10 @@ try {
                 borrar.append(namespaceAdjuntos);
                 borrar.append("deleteImagenRequerimientoCompra('");
                 borrar.append(String.valueOf(folderId));
-                borrar.append("','");
+                borrar.append("', '");
                 borrar.append(jsCompraAdjunto(fileEntry.getName()));
+                borrar.append("', '");
+                borrar.append(jsCompraAdjunto(fileEntry.getTitle()));
                 borrar.append("');\" />");
             } else {
                 borrar.append("");

@@ -377,13 +377,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                                 RenderRequest renderRequest,
                                 RenderResponse renderResponse) throws Exception {
 
-        /*
-         * Cada render de la pantalla de edicion genera un token nuevo.
-         * El JSP debe enviarlo en un hidden llamado compras_save_token.
-         */
-        generarTokenGuardadoCompra(renderRequest);
-
         try {
+            User user = PortalUtil.getUser(renderRequest);
+
             int idRequerimientoCompra =
                     ParamUtil.getInteger(renderRequest, "id_requerimiento_compra", 0);
 
@@ -392,6 +388,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             if (idRequerimientoCompra == 0 && idAttr instanceof Integer) {
                 idRequerimientoCompra = ((Integer) idAttr).intValue();
+            }
+
+            if (idRequerimientoCompra > 0) {
+                validarPermisoConsulta(user);
+            } else {
+                validarPermisoABM(user);
             }
 
             RequerimientoCompra requerimiento;
@@ -415,9 +417,26 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 }
             }
 
-            cargarCatalogos(renderRequest, requerimiento);
-
             boolean soloLectura = esModoSoloLectura(renderRequest);
+
+            if (!puedeEditarRender(user, requerimiento)) {
+                soloLectura = true;
+            }
+
+            renderRequest.setAttribute(
+                    WebKeysCompras.SOLO_LECTURA_ATTR,
+                    Boolean.valueOf(soloLectura)
+            );
+
+            if (!soloLectura) {
+                /*
+                 * Cada render editable genera un token nuevo.
+                 * El JSP debe enviarlo en un hidden llamado compras_save_token.
+                 */
+                generarTokenGuardadoCompra(renderRequest);
+            }
+
+            cargarCatalogos(renderRequest, requerimiento);
 
             cargarAfiliadoRequerimiento(renderRequest, requerimiento);
 
@@ -455,9 +474,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             }
 
             renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, mensaje);
+
+            return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_ERROR);
         }
 
-        if (esModoSoloLectura(renderRequest)) {
+        if (Boolean.TRUE.equals(
+                renderRequest.getAttribute(WebKeysCompras.SOLO_LECTURA_ATTR)
+        ) || esModoSoloLectura(renderRequest)) {
+
             return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
         }
 
@@ -634,6 +658,36 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
     private String getUsuario(User user) {
         return user != null ? user.getScreenName() : "sistema";
+    }
+
+    private boolean puedeEditarRender(User user, RequerimientoCompra requerimiento)
+            throws Exception {
+
+        return user != null
+                && PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_ABM_COMPRAS
+                )
+                && requerimiento != null
+                && requerimiento.isEditable();
+    }
+
+    private void validarPermisoConsulta(User user) throws Exception {
+        if (user == null) {
+            errorCampo("usuario", "No se pudo determinar el usuario actual.");
+        }
+
+        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS)
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ORDEN_COMPRA_COMPRAS)) {
+
+            errorCampo(
+                    "permisos",
+                    "No posee permisos para consultar requerimientos de compras."
+            );
+        }
     }
 
     private void validarPermisoABM(User user) throws Exception {

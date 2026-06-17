@@ -471,3 +471,18 @@ Report:
 - root cause;
 - any pre-existing failures;
 - any validation that could not be run and why.
+
+## Ponytail
+
+Ponytail is the default implementation policy for every coding task in this
+repository.
+
+- Apply Ponytail before designing or writing code.
+- Use Ponytail in `ultra` mode by default.
+- Prefer deletion, reuse, standard-library features, platform-native
+  capabilities, and the smallest complete implementation.
+- Do not disable or bypass Ponytail unless the user explicitly requests it.
+- Ponytail must never be used to skip validation, error handling, security,
+  authorization, accessibility, data-loss protection, or required tests.
+- Before completing a coding task, apply the equivalent of
+  `@ponytail-review` to the final diff.
