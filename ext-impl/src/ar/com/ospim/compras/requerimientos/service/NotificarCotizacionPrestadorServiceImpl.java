@@ -10,11 +10,9 @@ import ar.com.ospim.util.ConnectionHelper;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
-import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +30,15 @@ public class NotificarCotizacionPrestadorServiceImpl {
                     "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
             );
 
+    private static final Pattern SENSITIVE_DETAIL_PATTERN =
+            Pattern.compile(
+                    "(?i)(password|passwd|pwd|token|secret|api[_-]?key|authorization)\\s*[:=]\\s*\\S+"
+            );
+
+    private static final String ESTADO_ENVIADO = "ENVIADO";
+    private static final String ESTADO_ERROR = "ERROR";
+    private static final String ESTADO_EMAIL_INVALIDO = "EMAIL_INVALIDO";
+
     private static final String SQL_LISTAR_CANDIDATOS =
             "SELECT id_prestador, descripcion, cuit, email, " +
                     "id_tipo_prestador, tipo_prestador " +
@@ -39,8 +46,17 @@ public class NotificarCotizacionPrestadorServiceImpl {
                     "listar_prestadores_cotizacion_requerimiento(?)";
 
     private static final String SQL_REGISTRAR_COTIZACION =
-            "{ ? = call " +
-                    "compras.registrar_cotizacion_prestador(?,?,?) }";
+            "SELECT compras.registrar_cotizacion_prestador(?, ?, ?)";
+
+    private static final String SQL_EMAIL_RESERVADO =
+            "SELECT email_destino " +
+                    "FROM compras.requerimiento_cotizacion_prestador " +
+                    "WHERE id_requerimiento = ? " +
+                    "  AND id_prestador = ? " +
+                    "  AND estado_envio = 'PROCESANDO'";
+
+    private static final String SQL_FINALIZAR_COTIZACION =
+            "SELECT compras.finalizar_cotizacion_prestador(?, ?, ?, ?)";
 
     private final CotizacionPrestadorMailHelper mailHelper =
             new CotizacionPrestadorMailHelper();
@@ -56,10 +72,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
         );
 
         RequerimientoCompra requerimiento =
-                BusquedaRequerimientoCompraServiceUtil
-                        .getRequerimientoCompra(
-                                idRequerimientoCompra
-                        );
+                getRequerimientoCompra(
+                        idRequerimientoCompra
+                );
 
         validarRequerimiento(requerimiento);
 
@@ -112,20 +127,101 @@ public class NotificarCotizacionPrestadorServiceImpl {
             return;
         }
 
-        String email = normalizarEmail(
-                prestador.getEmail()
-        );
+        int idRequerimiento =
+                requerimiento.getIdRequerimientoCompra();
+
+        int idPrestador =
+                prestador.getIdPrestador();
+
+        boolean reservado;
+
+        try {
+            reservado =
+                    registrarCotizacionPrestador(
+                            idRequerimiento,
+                            idPrestador,
+                            usuario
+                    );
+
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudo reservar el envio de cotizacion. "
+                            + "idPrestador="
+                            + idPrestador
+                            + ", idRequerimiento="
+                            + idRequerimiento,
+                    e
+            );
+
+            resultado.incrementarErrores();
+            return;
+        }
+
+        if (!reservado) {
+            if (_log.isDebugEnabled()) {
+                _log.debug(
+                        "No se obtuvo reserva para envio de cotizacion. "
+                                + "idPrestador="
+                                + idPrestador
+                                + ", idRequerimiento="
+                                + idRequerimiento
+                );
+            }
+
+            resultado.incrementarOmitidos();
+            return;
+        }
+
+        String email;
+
+        try {
+            email =
+                    normalizarEmail(
+                            leerEmailReservado(
+                                    idRequerimiento,
+                                    idPrestador
+                            )
+                    );
+
+        } catch (Exception e) {
+            finalizarConControl(
+                    idRequerimiento,
+                    idPrestador,
+                    ESTADO_ERROR,
+                    construirDetalleError(e)
+            );
+
+            _log.error(
+                    "No se pudo leer el email reservado de cotizacion. "
+                            + "idPrestador="
+                            + idPrestador
+                            + ", idRequerimiento="
+                            + idRequerimiento,
+                    e
+            );
+
+            resultado.incrementarErrores();
+            return;
+        }
 
         if (!esEmailValido(email)) {
+
+            String errorEmail =
+                    "Email destino invalido.";
+
             _log.warn(
                     "Prestador con email invalido. "
                             + "idPrestador="
-                            + prestador.getIdPrestador()
+                            + idPrestador
                             + ", idRequerimiento="
-                            + requerimiento
-                            .getIdRequerimientoCompra()
-                            + ", email="
-                            + email
+                            + idRequerimiento
+            );
+
+            finalizarConControl(
+                    idRequerimiento,
+                    idPrestador,
+                    ESTADO_EMAIL_INVALIDO,
+                    errorEmail
             );
 
             resultado.incrementarErrores();
@@ -142,36 +238,52 @@ public class NotificarCotizacionPrestadorServiceImpl {
                             prestador
                     );
 
-            /*
-             * Primero se envia el correo.
-             *
-             * La tabla de auditoria solamente representa
-             * notificaciones efectivamente enviadas.
-             */
-            mailHelper.enviar(
+            enviarMail(
                     companyId,
                     email,
                     asunto,
                     cuerpo
             );
 
-            boolean registrado =
-                    registrarCotizacionPrestador(
-                            requerimiento
-                                    .getIdRequerimientoCompra(),
-                            prestador.getIdPrestador(),
-                            usuario
-                    );
+        } catch (Exception e) {
+            String detalleError =
+                    construirDetalleError(e);
 
-            if (!registrado) {
+            finalizarConControl(
+                    idRequerimiento,
+                    idPrestador,
+                    ESTADO_ERROR,
+                    detalleError
+            );
+
+            _log.error(
+                    "Fallo el envio de cotizacion. "
+                            + "idPrestador="
+                            + idPrestador
+                            + ", idRequerimiento="
+                            + idRequerimiento,
+                    e
+            );
+
+            resultado.incrementarErrores();
+            return;
+        }
+
+        try {
+            if (!finalizarCotizacionPrestador(
+                    idRequerimiento,
+                    idPrestador,
+                    ESTADO_ENVIADO,
+                    null
+            )) {
                 _log.error(
-                        "El correo fue enviado pero no se pudo "
-                                + "insertar la auditoria. "
+                        "El correo fue aceptado por el servicio de mail, "
+                                + "pero no se pudo persistir ENVIADO. "
+                                + "Se conserva PROCESANDO. "
                                 + "idPrestador="
-                                + prestador.getIdPrestador()
+                                + idPrestador
                                 + ", idRequerimiento="
-                                + requerimiento
-                                .getIdRequerimientoCompra()
+                                + idRequerimiento
                 );
 
                 resultado.incrementarErrores();
@@ -182,12 +294,13 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         } catch (Exception e) {
             _log.error(
-                    "Error notificando cotizacion. "
+                    "El correo fue aceptado por el servicio de mail, "
+                            + "pero fallo la persistencia de ENVIADO. "
+                            + "Se conserva PROCESANDO y no se marca ERROR. "
                             + "idPrestador="
-                            + prestador.getIdPrestador()
+                            + idPrestador
                             + ", idRequerimiento="
-                            + requerimiento
-                            .getIdRequerimientoCompra(),
+                            + idRequerimiento,
                     e
             );
 
@@ -195,7 +308,16 @@ public class NotificarCotizacionPrestadorServiceImpl {
         }
     }
 
-    private List<PrestadorCotizacion>
+    protected RequerimientoCompra getRequerimientoCompra(
+            int idRequerimientoCompra) throws Exception {
+
+        return BusquedaRequerimientoCompraServiceUtil
+                .getRequerimientoCompra(
+                        idRequerimientoCompra
+                );
+    }
+
+    protected List<PrestadorCotizacion>
     listarPrestadoresCandidatos(
             int idRequerimientoCompra) throws Exception {
 
@@ -244,47 +366,184 @@ public class NotificarCotizacionPrestadorServiceImpl {
         }
     }
 
-    private boolean registrarCotizacionPrestador(
+    protected boolean registrarCotizacionPrestador(
             int idRequerimientoCompra,
             int idPrestador,
             String usuario) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
 
         try {
             con = obtenerConexion();
 
-            stmt = con.prepareCall(
+            stmt = con.prepareStatement(
                     SQL_REGISTRAR_COTIZACION
             );
 
-            stmt.registerOutParameter(
-                    1,
-                    Types.BOOLEAN
-            );
-
             stmt.setInt(
-                    2,
+                    1,
                     idRequerimientoCompra
             );
 
             stmt.setInt(
-                    3,
+                    2,
                     idPrestador
             );
 
             stmt.setString(
-                    4,
+                    3,
                     normalizarUsuario(usuario)
             );
 
-            stmt.execute();
+            rs = stmt.executeQuery();
 
-            return stmt.getBoolean(1);
+            return rs.next()
+                    && rs.getBoolean(1);
 
         } finally {
+            cerrar(rs);
             ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    protected String leerEmailReservado(
+            int idRequerimiento,
+            int idPrestador) throws Exception {
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = obtenerConexion();
+
+            stmt = con.prepareStatement(
+                    SQL_EMAIL_RESERVADO
+            );
+
+            stmt.setInt(
+                    1,
+                    idRequerimiento
+            );
+
+            stmt.setInt(
+                    2,
+                    idPrestador
+            );
+
+            rs = stmt.executeQuery();
+
+            if (!rs.next()) {
+                return null;
+            }
+
+            return rs.getString("email_destino");
+
+        } finally {
+            cerrar(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    protected boolean finalizarCotizacionPrestador(
+            int idRequerimiento,
+            int idPrestador,
+            String estado,
+            String error) throws Exception {
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = obtenerConexion();
+
+            stmt = con.prepareStatement(
+                    SQL_FINALIZAR_COTIZACION
+            );
+
+            stmt.setInt(
+                    1,
+                    idRequerimiento
+            );
+
+            stmt.setInt(
+                    2,
+                    idPrestador
+            );
+
+            stmt.setString(
+                    3,
+                    estado
+            );
+
+            stmt.setString(
+                    4,
+                    truncar(error, 4000)
+            );
+
+            rs = stmt.executeQuery();
+
+            return rs.next()
+                    && rs.getBoolean(1);
+
+        } finally {
+            cerrar(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    protected void enviarMail(
+            long companyId,
+            String email,
+            String asunto,
+            String cuerpo) throws Exception {
+
+        mailHelper.enviar(
+                companyId,
+                email,
+                asunto,
+                cuerpo
+        );
+    }
+
+    private void finalizarConControl(
+            int idRequerimiento,
+            int idPrestador,
+            String estado,
+            String error) {
+
+        try {
+            if (!finalizarCotizacionPrestador(
+                    idRequerimiento,
+                    idPrestador,
+                    estado,
+                    error
+            )) {
+                _log.error(
+                        "No se pudo persistir el estado final "
+                                + "de cotizacion. estado="
+                                + estado
+                                + ", idPrestador="
+                                + idPrestador
+                                + ", idRequerimiento="
+                                + idRequerimiento
+                );
+            }
+
+        } catch (Exception persistenciaError) {
+            _log.error(
+                    "Error persistiendo el estado final "
+                            + "de cotizacion. estado="
+                            + estado
+                            + ", idPrestador="
+                            + idPrestador
+                            + ", idRequerimiento="
+                            + idRequerimiento,
+                    persistenciaError
+            );
         }
     }
 
@@ -552,6 +811,47 @@ public class NotificarCotizacionPrestadorServiceImpl {
         return resultado.length() > 0
                 ? resultado
                 : null;
+    }
+
+    private String construirDetalleError(Exception e) {
+        if (e == null) {
+            return "Error no informado.";
+        }
+
+        String mensaje = e.getMessage();
+
+        if (mensaje == null || mensaje.trim().length() == 0) {
+            mensaje = e.getClass().getName();
+        } else {
+            mensaje = e.getClass().getName()
+                    + ": "
+                    + mensaje.trim();
+        }
+
+        mensaje =
+                SENSITIVE_DETAIL_PATTERN
+                        .matcher(mensaje)
+                        .replaceAll("$1=<omitido>");
+
+        mensaje =
+                mensaje
+                        .replace('\r', ' ')
+                        .replace('\n', ' ')
+                        .replace('\t', ' ');
+
+        return truncar(mensaje, 4000);
+    }
+
+    private String truncar(String value, int maxLength) {
+        if (value == null) {
+            return null;
+        }
+
+        if (value.length() <= maxLength) {
+            return value;
+        }
+
+        return value.substring(0, maxLength);
     }
 
     private String normalizarUsuario(String usuario) {
