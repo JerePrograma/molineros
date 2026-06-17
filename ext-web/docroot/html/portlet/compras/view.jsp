@@ -76,31 +76,36 @@ configurarCotizacionesURL.setParameter(
     <liferay-portlet:renderURLParams varImpl="portletURL" />
 
     <liferay-ui-custom:tabs
-        names="<%= tabs1Names %>"
-        tabsValues="<%= tabs1Values %>"
-        portletURL="<%= portletURL %>"
-        value="<%= tabs1 %>"
+            names="<%= tabs1Names %>"
+            tabsValues="<%= tabs1Values %>"
+            portletURL="<%= portletURL %>"
+            value="<%= tabs1 %>"
     />
 
     <c:choose>
         <c:when test='<%= "requerimientos".equals(tabs1) %>'>
-            <liferay-util:include page="/html/portlet/compras/requerimientos/requerimientos.jsp" />
+            <liferay-util:include
+                    page="/html/portlet/compras/requerimientos/requerimientos_borrador.jsp" />
         </c:when>
 
         <c:when test='<%= "autorizaciones".equals(tabs1) %>'>
-            <liferay-util:include page="/html/portlet/compras/autorizaciones/autorizaciones.jsp" />
+            <liferay-util:include
+                    page="/html/portlet/compras/autorizaciones/autorizaciones.jsp" />
         </c:when>
 
         <c:when test='<%= "cotizaciones".equals(tabs1) %>'>
-            <liferay-util:include page="/html/portlet/compras/cotizaciones/cotizaciones.jsp" />
+            <liferay-util:include
+                    page="/html/portlet/compras/cotizaciones/cotizaciones.jsp" />
         </c:when>
 
         <c:when test='<%= "ordenes-de-compra".equals(tabs1) %>'>
-            <liferay-util:include page="/html/portlet/compras/ordenes-de-compra/ordenes-de-compra.jsp" />
+            <liferay-util:include
+                    page="/html/portlet/compras/ordenes-de-compra/ordenes-de-compra.jsp" />
         </c:when>
 
         <c:otherwise>
-            <liferay-util:include page="/html/portlet/compras/requerimientos/requerimientos.jsp" />
+            <liferay-util:include
+                    page="/html/portlet/compras/requerimientos/requerimientos_borrador.jsp" />
         </c:otherwise>
     </c:choose>
 
