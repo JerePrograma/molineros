@@ -168,37 +168,37 @@ public class NotificarCotizacionPrestadorServiceImpl {
             return;
         }
 
-        String email;
+        String email = "acomas@ospim.org.ar";
 
-        try {
-            email =
-                    normalizarEmail(
-                            leerEmailReservado(
-                                    idRequerimiento,
-                                    idPrestador
-                            )
-                    );
-
-        } catch (Exception e) {
-            finalizarConControl(
-                    idRequerimiento,
-                    idPrestador,
-                    WebKeysCompras.ENVIO_ERROR,
-                    construirDetalleError(e)
-            );
-
-            _log.error(
-                    "No se pudo leer el email reservado de cotizacion. "
-                            + "idPrestador="
-                            + idPrestador
-                            + ", idRequerimiento="
-                            + idRequerimiento,
-                    e
-            );
-
-            resultado.incrementarErrores();
-            return;
-        }
+//        try {
+//            email =
+//                    normalizarEmail(
+//                            leerEmailReservado(
+//                                    idRequerimiento,
+//                                    idPrestador
+//                            )
+//                    );
+//
+//        } catch (Exception e) {
+//            finalizarConControl(
+//                    idRequerimiento,
+//                    idPrestador,
+//                    WebKeysCompras.ENVIO_ERROR,
+//                    construirDetalleError(e)
+//            );
+//
+//            _log.error(
+//                    "No se pudo leer el email reservado de cotizacion. "
+//                            + "idPrestador="
+//                            + idPrestador
+//                            + ", idRequerimiento="
+//                            + idRequerimiento,
+//                    e
+//            );
+//
+//            resultado.incrementarErrores();
+//            return;
+//        }
 
         if (!esEmailValido(email)) {
 

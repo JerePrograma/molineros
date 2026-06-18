@@ -729,12 +729,40 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
     private void validarPermisoConsulta(User user) throws Exception {
         if (user == null) {
-            errorCampo("usuario", "No se pudo determinar el usuario actual.");
+            errorCampo(
+                    "usuario",
+                    "No se pudo determinar el usuario actual."
+            );
         }
 
-        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)) {
+        boolean puedeVer =
+                PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_VIEW_COMPRAS
+                );
+
+        boolean puedeAdministrar =
+                PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_ABM_COMPRAS
+                );
+
+        boolean puedeCotizar =
+                PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_COTIZAR_COMPRAS
+                );
+
+        boolean puedeAnular =
+                PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_ANULAR_COMPRAS
+                );
+
+        if (!puedeVer
+                && !puedeAdministrar
+                && !puedeCotizar
+                && !puedeAnular) {
 
             errorCampo(
                     "permisos",

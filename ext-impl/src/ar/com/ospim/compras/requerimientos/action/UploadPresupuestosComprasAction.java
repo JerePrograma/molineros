@@ -131,9 +131,21 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             }
 
             if (Constants.ADD.equals(cmd)) {
-                subirPresupuesto(actionRequest, uploadReq, user, requerimiento);
+                subirPresupuesto(
+                        actionRequest,
+                        uploadReq,
+                        requerimiento
+                );
             } else if (Constants.DELETE.equals(cmd)) {
-                borrarPresupuesto(actionRequest, uploadReq, user, requerimiento);
+                borrarPresupuesto(
+                        actionRequest,
+                        uploadReq,
+                        requerimiento
+                );
+            } else {
+                throw new Exception(
+                        "La accion solicitada para el presupuesto no es valida."
+                );
             }
 
             prepararRetorno(actionRequest, actionResponse, idRequerimientoCompra, modo);
@@ -264,7 +276,6 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
     private void subirPresupuesto(ActionRequest actionRequest,
                               UploadPortletRequest uploadReq,
-                              User user,
                               RequerimientoCompra requerimiento) throws Exception {
 
         File file = uploadReq.getFile("presupuesto");
@@ -272,10 +283,16 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         String description = ParamUtil.getString(uploadReq, "descripcionFile", "");
 
         if (file == null
+                || !file.exists()
+                || file.length() <= 0
                 || filename == null
                 || filename.trim().length() == 0) {
 
-            errorUpload(actionRequest, "Debe seleccionar un presupuesto.");
+            errorUpload(
+                    actionRequest,
+                    "Debe seleccionar un presupuesto valido."
+            );
+
             return;
         }
 
@@ -284,40 +301,104 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         ServiceContext serviceContext =
                 ServiceContextFactory.getInstance(
-                        FileEntry.class.getName(),
+                        DLFileEntry.class.getName(),
                         actionRequest
                 );
 
-        Random rnd = new Random();
+        String nombreOriginal =
+                filename
+                        .replace('\\', '/');
 
-        String title;
-        DLFileEntry existente;
+        int ultimaBarra =
+                nombreOriginal.lastIndexOf('/');
 
-        do {
-            existente = null;
+        if (ultimaBarra >= 0
+                && ultimaBarra < nombreOriginal.length() - 1) {
 
-            title = WebKeysCompras.getPrefijoDocumentoRequerimientoCompra(
-                    requerimiento.getIdRequerimientoCompra()
-            ) + (int) (rnd.nextDouble() * 100000);
+            nombreOriginal =
+                    nombreOriginal.substring(
+                            ultimaBarra + 1
+                    );
+        }
 
-            try {
-                existente =
-                        DLFileEntryLocalServiceUtil.getFileEntryByTitle(
-                                folderId,
-                                title
-                        );
-            } catch (Exception e) {
-                existente = null;
+        String prefijo =
+                WebKeysCompras.getPrefijoDocumentoRequerimientoCompra(
+                        requerimiento.getIdRequerimientoCompra()
+                );
+
+        String identificador =
+                UUID.randomUUID()
+                        .toString()
+                        .replace("-", "");
+
+        String extension = "";
+
+        int posicionExtension =
+                nombreOriginal.lastIndexOf('.');
+
+        if (posicionExtension >= 0
+                && posicionExtension < nombreOriginal.length() - 1) {
+
+            extension =
+                    nombreOriginal.substring(
+                            posicionExtension
+                    );
+
+            /*
+             * Evita nombres anormalmente largos o extensiones manipuladas.
+             */
+            if (extension.length() > 20) {
+                extension = "";
             }
-        } while (existente != null);
+        }
+
+        /*
+         * El nombre físico debe ser único dentro de la carpeta.
+         * addOrOverwriteFileEntry sobrescribe cuando el nombre ya existe.
+         */
+        String nombrePersistido =
+                prefijo
+                        + identificador
+                        + extension;
+
+        /*
+         * El título se usa para vincular el documento con el requerimiento.
+         * Debe conservar siempre el prefijo.
+         */
+        String sufijoTitulo =
+                "_"
+                        + identificador.substring(0, 8);
+
+        int longitudDisponible =
+                240
+                        - prefijo.length()
+                        - sufijoTitulo.length();
+
+        String nombreTitulo =
+                nombreOriginal;
+
+        if (longitudDisponible > 0
+                && nombreTitulo.length() > longitudDisponible) {
+
+            nombreTitulo =
+                    nombreTitulo.substring(
+                            0,
+                            longitudDisponible
+                    );
+        }
+
+        String title =
+                prefijo
+                        + nombreTitulo
+                        + sufijoTitulo;
 
         try {
             DLFileEntry entry =
                     DLFileEntryLocalServiceUtil.addOrOverwriteFileEntry(
                             serviceContext.getUserId(),
                             folderId,
-                            filename,
-                            filename,
+                            nombrePersistido,
+                            nombreOriginal,
                             title,
                             description,
                             "",
@@ -325,32 +406,59 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                             serviceContext
                     );
 
-            SessionMessages.add(actionRequest, "requerimiento-compra-presupuesto-guardado");
+            SessionMessages.add(
+                    actionRequest,
+                    "requerimiento-compra-presupuesto-guardado"
+            );
 
             logger.debug(
                     "AGREGAR PRESUPUESTO AL REQUERIMIENTO DE COMPRA: "
                             + requerimiento.getIdRequerimientoCompra()
                             + " - "
                             + entry.getName()
+                            + " - "
+                            + entry.getTitle()
             );
         } catch (DuplicateFileException e) {
             logger.error(e);
-            errorUpload(actionRequest, "El presupuesto se encuentra duplicado.");
+
+            errorUpload(
+                    actionRequest,
+                    "El presupuesto se encuentra duplicado."
+            );
         } catch (FileSizeException e) {
             logger.error(e);
-            errorUpload(actionRequest, "El presupuesto a subir supera el tamaï¿½o permitido.");
+
+            errorUpload(
+                    actionRequest,
+                    "El presupuesto a subir supera el tamanio permitido."
+            );
         } catch (FileNameException e) {
             logger.error(e);
-            errorUpload(actionRequest, "El tipo de presupuesto a subir no esta permitido.");
+
+            errorUpload(
+                    actionRequest,
+                    "El tipo de presupuesto a subir no esta permitido."
+            );
         } catch (Exception e) {
             logger.error(e);
-            errorUpload(actionRequest, e.getMessage());
+
+            String mensaje = e.getMessage();
+
+            if (WebKeysCompras.isEmpty(mensaje)) {
+                mensaje =
+                        "No se pudo guardar el presupuesto.";
+            }
+
+            errorUpload(
+                    actionRequest,
+                    mensaje
+            );
         }
     }
 
     private void borrarPresupuesto(ActionRequest actionRequest,
                                UploadPortletRequest uploadReq,
-                               User user,
                                RequerimientoCompra requerimiento) throws Exception {
 
         long folderId = ParamUtil.getLong(uploadReq, "folderid", 0L);
@@ -474,12 +582,39 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
     private void validarPermisoConsulta(User user) throws Exception {
         if (user == null) {
-            throw new Exception("No se pudo determinar el usuario actual.");
+            throw new Exception(
+                    "No se pudo determinar el usuario actual."
+            );
         }
 
-        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)) {
+        boolean puedeVer =
+                PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_VIEW_COMPRAS
+                );
+
+        boolean puedeAdministrar =
+                PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_ABM_COMPRAS
+                );
+
+        boolean puedeCotizar =
+                PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_COTIZAR_COMPRAS
+                );
+
+        boolean puedeAnular =
+                PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_ANULAR_COMPRAS
+                );
+
+        if (!puedeVer
+                && !puedeAdministrar
+                && !puedeCotizar
+                && !puedeAnular) {
 
             throw new Exception(
                     "No posee permisos para consultar presupuestos "
