@@ -298,9 +298,12 @@ public class EditarRequerimientoCompraServiceImpl {
                         companyId
                 );
 
-        if (resultado == null || resultado.getTotalCandidatos() <= 0) {
+        if (resultado == null
+                || resultado.getTotalCandidatos() <= 0
+                || resultado.getEnviados() <= 0) {
+
             throw new Exception(
-                    "No hay prestadores habilitados para recibir la solicitud. "
+                    "No se pudo enviar la solicitud a ningun prestador. "
                             + "El requerimiento permanece Pendiente."
             );
         }
