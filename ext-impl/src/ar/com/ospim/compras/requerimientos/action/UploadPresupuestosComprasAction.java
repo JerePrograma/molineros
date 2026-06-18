@@ -771,24 +771,51 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             );
 
             return folder;
-        } catch (Exception e) {
+        } catch (Exception createException) {
             /*
-             * Si dos requests intentaron crearla al mismo tiempo,
-             * una puede fallar por nombre duplicado.
+             * Si dos requests intentan crear la carpeta al mismo tiempo,
+             * una de ellas puede fallar porque la otra ya la creó.
+             *
+             * Antes de informar un error, se intenta recuperar nuevamente.
              */
             try {
-                return getFolderCompras(groupId);
-            } catch (Exception retryException) {
-                logger.error(e);
+                DLFolder folder =
+                        getFolderCompras(
+                                groupId
+                        );
+
+                logger.warn(
+                        "La creacion de la carpeta de presupuestos fallo, "
+                                + "pero la carpeta ya existe y sera reutilizada. "
+                                + "groupId="
+                                + groupId
+                                + ", folderId="
+                                + folder.getFolderId()
+                );
+
+                logger.warn(
+                        createException
+                );
+
+                return folder;
+            } catch (Exception lookupException) {
+                logger.error(
+                        createException
+                );
+
+                logger.error(
+                        lookupException
+                );
 
                 throw new Exception(
-                        "No se pudo crear ni recuperar la carpeta de Document Library '"
+                        "No se pudo crear ni recuperar la carpeta "
+                                + "de Document Library '"
                                 + WebKeysCompras
                                 .DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS
                                 + "' en el sitio actual. groupId="
                                 + groupId
                                 + ".",
-                        e
+                        createException
                 );
             }
         }

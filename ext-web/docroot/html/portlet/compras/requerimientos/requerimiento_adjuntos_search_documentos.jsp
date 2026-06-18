@@ -17,6 +17,7 @@
 <%@ page import="com.liferay.portal.kernel.dao.search.ResultRow" %>
 <%@ page import="com.liferay.portal.kernel.log.Log" %>
 <%@ page import="com.liferay.portal.kernel.log.LogFactoryUtil" %>
+<%@ page import="com.liferay.portlet.documentlibrary.NoSuchFolderException" %>
 <%@ page import="com.liferay.portlet.documentlibrary.model.DLFileEntry" %>
 <%@ page import="com.liferay.portlet.documentlibrary.model.DLFolder" %>
 <%@ page import="com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil" %>
@@ -44,6 +45,9 @@ private String jsCompraAdjunto(String value) {
 
 <%
 String namespaceAdjuntos = renderResponse.getNamespace();
+
+long groupIdPresupuestos =
+        themeDisplay.getScopeGroupId();
 
 RequerimientoCompra reqPresupuestos =
         (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
@@ -121,118 +125,255 @@ SearchContainer searchContainer =
 
 try {
     if (idRequerimientoCompraPresupuestos > 0) {
-        DynamicQuery dlf =
-                DynamicQueryFactoryUtil.forClass(
-                        DLFileEntry.class,
-                        PortletClassLoaderUtil.getClassLoader()
+
+        if (groupIdPresupuestos <= 0) {
+            throw new Exception(
+                    "No se pudo determinar el sitio actual para consultar "
+                            + "los presupuestos del requerimiento."
+            );
+        }
+
+        try {
+            DynamicQuery dlf =
+                    DynamicQueryFactoryUtil.forClass(
+                            DLFileEntry.class,
+                            PortletClassLoaderUtil.getClassLoader()
+                    );
+
+            DLFolder folder =
+                    DLFolderLocalServiceUtil.getFolder(
+                            groupIdPresupuestos,
+                            WebKeysCompras
+                                    .DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS,
+                            WebKeysCompras
+                                    .DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS
+                    );
+
+            long folderId =
+                    folder.getFolderId();
+
+            Criterion criterion =
+                    RestrictionsFactoryUtil.eq(
+                            "folderId",
+                            Long.valueOf(folderId)
+                    );
+
+            criterion =
+                    RestrictionsFactoryUtil.and(
+                            criterion,
+                            RestrictionsFactoryUtil.ilike(
+                                    "title",
+                                    WebKeysCompras
+                                            .getPrefijoDocumentoRequerimientoCompra(
+                                                    idRequerimientoCompraPresupuestos
+                                            )
+                                            + "%"
+                            )
+                    );
+
+            dlf.add(criterion);
+
+            List results =
+                    DLFileEntryLocalServiceUtil.dynamicQuery(
+                            dlf
+                    );
+
+            int total =
+                    results != null
+                            ? results.size()
+                            : 0;
+
+            searchContainer.setTotal(total);
+
+            List resultRows =
+                    searchContainer.getResultRows();
+
+            for (int i = 0;
+                    results != null && i < results.size();
+                    i++) {
+
+                DLFileEntry fileEntry =
+                        (DLFileEntry) results.get(i);
+
+                ResultRow row =
+                        new ResultRow(
+                                fileEntry,
+                                i,
+                                i
+                        );
+
+                row.setObject(fileEntry);
+
+                row.addText(
+                        searchContainer.getStart()
+                                + i
+                                + 1
+                                + StringPool.PERIOD
                 );
 
-        DLFolder folder =
-                DLFolderLocalServiceUtil.getFolder(
-                        WebKeysCompras.DOCUMENT_LIBRARY_GROUP_ID_COMPRAS,
-                        WebKeysCompras.DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS,
-                        WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS
-                );
-
-        long folderId = folder.getFolderId();
-
-        Criterion criterion =
-                RestrictionsFactoryUtil.eq("folderId", Long.valueOf(folderId));
-
-        criterion =
-                RestrictionsFactoryUtil.and(
-                        criterion,
-                        RestrictionsFactoryUtil.ilike(
-                                "title",
-                                WebKeysCompras.getPrefijoDocumentoRequerimientoCompra(
-                                        idRequerimientoCompraPresupuestos
-                                ) + "%"
+                row.addText(
+                        HtmlUtil.escape(
+                                folder.getName()
                         )
                 );
 
-        dlf.add(criterion);
+                row.addText(
+                        HtmlUtil.escape(
+                                fileEntry.getTitle()
+                        )
+                );
 
-        List results = DLFileEntryLocalServiceUtil.dynamicQuery(dlf);
+                row.addText(
+                        HtmlUtil.escape(
+                                fileEntry.getDescription()
+                        )
+                );
 
-        int total = results != null ? results.size() : 0;
+                String downloadURL =
+                        themeDisplay.getPathMain()
+                                + "/document_library/get_file?folderId="
+                                + folderId
+                                + "&name="
+                                + HttpUtil.encodeURL(
+                                        fileEntry.getName()
+                                );
 
-        searchContainer.setTotal(total);
+                StringBuilder ver =
+                        new StringBuilder();
 
-        List resultRows = searchContainer.getResultRows();
+                ver.append("<a href=\"");
+                ver.append(
+                        HtmlUtil.escape(
+                                downloadURL
+                        )
+                );
+                ver.append("\" target=\"_blank\">");
+                ver.append(
+                        "<img alt=\"Ver presupuesto\" src=\""
+                );
+                ver.append(
+                        themeDisplay.getPathThemeImages()
+                );
+                ver.append(
+                        "/common/view.png\" />"
+                );
+                ver.append("</a>");
 
-        for (int i = 0; results != null && i < results.size(); i++) {
-            DLFileEntry fileEntry = (DLFileEntry) results.get(i);
+                row.addText(
+                        ver.toString()
+                );
 
-            ResultRow row = new ResultRow(fileEntry, i, i);
+                StringBuilder borrar =
+                        new StringBuilder();
 
-            row.setObject(fileEntry);
+                if (puedeEliminarPresupuestos) {
+                    borrar.append(
+                            "<img alt=\"Eliminar presupuesto\" src=\""
+                    );
 
-            row.addText(searchContainer.getStart() + i + 1 + StringPool.PERIOD);
-            row.addText(HtmlUtil.escape(fileEntry.getFolder().getName()));
-            row.addText(HtmlUtil.escape(fileEntry.getTitle()));
-            row.addText(HtmlUtil.escape(fileEntry.getDescription()));
+                    borrar.append(
+                            themeDisplay.getPathThemeImages()
+                    );
 
-            String downloadURL =
-                    themeDisplay.getPathMain()
-                            + "/document_library/get_file?folderId="
-                            + folderId
-                            + "&name="
-                            + HttpUtil.encodeURL(fileEntry.getName());
+                    borrar.append(
+                            "/common/delete.png\" onclick=\"return "
+                    );
 
-            StringBuilder ver = new StringBuilder();
+                    borrar.append(
+                            namespaceAdjuntos
+                    );
 
-            ver.append("<a href=\"");
-            ver.append(HtmlUtil.escape(downloadURL));
-            ver.append("\" target=\"_blank\">");
-            ver.append("<img alt=\"Ver presupuesto\" src=\"");
-            ver.append(themeDisplay.getPathThemeImages());
-            ver.append("/common/view.png\" />");
-            ver.append("</a>");
+                    borrar.append(
+                            "deletePresupuestoRequerimientoCompra('"
+                    );
 
-            row.addText(ver.toString());
+                    borrar.append(
+                            String.valueOf(folderId)
+                    );
 
-            StringBuilder borrar = new StringBuilder();
+                    borrar.append("', '");
 
-            if (puedeEliminarPresupuestos) {
-                borrar.append("<img alt=\"Eliminar presupuesto\" src=\"");
-                borrar.append(themeDisplay.getPathThemeImages());
-                borrar.append("/common/delete.png\" onclick=\"return ");
-                borrar.append(namespaceAdjuntos);
-                borrar.append("deletePresupuestoRequerimientoCompra('");
-                borrar.append(String.valueOf(folderId));
-                borrar.append("', '");
-                borrar.append(jsCompraAdjunto(fileEntry.getName()));
-                borrar.append("', '");
-                borrar.append(jsCompraAdjunto(fileEntry.getTitle()));
-                borrar.append("');\" />");
-            } else {
-                borrar.append("");
+                    borrar.append(
+                            jsCompraAdjunto(
+                                    fileEntry.getName()
+                            )
+                    );
+
+                    borrar.append("', '");
+
+                    borrar.append(
+                            jsCompraAdjunto(
+                                    fileEntry.getTitle()
+                            )
+                    );
+
+                    borrar.append(
+                            "');\" />"
+                    );
+                }
+
+                row.addText(
+                        borrar.toString()
+                );
+
+                resultRows.add(row);
             }
+        } catch (NoSuchFolderException e) {
+            /*
+             * Estado normal antes de la primera subida.
+             *
+             * La carpeta debe crearla el Action al subir el primer
+             * presupuesto. Un JSP de render no debe crear datos.
+             */
+            searchContainer.setTotal(0);
 
-            row.addText(borrar.toString());
-
-            resultRows.add(row);
+            if (_log.isDebugEnabled()) {
+                _log.debug(
+                        "La carpeta de presupuestos todavía no existe. "
+                                + "groupId="
+                                + groupIdPresupuestos
+                                + ", parentFolderId="
+                                + WebKeysCompras
+                                    .DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS
+                                + ", name="
+                                + WebKeysCompras
+                                    .DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS
+                );
+            }
         }
+    } else {
+        searchContainer.setTotal(0);
     }
 %>
 
 <br /><br />
 
-<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
+<liferay-ui:search-iterator
+        searchContainer="<%= searchContainer %>" />
 
 <%
 } catch (Exception e) {
-    _log.error(e.getMessage(), e);
-%>
-    <div class="portlet-msg-info">
-        No se encontraron presupuestos para el requerimiento o no existe la carpeta de Document Library
-        <strong><%= HtmlUtil.escape(WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS) %></strong>.
-    </div>
-<%
-}
+    _log.error(
+            "No se pudieron consultar los presupuestos "
+                    + "del requerimiento. groupId="
+                    + groupIdPresupuestos
+                    + ", idRequerimientoCompra="
+                    + idRequerimientoCompraPresupuestos,
+            e
+    );
 %>
 
-<%!
-private static Log _log =
-        LogFactoryUtil.getLog("portal-web.docroot.html.portlet.compras.requerimientos.requerimiento_adjuntos_search_documentos.jsp");
+    <div class="portlet-msg-error">
+        No se pudieron consultar los presupuestos del requerimiento
+        en la carpeta de Document Library
+        <strong>
+            <%= HtmlUtil.escape(
+                    WebKeysCompras
+                            .DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS
+            ) %>
+        </strong>.
+    </div>
+
+<%
+}
 %>

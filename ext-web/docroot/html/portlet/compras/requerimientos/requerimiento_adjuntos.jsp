@@ -25,7 +25,17 @@ if (reqPresupuestos == null) {
     reqPresupuestos = new RequerimientoCompra();
 }
 
-int idRequerimientoCompraPresupuestos = reqPresupuestos.getIdRequerimientoCompra();
+int idRequerimientoCompraPresupuestos =
+        reqPresupuestos.getIdRequerimientoCompra();
+
+if (idRequerimientoCompraPresupuestos <= 0) {
+    idRequerimientoCompraPresupuestos =
+            ParamUtil.getInteger(
+                    renderRequest,
+                    "id_requerimiento_compra",
+                    0
+            );
+}
 
 Object soloLecturaAttrPresupuestos =
         renderRequest.getAttribute(WebKeysCompras.SOLO_LECTURA_ATTR);
@@ -107,7 +117,7 @@ boolean msgPresupuestoBorrado =
         <c:if test="<%= puedeEditarPresupuestos %>">
             <table class="lfr-table">
                 <tr>
-                    <td>Aï¿½adir presupuesto:</td>
+                    <td>Añadir presupuesto:</td>
                     <td>
                         <input type="file"
                                name="presupuesto"
@@ -117,7 +127,7 @@ boolean msgPresupuestoBorrado =
                     <td>&nbsp;</td>
 
                     <td>
-                        <label>Descripciï¿½n:</label>
+                        <label>Descripción:</label>
                     </td>
 
                     <td>
@@ -148,8 +158,8 @@ boolean msgPresupuestoBorrado =
     </fieldset>
 
     <input type="hidden"
-           name="<portlet:namespace />presupuesto"
-           id="<portlet:namespace />presupuesto"
+           name="<portlet:namespace />presupuesto_accion"
+           id="<portlet:namespace />presupuesto_accion"
            value="" />
 
     <input type="hidden"
@@ -184,46 +194,143 @@ boolean msgPresupuestoBorrado =
 
 <script type="text/javascript">
     function <portlet:namespace />uploadPresupuestoRequerimientoCompra() {
-        var form = document.getElementById('<portlet:namespace />compra_presupuesto_fm');
+        var form =
+                document.getElementById(
+                        '<portlet:namespace />compra_presupuesto_fm'
+                );
+
+        var file =
+                document.getElementById(
+                        '<portlet:namespace />presupuesto'
+                );
+
+        var accion =
+                document.getElementById(
+                        '<portlet:namespace />presupuesto_accion'
+                );
+
+        var folderId =
+                document.getElementById(
+                        '<portlet:namespace />folderid'
+                );
+
+        var filename =
+                document.getElementById(
+                        '<portlet:namespace />filename'
+                );
+
+        var filetitle =
+                document.getElementById(
+                        '<portlet:namespace />filetitle'
+                );
 
         if (!form) {
-            alert('No se encontrï¿½ el formulario de presupuestos.');
+            alert(
+                    'No se encontró el formulario de presupuestos.'
+            );
+
             return false;
         }
-
-        var file = document.getElementById('<portlet:namespace />presupuesto');
 
         if (!file || file.value == '') {
-            alert('Debe seleccionar un presupuesto.');
+            alert(
+                    'Debe seleccionar un presupuesto.'
+            );
+
             return false;
         }
 
-        document.getElementById('<portlet:namespace />presupuesto_accion').value = '<%= Constants.ADD %>';
-        document.getElementById('<portlet:namespace />folderid').value = '';
-        document.getElementById('<portlet:namespace />filename').value = '';
-        document.getElementById('<portlet:namespace />filetitle').value = '';
+        if (!accion
+                || !folderId
+                || !filename
+                || !filetitle) {
+
+            alert(
+                    'No se pudo preparar la subida del presupuesto.'
+            );
+
+            return false;
+        }
+
+        accion.value =
+                '<%= Constants.ADD %>';
+
+        folderId.value = '';
+        filename.value = '';
+        filetitle.value = '';
 
         form.submit();
 
         return false;
     }
 
-    function <portlet:namespace />deletePresupuestoRequerimientoCompra(folderId, filename, filetitle) {
-        var form = document.getElementById('<portlet:namespace />compra_presupuesto_fm');
+    function <portlet:namespace />deletePresupuestoRequerimientoCompra(
+            folderIdValue,
+            filenameValue,
+            filetitleValue) {
+
+        var form =
+                document.getElementById(
+                        '<portlet:namespace />compra_presupuesto_fm'
+                );
+
+        var accion =
+                document.getElementById(
+                        '<portlet:namespace />presupuesto_accion'
+                );
+
+        var folderId =
+                document.getElementById(
+                        '<portlet:namespace />folderid'
+                );
+
+        var filename =
+                document.getElementById(
+                        '<portlet:namespace />filename'
+                );
+
+        var filetitle =
+                document.getElementById(
+                        '<portlet:namespace />filetitle'
+                );
 
         if (!form) {
-            alert('No se encontrï¿½ el formulario de presupuestos.');
+            alert(
+                    'No se encontró el formulario de presupuestos.'
+            );
+
             return false;
         }
 
-        if (!confirm('ï¿½Estï¿½ seguro de eliminar este presupuesto?')) {
+        if (!accion
+                || !folderId
+                || !filename
+                || !filetitle) {
+
+            alert(
+                    'No se pudo preparar la eliminación del presupuesto.'
+            );
+
             return false;
         }
 
-        document.getElementById('<portlet:namespace />presupuesto_accion').value = '<%= Constants.DELETE %>';
-        document.getElementById('<portlet:namespace />folderid').value = folderId;
-        document.getElementById('<portlet:namespace />filename').value = filename;
-        document.getElementById('<portlet:namespace />filetitle').value = filetitle;
+        if (!confirm(
+                '¿Está seguro de eliminar este presupuesto?'
+        )) {
+            return false;
+        }
+
+        accion.value =
+                '<%= Constants.DELETE %>';
+
+        folderId.value =
+                folderIdValue;
+
+        filename.value =
+                filenameValue;
+
+        filetitle.value =
+                filetitleValue;
 
         form.submit();
 
