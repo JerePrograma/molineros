@@ -44,20 +44,20 @@ CREATE SCHEMA compras;
 -- =====================================================================
 
 CREATE TABLE compras.sector_requerimiento (
-                                              id_sector SERIAL PRIMARY KEY,
-                                              descripcion VARCHAR(120) NOT NULL,
-                                              requiere_afiliado BOOLEAN NOT NULL DEFAULT FALSE,
-                                              activo BOOLEAN NOT NULL DEFAULT TRUE,
+    id_sector SERIAL PRIMARY KEY,
+    descripcion VARCHAR(120) NOT NULL,
+    requiere_afiliado BOOLEAN NOT NULL DEFAULT FALSE,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
 
-                                              alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-                                              alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
-                                              modi_fecha TIMESTAMP WITHOUT TIME ZONE,
-                                              modi_usr VARCHAR(100),
-                                              baja_fecha TIMESTAMP WITHOUT TIME ZONE,
-                                              baja_usr VARCHAR(100),
+    alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
+    modi_fecha TIMESTAMP WITHOUT TIME ZONE,
+    modi_usr VARCHAR(100),
+    baja_fecha TIMESTAMP WITHOUT TIME ZONE,
+    baja_usr VARCHAR(100),
 
-                                              CONSTRAINT ck_compras_sector_descripcion
-                                                  CHECK (length(btrim(descripcion)) > 0)
+    CONSTRAINT ck_compras_sector_descripcion
+        CHECK (length(btrim(descripcion)) > 0)
 );
 
 CREATE UNIQUE INDEX uq_compras_sector_descripcion_activo
@@ -70,30 +70,30 @@ CREATE INDEX ix_compras_sector_activo
 
 
 CREATE TABLE compras.articulo (
-                                  id_articulo SERIAL PRIMARY KEY,
+    id_articulo SERIAL PRIMARY KEY,
 
-                                  id_sector INTEGER NOT NULL
-                                      REFERENCES compras.sector_requerimiento (id_sector),
+    id_sector INTEGER NOT NULL
+        REFERENCES compras.sector_requerimiento (id_sector),
 
-                                  descripcion VARCHAR(200) NOT NULL,
-                                  activo BOOLEAN NOT NULL DEFAULT TRUE,
+    descripcion VARCHAR(200) NOT NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
 
-                                  alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-                                  alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
-                                  modi_fecha TIMESTAMP WITHOUT TIME ZONE,
-                                  modi_usr VARCHAR(100),
-                                  baja_fecha TIMESTAMP WITHOUT TIME ZONE,
-                                  baja_usr VARCHAR(100),
+    alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
+    modi_fecha TIMESTAMP WITHOUT TIME ZONE,
+    modi_usr VARCHAR(100),
+    baja_fecha TIMESTAMP WITHOUT TIME ZONE,
+    baja_usr VARCHAR(100),
 
-                                  CONSTRAINT ck_compras_articulo_descripcion
-                                      CHECK (length(btrim(descripcion)) > 0)
+    CONSTRAINT ck_compras_articulo_descripcion
+        CHECK (length(btrim(descripcion)) > 0)
 );
 
 CREATE UNIQUE INDEX uq_compras_articulo_sector_descripcion_activo
     ON compras.articulo (
-                         id_sector,
-                         lower(btrim(descripcion))
-        )
+        id_sector,
+        lower(btrim(descripcion))
+    )
     WHERE baja_fecha IS NULL
       AND activo = TRUE;
 
@@ -104,22 +104,22 @@ CREATE INDEX ix_compras_articulo_sector
 
 
 CREATE TABLE compras.sector_tipo_prestador (
-                                               id_sector INTEGER NOT NULL
-                                                   REFERENCES compras.sector_requerimiento (id_sector),
+    id_sector INTEGER NOT NULL
+        REFERENCES compras.sector_requerimiento (id_sector),
 
-                                               id_tipo_prestador INTEGER NOT NULL,
+    id_tipo_prestador INTEGER NOT NULL,
 
-                                               activo BOOLEAN NOT NULL DEFAULT TRUE,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
 
-                                               alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-                                               alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
-                                               modi_fecha TIMESTAMP WITHOUT TIME ZONE,
-                                               modi_usr VARCHAR(100),
-                                               baja_fecha TIMESTAMP WITHOUT TIME ZONE,
-                                               baja_usr VARCHAR(100),
+    alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
+    modi_fecha TIMESTAMP WITHOUT TIME ZONE,
+    modi_usr VARCHAR(100),
+    baja_fecha TIMESTAMP WITHOUT TIME ZONE,
+    baja_usr VARCHAR(100),
 
-                                               CONSTRAINT pk_compras_sector_tipo_prestador
-                                                   PRIMARY KEY (id_sector, id_tipo_prestador)
+    CONSTRAINT pk_compras_sector_tipo_prestador
+        PRIMARY KEY (id_sector, id_tipo_prestador)
 );
 
 CREATE INDEX ix_compras_sector_tipo_sector_activo
@@ -132,65 +132,65 @@ CREATE INDEX ix_compras_sector_tipo_tipo_activo
 
 
 CREATE TABLE compras.requerimiento (
-                                       id_requerimiento SERIAL PRIMARY KEY,
+    id_requerimiento SERIAL PRIMARY KEY,
 
-                                       estado INTEGER NOT NULL DEFAULT 1,
+    estado INTEGER NOT NULL DEFAULT 1,
 
-                                       id_sector INTEGER NOT NULL
-                                           REFERENCES compras.sector_requerimiento (id_sector),
+    id_sector INTEGER NOT NULL
+        REFERENCES compras.sector_requerimiento (id_sector),
 
-                                       afiliado_cuil_titular VARCHAR(20),
-                                       afiliado_int INTEGER,
+    afiliado_cuil_titular VARCHAR(20),
+    afiliado_int INTEGER,
 
     -- Snapshot para consulta e impresion.
-                                       afiliado_nombre VARCHAR(120),
-                                       afiliado_apellido VARCHAR(120),
-                                       afiliado_documento_tipo VARCHAR(10),
-                                       afiliado_documento_nro VARCHAR(30),
-                                       afiliado_direccion VARCHAR(250),
-                                       afiliado_localidad VARCHAR(120),
-                                       afiliado_provincia VARCHAR(120),
-                                       afiliado_celular VARCHAR(80),
-                                       afiliado_telefono VARCHAR(80),
-                                       afiliado_email VARCHAR(160),
+    afiliado_nombre VARCHAR(120),
+    afiliado_apellido VARCHAR(120),
+    afiliado_documento_tipo VARCHAR(10),
+    afiliado_documento_nro VARCHAR(30),
+    afiliado_direccion VARCHAR(250),
+    afiliado_localidad VARCHAR(120),
+    afiliado_provincia VARCHAR(120),
+    afiliado_celular VARCHAR(80),
+    afiliado_telefono VARCHAR(80),
+    afiliado_email VARCHAR(160),
 
-                                       cargo_ospim INTEGER NOT NULL DEFAULT 100,
-                                       cargo_tercerizadora INTEGER NOT NULL DEFAULT 0,
-                                       id_tercerizadora VARCHAR(40),
-                                       recupero BOOLEAN NOT NULL DEFAULT FALSE,
+    cargo_ospim INTEGER NOT NULL DEFAULT 100,
+    cargo_tercerizadora INTEGER NOT NULL DEFAULT 0,
+    id_tercerizadora VARCHAR(40),
+    recupero BOOLEAN NOT NULL DEFAULT FALSE,
 
-                                       observaciones TEXT,
+    observaciones TEXT,
 
-                                       alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-                                       alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
-                                       modi_fecha TIMESTAMP WITHOUT TIME ZONE,
-                                       modi_usr VARCHAR(100),
-                                       baja_fecha TIMESTAMP WITHOUT TIME ZONE,
-                                       baja_usr VARCHAR(100),
+    alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
+    modi_fecha TIMESTAMP WITHOUT TIME ZONE,
+    modi_usr VARCHAR(100),
+    baja_fecha TIMESTAMP WITHOUT TIME ZONE,
+    baja_usr VARCHAR(100),
 
-                                       CONSTRAINT ck_compras_requerimiento_estado
-                                           CHECK (estado IN (1, 2, 3, 4, 5, 99)),
+    CONSTRAINT ck_compras_requerimiento_estado
+        CHECK (estado IN (1, 2, 3, 4, 5, 99)),
 
-                                       CONSTRAINT ck_compras_requerimiento_afiliado_int
-                                           CHECK (afiliado_int IS NULL OR afiliado_int >= 0),
+    CONSTRAINT ck_compras_requerimiento_afiliado_int
+        CHECK (afiliado_int IS NULL OR afiliado_int >= 0),
 
-                                       CONSTRAINT ck_compras_requerimiento_cargo_ospim
-                                           CHECK (cargo_ospim BETWEEN 0 AND 100),
+    CONSTRAINT ck_compras_requerimiento_cargo_ospim
+        CHECK (cargo_ospim BETWEEN 0 AND 100),
 
-                                       CONSTRAINT ck_compras_requerimiento_cargo_tercerizadora
-                                           CHECK (cargo_tercerizadora BETWEEN 0 AND 100),
+    CONSTRAINT ck_compras_requerimiento_cargo_tercerizadora
+        CHECK (cargo_tercerizadora BETWEEN 0 AND 100),
 
-                                       CONSTRAINT ck_compras_requerimiento_cargos_total
-                                           CHECK (cargo_ospim + cargo_tercerizadora = 100),
+    CONSTRAINT ck_compras_requerimiento_cargos_total
+        CHECK (cargo_ospim + cargo_tercerizadora = 100),
 
-                                       CONSTRAINT ck_compras_requerimiento_tercerizadora
-                                           CHECK (
-                                               cargo_tercerizadora = 0
-                                                   OR NULLIF(btrim(id_tercerizadora), '') IS NOT NULL
-                                               ),
+    CONSTRAINT ck_compras_requerimiento_tercerizadora
+        CHECK (
+            cargo_tercerizadora = 0
+            OR NULLIF(btrim(id_tercerizadora), '') IS NOT NULL
+        ),
 
-                                       CONSTRAINT ck_compras_requerimiento_recupero
-                                           CHECK (recupero = (cargo_tercerizadora > 0))
+    CONSTRAINT ck_compras_requerimiento_recupero
+        CHECK (recupero = (cargo_tercerizadora > 0))
 );
 
 CREATE INDEX ix_compras_requerimiento_estado
@@ -202,9 +202,9 @@ CREATE INDEX ix_compras_requerimiento_sector
 
 CREATE INDEX ix_compras_requerimiento_afiliado
     ON compras.requerimiento (
-                              afiliado_cuil_titular,
-                              afiliado_int
-        )
+        afiliado_cuil_titular,
+        afiliado_int
+    )
     WHERE baja_fecha IS NULL;
 
 CREATE INDEX ix_compras_requerimiento_tercerizadora
@@ -217,55 +217,55 @@ CREATE INDEX ix_compras_requerimiento_alta
 
 
 CREATE TABLE compras.requerimiento_cotizacion_prestador (
-                                                            id_requerimiento INTEGER NOT NULL
-                                                                REFERENCES compras.requerimiento (id_requerimiento),
+    id_requerimiento INTEGER NOT NULL
+        REFERENCES compras.requerimiento (id_requerimiento),
 
     -- Identificador externo. Sin FK: esta migracion no administra otros esquemas.
-                                                            id_prestador INTEGER NOT NULL,
+    id_prestador INTEGER NOT NULL,
 
-                                                            estado_envio VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE',
-                                                            intentos INTEGER NOT NULL DEFAULT 0,
+    estado_envio VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE',
+    intentos INTEGER NOT NULL DEFAULT 0,
 
-                                                            email_destino VARCHAR(320),
+    email_destino VARCHAR(320),
 
-                                                            fecha_creacion TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-                                                            fecha_ultimo_intento TIMESTAMP WITHOUT TIME ZONE,
-                                                            fecha_envio TIMESTAMP WITHOUT TIME ZONE,
-                                                            ultimo_error TEXT,
+    fecha_creacion TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    fecha_ultimo_intento TIMESTAMP WITHOUT TIME ZONE,
+    fecha_envio TIMESTAMP WITHOUT TIME ZONE,
+    ultimo_error TEXT,
 
-                                                            alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
-                                                            modi_fecha TIMESTAMP WITHOUT TIME ZONE,
-                                                            modi_usr VARCHAR(100),
+    alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
+    modi_fecha TIMESTAMP WITHOUT TIME ZONE,
+    modi_usr VARCHAR(100),
 
-                                                            CONSTRAINT pk_compras_requerimiento_cotizacion_prestador
-                                                                PRIMARY KEY (id_requerimiento, id_prestador),
+    CONSTRAINT pk_compras_requerimiento_cotizacion_prestador
+        PRIMARY KEY (id_requerimiento, id_prestador),
 
-                                                            CONSTRAINT ck_compras_cotizacion_estado_envio
-                                                                CHECK (
-                                                                    estado_envio IN (
-                                                                                     'PENDIENTE',
-                                                                                     'PROCESANDO',
-                                                                                     'ENVIADO',
-                                                                                     'ERROR',
-                                                                                     'EMAIL_INVALIDO'
-                                                                        )
-                                                                    ),
+    CONSTRAINT ck_compras_cotizacion_estado_envio
+        CHECK (
+            estado_envio IN (
+                'PENDIENTE',
+                'PROCESANDO',
+                'ENVIADO',
+                'ERROR',
+                'EMAIL_INVALIDO'
+            )
+        ),
 
-                                                            CONSTRAINT ck_compras_cotizacion_intentos
-                                                                CHECK (intentos >= 0),
+    CONSTRAINT ck_compras_cotizacion_intentos
+        CHECK (intentos >= 0),
 
-                                                            CONSTRAINT ck_compras_cotizacion_fecha_envio
-                                                                CHECK (
-                                                                    estado_envio <> 'ENVIADO'
-                                                                        OR fecha_envio IS NOT NULL
-                                                                    )
+    CONSTRAINT ck_compras_cotizacion_fecha_envio
+        CHECK (
+            estado_envio <> 'ENVIADO'
+            OR fecha_envio IS NOT NULL
+        )
 );
 
 CREATE INDEX ix_compras_cotizacion_requerimiento_estado
     ON compras.requerimiento_cotizacion_prestador (
-                                                   id_requerimiento,
-                                                   estado_envio
-        );
+        id_requerimiento,
+        estado_envio
+    );
 
 CREATE INDEX ix_compras_cotizacion_prestador
     ON compras.requerimiento_cotizacion_prestador (id_prestador);
@@ -275,51 +275,51 @@ CREATE INDEX ix_compras_cotizacion_fecha
 
 
 CREATE TABLE compras.requerimiento_detalle (
-                                               id_detalle SERIAL PRIMARY KEY,
+    id_detalle SERIAL PRIMARY KEY,
 
-                                               id_requerimiento INTEGER NOT NULL
-                                                   REFERENCES compras.requerimiento (id_requerimiento),
+    id_requerimiento INTEGER NOT NULL
+        REFERENCES compras.requerimiento (id_requerimiento),
 
-                                               id_articulo INTEGER NOT NULL
-                                                   REFERENCES compras.articulo (id_articulo),
+    id_articulo INTEGER NOT NULL
+        REFERENCES compras.articulo (id_articulo),
 
-                                               cantidad INTEGER NOT NULL,
-                                               observaciones TEXT,
+    cantidad INTEGER NOT NULL,
+    observaciones TEXT,
 
-                                               precio_unitario_estimado NUMERIC(18, 2),
-                                               precio_total_estimado NUMERIC(18, 2),
+    precio_unitario_estimado NUMERIC(18, 2),
+    precio_total_estimado NUMERIC(18, 2),
 
     -- Identificador externo. Sin FK: esta migracion no administra otros esquemas.
-                                               id_prestador INTEGER,
+    id_prestador INTEGER,
 
-                                               alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-                                               alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
-                                               modi_fecha TIMESTAMP WITHOUT TIME ZONE,
-                                               modi_usr VARCHAR(100),
-                                               baja_fecha TIMESTAMP WITHOUT TIME ZONE,
-                                               baja_usr VARCHAR(100),
+    alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
+    modi_fecha TIMESTAMP WITHOUT TIME ZONE,
+    modi_usr VARCHAR(100),
+    baja_fecha TIMESTAMP WITHOUT TIME ZONE,
+    baja_usr VARCHAR(100),
 
-                                               CONSTRAINT ck_compras_detalle_cantidad
-                                                   CHECK (cantidad > 0),
+    CONSTRAINT ck_compras_detalle_cantidad
+        CHECK (cantidad > 0),
 
-                                               CONSTRAINT ck_compras_detalle_precio_unitario
-                                                   CHECK (
-                                                       precio_unitario_estimado IS NULL
-                                                           OR precio_unitario_estimado >= 0
-                                                       ),
+    CONSTRAINT ck_compras_detalle_precio_unitario
+        CHECK (
+            precio_unitario_estimado IS NULL
+            OR precio_unitario_estimado >= 0
+        ),
 
-                                               CONSTRAINT ck_compras_detalle_precio_total
-                                                   CHECK (
-                                                       precio_total_estimado IS NULL
-                                                           OR precio_total_estimado >= 0
-                                                       )
+    CONSTRAINT ck_compras_detalle_precio_total
+        CHECK (
+            precio_total_estimado IS NULL
+            OR precio_total_estimado >= 0
+        )
 );
 
 CREATE INDEX ix_compras_detalle_requerimiento
     ON compras.requerimiento_detalle (
-                                      id_requerimiento,
-                                      id_detalle
-        )
+        id_requerimiento,
+        id_detalle
+    )
     WHERE baja_fecha IS NULL;
 
 CREATE INDEX ix_compras_detalle_articulo
@@ -353,13 +353,13 @@ VALUES
     (8, 'Otros', FALSE, TRUE, 'sistema');
 
 SELECT setval(
-               pg_get_serial_sequence(
-                       'compras.sector_requerimiento',
-                       'id_sector'
-               ),
-               8,
-               TRUE
-       );
+    pg_get_serial_sequence(
+        'compras.sector_requerimiento',
+        'id_sector'
+    ),
+    8,
+    TRUE
+);
 
 -- =====================================================================
 -- FUNCIONES AUXILIARES
@@ -368,12 +368,12 @@ SELECT setval(
 CREATE FUNCTION compras.normalizar_usuario(
     p_usuario VARCHAR
 )
-    RETURNS VARCHAR
+RETURNS VARCHAR
 AS $func$
-SELECT COALESCE(
-               NULLIF(btrim($1), ''),
-               current_user::VARCHAR
-       );
+    SELECT COALESCE(
+        NULLIF(btrim($1), ''),
+        current_user::VARCHAR
+    );
 $func$
 LANGUAGE sql
 STABLE;
@@ -382,17 +382,17 @@ STABLE;
 CREATE FUNCTION compras.estado_requerimiento_descripcion(
     p_estado INTEGER
 )
-    RETURNS VARCHAR
+RETURNS VARCHAR
 AS $func$
 BEGIN
-RETURN CASE p_estado
-           WHEN 1 THEN 'Pendiente'
-           WHEN 2 THEN 'A cotizar'
-           WHEN 3 THEN 'Cotizado'
-           WHEN 4 THEN 'Autorizado'
-           WHEN 5 THEN 'Orden de compra'
-           WHEN 99 THEN 'Anulado'
-           ELSE 'Desconocido'
+    RETURN CASE p_estado
+        WHEN 1 THEN 'Pendiente'
+        WHEN 2 THEN 'A cotizar'
+        WHEN 3 THEN 'Cotizado'
+        WHEN 4 THEN 'Autorizado'
+        WHEN 5 THEN 'Orden de compra'
+        WHEN 99 THEN 'Anulado'
+        ELSE 'Desconocido'
     END;
 END;
 $func$
@@ -401,21 +401,21 @@ IMMUTABLE;
 
 
 CREATE FUNCTION compras.listar_estados_requerimiento()
-    RETURNS TABLE (
-                      id INTEGER,
-                      descripcion VARCHAR
-                  )
-    AS $func$
+RETURNS TABLE (
+    id INTEGER,
+    descripcion VARCHAR
+)
+AS $func$
 BEGIN
-RETURN QUERY
-SELECT *
-FROM (
-         VALUES
-             (1, 'Pendiente'::VARCHAR),
-             (2, 'A cotizar'::VARCHAR),
-             (3, 'Cotizado'::VARCHAR),
-             (99, 'Anulado'::VARCHAR)
-     ) estados(id, descripcion);
+    RETURN QUERY
+    SELECT *
+      FROM (
+        VALUES
+            (1, 'Pendiente'::VARCHAR),
+            (2, 'A cotizar'::VARCHAR),
+            (3, 'Cotizado'::VARCHAR),
+            (99, 'Anulado'::VARCHAR)
+      ) estados(id, descripcion);
 END;
 $func$
 LANGUAGE plpgsql
@@ -426,36 +426,36 @@ IMMUTABLE;
 -- =====================================================================
 
 CREATE FUNCTION compras.validar_requerimiento_fila()
-    RETURNS TRIGGER
+RETURNS TRIGGER
 AS $func$
 DECLARE
-v_requiere_afiliado BOOLEAN;
+    v_requiere_afiliado BOOLEAN;
     v_cambio_estructura BOOLEAN;
     v_usuario VARCHAR(100);
 BEGIN
-SELECT s.requiere_afiliado
-INTO v_requiere_afiliado
-FROM compras.sector_requerimiento s
-WHERE s.id_sector = NEW.id_sector
-  AND s.activo = TRUE
-  AND s.baja_fecha IS NULL;
+    SELECT s.requiere_afiliado
+      INTO v_requiere_afiliado
+      FROM compras.sector_requerimiento s
+     WHERE s.id_sector = NEW.id_sector
+       AND s.activo = TRUE
+       AND s.baja_fecha IS NULL;
 
-IF v_requiere_afiliado IS NULL THEN
+    IF v_requiere_afiliado IS NULL THEN
         RAISE EXCEPTION
             'El sector informado no existe o no esta activo.';
-END IF;
+    END IF;
 
     IF TG_OP = 'INSERT' THEN
         IF NEW.estado <> 1 THEN
             RAISE EXCEPTION
                 'Un requerimiento nuevo debe crearse en estado Pendiente.';
-END IF;
-ELSE
+        END IF;
+    ELSE
         IF OLD.estado IN (3, 4, 5, 99)
            AND NEW IS DISTINCT FROM OLD THEN
             RAISE EXCEPTION
                 'El requerimiento no puede modificarse en el estado actual.';
-END IF;
+        END IF;
 
         v_cambio_estructura :=
                NEW.id_sector IS DISTINCT FROM OLD.id_sector
@@ -493,7 +493,7 @@ END IF;
         IF v_cambio_estructura AND OLD.estado <> 1 THEN
             RAISE EXCEPTION
                 'La estructura solo puede modificarse en estado Pendiente.';
-END IF;
+        END IF;
 
         IF NEW.estado IS DISTINCT FROM OLD.estado THEN
             IF NOT (
@@ -504,12 +504,12 @@ END IF;
                     'Transicion de estado invalida: % -> %.',
                     OLD.estado,
                     NEW.estado;
-END IF;
+            END IF;
 
             IF NEW.estado IN (4, 5) THEN
                 RAISE EXCEPTION
                     'Autorizado y Orden de compra son estados reservados.';
-END IF;
+            END IF;
 
             IF OLD.estado = 1 AND NEW.estado = 2 THEN
                 IF NOT EXISTS (
@@ -520,7 +520,7 @@ END IF;
                 ) THEN
                     RAISE EXCEPTION
                         'Debe existir al menos un detalle antes de enviar a cotizar.';
-END IF;
+                END IF;
 
                 IF NOT EXISTS (
                     SELECT 1
@@ -530,8 +530,8 @@ END IF;
                 ) THEN
                     RAISE EXCEPTION
                         'Debe existir al menos un prestador procesado antes de pasar a A cotizar.';
-END IF;
-END IF;
+                END IF;
+            END IF;
 
             IF OLD.estado = 2 AND NEW.estado = 3 THEN
                 IF NOT EXISTS (
@@ -542,7 +542,7 @@ END IF;
                 ) THEN
                     RAISE EXCEPTION
                         'No se puede cerrar una cotizacion sin detalles.';
-END IF;
+                END IF;
 
                 IF EXISTS (
                     SELECT 1
@@ -574,8 +574,8 @@ END IF;
                 ) THEN
                     RAISE EXCEPTION
                         'No se puede cerrar la cotizacion: existen detalles incompletos o invalidos.';
-END IF;
-END IF;
+                END IF;
+            END IF;
 
             IF NEW.estado = 99 THEN
                 v_usuario := compras.normalizar_usuario(
@@ -590,9 +590,9 @@ END IF;
                     NULLIF(btrim(NEW.baja_usr), ''),
                     v_usuario
                 );
-END IF;
-END IF;
-END IF;
+            END IF;
+        END IF;
+    END IF;
 
     IF v_requiere_afiliado THEN
         IF NULLIF(
@@ -601,14 +601,14 @@ END IF;
         ) IS NULL THEN
             RAISE EXCEPTION
                 'Debe informar el CUIL titular del afiliado.';
-END IF;
+        END IF;
 
         IF NEW.afiliado_int IS NULL
            OR NEW.afiliado_int < 0 THEN
             RAISE EXCEPTION
                 'Debe informar el integrante del afiliado.';
-END IF;
-ELSE
+        END IF;
+    ELSE
         NEW.afiliado_cuil_titular := NULL;
         NEW.afiliado_int := NULL;
 
@@ -627,70 +627,70 @@ ELSE
         NEW.cargo_tercerizadora := 0;
         NEW.id_tercerizadora := NULL;
         NEW.recupero := FALSE;
-END IF;
+    END IF;
 
-RETURN NEW;
+    RETURN NEW;
 END;
 $func$
 LANGUAGE plpgsql;
 
 
 CREATE TRIGGER trg_compras_requerimiento_validar
-    BEFORE INSERT OR UPDATE
-                         ON compras.requerimiento
-                         FOR EACH ROW
-                         EXECUTE PROCEDURE compras.validar_requerimiento_fila();
+BEFORE INSERT OR UPDATE
+ON compras.requerimiento
+FOR EACH ROW
+EXECUTE PROCEDURE compras.validar_requerimiento_fila();
 
 
 CREATE FUNCTION compras.validar_requerimiento_detalle_fila()
-    RETURNS TRIGGER
+RETURNS TRIGGER
 AS $func$
 DECLARE
-v_estado INTEGER;
+    v_estado INTEGER;
     v_id_sector_requerimiento INTEGER;
     v_id_sector_articulo INTEGER;
     v_articulo_activo BOOLEAN;
 BEGIN
-SELECT
-    r.estado,
-    r.id_sector
-INTO
-    v_estado,
-    v_id_sector_requerimiento
-FROM compras.requerimiento r
-WHERE r.id_requerimiento = NEW.id_requerimiento
-  AND r.baja_fecha IS NULL;
+    SELECT
+        r.estado,
+        r.id_sector
+      INTO
+        v_estado,
+        v_id_sector_requerimiento
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento = NEW.id_requerimiento
+       AND r.baja_fecha IS NULL;
 
-IF v_estado IS NULL THEN
+    IF v_estado IS NULL THEN
         RAISE EXCEPTION
             'No existe un requerimiento activo para el detalle.';
-END IF;
+    END IF;
 
-SELECT
-    a.id_sector,
-    a.activo
-INTO
-    v_id_sector_articulo,
-    v_articulo_activo
-FROM compras.articulo a
-WHERE a.id_articulo = NEW.id_articulo
-  AND a.baja_fecha IS NULL;
+    SELECT
+        a.id_sector,
+        a.activo
+      INTO
+        v_id_sector_articulo,
+        v_articulo_activo
+      FROM compras.articulo a
+     WHERE a.id_articulo = NEW.id_articulo
+       AND a.baja_fecha IS NULL;
 
-IF v_id_sector_articulo IS NULL
+    IF v_id_sector_articulo IS NULL
        OR NOT COALESCE(v_articulo_activo, FALSE) THEN
         RAISE EXCEPTION
             'El articulo informado no existe o no esta activo.';
-END IF;
+    END IF;
 
     IF v_id_sector_articulo <> v_id_sector_requerimiento THEN
         RAISE EXCEPTION
             'El articulo no pertenece al sector del requerimiento.';
-END IF;
+    END IF;
 
     IF TG_OP = 'INSERT' AND v_estado <> 1 THEN
         RAISE EXCEPTION
             'Los detalles solo pueden crearse en estado Pendiente.';
-END IF;
+    END IF;
 
     IF TG_OP = 'UPDATE' THEN
         IF v_estado = 1 THEN
@@ -713,13 +713,13 @@ END IF;
 
                 RAISE EXCEPTION
                     'En estado A cotizar la estructura del detalle esta bloqueada.';
-END IF;
+            END IF;
 
-ELSE
+        ELSE
             RAISE EXCEPTION
                 'El detalle no puede modificarse en el estado actual.';
-END IF;
-END IF;
+        END IF;
+    END IF;
 
     IF v_estado = 1 THEN
         IF NEW.precio_unitario_estimado IS NOT NULL
@@ -728,19 +728,19 @@ END IF;
 
             RAISE EXCEPTION
                 'Un requerimiento Pendiente no puede tener datos de cotizacion.';
-END IF;
+        END IF;
 
     ELSIF v_estado = 2 THEN
         IF NEW.precio_unitario_estimado IS NULL THEN
             NEW.precio_total_estimado := NULL;
-ELSE
+        ELSE
             NEW.precio_total_estimado :=
                 round(
                     NEW.cantidad
                     * NEW.precio_unitario_estimado,
                     2
                 );
-END IF;
+        END IF;
 
         IF NEW.id_prestador IS NOT NULL
            AND NOT EXISTS (
@@ -756,42 +756,42 @@ END IF;
 
             RAISE EXCEPTION
                 'El prestador seleccionado no fue notificado correctamente para este requerimiento.';
-END IF;
-END IF;
+        END IF;
+    END IF;
 
-RETURN NEW;
+    RETURN NEW;
 END;
 $func$
 LANGUAGE plpgsql;
 
 
 CREATE TRIGGER trg_compras_detalle_validar
-    BEFORE INSERT OR UPDATE
-                         ON compras.requerimiento_detalle
-                         FOR EACH ROW
-                         EXECUTE PROCEDURE compras.validar_requerimiento_detalle_fila();
+BEFORE INSERT OR UPDATE
+ON compras.requerimiento_detalle
+FOR EACH ROW
+EXECUTE PROCEDURE compras.validar_requerimiento_detalle_fila();
 
 -- =====================================================================
 -- SECTORES
 -- =====================================================================
 
 CREATE FUNCTION compras.listar_sector_requerimiento()
-    RETURNS TABLE (
-                      id INTEGER,
-                      descripcion VARCHAR,
-                      requiere_afiliado BOOLEAN
-                  )
-    AS $func$
+RETURNS TABLE (
+    id INTEGER,
+    descripcion VARCHAR,
+    requiere_afiliado BOOLEAN
+)
+AS $func$
 BEGIN
-RETURN QUERY
-SELECT
-    s.id_sector,
-    s.descripcion,
-    s.requiere_afiliado
-FROM compras.sector_requerimiento s
-WHERE s.activo = TRUE
-  AND s.baja_fecha IS NULL
-ORDER BY s.descripcion;
+    RETURN QUERY
+    SELECT
+        s.id_sector,
+        s.descripcion,
+        s.requiere_afiliado
+      FROM compras.sector_requerimiento s
+     WHERE s.activo = TRUE
+       AND s.baja_fecha IS NULL
+     ORDER BY s.descripcion;
 END;
 $func$
 LANGUAGE plpgsql
@@ -801,22 +801,22 @@ STABLE;
 CREATE FUNCTION compras.get_sector_requerimiento(
     p_id_sector INTEGER
 )
-    RETURNS TABLE (
-                      id INTEGER,
-                      descripcion VARCHAR,
-                      requiere_afiliado BOOLEAN
-                  )
-    AS $func$
+RETURNS TABLE (
+    id INTEGER,
+    descripcion VARCHAR,
+    requiere_afiliado BOOLEAN
+)
+AS $func$
 BEGIN
-RETURN QUERY
-SELECT
-    s.id_sector,
-    s.descripcion,
-    s.requiere_afiliado
-FROM compras.sector_requerimiento s
-WHERE s.id_sector = p_id_sector
-  AND s.activo = TRUE
-  AND s.baja_fecha IS NULL;
+    RETURN QUERY
+    SELECT
+        s.id_sector,
+        s.descripcion,
+        s.requiere_afiliado
+      FROM compras.sector_requerimiento s
+     WHERE s.id_sector = p_id_sector
+       AND s.activo = TRUE
+       AND s.baja_fecha IS NULL;
 END;
 $func$
 LANGUAGE plpgsql
@@ -829,26 +829,26 @@ STABLE;
 CREATE FUNCTION compras.listar_tipos_prestador_sector(
     p_id_sector INTEGER
 )
-    RETURNS TABLE (
-                      id_tipo_prestador INTEGER,
-                      descripcion VARCHAR,
-                      activo BOOLEAN
-                  )
-    AS $func$
+RETURNS TABLE (
+    id_tipo_prestador INTEGER,
+    descripcion VARCHAR,
+    activo BOOLEAN
+)
+AS $func$
 BEGIN
-RETURN QUERY
-SELECT
-    tp.id_tipo_prestador,
-    tp.descripcion::VARCHAR,
-    COALESCE(stp.activo, FALSE)
-FROM trae_tipos_prestadores() tp
-         LEFT JOIN compras.sector_tipo_prestador stp
-                   ON stp.id_tipo_prestador =
-                      tp.id_tipo_prestador
-                       AND stp.id_sector =
-                           p_id_sector
-                       AND stp.baja_fecha IS NULL
-ORDER BY tp.descripcion;
+    RETURN QUERY
+    SELECT
+        tp.id_tipo_prestador::INTEGER,
+        tp.descripcion::VARCHAR,
+        COALESCE(stp.activo, FALSE)::BOOLEAN
+      FROM trae_tipos_prestadores() tp
+      LEFT JOIN compras.sector_tipo_prestador stp
+        ON stp.id_tipo_prestador =
+           tp.id_tipo_prestador::INTEGER
+       AND stp.id_sector =
+           p_id_sector
+       AND stp.baja_fecha IS NULL
+     ORDER BY tp.descripcion;
 END;
 $func$
 LANGUAGE plpgsql
@@ -859,16 +859,16 @@ CREATE FUNCTION compras.desactivar_tipos_prestador_sector(
     p_id_sector INTEGER,
     p_usuario VARCHAR
 )
-    RETURNS VOID
+RETURNS VOID
 AS $func$
 BEGIN
-UPDATE compras.sector_tipo_prestador
-SET activo = FALSE,
-    modi_fecha = now(),
-    modi_usr = compras.normalizar_usuario(p_usuario)
-WHERE id_sector = p_id_sector
-  AND baja_fecha IS NULL
-  AND activo = TRUE;
+    UPDATE compras.sector_tipo_prestador
+       SET activo = FALSE,
+           modi_fecha = now(),
+           modi_usr = compras.normalizar_usuario(p_usuario)
+     WHERE id_sector = p_id_sector
+       AND baja_fecha IS NULL
+       AND activo = TRUE;
 END;
 $func$
 LANGUAGE plpgsql;
@@ -880,10 +880,10 @@ CREATE FUNCTION compras.guardar_sector_tipo_prestador(
     p_activo BOOLEAN,
     p_usuario VARCHAR
 )
-    RETURNS VOID
+RETURNS VOID
 AS $func$
 DECLARE
-v_usuario VARCHAR(100);
+    v_usuario VARCHAR(100);
 BEGIN
     v_usuario := compras.normalizar_usuario(p_usuario);
 
@@ -896,7 +896,7 @@ BEGIN
     ) THEN
         RAISE EXCEPTION
             'El sector informado no existe o no esta activo.';
-END IF;
+    END IF;
 
     IF NOT EXISTS (
         SELECT 1
@@ -906,30 +906,30 @@ END IF;
     ) THEN
         RAISE EXCEPTION
             'El tipo de prestador informado no existe.';
-END IF;
+    END IF;
 
-INSERT INTO compras.sector_tipo_prestador (
-    id_sector,
-    id_tipo_prestador,
-    activo,
-    alta_usr
-)
-VALUES (
-           p_id_sector,
-           p_id_tipo_prestador,
-           COALESCE(p_activo, TRUE),
-           v_usuario
-       )
+    INSERT INTO compras.sector_tipo_prestador (
+        id_sector,
+        id_tipo_prestador,
+        activo,
+        alta_usr
+    )
+    VALUES (
+        p_id_sector,
+        p_id_tipo_prestador,
+        COALESCE(p_activo, TRUE),
+        v_usuario
+    )
     ON CONFLICT (
         id_sector,
         id_tipo_prestador
     )
     DO UPDATE
-               SET activo = EXCLUDED.activo,
-               modi_fecha = now(),
-               modi_usr = v_usuario,
-               baja_fecha = NULL,
-               baja_usr = NULL;
+       SET activo = EXCLUDED.activo,
+           modi_fecha = now(),
+           modi_usr = v_usuario,
+           baja_fecha = NULL,
+           baja_usr = NULL;
 END;
 $func$
 LANGUAGE plpgsql;
@@ -942,43 +942,43 @@ CREATE FUNCTION compras.listar_articulos(
     p_id_sector INTEGER,
     p_texto VARCHAR
 )
-    RETURNS TABLE (
-                      id INTEGER,
-                      id_sector INTEGER,
-                      sector_descripcion VARCHAR,
-                      descripcion VARCHAR
-                  )
-    AS $func$
+RETURNS TABLE (
+    id INTEGER,
+    id_sector INTEGER,
+    sector_descripcion VARCHAR,
+    descripcion VARCHAR
+)
+AS $func$
 DECLARE
-v_texto VARCHAR;
+    v_texto VARCHAR;
 BEGIN
     v_texto := NULLIF(btrim(p_texto), '');
 
-RETURN QUERY
-SELECT
-    a.id_articulo,
-    a.id_sector,
-    s.descripcion,
-    a.descripcion
-FROM compras.articulo a
-         JOIN compras.sector_requerimiento s
-              ON s.id_sector = a.id_sector
-WHERE a.activo = TRUE
-  AND a.baja_fecha IS NULL
-  AND s.activo = TRUE
-  AND s.baja_fecha IS NULL
-  AND (
-    p_id_sector IS NULL
-        OR a.id_sector = p_id_sector
-    )
-  AND (
-    v_texto IS NULL
-        OR upper(a.descripcion)
-        LIKE '%' || upper(v_texto) || '%'
-    )
-ORDER BY
-    s.descripcion,
-    a.descripcion;
+    RETURN QUERY
+    SELECT
+        a.id_articulo,
+        a.id_sector,
+        s.descripcion,
+        a.descripcion
+      FROM compras.articulo a
+      JOIN compras.sector_requerimiento s
+        ON s.id_sector = a.id_sector
+     WHERE a.activo = TRUE
+       AND a.baja_fecha IS NULL
+       AND s.activo = TRUE
+       AND s.baja_fecha IS NULL
+       AND (
+            p_id_sector IS NULL
+            OR a.id_sector = p_id_sector
+       )
+       AND (
+            v_texto IS NULL
+            OR upper(a.descripcion)
+               LIKE '%' || upper(v_texto) || '%'
+       )
+     ORDER BY
+        s.descripcion,
+        a.descripcion;
 END;
 $func$
 LANGUAGE plpgsql
@@ -988,28 +988,28 @@ STABLE;
 CREATE FUNCTION compras.get_articulo(
     p_id_articulo INTEGER
 )
-    RETURNS TABLE (
-                      id INTEGER,
-                      id_sector INTEGER,
-                      sector_descripcion VARCHAR,
-                      descripcion VARCHAR
-                  )
-    AS $func$
+RETURNS TABLE (
+    id INTEGER,
+    id_sector INTEGER,
+    sector_descripcion VARCHAR,
+    descripcion VARCHAR
+)
+AS $func$
 BEGIN
-RETURN QUERY
-SELECT
-    a.id_articulo,
-    a.id_sector,
-    s.descripcion,
-    a.descripcion
-FROM compras.articulo a
-         JOIN compras.sector_requerimiento s
-              ON s.id_sector = a.id_sector
-WHERE a.id_articulo = p_id_articulo
-  AND a.activo = TRUE
-  AND a.baja_fecha IS NULL
-  AND s.activo = TRUE
-  AND s.baja_fecha IS NULL;
+    RETURN QUERY
+    SELECT
+        a.id_articulo,
+        a.id_sector,
+        s.descripcion,
+        a.descripcion
+      FROM compras.articulo a
+      JOIN compras.sector_requerimiento s
+        ON s.id_sector = a.id_sector
+     WHERE a.id_articulo = p_id_articulo
+       AND a.activo = TRUE
+       AND a.baja_fecha IS NULL
+       AND s.activo = TRUE
+       AND s.baja_fecha IS NULL;
 END;
 $func$
 LANGUAGE plpgsql
@@ -1021,10 +1021,10 @@ CREATE FUNCTION compras.guardar_articulo(
     p_id_sector INTEGER,
     p_descripcion VARCHAR
 )
-    RETURNS INTEGER
+RETURNS INTEGER
 AS $func$
 DECLARE
-v_id INTEGER;
+    v_id INTEGER;
     v_descripcion VARCHAR(200);
 BEGIN
     v_descripcion := NULLIF(btrim(p_descripcion), '');
@@ -1032,7 +1032,7 @@ BEGIN
     IF v_descripcion IS NULL THEN
         RAISE EXCEPTION
             'Debe informar la descripcion del articulo.';
-END IF;
+    END IF;
 
     IF NOT EXISTS (
         SELECT 1
@@ -1043,7 +1043,7 @@ END IF;
     ) THEN
         RAISE EXCEPTION
             'El sector informado no existe o no esta activo.';
-END IF;
+    END IF;
 
     IF p_id IS NULL OR p_id <= 0 THEN
         INSERT INTO compras.articulo (
@@ -1061,8 +1061,8 @@ END IF;
         RETURNING id_articulo
              INTO v_id;
 
-RETURN v_id;
-END IF;
+        RETURN v_id;
+    END IF;
 
     IF EXISTS (
         SELECT 1
@@ -1082,26 +1082,26 @@ END IF;
     ) THEN
         RAISE EXCEPTION
             'No se puede cambiar el sector de un articulo utilizado en detalles activos.';
-END IF;
+    END IF;
 
-UPDATE compras.articulo
-SET id_sector = p_id_sector,
-    descripcion = v_descripcion,
-    activo = TRUE,
-    modi_fecha = now(),
-    modi_usr = 'sistema',
-    baja_fecha = NULL,
-    baja_usr = NULL
-WHERE id_articulo = p_id
-    RETURNING id_articulo
-INTO v_id;
+    UPDATE compras.articulo
+       SET id_sector = p_id_sector,
+           descripcion = v_descripcion,
+           activo = TRUE,
+           modi_fecha = now(),
+           modi_usr = 'sistema',
+           baja_fecha = NULL,
+           baja_usr = NULL
+     WHERE id_articulo = p_id
+     RETURNING id_articulo
+          INTO v_id;
 
-IF v_id IS NULL THEN
+    IF v_id IS NULL THEN
         RAISE EXCEPTION
             'No se encontro el articulo a modificar.';
-END IF;
+    END IF;
 
-RETURN v_id;
+    RETURN v_id;
 END;
 $func$
 LANGUAGE plpgsql;
@@ -1110,7 +1110,7 @@ LANGUAGE plpgsql;
 CREATE FUNCTION compras.borrar_articulo(
     p_id_articulo INTEGER
 )
-    RETURNS VOID
+RETURNS VOID
 AS $func$
 BEGIN
     IF EXISTS (
@@ -1126,19 +1126,19 @@ BEGIN
     ) THEN
         RAISE EXCEPTION
             'No se puede borrar el articulo porque esta utilizado en detalles activos.';
-END IF;
+    END IF;
 
-UPDATE compras.articulo
-SET activo = FALSE,
-    baja_fecha = now(),
-    baja_usr = 'sistema'
-WHERE id_articulo = p_id_articulo
-  AND baja_fecha IS NULL;
+    UPDATE compras.articulo
+       SET activo = FALSE,
+           baja_fecha = now(),
+           baja_usr = 'sistema'
+     WHERE id_articulo = p_id_articulo
+       AND baja_fecha IS NULL;
 
-IF NOT FOUND THEN
+    IF NOT FOUND THEN
         RAISE EXCEPTION
             'No se encontro el articulo a borrar.';
-END IF;
+    END IF;
 END;
 $func$
 LANGUAGE plpgsql;
@@ -1190,84 +1190,84 @@ CREATE TYPE compras.requerimiento_base_row AS (
 
     id_estado INTEGER,
     estado_descripcion VARCHAR
-    );
+);
 
 
 CREATE FUNCTION compras.requerimiento_base()
-    RETURNS SETOF compras.requerimiento_base_row
+RETURNS SETOF compras.requerimiento_base_row
 AS $func$
 BEGIN
-RETURN QUERY
-SELECT
-    r.id_requerimiento,
+    RETURN QUERY
+    SELECT
+        r.id_requerimiento,
 
-    r.alta_fecha,
-    r.alta_usr,
+        r.alta_fecha,
+        r.alta_usr,
 
-    r.modi_fecha,
-    r.modi_usr,
+        r.modi_fecha,
+        r.modi_usr,
 
-    r.baja_fecha,
-    r.baja_usr,
+        r.baja_fecha,
+        r.baja_usr,
 
-    r.afiliado_cuil_titular,
-    r.afiliado_int,
+        r.afiliado_cuil_titular,
+        r.afiliado_int,
 
-    r.afiliado_nombre,
-    r.afiliado_apellido,
+        r.afiliado_nombre,
+        r.afiliado_apellido,
 
-    NULLIF(
+        NULLIF(
             concat_ws(
-                    ', ',
-                    NULLIF(btrim(r.afiliado_apellido), ''),
-                    NULLIF(btrim(r.afiliado_nombre), '')
+                ', ',
+                NULLIF(btrim(r.afiliado_apellido), ''),
+                NULLIF(btrim(r.afiliado_nombre), '')
             ),
             ''
-    )::VARCHAR AS afiliado_nombre_apellido,
+        )::VARCHAR AS afiliado_nombre_apellido,
 
-    r.afiliado_documento_tipo,
-    r.afiliado_documento_nro,
+        r.afiliado_documento_tipo,
+        r.afiliado_documento_nro,
 
-    NULLIF(
+        NULLIF(
             concat_ws(
-                    ' ',
-                    NULLIF(
-                            btrim(r.afiliado_documento_tipo),
-                            ''
-                    ),
-                    NULLIF(
-                            btrim(r.afiliado_documento_nro),
-                            ''
-                    )
+                ' ',
+                NULLIF(
+                    btrim(r.afiliado_documento_tipo),
+                    ''
+                ),
+                NULLIF(
+                    btrim(r.afiliado_documento_nro),
+                    ''
+                )
             ),
             ''
-    )::VARCHAR AS afiliado_documento,
+        )::VARCHAR AS afiliado_documento,
 
-    r.afiliado_direccion,
-    r.afiliado_localidad,
-    r.afiliado_provincia,
-    r.afiliado_celular,
-    r.afiliado_telefono,
-    r.afiliado_email,
+        r.afiliado_direccion,
+        r.afiliado_localidad,
+        r.afiliado_provincia,
+        r.afiliado_celular,
+        r.afiliado_telefono,
+        r.afiliado_email,
 
-    r.id_sector,
-    s.descripcion,
-    s.requiere_afiliado,
+        r.id_sector,
+        s.descripcion,
+        s.requiere_afiliado,
 
-    r.cargo_ospim,
-    r.cargo_tercerizadora,
-    r.id_tercerizadora,
+        r.cargo_ospim,
+        r.cargo_tercerizadora,
+        r.id_tercerizadora,
 
-    r.recupero,
-    r.observaciones,
+        r.recupero,
+        r.observaciones,
 
-    r.estado,
-    compras.estado_requerimiento_descripcion(
+        r.estado,
+        compras.estado_requerimiento_descripcion(
             r.estado
-    )
-FROM compras.requerimiento r
-         JOIN compras.sector_requerimiento s
-              ON s.id_sector = r.id_sector;
+        )
+      FROM compras.requerimiento r
+      JOIN compras.sector_requerimiento s
+        ON s.id_sector = r.id_sector;
 END;
 $func$
 LANGUAGE plpgsql
@@ -1283,10 +1283,10 @@ CREATE FUNCTION compras.buscar_requerimientos(
     p_recupero BOOLEAN,
     p_texto VARCHAR
 )
-    RETURNS SETOF compras.requerimiento_base_row
+RETURNS SETOF compras.requerimiento_base_row
 AS $func$
 DECLARE
-v_texto VARCHAR;
+    v_texto VARCHAR;
     v_cuil VARCHAR;
 BEGIN
     v_texto := NULLIF(
@@ -1307,65 +1307,65 @@ BEGIN
         ''
     );
 
-RETURN QUERY
-SELECT rb.*
-FROM compras.requerimiento_base() rb
-WHERE (
-    (
-        p_estado = 99
-            AND rb.id_estado = 99
-        )
-        OR (
-        p_estado IS DISTINCT FROM 99
-            AND rb.baja_fecha IS NULL
-        )
-    )
-  AND (
-    p_estado IS NULL
-        OR rb.id_estado = p_estado
-    )
-  AND (
-    p_sector IS NULL
-        OR rb.id_sector = p_sector
-    )
-  AND (
-    v_cuil IS NULL
-        OR regexp_replace(
-                   COALESCE(
-                           rb.afiliado_cuil_titular,
-                           ''
-                   ),
-                   '[^0-9]',
-                   '',
-                   'g'
-           ) LIKE '%' || v_cuil || '%'
-    )
-  AND (
-    p_afiliado_int IS NULL
-        OR rb.afiliado_int = p_afiliado_int
-    )
-  AND (
-    NULLIF(
-            btrim(p_id_tercerizadora),
-            ''
-    ) IS NULL
-        OR upper(
-                   COALESCE(
-                           rb.id_tercerizadora,
-                           ''
-                   )
-           ) = upper(
-                   btrim(p_id_tercerizadora)
-               )
-    )
-  AND (
-    p_recupero IS NULL
-        OR rb.recupero = p_recupero
-    )
-  AND (
-    v_texto IS NULL
+    RETURN QUERY
+    SELECT rb.*
+      FROM compras.requerimiento_base() rb
+     WHERE (
+            (
+                p_estado = 99
+                AND rb.id_estado = 99
+            )
+            OR (
+                p_estado IS DISTINCT FROM 99
+                AND rb.baja_fecha IS NULL
+            )
+       )
+       AND (
+            p_estado IS NULL
+            OR rb.id_estado = p_estado
+       )
+       AND (
+            p_sector IS NULL
+            OR rb.id_sector = p_sector
+       )
+       AND (
+            v_cuil IS NULL
+            OR regexp_replace(
+                COALESCE(
+                    rb.afiliado_cuil_titular,
+                    ''
+                ),
+                '[^0-9]',
+                '',
+                'g'
+            ) LIKE '%' || v_cuil || '%'
+       )
+       AND (
+            p_afiliado_int IS NULL
+            OR rb.afiliado_int = p_afiliado_int
+       )
+       AND (
+            NULLIF(
+                btrim(p_id_tercerizadora),
+                ''
+            ) IS NULL
+            OR upper(
+                COALESCE(
+                    rb.id_tercerizadora,
+                    ''
+                )
+            ) = upper(
+                btrim(p_id_tercerizadora)
+            )
+       )
+       AND (
+            p_recupero IS NULL
+            OR rb.recupero = p_recupero
+       )
+       AND (
+            v_texto IS NULL
 
-        OR rb.id::VARCHAR = btrim(p_texto)
+            OR rb.id::VARCHAR = btrim(p_texto)
 
             OR upper(
                 COALESCE(
@@ -1419,8 +1419,8 @@ WHERE (
                         ) LIKE '%' || v_texto || '%'
                    )
             )
-    )
-ORDER BY rb.id DESC;
+       )
+     ORDER BY rb.id DESC;
 END;
 $func$
 LANGUAGE plpgsql
@@ -1430,13 +1430,13 @@ STABLE;
 CREATE FUNCTION compras.get_requerimiento(
     p_id_requerimiento INTEGER
 )
-    RETURNS SETOF compras.requerimiento_base_row
+RETURNS SETOF compras.requerimiento_base_row
 AS $func$
 BEGIN
-RETURN QUERY
-SELECT rb.*
-FROM compras.requerimiento_base() rb
-WHERE rb.id = p_id_requerimiento;
+    RETURN QUERY
+    SELECT rb.*
+      FROM compras.requerimiento_base() rb
+     WHERE rb.id = p_id_requerimiento;
 END;
 $func$
 LANGUAGE plpgsql
@@ -1446,21 +1446,21 @@ STABLE;
 CREATE FUNCTION compras.get_estado_actual_requerimiento(
     p_id_requerimiento INTEGER
 )
-    RETURNS TABLE (
-                      id INTEGER,
-                      descripcion VARCHAR
-                  )
-    AS $func$
+RETURNS TABLE (
+    id INTEGER,
+    descripcion VARCHAR
+)
+AS $func$
 BEGIN
-RETURN QUERY
-SELECT
-    r.estado,
-    compras.estado_requerimiento_descripcion(
+    RETURN QUERY
+    SELECT
+        r.estado,
+        compras.estado_requerimiento_descripcion(
             r.estado
-    )
-FROM compras.requerimiento r
-WHERE r.id_requerimiento =
-      p_id_requerimiento;
+        )
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento =
+           p_id_requerimiento;
 END;
 $func$
 LANGUAGE plpgsql
@@ -1492,10 +1492,10 @@ CREATE FUNCTION compras.guardar_requerimiento(
     p_observaciones TEXT,
     p_usuario VARCHAR
 )
-    RETURNS INTEGER
+RETURNS INTEGER
 AS $func$
 DECLARE
-v_id INTEGER;
+    v_id INTEGER;
     v_usuario VARCHAR(100);
 
     v_afiliado_cuil VARCHAR(20);
@@ -1580,146 +1580,146 @@ BEGIN
         RETURNING id_requerimiento
              INTO v_id;
 
-RETURN v_id;
-END IF;
+        RETURN v_id;
+    END IF;
 
-SELECT
-    r.afiliado_cuil_titular,
-    r.afiliado_int
-INTO
-    v_cuil_anterior,
-    v_inte_anterior
-FROM compras.requerimiento r
-WHERE r.id_requerimiento = p_id
-  AND r.baja_fecha IS NULL;
+    SELECT
+        r.afiliado_cuil_titular,
+        r.afiliado_int
+      INTO
+        v_cuil_anterior,
+        v_inte_anterior
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento = p_id
+       AND r.baja_fecha IS NULL;
 
-IF NOT FOUND THEN
+    IF NOT FOUND THEN
         RAISE EXCEPTION
             'No se encontro el requerimiento a modificar.';
-END IF;
+    END IF;
 
     v_cambio_afiliado :=
            v_cuil_anterior IS DISTINCT FROM v_afiliado_cuil
         OR v_inte_anterior IS DISTINCT FROM p_afiliado_int;
 
-UPDATE compras.requerimiento
-SET id_sector = p_id_sector,
+    UPDATE compras.requerimiento
+       SET id_sector = p_id_sector,
 
-    afiliado_cuil_titular =
-        v_afiliado_cuil,
-    afiliado_int =
-        p_afiliado_int,
+           afiliado_cuil_titular =
+               v_afiliado_cuil,
+           afiliado_int =
+               p_afiliado_int,
 
-    afiliado_nombre =
-        CASE
-            WHEN v_cambio_afiliado
-                THEN NULLIF(btrim(p_afiliado_nombre), '')
-            ELSE afiliado_nombre
-            END,
+           afiliado_nombre =
+               CASE
+                   WHEN v_cambio_afiliado
+                       THEN NULLIF(btrim(p_afiliado_nombre), '')
+                   ELSE afiliado_nombre
+               END,
 
-    afiliado_apellido =
-        CASE
-            WHEN v_cambio_afiliado
-                THEN NULLIF(btrim(p_afiliado_apellido), '')
-            ELSE afiliado_apellido
-            END,
+           afiliado_apellido =
+               CASE
+                   WHEN v_cambio_afiliado
+                       THEN NULLIF(btrim(p_afiliado_apellido), '')
+                   ELSE afiliado_apellido
+               END,
 
-    afiliado_documento_tipo =
-        CASE
-            WHEN v_cambio_afiliado
-                THEN NULLIF(btrim(p_afiliado_documento_tipo), '')
-            ELSE afiliado_documento_tipo
-            END,
+           afiliado_documento_tipo =
+               CASE
+                   WHEN v_cambio_afiliado
+                       THEN NULLIF(btrim(p_afiliado_documento_tipo), '')
+                   ELSE afiliado_documento_tipo
+               END,
 
-    afiliado_documento_nro =
-        CASE
-            WHEN v_cambio_afiliado
-                THEN NULLIF(btrim(p_afiliado_documento_nro), '')
-            ELSE afiliado_documento_nro
-            END,
+           afiliado_documento_nro =
+               CASE
+                   WHEN v_cambio_afiliado
+                       THEN NULLIF(btrim(p_afiliado_documento_nro), '')
+                   ELSE afiliado_documento_nro
+               END,
 
-    afiliado_direccion =
-        CASE
-            WHEN v_cambio_afiliado
-                THEN NULLIF(btrim(p_afiliado_direccion), '')
-            ELSE afiliado_direccion
-            END,
+           afiliado_direccion =
+               CASE
+                   WHEN v_cambio_afiliado
+                       THEN NULLIF(btrim(p_afiliado_direccion), '')
+                   ELSE afiliado_direccion
+               END,
 
-    afiliado_localidad =
-        CASE
-            WHEN v_cambio_afiliado
-                THEN NULLIF(btrim(p_afiliado_localidad), '')
-            ELSE afiliado_localidad
-            END,
+           afiliado_localidad =
+               CASE
+                   WHEN v_cambio_afiliado
+                       THEN NULLIF(btrim(p_afiliado_localidad), '')
+                   ELSE afiliado_localidad
+               END,
 
-    afiliado_provincia =
-        CASE
-            WHEN v_cambio_afiliado
-                THEN NULLIF(btrim(p_afiliado_provincia), '')
-            ELSE afiliado_provincia
-            END,
+           afiliado_provincia =
+               CASE
+                   WHEN v_cambio_afiliado
+                       THEN NULLIF(btrim(p_afiliado_provincia), '')
+                   ELSE afiliado_provincia
+               END,
 
-    afiliado_celular =
-        CASE
-            WHEN v_cambio_afiliado
-                THEN NULLIF(btrim(p_afiliado_celular), '')
-            ELSE afiliado_celular
-            END,
+           afiliado_celular =
+               CASE
+                   WHEN v_cambio_afiliado
+                       THEN NULLIF(btrim(p_afiliado_celular), '')
+                   ELSE afiliado_celular
+               END,
 
-    afiliado_telefono =
-        CASE
-            WHEN v_cambio_afiliado
-                THEN NULLIF(btrim(p_afiliado_telefono), '')
-            ELSE afiliado_telefono
-            END,
+           afiliado_telefono =
+               CASE
+                   WHEN v_cambio_afiliado
+                       THEN NULLIF(btrim(p_afiliado_telefono), '')
+                   ELSE afiliado_telefono
+               END,
 
-    afiliado_email =
-        CASE
-            WHEN v_cambio_afiliado
-                THEN NULLIF(btrim(p_afiliado_email), '')
-            ELSE afiliado_email
-            END,
+           afiliado_email =
+               CASE
+                   WHEN v_cambio_afiliado
+                       THEN NULLIF(btrim(p_afiliado_email), '')
+                   ELSE afiliado_email
+               END,
 
-    cargo_ospim =
-        COALESCE(p_cargo_ospim, 0),
+           cargo_ospim =
+               COALESCE(p_cargo_ospim, 0),
 
-    cargo_tercerizadora =
-        COALESCE(
-                p_cargo_tercerizadora,
-                0
-        ),
+           cargo_tercerizadora =
+               COALESCE(
+                   p_cargo_tercerizadora,
+                   0
+               ),
 
-    id_tercerizadora =
-        NULLIF(
-                btrim(p_id_tercerizadora),
-                ''
-        ),
+           id_tercerizadora =
+               NULLIF(
+                   btrim(p_id_tercerizadora),
+                   ''
+               ),
 
-    recupero =
-        COALESCE(p_recupero, FALSE),
+           recupero =
+               COALESCE(p_recupero, FALSE),
 
-    observaciones =
-        NULLIF(
-                btrim(p_observaciones),
-                ''
-        ),
+           observaciones =
+               NULLIF(
+                   btrim(p_observaciones),
+                   ''
+               ),
 
-    modi_fecha = now(),
-    modi_usr = v_usuario
+           modi_fecha = now(),
+           modi_usr = v_usuario
 
-WHERE id_requerimiento = p_id
-  AND estado = 1
-  AND baja_fecha IS NULL
+     WHERE id_requerimiento = p_id
+       AND estado = 1
+       AND baja_fecha IS NULL
 
     RETURNING id_requerimiento
-INTO v_id;
+         INTO v_id;
 
-IF v_id IS NULL THEN
+    IF v_id IS NULL THEN
         RAISE EXCEPTION
             'La estructura solo puede modificarse en estado Pendiente.';
-END IF;
+    END IF;
 
-RETURN v_id;
+    RETURN v_id;
 END;
 $func$
 LANGUAGE plpgsql;
@@ -1730,56 +1730,56 @@ CREATE FUNCTION compras.cambiar_estado_requerimiento(
     p_estado_nuevo INTEGER,
     p_usuario VARCHAR
 )
-    RETURNS VOID
+RETURNS VOID
 AS $func$
 DECLARE
-v_estado_actual INTEGER;
+    v_estado_actual INTEGER;
     v_usuario VARCHAR(100);
 BEGIN
     v_usuario := compras.normalizar_usuario(
         p_usuario
     );
 
-SELECT r.estado
-INTO v_estado_actual
-FROM compras.requerimiento r
-WHERE r.id_requerimiento =
-      p_id_requerimiento
-  AND (
-    r.baja_fecha IS NULL
-        OR r.estado = 99
-    )
-    FOR UPDATE;
+    SELECT r.estado
+      INTO v_estado_actual
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento =
+           p_id_requerimiento
+       AND (
+            r.baja_fecha IS NULL
+            OR r.estado = 99
+       )
+     FOR UPDATE;
 
-IF v_estado_actual IS NULL THEN
+    IF v_estado_actual IS NULL THEN
         RAISE EXCEPTION
             'No se encontro el requerimiento.';
-END IF;
+    END IF;
 
     IF p_estado_nuevo = v_estado_actual THEN
         RAISE EXCEPTION
             'La transicion al mismo estado no es valida.';
-END IF;
+    END IF;
 
-UPDATE compras.requerimiento
-SET estado = p_estado_nuevo,
-    modi_fecha = now(),
-    modi_usr = v_usuario,
-    baja_usr =
-        CASE
-            WHEN p_estado_nuevo = 99
-                THEN v_usuario
-            ELSE baja_usr
-            END
-WHERE id_requerimiento =
-      p_id_requerimiento
-  AND estado =
-      v_estado_actual;
+    UPDATE compras.requerimiento
+       SET estado = p_estado_nuevo,
+           modi_fecha = now(),
+           modi_usr = v_usuario,
+           baja_usr =
+               CASE
+                   WHEN p_estado_nuevo = 99
+                       THEN v_usuario
+                   ELSE baja_usr
+               END
+     WHERE id_requerimiento =
+           p_id_requerimiento
+       AND estado =
+           v_estado_actual;
 
-IF NOT FOUND THEN
+    IF NOT FOUND THEN
         RAISE EXCEPTION
             'El requerimiento fue modificado por otro proceso.';
-END IF;
+    END IF;
 END;
 $func$
 LANGUAGE plpgsql;
@@ -1789,7 +1789,7 @@ CREATE FUNCTION compras.borrar_requerimiento(
     p_id_requerimiento INTEGER,
     p_usuario VARCHAR
 )
-    RETURNS VOID
+RETURNS VOID
 AS $func$
 BEGIN
     PERFORM compras.cambiar_estado_requerimiento(
@@ -1809,43 +1809,43 @@ LANGUAGE plpgsql;
 CREATE FUNCTION compras.get_requerimiento_detalle(
     p_id_requerimiento INTEGER
 )
-    RETURNS TABLE (
-                      id INTEGER,
-                      id_requerimiento INTEGER,
-                      id_articulo INTEGER,
-                      articulo VARCHAR,
-                      cantidad INTEGER,
-                      precio_unitario_estimado NUMERIC,
-                      precio_total_estimado NUMERIC,
-                      id_prestador INTEGER,
-                      prestador_cuit VARCHAR,
-                      prestador_razon_social VARCHAR,
-                      observaciones TEXT
-                  )
-    AS $func$
+RETURNS TABLE (
+    id INTEGER,
+    id_requerimiento INTEGER,
+    id_articulo INTEGER,
+    articulo VARCHAR,
+    cantidad INTEGER,
+    precio_unitario_estimado NUMERIC,
+    precio_total_estimado NUMERIC,
+    id_prestador INTEGER,
+    prestador_cuit VARCHAR,
+    prestador_razon_social VARCHAR,
+    observaciones TEXT
+)
+AS $func$
 BEGIN
-RETURN QUERY
-SELECT
-    d.id_detalle,
-    d.id_requerimiento,
-    d.id_articulo,
-    a.descripcion,
-    d.cantidad,
-    d.precio_unitario_estimado,
-    d.precio_total_estimado,
-    d.id_prestador,
-    p.cuit::VARCHAR,
-    p.descripcion::VARCHAR,
-    d.observaciones
-FROM compras.requerimiento_detalle d
-         JOIN compras.articulo a
-              ON a.id_articulo = d.id_articulo
-         LEFT JOIN public.prestador p
-                   ON p.id_prestador = d.id_prestador
-WHERE d.id_requerimiento =
-      p_id_requerimiento
-  AND d.baja_fecha IS NULL
-ORDER BY d.id_detalle;
+    RETURN QUERY
+    SELECT
+        d.id_detalle,
+        d.id_requerimiento,
+        d.id_articulo,
+        a.descripcion,
+        d.cantidad,
+        d.precio_unitario_estimado,
+        d.precio_total_estimado,
+        d.id_prestador,
+        p.cuit::VARCHAR,
+        p.descripcion::VARCHAR,
+        d.observaciones
+      FROM compras.requerimiento_detalle d
+      JOIN compras.articulo a
+        ON a.id_articulo = d.id_articulo
+      LEFT JOIN public.prestador p
+        ON p.id_prestador = d.id_prestador
+     WHERE d.id_requerimiento =
+           p_id_requerimiento
+       AND d.baja_fecha IS NULL
+     ORDER BY d.id_detalle;
 END;
 $func$
 LANGUAGE plpgsql
@@ -1860,10 +1860,10 @@ CREATE FUNCTION compras.guardar_requerimiento_detalle(
     p_observaciones TEXT,
     p_usuario VARCHAR
 )
-    RETURNS INTEGER
+RETURNS INTEGER
 AS $func$
 DECLARE
-v_id INTEGER;
+    v_id INTEGER;
     v_usuario VARCHAR(100);
 BEGIN
     v_usuario := compras.normalizar_usuario(
@@ -1874,7 +1874,7 @@ BEGIN
        OR p_cantidad <= 0 THEN
         RAISE EXCEPTION
             'La cantidad debe ser mayor a cero.';
-END IF;
+    END IF;
 
     IF NOT EXISTS (
         SELECT 1
@@ -1886,7 +1886,7 @@ END IF;
     ) THEN
         RAISE EXCEPTION
             'Los detalles estructurales solo pueden modificarse en estado Pendiente.';
-END IF;
+    END IF;
 
     IF p_id IS NULL OR p_id <= 0 THEN
         INSERT INTO compras.requerimiento_detalle (
@@ -1921,40 +1921,40 @@ END IF;
         RETURNING id_detalle
              INTO v_id;
 
-RETURN v_id;
-END IF;
+        RETURN v_id;
+    END IF;
 
-UPDATE compras.requerimiento_detalle
-SET id_articulo = p_id_articulo,
-    cantidad = p_cantidad,
+    UPDATE compras.requerimiento_detalle
+       SET id_articulo = p_id_articulo,
+           cantidad = p_cantidad,
 
-    precio_unitario_estimado = NULL,
-    precio_total_estimado = NULL,
-    id_prestador = NULL,
+           precio_unitario_estimado = NULL,
+           precio_total_estimado = NULL,
+           id_prestador = NULL,
 
-    observaciones =
-        NULLIF(
-                btrim(p_observaciones),
-                ''
-        ),
+           observaciones =
+               NULLIF(
+                   btrim(p_observaciones),
+                   ''
+               ),
 
-    modi_fecha = now(),
-    modi_usr = v_usuario
+           modi_fecha = now(),
+           modi_usr = v_usuario
 
-WHERE id_detalle = p_id
-  AND id_requerimiento =
-      p_id_requerimiento
-  AND baja_fecha IS NULL
+     WHERE id_detalle = p_id
+       AND id_requerimiento =
+           p_id_requerimiento
+       AND baja_fecha IS NULL
 
     RETURNING id_detalle
-INTO v_id;
+         INTO v_id;
 
-IF v_id IS NULL THEN
+    IF v_id IS NULL THEN
         RAISE EXCEPTION
             'No se encontro el detalle a modificar.';
-END IF;
+    END IF;
 
-RETURN v_id;
+    RETURN v_id;
 END;
 $func$
 LANGUAGE plpgsql;
@@ -1964,35 +1964,35 @@ CREATE FUNCTION compras.borrar_requerimiento_detalle(
     p_id_detalle INTEGER,
     p_usuario VARCHAR
 )
-    RETURNS VOID
+RETURNS VOID
 AS $func$
 DECLARE
-v_usuario VARCHAR(100);
+    v_usuario VARCHAR(100);
 BEGIN
     v_usuario := compras.normalizar_usuario(
         p_usuario
     );
 
-UPDATE compras.requerimiento_detalle d
-SET baja_fecha = now(),
-    baja_usr = v_usuario,
-    modi_fecha = now(),
-    modi_usr = v_usuario
-WHERE d.id_detalle = p_id_detalle
-  AND d.baja_fecha IS NULL
-  AND EXISTS (
-    SELECT 1
-    FROM compras.requerimiento r
-    WHERE r.id_requerimiento =
-          d.id_requerimiento
-      AND r.estado = 1
-      AND r.baja_fecha IS NULL
-);
+    UPDATE compras.requerimiento_detalle d
+       SET baja_fecha = now(),
+           baja_usr = v_usuario,
+           modi_fecha = now(),
+           modi_usr = v_usuario
+     WHERE d.id_detalle = p_id_detalle
+       AND d.baja_fecha IS NULL
+       AND EXISTS (
+            SELECT 1
+              FROM compras.requerimiento r
+             WHERE r.id_requerimiento =
+                   d.id_requerimiento
+               AND r.estado = 1
+               AND r.baja_fecha IS NULL
+       );
 
-IF NOT FOUND THEN
+    IF NOT FOUND THEN
         RAISE EXCEPTION
             'El detalle no existe o el requerimiento no esta Pendiente.';
-END IF;
+    END IF;
 END;
 $func$
 LANGUAGE plpgsql;
@@ -2004,72 +2004,72 @@ LANGUAGE plpgsql;
 CREATE FUNCTION compras.listar_prestadores_cotizacion_requerimiento(
     p_id_requerimiento INTEGER
 )
-    RETURNS TABLE (
-                      id_prestador INTEGER,
-                      descripcion VARCHAR,
-                      cuit VARCHAR,
-                      email VARCHAR,
-                      id_tipo_prestador INTEGER,
-                      tipo_prestador VARCHAR
-                  )
-    AS $func$
+RETURNS TABLE (
+    id_prestador INTEGER,
+    descripcion VARCHAR,
+    cuit VARCHAR,
+    email VARCHAR,
+    id_tipo_prestador INTEGER,
+    tipo_prestador VARCHAR
+)
+AS $func$
 BEGIN
-RETURN QUERY
-SELECT DISTINCT
-    p.id_prestador,
-    p.descripcion::VARCHAR,
-    p.cuit::VARCHAR,
-    NULLIF(
+    RETURN QUERY
+    SELECT DISTINCT
+        p.id_prestador::INTEGER,
+        p.descripcion::VARCHAR,
+        p.cuit::VARCHAR,
+        NULLIF(
             btrim(p.contacto),
             ''
-    )::VARCHAR,
-    p.id_tipo_prestador,
-    tp.descripcion::VARCHAR
-FROM compras.requerimiento r
-         JOIN compras.sector_tipo_prestador stp
-              ON stp.id_sector =
-                 r.id_sector
-                  AND stp.activo = TRUE
-                  AND stp.baja_fecha IS NULL
-         JOIN public.prestador p
-              ON p.id_tipo_prestador =
-                 stp.id_tipo_prestador
-         LEFT JOIN trae_tipos_prestadores() tp
-                   ON tp.id_tipo_prestador =
-                      p.id_tipo_prestador
-         LEFT JOIN compras.requerimiento_cotizacion_prestador rcp
-                   ON rcp.id_requerimiento =
-                      r.id_requerimiento
-                       AND rcp.id_prestador =
-                           p.id_prestador
-WHERE r.id_requerimiento =
-      p_id_requerimiento
-  AND r.estado IN (1, 2)
-  AND r.baja_fecha IS NULL
-  AND p.baja_fecha IS NULL
-  AND COALESCE(
-              p.solicitar_cotizacion,
-              FALSE
-      ) = TRUE
-  AND (
-    -- Primer envio o recuperacion: se listan todos los
-    -- candidatos vigentes. registrar_cotizacion_prestador
-    -- evita reenviar ENVIADO o PROCESANDO.
-    r.estado = 1
+        )::VARCHAR,
+        p.id_tipo_prestador::INTEGER,
+        tp.descripcion::VARCHAR
+      FROM compras.requerimiento r
+      JOIN compras.sector_tipo_prestador stp
+        ON stp.id_sector =
+           r.id_sector
+       AND stp.activo = TRUE
+       AND stp.baja_fecha IS NULL
+      JOIN public.prestador p
+        ON p.id_tipo_prestador =
+           stp.id_tipo_prestador
+      LEFT JOIN trae_tipos_prestadores() tp
+        ON tp.id_tipo_prestador =
+           p.id_tipo_prestador
+      LEFT JOIN compras.requerimiento_cotizacion_prestador rcp
+        ON rcp.id_requerimiento =
+           r.id_requerimiento
+       AND rcp.id_prestador =
+           p.id_prestador
+     WHERE r.id_requerimiento =
+           p_id_requerimiento
+       AND r.estado IN (1, 2)
+       AND r.baja_fecha IS NULL
+       AND p.baja_fecha IS NULL
+       AND COALESCE(
+            p.solicitar_cotizacion,
+            FALSE
+       ) = TRUE
+       AND (
+            -- Primer envio o recuperacion: se listan todos los
+            -- candidatos vigentes. registrar_cotizacion_prestador
+            -- evita reenviar ENVIADO o PROCESANDO.
+            r.estado = 1
 
-        OR (
-        r.estado = 2
-            AND (
-            rcp.id_prestador IS NULL
-                OR rcp.estado_envio IN (
-                                        'PENDIENTE',
-                                        'ERROR',
-                                        'EMAIL_INVALIDO'
+            OR (
+                r.estado = 2
+                AND (
+                    rcp.id_prestador IS NULL
+                    OR rcp.estado_envio IN (
+                        'PENDIENTE',
+                        'ERROR',
+                        'EMAIL_INVALIDO'
+                    )
                 )
             )
-        )
-    )
-ORDER BY 6, 2;
+       )
+     ORDER BY 6, 2;
 END;
 $func$
 LANGUAGE plpgsql
@@ -2081,10 +2081,10 @@ CREATE FUNCTION compras.registrar_cotizacion_prestador(
     p_id_prestador INTEGER,
     p_usuario VARCHAR
 )
-    RETURNS BOOLEAN
+RETURNS BOOLEAN
 AS $func$
 DECLARE
-v_email VARCHAR(320);
+    v_email VARCHAR(320);
     v_usuario VARCHAR(100);
     v_reservado BOOLEAN;
 BEGIN
@@ -2092,36 +2092,36 @@ BEGIN
         p_usuario
     );
 
-SELECT NULLIF(
+    SELECT NULLIF(
                btrim(p.contacto),
                ''
-       )::VARCHAR
-INTO v_email
-FROM compras.requerimiento r
-         JOIN compras.sector_tipo_prestador stp
-              ON stp.id_sector =
-                 r.id_sector
-                  AND stp.activo = TRUE
-                  AND stp.baja_fecha IS NULL
-         JOIN public.prestador p
-              ON p.id_prestador =
-                 p_id_prestador
-                  AND p.id_tipo_prestador =
-                      stp.id_tipo_prestador
-WHERE r.id_requerimiento =
-      p_id_requerimiento
-  AND r.estado IN (1, 2)
-  AND r.baja_fecha IS NULL
-  AND p.baja_fecha IS NULL
-  AND COALESCE(
-              p.solicitar_cotizacion,
-              FALSE
-      ) = TRUE
-    LIMIT 1;
+           )::VARCHAR
+      INTO v_email
+      FROM compras.requerimiento r
+      JOIN compras.sector_tipo_prestador stp
+        ON stp.id_sector =
+           r.id_sector
+       AND stp.activo = TRUE
+       AND stp.baja_fecha IS NULL
+      JOIN public.prestador p
+        ON p.id_prestador =
+           p_id_prestador
+       AND p.id_tipo_prestador =
+           stp.id_tipo_prestador
+     WHERE r.id_requerimiento =
+           p_id_requerimiento
+       AND r.estado IN (1, 2)
+       AND r.baja_fecha IS NULL
+       AND p.baja_fecha IS NULL
+       AND COALESCE(
+            p.solicitar_cotizacion,
+            FALSE
+       ) = TRUE
+     LIMIT 1;
 
-IF NOT FOUND THEN
+    IF NOT FOUND THEN
         RETURN FALSE;
-END IF;
+    END IF;
 
     /*
      * Reserva atomica.
@@ -2135,52 +2135,52 @@ END IF;
      * ENVIADO y PROCESANDO no se vuelven a tomar. De esta forma dos
      * ejecuciones concurrentes no pueden obtener TRUE para la misma fila.
      */
-INSERT INTO compras.requerimiento_cotizacion_prestador (
-    id_requerimiento,
-    id_prestador,
-    estado_envio,
-    intentos,
-    email_destino,
-    fecha_ultimo_intento,
-    alta_usr
-)
-VALUES (
-           p_id_requerimiento,
-           p_id_prestador,
-           'PROCESANDO',
-           1,
-           v_email,
-           now(),
-           v_usuario
-       )
+    INSERT INTO compras.requerimiento_cotizacion_prestador (
+        id_requerimiento,
+        id_prestador,
+        estado_envio,
+        intentos,
+        email_destino,
+        fecha_ultimo_intento,
+        alta_usr
+    )
+    VALUES (
+        p_id_requerimiento,
+        p_id_prestador,
+        'PROCESANDO',
+        1,
+        v_email,
+        now(),
+        v_usuario
+    )
     ON CONFLICT (
         id_requerimiento,
         id_prestador
     )
     DO UPDATE
-               SET estado_envio = 'PROCESANDO',
-               intentos =
+       SET estado_envio = 'PROCESANDO',
+           intentos =
                compras.requerimiento_cotizacion_prestador.intentos
                + 1,
-               email_destino = EXCLUDED.email_destino,
-               fecha_ultimo_intento = now(),
-               fecha_envio = NULL,
-               ultimo_error = NULL,
-               modi_fecha = now(),
-               modi_usr = v_usuario
-       WHERE compras.requerimiento_cotizacion_prestador.estado_envio
-               IN (
-               'PENDIENTE',
-               'ERROR',
-               'EMAIL_INVALIDO'
-               )
-               RETURNING TRUE
-       INTO v_reservado;
+           email_destino = EXCLUDED.email_destino,
+           fecha_ultimo_intento = now(),
+           fecha_envio = NULL,
+           ultimo_error = NULL,
+           modi_fecha = now(),
+           modi_usr = v_usuario
+     WHERE compras.requerimiento_cotizacion_prestador.estado_envio
+           IN (
+                'PENDIENTE',
+                'ERROR',
+                'EMAIL_INVALIDO'
+           )
+    RETURNING TRUE
+         INTO v_reservado;
 
-RETURN COALESCE(
+    RETURN COALESCE(
         v_reservado,
         FALSE
-       );
+    );
 END;
 $func$
 LANGUAGE plpgsql;
@@ -2192,10 +2192,10 @@ CREATE FUNCTION compras.finalizar_cotizacion_prestador(
     p_estado VARCHAR,
     p_error TEXT
 )
-    RETURNS BOOLEAN
+RETURNS BOOLEAN
 AS $func$
 DECLARE
-v_estado VARCHAR(20);
+    v_estado VARCHAR(20);
     v_error TEXT;
 BEGIN
     v_estado := upper(
@@ -2212,7 +2212,7 @@ BEGIN
         RAISE EXCEPTION
             'Estado final de notificacion invalido: %.',
             v_estado;
-END IF;
+    END IF;
 
     v_error := NULLIF(
         left(
@@ -2224,33 +2224,33 @@ END IF;
         ''
     );
 
-UPDATE compras.requerimiento_cotizacion_prestador
-SET estado_envio = v_estado,
+    UPDATE compras.requerimiento_cotizacion_prestador
+       SET estado_envio = v_estado,
 
-    fecha_envio =
-        CASE
-            WHEN v_estado = 'ENVIADO'
-                THEN now()
-            ELSE NULL
-            END,
+           fecha_envio =
+               CASE
+                   WHEN v_estado = 'ENVIADO'
+                       THEN now()
+                   ELSE NULL
+               END,
 
-    ultimo_error =
-        CASE
-            WHEN v_estado = 'ENVIADO'
-                THEN NULL
-            ELSE v_error
-            END,
+           ultimo_error =
+               CASE
+                   WHEN v_estado = 'ENVIADO'
+                       THEN NULL
+                   ELSE v_error
+               END,
 
-    modi_fecha = now()
+           modi_fecha = now()
 
-WHERE id_requerimiento =
-      p_id_requerimiento
-  AND id_prestador =
-      p_id_prestador
-  AND estado_envio =
-      'PROCESANDO';
+     WHERE id_requerimiento =
+           p_id_requerimiento
+       AND id_prestador =
+           p_id_prestador
+       AND estado_envio =
+           'PROCESANDO';
 
-RETURN FOUND;
+    RETURN FOUND;
 END;
 $func$
 LANGUAGE plpgsql;
@@ -2261,17 +2261,17 @@ CREATE FUNCTION compras.buscar_prestadores_enviados(
     p_texto VARCHAR,
     p_limite INTEGER
 )
-    RETURNS TABLE (
-                      id_prestador INTEGER,
-                      descripcion VARCHAR,
-                      cuit VARCHAR,
-                      email VARCHAR,
-                      id_tipo_prestador INTEGER,
-                      tipo_prestador VARCHAR
-                  )
-    AS $func$
+RETURNS TABLE (
+    id_prestador INTEGER,
+    descripcion VARCHAR,
+    cuit VARCHAR,
+    email VARCHAR,
+    id_tipo_prestador INTEGER,
+    tipo_prestador VARCHAR
+)
+AS $func$
 DECLARE
-v_texto VARCHAR;
+    v_texto VARCHAR;
     v_cuit VARCHAR;
     v_limite INTEGER;
 BEGIN
@@ -2298,54 +2298,54 @@ BEGIN
         50
     );
 
-RETURN QUERY
-SELECT DISTINCT
-    p.id_prestador,
-    p.descripcion::VARCHAR,
-    p.cuit::VARCHAR,
-    p.contacto::VARCHAR,
-    p.id_tipo_prestador,
-    tp.descripcion::VARCHAR
-FROM compras.requerimiento r
-         JOIN compras.requerimiento_cotizacion_prestador rcp
-              ON rcp.id_requerimiento =
-                 r.id_requerimiento
-                  AND rcp.estado_envio =
-                      'ENVIADO'
-         JOIN public.prestador p
-              ON p.id_prestador =
-                 rcp.id_prestador
-         LEFT JOIN trae_tipos_prestadores() tp
-                   ON tp.id_tipo_prestador =
-                      p.id_tipo_prestador
-WHERE r.id_requerimiento =
-      p_id_requerimiento
-  AND r.estado IN (2, 3)
-  AND (
-    v_texto IS NULL
+    RETURN QUERY
+    SELECT DISTINCT
+        p.id_prestador::INTEGER,
+        p.descripcion::VARCHAR,
+        p.cuit::VARCHAR,
+        p.contacto::VARCHAR,
+        p.id_tipo_prestador::INTEGER,
+        tp.descripcion::VARCHAR
+      FROM compras.requerimiento r
+      JOIN compras.requerimiento_cotizacion_prestador rcp
+        ON rcp.id_requerimiento =
+           r.id_requerimiento
+       AND rcp.estado_envio =
+           'ENVIADO'
+      JOIN public.prestador p
+        ON p.id_prestador =
+           rcp.id_prestador
+      LEFT JOIN trae_tipos_prestadores() tp
+        ON tp.id_tipo_prestador =
+           p.id_tipo_prestador
+     WHERE r.id_requerimiento =
+           p_id_requerimiento
+       AND r.estado IN (2, 3)
+       AND (
+            v_texto IS NULL
 
-        OR upper(
-                   COALESCE(
-                           p.descripcion,
-                           ''
-                   )
-           ) LIKE '%' || v_texto || '%'
+            OR upper(
+                COALESCE(
+                    p.descripcion,
+                    ''
+                )
+            ) LIKE '%' || v_texto || '%'
 
-        OR (
-        v_cuit IS NOT NULL
-            AND regexp_replace(
-                        COALESCE(
-                                p.cuit,
-                                ''
-                        ),
-                        '[^0-9]',
-                        '',
-                        'g'
+            OR (
+                v_cuit IS NOT NULL
+                AND regexp_replace(
+                    COALESCE(
+                        p.cuit,
+                        ''
+                    ),
+                    '[^0-9]',
+                    '',
+                    'g'
                 ) LIKE '%' || v_cuit || '%'
-        )
-    )
-ORDER BY 2
-    LIMIT v_limite;
+            )
+       )
+     ORDER BY 2
+     LIMIT v_limite;
 END;
 $func$
 LANGUAGE plpgsql
@@ -2358,94 +2358,94 @@ STABLE;
 CREATE FUNCTION compras.get_requerimiento_compra_pdf(
     p_id_requerimiento INTEGER
 )
-    RETURNS TABLE (
-                      id_requerimiento INTEGER,
-                      alta_fecha TIMESTAMP WITHOUT TIME ZONE,
-                      alta_usr VARCHAR,
+RETURNS TABLE (
+    id_requerimiento INTEGER,
+    alta_fecha TIMESTAMP WITHOUT TIME ZONE,
+    alta_usr VARCHAR,
 
-                      id_estado INTEGER,
-                      estado_descripcion VARCHAR,
+    id_estado INTEGER,
+    estado_descripcion VARCHAR,
 
-                      id_sector INTEGER,
-                      sector_descripcion VARCHAR,
-                      requiere_afiliado BOOLEAN,
+    id_sector INTEGER,
+    sector_descripcion VARCHAR,
+    requiere_afiliado BOOLEAN,
 
-                      afiliado_cuil_titular VARCHAR,
-                      afiliado_int INTEGER,
-                      afiliado_nombre_apellido VARCHAR,
-                      afiliado_documento VARCHAR,
+    afiliado_cuil_titular VARCHAR,
+    afiliado_int INTEGER,
+    afiliado_nombre_apellido VARCHAR,
+    afiliado_documento VARCHAR,
 
-                      afiliado_direccion VARCHAR,
-                      afiliado_localidad VARCHAR,
-                      afiliado_provincia VARCHAR,
-                      afiliado_celular VARCHAR,
-                      afiliado_telefono VARCHAR,
-                      afiliado_email VARCHAR,
+    afiliado_direccion VARCHAR,
+    afiliado_localidad VARCHAR,
+    afiliado_provincia VARCHAR,
+    afiliado_celular VARCHAR,
+    afiliado_telefono VARCHAR,
+    afiliado_email VARCHAR,
 
-                      cargo_ospim INTEGER,
-                      cargo_tercerizadora INTEGER,
-                      id_tercerizadora VARCHAR,
-                      recupero BOOLEAN,
-                      observaciones TEXT,
+    cargo_ospim INTEGER,
+    cargo_tercerizadora INTEGER,
+    id_tercerizadora VARCHAR,
+    recupero BOOLEAN,
+    observaciones TEXT,
 
-                      detalle_id INTEGER,
-                      detalle_orden INTEGER,
-                      id_articulo INTEGER,
-                      articulo VARCHAR,
-                      cantidad INTEGER,
+    detalle_id INTEGER,
+    detalle_orden INTEGER,
+    id_articulo INTEGER,
+    articulo VARCHAR,
+    cantidad INTEGER,
 
-                      precio_unitario_estimado NUMERIC,
-                      precio_total_estimado NUMERIC,
+    precio_unitario_estimado NUMERIC,
+    precio_total_estimado NUMERIC,
 
-                      prestador_razon_social VARCHAR,
-                      prestador_cuit VARCHAR,
+    prestador_razon_social VARCHAR,
+    prestador_cuit VARCHAR,
 
-                      detalle_observaciones TEXT,
-                      total_general NUMERIC
-                  )
-    AS $func$
+    detalle_observaciones TEXT,
+    total_general NUMERIC
+)
+AS $func$
 BEGIN
-RETURN QUERY
-SELECT
-    rb.id,
-    rb.alta_fecha,
-    rb.alta_usr,
+    RETURN QUERY
+    SELECT
+        rb.id,
+        rb.alta_fecha,
+        rb.alta_usr,
 
-    rb.id_estado,
-    rb.estado_descripcion,
+        rb.id_estado,
+        rb.estado_descripcion,
 
-    rb.id_sector,
-    rb.sector_descripcion,
-    rb.requiere_afiliado,
+        rb.id_sector,
+        rb.sector_descripcion,
+        rb.requiere_afiliado,
 
-    rb.afiliado_cuil_titular,
-    rb.afiliado_int,
-    rb.afiliado_nombre_apellido,
-    rb.afiliado_documento,
+        rb.afiliado_cuil_titular,
+        rb.afiliado_int,
+        rb.afiliado_nombre_apellido,
+        rb.afiliado_documento,
 
-    rb.afiliado_direccion,
-    rb.afiliado_localidad,
-    rb.afiliado_provincia,
-    rb.afiliado_celular,
-    rb.afiliado_telefono,
-    rb.afiliado_email,
+        rb.afiliado_direccion,
+        rb.afiliado_localidad,
+        rb.afiliado_provincia,
+        rb.afiliado_celular,
+        rb.afiliado_telefono,
+        rb.afiliado_email,
 
-    rb.cargo_ospim,
-    rb.cargo_tercerizadora,
-    rb.id_tercerizadora,
-    rb.recupero,
-    rb.observaciones,
+        rb.cargo_ospim,
+        rb.cargo_tercerizadora,
+        rb.id_tercerizadora,
+        rb.recupero,
+        rb.observaciones,
 
-    d.id,
+        d.id,
 
-    CASE
-        WHEN d.id IS NULL
-            THEN NULL
-        ELSE row_number() OVER (
+        CASE
+            WHEN d.id IS NULL
+                THEN NULL
+            ELSE row_number() OVER (
                 PARTITION BY rb.id
                 ORDER BY d.id
             )::INTEGER
-END,
+        END,
 
         d.id_articulo,
         d.articulo,
@@ -2486,30 +2486,30 @@ STABLE;
 
 DO $verificacion$
 DECLARE
-v_sectores INTEGER;
+    v_sectores INTEGER;
     v_estados INTEGER;
 BEGIN
-SELECT count(*)
-INTO v_sectores
-FROM compras.sector_requerimiento
-WHERE activo = TRUE
-  AND baja_fecha IS NULL;
+    SELECT count(*)
+      INTO v_sectores
+      FROM compras.sector_requerimiento
+     WHERE activo = TRUE
+       AND baja_fecha IS NULL;
 
-IF v_sectores <> 8 THEN
+    IF v_sectores <> 8 THEN
         RAISE EXCEPTION
             'La carga inicial de sectores es invalida. Total: %.',
             v_sectores;
-END IF;
+    END IF;
 
-SELECT count(*)
-INTO v_estados
-FROM compras.listar_estados_requerimiento();
+    SELECT count(*)
+      INTO v_estados
+      FROM compras.listar_estados_requerimiento();
 
-IF v_estados <> 4 THEN
+    IF v_estados <> 4 THEN
         RAISE EXCEPTION
             'La lista de estados operativos es invalida. Total: %.',
             v_estados;
-END IF;
+    END IF;
 
     IF EXISTS (
         SELECT 1
@@ -2518,7 +2518,7 @@ END IF;
     ) THEN
         RAISE EXCEPTION
             'Los estados reservados no deben exponerse como operativos.';
-END IF;
+    END IF;
 
     IF EXISTS (
         SELECT 1
@@ -2535,25 +2535,50 @@ END IF;
     ) THEN
         RAISE EXCEPTION
             'El esquema compras contiene claves foraneas hacia otros esquemas.';
-END IF;
+    END IF;
+
+    IF to_regclass('public.prestador') IS NULL THEN
+        RAISE EXCEPTION
+            'No existe la dependencia de solo lectura public.prestador.';
+    END IF;
+
+    IF to_regprocedure('trae_tipos_prestadores()') IS NULL THEN
+        RAISE EXCEPTION
+            'No existe la dependencia de solo lectura trae_tipos_prestadores().';
+    END IF;
+
+    -- Fuerza la preparacion y validacion de los contratos de salida que
+    -- combinan tipos internos INTEGER con identificadores externos que pueden
+    -- estar definidos como SMALLINT en la instalacion real.
+    PERFORM 1
+      FROM compras.listar_tipos_prestador_sector(1)
+     LIMIT 1;
+
+    PERFORM 1
+      FROM compras.listar_prestadores_cotizacion_requerimiento(0)
+     LIMIT 1;
+
+    PERFORM 1
+      FROM compras.buscar_prestadores_enviados(0, NULL, 1)
+     LIMIT 1;
 
     IF compras.estado_requerimiento_descripcion(1)
        <> 'Pendiente' THEN
         RAISE EXCEPTION
             'La configuracion de estados no es valida.';
-END IF;
+    END IF;
 
     IF compras.estado_requerimiento_descripcion(2)
        <> 'A cotizar' THEN
         RAISE EXCEPTION
             'La configuracion de estados no es valida.';
-END IF;
+    END IF;
 
     IF compras.estado_requerimiento_descripcion(3)
        <> 'Cotizado' THEN
         RAISE EXCEPTION
             'La configuracion de estados no es valida.';
-END IF;
+    END IF;
 END;
 $verificacion$;
 
