@@ -157,33 +157,32 @@ request or tab-specific search should be authoritative.
 
 The purchase-request state flow is:
 
-1. `ESTADO_BORRADOR`
-2. `ESTADO_REQUERIMIENTO`
-3. `ESTADO_AUTORIZADO`
-4. `ESTADO_COTIZACIONES`
-5. `ESTADO_ORDEN_COMPRA`
+1. `ESTADO_PENDIENTE`
+2. `ESTADO_A_COTIZAR`
+3. `ESTADO_COTIZADO`
+4. `ESTADO_AUTORIZADO`, reserved and without active functionality.
+5. `ESTADO_ORDEN_COMPRA`, reserved and without active functionality.
 99. `ESTADO_ANULADO`
 
-Valid forward transitions are only:
+The only active forward transitions are:
 
-- Borrador -> Requerimiento
-- Requerimiento -> Autorizado
-- Autorizado -> Cotizaciones
-- Cotizaciones -> Orden de compra
+- Pendiente -> A cotizar
+- A cotizar -> Cotizado
 
-Anulado is a terminal lateral state from the explicitly allowed prior
-states.
+Anulado is a terminal lateral state allowed only from Pendiente or A cotizar.
 
 A transition from a state to the same state is not valid.
 
 `validarTransicionEstado(actual, nuevo)` must return `false` when
 `actual == nuevo`.
 
-Retrying pending provider notifications is not a state transition. It is a
-separate operation allowed only while the persisted request is already in
-`ESTADO_COTIZACIONES`.
+There are no active transitions to Autorizado or Orden de compra.
 
-Do not implement notification retry as transition `4 -> 4`.
+Retrying provider notifications is not a state transition. It is a separate
+operation allowed only while the persisted request is in `ESTADO_A_COTIZAR`.
+
+Do not restore Borrador, Requerimiento as an intermediate state, the old
+Cotizaciones state, authorization, or purchase-order generation.
 
 ## Compras work queues
 
@@ -192,14 +191,12 @@ search.
 
 Expected mapping:
 
-- Requerimientos:
-  - state 1, Borrador.
-- Autorizaciones:
-  - state 2, Requerimiento.
-- Cotizaciones:
-  - state 3, Autorizado.
-- Ordenes de compra:
-  - state 4, Cotizaciones.
+- Pendientes:
+  - state 1, Pendiente.
+- A cotizar:
+  - state 2, A cotizar.
+- Cotizados:
+  - state 3, Cotizado.
 
 A request must not remain visible in a previous queue after its persisted
 state advances.
@@ -230,62 +227,37 @@ Must not modify requests or change state.
 
 May:
 
-- create requests;
-- edit and save only Borrador requests;
-- send Borrador to Requerimiento;
-- access provider-type configuration when that feature uses this role.
-
-Expected state-1 action label:
-
-- `Enviar a autorizar`
-
-### `AUTORIZAR_Compras`
-
-May authorize only requests in state Requerimiento.
-
-Expected state-2 action label:
-
-- `Autorizar`
-
-Must not see earlier or later workflow actions unless the user also owns
-the corresponding role.
+- create requests in Pendiente;
+- edit and save request structure only in Pendiente;
+- manage articles and provider-type configuration when those features use
+  this role.
 
 ### `COTIZAR_Compras`
 
-For state Autorizado, may execute the transition to Cotizaciones.
-
-Expected state-3 action label:
+For state Pendiente, may execute:
 
 - `Enviar a cotizar`
 
-This action performs:
+This operation notifies eligible providers and performs transition 1 -> 2.
 
-- state transition 3 -> 4;
-- provider notification process.
+For state A cotizar, may:
 
-For state Cotizaciones, may separately execute:
+- retry pending or failed provider notifications without changing state;
+- edit quotation values independently from the request structure;
+- select one successfully notified provider per detail;
+- close the quotation with transition 2 -> 3.
 
-- `Notificar prestadores pendientes`
+Budgets and quotation data are distinct capabilities:
 
-That action does not change state.
-
-### `ORDEN_COMPRA_Compras`
-
-For state Cotizaciones, may execute:
-
-- `Generar orden de compra`
-
-This performs transition 4 -> 5.
+- budget documents may be modified only in A cotizar;
+- quotation prices and awarded providers may be modified only in A cotizar;
+- structural fields and details remain blocked in A cotizar.
 
 ### `ANULAR_Compras`
 
-May annul only the states permitted by the centralized business rule.
+May annul only Pendiente or A cotizar requests.
 
-Do not grant edit, authorization, quotation, or purchase-order permissions
-merely because the user may annul.
-
-If the existing backend intentionally permits `ABM_Compras` to annul,
-keep the UI and backend rules identical and do not broaden them further.
+Do not grant edit or quotation permissions merely because the user may annul.
 
 ### Multiple roles
 
@@ -299,105 +271,92 @@ the user owns its role.
 
 Expected detailed-view actions:
 
-### State 1 — Borrador
+### State 1 — Pendiente
 
 With `ABM_Compras`:
 
 - Save while editing.
 - Edit while viewing.
-- Enviar a autorizar.
-- Anular when allowed.
+- Manage the request structure.
 - Imprimir PDF.
 - Volver.
-
-### State 2 — Requerimiento
-
-With `AUTORIZAR_Compras`:
-
-- Autorizar.
-- Anular when independently allowed.
-- Imprimir PDF.
-- Volver.
-
-Do not show:
-
-- Editar.
-- Enviar a autorizar.
-- Enviar a cotizar.
-- Generar orden de compra.
-
-### State 3 — Autorizado
 
 With `COTIZAR_Compras`:
 
 - Enviar a cotizar.
-- Anular when independently allowed.
-- Imprimir PDF.
-- Volver.
 
-Do not show:
+With `ANULAR_Compras`:
 
-- Editar.
-- Enviar a autorizar.
-- Autorizar.
-- Notificar prestadores pendientes.
-- Generar orden de compra.
+- Anular.
 
-### State 4 — Cotizaciones
+### State 2 — A cotizar
 
 With `COTIZAR_Compras`:
 
 - Notificar prestadores pendientes.
+- Guardar avance de cotización.
+- Cerrar cotización.
+- Modify budget documents.
 
-With `ORDEN_COMPRA_Compras`:
+With `ANULAR_Compras`:
 
-- Generar orden de compra.
+- Anular.
 
-With both roles, show both actions.
+The request structure and structural details are read-only.
 
-Also allow:
-
-- Anular when independently permitted.
-- Imprimir PDF.
-- Volver.
-
-Do not show actions from states 1, 2, or 3.
-
-### State 5 — Orden de compra
+### State 3 — Cotizado
 
 Allow only read-only operations such as:
 
+- View quotation results.
+- View budget documents.
 - Imprimir PDF.
 - Volver.
+
+### State 4 — Autorizado, reserved
+
+Allow only read-only operations. Do not expose authorization actions.
+
+### State 5 — Orden de compra, reserved
+
+Allow only read-only operations. Do not expose purchase-order actions.
 
 ### State 99 — Anulado
 
-Allow only read-only operations such as:
-
 - Imprimir PDF.
 - Volver.
 
+## Compras quotation and provider rules
+
+- Request structure is editable only in Pendiente.
+- Quotation prices and awarded providers are editable only in A cotizar.
+- Budgets are modifiable only in A cotizar.
+- Each detail has its own awarded provider.
+- The awarded provider must belong to the request notification set.
+- The provider notification must be in ENVIADO state before adjudication.
+- Cotizado and Anulado are read-only.
+- Authorization and purchase-order functionality are inactive.
+
 ## Compras notification behavior
 
-Moving from Autorizado to Cotizaciones triggers provider notification.
+Moving from Pendiente to A cotizar triggers provider notification.
 
 Pending-provider notification retry:
 
-- is allowed only in state Cotizaciones;
+- is allowed only in state A cotizar;
 - does not change the state;
-- must not resend providers already recorded as successfully notified;
+- must not resend providers already recorded as ENVIADO;
+- must not reserve the same provider simultaneously in two processes;
 - remains protected by `COTIZAR_Compras`.
 
-The current simplified audit represents successful notifications.
+Notification reservation and finalization are separate:
 
-Preserve the established ordering unless a task explicitly changes the
-design:
+1. reserve atomically as PROCESANDO;
+2. send email;
+3. finalize as ENVIADO, ERROR, or EMAIL_INVALIDO.
 
-1. send email;
-2. insert successful-notification audit.
-
-Do not add delivery-status infrastructure or schema columns without an
-explicit requirement.
+Do not add authorization, purchase-order, delivery-status, or unrelated
+infrastructure without an explicit requirement.
 
 ## Database changes
 
@@ -451,14 +410,16 @@ For Compras workflow changes, verify at minimum:
 - same-state transitions are rejected;
 - 1 -> 2 is accepted;
 - 2 -> 3 is accepted;
-- 3 -> 4 is accepted;
-- 4 -> 5 is accepted;
 - backward transitions are rejected;
-- states 5 and 99 have no outgoing transitions;
-- notification retry works separately in state 4;
+- transitions to states 4 and 5 are rejected;
+- states 3, 4, 5, and 99 have no outgoing transitions;
+- notification retry works separately in state 2;
+- structure is editable only in state 1;
+- quotation and budgets are editable only in state 2;
+- each awarded provider is ENVIADO for the same request;
 - each role sees only state-compatible actions;
 - direct requests without permission are rejected by Java;
-- list tabs contain only their assigned state.
+- list tabs contain only states 1, 2, and 3 in their assigned queues.
 
 Do not report a command as successful unless it actually completed
 successfully.
@@ -472,17 +433,163 @@ Report:
 - any pre-existing failures;
 - any validation that could not be run and why.
 
-## Ponytail
+<!-- BEGIN MANAGED: MOLINEROS CODEX POLICY -->
 
-Ponytail is the default implementation policy for every coding task in this
-repository.
+## Additional Codex policy
 
-- Apply Ponytail before designing or writing code.
-- Use Ponytail in `ultra` mode by default.
-- Prefer deletion, reuse, standard-library features, platform-native
-  capabilities, and the smallest complete implementation.
-- Do not disable or bypass Ponytail unless the user explicitly requests it.
-- Ponytail must never be used to skip validation, error handling, security,
-  authorization, accessibility, data-loss protection, or required tests.
-- Before completing a coding task, apply the equivalent of
-  `@ponytail-review` to the final diff.
+### Repository safety
+
+* Inspect `git status --short --branch` before modifying files.
+* Preserve all unrelated and pre-existing user changes.
+* Do not restore, reset, delete, move, rename, overwrite, or stash unrelated
+  work.
+* If `git apply --check` fails, do not force the patch. Use it only as a
+  reference and compare its intended changes against the current code.
+* Do not commit, push, merge, tag, open a pull request, or perform remote
+  changes unless explicitly requested.
+
+### Ponytail
+
+* Ponytail may be activated automatically when its use is appropriate for the
+  task.
+* Select the level according to scope, risk, reversibility, and certainty about
+  the existing implementation.
+* Use `lite` for normal repository work where minimalism is useful but the task
+  still requires broad inspection or validation.
+* `full` may be activated automatically for localized changes with a clear root
+  cause, bounded scope, established repository patterns, and well-defined
+  validation.
+* `ultra` may be activated automatically for very small, mechanical,
+  reversible, and low-risk changes where the complete correct solution is
+  unambiguous.
+* Do not select a stronger Ponytail level merely to minimize the number of files,
+  lines, tests, or validation commands.
+* Downgrade from `ultra` to `full` or `lite` when repository inspection reveals
+  hidden callers, cross-layer behavior, ambiguous ownership, legacy build
+  constraints, or broader regression risk.
+* Ponytail may remain active for security-sensitive or integrity-sensitive
+  tasks, but it must never simplify, omit, or weaken:
+
+  * authentication or authorization;
+  * persisted ownership checks;
+  * state-transition validation;
+  * trust-boundary validation;
+  * data integrity or persistence;
+  * migrations or SQL correctness;
+  * document or attachment ownership;
+  * auditability;
+  * financial calculations;
+  * accessibility;
+  * error handling that prevents data loss;
+  * necessary regression coverage;
+  * final supported validation.
+* In those areas, Ponytail controls implementation economy only. Security,
+  correctness, evidence, and completeness always take priority over diff size.
+* `full` and `ultra` do not authorize skipping repository inspection,
+  supported builds, relevant tests, or the final requested report.
+* The user may explicitly request any Ponytail level, but Codex may choose a
+  less aggressive level when the discovered risk makes the requested level
+  incompatible with a complete and correct implementation.
+
+### Legacy validation environment
+
+* Use an installed Java 8 JDK for repository validation.
+* Set `JAVA_HOME` only for the validation process or command.
+* Do not persist machine-specific JDK paths in tracked files.
+* Preserve the existing encoding and line endings of legacy source files.
+* Review the diff for mojibake, mass encoding changes, and line-ending churn.
+
+When backend and web validation apply, use this order:
+
+1. `ant -f ext-service/build.xml compile`
+2. `ant -f ext-impl/build.xml compile`
+3. `ant -f ext-web/build.xml compile`
+4. `ant -f ext-web/build.xml merge`
+
+* Investigate a failed step before continuing or retrying.
+* Report the initial failure separately from the definitive result.
+* `ext-web compile` does not prove that all JSPs compiled unless JSPC actually
+  ran.
+* `ext-web merge` validates webapp assembly but does not replace JSPC or a
+  runtime Tomcat check.
+
+### JSP and Tomcat validation
+
+* Do not report `compile-tomcat` as successful by forcing
+  `app.server.tomcat.version=6.0` against Tomcat 8.5.
+* Such an override is diagnostic only.
+* Do not claim JSP compilation succeeded unless Jasper/JspC completed
+  successfully.
+* If JSPC is blocked by the legacy build or classpath, report:
+
+  * the exact command;
+  * the root exception;
+  * the classpath or build-target limitation;
+  * which validations completed successfully;
+  * which runtime or manual validation remains pending.
+* Do not change shared build files or the Tomcat classpath outside task scope
+  merely to make validation pass.
+
+### Security regression evidence
+
+For changes involving permissions, states, details, documents, attachments,
+or persisted data:
+
+* Reload persisted entities before authorization, ownership, editability, or
+  transition checks.
+* Do not trust browser-supplied IDs, folders, names, titles, states, or entity
+  relationships.
+* Validate authorization before loading sensitive data, issuing save tokens,
+  or performing mutations.
+* Keep service-level protection when the service has callers other than the
+  current Action.
+* Cover the actual bypass or defect with a reproducible regression check.
+
+Relevant cases include:
+
+* a valid detail ID belonging to another requirement;
+* an attachment associated with another folder or requirement;
+* render and mutation attempts without the required role;
+* same-state and backward transitions;
+* attempted transitions from terminal states;
+* token issuance before authorization and editability checks.
+
+When automated coverage is not practical in the legacy architecture:
+
+1. explain the concrete limitation;
+2. document the exact manual scenario;
+3. record the observed result;
+4. identify the remaining coverage gap.
+
+Do not present an indirect utility test as equivalent security coverage.
+
+### Diagnostic checks
+
+* Temporary stubs, substitute sources, improvised mocks, partial compilation,
+  and incomplete classpaths are diagnostic only.
+* Run them outside the repository or in a temporary directory.
+* They must not modify tracked files.
+* They do not replace the supported repository build or final validation.
+
+### Final validation and reporting
+
+After modifying files:
+
+* Run `git diff --check`.
+* Review `git diff -- <changed files>`.
+* Run relevant searches for alternate mutation paths or bypasses.
+* Run the applicable repository validation commands.
+* Record exact commands and final results.
+* Distinguish:
+
+  * successful validation;
+  * introduced failure;
+  * pre-existing failure;
+  * environment limitation;
+  * diagnostic validation;
+  * validation not run.
+
+Group progress updates around material findings, design decisions, blockers,
+and validation results. Do not narrate every mechanical command or retry.
+
+<!-- END MANAGED: MOLINEROS CODEX POLICY -->

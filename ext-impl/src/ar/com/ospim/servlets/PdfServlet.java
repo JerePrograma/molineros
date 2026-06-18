@@ -29,9 +29,11 @@ import net.sf.jasperreports.engine.export.JRPdfExporter;
 import net.sf.jasperreports.engine.util.JRLoader;
 import ar.com.ospim.autorizaciones.beans.SituacionMedica;
 import ar.com.ospim.autorizaciones.services.SituacionesMedicasServiceUtil;
+import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.util.ConnectionHelper;
 import ar.com.ospim.util.DateUtils;
+import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.PortalException;
 import com.liferay.portal.SystemException;
@@ -40,6 +42,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.UserServiceUtil;
+import com.liferay.portal.util.PortalUtil;
 
 public class PdfServlet extends HttpServlet {
 	private static Log _log = LogFactoryUtil.getLog(PdfServlet.class);
@@ -1107,6 +1110,26 @@ public class PdfServlet extends HttpServlet {
 
 	private void generaRequerimientoCompra(HttpServletRequest req,
 	                                       HttpServletResponse res) throws IOException {
+
+		try {
+			User user = PortalUtil.getUser(req);
+
+			if (user == null
+					|| (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
+					&& !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
+					&& !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS))) {
+
+				res.sendError(
+						HttpServletResponse.SC_FORBIDDEN,
+						"No posee permisos para imprimir requerimientos de compras."
+				);
+				return;
+			}
+		} catch (Exception e) {
+			_log.error("No se pudo validar el permiso para imprimir el requerimiento de compra.", e);
+			res.sendError(HttpServletResponse.SC_FORBIDDEN);
+			return;
+		}
 
 		int idRequerimiento = ParamUtil.getInteger(req, "id_requerimiento", 0);
 

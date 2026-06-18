@@ -10,6 +10,7 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
 import ar.com.ospim.global.WebKeysGlobal;
+import ar.com.ospim.global.beans.Domicilio;
 import ar.com.ospim.util.PermissionUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
@@ -878,6 +879,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             }
         }
 
+        if (requerimiento.tieneAfiliadoInformado()) {
+            cargarSnapshotAfiliado(requerimiento);
+        }
+
         /*
          * Regla unica:
          * Si hay cualquier porcentaje a cargo de tercerizadora, hay recupero.
@@ -887,6 +892,123 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         requerimiento.setRecupero(
                 cargoTercerizadora != null && cargoTercerizadora.intValue() > 0
         );
+    }
+
+    private void cargarSnapshotAfiliado(RequerimientoCompra requerimiento)
+            throws Exception {
+
+        List<Afiliado> afiliados =
+                BusquedaAfiliadoServiceUtil.getBusquedaAfiliadosComponente(
+                        requerimiento.getAfiliadoCuilTitular(),
+                        requerimiento.getAfiliadoIntString(),
+                        null,
+                        null,
+                        0,
+                        null,
+                        null,
+                        WebKeysGlobal.ID_DEFAULT_ENTIDAD,
+                        0,
+                        0,
+                        new BigDecimal(0)
+                );
+
+        if (afiliados == null || afiliados.size() != 1) {
+            errorCampo(
+                    "afiliado_cuil_titular",
+                    "No se pudo obtener un unico afiliado para guardar el requerimiento."
+            );
+        }
+
+        Afiliado afiliado = afiliados.get(0);
+
+        requerimiento.setAfiliadoNombre(afiliado.getNombre());
+        requerimiento.setAfiliadoApellido(afiliado.getApellido());
+        requerimiento.setAfiliadoDocumentoTipo(afiliado.getDocumento_tipo());
+        requerimiento.setAfiliadoDocumentoNro(afiliado.getDocu_numero());
+        requerimiento.setAfiliadoEmail(afiliado.getEmail());
+
+        List<Domicilio> domicilios =
+                BusquedaAfiliadoServiceUtil.buscarDomiciliosAfiliado(
+                        requerimiento.getAfiliadoCuilTitular(),
+                        requerimiento.getAfiliadoInt().intValue()
+                );
+
+        if ((domicilios == null || domicilios.isEmpty())
+                && requerimiento.getAfiliadoInt().intValue() != 0) {
+
+            domicilios =
+                    BusquedaAfiliadoServiceUtil.buscarDomiciliosAfiliado(
+                            requerimiento.getAfiliadoCuilTitular(),
+                            0
+                    );
+        }
+
+        if (domicilios == null || domicilios.isEmpty()) {
+            return;
+        }
+
+        Domicilio domicilio = domicilios.get(0);
+
+        requerimiento.setAfiliadoDireccion(formatearDireccion(domicilio));
+        requerimiento.setAfiliadoLocalidad(domicilio.getLocalidadAsString());
+        requerimiento.setAfiliadoProvincia(domicilio.getProvinciaAsString());
+        requerimiento.setAfiliadoCelular(
+                formatearTelefono(
+                        domicilio.getCod_area_celular(),
+                        domicilio.getCelular()
+                )
+        );
+        requerimiento.setAfiliadoTelefono(
+                formatearTelefono(
+                        domicilio.getCod_area_telefono(),
+                        domicilio.getTelefono()
+                )
+        );
+    }
+
+    private String formatearDireccion(Domicilio domicilio) {
+        if (domicilio == null) {
+            return null;
+        }
+
+        StringBuilder direccion = new StringBuilder();
+
+        agregarParte(direccion, domicilio.getCalle());
+        agregarParte(direccion, domicilio.getNumero());
+        agregarParte(direccion, prefijar("Piso", domicilio.getPiso()));
+        agregarParte(direccion, prefijar("Dto.", domicilio.getDepto()));
+        agregarParte(direccion, prefijar("Of.", domicilio.getOficina()));
+
+        return WebKeysCompras.trimToNull(direccion.toString());
+    }
+
+    private String formatearTelefono(String codigoArea, String numero) {
+        StringBuilder telefono = new StringBuilder();
+
+        agregarParte(telefono, codigoArea);
+        agregarParte(telefono, numero);
+
+        return WebKeysCompras.trimToNull(telefono.toString());
+    }
+
+    private String prefijar(String prefijo, String valor) {
+        String normalizado = WebKeysCompras.trimToNull(valor);
+
+        return normalizado != null ? prefijo + " " + normalizado : null;
+    }
+
+    private void agregarParte(StringBuilder destino, String valor) {
+        String normalizado = WebKeysCompras.trimToNull(valor);
+
+        if (normalizado == null) {
+            return;
+        }
+
+        if (destino.length() > 0) {
+            destino.append(' ');
+        }
+
+        destino.append(normalizado);
     }
 
     private void validarCabecera(RequerimientoCompra requerimiento) throws Exception {

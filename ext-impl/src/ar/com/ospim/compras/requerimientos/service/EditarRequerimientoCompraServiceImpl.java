@@ -30,10 +30,10 @@ public class EditarRequerimientoCompraServiceImpl {
             Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
     private static final String SQL_GUARDAR_REQUERIMIENTO =
-            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?) }";
+            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_GUARDAR_REQUERIMIENTO_DETALLE =
-            "{ ? = call compras.guardar_requerimiento_detalle(?,?,?,?,?,?,?,?,?) }";
+            "{ ? = call compras.guardar_requerimiento_detalle(?,?,?,?,?,?) }";
 
     private static final String SQL_BORRAR_REQUERIMIENTO_DETALLE =
             "{ call compras.borrar_requerimiento_detalle(?,?) }";
@@ -132,13 +132,23 @@ public class EditarRequerimientoCompraServiceImpl {
             setNullableInteger(stmt, 2, requerimiento.getId());
             stmt.setString(3, emptyToNull(requerimiento.getAfiliadoCuilTitular()));
             setNullableInteger(stmt, 4, requerimiento.getAfiliadoInt());
-            setNullableInteger(stmt, 5, requerimiento.getIdSector());
-            setNullableInteger(stmt, 6, requerimiento.getCargoOspim());
-            setNullableInteger(stmt, 7, requerimiento.getCargoTercerizadora());
-            stmt.setString(8, emptyToNull(requerimiento.getIdTercerizadora()));
-            stmt.setBoolean(9, requerimiento.isRecupero());
-            stmt.setString(10, emptyToNull(requerimiento.getObservaciones()));
-            stmt.setString(11, emptyToNull(usuario));
+            stmt.setString(5, emptyToNull(requerimiento.getAfiliadoNombre()));
+            stmt.setString(6, emptyToNull(requerimiento.getAfiliadoApellido()));
+            stmt.setString(7, emptyToNull(requerimiento.getAfiliadoDocumentoTipo()));
+            stmt.setString(8, emptyToNull(requerimiento.getAfiliadoDocumentoNro()));
+            stmt.setString(9, emptyToNull(requerimiento.getAfiliadoDireccion()));
+            stmt.setString(10, emptyToNull(requerimiento.getAfiliadoLocalidad()));
+            stmt.setString(11, emptyToNull(requerimiento.getAfiliadoProvincia()));
+            stmt.setString(12, emptyToNull(requerimiento.getAfiliadoCelular()));
+            stmt.setString(13, emptyToNull(requerimiento.getAfiliadoTelefono()));
+            stmt.setString(14, emptyToNull(requerimiento.getAfiliadoEmail()));
+            setNullableInteger(stmt, 15, requerimiento.getIdSector());
+            setNullableInteger(stmt, 16, requerimiento.getCargoOspim());
+            setNullableInteger(stmt, 17, requerimiento.getCargoTercerizadora());
+            stmt.setString(18, emptyToNull(requerimiento.getIdTercerizadora()));
+            stmt.setBoolean(19, requerimiento.isRecupero());
+            stmt.setString(20, emptyToNull(requerimiento.getObservaciones()));
+            stmt.setString(21, emptyToNull(usuario));
 
             stmt.execute();
 
@@ -166,11 +176,8 @@ public class EditarRequerimientoCompraServiceImpl {
             setNullableInteger(stmt, 3, getIdRequerimientoDetalle(detalle));
             setNullableInteger(stmt, 4, detalle.getIdArticulo());
             setNullableInteger(stmt, 5, detalle.getCantidad());
-            setNullableBigDecimal(stmt, 6, detalle.getPrecioUnitarioEstimado());
-            setNullableBigDecimal(stmt, 7, detalle.getPrecioTotalEstimadoInformado());
-            setNullableInteger(stmt, 8, detalle.getIdPrestador());
-            stmt.setString(9, emptyToNull(detalle.getObservaciones()));
-            stmt.setString(10, emptyToNull(usuario));
+            stmt.setString(6, emptyToNull(detalle.getObservaciones()));
+            stmt.setString(7, emptyToNull(usuario));
 
             stmt.execute();
 
@@ -969,14 +976,6 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.setNull(index, Types.INTEGER);
         } else {
             stmt.setInt(index, value.intValue());
-        }
-    }
-
-    private void setNullableBigDecimal(CallableStatement stmt, int index, BigDecimal value) throws Exception {
-        if (value == null) {
-            stmt.setNull(index, Types.NUMERIC);
-        } else {
-            stmt.setBigDecimal(index, WebKeysCompras.normalizarImporte(value));
         }
     }
 

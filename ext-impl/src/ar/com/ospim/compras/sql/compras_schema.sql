@@ -28,12 +28,11 @@
 -- Fuentes externas consultadas en modo solo lectura por las funciones:
 --   public.prestador
 --   trae_tipos_prestadores()
---   buscar_grupo_fliar(varchar)
 -- =====================================================================
 
--- Limpia una transaccion abortada de una ejecucion anterior.
--- Fuera de una transaccion activa PostgreSQL solo emitira una advertencia inocua.
-ROLLBACK;
+-- Ejecutar manualmente con psql y ON_ERROR_STOP=1.
+-- Si la misma sesion tiene una transaccion abortada, ejecutar ROLLBACK por
+-- separado antes de invocar este archivo.
 
 BEGIN;
 
@@ -415,8 +414,6 @@ FROM (
              (1, 'Pendiente'::VARCHAR),
              (2, 'A cotizar'::VARCHAR),
              (3, 'Cotizado'::VARCHAR),
-             (4, 'Autorizado'::VARCHAR),
-             (5, 'Orden de compra'::VARCHAR),
              (99, 'Anulado'::VARCHAR)
      ) estados(id, descripcion);
 END;
@@ -454,11 +451,37 @@ END IF;
                 'Un requerimiento nuevo debe crearse en estado Pendiente.';
 END IF;
 ELSE
+        IF OLD.estado IN (3, 4, 5, 99)
+           AND NEW IS DISTINCT FROM OLD THEN
+            RAISE EXCEPTION
+                'El requerimiento no puede modificarse en el estado actual.';
+END IF;
+
         v_cambio_estructura :=
                NEW.id_sector IS DISTINCT FROM OLD.id_sector
             OR NEW.afiliado_cuil_titular
                 IS DISTINCT FROM OLD.afiliado_cuil_titular
             OR NEW.afiliado_int IS DISTINCT FROM OLD.afiliado_int
+            OR NEW.afiliado_nombre
+                IS DISTINCT FROM OLD.afiliado_nombre
+            OR NEW.afiliado_apellido
+                IS DISTINCT FROM OLD.afiliado_apellido
+            OR NEW.afiliado_documento_tipo
+                IS DISTINCT FROM OLD.afiliado_documento_tipo
+            OR NEW.afiliado_documento_nro
+                IS DISTINCT FROM OLD.afiliado_documento_nro
+            OR NEW.afiliado_direccion
+                IS DISTINCT FROM OLD.afiliado_direccion
+            OR NEW.afiliado_localidad
+                IS DISTINCT FROM OLD.afiliado_localidad
+            OR NEW.afiliado_provincia
+                IS DISTINCT FROM OLD.afiliado_provincia
+            OR NEW.afiliado_celular
+                IS DISTINCT FROM OLD.afiliado_celular
+            OR NEW.afiliado_telefono
+                IS DISTINCT FROM OLD.afiliado_telefono
+            OR NEW.afiliado_email
+                IS DISTINCT FROM OLD.afiliado_email
             OR NEW.cargo_ospim IS DISTINCT FROM OLD.cargo_ospim
             OR NEW.cargo_tercerizadora
                 IS DISTINCT FROM OLD.cargo_tercerizadora
@@ -1451,6 +1474,16 @@ CREATE FUNCTION compras.guardar_requerimiento(
     p_id INTEGER,
     p_afiliado_cuil_titular VARCHAR,
     p_afiliado_int INTEGER,
+    p_afiliado_nombre VARCHAR,
+    p_afiliado_apellido VARCHAR,
+    p_afiliado_documento_tipo VARCHAR,
+    p_afiliado_documento_nro VARCHAR,
+    p_afiliado_direccion VARCHAR,
+    p_afiliado_localidad VARCHAR,
+    p_afiliado_provincia VARCHAR,
+    p_afiliado_celular VARCHAR,
+    p_afiliado_telefono VARCHAR,
+    p_afiliado_email VARCHAR,
     p_id_sector INTEGER,
     p_cargo_ospim INTEGER,
     p_cargo_tercerizadora INTEGER,
@@ -1466,10 +1499,6 @@ v_id INTEGER;
     v_usuario VARCHAR(100);
 
     v_afiliado_cuil VARCHAR(20);
-    v_afiliado_nombre VARCHAR(120);
-    v_afiliado_apellido VARCHAR(120);
-    v_afiliado_documento_tipo VARCHAR(10);
-    v_afiliado_documento_nro VARCHAR(30);
 
     v_cuil_anterior VARCHAR(20);
     v_inte_anterior INTEGER;
@@ -1484,27 +1513,6 @@ BEGIN
         ''
     );
 
-    IF v_afiliado_cuil IS NOT NULL
-       AND p_afiliado_int IS NOT NULL THEN
-
-SELECT
-    afi.nombre::VARCHAR,
-    afi.apellido::VARCHAR,
-    afi.tdoc::VARCHAR,
-    afi.documento::VARCHAR
-INTO
-    v_afiliado_nombre,
-    v_afiliado_apellido,
-    v_afiliado_documento_tipo,
-    v_afiliado_documento_nro
-FROM buscar_grupo_fliar(
-             v_afiliado_cuil
-     ) afi
-WHERE afi.inte =
-      p_afiliado_int
-    LIMIT 1;
-END IF;
-
     IF p_id IS NULL OR p_id <= 0 THEN
         INSERT INTO compras.requerimiento (
             estado,
@@ -1517,6 +1525,12 @@ END IF;
             afiliado_apellido,
             afiliado_documento_tipo,
             afiliado_documento_nro,
+            afiliado_direccion,
+            afiliado_localidad,
+            afiliado_provincia,
+            afiliado_celular,
+            afiliado_telefono,
+            afiliado_email,
 
             cargo_ospim,
             cargo_tercerizadora,
@@ -1534,10 +1548,16 @@ END IF;
             v_afiliado_cuil,
             p_afiliado_int,
 
-            v_afiliado_nombre,
-            v_afiliado_apellido,
-            v_afiliado_documento_tipo,
-            v_afiliado_documento_nro,
+            NULLIF(btrim(p_afiliado_nombre), ''),
+            NULLIF(btrim(p_afiliado_apellido), ''),
+            NULLIF(btrim(p_afiliado_documento_tipo), ''),
+            NULLIF(btrim(p_afiliado_documento_nro), ''),
+            NULLIF(btrim(p_afiliado_direccion), ''),
+            NULLIF(btrim(p_afiliado_localidad), ''),
+            NULLIF(btrim(p_afiliado_provincia), ''),
+            NULLIF(btrim(p_afiliado_celular), ''),
+            NULLIF(btrim(p_afiliado_telefono), ''),
+            NULLIF(btrim(p_afiliado_email), ''),
 
             COALESCE(p_cargo_ospim, 0),
             COALESCE(
@@ -1593,70 +1613,70 @@ SET id_sector = p_id_sector,
     afiliado_nombre =
         CASE
             WHEN v_cambio_afiliado
-                THEN v_afiliado_nombre
+                THEN NULLIF(btrim(p_afiliado_nombre), '')
             ELSE afiliado_nombre
             END,
 
     afiliado_apellido =
         CASE
             WHEN v_cambio_afiliado
-                THEN v_afiliado_apellido
+                THEN NULLIF(btrim(p_afiliado_apellido), '')
             ELSE afiliado_apellido
             END,
 
     afiliado_documento_tipo =
         CASE
             WHEN v_cambio_afiliado
-                THEN v_afiliado_documento_tipo
+                THEN NULLIF(btrim(p_afiliado_documento_tipo), '')
             ELSE afiliado_documento_tipo
             END,
 
     afiliado_documento_nro =
         CASE
             WHEN v_cambio_afiliado
-                THEN v_afiliado_documento_nro
+                THEN NULLIF(btrim(p_afiliado_documento_nro), '')
             ELSE afiliado_documento_nro
             END,
 
     afiliado_direccion =
         CASE
             WHEN v_cambio_afiliado
-                THEN NULL
+                THEN NULLIF(btrim(p_afiliado_direccion), '')
             ELSE afiliado_direccion
             END,
 
     afiliado_localidad =
         CASE
             WHEN v_cambio_afiliado
-                THEN NULL
+                THEN NULLIF(btrim(p_afiliado_localidad), '')
             ELSE afiliado_localidad
             END,
 
     afiliado_provincia =
         CASE
             WHEN v_cambio_afiliado
-                THEN NULL
+                THEN NULLIF(btrim(p_afiliado_provincia), '')
             ELSE afiliado_provincia
             END,
 
     afiliado_celular =
         CASE
             WHEN v_cambio_afiliado
-                THEN NULL
+                THEN NULLIF(btrim(p_afiliado_celular), '')
             ELSE afiliado_celular
             END,
 
     afiliado_telefono =
         CASE
             WHEN v_cambio_afiliado
-                THEN NULL
+                THEN NULLIF(btrim(p_afiliado_telefono), '')
             ELSE afiliado_telefono
             END,
 
     afiliado_email =
         CASE
             WHEN v_cambio_afiliado
-                THEN NULL
+                THEN NULLIF(btrim(p_afiliado_email), '')
             ELSE afiliado_email
             END,
 
@@ -1734,6 +1754,11 @@ WHERE r.id_requerimiento =
 IF v_estado_actual IS NULL THEN
         RAISE EXCEPTION
             'No se encontro el requerimiento.';
+END IF;
+
+    IF p_estado_nuevo = v_estado_actual THEN
+        RAISE EXCEPTION
+            'La transicion al mismo estado no es valida.';
 END IF;
 
 UPDATE compras.requerimiento
@@ -1832,9 +1857,6 @@ CREATE FUNCTION compras.guardar_requerimiento_detalle(
     p_id_requerimiento INTEGER,
     p_id_articulo INTEGER,
     p_cantidad INTEGER,
-    p_precio_unitario_estimado NUMERIC,
-    p_precio_total_estimado NUMERIC,
-    p_id_prestador INTEGER,
     p_observaciones TEXT,
     p_usuario VARCHAR
 )
@@ -2465,6 +2487,7 @@ STABLE;
 DO $verificacion$
 DECLARE
 v_sectores INTEGER;
+    v_estados INTEGER;
 BEGIN
 SELECT count(*)
 INTO v_sectores
@@ -2476,6 +2499,42 @@ IF v_sectores <> 8 THEN
         RAISE EXCEPTION
             'La carga inicial de sectores es invalida. Total: %.',
             v_sectores;
+END IF;
+
+SELECT count(*)
+INTO v_estados
+FROM compras.listar_estados_requerimiento();
+
+IF v_estados <> 4 THEN
+        RAISE EXCEPTION
+            'La lista de estados operativos es invalida. Total: %.',
+            v_estados;
+END IF;
+
+    IF EXISTS (
+        SELECT 1
+          FROM compras.listar_estados_requerimiento() e
+         WHERE e.id IN (4, 5)
+    ) THEN
+        RAISE EXCEPTION
+            'Los estados reservados no deben exponerse como operativos.';
+END IF;
+
+    IF EXISTS (
+        SELECT 1
+          FROM pg_constraint c
+          JOIN pg_namespace propio
+            ON propio.oid = c.connamespace
+          JOIN pg_class referida
+            ON referida.oid = c.confrelid
+          JOIN pg_namespace esquema_referido
+            ON esquema_referido.oid = referida.relnamespace
+         WHERE c.contype = 'f'
+           AND propio.nspname = 'compras'
+           AND esquema_referido.nspname <> 'compras'
+    ) THEN
+        RAISE EXCEPTION
+            'El esquema compras contiene claves foraneas hacia otros esquemas.';
 END IF;
 
     IF compras.estado_requerimiento_descripcion(1)
@@ -2531,4 +2590,3 @@ COMMIT;
 -- FROM compras.get_requerimiento_compra_pdf(
 --     :id_requerimiento
 -- );
-
