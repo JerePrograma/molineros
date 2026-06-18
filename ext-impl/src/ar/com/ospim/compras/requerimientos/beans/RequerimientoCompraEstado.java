@@ -64,8 +64,12 @@ public class RequerimientoCompraEstado {
         this.descripcion = WebKeysCompras.trimToNull(descripcion);
     }
 
-    public boolean isBorrador() {
-        return WebKeysCompras.esBorrador(getIdEstado());
+    public boolean isPendiente() {
+        return WebKeysCompras.esPendiente(getIdEstado());
+    }
+
+    public boolean isACotizar() {
+        return WebKeysCompras.esACotizar(getIdEstado());
     }
 
     public boolean isCotizado() {

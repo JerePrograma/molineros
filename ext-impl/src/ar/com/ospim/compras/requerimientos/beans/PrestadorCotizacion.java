@@ -27,6 +27,22 @@ public class PrestadorCotizacion {
         return descripcion != null ? descripcion : "";
     }
 
+    public String getRazonSocialVisible() {
+        return getDescripcionVisible();
+    }
+
+    public String getEtiquetaVisible() {
+        if (WebKeysCompras.isEmpty(descripcion)) {
+            return getCuitVisible();
+        }
+
+        if (WebKeysCompras.isEmpty(cuit)) {
+            return getDescripcionVisible();
+        }
+
+        return getDescripcionVisible() + " - " + getCuitVisible();
+    }
+
     public void setDescripcion(String descripcion) {
         this.descripcion =
                 WebKeysCompras.trimToNull(descripcion);

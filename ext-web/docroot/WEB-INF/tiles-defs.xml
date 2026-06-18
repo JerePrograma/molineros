@@ -4571,6 +4571,11 @@
 		<put name="portlet_content"
 		     value="/portlet/compras/requerimientos/articulos_sector.jsp" />
 	</definition>
+	<definition name="portlet.compras.prestadores_enviados"
+	            extends="portlet.compras">
+		<put name="portlet_content"
+		     value="/portlet/compras/requerimientos/prestadores_enviados.jsp" />
+	</definition>
 
 	<definition name="portlet.compras.afiliados.result.search"
 	            extends="portlet.compras">

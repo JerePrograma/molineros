@@ -48,6 +48,18 @@ public class BusquedaRequerimientoCompraServiceUtil {
         return getInstance().getSector(idSector);
     }
 
+    public static List<PrestadorCotizacion> buscarPrestadoresEnviados(
+            int idRequerimientoCompra,
+            String texto,
+            int limite) throws Exception {
+
+        return getInstance().buscarPrestadoresEnviados(
+                idRequerimientoCompra,
+                texto,
+                limite
+        );
+    }
+
     private BusquedaRequerimientoCompraServiceUtil() {
     }
 }

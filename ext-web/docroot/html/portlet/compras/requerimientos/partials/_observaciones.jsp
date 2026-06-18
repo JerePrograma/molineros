@@ -1,7 +1,7 @@
 <fieldset class="block-labels">
     <legend>Observaciones</legend>
 
-    <% if (modoEditable) { %>
+    <% if (puedeEditarEstructuraPantalla) { %>
         <table class="lfr-table">
             <tr>
                 <td>

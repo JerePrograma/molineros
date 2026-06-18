@@ -5,6 +5,7 @@ public class NotificacionCotizacionResultado {
     private int totalCandidatos;
     private int enviados;
     private int errores;
+    private int emailsInvalidos;
     private int omitidos;
 
     public int getTotalCandidatos() {
@@ -42,6 +43,18 @@ public class NotificacionCotizacionResultado {
         errores++;
     }
 
+    public int getEmailsInvalidos() {
+        return emailsInvalidos;
+    }
+
+    public void setEmailsInvalidos(int emailsInvalidos) {
+        this.emailsInvalidos = emailsInvalidos;
+    }
+
+    public void incrementarEmailsInvalidos() {
+        emailsInvalidos++;
+    }
+
     public int getOmitidos() {
         return omitidos;
     }
@@ -55,10 +68,10 @@ public class NotificacionCotizacionResultado {
     }
 
     public int getTotalProcesados() {
-        return enviados + errores + omitidos;
+        return enviados + errores + emailsInvalidos + omitidos;
     }
 
     public boolean tieneErrores() {
-        return errores > 0;
+        return errores > 0 || emailsInvalidos > 0;
     }
 }

@@ -13,6 +13,9 @@ public class RequerimientoCompraDetalle {
     private Integer cantidad;
     private BigDecimal precioUnitarioEstimado;
     private BigDecimal precioTotalEstimado;
+    private Integer idPrestador;
+    private String prestadorCuit;
+    private String prestadorRazonSocial;
     private String observaciones;
 
     public RequerimientoCompraDetalle() {
@@ -102,6 +105,7 @@ public class RequerimientoCompraDetalle {
 
     public void setCantidad(Integer cantidad) {
         this.cantidad = cantidad;
+        this.precioTotalEstimado = calcularPrecioTotalEstimado();
     }
 
     public BigDecimal getPrecioUnitarioEstimado() {
@@ -109,11 +113,12 @@ public class RequerimientoCompraDetalle {
     }
 
     public String getPrecioUnitarioEstimadoString() {
-        return precioUnitarioEstimado != null ? precioUnitarioEstimado.toString() : "";
+        return WebKeysCompras.formatearImporte(precioUnitarioEstimado);
     }
 
     public void setPrecioUnitarioEstimado(BigDecimal precioUnitarioEstimado) {
-        this.precioUnitarioEstimado = precioUnitarioEstimado;
+        this.precioUnitarioEstimado = WebKeysCompras.normalizarImporte(precioUnitarioEstimado);
+        this.precioTotalEstimado = calcularPrecioTotalEstimado();
     }
 
     public BigDecimal getPrecioTotalEstimado() {
@@ -130,19 +135,71 @@ public class RequerimientoCompraDetalle {
 
     public String getPrecioTotalEstimadoString() {
         BigDecimal total = getPrecioTotalEstimado();
-        return total != null ? total.toString() : "";
+        return WebKeysCompras.formatearImporte(total);
     }
 
     public void setPrecioTotalEstimado(BigDecimal precioTotalEstimado) {
-        this.precioTotalEstimado = precioTotalEstimado;
+        this.precioTotalEstimado = WebKeysCompras.normalizarImporte(precioTotalEstimado);
     }
 
     public BigDecimal calcularPrecioTotalEstimado() {
-        if (cantidad == null || precioUnitarioEstimado == null) {
-            return null;
+        return WebKeysCompras.calcularPrecioTotal(cantidad, precioUnitarioEstimado);
+    }
+
+    public Integer getIdPrestador() {
+        return idPrestador;
+    }
+
+    public int getIdPrestadorInt() {
+        return idPrestador != null ? idPrestador.intValue() : 0;
+    }
+
+    public String getIdPrestadorString() {
+        return idPrestador != null && idPrestador.intValue() > 0
+                ? String.valueOf(idPrestador)
+                : "";
+    }
+
+    public void setIdPrestador(Integer idPrestador) {
+        this.idPrestador = idPrestador != null && idPrestador.intValue() > 0
+                ? idPrestador
+                : null;
+    }
+
+    public String getPrestadorCuit() {
+        return prestadorCuit;
+    }
+
+    public String getPrestadorCuitVisible() {
+        return prestadorCuit != null ? prestadorCuit : "";
+    }
+
+    public void setPrestadorCuit(String prestadorCuit) {
+        this.prestadorCuit = WebKeysCompras.trimToNull(prestadorCuit);
+    }
+
+    public String getPrestadorRazonSocial() {
+        return prestadorRazonSocial;
+    }
+
+    public String getPrestadorRazonSocialVisible() {
+        return prestadorRazonSocial != null ? prestadorRazonSocial : "";
+    }
+
+    public void setPrestadorRazonSocial(String prestadorRazonSocial) {
+        this.prestadorRazonSocial = WebKeysCompras.trimToNull(prestadorRazonSocial);
+    }
+
+    public String getPrestadorSeleccionadoVisible() {
+        if (WebKeysCompras.isEmpty(prestadorRazonSocial)) {
+            return getPrestadorCuitVisible();
         }
 
-        return precioUnitarioEstimado.multiply(new BigDecimal(cantidad.intValue()));
+        if (WebKeysCompras.isEmpty(prestadorCuit)) {
+            return getPrestadorRazonSocialVisible();
+        }
+
+        return getPrestadorRazonSocialVisible() + " - " + getPrestadorCuitVisible();
     }
 
     public String getObservaciones() {

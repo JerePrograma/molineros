@@ -105,9 +105,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
 
         if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
                 && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ORDEN_COMPRA_COMPRAS)) {
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)) {
 
             throw new Exception("No posee permisos para consultar requerimientos de compras.");
         }

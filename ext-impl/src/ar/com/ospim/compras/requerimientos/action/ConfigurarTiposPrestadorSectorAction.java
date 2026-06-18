@@ -79,7 +79,7 @@ public class ConfigurarTiposPrestadorSectorAction
 
             SessionMessages.add(
                     actionRequest,
-                    "configuracion-cotizaciones-actualizada"
+                    "configuracion-prestadores-sector-actualizada"
             );
 
         } catch (Exception e) {
@@ -96,7 +96,7 @@ public class ConfigurarTiposPrestadorSectorAction
              */
             SessionErrors.add(
                     actionRequest,
-                    "configuracion-cotizaciones-error",
+                    "configuracion-prestadores-sector-error",
                     getMensajeError(e)
             );
         }
@@ -436,7 +436,7 @@ public class ConfigurarTiposPrestadorSectorAction
                 || e.getMessage().trim().length() == 0) {
 
             return "Ocurrio un error procesando "
-                    + "la configuracion de cotizaciones.";
+                    + "la configuracion de prestadores por sector.";
         }
 
         return e.getMessage().trim();

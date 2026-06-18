@@ -5,6 +5,12 @@
         <th>Cantidad</th>
         <th>Descripcion</th>
 
+        <% if (puedeVerCotizacionDetalle) { %>
+            <th>Precio unitario</th>
+            <th>Total</th>
+            <th>Prestador adjudicado</th>
+        <% } %>
+
         <% if (puedeABMDetalle) { %>
             <th>Acciones</th>
         <% } %>

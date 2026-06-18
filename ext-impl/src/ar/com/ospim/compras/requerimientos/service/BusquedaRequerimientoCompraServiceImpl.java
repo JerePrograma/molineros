@@ -8,6 +8,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -37,6 +38,11 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
     private static final String SQL_GET_SECTOR =
             "{call compras.get_sector_requerimiento(?)}";
+
+    private static final String SQL_BUSCAR_PRESTADORES_ENVIADOS =
+            "SELECT id_prestador, descripcion, cuit, email, " +
+                    "id_tipo_prestador, tipo_prestador " +
+                    "FROM compras.buscar_prestadores_enviados(?, ?, ?)";
 
     public List<RequerimientoCompra> buscarRequerimientos(RequerimientoCompraFiltro filtro) throws Exception {
         Connection con = null;
@@ -135,29 +141,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
     }
 
     public List<RequerimientoCompraEstado> listarEstados() throws Exception {
-        Connection con = null;
-        CallableStatement stmt = null;
-        ResultSet rs = null;
-
-        List<RequerimientoCompraEstado> estados = new ArrayList<RequerimientoCompraEstado>();
-
-        try {
-            con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_LISTAR_ESTADOS);
-            rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                estados.add(mapEstado(rs));
-            }
-        } catch (Exception e) {
-            _log.error(e);
-            throw e;
-        } finally {
-            closeQuietly(rs);
-            ConnectionHelper.cerrar(stmt, con);
-        }
-
-        return estados;
+        return ar.com.ospim.compras.WebKeysCompras.listarEstados();
     }
 
     public List<RequerimientoCompraSector> listarSectores() throws Exception {
@@ -236,6 +220,45 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
     }
 
+    public List<PrestadorCotizacion> buscarPrestadoresEnviados(int idRequerimientoCompra,
+                                                                String texto,
+                                                                int limite) throws Exception {
+        if (idRequerimientoCompra <= 0) {
+            throw new Exception("Debe informar el requerimiento de compra.");
+        }
+
+        if (limite <= 0 || limite > 50) {
+            limite = 20;
+        }
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        List<PrestadorCotizacion> prestadores = new ArrayList<PrestadorCotizacion>();
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(SQL_BUSCAR_PRESTADORES_ENVIADOS);
+            stmt.setInt(1, idRequerimientoCompra);
+            stmt.setString(2, emptyToNull(texto));
+            stmt.setInt(3, limite);
+
+            rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                prestadores.add(mapPrestadorCotizacion(rs));
+            }
+
+            return prestadores;
+        } catch (Exception e) {
+            _log.error(e);
+            throw e;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
     private RequerimientoCompra mapRequerimiento(ResultSet rs) throws Exception {
         RequerimientoCompra r = new RequerimientoCompra();
 
@@ -257,6 +280,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
         r.setAfiliadoDocumentoTipo(getString(rs, "afiliado_documento_tipo"));
         r.setAfiliadoDocumentoNro(getString(rs, "afiliado_documento_nro"));
         r.setAfiliadoDocumento(getString(rs, "afiliado_documento"));
+        r.setAfiliadoDireccion(getString(rs, "afiliado_direccion"));
+        r.setAfiliadoLocalidad(getString(rs, "afiliado_localidad"));
+        r.setAfiliadoProvincia(getString(rs, "afiliado_provincia"));
+        r.setAfiliadoCelular(getString(rs, "afiliado_celular"));
+        r.setAfiliadoTelefono(getString(rs, "afiliado_telefono"));
+        r.setAfiliadoEmail(getString(rs, "afiliado_email"));
 
         r.setIdSector(getInteger(rs, "id_sector"));
         r.setSectorDescripcion(getString(rs, "sector_descripcion"));
@@ -285,6 +314,9 @@ public class BusquedaRequerimientoCompraServiceImpl {
         d.setCantidad(getInteger(rs, "cantidad"));
         d.setPrecioUnitarioEstimado(getNullableBigDecimal(rs, "precio_unitario_estimado"));
         d.setPrecioTotalEstimado(getNullableBigDecimal(rs, "precio_total_estimado"));
+        d.setIdPrestador(getInteger(rs, "id_prestador"));
+        d.setPrestadorCuit(getString(rs, "prestador_cuit"));
+        d.setPrestadorRazonSocial(getString(rs, "prestador_razon_social"));
         d.setObservaciones(getString(rs, "observaciones"));
 
         return d;
@@ -307,6 +339,23 @@ public class BusquedaRequerimientoCompraServiceImpl {
         sector.setRequiereAfiliado(getBoolean(rs, "requiere_afiliado"));
 
         return sector;
+    }
+
+    private PrestadorCotizacion mapPrestadorCotizacion(ResultSet rs) throws Exception {
+        PrestadorCotizacion prestador = new PrestadorCotizacion();
+
+        prestador.setIdPrestador(getInteger(rs, "id_prestador") != null
+                ? getInteger(rs, "id_prestador").intValue()
+                : 0);
+        prestador.setDescripcion(getString(rs, "descripcion"));
+        prestador.setCuit(getString(rs, "cuit"));
+        prestador.setEmail(getString(rs, "email"));
+        prestador.setIdTipoPrestador(getInteger(rs, "id_tipo_prestador") != null
+                ? getInteger(rs, "id_tipo_prestador").intValue()
+                : 0);
+        prestador.setTipoPrestador(getString(rs, "tipo_prestador"));
+
+        return prestador;
     }
 
     private void setNullableInteger(CallableStatement stmt, int index, Integer value) throws Exception {

@@ -5,6 +5,7 @@ import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.beans.CompraArticulo;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
@@ -156,6 +157,50 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             User user = PortalUtil.getUser(actionRequest);
             String usuario = getUsuario(user);
 
+            if ("saveCotizacion".equals(cmd) || "cerrarCotizacion".equals(cmd)) {
+                validarPermisoCotizar(user);
+                consumirTokenGuardadoCompra(actionRequest);
+
+                if (idRequerimientoCompra <= 0) {
+                    errorCampo(
+                            "id_requerimiento_compra",
+                            "Debe informar el requerimiento de compra."
+                    );
+                }
+
+                List detallesCotizacion =
+                        getDetallesCotizacionFromRequest(actionRequest);
+
+                if ("cerrarCotizacion".equals(cmd)) {
+                    EditarRequerimientoCompraServiceUtil.cerrarCotizacion(
+                            idRequerimientoCompra,
+                            detallesCotizacion,
+                            usuario
+                    );
+
+                    SessionMessages.add(actionRequest, "requerimiento-compra-cotizacion-cerrada");
+                    actionResponse.setRenderParameter("struts_action", "/compras/ver_requerimiento");
+                    setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
+                } else {
+                    EditarRequerimientoCompraServiceUtil.guardarAvanceCotizacion(
+                            idRequerimientoCompra,
+                            detallesCotizacion,
+                            usuario
+                    );
+
+                    SessionMessages.add(actionRequest, "requerimiento-compra-cotizacion-guardada");
+                    actionResponse.setRenderParameter("struts_action", STRUTS_ACTION_EDITAR_REQUERIMIENTO);
+                    setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+                }
+
+                actionResponse.setRenderParameter(
+                        "id_requerimiento_compra",
+                        String.valueOf(idRequerimientoCompra)
+                );
+
+                return;
+            }
+
             if ("saveAll".equals(cmd)) {
                 validarPermisoABM(user);
 
@@ -173,7 +218,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                     requerimiento.setIdEstado(existente.getIdEstado());
                 } else {
-                    requerimiento.setIdEstado(WebKeysCompras.ESTADO_BORRADOR);
+                    requerimiento.setIdEstado(WebKeysCompras.ESTADO_PENDIENTE);
                 }
 
                 prepararRequerimientoParaGuardar(requerimiento);
@@ -233,7 +278,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                     requerimiento.setIdEstado(existente.getIdEstado());
                 } else {
-                    requerimiento.setIdEstado(WebKeysCompras.ESTADO_BORRADOR);
+                    requerimiento.setIdEstado(WebKeysCompras.ESTADO_PENDIENTE);
                 }
 
                 prepararRequerimientoParaGuardar(requerimiento);
@@ -663,13 +708,22 @@ public class EditarRequerimientoCompraAction extends PortletAction {
     private boolean puedeEditarRender(User user, RequerimientoCompra requerimiento)
             throws Exception {
 
-        return user != null
-                && PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysCompras.ROL_ABM_COMPRAS
-                )
-                && requerimiento != null
-                && requerimiento.isEditable();
+        if (user == null || requerimiento == null) {
+            return false;
+        }
+
+        if (PermissionUtil.userContainsRole(
+                user,
+                WebKeysCompras.ROL_ABM_COMPRAS
+        ) && requerimiento.puedeEditarEstructura()) {
+
+            return true;
+        }
+
+        return PermissionUtil.userContainsRole(
+                user,
+                WebKeysCompras.ROL_COTIZAR_COMPRAS
+        ) && requerimiento.puedeEditarCotizacion();
     }
 
     private void validarPermisoConsulta(User user) throws Exception {
@@ -679,9 +733,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
                 && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ORDEN_COMPRA_COMPRAS)) {
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)) {
 
             errorCampo(
                     "permisos",
@@ -699,6 +751,19 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             errorCampo(
                     "permisos",
                     "No posee permisos para administrar requerimientos de compras."
+            );
+        }
+    }
+
+    private void validarPermisoCotizar(User user) throws Exception {
+        if (user == null) {
+            errorCampo("usuario", "No se pudo determinar el usuario actual.");
+        }
+
+        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)) {
+            errorCampo(
+                    "permisos",
+                    "No posee permisos para cotizar requerimientos de compras."
             );
         }
     }
@@ -737,10 +802,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             );
         }
 
-        if (!requerimiento.isEditable()) {
+        if (!requerimiento.puedeEditarEstructura()) {
             errorCampo(
                     "estado",
-                    "Solo se pueden editar requerimientos en estado Borrador. Estado actual: "
+                    "Solo se puede editar la estructura en estado Pendiente. Estado actual: "
                             + requerimiento.getEstadoDescripcionVisible() + "."
             );
         }
@@ -1000,6 +1065,99 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         requerimiento.setObservaciones(getParametroRaw(request, "observaciones", null));
 
         return requerimiento;
+    }
+
+    private List getDetallesCotizacionFromRequest(ActionRequest request)
+            throws Exception {
+
+        int count =
+                parseEnteroConDefault(
+                        request,
+                        "detalle_count",
+                        "Cantidad de detalles",
+                        0
+                );
+
+        List detalles = new ArrayList();
+
+        for (int i = 0; i < count; i++) {
+            String prefix = "detalle_" + i + "_";
+
+            int idDetalle =
+                    parseEnteroConDefault(
+                            request,
+                            prefix + "id",
+                            "Detalle #" + (i + 1),
+                            0
+                    );
+
+            if (idDetalle <= 0) {
+                continue;
+            }
+
+            RequerimientoCompraDetalle detalle =
+                    new RequerimientoCompraDetalle();
+
+            detalle.setId(Integer.valueOf(idDetalle));
+
+            BigDecimal precioUnitario =
+                    parseBigDecimalNullable(
+                            getParametroTrim(
+                                    request,
+                                    prefix + "precio_unitario_estimado"
+                            ),
+                            "Detalle #" + (i + 1) + " - Precio unitario"
+                    );
+
+            detalle.setPrecioUnitarioEstimado(precioUnitario);
+
+            int idPrestador =
+                    parseEnteroConDefault(
+                            request,
+                            prefix + "id_prestador",
+                            "Detalle #" + (i + 1) + " - Prestador",
+                            0
+                    );
+
+            if (idPrestador > 0) {
+                detalle.setIdPrestador(Integer.valueOf(idPrestador));
+            }
+
+            detalles.add(detalle);
+        }
+
+        return detalles;
+    }
+
+    private BigDecimal parseBigDecimalNullable(String value, String label)
+            throws ValidacionCompraException {
+
+        if (WebKeysCompras.isEmpty(value)) {
+            return null;
+        }
+
+        String original = value.trim();
+        String clean = original.replace(" ", "");
+
+        if (clean.indexOf(',') >= 0) {
+            clean = clean.replace(".", "").replace(",", ".");
+        }
+
+        if (!clean.matches("^-?[0-9]+(\\.[0-9]+)?$")) {
+            errorCampo(
+                    label,
+                    label + ": importe invalido. Valor recibido: '" + original
+                            + "'. Use formatos como 1234.56 o 1.234,56."
+            );
+        }
+
+        try {
+            return new BigDecimal(clean);
+        } catch (Exception e) {
+            errorCampo(label, label + ": no se pudo interpretar el importe '" + original + "'.");
+        }
+
+        return null;
     }
 
     private void errorCampo(String campo, String mensaje)

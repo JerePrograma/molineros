@@ -45,50 +45,50 @@ private String jsCompraAdjunto(String value) {
 <%
 String namespaceAdjuntos = renderResponse.getNamespace();
 
-RequerimientoCompra reqImagenes =
+RequerimientoCompra reqPresupuestos =
         (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
 
-if (reqImagenes == null) {
-    reqImagenes =
+if (reqPresupuestos == null) {
+    reqPresupuestos =
             (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW);
 }
 
-int idRequerimientoCompraImagenes = 0;
+int idRequerimientoCompraPresupuestos = 0;
 
-if (reqImagenes != null) {
-    idRequerimientoCompraImagenes = reqImagenes.getIdRequerimientoCompra();
+if (reqPresupuestos != null) {
+    idRequerimientoCompraPresupuestos = reqPresupuestos.getIdRequerimientoCompra();
 }
 
-if (idRequerimientoCompraImagenes <= 0) {
-    idRequerimientoCompraImagenes =
+if (idRequerimientoCompraPresupuestos <= 0) {
+    idRequerimientoCompraPresupuestos =
             ParamUtil.getInteger(renderRequest, "id_requerimiento_compra", 0);
 }
 
-Object soloLecturaAttrImagenes =
+Object soloLecturaAttrPresupuestos =
         renderRequest.getAttribute(WebKeysCompras.SOLO_LECTURA_ATTR);
 
-String modoImagenes = ParamUtil.getString(renderRequest, "modo", "");
-String strutsActionImagenes = ParamUtil.getString(renderRequest, "struts_action", "");
+String modoPresupuestos = ParamUtil.getString(renderRequest, "modo", "");
+String strutsActionPresupuestos = ParamUtil.getString(renderRequest, "struts_action", "");
 
-boolean soloLecturaImagenes =
-        Boolean.TRUE.equals(soloLecturaAttrImagenes)
-        || "ver".equalsIgnoreCase(modoImagenes)
-        || "/compras/ver_requerimiento".equals(strutsActionImagenes);
+boolean soloLecturaPresupuestos =
+        Boolean.TRUE.equals(soloLecturaAttrPresupuestos)
+        || "ver".equalsIgnoreCase(modoPresupuestos)
+        || "/compras/ver_requerimiento".equals(strutsActionPresupuestos);
 
-boolean puedeABMImagenes =
+boolean puedeCotizarPresupuestos =
         user != null
-        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS);
 
-boolean puedeEliminarImagenes =
-        idRequerimientoCompraImagenes > 0
-        && puedeABMImagenes
-        && reqImagenes != null
-        && reqImagenes.isEditable()
-        && !soloLecturaImagenes;
+boolean puedeEliminarPresupuestos =
+        idRequerimientoCompraPresupuestos > 0
+        && puedeCotizarPresupuestos
+        && reqPresupuestos != null
+        && reqPresupuestos.puedeAdministrarPresupuestos()
+        && !soloLecturaPresupuestos;
 
 String keywords =
-        idRequerimientoCompraImagenes > 0
-                ? WebKeysCompras.getPrefijoDocumentoRequerimientoCompra(idRequerimientoCompraImagenes) + "%"
+        idRequerimientoCompraPresupuestos > 0
+                ? WebKeysCompras.getPrefijoDocumentoRequerimientoCompra(idRequerimientoCompraPresupuestos) + "%"
                 : "";
 
 PortletURL portletURL = renderResponse.createRenderURL();
@@ -99,7 +99,7 @@ List<String> headerNames = new ArrayList<String>();
 headerNames.add("#");
 headerNames.add("folder");
 headerNames.add("document");
-headerNames.add("Descripción");
+headerNames.add("Descripciï¿½n");
 headerNames.add("");
 headerNames.add("");
 
@@ -120,7 +120,7 @@ SearchContainer searchContainer =
         );
 
 try {
-    if (idRequerimientoCompraImagenes > 0) {
+    if (idRequerimientoCompraPresupuestos > 0) {
         DynamicQuery dlf =
                 DynamicQueryFactoryUtil.forClass(
                         DLFileEntry.class,
@@ -131,7 +131,7 @@ try {
                 DLFolderLocalServiceUtil.getFolder(
                         WebKeysCompras.DOCUMENT_LIBRARY_GROUP_ID_COMPRAS,
                         WebKeysCompras.DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS,
-                        WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_REQUERIMIENTOS_COMPRAS
+                        WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS
                 );
 
         long folderId = folder.getFolderId();
@@ -145,7 +145,7 @@ try {
                         RestrictionsFactoryUtil.ilike(
                                 "title",
                                 WebKeysCompras.getPrefijoDocumentoRequerimientoCompra(
-                                        idRequerimientoCompraImagenes
+                                        idRequerimientoCompraPresupuestos
                                 ) + "%"
                         )
                 );
@@ -184,7 +184,7 @@ try {
             ver.append("<a href=\"");
             ver.append(HtmlUtil.escape(downloadURL));
             ver.append("\" target=\"_blank\">");
-            ver.append("<img alt=\"Ver archivo\" src=\"");
+            ver.append("<img alt=\"Ver presupuesto\" src=\"");
             ver.append(themeDisplay.getPathThemeImages());
             ver.append("/common/view.png\" />");
             ver.append("</a>");
@@ -193,12 +193,12 @@ try {
 
             StringBuilder borrar = new StringBuilder();
 
-            if (puedeEliminarImagenes) {
-                borrar.append("<img alt=\"Eliminar archivo\" src=\"");
+            if (puedeEliminarPresupuestos) {
+                borrar.append("<img alt=\"Eliminar presupuesto\" src=\"");
                 borrar.append(themeDisplay.getPathThemeImages());
                 borrar.append("/common/delete.png\" onclick=\"return ");
                 borrar.append(namespaceAdjuntos);
-                borrar.append("deleteImagenRequerimientoCompra('");
+                borrar.append("deletePresupuestoRequerimientoCompra('");
                 borrar.append(String.valueOf(folderId));
                 borrar.append("', '");
                 borrar.append(jsCompraAdjunto(fileEntry.getName()));
@@ -225,8 +225,8 @@ try {
     _log.error(e.getMessage(), e);
 %>
     <div class="portlet-msg-info">
-        No se encontraron archivos para el requerimiento o no existe la carpeta de Document Library
-        <strong><%= HtmlUtil.escape(WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_REQUERIMIENTOS_COMPRAS) %></strong>.
+        No se encontraron presupuestos para el requerimiento o no existe la carpeta de Document Library
+        <strong><%= HtmlUtil.escape(WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS) %></strong>.
     </div>
 <%
 }

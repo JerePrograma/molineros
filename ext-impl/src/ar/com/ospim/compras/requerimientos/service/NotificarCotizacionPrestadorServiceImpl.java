@@ -35,10 +35,6 @@ public class NotificarCotizacionPrestadorServiceImpl {
                     "(?i)(password|passwd|pwd|token|secret|api[_-]?key|authorization)\\s*[:=]\\s*\\S+"
             );
 
-    private static final String ESTADO_ENVIADO = "ENVIADO";
-    private static final String ESTADO_ERROR = "ERROR";
-    private static final String ESTADO_EMAIL_INVALIDO = "EMAIL_INVALIDO";
-
     private static final String SQL_LISTAR_CANDIDATOS =
             "SELECT id_prestador, descripcion, cuit, email, " +
                     "id_tipo_prestador, tipo_prestador " +
@@ -187,7 +183,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
             finalizarConControl(
                     idRequerimiento,
                     idPrestador,
-                    ESTADO_ERROR,
+                    WebKeysCompras.ENVIO_ERROR,
                     construirDetalleError(e)
             );
 
@@ -220,11 +216,11 @@ public class NotificarCotizacionPrestadorServiceImpl {
             finalizarConControl(
                     idRequerimiento,
                     idPrestador,
-                    ESTADO_EMAIL_INVALIDO,
+                    WebKeysCompras.ENVIO_EMAIL_INVALIDO,
                     errorEmail
             );
 
-            resultado.incrementarErrores();
+            resultado.incrementarEmailsInvalidos();
             return;
         }
 
@@ -252,7 +248,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
             finalizarConControl(
                     idRequerimiento,
                     idPrestador,
-                    ESTADO_ERROR,
+                    WebKeysCompras.ENVIO_ERROR,
                     detalleError
             );
 
@@ -273,7 +269,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
             if (!finalizarCotizacionPrestador(
                     idRequerimiento,
                     idPrestador,
-                    ESTADO_ENVIADO,
+                    WebKeysCompras.ENVIO_ENVIADO,
                     null
             )) {
                 _log.error(
@@ -768,11 +764,13 @@ public class NotificarCotizacionPrestadorServiceImpl {
         }
 
         if (requerimiento.getEstado()
-                != WebKeysCompras.ESTADO_COTIZACIONES) {
+                != WebKeysCompras.ESTADO_PENDIENTE
+                && requerimiento.getEstado()
+                != WebKeysCompras.ESTADO_A_COTIZAR) {
 
             throw new Exception(
                     "El requerimiento no se encuentra "
-                            + "en estado Cotizaciones."
+                            + "en estado Pendiente o A cotizar."
             );
         }
     }

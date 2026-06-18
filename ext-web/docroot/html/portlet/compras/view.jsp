@@ -16,19 +16,18 @@ if (tabs1 == null) {
 }
 
 String tabs1Values =
-        "requerimientos,autorizaciones,cotizaciones,ordenes-de-compra";
+        "pendientes,a-cotizar,cotizados";
 
 String tabs1Names =
-        "Requerimientos,Autorizaciones,Cotizaciones,Ordenes de Compras";
+        "Pendientes,A cotizar,Cotizados";
 
 boolean tabValida =
-        "requerimientos".equals(tabs1)
-        || "autorizaciones".equals(tabs1)
-        || "cotizaciones".equals(tabs1)
-        || "ordenes-de-compra".equals(tabs1);
+        "pendientes".equals(tabs1)
+        || "a-cotizar".equals(tabs1)
+        || "cotizados".equals(tabs1);
 
 if (tabs1 == null || !tabValida) {
-    tabs1 = "requerimientos";
+    tabs1 = "pendientes";
 }
 
 request.getSession().setAttribute("compras_tabs1", tabs1);
@@ -41,31 +40,31 @@ portletURL.setParameter("tabs1", tabs1);
 currentURL = PortalUtil.getCurrentURL(request);
 %>
 <%
-boolean puedeConfigurarCotizaciones =
+boolean puedeConfigurarPrestadores =
         user != null
         && PermissionUtil.userContainsRole(
                 user,
                 WebKeysCompras.ROL_ABM_COMPRAS
         );
 
-PortletURL configurarCotizacionesURL =
+PortletURL configurarPrestadoresURL =
         renderResponse.createRenderURL();
 
-configurarCotizacionesURL.setWindowState(
+configurarPrestadoresURL.setWindowState(
         LiferayWindowState.MAXIMIZED
 );
 
-configurarCotizacionesURL.setParameter(
+configurarPrestadoresURL.setParameter(
         "struts_action",
         "/compras/configurar_tipos_prestador_sector"
 );
 %>
 
-<% if (puedeConfigurarCotizaciones) { %>
+<% if (puedeConfigurarPrestadores) { %>
     <div style="margin-bottom: 15px; text-align: right;">
         <input type="button"
-               value="Configurar cotizaciones por sector"
-               onclick="window.location.href='<%= configurarCotizacionesURL.toString() %>';" />
+               value="Configurar prestadores por sector"
+               onclick="window.location.href='<%= configurarPrestadoresURL.toString() %>';" />
     </div>
 <% } %>
 <form action="<%= portletURL %>"
@@ -84,28 +83,23 @@ configurarCotizacionesURL.setParameter(
 </form>
 
 <c:choose>
-    <c:when test='<%= "requerimientos".equals(tabs1) %>'>
+    <c:when test='<%= "pendientes".equals(tabs1) %>'>
         <liferay-util:include
-                page="/html/portlet/compras/requerimientos/requerimientos_borrador.jsp" />
+                page="/html/portlet/compras/requerimientos/requerimientos_pendientes.jsp" />
     </c:when>
 
-    <c:when test='<%= "autorizaciones".equals(tabs1) %>'>
+    <c:when test='<%= "a-cotizar".equals(tabs1) %>'>
         <liferay-util:include
-                page="/html/portlet/compras/autorizaciones/autorizaciones.jsp" />
+                page="/html/portlet/compras/requerimientos/requerimientos_a_cotizar.jsp" />
     </c:when>
 
-    <c:when test='<%= "cotizaciones".equals(tabs1) %>'>
+    <c:when test='<%= "cotizados".equals(tabs1) %>'>
         <liferay-util:include
-                page="/html/portlet/compras/cotizaciones/cotizaciones.jsp" />
-    </c:when>
-
-    <c:when test='<%= "ordenes-de-compra".equals(tabs1) %>'>
-        <liferay-util:include
-                page="/html/portlet/compras/ordenes-de-compra/ordenes-de-compra.jsp" />
+                page="/html/portlet/compras/requerimientos/requerimientos_cotizados.jsp" />
     </c:when>
 
     <c:otherwise>
         <liferay-util:include
-                page="/html/portlet/compras/requerimientos/requerimientos_borrador.jsp" />
+                page="/html/portlet/compras/requerimientos/requerimientos_pendientes.jsp" />
     </c:otherwise>
 </c:choose>

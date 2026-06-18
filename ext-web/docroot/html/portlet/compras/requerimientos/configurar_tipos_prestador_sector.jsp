@@ -38,19 +38,19 @@ if (tiposPrestador == null) {
 boolean configuracionActualizada =
         com.liferay.portal.kernel.servlet.SessionMessages.contains(
                 renderRequest,
-                "configuracion-cotizaciones-actualizada"
+                "configuracion-prestadores-sector-actualizada"
         );
 
 boolean configuracionError =
         com.liferay.portal.kernel.servlet.SessionErrors.contains(
                 renderRequest,
-                "configuracion-cotizaciones-error"
+                "configuracion-prestadores-sector-error"
         );
 
 Object errorConfiguracionObject =
         com.liferay.portal.kernel.servlet.SessionErrors.get(
                 renderRequest,
-                "configuracion-cotizaciones-error"
+                "configuracion-prestadores-sector-error"
         );
 
 String errorConfiguracion =
@@ -99,53 +99,53 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
 %>
 
 <style type="text/css">
-    .compras-configuracion-cotizaciones {
+    .compras-configuracion-prestadores {
         max-width: 950px;
     }
 
-    .compras-configuracion-cotizaciones .configuracion-resumen {
+    .compras-configuracion-prestadores .configuracion-resumen {
         margin: 10px 0 15px 0;
         padding: 10px;
         background-color: #f5f5f5;
         border: 1px solid #d5d5d5;
     }
 
-    .compras-configuracion-cotizaciones .configuracion-tipos {
+    .compras-configuracion-prestadores .configuracion-tipos {
         width: 100%;
         border-collapse: collapse;
         margin-top: 10px;
     }
 
-    .compras-configuracion-cotizaciones .configuracion-tipos th,
-    .compras-configuracion-cotizaciones .configuracion-tipos td {
+    .compras-configuracion-prestadores .configuracion-tipos th,
+    .compras-configuracion-prestadores .configuracion-tipos td {
         padding: 7px 10px;
         border-bottom: 1px solid #dddddd;
         text-align: left;
         vertical-align: middle;
     }
 
-    .compras-configuracion-cotizaciones .configuracion-tipos th {
+    .compras-configuracion-prestadores .configuracion-tipos th {
         background-color: #eeeeee;
     }
 
-    .compras-configuracion-cotizaciones .configuracion-check {
+    .compras-configuracion-prestadores .configuracion-check {
         width: 90px;
         text-align: center !important;
     }
 
-    .compras-configuracion-cotizaciones .configuracion-botonera {
+    .compras-configuracion-prestadores .configuracion-botonera {
         margin-top: 18px;
     }
 
-    .compras-configuracion-cotizaciones .configuracion-ayuda {
+    .compras-configuracion-prestadores .configuracion-ayuda {
         margin: 8px 0 15px 0;
         color: #555555;
     }
 </style>
 
-<div class="compras-configuracion-cotizaciones">
+<div class="compras-configuracion-prestadores">
 
-    <h2>Configuraci&oacute;n de cotizaciones por sector</h2>
+    <h2>Configuraci&oacute;n de prestadores por sector</h2>
 
     <p class="configuracion-ayuda">
         Seleccione un sector y marque los tipos de prestador que podr&aacute;n
@@ -154,7 +154,7 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
 
     <% if (configuracionActualizada) { %>
         <div class="portlet-msg-success">
-            La configuraci&oacute;n de cotizaciones fue actualizada correctamente.
+            La configuraci&oacute;n de prestadores fue actualizada correctamente.
         </div>
     <% } %>
 
@@ -243,7 +243,7 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
 
         <form action="<%= guardarConfiguracionURL.toString() %>"
               method="post"
-              id="<portlet:namespace />guardarConfiguracionCotizacionesForm"
+              id="<portlet:namespace />guardarConfiguracionPrestadoresForm"
               onsubmit="return <%= namespaceConfiguracion %>confirmarGuardado();">
 
             <input type="hidden"
@@ -349,7 +349,7 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
 
                     <% if (!tiposPrestador.isEmpty()) { %>
                         <input type="submit"
-                               id="<portlet:namespace />guardarConfiguracionCotizaciones"
+                               id="<portlet:namespace />guardarConfiguracionPrestadores"
                                value="Guardar configuraci&oacute;n" />
 
                         &nbsp;&nbsp;
@@ -474,7 +474,7 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
         }
 
         var mensaje =
-                'Confirma guardar la configuracion de cotizaciones para el sector seleccionado?';
+                'Confirma guardar la configuracion de prestadores para el sector seleccionado?';
 
         if (cantidadSeleccionada == 0) {
             mensaje =

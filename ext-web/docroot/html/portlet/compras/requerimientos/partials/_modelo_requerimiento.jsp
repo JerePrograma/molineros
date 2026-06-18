@@ -160,6 +160,7 @@ if (req == null) {
 
 boolean esNuevo = req.getIdRequerimientoCompra() == 0;
 boolean puedeABM = user != null && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+boolean puedeCotizar = user != null && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS);
 
 Object soloLecturaAttr = renderRequest.getAttribute(WebKeysCompras.SOLO_LECTURA_ATTR);
 
@@ -172,12 +173,21 @@ boolean soloLecturaSolicitada =
         || "/compras/ver_requerimiento".equals(strutsActionActual)
         || "ver".equalsIgnoreCase(modoParam);
 
-boolean editablePorEstado = esNuevo || req.isEditable();
+boolean editablePorEstado = esNuevo || req.puedeEditarEstructura();
+boolean cotizacionEditablePorEstado = req.puedeEditarCotizacion();
+
+boolean puedeEditarEstructuraPantalla =
+        puedeABM
+        && editablePorEstado;
+
+boolean puedeEditarCotizacionPantalla =
+        !esNuevo
+        && puedeCotizar
+        && cotizacionEditablePorEstado;
 
 boolean layoutEdicion =
         !modoVistaForzado
-        && puedeABM
-        && editablePorEstado;
+        && (puedeEditarEstructuraPantalla || puedeEditarCotizacionPantalla);
 
 boolean modoEditable =
         layoutEdicion
@@ -291,7 +301,7 @@ String cargoTercerizadoraVisible =
 /*
  * Regla centralizada para la pantalla:
  * recupero = true si existe cargo a tercerizadora mayor a 0.
- * Si negocio exige exactamente 100, cambiar acá y en actualizarRecuperoPorCargoTercerizadora().
+ * Si negocio exige exactamente 100, cambiar acï¿½ y en actualizarRecuperoPorCargoTercerizadora().
  */
 boolean recuperoPorCargoTercerizadoraActual =
         !sectorSinAfiliadoForzaCargoOspim

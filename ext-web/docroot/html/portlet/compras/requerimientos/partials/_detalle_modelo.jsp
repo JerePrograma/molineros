@@ -2,6 +2,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="javax.portlet.PortletURL" %>
 <%@ page import="javax.portlet.WindowState" %>
+<%@ page import="com.liferay.portal.kernel.portlet.LiferayWindowState" %>
 <%@ page import="ar.com.ospim.compras.beans.CompraArticulo" %>
 
 <%!
@@ -51,9 +52,18 @@ boolean soloLecturaDetalle =
 boolean usuarioPuedeABMDetalle =
         user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-        && reqDetalle.isEditable();
+        && reqDetalle.puedeEditarEstructura();
+
+boolean usuarioPuedeCotizarDetalle =
+        user != null
+        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
+        && reqDetalle.puedeEditarCotizacion();
 
 boolean puedeABMDetalle = usuarioPuedeABMDetalle && !soloLecturaDetalle;
+boolean puedeCotizarDetalle = usuarioPuedeCotizarDetalle && !soloLecturaDetalle;
+boolean puedeVerCotizacionDetalle =
+        reqDetalle.puedeEditarCotizacion()
+        || reqDetalle.isCotizado();
 
 List<RequerimientoCompraDetalle> detalles = reqDetalle.getDetalles();
 
@@ -94,9 +104,24 @@ PortletURL detalleActionURL = renderResponse.createActionURL();
 detalleActionURL.setWindowState(WindowState.MAXIMIZED);
 detalleActionURL.setParameter("struts_action", "/compras/editar_requerimiento_detalle");
 
+PortletURL prestadoresEnviadosURL = renderResponse.createRenderURL();
+prestadoresEnviadosURL.setWindowState(LiferayWindowState.EXCLUSIVE);
+prestadoresEnviadosURL.setParameter("struts_action", "/compras/buscar_prestadores_enviados");
+prestadoresEnviadosURL.setParameter("limite", "20");
+
 int idRequerimientoCompraDetalle = reqDetalle.getIdRequerimientoCompra();
+
+if (idRequerimientoCompraDetalle > 0) {
+    prestadoresEnviadosURL.setParameter(
+            "id_requerimiento_compra",
+            String.valueOf(idRequerimientoCompraDetalle)
+    );
+}
 
 boolean requerimientoPersistidoDetalle = idRequerimientoCompraDetalle > 0;
 
-int detalleColspan = 4 + (puedeABMDetalle ? 1 : 0);
+int detalleColspan =
+        4
+        + (puedeVerCotizacionDetalle ? 3 : 0)
+        + (puedeABMDetalle ? 1 : 0);
 %>

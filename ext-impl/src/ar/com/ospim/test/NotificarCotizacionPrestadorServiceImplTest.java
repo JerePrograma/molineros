@@ -57,7 +57,8 @@ public class NotificarCotizacionPrestadorServiceImplTest {
                 service.notificarPrestadores(10, "tester", 1L);
 
         assertInt("enviados", 0, resultado.getEnviados());
-        assertInt("errores", 1, resultado.getErrores());
+        assertInt("errores", 0, resultado.getErrores());
+        assertInt("emails invalidos", 1, resultado.getEmailsInvalidos());
         assertInt("omitidos", 0, resultado.getOmitidos());
         assertInt("mails enviados", 0, service.mailsEnviados);
         assertEstadoFinal(service, 0, EMAIL_INVALIDO);
@@ -169,7 +170,7 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         requerimiento.setIdSector(Integer.valueOf(1));
         requerimiento.setSectorDescripcion("Farmacia");
         requerimiento.setEstado(
-                WebKeysCompras.ESTADO_COTIZACIONES
+                WebKeysCompras.ESTADO_A_COTIZAR
         );
 
         PrestadorCotizacion prestador =

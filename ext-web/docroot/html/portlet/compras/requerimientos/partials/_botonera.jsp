@@ -1,32 +1,9 @@
 <%
-/*
- * ============================================================
- * BOTONERA REQUERIMIENTO COMPRA
- * ============================================================
- *
- * Este partial asume que el JSP padre ya declaro:
- *
- * - String namespaceCompra
- * - RequerimientoCompra req
- * - boolean modoEditable
- * - boolean modoVista
- * - boolean puedeABM
- * - boolean editablePorEstado
- * - PortletURL editarURL
- * - PortletURL volverURL
- * - PortletURL imprimirURL
- */
-int botoneraIdRequerimientoActual = 0;
-int botoneraEstadoActual = 0;
-
-if (req != null) {
-    botoneraIdRequerimientoActual = req.getIdRequerimientoCompra();
-    botoneraEstadoActual = req.getEstado();
-}
+int botoneraIdRequerimientoActual = req != null ? req.getIdRequerimientoCompra() : 0;
+int botoneraEstadoActual = req != null ? req.getEstado() : 0;
 
 boolean botoneraRequerimientoPersistido =
-        req != null
-        && botoneraIdRequerimientoActual > 0;
+        req != null && botoneraIdRequerimientoActual > 0;
 
 boolean botoneraTieneRolAnular =
         user != null
@@ -36,42 +13,19 @@ boolean botoneraTieneRolView =
         user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS);
 
-boolean botoneraTieneRolAutorizar =
-        user != null
-        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS);
-
 boolean botoneraTieneRolCotizar =
         user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS);
 
-boolean botoneraTieneRolOrdenCompra =
-        user != null
-        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ORDEN_COMPRA_COMPRAS);
-
-boolean botoneraPuedeEnviarAAutorizar =
-        botoneraRequerimientoPersistido
-        && puedeABM
-        && WebKeysCompras.puedeEnviarAAutorizar(botoneraEstadoActual);
-
-boolean botoneraPuedeAutorizar =
-        botoneraRequerimientoPersistido
-        && botoneraTieneRolAutorizar
-        && WebKeysCompras.puedeAutorizar(botoneraEstadoActual);
-
-boolean botoneraPuedeIniciarCotizaciones =
+boolean botoneraPuedeEnviarACotizar =
         botoneraRequerimientoPersistido
         && botoneraTieneRolCotizar
-        && WebKeysCompras.puedeIniciarCotizaciones(botoneraEstadoActual);
+        && WebKeysCompras.puedeEnviarACotizar(botoneraEstadoActual);
 
-boolean botoneraPuedeReintentarCotizaciones =
+boolean botoneraPuedeReintentarCotizacion =
         botoneraRequerimientoPersistido
         && botoneraTieneRolCotizar
-        && WebKeysCompras.puedeReintentarNotificacionesCotizaciones(botoneraEstadoActual);
-
-boolean botoneraPuedeGenerarOrdenCompra =
-        botoneraRequerimientoPersistido
-        && botoneraTieneRolOrdenCompra
-        && WebKeysCompras.puedeGenerarOrdenCompra(botoneraEstadoActual);
+        && WebKeysCompras.puedeReintentarNotificaciones(botoneraEstadoActual);
 
 boolean botoneraPuedeAnular =
         botoneraRequerimientoPersistido
@@ -80,118 +34,45 @@ boolean botoneraPuedeAnular =
 
 boolean botoneraPuedeImprimir =
         botoneraRequerimientoPersistido
-        && (botoneraTieneRolView
-            || puedeABM
-            || botoneraTieneRolAutorizar
-            || botoneraTieneRolCotizar
-            || botoneraTieneRolOrdenCompra);
+        && (botoneraTieneRolView || puedeABM || botoneraTieneRolCotizar);
 
-PortletURL botoneraCambiarEstadoURL =
-        renderResponse.createActionURL();
-
+PortletURL botoneraCambiarEstadoURL = renderResponse.createActionURL();
 botoneraCambiarEstadoURL.setWindowState(WindowState.MAXIMIZED);
+botoneraCambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerimiento");
 
-botoneraCambiarEstadoURL.setParameter(
-        "struts_action",
-        "/compras/cambiar_estado_requerimiento"
-);
-
-String botoneraEnviarAutorizarFormId =
-        namespaceCompra + "enviarAutorizarRequerimientoCompraForm";
-
-String botoneraAutorizarFormId =
-        namespaceCompra + "autorizarRequerimientoCompraForm";
-
-String botoneraIniciarCotizacionesFormId =
-        namespaceCompra + "iniciarCotizacionesRequerimientoCompraForm";
-
-String botoneraReintentarCotizacionesFormId =
-        namespaceCompra + "reintentarCotizacionesRequerimientoCompraForm";
-
-String botoneraGenerarOrdenFormId =
-        namespaceCompra + "generarOrdenCompraForm";
-
+String botoneraEnviarCotizarFormId =
+        namespaceCompra + "enviarCotizarRequerimientoCompraForm";
+String botoneraReintentarCotizacionFormId =
+        namespaceCompra + "reintentarCotizacionRequerimientoCompraForm";
 String botoneraAnularFormId =
         namespaceCompra + "anularRequerimientoCompraForm";
 %>
 
-<% if (botoneraPuedeEnviarAAutorizar) { %>
+<% if (botoneraPuedeEnviarACotizar) { %>
     <form action="<%= botoneraCambiarEstadoURL.toString() %>"
           method="post"
-          id="<%= botoneraEnviarAutorizarFormId %>"
+          id="<%= botoneraEnviarCotizarFormId %>"
           style="display:none;">
-
         <input type="hidden"
                name="<portlet:namespace />id_requerimiento_compra"
                value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
-
         <input type="hidden"
                name="<portlet:namespace />estado_nuevo"
-               value="<%= String.valueOf(WebKeysCompras.ESTADO_REQUERIMIENTO) %>" />
+               value="<%= String.valueOf(WebKeysCompras.ESTADO_A_COTIZAR) %>" />
     </form>
 <% } %>
 
-<% if (botoneraPuedeAutorizar) { %>
+<% if (botoneraPuedeReintentarCotizacion) { %>
     <form action="<%= botoneraCambiarEstadoURL.toString() %>"
           method="post"
-          id="<%= botoneraAutorizarFormId %>"
+          id="<%= botoneraReintentarCotizacionFormId %>"
           style="display:none;">
-
         <input type="hidden"
                name="<portlet:namespace />id_requerimiento_compra"
                value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
-
-        <input type="hidden"
-               name="<portlet:namespace />estado_nuevo"
-               value="<%= String.valueOf(WebKeysCompras.ESTADO_AUTORIZADO) %>" />
-    </form>
-<% } %>
-
-<% if (botoneraPuedeIniciarCotizaciones) { %>
-    <form action="<%= botoneraCambiarEstadoURL.toString() %>"
-          method="post"
-          id="<%= botoneraIniciarCotizacionesFormId %>"
-          style="display:none;">
-
-        <input type="hidden"
-               name="<portlet:namespace />id_requerimiento_compra"
-               value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
-
-        <input type="hidden"
-               name="<portlet:namespace />estado_nuevo"
-               value="<%= String.valueOf(WebKeysCompras.ESTADO_COTIZACIONES) %>" />
-    </form>
-<% } %>
-
-<% if (botoneraPuedeReintentarCotizaciones) { %>
-    <form action="<%= botoneraCambiarEstadoURL.toString() %>"
-          method="post"
-          id="<%= botoneraReintentarCotizacionesFormId %>"
-          style="display:none;">
-
-        <input type="hidden"
-               name="<portlet:namespace />id_requerimiento_compra"
-               value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
-
         <input type="hidden"
                name="<portlet:namespace />reintentar_notificaciones"
                value="true" />
-    </form>
-<% } %>
-
-<% if (botoneraPuedeGenerarOrdenCompra) { %>
-    <form action="<%= botoneraCambiarEstadoURL.toString() %>"
-          method="post"
-          id="<%= botoneraGenerarOrdenFormId %>"
-          style="display:none;">
-
-        <input type="hidden"
-               name="<portlet:namespace />id_requerimiento_compra"
-               value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
-
-        <input type="hidden"
-               name="<portlet:namespace />estado_nuevo"
-               value="<%= String.valueOf(WebKeysCompras.ESTADO_ORDEN_COMPRA) %>" />
     </form>
 <% } %>
 
@@ -200,11 +81,9 @@ String botoneraAnularFormId =
           method="post"
           id="<%= botoneraAnularFormId %>"
           style="display:none;">
-
         <input type="hidden"
                name="<portlet:namespace />id_requerimiento_compra"
                value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
-
         <input type="hidden"
                name="<portlet:namespace />estado_nuevo"
                value="<%= String.valueOf(WebKeysCompras.ESTADO_ANULADO) %>" />
@@ -214,12 +93,25 @@ String botoneraAnularFormId =
 <table class="lfr-table">
     <tr>
         <td>
-            <% if (modoEditable) { %>
+            <% if (modoEditable && puedeEditarEstructuraPantalla) { %>
                 <input type="button"
                        id="<portlet:namespace />btnGuardarCompras"
                        value="Guardar"
                        onClick="return <%= namespaceCompra %>guardar();" />
+                &nbsp;&nbsp;
+            <% } %>
 
+            <% if (modoEditable && puedeEditarCotizacionPantalla) { %>
+                <input type="button"
+                       id="<portlet:namespace />btnGuardarCotizacionCompra"
+                       value="Guardar avance"
+                       onClick="return <%= namespaceCompra %>guardarCotizacion(false);" />
+                &nbsp;&nbsp;
+
+                <input type="button"
+                       id="<portlet:namespace />btnCerrarCotizacionCompra"
+                       value="Cerrar cotizaci&oacute;n"
+                       onClick="return <%= namespaceCompra %>guardarCotizacion(true);" />
                 &nbsp;&nbsp;
             <% } %>
 
@@ -228,77 +120,32 @@ String botoneraAnularFormId =
                        id="<portlet:namespace />btnEditarRequerimientoCompra"
                        value="Editar"
                        onClick="window.location.href='<%= editarURL.toString() %>';" />
-
                 &nbsp;&nbsp;
             <% } %>
 
-            <% if (botoneraPuedeEnviarAAutorizar) { %>
+            <% if (botoneraPuedeEnviarACotizar) { %>
                 <input type="button"
-                       id="<portlet:namespace />btnEnviarAutorizarRequerimientoCompra"
-                       value="Enviar a autorizar"
-                       onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
-                               '<%= botoneraEnviarAutorizarFormId %>',
-                               '<portlet:namespace />btnEnviarAutorizarRequerimientoCompra',
-                               'Confirma enviar el requerimiento a autorizacion?',
-                               'Enviando...'
-                       );" />
-
-                &nbsp;&nbsp;
-            <% } %>
-
-            <% if (botoneraPuedeAutorizar) { %>
-                <input type="button"
-                       id="<portlet:namespace />btnAutorizarRequerimientoCompra"
-                       value="Autorizar"
-                       onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
-                               '<%= botoneraAutorizarFormId %>',
-                               '<portlet:namespace />btnAutorizarRequerimientoCompra',
-                               'Confirma autorizar el requerimiento?',
-                               'Autorizando...'
-                       );" />
-
-                &nbsp;&nbsp;
-            <% } %>
-
-            <% if (botoneraPuedeIniciarCotizaciones) { %>
-                <input type="button"
-                       id="<portlet:namespace />btnIniciarCotizacionesRequerimientoCompra"
+                       id="<portlet:namespace />btnEnviarCotizarRequerimientoCompra"
                        value="Enviar a cotizar"
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
-                               '<%= botoneraIniciarCotizacionesFormId %>',
-                               '<portlet:namespace />btnIniciarCotizacionesRequerimientoCompra',
+                               '<%= botoneraEnviarCotizarFormId %>',
+                               '<portlet:namespace />btnEnviarCotizarRequerimientoCompra',
                                'Confirma enviar a cotizar y notificar a los prestadores habilitados?',
                                'Notificando...'
                        );" />
-
                 &nbsp;&nbsp;
             <% } %>
 
-            <% if (botoneraPuedeReintentarCotizaciones) { %>
+            <% if (botoneraPuedeReintentarCotizacion) { %>
                 <input type="button"
-                       id="<portlet:namespace />btnReintentarCotizacionesRequerimientoCompra"
+                       id="<portlet:namespace />btnReintentarCotizacionRequerimientoCompra"
                        value="Notificar prestadores pendientes"
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
-                               '<%= botoneraReintentarCotizacionesFormId %>',
-                               '<portlet:namespace />btnReintentarCotizacionesRequerimientoCompra',
+                               '<%= botoneraReintentarCotizacionFormId %>',
+                               '<portlet:namespace />btnReintentarCotizacionRequerimientoCompra',
                                'Confirma notificar nuevamente a los prestadores pendientes?',
                                'Notificando...'
                        );" />
-
-                &nbsp;&nbsp;
-            <% } %>
-
-            <% if (botoneraPuedeGenerarOrdenCompra) { %>
-                <input type="button"
-                       id="<portlet:namespace />btnGenerarOrdenCompra"
-                       value="Generar orden de compra"
-                       onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
-                               '<%= botoneraGenerarOrdenFormId %>',
-                               '<portlet:namespace />btnGenerarOrdenCompra',
-                               'Confirma generar la orden de compra?',
-                               'Generando...'
-                       );" />
-
                 &nbsp;&nbsp;
             <% } %>
 
@@ -312,7 +159,6 @@ String botoneraAnularFormId =
                                'Confirma anular el requerimiento?',
                                'Anulando...'
                        );" />
-
                 &nbsp;&nbsp;
             <% } %>
 
@@ -321,7 +167,6 @@ String botoneraAnularFormId =
                        id="<portlet:namespace />btnImprimirRequerimientoCompra"
                        value="Imprimir PDF"
                        onClick="return <%= namespaceCompra %>imprimirRequerimientoCompra();" />
-
                 &nbsp;&nbsp;
             <% } %>
 
@@ -359,7 +204,6 @@ String botoneraAnularFormId =
         }
 
         submitForm(form);
-
         return false;
     }
 
@@ -372,7 +216,6 @@ String botoneraAnularFormId =
         }
 
         var url = '<%= imprimirURL.toString() %>';
-
         url += (url.indexOf('?') >= 0 ? '&' : '?') + '_ts=' + new Date().getTime();
 
         iframe.onload = function() {
@@ -380,15 +223,11 @@ String botoneraAnularFormId =
                 iframe.contentWindow.focus();
                 iframe.contentWindow.print();
             } catch (e) {
-                alert(
-                    'No se pudo imprimir automaticamente el PDF. ' +
-                    'Revise que el navegador permita imprimir contenido embebido.'
-                );
+                alert('No se pudo imprimir automaticamente el PDF.');
             }
         };
 
         iframe.src = url;
-
         return false;
     }
 </script>

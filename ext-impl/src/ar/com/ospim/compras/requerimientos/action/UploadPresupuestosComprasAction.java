@@ -43,10 +43,10 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.util.*;
 
-public class UploadImagenesComprasAction extends PortletAction {
+public class UploadPresupuestosComprasAction extends PortletAction {
 
     private static final Log logger =
-            LogFactoryUtil.getLog(UploadImagenesComprasAction.class);
+            LogFactoryUtil.getLog(UploadPresupuestosComprasAction.class);
 
     private static final String ARTICULOS_COMPRA = "ARTICULOS_COMPRA";
 
@@ -68,7 +68,7 @@ public class UploadImagenesComprasAction extends PortletAction {
                               ActionRequest actionRequest,
                               ActionResponse actionResponse) throws Exception {
 
-        String cmd = ParamUtil.getString(actionRequest, "imagen", null);
+        String cmd = ParamUtil.getString(actionRequest, "presupuesto_accion", null);
 
         User user = PortalUtil.getUser(actionRequest);
 
@@ -84,7 +84,7 @@ public class UploadImagenesComprasAction extends PortletAction {
             UploadPortletRequest uploadReq =
                     PortalUtil.getUploadPortletRequest(actionRequest);
 
-            cmd = ParamUtil.getString(uploadReq, "imagen", cmd);
+            cmd = ParamUtil.getString(uploadReq, "presupuesto_accion", cmd);
             modo = ParamUtil.getString(uploadReq, "modo", modo);
 
             idRequerimientoCompra =
@@ -97,13 +97,13 @@ public class UploadImagenesComprasAction extends PortletAction {
             if (idRequerimientoCompra <= 0) {
                 errorUpload(
                         actionRequest,
-                        "Debe guardar el requerimiento antes de subir archivos."
+                        "Debe guardar y enviar a cotizar el requerimiento antes de subir presupuestos."
                 );
                 prepararRetorno(actionRequest, actionResponse, idRequerimientoCompra, modo);
                 return;
             }
 
-            validarPermisoABM(user);
+            validarPermisoCotizar(user);
 
             RequerimientoCompra requerimiento =
                     BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(
@@ -120,10 +120,10 @@ public class UploadImagenesComprasAction extends PortletAction {
                 return;
             }
 
-            if (!requerimiento.isEditable()) {
+            if (!requerimiento.puedeAdministrarPresupuestos()) {
                 errorUpload(
                         actionRequest,
-                        "Solo se pueden administrar archivos en requerimientos en estado Borrador. Estado actual: "
+                        "Solo se pueden administrar presupuestos en estado A cotizar. Estado actual: "
                                 + requerimiento.getEstadoDescripcionVisible() + "."
                 );
                 prepararRetorno(actionRequest, actionResponse, idRequerimientoCompra, modo);
@@ -131,9 +131,9 @@ public class UploadImagenesComprasAction extends PortletAction {
             }
 
             if (Constants.ADD.equals(cmd)) {
-                subirArchivo(actionRequest, uploadReq, user, requerimiento);
+                subirPresupuesto(actionRequest, uploadReq, user, requerimiento);
             } else if (Constants.DELETE.equals(cmd)) {
-                borrarArchivo(actionRequest, uploadReq, user, requerimiento);
+                borrarPresupuesto(actionRequest, uploadReq, user, requerimiento);
             }
 
             prepararRetorno(actionRequest, actionResponse, idRequerimientoCompra, modo);
@@ -143,7 +143,7 @@ public class UploadImagenesComprasAction extends PortletAction {
             String mensaje = e.getMessage();
 
             if (WebKeysCompras.isEmpty(mensaje)) {
-                mensaje = "No se pudo procesar el archivo del requerimiento.";
+                mensaje = "No se pudo procesar el presupuesto del requerimiento.";
             }
 
             errorUpload(actionRequest, mensaje);
@@ -170,7 +170,7 @@ public class UploadImagenesComprasAction extends PortletAction {
             if (soloLectura) {
                 validarPermisoConsulta(user);
             } else {
-                validarPermisoABM(user);
+                validarPermisoCotizar(user);
             }
 
             int idRequerimientoCompra =
@@ -195,7 +195,7 @@ public class UploadImagenesComprasAction extends PortletAction {
                 requerimiento = new RequerimientoCompra();
             }
 
-            if (!soloLectura && !requerimiento.isEditable()) {
+            if (!soloLectura && !requerimiento.puedeAdministrarPresupuestos()) {
                 soloLectura = true;
             }
 
@@ -243,7 +243,7 @@ public class UploadImagenesComprasAction extends PortletAction {
             String mensaje = e.getMessage();
 
             if (WebKeysCompras.isEmpty(mensaje)) {
-                mensaje = "No se pudo cargar el requerimiento de compra luego de procesar el archivo.";
+                mensaje = "No se pudo cargar el requerimiento de compra luego de procesar el presupuesto.";
             }
 
             renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, mensaje);
@@ -262,20 +262,20 @@ public class UploadImagenesComprasAction extends PortletAction {
         );
     }
 
-    private void subirArchivo(ActionRequest actionRequest,
+    private void subirPresupuesto(ActionRequest actionRequest,
                               UploadPortletRequest uploadReq,
                               User user,
                               RequerimientoCompra requerimiento) throws Exception {
 
-        File file = uploadReq.getFile("importa_imagenes");
-        String filename = uploadReq.getFileName("importa_imagenes");
+        File file = uploadReq.getFile("presupuesto");
+        String filename = uploadReq.getFileName("presupuesto");
         String description = ParamUtil.getString(uploadReq, "descripcionFile", "");
 
         if (file == null
                 || filename == null
                 || filename.trim().length() == 0) {
 
-            errorUpload(actionRequest, "Debe seleccionar un archivo.");
+            errorUpload(actionRequest, "Debe seleccionar un presupuesto.");
             return;
         }
 
@@ -325,30 +325,30 @@ public class UploadImagenesComprasAction extends PortletAction {
                             serviceContext
                     );
 
-            SessionMessages.add(actionRequest, "requerimiento-compra-archivo-guardado");
+            SessionMessages.add(actionRequest, "requerimiento-compra-presupuesto-guardado");
 
             logger.debug(
-                    "AGREGAR ARCHIVO AL REQUERIMIENTO DE COMPRA: "
+                    "AGREGAR PRESUPUESTO AL REQUERIMIENTO DE COMPRA: "
                             + requerimiento.getIdRequerimientoCompra()
                             + " - "
                             + entry.getName()
             );
         } catch (DuplicateFileException e) {
             logger.error(e);
-            errorUpload(actionRequest, "El archivo se encuentra duplicado.");
+            errorUpload(actionRequest, "El presupuesto se encuentra duplicado.");
         } catch (FileSizeException e) {
             logger.error(e);
-            errorUpload(actionRequest, "El archivo a subir supera el tamaño permitido.");
+            errorUpload(actionRequest, "El presupuesto a subir supera el tamaï¿½o permitido.");
         } catch (FileNameException e) {
             logger.error(e);
-            errorUpload(actionRequest, "El tipo de archivo a subir no esta permitido.");
+            errorUpload(actionRequest, "El tipo de presupuesto a subir no esta permitido.");
         } catch (Exception e) {
             logger.error(e);
             errorUpload(actionRequest, e.getMessage());
         }
     }
 
-    private void borrarArchivo(ActionRequest actionRequest,
+    private void borrarPresupuesto(ActionRequest actionRequest,
                                UploadPortletRequest uploadReq,
                                User user,
                                RequerimientoCompra requerimiento) throws Exception {
@@ -361,7 +361,7 @@ public class UploadImagenesComprasAction extends PortletAction {
                 || WebKeysCompras.isEmpty(name)
                 || WebKeysCompras.isEmpty(title)) {
 
-            errorUpload(actionRequest, "Debe informar el archivo a eliminar.");
+            errorUpload(actionRequest, "Debe informar el presupuesto a eliminar.");
             return;
         }
 
@@ -370,7 +370,7 @@ public class UploadImagenesComprasAction extends PortletAction {
 
             if (folderId != folderCompras.getFolderId()) {
                 throw new Exception(
-                        "El archivo informado no pertenece a la carpeta de Compras."
+                        "El presupuesto informado no pertenece a la carpeta de Compras."
                 );
             }
 
@@ -390,22 +390,22 @@ public class UploadImagenesComprasAction extends PortletAction {
                     || !fileEntry.getTitle().startsWith(prefijoEsperado)) {
 
                 throw new Exception(
-                        "El archivo informado no pertenece al requerimiento actual."
+                        "El presupuesto informado no pertenece al requerimiento actual."
                 );
             }
 
             if (!name.equals(fileEntry.getName())) {
                 throw new Exception(
-                        "El archivo informado no coincide con el documento persistido."
+                        "El presupuesto informado no coincide con el documento persistido."
                 );
             }
 
             DLFileEntryLocalServiceUtil.deleteFileEntry(folderId, name);
 
-            SessionMessages.add(actionRequest, "requerimiento-compra-archivo-borrado");
+            SessionMessages.add(actionRequest, "requerimiento-compra-presupuesto-borrado");
 
             logger.debug(
-                    "BORRAR ARCHIVO DEL REQUERIMIENTO DE COMPRA: "
+                    "BORRAR PRESUPUESTO DEL REQUERIMIENTO DE COMPRA: "
                             + requerimiento.getIdRequerimientoCompra()
                             + " - "
                             + folderId
@@ -423,12 +423,12 @@ public class UploadImagenesComprasAction extends PortletAction {
             return DLFolderLocalServiceUtil.getFolder(
                     WebKeysCompras.DOCUMENT_LIBRARY_GROUP_ID_COMPRAS,
                     WebKeysCompras.DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS,
-                    WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_REQUERIMIENTOS_COMPRAS
+                    WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS
             );
         } catch (Exception e) {
             throw new Exception(
                     "No se encontro la carpeta de Document Library '"
-                            + WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_REQUERIMIENTOS_COMPRAS
+                            + WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS
                             + "'. Debe crearla bajo groupId "
                             + WebKeysCompras.DOCUMENT_LIBRARY_GROUP_ID_COMPRAS
                             + "."
@@ -465,7 +465,7 @@ public class UploadImagenesComprasAction extends PortletAction {
         SessionErrors.add(request, "errorUploadFile");
 
         if (WebKeysCompras.isEmpty(mensaje)) {
-            mensaje = "No se pudo procesar el archivo.";
+            mensaje = "No se pudo procesar el presupuesto.";
         }
 
         request.setAttribute("msgInsertError", mensaje);
@@ -479,25 +479,23 @@ public class UploadImagenesComprasAction extends PortletAction {
 
         if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
                 && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ORDEN_COMPRA_COMPRAS)) {
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)) {
 
             throw new Exception(
-                    "No posee permisos para consultar archivos "
+                    "No posee permisos para consultar presupuestos "
                             + "de requerimientos de compra."
             );
         }
     }
 
-    private void validarPermisoABM(User user) throws Exception {
+    private void validarPermisoCotizar(User user) throws Exception {
         if (user == null) {
             throw new Exception("No se pudo determinar el usuario actual.");
         }
 
-        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
+        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)) {
             throw new Exception(
-                    "No posee permisos para administrar archivos de requerimientos de compra."
+                    "No posee permisos para administrar presupuestos de requerimientos de compra."
             );
         }
     }
@@ -571,7 +569,7 @@ public class UploadImagenesComprasAction extends PortletAction {
 
         /*
          * Performance:
-         * No listar todos los articulos al volver de subir/borrar archivos.
+         * No listar todos los articulos al volver de subir/borrar presupuestos.
          * Solo cargar articulos del sector del requerimiento.
          */
         if (idSectorRequerimiento != null && idSectorRequerimiento.intValue() > 0) {

@@ -9,68 +9,62 @@ public class WebKeysComprasTransicionesTest {
         assertTransicion(2, 2, false);
         assertTransicion(3, 3, false);
         assertTransicion(4, 4, false);
+        assertTransicion(5, 5, false);
+        assertTransicion(99, 99, false);
 
         assertTransicion(1, 2, true);
         assertTransicion(2, 3, true);
-        assertTransicion(3, 4, true);
-        assertTransicion(4, 5, true);
 
+        assertTransicion(3, 4, false);
+        assertTransicion(4, 5, false);
         assertTransicion(2, 1, false);
         assertTransicion(3, 2, false);
         assertTransicion(4, 3, false);
         assertTransicion(5, 4, false);
-
-        assertTransicion(5, 99, false);
         assertTransicion(99, 1, false);
-        assertTransicion(99, 99, false);
 
         assertTransicion(1, 99, true);
         assertTransicion(2, 99, true);
-        assertTransicion(3, 99, true);
-        assertTransicion(4, 99, true);
+        assertTransicion(3, 99, false);
+        assertTransicion(4, 99, false);
+        assertTransicion(5, 99, false);
 
-        assertAccionesEstado(1, true, false, false, false, false, true, true);
-        assertAccionesEstado(2, false, true, false, false, false, true, false);
-        assertAccionesEstado(3, false, false, true, false, false, true, false);
-        assertAccionesEstado(4, false, false, false, true, true, true, false);
-        assertAccionesEstado(5, false, false, false, false, false, false, false);
-        assertAccionesEstado(99, false, false, false, false, false, false, false);
+        assertAccionesEstado(1, true, false, false, false, true, true);
+        assertAccionesEstado(2, false, true, true, true, true, false);
+        assertAccionesEstado(3, false, false, false, false, false, false);
+        assertAccionesEstado(4, false, false, false, false, false, false);
+        assertAccionesEstado(5, false, false, false, false, false, false);
+        assertAccionesEstado(99, false, false, false, false, false, false);
     }
 
     private static void assertAccionesEstado(
             int estado,
-            boolean enviarAAutorizar,
-            boolean autorizar,
-            boolean iniciarCotizaciones,
+            boolean enviarACotizar,
+            boolean editarCotizacion,
             boolean reintentarNotificaciones,
-            boolean generarOrdenCompra,
+            boolean cerrarCotizacion,
             boolean anular,
-            boolean editar) {
+            boolean editarEstructura) {
 
         assertBoolean(
-                "puedeEnviarAAutorizar(" + estado + ")",
-                enviarAAutorizar,
-                WebKeysCompras.puedeEnviarAAutorizar(estado)
+                "puedeEnviarACotizar(" + estado + ")",
+                enviarACotizar,
+                WebKeysCompras.puedeEnviarACotizar(estado)
         );
         assertBoolean(
-                "puedeAutorizar(" + estado + ")",
-                autorizar,
-                WebKeysCompras.puedeAutorizar(estado)
+                "puedeEditarCotizacion(" + estado + ")",
+                editarCotizacion,
+                WebKeysCompras.puedeEditarCotizacion(estado)
         );
         assertBoolean(
-                "puedeIniciarCotizaciones(" + estado + ")",
-                iniciarCotizaciones,
-                WebKeysCompras.puedeIniciarCotizaciones(estado)
-        );
-        assertBoolean(
-                "puedeReintentarNotificacionesCotizaciones(" + estado + ")",
+                "puedeReintentarNotificaciones(" + estado + ")",
                 reintentarNotificaciones,
-                WebKeysCompras.puedeReintentarNotificacionesCotizaciones(estado)
+                WebKeysCompras.puedeReintentarNotificaciones(estado)
         );
         assertBoolean(
-                "puedeGenerarOrdenCompra(" + estado + ")",
-                generarOrdenCompra,
-                WebKeysCompras.puedeGenerarOrdenCompra(estado)
+                "puedeCerrarCotizacion(" + estado + ")",
+                cerrarCotizacion,
+                WebKeysCompras.puedeCerrarCotizacion(estado)
         );
         assertBoolean(
                 "puedeAnular(" + estado + ")",
@@ -78,9 +72,9 @@ public class WebKeysComprasTransicionesTest {
                 WebKeysCompras.puedeAnular(estado)
         );
         assertBoolean(
-                "puedeEditar(" + estado + ")",
-                editar,
-                WebKeysCompras.puedeEditar(estado)
+                "puedeEditarEstructura(" + estado + ")",
+                editarEstructura,
+                WebKeysCompras.puedeEditarEstructura(estado)
         );
     }
 

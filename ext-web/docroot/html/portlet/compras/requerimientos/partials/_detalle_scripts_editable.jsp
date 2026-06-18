@@ -443,6 +443,10 @@
             idArticulo: idArticulo,
             articulo: articulo,
             cantidad: cantidad,
+            precioUnitario: '',
+            precioTotal: '',
+            idPrestador: '',
+            prestador: '',
             observaciones: observaciones
         };
 
@@ -620,6 +624,10 @@
         }
 
         for (var i = 0; i < <portlet:namespace />detallesCompra.length; i++) {
+            if (typeof <portlet:namespace />capturarCotizacionDetalle == 'function') {
+                <portlet:namespace />capturarCotizacionDetalle(i);
+            }
+
             var detalle = <portlet:namespace />detallesCompra[i];
             var prefix = 'detalle_' + i + '_';
 
@@ -655,6 +663,33 @@
             }
 
             if (!<portlet:namespace />crearHiddenDetalle(prefix + 'observaciones', detalle.observaciones)) {
+                return false;
+            }
+
+            var precioUnitario = jQuery.trim(<portlet:namespace />detalleValue(detalle.precioUnitario));
+
+            if (precioUnitario != '') {
+                var precioParseado = <portlet:namespace />parseImporteDetalle(precioUnitario);
+
+                if (precioParseado == null || isNaN(precioParseado) || precioParseado < 0) {
+                    alert('Detalle #' + (i + 1) + ': el precio unitario debe ser mayor o igual que cero.');
+                    return false;
+                }
+            }
+
+            if (!<portlet:namespace />crearHiddenDetalle(prefix + 'precio_unitario_estimado', precioUnitario)) {
+                return false;
+            }
+
+            var idPrestador = jQuery.trim(<portlet:namespace />detalleValue(detalle.idPrestador));
+
+            if (idPrestador != ''
+                    && (!/^[0-9]+$/.test(idPrestador) || parseInt(idPrestador, 10) <= 0)) {
+                alert('Detalle #' + (i + 1) + ': debe seleccionar un prestador valido.');
+                return false;
+            }
+
+            if (!<portlet:namespace />crearHiddenDetalle(prefix + 'id_prestador', idPrestador)) {
                 return false;
             }
         }

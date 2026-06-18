@@ -173,25 +173,9 @@ public class RequerimientoCompraDetalleHelper {
                     )
             );
 
-            detalle.setPrecioUnitarioEstimado(
-                    parseBigDecimalNullable(
-                            getParametroTrim(
-                                    request,
-                                    prefix + "precio_unitario_estimado"
-                            ),
-                            contexto + " - Precio unitario estimado"
-                    )
-            );
-
-            detalle.setPrecioTotalEstimado(
-                    parseBigDecimalNullable(
-                            getParametroTrim(
-                                    request,
-                                    prefix + "precio_total_estimado"
-                            ),
-                            contexto + " - Precio total estimado"
-                    )
-            );
+            detalle.setPrecioUnitarioEstimado(null);
+            detalle.setPrecioTotalEstimado(null);
+            detalle.setIdPrestador(null);
 
             detalle.setObservaciones(
                     getParametroRaw(request, prefix + "observaciones", null)
@@ -322,19 +306,9 @@ public class RequerimientoCompraDetalleHelper {
                 parseCantidadDesdeRequest(request, "cantidad", "Cantidad")
         );
 
-        detalle.setPrecioUnitarioEstimado(
-                parseBigDecimalNullable(
-                        ParamUtil.getString(request, "precio_unitario_estimado", null),
-                        "Precio unitario estimado"
-                )
-        );
-
-        detalle.setPrecioTotalEstimado(
-                parseBigDecimalNullable(
-                        ParamUtil.getString(request, "precio_total_estimado", null),
-                        "Precio total estimado"
-                )
-        );
+        detalle.setPrecioUnitarioEstimado(null);
+        detalle.setPrecioTotalEstimado(null);
+        detalle.setIdPrestador(null);
 
         detalle.setObservaciones(
                 ParamUtil.getString(request, "observaciones_detalle", null)
@@ -466,10 +440,10 @@ public class RequerimientoCompraDetalleHelper {
             );
         }
 
-        if (!requerimiento.isEditable()) {
+        if (!requerimiento.puedeEditarEstructura()) {
             errorCampo(
                     "estado",
-                    "Solo se pueden editar requerimientos en estado Borrador. Estado actual: "
+                    "Solo se puede editar la estructura en estado Pendiente. Estado actual: "
                             + requerimiento.getEstadoDescripcionVisible() + "."
             );
         }
@@ -524,12 +498,6 @@ public class RequerimientoCompraDetalleHelper {
         return WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "id"))
                 && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "id_articulo"))
                 && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "cantidad"))
-                && WebKeysCompras.isEmpty(
-                getParametroTrim(request, prefix + "precio_unitario_estimado")
-        )
-                && WebKeysCompras.isEmpty(
-                getParametroTrim(request, prefix + "precio_total_estimado")
-        )
                 && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "observaciones"));
     }
 
@@ -773,37 +741,6 @@ public class RequerimientoCompraDetalleHelper {
         }
 
         return Integer.valueOf(parsed);
-    }
-
-    private BigDecimal parseBigDecimalNullable(String value, String label)
-            throws ValidacionCompraException {
-
-        if (WebKeysCompras.isEmpty(value)) {
-            return null;
-        }
-
-        String original = value.trim();
-        String clean = original.replace(" ", "");
-
-        if (clean.indexOf(',') >= 0) {
-            clean = clean.replace(".", "").replace(",", ".");
-        }
-
-        if (!clean.matches("^-?[0-9]+(\\.[0-9]+)?$")) {
-            errorCampo(
-                    label,
-                    label + ": importe invalido. Valor recibido: '" + original
-                            + "'. Use formatos como 1234.56 o 1.234,56."
-            );
-        }
-
-        try {
-            return new BigDecimal(clean);
-        } catch (Exception e) {
-            errorCampo(label, label + ": no se pudo interpretar el importe '" + original + "'.");
-        }
-
-        return null;
     }
 
     public CompraArticulo guardarArticuloDesdeRequest(ActionRequest request,

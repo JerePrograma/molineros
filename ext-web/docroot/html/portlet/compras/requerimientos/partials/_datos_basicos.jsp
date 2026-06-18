@@ -19,7 +19,7 @@
         <tr>
             <td><label>Sector:</label></td>
             <td colspan="5">
-                <% if (modoEditable) { %>
+                <% if (puedeEditarEstructuraPantalla) { %>
                     <select id="<portlet:namespace />sector_id"
                             onChange="<portlet:namespace />cambiarSectorCompra(true);">
                         <option value="0" data-requiere-afiliado="false">Seleccione</option>
@@ -53,10 +53,10 @@
         </tr>
 
         <tr id="<portlet:namespace />fila_cargos_compra"
-            style="<%= modoEditable && sectorSinAfiliadoForzaCargoOspim ? "display:none;" : "" %>">
+            style="<%= puedeEditarEstructuraPantalla && sectorSinAfiliadoForzaCargoOspim ? "display:none;" : "" %>">
             <td><label>Cargo OSPIM %:</label></td>
             <td>
-                <% if (modoEditable) { %>
+                <% if (puedeEditarEstructuraPantalla) { %>
                     <input type="text"
                            id="<portlet:namespace />cargo_ospim"
                            value="<%= HtmlUtil.escape(cargoOspimVisible) %>"
@@ -72,7 +72,7 @@
 
             <td><label>Cargo tercerizadora %:</label></td>
             <td>
-                <% if (modoEditable) { %>
+                <% if (puedeEditarEstructuraPantalla) { %>
                     <input type="text"
                            id="<portlet:namespace />cargo_tercerizadora"
                            value="<%= HtmlUtil.escape(cargoTercerizadoraVisible) %>"
@@ -87,7 +87,7 @@
 
             <td><label>Recupero:</label></td>
             <td>
-                <% if (modoEditable) { %>
+                <% if (puedeEditarEstructuraPantalla) { %>
                     <input type="checkbox"
                            id="<portlet:namespace />recupero"
                            value="true"
@@ -98,14 +98,14 @@
                            aria-disabled="true" />
                 <% } else { %>
                     <div class="compras-campo-solo-lectura">
-                        <%= recuperoPorCargoTercerizadoraActual ? "Sí" : "No" %>
+                        <%= recuperoPorCargoTercerizadoraActual ? "Sï¿½" : "No" %>
                     </div>
                 <% } %>
             </td>
         </tr>
     </table>
 
-    <% if (modoEditable) { %>
+    <% if (puedeEditarEstructuraPantalla) { %>
         <input type="hidden"
                id="<portlet:namespace />requerimiento_id_tercerizadora"
                value="<%= HtmlUtil.escape(idTercerizadora) %>" />

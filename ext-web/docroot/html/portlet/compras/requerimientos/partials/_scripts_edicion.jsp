@@ -403,7 +403,7 @@
 
             /*
              * Solo limpiar cuando el usuario cambia sector.
-             * No limpiar durante el document.ready, porque en edición pisaría valores existentes.
+             * No limpiar durante el document.ready, porque en ediciï¿½n pisarï¿½a valores existentes.
              */
             if (reiniciarCargosSiRequiereAfiliado) {
                 <portlet:namespace />limpiarCargosCompra();
@@ -675,6 +675,90 @@
         }
     }
 
+    function <portlet:namespace />validarTokenGuardadoCompra() {
+        var tokenInput = document.getElementById('<portlet:namespace />compras_save_token');
+
+        if (!tokenInput
+                || tokenInput.value == null
+                || jQuery.trim(tokenInput.value) == ''
+                || jQuery.trim(tokenInput.value) == 'null') {
+
+            alert(
+                'No se pudo preparar el guardado seguro del requerimiento. ' +
+                'Falta el token de guardado. Vuelva a cargar la pantalla e intente nuevamente.'
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
+    function <portlet:namespace />obtenerSerializadorDetallesCompra() {
+        if (typeof <portlet:namespace />serializarDetallesCompras == 'function') {
+            return <portlet:namespace />serializarDetallesCompras;
+        }
+
+        if (typeof window['<portlet:namespace />serializarDetallesCompras'] == 'function') {
+            return window['<portlet:namespace />serializarDetallesCompras'];
+        }
+
+        return null;
+    }
+
+    function <portlet:namespace />guardarCotizacion(cerrar) {
+        if (<portlet:namespace />guardandoCompra) {
+            return false;
+        }
+
+        if (cerrar
+                && !confirm('Confirma cerrar la cotizacion? Luego quedara solo lectura.')) {
+            return false;
+        }
+
+        <portlet:namespace />setGuardandoCompraActivo(true);
+
+        var form = document.getElementById('<portlet:namespace />fmCompras');
+
+        if (!form) {
+            alert('No se pudo encontrar el formulario principal de Compras.');
+            return <portlet:namespace />cancelarGuardadoCompra();
+        }
+
+        var cmdInput = document.getElementById('<portlet:namespace />compras_cmd');
+
+        if (cmdInput) {
+            cmdInput.value = cerrar ? 'cerrarCotizacion' : 'saveCotizacion';
+        }
+
+        if (!<portlet:namespace />validarTokenGuardadoCompra()) {
+            return <portlet:namespace />cancelarGuardadoCompra();
+        }
+
+        var serializadorDetalles = <portlet:namespace />obtenerSerializadorDetallesCompra();
+
+        if (serializadorDetalles == null) {
+            alert('Detalles: no se encontro la funcion de serializacion de detalles.');
+            return <portlet:namespace />cancelarGuardadoCompra();
+        }
+
+        if (!serializadorDetalles()) {
+            return <portlet:namespace />cancelarGuardadoCompra();
+        }
+
+        var detalleCountInput = jQuery(form).find('input[name$="detalle_count"]');
+
+        if (detalleCountInput.length == 0) {
+            alert('Detalles: no se pudo serializar la cotizacion.');
+            return <portlet:namespace />cancelarGuardadoCompra();
+        }
+
+        if (!<portlet:namespace />submitFormularioCompra(form)) {
+            return <portlet:namespace />cancelarGuardadoCompra();
+        }
+
+        return false;
+    }
     function <portlet:namespace />guardar() {
         if (<portlet:namespace />guardandoCompra) {
             return false;

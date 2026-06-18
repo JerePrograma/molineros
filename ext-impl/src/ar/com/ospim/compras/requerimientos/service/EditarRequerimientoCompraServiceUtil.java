@@ -3,6 +3,7 @@ package ar.com.ospim.compras.requerimientos.service;
 import ar.com.ospim.compras.beans.CompraArticulo;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
+import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
 
 import java.util.List;
 
@@ -44,6 +45,54 @@ public class EditarRequerimientoCompraServiceUtil {
 
     public static void cambiarEstado(int idRequerimientoCompra, int idEstadoNuevo, String usuario) throws Exception {
         getInstance().cambiarEstado(idRequerimientoCompra, idEstadoNuevo, usuario);
+    }
+
+    public static NotificacionCotizacionResultado enviarACotizar(
+            int idRequerimientoCompra,
+            String usuario,
+            long companyId) throws Exception {
+
+        return getInstance().enviarACotizar(
+                idRequerimientoCompra,
+                usuario,
+                companyId
+        );
+    }
+
+    public static NotificacionCotizacionResultado reintentarNotificacionesCotizacion(
+            int idRequerimientoCompra,
+            String usuario,
+            long companyId) throws Exception {
+
+        return getInstance().reintentarNotificacionesCotizacion(
+                idRequerimientoCompra,
+                usuario,
+                companyId
+        );
+    }
+
+    public static void guardarAvanceCotizacion(
+            int idRequerimientoCompra,
+            List<RequerimientoCompraDetalle> detalles,
+            String usuario) throws Exception {
+
+        getInstance().guardarAvanceCotizacion(
+                idRequerimientoCompra,
+                detalles,
+                usuario
+        );
+    }
+
+    public static void cerrarCotizacion(
+            int idRequerimientoCompra,
+            List<RequerimientoCompraDetalle> detalles,
+            String usuario) throws Exception {
+
+        getInstance().cerrarCotizacion(
+                idRequerimientoCompra,
+                detalles,
+                usuario
+        );
     }
 
     public static List<CompraArticulo> listarArticulos(Integer idSector, String texto) throws Exception {

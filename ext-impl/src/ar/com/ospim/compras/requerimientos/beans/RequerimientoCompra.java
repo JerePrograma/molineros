@@ -44,9 +44,15 @@ public class RequerimientoCompra {
     private String afiliadoDocumentoTipo;
     private String afiliadoDocumentoNro;
     private String afiliadoDocumento;
+    private String afiliadoDireccion;
+    private String afiliadoLocalidad;
+    private String afiliadoProvincia;
+    private String afiliadoCelular;
+    private String afiliadoTelefono;
+    private String afiliadoEmail;
 
     public RequerimientoCompra() {
-        this.idEstado = Integer.valueOf(WebKeysCompras.ESTADO_BORRADOR);
+        this.idEstado = Integer.valueOf(WebKeysCompras.ESTADO_PENDIENTE);
         this.requiereAfiliado = Boolean.FALSE;
         this.cargoOspim = Integer.valueOf(0);
         this.cargoTercerizadora = Integer.valueOf(0);
@@ -384,15 +390,47 @@ public class RequerimientoCompra {
 
     public String getTotalEstimadoString() {
         BigDecimal total = getTotalEstimado();
-        return total != null ? total.toString() : "0";
+        return WebKeysCompras.formatearImporte(total);
+    }
+
+    public boolean puedeEditarEstructura() {
+        return WebKeysCompras.puedeEditarEstructura(getEstado()) && bajaFecha == null;
+    }
+
+    public boolean puedeEditarCotizacion() {
+        return WebKeysCompras.puedeEditarCotizacion(getEstado()) && bajaFecha == null;
+    }
+
+    public boolean puedeAdministrarPresupuestos() {
+        return WebKeysCompras.puedeAdministrarPresupuestos(getEstado()) && bajaFecha == null;
+    }
+
+    public boolean puedeVerPresupuestos() {
+        return WebKeysCompras.puedeVerPresupuestos(getEstado()) && bajaFecha == null;
+    }
+
+    public boolean puedeEnviarACotizar() {
+        return WebKeysCompras.puedeEnviarACotizar(getEstado()) && bajaFecha == null;
+    }
+
+    public boolean puedeCerrarCotizacion() {
+        return WebKeysCompras.puedeCerrarCotizacion(getEstado()) && bajaFecha == null;
+    }
+
+    public boolean puedeReintentarNotificaciones() {
+        return WebKeysCompras.puedeReintentarNotificaciones(getEstado()) && bajaFecha == null;
     }
 
     public boolean isEditable() {
-        return WebKeysCompras.puedeEditar(getEstado()) && bajaFecha == null;
+        return puedeEditarEstructura();
     }
 
-    public boolean isBorrador() {
-        return WebKeysCompras.esBorrador(getEstado());
+    public boolean isPendiente() {
+        return WebKeysCompras.esPendiente(getEstado());
+    }
+
+    public boolean isACotizar() {
+        return WebKeysCompras.esACotizar(getEstado());
     }
 
     public boolean isCotizado() {
@@ -408,7 +446,7 @@ public class RequerimientoCompra {
     }
 
     public boolean puedeCotizar() {
-        return WebKeysCompras.puedeCotizar(getEstado()) && bajaFecha == null;
+        return puedeEditarCotizacion();
     }
 
     public boolean puedeAnular() {
@@ -511,5 +549,77 @@ public class RequerimientoCompra {
 
     public void setAfiliadoDocumento(String afiliadoDocumento) {
         this.afiliadoDocumento = WebKeysCompras.trimToNull(afiliadoDocumento);
+    }
+
+    public String getAfiliadoDireccion() {
+        return afiliadoDireccion;
+    }
+
+    public String getAfiliadoDireccionVisible() {
+        return afiliadoDireccion != null ? afiliadoDireccion : "";
+    }
+
+    public void setAfiliadoDireccion(String afiliadoDireccion) {
+        this.afiliadoDireccion = WebKeysCompras.trimToNull(afiliadoDireccion);
+    }
+
+    public String getAfiliadoLocalidad() {
+        return afiliadoLocalidad;
+    }
+
+    public String getAfiliadoLocalidadVisible() {
+        return afiliadoLocalidad != null ? afiliadoLocalidad : "";
+    }
+
+    public void setAfiliadoLocalidad(String afiliadoLocalidad) {
+        this.afiliadoLocalidad = WebKeysCompras.trimToNull(afiliadoLocalidad);
+    }
+
+    public String getAfiliadoProvincia() {
+        return afiliadoProvincia;
+    }
+
+    public String getAfiliadoProvinciaVisible() {
+        return afiliadoProvincia != null ? afiliadoProvincia : "";
+    }
+
+    public void setAfiliadoProvincia(String afiliadoProvincia) {
+        this.afiliadoProvincia = WebKeysCompras.trimToNull(afiliadoProvincia);
+    }
+
+    public String getAfiliadoCelular() {
+        return afiliadoCelular;
+    }
+
+    public String getAfiliadoCelularVisible() {
+        return afiliadoCelular != null ? afiliadoCelular : "";
+    }
+
+    public void setAfiliadoCelular(String afiliadoCelular) {
+        this.afiliadoCelular = WebKeysCompras.trimToNull(afiliadoCelular);
+    }
+
+    public String getAfiliadoTelefono() {
+        return afiliadoTelefono;
+    }
+
+    public String getAfiliadoTelefonoVisible() {
+        return afiliadoTelefono != null ? afiliadoTelefono : "";
+    }
+
+    public void setAfiliadoTelefono(String afiliadoTelefono) {
+        this.afiliadoTelefono = WebKeysCompras.trimToNull(afiliadoTelefono);
+    }
+
+    public String getAfiliadoEmail() {
+        return afiliadoEmail;
+    }
+
+    public String getAfiliadoEmailVisible() {
+        return afiliadoEmail != null ? afiliadoEmail : "";
+    }
+
+    public void setAfiliadoEmail(String afiliadoEmail) {
+        this.afiliadoEmail = WebKeysCompras.trimToNull(afiliadoEmail);
     }
 }

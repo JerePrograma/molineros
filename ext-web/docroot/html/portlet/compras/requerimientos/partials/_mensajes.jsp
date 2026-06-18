@@ -5,35 +5,45 @@ boolean msgEstadoRequerimientoActualizado =
                 "estado-requerimiento-compra-actualizado"
         );
 
-boolean msgCotizacionesPrestadoresNotificados =
+boolean msgRequerimientoEnviadoACotizar =
         com.liferay.portal.kernel.servlet.SessionMessages.contains(
                 renderRequest,
-                "cotizaciones-prestadores-notificados"
+                "requerimiento-compra-enviado-a-cotizar"
         );
 
-boolean msgCotizacionesPrestadoresConErrores =
+boolean msgCotizacionGuardada =
         com.liferay.portal.kernel.servlet.SessionMessages.contains(
                 renderRequest,
-                "cotizaciones-prestadores-notificados-con-errores"
+                "requerimiento-compra-cotizacion-guardada"
         );
 
-boolean msgCotizacionesSinDestinatarios =
+boolean msgCotizacionCerrada =
         com.liferay.portal.kernel.servlet.SessionMessages.contains(
                 renderRequest,
-                "cotizaciones-prestadores-sin-destinatarios"
+                "requerimiento-compra-cotizacion-cerrada"
         );
 
-boolean msgCotizacionesError =
+boolean msgPrestadoresNotificados =
         com.liferay.portal.kernel.servlet.SessionMessages.contains(
                 renderRequest,
-                "cotizaciones-prestadores-error"
+                "cotizacion-prestadores-notificados"
         );
 
-boolean msgCotizacionesSinResultado =
+boolean msgPrestadoresConErrores =
         com.liferay.portal.kernel.servlet.SessionMessages.contains(
                 renderRequest,
-                "cotizaciones-prestadores-sin-resultado"
+                "cotizacion-prestadores-notificados-con-errores"
         );
+
+boolean msgPrestadoresSinResultado =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "cotizacion-prestadores-sin-resultado"
+        );
+
+ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado resultadoNotificacionCotizacion =
+        (ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado)
+                renderRequest.getAttribute(WebKeysCompras.RESULTADO_NOTIFICACION_COTIZACION);
 %>
 
 <c:if test="<%= mostrarMensajeRequerimientoGuardado %>">
@@ -60,37 +70,56 @@ boolean msgCotizacionesSinResultado =
     </div>
 </c:if>
 
-<c:if test="<%= msgCotizacionesPrestadoresNotificados %>">
+<c:if test="<%= msgRequerimientoEnviadoACotizar %>">
+    <div class="portlet-msg-success">
+        El requerimiento fue enviado a cotizar correctamente.
+    </div>
+</c:if>
+
+<c:if test="<%= msgCotizacionGuardada %>">
+    <div class="portlet-msg-success">
+        Avance de cotizaci&oacute;n guardado correctamente.
+    </div>
+</c:if>
+
+<c:if test="<%= msgCotizacionCerrada %>">
+    <div class="portlet-msg-success">
+        Cotizaci&oacute;n cerrada correctamente.
+    </div>
+</c:if>
+
+<c:if test="<%= msgPrestadoresNotificados %>">
     <div class="portlet-msg-success">
         Los prestadores candidatos fueron notificados correctamente.
     </div>
 </c:if>
 
-<c:if test="<%= msgCotizacionesPrestadoresConErrores %>">
+<c:if test="<%= msgPrestadoresConErrores %>">
     <div class="portlet-msg-error">
-        Uno o más prestadores no pudieron ser notificados.
-        Verifique los correos configurados y revise el log de la aplicación.
+        Uno o m&aacute;s prestadores no pudieron ser notificados.
+        Verifique los correos configurados y revise el log de la aplicaci&oacute;n.
     </div>
 </c:if>
 
-<c:if test="<%= msgCotizacionesSinDestinatarios %>">
-    <div class="portlet-msg-info">
-        No existen prestadores habilitados pendientes de notificación
-        para el sector del requerimiento.
-    </div>
-</c:if>
-
-<c:if test="<%= msgCotizacionesError %>">
+<c:if test="<%= msgPrestadoresSinResultado %>">
     <div class="portlet-msg-error">
-        Falló el proceso general de notificación a prestadores.
-        El estado del requerimiento no fue revertido.
-    </div>
-</c:if>
-
-<c:if test="<%= msgCotizacionesSinResultado %>">
-    <div class="portlet-msg-error">
-        El proceso de notificación finalizó sin devolver
+        El proceso de notificaci&oacute;n finaliz&oacute; sin devolver
         un resultado verificable.
+    </div>
+</c:if>
+
+<c:if test="<%= resultadoNotificacionCotizacion != null %>">
+    <div class="portlet-msg-info">
+        Prestadores candidatos:
+        <%= resultadoNotificacionCotizacion.getTotalCandidatos() %>.
+        Enviados:
+        <%= resultadoNotificacionCotizacion.getEnviados() %>.
+        Errores:
+        <%= resultadoNotificacionCotizacion.getErrores() %>.
+        Correos inv&aacute;lidos:
+        <%= resultadoNotificacionCotizacion.getEmailsInvalidos() %>.
+        Omitidos:
+        <%= resultadoNotificacionCotizacion.getOmitidos() %>.
     </div>
 </c:if>
 
@@ -108,13 +137,13 @@ boolean msgCotizacionesSinResultado =
 
 <c:if test="<%= msgArticuloGuardado %>">
     <div class="portlet-msg-success">
-        Artículo de compra guardado correctamente.
+        Art&iacute;culo de compra guardado correctamente.
     </div>
 </c:if>
 
 <c:if test="<%= msgArticuloBorrado %>">
     <div class="portlet-msg-success">
-        Artículo de compra eliminado correctamente.
+        Art&iacute;culo de compra eliminado correctamente.
     </div>
 </c:if>
 
@@ -160,9 +189,9 @@ boolean msgCotizacionesSinResultado =
     </div>
 </c:if>
 
-<c:if test="<%= !soloLecturaSolicitada && !puedeABM %>">
+<c:if test="<%= !soloLecturaSolicitada && !puedeABM && !puedeCotizar %>">
     <div class="portlet-msg-error">
-        No posee permisos para editar requerimientos de compras.
+        No posee permisos para modificar requerimientos de compras.
     </div>
 </c:if>
 
@@ -171,6 +200,6 @@ boolean msgCotizacionesSinResultado =
         && !editablePorEstado %>">
 
     <div class="portlet-msg-info">
-        El requerimiento solo puede editarse en estado Borrador.
+        La estructura del requerimiento solo puede editarse en estado Pendiente.
     </div>
 </c:if>
