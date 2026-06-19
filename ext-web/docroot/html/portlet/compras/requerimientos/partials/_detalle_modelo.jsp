@@ -1,11 +1,7 @@
-<%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.HashMap" %>
-<%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="javax.portlet.PortletURL" %>
-<%@ page import="javax.portlet.WindowState" %>
-<%@ page import="com.liferay.portal.kernel.portlet.LiferayWindowState" %>
 <%@ page import="ar.com.ospim.compras.beans.CompraArticulo" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion" %>
 
 <%!
 private String jsDetalleCompra(String value) {
@@ -193,21 +189,35 @@ PortletURL detalleActionURL = renderResponse.createActionURL();
 detalleActionURL.setWindowState(WindowState.MAXIMIZED);
 detalleActionURL.setParameter("struts_action", "/compras/editar_requerimiento_detalle");
 
-PortletURL prestadoresEnviadosURL = renderResponse.createRenderURL();
-prestadoresEnviadosURL.setWindowState(LiferayWindowState.EXCLUSIVE);
-prestadoresEnviadosURL.setParameter("struts_action", "/compras/buscar_prestadores_enviados");
-prestadoresEnviadosURL.setParameter("limite", "20");
+int idRequerimientoCompraDetalle =
+        reqDetalle.getIdRequerimientoCompra();
 
-int idRequerimientoCompraDetalle = reqDetalle.getIdRequerimientoCompra();
+boolean requerimientoPersistidoDetalle =
+        idRequerimientoCompraDetalle > 0;
 
-if (idRequerimientoCompraDetalle > 0) {
-    prestadoresEnviadosURL.setParameter(
-            "id_requerimiento_compra",
-            String.valueOf(idRequerimientoCompraDetalle)
-    );
+List<PrestadorCotizacion> prestadoresEnviadosDetalle =
+        new ArrayList<PrestadorCotizacion>();
+
+String errorPrestadoresEnviadosDetalle = "";
+
+if (puedeCotizarDetalle && requerimientoPersistidoDetalle) {
+    try {
+        prestadoresEnviadosDetalle =
+                BusquedaRequerimientoCompraServiceUtil
+                        .listarPrestadoresEnviados(
+                                idRequerimientoCompraDetalle
+                        );
+    } catch (Exception e) {
+        errorPrestadoresEnviadosDetalle =
+                e.getMessage() != null
+                        ? e.getMessage()
+                        : "No se pudieron cargar los prestadores enviados.";
+    }
 }
 
-boolean requerimientoPersistidoDetalle = idRequerimientoCompraDetalle > 0;
+boolean hayPrestadoresEnviadosDetalle =
+        prestadoresEnviadosDetalle != null
+        && !prestadoresEnviadosDetalle.isEmpty();
 
 int detalleColspan =
         4

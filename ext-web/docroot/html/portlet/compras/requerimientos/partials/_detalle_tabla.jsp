@@ -1,4 +1,26 @@
-<table class="lfr-table taglib-search-iterator" width="100%">
+<% if (puedeCotizarDetalle
+        && !WebKeysCompras.isEmpty(
+                errorPrestadoresEnviadosDetalle
+        )) { %>
+
+    <div class="portlet-msg-error">
+        <%= HtmlUtil.escape(
+                errorPrestadoresEnviadosDetalle
+        ) %>
+    </div>
+
+<% } else if (puedeCotizarDetalle
+        && !hayPrestadoresEnviadosDetalle) { %>
+
+    <div class="portlet-msg-info">
+        No hay prestadores notificados correctamente para este requerimiento.
+    </div>
+
+<% } %>
+
+<table class="lfr-table taglib-search-iterator"
+       width="100%">
+
     <tr class="portlet-section-header results-header">
         <th>ID</th>
         <th>Art&iacute;culo</th>

@@ -2,8 +2,33 @@
     var <portlet:namespace />detallesCompra = [];
     var <portlet:namespace />detalleDeletedIds = [];
     var <portlet:namespace />articulosCompraCache = [];
-    var <portlet:namespace />prestadoresEnviadosURL =
-            '<%= prestadoresEnviadosURL.toString() %>';
+    var <portlet:namespace />prestadoresEnviadosDetalleCache = [];
+
+    <%
+    if (prestadoresEnviadosDetalle != null) {
+        for (int i = 0;
+                i < prestadoresEnviadosDetalle.size();
+                i++) {
+
+            PrestadorCotizacion prestadorDetalle =
+                    prestadoresEnviadosDetalle.get(i);
+
+            if (prestadorDetalle == null
+                    || prestadorDetalle.getIdPrestador() <= 0) {
+
+                continue;
+            }
+    %>
+            <portlet:namespace />prestadoresEnviadosDetalleCache.push({
+                id: '<%= prestadorDetalle.getIdPrestador() %>',
+                label: '<%= jsDetalleCompra(
+                        prestadorDetalle.getEtiquetaVisible()
+                ) %>'
+            });
+    <%
+        }
+    }
+    %>
 
     <%
     for (int i = 0; i < articulos.size(); i++) {
@@ -156,126 +181,147 @@
     }
 
     function <portlet:namespace />capturarCotizacionDetalle(index) {
-        var detalle = <portlet:namespace />detallesCompra[index];
+        var detalle =
+                <portlet:namespace />detallesCompra[index];
 
         if (!detalle) {
             return;
         }
 
-        var precioInput = jQuery('#<portlet:namespace />detalle_precio_unitario_' + index);
-        var prestadorInput = jQuery('#<portlet:namespace />detalle_id_prestador_' + index);
+        var precioInput =
+                jQuery(
+                        '#<portlet:namespace />detalle_precio_unitario_'
+                                + index
+                );
+
+        var prestadorInput =
+                jQuery(
+                        '#<portlet:namespace />detalle_id_prestador_'
+                                + index
+                );
 
         if (precioInput.length > 0) {
-            detalle.precioUnitario = jQuery.trim(precioInput.val());
+            detalle.precioUnitario =
+                    jQuery.trim(
+                            precioInput.val()
+                    );
         }
 
         if (prestadorInput.length > 0) {
-            detalle.idPrestador = jQuery.trim(prestadorInput.val());
+            detalle.idPrestador =
+                    jQuery.trim(
+                            prestadorInput.val()
+                    );
+
+            if (detalle.idPrestador == '') {
+                detalle.prestador = '';
+            } else {
+                detalle.prestador =
+                        jQuery.trim(
+                                prestadorInput
+                                        .find('option:selected')
+                                        .text()
+                        );
+            }
         }
 
-        detalle.precioTotal = <portlet:namespace />calcularTotalDetalle(index);
+        detalle.precioTotal =
+                <portlet:namespace />calcularTotalDetalle(
+                        index
+                );
 
-        jQuery('#<portlet:namespace />detalle_total_estimado_' + index).text(detalle.precioTotal);
+        jQuery(
+                '#<portlet:namespace />detalle_total_estimado_'
+                        + index
+        ).text(
+                detalle.precioTotal
+        );
     }
 
     function <portlet:namespace />actualizarPrecioDetalle(index) {
         <portlet:namespace />capturarCotizacionDetalle(index);
     }
 
-    function <portlet:namespace />setPrestadorDetalle(index, idPrestador, label) {
-        var detalle = <portlet:namespace />detallesCompra[index];
+    function <portlet:namespace />setPrestadorDetalle(
+            index,
+            idPrestador) {
+
+        var detalle =
+                <portlet:namespace />detallesCompra[index];
 
         if (!detalle) {
-            return;
-        }
-
-        detalle.idPrestador = idPrestador == null ? '' : String(idPrestador);
-        detalle.prestador = label == null ? '' : String(label);
-
-        jQuery('#<portlet:namespace />detalle_id_prestador_' + index).val(detalle.idPrestador);
-        jQuery('#<portlet:namespace />detalle_prestador_label_' + index).text(detalle.prestador);
-    }
-
-    function <portlet:namespace />buscarPrestadoresDetalle(index) {
-        var texto = jQuery.trim(jQuery('#<portlet:namespace />detalle_prestador_texto_' + index).val());
-
-        if (texto.length < 2) {
-            alert('Ingrese al menos dos caracteres para buscar prestadores.');
             return false;
         }
 
-        jQuery.ajax({
-            type: 'GET',
-            url: <portlet:namespace />prestadoresEnviadosURL
-                    + '&texto=' + encodeURIComponent(texto)
-                    + '&_ts=' + new Date().getTime(),
-            dataType: 'json',
-            cache: false,
-            success: function(data) {
-                var select = jQuery('#<portlet:namespace />detalle_prestador_result_' + index);
+        var select =
+                jQuery(
+                        '#<portlet:namespace />detalle_id_prestador_'
+                                + index
+                );
 
-                select.empty();
-                select.append('<option value="">Seleccione...</option>');
-
-                if (!data || !data.prestadores || data.prestadores.length == 0) {
-                    alert('No se encontraron prestadores enviados para este requerimiento.');
-                    select.hide();
-                    return;
-                }
-
-                for (var i = 0; i < data.prestadores.length; i++) {
-                    var prestador = data.prestadores[i];
-                    var option = jQuery('<option></option>');
-
-                    option.val(prestador.id);
-                    option.text(prestador.label);
-                    option.attr('data-label', prestador.label);
-                    select.append(option);
-                }
-
-                select.show();
-                select.focus();
-            },
-            error: function() {
-                alert('No se pudo buscar prestadores enviados.');
-            }
-        });
-
-        return false;
-    }
-
-    function <portlet:namespace />seleccionarPrestadorDetalle(index) {
-        var select = jQuery('#<portlet:namespace />detalle_prestador_result_' + index);
-        var selected = select.find('option:selected');
-
-        if (selected.length == 0 || selected.val() == '') {
+        if (select.length == 0) {
             return false;
         }
 
-        <portlet:namespace />setPrestadorDetalle(
-                index,
-                selected.val(),
-                selected.attr('data-label')
-        );
+        var idNormalizado =
+                idPrestador == null
+                        ? ''
+                        : String(idPrestador);
 
-        select.hide();
+        select.val(idNormalizado);
 
-        return false;
+        /*
+         * Si el ID no forma parte de las opciones válidas,
+         * jQuery devuelve null. No se crea una opción artificial.
+         */
+        if (select.val() == null) {
+            select.val('');
+        }
+
+        detalle.idPrestador =
+                jQuery.trim(
+                        select.val()
+                );
+
+        if (detalle.idPrestador == '') {
+            detalle.prestador = '';
+        } else {
+            detalle.prestador =
+                    jQuery.trim(
+                            select
+                                    .find('option:selected')
+                                    .text()
+                    );
+        }
+
+        return true;
     }
 
     function <portlet:namespace />aplicarPrestadorATodos(index) {
-        var detalle = <portlet:namespace />detallesCompra[index];
+        /*
+         * Captura expresamente el valor visible del combo antes de
+         * utilizar el objeto JavaScript del detalle.
+         */
+        <portlet:namespace />capturarCotizacionDetalle(index);
 
-        if (!detalle || detalle.idPrestador == null || detalle.idPrestador == '') {
+        var detalle =
+                <portlet:namespace />detallesCompra[index];
+
+        if (!detalle
+                || detalle.idPrestador == null
+                || detalle.idPrestador == '') {
+
             alert('Seleccione primero un prestador.');
             return false;
         }
 
-        for (var i = 0; i < <portlet:namespace />detallesCompra.length; i++) {
+        for (var i = 0;
+                i < <portlet:namespace />detallesCompra.length;
+                i++) {
+
             <portlet:namespace />setPrestadorDetalle(
                     i,
-                    detalle.idPrestador,
-                    detalle.prestador
+                    detalle.idPrestador
             );
         }
 
@@ -330,6 +376,56 @@
         });
     }
 
+    function <portlet:namespace />getOpcionesPrestadorDetalle(
+            idPrestadorSeleccionado) {
+
+        var seleccionado =
+                idPrestadorSeleccionado == null
+                        ? ''
+                        : String(idPrestadorSeleccionado);
+
+        var html =
+                '<option value="">Seleccione...</option>';
+
+        for (var i = 0;
+                i < <portlet:namespace />prestadoresEnviadosDetalleCache.length;
+                i++) {
+
+            var prestador =
+                    <portlet:namespace />prestadoresEnviadosDetalleCache[i];
+
+            if (!prestador
+                    || prestador.id == null
+                    || String(prestador.id) == '') {
+
+                continue;
+            }
+
+            var idPrestador =
+                    String(prestador.id);
+
+            var selected =
+                    idPrestador == seleccionado
+                            ? ' selected="selected"'
+                            : '';
+
+            html +=
+                    '<option value="'
+                    + <portlet:namespace />detalleEscapeHtml(
+                            idPrestador
+                    )
+                    + '"'
+                    + selected
+                    + '>'
+                    + <portlet:namespace />detalleEscapeHtml(
+                            prestador.label
+                    )
+                    + '</option>';
+        }
+
+        return html;
+    }
+
     function <portlet:namespace />renderDetallesCompra() {
         var tbody = jQuery('#<portlet:namespace />detalle_body');
 
@@ -371,17 +467,37 @@
                     html += '<td><span id="<portlet:namespace />detalle_total_estimado_' + i + '">' +
                             <portlet:namespace />detalleEscapeHtml(detalle.precioTotal) + '</span></td>';
                     html += '<td>';
-                    html += '<span id="<portlet:namespace />detalle_prestador_label_' + i + '">' +
-                            <portlet:namespace />detalleEscapeHtml(detalle.prestador) + '</span>';
-                    html += '<input type="hidden" id="<portlet:namespace />detalle_id_prestador_' + i + '" value="' +
-                            <portlet:namespace />detalleEscapeHtml(detalle.idPrestador) + '" />';
+
+                    html += '<select ';
+                    html += 'id="<portlet:namespace />detalle_id_prestador_' + i + '" ';
+                    html += 'style="max-width: 360px; width: 100%;" ';
+                    html += 'onchange="<portlet:namespace />capturarCotizacionDetalle(' + i + ');"';
+
+                    if (<portlet:namespace />prestadoresEnviadosDetalleCache.length == 0) {
+                        html += ' disabled="disabled"';
+                    }
+
+                    html += '>';
+
+                    html +=
+                            <portlet:namespace />getOpcionesPrestadorDetalle(
+                                    detalle.idPrestador
+                            );
+
+                    html += '</select>';
+
                     html += '<br />';
-                    html += '<input type="text" size="24" id="<portlet:namespace />detalle_prestador_texto_' + i + '" />';
-                    html += '&nbsp;<input type="button" value="Buscar" onclick="return <portlet:namespace />buscarPrestadoresDetalle(' + i + ');" />';
-                    html += '&nbsp;<input type="button" value="Aplicar a todos" onclick="return <portlet:namespace />aplicarPrestadorATodos(' + i + ');" />';
-                    html += '<br /><select id="<portlet:namespace />detalle_prestador_result_' + i + '" ';
-                    html += 'style="display:none; max-width: 360px;" ';
-                    html += 'onchange="return <portlet:namespace />seleccionarPrestadorDetalle(' + i + ');"></select>';
+
+                    html += '<input type="button" ';
+                    html += 'value="Aplicar a todos" ';
+                    html += 'onclick="return <portlet:namespace />aplicarPrestadorATodos(' + i + ');"';
+
+                    if (<portlet:namespace />prestadoresEnviadosDetalleCache.length == 0) {
+                        html += ' disabled="disabled"';
+                    }
+
+                    html += ' />';
+
                     html += '</td>';
                 <% } else { %>
                     html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.precioUnitario) + '</td>';
