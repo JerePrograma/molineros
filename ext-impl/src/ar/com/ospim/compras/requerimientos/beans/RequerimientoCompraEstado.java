@@ -2,6 +2,8 @@ package ar.com.ospim.compras.requerimientos.beans;
 
 import ar.com.ospim.compras.WebKeysCompras;
 
+import java.util.Locale;
+
 public class RequerimientoCompraEstado {
 
     private Integer id;
@@ -57,7 +59,10 @@ public class RequerimientoCompraEstado {
 
     public String getDescripcionVisible() {
         String value = getDescripcion();
-        return value != null ? value : "";
+
+        return value != null
+                ? value.toUpperCase(Locale.ROOT)
+                : "";
     }
 
     public void setDescripcion(String descripcion) {

@@ -2,6 +2,8 @@ package ar.com.ospim.compras.requerimientos.beans;
 
 import ar.com.ospim.compras.WebKeysCompras;
 
+import java.util.Locale;
+
 public class TipoPrestadorSector {
 
     private int idTipoPrestador;
@@ -39,7 +41,11 @@ public class TipoPrestadorSector {
     }
 
     public String getDescripcionVisible() {
-        return descripcion != null ? descripcion : "";
+        String value = getDescripcion();
+
+        return value != null
+                ? value.toUpperCase(Locale.ROOT)
+                : "";
     }
 
     public void setDescripcion(String descripcion) {
