@@ -15,7 +15,8 @@ boolean showABMButtons =
         && PermissionUtil.userContainsRole(
                 user,
                 WebKeysCompras.ROL_ABM_COMPRAS
-        );
+        )
+        && !estadoForzadoActivo;
 
 List<RequerimientoCompraSector> sectores =
         (List<RequerimientoCompraSector>)

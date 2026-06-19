@@ -1,5 +1,6 @@
 package ar.com.ospim.compras.requerimientos.service;
 
+import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.*;
 import ar.com.ospim.util.ConnectionHelper;
 import com.liferay.portal.kernel.log.Log;
@@ -43,6 +44,24 @@ public class BusquedaRequerimientoCompraServiceImpl {
             "SELECT id_prestador, descripcion, cuit, email, " +
                     "id_tipo_prestador, tipo_prestador " +
                     "FROM compras.buscar_prestadores_enviados(?, ?, ?)";
+
+    private static final String SQL_LISTAR_PRESTADORES_ENVIADOS =
+            "SELECT DISTINCT p.id_prestador, p.descripcion, p.cuit, " +
+                    "p.contacto AS email, p.id_tipo_prestador, " +
+                    "tp.descripcion AS tipo_prestador, " +
+                    "rcp.estado_envio " +
+                    "FROM compras.requerimiento r " +
+                    "JOIN compras.requerimiento_cotizacion_prestador rcp " +
+                    "  ON rcp.id_requerimiento = r.id_requerimiento " +
+                    " AND rcp.estado_envio = ? " +
+                    "JOIN public.prestador p " +
+                    "  ON p.id_prestador = rcp.id_prestador " +
+                    "LEFT JOIN trae_tipos_prestadores() tp " +
+                    "  ON tp.id_tipo_prestador = p.id_tipo_prestador " +
+                    "WHERE r.id_requerimiento = ? " +
+                    "  AND r.estado IN (?, ?) " +
+                    "ORDER BY p.descripcion, p.cuit, p.id_prestador " +
+                    "LIMIT ?";
 
     public List<RequerimientoCompra> buscarRequerimientos(RequerimientoCompraFiltro filtro) throws Exception {
         Connection con = null;
@@ -259,6 +278,74 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
     }
 
+    public List<PrestadorCotizacion> listarPrestadoresEnviados(
+            int idRequerimientoCompra) throws Exception {
+
+        if (idRequerimientoCompra <= 0) {
+            throw new Exception(
+                    "Debe informar el requerimiento de compra."
+            );
+        }
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        List<PrestadorCotizacion> prestadores =
+                new ArrayList<PrestadorCotizacion>();
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(
+                    SQL_LISTAR_PRESTADORES_ENVIADOS
+            );
+            stmt.setString(
+                    1,
+                    WebKeysCompras.ENVIO_ENVIADO
+            );
+            stmt.setInt(2, idRequerimientoCompra);
+            stmt.setInt(
+                    3,
+                    WebKeysCompras.ESTADO_A_COTIZAR
+            );
+            stmt.setInt(
+                    4,
+                    WebKeysCompras.ESTADO_COTIZADO
+            );
+            stmt.setInt(
+                    5,
+                    WebKeysCompras
+                            .MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO
+                            + 1
+            );
+
+            rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                prestadores.add(
+                        mapPrestadorCotizacion(rs)
+                );
+            }
+
+            if (prestadores.size()
+                    > WebKeysCompras
+                    .MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO) {
+
+                throw new Exception(
+                        "El requerimiento supera el maximo de prestadores "
+                                + "enviados permitido para esta pantalla."
+                );
+            }
+
+            return prestadores;
+        } catch (Exception e) {
+            _log.error(e);
+            throw e;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
     private RequerimientoCompra mapRequerimiento(ResultSet rs) throws Exception {
         RequerimientoCompra r = new RequerimientoCompra();
 
@@ -354,6 +441,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
                 ? getInteger(rs, "id_tipo_prestador").intValue()
                 : 0);
         prestador.setTipoPrestador(getString(rs, "tipo_prestador"));
+        prestador.setEstadoEnvio(getString(rs, "estado_envio"));
 
         return prestador;
     }

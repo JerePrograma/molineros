@@ -137,6 +137,8 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
     public static final int DOCUMENT_LIBRARY_MAX_EXTENSION_LENGTH = 20;
     public static final int DOCUMENT_LIBRARY_MAX_TITLE_LENGTH = 240;
+    public static final int MAX_PRESUPUESTOS_POR_CARGA = 10;
+    public static final int MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO = 500;
 
     public static String getPrefijoDocumentoRequerimientoCompra(
             int idRequerimientoCompra) {

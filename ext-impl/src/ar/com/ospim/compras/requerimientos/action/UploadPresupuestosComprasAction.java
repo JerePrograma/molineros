@@ -1,15 +1,14 @@
 package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.afiliados.beans.Afiliado;
-import ar.com.ospim.afiliados.beans.TercerizadoraServicio;
 import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.beans.CompraArticulo;
+import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
 import ar.com.ospim.global.WebKeysGlobal;
-import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 import com.liferay.documentlibrary.DuplicateFileException;
 import com.liferay.documentlibrary.FileNameException;
@@ -22,6 +21,7 @@ import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextFactory;
@@ -44,9 +44,11 @@ import javax.portlet.RenderResponse;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -104,13 +106,6 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         ""
                 );
 
-        String idTercerizadoraCotizacion =
-                ParamUtil.getString(
-                        actionRequest,
-                        "cotizacion_id_tercerizadora",
-                        ""
-                );
-
         try {
             UploadPortletRequest uploadReq =
                     PortalUtil.getUploadPortletRequest(
@@ -138,28 +133,10 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                             idRequerimientoCompra
                     );
 
-            idTercerizadoraCotizacion =
-                    ParamUtil.getString(
-                            uploadReq,
-                            "cotizacion_id_tercerizadora",
-                            idTercerizadoraCotizacion
-                    );
-
             if (idRequerimientoCompra <= 0) {
-                errorUpload(
-                        actionRequest,
+                throw new Exception(
                         "Debe guardar y enviar a cotizar el requerimiento antes de subir presupuestos."
                 );
-
-                prepararRetorno(
-                        actionRequest,
-                        actionResponse,
-                        idRequerimientoCompra,
-                        modo,
-                        idTercerizadoraCotizacion
-                );
-
-                return;
             }
 
             validarPermisoCotizar(user);
@@ -170,62 +147,23 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                                     idRequerimientoCompra
                             );
 
-            if (requerimiento == null) {
-                errorUpload(
-                        actionRequest,
-                        "No se encontro el requerimiento de compra informado. ID recibido: "
-                                + idRequerimientoCompra
-                                + "."
-                );
-
-                prepararRetorno(
-                        actionRequest,
-                        actionResponse,
-                        idRequerimientoCompra,
-                        modo,
-                        idTercerizadoraCotizacion
-                );
-
-                return;
-            }
-
-            if (!requerimiento
-                    .puedeAdministrarPresupuestos()) {
-
-                errorUpload(
-                        actionRequest,
-                        "Solo se pueden administrar presupuestos en estado A cotizar. Estado actual: "
-                                + requerimiento
-                                .getEstadoDescripcionVisible()
-                                + "."
-                );
-
-                prepararRetorno(
-                        actionRequest,
-                        actionResponse,
-                        idRequerimientoCompra,
-                        modo,
-                        idTercerizadoraCotizacion
-                );
-
-                return;
-            }
+            validarAccesoCarga(
+                    true,
+                    requerimiento,
+                    "ver".equalsIgnoreCase(modo)
+            );
 
             if (Constants.ADD.equals(cmd)) {
-                idTercerizadoraCotizacion =
-                        resolverCodigoTercerizadora(
-                                TraeListasServiceUtil
-                                        .getTercerizadoraServicio(
-                                                actionRequest
-                                        ),
-                                idTercerizadoraCotizacion
-                        );
-
-                subirPresupuesto(
+                int cantidad =
+                        subirPresupuestos(
                         actionRequest,
                         uploadReq,
-                        requerimiento,
-                        idTercerizadoraCotizacion
+                        requerimiento
+                );
+
+                actionResponse.setRenderParameter(
+                        "presupuestos_guardados",
+                        String.valueOf(cantidad)
                 );
             } else if (Constants.DELETE.equals(cmd)) {
                 borrarPresupuesto(
@@ -243,8 +181,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                     actionRequest,
                     actionResponse,
                     idRequerimientoCompra,
-                    modo,
-                    idTercerizadoraCotizacion
+                    modo
             );
         } catch (Exception e) {
             logger.error(e);
@@ -265,8 +202,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                     actionRequest,
                     actionResponse,
                     idRequerimientoCompra,
-                    modo,
-                    idTercerizadoraCotizacion
+                    modo
             );
         }
     }
@@ -428,39 +364,57 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         );
     }
 
-    private void subirPresupuesto(
+    private int subirPresupuestos(
             ActionRequest actionRequest,
             UploadPortletRequest uploadReq,
-            RequerimientoCompra requerimiento,
-            String idTercerizadoraCotizacion)
+            RequerimientoCompra requerimiento)
             throws Exception {
 
-        File file =
-                uploadReq.getFile("presupuesto");
-
-        String filename =
-                uploadReq.getFileName("presupuesto");
-
-        String description =
-                ParamUtil.getString(
+        int cantidad =
+                ParamUtil.getInteger(
                         uploadReq,
-                        "descripcionFile",
-                        ""
+                        "presupuesto_count",
+                        0
                 );
 
-        if (file == null
-                || !file.exists()
-                || file.length() <= 0
-                || filename == null
-                || filename.trim().length() == 0) {
+        validarCantidadPresupuestos(cantidad);
 
-            errorUpload(
-                    actionRequest,
-                    "Debe seleccionar un presupuesto valido."
-            );
+        List<PresupuestoEntrada> entradas =
+                leerEntradasPresupuesto(
+                        uploadReq,
+                        cantidad
+                );
 
-            return;
-        }
+        List<PrestadorCotizacion> prestadores =
+                BusquedaRequerimientoCompraServiceUtil
+                        .listarPrestadoresEnviados(
+                                requerimiento
+                                        .getIdRequerimientoCompra()
+                        );
+
+        List<PresupuestoValidado> presupuestos =
+                validarPresupuestos(
+                        requerimiento
+                                .getIdRequerimientoCompra(),
+                        cantidad,
+                        entradas,
+                        prestadores,
+                        obtenerMaximoTamanoArchivo(),
+                        obtenerExtensionesPermitidas()
+                );
+
+        RequerimientoCompra actual =
+                BusquedaRequerimientoCompraServiceUtil
+                        .getRequerimientoCompra(
+                                requerimiento
+                                        .getIdRequerimientoCompra()
+                        );
+
+        validarAccesoCarga(
+                true,
+                actual,
+                false
+        );
 
         ServiceContext serviceContext =
                 ServiceContextFactory.getInstance(
@@ -487,143 +441,386 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         long folderId =
                 folder.getFolderId();
 
-        String nombreOriginal =
-                obtenerNombreArchivo(filename);
+        guardarPresupuestosValidados(
+                presupuestos,
+                serviceContext.getUserId(),
+                folderId,
+                serviceContext
+        );
 
-        if (WebKeysCompras.isEmpty(nombreOriginal)) {
-            errorUpload(
-                    actionRequest,
-                    "El nombre del presupuesto no es valido."
+        SessionMessages.add(
+                actionRequest,
+                "requerimiento-compra-presupuesto-guardado"
+        );
+
+        logger.debug(
+                "AGREGAR PRESUPUESTOS AL REQUERIMIENTO DE COMPRA: "
+                        + requerimiento
+                        .getIdRequerimientoCompra()
+                        + " - cantidad="
+                        + presupuestos.size()
+                        + " - groupId="
+                        + groupId
+                        + " - folderId="
+                        + folderId
+        );
+
+        return presupuestos.size();
+    }
+
+    private List<PresupuestoEntrada> leerEntradasPresupuesto(
+            UploadPortletRequest uploadReq,
+            int cantidad) {
+
+        List<PresupuestoEntrada> entradas =
+                new ArrayList<PresupuestoEntrada>();
+
+        for (int i = 0; i < cantidad; i++) {
+            String nombreParametro =
+                    "presupuesto_"
+                            + i;
+
+            entradas.add(
+                    crearEntradaPresupuesto(
+                            i,
+                            uploadReq.getFile(
+                                    nombreParametro
+                            ),
+                            uploadReq.getFileName(
+                                    nombreParametro
+                            ),
+                            ParamUtil.getInteger(
+                                    uploadReq,
+                                    nombreParametro
+                                            + "_id_prestador",
+                                    0
+                            )
+                    )
             );
-
-            return;
         }
 
-        String prefijo =
-                WebKeysCompras
-                        .getPrefijoDocumentoRequerimientoCompra(
-                                requerimiento
-                                        .getIdRequerimientoCompra()
-                        )
-                        + idTercerizadoraCotizacion
-                        + "-";
+        return entradas;
+    }
 
-        String identificador =
-                UUID.randomUUID()
-                        .toString()
-                        .replace("-", "");
+    protected PresupuestoEntrada crearEntradaPresupuesto(
+            int indice,
+            File archivo,
+            String nombreOriginal,
+            int idPrestador) {
 
-        String extension =
-                obtenerExtensionSegura(nombreOriginal);
+        return new PresupuestoEntrada(
+                indice,
+                archivo,
+                nombreOriginal,
+                idPrestador
+        );
+    }
 
-        String nombrePersistido =
-                construirNombrePersistido(
-                        prefijo,
-                        identificador,
-                        extension
-                );
+    protected void validarCantidadPresupuestos(
+            int cantidad)
+            throws Exception {
 
-        String sufijoTitulo =
-                "_"
-                        + identificador.substring(0, 8);
+        if (cantidad <= 0
+                || cantidad
+                > WebKeysCompras
+                .MAX_PRESUPUESTOS_POR_CARGA) {
 
-        int longitudDisponible =
-                WebKeysCompras
-                        .DOCUMENT_LIBRARY_MAX_TITLE_LENGTH
-                        - prefijo.length()
-                        - sufijoTitulo.length();
+            throw new Exception(
+                    "La cantidad de presupuestos debe estar entre 1 y "
+                            + WebKeysCompras
+                            .MAX_PRESUPUESTOS_POR_CARGA
+                            + "."
+            );
+        }
+    }
 
-        String nombreTitulo =
-                normalizarComponenteTitulo(
-                        nombreOriginal
-                );
+    protected List<PresupuestoValidado> validarPresupuestos(
+            int idRequerimientoCompra,
+            int cantidad,
+            List<PresupuestoEntrada> entradas,
+            List<PrestadorCotizacion> prestadores,
+            long maximoTamanoArchivo,
+            String[] extensionesPermitidas)
+            throws Exception {
 
-        if (longitudDisponible <= 0) {
-            nombreTitulo = "";
-        } else if (nombreTitulo.length()
-                > longitudDisponible) {
+        validarCantidadPresupuestos(cantidad);
 
-            nombreTitulo =
-                    nombreTitulo.substring(
-                            0,
-                            longitudDisponible
-                    );
+        if (idRequerimientoCompra <= 0) {
+            throw new Exception(
+                    "El requerimiento de compra no es valido."
+            );
         }
 
-        String title =
-                prefijo
-                        + nombreTitulo
-                        + sufijoTitulo;
+        if (entradas == null
+                || entradas.size() != cantidad) {
 
-        try {
-            DLFileEntry entry =
-                    DLFileEntryLocalServiceUtil
-                            .addOrOverwriteFileEntry(
-                                    serviceContext.getUserId(),
-                                    folderId,
-                                    nombrePersistido,
-                                    nombreOriginal,
-                                    title,
-                                    description,
-                                    "",
-                                    file,
-                                    serviceContext
-                            );
-
-            SessionMessages.add(
-                    actionRequest,
-                    "requerimiento-compra-presupuesto-guardado"
+            throw new Exception(
+                    "La coleccion de presupuestos fue manipulada."
             );
+        }
 
-            logger.debug(
-                    "AGREGAR PRESUPUESTO AL REQUERIMIENTO DE COMPRA: "
-                            + requerimiento
-                            .getIdRequerimientoCompra()
-                            + " - groupId="
-                            + groupId
-                            + " - folderId="
-                            + folderId
-                            + " - name="
-                            + entry.getName()
-                            + " - title="
-                            + entry.getTitle()
-            );
-        } catch (DuplicateFileException e) {
-            logger.error(e);
+        Map<Integer, PrestadorCotizacion> prestadoresPorId =
+                new HashMap<Integer, PrestadorCotizacion>();
 
-            errorUpload(
-                    actionRequest,
-                    "El presupuesto se encuentra duplicado."
-            );
-        } catch (FileSizeException e) {
-            logger.error(e);
+        for (int i = 0;
+                prestadores != null
+                        && i < prestadores.size();
+                i++) {
 
-            errorUpload(
-                    actionRequest,
-                    "El presupuesto a subir supera el tamanio permitido."
-            );
-        } catch (FileNameException e) {
-            logger.error(e);
+            PrestadorCotizacion prestador =
+                    prestadores.get(i);
 
-            errorUpload(
-                    actionRequest,
-                    "El tipo de presupuesto a subir no esta permitido."
-            );
-        } catch (Exception e) {
-            logger.error(e);
+            if (prestador != null
+                    && prestador.getIdPrestador() > 0
+                    && WebKeysCompras.ENVIO_ENVIADO
+                    .equals(
+                            prestador.getEstadoEnvio()
+                    )) {
 
-            String mensaje = e.getMessage();
+                prestadoresPorId.put(
+                        Integer.valueOf(
+                                prestador.getIdPrestador()
+                        ),
+                        prestador
+                );
+            }
+        }
 
-            if (WebKeysCompras.isEmpty(mensaje)) {
-                mensaje =
-                        "No se pudo guardar el presupuesto.";
+        List<PresupuestoValidado> validados =
+                new ArrayList<PresupuestoValidado>();
+
+        for (int i = 0; i < cantidad; i++) {
+            PresupuestoEntrada entrada =
+                    entradas.get(i);
+
+            if (entrada == null
+                    || entrada.indice != i) {
+
+                throw new Exception(
+                        "El indice del presupuesto "
+                                + (i + 1)
+                                + " no es valido."
+                );
             }
 
-            errorUpload(
-                    actionRequest,
-                    mensaje
+            if (entrada.archivo == null
+                    || !entrada.archivo.exists()
+                    || entrada.archivo.length() <= 0) {
+
+                throw new Exception(
+                        "Debe seleccionar el archivo del presupuesto "
+                                + (i + 1)
+                                + "."
+                );
+            }
+
+            if (maximoTamanoArchivo > 0
+                    && entrada.archivo.length()
+                    > maximoTamanoArchivo) {
+
+                throw new Exception(
+                        "El presupuesto "
+                                + (i + 1)
+                                + " supera el tamanio permitido."
+                );
+            }
+
+            String nombreOriginal =
+                    obtenerNombreArchivo(
+                            entrada.nombreOriginal
+                    );
+
+            if (WebKeysCompras.isEmpty(
+                    nombreOriginal
+            )) {
+                throw new Exception(
+                        "El nombre del presupuesto "
+                                + (i + 1)
+                                + " no es valido."
+                );
+            }
+
+            String extension =
+                    obtenerExtensionSegura(
+                            nombreOriginal
+                    );
+
+            if (WebKeysCompras.isEmpty(extension)
+                    || !esExtensionPermitida(
+                            extension,
+                            extensionesPermitidas
+                    )) {
+
+                throw new Exception(
+                        "El tipo del presupuesto "
+                                + (i + 1)
+                                + " no esta permitido."
+                );
+            }
+
+            if (entrada.idPrestador <= 0) {
+                throw new Exception(
+                        "Debe seleccionar el prestador del presupuesto "
+                                + (i + 1)
+                                + "."
+                );
+            }
+
+            PrestadorCotizacion prestador =
+                    prestadoresPorId.get(
+                            Integer.valueOf(
+                                    entrada.idPrestador
+                            )
+                    );
+
+            if (prestador == null) {
+                throw new Exception(
+                        "El prestador del presupuesto "
+                                + (i + 1)
+                                + " no fue notificado correctamente "
+                                + "para este requerimiento."
+                );
+            }
+
+            String identificador =
+                    UUID.randomUUID()
+                            .toString()
+                            .replace("-", "");
+
+            validados.add(
+                    new PresupuestoValidado(
+                            i,
+                            entrada.archivo,
+                            nombreOriginal,
+                            prestador,
+                            construirNombrePersistido(
+                                    idRequerimientoCompra,
+                                    prestador.getIdPrestador(),
+                                    identificador,
+                                    extension
+                            ),
+                            construirTituloVisible(
+                                    idRequerimientoCompra,
+                                    nombreOriginal,
+                                    identificador
+                            ),
+                            prestador.getEtiquetaVisible()
+                    )
             );
         }
+
+        return validados;
+    }
+
+    protected void guardarPresupuestosValidados(
+            List<PresupuestoValidado> presupuestos,
+            long userId,
+            long folderId,
+            ServiceContext serviceContext)
+            throws Exception {
+
+        List<String> nombresCreados =
+                new ArrayList<String>();
+
+        try {
+            for (int i = 0;
+                    presupuestos != null
+                            && i < presupuestos.size();
+                    i++) {
+
+                String nombre =
+                        crearArchivoPresupuesto(
+                                userId,
+                                folderId,
+                                presupuestos.get(i),
+                                serviceContext
+                        );
+
+                nombresCreados.add(nombre);
+            }
+        } catch (Exception e) {
+            for (int i = nombresCreados.size() - 1;
+                    i >= 0;
+                    i--) {
+
+                try {
+                    eliminarArchivoPresupuesto(
+                            folderId,
+                            nombresCreados.get(i)
+                    );
+                } catch (Exception cleanupError) {
+                    logger.error(
+                            "No se pudo eliminar un presupuesto "
+                                    + "creado durante una carga fallida.",
+                            cleanupError
+                    );
+                }
+            }
+
+            throw traducirErrorDocumento(e);
+        }
+    }
+
+    protected String crearArchivoPresupuesto(
+            long userId,
+            long folderId,
+            PresupuestoValidado presupuesto,
+            ServiceContext serviceContext)
+            throws Exception {
+
+        DLFileEntry entry =
+                DLFileEntryLocalServiceUtil
+                        .addOrOverwriteFileEntry(
+                                userId,
+                                folderId,
+                                presupuesto.nombrePersistido,
+                                presupuesto.nombreOriginal,
+                                presupuesto.titulo,
+                                presupuesto.descripcionPrestador,
+                                "",
+                                presupuesto.archivo,
+                                serviceContext
+                        );
+
+        return entry.getName();
+    }
+
+    protected void eliminarArchivoPresupuesto(
+            long folderId,
+            String nombre)
+            throws Exception {
+
+        DLFileEntryLocalServiceUtil.deleteFileEntry(
+                folderId,
+                nombre
+        );
+    }
+
+    private Exception traducirErrorDocumento(
+            Exception error) {
+
+        if (error instanceof DuplicateFileException) {
+            return new Exception(
+                    "Uno de los presupuestos se encuentra duplicado.",
+                    error
+            );
+        }
+
+        if (error instanceof FileSizeException) {
+            return new Exception(
+                    "Uno de los presupuestos supera el tamanio permitido.",
+                    error
+            );
+        }
+
+        if (error instanceof FileNameException) {
+            return new Exception(
+                    "El tipo de uno de los presupuestos no esta permitido.",
+                    error
+            );
+        }
+
+        return error;
     }
 
     private void borrarPresupuesto(
@@ -701,11 +898,21 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                                     title
                             );
 
+            boolean perteneceAlRequerimiento =
+                    fileEntry != null
+                    && (fileEntry.getTitle()
+                            .startsWith(
+                                    prefijoEsperado
+                            )
+                        || fileEntry.getName()
+                            .startsWith(
+                                    prefijoEsperado
+                            ));
+
             if (fileEntry == null
                     || fileEntry.getFolderId()
                     != folderComprasId
-                    || !fileEntry.getTitle()
-                    .startsWith(prefijoEsperado)) {
+                    || !perteneceAlRequerimiento) {
 
                 throw new Exception(
                         "El presupuesto informado no pertenece al requerimiento actual."
@@ -912,24 +1119,15 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         }
 
         String nombre =
-                filename
-                        .trim()
-                        .replace('\\', '/');
+                filename.trim();
 
-        int ultimaBarra =
-                nombre.lastIndexOf('/');
-
-        if (ultimaBarra >= 0) {
-            nombre =
-                    nombre.substring(
-                            ultimaBarra + 1
-                    );
-        }
-
-        nombre = nombre.trim();
-
-        if (".".equals(nombre)
-                || "..".equals(nombre)) {
+        if (WebKeysCompras.isEmpty(nombre)
+                || ".".equals(nombre)
+                || "..".equals(nombre)
+                || nombre.indexOf("..") >= 0
+                || nombre.indexOf('/') >= 0
+                || nombre.indexOf('\\') >= 0
+                || nombre.matches(".*\\p{Cntrl}.*")) {
 
             return "";
         }
@@ -972,79 +1170,123 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             return "";
         }
 
-        return extension;
-    }
-
-    protected String resolverCodigoTercerizadora(
-            List<TercerizadoraServicio> tercerizadoras,
-            String codigoRecibido)
-            throws Exception {
-
-        String codigo =
-                codigoRecibido != null
-                        ? codigoRecibido.trim()
-                        : "";
-
-        if (WebKeysCompras.isEmpty(codigo)) {
-            throw new Exception(
-                    "Debe seleccionar la tercerizadora de la cotizacion."
-            );
-        }
-
-        if (tercerizadoras == null
-                || tercerizadoras.isEmpty()) {
-
-            throw new Exception(
-                    "No se pudo cargar el catalogo de tercerizadoras."
-            );
-        }
-
-        for (int i = 0; i < tercerizadoras.size(); i++) {
-            TercerizadoraServicio tercerizadora =
-                    tercerizadoras.get(i);
-
-            String codigoCatalogo =
-                    tercerizadora != null
-                            ? tercerizadora
-                                    .getId_tercerizadora()
-                            : null;
-
-            if (codigoCatalogo != null
-                    && codigoCatalogo.trim()
-                            .equalsIgnoreCase(codigo)) {
-
-                String codigoNormalizado =
-                        codigoCatalogo
-                                .trim()
-                                .toUpperCase(
-                                        Locale.ENGLISH
-                                );
-
-                if (!codigoNormalizado.matches(
-                        "^[A-Z0-9_-]+$"
-                )) {
-                    throw new Exception(
-                            "La tercerizadora configurada no posee un codigo valido."
-                    );
-                }
-
-                return codigoNormalizado;
-            }
-        }
-
-        throw new Exception(
-                "La tercerizadora seleccionada no pertenece al catalogo permitido."
+        return extension.toLowerCase(
+                Locale.ENGLISH
         );
     }
 
+    protected boolean esExtensionPermitida(
+            String extension,
+            String[] extensionesPermitidas) {
+
+        if (WebKeysCompras.isEmpty(extension)) {
+            return false;
+        }
+
+        if (extensionesPermitidas == null
+                || extensionesPermitidas.length == 0) {
+
+            return true;
+        }
+
+        String extensionNormalizada =
+                extension.toLowerCase(
+                        Locale.ENGLISH
+                );
+
+        for (int i = 0;
+                i < extensionesPermitidas.length;
+                i++) {
+
+            String permitida =
+                    extensionesPermitidas[i] != null
+                            ? extensionesPermitidas[i]
+                                    .trim()
+                                    .toLowerCase(
+                                            Locale.ENGLISH
+                                    )
+                            : "";
+
+            if ("*".equals(permitida)
+                    || "*.*".equals(permitida)) {
+
+                return true;
+            }
+
+            if (!WebKeysCompras.isEmpty(permitida)
+                    && permitida.charAt(0) != '.') {
+
+                permitida = "." + permitida;
+            }
+
+            if (extensionNormalizada.equals(
+                    permitida
+            )) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     protected String construirNombrePersistido(
-            String prefijo,
+            int idRequerimientoCompra,
+            int idPrestador,
             String identificador,
             String extension) {
 
-        return prefijo
+        return WebKeysCompras
+                .getPrefijoDocumentoRequerimientoCompra(
+                        idRequerimientoCompra
+                )
+                + "PRESTADOR-"
+                + idPrestador
+                + "-"
                 + identificador
                 + extension;
+    }
+
+    protected String construirTituloVisible(
+            int idRequerimientoCompra,
+            String nombreOriginal,
+            String identificador) {
+
+        String prefijo =
+                WebKeysCompras
+                        .getPrefijoDocumentoRequerimientoCompra(
+                                idRequerimientoCompra
+                        );
+
+        String sufijo =
+                "_"
+                        + identificador.substring(0, 8);
+
+        int longitudDisponible =
+                WebKeysCompras
+                        .DOCUMENT_LIBRARY_MAX_TITLE_LENGTH
+                        - prefijo.length()
+                        - sufijo.length();
+
+        String nombre =
+                normalizarComponenteTitulo(
+                        nombreOriginal
+                );
+
+        if (longitudDisponible <= 0) {
+            nombre = "";
+        } else if (nombre.length()
+                > longitudDisponible) {
+
+            nombre =
+                    nombre.substring(
+                            0,
+                            longitudDisponible
+                    );
+        }
+
+        return prefijo
+                + nombre
+                + sufijo;
     }
 
     protected String normalizarComponenteTitulo(
@@ -1075,12 +1317,46 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         return nombre;
     }
 
+    protected long obtenerMaximoTamanoArchivo()
+            throws Exception {
+
+        String valor =
+                PropsUtil.get(
+                        "dl.file.max.size"
+                );
+
+        if (WebKeysCompras.isEmpty(valor)) {
+            return Long.MAX_VALUE;
+        }
+
+        long maximo =
+                Long.parseLong(
+                        valor.trim()
+                );
+
+        return maximo > 0
+                ? maximo
+                : Long.MAX_VALUE;
+    }
+
+    protected String[] obtenerExtensionesPermitidas()
+            throws Exception {
+
+        String[] extensiones =
+                PropsUtil.getArray(
+                        "dl.file.extensions"
+                );
+
+        return extensiones != null
+                ? extensiones
+                : new String[0];
+    }
+
     private void prepararRetorno(
             ActionRequest request,
             ActionResponse response,
             int idRequerimientoCompra,
-            String modo,
-            String idTercerizadoraCotizacion) {
+            String modo) {
 
         request.setAttribute(
                 WebKeysCompras
@@ -1092,15 +1368,6 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 "id_requerimiento_compra",
                 String.valueOf(idRequerimientoCompra)
         );
-
-        if (!WebKeysCompras.isEmpty(
-                idTercerizadoraCotizacion
-        )) {
-            response.setRenderParameter(
-                    "cotizacion_id_tercerizadora",
-                    idTercerizadoraCotizacion
-            );
-        }
 
         if ("ver".equalsIgnoreCase(modo)) {
             response.setRenderParameter(
@@ -1207,18 +1474,59 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             User user)
             throws Exception {
 
-        if (user == null) {
+        if (!tieneRolCotizar(user)) {
             throw new Exception(
-                    "No se pudo determinar el usuario actual."
+                    "No posee permisos para administrar presupuestos de requerimientos de compra."
+            );
+        }
+    }
+
+    private boolean tieneRolCotizar(
+            User user) {
+
+        return user != null
+                && PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras
+                                .ROL_COTIZAR_COMPRAS
+                );
+    }
+
+    protected void validarAccesoCarga(
+            boolean tieneRolCotizar,
+            RequerimientoCompra requerimiento,
+            boolean soloLectura)
+            throws Exception {
+
+        if (!tieneRolCotizar) {
+            throw new Exception(
+                    "No posee permisos para administrar presupuestos de requerimientos de compra."
             );
         }
 
-        if (!PermissionUtil.userContainsRole(
-                user,
-                WebKeysCompras.ROL_COTIZAR_COMPRAS
-        )) {
+        if (requerimiento == null
+                || requerimiento
+                .getIdRequerimientoCompra() <= 0) {
+
             throw new Exception(
-                    "No posee permisos para administrar presupuestos de requerimientos de compra."
+                    "No se encontro el requerimiento de compra informado."
+            );
+        }
+
+        if (soloLectura) {
+            throw new Exception(
+                    "No se pueden administrar presupuestos en modo de solo lectura."
+            );
+        }
+
+        if (!requerimiento
+                .puedeAdministrarPresupuestos()) {
+
+            throw new Exception(
+                    "Solo se pueden administrar presupuestos en estado A cotizar. Estado actual: "
+                            + requerimiento
+                            .getEstadoDescripcionVisible()
+                            + "."
             );
         }
     }
@@ -1381,6 +1689,78 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             }
         } catch (Exception e) {
             logger.error(e);
+        }
+    }
+
+    protected static class PresupuestoEntrada {
+
+        private final int indice;
+        private final File archivo;
+        private final String nombreOriginal;
+        private final int idPrestador;
+
+        private PresupuestoEntrada(
+                int indice,
+                File archivo,
+                String nombreOriginal,
+                int idPrestador) {
+
+            this.indice = indice;
+            this.archivo = archivo;
+            this.nombreOriginal = nombreOriginal;
+            this.idPrestador = idPrestador;
+        }
+    }
+
+    protected static class PresupuestoValidado {
+
+        private final int indice;
+        private final File archivo;
+        private final String nombreOriginal;
+        private final PrestadorCotizacion prestador;
+        private final String nombrePersistido;
+        private final String titulo;
+        private final String descripcionPrestador;
+
+        private PresupuestoValidado(
+                int indice,
+                File archivo,
+                String nombreOriginal,
+                PrestadorCotizacion prestador,
+                String nombrePersistido,
+                String titulo,
+                String descripcionPrestador) {
+
+            this.indice = indice;
+            this.archivo = archivo;
+            this.nombreOriginal = nombreOriginal;
+            this.prestador = prestador;
+            this.nombrePersistido = nombrePersistido;
+            this.titulo = titulo;
+            this.descripcionPrestador =
+                    descripcionPrestador;
+        }
+
+        public int getIndice() {
+            return indice;
+        }
+
+        public int getIdPrestador() {
+            return prestador != null
+                    ? prestador.getIdPrestador()
+                    : 0;
+        }
+
+        public String getNombrePersistido() {
+            return nombrePersistido;
+        }
+
+        public String getTitulo() {
+            return titulo;
+        }
+
+        public String getDescripcionPrestador() {
+            return descripcionPrestador;
         }
     }
 }

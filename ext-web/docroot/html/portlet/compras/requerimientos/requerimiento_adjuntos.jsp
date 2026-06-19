@@ -1,6 +1,7 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra" %>
 <%@ page import="ar.com.ospim.util.PermissionUtil" %>
 <%@ page import="com.liferay.portal.kernel.servlet.SessionMessages" %>
@@ -58,22 +59,29 @@ boolean puedeEditarPresupuestos =
         && reqPresupuestos.puedeAdministrarPresupuestos()
         && !soloLecturaPresupuestos;
 
-List<TercerizadoraServicio> tercerizadorasPresupuestos =
-        TraeListasServiceUtil.getTercerizadoraServicio(
-                renderRequest
-        );
+List<PrestadorCotizacion> prestadoresEnviadosPresupuestos =
+        new ArrayList<PrestadorCotizacion>();
 
-if (tercerizadorasPresupuestos == null) {
-    tercerizadorasPresupuestos =
-            new ArrayList<TercerizadoraServicio>();
+String errorPrestadoresPresupuestos = "";
+
+if (puedeEditarPresupuestos) {
+    try {
+        prestadoresEnviadosPresupuestos =
+                BusquedaRequerimientoCompraServiceUtil
+                        .listarPrestadoresEnviados(
+                                idRequerimientoCompraPresupuestos
+                        );
+    } catch (Exception e) {
+        errorPrestadoresPresupuestos =
+                e.getMessage() != null
+                        ? e.getMessage()
+                        : "No se pudieron cargar los prestadores enviados.";
+    }
 }
 
-String idTercerizadoraCotizacionPresupuestos =
-        ParamUtil.getString(
-                renderRequest,
-                "cotizacion_id_tercerizadora",
-                reqPresupuestos.getIdTercerizadora()
-        );
+boolean hayPrestadoresEnviadosPresupuestos =
+        prestadoresEnviadosPresupuestos != null
+        && !prestadoresEnviadosPresupuestos.isEmpty();
 
 PortletURL uploadPresupuestosURL = renderResponse.createActionURL();
 uploadPresupuestosURL.setWindowState(WindowState.MAXIMIZED);
@@ -92,6 +100,13 @@ boolean msgPresupuestoGuardado =
         SessionMessages.contains(
                 renderRequest,
                 "requerimiento-compra-presupuesto-guardado"
+        );
+
+int presupuestosGuardados =
+        ParamUtil.getInteger(
+                renderRequest,
+                "presupuestos_guardados",
+                0
         );
 
 boolean msgPresupuestoBorrado =
@@ -115,7 +130,10 @@ boolean msgPresupuestoBorrado =
 
         <c:if test="<%= msgPresupuestoGuardado %>">
             <div class="portlet-msg-success">
-                Presupuesto guardado correctamente.
+                Se cargaron
+                <%= presupuestosGuardados %>
+                presupuesto<%= presupuestosGuardados == 1 ? "" : "s" %>
+                correctamente.
             </div>
         </c:if>
 
@@ -132,88 +150,74 @@ boolean msgPresupuestoBorrado =
         </c:if>
 
         <c:if test="<%= puedeEditarPresupuestos %>">
-            <table class="lfr-table">
-                <tr>
-                    <td>
-                        <label for="<portlet:namespace />cotizacion_id_tercerizadora">
-                            Tercerizadora:
-                        </label>
-                    </td>
+            <c:choose>
+                <c:when test="<%= !WebKeysCompras.isEmpty(errorPrestadoresPresupuestos) %>">
+                    <div class="portlet-msg-error">
+                        <%= HtmlUtil.escape(errorPrestadoresPresupuestos) %>
+                    </div>
+                </c:when>
 
-                    <td colspan="5">
-                        <select id="<portlet:namespace />cotizacion_id_tercerizadora"
-                                name="<portlet:namespace />cotizacion_id_tercerizadora">
-                            <option value="">Seleccione...</option>
-                            <%
-                            for (int i = 0; i < tercerizadorasPresupuestos.size(); i++) {
-                                TercerizadoraServicio tercerizadoraPresupuesto =
-                                        tercerizadorasPresupuestos.get(i);
+                <c:when test="<%= !hayPrestadoresEnviadosPresupuestos %>">
+                    <div class="portlet-msg-info">
+                        No hay prestadores notificados correctamente para este requerimiento.
+                    </div>
+                </c:when>
 
-                                String idTercerizadoraPresupuesto =
-                                        tercerizadoraPresupuesto != null
-                                                ? tercerizadoraPresupuesto.getId_tercerizadora()
-                                                : "";
+                <c:otherwise>
+                    <table class="lfr-table">
+                        <thead>
+                            <tr>
+                                <th>Prestador enviado</th>
+                                <th>Archivo</th>
+                                <th>Quitar</th>
+                            </tr>
+                        </thead>
 
-                                String descripcionTercerizadoraPresupuesto =
-                                        tercerizadoraPresupuesto != null
-                                                ? tercerizadoraPresupuesto.getDescripcion()
-                                                : "";
+                        <tbody id="<portlet:namespace />presupuestos_body"></tbody>
+                    </table>
 
-                                if (WebKeysCompras.isEmpty(
-                                        idTercerizadoraPresupuesto
-                                )) {
-                                    continue;
-                                }
-                            %>
-                                <option value="<%= HtmlUtil.escape(
-                                        idTercerizadoraPresupuesto
-                                ) %>"
-                                        <%= idTercerizadoraPresupuesto.equalsIgnoreCase(
-                                                idTercerizadoraCotizacionPresupuestos
-                                        ) ? "selected" : "" %>>
-                                    <%= HtmlUtil.escape(
-                                            descripcionTercerizadoraPresupuesto
-                                    ) %>
-                                </option>
-                            <%
+                    <select id="<portlet:namespace />prestador_presupuesto_template"
+                            style="display: none;">
+                        <option value="">Seleccione...</option>
+                        <%
+                        for (int i = 0;
+                                i < prestadoresEnviadosPresupuestos.size();
+                                i++) {
+
+                            PrestadorCotizacion prestadorPresupuesto =
+                                    prestadoresEnviadosPresupuestos.get(i);
+
+                            if (prestadorPresupuesto == null
+                                    || prestadorPresupuesto
+                                    .getIdPrestador() <= 0) {
+
+                                continue;
                             }
-                            %>
-                        </select>
-                    </td>
-                </tr>
+                        %>
+                            <option value="<%= prestadorPresupuesto.getIdPrestador() %>">
+                                <%= HtmlUtil.escape(
+                                        prestadorPresupuesto
+                                                .getEtiquetaVisible()
+                                ) %>
+                            </option>
+                        <%
+                        }
+                        %>
+                    </select>
 
-                <tr>
-                    <td>Añadir presupuesto:</td>
-                    <td>
-                        <input type="file"
-                               name="presupuesto"
-                               id="<portlet:namespace />presupuesto" />
-                    </td>
+                    <br />
 
-                    <td>&nbsp;</td>
+                    <input type="button"
+                           value="Agregar otro presupuesto"
+                           onclick="return <portlet:namespace />agregarFilaPresupuesto();" />
 
-                    <td>
-                        <label>Descripción:</label>
-                    </td>
-
-                    <td>
-                        <input id="<portlet:namespace />descripcionFile"
-                               name="<portlet:namespace />descripcionFile"
-                               size="90"
-                               maxlength="120"
-                               type="text"
-                               value="" />
-                    </td>
-
-                    <td>
-                        <input id="<portlet:namespace />uploadPresupuestoCompra"
-                               value="Subir presupuesto"
-                               title="Subir presupuesto"
-                               onclick="return <portlet:namespace />uploadPresupuestoRequerimientoCompra();"
-                               type="button" />
-                    </td>
-                </tr>
-            </table>
+                    <input id="<portlet:namespace />uploadPresupuestoCompra"
+                           value="Subir presupuestos"
+                           title="Subir presupuestos"
+                           onclick="return <portlet:namespace />uploadPresupuestoRequerimientoCompra();"
+                           type="button" />
+                </c:otherwise>
+            </c:choose>
         </c:if>
 
         <c:if test="<%= idRequerimientoCompraPresupuestos > 0 && !puedeEditarPresupuestos && !soloLecturaPresupuestos %>">
@@ -227,6 +231,11 @@ boolean msgPresupuestoBorrado =
            name="<portlet:namespace />presupuesto_accion"
            id="<portlet:namespace />presupuesto_accion"
            value="" />
+
+    <input type="hidden"
+           name="<portlet:namespace />presupuesto_count"
+           id="<portlet:namespace />presupuesto_count"
+           value="0" />
 
     <input type="hidden"
            name="<portlet:namespace />id_requerimiento_compra"
@@ -259,20 +268,130 @@ boolean msgPresupuestoBorrado =
 </form>
 
 <script type="text/javascript">
+    function <portlet:namespace />reindexarFilasPresupuesto() {
+        var rows =
+                jQuery(
+                        '#<portlet:namespace />presupuestos_body tr'
+                );
+
+        rows.each(function(index) {
+            var row = jQuery(this);
+            var prestador =
+                    row.find(
+                            'select.presupuesto-prestador'
+                    );
+            var archivo =
+                    row.find(
+                            'input.presupuesto-archivo'
+                    );
+
+            prestador.attr(
+                    'name',
+                    '<portlet:namespace />presupuesto_'
+                            + index
+                            + '_id_prestador'
+            );
+            prestador.attr(
+                    'id',
+                    '<portlet:namespace />presupuesto_'
+                            + index
+                            + '_id_prestador'
+            );
+
+            archivo.attr(
+                    'name',
+                    'presupuesto_'
+                            + index
+            );
+            archivo.attr(
+                    'id',
+                    '<portlet:namespace />presupuesto_'
+                            + index
+            );
+        });
+
+        jQuery(
+                '#<portlet:namespace />presupuesto_count'
+        ).val(rows.length);
+    }
+
+    function <portlet:namespace />agregarFilaPresupuesto() {
+        var tbody =
+                jQuery(
+                        '#<portlet:namespace />presupuestos_body'
+                );
+
+        if (tbody.length == 0) {
+            return false;
+        }
+
+        var cantidad =
+                tbody.find('tr').length;
+
+        if (cantidad >= <%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>) {
+            alert(
+                    'Se pueden cargar hasta '
+                            + '<%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>'
+                            + ' presupuestos por operacion.'
+            );
+
+            return false;
+        }
+
+        var prestador =
+                jQuery(
+                        '#<portlet:namespace />prestador_presupuesto_template'
+                ).clone();
+
+        prestador.removeAttr('id');
+        prestador.removeAttr('style');
+        prestador.addClass(
+                'presupuesto-prestador'
+        );
+
+        var archivo =
+                jQuery(
+                        '<input type="file" class="presupuesto-archivo" />'
+                );
+
+        var quitar =
+                jQuery(
+                        '<input type="button" value="Quitar" />'
+                );
+
+        quitar.click(function() {
+            jQuery(this).closest('tr').remove();
+            <portlet:namespace />reindexarFilasPresupuesto();
+        });
+
+        var row = jQuery('<tr></tr>');
+
+        row.append(
+                jQuery('<td></td>').append(
+                        prestador
+                )
+        );
+        row.append(
+                jQuery('<td></td>').append(
+                        archivo
+                )
+        );
+        row.append(
+                jQuery('<td></td>').append(
+                        quitar
+                )
+        );
+
+        tbody.append(row);
+        <portlet:namespace />reindexarFilasPresupuesto();
+
+        return false;
+    }
+
     function <portlet:namespace />uploadPresupuestoRequerimientoCompra() {
         var form =
                 document.getElementById(
                         '<portlet:namespace />compra_presupuesto_fm'
-                );
-
-        var file =
-                document.getElementById(
-                        '<portlet:namespace />presupuesto'
-                );
-
-        var tercerizadora =
-                document.getElementById(
-                        '<portlet:namespace />cotizacion_id_tercerizadora'
                 );
 
         var accion =
@@ -303,21 +422,61 @@ boolean msgPresupuestoBorrado =
             return false;
         }
 
-        if (!file || file.value == '') {
+        var rows =
+                jQuery(
+                        '#<portlet:namespace />presupuestos_body tr'
+                );
+
+        if (rows.length <= 0
+                || rows.length
+                > <%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>) {
+
             alert(
-                    'Debe seleccionar un presupuesto.'
+                    'La cantidad de presupuestos no es valida.'
             );
 
             return false;
         }
 
-        if (!tercerizadora
-                || jQuery.trim(tercerizadora.value) == '') {
+        var valido = true;
 
-            alert(
-                    'Debe seleccionar la tercerizadora de la cotizacion.'
-            );
+        rows.each(function(index) {
+            var row = jQuery(this);
+            var prestador =
+                    jQuery.trim(
+                            row.find(
+                                    'select.presupuesto-prestador'
+                            ).val()
+                    );
+            var archivo =
+                    row.find(
+                            'input.presupuesto-archivo'
+                    );
 
+            if (prestador == '') {
+                alert(
+                        'Debe seleccionar el prestador del presupuesto '
+                                + (index + 1)
+                                + '.'
+                );
+                valido = false;
+                return false;
+            }
+
+            if (archivo.length == 0
+                    || archivo.val() == '') {
+
+                alert(
+                        'Debe seleccionar el archivo del presupuesto '
+                                + (index + 1)
+                                + '.'
+                );
+                valido = false;
+                return false;
+            }
+        });
+
+        if (!valido) {
             return false;
         }
 
@@ -339,6 +498,8 @@ boolean msgPresupuestoBorrado =
         folderId.value = '';
         filename.value = '';
         filetitle.value = '';
+
+        <portlet:namespace />reindexarFilasPresupuesto();
 
         form.submit();
 
@@ -417,4 +578,15 @@ boolean msgPresupuestoBorrado =
 
         return false;
     }
+
+    jQuery(function() {
+        <% if (puedeEditarPresupuestos
+                && hayPrestadoresEnviadosPresupuestos
+                && WebKeysCompras.isEmpty(
+                        errorPrestadoresPresupuestos
+                )) { %>
+
+            <portlet:namespace />agregarFilaPresupuesto();
+        <% } %>
+    });
 </script>

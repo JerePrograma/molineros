@@ -10,6 +10,7 @@ public class PrestadorCotizacion {
     private String email;
     private int idTipoPrestador;
     private String tipoPrestador;
+    private String estadoEnvio;
 
     public int getIdPrestador() {
         return idPrestador;
@@ -101,6 +102,19 @@ public class PrestadorCotizacion {
         this.tipoPrestador =
                 WebKeysCompras.trimToNull(
                         tipoPrestador
+                );
+    }
+
+    public String getEstadoEnvio() {
+        return estadoEnvio;
+    }
+
+    public void setEstadoEnvio(
+            String estadoEnvio) {
+
+        this.estadoEnvio =
+                WebKeysCompras.trimToNull(
+                        estadoEnvio
                 );
     }
 }

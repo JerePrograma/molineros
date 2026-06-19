@@ -60,6 +60,14 @@ public class BusquedaRequerimientoCompraServiceUtil {
         );
     }
 
+    public static List<PrestadorCotizacion> listarPrestadoresEnviados(
+            int idRequerimientoCompra) throws Exception {
+
+        return getInstance().listarPrestadoresEnviados(
+                idRequerimientoCompra
+        );
+    }
+
     private BusquedaRequerimientoCompraServiceUtil() {
     }
 }

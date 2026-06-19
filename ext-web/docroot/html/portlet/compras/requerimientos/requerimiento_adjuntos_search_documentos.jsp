@@ -11,7 +11,6 @@
 <%@ page import="com.liferay.portal.kernel.util.HtmlUtil" %>
 <%@ page import="com.liferay.portal.kernel.util.HttpUtil" %>
 <%@ page import="com.liferay.portal.kernel.util.ParamUtil" %>
-<%@ page import="com.liferay.portal.kernel.util.StringPool" %>
 <%@ page import="com.liferay.portal.kernel.language.LanguageUtil" %>
 <%@ page import="com.liferay.portal.kernel.dao.search.SearchContainer" %>
 <%@ page import="com.liferay.portal.kernel.dao.search.ResultRow" %>
@@ -100,12 +99,10 @@ portletURL.setWindowState(LiferayWindowState.MAXIMIZED);
 
 List<String> headerNames = new ArrayList<String>();
 
-headerNames.add("#");
-headerNames.add("folder");
-headerNames.add("document");
-headerNames.add("Descripci�n");
-headerNames.add("");
-headerNames.add("");
+headerNames.add("Archivo");
+headerNames.add("Prestador");
+headerNames.add("Descargar");
+headerNames.add("Eliminar");
 
 SearchContainer searchContainer =
         new SearchContainer(
@@ -204,22 +201,36 @@ try {
 
                 row.setObject(fileEntry);
 
-                row.addText(
-                        searchContainer.getStart()
-                                + i
-                                + 1
-                                + StringPool.PERIOD
-                );
+                String prefijoDocumento =
+                        WebKeysCompras
+                                .getPrefijoDocumentoRequerimientoCompra(
+                                        idRequerimientoCompraPresupuestos
+                                );
+
+                String archivoVisible =
+                        fileEntry.getTitle();
+
+                if (WebKeysCompras.isEmpty(
+                        archivoVisible
+                )) {
+                    archivoVisible =
+                            fileEntry.getName();
+                }
+
+                if (archivoVisible != null
+                        && archivoVisible.startsWith(
+                                prefijoDocumento
+                        )) {
+
+                    archivoVisible =
+                            archivoVisible.substring(
+                                    prefijoDocumento.length()
+                            );
+                }
 
                 row.addText(
                         HtmlUtil.escape(
-                                folder.getName()
-                        )
-                );
-
-                row.addText(
-                        HtmlUtil.escape(
-                                fileEntry.getTitle()
+                                archivoVisible
                         )
                 );
 
@@ -249,7 +260,7 @@ try {
                 );
                 ver.append("\" target=\"_blank\">");
                 ver.append(
-                        "<img alt=\"Ver presupuesto\" src=\""
+                        "<img alt=\"Descargar presupuesto\" src=\""
                 );
                 ver.append(
                         themeDisplay.getPathThemeImages()
