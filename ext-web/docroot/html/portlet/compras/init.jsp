@@ -11,6 +11,8 @@
 
 <%@ page import="ar.com.ospim.afiliados.WebKeysAfiliados" %>
 <%@ page import="ar.com.ospim.afiliados.beans.Afiliado" %>
+<%@ page import="ar.com.ospim.afiliados.beans.TercerizadoraServicio" %>
+<%@ page import="ar.com.ospim.global.services.TraeListasServiceUtil" %>
 
 <%@ page import="ar.com.ospim.liquidaciones.WebKeysLiquidaciones" %>
 <%@ page import="javax.portlet.PortletSession" %>

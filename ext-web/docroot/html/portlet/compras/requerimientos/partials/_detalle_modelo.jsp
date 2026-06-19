@@ -1,5 +1,7 @@
 <%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
 <%@ page import="javax.portlet.PortletURL" %>
 <%@ page import="javax.portlet.WindowState" %>
 <%@ page import="com.liferay.portal.kernel.portlet.LiferayWindowState" %>
@@ -69,6 +71,93 @@ List<RequerimientoCompraDetalle> detalles = reqDetalle.getDetalles();
 
 if (detalles == null) {
     detalles = new ArrayList<RequerimientoCompraDetalle>();
+}
+
+Map<String, String> preciosCotizacionRestaurados =
+        new HashMap<String, String>();
+Map<String, String> prestadoresCotizacionRestaurados =
+        new HashMap<String, String>();
+Map<String, String> labelsPrestadorCotizacionRestaurados =
+        new HashMap<String, String>();
+
+boolean restaurarCotizacion =
+        ParamUtil.getBoolean(
+                renderRequest,
+                "compras_error",
+                false
+        )
+        && ("saveCotizacion".equals(
+                ParamUtil.getString(
+                        renderRequest,
+                        "compras_operacion",
+                        ""
+                )
+        ) || "cerrarCotizacion".equals(
+                ParamUtil.getString(
+                        renderRequest,
+                        "compras_operacion",
+                        ""
+                )
+        ));
+
+if (restaurarCotizacion) {
+    int cantidadDetallesRestaurados =
+            ParamUtil.getInteger(
+                    renderRequest,
+                    "detalle_count",
+                    0
+            );
+
+    for (int i = 0;
+            i < cantidadDetallesRestaurados;
+            i++) {
+
+        String prefix =
+                "detalle_"
+                        + i
+                        + "_";
+
+        String idDetalleRestaurado =
+                ParamUtil.getString(
+                        renderRequest,
+                        prefix + "id",
+                        ""
+                );
+
+        if (WebKeysCompras.isEmpty(
+                idDetalleRestaurado
+        )) {
+            continue;
+        }
+
+        preciosCotizacionRestaurados.put(
+                idDetalleRestaurado,
+                ParamUtil.getString(
+                        renderRequest,
+                        prefix
+                                + "precio_unitario_estimado",
+                        ""
+                )
+        );
+
+        prestadoresCotizacionRestaurados.put(
+                idDetalleRestaurado,
+                ParamUtil.getString(
+                        renderRequest,
+                        prefix + "id_prestador",
+                        ""
+                )
+        );
+
+        labelsPrestadorCotizacionRestaurados.put(
+                idDetalleRestaurado,
+                ParamUtil.getString(
+                        renderRequest,
+                        prefix + "prestador_label",
+                        ""
+                )
+        );
+    }
 }
 
 Integer idSectorActual = reqDetalle.getSectorId();

@@ -16,18 +16,17 @@ if (tabs1 == null) {
 }
 
 String tabs1Values =
-        "pendientes,a-cotizar,cotizados";
+        "requerimientos,cotizados";
 
 String tabs1Names =
-        "Pendientes,A cotizar,Cotizados";
+        "Requerimientos,Cotizados";
 
 boolean tabValida =
-        "pendientes".equals(tabs1)
-        || "a-cotizar".equals(tabs1)
+        "requerimientos".equals(tabs1)
         || "cotizados".equals(tabs1);
 
 if (tabs1 == null || !tabValida) {
-    tabs1 = "pendientes";
+    tabs1 = "requerimientos";
 }
 
 request.getSession().setAttribute("compras_tabs1", tabs1);
@@ -83,14 +82,9 @@ configurarPrestadoresURL.setParameter(
 </form>
 
 <c:choose>
-    <c:when test='<%= "pendientes".equals(tabs1) %>'>
+    <c:when test='<%= "requerimientos".equals(tabs1) %>'>
         <liferay-util:include
-                page="/html/portlet/compras/requerimientos/requerimientos_pendientes.jsp" />
-    </c:when>
-
-    <c:when test='<%= "a-cotizar".equals(tabs1) %>'>
-        <liferay-util:include
-                page="/html/portlet/compras/requerimientos/requerimientos_a_cotizar.jsp" />
+                page="/html/portlet/compras/requerimientos/requerimientos.jsp" />
     </c:when>
 
     <c:when test='<%= "cotizados".equals(tabs1) %>'>
@@ -100,6 +94,6 @@ configurarPrestadoresURL.setParameter(
 
     <c:otherwise>
         <liferay-util:include
-                page="/html/portlet/compras/requerimientos/requerimientos_pendientes.jsp" />
+                page="/html/portlet/compras/requerimientos/requerimientos.jsp" />
     </c:otherwise>
 </c:choose>

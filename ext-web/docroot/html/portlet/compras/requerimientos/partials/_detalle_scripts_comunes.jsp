@@ -46,16 +46,56 @@
         if (detalle.getIdArticulo() != null) {
             idArticuloDetalle = String.valueOf(detalle.getIdArticulo().intValue());
         }
+
+        String idDetalleCotizacion =
+                detalle.getIdString();
+
+        boolean cotizacionRestaurada =
+                preciosCotizacionRestaurados.containsKey(
+                        idDetalleCotizacion
+                )
+                || prestadoresCotizacionRestaurados.containsKey(
+                        idDetalleCotizacion
+                );
+
+        String precioUnitarioDetalle =
+                preciosCotizacionRestaurados.containsKey(
+                        idDetalleCotizacion
+                )
+                        ? preciosCotizacionRestaurados.get(
+                                idDetalleCotizacion
+                        )
+                        : detalle.getPrecioUnitarioEstimadoString();
+
+        String idPrestadorDetalle =
+                prestadoresCotizacionRestaurados.containsKey(
+                        idDetalleCotizacion
+                )
+                        ? prestadoresCotizacionRestaurados.get(
+                                idDetalleCotizacion
+                        )
+                        : detalle.getIdPrestadorString();
+
+        String prestadorDetalle =
+                labelsPrestadorCotizacionRestaurados.containsKey(
+                        idDetalleCotizacion
+                )
+                        ? labelsPrestadorCotizacionRestaurados.get(
+                                idDetalleCotizacion
+                        )
+                        : detalle.getPrestadorSeleccionadoVisible();
     %>
         <portlet:namespace />detallesCompra.push({
             id: '<%= jsDetalleCompra(detalle.getIdString()) %>',
             idArticulo: '<%= jsDetalleCompra(idArticuloDetalle) %>',
             articulo: '<%= jsDetalleCompra(detalle.getArticuloVisible()) %>',
             cantidad: '<%= jsDetalleCompra(detalle.getCantidadString()) %>',
-            precioUnitario: '<%= jsDetalleCompra(detalle.getPrecioUnitarioEstimadoString()) %>',
-            precioTotal: '<%= jsDetalleCompra(detalle.getPrecioTotalEstimadoString()) %>',
-            idPrestador: '<%= jsDetalleCompra(detalle.getIdPrestadorString()) %>',
-            prestador: '<%= jsDetalleCompra(detalle.getPrestadorSeleccionadoVisible()) %>',
+            precioUnitario: '<%= jsDetalleCompra(precioUnitarioDetalle) %>',
+            precioTotal: '<%= cotizacionRestaurada
+                    ? ""
+                    : jsDetalleCompra(detalle.getPrecioTotalEstimadoString()) %>',
+            idPrestador: '<%= jsDetalleCompra(idPrestadorDetalle) %>',
+            prestador: '<%= jsDetalleCompra(prestadorDetalle) %>',
             observaciones: '<%= jsDetalleCompra(detalle.getObservacionesVisible()) %>'
         });
     <%
@@ -366,5 +406,14 @@
 
     jQuery(function() {
         <portlet:namespace />renderDetallesCompra();
+
+        <% if (puedeCotizarDetalle) { %>
+            for (var i = 0;
+                    i < <portlet:namespace />detallesCompra.length;
+                    i++) {
+
+                <portlet:namespace />capturarCotizacionDetalle(i);
+            }
+        <% } %>
     });
 </script>

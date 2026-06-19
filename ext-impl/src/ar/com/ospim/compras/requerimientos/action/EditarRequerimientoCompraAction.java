@@ -55,6 +55,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
     private static final int MAX_TOKENS_GUARDADO_COMPRA = 20;
 
+    private static final int MAX_DETALLES_COTIZACION_RETORNO = 1000;
+
     private static final String STRUTS_ACTION_NUEVO_REQUERIMIENTO =
             "/compras/nuevo_requerimiento";
 
@@ -409,6 +411,15 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     "compras_error",
                     "true"
             );
+
+            if ("saveCotizacion".equals(cmd)
+                    || "cerrarCotizacion".equals(cmd)) {
+
+                copiarParametrosCotizacion(
+                        actionRequest,
+                        actionResponse
+                );
+            }
 
             actionResponse.setRenderParameter(
                     "compras_operacion",
@@ -1277,6 +1288,73 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         return detalles;
+    }
+
+    private void copiarParametrosCotizacion(
+            ActionRequest request,
+            ActionResponse response) {
+
+        int count = 0;
+
+        try {
+            count =
+                    Integer.parseInt(
+                            getParametroTrim(
+                                    request,
+                                    "detalle_count"
+                            )
+                    );
+        } catch (Exception e) {
+            count = 0;
+        }
+
+        if (count < 0) {
+            count = 0;
+        } else if (count
+                > MAX_DETALLES_COTIZACION_RETORNO) {
+
+            count =
+                    MAX_DETALLES_COTIZACION_RETORNO;
+        }
+
+        response.setRenderParameter(
+                "detalle_count",
+                String.valueOf(count)
+        );
+
+        String[] campos = {
+                "id",
+                "precio_unitario_estimado",
+                "id_prestador",
+                "prestador_label"
+        };
+
+        for (int i = 0; i < count; i++) {
+            String prefix =
+                    "detalle_"
+                            + i
+                            + "_";
+
+            for (int j = 0; j < campos.length; j++) {
+                String nombre =
+                        prefix
+                                + campos[j];
+
+                String valor =
+                        getParametroRaw(
+                                request,
+                                nombre,
+                                null
+                        );
+
+                if (valor != null) {
+                    response.setRenderParameter(
+                            nombre,
+                            valor
+                    );
+                }
+            }
+        }
     }
 
     private BigDecimal parseBigDecimalNullable(String value, String label)

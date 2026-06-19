@@ -692,6 +692,13 @@
             if (!<portlet:namespace />crearHiddenDetalle(prefix + 'id_prestador', idPrestador)) {
                 return false;
             }
+
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'prestador_label',
+                    <portlet:namespace />detalleValue(detalle.prestador)
+            )) {
+                return false;
+            }
         }
 
         return true;

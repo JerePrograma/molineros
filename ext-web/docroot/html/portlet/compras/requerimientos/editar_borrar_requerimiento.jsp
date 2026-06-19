@@ -7,6 +7,9 @@ RequerimientoCompra req = (RequerimientoCompra) row.getObject();
 boolean showABMButtons =
         user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+boolean showCotizarButtons =
+        user != null
+        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS);
 boolean showAnularButtons =
         user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS);
@@ -51,6 +54,10 @@ String anularURL = "javascript:if(confirm('Confirma anular el requerimiento?')) 
 
     <c:if test="<%= showABMButtons && req.isEditable() %>">
         <liferay-ui:icon image="edit" message="Editar" url="<%= editarURL %>" />
+    </c:if>
+
+    <c:if test="<%= showCotizarButtons && req.puedeEditarCotizacion() %>">
+        <liferay-ui:icon image="edit" message="Cotizar" url="<%= editarURL %>" />
     </c:if>
 
     <c:if test="<%= showAnularButtons && req.puedeAnular() %>">

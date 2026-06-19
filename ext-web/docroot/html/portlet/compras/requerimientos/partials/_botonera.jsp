@@ -123,6 +123,14 @@ String botoneraAnularFormId =
                 &nbsp;&nbsp;
             <% } %>
 
+            <% if (modoVista && botoneraTieneRolCotizar && req.puedeEditarCotizacion()) { %>
+                <input type="button"
+                       id="<portlet:namespace />btnCotizarRequerimientoCompra"
+                       value="Cotizar"
+                       onClick="window.location.href='<%= editarURL.toString() %>';" />
+                &nbsp;&nbsp;
+            <% } %>
+
             <% if (botoneraPuedeEnviarACotizar) { %>
                 <input type="button"
                        id="<portlet:namespace />btnEnviarCotizarRequerimientoCompra"

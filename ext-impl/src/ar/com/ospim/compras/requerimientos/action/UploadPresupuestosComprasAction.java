@@ -1,6 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.afiliados.beans.Afiliado;
+import ar.com.ospim.afiliados.beans.TercerizadoraServicio;
 import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.beans.CompraArticulo;
@@ -8,6 +9,7 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
 import ar.com.ospim.global.WebKeysGlobal;
+import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 import com.liferay.documentlibrary.DuplicateFileException;
 import com.liferay.documentlibrary.FileNameException;
@@ -44,6 +46,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -101,6 +104,13 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         ""
                 );
 
+        String idTercerizadoraCotizacion =
+                ParamUtil.getString(
+                        actionRequest,
+                        "cotizacion_id_tercerizadora",
+                        ""
+                );
+
         try {
             UploadPortletRequest uploadReq =
                     PortalUtil.getUploadPortletRequest(
@@ -128,6 +138,13 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                             idRequerimientoCompra
                     );
 
+            idTercerizadoraCotizacion =
+                    ParamUtil.getString(
+                            uploadReq,
+                            "cotizacion_id_tercerizadora",
+                            idTercerizadoraCotizacion
+                    );
+
             if (idRequerimientoCompra <= 0) {
                 errorUpload(
                         actionRequest,
@@ -138,7 +155,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         actionRequest,
                         actionResponse,
                         idRequerimientoCompra,
-                        modo
+                        modo,
+                        idTercerizadoraCotizacion
                 );
 
                 return;
@@ -164,7 +182,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         actionRequest,
                         actionResponse,
                         idRequerimientoCompra,
-                        modo
+                        modo,
+                        idTercerizadoraCotizacion
                 );
 
                 return;
@@ -185,17 +204,28 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         actionRequest,
                         actionResponse,
                         idRequerimientoCompra,
-                        modo
+                        modo,
+                        idTercerizadoraCotizacion
                 );
 
                 return;
             }
 
             if (Constants.ADD.equals(cmd)) {
+                idTercerizadoraCotizacion =
+                        resolverCodigoTercerizadora(
+                                TraeListasServiceUtil
+                                        .getTercerizadoraServicio(
+                                                actionRequest
+                                        ),
+                                idTercerizadoraCotizacion
+                        );
+
                 subirPresupuesto(
                         actionRequest,
                         uploadReq,
-                        requerimiento
+                        requerimiento,
+                        idTercerizadoraCotizacion
                 );
             } else if (Constants.DELETE.equals(cmd)) {
                 borrarPresupuesto(
@@ -213,7 +243,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                     actionRequest,
                     actionResponse,
                     idRequerimientoCompra,
-                    modo
+                    modo,
+                    idTercerizadoraCotizacion
             );
         } catch (Exception e) {
             logger.error(e);
@@ -234,7 +265,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                     actionRequest,
                     actionResponse,
                     idRequerimientoCompra,
-                    modo
+                    modo,
+                    idTercerizadoraCotizacion
             );
         }
     }
@@ -399,7 +431,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
     private void subirPresupuesto(
             ActionRequest actionRequest,
             UploadPortletRequest uploadReq,
-            RequerimientoCompra requerimiento)
+            RequerimientoCompra requerimiento,
+            String idTercerizadoraCotizacion)
             throws Exception {
 
         File file =
@@ -471,7 +504,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         .getPrefijoDocumentoRequerimientoCompra(
                                 requerimiento
                                         .getIdRequerimientoCompra()
-                        );
+                        )
+                        + idTercerizadoraCotizacion
+                        + "-";
 
         String identificador =
                 UUID.randomUUID()
@@ -482,9 +517,11 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 obtenerExtensionSegura(nombreOriginal);
 
         String nombrePersistido =
-                prefijo
-                        + identificador
-                        + extension;
+                construirNombrePersistido(
+                        prefijo,
+                        identificador,
+                        extension
+                );
 
         String sufijoTitulo =
                 "_"
@@ -497,7 +534,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         - sufijoTitulo.length();
 
         String nombreTitulo =
-                nombreOriginal;
+                normalizarComponenteTitulo(
+                        nombreOriginal
+                );
 
         if (longitudDisponible <= 0) {
             nombreTitulo = "";
@@ -865,7 +904,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         }
     }
 
-    private String obtenerNombreArchivo(
+    protected String obtenerNombreArchivo(
             String filename) {
 
         if (filename == null) {
@@ -887,10 +926,18 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                     );
         }
 
-        return nombre.trim();
+        nombre = nombre.trim();
+
+        if (".".equals(nombre)
+                || "..".equals(nombre)) {
+
+            return "";
+        }
+
+        return nombre;
     }
 
-    private String obtenerExtensionSegura(
+    protected String obtenerExtensionSegura(
             String nombreOriginal) {
 
         if (WebKeysCompras.isEmpty(nombreOriginal)) {
@@ -919,14 +966,121 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             return "";
         }
 
+        if (!extension.matches(
+                "^\\.[A-Za-z0-9]+$"
+        )) {
+            return "";
+        }
+
         return extension;
+    }
+
+    protected String resolverCodigoTercerizadora(
+            List<TercerizadoraServicio> tercerizadoras,
+            String codigoRecibido)
+            throws Exception {
+
+        String codigo =
+                codigoRecibido != null
+                        ? codigoRecibido.trim()
+                        : "";
+
+        if (WebKeysCompras.isEmpty(codigo)) {
+            throw new Exception(
+                    "Debe seleccionar la tercerizadora de la cotizacion."
+            );
+        }
+
+        if (tercerizadoras == null
+                || tercerizadoras.isEmpty()) {
+
+            throw new Exception(
+                    "No se pudo cargar el catalogo de tercerizadoras."
+            );
+        }
+
+        for (int i = 0; i < tercerizadoras.size(); i++) {
+            TercerizadoraServicio tercerizadora =
+                    tercerizadoras.get(i);
+
+            String codigoCatalogo =
+                    tercerizadora != null
+                            ? tercerizadora
+                                    .getId_tercerizadora()
+                            : null;
+
+            if (codigoCatalogo != null
+                    && codigoCatalogo.trim()
+                            .equalsIgnoreCase(codigo)) {
+
+                String codigoNormalizado =
+                        codigoCatalogo
+                                .trim()
+                                .toUpperCase(
+                                        Locale.ENGLISH
+                                );
+
+                if (!codigoNormalizado.matches(
+                        "^[A-Z0-9_-]+$"
+                )) {
+                    throw new Exception(
+                            "La tercerizadora configurada no posee un codigo valido."
+                    );
+                }
+
+                return codigoNormalizado;
+            }
+        }
+
+        throw new Exception(
+                "La tercerizadora seleccionada no pertenece al catalogo permitido."
+        );
+    }
+
+    protected String construirNombrePersistido(
+            String prefijo,
+            String identificador,
+            String extension) {
+
+        return prefijo
+                + identificador
+                + extension;
+    }
+
+    protected String normalizarComponenteTitulo(
+            String nombreOriginal) {
+
+        if (nombreOriginal == null) {
+            return "";
+        }
+
+        String nombre =
+                nombreOriginal
+                        .replaceAll(
+                                "[\\p{Cntrl}\\\\/:*?\"<>|]+",
+                                "_"
+                        )
+                        .replaceAll(
+                                "\\s+",
+                                " "
+                        )
+                        .trim();
+
+        if (".".equals(nombre)
+                || "..".equals(nombre)) {
+
+            return "";
+        }
+
+        return nombre;
     }
 
     private void prepararRetorno(
             ActionRequest request,
             ActionResponse response,
             int idRequerimientoCompra,
-            String modo) {
+            String modo,
+            String idTercerizadoraCotizacion) {
 
         request.setAttribute(
                 WebKeysCompras
@@ -938,6 +1092,15 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 "id_requerimiento_compra",
                 String.valueOf(idRequerimientoCompra)
         );
+
+        if (!WebKeysCompras.isEmpty(
+                idTercerizadoraCotizacion
+        )) {
+            response.setRenderParameter(
+                    "cotizacion_id_tercerizadora",
+                    idTercerizadoraCotizacion
+            );
+        }
 
         if ("ver".equalsIgnoreCase(modo)) {
             response.setRenderParameter(

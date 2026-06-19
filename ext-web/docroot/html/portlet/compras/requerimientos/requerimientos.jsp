@@ -10,24 +10,12 @@ String estadoForzado =
 boolean estadoForzadoActivo =
         !WebKeysCompras.isEmpty(estadoForzado);
 
-boolean esPestanaPendientes =
-        String.valueOf(WebKeysCompras.ESTADO_PENDIENTE)
-                .equals(estadoForzado);
-
 boolean showABMButtons =
         user != null
         && PermissionUtil.userContainsRole(
                 user,
                 WebKeysCompras.ROL_ABM_COMPRAS
         );
-
-boolean modoRequerimientos =
-        Boolean.TRUE.equals(
-                request.getAttribute(
-                        "COMPRAS_MODO_REQUERIMIENTO"
-                )
-        )
-        && esPestanaPendientes;
 
 List<RequerimientoCompraSector> sectores =
         (List<RequerimientoCompraSector>)
@@ -130,6 +118,16 @@ if (idTercerizadoraFiltro != null) {
 
 if ("0".equals(idTercerizadoraFiltro)) {
     idTercerizadoraFiltro = "";
+}
+
+List<TercerizadoraServicio> tercerizadoras =
+        TraeListasServiceUtil.getTercerizadoraServicio(
+                renderRequest
+        );
+
+if (tercerizadoras == null) {
+    tercerizadoras =
+            new ArrayList<TercerizadoraServicio>();
 }
 %>
 
@@ -336,54 +334,34 @@ if ("0".equals(idTercerizadoraFiltro)) {
                         Todas
                     </option>
 
-                    <option value="OMI"
-                            <%= "OMI".equals(idTercerizadoraFiltro)
-                                    ? "selected"
-                                    : "" %>>
-                        OMINT
-                    </option>
+                    <%
+                    for (int i = 0; i < tercerizadoras.size(); i++) {
+                        TercerizadoraServicio tercerizadora =
+                                tercerizadoras.get(i);
 
-                    <option value="MPS"
-                            <%= "MPS".equals(idTercerizadoraFiltro)
-                                    ? "selected"
-                                    : "" %>>
-                        MOLINEROS POR PS
-                    </option>
+                        String idTercerizadora =
+                                tercerizadora != null
+                                        ? tercerizadora.getId_tercerizadora()
+                                        : "";
 
-                    <option value="MEN"
-                            <%= "MEN".equals(idTercerizadoraFiltro)
-                                    ? "selected"
-                                    : "" %>>
-                        MOLINEROS POR ENSALUD
-                    </option>
+                        String descripcionTercerizadora =
+                                tercerizadora != null
+                                        ? tercerizadora.getDescripcion()
+                                        : "";
 
-                    <option value="MCE"
-                            <%= "MCE".equals(idTercerizadoraFiltro)
-                                    ? "selected"
-                                    : "" %>>
-                        MOLINEROS POR CES
-                    </option>
-
-                    <option value="CEM"
-                            <%= "CEM".equals(idTercerizadoraFiltro)
-                                    ? "selected"
-                                    : "" %>>
-                        CEMIC
-                    </option>
-
-                    <option value="MIM"
-                            <%= "MIM".equals(idTercerizadoraFiltro)
-                                    ? "selected"
-                                    : "" %>>
-                        IMESA
-                    </option>
-
-                    <option value="MON"
-                            <%= "MON".equals(idTercerizadoraFiltro)
-                                    ? "selected"
-                                    : "" %>>
-                        MONOTRIBUTO
-                    </option>
+                        if (WebKeysCompras.isEmpty(idTercerizadora)) {
+                            continue;
+                        }
+                    %>
+                        <option value="<%= HtmlUtil.escape(idTercerizadora) %>"
+                                <%= idTercerizadora.equalsIgnoreCase(
+                                        idTercerizadoraFiltro
+                                ) ? "selected" : "" %>>
+                            <%= HtmlUtil.escape(descripcionTercerizadora) %>
+                        </option>
+                    <%
+                    }
+                    %>
                 </select>
 
                 <input id="<portlet:namespace />id_tercerizadora_filtro"
@@ -416,8 +394,7 @@ if ("0".equals(idTercerizadoraFiltro)) {
             </td>
 
             <td colspan="5">
-                <c:if test="<%= showABMButtons
-                        && modoRequerimientos %>">
+                <c:if test="<%= showABMButtons %>">
 
                     <input type="button"
                            value="Nuevo requerimiento"

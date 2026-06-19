@@ -58,6 +58,23 @@ boolean puedeEditarPresupuestos =
         && reqPresupuestos.puedeAdministrarPresupuestos()
         && !soloLecturaPresupuestos;
 
+List<TercerizadoraServicio> tercerizadorasPresupuestos =
+        TraeListasServiceUtil.getTercerizadoraServicio(
+                renderRequest
+        );
+
+if (tercerizadorasPresupuestos == null) {
+    tercerizadorasPresupuestos =
+            new ArrayList<TercerizadoraServicio>();
+}
+
+String idTercerizadoraCotizacionPresupuestos =
+        ParamUtil.getString(
+                renderRequest,
+                "cotizacion_id_tercerizadora",
+                reqPresupuestos.getIdTercerizadora()
+        );
+
 PortletURL uploadPresupuestosURL = renderResponse.createActionURL();
 uploadPresupuestosURL.setWindowState(WindowState.MAXIMIZED);
 uploadPresupuestosURL.setParameter("struts_action", "/compras/upload_presupuestos_requerimiento");
@@ -116,6 +133,55 @@ boolean msgPresupuestoBorrado =
 
         <c:if test="<%= puedeEditarPresupuestos %>">
             <table class="lfr-table">
+                <tr>
+                    <td>
+                        <label for="<portlet:namespace />cotizacion_id_tercerizadora">
+                            Tercerizadora:
+                        </label>
+                    </td>
+
+                    <td colspan="5">
+                        <select id="<portlet:namespace />cotizacion_id_tercerizadora"
+                                name="<portlet:namespace />cotizacion_id_tercerizadora">
+                            <option value="">Seleccione...</option>
+                            <%
+                            for (int i = 0; i < tercerizadorasPresupuestos.size(); i++) {
+                                TercerizadoraServicio tercerizadoraPresupuesto =
+                                        tercerizadorasPresupuestos.get(i);
+
+                                String idTercerizadoraPresupuesto =
+                                        tercerizadoraPresupuesto != null
+                                                ? tercerizadoraPresupuesto.getId_tercerizadora()
+                                                : "";
+
+                                String descripcionTercerizadoraPresupuesto =
+                                        tercerizadoraPresupuesto != null
+                                                ? tercerizadoraPresupuesto.getDescripcion()
+                                                : "";
+
+                                if (WebKeysCompras.isEmpty(
+                                        idTercerizadoraPresupuesto
+                                )) {
+                                    continue;
+                                }
+                            %>
+                                <option value="<%= HtmlUtil.escape(
+                                        idTercerizadoraPresupuesto
+                                ) %>"
+                                        <%= idTercerizadoraPresupuesto.equalsIgnoreCase(
+                                                idTercerizadoraCotizacionPresupuestos
+                                        ) ? "selected" : "" %>>
+                                    <%= HtmlUtil.escape(
+                                            descripcionTercerizadoraPresupuesto
+                                    ) %>
+                                </option>
+                            <%
+                            }
+                            %>
+                        </select>
+                    </td>
+                </tr>
+
                 <tr>
                     <td>Añadir presupuesto:</td>
                     <td>
@@ -204,6 +270,11 @@ boolean msgPresupuestoBorrado =
                         '<portlet:namespace />presupuesto'
                 );
 
+        var tercerizadora =
+                document.getElementById(
+                        '<portlet:namespace />cotizacion_id_tercerizadora'
+                );
+
         var accion =
                 document.getElementById(
                         '<portlet:namespace />presupuesto_accion'
@@ -235,6 +306,16 @@ boolean msgPresupuestoBorrado =
         if (!file || file.value == '') {
             alert(
                     'Debe seleccionar un presupuesto.'
+            );
+
+            return false;
+        }
+
+        if (!tercerizadora
+                || jQuery.trim(tercerizadora.value) == '') {
+
+            alert(
+                    'Debe seleccionar la tercerizadora de la cotizacion.'
             );
 
             return false;
