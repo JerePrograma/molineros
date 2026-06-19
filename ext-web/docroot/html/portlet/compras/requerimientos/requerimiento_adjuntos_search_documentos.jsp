@@ -43,6 +43,11 @@ private String jsCompraAdjunto(String value) {
 %>
 
 <%
+Log logPresupuestos =
+        LogFactoryUtil.getLog(
+                "compras.requerimiento_adjuntos_search_documentos"
+        );
+
 String namespaceAdjuntos = renderResponse.getNamespace();
 
 long groupIdPresupuestos =
@@ -72,9 +77,12 @@ Object soloLecturaAttrPresupuestos =
 
 String modoPresupuestos = ParamUtil.getString(renderRequest, "modo", "");
 String strutsActionPresupuestos = ParamUtil.getString(renderRequest, "struts_action", "");
+boolean soloLecturaParamPresupuestos =
+        ParamUtil.getBoolean(request, "solo_lectura", false);
 
 boolean soloLecturaPresupuestos =
         Boolean.TRUE.equals(soloLecturaAttrPresupuestos)
+        || soloLecturaParamPresupuestos
         || "ver".equalsIgnoreCase(modoPresupuestos)
         || "/compras/ver_requerimiento".equals(strutsActionPresupuestos);
 
@@ -338,8 +346,8 @@ try {
              */
             searchContainer.setTotal(0);
 
-            if (_log.isDebugEnabled()) {
-                _log.debug(
+            if (logPresupuestos.isDebugEnabled()) {
+                logPresupuestos.debug(
                         "La carpeta de presupuestos todavía no existe. "
                                 + "groupId="
                                 + groupIdPresupuestos
@@ -364,7 +372,7 @@ try {
 
 <%
 } catch (Exception e) {
-    _log.error(
+    logPresupuestos.error(
             "No se pudieron consultar los presupuestos "
                     + "del requerimiento. groupId="
                     + groupIdPresupuestos

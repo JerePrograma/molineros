@@ -183,7 +183,8 @@ boolean puedeEditarEstructuraPantalla =
 boolean puedeEditarCotizacionPantalla =
         !esNuevo
         && puedeCotizar
-        && cotizacionEditablePorEstado;
+        && cotizacionEditablePorEstado
+        && !soloLecturaSolicitada;
 
 boolean layoutEdicion =
         !modoVistaForzado

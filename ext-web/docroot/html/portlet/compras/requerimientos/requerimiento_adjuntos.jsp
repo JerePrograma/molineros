@@ -43,9 +43,12 @@ Object soloLecturaAttrPresupuestos =
 
 String modoPresupuestos = ParamUtil.getString(renderRequest, "modo", "");
 String strutsActionPresupuestos = ParamUtil.getString(renderRequest, "struts_action", "");
+boolean soloLecturaParamPresupuestos =
+        ParamUtil.getBoolean(request, "solo_lectura", false);
 
 boolean soloLecturaPresupuestos =
         Boolean.TRUE.equals(soloLecturaAttrPresupuestos)
+        || soloLecturaParamPresupuestos
         || "ver".equalsIgnoreCase(modoPresupuestos)
         || "/compras/ver_requerimiento".equals(strutsActionPresupuestos);
 
@@ -116,6 +119,18 @@ boolean msgPresupuestoBorrado =
         );
 %>
 
+<!-- compras-presupuestos-include-debug
+idRequerimiento=<%= idRequerimientoCompraPresupuestos %>
+estadoPersistido=<%= reqPresupuestos.getEstado() %>
+soloLecturaParam=<%= soloLecturaParamPresupuestos %>
+soloLectura=<%= soloLecturaPresupuestos %>
+puedeCotizar=<%= puedeCotizarPresupuestos %>
+puedeVerPresupuestos=<%= reqPresupuestos.puedeVerPresupuestos() %>
+puedeAdministrarPresupuestos=<%= reqPresupuestos.puedeAdministrarPresupuestos() %>
+puedeEditarPresupuestos=<%= puedeEditarPresupuestos %>
+struts_action=<%= HtmlUtil.escape(strutsActionPresupuestos) %>
+modo=<%= HtmlUtil.escape(modoPresupuestos) %>
+-->
 <form action="<%= uploadPresupuestosURL.toString() %>"
       method="post"
       name="<portlet:namespace />compra_presupuesto_fm"
