@@ -23,9 +23,9 @@
 
     <tr class="portlet-section-header results-header">
         <th>ID</th>
-        <th>Art&iacute;culo</th>
+        <th>Artículo</th>
         <th>Cantidad</th>
-        <th>Descripcion</th>
+        <th>Descripción</th>
 
         <% if (puedeVerCotizacionDetalle) { %>
             <th>Precio unitario</th>

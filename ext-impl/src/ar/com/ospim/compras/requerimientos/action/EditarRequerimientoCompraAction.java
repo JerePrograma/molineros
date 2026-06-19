@@ -38,10 +38,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             "ARTICULOS_COMPRA";
 
     /*
-     * Blindaje anti doble envio.
+     * Blindaje anti doble envío.
      *
-     * Se usa un SET de tokens, no un unico token, para no romper pantallas
-     * abiertas en multiples tabs. Cada render agrega un token valido.
+     * Se usa un SET de tokens, no un único token, para no romper pantallas
+     * abiertas en múltiples tabs. Cada render agrega un token válido.
      * Cada save consume exactamente un token.
      */
     private static final String PARAM_COMPRAS_SAVE_TOKEN =
@@ -64,11 +64,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             "/compras/editar_requerimiento";
 
     /*
-     * La logica de detalles queda separada en helper:
+     * La lógica de detalles queda separada en helper:
      * - parseo de detalle
-     * - validacion de detalle
+     * - validación de detalle
      * - guardado/borrado de detalles
-     * - normalizacion de textos nuevos
+     * - normalización de textos nuevos
      */
     private final RequerimientoCompraDetalleHelper detalleHelper =
             new RequerimientoCompraDetalleHelper();
@@ -149,7 +149,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         /*
          * Importante:
-         * El popup de articulo SOLO debe tratarse como popup si el cmd real es saveArticuloPopup.
+         * El popup de artículo SOLO debe tratarse como popup si el cmd real es saveArticuloPopup.
          * No uses struts_action para decidir esto, porque si struts_action queda contaminado
          * con /compras/alta_articulo_popup, cualquier error de saveAll puede terminar
          * redirigiendo al popup incorrecto.
@@ -209,7 +209,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 /*
                  * Blindaje anti doble click / doble submit.
-                 * Debe ejecutarse despues del permiso y antes de guardar cualquier cosa.
+                 * Debe ejecutarse después del permiso y antes de guardar cualquier cosa.
                  */
                 consumirTokenGuardadoCompra(actionRequest);
 
@@ -268,8 +268,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 validarPermisoABM(user);
 
                 /*
-                 * Blindaje tambien para flujos legacy ADD/UPDATE.
-                 * Si siguen vivos, tambien guardan cabecera.
+                 * Blindaje también para flujos legacy ADD/UPDATE.
+                 * Si siguen vivos, también guardan cabecera.
                  */
                 consumirTokenGuardadoCompra(actionRequest);
 
@@ -462,7 +462,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                         );
 
                 if (requerimiento == null) {
-                    throw new Exception("No se encontro el requerimiento de compra informado.");
+                    throw new Exception("No se encontró el requerimiento de compra informado.");
                 }
             } else {
                 requerimiento = new RequerimientoCompra();
@@ -598,7 +598,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             if (!(tokensObj instanceof Set)) {
                 errorCampo(
                         "guardar",
-                        "El requerimiento ya fue enviado o la pantalla esta desactualizada. "
+                        "El requerimiento ya fue enviado o la pantalla está desactualizada. "
                                 + "Vuelva a cargar la pantalla antes de guardar nuevamente."
                 );
             }
@@ -610,7 +610,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 errorCampo(
                         "guardar",
-                        "El requerimiento ya fue enviado o la pantalla esta desactualizada. "
+                        "El requerimiento ya fue enviado o la pantalla está desactualizada. "
                                 + "Vuelva a cargar la pantalla antes de guardar nuevamente."
                 );
             }
@@ -651,10 +651,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         /*
          * Performance:
-         * No precargar articulos en render.
+         * No precargar artículos en render.
          *
          * La lista puede ser grande y termina serializada en JS por
-         * _detalle_scripts_comunes.jsp. Los articulos deben cargarse
+         * _detalle_scripts_comunes.jsp. Los artículos deben cargarse
          * bajo demanda por /compras/listar_articulos_sector.
          */
         request.setAttribute(
@@ -837,7 +837,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (requerimiento == null) {
             errorCampo(
                     "id_requerimiento_compra",
-                    "No se encontro el requerimiento de compra informado. ID recibido: "
+                    "No se encontró el requerimiento de compra informado. ID recibido: "
                             + idRequerimientoCompra + "."
             );
         }
@@ -864,7 +864,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (requerimiento == null) {
             errorCampo(
                     "id_requerimiento_compra",
-                    "No se encontro el requerimiento de compra informado. ID recibido: "
+                    "No se encontró el requerimiento de compra informado. ID recibido: "
                             + idRequerimientoCompra + "."
             );
         }
@@ -896,7 +896,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             if (sector == null) {
                 errorCampo(
                         "sector_id",
-                        "Sector: el sector seleccionado no existe o no esta disponible. ID recibido: "
+                        "Sector: el sector seleccionado no existe o no está disponible. ID recibido: "
                                 + requerimiento.getIdSector() + "."
                 );
             }
@@ -910,7 +910,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
              *
              * Importante:
              * No borrar idTercerizadora en requerimientos existentes.
-             * Si se borra automaticamente, se pisan datos historicos.
+             * Si se borra automáticamente, se pisan datos históricos.
              */
             if (!sector.isRequiereAfiliado()) {
                 aplicarReglaSectorSinAfiliado(requerimiento);
@@ -923,7 +923,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         /*
-         * Regla unica:
+         * Regla única:
          * Si hay cualquier porcentaje a cargo de tercerizadora, hay recupero.
          */
         Integer cargoTercerizadora = requerimiento.getCargoTercerizadora();
@@ -954,7 +954,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (afiliados == null || afiliados.size() != 1) {
             errorCampo(
                     "afiliado_cuil_titular",
-                    "No se pudo obtener un unico afiliado para guardar el requerimiento."
+                    "No se pudo obtener un único afiliado para guardar el requerimiento."
             );
         }
 
@@ -1088,17 +1088,17 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         /*
-         * Regla unica:
+         * Regla única:
          * Recupero es true cuando Cargo tercerizadora es mayor a 0.
          */
         requerimiento.setRecupero(cargoTercerizadora > 0);
 
         /*
-         * No se limpia tercerizadora automaticamente por cargos.
+         * No se limpia tercerizadora automáticamente por cargos.
          * La tercerizadora queda como vino del afiliado/formulario
-         * o como estaba guardada si el afiliado no cambio.
+         * o como estaba guardada si el afiliado no cambió.
          *
-         * Si hay cargo a tercerizadora, si se exige que exista tercerizadora.
+         * Si hay cargo a tercerizadora, sí se exige que exista tercerizadora.
          */
         if (requerimiento.isRequiereAfiliado()
                 && cargoTercerizadora > 0
@@ -1210,13 +1210,13 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         /*
          * Blindaje contra pisado de tercerizadora:
-         * si el requerimiento ya existia y el afiliado no cambio,
+         * si el requerimiento ya existía y el afiliado no cambió,
          * se conserva la tercerizadora persistida.
          */
         preservarTercerizadoraExistenteSiNoCambioAfiliado(requerimiento);
 
         /*
-         * Regla unica:
+         * Regla única:
          * recupero true si hay cualquier cargo a tercerizadora.
          */
         requerimiento.setRecupero(
@@ -1374,7 +1374,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (!clean.matches("^-?[0-9]+(\\.[0-9]+)?$")) {
             errorCampo(
                     label,
-                    label + ": importe invalido. Valor recibido: '" + original
+                    label + ": importe inválido. Valor recibido: '" + original
                             + "'. Use formatos como 1234.56 o 1.234,56."
             );
         }
@@ -1492,7 +1492,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             errorCampo(
                     nombre,
                     label + ": el valor ingresado '" + value
-                            + "' no es un numero entero valido."
+                            + "' no es un número entero válido."
             );
         }
 
@@ -1502,7 +1502,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             errorCampo(
                     nombre,
                     label + ": el valor ingresado '" + value
-                            + "' esta fuera del rango permitido."
+                            + "' está fuera del rango permitido."
             );
         }
 
@@ -1538,7 +1538,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (!value.matches("^[0-9]+$")) {
             errorCampo(
                     nombre,
-                    label + ": debe ser un numero entero entre 0 y 100. Valor recibido: '"
+                    label + ": debe ser un número entero entre 0 y 100. Valor recibido: '"
                             + value + "'."
             );
         }
@@ -1551,7 +1551,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             errorCampo(
                     nombre,
                     label + ": el valor ingresado '" + value
-                            + "' esta fuera del rango permitido."
+                            + "' está fuera del rango permitido."
             );
             return null;
         }
@@ -1576,7 +1576,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         /*
          * En requerimientos nuevos sin afiliado, no corresponde guardar tercerizadora.
-         * En requerimientos existentes, NO se limpia para evitar pisar datos historicos.
+         * En requerimientos existentes, NO se limpia para evitar pisar datos históricos.
          */
         if (requerimiento.getIdRequerimientoCompra() <= 0) {
             requerimiento.setIdTercerizadora(null);
@@ -1619,8 +1619,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         /*
-         * Si el afiliado no cambio, no aceptamos que el componente visual
-         * reemplace automaticamente CSA por MCE u otra tercerizadora.
+         * Si el afiliado no cambió, no aceptamos que el componente visual
+         * reemplace automáticamente CSA por MCE u otra tercerizadora.
          */
         if (!WebKeysCompras.isEmpty(existente.getIdTercerizadora())) {
             requerimiento.setIdTercerizadora(

@@ -106,11 +106,11 @@ int totalAfiliados = afiliadosList != null ? afiliadosList.size() : 0;
         }
     <% } else if (totalAfiliados == 0) { %>
         if (typeof <portlet:namespace />mostrarMensajeAfiliadoInicial == 'function') {
-            <portlet:namespace />mostrarMensajeAfiliadoInicial('No se encontro un afiliado para el CUIL e integrante informados. Puede buscarlo manualmente.');
+            <portlet:namespace />mostrarMensajeAfiliadoInicial('No se encontró un afiliado para el CUIL e integrante informados. Puede buscarlo manualmente.');
         }
     <% } else { %>
         if (typeof <portlet:namespace />mostrarMensajeAfiliadoInicial == 'function') {
-            <portlet:namespace />mostrarMensajeAfiliadoInicial('La busqueda inicial encontro mas de un afiliado. Puede seleccionarlo manualmente con Buscar afiliado.');
+            <portlet:namespace />mostrarMensajeAfiliadoInicial('La búsqueda inicial encontró más de un afiliado. Puede seleccionarlo manualmente con Buscar afiliado.');
         }
     <% } %>
 </script>

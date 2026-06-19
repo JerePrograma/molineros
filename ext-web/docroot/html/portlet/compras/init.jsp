@@ -1,3 +1,4 @@
+<%@ page pageEncoding="ISO-8859-1" %>
 <%@ include file="/html/portlet/init.jsp" %>
 
 <%@ page import="java.util.List" %>

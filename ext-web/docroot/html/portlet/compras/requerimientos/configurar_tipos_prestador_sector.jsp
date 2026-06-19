@@ -145,22 +145,22 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
 
 <div class="compras-configuracion-prestadores">
 
-    <h2>Configuraci&oacute;n de prestadores por sector</h2>
+    <h2>Configuración de prestadores por sector</h2>
 
     <p class="configuracion-ayuda">
-        Seleccione un sector y marque los tipos de prestador que podr&aacute;n
-        recibir solicitudes de cotizaci&oacute;n para sus requerimientos.
+        Seleccione un sector y marque los tipos de prestador que podrán
+        recibir solicitudes de cotización para sus requerimientos.
     </p>
 
     <% if (configuracionActualizada) { %>
         <div class="portlet-msg-success">
-            La configuraci&oacute;n de prestadores fue actualizada correctamente.
+            La configuración de prestadores fue actualizada correctamente.
         </div>
     <% } %>
 
     <% if (configuracionError) { %>
         <div class="portlet-msg-error">
-            <strong>No se pudo guardar la configuraci&oacute;n.</strong>
+            <strong>No se pudo guardar la configuración.</strong>
 
             <% if (!WebKeysCompras.isEmpty(errorConfiguracion)) { %>
                 <br />
@@ -350,7 +350,7 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
                     <% if (!tiposPrestador.isEmpty()) { %>
                         <input type="submit"
                                id="<portlet:namespace />guardarConfiguracionPrestadores"
-                               value="Guardar configuraci&oacute;n" />
+                               value="Guardar configuración" />
 
                         &nbsp;&nbsp;
                     <% } %>
@@ -474,13 +474,13 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
         }
 
         var mensaje =
-                'Confirma guardar la configuracion de prestadores para el sector seleccionado?';
+                '¿Confirma guardar la configuración de prestadores para el sector seleccionado?';
 
         if (cantidadSeleccionada == 0) {
             mensaje =
-                    'No selecciono ningun tipo de prestador. '
-                    + 'Esto deshabilitara todos los tipos para el sector. '
-                    + 'Confirma continuar?';
+                    'No seleccionó ningún tipo de prestador. '
+                    + 'Esto deshabilitará todos los tipos para el sector. '
+                    + '¿Confirma continuar?';
         }
 
         return confirm(mensaje);

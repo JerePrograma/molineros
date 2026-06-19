@@ -173,7 +173,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 );
             } else {
                 throw new Exception(
-                        "La accion solicitada para el presupuesto no es valida."
+                        "La acción solicitada para el presupuesto no es válida."
                 );
             }
 
@@ -264,7 +264,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             if (requerimiento == null) {
                 if (idRequerimientoCompra > 0) {
                     throw new Exception(
-                            "No se encontro el requerimiento de compra informado."
+                            "No se encontró el requerimiento de compra informado."
                     );
                 }
 
@@ -547,7 +547,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (idRequerimientoCompra <= 0) {
             throw new Exception(
-                    "El requerimiento de compra no es valido."
+                    "El requerimiento de compra no es válido."
             );
         }
 
@@ -555,7 +555,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 || entradas.size() != cantidad) {
 
             throw new Exception(
-                    "La coleccion de presupuestos fue manipulada."
+                    "La colección de presupuestos fue manipulada."
             );
         }
 
@@ -597,9 +597,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                     || entrada.indice != i) {
 
                 throw new Exception(
-                        "El indice del presupuesto "
+                        "El índice del presupuesto "
                                 + (i + 1)
-                                + " no es valido."
+                                + " no es válido."
                 );
             }
 
@@ -621,7 +621,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 throw new Exception(
                         "El presupuesto "
                                 + (i + 1)
-                                + " supera el tamanio permitido."
+                                + " supera el tamaño permitido."
                 );
             }
 
@@ -636,7 +636,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 throw new Exception(
                         "El nombre del presupuesto "
                                 + (i + 1)
-                                + " no es valido."
+                                + " no es válido."
                 );
             }
 
@@ -654,7 +654,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 throw new Exception(
                         "El tipo del presupuesto "
                                 + (i + 1)
-                                + " no esta permitido."
+                                + " no está permitido."
                 );
             }
 
@@ -808,14 +808,14 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (error instanceof FileSizeException) {
             return new Exception(
-                    "Uno de los presupuestos supera el tamanio permitido.",
+                    "Uno de los presupuestos supera el tamaño permitido.",
                     error
             );
         }
 
         if (error instanceof FileNameException) {
             return new Exception(
-                    "El tipo de uno de los presupuestos no esta permitido.",
+                    "El tipo de uno de los presupuestos no está permitido.",
                     error
             );
         }
@@ -982,7 +982,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             return getFolderCompras(groupId);
         } catch (NoSuchFolderException e) {
             logger.info(
-                    "La carpeta de Compras no existe. Se intentara crear: "
+                    "La carpeta de Compras no existe. Se intentará crear: "
                             + "groupId="
                             + groupId
                             + ", parentFolderId="
@@ -1031,8 +1031,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         );
 
                 logger.warn(
-                        "La creacion de la carpeta de presupuestos fallo, "
-                                + "pero la carpeta ya existe y sera reutilizada. "
+                        "La creación de la carpeta de presupuestos falló, "
+                                + "pero la carpeta ya existe y será reutilizada. "
                                 + "groupId="
                                 + groupId
                                 + ", folderId="
@@ -1073,7 +1073,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (groupId <= 0) {
             throw new Exception(
-                    "El groupId de Document Library no es valido."
+                    "El groupId de Document Library no es válido."
             );
         }
 
@@ -1509,7 +1509,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 .getIdRequerimientoCompra() <= 0) {
 
             throw new Exception(
-                    "No se encontro el requerimiento de compra informado."
+                    "No se encontró el requerimiento de compra informado."
             );
         }
 

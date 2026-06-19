@@ -1,4 +1,4 @@
-<%@ page contentType="application/json; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page contentType="application/json; charset=UTF-8" pageEncoding="ISO-8859-1" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="ar.com.ospim.compras.WebKeysCompras" %>

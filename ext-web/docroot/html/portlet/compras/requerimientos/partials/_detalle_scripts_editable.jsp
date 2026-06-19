@@ -34,13 +34,13 @@
         var idSector = <portlet:namespace />getSectorSeleccionadoCompra();
 
         if (idSector == '' || !/^[0-9]+$/.test(idSector) || parseInt(idSector, 10) <= 0) {
-            alert('Debe seleccionar un sector antes de cargar un articulo.');
+            alert('Debe seleccionar un sector antes de cargar un artículo.');
             <portlet:namespace />popupArticuloCompraAbriendo = false;
             return false;
         }
 
         <portlet:namespace />popupArticuloCompra = Liferay.Popup({
-            title: 'Alta de articulo',
+            title: 'Alta de artículo',
             modal: true,
             width: 700
         });
@@ -142,7 +142,7 @@
                 }
             },
             error: function() {
-                alert('No se pudieron cargar los articulos del sector seleccionado.');
+                alert('No se pudieron cargar los artículos del sector seleccionado.');
 
                 if (typeof callback == 'function') {
                     callback();
@@ -172,7 +172,7 @@
                 && !<portlet:namespace />articulosCompraSectorCargado[sectorSeleccionado]) {
 
             select.empty();
-            select.append('<option value="">Cargando articulos...</option>');
+            select.append('<option value="">Cargando artículos...</option>');
             select.attr('disabled', 'disabled');
 
             <portlet:namespace />cargarArticulosPorSectorRemoto(
@@ -406,7 +406,7 @@
         var observaciones = jQuery.trim(jQuery('#<portlet:namespace />detalle_observaciones').val());
 
         if (idArticulo == '' || !/^[0-9]+$/.test(idArticulo) || parseInt(idArticulo, 10) <= 0) {
-            alert('Debe seleccionar un articulo.');
+            alert('Debe seleccionar un artículo.');
             jQuery('#<portlet:namespace />detalle_id_articulo').focus();
             return false;
         }
@@ -431,7 +431,7 @@
                 idArticulo,
                 esEdicion ? editIndex : -1
         )) {
-            alert('Ya existe un detalle cargado para este articulo. Edite la fila existente en lugar de agregar otra.');
+            alert('Ya existe un detalle cargado para este artículo. Edite la fila existente en lugar de agregar otra.');
             jQuery('#<portlet:namespace />detalle_id_articulo').focus();
             return false;
         }
@@ -498,7 +498,7 @@
             return <portlet:namespace />liberarDetalleAccion(0);
         }
 
-        if (!confirm('Confirma quitar el detalle?')) {
+        if (!confirm('¿Confirma quitar el detalle?')) {
             return <portlet:namespace />liberarDetalleAccion(0);
         }
 
@@ -539,7 +539,7 @@
         var form = document.getElementById('<portlet:namespace />fmCompras');
 
         if (!form) {
-            alert('No se encontro el formulario principal para serializar detalles.');
+            alert('No se encontró el formulario principal para serializar detalles.');
             return false;
         }
 
@@ -576,7 +576,7 @@
         var form = document.getElementById('<portlet:namespace />fmCompras');
 
         if (!form) {
-            alert('No se encontro el formulario principal de Compras.');
+            alert('No se encontró el formulario principal de Compras.');
             return false;
         }
 
@@ -605,7 +605,7 @@
             if (articulosSerializados[idArticuloValidacion]) {
                 alert(
                     'Detalle #' + (d + 1) +
-                    ': el articulo ya fue cargado en otro detalle. ' +
+                    ': el artículo ya fue cargado en otro detalle. ' +
                     'Edite la fila existente en lugar de duplicarlo.'
                 );
 
@@ -638,7 +638,7 @@
                     || !/^[0-9]+$/.test(idArticulo)
                     || parseInt(idArticulo, 10) <= 0) {
 
-                alert('Detalle #' + (i + 1) + ': debe seleccionar un articulo.');
+                alert('Detalle #' + (i + 1) + ': debe seleccionar un artículo.');
                 return false;
             }
 
@@ -685,7 +685,7 @@
 
             if (idPrestador != ''
                     && (!/^[0-9]+$/.test(idPrestador) || parseInt(idPrestador, 10) <= 0)) {
-                alert('Detalle #' + (i + 1) + ': debe seleccionar un prestador valido.');
+                alert('Detalle #' + (i + 1) + ': debe seleccionar un prestador válido.');
                 return false;
             }
 

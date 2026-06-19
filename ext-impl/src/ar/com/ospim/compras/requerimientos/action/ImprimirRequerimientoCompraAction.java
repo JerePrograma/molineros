@@ -51,7 +51,7 @@ public class ImprimirRequerimientoCompraAction extends PortletAction {
             );
         } catch (Exception e) {
             _log.error(
-                    "Error preparando impresion del requerimiento de compra. id="
+                    "Error preparando impresión del requerimiento de compra. id="
                             + idRequerimientoCompra,
                     e
             );
@@ -77,7 +77,7 @@ public class ImprimirRequerimientoCompraAction extends PortletAction {
             );
         } catch (Exception e) {
             _log.error(
-                    "Error renderizando impresion del requerimiento de compra. id="
+                    "Error renderizando impresión del requerimiento de compra. id="
                             + idRequerimientoCompra,
                     e
             );
@@ -102,7 +102,7 @@ public class ImprimirRequerimientoCompraAction extends PortletAction {
                 );
 
         if (requerimiento == null) {
-            throw new Exception("No se encontro el requerimiento de compra informado.");
+            throw new Exception("No se encontró el requerimiento de compra informado.");
         }
 
         if (requerimiento.getDetalles() == null) {
@@ -129,7 +129,7 @@ public class ImprimirRequerimientoCompraAction extends PortletAction {
 
     private void validarIdRequerimiento(int idRequerimientoCompra) throws Exception {
         if (idRequerimientoCompra <= 0) {
-            throw new Exception("Debe informar un requerimiento de compra valido para imprimir.");
+            throw new Exception("Debe informar un requerimiento de compra válido para imprimir.");
         }
     }
 

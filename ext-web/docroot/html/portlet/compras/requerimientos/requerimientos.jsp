@@ -134,7 +134,7 @@ if (tercerizadoras == null) {
 
 <fieldset class="block-labels">
     <legend>
-        Filtro de b&uacute;squeda de requerimientos de compras
+        Filtro de búsqueda de requerimientos de compras
     </legend>
 
     <table class="lfr-table">
@@ -245,7 +245,7 @@ if (tercerizadoras == null) {
                             <%= "true".equals(recuperoFiltro)
                                     ? "selected"
                                     : "" %>>
-                        SI
+                        Sí
                     </option>
 
                     <option value="false"
@@ -266,7 +266,7 @@ if (tercerizadoras == null) {
             <td colspan="6">
                 <fieldset class="block-labels">
                     <legend>
-                        B&uacute;squeda por afiliado
+                        Búsqueda por afiliado
                     </legend>
 
                     <liferay-util:include
@@ -696,7 +696,7 @@ if (tercerizadoras == null) {
 
             if (!validarCuil(
                     cuil,
-                    "CUIL titular invalido."
+                    "CUIL titular inválido."
             )) {
                 jQuery(
                         '#<portlet:namespace />cuil'

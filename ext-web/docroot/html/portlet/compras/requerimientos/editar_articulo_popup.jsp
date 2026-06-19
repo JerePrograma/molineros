@@ -45,7 +45,7 @@ guardarArticuloURL.setParameter("struts_action", "/compras/alta_articulo_popup")
 <% if (articuloGuardado && idArticuloGuardado > 0 && callback.length() > 0) { %>
 
     <div class="portlet-msg-success">
-        Art&iacute;culo guardado correctamente.
+        Artículo guardado correctamente.
     </div>
 
     <script type="text/javascript">
@@ -69,7 +69,7 @@ guardarArticuloURL.setParameter("struts_action", "/compras/alta_articulo_popup")
 <div id="<portlet:namespace />articulo_popup_content">
 
     <fieldset class="block-labels">
-        <legend>Alta de art&iacute;culo</legend>
+        <legend>Alta de artículo</legend>
 
         <div id="<portlet:namespace />articulo_popup_feedback"
              style="display:none; margin-bottom:10px;"></div>
@@ -103,7 +103,7 @@ guardarArticuloURL.setParameter("struts_action", "/compras/alta_articulo_popup")
                 <tr>
                     <td>
                         <label for="<portlet:namespace />articulo_descripcion">
-                            Art&iacute;culo:
+                            Artículo:
                         </label>
                     </td>
                     <td>

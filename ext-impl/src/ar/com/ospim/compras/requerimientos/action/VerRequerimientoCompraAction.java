@@ -105,7 +105,7 @@ public class VerRequerimientoCompraAction extends PortletAction {
                     );
 
             if (requerimiento == null) {
-                throw new Exception("No se encontro el requerimiento de compra informado.");
+                throw new Exception("No se encontró el requerimiento de compra informado.");
             }
 
             cargarCatalogos(renderRequest);

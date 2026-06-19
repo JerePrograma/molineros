@@ -18,7 +18,7 @@ String idRequerimiento = req.getIdRequerimientoCompraString();
 String idRequerimientoForm = req.getIdString();
 String ns = renderResponse.getNamespace();
 String anularFormId = ns + "anular_" + idRequerimientoForm;
-String anularURL = "javascript:if(confirm('Confirma anular el requerimiento?')) submitForm(document.getElementById('" + anularFormId + "'));";
+String anularURL = "javascript:if(confirm('¿Confirma anular el requerimiento?')) submitForm(document.getElementById('" + anularFormId + "'));";
 %>
 
 <portlet:renderURL windowState="<%= WindowState.MAXIMIZED.toString() %>" var="verURL">

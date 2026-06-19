@@ -9,7 +9,7 @@
         <tr>
             <td>
                 <label for="<portlet:namespace />detalle_id_articulo">
-                    Art&iacute;culo:
+                    Artículo:
                 </label>
             </td>
             <td colspan="3">
@@ -20,8 +20,8 @@
 
                 &nbsp;
 
-                <img alt="Nuevo art&iacute;culo"
-                     title="Nuevo art&iacute;culo"
+                <img alt="Nuevo artículo"
+                     title="Nuevo artículo"
                      align="absmiddle"
                      src="<%= themeDisplay.getPathThemeImages() %>/common/add.png"
                      style="cursor:pointer;"
@@ -54,7 +54,7 @@
         <tr>
             <td>
                 <label for="<portlet:namespace />detalle_observaciones">
-                    Descripci&oacute;n:
+                    Descripción:
                 </label>
             </td>
             <td>
@@ -81,7 +81,7 @@
 
                 <input type="button"
                        id="<portlet:namespace />detalle_cancelar"
-                       value="Cancelar edici&oacute;n"
+                       value="Cancelar edición"
                        style="display:none;"
                        onClick="return <%= namespaceDetalleCompra %>cancelarEdicionDetalle();" />
             </td>

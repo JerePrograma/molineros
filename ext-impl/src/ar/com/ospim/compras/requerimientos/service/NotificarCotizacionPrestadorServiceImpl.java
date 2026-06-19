@@ -89,7 +89,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
         if (candidatos.isEmpty()) {
             if (_log.isInfoEnabled()) {
                 _log.info(
-                        "No hay prestadores pendientes de notificacion. "
+                        "No hay prestadores pendientes de notificación. "
                                 + "idRequerimiento="
                                 + idRequerimientoCompra
                 );
@@ -141,7 +141,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         } catch (Exception e) {
             _log.error(
-                    "No se pudo reservar el envio de cotizacion. "
+                    "No se pudo reservar el envío de cotización. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -156,7 +156,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
         if (!reservado) {
             if (_log.isDebugEnabled()) {
                 _log.debug(
-                        "No se obtuvo reserva para envio de cotizacion. "
+                        "No se obtuvo reserva para envío de cotización. "
                                 + "idPrestador="
                                 + idPrestador
                                 + ", idRequerimiento="
@@ -188,7 +188,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 //            );
 //
 //            _log.error(
-//                    "No se pudo leer el email reservado de cotizacion. "
+//                    "No se pudo leer el email reservado de cotización. "
 //                            + "idPrestador="
 //                            + idPrestador
 //                            + ", idRequerimiento="
@@ -203,10 +203,10 @@ public class NotificarCotizacionPrestadorServiceImpl {
         if (!esEmailValido(email)) {
 
             String errorEmail =
-                    "Email destino invalido.";
+                    "Email destino inválido.";
 
             _log.warn(
-                    "Prestador con email invalido. "
+                    "Prestador con email inválido. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -253,7 +253,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
             );
 
             _log.error(
-                    "Fallo el envio de cotizacion. "
+                    "Falló el envío de cotización. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -291,7 +291,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
         } catch (Exception e) {
             _log.error(
                     "El correo fue aceptado por el servicio de mail, "
-                            + "pero fallo la persistencia de ENVIADO. "
+                            + "pero falló la persistencia de ENVIADO. "
                             + "Se conserva PROCESANDO y no se marca ERROR. "
                             + "idPrestador="
                             + idPrestador
@@ -520,7 +520,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
             )) {
                 _log.error(
                         "No se pudo persistir el estado final "
-                                + "de cotizacion. estado="
+                                + "de cotización. estado="
                                 + estado
                                 + ", idPrestador="
                                 + idPrestador
@@ -532,7 +532,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
         } catch (Exception persistenciaError) {
             _log.error(
                     "Error persistiendo el estado final "
-                            + "de cotizacion. estado="
+                            + "de cotización. estado="
                             + estado
                             + ", idPrestador="
                             + idPrestador
@@ -546,7 +546,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
     private String construirAsunto(
             RequerimientoCompra requerimiento) {
 
-        return "Solicitud de cotizacion - Requerimiento #"
+        return "Solicitud de cotización - Requerimiento #"
                 + requerimiento
                 .getIdRequerimientoCompra();
     }
@@ -571,7 +571,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
         sb.append(",\n\n");
 
         sb.append(
-                "OSPIM solicita cotizacion para el "
+                "OSPIM solicita cotización para el "
                         + "siguiente requerimiento de compra."
         );
 
@@ -635,11 +635,11 @@ public class NotificarCotizacionPrestadorServiceImpl {
         sb.append(
                 "\nPor favor responder este correo "
                         + "informando disponibilidad, plazo "
-                        + "e importe de cotizacion.\n\n"
+                        + "e importe de cotización.\n\n"
         );
 
         sb.append(
-                "Este mensaje fue generado automaticamente "
+                "Este mensaje fue generado automáticamente "
                         + "por el sistema de Compras de OSPIM.\n"
         );
 
@@ -672,7 +672,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                         detalle.getArticuloVisible()
                 );
             } else {
-                sb.append("Item sin descripcion");
+                sb.append("Ítem sin descripción");
             }
 
             sb.append(" | Cantidad: ");
@@ -749,7 +749,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         if (requerimiento == null) {
             throw new Exception(
-                    "No se encontro el requerimiento de compra."
+                    "No se encontró el requerimiento de compra."
             );
         }
 
@@ -783,7 +783,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         if (con == null) {
             throw new Exception(
-                    "No se pudo obtener conexion "
+                    "No se pudo obtener conexión "
                             + "a la base de datos."
             );
         }

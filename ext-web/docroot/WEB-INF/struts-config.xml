@@ -7048,7 +7048,7 @@
 					path="portlet.compras.error" />
 		</action>
 
-		<!-- DETALLES + ABM de articulos/items -->
+		<!-- DETALLES + ABM de artículos/items -->
 		<action
 				path="/compras/editar_requerimiento_detalle"
 				type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraDetalleAction">
@@ -7070,7 +7070,7 @@
 					path="portlet.compras.error" />
 		</action>
 
-		<!-- Popup alta articulo: responsabilidad del action de detalle -->
+		<!-- Popup alta artículo: responsabilidad del action de detalle -->
 		<action
 				path="/compras/alta_articulo_popup"
 				type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraDetalleAction">
@@ -7088,7 +7088,7 @@
 					path="portlet.compras.error" />
 		</action>
 
-		<!-- AJAX articulos por sector: responsabilidad del action de detalle -->
+		<!-- AJAX artículos por sector: responsabilidad del action de detalle -->
 		<action
 				path="/compras/listar_articulos_sector"
 				type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraDetalleAction">

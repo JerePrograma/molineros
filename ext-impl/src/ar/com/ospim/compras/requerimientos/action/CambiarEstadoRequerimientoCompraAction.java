@@ -86,7 +86,7 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
 
                 SessionMessages.add(actionRequest, "requerimiento-compra-anulado");
             } else {
-                throw new Exception("La transicion de estado solicitada no es valida.");
+                throw new Exception("La transición de estado solicitada no es válida.");
             }
         } catch (Exception e) {
             _log.error(

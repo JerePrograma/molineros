@@ -110,7 +110,7 @@ String botoneraAnularFormId =
 
                 <input type="button"
                        id="<portlet:namespace />btnCerrarCotizacionCompra"
-                       value="Cerrar cotizaci&oacute;n"
+                       value="Cerrar cotización"
                        onClick="return <%= namespaceCompra %>guardarCotizacion(true);" />
                 &nbsp;&nbsp;
             <% } %>
@@ -138,7 +138,7 @@ String botoneraAnularFormId =
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
                                '<%= botoneraEnviarCotizarFormId %>',
                                '<portlet:namespace />btnEnviarCotizarRequerimientoCompra',
-                               'Confirma enviar a cotizar y notificar a los prestadores habilitados?',
+                               '¿Confirma enviar a cotizar y notificar a los prestadores habilitados?',
                                'Notificando...'
                        );" />
                 &nbsp;&nbsp;
@@ -151,7 +151,7 @@ String botoneraAnularFormId =
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
                                '<%= botoneraReintentarCotizacionFormId %>',
                                '<portlet:namespace />btnReintentarCotizacionRequerimientoCompra',
-                               'Confirma notificar nuevamente a los prestadores pendientes?',
+                               '¿Confirma notificar nuevamente a los prestadores pendientes?',
                                'Notificando...'
                        );" />
                 &nbsp;&nbsp;
@@ -164,7 +164,7 @@ String botoneraAnularFormId =
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
                                '<%= botoneraAnularFormId %>',
                                '<portlet:namespace />btnAnularRequerimientoCompra',
-                               'Confirma anular el requerimiento?',
+                               '¿Confirma anular el requerimiento?',
                                'Anulando...'
                        );" />
                 &nbsp;&nbsp;
@@ -219,7 +219,7 @@ String botoneraAnularFormId =
         var iframe = document.getElementById('<portlet:namespace />iframeImpresionRequerimientoCompra');
 
         if (!iframe) {
-            alert('No se pudo preparar la impresion del requerimiento.');
+            alert('No se pudo preparar la impresión del requerimiento.');
             return false;
         }
 
@@ -231,7 +231,7 @@ String botoneraAnularFormId =
                 iframe.contentWindow.focus();
                 iframe.contentWindow.print();
             } catch (e) {
-                alert('No se pudo imprimir automaticamente el PDF.');
+                alert('No se pudo imprimir automáticamente el PDF.');
             }
         };
 

@@ -84,7 +84,7 @@ public class ConfigurarTiposPrestadorSectorAction
 
         } catch (Exception e) {
             _log.error(
-                    "Error guardando configuracion sector/tipo prestador. "
+                    "Error guardando configuración sector/tipo prestador. "
                             + "idSector="
                             + idSector,
                     e
@@ -185,7 +185,7 @@ public class ConfigurarTiposPrestadorSectorAction
 
         } catch (Exception e) {
             _log.error(
-                    "Error cargando configuracion "
+                    "Error cargando configuración "
                             + "sector/tipo prestador.",
                     e
             );
@@ -435,8 +435,8 @@ public class ConfigurarTiposPrestadorSectorAction
                 || e.getMessage() == null
                 || e.getMessage().trim().length() == 0) {
 
-            return "Ocurrio un error procesando "
-                    + "la configuracion de prestadores por sector.";
+            return "Ocurrió un error procesando "
+                    + "la configuración de prestadores por sector.";
         }
 
         return e.getMessage().trim();

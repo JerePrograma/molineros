@@ -1136,7 +1136,7 @@ public class PdfServlet extends HttpServlet {
 		if (idRequerimiento <= 0) {
 			res.sendError(
 					HttpServletResponse.SC_BAD_REQUEST,
-					"Parametro id_requerimiento obligatorio"
+					"Parámetro id_requerimiento obligatorio"
 			);
 			return;
 		}

@@ -1,5 +1,5 @@
 -- =====================================================================
--- MODULO: Compras - esquema canonico de desarrollo
+-- MÓDULO: Compras - esquema canónico de desarrollo
 -- PostgreSQL 9.6+
 --
 -- DESTRUCTIVO:
@@ -18,7 +18,7 @@
 -- Estado lateral:
 --   99 ANULADO
 --
--- Estados de notificacion:
+-- Estados de notificación:
 --   PENDIENTE, PROCESANDO, ENVIADO, ERROR, EMAIL_INVALIDO
 --
 -- Alcance de escritura:
@@ -31,8 +31,10 @@
 -- =====================================================================
 
 -- Ejecutar manualmente con psql y ON_ERROR_STOP=1.
--- Si la misma sesion tiene una transaccion abortada, ejecutar ROLLBACK por
+-- Si la misma sesión tiene una transacción abortada, ejecutar ROLLBACK por
 -- separado antes de invocar este archivo.
+
+SET client_encoding = 'LATIN1';
 
 BEGIN;
 
@@ -142,7 +144,7 @@ CREATE TABLE compras.requerimiento (
     afiliado_cuil_titular VARCHAR(20),
     afiliado_int INTEGER,
 
-    -- Snapshot para consulta e impresion.
+    -- Snapshot para consulta e impresión.
     afiliado_nombre VARCHAR(120),
     afiliado_apellido VARCHAR(120),
     afiliado_documento_tipo VARCHAR(10),
@@ -220,7 +222,7 @@ CREATE TABLE compras.requerimiento_cotizacion_prestador (
     id_requerimiento INTEGER NOT NULL
         REFERENCES compras.requerimiento (id_requerimiento),
 
-    -- Identificador externo. Sin FK: esta migracion no administra otros esquemas.
+    -- Identificador externo. Sin FK: esta migración no administra otros esquemas.
     id_prestador INTEGER NOT NULL,
 
     estado_envio VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE',
@@ -289,7 +291,7 @@ CREATE TABLE compras.requerimiento_detalle (
     precio_unitario_estimado NUMERIC(18, 2),
     precio_total_estimado NUMERIC(18, 2),
 
-    -- Identificador externo. Sin FK: esta migracion no administra otros esquemas.
+    -- Identificador externo. Sin FK: esta migración no administra otros esquemas.
     id_prestador INTEGER,
 
     alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
@@ -344,8 +346,8 @@ INSERT INTO compras.sector_requerimiento (
 )
 VALUES
     (1, 'Farmacia', TRUE, TRUE, 'sistema'),
-    (2, 'Prestaciones Medicas', TRUE, TRUE, 'sistema'),
-    (3, 'Auditoria Medica', TRUE, TRUE, 'sistema'),
+    (2, 'Prestaciones Médicas', TRUE, TRUE, 'sistema'),
+    (3, 'Auditoría Médica', TRUE, TRUE, 'sistema'),
     (4, 'Monotributo', TRUE, TRUE, 'sistema'),
     (5, 'Sistemas', FALSE, TRUE, 'sistema'),
     (6, 'RRHH', FALSE, TRUE, 'sistema'),
@@ -442,7 +444,7 @@ BEGIN
 
     IF v_requiere_afiliado IS NULL THEN
         RAISE EXCEPTION
-            'El sector informado no existe o no esta activo.';
+            'El sector informado no existe o no está activo.';
     END IF;
 
     IF TG_OP = 'INSERT' THEN
@@ -501,7 +503,7 @@ BEGIN
                  OR (OLD.estado = 2 AND NEW.estado IN (3, 99))
             ) THEN
                 RAISE EXCEPTION
-                    'Transicion de estado invalida: % -> %.',
+                    'Transición de estado inválida: % -> %.',
                     OLD.estado,
                     NEW.estado;
             END IF;
@@ -541,7 +543,7 @@ BEGIN
                        AND d.baja_fecha IS NULL
                 ) THEN
                     RAISE EXCEPTION
-                        'No se puede cerrar una cotizacion sin detalles.';
+                        'No se puede cerrar una cotización sin detalles.';
                 END IF;
 
                 IF EXISTS (
@@ -573,7 +575,7 @@ BEGIN
                        )
                 ) THEN
                     RAISE EXCEPTION
-                        'No se puede cerrar la cotizacion: existen detalles incompletos o invalidos.';
+                        'No se puede cerrar la cotización: existen detalles incompletos o inválidos.';
                 END IF;
             END IF;
 
@@ -679,12 +681,12 @@ BEGIN
     IF v_id_sector_articulo IS NULL
        OR NOT COALESCE(v_articulo_activo, FALSE) THEN
         RAISE EXCEPTION
-            'El articulo informado no existe o no esta activo.';
+            'El artículo informado no existe o no está activo.';
     END IF;
 
     IF v_id_sector_articulo <> v_id_sector_requerimiento THEN
         RAISE EXCEPTION
-            'El articulo no pertenece al sector del requerimiento.';
+            'El artículo no pertenece al sector del requerimiento.';
     END IF;
 
     IF TG_OP = 'INSERT' AND v_estado <> 1 THEN
@@ -712,7 +714,7 @@ BEGIN
                     IS DISTINCT FROM OLD.baja_usr THEN
 
                 RAISE EXCEPTION
-                    'En estado A cotizar la estructura del detalle esta bloqueada.';
+                    'En estado A cotizar la estructura del detalle está bloqueada.';
             END IF;
 
         ELSE
@@ -727,7 +729,7 @@ BEGIN
            OR NEW.id_prestador IS NOT NULL THEN
 
             RAISE EXCEPTION
-                'Un requerimiento Pendiente no puede tener datos de cotizacion.';
+                'Un requerimiento Pendiente no puede tener datos de cotización.';
         END IF;
 
     ELSIF v_estado = 2 THEN
@@ -895,7 +897,7 @@ BEGIN
            AND s.baja_fecha IS NULL
     ) THEN
         RAISE EXCEPTION
-            'El sector informado no existe o no esta activo.';
+            'El sector informado no existe o no está activo.';
     END IF;
 
     IF NOT EXISTS (
@@ -935,7 +937,7 @@ $func$
 LANGUAGE plpgsql;
 
 -- =====================================================================
--- ARTICULOS
+-- ARTÍCULOS
 -- =====================================================================
 
 CREATE FUNCTION compras.listar_articulos(
@@ -1031,7 +1033,7 @@ BEGIN
 
     IF v_descripcion IS NULL THEN
         RAISE EXCEPTION
-            'Debe informar la descripcion del articulo.';
+            'Debe informar la descripción del artículo.';
     END IF;
 
     IF NOT EXISTS (
@@ -1042,7 +1044,7 @@ BEGIN
            AND s.baja_fecha IS NULL
     ) THEN
         RAISE EXCEPTION
-            'El sector informado no existe o no esta activo.';
+            'El sector informado no existe o no está activo.';
     END IF;
 
     IF p_id IS NULL OR p_id <= 0 THEN
@@ -1081,7 +1083,7 @@ BEGIN
            )
     ) THEN
         RAISE EXCEPTION
-            'No se puede cambiar el sector de un articulo utilizado en detalles activos.';
+            'No se puede cambiar el sector de un artículo utilizado en detalles activos.';
     END IF;
 
     UPDATE compras.articulo
@@ -1098,7 +1100,7 @@ BEGIN
 
     IF v_id IS NULL THEN
         RAISE EXCEPTION
-            'No se encontro el articulo a modificar.';
+            'No se encontró el artículo a modificar.';
     END IF;
 
     RETURN v_id;
@@ -1125,7 +1127,7 @@ BEGIN
            AND r.baja_fecha IS NULL
     ) THEN
         RAISE EXCEPTION
-            'No se puede borrar el articulo porque esta utilizado en detalles activos.';
+            'No se puede borrar el artículo porque está utilizado en detalles activos.';
     END IF;
 
     UPDATE compras.articulo
@@ -1137,7 +1139,7 @@ BEGIN
 
     IF NOT FOUND THEN
         RAISE EXCEPTION
-            'No se encontro el articulo a borrar.';
+            'No se encontró el artículo a borrar.';
     END IF;
 END;
 $func$
@@ -1595,7 +1597,7 @@ BEGIN
 
     IF NOT FOUND THEN
         RAISE EXCEPTION
-            'No se encontro el requerimiento a modificar.';
+            'No se encontró el requerimiento a modificar.';
     END IF;
 
     v_cambio_afiliado :=
@@ -1753,12 +1755,12 @@ BEGIN
 
     IF v_estado_actual IS NULL THEN
         RAISE EXCEPTION
-            'No se encontro el requerimiento.';
+            'No se encontró el requerimiento.';
     END IF;
 
     IF p_estado_nuevo = v_estado_actual THEN
         RAISE EXCEPTION
-            'La transicion al mismo estado no es valida.';
+            'La transición al mismo estado no es válida.';
     END IF;
 
     UPDATE compras.requerimiento
@@ -1951,7 +1953,7 @@ BEGIN
 
     IF v_id IS NULL THEN
         RAISE EXCEPTION
-            'No se encontro el detalle a modificar.';
+            'No se encontró el detalle a modificar.';
     END IF;
 
     RETURN v_id;
@@ -1991,14 +1993,14 @@ BEGIN
 
     IF NOT FOUND THEN
         RAISE EXCEPTION
-            'El detalle no existe o el requerimiento no esta Pendiente.';
+            'El detalle no existe o el requerimiento no está Pendiente.';
     END IF;
 END;
 $func$
 LANGUAGE plpgsql;
 
 -- =====================================================================
--- PRESTADORES PARA COTIZACION
+-- PRESTADORES PARA COTIZACIÓN
 -- =====================================================================
 
 CREATE FUNCTION compras.listar_prestadores_cotizacion_requerimiento(
@@ -2052,7 +2054,7 @@ BEGIN
             FALSE
        ) = TRUE
        AND (
-            -- Primer envio o recuperacion: se listan todos los
+            -- Primer envío o recuperación: se listan todos los
             -- candidatos vigentes. registrar_cotizacion_prestador
             -- evita reenviar ENVIADO o PROCESANDO.
             r.estado = 1
@@ -2124,7 +2126,7 @@ BEGIN
     END IF;
 
     /*
-     * Reserva atomica.
+     * Reserva atómica.
      *
      * INSERT nuevo:
      *   PROCESANDO, intento 1.
@@ -2210,7 +2212,7 @@ BEGIN
         'EMAIL_INVALIDO'
     ) THEN
         RAISE EXCEPTION
-            'Estado final de notificacion invalido: %.',
+            'Estado final de notificación inválido: %.',
             v_estado;
     END IF;
 
@@ -2481,7 +2483,7 @@ LANGUAGE plpgsql
 STABLE;
 
 -- =====================================================================
--- VALIDACIONES DE INSTALACION
+-- VALIDACIONES DE INSTALACIÓN
 -- =====================================================================
 
 DO $verificacion$
@@ -2497,7 +2499,7 @@ BEGIN
 
     IF v_sectores <> 8 THEN
         RAISE EXCEPTION
-            'La carga inicial de sectores es invalida. Total: %.',
+            'La carga inicial de sectores es inválida. Total: %.',
             v_sectores;
     END IF;
 
@@ -2507,7 +2509,7 @@ BEGIN
 
     IF v_estados <> 4 THEN
         RAISE EXCEPTION
-            'La lista de estados operativos es invalida. Total: %.',
+            'La lista de estados operativos es inválida. Total: %.',
             v_estados;
     END IF;
 
@@ -2547,9 +2549,9 @@ BEGIN
             'No existe la dependencia de solo lectura trae_tipos_prestadores().';
     END IF;
 
-    -- Fuerza la preparacion y validacion de los contratos de salida que
+    -- Fuerza la preparación y validación de los contratos de salida que
     -- combinan tipos internos INTEGER con identificadores externos que pueden
-    -- estar definidos como SMALLINT en la instalacion real.
+    -- estar definidos como SMALLINT en la instalación real.
     PERFORM 1
       FROM compras.listar_tipos_prestador_sector(1)
      LIMIT 1;
@@ -2565,19 +2567,19 @@ BEGIN
     IF compras.estado_requerimiento_descripcion(1)
        <> 'Pendiente' THEN
         RAISE EXCEPTION
-            'La configuracion de estados no es valida.';
+            'La configuración de estados no es válida.';
     END IF;
 
     IF compras.estado_requerimiento_descripcion(2)
        <> 'A cotizar' THEN
         RAISE EXCEPTION
-            'La configuracion de estados no es valida.';
+            'La configuración de estados no es válida.';
     END IF;
 
     IF compras.estado_requerimiento_descripcion(3)
        <> 'Cotizado' THEN
         RAISE EXCEPTION
-            'La configuracion de estados no es valida.';
+            'La configuración de estados no es válida.';
     END IF;
 END;
 $verificacion$;
@@ -2585,7 +2587,7 @@ $verificacion$;
 COMMIT;
 
 -- =====================================================================
--- CONSULTAS MANUALES DE VERIFICACION
+-- CONSULTAS MANUALES DE VERIFICACIÓN
 -- =====================================================================
 
 -- SELECT *

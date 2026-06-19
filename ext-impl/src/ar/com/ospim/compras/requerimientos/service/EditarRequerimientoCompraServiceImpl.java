@@ -111,7 +111,7 @@ public class EditarRequerimientoCompraServiceImpl {
                     );
 
             if (actual == null) {
-                throw new Exception("No se encontro el requerimiento de compra informado.");
+                throw new Exception("No se encontró el requerimiento de compra informado.");
             }
 
             if (!actual.puedeEditarEstructura()) {
@@ -242,7 +242,7 @@ public class EditarRequerimientoCompraServiceImpl {
         }
 
         if (!WebKeysCompras.esEstadoValido(idEstadoNuevo)) {
-            throw new Exception("Estado de requerimiento invalido.");
+            throw new Exception("Estado de requerimiento inválido.");
         }
 
         RequerimientoCompra requerimientoActual =
@@ -251,7 +251,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
         if (requerimientoActual == null) {
             throw new Exception(
-                    "No se encontro el requerimiento de compra informado."
+                    "No se encontró el requerimiento de compra informado."
             );
         }
 
@@ -260,7 +260,7 @@ public class EditarRequerimientoCompraServiceImpl {
                 idEstadoNuevo
         )) {
             throw new Exception(
-                    "La transicion de estado solicitada no es valida."
+                    "La transición de estado solicitada no es válida."
             );
         }
 
@@ -303,7 +303,7 @@ public class EditarRequerimientoCompraServiceImpl {
                 || resultado.getEnviados() <= 0) {
 
             throw new Exception(
-                    "No se pudo enviar la solicitud a ningun prestador. "
+                    "No se pudo enviar la solicitud a ningún prestador. "
                             + "El requerimiento permanece Pendiente."
             );
         }
@@ -329,7 +329,7 @@ public class EditarRequerimientoCompraServiceImpl {
                 );
 
         if (requerimiento == null) {
-            throw new Exception("No se encontro el requerimiento de compra informado.");
+            throw new Exception("No se encontró el requerimiento de compra informado.");
         }
 
         if (!requerimiento.puedeReintentarNotificaciones()) {
@@ -399,7 +399,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
     public CompraArticulo getArticulo(int idArticulo) throws Exception {
         if (idArticulo <= 0) {
-            throw new Exception("Debe informar el articulo.");
+            throw new Exception("Debe informar el artículo.");
         }
 
         Connection con = null;
@@ -466,7 +466,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
     public void borrarArticulo(int idArticulo) throws Exception {
         if (idArticulo <= 0) {
-            throw new Exception("Debe informar el articulo.");
+            throw new Exception("Debe informar el artículo.");
         }
 
         Connection con = null;
@@ -538,7 +538,7 @@ public class EditarRequerimientoCompraServiceImpl {
         }
 
         if (detalle.getIdArticulo() == null || detalle.getIdArticulo().intValue() <= 0) {
-            throw new Exception("Debe informar el articulo.");
+            throw new Exception("Debe informar el artículo.");
         }
 
         if (detalle.getCantidad() == null) {
@@ -573,7 +573,7 @@ public class EditarRequerimientoCompraServiceImpl {
                 );
 
         if (requerimiento == null) {
-            throw new Exception("No se encontro el requerimiento de compra informado.");
+            throw new Exception("No se encontró el requerimiento de compra informado.");
         }
 
         if (!requerimiento.puedeEnviarACotizar()) {
@@ -586,7 +586,7 @@ public class EditarRequerimientoCompraServiceImpl {
         }
 
         if (!requerimiento.tieneDetalles()) {
-            throw new Exception("El requerimiento debe tener al menos un detalle valido.");
+            throw new Exception("El requerimiento debe tener al menos un detalle válido.");
         }
 
         if (requerimiento.isRequiereAfiliado()
@@ -703,7 +703,7 @@ public class EditarRequerimientoCompraServiceImpl {
             rs = stmt.executeQuery();
 
             if (!rs.next()) {
-                throw new Exception("No se encontro el requerimiento de compra informado.");
+                throw new Exception("No se encontró el requerimiento de compra informado.");
             }
 
             if (rs.getTimestamp("baja_fecha") != null) {
@@ -714,7 +714,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
             if (estado != WebKeysCompras.ESTADO_A_COTIZAR) {
                 throw new Exception(
-                        "Solo se puede cargar o cerrar cotizacion en estado A cotizar."
+                        "Solo se puede cargar o cerrar cotización en estado A cotizar."
                 );
             }
         } finally {
@@ -815,7 +815,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
         if (cerrar && recibidos.size() < cantidades.size()) {
             throw new Exception(
-                    "Debe enviar todos los detalles para cerrar la cotizacion."
+                    "Debe enviar todos los detalles para cerrar la cotización."
             );
         }
     }
@@ -889,7 +889,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
             if (incompletos > 0) {
                 throw new Exception(
-                        "No se puede cerrar la cotizacion: hay detalles sin precio o prestador."
+                        "No se puede cerrar la cotización: hay detalles sin precio o prestador."
                 );
             }
         } finally {
@@ -923,15 +923,15 @@ public class EditarRequerimientoCompraServiceImpl {
 
     private void validarArticuloParaGuardar(CompraArticulo articulo) throws Exception {
         if (articulo == null) {
-            throw new Exception("Debe informar el articulo.");
+            throw new Exception("Debe informar el artículo.");
         }
 
         if (articulo.getIdSector() == null || articulo.getIdSector().intValue() <= 0) {
-            throw new Exception("Debe informar el sector del articulo.");
+            throw new Exception("Debe informar el sector del artículo.");
         }
 
         if (WebKeysCompras.isEmpty(articulo.getDescripcion())) {
-            throw new Exception("Debe informar la descripcion del articulo.");
+            throw new Exception("Debe informar la descripción del artículo.");
         }
     }
 
@@ -1081,7 +1081,7 @@ public class EditarRequerimientoCompraServiceImpl {
                     && descripcionNormalizada.equals(descripcionExistente)) {
 
                 throw new Exception(
-                        "Ya existe un articulo con la descripcion '"
+                        "Ya existe un artículo con la descripción '"
                                 + descripcionNormalizada
                                 + "' para el sector seleccionado."
                 );

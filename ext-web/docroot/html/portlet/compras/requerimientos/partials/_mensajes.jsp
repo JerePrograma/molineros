@@ -78,13 +78,13 @@ ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado result
 
 <c:if test="<%= msgCotizacionGuardada %>">
     <div class="portlet-msg-success">
-        Avance de cotizaci&oacute;n guardado correctamente.
+        Avance de cotización guardado correctamente.
     </div>
 </c:if>
 
 <c:if test="<%= msgCotizacionCerrada %>">
     <div class="portlet-msg-success">
-        Cotizaci&oacute;n cerrada correctamente.
+        Cotización cerrada correctamente.
     </div>
 </c:if>
 
@@ -96,14 +96,14 @@ ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado result
 
 <c:if test="<%= msgPrestadoresConErrores %>">
     <div class="portlet-msg-error">
-        Uno o m&aacute;s prestadores no pudieron ser notificados.
-        Verifique los correos configurados y revise el log de la aplicaci&oacute;n.
+        Uno o más prestadores no pudieron ser notificados.
+        Verifique los correos configurados y revise el log de la aplicación.
     </div>
 </c:if>
 
 <c:if test="<%= msgPrestadoresSinResultado %>">
     <div class="portlet-msg-error">
-        El proceso de notificaci&oacute;n finaliz&oacute; sin devolver
+        El proceso de notificación finalizó sin devolver
         un resultado verificable.
     </div>
 </c:if>
@@ -116,7 +116,7 @@ ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado result
         <%= resultadoNotificacionCotizacion.getEnviados() %>.
         Errores:
         <%= resultadoNotificacionCotizacion.getErrores() %>.
-        Correos inv&aacute;lidos:
+        Correos inválidos:
         <%= resultadoNotificacionCotizacion.getEmailsInvalidos() %>.
         Omitidos:
         <%= resultadoNotificacionCotizacion.getOmitidos() %>.
@@ -137,13 +137,13 @@ ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado result
 
 <c:if test="<%= msgArticuloGuardado %>">
     <div class="portlet-msg-success">
-        Art&iacute;culo de compra guardado correctamente.
+        Artículo de compra guardado correctamente.
     </div>
 </c:if>
 
 <c:if test="<%= msgArticuloBorrado %>">
     <div class="portlet-msg-success">
-        Art&iacute;culo de compra eliminado correctamente.
+        Artículo de compra eliminado correctamente.
     </div>
 </c:if>
 

@@ -1,3 +1,4 @@
+<%@ page pageEncoding="ISO-8859-1" %>
 <%@ include file="/html/portlet/document_library/init.jsp" %>
 <%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra" %>
@@ -348,7 +349,7 @@ try {
 
             if (logPresupuestos.isDebugEnabled()) {
                 logPresupuestos.debug(
-                        "La carpeta de presupuestos todavÃ­a no existe. "
+                        "La carpeta de presupuestos todavía no existe. "
                                 + "groupId="
                                 + groupIdPresupuestos
                                 + ", parentFolderId="

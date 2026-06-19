@@ -125,7 +125,7 @@ public class ConfiguracionCotizacionPrestadorServiceImpl {
             }
 
             _log.error(
-                    "Error guardando configuracion de tipos de prestador. "
+                    "Error guardando configuración de tipos de prestador. "
                             + "idSector="
                             + idSector,
                     e
@@ -167,7 +167,7 @@ public class ConfiguracionCotizacionPrestadorServiceImpl {
 
         if (con == null) {
             throw new Exception(
-                    "No se pudo obtener conexion a la base de datos."
+                    "No se pudo obtener conexión a la base de datos."
             );
         }
 
@@ -218,7 +218,7 @@ public class ConfiguracionCotizacionPrestadorServiceImpl {
             con.setAutoCommit(autoCommitOriginal);
         } catch (Exception e) {
             _log.warn(
-                    "No se pudo restaurar autoCommit de la conexion.",
+                    "No se pudo restaurar autoCommit de la conexión.",
                     e
             );
         }

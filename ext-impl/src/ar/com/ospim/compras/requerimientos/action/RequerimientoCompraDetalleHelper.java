@@ -77,7 +77,7 @@ public class RequerimientoCompraDetalleHelper {
                 if (!rawId.matches("^[0-9]+$")) {
                     errorCampo(
                             "detalle_deleted_ids",
-                            "Detalle a borrar: ID invalido recibido: '" + rawId + "'."
+                            "Detalle a borrar: ID inválido recibido: '" + rawId + "'."
                     );
                 }
 
@@ -112,11 +112,11 @@ public class RequerimientoCompraDetalleHelper {
         if (EXIGIR_DETALLES_EN_SAVE_ALL && count <= 0) {
             errorCampo(
                     "detalle_count",
-                    "Detalles: no llego ningun detalle al Action. "
-                            + "detalle_count vino vacio o en cero. "
-                            + "Esto normalmente indica que serializarDetallesCompras() no genero los hidden inputs, "
+                    "Detalles: no llegó ningún detalle al Action. "
+                            + "detalle_count vino vacío o en cero. "
+                            + "Esto normalmente indica que serializarDetallesCompras() no generó los hidden inputs, "
                             + "que los inputs quedaron fuera del form principal, "
-                            + "o que el formulario se rompio por incluir busqueda_afiliado.jsp dentro del form."
+                            + "o que el formulario se rompió por incluir busqueda_afiliado.jsp dentro del form."
             );
         }
 
@@ -155,7 +155,7 @@ public class RequerimientoCompraDetalleHelper {
             int idArticulo = parseEnteroConDefault(
                     request,
                     prefix + "id_articulo",
-                    contexto + " - Articulo",
+                    contexto + " - Artículo",
                     0
             );
 
@@ -193,9 +193,9 @@ public class RequerimientoCompraDetalleHelper {
         if (EXIGIR_DETALLES_EN_SAVE_ALL && guardados == 0 && borrados.size() == 0) {
             errorCampo(
                     "detalles",
-                    "Detalles: el Action recibio detalle_count=" + count
-                            + ", pero no guardo ningun detalle. "
-                            + "Revisar los nombres de parametros generados por serializarDetallesCompras()."
+                    "Detalles: el Action recibió detalle_count=" + count
+                            + ", pero no guardó ningún detalle. "
+                            + "Revisar los nombres de parámetros generados por serializarDetallesCompras()."
             );
         }
 
@@ -296,7 +296,7 @@ public class RequerimientoCompraDetalleHelper {
         int idArticulo = parseEnteroConDefault(
                 request,
                 "id_articulo",
-                "Articulo",
+                "Artículo",
                 0
         );
 
@@ -388,7 +388,7 @@ public class RequerimientoCompraDetalleHelper {
 
             errorCampo(
                     contexto + " - id_articulo",
-                    contexto + ": debe seleccionar un articulo."
+                    contexto + ": debe seleccionar un artículo."
             );
         }
 
@@ -435,7 +435,7 @@ public class RequerimientoCompraDetalleHelper {
         if (requerimiento == null) {
             errorCampo(
                     "id_requerimiento_compra",
-                    "No se encontro el requerimiento de compra informado. ID recibido: "
+                    "No se encontró el requerimiento de compra informado. ID recibido: "
                             + idRequerimientoCompra + "."
             );
         }
@@ -669,7 +669,7 @@ public class RequerimientoCompraDetalleHelper {
             errorCampo(
                     nombre,
                     label + ": el valor ingresado '" + value
-                            + "' no es un numero entero valido."
+                            + "' no es un número entero válido."
             );
         }
 
@@ -679,7 +679,7 @@ public class RequerimientoCompraDetalleHelper {
             errorCampo(
                     nombre,
                     label + ": el valor ingresado '" + value
-                            + "' esta fuera del rango permitido."
+                            + "' está fuera del rango permitido."
             );
         }
 
@@ -715,7 +715,7 @@ public class RequerimientoCompraDetalleHelper {
         if (!value.matches("^[0-9]+$")) {
             errorCampo(
                     nombre,
-                    label + ": debe ser un numero entero mayor a cero. Valor recibido: '"
+                    label + ": debe ser un número entero mayor a cero. Valor recibido: '"
                             + value + "'."
             );
         }
@@ -728,7 +728,7 @@ public class RequerimientoCompraDetalleHelper {
             errorCampo(
                     nombre,
                     label + ": el valor ingresado '" + value
-                            + "' esta fuera del rango permitido."
+                            + "' está fuera del rango permitido."
             );
             return null;
         }
@@ -749,14 +749,14 @@ public class RequerimientoCompraDetalleHelper {
         int idArticulo = parseEnteroConDefault(
                 request,
                 "id_articulo",
-                "Articulo",
+                "Artículo",
                 0
         );
 
         int idSector = parseEnteroConDefault(
                 request,
                 "id_sector",
-                "Sector del articulo",
+                "Sector del artículo",
                 0
         );
 
@@ -764,7 +764,7 @@ public class RequerimientoCompraDetalleHelper {
             idSector = parseEnteroConDefault(
                     request,
                     "sector_id",
-                    "Sector del articulo",
+                    "Sector del artículo",
                     0
             );
         }
@@ -816,14 +816,14 @@ public class RequerimientoCompraDetalleHelper {
         int idArticulo = parseEnteroConDefault(
                 request,
                 "id_articulo",
-                "Articulo",
+                "Artículo",
                 0
         );
 
         if (idArticulo <= 0) {
             errorCampo(
                     "id_articulo",
-                    "Debe informar el articulo a borrar."
+                    "Debe informar el artículo a borrar."
             );
         }
 
@@ -836,14 +836,14 @@ public class RequerimientoCompraDetalleHelper {
         if (idSector <= 0) {
             errorCampo(
                     "id_sector",
-                    "Debe informar el sector del articulo."
+                    "Debe informar el sector del artículo."
             );
         }
 
         if (WebKeysCompras.isEmpty(descripcion)) {
             errorCampo(
                     "articulo_descripcion",
-                    "Debe informar la descripcion del articulo."
+                    "Debe informar la descripción del artículo."
             );
         }
     }

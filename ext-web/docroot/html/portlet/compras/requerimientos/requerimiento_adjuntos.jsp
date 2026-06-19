@@ -347,7 +347,7 @@ modo=<%= HtmlUtil.escape(modoPresupuestos) %>
             alert(
                     'Se pueden cargar hasta '
                             + '<%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>'
-                            + ' presupuestos por operacion.'
+                            + ' presupuestos por operación.'
             );
 
             return false;
@@ -447,7 +447,7 @@ modo=<%= HtmlUtil.escape(modoPresupuestos) %>
                 > <%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>) {
 
             alert(
-                    'La cantidad de presupuestos no es valida.'
+                    'La cantidad de presupuestos no es válida.'
             );
 
             return false;

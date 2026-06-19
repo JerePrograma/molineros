@@ -331,8 +331,8 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     .MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO) {
 
                 throw new Exception(
-                        "El requerimiento supera el maximo de prestadores "
-                                + "enviados permitido para esta pantalla."
+                        "El requerimiento supera el máximo permitido de "
+                                + "prestadores enviados para esta pantalla."
                 );
             }
 

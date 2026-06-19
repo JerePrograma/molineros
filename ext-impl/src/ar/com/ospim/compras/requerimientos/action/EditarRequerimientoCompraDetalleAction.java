@@ -87,7 +87,7 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                         : detalleHelper.parseEnteroConDefault(
                         actionRequest,
                         "id_sector",
-                        "Sector del articulo",
+                        "Sector del artículo",
                         0
                 );
 

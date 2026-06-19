@@ -403,7 +403,7 @@
 
             /*
              * Solo limpiar cuando el usuario cambia sector.
-             * No limpiar durante el document.ready, porque en ediciï¿½n pisarï¿½a valores existentes.
+             * No limpiar durante el document.ready, porque en edición pisaría valores existentes.
              */
             if (reiniciarCargosSiRequiereAfiliado) {
                 <portlet:namespace />limpiarCargosCompra();
@@ -635,7 +635,7 @@
         }
 
         if (!/^[0-9]+$/.test(value)) {
-            alert(label + ': debe ser un numero entero entre 0 y 100. Valor recibido: "' + value + '".');
+            alert(label + ': debe ser un número entero entre 0 y 100. Valor recibido: "' + value + '".');
             jQuery('#<portlet:namespace />' + id).focus();
             return null;
         }
@@ -712,7 +712,7 @@
         }
 
         if (cerrar
-                && !confirm('Confirma cerrar la cotizacion? Luego quedara solo lectura.')) {
+                && !confirm('¿Confirma cerrar la cotización? Luego quedará en modo de solo lectura.')) {
             return false;
         }
 
@@ -738,7 +738,7 @@
         var serializadorDetalles = <portlet:namespace />obtenerSerializadorDetallesCompra();
 
         if (serializadorDetalles == null) {
-            alert('Detalles: no se encontro la funcion de serializacion de detalles.');
+            alert('Detalles: no se encontró la función de serialización de detalles.');
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
@@ -749,7 +749,7 @@
         var detalleCountInput = jQuery(form).find('input[name$="detalle_count"]');
 
         if (detalleCountInput.length == 0) {
-            alert('Detalles: no se pudo serializar la cotizacion.');
+            alert('Detalles: no se pudo serializar la cotización.');
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
@@ -875,8 +875,8 @@
 
         if (serializadorDetalles == null) {
             alert(
-                'Detalles: no se encontro la funcion <portlet:namespace />serializarDetallesCompras(). ' +
-                'El JSP embebido no se esta renderizando correctamente o Liferay esta usando una version vieja compilada.'
+                'Detalles: no se encontró la función <portlet:namespace />serializarDetallesCompras(). ' +
+                'El JSP embebido no se está renderizando correctamente o Liferay está usando una versión vieja compilada.'
             );
 
             return <portlet:namespace />cancelarGuardadoCompra();
@@ -890,7 +890,7 @@
 
         if (detalleCountInput.length == 0) {
             alert(
-                'Detalles: serializarDetallesCompras() se ejecuto, pero no dejo detalle_count dentro del formulario principal. ' +
+                'Detalles: serializarDetallesCompras() se ejecutó, pero no dejó detalle_count dentro del formulario principal. ' +
                 'Revisar que el JSP embebido agregue los hidden a #<portlet:namespace />fmCompras.'
             );
 

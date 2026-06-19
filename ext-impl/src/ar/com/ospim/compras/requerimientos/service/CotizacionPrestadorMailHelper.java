@@ -28,7 +28,7 @@ public class CotizacionPrestadorMailHelper {
 
         if (isEmpty(fromAddress)) {
             throw new Exception(
-                    "No esta configurado el remitente de email del portal: "
+                    "No está configurado el remitente de email del portal: "
                             + PropsKeys.ADMIN_EMAIL_FROM_ADDRESS
             );
         }
@@ -70,7 +70,7 @@ public class CotizacionPrestadorMailHelper {
                 || emailDestino.indexOf(".") < 0) {
 
             throw new Exception(
-                    "Email destino invalido: "
+                    "Email destino inválido: "
                             + emailDestino
             );
         }

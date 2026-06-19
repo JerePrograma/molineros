@@ -98,7 +98,7 @@
                            aria-disabled="true" />
                 <% } else { %>
                     <div class="compras-campo-solo-lectura">
-                        <%= recuperoPorCargoTercerizadoraActual ? "Sï¿½" : "No" %>
+                        <%= recuperoPorCargoTercerizadoraActual ? "Sí" : "No" %>
                     </div>
                 <% } %>
             </td>
