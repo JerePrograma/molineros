@@ -53,9 +53,18 @@ boolean msgPrestadoresNoEnviados =
                 "cotizacion-prestadores-no-enviados"
         );
 
+boolean msgPrestadoresSinNuevosEnvios =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "cotizacion-prestadores-sin-nuevos-envios"
+        );
+
 ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado resultadoNotificacionCotizacion =
         (ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado)
-                renderRequest.getAttribute(WebKeysCompras.RESULTADO_NOTIFICACION_COTIZACION);
+                com.liferay.portal.kernel.servlet.SessionMessages.get(
+                        renderRequest,
+                        WebKeysCompras.RESULTADO_NOTIFICACION_COTIZACION
+                );
 %>
 
 <c:if test="<%= mostrarMensajeRequerimientoGuardado %>">
@@ -126,6 +135,13 @@ ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado result
     <div class="portlet-msg-error">
         No se pudo enviar la solicitud a ningún prestador.
         El requerimiento permanece PENDIENTE.
+    </div>
+</c:if>
+
+<c:if test="<%= msgPrestadoresSinNuevosEnvios %>">
+    <div class="portlet-msg-info">
+        No se enviaron nuevas notificaciones.
+        El requerimiento conserva su estado actual.
     </div>
 </c:if>
 

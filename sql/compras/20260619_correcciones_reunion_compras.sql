@@ -220,6 +220,11 @@ BEGIN
             'La estructura solo puede modificarse en estado PENDIENTE.';
     END IF;
 
+    IF NEW.afiliado_cuil_titular IS NULL
+       OR NEW.afiliado_int IS NULL THEN
+        NEW.afiliado_id_ospim := NULL;
+    END IF;
+
     RETURN NEW;
 END;
 $func$
@@ -230,7 +235,11 @@ DROP TRIGGER IF EXISTS
     ON compras.requerimiento;
 
 CREATE TRIGGER trg_compras_requerimiento_validar_afiliado_id_ospim
-BEFORE UPDATE OF afiliado_id_ospim
+BEFORE UPDATE OF
+    afiliado_id_ospim,
+    afiliado_cuil_titular,
+    afiliado_int,
+    id_sector
 ON compras.requerimiento
 FOR EACH ROW
 EXECUTE PROCEDURE compras.validar_afiliado_id_ospim_fila();

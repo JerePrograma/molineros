@@ -427,8 +427,12 @@ public class RequerimientoCompra {
         return WebKeysCompras.puedeAdministrarPresupuestos(getEstado()) && bajaFecha == null;
     }
 
+    public boolean puedeVerCotizacion() {
+        return WebKeysCompras.puedeVerCotizacion(getEstado());
+    }
+
     public boolean puedeVerPresupuestos() {
-        return WebKeysCompras.puedeVerPresupuestos(getEstado()) && bajaFecha == null;
+        return WebKeysCompras.puedeVerPresupuestos(getEstado());
     }
 
     public boolean puedeEnviarACotizar() {

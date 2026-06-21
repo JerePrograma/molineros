@@ -235,6 +235,10 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return esACotizar(estado);
     }
 
+    public static boolean puedeVerCotizacion(int estado) {
+        return esACotizar(estado) || esSoloLectura(estado);
+    }
+
     public static boolean puedeVerPresupuestos(int estado) {
         return esACotizar(estado)
                 || esCotizado(estado)

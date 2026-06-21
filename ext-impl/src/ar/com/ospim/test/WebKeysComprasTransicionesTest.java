@@ -1,8 +1,10 @@
 package ar.com.ospim.test;
 
 import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraEstado;
 
+import java.util.Date;
 import java.util.List;
 
 public class WebKeysComprasTransicionesTest {
@@ -46,6 +48,24 @@ public class WebKeysComprasTransicionesTest {
         assertAccionesEstado(5, false, false, false, false, false);
         assertAccionesEstado(99, false, false, false, false, false);
 
+        assertLecturaCotizacion(1, false, false);
+        assertLecturaCotizacion(2, true, true);
+        assertLecturaCotizacion(3, true, true);
+        assertLecturaCotizacion(4, true, true);
+        assertLecturaCotizacion(5, true, true);
+        assertLecturaCotizacion(99, true, true);
+
+        RequerimientoCompra anulado =
+                new RequerimientoCompra();
+        anulado.setEstado(WebKeysCompras.ESTADO_ANULADO);
+        anulado.setBajaFecha(new Date());
+
+        assertBoolean(
+                "presupuestos visibles en ANULADO con baja logica",
+                true,
+                anulado.puedeVerPresupuestos()
+        );
+
         assertBoolean(
                 "solo lectura 3",
                 true,
@@ -65,6 +85,23 @@ public class WebKeysComprasTransicionesTest {
                 "solo lectura 99",
                 true,
                 WebKeysCompras.esSoloLectura(99)
+        );
+    }
+
+    private static void assertLecturaCotizacion(
+            int estado,
+            boolean cotizacionVisible,
+            boolean presupuestosVisibles) {
+
+        assertBoolean(
+                "puedeVerCotizacion(" + estado + ")",
+                cotizacionVisible,
+                WebKeysCompras.puedeVerCotizacion(estado)
+        );
+        assertBoolean(
+                "puedeVerPresupuestos(" + estado + ")",
+                presupuestosVisibles,
+                WebKeysCompras.puedeVerPresupuestos(estado)
         );
     }
 

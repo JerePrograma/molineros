@@ -19,6 +19,7 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         assertReservaFalseOmiteSinEnviarNiFinalizar();
         assertEmailReservadoNuloFinalizaEmailInvalido();
         assertEmailInvalidoFinalizaEmailInvalido();
+        assertEmailInvalidoYFinalizacionLanzaNoEnvia();
         assertErrorLecturaEmailFinalizaError();
         assertErrorEnvioFinalizaError();
         assertEnvioAceptadoYEnviadoPersistidoCuentaEnviado();
@@ -81,6 +82,31 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         assertInt("errores", 0, resultado.getErrores());
         assertInt("emails invalidos", 1, resultado.getEmailsInvalidos());
         assertInt("omitidos", 0, resultado.getOmitidos());
+        assertInt("mails enviados", 0, service.mailsEnviados);
+        assertEstadoFinal(service, 0, EMAIL_INVALIDO);
+    }
+
+    private static void assertEmailInvalidoYFinalizacionLanzaNoEnvia()
+            throws Exception {
+
+        ServicioPrueba service =
+                servicioConPrestador(
+                        "listado@ospim.org.ar",
+                        "email-invalido"
+                );
+
+        service.errorFinalizarEstado =
+                EMAIL_INVALIDO;
+
+        NotificacionCotizacionResultado resultado =
+                service.notificarPrestadores(
+                        10,
+                        "tester",
+                        1L
+                );
+
+        assertInt("enviados", 0, resultado.getEnviados());
+        assertInt("emails invalidos", 1, resultado.getEmailsInvalidos());
         assertInt("mails enviados", 0, service.mailsEnviados);
         assertEstadoFinal(service, 0, EMAIL_INVALIDO);
     }
@@ -368,6 +394,7 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         private Exception errorEnvio;
         private Exception errorLectura;
         private Exception errorFinalizarEnviado;
+        private String errorFinalizarEstado;
         private int mailsEnviados;
         private String emailReservado;
         private String emailEnviado;
@@ -432,6 +459,12 @@ public class NotificarCotizacionPrestadorServiceImplTest {
             eventos.add("finalizar:" + estado);
             estadosFinalizados.add(estado);
             ultimoError = error;
+
+            if (estado.equals(errorFinalizarEstado)) {
+                throw new Exception(
+                        "falla persistiendo " + estado
+                );
+            }
 
             if (ENVIADO.equals(estado)
                     && errorFinalizarEnviado != null) {

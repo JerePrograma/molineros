@@ -4,9 +4,12 @@
 DO $smoke$
 DECLARE
     v_id INTEGER;
-    v_articulo INTEGER;
-    v_detalle INTEGER;
+    v_articulo_uno INTEGER;
+    v_articulo_dos INTEGER;
+    v_detalle_uno INTEGER;
+    v_detalle_dos INTEGER;
     v_estados TEXT;
+    v_total NUMERIC;
 BEGIN
     INSERT INTO public.prestador (
         id_prestador,
@@ -16,14 +19,23 @@ BEGIN
         id_tipo_prestador,
         solicitar_cotizacion
     )
-    VALUES (
-        20,
-        'Prestador prueba',
-        '20123456789',
-        'prestador@example.com',
-        1,
-        TRUE
-    );
+    VALUES
+        (
+            20,
+            'Prestador enviado',
+            '20123456789',
+            'enviado@example.com',
+            1,
+            TRUE
+        ),
+        (
+            21,
+            'Prestador no enviado',
+            '20987654321',
+            'no-enviado@example.com',
+            1,
+            TRUE
+        );
 
     INSERT INTO compras.sector_tipo_prestador (
         id_sector,
@@ -36,7 +48,7 @@ BEGIN
         NULL,
         NULL,
         NULL,
-        NULL,
+        123456,
         NULL,
         NULL,
         NULL,
@@ -56,6 +68,15 @@ BEGIN
         'smoke'
     );
 
+    IF (
+        SELECT afiliado_id_ospim
+          FROM compras.requerimiento
+         WHERE id_requerimiento = v_id
+    ) IS NOT NULL THEN
+        RAISE EXCEPTION
+            'Se conservó id_ospim sin afiliado asociado.';
+    END IF;
+
     INSERT INTO compras.articulo (
         id_sector,
         descripcion,
@@ -63,17 +84,38 @@ BEGIN
     )
     VALUES (
         5,
-        'Artículo smoke',
+        'Artículo smoke uno',
         'smoke'
     )
-    RETURNING id_articulo INTO v_articulo;
+    RETURNING id_articulo INTO v_articulo_uno;
 
-    v_detalle := compras.guardar_requerimiento_detalle(
+    INSERT INTO compras.articulo (
+        id_sector,
+        descripcion,
+        alta_usr
+    )
+    VALUES (
+        5,
+        'Artículo smoke dos',
+        'smoke'
+    )
+    RETURNING id_articulo INTO v_articulo_dos;
+
+    v_detalle_uno := compras.guardar_requerimiento_detalle(
         NULL,
         v_id,
-        v_articulo,
+        v_articulo_uno,
         2,
-        'Detalle smoke',
+        'Detalle smoke uno',
+        'smoke'
+    );
+
+    v_detalle_dos := compras.guardar_requerimiento_detalle(
+        NULL,
+        v_id,
+        v_articulo_dos,
+        3,
+        'Detalle smoke dos',
         'smoke'
     );
 
@@ -86,15 +128,25 @@ BEGIN
         fecha_envio,
         alta_usr
     )
-    VALUES (
-        v_id,
-        20,
-        'ERROR',
-        1,
-        'prestador@example.com',
-        NULL,
-        'smoke'
-    );
+    VALUES
+        (
+            v_id,
+            20,
+            'ERROR',
+            1,
+            'enviado@example.com',
+            NULL,
+            'smoke'
+        ),
+        (
+            v_id,
+            21,
+            'ERROR',
+            1,
+            'no-enviado@example.com',
+            NULL,
+            'smoke'
+        );
 
     BEGIN
         PERFORM compras.cambiar_estado_requerimiento(
@@ -127,8 +179,22 @@ BEGIN
 
     BEGIN
         UPDATE compras.requerimiento_detalle
+           SET cantidad = 999
+         WHERE id_detalle = v_detalle_uno;
+        RAISE EXCEPTION
+            'Se permitió modificar cantidad en A COTIZAR.';
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLERRM =
+               'Se permitió modificar cantidad en A COTIZAR.' THEN
+                RAISE;
+            END IF;
+    END;
+
+    BEGIN
+        UPDATE compras.requerimiento_detalle
            SET precio_unitario_estimado = -1
-         WHERE id_detalle = v_detalle;
+         WHERE id_detalle = v_detalle_uno;
         RAISE EXCEPTION
             'Se permitió un precio unitario negativo.';
     EXCEPTION
@@ -140,27 +206,111 @@ BEGIN
     END;
 
     BEGIN
-        PERFORM compras.cambiar_estado_requerimiento(
-            v_id,
-            3,
-            'smoke'
-        );
+        UPDATE compras.requerimiento_detalle
+           SET precio_unitario_estimado = 10.00,
+               id_prestador = 21
+         WHERE id_detalle = v_detalle_uno;
         RAISE EXCEPTION
-            'La cotización incompleta no fue rechazada.';
+            'Se permitió adjudicar un prestador no ENVIADO.';
     EXCEPTION
         WHEN OTHERS THEN
             IF SQLERRM =
-               'La cotización incompleta no fue rechazada.' THEN
+               'Se permitió adjudicar un prestador no ENVIADO.' THEN
                 RAISE;
             END IF;
     END;
 
     UPDATE compras.requerimiento_detalle
        SET precio_unitario_estimado = 10.00,
-           precio_total_estimado = 20.00,
+           precio_total_estimado = 999.99,
            id_prestador = 20,
            modi_usr = 'smoke'
-     WHERE id_detalle = v_detalle;
+     WHERE id_detalle = v_detalle_uno;
+
+    SELECT precio_total_estimado
+      INTO v_total
+      FROM compras.requerimiento_detalle
+     WHERE id_detalle = v_detalle_uno;
+
+    IF v_total <> 20.00 THEN
+        RAISE EXCEPTION
+            'El total manipulado no fue recalculado: %.',
+            v_total;
+    END IF;
+
+    BEGIN
+        PERFORM compras.cambiar_estado_requerimiento(
+            v_id,
+            3,
+            'smoke'
+        );
+        RAISE EXCEPTION
+            'Un solo detalle completo cerró la cotización.';
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLERRM =
+               'Un solo detalle completo cerró la cotización.' THEN
+                RAISE;
+            END IF;
+    END;
+
+    IF (
+        SELECT estado
+          FROM compras.requerimiento
+         WHERE id_requerimiento = v_id
+    ) <> 2 THEN
+        RAISE EXCEPTION
+            'La cotización incompleta no permaneció en A COTIZAR.';
+    END IF;
+
+    BEGIN
+        UPDATE compras.requerimiento_detalle
+           SET precio_unitario_estimado = 12.00,
+               id_prestador = 20
+         WHERE id_detalle = v_detalle_uno;
+
+        UPDATE compras.requerimiento_detalle
+           SET precio_unitario_estimado = -1
+         WHERE id_detalle = v_detalle_dos;
+
+        RAISE EXCEPTION
+            'La operación intermedia inválida no falló.';
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLERRM =
+               'La operación intermedia inválida no falló.' THEN
+                RAISE;
+            END IF;
+    END;
+
+    SELECT precio_total_estimado
+      INTO v_total
+      FROM compras.requerimiento_detalle
+     WHERE id_detalle = v_detalle_uno;
+
+    IF v_total <> 20.00 THEN
+        RAISE EXCEPTION
+            'No se revirtió el cambio previo al error intermedio: %.',
+            v_total;
+    END IF;
+
+    UPDATE compras.requerimiento_detalle
+       SET precio_unitario_estimado = 5.00,
+           precio_total_estimado = 0.01,
+           id_prestador = 20,
+           modi_usr = 'smoke'
+     WHERE id_detalle = v_detalle_dos;
+
+    SELECT precio_total_estimado
+      INTO v_total
+      FROM compras.requerimiento_detalle
+     WHERE id_detalle = v_detalle_dos;
+
+    IF v_total <> 15.00 THEN
+        RAISE EXCEPTION
+            'El segundo total no fue recalculado: %.',
+            v_total;
+    END IF;
 
     PERFORM compras.cambiar_estado_requerimiento(
         v_id,
@@ -176,6 +326,20 @@ BEGIN
         RAISE EXCEPTION
             'La cotización completa no pasó a COTIZADO.';
     END IF;
+
+    BEGIN
+        UPDATE compras.requerimiento_detalle
+           SET precio_unitario_estimado = 15.00
+         WHERE id_detalle = v_detalle_uno;
+        RAISE EXCEPTION
+            'Se permitió modificar un detalle COTIZADO.';
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLERRM =
+               'Se permitió modificar un detalle COTIZADO.' THEN
+                RAISE;
+            END IF;
+    END;
 
     BEGIN
         PERFORM compras.cambiar_estado_requerimiento(

@@ -15,9 +15,11 @@ import java.sql.*;
 import java.text.Normalizer;
 import java.util.Locale;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class EditarRequerimientoCompraServiceImpl {
@@ -636,13 +638,52 @@ public class EditarRequerimientoCompraServiceImpl {
 
             int actualizados = stmt.executeUpdate();
 
-            if (actualizados != 1) {
+            if (actualizados != 1
+                    && !esEnvioACotizarAplicadoConcurrentemente(
+                            con,
+                            idRequerimientoCompra,
+                            estadoEsperado,
+                            estadoNuevo
+                    )) {
+
                 throw new Exception(
                         "El requerimiento fue modificado por otro proceso. Recargue la pantalla."
                 );
             }
         } finally {
             ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    private boolean esEnvioACotizarAplicadoConcurrentemente(
+            Connection con,
+            int idRequerimientoCompra,
+            int estadoEsperado,
+            int estadoNuevo) throws Exception {
+
+        if (estadoEsperado != WebKeysCompras.ESTADO_PENDIENTE
+                || estadoNuevo != WebKeysCompras.ESTADO_A_COTIZAR) {
+
+            return false;
+        }
+
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            stmt = con.prepareStatement(
+                    "SELECT estado FROM compras.requerimiento "
+                            + "WHERE id_requerimiento = ? AND baja_fecha IS NULL"
+            );
+            stmt.setInt(1, idRequerimientoCompra);
+            rs = stmt.executeQuery();
+
+            return rs.next()
+                    && rs.getInt("estado")
+                    == WebKeysCompras.ESTADO_A_COTIZAR;
+        } finally {
+            cerrar(rs);
+            cerrar(stmt);
         }
     }
 
@@ -714,12 +755,20 @@ public class EditarRequerimientoCompraServiceImpl {
             if (con != null) {
                 try {
                     con.setAutoCommit(autoCommitOriginal);
-                } catch (Exception ignored) {
+                } catch (Exception autoCommitError) {
+                    _log.warn(
+                            "No se pudo restaurar autoCommit al guardar cotizacion.",
+                            autoCommitError
+                    );
                 }
 
                 try {
                     con.close();
-                } catch (Exception ignored) {
+                } catch (Exception closeError) {
+                    _log.warn(
+                            "No se pudo cerrar la conexion al guardar cotizacion.",
+                            closeError
+                    );
                 }
             }
         }
@@ -793,42 +842,27 @@ public class EditarRequerimientoCompraServiceImpl {
             detalles = new ArrayList<RequerimientoCompraDetalle>();
         }
 
+        validarDetallesCotizacionRecibidos(
+                cantidades,
+                detalles
+        );
+
         for (int i = 0; i < detalles.size(); i++) {
             RequerimientoCompraDetalle detalle = detalles.get(i);
-
-            if (detalle == null || detalle.getIdInt() <= 0) {
-                continue;
-            }
 
             Integer idDetalle = Integer.valueOf(detalle.getIdInt());
             Integer cantidad = cantidades.get(idDetalle);
 
-            if (cantidad == null) {
-                throw new Exception(
-                        "El detalle " + idDetalle + " no pertenece al requerimiento."
-                );
-            }
-
-            if (detalle.getPrecioUnitarioEstimado() != null
-                    && detalle.getPrecioUnitarioEstimado().compareTo(BigDecimal.ZERO) < 0) {
-                throw new Exception("El precio unitario no puede ser negativo.");
-            }
-
-            if (detalle.getIdPrestador() != null
-                    && !existePrestadorEnviado(
+            validarPrestadorCotizacion(
                     con,
                     idRequerimientoCompra,
-                    detalle.getIdPrestador().intValue()
-            )) {
-                throw new Exception(
-                        "El prestador seleccionado no fue notificado correctamente para este requerimiento."
-                );
-            }
+                    detalle.getIdPrestador()
+            );
 
             BigDecimal total =
-                    WebKeysCompras.calcularPrecioTotal(
+                    calcularPrecioTotalCotizacion(
                             cantidad,
-                            detalle.getPrecioUnitarioEstimado()
+                            detalle
                     );
 
             actualizarDetalleCotizacion(
@@ -844,7 +878,81 @@ public class EditarRequerimientoCompraServiceImpl {
 
     }
 
-    private boolean existePrestadorEnviado(Connection con,
+    protected void validarDetallesCotizacionRecibidos(
+            Map<Integer, Integer> cantidades,
+            List<RequerimientoCompraDetalle> detalles) throws Exception {
+
+        if (cantidades == null || cantidades.isEmpty()) {
+            throw new Exception("El requerimiento no tiene detalles activos.");
+        }
+
+        Set<Integer> idsRecibidos = new HashSet<Integer>();
+
+        for (int i = 0; detalles != null && i < detalles.size(); i++) {
+            RequerimientoCompraDetalle detalle = detalles.get(i);
+
+            if (detalle == null || detalle.getIdInt() <= 0) {
+                throw new Exception("La lista de detalles de cotizacion fue manipulada.");
+            }
+
+            Integer idDetalle = Integer.valueOf(detalle.getIdInt());
+
+            if (!cantidades.containsKey(idDetalle)) {
+                throw new Exception(
+                        "El detalle " + idDetalle + " no pertenece al requerimiento."
+                );
+            }
+
+            if (!idsRecibidos.add(idDetalle)) {
+                throw new Exception(
+                        "El detalle " + idDetalle + " fue informado mas de una vez."
+                );
+            }
+
+            if (detalle.getPrecioUnitarioEstimado() != null
+                    && detalle.getPrecioUnitarioEstimado().compareTo(BigDecimal.ZERO) < 0) {
+                throw new Exception("El precio unitario no puede ser negativo.");
+            }
+        }
+
+        if (!idsRecibidos.equals(cantidades.keySet())) {
+            throw new Exception(
+                    "Deben informarse exactamente todos los detalles activos del requerimiento."
+            );
+        }
+    }
+
+    protected BigDecimal calcularPrecioTotalCotizacion(
+            Integer cantidadPersistida,
+            RequerimientoCompraDetalle detalle) {
+
+        return WebKeysCompras.calcularPrecioTotal(
+                cantidadPersistida,
+                detalle != null
+                        ? detalle.getPrecioUnitarioEstimado()
+                        : null
+        );
+    }
+
+    protected void validarPrestadorCotizacion(
+            Connection con,
+            int idRequerimientoCompra,
+            Integer idPrestador) throws Exception {
+
+        if (idPrestador != null
+                && !existePrestadorEnviado(
+                        con,
+                        idRequerimientoCompra,
+                        idPrestador.intValue()
+                )) {
+
+            throw new Exception(
+                    "El prestador seleccionado no fue notificado correctamente para este requerimiento."
+            );
+        }
+    }
+
+    protected boolean existePrestadorEnviado(Connection con,
                                           int idRequerimientoCompra,
                                           int idPrestador) throws Exception {
 

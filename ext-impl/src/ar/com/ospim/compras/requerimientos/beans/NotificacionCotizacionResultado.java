@@ -1,6 +1,11 @@
 package ar.com.ospim.compras.requerimientos.beans;
 
-public class NotificacionCotizacionResultado {
+import java.io.Serializable;
+
+public class NotificacionCotizacionResultado
+        implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private int totalCandidatos;
     private int enviados;

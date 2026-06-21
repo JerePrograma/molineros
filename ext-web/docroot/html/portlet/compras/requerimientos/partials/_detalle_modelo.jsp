@@ -60,8 +60,7 @@ boolean usuarioPuedeCotizarDetalle =
 boolean puedeABMDetalle = usuarioPuedeABMDetalle && !soloLecturaDetalle;
 boolean puedeCotizarDetalle = usuarioPuedeCotizarDetalle && !soloLecturaDetalle;
 boolean puedeVerCotizacionDetalle =
-        reqDetalle.puedeEditarCotizacion()
-        || reqDetalle.isCotizado();
+        reqDetalle.puedeVerCotizacion();
 
 List<RequerimientoCompraDetalle> detalles = reqDetalle.getDetalles();
 

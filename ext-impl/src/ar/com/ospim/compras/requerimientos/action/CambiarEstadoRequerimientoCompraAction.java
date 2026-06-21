@@ -2,6 +2,8 @@ package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 
@@ -62,7 +64,12 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
                                         user.getCompanyId()
                                 );
 
-                registrarResultado(actionRequest, resultado, false);
+                registrarResultado(
+                        actionRequest,
+                        resultado,
+                        false,
+                        getEstadoPersistido(idRequerimientoCompra)
+                );
             } else if (estadoNuevo == WebKeysCompras.ESTADO_A_COTIZAR) {
                 validarRolCotizar(user);
 
@@ -73,7 +80,12 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
                                 user.getCompanyId()
                 );
 
-                registrarResultado(actionRequest, resultado, true);
+                registrarResultado(
+                        actionRequest,
+                        resultado,
+                        true,
+                        getEstadoPersistido(idRequerimientoCompra)
+                );
             } else if (estadoNuevo == WebKeysCompras.ESTADO_ANULADO) {
                 validarRolAnular(user);
 
@@ -124,9 +136,11 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
     private void registrarResultado(
             ActionRequest actionRequest,
             NotificacionCotizacionResultado resultado,
-            boolean cambiaAAcotizar) {
+            boolean cambiaAAcotizar,
+            int estadoPersistido) {
 
-        actionRequest.setAttribute(
+        SessionMessages.add(
+                actionRequest,
                 WebKeysCompras.RESULTADO_NOTIFICACION_COTIZACION,
                 resultado
         );
@@ -139,7 +153,9 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
         if (resultado.getEnviados() <= 0) {
             SessionMessages.add(
                     actionRequest,
-                    "cotizacion-prestadores-no-enviados"
+                    estadoPersistido == WebKeysCompras.ESTADO_PENDIENTE
+                            ? "cotizacion-prestadores-no-enviados"
+                            : "cotizacion-prestadores-sin-nuevos-envios"
             );
         } else if (resultado.tieneErrores()) {
             SessionMessages.add(
@@ -156,6 +172,24 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
         } else {
             SessionMessages.add(actionRequest, "cotizacion-prestadores-notificados");
         }
+    }
+
+    private int getEstadoPersistido(
+            int idRequerimientoCompra) throws Exception {
+
+        RequerimientoCompra requerimiento =
+                BusquedaRequerimientoCompraServiceUtil
+                        .getRequerimientoCompra(
+                                idRequerimientoCompra
+                        );
+
+        if (requerimiento == null) {
+            throw new Exception(
+                    "No se encontro el requerimiento de compra informado."
+            );
+        }
+
+        return requerimiento.getEstado();
     }
 
     private void validarRolCotizar(User user) throws Exception {
