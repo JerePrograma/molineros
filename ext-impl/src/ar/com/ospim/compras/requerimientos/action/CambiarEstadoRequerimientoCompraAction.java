@@ -62,7 +62,7 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
                                         user.getCompanyId()
                                 );
 
-                registrarResultado(actionRequest, resultado);
+                registrarResultado(actionRequest, resultado, false);
             } else if (estadoNuevo == WebKeysCompras.ESTADO_A_COTIZAR) {
                 validarRolCotizar(user);
 
@@ -71,10 +71,9 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
                                 idRequerimientoCompra,
                                 usuario,
                                 user.getCompanyId()
-                        );
+                );
 
-                registrarResultado(actionRequest, resultado);
-                SessionMessages.add(actionRequest, "requerimiento-compra-enviado-a-cotizar");
+                registrarResultado(actionRequest, resultado, true);
             } else if (estadoNuevo == WebKeysCompras.ESTADO_ANULADO) {
                 validarRolAnular(user);
 
@@ -122,8 +121,10 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
         return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
     }
 
-    private void registrarResultado(ActionRequest actionRequest,
-                                    NotificacionCotizacionResultado resultado) {
+    private void registrarResultado(
+            ActionRequest actionRequest,
+            NotificacionCotizacionResultado resultado,
+            boolean cambiaAAcotizar) {
 
         actionRequest.setAttribute(
                 WebKeysCompras.RESULTADO_NOTIFICACION_COTIZACION,
@@ -135,8 +136,23 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             return;
         }
 
-        if (resultado.tieneErrores()) {
-            SessionMessages.add(actionRequest, "cotizacion-prestadores-notificados-con-errores");
+        if (resultado.getEnviados() <= 0) {
+            SessionMessages.add(
+                    actionRequest,
+                    "cotizacion-prestadores-no-enviados"
+            );
+        } else if (resultado.tieneErrores()) {
+            SessionMessages.add(
+                    actionRequest,
+                    cambiaAAcotizar
+                            ? "requerimiento-compra-enviado-a-cotizar-con-errores"
+                            : "cotizacion-prestadores-notificados-con-errores"
+            );
+        } else if (cambiaAAcotizar) {
+            SessionMessages.add(
+                    actionRequest,
+                    "requerimiento-compra-enviado-a-cotizar"
+            );
         } else {
             SessionMessages.add(actionRequest, "cotizacion-prestadores-notificados");
         }

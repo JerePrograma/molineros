@@ -508,9 +508,13 @@
 
             <% if (puedeABMDetalle) { %>
                 html += '<td>';
-                html += '<input type="button" value="Editar" onclick="<portlet:namespace />editarDetalleEnPantalla(' + i + ');" />';
+                html += '<a href="#" title="Editar" onclick="<portlet:namespace />editarDetalleEnPantalla(' + i + '); return false;">';
+                html += '<img alt="Editar" src="<%= themeDisplay.getPathThemeImages() %>/common/edit.png" />';
+                html += '</a>';
                 html += '&nbsp;';
-                html += '<input type="button" value="Quitar" onclick="<portlet:namespace />quitarDetalleEnPantalla(' + i + ');" />';
+                html += '<a href="#" title="Quitar" onclick="<portlet:namespace />quitarDetalleEnPantalla(' + i + '); return false;">';
+                html += '<img alt="Quitar" src="<%= themeDisplay.getPathThemeImages() %>/common/delete.png" />';
+                html += '</a>';
                 html += '</td>';
             <% } %>
 

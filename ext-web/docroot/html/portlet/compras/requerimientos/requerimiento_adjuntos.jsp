@@ -119,18 +119,6 @@ boolean msgPresupuestoBorrado =
         );
 %>
 
-<!-- compras-presupuestos-include-debug
-idRequerimiento=<%= idRequerimientoCompraPresupuestos %>
-estadoPersistido=<%= reqPresupuestos.getEstado() %>
-soloLecturaParam=<%= soloLecturaParamPresupuestos %>
-soloLectura=<%= soloLecturaPresupuestos %>
-puedeCotizar=<%= puedeCotizarPresupuestos %>
-puedeVerPresupuestos=<%= reqPresupuestos.puedeVerPresupuestos() %>
-puedeAdministrarPresupuestos=<%= reqPresupuestos.puedeAdministrarPresupuestos() %>
-puedeEditarPresupuestos=<%= puedeEditarPresupuestos %>
-struts_action=<%= HtmlUtil.escape(strutsActionPresupuestos) %>
-modo=<%= HtmlUtil.escape(modoPresupuestos) %>
--->
 <form action="<%= uploadPresupuestosURL.toString() %>"
       method="post"
       name="<portlet:namespace />compra_presupuesto_fm"
@@ -179,6 +167,39 @@ modo=<%= HtmlUtil.escape(modoPresupuestos) %>
                 </c:when>
 
                 <c:otherwise>
+                    <table class="lfr-table taglib-search-iterator"
+                           style="margin-bottom: 12px; width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Razón social</th>
+                                <th>CUIT</th>
+                                <th>Estado de notificación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <%
+                            for (int i = 0;
+                                    i < prestadoresEnviadosPresupuestos.size();
+                                    i++) {
+
+                                PrestadorCotizacion prestadorEnviado =
+                                        prestadoresEnviadosPresupuestos.get(i);
+
+                                if (prestadorEnviado == null) {
+                                    continue;
+                                }
+                            %>
+                                <tr>
+                                    <td><%= HtmlUtil.escape(prestadorEnviado.getDescripcionVisible()) %></td>
+                                    <td><%= HtmlUtil.escape(prestadorEnviado.getCuitVisible()) %></td>
+                                    <td><%= HtmlUtil.escape(prestadorEnviado.getEstadoEnvioVisible()) %></td>
+                                </tr>
+                            <%
+                            }
+                            %>
+                        </tbody>
+                    </table>
+
                     <table class="lfr-table">
                         <thead>
                             <tr>
@@ -237,7 +258,7 @@ modo=<%= HtmlUtil.escape(modoPresupuestos) %>
 
         <c:if test="<%= idRequerimientoCompraPresupuestos > 0 && !puedeEditarPresupuestos && !soloLecturaPresupuestos %>">
             <div class="portlet-msg-info">
-                Los presupuestos solo pueden administrarse en estado A cotizar.
+                Los presupuestos solo pueden administrarse en estado A COTIZAR.
             </div>
         </c:if>
     </fieldset>

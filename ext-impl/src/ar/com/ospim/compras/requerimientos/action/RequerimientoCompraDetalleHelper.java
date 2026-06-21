@@ -443,7 +443,7 @@ public class RequerimientoCompraDetalleHelper {
         if (!requerimiento.puedeEditarEstructura()) {
             errorCampo(
                     "estado",
-                    "Solo se puede editar la estructura en estado Pendiente. Estado actual: "
+                    "Solo se puede editar la estructura en estado PENDIENTE. Estado actual: "
                             + requerimiento.getEstadoDescripcionVisible() + "."
             );
         }

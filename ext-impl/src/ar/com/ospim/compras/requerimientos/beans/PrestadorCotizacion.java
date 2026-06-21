@@ -115,6 +115,12 @@ public class PrestadorCotizacion {
         return estadoEnvio;
     }
 
+    public String getEstadoEnvioVisible() {
+        return estadoEnvio != null
+                ? estadoEnvio
+                : "";
+    }
+
     public void setEstadoEnvio(
             String estadoEnvio) {
 

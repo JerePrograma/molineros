@@ -360,6 +360,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
         r.setAfiliadoCuilTitular(getString(rs, "afiliado_cuil_titular"));
         r.setAfiliadoInt(getInteger(rs, "afiliado_int"));
+        r.setAfiliadoIdOspim(getInteger(rs, "afiliado_id_ospim"));
 
         r.setAfiliadoNombre(getString(rs, "afiliado_nombre"));
         r.setAfiliadoApellido(getString(rs, "afiliado_apellido"));

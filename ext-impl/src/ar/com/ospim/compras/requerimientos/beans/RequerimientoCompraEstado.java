@@ -2,8 +2,6 @@ package ar.com.ospim.compras.requerimientos.beans;
 
 import ar.com.ospim.compras.WebKeysCompras;
 
-import java.util.Locale;
-
 public class RequerimientoCompraEstado {
 
     private Integer id;
@@ -50,18 +48,19 @@ public class RequerimientoCompraEstado {
     }
 
     public String getDescripcion() {
-        if (!WebKeysCompras.isEmpty(descripcion)) {
-            return descripcion;
-        }
+        String descripcionCentralizada =
+                WebKeysCompras.getEstadoDescripcion(getIdEstado());
 
-        return WebKeysCompras.getEstadoDescripcion(getIdEstado());
+        return !WebKeysCompras.isEmpty(descripcionCentralizada)
+                ? descripcionCentralizada
+                : descripcion;
     }
 
     public String getDescripcionVisible() {
         String value = getDescripcion();
 
         return value != null
-                ? value.toUpperCase(Locale.ROOT)
+                ? value
                 : "";
     }
 
@@ -79,6 +78,14 @@ public class RequerimientoCompraEstado {
 
     public boolean isCotizado() {
         return WebKeysCompras.esCotizado(getIdEstado());
+    }
+
+    public boolean isReclamoRP() {
+        return WebKeysCompras.esReclamoRP(getIdEstado());
+    }
+
+    public boolean isOrdenCompra() {
+        return WebKeysCompras.esOrdenCompra(getIdEstado());
     }
 
     public boolean isAnulado() {

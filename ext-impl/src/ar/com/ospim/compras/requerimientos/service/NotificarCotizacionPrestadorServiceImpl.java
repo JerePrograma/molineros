@@ -168,37 +168,37 @@ public class NotificarCotizacionPrestadorServiceImpl {
             return;
         }
 
-        String email = "acomas@ospim.org.ar";
+        String email;
 
-//        try {
-//            email =
-//                    normalizarEmail(
-//                            leerEmailReservado(
-//                                    idRequerimiento,
-//                                    idPrestador
-//                            )
-//                    );
-//
-//        } catch (Exception e) {
-//            finalizarConControl(
-//                    idRequerimiento,
-//                    idPrestador,
-//                    WebKeysCompras.ENVIO_ERROR,
-//                    construirDetalleError(e)
-//            );
-//
-//            _log.error(
-//                    "No se pudo leer el email reservado de cotización. "
-//                            + "idPrestador="
-//                            + idPrestador
-//                            + ", idRequerimiento="
-//                            + idRequerimiento,
-//                    e
-//            );
-//
-//            resultado.incrementarErrores();
-//            return;
-//        }
+        try {
+            email =
+                    normalizarEmail(
+                            leerEmailReservado(
+                                    idRequerimiento,
+                                    idPrestador
+                            )
+                    );
+
+        } catch (Exception e) {
+            finalizarConControl(
+                    idRequerimiento,
+                    idPrestador,
+                    WebKeysCompras.ENVIO_ERROR,
+                    construirDetalleError(e)
+            );
+
+            _log.error(
+                    "No se pudo leer el email reservado de cotización. "
+                            + "idPrestador="
+                            + idPrestador
+                            + ", idRequerimiento="
+                            + idRequerimiento,
+                    e
+            );
+
+            resultado.incrementarErrores();
+            return;
+        }
 
         if (!esEmailValido(email)) {
 
@@ -770,7 +770,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             throw new Exception(
                     "El requerimiento no se encuentra "
-                            + "en estado Pendiente o A cotizar."
+                            + "en estado PENDIENTE o A COTIZAR."
             );
         }
     }

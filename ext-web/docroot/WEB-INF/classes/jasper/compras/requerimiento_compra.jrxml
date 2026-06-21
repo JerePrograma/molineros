@@ -33,6 +33,7 @@ FROM compras.get_requerimiento_compra_pdf(
     <field name="id_sector" class="java.lang.Integer"/>
     <field name="sector_descripcion" class="java.lang.String"/>
     <field name="requiere_afiliado" class="java.lang.Boolean"/>
+    <field name="afiliado_id_ospim" class="java.lang.Integer"/>
     <field name="afiliado_int" class="java.lang.Integer"/>
     <field name="afiliado_nombre_apellido" class="java.lang.String"/>
     <field name="afiliado_documento" class="java.lang.String"/>
@@ -57,7 +58,6 @@ FROM compras.get_requerimiento_compra_pdf(
     <field name="prestador_razon_social" class="java.lang.String"/>
     <field name="prestador_cuit" class="java.lang.String"/>
     <field name="detalle_observaciones" class="java.lang.String"/>
-    <field name="total_general" class="java.math.BigDecimal"/>
 
     <background>
         <band splitType="Stretch"/>
@@ -173,7 +173,7 @@ $F{afiliado_nombre_apellido} == null
                     <textElement>
                         <font fontName="SansSerif" size="8" isBold="true"/>
                     </textElement>
-                    <text><![CDATA[Documento:]]></text>
+                    <text><![CDATA[Nro. afiliado:]]></text>
                 </staticText>
 
                 <textField isBlankWhenNull="true">
@@ -181,7 +181,7 @@ $F{afiliado_nombre_apellido} == null
                     <textElement>
                         <font fontName="SansSerif" size="8"/>
                     </textElement>
-                    <textFieldExpression class="java.lang.String"><![CDATA[$F{afiliado_documento}]]></textFieldExpression>
+                    <textFieldExpression class="java.lang.Integer"><![CDATA[$F{afiliado_id_ospim}]]></textFieldExpression>
                 </textField>
 
                 <staticText>
@@ -431,44 +431,13 @@ $F{precio_total_estimado} == null
     </detail>
 
     <summary>
-        <band height="120" splitType="Stretch">
+        <band height="90" splitType="Stretch">
             <line>
                 <reportElement x="0" y="4" width="555" height="1"/>
             </line>
 
             <staticText>
-                <reportElement x="345" y="14" width="90" height="14">
-                    <printWhenExpression><![CDATA[
-$F{id_estado} != null
-&& $F{id_estado}.intValue() != 1
-                    ]]></printWhenExpression>
-                </reportElement>
-                <textElement textAlignment="Right">
-                    <font fontName="SansSerif" size="9" isBold="true"/>
-                </textElement>
-                <text><![CDATA[Total general:]]></text>
-            </staticText>
-
-            <textField isBlankWhenNull="true">
-                <reportElement x="440" y="14" width="115" height="14">
-                    <printWhenExpression><![CDATA[
-$F{id_estado} != null
-&& $F{id_estado}.intValue() != 1
-                    ]]></printWhenExpression>
-                </reportElement>
-                <textElement textAlignment="Right">
-                    <font fontName="SansSerif" size="9" isBold="true"/>
-                </textElement>
-                <textFieldExpression class="java.lang.String"><![CDATA[
-$F{total_general} == null
-    ? ""
-    : new java.text.DecimalFormat("$ #,##0.00")
-        .format($F{total_general})
-                ]]></textFieldExpression>
-            </textField>
-
-            <staticText>
-                <reportElement x="0" y="38" width="85" height="14"/>
+                <reportElement x="0" y="14" width="85" height="14"/>
                 <textElement>
                     <font fontName="SansSerif" size="8" isBold="true"/>
                 </textElement>
@@ -476,7 +445,7 @@ $F{total_general} == null
             </staticText>
 
             <textField isStretchWithOverflow="true" isBlankWhenNull="true">
-                <reportElement x="0" y="56" width="555" height="50"/>
+                <reportElement x="0" y="32" width="555" height="50"/>
                 <textElement>
                     <font fontName="SansSerif" size="8"/>
                 </textElement>

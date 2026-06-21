@@ -13,6 +13,10 @@ boolean showCotizarButtons =
 boolean showAnularButtons =
         user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS);
+boolean showEditarButton =
+        (showABMButtons && req.puedeEditarEstructura())
+        || ((showABMButtons || showCotizarButtons)
+                && req.puedeEditarCotizacion());
 
 String idRequerimiento = req.getIdRequerimientoCompraString();
 String idRequerimientoForm = req.getIdString();
@@ -52,15 +56,11 @@ String anularURL = "javascript:if(confirm('¿Confirma anular el requerimiento?'))
 <liferay-ui:icon-menu>
     <liferay-ui:icon image="../common/view" message="Ver" url="<%= verURL %>" />
 
-    <c:if test="<%= showABMButtons && req.isEditable() %>">
+    <c:if test="<%= showEditarButton %>">
         <liferay-ui:icon image="edit" message="Editar" url="<%= editarURL %>" />
     </c:if>
 
-    <c:if test="<%= showCotizarButtons && req.puedeEditarCotizacion() %>">
-        <liferay-ui:icon image="edit" message="Cotizar" url="<%= editarURL %>" />
-    </c:if>
-
     <c:if test="<%= showAnularButtons && req.puedeAnular() %>">
-        <liferay-ui:icon image="../message_boards/ban_user" message="Anular" url="<%= anularURL %>" />
+        <liferay-ui:icon-delete url="<%= anularURL %>" />
     </c:if>
 </liferay-ui:icon-menu>

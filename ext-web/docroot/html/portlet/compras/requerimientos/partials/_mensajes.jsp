@@ -11,16 +11,22 @@ boolean msgRequerimientoEnviadoACotizar =
                 "requerimiento-compra-enviado-a-cotizar"
         );
 
+boolean msgRequerimientoEnviadoACotizarConErrores =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "requerimiento-compra-enviado-a-cotizar-con-errores"
+        );
+
 boolean msgCotizacionGuardada =
         com.liferay.portal.kernel.servlet.SessionMessages.contains(
                 renderRequest,
                 "requerimiento-compra-cotizacion-guardada"
         );
 
-boolean msgCotizacionCerrada =
+boolean msgCotizacionCompleta =
         com.liferay.portal.kernel.servlet.SessionMessages.contains(
                 renderRequest,
-                "requerimiento-compra-cotizacion-cerrada"
+                "requerimiento-compra-cotizacion-completa"
         );
 
 boolean msgPrestadoresNotificados =
@@ -41,6 +47,12 @@ boolean msgPrestadoresSinResultado =
                 "cotizacion-prestadores-sin-resultado"
         );
 
+boolean msgPrestadoresNoEnviados =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "cotizacion-prestadores-no-enviados"
+        );
+
 ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado resultadoNotificacionCotizacion =
         (ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado)
                 renderRequest.getAttribute(WebKeysCompras.RESULTADO_NOTIFICACION_COTIZACION);
@@ -56,11 +68,6 @@ ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado result
             <%= HtmlUtil.escape(idRequerimientoMensaje) %>
         </c:if>
 
-        <c:if test="<%= !WebKeysCompras.isEmpty(comprasDetallesGuardados) %>">
-            <br />
-            Detalles guardados/procesados:
-            <%= HtmlUtil.escape(comprasDetallesGuardados) %>
-        </c:if>
     </div>
 </c:if>
 
@@ -72,7 +79,14 @@ ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado result
 
 <c:if test="<%= msgRequerimientoEnviadoACotizar %>">
     <div class="portlet-msg-success">
-        El requerimiento fue enviado a cotizar correctamente.
+        Prestadores notificados y requerimiento pasado a A COTIZAR.
+    </div>
+</c:if>
+
+<c:if test="<%= msgRequerimientoEnviadoACotizarConErrores %>">
+    <div class="portlet-msg-error">
+        El requerimiento pasó a A COTIZAR porque al menos un correo
+        fue aceptado por el servicio de mail. Otros envíos fallaron.
     </div>
 </c:if>
 
@@ -82,9 +96,9 @@ ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado result
     </div>
 </c:if>
 
-<c:if test="<%= msgCotizacionCerrada %>">
+<c:if test="<%= msgCotizacionCompleta %>">
     <div class="portlet-msg-success">
-        Cotización cerrada correctamente.
+        Cotización guardada y requerimiento pasado a COTIZADO.
     </div>
 </c:if>
 
@@ -105,6 +119,13 @@ ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado result
     <div class="portlet-msg-error">
         El proceso de notificación finalizó sin devolver
         un resultado verificable.
+    </div>
+</c:if>
+
+<c:if test="<%= msgPrestadoresNoEnviados %>">
+    <div class="portlet-msg-error">
+        No se pudo enviar la solicitud a ningún prestador.
+        El requerimiento permanece PENDIENTE.
     </div>
 </c:if>
 
@@ -200,6 +221,6 @@ ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado result
         && !editablePorEstado %>">
 
     <div class="portlet-msg-info">
-        La estructura del requerimiento solo puede editarse en estado Pendiente.
+        La estructura del requerimiento solo puede editarse en estado PENDIENTE.
     </div>
 </c:if>

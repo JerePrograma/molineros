@@ -46,6 +46,16 @@ String botoneraReintentarCotizacionFormId =
         namespaceCompra + "reintentarCotizacionRequerimientoCompraForm";
 String botoneraAnularFormId =
         namespaceCompra + "anularRequerimientoCompraForm";
+String botoneraAnularURL =
+        "javascript:"
+        + namespaceCompra
+        + "cambiarEstadoRequerimientoCompra('"
+        + botoneraAnularFormId
+        + "','"
+        + renderResponse.getNamespace()
+        + "btnAnularRequerimientoCompra'"
+        + ",'¿Confirma anular el requerimiento?'"
+        + ",'Anulando...');";
 %>
 
 <% if (botoneraPuedeEnviarACotizar) { %>
@@ -104,41 +114,30 @@ String botoneraAnularFormId =
             <% if (modoEditable && puedeEditarCotizacionPantalla) { %>
                 <input type="button"
                        id="<portlet:namespace />btnGuardarCotizacionCompra"
-                       value="Guardar avance"
-                       onClick="return <%= namespaceCompra %>guardarCotizacion(false);" />
-                &nbsp;&nbsp;
-
-                <input type="button"
-                       id="<portlet:namespace />btnCerrarCotizacionCompra"
-                       value="Cerrar cotización"
-                       onClick="return <%= namespaceCompra %>guardarCotizacion(true);" />
+                       value="Guardar cotización"
+                       onClick="return <%= namespaceCompra %>guardarCotizacion();" />
                 &nbsp;&nbsp;
             <% } %>
 
-            <% if (modoVista && puedeABM && editablePorEstado && botoneraRequerimientoPersistido) { %>
-                <input type="button"
-                       id="<portlet:namespace />btnEditarRequerimientoCompra"
-                       value="Editar"
-                       onClick="window.location.href='<%= editarURL.toString() %>';" />
-                &nbsp;&nbsp;
-            <% } %>
-
-            <% if (modoVista && botoneraTieneRolCotizar && req.puedeEditarCotizacion()) { %>
-                <input type="button"
-                       id="<portlet:namespace />btnCotizarRequerimientoCompra"
-                       value="Cotizar"
-                       onClick="window.location.href='<%= editarURL.toString() %>';" />
+            <% if (modoVista
+                    && botoneraRequerimientoPersistido
+                    && ((puedeABM && req.puedeEditarEstructura())
+                        || ((puedeABM || botoneraTieneRolCotizar)
+                            && req.puedeEditarCotizacion()))) { %>
+                <liferay-ui:icon image="edit"
+                                 message="Editar"
+                                 url="<%= editarURL.toString() %>" />
                 &nbsp;&nbsp;
             <% } %>
 
             <% if (botoneraPuedeEnviarACotizar) { %>
                 <input type="button"
                        id="<portlet:namespace />btnEnviarCotizarRequerimientoCompra"
-                       value="Enviar a cotizar"
+                       value="A Cotizar"
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
                                '<%= botoneraEnviarCotizarFormId %>',
                                '<portlet:namespace />btnEnviarCotizarRequerimientoCompra',
-                               '¿Confirma enviar a cotizar y notificar a los prestadores habilitados?',
+                               '¿Confirma pasar a A COTIZAR y notificar a los prestadores habilitados?',
                                'Notificando...'
                        );" />
                 &nbsp;&nbsp;
@@ -158,15 +157,9 @@ String botoneraAnularFormId =
             <% } %>
 
             <% if (botoneraPuedeAnular) { %>
-                <input type="button"
-                       id="<portlet:namespace />btnAnularRequerimientoCompra"
-                       value="Anular"
-                       onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
-                               '<%= botoneraAnularFormId %>',
-                               '<portlet:namespace />btnAnularRequerimientoCompra',
-                               '¿Confirma anular el requerimiento?',
-                               'Anulando...'
-                       );" />
+                <span id="<portlet:namespace />btnAnularRequerimientoCompra">
+                    <liferay-ui:icon-delete url="<%= botoneraAnularURL %>" />
+                </span>
                 &nbsp;&nbsp;
             <% } %>
 

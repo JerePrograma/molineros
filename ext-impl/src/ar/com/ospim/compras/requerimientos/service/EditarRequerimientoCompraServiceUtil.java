@@ -1,6 +1,7 @@
 package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.beans.CompraArticulo;
+import ar.com.ospim.compras.requerimientos.beans.GuardadoCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
@@ -71,24 +72,24 @@ public class EditarRequerimientoCompraServiceUtil {
         );
     }
 
-    public static void guardarAvanceCotizacion(
+    public static GuardadoCotizacionResultado guardarAvanceCotizacion(
             int idRequerimientoCompra,
             List<RequerimientoCompraDetalle> detalles,
             String usuario) throws Exception {
 
-        getInstance().guardarAvanceCotizacion(
+        return getInstance().guardarAvanceCotizacion(
                 idRequerimientoCompra,
                 detalles,
                 usuario
         );
     }
 
-    public static void cerrarCotizacion(
+    public static GuardadoCotizacionResultado cerrarCotizacion(
             int idRequerimientoCompra,
             List<RequerimientoCompraDetalle> detalles,
             String usuario) throws Exception {
 
-        getInstance().cerrarCotizacion(
+        return getInstance().cerrarCotizacion(
                 idRequerimientoCompra,
                 detalles,
                 usuario

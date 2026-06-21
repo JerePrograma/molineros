@@ -706,13 +706,8 @@
         return null;
     }
 
-    function <portlet:namespace />guardarCotizacion(cerrar) {
+    function <portlet:namespace />guardarCotizacion() {
         if (<portlet:namespace />guardandoCompra) {
-            return false;
-        }
-
-        if (cerrar
-                && !confirm('¿Confirma cerrar la cotización? Luego quedará en modo de solo lectura.')) {
             return false;
         }
 
@@ -728,7 +723,7 @@
         var cmdInput = document.getElementById('<portlet:namespace />compras_cmd');
 
         if (cmdInput) {
-            cmdInput.value = cerrar ? 'cerrarCotizacion' : 'saveCotizacion';
+            cmdInput.value = 'saveCotizacion';
         }
 
         if (!<portlet:namespace />validarTokenGuardadoCompra()) {

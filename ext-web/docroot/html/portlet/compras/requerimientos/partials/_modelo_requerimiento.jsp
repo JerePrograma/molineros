@@ -593,7 +593,6 @@ boolean errorRequerimientoCompra =
         );
 
 String comprasGuardado = ParamUtil.getString(renderRequest, "compras_guardado", "");
-String comprasDetallesGuardados = ParamUtil.getString(renderRequest, "compras_detalles_guardados", "");
 String comprasOperacion = ParamUtil.getString(renderRequest, "compras_operacion", "");
 
 boolean comprasGuardadoPorParametro =

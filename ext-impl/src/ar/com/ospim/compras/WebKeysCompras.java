@@ -62,7 +62,12 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final int ESTADO_PENDIENTE = 1;
     public static final int ESTADO_A_COTIZAR = 2;
     public static final int ESTADO_COTIZADO = 3;
-    public static final int ESTADO_AUTORIZADO = 4;
+    public static final int ESTADO_RECLAMO_RP = 4;
+    /**
+     * @deprecated Alias exclusivo para compatibilidad con código legacy.
+     */
+    @Deprecated
+    public static final int ESTADO_AUTORIZADO = ESTADO_RECLAMO_RP;
     public static final int ESTADO_ORDEN_COMPRA = 5;
     public static final int ESTADO_ANULADO = 99;
 
@@ -155,17 +160,17 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static String getEstadoDescripcion(int estado) {
         switch (estado) {
             case ESTADO_PENDIENTE:
-                return "Pendiente";
+                return "PENDIENTE";
             case ESTADO_A_COTIZAR:
-                return "A cotizar";
+                return "A COTIZAR";
             case ESTADO_COTIZADO:
-                return "Cotizado";
-            case ESTADO_AUTORIZADO:
-                return "Autorizado";
+                return "COTIZADO";
+            case ESTADO_RECLAMO_RP:
+                return "RECLAMO (RP)";
             case ESTADO_ORDEN_COMPRA:
-                return "Orden de compra";
+                return "ORDEN DE COMPRA";
             case ESTADO_ANULADO:
-                return "Anulado";
+                return "ANULADO";
             default:
                 return "";
         }
@@ -178,6 +183,8 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         agregarEstado(estados, ESTADO_PENDIENTE);
         agregarEstado(estados, ESTADO_A_COTIZAR);
         agregarEstado(estados, ESTADO_COTIZADO);
+        agregarEstado(estados, ESTADO_RECLAMO_RP);
+        agregarEstado(estados, ESTADO_ORDEN_COMPRA);
         agregarEstado(estados, ESTADO_ANULADO);
 
         return estados;
@@ -187,7 +194,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return estado == ESTADO_PENDIENTE
                 || estado == ESTADO_A_COTIZAR
                 || estado == ESTADO_COTIZADO
-                || estado == ESTADO_AUTORIZADO
+                || estado == ESTADO_RECLAMO_RP
                 || estado == ESTADO_ORDEN_COMPRA
                 || estado == ESTADO_ANULADO;
     }
@@ -204,11 +211,11 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return estado == ESTADO_COTIZADO;
     }
 
-    public static boolean esAutorizadoReservado(int estado) {
-        return estado == ESTADO_AUTORIZADO;
+    public static boolean esReclamoRP(int estado) {
+        return estado == ESTADO_RECLAMO_RP;
     }
 
-    public static boolean esOrdenCompraReservado(int estado) {
+    public static boolean esOrdenCompra(int estado) {
         return estado == ESTADO_ORDEN_COMPRA;
     }
 
@@ -229,7 +236,11 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     }
 
     public static boolean puedeVerPresupuestos(int estado) {
-        return esACotizar(estado) || esCotizado(estado);
+        return esACotizar(estado)
+                || esCotizado(estado)
+                || esReclamoRP(estado)
+                || esOrdenCompra(estado)
+                || esAnulado(estado);
     }
 
     public static boolean puedeEnviarACotizar(int estado) {
@@ -240,12 +251,15 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return esACotizar(estado);
     }
 
-    public static boolean puedeCerrarCotizacion(int estado) {
-        return esACotizar(estado);
-    }
-
     public static boolean puedeAnular(int estado) {
         return esPendiente(estado) || esACotizar(estado);
+    }
+
+    public static boolean esSoloLectura(int estado) {
+        return esCotizado(estado)
+                || esReclamoRP(estado)
+                || esOrdenCompra(estado)
+                || esAnulado(estado);
     }
 
     public static boolean validarTransicionEstado(

@@ -2,6 +2,7 @@ package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.beans.CompraArticulo;
+import ar.com.ospim.compras.requerimientos.beans.GuardadoCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
@@ -14,11 +15,9 @@ import java.sql.*;
 import java.text.Normalizer;
 import java.util.Locale;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 public class EditarRequerimientoCompraServiceImpl {
@@ -30,7 +29,7 @@ public class EditarRequerimientoCompraServiceImpl {
             Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
     private static final String SQL_GUARDAR_REQUERIMIENTO =
-            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
+            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_GUARDAR_REQUERIMIENTO_DETALLE =
             "{ ? = call compras.guardar_requerimiento_detalle(?,?,?,?,?,?) }";
@@ -81,8 +80,20 @@ public class EditarRequerimientoCompraServiceImpl {
             "SELECT count(*) AS total, " +
                     "       sum(CASE WHEN cantidad <= 0 " +
                     "                 OR precio_unitario_estimado IS NULL " +
+                    "                 OR precio_unitario_estimado < 0 " +
                     "                 OR precio_total_estimado IS NULL " +
                     "                 OR id_prestador IS NULL " +
+                    "                 OR precio_total_estimado <> " +
+                    "                    round(cantidad * precio_unitario_estimado, 2) " +
+                    "                 OR NOT EXISTS (" +
+                    "                    SELECT 1 " +
+                    "                    FROM compras.requerimiento_cotizacion_prestador rcp " +
+                    "                    WHERE rcp.id_requerimiento = " +
+                    "                          compras.requerimiento_detalle.id_requerimiento " +
+                    "                      AND rcp.id_prestador = " +
+                    "                          compras.requerimiento_detalle.id_prestador " +
+                    "                      AND rcp.estado_envio = 'ENVIADO'" +
+                    "                 ) " +
                     "                THEN 1 ELSE 0 END) AS incompletos " +
                     "FROM compras.requerimiento_detalle " +
                     "WHERE id_requerimiento = ? AND baja_fecha IS NULL";
@@ -116,7 +127,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
             if (!actual.puedeEditarEstructura()) {
                 throw new Exception(
-                        "Solo se puede editar la estructura de requerimientos en estado Pendiente."
+                        "Solo se puede editar la estructura de requerimientos en estado PENDIENTE."
                 );
             }
         }
@@ -132,23 +143,24 @@ public class EditarRequerimientoCompraServiceImpl {
             setNullableInteger(stmt, 2, requerimiento.getId());
             stmt.setString(3, emptyToNull(requerimiento.getAfiliadoCuilTitular()));
             setNullableInteger(stmt, 4, requerimiento.getAfiliadoInt());
-            stmt.setString(5, emptyToNull(requerimiento.getAfiliadoNombre()));
-            stmt.setString(6, emptyToNull(requerimiento.getAfiliadoApellido()));
-            stmt.setString(7, emptyToNull(requerimiento.getAfiliadoDocumentoTipo()));
-            stmt.setString(8, emptyToNull(requerimiento.getAfiliadoDocumentoNro()));
-            stmt.setString(9, emptyToNull(requerimiento.getAfiliadoDireccion()));
-            stmt.setString(10, emptyToNull(requerimiento.getAfiliadoLocalidad()));
-            stmt.setString(11, emptyToNull(requerimiento.getAfiliadoProvincia()));
-            stmt.setString(12, emptyToNull(requerimiento.getAfiliadoCelular()));
-            stmt.setString(13, emptyToNull(requerimiento.getAfiliadoTelefono()));
-            stmt.setString(14, emptyToNull(requerimiento.getAfiliadoEmail()));
-            setNullableInteger(stmt, 15, requerimiento.getIdSector());
-            setNullableInteger(stmt, 16, requerimiento.getCargoOspim());
-            setNullableInteger(stmt, 17, requerimiento.getCargoTercerizadora());
-            stmt.setString(18, emptyToNull(requerimiento.getIdTercerizadora()));
-            stmt.setBoolean(19, requerimiento.isRecupero());
-            stmt.setString(20, emptyToNull(requerimiento.getObservaciones()));
-            stmt.setString(21, emptyToNull(usuario));
+            setNullableInteger(stmt, 5, requerimiento.getAfiliadoIdOspim());
+            stmt.setString(6, emptyToNull(requerimiento.getAfiliadoNombre()));
+            stmt.setString(7, emptyToNull(requerimiento.getAfiliadoApellido()));
+            stmt.setString(8, emptyToNull(requerimiento.getAfiliadoDocumentoTipo()));
+            stmt.setString(9, emptyToNull(requerimiento.getAfiliadoDocumentoNro()));
+            stmt.setString(10, emptyToNull(requerimiento.getAfiliadoDireccion()));
+            stmt.setString(11, emptyToNull(requerimiento.getAfiliadoLocalidad()));
+            stmt.setString(12, emptyToNull(requerimiento.getAfiliadoProvincia()));
+            stmt.setString(13, emptyToNull(requerimiento.getAfiliadoCelular()));
+            stmt.setString(14, emptyToNull(requerimiento.getAfiliadoTelefono()));
+            stmt.setString(15, emptyToNull(requerimiento.getAfiliadoEmail()));
+            setNullableInteger(stmt, 16, requerimiento.getIdSector());
+            setNullableInteger(stmt, 17, requerimiento.getCargoOspim());
+            setNullableInteger(stmt, 18, requerimiento.getCargoTercerizadora());
+            stmt.setString(19, emptyToNull(requerimiento.getIdTercerizadora()));
+            stmt.setBoolean(20, requerimiento.isRecupero());
+            stmt.setString(21, emptyToNull(requerimiento.getObservaciones()));
+            stmt.setString(22, emptyToNull(usuario));
 
             stmt.execute();
 
@@ -298,22 +310,21 @@ public class EditarRequerimientoCompraServiceImpl {
                         companyId
                 );
 
-        if (resultado == null
-                || resultado.getTotalCandidatos() <= 0
-                || resultado.getEnviados() <= 0) {
+        if (resultado == null) {
 
             throw new Exception(
-                    "No se pudo enviar la solicitud a ningún prestador. "
-                            + "El requerimiento permanece Pendiente."
+                    "El proceso de notificación no devolvió un resultado verificable."
             );
         }
 
-        actualizarEstadoEsperado(
-                idRequerimientoCompra,
-                WebKeysCompras.ESTADO_PENDIENTE,
-                WebKeysCompras.ESTADO_A_COTIZAR,
-                usuario
-        );
+        if (resultado.getEnviados() > 0) {
+            actualizarEstadoEsperado(
+                    idRequerimientoCompra,
+                    WebKeysCompras.ESTADO_PENDIENTE,
+                    WebKeysCompras.ESTADO_A_COTIZAR,
+                    usuario
+            );
+        }
 
         return resultado;
     }
@@ -334,7 +345,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
         if (!requerimiento.puedeReintentarNotificaciones()) {
             throw new Exception(
-                    "Solo se pueden reintentar notificaciones de requerimientos en estado A cotizar."
+                    "Solo se pueden reintentar notificaciones de requerimientos en estado A COTIZAR."
             );
         }
 
@@ -345,18 +356,28 @@ public class EditarRequerimientoCompraServiceImpl {
         );
     }
 
-    public void guardarAvanceCotizacion(int idRequerimientoCompra,
-                                        List<RequerimientoCompraDetalle> detalles,
-                                        String usuario) throws Exception {
+    public GuardadoCotizacionResultado guardarAvanceCotizacion(
+            int idRequerimientoCompra,
+            List<RequerimientoCompraDetalle> detalles,
+            String usuario) throws Exception {
 
-        guardarCotizacion(idRequerimientoCompra, detalles, usuario, false);
+        return guardarCotizacion(
+                idRequerimientoCompra,
+                detalles,
+                usuario
+        );
     }
 
-    public void cerrarCotizacion(int idRequerimientoCompra,
-                                 List<RequerimientoCompraDetalle> detalles,
-                                 String usuario) throws Exception {
+    public GuardadoCotizacionResultado cerrarCotizacion(
+            int idRequerimientoCompra,
+            List<RequerimientoCompraDetalle> detalles,
+            String usuario) throws Exception {
 
-        guardarCotizacion(idRequerimientoCompra, detalles, usuario, true);
+        return guardarCotizacion(
+                idRequerimientoCompra,
+                detalles,
+                usuario
+        );
     }
 
     public List<CompraArticulo> listarArticulos(Integer idSector, String texto) throws Exception {
@@ -577,7 +598,7 @@ public class EditarRequerimientoCompraServiceImpl {
         }
 
         if (!requerimiento.puedeEnviarACotizar()) {
-            throw new Exception("Solo se pueden enviar a cotizar requerimientos Pendientes.");
+            throw new Exception("Solo se pueden enviar a cotizar requerimientos en estado PENDIENTE.");
         }
 
         if (requerimiento.getIdSector() == null
@@ -625,10 +646,10 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
-    private void guardarCotizacion(int idRequerimientoCompra,
-                                   List<RequerimientoCompraDetalle> detalles,
-                                   String usuario,
-                                   boolean cerrar) throws Exception {
+    private GuardadoCotizacionResultado guardarCotizacion(
+            int idRequerimientoCompra,
+            List<RequerimientoCompraDetalle> detalles,
+            String usuario) throws Exception {
 
         if (idRequerimientoCompra <= 0) {
             throw new Exception("Debe informar el requerimiento de compra.");
@@ -656,16 +677,29 @@ public class EditarRequerimientoCompraServiceImpl {
                     idRequerimientoCompra,
                     cantidades,
                     detalles,
-                    usuario,
-                    cerrar
+                    usuario
             );
 
-            if (cerrar) {
-                validarCotizacionCompleta(con, idRequerimientoCompra);
+            boolean cotizacionCompleta =
+                    esCotizacionCompleta(
+                            con,
+                            idRequerimientoCompra
+                    );
+
+            int estadoFinal =
+                    WebKeysCompras.ESTADO_A_COTIZAR;
+
+            if (cotizacionCompleta) {
                 actualizarEstadoCotizacionCerrada(con, idRequerimientoCompra, usuario);
+                estadoFinal =
+                        WebKeysCompras.ESTADO_COTIZADO;
             }
 
             con.commit();
+            return new GuardadoCotizacionResultado(
+                    cotizacionCompleta,
+                    estadoFinal
+            );
         } catch (Exception e) {
             if (con != null) {
                 try {
@@ -714,7 +748,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
             if (estado != WebKeysCompras.ESTADO_A_COTIZAR) {
                 throw new Exception(
-                        "Solo se puede cargar o cerrar cotización en estado A cotizar."
+                        "Solo se puede guardar cotización en estado A COTIZAR."
                 );
             }
         } finally {
@@ -753,14 +787,11 @@ public class EditarRequerimientoCompraServiceImpl {
                                              int idRequerimientoCompra,
                                              Map<Integer, Integer> cantidades,
                                              List<RequerimientoCompraDetalle> detalles,
-                                             String usuario,
-                                             boolean cerrar) throws Exception {
+                                             String usuario) throws Exception {
 
         if (detalles == null) {
             detalles = new ArrayList<RequerimientoCompraDetalle>();
         }
-
-        Set<Integer> recibidos = new HashSet<Integer>();
 
         for (int i = 0; i < detalles.size(); i++) {
             RequerimientoCompraDetalle detalle = detalles.get(i);
@@ -809,15 +840,8 @@ public class EditarRequerimientoCompraServiceImpl {
                     detalle.getIdPrestador(),
                     usuario
             );
-
-            recibidos.add(idDetalle);
         }
 
-        if (cerrar && recibidos.size() < cantidades.size()) {
-            throw new Exception(
-                    "Debe enviar todos los detalles para cerrar la cotización."
-            );
-        }
     }
 
     private boolean existePrestadorEnviado(Connection con,
@@ -870,8 +894,9 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
-    private void validarCotizacionCompleta(Connection con,
-                                           int idRequerimientoCompra) throws Exception {
+    private boolean esCotizacionCompleta(
+            Connection con,
+            int idRequerimientoCompra) throws Exception {
 
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -885,13 +910,7 @@ public class EditarRequerimientoCompraServiceImpl {
                 throw new Exception("El requerimiento no tiene detalles activos.");
             }
 
-            int incompletos = rs.getInt("incompletos");
-
-            if (incompletos > 0) {
-                throw new Exception(
-                        "No se puede cerrar la cotización: hay detalles sin precio o prestador."
-                );
-            }
+            return rs.getInt("incompletos") == 0;
         } finally {
             cerrar(rs);
             cerrar(stmt);

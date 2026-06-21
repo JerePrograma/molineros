@@ -4,6 +4,7 @@ import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.beans.CompraArticulo;
+import ar.com.ospim.compras.requerimientos.beans.GuardadoCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
@@ -174,24 +175,26 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 List detallesCotizacion =
                         getDetallesCotizacionFromRequest(actionRequest);
 
-                if ("cerrarCotizacion".equals(cmd)) {
-                    EditarRequerimientoCompraServiceUtil.cerrarCotizacion(
-                            idRequerimientoCompra,
-                            detallesCotizacion,
-                            usuario
-                    );
+                GuardadoCotizacionResultado resultado =
+                        EditarRequerimientoCompraServiceUtil
+                                .guardarAvanceCotizacion(
+                                        idRequerimientoCompra,
+                                        detallesCotizacion,
+                                        usuario
+                                );
 
-                    SessionMessages.add(actionRequest, "requerimiento-compra-cotizacion-cerrada");
+                if (resultado.getEstadoFinal() == WebKeysCompras.ESTADO_COTIZADO) {
+                    SessionMessages.add(
+                            actionRequest,
+                            "requerimiento-compra-cotizacion-completa"
+                    );
                     actionResponse.setRenderParameter("struts_action", "/compras/ver_requerimiento");
                     setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
                 } else {
-                    EditarRequerimientoCompraServiceUtil.guardarAvanceCotizacion(
-                            idRequerimientoCompra,
-                            detallesCotizacion,
-                            usuario
+                    SessionMessages.add(
+                            actionRequest,
+                            "requerimiento-compra-cotizacion-guardada"
                     );
-
-                    SessionMessages.add(actionRequest, "requerimiento-compra-cotizacion-guardada");
                     actionResponse.setRenderParameter("struts_action", STRUTS_ACTION_EDITAR_REQUERIMIENTO);
                     setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
                 }
@@ -233,19 +236,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                                 usuario
                         );
 
-                int detallesGuardados =
-                        detalleHelper.guardarDetallesDesdeRequest(
-                                actionRequest,
-                                idRequerimientoCompra,
-                                usuario
-                        );
+                detalleHelper.guardarDetallesDesdeRequest(
+                        actionRequest,
+                        idRequerimientoCompra,
+                        usuario
+                );
 
                 actionResponse.setRenderParameter("compras_guardado", "true");
                 actionResponse.setRenderParameter("compras_operacion", "saveAll");
-                actionResponse.setRenderParameter(
-                        "compras_detalles_guardados",
-                        String.valueOf(detallesGuardados)
-                );
 
                 setIdRequerimientoEnRequest(
                         actionRequest,
@@ -845,7 +843,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (!requerimiento.puedeEditarEstructura()) {
             errorCampo(
                     "estado",
-                    "Solo se puede editar la estructura en estado Pendiente. Estado actual: "
+                    "Solo se puede editar la estructura en estado PENDIENTE. Estado actual: "
                             + requerimiento.getEstadoDescripcionVisible() + "."
             );
         }
@@ -960,6 +958,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         Afiliado afiliado = afiliados.get(0);
 
+        requerimiento.setAfiliadoIdOspim(
+                afiliado.getId_ospim()
+        );
         requerimiento.setAfiliadoNombre(afiliado.getNombre());
         requerimiento.setAfiliadoApellido(afiliado.getApellido());
         requerimiento.setAfiliadoDocumentoTipo(afiliado.getDocumento_tipo());
@@ -1573,6 +1574,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         requerimiento.setAfiliadoCuilTitular(null);
         requerimiento.setAfiliadoInt(null);
+        requerimiento.setAfiliadoIdOspim((Integer) null);
 
         /*
          * En requerimientos nuevos sin afiliado, no corresponde guardar tercerizadora.

@@ -17,12 +17,33 @@ public class NotificarCotizacionPrestadorServiceImplTest {
 
     public static void main(String[] args) throws Exception {
         assertReservaFalseOmiteSinEnviarNiFinalizar();
+        assertEmailReservadoNuloFinalizaEmailInvalido();
         assertEmailInvalidoFinalizaEmailInvalido();
+        assertErrorLecturaEmailFinalizaError();
         assertErrorEnvioFinalizaError();
         assertEnvioAceptadoYEnviadoPersistidoCuentaEnviado();
         assertEnvioAceptadoYFinalizacionFalseCuentaError();
         assertEnvioAceptadoYFinalizacionLanzaCuentaError();
         assertUsaEmailReservadoDespuesDeReservar();
+    }
+
+    private static void assertEmailReservadoNuloFinalizaEmailInvalido()
+            throws Exception {
+
+        ServicioPrueba service =
+                servicioConPrestador("listado@ospim.org.ar", null);
+
+        NotificacionCotizacionResultado resultado =
+                service.notificarPrestadores(10, "tester", 1L);
+
+        assertInt("enviados", 0, resultado.getEnviados());
+        assertInt("errores", 0, resultado.getErrores());
+        assertInt("emails invalidos", 1, resultado.getEmailsInvalidos());
+        assertInt("mails enviados", 0, service.mailsEnviados);
+        assertEstadoFinal(service, 0, EMAIL_INVALIDO);
+        assertEvento(service, 0, "reservar");
+        assertEvento(service, 1, "leer-email");
+        assertEvento(service, 2, "finalizar:" + EMAIL_INVALIDO);
     }
 
     private static void assertReservaFalseOmiteSinEnviarNiFinalizar()
@@ -82,6 +103,33 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         assertInt("omitidos", 0, resultado.getOmitidos());
         assertEstadoFinal(service, 0, ERROR);
         assertContains("detalle error", service.ultimoError, "smtp caido");
+    }
+
+    private static void assertErrorLecturaEmailFinalizaError()
+            throws Exception {
+
+        ServicioPrueba service =
+                servicioConPrestador("listado@ospim.org.ar",
+                        "reservado@ospim.org.ar");
+
+        service.errorLectura =
+                new Exception("lectura fallida");
+
+        NotificacionCotizacionResultado resultado =
+                service.notificarPrestadores(10, "tester", 1L);
+
+        assertInt("enviados", 0, resultado.getEnviados());
+        assertInt("errores", 1, resultado.getErrores());
+        assertInt("mails enviados", 0, service.mailsEnviados);
+        assertEstadoFinal(service, 0, ERROR);
+        assertContains(
+                "detalle error lectura",
+                service.ultimoError,
+                "lectura fallida"
+        );
+        assertEvento(service, 0, "reservar");
+        assertEvento(service, 1, "leer-email");
+        assertEvento(service, 2, "finalizar:" + ERROR);
     }
 
     private static void assertEnvioAceptadoYEnviadoPersistidoCuentaEnviado()
@@ -318,6 +366,7 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         private boolean reserva = true;
         private boolean finalizarEnviado = true;
         private Exception errorEnvio;
+        private Exception errorLectura;
         private Exception errorFinalizarEnviado;
         private int mailsEnviados;
         private String emailReservado;
@@ -348,9 +397,14 @@ public class NotificarCotizacionPrestadorServiceImplTest {
 
         protected String leerEmailReservado(
                 int idRequerimiento,
-                int idPrestador) {
+                int idPrestador) throws Exception {
 
             eventos.add("leer-email");
+
+            if (errorLectura != null) {
+                throw errorLectura;
+            }
+
             return emailReservado;
         }
 

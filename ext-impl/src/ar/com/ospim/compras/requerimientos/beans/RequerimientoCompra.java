@@ -21,6 +21,7 @@ public class RequerimientoCompra {
 
     private String afiliadoCuilTitular;
     private Integer afiliadoInt;
+    private Integer afiliadoIdOspim;
 
     private Integer idSector;
     private String sectorDescripcion;
@@ -193,6 +194,26 @@ public class RequerimientoCompra {
         this.afiliadoInt = afiliadoInt;
     }
 
+    public Integer getAfiliadoIdOspim() {
+        return afiliadoIdOspim;
+    }
+
+    public String getAfiliadoIdOspimString() {
+        return afiliadoIdOspim != null
+                ? String.valueOf(afiliadoIdOspim)
+                : "";
+    }
+
+    public void setAfiliadoIdOspim(Integer afiliadoIdOspim) {
+        this.afiliadoIdOspim = afiliadoIdOspim;
+    }
+
+    public void setAfiliadoIdOspim(int afiliadoIdOspim) {
+        this.afiliadoIdOspim = afiliadoIdOspim > 0
+                ? Integer.valueOf(afiliadoIdOspim)
+                : null;
+    }
+
     public boolean tieneAfiliadoInformado() {
         return !WebKeysCompras.isEmpty(afiliadoCuilTitular) && afiliadoInt != null;
     }
@@ -334,11 +355,12 @@ public class RequerimientoCompra {
     }
 
     public String getEstadoDescripcion() {
-        if (!WebKeysCompras.isEmpty(estadoDescripcion)) {
-            return estadoDescripcion;
-        }
+        String descripcionCentralizada =
+                WebKeysCompras.getEstadoDescripcion(getEstado());
 
-        return WebKeysCompras.getEstadoDescripcion(getEstado());
+        return !WebKeysCompras.isEmpty(descripcionCentralizada)
+                ? descripcionCentralizada
+                : estadoDescripcion;
     }
 
     public String getEstadoDescripcionVisible() {
@@ -413,10 +435,6 @@ public class RequerimientoCompra {
         return WebKeysCompras.puedeEnviarACotizar(getEstado()) && bajaFecha == null;
     }
 
-    public boolean puedeCerrarCotizacion() {
-        return WebKeysCompras.puedeCerrarCotizacion(getEstado()) && bajaFecha == null;
-    }
-
     public boolean puedeReintentarNotificaciones() {
         return WebKeysCompras.puedeReintentarNotificaciones(getEstado()) && bajaFecha == null;
     }
@@ -437,8 +455,20 @@ public class RequerimientoCompra {
         return WebKeysCompras.esCotizado(getEstado());
     }
 
+    public boolean isReclamoRP() {
+        return WebKeysCompras.esReclamoRP(getEstado());
+    }
+
+    public boolean isOrdenCompra() {
+        return WebKeysCompras.esOrdenCompra(getEstado());
+    }
+
     public boolean isAnulado() {
         return WebKeysCompras.esAnulado(getEstado());
+    }
+
+    public boolean esSoloLectura() {
+        return WebKeysCompras.esSoloLectura(getEstado());
     }
 
     public boolean isActivo() {

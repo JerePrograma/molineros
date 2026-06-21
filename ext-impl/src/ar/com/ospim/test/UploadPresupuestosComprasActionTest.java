@@ -105,19 +105,38 @@ public class UploadPresupuestosComprasActionTest {
                         WebKeysCompras.ESTADO_PENDIENTE
                 );
 
-        assertException(
-                "estado fuera de A cotizar",
-                new Ejecucion() {
-                    public void ejecutar()
-                            throws Exception {
-
-                        accion.validarAcceso(
-                                true,
-                                pendiente,
-                                false
-                        );
-                    }
-                }
+        assertAccesoRechazado(
+                accion,
+                "PENDIENTE",
+                pendiente
+        );
+        assertAccesoRechazado(
+                accion,
+                "COTIZADO",
+                requerimiento(
+                        WebKeysCompras.ESTADO_COTIZADO
+                )
+        );
+        assertAccesoRechazado(
+                accion,
+                "RECLAMO (RP)",
+                requerimiento(
+                        WebKeysCompras.ESTADO_RECLAMO_RP
+                )
+        );
+        assertAccesoRechazado(
+                accion,
+                "ORDEN DE COMPRA",
+                requerimiento(
+                        WebKeysCompras.ESTADO_ORDEN_COMPRA
+                )
+        );
+        assertAccesoRechazado(
+                accion,
+                "ANULADO",
+                requerimiento(
+                        WebKeysCompras.ESTADO_ANULADO
+                )
         );
 
         assertException(
@@ -130,6 +149,28 @@ public class UploadPresupuestosComprasActionTest {
                                 true,
                                 requerimiento,
                                 true
+                        );
+                    }
+                }
+        );
+    }
+
+    private static void assertAccesoRechazado(
+            final AccionPrueba accion,
+            String estado,
+            final RequerimientoCompra requerimiento)
+            throws Exception {
+
+        assertException(
+                "estado fuera de A COTIZAR: " + estado,
+                new Ejecucion() {
+                    public void ejecutar()
+                            throws Exception {
+
+                        accion.validarAcceso(
+                                true,
+                                requerimiento,
+                                false
                         );
                     }
                 }
@@ -206,7 +247,7 @@ public class UploadPresupuestosComprasActionTest {
         );
         assertString(
                 "metadata canonica",
-                "Prestador Canonico - 20-12345678-9",
+                "PRESTADOR CANONICO - 20-12345678-9",
                 resultados.get(0).descripcion
         );
         assertFalse(

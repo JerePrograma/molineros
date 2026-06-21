@@ -1523,7 +1523,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 .puedeAdministrarPresupuestos()) {
 
             throw new Exception(
-                    "Solo se pueden administrar presupuestos en estado A cotizar. Estado actual: "
+                    "Solo se pueden administrar presupuestos en estado A COTIZAR. Estado actual: "
                             + requerimiento
                             .getEstadoDescripcionVisible()
                             + "."

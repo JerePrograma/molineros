@@ -160,9 +160,18 @@ The purchase-request state flow is:
 1. `ESTADO_PENDIENTE`
 2. `ESTADO_A_COTIZAR`
 3. `ESTADO_COTIZADO`
-4. `ESTADO_AUTORIZADO`, reserved and without active functionality.
-5. `ESTADO_ORDEN_COMPRA`, reserved and without active functionality.
+4. `ESTADO_RECLAMO_RP`, recognized as `RECLAMO (RP)` and read-only.
+5. `ESTADO_ORDEN_COMPRA`, recognized as `ORDEN DE COMPRA` and read-only.
 99. `ESTADO_ANULADO`
+
+Visible state descriptions are centralized and must be exactly:
+
+- `PENDIENTE`
+- `A COTIZAR`
+- `COTIZADO`
+- `RECLAMO (RP)`
+- `ORDEN DE COMPRA`
+- `ANULADO`
 
 The only active forward transitions are:
 
@@ -176,7 +185,7 @@ A transition from a state to the same state is not valid.
 `validarTransicionEstado(actual, nuevo)` must return `false` when
 `actual == nuevo`.
 
-There are no active transitions to Autorizado or Orden de compra.
+There are no active transitions to or from Reclamo (RP) or Orden de compra.
 
 Retrying provider notifications is not a state transition. It is a separate
 operation allowed only while the persisted request is in `ESTADO_A_COTIZAR`.
@@ -197,6 +206,9 @@ Expected mapping:
   - state 2, A cotizar.
 - Cotizados:
   - state 3, Cotizado.
+
+The state catalog and unrestricted state filter must still include all six
+recognized states, including the read-only historical states 4, 5, and 99.
 
 A request must not remain visible in a previous queue after its persisted
 state advances.
@@ -245,7 +257,8 @@ For state A cotizar, may:
 - retry pending or failed provider notifications without changing state;
 - edit quotation values independently from the request structure;
 - select one successfully notified provider per detail;
-- close the quotation with transition 2 -> 3.
+- save quotation progress; the service automatically performs transition
+  2 -> 3 when every active detail is complete and valid.
 
 Budgets and quotation data are distinct capabilities:
 
@@ -294,8 +307,7 @@ With `ANULAR_Compras`:
 With `COTIZAR_Compras`:
 
 - Notificar prestadores pendientes.
-- Guardar avance de cotización.
-- Cerrar cotización.
+- Guardar cotización.
 - Modify budget documents.
 
 With `ANULAR_Compras`:
@@ -313,13 +325,15 @@ Allow only read-only operations such as:
 - Imprimir PDF.
 - Volver.
 
-### State 4 — Autorizado, reserved
+### State 4 — Reclamo (RP), read-only
 
-Allow only read-only operations. Do not expose authorization actions.
+Allow search, view, existing-document download, PDF printing, and return only.
+Do not expose mutation or transition actions.
 
-### State 5 — Orden de compra, reserved
+### State 5 — Orden de compra, read-only
 
-Allow only read-only operations. Do not expose purchase-order actions.
+Allow search, view, existing-document download, PDF printing, and return only.
+Do not expose purchase-order or transition actions.
 
 ### State 99 — Anulado
 
@@ -331,11 +345,14 @@ Allow only read-only operations. Do not expose purchase-order actions.
 - Request structure is editable only in Pendiente.
 - Quotation prices and awarded providers are editable only in A cotizar.
 - Budgets are modifiable only in A cotizar.
+- Saving a quotation automatically changes it to Cotizado only when every
+  active detail has a valid amount and an awarded provider whose notification
+  for the same request is persisted as ENVIADO.
 - Each detail has its own awarded provider.
 - The awarded provider must belong to the request notification set.
 - The provider notification must be in ENVIADO state before adjudication.
-- Cotizado and Anulado are read-only.
-- Authorization and purchase-order functionality are inactive.
+- Cotizado, Reclamo (RP), Orden de compra, and Anulado are read-only.
+- Reclamo and purchase-order transition functionality are inactive.
 
 ## Compras notification behavior
 

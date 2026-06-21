@@ -113,6 +113,12 @@ tracked-build-properties-audit.txt
 
 # SQL legacy/base completo
 /sql/
+!/sql/
+/sql/*
+!/sql/compras/
+/sql/compras/*
+!/sql/compras/20260619_correcciones_reunion_compras.sql
+!/sql/compras/20260619_correcciones_reunion_compras_smoke.sql
 
 # Tests locales / pruebas legacy
 /test/

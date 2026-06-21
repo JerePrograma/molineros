@@ -11,8 +11,8 @@
 --   2  A_COTIZAR
 --   3  COTIZADO
 --
--- Estados reservados, sin transiciones activas:
---   4  AUTORIZADO
+-- Estados reconocidos de solo lectura, sin transiciones activas:
+--   4  RECLAMO_RP
 --   5  ORDEN_COMPRA
 --
 -- Estado lateral:
@@ -143,6 +143,7 @@ CREATE TABLE compras.requerimiento (
 
     afiliado_cuil_titular VARCHAR(20),
     afiliado_int INTEGER,
+    afiliado_id_ospim INTEGER,
 
     -- Snapshot para consulta e impresión.
     afiliado_nombre VARCHAR(120),
@@ -388,13 +389,13 @@ RETURNS VARCHAR
 AS $func$
 BEGIN
     RETURN CASE p_estado
-        WHEN 1 THEN 'Pendiente'
-        WHEN 2 THEN 'A cotizar'
-        WHEN 3 THEN 'Cotizado'
-        WHEN 4 THEN 'Autorizado'
-        WHEN 5 THEN 'Orden de compra'
-        WHEN 99 THEN 'Anulado'
-        ELSE 'Desconocido'
+        WHEN 1 THEN 'PENDIENTE'
+        WHEN 2 THEN 'A COTIZAR'
+        WHEN 3 THEN 'COTIZADO'
+        WHEN 4 THEN 'RECLAMO (RP)'
+        WHEN 5 THEN 'ORDEN DE COMPRA'
+        WHEN 99 THEN 'ANULADO'
+        ELSE 'DESCONOCIDO'
     END;
 END;
 $func$
@@ -413,10 +414,12 @@ BEGIN
     SELECT *
       FROM (
         VALUES
-            (1, 'Pendiente'::VARCHAR),
-            (2, 'A cotizar'::VARCHAR),
-            (3, 'Cotizado'::VARCHAR),
-            (99, 'Anulado'::VARCHAR)
+            (1, 'PENDIENTE'::VARCHAR),
+            (2, 'A COTIZAR'::VARCHAR),
+            (3, 'COTIZADO'::VARCHAR),
+            (4, 'RECLAMO (RP)'::VARCHAR),
+            (5, 'ORDEN DE COMPRA'::VARCHAR),
+            (99, 'ANULADO'::VARCHAR)
       ) estados(id, descripcion);
 END;
 $func$
@@ -450,7 +453,7 @@ BEGIN
     IF TG_OP = 'INSERT' THEN
         IF NEW.estado <> 1 THEN
             RAISE EXCEPTION
-                'Un requerimiento nuevo debe crearse en estado Pendiente.';
+                'Un requerimiento nuevo debe crearse en estado PENDIENTE.';
         END IF;
     ELSE
         IF OLD.estado IN (3, 4, 5, 99)
@@ -464,6 +467,8 @@ BEGIN
             OR NEW.afiliado_cuil_titular
                 IS DISTINCT FROM OLD.afiliado_cuil_titular
             OR NEW.afiliado_int IS DISTINCT FROM OLD.afiliado_int
+            OR NEW.afiliado_id_ospim
+                IS DISTINCT FROM OLD.afiliado_id_ospim
             OR NEW.afiliado_nombre
                 IS DISTINCT FROM OLD.afiliado_nombre
             OR NEW.afiliado_apellido
@@ -494,7 +499,7 @@ BEGIN
 
         IF v_cambio_estructura AND OLD.estado <> 1 THEN
             RAISE EXCEPTION
-                'La estructura solo puede modificarse en estado Pendiente.';
+                'La estructura solo puede modificarse en estado PENDIENTE.';
         END IF;
 
         IF NEW.estado IS DISTINCT FROM OLD.estado THEN
@@ -510,7 +515,7 @@ BEGIN
 
             IF NEW.estado IN (4, 5) THEN
                 RAISE EXCEPTION
-                    'Autorizado y Orden de compra son estados reservados.';
+                    'RECLAMO (RP) y ORDEN DE COMPRA son estados de solo lectura.';
             END IF;
 
             IF OLD.estado = 1 AND NEW.estado = 2 THEN
@@ -529,9 +534,10 @@ BEGIN
                       FROM compras.requerimiento_cotizacion_prestador rcp
                      WHERE rcp.id_requerimiento =
                            NEW.id_requerimiento
+                       AND rcp.estado_envio = 'ENVIADO'
                 ) THEN
                     RAISE EXCEPTION
-                        'Debe existir al menos un prestador procesado antes de pasar a A cotizar.';
+                        'Debe existir al menos un prestador notificado como ENVIADO antes de pasar a A COTIZAR.';
                 END IF;
             END IF;
 
@@ -552,9 +558,10 @@ BEGIN
                      WHERE d.id_requerimiento = NEW.id_requerimiento
                        AND d.baja_fecha IS NULL
                        AND (
-                              d.cantidad <= 0
-                           OR d.precio_unitario_estimado IS NULL
-                           OR d.precio_total_estimado IS NULL
+                               d.cantidad <= 0
+                            OR d.precio_unitario_estimado IS NULL
+                            OR d.precio_unitario_estimado < 0
+                            OR d.precio_total_estimado IS NULL
                            OR d.id_prestador IS NULL
                            OR d.precio_total_estimado
                               <> round(
@@ -613,6 +620,7 @@ BEGIN
     ELSE
         NEW.afiliado_cuil_titular := NULL;
         NEW.afiliado_int := NULL;
+        NEW.afiliado_id_ospim := NULL;
 
         NEW.afiliado_nombre := NULL;
         NEW.afiliado_apellido := NULL;
@@ -691,12 +699,12 @@ BEGIN
 
     IF TG_OP = 'INSERT' AND v_estado <> 1 THEN
         RAISE EXCEPTION
-            'Los detalles solo pueden crearse en estado Pendiente.';
+            'Los detalles solo pueden crearse en estado PENDIENTE.';
     END IF;
 
     IF TG_OP = 'UPDATE' THEN
         IF v_estado = 1 THEN
-            -- En Pendiente se permite editar o dar de baja la estructura.
+            -- En PENDIENTE se permite editar o dar de baja la estructura.
             NULL;
 
         ELSIF v_estado = 2 THEN
@@ -714,7 +722,7 @@ BEGIN
                     IS DISTINCT FROM OLD.baja_usr THEN
 
                 RAISE EXCEPTION
-                    'En estado A cotizar la estructura del detalle está bloqueada.';
+                    'En estado A COTIZAR la estructura del detalle está bloqueada.';
             END IF;
 
         ELSE
@@ -729,10 +737,15 @@ BEGIN
            OR NEW.id_prestador IS NOT NULL THEN
 
             RAISE EXCEPTION
-                'Un requerimiento Pendiente no puede tener datos de cotización.';
+                'Un requerimiento PENDIENTE no puede tener datos de cotización.';
         END IF;
 
     ELSIF v_estado = 2 THEN
+        IF NEW.precio_unitario_estimado < 0 THEN
+            RAISE EXCEPTION
+                'El precio unitario estimado no puede ser negativo.';
+        END IF;
+
         IF NEW.precio_unitario_estimado IS NULL THEN
             NEW.precio_total_estimado := NULL;
         ELSE
@@ -1191,7 +1204,8 @@ CREATE TYPE compras.requerimiento_base_row AS (
     observaciones TEXT,
 
     id_estado INTEGER,
-    estado_descripcion VARCHAR
+    estado_descripcion VARCHAR,
+    afiliado_id_ospim INTEGER
 );
 
 
@@ -1266,7 +1280,8 @@ BEGIN
         r.estado,
         compras.estado_requerimiento_descripcion(
             r.estado
-        )
+        ),
+        r.afiliado_id_ospim
       FROM compras.requerimiento r
       JOIN compras.sector_requerimiento s
         ON s.id_sector = r.id_sector;
@@ -1476,6 +1491,7 @@ CREATE FUNCTION compras.guardar_requerimiento(
     p_id INTEGER,
     p_afiliado_cuil_titular VARCHAR,
     p_afiliado_int INTEGER,
+    p_afiliado_id_ospim INTEGER,
     p_afiliado_nombre VARCHAR,
     p_afiliado_apellido VARCHAR,
     p_afiliado_documento_tipo VARCHAR,
@@ -1522,6 +1538,7 @@ BEGIN
 
             afiliado_cuil_titular,
             afiliado_int,
+            afiliado_id_ospim,
 
             afiliado_nombre,
             afiliado_apellido,
@@ -1549,6 +1566,7 @@ BEGIN
 
             v_afiliado_cuil,
             p_afiliado_int,
+            p_afiliado_id_ospim,
 
             NULLIF(btrim(p_afiliado_nombre), ''),
             NULLIF(btrim(p_afiliado_apellido), ''),
@@ -1611,6 +1629,9 @@ BEGIN
                v_afiliado_cuil,
            afiliado_int =
                p_afiliado_int,
+
+           afiliado_id_ospim =
+               p_afiliado_id_ospim,
 
            afiliado_nombre =
                CASE
@@ -1718,7 +1739,7 @@ BEGIN
 
     IF v_id IS NULL THEN
         RAISE EXCEPTION
-            'La estructura solo puede modificarse en estado Pendiente.';
+            'La estructura solo puede modificarse en estado PENDIENTE.';
     END IF;
 
     RETURN v_id;
@@ -1887,7 +1908,7 @@ BEGIN
            AND r.baja_fecha IS NULL
     ) THEN
         RAISE EXCEPTION
-            'Los detalles estructurales solo pueden modificarse en estado Pendiente.';
+            'Los detalles estructurales solo pueden modificarse en estado PENDIENTE.';
     END IF;
 
     IF p_id IS NULL OR p_id <= 0 THEN
@@ -2372,7 +2393,7 @@ RETURNS TABLE (
     sector_descripcion VARCHAR,
     requiere_afiliado BOOLEAN,
 
-    afiliado_cuil_titular VARCHAR,
+    afiliado_id_ospim INTEGER,
     afiliado_int INTEGER,
     afiliado_nombre_apellido VARCHAR,
     afiliado_documento VARCHAR,
@@ -2402,8 +2423,7 @@ RETURNS TABLE (
     prestador_razon_social VARCHAR,
     prestador_cuit VARCHAR,
 
-    detalle_observaciones TEXT,
-    total_general NUMERIC
+    detalle_observaciones TEXT
 )
 AS $func$
 BEGIN
@@ -2420,7 +2440,7 @@ BEGIN
         rb.sector_descripcion,
         rb.requiere_afiliado,
 
-        rb.afiliado_cuil_titular,
+        rb.afiliado_id_ospim,
         rb.afiliado_int,
         rb.afiliado_nombre_apellido,
         rb.afiliado_documento,
@@ -2459,16 +2479,7 @@ BEGIN
         d.prestador_razon_social,
         d.prestador_cuit,
 
-        d.observaciones,
-
-        sum(
-            COALESCE(
-                d.precio_total_estimado,
-                0
-            )
-        ) OVER (
-            PARTITION BY rb.id
-        )::NUMERIC
+        d.observaciones
 
       FROM compras.requerimiento_base() rb
       LEFT JOIN compras.get_requerimiento_detalle(
@@ -2507,19 +2518,10 @@ BEGIN
       INTO v_estados
       FROM compras.listar_estados_requerimiento();
 
-    IF v_estados <> 4 THEN
+    IF v_estados <> 6 THEN
         RAISE EXCEPTION
             'La lista de estados operativos es inválida. Total: %.',
             v_estados;
-    END IF;
-
-    IF EXISTS (
-        SELECT 1
-          FROM compras.listar_estados_requerimiento() e
-         WHERE e.id IN (4, 5)
-    ) THEN
-        RAISE EXCEPTION
-            'Los estados reservados no deben exponerse como operativos.';
     END IF;
 
     IF EXISTS (
@@ -2565,21 +2567,31 @@ BEGIN
      LIMIT 1;
 
     IF compras.estado_requerimiento_descripcion(1)
-       <> 'Pendiente' THEN
+       <> 'PENDIENTE' THEN
         RAISE EXCEPTION
             'La configuración de estados no es válida.';
     END IF;
 
     IF compras.estado_requerimiento_descripcion(2)
-       <> 'A cotizar' THEN
+       <> 'A COTIZAR' THEN
         RAISE EXCEPTION
             'La configuración de estados no es válida.';
     END IF;
 
     IF compras.estado_requerimiento_descripcion(3)
-       <> 'Cotizado' THEN
+       <> 'COTIZADO' THEN
         RAISE EXCEPTION
             'La configuración de estados no es válida.';
+    END IF;
+
+    IF compras.estado_requerimiento_descripcion(4)
+       <> 'RECLAMO (RP)'
+       OR compras.estado_requerimiento_descripcion(5)
+       <> 'ORDEN DE COMPRA'
+       OR compras.estado_requerimiento_descripcion(99)
+       <> 'ANULADO' THEN
+        RAISE EXCEPTION
+            'La configuración de estados de solo lectura no es válida.';
     END IF;
 END;
 $verificacion$;
