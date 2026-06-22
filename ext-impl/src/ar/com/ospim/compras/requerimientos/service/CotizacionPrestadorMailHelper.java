@@ -1,64 +1,76 @@
 package ar.com.ospim.compras.requerimientos.service;
 
-import com.liferay.mail.service.MailServiceUtil;
-import com.liferay.portal.kernel.mail.MailMessage;
-import com.liferay.portal.kernel.util.PrefsPropsUtil;
-import com.liferay.portal.util.PropsKeys;
+import ar.com.ospim.automatico.ReportesScheduler
+        .ReportesAutomaticosConfiguracion;
+import ar.com.ospim.automatico.service.ReportesServiceUtil;
+import ar.com.ospim.mail.MailUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 
 public class CotizacionPrestadorMailHelper {
 
-    public void enviar(long companyId,
-                       String emailDestino,
-                       String asunto,
-                       String cuerpo) throws Exception {
+    public void enviar(
+            String emailDestino,
+            String asunto,
+            String cuerpo) throws Exception {
 
         validarEmailDestino(emailDestino);
 
-        String fromAddress = PrefsPropsUtil.getString(
-                companyId,
-                PropsKeys.ADMIN_EMAIL_FROM_ADDRESS
-        );
+        ReportesAutomaticosConfiguracion configuracion =
+                ReportesServiceUtil.getConfiguracion();
 
-        String fromName = PrefsPropsUtil.getString(
-                companyId,
-                PropsKeys.ADMIN_EMAIL_FROM_NAME
-        );
-
-        if (isEmpty(fromAddress)) {
+        if (configuracion == null) {
             throw new Exception(
-                    "No está configurado el remitente de email del portal: "
-                            + PropsKeys.ADMIN_EMAIL_FROM_ADDRESS
+                    "No se encontró la configuración "
+                            + "de correo de reportes automáticos."
             );
         }
 
-        if (isEmpty(fromName)) {
-            fromName = "OSPIM";
+        String password =
+                configuracion.getPass();
+
+        if (isEmpty(password)) {
+            throw new Exception(
+                    "La configuración de correo "
+                            + "no tiene contraseña informada."
+            );
         }
 
-        InternetAddress from = new InternetAddress(
-                fromAddress,
-                fromName
-        );
+        List<String> destinatarios =
+                new ArrayList<String>();
 
-        InternetAddress to = new InternetAddress(
+        destinatarios.add(
                 emailDestino.trim()
         );
 
-        MailMessage mailMessage = new MailMessage(
-                from,
-                to,
-                asunto,
-                cuerpo,
-                false
-        );
+        List<MimeBodyPart> adjuntos =
+                new ArrayList<MimeBodyPart>();
 
-        MailServiceUtil.sendEmail(mailMessage);
+        boolean enviado =
+                MailUtils
+                        .enviarMailGmailconAdjuntoYRespuesta(
+                                configuracion.getMailFrom(),
+                                password,
+                                destinatarios,
+                                asunto,
+                                cuerpo,
+                                adjuntos
+                        );
+
+        if (!enviado) {
+            throw new Exception(
+                    "El servicio SMTP existente "
+                            + "no pudo enviar el correo."
+            );
+        }
     }
 
-    private void validarEmailDestino(String emailDestino)
-            throws Exception {
+    private void validarEmailDestino(
+            String emailDestino) throws Exception {
 
         if (isEmpty(emailDestino)) {
             throw new Exception(
@@ -66,12 +78,20 @@ public class CotizacionPrestadorMailHelper {
             );
         }
 
-        if (emailDestino.indexOf("@") < 0
-                || emailDestino.indexOf(".") < 0) {
+        try {
+            InternetAddress direccion =
+                    new InternetAddress(
+                            emailDestino.trim(),
+                            true
+                    );
 
+            direccion.validate();
+
+        } catch (Exception e) {
             throw new Exception(
                     "Email destino inválido: "
-                            + emailDestino
+                            + emailDestino,
+                    e
             );
         }
     }

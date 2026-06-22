@@ -32,28 +32,31 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
     private static final Pattern SENSITIVE_DETAIL_PATTERN =
             Pattern.compile(
-                    "(?i)(password|passwd|pwd|token|secret|api[_-]?key|authorization)\\s*[:=]\\s*\\S+"
+                    "(?i)(password|passwd|pwd|token|secret|"
+                            + "api[_-]?key|authorization)"
+                            + "\\s*[:=]\\s*\\S+"
             );
 
     private static final String SQL_LISTAR_CANDIDATOS =
-            "SELECT id_prestador, descripcion, cuit, email, " +
-                    "id_tipo_prestador, tipo_prestador " +
-                    "FROM compras." +
-                    "listar_prestadores_cotizacion_requerimiento(?)";
+            "SELECT id_prestador, descripcion, cuit, email, "
+                    + "id_tipo_prestador, tipo_prestador "
+                    + "FROM compras."
+                    + "listar_prestadores_cotizacion_requerimiento(?)";
 
     private static final String SQL_REGISTRAR_COTIZACION =
-            "SELECT compras.registrar_cotizacion_prestador(?, ?, ?)";
-
-    private static final String SQL_EMAIL_RESERVADO =
-            "SELECT email_destino " +
-                    "FROM compras.requerimiento_cotizacion_prestador " +
-                    "WHERE id_requerimiento = ? " +
-                    "  AND id_prestador = ? " +
-                    "  AND estado_envio = 'PROCESANDO'";
+            "SELECT compras."
+                    + "registrar_cotizacion_prestador(?, ?, ?)";
 
     private static final String SQL_FINALIZAR_COTIZACION =
-            "SELECT compras.finalizar_cotizacion_prestador(?, ?, ?, ?)";
+            "SELECT compras."
+                    + "finalizar_cotizacion_prestador(?, ?, ?, ?)";
 
+    /*
+     * TEMPORAL:
+     * Todos los correos se envían a esta dirección.
+     * La reserva y el estado continúan siendo individuales
+     * por prestador.
+     */
     private static final String EMAIL_DESTINO_TEMPORAL =
             "acomas@ospim.org.ar";
 
@@ -92,7 +95,8 @@ public class NotificarCotizacionPrestadorServiceImpl {
         if (candidatos.isEmpty()) {
             if (_log.isInfoEnabled()) {
                 _log.info(
-                        "No hay prestadores pendientes de notificación. "
+                        "No hay prestadores pendientes "
+                                + "de notificación. "
                                 + "idRequerimiento="
                                 + idRequerimientoCompra
                 );
@@ -144,7 +148,8 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         } catch (Exception e) {
             _log.error(
-                    "No se pudo reservar el envío de cotización. "
+                    "No se pudo reservar el envío "
+                            + "de cotización. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -159,7 +164,8 @@ public class NotificarCotizacionPrestadorServiceImpl {
         if (!reservado) {
             if (_log.isDebugEnabled()) {
                 _log.debug(
-                        "No se obtuvo reserva para envío de cotización. "
+                        "No se obtuvo reserva para envío "
+                                + "de cotización. "
                                 + "idPrestador="
                                 + idPrestador
                                 + ", idRequerimiento="
@@ -171,44 +177,14 @@ public class NotificarCotizacionPrestadorServiceImpl {
             return;
         }
 
-//        String email;
-//
-//        try {
-//            email =
-//                    normalizarEmail(
-//                            leerEmailReservado(
-//                                    idRequerimiento,
-//                                    idPrestador
-//                            )
-//                    );
-//
-//        } catch (Exception e) {
-//            finalizarConControl(
-//                    idRequerimiento,
-//                    idPrestador,
-//                    WebKeysCompras.ENVIO_ERROR,
-//                    construirDetalleError(e)
-//            );
-//
-//            _log.error(
-//                    "No se pudo leer el email reservado de cotización. "
-//                            + "idPrestador="
-//                            + idPrestador
-//                            + ", idRequerimiento="
-//                            + idRequerimiento,
-//                    e
-//            );
-//
-//            resultado.incrementarErrores();
-//            return;
-//        }
-
-        String email = EMAIL_DESTINO_TEMPORAL;
+        String email =
+                EMAIL_DESTINO_TEMPORAL;
 
         if (_log.isInfoEnabled()) {
             _log.info(
                     "Modo temporal de notificación activo. "
-                            + "La cotización será enviada al destinatario fijo. "
+                            + "La cotización será enviada "
+                            + "al destinatario fijo. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -219,12 +195,11 @@ public class NotificarCotizacionPrestadorServiceImpl {
         }
 
         if (!esEmailValido(email)) {
-
             String errorEmail =
                     "Email destino inválido.";
 
             _log.warn(
-                    "Prestador con email inválido. "
+                    "Email temporal de cotización inválido. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -244,7 +219,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         try {
             String asunto =
-                    construirAsunto(requerimiento);
+                    construirAsunto(
+                            requerimiento
+                    );
 
             String cuerpo =
                     construirCuerpo(
@@ -275,7 +252,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
-                            + idRequerimiento,
+                            + idRequerimiento
+                            + ", emailDestino="
+                            + email,
                     e
             );
 
@@ -291,8 +270,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
                     null
             )) {
                 _log.error(
-                        "El correo fue aceptado por el servicio de mail, "
-                                + "pero no se pudo persistir ENVIADO. "
+                        "El correo fue aceptado por el servicio "
+                                + "de mail, pero no se pudo "
+                                + "persistir ENVIADO. "
                                 + "Se conserva PROCESANDO. "
                                 + "idPrestador="
                                 + idPrestador
@@ -308,9 +288,11 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         } catch (Exception e) {
             _log.error(
-                    "El correo fue aceptado por el servicio de mail, "
-                            + "pero falló la persistencia de ENVIADO. "
-                            + "Se conserva PROCESANDO y no se marca ERROR. "
+                    "El correo fue aceptado por el servicio "
+                            + "de mail, pero falló la persistencia "
+                            + "de ENVIADO. "
+                            + "Se conserva PROCESANDO y no "
+                            + "se marca ERROR. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -376,7 +358,10 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         } finally {
             cerrar(rs);
-            ConnectionHelper.cerrar(stmt, con);
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
         }
     }
 
@@ -418,46 +403,10 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         } finally {
             cerrar(rs);
-            ConnectionHelper.cerrar(stmt, con);
-        }
-    }
-
-    protected String leerEmailReservado(
-            int idRequerimiento,
-            int idPrestador) throws Exception {
-
-        Connection con = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
-        try {
-            con = obtenerConexion();
-
-            stmt = con.prepareStatement(
-                    SQL_EMAIL_RESERVADO
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
             );
-
-            stmt.setInt(
-                    1,
-                    idRequerimiento
-            );
-
-            stmt.setInt(
-                    2,
-                    idPrestador
-            );
-
-            rs = stmt.executeQuery();
-
-            if (!rs.next()) {
-                return null;
-            }
-
-            return rs.getString("email_destino");
-
-        } finally {
-            cerrar(rs);
-            ConnectionHelper.cerrar(stmt, con);
         }
     }
 
@@ -495,7 +444,10 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             stmt.setString(
                     4,
-                    truncar(error, 4000)
+                    truncar(
+                            error,
+                            4000
+                    )
             );
 
             rs = stmt.executeQuery();
@@ -505,10 +457,18 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         } finally {
             cerrar(rs);
-            ConnectionHelper.cerrar(stmt, con);
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
         }
     }
 
+    /*
+     * companyId se conserva en la firma para no romper
+     * llamadas o tests existentes, aunque la implementación
+     * SMTP específica de Compras no lo necesita.
+     */
     protected void enviarMail(
             long companyId,
             String email,
@@ -516,7 +476,6 @@ public class NotificarCotizacionPrestadorServiceImpl {
             String cuerpo) throws Exception {
 
         mailHelper.enviar(
-                companyId,
                 email,
                 asunto,
                 cuerpo
@@ -573,7 +532,8 @@ public class NotificarCotizacionPrestadorServiceImpl {
             RequerimientoCompra requerimiento,
             PrestadorCotizacion prestador) {
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb =
+                new StringBuilder();
 
         sb.append("Estimado prestador");
 
@@ -671,7 +631,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
         List<RequerimientoCompraDetalle> detalles =
                 requerimiento.getDetalles();
 
-        if (detalles == null || detalles.isEmpty()) {
+        if (detalles == null
+                || detalles.isEmpty()) {
+
             return;
         }
 
@@ -690,7 +652,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
                         detalle.getArticuloVisible()
                 );
             } else {
-                sb.append("Ítem sin descripción");
+                sb.append(
+                        "Ítem sin descripción"
+                );
             }
 
             sb.append(" | Cantidad: ");
@@ -809,7 +773,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
         return con;
     }
 
-    private boolean esEmailValido(String email) {
+    private boolean esEmailValido(
+            String email) {
+
         return email != null
                 && email.length() > 0
                 && EMAIL_PATTERN
@@ -817,37 +783,35 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 .matches();
     }
 
-    private String normalizarEmail(String email) {
-        if (email == null) {
-            return null;
-        }
+    private String construirDetalleError(
+            Exception e) {
 
-        String resultado = email.trim();
-
-        return resultado.length() > 0
-                ? resultado
-                : null;
-    }
-
-    private String construirDetalleError(Exception e) {
         if (e == null) {
             return "Error no informado.";
         }
 
-        String mensaje = e.getMessage();
+        String mensaje =
+                e.getMessage();
 
-        if (mensaje == null || mensaje.trim().length() == 0) {
-            mensaje = e.getClass().getName();
+        if (mensaje == null
+                || mensaje.trim().length() == 0) {
+
+            mensaje =
+                    e.getClass().getName();
+
         } else {
-            mensaje = e.getClass().getName()
-                    + ": "
-                    + mensaje.trim();
+            mensaje =
+                    e.getClass().getName()
+                            + ": "
+                            + mensaje.trim();
         }
 
         mensaje =
                 SENSITIVE_DETAIL_PATTERN
                         .matcher(mensaje)
-                        .replaceAll("$1=<omitido>");
+                        .replaceAll(
+                                "$1=<omitido>"
+                        );
 
         mensaje =
                 mensaje
@@ -855,10 +819,16 @@ public class NotificarCotizacionPrestadorServiceImpl {
                         .replace('\n', ' ')
                         .replace('\t', ' ');
 
-        return truncar(mensaje, 4000);
+        return truncar(
+                mensaje,
+                4000
+        );
     }
 
-    private String truncar(String value, int maxLength) {
+    private String truncar(
+            String value,
+            int maxLength) {
+
         if (value == null) {
             return null;
         }
@@ -867,10 +837,15 @@ public class NotificarCotizacionPrestadorServiceImpl {
             return value;
         }
 
-        return value.substring(0, maxLength);
+        return value.substring(
+                0,
+                maxLength
+        );
     }
 
-    private String normalizarUsuario(String usuario) {
+    private String normalizarUsuario(
+            String usuario) {
+
         if (usuario == null
                 || usuario.trim().length() == 0) {
 
@@ -880,13 +855,16 @@ public class NotificarCotizacionPrestadorServiceImpl {
         return usuario.trim();
     }
 
-    private void cerrar(ResultSet rs) {
+    private void cerrar(
+            ResultSet rs) {
+
         if (rs == null) {
             return;
         }
 
         try {
             rs.close();
+
         } catch (Exception e) {
             _log.debug(
                     "No se pudo cerrar ResultSet.",
