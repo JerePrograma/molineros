@@ -31,7 +31,7 @@ public class EditarRequerimientoCompraServiceImpl {
             Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
     private static final String SQL_GUARDAR_REQUERIMIENTO =
-            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
+            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_GUARDAR_REQUERIMIENTO_DETALLE =
             "{ ? = call compras.guardar_requerimiento_detalle(?,?,?,?,?,?) }";
@@ -114,22 +114,30 @@ public class EditarRequerimientoCompraServiceImpl {
     private static final String SQL_BORRAR_ARTICULO =
             "{ call compras.borrar_articulo(?) }";
 
-    public int guardarRequerimientoCompra(RequerimientoCompra requerimiento, String usuario) throws Exception {
+    public int guardarRequerimientoCompra(
+            RequerimientoCompra requerimiento,
+            String usuario) throws Exception {
+
         validarRequerimientoParaGuardar(requerimiento);
 
         if (requerimiento.getIdRequerimientoCompra() > 0) {
             RequerimientoCompra actual =
-                    BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(
-                            requerimiento.getIdRequerimientoCompra()
-                    );
+                    BusquedaRequerimientoCompraServiceUtil
+                            .getRequerimientoCompra(
+                                    requerimiento
+                                            .getIdRequerimientoCompra()
+                            );
 
             if (actual == null) {
-                throw new Exception("No se encontró el requerimiento de compra informado.");
+                throw new Exception(
+                        "No se encontró el requerimiento de compra informado."
+                );
             }
 
             if (!actual.puedeEditarEstructura()) {
                 throw new Exception(
-                        "Solo se puede editar la estructura de requerimientos en estado PENDIENTE."
+                        "Solo se puede editar la estructura de requerimientos "
+                                + "en estado PENDIENTE."
                 );
             }
         }
@@ -139,30 +147,146 @@ public class EditarRequerimientoCompraServiceImpl {
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_GUARDAR_REQUERIMIENTO);
-            stmt.registerOutParameter(1, Types.INTEGER);
 
-            setNullableInteger(stmt, 2, requerimiento.getId());
-            stmt.setString(3, emptyToNull(requerimiento.getAfiliadoCuilTitular()));
-            setNullableInteger(stmt, 4, requerimiento.getAfiliadoInt());
-            setNullableInteger(stmt, 5, requerimiento.getAfiliadoIdOspim());
-            stmt.setString(6, emptyToNull(requerimiento.getAfiliadoNombre()));
-            stmt.setString(7, emptyToNull(requerimiento.getAfiliadoApellido()));
-            stmt.setString(8, emptyToNull(requerimiento.getAfiliadoDocumentoTipo()));
-            stmt.setString(9, emptyToNull(requerimiento.getAfiliadoDocumentoNro()));
-            stmt.setString(10, emptyToNull(requerimiento.getAfiliadoDireccion()));
-            stmt.setString(11, emptyToNull(requerimiento.getAfiliadoLocalidad()));
-            stmt.setString(12, emptyToNull(requerimiento.getAfiliadoProvincia()));
-            stmt.setString(13, emptyToNull(requerimiento.getAfiliadoCelular()));
-            stmt.setString(14, emptyToNull(requerimiento.getAfiliadoTelefono()));
-            stmt.setString(15, emptyToNull(requerimiento.getAfiliadoEmail()));
-            setNullableInteger(stmt, 16, requerimiento.getIdSector());
-            setNullableInteger(stmt, 17, requerimiento.getCargoOspim());
-            setNullableInteger(stmt, 18, requerimiento.getCargoTercerizadora());
-            stmt.setString(19, emptyToNull(requerimiento.getIdTercerizadora()));
-            stmt.setBoolean(20, requerimiento.isRecupero());
-            stmt.setString(21, emptyToNull(requerimiento.getObservaciones()));
-            stmt.setString(22, emptyToNull(usuario));
+            stmt = con.prepareCall(
+                    SQL_GUARDAR_REQUERIMIENTO
+            );
+
+            stmt.registerOutParameter(
+                    1,
+                    Types.INTEGER
+            );
+
+            setNullableInteger(
+                    stmt,
+                    2,
+                    requerimiento.getId()
+            );
+
+            stmt.setString(
+                    3,
+                    emptyToNull(
+                            requerimiento.getAfiliadoCuilTitular()
+                    )
+            );
+
+            setNullableInteger(
+                    stmt,
+                    4,
+                    requerimiento.getAfiliadoInt()
+            );
+
+            stmt.setString(
+                    5,
+                    emptyToNull(
+                            requerimiento.getAfiliadoNombre()
+                    )
+            );
+
+            stmt.setString(
+                    6,
+                    emptyToNull(
+                            requerimiento.getAfiliadoApellido()
+                    )
+            );
+
+            stmt.setString(
+                    7,
+                    emptyToNull(
+                            requerimiento.getAfiliadoDocumentoTipo()
+                    )
+            );
+
+            stmt.setString(
+                    8,
+                    emptyToNull(
+                            requerimiento.getAfiliadoDocumentoNro()
+                    )
+            );
+
+            stmt.setString(
+                    9,
+                    emptyToNull(
+                            requerimiento.getAfiliadoDireccion()
+                    )
+            );
+
+            stmt.setString(
+                    10,
+                    emptyToNull(
+                            requerimiento.getAfiliadoLocalidad()
+                    )
+            );
+
+            stmt.setString(
+                    11,
+                    emptyToNull(
+                            requerimiento.getAfiliadoProvincia()
+                    )
+            );
+
+            stmt.setString(
+                    12,
+                    emptyToNull(
+                            requerimiento.getAfiliadoCelular()
+                    )
+            );
+
+            stmt.setString(
+                    13,
+                    emptyToNull(
+                            requerimiento.getAfiliadoTelefono()
+                    )
+            );
+
+            stmt.setString(
+                    14,
+                    emptyToNull(
+                            requerimiento.getAfiliadoEmail()
+                    )
+            );
+
+            setNullableInteger(
+                    stmt,
+                    15,
+                    requerimiento.getIdSector()
+            );
+
+            setNullableInteger(
+                    stmt,
+                    16,
+                    requerimiento.getCargoOspim()
+            );
+
+            setNullableInteger(
+                    stmt,
+                    17,
+                    requerimiento.getCargoTercerizadora()
+            );
+
+            stmt.setString(
+                    18,
+                    emptyToNull(
+                            requerimiento.getIdTercerizadora()
+                    )
+            );
+
+            stmt.setBoolean(
+                    19,
+                    requerimiento.isRecupero()
+            );
+
+            stmt.setString(
+                    20,
+                    emptyToNull(
+                            requerimiento.getObservaciones()
+                    )
+            );
+
+            stmt.setString(
+                    21,
+                    emptyToNull(usuario)
+            );
 
             stmt.execute();
 
@@ -171,7 +295,10 @@ public class EditarRequerimientoCompraServiceImpl {
             _log.error(e);
             throw e;
         } finally {
-            ConnectionHelper.cerrar(stmt, con);
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
         }
     }
 
