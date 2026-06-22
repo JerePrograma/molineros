@@ -54,6 +54,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
     private static final String SQL_FINALIZAR_COTIZACION =
             "SELECT compras.finalizar_cotizacion_prestador(?, ?, ?, ?)";
 
+    private static final String EMAIL_DESTINO_TEMPORAL =
+            "acomas@ospim.org.ar";
+
     private final CotizacionPrestadorMailHelper mailHelper =
             new CotizacionPrestadorMailHelper();
 
@@ -168,36 +171,51 @@ public class NotificarCotizacionPrestadorServiceImpl {
             return;
         }
 
-        String email;
+//        String email;
+//
+//        try {
+//            email =
+//                    normalizarEmail(
+//                            leerEmailReservado(
+//                                    idRequerimiento,
+//                                    idPrestador
+//                            )
+//                    );
+//
+//        } catch (Exception e) {
+//            finalizarConControl(
+//                    idRequerimiento,
+//                    idPrestador,
+//                    WebKeysCompras.ENVIO_ERROR,
+//                    construirDetalleError(e)
+//            );
+//
+//            _log.error(
+//                    "No se pudo leer el email reservado de cotización. "
+//                            + "idPrestador="
+//                            + idPrestador
+//                            + ", idRequerimiento="
+//                            + idRequerimiento,
+//                    e
+//            );
+//
+//            resultado.incrementarErrores();
+//            return;
+//        }
 
-        try {
-            email =
-                    normalizarEmail(
-                            leerEmailReservado(
-                                    idRequerimiento,
-                                    idPrestador
-                            )
-                    );
+        String email = EMAIL_DESTINO_TEMPORAL;
 
-        } catch (Exception e) {
-            finalizarConControl(
-                    idRequerimiento,
-                    idPrestador,
-                    WebKeysCompras.ENVIO_ERROR,
-                    construirDetalleError(e)
-            );
-
-            _log.error(
-                    "No se pudo leer el email reservado de cotización. "
+        if (_log.isInfoEnabled()) {
+            _log.info(
+                    "Modo temporal de notificación activo. "
+                            + "La cotización será enviada al destinatario fijo. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
-                            + idRequerimiento,
-                    e
+                            + idRequerimiento
+                            + ", emailDestino="
+                            + email
             );
-
-            resultado.incrementarErrores();
-            return;
         }
 
         if (!esEmailValido(email)) {
