@@ -328,10 +328,6 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
                                             ) %>
                                         </label>
                                     </td>
-
-                                    <td>
-                                        <%= tipo.getIdTipoPrestador() %>
-                                    </td>
                                 </tr>
                             <%
                             }
