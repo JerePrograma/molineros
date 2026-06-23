@@ -295,10 +295,6 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
                                 <th>
                                     Tipo de prestador
                                 </th>
-
-                                <th>
-                                    ID
-                                </th>
                             </tr>
                         </thead>
 
