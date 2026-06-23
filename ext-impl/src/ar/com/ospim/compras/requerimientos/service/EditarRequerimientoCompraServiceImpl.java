@@ -31,7 +31,7 @@ public class EditarRequerimientoCompraServiceImpl {
             Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
     private static final String SQL_GUARDAR_REQUERIMIENTO =
-            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
+            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_GUARDAR_REQUERIMIENTO_DETALLE =
             "{ ? = call compras.guardar_requerimiento_detalle(?,?,?,?,?,?) }";
@@ -146,7 +146,7 @@ public class EditarRequerimientoCompraServiceImpl {
         CallableStatement stmt = null;
 
         try {
-            con = ConnectionHelper.getConnection();
+            con = obtenerConexionGuardarRequerimiento();
 
             stmt = con.prepareCall(
                     SQL_GUARDAR_REQUERIMIENTO
@@ -176,71 +176,77 @@ public class EditarRequerimientoCompraServiceImpl {
                     requerimiento.getAfiliadoInt()
             );
 
-            stmt.setString(
+            setNullableInteger(
+                    stmt,
                     5,
+                    requerimiento.getAfiliadoIdOspim()
+            );
+
+            stmt.setString(
+                    6,
                     emptyToNull(
                             requerimiento.getAfiliadoNombre()
                     )
             );
 
             stmt.setString(
-                    6,
+                    7,
                     emptyToNull(
                             requerimiento.getAfiliadoApellido()
                     )
             );
 
             stmt.setString(
-                    7,
+                    8,
                     emptyToNull(
                             requerimiento.getAfiliadoDocumentoTipo()
                     )
             );
 
             stmt.setString(
-                    8,
+                    9,
                     emptyToNull(
                             requerimiento.getAfiliadoDocumentoNro()
                     )
             );
 
             stmt.setString(
-                    9,
+                    10,
                     emptyToNull(
                             requerimiento.getAfiliadoDireccion()
                     )
             );
 
             stmt.setString(
-                    10,
+                    11,
                     emptyToNull(
                             requerimiento.getAfiliadoLocalidad()
                     )
             );
 
             stmt.setString(
-                    11,
+                    12,
                     emptyToNull(
                             requerimiento.getAfiliadoProvincia()
                     )
             );
 
             stmt.setString(
-                    12,
+                    13,
                     emptyToNull(
                             requerimiento.getAfiliadoCelular()
                     )
             );
 
             stmt.setString(
-                    13,
+                    14,
                     emptyToNull(
                             requerimiento.getAfiliadoTelefono()
                     )
             );
 
             stmt.setString(
-                    14,
+                    15,
                     emptyToNull(
                             requerimiento.getAfiliadoEmail()
                     )
@@ -248,43 +254,43 @@ public class EditarRequerimientoCompraServiceImpl {
 
             setNullableInteger(
                     stmt,
-                    15,
+                    16,
                     requerimiento.getIdSector()
             );
 
             setNullableInteger(
                     stmt,
-                    16,
+                    17,
                     requerimiento.getCargoOspim()
             );
 
             setNullableInteger(
                     stmt,
-                    17,
+                    18,
                     requerimiento.getCargoTercerizadora()
             );
 
             stmt.setString(
-                    18,
+                    19,
                     emptyToNull(
                             requerimiento.getIdTercerizadora()
                     )
             );
 
             stmt.setBoolean(
-                    19,
+                    20,
                     requerimiento.isRecupero()
             );
 
             stmt.setString(
-                    20,
+                    21,
                     emptyToNull(
                             requerimiento.getObservaciones()
                     )
             );
 
             stmt.setString(
-                    21,
+                    22,
                     emptyToNull(usuario)
             );
 
@@ -300,6 +306,12 @@ public class EditarRequerimientoCompraServiceImpl {
                     con
             );
         }
+    }
+
+    protected Connection obtenerConexionGuardarRequerimiento()
+            throws Exception {
+
+        return ConnectionHelper.getConnection();
     }
 
     public int guardarDetalle(RequerimientoCompraDetalle detalle, String usuario) throws Exception {

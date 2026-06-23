@@ -51,15 +51,12 @@ public class NotificarCotizacionPrestadorServiceImpl {
             "SELECT compras."
                     + "finalizar_cotizacion_prestador(?, ?, ?, ?)";
 
-    /*
-     * TEMPORAL:
-     * Todos los correos se envían a esta dirección.
-     * La reserva y el estado continúan siendo individuales
-     * por prestador.
-     */
-    private static final String EMAIL_DESTINO_TEMPORAL =
-            "acomas@ospim.org.ar";
-
+    private static final String SQL_LEER_EMAIL_RESERVADO =
+            "SELECT email_destino "
+                    + "FROM compras.requerimiento_cotizacion_prestador "
+                    + "WHERE id_requerimiento = ? "
+                    + "  AND id_prestador = ? "
+                    + "  AND estado_envio = 'PROCESANDO'";
     private final CotizacionPrestadorMailHelper mailHelper =
             new CotizacionPrestadorMailHelper();
 
@@ -177,35 +174,51 @@ public class NotificarCotizacionPrestadorServiceImpl {
             return;
         }
 
-        String email =
-                EMAIL_DESTINO_TEMPORAL;
+        String email;
 
-        if (_log.isInfoEnabled()) {
-            _log.info(
-                    "Modo temporal de notificación activo. "
-                            + "La cotización será enviada "
-                            + "al destinatario fijo. "
+        try {
+            email =
+                    leerEmailReservado(
+                            idRequerimiento,
+                            idPrestador
+                    );
+
+        } catch (Exception e) {
+            String detalleError =
+                    construirDetalleError(e);
+
+            finalizarConControl(
+                    idRequerimiento,
+                    idPrestador,
+                    WebKeysCompras.ENVIO_ERROR,
+                    detalleError
+            );
+
+            _log.error(
+                    "No se pudo leer el email reservado "
+                            + "de cotizacion. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
-                            + idRequerimiento
-                            + ", emailDestino="
-                            + email
+                            + idRequerimiento,
+                    e
             );
+
+            resultado.incrementarErrores();
+            return;
         }
 
         if (!esEmailValido(email)) {
             String errorEmail =
-                    "Email destino inválido.";
+                    "Email destino invalido.";
 
             _log.warn(
-                    "Email temporal de cotización inválido. "
+                    "Email reservado de cotizacion invalido. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
                             + idRequerimiento
             );
-
             finalizarConControl(
                     idRequerimiento,
                     idPrestador,
@@ -400,6 +413,46 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             return rs.next()
                     && rs.getBoolean(1);
+
+        } finally {
+            cerrar(rs);
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
+        }
+    }
+
+    protected String leerEmailReservado(
+            int idRequerimiento,
+            int idPrestador) throws Exception {
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = obtenerConexion();
+
+            stmt = con.prepareStatement(
+                    SQL_LEER_EMAIL_RESERVADO
+            );
+
+            stmt.setInt(
+                    1,
+                    idRequerimiento
+            );
+
+            stmt.setInt(
+                    2,
+                    idPrestador
+            );
+
+            rs = stmt.executeQuery();
+
+            return rs.next()
+                    ? rs.getString("email_destino")
+                    : null;
 
         } finally {
             cerrar(rs);

@@ -2,14 +2,20 @@ package ar.com.ospim.test;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.GuardadoCotizacionResultado;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceImpl;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +32,7 @@ public class EditarRequerimientoCompraServiceImplTest {
         assertPrestadorEnviadoAceptado();
         assertPrestadorAjenoONoEnviadoRechazado();
         assertResultadoEstadoFinal();
+        assertGuardarRequerimientoVinculaAfiliadoIdOspim();
     }
 
     private static void assertConjuntoCompletoAceptado()
@@ -262,6 +269,75 @@ public class EditarRequerimientoCompraServiceImplTest {
         );
     }
 
+    private static void assertGuardarRequerimientoVinculaAfiliadoIdOspim()
+            throws Exception {
+
+        ServicioGuardarPrueba service =
+                new ServicioGuardarPrueba();
+
+        RequerimientoCompra requerimiento =
+                new RequerimientoCompra();
+
+        requerimiento.setIdSector(Integer.valueOf(5));
+        requerimiento.setAfiliadoCuilTitular("20111111112");
+        requerimiento.setAfiliadoInt(Integer.valueOf(2));
+        requerimiento.setAfiliadoIdOspim(Integer.valueOf(123456));
+        requerimiento.setAfiliadoNombre("Nombre");
+        requerimiento.setAfiliadoApellido("Apellido");
+        requerimiento.setAfiliadoDocumentoTipo("DNI");
+        requerimiento.setAfiliadoDocumentoNro("11222333");
+        requerimiento.setAfiliadoDireccion("Calle 123");
+        requerimiento.setAfiliadoLocalidad("Localidad");
+        requerimiento.setAfiliadoProvincia("Provincia");
+        requerimiento.setAfiliadoCelular("111-222");
+        requerimiento.setAfiliadoTelefono("333-444");
+        requerimiento.setAfiliadoEmail("afiliado@example.com");
+        requerimiento.setCargoOspim(Integer.valueOf(80));
+        requerimiento.setCargoTercerizadora(Integer.valueOf(20));
+        requerimiento.setIdTercerizadora("CSA");
+        requerimiento.setRecupero(true);
+        requerimiento.setObservaciones("Observaciones");
+
+        int id =
+                service.guardarRequerimientoCompra(
+                        requerimiento,
+                        "tester"
+                );
+
+        assertInt("id devuelto", 987, id);
+        assertInt("cantidad out parameters", 1, service.outParameters.size());
+        assertInt("cantidad parametros", 21, service.parametros.size());
+        assertInt(
+                "out parameter",
+                java.sql.Types.INTEGER,
+                ((Integer) service.outParameters.get(
+                        Integer.valueOf(1)
+                )).intValue()
+        );
+        assertInt("cantidad placeholders", 22, contar(service.sql, '?'));
+        assertObject("p_id", null, service.parametros.get(Integer.valueOf(2)));
+        assertObject("p_afiliado_cuil_titular", "20111111112", service.parametros.get(Integer.valueOf(3)));
+        assertObject("p_afiliado_int", Integer.valueOf(2), service.parametros.get(Integer.valueOf(4)));
+        assertObject("p_afiliado_id_ospim", Integer.valueOf(123456), service.parametros.get(Integer.valueOf(5)));
+        assertObject("p_afiliado_nombre", "Nombre", service.parametros.get(Integer.valueOf(6)));
+        assertObject("p_afiliado_apellido", "Apellido", service.parametros.get(Integer.valueOf(7)));
+        assertObject("p_afiliado_documento_tipo", "DNI", service.parametros.get(Integer.valueOf(8)));
+        assertObject("p_afiliado_documento_nro", "11222333", service.parametros.get(Integer.valueOf(9)));
+        assertObject("p_afiliado_direccion", "Calle 123", service.parametros.get(Integer.valueOf(10)));
+        assertObject("p_afiliado_localidad", "Localidad", service.parametros.get(Integer.valueOf(11)));
+        assertObject("p_afiliado_provincia", "Provincia", service.parametros.get(Integer.valueOf(12)));
+        assertObject("p_afiliado_celular", "111-222", service.parametros.get(Integer.valueOf(13)));
+        assertObject("p_afiliado_telefono", "333-444", service.parametros.get(Integer.valueOf(14)));
+        assertObject("p_afiliado_email", "afiliado@example.com", service.parametros.get(Integer.valueOf(15)));
+        assertObject("p_id_sector", Integer.valueOf(5), service.parametros.get(Integer.valueOf(16)));
+        assertObject("p_cargo_ospim", Integer.valueOf(80), service.parametros.get(Integer.valueOf(17)));
+        assertObject("p_cargo_tercerizadora", Integer.valueOf(20), service.parametros.get(Integer.valueOf(18)));
+        assertObject("p_id_tercerizadora", "CSA", service.parametros.get(Integer.valueOf(19)));
+        assertObject("p_recupero", Boolean.TRUE, service.parametros.get(Integer.valueOf(20)));
+        assertObject("p_observaciones", "Observaciones", service.parametros.get(Integer.valueOf(21)));
+        assertObject("p_usuario", "tester", service.parametros.get(Integer.valueOf(22)));
+    }
+
     private static RequerimientoCompraDetalle detalle(
             int id,
             BigDecimal precioUnitario,
@@ -397,6 +473,40 @@ public class EditarRequerimientoCompraServiceImplTest {
         }
     }
 
+    private static void assertObject(
+            String descripcion,
+            Object esperado,
+            Object actual) {
+
+        if (esperado == null
+                ? actual != null
+                : !esperado.equals(actual)) {
+
+            throw new AssertionError(
+                    descripcion
+                            + ": esperado="
+                            + esperado
+                            + ", actual="
+                            + actual
+            );
+        }
+    }
+
+    private static int contar(
+            String value,
+            char esperado) {
+
+        int total = 0;
+
+        for (int i = 0; value != null && i < value.length(); i++) {
+            if (value.charAt(i) == esperado) {
+                total++;
+            }
+        }
+
+        return total;
+    }
+
     private interface Ejecucion {
 
         void ejecutar()
@@ -451,6 +561,147 @@ public class EditarRequerimientoCompraServiceImplTest {
                     Integer.valueOf(idPrestador)
             );
         }
+    }
+
+    private static class ServicioGuardarPrueba
+            extends EditarRequerimientoCompraServiceImpl {
+
+        private String sql;
+        private Map<Integer, Object> parametros =
+                new LinkedHashMap<Integer, Object>();
+        private Map<Integer, Object> outParameters =
+                new LinkedHashMap<Integer, Object>();
+
+        protected Connection obtenerConexionGuardarRequerimiento() {
+            return (Connection) Proxy.newProxyInstance(
+                    Connection.class.getClassLoader(),
+                    new Class[] {Connection.class},
+                    new ConnectionHandler(this)
+            );
+        }
+    }
+
+    private static class ConnectionHandler implements InvocationHandler {
+
+        private final ServicioGuardarPrueba service;
+
+        private ConnectionHandler(ServicioGuardarPrueba service) {
+            this.service = service;
+        }
+
+        public Object invoke(Object proxy, Method method, Object[] args) {
+            if ("prepareCall".equals(method.getName())) {
+                service.sql =
+                        (String) args[0];
+
+                return Proxy.newProxyInstance(
+                        CallableStatement.class.getClassLoader(),
+                        new Class[] {CallableStatement.class},
+                        new CallableStatementHandler(service)
+                );
+            }
+
+            return defaultValue(method.getReturnType());
+        }
+    }
+
+    private static class CallableStatementHandler implements InvocationHandler {
+
+        private final ServicioGuardarPrueba service;
+
+        private CallableStatementHandler(ServicioGuardarPrueba service) {
+            this.service = service;
+        }
+
+        public Object invoke(Object proxy, Method method, Object[] args) {
+            String name =
+                    method.getName();
+
+            if ("registerOutParameter".equals(name)) {
+                service.outParameters.put(
+                        (Integer) args[0],
+                        args[1]
+                );
+
+                return null;
+            }
+
+            if ("setNull".equals(name)) {
+                service.parametros.put(
+                        (Integer) args[0],
+                        null
+                );
+
+                return null;
+            }
+
+            if (name.startsWith("set")
+                    && args != null
+                    && args.length >= 2
+                    && args[0] instanceof Integer) {
+
+                service.parametros.put(
+                        (Integer) args[0],
+                        args[1]
+                );
+
+                return null;
+            }
+
+            if ("execute".equals(name)) {
+                return Boolean.TRUE;
+            }
+
+            if ("getInt".equals(name)) {
+                return Integer.valueOf(987);
+            }
+
+            return defaultValue(method.getReturnType());
+        }
+    }
+
+    private static Object defaultValue(Class type) {
+        if (type == null || Void.TYPE.equals(type)) {
+            return null;
+        }
+
+        if (!type.isPrimitive()) {
+            return null;
+        }
+
+        if (Boolean.TYPE.equals(type)) {
+            return Boolean.FALSE;
+        }
+
+        if (Integer.TYPE.equals(type)) {
+            return Integer.valueOf(0);
+        }
+
+        if (Long.TYPE.equals(type)) {
+            return Long.valueOf(0L);
+        }
+
+        if (Double.TYPE.equals(type)) {
+            return Double.valueOf(0D);
+        }
+
+        if (Float.TYPE.equals(type)) {
+            return Float.valueOf(0F);
+        }
+
+        if (Short.TYPE.equals(type)) {
+            return Short.valueOf((short) 0);
+        }
+
+        if (Byte.TYPE.equals(type)) {
+            return Byte.valueOf((byte) 0);
+        }
+
+        if (Character.TYPE.equals(type)) {
+            return Character.valueOf((char) 0);
+        }
+
+        return null;
     }
 
     private EditarRequerimientoCompraServiceImplTest() {
