@@ -25,6 +25,24 @@ public class NotificarCotizacionPrestadorServiceImpl {
                     NotificarCotizacionPrestadorServiceImpl.class
             );
 
+    /*
+     * Modo temporal para pruebas.
+     *
+     * Mientras sea true, todos los correos se envían al
+     * destinatario fijo, independientemente del email
+     * registrado para cada prestador.
+     *
+     * Para habilitar el envío real a prestadores:
+     *
+     *     USAR_EMAIL_DESTINO_TEMPORAL = false;
+     */
+    private static final boolean
+            USAR_EMAIL_DESTINO_TEMPORAL = true;
+
+    private static final String
+            EMAIL_DESTINO_TEMPORAL =
+            "acomas@ospim.org.ar";
+
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile(
                     "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
@@ -57,6 +75,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                     + "WHERE id_requerimiento = ? "
                     + "  AND id_prestador = ? "
                     + "  AND estado_envio = 'PROCESANDO'";
+
     private final CotizacionPrestadorMailHelper mailHelper =
             new CotizacionPrestadorMailHelper();
 
@@ -75,7 +94,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
                         idRequerimientoCompra
                 );
 
-        validarRequerimiento(requerimiento);
+        validarRequerimiento(
+                requerimiento
+        );
 
         List<PrestadorCotizacion> candidatos =
                 listarPrestadoresCandidatos(
@@ -128,10 +149,12 @@ public class NotificarCotizacionPrestadorServiceImpl {
         }
 
         int idRequerimiento =
-                requerimiento.getIdRequerimientoCompra();
+                requerimiento
+                        .getIdRequerimientoCompra();
 
         int idPrestador =
-                prestador.getIdPrestador();
+                prestador
+                        .getIdPrestador();
 
         boolean reservado;
 
@@ -174,10 +197,10 @@ public class NotificarCotizacionPrestadorServiceImpl {
             return;
         }
 
-        String email;
+        String emailReservado;
 
         try {
-            email =
+            emailReservado =
                     leerEmailReservado(
                             idRequerimiento,
                             idPrestador
@@ -185,7 +208,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         } catch (Exception e) {
             String detalleError =
-                    construirDetalleError(e);
+                    construirDetalleError(
+                            e
+                    );
 
             finalizarConControl(
                     idRequerimiento,
@@ -196,7 +221,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             _log.error(
                     "No se pudo leer el email reservado "
-                            + "de cotizacion. "
+                            + "de cotización. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -208,17 +233,57 @@ public class NotificarCotizacionPrestadorServiceImpl {
             return;
         }
 
-        if (!esEmailValido(email)) {
-            String errorEmail =
-                    "Email destino invalido.";
+        /*
+         * El modo temporal se resuelve después de obtener
+         * correctamente la reserva, pero antes de validar
+         * el destinatario.
+         *
+         * De esta manera, un prestador sin email real no
+         * bloquea las pruebas de envío.
+         */
+        String emailDestino =
+                resolverEmailDestino(
+                        emailReservado
+                );
 
-            _log.warn(
-                    "Email reservado de cotizacion invalido. "
+        if (USAR_EMAIL_DESTINO_TEMPORAL
+                && _log.isInfoEnabled()) {
+
+            _log.info(
+                    "Modo temporal de notificación activo. "
+                            + "La cotización será enviada "
+                            + "al destinatario fijo. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
                             + idRequerimiento
+                            + ", emailDestino="
+                            + emailDestino
             );
+        }
+
+        if (!esEmailValido(
+                emailDestino
+        )) {
+            String errorEmail =
+                    USAR_EMAIL_DESTINO_TEMPORAL
+                            ? "Email destino temporal inválido."
+                            : "Email destino reservado inválido.";
+
+            _log.warn(
+                    "Email destino de cotización inválido. "
+                            + "origen="
+                            + (
+                            USAR_EMAIL_DESTINO_TEMPORAL
+                                    ? "TEMPORAL"
+                                    : "RESERVADO"
+                    )
+                            + ", idPrestador="
+                            + idPrestador
+                            + ", idRequerimiento="
+                            + idRequerimiento
+            );
+
             finalizarConControl(
                     idRequerimiento,
                     idPrestador,
@@ -244,14 +309,16 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             enviarMail(
                     companyId,
-                    email,
+                    emailDestino,
                     asunto,
                     cuerpo
             );
 
         } catch (Exception e) {
             String detalleError =
-                    construirDetalleError(e);
+                    construirDetalleError(
+                            e
+                    );
 
             finalizarConControl(
                     idRequerimiento,
@@ -267,7 +334,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                             + ", idRequerimiento="
                             + idRequerimiento
                             + ", emailDestino="
-                            + email,
+                            + emailDestino,
                     e
             );
 
@@ -353,7 +420,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             while (rs.next()) {
                 candidatos.add(
-                        mapPrestadorCotizacion(rs)
+                        mapPrestadorCotizacion(
+                                rs
+                        )
                 );
             }
 
@@ -370,7 +439,10 @@ public class NotificarCotizacionPrestadorServiceImpl {
             throw e;
 
         } finally {
-            cerrar(rs);
+            cerrar(
+                    rs
+            );
+
             ConnectionHelper.cerrar(
                     stmt,
                     con
@@ -406,16 +478,23 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             stmt.setString(
                     3,
-                    normalizarUsuario(usuario)
+                    normalizarUsuario(
+                            usuario
+                    )
             );
 
             rs = stmt.executeQuery();
 
             return rs.next()
-                    && rs.getBoolean(1);
+                    && rs.getBoolean(
+                    1
+            );
 
         } finally {
-            cerrar(rs);
+            cerrar(
+                    rs
+            );
+
             ConnectionHelper.cerrar(
                     stmt,
                     con
@@ -450,12 +529,22 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             rs = stmt.executeQuery();
 
-            return rs.next()
-                    ? rs.getString("email_destino")
-                    : null;
+            if (!rs.next()) {
+                throw new Exception(
+                        "No se encontró una reserva "
+                                + "PROCESANDO para el prestador."
+                );
+            }
+
+            return rs.getString(
+                    "email_destino"
+            );
 
         } finally {
-            cerrar(rs);
+            cerrar(
+                    rs
+            );
+
             ConnectionHelper.cerrar(
                     stmt,
                     con
@@ -506,10 +595,15 @@ public class NotificarCotizacionPrestadorServiceImpl {
             rs = stmt.executeQuery();
 
             return rs.next()
-                    && rs.getBoolean(1);
+                    && rs.getBoolean(
+                    1
+            );
 
         } finally {
-            cerrar(rs);
+            cerrar(
+                    rs
+            );
+
             ConnectionHelper.cerrar(
                     stmt,
                     con
@@ -573,6 +667,20 @@ public class NotificarCotizacionPrestadorServiceImpl {
         }
     }
 
+    private String resolverEmailDestino(
+            String emailReservado) {
+
+        if (USAR_EMAIL_DESTINO_TEMPORAL) {
+            return normalizarEmail(
+                    EMAIL_DESTINO_TEMPORAL
+            );
+        }
+
+        return normalizarEmail(
+                emailReservado
+        );
+    }
+
     private String construirAsunto(
             RequerimientoCompra requerimiento) {
 
@@ -588,59 +696,94 @@ public class NotificarCotizacionPrestadorServiceImpl {
         StringBuilder sb =
                 new StringBuilder();
 
-        sb.append("Estimado prestador");
+        sb.append(
+                "Estimado prestador"
+        );
 
         if (!WebKeysCompras.isEmpty(
                 prestador.getDescripcion()
         )) {
-            sb.append(" ");
             sb.append(
-                    prestador.getDescripcionVisible()
+                    " "
+            );
+
+            sb.append(
+                    prestador
+                            .getDescripcionVisible()
             );
         }
 
-        sb.append(",\n\n");
+        sb.append(
+                ",\n\n"
+        );
 
         sb.append(
                 "OSPIM solicita cotización para el "
                         + "siguiente requerimiento de compra."
         );
 
-        sb.append("\n\n");
+        sb.append(
+                "\n\n"
+        );
 
-        sb.append("Requerimiento: #");
+        sb.append(
+                "Requerimiento: #"
+        );
+
         sb.append(
                 requerimiento
                         .getIdRequerimientoCompra()
         );
-        sb.append("\n");
 
-        sb.append("Sector: ");
+        sb.append(
+                "\n"
+        );
+
+        sb.append(
+                "Sector: "
+        );
+
         sb.append(
                 requerimiento
                         .getSectorDescripcionVisible()
         );
-        sb.append("\n");
+
+        sb.append(
+                "\n"
+        );
 
         if (!WebKeysCompras.isEmpty(
                 requerimiento.getAltaFechaAsString()
         )) {
-            sb.append("Fecha: ");
+            sb.append(
+                    "Fecha: "
+            );
+
             sb.append(
                     requerimiento
                             .getAltaFechaAsString()
             );
-            sb.append("\n");
+
+            sb.append(
+                    "\n"
+            );
         }
 
         if (!WebKeysCompras.isEmpty(
                 requerimiento.getAltaUsr()
         )) {
-            sb.append("Usuario solicitante: ");
             sb.append(
-                    requerimiento.getAltaUsr()
+                    "Usuario solicitante: "
             );
-            sb.append("\n");
+
+            sb.append(
+                    requerimiento
+                            .getAltaUsr()
+            );
+
+            sb.append(
+                    "\n"
+            );
         }
 
         if (!WebKeysCompras.isEmpty(
@@ -655,7 +798,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
                             .getObservacionesVisible()
             );
 
-            sb.append("\n");
+            sb.append(
+                    "\n"
+            );
         }
 
         appendDetalles(
@@ -690,41 +835,59 @@ public class NotificarCotizacionPrestadorServiceImpl {
             return;
         }
 
-        sb.append("\nItems:\n");
+        sb.append(
+                "\nItems:\n"
+        );
 
         for (int i = 0; i < detalles.size(); i++) {
             RequerimientoCompraDetalle detalle =
-                    detalles.get(i);
+                    detalles.get(
+                            i
+                    );
 
-            sb.append("- ");
+            sb.append(
+                    "- "
+            );
 
             if (!WebKeysCompras.isEmpty(
                     detalle.getArticulo()
             )) {
                 sb.append(
-                        detalle.getArticuloVisible()
+                        detalle
+                                .getArticuloVisible()
                 );
+
             } else {
                 sb.append(
                         "Ítem sin descripción"
                 );
             }
 
-            sb.append(" | Cantidad: ");
             sb.append(
-                    detalle.getCantidadString()
+                    " | Cantidad: "
+            );
+
+            sb.append(
+                    detalle
+                            .getCantidadString()
             );
 
             if (!WebKeysCompras.isEmpty(
                     detalle.getObservaciones()
             )) {
-                sb.append(" | Obs: ");
                 sb.append(
-                        detalle.getObservacionesVisible()
+                        " | Obs: "
+                );
+
+                sb.append(
+                        detalle
+                                .getObservacionesVisible()
                 );
             }
 
-            sb.append("\n");
+            sb.append(
+                    "\n"
+            );
         }
     }
 
@@ -735,27 +898,39 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 new PrestadorCotizacion();
 
         prestador.setIdPrestador(
-                rs.getInt("id_prestador")
+                rs.getInt(
+                        "id_prestador"
+                )
         );
 
         prestador.setDescripcion(
-                rs.getString("descripcion")
+                rs.getString(
+                        "descripcion"
+                )
         );
 
         prestador.setCuit(
-                rs.getString("cuit")
+                rs.getString(
+                        "cuit"
+                )
         );
 
         prestador.setEmail(
-                rs.getString("email")
+                rs.getString(
+                        "email"
+                )
         );
 
         prestador.setIdTipoPrestador(
-                rs.getInt("id_tipo_prestador")
+                rs.getInt(
+                        "id_tipo_prestador"
+                )
         );
 
         prestador.setTipoPrestador(
-                rs.getString("tipo_prestador")
+                rs.getString(
+                        "tipo_prestador"
+                )
         );
 
         return prestador;
@@ -829,11 +1004,32 @@ public class NotificarCotizacionPrestadorServiceImpl {
     private boolean esEmailValido(
             String email) {
 
-        return email != null
-                && email.length() > 0
+        String emailNormalizado =
+                normalizarEmail(
+                        email
+                );
+
+        return emailNormalizado != null
                 && EMAIL_PATTERN
-                .matcher(email)
+                .matcher(
+                        emailNormalizado
+                )
                 .matches();
+    }
+
+    private String normalizarEmail(
+            String email) {
+
+        if (email == null) {
+            return null;
+        }
+
+        String resultado =
+                email.trim();
+
+        return resultado.length() > 0
+                ? resultado
+                : null;
     }
 
     private String construirDetalleError(
@@ -850,27 +1046,40 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 || mensaje.trim().length() == 0) {
 
             mensaje =
-                    e.getClass().getName();
+                    e.getClass()
+                            .getName();
 
         } else {
             mensaje =
-                    e.getClass().getName()
+                    e.getClass()
+                            .getName()
                             + ": "
                             + mensaje.trim();
         }
 
         mensaje =
                 SENSITIVE_DETAIL_PATTERN
-                        .matcher(mensaje)
+                        .matcher(
+                                mensaje
+                        )
                         .replaceAll(
                                 "$1=<omitido>"
                         );
 
         mensaje =
                 mensaje
-                        .replace('\r', ' ')
-                        .replace('\n', ' ')
-                        .replace('\t', ' ');
+                        .replace(
+                                '\r',
+                                ' '
+                        )
+                        .replace(
+                                '\n',
+                                ' '
+                        )
+                        .replace(
+                                '\t',
+                                ' '
+                        );
 
         return truncar(
                 mensaje,
