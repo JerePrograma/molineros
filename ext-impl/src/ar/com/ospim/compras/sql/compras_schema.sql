@@ -1,38 +1,37 @@
 -- =====================================================================
--- MODULO: Compras - esquema canonico de desarrollo
+-- MODULO: Compras - reconstruccion canonica unificada de desarrollo
 -- PostgreSQL 9.6+
 --
 -- DESTRUCTIVO:
 --   Elimina completamente el esquema compras y lo reconstruye desde cero.
 --   No conserva datos ni compatibilidad con el modelo anterior.
+--   Toda la instalacion y su smoke test se ejecutan en una unica transaccion.
 --
 -- Flujo funcional activo:
 --   1  PENDIENTE
 --   2  A_COTIZAR
 --   3  COTIZADO
 --
--- Estados reservados, sin transiciones activas:
---   4  AUTORIZADO
+-- Estados reconocidos de solo lectura, sin transiciones activas:
+--   4  RECLAMO_RP
 --   5  ORDEN_COMPRA
 --
 -- Estado lateral:
 --   99 ANULADO
 --
--- Estados de notificacion:
---   PENDIENTE, PROCESANDO, ENVIADO, ERROR, EMAIL_INVALIDO
+-- Contratos incorporados:
+--   - guardar_requerimiento con 21 argumentos de entrada.
+--   - persistencia de afiliado_id_ospim como snapshot.
+--   - PDF con afiliado_id_ospim, integrante y documento.
+--   - destinatario de cotizacion persistido por prestador.
 --
--- Alcance de escritura:
---   Este script elimina y crea objetos exclusivamente en el esquema compras.
---   No crea, altera ni elimina objetos de otros esquemas.
---
--- Fuentes externas consultadas en modo solo lectura por las funciones:
+-- Dependencias externas de solo lectura:
 --   public.prestador
 --   trae_tipos_prestadores()
+--
+-- Ejecutar con psql -v ON_ERROR_STOP=1.
+-- Si la sesion esta abortada, ejecutar ROLLBACK antes de este archivo.
 -- =====================================================================
-
--- Ejecutar manualmente con psql y ON_ERROR_STOP=1.
--- Si la misma sesion tiene una transaccion abortada, ejecutar ROLLBACK por
--- separado antes de invocar este archivo.
 
 BEGIN;
 
@@ -141,6 +140,7 @@ CREATE TABLE compras.requerimiento (
 
                                        afiliado_cuil_titular VARCHAR(20),
                                        afiliado_int INTEGER,
+                                       afiliado_id_ospim INTEGER,
 
     -- Snapshot para consulta e impresion.
                                        afiliado_nombre VARCHAR(120),
@@ -206,6 +206,11 @@ CREATE INDEX ix_compras_requerimiento_afiliado
                               afiliado_int
         )
     WHERE baja_fecha IS NULL;
+
+CREATE INDEX ix_compras_requerimiento_afiliado_id_ospim
+    ON compras.requerimiento (afiliado_id_ospim)
+    WHERE baja_fecha IS NULL
+      AND afiliado_id_ospim IS NOT NULL;
 
 CREATE INDEX ix_compras_requerimiento_tercerizadora
     ON compras.requerimiento (id_tercerizadora)
@@ -382,17 +387,17 @@ STABLE;
 CREATE FUNCTION compras.estado_requerimiento_descripcion(
     p_estado INTEGER
 )
-    RETURNS VARCHAR
+RETURNS VARCHAR
 AS $func$
 BEGIN
-RETURN CASE p_estado
-           WHEN 1 THEN 'Pendiente'
-           WHEN 2 THEN 'A cotizar'
-           WHEN 3 THEN 'Cotizado'
-           WHEN 4 THEN 'Autorizado'
-           WHEN 5 THEN 'Orden de compra'
-           WHEN 99 THEN 'Anulado'
-           ELSE 'Desconocido'
+    RETURN CASE p_estado
+        WHEN 1 THEN 'PENDIENTE'
+        WHEN 2 THEN 'A COTIZAR'
+        WHEN 3 THEN 'COTIZADO'
+        WHEN 4 THEN 'RECLAMO (RP)'
+        WHEN 5 THEN 'ORDEN DE COMPRA'
+        WHEN 99 THEN 'ANULADO'
+        ELSE 'DESCONOCIDO'
     END;
 END;
 $func$
@@ -401,21 +406,23 @@ IMMUTABLE;
 
 
 CREATE FUNCTION compras.listar_estados_requerimiento()
-    RETURNS TABLE (
-                      id INTEGER,
-                      descripcion VARCHAR
-                  )
-    AS $func$
+RETURNS TABLE (
+    id INTEGER,
+    descripcion VARCHAR
+)
+AS $func$
 BEGIN
-RETURN QUERY
-SELECT *
-FROM (
-         VALUES
-             (1, 'Pendiente'::VARCHAR),
-             (2, 'A cotizar'::VARCHAR),
-             (3, 'Cotizado'::VARCHAR),
-             (99, 'Anulado'::VARCHAR)
-     ) estados(id, descripcion);
+    RETURN QUERY
+    SELECT *
+      FROM (
+        VALUES
+            (1, 'PENDIENTE'::VARCHAR),
+            (2, 'A COTIZAR'::VARCHAR),
+            (3, 'COTIZADO'::VARCHAR),
+            (4, 'RECLAMO (RP)'::VARCHAR),
+            (5, 'ORDEN DE COMPRA'::VARCHAR),
+            (99, 'ANULADO'::VARCHAR)
+      ) estados(id, descripcion);
 END;
 $func$
 LANGUAGE plpgsql
@@ -448,7 +455,7 @@ END IF;
     IF TG_OP = 'INSERT' THEN
         IF NEW.estado <> 1 THEN
             RAISE EXCEPTION
-                'Un requerimiento nuevo debe crearse en estado Pendiente.';
+                'Un requerimiento nuevo debe crearse en estado PENDIENTE.';
 END IF;
 ELSE
         IF OLD.estado IN (3, 4, 5, 99)
@@ -462,6 +469,8 @@ END IF;
             OR NEW.afiliado_cuil_titular
                 IS DISTINCT FROM OLD.afiliado_cuil_titular
             OR NEW.afiliado_int IS DISTINCT FROM OLD.afiliado_int
+            OR NEW.afiliado_id_ospim
+                IS DISTINCT FROM OLD.afiliado_id_ospim
             OR NEW.afiliado_nombre
                 IS DISTINCT FROM OLD.afiliado_nombre
             OR NEW.afiliado_apellido
@@ -492,7 +501,7 @@ END IF;
 
         IF v_cambio_estructura AND OLD.estado <> 1 THEN
             RAISE EXCEPTION
-                'La estructura solo puede modificarse en estado Pendiente.';
+                'La estructura solo puede modificarse en estado PENDIENTE.';
 END IF;
 
         IF NEW.estado IS DISTINCT FROM OLD.estado THEN
@@ -508,7 +517,7 @@ END IF;
 
             IF NEW.estado IN (4, 5) THEN
                 RAISE EXCEPTION
-                    'Autorizado y Orden de compra son estados reservados.';
+                    'RECLAMO (RP) y ORDEN DE COMPRA son estados de solo lectura.';
 END IF;
 
             IF OLD.estado = 1 AND NEW.estado = 2 THEN
@@ -527,9 +536,10 @@ END IF;
                       FROM compras.requerimiento_cotizacion_prestador rcp
                      WHERE rcp.id_requerimiento =
                            NEW.id_requerimiento
+                       AND rcp.estado_envio = 'ENVIADO'
                 ) THEN
                     RAISE EXCEPTION
-                        'Debe existir al menos un prestador procesado antes de pasar a A cotizar.';
+                        'Debe existir al menos un prestador notificado como ENVIADO antes de pasar a A COTIZAR.';
 END IF;
 END IF;
 
@@ -552,6 +562,7 @@ END IF;
                        AND (
                               d.cantidad <= 0
                            OR d.precio_unitario_estimado IS NULL
+                           OR d.precio_unitario_estimado < 0
                            OR d.precio_total_estimado IS NULL
                            OR d.id_prestador IS NULL
                            OR d.precio_total_estimado
@@ -611,6 +622,7 @@ END IF;
 ELSE
         NEW.afiliado_cuil_titular := NULL;
         NEW.afiliado_int := NULL;
+        NEW.afiliado_id_ospim := NULL;
 
         NEW.afiliado_nombre := NULL;
         NEW.afiliado_apellido := NULL;
@@ -689,12 +701,12 @@ END IF;
 
     IF TG_OP = 'INSERT' AND v_estado <> 1 THEN
         RAISE EXCEPTION
-            'Los detalles solo pueden crearse en estado Pendiente.';
+            'Los detalles solo pueden crearse en estado PENDIENTE.';
 END IF;
 
     IF TG_OP = 'UPDATE' THEN
         IF v_estado = 1 THEN
-            -- En Pendiente se permite editar o dar de baja la estructura.
+            -- En PENDIENTE se permite editar o dar de baja la estructura.
             NULL;
 
         ELSIF v_estado = 2 THEN
@@ -712,7 +724,7 @@ END IF;
                     IS DISTINCT FROM OLD.baja_usr THEN
 
                 RAISE EXCEPTION
-                    'En estado A cotizar la estructura del detalle esta bloqueada.';
+                    'En estado A COTIZAR la estructura del detalle esta bloqueada.';
 END IF;
 
 ELSE
@@ -727,10 +739,15 @@ END IF;
            OR NEW.id_prestador IS NOT NULL THEN
 
             RAISE EXCEPTION
-                'Un requerimiento Pendiente no puede tener datos de cotizacion.';
+                'Un requerimiento PENDIENTE no puede tener datos de cotizacion.';
 END IF;
 
     ELSIF v_estado = 2 THEN
+        IF NEW.precio_unitario_estimado < 0 THEN
+            RAISE EXCEPTION
+                'El precio unitario estimado no puede ser negativo.';
+        END IF;
+
         IF NEW.precio_unitario_estimado IS NULL THEN
             NEW.precio_total_estimado := NULL;
 ELSE
@@ -1161,6 +1178,7 @@ CREATE TYPE compras.requerimiento_base_row AS (
 
     afiliado_cuil_titular VARCHAR,
     afiliado_int INTEGER,
+    afiliado_id_ospim INTEGER,
 
     afiliado_nombre VARCHAR,
     afiliado_apellido VARCHAR,
@@ -1212,6 +1230,7 @@ SELECT
 
     r.afiliado_cuil_titular,
     r.afiliado_int,
+    r.afiliado_id_ospim,
 
     r.afiliado_nombre,
     r.afiliado_apellido,
@@ -1474,6 +1493,7 @@ CREATE FUNCTION compras.guardar_requerimiento(
     p_id INTEGER,
     p_afiliado_cuil_titular VARCHAR,
     p_afiliado_int INTEGER,
+    p_afiliado_id_ospim INTEGER,
     p_afiliado_nombre VARCHAR,
     p_afiliado_apellido VARCHAR,
     p_afiliado_documento_tipo VARCHAR,
@@ -1520,6 +1540,7 @@ BEGIN
 
             afiliado_cuil_titular,
             afiliado_int,
+            afiliado_id_ospim,
 
             afiliado_nombre,
             afiliado_apellido,
@@ -1547,6 +1568,7 @@ BEGIN
 
             v_afiliado_cuil,
             p_afiliado_int,
+            p_afiliado_id_ospim,
 
             NULLIF(btrim(p_afiliado_nombre), ''),
             NULLIF(btrim(p_afiliado_apellido), ''),
@@ -1609,6 +1631,8 @@ SET id_sector = p_id_sector,
         v_afiliado_cuil,
     afiliado_int =
         p_afiliado_int,
+    afiliado_id_ospim =
+        p_afiliado_id_ospim,
 
     afiliado_nombre =
         CASE
@@ -1716,7 +1740,7 @@ INTO v_id;
 
 IF v_id IS NULL THEN
         RAISE EXCEPTION
-            'La estructura solo puede modificarse en estado Pendiente.';
+            'La estructura solo puede modificarse en estado PENDIENTE.';
 END IF;
 
 RETURN v_id;
@@ -1885,7 +1909,7 @@ END IF;
            AND r.baja_fecha IS NULL
     ) THEN
         RAISE EXCEPTION
-            'Los detalles estructurales solo pueden modificarse en estado Pendiente.';
+            'Los detalles estructurales solo pueden modificarse en estado PENDIENTE.';
 END IF;
 
     IF p_id IS NULL OR p_id <= 0 THEN
@@ -1991,7 +2015,7 @@ WHERE d.id_detalle = p_id_detalle
 
 IF NOT FOUND THEN
         RAISE EXCEPTION
-            'El detalle no existe o el requerimiento no esta Pendiente.';
+            'El detalle no existe o el requerimiento no esta PENDIENTE.';
 END IF;
 END;
 $func$
@@ -2417,7 +2441,7 @@ SELECT
     rb.sector_descripcion,
     rb.requiere_afiliado,
 
-    a.id_ospim::INTEGER AS afiliado_id_ospim,
+    rb.afiliado_id_ospim,
     rb.afiliado_int,
     rb.afiliado_nombre_apellido,
     rb.afiliado_documento,
@@ -2459,10 +2483,6 @@ END,
 
     FROM compras.requerimiento_base() rb
 
-    LEFT JOIN public.afiliado a
-      ON a.cuil_titular = rb.afiliado_cuil_titular
-     AND a.inte = rb.afiliado_int
-
     LEFT JOIN compras.get_requerimiento_detalle(
         p_id_requerimiento
     ) d
@@ -2477,44 +2497,41 @@ LANGUAGE plpgsql
 STABLE;
 
 -- =====================================================================
--- VALIDACIONES DE INSTALACION
+-- VALIDACIONES DE INSTALACION Y SMOKE TRANSACCIONAL
 -- =====================================================================
 
 DO $verificacion$
 DECLARE
-v_sectores INTEGER;
-    v_estados INTEGER;
+    v_sectores INTEGER;
+    v_estados TEXT;
+    v_guardar OID;
+    v_pdf OID;
 BEGIN
-SELECT count(*)
-INTO v_sectores
-FROM compras.sector_requerimiento
-WHERE activo = TRUE
-  AND baja_fecha IS NULL;
+    SELECT count(*)
+      INTO v_sectores
+      FROM compras.sector_requerimiento
+     WHERE activo = TRUE
+       AND baja_fecha IS NULL;
 
-IF v_sectores <> 8 THEN
+    IF v_sectores <> 8 THEN
         RAISE EXCEPTION
             'La carga inicial de sectores es invalida. Total: %.',
             v_sectores;
-END IF;
+    END IF;
 
-SELECT count(*)
-INTO v_estados
-FROM compras.listar_estados_requerimiento();
+    SELECT string_agg(
+               e.id::TEXT || ':' || e.descripcion,
+               ',' ORDER BY e.id
+           )
+      INTO v_estados
+      FROM compras.listar_estados_requerimiento() e;
 
-IF v_estados <> 4 THEN
+    IF v_estados <>
+       '1:PENDIENTE,2:A COTIZAR,3:COTIZADO,4:RECLAMO (RP),5:ORDEN DE COMPRA,99:ANULADO' THEN
         RAISE EXCEPTION
-            'La lista de estados operativos es invalida. Total: %.',
+            'Catalogo de estados inesperado: %.',
             v_estados;
-END IF;
-
-    IF EXISTS (
-        SELECT 1
-          FROM compras.listar_estados_requerimiento() e
-         WHERE e.id IN (4, 5)
-    ) THEN
-        RAISE EXCEPTION
-            'Los estados reservados no deben exponerse como operativos.';
-END IF;
+    END IF;
 
     IF EXISTS (
         SELECT 1
@@ -2531,21 +2548,57 @@ END IF;
     ) THEN
         RAISE EXCEPTION
             'El esquema compras contiene claves foraneas hacia otros esquemas.';
-END IF;
+    END IF;
 
     IF to_regclass('public.prestador') IS NULL THEN
         RAISE EXCEPTION
             'No existe la dependencia de solo lectura public.prestador.';
-END IF;
+    END IF;
 
     IF to_regprocedure('trae_tipos_prestadores()') IS NULL THEN
         RAISE EXCEPTION
             'No existe la dependencia de solo lectura trae_tipos_prestadores().';
-END IF;
+    END IF;
 
-    -- Fuerza la preparacion y validacion de los contratos de salida que
-    -- combinan tipos internos INTEGER con identificadores externos que pueden
-    -- estar definidos como SMALLINT en la instalacion real.
+    v_guardar := to_regprocedure(
+        'compras.guardar_requerimiento(integer, character varying, integer, integer, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, integer, integer, integer, character varying, boolean, text, character varying)'
+    )::OID;
+
+    IF v_guardar IS NULL THEN
+        RAISE EXCEPTION
+            'Falta guardar_requerimiento con 21 argumentos canonicos.';
+    END IF;
+
+    IF (
+        SELECT p.pronargs
+          FROM pg_proc p
+         WHERE p.oid = v_guardar
+    ) <> 21 THEN
+        RAISE EXCEPTION
+            'guardar_requerimiento no tiene 21 argumentos.';
+    END IF;
+
+    v_pdf := to_regprocedure(
+        'compras.get_requerimiento_compra_pdf(integer)'
+    )::OID;
+
+    IF v_pdf IS NULL THEN
+        RAISE EXCEPTION
+            'Falta get_requerimiento_compra_pdf(integer).';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+          FROM pg_proc p
+         WHERE p.oid = v_pdf
+           AND array_position(p.proargnames, 'afiliado_documento') IS NOT NULL
+           AND array_position(p.proargnames, 'afiliado_id_ospim') IS NOT NULL
+           AND array_position(p.proargnames, 'total_general') IS NULL
+    ) THEN
+        RAISE EXCEPTION
+            'Contrato PDF incompatible.';
+    END IF;
+
     PERFORM 1
       FROM compras.listar_tipos_prestador_sector(1)
      LIMIT 1;
@@ -2557,26 +2610,298 @@ END IF;
     PERFORM 1
       FROM compras.buscar_prestadores_enviados(0, NULL, 1)
      LIMIT 1;
-
-    IF compras.estado_requerimiento_descripcion(1)
-       <> 'Pendiente' THEN
-        RAISE EXCEPTION
-            'La configuracion de estados no es valida.';
-END IF;
-
-    IF compras.estado_requerimiento_descripcion(2)
-       <> 'A cotizar' THEN
-        RAISE EXCEPTION
-            'La configuracion de estados no es valida.';
-END IF;
-
-    IF compras.estado_requerimiento_descripcion(3)
-       <> 'Cotizado' THEN
-        RAISE EXCEPTION
-            'La configuracion de estados no es valida.';
-END IF;
 END;
 $verificacion$;
+
+
+DO $smoke$
+DECLARE
+    v_id INTEGER;
+    v_articulo INTEGER;
+    v_detalle INTEGER;
+    v_pdf_id_ospim INTEGER;
+    v_pdf_documento VARCHAR;
+    v_estado INTEGER;
+BEGIN
+    v_id := compras.guardar_requerimiento(
+        NULL,
+        '20111111112',
+        1,
+        123456,
+        'Nombre',
+        'Apellido',
+        'DNI',
+        '11222333',
+        'Calle 123',
+        'Localidad',
+        'Provincia',
+        '111-222',
+        '333-444',
+        'afiliado@example.com',
+        1,
+        100,
+        0,
+        NULL,
+        FALSE,
+        'Smoke esquema unificado',
+        'smoke'
+    );
+
+    IF (
+        SELECT r.afiliado_id_ospim
+          FROM compras.requerimiento r
+         WHERE r.id_requerimiento = v_id
+    ) IS DISTINCT FROM 123456 THEN
+        RAISE EXCEPTION
+            'SMOKE: afiliado_id_ospim no persistio.';
+    END IF;
+
+    SELECT
+        pdf.afiliado_id_ospim,
+        pdf.afiliado_documento
+      INTO
+        v_pdf_id_ospim,
+        v_pdf_documento
+      FROM compras.get_requerimiento_compra_pdf(v_id) pdf
+     LIMIT 1;
+
+    IF v_pdf_id_ospim IS DISTINCT FROM 123456 THEN
+        RAISE EXCEPTION
+            'SMOKE: PDF no expone afiliado_id_ospim.';
+    END IF;
+
+    IF v_pdf_documento IS DISTINCT FROM 'DNI 11222333' THEN
+        RAISE EXCEPTION
+            'SMOKE: PDF no conserva afiliado_documento. Valor=%.',
+            v_pdf_documento;
+    END IF;
+
+    v_articulo := compras.guardar_articulo(
+        NULL,
+        1,
+        'Articulo smoke esquema unificado'
+    );
+
+    v_detalle := compras.guardar_requerimiento_detalle(
+        NULL,
+        v_id,
+        v_articulo,
+        2,
+        'Detalle smoke',
+        'smoke'
+    );
+
+    INSERT INTO compras.requerimiento_cotizacion_prestador (
+        id_requerimiento,
+        id_prestador,
+        estado_envio,
+        intentos,
+        email_destino,
+        fecha_envio,
+        alta_usr
+    )
+    VALUES (
+        v_id,
+        9001,
+        'ENVIADO',
+        1,
+        'prestador@example.com',
+        now(),
+        'smoke'
+    );
+
+    BEGIN
+        PERFORM compras.cambiar_estado_requerimiento(
+            v_id,
+            1,
+            'smoke'
+        );
+
+        RAISE EXCEPTION
+            'SMOKE: se acepto transicion al mismo estado.';
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLERRM = 'SMOKE: se acepto transicion al mismo estado.' THEN
+                RAISE;
+            END IF;
+
+            IF SQLSTATE <> 'P0001'
+               OR SQLERRM NOT LIKE
+                  'La transicion al mismo estado no es valida.%' THEN
+                RAISE EXCEPTION
+                    'SMOKE: rechazo inesperado del mismo estado. SQLSTATE=%, SQLERRM=%.',
+                    SQLSTATE,
+                    SQLERRM;
+            END IF;
+    END;
+
+    PERFORM compras.cambiar_estado_requerimiento(
+        v_id,
+        2,
+        'smoke'
+    );
+
+    BEGIN
+        PERFORM compras.cambiar_estado_requerimiento(
+            v_id,
+            1,
+            'smoke'
+        );
+
+        RAISE EXCEPTION
+            'SMOKE: se acepto transicion 2 -> 1.';
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLERRM = 'SMOKE: se acepto transicion 2 -> 1.' THEN
+                RAISE;
+            END IF;
+
+            IF SQLSTATE <> 'P0001'
+               OR SQLERRM <> 'Transicion de estado invalida: 2 -> 1.' THEN
+                RAISE EXCEPTION
+                    'SMOKE: rechazo inesperado 2 -> 1. SQLSTATE=%, SQLERRM=%.',
+                    SQLSTATE,
+                    SQLERRM;
+            END IF;
+    END;
+
+    BEGIN
+        PERFORM compras.cambiar_estado_requerimiento(
+            v_id,
+            4,
+            'smoke'
+        );
+
+        RAISE EXCEPTION
+            'SMOKE: se acepto transicion 2 -> 4.';
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLERRM = 'SMOKE: se acepto transicion 2 -> 4.' THEN
+                RAISE;
+            END IF;
+
+            IF SQLSTATE <> 'P0001'
+               OR SQLERRM <> 'Transicion de estado invalida: 2 -> 4.' THEN
+                RAISE EXCEPTION
+                    'SMOKE: rechazo inesperado 2 -> 4. SQLSTATE=%, SQLERRM=%.',
+                    SQLSTATE,
+                    SQLERRM;
+            END IF;
+    END;
+
+    BEGIN
+        PERFORM compras.cambiar_estado_requerimiento(
+            v_id,
+            5,
+            'smoke'
+        );
+
+        RAISE EXCEPTION
+            'SMOKE: se acepto transicion 2 -> 5.';
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLERRM = 'SMOKE: se acepto transicion 2 -> 5.' THEN
+                RAISE;
+            END IF;
+
+            IF SQLSTATE <> 'P0001'
+               OR SQLERRM <> 'Transicion de estado invalida: 2 -> 5.' THEN
+                RAISE EXCEPTION
+                    'SMOKE: rechazo inesperado 2 -> 5. SQLSTATE=%, SQLERRM=%.',
+                    SQLSTATE,
+                    SQLERRM;
+            END IF;
+    END;
+
+    UPDATE compras.requerimiento_detalle
+       SET precio_unitario_estimado = 10.00,
+           id_prestador = 9001,
+           modi_usr = 'smoke'
+     WHERE id_detalle = v_detalle;
+
+    PERFORM compras.cambiar_estado_requerimiento(
+        v_id,
+        3,
+        'smoke'
+    );
+
+    SELECT r.estado
+      INTO v_estado
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento = v_id;
+
+    IF v_estado IS DISTINCT FROM 3 THEN
+        RAISE EXCEPTION
+            'SMOKE: 2 -> 3 no dejo el requerimiento COTIZADO.';
+    END IF;
+
+    BEGIN
+        PERFORM compras.cambiar_estado_requerimiento(
+            v_id,
+            2,
+            'smoke'
+        );
+
+        RAISE EXCEPTION
+            'SMOKE: se acepto salida desde COTIZADO.';
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLERRM = 'SMOKE: se acepto salida desde COTIZADO.' THEN
+                RAISE;
+            END IF;
+
+            IF SQLSTATE <> 'P0001'
+               OR SQLERRM <>
+                  'El requerimiento no puede modificarse en el estado actual.' THEN
+                RAISE EXCEPTION
+                    'SMOKE: rechazo inesperado desde COTIZADO. SQLSTATE=%, SQLERRM=%.',
+                    SQLSTATE,
+                    SQLERRM;
+            END IF;
+    END;
+
+    DELETE FROM compras.requerimiento_cotizacion_prestador
+     WHERE id_requerimiento = v_id;
+
+    DELETE FROM compras.requerimiento_detalle
+     WHERE id_requerimiento = v_id;
+
+    DELETE FROM compras.requerimiento
+     WHERE id_requerimiento = v_id;
+
+    DELETE FROM compras.articulo
+     WHERE id_articulo = v_articulo;
+
+    PERFORM setval(
+        pg_get_serial_sequence(
+            'compras.requerimiento',
+            'id_requerimiento'
+        ),
+        1,
+        FALSE
+    );
+
+    PERFORM setval(
+        pg_get_serial_sequence(
+            'compras.requerimiento_detalle',
+            'id_detalle'
+        ),
+        1,
+        FALSE
+    );
+
+    PERFORM setval(
+        pg_get_serial_sequence(
+            'compras.articulo',
+            'id_articulo'
+        ),
+        1,
+        FALSE
+    );
+
+    RAISE NOTICE 'COMPRAS_SCHEMA_SMOKE_OK';
+END;
+$smoke$;
 
 COMMIT;
 
