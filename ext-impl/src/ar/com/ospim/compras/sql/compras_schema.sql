@@ -280,6 +280,87 @@ CREATE INDEX ix_compras_cotizacion_prestador
 CREATE INDEX ix_compras_cotizacion_fecha
     ON compras.requerimiento_cotizacion_prestador (fecha_creacion DESC);
 
+CREATE TABLE compras.requerimiento_presupuesto (
+                                                   id_requerimiento_presupuesto SERIAL PRIMARY KEY,
+
+                                                   id_requerimiento INTEGER NOT NULL
+                                                       REFERENCES compras.requerimiento (id_requerimiento),
+
+    /*
+     * Identificador externo.
+     * No agregar FK porque public.prestador pertenece a otro modelo.
+     */
+                                                   id_prestador INTEGER NOT NULL,
+
+    /*
+     * Identidad exacta del documento en Liferay Document Library.
+     */
+                                                   dl_group_id BIGINT NOT NULL,
+                                                   dl_folder_id BIGINT NOT NULL,
+                                                   dl_file_entry_id BIGINT NOT NULL,
+                                                   dl_file_uuid VARCHAR(75),
+
+    /*
+     * Snapshot del documento y del prestador al momento de cargarlo.
+     */
+                                                   nombre_original VARCHAR(255) NOT NULL,
+                                                   nombre_persistido VARCHAR(255) NOT NULL,
+                                                   titulo VARCHAR(240) NOT NULL,
+                                                   descripcion_prestador VARCHAR(500),
+
+                                                   alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+                                                   alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
+
+                                                   baja_fecha TIMESTAMP WITHOUT TIME ZONE,
+                                                   baja_usr VARCHAR(100),
+
+                                                   CONSTRAINT ck_compras_presupuesto_requerimiento
+                                                       CHECK (id_requerimiento > 0),
+
+                                                   CONSTRAINT ck_compras_presupuesto_prestador
+                                                       CHECK (id_prestador > 0),
+
+                                                   CONSTRAINT ck_compras_presupuesto_group
+                                                       CHECK (dl_group_id > 0),
+
+                                                   CONSTRAINT ck_compras_presupuesto_folder
+                                                       CHECK (dl_folder_id >= 0),
+
+                                                   CONSTRAINT ck_compras_presupuesto_file_entry
+                                                       CHECK (dl_file_entry_id > 0),
+
+                                                   CONSTRAINT ck_compras_presupuesto_nombre_original
+                                                       CHECK (NULLIF(btrim(nombre_original), '') IS NOT NULL),
+
+                                                   CONSTRAINT ck_compras_presupuesto_nombre_persistido
+                                                       CHECK (NULLIF(btrim(nombre_persistido), '') IS NOT NULL),
+
+                                                   CONSTRAINT ck_compras_presupuesto_titulo
+                                                       CHECK (NULLIF(btrim(titulo), '') IS NOT NULL),
+
+                                                   CONSTRAINT uq_compras_presupuesto_dl_file_entry
+                                                       UNIQUE (dl_file_entry_id)
+);
+
+CREATE INDEX ix_compras_presupuesto_requerimiento_activo
+    ON compras.requerimiento_presupuesto (
+                                          id_requerimiento,
+                                          id_requerimiento_presupuesto
+        )
+    WHERE baja_fecha IS NULL;
+
+CREATE INDEX ix_compras_presupuesto_prestador_activo
+    ON compras.requerimiento_presupuesto (
+                                          id_requerimiento,
+                                          id_prestador
+        )
+    WHERE baja_fecha IS NULL;
+
+CREATE INDEX ix_compras_presupuesto_folder_name
+    ON compras.requerimiento_presupuesto (
+                                          dl_folder_id,
+                                          nombre_persistido
+        );
 
 CREATE TABLE compras.requerimiento_detalle (
                                                id_detalle SERIAL PRIMARY KEY,
@@ -2992,3 +3073,201 @@ COMMIT;
 -- FROM compras.get_requerimiento_compra_pdf(
 --     :id_requerimiento
 -- );
+
+CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_presupuesto(
+    p_id_requerimiento INTEGER,
+    p_id_prestador INTEGER,
+    p_dl_group_id BIGINT,
+    p_dl_folder_id BIGINT,
+    p_dl_file_entry_id BIGINT,
+    p_dl_file_uuid VARCHAR,
+    p_nombre_original VARCHAR,
+    p_nombre_persistido VARCHAR,
+    p_titulo VARCHAR,
+    p_descripcion_prestador VARCHAR,
+    p_usuario VARCHAR
+)
+RETURNS INTEGER
+AS $func$
+DECLARE
+v_id INTEGER;
+BEGIN
+    IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
+        RAISE EXCEPTION
+            'El requerimiento informado no es válido.';
+END IF;
+
+    IF p_id_prestador IS NULL OR p_id_prestador <= 0 THEN
+        RAISE EXCEPTION
+            'El prestador informado no es válido.';
+END IF;
+
+    IF p_dl_group_id IS NULL OR p_dl_group_id <= 0
+       OR p_dl_folder_id IS NULL OR p_dl_folder_id < 0
+       OR p_dl_file_entry_id IS NULL OR p_dl_file_entry_id <= 0 THEN
+
+        RAISE EXCEPTION
+            'La identidad del documento de presupuesto no es válida.';
+END IF;
+
+    /*
+     * La autorización se vuelve a comprobar en base de datos.
+     * No alcanza con que el navegador haya enviado un id_prestador.
+     */
+    IF NOT EXISTS (
+        SELECT 1
+          FROM compras.requerimiento r
+          JOIN compras.requerimiento_cotizacion_prestador rcp
+            ON rcp.id_requerimiento = r.id_requerimiento
+           AND rcp.id_prestador = p_id_prestador
+           AND rcp.estado_envio = 'ENVIADO'
+         WHERE r.id_requerimiento = p_id_requerimiento
+           AND r.estado = 2
+           AND r.baja_fecha IS NULL
+    ) THEN
+        RAISE EXCEPTION
+            'El prestador no fue notificado correctamente para el requerimiento.';
+END IF;
+
+INSERT INTO compras.requerimiento_presupuesto (
+    id_requerimiento,
+    id_prestador,
+    dl_group_id,
+    dl_folder_id,
+    dl_file_entry_id,
+    dl_file_uuid,
+    nombre_original,
+    nombre_persistido,
+    titulo,
+    descripcion_prestador,
+    alta_usr
+)
+VALUES (
+           p_id_requerimiento,
+           p_id_prestador,
+           p_dl_group_id,
+           p_dl_folder_id,
+           p_dl_file_entry_id,
+           NULLIF(btrim(p_dl_file_uuid), ''),
+           btrim(p_nombre_original),
+           btrim(p_nombre_persistido),
+           btrim(p_titulo),
+           NULLIF(btrim(p_descripcion_prestador), ''),
+           COALESCE(NULLIF(btrim(p_usuario), ''), 'sistema')
+       )
+    RETURNING id_requerimiento_presupuesto
+INTO v_id;
+
+RETURN v_id;
+END;
+$func$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION compras.listar_requerimiento_presupuestos(
+    p_id_requerimiento INTEGER
+)
+RETURNS TABLE (
+    id_requerimiento_presupuesto INTEGER,
+    id_requerimiento INTEGER,
+    id_prestador INTEGER,
+    dl_group_id BIGINT,
+    dl_folder_id BIGINT,
+    dl_file_entry_id BIGINT,
+    dl_file_uuid VARCHAR,
+    nombre_original VARCHAR,
+    nombre_persistido VARCHAR,
+    titulo VARCHAR,
+    descripcion_prestador VARCHAR,
+    alta_fecha TIMESTAMP WITHOUT TIME ZONE,
+    alta_usr VARCHAR
+)
+AS $func$
+BEGIN
+RETURN QUERY
+SELECT
+    rp.id_requerimiento_presupuesto,
+    rp.id_requerimiento,
+    rp.id_prestador,
+    rp.dl_group_id,
+    rp.dl_folder_id,
+    rp.dl_file_entry_id,
+    rp.dl_file_uuid,
+    rp.nombre_original,
+    rp.nombre_persistido,
+    rp.titulo,
+    rp.descripcion_prestador,
+    rp.alta_fecha,
+    rp.alta_usr
+FROM compras.requerimiento_presupuesto rp
+WHERE rp.id_requerimiento = p_id_requerimiento
+  AND rp.baja_fecha IS NULL
+ORDER BY
+    rp.alta_fecha DESC,
+    rp.id_requerimiento_presupuesto DESC;
+END;
+$func$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION compras.get_requerimiento_presupuesto(
+    p_id_requerimiento_presupuesto INTEGER,
+    p_id_requerimiento INTEGER
+)
+RETURNS SETOF compras.requerimiento_presupuesto
+AS $func$
+BEGIN
+RETURN QUERY
+SELECT rp.*
+FROM compras.requerimiento_presupuesto rp
+WHERE rp.id_requerimiento_presupuesto =
+      p_id_requerimiento_presupuesto
+  AND rp.id_requerimiento = p_id_requerimiento
+  AND rp.baja_fecha IS NULL;
+END;
+$func$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION compras.baja_requerimiento_presupuesto(
+    p_id_requerimiento_presupuesto INTEGER,
+    p_id_requerimiento INTEGER,
+    p_usuario VARCHAR
+)
+RETURNS BOOLEAN
+AS $func$
+BEGIN
+UPDATE compras.requerimiento_presupuesto
+SET baja_fecha = now(),
+    baja_usr = COALESCE(
+            NULLIF(btrim(p_usuario), ''),
+            'sistema'
+               )
+WHERE id_requerimiento_presupuesto =
+      p_id_requerimiento_presupuesto
+  AND id_requerimiento = p_id_requerimiento
+  AND baja_fecha IS NULL;
+
+RETURN FOUND;
+END;
+$func$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION compras.reactivar_requerimiento_presupuesto(
+    p_id_requerimiento_presupuesto INTEGER,
+    p_id_requerimiento INTEGER
+)
+RETURNS BOOLEAN
+AS $func$
+BEGIN
+UPDATE compras.requerimiento_presupuesto
+SET baja_fecha = NULL,
+    baja_usr = NULL
+WHERE id_requerimiento_presupuesto =
+      p_id_requerimiento_presupuesto
+  AND id_requerimiento = p_id_requerimiento
+  AND baja_fecha IS NOT NULL;
+
+RETURN FOUND;
+END;
+$func$
+LANGUAGE plpgsql;

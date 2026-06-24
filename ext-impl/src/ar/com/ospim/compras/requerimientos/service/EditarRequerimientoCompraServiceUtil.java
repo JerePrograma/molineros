@@ -1,10 +1,7 @@
 package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.beans.CompraArticulo;
-import ar.com.ospim.compras.requerimientos.beans.GuardadoCotizacionResultado;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
-import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
+import ar.com.ospim.compras.requerimientos.beans.*;
 
 import java.util.List;
 
@@ -117,5 +114,43 @@ public class EditarRequerimientoCompraServiceUtil {
     }
 
     private EditarRequerimientoCompraServiceUtil() {
+    }
+
+    public static int registrarPresupuesto(
+            RequerimientoCompraPresupuesto presupuesto,
+            String usuario)
+            throws Exception {
+
+        return getInstance()
+                .registrarPresupuesto(
+                        presupuesto,
+                        usuario
+                );
+    }
+
+    public static boolean darDeBajaPresupuesto(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra,
+            String usuario)
+            throws Exception {
+
+        return getInstance()
+                .darDeBajaPresupuesto(
+                        idRequerimientoPresupuesto,
+                        idRequerimientoCompra,
+                        usuario
+                );
+    }
+
+    public static boolean reactivarPresupuesto(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra)
+            throws Exception {
+
+        return getInstance()
+                .reactivarPresupuesto(
+                        idRequerimientoPresupuesto,
+                        idRequerimientoCompra
+                );
     }
 }

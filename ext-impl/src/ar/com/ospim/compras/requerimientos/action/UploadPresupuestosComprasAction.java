@@ -6,10 +6,12 @@ import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.beans.CompraArticulo;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
 import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.util.PermissionUtil;
+
 import com.liferay.documentlibrary.DuplicateFileException;
 import com.liferay.documentlibrary.FileNameException;
 import com.liferay.documentlibrary.FileSizeException;
@@ -31,16 +33,11 @@ import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import javax.portlet.PortletConfig;
-import javax.portlet.PortletSession;
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -52,6 +49,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.portlet.ActionRequest;
+import javax.portlet.ActionResponse;
+import javax.portlet.PortletConfig;
+import javax.portlet.PortletSession;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
+
 public class UploadPresupuestosComprasAction extends PortletAction {
 
     private static final Log logger =
@@ -61,6 +65,12 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
     private static final String ARTICULOS_COMPRA =
             "ARTICULOS_COMPRA";
+
+    private static final String MODO_VER =
+            "ver";
+
+    private static final String MODO_EDITAR =
+            "editar";
 
     /*
      * Deben coincidir con EditarRequerimientoCompraAction.
@@ -90,7 +100,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 );
 
         User user =
-                PortalUtil.getUser(actionRequest);
+                PortalUtil.getUser(
+                        actionRequest
+                );
 
         int idRequerimientoCompra =
                 ParamUtil.getInteger(
@@ -135,11 +147,14 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
             if (idRequerimientoCompra <= 0) {
                 throw new Exception(
-                        "Debe guardar y enviar a cotizar el requerimiento antes de subir presupuestos."
+                        "Debe guardar y enviar a cotizar el requerimiento "
+                                + "antes de administrar presupuestos."
                 );
             }
 
-            validarPermisoCotizar(user);
+            validarPermisoCotizar(
+                    user
+            );
 
             RequerimientoCompra requerimiento =
                     BusquedaRequerimientoCompraServiceUtil
@@ -150,30 +165,41 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             validarAccesoCarga(
                     true,
                     requerimiento,
-                    "ver".equalsIgnoreCase(modo)
+                    MODO_VER.equalsIgnoreCase(
+                            modo
+                    )
             );
 
-            if (Constants.ADD.equals(cmd)) {
+            if (Constants.ADD.equals(
+                    cmd
+            )) {
                 int cantidad =
                         subirPresupuestos(
-                        actionRequest,
-                        uploadReq,
-                        requerimiento
-                );
+                                actionRequest,
+                                uploadReq,
+                                requerimiento,
+                                user
+                        );
 
                 actionResponse.setRenderParameter(
                         "presupuestos_guardados",
-                        String.valueOf(cantidad)
+                        String.valueOf(
+                                cantidad
+                        )
                 );
-            } else if (Constants.DELETE.equals(cmd)) {
+            } else if (Constants.DELETE.equals(
+                    cmd
+            )) {
                 borrarPresupuesto(
                         actionRequest,
                         uploadReq,
-                        requerimiento
+                        requerimiento,
+                        user
                 );
             } else {
                 throw new Exception(
-                        "La acci�n solicitada para el presupuesto no es v�lida."
+                        "La acción solicitada para el presupuesto "
+                                + "no es válida."
                 );
             }
 
@@ -184,13 +210,19 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                     modo
             );
         } catch (Exception e) {
-            logger.error(e);
+            logger.error(
+                    e
+            );
 
-            String mensaje = e.getMessage();
+            String mensaje =
+                    e.getMessage();
 
-            if (WebKeysCompras.isEmpty(mensaje)) {
+            if (WebKeysCompras.isEmpty(
+                    mensaje
+            )) {
                 mensaje =
-                        "No se pudo procesar el presupuesto del requerimiento.";
+                        "No se pudo procesar el presupuesto "
+                                + "del requerimiento.";
             }
 
             errorUpload(
@@ -230,18 +262,28 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 );
 
         boolean soloLectura =
-                "ver".equalsIgnoreCase(modo)
+                MODO_VER.equalsIgnoreCase(
+                        modo
+                )
                         || "/compras/ver_requerimiento"
-                        .equals(strutsAction);
+                        .equals(
+                                strutsAction
+                        );
 
         try {
             User user =
-                    PortalUtil.getUser(renderRequest);
+                    PortalUtil.getUser(
+                            renderRequest
+                    );
 
             if (soloLectura) {
-                validarPermisoConsulta(user);
+                validarPermisoConsulta(
+                        user
+                );
             } else {
-                validarPermisoCotizar(user);
+                validarPermisoCotizar(
+                        user
+                );
             }
 
             int idRequerimientoCompra =
@@ -264,7 +306,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             if (requerimiento == null) {
                 if (idRequerimientoCompra > 0) {
                     throw new Exception(
-                            "No se encontr� el requerimiento de compra informado."
+                            "No se encontró el requerimiento "
+                                    + "de compra informado."
                     );
                 }
 
@@ -281,7 +324,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
             renderRequest.setAttribute(
                     WebKeysCompras.SOLO_LECTURA_ATTR,
-                    Boolean.valueOf(soloLectura)
+                    Boolean.valueOf(
+                            soloLectura
+                    )
             );
 
             if (!soloLectura) {
@@ -326,13 +371,19 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 );
             }
         } catch (Exception e) {
-            logger.error(e);
+            logger.error(
+                    e
+            );
 
-            String mensaje = e.getMessage();
+            String mensaje =
+                    e.getMessage();
 
-            if (WebKeysCompras.isEmpty(mensaje)) {
+            if (WebKeysCompras.isEmpty(
+                    mensaje
+            )) {
                 mensaje =
-                        "No se pudo cargar el requerimiento de compra luego de procesar el presupuesto.";
+                        "No se pudo cargar el requerimiento de compra "
+                                + "luego de procesar el presupuesto.";
             }
 
             renderRequest.setAttribute(
@@ -367,7 +418,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
     private int subirPresupuestos(
             ActionRequest actionRequest,
             UploadPortletRequest uploadReq,
-            RequerimientoCompra requerimiento)
+            RequerimientoCompra requerimiento,
+            User user)
             throws Exception {
 
         int cantidad =
@@ -377,7 +429,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         0
                 );
 
-        validarCantidadPresupuestos(cantidad);
+        validarCantidadPresupuestos(
+                cantidad
+        );
 
         List<PresupuestoEntrada> entradas =
                 leerEntradasPresupuesto(
@@ -385,17 +439,19 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         cantidad
                 );
 
+        int idRequerimientoCompra =
+                requerimiento
+                        .getIdRequerimientoCompra();
+
         List<PrestadorCotizacion> prestadores =
                 BusquedaRequerimientoCompraServiceUtil
                         .listarPrestadoresEnviados(
-                                requerimiento
-                                        .getIdRequerimientoCompra()
+                                idRequerimientoCompra
                         );
 
         List<PresupuestoValidado> presupuestos =
                 validarPresupuestos(
-                        requerimiento
-                                .getIdRequerimientoCompra(),
+                        idRequerimientoCompra,
                         cantidad,
                         entradas,
                         prestadores,
@@ -403,11 +459,14 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         obtenerExtensionesPermitidas()
                 );
 
+        /*
+         * Se vuelve a consultar antes de escribir para reducir la ventana
+         * entre la validación inicial y la persistencia.
+         */
         RequerimientoCompra actual =
                 BusquedaRequerimientoCompraServiceUtil
                         .getRequerimientoCompra(
-                                requerimiento
-                                        .getIdRequerimientoCompra()
+                                idRequerimientoCompra
                         );
 
         validarAccesoCarga(
@@ -427,7 +486,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (groupId <= 0) {
             throw new Exception(
-                    "No se pudo determinar el sitio actual para almacenar el presupuesto."
+                    "No se pudo determinar el sitio actual "
+                            + "para almacenar el presupuesto."
             );
         }
 
@@ -442,9 +502,13 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 folder.getFolderId();
 
         guardarPresupuestosValidados(
+                idRequerimientoCompra,
                 presupuestos,
                 serviceContext.getUserId(),
                 folderId,
+                obtenerUsuarioAuditoria(
+                        user
+                ),
                 serviceContext
         );
 
@@ -455,8 +519,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         logger.debug(
                 "AGREGAR PRESUPUESTOS AL REQUERIMIENTO DE COMPRA: "
-                        + requerimiento
-                        .getIdRequerimientoCompra()
+                        + idRequerimientoCompra
                         + " - cantidad="
                         + presupuestos.size()
                         + " - groupId="
@@ -543,11 +606,13 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             String[] extensionesPermitidas)
             throws Exception {
 
-        validarCantidadPresupuestos(cantidad);
+        validarCantidadPresupuestos(
+                cantidad
+        );
 
         if (idRequerimientoCompra <= 0) {
             throw new Exception(
-                    "El requerimiento de compra no es v�lido."
+                    "El requerimiento de compra no es válido."
             );
         }
 
@@ -555,7 +620,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 || entradas.size() != cantidad) {
 
             throw new Exception(
-                    "La colecci�n de presupuestos fue manipulada."
+                    "La colección de presupuestos fue manipulada."
             );
         }
 
@@ -568,7 +633,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 i++) {
 
             PrestadorCotizacion prestador =
-                    prestadores.get(i);
+                    prestadores.get(
+                            i
+                    );
 
             if (prestador != null
                     && prestador.getIdPrestador() > 0
@@ -591,15 +658,17 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         for (int i = 0; i < cantidad; i++) {
             PresupuestoEntrada entrada =
-                    entradas.get(i);
+                    entradas.get(
+                            i
+                    );
 
             if (entrada == null
                     || entrada.indice != i) {
 
                 throw new Exception(
-                        "El �ndice del presupuesto "
+                        "El índice del presupuesto "
                                 + (i + 1)
-                                + " no es v�lido."
+                                + " no es válido."
                 );
             }
 
@@ -621,7 +690,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 throw new Exception(
                         "El presupuesto "
                                 + (i + 1)
-                                + " supera el tama�o permitido."
+                                + " supera el tamaño permitido."
                 );
             }
 
@@ -636,7 +705,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 throw new Exception(
                         "El nombre del presupuesto "
                                 + (i + 1)
-                                + " no es v�lido."
+                                + " no es válido."
                 );
             }
 
@@ -645,7 +714,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                             nombreOriginal
                     );
 
-            if (WebKeysCompras.isEmpty(extension)
+            if (WebKeysCompras.isEmpty(
+                    extension
+            )
                     || !esExtensionPermitida(
                             extension,
                             extensionesPermitidas
@@ -654,7 +725,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 throw new Exception(
                         "El tipo del presupuesto "
                                 + (i + 1)
-                                + " no est� permitido."
+                                + " no está permitido."
                 );
             }
 
@@ -685,7 +756,10 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             String identificador =
                     UUID.randomUUID()
                             .toString()
-                            .replace("-", "");
+                            .replace(
+                                    "-",
+                                    ""
+                            );
 
             validados.add(
                     new PresupuestoValidado(
@@ -713,55 +787,212 @@ public class UploadPresupuestosComprasAction extends PortletAction {
     }
 
     protected void guardarPresupuestosValidados(
+            int idRequerimientoCompra,
             List<PresupuestoValidado> presupuestos,
             long userId,
             long folderId,
+            String usuario,
             ServiceContext serviceContext)
             throws Exception {
 
-        List<String> nombresCreados =
-                new ArrayList<String>();
+        if (idRequerimientoCompra <= 0) {
+            throw new Exception(
+                    "El requerimiento de compra no es válido."
+            );
+        }
+
+        if (presupuestos == null
+                || presupuestos.isEmpty()) {
+
+            throw new Exception(
+                    "No se informaron presupuestos para guardar."
+            );
+        }
+
+        List<PresupuestoCreado> creados =
+                new ArrayList<PresupuestoCreado>();
 
         try {
             for (int i = 0;
-                    presupuestos != null
-                            && i < presupuestos.size();
+                    i < presupuestos.size();
                     i++) {
 
-                String nombre =
-                        crearArchivoPresupuesto(
-                                userId,
-                                folderId,
-                                presupuestos.get(i),
-                                serviceContext
+                PresupuestoValidado presupuesto =
+                        presupuestos.get(
+                                i
                         );
 
-                nombresCreados.add(nombre);
-            }
-        } catch (Exception e) {
-            for (int i = nombresCreados.size() - 1;
-                    i >= 0;
-                    i--) {
-
-                try {
-                    eliminarArchivoPresupuesto(
-                            folderId,
-                            nombresCreados.get(i)
-                    );
-                } catch (Exception cleanupError) {
-                    logger.error(
-                            "No se pudo eliminar un presupuesto "
-                                    + "creado durante una carga fallida.",
-                            cleanupError
+                if (presupuesto == null) {
+                    throw new Exception(
+                            "La colección de presupuestos contiene "
+                                    + "un elemento inválido."
                     );
                 }
-            }
 
-            throw traducirErrorDocumento(e);
+                DocumentoPresupuestoCreado documento = null;
+
+                try {
+                    documento =
+                            crearArchivoPresupuesto(
+                                    userId,
+                                    folderId,
+                                    presupuesto,
+                                    serviceContext
+                            );
+
+                    RequerimientoCompraPresupuesto asociacion =
+                            registrarAsociacionPresupuesto(
+                                    idRequerimientoCompra,
+                                    presupuesto,
+                                    documento,
+                                    usuario
+                            );
+
+                    creados.add(
+                            new PresupuestoCreado(
+                                    documento,
+                                    asociacion
+                            )
+                    );
+                } catch (Exception errorCreacion) {
+                    /*
+                     * Si Document Library creó el archivo pero falló
+                     * el registro SQL, ese archivo aún no forma parte
+                     * de la lista de operaciones completadas.
+                     */
+                    if (documento != null) {
+                        try {
+                            eliminarArchivoPresupuesto(
+                                    documento.getFolderId(),
+                                    documento.getNombre()
+                            );
+                        } catch (Exception cleanupError) {
+                            logger.error(
+                                    "No se pudo eliminar el documento "
+                                            + "creado antes de fallar "
+                                            + "el registro de su asociación. "
+                                            + "fileEntryId="
+                                            + documento.getFileEntryId(),
+                                    cleanupError
+                            );
+                        }
+                    }
+
+                    throw errorCreacion;
+                }
+            }
+        } catch (Exception errorPrincipal) {
+            compensarPresupuestosCreados(
+                    idRequerimientoCompra,
+                    creados,
+                    usuario
+            );
+
+            throw traducirErrorDocumento(
+                    errorPrincipal
+            );
         }
     }
 
-    protected String crearArchivoPresupuesto(
+    private void compensarPresupuestosCreados(
+            int idRequerimientoCompra,
+            List<PresupuestoCreado> creados,
+            String usuario) {
+
+        for (int i = creados.size() - 1;
+                i >= 0;
+                i--) {
+
+            PresupuestoCreado creado =
+                    creados.get(
+                            i
+                    );
+
+            RequerimientoCompraPresupuesto asociacion =
+                    creado.getAsociacion();
+
+            DocumentoPresupuestoCreado documento =
+                    creado.getDocumento();
+
+            Integer idAsociacion =
+                    asociacion != null
+                            ? asociacion
+                            .getIdRequerimientoPresupuesto()
+                            : null;
+
+            if (idAsociacion == null
+                    || idAsociacion.intValue() <= 0) {
+
+                logger.error(
+                        "No se pudo compensar una asociación "
+                                + "de presupuesto sin identificador."
+                );
+
+                continue;
+            }
+
+            boolean asociacionDadaDeBaja = false;
+
+            try {
+                asociacionDadaDeBaja =
+                        darDeBajaAsociacionPresupuesto(
+                                idAsociacion.intValue(),
+                                idRequerimientoCompra,
+                                usuario
+                        );
+            } catch (Exception cleanupSqlError) {
+                logger.error(
+                        "No se pudo dar de baja una asociación "
+                                + "durante la compensación de la carga. "
+                                + "idRequerimientoPresupuesto="
+                                + idAsociacion,
+                        cleanupSqlError
+                );
+            }
+
+            /*
+             * Si no se pudo desactivar la asociación, no se elimina
+             * el documento. Es preferible conservar ambos antes que
+             * dejar una asociación activa apuntando a un archivo ausente.
+             */
+            if (!asociacionDadaDeBaja) {
+                continue;
+            }
+
+            try {
+                eliminarArchivoPresupuesto(
+                        documento.getFolderId(),
+                        documento.getNombre()
+                );
+            } catch (Exception cleanupFileError) {
+                logger.error(
+                        "No se pudo eliminar un presupuesto "
+                                + "durante la compensación de la carga. "
+                                + "fileEntryId="
+                                + documento.getFileEntryId(),
+                        cleanupFileError
+                );
+
+                try {
+                    reactivarAsociacionPresupuesto(
+                            idAsociacion.intValue(),
+                            idRequerimientoCompra
+                    );
+                } catch (Exception reactivarError) {
+                    logger.error(
+                            "No se pudo reactivar la asociación "
+                                    + "después de fallar la eliminación "
+                                    + "del documento. "
+                                    + "idRequerimientoPresupuesto="
+                                    + idAsociacion,
+                            reactivarError
+                    );
+                }
+            }
+        }
+    }
+
+    protected DocumentoPresupuestoCreado crearArchivoPresupuesto(
             long userId,
             long folderId,
             PresupuestoValidado presupuesto,
@@ -773,16 +1004,37 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         .addOrOverwriteFileEntry(
                                 userId,
                                 folderId,
-                                presupuesto.nombrePersistido,
-                                presupuesto.nombreOriginal,
-                                presupuesto.titulo,
-                                presupuesto.descripcionPrestador,
+                                presupuesto
+                                        .getNombrePersistido(),
+                                presupuesto
+                                        .getNombreOriginal(),
+                                presupuesto
+                                        .getTitulo(),
+                                presupuesto
+                                        .getDescripcionPrestador(),
                                 "",
-                                presupuesto.archivo,
+                                presupuesto
+                                        .getArchivo(),
                                 serviceContext
                         );
 
-        return entry.getName();
+        if (entry == null
+                || entry.getFileEntryId() <= 0L) {
+
+            throw new Exception(
+                    "Document Library no devolvió "
+                            + "un documento válido."
+            );
+        }
+
+        return new DocumentoPresupuestoCreado(
+                entry.getGroupId(),
+                entry.getFolderId(),
+                entry.getFileEntryId(),
+                entry.getUuid(),
+                entry.getName(),
+                entry.getTitle()
+        );
     }
 
     protected void eliminarArchivoPresupuesto(
@@ -790,10 +1042,166 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             String nombre)
             throws Exception {
 
+        if (folderId <= 0L
+                || WebKeysCompras.isEmpty(
+                        nombre
+                )) {
+
+            throw new Exception(
+                    "La identidad del documento a eliminar "
+                            + "no es válida."
+            );
+        }
+
         DLFileEntryLocalServiceUtil.deleteFileEntry(
                 folderId,
                 nombre
         );
+    }
+
+    protected RequerimientoCompraPresupuesto
+    registrarAsociacionPresupuesto(
+            int idRequerimientoCompra,
+            PresupuestoValidado presupuesto,
+            DocumentoPresupuestoCreado documento,
+            String usuario)
+            throws Exception {
+
+        if (idRequerimientoCompra <= 0) {
+            throw new Exception(
+                    "El requerimiento de compra no es válido."
+            );
+        }
+
+        if (presupuesto == null) {
+            throw new Exception(
+                    "El presupuesto validado no puede ser nulo."
+            );
+        }
+
+        if (presupuesto.getIdPrestador() <= 0) {
+            throw new Exception(
+                    "El prestador del presupuesto no es válido."
+            );
+        }
+
+        if (documento == null
+                || documento.getGroupId() <= 0L
+                || documento.getFolderId() <= 0L
+                || documento.getFileEntryId() <= 0L
+                || WebKeysCompras.isEmpty(
+                        documento.getNombre()
+                )
+                || WebKeysCompras.isEmpty(
+                        documento.getTitulo()
+                )) {
+
+            throw new Exception(
+                    "No se pudo determinar el documento "
+                            + "creado en Document Library."
+            );
+        }
+
+        RequerimientoCompraPresupuesto asociacion =
+                new RequerimientoCompraPresupuesto();
+
+        asociacion.setIdRequerimiento(
+                Integer.valueOf(
+                        idRequerimientoCompra
+                )
+        );
+
+        asociacion.setIdPrestador(
+                Integer.valueOf(
+                        presupuesto.getIdPrestador()
+                )
+        );
+
+        asociacion.setDlGroupId(
+                Long.valueOf(
+                        documento.getGroupId()
+                )
+        );
+
+        asociacion.setDlFolderId(
+                Long.valueOf(
+                        documento.getFolderId()
+                )
+        );
+
+        asociacion.setDlFileEntryId(
+                Long.valueOf(
+                        documento.getFileEntryId()
+                )
+        );
+
+        asociacion.setDlFileUuid(
+                documento.getUuid()
+        );
+
+        asociacion.setNombreOriginal(
+                presupuesto.getNombreOriginal()
+        );
+
+        asociacion.setNombrePersistido(
+                documento.getNombre()
+        );
+
+        asociacion.setTitulo(
+                documento.getTitulo()
+        );
+
+        asociacion.setDescripcionPrestador(
+                presupuesto.getDescripcionPrestador()
+        );
+
+        int id =
+                EditarRequerimientoCompraServiceUtil
+                        .registrarPresupuesto(
+                                asociacion,
+                                usuario
+                        );
+
+        if (id <= 0) {
+            throw new Exception(
+                    "No se pudo obtener el identificador "
+                            + "de la asociación del presupuesto."
+            );
+        }
+
+        asociacion.setIdRequerimientoPresupuesto(
+                Integer.valueOf(
+                        id
+                )
+        );
+
+        return asociacion;
+    }
+
+    protected boolean darDeBajaAsociacionPresupuesto(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra,
+            String usuario)
+            throws Exception {
+
+        return EditarRequerimientoCompraServiceUtil
+                .darDeBajaPresupuesto(
+                        idRequerimientoPresupuesto,
+                        idRequerimientoCompra,
+                        usuario
+                );
+    }
+
+    protected boolean reactivarAsociacionPresupuesto(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra)
+            throws Exception {
+
+        return EditarRequerimientoCompraServiceUtil
+                .reactivarPresupuesto(
+                        idRequerimientoPresupuesto,
+                        idRequerimientoCompra
+                );
     }
 
     private Exception traducirErrorDocumento(
@@ -808,14 +1216,16 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (error instanceof FileSizeException) {
             return new Exception(
-                    "Uno de los presupuestos supera el tama�o permitido.",
+                    "Uno de los presupuestos supera "
+                            + "el tamaño permitido.",
                     error
             );
         }
 
         if (error instanceof FileNameException) {
             return new Exception(
-                    "El tipo de uno de los presupuestos no est� permitido.",
+                    "El tipo de uno de los presupuestos "
+                            + "no está permitido.",
                     error
             );
         }
@@ -826,142 +1236,242 @@ public class UploadPresupuestosComprasAction extends PortletAction {
     private void borrarPresupuesto(
             ActionRequest actionRequest,
             UploadPortletRequest uploadReq,
-            RequerimientoCompra requerimiento)
+            RequerimientoCompra requerimiento,
+            User user)
             throws Exception {
 
-        long folderId =
-                ParamUtil.getLong(
+        int idRequerimientoPresupuesto =
+                ParamUtil.getInteger(
                         uploadReq,
-                        "folderid",
-                        0L
+                        "id_requerimiento_presupuesto",
+                        0
                 );
 
-        String name =
-                ParamUtil.getString(
-                        uploadReq,
-                        "filename",
-                        ""
-                );
-
-        String title =
-                ParamUtil.getString(
-                        uploadReq,
-                        "filetitle",
-                        ""
-                );
-
-        if (folderId <= 0
-                || WebKeysCompras.isEmpty(name)
-                || WebKeysCompras.isEmpty(title)) {
-
-            errorUpload(
-                    actionRequest,
+        if (idRequerimientoPresupuesto <= 0) {
+            throw new Exception(
                     "Debe informar el presupuesto a eliminar."
             );
+        }
 
-            return;
+        if (requerimiento == null
+                || requerimiento
+                .getIdRequerimientoCompra() <= 0) {
+
+            throw new Exception(
+                    "No se encontró el requerimiento "
+                            + "de compra informado."
+            );
+        }
+
+        int idRequerimientoCompra =
+                requerimiento
+                        .getIdRequerimientoCompra();
+
+        RequerimientoCompraPresupuesto presupuesto =
+                BusquedaRequerimientoCompraServiceUtil
+                        .getPresupuesto(
+                                idRequerimientoPresupuesto,
+                                idRequerimientoCompra
+                        );
+
+        if (presupuesto == null) {
+            throw new Exception(
+                    "El presupuesto informado no pertenece "
+                            + "al requerimiento actual."
+            );
+        }
+
+        validarIdentidadAsociacion(
+                presupuesto
+        );
+
+        ServiceContext serviceContext =
+                ServiceContextFactory.getInstance(
+                        DLFileEntry.class.getName(),
+                        actionRequest
+                );
+
+        long scopeGroupId =
+                serviceContext.getScopeGroupId();
+
+        if (scopeGroupId <= 0L) {
+            throw new Exception(
+                    "No se pudo determinar el sitio actual."
+            );
+        }
+
+        if (presupuesto
+                .getDlGroupId()
+                .longValue() != scopeGroupId) {
+
+            throw new Exception(
+                    "El presupuesto informado no pertenece "
+                            + "al sitio actual."
+            );
+        }
+
+        DLFileEntry fileEntry =
+                DLFileEntryLocalServiceUtil
+                        .getDLFileEntry(
+                                presupuesto
+                                        .getDlFileEntryId()
+                                        .longValue()
+                        );
+
+        validarDocumentoAsociado(
+                presupuesto,
+                fileEntry
+        );
+
+        boolean asociacionDadaDeBaja =
+                darDeBajaAsociacionPresupuesto(
+                        idRequerimientoPresupuesto,
+                        idRequerimientoCompra,
+                        obtenerUsuarioAuditoria(
+                                user
+                        )
+                );
+
+        if (!asociacionDadaDeBaja) {
+            throw new Exception(
+                    "El presupuesto ya fue eliminado "
+                            + "o fue modificado por otro proceso."
+            );
         }
 
         try {
-            ServiceContext serviceContext =
-                    ServiceContextFactory.getInstance(
-                            DLFileEntry.class.getName(),
-                            actionRequest
-                    );
-
-            long groupId =
-                    serviceContext.getScopeGroupId();
-
-            DLFolder folderCompras =
-                    getFolderCompras(groupId);
-
-            long folderComprasId =
-                    folderCompras.getFolderId();
-
-            if (folderId != folderComprasId) {
-                throw new Exception(
-                        "El presupuesto informado no pertenece a la carpeta de Compras."
-                );
-            }
-
-            String prefijoEsperado =
-                    WebKeysCompras
-                            .getPrefijoDocumentoRequerimientoCompra(
-                                    requerimiento
-                                            .getIdRequerimientoCompra()
-                            );
-
-            DLFileEntry fileEntry =
-                    DLFileEntryLocalServiceUtil
-                            .getFileEntryByTitle(
-                                    folderComprasId,
-                                    title
-                            );
-
-            boolean perteneceAlRequerimiento =
-                    fileEntry != null
-                    && (fileEntry.getTitle()
-                            .startsWith(
-                                    prefijoEsperado
-                            )
-                        || fileEntry.getName()
-                            .startsWith(
-                                    prefijoEsperado
-                            ));
-
-            if (fileEntry == null
-                    || fileEntry.getFolderId()
-                    != folderComprasId
-                    || !perteneceAlRequerimiento) {
-
-                throw new Exception(
-                        "El presupuesto informado no pertenece al requerimiento actual."
-                );
-            }
-
-            if (!name.equals(
+            eliminarArchivoPresupuesto(
+                    fileEntry.getFolderId(),
                     fileEntry.getName()
-            )) {
-                throw new Exception(
-                        "El presupuesto informado no coincide con el documento persistido."
+            );
+        } catch (Exception deleteError) {
+            try {
+                boolean reactivada =
+                        reactivarAsociacionPresupuesto(
+                                idRequerimientoPresupuesto,
+                                idRequerimientoCompra
+                        );
+
+                if (!reactivada) {
+                    logger.error(
+                            "La eliminación física del presupuesto falló "
+                                    + "y la asociación no pudo reactivarse. "
+                                    + "idRequerimientoPresupuesto="
+                                    + idRequerimientoPresupuesto
+                    );
+                }
+            } catch (Exception reactivarError) {
+                logger.error(
+                        "La eliminación física del presupuesto falló "
+                                + "y también falló la reactivación "
+                                + "de su asociación. "
+                                + "idRequerimientoPresupuesto="
+                                + idRequerimientoPresupuesto,
+                        reactivarError
                 );
             }
 
-            DLFileEntryLocalServiceUtil
-                    .deleteFileEntry(
-                            folderComprasId,
-                            fileEntry.getName()
+            throw deleteError;
+        }
+
+        SessionMessages.add(
+                actionRequest,
+                "requerimiento-compra-presupuesto-borrado"
+        );
+
+        logger.debug(
+                "BORRAR PRESUPUESTO DEL REQUERIMIENTO DE COMPRA: "
+                        + idRequerimientoCompra
+                        + " - idRequerimientoPresupuesto="
+                        + idRequerimientoPresupuesto
+                        + " - groupId="
+                        + fileEntry.getGroupId()
+                        + " - folderId="
+                        + fileEntry.getFolderId()
+                        + " - fileEntryId="
+                        + fileEntry.getFileEntryId()
+                        + " - name="
+                        + fileEntry.getName()
+        );
+    }
+
+    private void validarIdentidadAsociacion(
+            RequerimientoCompraPresupuesto presupuesto)
+            throws Exception {
+
+        if (presupuesto.getDlGroupId() == null
+                || presupuesto
+                .getDlGroupId()
+                .longValue() <= 0L
+                || presupuesto.getDlFolderId() == null
+                || presupuesto
+                .getDlFolderId()
+                .longValue() <= 0L
+                || presupuesto.getDlFileEntryId() == null
+                || presupuesto
+                .getDlFileEntryId()
+                .longValue() <= 0L
+                || WebKeysCompras.isEmpty(
+                        presupuesto
+                                .getNombrePersistido()
+                )) {
+
+            throw new Exception(
+                    "La asociación del presupuesto contiene "
+                            + "una identidad de documento inválida."
+            );
+        }
+    }
+
+    private void validarDocumentoAsociado(
+            RequerimientoCompraPresupuesto presupuesto,
+            DLFileEntry fileEntry)
+            throws Exception {
+
+        if (fileEntry == null) {
+            throw new Exception(
+                    "No se encontró el documento asociado "
+                            + "al presupuesto."
+            );
+        }
+
+        boolean coincide =
+                fileEntry.getFileEntryId()
+                        == presupuesto
+                        .getDlFileEntryId()
+                        .longValue()
+                        && fileEntry.getGroupId()
+                        == presupuesto
+                        .getDlGroupId()
+                        .longValue()
+                        && fileEntry.getFolderId()
+                        == presupuesto
+                        .getDlFolderId()
+                        .longValue()
+                        && presupuesto
+                        .getNombrePersistido()
+                        .equals(
+                                fileEntry.getName()
+                        );
+
+        String uuidPersistido =
+                presupuesto.getDlFileUuid();
+
+        if (coincide
+                && !WebKeysCompras.isEmpty(
+                        uuidPersistido
+                )) {
+
+            coincide =
+                    uuidPersistido.equals(
+                            fileEntry.getUuid()
                     );
+        }
 
-            SessionMessages.add(
-                    actionRequest,
-                    "requerimiento-compra-presupuesto-borrado"
-            );
-
-            logger.debug(
-                    "BORRAR PRESUPUESTO DEL REQUERIMIENTO DE COMPRA: "
-                            + requerimiento
-                            .getIdRequerimientoCompra()
-                            + " - groupId="
-                            + groupId
-                            + " - folderId="
-                            + folderComprasId
-                            + " - name="
-                            + fileEntry.getName()
-            );
-        } catch (Exception e) {
-            logger.error(e);
-
-            String mensaje = e.getMessage();
-
-            if (WebKeysCompras.isEmpty(mensaje)) {
-                mensaje =
-                        "No se pudo eliminar el presupuesto.";
-            }
-
-            errorUpload(
-                    actionRequest,
-                    mensaje
+        if (!coincide) {
+            throw new Exception(
+                    "El documento persistido no coincide "
+                            + "con la asociación del presupuesto."
             );
         }
     }
@@ -979,10 +1489,13 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         );
 
         try {
-            return getFolderCompras(groupId);
+            return getFolderCompras(
+                    groupId
+            );
         } catch (NoSuchFolderException e) {
             logger.info(
-                    "La carpeta de Compras no existe. Se intentar� crear: "
+                    "La carpeta de Compras no existe. "
+                            + "Se intentará crear: "
                             + "groupId="
                             + groupId
                             + ", parentFolderId="
@@ -1020,9 +1533,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         } catch (Exception createException) {
             /*
              * Si dos requests intentan crear la carpeta al mismo tiempo,
-             * una de ellas puede fallar porque la otra ya la cre�.
-             *
-             * Antes de informar un error, se intenta recuperar nuevamente.
+             * una puede fallar porque la otra ya la creó.
              */
             try {
                 DLFolder folder =
@@ -1031,8 +1542,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         );
 
                 logger.warn(
-                        "La creaci�n de la carpeta de presupuestos fall�, "
-                                + "pero la carpeta ya existe y ser� reutilizada. "
+                        "La creación de la carpeta de presupuestos falló, "
+                                + "pero la carpeta ya existe y será reutilizada. "
                                 + "groupId="
                                 + groupId
                                 + ", folderId="
@@ -1073,7 +1584,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (groupId <= 0) {
             throw new Exception(
-                    "El groupId de Document Library no es v�lido."
+                    "El groupId de Document Library no es válido."
             );
         }
 
@@ -1100,13 +1611,15 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (userId <= 0) {
             throw new Exception(
-                    "No se pudo determinar el usuario que crea la carpeta de presupuestos."
+                    "No se pudo determinar el usuario que crea "
+                            + "la carpeta de presupuestos."
             );
         }
 
         if (serviceContext == null) {
             throw new Exception(
-                    "No se pudo preparar el contexto de Document Library."
+                    "No se pudo preparar el contexto "
+                            + "de Document Library."
             );
         }
     }
@@ -1121,13 +1634,27 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         String nombre =
                 filename.trim();
 
-        if (WebKeysCompras.isEmpty(nombre)
-                || ".".equals(nombre)
-                || "..".equals(nombre)
-                || nombre.indexOf("..") >= 0
-                || nombre.indexOf('/') >= 0
-                || nombre.indexOf('\\') >= 0
-                || nombre.matches(".*\\p{Cntrl}.*")) {
+        if (WebKeysCompras.isEmpty(
+                nombre
+        )
+                || ".".equals(
+                        nombre
+                )
+                || "..".equals(
+                        nombre
+                )
+                || nombre.indexOf(
+                        ".."
+                ) >= 0
+                || nombre.indexOf(
+                        '/'
+                ) >= 0
+                || nombre.indexOf(
+                        '\\'
+                ) >= 0
+                || nombre.matches(
+                        ".*\\p{Cntrl}.*"
+                )) {
 
             return "";
         }
@@ -1138,12 +1665,16 @@ public class UploadPresupuestosComprasAction extends PortletAction {
     protected String obtenerExtensionSegura(
             String nombreOriginal) {
 
-        if (WebKeysCompras.isEmpty(nombreOriginal)) {
+        if (WebKeysCompras.isEmpty(
+                nombreOriginal
+        )) {
             return "";
         }
 
         int posicionExtension =
-                nombreOriginal.lastIndexOf('.');
+                nombreOriginal.lastIndexOf(
+                        '.'
+                );
 
         if (posicionExtension < 0
                 || posicionExtension
@@ -1179,7 +1710,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             String extension,
             String[] extensionesPermitidas) {
 
-        if (WebKeysCompras.isEmpty(extension)) {
+        if (WebKeysCompras.isEmpty(
+                extension
+        )) {
             return false;
         }
 
@@ -1201,22 +1734,32 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             String permitida =
                     extensionesPermitidas[i] != null
                             ? extensionesPermitidas[i]
-                                    .trim()
-                                    .toLowerCase(
-                                            Locale.ENGLISH
-                                    )
+                            .trim()
+                            .toLowerCase(
+                                    Locale.ENGLISH
+                            )
                             : "";
 
-            if ("*".equals(permitida)
-                    || "*.*".equals(permitida)) {
+            if ("*".equals(
+                    permitida
+            )
+                    || "*.*".equals(
+                            permitida
+                    )) {
 
                 return true;
             }
 
-            if (!WebKeysCompras.isEmpty(permitida)
-                    && permitida.charAt(0) != '.') {
+            if (!WebKeysCompras.isEmpty(
+                    permitida
+            )
+                    && permitida.charAt(
+                            0
+                    ) != '.') {
 
-                permitida = "." + permitida;
+                permitida =
+                        "."
+                                + permitida;
             }
 
             if (extensionNormalizada.equals(
@@ -1259,7 +1802,10 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         String sufijo =
                 "_"
-                        + identificador.substring(0, 8);
+                        + identificador.substring(
+                                0,
+                                8
+                        );
 
         int longitudDisponible =
                 WebKeysCompras
@@ -1273,7 +1819,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 );
 
         if (longitudDisponible <= 0) {
-            nombre = "";
+            nombre =
+                    "";
         } else if (nombre.length()
                 > longitudDisponible) {
 
@@ -1308,8 +1855,12 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         )
                         .trim();
 
-        if (".".equals(nombre)
-                || "..".equals(nombre)) {
+        if (".".equals(
+                nombre
+        )
+                || "..".equals(
+                        nombre
+                )) {
 
             return "";
         }
@@ -1325,7 +1876,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         "dl.file.max.size"
                 );
 
-        if (WebKeysCompras.isEmpty(valor)) {
+        if (WebKeysCompras.isEmpty(
+                valor
+        )) {
             return Long.MAX_VALUE;
         }
 
@@ -1361,18 +1914,24 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         request.setAttribute(
                 WebKeysCompras
                         .ID_REQUERIMIENTO_COMPRA_EN_EDICION,
-                Integer.valueOf(idRequerimientoCompra)
+                Integer.valueOf(
+                        idRequerimientoCompra
+                )
         );
 
         response.setRenderParameter(
                 "id_requerimiento_compra",
-                String.valueOf(idRequerimientoCompra)
+                String.valueOf(
+                        idRequerimientoCompra
+                )
         );
 
-        if ("ver".equalsIgnoreCase(modo)) {
+        if (MODO_VER.equalsIgnoreCase(
+                modo
+        )) {
             response.setRenderParameter(
                     "modo",
-                    "ver"
+                    MODO_VER
             );
 
             response.setRenderParameter(
@@ -1386,6 +1945,15 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                             .FORWARD_COMPRAS_VER_REQUERIMIENTO
             );
         } else {
+            /*
+             * Se informa explícitamente el modo de edición para impedir
+             * que un modo=ver residual vuelva a dejar la pantalla readonly.
+             */
+            response.setRenderParameter(
+                    "modo",
+                    MODO_EDITAR
+            );
+
             response.setRenderParameter(
                     "struts_action",
                     "/compras/editar_requerimiento"
@@ -1408,7 +1976,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 "errorUploadFile"
         );
 
-        if (WebKeysCompras.isEmpty(mensaje)) {
+        if (WebKeysCompras.isEmpty(
+                mensaje
+        )) {
             mensaje =
                     "No se pudo procesar el presupuesto.";
         }
@@ -1474,9 +2044,12 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             User user)
             throws Exception {
 
-        if (!tieneRolCotizar(user)) {
+        if (!tieneRolCotizar(
+                user
+        )) {
             throw new Exception(
-                    "No posee permisos para administrar presupuestos de requerimientos de compra."
+                    "No posee permisos para administrar presupuestos "
+                            + "de requerimientos de compra."
             );
         }
     }
@@ -1500,7 +2073,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (!tieneRolCotizar) {
             throw new Exception(
-                    "No posee permisos para administrar presupuestos de requerimientos de compra."
+                    "No posee permisos para administrar presupuestos "
+                            + "de requerimientos de compra."
             );
         }
 
@@ -1509,13 +2083,15 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 .getIdRequerimientoCompra() <= 0) {
 
             throw new Exception(
-                    "No se encontr� el requerimiento de compra informado."
+                    "No se encontró el requerimiento "
+                            + "de compra informado."
             );
         }
 
         if (soloLectura) {
             throw new Exception(
-                    "No se pueden administrar presupuestos en modo de solo lectura."
+                    "No se pueden administrar presupuestos "
+                            + "en modo de solo lectura."
             );
         }
 
@@ -1523,7 +2099,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 .puedeAdministrarPresupuestos()) {
 
             throw new Exception(
-                    "Solo se pueden administrar presupuestos en estado A COTIZAR. Estado actual: "
+                    "Solo se pueden administrar presupuestos "
+                            + "en estado A COTIZAR. Estado actual: "
                             + requerimiento
                             .getEstadoDescripcionVisible()
                             + "."
@@ -1539,10 +2116,12 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         }
 
         String token =
-                UUID.randomUUID().toString();
+                UUID.randomUUID()
+                        .toString();
 
         PortletSession session =
-                renderRequest.getPortletSession();
+                renderRequest
+                        .getPortletSession();
 
         synchronized (session) {
             Set tokens = null;
@@ -1553,17 +2132,21 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                     );
 
             if (tokensObj instanceof Set) {
-                tokens = (Set) tokensObj;
+                tokens =
+                        (Set) tokensObj;
             }
 
             if (tokens == null
                     || tokens.size()
                     >= MAX_TOKENS_GUARDADO_COMPRA) {
 
-                tokens = new HashSet();
+                tokens =
+                        new HashSet();
             }
 
-            tokens.add(token);
+            tokens.add(
+                    token
+            );
 
             session.setAttribute(
                     SESSION_COMPRAS_SAVE_TOKENS,
@@ -1675,7 +2258,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                                             .ID_DEFAULT_ENTIDAD,
                                     0,
                                     0,
-                                    new BigDecimal(0)
+                                    new BigDecimal(
+                                            0
+                                    )
                             );
 
             if (afiliados != null
@@ -1684,12 +2269,37 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 renderRequest.setAttribute(
                         WebKeysCompras
                                 .AFILIADO_REQUERIMIENTO_COMPRA,
-                        afiliados.get(0)
+                        afiliados.get(
+                                0
+                        )
                 );
             }
         } catch (Exception e) {
-            logger.error(e);
+            logger.error(
+                    e
+            );
         }
+    }
+
+    private String obtenerUsuarioAuditoria(
+            User user) {
+
+        if (user == null) {
+            return "sistema";
+        }
+
+        String screenName =
+                user.getScreenName();
+
+        if (!WebKeysCompras.isEmpty(
+                screenName
+        )) {
+            return screenName.trim();
+        }
+
+        return String.valueOf(
+                user.getUserId()
+        );
     }
 
     protected static class PresupuestoEntrada {
@@ -1705,10 +2315,17 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 String nombreOriginal,
                 int idPrestador) {
 
-            this.indice = indice;
-            this.archivo = archivo;
-            this.nombreOriginal = nombreOriginal;
-            this.idPrestador = idPrestador;
+            this.indice =
+                    indice;
+
+            this.archivo =
+                    archivo;
+
+            this.nombreOriginal =
+                    nombreOriginal;
+
+            this.idPrestador =
+                    idPrestador;
         }
     }
 
@@ -1731,18 +2348,42 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 String titulo,
                 String descripcionPrestador) {
 
-            this.indice = indice;
-            this.archivo = archivo;
-            this.nombreOriginal = nombreOriginal;
-            this.prestador = prestador;
-            this.nombrePersistido = nombrePersistido;
-            this.titulo = titulo;
+            this.indice =
+                    indice;
+
+            this.archivo =
+                    archivo;
+
+            this.nombreOriginal =
+                    nombreOriginal;
+
+            this.prestador =
+                    prestador;
+
+            this.nombrePersistido =
+                    nombrePersistido;
+
+            this.titulo =
+                    titulo;
+
             this.descripcionPrestador =
                     descripcionPrestador;
         }
 
         public int getIndice() {
             return indice;
+        }
+
+        public File getArchivo() {
+            return archivo;
+        }
+
+        public String getNombreOriginal() {
+            return nombreOriginal;
+        }
+
+        public PrestadorCotizacion getPrestador() {
+            return prestador;
         }
 
         public int getIdPrestador() {
@@ -1761,6 +2402,92 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         public String getDescripcionPrestador() {
             return descripcionPrestador;
+        }
+    }
+
+    protected static class DocumentoPresupuestoCreado {
+
+        private final long groupId;
+        private final long folderId;
+        private final long fileEntryId;
+        private final String uuid;
+        private final String nombre;
+        private final String titulo;
+
+        protected DocumentoPresupuestoCreado(
+                long groupId,
+                long folderId,
+                long fileEntryId,
+                String uuid,
+                String nombre,
+                String titulo) {
+
+            this.groupId =
+                    groupId;
+
+            this.folderId =
+                    folderId;
+
+            this.fileEntryId =
+                    fileEntryId;
+
+            this.uuid =
+                    uuid;
+
+            this.nombre =
+                    nombre;
+
+            this.titulo =
+                    titulo;
+        }
+
+        public long getGroupId() {
+            return groupId;
+        }
+
+        public long getFolderId() {
+            return folderId;
+        }
+
+        public long getFileEntryId() {
+            return fileEntryId;
+        }
+
+        public String getUuid() {
+            return uuid;
+        }
+
+        public String getNombre() {
+            return nombre;
+        }
+
+        public String getTitulo() {
+            return titulo;
+        }
+    }
+
+    private static class PresupuestoCreado {
+
+        private final DocumentoPresupuestoCreado documento;
+        private final RequerimientoCompraPresupuesto asociacion;
+
+        private PresupuestoCreado(
+                DocumentoPresupuestoCreado documento,
+                RequerimientoCompraPresupuesto asociacion) {
+
+            this.documento =
+                    documento;
+
+            this.asociacion =
+                    asociacion;
+        }
+
+        public DocumentoPresupuestoCreado getDocumento() {
+            return documento;
+        }
+
+        public RequerimientoCompraPresupuesto getAsociacion() {
+            return asociacion;
         }
     }
 }

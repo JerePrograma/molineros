@@ -70,4 +70,28 @@ public class BusquedaRequerimientoCompraServiceUtil {
 
     private BusquedaRequerimientoCompraServiceUtil() {
     }
+
+    public static List<RequerimientoCompraPresupuesto>
+    listarPresupuestos(
+            int idRequerimientoCompra)
+            throws Exception {
+
+        return getInstance()
+                .listarPresupuestos(
+                        idRequerimientoCompra
+                );
+    }
+
+    public static RequerimientoCompraPresupuesto
+    getPresupuesto(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra)
+            throws Exception {
+
+        return getInstance()
+                .getPresupuesto(
+                        idRequerimientoPresupuesto,
+                        idRequerimientoCompra
+                );
+    }
 }

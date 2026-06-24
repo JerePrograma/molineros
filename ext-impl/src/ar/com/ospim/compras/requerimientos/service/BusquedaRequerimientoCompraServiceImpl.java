@@ -63,6 +63,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     "ORDER BY p.descripcion, p.cuit, p.id_prestador " +
                     "LIMIT ?";
 
+    private static final String SQL_LISTAR_PRESUPUESTOS =
+            "{call compras.listar_requerimiento_presupuestos(?)}";
+
+    private static final String SQL_GET_PRESUPUESTO =
+            "{call compras.get_requerimiento_presupuesto(?,?)}";
+
     public List<RequerimientoCompra> buscarRequerimientos(RequerimientoCompraFiltro filtro) throws Exception {
         Connection con = null;
         CallableStatement stmt = null;
@@ -489,6 +495,28 @@ public class BusquedaRequerimientoCompraServiceImpl {
         return rs.wasNull() ? null : Integer.valueOf(value);
     }
 
+    private Long getLong(
+            ResultSet rs,
+            String column)
+            throws Exception {
+
+        if (!hasColumn(
+                rs,
+                column
+        )) {
+            return null;
+        }
+
+        long value =
+                rs.getLong(
+                        column
+                );
+
+        return rs.wasNull()
+                ? null
+                : Long.valueOf(value);
+    }
+
     private Boolean getBoolean(ResultSet rs, String column) throws Exception {
         if (!hasColumn(rs, column)) {
             return null;
@@ -522,5 +550,254 @@ public class BusquedaRequerimientoCompraServiceImpl {
             } catch (Exception ignored) {
             }
         }
+    }
+
+    public List<RequerimientoCompraPresupuesto>
+    listarPresupuestos(
+            int idRequerimientoCompra)
+            throws Exception {
+
+        if (idRequerimientoCompra <= 0) {
+            throw new Exception(
+                    "Debe informar el requerimiento de compra."
+            );
+        }
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+
+        List<RequerimientoCompraPresupuesto> presupuestos =
+                new ArrayList<RequerimientoCompraPresupuesto>();
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            stmt = con.prepareCall(
+                    SQL_LISTAR_PRESUPUESTOS
+            );
+
+            stmt.setInt(
+                    1,
+                    idRequerimientoCompra
+            );
+
+            rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                presupuestos.add(
+                        mapPresupuesto(rs)
+                );
+            }
+
+            return presupuestos;
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudieron listar los presupuestos "
+                            + "del requerimiento. "
+                            + "idRequerimiento="
+                            + idRequerimientoCompra,
+                    e
+            );
+
+            throw e;
+        } finally {
+            closeQuietly(rs);
+
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
+        }
+    }
+
+    public RequerimientoCompraPresupuesto getPresupuesto(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra)
+            throws Exception {
+
+        if (idRequerimientoPresupuesto <= 0) {
+            throw new Exception(
+                    "Debe informar el presupuesto del requerimiento."
+            );
+        }
+
+        if (idRequerimientoCompra <= 0) {
+            throw new Exception(
+                    "Debe informar el requerimiento de compra."
+            );
+        }
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            stmt = con.prepareCall(
+                    SQL_GET_PRESUPUESTO
+            );
+
+            stmt.setInt(
+                    1,
+                    idRequerimientoPresupuesto
+            );
+
+            stmt.setInt(
+                    2,
+                    idRequerimientoCompra
+            );
+
+            rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return mapPresupuesto(rs);
+            }
+
+            return null;
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudo recuperar el presupuesto "
+                            + "del requerimiento. "
+                            + "idRequerimientoPresupuesto="
+                            + idRequerimientoPresupuesto
+                            + ", idRequerimiento="
+                            + idRequerimientoCompra,
+                    e
+            );
+
+            throw e;
+        } finally {
+            closeQuietly(rs);
+
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
+        }
+    }
+
+    private RequerimientoCompraPresupuesto mapPresupuesto(
+            ResultSet rs)
+            throws Exception {
+
+        RequerimientoCompraPresupuesto presupuesto =
+                new RequerimientoCompraPresupuesto();
+
+        presupuesto.setIdRequerimientoPresupuesto(
+                getInteger(
+                        rs,
+                        "id_requerimiento_presupuesto"
+                )
+        );
+
+        presupuesto.setIdRequerimiento(
+                getInteger(
+                        rs,
+                        "id_requerimiento"
+                )
+        );
+
+        presupuesto.setIdPrestador(
+                getInteger(
+                        rs,
+                        "id_prestador"
+                )
+        );
+
+        presupuesto.setDlGroupId(
+                getLong(
+                        rs,
+                        "dl_group_id"
+                )
+        );
+
+        presupuesto.setDlFolderId(
+                getLong(
+                        rs,
+                        "dl_folder_id"
+                )
+        );
+
+        presupuesto.setDlFileEntryId(
+                getLong(
+                        rs,
+                        "dl_file_entry_id"
+                )
+        );
+
+        presupuesto.setDlFileUuid(
+                getString(
+                        rs,
+                        "dl_file_uuid"
+                )
+        );
+
+        presupuesto.setNombreOriginal(
+                getString(
+                        rs,
+                        "nombre_original"
+                )
+        );
+
+        presupuesto.setNombrePersistido(
+                getString(
+                        rs,
+                        "nombre_persistido"
+                )
+        );
+
+        presupuesto.setTitulo(
+                getString(
+                        rs,
+                        "titulo"
+                )
+        );
+
+        presupuesto.setDescripcionPrestador(
+                getString(
+                        rs,
+                        "descripcion_prestador"
+                )
+        );
+
+        if (hasColumn(
+                rs,
+                "alta_fecha"
+        )) {
+            presupuesto.setAltaFecha(
+                    rs.getTimestamp(
+                            "alta_fecha"
+                    )
+            );
+        }
+
+        presupuesto.setAltaUsr(
+                getString(
+                        rs,
+                        "alta_usr"
+                )
+        );
+
+        if (hasColumn(
+                rs,
+                "baja_fecha"
+        )) {
+            presupuesto.setBajaFecha(
+                    rs.getTimestamp(
+                            "baja_fecha"
+                    )
+            );
+        }
+
+        presupuesto.setBajaUsr(
+                getString(
+                        rs,
+                        "baja_usr"
+                )
+        );
+
+        return presupuesto;
     }
 }

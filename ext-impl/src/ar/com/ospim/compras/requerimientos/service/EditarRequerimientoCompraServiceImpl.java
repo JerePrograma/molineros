@@ -2,10 +2,7 @@ package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.beans.CompraArticulo;
-import ar.com.ospim.compras.requerimientos.beans.GuardadoCotizacionResultado;
-import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
+import ar.com.ospim.compras.requerimientos.beans.*;
 import ar.com.ospim.util.ConnectionHelper;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -113,6 +110,18 @@ public class EditarRequerimientoCompraServiceImpl {
 
     private static final String SQL_BORRAR_ARTICULO =
             "{ call compras.borrar_articulo(?) }";
+
+    private static final String SQL_REGISTRAR_PRESUPUESTO =
+            "{ ? = call compras.registrar_requerimiento_presupuesto("
+                    + "?,?,?,?,?,?,?,?,?,?,?) }";
+
+    private static final String SQL_BAJA_PRESUPUESTO =
+            "{ ? = call compras.baja_requerimiento_presupuesto("
+                    + "?,?,?) }";
+
+    private static final String SQL_REACTIVAR_PRESUPUESTO =
+            "{ ? = call compras.reactivar_requerimiento_presupuesto("
+                    + "?,?) }";
 
     public int guardarRequerimientoCompra(
             RequerimientoCompra requerimiento,
@@ -1359,4 +1368,374 @@ public class EditarRequerimientoCompraServiceImpl {
             }
         }
     }
+
+    public int registrarPresupuesto(
+            RequerimientoCompraPresupuesto presupuesto,
+            String usuario)
+            throws Exception {
+
+        validarPresupuestoParaRegistrar(
+                presupuesto
+        );
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            stmt = con.prepareCall(
+                    SQL_REGISTRAR_PRESUPUESTO
+            );
+
+            /*
+             * 1: valor de retorno.
+             * 2..12: argumentos de la función.
+             */
+            stmt.registerOutParameter(
+                    1,
+                    Types.INTEGER
+            );
+
+            stmt.setInt(
+                    2,
+                    presupuesto
+                            .getIdRequerimiento()
+                            .intValue()
+            );
+
+            stmt.setInt(
+                    3,
+                    presupuesto
+                            .getIdPrestador()
+                            .intValue()
+            );
+
+            stmt.setLong(
+                    4,
+                    presupuesto
+                            .getDlGroupId()
+                            .longValue()
+            );
+
+            stmt.setLong(
+                    5,
+                    presupuesto
+                            .getDlFolderId()
+                            .longValue()
+            );
+
+            stmt.setLong(
+                    6,
+                    presupuesto
+                            .getDlFileEntryId()
+                            .longValue()
+            );
+
+            stmt.setString(
+                    7,
+                    emptyToNull(
+                            presupuesto.getDlFileUuid()
+                    )
+            );
+
+            stmt.setString(
+                    8,
+                    emptyToNull(
+                            presupuesto.getNombreOriginal()
+                    )
+            );
+
+            stmt.setString(
+                    9,
+                    emptyToNull(
+                            presupuesto.getNombrePersistido()
+                    )
+            );
+
+            stmt.setString(
+                    10,
+                    emptyToNull(
+                            presupuesto.getTitulo()
+                    )
+            );
+
+            stmt.setString(
+                    11,
+                    emptyToNull(
+                            presupuesto
+                                    .getDescripcionPrestador()
+                    )
+            );
+
+            stmt.setString(
+                    12,
+                    emptyToNull(usuario)
+            );
+
+            stmt.execute();
+
+            int idRequerimientoPresupuesto =
+                    stmt.getInt(1);
+
+            if (stmt.wasNull()
+                    || idRequerimientoPresupuesto <= 0) {
+
+                throw new Exception(
+                        "La base de datos devolvió un identificador "
+                                + "de presupuesto inválido."
+                );
+            }
+
+            return idRequerimientoPresupuesto;
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudo registrar la asociación "
+                            + "del presupuesto. "
+                            + "idRequerimiento="
+                            + presupuesto.getIdRequerimiento()
+                            + ", idPrestador="
+                            + presupuesto.getIdPrestador()
+                            + ", dlFileEntryId="
+                            + presupuesto.getDlFileEntryId(),
+                    e
+            );
+
+            throw e;
+        } finally {
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
+        }
+    }
+
+    public boolean darDeBajaPresupuesto(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra,
+            String usuario)
+            throws Exception {
+
+        if (idRequerimientoPresupuesto <= 0) {
+            throw new Exception(
+                    "Debe informar el presupuesto del requerimiento."
+            );
+        }
+
+        if (idRequerimientoCompra <= 0) {
+            throw new Exception(
+                    "Debe informar el requerimiento de compra."
+            );
+        }
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            stmt = con.prepareCall(
+                    SQL_BAJA_PRESUPUESTO
+            );
+
+            stmt.registerOutParameter(
+                    1,
+                    Types.BOOLEAN
+            );
+
+            stmt.setInt(
+                    2,
+                    idRequerimientoPresupuesto
+            );
+
+            stmt.setInt(
+                    3,
+                    idRequerimientoCompra
+            );
+
+            stmt.setString(
+                    4,
+                    emptyToNull(usuario)
+            );
+
+            stmt.execute();
+
+            boolean resultado =
+                    stmt.getBoolean(1);
+
+            return !stmt.wasNull()
+                    && resultado;
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudo dar de baja el presupuesto. "
+                            + "idRequerimientoPresupuesto="
+                            + idRequerimientoPresupuesto
+                            + ", idRequerimiento="
+                            + idRequerimientoCompra,
+                    e
+            );
+
+            throw e;
+        } finally {
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
+        }
+    }
+
+    public boolean reactivarPresupuesto(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra)
+            throws Exception {
+
+        if (idRequerimientoPresupuesto <= 0) {
+            throw new Exception(
+                    "Debe informar el presupuesto del requerimiento."
+            );
+        }
+
+        if (idRequerimientoCompra <= 0) {
+            throw new Exception(
+                    "Debe informar el requerimiento de compra."
+            );
+        }
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            stmt = con.prepareCall(
+                    SQL_REACTIVAR_PRESUPUESTO
+            );
+
+            stmt.registerOutParameter(
+                    1,
+                    Types.BOOLEAN
+            );
+
+            stmt.setInt(
+                    2,
+                    idRequerimientoPresupuesto
+            );
+
+            stmt.setInt(
+                    3,
+                    idRequerimientoCompra
+            );
+
+            stmt.execute();
+
+            boolean resultado =
+                    stmt.getBoolean(1);
+
+            return !stmt.wasNull()
+                    && resultado;
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudo reactivar el presupuesto. "
+                            + "idRequerimientoPresupuesto="
+                            + idRequerimientoPresupuesto
+                            + ", idRequerimiento="
+                            + idRequerimientoCompra,
+                    e
+            );
+
+            throw e;
+        } finally {
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
+        }
+    }
+
+    private void validarPresupuestoParaRegistrar(
+            RequerimientoCompraPresupuesto presupuesto)
+            throws Exception {
+
+        if (presupuesto == null) {
+            throw new Exception(
+                    "Debe informar el presupuesto del requerimiento."
+            );
+        }
+
+        if (presupuesto.getIdRequerimiento() == null
+                || presupuesto
+                .getIdRequerimiento()
+                .intValue() <= 0) {
+
+            throw new Exception(
+                    "Debe informar el requerimiento de compra."
+            );
+        }
+
+        if (presupuesto.getIdPrestador() == null
+                || presupuesto
+                .getIdPrestador()
+                .intValue() <= 0) {
+
+            throw new Exception(
+                    "Debe informar el prestador del presupuesto."
+            );
+        }
+
+        if (presupuesto.getDlGroupId() == null
+                || presupuesto
+                .getDlGroupId()
+                .longValue() <= 0L) {
+
+            throw new Exception(
+                    "El groupId del documento no es válido."
+            );
+        }
+
+        if (presupuesto.getDlFolderId() == null
+                || presupuesto
+                .getDlFolderId()
+                .longValue() < 0L) {
+
+            throw new Exception(
+                    "El folderId del documento no es válido."
+            );
+        }
+
+        if (presupuesto.getDlFileEntryId() == null
+                || presupuesto
+                .getDlFileEntryId()
+                .longValue() <= 0L) {
+
+            throw new Exception(
+                    "El fileEntryId del documento no es válido."
+            );
+        }
+
+        if (WebKeysCompras.isEmpty(
+                presupuesto.getNombreOriginal()
+        )) {
+            throw new Exception(
+                    "El nombre original del presupuesto no es válido."
+            );
+        }
+
+        if (WebKeysCompras.isEmpty(
+                presupuesto.getNombrePersistido()
+        )) {
+            throw new Exception(
+                    "El nombre persistido del presupuesto no es válido."
+            );
+        }
+
+        if (WebKeysCompras.isEmpty(
+                presupuesto.getTitulo()
+        )) {
+            throw new Exception(
+                    "El título del presupuesto no es válido."
+            );
+        }
+    }
+
+
 }
