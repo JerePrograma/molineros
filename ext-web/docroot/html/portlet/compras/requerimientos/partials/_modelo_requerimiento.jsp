@@ -530,6 +530,9 @@ boolean tieneAfiliadoVisible =
 boolean mostrarPanelAfiliadoEnVista = sectorRequiereAfiliadoActual || tieneAfiliadoVisible;
 
 String recuperoChecked = recuperoPorCargoTercerizadoraActual ? "checked=\"checked\"" : "";
+boolean surgeActual = req.isSurge();
+String surgeChecked = surgeActual ? "checked=\"checked\"" : "";
+String surgeValue = surgeActual ? "true" : "false";
 String camposSoloLectura = !modoEditable ? "readonly=\"readonly\"" : "";
 
 String bloqueoSinEstiloVista = !modoEditable

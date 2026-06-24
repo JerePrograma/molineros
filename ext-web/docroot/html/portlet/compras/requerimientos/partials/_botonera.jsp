@@ -137,7 +137,7 @@ String botoneraAnularURL =
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
                                '<%= botoneraEnviarCotizarFormId %>',
                                '<portlet:namespace />btnEnviarCotizarRequerimientoCompra',
-                               '¿Confirma pasar a A COTIZAR y notificar a los prestadores habilitados?',
+                               '\u00bfConfirma enviar a Cotizar a los prestadores habilitados?',
                                'Notificando...'
                        );" />
                 &nbsp;&nbsp;

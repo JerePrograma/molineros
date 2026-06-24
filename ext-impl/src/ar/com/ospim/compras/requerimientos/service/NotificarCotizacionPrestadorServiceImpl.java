@@ -61,6 +61,37 @@ public class NotificarCotizacionPrestadorServiceImpl {
                     + "FROM compras."
                     + "listar_prestadores_cotizacion_requerimiento(?)";
 
+    private static final String SQL_DIAGNOSTICO_CANDIDATOS =
+            "SELECT r.id_sector, "
+                    + "COUNT(DISTINCT CASE "
+                    + "WHEN p.id_prestador IS NOT NULL "
+                    + "THEN p.id_prestador END) "
+                    + "AS prestadores_habilitados, "
+                    + "COUNT(DISTINCT CASE "
+                    + "WHEN stp.id_tipo_prestador IS NOT NULL "
+                    + "THEN p.id_prestador END) "
+                    + "AS prestadores_compatibles_sector, "
+                    + "COUNT(DISTINCT CASE "
+                    + "WHEN stp.id_tipo_prestador IS NOT NULL "
+                    + "AND rcp.estado_envio IN ('ENVIADO', 'PROCESANDO') "
+                    + "THEN p.id_prestador END) "
+                    + "AS prestadores_bloqueados_estado_previo "
+                    + "FROM compras.requerimiento r "
+                    + "LEFT JOIN public.prestador p "
+                    + "ON COALESCE(p.solicitar_cotizacion, FALSE) = TRUE "
+                    + "AND p.baja_fecha IS NULL "
+                    + "LEFT JOIN compras.sector_tipo_prestador stp "
+                    + "ON stp.id_sector = r.id_sector "
+                    + "AND stp.id_tipo_prestador = p.id_tipo_prestador "
+                    + "AND stp.activo = TRUE "
+                    + "AND stp.baja_fecha IS NULL "
+                    + "LEFT JOIN compras.requerimiento_cotizacion_prestador rcp "
+                    + "ON rcp.id_requerimiento = r.id_requerimiento "
+                    + "AND rcp.id_prestador = p.id_prestador "
+                    + "WHERE r.id_requerimiento = ? "
+                    + "AND r.baja_fecha IS NULL "
+                    + "GROUP BY r.id_sector";
+
     private static final String SQL_REGISTRAR_COTIZACION =
             "SELECT compras."
                     + "registrar_cotizacion_prestador(?, ?, ?)";
@@ -110,6 +141,11 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 candidatos.size()
         );
 
+        cargarDiagnosticoCandidatosConControl(
+                requerimiento,
+                resultado
+        );
+
         if (candidatos.isEmpty()) {
             if (_log.isInfoEnabled()) {
                 _log.info(
@@ -156,6 +192,20 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 prestador
                         .getIdPrestador();
 
+        if (_log.isInfoEnabled()) {
+            _log.info(
+                    "Procesando candidato de cotizacion. "
+                            + "idRequerimiento="
+                            + idRequerimiento
+                            + ", sector="
+                            + requerimiento.getIdSector()
+                            + ", idPrestador="
+                            + idPrestador
+                            + ", idTipoPrestador="
+                            + prestador.getIdTipoPrestador()
+            );
+        }
+
         boolean reservado;
 
         try {
@@ -182,14 +232,19 @@ public class NotificarCotizacionPrestadorServiceImpl {
         }
 
         if (!reservado) {
-            if (_log.isDebugEnabled()) {
-                _log.debug(
-                        "No se obtuvo reserva para envío "
-                                + "de cotización. "
+            if (_log.isInfoEnabled()) {
+                _log.info(
+                        "No se obtuvo reserva para envio "
+                                + "de cotizacion. "
                                 + "idPrestador="
                                 + idPrestador
                                 + ", idRequerimiento="
                                 + idRequerimiento
+                                + ", sector="
+                                + requerimiento.getIdSector()
+                                + ", idTipoPrestador="
+                                + prestador.getIdTipoPrestador()
+                                + ", resultadoReserva=false"
                 );
             }
 
@@ -366,6 +421,21 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             resultado.incrementarEnviados();
 
+            if (_log.isInfoEnabled()) {
+                _log.info(
+                        "Cotizacion enviada a prestador. "
+                                + "idPrestador="
+                                + idPrestador
+                                + ", idRequerimiento="
+                                + idRequerimiento
+                                + ", sector="
+                                + requerimiento.getIdSector()
+                                + ", idTipoPrestador="
+                                + prestador.getIdTipoPrestador()
+                                + ", estadoEnvio=ENVIADO"
+                );
+            }
+
         } catch (Exception e) {
             _log.error(
                     "El correo fue aceptado por el servicio "
@@ -437,6 +507,114 @@ public class NotificarCotizacionPrestadorServiceImpl {
             );
 
             throw e;
+
+        } finally {
+            cerrar(
+                    rs
+            );
+
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
+        }
+    }
+
+    private void cargarDiagnosticoCandidatosConControl(
+            RequerimientoCompra requerimiento,
+            NotificacionCotizacionResultado resultado) {
+
+        try {
+            cargarDiagnosticoCandidatos(
+                    requerimiento,
+                    resultado
+            );
+
+        } catch (Exception e) {
+            _log.warn(
+                    "No se pudo calcular el diagnostico "
+                            + "de prestadores candidatos. "
+                            + "idRequerimiento="
+                            + (
+                            requerimiento != null
+                                    ? requerimiento
+                                    .getIdRequerimientoCompra()
+                                    : 0
+                    ),
+                    e
+            );
+        }
+    }
+
+    protected void cargarDiagnosticoCandidatos(
+            RequerimientoCompra requerimiento,
+            NotificacionCotizacionResultado resultado)
+            throws Exception {
+
+        if (requerimiento == null
+                || resultado == null) {
+
+            return;
+        }
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = obtenerConexion();
+
+            stmt = con.prepareStatement(
+                    SQL_DIAGNOSTICO_CANDIDATOS
+            );
+
+            stmt.setInt(
+                    1,
+                    requerimiento.getIdRequerimientoCompra()
+            );
+
+            rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                resultado.setPrestadoresHabilitados(
+                        rs.getInt(
+                                "prestadores_habilitados"
+                        )
+                );
+
+                resultado.setPrestadoresCompatiblesSector(
+                        rs.getInt(
+                                "prestadores_compatibles_sector"
+                        )
+                );
+
+                resultado.setPrestadoresBloqueadosEstadoPrevio(
+                        rs.getInt(
+                                "prestadores_bloqueados_estado_previo"
+                        )
+                );
+            }
+
+            if (_log.isInfoEnabled()) {
+                _log.info(
+                        "Diagnostico de prestadores candidatos. "
+                                + "idRequerimiento="
+                                + requerimiento
+                                .getIdRequerimientoCompra()
+                                + ", sector="
+                                + requerimiento.getIdSector()
+                                + ", candidatos="
+                                + resultado.getTotalCandidatos()
+                                + ", habilitados="
+                                + resultado.getPrestadoresHabilitados()
+                                + ", compatiblesSector="
+                                + resultado
+                                .getPrestadoresCompatiblesSector()
+                                + ", bloqueadosEstadoPrevio="
+                                + resultado
+                                .getPrestadoresBloqueadosEstadoPrevio()
+                );
+            }
 
         } finally {
             cerrar(

@@ -119,6 +119,8 @@ tracked-build-properties-audit.txt
 /sql/compras/*
 !/sql/compras/20260619_correcciones_reunion_compras.sql
 !/sql/compras/20260619_correcciones_reunion_compras_smoke.sql
+!/sql/compras/20260624_surge_requerimiento_compra.sql
+!/sql/compras/20260624_surge_requerimiento_compra_smoke.sql
 
 # Tests locales / pruebas legacy
 /test/

@@ -31,7 +31,7 @@ public class EditarRequerimientoCompraServiceImpl {
             Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
     private static final String SQL_GUARDAR_REQUERIMIENTO =
-            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
+            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_GUARDAR_REQUERIMIENTO_DETALLE =
             "{ ? = call compras.guardar_requerimiento_detalle(?,?,?,?,?,?) }";
@@ -282,15 +282,20 @@ public class EditarRequerimientoCompraServiceImpl {
                     requerimiento.isRecupero()
             );
 
-            stmt.setString(
+            stmt.setBoolean(
                     21,
+                    requerimiento.isSurge()
+            );
+
+            stmt.setString(
+                    22,
                     emptyToNull(
                             requerimiento.getObservaciones()
                     )
             );
 
             stmt.setString(
-                    22,
+                    23,
                     emptyToNull(usuario)
             );
 

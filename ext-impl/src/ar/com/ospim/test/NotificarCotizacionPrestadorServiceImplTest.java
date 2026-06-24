@@ -17,18 +17,19 @@ public class NotificarCotizacionPrestadorServiceImplTest {
 
     public static void main(String[] args) throws Exception {
         assertReservaFalseOmiteSinEnviarNiFinalizar();
-        assertEmailReservadoNuloFinalizaEmailInvalido();
-        assertEmailInvalidoFinalizaEmailInvalido();
-        assertEmailInvalidoYFinalizacionLanzaNoEnvia();
+        assertEmailReservadoNuloConTemporalEnvia();
+        assertEmailReservadoInvalidoConTemporalEnvia();
         assertErrorLecturaEmailFinalizaError();
         assertErrorEnvioFinalizaError();
         assertEnvioAceptadoYEnviadoPersistidoCuentaEnviado();
         assertEnvioAceptadoYFinalizacionFalseCuentaError();
         assertEnvioAceptadoYFinalizacionLanzaCuentaError();
         assertUsaEmailReservadoDespuesDeReservar();
+        assertDiagnosticoSinCompatiblesSector();
+        assertDiagnosticoTodosBloqueadosPorEstadoPrevio();
     }
 
-    private static void assertEmailReservadoNuloFinalizaEmailInvalido()
+    private static void assertEmailReservadoNuloConTemporalEnvia()
             throws Exception {
 
         ServicioPrueba service =
@@ -37,14 +38,20 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         NotificacionCotizacionResultado resultado =
                 service.notificarPrestadores(10, "tester", 1L);
 
-        assertInt("enviados", 0, resultado.getEnviados());
+        assertInt("enviados", 1, resultado.getEnviados());
         assertInt("errores", 0, resultado.getErrores());
-        assertInt("emails invalidos", 1, resultado.getEmailsInvalidos());
-        assertInt("mails enviados", 0, service.mailsEnviados);
-        assertEstadoFinal(service, 0, EMAIL_INVALIDO);
+        assertInt("emails invalidos", 0, resultado.getEmailsInvalidos());
+        assertInt("mails enviados", 1, service.mailsEnviados);
+        assertString(
+                "email temporal",
+                "acomas@ospim.org.ar",
+                service.emailEnviado
+        );
+        assertEstadoFinal(service, 0, ENVIADO);
         assertEvento(service, 0, "reservar");
         assertEvento(service, 1, "leer-email");
-        assertEvento(service, 2, "finalizar:" + EMAIL_INVALIDO);
+        assertEvento(service, 2, "enviar");
+        assertEvento(service, 3, "finalizar:" + ENVIADO);
     }
 
     private static void assertReservaFalseOmiteSinEnviarNiFinalizar()
@@ -68,7 +75,7 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         assertInt("eventos", 1, service.eventos.size());
     }
 
-    private static void assertEmailInvalidoFinalizaEmailInvalido()
+    private static void assertEmailReservadoInvalidoConTemporalEnvia()
             throws Exception {
 
         ServicioPrueba service =
@@ -78,37 +85,17 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         NotificacionCotizacionResultado resultado =
                 service.notificarPrestadores(10, "tester", 1L);
 
-        assertInt("enviados", 0, resultado.getEnviados());
+        assertInt("enviados", 1, resultado.getEnviados());
         assertInt("errores", 0, resultado.getErrores());
-        assertInt("emails invalidos", 1, resultado.getEmailsInvalidos());
+        assertInt("emails invalidos", 0, resultado.getEmailsInvalidos());
         assertInt("omitidos", 0, resultado.getOmitidos());
-        assertInt("mails enviados", 0, service.mailsEnviados);
-        assertEstadoFinal(service, 0, EMAIL_INVALIDO);
-    }
-
-    private static void assertEmailInvalidoYFinalizacionLanzaNoEnvia()
-            throws Exception {
-
-        ServicioPrueba service =
-                servicioConPrestador(
-                        "listado@ospim.org.ar",
-                        "email-invalido"
-                );
-
-        service.errorFinalizarEstado =
-                EMAIL_INVALIDO;
-
-        NotificacionCotizacionResultado resultado =
-                service.notificarPrestadores(
-                        10,
-                        "tester",
-                        1L
-                );
-
-        assertInt("enviados", 0, resultado.getEnviados());
-        assertInt("emails invalidos", 1, resultado.getEmailsInvalidos());
-        assertInt("mails enviados", 0, service.mailsEnviados);
-        assertEstadoFinal(service, 0, EMAIL_INVALIDO);
+        assertInt("mails enviados", 1, service.mailsEnviados);
+        assertString(
+                "email temporal",
+                "acomas@ospim.org.ar",
+                service.emailEnviado
+        );
+        assertEstadoFinal(service, 0, ENVIADO);
     }
 
     private static void assertErrorEnvioFinalizaError()
@@ -223,14 +210,72 @@ public class NotificarCotizacionPrestadorServiceImplTest {
 
         assertInt("enviados", 1, resultado.getEnviados());
         assertString(
-                "email enviado",
-                "reservado@ospim.org.ar",
+                "email temporal",
+                "acomas@ospim.org.ar",
                 service.emailEnviado
         );
         assertEvento(service, 0, "reservar");
         assertEvento(service, 1, "leer-email");
         assertEvento(service, 2, "enviar");
         assertEvento(service, 3, "finalizar:" + ENVIADO);
+    }
+
+    private static void assertDiagnosticoSinCompatiblesSector()
+            throws Exception {
+
+        ServicioPrueba service =
+                servicioConPrestador("listado@ospim.org.ar",
+                        "reservado@ospim.org.ar");
+
+        service.candidatos.clear();
+        service.prestadoresHabilitados = 2;
+        service.prestadoresCompatiblesSector = 0;
+        service.prestadoresBloqueadosEstadoPrevio = 0;
+
+        NotificacionCotizacionResultado resultado =
+                service.notificarPrestadores(10, "tester", 1L);
+
+        assertInt("candidatos", 0, resultado.getTotalCandidatos());
+        assertInt(
+                "habilitados",
+                2,
+                resultado.getPrestadoresHabilitados()
+        );
+        assertInt(
+                "compatibles",
+                0,
+                resultado.getPrestadoresCompatiblesSector()
+        );
+        assertInt("mails enviados", 0, service.mailsEnviados);
+    }
+
+    private static void assertDiagnosticoTodosBloqueadosPorEstadoPrevio()
+            throws Exception {
+
+        ServicioPrueba service =
+                servicioConPrestador("listado@ospim.org.ar",
+                        "reservado@ospim.org.ar");
+
+        service.candidatos.clear();
+        service.prestadoresHabilitados = 2;
+        service.prestadoresCompatiblesSector = 2;
+        service.prestadoresBloqueadosEstadoPrevio = 2;
+
+        NotificacionCotizacionResultado resultado =
+                service.notificarPrestadores(10, "tester", 1L);
+
+        assertInt("candidatos", 0, resultado.getTotalCandidatos());
+        assertInt(
+                "compatibles",
+                2,
+                resultado.getPrestadoresCompatiblesSector()
+        );
+        assertInt(
+                "bloqueados",
+                2,
+                resultado.getPrestadoresBloqueadosEstadoPrevio()
+        );
+        assertInt("mails enviados", 0, service.mailsEnviados);
     }
 
     private static ServicioPrueba servicioConPrestador(
@@ -396,6 +441,9 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         private Exception errorFinalizarEnviado;
         private String errorFinalizarEstado;
         private int mailsEnviados;
+        private int prestadoresHabilitados = 1;
+        private int prestadoresCompatiblesSector = 1;
+        private int prestadoresBloqueadosEstadoPrevio;
         private String emailReservado;
         private String emailEnviado;
         private String ultimoError;
@@ -411,6 +459,23 @@ public class NotificarCotizacionPrestadorServiceImplTest {
                 int idRequerimientoCompra) {
 
             return candidatos;
+        }
+
+        protected void cargarDiagnosticoCandidatos(
+                RequerimientoCompra requerimiento,
+                NotificacionCotizacionResultado resultado) {
+
+            resultado.setPrestadoresHabilitados(
+                    prestadoresHabilitados
+            );
+
+            resultado.setPrestadoresCompatiblesSector(
+                    prestadoresCompatiblesSector
+            );
+
+            resultado.setPrestadoresBloqueadosEstadoPrevio(
+                    prestadoresBloqueadosEstadoPrevio
+            );
         }
 
         protected boolean registrarCotizacionPrestador(

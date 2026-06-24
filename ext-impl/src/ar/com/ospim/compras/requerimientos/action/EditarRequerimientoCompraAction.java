@@ -1224,6 +1224,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 cargoTercerizadora != null && cargoTercerizadora.intValue() > 0
         );
 
+        requerimiento.setSurge(
+                getParametroBoolean(request, "surge")
+        );
+
         requerimiento.setObservaciones(getParametroRaw(request, "observaciones", null));
 
         return requerimiento;
@@ -1403,6 +1407,16 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         return value.trim();
+    }
+
+    private boolean getParametroBoolean(ActionRequest request, String nombre) {
+        String value = getParametroTrim(request, nombre);
+
+        return "true".equalsIgnoreCase(value)
+                || "on".equalsIgnoreCase(value)
+                || "1".equals(value)
+                || "si".equalsIgnoreCase(value)
+                || "s".equalsIgnoreCase(value);
     }
 
     private String getParametroRaw(ActionRequest request, String nombre, String defaultValue) {

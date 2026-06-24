@@ -62,4 +62,13 @@
 
         return recuperoActivo;
     }
+
+    function <portlet:namespace />actualizarSurgeCompra() {
+        var surgeEl = document.getElementById('<portlet:namespace />surge');
+        var surgeHiddenEl = document.getElementById('<portlet:namespace />surge_hidden');
+
+        if (surgeHiddenEl && surgeEl) {
+            surgeHiddenEl.value = surgeEl.checked ? 'true' : 'false';
+        }
+    }
 </script>

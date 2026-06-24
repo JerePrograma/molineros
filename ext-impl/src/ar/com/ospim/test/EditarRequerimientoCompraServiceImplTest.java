@@ -296,6 +296,7 @@ public class EditarRequerimientoCompraServiceImplTest {
         requerimiento.setCargoTercerizadora(Integer.valueOf(20));
         requerimiento.setIdTercerizadora("CSA");
         requerimiento.setRecupero(true);
+        requerimiento.setSurge(true);
         requerimiento.setObservaciones("Observaciones");
 
         int id =
@@ -306,7 +307,7 @@ public class EditarRequerimientoCompraServiceImplTest {
 
         assertInt("id devuelto", 987, id);
         assertInt("cantidad out parameters", 1, service.outParameters.size());
-        assertInt("cantidad parametros", 21, service.parametros.size());
+        assertInt("cantidad parametros", 22, service.parametros.size());
         assertInt(
                 "out parameter",
                 java.sql.Types.INTEGER,
@@ -314,7 +315,7 @@ public class EditarRequerimientoCompraServiceImplTest {
                         Integer.valueOf(1)
                 )).intValue()
         );
-        assertInt("cantidad placeholders", 22, contar(service.sql, '?'));
+        assertInt("cantidad placeholders", 23, contar(service.sql, '?'));
         assertObject("p_id", null, service.parametros.get(Integer.valueOf(2)));
         assertObject("p_afiliado_cuil_titular", "20111111112", service.parametros.get(Integer.valueOf(3)));
         assertObject("p_afiliado_int", Integer.valueOf(2), service.parametros.get(Integer.valueOf(4)));
@@ -334,8 +335,9 @@ public class EditarRequerimientoCompraServiceImplTest {
         assertObject("p_cargo_tercerizadora", Integer.valueOf(20), service.parametros.get(Integer.valueOf(18)));
         assertObject("p_id_tercerizadora", "CSA", service.parametros.get(Integer.valueOf(19)));
         assertObject("p_recupero", Boolean.TRUE, service.parametros.get(Integer.valueOf(20)));
-        assertObject("p_observaciones", "Observaciones", service.parametros.get(Integer.valueOf(21)));
-        assertObject("p_usuario", "tester", service.parametros.get(Integer.valueOf(22)));
+        assertObject("p_surge", Boolean.TRUE, service.parametros.get(Integer.valueOf(21)));
+        assertObject("p_observaciones", "Observaciones", service.parametros.get(Integer.valueOf(22)));
+        assertObject("p_usuario", "tester", service.parametros.get(Integer.valueOf(23)));
     }
 
     private static RequerimientoCompraDetalle detalle(

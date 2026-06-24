@@ -440,6 +440,8 @@
         } else {
             <portlet:namespace />actualizarRecuperoPorCargoTercerizadora();
         }
+
+        <portlet:namespace />actualizarSurgeCompra();
     }
 
     function <portlet:namespace />cargarAfiliadoInicial() {
@@ -934,6 +936,10 @@
         });
 
         jQuery('#<portlet:namespace />observaciones').keyup(function() {
+            <portlet:namespace />sincronizarFormularioCompra();
+        });
+
+        jQuery('#<portlet:namespace />surge').change(function() {
             <portlet:namespace />sincronizarFormularioCompra();
         });
 

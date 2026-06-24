@@ -20,8 +20,9 @@
 --   99 ANULADO
 --
 -- Contratos incorporados:
---   - guardar_requerimiento con 21 argumentos de entrada.
+--   - guardar_requerimiento con 22 argumentos de entrada.
 --   - persistencia de afiliado_id_ospim como snapshot.
+--   - persistencia de surge como cabecera del requerimiento.
 --   - PDF con afiliado_id_ospim, integrante y documento.
 --   - destinatario de cotizacion persistido por prestador.
 --
@@ -158,6 +159,7 @@ CREATE TABLE compras.requerimiento (
                                        cargo_tercerizadora INTEGER NOT NULL DEFAULT 0,
                                        id_tercerizadora VARCHAR(40),
                                        recupero BOOLEAN NOT NULL DEFAULT FALSE,
+                                       surge BOOLEAN NOT NULL DEFAULT FALSE,
 
                                        observaciones TEXT,
 
@@ -1204,6 +1206,7 @@ CREATE TYPE compras.requerimiento_base_row AS (
     id_tercerizadora VARCHAR,
 
     recupero BOOLEAN,
+    surge BOOLEAN,
     observaciones TEXT,
 
     id_estado INTEGER,
@@ -1278,6 +1281,7 @@ SELECT
     r.id_tercerizadora,
 
     r.recupero,
+    r.surge,
     r.observaciones,
 
     r.estado,
@@ -1509,6 +1513,7 @@ CREATE FUNCTION compras.guardar_requerimiento(
     p_cargo_tercerizadora INTEGER,
     p_id_tercerizadora VARCHAR,
     p_recupero BOOLEAN,
+    p_surge BOOLEAN,
     p_observaciones TEXT,
     p_usuario VARCHAR
 )
@@ -1557,6 +1562,7 @@ BEGIN
             cargo_tercerizadora,
             id_tercerizadora,
             recupero,
+            surge,
 
             observaciones,
 
@@ -1591,6 +1597,7 @@ BEGIN
                 ''
             ),
             COALESCE(p_recupero, FALSE),
+            COALESCE(p_surge, FALSE),
 
             NULLIF(
                 btrim(p_observaciones),
@@ -1721,6 +1728,9 @@ SET id_sector = p_id_sector,
 
     recupero =
         COALESCE(p_recupero, FALSE),
+
+    surge =
+        COALESCE(p_surge, FALSE),
 
     observaciones =
         NULLIF(
@@ -2561,21 +2571,21 @@ BEGIN
     END IF;
 
     v_guardar := to_regprocedure(
-        'compras.guardar_requerimiento(integer, character varying, integer, integer, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, integer, integer, integer, character varying, boolean, text, character varying)'
+        'compras.guardar_requerimiento(integer, character varying, integer, integer, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, integer, integer, integer, character varying, boolean, boolean, text, character varying)'
     )::OID;
 
     IF v_guardar IS NULL THEN
         RAISE EXCEPTION
-            'Falta guardar_requerimiento con 21 argumentos canonicos.';
+            'Falta guardar_requerimiento con 22 argumentos canonicos.';
     END IF;
 
     IF (
         SELECT p.pronargs
           FROM pg_proc p
          WHERE p.oid = v_guardar
-    ) <> 21 THEN
+    ) <> 22 THEN
         RAISE EXCEPTION
-            'guardar_requerimiento no tiene 21 argumentos.';
+            'guardar_requerimiento no tiene 22 argumentos.';
     END IF;
 
     v_pdf := to_regprocedure(
@@ -2622,6 +2632,7 @@ DECLARE
     v_pdf_id_ospim INTEGER;
     v_pdf_documento VARCHAR;
     v_estado INTEGER;
+    v_surge BOOLEAN;
 BEGIN
     v_id := compras.guardar_requerimiento(
         NULL,
@@ -2643,6 +2654,7 @@ BEGIN
         0,
         NULL,
         FALSE,
+        TRUE,
         'Smoke esquema unificado',
         'smoke'
     );
@@ -2654,6 +2666,50 @@ BEGIN
     ) IS DISTINCT FROM 123456 THEN
         RAISE EXCEPTION
             'SMOKE: afiliado_id_ospim no persistio.';
+    END IF;
+
+    IF (
+        SELECT r.surge
+          FROM compras.requerimiento r
+         WHERE r.id_requerimiento = v_id
+    ) IS DISTINCT FROM TRUE THEN
+        RAISE EXCEPTION
+            'SMOKE: surge no persistio en el alta.';
+    END IF;
+
+    v_id := compras.guardar_requerimiento(
+        v_id,
+        '20111111112',
+        1,
+        123456,
+        'Nombre',
+        'Apellido',
+        'DNI',
+        '11222333',
+        'Calle 123',
+        'Localidad',
+        'Provincia',
+        '111-222',
+        '333-444',
+        'afiliado@example.com',
+        1,
+        100,
+        0,
+        NULL,
+        FALSE,
+        FALSE,
+        'Smoke esquema unificado actualizado',
+        'smoke'
+    );
+
+    SELECT r.surge
+      INTO v_surge
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento = v_id;
+
+    IF v_surge IS DISTINCT FROM FALSE THEN
+        RAISE EXCEPTION
+            'SMOKE: surge no actualizo de TRUE a FALSE.';
     END IF;
 
     SELECT

@@ -12,6 +12,9 @@ public class NotificacionCotizacionResultado
     private int errores;
     private int emailsInvalidos;
     private int omitidos;
+    private int prestadoresHabilitados;
+    private int prestadoresCompatiblesSector;
+    private int prestadoresBloqueadosEstadoPrevio;
 
     public int getTotalCandidatos() {
         return totalCandidatos;
@@ -70,6 +73,36 @@ public class NotificacionCotizacionResultado
 
     public void incrementarOmitidos() {
         omitidos++;
+    }
+
+    public int getPrestadoresHabilitados() {
+        return prestadoresHabilitados;
+    }
+
+    public void setPrestadoresHabilitados(int prestadoresHabilitados) {
+        this.prestadoresHabilitados = prestadoresHabilitados;
+    }
+
+    public int getPrestadoresCompatiblesSector() {
+        return prestadoresCompatiblesSector;
+    }
+
+    public void setPrestadoresCompatiblesSector(
+            int prestadoresCompatiblesSector) {
+
+        this.prestadoresCompatiblesSector =
+                prestadoresCompatiblesSector;
+    }
+
+    public int getPrestadoresBloqueadosEstadoPrevio() {
+        return prestadoresBloqueadosEstadoPrevio;
+    }
+
+    public void setPrestadoresBloqueadosEstadoPrevio(
+            int prestadoresBloqueadosEstadoPrevio) {
+
+        this.prestadoresBloqueadosEstadoPrevio =
+                prestadoresBloqueadosEstadoPrevio;
     }
 
     public int getTotalProcesados() {

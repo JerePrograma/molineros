@@ -151,12 +151,34 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
         }
 
         if (resultado.getEnviados() <= 0) {
-            SessionMessages.add(
-                    actionRequest,
-                    estadoPersistido == WebKeysCompras.ESTADO_PENDIENTE
-                            ? "cotizacion-prestadores-no-enviados"
-                            : "cotizacion-prestadores-sin-nuevos-envios"
-            );
+            if (sinCompatiblesSector(resultado)) {
+                SessionMessages.add(
+                        actionRequest,
+                        "cotizacion-prestadores-sin-compatibles-sector"
+                );
+            } else if (todosBloqueadosPorEstadoPrevio(resultado)) {
+                SessionMessages.add(
+                        actionRequest,
+                        "cotizacion-prestadores-todos-omitidos-previos"
+                );
+            } else if (resultado.getEmailsInvalidos() > 0) {
+                SessionMessages.add(
+                        actionRequest,
+                        "cotizacion-prestadores-emails-invalidos"
+                );
+            } else if (resultado.getErrores() > 0) {
+                SessionMessages.add(
+                        actionRequest,
+                        "cotizacion-prestadores-errores-envio"
+                );
+            } else {
+                SessionMessages.add(
+                        actionRequest,
+                        estadoPersistido == WebKeysCompras.ESTADO_PENDIENTE
+                                ? "cotizacion-prestadores-no-enviados"
+                                : "cotizacion-prestadores-sin-nuevos-envios"
+                );
+            }
         } else if (resultado.tieneErrores()) {
             SessionMessages.add(
                     actionRequest,
@@ -172,6 +194,23 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
         } else {
             SessionMessages.add(actionRequest, "cotizacion-prestadores-notificados");
         }
+    }
+
+    private boolean sinCompatiblesSector(
+            NotificacionCotizacionResultado resultado) {
+
+        return resultado.getTotalCandidatos() <= 0
+                && resultado.getPrestadoresHabilitados() > 0
+                && resultado.getPrestadoresCompatiblesSector() <= 0;
+    }
+
+    private boolean todosBloqueadosPorEstadoPrevio(
+            NotificacionCotizacionResultado resultado) {
+
+        return resultado.getTotalCandidatos() <= 0
+                && resultado.getPrestadoresCompatiblesSector() > 0
+                && resultado.getPrestadoresBloqueadosEstadoPrevio()
+                >= resultado.getPrestadoresCompatiblesSector();
     }
 
     private int getEstadoPersistido(

@@ -103,6 +103,23 @@
                 <% } %>
             </td>
         </tr>
+
+        <tr>
+            <td><label>Surge:</label></td>
+            <td colspan="5">
+                <% if (puedeEditarEstructuraPantalla) { %>
+                    <input type="checkbox"
+                           id="<portlet:namespace />surge"
+                           value="true"
+                           <%= surgeChecked %>
+                           onchange="<portlet:namespace />sincronizarFormularioCompra();" />
+                <% } else { %>
+                    <div class="compras-campo-solo-lectura">
+                        <%= HtmlUtil.escape(req.getSurgeDescripcion()) %>
+                    </div>
+                <% } %>
+            </td>
+        </tr>
     </table>
 
     <% if (puedeEditarEstructuraPantalla) { %>

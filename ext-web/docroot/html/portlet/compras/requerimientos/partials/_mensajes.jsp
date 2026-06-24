@@ -59,6 +59,30 @@ boolean msgPrestadoresSinNuevosEnvios =
                 "cotizacion-prestadores-sin-nuevos-envios"
         );
 
+boolean msgPrestadoresSinCompatiblesSector =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "cotizacion-prestadores-sin-compatibles-sector"
+        );
+
+boolean msgPrestadoresTodosOmitidosPrevios =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "cotizacion-prestadores-todos-omitidos-previos"
+        );
+
+boolean msgPrestadoresEmailsInvalidos =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "cotizacion-prestadores-emails-invalidos"
+        );
+
+boolean msgPrestadoresErroresEnvio =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "cotizacion-prestadores-errores-envio"
+        );
+
 ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado resultadoNotificacionCotizacion =
         (ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado)
                 com.liferay.portal.kernel.servlet.SessionMessages.get(
@@ -145,10 +169,45 @@ ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado result
     </div>
 </c:if>
 
+<c:if test="<%= msgPrestadoresSinCompatiblesSector %>">
+    <div class="portlet-msg-error">
+        Existen prestadores habilitados para cotizar, pero ninguno
+        tiene un tipo activo asociado al sector del requerimiento.
+        El requerimiento permanece PENDIENTE.
+    </div>
+</c:if>
+
+<c:if test="<%= msgPrestadoresTodosOmitidosPrevios %>">
+    <div class="portlet-msg-info">
+        Los prestadores compatibles ya estaban ENVIADO o PROCESANDO.
+        No se reenviaron notificaciones.
+    </div>
+</c:if>
+
+<c:if test="<%= msgPrestadoresEmailsInvalidos %>">
+    <div class="portlet-msg-error">
+        Existen candidatos para cotizar, pero el email destino resulto
+        invalido. Revise la configuracion de correo y el log.
+    </div>
+</c:if>
+
+<c:if test="<%= msgPrestadoresErroresEnvio %>">
+    <div class="portlet-msg-error">
+        Existen candidatos para cotizar, pero hubo errores durante
+        el envio o la persistencia del resultado.
+    </div>
+</c:if>
+
 <c:if test="<%= resultadoNotificacionCotizacion != null %>">
     <div class="portlet-msg-info">
         Prestadores candidatos:
         <%= resultadoNotificacionCotizacion.getTotalCandidatos() %>.
+        Habilitados activos:
+        <%= resultadoNotificacionCotizacion.getPrestadoresHabilitados() %>.
+        Compatibles con sector:
+        <%= resultadoNotificacionCotizacion.getPrestadoresCompatiblesSector() %>.
+        Bloqueados por envio previo:
+        <%= resultadoNotificacionCotizacion.getPrestadoresBloqueadosEstadoPrevio() %>.
         Enviados:
         <%= resultadoNotificacionCotizacion.getEnviados() %>.
         Errores:

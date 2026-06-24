@@ -40,6 +40,11 @@
            value="<%= recuperoPorCargoTercerizadoraActual ? "true" : "false" %>" />
 
     <input type="hidden"
+           name="<portlet:namespace />surge"
+           id="<portlet:namespace />surge_hidden"
+           value="<%= surgeValue %>" />
+
+    <input type="hidden"
            name="<portlet:namespace />afiliado_cuil_titular"
            id="<portlet:namespace />afiliado_cuil_titular"
            value="<%= HtmlUtil.escape(afiliadoCuilTitular) %>" />

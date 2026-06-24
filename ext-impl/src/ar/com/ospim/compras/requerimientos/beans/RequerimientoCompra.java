@@ -32,6 +32,7 @@ public class RequerimientoCompra {
     private String idTercerizadora;
 
     private Boolean recupero;
+    private Boolean surge;
     private String observaciones;
 
     private Integer idEstado;
@@ -58,6 +59,7 @@ public class RequerimientoCompra {
         this.cargoOspim = Integer.valueOf(0);
         this.cargoTercerizadora = Integer.valueOf(0);
         this.recupero = Boolean.FALSE;
+        this.surge = Boolean.FALSE;
         this.detalles = new ArrayList<RequerimientoCompraDetalle>();
     }
 
@@ -320,6 +322,26 @@ public class RequerimientoCompra {
 
     public void setRecupero(boolean recupero) {
         this.recupero = Boolean.valueOf(recupero);
+    }
+
+    public Boolean getSurge() {
+        return surge;
+    }
+
+    public boolean isSurge() {
+        return Boolean.TRUE.equals(surge);
+    }
+
+    public String getSurgeDescripcion() {
+        return WebKeysCompras.getBooleanDescripcion(surge);
+    }
+
+    public void setSurge(Boolean surge) {
+        this.surge = surge != null ? surge : Boolean.FALSE;
+    }
+
+    public void setSurge(boolean surge) {
+        this.surge = Boolean.valueOf(surge);
     }
 
     public String getObservaciones() {

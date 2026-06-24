@@ -384,6 +384,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
         r.setIdTercerizadora(getString(rs, "id_tercerizadora"));
 
         r.setRecupero(getBoolean(rs, "recupero"));
+        r.setSurge(getBoolean(rs, "surge"));
         r.setObservaciones(getString(rs, "observaciones"));
 
         r.setIdEstado(getInteger(rs, "id_estado"));
