@@ -4,6 +4,7 @@ import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.action.UploadPresupuestosComprasAction;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 
 import com.liferay.portal.service.ServiceContext;
 
@@ -15,9 +16,13 @@ import java.util.List;
 public class UploadPresupuestosComprasActionTest {
 
     private static final String[] EXTENSIONES =
-            new String[]{".pdf", ".doc"};
+            new String[]{
+                    ".pdf",
+                    ".doc"
+            };
 
-    public static void main(String[] args)
+    public static void main(
+            String[] args)
             throws Exception {
 
         List<File> archivos =
@@ -25,45 +30,85 @@ public class UploadPresupuestosComprasActionTest {
 
         try {
             File archivoUno =
-                    crearArchivo("presupuesto-uno", ".pdf");
-            File archivoDos =
-                    crearArchivo("presupuesto-dos", ".doc");
-            File archivoTres =
-                    crearArchivo("presupuesto-tres", ".pdf");
+                    crearArchivo(
+                            "presupuesto-uno",
+                            ".pdf"
+                    );
 
-            archivos.add(archivoUno);
-            archivos.add(archivoDos);
-            archivos.add(archivoTres);
+            File archivoDos =
+                    crearArchivo(
+                            "presupuesto-dos",
+                            ".doc"
+                    );
+
+            File archivoTres =
+                    crearArchivo(
+                            "presupuesto-tres",
+                            ".pdf"
+                    );
+
+            archivos.add(
+                    archivoUno
+            );
+
+            archivos.add(
+                    archivoDos
+            );
+
+            archivos.add(
+                    archivoTres
+            );
 
             assertAcceso();
+
             assertColeccionValida(
                     archivoUno,
                     archivoDos,
                     archivoTres
             );
+
             assertPrestadorInvalido(
                     archivoUno
             );
+
             assertFilaSinArchivo(
                     archivoUno
             );
+
             assertFilaSinPrestador(
                     archivoUno
             );
+
             assertCantidadEIndiceManipulados(
                     archivoUno
             );
+
             assertPathTraversal(
                     archivoUno
             );
+
             assertLimpiezaParcial(
                     archivoUno,
                     archivoDos,
                     archivoTres
             );
+
+            assertLimpiezaSiFallaRegistro(
+                    archivoUno
+            );
+
+            assertReactivacionSiFallaEliminar(
+                    archivoUno,
+                    archivoDos
+            );
         } finally {
-            for (int i = 0; i < archivos.size(); i++) {
-                archivos.get(i).delete();
+            for (int i = 0;
+                    i < archivos.size();
+                    i++) {
+
+                archivos.get(
+                        i
+                ).delete();
             }
         }
     }
@@ -76,7 +121,8 @@ public class UploadPresupuestosComprasActionTest {
 
         final RequerimientoCompra requerimiento =
                 requerimiento(
-                        WebKeysCompras.ESTADO_A_COTIZAR
+                        WebKeysCompras
+                                .ESTADO_A_COTIZAR
                 );
 
         accion.validarAcceso(
@@ -100,42 +146,48 @@ public class UploadPresupuestosComprasActionTest {
                 }
         );
 
-        final RequerimientoCompra pendiente =
-                requerimiento(
-                        WebKeysCompras.ESTADO_PENDIENTE
-                );
-
         assertAccesoRechazado(
                 accion,
                 "PENDIENTE",
-                pendiente
+                requerimiento(
+                        WebKeysCompras
+                                .ESTADO_PENDIENTE
+                )
         );
+
         assertAccesoRechazado(
                 accion,
                 "COTIZADO",
                 requerimiento(
-                        WebKeysCompras.ESTADO_COTIZADO
+                        WebKeysCompras
+                                .ESTADO_COTIZADO
                 )
         );
+
         assertAccesoRechazado(
                 accion,
                 "RECLAMO (RP)",
                 requerimiento(
-                        WebKeysCompras.ESTADO_RECLAMO_RP
+                        WebKeysCompras
+                                .ESTADO_RECLAMO_RP
                 )
         );
+
         assertAccesoRechazado(
                 accion,
                 "ORDEN DE COMPRA",
                 requerimiento(
-                        WebKeysCompras.ESTADO_ORDEN_COMPRA
+                        WebKeysCompras
+                                .ESTADO_ORDEN_COMPRA
                 )
         );
+
         assertAccesoRechazado(
                 accion,
                 "ANULADO",
                 requerimiento(
-                        WebKeysCompras.ESTADO_ANULADO
+                        WebKeysCompras
+                                .ESTADO_ANULADO
                 )
         );
 
@@ -162,7 +214,8 @@ public class UploadPresupuestosComprasActionTest {
             throws Exception {
 
         assertException(
-                "estado fuera de A COTIZAR: " + estado,
+                "estado fuera de A COTIZAR: "
+                        + estado,
                 new Ejecucion() {
                     public void ejecutar()
                             throws Exception {
@@ -198,6 +251,7 @@ public class UploadPresupuestosComprasActionTest {
                         "LABEL MANIPULADO"
                 )
         );
+
         entradas.add(
                 new EntradaPrueba(
                         1,
@@ -207,6 +261,7 @@ public class UploadPresupuestosComprasActionTest {
                         "OTRO LABEL"
                 )
         );
+
         entradas.add(
                 new EntradaPrueba(
                         2,
@@ -226,48 +281,74 @@ public class UploadPresupuestosComprasActionTest {
                 );
 
         assertInt(
-                "coleccion de tres archivos",
+                "colección de tres archivos",
                 3,
                 resultados.size()
         );
+
         assertInt(
                 "primer prestador",
                 20,
-                resultados.get(0).idPrestador
+                resultados.get(
+                        0
+                ).idPrestador
         );
+
         assertInt(
                 "segundo prestador",
                 21,
-                resultados.get(1).idPrestador
+                resultados.get(
+                        1
+                ).idPrestador
         );
+
         assertInt(
                 "prestador repetido permitido",
                 20,
-                resultados.get(2).idPrestador
+                resultados.get(
+                        2
+                ).idPrestador
         );
+
         assertString(
-                "metadata canonica",
+                "metadata canónica",
                 "PRESTADOR CANONICO - 20-12345678-9",
-                resultados.get(0).descripcion
+                resultados.get(
+                        0
+                ).descripcion
         );
+
         assertFalse(
                 "label del navegador ignorado",
-                resultados.get(0).descripcion
-                        .contains("MANIPULADO")
+                resultados.get(
+                        0
+                ).descripcion.contains(
+                        "MANIPULADO"
+                )
         );
+
         assertMatches(
                 "nombre persistido seguro",
                 "PRESUPUESTO-COMPRA-25-PRESTADOR-20-[0-9a-f]{32}\\.pdf",
-                resultados.get(0).nombrePersistido
+                resultados.get(
+                        0
+                ).nombrePersistido
         );
+
         assertFalse(
                 "nombre sin tercerizadora",
-                resultados.get(0).nombrePersistido
-                        .contains("OMI")
+                resultados.get(
+                        0
+                ).nombrePersistido.contains(
+                        "OMI"
+                )
         );
+
         assertTrue(
-                "titulo conserva nombre original",
-                resultados.get(0).titulo.startsWith(
+                "título conserva nombre original",
+                resultados.get(
+                        0
+                ).titulo.startsWith(
                         "PRESUPUESTO-COMPRA-25-uno.pdf_"
                 )
         );
@@ -300,7 +381,7 @@ public class UploadPresupuestosComprasActionTest {
         );
 
         assertException(
-                "prestador con envio fallido",
+                "prestador con envío fallido",
                 new Ejecucion() {
                     public void ejecutar()
                             throws Exception {
@@ -325,6 +406,7 @@ public class UploadPresupuestosComprasActionTest {
 
         final AccionPrueba accion =
                 new AccionPrueba();
+
         final List<EntradaPrueba> entradas =
                 entradas(
                         archivo,
@@ -426,7 +508,7 @@ public class UploadPresupuestosComprasActionTest {
         );
 
         assertException(
-                "indice manipulado",
+                "índice manipulado",
                 new Ejecucion() {
                     public void ejecutar()
                             throws Exception {
@@ -448,6 +530,7 @@ public class UploadPresupuestosComprasActionTest {
 
         final AccionPrueba accion =
                 new AccionPrueba();
+
         final List<EntradaPrueba> entradas =
                 entradas(
                         archivo,
@@ -491,47 +574,22 @@ public class UploadPresupuestosComprasActionTest {
         final AccionPrueba accion =
                 new AccionPrueba();
 
-        List<EntradaPrueba> entradas =
-                new ArrayList<EntradaPrueba>();
-
-        entradas.add(
-                new EntradaPrueba(
-                        0,
-                        archivoUno,
-                        "uno.pdf",
-                        20,
-                        ""
-                )
-        );
-        entradas.add(
-                new EntradaPrueba(
-                        1,
-                        archivoDos,
-                        "dos.doc",
-                        21,
-                        ""
-                )
-        );
-        entradas.add(
-                new EntradaPrueba(
-                        2,
-                        archivoTres,
-                        "tres.pdf",
-                        20,
-                        ""
-                )
-        );
-
         accion.validar(
                 25,
                 3,
-                entradas,
+                tresEntradas(
+                        archivoUno,
+                        archivoDos,
+                        archivoTres
+                ),
                 prestadoresEnviados()
         );
-        accion.fallarEnCreacion = 2;
+
+        accion.fallarEnCreacion =
+                2;
 
         assertException(
-                "falla parcial",
+                "falla parcial de Document Library",
                 new Ejecucion() {
                     public void ejecutar()
                             throws Exception {
@@ -546,15 +604,183 @@ public class UploadPresupuestosComprasActionTest {
                 1,
                 accion.creados.size()
         );
+
+        assertInt(
+                "primera asociación registrada",
+                1,
+                accion.asociacionesRegistradas.size()
+        );
+
+        assertInt(
+                "asociación compensada",
+                1,
+                accion.asociacionesBaja.size()
+        );
+
         assertInt(
                 "primer archivo limpiado",
                 1,
                 accion.eliminados.size()
         );
+
         assertString(
                 "limpieza exacta",
-                accion.creados.get(0),
-                accion.eliminados.get(0)
+                accion.creados.get(
+                        0
+                ),
+                accion.eliminados.get(
+                        0
+                )
+        );
+
+        assertInt(
+                "sin reactivación cuando la limpieza física funciona",
+                0,
+                accion.asociacionesReactivadas.size()
+        );
+    }
+
+    private static void assertLimpiezaSiFallaRegistro(
+            File archivo)
+            throws Exception {
+
+        final AccionPrueba accion =
+                new AccionPrueba();
+
+        accion.validar(
+                25,
+                1,
+                entradas(
+                        archivo,
+                        20
+                ),
+                prestadoresEnviados()
+        );
+
+        accion.fallarEnRegistro =
+                1;
+
+        assertException(
+                "falla al registrar asociación",
+                new Ejecucion() {
+                    public void ejecutar()
+                            throws Exception {
+
+                        accion.guardarValidados();
+                    }
+                }
+        );
+
+        assertInt(
+                "documento creado antes de fallar SQL",
+                1,
+                accion.creados.size()
+        );
+
+        assertInt(
+                "sin asociación completada",
+                0,
+                accion.asociacionesRegistradas.size()
+        );
+
+        assertInt(
+                "documento huérfano eliminado",
+                1,
+                accion.eliminados.size()
+        );
+
+        assertString(
+                "se elimina exactamente el documento creado",
+                accion.creados.get(
+                        0
+                ),
+                accion.eliminados.get(
+                        0
+                )
+        );
+    }
+
+    private static void assertReactivacionSiFallaEliminar(
+            File archivoUno,
+            File archivoDos)
+            throws Exception {
+
+        final AccionPrueba accion =
+                new AccionPrueba();
+
+        List<EntradaPrueba> entradas =
+                new ArrayList<EntradaPrueba>();
+
+        entradas.add(
+                new EntradaPrueba(
+                        0,
+                        archivoUno,
+                        "uno.pdf",
+                        20,
+                        ""
+                )
+        );
+
+        entradas.add(
+                new EntradaPrueba(
+                        1,
+                        archivoDos,
+                        "dos.doc",
+                        21,
+                        ""
+                )
+        );
+
+        accion.validar(
+                25,
+                2,
+                entradas,
+                prestadoresEnviados()
+        );
+
+        accion.fallarEnCreacion =
+                2;
+
+        accion.fallarEliminacion =
+                true;
+
+        assertException(
+                "falla de eliminación durante compensación",
+                new Ejecucion() {
+                    public void ejecutar()
+                            throws Exception {
+
+                        accion.guardarValidados();
+                    }
+                }
+        );
+
+        assertInt(
+                "una asociación dada de baja",
+                1,
+                accion.asociacionesBaja.size()
+        );
+
+        assertInt(
+                "asociación reactivada al conservarse el documento",
+                1,
+                accion.asociacionesReactivadas.size()
+        );
+
+        assertInt(
+                "el documento no figura como eliminado",
+                0,
+                accion.eliminados.size()
+        );
+
+        assertInt(
+                "la misma asociación fue reactivada",
+                accion.asociacionesBaja.get(
+                        0
+                ).intValue(),
+                accion.asociacionesReactivadas.get(
+                        0
+                ).intValue()
         );
     }
 
@@ -564,8 +790,13 @@ public class UploadPresupuestosComprasActionTest {
         RequerimientoCompra requerimiento =
                 new RequerimientoCompra();
 
-        requerimiento.setIdRequerimientoCompra(25);
-        requerimiento.setEstado(estado);
+        requerimiento.setIdRequerimientoCompra(
+                25
+        );
+
+        requerimiento.setEstado(
+                estado
+        );
 
         return requerimiento;
     }
@@ -583,6 +814,7 @@ public class UploadPresupuestosComprasActionTest {
                         "20-12345678-9"
                 )
         );
+
         prestadores.add(
                 prestador(
                         21,
@@ -608,9 +840,13 @@ public class UploadPresupuestosComprasActionTest {
                 );
 
         fallido.setEstadoEnvio(
-                WebKeysCompras.ENVIO_ERROR
+                WebKeysCompras
+                        .ENVIO_ERROR
         );
-        prestadores.add(fallido);
+
+        prestadores.add(
+                fallido
+        );
 
         return prestadores;
     }
@@ -623,11 +859,21 @@ public class UploadPresupuestosComprasActionTest {
         PrestadorCotizacion prestador =
                 new PrestadorCotizacion();
 
-        prestador.setIdPrestador(id);
-        prestador.setDescripcion(descripcion);
-        prestador.setCuit(cuit);
+        prestador.setIdPrestador(
+                id
+        );
+
+        prestador.setDescripcion(
+                descripcion
+        );
+
+        prestador.setCuit(
+                cuit
+        );
+
         prestador.setEstadoEnvio(
-                WebKeysCompras.ENVIO_ENVIADO
+                WebKeysCompras
+                        .ENVIO_ENVIADO
         );
 
         return prestador;
@@ -653,6 +899,47 @@ public class UploadPresupuestosComprasActionTest {
         return entradas;
     }
 
+    private static List<EntradaPrueba> tresEntradas(
+            File archivoUno,
+            File archivoDos,
+            File archivoTres) {
+
+        List<EntradaPrueba> entradas =
+                new ArrayList<EntradaPrueba>();
+
+        entradas.add(
+                new EntradaPrueba(
+                        0,
+                        archivoUno,
+                        "uno.pdf",
+                        20,
+                        ""
+                )
+        );
+
+        entradas.add(
+                new EntradaPrueba(
+                        1,
+                        archivoDos,
+                        "dos.doc",
+                        21,
+                        ""
+                )
+        );
+
+        entradas.add(
+                new EntradaPrueba(
+                        2,
+                        archivoTres,
+                        "tres.pdf",
+                        20,
+                        ""
+                )
+        );
+
+        return entradas;
+    }
+
     private static File crearArchivo(
             String prefijo,
             String extension)
@@ -671,7 +958,11 @@ public class UploadPresupuestosComprasActionTest {
 
         try {
             output.write(
-                    new byte[]{1, 2, 3}
+                    new byte[]{
+                            1,
+                            2,
+                            3
+                    }
             );
         } finally {
             output.close();
@@ -703,11 +994,13 @@ public class UploadPresupuestosComprasActionTest {
             String actual) {
 
         if (actual == null
-                || !actual.matches(expresion)) {
+                || !actual.matches(
+                        expresion
+                )) {
 
             throw new AssertionError(
                     descripcion
-                            + ": expresion="
+                            + ": expresión="
                             + expresion
                             + ", actual="
                             + actual
@@ -722,7 +1015,9 @@ public class UploadPresupuestosComprasActionTest {
 
         if (esperado == null
                 ? actual != null
-                : !esperado.equals(actual)) {
+                : !esperado.equals(
+                        actual
+                )) {
 
             throw new AssertionError(
                     descripcion
@@ -792,11 +1087,20 @@ public class UploadPresupuestosComprasActionTest {
                 int idPrestador,
                 String labelNavegador) {
 
-            this.indice = indice;
-            this.archivo = archivo;
-            this.nombreOriginal = nombreOriginal;
-            this.idPrestador = idPrestador;
-            this.labelNavegador = labelNavegador;
+            this.indice =
+                    indice;
+
+            this.archivo =
+                    archivo;
+
+            this.nombreOriginal =
+                    nombreOriginal;
+
+            this.idPrestador =
+                    idPrestador;
+
+            this.labelNavegador =
+                    labelNavegador;
         }
     }
 
@@ -815,11 +1119,20 @@ public class UploadPresupuestosComprasActionTest {
                 String titulo,
                 String descripcion) {
 
-            this.indice = indice;
-            this.idPrestador = idPrestador;
-            this.nombrePersistido = nombrePersistido;
-            this.titulo = titulo;
-            this.descripcion = descripcion;
+            this.indice =
+                    indice;
+
+            this.idPrestador =
+                    idPrestador;
+
+            this.nombrePersistido =
+                    nombrePersistido;
+
+            this.titulo =
+                    titulo;
+
+            this.descripcion =
+                    descripcion;
         }
     }
 
@@ -827,12 +1140,31 @@ public class UploadPresupuestosComprasActionTest {
             extends UploadPresupuestosComprasAction {
 
         private List<PresupuestoValidado> validados;
-        private List<String> creados =
+
+        private final List<String> creados =
                 new ArrayList<String>();
-        private List<String> eliminados =
+
+        private final List<String> eliminados =
                 new ArrayList<String>();
+
+        private final List<Integer> asociacionesRegistradas =
+                new ArrayList<Integer>();
+
+        private final List<Integer> asociacionesBaja =
+                new ArrayList<Integer>();
+
+        private final List<Integer> asociacionesReactivadas =
+                new ArrayList<Integer>();
+
         private int fallarEnCreacion;
+        private int fallarEnRegistro;
+
         private int creacionesIntentadas;
+        private int registrosIntentados;
+        private int siguienteIdAsociacion =
+                1;
+
+        private boolean fallarEliminacion;
 
         public void validarAcceso(
                 boolean tieneRol,
@@ -866,9 +1198,14 @@ public class UploadPresupuestosComprasActionTest {
             List<PresupuestoEntrada> entradasAction =
                     new ArrayList<PresupuestoEntrada>();
 
-            for (int i = 0; i < entradas.size(); i++) {
+            for (int i = 0;
+                    i < entradas.size();
+                    i++) {
+
                 EntradaPrueba entrada =
-                        entradas.get(i);
+                        entradas.get(
+                                i
+                        );
 
                 entradasAction.add(
                         crearEntradaPresupuesto(
@@ -899,9 +1236,14 @@ public class UploadPresupuestosComprasActionTest {
             List<ResultadoPrueba> resultados =
                     new ArrayList<ResultadoPrueba>();
 
-            for (int i = 0; i < validados.size(); i++) {
+            for (int i = 0;
+                    i < validados.size();
+                    i++) {
+
                 PresupuestoValidado validado =
-                        validados.get(i);
+                        validados.get(
+                                i
+                        );
 
                 resultados.add(
                         new ResultadoPrueba(
@@ -922,14 +1264,16 @@ public class UploadPresupuestosComprasActionTest {
                 throws Exception {
 
             guardarPresupuestosValidados(
+                    25,
                     validados,
                     1L,
                     2L,
+                    "test",
                     null
             );
         }
 
-        protected String crearArchivoPresupuesto(
+        protected DocumentoPresupuestoCreado crearArchivoPresupuesto(
                 long userId,
                 long folderId,
                 PresupuestoValidado presupuesto,
@@ -940,7 +1284,7 @@ public class UploadPresupuestosComprasActionTest {
 
             if (fallarEnCreacion > 0
                     && creacionesIntentadas
-                    == fallarEnCreacion) {
+                            == fallarEnCreacion) {
 
                 throw new Exception(
                         "Falla simulada de Document Library."
@@ -951,16 +1295,177 @@ public class UploadPresupuestosComprasActionTest {
                     presupuesto
                             .getNombrePersistido();
 
-            creados.add(nombre);
+            creados.add(
+                    nombre
+            );
 
-            return nombre;
+            return new DocumentoPresupuestoCreadoPrueba(
+                    1L,
+                    folderId,
+                    1000L
+                            + creacionesIntentadas,
+                    "uuid-prueba-"
+                            + creacionesIntentadas,
+                    nombre,
+                    presupuesto.getTitulo()
+            );
+        }
+
+        protected RequerimientoCompraPresupuesto
+        registrarAsociacionPresupuesto(
+                int idRequerimientoCompra,
+                PresupuestoValidado presupuesto,
+                DocumentoPresupuestoCreado documento,
+                String usuario)
+                throws Exception {
+
+            registrosIntentados++;
+
+            if (fallarEnRegistro > 0
+                    && registrosIntentados
+                            == fallarEnRegistro) {
+
+                throw new Exception(
+                        "Falla simulada al registrar la asociación SQL."
+                );
+            }
+
+            int idAsociacion =
+                    siguienteIdAsociacion++;
+
+            RequerimientoCompraPresupuesto asociacion =
+                    new RequerimientoCompraPresupuesto();
+
+            asociacion.setIdRequerimientoPresupuesto(
+                    Integer.valueOf(
+                            idAsociacion
+                    )
+            );
+
+            asociacion.setIdRequerimiento(
+                    Integer.valueOf(
+                            idRequerimientoCompra
+                    )
+            );
+
+            asociacion.setIdPrestador(
+                    Integer.valueOf(
+                            presupuesto.getIdPrestador()
+                    )
+            );
+
+            asociacion.setDlGroupId(
+                    Long.valueOf(
+                            documento.getGroupId()
+                    )
+            );
+
+            asociacion.setDlFolderId(
+                    Long.valueOf(
+                            documento.getFolderId()
+                    )
+            );
+
+            asociacion.setDlFileEntryId(
+                    Long.valueOf(
+                            documento.getFileEntryId()
+                    )
+            );
+
+            asociacion.setDlFileUuid(
+                    documento.getUuid()
+            );
+
+            asociacion.setNombreOriginal(
+                    presupuesto.getNombreOriginal()
+            );
+
+            asociacion.setNombrePersistido(
+                    documento.getNombre()
+            );
+
+            asociacion.setTitulo(
+                    documento.getTitulo()
+            );
+
+            asociacion.setDescripcionPrestador(
+                    presupuesto.getDescripcionPrestador()
+            );
+
+            asociacionesRegistradas.add(
+                    Integer.valueOf(
+                            idAsociacion
+                    )
+            );
+
+            return asociacion;
+        }
+
+        protected boolean darDeBajaAsociacionPresupuesto(
+                int idRequerimientoPresupuesto,
+                int idRequerimientoCompra,
+                String usuario)
+                throws Exception {
+
+            asociacionesBaja.add(
+                    Integer.valueOf(
+                            idRequerimientoPresupuesto
+                    )
+            );
+
+            return true;
+        }
+
+        protected boolean reactivarAsociacionPresupuesto(
+                int idRequerimientoPresupuesto,
+                int idRequerimientoCompra)
+                throws Exception {
+
+            asociacionesReactivadas.add(
+                    Integer.valueOf(
+                            idRequerimientoPresupuesto
+                    )
+            );
+
+            return true;
         }
 
         protected void eliminarArchivoPresupuesto(
                 long folderId,
-                String nombre) {
+                String nombre)
+                throws Exception {
 
-            eliminados.add(nombre);
+            if (fallarEliminacion) {
+                throw new Exception(
+                        "Falla simulada al eliminar el documento."
+                );
+            }
+
+            eliminados.add(
+                    nombre
+            );
+        }
+    }
+
+    private static class DocumentoPresupuestoCreadoPrueba
+            extends UploadPresupuestosComprasAction.DocumentoPresupuestoCreado {
+
+        private DocumentoPresupuestoCreadoPrueba(
+                long groupId,
+                long folderId,
+                long fileEntryId,
+                String uuid,
+                String nombre,
+                String titulo) {
+
+            super(
+                    groupId,
+                    folderId,
+                    fileEntryId,
+                    uuid,
+                    nombre,
+                    titulo
+            );
         }
     }
 
