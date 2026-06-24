@@ -166,6 +166,48 @@ public class RequerimientoCompraDetalle {
                 : null;
     }
 
+    /*
+     * Alias explícito para el nuevo contrato de un único prestador
+     * adjudicado por requerimiento. Se conserva get/setIdPrestador porque la
+     * columna y el servicio actuales siguen persistiendo el dato por detalle.
+     */
+    public Integer getIdPrestadorAdjudicado() {
+        return getIdPrestador();
+    }
+
+    public int getIdPrestadorAdjudicadoInt() {
+        return getIdPrestadorInt();
+    }
+
+    public String getIdPrestadorAdjudicadoString() {
+        return getIdPrestadorString();
+    }
+
+    public void setIdPrestadorAdjudicado(Integer idPrestadorAdjudicado) {
+        setIdPrestador(idPrestadorAdjudicado);
+    }
+
+    public void aplicarPrestadorAdjudicado(Integer idPrestadorAdjudicado) {
+        setIdPrestador(idPrestadorAdjudicado);
+    }
+
+    public boolean tienePrestadorAdjudicado() {
+        return idPrestador != null && idPrestador.intValue() > 0;
+    }
+
+    public boolean tienePrecioUnitarioEstimado() {
+        return precioUnitarioEstimado != null
+                && precioUnitarioEstimado.compareTo(BigDecimal.ZERO) >= 0;
+    }
+
+    public boolean estaCompletoParaCotizacion() {
+        return cantidad != null
+                && cantidad.intValue() > 0
+                && tienePrecioUnitarioEstimado()
+                && getPrecioTotalEstimado() != null
+                && tienePrestadorAdjudicado();
+    }
+
     public String getPrestadorCuit() {
         return prestadorCuit;
     }

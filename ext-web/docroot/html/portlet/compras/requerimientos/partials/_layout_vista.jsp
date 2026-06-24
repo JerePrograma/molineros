@@ -5,7 +5,13 @@
      class="compras-modo-vista">
 
     <%@ include file="/html/portlet/compras/requerimientos/partials/_datos_basicos.jsp" %>
-    <%@ include file="/html/portlet/compras/requerimientos/partials/_afiliado_readonly.jsp" %>
+
+    <%--
+        La vista utiliza el mismo componente que ALTA/EDICION, configurado
+        automáticamente como readonly por _afiliado_editable.jsp.
+    --%>
+    <%@ include file="/html/portlet/compras/requerimientos/partials/_afiliado_editable.jsp" %>
+
     <%@ include file="/html/portlet/compras/requerimientos/partials/_observaciones.jsp" %>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle.jsp" %>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_adjuntos.jsp" %>

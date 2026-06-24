@@ -17,6 +17,22 @@ boolean botoneraTieneRolCotizar =
         user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS);
 
+Object botoneraPendientesNotificacionAttr =
+        renderRequest.getAttribute(
+                WebKeysCompras.HAY_PRESTADORES_PENDIENTES_NOTIFICACION
+        );
+
+/*
+ * Compatibilidad defensiva:
+ * los actions corregidos siempre cargan el Boolean. Si otro forward legacy
+ * renderiza esta botonera sin pasar por ellos, se conserva la visibilidad
+ * anterior en A COTIZAR en vez de ocultar una operación válida por accidente.
+ */
+boolean botoneraHayPrestadoresPendientesNotificacion =
+        botoneraPendientesNotificacionAttr instanceof Boolean
+                ? ((Boolean) botoneraPendientesNotificacionAttr).booleanValue()
+                : req != null && req.puedeReintentarNotificaciones();
+
 boolean botoneraPuedeEnviarACotizar =
         botoneraRequerimientoPersistido
         && botoneraTieneRolCotizar
@@ -25,7 +41,10 @@ boolean botoneraPuedeEnviarACotizar =
 boolean botoneraPuedeReintentarCotizacion =
         botoneraRequerimientoPersistido
         && botoneraTieneRolCotizar
-        && WebKeysCompras.puedeReintentarNotificaciones(botoneraEstadoActual);
+        && WebKeysCompras.puedeReintentarNotificaciones(
+                botoneraEstadoActual,
+                botoneraHayPrestadoresPendientesNotificacion
+        );
 
 boolean botoneraPuedeAnular =
         botoneraRequerimientoPersistido
@@ -54,7 +73,7 @@ String botoneraAnularURL =
         + "','"
         + renderResponse.getNamespace()
         + "btnAnularRequerimientoCompra'"
-        + ",'�Confirma anular el requerimiento?'"
+        + ",'¿Confirma anular el requerimiento?'"
         + ",'Anulando...');";
 %>
 
@@ -114,21 +133,16 @@ String botoneraAnularURL =
             <% if (modoEditable && puedeEditarCotizacionPantalla) { %>
                 <input type="button"
                        id="<portlet:namespace />btnGuardarCotizacionCompra"
-                       value="Guardar cotizaci�n"
+                       value="Guardar cotización"
                        onClick="return <%= namespaceCompra %>guardarCotizacion();" />
                 &nbsp;&nbsp;
             <% } %>
 
-            <% if (modoVista
-                    && botoneraRequerimientoPersistido
-                    && ((puedeABM && req.puedeEditarEstructura())
-                        || ((puedeABM || botoneraTieneRolCotizar)
-                            && req.puedeEditarCotizacion()))) { %>
-                <liferay-ui:icon image="edit"
-                                 message="Editar"
-                                 url="<%= editarURL.toString() %>" />
-                &nbsp;&nbsp;
-            <% } %>
+            <%--
+                No se muestra Editar dentro de la vista.
+                La edición continúa disponible en el menú de acciones del
+                listado, respetando la observación funcional más reciente.
+            --%>
 
             <% if (botoneraPuedeEnviarACotizar) { %>
                 <input type="button"
@@ -150,7 +164,7 @@ String botoneraAnularURL =
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
                                '<%= botoneraReintentarCotizacionFormId %>',
                                '<portlet:namespace />btnReintentarCotizacionRequerimientoCompra',
-                               '�Confirma notificar nuevamente a los prestadores pendientes?',
+                               '¿Confirma notificar nuevamente a los prestadores pendientes?',
                                'Notificando...'
                        );" />
                 &nbsp;&nbsp;
@@ -212,7 +226,7 @@ String botoneraAnularURL =
         var iframe = document.getElementById('<portlet:namespace />iframeImpresionRequerimientoCompra');
 
         if (!iframe) {
-            alert('No se pudo preparar la impresi�n del requerimiento.');
+            alert('No se pudo preparar la impresión del requerimiento.');
             return false;
         }
 
@@ -224,7 +238,7 @@ String botoneraAnularURL =
                 iframe.contentWindow.focus();
                 iframe.contentWindow.print();
             } catch (e) {
-                alert('No se pudo imprimir autom�ticamente el PDF.');
+                alert('No se pudo imprimir automáticamente el PDF.');
             }
         };
 

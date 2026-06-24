@@ -437,6 +437,120 @@ public class RequerimientoCompra {
         return WebKeysCompras.formatearImporte(total);
     }
 
+    /*
+     * Obtiene el único prestador adjudicado cuando todos los detalles que
+     * informan prestador coinciden. Si existen IDs distintos devuelve null;
+     * use tienePrestadoresAdjudicadosMixtos() para distinguir mezcla de falta
+     * de adjudicación.
+     */
+    public Integer getIdPrestadorAdjudicado() {
+        Integer prestador = null;
+
+        if (detalles == null) {
+            return null;
+        }
+
+        for (int i = 0; i < detalles.size(); i++) {
+            RequerimientoCompraDetalle detalle = detalles.get(i);
+
+            if (detalle == null || !detalle.tienePrestadorAdjudicado()) {
+                continue;
+            }
+
+            Integer idPrestadorDetalle = detalle.getIdPrestador();
+
+            if (prestador == null) {
+                prestador = idPrestadorDetalle;
+            } else if (prestador.intValue() != idPrestadorDetalle.intValue()) {
+                return null;
+            }
+        }
+
+        return prestador;
+    }
+
+    public int getIdPrestadorAdjudicadoInt() {
+        Integer prestador = getIdPrestadorAdjudicado();
+        return prestador != null ? prestador.intValue() : 0;
+    }
+
+    public String getIdPrestadorAdjudicadoString() {
+        int prestador = getIdPrestadorAdjudicadoInt();
+        return prestador > 0 ? String.valueOf(prestador) : "";
+    }
+
+    public boolean tienePrestadorAdjudicado() {
+        return !tienePrestadoresAdjudicadosMixtos()
+                && getIdPrestadorAdjudicadoInt() > 0;
+    }
+
+    public boolean tienePrestadoresAdjudicadosMixtos() {
+        Integer prestador = null;
+
+        if (detalles == null) {
+            return false;
+        }
+
+        for (int i = 0; i < detalles.size(); i++) {
+            RequerimientoCompraDetalle detalle = detalles.get(i);
+
+            if (detalle == null || !detalle.tienePrestadorAdjudicado()) {
+                continue;
+            }
+
+            Integer idPrestadorDetalle = detalle.getIdPrestador();
+
+            if (prestador == null) {
+                prestador = idPrestadorDetalle;
+            } else if (prestador.intValue() != idPrestadorDetalle.intValue()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean tieneCotizacionCompletaConPrestadorUnico() {
+        if (!tieneDetalles()
+                || tienePrestadoresAdjudicadosMixtos()
+                || !tienePrestadorAdjudicado()) {
+
+            return false;
+        }
+
+        for (int i = 0; i < detalles.size(); i++) {
+            RequerimientoCompraDetalle detalle = detalles.get(i);
+
+            if (detalle == null || !detalle.estaCompletoParaCotizacion()) {
+                return false;
+            }
+
+            if (detalle.getIdPrestadorInt() != getIdPrestadorAdjudicadoInt()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public String getPrestadorAdjudicadoVisible() {
+        if (!tienePrestadorAdjudicado() || detalles == null) {
+            return "";
+        }
+
+        int idPrestador = getIdPrestadorAdjudicadoInt();
+
+        for (int i = 0; i < detalles.size(); i++) {
+            RequerimientoCompraDetalle detalle = detalles.get(i);
+
+            if (detalle != null && detalle.getIdPrestadorInt() == idPrestador) {
+                return detalle.getPrestadorSeleccionadoVisible();
+            }
+        }
+
+        return "";
+    }
+
     public boolean puedeEditarEstructura() {
         return WebKeysCompras.puedeEditarEstructura(getEstado()) && bajaFecha == null;
     }
@@ -463,6 +577,13 @@ public class RequerimientoCompra {
 
     public boolean puedeReintentarNotificaciones() {
         return WebKeysCompras.puedeReintentarNotificaciones(getEstado()) && bajaFecha == null;
+    }
+
+    public boolean puedeReintentarNotificaciones(boolean hayPrestadoresPendientes) {
+        return WebKeysCompras.puedeReintentarNotificaciones(
+                getEstado(),
+                hayPrestadoresPendientes
+        ) && bajaFecha == null;
     }
 
     public boolean isEditable() {

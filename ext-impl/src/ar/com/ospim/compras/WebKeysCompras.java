@@ -59,15 +59,33 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String RESULTADO_NOTIFICACION_COTIZACION =
             "RESULTADO_NOTIFICACION_COTIZACION";
 
+    /*
+     * Boolean cargado por los actions que renderizan un requerimiento.
+     * La botonera lo utiliza para ocultar el reintento cuando la función
+     * canónica de candidatos ya no devuelve prestadores pendientes.
+     */
+    public static final String HAY_PRESTADORES_PENDIENTES_NOTIFICACION =
+            "HAY_PRESTADORES_PENDIENTES_NOTIFICACION";
+
+    /*
+     * Parámetro único del prestador adjudicado para todo el requerimiento.
+     * Se mantiene el parseo de los parámetros legacy por detalle durante la
+     * transición para no romper pantallas compiladas o formularios antiguos.
+     */
+    public static final String PARAM_ID_PRESTADOR_ADJUDICADO =
+            "id_prestador_adjudicado";
+
     public static final int ESTADO_PENDIENTE = 1;
     public static final int ESTADO_A_COTIZAR = 2;
     public static final int ESTADO_COTIZADO = 3;
     public static final int ESTADO_RECLAMO_RP = 4;
+
     /**
      * @deprecated Alias exclusivo para compatibilidad con código legacy.
      */
     @Deprecated
     public static final int ESTADO_AUTORIZADO = ESTADO_RECLAMO_RP;
+
     public static final int ESTADO_ORDEN_COMPRA = 5;
     public static final int ESTADO_ANULADO = 99;
 
@@ -255,6 +273,14 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return esACotizar(estado);
     }
 
+    public static boolean puedeReintentarNotificaciones(
+            int estado,
+            boolean hayPrestadoresPendientes) {
+
+        return puedeReintentarNotificaciones(estado)
+                && hayPrestadoresPendientes;
+    }
+
     public static boolean puedeAnular(int estado) {
         return esPendiente(estado) || esACotizar(estado);
     }
@@ -276,6 +302,11 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             return false;
         }
 
+        /*
+         * Los estados 4 y 5 siguen reconocidos, pero continúan sin transición
+         * activa hasta implementar y vincular el Reclamo Prestacional y la
+         * Orden de Compra reales.
+         */
         if (estadoActual == estadoNuevo
                 || esAnulado(estadoActual)
                 || esCotizado(estadoActual)) {
