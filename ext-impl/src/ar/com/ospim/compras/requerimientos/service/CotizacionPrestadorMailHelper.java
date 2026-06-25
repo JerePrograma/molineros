@@ -181,23 +181,13 @@ public class CotizacionPrestadorMailHelper {
 
             if (_log.isInfoEnabled()) {
                 _log.info(
-                        "Correo de cotización enviado. "
-                                + "emailDestino="
-                                + emailDestino
-                                + ", usuarioSmtp="
-                                + usuarioSmtp
-                                + ", remitente="
-                                + remitente
+                        "Correo de cotización aceptado por el servidor SMTP."
                 );
             }
 
         } catch (Exception e) {
             _log.error(
-                    "Falló el envío SMTP de cotización. "
-                            + "emailDestino="
-                            + emailDestino
-                            + ", usuarioSmtp="
-                            + usuarioSmtp,
+                    "Falló el envío SMTP de cotización.",
                     e
             );
 

@@ -256,7 +256,7 @@ For state A cotizar, may:
 
 - retry pending or failed provider notifications without changing state;
 - edit quotation values independently from the request structure;
-- select one successfully notified provider per detail;
+- select one successfully notified provider for the complete request; the selected provider is applied to every active detail;
 - save quotation progress; the service automatically performs transition
   2 -> 3 when every active detail is complete and valid.
 
@@ -289,7 +289,7 @@ Expected detailed-view actions:
 With `ABM_Compras`:
 
 - Save while editing.
-- Edit while viewing.
+
 - Manage the request structure.
 - Imprimir PDF.
 - Volver.
@@ -318,12 +318,17 @@ The request structure and structural details are read-only.
 
 ### State 3 — Cotizado
 
-Allow only read-only operations such as:
+Allow read-only operations such as:
 
 - View quotation results.
 - View budget documents.
 - Imprimir PDF.
 - Volver.
+
+The optional `Crear Reclamo Prestacional` action is a cross-module handoff. It
+must independently validate the persisted Cotizado state and the authorized
+role in backend code, and must persist the relationship with the created claim.
+UI visibility alone does not complete this integration.
 
 ### State 4 — Reclamo (RP), read-only
 
@@ -348,11 +353,11 @@ Do not expose purchase-order or transition actions.
 - Saving a quotation automatically changes it to Cotizado only when every
   active detail has a valid amount and an awarded provider whose notification
   for the same request is persisted as ENVIADO.
-- Each detail has its own awarded provider.
+- The complete request has one awarded provider, replicated to every active detail for compatibility with the legacy data model.
 - The awarded provider must belong to the request notification set.
 - The provider notification must be in ENVIADO state before adjudication.
 - Cotizado, Reclamo (RP), Orden de compra, and Anulado are read-only.
-- Reclamo and purchase-order transition functionality are inactive.
+- Creating a Reclamo Prestacional from Cotizado is a cross-module handoff, not a Compras state transition. It is complete only when the backend validates role/state and persists the source relationship. Purchase-order transition functionality remains inactive.
 
 ## Compras notification behavior
 

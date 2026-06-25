@@ -346,12 +346,7 @@
 
             <% if (puedeVerCotizacionDetalle) { %>
                 <% if (puedeCotizarDetalle) { %>
-                    html += '<td>';
-                    html += '<input type="text" size="10" id="<portlet:namespace />detalle_precio_unitario_' + i + '" ';
-                    html += 'value="' + <portlet:namespace />detalleEscapeHtml(detalle.precioUnitario) + '" ';
-                    html += 'onkeyup="<portlet:namespace />actualizarPrecioDetalle(' + i + ');" ';
-                    html += 'onchange="<portlet:namespace />actualizarPrecioDetalle(' + i + ');" />';
-                    html += '</td>';
+                    html += '<td id="<portlet:namespace />detalle_precio_cell_' + i + '"></td>';
                     html += '<td><span id="<portlet:namespace />detalle_total_estimado_' + i + '">' +
                             <portlet:namespace />detalleEscapeHtml(detalle.precioTotal) + '</span></td>';
                 <% } else { %>
@@ -375,6 +370,30 @@
             html += '</tr>';
 
             tbody.append(html);
+
+            <% if (puedeCotizarDetalle) { %>
+                var precioInput = jQuery('<input/>', {
+                    type: 'text',
+                    size: '10',
+                    id: '<portlet:namespace />detalle_precio_unitario_' + i
+                });
+
+                precioInput.val(
+                        detalle.precioUnitario == null
+                                ? ''
+                                : detalle.precioUnitario
+                );
+
+                (function(index, input) {
+                    input.bind('keyup change', function() {
+                        <portlet:namespace />actualizarPrecioDetalle(index);
+                    });
+                })(i, precioInput);
+
+                jQuery(
+                        '#<portlet:namespace />detalle_precio_cell_' + i
+                ).append(precioInput);
+            <% } %>
         }
     }
 

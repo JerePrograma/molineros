@@ -18,8 +18,8 @@ public class NotificarCotizacionPrestadorServiceImplTest {
 
     public static void main(String[] args) throws Exception {
         assertReservaFalseOmiteSinEnviarNiFinalizar();
-        assertEmailReservadoNuloConTemporalEnvia();
-        assertEmailReservadoInvalidoConTemporalEnvia();
+        assertEmailReservadoNuloConTemporalNoEnvia();
+        assertEmailReservadoInvalidoConTemporalNoEnvia();
         assertErrorLecturaEmailFinalizaError();
         assertErrorEnvioFinalizaError();
         assertEnvioAceptadoYEnviadoPersistidoCuentaEnviado();
@@ -31,7 +31,7 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         assertDiagnosticoTodosBloqueadosPorEstadoPrevio();
     }
 
-    private static void assertEmailReservadoNuloConTemporalEnvia()
+    private static void assertEmailReservadoNuloConTemporalNoEnvia()
             throws Exception {
 
         ServicioPrueba service =
@@ -40,20 +40,15 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         NotificacionCotizacionResultado resultado =
                 service.notificarPrestadores(10, "tester", 1L);
 
-        assertInt("enviados", 1, resultado.getEnviados());
+        assertInt("enviados", 0, resultado.getEnviados());
         assertInt("errores", 0, resultado.getErrores());
-        assertInt("emails invalidos", 0, resultado.getEmailsInvalidos());
-        assertInt("mails enviados", 1, service.mailsEnviados);
-        assertString(
-                "email temporal",
-                "acomas@ospim.org.ar",
-                service.emailEnviado
-        );
-        assertEstadoFinal(service, 0, ENVIADO);
+        assertInt("emails invalidos", 1, resultado.getEmailsInvalidos());
+        assertInt("mails enviados", 0, service.mailsEnviados);
+        assertEstadoFinal(service, 0, EMAIL_INVALIDO);
         assertEvento(service, 0, "reservar");
         assertEvento(service, 1, "leer-email");
-        assertEvento(service, 2, "enviar");
-        assertEvento(service, 3, "finalizar:" + ENVIADO);
+        assertEvento(service, 2, "finalizar:" + EMAIL_INVALIDO);
+        assertInt("eventos", 3, service.eventos.size());
     }
 
     private static void assertReservaFalseOmiteSinEnviarNiFinalizar()
@@ -77,7 +72,7 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         assertInt("eventos", 1, service.eventos.size());
     }
 
-    private static void assertEmailReservadoInvalidoConTemporalEnvia()
+    private static void assertEmailReservadoInvalidoConTemporalNoEnvia()
             throws Exception {
 
         ServicioPrueba service =
@@ -87,17 +82,15 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         NotificacionCotizacionResultado resultado =
                 service.notificarPrestadores(10, "tester", 1L);
 
-        assertInt("enviados", 1, resultado.getEnviados());
+        assertInt("enviados", 0, resultado.getEnviados());
         assertInt("errores", 0, resultado.getErrores());
-        assertInt("emails invalidos", 0, resultado.getEmailsInvalidos());
+        assertInt("emails invalidos", 1, resultado.getEmailsInvalidos());
         assertInt("omitidos", 0, resultado.getOmitidos());
-        assertInt("mails enviados", 1, service.mailsEnviados);
-        assertString(
-                "email temporal",
-                "acomas@ospim.org.ar",
-                service.emailEnviado
-        );
-        assertEstadoFinal(service, 0, ENVIADO);
+        assertInt("mails enviados", 0, service.mailsEnviados);
+        assertEstadoFinal(service, 0, EMAIL_INVALIDO);
+        assertEvento(service, 0, "reservar");
+        assertEvento(service, 1, "leer-email");
+        assertEvento(service, 2, "finalizar:" + EMAIL_INVALIDO);
     }
 
     private static void assertErrorEnvioFinalizaError()

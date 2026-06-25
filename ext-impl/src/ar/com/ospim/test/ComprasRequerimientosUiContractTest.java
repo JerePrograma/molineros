@@ -17,6 +17,7 @@ public final class ComprasRequerimientosUiContractTest {
     public static void main(String[] args) throws Exception {
         assertFiltroPrestadoresEsCheckbox();
         assertPrestadorAdjudicadoEsUnico();
+        assertPrecioCotizacionNoConcatenaAtributos();
         assertMensajesYPresupuestos();
         assertNotificacionesFailClosed();
         assertCorreoYDestinatarioTemporal();
@@ -51,6 +52,23 @@ public final class ComprasRequerimientosUiContractTest {
         assertContains("backend aplica unico", service, "aplicarPrestadorAdjudicado");
     }
 
+    private static void assertPrecioCotizacionNoConcatenaAtributos()
+            throws Exception {
+
+        String comunes = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_scripts_comunes.jsp"
+        );
+
+        assertNotContains(
+                "precio no concatenado en value",
+                comunes,
+                "value=\"' + <portlet:namespace />detalleEscapeHtml(detalle.precioUnitario)"
+        );
+        assertContains("input creado por DOM", comunes, "jQuery('<input/>', {");
+        assertContains("precio asignado con val", comunes, "precioInput.val(");
+        assertContains("eventos enlazados", comunes, "input.bind('keyup change'");
+    }
+
     private static void assertMensajesYPresupuestos() throws Exception {
         String mensajes = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_mensajes.jsp");
         String adjuntos = leer("ext-web/docroot/html/portlet/compras/requerimientos/requerimiento_adjuntos.jsp");
@@ -79,6 +97,7 @@ public final class ComprasRequerimientosUiContractTest {
 
     private static void assertCorreoYDestinatarioTemporal() throws Exception {
         String mail = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/service/NotificarCotizacionPrestadorServiceImpl.java");
+        String helper = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/service/CotizacionPrestadorMailHelper.java");
         assertContains("descripcion", mail, " | Descripción: ");
         assertNotContains("obs anterior", mail, " | Obs: ");
         assertContains("modo temporal explicito", mail, "USAR_EMAIL_DESTINO_TEMPORAL = true");
@@ -86,6 +105,18 @@ public final class ComprasRequerimientosUiContractTest {
         assertContains("reserva canonica", mail, "registrar_cotizacion_prestador");
         assertContains("reserva procesando", mail, "AND estado_envio = 'PROCESANDO'");
         assertContains("estado enviado", mail, "WebKeysCompras.ENVIO_ENVIADO");
+        assertContains("email real obligatorio", mail,
+                "Email real reservado del prestador inválido.");
+        assertBefore("validacion real antes de redireccion", mail,
+                "String emailReservadoNormalizado", "String emailDestino");
+        assertNotContains("destino fuera de logs de servicio", mail,
+                "\", emailDestino=\"");
+        assertNotContains("destino fuera de logs SMTP", helper,
+                "emailDestino=");
+        assertNotContains("usuario fuera de logs SMTP", helper,
+                "usuarioSmtp=");
+        assertNotContains("remitente fuera de logs SMTP", helper,
+                "remitente=");
     }
 
     private static void assertComponenteAfiliadoCompartido() throws Exception {

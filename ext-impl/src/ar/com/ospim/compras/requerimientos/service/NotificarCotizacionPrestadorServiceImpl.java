@@ -289,16 +289,43 @@ public class NotificarCotizacionPrestadorServiceImpl {
         }
 
         /*
-         * El modo temporal se resuelve después de obtener
-         * correctamente la reserva, pero antes de validar
-         * el destinatario.
-         *
-         * De esta manera, un prestador sin email real no
-         * bloquea las pruebas de envío.
+         * El destinatario temporal cambia únicamente el destino físico
+         * del mensaje. La validez de negocio continúa dependiendo del
+         * email real reservado para el prestador.
          */
+        String emailReservadoNormalizado =
+                normalizarEmail(
+                        emailReservado
+                );
+
+        if (!esEmailValido(
+                emailReservadoNormalizado
+        )) {
+            String errorEmail =
+                    "Email real reservado del prestador inválido.";
+
+            _log.warn(
+                    "Email real reservado de cotización inválido. "
+                            + "idPrestador="
+                            + idPrestador
+                            + ", idRequerimiento="
+                            + idRequerimiento
+            );
+
+            finalizarConControl(
+                    idRequerimiento,
+                    idPrestador,
+                    WebKeysCompras.ENVIO_EMAIL_INVALIDO,
+                    errorEmail
+            );
+
+            resultado.incrementarEmailsInvalidos();
+            return;
+        }
+
         String emailDestino =
                 resolverEmailDestino(
-                        emailReservado
+                        emailReservadoNormalizado
                 );
 
         if (USAR_EMAIL_DESTINO_TEMPORAL
@@ -306,14 +333,12 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             _log.info(
                     "Modo temporal de notificación activo. "
-                            + "La cotización será enviada "
-                            + "al destinatario fijo. "
+                            + "La cotización será redirigida "
+                            + "al destinatario fijo de QA. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
                             + idRequerimiento
-                            + ", emailDestino="
-                            + emailDestino
             );
         }
 
@@ -321,19 +346,11 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 emailDestino
         )) {
             String errorEmail =
-                    USAR_EMAIL_DESTINO_TEMPORAL
-                            ? "Email destino temporal inválido."
-                            : "Email destino reservado inválido.";
+                    "Email destino temporal inválido.";
 
             _log.warn(
-                    "Email destino de cotización inválido. "
-                            + "origen="
-                            + (
-                            USAR_EMAIL_DESTINO_TEMPORAL
-                                    ? "TEMPORAL"
-                                    : "RESERVADO"
-                    )
-                            + ", idPrestador="
+                    "Email temporal de cotización inválido. "
+                            + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
                             + idRequerimiento
@@ -387,9 +404,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
-                            + idRequerimiento
-                            + ", emailDestino="
-                            + emailDestino,
+                            + idRequerimiento,
                     e
             );
 
