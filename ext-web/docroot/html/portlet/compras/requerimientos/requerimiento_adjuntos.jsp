@@ -222,9 +222,9 @@ boolean msgPresupuestoBorrado =
                            style="margin-bottom: 12px; width: 100%;">
                         <thead>
                             <tr>
-                                <th>Raz√≥n social</th>
+                                <th>RazÛn social</th>
                                 <th>CUIT</th>
-                                <th>Estado de notificaci√≥n</th>
+                                <th>Estado de notificaciÛn</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -443,7 +443,7 @@ boolean msgPresupuestoBorrado =
             alert(
                     'Se pueden cargar hasta '
                             + '<%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>'
-                            + ' presupuestos por operaci√≥n.'
+                            + ' presupuestos por operaciÛn.'
             );
 
             return false;
@@ -561,7 +561,7 @@ boolean msgPresupuestoBorrado =
                         > <%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>) {
 
             alert(
-                    'La cantidad de presupuestos no es v√°lida.'
+                    'La cantidad de presupuestos no es v·lida.'
             );
 
             return false;
@@ -663,14 +663,14 @@ boolean msgPresupuestoBorrado =
                 || idNumerico <= 0) {
 
             alert(
-                    'No se pudo preparar la eliminaci√≥n del presupuesto.'
+                    'No se pudo preparar la eliminaciÛn del presupuesto.'
             );
 
             return false;
         }
 
         if (!confirm(
-                '¬øEst√° seguro de eliminar este presupuesto?'
+                'øEst· seguro de eliminar este presupuesto?'
         )) {
             return false;
         }

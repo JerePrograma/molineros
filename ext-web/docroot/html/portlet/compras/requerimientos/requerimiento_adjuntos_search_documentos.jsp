@@ -144,7 +144,7 @@ headerNames.add(
 String mensajeSinResultados =
         idRequerimientoCompraPresupuestos > 0
                 ? "No hay presupuestos asociados al requerimiento."
-                : "No se informÃ³ el requerimiento de compra.";
+                : "No se informó el requerimiento de compra.";
 
 SearchContainer searchContainer =
         new SearchContainer(
@@ -389,7 +389,7 @@ try {
             );
         } else {
             descargar.append(
-                    "<span title=\"El documento asociado no estÃ¡ disponible\">No disponible</span>"
+                    "<span title=\"El documento asociado no está disponible\">No disponible</span>"
             );
         }
 
