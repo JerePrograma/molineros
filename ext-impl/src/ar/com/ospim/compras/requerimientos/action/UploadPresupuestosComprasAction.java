@@ -1755,7 +1755,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         }
     }
 
-    protected static class DocumentoPresupuestoCreado {
+    public static class DocumentoPresupuestoCreado {
 
         private final long groupId;
         private final long folderId;
