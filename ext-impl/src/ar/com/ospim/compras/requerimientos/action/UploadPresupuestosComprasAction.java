@@ -329,11 +329,25 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 && requerimiento.getIdRequerimientoCompra() > 0
                 && requerimiento.puedeReintentarNotificaciones()) {
 
-            hayPendientes =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .hayPrestadoresPendientesNotificacion(
-                                    requerimiento.getIdRequerimientoCompra()
-                            );
+            try {
+                hayPendientes =
+                        BusquedaRequerimientoCompraServiceUtil
+                                .hayPrestadoresPendientesNotificacion(
+                                        requerimiento
+                                                .getIdRequerimientoCompra()
+                                );
+            } catch (Exception e) {
+                logger.warn(
+                        "No se pudo confirmar si quedan prestadores "
+                                + "pendientes de notificación. "
+                                + "El botón permanecerá oculto. "
+                                + "idRequerimiento="
+                                + requerimiento
+                                        .getIdRequerimientoCompra(),
+                        e
+                );
+                hayPendientes = false;
+            }
         }
 
         renderRequest.setAttribute(

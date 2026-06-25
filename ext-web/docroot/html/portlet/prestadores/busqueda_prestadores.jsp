@@ -116,12 +116,10 @@
 					Habilitados a Cotizar:
 				</label></td>
 				<td>
-					<select id="<portlet:namespace />solicitar_cotizacion_filtro"
-						name="<portlet:namespace />solicitar_cotizacion_filtro">
-						<option value="">Todos</option>
-						<option value="true">Sí</option>
-						<option value="false">No</option>
-					</select>
+					<input id="<portlet:namespace />solicitar_cotizacion_filtro"
+						name="<portlet:namespace />solicitar_cotizacion_filtro"
+						type="checkbox"
+						value="true" />
 				</td>
 			</tr>
 			<tr>
@@ -174,7 +172,9 @@
 		var tipoPrestador=jQuery('#<portlet:namespace />tipo_prestador').val();
 		var hospital=jQuery('#<portlet:namespace />cod_hospital').val();
 		var solicitarCotizacionFiltro =
-				jQuery('#<portlet:namespace />solicitar_cotizacion_filtro').val();
+				jQuery('#<portlet:namespace />solicitar_cotizacion_filtro').is(':checked')
+						? 'true'
+						: '';
 
 /* 		if(!<portlet:namespace />validarBusqueda(id_prestador,cuit,descripcion)){
 			return false;

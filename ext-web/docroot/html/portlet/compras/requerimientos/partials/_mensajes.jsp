@@ -290,12 +290,3 @@ ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado result
         No posee permisos para modificar requerimientos de compras.
     </div>
 </c:if>
-
-<c:if test="<%= !soloLecturaSolicitada
-        && puedeABM
-        && !editablePorEstado %>">
-
-    <div class="portlet-msg-info">
-        La estructura del requerimiento solo puede editarse en estado PENDIENTE.
-    </div>
-</c:if>

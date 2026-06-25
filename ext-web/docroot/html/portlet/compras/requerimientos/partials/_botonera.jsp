@@ -23,15 +23,13 @@ Object botoneraPendientesNotificacionAttr =
         );
 
 /*
- * Compatibilidad defensiva:
- * los actions corregidos siempre cargan el Boolean. Si otro forward legacy
- * renderiza esta botonera sin pasar por ellos, se conserva la visibilidad
- * anterior en A COTIZAR en vez de ocultar una operación válida por accidente.
+ * Fail closed: el botón solo se muestra cuando el action confirmó mediante
+ * la consulta canónica que realmente existen prestadores pendientes.
  */
 boolean botoneraHayPrestadoresPendientesNotificacion =
-        botoneraPendientesNotificacionAttr instanceof Boolean
-                ? ((Boolean) botoneraPendientesNotificacionAttr).booleanValue()
-                : req != null && req.puedeReintentarNotificaciones();
+        Boolean.TRUE.equals(
+                botoneraPendientesNotificacionAttr
+        );
 
 boolean botoneraPuedeEnviarACotizar =
         botoneraRequerimientoPersistido
@@ -55,9 +53,32 @@ boolean botoneraPuedeImprimir =
         botoneraRequerimientoPersistido
         && (botoneraTieneRolView || puedeABM || botoneraTieneRolCotizar);
 
+boolean botoneraPuedeCrearReclamoPrestacional =
+        botoneraRequerimientoPersistido
+        && WebKeysCompras.esCotizado(botoneraEstadoActual)
+        && (puedeABM || botoneraTieneRolCotizar);
+
 PortletURL botoneraCambiarEstadoURL = renderResponse.createActionURL();
 botoneraCambiarEstadoURL.setWindowState(WindowState.MAXIMIZED);
 botoneraCambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerimiento");
+
+PortletURL botoneraCrearReclamoPrestacionalURL =
+        renderResponse.createRenderURL();
+botoneraCrearReclamoPrestacionalURL.setWindowState(
+        WindowState.MAXIMIZED
+);
+botoneraCrearReclamoPrestacionalURL.setParameter(
+        "struts_action",
+        "/autorizaciones/editar_reclamosprestaciones_entry"
+);
+botoneraCrearReclamoPrestacionalURL.setParameter(
+        "origen",
+        "compras"
+);
+botoneraCrearReclamoPrestacionalURL.setParameter(
+        "id_requerimiento_compra",
+        String.valueOf(botoneraIdRequerimientoActual)
+);
 
 String botoneraEnviarCotizarFormId =
         namespaceCompra + "enviarCotizarRequerimientoCompraForm";
@@ -174,6 +195,14 @@ String botoneraAnularURL =
                 <span id="<portlet:namespace />btnAnularRequerimientoCompra">
                     <liferay-ui:icon-delete url="<%= botoneraAnularURL %>" />
                 </span>
+                &nbsp;&nbsp;
+            <% } %>
+
+            <% if (botoneraPuedeCrearReclamoPrestacional) { %>
+                <input type="button"
+                       id="<portlet:namespace />btnCrearReclamoPrestacional"
+                       value="Crear Reclamo Prestacional"
+                       onClick="window.location.href='<%= botoneraCrearReclamoPrestacionalURL.toString() %>';" />
                 &nbsp;&nbsp;
             <% } %>
 

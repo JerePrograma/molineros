@@ -5,7 +5,6 @@ package ar.com.ospim.prestadores.action;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -110,8 +109,12 @@ public class BuscarPrestadoresAction extends PrestadoresBaseAction {
 						: null;
 			}
 
-			Boolean solicitarCotizacionFiltro =
-					getSolicitarCotizacionFiltro(renderRequest);
+			boolean soloHabilitadosCotizar =
+					ParamUtil.getBoolean(
+							renderRequest,
+							"solicitarCotizacionFiltro",
+							false
+					);
 
 			List<Prestador> busqueda = PrestadorServiceUtil
 					.getPrestadores(id,cuit,descripcion, provincia, localidad, soloVigentes, 
@@ -119,7 +122,7 @@ public class BuscarPrestadoresAction extends PrestadoresBaseAction {
 
 			busqueda = filtrarPorSolicitarCotizacion(
 					busqueda,
-					solicitarCotizacionFiltro
+					soloHabilitadosCotizar
 			);
 
 			renderRequest.removeAttribute(WebKeysLiquidaciones.BUSQUEDA_PRESTADORES);
@@ -132,33 +135,12 @@ public class BuscarPrestadoresAction extends PrestadoresBaseAction {
 		return mapping.findForward("portlet.prestadores.result.search");
 	}
 
-	private Boolean getSolicitarCotizacionFiltro(
-			RenderRequest renderRequest) {
-
-		String valor =
-				ParamUtil.getString(
-						renderRequest,
-						"solicitarCotizacionFiltro",
-						""
-				);
-
-		if ("true".equalsIgnoreCase(valor)) {
-			return Boolean.TRUE;
-		}
-
-		if ("false".equalsIgnoreCase(valor)) {
-			return Boolean.FALSE;
-		}
-
-		return null;
-	}
-
 	private List<Prestador> filtrarPorSolicitarCotizacion(
 			List<Prestador> prestadores,
-			Boolean solicitarCotizacionFiltro) {
+			boolean soloHabilitadosCotizar) {
 
 		if (prestadores == null
-				|| solicitarCotizacionFiltro == null) {
+				|| !soloHabilitadosCotizar) {
 
 			return prestadores;
 		}
@@ -168,8 +150,7 @@ public class BuscarPrestadoresAction extends PrestadoresBaseAction {
 
 		for (Prestador prestador : prestadores) {
 			if (prestador != null
-					&& prestador.isSolicitarCotizacion()
-					== solicitarCotizacionFiltro.booleanValue()) {
+					&& prestador.isSolicitarCotizacion()) {
 
 				filtrados.add(prestador);
 			}

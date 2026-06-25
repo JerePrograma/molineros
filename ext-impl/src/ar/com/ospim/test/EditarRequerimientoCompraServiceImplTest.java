@@ -31,6 +31,8 @@ public class EditarRequerimientoCompraServiceImplTest {
         assertCantidadYTotalDelRequestIgnorados();
         assertPrestadorEnviadoAceptado();
         assertPrestadorAjenoONoEnviadoRechazado();
+        assertPrestadorUnicoAceptado();
+        assertPrestadoresMixtosRechazados();
         assertResultadoEstadoFinal();
         assertGuardarRequerimientoVinculaAfiliadoIdOspim();
     }
@@ -227,6 +229,61 @@ public class EditarRequerimientoCompraServiceImplTest {
                         service.validarPrestador(
                                 1,
                                 Integer.valueOf(40)
+                        );
+                    }
+                }
+        );
+    }
+
+    private static void assertPrestadorUnicoAceptado()
+            throws Exception {
+
+        ServicioPrueba service =
+                new ServicioPrueba();
+
+        service.validarDetalles(
+                cantidades(10, 2, 11, 3),
+                detalles(
+                        detalle(
+                                10,
+                                new BigDecimal("10.00"),
+                                Integer.valueOf(20)
+                        ),
+                        detalle(
+                                11,
+                                new BigDecimal("5.00"),
+                                Integer.valueOf(20)
+                        )
+                )
+        );
+    }
+
+    private static void assertPrestadoresMixtosRechazados()
+            throws Exception {
+
+        final ServicioPrueba service =
+                new ServicioPrueba();
+
+        assertException(
+                "prestadores adjudicados mixtos",
+                new Ejecucion() {
+                    public void ejecutar()
+                            throws Exception {
+
+                        service.validarDetalles(
+                                cantidades(10, 2, 11, 3),
+                                detalles(
+                                        detalle(
+                                                10,
+                                                new BigDecimal("10.00"),
+                                                Integer.valueOf(20)
+                                        ),
+                                        detalle(
+                                                11,
+                                                new BigDecimal("5.00"),
+                                                Integer.valueOf(30)
+                                        )
+                                )
                         );
                     }
                 }

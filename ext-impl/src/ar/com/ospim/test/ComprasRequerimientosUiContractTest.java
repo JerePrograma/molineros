@@ -1,0 +1,190 @@
+package ar.com.ospim.test;
+
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.file.Files;
+
+/**
+ * Contrato ejecutable sin dependencias de Liferay. Verifica la integración
+ * textual de JSP, Java y configuración que define los requerimientos de QA.
+ */
+public final class ComprasRequerimientosUiContractTest {
+
+    public static void main(String[] args) throws Exception {
+        assertFiltroPrestadoresEsCheckbox();
+        assertPrestadorAdjudicadoEsUnico();
+        assertMensajesYPresupuestos();
+        assertNotificacionesFailClosed();
+        assertCorreoYDestinatarioTemporal();
+        assertComponenteAfiliadoCompartido();
+        assertEditarSoloEnListado();
+        assertEstadosYBotones();
+        assertReclamoPrestacionalNavegaARutaReal();
+        System.out.println("CONTRATO_UI_COMPRAS_OK");
+    }
+
+    private static void assertFiltroPrestadoresEsCheckbox() throws Exception {
+        String jsp = leer("ext-web/docroot/html/portlet/prestadores/busqueda_prestadores.jsp");
+        String action = leer("ext-impl/src/ar/com/ospim/prestadores/action/BuscarPrestadoresAction.java");
+        assertContains("checkbox habilitados", jsp, "type=\"checkbox\"");
+        assertContains("valor marcado", jsp, "? 'true'");
+        assertNotContains("selector triestado", jsp, "<select id=\"<portlet:namespace />solicitar_cotizacion_filtro\"");
+        assertContains("backend booleano", action, "boolean soloHabilitadosCotizar");
+        assertContains("ParamUtil booleano", action, "ParamUtil.getBoolean");
+        assertNotContains("semantica deshabilitados", action, "getSolicitarCotizacionFiltro");
+    }
+
+    private static void assertPrestadorAdjudicadoEsUnico() throws Exception {
+        String tabla = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_tabla.jsp");
+        String comunes = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_scripts_comunes.jsp");
+        String editable = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_scripts_editable.jsp");
+        String service = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/service/EditarRequerimientoCompraServiceImpl.java");
+        assertContains("selector global", tabla, "id_prestador_adjudicado");
+        assertNotContains("aplicar a todos", comunes, "Aplicar a todos");
+        assertNotContains("selector por detalle", comunes, "detalle_id_prestador_");
+        assertContains("parametro unico", editable, "PARAM_ID_PRESTADOR_ADJUDICADO");
+        assertContains("backend exige unico", service, "obtenerPrestadorAdjudicadoUnico");
+        assertContains("backend aplica unico", service, "aplicarPrestadorAdjudicado");
+    }
+
+    private static void assertMensajesYPresupuestos() throws Exception {
+        String mensajes = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_mensajes.jsp");
+        String adjuntos = leer("ext-web/docroot/html/portlet/compras/requerimientos/requerimiento_adjuntos.jsp");
+        assertNotContains("mensaje azul eliminado", mensajes,
+                "La estructura del requerimiento solo puede editarse en estado PENDIENTE.");
+        assertContains("accion borrar", adjuntos, "value=\"Borrar\"");
+        assertBefore("orden Subir/Agregar", adjuntos,
+                "value=\"Subir\"", "value=\"Agregar otro presupuesto\"");
+    }
+
+    private static void assertNotificacionesFailClosed() throws Exception {
+        String botonera = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_botonera.jsp");
+        String action = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/action/EditarRequerimientoCompraAction.java");
+        String upload = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/action/UploadPresupuestosComprasAction.java");
+        String service = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/service/EditarRequerimientoCompraServiceImpl.java");
+        assertContains("boton fail closed", botonera, "Boolean.TRUE.equals");
+        assertNotContains("fallback fail open", botonera,
+                ": req != null && req.puedeReintentarNotificaciones();");
+        assertContains("action oculta ante error", action, "El botón permanecerá oculto.");
+        assertContains("upload oculta ante error", upload, "El botón permanecerá oculto.");
+        assertContains("reintento idempotente", service,
+                "hayPrestadoresPendientesNotificacion");
+        assertContains("reintento no-op", service,
+                "return new NotificacionCotizacionResultado();");
+    }
+
+    private static void assertCorreoYDestinatarioTemporal() throws Exception {
+        String mail = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/service/NotificarCotizacionPrestadorServiceImpl.java");
+        assertContains("descripcion", mail, " | Descripción: ");
+        assertNotContains("obs anterior", mail, " | Obs: ");
+        assertContains("modo temporal explicito", mail, "USAR_EMAIL_DESTINO_TEMPORAL = true");
+        assertContains("destinatario QA", mail, "acomas@ospim.org.ar");
+        assertContains("reserva canonica", mail, "registrar_cotizacion_prestador");
+        assertContains("reserva procesando", mail, "AND estado_envio = 'PROCESANDO'");
+        assertContains("estado enviado", mail, "WebKeysCompras.ENVIO_ENVIADO");
+    }
+
+    private static void assertComponenteAfiliadoCompartido() throws Exception {
+        String edicion = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_layout_edicion.jsp");
+        String vista = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_layout_vista.jsp");
+        String action = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/action/EditarRequerimientoCompraAction.java");
+        assertContains("afiliado edicion", edicion, "_afiliado_editable.jsp");
+        assertContains("afiliado vista", vista, "_afiliado_editable.jsp");
+        assertContains("carga afiliado", action, "cargarAfiliadoRequerimiento");
+        assertContains("atributo afiliado", action, "AFILIADO_REQUERIMIENTO_COMPRA");
+    }
+
+    private static void assertEditarSoloEnListado() throws Exception {
+        String botonera = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_botonera.jsp");
+        String acciones = leer("ext-web/docroot/html/portlet/compras/requerimientos/editar_borrar_requerimiento.jsp");
+        assertNotContains("editar no aparece en vista", botonera, "value=\"Editar\"");
+        assertContains("lapiz en listado", acciones, "image=\"edit\"");
+        assertContains("ruta editar", acciones, "/compras/editar_requerimiento");
+        assertContains("papelera", acciones, "icon-delete");
+    }
+
+    private static void assertEstadosYBotones() throws Exception {
+        String keys = leer("ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java");
+        String botonera = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_botonera.jsp");
+        assertContains("PENDIENTE", keys, "return \"PENDIENTE\"");
+        assertContains("A COTIZAR", keys, "return \"A COTIZAR\"");
+        assertContains("COTIZADO", keys, "return \"COTIZADO\"");
+        assertContains("RECLAMO RP", keys, "return \"RECLAMO (RP)\"");
+        assertContains("ORDEN declarada", keys, "return \"ORDEN DE COMPRA\"");
+        assertContains("A Cotizar solo pendiente", botonera, "puedeEnviarACotizar");
+        assertContains("notificar condicionado", botonera, "puedeReintentarNotificaciones");
+    }
+
+    private static void assertReclamoPrestacionalNavegaARutaReal() throws Exception {
+        String botonera = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_botonera.jsp");
+        String struts = leer("ext-web/docroot/WEB-INF/struts-config.xml");
+        assertContains("boton RP", botonera, "Crear Reclamo Prestacional");
+        assertContains("solo cotizado", botonera, "WebKeysCompras.esCotizado");
+        assertContains("destino RP", botonera, "/autorizaciones/editar_reclamosprestaciones_entry");
+        assertContains("action RP existente", struts,
+                "path=\"/autorizaciones/editar_reclamosprestaciones_entry\"");
+        assertContains("action real", struts, "ar.com.ospim.autorizaciones.action.EditarReclamosEntryAction");
+    }
+
+    private static String leer(String path) throws Exception {
+        File file = new File(path);
+        if (!file.isFile()) {
+            throw new AssertionError("archivo inexistente: " + path);
+        }
+        byte[] bytes = Files.readAllBytes(file.toPath());
+        String value = decodificar(bytes);
+        if (value.length() > 0 && value.charAt(0) == '\uFEFF') {
+            value = value.substring(1);
+        }
+        return value.replace("\r\n", "\n").replace('\r', '\n');
+    }
+
+    private static String decodificar(byte[] bytes) throws Exception {
+        if (bytes.length >= 2 && (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xFE) {
+            return new String(bytes, 2, bytes.length - 2, Charset.forName("UTF-16LE"));
+        }
+        if (bytes.length >= 2 && (bytes[0] & 0xFF) == 0xFE && (bytes[1] & 0xFF) == 0xFF) {
+            return new String(bytes, 2, bytes.length - 2, Charset.forName("UTF-16BE"));
+        }
+        int offset = 0;
+        if (bytes.length >= 3 && (bytes[0] & 0xFF) == 0xEF
+                && (bytes[1] & 0xFF) == 0xBB && (bytes[2] & 0xFF) == 0xBF) {
+            offset = 3;
+        }
+        CharsetDecoder utf8 = Charset.forName("UTF-8").newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
+        try {
+            return utf8.decode(ByteBuffer.wrap(bytes, offset, bytes.length - offset)).toString();
+        } catch (CharacterCodingException invalidUtf8) {
+            return new String(bytes, Charset.forName("windows-1252"));
+        }
+    }
+
+    private static void assertContains(String d, String v, String e) {
+        if (v == null || v.indexOf(e) < 0) {
+            throw new AssertionError(d + ": falta [" + e + "]");
+        }
+    }
+
+    private static void assertNotContains(String d, String v, String e) {
+        if (v != null && v.indexOf(e) >= 0) {
+            throw new AssertionError(d + ": contenido inesperado [" + e + "]");
+        }
+    }
+
+    private static void assertBefore(String d, String v, String a, String b) {
+        int ia = v == null ? -1 : v.indexOf(a);
+        int ib = v == null ? -1 : v.indexOf(b);
+        if (ia < 0 || ib < 0 || ia >= ib) {
+            throw new AssertionError(d + ": orden inválido: " + ia + ", " + ib);
+        }
+    }
+
+    private ComprasRequerimientosUiContractTest() {
+    }
+}

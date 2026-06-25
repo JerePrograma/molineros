@@ -4,6 +4,7 @@ import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.service.NotificarCotizacionPrestadorServiceImpl;
 
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         assertEnvioAceptadoYFinalizacionFalseCuentaError();
         assertEnvioAceptadoYFinalizacionLanzaCuentaError();
         assertUsaEmailReservadoDespuesDeReservar();
+        assertCuerpoUsaDescripcion();
         assertDiagnosticoSinCompatiblesSector();
         assertDiagnosticoTodosBloqueadosPorEstadoPrevio();
     }
@@ -220,6 +222,46 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         assertEvento(service, 3, "finalizar:" + ENVIADO);
     }
 
+    private static void assertCuerpoUsaDescripcion()
+            throws Exception {
+
+        ServicioPrueba service =
+                servicioConPrestador(
+                        "listado@ospim.org.ar",
+                        "reservado@ospim.org.ar"
+                );
+
+        RequerimientoCompraDetalle detalle =
+                new RequerimientoCompraDetalle();
+
+        detalle.setArticulo("Prótesis");
+        detalle.setCantidad(Integer.valueOf(1));
+        detalle.setObservaciones("Entrega prioritaria");
+
+        List<RequerimientoCompraDetalle> detalles =
+                new ArrayList<RequerimientoCompraDetalle>();
+
+        detalles.add(detalle);
+        service.requerimiento.setDetalles(detalles);
+
+        service.notificarPrestadores(
+                10,
+                "tester",
+                1L
+        );
+
+        assertContains(
+                "descripcion en cuerpo",
+                service.cuerpoEnviado,
+                " | Descripción: Entrega prioritaria"
+        );
+        assertNotContains(
+                "abreviatura anterior eliminada",
+                service.cuerpoEnviado,
+                " | Obs: "
+        );
+    }
+
     private static void assertDiagnosticoSinCompatiblesSector()
             throws Exception {
 
@@ -389,6 +431,22 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         }
     }
 
+    private static void assertNotContains(
+            String descripcion,
+            String value,
+            String inesperado) {
+
+        if (value != null && value.indexOf(inesperado) >= 0) {
+            throw new AssertionError(
+                    descripcion
+                            + ": no se esperaba contener="
+                            + inesperado
+                            + ", actual="
+                            + value
+            );
+        }
+    }
+
     private static void assertString(
             String descripcion,
             String esperado,
@@ -446,6 +504,7 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         private int prestadoresBloqueadosEstadoPrevio;
         private String emailReservado;
         private String emailEnviado;
+        private String cuerpoEnviado;
         private String ultimoError;
 
         protected RequerimientoCompra getRequerimientoCompra(
@@ -509,6 +568,7 @@ public class NotificarCotizacionPrestadorServiceImplTest {
             eventos.add("enviar");
             mailsEnviados++;
             emailEnviado = email;
+            cuerpoEnviado = cuerpo;
 
             if (errorEnvio != null) {
                 throw errorEnvio;

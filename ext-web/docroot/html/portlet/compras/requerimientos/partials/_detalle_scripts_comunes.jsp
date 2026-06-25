@@ -3,6 +3,10 @@
     var <portlet:namespace />detalleDeletedIds = [];
     var <portlet:namespace />articulosCompraCache = [];
     var <portlet:namespace />prestadoresEnviadosDetalleCache = [];
+    var <portlet:namespace />idPrestadorAdjudicado =
+            '<%= jsDetalleCompra(idPrestadorAdjudicadoDetalle) %>';
+    var <portlet:namespace />prestadorAdjudicado =
+            '<%= jsDetalleCompra(prestadorAdjudicadoDetalle) %>';
 
     <%
     if (prestadoresEnviadosDetalle != null) {
@@ -180,6 +184,46 @@
         return (cantidad * precio).toFixed(2);
     }
 
+    function <portlet:namespace />capturarPrestadorAdjudicado() {
+        var selector =
+                jQuery(
+                        '#<portlet:namespace />id_prestador_adjudicado'
+                );
+
+        if (selector.length > 0) {
+            <portlet:namespace />idPrestadorAdjudicado =
+                    jQuery.trim(
+                            selector.val()
+                    );
+
+            <portlet:namespace />prestadorAdjudicado =
+                    <portlet:namespace />idPrestadorAdjudicado == ''
+                            ? ''
+                            : jQuery.trim(
+                                    selector
+                                            .find('option:selected')
+                                            .text()
+                            );
+        }
+
+        for (var i = 0;
+                i < <portlet:namespace />detallesCompra.length;
+                i++) {
+
+            var detalle =
+                    <portlet:namespace />detallesCompra[i];
+
+            if (!detalle) {
+                continue;
+            }
+
+            detalle.idPrestador =
+                    <portlet:namespace />idPrestadorAdjudicado;
+            detalle.prestador =
+                    <portlet:namespace />prestadorAdjudicado;
+        }
+    }
+
     function <portlet:namespace />capturarCotizacionDetalle(index) {
         var detalle =
                 <portlet:namespace />detallesCompra[index];
@@ -194,12 +238,6 @@
                                 + index
                 );
 
-        var prestadorInput =
-                jQuery(
-                        '#<portlet:namespace />detalle_id_prestador_'
-                                + index
-                );
-
         if (precioInput.length > 0) {
             detalle.precioUnitario =
                     jQuery.trim(
@@ -207,23 +245,7 @@
                     );
         }
 
-        if (prestadorInput.length > 0) {
-            detalle.idPrestador =
-                    jQuery.trim(
-                            prestadorInput.val()
-                    );
-
-            if (detalle.idPrestador == '') {
-                detalle.prestador = '';
-            } else {
-                detalle.prestador =
-                        jQuery.trim(
-                                prestadorInput
-                                        .find('option:selected')
-                                        .text()
-                        );
-            }
-        }
+        <portlet:namespace />capturarPrestadorAdjudicado();
 
         detalle.precioTotal =
                 <portlet:namespace />calcularTotalDetalle(
@@ -240,92 +262,6 @@
 
     function <portlet:namespace />actualizarPrecioDetalle(index) {
         <portlet:namespace />capturarCotizacionDetalle(index);
-    }
-
-    function <portlet:namespace />setPrestadorDetalle(
-            index,
-            idPrestador) {
-
-        var detalle =
-                <portlet:namespace />detallesCompra[index];
-
-        if (!detalle) {
-            return false;
-        }
-
-        var select =
-                jQuery(
-                        '#<portlet:namespace />detalle_id_prestador_'
-                                + index
-                );
-
-        if (select.length == 0) {
-            return false;
-        }
-
-        var idNormalizado =
-                idPrestador == null
-                        ? ''
-                        : String(idPrestador);
-
-        select.val(idNormalizado);
-
-        /*
-         * Si el ID no forma parte de las opciones válidas,
-         * jQuery devuelve null. No se crea una opción artificial.
-         */
-        if (select.val() == null) {
-            select.val('');
-        }
-
-        detalle.idPrestador =
-                jQuery.trim(
-                        select.val()
-                );
-
-        if (detalle.idPrestador == '') {
-            detalle.prestador = '';
-        } else {
-            detalle.prestador =
-                    jQuery.trim(
-                            select
-                                    .find('option:selected')
-                                    .text()
-                    );
-        }
-
-        return true;
-    }
-
-    function <portlet:namespace />aplicarPrestadorATodos(index) {
-        /*
-         * Captura expresamente el valor visible del combo antes de
-         * utilizar el objeto JavaScript del detalle.
-         */
-        <portlet:namespace />capturarCotizacionDetalle(index);
-
-        var detalle =
-                <portlet:namespace />detallesCompra[index];
-
-        if (!detalle
-                || detalle.idPrestador == null
-                || detalle.idPrestador == '') {
-
-            alert('Seleccione primero un prestador.');
-            return false;
-        }
-
-        for (var i = 0;
-                i < <portlet:namespace />detallesCompra.length;
-                i++) {
-
-            <portlet:namespace />setPrestadorDetalle(
-                    i,
-                    detalle.idPrestador
-            );
-        }
-
-        return false;
     }
 
     function <portlet:namespace />getSectorSeleccionadoCompra() {
@@ -376,55 +312,7 @@
         });
     }
 
-    function <portlet:namespace />getOpcionesPrestadorDetalle(
-            idPrestadorSeleccionado) {
 
-        var seleccionado =
-                idPrestadorSeleccionado == null
-                        ? ''
-                        : String(idPrestadorSeleccionado);
-
-        var html =
-                '<option value="">Seleccione...</option>';
-
-        for (var i = 0;
-                i < <portlet:namespace />prestadoresEnviadosDetalleCache.length;
-                i++) {
-
-            var prestador =
-                    <portlet:namespace />prestadoresEnviadosDetalleCache[i];
-
-            if (!prestador
-                    || prestador.id == null
-                    || String(prestador.id) == '') {
-
-                continue;
-            }
-
-            var idPrestador =
-                    String(prestador.id);
-
-            var selected =
-                    idPrestador == seleccionado
-                            ? ' selected="selected"'
-                            : '';
-
-            html +=
-                    '<option value="'
-                    + <portlet:namespace />detalleEscapeHtml(
-                            idPrestador
-                    )
-                    + '"'
-                    + selected
-                    + '>'
-                    + <portlet:namespace />detalleEscapeHtml(
-                            prestador.label
-                    )
-                    + '</option>';
-        }
-
-        return html;
-    }
 
     function <portlet:namespace />renderDetallesCompra() {
         var tbody = jQuery('#<portlet:namespace />detalle_body');
@@ -466,43 +354,9 @@
                     html += '</td>';
                     html += '<td><span id="<portlet:namespace />detalle_total_estimado_' + i + '">' +
                             <portlet:namespace />detalleEscapeHtml(detalle.precioTotal) + '</span></td>';
-                    html += '<td>';
-
-                    html += '<select ';
-                    html += 'id="<portlet:namespace />detalle_id_prestador_' + i + '" ';
-                    html += 'style="max-width: 360px; width: 100%;" ';
-                    html += 'onchange="<portlet:namespace />capturarCotizacionDetalle(' + i + ');"';
-
-                    if (<portlet:namespace />prestadoresEnviadosDetalleCache.length == 0) {
-                        html += ' disabled="disabled"';
-                    }
-
-                    html += '>';
-
-                    html +=
-                            <portlet:namespace />getOpcionesPrestadorDetalle(
-                                    detalle.idPrestador
-                            );
-
-                    html += '</select>';
-
-                    html += '<br />';
-
-                    html += '<input type="button" ';
-                    html += 'value="Aplicar a todos" ';
-                    html += 'onclick="return <portlet:namespace />aplicarPrestadorATodos(' + i + ');"';
-
-                    if (<portlet:namespace />prestadoresEnviadosDetalleCache.length == 0) {
-                        html += ' disabled="disabled"';
-                    }
-
-                    html += ' />';
-
-                    html += '</td>';
                 <% } else { %>
                     html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.precioUnitario) + '</td>';
                     html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.precioTotal) + '</td>';
-                    html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.prestador) + '</td>';
                 <% } %>
             <% } %>
 
@@ -525,6 +379,25 @@
     }
 
     jQuery(function() {
+        <% if (puedeCotizarDetalle) { %>
+            var selectorPrestador =
+                    jQuery(
+                            '#<portlet:namespace />id_prestador_adjudicado'
+                    );
+
+            if (selectorPrestador.length > 0) {
+                selectorPrestador.val(
+                        <portlet:namespace />idPrestadorAdjudicado
+                );
+
+                if (selectorPrestador.val() == null) {
+                    selectorPrestador.val('');
+                }
+            }
+
+            <portlet:namespace />capturarPrestadorAdjudicado();
+        <% } %>
+
         <portlet:namespace />renderDetallesCompra();
 
         <% if (puedeCotizarDetalle) { %>

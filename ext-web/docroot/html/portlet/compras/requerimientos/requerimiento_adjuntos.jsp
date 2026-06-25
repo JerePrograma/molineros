@@ -273,7 +273,7 @@ boolean msgPresupuestoBorrado =
                             <tr>
                                 <th>Prestador enviado</th>
                                 <th>Archivo</th>
-                                <th>Quitar</th>
+                                <th>Borrar</th>
                             </tr>
                         </thead>
 
@@ -314,15 +314,14 @@ boolean msgPresupuestoBorrado =
 
                     <br />
 
-                    <input type="button"
-                           value="Agregar otro presupuesto"
-                           onclick="return <portlet:namespace />agregarFilaPresupuesto();" />
-
                     <input id="<portlet:namespace />uploadPresupuestoCompra"
-                           value="Subir presupuestos"
+                           value="Subir"
                            title="Subir presupuestos"
                            onclick="return <portlet:namespace />uploadPresupuestoRequerimientoCompra();"
                            type="button" />
+                    <input type="button"
+                           value="Agregar otro presupuesto"
+                           onclick="return <portlet:namespace />agregarFilaPresupuesto();" />
                 </c:otherwise>
             </c:choose>
         </c:if>
@@ -472,12 +471,12 @@ boolean msgPresupuestoBorrado =
                         '<input type="file" class="presupuesto-archivo" />'
                 );
 
-        var quitar =
+        var borrar =
                 jQuery(
-                        '<input type="button" value="Quitar" />'
+                        '<input type="button" value="Borrar" />'
                 );
 
-        quitar.click(function() {
+        borrar.click(function() {
             jQuery(this)
                     .closest(
                             'tr'
@@ -512,7 +511,7 @@ boolean msgPresupuestoBorrado =
                 jQuery(
                         '<td></td>'
                 ).append(
-                        quitar
+                        borrar
                 )
         );
 

@@ -568,6 +568,9 @@
         form.find('input[name="<portlet:namespace />detalle_count"]').remove();
         form.find('input[name="<portlet:namespace />detalle_deleted_ids"]').remove();
         form.find('input[name^="<portlet:namespace />detalle_"]').remove();
+        form.find(
+                'input[name="<portlet:namespace /><%= WebKeysCompras.PARAM_ID_PRESTADOR_ADJUDICADO %>"]'
+        ).remove();
 
         jQuery('#<portlet:namespace />detalle_payload').empty();
     }
@@ -620,6 +623,34 @@
         }
 
         if (!<portlet:namespace />crearHiddenDetalle('detalle_deleted_ids', <portlet:namespace />detalleDeletedIds.join(','))) {
+            return false;
+        }
+
+        if (typeof <portlet:namespace />capturarPrestadorAdjudicado
+                == 'function') {
+
+            <portlet:namespace />capturarPrestadorAdjudicado();
+        }
+
+        var idPrestadorAdjudicado =
+                jQuery.trim(
+                        <portlet:namespace />detalleValue(
+                                <portlet:namespace />idPrestadorAdjudicado
+                        )
+                );
+
+        if (idPrestadorAdjudicado != ''
+                && (!/^[0-9]+$/.test(idPrestadorAdjudicado)
+                        || parseInt(idPrestadorAdjudicado, 10) <= 0)) {
+
+            alert('Debe seleccionar un prestador adjudicado válido.');
+            return false;
+        }
+
+        if (!<portlet:namespace />crearHiddenDetalle(
+                '<%= WebKeysCompras.PARAM_ID_PRESTADOR_ADJUDICADO %>',
+                idPrestadorAdjudicado
+        )) {
             return false;
         }
 
@@ -681,21 +712,28 @@
                 return false;
             }
 
-            var idPrestador = jQuery.trim(<portlet:namespace />detalleValue(detalle.idPrestador));
+            detalle.idPrestador =
+                    idPrestadorAdjudicado;
+            detalle.prestador =
+                    <portlet:namespace />prestadorAdjudicado;
 
-            if (idPrestador != ''
-                    && (!/^[0-9]+$/.test(idPrestador) || parseInt(idPrestador, 10) <= 0)) {
-                alert('Detalle #' + (i + 1) + ': debe seleccionar un prestador válido.');
-                return false;
-            }
-
-            if (!<portlet:namespace />crearHiddenDetalle(prefix + 'id_prestador', idPrestador)) {
+            /*
+             * Compatibilidad con el contrato persistente actual:
+             * se continúa enviando el ID por detalle, pero siempre replicando
+             * el único adjudicado global.
+             */
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'id_prestador',
+                    idPrestadorAdjudicado
+            )) {
                 return false;
             }
 
             if (!<portlet:namespace />crearHiddenDetalle(
                     prefix + 'prestador_label',
-                    <portlet:namespace />detalleValue(detalle.prestador)
+                    <portlet:namespace />detalleValue(
+                            <portlet:namespace />prestadorAdjudicado
+                    )
             )) {
                 return false;
             }

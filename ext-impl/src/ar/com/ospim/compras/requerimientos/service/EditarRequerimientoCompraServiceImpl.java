@@ -504,6 +504,18 @@ public class EditarRequerimientoCompraServiceImpl {
             );
         }
 
+        if (!BusquedaRequerimientoCompraServiceUtil
+                .hayPrestadoresPendientesNotificacion(
+                        idRequerimientoCompra
+                )) {
+
+            /*
+             * Operación idempotente: una petición atrasada o duplicada no
+             * vuelve a enviar correos cuando ya no quedan candidatos.
+             */
+            return new NotificacionCotizacionResultado();
+        }
+
         return NotificarCotizacionPrestadorServiceUtil.notificarPrestadores(
                 idRequerimientoCompra,
                 usuario,
@@ -995,41 +1007,50 @@ public class EditarRequerimientoCompraServiceImpl {
             detalles = new ArrayList<RequerimientoCompraDetalle>();
         }
 
-        validarDetallesCotizacionRecibidos(
-                cantidades,
-                detalles
-        );
+            validarDetallesCotizacionRecibidos(
+                    cantidades,
+                    detalles
+            );
 
-        for (int i = 0; i < detalles.size(); i++) {
-            RequerimientoCompraDetalle detalle = detalles.get(i);
-
-            Integer idDetalle = Integer.valueOf(detalle.getIdInt());
-            Integer cantidad = cantidades.get(idDetalle);
+            Integer idPrestadorAdjudicado =
+                    obtenerPrestadorAdjudicadoUnico(
+                            detalles
+                    );
 
             validarPrestadorCotizacion(
                     con,
                     idRequerimientoCompra,
-                    detalle.getIdPrestador()
+                    idPrestadorAdjudicado
             );
 
-            BigDecimal total =
-                    calcularPrecioTotalCotizacion(
-                            cantidad,
-                            detalle
-                    );
+            for (int i = 0; i < detalles.size(); i++) {
+                RequerimientoCompraDetalle detalle = detalles.get(i);
 
-            actualizarDetalleCotizacion(
-                    con,
-                    idRequerimientoCompra,
-                    idDetalle.intValue(),
-                    detalle.getPrecioUnitarioEstimado(),
-                    total,
-                    detalle.getIdPrestador(),
-                    usuario
-            );
+                Integer idDetalle = Integer.valueOf(detalle.getIdInt());
+                Integer cantidad = cantidades.get(idDetalle);
+
+                BigDecimal total =
+                        calcularPrecioTotalCotizacion(
+                                cantidad,
+                                detalle
+                        );
+
+                detalle.aplicarPrestadorAdjudicado(
+                        idPrestadorAdjudicado
+                );
+
+                actualizarDetalleCotizacion(
+                        con,
+                        idRequerimientoCompra,
+                        idDetalle.intValue(),
+                        detalle.getPrecioUnitarioEstimado(),
+                        total,
+                        idPrestadorAdjudicado,
+                        usuario
+                );
+            }
+
         }
-
-    }
 
     protected void validarDetallesCotizacionRecibidos(
             Map<Integer, Integer> cantidades,
@@ -1068,14 +1089,54 @@ public class EditarRequerimientoCompraServiceImpl {
             }
         }
 
-        if (!idsRecibidos.equals(cantidades.keySet())) {
-            throw new Exception(
-                    "Deben informarse exactamente todos los detalles activos del requerimiento."
+            if (!idsRecibidos.equals(cantidades.keySet())) {
+                throw new Exception(
+                        "Deben informarse exactamente todos los detalles activos del requerimiento."
+                );
+            }
+
+            obtenerPrestadorAdjudicadoUnico(
+                    detalles
             );
         }
-    }
 
-    protected BigDecimal calcularPrecioTotalCotizacion(
+        protected Integer obtenerPrestadorAdjudicadoUnico(
+                List<RequerimientoCompraDetalle> detalles) throws Exception {
+
+            Integer idPrestadorAdjudicado = null;
+
+            for (int i = 0;
+                    detalles != null && i < detalles.size();
+                    i++) {
+
+                RequerimientoCompraDetalle detalle =
+                        detalles.get(i);
+
+                if (detalle == null
+                        || !detalle.tienePrestadorAdjudicado()) {
+                    continue;
+                }
+
+                Integer idPrestadorDetalle =
+                        detalle.getIdPrestador();
+
+                if (idPrestadorAdjudicado == null) {
+                    idPrestadorAdjudicado =
+                            idPrestadorDetalle;
+                } else if (idPrestadorAdjudicado.intValue()
+                        != idPrestadorDetalle.intValue()) {
+
+                    throw new Exception(
+                            "Debe seleccionar un único prestador adjudicado "
+                                    + "para todo el requerimiento."
+                    );
+                }
+            }
+
+            return idPrestadorAdjudicado;
+        }
+
+        protected BigDecimal calcularPrecioTotalCotizacion(
             Integer cantidadPersistida,
             RequerimientoCompraDetalle detalle) {
 

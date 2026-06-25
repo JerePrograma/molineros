@@ -95,6 +95,18 @@ boolean restaurarCotizacion =
                 )
         ));
 
+String idPrestadorAdjudicadoDetalle =
+        restaurarCotizacion
+                ? ParamUtil.getString(
+                        renderRequest,
+                        WebKeysCompras.PARAM_ID_PRESTADOR_ADJUDICADO,
+                        ""
+                )
+                : reqDetalle.getIdPrestadorAdjudicadoString();
+
+String prestadorAdjudicadoDetalle =
+        reqDetalle.getPrestadorAdjudicadoVisible();
+
 if (restaurarCotizacion) {
     int cantidadDetallesRestaurados =
             ParamUtil.getInteger(
@@ -144,18 +156,59 @@ if (restaurarCotizacion) {
                 )
         );
 
-        labelsPrestadorCotizacionRestaurados.put(
-                idDetalleRestaurado,
-                ParamUtil.getString(
-                        renderRequest,
-                        prefix + "prestador_label",
-                        ""
-                )
-        );
-    }
-}
+                labelsPrestadorCotizacionRestaurados.put(
+                        idDetalleRestaurado,
+                        ParamUtil.getString(
+                                renderRequest,
+                                prefix + "prestador_label",
+                                ""
+                        )
+                );
+            }
 
-Integer idSectorActual = reqDetalle.getSectorId();
+            if (WebKeysCompras.isEmpty(idPrestadorAdjudicadoDetalle)) {
+                String prestadorLegacyUnico = "";
+
+                for (String prestadorLegacy :
+                        prestadoresCotizacionRestaurados.values()) {
+
+                    if (WebKeysCompras.isEmpty(prestadorLegacy)) {
+                        continue;
+                    }
+
+                    if (WebKeysCompras.isEmpty(prestadorLegacyUnico)) {
+                        prestadorLegacyUnico = prestadorLegacy;
+                    } else if (!prestadorLegacyUnico.equals(prestadorLegacy)) {
+                        prestadorLegacyUnico = "";
+                        break;
+                    }
+                }
+
+                idPrestadorAdjudicadoDetalle = prestadorLegacyUnico;
+            }
+
+            if (WebKeysCompras.isEmpty(prestadorAdjudicadoDetalle)
+                    && !WebKeysCompras.isEmpty(idPrestadorAdjudicadoDetalle)) {
+
+                for (Map.Entry<String, String> entry :
+                        prestadoresCotizacionRestaurados.entrySet()) {
+
+                    if (idPrestadorAdjudicadoDetalle.equals(entry.getValue())) {
+                        String label =
+                                labelsPrestadorCotizacionRestaurados.get(
+                                        entry.getKey()
+                                );
+
+                        if (!WebKeysCompras.isEmpty(label)) {
+                            prestadorAdjudicadoDetalle = label;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        Integer idSectorActual = reqDetalle.getSectorId();
 
 int sectorIdParametro = ParamUtil.getInteger(request, "sector_id", 0);
 
@@ -218,8 +271,32 @@ boolean hayPrestadoresEnviadosDetalle =
         prestadoresEnviadosDetalle != null
         && !prestadoresEnviadosDetalle.isEmpty();
 
+if (WebKeysCompras.isEmpty(prestadorAdjudicadoDetalle)
+        && !WebKeysCompras.isEmpty(idPrestadorAdjudicadoDetalle)) {
+
+    for (int i = 0;
+            i < prestadoresEnviadosDetalle.size();
+            i++) {
+
+        PrestadorCotizacion prestador =
+                prestadoresEnviadosDetalle.get(i);
+
+        if (prestador != null
+                && String.valueOf(prestador.getIdPrestador())
+                        .equals(idPrestadorAdjudicadoDetalle)) {
+
+            prestadorAdjudicadoDetalle =
+                    prestador.getEtiquetaVisible();
+            break;
+        }
+    }
+}
+
+boolean prestadoresAdjudicadosMixtosDetalle =
+        reqDetalle.tienePrestadoresAdjudicadosMixtos();
+
 int detalleColspan =
         4
-        + (puedeVerCotizacionDetalle ? 3 : 0)
+        + (puedeVerCotizacionDetalle ? 2 : 0)
         + (puedeABMDetalle ? 1 : 0);
 %>

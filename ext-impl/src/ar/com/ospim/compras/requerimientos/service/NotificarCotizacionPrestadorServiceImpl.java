@@ -1054,7 +1054,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                     detalle.getObservaciones()
             )) {
                 sb.append(
-                        " | Obs: "
+                        " | Descripción: "
                 );
 
                 sb.append(
