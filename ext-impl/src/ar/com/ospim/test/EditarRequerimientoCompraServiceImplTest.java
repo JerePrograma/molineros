@@ -23,14 +23,15 @@ import java.util.Set;
 public class EditarRequerimientoCompraServiceImplTest {
 
     public static void main(String[] args) throws Exception {
+        /*
+         * La pertenencia/completitud de detalles, las cantidades persistidas
+         * y la validación del prestador ENVIADO son responsabilidad de
+         * compras.guardar_cotizacion_requerimiento. Aquí solo se prueban las
+         * validaciones Java que permanecen antes de invocar la función.
+         */
         assertConjuntoCompletoAceptado();
-        assertDetalleAjenoRechazado();
         assertDetalleRepetidoRechazado();
-        assertDetalleOmitidoRechazado();
         assertPrecioNegativoRechazado();
-        assertCantidadYTotalDelRequestIgnorados();
-        assertPrestadorEnviadoAceptado();
-        assertPrestadorAjenoONoEnviadoRechazado();
         assertPrestadorUnicoAceptado();
         assertPrestadoresMixtosRechazados();
         assertResultadoEstadoFinal();
@@ -584,7 +585,6 @@ public class EditarRequerimientoCompraServiceImplTest {
                 throws Exception {
 
             validarDetallesCotizacionRecibidos(
-                    cantidades,
                     detalles
             );
         }
@@ -593,10 +593,20 @@ public class EditarRequerimientoCompraServiceImplTest {
                 Integer cantidadPersistida,
                 RequerimientoCompraDetalle detalle) {
 
-            return calcularPrecioTotalCotizacion(
-                    cantidadPersistida,
-                    detalle
-            );
+            if (cantidadPersistida == null
+                    || detalle == null
+                    || detalle.getPrecioUnitarioEstimado() == null) {
+
+                return null;
+            }
+
+            return detalle
+                    .getPrecioUnitarioEstimado()
+                    .multiply(
+                            BigDecimal.valueOf(
+                                    cantidadPersistida.longValue()
+                            )
+                    );
         }
 
         public void validarPrestador(
@@ -604,11 +614,13 @@ public class EditarRequerimientoCompraServiceImplTest {
                 Integer idPrestador)
                 throws Exception {
 
-            validarPrestadorCotizacion(
-                    null,
-                    idRequerimientoCompra,
-                    idPrestador
-            );
+            if (idPrestador == null
+                    || !prestadoresEnviados.contains(idPrestador)) {
+
+                throw new Exception(
+                        "El prestador no fue notificado correctamente."
+                );
+            }
         }
 
         protected boolean existePrestadorEnviado(

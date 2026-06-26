@@ -1,6 +1,7 @@
 package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.servlets.PdfServlet;
 import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
@@ -159,13 +160,30 @@ public class NotificarCotizacionPrestadorServiceImpl {
             return resultado;
         }
 
+        /*
+         * Se genera antes de reservar el primer prestador. Si Jasper o la
+         * conexión fallan, no queda ninguna fila PROCESANDO ni se intenta
+         * enviar un correo parcial.
+         */
+        byte[] pedidoPresupuestoPdf =
+                generarPedidoPresupuestoPdf(
+                        idRequerimientoCompra
+                );
+
+        String nombrePedidoPresupuestoPdf =
+                "PedidoPresupuesto_"
+                        + idRequerimientoCompra
+                        + ".pdf";
+
         for (int i = 0; i < candidatos.size(); i++) {
             procesarPrestador(
                     requerimiento,
                     candidatos.get(i),
                     usuario,
                     companyId,
-                    resultado
+                    resultado,
+                    pedidoPresupuestoPdf,
+                    nombrePedidoPresupuestoPdf
             );
         }
 
@@ -177,7 +195,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
             PrestadorCotizacion prestador,
             String usuario,
             long companyId,
-            NotificacionCotizacionResultado resultado) {
+            NotificacionCotizacionResultado resultado,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf) {
 
         if (prestador == null) {
             resultado.incrementarErrores();
@@ -383,7 +403,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
                     companyId,
                     emailDestino,
                     asunto,
-                    cuerpo
+                    cuerpo,
+                    pedidoPresupuestoPdf,
+                    nombrePedidoPresupuestoPdf
             );
 
         } catch (Exception e) {
@@ -469,6 +491,14 @@ public class NotificarCotizacionPrestadorServiceImpl {
         }
     }
 
+    protected byte[] generarPedidoPresupuestoPdf(
+            int idRequerimientoCompra) throws Exception {
+
+        return new PdfServlet()
+                .crearRequerimientoCompraComoAdjunto(
+                        idRequerimientoCompra
+                );
+    }
     protected RequerimientoCompra getRequerimientoCompra(
             int idRequerimientoCompra) throws Exception {
 
@@ -813,12 +843,17 @@ public class NotificarCotizacionPrestadorServiceImpl {
             long companyId,
             String email,
             String asunto,
-            String cuerpo) throws Exception {
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf)
+            throws Exception {
 
         mailHelper.enviar(
                 email,
                 asunto,
-                cuerpo
+                cuerpo,
+                pedidoPresupuestoPdf,
+                nombrePedidoPresupuestoPdf
         );
     }
 

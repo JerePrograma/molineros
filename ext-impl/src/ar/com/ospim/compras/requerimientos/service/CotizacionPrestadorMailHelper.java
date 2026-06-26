@@ -8,14 +8,24 @@ import ar.com.ospim.mail.MailUtils;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Date;
 import java.util.Properties;
 
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
 import javax.mail.Message;
+import javax.mail.Multipart;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+import javax.mail.internet.MimeUtility;
 
 public class CotizacionPrestadorMailHelper {
 
@@ -27,12 +37,17 @@ public class CotizacionPrestadorMailHelper {
     public void enviar(
             String emailDestino,
             String asunto,
-            String cuerpo) throws Exception {
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf)
+            throws Exception {
 
         validarParametros(
                 emailDestino,
                 asunto,
-                cuerpo
+                cuerpo,
+                pedidoPresupuestoPdf,
+                nombrePedidoPresupuestoPdf
         );
 
         ReportesAutomaticosConfiguracion configuracion =
@@ -151,9 +166,47 @@ public class CotizacionPrestadorMailHelper {
                 "UTF-8"
         );
 
-        mensaje.setText(
+        MimeBodyPart parteTexto =
+                new MimeBodyPart();
+
+        parteTexto.setText(
                 cuerpo,
                 "UTF-8"
+        );
+
+        MimeBodyPart partePdf =
+                new MimeBodyPart();
+
+        partePdf.setDataHandler(
+                new DataHandler(
+                        new PdfAdjuntoDataSource(
+                                pedidoPresupuestoPdf,
+                                nombrePedidoPresupuestoPdf
+                        )
+                )
+        );
+
+        partePdf.setFileName(
+                MimeUtility.encodeText(
+                        nombrePedidoPresupuestoPdf,
+                        "UTF-8",
+                        null
+                )
+        );
+
+        Multipart multipart =
+                new MimeMultipart();
+
+        multipart.addBodyPart(
+                parteTexto
+        );
+
+        multipart.addBodyPart(
+                partePdf
+        );
+
+        mensaje.setContent(
+                multipart
         );
 
         mensaje.setSentDate(
@@ -204,7 +257,10 @@ public class CotizacionPrestadorMailHelper {
     private void validarParametros(
             String emailDestino,
             String asunto,
-            String cuerpo) throws Exception {
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf)
+            throws Exception {
 
         if (isEmpty(emailDestino)) {
             throw new Exception(
@@ -226,6 +282,26 @@ public class CotizacionPrestadorMailHelper {
         if (cuerpo == null) {
             throw new Exception(
                     "Debe informar el cuerpo del correo."
+            );
+        }
+
+        if (pedidoPresupuestoPdf == null
+                || pedidoPresupuestoPdf.length == 0) {
+
+            throw new Exception(
+                    "El pedido de presupuesto PDF "
+                            + "no fue generado."
+            );
+        }
+
+        if (isEmpty(nombrePedidoPresupuestoPdf)
+                || !nombrePedidoPresupuestoPdf
+                .toLowerCase()
+                .endsWith(".pdf")) {
+
+            throw new Exception(
+                    "El nombre del adjunto PDF "
+                            + "no es válido."
             );
         }
     }
@@ -287,6 +363,45 @@ public class CotizacionPrestadorMailHelper {
         }
     }
 
+    private static final class PdfAdjuntoDataSource
+            implements DataSource {
+
+        private final byte[] contenido;
+        private final String nombre;
+
+        private PdfAdjuntoDataSource(
+                byte[] contenido,
+                String nombre) {
+
+            this.contenido =
+                    contenido;
+
+            this.nombre =
+                    nombre;
+        }
+
+        public InputStream getInputStream() {
+            return new ByteArrayInputStream(
+                    contenido
+            );
+        }
+
+        public OutputStream getOutputStream()
+                throws IOException {
+
+            throw new IOException(
+                    "El adjunto PDF es de solo lectura."
+            );
+        }
+
+        public String getContentType() {
+            return "application/pdf";
+        }
+
+        public String getName() {
+            return nombre;
+        }
+    }
     private String normalizar(
             String value) {
 

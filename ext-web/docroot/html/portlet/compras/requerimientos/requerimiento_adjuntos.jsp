@@ -98,7 +98,7 @@ boolean puedeEditarPresupuestos =
 boolean puedeVerPrestadoresEnviadosPresupuestos =
         idRequerimientoCompraPresupuestos > 0
         && reqPresupuestos
-                .puedeVerPresupuestos();}
+                .puedeVerPresupuestos();
 
 List<PrestadorCotizacion> prestadoresEnviadosPresupuestos =
         new ArrayList<PrestadorCotizacion>();
@@ -282,11 +282,71 @@ boolean msgPresupuestoBorrado =
                 && hayPrestadoresEnviadosPresupuestos
         %>">
 
-            <!-- tabla de archivos -->
-            <!-- select prestador_presupuesto_template -->
-            <!-- botón Subir -->
-            <!-- botón Agregar otro presupuesto -->
+            <table class="lfr-table">
+                <thead>
+                    <tr>
+                        <th>Prestador enviado</th>
+                        <th>Archivo</th>
+                        <th>Borrar</th>
+                    </tr>
+                </thead>
 
+                <tbody id="<portlet:namespace />presupuestos_body"></tbody>
+            </table>
+
+            <select id="<portlet:namespace />prestador_presupuesto_template"
+                    style="display: none;">
+                <option value="">Seleccione...</option>
+
+                <%
+                for (int i = 0;
+                        i < prestadoresEnviadosPresupuestos.size();
+                        i++) {
+
+                    PrestadorCotizacion prestadorPresupuesto =
+                            prestadoresEnviadosPresupuestos.get(
+                                    i
+                            );
+
+                    if (prestadorPresupuesto == null
+                            || prestadorPresupuesto
+                                    .getIdPrestador() <= 0) {
+
+                        continue;
+                    }
+                %>
+                    <option value="<%= prestadorPresupuesto.getIdPrestador() %>">
+                        <%= HtmlUtil.escape(
+                                prestadorPresupuesto
+                                        .getEtiquetaVisible()
+                        ) %>
+                    </option>
+                <%
+                }
+                %>
+            </select>
+
+            <br />
+
+            <input id="<portlet:namespace />uploadPresupuestoCompra"
+                   value="Subir"
+                   title="Subir presupuestos"
+                   onclick="return <portlet:namespace />uploadPresupuestoRequerimientoCompra();"
+                   type="button" />
+            <input type="button"
+                   value="Agregar otro presupuesto"
+                   onclick="return <portlet:namespace />agregarFilaPresupuesto();" />
+        </c:if>
+
+        <c:if test="<%=
+                idRequerimientoCompraPresupuestos > 0
+                && !puedeEditarPresupuestos
+                && !soloLecturaPresupuestos
+        %>">
+            <div class="portlet-msg-info">
+                Los presupuestos solo pueden administrarse
+                en estado A COTIZAR y con rol de cotización.
+            </div>
         </c:if>
     </fieldset>
 

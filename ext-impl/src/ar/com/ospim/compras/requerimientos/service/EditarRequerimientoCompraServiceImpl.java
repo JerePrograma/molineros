@@ -11,11 +11,9 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.text.Normalizer;
 import java.util.Locale;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -67,10 +65,10 @@ public class EditarRequerimientoCompraServiceImpl {
             "{ ? = call compras.guardar_cotizacion_requerimiento("
                     + "?,?,?,?,?) }";
 
-    private static final String SQL_LISTAR_ARTICULOS =
+    private static final String SQL_LISTAR_ARTICULOS_CURSOR =
             "{ ? = call compras.listar_articulos_cursor(?,?) }";
 
-    private static final String SQL_GET_ARTICULO =
+    private static final String SQL_GET_ARTICULO_CURSOR =
             "{ ? = call compras.get_articulo_cursor(?) }";
 
     public int guardarRequerimientoCompra(
@@ -511,6 +509,9 @@ public class EditarRequerimientoCompraServiceImpl {
         ResultSet rs = null;
         boolean autoCommitOriginal = true;
 
+        List<CompraArticulo> articulos =
+                new ArrayList<CompraArticulo>();
+
         try {
             con =
                     ConnectionHelper.getConnection();
@@ -522,7 +523,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
             stmt =
                     con.prepareCall(
-                            SQL_LISTAR_ARTICULOS
+                            SQL_LISTAR_ARTICULOS_CURSOR
                     );
 
             stmt.registerOutParameter(
@@ -603,30 +604,80 @@ public class EditarRequerimientoCompraServiceImpl {
         }
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
+        boolean autoCommitOriginal = true;
 
         try {
-            con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_GET_ARTICULO);
-            stmt.setInt(1, idArticulo);
+            con =
+                    ConnectionHelper.getConnection();
+
+            autoCommitOriginal =
+                    con.getAutoCommit();
+
+            con.setAutoCommit(false);
+
+            stmt =
+                    con.prepareCall(
+                            SQL_GET_ARTICULO_CURSOR
+                    );
+
+            stmt.registerOutParameter(
+                    1,
+                    Types.OTHER
+            );
+
             stmt.setInt(
                     2,
                     idArticulo
             );
-            rs = stmt.executeQuery();
+
+            stmt.execute();
+
+            rs =
+                    (ResultSet) stmt.getObject(1);
+
+            CompraArticulo articulo = null;
 
             if (rs.next()) {
-                return mapearArticulo(rs);
+                articulo =
+                        mapearArticulo(rs);
             }
 
-            return null;
+            con.commit();
+
+            return articulo;
+
         } catch (Exception e) {
-            _log.error(e);
+            if (con != null) {
+                try {
+                    con.rollback();
+                } catch (Exception rollbackError) {
+                    _log.error(
+                            rollbackError
+                    );
+                }
+            }
+
             throw e;
+
         } finally {
             cerrar(rs);
-            ConnectionHelper.cerrar(stmt, con);
+            cerrar(stmt);
+
+            if (con != null) {
+                try {
+                    con.setAutoCommit(
+                            autoCommitOriginal
+                    );
+                } catch (Exception ignored) {
+                }
+
+                try {
+                    con.close();
+                } catch (Exception ignored) {
+                }
+            }
         }
     }
 
@@ -842,8 +893,8 @@ public class EditarRequerimientoCompraServiceImpl {
 
         Connection con = null;
         CallableStatement stmt = null;
-        java.sql.Array idsSql = null;
-        java.sql.Array preciosSql = null;
+        Array idsSql = null;
+        Array preciosSql = null;
 
         try {
             con =
@@ -946,76 +997,54 @@ public class EditarRequerimientoCompraServiceImpl {
             List<RequerimientoCompraDetalle> detalles)
             throws Exception {
 
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
+        if (detalles == null
+                || detalles.isEmpty()) {
 
-        try {
-            stmt = con.prepareStatement(SQL_GET_REQUERIMIENTO);
-            stmt.setInt(1, idRequerimientoCompra);
-            rs = stmt.executeQuery();
-
-            if (!rs.next()) {
-                throw new Exception("No se encontró el requerimiento de compra informado.");
-            }
-
-            if (rs.getTimestamp("baja_fecha") != null) {
-                throw new Exception("El requerimiento se encuentra anulado.");
-            }
-
-            int estado = rs.getInt("estado");
-
-            if (estado != WebKeysCompras.ESTADO_A_COTIZAR) {
-                throw new Exception(
-                        "Solo se puede guardar cotización en estado A COTIZAR."
-                );
-            }
-        } finally {
-            cerrar(rs);
-            cerrar(stmt);
-        }
-    }
-
-    protected void validarDetallesCotizacionRecibidos(
-            Map<Integer, Integer> cantidades,
-            List<RequerimientoCompraDetalle> detalles) throws Exception {
-
-        if (cantidades == null || cantidades.isEmpty()) {
-            throw new Exception("El requerimiento no tiene detalles activos.");
+            throw new Exception(
+                    "Debe informar los detalles de la cotización."
+            );
         }
 
-        Set<Integer> idsRecibidos = new HashSet<Integer>();
+        Set<Integer> idsRecibidos =
+                new HashSet<Integer>();
 
-        for (int i = 0; detalles != null && i < detalles.size(); i++) {
-            RequerimientoCompraDetalle detalle = detalles.get(i);
+        for (int i = 0;
+             i < detalles.size();
+             i++) {
 
-            if (detalle == null || detalle.getIdInt() <= 0) {
-                throw new Exception("La lista de detalles de cotizacion fue manipulada.");
-            }
+            RequerimientoCompraDetalle detalle =
+                    detalles.get(i);
 
-            Integer idDetalle = Integer.valueOf(detalle.getIdInt());
+            if (detalle == null
+                    || detalle.getIdInt() <= 0) {
 
-            if (!cantidades.containsKey(idDetalle)) {
                 throw new Exception(
-                        "El detalle " + idDetalle + " no pertenece al requerimiento."
+                        "La lista de detalles de cotización fue manipulada."
                 );
             }
+
+            Integer idDetalle =
+                    Integer.valueOf(
+                            detalle.getIdInt()
+                    );
 
             if (!idsRecibidos.add(idDetalle)) {
                 throw new Exception(
-                        "El detalle " + idDetalle + " fue informado mas de una vez."
+                        "El detalle "
+                                + idDetalle
+                                + " fue informado más de una vez."
                 );
             }
 
             if (detalle.getPrecioUnitarioEstimado() != null
-                    && detalle.getPrecioUnitarioEstimado().compareTo(BigDecimal.ZERO) < 0) {
-                throw new Exception("El precio unitario no puede ser negativo.");
-            }
-        }
+                    && detalle
+                    .getPrecioUnitarioEstimado()
+                    .compareTo(BigDecimal.ZERO) < 0) {
 
-        if (!idsRecibidos.equals(cantidades.keySet())) {
-            throw new Exception(
-                    "Deben informarse exactamente todos los detalles activos del requerimiento."
-            );
+                throw new Exception(
+                        "El precio unitario no puede ser negativo."
+                );
+            }
         }
 
         obtenerPrestadorAdjudicadoUnico(

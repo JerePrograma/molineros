@@ -1108,6 +1108,97 @@ public class PdfServlet extends HttpServlet {
 	    }
 	}
 
+	public byte[] crearRequerimientoCompraComoAdjunto(
+			int idRequerimiento) throws Exception {
+
+		if (idRequerimiento <= 0) {
+			throw new Exception(
+					"Debe informar el requerimiento de compra."
+			);
+		}
+
+		Connection con = null;
+		InputStream in = null;
+
+		try {
+			con =
+					ConnectionHelper.getConnection();
+
+			if (con == null) {
+				throw new Exception(
+						"No se pudo obtener conexión para generar el PDF."
+				);
+			}
+
+			in =
+					getClass()
+							.getClassLoader()
+							.getResourceAsStream(
+									REQUERIMIENTO_COMPRA
+							);
+
+			if (in == null) {
+				throw new Exception(
+						"No se encontró el Jasper de requerimiento: "
+								+ REQUERIMIENTO_COMPRA
+				);
+			}
+
+			HashMap<String, String> parametros =
+					new HashMap<String, String>();
+
+			parametros.put(
+					"ID_REQUERIMIENTO",
+					String.valueOf(idRequerimiento)
+			);
+
+			JasperPrint print =
+					JasperFillManager.fillReport(
+							in,
+							parametros,
+							con
+					);
+
+			byte[] pdf =
+					JasperExportManager
+							.exportReportToPdf(
+									print
+							);
+
+			if (pdf == null || pdf.length == 0) {
+				throw new Exception(
+						"El pedido de presupuesto PDF quedó vacío."
+				);
+			}
+
+			return pdf;
+
+		} finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (IOException e) {
+					_log.warn(
+							"No se pudo cerrar el Jasper "
+									+ "del requerimiento.",
+							e
+					);
+				}
+			}
+
+			if (con != null) {
+				try {
+					con.close();
+				} catch (SQLException e) {
+					_log.warn(
+							"No se pudo cerrar la conexión "
+									+ "del PDF de requerimiento.",
+							e
+					);
+				}
+			}
+		}
+	}
 	private void generaRequerimientoCompra(HttpServletRequest req,
 	                                       HttpServletResponse res) throws IOException {
 
@@ -1141,15 +1232,36 @@ public class PdfServlet extends HttpServlet {
 			return;
 		}
 
-		HashMap<String, String> hm = new HashMap<String, String>();
-		hm.put("ID_REQUERIMIENTO", String.valueOf(idRequerimiento));
+		try {
+			byte[] pdf =
+					crearRequerimientoCompraComoAdjunto(
+							idRequerimiento
+					);
 
-		crearPdf(
-				req,
-				res,
-				REQUERIMIENTO_COMPRA,
-				hm,
-				"RequerimientoCompra_" + idRequerimiento + ".pdf"
-		);
+			crearPdfFromByteArray(
+					req,
+					res,
+					pdf,
+					"RequerimientoCompra_"
+							+ idRequerimiento
+							+ ".pdf"
+			);
+
+		} catch (Exception e) {
+			_log.error(
+					"No se pudo generar el PDF "
+							+ "del requerimiento de compra. id="
+							+ idRequerimiento,
+					e
+			);
+
+			if (!res.isCommitted()) {
+				res.sendError(
+						HttpServletResponse
+								.SC_INTERNAL_SERVER_ERROR,
+						"No se pudo generar el pedido de presupuesto."
+				);
+			}
+		}
 	}
 }

@@ -27,6 +27,8 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         assertEnvioAceptadoYFinalizacionLanzaCuentaError();
         assertUsaEmailReservadoDespuesDeReservar();
         assertCuerpoUsaDescripcion();
+        assertPdfSeGeneraUnaVezYSeAdjunta();
+        assertFalloPdfNoReservaNiEnvia();
         assertDiagnosticoSinCompatiblesSector();
         assertDiagnosticoTodosBloqueadosPorEstadoPrevio();
     }
@@ -227,7 +229,7 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         RequerimientoCompraDetalle detalle =
                 new RequerimientoCompraDetalle();
 
-        detalle.setArticulo("PrÃ³tesis");
+        detalle.setArticulo("Prótesis");
         detalle.setCantidad(Integer.valueOf(1));
         detalle.setObservaciones("Entrega prioritaria");
 
@@ -246,7 +248,7 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         assertContains(
                 "descripcion en cuerpo",
                 service.cuerpoEnviado,
-                " | DescripciÃ³n: Entrega prioritaria"
+                " | Descripción: Entrega prioritaria"
         );
         assertNotContains(
                 "abreviatura anterior eliminada",
@@ -255,6 +257,86 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         );
     }
 
+    private static void assertPdfSeGeneraUnaVezYSeAdjunta()
+            throws Exception {
+
+        ServicioPrueba service =
+                servicioConPrestador(
+                        "listado@ospim.org.ar",
+                        "reservado@ospim.org.ar"
+                );
+
+        service.notificarPrestadores(
+                10,
+                "tester",
+                1L
+        );
+
+        assertInt(
+                "PDF generado una sola vez",
+                1,
+                service.pdfsGenerados
+        );
+
+        if (service.pdfEnviado == null
+                || service.pdfEnviado.length == 0) {
+
+            throw new AssertionError(
+                    "No se recibió el PDF en enviarMail."
+            );
+        }
+
+        assertString(
+                "nombre del PDF",
+                "PedidoPresupuesto_10.pdf",
+                service.nombrePdfEnviado
+        );
+    }
+
+    private static void assertFalloPdfNoReservaNiEnvia()
+            throws Exception {
+
+        ServicioPrueba service =
+                servicioConPrestador(
+                        "listado@ospim.org.ar",
+                        "reservado@ospim.org.ar"
+                );
+
+        service.errorPdf =
+                new Exception("jasper caído");
+
+        boolean fallo = false;
+
+        try {
+            service.notificarPrestadores(
+                    10,
+                    "tester",
+                    1L
+            );
+        } catch (Exception e) {
+            fallo = true;
+            assertContains(
+                    "error PDF propagado",
+                    e.getMessage(),
+                    "jasper caído"
+            );
+        }
+
+        if (!fallo) {
+            throw new AssertionError(
+                    "Se esperaba que fallara la generación del PDF."
+            );
+        }
+
+        assertInt("PDF intentado una vez", 1, service.pdfsGenerados);
+        assertInt("sin reservas", 0, service.eventos.size());
+        assertInt("sin mails", 0, service.mailsEnviados);
+        assertInt(
+                "sin finalizaciones",
+                0,
+                service.estadosFinalizados.size()
+        );
+    }
     private static void assertDiagnosticoSinCompatiblesSector()
             throws Exception {
 
@@ -490,8 +572,12 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         private Exception errorEnvio;
         private Exception errorLectura;
         private Exception errorFinalizarEnviado;
+        private Exception errorPdf;
         private String errorFinalizarEstado;
         private int mailsEnviados;
+        private int pdfsGenerados;
+        private byte[] pdfEnviado;
+        private String nombrePdfEnviado;
         private int prestadoresHabilitados = 1;
         private int prestadoresCompatiblesSector = 1;
         private int prestadoresBloqueadosEstadoPrevio;
@@ -552,16 +638,35 @@ public class NotificarCotizacionPrestadorServiceImplTest {
             return emailReservado;
         }
 
+        protected byte[] generarPedidoPresupuestoPdf(
+                int idRequerimientoCompra) throws Exception {
+
+            pdfsGenerados++;
+
+            if (errorPdf != null) {
+                throw errorPdf;
+            }
+
+            return new byte[] {
+                    37, 80, 68, 70
+            };
+        }
+
         protected void enviarMail(
                 long companyId,
                 String email,
                 String asunto,
-                String cuerpo) throws Exception {
+                String cuerpo,
+                byte[] pedidoPresupuestoPdf,
+                String nombrePedidoPresupuestoPdf)
+                throws Exception {
 
             eventos.add("enviar");
             mailsEnviados++;
             emailEnviado = email;
             cuerpoEnviado = cuerpo;
+            pdfEnviado = pedidoPresupuestoPdf;
+            nombrePdfEnviado = nombrePedidoPresupuestoPdf;
 
             if (errorEnvio != null) {
                 throw errorEnvio;

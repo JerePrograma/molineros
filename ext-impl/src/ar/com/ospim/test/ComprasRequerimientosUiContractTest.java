@@ -9,8 +9,8 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.file.Files;
 
 /**
- * Contrato ejecutable sin dependencias de Liferay. Verifica la integraciÃ³n
- * textual de JSP, Java y configuraciÃ³n que define los requerimientos de QA.
+ * Contrato ejecutable sin dependencias de Liferay. Verifica la integración
+ * textual de JSP, Java y configuración que define los requerimientos de QA.
  */
 public final class ComprasRequerimientosUiContractTest {
 
@@ -24,6 +24,7 @@ public final class ComprasRequerimientosUiContractTest {
         assertComponenteAfiliadoCompartido();
         assertEditarSoloEnListado();
         assertEstadosYBotones();
+        assertPersistenciaComprasUsaFunciones();
         assertReclamoPrestacionalUsaHandoffSeguro();
         System.out.println("CONTRATO_UI_COMPRAS_OK");
     }
@@ -49,7 +50,16 @@ public final class ComprasRequerimientosUiContractTest {
         assertNotContains("selector por detalle", comunes, "detalle_id_prestador_");
         assertContains("parametro unico", editable, "PARAM_ID_PRESTADOR_ADJUDICADO");
         assertContains("backend exige unico", service, "obtenerPrestadorAdjudicadoUnico");
-        assertContains("backend aplica unico", service, "aplicarPrestadorAdjudicado");
+        assertContains(
+                "backend envía prestador único",
+                service,
+                "idPrestadorAdjudicado"
+        );
+        assertContains(
+                "backend delega cotización atómica",
+                service,
+                "compras.guardar_cotizacion_requerimiento"
+        );
     }
 
     private static void assertPrecioCotizacionNoConcatenaAtributos()
@@ -74,6 +84,11 @@ public final class ComprasRequerimientosUiContractTest {
         String adjuntos = leer("ext-web/docroot/html/portlet/compras/requerimientos/requerimiento_adjuntos.jsp");
         assertNotContains("mensaje azul eliminado", mensajes,
                 "La estructura del requerimiento solo puede editarse en estado PENDIENTE.");
+        assertNotContains(
+                "mensaje verde detalle eliminado",
+                mensajes,
+                "Detalle del requerimiento guardado correctamente."
+        );
         assertContains("accion borrar", adjuntos, "value=\"Borrar\"");
         assertBefore("orden Subir/Agregar", adjuntos,
                 "value=\"Subir\"", "value=\"Agregar otro presupuesto\"");
@@ -82,13 +97,28 @@ public final class ComprasRequerimientosUiContractTest {
     private static void assertNotificacionesFailClosed() throws Exception {
         String botonera = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_botonera.jsp");
         String action = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/action/EditarRequerimientoCompraAction.java");
+        String viewAction = leer(
+                "ext-impl/src/ar/com/ospim/compras/"
+                        + "requerimientos/action/"
+                        + "VerRequerimientoCompraAction.java"
+        );
         String upload = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/action/UploadPresupuestosComprasAction.java");
         String service = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/service/EditarRequerimientoCompraServiceImpl.java");
         assertContains("boton fail closed", botonera, "Boolean.TRUE.equals");
         assertNotContains("fallback fail open", botonera,
                 ": req != null && req.puedeReintentarNotificaciones();");
-        assertContains("action oculta ante error", action, "El botÃ³n permanecerÃ¡ oculto.");
-        assertContains("upload oculta ante error", upload, "El botÃ³n permanecerÃ¡ oculto.");
+        assertContains("action oculta ante error", action, "El botón permanecerá oculto.");
+        assertContains(
+                "vista consulta pendientes",
+                viewAction,
+                "hayPrestadoresPendientesNotificacion"
+        );
+        assertContains(
+                "vista carga atributo pendientes",
+                viewAction,
+                "HAY_PRESTADORES_PENDIENTES_NOTIFICACION"
+        );
+        assertContains("upload oculta ante error", upload, "El botón permanecerá oculto.");
         assertContains("reintento idempotente", service,
                 "hayPrestadoresPendientesNotificacion");
         assertContains("reintento no-op", service,
@@ -98,7 +128,11 @@ public final class ComprasRequerimientosUiContractTest {
     private static void assertCorreoYDestinatarioTemporal() throws Exception {
         String mail = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/service/NotificarCotizacionPrestadorServiceImpl.java");
         String helper = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/service/CotizacionPrestadorMailHelper.java");
-        assertContains("descripcion", mail, " | DescripciÃ³n: ");
+        String pdfServlet = leer(
+                "ext-impl/src/ar/com/ospim/servlets/"
+                        + "PdfServlet.java"
+        );
+        assertContains("descripcion", mail, " | Descripción: ");
         assertNotContains("obs anterior", mail, " | Obs: ");
         assertContains("modo temporal explicito", mail, "USAR_EMAIL_DESTINO_TEMPORAL = true");
         assertContains("destinatario QA", mail, "acomas@ospim.org.ar");
@@ -106,7 +140,7 @@ public final class ComprasRequerimientosUiContractTest {
         assertContains("reserva procesando", mail, "AND estado_envio = 'PROCESANDO'");
         assertContains("estado enviado", mail, "WebKeysCompras.ENVIO_ENVIADO");
         assertContains("email real obligatorio", mail,
-                "Email real reservado del prestador invÃ¡lido.");
+                "Email real reservado del prestador inválido.");
         assertBefore("validacion real antes de redireccion", mail,
                 "String emailReservadoNormalizado", "String emailDestino");
         assertNotContains("destino fuera de logs de servicio", mail,
@@ -117,6 +151,26 @@ public final class ComprasRequerimientosUiContractTest {
                 "usuarioSmtp=");
         assertNotContains("remitente fuera de logs SMTP", helper,
                 "remitente=");
+        assertContains(
+                "correo recibe PDF",
+                mail,
+                "pedidoPresupuestoPdf"
+        );
+        assertContains(
+                "correo multipart",
+                helper,
+                "MimeMultipart"
+        );
+        assertContains(
+                "adjunto application pdf",
+                helper,
+                "application/pdf"
+        );
+        assertContains(
+                "generador PDF adjunto",
+                pdfServlet,
+                "crearRequerimientoCompraComoAdjunto"
+        );
     }
 
     private static void assertComponenteAfiliadoCompartido() throws Exception {
@@ -136,6 +190,21 @@ public final class ComprasRequerimientosUiContractTest {
         assertContains("lapiz en listado", acciones, "image=\"edit\"");
         assertContains("ruta editar", acciones, "/compras/editar_requerimiento");
         assertContains("papelera", acciones, "icon-delete");
+        assertContains(
+                "A COTIZAR consulta rol cotizar",
+                acciones,
+                "showCotizarButtons"
+        );
+        assertContains(
+                "A COTIZAR consulta edición de cotización",
+                acciones,
+                "req.puedeEditarCotizacion()"
+        );
+        assertNotContains(
+                "ABM no habilita cotización",
+                acciones,
+                "(showABMButtons || showCotizarButtons)"
+        );
     }
 
     private static void assertEstadosYBotones() throws Exception {
@@ -150,6 +219,69 @@ public final class ComprasRequerimientosUiContractTest {
         assertContains("notificar condicionado", botonera, "puedeReintentarNotificaciones");
     }
 
+    private static void assertPersistenciaComprasUsaFunciones()
+            throws Exception {
+
+        String service = leer(
+                "ext-impl/src/ar/com/ospim/compras/"
+                        + "requerimientos/service/"
+                        + "EditarRequerimientoCompraServiceImpl.java"
+        );
+
+        assertNotContains(
+                "sin PreparedStatement",
+                service,
+                "prepareStatement("
+        );
+
+        assertNotContains(
+                "sin SELECT nativo",
+                service,
+                "\"SELECT "
+        );
+
+        assertNotContains(
+                "sin UPDATE nativo",
+                service,
+                "\"UPDATE "
+        );
+
+        assertNotContains(
+                "sin INSERT nativo",
+                service,
+                "\"INSERT "
+        );
+
+        assertNotContains(
+                "sin DELETE nativo",
+                service,
+                "\"DELETE "
+        );
+
+        assertContains(
+                "confirmación mediante función",
+                service,
+                "compras.confirmar_envio_a_cotizar"
+        );
+
+        assertContains(
+                "cotización mediante función",
+                service,
+                "compras.guardar_cotizacion_requerimiento"
+        );
+
+        assertContains(
+                "artículos mediante refcursor",
+                service,
+                "compras.listar_articulos_cursor"
+        );
+
+        assertContains(
+                "artículo individual mediante refcursor",
+                service,
+                "compras.get_articulo_cursor"
+        );
+    }
     private static void assertReclamoPrestacionalUsaHandoffSeguro()
             throws Exception {
 
@@ -218,7 +350,7 @@ public final class ComprasRequerimientosUiContractTest {
         assertContains(
                 "revalida cotizado",
                 actionCompra,
-                "El Reclamo Prestacional sÃ³lo puede iniciarse"
+                "El Reclamo Prestacional sólo puede iniciarse"
         );
         assertContains(
                 "rol reclamo backend",
@@ -344,7 +476,7 @@ public final class ComprasRequerimientosUiContractTest {
         int ia = v == null ? -1 : v.indexOf(a);
         int ib = v == null ? -1 : v.indexOf(b);
         if (ia < 0 || ib < 0 || ia >= ib) {
-            throw new AssertionError(d + ": orden invÃ¡lido: " + ia + ", " + ib);
+            throw new AssertionError(d + ": orden inválido: " + ia + ", " + ib);
         }
     }
 
