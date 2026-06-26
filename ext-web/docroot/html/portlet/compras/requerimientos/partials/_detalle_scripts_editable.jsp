@@ -671,9 +671,28 @@
         }
 
         for (var i = 0; i < <portlet:namespace />detallesCompra.length; i++) {
-            if (typeof <portlet:namespace />capturarCotizacionDetalle == 'function') {
-                <portlet:namespace />capturarCotizacionDetalle(i);
-            }
+            <% if (puedeCotizarDetalle) { %>
+                if (typeof <portlet:namespace />capturarCotizacionDetalle
+                        != 'function') {
+
+                    alert(
+                            'No se encontró la función que captura '
+                                    + 'los precios de cotización.'
+                    );
+
+                    return false;
+                }
+
+                if (!<portlet:namespace />capturarCotizacionDetalle(i)) {
+                    alert(
+                            'Detalle #' + (i + 1)
+                                    + ': no se pudo leer el campo '
+                                    + 'de precio unitario.'
+                    );
+
+                    return false;
+                }
+            <% } %>
 
             var detalle = <portlet:namespace />detallesCompra[i];
             var prefix = 'detalle_' + i + '_';
@@ -713,7 +732,43 @@
                 return false;
             }
 
-            var precioUnitario = jQuery.trim(<portlet:namespace />detalleValue(detalle.precioUnitario));
+            var precioUnitario = '';
+
+            <% if (puedeCotizarDetalle) { %>
+                var precioInputVisible =
+                        document.getElementById(
+                                '<portlet:namespace />detalle_precio_unitario_'
+                                        + i
+                        );
+
+                if (!precioInputVisible) {
+                    alert(
+                            'Detalle #' + (i + 1)
+                                    + ': desapareció el campo '
+                                    + 'de precio unitario.'
+                    );
+
+                    return false;
+                }
+
+                precioUnitario =
+                        jQuery.trim(
+                                precioInputVisible.value
+                        );
+
+                /*
+                 * La caché se actualiza desde el valor real del DOM.
+                 */
+                detalle.precioUnitario =
+                        precioUnitario;
+            <% } else { %>
+                precioUnitario =
+                        jQuery.trim(
+                                <portlet:namespace />detalleValue(
+                                        detalle.precioUnitario
+                                )
+                        );
+            <% } %>
 
             if (precioUnitario != '') {
                 var precioParseado = <portlet:namespace />parseImporteDetalle(precioUnitario);
@@ -746,13 +801,18 @@
             }
 
             if (String(hiddenPrecio.value)
-                    != String(precioUnitario)) {
+                    != String(
+                            jQuery.trim(
+                                    precioInputVisible.value
+                            )
+                    )) {
 
                 alert(
                         'Detalle #' + (i + 1)
-                                + ': el precio visible no coincide '
-                                + 'con el valor enviado.'
+                                + ': el precio enviado no coincide '
+                                + 'con el campo visible.'
                 );
+
                 return false;
             }
 

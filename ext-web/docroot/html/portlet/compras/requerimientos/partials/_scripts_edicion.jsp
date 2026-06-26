@@ -709,6 +709,12 @@
     }
 
     function <portlet:namespace />guardarCotizacion() {
+        if (<portlet:namespace />guardandoCompra) {
+            return false;
+        }
+
+        <portlet:namespace />setGuardandoCompraActivo(true);
+
         var form =
                 document.getElementById(
                         '<portlet:namespace />fmCompras'
@@ -716,21 +722,38 @@
 
         if (!form) {
             alert('No se encontró el formulario de Compras.');
-            return false;
+            return <portlet:namespace />cancelarGuardadoCompra();
         }
 
         jQuery(
                 '#<portlet:namespace />compras_cmd'
         ).val('saveCotizacion');
 
-        if (!<portlet:namespace />serializarDetallesCompras()) {
-            return false;
+        if (!<portlet:namespace />validarTokenGuardadoCompra()) {
+            return <portlet:namespace />cancelarGuardadoCompra();
+        }
+
+        var serializador =
+                <portlet:namespace />obtenerSerializadorDetallesCompra();
+
+        if (serializador == null) {
+            alert(
+                    'No se encontró la función de '
+                            + 'serialización de detalles.'
+            );
+
+            return <portlet:namespace />cancelarGuardadoCompra();
+        }
+
+        if (!serializador()) {
+            return <portlet:namespace />cancelarGuardadoCompra();
         }
 
         submitForm(form);
 
         return false;
     }
+
     function <portlet:namespace />guardar() {
         if (<portlet:namespace />guardandoCompra) {
             return false;

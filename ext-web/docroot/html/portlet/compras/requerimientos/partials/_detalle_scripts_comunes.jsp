@@ -229,21 +229,37 @@
                 <portlet:namespace />detallesCompra[index];
 
         if (!detalle) {
-            return;
+            return false;
         }
+
+        var precioInputId =
+                '<portlet:namespace />detalle_precio_unitario_'
+                        + index;
 
         var precioInput =
-                jQuery(
-                        '#<portlet:namespace />detalle_precio_unitario_'
-                                + index
+                document.getElementById(
+                        precioInputId
                 );
 
-        if (precioInput.length > 0) {
-            detalle.precioUnitario =
-                    jQuery.trim(
-                            precioInput.val()
-                    );
+        /*
+         * Durante una cotización el input debe existir exactamente
+         * en la fila renderizada. No continuar silenciosamente.
+         */
+        if (!precioInput) {
+            if (window.console && window.console.error) {
+                window.console.error(
+                        '[COMPRAS-COTIZACION] No se encontró el input '
+                                + precioInputId
+                );
+            }
+
+            return false;
         }
+
+        detalle.precioUnitario =
+                jQuery.trim(
+                        precioInput.value
+                );
 
         <portlet:namespace />capturarPrestadorAdjudicado();
 
@@ -258,6 +274,8 @@
         ).text(
                 detalle.precioTotal
         );
+
+        return true;
     }
 
     function <portlet:namespace />actualizarPrecioDetalle(index) {
@@ -375,7 +393,15 @@
                 var precioInput = jQuery('<input/>', {
                     type: 'text',
                     size: '10',
-                    id: '<portlet:namespace />detalle_precio_unitario_' + i
+                    id:
+                            '<portlet:namespace />detalle_precio_unitario_'
+                                    + i,
+                    'data-detalle-index': i,
+                    'data-detalle-id':
+                            detalle.id == null
+                                    ? ''
+                                    : detalle.id,
+                    autocomplete: 'off'
                 });
 
                 precioInput.val(
