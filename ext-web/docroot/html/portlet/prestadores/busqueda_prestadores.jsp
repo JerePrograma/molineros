@@ -62,11 +62,11 @@
                 <td colspan="2">&nbsp;</td>
             </tr>
 			<tr>
-				<td><label><liferay-ui:message key="Profesi√≥n" />:</label></td>
+				<td><label><liferay-ui:message key="ProfesiÛn" />:</label></td>
 				<td><select 
 					name="<portlet:namespace/>profesion"
 					id="<portlet:namespace/>profesion" onchange="manejarProfesion();">
-					<option selected value="0" >Seleccione una profesi√≥n</option>
+					<option selected value="0" >Seleccione una profesiÛn</option>
 					<% for (ProfesionPrestador prof : profesionPrestador) { %>
 						<option
 							<%-- <%= prof != null && prof.getIdProfesion() != 0 && prof.getIdProfesion() == prof.getIdProfesion() ? "selected" : ""  %> --%>
@@ -82,7 +82,7 @@
 					<% for (EspecialidadPrestador espe : especialidadPrestador) { %>
 						<option
 							<%-- <%= espe != null && espe.getIdEspecialidad() != 0 && espe.getId() == espe.getId() ? "selected" : ""  %> --%>
-							value="<%= espe.getIdEspecialidad() %>"><%=espe.getDescripcion()%></option>
+							value="<%= espe.getIdEcspecialidad() %>"><%=espe.getDescripcion()%></option>
 						<% } %>
 				</select></td>
 
@@ -107,7 +107,7 @@
 					<% } %>
 			</select></td>	
 
-				<td>C√≥digo Hospital:</td>
+				<td>CÛdigo Hospital:</td>
 				<td><input id="<portlet:namespace />cod_hospital"
 					name="<portlet:namespace />cod_hospital" type="text" maxlength="10"
 					size="10" value="" /></td>
@@ -264,10 +264,10 @@
 
 	function addElementToSelect(id_combo, texto, valor) {
 		var combo = document.getElementById(id_combo);
-		var idxElemento = combo.options.length; //Numero de elementos de la combo si esta vacio es 0. Este indice ser√° el del nuevo elemento
+		var idxElemento = combo.options.length; //Numero de elementos de la combo si esta vacio es 0. Este indice ser· el del nuevo elemento
 		combo.options[idxElemento] = new Option();
-		combo.options[idxElemento].text = texto; //Este es el texto que ver√°s en la combo
-		combo.options[idxElemento].value = valor; //Este es el valor que se enviar√° cuando hagas un submit del formulario que lo contiene
+		combo.options[idxElemento].text = texto; //Este es el texto que ver·s en la combo
+		combo.options[idxElemento].value = valor; //Este es el valor que se enviar· cuando hagas un submit del formulario que lo contiene
 	}
 
 	function filtrarLocalidad() {
