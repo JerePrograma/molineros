@@ -61,8 +61,8 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
     /*
      * Boolean cargado por los actions que renderizan un requerimiento.
-     * La botonera lo utiliza para ocultar el reintento cuando la funci贸n
-     * can贸nica de candidatos ya no devuelve prestadores pendientes.
+     * La botonera lo utiliza para ocultar el reintento cuando la funci髇
+     * can髇ica de candidatos ya no devuelve prestadores pendientes.
      */
     public static final String HAY_PRESTADORES_PENDIENTES_NOTIFICACION =
             "HAY_PRESTADORES_PENDIENTES_NOTIFICACION";
@@ -92,9 +92,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             "ERROR";
 
     /*
-     * Par谩metro 煤nico del prestador adjudicado para todo el requerimiento.
-     * Se mantiene el parseo de los par谩metros legacy por detalle durante la
-     * transici贸n para no romper pantallas compiladas o formularios antiguos.
+     * Par醡etro 鷑ico del prestador adjudicado para todo el requerimiento.
+     * Se mantiene el parseo de los par醡etros legacy por detalle durante la
+     * transici髇 para no romper pantallas compiladas o formularios antiguos.
      */
     public static final String PARAM_ID_PRESTADOR_ADJUDICADO =
             "id_prestador_adjudicado";
@@ -105,7 +105,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final int ESTADO_RECLAMO_RP = 4;
 
     /**
-     * @deprecated Alias exclusivo para compatibilidad con c贸digo legacy.
+     * @deprecated Alias exclusivo para compatibilidad con c骴igo legacy.
      */
     @Deprecated
     public static final int ESTADO_AUTORIZADO = ESTADO_RECLAMO_RP;
@@ -327,7 +327,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         }
 
         /*
-         * Los estados 4 y 5 siguen reconocidos, pero contin煤an sin transici贸n
+         * Los estados 4 y 5 siguen reconocidos, pero contin鷄n sin transici髇
          * activa hasta implementar y vincular el Reclamo Prestacional y la
          * Orden de Compra reales.
          */

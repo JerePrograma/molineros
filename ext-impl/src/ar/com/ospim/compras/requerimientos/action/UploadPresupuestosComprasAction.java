@@ -162,7 +162,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 );
             } else {
                 throw new Exception(
-                        "La acci√≥n solicitada para el presupuesto no es v√°lida."
+                        "La acciÛn solicitada para el presupuesto no es v·lida."
                 );
             }
 
@@ -240,7 +240,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             if (requerimiento == null) {
                 if (idRequerimientoCompra > 0) {
                     throw new Exception(
-                            "No se encontr√≥ el requerimiento de compra informado."
+                            "No se encontrÛ el requerimiento de compra informado."
                     );
                 }
 
@@ -339,8 +339,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             } catch (Exception e) {
                 logger.warn(
                         "No se pudo confirmar si quedan prestadores "
-                                + "pendientes de notificaci√≥n. "
-                                + "El bot√≥n permanecer√° oculto. "
+                                + "pendientes de notificaciÛn. "
+                                + "El botÛn permanecer· oculto. "
                                 + "idRequerimiento="
                                 + requerimiento
                                         .getIdRequerimientoCompra(),
@@ -505,12 +505,12 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         validarCantidadPresupuestos(cantidad);
 
         if (idRequerimientoCompra <= 0) {
-            throw new Exception("El requerimiento de compra no es v√°lido.");
+            throw new Exception("El requerimiento de compra no es v·lido.");
         }
 
         if (entradas == null || entradas.size() != cantidad) {
             throw new Exception(
-                    "La colecci√≥n de presupuestos fue manipulada."
+                    "La colecciÛn de presupuestos fue manipulada."
             );
         }
 
@@ -544,8 +544,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
             if (entrada == null || entrada.indice != i) {
                 throw new Exception(
-                        "El √≠ndice del presupuesto " + (i + 1)
-                                + " no es v√°lido."
+                        "El Ìndice del presupuesto " + (i + 1)
+                                + " no es v·lido."
                 );
             }
 
@@ -564,7 +564,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
                 throw new Exception(
                         "El presupuesto " + (i + 1)
-                                + " supera el tama√±o permitido."
+                                + " supera el tamaÒo permitido."
                 );
             }
 
@@ -574,7 +574,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             if (WebKeysCompras.isEmpty(nombreOriginal)) {
                 throw new Exception(
                         "El nombre del presupuesto " + (i + 1)
-                                + " no es v√°lido."
+                                + " no es v·lido."
                 );
             }
 
@@ -588,7 +588,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
                 throw new Exception(
                         "El tipo del presupuesto " + (i + 1)
-                                + " no est√° permitido."
+                                + " no est· permitido."
                 );
             }
 
@@ -649,7 +649,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             ServiceContext serviceContext) throws Exception {
 
         if (idRequerimientoCompra <= 0) {
-            throw new Exception("El requerimiento de compra no es v√°lido.");
+            throw new Exception("El requerimiento de compra no es v·lido.");
         }
 
         if (presupuestos == null || presupuestos.isEmpty()) {
@@ -665,8 +665,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
                 if (presupuesto == null) {
                     throw new Exception(
-                            "La colecci√≥n de presupuestos contiene "
-                                    + "un elemento inv√°lido."
+                            "La colecciÛn de presupuestos contiene "
+                                    + "un elemento inv·lido."
                     );
                 }
 
@@ -701,7 +701,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         } catch (Exception cleanupError) {
                             logger.error(
                                     "No se pudo eliminar el documento creado "
-                                            + "antes de fallar el registro de su asociaci√≥n. "
+                                            + "antes de fallar el registro de su asociaciÛn. "
                                             + "fileEntryId="
                                             + documento.getFileEntryId(),
                                     cleanupError
@@ -739,7 +739,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
             if (idAsociacion == null || idAsociacion.intValue() <= 0) {
                 logger.error(
-                        "No se pudo compensar una asociaci√≥n de presupuesto "
+                        "No se pudo compensar una asociaciÛn de presupuesto "
                                 + "sin identificador."
                 );
                 continue;
@@ -755,8 +755,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 );
             } catch (Exception cleanupSqlError) {
                 logger.error(
-                        "No se pudo dar de baja una asociaci√≥n durante la "
-                                + "compensaci√≥n de la carga. "
+                        "No se pudo dar de baja una asociaciÛn durante la "
+                                + "compensaciÛn de la carga. "
                                 + "idRequerimientoPresupuesto="
                                 + idAsociacion,
                         cleanupSqlError
@@ -775,7 +775,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             } catch (Exception cleanupFileError) {
                 logger.error(
                         "No se pudo eliminar un presupuesto durante la "
-                                + "compensaci√≥n de la carga. fileEntryId="
+                                + "compensaciÛn de la carga. fileEntryId="
                                 + documento.getFileEntryId(),
                         cleanupFileError
                 );
@@ -787,8 +787,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                     );
                 } catch (Exception reactivarError) {
                     logger.error(
-                            "No se pudo reactivar la asociaci√≥n despu√©s de "
-                                    + "fallar la eliminaci√≥n del documento. "
+                            "No se pudo reactivar la asociaciÛn despuÈs de "
+                                    + "fallar la eliminaciÛn del documento. "
                                     + "idRequerimientoPresupuesto="
                                     + idAsociacion,
                             reactivarError
@@ -819,7 +819,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (entry == null || entry.getFileEntryId() <= 0L) {
             throw new Exception(
-                    "Document Library no devolvi√≥ un documento v√°lido."
+                    "Document Library no devolviÛ un documento v·lido."
             );
         }
 
@@ -839,7 +839,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (folderId <= 0L || WebKeysCompras.isEmpty(nombre)) {
             throw new Exception(
-                    "La identidad del documento a eliminar no es v√°lida."
+                    "La identidad del documento a eliminar no es v·lida."
             );
         }
 
@@ -853,7 +853,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             String usuario) throws Exception {
 
         if (idRequerimientoCompra <= 0) {
-            throw new Exception("El requerimiento de compra no es v√°lido.");
+            throw new Exception("El requerimiento de compra no es v·lido.");
         }
 
         if (presupuesto == null) {
@@ -861,7 +861,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         }
 
         if (presupuesto.getIdPrestador() <= 0) {
-            throw new Exception("El prestador del presupuesto no es v√°lido.");
+            throw new Exception("El prestador del presupuesto no es v·lido.");
         }
 
         if (documento == null
@@ -906,7 +906,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (id <= 0) {
             throw new Exception(
-                    "No se pudo obtener el identificador de la asociaci√≥n "
+                    "No se pudo obtener el identificador de la asociaciÛn "
                             + "del presupuesto."
             );
         }
@@ -947,14 +947,14 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (error instanceof FileSizeException) {
             return new Exception(
-                    "Uno de los presupuestos supera el tama√±o permitido.",
+                    "Uno de los presupuestos supera el tamaÒo permitido.",
                     error
             );
         }
 
         if (error instanceof FileNameException) {
             return new Exception(
-                    "El tipo de uno de los presupuestos no est√° permitido.",
+                    "El tipo de uno de los presupuestos no est· permitido.",
                     error
             );
         }
@@ -982,7 +982,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 || requerimiento.getIdRequerimientoCompra() <= 0) {
 
             throw new Exception(
-                    "No se encontr√≥ el requerimiento de compra informado."
+                    "No se encontrÛ el requerimiento de compra informado."
             );
         }
 
@@ -1056,16 +1056,16 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
                 if (!reactivada) {
                     logger.error(
-                            "La eliminaci√≥n f√≠sica del presupuesto fall√≥ "
-                                    + "y la asociaci√≥n no pudo reactivarse. "
+                            "La eliminaciÛn fÌsica del presupuesto fallÛ "
+                                    + "y la asociaciÛn no pudo reactivarse. "
                                     + "idRequerimientoPresupuesto="
                                     + idRequerimientoPresupuesto
                     );
                 }
             } catch (Exception reactivarError) {
                 logger.error(
-                        "La eliminaci√≥n f√≠sica del presupuesto fall√≥ y "
-                                + "tambi√©n fall√≥ la reactivaci√≥n de su asociaci√≥n. "
+                        "La eliminaciÛn fÌsica del presupuesto fallÛ y "
+                                + "tambiÈn fallÛ la reactivaciÛn de su asociaciÛn. "
                                 + "idRequerimientoPresupuesto="
                                 + idRequerimientoPresupuesto,
                         reactivarError
@@ -1106,8 +1106,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 )) {
 
             throw new Exception(
-                    "La asociaci√≥n del presupuesto contiene una identidad "
-                            + "de documento inv√°lida."
+                    "La asociaciÛn del presupuesto contiene una identidad "
+                            + "de documento inv·lida."
             );
         }
     }
@@ -1118,7 +1118,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (fileEntry == null) {
             throw new Exception(
-                    "No se encontr√≥ el documento asociado al presupuesto."
+                    "No se encontrÛ el documento asociado al presupuesto."
             );
         }
 
@@ -1141,7 +1141,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (!coincide) {
             throw new Exception(
-                    "El documento persistido no coincide con la asociaci√≥n "
+                    "El documento persistido no coincide con la asociaciÛn "
                             + "del presupuesto."
             );
         }
@@ -1158,7 +1158,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             return getFolderCompras(groupId);
         } catch (NoSuchFolderException e) {
             logger.info(
-                    "La carpeta de Compras no existe. Se intentar√° crear: "
+                    "La carpeta de Compras no existe. Se intentar· crear: "
                             + "groupId=" + groupId
                             + ", parentFolderId="
                             + WebKeysCompras
@@ -1191,8 +1191,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 DLFolder folder = getFolderCompras(groupId);
 
                 logger.warn(
-                        "La creaci√≥n de la carpeta de presupuestos fall√≥, "
-                                + "pero la carpeta ya existe y ser√° reutilizada. "
+                        "La creaciÛn de la carpeta de presupuestos fallÛ, "
+                                + "pero la carpeta ya existe y ser· reutilizada. "
                                 + "groupId=" + groupId
                                 + ", folderId=" + folder.getFolderId()
                 );
@@ -1218,7 +1218,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
     private DLFolder getFolderCompras(long groupId) throws Exception {
         if (groupId <= 0) {
             throw new Exception(
-                    "El groupId de Document Library no es v√°lido."
+                    "El groupId de Document Library no es v·lido."
             );
         }
 
@@ -1525,7 +1525,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         if (requerimiento == null
                 || requerimiento.getIdRequerimientoCompra() <= 0) {
             throw new Exception(
-                    "No se encontr√≥ el requerimiento de compra informado."
+                    "No se encontrÛ el requerimiento de compra informado."
             );
         }
 

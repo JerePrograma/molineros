@@ -8,7 +8,7 @@
 
     <%--
         La vista utiliza el mismo componente que ALTA/EDICION, configurado
-        automÃ¡ticamente como readonly por _afiliado_editable.jsp.
+        automáticamente como readonly por _afiliado_editable.jsp.
     --%>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_afiliado_editable.jsp" %>
 

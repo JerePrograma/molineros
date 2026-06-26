@@ -110,10 +110,10 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                 throw new Exception(
                         relacion.isError()
                                 ? "El Reclamo Prestacional fue creado, "
-                                        + "pero su vinculaci√≥n requiere "
-                                        + "reconciliaci√≥n. No se permite "
+                                        + "pero su vinculaciÛn requiere "
+                                        + "reconciliaciÛn. No se permite "
                                         + "crear otro reclamo."
-                                : "Ya existe una creaci√≥n de Reclamo "
+                                : "Ya existe una creaciÛn de Reclamo "
                                         + "Prestacional en proceso para "
                                         + "este requerimiento."
                 );
@@ -243,7 +243,7 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                 || requerimiento.getBajaFecha() != null) {
 
             throw new Exception(
-                    "No se encontr√≥ el requerimiento de compra activo."
+                    "No se encontrÛ el requerimiento de compra activo."
             );
         }
 
@@ -251,14 +251,14 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                 requerimiento.getEstado()
         )) {
             throw new Exception(
-                    "El Reclamo Prestacional s√≥lo puede iniciarse "
+                    "El Reclamo Prestacional sÛlo puede iniciarse "
                             + "desde un requerimiento COTIZADO."
             );
         }
 
         if (!requerimiento.tieneAfiliadoInformado()) {
             throw new Exception(
-                    "El requerimiento no tiene un afiliado v√°lido "
+                    "El requerimiento no tiene un afiliado v·lido "
                             + "para iniciar el Reclamo Prestacional."
             );
         }

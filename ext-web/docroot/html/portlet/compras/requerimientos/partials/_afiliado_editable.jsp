@@ -1,12 +1,12 @@
 <%
 /*
  * Compatibilidad:
- * se conserva el nombre histÃ³rico del partial para no afectar includes,
- * aunque ahora funciona como componente comÃºn de ALTA, EDICION y VISTA.
+ * se conserva el nombre histórico del partial para no afectar includes,
+ * aunque ahora funciona como componente común de ALTA, EDICION y VISTA.
  *
- * Solo se permite editar el afiliado cuando la pantalla estÃ¡ realmente en
+ * Solo se permite editar el afiliado cuando la pantalla está realmente en
  * modo editable y el estado/rol permiten modificar la estructura.
- * En cotizaciÃ³n y en vista se renderiza exactamente el mismo componente,
+ * En cotización y en vista se renderiza exactamente el mismo componente,
  * pero con edit_mode=false.
  */
 boolean afiliadoComponenteEditable =

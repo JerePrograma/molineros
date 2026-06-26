@@ -69,8 +69,8 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     + "LIMIT ?";
 
     /*
-     * Se reutiliza exactamente la misma funci√≥n can√≥nica que consume el
-     * servicio de notificaciones. As√≠ la visibilidad del bot√≥n y la operaci√≥n
+     * Se reutiliza exactamente la misma funciÛn canÛnica que consume el
+     * servicio de notificaciones. AsÌ la visibilidad del botÛn y la operaciÛn
      * real no pueden divergir por tener filtros SQL diferentes.
      */
     private static final String SQL_HAY_PRESTADORES_PENDIENTES_NOTIFICACION =
@@ -327,7 +327,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     > WebKeysCompras.MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO) {
 
                 throw new Exception(
-                        "El requerimiento supera el m√°ximo permitido de "
+                        "El requerimiento supera el m·ximo permitido de "
                                 + "prestadores enviados para esta pantalla."
                 );
             }
@@ -363,7 +363,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
         } catch (Exception e) {
             _log.error(
                     "No se pudo determinar si existen prestadores pendientes "
-                            + "de notificaci√≥n. idRequerimiento="
+                            + "de notificaciÛn. idRequerimiento="
                             + idRequerimientoCompra,
                     e
             );

@@ -52,7 +52,7 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             return rs.next() ? mapRelacion(rs) : null;
         } catch (Exception e) {
             _log.error(
-                    "No se pudo consultar la relaci贸n entre el requerimiento "
+                    "No se pudo consultar la relaci髇 entre el requerimiento "
                             + "de compra y el Reclamo Prestacional. "
                             + "idRequerimiento="
                             + idRequerimientoCompra,
@@ -84,7 +84,7 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                         stmt.setString(3, normalizarUsuario(usuario));
                     }
                 },
-                "No se pudo reservar la creaci贸n del Reclamo Prestacional."
+                "No se pudo reservar la creaci髇 del Reclamo Prestacional."
         );
     }
 
@@ -115,7 +115,7 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                         stmt.setString(4, normalizarUsuario(usuario));
                     }
                 },
-                "No se pudo finalizar la relaci贸n con el Reclamo Prestacional."
+                "No se pudo finalizar la relaci髇 con el Reclamo Prestacional."
         );
     }
 
@@ -171,7 +171,7 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                         stmt.setString(5, normalizarUsuario(usuario));
                     }
                 },
-                "No se pudo registrar el error de vinculaci贸n "
+                "No se pudo registrar el error de vinculaci髇 "
                         + "del Reclamo Prestacional."
         );
     }
@@ -251,7 +251,7 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
     private void validarToken(String tokenReserva) throws Exception {
         if (WebKeysCompras.isEmpty(tokenReserva)) {
             throw new Exception(
-                    "No se pudo validar el contexto de creaci贸n "
+                    "No se pudo validar el contexto de creaci髇 "
                             + "del Reclamo Prestacional."
             );
         }
@@ -267,7 +267,7 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
         String value = WebKeysCompras.trimToNull(error);
 
         if (value == null) {
-            return "Error de vinculaci贸n no especificado.";
+            return "Error de vinculaci髇 no especificado.";
         }
 
         return value.length() <= 2000

@@ -54,10 +54,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             "ARTICULOS_COMPRA";
 
     /*
-     * Blindaje anti doble env√≠o.
+     * Blindaje anti doble envÌo.
      *
-     * Se usa un SET de tokens, no un √∫nico token, para no romper pantallas
-     * abiertas en m√∫ltiples tabs. Cada render agrega un token v√°lido.
+     * Se usa un SET de tokens, no un ˙nico token, para no romper pantallas
+     * abiertas en m˙ltiples tabs. Cada render agrega un token v·lido.
      * Cada save consume exactamente un token.
      */
     private static final String PARAM_COMPRAS_SAVE_TOKEN =
@@ -80,11 +80,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             "/compras/editar_requerimiento";
 
     /*
-     * La l√≥gica de detalles queda separada en helper:
+     * La lÛgica de detalles queda separada en helper:
      * - parseo de detalle
-     * - validaci√≥n de detalle
+     * - validaciÛn de detalle
      * - guardado/borrado de detalles
-     * - normalizaci√≥n de textos nuevos
+     * - normalizaciÛn de textos nuevos
      */
     private final RequerimientoCompraDetalleHelper detalleHelper =
             new RequerimientoCompraDetalleHelper();
@@ -497,7 +497,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 if (requerimiento == null) {
                     throw new Exception(
-                            "No se encontr√≥ el requerimiento de compra informado."
+                            "No se encontrÛ el requerimiento de compra informado."
                     );
                 }
             } else {
@@ -613,8 +613,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             } catch (Exception e) {
                 _log.warn(
                         "No se pudo confirmar si quedan prestadores "
-                                + "pendientes de notificaci√≥n. "
-                                + "El bot√≥n permanecer√° oculto. "
+                                + "pendientes de notificaciÛn. "
+                                + "El botÛn permanecer· oculto. "
                                 + "idRequerimiento="
                                 + requerimiento
                                         .getIdRequerimientoCompra(),
@@ -654,9 +654,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 consultaOk = false;
 
                 _log.warn(
-                        "No se pudo consultar la relaci√≥n con el "
+                        "No se pudo consultar la relaciÛn con el "
                                 + "Reclamo Prestacional. "
-                                + "La acci√≥n permanecer√° oculta. "
+                                + "La acciÛn permanecer· oculta. "
                                 + "idRequerimiento="
                                 + requerimiento
                                         .getIdRequerimientoCompra(),
@@ -717,7 +717,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             if (!(tokensObj instanceof Set)) {
                 errorCampo(
                         "guardar",
-                        "El requerimiento ya fue enviado o la pantalla est√° desactualizada. "
+                        "El requerimiento ya fue enviado o la pantalla est· desactualizada. "
                                 + "Vuelva a cargar la pantalla antes de guardar nuevamente."
                 );
             }
@@ -729,7 +729,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 errorCampo(
                         "guardar",
-                        "El requerimiento ya fue enviado o la pantalla est√° desactualizada. "
+                        "El requerimiento ya fue enviado o la pantalla est· desactualizada. "
                                 + "Vuelva a cargar la pantalla antes de guardar nuevamente."
                 );
             }
@@ -766,7 +766,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 BusquedaRequerimientoCompraServiceUtil.listarSectores()
         );
 
-        /* Los art√≠culos contin√∫an carg√°ndose bajo demanda. */
+        /* Los artÌculos contin˙an carg·ndose bajo demanda. */
         request.setAttribute(
                 ARTICULOS_COMPRA,
                 new ArrayList<CompraArticulo>()
@@ -810,7 +810,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         } catch (Exception e) {
             _log.warn(
                     "No se pudo completar el componente visual del afiliado. "
-                            + "Se conservar√° el snapshot del requerimiento.",
+                            + "Se conservar· el snapshot del requerimiento.",
                     e
             );
         }
@@ -949,7 +949,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (requerimiento == null) {
             errorCampo(
                     "id_requerimiento_compra",
-                    "No se encontr√≥ el requerimiento de compra informado. ID recibido: "
+                    "No se encontrÛ el requerimiento de compra informado. ID recibido: "
                             + idRequerimientoCompra + "."
             );
         }
@@ -975,7 +975,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (requerimiento == null) {
             errorCampo(
                     "id_requerimiento_compra",
-                    "No se encontr√≥ el requerimiento de compra informado. ID recibido: "
+                    "No se encontrÛ el requerimiento de compra informado. ID recibido: "
                             + idRequerimientoCompra + "."
             );
         }
@@ -1007,7 +1007,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             if (sector == null) {
                 errorCampo(
                         "sector_id",
-                        "Sector: el sector seleccionado no existe o no est√° disponible. ID recibido: "
+                        "Sector: el sector seleccionado no existe o no est· disponible. ID recibido: "
                                 + requerimiento.getIdSector() + "."
                 );
             }
@@ -1055,7 +1055,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (afiliados == null || afiliados.size() != 1) {
             errorCampo(
                     "afiliado_cuil_titular",
-                    "No se pudo obtener un √∫nico afiliado para guardar el requerimiento."
+                    "No se pudo obtener un ˙nico afiliado para guardar el requerimiento."
             );
         }
 
@@ -1341,10 +1341,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
      * Contrato transitorio compatible:
      *
      * 1. Si llega id_prestador_adjudicado, se aplica a todos los detalles y
-     *    cualquier ID legacy diferente se considera manipulaci√≥n.
-     * 2. Si todav√≠a llega el formulario antiguo por detalle, se acepta solo
-     *    cuando todos los IDs no vac√≠os coinciden y se replica ese √∫nico ID.
-     * 3. Si no se eligi√≥ prestador, se conservan null para permitir guardar un
+     *    cualquier ID legacy diferente se considera manipulaciÛn.
+     * 2. Si todavÌa llega el formulario antiguo por detalle, se acepta solo
+     *    cuando todos los IDs no vacÌos coinciden y se replica ese ˙nico ID.
+     * 3. Si no se eligiÛ prestador, se conservan null para permitir guardar un
      *    avance parcial de precios en A COTIZAR.
      */
     private List getDetallesCotizacionFromRequest(ActionRequest request)
@@ -1411,7 +1411,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 errorCampo(
                         WebKeysCompras.PARAM_ID_PRESTADOR_ADJUDICADO,
-                        "La cotizaci√≥n fue manipulada: el prestador del detalle #"
+                        "La cotizaciÛn fue manipulada: el prestador del detalle #"
                                 + (i + 1)
                                 + " no coincide con el prestador adjudicado."
                 );
@@ -1424,7 +1424,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             if (idsPrestadorLegacy.size() > 1) {
                 errorCampo(
                         WebKeysCompras.PARAM_ID_PRESTADOR_ADJUDICADO,
-                        "Debe seleccionar un √∫nico prestador adjudicado para "
+                        "Debe seleccionar un ˙nico prestador adjudicado para "
                                 + "todo el requerimiento."
                 );
             }
@@ -1523,7 +1523,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (!clean.matches("^-?[0-9]+(\\.[0-9]+)?$")) {
             errorCampo(
                     label,
-                    label + ": importe inv√°lido. Valor recibido: '"
+                    label + ": importe inv·lido. Valor recibido: '"
                             + original
                             + "'. Use formatos como 1234.56 o 1.234,56."
             );
@@ -1652,7 +1652,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             errorCampo(
                     nombre,
                     label + ": el valor ingresado '" + value
-                            + "' no es un n√∫mero entero v√°lido."
+                            + "' no es un n˙mero entero v·lido."
             );
         }
 
@@ -1662,7 +1662,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             errorCampo(
                     nombre,
                     label + ": el valor ingresado '" + value
-                            + "' est√° fuera del rango permitido."
+                            + "' est· fuera del rango permitido."
             );
         }
 
@@ -1693,7 +1693,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (!value.matches("^[0-9]+$")) {
             errorCampo(
                     nombre,
-                    label + ": debe ser un n√∫mero entero entre 0 y 100. "
+                    label + ": debe ser un n˙mero entero entre 0 y 100. "
                             + "Valor recibido: '" + value + "'."
             );
         }
@@ -1706,7 +1706,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             errorCampo(
                     nombre,
                     label + ": el valor ingresado '" + value
-                            + "' est√° fuera del rango permitido."
+                            + "' est· fuera del rango permitido."
             );
             return null;
         }
