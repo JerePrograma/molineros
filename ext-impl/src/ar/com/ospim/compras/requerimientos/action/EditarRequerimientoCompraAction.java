@@ -1378,20 +1378,42 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             );
 
             if (idDetalle <= 0) {
-                continue;
+                errorCampo(
+                        prefix + "id",
+                        "Detalle #" + (i + 1)
+                                + ": no se recibió un ID válido."
+                );
             }
 
             RequerimientoCompraDetalle detalle =
                     new RequerimientoCompraDetalle();
             detalle.setId(Integer.valueOf(idDetalle));
 
-            BigDecimal precioUnitario = parseBigDecimalNullable(
+            String precioUnitarioRaw =
                     getParametroTrim(
                             request,
-                            prefix + "precio_unitario_estimado"
-                    ),
-                    "Detalle #" + (i + 1) + " - Precio unitario"
+                            prefix
+                                    + "precio_unitario_estimado"
+                    );
+
+            _log.info(
+                    "[COMPRAS-COTIZACION][REQUEST]"
+                            + " index=" + i
+                            + ", idDetalle=" + idDetalle
+                            + ", parametro="
+                            + prefix
+                            + "precio_unitario_estimado"
+                            + ", valorRaw=["
+                            + precioUnitarioRaw
+                            + "]"
             );
+
+            BigDecimal precioUnitario =
+                    parseBigDecimalNullable(
+                            precioUnitarioRaw,
+                            "Detalle #" + (i + 1)
+                                    + " - Precio unitario"
+                    );
             detalle.setPrecioUnitarioEstimado(precioUnitario);
 
             int idPrestadorDetalle = parseEnteroConDefault(
@@ -1444,6 +1466,17 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             RequerimientoCompraDetalle detalle =
                     (RequerimientoCompraDetalle) detalles.get(i);
             detalle.aplicarPrestadorAdjudicado(prestadorUnico);
+        }
+
+        if (detalles.size() != count) {
+            throw new Exception(
+                    "Se esperaban "
+                            + count
+                            + " detalles de cotización, "
+                            + "pero se reconstruyeron "
+                            + detalles.size()
+                            + "."
+            );
         }
 
         return detalles;

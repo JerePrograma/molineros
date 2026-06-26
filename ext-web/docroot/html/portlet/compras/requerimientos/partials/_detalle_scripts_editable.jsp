@@ -536,43 +536,59 @@
     }
 
     function <portlet:namespace />crearHiddenDetalle(name, value) {
-        var form = document.getElementById('<portlet:namespace />fmCompras');
+        var form =
+                document.getElementById(
+                        '<portlet:namespace />fmCompras'
+                );
 
         if (!form) {
-            alert('No se encontró el formulario principal para serializar detalles.');
+            alert(
+                    'No se encontró el formulario principal '
+                            + 'para serializar detalles.'
+            );
             return false;
-        }
-
-        var payload = document.getElementById('<portlet:namespace />detalle_payload');
-
-        if (!payload) {
-            payload = form;
         }
 
         var input = document.createElement('input');
 
         input.type = 'hidden';
         input.name = '<portlet:namespace />' + name;
-        input.id = '<portlet:namespace />serializado_' + name;
-        input.value = value == null ? '' : value;
-        input.className = '<portlet:namespace />detalle_serializado';
+        input.id =
+                '<portlet:namespace />serializado_'
+                        + name;
+        input.value =
+                value == null
+                        ? ''
+                        : value;
+        input.className =
+                'detalle-serializado-compra';
 
-        payload.appendChild(input);
+        /*
+         * Se agrega directamente al FORM.
+         * No depender de la ubicación de detalle_payload.
+         */
+        form.appendChild(input);
 
         return true;
     }
 
     function <portlet:namespace />limpiarPayloadDetallesCompra() {
-        var form = jQuery('#<portlet:namespace />fmCompras');
+        var form =
+                jQuery(
+                        '#<portlet:namespace />fmCompras'
+                );
 
-        form.find('input[name="<portlet:namespace />detalle_count"]').remove();
-        form.find('input[name="<portlet:namespace />detalle_deleted_ids"]').remove();
-        form.find('input[name^="<portlet:namespace />detalle_"]').remove();
+        /*
+         * Elimina exclusivamente los hidden generados
+         * por serializarDetallesCompras().
+         */
         form.find(
-                'input[name="<portlet:namespace /><%= WebKeysCompras.PARAM_ID_PRESTADOR_ADJUDICADO %>"]'
+                'input.detalle-serializado-compra'
         ).remove();
 
-        jQuery('#<portlet:namespace />detalle_payload').empty();
+        jQuery(
+                '#<portlet:namespace />detalle_payload'
+        ).empty();
     }
 
     function <portlet:namespace />serializarDetallesCompras() {
@@ -709,6 +725,34 @@
             }
 
             if (!<portlet:namespace />crearHiddenDetalle(prefix + 'precio_unitario_estimado', precioUnitario)) {
+                return false;
+            }
+
+            var nombrePrecio =
+                    '<portlet:namespace />'
+                            + prefix
+                            + 'precio_unitario_estimado';
+
+            var hiddenPrecio =
+                    form.elements[nombrePrecio];
+
+            if (!hiddenPrecio) {
+                alert(
+                        'Detalle #' + (i + 1)
+                                + ': no se pudo serializar '
+                                + 'el precio unitario.'
+                );
+                return false;
+            }
+
+            if (String(hiddenPrecio.value)
+                    != String(precioUnitario)) {
+
+                alert(
+                        'Detalle #' + (i + 1)
+                                + ': el precio visible no coincide '
+                                + 'con el valor enviado.'
+                );
                 return false;
             }
 

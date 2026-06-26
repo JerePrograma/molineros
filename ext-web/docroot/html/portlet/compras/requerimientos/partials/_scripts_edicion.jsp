@@ -709,50 +709,25 @@
     }
 
     function <portlet:namespace />guardarCotizacion() {
-        if (<portlet:namespace />guardandoCompra) {
+        var form =
+                document.getElementById(
+                        '<portlet:namespace />fmCompras'
+                );
+
+        if (!form) {
+            alert('No se encontró el formulario de Compras.');
             return false;
         }
 
-        <portlet:namespace />setGuardandoCompraActivo(true);
+        jQuery(
+                '#<portlet:namespace />compras_cmd'
+        ).val('saveCotizacion');
 
-        var form = document.getElementById('<portlet:namespace />fmCompras');
-
-        if (!form) {
-            alert('No se pudo encontrar el formulario principal de Compras.');
-            return <portlet:namespace />cancelarGuardadoCompra();
+        if (!<portlet:namespace />serializarDetallesCompras()) {
+            return false;
         }
 
-        var cmdInput = document.getElementById('<portlet:namespace />compras_cmd');
-
-        if (cmdInput) {
-            cmdInput.value = 'saveCotizacion';
-        }
-
-        if (!<portlet:namespace />validarTokenGuardadoCompra()) {
-            return <portlet:namespace />cancelarGuardadoCompra();
-        }
-
-        var serializadorDetalles = <portlet:namespace />obtenerSerializadorDetallesCompra();
-
-        if (serializadorDetalles == null) {
-            alert('Detalles: no se encontró la función de serialización de detalles.');
-            return <portlet:namespace />cancelarGuardadoCompra();
-        }
-
-        if (!serializadorDetalles()) {
-            return <portlet:namespace />cancelarGuardadoCompra();
-        }
-
-        var detalleCountInput = jQuery(form).find('input[name$="detalle_count"]');
-
-        if (detalleCountInput.length == 0) {
-            alert('Detalles: no se pudo serializar la cotización.');
-            return <portlet:namespace />cancelarGuardadoCompra();
-        }
-
-        if (!<portlet:namespace />submitFormularioCompra(form)) {
-            return <portlet:namespace />cancelarGuardadoCompra();
-        }
+        submitForm(form);
 
         return false;
     }
