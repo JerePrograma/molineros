@@ -1085,7 +1085,7 @@ LANGUAGE plpgsql
 STABLE;
 
 
-CREATE FUNCTION compras.get_articulo(
+CREATE FUNCTION compras.get_articulo_cursor(
     p_id_articulo INTEGER
 )
     RETURNS TABLE (
