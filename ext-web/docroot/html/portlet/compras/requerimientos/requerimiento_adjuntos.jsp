@@ -95,13 +95,18 @@ boolean puedeEditarPresupuestos =
                 .puedeAdministrarPresupuestos()
         && !soloLecturaPresupuestos;
 
+boolean puedeVerPrestadoresEnviadosPresupuestos =
+        idRequerimientoCompraPresupuestos > 0
+        && reqPresupuestos
+                .puedeVerPresupuestos();}
+
 List<PrestadorCotizacion> prestadoresEnviadosPresupuestos =
         new ArrayList<PrestadorCotizacion>();
 
 String errorPrestadoresPresupuestos =
         "";
 
-if (puedeEditarPresupuestos) {
+if (puedeVerPrestadoresEnviadosPresupuestos) {
     try {
         prestadoresEnviadosPresupuestos =
                 BusquedaRequerimientoCompraServiceUtil
@@ -202,7 +207,7 @@ boolean msgPresupuestoBorrado =
             </div>
         </c:if>
 
-        <c:if test="<%= puedeEditarPresupuestos %>">
+        <c:if test="<%= puedeVerPrestadoresEnviadosPresupuestos %>">
             <c:choose>
                 <c:when test="<%= !WebKeysCompras.isEmpty(errorPrestadoresPresupuestos) %>">
                     <div class="portlet-msg-error">
@@ -234,9 +239,7 @@ boolean msgPresupuestoBorrado =
                                     i++) {
 
                                 PrestadorCotizacion prestadorEnviado =
-                                        prestadoresEnviadosPresupuestos.get(
-                                                i
-                                        );
+                                        prestadoresEnviadosPresupuestos.get(i);
 
                                 if (prestadorEnviado == null) {
                                     continue;
@@ -267,74 +270,23 @@ boolean msgPresupuestoBorrado =
                             %>
                         </tbody>
                     </table>
-
-                    <table class="lfr-table">
-                        <thead>
-                            <tr>
-                                <th>Prestador enviado</th>
-                                <th>Archivo</th>
-                                <th>Borrar</th>
-                            </tr>
-                        </thead>
-
-                        <tbody id="<portlet:namespace />presupuestos_body"></tbody>
-                    </table>
-
-                    <select id="<portlet:namespace />prestador_presupuesto_template"
-                            style="display: none;">
-                        <option value="">Seleccione...</option>
-
-                        <%
-                        for (int i = 0;
-                                i < prestadoresEnviadosPresupuestos.size();
-                                i++) {
-
-                            PrestadorCotizacion prestadorPresupuesto =
-                                    prestadoresEnviadosPresupuestos.get(
-                                            i
-                                    );
-
-                            if (prestadorPresupuesto == null
-                                    || prestadorPresupuesto
-                                            .getIdPrestador() <= 0) {
-
-                                continue;
-                            }
-                        %>
-                            <option value="<%= prestadorPresupuesto.getIdPrestador() %>">
-                                <%= HtmlUtil.escape(
-                                        prestadorPresupuesto
-                                                .getEtiquetaVisible()
-                                ) %>
-                            </option>
-                        <%
-                        }
-                        %>
-                    </select>
-
-                    <br />
-
-                    <input id="<portlet:namespace />uploadPresupuestoCompra"
-                           value="Subir"
-                           title="Subir presupuestos"
-                           onclick="return <portlet:namespace />uploadPresupuestoRequerimientoCompra();"
-                           type="button" />
-                    <input type="button"
-                           value="Agregar otro presupuesto"
-                           onclick="return <portlet:namespace />agregarFilaPresupuesto();" />
                 </c:otherwise>
             </c:choose>
         </c:if>
 
         <c:if test="<%=
-                idRequerimientoCompraPresupuestos > 0
-                && !puedeEditarPresupuestos
-                && !soloLecturaPresupuestos
+                puedeEditarPresupuestos
+                && WebKeysCompras.isEmpty(
+                        errorPrestadoresPresupuestos
+                )
+                && hayPrestadoresEnviadosPresupuestos
         %>">
-            <div class="portlet-msg-info">
-                Los presupuestos solo pueden administrarse
-                en estado A COTIZAR.
-            </div>
+
+            <!-- tabla de archivos -->
+            <!-- select prestador_presupuesto_template -->
+            <!-- botón Subir -->
+            <!-- botón Agregar otro presupuesto -->
+
         </c:if>
     </fieldset>
 

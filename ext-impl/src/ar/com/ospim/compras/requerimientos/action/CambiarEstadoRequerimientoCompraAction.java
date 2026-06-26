@@ -34,6 +34,9 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
     private static final String STRUTS_ACTION_VER_REQUERIMIENTO =
             "/compras/ver_requerimiento";
 
+    private static final String STRUTS_ACTION_EDITAR_REQUERIMIENTO =
+            "/compras/editar_requerimiento";
+
     public void processAction(ActionMapping mapping,
                               ActionForm form,
                               PortletConfig portletConfig,
@@ -48,6 +51,13 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
 
         boolean reintentarNotificaciones =
                 ParamUtil.getBoolean(actionRequest, "reintentar_notificaciones", false);
+
+        String strutsActionDestino =
+                STRUTS_ACTION_VER_REQUERIMIENTO;
+
+        String forwardDestino =
+                WebKeysCompras
+                        .FORWARD_COMPRAS_VER_REQUERIMIENTO;
 
         try {
             User user = PortalUtil.getUser(actionRequest);
@@ -64,12 +74,28 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
                                         user.getCompanyId()
                                 );
 
+                int estadoPersistido =
+                        getEstadoPersistido(
+                                idRequerimientoCompra
+                        );
+
                 registrarResultado(
                         actionRequest,
                         resultado,
                         false,
-                        getEstadoPersistido(idRequerimientoCompra)
+                        estadoPersistido
                 );
+
+                if (estadoPersistido
+                        == WebKeysCompras.ESTADO_A_COTIZAR) {
+
+                    strutsActionDestino =
+                            STRUTS_ACTION_EDITAR_REQUERIMIENTO;
+
+                    forwardDestino =
+                            WebKeysCompras
+                                    .FORWARD_COMPRAS_EDITAR_REQUERIMIENTO;
+                }
             } else if (estadoNuevo == WebKeysCompras.ESTADO_A_COTIZAR) {
                 validarRolCotizar(user);
 
@@ -80,12 +106,28 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
                                 user.getCompanyId()
                 );
 
+                int estadoPersistido =
+                        getEstadoPersistido(
+                                idRequerimientoCompra
+                        );
+
                 registrarResultado(
                         actionRequest,
                         resultado,
                         true,
-                        getEstadoPersistido(idRequerimientoCompra)
+                        estadoPersistido
                 );
+
+                if (estadoPersistido
+                        == WebKeysCompras.ESTADO_A_COTIZAR) {
+
+                    strutsActionDestino =
+                            STRUTS_ACTION_EDITAR_REQUERIMIENTO;
+
+                    forwardDestino =
+                            WebKeysCompras
+                                    .FORWARD_COMPRAS_EDITAR_REQUERIMIENTO;
+                }
             } else if (estadoNuevo == WebKeysCompras.ESTADO_ANULADO) {
                 validarRolAnular(user);
 
@@ -112,7 +154,10 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             actionRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, mensajeError(e));
         }
 
-        actionResponse.setRenderParameter("struts_action", STRUTS_ACTION_VER_REQUERIMIENTO);
+        actionResponse.setRenderParameter(
+                "struts_action",
+                strutsActionDestino
+        );
 
         if (idRequerimientoCompra > 0) {
             actionResponse.setRenderParameter(
@@ -121,7 +166,10 @@ public class CambiarEstadoRequerimientoCompraAction extends PortletAction {
             );
         }
 
-        setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
+        setForward(
+                actionRequest,
+                forwardDestino
+        );
     }
 
     public ActionForward render(ActionMapping mapping,

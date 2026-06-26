@@ -1899,6 +1899,70 @@ END;
 $func$
 LANGUAGE plpgsql;
 
+CREATE FUNCTION compras.confirmar_envio_a_cotizar(
+    p_id_requerimiento INTEGER,
+    p_usuario VARCHAR
+)
+    RETURNS INTEGER
+AS $func$
+DECLARE
+v_estado INTEGER;
+BEGIN
+    IF p_id_requerimiento IS NULL
+       OR p_id_requerimiento <= 0 THEN
+
+        RAISE EXCEPTION
+            'Debe informar el requerimiento de compra.';
+END IF;
+
+SELECT r.estado
+INTO v_estado
+FROM compras.requerimiento r
+WHERE r.id_requerimiento = p_id_requerimiento
+  AND r.baja_fecha IS NULL
+    FOR UPDATE;
+
+IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No se encontro el requerimiento activo.';
+END IF;
+
+    /*
+     * Idempotencia:
+     * otro proceso pudo confirmar el envío y cambiar el estado.
+     */
+    IF v_estado = 2 THEN
+        RETURN 2;
+END IF;
+
+    IF v_estado <> 1 THEN
+        RAISE EXCEPTION
+            'Solo un requerimiento PENDIENTE puede pasar a A COTIZAR.';
+END IF;
+
+    /*
+     * No se cambia el estado si no existe al menos un envío
+     * efectivamente persistido como ENVIADO.
+     */
+    IF NOT EXISTS (
+        SELECT 1
+          FROM compras.requerimiento_cotizacion_prestador rcp
+         WHERE rcp.id_requerimiento = p_id_requerimiento
+           AND rcp.estado_envio = 'ENVIADO'
+    ) THEN
+        RETURN 1;
+END IF;
+
+    PERFORM compras.cambiar_estado_requerimiento(
+        p_id_requerimiento,
+        2,
+        p_usuario
+    );
+
+RETURN 2;
+END;
+$func$
+LANGUAGE plpgsql;
 
 CREATE FUNCTION compras.borrar_requerimiento(
     p_id_requerimiento INTEGER,
@@ -2112,6 +2176,256 @@ END;
 $func$
 LANGUAGE plpgsql;
 
+CREATE FUNCTION compras.guardar_cotizacion_requerimiento(
+    p_id_requerimiento INTEGER,
+    p_ids_detalle INTEGER[],
+    p_precios_unitarios NUMERIC[],
+    p_id_prestador INTEGER,
+    p_usuario VARCHAR
+)
+    RETURNS INTEGER
+AS $func$
+DECLARE
+v_estado INTEGER;
+    v_usuario VARCHAR(100);
+    v_cantidad_detalles INTEGER;
+BEGIN
+    IF p_id_requerimiento IS NULL
+       OR p_id_requerimiento <= 0 THEN
+
+        RAISE EXCEPTION
+            'Debe informar el requerimiento de compra.';
+END IF;
+
+    IF p_ids_detalle IS NULL
+       OR p_precios_unitarios IS NULL
+       OR cardinality(p_ids_detalle) = 0 THEN
+
+        RAISE EXCEPTION
+            'Debe informar los detalles de la cotizacion.';
+END IF;
+
+    IF cardinality(p_ids_detalle)
+       <> cardinality(p_precios_unitarios) THEN
+
+        RAISE EXCEPTION
+            'La cantidad de detalles y precios no coincide.';
+END IF;
+
+    IF EXISTS (
+        SELECT 1
+          FROM unnest(p_ids_detalle) AS ids(id_detalle)
+         WHERE ids.id_detalle IS NULL
+            OR ids.id_detalle <= 0
+    ) THEN
+        RAISE EXCEPTION
+            'La lista contiene identificadores de detalle invalidos.';
+END IF;
+
+    IF EXISTS (
+        SELECT ids.id_detalle
+          FROM unnest(p_ids_detalle) AS ids(id_detalle)
+         GROUP BY ids.id_detalle
+        HAVING count(*) > 1
+    ) THEN
+        RAISE EXCEPTION
+            'La lista contiene detalles repetidos.';
+END IF;
+
+    IF EXISTS (
+        SELECT 1
+          FROM unnest(p_precios_unitarios)
+               AS precios(precio)
+         WHERE precios.precio < 0
+    ) THEN
+        RAISE EXCEPTION
+            'El precio unitario no puede ser negativo.';
+END IF;
+
+    v_usuario :=
+        compras.normalizar_usuario(
+            p_usuario
+        );
+
+SELECT r.estado
+INTO v_estado
+FROM compras.requerimiento r
+WHERE r.id_requerimiento =
+      p_id_requerimiento
+  AND r.baja_fecha IS NULL
+    FOR UPDATE;
+
+IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No se encontro el requerimiento activo.';
+END IF;
+
+    IF v_estado <> 2 THEN
+        RAISE EXCEPTION
+            'Solo se puede guardar cotizacion en estado A COTIZAR.';
+END IF;
+
+    /*
+     * Bloquea todos los detalles antes de validar y actualizar.
+     */
+    PERFORM d.id_detalle
+      FROM compras.requerimiento_detalle d
+     WHERE d.id_requerimiento =
+           p_id_requerimiento
+       AND d.baja_fecha IS NULL
+     ORDER BY d.id_detalle
+     FOR UPDATE;
+
+SELECT count(*)
+INTO v_cantidad_detalles
+FROM compras.requerimiento_detalle d
+WHERE d.id_requerimiento =
+      p_id_requerimiento
+  AND d.baja_fecha IS NULL;
+
+IF v_cantidad_detalles = 0 THEN
+        RAISE EXCEPTION
+            'El requerimiento no tiene detalles activos.';
+END IF;
+
+    IF v_cantidad_detalles
+       <> cardinality(p_ids_detalle) THEN
+
+        RAISE EXCEPTION
+            'Deben informarse exactamente todos los detalles activos.';
+END IF;
+
+    IF EXISTS (
+        SELECT 1
+          FROM compras.requerimiento_detalle d
+         WHERE d.id_requerimiento =
+               p_id_requerimiento
+           AND d.baja_fecha IS NULL
+           AND NOT (
+               d.id_detalle = ANY(p_ids_detalle)
+           )
+    ) THEN
+        RAISE EXCEPTION
+            'Faltan detalles activos en la cotizacion recibida.';
+END IF;
+
+    IF EXISTS (
+        SELECT 1
+          FROM unnest(p_ids_detalle)
+               AS ids(id_detalle)
+         WHERE NOT EXISTS (
+             SELECT 1
+               FROM compras.requerimiento_detalle d
+              WHERE d.id_requerimiento =
+                    p_id_requerimiento
+                AND d.id_detalle =
+                    ids.id_detalle
+                AND d.baja_fecha IS NULL
+         )
+    ) THEN
+        RAISE EXCEPTION
+            'La cotizacion contiene detalles ajenos al requerimiento.';
+END IF;
+
+    IF p_id_prestador IS NOT NULL
+       AND NOT EXISTS (
+           SELECT 1
+             FROM compras.requerimiento_cotizacion_prestador rcp
+            WHERE rcp.id_requerimiento =
+                  p_id_requerimiento
+              AND rcp.id_prestador =
+                  p_id_prestador
+              AND rcp.estado_envio = 'ENVIADO'
+       ) THEN
+
+        RAISE EXCEPTION
+            'El prestador seleccionado no fue notificado correctamente.';
+END IF;
+
+UPDATE compras.requerimiento_detalle d
+SET precio_unitario_estimado =
+        valores.precio_unitario,
+
+    precio_total_estimado =
+        CASE
+            WHEN valores.precio_unitario IS NULL
+                THEN NULL
+            ELSE round(
+                    d.cantidad
+                        * valores.precio_unitario,
+                    2
+                 )
+            END,
+
+    id_prestador =
+        p_id_prestador,
+
+    modi_fecha = now(),
+    modi_usr = v_usuario
+
+    FROM (
+          SELECT
+              p_ids_detalle[indice] AS id_detalle,
+              p_precios_unitarios[indice]
+                  AS precio_unitario
+            FROM generate_subscripts(
+                p_ids_detalle,
+                1
+            ) AS indices(indice)
+      ) valores
+
+WHERE d.id_requerimiento =
+    p_id_requerimiento
+  AND d.id_detalle =
+    valores.id_detalle
+  AND d.baja_fecha IS NULL;
+
+/*
+ * Si falta algún dato, se guarda el avance y continúa A COTIZAR.
+ */
+IF EXISTS (
+        SELECT 1
+          FROM compras.requerimiento_detalle d
+         WHERE d.id_requerimiento =
+               p_id_requerimiento
+           AND d.baja_fecha IS NULL
+           AND (
+                  d.cantidad <= 0
+               OR d.precio_unitario_estimado IS NULL
+               OR d.precio_unitario_estimado < 0
+               OR d.precio_total_estimado IS NULL
+               OR d.id_prestador IS NULL
+               OR d.precio_total_estimado
+                  <> round(
+                      d.cantidad
+                      * d.precio_unitario_estimado,
+                      2
+                  )
+               OR NOT EXISTS (
+                   SELECT 1
+                     FROM compras.requerimiento_cotizacion_prestador rcp
+                    WHERE rcp.id_requerimiento =
+                          p_id_requerimiento
+                      AND rcp.id_prestador =
+                          d.id_prestador
+                      AND rcp.estado_envio =
+                          'ENVIADO'
+               )
+           )
+    ) THEN
+        RETURN 2;
+END IF;
+
+    PERFORM compras.cambiar_estado_requerimiento(
+        p_id_requerimiento,
+        3,
+        v_usuario
+    );
+
+RETURN 3;
+END;
+$func$
+LANGUAGE plpgsql;
 -- =====================================================================
 -- PRESTADORES PARA COTIZACION
 -- =====================================================================
@@ -3601,6 +3915,27 @@ VOLATILE;
 
 COMMIT;
 
+
+CREATE FUNCTION compras.listar_articulos_cursor(
+    p_id_sector INTEGER,
+    p_texto VARCHAR
+)
+    RETURNS REFCURSOR
+AS $func$
+DECLARE
+v_cursor REFCURSOR;
+BEGIN
+OPEN v_cursor FOR
+SELECT *
+FROM compras.listar_articulos(
+        p_id_sector,
+        p_texto
+     );
+
+RETURN v_cursor;
+END;
+$func$
+LANGUAGE plpgsql;
 -- =====================================================================
 -- CONSULTAS MANUALES DE VERIFICACION
 -- =====================================================================

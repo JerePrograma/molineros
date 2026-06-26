@@ -185,11 +185,6 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                         usuario
                 );
 
-                SessionMessages.add(
-                        actionRequest,
-                        "requerimiento-compra-item-guardado"
-                );
-
                 setForward(
                         actionRequest,
                         WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO

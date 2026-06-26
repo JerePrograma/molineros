@@ -559,12 +559,6 @@ boolean msgRequerimientoGuardado =
                 "requerimiento-compra-guardado"
         );
 
-boolean msgDetalleGuardado =
-        com.liferay.portal.kernel.servlet.SessionMessages.contains(
-                renderRequest,
-                "requerimiento-compra-item-guardado"
-        );
-
 boolean msgDetalleBorrado =
         com.liferay.portal.kernel.servlet.SessionMessages.contains(
                 renderRequest,

@@ -110,7 +110,14 @@ public class VerRequerimientoCompraAction extends PortletAction {
             }
 
             cargarCatalogos(renderRequest);
-            cargarAfiliadoRequerimiento(renderRequest, requerimiento);
+            cargarAfiliadoRequerimiento(
+                    renderRequest,
+                    requerimiento
+            );
+            cargarEstadoPrestadoresPendientesNotificacion(
+                    renderRequest,
+                    requerimiento
+            );
             cargarRelacionReclamoPrestacional(
                     renderRequest,
                     requerimiento
@@ -157,6 +164,46 @@ public class VerRequerimientoCompraAction extends PortletAction {
 
             throw new Exception("No posee permisos para consultar requerimientos de compras.");
         }
+    }
+
+    private void cargarEstadoPrestadoresPendientesNotificacion(
+            RenderRequest renderRequest,
+            RequerimientoCompra requerimiento) {
+
+        boolean hayPendientes = false;
+
+        if (requerimiento != null
+                && requerimiento.getIdRequerimientoCompra() > 0
+                && requerimiento.puedeReintentarNotificaciones()) {
+
+            try {
+                hayPendientes =
+                        BusquedaRequerimientoCompraServiceUtil
+                                .hayPrestadoresPendientesNotificacion(
+                                        requerimiento
+                                                .getIdRequerimientoCompra()
+                                );
+
+            } catch (Exception e) {
+                _log.warn(
+                        "No se pudo confirmar si quedan prestadores "
+                                + "pendientes de notificación. "
+                                + "El botón permanecerá oculto. "
+                                + "idRequerimiento="
+                                + requerimiento
+                                .getIdRequerimientoCompra(),
+                        e
+                );
+
+                hayPendientes = false;
+            }
+        }
+
+        renderRequest.setAttribute(
+                WebKeysCompras
+                        .HAY_PRESTADORES_PENDIENTES_NOTIFICACION,
+                Boolean.valueOf(hayPendientes)
+        );
     }
 
     private void cargarRelacionReclamoPrestacional(

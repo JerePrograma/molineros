@@ -42,69 +42,6 @@ public class EditarRequerimientoCompraServiceImpl {
     private static final String SQL_CAMBIAR_ESTADO =
             "{ call compras.cambiar_estado_requerimiento(?,?,?) }";
 
-    private static final String SQL_ACTUALIZAR_ESTADO_ESPERADO =
-            "UPDATE compras.requerimiento " +
-                    "SET estado = ?, modi_fecha = now(), modi_usr = ? " +
-                    "WHERE id_requerimiento = ? AND estado = ? AND baja_fecha IS NULL";
-
-    private static final String SQL_GET_REQUERIMIENTO_BLOQUEO =
-            "SELECT estado, baja_fecha " +
-                    "FROM compras.requerimiento " +
-                    "WHERE id_requerimiento = ? " +
-                    "FOR UPDATE";
-
-    private static final String SQL_GET_DETALLES_BLOQUEO =
-            "SELECT id_detalle, cantidad " +
-                    "FROM compras.requerimiento_detalle " +
-                    "WHERE id_requerimiento = ? AND baja_fecha IS NULL " +
-                    "FOR UPDATE";
-
-    private static final String SQL_ACTUALIZAR_DETALLE_COTIZACION =
-            "UPDATE compras.requerimiento_detalle " +
-                    "SET precio_unitario_estimado = ?, " +
-                    "    precio_total_estimado = ?, " +
-                    "    id_prestador = ?, " +
-                    "    modi_fecha = now(), " +
-                    "    modi_usr = ? " +
-                    "WHERE id_requerimiento = ? AND id_detalle = ? AND baja_fecha IS NULL";
-
-    private static final String SQL_EXISTE_PRESTADOR_ENVIADO =
-            "SELECT 1 " +
-                    "FROM compras.requerimiento_cotizacion_prestador " +
-                    "WHERE id_requerimiento = ? " +
-                    "  AND id_prestador = ? " +
-                    "  AND estado_envio = ?";
-
-    private static final String SQL_DETALLES_INCOMPLETOS_COTIZACION =
-            "SELECT count(*) AS total, " +
-                    "       sum(CASE WHEN cantidad <= 0 " +
-                    "                 OR precio_unitario_estimado IS NULL " +
-                    "                 OR precio_unitario_estimado < 0 " +
-                    "                 OR precio_total_estimado IS NULL " +
-                    "                 OR id_prestador IS NULL " +
-                    "                 OR precio_total_estimado <> " +
-                    "                    round(cantidad * precio_unitario_estimado, 2) " +
-                    "                 OR NOT EXISTS (" +
-                    "                    SELECT 1 " +
-                    "                    FROM compras.requerimiento_cotizacion_prestador rcp " +
-                    "                    WHERE rcp.id_requerimiento = " +
-                    "                          compras.requerimiento_detalle.id_requerimiento " +
-                    "                      AND rcp.id_prestador = " +
-                    "                          compras.requerimiento_detalle.id_prestador " +
-                    "                      AND rcp.estado_envio = 'ENVIADO'" +
-                    "                 ) " +
-                    "                THEN 1 ELSE 0 END) AS incompletos " +
-                    "FROM compras.requerimiento_detalle " +
-                    "WHERE id_requerimiento = ? AND baja_fecha IS NULL";
-
-    private static final String SQL_LISTAR_ARTICULOS =
-            "SELECT id, id_sector, sector_descripcion, descripcion " +
-                    "FROM compras.listar_articulos(?, ?)";
-
-    private static final String SQL_GET_ARTICULO =
-            "SELECT id, id_sector, sector_descripcion, descripcion " +
-                    "FROM compras.get_articulo(?)";
-
     private static final String SQL_GUARDAR_ARTICULO =
             "{ ? = call compras.guardar_articulo(?,?,?) }";
 
@@ -122,6 +59,19 @@ public class EditarRequerimientoCompraServiceImpl {
     private static final String SQL_REACTIVAR_PRESUPUESTO =
             "{ ? = call compras.reactivar_requerimiento_presupuesto("
                     + "?,?) }";
+
+    private static final String SQL_CONFIRMAR_ENVIO_A_COTIZAR =
+            "{ ? = call compras.confirmar_envio_a_cotizar(?,?) }";
+
+    private static final String SQL_GUARDAR_COTIZACION_REQUERIMIENTO =
+            "{ ? = call compras.guardar_cotizacion_requerimiento("
+                    + "?,?,?,?,?) }";
+
+    private static final String SQL_LISTAR_ARTICULOS =
+            "{ ? = call compras.listar_articulos_cursor(?,?) }";
+
+    private static final String SQL_GET_ARTICULO =
+            "{ ? = call compras.get_articulo_cursor(?) }";
 
     public int guardarRequerimientoCompra(
             RequerimientoCompra requerimiento,
@@ -472,12 +422,20 @@ public class EditarRequerimientoCompraServiceImpl {
             );
         }
 
-        if (resultado.getEnviados() > 0) {
-            actualizarEstadoEsperado(
-                    idRequerimientoCompra,
-                    WebKeysCompras.ESTADO_PENDIENTE,
-                    WebKeysCompras.ESTADO_A_COTIZAR,
-                    usuario
+        int estadoFinal =
+                confirmarEnvioACotizar(
+                        idRequerimientoCompra,
+                        usuario
+                );
+
+        if (estadoFinal != WebKeysCompras.ESTADO_PENDIENTE
+                && estadoFinal
+                != WebKeysCompras.ESTADO_A_COTIZAR) {
+
+            throw new Exception(
+                    "La base devolvió un estado inesperado "
+                            + "al confirmar el envío a cotizar: "
+                            + estadoFinal
             );
         }
 
@@ -549,31 +507,85 @@ public class EditarRequerimientoCompraServiceImpl {
 
     public List<CompraArticulo> listarArticulos(Integer idSector, String texto) throws Exception {
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
-
-        List<CompraArticulo> articulos = new ArrayList<CompraArticulo>();
+        boolean autoCommitOriginal = true;
 
         try {
-            con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_LISTAR_ARTICULOS);
+            con =
+                    ConnectionHelper.getConnection();
 
-            setNullableInteger(stmt, 1, idSector);
-            stmt.setString(2, emptyToNull(texto));
+            autoCommitOriginal =
+                    con.getAutoCommit();
 
-            rs = stmt.executeQuery();
+            con.setAutoCommit(false);
+
+            stmt =
+                    con.prepareCall(
+                            SQL_LISTAR_ARTICULOS
+                    );
+
+            stmt.registerOutParameter(
+                    1,
+                    Types.OTHER
+            );
+
+            setNullableInteger(
+                    stmt,
+                    2,
+                    idSector
+            );
+
+            stmt.setString(
+                    3,
+                    emptyToNull(texto)
+            );
+
+            stmt.execute();
+
+            rs =
+                    (ResultSet) stmt.getObject(1);
 
             while (rs.next()) {
-                articulos.add(mapearArticulo(rs));
+                articulos.add(
+                        mapearArticulo(rs)
+                );
             }
 
+            con.commit();
+
             return articulos;
+
         } catch (Exception e) {
-            _log.error(e);
+            if (con != null) {
+                try {
+                    con.rollback();
+                } catch (Exception rollbackError) {
+                    _log.error(
+                            rollbackError
+                    );
+                }
+            }
+
             throw e;
+
         } finally {
             cerrar(rs);
-            ConnectionHelper.cerrar(stmt, con);
+            cerrar(stmt);
+
+            if (con != null) {
+                try {
+                    con.setAutoCommit(
+                            autoCommitOriginal
+                    );
+                } catch (Exception ignored) {
+                }
+
+                try {
+                    con.close();
+                } catch (Exception ignored) {
+                }
+            }
         }
     }
 
@@ -598,7 +610,10 @@ public class EditarRequerimientoCompraServiceImpl {
             con = ConnectionHelper.getConnection();
             stmt = con.prepareStatement(SQL_GET_ARTICULO);
             stmt.setInt(1, idArticulo);
-
+            stmt.setInt(
+                    2,
+                    idArticulo
+            );
             rs = stmt.executeQuery();
 
             if (rs.next()) {
@@ -785,168 +800,157 @@ public class EditarRequerimientoCompraServiceImpl {
         return requerimiento;
     }
 
-    private void actualizarEstadoEsperado(int idRequerimientoCompra,
-                                          int estadoEsperado,
-                                          int estadoNuevo,
-                                          String usuario) throws Exception {
-
-        Connection con = null;
-        PreparedStatement stmt = null;
-
-        try {
-            con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_ACTUALIZAR_ESTADO_ESPERADO);
-            stmt.setInt(1, estadoNuevo);
-            stmt.setString(2, emptyToNull(usuario));
-            stmt.setInt(3, idRequerimientoCompra);
-            stmt.setInt(4, estadoEsperado);
-
-            int actualizados = stmt.executeUpdate();
-
-            if (actualizados != 1
-                    && !esEnvioACotizarAplicadoConcurrentemente(
-                            con,
-                            idRequerimientoCompra,
-                            estadoEsperado,
-                            estadoNuevo
-                    )) {
-
-                throw new Exception(
-                        "El requerimiento fue modificado por otro proceso. Recargue la pantalla."
-                );
-            }
-        } finally {
-            ConnectionHelper.cerrar(stmt, con);
-        }
-    }
-
-    private boolean esEnvioACotizarAplicadoConcurrentemente(
-            Connection con,
-            int idRequerimientoCompra,
-            int estadoEsperado,
-            int estadoNuevo) throws Exception {
-
-        if (estadoEsperado != WebKeysCompras.ESTADO_PENDIENTE
-                || estadoNuevo != WebKeysCompras.ESTADO_A_COTIZAR) {
-
-            return false;
-        }
-
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
-        try {
-            stmt = con.prepareStatement(
-                    "SELECT estado FROM compras.requerimiento "
-                            + "WHERE id_requerimiento = ? AND baja_fecha IS NULL"
-            );
-            stmt.setInt(1, idRequerimientoCompra);
-            rs = stmt.executeQuery();
-
-            return rs.next()
-                    && rs.getInt("estado")
-                    == WebKeysCompras.ESTADO_A_COTIZAR;
-        } finally {
-            cerrar(rs);
-            cerrar(stmt);
-        }
-    }
-
     private GuardadoCotizacionResultado guardarCotizacion(
             int idRequerimientoCompra,
             List<RequerimientoCompraDetalle> detalles,
             String usuario) throws Exception {
 
-        if (idRequerimientoCompra <= 0) {
-            throw new Exception("Debe informar el requerimiento de compra.");
+        validarDetallesCotizacionRecibidos(
+                detalles
+        );
+
+        Integer idPrestadorAdjudicado =
+                obtenerPrestadorAdjudicadoUnico(
+                        detalles
+                );
+
+        Integer[] idsDetalle =
+                new Integer[detalles.size()];
+
+        BigDecimal[] preciosUnitarios =
+                new BigDecimal[detalles.size()];
+
+        for (int i = 0;
+             i < detalles.size();
+             i++) {
+
+            RequerimientoCompraDetalle detalle =
+                    detalles.get(i);
+
+            idsDetalle[i] =
+                    Integer.valueOf(
+                            detalle.getIdInt()
+                    );
+
+            preciosUnitarios[i] =
+                    detalle.getPrecioUnitarioEstimado() != null
+                            ? WebKeysCompras.normalizarImporte(
+                            detalle.getPrecioUnitarioEstimado()
+                    )
+                            : null;
         }
 
         Connection con = null;
-        boolean autoCommitOriginal = true;
+        CallableStatement stmt = null;
+        java.sql.Array idsSql = null;
+        java.sql.Array preciosSql = null;
 
         try {
-            con = ConnectionHelper.getConnection();
-            autoCommitOriginal = con.getAutoCommit();
-            con.setAutoCommit(false);
+            con =
+                    ConnectionHelper.getConnection();
 
-            validarEstadoCotizacion(con, idRequerimientoCompra);
+            idsSql =
+                    con.createArrayOf(
+                            "integer",
+                            idsDetalle
+                    );
 
-            Map<Integer, Integer> cantidades =
-                    getCantidadesDetalle(con, idRequerimientoCompra);
+            preciosSql =
+                    con.createArrayOf(
+                            "numeric",
+                            preciosUnitarios
+                    );
 
-            if (cantidades.isEmpty()) {
-                throw new Exception("El requerimiento no tiene detalles activos.");
-            }
+            stmt =
+                    con.prepareCall(
+                            SQL_GUARDAR_COTIZACION_REQUERIMIENTO
+                    );
 
-            actualizarDetallesCotizacion(
-                    con,
-                    idRequerimientoCompra,
-                    cantidades,
-                    detalles,
-                    usuario
+            stmt.registerOutParameter(
+                    1,
+                    Types.INTEGER
             );
 
-            boolean cotizacionCompleta =
-                    esCotizacionCompleta(
-                            con,
-                            idRequerimientoCompra
-                    );
+            stmt.setInt(
+                    2,
+                    idRequerimientoCompra
+            );
+
+            stmt.setArray(
+                    3,
+                    idsSql
+            );
+
+            stmt.setArray(
+                    4,
+                    preciosSql
+            );
+
+            setNullableInteger(
+                    stmt,
+                    5,
+                    idPrestadorAdjudicado
+            );
+
+            stmt.setString(
+                    6,
+                    emptyToNull(usuario)
+            );
+
+            stmt.execute();
 
             int estadoFinal =
-                    WebKeysCompras.ESTADO_A_COTIZAR;
+                    stmt.getInt(1);
 
-            if (cotizacionCompleta) {
-                actualizarEstadoCotizacionCerrada(con, idRequerimientoCompra, usuario);
-                estadoFinal =
-                        WebKeysCompras.ESTADO_COTIZADO;
+            if (stmt.wasNull()
+                    || (estadoFinal
+                    != WebKeysCompras.ESTADO_A_COTIZAR
+                    && estadoFinal
+                    != WebKeysCompras.ESTADO_COTIZADO)) {
+
+                throw new Exception(
+                        "La base devolvió un estado final "
+                                + "de cotización inválido."
+                );
             }
 
-            con.commit();
             return new GuardadoCotizacionResultado(
-                    cotizacionCompleta,
+                    estadoFinal
+                            == WebKeysCompras.ESTADO_COTIZADO,
                     estadoFinal
             );
-        } catch (Exception e) {
-            if (con != null) {
-                try {
-                    con.rollback();
-                } catch (Exception rollbackError) {
-                    _log.error(rollbackError);
-                }
-            }
 
-            throw e;
         } finally {
-            if (con != null) {
+            if (idsSql != null) {
                 try {
-                    con.setAutoCommit(autoCommitOriginal);
-                } catch (Exception autoCommitError) {
-                    _log.warn(
-                            "No se pudo restaurar autoCommit al guardar cotizacion.",
-                            autoCommitError
-                    );
-                }
-
-                try {
-                    con.close();
-                } catch (Exception closeError) {
-                    _log.warn(
-                            "No se pudo cerrar la conexion al guardar cotizacion.",
-                            closeError
-                    );
+                    idsSql.free();
+                } catch (Exception ignored) {
                 }
             }
+
+            if (preciosSql != null) {
+                try {
+                    preciosSql.free();
+                } catch (Exception ignored) {
+                }
+            }
+
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
         }
     }
 
-    private void validarEstadoCotizacion(Connection con,
-                                         int idRequerimientoCompra) throws Exception {
+    protected void validarDetallesCotizacionRecibidos(
+            List<RequerimientoCompraDetalle> detalles)
+            throws Exception {
 
         PreparedStatement stmt = null;
         ResultSet rs = null;
 
         try {
-            stmt = con.prepareStatement(SQL_GET_REQUERIMIENTO_BLOQUEO);
+            stmt = con.prepareStatement(SQL_GET_REQUERIMIENTO);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
@@ -970,87 +974,6 @@ public class EditarRequerimientoCompraServiceImpl {
             cerrar(stmt);
         }
     }
-
-    private Map<Integer, Integer> getCantidadesDetalle(Connection con,
-                                                       int idRequerimientoCompra) throws Exception {
-
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        Map<Integer, Integer> cantidades = new HashMap<Integer, Integer>();
-
-        try {
-            stmt = con.prepareStatement(SQL_GET_DETALLES_BLOQUEO);
-            stmt.setInt(1, idRequerimientoCompra);
-            rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                cantidades.put(
-                        Integer.valueOf(rs.getInt("id_detalle")),
-                        Integer.valueOf(rs.getInt("cantidad"))
-                );
-            }
-
-            return cantidades;
-        } finally {
-            cerrar(rs);
-            cerrar(stmt);
-        }
-    }
-
-    private void actualizarDetallesCotizacion(Connection con,
-                                             int idRequerimientoCompra,
-                                             Map<Integer, Integer> cantidades,
-                                             List<RequerimientoCompraDetalle> detalles,
-                                             String usuario) throws Exception {
-
-        if (detalles == null) {
-            detalles = new ArrayList<RequerimientoCompraDetalle>();
-        }
-
-            validarDetallesCotizacionRecibidos(
-                    cantidades,
-                    detalles
-            );
-
-            Integer idPrestadorAdjudicado =
-                    obtenerPrestadorAdjudicadoUnico(
-                            detalles
-                    );
-
-            validarPrestadorCotizacion(
-                    con,
-                    idRequerimientoCompra,
-                    idPrestadorAdjudicado
-            );
-
-            for (int i = 0; i < detalles.size(); i++) {
-                RequerimientoCompraDetalle detalle = detalles.get(i);
-
-                Integer idDetalle = Integer.valueOf(detalle.getIdInt());
-                Integer cantidad = cantidades.get(idDetalle);
-
-                BigDecimal total =
-                        calcularPrecioTotalCotizacion(
-                                cantidad,
-                                detalle
-                        );
-
-                detalle.aplicarPrestadorAdjudicado(
-                        idPrestadorAdjudicado
-                );
-
-                actualizarDetalleCotizacion(
-                        con,
-                        idRequerimientoCompra,
-                        idDetalle.intValue(),
-                        detalle.getPrecioUnitarioEstimado(),
-                        total,
-                        idPrestadorAdjudicado,
-                        usuario
-                );
-            }
-
-        }
 
     protected void validarDetallesCotizacionRecibidos(
             Map<Integer, Integer> cantidades,
@@ -1089,177 +1012,52 @@ public class EditarRequerimientoCompraServiceImpl {
             }
         }
 
-            if (!idsRecibidos.equals(cantidades.keySet())) {
-                throw new Exception(
-                        "Deben informarse exactamente todos los detalles activos del requerimiento."
-                );
-            }
-
-            obtenerPrestadorAdjudicadoUnico(
-                    detalles
+        if (!idsRecibidos.equals(cantidades.keySet())) {
+            throw new Exception(
+                    "Deben informarse exactamente todos los detalles activos del requerimiento."
             );
         }
 
-        protected Integer obtenerPrestadorAdjudicadoUnico(
-                List<RequerimientoCompraDetalle> detalles) throws Exception {
-
-            Integer idPrestadorAdjudicado = null;
-
-            for (int i = 0;
-                    detalles != null && i < detalles.size();
-                    i++) {
-
-                RequerimientoCompraDetalle detalle =
-                        detalles.get(i);
-
-                if (detalle == null
-                        || !detalle.tienePrestadorAdjudicado()) {
-                    continue;
-                }
-
-                Integer idPrestadorDetalle =
-                        detalle.getIdPrestador();
-
-                if (idPrestadorAdjudicado == null) {
-                    idPrestadorAdjudicado =
-                            idPrestadorDetalle;
-                } else if (idPrestadorAdjudicado.intValue()
-                        != idPrestadorDetalle.intValue()) {
-
-                    throw new Exception(
-                            "Debe seleccionar un único prestador adjudicado "
-                                    + "para todo el requerimiento."
-                    );
-                }
-            }
-
-            return idPrestadorAdjudicado;
-        }
-
-        protected BigDecimal calcularPrecioTotalCotizacion(
-            Integer cantidadPersistida,
-            RequerimientoCompraDetalle detalle) {
-
-        return WebKeysCompras.calcularPrecioTotal(
-                cantidadPersistida,
-                detalle != null
-                        ? detalle.getPrecioUnitarioEstimado()
-                        : null
+        obtenerPrestadorAdjudicadoUnico(
+                detalles
         );
     }
 
-    protected void validarPrestadorCotizacion(
-            Connection con,
-            int idRequerimientoCompra,
-            Integer idPrestador) throws Exception {
+    protected Integer obtenerPrestadorAdjudicadoUnico(
+            List<RequerimientoCompraDetalle> detalles) throws Exception {
 
-        if (idPrestador != null
-                && !existePrestadorEnviado(
-                        con,
-                        idRequerimientoCompra,
-                        idPrestador.intValue()
-                )) {
+        Integer idPrestadorAdjudicado = null;
 
-            throw new Exception(
-                    "El prestador seleccionado no fue notificado correctamente para este requerimiento."
-            );
-        }
-    }
+        for (int i = 0;
+             detalles != null && i < detalles.size();
+             i++) {
 
-    protected boolean existePrestadorEnviado(Connection con,
-                                          int idRequerimientoCompra,
-                                          int idPrestador) throws Exception {
+            RequerimientoCompraDetalle detalle =
+                    detalles.get(i);
 
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
+            if (detalle == null
+                    || !detalle.tienePrestadorAdjudicado()) {
+                continue;
+            }
 
-        try {
-            stmt = con.prepareStatement(SQL_EXISTE_PRESTADOR_ENVIADO);
-            stmt.setInt(1, idRequerimientoCompra);
-            stmt.setInt(2, idPrestador);
-            stmt.setString(3, WebKeysCompras.ENVIO_ENVIADO);
-            rs = stmt.executeQuery();
+            Integer idPrestadorDetalle =
+                    detalle.getIdPrestador();
 
-            return rs.next();
-        } finally {
-            cerrar(rs);
-            cerrar(stmt);
-        }
-    }
+            if (idPrestadorAdjudicado == null) {
+                idPrestadorAdjudicado =
+                        idPrestadorDetalle;
+            } else if (idPrestadorAdjudicado.intValue()
+                    != idPrestadorDetalle.intValue()) {
 
-    private void actualizarDetalleCotizacion(Connection con,
-                                             int idRequerimientoCompra,
-                                             int idDetalle,
-                                             BigDecimal precioUnitario,
-                                             BigDecimal total,
-                                             Integer idPrestador,
-                                             String usuario) throws Exception {
-
-        PreparedStatement stmt = null;
-
-        try {
-            stmt = con.prepareStatement(SQL_ACTUALIZAR_DETALLE_COTIZACION);
-            setNullableBigDecimal(stmt, 1, precioUnitario);
-            setNullableBigDecimal(stmt, 2, total);
-            setNullableInteger(stmt, 3, idPrestador);
-            stmt.setString(4, emptyToNull(usuario));
-            stmt.setInt(5, idRequerimientoCompra);
-            stmt.setInt(6, idDetalle);
-
-            if (stmt.executeUpdate() != 1) {
                 throw new Exception(
-                        "No se pudo actualizar el detalle " + idDetalle + "."
+                        "Debe seleccionar un único prestador adjudicado "
+                                + "para todo el requerimiento."
                 );
             }
-        } finally {
-            cerrar(stmt);
         }
-    }
 
-    private boolean esCotizacionCompleta(
-            Connection con,
-            int idRequerimientoCompra) throws Exception {
+        return idPrestadorAdjudicado;
 
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
-        try {
-            stmt = con.prepareStatement(SQL_DETALLES_INCOMPLETOS_COTIZACION);
-            stmt.setInt(1, idRequerimientoCompra);
-            rs = stmt.executeQuery();
-
-            if (!rs.next() || rs.getInt("total") <= 0) {
-                throw new Exception("El requerimiento no tiene detalles activos.");
-            }
-
-            return rs.getInt("incompletos") == 0;
-        } finally {
-            cerrar(rs);
-            cerrar(stmt);
-        }
-    }
-
-    private void actualizarEstadoCotizacionCerrada(Connection con,
-                                                   int idRequerimientoCompra,
-                                                   String usuario) throws Exception {
-
-        PreparedStatement stmt = null;
-
-        try {
-            stmt = con.prepareStatement(SQL_ACTUALIZAR_ESTADO_ESPERADO);
-            stmt.setInt(1, WebKeysCompras.ESTADO_COTIZADO);
-            stmt.setString(2, emptyToNull(usuario));
-            stmt.setInt(3, idRequerimientoCompra);
-            stmt.setInt(4, WebKeysCompras.ESTADO_A_COTIZAR);
-
-            if (stmt.executeUpdate() != 1) {
-                throw new Exception(
-                        "El requerimiento fue modificado o cerrado por otro proceso."
-                );
-            }
-        } finally {
-            cerrar(stmt);
-        }
     }
 
     private void validarArticuloParaGuardar(CompraArticulo articulo) throws Exception {
@@ -1312,22 +1110,6 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.setNull(index, Types.INTEGER);
         } else {
             stmt.setInt(index, value.intValue());
-        }
-    }
-
-    private void setNullableInteger(PreparedStatement stmt, int index, Integer value) throws Exception {
-        if (value == null) {
-            stmt.setNull(index, Types.INTEGER);
-        } else {
-            stmt.setInt(index, value.intValue());
-        }
-    }
-
-    private void setNullableBigDecimal(PreparedStatement stmt, int index, BigDecimal value) throws Exception {
-        if (value == null) {
-            stmt.setNull(index, Types.NUMERIC);
-        } else {
-            stmt.setBigDecimal(index, WebKeysCompras.normalizarImporte(value));
         }
     }
 
@@ -1799,4 +1581,54 @@ public class EditarRequerimientoCompraServiceImpl {
     }
 
 
+    protected int confirmarEnvioACotizar(
+            int idRequerimientoCompra,
+            String usuario) throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            stmt = con.prepareCall(
+                    SQL_CONFIRMAR_ENVIO_A_COTIZAR
+            );
+
+            stmt.registerOutParameter(
+                    1,
+                    Types.INTEGER
+            );
+
+            stmt.setInt(
+                    2,
+                    idRequerimientoCompra
+            );
+
+            stmt.setString(
+                    3,
+                    emptyToNull(usuario)
+            );
+
+            stmt.execute();
+
+            int estadoFinal =
+                    stmt.getInt(1);
+
+            if (stmt.wasNull()) {
+                throw new Exception(
+                        "La base no devolvió el estado final "
+                                + "del requerimiento."
+                );
+            }
+
+            return estadoFinal;
+
+        } finally {
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
+        }
+    }
 }

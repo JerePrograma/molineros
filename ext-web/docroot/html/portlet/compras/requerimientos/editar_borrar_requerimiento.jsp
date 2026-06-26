@@ -14,8 +14,9 @@ boolean showAnularButtons =
         user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS);
 boolean showEditarButton =
-        (showABMButtons && req.puedeEditarEstructura())
-        || ((showABMButtons || showCotizarButtons)
+        (showABMButtons
+                && req.puedeEditarEstructura())
+        || (showCotizarButtons
                 && req.puedeEditarCotizacion());
 
 String idRequerimiento = req.getIdRequerimientoCompraString();

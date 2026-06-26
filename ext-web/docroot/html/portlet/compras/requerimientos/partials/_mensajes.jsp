@@ -219,12 +219,6 @@ ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado result
     </div>
 </c:if>
 
-<c:if test="<%= msgDetalleGuardado %>">
-    <div class="portlet-msg-success">
-        Detalle del requerimiento guardado correctamente.
-    </div>
-</c:if>
-
 <c:if test="<%= msgDetalleBorrado %>">
     <div class="portlet-msg-success">
         Detalle del requerimiento eliminado correctamente.
