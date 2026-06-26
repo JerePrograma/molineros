@@ -39,7 +39,7 @@
 
             /*
              * busqueda_seccional.jsp no recibe edit_mode. Se bloquean de forma
-             * local sus campos y se oculta Ãºnicamente su acciÃ³n de bÃºsqueda.
+             * local sus campos y se oculta únicamente su acción de búsqueda.
              */
             jQuery('#<portlet:namespace />id_seccional, #<portlet:namespace />seccional')
                     .attr('readonly', 'readonly')
@@ -125,7 +125,7 @@
 
             /*
              * Algunos includes legacy terminan de inicializar sus controles
-             * despuÃ©s del ready. Se reaplica una sola vez sin alterar datos.
+             * después del ready. Se reaplica una sola vez sin alterar datos.
              */
             setTimeout(function() {
                 <portlet:namespace />cargarAfiliadoVista();

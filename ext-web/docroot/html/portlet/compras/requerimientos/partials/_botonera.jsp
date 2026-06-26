@@ -43,8 +43,8 @@ Object botoneraPendientesNotificacionAttr =
         );
 
 /*
- * Fail closed: el bot√≥n solo se muestra cuando el action confirm√≥ mediante
- * la consulta can√≥nica que realmente existen prestadores pendientes.
+ * Fail closed: el botÛn solo se muestra cuando el action confirmÛ mediante
+ * la consulta canÛnica que realmente existen prestadores pendientes.
  */
 boolean botoneraHayPrestadoresPendientesNotificacion =
         Boolean.TRUE.equals(
@@ -148,7 +148,7 @@ String botoneraAnularURL =
         + "','"
         + renderResponse.getNamespace()
         + "btnAnularRequerimientoCompra'"
-        + ",'¬øConfirma anular el requerimiento?'"
+        + ",'øConfirma anular el requerimiento?'"
         + ",'Anulando...');";
 %>
 
@@ -220,15 +220,15 @@ String botoneraAnularURL =
             <% if (modoEditable && puedeEditarCotizacionPantalla) { %>
                 <input type="button"
                        id="<portlet:namespace />btnGuardarCotizacionCompra"
-                       value="Guardar cotizaci√≥n"
+                       value="Guardar cotizaciÛn"
                        onClick="return <%= namespaceCompra %>guardarCotizacion();" />
                 &nbsp;&nbsp;
             <% } %>
 
             <%--
                 No se muestra Editar dentro de la vista.
-                La edici√≥n contin√∫a disponible en el men√∫ de acciones del
-                listado, respetando la observaci√≥n funcional m√°s reciente.
+                La ediciÛn contin˙a disponible en el men˙ de acciones del
+                listado, respetando la observaciÛn funcional m·s reciente.
             --%>
 
             <% if (botoneraPuedeEnviarACotizar) { %>
@@ -251,7 +251,7 @@ String botoneraAnularURL =
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
                                '<%= botoneraReintentarCotizacionFormId %>',
                                '<portlet:namespace />btnReintentarCotizacionRequerimientoCompra',
-                               '¬øConfirma notificar nuevamente a los prestadores pendientes?',
+                               'øConfirma notificar nuevamente a los prestadores pendientes?',
                                'Notificando...'
                        );" />
                 &nbsp;&nbsp;
@@ -285,8 +285,8 @@ String botoneraAnularURL =
                         || botoneraTieneRolCrearReclamo)) { %>
                 <input type="button"
                        value="<%= botoneraRelacionReclamo.isError()
-                               ? "Reclamo creado: vinculaci√≥n pendiente"
-                               : "Creaci√≥n de reclamo en proceso" %>"
+                               ? "Reclamo creado: vinculaciÛn pendiente"
+                               : "CreaciÛn de reclamo en proceso" %>"
                        disabled="disabled" />
                 &nbsp;&nbsp;
             <% } %>
@@ -340,7 +340,7 @@ String botoneraAnularURL =
         var iframe = document.getElementById('<portlet:namespace />iframeImpresionRequerimientoCompra');
 
         if (!iframe) {
-            alert('No se pudo preparar la impresi√≥n del requerimiento.');
+            alert('No se pudo preparar la impresiÛn del requerimiento.');
             return false;
         }
 
@@ -352,7 +352,7 @@ String botoneraAnularURL =
                 iframe.contentWindow.focus();
                 iframe.contentWindow.print();
             } catch (e) {
-                alert('No se pudo imprimir autom√°ticamente el PDF.');
+                alert('No se pudo imprimir autom·ticamente el PDF.');
             }
         };
 
