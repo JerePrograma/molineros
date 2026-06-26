@@ -167,7 +167,7 @@ public class RequerimientoCompraDetalle {
     }
 
     /*
-     * Alias explÃ­cito para el nuevo contrato de un Ãºnico prestador
+     * Alias explícito para el nuevo contrato de un único prestador
      * adjudicado por requerimiento. Se conserva get/setIdPrestador porque la
      * columna y el servicio actuales siguen persistiendo el dato por detalle.
      */

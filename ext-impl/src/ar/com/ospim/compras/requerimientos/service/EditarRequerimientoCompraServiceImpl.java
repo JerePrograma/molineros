@@ -62,8 +62,13 @@ public class EditarRequerimientoCompraServiceImpl {
             "{ ? = call compras.confirmar_envio_a_cotizar(?,?) }";
 
     private static final String SQL_GUARDAR_COTIZACION_REQUERIMIENTO =
-            "{ ? = call compras.guardar_cotizacion_requerimiento("
-                    + "?,?,?,?,?) }";
+            "SELECT compras.guardar_cotizacion_requerimiento("
+                    + "?, "
+                    + "CAST(? AS INTEGER[]), "
+                    + "CAST(? AS NUMERIC[]), "
+                    + "?, "
+                    + "?"
+                    + ")";
 
     private static final String SQL_LISTAR_ARTICULOS_CURSOR =
             "{ ? = call compras.listar_articulos_cursor(?,?) }";
@@ -892,68 +897,73 @@ public class EditarRequerimientoCompraServiceImpl {
         }
 
         Connection con = null;
-        CallableStatement stmt = null;
-        Array idsSql = null;
-        Array preciosSql = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
 
         try {
             con =
                     ConnectionHelper.getConnection();
 
-            idsSql =
-                    con.createArrayOf(
-                            "integer",
-                            idsDetalle
-                    );
-
-            preciosSql =
-                    con.createArrayOf(
-                            "numeric",
-                            preciosUnitarios
-                    );
-
             stmt =
-                    con.prepareCall(
+                    con.prepareStatement(
                             SQL_GUARDAR_COTIZACION_REQUERIMIENTO
                     );
 
-            stmt.registerOutParameter(
-                    1,
-                    Types.INTEGER
-            );
-
             stmt.setInt(
-                    2,
+                    1,
                     idRequerimientoCompra
             );
 
-            stmt.setArray(
-                    3,
-                    idsSql
-            );
-
-            stmt.setArray(
-                    4,
-                    preciosSql
-            );
-
-            setNullableInteger(
-                    stmt,
-                    5,
-                    idPrestadorAdjudicado
+            /*
+             * El pool c3p0 legacy no implementa Connection.createArrayOf().
+             * Los arrays se envían como literales parametrizados y PostgreSQL
+             * realiza el cast explícito definido en la sentencia.
+             */
+            stmt.setString(
+                    2,
+                    construirArrayEnterosPostgreSql(
+                            idsDetalle
+                    )
             );
 
             stmt.setString(
-                    6,
+                    3,
+                    construirArrayNumericosPostgreSql(
+                            preciosUnitarios
+                    )
+            );
+
+            if (idPrestadorAdjudicado == null) {
+                stmt.setNull(
+                        4,
+                        Types.INTEGER
+                );
+            } else {
+                stmt.setInt(
+                        4,
+                        idPrestadorAdjudicado.intValue()
+                );
+            }
+
+            stmt.setString(
+                    5,
                     emptyToNull(usuario)
             );
 
-            stmt.execute();
+            rs =
+                    stmt.executeQuery();
+
+            if (!rs.next()) {
+                throw new Exception(
+                        "La base no devolvió el estado final "
+                                + "de la cotización."
+                );
+            }
 
             int estadoFinal =
-                    stmt.getInt(1);
+                    rs.getInt(1);
 
-            if (stmt.wasNull()
+            if (rs.wasNull()
                     || (estadoFinal
                     != WebKeysCompras.ESTADO_A_COTIZAR
                     && estadoFinal
@@ -972,25 +982,117 @@ public class EditarRequerimientoCompraServiceImpl {
             );
 
         } finally {
-            if (idsSql != null) {
-                try {
-                    idsSql.free();
-                } catch (Exception ignored) {
-                }
-            }
-
-            if (preciosSql != null) {
-                try {
-                    preciosSql.free();
-                } catch (Exception ignored) {
-                }
-            }
+            cerrar(
+                    rs
+            );
 
             ConnectionHelper.cerrar(
                     stmt,
                     con
             );
         }
+    }
+
+    protected String construirArrayEnterosPostgreSql(
+            Integer[] valores) throws Exception {
+
+        if (valores == null
+                || valores.length == 0) {
+
+            throw new Exception(
+                    "Debe informar los identificadores "
+                            + "de detalle de la cotización."
+            );
+        }
+
+        StringBuilder array =
+                new StringBuilder();
+
+        array.append('{');
+
+        for (int i = 0; i < valores.length; i++) {
+            Integer valor =
+                    valores[i];
+
+            if (valor == null
+                    || valor.intValue() <= 0) {
+
+                throw new Exception(
+                        "La lista contiene un identificador "
+                                + "de detalle inválido."
+                );
+            }
+
+            if (i > 0) {
+                array.append(',');
+            }
+
+            array.append(
+                    valor.intValue()
+            );
+        }
+
+        array.append('}');
+
+        return array.toString();
+    }
+
+    protected String construirArrayNumericosPostgreSql(
+            BigDecimal[] valores) throws Exception {
+
+        if (valores == null
+                || valores.length == 0) {
+
+            throw new Exception(
+                    "Debe informar los precios "
+                            + "de la cotización."
+            );
+        }
+
+        StringBuilder array =
+                new StringBuilder();
+
+        array.append('{');
+
+        for (int i = 0; i < valores.length; i++) {
+            BigDecimal valor =
+                    valores[i];
+
+            if (i > 0) {
+                array.append(',');
+            }
+
+            /*
+             * NULL sin comillas representa un elemento SQL nulo.
+             * Esto permite guardar avances de cotización incompletos.
+             */
+            if (valor == null) {
+                array.append("NULL");
+                continue;
+            }
+
+            BigDecimal normalizado =
+                    WebKeysCompras.normalizarImporte(
+                            valor
+                    );
+
+            if (normalizado.compareTo(
+                    BigDecimal.ZERO
+            ) < 0) {
+
+                throw new Exception(
+                        "El precio unitario no puede ser negativo."
+                );
+            }
+
+            array.append(
+                    normalizado.toPlainString()
+            );
+        }
+
+        array.append('}');
+
+        return array.toString();
     }
 
     protected void validarDetallesCotizacionRecibidos(

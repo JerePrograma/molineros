@@ -438,10 +438,10 @@ public class RequerimientoCompra {
     }
 
     /*
-     * Obtiene el Ãºnico prestador adjudicado cuando todos los detalles que
+     * Obtiene el único prestador adjudicado cuando todos los detalles que
      * informan prestador coinciden. Si existen IDs distintos devuelve null;
      * use tienePrestadoresAdjudicadosMixtos() para distinguir mezcla de falta
-     * de adjudicaciÃ³n.
+     * de adjudicación.
      */
     public Integer getIdPrestadorAdjudicado() {
         Integer prestador = null;
