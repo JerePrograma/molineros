@@ -10,6 +10,7 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
 import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.global.beans.Domicilio;
 import ar.com.ospim.util.PermissionUtil;
@@ -531,6 +532,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     renderRequest,
                     requerimiento
             );
+            cargarRelacionReclamoPrestacional(
+                    renderRequest,
+                    requerimiento
+            );
 
             if (soloLectura) {
                 renderRequest.setAttribute(
@@ -622,6 +627,53 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         renderRequest.setAttribute(
                 WebKeysCompras.HAY_PRESTADORES_PENDIENTES_NOTIFICACION,
                 Boolean.valueOf(hayPendientes)
+        );
+    }
+
+    private void cargarRelacionReclamoPrestacional(
+            RenderRequest renderRequest,
+            RequerimientoCompra requerimiento) {
+
+        boolean consultaOk = true;
+        Object relacion = null;
+
+        if (requerimiento != null
+                && requerimiento.getIdRequerimientoCompra() > 0
+                && WebKeysCompras.esCotizado(
+                        requerimiento.getEstado()
+                )) {
+
+            try {
+                relacion =
+                        RequerimientoCompraReclamoPrestacionalServiceUtil
+                                .obtenerPorRequerimiento(
+                                        requerimiento
+                                                .getIdRequerimientoCompra()
+                                );
+            } catch (Exception e) {
+                consultaOk = false;
+
+                _log.warn(
+                        "No se pudo consultar la relación con el "
+                                + "Reclamo Prestacional. "
+                                + "La acción permanecerá oculta. "
+                                + "idRequerimiento="
+                                + requerimiento
+                                        .getIdRequerimientoCompra(),
+                        e
+                );
+            }
+        }
+
+        renderRequest.setAttribute(
+                WebKeysCompras
+                        .RELACION_RECLAMO_PRESTACIONAL_COMPRA,
+                relacion
+        );
+        renderRequest.setAttribute(
+                WebKeysCompras
+                        .RELACION_RECLAMO_PRESTACIONAL_CONSULTA_OK,
+                Boolean.valueOf(consultaOk)
         );
     }
 

@@ -1,3 +1,5 @@
+<%@ page import="ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional" %>
 <%
 int botoneraIdRequerimientoActual = req != null ? req.getIdRequerimientoCompra() : 0;
 int botoneraEstadoActual = req != null ? req.getEstado() : 0;
@@ -17,6 +19,24 @@ boolean botoneraTieneRolCotizar =
         user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS);
 
+boolean botoneraTieneRolCrearReclamo =
+        user != null
+        && PermissionUtil.userContainsRole(
+                user,
+                WebKeysAutorizaciones.ROL_ABM_RECLAM_PREST
+        );
+
+boolean botoneraTieneRolVerReclamo =
+        user != null
+        && (
+                botoneraTieneRolCrearReclamo
+                || PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysAutorizaciones
+                                .ROL_CONSULTA_RECLAMOS_PRESTACIONALES
+                )
+        );
+
 Object botoneraPendientesNotificacionAttr =
         renderRequest.getAttribute(
                 WebKeysCompras.HAY_PRESTADORES_PENDIENTES_NOTIFICACION
@@ -29,6 +49,27 @@ Object botoneraPendientesNotificacionAttr =
 boolean botoneraHayPrestadoresPendientesNotificacion =
         Boolean.TRUE.equals(
                 botoneraPendientesNotificacionAttr
+        );
+
+Object botoneraRelacionAttr =
+        renderRequest.getAttribute(
+                WebKeysCompras
+                        .RELACION_RECLAMO_PRESTACIONAL_COMPRA
+        );
+
+RequerimientoCompraReclamoPrestacional botoneraRelacionReclamo =
+        botoneraRelacionAttr
+                instanceof RequerimientoCompraReclamoPrestacional
+                ? (RequerimientoCompraReclamoPrestacional)
+                        botoneraRelacionAttr
+                : null;
+
+boolean botoneraConsultaRelacionReclamoOk =
+        Boolean.TRUE.equals(
+                renderRequest.getAttribute(
+                        WebKeysCompras
+                                .RELACION_RECLAMO_PRESTACIONAL_CONSULTA_OK
+                )
         );
 
 boolean botoneraPuedeEnviarACotizar =
@@ -56,28 +97,39 @@ boolean botoneraPuedeImprimir =
 boolean botoneraPuedeCrearReclamoPrestacional =
         botoneraRequerimientoPersistido
         && WebKeysCompras.esCotizado(botoneraEstadoActual)
-        && (puedeABM || botoneraTieneRolCotizar);
+        && (puedeABM || botoneraTieneRolCotizar)
+        && botoneraTieneRolCrearReclamo
+        && botoneraConsultaRelacionReclamoOk
+        && botoneraRelacionReclamo == null;
+
+boolean botoneraPuedeVerReclamoPrestacional =
+        botoneraRequerimientoPersistido
+        && WebKeysCompras.esCotizado(botoneraEstadoActual)
+        && (botoneraTieneRolView || puedeABM || botoneraTieneRolCotizar)
+        && botoneraTieneRolVerReclamo
+        && botoneraConsultaRelacionReclamoOk
+        && botoneraRelacionReclamo != null
+        && botoneraRelacionReclamo.isVinculado();
+
+boolean botoneraReclamoEnProceso =
+        botoneraRequerimientoPersistido
+        && WebKeysCompras.esCotizado(botoneraEstadoActual)
+        && botoneraConsultaRelacionReclamoOk
+        && botoneraRelacionReclamo != null
+        && !botoneraRelacionReclamo.isVinculado();
 
 PortletURL botoneraCambiarEstadoURL = renderResponse.createActionURL();
 botoneraCambiarEstadoURL.setWindowState(WindowState.MAXIMIZED);
 botoneraCambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerimiento");
 
-PortletURL botoneraCrearReclamoPrestacionalURL =
-        renderResponse.createRenderURL();
-botoneraCrearReclamoPrestacionalURL.setWindowState(
+PortletURL botoneraReclamoPrestacionalURL =
+        renderResponse.createActionURL();
+botoneraReclamoPrestacionalURL.setWindowState(
         WindowState.MAXIMIZED
 );
-botoneraCrearReclamoPrestacionalURL.setParameter(
+botoneraReclamoPrestacionalURL.setParameter(
         "struts_action",
-        "/autorizaciones/editar_reclamosprestaciones_entry"
-);
-botoneraCrearReclamoPrestacionalURL.setParameter(
-        "origen",
-        "compras"
-);
-botoneraCrearReclamoPrestacionalURL.setParameter(
-        "id_requerimiento_compra",
-        String.valueOf(botoneraIdRequerimientoActual)
+        "/compras/iniciar_reclamo_prestacional"
 );
 
 String botoneraEnviarCotizarFormId =
@@ -86,6 +138,8 @@ String botoneraReintentarCotizacionFormId =
         namespaceCompra + "reintentarCotizacionRequerimientoCompraForm";
 String botoneraAnularFormId =
         namespaceCompra + "anularRequerimientoCompraForm";
+String botoneraReclamoPrestacionalFormId =
+        namespaceCompra + "reclamoPrestacionalCompraForm";
 String botoneraAnularURL =
         "javascript:"
         + namespaceCompra
@@ -137,6 +191,18 @@ String botoneraAnularURL =
         <input type="hidden"
                name="<portlet:namespace />estado_nuevo"
                value="<%= String.valueOf(WebKeysCompras.ESTADO_ANULADO) %>" />
+    </form>
+<% } %>
+
+<% if (botoneraPuedeCrearReclamoPrestacional
+        || botoneraPuedeVerReclamoPrestacional) { %>
+    <form action="<%= botoneraReclamoPrestacionalURL.toString() %>"
+          method="post"
+          id="<%= botoneraReclamoPrestacionalFormId %>"
+          style="display:none;">
+        <input type="hidden"
+               name="<portlet:namespace />id_requerimiento_compra"
+               value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
     </form>
 <% } %>
 
@@ -202,7 +268,26 @@ String botoneraAnularURL =
                 <input type="button"
                        id="<portlet:namespace />btnCrearReclamoPrestacional"
                        value="Crear Reclamo Prestacional"
-                       onClick="window.location.href='<%= botoneraCrearReclamoPrestacionalURL.toString() %>';" />
+                       onClick="submitForm(document.getElementById('<%= botoneraReclamoPrestacionalFormId %>')); return false;" />
+                &nbsp;&nbsp;
+            <% } %>
+
+            <% if (botoneraPuedeVerReclamoPrestacional) { %>
+                <input type="button"
+                       id="<portlet:namespace />btnVerReclamoPrestacional"
+                       value="Ver Reclamo Prestacional"
+                       onClick="submitForm(document.getElementById('<%= botoneraReclamoPrestacionalFormId %>')); return false;" />
+                &nbsp;&nbsp;
+            <% } %>
+
+            <% if (botoneraReclamoEnProceso
+                    && (botoneraTieneRolVerReclamo
+                        || botoneraTieneRolCrearReclamo)) { %>
+                <input type="button"
+                       value="<%= botoneraRelacionReclamo.isError()
+                               ? "Reclamo creado: vinculación pendiente"
+                               : "Creación de reclamo en proceso" %>"
+                       disabled="disabled" />
                 &nbsp;&nbsp;
             <% } %>
 

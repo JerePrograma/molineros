@@ -1,8 +1,35 @@
 <%@ include file="/html/portlet/autorizaciones/init.jsp" %>
+<%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto" %>
 <portlet:defineObjects />
 <liferay-theme:defineObjects />
 <%
 ReclamoPrestacional  reclamoprestacional  = (ReclamoPrestacional)request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
+String contextoCompraNonceRequest =
+        ParamUtil.getString(
+                request,
+                WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
+                ""
+        );
+ReclamoPrestacionalCompraContexto contextoCompraSesion =
+        (ReclamoPrestacionalCompraContexto) request.getSession().getAttribute(
+                WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+        );
+ReclamoPrestacionalCompraContexto contextoCompra =
+        contextoCompraSesion != null
+                && contextoCompraSesion.coincideNonce(
+                        contextoCompraNonceRequest
+                )
+                && contextoCompraSesion.perteneceAUsuario(
+                        user != null ? user.getScreenName() : ""
+                )
+                && contextoCompraSesion.estaVigente(
+                        System.currentTimeMillis()
+                )
+                ? contextoCompraSesion
+                : null;
+String contextoCompraNonce =
+        contextoCompra != null ? contextoCompra.getNonce() : "";
 String tabNames="" ;
 StringBuilder tabValues = new StringBuilder("datos");
 
@@ -52,8 +79,14 @@ portletURL.setParameter("tab", tabValue);
 portletURL.setParameter("cmd", cmd);
 portletURL.setParameter("reclamo_id", String.valueOf(idReclamoAux));
 
+if (contextoCompraNonce != null
+        && contextoCompraNonce.trim().length() > 0) {
 
-
+    portletURL.setParameter(
+            WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
+            contextoCompraNonce
+    );
+}
 
 %>
 <liferay-ui:error key="error-estado-reclamo" message="falta-estado-reclamo-prestacion" />
@@ -73,6 +106,11 @@ portletURL.setParameter("reclamo_id", String.valueOf(idReclamoAux));
 <liferay-ui:error
     key="error-reclamo-ya-cerrado"
     message="<%=(String)request.getAttribute(\"msgErrorReclamoYaCerrado\") %>" />
+
+
+<liferay-ui:error
+    key="error-reclamo-compras"
+    message="<%=(String)request.getAttribute(\"msgErrorReclamoCompras\") %>" />
     
 <!--  form action="" method="post" method="post" name="<portlet:namespace />reclamo_fm" id="<portlet:namespace />reclamo_fm"  enctype="multipart/form-data"-->		
 

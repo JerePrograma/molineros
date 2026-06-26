@@ -3,6 +3,8 @@
 	file="/html/portlet/autorizaciones/reclamos_prestacionales/init.jsp"%>
 <%@ page
 	import="ar.com.ospim.autorizaciones.services.PreAutorizacionServiceUtil"%>
+<%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto" %>
 <%
 Calendar prestacionFecha = CalendarFactoryUtil.getCalendar();
 String prestacionFechaString = prestacionFecha.get(Calendar.DATE)+"/"+(prestacionFecha.get(Calendar.MONTH) + 1)+"/"+prestacionFecha.get(Calendar.YEAR);
@@ -18,6 +20,31 @@ int cantRevisiones=0;
 boolean debitoTercerizadora = false;
 
 ReclamoPrestacional  reclamoprestacional  = (ReclamoPrestacional)request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
+String contextoCompraNonceRequest =
+        ParamUtil.getString(
+                request,
+                WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
+                ""
+        );
+ReclamoPrestacionalCompraContexto contextoCompraSesion =
+        (ReclamoPrestacionalCompraContexto) request.getSession().getAttribute(
+                WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+        );
+ReclamoPrestacionalCompraContexto contextoCompra =
+        contextoCompraSesion != null
+                && contextoCompraSesion.coincideNonce(
+                        contextoCompraNonceRequest
+                )
+                && contextoCompraSesion.perteneceAUsuario(
+                        user != null ? user.getScreenName() : ""
+                )
+                && contextoCompraSesion.estaVigente(
+                        System.currentTimeMillis()
+                )
+                ? contextoCompraSesion
+                : null;
+String contextoCompraNonce =
+        contextoCompra != null ? contextoCompra.getNonce() : "";
 
 String _nuevoEstadoObservado = "";
 if (request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS) != null) {
@@ -151,7 +178,15 @@ if(reclamoprestacional != null  ){
 	
 }else{
 	
-if (Integer.parseInt(caso_vinculado)>0 ){// carga datos del afiliado del cas 
+if (contextoCompra != null) {
+        cuit_titular_vinculado =
+                contextoCompra.getAfiliadoCuilTitular();
+        inte_vinculado =
+                contextoCompra.getAfiliadoInt() != null
+                        ? contextoCompra.getAfiliadoInt().intValue()
+                        : 0;
+        reclamo_vinculado = true;
+} else if (Integer.parseInt(caso_vinculado)>0 ){// carga datos del afiliado del cas
 		ReclamoPrestacional reclamoprestacional1 = ReclamosPrestacionesServiceUtil.getReclamoPrestacional(Integer.parseInt(caso_vinculado));
 		cuit_titular_vinculado = reclamoprestacional1.getCuit_titular();
 		inte_vinculado = reclamoprestacional1.getInte();
@@ -270,7 +305,11 @@ span-fixed-size {
 		name="<portlet:namespace />codigoCie10"
 		value="<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getCodigoCie10())   ? reclamoprestacional.getCodigoCie10()   : ""  %>" />
 	<input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>"
-		value="<%=cmd%>" /> <input type="hidden"
+		value="<%=cmd%>" />
+	<input type="hidden"
+		name="<portlet:namespace /><%= WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE %>"
+		value="<%= contextoCompraNonce %>" />
+	<input type="hidden"
 		name="<portlet:namespace />cantprestacioneslista"
 		id="<portlet:namespace />cantprestacioneslista"
 		value="<%=cantprestacioneslista%>" /> <input type="hidden"

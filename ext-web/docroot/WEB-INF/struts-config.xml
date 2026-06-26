@@ -7158,6 +7158,23 @@
 					path="portlet.compras.error" />
 		</action>
 
+		<action
+				path="/compras/iniciar_reclamo_prestacional"
+				type="ar.com.ospim.compras.requerimientos.action.IniciarReclamoPrestacionalCompraAction">
+
+			<forward
+					name="portlet.autorizaciones.reclamosprestacionales.editar_reclamos_entry"
+					path="portlet.autorizaciones.reclamosprestacionales.editar_reclamos_entry" />
+
+			<forward
+					name="portlet.compras.ver_requerimiento"
+					path="portlet.compras.ver_requerimiento" />
+
+			<forward
+					name="portlet.compras.error"
+					path="portlet.compras.error" />
+		</action>
+
 		<!-- CONFIGURAR tipos de prestador habilitados por sector -->
 		<action
 				path="/compras/configurar_tipos_prestador_sector"

@@ -5,6 +5,7 @@ import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
 import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.util.PermissionUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -110,6 +111,10 @@ public class VerRequerimientoCompraAction extends PortletAction {
 
             cargarCatalogos(renderRequest);
             cargarAfiliadoRequerimiento(renderRequest, requerimiento);
+            cargarRelacionReclamoPrestacional(
+                    renderRequest,
+                    requerimiento
+            );
 
             renderRequest.setAttribute(
                     WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW,
@@ -152,6 +157,53 @@ public class VerRequerimientoCompraAction extends PortletAction {
 
             throw new Exception("No posee permisos para consultar requerimientos de compras.");
         }
+    }
+
+    private void cargarRelacionReclamoPrestacional(
+            RenderRequest renderRequest,
+            RequerimientoCompra requerimiento) {
+
+        boolean consultaOk = true;
+        Object relacion = null;
+
+        if (requerimiento != null
+                && requerimiento.getIdRequerimientoCompra() > 0
+                && WebKeysCompras.esCotizado(
+                        requerimiento.getEstado()
+                )) {
+
+            try {
+                relacion =
+                        RequerimientoCompraReclamoPrestacionalServiceUtil
+                                .obtenerPorRequerimiento(
+                                        requerimiento
+                                                .getIdRequerimientoCompra()
+                                );
+            } catch (Exception e) {
+                consultaOk = false;
+
+                _log.warn(
+                        "No se pudo consultar la relación con el "
+                                + "Reclamo Prestacional. "
+                                + "La acción permanecerá oculta. "
+                                + "idRequerimiento="
+                                + requerimiento
+                                        .getIdRequerimientoCompra(),
+                        e
+                );
+            }
+        }
+
+        renderRequest.setAttribute(
+                WebKeysCompras
+                        .RELACION_RECLAMO_PRESTACIONAL_COMPRA,
+                relacion
+        );
+        renderRequest.setAttribute(
+                WebKeysCompras
+                        .RELACION_RECLAMO_PRESTACIONAL_CONSULTA_OK,
+                Boolean.valueOf(consultaOk)
+        );
     }
 
     private void cargarCatalogos(RenderRequest renderRequest) {

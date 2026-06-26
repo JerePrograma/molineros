@@ -67,6 +67,30 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String HAY_PRESTADORES_PENDIENTES_NOTIFICACION =
             "HAY_PRESTADORES_PENDIENTES_NOTIFICACION";
 
+    public static final String RELACION_RECLAMO_PRESTACIONAL_COMPRA =
+            "RELACION_RECLAMO_PRESTACIONAL_COMPRA";
+
+    public static final String RELACION_RECLAMO_PRESTACIONAL_CONSULTA_OK =
+            "RELACION_RECLAMO_PRESTACIONAL_CONSULTA_OK";
+
+    public static final String CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA =
+            "CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA";
+
+    public static final String PARAM_ID_REQUERIMIENTO_COMPRA =
+            "id_requerimiento_compra";
+
+    public static final String PARAM_RECLAMO_PRESTACIONAL_NONCE =
+            "compras_reclamo_nonce";
+
+    public static final String VINCULO_RECLAMO_RESERVADO =
+            "RESERVADO";
+
+    public static final String VINCULO_RECLAMO_VINCULADO =
+            "VINCULADO";
+
+    public static final String VINCULO_RECLAMO_ERROR =
+            "ERROR";
+
     /*
      * Parámetro único del prestador adjudicado para todo el requerimiento.
      * Se mantiene el parseo de los parámetros legacy por detalle durante la

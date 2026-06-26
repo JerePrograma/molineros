@@ -330,6 +330,13 @@ must independently validate the persisted Cotizado state and the authorized
 role in backend code, and must persist the relationship with the created claim.
 UI visibility alone does not complete this integration.
 
+The relationship is one-to-one: one purchase request can have at most one
+Reclamo Prestacional. The handoff reserves the relationship atomically only
+when saving the new claim, validates the affiliate against the persisted
+request, and never changes the purchase-request state from Cotizado. If the
+claim is inserted but final linkage fails, the relationship must remain blocked
+for reconciliation and must not allow a second claim.
+
 ### State 4 — Reclamo (RP), read-only
 
 Allow search, view, existing-document download, PDF printing, and return only.

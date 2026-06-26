@@ -24,7 +24,7 @@ public final class ComprasRequerimientosUiContractTest {
         assertComponenteAfiliadoCompartido();
         assertEditarSoloEnListado();
         assertEstadosYBotones();
-        assertReclamoPrestacionalNavegaARutaReal();
+        assertReclamoPrestacionalUsaHandoffSeguro();
         System.out.println("CONTRATO_UI_COMPRAS_OK");
     }
 
@@ -150,15 +150,147 @@ public final class ComprasRequerimientosUiContractTest {
         assertContains("notificar condicionado", botonera, "puedeReintentarNotificaciones");
     }
 
-    private static void assertReclamoPrestacionalNavegaARutaReal() throws Exception {
-        String botonera = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_botonera.jsp");
-        String struts = leer("ext-web/docroot/WEB-INF/struts-config.xml");
-        assertContains("boton RP", botonera, "Crear Reclamo Prestacional");
-        assertContains("solo cotizado", botonera, "WebKeysCompras.esCotizado");
-        assertContains("destino RP", botonera, "/autorizaciones/editar_reclamosprestaciones_entry");
-        assertContains("action RP existente", struts,
-                "path=\"/autorizaciones/editar_reclamosprestaciones_entry\"");
-        assertContains("action real", struts, "ar.com.ospim.autorizaciones.action.EditarReclamosEntryAction");
+    private static void assertReclamoPrestacionalUsaHandoffSeguro()
+            throws Exception {
+
+        String botonera = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/partials/_botonera.jsp"
+        );
+        String struts = leer(
+                "ext-web/docroot/WEB-INF/struts-config.xml"
+        );
+        String actionCompra = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/action/"
+                        + "IniciarReclamoPrestacionalCompraAction.java"
+        );
+        String actionReclamo = leer(
+                "ext-impl/src/ar/com/ospim/autorizaciones/action/"
+                        + "EditarReclamosEntryAction.java"
+        );
+        String service = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
+                        + "RequerimientoCompraReclamoPrestacionalServiceImpl.java"
+        );
+        String migration = leer(
+                "sql/compras/"
+                        + "20260625_requerimiento_reclamo_prestacional.sql"
+        );
+        String viewReclamo = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/view_reclamo.jsp"
+        );
+
+        assertContains(
+                "boton RP",
+                botonera,
+                "Crear Reclamo Prestacional"
+        );
+        assertContains(
+                "boton ver RP",
+                botonera,
+                "Ver Reclamo Prestacional"
+        );
+        assertContains(
+                "solo cotizado",
+                botonera,
+                "WebKeysCompras.esCotizado"
+        );
+        assertContains(
+                "handoff backend",
+                botonera,
+                "/compras/iniciar_reclamo_prestacional"
+        );
+        assertNotContains(
+                "sin salto directo desde JSP",
+                botonera,
+                "/autorizaciones/editar_reclamosprestaciones_entry"
+        );
+        assertContains(
+                "mapping handoff",
+                struts,
+                "path=\"/compras/iniciar_reclamo_prestacional\""
+        );
+        assertContains(
+                "action handoff",
+                struts,
+                "IniciarReclamoPrestacionalCompraAction"
+        );
+        assertContains(
+                "revalida cotizado",
+                actionCompra,
+                "El Reclamo Prestacional sólo puede iniciarse"
+        );
+        assertContains(
+                "rol reclamo backend",
+                actionCompra,
+                "ROL_ABM_RECLAM_PREST"
+        );
+        assertContains(
+                "reserva antes del insert",
+                actionReclamo,
+                ".reservarCreacion("
+        );
+        assertBefore(
+                "reserva antes de insertar",
+                actionReclamo,
+                ".reservarCreacion(",
+                "ReclamosPrestacionesServiceUtil.insertar("
+        );
+        assertContains(
+                "finaliza vinculo",
+                actionReclamo,
+                ".finalizarCreacion("
+        );
+        assertContains(
+                "nonce invalido no degrada a alta generica",
+                actionReclamo,
+                "nunca puede degradarse"
+        );
+        assertContains(
+                "contexto con vencimiento",
+                actionReclamo,
+                ".estaVigente(System.currentTimeMillis())"
+        );
+        assertContains(
+                "nonce en formulario",
+                viewReclamo,
+                "PARAM_RECLAMO_PRESTACIONAL_NONCE"
+        );
+        assertContains(
+                "servicio consulta relacion",
+                service,
+                "get_requerimiento_reclamo_prestacional"
+        );
+        assertContains(
+                "servicio reserva",
+                service,
+                "reservar_reclamo_prestacional"
+        );
+        assertContains(
+                "tabla uno a uno",
+                migration,
+                "PRIMARY KEY (id_requerimiento)"
+        );
+        assertContains(
+                "reclamo unico",
+                migration,
+                "ux_compras_requerimiento_reclamo_id_reclamo"
+        );
+        assertContains(
+                "reserva exige cotizado",
+                migration,
+                "v_estado_requerimiento <> 3"
+        );
+        assertContains(
+                "reserva exige afiliado",
+                migration,
+                "v_afiliado_int IS NULL"
+        );
+        assertNotContains(
+                "sin transicion estado RP",
+                actionCompra,
+                "ESTADO_RECLAMO_RP"
+        );
     }
 
     private static String leer(String path) throws Exception {
