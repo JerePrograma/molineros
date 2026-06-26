@@ -592,30 +592,53 @@
     }
 
     function <portlet:namespace />serializarDetallesCompras() {
-        var form = document.getElementById('<portlet:namespace />fmCompras');
+        var form =
+                document.getElementById(
+                        '<portlet:namespace />fmCompras'
+                );
 
         if (!form) {
-            alert('No se encontró el formulario principal de Compras.');
+            alert(
+                    'No se encontró el formulario principal de Compras.'
+            );
+
             return false;
         }
 
         <portlet:namespace />limpiarPayloadDetallesCompra();
 
         if (<portlet:namespace />detallesCompra.length <= 0) {
-            alert('Debe cargar al menos un detalle antes de guardar el requerimiento.');
+            alert(
+                    'Debe cargar al menos un detalle '
+                            + 'antes de guardar el requerimiento.'
+            );
+
             return false;
         }
 
+        /*
+         * Validación previa de artículos duplicados.
+         */
         var articulosSerializados = {};
 
-        for (var d = 0; d < <portlet:namespace />detallesCompra.length; d++) {
-            var detalleValidacion = <portlet:namespace />detallesCompra[d];
+        for (
+            var d = 0;
+            d < <portlet:namespace />detallesCompra.length;
+            d++
+        ) {
+            var detalleValidacion =
+                    <portlet:namespace />detallesCompra[d];
 
             if (detalleValidacion == null) {
                 continue;
             }
 
-            var idArticuloValidacion = jQuery.trim(detalleValidacion.idArticulo);
+            var idArticuloValidacion =
+                    jQuery.trim(
+                            <portlet:namespace />detalleValue(
+                                    detalleValidacion.idArticulo
+                            )
+                    );
 
             if (idArticuloValidacion == '') {
                 continue;
@@ -623,9 +646,10 @@
 
             if (articulosSerializados[idArticuloValidacion]) {
                 alert(
-                    'Detalle #' + (d + 1) +
-                    ': el artículo ya fue cargado en otro detalle. ' +
-                    'Edite la fila existente en lugar de duplicarlo.'
+                        'Detalle #' + (d + 1)
+                                + ': el artículo ya fue cargado '
+                                + 'en otro detalle. Edite la fila '
+                                + 'existente en lugar de duplicarlo.'
                 );
 
                 return false;
@@ -634,14 +658,26 @@
             articulosSerializados[idArticuloValidacion] = true;
         }
 
-        if (!<portlet:namespace />crearHiddenDetalle('detalle_count', <portlet:namespace />detallesCompra.length)) {
+        /*
+         * Datos generales del payload de detalles.
+         */
+        if (!<portlet:namespace />crearHiddenDetalle(
+                'detalle_count',
+                <portlet:namespace />detallesCompra.length
+        )) {
             return false;
         }
 
-        if (!<portlet:namespace />crearHiddenDetalle('detalle_deleted_ids', <portlet:namespace />detalleDeletedIds.join(','))) {
+        if (!<portlet:namespace />crearHiddenDetalle(
+                'detalle_deleted_ids',
+                <portlet:namespace />detalleDeletedIds.join(',')
+        )) {
             return false;
         }
 
+        /*
+         * Prestador adjudicado global.
+         */
         if (typeof <portlet:namespace />capturarPrestadorAdjudicado
                 == 'function') {
 
@@ -656,10 +692,20 @@
                 );
 
         if (idPrestadorAdjudicado != ''
-                && (!/^[0-9]+$/.test(idPrestadorAdjudicado)
-                        || parseInt(idPrestadorAdjudicado, 10) <= 0)) {
+                && (
+                        !/^[0-9]+$/.test(
+                                idPrestadorAdjudicado
+                        )
+                        || parseInt(
+                                idPrestadorAdjudicado,
+                                10
+                        ) <= 0
+                )) {
 
-            alert('Debe seleccionar un prestador adjudicado válido.');
+            alert(
+                    'Debe seleccionar un prestador adjudicado válido.'
+            );
+
             return false;
         }
 
@@ -670,7 +716,27 @@
             return false;
         }
 
-        for (var i = 0; i < <portlet:namespace />detallesCompra.length; i++) {
+        /*
+         * Serialización individual de cada detalle.
+         */
+        for (
+            var i = 0;
+            i < <portlet:namespace />detallesCompra.length;
+            i++
+        ) {
+            var detalle =
+                    <portlet:namespace />detallesCompra[i];
+
+            if (!detalle) {
+                alert(
+                        'Detalle #' + (i + 1)
+                                + ': no se encontró la información '
+                                + 'del detalle en memoria.'
+                );
+
+                return false;
+            }
+
             <% if (puedeCotizarDetalle) { %>
                 if (typeof <portlet:namespace />capturarCotizacionDetalle
                         != 'function') {
@@ -694,17 +760,44 @@
                 }
             <% } %>
 
-            var detalle = <portlet:namespace />detallesCompra[i];
-            var prefix = 'detalle_' + i + '_';
+            var prefix =
+                    'detalle_' + i + '_';
 
-            var idArticulo = jQuery.trim(detalle.idArticulo);
-            var cantidad = jQuery.trim(detalle.cantidad);
+            var idDetalle =
+                    jQuery.trim(
+                            <portlet:namespace />detalleValue(
+                                    detalle.id
+                            )
+                    );
+
+            var idArticulo =
+                    jQuery.trim(
+                            <portlet:namespace />detalleValue(
+                                    detalle.idArticulo
+                            )
+                    );
+
+            var cantidad =
+                    jQuery.trim(
+                            <portlet:namespace />detalleValue(
+                                    detalle.cantidad
+                            )
+                    );
+
+            var observaciones =
+                    <portlet:namespace />detalleValue(
+                            detalle.observaciones
+                    );
 
             if (idArticulo == ''
                     || !/^[0-9]+$/.test(idArticulo)
                     || parseInt(idArticulo, 10) <= 0) {
 
-                alert('Detalle #' + (i + 1) + ': debe seleccionar un artículo.');
+                alert(
+                        'Detalle #' + (i + 1)
+                                + ': debe seleccionar un artículo.'
+                );
+
                 return false;
             }
 
@@ -712,77 +805,88 @@
                     || !/^[0-9]+$/.test(cantidad)
                     || parseInt(cantidad, 10) <= 0) {
 
-                alert('Detalle #' + (i + 1) + ': la cantidad debe ser entera y mayor a cero.');
+                alert(
+                        'Detalle #' + (i + 1)
+                                + ': la cantidad debe ser entera '
+                                + 'y mayor a cero.'
+                );
+
                 return false;
             }
 
-            if (!<portlet:namespace />crearHiddenDetalle(prefix + 'id', detalle.id)) {
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'id',
+                    idDetalle
+            )) {
                 return false;
             }
 
-            if (!<portlet:namespace />crearHiddenDetalle(prefix + 'id_articulo', detalle.idArticulo)) {
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'id_articulo',
+                    idArticulo
+            )) {
                 return false;
             }
 
-            if (!<portlet:namespace />crearHiddenDetalle(prefix + 'cantidad', detalle.cantidad)) {
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'cantidad',
+                    cantidad
+            )) {
                 return false;
             }
 
-            if (!<portlet:namespace />crearHiddenDetalle(prefix + 'observaciones', detalle.observaciones)) {
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'observaciones',
+                    observaciones
+            )) {
                 return false;
             }
 
-            var precioUnitario = '';
+            /*
+             * capturarCotizacionDetalle() ya actualizó
+             * detalle.precioUnitario desde el input visible.
+             *
+             * En estados sin edición de cotización se conserva
+             * el valor cargado originalmente en el objeto.
+             */
+            var precioUnitario =
+                    jQuery.trim(
+                            <portlet:namespace />detalleValue(
+                                    detalle.precioUnitario
+                            )
+                    );
 
-            <% if (puedeCotizarDetalle) { %>
-                var precioInputVisible =
-                        document.getElementById(
-                                '<portlet:namespace />detalle_precio_unitario_'
-                                        + i
+            if (precioUnitario != '') {
+                var precioParseado =
+                        <portlet:namespace />parseImporteDetalle(
+                                precioUnitario
                         );
 
-                if (!precioInputVisible) {
+                if (precioParseado == null
+                        || isNaN(precioParseado)
+                        || precioParseado < 0) {
+
                     alert(
                             'Detalle #' + (i + 1)
-                                    + ': desapareció el campo '
-                                    + 'de precio unitario.'
+                                    + ': el precio unitario debe ser '
+                                    + 'mayor o igual que cero.'
                     );
 
                     return false;
                 }
-
-                precioUnitario =
-                        jQuery.trim(
-                                precioInputVisible.value
-                        );
-
-                /*
-                 * La caché se actualiza desde el valor real del DOM.
-                 */
-                detalle.precioUnitario =
-                        precioUnitario;
-            <% } else { %>
-                precioUnitario =
-                        jQuery.trim(
-                                <portlet:namespace />detalleValue(
-                                        detalle.precioUnitario
-                                )
-                        );
-            <% } %>
-
-            if (precioUnitario != '') {
-                var precioParseado = <portlet:namespace />parseImporteDetalle(precioUnitario);
-
-                if (precioParseado == null || isNaN(precioParseado) || precioParseado < 0) {
-                    alert('Detalle #' + (i + 1) + ': el precio unitario debe ser mayor o igual que cero.');
-                    return false;
-                }
             }
 
-            if (!<portlet:namespace />crearHiddenDetalle(prefix + 'precio_unitario_estimado', precioUnitario)) {
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'precio_unitario_estimado',
+                    precioUnitario
+            )) {
                 return false;
             }
 
+            /*
+             * Verificar que el hidden fue creado dentro del formulario
+             * con el mismo valor capturado desde el input visible.
+             */
             var nombrePrecio =
                     '<portlet:namespace />'
                             + prefix
@@ -797,35 +901,32 @@
                                 + ': no se pudo serializar '
                                 + 'el precio unitario.'
                 );
+
                 return false;
             }
 
             if (String(hiddenPrecio.value)
-                    != String(
-                            jQuery.trim(
-                                    precioInputVisible.value
-                            )
-                    )) {
+                    != String(precioUnitario)) {
 
                 alert(
                         'Detalle #' + (i + 1)
                                 + ': el precio enviado no coincide '
-                                + 'con el campo visible.'
+                                + 'con el precio capturado.'
                 );
 
                 return false;
             }
 
+            /*
+             * Replicar el adjudicado global en cada detalle para
+             * mantener compatibilidad con el contrato persistente.
+             */
             detalle.idPrestador =
                     idPrestadorAdjudicado;
+
             detalle.prestador =
                     <portlet:namespace />prestadorAdjudicado;
 
-            /*
-             * Compatibilidad con el contrato persistente actual:
-             * se continúa enviando el ID por detalle, pero siempre replicando
-             * el único adjudicado global.
-             */
             if (!<portlet:namespace />crearHiddenDetalle(
                     prefix + 'id_prestador',
                     idPrestadorAdjudicado

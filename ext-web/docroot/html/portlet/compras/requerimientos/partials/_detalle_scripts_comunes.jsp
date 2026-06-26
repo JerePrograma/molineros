@@ -229,6 +229,14 @@
                 <portlet:namespace />detallesCompra[index];
 
         if (!detalle) {
+            if (window.console && window.console.error) {
+                window.console.error(
+                        '[COMPRAS-COTIZACION] No existe el detalle '
+                                + 'en el índice '
+                                + index
+                );
+            }
+
             return false;
         }
 
@@ -236,44 +244,116 @@
                 '<portlet:namespace />detalle_precio_unitario_'
                         + index;
 
+        var precioCellId =
+                '<portlet:namespace />detalle_precio_cell_'
+                        + index;
+
+        /*
+         * Búsqueda principal por el ID esperado.
+         */
         var precioInput =
                 document.getElementById(
                         precioInputId
                 );
 
         /*
-         * Durante una cotización el input debe existir exactamente
-         * en la fila renderizada. No continuar silenciosamente.
+         * Compatibilidad con inputs generados por jQuery legacy:
+         * el campo puede estar visible dentro de la celda aunque
+         * el constructor no haya aplicado correctamente su ID.
          */
+        if (!precioInput) {
+            var precioCell =
+                    document.getElementById(
+                            precioCellId
+                    );
+
+            if (precioCell) {
+                var inputs =
+                        precioCell.getElementsByTagName(
+                                'input'
+                        );
+
+                /*
+                 * La celda debe contener un único input de precio.
+                 */
+                if (inputs != null && inputs.length == 1) {
+                    precioInput =
+                            inputs[0];
+
+                    /*
+                     * Reparar el ID para que las próximas capturas
+                     * puedan encontrarlo directamente.
+                     */
+                    precioInput.id =
+                            precioInputId;
+
+                    precioInput.setAttribute(
+                            'data-detalle-index',
+                            String(index)
+                    );
+
+                    precioInput.setAttribute(
+                            'data-detalle-id',
+                            detalle.id == null
+                                    ? ''
+                                    : String(detalle.id)
+                    );
+                }
+            }
+        }
+
         if (!precioInput) {
             if (window.console && window.console.error) {
                 window.console.error(
                         '[COMPRAS-COTIZACION] No se encontró el input '
                                 + precioInputId
+                                + ' ni un input recuperable dentro de '
+                                + precioCellId
                 );
             }
 
             return false;
         }
 
-        detalle.precioUnitario =
+        var precioUnitario =
                 jQuery.trim(
-                        precioInput.value
+                        precioInput.value == null
+                                ? ''
+                                : String(precioInput.value)
                 );
 
-        <portlet:namespace />capturarPrestadorAdjudicado();
+        detalle.precioUnitario =
+                precioUnitario;
+
+        if (typeof <portlet:namespace />capturarPrestadorAdjudicado
+                == 'function') {
+
+            <portlet:namespace />capturarPrestadorAdjudicado();
+        }
 
         detalle.precioTotal =
                 <portlet:namespace />calcularTotalDetalle(
                         index
                 );
 
-        jQuery(
-                '#<portlet:namespace />detalle_total_estimado_'
-                        + index
-        ).text(
-                detalle.precioTotal
-        );
+        var totalElement =
+                document.getElementById(
+                        '<portlet:namespace />detalle_total_estimado_'
+                                + index
+                );
+
+        if (totalElement) {
+            if (typeof totalElement.textContent != 'undefined') {
+                totalElement.textContent =
+                        detalle.precioTotal;
+            } else {
+                /*
+                 * Compatibilidad con navegadores legacy.
+                 */
+                totalElement.innerText =
+                        detalle.precioTotal;
+            }
+        }
 
         return true;
     }
