@@ -82,7 +82,7 @@
 					<% for (EspecialidadPrestador espe : especialidadPrestador) { %>
 						<option
 							<%-- <%= espe != null && espe.getIdEspecialidad() != 0 && espe.getId() == espe.getId() ? "selected" : ""  %> --%>
-							value="<%= espe.getIdEcspecialidad() %>"><%=espe.getDescripcion()%></option>
+							value="<%= espe.getIdEspecialidad() %>"><%=espe.getDescripcion()%></option>
 						<% } %>
 				</select></td>
 
