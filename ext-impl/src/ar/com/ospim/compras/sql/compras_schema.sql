@@ -1085,7 +1085,7 @@ LANGUAGE plpgsql
 STABLE;
 
 
-CREATE FUNCTION compras.get_articulo(
+CREATE FUNCTION compras.get_articulo_cursor(
     p_id_articulo INTEGER
 )
     RETURNS TABLE (
@@ -1929,7 +1929,7 @@ END IF;
 
     /*
      * Idempotencia:
-     * otro proceso pudo confirmar el envío y cambiar el estado.
+     * otro proceso pudo confirmar el envï¿½o y cambiar el estado.
      */
     IF v_estado = 2 THEN
         RETURN 2;
@@ -1941,7 +1941,7 @@ END IF;
 END IF;
 
     /*
-     * No se cambia el estado si no existe al menos un envío
+     * No se cambia el estado si no existe al menos un envï¿½o
      * efectivamente persistido como ENVIADO.
      */
     IF NOT EXISTS (
@@ -2381,7 +2381,7 @@ WHERE d.id_requerimiento =
   AND d.baja_fecha IS NULL;
 
 /*
- * Si falta algún dato, se guarda el avance y continúa A COTIZAR.
+ * Si falta algï¿½n dato, se guarda el avance y continï¿½a A COTIZAR.
  */
 IF EXISTS (
         SELECT 1
@@ -2926,12 +2926,12 @@ v_id INTEGER;
 BEGIN
     IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
         RAISE EXCEPTION
-            'El requerimiento informado no es válido.';
+            'El requerimiento informado no es vï¿½lido.';
 END IF;
 
     IF p_id_prestador IS NULL OR p_id_prestador <= 0 THEN
         RAISE EXCEPTION
-            'El prestador informado no es válido.';
+            'El prestador informado no es vï¿½lido.';
 END IF;
 
     IF p_dl_group_id IS NULL OR p_dl_group_id <= 0
@@ -2939,11 +2939,11 @@ END IF;
        OR p_dl_file_entry_id IS NULL OR p_dl_file_entry_id <= 0 THEN
 
         RAISE EXCEPTION
-            'La identidad del documento de presupuesto no es válida.';
+            'La identidad del documento de presupuesto no es vï¿½lida.';
 END IF;
 
     /*
-     * La autorización se vuelve a comprobar en base de datos.
+     * La autorizaciï¿½n se vuelve a comprobar en base de datos.
      * No alcanza con que el navegador haya enviado un id_prestador.
      */
     IF NOT EXISTS (
