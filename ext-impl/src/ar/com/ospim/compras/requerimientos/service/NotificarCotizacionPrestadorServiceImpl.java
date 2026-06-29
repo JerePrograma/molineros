@@ -309,16 +309,52 @@ public class NotificarCotizacionPrestadorServiceImpl {
         }
 
         /*
-         * El destinatario temporal cambia únicamente el destino físico
-         * del mensaje. La validez de negocio continúa dependiendo del
-         * email real reservado para el prestador.
+         * En modo temporal se utiliza exclusivamente el destinatario
+         * fijo de QA. Un email real inexistente o inválido se registra
+         * en el log, pero no bloquea la prueba.
+         *
+         * Fuera del modo temporal, el email real reservado continúa
+         * siendo obligatorio.
          */
         String emailReservadoNormalizado =
                 normalizarEmail(
                         emailReservado
                 );
 
-        if (!esEmailValido(
+        String emailDestino =
+                resolverEmailDestino(
+                        emailReservadoNormalizado
+                );
+
+        if (USAR_EMAIL_DESTINO_TEMPORAL) {
+
+            if (!esEmailValido(
+                    emailReservadoNormalizado
+            )) {
+                _log.warn(
+                        "El email real reservado del prestador "
+                                + "es inválido, pero el envío continuará "
+                                + "redirigido al destinatario temporal. "
+                                + "idPrestador="
+                                + idPrestador
+                                + ", idRequerimiento="
+                                + idRequerimiento
+                );
+            }
+
+            if (_log.isInfoEnabled()) {
+                _log.info(
+                        "Modo temporal de notificación activo. "
+                                + "La cotización será redirigida "
+                                + "al destinatario fijo de QA. "
+                                + "idPrestador="
+                                + idPrestador
+                                + ", idRequerimiento="
+                                + idRequerimiento
+                );
+            }
+
+        } else if (!esEmailValido(
                 emailReservadoNormalizado
         )) {
             String errorEmail =
@@ -343,34 +379,19 @@ public class NotificarCotizacionPrestadorServiceImpl {
             return;
         }
 
-        String emailDestino =
-                resolverEmailDestino(
-                        emailReservadoNormalizado
-                );
-
-        if (USAR_EMAIL_DESTINO_TEMPORAL
-                && _log.isInfoEnabled()) {
-
-            _log.info(
-                    "Modo temporal de notificación activo. "
-                            + "La cotización será redirigida "
-                            + "al destinatario fijo de QA. "
-                            + "idPrestador="
-                            + idPrestador
-                            + ", idRequerimiento="
-                            + idRequerimiento
-            );
-        }
-
         if (!esEmailValido(
                 emailDestino
         )) {
             String errorEmail =
-                    "Email destino temporal inválido.";
+                    USAR_EMAIL_DESTINO_TEMPORAL
+                            ? "Email destino temporal inválido."
+                            : "Email destino del prestador inválido.";
 
             _log.warn(
-                    "Email temporal de cotización inválido. "
-                            + "idPrestador="
+                    "Email destino de cotización inválido. "
+                            + "modoTemporal="
+                            + USAR_EMAIL_DESTINO_TEMPORAL
+                            + ", idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
                             + idRequerimiento
@@ -384,53 +405,6 @@ public class NotificarCotizacionPrestadorServiceImpl {
             );
 
             resultado.incrementarEmailsInvalidos();
-            return;
-        }
-
-        try {
-            String asunto =
-                    construirAsunto(
-                            requerimiento
-                    );
-
-            String cuerpo =
-                    construirCuerpo(
-                            requerimiento,
-                            prestador
-                    );
-
-            enviarMail(
-                    companyId,
-                    emailDestino,
-                    asunto,
-                    cuerpo,
-                    pedidoPresupuestoPdf,
-                    nombrePedidoPresupuestoPdf
-            );
-
-        } catch (Exception e) {
-            String detalleError =
-                    construirDetalleError(
-                            e
-                    );
-
-            finalizarConControl(
-                    idRequerimiento,
-                    idPrestador,
-                    WebKeysCompras.ENVIO_ERROR,
-                    detalleError
-            );
-
-            _log.error(
-                    "Falló el envío de cotización. "
-                            + "idPrestador="
-                            + idPrestador
-                            + ", idRequerimiento="
-                            + idRequerimiento,
-                    e
-            );
-
-            resultado.incrementarErrores();
             return;
         }
 

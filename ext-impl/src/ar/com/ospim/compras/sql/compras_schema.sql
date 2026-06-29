@@ -470,17 +470,17 @@ STABLE;
 CREATE FUNCTION compras.estado_requerimiento_descripcion(
     p_estado INTEGER
 )
-RETURNS VARCHAR
+    RETURNS VARCHAR
 AS $func$
 BEGIN
-    RETURN CASE p_estado
-        WHEN 1 THEN 'PENDIENTE'
-        WHEN 2 THEN 'A COTIZAR'
-        WHEN 3 THEN 'COTIZADO'
-        WHEN 4 THEN 'RECLAMO (RP)'
-        WHEN 5 THEN 'ORDEN DE COMPRA'
-        WHEN 99 THEN 'ANULADO'
-        ELSE 'DESCONOCIDO'
+RETURN CASE p_estado
+           WHEN 1 THEN 'PENDIENTE'
+           WHEN 2 THEN 'A COTIZAR'
+           WHEN 3 THEN 'COTIZADO'
+           WHEN 4 THEN 'RECLAMO (RP)'
+           WHEN 5 THEN 'ORDEN DE COMPRA'
+           WHEN 99 THEN 'ANULADO'
+           ELSE 'DESCONOCIDO'
     END;
 END;
 $func$
@@ -489,23 +489,23 @@ IMMUTABLE;
 
 
 CREATE FUNCTION compras.listar_estados_requerimiento()
-RETURNS TABLE (
-    id INTEGER,
-    descripcion VARCHAR
-)
-AS $func$
+    RETURNS TABLE (
+                      id INTEGER,
+                      descripcion VARCHAR
+                  )
+    AS $func$
 BEGIN
-    RETURN QUERY
-    SELECT *
-      FROM (
-        VALUES
-            (1, 'PENDIENTE'::VARCHAR),
-            (2, 'A COTIZAR'::VARCHAR),
-            (3, 'COTIZADO'::VARCHAR),
-            (4, 'RECLAMO (RP)'::VARCHAR),
-            (5, 'ORDEN DE COMPRA'::VARCHAR),
-            (99, 'ANULADO'::VARCHAR)
-      ) estados(id, descripcion);
+RETURN QUERY
+SELECT *
+FROM (
+         VALUES
+             (1, 'PENDIENTE'::VARCHAR),
+             (2, 'A COTIZAR'::VARCHAR),
+             (3, 'COTIZADO'::VARCHAR),
+             (4, 'RECLAMO (RP)'::VARCHAR),
+             (5, 'ORDEN DE COMPRA'::VARCHAR),
+             (99, 'ANULADO'::VARCHAR)
+     ) estados(id, descripcion);
 END;
 $func$
 LANGUAGE plpgsql
@@ -829,7 +829,7 @@ END IF;
         IF NEW.precio_unitario_estimado < 0 THEN
             RAISE EXCEPTION
                 'El precio unitario estimado no puede ser negativo.';
-        END IF;
+END IF;
 
         IF NEW.precio_unitario_estimado IS NULL THEN
             NEW.precio_total_estimado := NULL;
@@ -1084,37 +1084,38 @@ $func$
 LANGUAGE plpgsql
 STABLE;
 
-
 CREATE FUNCTION compras.get_articulo_cursor(
     p_id_articulo INTEGER
 )
-    RETURNS TABLE (
-                      id INTEGER,
-                      id_sector INTEGER,
-                      sector_descripcion VARCHAR,
-                      descripcion VARCHAR
-                  )
-    AS $func$
+    RETURNS REFCURSOR
+AS $func$
+DECLARE
+v_cursor REFCURSOR;
 BEGIN
-RETURN QUERY
+OPEN v_cursor FOR
+
 SELECT
-    a.id_articulo,
+    a.id_articulo AS id,
     a.id_sector,
-    s.descripcion,
+    s.descripcion AS sector_descripcion,
     a.descripcion
+
 FROM compras.articulo a
+
          JOIN compras.sector_requerimiento s
               ON s.id_sector = a.id_sector
+
 WHERE a.id_articulo = p_id_articulo
   AND a.activo = TRUE
   AND a.baja_fecha IS NULL
   AND s.activo = TRUE
   AND s.baja_fecha IS NULL;
+
+RETURN v_cursor;
 END;
 $func$
 LANGUAGE plpgsql
 STABLE;
-
 
 CREATE FUNCTION compras.guardar_articulo(
     p_id INTEGER,
@@ -3106,36 +3107,36 @@ LANGUAGE plpgsql;
 
 DO $verificacion$
 DECLARE
-    v_sectores INTEGER;
+v_sectores INTEGER;
     v_estados TEXT;
     v_guardar OID;
     v_pdf OID;
 BEGIN
-    SELECT count(*)
-      INTO v_sectores
-      FROM compras.sector_requerimiento
-     WHERE activo = TRUE
-       AND baja_fecha IS NULL;
+SELECT count(*)
+INTO v_sectores
+FROM compras.sector_requerimiento
+WHERE activo = TRUE
+  AND baja_fecha IS NULL;
 
-    IF v_sectores <> 8 THEN
+IF v_sectores <> 8 THEN
         RAISE EXCEPTION
             'La carga inicial de sectores es invalida. Total: %.',
             v_sectores;
-    END IF;
+END IF;
 
-    SELECT string_agg(
+SELECT string_agg(
                e.id::TEXT || ':' || e.descripcion,
                ',' ORDER BY e.id
-           )
-      INTO v_estados
-      FROM compras.listar_estados_requerimiento() e;
+       )
+INTO v_estados
+FROM compras.listar_estados_requerimiento() e;
 
-    IF v_estados <>
+IF v_estados <>
        '1:PENDIENTE,2:A COTIZAR,3:COTIZADO,4:RECLAMO (RP),5:ORDEN DE COMPRA,99:ANULADO' THEN
         RAISE EXCEPTION
             'Catalogo de estados inesperado: %.',
             v_estados;
-    END IF;
+END IF;
 
     IF EXISTS (
         SELECT 1
@@ -3152,17 +3153,17 @@ BEGIN
     ) THEN
         RAISE EXCEPTION
             'El esquema compras contiene claves foraneas hacia otros esquemas.';
-    END IF;
+END IF;
 
     IF to_regclass('public.prestador') IS NULL THEN
         RAISE EXCEPTION
             'No existe la dependencia de solo lectura public.prestador.';
-    END IF;
+END IF;
 
     IF to_regprocedure('trae_tipos_prestadores()') IS NULL THEN
         RAISE EXCEPTION
             'No existe la dependencia de solo lectura trae_tipos_prestadores().';
-    END IF;
+END IF;
 
     v_guardar := to_regprocedure(
         'compras.guardar_requerimiento(integer, character varying, integer, integer, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, integer, integer, integer, character varying, boolean, boolean, text, character varying)'
@@ -3171,16 +3172,16 @@ BEGIN
     IF v_guardar IS NULL THEN
         RAISE EXCEPTION
             'Falta guardar_requerimiento con 22 argumentos canonicos.';
-    END IF;
+END IF;
 
     IF (
-        SELECT p.pronargs
-          FROM pg_proc p
-         WHERE p.oid = v_guardar
+SELECT p.pronargs
+FROM pg_proc p
+WHERE p.oid = v_guardar
     ) <> 22 THEN
         RAISE EXCEPTION
             'guardar_requerimiento no tiene 22 argumentos.';
-    END IF;
+END IF;
 
     v_pdf := to_regprocedure(
         'compras.get_requerimiento_compra_pdf(integer)'
@@ -3189,7 +3190,7 @@ BEGIN
     IF v_pdf IS NULL THEN
         RAISE EXCEPTION
             'Falta get_requerimiento_compra_pdf(integer).';
-    END IF;
+END IF;
 
     IF NOT EXISTS (
         SELECT 1
@@ -3201,7 +3202,7 @@ BEGIN
     ) THEN
         RAISE EXCEPTION
             'Contrato PDF incompatible.';
-    END IF;
+END IF;
 
     PERFORM 1
       FROM compras.listar_tipos_prestador_sector(1)
@@ -3220,7 +3221,7 @@ $verificacion$;
 
 DO $smoke$
 DECLARE
-    v_id INTEGER;
+v_id INTEGER;
     v_articulo INTEGER;
     v_detalle INTEGER;
     v_pdf_id_ospim INTEGER;
@@ -3254,22 +3255,22 @@ BEGIN
     );
 
     IF (
-        SELECT r.afiliado_id_ospim
-          FROM compras.requerimiento r
-         WHERE r.id_requerimiento = v_id
+SELECT r.afiliado_id_ospim
+FROM compras.requerimiento r
+WHERE r.id_requerimiento = v_id
     ) IS DISTINCT FROM 123456 THEN
-        RAISE EXCEPTION
-            'SMOKE: afiliado_id_ospim no persistio.';
-    END IF;
+    RAISE EXCEPTION
+    'SMOKE: afiliado_id_ospim no persistio.';
+END IF;
 
     IF (
-        SELECT r.surge
-          FROM compras.requerimiento r
-         WHERE r.id_requerimiento = v_id
+SELECT r.surge
+FROM compras.requerimiento r
+WHERE r.id_requerimiento = v_id
     ) IS DISTINCT FROM TRUE THEN
-        RAISE EXCEPTION
-            'SMOKE: surge no persistio en el alta.';
-    END IF;
+    RAISE EXCEPTION
+    'SMOKE: surge no persistio en el alta.';
+END IF;
 
     v_id := compras.guardar_requerimiento(
         v_id,
@@ -3296,35 +3297,35 @@ BEGIN
         'smoke'
     );
 
-    SELECT r.surge
-      INTO v_surge
-      FROM compras.requerimiento r
-     WHERE r.id_requerimiento = v_id;
+SELECT r.surge
+INTO v_surge
+FROM compras.requerimiento r
+WHERE r.id_requerimiento = v_id;
 
-    IF v_surge IS DISTINCT FROM FALSE THEN
+IF v_surge IS DISTINCT FROM FALSE THEN
         RAISE EXCEPTION
             'SMOKE: surge no actualizo de TRUE a FALSE.';
-    END IF;
+END IF;
 
-    SELECT
-        pdf.afiliado_id_ospim,
-        pdf.afiliado_documento
-      INTO
-        v_pdf_id_ospim,
-        v_pdf_documento
-      FROM compras.get_requerimiento_compra_pdf(v_id) pdf
-     LIMIT 1;
+SELECT
+    pdf.afiliado_id_ospim,
+    pdf.afiliado_documento
+INTO
+    v_pdf_id_ospim,
+    v_pdf_documento
+FROM compras.get_requerimiento_compra_pdf(v_id) pdf
+    LIMIT 1;
 
-    IF v_pdf_id_ospim IS DISTINCT FROM 123456 THEN
+IF v_pdf_id_ospim IS DISTINCT FROM 123456 THEN
         RAISE EXCEPTION
             'SMOKE: PDF no expone afiliado_id_ospim.';
-    END IF;
+END IF;
 
     IF v_pdf_documento IS DISTINCT FROM 'DNI 11222333' THEN
         RAISE EXCEPTION
             'SMOKE: PDF no conserva afiliado_documento. Valor=%.',
             v_pdf_documento;
-    END IF;
+END IF;
 
     v_articulo := compras.guardar_articulo(
         NULL,
@@ -3341,26 +3342,26 @@ BEGIN
         'smoke'
     );
 
-    INSERT INTO compras.requerimiento_cotizacion_prestador (
-        id_requerimiento,
-        id_prestador,
-        estado_envio,
-        intentos,
-        email_destino,
-        fecha_envio,
-        alta_usr
-    )
-    VALUES (
-        v_id,
-        9001,
-        'ENVIADO',
-        1,
-        'prestador@example.com',
-        now(),
-        'smoke'
-    );
+INSERT INTO compras.requerimiento_cotizacion_prestador (
+    id_requerimiento,
+    id_prestador,
+    estado_envio,
+    intentos,
+    email_destino,
+    fecha_envio,
+    alta_usr
+)
+VALUES (
+           v_id,
+           9001,
+           'ENVIADO',
+           1,
+           'prestador@example.com',
+           now(),
+           'smoke'
+       );
 
-    BEGIN
+BEGIN
         PERFORM compras.cambiar_estado_requerimiento(
             v_id,
             1,
@@ -3369,11 +3370,11 @@ BEGIN
 
         RAISE EXCEPTION
             'SMOKE: se acepto transicion al mismo estado.';
-    EXCEPTION
+EXCEPTION
         WHEN OTHERS THEN
             IF SQLERRM = 'SMOKE: se acepto transicion al mismo estado.' THEN
                 RAISE;
-            END IF;
+END IF;
 
             IF SQLSTATE <> 'P0001'
                OR SQLERRM NOT LIKE
@@ -3382,8 +3383,8 @@ BEGIN
                     'SMOKE: rechazo inesperado del mismo estado. SQLSTATE=%, SQLERRM=%.',
                     SQLSTATE,
                     SQLERRM;
-            END IF;
-    END;
+END IF;
+END;
 
     PERFORM compras.cambiar_estado_requerimiento(
         v_id,
@@ -3391,7 +3392,7 @@ BEGIN
         'smoke'
     );
 
-    BEGIN
+BEGIN
         PERFORM compras.cambiar_estado_requerimiento(
             v_id,
             1,
@@ -3400,11 +3401,11 @@ BEGIN
 
         RAISE EXCEPTION
             'SMOKE: se acepto transicion 2 -> 1.';
-    EXCEPTION
+EXCEPTION
         WHEN OTHERS THEN
             IF SQLERRM = 'SMOKE: se acepto transicion 2 -> 1.' THEN
                 RAISE;
-            END IF;
+END IF;
 
             IF SQLSTATE <> 'P0001'
                OR SQLERRM <> 'Transicion de estado invalida: 2 -> 1.' THEN
@@ -3412,10 +3413,10 @@ BEGIN
                     'SMOKE: rechazo inesperado 2 -> 1. SQLSTATE=%, SQLERRM=%.',
                     SQLSTATE,
                     SQLERRM;
-            END IF;
-    END;
+END IF;
+END;
 
-    BEGIN
+BEGIN
         PERFORM compras.cambiar_estado_requerimiento(
             v_id,
             4,
@@ -3424,11 +3425,11 @@ BEGIN
 
         RAISE EXCEPTION
             'SMOKE: se acepto transicion 2 -> 4.';
-    EXCEPTION
+EXCEPTION
         WHEN OTHERS THEN
             IF SQLERRM = 'SMOKE: se acepto transicion 2 -> 4.' THEN
                 RAISE;
-            END IF;
+END IF;
 
             IF SQLSTATE <> 'P0001'
                OR SQLERRM <> 'Transicion de estado invalida: 2 -> 4.' THEN
@@ -3436,10 +3437,10 @@ BEGIN
                     'SMOKE: rechazo inesperado 2 -> 4. SQLSTATE=%, SQLERRM=%.',
                     SQLSTATE,
                     SQLERRM;
-            END IF;
-    END;
+END IF;
+END;
 
-    BEGIN
+BEGIN
         PERFORM compras.cambiar_estado_requerimiento(
             v_id,
             5,
@@ -3448,11 +3449,11 @@ BEGIN
 
         RAISE EXCEPTION
             'SMOKE: se acepto transicion 2 -> 5.';
-    EXCEPTION
+EXCEPTION
         WHEN OTHERS THEN
             IF SQLERRM = 'SMOKE: se acepto transicion 2 -> 5.' THEN
                 RAISE;
-            END IF;
+END IF;
 
             IF SQLSTATE <> 'P0001'
                OR SQLERRM <> 'Transicion de estado invalida: 2 -> 5.' THEN
@@ -3460,32 +3461,32 @@ BEGIN
                     'SMOKE: rechazo inesperado 2 -> 5. SQLSTATE=%, SQLERRM=%.',
                     SQLSTATE,
                     SQLERRM;
-            END IF;
-    END;
+END IF;
+END;
 
-    UPDATE compras.requerimiento_detalle
-       SET precio_unitario_estimado = 10.00,
-           id_prestador = 9001,
-           modi_usr = 'smoke'
-     WHERE id_detalle = v_detalle;
+UPDATE compras.requerimiento_detalle
+SET precio_unitario_estimado = 10.00,
+    id_prestador = 9001,
+    modi_usr = 'smoke'
+WHERE id_detalle = v_detalle;
 
-    PERFORM compras.cambiar_estado_requerimiento(
+PERFORM compras.cambiar_estado_requerimiento(
         v_id,
         3,
         'smoke'
     );
 
-    SELECT r.estado
-      INTO v_estado
-      FROM compras.requerimiento r
-     WHERE r.id_requerimiento = v_id;
+SELECT r.estado
+INTO v_estado
+FROM compras.requerimiento r
+WHERE r.id_requerimiento = v_id;
 
-    IF v_estado IS DISTINCT FROM 3 THEN
+IF v_estado IS DISTINCT FROM 3 THEN
         RAISE EXCEPTION
             'SMOKE: 2 -> 3 no dejo el requerimiento COTIZADO.';
-    END IF;
+END IF;
 
-    BEGIN
+BEGIN
         PERFORM compras.cambiar_estado_requerimiento(
             v_id,
             2,
@@ -3494,11 +3495,11 @@ BEGIN
 
         RAISE EXCEPTION
             'SMOKE: se acepto salida desde COTIZADO.';
-    EXCEPTION
+EXCEPTION
         WHEN OTHERS THEN
             IF SQLERRM = 'SMOKE: se acepto salida desde COTIZADO.' THEN
                 RAISE;
-            END IF;
+END IF;
 
             IF SQLSTATE <> 'P0001'
                OR SQLERRM <>
@@ -3507,22 +3508,22 @@ BEGIN
                     'SMOKE: rechazo inesperado desde COTIZADO. SQLSTATE=%, SQLERRM=%.',
                     SQLSTATE,
                     SQLERRM;
-            END IF;
-    END;
+END IF;
+END;
 
-    DELETE FROM compras.requerimiento_cotizacion_prestador
-     WHERE id_requerimiento = v_id;
+DELETE FROM compras.requerimiento_cotizacion_prestador
+WHERE id_requerimiento = v_id;
 
-    DELETE FROM compras.requerimiento_detalle
-     WHERE id_requerimiento = v_id;
+DELETE FROM compras.requerimiento_detalle
+WHERE id_requerimiento = v_id;
 
-    DELETE FROM compras.requerimiento
-     WHERE id_requerimiento = v_id;
+DELETE FROM compras.requerimiento
+WHERE id_requerimiento = v_id;
 
-    DELETE FROM compras.articulo
-     WHERE id_articulo = v_articulo;
+DELETE FROM compras.articulo
+WHERE id_articulo = v_articulo;
 
-    PERFORM setval(
+PERFORM setval(
         pg_get_serial_sequence(
             'compras.requerimiento',
             'id_requerimiento'
@@ -3562,9 +3563,9 @@ COMMIT;
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS compras.requerimiento_reclamo_prestacional (
-    id_requerimiento INTEGER NOT NULL,
-    id_reclamo_prestacional INTEGER,
-    estado VARCHAR(20) NOT NULL,
+                                                                          id_requerimiento INTEGER NOT NULL,
+                                                                          id_reclamo_prestacional INTEGER,
+                                                                          estado VARCHAR(20) NOT NULL,
     token_reserva VARCHAR(64),
     reserva_fecha TIMESTAMP WITHOUT TIME ZONE,
     ultimo_error TEXT,
@@ -3574,38 +3575,38 @@ CREATE TABLE IF NOT EXISTS compras.requerimiento_reclamo_prestacional (
     modi_usr VARCHAR(100),
 
     CONSTRAINT pk_compras_requerimiento_reclamo
-        PRIMARY KEY (id_requerimiento),
+    PRIMARY KEY (id_requerimiento),
 
     CONSTRAINT fk_compras_requerimiento_reclamo_req
-        FOREIGN KEY (id_requerimiento)
-        REFERENCES compras.requerimiento (id_requerimiento),
+    FOREIGN KEY (id_requerimiento)
+    REFERENCES compras.requerimiento (id_requerimiento),
 
     CONSTRAINT ck_compras_requerimiento_reclamo_estado
-        CHECK (estado IN ('RESERVADO', 'VINCULADO', 'ERROR')),
+    CHECK (estado IN ('RESERVADO', 'VINCULADO', 'ERROR')),
 
     CONSTRAINT ck_compras_requerimiento_reclamo_datos
-        CHECK (
-            (estado = 'RESERVADO'
-                AND id_reclamo_prestacional IS NULL
-                AND NULLIF(btrim(token_reserva), '') IS NOT NULL)
-            OR
-            (estado IN ('VINCULADO', 'ERROR')
-                AND id_reclamo_prestacional IS NOT NULL)
-        )
-);
+    CHECK (
+    (estado = 'RESERVADO'
+     AND id_reclamo_prestacional IS NULL
+     AND NULLIF(btrim(token_reserva), '') IS NOT NULL)
+    OR
+(estado IN ('VINCULADO', 'ERROR')
+    AND id_reclamo_prestacional IS NOT NULL)
+    )
+    );
 
 CREATE UNIQUE INDEX IF NOT EXISTS
     ux_compras_requerimiento_reclamo_id_reclamo
     ON compras.requerimiento_reclamo_prestacional (
-        id_reclamo_prestacional
+    id_reclamo_prestacional
     )
     WHERE id_reclamo_prestacional IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS
     ix_compras_requerimiento_reclamo_estado
     ON compras.requerimiento_reclamo_prestacional (
-        estado,
-        reserva_fecha
+    estado,
+    reserva_fecha
     );
 
 COMMENT ON TABLE compras.requerimiento_reclamo_prestacional IS
@@ -3631,20 +3632,20 @@ RETURNS TABLE (
 )
 AS $func$
 BEGIN
-    RETURN QUERY
-    SELECT
-        rr.id_requerimiento,
-        rr.id_reclamo_prestacional,
-        rr.estado,
-        rr.token_reserva,
-        rr.reserva_fecha,
-        rr.ultimo_error,
-        rr.alta_fecha,
-        rr.alta_usr,
-        rr.modi_fecha,
-        rr.modi_usr
-    FROM compras.requerimiento_reclamo_prestacional rr
-    WHERE rr.id_requerimiento = p_id_requerimiento;
+RETURN QUERY
+SELECT
+    rr.id_requerimiento,
+    rr.id_reclamo_prestacional,
+    rr.estado,
+    rr.token_reserva,
+    rr.reserva_fecha,
+    rr.ultimo_error,
+    rr.alta_fecha,
+    rr.alta_usr,
+    rr.modi_fecha,
+    rr.modi_usr
+FROM compras.requerimiento_reclamo_prestacional rr
+WHERE rr.id_requerimiento = p_id_requerimiento;
 END;
 $func$
 LANGUAGE plpgsql
@@ -3658,7 +3659,7 @@ CREATE OR REPLACE FUNCTION compras.reservar_reclamo_prestacional(
 RETURNS BOOLEAN
 AS $func$
 DECLARE
-    v_estado_requerimiento INTEGER;
+v_estado_requerimiento INTEGER;
     v_baja_fecha TIMESTAMP WITHOUT TIME ZONE;
     v_afiliado_cuil VARCHAR(20);
     v_afiliado_int INTEGER;
@@ -3670,95 +3671,95 @@ BEGIN
     IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
         RAISE EXCEPTION
             'Debe informar el requerimiento de compra.';
-    END IF;
+END IF;
 
     IF NULLIF(btrim(p_token_reserva), '') IS NULL THEN
         RAISE EXCEPTION
             'No se pudo validar el contexto de creacion del Reclamo Prestacional.';
-    END IF;
+END IF;
 
     v_usuario := compras.normalizar_usuario(p_usuario);
 
-    SELECT
-        r.estado,
-        r.baja_fecha,
-        r.afiliado_cuil_titular,
-        r.afiliado_int
-    INTO
-        v_estado_requerimiento,
-        v_baja_fecha,
-        v_afiliado_cuil,
-        v_afiliado_int
-    FROM compras.requerimiento r
-    WHERE r.id_requerimiento = p_id_requerimiento
+SELECT
+    r.estado,
+    r.baja_fecha,
+    r.afiliado_cuil_titular,
+    r.afiliado_int
+INTO
+    v_estado_requerimiento,
+    v_baja_fecha,
+    v_afiliado_cuil,
+    v_afiliado_int
+FROM compras.requerimiento r
+WHERE r.id_requerimiento = p_id_requerimiento
     FOR UPDATE;
 
-    IF NOT FOUND OR v_baja_fecha IS NOT NULL THEN
+IF NOT FOUND OR v_baja_fecha IS NOT NULL THEN
         RAISE EXCEPTION
             'No existe un requerimiento de compra activo con id %.',
             p_id_requerimiento;
-    END IF;
+END IF;
 
     IF v_estado_requerimiento <> 3 THEN
         RAISE EXCEPTION
             'El requerimiento % no se encuentra COTIZADO.',
             p_id_requerimiento;
-    END IF;
+END IF;
 
     IF NULLIF(btrim(v_afiliado_cuil), '') IS NULL
             OR v_afiliado_int IS NULL THEN
         RAISE EXCEPTION
             'El requerimiento % no posee un afiliado valido.',
             p_id_requerimiento;
-    END IF;
+END IF;
 
-    INSERT INTO compras.requerimiento_reclamo_prestacional (
-        id_requerimiento,
-        estado,
-        token_reserva,
-        reserva_fecha,
-        alta_fecha,
-        alta_usr
-    )
-    VALUES (
-        p_id_requerimiento,
-        'RESERVADO',
-        btrim(p_token_reserva),
-        now(),
-        now(),
-        v_usuario
-    )
+INSERT INTO compras.requerimiento_reclamo_prestacional (
+    id_requerimiento,
+    estado,
+    token_reserva,
+    reserva_fecha,
+    alta_fecha,
+    alta_usr
+)
+VALUES (
+           p_id_requerimiento,
+           'RESERVADO',
+           btrim(p_token_reserva),
+           now(),
+           now(),
+           v_usuario
+       )
     ON CONFLICT (id_requerimiento) DO NOTHING;
 
-    IF FOUND THEN
+IF FOUND THEN
         RETURN TRUE;
-    END IF;
+END IF;
 
-    SELECT
-        rr.estado,
-        rr.token_reserva,
-        rr.id_reclamo_prestacional
-    INTO
-        v_estado_vinculo,
-        v_token_actual,
-        v_id_reclamo
-    FROM compras.requerimiento_reclamo_prestacional rr
-    WHERE rr.id_requerimiento = p_id_requerimiento
+SELECT
+    rr.estado,
+    rr.token_reserva,
+    rr.id_reclamo_prestacional
+INTO
+    v_estado_vinculo,
+    v_token_actual,
+    v_id_reclamo
+FROM compras.requerimiento_reclamo_prestacional rr
+WHERE rr.id_requerimiento = p_id_requerimiento
     FOR UPDATE;
 
-    IF v_estado_vinculo = 'VINCULADO' THEN
+IF v_estado_vinculo = 'VINCULADO' THEN
         RAISE EXCEPTION
             'El requerimiento % ya posee el Reclamo Prestacional %.',
             p_id_requerimiento,
             v_id_reclamo;
-    END IF;
+END IF;
 
     IF v_estado_vinculo = 'ERROR' THEN
         RAISE EXCEPTION
             'El requerimiento % posee el Reclamo Prestacional % pendiente de reconciliacion.',
             p_id_requerimiento,
             v_id_reclamo;
-    END IF;
+END IF;
 
     RAISE EXCEPTION
         'Ya existe una creacion de Reclamo Prestacional en proceso para el requerimiento %.',
@@ -3777,7 +3778,7 @@ CREATE OR REPLACE FUNCTION compras.finalizar_reclamo_prestacional(
 RETURNS BOOLEAN
 AS $func$
 DECLARE
-    v_estado VARCHAR(20);
+v_estado VARCHAR(20);
     v_token_actual VARCHAR(64);
     v_id_reclamo_actual INTEGER;
     v_usuario VARCHAR(100);
@@ -3786,50 +3787,50 @@ BEGIN
             OR p_id_reclamo_prestacional <= 0 THEN
         RAISE EXCEPTION
             'Debe informar el Reclamo Prestacional creado.';
-    END IF;
+END IF;
 
     v_usuario := compras.normalizar_usuario(p_usuario);
 
-    SELECT
-        rr.estado,
-        rr.token_reserva,
-        rr.id_reclamo_prestacional
-    INTO
-        v_estado,
-        v_token_actual,
-        v_id_reclamo_actual
-    FROM compras.requerimiento_reclamo_prestacional rr
-    WHERE rr.id_requerimiento = p_id_requerimiento
+SELECT
+    rr.estado,
+    rr.token_reserva,
+    rr.id_reclamo_prestacional
+INTO
+    v_estado,
+    v_token_actual,
+    v_id_reclamo_actual
+FROM compras.requerimiento_reclamo_prestacional rr
+WHERE rr.id_requerimiento = p_id_requerimiento
     FOR UPDATE;
 
-    IF NOT FOUND THEN
+IF NOT FOUND THEN
         RAISE EXCEPTION
             'No existe una reserva para el requerimiento %.',
             p_id_requerimiento;
-    END IF;
+END IF;
 
     IF v_estado = 'VINCULADO'
             AND v_id_reclamo_actual = p_id_reclamo_prestacional THEN
         RETURN TRUE;
-    END IF;
+END IF;
 
     IF v_estado <> 'RESERVADO'
             OR v_token_actual IS DISTINCT FROM btrim(p_token_reserva) THEN
         RAISE EXCEPTION
             'La reserva del requerimiento % no es valida.',
             p_id_requerimiento;
-    END IF;
+END IF;
 
-    UPDATE compras.requerimiento_reclamo_prestacional
-       SET id_reclamo_prestacional = p_id_reclamo_prestacional,
-           estado = 'VINCULADO',
-           token_reserva = NULL,
-           ultimo_error = NULL,
-           modi_fecha = now(),
-           modi_usr = v_usuario
-     WHERE id_requerimiento = p_id_requerimiento;
+UPDATE compras.requerimiento_reclamo_prestacional
+SET id_reclamo_prestacional = p_id_reclamo_prestacional,
+    estado = 'VINCULADO',
+    token_reserva = NULL,
+    ultimo_error = NULL,
+    modi_fecha = now(),
+    modi_usr = v_usuario
+WHERE id_requerimiento = p_id_requerimiento;
 
-    RETURN TRUE;
+RETURN TRUE;
 END;
 $func$
 LANGUAGE plpgsql
@@ -3843,13 +3844,13 @@ CREATE OR REPLACE FUNCTION compras.liberar_reserva_reclamo_prestacional(
 RETURNS BOOLEAN
 AS $func$
 BEGIN
-    DELETE FROM compras.requerimiento_reclamo_prestacional
-     WHERE id_requerimiento = p_id_requerimiento
-       AND estado = 'RESERVADO'
-       AND id_reclamo_prestacional IS NULL
-       AND token_reserva = btrim(p_token_reserva);
+DELETE FROM compras.requerimiento_reclamo_prestacional
+WHERE id_requerimiento = p_id_requerimiento
+  AND estado = 'RESERVADO'
+  AND id_reclamo_prestacional IS NULL
+  AND token_reserva = btrim(p_token_reserva);
 
-    RETURN FOUND;
+RETURN FOUND;
 END;
 $func$
 LANGUAGE plpgsql
@@ -3865,7 +3866,7 @@ CREATE OR REPLACE FUNCTION compras.marcar_error_reclamo_prestacional(
 RETURNS BOOLEAN
 AS $func$
 DECLARE
-    v_usuario VARCHAR(100);
+v_usuario VARCHAR(100);
     v_estado VARCHAR(20);
     v_id_reclamo_actual INTEGER;
 BEGIN
@@ -3873,41 +3874,41 @@ BEGIN
             OR p_id_reclamo_prestacional <= 0 THEN
         RAISE EXCEPTION
             'Debe informar el Reclamo Prestacional creado.';
-    END IF;
+END IF;
 
     v_usuario := compras.normalizar_usuario(p_usuario);
 
-    UPDATE compras.requerimiento_reclamo_prestacional
-       SET id_reclamo_prestacional = p_id_reclamo_prestacional,
-           estado = 'ERROR',
-           ultimo_error = left(
-               COALESCE(
-                   NULLIF(btrim(p_error), ''),
-                   'Error de vinculacion no especificado.'
-               ),
-               2000
-           ),
-           modi_fecha = now(),
-           modi_usr = v_usuario
-     WHERE id_requerimiento = p_id_requerimiento
-       AND estado = 'RESERVADO'
-       AND token_reserva = btrim(p_token_reserva);
+UPDATE compras.requerimiento_reclamo_prestacional
+SET id_reclamo_prestacional = p_id_reclamo_prestacional,
+    estado = 'ERROR',
+    ultimo_error = left(
+    COALESCE(
+    NULLIF(btrim(p_error), ''),
+    'Error de vinculacion no especificado.'
+    ),
+    2000
+    ),
+    modi_fecha = now(),
+    modi_usr = v_usuario
+WHERE id_requerimiento = p_id_requerimiento
+  AND estado = 'RESERVADO'
+  AND token_reserva = btrim(p_token_reserva);
 
-    IF FOUND THEN
+IF FOUND THEN
         RETURN TRUE;
-    END IF;
+END IF;
 
-    SELECT
-        rr.estado,
-        rr.id_reclamo_prestacional
-    INTO
-        v_estado,
-        v_id_reclamo_actual
-    FROM compras.requerimiento_reclamo_prestacional rr
-    WHERE rr.id_requerimiento = p_id_requerimiento;
+SELECT
+    rr.estado,
+    rr.id_reclamo_prestacional
+INTO
+    v_estado,
+    v_id_reclamo_actual
+FROM compras.requerimiento_reclamo_prestacional rr
+WHERE rr.id_requerimiento = p_id_requerimiento;
 
-    RETURN v_estado = 'ERROR'
-       AND v_id_reclamo_actual = p_id_reclamo_prestacional;
+RETURN v_estado = 'ERROR'
+    AND v_id_reclamo_actual = p_id_reclamo_prestacional;
 END;
 $func$
 LANGUAGE plpgsql
