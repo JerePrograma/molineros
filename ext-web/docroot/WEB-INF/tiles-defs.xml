@@ -4600,4 +4600,14 @@
 		<put name="portlet_content"
 		     value="/portlet/afiliados/error.jsp" />
 	</definition>
+
+	<definition
+			name="portlet.prestadores.historico_cotizacion_result"
+			extends="portlet">
+
+		<put
+				name="portlet_content"
+				value="/html/portlet/prestadores/historico_cotizacion_result.jsp"
+		/>
+	</definition>
 </tiles-definitions>

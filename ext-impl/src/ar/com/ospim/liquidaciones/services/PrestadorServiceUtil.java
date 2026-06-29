@@ -13,6 +13,8 @@ import ar.com.ospim.liquidaciones.beans.MatriculaPrestador;
 import ar.com.ospim.liquidaciones.beans.Prestador;
 import ar.com.ospim.liquidaciones.beans.PrestadorPlan;
 
+import ar.com.ospim.prestadores.beans.HistoricoPrestadorCotizacion;
+import com.liferay.portal.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.model.User;
@@ -178,5 +180,12 @@ public class PrestadorServiceUtil {
 				solicitarCotizacion,
 				user.getScreenName()
 		);
+	}
+
+	public List<HistoricoPrestadorCotizacion>
+	listarHistoricoCotizacionPrestador(int idPrestador)
+			throws SystemException {
+		return getInstance().listarHistoricoCotizacionPrestador(
+				idPrestador);
 	}
 }

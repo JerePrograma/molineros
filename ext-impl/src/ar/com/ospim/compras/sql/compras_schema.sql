@@ -432,20 +432,19 @@ INSERT INTO compras.sector_requerimiento (
 )
 VALUES
     (1, 'Farmacia', TRUE, TRUE, 'sistema'),
-    (2, 'Prestaciones Medicas', TRUE, TRUE, 'sistema'),
-    (3, 'Auditoria Medica', TRUE, TRUE, 'sistema'),
-    (4, 'Monotributo', TRUE, TRUE, 'sistema'),
-    (5, 'Sistemas', FALSE, TRUE, 'sistema'),
-    (6, 'RRHH', FALSE, TRUE, 'sistema'),
-    (7, 'Legales', FALSE, TRUE, 'sistema'),
-    (8, 'Otros', FALSE, TRUE, 'sistema');
+    (2, 'Prestaciones Médicas', TRUE, TRUE, 'sistema'),
+    (3, 'Monotributo', TRUE, TRUE, 'sistema'),
+    (4, 'Sistemas', FALSE, TRUE, 'sistema'),
+    (5, 'RRHH', FALSE, TRUE, 'sistema'),
+    (6, 'Legales', FALSE, TRUE, 'sistema'),
+    (7, 'Otros', FALSE, TRUE, 'sistema');
 
 SELECT setval(
                pg_get_serial_sequence(
                        'compras.sector_requerimiento',
                        'id_sector'
                ),
-               8,
+               7,
                TRUE
        );
 
@@ -4789,3 +4788,137 @@ ALTER FUNCTION public.buscar_prestadores(
     boolean
     )
     OWNER TO postgres;
+
+ALTER TABLE public.prestador ADD COLUMN solicitar_cotizacion boolean NOT NULL DEFAULT false; ALTER TYPE public.prestador_detalle ADD ATTRIBUTE prs__solicitar_cotizacion boolean; ALTER TYPE public.prestador_simple ADD ATTRIBUTE solicitar_cotizacion boolean;
+
+CREATE TABLE autorizaciones.prestador_cotizacion_historico (
+                                                               id_historico SERIAL PRIMARY KEY,
+
+                                                               id_prestador INTEGER NOT NULL,
+
+                                                               usr_alta VARCHAR(75) NOT NULL,
+
+                                                               fecha_alta TIMESTAMP WITHOUT TIME ZONE
+        NOT NULL DEFAULT now(),
+
+                                                               estado_a_cotizar BOOLEAN NOT NULL
+);
+
+CREATE INDEX ix_prestador_cotizacion_historico_prestador
+    ON autorizaciones.prestador_cotizacion_historico (
+                                                      id_prestador,
+                                                      fecha_alta DESC,
+                                                      id_historico DESC
+        );
+
+CREATE OR REPLACE FUNCTION
+    autorizaciones.actualizar_solicitar_cotizacion_prestador(
+        p_id_prestador INTEGER,
+        p_solicitar_cotizacion BOOLEAN,
+        p_usuario VARCHAR
+    )
+RETURNS INTEGER
+AS $func$
+DECLARE
+v_estado_actual BOOLEAN;
+    v_usuario VARCHAR(75);
+BEGIN
+    IF p_id_prestador IS NULL OR p_id_prestador <= 0 THEN
+        RETURN 0;
+END IF;
+
+    IF p_solicitar_cotizacion IS NULL THEN
+        RETURN 0;
+END IF;
+
+    v_usuario := COALESCE(
+        NULLIF(
+            btrim(p_usuario),
+            ''
+        ),
+        current_user::VARCHAR
+    );
+
+    /*
+     * Bloquea el registro hasta terminar la operación.
+     * Evita que dos usuarios cambien simultáneamente el mismo checkbox.
+     */
+SELECT solicitar_cotizacion
+INTO v_estado_actual
+FROM public.prestador
+WHERE id_prestador = p_id_prestador
+  AND baja_fecha IS NULL
+    FOR UPDATE;
+
+IF NOT FOUND THEN
+        RETURN 0;
+END IF;
+
+    /*
+     * Si ya tiene ese estado, no registra un movimiento falso.
+     *
+     * Se devuelve 1 porque la Action actual considera error cualquier
+     * resultado distinto de uno.
+     */
+    IF v_estado_actual IS NOT DISTINCT FROM
+       p_solicitar_cotizacion THEN
+
+        RETURN 1;
+END IF;
+
+UPDATE public.prestador
+SET solicitar_cotizacion =
+        p_solicitar_cotizacion
+WHERE id_prestador =
+      p_id_prestador
+  AND baja_fecha IS NULL;
+
+INSERT INTO
+    autorizaciones.prestador_cotizacion_historico (
+    id_prestador,
+    usr_alta,
+    fecha_alta,
+    estado_a_cotizar
+)
+VALUES (
+           p_id_prestador,
+           v_usuario,
+           now(),
+           p_solicitar_cotizacion
+       );
+
+RETURN 1;
+END;
+$func$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION
+    autorizaciones.listar_historico_prestador_cotizacion(
+        p_id_prestador INTEGER
+    )
+RETURNS TABLE (
+    id_historico INTEGER,
+    id_prestador INTEGER,
+    usr_alta VARCHAR,
+    fecha_alta TIMESTAMP WITHOUT TIME ZONE,
+    estado_a_cotizar BOOLEAN
+)
+AS $func$
+BEGIN
+RETURN QUERY
+SELECT
+    h.id_historico,
+    h.id_prestador,
+    h.usr_alta,
+    h.fecha_alta,
+    h.estado_a_cotizar
+FROM autorizaciones.prestador_cotizacion_historico h
+WHERE h.id_prestador =
+      p_id_prestador
+ORDER BY
+    h.fecha_alta DESC,
+    h.id_historico DESC;
+END;
+$func$
+LANGUAGE plpgsql
+STABLE;

@@ -7246,6 +7246,16 @@
 					name="portlet.compras.error"
 					path="portlet.compras.error" />
 		</action>
+
+		<action
+				path="/prestadores/historico_cotizacion"
+				type="ar.com.ospim.prestadores.action.HistoricoPrestadorCotizacionAction">
+
+			<forward
+					name="portlet.prestadores.historico_cotizacion_result"
+					path="portlet.prestadores.historico_cotizacion_result"
+			/>
+		</action>
     </action-mappings>
 
 </struts-config>

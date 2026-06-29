@@ -13,6 +13,7 @@ import java.util.List;
 import ar.com.ospim.global.beans.ContactoElectronico;
 import ar.com.ospim.global.beans.Telefono;
 import ar.com.ospim.liquidaciones.ImposibleBorrarPrestadorException;
+import ar.com.ospim.prestadores.beans.HistoricoPrestadorCotizacion;
 import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.liquidaciones.beans.EspecialidadPrestador;
 import ar.com.ospim.liquidaciones.beans.MatriculaPrestador;
@@ -1225,5 +1226,69 @@ public class PrestadorServiceImpl {
 		}
 
 		return resultado;
+	}
+
+	public List<HistoricoPrestadorCotizacion>
+	listarHistoricoCotizacionPrestador(int idPrestador)
+			throws SystemException {
+
+		Connection con = null;
+		CallableStatement stmt = null;
+		ResultSet rs = null;
+
+		List<HistoricoPrestadorCotizacion> resultado =
+				new ArrayList<HistoricoPrestadorCotizacion>();
+
+		try {
+			con = ConnectionHelper.getConnection();
+
+			stmt = con.prepareCall(
+					"{call autorizaciones.listar_historico_prestador_cotizacion(?)}"
+			);
+
+			stmt.setInt(1, idPrestador);
+
+			rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				HistoricoPrestadorCotizacion historico =
+						new HistoricoPrestadorCotizacion();
+
+				historico.setIdHistorico(
+						rs.getInt("id_historico")
+				);
+
+				historico.setIdPrestador(
+						rs.getInt("id_prestador")
+				);
+
+				historico.setUsuario(
+						rs.getString("usr_alta")
+				);
+
+				historico.setFecha(
+						rs.getTimestamp("fecha_alta")
+				);
+
+				historico.setEstadoACotizar(
+						rs.getBoolean("estado_a_cotizar")
+				);
+
+				resultado.add(historico);
+			}
+
+			return resultado;
+
+		} catch (SQLException e) {
+			_log.error(
+					"Error al consultar el histórico de cotización del prestador",
+					e
+			);
+
+			throw new SystemException(e);
+
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
 	}
 }
