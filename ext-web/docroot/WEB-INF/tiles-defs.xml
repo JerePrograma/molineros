@@ -4603,11 +4603,11 @@
 
 	<definition
 			name="portlet.prestadores.historico_cotizacion_result"
-			extends="portlet">
+			extends="portlet.prestadores">
 
 		<put
 				name="portlet_content"
-				value="/html/portlet/prestadores/historico_cotizacion_result.jsp"
+				value="/portlet/prestadores/historico_cotizacion_result.jsp"
 		/>
 	</definition>
 </tiles-definitions>
