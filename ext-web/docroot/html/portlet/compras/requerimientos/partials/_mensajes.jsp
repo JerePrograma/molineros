@@ -99,6 +99,8 @@ java.util.List<
 > detallesNotificacionResultado = null;
 
 int cantidadDetallesIncidencia = 0;
+int cantidadErroresEtapaReserva = 0;
+int cantidadErroresOtrasEtapas = 0;
 
 if (hayResultadoNotificacion) {
     detallesNotificacionResultado =
@@ -130,6 +132,16 @@ if (hayResultadoNotificacion) {
                             .equals(
                                     detalle.getResultado()
                             );
+
+            if (esError) {
+                if ("RESERVA".equals(
+                        detalle.getEtapa()
+                )) {
+                    cantidadErroresEtapaReserva++;
+                } else {
+                    cantidadErroresOtrasEtapas++;
+                }
+            }
 
             if (esError
                     || esEmailInvalido
@@ -252,6 +264,213 @@ boolean hayMensajeNotificacionFallback =
         );
 %>
 
+<style type="text/css">
+    .compras-notificacion-resumen {
+        margin-bottom: 12px;
+    }
+
+    .compras-notificacion-acciones {
+        margin-top: 8px;
+    }
+
+    .compras-notificacion-enlace {
+        display: inline-block;
+        padding: 6px 11px;
+
+        border: 1px solid #b8b8b8;
+        border-radius: 3px;
+
+        background: #f5f5f5;
+        color: #333333;
+
+        font-size: 12px;
+        font-weight: bold;
+        line-height: 18px;
+
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .compras-notificacion-enlace:hover,
+    .compras-notificacion-enlace:focus {
+        border-color: #8c8c8c;
+        background: #e9e9e9;
+        color: #111111;
+        text-decoration: none;
+    }
+
+    .compras-notificacion-detalle {
+        margin-top: 10px;
+
+        border: 1px solid #d1d1d1;
+        border-radius: 3px;
+
+        background: #ffffff;
+    }
+
+    .compras-notificacion-detalle-cabecera {
+        padding: 10px 12px;
+
+        border-bottom: 1px solid #d1d1d1;
+        background: #f3f3f3;
+    }
+
+    .compras-notificacion-detalle-titulo {
+        margin: 0;
+
+        color: #333333;
+
+        font-size: 14px;
+        font-weight: bold;
+        line-height: 20px;
+    }
+
+    .compras-notificacion-detalle-aclaracion {
+        margin-top: 3px;
+
+        color: #666666;
+
+        font-size: 12px;
+        line-height: 17px;
+    }
+
+    .compras-notificacion-tabla-contenedor {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .compras-notificacion-tabla {
+        width: 100%;
+        margin: 0;
+
+        border: 0;
+        border-collapse: collapse;
+        border-spacing: 0;
+    }
+
+    .compras-notificacion-tabla th {
+        padding: 8px 10px;
+
+        border-bottom: 1px solid #c7c7c7;
+
+        background: #e9e9e9;
+        color: #333333;
+
+        font-size: 12px;
+        font-weight: bold;
+        line-height: 18px;
+
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .compras-notificacion-tabla td {
+        padding: 9px 10px;
+
+        border-bottom: 1px solid #e2e2e2;
+
+        color: #333333;
+
+        font-size: 12px;
+        line-height: 18px;
+
+        vertical-align: top;
+    }
+
+    .compras-notificacion-tabla tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .compras-notificacion-prestador {
+        color: #222222;
+        font-weight: bold;
+    }
+
+    .compras-notificacion-prestador-id {
+        display: block;
+        margin-top: 2px;
+
+        color: #777777;
+
+        font-size: 11px;
+        font-weight: normal;
+        line-height: 15px;
+    }
+
+    .compras-notificacion-estado {
+        display: inline-block;
+        padding: 2px 7px;
+
+        border-radius: 3px;
+
+        font-size: 11px;
+        font-weight: bold;
+        line-height: 16px;
+
+        white-space: nowrap;
+    }
+
+    .compras-notificacion-estado-error {
+        border: 1px solid #b94a48;
+
+        background: #f2dede;
+        color: #8a1f1d;
+    }
+
+    .compras-notificacion-estado-advertencia {
+        border: 1px solid #c09853;
+
+        background: #fcf8e3;
+        color: #7a5b15;
+    }
+
+    .compras-notificacion-estado-pendiente {
+        border: 1px solid #999999;
+
+        background: #eeeeee;
+        color: #555555;
+    }
+
+    .compras-notificacion-motivo {
+        max-width: 580px;
+
+        color: #555555;
+
+        white-space: normal;
+        word-break: normal;
+        overflow-wrap: break-word;
+    }
+
+    .compras-notificacion-contador {
+        display: inline-block;
+        min-width: 18px;
+        margin-left: 5px;
+        padding: 1px 6px;
+
+        border-radius: 10px;
+
+        background: #666666;
+        color: #ffffff;
+
+        font-size: 11px;
+        font-weight: bold;
+        line-height: 16px;
+
+        text-align: center;
+    }
+
+    @media screen and (max-width: 700px) {
+        .compras-notificacion-tabla th,
+        .compras-notificacion-tabla td {
+            padding: 7px;
+        }
+
+        .compras-notificacion-motivo {
+            min-width: 240px;
+        }
+    }
+</style>
+
 <c:if test="<%= mostrarMensajeRequerimientoGuardado %>">
     <div class="portlet-msg-success">
         <strong>
@@ -352,6 +571,27 @@ boolean hayMensajeNotificacionFallback =
     int incidenciasResumen =
             erroresResumen + emailsInvalidosResumen;
 
+    /*
+     * Se considera fallo general de reserva cuando:
+     *
+     * - no se envió ninguna solicitud;
+     * - todos los candidatos terminaron en error;
+     * - todos esos errores ocurrieron en la etapa RESERVA;
+     * - no hubo errores de otra etapa;
+     * - no se trató de emails inválidos.
+     *
+     * En ese escenario no existen múltiples inconvenientes
+     * independientes de prestadores. Existe un único fallo técnico
+     * que afectó a todos los candidatos.
+     */
+    boolean falloGlobalReserva =
+            candidatosResumen > 0
+                    && enviadosResumen == 0
+                    && erroresResumen == candidatosResumen
+                    && emailsInvalidosResumen == 0
+                    && cantidadErroresEtapaReserva == erroresResumen
+                    && cantidadErroresOtrasEtapas == 0;
+
     String claseResumen =
             "portlet-msg-info";
 
@@ -367,6 +607,29 @@ boolean hayMensajeNotificacionFallback =
 
         descripcionResumen =
                 "Contacte a Sistemas antes de reintentar.";
+
+    } else if (falloGlobalReserva) {
+        claseResumen =
+                "portlet-msg-error";
+
+        tituloResumen =
+                "No se pudo iniciar la notificación.";
+
+        if (candidatosResumen == 1) {
+            descripcionResumen =
+                    "Ocurrió un error técnico general antes de iniciar "
+                            + "el envío. No se envió ninguna solicitud. "
+                            + "El prestador permanece pendiente y el "
+                            + "requerimiento conserva su estado actual.";
+        } else {
+            descripcionResumen =
+                    "Ocurrió un error técnico general antes de iniciar "
+                            + "los envíos. No se envió ninguna solicitud. "
+                            + "Los "
+                            + candidatosResumen
+                            + " prestadores permanecen pendientes y el "
+                            + "requerimiento conserva su estado actual.";
+        }
 
     } else if (enviadosResumen > 0
             && (
@@ -449,6 +712,31 @@ boolean hayMensajeNotificacionFallback =
                             + " solicitudes de cotización.";
         }
 
+    } else if (erroresResumen > 0
+            && emailsInvalidosResumen > 0) {
+
+        claseResumen =
+                "portlet-msg-error";
+
+        tituloResumen =
+                "No se pudo completar la notificación.";
+
+        descripcionResumen =
+                erroresResumen
+                        + (
+                        erroresResumen == 1
+                                ? " prestador tuvo un error técnico"
+                                : " prestadores tuvieron errores técnicos"
+                )
+                        + " y "
+                        + emailsInvalidosResumen
+                        + (
+                        emailsInvalidosResumen == 1
+                                ? " prestador no tiene un email válido. "
+                                : " prestadores no tienen un email válido. "
+                )
+                        + "El requerimiento conserva su estado actual.";
+
     } else if (erroresResumen > 0) {
         claseResumen =
                 "portlet-msg-error";
@@ -459,13 +747,13 @@ boolean hayMensajeNotificacionFallback =
         if (erroresResumen == 1) {
             descripcionResumen =
                     "No se pudo notificar a un prestador. "
-                            + "El requerimiento conserva su estado.";
+                            + "El requerimiento conserva su estado actual.";
         } else {
             descripcionResumen =
                     "No se pudo notificar a "
                             + erroresResumen
                             + " prestadores. "
-                            + "El requerimiento conserva su estado.";
+                            + "El requerimiento conserva su estado actual.";
         }
 
     } else if (emailsInvalidosResumen > 0) {
@@ -544,37 +832,152 @@ boolean hayMensajeNotificacionFallback =
         descripcionResumen =
                 "El requerimiento conserva su estado actual.";
     }
+
+    String tituloDetalleIncidencias;
+
+    if (falloGlobalReserva) {
+        tituloDetalleIncidencias =
+                cantidadDetallesIncidencia == 1
+                        ? "Prestador pendiente"
+                        : "Prestadores pendientes";
+    } else {
+        tituloDetalleIncidencias =
+                cantidadDetallesIncidencia == 1
+                        ? "Detalle de la incidencia"
+                        : "Detalle de incidencias";
+    }
     %>
 
-    <div class="<%= claseResumen %>">
-        <strong>
-            <%= HtmlUtil.escape(tituloResumen) %>
-        </strong>
+    <div class="compras-notificacion-resumen">
+        <div class="<%= claseResumen %>">
+            <strong>
+                <%= HtmlUtil.escape(tituloResumen) %>
+            </strong>
 
-        <br />
+            <br />
 
-        <%= HtmlUtil.escape(descripcionResumen) %>
+            <%= HtmlUtil.escape(descripcionResumen) %>
+        </div>
     </div>
 
     <c:if test="<%= hayDetalleIncidencias %>">
 
-        <div style="margin-top: 15px;">
-            <h4>
-                Prestadores con inconvenientes
-            </h4>
+        <script type="text/javascript">
+            function <portlet:namespace />alternarDetalleNotificacion() {
+                var detalle =
+                        document.getElementById(
+                                '<portlet:namespace />detalleNotificacion'
+                        );
 
-            <div style="overflow-x: auto;">
-                <table class="table table-bordered table-striped">
+                var enlace =
+                        document.getElementById(
+                                '<portlet:namespace />enlaceDetalleNotificacion'
+                        );
+
+                if (!detalle) {
+                    return false;
+                }
+
+                var estaOculto =
+                        detalle.style.display === 'none'
+                                || detalle.style.display === '';
+
+                detalle.style.display =
+                        estaOculto
+                                ? 'block'
+                                : 'none';
+
+                if (enlace) {
+                    enlace.innerHTML =
+                            estaOculto
+                                    ? 'Ocultar detalle'
+                                    : 'Ver detalle (<%= cantidadDetallesIncidencia %>)';
+
+                    enlace.setAttribute(
+                            'aria-expanded',
+                            estaOculto
+                                    ? 'true'
+                                    : 'false'
+                    );
+                }
+
+                return false;
+            }
+        </script>
+
+        <div class="compras-notificacion-acciones">
+            <a
+                id="<portlet:namespace />enlaceDetalleNotificacion"
+                class="compras-notificacion-enlace"
+                href="javascript:;"
+                aria-controls="<portlet:namespace />detalleNotificacion"
+                aria-expanded="false"
+                onclick="return <portlet:namespace />alternarDetalleNotificacion();"
+            >
+                Ver detalle (<%= cantidadDetallesIncidencia %>)
+            </a>
+        </div>
+
+        <div
+            id="<portlet:namespace />detalleNotificacion"
+            class="compras-notificacion-detalle"
+            style="display: none;"
+        >
+            <div class="compras-notificacion-detalle-cabecera">
+                <div class="compras-notificacion-detalle-titulo">
+                    <%= HtmlUtil.escape(tituloDetalleIncidencias) %>
+
+                    <span class="compras-notificacion-contador">
+                        <%= cantidadDetallesIncidencia %>
+                    </span>
+                </div>
+
+                <div class="compras-notificacion-detalle-aclaracion">
+                    <%
+                    if (falloGlobalReserva) {
+                    %>
+                        No se detectó un inconveniente individual en cada
+                        prestador. Un error técnico general impidió iniciar
+                        todos los envíos.
+                    <%
+                    } else {
+                    %>
+                        Se muestran únicamente los prestadores que requieren
+                        revisión.
+                    <%
+                    }
+                    %>
+                </div>
+            </div>
+
+            <div class="compras-notificacion-tabla-contenedor">
+                <table
+                    class="taglib-search-iterator compras-notificacion-tabla"
+                    cellspacing="0"
+                    cellpadding="0"
+                >
                     <thead>
-                        <tr>
-                            <th>Prestador</th>
-                            <th>Estado</th>
-                            <th>Motivo</th>
+                        <tr class="portlet-section-header">
+                            <th style="width: 35%;">
+                                Prestador
+                            </th>
+
+                            <th style="width: 18%;">
+                                Estado
+                            </th>
+
+                            <c:if test="<%= !falloGlobalReserva %>">
+                                <th style="width: 47%;">
+                                    Motivo
+                                </th>
+                            </c:if>
                         </tr>
                     </thead>
 
                     <tbody>
                         <%
+                        int filaVisible = 0;
+
                         for (int i = 0;
                                 i < detallesNotificacionResultado.size();
                                 i++) {
@@ -629,98 +1032,130 @@ boolean hayMensajeNotificacionFallback =
 
                             String claseEstado;
                             String estadoVisible;
-                            String motivoVisible;
+                            String motivoVisible =
+                                    detalleNotificacion.getMotivo();
 
-                            if (esErrorTecnico) {
+                            if (falloGlobalReserva) {
                                 claseEstado =
-                                        "label label-important";
+                                        "compras-notificacion-estado "
+                                                + "compras-notificacion-estado-pendiente";
+
+                                estadoVisible =
+                                        "Pendiente";
+
+                            } else if (esErrorTecnico) {
+                                claseEstado =
+                                        "compras-notificacion-estado "
+                                                + "compras-notificacion-estado-error";
 
                                 estadoVisible =
                                         "Error técnico";
 
-                                String etapa =
-                                        detalleNotificacion
-                                                .getEtapa();
+                                if (WebKeysCompras.isEmpty(
+                                        motivoVisible
+                                )) {
+                                    String etapa =
+                                            detalleNotificacion
+                                                    .getEtapa();
 
-                                if ("VALIDACION".equals(etapa)) {
-                                    motivoVisible =
-                                            "No se pudo preparar la "
-                                                    + "notificación. "
-                                                    + "Contacte a Sistemas.";
+                                    if ("VALIDACION".equals(etapa)) {
+                                        motivoVisible =
+                                                "No se pudo preparar la "
+                                                        + "notificación. "
+                                                        + "Contacte a Sistemas.";
 
-                                } else if ("RESERVA".equals(etapa)) {
-                                    motivoVisible =
-                                            "No se pudo iniciar el envío. "
-                                                    + "Contacte a Sistemas "
-                                                    + "antes de reintentar.";
+                                    } else if ("RESERVA".equals(etapa)) {
+                                        motivoVisible =
+                                                "No se pudo iniciar el envío. "
+                                                        + "Contacte a Sistemas "
+                                                        + "antes de reintentar.";
 
-                                } else if ("ENVIO".equals(etapa)) {
-                                    motivoVisible =
-                                            "El correo no pudo enviarse. "
-                                                    + "Contacte a Sistemas "
-                                                    + "antes de reintentar.";
+                                    } else if ("ENVIO".equals(etapa)) {
+                                        motivoVisible =
+                                                "El correo no pudo enviarse. "
+                                                        + "Contacte a Sistemas "
+                                                        + "antes de reintentar.";
 
-                                } else if ("PERSISTENCIA".equals(etapa)) {
-                                    motivoVisible =
-                                            "El resultado del envío no pudo "
-                                                    + "confirmarse. No reintente "
-                                                    + "hasta verificarlo con "
-                                                    + "Sistemas.";
+                                    } else if ("PERSISTENCIA".equals(etapa)) {
+                                        motivoVisible =
+                                                "El resultado del envío no pudo "
+                                                        + "confirmarse. No reintente "
+                                                        + "hasta verificarlo con "
+                                                        + "Sistemas.";
 
-                                } else {
-                                    motivoVisible =
-                                            "No se pudo procesar la "
-                                                    + "notificación. "
-                                                    + "Contacte a Sistemas "
-                                                    + "antes de reintentar.";
+                                    } else {
+                                        motivoVisible =
+                                                "No se pudo procesar la "
+                                                        + "notificación. "
+                                                        + "Contacte a Sistemas "
+                                                        + "antes de reintentar.";
+                                    }
                                 }
 
                                 if (esAdvertenciaQa) {
-                                    motivoVisible +=
-                                            " El email registrado del "
-                                                    + "prestador también "
+                                    motivoVisible =
+                                            motivoVisible
+                                                    + " El email registrado "
+                                                    + "del prestador también "
                                                     + "debe revisarse.";
                                 }
 
                             } else if (esEmailInvalido) {
                                 claseEstado =
-                                        "label label-warning";
+                                        "compras-notificacion-estado "
+                                                + "compras-notificacion-estado-advertencia";
 
                                 estadoVisible =
                                         "Email inválido";
 
-                                motivoVisible =
-                                        "El prestador no tiene un email "
-                                                + "válido registrado.";
+                                if (WebKeysCompras.isEmpty(
+                                        motivoVisible
+                                )) {
+                                    motivoVisible =
+                                            "El prestador no tiene un email "
+                                                    + "válido registrado.";
+                                }
 
                             } else {
                                 claseEstado =
-                                        "label label-warning";
+                                        "compras-notificacion-estado "
+                                                + "compras-notificacion-estado-advertencia";
 
                                 estadoVisible =
                                         "Revisar email";
 
-                                motivoVisible =
-                                        "El email registrado no es válido. "
-                                                + "El envío de prueba fue "
-                                                + "redirigido al destinatario "
-                                                + "temporal.";
+                                if (WebKeysCompras.isEmpty(
+                                        motivoVisible
+                                )) {
+                                    motivoVisible =
+                                            "El email registrado no es válido. "
+                                                    + "El envío de prueba fue "
+                                                    + "redirigido al destinatario "
+                                                    + "temporal.";
+                                }
                             }
+
+                            String claseFila =
+                                    filaVisible % 2 == 0
+                                            ? "portlet-section-body"
+                                            : "portlet-section-alternate";
+
+                            filaVisible++;
                         %>
 
-                            <tr>
+                            <tr class="<%= claseFila %>">
                                 <td>
-                                    <strong>
+                                    <span class="compras-notificacion-prestador">
                                         <%= HtmlUtil.escape(
                                                 nombrePrestador
                                         ) %>
-                                    </strong>
+                                    </span>
 
-                                    <br />
-
-                                    ID:
-                                    <%= detalleNotificacion
-                                            .getIdPrestador() %>
+                                    <span class="compras-notificacion-prestador-id">
+                                        ID:
+                                        <%= detalleNotificacion
+                                                .getIdPrestador() %>
+                                    </span>
                                 </td>
 
                                 <td>
@@ -731,11 +1166,15 @@ boolean hayMensajeNotificacionFallback =
                                     </span>
                                 </td>
 
-                                <td>
-                                    <%= HtmlUtil.escape(
-                                            motivoVisible
-                                    ) %>
-                                </td>
+                                <c:if test="<%= !falloGlobalReserva %>">
+                                    <td>
+                                        <div class="compras-notificacion-motivo">
+                                            <%= HtmlUtil.escape(
+                                                    motivoVisible
+                                            ) %>
+                                        </div>
+                                    </td>
+                                </c:if>
                             </tr>
 
                         <%

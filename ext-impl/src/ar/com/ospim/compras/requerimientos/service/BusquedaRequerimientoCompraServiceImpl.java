@@ -28,7 +28,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
             LogFactoryUtil.getLog(BusquedaRequerimientoCompraServiceImpl.class);
 
     private static final String SQL_BUSCAR_REQUERIMIENTOS =
-            "{call compras.buscar_requerimientos(?,?,?,?,?,?,?)}";
+            "{call compras.buscar_requerimientos(?,?,?,?,?,?,?,?)}";
 
     private static final String SQL_GET_REQUERIMIENTO =
             "{call compras.get_requerimiento(?)}";
@@ -104,11 +104,21 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
             setNullableInteger(stmt, 1, filtro.getIdEstado());
             setNullableInteger(stmt, 2, filtro.getIdSector());
-            stmt.setString(3, emptyToNull(filtro.getAfiliadoCuilTitular()));
+            stmt.setString(
+                    3,
+                    emptyToNull(filtro.getAfiliadoCuilTitular())
+            );
             setNullableInteger(stmt, 4, filtro.getAfiliadoInt());
-            stmt.setString(5, emptyToNull(filtro.getIdTercerizadora()));
+            stmt.setString(
+                    5,
+                    emptyToNull(filtro.getIdTercerizadora())
+            );
             setNullableBoolean(stmt, 6, filtro.getRecupero());
-            stmt.setString(7, emptyToNull(filtro.getTexto()));
+            setNullableBoolean(stmt, 7, filtro.getSurge());
+            stmt.setString(
+                    8,
+                    emptyToNull(filtro.getTexto())
+            );
 
             rs = stmt.executeQuery();
 

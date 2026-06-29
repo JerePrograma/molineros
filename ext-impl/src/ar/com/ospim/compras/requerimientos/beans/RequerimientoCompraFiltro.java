@@ -14,6 +14,7 @@ public class RequerimientoCompraFiltro implements Serializable {
     private Integer afiliadoInt;
     private String idTercerizadora;
     private Boolean recupero;
+    private Boolean surge;
     private String texto;
     private String afiliadoTipoDoc;
     private String afiliadoNroDoc;
@@ -101,6 +102,18 @@ public class RequerimientoCompraFiltro implements Serializable {
         this.recupero = recupero;
     }
 
+    public Boolean getSurge() {
+        return surge;
+    }
+
+    public String getSurgeString() {
+        return surge != null ? surge.toString() : "";
+    }
+
+    public void setSurge(Boolean surge) {
+        this.surge = surge;
+    }
+
     public String getTexto() {
         return texto;
     }
@@ -116,6 +129,7 @@ public class RequerimientoCompraFiltro implements Serializable {
                 || afiliadoInt != null
                 || !WebKeysCompras.isEmpty(idTercerizadora)
                 || recupero != null
+                || surge != null
                 || !WebKeysCompras.isEmpty(texto);
     }
 

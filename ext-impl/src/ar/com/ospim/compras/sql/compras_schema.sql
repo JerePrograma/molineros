@@ -1385,6 +1385,7 @@ CREATE FUNCTION compras.buscar_requerimientos(
     p_afiliado_int INTEGER,
     p_id_tercerizadora VARCHAR,
     p_recupero BOOLEAN,
+    p_surge BOOLEAN,
     p_texto VARCHAR
 )
     RETURNS SETOF compras.requerimiento_base_row
@@ -1465,6 +1466,10 @@ WHERE (
   AND (
     p_recupero IS NULL
         OR rb.recupero = p_recupero
+    )
+  AND (
+    p_surge IS NULL
+        OR rb.surge = p_surge
     )
   AND (
     v_texto IS NULL
@@ -3705,7 +3710,7 @@ BEGIN
 
     SELECT
         NULLIF(
-            BTRIM(p.email),
+            BTRIM(p.contacto),
             ''
         )
     INTO

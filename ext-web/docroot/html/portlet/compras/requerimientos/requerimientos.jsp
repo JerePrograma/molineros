@@ -91,6 +91,19 @@ if (!"true".equals(recuperoFiltro)
     recuperoFiltro = "";
 }
 
+String surgeFiltro =
+        ParamUtil.getString(
+                renderRequest,
+                "surge",
+                ""
+        );
+
+if (!"true".equals(surgeFiltro)
+        && !"false".equals(surgeFiltro)) {
+
+    surgeFiltro = "";
+}
+
 String idTercerizadoraFiltro =
         ParamUtil.getString(
                 renderRequest,
@@ -373,7 +386,38 @@ if (tercerizadoras == null) {
                        ) %>" />
             </td>
 
-            <td colspan="4">&nbsp;</td>
+            <td>
+                <label>Surge:</label>
+            </td>
+
+            <td>
+                <select id="<portlet:namespace />surge"
+                        name="<portlet:namespace />surge">
+
+                    <option value=""
+                            <%= "".equals(surgeFiltro)
+                                    ? "selected"
+                                    : "" %>>
+                        Todos
+                    </option>
+
+                    <option value="true"
+                            <%= "true".equals(surgeFiltro)
+                                    ? "selected"
+                                    : "" %>>
+                        Sí
+                    </option>
+
+                    <option value="false"
+                            <%= "false".equals(surgeFiltro)
+                                    ? "selected"
+                                    : "" %>>
+                        No
+                    </option>
+                </select>
+            </td>
+
+            <td colspan="2">&nbsp;</td>
         </tr>
 
         <tr>
@@ -595,6 +639,10 @@ if (tercerizadoras == null) {
 
         jQuery(
                 '#<portlet:namespace />recupero'
+        ).val('');
+
+        jQuery(
+                '#<portlet:namespace />surge'
         ).val('');
 
         jQuery(
@@ -1263,6 +1311,11 @@ if (tercerizadoras == null) {
                         '#<portlet:namespace />recupero'
                 ).val();
 
+        var surge =
+                jQuery(
+                        '#<portlet:namespace />surge'
+                ).val();
+
         jQuery(
                 '#<portlet:namespace />buscando'
         ).show();
@@ -1310,6 +1363,10 @@ if (tercerizadoras == null) {
                     + encodeURIComponent(
                             recupero
                     ) +
+                '&surge='
+                    + encodeURIComponent(
+                            surge
+                    ) +
                 '&<portlet:namespace />estado='
                     + encodeURIComponent(estado) +
                 '&<portlet:namespace />sector_id='
@@ -1349,6 +1406,10 @@ if (tercerizadoras == null) {
                 '&<portlet:namespace />recupero='
                     + encodeURIComponent(
                             recupero
+                    ) +
+                '&<portlet:namespace />surge='
+                    + encodeURIComponent(
+                            surge
                     );
 
         jQuery(
@@ -1385,7 +1446,8 @@ if (tercerizadoras == null) {
         jQuery(
                 '#<portlet:namespace />estado, '
                 + '#<portlet:namespace />sector_id, '
-                + '#<portlet:namespace />recupero'
+                + '#<portlet:namespace />recupero, '
+                + '#<portlet:namespace />surge'
         ).change(function() {
             <portlet:namespace />buscarRequerimientos();
         });
