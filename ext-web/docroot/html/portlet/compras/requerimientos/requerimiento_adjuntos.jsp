@@ -172,6 +172,33 @@ boolean msgPresupuestoBorrado =
         );
 %>
 
+<style type="text/css">
+    #<portlet:namespace />tabla_carga_presupuestos {
+        width: 100%;
+        table-layout: auto;
+    }
+
+    #<portlet:namespace />tabla_carga_presupuestos th,
+    #<portlet:namespace />tabla_carga_presupuestos td {
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    #<portlet:namespace />tabla_carga_presupuestos
+    select.presupuesto-prestador {
+
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    #<portlet:namespace />tabla_carga_presupuestos
+    input.presupuesto-archivo {
+
+        width: 100%;
+        box-sizing: border-box;
+    }
+</style>
+
 <form action="<%= uploadPresupuestosURL.toString() %>"
       method="post"
       name="<portlet:namespace />compra_presupuesto_fm"
@@ -209,9 +236,15 @@ boolean msgPresupuestoBorrado =
 
         <c:if test="<%= puedeVerPrestadoresEnviadosPresupuestos %>">
             <c:choose>
-                <c:when test="<%= !WebKeysCompras.isEmpty(errorPrestadoresPresupuestos) %>">
+                <c:when test="<%=
+                        !WebKeysCompras.isEmpty(
+                                errorPrestadoresPresupuestos
+                        )
+                %>">
                     <div class="portlet-msg-error">
-                        <%= HtmlUtil.escape(errorPrestadoresPresupuestos) %>
+                        <%= HtmlUtil.escape(
+                                errorPrestadoresPresupuestos
+                        ) %>
                     </div>
                 </c:when>
 
@@ -225,6 +258,7 @@ boolean msgPresupuestoBorrado =
                 <c:otherwise>
                     <table class="lfr-table taglib-search-iterator"
                            style="margin-bottom: 12px; width: 100%;">
+
                         <thead>
                             <tr>
                                 <th>Razón social</th>
@@ -232,6 +266,7 @@ boolean msgPresupuestoBorrado =
                                 <th>Estado de notificación</th>
                             </tr>
                         </thead>
+
                         <tbody>
                             <%
                             for (int i = 0;
@@ -252,12 +287,14 @@ boolean msgPresupuestoBorrado =
                                                         .getDescripcionVisible()
                                         ) %>
                                     </td>
+
                                     <td>
                                         <%= HtmlUtil.escape(
                                                 prestadorEnviado
                                                         .getCuitVisible()
                                         ) %>
                                     </td>
+
                                     <td>
                                         <%= HtmlUtil.escape(
                                                 prestadorEnviado
@@ -282,20 +319,34 @@ boolean msgPresupuestoBorrado =
                 && hayPrestadoresEnviadosPresupuestos
         %>">
 
-            <table class="lfr-table">
+            <table class="lfr-table"
+                   id="<portlet:namespace />tabla_carga_presupuestos">
+
+                <colgroup>
+                    <col style="width: 37%;" />
+                    <col style="width: 23%;" />
+                    <col style="width: 7%;" />
+                    <col style="width: 7%;" />
+                    <col style="width: 26%;" />
+                </colgroup>
+
                 <thead>
                     <tr>
                         <th>Prestador enviado</th>
                         <th>Archivo</th>
-                        <th>Borrar</th>
+                        <th>&nbsp;</th>
+                        <th>&nbsp;</th>
+                        <th>&nbsp;</th>
                     </tr>
                 </thead>
 
-                <tbody id="<portlet:namespace />presupuestos_body"></tbody>
+                <tbody id="<portlet:namespace />presupuestos_body">
+                </tbody>
             </table>
 
             <select id="<portlet:namespace />prestador_presupuesto_template"
                     style="display: none;">
+
                 <option value="">Seleccione...</option>
 
                 <%
@@ -304,9 +355,7 @@ boolean msgPresupuestoBorrado =
                         i++) {
 
                     PrestadorCotizacion prestadorPresupuesto =
-                            prestadoresEnviadosPresupuestos.get(
-                                    i
-                            );
+                            prestadoresEnviadosPresupuestos.get(i);
 
                     if (prestadorPresupuesto == null
                             || prestadorPresupuesto
@@ -315,7 +364,9 @@ boolean msgPresupuestoBorrado =
                         continue;
                     }
                 %>
-                    <option value="<%= prestadorPresupuesto.getIdPrestador() %>">
+                    <option value="<%=
+                            prestadorPresupuesto.getIdPrestador()
+                    %>">
                         <%= HtmlUtil.escape(
                                 prestadorPresupuesto
                                         .getEtiquetaVisible()
@@ -325,17 +376,6 @@ boolean msgPresupuestoBorrado =
                 }
                 %>
             </select>
-
-            <br />
-
-            <input id="<portlet:namespace />uploadPresupuestoCompra"
-                   value="Subir"
-                   title="Subir presupuestos"
-                   onclick="return <portlet:namespace />uploadPresupuestoRequerimientoCompra();"
-                   type="button" />
-            <input type="button"
-                   value="Agregar otro presupuesto"
-                   onclick="return <portlet:namespace />agregarFilaPresupuesto();" />
         </c:if>
 
         <c:if test="<%=
@@ -402,6 +442,16 @@ boolean msgPresupuestoBorrado =
                             'input.presupuesto-archivo'
                     );
 
+            var botonSubir =
+                    row.find(
+                            'input.presupuesto-subir'
+                    );
+
+            var botonAgregar =
+                    row.find(
+                            'input.presupuesto-agregar'
+                    );
+
             prestador.attr(
                     'name',
                     '<portlet:namespace />presupuesto_'
@@ -427,6 +477,25 @@ boolean msgPresupuestoBorrado =
                     '<portlet:namespace />presupuesto_'
                             + index
             );
+
+            /*
+             * Subir y Agregar son acciones generales.
+             * Solo deben mostrarse en la primera fila.
+             */
+            if (index == 0) {
+                botonSubir.show();
+
+                if (rows.length
+                        < <%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>) {
+
+                    botonAgregar.show();
+                } else {
+                    botonAgregar.hide();
+                }
+            } else {
+                botonSubir.hide();
+                botonAgregar.hide();
+            }
         });
 
         jQuery(
@@ -451,7 +520,9 @@ boolean msgPresupuestoBorrado =
                         'tr'
                 ).length;
 
-        if (cantidad >= <%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>) {
+        if (cantidad
+                >= <%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>) {
+
             alert(
                     'Se pueden cargar hasta '
                             + '<%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>'
@@ -480,12 +551,33 @@ boolean msgPresupuestoBorrado =
 
         var archivo =
                 jQuery(
-                        '<input type="file" class="presupuesto-archivo" />'
+                        '<input '
+                                + 'type="file" '
+                                + 'class="presupuesto-archivo" '
+                                + '/>'
                 );
+
+        var subir =
+                jQuery(
+                        '<input '
+                                + 'type="button" '
+                                + 'class="presupuesto-subir" '
+                                + 'value="Subir" '
+                                + 'title="Subir presupuestos" '
+                                + '/>'
+                );
+
+        subir.click(function() {
+            return <portlet:namespace />uploadPresupuestoRequerimientoCompra();
+        });
 
         var borrar =
                 jQuery(
-                        '<input type="button" value="Borrar" />'
+                        '<input '
+                                + 'type="button" '
+                                + 'class="presupuesto-borrar" '
+                                + 'value="Borrar" '
+                                + '/>'
                 );
 
         borrar.click(function() {
@@ -495,7 +587,30 @@ boolean msgPresupuestoBorrado =
                     )
                     .remove();
 
-            <portlet:namespace />reindexarFilasPresupuesto();
+            /*
+             * Al mover Agregar dentro de la fila,
+             * no se puede dejar la tabla sin filas.
+             */
+            if (tbody.find('tr').length == 0) {
+                <portlet:namespace />agregarFilaPresupuesto();
+            } else {
+                <portlet:namespace />reindexarFilasPresupuesto();
+            }
+
+            return false;
+        });
+
+        var agregar =
+                jQuery(
+                        '<input '
+                                + 'type="button" '
+                                + 'class="presupuesto-agregar" '
+                                + 'value="Agregar otro presupuesto" '
+                                + '/>'
+                );
+
+        agregar.click(function() {
+            return <portlet:namespace />agregarFilaPresupuesto();
         });
 
         var row =
@@ -523,7 +638,23 @@ boolean msgPresupuestoBorrado =
                 jQuery(
                         '<td></td>'
                 ).append(
+                        subir
+                )
+        );
+
+        row.append(
+                jQuery(
+                        '<td></td>'
+                ).append(
                         borrar
+                )
+        );
+
+        row.append(
+                jQuery(
+                        '<td></td>'
+                ).append(
+                        agregar
                 )
         );
 
