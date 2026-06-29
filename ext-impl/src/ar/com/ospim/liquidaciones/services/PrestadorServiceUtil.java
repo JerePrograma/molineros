@@ -182,7 +182,7 @@ public class PrestadorServiceUtil {
 		);
 	}
 
-	public List<HistoricoPrestadorCotizacion>
+	public static List<HistoricoPrestadorCotizacion>
 	listarHistoricoCotizacionPrestador(int idPrestador)
 			throws SystemException {
 		return getInstance().listarHistoricoCotizacionPrestador(
