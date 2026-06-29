@@ -368,7 +368,7 @@ if (afiliadoRequerimiento != null) {
     }
 
     afiliadoIncapacidad = afiliadoRequerimiento.getDiscapacitado() != null ? afiliadoRequerimiento.getDiscapacitado() : "";
-    afiliadoAntecedentes = afiliadoRequerimiento.getTieneAntecedentesJudiciales() == 1 ? "SI" : "NO";
+    afiliadoAntecedentes = afiliadoRequerimiento.getTieneAntecedentesJudiciales() == 1 ? "Sí" : "No";
 
     afiliadoNumeroOspim = primerValorMetodoCompra(
             afiliadoRequerimiento,

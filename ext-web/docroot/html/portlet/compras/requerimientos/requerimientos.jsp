@@ -252,7 +252,7 @@ if (tercerizadoras == null) {
                             <%= "false".equals(recuperoFiltro)
                                     ? "selected"
                                     : "" %>>
-                        NO
+                        No
                     </option>
                 </select>
             </td>
