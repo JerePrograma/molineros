@@ -202,10 +202,6 @@ ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado result
     <div class="portlet-msg-info">
         Prestadores candidatos:
         <%= resultadoNotificacionCotizacion.getTotalCandidatos() %>.
-        Habilitados activos:
-        <%= resultadoNotificacionCotizacion.getPrestadoresHabilitados() %>.
-        Compatibles con sector:
-        <%= resultadoNotificacionCotizacion.getPrestadoresCompatiblesSector() %>.
         Bloqueados por envio previo:
         <%= resultadoNotificacionCotizacion.getPrestadoresBloqueadosEstadoPrevio() %>.
         Enviados:
