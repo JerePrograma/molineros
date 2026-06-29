@@ -1,1339 +1,591 @@
 package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.servlets.PdfServlet;
+import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionDetalle;
 import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
+import ar.com.ospim.servlets.PdfServlet;
 import ar.com.ospim.util.ConnectionHelper;
-
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
 public class NotificarCotizacionPrestadorServiceImpl {
+    private static final Log _log = LogFactoryUtil.getLog(NotificarCotizacionPrestadorServiceImpl.class); /*
+     * Mientras permanezca en true, todos los correos se envían * al destinatario fijo de QA. *
+     * El email real del prestador igualmente se captura, * valida y expone en el resultado como advertencia. */
+    private static final boolean USAR_EMAIL_DESTINO_TEMPORAL = true;
+    private static final String EMAIL_DESTINO_TEMPORAL = "acomas@ospim.org.ar";
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+    private static final Pattern SENSITIVE_DETAIL_PATTERN = Pattern.compile("(?i)(password|passwd|pwd|token|secret|" + "api[_-]?key|authorization)" + "\\s*[:=]\\s*\\S+");
+    private final CotizacionPrestadorMailHelper mailHelper = new CotizacionPrestadorMailHelper();
 
-    private static final Log _log =
-            LogFactoryUtil.getLog(
-                    NotificarCotizacionPrestadorServiceImpl.class
-            );
-
-    /*
-     * Modo temporal para pruebas.
-     *
-     * Mientras sea true, todos los correos se envían al
-     * destinatario fijo, independientemente del email
-     * registrado para cada prestador.
-     *
-     * Para habilitar el envío real a prestadores:
-     *
-     *     USAR_EMAIL_DESTINO_TEMPORAL = false;
-     */
-    private static final boolean
-            USAR_EMAIL_DESTINO_TEMPORAL = true;
-
-    private static final String
-            EMAIL_DESTINO_TEMPORAL =
-            "acomas@ospim.org.ar";
-
-    private static final Pattern EMAIL_PATTERN =
-            Pattern.compile(
-                    "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
-            );
-
-    private static final Pattern SENSITIVE_DETAIL_PATTERN =
-            Pattern.compile(
-                    "(?i)(password|passwd|pwd|token|secret|"
-                            + "api[_-]?key|authorization)"
-                            + "\\s*[:=]\\s*\\S+"
-            );
-
-    private static final String SQL_LISTAR_CANDIDATOS =
-            "SELECT id_prestador, descripcion, cuit, email, "
-                    + "id_tipo_prestador, tipo_prestador "
-                    + "FROM compras."
-                    + "listar_prestadores_cotizacion_requerimiento(?)";
-
-    private static final String SQL_DIAGNOSTICO_CANDIDATOS =
-            "SELECT r.id_sector, "
-                    + "COUNT(DISTINCT CASE "
-                    + "WHEN p.id_prestador IS NOT NULL "
-                    + "THEN p.id_prestador END) "
-                    + "AS prestadores_habilitados, "
-                    + "COUNT(DISTINCT CASE "
-                    + "WHEN stp.id_tipo_prestador IS NOT NULL "
-                    + "THEN p.id_prestador END) "
-                    + "AS prestadores_compatibles_sector, "
-                    + "COUNT(DISTINCT CASE "
-                    + "WHEN stp.id_tipo_prestador IS NOT NULL "
-                    + "AND rcp.estado_envio IN ('ENVIADO', 'PROCESANDO') "
-                    + "THEN p.id_prestador END) "
-                    + "AS prestadores_bloqueados_estado_previo "
-                    + "FROM compras.requerimiento r "
-                    + "LEFT JOIN public.prestador p "
-                    + "ON COALESCE(p.solicitar_cotizacion, FALSE) = TRUE "
-                    + "AND p.baja_fecha IS NULL "
-                    + "LEFT JOIN compras.sector_tipo_prestador stp "
-                    + "ON stp.id_sector = r.id_sector "
-                    + "AND stp.id_tipo_prestador = p.id_tipo_prestador "
-                    + "AND stp.activo = TRUE "
-                    + "AND stp.baja_fecha IS NULL "
-                    + "LEFT JOIN compras.requerimiento_cotizacion_prestador rcp "
-                    + "ON rcp.id_requerimiento = r.id_requerimiento "
-                    + "AND rcp.id_prestador = p.id_prestador "
-                    + "WHERE r.id_requerimiento = ? "
-                    + "AND r.baja_fecha IS NULL "
-                    + "GROUP BY r.id_sector";
-
-    private static final String SQL_REGISTRAR_COTIZACION =
-            "SELECT compras."
-                    + "registrar_cotizacion_prestador(?, ?, ?)";
-
-    private static final String SQL_FINALIZAR_COTIZACION =
-            "SELECT compras."
-                    + "finalizar_cotizacion_prestador(?, ?, ?, ?)";
-
-    private static final String SQL_LEER_EMAIL_RESERVADO =
-            "SELECT email_destino "
-                    + "FROM compras.requerimiento_cotizacion_prestador "
-                    + "WHERE id_requerimiento = ? "
-                    + "  AND id_prestador = ? "
-                    + "  AND estado_envio = 'PROCESANDO'";
-
-    private final CotizacionPrestadorMailHelper mailHelper =
-            new CotizacionPrestadorMailHelper();
-
-    public NotificacionCotizacionResultado notificarPrestadores(
-            int idRequerimientoCompra,
-            String usuario,
-            long companyId) throws Exception {
-
-        validarParametros(
-                idRequerimientoCompra,
-                companyId
-        );
-
-        RequerimientoCompra requerimiento =
-                getRequerimientoCompra(
-                        idRequerimientoCompra
-                );
-
-        validarRequerimiento(
-                requerimiento
-        );
-
-        List<PrestadorCotizacion> candidatos =
-                listarPrestadoresCandidatos(
-                        idRequerimientoCompra
-                );
-
-        NotificacionCotizacionResultado resultado =
-                new NotificacionCotizacionResultado();
-
-        resultado.setTotalCandidatos(
-                candidatos.size()
-        );
-
-        cargarDiagnosticoCandidatosConControl(
-                requerimiento,
-                resultado
-        );
-
+    public NotificacionCotizacionResultado notificarPrestadores(int idRequerimientoCompra, String usuario, long companyId) throws Exception {
+        validarParametros(idRequerimientoCompra, companyId);
+        RequerimientoCompra requerimiento = getRequerimientoCompra(idRequerimientoCompra);
+        validarRequerimiento(requerimiento);
+        List<PrestadorCotizacion> candidatos = listarPrestadoresCandidatos(idRequerimientoCompra);
+        NotificacionCotizacionResultado resultado = new NotificacionCotizacionResultado();
+        resultado.setTotalCandidatos(candidatos.size());
+        cargarDiagnosticoCandidatosConControl(requerimiento, resultado);
         if (candidatos.isEmpty()) {
             if (_log.isInfoEnabled()) {
-                _log.info(
-                        "No hay prestadores pendientes "
-                                + "de notificación. "
-                                + "idRequerimiento="
-                                + idRequerimientoCompra
-                );
+                _log.info("No hay prestadores pendientes " + "de notificacion. " + "idRequerimiento=" + idRequerimientoCompra + ", habilitados=" + resultado.getPrestadoresHabilitados() + ", compatiblesSector=" + resultado.getPrestadoresCompatiblesSector() + ", bloqueadosEstadoPrevio=" + resultado.getPrestadoresBloqueadosEstadoPrevio());
             }
-
             return resultado;
-        }
-
-        /*
-         * Se genera antes de reservar el primer prestador. Si Jasper o la
-         * conexión fallan, no queda ninguna fila PROCESANDO ni se intenta
-         * enviar un correo parcial.
-         */
-        byte[] pedidoPresupuestoPdf =
-                generarPedidoPresupuestoPdf(
-                        idRequerimientoCompra
-                );
-
-        String nombrePedidoPresupuestoPdf =
-                "PedidoPresupuesto_"
-                        + idRequerimientoCompra
-                        + ".pdf";
-
+        } /* * El PDF se genera antes de reservar al primer prestador. * * Si Jasper falla, no queda ninguna fila PROCESANDO * ni se realizan envíos parciales. */
+        byte[] pedidoPresupuestoPdf = generarPedidoPresupuestoPdf(idRequerimientoCompra);
+        String nombrePedidoPresupuestoPdf = "PedidoPresupuesto_" + idRequerimientoCompra + ".pdf";
         for (int i = 0; i < candidatos.size(); i++) {
-            procesarPrestador(
-                    requerimiento,
-                    candidatos.get(i),
-                    usuario,
-                    companyId,
-                    resultado,
-                    pedidoPresupuestoPdf,
-                    nombrePedidoPresupuestoPdf
-            );
+            procesarPrestador(requerimiento, candidatos.get(i), usuario, companyId, resultado, pedidoPresupuestoPdf, nombrePedidoPresupuestoPdf);
         }
-
+        if (resultado.getPendientesSinClasificar() > 0) {
+            _log.error("El proceso de notificacion finalizo " + "con candidatos sin clasificar. " + "idRequerimiento=" + idRequerimientoCompra + ", candidatos=" + resultado.getTotalCandidatos() + ", procesados=" + resultado.getTotalProcesados() + ", pendientesSinClasificar=" + resultado.getPendientesSinClasificar());
+        }
         return resultado;
     }
 
-    private void procesarPrestador(
-            RequerimientoCompra requerimiento,
-            PrestadorCotizacion prestador,
-            String usuario,
-            long companyId,
-            NotificacionCotizacionResultado resultado,
-            byte[] pedidoPresupuestoPdf,
-            String nombrePedidoPresupuestoPdf) {
-
+    private void procesarPrestador(RequerimientoCompra requerimiento, PrestadorCotizacion prestador, String usuario, long companyId, NotificacionCotizacionResultado resultado, byte[] pedidoPresupuestoPdf, String nombrePedidoPresupuestoPdf) {
         if (prestador == null) {
-            resultado.incrementarErrores();
+            registrarResultado(resultado, null, null, null, NotificacionCotizacionDetalle.RESULTADO_ERROR, "VALIDACION", "La consulta devolvio un candidato nulo.", false);
             return;
         }
-
-        int idRequerimiento =
-                requerimiento
-                        .getIdRequerimientoCompra();
-
-        int idPrestador =
-                prestador
-                        .getIdPrestador();
-
+        int idRequerimiento = requerimiento.getIdRequerimientoCompra();
+        int idPrestador = prestador.getIdPrestador();
         if (_log.isInfoEnabled()) {
-            _log.info(
-                    "Procesando candidato de cotizacion. "
-                            + "idRequerimiento="
-                            + idRequerimiento
-                            + ", sector="
-                            + requerimiento.getIdSector()
-                            + ", idPrestador="
-                            + idPrestador
-                            + ", idTipoPrestador="
-                            + prestador.getIdTipoPrestador()
-            );
+            _log.info("Procesando candidato de cotizacion. " + "idRequerimiento=" + idRequerimiento + ", sector=" + requerimiento.getIdSector() + ", idPrestador=" + idPrestador + ", idTipoPrestador=" + prestador.getIdTipoPrestador());
         }
-
-        boolean reservado;
-
+        ReservaCotizacionPrestador reserva;
         try {
-            reservado =
-                    registrarCotizacionPrestador(
-                            idRequerimiento,
-                            idPrestador,
-                            usuario
-                    );
-
+            reserva = reservarCotizacionPrestador(idRequerimiento, idPrestador, usuario);
         } catch (Exception e) {
-            _log.error(
-                    "No se pudo reservar el envío "
-                            + "de cotización. "
-                            + "idPrestador="
-                            + idPrestador
-                            + ", idRequerimiento="
-                            + idRequerimiento,
-                    e
-            );
-
-            resultado.incrementarErrores();
+            String detalleError = construirDetalleError(e);
+            _log.error("No se pudo reservar la notificacion " + "de cotizacion. " + "idPrestador=" + idPrestador + ", idRequerimiento=" + idRequerimiento, e);
+            registrarResultado(resultado, prestador, prestador.getEmail(), null, NotificacionCotizacionDetalle.RESULTADO_ERROR, "RESERVA", detalleError, false);
             return;
         }
-
-        if (!reservado) {
+        if (reserva == null) {
+            registrarResultado(resultado, prestador, prestador.getEmail(), null, NotificacionCotizacionDetalle.RESULTADO_ERROR, "RESERVA", "La funcion de reserva no devolvio un resultado.", false);
+            return;
+        }
+        if (!reserva.isReservado()) {
+            String motivo = construirMotivoReservaNoOtorgada(reserva);
             if (_log.isInfoEnabled()) {
-                _log.info(
-                        "No se obtuvo reserva para envio "
-                                + "de cotizacion. "
-                                + "idPrestador="
-                                + idPrestador
-                                + ", idRequerimiento="
-                                + idRequerimiento
-                                + ", sector="
-                                + requerimiento.getIdSector()
-                                + ", idTipoPrestador="
-                                + prestador.getIdTipoPrestador()
-                                + ", resultadoReserva=false"
-                );
+                _log.info("Prestador omitido porque no se obtuvo " + "la reserva exclusiva. " + "idPrestador=" + idPrestador + ", idRequerimiento=" + idRequerimiento + ", estadoObservado=" + reserva.getEstadoEnvio() + ", motivoCodigo=" + reserva.getMotivoCodigo() + ", motivo=" + motivo);
             }
-
-            resultado.incrementarOmitidos();
+            registrarResultado(resultado, prestador, reserva.getEmailDestino(), null, NotificacionCotizacionDetalle.RESULTADO_OMITIDO, "RESERVA", motivo, false);
             return;
         }
-
-        String emailReservado;
-
-        try {
-            emailReservado =
-                    leerEmailReservado(
-                            idRequerimiento,
-                            idPrestador
-                    );
-
-        } catch (Exception e) {
-            String detalleError =
-                    construirDetalleError(
-                            e
-                    );
-
-            finalizarConControl(
-                    idRequerimiento,
-                    idPrestador,
-                    WebKeysCompras.ENVIO_ERROR,
-                    detalleError
-            );
-
-            _log.error(
-                    "No se pudo leer el email reservado "
-                            + "de cotización. "
-                            + "idPrestador="
-                            + idPrestador
-                            + ", idRequerimiento="
-                            + idRequerimiento,
-                    e
-            );
-
-            resultado.incrementarErrores();
-            return;
-        }
-
-        /*
-         * En modo temporal se utiliza exclusivamente el destinatario
-         * fijo de QA. Un email real inexistente o inválido se registra
-         * en el log, pero no bloquea la prueba.
-         *
-         * Fuera del modo temporal, el email real reservado continúa
-         * siendo obligatorio.
-         */
-        String emailReservadoNormalizado =
-                normalizarEmail(
-                        emailReservado
-                );
-
-        String emailDestino =
-                resolverEmailDestino(
-                        emailReservadoNormalizado
-                );
-
+        String emailReservadoNormalizado = normalizarEmail(reserva.getEmailDestino());
+        String emailDestino = resolverEmailDestino(emailReservadoNormalizado);
+        boolean emailRealInvalido = !esEmailValido(emailReservadoNormalizado);
+        boolean emailRealInvalidoAdvertido = USAR_EMAIL_DESTINO_TEMPORAL && emailRealInvalido; /* * En modo QA, el email real inválido no bloquea el envío, * porque se utiliza EMAIL_DESTINO_TEMPORAL. * * Sin embargo, queda registrado como advertencia explícita * en el detalle y en el contador correspondiente. */
         if (USAR_EMAIL_DESTINO_TEMPORAL) {
-
-            if (!esEmailValido(
-                    emailReservadoNormalizado
-            )) {
-                _log.warn(
-                        "El email real reservado del prestador "
-                                + "es inválido, pero el envío continuará "
-                                + "redirigido al destinatario temporal. "
-                                + "idPrestador="
-                                + idPrestador
-                                + ", idRequerimiento="
-                                + idRequerimiento
-                );
+            if (emailRealInvalido) {
+                _log.warn("El email real reservado del prestador " + "es inexistente o invalido. " + "El envio continuara redirigido " + "al destinatario temporal. " + "idPrestador=" + idPrestador + ", idRequerimiento=" + idRequerimiento);
             }
-
             if (_log.isInfoEnabled()) {
-                _log.info(
-                        "Modo temporal de notificación activo. "
-                                + "La cotización será redirigida "
-                                + "al destinatario fijo de QA. "
-                                + "idPrestador="
-                                + idPrestador
-                                + ", idRequerimiento="
-                                + idRequerimiento
-                );
+                _log.info("Modo temporal de notificacion activo. " + "El correo sera redirigido " + "al destinatario fijo de QA. " + "idPrestador=" + idPrestador + ", idRequerimiento=" + idRequerimiento);
             }
-
-        } else if (!esEmailValido(
-                emailReservadoNormalizado
-        )) {
-            String errorEmail =
-                    "Email real reservado del prestador inválido.";
-
-            _log.warn(
-                    "Email real reservado de cotización inválido. "
-                            + "idPrestador="
-                            + idPrestador
-                            + ", idRequerimiento="
-                            + idRequerimiento
-            );
-
-            finalizarConControl(
-                    idRequerimiento,
-                    idPrestador,
-                    WebKeysCompras.ENVIO_EMAIL_INVALIDO,
-                    errorEmail
-            );
-
-            resultado.incrementarEmailsInvalidos();
+        } else if (emailRealInvalido) {
+            String errorEmail = "El email real reservado del prestador " + "es inexistente o invalido.";
+            _log.warn("No se intentara enviar la cotizacion " + "porque el email real es invalido. " + "idPrestador=" + idPrestador + ", idRequerimiento=" + idRequerimiento);
+            boolean persistido = finalizarConControl(idRequerimiento, idPrestador, WebKeysCompras.ENVIO_EMAIL_INVALIDO, errorEmail, usuario);
+            registrarResultado(resultado, prestador, emailReservadoNormalizado, null, persistido ? NotificacionCotizacionDetalle.RESULTADO_EMAIL_INVALIDO : NotificacionCotizacionDetalle.RESULTADO_ERROR, persistido ? "VALIDACION_EMAIL" : "PERSISTENCIA", persistido ? errorEmail : errorEmail + " Ademas, no se pudo persistir " + "el estado EMAIL_INVALIDO.", false);
             return;
-        }
-
-        if (!esEmailValido(
-                emailDestino
-        )) {
-            String errorEmail =
-                    USAR_EMAIL_DESTINO_TEMPORAL
-                            ? "Email destino temporal inválido."
-                            : "Email destino del prestador inválido.";
-
-            _log.warn(
-                    "Email destino de cotización inválido. "
-                            + "modoTemporal="
-                            + USAR_EMAIL_DESTINO_TEMPORAL
-                            + ", idPrestador="
-                            + idPrestador
-                            + ", idRequerimiento="
-                            + idRequerimiento
-            );
-
-            finalizarConControl(
-                    idRequerimiento,
-                    idPrestador,
-                    WebKeysCompras.ENVIO_EMAIL_INVALIDO,
-                    errorEmail
-            );
-
-            resultado.incrementarEmailsInvalidos();
+        } /* * Esta validación contempla especialmente un error de * configuración del destinatario temporal. */
+        if (!esEmailValido(emailDestino)) {
+            String errorEmail = USAR_EMAIL_DESTINO_TEMPORAL ? "El email destino temporal de QA " + "es inexistente o invalido." : "El email destino efectivo del prestador " + "es inexistente o invalido.";
+            _log.warn("No se intentara enviar la cotizacion " + "porque el destinatario efectivo " + "es invalido. " + "modoTemporal=" + USAR_EMAIL_DESTINO_TEMPORAL + ", idPrestador=" + idPrestador + ", idRequerimiento=" + idRequerimiento);
+            boolean persistido = finalizarConControl(idRequerimiento, idPrestador, WebKeysCompras.ENVIO_EMAIL_INVALIDO, errorEmail, usuario);
+            registrarResultado(resultado, prestador, emailReservadoNormalizado, emailDestino, persistido ? NotificacionCotizacionDetalle.RESULTADO_EMAIL_INVALIDO : NotificacionCotizacionDetalle.RESULTADO_ERROR, persistido ? "VALIDACION_EMAIL" : "PERSISTENCIA", persistido ? errorEmail : errorEmail + " Ademas, no se pudo persistir " + "el estado EMAIL_INVALIDO.", emailRealInvalidoAdvertido);
             return;
-        }
-
+        } /* * La llamada al servicio de correo debe ocurrir antes * de persistir ENVIADO. * * El código anterior omitía esta llamada y marcaba * ENVIADO sin haber enviado el mensaje. */
         try {
-            if (!finalizarCotizacionPrestador(
-                    idRequerimiento,
-                    idPrestador,
-                    WebKeysCompras.ENVIO_ENVIADO,
-                    null
-            )) {
-                _log.error(
-                        "El correo fue aceptado por el servicio "
-                                + "de mail, pero no se pudo "
-                                + "persistir ENVIADO. "
-                                + "Se conserva PROCESANDO. "
-                                + "idPrestador="
-                                + idPrestador
-                                + ", idRequerimiento="
-                                + idRequerimiento
-                );
-
-                resultado.incrementarErrores();
-                return;
-            }
-
-            resultado.incrementarEnviados();
-
-            if (_log.isInfoEnabled()) {
-                _log.info(
-                        "Cotizacion enviada a prestador. "
-                                + "idPrestador="
-                                + idPrestador
-                                + ", idRequerimiento="
-                                + idRequerimiento
-                                + ", sector="
-                                + requerimiento.getIdSector()
-                                + ", idTipoPrestador="
-                                + prestador.getIdTipoPrestador()
-                                + ", estadoEnvio=ENVIADO"
-                );
-            }
-
+            enviarMail(companyId, emailDestino, construirAsunto(requerimiento), construirCuerpo(requerimiento, prestador), pedidoPresupuestoPdf, nombrePedidoPresupuestoPdf);
         } catch (Exception e) {
-            _log.error(
-                    "El correo fue aceptado por el servicio "
-                            + "de mail, pero falló la persistencia "
-                            + "de ENVIADO. "
-                            + "Se conserva PROCESANDO y no "
-                            + "se marca ERROR. "
-                            + "idPrestador="
-                            + idPrestador
-                            + ", idRequerimiento="
-                            + idRequerimiento,
-                    e
-            );
-
-            resultado.incrementarErrores();
+            String detalleError = construirDetalleError(e);
+            boolean persistido = finalizarConControl(idRequerimiento, idPrestador, WebKeysCompras.ENVIO_ERROR, detalleError, usuario);
+            String motivo = "Fallo el envio del correo. " + detalleError;
+            if (!persistido) {
+                motivo += " Ademas, no se pudo persistir " + "el estado ERROR.";
+            }
+            _log.error("Fallo el envio de la cotizacion. " + "idPrestador=" + idPrestador + ", idRequerimiento=" + idRequerimiento + ", estadoErrorPersistido=" + persistido, e);
+            registrarResultado(resultado, prestador, emailReservadoNormalizado, emailDestino, NotificacionCotizacionDetalle.RESULTADO_ERROR, "ENVIO", motivo, emailRealInvalidoAdvertido);
+            return;
+        } /* * El helper de mail aceptó el mensaje. * Recién ahora se intenta persistir ENVIADO. */
+        boolean enviadoPersistido = finalizarConControl(idRequerimiento, idPrestador, WebKeysCompras.ENVIO_ENVIADO, null, usuario);
+        if (!enviadoPersistido) {
+            String motivo = "El servicio de correo acepto el mensaje, " + "pero no se pudo persistir ENVIADO. " + "La fila puede permanecer PROCESANDO.";
+            _log.error(motivo + " idPrestador=" + idPrestador + ", idRequerimiento=" + idRequerimiento);
+            registrarResultado(resultado, prestador, emailReservadoNormalizado, emailDestino, NotificacionCotizacionDetalle.RESULTADO_ERROR, "PERSISTENCIA", motivo, emailRealInvalidoAdvertido);
+            return;
+        }
+        String motivoExito;
+        if (USAR_EMAIL_DESTINO_TEMPORAL) {
+            motivoExito = "Correo aceptado por el servicio de mail, " + "redirigido al destinatario temporal " + "de QA y estado ENVIADO persistido.";
+            if (emailRealInvalidoAdvertido) {
+                motivoExito += " El email real del prestador " + "es inexistente o invalido.";
+            }
+        } else {
+            motivoExito = "Correo aceptado por el servicio de mail " + "y estado ENVIADO persistido.";
+        }
+        registrarResultado(resultado, prestador, emailReservadoNormalizado, emailDestino, NotificacionCotizacionDetalle.RESULTADO_ENVIADO, "FINALIZADO", motivoExito, emailRealInvalidoAdvertido);
+        if (_log.isInfoEnabled()) {
+            _log.info("Cotizacion enviada y finalizada. " + "idPrestador=" + idPrestador + ", idRequerimiento=" + idRequerimiento + ", sector=" + requerimiento.getIdSector() + ", idTipoPrestador=" + prestador.getIdTipoPrestador() + ", modoTemporal=" + USAR_EMAIL_DESTINO_TEMPORAL + ", estadoEnvio=ENVIADO");
         }
     }
 
-    protected byte[] generarPedidoPresupuestoPdf(
-            int idRequerimientoCompra) throws Exception {
-
-        return new PdfServlet()
-                .crearRequerimientoCompraComoAdjunto(
-                        idRequerimientoCompra
-                );
-    }
-    protected RequerimientoCompra getRequerimientoCompra(
-            int idRequerimientoCompra) throws Exception {
-
-        return BusquedaRequerimientoCompraServiceUtil
-                .getRequerimientoCompra(
-                        idRequerimientoCompra
-                );
+    protected byte[] generarPedidoPresupuestoPdf(int idRequerimientoCompra) throws Exception {
+        return new PdfServlet().crearRequerimientoCompraComoAdjunto(idRequerimientoCompra);
     }
 
-    protected List<PrestadorCotizacion>
-    listarPrestadoresCandidatos(
-            int idRequerimientoCompra) throws Exception {
+    protected RequerimientoCompra getRequerimientoCompra(int idRequerimientoCompra) throws Exception {
+        return BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimientoCompra);
+    }
 
+    protected List<PrestadorCotizacion> listarPrestadoresCandidatos(int idRequerimientoCompra) throws Exception {
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
-
-        List<PrestadorCotizacion> candidatos =
-                new ArrayList<PrestadorCotizacion>();
-
+        List<PrestadorCotizacion> candidatos = new ArrayList<PrestadorCotizacion>();
         try {
+            String sql = "{call compras." + "listar_prestadores_notificacion_cotizacion(?)}";
             con = obtenerConexion();
-
-            stmt = con.prepareStatement(
-                    SQL_LISTAR_CANDIDATOS
-            );
-
-            stmt.setInt(
-                    1,
-                    idRequerimientoCompra
-            );
-
+            stmt = con.prepareCall(sql);
+            stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
-
             while (rs.next()) {
-                candidatos.add(
-                        mapPrestadorCotizacion(
-                                rs
-                        )
-                );
+                candidatos.add(mapPrestadorCotizacion(rs));
             }
-
             return candidatos;
-
         } catch (Exception e) {
-            _log.error(
-                    "Error listando prestadores candidatos. "
-                            + "idRequerimiento="
-                            + idRequerimientoCompra,
-                    e
-            );
-
+            _log.error("Error listando prestadores candidatos. " + "idRequerimiento=" + idRequerimientoCompra, e);
             throw e;
-
         } finally {
-            cerrar(
-                    rs
-            );
-
-            ConnectionHelper.cerrar(
-                    stmt,
-                    con
-            );
+            cerrar(rs);
+            ConnectionHelper.cerrar(stmt, con);
         }
     }
 
-    private void cargarDiagnosticoCandidatosConControl(
-            RequerimientoCompra requerimiento,
-            NotificacionCotizacionResultado resultado) {
-
+    private void cargarDiagnosticoCandidatosConControl(RequerimientoCompra requerimiento, NotificacionCotizacionResultado resultado) {
         try {
-            cargarDiagnosticoCandidatos(
-                    requerimiento,
-                    resultado
-            );
-
+            cargarDiagnosticoCandidatos(requerimiento, resultado);
         } catch (Exception e) {
-            _log.warn(
-                    "No se pudo calcular el diagnostico "
-                            + "de prestadores candidatos. "
-                            + "idRequerimiento="
-                            + (
-                            requerimiento != null
-                                    ? requerimiento
-                                    .getIdRequerimientoCompra()
-                                    : 0
-                    ),
-                    e
-            );
+            _log.warn("No se pudo calcular el diagnostico " + "de prestadores candidatos. " + "idRequerimiento=" + (requerimiento != null ? requerimiento.getIdRequerimientoCompra() : 0), e);
         }
     }
 
-    protected void cargarDiagnosticoCandidatos(
-            RequerimientoCompra requerimiento,
-            NotificacionCotizacionResultado resultado)
-            throws Exception {
-
-        if (requerimiento == null
-                || resultado == null) {
-
+    protected void cargarDiagnosticoCandidatos(RequerimientoCompra requerimiento, NotificacionCotizacionResultado resultado) throws Exception {
+        if (requerimiento == null || resultado == null) {
             return;
         }
-
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
-
         try {
+            String sql = "{call compras." + "diagnosticar_prestadores_notificacion_cotizacion(?)}";
             con = obtenerConexion();
-
-            stmt = con.prepareStatement(
-                    SQL_DIAGNOSTICO_CANDIDATOS
-            );
-
-            stmt.setInt(
-                    1,
-                    requerimiento.getIdRequerimientoCompra()
-            );
-
+            stmt = con.prepareCall(sql);
+            stmt.setInt(1, requerimiento.getIdRequerimientoCompra());
             rs = stmt.executeQuery();
-
             if (rs.next()) {
-                resultado.setPrestadoresHabilitados(
-                        rs.getInt(
-                                "prestadores_habilitados"
-                        )
-                );
-
-                resultado.setPrestadoresCompatiblesSector(
-                        rs.getInt(
-                                "prestadores_compatibles_sector"
-                        )
-                );
-
-                resultado.setPrestadoresBloqueadosEstadoPrevio(
-                        rs.getInt(
-                                "prestadores_bloqueados_estado_previo"
-                        )
-                );
+                resultado.setPrestadoresHabilitados(rs.getInt("prestadores_habilitados"));
+                resultado.setPrestadoresCompatiblesSector(rs.getInt("prestadores_compatibles_sector"));
+                resultado.setPrestadoresBloqueadosEstadoPrevio(rs.getInt("prestadores_bloqueados_estado_previo"));
             }
-
             if (_log.isInfoEnabled()) {
-                _log.info(
-                        "Diagnostico de prestadores candidatos. "
-                                + "idRequerimiento="
-                                + requerimiento
-                                .getIdRequerimientoCompra()
-                                + ", sector="
-                                + requerimiento.getIdSector()
-                                + ", candidatos="
-                                + resultado.getTotalCandidatos()
-                                + ", habilitados="
-                                + resultado.getPrestadoresHabilitados()
-                                + ", compatiblesSector="
-                                + resultado
-                                .getPrestadoresCompatiblesSector()
-                                + ", bloqueadosEstadoPrevio="
-                                + resultado
-                                .getPrestadoresBloqueadosEstadoPrevio()
-                );
+                _log.info("Diagnostico de prestadores candidatos. " + "idRequerimiento=" + requerimiento.getIdRequerimientoCompra() + ", sector=" + requerimiento.getIdSector() + ", candidatos=" + resultado.getTotalCandidatos() + ", habilitados=" + resultado.getPrestadoresHabilitados() + ", compatiblesSector=" + resultado.getPrestadoresCompatiblesSector() + ", bloqueadosEstadoPrevio=" + resultado.getPrestadoresBloqueadosEstadoPrevio());
             }
-
         } finally {
-            cerrar(
-                    rs
-            );
-
-            ConnectionHelper.cerrar(
-                    stmt,
-                    con
-            );
+            cerrar(rs);
+            ConnectionHelper.cerrar(stmt, con);
         }
     }
 
-    protected boolean registrarCotizacionPrestador(
-            int idRequerimientoCompra,
-            int idPrestador,
-            String usuario) throws Exception {
-
+    protected ReservaCotizacionPrestador reservarCotizacionPrestador(int idRequerimientoCompra, int idPrestador, String usuario) throws Exception {
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
-
         try {
+            String sql = "{call compras." + "reservar_notificacion_cotizacion_prestador" + "(?,?,?)}";
             con = obtenerConexion();
-
-            stmt = con.prepareStatement(
-                    SQL_REGISTRAR_COTIZACION
-            );
-
-            stmt.setInt(
-                    1,
-                    idRequerimientoCompra
-            );
-
-            stmt.setInt(
-                    2,
-                    idPrestador
-            );
-
-            stmt.setString(
-                    3,
-                    normalizarUsuario(
-                            usuario
-                    )
-            );
-
+            stmt = con.prepareCall(sql);
+            stmt.setInt(1, idRequerimientoCompra);
+            stmt.setInt(2, idPrestador);
+            stmt.setString(3, normalizarUsuario(usuario));
             rs = stmt.executeQuery();
-
-            return rs.next()
-                    && rs.getBoolean(
-                    1
-            );
-
-        } finally {
-            cerrar(
-                    rs
-            );
-
-            ConnectionHelper.cerrar(
-                    stmt,
-                    con
-            );
-        }
-    }
-
-    protected String leerEmailReservado(
-            int idRequerimiento,
-            int idPrestador) throws Exception {
-
-        Connection con = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
-        try {
-            con = obtenerConexion();
-
-            stmt = con.prepareStatement(
-                    SQL_LEER_EMAIL_RESERVADO
-            );
-
-            stmt.setInt(
-                    1,
-                    idRequerimiento
-            );
-
-            stmt.setInt(
-                    2,
-                    idPrestador
-            );
-
-            rs = stmt.executeQuery();
-
             if (!rs.next()) {
-                throw new Exception(
-                        "No se encontró una reserva "
-                                + "PROCESANDO para el prestador."
-                );
+                throw new Exception("La funcion de reserva no devolvio filas.");
             }
-
-            return rs.getString(
-                    "email_destino"
-            );
-
+            ReservaCotizacionPrestador reserva = new ReservaCotizacionPrestador();
+            reserva.setReservado(rs.getBoolean("reservado"));
+            reserva.setEstadoEnvio(rs.getString("estado_envio"));
+            reserva.setEmailDestino(rs.getString("email_destino"));
+            reserva.setMotivoCodigo(rs.getString("motivo_codigo"));
+            reserva.setMotivoDescripcion(rs.getString("motivo_descripcion"));
+            return reserva;
         } finally {
-            cerrar(
-                    rs
-            );
-
-            ConnectionHelper.cerrar(
-                    stmt,
-                    con
-            );
+            cerrar(rs);
+            ConnectionHelper.cerrar(stmt, con);
         }
+    } /* * Método conservado para compatibilidad con tests o * subclases que utilizaban la firma anterior. */
+
+    protected boolean registrarCotizacionPrestador(int idRequerimientoCompra, int idPrestador, String usuario) throws Exception {
+        ReservaCotizacionPrestador reserva = reservarCotizacionPrestador(idRequerimientoCompra, idPrestador, usuario);
+        return reserva != null && reserva.isReservado();
     }
 
-    protected boolean finalizarCotizacionPrestador(
-            int idRequerimiento,
-            int idPrestador,
-            String estado,
-            String error) throws Exception {
-
+    protected FinalizacionCotizacionPrestador finalizarCotizacionPrestadorConDetalle(int idRequerimiento, int idPrestador, String estado, String error, String usuario) throws Exception {
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
-
         try {
+            String sql = "{call compras." + "finalizar_notificacion_cotizacion_prestador" + "(?,?,?,?,?)}";
             con = obtenerConexion();
-
-            stmt = con.prepareStatement(
-                    SQL_FINALIZAR_COTIZACION
-            );
-
-            stmt.setInt(
-                    1,
-                    idRequerimiento
-            );
-
-            stmt.setInt(
-                    2,
-                    idPrestador
-            );
-
-            stmt.setString(
-                    3,
-                    estado
-            );
-
-            stmt.setString(
-                    4,
-                    truncar(
-                            error,
-                            4000
-                    )
-            );
-
+            stmt = con.prepareCall(sql);
+            stmt.setInt(1, idRequerimiento);
+            stmt.setInt(2, idPrestador);
+            stmt.setString(3, estado);
+            stmt.setString(4, truncar(error, 4000));
+            stmt.setString(5, normalizarUsuario(usuario));
             rs = stmt.executeQuery();
-
-            return rs.next()
-                    && rs.getBoolean(
-                    1
-            );
-
-        } finally {
-            cerrar(
-                    rs
-            );
-
-            ConnectionHelper.cerrar(
-                    stmt,
-                    con
-            );
-        }
-    }
-
-    /*
-     * companyId se conserva en la firma para no romper
-     * llamadas o tests existentes, aunque la implementación
-     * SMTP específica de Compras no lo necesita.
-     */
-    protected void enviarMail(
-            long companyId,
-            String email,
-            String asunto,
-            String cuerpo,
-            byte[] pedidoPresupuestoPdf,
-            String nombrePedidoPresupuestoPdf)
-            throws Exception {
-
-        mailHelper.enviar(
-                email,
-                asunto,
-                cuerpo,
-                pedidoPresupuestoPdf,
-                nombrePedidoPresupuestoPdf
-        );
-    }
-
-    private void finalizarConControl(
-            int idRequerimiento,
-            int idPrestador,
-            String estado,
-            String error) {
-
-        try {
-            if (!finalizarCotizacionPrestador(
-                    idRequerimiento,
-                    idPrestador,
-                    estado,
-                    error
-            )) {
-                _log.error(
-                        "No se pudo persistir el estado final "
-                                + "de cotización. estado="
-                                + estado
-                                + ", idPrestador="
-                                + idPrestador
-                                + ", idRequerimiento="
-                                + idRequerimiento
-                );
+            if (!rs.next()) {
+                throw new Exception("La funcion de finalizacion " + "no devolvio filas.");
             }
+            FinalizacionCotizacionPrestador finalizacion = new FinalizacionCotizacionPrestador();
+            finalizacion.setActualizado(rs.getBoolean("actualizado"));
+            finalizacion.setEstadoAnterior(rs.getString("estado_anterior"));
+            finalizacion.setEstadoActual(rs.getString("estado_actual"));
+            finalizacion.setMotivo(rs.getString("motivo"));
+            return finalizacion;
+        } finally {
+            cerrar(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    } /* * Método conservado para compatibilidad con tests o * código existente que utilizaba la firma anterior. */
 
+    protected boolean finalizarCotizacionPrestador(int idRequerimiento, int idPrestador, String estado, String error) throws Exception {
+        FinalizacionCotizacionPrestador finalizacion = finalizarCotizacionPrestadorConDetalle(idRequerimiento, idPrestador, estado, error, "sistema");
+        return finalizacion != null && finalizacion.isActualizado();
+    } /* * companyId se conserva para no romper llamadas ni tests. * * El helper SMTP específico de Compras actualmente * no utiliza companyId. */
+
+    protected void enviarMail(long companyId, String email, String asunto, String cuerpo, byte[] pedidoPresupuestoPdf, String nombrePedidoPresupuestoPdf) throws Exception {
+        mailHelper.enviar(email, asunto, cuerpo, pedidoPresupuestoPdf, nombrePedidoPresupuestoPdf);
+    }
+
+    private boolean finalizarConControl(int idRequerimiento, int idPrestador, String estado, String error, String usuario) {
+        try {
+            FinalizacionCotizacionPrestador finalizacion = finalizarCotizacionPrestadorConDetalle(idRequerimiento, idPrestador, estado, error, usuario);
+            if (finalizacion == null) {
+                _log.error("La finalizacion no devolvio resultado. " + "estadoSolicitado=" + estado + ", idPrestador=" + idPrestador + ", idRequerimiento=" + idRequerimiento);
+                return false;
+            }
+            if (!finalizacion.isActualizado()) {
+                _log.error("No se pudo persistir el estado final " + "de la cotizacion. " + "estadoSolicitado=" + estado + ", estadoAnterior=" + finalizacion.getEstadoAnterior() + ", estadoActual=" + finalizacion.getEstadoActual() + ", motivo=" + finalizacion.getMotivo() + ", idPrestador=" + idPrestador + ", idRequerimiento=" + idRequerimiento);
+                return false;
+            }
+            return true;
         } catch (Exception persistenciaError) {
-            _log.error(
-                    "Error persistiendo el estado final "
-                            + "de cotización. estado="
-                            + estado
-                            + ", idPrestador="
-                            + idPrestador
-                            + ", idRequerimiento="
-                            + idRequerimiento,
-                    persistenciaError
-            );
+            _log.error("Error persistiendo el estado final " + "de la cotizacion. " + "estadoSolicitado=" + estado + ", idPrestador=" + idPrestador + ", idRequerimiento=" + idRequerimiento, persistenciaError);
+            return false;
         }
     }
 
-    private String resolverEmailDestino(
-            String emailReservado) {
+    private void registrarResultado(NotificacionCotizacionResultado resultado, PrestadorCotizacion prestador, String emailReal, String emailDestino, String tipoResultado, String etapa, String motivo, boolean emailRealInvalidoAdvertido) {
+        if (resultado == null) {
+            return;
+        }
+        NotificacionCotizacionDetalle detalle = new NotificacionCotizacionDetalle();
+        if (prestador != null) {
+            detalle.setIdPrestador(prestador.getIdPrestador());
+            detalle.setPrestador(prestador.getDescripcion());
+        }
+        detalle.setEmailReal(normalizarEmail(emailReal));
+        detalle.setEmailDestino(normalizarEmail(emailDestino));
+        detalle.setResultado(tipoResultado);
+        detalle.setEtapa(etapa);
+        detalle.setMotivo(truncar(motivo, 4000));
+        detalle.setEmailRealInvalidoAdvertido(emailRealInvalidoAdvertido);
+        resultado.agregarDetalle(detalle);
+    }
 
+    private String construirMotivoReservaNoOtorgada(ReservaCotizacionPrestador reserva) {
+        if (reserva == null) {
+            return "No se obtuvo la reserva y no existe " + "informacion adicional.";
+        }
+        if (!WebKeysCompras.isEmpty(reserva.getMotivoDescripcion())) {
+            return reserva.getMotivoDescripcion();
+        }
+        if (WebKeysCompras.ENVIO_ENVIADO.equals(reserva.getEstadoEnvio())) {
+            return "El prestador ya se encontraba ENVIADO. " + "No se realizo un reenvio.";
+        }
+        if (WebKeysCompras.ENVIO_PROCESANDO.equals(reserva.getEstadoEnvio())) {
+            return "El prestador ya se encontraba PROCESANDO, " + "posiblemente por otra ejecucion concurrente.";
+        }
+        return "La base de datos no otorgo la reserva. " + "Estado observado: " + (reserva.getEstadoEnvio() != null ? reserva.getEstadoEnvio() : "sin estado") + ".";
+    }
+
+    private String resolverEmailDestino(String emailReservado) {
         if (USAR_EMAIL_DESTINO_TEMPORAL) {
-            return normalizarEmail(
-                    EMAIL_DESTINO_TEMPORAL
-            );
+            return normalizarEmail(EMAIL_DESTINO_TEMPORAL);
         }
-
-        return normalizarEmail(
-                emailReservado
-        );
+        return normalizarEmail(emailReservado);
     }
 
-    private String construirAsunto(
-            RequerimientoCompra requerimiento) {
-
-        return "Solicitud de cotización - Requerimiento #"
-                + requerimiento
-                .getIdRequerimientoCompra();
+    private String construirAsunto(RequerimientoCompra requerimiento) {
+        return "Solicitud de cotizacion - Requerimiento #" + requerimiento.getIdRequerimientoCompra();
     }
 
-    private String construirCuerpo(
-            RequerimientoCompra requerimiento,
-            PrestadorCotizacion prestador) {
-
-        StringBuilder sb =
-                new StringBuilder();
-
-        sb.append(
-                "Estimado prestador"
-        );
-
-        if (!WebKeysCompras.isEmpty(
-                prestador.getDescripcion()
-        )) {
-            sb.append(
-                    " "
-            );
-
-            sb.append(
-                    prestador
-                            .getDescripcionVisible()
-            );
+    private String construirCuerpo(RequerimientoCompra requerimiento, PrestadorCotizacion prestador) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Estimado prestador");
+        if (!WebKeysCompras.isEmpty(prestador.getDescripcion())) {
+            sb.append(" ");
+            sb.append(prestador.getDescripcionVisible());
         }
-
-        sb.append(
-                ",\n\n"
-        );
-
-        sb.append(
-                "OSPIM solicita cotización para el "
-                        + "siguiente requerimiento de compra."
-        );
-
-        sb.append(
-                "\n\n"
-        );
-
-        sb.append(
-                "Requerimiento: #"
-        );
-
-        sb.append(
-                requerimiento
-                        .getIdRequerimientoCompra()
-        );
-
-        sb.append(
-                "\n"
-        );
-
-        sb.append(
-                "Sector: "
-        );
-
-        sb.append(
-                requerimiento
-                        .getSectorDescripcionVisible()
-        );
-
-        sb.append(
-                "\n"
-        );
-
-        if (!WebKeysCompras.isEmpty(
-                requerimiento.getAltaFechaAsString()
-        )) {
-            sb.append(
-                    "Fecha: "
-            );
-
-            sb.append(
-                    requerimiento
-                            .getAltaFechaAsString()
-            );
-
-            sb.append(
-                    "\n"
-            );
+        sb.append(",\n\n");
+        sb.append("OSPIM solicita cotizacion para el " + "siguiente requerimiento de compra.");
+        sb.append("\n\n");
+        sb.append("Requerimiento: #");
+        sb.append(requerimiento.getIdRequerimientoCompra());
+        sb.append("\n");
+        sb.append("Sector: ");
+        sb.append(requerimiento.getSectorDescripcionVisible());
+        sb.append("\n");
+        if (!WebKeysCompras.isEmpty(requerimiento.getAltaFechaAsString())) {
+            sb.append("Fecha: ");
+            sb.append(requerimiento.getAltaFechaAsString());
+            sb.append("\n");
         }
-
-        if (!WebKeysCompras.isEmpty(
-                requerimiento.getAltaUsr()
-        )) {
-            sb.append(
-                    "Usuario solicitante: "
-            );
-
-            sb.append(
-                    requerimiento
-                            .getAltaUsr()
-            );
-
-            sb.append(
-                    "\n"
-            );
+        if (!WebKeysCompras.isEmpty(requerimiento.getAltaUsr())) {
+            sb.append("Usuario solicitante: ");
+            sb.append(requerimiento.getAltaUsr());
+            sb.append("\n");
         }
-
-        if (!WebKeysCompras.isEmpty(
-                requerimiento.getObservaciones()
-        )) {
-            sb.append(
-                    "\nDetalle / observaciones:\n"
-            );
-
-            sb.append(
-                    requerimiento
-                            .getObservacionesVisible()
-            );
-
-            sb.append(
-                    "\n"
-            );
+        if (!WebKeysCompras.isEmpty(requerimiento.getObservaciones())) {
+            sb.append("\nDetalle / observaciones:\n");
+            sb.append(requerimiento.getObservacionesVisible());
+            sb.append("\n");
         }
-
-        appendDetalles(
-                sb,
-                requerimiento
-        );
-
-        sb.append(
-                "\nPor favor responder este correo "
-                        + "informando disponibilidad, plazo "
-                        + "e importe de cotización.\n\n"
-        );
-
-        sb.append(
-                "Este mensaje fue generado automáticamente "
-                        + "por el sistema de Compras de OSPIM.\n"
-        );
-
+        appendDetalles(sb, requerimiento);
+        sb.append("\nPor favor responder este correo " + "informando disponibilidad, plazo " + "e importe de cotizacion.\n\n");
+        sb.append("Este mensaje fue generado automaticamente " + "por el sistema de Compras de OSPIM.\n");
         return sb.toString();
     }
 
-    private void appendDetalles(
-            StringBuilder sb,
-            RequerimientoCompra requerimiento) {
-
-        List<RequerimientoCompraDetalle> detalles =
-                requerimiento.getDetalles();
-
-        if (detalles == null
-                || detalles.isEmpty()) {
-
+    private void appendDetalles(StringBuilder sb, RequerimientoCompra requerimiento) {
+        List<RequerimientoCompraDetalle> detalles = requerimiento.getDetalles();
+        if (detalles == null || detalles.isEmpty()) {
             return;
         }
-
-        sb.append(
-                "\nItems:\n"
-        );
-
+        sb.append("\nItems:\n");
         for (int i = 0; i < detalles.size(); i++) {
-            RequerimientoCompraDetalle detalle =
-                    detalles.get(
-                            i
-                    );
-
-            sb.append(
-                    "- "
-            );
-
-            if (!WebKeysCompras.isEmpty(
-                    detalle.getArticulo()
-            )) {
-                sb.append(
-                        detalle
-                                .getArticuloVisible()
-                );
-
+            RequerimientoCompraDetalle detalle = detalles.get(i);
+            sb.append("- ");
+            if (!WebKeysCompras.isEmpty(detalle.getArticulo())) {
+                sb.append(detalle.getArticuloVisible());
             } else {
-                sb.append(
-                        "Ítem sin descripción"
-                );
+                sb.append("Item sin descripcion");
             }
-
-            sb.append(
-                    " | Cantidad: "
-            );
-
-            sb.append(
-                    detalle
-                            .getCantidadString()
-            );
-
-            if (!WebKeysCompras.isEmpty(
-                    detalle.getObservaciones()
-            )) {
-                sb.append(
-                        " | Descripción: "
-                );
-
-                sb.append(
-                        detalle
-                                .getObservacionesVisible()
-                );
+            sb.append(" | Cantidad: ");
+            sb.append(detalle.getCantidadString());
+            if (!WebKeysCompras.isEmpty(detalle.getObservaciones())) {
+                sb.append(" | Descripcion: ");
+                sb.append(detalle.getObservacionesVisible());
             }
-
-            sb.append(
-                    "\n"
-            );
+            sb.append("\n");
         }
     }
 
-    private PrestadorCotizacion mapPrestadorCotizacion(
-            ResultSet rs) throws Exception {
-
-        PrestadorCotizacion prestador =
-                new PrestadorCotizacion();
-
-        prestador.setIdPrestador(
-                rs.getInt(
-                        "id_prestador"
-                )
-        );
-
-        prestador.setDescripcion(
-                rs.getString(
-                        "descripcion"
-                )
-        );
-
-        prestador.setCuit(
-                rs.getString(
-                        "cuit"
-                )
-        );
-
-        prestador.setEmail(
-                rs.getString(
-                        "email"
-                )
-        );
-
-        prestador.setIdTipoPrestador(
-                rs.getInt(
-                        "id_tipo_prestador"
-                )
-        );
-
-        prestador.setTipoPrestador(
-                rs.getString(
-                        "tipo_prestador"
-                )
-        );
-
+    private PrestadorCotizacion mapPrestadorCotizacion(ResultSet rs) throws Exception {
+        PrestadorCotizacion prestador = new PrestadorCotizacion();
+        prestador.setIdPrestador(rs.getInt("id_prestador"));
+        prestador.setDescripcion(rs.getString("descripcion"));
+        prestador.setCuit(rs.getString("cuit"));
+        prestador.setEmail(rs.getString("email"));
+        prestador.setIdTipoPrestador(rs.getInt("id_tipo_prestador"));
+        prestador.setTipoPrestador(rs.getString("tipo_prestador"));
         return prestador;
     }
 
-    private void validarParametros(
-            int idRequerimientoCompra,
-            long companyId) throws Exception {
-
+    private void validarParametros(int idRequerimientoCompra, long companyId) throws Exception {
         if (idRequerimientoCompra <= 0) {
-            throw new Exception(
-                    "Debe informar el requerimiento de compra."
-            );
+            throw new Exception("Debe informar el requerimiento de compra.");
         }
-
         if (companyId <= 0) {
-            throw new Exception(
-                    "No se pudo determinar la empresa del portal."
-            );
+            throw new Exception("No se pudo determinar la empresa del portal.");
         }
     }
 
-    private void validarRequerimiento(
-            RequerimientoCompra requerimiento)
-            throws Exception {
-
+    private void validarRequerimiento(RequerimientoCompra requerimiento) throws Exception {
         if (requerimiento == null) {
-            throw new Exception(
-                    "No se encontró el requerimiento de compra."
-            );
+            throw new Exception("No se encontro el requerimiento de compra.");
         }
-
-        if (requerimiento.getIdSector() == null
-                || requerimiento
-                .getIdSector()
-                .intValue() <= 0) {
-
-            throw new Exception(
-                    "El requerimiento no tiene sector informado."
-            );
+        if (requerimiento.getIdSector() == null || requerimiento.getIdSector().intValue() <= 0) {
+            throw new Exception("El requerimiento no tiene sector informado.");
         }
-
-        if (requerimiento.getEstado()
-                != WebKeysCompras.ESTADO_PENDIENTE
-                && requerimiento.getEstado()
-                != WebKeysCompras.ESTADO_A_COTIZAR) {
-
-            throw new Exception(
-                    "El requerimiento no se encuentra "
-                            + "en estado PENDIENTE o A COTIZAR."
-            );
+        if (requerimiento.getEstado() != WebKeysCompras.ESTADO_PENDIENTE && requerimiento.getEstado() != WebKeysCompras.ESTADO_A_COTIZAR) {
+            throw new Exception("El requerimiento no se encuentra " + "en estado PENDIENTE o A COTIZAR.");
         }
     }
 
-    private Connection obtenerConexion()
-            throws Exception {
-
-        Connection con =
-                ConnectionHelper.getConnection();
-
+    private Connection obtenerConexion() throws Exception {
+        Connection con = ConnectionHelper.getConnection();
         if (con == null) {
-            throw new Exception(
-                    "No se pudo obtener conexión "
-                            + "a la base de datos."
-            );
+            throw new Exception("No se pudo obtener conexion " + "a la base de datos.");
         }
-
         return con;
     }
 
-    private boolean esEmailValido(
-            String email) {
-
-        String emailNormalizado =
-                normalizarEmail(
-                        email
-                );
-
-        return emailNormalizado != null
-                && EMAIL_PATTERN
-                .matcher(
-                        emailNormalizado
-                )
-                .matches();
+    private boolean esEmailValido(String email) {
+        String emailNormalizado = normalizarEmail(email);
+        return emailNormalizado != null && EMAIL_PATTERN.matcher(emailNormalizado).matches();
     }
 
-    private String normalizarEmail(
-            String email) {
-
+    private String normalizarEmail(String email) {
         if (email == null) {
             return null;
         }
-
-        String resultado =
-                email.trim();
-
-        return resultado.length() > 0
-                ? resultado
-                : null;
+        String resultado = email.trim();
+        return resultado.length() > 0 ? resultado : null;
     }
 
-    private String construirDetalleError(
-            Exception e) {
-
+    private String construirDetalleError(Exception e) {
         if (e == null) {
             return "Error no informado.";
         }
-
-        String mensaje =
-                e.getMessage();
-
-        if (mensaje == null
-                || mensaje.trim().length() == 0) {
-
-            mensaje =
-                    e.getClass()
-                            .getName();
-
+        String mensaje = e.getMessage();
+        if (mensaje == null || mensaje.trim().length() == 0) {
+            mensaje = e.getClass().getName();
         } else {
-            mensaje =
-                    e.getClass()
-                            .getName()
-                            + ": "
-                            + mensaje.trim();
+            mensaje = e.getClass().getName() + ": " + mensaje.trim();
         }
-
-        mensaje =
-                SENSITIVE_DETAIL_PATTERN
-                        .matcher(
-                                mensaje
-                        )
-                        .replaceAll(
-                                "$1=<omitido>"
-                        );
-
-        mensaje =
-                mensaje
-                        .replace(
-                                '\r',
-                                ' '
-                        )
-                        .replace(
-                                '\n',
-                                ' '
-                        )
-                        .replace(
-                                '\t',
-                                ' '
-                        );
-
-        return truncar(
-                mensaje,
-                4000
-        );
+        mensaje = SENSITIVE_DETAIL_PATTERN.matcher(mensaje).replaceAll("$1=<omitido>");
+        mensaje = mensaje.replace('\r', ' ').replace('\n', ' ').replace('\t', ' ');
+        return truncar(mensaje, 4000);
     }
 
-    private String truncar(
-            String value,
-            int maxLength) {
-
+    private String truncar(String value, int maxLength) {
         if (value == null) {
             return null;
         }
-
         if (value.length() <= maxLength) {
             return value;
         }
-
-        return value.substring(
-                0,
-                maxLength
-        );
+        return value.substring(0, maxLength);
     }
 
-    private String normalizarUsuario(
-            String usuario) {
-
-        if (usuario == null
-                || usuario.trim().length() == 0) {
-
+    private String normalizarUsuario(String usuario) {
+        if (usuario == null || usuario.trim().length() == 0) {
             return "sistema";
         }
-
-        return usuario.trim();
+        return truncar(usuario.trim(), 100);
     }
 
-    private void cerrar(
-            ResultSet rs) {
-
+    private void cerrar(ResultSet rs) {
         if (rs == null) {
             return;
         }
-
         try {
             rs.close();
-
         } catch (Exception e) {
-            _log.debug(
-                    "No se pudo cerrar ResultSet.",
-                    e
-            );
+            _log.debug("No se pudo cerrar ResultSet.", e);
+        }
+    }
+
+    protected static class ReservaCotizacionPrestador {
+        private boolean reservado;
+        private String estadoEnvio;
+        private String emailDestino;
+        private String motivoCodigo;
+        private String motivoDescripcion;
+
+        public boolean isReservado() {
+            return reservado;
+        }
+
+        public void setReservado(boolean reservado) {
+            this.reservado = reservado;
+        }
+
+        public String getEstadoEnvio() {
+            return estadoEnvio;
+        }
+
+        public void setEstadoEnvio(String estadoEnvio) {
+            this.estadoEnvio = estadoEnvio;
+        }
+
+        public String getEmailDestino() {
+            return emailDestino;
+        }
+
+        public void setEmailDestino(String emailDestino) {
+            this.emailDestino = emailDestino;
+        }
+
+        public String getMotivoCodigo() {
+            return motivoCodigo;
+        }
+
+        public void setMotivoCodigo(String motivoCodigo) {
+            this.motivoCodigo = motivoCodigo;
+        }
+
+        public String getMotivoDescripcion() {
+            return motivoDescripcion;
+        }
+
+        public void setMotivoDescripcion(String motivoDescripcion) {
+            this.motivoDescripcion = motivoDescripcion;
+        }
+    }
+
+    protected static class FinalizacionCotizacionPrestador {
+        private boolean actualizado;
+        private String estadoAnterior;
+        private String estadoActual;
+        private String motivo;
+
+        public boolean isActualizado() {
+            return actualizado;
+        }
+
+        public void setActualizado(boolean actualizado) {
+            this.actualizado = actualizado;
+        }
+
+        public String getEstadoAnterior() {
+            return estadoAnterior;
+        }
+
+        public void setEstadoAnterior(String estadoAnterior) {
+            this.estadoAnterior = estadoAnterior;
+        }
+
+        public String getEstadoActual() {
+            return estadoActual;
+        }
+
+        public void setEstadoActual(String estadoActual) {
+            this.estadoActual = estadoActual;
+        }
+
+        public String getMotivo() {
+            return motivo;
+        }
+
+        public void setMotivo(String motivo) {
+            this.motivo = motivo;
         }
     }
 }

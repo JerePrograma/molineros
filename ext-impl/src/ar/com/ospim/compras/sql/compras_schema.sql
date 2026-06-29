@@ -3937,6 +3937,639 @@ RETURN v_cursor;
 END;
 $func$
 LANGUAGE plpgsql;
+
+/*
+ * ============================================================
+ * 1. LISTADO DE CANDIDATOS
+ * ============================================================
+ *
+ * Wrapper estable para el servicio Java.
+ *
+ * Se apoya en:
+ *
+ * compras.listar_prestadores_cotizacion_requerimiento(integer)
+ *
+ * Esa función ya era utilizada por el servicio anterior.
+ */
+CREATE OR REPLACE FUNCTION
+compras.listar_prestadores_notificacion_cotizacion(
+    p_id_requerimiento INTEGER
+)
+RETURNS TABLE (
+    id_prestador INTEGER,
+    descripcion TEXT,
+    cuit TEXT,
+    email TEXT,
+    id_tipo_prestador INTEGER,
+    tipo_prestador TEXT
+)
+LANGUAGE sql
+STABLE
+AS
+$function$
+    SELECT
+        candidato.id_prestador::INTEGER,
+        candidato.descripcion::TEXT,
+        candidato.cuit::TEXT,
+        candidato.email::TEXT,
+        candidato.id_tipo_prestador::INTEGER,
+        candidato.tipo_prestador::TEXT
+    FROM compras.listar_prestadores_cotizacion_requerimiento(
+        p_id_requerimiento
+    ) candidato
+    ORDER BY
+        candidato.descripcion,
+        candidato.id_prestador;
+$function$;
+
+
+/*
+ * ============================================================
+ * 2. DIAGNÓSTICO GENERAL
+ * ============================================================
+ *
+ * Diferencia:
+ *
+ * - prestadores_habilitados:
+ *   solicitar_cotizacion = true y sin baja.
+ *
+ * - prestadores_compatibles_sector:
+ *   habilitados cuyo tipo está asociado al sector.
+ *
+ * - prestadores_bloqueados_estado_previo:
+ *   compatibles que ya estaban ENVIADO o PROCESANDO antes
+ *   de confeccionar la lista de candidatos.
+ */
+CREATE OR REPLACE FUNCTION
+compras.diagnosticar_prestadores_notificacion_cotizacion(
+    p_id_requerimiento INTEGER
+)
+RETURNS TABLE (
+    id_sector INTEGER,
+    prestadores_habilitados INTEGER,
+    prestadores_compatibles_sector INTEGER,
+    prestadores_bloqueados_estado_previo INTEGER
+)
+LANGUAGE sql
+STABLE
+AS
+$function$
+    SELECT
+        r.id_sector,
+
+        COUNT(
+            DISTINCT CASE
+                WHEN p.id_prestador IS NOT NULL
+                THEN p.id_prestador
+            END
+        )::INTEGER
+        AS prestadores_habilitados,
+
+        COUNT(
+            DISTINCT CASE
+                WHEN stp.id_tipo_prestador IS NOT NULL
+                THEN p.id_prestador
+            END
+        )::INTEGER
+        AS prestadores_compatibles_sector,
+
+        COUNT(
+            DISTINCT CASE
+                WHEN stp.id_tipo_prestador IS NOT NULL
+                 AND rcp.estado_envio IN (
+                     'ENVIADO',
+                     'PROCESANDO'
+                 )
+                THEN p.id_prestador
+            END
+        )::INTEGER
+        AS prestadores_bloqueados_estado_previo
+
+    FROM compras.requerimiento r
+
+    LEFT JOIN public.prestador p
+        ON COALESCE(
+            p.solicitar_cotizacion,
+            FALSE
+        ) = TRUE
+       AND p.baja_fecha IS NULL
+
+    LEFT JOIN compras.sector_tipo_prestador stp
+        ON stp.id_sector = r.id_sector
+       AND stp.id_tipo_prestador = p.id_tipo_prestador
+       AND stp.activo = TRUE
+       AND stp.baja_fecha IS NULL
+
+    LEFT JOIN compras.requerimiento_cotizacion_prestador rcp
+        ON rcp.id_requerimiento = r.id_requerimiento
+       AND rcp.id_prestador = p.id_prestador
+
+    WHERE r.id_requerimiento = p_id_requerimiento
+      AND r.baja_fecha IS NULL
+
+    GROUP BY
+        r.id_sector;
+$function$;
+
+
+/*
+ * ============================================================
+ * 3. RESERVA ATÓMICA
+ * ============================================================
+ *
+ * Devuelve:
+ *
+ * reservado = true
+ *   La fila quedó PROCESANDO y esta ejecución obtuvo la
+ *   reserva exclusiva.
+ *
+ * reservado = false
+ *   No se debe intentar enviar. La causa queda informada
+ *   mediante motivo_codigo y motivo_descripcion.
+ *
+ * La fila se bloquea con FOR UPDATE para impedir que dos
+ * ejecuciones envíen simultáneamente al mismo prestador.
+ */
+CREATE OR REPLACE FUNCTION
+compras.reservar_notificacion_cotizacion_prestador(
+    p_id_requerimiento INTEGER,
+    p_id_prestador INTEGER,
+    p_usuario VARCHAR
+)
+RETURNS TABLE (
+    reservado BOOLEAN,
+    estado_envio TEXT,
+    email_destino TEXT,
+    motivo_codigo TEXT,
+    motivo_descripcion TEXT
+)
+LANGUAGE plpgsql
+AS
+$function$
+DECLARE
+    v_usuario VARCHAR(100);
+    v_id_sector INTEGER;
+    v_email_real VARCHAR(320);
+    v_email_guardado VARCHAR(320);
+    v_estado_actual VARCHAR(20);
+BEGIN
+    IF p_id_requerimiento IS NULL
+       OR p_id_requerimiento <= 0 THEN
+
+        RAISE EXCEPTION
+            'El id de requerimiento debe ser mayor que cero.';
+    END IF;
+
+    IF p_id_prestador IS NULL
+       OR p_id_prestador <= 0 THEN
+
+        RAISE EXCEPTION
+            'El id de prestador debe ser mayor que cero.';
+    END IF;
+
+    v_usuario :=
+        LEFT(
+            COALESCE(
+                NULLIF(
+                    BTRIM(p_usuario),
+                    ''
+                ),
+                'sistema'
+            ),
+            100
+        );
+
+    SELECT
+        r.id_sector
+    INTO
+        v_id_sector
+    FROM compras.requerimiento r
+    WHERE r.id_requerimiento = p_id_requerimiento
+      AND r.baja_fecha IS NULL;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No existe el requerimiento activo %.',
+            p_id_requerimiento;
+    END IF;
+
+    SELECT
+        NULLIF(
+            BTRIM(p.email),
+            ''
+        )
+    INTO
+        v_email_real
+    FROM public.prestador p
+    WHERE p.id_prestador = p_id_prestador
+      AND COALESCE(
+          p.solicitar_cotizacion,
+          FALSE
+      ) = TRUE
+      AND p.baja_fecha IS NULL;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'El prestador % no existe, esta dado de baja '
+            'o no esta habilitado para cotizar.',
+            p_id_prestador;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT
+            1
+        FROM public.prestador p
+        INNER JOIN compras.sector_tipo_prestador stp
+            ON stp.id_tipo_prestador =
+                p.id_tipo_prestador
+           AND stp.id_sector =
+                v_id_sector
+           AND stp.activo = TRUE
+           AND stp.baja_fecha IS NULL
+        WHERE p.id_prestador =
+            p_id_prestador
+          AND p.baja_fecha IS NULL
+    ) THEN
+
+        RAISE EXCEPTION
+            'El prestador % no es compatible con el sector %.',
+            p_id_prestador,
+            v_id_sector;
+    END IF;
+
+    /*
+     * Se crea la fila si todavía no existe.
+     *
+     * ON CONFLICT evita una excepción si dos transacciones
+     * intentan crearla simultáneamente.
+     */
+    INSERT INTO compras.requerimiento_cotizacion_prestador (
+        id_requerimiento,
+        id_prestador,
+        estado_envio,
+        intentos,
+        email_destino,
+        fecha_creacion,
+        alta_usr
+    )
+    VALUES (
+        p_id_requerimiento,
+        p_id_prestador,
+        'PENDIENTE',
+        0,
+        v_email_real,
+        clock_timestamp(),
+        v_usuario
+    )
+    ON CONFLICT (
+        id_requerimiento,
+        id_prestador
+    )
+    DO NOTHING;
+
+    /*
+     * El bloqueo garantiza que sólo una ejecución pueda
+     * analizar y modificar esta fila a la vez.
+     */
+    SELECT
+        rcp.estado_envio,
+        rcp.email_destino
+    INTO
+        v_estado_actual,
+        v_email_guardado
+    FROM compras.requerimiento_cotizacion_prestador rcp
+    WHERE rcp.id_requerimiento =
+        p_id_requerimiento
+      AND rcp.id_prestador =
+        p_id_prestador
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No se pudo crear ni localizar la fila de '
+            'notificacion para requerimiento % y prestador %.',
+            p_id_requerimiento,
+            p_id_prestador;
+    END IF;
+
+    IF v_estado_actual = 'ENVIADO' THEN
+        RETURN QUERY
+        SELECT
+            FALSE,
+            v_estado_actual::TEXT,
+            v_email_guardado::TEXT,
+            'YA_ENVIADO'::TEXT,
+            (
+                'El prestador ya se encontraba ENVIADO. '
+                || 'No se realizo un reenvio.'
+            )::TEXT;
+
+        RETURN;
+    END IF;
+
+    IF v_estado_actual = 'PROCESANDO' THEN
+        RETURN QUERY
+        SELECT
+            FALSE,
+            v_estado_actual::TEXT,
+            v_email_guardado::TEXT,
+            'YA_PROCESANDO'::TEXT,
+            (
+                'El prestador ya se encontraba PROCESANDO, '
+                || 'posiblemente por otra ejecucion concurrente.'
+            )::TEXT;
+
+        RETURN;
+    END IF;
+
+    /*
+     * Los estados reintentables son:
+     *
+     * PENDIENTE
+     * ERROR
+     * EMAIL_INVALIDO
+     */
+    UPDATE compras.requerimiento_cotizacion_prestador
+    SET
+        estado_envio =
+            'PROCESANDO',
+
+        intentos =
+            intentos + 1,
+
+        email_destino =
+            v_email_real,
+
+        fecha_ultimo_intento =
+            clock_timestamp(),
+
+        fecha_envio =
+            NULL,
+
+        ultimo_error =
+            NULL,
+
+        modi_fecha =
+            clock_timestamp(),
+
+        modi_usr =
+            v_usuario
+
+    WHERE id_requerimiento =
+        p_id_requerimiento
+      AND id_prestador =
+        p_id_prestador;
+
+    RETURN QUERY
+    SELECT
+        TRUE,
+        'PROCESANDO'::TEXT,
+        v_email_real::TEXT,
+        'RESERVA_OTORGADA'::TEXT,
+        (
+            'La ejecucion obtuvo la reserva exclusiva '
+            || 'y la fila quedo PROCESANDO.'
+        )::TEXT;
+END;
+$function$;
+
+
+/*
+ * ============================================================
+ * 4. FINALIZACIÓN ATÓMICA
+ * ============================================================
+ *
+ * Sólo permite finalizar una fila que continúa PROCESANDO.
+ *
+ * Estados finales aceptados:
+ *
+ * ENVIADO
+ * ERROR
+ * EMAIL_INVALIDO
+ */
+CREATE OR REPLACE FUNCTION
+compras.finalizar_notificacion_cotizacion_prestador(
+    p_id_requerimiento INTEGER,
+    p_id_prestador INTEGER,
+    p_estado VARCHAR,
+    p_error TEXT,
+    p_usuario VARCHAR
+)
+RETURNS TABLE (
+    actualizado BOOLEAN,
+    estado_anterior TEXT,
+    estado_actual TEXT,
+    motivo TEXT
+)
+LANGUAGE plpgsql
+AS
+$function$
+DECLARE
+    v_usuario VARCHAR(100);
+    v_estado_solicitado VARCHAR(20);
+    v_estado_anterior VARCHAR(20);
+    v_error TEXT;
+BEGIN
+    IF p_id_requerimiento IS NULL
+       OR p_id_requerimiento <= 0 THEN
+
+        RAISE EXCEPTION
+            'El id de requerimiento debe ser mayor que cero.';
+    END IF;
+
+    IF p_id_prestador IS NULL
+       OR p_id_prestador <= 0 THEN
+
+        RAISE EXCEPTION
+            'El id de prestador debe ser mayor que cero.';
+    END IF;
+
+    v_estado_solicitado :=
+        UPPER(
+            BTRIM(
+                COALESCE(
+                    p_estado,
+                    ''
+                )
+            )
+        );
+
+    IF v_estado_solicitado NOT IN (
+        'ENVIADO',
+        'ERROR',
+        'EMAIL_INVALIDO'
+    ) THEN
+        RAISE EXCEPTION
+            'Estado final no permitido: %.',
+            v_estado_solicitado;
+    END IF;
+
+    v_usuario :=
+        LEFT(
+            COALESCE(
+                NULLIF(
+                    BTRIM(p_usuario),
+                    ''
+                ),
+                'sistema'
+            ),
+            100
+        );
+
+    v_error :=
+        CASE
+            WHEN p_error IS NULL THEN
+                NULL
+            ELSE
+                LEFT(
+                    p_error,
+                    4000
+                )
+        END;
+
+    SELECT
+        rcp.estado_envio
+    INTO
+        v_estado_anterior
+    FROM compras.requerimiento_cotizacion_prestador rcp
+    WHERE rcp.id_requerimiento =
+        p_id_requerimiento
+      AND rcp.id_prestador =
+        p_id_prestador
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RETURN QUERY
+        SELECT
+            FALSE,
+            NULL::TEXT,
+            NULL::TEXT,
+            (
+                'No existe una fila de notificacion '
+                || 'para el requerimiento y prestador.'
+            )::TEXT;
+
+        RETURN;
+    END IF;
+
+    IF v_estado_anterior <> 'PROCESANDO' THEN
+        RETURN QUERY
+        SELECT
+            FALSE,
+            v_estado_anterior::TEXT,
+            v_estado_anterior::TEXT,
+            (
+                'La fila no se encontraba PROCESANDO. '
+                || 'No se modifico el estado.'
+            )::TEXT;
+
+        RETURN;
+    END IF;
+
+    UPDATE compras.requerimiento_cotizacion_prestador
+    SET
+        estado_envio =
+            v_estado_solicitado,
+
+        fecha_envio =
+            CASE
+                WHEN v_estado_solicitado = 'ENVIADO'
+                THEN clock_timestamp()
+                ELSE NULL
+            END,
+
+        ultimo_error =
+            CASE
+                WHEN v_estado_solicitado = 'ENVIADO'
+                THEN NULL
+                ELSE COALESCE(
+                    v_error,
+                    'Error sin detalle informado.'
+                )
+            END,
+
+        modi_fecha =
+            clock_timestamp(),
+
+        modi_usr =
+            v_usuario
+
+    WHERE id_requerimiento =
+        p_id_requerimiento
+      AND id_prestador =
+        p_id_prestador
+      AND estado_envio =
+        'PROCESANDO';
+
+    IF NOT FOUND THEN
+        RETURN QUERY
+        SELECT
+            FALSE,
+            v_estado_anterior::TEXT,
+            v_estado_anterior::TEXT,
+            (
+                'La fila cambio de estado antes de '
+                || 'completar la finalizacion.'
+            )::TEXT;
+
+        RETURN;
+    END IF;
+
+    RETURN QUERY
+    SELECT
+        TRUE,
+        v_estado_anterior::TEXT,
+        v_estado_solicitado::TEXT,
+        (
+            'El estado final fue persistido correctamente.'
+        )::TEXT;
+END;
+$function$;
+
+
+/*
+ * ============================================================
+ * 5. VALIDACIONES POSTERIORES A LA INSTALACIÓN
+ * ============================================================
+ */
+
+SELECT *
+FROM compras.diagnosticar_prestadores_notificacion_cotizacion(
+    1
+);
+
+SELECT *
+FROM compras.listar_prestadores_notificacion_cotizacion(
+    1
+);
+
+/*
+ * No ejecutar las pruebas de reserva/finalización sobre un
+ * requerimiento productivo sin reemplazar los identificadores.
+ *
+ * Ejemplo:
+ *
+ * SELECT *
+ * FROM compras.reservar_notificacion_cotizacion_prestador(
+ *     1,
+ *     123,
+ *     'prueba_sql'
+ * );
+ *
+ * SELECT *
+ * FROM compras.finalizar_notificacion_cotizacion_prestador(
+ *     1,
+ *     123,
+ *     'ERROR',
+ *     'Prueba controlada de instalacion.',
+ *     'prueba_sql'
+ * );
+ */
+
+
+
+
+
 -- =====================================================================
 -- CONSULTAS MANUALES DE VERIFICACION
 -- =====================================================================
