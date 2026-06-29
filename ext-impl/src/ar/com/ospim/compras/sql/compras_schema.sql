@@ -4601,3 +4601,191 @@ FROM compras.listar_prestadores_notificacion_cotizacion(
 -- FROM compras.get_requerimiento_compra_pdf(
 --     :id_requerimiento
 -- );
+
+
+CREATE OR REPLACE FUNCTION public.buscar_prestadores(
+    cuit_p character varying,
+    descripcion_p character varying,
+    id_prestador_p integer,
+    provincia_p integer,
+    localidad_p integer,
+    solovigentes_p boolean,
+    profesion_p integer,
+    especialidad_p integer,
+    subespecialidad_p integer,
+    tipo_prestador_p integer,
+    hospital_p character varying,
+    solo_habilitados_cotizar_p boolean
+)
+RETURNS SETOF prestador_detalle
+LANGUAGE plpgsql
+COST 100
+VOLATILE
+ROWS 200
+AS $BODY$
+BEGIN
+
+RETURN QUERY
+
+SELECT DISTINCT
+    p.id_prestador,
+    p.cuit,
+    CAST(p.id_tipo_prestador AS integer),
+    tp.descripcion AS descripcion_tipo_prestador,
+    p.contacto,
+    p.observaciones,
+    CAST(p.rein_liqui AS integer),
+    p.descripcion,
+    p.codigo_htal,
+    p.certificacion_profesional,
+    p.vto_certificacion,
+    p.seguro_cobertura,
+    p.cia_seguro,
+    p.vto_cobertura_seguro,
+    p.otorga_cert,
+    e.cai_cae || ' ' || e.cai_cae_numero
+                   AS cai_cae_numero_completo,
+    p.alta_fecha,
+    p.alta_usr,
+    p.modi_fecha,
+    p.modi_usr,
+    p.baja_fecha,
+    p.baja_usr,
+    p.cbu,
+    p.solicitar_cotizacion
+
+FROM prestador p
+
+         INNER JOIN tipo_prestador tp
+                    ON p.id_tipo_prestador = tp.id_tipo_prestador
+
+         LEFT JOIN prestad_lugar_atencion pla
+                   ON p.id_prestador = pla.id_prestador
+                       AND pla.baja_fecha IS NULL
+
+         LEFT JOIN domicilio dom
+                   ON pla.id_domicilio = dom.id_domicilio
+
+         LEFT JOIN autorizaciones.prestador_profesion pp
+                   ON p.id_prestador = pp.id_prestador
+                       AND pp.baja_fecha IS NULL
+
+         LEFT JOIN autorizaciones.prest_prof_especialidad ppe
+                   ON pp.id = ppe.id_prest_profesion
+                       AND ppe.baja_fecha IS NULL
+
+         LEFT JOIN autorizaciones.prest_prof_esp_subesp ppes
+                   ON ppes.id_prest_prof_especialidad = ppe.id
+
+         LEFT JOIN informacion_afip.empresa e
+                   ON p.cuit = e.cuit
+                       AND e.sucursal = '000'
+
+WHERE (cuit_p IS NULL OR p.cuit = cuit_p)
+
+  AND (
+    descripcion_p IS NULL
+        OR UPPER(p.descripcion)
+        LIKE '%' || UPPER(descripcion_p) || '%'
+    )
+
+  AND (
+    id_prestador_p = 0
+        OR p.id_prestador = id_prestador_p
+    )
+
+  AND (
+    provincia_p = 0
+        OR dom.provincia = provincia_p
+    )
+
+  AND (
+    localidad_p = 0
+        OR dom.localidad = localidad_p
+    )
+
+  AND (
+    solovigentes_p IS FALSE
+        OR p.baja_fecha IS NULL
+    )
+
+  AND (
+    profesion_p = 0
+        OR pp.id_profesion = profesion_p
+    )
+
+  AND (
+    especialidad_p = 0
+        OR ppe.id_especialidad = especialidad_p
+    )
+
+  AND (
+    subespecialidad_p = 0
+        OR ppes.id_subespecialidad = subespecialidad_p
+    )
+
+  AND (
+    tipo_prestador_p = 0
+        OR p.id_tipo_prestador = tipo_prestador_p
+    )
+
+  AND (
+    hospital_p IS NULL
+        OR p.codigo_htal LIKE hospital_p || '%'
+    )
+
+  -- Cuando el checkbox está desmarcado, no filtra.
+  -- Cuando está marcado, devuelve solamente los habilitados.
+  AND (
+    NOT COALESCE(solo_habilitados_cotizar_p, FALSE)
+        OR p.solicitar_cotizacion IS TRUE
+    )
+
+GROUP BY
+    p.id_prestador,
+    p.cuit,
+    CAST(p.id_tipo_prestador AS integer),
+    tp.descripcion,
+    p.contacto,
+    p.observaciones,
+    CAST(p.rein_liqui AS integer),
+    p.descripcion,
+    p.codigo_htal,
+    p.certificacion_profesional,
+    p.vto_certificacion,
+    p.seguro_cobertura,
+    p.cia_seguro,
+    p.vto_cobertura_seguro,
+    p.otorga_cert,
+    cai_cae_numero_completo,
+    p.alta_fecha,
+    p.alta_usr,
+    p.modi_fecha,
+    p.modi_usr,
+    p.baja_fecha,
+    p.baja_usr,
+    p.cbu,
+    p.solicitar_cotizacion
+
+ORDER BY p.cuit
+
+    LIMIT 20;
+
+END;
+$BODY$;
+
+ALTER FUNCTION public.buscar_prestadores(
+    character varying,
+    character varying,
+    integer,
+    integer,
+    integer,
+    boolean,
+    integer,
+    integer,
+    integer,
+    integer,
+    character varying,
+    boolean
+    )
+    OWNER TO postgres;
