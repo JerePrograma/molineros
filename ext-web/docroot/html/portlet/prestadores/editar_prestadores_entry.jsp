@@ -9,7 +9,6 @@ Prestador prestador =
 WebKeysLiquidaciones.PRESTADOR_EN_EDICION
 );
 
-```
 if (prestador == null) {
     prestador =
         (Prestador) request.getSession().getAttribute(
@@ -134,7 +133,6 @@ if (idPrestAux > 0) {
         String.valueOf(idPrestAux)
     );
 }
-```
 
 %>
 
@@ -197,12 +195,10 @@ message="falta-prestador-cbu"
 windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"
 var="volver">
 
-```
 <portlet:param
     name="struts_action"
     value="/prestadores/view"
 />
-```
 
 </portlet:renderURL>
 
@@ -222,45 +218,35 @@ param="tab"
 
 <% if ("datos".equals(tabValue)) { %>
 
-```
 <liferay-util:include
     page="/html/portlet/prestadores/view_prestador.jsp"
 />
-```
 
 <% } else if ("plan_prest".equals(tabValue)) { %>
 
-```
 <liferay-util:include
     page="/html/portlet/prestadores/prestador_plan.jsp"
 />
-```
 
 <% } else if ("lugar_atencion".equals(tabValue)) { %>
 
-```
 <liferay-util:include
     page="/html/portlet/prestadores/prestador_lugar_atencion.jsp"
 />
-```
 
 <% } else if (
 "historico_cotizacion".equals(tabValue) &&
 idPrestAux > 0
 ) { %>
 
-```
 <liferay-util:include
     page="/html/portlet/prestadores/historico_cotizacion.jsp"
 />
-```
 
 <% } else { %>
 
-```
 <liferay-util:include
     page="/html/portlet/prestadores/view_prestador.jsp"
 />
-```
 
 <% } %>
