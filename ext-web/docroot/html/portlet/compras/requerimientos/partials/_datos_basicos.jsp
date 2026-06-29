@@ -102,9 +102,6 @@
                     </div>
                 <% } %>
             </td>
-        </tr>
-
-        <tr>
             <td><label>Surge:</label></td>
             <td colspan="5">
                 <% if (puedeEditarEstructuraPantalla) { %>
