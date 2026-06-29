@@ -179,6 +179,75 @@ public class PrestadorServiceImpl {
 		return listaPrestadores;
 	}
 
+	public List<Prestador> getPrestadores(
+			int id,
+			String cuit,
+			String descripcion,
+			int provincia,
+			int localidad,
+			boolean soloVigentes,
+			int profesion,
+			int especialidad,
+			int subEspecialidad,
+			int tipoPrestador,
+			String hospital,
+			boolean soloHabilitadosCotizar) {
+
+		Connection con = null;
+		CallableStatement stmt = null;
+		List<Prestador> listaPrestadores = null;
+
+		try {
+			String sql =
+					"{call buscar_prestadores(?,?,?,?,?,?,?,?,?,?,?,?)}";
+
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql);
+
+			if (cuit != null && cuit.trim().equals("")) {
+				cuit = null;
+			}
+
+			stmt.setString(1, cuit);
+			stmt.setString(2, descripcion);
+			stmt.setInt(3, id);
+			stmt.setInt(4, provincia);
+			stmt.setInt(5, localidad);
+			stmt.setBoolean(6, soloVigentes);
+			stmt.setInt(7, profesion);
+			stmt.setInt(8, especialidad);
+			stmt.setInt(9, subEspecialidad);
+			stmt.setInt(10, tipoPrestador);
+			stmt.setString(11, hospital);
+			stmt.setBoolean(12, soloHabilitadosCotizar);
+
+			ResultSet rs = stmt.executeQuery();
+
+			listaPrestadores = new ArrayList<Prestador>();
+
+			while (rs.next()) {
+				Prestador prestador =
+						Prestador.getMapping(rs, "prs__");
+
+				prestador.setCbu(
+						rs.getString("prs__cbu")
+				);
+
+				listaPrestadores.add(prestador);
+			}
+
+		} catch (Exception e) {
+			_log.error(
+					"Error en busqueda prestadores",
+					e
+			);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+
+		return listaPrestadores;
+	}
+
 	public Prestador getPrestador(int id) {
 		Connection con = null;
 		CallableStatement stmt = null;

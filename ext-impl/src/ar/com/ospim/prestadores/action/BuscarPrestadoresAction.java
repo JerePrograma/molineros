@@ -117,13 +117,20 @@ public class BuscarPrestadoresAction extends PrestadoresBaseAction {
 					);
 
 			List<Prestador> busqueda = PrestadorServiceUtil
-					.getPrestadores(id,cuit,descripcion, provincia, localidad, soloVigentes, 
-							profesion, especialidad, subEspecialidad, tipoPrestado,hospital);
-
-			busqueda = filtrarPorSolicitarCotizacion(
-					busqueda,
-					soloHabilitadosCotizar
-			);
+					.getPrestadores(
+							id,
+							cuit,
+							descripcion,
+							provincia,
+							localidad,
+							soloVigentes,
+							profesion,
+							especialidad,
+							subEspecialidad,
+							tipoPrestado,
+							hospital,
+							soloHabilitadosCotizar
+					);
 
 			renderRequest.removeAttribute(WebKeysLiquidaciones.BUSQUEDA_PRESTADORES);
 			renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_PRESTADORES, busqueda);			
@@ -134,29 +141,4 @@ public class BuscarPrestadoresAction extends PrestadoresBaseAction {
 
 		return mapping.findForward("portlet.prestadores.result.search");
 	}
-
-	private List<Prestador> filtrarPorSolicitarCotizacion(
-			List<Prestador> prestadores,
-			boolean soloHabilitadosCotizar) {
-
-		if (prestadores == null
-				|| !soloHabilitadosCotizar) {
-
-			return prestadores;
-		}
-
-		List<Prestador> filtrados =
-				new ArrayList<Prestador>();
-
-		for (Prestador prestador : prestadores) {
-			if (prestador != null
-					&& prestador.isSolicitarCotizacion()) {
-
-				filtrados.add(prestador);
-			}
-		}
-
-		return filtrados;
-	}
-
 }

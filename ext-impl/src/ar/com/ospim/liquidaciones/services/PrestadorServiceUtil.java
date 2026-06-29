@@ -55,7 +55,37 @@ public class PrestadorServiceUtil {
 				profesion, especialidad, subEspecialidad, tipoPrestador );
 	}
 
-	
+	public static List<Prestador> getPrestadores(
+			int id,
+			String cuit,
+			String descripcion,
+			int provincia,
+			int localidad,
+			boolean soloVigentes,
+			int profesion,
+			int especialidad,
+			int subEspecialidad,
+			int tipoPrestador,
+			String hospital,
+			boolean soloHabilitadosCotizar)
+			throws Exception {
+
+		return getInstance().getPrestadores(
+				id,
+				cuit,
+				descripcion,
+				provincia,
+				localidad,
+				soloVigentes,
+				profesion,
+				especialidad,
+				subEspecialidad,
+				tipoPrestador,
+				hospital,
+				soloHabilitadosCotizar
+		);
+	}
+
 	public static Prestador getPrestador(int id) throws Exception {
 		return getInstance().getPrestador(id);
 	}
@@ -128,7 +158,8 @@ public class PrestadorServiceUtil {
 	public static List<PrestadorPlan> getPlanesDelPrestador(int idPrestador) {
 		return getInstance().getPlanesDelPrestador(idPrestador);
 	}
-	
+
+	// POSIBLEMENTE ELIMINAR TANTO FUNCIONES COMO MÉTODOS.
 	public static List<Prestador> getPrestadores(int id, String cuit, String descripcion, int provincia, int localidad, boolean soloVigentes,
 			int profesion, int especialidad, int subEspecialidad, int tipoPrestador,String hospital)
 		throws Exception {
