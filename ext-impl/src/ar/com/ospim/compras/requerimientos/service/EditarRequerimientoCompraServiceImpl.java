@@ -29,7 +29,7 @@ public class EditarRequerimientoCompraServiceImpl {
             "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_GUARDAR_REQUERIMIENTO_DETALLE =
-            "{ ? = call compras.guardar_requerimiento_detalle(?,?,?,?,?,?) }";
+            "{call compras.guardar_requerimiento_detalle(?,?,?,?,?,?)}";
 
     private static final String SQL_BORRAR_REQUERIMIENTO_DETALLE =
             "{ call compras.borrar_requerimiento_detalle(?,?) }";
@@ -281,32 +281,159 @@ public class EditarRequerimientoCompraServiceImpl {
         return ConnectionHelper.getConnection();
     }
 
-    public int guardarDetalle(RequerimientoCompraDetalle detalle, String usuario) throws Exception {
+    public int guardarDetalle(
+            RequerimientoCompraDetalle detalle,
+            String usuario) throws Exception {
+
         validarDetalleParaGuardar(detalle);
 
         Connection con = null;
         CallableStatement stmt = null;
+        ResultSet rs = null;
+
+        Integer idRequerimiento =
+                getIdRequerimientoDetalle(detalle);
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_GUARDAR_REQUERIMIENTO_DETALLE);
-            stmt.registerOutParameter(1, Types.INTEGER);
 
-            setNullableInteger(stmt, 2, detalle.getId());
-            setNullableInteger(stmt, 3, getIdRequerimientoDetalle(detalle));
-            setNullableInteger(stmt, 4, detalle.getIdArticulo());
-            setNullableInteger(stmt, 5, detalle.getCantidad());
-            stmt.setString(6, emptyToNull(detalle.getObservaciones()));
-            stmt.setString(7, emptyToNull(usuario));
+            if (con == null) {
+                throw new SQLException(
+                        "No se pudo obtener una conexión para guardar "
+                                + "el detalle del requerimiento."
+                );
+            }
 
-            stmt.execute();
+            stmt = con.prepareCall(
+                    SQL_GUARDAR_REQUERIMIENTO_DETALLE
+            );
 
-            return stmt.getInt(1);
+            /*
+             * La función recibe seis parámetros.
+             *
+             * Ya no existe registerOutParameter():
+             * el INTEGER retornado se obtiene desde el ResultSet.
+             */
+            setNullableInteger(
+                    stmt,
+                    1,
+                    detalle.getId()
+            );
+
+            setNullableInteger(
+                    stmt,
+                    2,
+                    idRequerimiento
+            );
+
+            setNullableInteger(
+                    stmt,
+                    3,
+                    detalle.getIdArticulo()
+            );
+
+            setNullableInteger(
+                    stmt,
+                    4,
+                    detalle.getCantidad()
+            );
+
+            stmt.setString(
+                    5,
+                    emptyToNull(
+                            detalle.getObservaciones()
+                    )
+            );
+
+            stmt.setString(
+                    6,
+                    emptyToNull(usuario)
+            );
+
+            rs = stmt.executeQuery();
+
+            if (!rs.next()) {
+                throw new SQLException(
+                        "La función compras.guardar_requerimiento_detalle "
+                                + "no devolvió el identificador del detalle."
+                );
+            }
+
+            int idDetalleGuardado =
+                    rs.getInt(1);
+
+            if (rs.wasNull()) {
+                throw new SQLException(
+                        "La función compras.guardar_requerimiento_detalle "
+                                + "devolvió NULL."
+                );
+            }
+
+            if (idDetalleGuardado <= 0) {
+                throw new SQLException(
+                        "La función compras.guardar_requerimiento_detalle "
+                                + "devolvió un identificador inválido: "
+                                + idDetalleGuardado
+                );
+            }
+
+            /*
+             * Una función escalar debe devolver exactamente una fila.
+             */
+            if (rs.next()) {
+                throw new SQLException(
+                        "La función compras.guardar_requerimiento_detalle "
+                                + "devolvió más de un resultado."
+                );
+            }
+
+            return idDetalleGuardado;
+
         } catch (Exception e) {
-            _log.error(e);
+            SQLException sqlException =
+                    buscarSQLException(e);
+
+            String sqlState =
+                    sqlException != null
+                            ? sqlException.getSQLState()
+                            : null;
+
+            int errorCode =
+                    sqlException != null
+                            ? sqlException.getErrorCode()
+                            : 0;
+
+            _log.error(
+                    "No se pudo guardar el detalle del requerimiento. "
+                            + "idDetalle=" + detalle.getId()
+                            + ", idRequerimiento=" + idRequerimiento
+                            + ", idArticulo=" + detalle.getIdArticulo()
+                            + ", cantidad=" + detalle.getCantidad()
+                            + ", usuario=" + usuario
+                            + ", SQLState=" + sqlState
+                            + ", errorCode=" + errorCode,
+                    e
+            );
+
+            if (sqlException != null
+                    && sqlException.getNextException() != null
+                    && sqlException.getNextException() != sqlException) {
+
+                _log.error(
+                        "Excepción SQL encadenada al guardar el detalle.",
+                        sqlException.getNextException()
+                );
+            }
+
             throw e;
+
         } finally {
-            ConnectionHelper.cerrar(stmt, con);
+            cerrar(rs);
+
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
         }
     }
 
@@ -1236,11 +1363,27 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
-    private void setNullableInteger(CallableStatement stmt, int index, Integer value) throws Exception {
+    private void setNullableInteger(
+            CallableStatement stmt,
+            int index,
+            Integer value) throws SQLException {
+
+        if (stmt == null) {
+            throw new SQLException(
+                    "No se informó el CallableStatement."
+            );
+        }
+
         if (value == null) {
-            stmt.setNull(index, Types.INTEGER);
+            stmt.setNull(
+                    index,
+                    Types.INTEGER
+            );
         } else {
-            stmt.setInt(index, value.intValue());
+            stmt.setInt(
+                    index,
+                    value.intValue()
+            );
         }
     }
 
@@ -1761,5 +1904,19 @@ public class EditarRequerimientoCompraServiceImpl {
                     con
             );
         }
+    }
+
+    private SQLException buscarSQLException(Throwable throwable) {
+        Throwable actual = throwable;
+
+        while (actual != null) {
+            if (actual instanceof SQLException) {
+                return (SQLException) actual;
+            }
+
+            actual = actual.getCause();
+        }
+
+        return null;
     }
 }

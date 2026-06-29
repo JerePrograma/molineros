@@ -25,10 +25,6 @@ public class EditarRequerimientoCompraServiceUtil {
         return getInstance().guardarDetalle(detalle, usuario);
     }
 
-    public static int guardarItem(RequerimientoCompraDetalle detalle, String usuario) throws Exception {
-        return guardarDetalle(detalle, usuario);
-    }
-
     public static void borrarDetalle(int idDetalle, String usuario) throws Exception {
         getInstance().borrarDetalle(idDetalle, usuario);
     }

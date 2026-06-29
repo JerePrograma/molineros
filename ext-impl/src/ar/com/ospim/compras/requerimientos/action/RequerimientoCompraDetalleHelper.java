@@ -7,6 +7,8 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
 
@@ -23,6 +25,11 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public class RequerimientoCompraDetalleHelper {
+
+    private static final Log _log =
+            LogFactoryUtil.getLog(
+                    RequerimientoCompraDetalleHelper.class
+            );
 
     private static final boolean EXIGIR_DETALLES_EN_SAVE_ALL = true;
 
@@ -46,9 +53,10 @@ public class RequerimientoCompraDetalleHelper {
         }
     }
 
-    public int guardarDetallesDesdeRequest(ActionRequest request,
-                                           int idRequerimientoCompra,
-                                           String usuario) throws Exception {
+    public int guardarDetallesDesdeRequest(
+            ActionRequest request,
+            int idRequerimientoCompra,
+            String usuario) throws Exception {
 
         if (idRequerimientoCompra <= 0) {
             errorCampo(
@@ -58,17 +66,28 @@ public class RequerimientoCompraDetalleHelper {
         }
 
         RequerimientoCompra requerimiento =
-                validarRequerimientoEditable(idRequerimientoCompra);
+                validarRequerimientoEditable(
+                        idRequerimientoCompra
+                );
 
-        String deletedIds = getParametroTrim(request, "detalle_deleted_ids");
+        String deletedIds =
+                getParametroTrim(
+                        request,
+                        "detalle_deleted_ids"
+                );
 
-        Set<Integer> borrados = new HashSet<Integer>();
+        Set<Integer> borrados =
+                new HashSet<Integer>();
 
         if (!WebKeysCompras.isEmpty(deletedIds)) {
-            String[] ids = deletedIds.split(",");
+            String[] ids =
+                    deletedIds.split(",");
 
             for (int i = 0; i < ids.length; i++) {
-                String rawId = ids[i] != null ? ids[i].trim() : "";
+                String rawId =
+                        ids[i] != null
+                                ? ids[i].trim()
+                                : "";
 
                 if (WebKeysCompras.isEmpty(rawId)) {
                     continue;
@@ -77,46 +96,79 @@ public class RequerimientoCompraDetalleHelper {
                 if (!rawId.matches("^[0-9]+$")) {
                     errorCampo(
                             "detalle_deleted_ids",
-                            "Detalle a borrar: ID inválido recibido: '" + rawId + "'."
+                            "Detalle a borrar: ID inválido recibido: '"
+                                    + rawId
+                                    + "'."
                     );
                 }
 
-                int idDetalleBorrado = Integer.parseInt(rawId);
+                int idDetalleBorrado =
+                        Integer.parseInt(rawId);
 
-                if (idDetalleBorrado > 0
-                        && !borrados.contains(Integer.valueOf(idDetalleBorrado))) {
+                if (idDetalleBorrado <= 0
+                        || borrados.contains(
+                        Integer.valueOf(idDetalleBorrado)
+                )) {
 
-                    validarDetallePerteneceARequerimiento(
-                            requerimiento,
-                            idDetalleBorrado,
-                            "detalle_deleted_ids"
+                    continue;
+                }
+
+                validarDetallePerteneceARequerimiento(
+                        requerimiento,
+                        idDetalleBorrado,
+                        "detalle_deleted_ids"
+                );
+
+                try {
+                    EditarRequerimientoCompraServiceUtil
+                            .borrarDetalle(
+                                    idDetalleBorrado,
+                                    usuario
+                            );
+
+                    borrados.add(
+                            Integer.valueOf(idDetalleBorrado)
                     );
 
-                    EditarRequerimientoCompraServiceUtil.borrarDetalle(
-                            idDetalleBorrado,
-                            usuario
+                } catch (Exception e) {
+                    _log.error(
+                            "No se pudo borrar un detalle durante "
+                                    + "el guardado conjunto. "
+                                    + "idRequerimiento="
+                                    + idRequerimientoCompra
+                                    + ", idDetalle="
+                                    + idDetalleBorrado
+                                    + ", usuario="
+                                    + usuario,
+                            e
                     );
 
-                    borrados.add(Integer.valueOf(idDetalleBorrado));
+                    throw e;
                 }
             }
         }
 
-        int count = parseEnteroConDefault(
-                request,
-                "detalle_count",
-                "Cantidad de detalles",
-                0
-        );
+        int count =
+                parseEnteroConDefault(
+                        request,
+                        "detalle_count",
+                        "Cantidad de detalles",
+                        0
+                );
 
-        if (EXIGIR_DETALLES_EN_SAVE_ALL && count <= 0) {
+        if (EXIGIR_DETALLES_EN_SAVE_ALL
+                && count <= 0) {
+
             errorCampo(
                     "detalle_count",
                     "Detalles: no llegó ningún detalle al Action. "
                             + "detalle_count vino vacío o en cero. "
-                            + "Esto normalmente indica que serializarDetallesCompras() no generó los hidden inputs, "
-                            + "que los inputs quedaron fuera del form principal, "
-                            + "o que el formulario se rompió por incluir busqueda_afiliado.jsp dentro del form."
+                            + "Esto normalmente indica que "
+                            + "serializarDetallesCompras() no generó "
+                            + "los hidden inputs, que los inputs quedaron "
+                            + "fuera del form principal, o que el formulario "
+                            + "se rompió por incluir busqueda_afiliado.jsp "
+                            + "dentro del form."
             );
         }
 
@@ -124,22 +176,32 @@ public class RequerimientoCompraDetalleHelper {
         int omitidos = 0;
 
         for (int i = 0; i < count; i++) {
-            String prefix = "detalle_" + i + "_";
-            String contexto = "Detalle #" + (i + 1);
+            String prefix =
+                    "detalle_" + i + "_";
 
-            if (filaDetalleVacia(request, prefix)) {
+            String contexto =
+                    "Detalle #" + (i + 1);
+
+            if (filaDetalleVacia(
+                    request,
+                    prefix
+            )) {
                 omitidos++;
                 continue;
             }
 
-            int idDetalle = parseEnteroConDefault(
-                    request,
-                    prefix + "id",
-                    contexto + " - ID",
-                    0
-            );
+            int idDetalle =
+                    parseEnteroConDefault(
+                            request,
+                            prefix + "id",
+                            contexto + " - ID",
+                            0
+                    );
 
-            if (idDetalle > 0 && borrados.contains(Integer.valueOf(idDetalle))) {
+            if (idDetalle > 0
+                    && borrados.contains(
+                    Integer.valueOf(idDetalle)
+            )) {
                 omitidos++;
                 continue;
             }
@@ -152,18 +214,32 @@ public class RequerimientoCompraDetalleHelper {
                 );
             }
 
-            int idArticulo = parseEnteroConDefault(
-                    request,
-                    prefix + "id_articulo",
-                    contexto + " - Artículo",
-                    0
+            int idArticulo =
+                    parseEnteroConDefault(
+                            request,
+                            prefix + "id_articulo",
+                            contexto + " - Artículo",
+                            0
+                    );
+
+            RequerimientoCompraDetalle detalle =
+                    new RequerimientoCompraDetalle();
+
+            detalle.setId(
+                    idDetalle > 0
+                            ? Integer.valueOf(idDetalle)
+                            : null
             );
 
-            RequerimientoCompraDetalle detalle = new RequerimientoCompraDetalle();
+            detalle.setIdRequerimientoCompra(
+                    idRequerimientoCompra
+            );
 
-            detalle.setId(idDetalle > 0 ? Integer.valueOf(idDetalle) : null);
-            detalle.setIdRequerimientoCompra(idRequerimientoCompra);
-            detalle.setIdArticulo(idArticulo > 0 ? Integer.valueOf(idArticulo) : null);
+            detalle.setIdArticulo(
+                    idArticulo > 0
+                            ? Integer.valueOf(idArticulo)
+                            : null
+            );
 
             detalle.setCantidad(
                     parseCantidadDesdeRequest(
@@ -173,63 +249,198 @@ public class RequerimientoCompraDetalleHelper {
                     )
             );
 
+            /*
+             * Los valores de cotización no pertenecen al guardado
+             * estructural del detalle.
+             */
             detalle.setPrecioUnitarioEstimado(null);
             detalle.setPrecioTotalEstimado(null);
             detalle.setIdPrestador(null);
 
             detalle.setObservaciones(
-                    getParametroRaw(request, prefix + "observaciones", null)
+                    getParametroRaw(
+                            request,
+                            prefix + "observaciones",
+                            null
+                    )
             );
 
             normalizarDetalleNuevo(detalle);
 
-            validarDetalle(detalle, contexto);
+            validarDetalle(
+                    detalle,
+                    contexto
+            );
 
-            EditarRequerimientoCompraServiceUtil.guardarDetalle(detalle, usuario);
+            try {
+                int idDetalleGuardado =
+                        EditarRequerimientoCompraServiceUtil
+                                .guardarDetalle(
+                                        detalle,
+                                        usuario
+                                );
 
-            guardados++;
+                if (idDetalleGuardado <= 0) {
+                    errorCampo(
+                            prefix + "id",
+                            contexto
+                                    + ": el servicio devolvió "
+                                    + "un identificador inválido."
+                    );
+                }
+
+                guardados++;
+
+            } catch (Exception e) {
+                _log.error(
+                        "No se pudo guardar un detalle durante "
+                                + "el guardado conjunto. "
+                                + "fila=" + (i + 1)
+                                + ", idDetalle=" + detalle.getId()
+                                + ", idRequerimiento="
+                                + idRequerimientoCompra
+                                + ", idArticulo="
+                                + detalle.getIdArticulo()
+                                + ", cantidad="
+                                + detalle.getCantidad()
+                                + ", usuario="
+                                + usuario,
+                        e
+                );
+
+                throw e;
+            }
         }
 
-        if (EXIGIR_DETALLES_EN_SAVE_ALL && guardados == 0 && borrados.size() == 0) {
+        if (EXIGIR_DETALLES_EN_SAVE_ALL
+                && guardados == 0
+                && borrados.size() == 0) {
+
             errorCampo(
                     "detalles",
-                    "Detalles: el Action recibió detalle_count=" + count
+                    "Detalles: el Action recibió detalle_count="
+                            + count
                             + ", pero no guardó ningún detalle. "
-                            + "Revisar los nombres de parámetros generados por serializarDetallesCompras()."
+                            + "Filas omitidas="
+                            + omitidos
+                            + ". Revisar los nombres de parámetros "
+                            + "generados por serializarDetallesCompras()."
+            );
+        }
+
+        if (_log.isDebugEnabled()) {
+            _log.debug(
+                    "Guardado conjunto de detalles finalizado. "
+                            + "idRequerimiento="
+                            + idRequerimientoCompra
+                            + ", recibidos="
+                            + count
+                            + ", guardados="
+                            + guardados
+                            + ", borrados="
+                            + borrados.size()
+                            + ", omitidos="
+                            + omitidos
             );
         }
 
         return guardados;
     }
 
-    public void guardarDetalleDesdeRequest(ActionRequest request,
-                                           ActionResponse response,
-                                           String usuario) throws Exception {
+    public void guardarDetalleDesdeRequest(
+            ActionRequest request,
+            ActionResponse response,
+            String usuario) throws Exception {
 
-        RequerimientoCompraDetalle detalle = getDetalleFromRequest(request);
+        RequerimientoCompraDetalle detalle = null;
 
-        normalizarDetalleNuevo(detalle);
+        try {
+            detalle =
+                    getDetalleFromRequest(request);
 
-        RequerimientoCompra requerimiento =
-                validarRequerimientoEditable(detalle.getIdRequerimientoCompra());
+            normalizarDetalleNuevo(detalle);
 
-        if (detalle.getIdInt() > 0) {
-            validarDetallePerteneceARequerimiento(
-                    requerimiento,
-                    detalle.getIdInt(),
-                    "id_detalle"
+            RequerimientoCompra requerimiento =
+                    validarRequerimientoEditable(
+                            detalle.getIdRequerimientoCompra()
+                    );
+
+            if (detalle.getIdInt() > 0) {
+                validarDetallePerteneceARequerimiento(
+                        requerimiento,
+                        detalle.getIdInt(),
+                        "id_detalle"
+                );
+            }
+
+            validarDetalle(detalle);
+
+            int idDetalleGuardado =
+                    EditarRequerimientoCompraServiceUtil
+                            .guardarDetalle(
+                                    detalle,
+                                    usuario
+                            );
+
+            if (idDetalleGuardado <= 0) {
+                errorCampo(
+                        "id_detalle",
+                        "El servicio devolvió un identificador "
+                                + "de detalle inválido."
+                );
+            }
+
+            setIdRequerimientoEnRequest(
+                    request,
+                    response,
+                    detalle.getIdRequerimientoCompra()
             );
+
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudo guardar el detalle recibido "
+                            + "desde el formulario. "
+                            + "idDetalle="
+                            + (
+                            detalle != null
+                                    ? detalle.getId()
+                                    : null
+                    )
+                            + ", idRequerimiento="
+                            + (
+                            detalle != null
+                                    ? detalle
+                                      .getIdRequerimientoCompra()
+                                    : getParametroTrim(
+                                    request,
+                                    "id_requerimiento_compra"
+                            )
+                    )
+                            + ", idArticulo="
+                            + (
+                            detalle != null
+                                    ? detalle.getIdArticulo()
+                                    : getParametroTrim(
+                                    request,
+                                    "id_articulo"
+                            )
+                    )
+                            + ", cantidad="
+                            + (
+                            detalle != null
+                                    ? detalle.getCantidad()
+                                    : getParametroTrim(
+                                    request,
+                                    "cantidad"
+                            )
+                    )
+                            + ", usuario="
+                            + usuario,
+                    e
+            );
+
+            throw e;
         }
-
-        validarDetalle(detalle);
-
-        EditarRequerimientoCompraServiceUtil.guardarDetalle(detalle, usuario);
-
-        setIdRequerimientoEnRequest(
-                request,
-                response,
-                detalle.getIdRequerimientoCompra()
-        );
     }
 
     public void borrarDetalleDesdeRequest(ActionRequest request,
