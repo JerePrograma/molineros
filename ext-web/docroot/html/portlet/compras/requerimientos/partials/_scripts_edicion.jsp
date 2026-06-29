@@ -328,7 +328,7 @@
         var selected = jQuery('#<portlet:namespace />sector_id option:selected');
         var attr = selected.attr('data-requiere-afiliado');
 
-        return attr == 'true' || attr == '1' || attr == 'SI' || attr == 'S';
+        return attr == 'true' || attr == '1' || attr == 'Sí' || attr == 'S';
     }
 
     function <portlet:namespace />sincronizarAfiliadoRequerimiento() {
@@ -534,7 +534,7 @@
             <portlet:namespace />setAfiliadoValue('secc_seleccionada', '1');
         }
 
-        if ('<%= jsCompra(afiliadoAntecedentes) %>' == 'SI') {
+        if ('<%= jsCompra(afiliadoAntecedentes) %>' == 'Sí') {
             <portlet:namespace />setAfiliadoValue('tieneAntecedentes', '1');
         } else {
             <portlet:namespace />setAfiliadoValue('tieneAntecedentes', '0');
@@ -544,7 +544,7 @@
 
         if (typeof <portlet:namespace />aplicarAntecedentesAfiliado == 'function') {
             <portlet:namespace />aplicarAntecedentesAfiliado(
-                    '<%= jsCompra(afiliadoAntecedentes) %>' == 'SI' ? '1' : '0'
+                    '<%= jsCompra(afiliadoAntecedentes) %>' == 'Sí' ? '1' : '0'
             );
         }
 

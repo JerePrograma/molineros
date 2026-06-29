@@ -411,8 +411,8 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         }
 
         return value.booleanValue()
-                ? "SI"
-                : "NO";
+                ? "Sí"
+                : "No";
     }
 
     public static boolean isEmpty(String value) {

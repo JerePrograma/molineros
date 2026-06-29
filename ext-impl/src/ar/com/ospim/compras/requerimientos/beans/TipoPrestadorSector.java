@@ -61,7 +61,7 @@ public class TipoPrestadorSector {
     }
 
     public String getActivoDescripcion() {
-        return activo ? "SI" : "NO";
+        return activo ? "Sí" : "No";
     }
 
     public void setActivo(boolean activo) {

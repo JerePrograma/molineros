@@ -103,7 +103,7 @@
             <portlet:namespace />setAfiliadoVistaValue('numero_afi', numeroAfiliado);
 
             var tieneAntecedentes =
-                    '<%= jsCompra(afiliadoAntecedentes) %>' == 'SI'
+                    '<%= jsCompra(afiliadoAntecedentes) %>' == 'Sí'
                             ? '1'
                             : '0';
 
