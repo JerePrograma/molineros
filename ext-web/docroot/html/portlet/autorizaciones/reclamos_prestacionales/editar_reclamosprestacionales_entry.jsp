@@ -30,8 +30,8 @@ ReclamoPrestacionalCompraContexto contextoCompra =
                 : null;
 String contextoCompraNonce =
         contextoCompra != null ? contextoCompra.getNonce() : "";
-String tabNames="" ;
-StringBuilder tabValues = new StringBuilder("datos");
+String tabNames = "";
+StringBuilder tabValues = new StringBuilder();
 
 String cmd = (String) request.getAttribute(Constants.CMD);
 
@@ -54,29 +54,39 @@ if(tabValue == null || StringUtils.checkEmpty(tabValue)){
 	tabValue = "datos";
 }
 
-if (idReclamoAux == 0 ){
-	tabNames="Datos Generales" ;
-	 tabValues.append("datos");
-	
-}else if ("REINTEGRO".equalsIgnoreCase(reclamoprestacional.getTipoPedido())){
-		
-	tabNames="Datos Generales,CTA Bancaria, Archivos, Histórico de Movimientos" ;
-	tabValues.append(",cta_bancaria");
-	tabValues.append(",archivos");
-	tabValues.append(",historico_movimientos");	
-	
-}else{
-	 tabNames="Datos Generales,Archivos, Histórico de Movimientos" ;
-	 tabValues.append(",archivos");
-	 tabValues.append(",historico_movimientos");
+if (idReclamoAux == 0) {
+    tabNames = "Datos Generales";
+    tabValues.append("datos");
 
+} else if ("REINTEGRO".equalsIgnoreCase(
+        reclamoprestacional.getTipoPedido())) {
+
+    tabNames =
+            "Datos Generales,CTA Bancaria, Archivos, "
+                    + "Histórico de Movimientos";
+
+    tabValues.append("datos");
+    tabValues.append(",cta_bancaria");
+    tabValues.append(",archivos");
+    tabValues.append(",historico_movimientos");
+
+} else {
+    tabNames =
+            "Datos Generales,Archivos, "
+                    + "Histórico de Movimientos";
+
+    tabValues.append("datos");
+    tabValues.append(",archivos");
+    tabValues.append(",historico_movimientos");
 }
 
 PortletURL portletURL = renderResponse.createRenderURL();
 portletURL.setWindowState(LiferayWindowState.MAXIMIZED);
 portletURL.setParameter("struts_action", "/autorizaciones/editar_reclamosprestaciones_entry");
 portletURL.setParameter("tab", tabValue);
-portletURL.setParameter("cmd", cmd);
+if (cmd != null) {
+    portletURL.setParameter("cmd", cmd);
+}
 portletURL.setParameter("reclamo_id", String.valueOf(idReclamoAux));
 
 if (contextoCompraNonce != null
