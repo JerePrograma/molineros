@@ -1,0 +1,191 @@
+<%@ page import="com.liferay.portal.kernel.language.LanguageUtil" %>
+<%@ page import="com.liferay.portal.kernel.util.HtmlUtil" %>
+
+<%--
+    Reemplaza el bloque <script> original por este bloque, preferentemente
+    al final de view_reclamo.jsp, después del HTML que usa estos controles.
+--%>
+
+<portlet:renderURL var="borrarReclamosPrestacionesTodosURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/borrar_reclamosprestaciones_todos" />
+</portlet:renderURL>
+
+<portlet:renderURL var="filtrarLetraComprobanteURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/filtrarLetraComprobante" />
+</portlet:renderURL>
+
+<portlet:renderURL var="buscarNomencladorURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/buscar_nomenclador" />
+</portlet:renderURL>
+
+<portlet:renderURL var="validarReclamoAfiliadoPrestacionesURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/validar_reclamo_afiliado_prestaciones" />
+</portlet:renderURL>
+
+<portlet:actionURL var="editarReclamoActionURL"
+    windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones_entry" />
+</portlet:actionURL>
+
+<portlet:renderURL var="observarURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/observar" />
+</portlet:renderURL>
+
+<portlet:renderURL var="proponeLoteReclamoPrestacionalURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/propone_lote_reclamo_prestacional" />
+</portlet:renderURL>
+
+<portlet:renderURL var="listaRevisionesReclamoURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/lista_revisiones_reclamo" />
+</portlet:renderURL>
+
+<portlet:renderURL var="listaContactosReclamoURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/lista_contactos_reclamo" />
+</portlet:renderURL>
+
+<portlet:renderURL var="editarReclamosPrestacionesURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones" />
+</portlet:renderURL>
+
+<portlet:renderURL var="listaPrestacionesReclamosURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/lista_prestaciones_reclamos" />
+</portlet:renderURL>
+
+<portlet:renderURL var="validarReclamoURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/validar_reclamo" />
+</portlet:renderURL>
+
+<portlet:renderURL var="validarExisteComprobanteURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/validar_existe_comprobante" />
+</portlet:renderURL>
+
+<portlet:renderURL var="editarContactoAfiliadosURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/afiliados/editar_contacto_entry" />
+</portlet:renderURL>
+
+<portlet:renderURL var="editarContactoCaiURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/cai/editar_contacto_entry" />
+</portlet:renderURL>
+
+<portlet:renderURL var="autorizacionesPrestacionalesURL"
+    windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>">
+    <portlet:param name="tabs1" value="autorizaciones-prestacionales" />
+    <portlet:param name="redirect" value="#" />
+</portlet:renderURL>
+
+<portlet:renderURL var="getIntegracionDetalleURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/getIntegracionDetalle" />
+</portlet:renderURL>
+
+<portlet:renderURL var="actualizaDomicilioURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/actualiza_domicilio" />
+</portlet:renderURL>
+
+<portlet:renderURL var="buscarAfiliadoDatosURL"
+    windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+    <portlet:param name="struts_action" value="/autorizaciones/buscar_afiliado_datos" />
+</portlet:renderURL>
+
+<script type="text/javascript"
+    src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js?v=20260630"></script>
+
+<script type="text/javascript">
+ViewReclamo.init({
+    namespace: '<portlet:namespace />',
+
+    initial: {
+        cantPrestacionesLista: '<%= cantprestacioneslista %>',
+        casoVinculado: '<%= HtmlUtil.escapeJS(caso_vinculado) %>',
+
+        reclamoExiste: <%= reclamoprestacional != null %>,
+        idReclamo: <%= reclamoprestacional != null ? reclamoprestacional.getId_reclamo() : 0 %>,
+        estadoReclamo: <%= reclamoprestacional != null ? reclamoprestacional.getEstado() : 0 %>,
+        tipoGestionCierre: <%= reclamoprestacional != null ? reclamoprestacional.getTipo_gestion_cierre_reclamo() : 0 %>,
+        idObservacionMedica: <%= reclamoprestacional != null ? reclamoprestacional.getIdObservacionMedica() : 0 %>,
+
+        resolucionActiva: <%=
+            resolucionAutorizado != ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINVALOR &&
+            resolucionAutorizado != ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINEVALUACION
+        %>,
+
+        esEdicion: <%= esEdicion %>,
+        cantRevisiones: <%= cantRevisiones %>,
+        debitoTercerizadora: <%= debitoTercerizadora %>,
+
+        buscarCieInicial: <%=
+            reclamoprestacional != null &&
+            reclamoprestacional.getCodigoCie10() != null &&
+            !reclamoprestacional.getCodigoCie10().equals("")
+        %>,
+
+        esPortletCai: <%=
+            renderResponse != null &&
+            renderResponse.getNamespace() != null &&
+            renderResponse.getNamespace().equals("_CAI_1_")
+        %>
+    },
+
+    commands: {
+        cmdParam: '<%= HtmlUtil.escapeJS(Constants.CMD) %>',
+        actionParam: '<%= HtmlUtil.escapeJS(Constants.ACTION) %>',
+        reclamoPrestacionalSeccional: '<%= HtmlUtil.escapeJS(WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL) %>',
+        view: '<%= HtmlUtil.escapeJS(Constants.VIEW) %>',
+        save: '<%= HtmlUtil.escapeJS(Constants.SAVE) %>',
+        update: '<%= HtmlUtil.escapeJS(Constants.UPDATE) %>',
+        restore: '<%= HtmlUtil.escapeJS(Constants.RESTORE) %>'
+    },
+
+    parentescos: {
+        defaultId: '<%= HtmlUtil.escapeJS(String.valueOf(WebKeysAfiliados.PARENTESCO_DEFAULT)) %>',
+        conyugeId: '<%= HtmlUtil.escapeJS(String.valueOf(WebKeysAfiliados.CONYUGE_DEFAULT)) %>',
+        concubinoId: '<%= HtmlUtil.escapeJS(String.valueOf(WebKeysAfiliados.CONCUBINO_DEFAULT)) %>'
+    },
+
+    messages: {
+        ingreseParametrosBusqueda: '<%= HtmlUtil.escapeJS(LanguageUtil.get(pageContext, "ingrese-parametros-busqueda")) %>',
+        observacionInterna: '<%= HtmlUtil.escapeJS(LanguageUtil.get(pageContext, "observacion-interna")) %>',
+        detalleContacto: '<%= HtmlUtil.escapeJS(LanguageUtil.get(pageContext, "detalle-contacto")) %>',
+        detalleDomicilio: '<%= HtmlUtil.escapeJS(LanguageUtil.get(pageContext, "detalle-domicilio")) %>'
+    },
+
+    pdfServletUrl: '/pdfservlet/',
+
+    urls: {
+        borrarReclamosPrestacionesTodos: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("borrarReclamosPrestacionesTodosURL")) %>',
+        filtrarLetraComprobante: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("filtrarLetraComprobanteURL")) %>',
+        buscarNomenclador: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("buscarNomencladorURL")) %>',
+        validarReclamoAfiliadoPrestaciones: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("validarReclamoAfiliadoPrestacionesURL")) %>',
+        editarReclamoAction: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("editarReclamoActionURL")) %>',
+        observar: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("observarURL")) %>',
+        proponeLoteReclamoPrestacional: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("proponeLoteReclamoPrestacionalURL")) %>',
+        listaRevisionesReclamo: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("listaRevisionesReclamoURL")) %>',
+        listaContactosReclamo: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("listaContactosReclamoURL")) %>',
+        editarReclamosPrestaciones: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("editarReclamosPrestacionesURL")) %>',
+        listaPrestacionesReclamos: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("listaPrestacionesReclamosURL")) %>',
+        validarReclamo: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("validarReclamoURL")) %>',
+        validarExisteComprobante: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("validarExisteComprobanteURL")) %>',
+        editarContactoAfiliados: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("editarContactoAfiliadosURL")) %>',
+        editarContactoCai: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("editarContactoCaiURL")) %>',
+        autorizacionesPrestacionales: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("autorizacionesPrestacionalesURL")) %>',
+        getIntegracionDetalle: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("getIntegracionDetalleURL")) %>',
+        actualizaDomicilio: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("actualizaDomicilioURL")) %>',
+        buscarAfiliadoDatos: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("buscarAfiliadoDatosURL")) %>'
+    }
+});
+</script>
