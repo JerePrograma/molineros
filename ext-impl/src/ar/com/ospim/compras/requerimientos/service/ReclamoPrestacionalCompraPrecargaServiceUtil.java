@@ -23,9 +23,9 @@ import javax.servlet.http.HttpSession;
  * Precarga un Reclamo Prestacional desde un requerimiento de compra
  * COTIZADO.
  *
- * Los identificadores de artÃ­culos de Compras no se reutilizan como
- * IDs del nomenclador mÃ©dico. Se transportan como cÃ³digo visible
- * ART-{id} y se deja el ID de prestaciÃ³n en cero para que el usuario
+ * Los identificadores de artículos de Compras no se reutilizan como
+ * IDs del nomenclador médico. Se transportan como código visible
+ * ART-{id} y se deja el ID de prestación en cero para que el usuario
  * confirme el nomenclador.
  */
 public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
@@ -39,28 +39,37 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
     private ReclamoPrestacionalCompraPrecargaServiceUtil() {
     }
 
-    public static void precargar(
+    /**
+     * Precarga los objetos utilizados por el editor legacy y devuelve
+     * un descriptor con las referencias exactas escritas en sesión.
+     *
+     * Ese descriptor permite compensar un handoff fallido sin eliminar
+     * objetos que otra petición hubiera escrito posteriormente.
+     */
+    public static Precarga precargar(
             HttpSession session,
             String nonceRequest,
             String usuarioActual) throws Exception {
 
         if (session == null) {
             throw new Exception(
-                    "No se pudo obtener la sesiÃ³n para precargar "
+                    "No se pudo obtener la sesión para precargar "
                             + "el Reclamo Prestacional."
             );
         }
 
         if (WebKeysCompras.isEmpty(nonceRequest)) {
             throw new Exception(
-                    "No se informÃ³ el identificador de la precarga."
+                    "No se informó el identificador de la precarga."
             );
         }
 
         ReclamoPrestacionalCompraContexto contexto;
 
         synchronized (session) {
-            validarSinReclamoEnEdicion(session);
+            validarSinReclamoEnEdicion(
+                    session
+            );
 
             contexto =
                     obtenerContextoValido(
@@ -83,15 +92,19 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         );
 
         ReclamoPrestacional reclamo =
-                crearReclamo(requerimiento);
+                crearReclamo(
+                        requerimiento
+                );
 
         List<PrestacionesReclamo> prestaciones =
-                crearPrestaciones(requerimiento);
+                crearPrestaciones(
+                        requerimiento
+                );
 
         if (prestaciones.isEmpty()) {
             throw new Exception(
                     "El requerimiento COTIZADO no contiene "
-                            + "Ã­tems para precargar."
+                            + "ítems para precargar."
             );
         }
 
@@ -101,48 +114,242 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         List<ContactoCRM> contactos =
                 new ArrayList<ContactoCRM>();
 
-        reclamo.setPrestaciones(prestaciones);
-        reclamo.setRevisiones(revisiones);
-        reclamo.setContactosCRM(contactos);
+        reclamo.setPrestaciones(
+                prestaciones
+        );
 
-        /*
-         * El armado del reclamo ocurre fuera del bloqueo para no retener
-         * innecesariamente la sesiÃ³n durante consultas y conversiones.
-         *
-         * Antes de escribir se comprueba nuevamente que otra peticiÃ³n
-         * no haya sustituido el contexto ni iniciado otra ediciÃ³n.
-         */
-        synchronized (session) {
-            obtenerContextoValido(
+        reclamo.setRevisiones(
+                revisiones
+        );
+
+        reclamo.setContactosCRM(
+                contactos
+        );
+
+        Precarga precarga = null;
+
+        try {
+            /*
+             * El armado del reclamo ocurre fuera del bloqueo para no
+             * retener innecesariamente la sesión durante consultas y
+             * conversiones.
+             *
+             * Antes de escribir se comprueba nuevamente que otra petición
+             * no haya sustituido el contexto ni iniciado otra edición.
+             */
+            synchronized (session) {
+                obtenerContextoValido(
+                        session,
+                        nonceRequest,
+                        usuarioActual
+                );
+
+                validarSinReclamoEnEdicion(
+                        session
+                );
+
+                /*
+                 * Se guardan los valores anteriores para poder restaurarlos
+                 * si la navegación falla después de la precarga.
+                 *
+                 * RECLAMO_PRESTACION_EN_EDICION debe ser null por la
+                 * validación anterior, pero se conserva igualmente el valor
+                 * para que el algoritmo de compensación sea completo.
+                 */
+                precarga =
+                        new Precarga(
+                                nonceRequest,
+                                reclamo,
+                                prestaciones,
+                                revisiones,
+                                contactos,
+                                session.getAttribute(
+                                        WebKeysAutorizaciones
+                                                .RECLAMO_PRESTACION_EN_EDICION
+                                ),
+                                session.getAttribute(
+                                        WebKeysAutorizaciones
+                                                .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
+                                ),
+                                session.getAttribute(
+                                        WebKeysAutorizaciones
+                                                .LISTADO_REVISIONES_RECLAMOS_EN_SESION
+                                ),
+                                session.getAttribute(
+                                        WebKeysAutorizaciones
+                                                .LISTADO_CONTACTOS_RECLAMOS_EN_SESION
+                                )
+                        );
+
+                session.setAttribute(
+                        WebKeysAutorizaciones
+                                .RECLAMO_PRESTACION_EN_EDICION,
+                        reclamo
+                );
+
+                session.setAttribute(
+                        WebKeysAutorizaciones
+                                .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION,
+                        prestaciones
+                );
+
+                session.setAttribute(
+                        WebKeysAutorizaciones
+                                .LISTADO_REVISIONES_RECLAMOS_EN_SESION,
+                        revisiones
+                );
+
+                session.setAttribute(
+                        WebKeysAutorizaciones
+                                .LISTADO_CONTACTOS_RECLAMOS_EN_SESION,
+                        contactos
+                );
+            }
+
+            return precarga;
+
+        } catch (Exception e) {
+            /*
+             * También cubre una eventual escritura parcial de los atributos
+             * de sesión dentro del bloque anterior.
+             */
+            limpiarHandoffFallido(
                     session,
                     nonceRequest,
-                    usuarioActual
+                    precarga
             );
 
-            validarSinReclamoEnEdicion(session);
+            throw e;
+        }
+    }
 
-            session.setAttribute(
-                    WebKeysAutorizaciones
-                            .RECLAMO_PRESTACION_EN_EDICION,
-                    reclamo
+    /**
+     * Compensa exclusivamente la precarga perteneciente al nonce indicado.
+     *
+     * Reglas:
+     *
+     * 1. El contexto actual debe seguir teniendo el mismo nonce.
+     * 2. Cada atributo sólo se restaura si todavía contiene exactamente
+     *    el mismo objeto que escribió esta Precarga.
+     * 3. Si otra petición reemplazó un atributo, no se toca.
+     * 4. El contexto se elimina únicamente si sigue perteneciendo al
+     *    handoff fallido.
+     */
+    public static void limpiarHandoffFallido(
+            HttpSession session,
+            String nonce,
+            Precarga precarga) {
+
+        if (session == null
+                || WebKeysCompras.isEmpty(nonce)) {
+
+            return;
+        }
+
+        synchronized (session) {
+            Object contextoObj =
+                    session.getAttribute(
+                            WebKeysCompras
+                                    .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                    );
+
+            if (!(contextoObj
+                    instanceof ReclamoPrestacionalCompraContexto)) {
+
+                return;
+            }
+
+            ReclamoPrestacionalCompraContexto contexto =
+                    (ReclamoPrestacionalCompraContexto)
+                            contextoObj;
+
+            if (!contexto.coincideNonce(
+                    nonce
+            )) {
+                /*
+                 * Otra petición sustituyó el contexto.
+                 * No se elimina ningún dato.
+                 */
+                return;
+            }
+
+            if (precarga != null
+                    && precarga.coincideNonce(
+                    nonce
+            )) {
+
+                restaurarAtributoSiPertenece(
+                        session,
+                        WebKeysAutorizaciones
+                                .RECLAMO_PRESTACION_EN_EDICION,
+                        precarga.getReclamoCreado(),
+                        precarga.getReclamoAnterior()
+                );
+
+                restaurarAtributoSiPertenece(
+                        session,
+                        WebKeysAutorizaciones
+                                .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION,
+                        precarga.getPrestacionesCreadas(),
+                        precarga.getPrestacionesAnteriores()
+                );
+
+                restaurarAtributoSiPertenece(
+                        session,
+                        WebKeysAutorizaciones
+                                .LISTADO_REVISIONES_RECLAMOS_EN_SESION,
+                        precarga.getRevisionesCreadas(),
+                        precarga.getRevisionesAnteriores()
+                );
+
+                restaurarAtributoSiPertenece(
+                        session,
+                        WebKeysAutorizaciones
+                                .LISTADO_CONTACTOS_RECLAMOS_EN_SESION,
+                        precarga.getContactosCreados(),
+                        precarga.getContactosAnteriores()
+                );
+            }
+
+            /*
+             * Se elimina sólo después de verificar que el contexto actual
+             * todavía corresponde al nonce fallido.
+             */
+            session.removeAttribute(
+                    WebKeysCompras
+                            .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
             );
+        }
+    }
 
-            session.setAttribute(
-                    WebKeysAutorizaciones
-                            .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION,
-                    prestaciones
+    private static void restaurarAtributoSiPertenece(
+            HttpSession session,
+            String nombre,
+            Object valorCreado,
+            Object valorAnterior) {
+
+        Object valorActual =
+                session.getAttribute(
+                        nombre
+                );
+
+        /*
+         * La comparación deliberadamente utiliza identidad, no equals().
+         * Dos listas o reclamos con los mismos valores pueden pertenecer
+         * a peticiones distintas.
+         */
+        if (valorActual != valorCreado) {
+            return;
+        }
+
+        if (valorAnterior == null) {
+            session.removeAttribute(
+                    nombre
             );
-
+        } else {
             session.setAttribute(
-                    WebKeysAutorizaciones
-                            .LISTADO_REVISIONES_RECLAMOS_EN_SESION,
-                    revisiones
-            );
-
-            session.setAttribute(
-                    WebKeysAutorizaciones
-                            .LISTADO_CONTACTOS_RECLAMOS_EN_SESION,
-                    contactos
+                    nombre,
+                    valorAnterior
             );
         }
     }
@@ -156,7 +363,8 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             );
         }
 
-        Date fechaAlta = new Date();
+        Date fechaAlta =
+                new Date();
 
         int integrante =
                 requerimiento.getAfiliadoInt() != null
@@ -178,10 +386,21 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                         null
                 );
 
-        reclamo.setAlta_fecha(fechaAlta);
-        reclamo.setOspim_fecha(fechaAlta);
-        reclamo.setTipoPedido("EXCEPCION");
-        reclamo.setEstado(0);
+        reclamo.setAlta_fecha(
+                fechaAlta
+        );
+
+        reclamo.setOspim_fecha(
+                fechaAlta
+        );
+
+        reclamo.setTipoPedido(
+                "EXCEPCION"
+        );
+
+        reclamo.setEstado(
+                0
+        );
 
         reclamo.setRecuperable(
                 requerimiento.isRecupero()
@@ -214,7 +433,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             return prestaciones;
         }
 
-        validarPorcentajes(requerimiento);
+        validarPorcentajes(
+                requerimiento
+        );
 
         int idRegistro = 1;
 
@@ -243,26 +464,40 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             String sectorCompras) {
 
         String sector =
-                normalizarTexto(sectorCompras);
+                normalizarTexto(
+                        sectorCompras
+                );
 
-        if (sector.indexOf("DISCAPAC") >= 0) {
+        if (sector.indexOf(
+                "DISCAPAC"
+        ) >= 0) {
             return "DISCAPACIDAD";
         }
 
-        if (sector.indexOf("FARMAC") >= 0) {
+        if (sector.indexOf(
+                "FARMAC"
+        ) >= 0) {
             return "FARMACIA";
         }
 
-        if (sector.indexOf("ODONTO") >= 0) {
+        if (sector.indexOf(
+                "ODONTO"
+        ) >= 0) {
             return "ODONTOLOGIA";
         }
 
-        if (sector.indexOf("LEGAL") >= 0) {
+        if (sector.indexOf(
+                "LEGAL"
+        ) >= 0) {
             return "LEGALES";
         }
 
-        if (sector.indexOf("PRESTACION") >= 0
-                && sector.indexOf("MEDIC") >= 0) {
+        if (sector.indexOf(
+                "PRESTACION"
+        ) >= 0
+                && sector.indexOf(
+                "MEDIC"
+        ) >= 0) {
 
             return "PRESTACIONES MEDICAS";
         }
@@ -293,7 +528,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             RequerimientoCompraDetalle detalle,
             int idRegistro) throws Exception {
 
-        validarDetalleCotizado(detalle);
+        validarDetalleCotizado(
+                detalle
+        );
 
         BigDecimal cantidad =
                 BigDecimal.valueOf(
@@ -333,24 +570,38 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
          * diferencias producidas por dos redondeos independientes.
          */
         BigDecimal cargoTercerizadora =
-                total.subtract(cargoOspim)
-                        .setScale(
-                                2,
-                                RoundingMode.HALF_UP
-                        );
+                total.subtract(
+                        cargoOspim
+                ).setScale(
+                        2,
+                        RoundingMode.HALF_UP
+                );
 
         PrestacionesReclamo prestacion =
                 new PrestacionesReclamo();
 
-        prestacion.setIdRegistro(idRegistro);
+        prestacion.setIdRegistro(
+                idRegistro
+        );
 
         /*
-         * El artÃ­culo de Compras no es un ID del nomenclador mÃ©dico.
+         * El artículo de Compras no es un ID del nomenclador médico.
          */
-        prestacion.setId_prestacion(0);
-        prestacion.setId_medicamento(0);
-        prestacion.setId_prestacionrecord(0);
-        prestacion.setTipoPrestacion(1);
+        prestacion.setId_prestacion(
+                0
+        );
+
+        prestacion.setId_medicamento(
+                0
+        );
+
+        prestacion.setId_prestacionrecord(
+                0
+        );
+
+        prestacion.setTipoPrestacion(
+                1
+        );
 
         prestacion.setCodigoPrestacion(
                 detalle.getIdArticulo() != null
@@ -366,8 +617,13 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 detalle.getArticuloVisible()
         );
 
-        prestacion.setNombremedicacion("");
-        prestacion.setFrecuencia("UNICA");
+        prestacion.setNombremedicacion(
+                ""
+        );
+
+        prestacion.setFrecuencia(
+                "UNICA"
+        );
 
         prestacion.setCantidad(
                 cantidad.doubleValue()
@@ -389,7 +645,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 Double.valueOf(0D)
         );
 
-        prestacion.setReconocidoSSS(0D);
+        prestacion.setReconocidoSSS(
+                0D
+        );
 
         prestacion.setRecuperable(
                 Integer.valueOf(
@@ -428,16 +686,33 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         );
 
         /*
-         * Una cotizaciÃ³n no es una factura. OTR evita valores nulos
-         * incompatibles con el JSP legacy, pero el nÃºmero, la fecha,
+         * Una cotización no es una factura. OTR evita valores nulos
+         * incompatibles con el JSP legacy, pero el número, la fecha,
          * la letra y las sucursales deben ser confirmados.
          */
-        prestacion.setComprobanteTipo("OTR");
-        prestacion.setComprobanteNro(null);
-        prestacion.setComprobanteFecha(null);
-        prestacion.setComprobanteLetra(null);
-        prestacion.setComprobanteSucursal(null);
-        prestacion.setComprobanteCUITSucursal(null);
+        prestacion.setComprobanteTipo(
+                "OTR"
+        );
+
+        prestacion.setComprobanteNro(
+                null
+        );
+
+        prestacion.setComprobanteFecha(
+                null
+        );
+
+        prestacion.setComprobanteLetra(
+                null
+        );
+
+        prestacion.setComprobanteSucursal(
+                null
+        );
+
+        prestacion.setComprobanteCUITSucursal(
+                null
+        );
 
         prestacion.setComprobanteCUIT(
                 normalizarCuit(
@@ -467,7 +742,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 )
         );
 
-        prestacion.setFechaPrestacion(null);
+        prestacion.setFechaPrestacion(
+                null
+        );
 
         prestacion.setEstado(
                 PrestacionesReclamo
@@ -475,7 +752,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                         .NUEVO
         );
 
-        prestacion.setEstadoRechazoAprobado(0);
+        prestacion.setEstadoRechazoAprobado(
+                0
+        );
 
         prestacion.setObservaciones(
                 construirObservacion(
@@ -496,7 +775,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 || requerimiento.getBajaFecha() != null) {
 
             throw new Exception(
-                    "El requerimiento de compra ya no estÃ¡ activo."
+                    "El requerimiento de compra ya no está activo."
             );
         }
 
@@ -504,14 +783,14 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 requerimiento.getEstado()
         )) {
             throw new Exception(
-                    "El requerimiento de compra ya no estÃ¡ COTIZADO."
+                    "El requerimiento de compra ya no está COTIZADO."
             );
         }
 
         if (!requerimiento.tieneAfiliadoInformado()) {
             throw new Exception(
                     "El requerimiento COTIZADO no tiene "
-                            + "un afiliado vÃ¡lido."
+                            + "un afiliado válido."
             );
         }
 
@@ -537,7 +816,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 || cuilContexto == null
                 || integranteRequerimiento == null
                 || integranteContexto == null
-                || !cuilRequerimiento.equals(cuilContexto)
+                || !cuilRequerimiento.equals(
+                cuilContexto
+        )
                 || !integranteRequerimiento.equals(
                 integranteContexto
         )) {
@@ -545,7 +826,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             throw new Exception(
                     "El afiliado persistido del requerimiento "
                             + "no coincide con el contexto "
-                            + "de creaciÃ³n del RP."
+                            + "de creación del RP."
             );
         }
     }
@@ -562,7 +843,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
             throw new Exception(
                     "El requerimiento figura COTIZADO, "
-                            + "pero contiene un Ã­tem sin cantidad, "
+                            + "pero contiene un ítem sin cantidad, "
                             + "precio o prestador adjudicado."
             );
         }
@@ -612,8 +893,8 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 instanceof ReclamoPrestacionalCompraContexto)) {
 
             throw new Exception(
-                    "El contexto de Compras expirÃ³ "
-                            + "o ya no estÃ¡ disponible."
+                    "El contexto de Compras expiró "
+                            + "o ya no está disponible."
             );
         }
 
@@ -621,14 +902,18 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 (ReclamoPrestacionalCompraContexto)
                         contextoObj;
 
-        if (!contexto.coincideNonce(nonceRequest)
-                || !contexto.perteneceAUsuario(usuarioActual)
+        if (!contexto.coincideNonce(
+                nonceRequest
+        )
+                || !contexto.perteneceAUsuario(
+                usuarioActual
+        )
                 || !contexto.estaVigente(
                 System.currentTimeMillis()
         )) {
 
             throw new Exception(
-                    "El contexto de Compras no es vÃ¡lido o venciÃ³. "
+                    "El contexto de Compras no es válido o venció. "
                             + "Vuelva al requerimiento e inicie "
                             + "nuevamente el Reclamo Prestacional."
             );
@@ -646,9 +931,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         ) != null) {
 
             throw new Exception(
-                    "Ya existe un Reclamo Prestacional en ediciÃ³n "
-                            + "en esta sesiÃ³n. Finalice o descarte "
-                            + "esa ediciÃ³n antes de iniciar otro "
+                    "Ya existe un Reclamo Prestacional en edición "
+                            + "en esta sesión. Finalice o descarte "
+                            + "esa edición antes de iniciar otro "
                             + "desde Compras."
             );
         }
@@ -701,11 +986,18 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             String value) {
 
         String normalizado =
-                WebKeysCompras.trimToNull(value);
+                WebKeysCompras.trimToNull(
+                        value
+                );
 
         if (normalizado != null) {
-            destino.append(' ');
-            destino.append(normalizado);
+            destino.append(
+                    ' '
+            );
+
+            destino.append(
+                    normalizado
+            );
         }
     }
 
@@ -714,7 +1006,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
         if (value == null) {
             throw new Exception(
-                    "Un Ã­tem cotizado no tiene importe."
+                    "Un ítem cotizado no tiene importe."
             );
         }
 
@@ -769,5 +1061,104 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         return normalizado.length() > 0
                 ? normalizado
                 : null;
+    }
+
+    /**
+     * Descriptor inmutable de los objetos escritos por una precarga.
+     *
+     * Las referencias anteriores se conservan exclusivamente para una
+     * eventual compensación. No forman parte del flujo funcional normal.
+     */
+    public static final class Precarga {
+
+        private final String nonce;
+
+        private final ReclamoPrestacional reclamoCreado;
+
+        private final List<PrestacionesReclamo>
+                prestacionesCreadas;
+
+        private final List<RevisionesReclamo>
+                revisionesCreadas;
+
+        private final List<ContactoCRM>
+                contactosCreados;
+
+        private final Object reclamoAnterior;
+
+        private final Object prestacionesAnteriores;
+
+        private final Object revisionesAnteriores;
+
+        private final Object contactosAnteriores;
+
+        private Precarga(
+                String nonce,
+                ReclamoPrestacional reclamoCreado,
+                List<PrestacionesReclamo> prestacionesCreadas,
+                List<RevisionesReclamo> revisionesCreadas,
+                List<ContactoCRM> contactosCreados,
+                Object reclamoAnterior,
+                Object prestacionesAnteriores,
+                Object revisionesAnteriores,
+                Object contactosAnteriores) {
+
+            this.nonce = nonce;
+            this.reclamoCreado = reclamoCreado;
+            this.prestacionesCreadas = prestacionesCreadas;
+            this.revisionesCreadas = revisionesCreadas;
+            this.contactosCreados = contactosCreados;
+            this.reclamoAnterior = reclamoAnterior;
+            this.prestacionesAnteriores = prestacionesAnteriores;
+            this.revisionesAnteriores = revisionesAnteriores;
+            this.contactosAnteriores = contactosAnteriores;
+        }
+
+        private boolean coincideNonce(
+                String nonceRequest) {
+
+            return nonce != null
+                    && nonce.equals(
+                    nonceRequest
+            );
+        }
+
+        private ReclamoPrestacional getReclamoCreado() {
+            return reclamoCreado;
+        }
+
+        private List<PrestacionesReclamo>
+        getPrestacionesCreadas() {
+
+            return prestacionesCreadas;
+        }
+
+        private List<RevisionesReclamo>
+        getRevisionesCreadas() {
+
+            return revisionesCreadas;
+        }
+
+        private List<ContactoCRM>
+        getContactosCreados() {
+
+            return contactosCreados;
+        }
+
+        private Object getReclamoAnterior() {
+            return reclamoAnterior;
+        }
+
+        private Object getPrestacionesAnteriores() {
+            return prestacionesAnteriores;
+        }
+
+        private Object getRevisionesAnteriores() {
+            return revisionesAnteriores;
+        }
+
+        private Object getContactosAnteriores() {
+            return contactosAnteriores;
+        }
     }
 }
