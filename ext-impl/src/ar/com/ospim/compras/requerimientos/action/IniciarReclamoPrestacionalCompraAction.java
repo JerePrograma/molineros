@@ -32,7 +32,8 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import javax.servlet.http.HttpSession;
 
-public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
+public class IniciarReclamoPrestacionalCompraAction
+        extends PortletAction {
 
     private static final Log _log =
             LogFactoryUtil.getLog(
@@ -65,6 +66,7 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
 
         try {
             User user = PortalUtil.getUser(actionRequest);
+
             RequerimientoCompra requerimiento =
                     obtenerRequerimientoCotizado(
                             idRequerimientoCompra
@@ -92,10 +94,12 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                         "struts_action",
                         STRUTS_ACTION_RECLAMO
                 );
+
                 actionResponse.setRenderParameter(
                         Constants.CMD,
                         Constants.VIEW
                 );
+
                 actionResponse.setRenderParameter(
                         "id_reclamosel",
                         String.valueOf(
@@ -103,7 +107,11 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                         )
                 );
 
-                setForward(actionRequest, FORWARD_RECLAMO);
+                setForward(
+                        actionRequest,
+                        FORWARD_RECLAMO
+                );
+
                 return;
             }
 
@@ -111,12 +119,12 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                 throw new Exception(
                         relacion.isError()
                                 ? "El Reclamo Prestacional fue creado, "
-                                        + "pero su vinculación requiere "
-                                        + "reconciliación. No se permite "
-                                        + "crear otro reclamo."
+                                  + "pero su vinculación requiere "
+                                  + "reconciliación. No se permite "
+                                  + "crear otro reclamo."
                                 : "Ya existe una creación de Reclamo "
-                                        + "Prestacional en proceso para "
-                                        + "este requerimiento."
+                                  + "Prestacional en proceso para "
+                                  + "este requerimiento."
                 );
             }
 
@@ -154,18 +162,19 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                     );
                 }
 
-                Object contextoAnteriorObj = session.getAttribute(
-                        WebKeysCompras
-                                .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
-                );
+                Object contextoAnteriorObj =
+                        session.getAttribute(
+                                WebKeysCompras
+                                        .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                        );
 
                 if (contextoAnteriorObj
                         instanceof ReclamoPrestacionalCompraContexto) {
 
                     /*
                      * Sin un RP en edición, un contexto previo quedó
-                     * abandonado. Se reemplaza; el nonce impide que una
-                     * petición concurrente termine usando el contexto ajeno.
+                     * abandonado. Se reemplaza; el nonce permite detectar
+                     * si otra petición sustituyó el contexto.
                      */
                     session.removeAttribute(
                             WebKeysCompras
@@ -189,16 +198,19 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                         );
             } catch (Exception precargaError) {
                 synchronized (session) {
-                    Object contextoActualObj = session.getAttribute(
-                            WebKeysCompras
-                                    .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
-                    );
+                    Object contextoActualObj =
+                            session.getAttribute(
+                                    WebKeysCompras
+                                            .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                            );
 
                     if (contextoActualObj
                             instanceof ReclamoPrestacionalCompraContexto
                             && ((ReclamoPrestacionalCompraContexto)
-                                    contextoActualObj)
-                                    .coincideNonce(contexto.getNonce())) {
+                            contextoActualObj)
+                            .coincideNonce(
+                                    contexto.getNonce()
+                            )) {
 
                         session.removeAttribute(
                                 WebKeysCompras
@@ -214,17 +226,22 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                     "struts_action",
                     STRUTS_ACTION_RECLAMO
             );
+
             actionResponse.setRenderParameter(
                     "origen",
                     "compras"
             );
+
             actionResponse.setRenderParameter(
                     WebKeysCompras
                             .PARAM_RECLAMO_PRESTACIONAL_NONCE,
                     contexto.getNonce()
             );
 
-            setForward(actionRequest, FORWARD_RECLAMO);
+            setForward(
+                    actionRequest,
+                    FORWARD_RECLAMO
+            );
         } catch (Exception e) {
             _log.error(
                     "No se pudo iniciar el Reclamo Prestacional desde "
@@ -279,11 +296,14 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                 );
 
         if (STRUTS_ACTION_RECLAMO.equals(strutsAction)) {
-            return mapping.findForward(FORWARD_RECLAMO);
+            return mapping.findForward(
+                    FORWARD_RECLAMO
+            );
         }
 
         return mapping.findForward(
-                WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO
+                WebKeysCompras
+                        .FORWARD_COMPRAS_VER_REQUERIMIENTO
         );
     }
 
@@ -329,7 +349,9 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
         return requerimiento;
     }
 
-    private void validarPermisoCreacion(User user) throws Exception {
+    private void validarPermisoCreacion(
+            User user) throws Exception {
+
         validarUsuario(user);
 
         boolean permisoCompras =
@@ -337,7 +359,7 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                         user,
                         WebKeysCompras.ROL_ABM_COMPRAS
                 )
-                || PermissionUtil.userContainsRole(
+                        || PermissionUtil.userContainsRole(
                         user,
                         WebKeysCompras.ROL_COTIZAR_COMPRAS
                 );
@@ -357,7 +379,9 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
         }
     }
 
-    private void validarPermisoConsulta(User user) throws Exception {
+    private void validarPermisoConsulta(
+            User user) throws Exception {
+
         validarUsuario(user);
 
         boolean permisoCompras =
@@ -365,15 +389,15 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                         user,
                         WebKeysCompras.ROL_VIEW_COMPRAS
                 )
-                || PermissionUtil.userContainsRole(
+                        || PermissionUtil.userContainsRole(
                         user,
                         WebKeysCompras.ROL_ABM_COMPRAS
                 )
-                || PermissionUtil.userContainsRole(
+                        || PermissionUtil.userContainsRole(
                         user,
                         WebKeysCompras.ROL_COTIZAR_COMPRAS
                 )
-                || PermissionUtil.userContainsRole(
+                        || PermissionUtil.userContainsRole(
                         user,
                         WebKeysCompras.ROL_ANULAR_COMPRAS
                 );
@@ -384,7 +408,7 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                         WebKeysAutorizaciones
                                 .ROL_ABM_RECLAM_PREST
                 )
-                || PermissionUtil.userContainsRole(
+                        || PermissionUtil.userContainsRole(
                         user,
                         WebKeysAutorizaciones
                                 .ROL_CONSULTA_RECLAMOS_PRESTACIONALES
@@ -398,7 +422,9 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
         }
     }
 
-    private void validarUsuario(User user) throws Exception {
+    private void validarUsuario(
+            User user) throws Exception {
+
         if (user == null) {
             throw new Exception(
                     "No se pudo determinar el usuario actual."
@@ -407,7 +433,9 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
     }
 
     private String mensajeError(Exception e) {
-        if (e == null || WebKeysCompras.isEmpty(e.getMessage())) {
+        if (e == null
+                || WebKeysCompras.isEmpty(e.getMessage())) {
+
             return "No se pudo procesar el Reclamo Prestacional.";
         }
 
