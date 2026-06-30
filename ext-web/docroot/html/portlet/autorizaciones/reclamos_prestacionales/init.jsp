@@ -1,7 +1,31 @@
 <%
-List<EstadosReclamosPrestacionales> listaestados = (ArrayList<EstadosReclamosPrestacionales>) portletSession
-.getAttribute(WebKeysAutorizaciones.ESTADOS_RECLAMOS_PRESTACIONES_EN_SESION,
-		PortletSession.APPLICATION_SCOPE);
+String _comprasRpPrecargaError = null;
+
+String _comprasRpNonce = ParamUtil.getString(
+        request,
+        ar.com.ospim.compras.WebKeysCompras
+                .PARAM_RECLAMO_PRESTACIONAL_NONCE,
+        ""
+);
+
+try {
+    ar.com.ospim.compras.requerimientos.service
+            .ReclamoPrestacionalCompraPrecargaServiceUtil.precargar(
+                    request.getSession(),
+                    _comprasRpNonce,
+                    user != null ? user.getScreenName() : ""
+            );
+} catch (Exception e) {
+    _comprasRpPrecargaError = e.getMessage();
+}
+
+List<EstadosReclamosPrestacionales> listaestados =
+        (ArrayList<EstadosReclamosPrestacionales>)
+                portletSession.getAttribute(
+                        WebKeysAutorizaciones
+                                .ESTADOS_RECLAMOS_PRESTACIONES_EN_SESION,
+                        PortletSession.APPLICATION_SCOPE
+                );
 
 if (listaestados == null) {
 	listaestados = TraeListasServiceUtil.getEstadosReclamos();
@@ -55,3 +79,12 @@ if (listaIntegracion == null) {
 
 
 %>
+
+<% if (_comprasRpPrecargaError != null
+        && _comprasRpPrecargaError.trim().length() > 0) { %>
+
+    <div class="portlet-msg-error">
+        <%= HtmlUtil.escape(_comprasRpPrecargaError) %>
+    </div>
+
+<% } %>

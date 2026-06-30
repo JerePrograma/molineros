@@ -8,7 +8,6 @@ import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.crm.beans.ContactoCRM;
 
 import java.math.BigDecimal;
@@ -17,12 +16,12 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
 import javax.servlet.http.HttpSession;
 
-/** Precarga un Reclamo Prestacional desde un requerimiento COTIZADO. */
+/**
+ * Precarga un Reclamo Prestacional desde un requerimiento de compra COTIZADO. * * Los identificadores de artículos de Compras no se reutilizan como IDs del * nomenclador médico. Se transportan como código visible ART-{id} y se deja el * ID de prestación en cero para que el usuario confirme el nomenclador.
+ */
 public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
-
     private static final int RECUPERABLE_SUR = 1;
     private static final int NO_RECUPERABLE = 2;
     private static final int RECUPERABLE_INTEGRACION = 3;
@@ -31,114 +30,48 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
     private ReclamoPrestacionalCompraPrecargaServiceUtil() {
     }
 
-    public static void precargar(
-            HttpSession session,
-            String nonceRequest,
-            String usuarioActual) throws Exception {
-
+    public static void precargar(HttpSession session, String nonceRequest, String usuarioActual) throws Exception {
         if (session == null || WebKeysCompras.isEmpty(nonceRequest)) {
-            throw new Exception("No se pudo validar el contexto de creación del Reclamo Prestacional.");
+            return;
+        } /* * No pisa una edición ya iniciada ni los datos que vuelven de una * validación fallida del propio RP. */
+        if (session.getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION) != null) {
+            return;
         }
-
-        Object value = session.getAttribute(
-                WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
-        );
-        if (!(value instanceof ReclamoPrestacionalCompraContexto)) {
+        Object contextoObj = session.getAttribute(WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA);
+        if (!(contextoObj instanceof ReclamoPrestacionalCompraContexto)) {
             throw new Exception("El contexto de Compras expiró o ya no está disponible.");
         }
-
-        ReclamoPrestacionalCompraContexto contexto =
-                (ReclamoPrestacionalCompraContexto) value;
-        validarContexto(contexto, nonceRequest, usuarioActual);
-        validarRelacionPersistida(contexto.getIdRequerimientoCompra());
-
-        RequerimientoCompra requerimiento =
-                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(
-                        contexto.getIdRequerimientoCompra()
-                );
+        ReclamoPrestacionalCompraContexto contexto = (ReclamoPrestacionalCompraContexto) contextoObj;
+        if (!contexto.coincideNonce(nonceRequest) || !contexto.perteneceAUsuario(usuarioActual) || !contexto.estaVigente(System.currentTimeMillis())) {
+            throw new Exception("El contexto de Compras no es válido o venció. " + "Vuelva al requerimiento e inicie nuevamente " + "el Reclamo Prestacional.");
+        }
+        RequerimientoCompra requerimiento = BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(contexto.getIdRequerimientoCompra());
         validarRequerimiento(requerimiento, contexto);
-
         ReclamoPrestacional reclamo = crearReclamo(requerimiento);
         List<PrestacionesReclamo> prestaciones = crearPrestaciones(requerimiento);
         if (prestaciones.isEmpty()) {
             throw new Exception("El requerimiento COTIZADO no contiene ítems para precargar.");
         }
-
         List<RevisionesReclamo> revisiones = new ArrayList<RevisionesReclamo>();
         List<ContactoCRM> contactos = new ArrayList<ContactoCRM>();
         reclamo.setPrestaciones(prestaciones);
         reclamo.setRevisiones(revisiones);
         reclamo.setContactosCRM(contactos);
-
-        synchronized (session) {
-            Object actual = session.getAttribute(
-                    WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
-            );
-            if (!(actual instanceof ReclamoPrestacionalCompraContexto)) {
-                throw new Exception(
-                        "El contexto de Compras cambió durante la precarga. "
-                                + "Vuelva al requerimiento e inicie nuevamente el Reclamo Prestacional."
-                );
-            }
-            validarContexto(
-                    (ReclamoPrestacionalCompraContexto) actual,
-                    nonceRequest,
-                    usuarioActual
-            );
-            if (session.getAttribute(
-                    WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION
-            ) != null) {
-                throw new Exception(
-                        "Ya existe un Reclamo Prestacional en edición en esta sesión. "
-                                + "Finalice o descarte esa edición antes de iniciar otro desde Compras."
-                );
-            }
-
-            session.setAttribute(
-                    WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION,
-                    reclamo
-            );
-            session.setAttribute(
-                    WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION,
-                    prestaciones
-            );
-            session.setAttribute(
-                    WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION,
-                    revisiones
-            );
-            session.setAttribute(
-                    WebKeysAutorizaciones.LISTADO_CONTACTOS_RECLAMOS_EN_SESION,
-                    contactos
-            );
-        }
+        session.setAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION, reclamo);
+        session.setAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION, prestaciones);
+        session.setAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION, revisiones);
+        session.setAttribute(WebKeysAutorizaciones.LISTADO_CONTACTOS_RECLAMOS_EN_SESION, contactos);
     }
 
-    public static ReclamoPrestacional crearReclamo(
-            RequerimientoCompra requerimiento) throws Exception {
-
+    public static ReclamoPrestacional crearReclamo(RequerimientoCompra requerimiento) throws Exception {
         if (requerimiento == null) {
             throw new Exception("No se pudo obtener el requerimiento de compra.");
         }
-
-        String sector = mapearSector(requerimiento.getSectorDescripcion());
-        if (WebKeysCompras.isEmpty(sector)) {
-            throw new Exception(
-                    "El sector de Compras '"
-                            + requerimiento.getSectorDescripcionVisible()
-                            + "' no tiene un mapeo válido a Reclamos Prestacionales."
-            );
-        }
-
-        Date fecha = new Date();
-        ReclamoPrestacional reclamo = new ReclamoPrestacional(
-                requerimiento.getAfiliadoCuilTitular(),
-                requerimiento.getAfiliadoInt().intValue(),
-                fecha,
-                sector,
-                null
-        );
-        reclamo.setAlta_fecha(fecha);
-        reclamo.setOspim_fecha(fecha);
+        Date fechaAlta = new Date();
+        int integrante = requerimiento.getAfiliadoInt() != null ? requerimiento.getAfiliadoInt().intValue() : 0;
+        ReclamoPrestacional reclamo = new ReclamoPrestacional(requerimiento.getAfiliadoCuilTitular(), integrante, fechaAlta, mapearSector(requerimiento.getSectorDescripcion()), null);
+        reclamo.setAlta_fecha(fechaAlta);
+        reclamo.setOspim_fecha(fechaAlta);
         reclamo.setTipoPedido("EXCEPCION");
         reclamo.setEstado(0);
         reclamo.setRecuperable(requerimiento.isRecupero() || requerimiento.isSurge());
@@ -147,22 +80,20 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         return reclamo;
     }
 
-    public static List<PrestacionesReclamo> crearPrestaciones(
-            RequerimientoCompra requerimiento) throws Exception {
-
-        List<PrestacionesReclamo> result = new ArrayList<PrestacionesReclamo>();
+    public static List<PrestacionesReclamo> crearPrestaciones(RequerimientoCompra requerimiento) throws Exception {
+        List<PrestacionesReclamo> prestaciones = new ArrayList<PrestacionesReclamo>();
         if (requerimiento == null || requerimiento.getDetalles() == null) {
-            return result;
+            return prestaciones;
         }
-
         validarPorcentajes(requerimiento);
         int idRegistro = 1;
         for (RequerimientoCompraDetalle detalle : requerimiento.getDetalles()) {
-            if (detalle != null) {
-                result.add(crearPrestacion(requerimiento, detalle, idRegistro++));
+            if (detalle == null) {
+                continue;
             }
+            prestaciones.add(crearPrestacion(requerimiento, detalle, idRegistro++));
         }
-        return result;
+        return prestaciones;
     }
 
     public static String mapearSector(String sectorCompras) {
@@ -195,116 +126,54 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         return NO_RECUPERABLE;
     }
 
-    private static PrestacionesReclamo crearPrestacion(
-            RequerimientoCompra requerimiento,
-            RequerimientoCompraDetalle detalle,
-            int idRegistro) throws Exception {
-
+    private static PrestacionesReclamo crearPrestacion(RequerimientoCompra requerimiento, RequerimientoCompraDetalle detalle, int idRegistro) throws Exception {
         validarDetalleCotizado(detalle);
-
         BigDecimal cantidad = BigDecimal.valueOf(detalle.getCantidad().intValue());
-        BigDecimal unitario = importe(detalle.getPrecioUnitarioEstimado());
-        BigDecimal total = importe(detalle.getPrecioTotalEstimadoInformado());
-        BigDecimal cargoOspim = total
-                .multiply(BigDecimal.valueOf(porcentaje(requerimiento.getCargoOspim())))
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-        BigDecimal cargoTercerizadora = total
-                .subtract(cargoOspim)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        PrestacionesReclamo p = new PrestacionesReclamo();
-        p.setIdRegistro(idRegistro);
-        p.setId_prestacion(0);
-        p.setId_medicamento(0);
-        p.setId_prestacionrecord(0);
-        p.setTipoPrestacion(1);
-        p.setCodigoPrestacion(
-                detalle.getIdArticulo() != null
-                        ? "ART-" + detalle.getIdArticulo()
-                        : "COMPRA"
-        );
-        p.setNombreprestacion(detalle.getArticuloVisible());
-        p.setDescripcion(detalle.getArticuloVisible());
-        p.setNombremedicacion("");
-        p.setFrecuencia("UNICA");
-        p.setCantidad(cantidad.doubleValue());
-        p.setImporte(unitario.doubleValue());
-        p.setCargo_ospim(cargoOspim.doubleValue());
-        p.setCargo_ps(cargoTercerizadora.doubleValue());
-        p.setCargo_imesa(Double.valueOf(0D));
-        p.setReconocidoSSS(0D);
-        p.setRecuperable(Integer.valueOf(resolverRecuperable(requerimiento)));
-        p.setRecuperableSur(Boolean.valueOf(requerimiento.isSurge()));
-        p.setIdTercerizadora(
-                porcentaje(requerimiento.getCargoTercerizadora()) > 0
-                        ? requerimiento.getIdTercerizadora()
-                        : null
-        );
-        p.setCuilTitular(requerimiento.getAfiliadoCuilTitular());
-        p.setInte(requerimiento.getAfiliadoInt().intValue());
-
-        // Una cotización no es una factura; estos datos deben confirmarse en RP.
-        p.setComprobanteTipo("OTR");
-        p.setComprobanteNro(null);
-        p.setComprobanteFecha(null);
-        p.setComprobanteLetra(null);
-        p.setComprobanteSucursal(null);
-        p.setComprobanteCUITSucursal(null);
-        p.setComprobanteCUIT(normalizarCuit(detalle.getPrestadorCuit()));
-        p.setComprobanteRazonSocial(detalle.getPrestadorRazonSocial());
-        p.setComprobanteCantidad(Double.valueOf(cantidad.doubleValue()));
-        p.setComprobanteImporte(Double.valueOf(unitario.doubleValue()));
-        p.setComprobanteTotal(Double.valueOf(total.doubleValue()));
-        p.setFechaPrestacion(null);
-        p.setEstado(PrestacionesReclamo.ESTADOS.NUEVO);
-        p.setEstadoRechazoAprobado(0);
-        p.setObservaciones(construirObservacion(requerimiento, detalle));
-        return p;
+        BigDecimal importeUnitario = normalizarImporte(detalle.getPrecioUnitarioEstimado());
+        BigDecimal total = normalizarImporte(detalle.getPrecioTotalEstimado());
+        BigDecimal cargoOspim = total.multiply(BigDecimal.valueOf(porcentaje(requerimiento.getCargoOspim()))).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP); /* * El remanente va a la tercerizadora. Así se evita que dos redondeos * independientes hagan diferir la suma del total cotizado. */
+        BigDecimal cargoTercerizadora = total.subtract(cargoOspim).setScale(2, RoundingMode.HALF_UP);
+        PrestacionesReclamo prestacion = new PrestacionesReclamo();
+        prestacion.setIdRegistro(idRegistro);
+        prestacion.setId_prestacion(0);
+        prestacion.setId_medicamento(0);
+        prestacion.setId_prestacionrecord(0);
+        prestacion.setTipoPrestacion(1);
+        prestacion.setCodigoPrestacion(detalle.getIdArticulo() != null ? "ART-" + detalle.getIdArticulo() : "COMPRA");
+        prestacion.setNombreprestacion(detalle.getArticuloVisible());
+        prestacion.setDescripcion(detalle.getArticuloVisible());
+        prestacion.setNombremedicacion("");
+        prestacion.setFrecuencia("UNICA");
+        prestacion.setCantidad(cantidad.doubleValue());
+        prestacion.setImporte(importeUnitario.doubleValue());
+        prestacion.setCargo_ospim(cargoOspim.doubleValue());
+        prestacion.setCargo_ps(cargoTercerizadora.doubleValue());
+        prestacion.setCargo_imesa(Double.valueOf(0D));
+        prestacion.setReconocidoSSS(0D);
+        prestacion.setRecuperable(Integer.valueOf(resolverRecuperable(requerimiento)));
+        prestacion.setRecuperableSur(Boolean.valueOf(requerimiento.isSurge()));
+        prestacion.setIdTercerizadora(porcentaje(requerimiento.getCargoTercerizadora()) > 0 ? requerimiento.getIdTercerizadora() : null);
+        prestacion.setCuilTitular(requerimiento.getAfiliadoCuilTitular());
+        prestacion.setInte(requerimiento.getAfiliadoInt() != null ? requerimiento.getAfiliadoInt().intValue() : 0); /* * Una cotización no es una factura. OTR evita nulls en el JSP legacy, * pero número, fecha y sucursales quedan vacíos hasta ser confirmados. */
+        prestacion.setComprobanteTipo("OTR");
+        prestacion.setComprobanteNro(null);
+        prestacion.setComprobanteFecha(null);
+        prestacion.setComprobanteLetra(null);
+        prestacion.setComprobanteSucursal(null);
+        prestacion.setComprobanteCUITSucursal(null);
+        prestacion.setComprobanteCUIT(normalizarCuit(detalle.getPrestadorCuit()));
+        prestacion.setComprobanteRazonSocial(detalle.getPrestadorRazonSocial());
+        prestacion.setComprobanteCantidad(Double.valueOf(cantidad.doubleValue()));
+        prestacion.setComprobanteImporte(Double.valueOf(importeUnitario.doubleValue()));
+        prestacion.setComprobanteTotal(Double.valueOf(total.doubleValue()));
+        prestacion.setFechaPrestacion(null);
+        prestacion.setEstado(PrestacionesReclamo.ESTADOS.NUEVO);
+        prestacion.setEstadoRechazoAprobado(0);
+        prestacion.setObservaciones(construirObservacion(requerimiento, detalle));
+        return prestacion;
     }
 
-    private static void validarContexto(
-            ReclamoPrestacionalCompraContexto contexto,
-            String nonce,
-            String usuario) throws Exception {
-
-        if (contexto == null
-                || !contexto.coincideNonce(nonce)
-                || !contexto.perteneceAUsuario(usuario)
-                || !contexto.estaVigente(System.currentTimeMillis())) {
-            throw new Exception(
-                    "El contexto de Compras no es válido o venció. "
-                            + "Vuelva al requerimiento e inicie nuevamente el Reclamo Prestacional."
-            );
-        }
-    }
-
-    private static void validarRelacionPersistida(int idRequerimiento)
-            throws Exception {
-
-        RequerimientoCompraReclamoPrestacional relacion =
-                RequerimientoCompraReclamoPrestacionalServiceUtil
-                        .obtenerPorRequerimiento(idRequerimiento);
-        if (relacion == null) {
-            return;
-        }
-        if (relacion.isVinculado()) {
-            throw new Exception("El requerimiento ya posee un Reclamo Prestacional vinculado.");
-        }
-        if (relacion.isError()) {
-            throw new Exception(
-                    "El Reclamo Prestacional fue creado, pero su vinculación requiere "
-                            + "reconciliación. No se permite crear otro reclamo."
-            );
-        }
-        throw new Exception(
-                "Ya existe una creación de Reclamo Prestacional en proceso para este requerimiento."
-        );
-    }
-
-    private static void validarRequerimiento(
-            RequerimientoCompra requerimiento,
-            ReclamoPrestacionalCompraContexto contexto) throws Exception {
-
+    private static void validarRequerimiento(RequerimientoCompra requerimiento, ReclamoPrestacionalCompraContexto contexto) throws Exception {
         if (requerimiento == null || requerimiento.getBajaFecha() != null) {
             throw new Exception("El requerimiento de compra ya no está activo.");
         }
@@ -314,91 +183,47 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         if (!requerimiento.tieneAfiliadoInformado()) {
             throw new Exception("El requerimiento COTIZADO no tiene un afiliado válido.");
         }
-
-        String cuilReq = normalizarCuit(requerimiento.getAfiliadoCuilTitular());
-        String cuilCtx = normalizarCuit(contexto.getAfiliadoCuilTitular());
-        int inteReq = requerimiento.getAfiliadoInt().intValue();
-        int inteCtx = contexto.getAfiliadoInt() != null
-                ? contexto.getAfiliadoInt().intValue()
-                : -1;
-        if (!cuilReq.equals(cuilCtx) || inteReq != inteCtx) {
-            throw new Exception(
-                    "El afiliado persistido del requerimiento no coincide "
-                            + "con el contexto de creación del RP."
-            );
+        String cuilRequerimiento = normalizarCuit(requerimiento.getAfiliadoCuilTitular());
+        String cuilContexto = normalizarCuit(contexto.getAfiliadoCuilTitular());
+        int integranteContexto = contexto.getAfiliadoInt() != null ? contexto.getAfiliadoInt().intValue() : -1;
+        if (!cuilRequerimiento.equals(cuilContexto) || requerimiento.getAfiliadoInt().intValue() != integranteContexto) {
+            throw new Exception("El afiliado persistido del requerimiento no coincide " + "con el contexto de creación del RP.");
         }
     }
 
-    private static void validarDetalleCotizado(RequerimientoCompraDetalle detalle)
-            throws Exception {
-
-        if (!detalle.estaCompletoParaCotizacion()
-                || detalle.getPrecioTotalEstimadoInformado() == null
-                || WebKeysCompras.isEmpty(detalle.getArticuloVisible())) {
-            throw new Exception(
-                    "El requerimiento figura COTIZADO, pero contiene un ítem sin "
-                            + "artículo, cantidad, precio o prestador adjudicado."
-            );
-        }
-
-        BigDecimal unitario = importe(detalle.getPrecioUnitarioEstimado());
-        BigDecimal total = importe(detalle.getPrecioTotalEstimadoInformado());
-        BigDecimal calculado = unitario
-                .multiply(BigDecimal.valueOf(detalle.getCantidad().intValue()))
-                .setScale(2, RoundingMode.HALF_UP);
-        if (unitario.signum() < 0 || total.signum() < 0 || total.compareTo(calculado) != 0) {
-            throw new Exception(
-                    "El requerimiento figura COTIZADO, pero contiene un ítem "
-                            + "con importes inconsistentes."
-            );
+    private static void validarDetalleCotizado(RequerimientoCompraDetalle detalle) throws Exception {
+        if (!detalle.estaCompletoParaCotizacion() || detalle.getPrecioUnitarioEstimado() == null || detalle.getPrecioTotalEstimado() == null) {
+            throw new Exception("El requerimiento figura COTIZADO, pero contiene un ítem " + "sin cantidad, precio o prestador adjudicado.");
         }
     }
 
-    private static void validarPorcentajes(RequerimientoCompra requerimiento)
-            throws Exception {
-
-        int ospim = porcentaje(requerimiento.getCargoOspim());
-        int tercerizadora = porcentaje(requerimiento.getCargoTercerizadora());
-        if (ospim < 0 || ospim > 100
-                || tercerizadora < 0 || tercerizadora > 100
-                || ospim + tercerizadora != 100) {
-            throw new Exception(
-                    "Los porcentajes de cargo deben estar entre 0 y 100 y sumar exactamente 100."
-            );
-        }
-        if (tercerizadora > 0
-                && WebKeysCompras.isEmpty(requerimiento.getIdTercerizadora())) {
-            throw new Exception(
-                    "El requerimiento asigna cargo a una tercerizadora, "
-                            + "pero no tiene una tercerizadora informada."
-            );
+    private static void validarPorcentajes(RequerimientoCompra requerimiento) throws Exception {
+        int suma = porcentaje(requerimiento.getCargoOspim()) + porcentaje(requerimiento.getCargoTercerizadora());
+        if (suma != 100) {
+            throw new Exception("Los porcentajes de cargo del requerimiento no suman 100.");
         }
     }
 
-    private static String construirObservacion(
-            RequerimientoCompra requerimiento,
-            RequerimientoCompraDetalle detalle) {
-
-        StringBuilder value = new StringBuilder();
-        value.append("Precargado desde Requerimiento de Compra #");
-        value.append(requerimiento.getIdRequerimientoCompra());
-        value.append(". Confirmar nomenclador, fecha, comprobante y reconocido SSS.");
-        agregar(value, detalle.getObservaciones());
-        agregar(value, requerimiento.getObservaciones());
-        String result = value.toString();
-        return result.length() <= MAX_OBSERVACION
-                ? result
-                : result.substring(0, MAX_OBSERVACION);
+    private static String construirObservacion(RequerimientoCompra requerimiento, RequerimientoCompraDetalle detalle) {
+        StringBuilder observacion = new StringBuilder();
+        observacion.append("Precargado desde Requerimiento de Compra #");
+        observacion.append(requerimiento.getIdRequerimientoCompra());
+        observacion.append(". Confirmar nomenclador, fecha, comprobante y reconocido SSS.");
+        agregarObservacion(observacion, detalle.getObservaciones());
+        agregarObservacion(observacion, requerimiento.getObservaciones());
+        String value = observacion.toString();
+        return value.length() <= MAX_OBSERVACION ? value : value.substring(0, MAX_OBSERVACION);
     }
 
-    private static void agregar(StringBuilder destino, String value) {
-        String texto = WebKeysCompras.trimToNull(value);
-        if (texto != null) {
-            destino.append(' ').append(texto);
+    private static void agregarObservacion(StringBuilder destino, String value) {
+        String normalizado = WebKeysCompras.trimToNull(value);
+        if (normalizado != null) {
+            destino.append(' ');
+            destino.append(normalizado);
         }
     }
 
-    private static BigDecimal importe(BigDecimal value) throws Exception {
+    private static BigDecimal normalizarImporte(BigDecimal value) throws Exception {
         if (value == null) {
             throw new Exception("Un ítem cotizado no tiene importe.");
         }
@@ -413,14 +238,10 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         if (value == null) {
             return "";
         }
-        return Normalizer.normalize(value, Normalizer.Form.NFD)
-                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
-                .trim()
-                .toUpperCase()
-                .replaceAll("\\s+", " ");
+        return Normalizer.normalize(value, Normalizer.Form.NFD).replaceAll("\\p{InCombiningDiacriticalMarks}+", "").trim().toUpperCase().replaceAll("\\s+", " ");
     }
 
     private static String normalizarCuit(String value) {
-        return value != null ? value.replaceAll("[^0-9]", "") : "";
+        return value != null ? value.replaceAll("[^0-9]", "") : null;
     }
 }
