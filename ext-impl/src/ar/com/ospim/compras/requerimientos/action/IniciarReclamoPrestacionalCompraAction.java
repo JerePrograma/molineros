@@ -6,6 +6,7 @@ import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContex
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.service.ReclamoPrestacionalCompraPrecargaServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 
@@ -110,10 +111,10 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                 throw new Exception(
                         relacion.isError()
                                 ? "El Reclamo Prestacional fue creado, "
-                                        + "pero su vinculaci�n requiere "
-                                        + "reconciliaci�n. No se permite "
+                                        + "pero su vinculación requiere "
+                                        + "reconciliación. No se permite "
                                         + "crear otro reclamo."
-                                : "Ya existe una creaci�n de Reclamo "
+                                : "Ya existe una creación de Reclamo "
                                         + "Prestacional en proceso para "
                                         + "este requerimiento."
                 );
@@ -140,11 +141,84 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                     );
 
             synchronized (session) {
+                if (session.getAttribute(
+                        WebKeysAutorizaciones
+                                .RECLAMO_PRESTACION_EN_EDICION
+                ) != null) {
+
+                    throw new Exception(
+                            "Ya existe un Reclamo Prestacional en edición "
+                                    + "en esta sesión. Finalice o descarte "
+                                    + "esa edición antes de iniciar otro "
+                                    + "desde Compras."
+                    );
+                }
+
+                Object contextoAnteriorObj = session.getAttribute(
+                        WebKeysCompras
+                                .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                );
+
+                if (contextoAnteriorObj
+                        instanceof ReclamoPrestacionalCompraContexto) {
+
+                    ReclamoPrestacionalCompraContexto contextoAnterior =
+                            (ReclamoPrestacionalCompraContexto)
+                                    contextoAnteriorObj;
+
+                    if (contextoAnterior.estaVigente(
+                            System.currentTimeMillis()
+                    )) {
+                        throw new Exception(
+                                "Ya existe una creación de Reclamo "
+                                        + "Prestacional iniciada en esta "
+                                        + "sesión. Finalícela o vuelva a "
+                                        + "intentarlo cuando el contexto "
+                                        + "haya sido descartado."
+                        );
+                    }
+
+                    session.removeAttribute(
+                            WebKeysCompras
+                                    .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                    );
+                }
+
                 session.setAttribute(
                         WebKeysCompras
                                 .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA,
                         contexto
                 );
+            }
+
+            try {
+                ReclamoPrestacionalCompraPrecargaServiceUtil
+                        .precargar(
+                                session,
+                                contexto.getNonce(),
+                                usuario
+                        );
+            } catch (Exception precargaError) {
+                synchronized (session) {
+                    Object contextoActualObj = session.getAttribute(
+                            WebKeysCompras
+                                    .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                    );
+
+                    if (contextoActualObj
+                            instanceof ReclamoPrestacionalCompraContexto
+                            && ((ReclamoPrestacionalCompraContexto)
+                                    contextoActualObj)
+                                    .coincideNonce(contexto.getNonce())) {
+
+                        session.removeAttribute(
+                                WebKeysCompras
+                                        .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                        );
+                    }
+                }
+
+                throw precargaError;
             }
 
             actionResponse.setRenderParameter(
@@ -243,7 +317,7 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                 || requerimiento.getBajaFecha() != null) {
 
             throw new Exception(
-                    "No se encontr� el requerimiento de compra activo."
+                    "No se encontró el requerimiento de compra activo."
             );
         }
 
@@ -251,14 +325,14 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                 requerimiento.getEstado()
         )) {
             throw new Exception(
-                    "El Reclamo Prestacional s�lo puede iniciarse "
+                    "El Reclamo Prestacional sólo puede iniciarse "
                             + "desde un requerimiento COTIZADO."
             );
         }
 
         if (!requerimiento.tieneAfiliadoInformado()) {
             throw new Exception(
-                    "El requerimiento no tiene un afiliado v�lido "
+                    "El requerimiento no tiene un afiliado válido "
                             + "para iniciar el Reclamo Prestacional."
             );
         }
