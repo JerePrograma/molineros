@@ -162,22 +162,11 @@ public class IniciarReclamoPrestacionalCompraAction extends PortletAction {
                 if (contextoAnteriorObj
                         instanceof ReclamoPrestacionalCompraContexto) {
 
-                    ReclamoPrestacionalCompraContexto contextoAnterior =
-                            (ReclamoPrestacionalCompraContexto)
-                                    contextoAnteriorObj;
-
-                    if (contextoAnterior.estaVigente(
-                            System.currentTimeMillis()
-                    )) {
-                        throw new Exception(
-                                "Ya existe una creación de Reclamo "
-                                        + "Prestacional iniciada en esta "
-                                        + "sesión. Finalícela o vuelva a "
-                                        + "intentarlo cuando el contexto "
-                                        + "haya sido descartado."
-                        );
-                    }
-
+                    /*
+                     * Sin un RP en edición, un contexto previo quedó
+                     * abandonado. Se reemplaza; el nonce impide que una
+                     * petición concurrente termine usando el contexto ajeno.
+                     */
                     session.removeAttribute(
                             WebKeysCompras
                                     .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
