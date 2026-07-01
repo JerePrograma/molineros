@@ -1,5 +1,5 @@
 <%@ page import="com.liferay.portal.kernel.language.LanguageUtil" %>
-<%@ page import="com.liferay.portal.kernel.util.HtmlUtil" %>
+<%@ page import="com.liferay.portal.kernel.util.UnicodeFormatter" %>
 
 <%--
     Reemplaza el bloque <script> original por este bloque, preferentemente
@@ -111,7 +111,7 @@ ViewReclamo.init({
 
     initial: {
         cantPrestacionesLista: '<%= cantprestacioneslista %>',
-        casoVinculado: '<%= HtmlUtil.escapeJS(caso_vinculado) %>',
+        casoVinculado: '<%= UnicodeFormatter.toString(caso_vinculado) %>',
 
         reclamoExiste: <%= reclamoprestacional != null %>,
         idReclamo: <%= reclamoprestacional != null ? reclamoprestacional.getId_reclamo() : 0 %>,
@@ -142,50 +142,50 @@ ViewReclamo.init({
     },
 
     commands: {
-        cmdParam: '<%= HtmlUtil.escapeJS(Constants.CMD) %>',
-        actionParam: '<%= HtmlUtil.escapeJS(Constants.ACTION) %>',
-        reclamoPrestacionalSeccional: '<%= HtmlUtil.escapeJS(WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL) %>',
-        view: '<%= HtmlUtil.escapeJS(Constants.VIEW) %>',
-        save: '<%= HtmlUtil.escapeJS(Constants.SAVE) %>',
-        update: '<%= HtmlUtil.escapeJS(Constants.UPDATE) %>',
-        restore: '<%= HtmlUtil.escapeJS(Constants.RESTORE) %>'
+        cmdParam: '<%= UnicodeFormatter.toString(Constants.CMD) %>',
+        actionParam: '<%= UnicodeFormatter.toString(Constants.ACTION) %>',
+        reclamoPrestacionalSeccional: '<%= UnicodeFormatter.toString(WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL) %>',
+        view: '<%= UnicodeFormatter.toString(Constants.VIEW) %>',
+        save: '<%= UnicodeFormatter.toString(Constants.SAVE) %>',
+        update: '<%= UnicodeFormatter.toString(Constants.UPDATE) %>',
+        restore: '<%= UnicodeFormatter.toString(Constants.RESTORE) %>'
     },
 
     parentescos: {
-        defaultId: '<%= HtmlUtil.escapeJS(String.valueOf(WebKeysAfiliados.PARENTESCO_DEFAULT)) %>',
-        conyugeId: '<%= HtmlUtil.escapeJS(String.valueOf(WebKeysAfiliados.CONYUGE_DEFAULT)) %>',
-        concubinoId: '<%= HtmlUtil.escapeJS(String.valueOf(WebKeysAfiliados.CONCUBINO_DEFAULT)) %>'
+        defaultId: '<%= UnicodeFormatter.toString(String.valueOf(WebKeysAfiliados.PARENTESCO_DEFAULT)) %>',
+        conyugeId: '<%= UnicodeFormatter.toString(String.valueOf(WebKeysAfiliados.CONYUGE_DEFAULT)) %>',
+        concubinoId: '<%= UnicodeFormatter.toString(String.valueOf(WebKeysAfiliados.CONCUBINO_DEFAULT)) %>'
     },
 
     messages: {
-        ingreseParametrosBusqueda: '<%= HtmlUtil.escapeJS(LanguageUtil.get(pageContext, "ingrese-parametros-busqueda")) %>',
-        observacionInterna: '<%= HtmlUtil.escapeJS(LanguageUtil.get(pageContext, "observacion-interna")) %>',
-        detalleContacto: '<%= HtmlUtil.escapeJS(LanguageUtil.get(pageContext, "detalle-contacto")) %>',
-        detalleDomicilio: '<%= HtmlUtil.escapeJS(LanguageUtil.get(pageContext, "detalle-domicilio")) %>'
+        ingreseParametrosBusqueda: '<%= UnicodeFormatter.toString(LanguageUtil.get(pageContext, "ingrese-parametros-busqueda")) %>',
+        observacionInterna: '<%= UnicodeFormatter.toString(LanguageUtil.get(pageContext, "observacion-interna")) %>',
+        detalleContacto: '<%= UnicodeFormatter.toString(LanguageUtil.get(pageContext, "detalle-contacto")) %>',
+        detalleDomicilio: '<%= UnicodeFormatter.toString(LanguageUtil.get(pageContext, "detalle-domicilio")) %>'
     },
 
     pdfServletUrl: '/pdfservlet/',
 
     urls: {
-        borrarReclamosPrestacionesTodos: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("borrarReclamosPrestacionesTodosURL")) %>',
-        filtrarLetraComprobante: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("filtrarLetraComprobanteURL")) %>',
-        buscarNomenclador: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("buscarNomencladorURL")) %>',
-        validarReclamoAfiliadoPrestaciones: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("validarReclamoAfiliadoPrestacionesURL")) %>',
-        editarReclamoAction: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("editarReclamoActionURL")) %>',
-        observar: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("observarURL")) %>',
-        proponeLoteReclamoPrestacional: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("proponeLoteReclamoPrestacionalURL")) %>',
-        listaRevisionesReclamo: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("listaRevisionesReclamoURL")) %>',
-        listaContactosReclamo: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("listaContactosReclamoURL")) %>',
-        editarReclamosPrestaciones: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("editarReclamosPrestacionesURL")) %>',
-        listaPrestacionesReclamos: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("listaPrestacionesReclamosURL")) %>',
-        validarReclamo: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("validarReclamoURL")) %>',
-        validarExisteComprobante: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("validarExisteComprobanteURL")) %>',
-        editarContactoAfiliados: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("editarContactoAfiliadosURL")) %>',
-        editarContactoCai: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("editarContactoCaiURL")) %>',
-        autorizacionesPrestacionales: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("autorizacionesPrestacionalesURL")) %>',
-        getIntegracionDetalle: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("getIntegracionDetalleURL")) %>',
-        actualizaDomicilio: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("actualizaDomicilioURL")) %>',
-        buscarAfiliadoDatos: '<%= HtmlUtil.escapeJS((String) pageContext.getAttribute("buscarAfiliadoDatosURL")) %>'
+        borrarReclamosPrestacionesTodos: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("borrarReclamosPrestacionesTodosURL")) %>',
+        filtrarLetraComprobante: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("filtrarLetraComprobanteURL")) %>',
+        buscarNomenclador: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("buscarNomencladorURL")) %>',
+        validarReclamoAfiliadoPrestaciones: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("validarReclamoAfiliadoPrestacionesURL")) %>',
+        editarReclamoAction: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("editarReclamoActionURL")) %>',
+        observar: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("observarURL")) %>',
+        proponeLoteReclamoPrestacional: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("proponeLoteReclamoPrestacionalURL")) %>',
+        listaRevisionesReclamo: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("listaRevisionesReclamoURL")) %>',
+        listaContactosReclamo: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("listaContactosReclamoURL")) %>',
+        editarReclamosPrestaciones: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("editarReclamosPrestacionesURL")) %>',
+        listaPrestacionesReclamos: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("listaPrestacionesReclamosURL")) %>',
+        validarReclamo: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("validarReclamoURL")) %>',
+        validarExisteComprobante: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("validarExisteComprobanteURL")) %>',
+        editarContactoAfiliados: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("editarContactoAfiliadosURL")) %>',
+        editarContactoCai: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("editarContactoCaiURL")) %>',
+        autorizacionesPrestacionales: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("autorizacionesPrestacionalesURL")) %>',
+        getIntegracionDetalle: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("getIntegracionDetalleURL")) %>',
+        actualizaDomicilio: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("actualizaDomicilioURL")) %>',
+        buscarAfiliadoDatos: '<%= UnicodeFormatter.toString((String) pageContext.getAttribute("buscarAfiliadoDatosURL")) %>'
     }
 });
 </script>
