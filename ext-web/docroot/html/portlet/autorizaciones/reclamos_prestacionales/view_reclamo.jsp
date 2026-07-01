@@ -1144,7 +1144,11 @@ span-fixed-size {
 		</div>
 
 
-		<div id="<portlet:namespace />datos_edicion_prestacion" align="left" width="95%">
+		<div
+            id="<portlet:namespace />datos_edicion_prestacion"
+            align="left"
+            style="display: none; width: 95%;"
+        >
           <table width="95%;"><tr><td>
 			<span><b>Prestaci&oacute;n en Proceso de Edici&oacute;n.</b></span>
 			<liferay-util:include

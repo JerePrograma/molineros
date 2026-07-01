@@ -55,20 +55,55 @@ jQuery("#<portlet:namespace />idRegistro").val('<%=prestacionEnEdicion.getIdRegi
 
 jQuery("#<portlet:namespace />idRegistro").val('<%=prestacionEnEdicion.getIdRegistro()%>');
 
-<%if (prestacionEnEdicion != null && prestacionEnEdicion.getId_prestacion() != 0){ %>
-	jQuery("#<portlet:namespace />codigoSeguimiento_filtro_edit").val('<%=prestacionEnEdicion.getCodigoPrestacion()%>');
-	jQuery("#<portlet:namespace />descripcionSeguimiento_filtro_edit").val('<%=prestacionEnEdicion.getDescripcion()%>');
-	<portlet:namespace />buscarNomencladorAutocompletar_edit();
-<%}else{%>
-	jQuery("#<portlet:namespace />troquel_edit").val('<%=prestacionEnEdicion.getId_medicamento()%>');
-<%}%>
+if (prestacionEnEdicion != null) {
+%>
 
-// se oculta parte area media para las seccionales
-<%if(ocultarSeccional != null){%>
+<script type="text/javascript">
+jQuery("#<portlet:namespace />datos_edicion_prestacion").show();
+
+jQuery("#<portlet:namespace />codigoprestacion").val(
+    '<%= prestacionEnEdicion.getCodigoPrestacion() %>'
+);
+
+jQuery("#<portlet:namespace />idRegistro").val(
+    '<%= prestacionEnEdicion.getIdRegistro() %>'
+);
+
+<%
+if (prestacionEnEdicion.getId_prestacion() != 0) {
+%>
+
+jQuery("#<portlet:namespace />codigoSeguimiento_filtro_edit").val(
+    '<%= prestacionEnEdicion.getCodigoPrestacion() %>'
+);
+
+jQuery("#<portlet:namespace />descripcionSeguimiento_filtro_edit").val(
+    '<%= prestacionEnEdicion.getDescripcion() %>'
+);
+
+<portlet:namespace />buscarNomencladorAutocompletar_edit();
+
+<%
+} else if (prestacionEnEdicion.getId_medicamento() != 0) {
+%>
+
+jQuery("#<portlet:namespace />troquel_edit").val(
+    '<%= prestacionEnEdicion.getId_medicamento() %>'
+);
+
+<%
+}
+%>
+
+<%
+if (ocultarSeccional != null) {
+%>
 
 jQuery("#<portlet:namespace />Autorizado").hide();
-	
-<%}%>
+
+<%
+}
+%>
 </script>
 <%}%>
 	    <input   type="hidden" id="<portlet:namespace />idRegistro" name="<portlet:namespace />idRegistro" size="10" maxlength="10" type="text" value='<%=Validator.isNotNull(prestacionEnEdicion)  ? prestacionEnEdicion.getIdRegistro()      : ""  %>'/></td>
@@ -462,10 +497,19 @@ function cambiorecuperableEdicion(){
 }
 
 function completarConCeros(value, longitud) {
-    if (!value) return "";
+    if (!value) {
+        return "";
+    }
+
     value = value.replace(/\D/g, "");
-    return ("0".repeat(longitud) + value).slice(-longitud);
+
+    return (
+        "0".repeat(longitud) + value
+    ).slice(-longitud);
 }
 
+</script>
 
-</script>	    
+<%
+}
+%>
