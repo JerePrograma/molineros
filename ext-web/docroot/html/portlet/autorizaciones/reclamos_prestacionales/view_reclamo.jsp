@@ -65,6 +65,21 @@ boolean reclamoPersistido =
         reclamoprestacional != null
                 && reclamoprestacional.getId_reclamo() > 0;
 
+int cargoOspimPorcentajeInicial =
+        borradorDesdeCompras
+                ? contextoCompra.getCargoOspimPorcentaje()
+                : 0;
+
+int cargoPrestadoraPorcentajeInicial =
+        borradorDesdeCompras
+                ? contextoCompra.getCargoPrestadoraPorcentaje()
+                : 0;
+
+int recuperableInicialCompras =
+        borradorDesdeCompras
+                ? contextoCompra.getRecuperableInicial()
+                : 0;
+
 String _nuevoEstadoObservado = "";
 
 Object nuevoEstadoObservadoObj =
@@ -1297,69 +1312,209 @@ span-fixed-size {
 							</legend>
 							<table>
 								<tr>
-									<td><label><liferay-ui:message key="Cantidad" />:</label>
-									</td>
-									<td><input id="<portlet:namespace />cantidad"
-										<% if (!esEdicion) { %> disabled='disabled' <%}%>
-										name="<portlet:namespace />cantidad" size="8" maxlength="9"
-										type="text" value="1" onblur="calculatotal()" /></td>
+                                    <td>
+                                        <label>
+                                            <liferay-ui:message key="Cantidad" />:
+                                        </label>
+                                    </td>
 
-									<td><label><liferay-ui:message key="Importe" />:</label>
-									</td>
-									<td><input id="<portlet:namespace />importe"
-										<% if (!esEdicion) { %> disabled='disabled' <%}%>
-										name="<portlet:namespace />importe" size="8" maxlength="20"
-										value='' type="text"
-										onkeydown="allowOnlyDigitsAndDecimals(event)"
-										onblur="calculatotal()" /></td>
+                                    <td>
+                                        <input
+                                            id="<portlet:namespace />cantidad"
+                                            name="<portlet:namespace />cantidad"
+                                            size="8"
+                                            maxlength="9"
+                                            type="text"
+                                            value="1"
+                                            onblur="calculatotal()"
+                                            <% if (!esEdicion) { %>
+                                                disabled="disabled"
+                                            <% } %>
+                                        />
+                                    </td>
 
-									<td><label><liferay-ui:message key="Total" />:</label></td>
-									<td><input id="<portlet:namespace />total"
-										<% if (!esEdicion) { %> disabled='disabled' <%}%>
-										name="<portlet:namespace />total" size="8" maxlength="20"
-										value='' type="text" readonly="readonly" /></td>
+                                    <td>
+                                        <label>
+                                            <liferay-ui:message key="Importe" />:
+                                        </label>
+                                    </td>
 
-									<td><label><liferay-ui:message key="Cargo OSPIM" />:</label>
-									</td>
-									<td><input id="<portlet:namespace />cargoospim"
-										name="<portlet:namespace />cargoospim" size="8" maxlength="20"
-										value='' <% if (!esEdicion) { %> disabled='disabled' <%}%>
-										type="text" value=""
-										onkeydown="allowOnlyDigitsAndDecimals(event)" /></td>
-									<td><label><liferay-ui:message key="Cargo Prestadora" />:</label>
-									</td>
-									<td><input id="<portlet:namespace />cargops"
-										<% if (!esEdicion) { %> disabled='disabled' <%}%>
-										name="<portlet:namespace />cargops" size="8" maxlength="20"
-										value='' onkeydown="allowOnlyDigitsAndDecimals(event)"
-										type="text" value="" /></td>
-									<td><label>Cargo Monotributo:</label>
-									<td><input id="<portlet:namespace />cargoimesa"
-										<% if (!esEdicion) { %> disabled='disabled' <%}%>
-										name="<portlet:namespace />cargoimesa" size="8" maxlength="20"
-										value='' onkeydown="allowOnlyDigitsAndDecimals(event)"
-										type="text" value="" /></td>
-										
-									<td><label>Reconocido SSS:</label>
-									</td>
-									<td><input id="<portlet:namespace />reconocidoSSS"
-										<% if (!esEdicion) { %> disabled='disabled' <%}%>
-										name="<portlet:namespace />reconocidoSSS" size="8" maxlength="20"
-										value='' onkeydown="allowOnlyDigitsAndDecimals(event)"
-										type="text" value="" /></td>	
-										
-									<td>Recuperable:</label> 
-									
-									<select name="<portlet:namespace />recuperable_sur" id="<portlet:namespace />recuperable_sur"
-									 <% if (!esEdicion) { %> disabled="disabled" <%} %> onchange="cambiorecuperable();">
-														<option value="0">Seleccione</option>
-														<option value="1">SUR</option>
-														<option value="3">Integración</option>
-														<option value="2">NO Recuperable</option>
-									</select>
-									
+                                    <td>
+                                        <input
+                                            id="<portlet:namespace />importe"
+                                            name="<portlet:namespace />importe"
+                                            size="8"
+                                            maxlength="20"
+                                            type="text"
+                                            value=""
+                                            onkeydown="allowOnlyDigitsAndDecimals(event)"
+                                            onblur="calculatotal()"
+                                            <% if (!esEdicion) { %>
+                                                disabled="disabled"
+                                            <% } %>
+                                        />
+                                    </td>
 
-									</tr>
+                                    <td>
+                                        <label>
+                                            <liferay-ui:message key="Total" />:
+                                        </label>
+                                    </td>
+
+                                    <td>
+                                        <input
+                                            id="<portlet:namespace />total"
+                                            name="<portlet:namespace />total"
+                                            size="8"
+                                            maxlength="20"
+                                            type="text"
+                                            value=""
+                                            readonly="readonly"
+                                            <% if (!esEdicion) { %>
+                                                disabled="disabled"
+                                            <% } %>
+                                        />
+                                    </td>
+
+                                    <td>
+                                        <label>
+                                            <liferay-ui:message key="Cargo OSPIM" />
+
+                                            <% if (borradorDesdeCompras) { %>
+                                                (<%= cargoOspimPorcentajeInicial %>%)
+                                            <% } %>
+
+                                            :
+                                        </label>
+                                    </td>
+
+                                    <td>
+                                        <input
+                                            id="<portlet:namespace />cargoospim"
+                                            name="<portlet:namespace />cargoospim"
+                                            size="8"
+                                            maxlength="20"
+                                            type="text"
+                                            value="<%= borradorDesdeCompras ? "0.00" : "" %>"
+                                            onkeydown="allowOnlyDigitsAndDecimals(event)"
+                                            <% if (!esEdicion) { %>
+                                                disabled="disabled"
+                                            <% } %>
+                                        />
+                                    </td>
+
+                                    <td>
+                                        <label>
+                                            <liferay-ui:message key="Cargo Prestadora" />
+
+                                            <% if (borradorDesdeCompras) { %>
+                                                (<%= cargoPrestadoraPorcentajeInicial %>%)
+                                            <% } %>
+
+                                            :
+                                        </label>
+                                    </td>
+
+                                    <td>
+                                        <input
+                                            id="<portlet:namespace />cargops"
+                                            name="<portlet:namespace />cargops"
+                                            size="8"
+                                            maxlength="20"
+                                            type="text"
+                                            value="<%= borradorDesdeCompras ? "0.00" : "" %>"
+                                            onkeydown="allowOnlyDigitsAndDecimals(event)"
+                                            <% if (!esEdicion) { %>
+                                                disabled="disabled"
+                                            <% } %>
+                                        />
+                                    </td>
+
+                                    <td>
+                                        <label>Cargo Monotributo:</label>
+                                    </td>
+
+                                    <td>
+                                        <input
+                                            id="<portlet:namespace />cargoimesa"
+                                            name="<portlet:namespace />cargoimesa"
+                                            size="8"
+                                            maxlength="20"
+                                            type="text"
+                                            value=""
+                                            onkeydown="allowOnlyDigitsAndDecimals(event)"
+                                            <% if (!esEdicion) { %>
+                                                disabled="disabled"
+                                            <% } %>
+                                        />
+                                    </td>
+
+                                    <td>
+                                        <label>Reconocido SSS:</label>
+                                    </td>
+
+                                    <td>
+                                        <input
+                                            id="<portlet:namespace />reconocidoSSS"
+                                            name="<portlet:namespace />reconocidoSSS"
+                                            size="8"
+                                            maxlength="20"
+                                            type="text"
+                                            value=""
+                                            onkeydown="allowOnlyDigitsAndDecimals(event)"
+                                            <% if (!esEdicion) { %>
+                                                disabled="disabled"
+                                            <% } %>
+                                        />
+                                    </td>
+
+                                    <td>
+                                        <label>Recuperable:</label>
+                                    </td>
+
+                                    <td>
+                                        <select
+                                            name="<portlet:namespace />recuperable_sur"
+                                            id="<portlet:namespace />recuperable_sur"
+                                            onchange="cambiorecuperable();"
+                                            <% if (!esEdicion) { %>
+                                                disabled="disabled"
+                                            <% } %>>
+
+                                            <option
+                                                value="0"
+                                                <%= recuperableInicialCompras == 0
+                                                        ? "selected"
+                                                        : "" %>>
+                                                Seleccione
+                                            </option>
+
+                                            <option
+                                                value="1"
+                                                <%= recuperableInicialCompras == 1
+                                                        ? "selected"
+                                                        : "" %>>
+                                                SUR
+                                            </option>
+
+                                            <option
+                                                value="3"
+                                                <%= recuperableInicialCompras == 3
+                                                        ? "selected"
+                                                        : "" %>>
+                                                Integración
+                                            </option>
+
+                                            <option
+                                                value="2"
+                                                <%= recuperableInicialCompras == 2
+                                                        ? "selected"
+                                                        : "" %>>
+                                                NO Recuperable
+                                            </option>
+                                        </select>
+                                    </td>
+                                </tr>
 							</table>
 						</fieldset>
 					</td>

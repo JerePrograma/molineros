@@ -246,12 +246,9 @@
 
             jQuery(selector('idreclamoprestacion')).val('0');
 
-            /*
-             * El botón existe porque cmd=ADD.
-             * Se fuerza visible por si una ejecución anterior del JS
-             * lo hubiera ocultado.
-             */
             jQuery(selector('botonsavereclamo')).show();
+
+            aplicarDistribucionCompras();
         }
 
         if (!config.initial.esEdicion) {
@@ -275,6 +272,7 @@
         filtrarLetraComprobante();
         integracionReclamo();
         aplicaEstiloBordeRojoDatosObligatorio();
+        aplicarDistribucionCompras();
 
         if (config.initial.buscarCieInicial) {
             var buscarCie =
@@ -1794,9 +1792,92 @@
         });
     }
 
+    function aplicarDistribucionCompras() {
+        if (!config.initial.borradorDesdeCompras) {
+            return;
+        }
+
+        var porcentajeOspim =
+            Number(
+                config.initial.cargoOspimPorcentaje || 0
+            );
+
+        var porcentajePrestadora =
+            Number(
+                config.initial.cargoPrestadoraPorcentaje || 0
+            );
+
+        /*
+         * Los porcentajes pertenecen al requerimiento.
+         * Los campos del RP representan importes monetarios.
+         */
+        if (porcentajeOspim < 0
+            || porcentajeOspim > 100
+            || porcentajePrestadora < 0
+            || porcentajePrestadora > 100
+            || porcentajeOspim + porcentajePrestadora !== 100) {
+
+            return;
+        }
+
+        var total =
+            redondear(
+                numero(
+                    valor('total')
+                )
+            );
+
+        var cargoOspim =
+            redondear(
+                total
+                * porcentajeOspim
+                / 100
+            );
+
+        /*
+         * Cargo Prestadora del RP equivale a Cargo tercerizadora
+         * del requerimiento.
+         *
+         * Se calcula como remanente para absorber cualquier diferencia
+         * de centavos producida por el redondeo.
+         */
+        var cargoPrestadora =
+            redondear(
+                total - cargoOspim
+            );
+
+        jQuery(selector('cargoospim')).val(
+            cargoOspim.toFixed(2)
+        );
+
+        jQuery(selector('cargops')).val(
+            cargoPrestadora.toFixed(2)
+        );
+
+        seleccionarValor(
+            'recuperable_sur',
+            config.initial.recuperableInicial
+        );
+
+        cambioRecuperable();
+    }
+
     function calculaTotal() {
-        var total = numero(valor('importe')) * numero(valor('cantidad'));
-        jQuery(selector('total')).val(redondear(total));
+        var total =
+            redondear(
+                numero(
+                    valor('importe')
+                )
+                * numero(
+                    valor('cantidad')
+                )
+            );
+
+        jQuery(selector('total')).val(
+            total.toFixed(2)
+        );
+
+        aplicarDistribucionCompras();
     }
 
     function seleccionaCamposCieDiez(codigo, descripcion) {
@@ -2056,6 +2137,8 @@
         jQuery(selector('divBtnBuscaEntidad')).show();
         jQuery(selector('divBtnBuscaMedicamento')).show();
         limpiarNomencladorAutocompletar();
+
+        aplicarDistribucionCompras();
     }
 
     function establecerValores(valores) {

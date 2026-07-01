@@ -137,6 +137,15 @@ ViewReclamo.init({
                         : 0
             %>,
 
+        cargoOspimPorcentaje:
+            <%= cargoOspimPorcentajeInicial %>,
+
+        cargoPrestadoraPorcentaje:
+            <%= cargoPrestadoraPorcentajeInicial %>,
+
+        recuperableInicial:
+            <%= recuperableInicialCompras %>,
+
         idReclamo:
             <%=
                 reclamoPersistido
