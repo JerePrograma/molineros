@@ -90,8 +90,6 @@ if (nuevoEstadoObservadoObj != null
 request.getSession().removeAttribute(
         WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS
 );
-
-request.getSession().removeAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS);
 		
 Calendar fechadia  =Calendar.getInstance(); 		
 Calendar fechaospim  = Calendar.getInstance();	

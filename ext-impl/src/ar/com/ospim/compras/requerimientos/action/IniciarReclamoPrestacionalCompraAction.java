@@ -43,6 +43,15 @@ import javax.portlet.WindowState;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+/**
+ * Inicia la edici√≥n de un Reclamo Prestacional nuevo a partir de un
+ * requerimiento de compra COTIZADO.
+ *
+ * Esta acci√≥n no inserta el Reclamo Prestacional y no crea ni reserva una
+ * relaci√≥n persistente entre Compras y Autorizaciones. S√≥lo construye un
+ * borrador temporal en sesi√≥n y redirige al formulario de alta del portlet
+ * de Autorizaciones.
+ */
 public class IniciarReclamoPrestacionalCompraAction
         extends PortletAction {
 
@@ -58,13 +67,11 @@ public class IniciarReclamoPrestacionalCompraAction
             "/compras/ver_requerimiento";
 
     /*
-     * Es el portlet-name real definido en portlet-ext.xml y
+     * Portlet-name ra√≠z definido en portlet-ext.xml y
      * liferay-portlet-ext.xml.
      *
-     * Como el portlet es instanceable, este valor es ˙nicamente el root ID.
-     * La navegaciÛn utiliza el ID completo encontrado en el layout:
-     *
-     * AUT_1_INSTANCE_<instanceId>
+     * Al ser instanceable, la navegaci√≥n utiliza el ID completo encontrado
+     * en el layout: AUT_1_INSTANCE_<instanceId>.
      */
     private static final String AUTORIZACIONES_ROOT_PORTLET_ID =
             "AUT_1";
@@ -75,9 +82,7 @@ public class IniciarReclamoPrestacionalCompraAction
     private static final String ORIGEN_COMPRAS =
             "compras";
 
-    private static final String PARAM_ID_RECLAMO =
-            "id_reclamosel";
-
+    @Override
     public void processAction(
             ActionMapping mapping,
             ActionForm form,
@@ -101,9 +106,13 @@ public class IniciarReclamoPrestacionalCompraAction
 
         try {
             User user =
-                    PortalUtil.getUser(actionRequest);
+                    PortalUtil.getUser(
+                            actionRequest
+                    );
 
-            validarPermisoCreacion(user);
+            validarPermisoCreacion(
+                    user
+            );
 
             RequerimientoCompra requerimiento =
                     obtenerRequerimientoCotizado(
@@ -114,6 +123,12 @@ public class IniciarReclamoPrestacionalCompraAction
                     PortalUtil.getHttpServletRequest(
                             actionRequest
                     );
+
+            if (httpRequest == null) {
+                throw new Exception(
+                        "No se pudo obtener la petici√≥n HTTP actual."
+                );
+            }
 
             session =
                     httpRequest.getSession();
@@ -131,6 +146,11 @@ public class IniciarReclamoPrestacionalCompraAction
                             UUID.randomUUID().toString()
                     );
 
+            /*
+             * La URL se resuelve antes de tocar la sesi√≥n. Si no existe una
+             * instancia v√°lida de Autorizaciones, no se descarta ning√∫n
+             * borrador anterior.
+             */
             DestinoPortlet destino =
                     resolverDestinoAutorizaciones(
                             actionRequest
@@ -140,16 +160,13 @@ public class IniciarReclamoPrestacionalCompraAction
                     construirURLAutorizaciones(
                             httpRequest,
                             destino,
-                            contextoHandoff.getNonce(),
-                            null
+                            contextoHandoff.getNonce()
                     );
 
             /*
-             * Registra solamente metadata temporal del requerimiento origen.
-             *
-             * No crea relaciÛn.
-             * No reserva un RP.
-             * No asigna idRequerimientoCompra como idReclamo.
+             * Se registra √∫nicamente metadata temporal del requerimiento
+             * origen. No se genera ID de RP, no se reserva una relaci√≥n y no
+             * se reutiliza idRequerimientoCompra como idReclamo.
              */
             registrarContextoBorrador(
                     session,
@@ -157,8 +174,8 @@ public class IniciarReclamoPrestacionalCompraAction
             );
 
             /*
-             * Construye objetos Java en sesiÛn.
-             * No persiste el Reclamo Prestacional.
+             * Construye en sesi√≥n la cabecera temporal y la lista temporal
+             * de prestaciones. No ejecuta INSERT ni UPDATE.
              */
             precargaHandoff =
                     ReclamoPrestacionalCompraPrecargaServiceUtil
@@ -199,7 +216,9 @@ public class IniciarReclamoPrestacionalCompraAction
 
             actionRequest.setAttribute(
                     WebKeysCompras.ERROR_PARA_ALERT,
-                    mensajeError(e)
+                    mensajeError(
+                            e
+                    )
             );
 
             actionResponse.setRenderParameter(
@@ -209,8 +228,11 @@ public class IniciarReclamoPrestacionalCompraAction
 
             if (idRequerimientoCompra > 0) {
                 actionResponse.setRenderParameter(
-                        WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
-                        String.valueOf(idRequerimientoCompra)
+                        WebKeysCompras
+                                .PARAM_ID_REQUERIMIENTO_COMPRA,
+                        String.valueOf(
+                                idRequerimientoCompra
+                        )
                 );
             }
 
@@ -223,10 +245,11 @@ public class IniciarReclamoPrestacionalCompraAction
     }
 
     /**
-     * DespuÈs de una redirecciÛn exitosa este mÈtodo no interviene en el
-     * render de Autorizaciones.
-     * Se conserva solamente para el retorno de error dentro de COMPRA_1.
+     * Despu√©s de una redirecci√≥n exitosa no interviene en el render del
+     * portlet de Autorizaciones. Se conserva para el retorno de error dentro
+     * de COMPRA_1.
      */
+    @Override
     public ActionForward render(
             ActionMapping mapping,
             ActionForm form,
@@ -240,15 +263,20 @@ public class IniciarReclamoPrestacionalCompraAction
         );
     }
 
+    /**
+     * Construye una URL de alta de RP nuevo.
+     *
+     * No recibe idReclamo porque en esta etapa todav√≠a no existe un RP
+     * persistido.
+     */
     private String construirURLAutorizaciones(
             HttpServletRequest httpRequest,
             DestinoPortlet destino,
-            String nonce,
-            Integer idReclamo) throws Exception {
+            String nonce) throws Exception {
 
         if (httpRequest == null) {
             throw new Exception(
-                    "No se pudo obtener la peticiÛn HTTP para navegar "
+                    "No se pudo obtener la petici√≥n HTTP para navegar "
                             + "al portlet de Autorizaciones."
             );
         }
@@ -261,7 +289,7 @@ public class IniciarReclamoPrestacionalCompraAction
 
             throw new Exception(
                     "No se pudo determinar el portlet de Autorizaciones "
-                            + "y la p·gina que lo contiene."
+                            + "y la p√°gina que lo contiene."
             );
         }
 
@@ -289,32 +317,27 @@ public class IniciarReclamoPrestacionalCompraAction
                 STRUTS_ACTION_RECLAMO
         );
 
+        /*
+         * Es un alta nueva. El id del requerimiento no se env√≠a como
+         * id_reclamosel y nunca se utiliza como identificador de RP.
+         */
+        url.setParameter(
+                Constants.CMD,
+                Constants.ADD
+        );
+
         url.setParameter(
                 PARAM_ORIGEN,
                 ORIGEN_COMPRAS
         );
 
-        if (!WebKeysCompras.isEmpty(nonce)) {
+        if (!WebKeysCompras.isEmpty(
+                nonce
+        )) {
             url.setParameter(
                     WebKeysCompras
                             .PARAM_RECLAMO_PRESTACIONAL_NONCE,
                     nonce
-            );
-        }
-
-        if (idReclamo != null
-                && idReclamo.intValue() > 0) {
-
-            url.setParameter(
-                    Constants.CMD,
-                    Constants.VIEW
-            );
-
-            url.setParameter(
-                    PARAM_ID_RECLAMO,
-                    String.valueOf(
-                            idReclamo.intValue()
-                    )
             );
         }
 
@@ -329,6 +352,12 @@ public class IniciarReclamoPrestacionalCompraAction
                         actionRequest
                 );
 
+        if (httpRequest == null) {
+            throw new Exception(
+                    "No se pudo obtener la petici√≥n HTTP actual."
+            );
+        }
+
         ThemeDisplay themeDisplay =
                 (ThemeDisplay) httpRequest.getAttribute(
                         WebKeys.THEME_DISPLAY
@@ -338,16 +367,14 @@ public class IniciarReclamoPrestacionalCompraAction
                 || themeDisplay.getLayout() == null) {
 
             throw new Exception(
-                    "No se pudo determinar la p·gina actual de Liferay."
+                    "No se pudo determinar la p√°gina actual de Liferay."
             );
         }
 
         Layout layoutActual =
                 themeDisplay.getLayout();
 
-        /*
-         * Primera prioridad: la instancia colocada en la misma p·gina.
-         */
+        /* Primera prioridad: instancia colocada en la misma p√°gina. */
         DestinoPortlet destino =
                 buscarDestinoEnLayout(
                         layoutActual
@@ -358,8 +385,8 @@ public class IniciarReclamoPrestacionalCompraAction
         }
 
         /*
-         * Segunda prioridad: otra p·gina del mismo sitio y del mismo
-         * tipo p˙blico/privado.
+         * Segunda prioridad: otra p√°gina del mismo sitio y misma
+         * visibilidad p√∫blica/privada.
          */
         destino =
                 buscarDestinoUnicoEnGrupo(
@@ -373,11 +400,8 @@ public class IniciarReclamoPrestacionalCompraAction
         }
 
         /*
-         * ⁄ltima alternativa: una p·gina del mismo sitio con visibilidad
+         * √öltima alternativa: p√°gina del mismo sitio con visibilidad
          * contraria.
-         *
-         * Esto permite Compras privada -> Autorizaciones p˙blica, o a la
-         * inversa, sin inventar un plid.
          */
         destino =
                 buscarDestinoUnicoEnGrupo(
@@ -391,9 +415,9 @@ public class IniciarReclamoPrestacionalCompraAction
         }
 
         throw new Exception(
-                "No se encontrÛ una instancia de "
+                "No se encontr√≥ una instancia de "
                         + AUTORIZACIONES_ROOT_PORTLET_ID
-                        + " colocada en una p·gina del sitio actual."
+                        + " colocada en una p√°gina del sitio actual."
         );
     }
 
@@ -439,9 +463,9 @@ public class IniciarReclamoPrestacionalCompraAction
                 throw new Exception(
                         "Se encontraron varias instancias del portlet "
                                 + AUTORIZACIONES_ROOT_PORTLET_ID
-                                + " en p·ginas del sitio. "
+                                + " en p√°ginas del sitio. "
                                 + "No es seguro seleccionar una "
-                                + "autom·ticamente. Instancias: "
+                                + "autom√°ticamente. Instancias: "
                                 + encontrado.getPortletId()
                                 + " en plid "
                                 + encontrado.getPlid()
@@ -453,7 +477,8 @@ public class IniciarReclamoPrestacionalCompraAction
                 );
             }
 
-            encontrado = candidato;
+            encontrado =
+                    candidato;
         }
 
         return encontrado;
@@ -483,7 +508,9 @@ public class IniciarReclamoPrestacionalCompraAction
         }
 
         for (String portletId : portletIds) {
-            if (WebKeysCompras.isEmpty(portletId)) {
+            if (WebKeysCompras.isEmpty(
+                    portletId
+            )) {
                 continue;
             }
 
@@ -498,11 +525,6 @@ public class IniciarReclamoPrestacionalCompraAction
                 continue;
             }
 
-            /*
-             * Se consulta PortalUtil con el ID completo de la instancia.
-             * Consultar solamente AUT_1 no encuentra necesariamente un
-             * portlet instanceable colocado como AUT_1_INSTANCE_x.
-             */
             long plidLocalizado =
                     PortalUtil.getPlidFromPortletId(
                             layout.getGroupId(),
@@ -526,21 +548,29 @@ public class IniciarReclamoPrestacionalCompraAction
             )) {
 
                 throw new Exception(
-                        "La p·gina con plid "
+                        "La p√°gina con plid "
                                 + layout.getPlid()
-                                + " contiene m·s de una instancia de "
+                                + " contiene m√°s de una instancia de "
                                 + AUTORIZACIONES_ROOT_PORTLET_ID
                                 + ". No es seguro seleccionar una "
-                                + "autom·ticamente."
+                                + "autom√°ticamente."
                 );
             }
 
-            encontrado = candidato;
+            encontrado =
+                    candidato;
         }
 
         return encontrado;
     }
 
+    /**
+     * Reemplaza exclusivamente un borrador anterior que tambi√©n haya sido
+     * originado desde Compras.
+     *
+     * Si existe una edici√≥n normal iniciada desde Autorizaciones, se bloquea
+     * para no destruir trabajo del usuario.
+     */
     private void registrarContextoBorrador(
             HttpSession session,
             ReclamoPrestacionalCompraContexto nuevoContexto)
@@ -548,7 +578,7 @@ public class IniciarReclamoPrestacionalCompraAction
 
         if (session == null) {
             throw new Exception(
-                    "No se pudo obtener la sesiÛn del usuario."
+                    "No se pudo obtener la sesi√≥n del usuario."
             );
         }
 
@@ -576,24 +606,24 @@ public class IniciarReclamoPrestacionalCompraAction
                     );
 
             /*
-             * Si existe un RP en ediciÛn sin contexto de Compras, pertenece
-             * al flujo normal de Autorizaciones. No se pisa silenciosamente.
+             * Un RP en sesi√≥n sin contexto de Compras pertenece al flujo
+             * normal de Autorizaciones y no debe ser sustituido.
              */
             if (reclamoEnEdicion != null
                     && !(contextoAnteriorObj
                     instanceof ReclamoPrestacionalCompraContexto)) {
 
                 throw new Exception(
-                        "Existe un Reclamo Prestacional en ediciÛn iniciado "
-                                + "desde Autorizaciones. FinalÌcelo o desc·rtelo "
-                                + "antes de precargar uno desde Compras."
+                        "Existe un Reclamo Prestacional en edici√≥n iniciado "
+                                + "desde Autorizaciones. Final√≠celo o "
+                                + "desc√°rtelo antes de precargar uno desde "
+                                + "Compras."
                 );
             }
 
             /*
-             * Si hay contexto de Compras, lo existente es solamente un
-             * borrador temporal anterior. Se reemplaza por el requerimiento
-             * seleccionado actualmente.
+             * Si hab√≠a contexto de Compras, lo existente era un borrador
+             * temporal. Se reemplaza por el requerimiento seleccionado.
              */
             limpiarBorradorComprasEnSesion(
                     session
@@ -634,6 +664,16 @@ public class IniciarReclamoPrestacionalCompraAction
                 WebKeysAutorizaciones
                         .LISTADO_CONTACTOS_RECLAMOS_EN_SESION
         );
+
+        session.removeAttribute(
+                WebKeysAutorizaciones
+                        .PRESTACION_EN_PROCESO_DE_EDICION
+        );
+
+        session.removeAttribute(
+                WebKeysAutorizaciones
+                        .RECLAMO_NUEVO_ESTADO_OBS
+        );
     }
 
     private RequerimientoCompra obtenerRequerimientoCotizado(
@@ -655,7 +695,7 @@ public class IniciarReclamoPrestacionalCompraAction
                 || requerimiento.getBajaFecha() != null) {
 
             throw new Exception(
-                    "No se encontrÛ el requerimiento de compra activo."
+                    "No se encontr√≥ el requerimiento de compra activo."
             );
         }
 
@@ -663,14 +703,14 @@ public class IniciarReclamoPrestacionalCompraAction
                 requerimiento.getEstado()
         )) {
             throw new Exception(
-                    "El Reclamo Prestacional sÛlo puede iniciarse "
+                    "El Reclamo Prestacional s√≥lo puede iniciarse "
                             + "desde un requerimiento COTIZADO."
             );
         }
 
         if (!requerimiento.tieneAfiliadoInformado()) {
             throw new Exception(
-                    "El requerimiento no tiene un afiliado v·lido "
+                    "El requerimiento no tiene un afiliado v√°lido "
                             + "para iniciar el Reclamo Prestacional."
             );
         }
@@ -681,7 +721,9 @@ public class IniciarReclamoPrestacionalCompraAction
     private void validarPermisoCreacion(
             User user) throws Exception {
 
-        validarUsuario(user);
+        validarUsuario(
+                user
+        );
 
         boolean permisoCompras =
                 PermissionUtil.userContainsRole(
@@ -743,8 +785,11 @@ public class IniciarReclamoPrestacionalCompraAction
                 String portletId,
                 long plid) {
 
-            this.portletId = portletId;
-            this.plid = plid;
+            this.portletId =
+                    portletId;
+
+            this.plid =
+                    plid;
         }
 
         private String getPortletId() {

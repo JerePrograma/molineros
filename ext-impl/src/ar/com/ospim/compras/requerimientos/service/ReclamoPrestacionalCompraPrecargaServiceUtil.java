@@ -20,13 +20,17 @@ import java.util.List;
 import javax.servlet.http.HttpSession;
 
 /**
- * Precarga un Reclamo Prestacional desde un requerimiento de compra
- * COTIZADO.
+ * Construye un borrador temporal de Reclamo Prestacional a partir de un
+ * requerimiento de compra COTIZADO.
  *
- * Los identificadores de artÌculos de Compras no se reutilizan como
- * IDs del nomenclador mÈdico. Se transportan como cÛdigo visible
- * ART-{id} y se deja el ID de prestaciÛn en cero para que el usuario
- * confirme el nomenclador.
+ * Esta clase no inserta cabeceras, prestaciones ni relaciones en base de
+ * datos. S√≥lo arma los objetos requeridos por el editor legacy y los publica
+ * en la sesi√≥n del usuario.
+ *
+ * Los identificadores de art√≠culos de Compras no se reutilizan como IDs del
+ * nomenclador m√©dico. Se transportan como c√≥digo visible ART-{id}; el ID real
+ * de prestaci√≥n y el ID real de medicamento permanecen en cero hasta que el
+ * usuario confirme el nomenclador correspondiente.
  */
 public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
@@ -34,17 +38,30 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
     private static final int NO_RECUPERABLE = 2;
     private static final int RECUPERABLE_INTEGRACION = 3;
 
-    private static final int MAX_OBSERVACION = 250;
+    private static final int ESTADO_PRESTACION_CARGADA = 0;
+
+    /*
+     * La pantalla informa un m√°ximo funcional de 200 caracteres, aunque
+     * algunos textareas legacy tengan maxlength=250.
+     */
+    private static final int MAX_OBSERVACION = 200;
+
+    private static final BigDecimal CIEN =
+            BigDecimal.valueOf(
+                    100L
+            );
+
+    private static final BigDecimal TOLERANCIA_TOTAL =
+            new BigDecimal(
+                    "0.01"
+            );
 
     private ReclamoPrestacionalCompraPrecargaServiceUtil() {
     }
 
     /**
-     * Precarga los objetos utilizados por el editor legacy y devuelve
-     * un descriptor con las referencias exactas escritas en sesiÛn.
-     *
-     * Ese descriptor permite compensar un handoff fallido sin eliminar
-     * objetos que otra peticiÛn hubiera escrito posteriormente.
+     * Precarga la cabecera y las prestaciones temporales utilizadas por el
+     * editor de Reclamos Prestacionales.
      */
     public static Precarga precargar(
             HttpSession session,
@@ -53,14 +70,16 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
         if (session == null) {
             throw new Exception(
-                    "No se pudo obtener la sesiÛn para precargar "
+                    "No se pudo obtener la sesi√≥n para precargar "
                             + "el Reclamo Prestacional."
             );
         }
 
-        if (WebKeysCompras.isEmpty(nonceRequest)) {
+        if (WebKeysCompras.isEmpty(
+                nonceRequest
+        )) {
             throw new Exception(
-                    "No se informÛ el identificador de la precarga."
+                    "No se inform√≥ el identificador de la precarga."
             );
         }
 
@@ -104,7 +123,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         if (prestaciones.isEmpty()) {
             throw new Exception(
                     "El requerimiento COTIZADO no contiene "
-                            + "Ìtems para precargar."
+                            + "√≠tems para precargar."
             );
         }
 
@@ -114,6 +133,11 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         List<ContactoCRM> contactos =
                 new ArrayList<ContactoCRM>();
 
+        /*
+         * La cabecera y el atributo espec√≠fico de sesi√≥n comparten la misma
+         * instancia de lista. El JSP cuenta desde el reclamo, pero la tabla
+         * obtiene las filas desde LISTADO_PRESTACIONES_RECLAMOS_EN_SESION.
+         */
         reclamo.setPrestaciones(
                 prestaciones
         );
@@ -129,15 +153,11 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         Precarga precarga = null;
 
         try {
-            /*
-             * El armado del reclamo ocurre fuera del bloqueo para no
-             * retener innecesariamente la sesiÛn durante consultas y
-             * conversiones.
-             *
-             * Antes de escribir se comprueba nuevamente que otra peticiÛn
-             * no haya sustituido el contexto ni iniciado otra ediciÛn.
-             */
             synchronized (session) {
+                /*
+                 * Se revalidan contexto y edici√≥n antes de escribir para
+                 * detectar una petici√≥n concurrente.
+                 */
                 obtenerContextoValido(
                         session,
                         nonceRequest,
@@ -148,14 +168,6 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                         session
                 );
 
-                /*
-                 * Se guardan los valores anteriores para poder restaurarlos
-                 * si la navegaciÛn falla despuÈs de la precarga.
-                 *
-                 * RECLAMO_PRESTACION_EN_EDICION debe ser null por la
-                 * validaciÛn anterior, pero se conserva igualmente el valor
-                 * para que el algoritmo de compensaciÛn sea completo.
-                 */
                 precarga =
                         new Precarga(
                                 nonceRequest,
@@ -209,10 +221,6 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             return precarga;
 
         } catch (Exception e) {
-            /*
-             * TambiÈn cubre una eventual escritura parcial de los atributos
-             * de sesiÛn dentro del bloque anterior.
-             */
             limpiarHandoffFallido(
                     session,
                     nonceRequest,
@@ -224,16 +232,10 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
     }
 
     /**
-     * Compensa exclusivamente la precarga perteneciente al nonce indicado.
+     * Compensa exclusivamente los objetos escritos por la precarga indicada.
      *
-     * Reglas:
-     *
-     * 1. El contexto actual debe seguir teniendo el mismo nonce.
-     * 2. Cada atributo sÛlo se restaura si todavÌa contiene exactamente
-     *    el mismo objeto que escribiÛ esta Precarga.
-     * 3. Si otra peticiÛn reemplazÛ un atributo, no se toca.
-     * 4. El contexto se elimina ˙nicamente si sigue perteneciendo al
-     *    handoff fallido.
+     * La comparaci√≥n se realiza por identidad para no eliminar objetos que
+     * otra petici√≥n haya escrito posteriormente.
      */
     public static void limpiarHandoffFallido(
             HttpSession session,
@@ -241,7 +243,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             Precarga precarga) {
 
         if (session == null
-                || WebKeysCompras.isEmpty(nonce)) {
+                || WebKeysCompras.isEmpty(
+                nonce
+        )) {
 
             return;
         }
@@ -266,10 +270,6 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             if (!contexto.coincideNonce(
                     nonce
             )) {
-                /*
-                 * Otra peticiÛn sustituyÛ el contexto.
-                 * No se elimina ning˙n dato.
-                 */
                 return;
             }
 
@@ -311,10 +311,6 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 );
             }
 
-            /*
-             * Se elimina sÛlo despuÈs de verificar que el contexto actual
-             * todavÌa corresponde al nonce fallido.
-             */
             session.removeAttribute(
                     WebKeysCompras
                             .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
@@ -333,11 +329,6 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                         nombre
                 );
 
-        /*
-         * La comparaciÛn deliberadamente utiliza identidad, no equals().
-         * Dos listas o reclamos con los mismos valores pueden pertenecer
-         * a peticiones distintas.
-         */
         if (valorActual != valorCreado) {
             return;
         }
@@ -354,12 +345,32 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         }
     }
 
+    /**
+     * Crea √∫nicamente la cabecera temporal del RP. Al no persistirse, el ID
+     * sigue siendo el valor inicial del bean y no se relaciona con el ID del
+     * requerimiento.
+     */
     public static ReclamoPrestacional crearReclamo(
             RequerimientoCompra requerimiento) throws Exception {
 
         if (requerimiento == null) {
             throw new Exception(
                     "No se pudo obtener el requerimiento de compra."
+            );
+        }
+
+        String sector =
+                mapearSector(
+                        requerimiento
+                                .getSectorDescripcion()
+                );
+
+        if (WebKeysCompras.isEmpty(
+                sector
+        )) {
+            throw new Exception(
+                    "El sector del requerimiento no puede mapearse a un "
+                            + "sector de Reclamos Prestacionales."
             );
         }
 
@@ -379,10 +390,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                                 .getAfiliadoCuilTitular(),
                         integrante,
                         fechaAlta,
-                        mapearSector(
-                                requerimiento
-                                        .getSectorDescripcion()
-                        ),
+                        sector,
                         null
                 );
 
@@ -398,6 +406,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 "EXCEPCION"
         );
 
+        /* Estado de precarga del editor legacy. */
         reclamo.setEstado(
                 0
         );
@@ -505,6 +514,15 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         return "";
     }
 
+    /**
+     * Regla vigente del proyecto:
+     *
+     * - Surge = recuperable SUR.
+     * - Recupero sin Surge = recuperable por Integraci√≥n.
+     * - Ninguno = no recuperable.
+     *
+     * Si ambos indicadores vienen activos, SUR tiene prioridad.
+     */
     public static int resolverRecuperable(
             RequerimientoCompra requerimiento) {
 
@@ -523,6 +541,12 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         return NO_RECUPERABLE;
     }
 
+    /**
+     * Construye una prestaci√≥n CARGADA, no AUTORIZADA.
+     *
+     * Los valores del √°rea m√©dica se precargan como propuesta econ√≥mica para
+     * que el usuario pueda revisarlos; estadoRechazoAprobado permanece en 0.
+     */
     private static PrestacionesReclamo crearPrestacion(
             RequerimientoCompra requerimiento,
             RequerimientoCompraDetalle detalle,
@@ -545,11 +569,33 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                                 .getPrecioUnitarioEstimado()
                 );
 
-        BigDecimal total =
+        BigDecimal totalCalculado =
+                cantidad.multiply(
+                        importeUnitario
+                ).setScale(
+                        2,
+                        RoundingMode.HALF_UP
+                );
+
+        BigDecimal totalInformado =
                 normalizarImporte(
                         detalle
                                 .getPrecioTotalEstimado()
                 );
+
+        validarConsistenciaTotal(
+                detalle,
+                totalCalculado,
+                totalInformado
+        );
+
+        /*
+         * Se usa el total recalculado para que los campos presentados, el
+         * total autorizado y la distribuci√≥n de cargos partan de la misma
+         * base monetaria.
+         */
+        BigDecimal total =
+                totalCalculado;
 
         BigDecimal cargoOspim =
                 total.multiply(
@@ -560,14 +606,14 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                                 )
                         )
                 ).divide(
-                        BigDecimal.valueOf(100),
+                        CIEN,
                         2,
                         RoundingMode.HALF_UP
                 );
 
         /*
-         * El remanente se asigna a la tercerizadora para evitar
-         * diferencias producidas por dos redondeos independientes.
+         * El remanente se asigna a la tercerizadora para evitar diferencias
+         * de centavos por dos redondeos independientes.
          */
         BigDecimal cargoTercerizadora =
                 total.subtract(
@@ -580,12 +626,14 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         PrestacionesReclamo prestacion =
                 new PrestacionesReclamo();
 
+        /* Identificador temporal de la fila dentro de la sesi√≥n. */
         prestacion.setIdRegistro(
                 idRegistro
         );
 
         /*
-         * El artÌculo de Compras no es un ID del nomenclador mÈdico.
+         * El art√≠culo de Compras no es una prestaci√≥n ni un medicamento del
+         * nomenclador de Autorizaciones.
          */
         prestacion.setId_prestacion(
                 0
@@ -625,6 +673,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 "UNICA"
         );
 
+        /* Propuesta para Autorizado por √Årea M√©dica. */
         prestacion.setCantidad(
                 cantidad.doubleValue()
         );
@@ -642,7 +691,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         );
 
         prestacion.setCargo_imesa(
-                Double.valueOf(0D)
+                Double.valueOf(
+                        0D
+                )
         );
 
         prestacion.setReconocidoSSS(
@@ -686,9 +737,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         );
 
         /*
-         * Una cotizaciÛn no es una factura. OTR evita valores nulos
-         * incompatibles con el JSP legacy, pero el n˙mero, la fecha,
-         * la letra y las sucursales deben ser confirmados.
+         * Una cotizaci√≥n no es una factura. Se usa OTR como tipo temporal y
+         * se dejan vac√≠os los datos documentales que el usuario debe
+         * confirmar.
          */
         prestacion.setComprobanteTipo(
                 "OTR"
@@ -724,6 +775,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 detalle.getPrestadorRazonSocial()
         );
 
+        /* Datos presentados provenientes de la adjudicaci√≥n. */
         prestacion.setComprobanteCantidad(
                 Double.valueOf(
                         cantidad.doubleValue()
@@ -742,6 +794,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 )
         );
 
+        /* Debe ser confirmada por el usuario. */
         prestacion.setFechaPrestacion(
                 null
         );
@@ -752,8 +805,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                         .NUEVO
         );
 
+        /* CARGADO: no implica autorizaci√≥n m√©dica. */
         prestacion.setEstadoRechazoAprobado(
-                0
+                ESTADO_PRESTACION_CARGADA
         );
 
         prestacion.setObservaciones(
@@ -775,7 +829,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 || requerimiento.getBajaFecha() != null) {
 
             throw new Exception(
-                    "El requerimiento de compra ya no est· activo."
+                    "El requerimiento de compra ya no est√° activo."
             );
         }
 
@@ -783,14 +837,14 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 requerimiento.getEstado()
         )) {
             throw new Exception(
-                    "El requerimiento de compra ya no est· COTIZADO."
+                    "El requerimiento de compra ya no est√° COTIZADO."
             );
         }
 
         if (!requerimiento.tieneAfiliadoInformado()) {
             throw new Exception(
                     "El requerimiento COTIZADO no tiene "
-                            + "un afiliado v·lido."
+                            + "un afiliado v√°lido."
             );
         }
 
@@ -825,8 +879,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
             throw new Exception(
                     "El afiliado persistido del requerimiento "
-                            + "no coincide con el contexto "
-                            + "de creaciÛn del RP."
+                            + "no coincide con el contexto del borrador."
             );
         }
     }
@@ -843,8 +896,30 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
             throw new Exception(
                     "El requerimiento figura COTIZADO, "
-                            + "pero contiene un Ìtem sin cantidad, "
+                            + "pero contiene un √≠tem sin cantidad, "
                             + "precio o prestador adjudicado."
+            );
+        }
+    }
+
+    private static void validarConsistenciaTotal(
+            RequerimientoCompraDetalle detalle,
+            BigDecimal totalCalculado,
+            BigDecimal totalInformado) throws Exception {
+
+        BigDecimal diferencia =
+                totalCalculado.subtract(
+                        totalInformado
+                ).abs();
+
+        if (diferencia.compareTo(
+                TOLERANCIA_TOTAL
+        ) > 0) {
+            throw new Exception(
+                    "El √≠tem "
+                            + detalle.getIdString()
+                            + " tiene un total inconsistente con su "
+                            + "cantidad y precio unitario."
             );
         }
     }
@@ -893,8 +968,8 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 instanceof ReclamoPrestacionalCompraContexto)) {
 
             throw new Exception(
-                    "El contexto de Compras expirÛ "
-                            + "o ya no est· disponible."
+                    "El contexto de Compras expir√≥ "
+                            + "o ya no est√° disponible."
             );
         }
 
@@ -913,9 +988,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         )) {
 
             throw new Exception(
-                    "El contexto de Compras no es v·lido o venciÛ. "
+                    "El contexto de Compras no es v√°lido o venci√≥. "
                             + "Vuelva al requerimiento e inicie "
-                            + "nuevamente el Reclamo Prestacional."
+                            + "nuevamente el borrador."
             );
         }
 
@@ -931,10 +1006,8 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         ) != null) {
 
             throw new Exception(
-                    "Ya existe un Reclamo Prestacional en ediciÛn "
-                            + "en esta sesiÛn. Finalice o descarte "
-                            + "esa ediciÛn antes de iniciar otro "
-                            + "desde Compras."
+                    "Ya existe un Reclamo Prestacional en edici√≥n "
+                            + "en esta sesi√≥n."
             );
         }
     }
@@ -947,7 +1020,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 new StringBuilder();
 
         observacion.append(
-                "Precargado desde Requerimiento de Compra #"
+                "Borrador desde Requerimiento de Compra #"
         );
 
         observacion.append(
@@ -956,8 +1029,8 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         );
 
         observacion.append(
-                ". Confirmar nomenclador, fecha, "
-                        + "comprobante y reconocido SSS."
+                ". Confirmar nomenclador, fecha, comprobante y "
+                        + "reconocido SSS."
         );
 
         agregarObservacion(
@@ -1006,7 +1079,15 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
         if (value == null) {
             throw new Exception(
-                    "Un Ìtem cotizado no tiene importe."
+                    "Un √≠tem cotizado no tiene importe."
+            );
+        }
+
+        if (value.compareTo(
+                BigDecimal.ZERO
+        ) < 0) {
+            throw new Exception(
+                    "Un √≠tem cotizado tiene un importe negativo."
             );
         }
 
@@ -1065,9 +1146,6 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
     /**
      * Descriptor inmutable de los objetos escritos por una precarga.
-     *
-     * Las referencias anteriores se conservan exclusivamente para una
-     * eventual compensaciÛn. No forman parte del flujo funcional normal.
      */
     public static final class Precarga {
 
@@ -1103,15 +1181,32 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 Object revisionesAnteriores,
                 Object contactosAnteriores) {
 
-            this.nonce = nonce;
-            this.reclamoCreado = reclamoCreado;
-            this.prestacionesCreadas = prestacionesCreadas;
-            this.revisionesCreadas = revisionesCreadas;
-            this.contactosCreados = contactosCreados;
-            this.reclamoAnterior = reclamoAnterior;
-            this.prestacionesAnteriores = prestacionesAnteriores;
-            this.revisionesAnteriores = revisionesAnteriores;
-            this.contactosAnteriores = contactosAnteriores;
+            this.nonce =
+                    nonce;
+
+            this.reclamoCreado =
+                    reclamoCreado;
+
+            this.prestacionesCreadas =
+                    prestacionesCreadas;
+
+            this.revisionesCreadas =
+                    revisionesCreadas;
+
+            this.contactosCreados =
+                    contactosCreados;
+
+            this.reclamoAnterior =
+                    reclamoAnterior;
+
+            this.prestacionesAnteriores =
+                    prestacionesAnteriores;
+
+            this.revisionesAnteriores =
+                    revisionesAnteriores;
+
+            this.contactosAnteriores =
+                    contactosAnteriores;
         }
 
         private boolean coincideNonce(

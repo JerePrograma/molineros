@@ -4,6 +4,12 @@ import ar.com.ospim.compras.WebKeysCompras;
 
 import java.math.BigDecimal;
 
+/**
+ * Detalle adjudicado de un requerimiento de compra.
+ *
+ * El ID de artículo pertenece al módulo Compras y no debe reutilizarse como
+ * ID de prestación ni como ID de medicamento del módulo Autorizaciones.
+ */
 public class RequerimientoCompraDetalle {
 
     private Integer id;
@@ -19,12 +25,18 @@ public class RequerimientoCompraDetalle {
     private String observaciones;
 
     public RequerimientoCompraDetalle() {
-        this.cantidad = Integer.valueOf(1);
+        this.cantidad =
+                Integer.valueOf(
+                        1
+                );
     }
 
-    public RequerimientoCompraDetalle(Integer id) {
+    public RequerimientoCompraDetalle(
+            Integer id) {
+
         this();
-        this.id = id;
+        this.id =
+                id;
     }
 
     public Integer getId() {
@@ -32,15 +44,25 @@ public class RequerimientoCompraDetalle {
     }
 
     public int getIdInt() {
-        return id != null ? id.intValue() : 0;
+        return id != null
+                ? id.intValue()
+                : 0;
     }
 
     public String getIdString() {
-        return id != null && id.intValue() > 0 ? String.valueOf(id) : "";
+        return id != null
+                && id.intValue() > 0
+                ? String.valueOf(
+                id
+        )
+                : "";
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public void setId(
+            Integer id) {
+
+        this.id =
+                id;
     }
 
     public Integer getIdRequerimiento() {
@@ -48,17 +70,27 @@ public class RequerimientoCompraDetalle {
     }
 
     public int getIdRequerimientoCompra() {
-        return idRequerimiento != null ? idRequerimiento.intValue() : 0;
+        return idRequerimiento != null
+                ? idRequerimiento.intValue()
+                : 0;
     }
 
-    public void setIdRequerimiento(Integer idRequerimiento) {
-        this.idRequerimiento = idRequerimiento;
+    public void setIdRequerimiento(
+            Integer idRequerimiento) {
+
+        this.idRequerimiento =
+                idRequerimiento;
     }
 
-    public void setIdRequerimientoCompra(int idRequerimientoCompra) {
-        this.idRequerimiento = idRequerimientoCompra > 0
-                ? Integer.valueOf(idRequerimientoCompra)
-                : null;
+    public void setIdRequerimientoCompra(
+            int idRequerimientoCompra) {
+
+        this.idRequerimiento =
+                idRequerimientoCompra > 0
+                        ? Integer.valueOf(
+                        idRequerimientoCompra
+                )
+                        : null;
     }
 
     public Integer getIdArticulo() {
@@ -66,17 +98,25 @@ public class RequerimientoCompraDetalle {
     }
 
     public int getIdArticuloInt() {
-        return idArticulo != null ? idArticulo.intValue() : 0;
+        return idArticulo != null
+                ? idArticulo.intValue()
+                : 0;
     }
 
     public String getIdArticuloString() {
-        return idArticulo != null && idArticulo.intValue() > 0
-                ? String.valueOf(idArticulo)
+        return idArticulo != null
+                && idArticulo.intValue() > 0
+                ? String.valueOf(
+                idArticulo
+        )
                 : "";
     }
 
-    public void setIdArticulo(Integer idArticulo) {
-        this.idArticulo = idArticulo;
+    public void setIdArticulo(
+            Integer idArticulo) {
+
+        this.idArticulo =
+                idArticulo;
     }
 
     public String getArticulo() {
@@ -84,11 +124,18 @@ public class RequerimientoCompraDetalle {
     }
 
     public String getArticuloVisible() {
-        return articulo != null ? articulo : "";
+        return articulo != null
+                ? articulo
+                : "";
     }
 
-    public void setArticulo(String articulo) {
-        this.articulo = WebKeysCompras.trimToNull(articulo);
+    public void setArticulo(
+            String articulo) {
+
+        this.articulo =
+                WebKeysCompras.trimToNull(
+                        articulo
+                );
     }
 
     public Integer getCantidad() {
@@ -96,16 +143,25 @@ public class RequerimientoCompraDetalle {
     }
 
     public int getCantidadInt() {
-        return cantidad != null ? cantidad.intValue() : 0;
+        return cantidad != null
+                ? cantidad.intValue()
+                : 0;
     }
 
     public String getCantidadString() {
-        return cantidad != null ? cantidad.toString() : "0";
+        return cantidad != null
+                ? cantidad.toString()
+                : "0";
     }
 
-    public void setCantidad(Integer cantidad) {
-        this.cantidad = cantidad;
-        this.precioTotalEstimado = calcularPrecioTotalEstimado();
+    public void setCantidad(
+            Integer cantidad) {
+
+        this.cantidad =
+                cantidad;
+
+        this.precioTotalEstimado =
+                calcularPrecioTotalEstimado();
     }
 
     public BigDecimal getPrecioUnitarioEstimado() {
@@ -113,12 +169,21 @@ public class RequerimientoCompraDetalle {
     }
 
     public String getPrecioUnitarioEstimadoString() {
-        return WebKeysCompras.formatearImporte(precioUnitarioEstimado);
+        return WebKeysCompras.formatearImporte(
+                precioUnitarioEstimado
+        );
     }
 
-    public void setPrecioUnitarioEstimado(BigDecimal precioUnitarioEstimado) {
-        this.precioUnitarioEstimado = WebKeysCompras.normalizarImporte(precioUnitarioEstimado);
-        this.precioTotalEstimado = calcularPrecioTotalEstimado();
+    public void setPrecioUnitarioEstimado(
+            BigDecimal precioUnitarioEstimado) {
+
+        this.precioUnitarioEstimado =
+                WebKeysCompras.normalizarImporte(
+                        precioUnitarioEstimado
+                );
+
+        this.precioTotalEstimado =
+                calcularPrecioTotalEstimado();
     }
 
     public BigDecimal getPrecioTotalEstimado() {
@@ -134,16 +199,28 @@ public class RequerimientoCompraDetalle {
     }
 
     public String getPrecioTotalEstimadoString() {
-        BigDecimal total = getPrecioTotalEstimado();
-        return WebKeysCompras.formatearImporte(total);
+        BigDecimal total =
+                getPrecioTotalEstimado();
+
+        return WebKeysCompras.formatearImporte(
+                total
+        );
     }
 
-    public void setPrecioTotalEstimado(BigDecimal precioTotalEstimado) {
-        this.precioTotalEstimado = WebKeysCompras.normalizarImporte(precioTotalEstimado);
+    public void setPrecioTotalEstimado(
+            BigDecimal precioTotalEstimado) {
+
+        this.precioTotalEstimado =
+                WebKeysCompras.normalizarImporte(
+                        precioTotalEstimado
+                );
     }
 
     public BigDecimal calcularPrecioTotalEstimado() {
-        return WebKeysCompras.calcularPrecioTotal(cantidad, precioUnitarioEstimado);
+        return WebKeysCompras.calcularPrecioTotal(
+                cantidad,
+                precioUnitarioEstimado
+        );
     }
 
     public Integer getIdPrestador() {
@@ -151,25 +228,34 @@ public class RequerimientoCompraDetalle {
     }
 
     public int getIdPrestadorInt() {
-        return idPrestador != null ? idPrestador.intValue() : 0;
+        return idPrestador != null
+                ? idPrestador.intValue()
+                : 0;
     }
 
     public String getIdPrestadorString() {
-        return idPrestador != null && idPrestador.intValue() > 0
-                ? String.valueOf(idPrestador)
+        return idPrestador != null
+                && idPrestador.intValue() > 0
+                ? String.valueOf(
+                idPrestador
+        )
                 : "";
     }
 
-    public void setIdPrestador(Integer idPrestador) {
-        this.idPrestador = idPrestador != null && idPrestador.intValue() > 0
-                ? idPrestador
-                : null;
+    public void setIdPrestador(
+            Integer idPrestador) {
+
+        this.idPrestador =
+                idPrestador != null
+                        && idPrestador.intValue() > 0
+                        ? idPrestador
+                        : null;
     }
 
     /*
-     * Alias expl�cito para el nuevo contrato de un �nico prestador
-     * adjudicado por requerimiento. Se conserva get/setIdPrestador porque la
-     * columna y el servicio actuales siguen persistiendo el dato por detalle.
+     * Alias explícitos para el contrato de un único prestador adjudicado por
+     * requerimiento. Se conserva get/setIdPrestador por compatibilidad con la
+     * persistencia existente.
      */
     public Integer getIdPrestadorAdjudicado() {
         return getIdPrestador();
@@ -183,21 +269,32 @@ public class RequerimientoCompraDetalle {
         return getIdPrestadorString();
     }
 
-    public void setIdPrestadorAdjudicado(Integer idPrestadorAdjudicado) {
-        setIdPrestador(idPrestadorAdjudicado);
+    public void setIdPrestadorAdjudicado(
+            Integer idPrestadorAdjudicado) {
+
+        setIdPrestador(
+                idPrestadorAdjudicado
+        );
     }
 
-    public void aplicarPrestadorAdjudicado(Integer idPrestadorAdjudicado) {
-        setIdPrestador(idPrestadorAdjudicado);
+    public void aplicarPrestadorAdjudicado(
+            Integer idPrestadorAdjudicado) {
+
+        setIdPrestador(
+                idPrestadorAdjudicado
+        );
     }
 
     public boolean tienePrestadorAdjudicado() {
-        return idPrestador != null && idPrestador.intValue() > 0;
+        return idPrestador != null
+                && idPrestador.intValue() > 0;
     }
 
     public boolean tienePrecioUnitarioEstimado() {
         return precioUnitarioEstimado != null
-                && precioUnitarioEstimado.compareTo(BigDecimal.ZERO) >= 0;
+                && precioUnitarioEstimado.compareTo(
+                BigDecimal.ZERO
+        ) >= 0;
     }
 
     public boolean estaCompletoParaCotizacion() {
@@ -213,11 +310,18 @@ public class RequerimientoCompraDetalle {
     }
 
     public String getPrestadorCuitVisible() {
-        return prestadorCuit != null ? prestadorCuit : "";
+        return prestadorCuit != null
+                ? prestadorCuit
+                : "";
     }
 
-    public void setPrestadorCuit(String prestadorCuit) {
-        this.prestadorCuit = WebKeysCompras.trimToNull(prestadorCuit);
+    public void setPrestadorCuit(
+            String prestadorCuit) {
+
+        this.prestadorCuit =
+                WebKeysCompras.trimToNull(
+                        prestadorCuit
+                );
     }
 
     public String getPrestadorRazonSocial() {
@@ -225,23 +329,36 @@ public class RequerimientoCompraDetalle {
     }
 
     public String getPrestadorRazonSocialVisible() {
-        return prestadorRazonSocial != null ? prestadorRazonSocial : "";
+        return prestadorRazonSocial != null
+                ? prestadorRazonSocial
+                : "";
     }
 
-    public void setPrestadorRazonSocial(String prestadorRazonSocial) {
-        this.prestadorRazonSocial = WebKeysCompras.trimToNull(prestadorRazonSocial);
+    public void setPrestadorRazonSocial(
+            String prestadorRazonSocial) {
+
+        this.prestadorRazonSocial =
+                WebKeysCompras.trimToNull(
+                        prestadorRazonSocial
+                );
     }
 
     public String getPrestadorSeleccionadoVisible() {
-        if (WebKeysCompras.isEmpty(prestadorRazonSocial)) {
+        if (WebKeysCompras.isEmpty(
+                prestadorRazonSocial
+        )) {
             return getPrestadorCuitVisible();
         }
 
-        if (WebKeysCompras.isEmpty(prestadorCuit)) {
+        if (WebKeysCompras.isEmpty(
+                prestadorCuit
+        )) {
             return getPrestadorRazonSocialVisible();
         }
 
-        return getPrestadorRazonSocialVisible() + " - " + getPrestadorCuitVisible();
+        return getPrestadorRazonSocialVisible()
+                + " - "
+                + getPrestadorCuitVisible();
     }
 
     public String getObservaciones() {
@@ -249,10 +366,17 @@ public class RequerimientoCompraDetalle {
     }
 
     public String getObservacionesVisible() {
-        return observaciones != null ? observaciones : "";
+        return observaciones != null
+                ? observaciones
+                : "";
     }
 
-    public void setObservaciones(String observaciones) {
-        this.observaciones = WebKeysCompras.trimToNull(observaciones);
+    public void setObservaciones(
+            String observaciones) {
+
+        this.observaciones =
+                WebKeysCompras.trimToNull(
+                        observaciones
+                );
     }
 }
