@@ -93,13 +93,15 @@ public class IniciarReclamoPrestacionalCompraAction
         int idRequerimientoCompra =
                 ParamUtil.getInteger(
                         actionRequest,
-                        WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
+                        WebKeysCompras
+                                .PARAM_ID_REQUERIMIENTO_COMPRA,
                         0
                 );
 
         HttpSession session = null;
 
-        ReclamoPrestacionalCompraContexto contextoHandoff = null;
+        ReclamoPrestacionalCompraContexto contextoHandoff =
+                null;
 
         ReclamoPrestacionalCompraPrecargaServiceUtil.Precarga
                 precargaHandoff = null;
@@ -136,14 +138,32 @@ public class IniciarReclamoPrestacionalCompraAction
             String usuario =
                     user.getScreenName();
 
+            /*
+             * Se transportan al contexto temporal los porcentajes y
+             * las marcas de recuperabilidad del requerimiento.
+             *
+             * Cargo tercerizadora de Compras equivale a
+             * Cargo Prestadora/cargo_ps del RP.
+             */
             contextoHandoff =
                     new ReclamoPrestacionalCompraContexto(
-                            requerimiento.getIdRequerimientoCompra(),
-                            requerimiento.getAfiliadoCuilTitular(),
-                            requerimiento.getAfiliadoInt(),
+                            requerimiento
+                                    .getIdRequerimientoCompra(),
+                            requerimiento
+                                    .getAfiliadoCuilTitular(),
+                            requerimiento
+                                    .getAfiliadoInt(),
                             usuario,
                             System.currentTimeMillis(),
-                            UUID.randomUUID().toString()
+                            UUID.randomUUID().toString(),
+                            requerimiento
+                                    .getCargoOspim(),
+                            requerimiento
+                                    .getCargoTercerizadora(),
+                            requerimiento
+                                    .isRecupero(),
+                            requerimiento
+                                    .isSurge()
                     );
 
             /*
@@ -318,7 +338,7 @@ public class IniciarReclamoPrestacionalCompraAction
         );
 
         /*
-         * Es un alta nueva. El id del requerimiento no se envía como
+         * Es un alta nueva. El ID del requerimiento no se envía como
          * id_reclamosel y nunca se utiliza como identificador de RP.
          */
         url.setParameter(
@@ -374,7 +394,9 @@ public class IniciarReclamoPrestacionalCompraAction
         Layout layoutActual =
                 themeDisplay.getLayout();
 
-        /* Primera prioridad: instancia colocada en la misma página. */
+        /*
+         * Primera prioridad: instancia colocada en la misma página.
+         */
         DestinoPortlet destino =
                 buscarDestinoEnLayout(
                         layoutActual
@@ -433,7 +455,8 @@ public class IniciarReclamoPrestacionalCompraAction
                         LayoutConstants.TYPE_PORTLET
                 );
 
-        DestinoPortlet encontrado = null;
+        DestinoPortlet encontrado =
+                null;
 
         if (layouts == null) {
             return null;
@@ -501,7 +524,8 @@ public class IniciarReclamoPrestacionalCompraAction
         List<String> portletIds =
                 layoutTypePortlet.getPortletIds();
 
-        DestinoPortlet encontrado = null;
+        DestinoPortlet encontrado =
+                null;
 
         if (portletIds == null) {
             return null;
