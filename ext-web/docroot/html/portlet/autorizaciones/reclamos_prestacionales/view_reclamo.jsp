@@ -9,7 +9,19 @@
 Calendar prestacionFecha = CalendarFactoryUtil.getCalendar();
 String prestacionFechaString = prestacionFecha.get(Calendar.DATE)+"/"+(prestacionFecha.get(Calendar.MONTH) + 1)+"/"+prestacionFecha.get(Calendar.YEAR);
 
-String cmd = (String) request.getAttribute(Constants.CMD);	
+String cmd =
+        ParamUtil.getString(
+                request,
+                Constants.CMD,
+                ""
+        );
+
+if (Validator.isNull(cmd)) {
+    cmd =
+            (String) request.getAttribute(
+                    Constants.CMD
+            );
+}
 String caso_vinculado = String.valueOf(request.getAttribute("caso_vinculado")!=null?request.getAttribute("caso_vinculado"):0);
 String cuit_titular_vinculado="";
 int inte_vinculado=0;
@@ -46,11 +58,39 @@ ReclamoPrestacionalCompraContexto contextoCompra =
 String contextoCompraNonce =
         contextoCompra != null ? contextoCompra.getNonce() : "";
 
+boolean borradorDesdeCompras =
+        contextoCompra != null;
+
+boolean reclamoPersistido =
+        reclamoprestacional != null
+                && reclamoprestacional.getId_reclamo() > 0;
+
 String _nuevoEstadoObservado = "";
-if (request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS) != null) {
-  _nuevoEstadoObservado = String.valueOf(request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS));
-  reclamoprestacional.setEstado(Integer.parseInt(_nuevoEstadoObservado));
+
+Object nuevoEstadoObservadoObj =
+        request.getSession().getAttribute(
+                WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS
+        );
+
+if (nuevoEstadoObservadoObj != null
+        && reclamoprestacional != null) {
+
+    _nuevoEstadoObservado =
+            String.valueOf(
+                    nuevoEstadoObservadoObj
+            );
+
+    reclamoprestacional.setEstado(
+            Integer.parseInt(
+                    _nuevoEstadoObservado
+            )
+    );
 }
+
+request.getSession().removeAttribute(
+        WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS
+);
+
 request.getSession().removeAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS);
 		
 Calendar fechadia  =Calendar.getInstance(); 		
@@ -69,7 +109,8 @@ List<CieDiez> cieDiez=(ArrayList<CieDiez>) request.getSession().getAttribute(Web
 
 
 String divcheckbox="";
-String nroreclamo="Caso Nro 00000";
+String nroreclamo =
+        "Nuevo Reclamo Prestacional";
 String opAsignadaalReclamo ="";
 boolean opAsignadaalReclamoExiste =false;
 ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO resolucionAutorizado=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINVALOR;
@@ -143,61 +184,237 @@ if(reclamoprestacional != null  ){
 		}	
 	}
 	
-	nroreclamo ="Reclamo Nro : " + "000"+  String.valueOf(reclamoprestacional.getId_reclamo());
-	if (reclamoprestacional.getId_lista_reintegro()==0 && reclamoprestacional.getIdOP()==0 
-	&& reclamoprestacional.getChequeOP()==null  &&  reclamoprestacional.getFechaOP()==null ){
-		     opAsignadaalReclamo="Sin Orden de Pago";
-	}else{
-		//String.valueOf(reclamoprestacional.getId_lista_reintegro())
-		     String valorLista;
-		  //   String valorCheque ;
-		     String valorFechaCheque ;
-		     String ctaDescrpcion;
-		     String formaPago = "";
-		     String ctaNro;    
-		     String ctaSucursal;
-		     if (reclamoprestacional.getChequeOP()!=null){
-		    	 formaPago =  reclamoprestacional.getChequeOP()==null ? " " :" / CH: "  +  reclamoprestacional.getChequeOP() ;
-		     }else{
-		    	 formaPago =  reclamoprestacional.getCtaNro()==0 ? " " :" / CTA: "  +  reclamoprestacional.getCtaNro()  ;
-		     }
-		     
-		     valorLista= reclamoprestacional.getId_lista_reintegro()==-1 ? " " :String.valueOf(reclamoprestacional.getId_lista_reintegro()) ;
-		     valorFechaCheque=  reclamoprestacional.getFechaOP()==null ? " " :" / "  + reclamoprestacional.getfechaOPAsString() ;
-		     opAsignadaalReclamo ="OP: " + valorLista    + " / " + reclamoprestacional.getIdOP() +  formaPago  +  valorFechaCheque ;
-		     opAsignadaalReclamoExiste=true;
-	}
-	
-	caso_vinculado =  String.valueOf(reclamoprestacional.getCaso_vinculado()); 
-	if (Integer.valueOf(caso_vinculado)>0)
-	{
-		cuit_titular_vinculado = reclamoprestacional.getCuit_titular();
-		inte_vinculado = reclamoprestacional.getInte();
-		reclamo_vinculado=true;
-	}	
-	
-}else{
-	
-if (contextoCompra != null) {
-        cuit_titular_vinculado =
-                contextoCompra.getAfiliadoCuilTitular();
-        inte_vinculado =
-                contextoCompra.getAfiliadoInt() != null
-                        ? contextoCompra.getAfiliadoInt().intValue()
-                        : 0;
-        reclamo_vinculado = true;
-} else if (Integer.parseInt(caso_vinculado)>0 ){// carga datos del afiliado del cas
-		ReclamoPrestacional reclamoprestacional1 = ReclamosPrestacionesServiceUtil.getReclamoPrestacional(Integer.parseInt(caso_vinculado));
-		cuit_titular_vinculado = reclamoprestacional1.getCuit_titular();
-		inte_vinculado = reclamoprestacional1.getInte();
-		reclamo_vinculado=true;
-	}
+	    /*
+         * Sólo un RP con ID mayor que cero es persistido.
+         *
+         * El objeto generado desde Compras tiene ID cero y representa
+         * exclusivamente un borrador temporal.
+         */
+        if (reclamoPersistido) {
+
+            nroreclamo =
+                    "Reclamo Nro: 000"
+                            + String.valueOf(
+                                    reclamoprestacional
+                                            .getId_reclamo()
+                            );
+
+            if (reclamoprestacional.getId_lista_reintegro() == 0
+                    && reclamoprestacional.getIdOP() == 0
+                    && reclamoprestacional.getChequeOP() == null
+                    && reclamoprestacional.getFechaOP() == null) {
+
+                opAsignadaalReclamo =
+                        "Sin Orden de Pago";
+
+            } else {
+                String valorLista;
+                String valorFechaCheque;
+                String formaPago;
+
+                if (reclamoprestacional.getChequeOP() != null) {
+                    formaPago =
+                            " / CH: "
+                                    + reclamoprestacional
+                                            .getChequeOP();
+                } else {
+                    formaPago =
+                            reclamoprestacional.getCtaNro() == 0
+                                    ? " "
+                                    : " / CTA: "
+                                      + reclamoprestacional
+                                              .getCtaNro();
+                }
+
+                valorLista =
+                        reclamoprestacional
+                                .getId_lista_reintegro() == -1
+                                ? " "
+                                : String.valueOf(
+                                        reclamoprestacional
+                                                .getId_lista_reintegro()
+                                );
+
+                valorFechaCheque =
+                        reclamoprestacional.getFechaOP() == null
+                                ? " "
+                                : " / "
+                                  + reclamoprestacional
+                                          .getfechaOPAsString();
+
+                opAsignadaalReclamo =
+                        "OP: "
+                                + valorLista
+                                + " / "
+                                + reclamoprestacional.getIdOP()
+                                + formaPago
+                                + valorFechaCheque;
+
+                opAsignadaalReclamoExiste =
+                        true;
+            }
+
+            caso_vinculado =
+                    String.valueOf(
+                            reclamoprestacional
+                                    .getCaso_vinculado()
+                    );
+
+            if (reclamoprestacional.getCaso_vinculado() > 0) {
+                cuit_titular_vinculado =
+                        reclamoprestacional
+                                .getCuit_titular();
+
+                inte_vinculado =
+                        reclamoprestacional
+                                .getInte();
+
+                reclamo_vinculado =
+                        true;
+            }
+
+        } else if (borradorDesdeCompras) {
+
+            nroreclamo =
+                    "Nuevo Reclamo Prestacional - Requerimiento #"
+                            + contextoCompra
+                                    .getIdRequerimientoCompra();
+
+            cuit_titular_vinculado =
+                    contextoCompra
+                            .getAfiliadoCuilTitular();
+
+            inte_vinculado =
+                    contextoCompra.getAfiliadoInt() != null
+                            ? contextoCompra
+                                    .getAfiliadoInt()
+                                    .intValue()
+                            : 0;
+
+            /*
+             * El requerimiento es el origen del borrador.
+             * No es otro Reclamo Prestacional vinculado.
+             */
+            reclamo_vinculado =
+                    false;
+
+            caso_vinculado =
+                    "0";
+
+        } else {
+            nroreclamo =
+                    "Nuevo Reclamo Prestacional";
+        }
+
+    } else {
+
+        if (borradorDesdeCompras) {
+
+            nroreclamo =
+                    "Nuevo Reclamo Prestacional - Requerimiento #"
+                            + contextoCompra
+                                    .getIdRequerimientoCompra();
+
+            cuit_titular_vinculado =
+                    contextoCompra
+                            .getAfiliadoCuilTitular();
+
+            inte_vinculado =
+                    contextoCompra.getAfiliadoInt() != null
+                            ? contextoCompra
+                                    .getAfiliadoInt()
+                                    .intValue()
+                            : 0;
+
+            reclamo_vinculado =
+                    false;
+
+            caso_vinculado =
+                    "0";
+
+        } else if (Integer.parseInt(caso_vinculado) > 0) {
+
+            ReclamoPrestacional reclamoprestacional1 =
+                    ReclamosPrestacionesServiceUtil
+                            .getReclamoPrestacional(
+                                    Integer.parseInt(
+                                            caso_vinculado
+                                    )
+                            );
+
+            cuit_titular_vinculado =
+                    reclamoprestacional1
+                            .getCuit_titular();
+
+            inte_vinculado =
+                    reclamoprestacional1
+                            .getInte();
+
+            reclamo_vinculado =
+                    true;
+        }
+    }
+String cuilAfiliadoInicial =
+        null;
+
+String inteAfiliadoInicial =
+        null;
+
+if (borradorDesdeCompras) {
+
+    cuilAfiliadoInicial =
+            contextoCompra
+                    .getAfiliadoCuilTitular();
+
+    inteAfiliadoInicial =
+            contextoCompra.getAfiliadoInt() != null
+                    ? String.valueOf(
+                            contextoCompra
+                                    .getAfiliadoInt()
+                    )
+                    : "0";
+
+} else if (reclamoprestacional != null) {
+
+    cuilAfiliadoInicial =
+            reclamoprestacional
+                    .getCuit_titular();
+
+    inteAfiliadoInicial =
+            String.valueOf(
+                    reclamoprestacional
+                            .getInte()
+            );
+
+} else if (reclamo_vinculado) {
+
+    cuilAfiliadoInicial =
+            cuit_titular_vinculado;
+
+    inteAfiliadoInicial =
+            String.valueOf(
+                    inte_vinculado
+            );
 }
 
-Integer idPreautorizacion=0;
-try{
-	idPreautorizacion = PreAutorizacionServiceUtil.buscarPreautorizacionPorIdReclamo(reclamoprestacional.getId_reclamo(),null);
-}catch(Exception e){}
+Integer idPreautorizacion =
+        Integer.valueOf(0);
+
+if (reclamoPersistido) {
+    try {
+        idPreautorizacion =
+                PreAutorizacionServiceUtil
+                        .buscarPreautorizacionPorIdReclamo(
+                                reclamoprestacional
+                                        .getId_reclamo(),
+                                null
+                        );
+    } catch (Exception e) {
+        /*
+         * Se conserva el comportamiento silencioso legacy.
+         */
+    }
+}
 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
@@ -318,10 +535,18 @@ span-fixed-size {
 		name="<portlet:namespace />intetitular"
 		id="<portlet:namespace />intetitular" /> <input type="hidden"
 		name="<portlet:namespace />cantrevisionesactivas"
-		id="<portlet:namespace />cantrevisionesactivas" value="" /> <input
-		type="hidden" id="<portlet:namespace />id_reclamosel"
-		name="<portlet:namespace />id_reclamosel" size="8"
-		value="<%=Validator.isNotNull(reclamoprestacional)  ? reclamoprestacional.getId_reclamo()  : "0"  %>" />
+		id="<portlet:namespace />cantrevisionesactivas" value="" />
+		<input
+            type="hidden"
+            id="<portlet:namespace />id_reclamosel"
+            name="<portlet:namespace />id_reclamosel"
+            size="8"
+            value="<%=
+                reclamoPersistido
+                        ? reclamoprestacional.getId_reclamo()
+                        : 0
+            %>"
+        />
 	<input type="hidden" id="<portlet:namespace />tipoaccionprestacion"
 		name="<portlet:namespace />tipoaccionprestacion" size="8" value='0' />
 	<input type="hidden" id="<portlet:namespace />evaluacionreclamo"
@@ -441,7 +666,9 @@ span-fixed-size {
 
 						<td>
 							<div class="divheaderNroReclamo">
-								<label><b><liferay-ui:message key="<%= nroreclamo %>" /></b></label>
+								<label>
+                                    <b><%= nroreclamo %></b>
+                                </label>
 							</div>
 							<div  class="divheaderNroOP">
 								<label><b><%= opAsignadaalReclamo %></b></label>
@@ -627,7 +854,9 @@ span-fixed-size {
 							<!--
 							    <td>
 							    <div class="divheaderNroReclamo">
-							    <label><b><liferay-ui:message key="<%= nroreclamo %>" /></b></label>
+							    <label>
+                                    <b><%= nroreclamo %></b>
+                                </label>
 							    </div>
 							    <div class="divheaderNroOP">
 							    <label><b><liferay-ui:message key="<%= opAsignadaalReclamo %>" /></b></label>
@@ -653,7 +882,9 @@ span-fixed-size {
 				<!-- DS -->
 				<td>
 <!-- 					<div class="divheaderNroReclamo"> -->
-<%-- 						<label><b><liferay-ui:message key="<%= nroreclamo %>" /></b></label> --%>
+<%-- 						<label>
+                                <b><%= nroreclamo %></b>
+                            </label>
 <!-- 					</div> -->
 <!-- 					<div  class="divheaderNroOP"> -->
 <%-- 						<label><b><%= opAsignadaalReclamo %></b></label> 							 --%>
@@ -744,20 +975,20 @@ span-fixed-size {
 										<liferay-util:param name="pag_reintegro" value="<%= String.valueOf(true) %>" />
 										<liferay-util:param name="from_reclamo" value="true" />
 
-										<% if ( reclamo_vinculado   ) { %>
-										<liferay-util:param name="cuil"
-											value="<%= String.valueOf(cuit_titular_vinculado) %>" />
-										<liferay-util:param name="inte"
-											value="<%= String.valueOf(inte_vinculado) %>" />
-										<liferay-util:param name="origen" value="" />
+										<liferay-util:param
+                                            name="cuil"
+                                            value="<%= cuilAfiliadoInicial %>"
+                                        />
 
-										<%}else{ %>
-										<liferay-util:param name="cuil"
-											value="<%=reclamoprestacional!=null?reclamoprestacional.getCuit_titular():null%>" />
-										<liferay-util:param name="inte"
-											value="<%=reclamoprestacional!=null?String.valueOf(reclamoprestacional.getInte()):null%>" />
-										<liferay-util:param name="origen" value="" />
-										<%} %>
+                                        <liferay-util:param
+                                            name="inte"
+                                            value="<%= inteAfiliadoInicial %>"
+                                        />
+
+                                        <liferay-util:param
+                                            name="origen"
+                                            value=""
+                                        />
 
 									</liferay-util:include>
 								</fieldset>
@@ -1632,10 +1863,13 @@ span-fixed-size {
 			</table>
 		</div>
 		<%} %>
-		<% if( reclamoprestacional!=null 
-		&& showABMButtons == true 
-		&& reclamoprestacional.getEstado()== 3  && reclamoprestacional.getIdOP() == 0
-		&& !reclamoprestacional.isMarcaReabrirReclamo()) { // cerrado sin OP %>
+		<% if (
+                reclamoPersistido
+                && showABMButtons
+                && reclamoprestacional.getEstado() == 3
+                && reclamoprestacional.getIdOP() == 0
+                && !reclamoprestacional.isMarcaReabrirReclamo()
+        ) { %>
 
 		<div id="<portlet:namespace />boton_rollback" align="center"
 			style="height: 80px; overflow-x: hidden;">
@@ -1652,7 +1886,7 @@ span-fixed-size {
 		</div>
 		<%}%>
 
-		<%if(reclamoprestacional != null){ %>
+		<% if (reclamoPersistido) { %>
 		<div align="center">
 			<table class="lfr-table"
 				style="border-collapse: separate; border-spacing: 5px;">

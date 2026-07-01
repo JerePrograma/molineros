@@ -137,7 +137,11 @@
 
     function inicializarPantalla() {
         jQuery(selector('divResultadoActualizarOK')).hide();
-        jQuery(selector('cantprestacioneslista')).val(config.initial.cantPrestacionesLista);
+
+        jQuery(selector('cantprestacioneslista')).val(
+            config.initial.cantPrestacionesLista
+        );
+
         jQuery(selector('busqueda_prestaciones')).hide();
         jQuery(selector('busqueda_farmacia')).hide();
         jQuery(selector('datos_edicion_prestacion')).hide();
@@ -145,26 +149,75 @@
         jQuery(selector('lista_prestaciones_asociadas')).hide();
         jQuery(selector('lista_contactos_reclamo')).hide();
         jQuery(selector('justificacion_medica_reclamo')).hide();
-        jQuery(selector('caso_vinculado')).val(config.initial.casoVinculado);
-        jQuery(selector('reconocidoSSS')).prop('readonly', true);
+
+        jQuery(selector('caso_vinculado')).val(
+            config.initial.casoVinculado
+        );
+
+        jQuery(selector('reconocidoSSS')).prop(
+            'readonly',
+            true
+        );
+
+        /*
+         * El ID permanece en cero para un borrador proveniente
+         * de Compras.
+         */
         jQuery(selector('idreclamoprestacion')).val('0');
 
         load = true;
-        sectorIni = valor('sector');
-        estadoIni = valor('estado');
 
-        if (config.initial.reclamoExiste) {
-            jQuery(selector('idreclamoprestacion')).val(config.initial.idReclamo);
-            jQuery(selector('botonsavereclamo')).hide();
+        sectorIni =
+            valor('sector');
 
+        estadoIni =
+            valor('estado');
+
+        /*
+         * Tanto un RP persistido como un borrador de Compras tienen
+         * valores iniciales de cabecera que deben reflejarse en la UI.
+         *
+         * El borrador no es un RP existente, pero sí contiene:
+         *
+         * - tipo de pedido;
+         * - sector;
+         * - prestaciones precargadas.
+         */
+        var tieneModeloInicial =
+            config.initial.reclamoExiste
+            || config.initial.borradorDesdeCompras;
+
+        if (tieneModeloInicial) {
             manejarTipoPedidoCierre();
             manejarTipoSector();
+        }
 
-            if (config.initial.tipoGestionCierre !== null && config.initial.tipoGestionCierre !== undefined) {
-                seleccionarValor('tipo_gestion_cierre_reclamo', config.initial.tipoGestionCierre);
+        /*
+         * Comportamiento exclusivo de un RP persistido.
+         */
+        if (config.initial.reclamoExiste) {
+            jQuery(selector('idreclamoprestacion')).val(
+                config.initial.idReclamo
+            );
+
+            jQuery(selector('botonsavereclamo')).hide();
+
+            if (config.initial.tipoGestionCierre !== null
+                && config.initial.tipoGestionCierre !== undefined) {
+
+                seleccionarValor(
+                    'tipo_gestion_cierre_reclamo',
+                    config.initial.tipoGestionCierre
+                );
             }
-            if (config.initial.idObservacionMedica !== null && config.initial.idObservacionMedica !== undefined) {
-                seleccionarValor('observacion_medica', config.initial.idObservacionMedica);
+
+            if (config.initial.idObservacionMedica !== null
+                && config.initial.idObservacionMedica !== undefined) {
+
+                seleccionarValor(
+                    'observacion_medica',
+                    config.initial.idObservacionMedica
+                );
             }
 
             if (Number(config.initial.estadoReclamo) === 3) {
@@ -174,17 +227,42 @@
 
             if (config.initial.resolucionActiva) {
                 jQuery(selector('botonrevision')).hide();
-                jQuery(selector('mensajerevisionefectuada')).html(
-                    'Revision Efectuada, el Sistema soporta solo una revision activa (No de baja).'
+
+                jQuery(
+                    selector('mensajerevisionefectuada')
+                ).html(
+                    'Revision Efectuada, '
+                    + 'el Sistema soporta solo una revision activa '
+                    + '(No de baja).'
                 );
             }
         }
 
+        /*
+         * Comportamiento exclusivo del borrador originado en Compras.
+         */
+        if (config.initial.borradorDesdeCompras
+            && !config.initial.reclamoExiste) {
+
+            jQuery(selector('idreclamoprestacion')).val('0');
+
+            /*
+             * El botón existe porque cmd=ADD.
+             * Se fuerza visible por si una ejecución anterior del JS
+             * lo hubiera ocultado.
+             */
+            jQuery(selector('botonsavereclamo')).show();
+        }
+
         if (!config.initial.esEdicion) {
-            var observacionCierre = elemento('reclamo_observacion_cierre');
+            var observacionCierre =
+                elemento('reclamo_observacion_cierre');
+
             if (observacionCierre) {
-                observacionCierre.disabled = true;
+                observacionCierre.disabled =
+                    true;
             }
+
             jQuery(selector('botonrevision')).hide();
             jQuery(selector('buttonaddprestacion')).hide();
         }
@@ -199,7 +277,11 @@
         aplicaEstiloBordeRojoDatosObligatorio();
 
         if (config.initial.buscarCieInicial) {
-            var buscarCie = window[namespace + 'buscarCieCodigo'];
+            var buscarCie =
+                window[
+                namespace + 'buscarCieCodigo'
+                    ];
+
             if (typeof buscarCie === 'function') {
                 buscarCie();
             }
