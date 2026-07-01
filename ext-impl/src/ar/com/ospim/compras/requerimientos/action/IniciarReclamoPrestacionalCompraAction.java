@@ -4,10 +4,8 @@ import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.ReclamoPrestacionalCompraPrecargaServiceUtil;
-import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.kernel.log.Log;
@@ -105,16 +103,12 @@ public class IniciarReclamoPrestacionalCompraAction
             User user =
                     PortalUtil.getUser(actionRequest);
 
+            validarPermisoCreacion(user);
+
             RequerimientoCompra requerimiento =
                     obtenerRequerimientoCotizado(
                             idRequerimientoCompra
                     );
-
-            RequerimientoCompraReclamoPrestacional relacion =
-                    RequerimientoCompraReclamoPrestacionalServiceUtil
-                            .obtenerPorRequerimiento(
-                                    idRequerimientoCompra
-                            );
 
             HttpServletRequest httpRequest =
                     PortalUtil.getHttpServletRequest(
@@ -124,96 +118,19 @@ public class IniciarReclamoPrestacionalCompraAction
             session =
                     httpRequest.getSession();
 
-            /*
-             * Si la relación ya está vinculada, no existe precarga.
-             * Se navega al mismo action de Autorizaciones en modo consulta.
-             */
-            if (relacion != null
-                    && relacion.isVinculado()) {
-
-                validarPermisoConsulta(user);
-
-                int idReclamo =
-                        relacion.getIdReclamoPrestacionalInt();
-
-                if (idReclamo <= 0) {
-                    throw new Exception(
-                            "La relación de Compras está vinculada, "
-                                    + "pero no contiene un identificador "
-                                    + "válido de Reclamo Prestacional."
-                    );
-                }
-
-                DestinoPortlet destino =
-                        resolverDestinoAutorizaciones(
-                                actionRequest
-                        );
-
-                String redirect =
-                        construirURLAutorizaciones(
-                                httpRequest,
-                                destino,
-                                null,
-                                Integer.valueOf(idReclamo)
-                        );
-
-                /*
-                 * No se permite que la consulta sustituya silenciosamente
-                 * un reclamo legítimo que ya estuviera siendo editado.
-                 */
-                prepararSesionParaConsulta(
-                        session
-                );
-
-                actionResponse.sendRedirect(
-                        redirect
-                );
-
-                return;
-            }
-
-            /*
-             * RESERVADO y ERROR continúan bloqueando una segunda creación.
-             */
-            if (relacion != null) {
-                throw new Exception(
-                        relacion.isError()
-                                ? "El Reclamo Prestacional fue creado, "
-                                  + "pero su vinculación requiere "
-                                  + "reconciliación. No se permite "
-                                  + "crear otro reclamo."
-                                : "Ya existe una creación de Reclamo "
-                                  + "Prestacional en proceso para "
-                                  + "este requerimiento."
-                );
-            }
-
-            validarPermisoCreacion(user);
-
             String usuario =
-                    user != null
-                            ? user.getScreenName()
-                            : "sistema";
+                    user.getScreenName();
 
             contextoHandoff =
                     new ReclamoPrestacionalCompraContexto(
-                            requerimiento
-                                    .getIdRequerimientoCompra(),
-                            requerimiento
-                                    .getAfiliadoCuilTitular(),
-                            requerimiento
-                                    .getAfiliadoInt(),
+                            requerimiento.getIdRequerimientoCompra(),
+                            requerimiento.getAfiliadoCuilTitular(),
+                            requerimiento.getAfiliadoInt(),
                             usuario,
                             System.currentTimeMillis(),
                             UUID.randomUUID().toString()
                     );
 
-            /*
-             * Primero se resuelve el portlet y se construye la URL.
-             *
-             * Si cualquiera de estas operaciones falla, todavía no se
-             * escribió la precarga en la sesión.
-             */
             DestinoPortlet destino =
                     resolverDestinoAutorizaciones(
                             actionRequest
@@ -228,15 +145,21 @@ public class IniciarReclamoPrestacionalCompraAction
                     );
 
             /*
-             * El contexto se registra después de tener preparada la URL.
-             * Un contexto vigente impide que una segunda pulsación
-             * reemplace el handoff que está en curso.
+             * Registra solamente metadata temporal del requerimiento origen.
+             *
+             * No crea relación.
+             * No reserva un RP.
+             * No asigna idRequerimientoCompra como idReclamo.
              */
-            registrarContextoNuevo(
+            registrarContextoBorrador(
                     session,
                     contextoHandoff
             );
 
+            /*
+             * Construye objetos Java en sesión.
+             * No persiste el Reclamo Prestacional.
+             */
             precargaHandoff =
                     ReclamoPrestacionalCompraPrecargaServiceUtil
                             .precargar(
@@ -245,25 +168,11 @@ public class IniciarReclamoPrestacionalCompraAction
                                     usuario
                             );
 
-            /*
-             * La URL pertenece realmente al portlet de Autorizaciones.
-             * No se establecen render parameters de Autorizaciones sobre
-             * COMPRA_1 y no se utiliza un forward Tiles entre portlets.
-             */
             actionResponse.sendRedirect(
                     redirect
             );
 
         } catch (Exception e) {
-            /*
-             * Si el contexto de este intento llegó a registrarse, se
-             * compensa únicamente cuando el nonce actual sigue siendo
-             * el mismo.
-             *
-             * La limpieza compara además la identidad de los objetos
-             * precargados, por lo que no elimina datos escritos después
-             * por otra petición.
-             */
             if (session != null
                     && contextoHandoff != null) {
 
@@ -276,8 +185,9 @@ public class IniciarReclamoPrestacionalCompraAction
             }
 
             _log.error(
-                    "No se pudo iniciar el Reclamo Prestacional desde "
-                            + "Compras. idRequerimiento="
+                    "No se pudo precargar el borrador de Reclamo "
+                            + "Prestacional desde Compras. "
+                            + "idRequerimiento="
                             + idRequerimientoCompra,
                     e
             );
@@ -292,10 +202,6 @@ public class IniciarReclamoPrestacionalCompraAction
                     mensajeError(e)
             );
 
-            /*
-             * Este render parameter pertenece a COMPRA_1 y es válido.
-             * El forward restante también permanece dentro de Compras.
-             */
             actionResponse.setRenderParameter(
                     "struts_action",
                     STRUTS_ACTION_VER_REQUERIMIENTO
@@ -303,8 +209,7 @@ public class IniciarReclamoPrestacionalCompraAction
 
             if (idRequerimientoCompra > 0) {
                 actionResponse.setRenderParameter(
-                        WebKeysCompras
-                                .PARAM_ID_REQUERIMIENTO_COMPRA,
+                        WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
                         String.valueOf(idRequerimientoCompra)
                 );
             }
@@ -320,7 +225,6 @@ public class IniciarReclamoPrestacionalCompraAction
     /**
      * Después de una redirección exitosa este método no interviene en el
      * render de Autorizaciones.
-     *
      * Se conserva solamente para el retorno de error dentro de COMPRA_1.
      */
     public ActionForward render(
@@ -637,9 +541,9 @@ public class IniciarReclamoPrestacionalCompraAction
         return encontrado;
     }
 
-    private void registrarContextoNuevo(
+    private void registrarContextoBorrador(
             HttpSession session,
-            ReclamoPrestacionalCompraContexto contexto)
+            ReclamoPrestacionalCompraContexto nuevoContexto)
             throws Exception {
 
         if (session == null) {
@@ -648,127 +552,88 @@ public class IniciarReclamoPrestacionalCompraAction
             );
         }
 
-        if (contexto == null
+        if (nuevoContexto == null
                 || WebKeysCompras.isEmpty(
-                contexto.getNonce()
+                nuevoContexto.getNonce()
         )) {
 
             throw new Exception(
-                    "No se pudo construir el contexto de Compras."
+                    "No se pudo construir el contexto temporal de Compras."
             );
         }
 
         synchronized (session) {
-            validarSinReclamoEnEdicion(
-                    session
-            );
-
             Object contextoAnteriorObj =
                     session.getAttribute(
                             WebKeysCompras
                                     .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
                     );
 
-            if (contextoAnteriorObj
-                    instanceof ReclamoPrestacionalCompraContexto) {
-
-                ReclamoPrestacionalCompraContexto contextoAnterior =
-                        (ReclamoPrestacionalCompraContexto)
-                                contextoAnteriorObj;
-
-                if (contextoAnterior.estaVigente(
-                        System.currentTimeMillis()
-                )) {
-
-                    throw new Exception(
-                            "Ya existe un inicio de Reclamo Prestacional "
-                                    + "desde Compras en proceso en esta "
-                                    + "sesión. No se iniciará otro."
+            Object reclamoEnEdicion =
+                    session.getAttribute(
+                            WebKeysAutorizaciones
+                                    .RECLAMO_PRESTACION_EN_EDICION
                     );
-                }
+
+            /*
+             * Si existe un RP en edición sin contexto de Compras, pertenece
+             * al flujo normal de Autorizaciones. No se pisa silenciosamente.
+             */
+            if (reclamoEnEdicion != null
+                    && !(contextoAnteriorObj
+                    instanceof ReclamoPrestacionalCompraContexto)) {
+
+                throw new Exception(
+                        "Existe un Reclamo Prestacional en edición iniciado "
+                                + "desde Autorizaciones. Finalícelo o descártelo "
+                                + "antes de precargar uno desde Compras."
+                );
             }
 
             /*
-             * Sólo se reemplazan contextos expirados o valores inválidos.
-             * Un contexto vigente se bloqueó en el bloque anterior.
+             * Si hay contexto de Compras, lo existente es solamente un
+             * borrador temporal anterior. Se reemplaza por el requerimiento
+             * seleccionado actualmente.
              */
-            session.removeAttribute(
-                    WebKeysCompras
-                            .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+            limpiarBorradorComprasEnSesion(
+                    session
             );
 
             session.setAttribute(
                     WebKeysCompras
                             .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA,
-                    contexto
+                    nuevoContexto
             );
         }
     }
 
-    private void prepararSesionParaConsulta(
-            HttpSession session) throws Exception {
+    private void limpiarBorradorComprasEnSesion(
+            HttpSession session) {
 
-        if (session == null) {
-            throw new Exception(
-                    "No se pudo obtener la sesión del usuario."
-            );
-        }
+        session.removeAttribute(
+                WebKeysCompras
+                        .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+        );
 
-        synchronized (session) {
-            validarSinReclamoEnEdicion(
-                    session
-            );
-
-            Object contextoObj =
-                    session.getAttribute(
-                            WebKeysCompras
-                                    .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
-                    );
-
-            if (contextoObj
-                    instanceof ReclamoPrestacionalCompraContexto) {
-
-                ReclamoPrestacionalCompraContexto contexto =
-                        (ReclamoPrestacionalCompraContexto)
-                                contextoObj;
-
-                if (contexto.estaVigente(
-                        System.currentTimeMillis()
-                )) {
-
-                    throw new Exception(
-                            "Ya existe un inicio de Reclamo Prestacional "
-                                    + "desde Compras en proceso en esta "
-                                    + "sesión. Finalícelo o descarte esa "
-                                    + "edición antes de consultar otro."
-                    );
-                }
-            }
-
-            /*
-             * Un contexto expirado sin reclamo en edición es abandonado.
-             */
-            session.removeAttribute(
-                    WebKeysCompras
-                            .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
-            );
-        }
-    }
-
-    private void validarSinReclamoEnEdicion(
-            HttpSession session) throws Exception {
-
-        if (session.getAttribute(
+        session.removeAttribute(
                 WebKeysAutorizaciones
                         .RECLAMO_PRESTACION_EN_EDICION
-        ) != null) {
+        );
 
-            throw new Exception(
-                    "Ya existe un Reclamo Prestacional en edición "
-                            + "en esta sesión. Finalice o descarte "
-                            + "esa edición antes de navegar desde Compras."
-            );
-        }
+        session.removeAttribute(
+                WebKeysAutorizaciones
+                        .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
+        );
+
+        session.removeAttribute(
+                WebKeysAutorizaciones
+                        .LISTADO_REVISIONES_RECLAMOS_EN_SESION
+        );
+
+        session.removeAttribute(
+                WebKeysAutorizaciones
+                        .LISTADO_CONTACTOS_RECLAMOS_EN_SESION
+        );
     }
 
     private RequerimientoCompra obtenerRequerimientoCotizado(
@@ -841,51 +706,6 @@ public class IniciarReclamoPrestacionalCompraAction
             throw new Exception(
                     "No posee permisos para crear un Reclamo "
                             + "Prestacional desde Compras."
-            );
-        }
-    }
-
-    private void validarPermisoConsulta(
-            User user) throws Exception {
-
-        validarUsuario(user);
-
-        boolean permisoCompras =
-                PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysCompras.ROL_VIEW_COMPRAS
-                )
-                        || PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysCompras.ROL_ABM_COMPRAS
-                )
-                        || PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysCompras.ROL_COTIZAR_COMPRAS
-                )
-                        || PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysCompras.ROL_ANULAR_COMPRAS
-                );
-
-        boolean permisoReclamo =
-                PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysAutorizaciones
-                                .ROL_ABM_RECLAM_PREST
-                )
-                        || PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysAutorizaciones
-                                .ROL_CONSULTA_RECLAMOS_PRESTACIONALES
-                );
-
-        if (!permisoCompras
-                || !permisoReclamo) {
-
-            throw new Exception(
-                    "No posee permisos para consultar el Reclamo "
-                            + "Prestacional asociado."
             );
         }
     }
