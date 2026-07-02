@@ -27,6 +27,11 @@ if(prestador != null && prestador.getFechaVtoSeguro() != null){
 
 String tabValue = ParamUtil.getString(request, "tab", null); // "datos"
 
+SimpleDateFormat sdfAuditoriaPrestador =
+        new SimpleDateFormat(
+                "dd/MM/yyyy HH:mm"
+        );
+
 %>
 <portlet:defineObjects />
 
@@ -317,9 +322,102 @@ String tabValue = ParamUtil.getString(request, "tab", null); // "datos"
 			</td>
 			
 		</tr>
-	</table>
-</fieldset>
-<%if(esEdicion){ %>
+		</table>
+    </fieldset>
+
+    <%
+    if (
+            prestador != null
+            && prestador.getId_prestador() > 0
+    ) {
+    %>
+
+    <br />
+
+    <hr />
+
+    <div align="center">
+        <table
+            class="lfr-table"
+            style="
+                border-collapse: separate;
+                border-spacing: 5px;
+                font-size: 8pt;
+            "
+        >
+            <tr>
+                <td>
+                    <label>
+                        <liferay-ui:message
+                            key="Alta Usuario"
+                        />:
+                    </label>
+                </td>
+
+                <td>
+                    <%= prestador.getAlta_usr() != null
+                            ? prestador.getAlta_usr()
+                            : ""
+                    %>
+                </td>
+
+                <td>
+                    <label>
+                        <liferay-ui:message
+                            key="crm-contacto-alta-fec"
+                        />:
+                    </label>
+                </td>
+
+                <td>
+                    <%= prestador.getAlta_fecha() != null
+                            ? sdfAuditoriaPrestador.format(
+                                    prestador.getAlta_fecha()
+                              )
+                            : ""
+                    %>
+                </td>
+
+                <td>
+                    <label>
+                        <liferay-ui:message
+                            key="Modi Usuario"
+                        />:
+                    </label>
+                </td>
+
+                <td>
+                    <%= prestador.getModi_usr() != null
+                            ? prestador.getModi_usr()
+                            : ""
+                    %>
+                </td>
+
+                <td>
+                    <label>
+                        <liferay-ui:message
+                            key="crm-contacto-modi-fec"
+                        />:
+                    </label>
+                </td>
+
+                <td>
+                    <%= prestador.getModi_fecha() != null
+                            ? sdfAuditoriaPrestador.format(
+                                    prestador.getModi_fecha()
+                              )
+                            : ""
+                    %>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <%
+    }
+    %>
+
+    <%if(esEdicion){ %>
 <br/>
 <div align="left" style="vertical-align: bottom;" >
 <input type="button" value="<liferay-ui:message key="next" />"
@@ -331,9 +429,9 @@ String tabValue = ParamUtil.getString(request, "tab", null); // "datos"
 </form>
 
 <script type="text/javascript">
-<%if(cmd.equals(Constants.ADD)){ %>
+<% if (Constants.ADD.equals(cmd)) { %>
 jQuery("#<portlet:namespace />cuit").focus();
-<%}%>
+<% } %>
 
 <% if(prestador != null && prestador.getFechaVtoSeguro() == null){ %>
 	jQuery('#<portlet:namespace/>seguroFechaVtoDia').val('');
