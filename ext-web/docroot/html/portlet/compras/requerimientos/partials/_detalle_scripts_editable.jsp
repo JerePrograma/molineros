@@ -337,26 +337,6 @@
         return false;
     }
 
-    function <portlet:namespace />existeDetalleConArticulo(idArticulo, ignorarIndex) {
-        idArticulo = idArticulo == null ? '' : String(idArticulo);
-
-        for (var i = 0; i < <portlet:namespace />detallesCompra.length; i++) {
-            if (typeof ignorarIndex != 'undefined'
-                    && ignorarIndex != null
-                    && i == ignorarIndex) {
-                continue;
-            }
-
-            var detalle = <portlet:namespace />detallesCompra[i];
-
-            if (detalle != null && String(detalle.idArticulo) == idArticulo) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     function <portlet:namespace />postDetalleServidor(cmd, idDetalle, idArticulo, cantidad, observaciones) {
         var idReq = <portlet:namespace />idRequerimientoCompraDetalle;
 
@@ -426,15 +406,6 @@
                 !isNaN(editIndex)
                 && editIndex >= 0
                 && <portlet:namespace />detallesCompra[editIndex];
-
-        if (<portlet:namespace />existeDetalleConArticulo(
-                idArticulo,
-                esEdicion ? editIndex : -1
-        )) {
-            alert('Ya existe un detalle cargado para este artículo. Edite la fila existente en lugar de agregar otra.');
-            jQuery('#<portlet:namespace />detalle_id_articulo').focus();
-            return false;
-        }
 
         <portlet:namespace />setDetalleAccionEnCurso(true);
 
@@ -614,48 +585,6 @@
             );
 
             return false;
-        }
-
-        /*
-         * Validación previa de artículos duplicados.
-         */
-        var articulosSerializados = {};
-
-        for (
-            var d = 0;
-            d < <portlet:namespace />detallesCompra.length;
-            d++
-        ) {
-            var detalleValidacion =
-                    <portlet:namespace />detallesCompra[d];
-
-            if (detalleValidacion == null) {
-                continue;
-            }
-
-            var idArticuloValidacion =
-                    jQuery.trim(
-                            <portlet:namespace />detalleValue(
-                                    detalleValidacion.idArticulo
-                            )
-                    );
-
-            if (idArticuloValidacion == '') {
-                continue;
-            }
-
-            if (articulosSerializados[idArticuloValidacion]) {
-                alert(
-                        'Detalle #' + (d + 1)
-                                + ': el artículo ya fue cargado '
-                                + 'en otro detalle. Edite la fila '
-                                + 'existente en lugar de duplicarlo.'
-                );
-
-                return false;
-            }
-
-            articulosSerializados[idArticuloValidacion] = true;
         }
 
         /*

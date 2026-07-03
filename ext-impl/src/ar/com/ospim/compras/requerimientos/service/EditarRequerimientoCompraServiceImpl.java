@@ -1023,6 +1023,23 @@ public class EditarRequerimientoCompraServiceImpl {
                             : null;
         }
 
+        /*
+         * Si la cotización está completa para pasar a COTIZADO,
+         * debe existir al menos un archivo activo de presupuesto
+         * cargado para una tercerizadora/prestador.
+         *
+         * Se valida antes de llamar a la función SQL para evitar
+         * que la base cambie el estado y recién después falle Java.
+         */
+        if (debeValidarPresupuestoParaCotizado(
+                idPrestadorAdjudicado,
+                preciosUnitarios
+        )) {
+            validarTienePresupuestoActivoDeTercerizadora(
+                    idRequerimientoCompra
+            );
+        }
+
         Connection con = null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -1918,5 +1935,91 @@ public class EditarRequerimientoCompraServiceImpl {
         }
 
         return null;
+    }
+
+    private void validarTienePresupuestoActivoDeTercerizadora(
+            int idRequerimientoCompra) throws Exception {
+
+        List<RequerimientoCompraPresupuesto> presupuestos =
+                BusquedaRequerimientoCompraServiceUtil
+                        .listarPresupuestos(
+                                idRequerimientoCompra
+                        );
+
+        if (presupuestos == null
+                || presupuestos.isEmpty()) {
+
+            throw new Exception(
+                    "Para pasar el requerimiento a COTIZADO debe cargar "
+                            + "al menos un archivo de presupuesto en una tercerizadora."
+            );
+        }
+
+        for (int i = 0; i < presupuestos.size(); i++) {
+            RequerimientoCompraPresupuesto presupuesto =
+                    presupuestos.get(i);
+
+            if (esPresupuestoActivoDeTercerizadora(
+                    presupuesto
+            )) {
+                return;
+            }
+        }
+
+        throw new Exception(
+                "Para pasar el requerimiento a COTIZADO debe existir "
+                        + "al menos un archivo activo cargado en una tercerizadora."
+        );
+    }
+
+    private boolean esPresupuestoActivoDeTercerizadora(
+            RequerimientoCompraPresupuesto presupuesto) {
+
+        if (presupuesto == null) {
+            return false;
+        }
+
+        if (presupuesto.getBajaFecha() != null) {
+            return false;
+        }
+
+        if (presupuesto.getIdPrestador() == null
+                || presupuesto.getIdPrestador().intValue() <= 0) {
+
+            return false;
+        }
+
+        if (presupuesto.getDlFileEntryId() == null
+                || presupuesto.getDlFileEntryId().longValue() <= 0L) {
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean debeValidarPresupuestoParaCotizado(
+            Integer idPrestadorAdjudicado,
+            BigDecimal[] preciosUnitarios) {
+
+        if (idPrestadorAdjudicado == null
+                || idPrestadorAdjudicado.intValue() <= 0) {
+
+            return false;
+        }
+
+        if (preciosUnitarios == null
+                || preciosUnitarios.length == 0) {
+
+            return false;
+        }
+
+        for (int i = 0; i < preciosUnitarios.length; i++) {
+            if (preciosUnitarios[i] == null) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
