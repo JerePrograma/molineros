@@ -1,3 +1,5 @@
+<%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto" %>
 <%@ include file="/html/portlet/autorizaciones/init.jsp"%>
 <%@ include
 	file="/html/portlet/autorizaciones/reclamos_prestacionales/init.jsp"%>

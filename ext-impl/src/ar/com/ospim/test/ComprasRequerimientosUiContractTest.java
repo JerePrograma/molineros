@@ -311,6 +311,10 @@ public final class ComprasRequerimientosUiContractTest {
                 "ext-web/docroot/html/portlet/autorizaciones/"
                         + "reclamos_prestacionales/view_reclamo.jsp"
         );
+        String viewReclamoJspf = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/view_reclamo.jspf"
+        );
 
         assertContains(
                 "boton RP",
@@ -385,8 +389,38 @@ public final class ComprasRequerimientosUiContractTest {
         );
         assertContains(
                 "nonce en formulario",
-                viewReclamo,
+                viewReclamoJspf,
                 "PARAM_RECLAMO_PRESTACIONAL_NONCE"
+        );
+        assertContains(
+                "vista importa contexto Compras",
+                viewReclamo,
+                "ReclamoPrestacionalCompraContexto"
+        );
+        assertContains(
+                "bean temporal no implica reclamo persistido",
+                viewReclamoJspf,
+                "boolean existeReclamoPersistido"
+        );
+        assertContains(
+                "hasReclamo exige persistencia",
+                viewReclamoJspf,
+                "hasReclamo: <%= existeReclamoPersistido %>"
+        );
+        assertContains(
+                "ids de alta quedan en cero",
+                viewReclamoJspf,
+                "int idReclamoPantalla = esAlta || !existeReclamoPersistido"
+        );
+        assertContains(
+                "precarga Compras muestra estado cero",
+                viewReclamoJspf,
+                "esAlta && !esBorradorCompras && estados.getId()==0"
+        );
+        assertContains(
+                "render conserva alta Compras",
+                actionReclamo,
+                "if (cmd.equals(Constants.ADD))"
         );
         assertContains(
                 "servicio consulta relacion",

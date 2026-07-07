@@ -9,12 +9,51 @@ String caso_vinculado = String.valueOf(request.getAttribute("caso_vinculado")!=n
 String cuit_titular_vinculado="";
 int inte_vinculado=0;
 boolean reclamo_vinculado =false;
-boolean esEdicion = false;
 int cantprestacioneslista=0;
 int cantRevisiones=0;
 boolean debitoTercerizadora = false;
 
 ReclamoPrestacional  reclamoprestacional  = (ReclamoPrestacional)request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
+
+boolean esAlta = cmd != null && cmd.equalsIgnoreCase(Constants.ADD);
+boolean esEdit = cmd != null && cmd.equalsIgnoreCase(Constants.EDIT);
+boolean permiteEditarPantalla = esAlta || esEdit;
+boolean esEdicion = permiteEditarPantalla;
+
+Object contextoComprasObj = request.getSession().getAttribute(
+        WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+);
+String nonceCompras = ParamUtil.getString(
+        request,
+        WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
+        ""
+);
+ReclamoPrestacionalCompraContexto contextoCompras =
+        contextoComprasObj instanceof ReclamoPrestacionalCompraContexto
+        ? (ReclamoPrestacionalCompraContexto) contextoComprasObj
+        : null;
+
+if (contextoCompras != null
+        && (!contextoCompras.coincideNonce(nonceCompras)
+        || !contextoCompras.perteneceAUsuario(
+                user != null ? user.getScreenName() : ""
+        )
+        || !contextoCompras.estaVigente(System.currentTimeMillis()))) {
+    contextoCompras = null;
+}
+
+boolean esBorradorCompras = esAlta && contextoCompras != null;
+
+/*
+ * Un ReclamoPrestacional en sesion puede ser un borrador de alta. La
+ * existencia del objeto no implica que exista un reclamo persistido.
+ */
+boolean existeReclamoPersistido = reclamoprestacional != null
+        && reclamoprestacional.getId_reclamo() > 0;
+boolean esEdicionPersistida = esEdit && existeReclamoPersistido;
+int idReclamoPantalla = esAlta || !existeReclamoPersistido
+        ? 0
+        : reclamoprestacional.getId_reclamo();
 
 String _nuevoEstadoObservado = "";
 if (request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS) != null) {
@@ -46,15 +85,12 @@ ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO resolucionAutorizado=ReclamoPrestac
 
 divcheckbox="divheadercheckboxs";
 
-if (cmd != null && (cmd.equalsIgnoreCase(Constants.EDIT) || cmd.equalsIgnoreCase(Constants.ADD)) ){
-    esEdicion = true;	
-}
 
 boolean PuedeObservar = false;
 int _estadoPendiente = 1;
 int _estadoPrecarga = 0;
 
-if(reclamoprestacional != null  ){
+if(existeReclamoPersistido){
 	if ((reclamoprestacional.getEstado() == _estadoPendiente) || 
 	    (reclamoprestacional.getEstado() == _estadoPrecarga)) 
 	{
@@ -113,8 +149,9 @@ if(reclamoprestacional != null  ){
 		}	
 	}
 	
-	nroreclamo ="Reclamo Nro : " + "000"+  String.valueOf(reclamoprestacional.getId_reclamo());
-	if (reclamoprestacional.getId_lista_reintegro()==0 && reclamoprestacional.getIdOP()==0 
+	if (existeReclamoPersistido) {
+		nroreclamo ="Reclamo Nro : " + "000"+  String.valueOf(reclamoprestacional.getId_reclamo());
+		if (reclamoprestacional.getId_lista_reintegro()==0 && reclamoprestacional.getIdOP()==0
 	&& reclamoprestacional.getChequeOP()==null  &&  reclamoprestacional.getFechaOP()==null ){
 		     opAsignadaalReclamo="Sin Orden de Pago";
 	}else{
@@ -136,6 +173,7 @@ if(reclamoprestacional != null  ){
 		     valorFechaCheque=  reclamoprestacional.getFechaOP()==null ? " " :" / "  + reclamoprestacional.getfechaOPAsString() ;
 		     opAsignadaalReclamo ="OP: " + valorLista    + " / " + reclamoprestacional.getIdOP() +  formaPago  +  valorFechaCheque ;
 		     opAsignadaalReclamoExiste=true;
+		}
 	}
 	
 	caso_vinculado =  String.valueOf(reclamoprestacional.getCaso_vinculado()); 
@@ -157,9 +195,11 @@ if (Integer.parseInt(caso_vinculado)>0 ){// carga datos del afiliado del cas
 }
 
 Integer idPreautorizacion=0;
-try{
-	idPreautorizacion = PreAutorizacionServiceUtil.buscarPreautorizacionPorIdReclamo(reclamoprestacional.getId_reclamo(),null);
-}catch(Exception e){}
+if (existeReclamoPersistido) {
+	try{
+		idPreautorizacion = PreAutorizacionServiceUtil.buscarPreautorizacionPorIdReclamo(reclamoprestacional.getId_reclamo(),null);
+	}catch(Exception e){}
+}
 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
@@ -267,7 +307,13 @@ span-fixed-size {
 		name="<portlet:namespace />codigoCie10"
 		value="<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getCodigoCie10())   ? reclamoprestacional.getCodigoCie10()   : ""  %>" />
 	<input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>"
-		value="<%=cmd%>" /> <input type="hidden"
+		value="<%=cmd%>" />
+	<% if (esBorradorCompras) { %>
+	<input type="hidden"
+		name="<portlet:namespace /><%= WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE %>"
+		value="<%= contextoCompras.getNonce() %>" />
+	<% } %>
+	<input type="hidden"
 		name="<portlet:namespace />cantprestacioneslista"
 		id="<portlet:namespace />cantprestacioneslista"
 		value="<%=cantprestacioneslista%>" /> <input type="hidden"
@@ -279,7 +325,7 @@ span-fixed-size {
 		id="<portlet:namespace />cantrevisionesactivas" value="" /> <input
 		type="hidden" id="<portlet:namespace />id_reclamosel"
 		name="<portlet:namespace />id_reclamosel" size="8"
-		value="<%=Validator.isNotNull(reclamoprestacional)  ? reclamoprestacional.getId_reclamo()  : "0"  %>" />
+		value="<%= idReclamoPantalla %>" />
 	<input type="hidden" id="<portlet:namespace />tipoaccionprestacion"
 		name="<portlet:namespace />tipoaccionprestacion" size="8" value='0' />
 	<input type="hidden" id="<portlet:namespace />evaluacionreclamo"
@@ -511,7 +557,7 @@ span-fixed-size {
 
 												<option value="-1">SELECCIONE</option>
 												<% for (EstadosReclamosPrestacionales estados : listaestados) { %>
-													<%if(cmd!=null && cmd.equalsIgnoreCase(Constants.ADD) &&  estados.getId()==0){ %>
+													<%if(esAlta && !esBorradorCompras && estados.getId()==0){ %>
 	
 													<% } else{%>
 													
@@ -1168,7 +1214,7 @@ span-fixed-size {
 	<input type="hidden" name="<portlet:namespace />tipogestion"
 		id="<portlet:namespace />tipogestion" value="" /> <input
 		type="hidden" name="<portlet:namespace />idreclamoprestacion"
-		id="<portlet:namespace />idreclamoprestacion" value="" /> <input
+		id="<portlet:namespace />idreclamoprestacion" value="<%= idReclamoPantalla %>" /> <input
 		type="hidden" name="<portlet:namespace />consultareclamo"
 		id="<portlet:namespace />consultareclamo"
 		value="<%=esEdicion  ? true  : false  %>" /> <input type="hidden"
@@ -1387,7 +1433,7 @@ span-fixed-size {
 							<table class="lfr-table"
 								style="border-collapse: separate; border-spacing: 3px;">
 								<tr>
-									<%if(reclamoprestacional == null) {%>
+									<%if(!existeReclamoPersistido) {%>
 									<td colspan="2"><label><liferay-ui:message
 												key="Fecha Cierre" />:</label> <liferay-ui:input-date
 											dayParam="fechacierreDia"
@@ -1547,7 +1593,7 @@ span-fixed-size {
 		</table>
 
 		<br />
-		<%if(cmd!=null && cmd.equalsIgnoreCase(Constants.ADD)){ %>
+		<%if(esAlta){ %>
 		<div id="<portlet:namespace />botonsavereclamo" align="center"
 			style="height: 80px; overflow-x: hidden;">
 			<table>
@@ -1561,7 +1607,7 @@ span-fixed-size {
 			</table>
 		</div>
 		<%} %>
-		<%if(cmd!=null && cmd.equalsIgnoreCase(Constants.EDIT)) {%>
+		<%if(esEdicionPersistida) {%>
 		<div id="<portlet:namespace />botoneditareclamo" align="center"
 			style="height: 80px; overflow-x: hidden;">
 			<table>
@@ -1590,7 +1636,7 @@ span-fixed-size {
 			</table>
 		</div>
 		<%} %>
-		<% if( reclamoprestacional!=null 
+		<% if( existeReclamoPersistido
 		&& showABMButtons == true 
 		&& reclamoprestacional.getEstado()== 3  && reclamoprestacional.getIdOP() == 0
 		&& !reclamoprestacional.isMarcaReabrirReclamo()) { // cerrado sin OP %>
@@ -1610,7 +1656,7 @@ span-fixed-size {
 		</div>
 		<%}%>
 
-		<%if(reclamoprestacional != null){ %>
+		<%if(existeReclamoPersistido){ %>
 		<div align="center">
 			<table class="lfr-table"
 				style="border-collapse: separate; border-spacing: 5px;">
@@ -1743,13 +1789,15 @@ window.ReclamoPrestacionalViewConfig = {
     values: {
         cantPrestaciones: <%= cantprestacioneslista %>,
         casoVinculado: <%= caso_vinculado %>,
-        hasReclamo: <%= reclamoprestacional != null %>,
-        reclamoCerrado: <%= reclamoprestacional != null && reclamoprestacional.getEstado() == 3 %>,
+        hasReclamo: <%= existeReclamoPersistido %>,
+        reclamoCerrado: <%= existeReclamoPersistido && reclamoprestacional.getEstado() == 3 %>,
         tipoGestionCierre: <%= reclamoprestacional != null ? reclamoprestacional.getTipo_gestion_cierre_reclamo() : 0 %>,
         idObservacionMedica: <%= reclamoprestacional != null ? reclamoprestacional.getIdObservacionMedica() : 0 %>,
         tieneResolucion: <%= resolucionAutorizado != ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINVALOR && resolucionAutorizado != ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINEVALUACION %>,
         esEdicion: <%= esEdicion %>,
-        idReclamo: <%= reclamoprestacional != null ? reclamoprestacional.getId_reclamo() : 0 %>,
+        esAlta: <%= esAlta %>,
+        esBorradorCompras: <%= esBorradorCompras %>,
+        idReclamo: <%= idReclamoPantalla %>,
         cantRevisiones: <%= cantRevisiones %>,
         debitoTercerizadora: <%= debitoTercerizadora %>,
         codigoCie10Presente: <%= reclamoprestacional != null && reclamoprestacional.getCodigoCie10() != null && !reclamoprestacional.getCodigoCie10().equals("") %>,

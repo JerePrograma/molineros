@@ -1002,14 +1002,24 @@ import ar.com.ospim.util.StringUtils;
 					String successMessage = ParamUtil.getString(renderRequest, "successMessage");
 					SessionMessages.add(renderRequest, "request_processed", successMessage);																
 				}
-				renderRequest.setAttribute(Constants.CMD, Constants.EDIT);					
-				if (cmd.equals(Constants.VIEW) ){
-					   renderRequest.setAttribute(Constants.CMD,Constants.VIEW);					                                    
+				if (cmd.equals(Constants.ADD)) {
+					renderRequest.setAttribute(Constants.CMD, Constants.ADD);
+				} else if (cmd.equals(Constants.VIEW)) {
+					renderRequest.setAttribute(Constants.CMD, Constants.VIEW);
+				} else {
+					renderRequest.setAttribute(Constants.CMD, Constants.EDIT);
 				}
 					    //renderRequest.setAttribute("tabs1", "reclamos-prestacionales");					    
 			} else {
-				renderRequest.setAttribute(Constants.CMD, Constants.EDIT);
-				reclamoPrestacional.setMarcaReabrirReclamo(true);
+				boolean existeReclamoPersistido = reclamoPrestacional != null
+						&& reclamoPrestacional.getId_reclamo() > 0;
+				renderRequest.setAttribute(
+						Constants.CMD,
+						existeReclamoPersistido ? Constants.EDIT : Constants.ADD
+				);
+				if (existeReclamoPersistido) {
+					reclamoPrestacional.setMarcaReabrirReclamo(true);
+				}
 			}
 				
 		}else{ // es Nuevo			
