@@ -525,9 +525,9 @@ span-fixed-size {
 								</table></td>
 
 								<td colspan="1">&nbsp;&nbsp;&nbsp;&nbsp;</td>
-								<td><label id="integracion_label"  style="display:none"><liferay-ui:message key="integracion"  />:&nbsp;&nbsp;</label></td>
+								<td><label id="integracion_label" style="display:<%= esBorradorCompras ? "inline" : "none" %>"><liferay-ui:message key="integracion"  />:&nbsp;&nbsp;</label></td>
 								<td><select name="<portlet:namespace/>integracion" id="<portlet:namespace/>integracion"
-									<% if (!esEdicion) { %> disabled='disabled' <%}%> style15"display:none"  >												
+									<% if (!esEdicion) { %> disabled='disabled' <%}%> style="display:<%= esBorradorCompras ? "inline" : "none" %>"  >
 										<option value="0">Seleccione Integración</option>
 											<% for (ReclamosPrestacionalesIntegracion integracion : listaIntegracion) { %>
 												<option
@@ -541,7 +541,7 @@ span-fixed-size {
 								<td colspan="1">&nbsp;&nbsp;&nbsp;&nbsp;</td>
 								
 								<td>								
-								<div id="integracion_div"  style="display:none">
+								<div id="integracion_div" style="display:<%= esBorradorCompras ? "block" : "none" %>">
 									<img id="integracion_desc"   height='16'  width='16'  src='/html/themes/classic/images/common/help.png' title=''   />
 									</div>
 								</td>

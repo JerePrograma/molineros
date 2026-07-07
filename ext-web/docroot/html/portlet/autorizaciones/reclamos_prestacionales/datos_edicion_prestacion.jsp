@@ -1,6 +1,7 @@
 <%@ include file="/html/portlet/autorizaciones/init.jsp"%>
 <%@ page import="java.math.BigDecimal" %>
 <%@ page import="java.math.RoundingMode" %>
+<%@ page import="com.liferay.portal.kernel.util.HtmlUtil" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet"%>
 <portlet:defineObjects/>
 
@@ -149,11 +150,11 @@ jQuery("#<portlet:namespace />Autorizado").hide();
 	   	<td>	<label><liferay-ui:message key="codigo-presentado" />:</label></td>
 					<td><input id="<portlet:namespace />codigoSeguimiento_filtro_edit"
 						name="<portlet:namespace />codigoSeguimiento_filtro_edit" size="10"
-						maxlength="20" type="text" value='' /></td>
+						maxlength="20" type="text" value='<%= prestacionEnEdicion != null && prestacionEnEdicion.getCodigoPrestacion() != null ? HtmlUtil.escape(prestacionEnEdicion.getCodigoPrestacion()) : "" %>' /></td>
 					<td><input
 						id="<portlet:namespace />descripcionSeguimiento_filtro_edit"
 						name="<portlet:namespace />descripcionSeguimiento_filtro_edit"
-						size="60" maxlength="200" type="text" value='' /></td>
+						size="60" maxlength="200" type="text" value='<%= prestacionEnEdicion != null && prestacionEnEdicion.getDescripcion() != null ? HtmlUtil.escape(prestacionEnEdicion.getDescripcion()) : "" %>' /></td>
 					<td><div style="width:4%;" id="<portlet:namespace />divBtnBusca">
 							<a href="javascript: void(0);"
 								onclick="javascript:<portlet:namespace />buscarNomencladorAutocompletar_edit();"

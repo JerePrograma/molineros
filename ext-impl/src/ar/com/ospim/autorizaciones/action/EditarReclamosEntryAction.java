@@ -234,6 +234,13 @@ import ar.com.ospim.util.StringUtils;
 			));
 		}
 
+		if (contextoCompra != null) {
+			renderRequest.setAttribute(
+					"tipoEdicion",
+					Integer.valueOf(0)
+			);
+		}
+
 		String seccionalDefecto=user.getExpandoBridge().getAttribute("id_seccional").toString();
 		
 		String tabSel = ParamUtil.get(renderRequest, "tab_seleccionada", "datos");

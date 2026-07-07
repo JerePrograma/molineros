@@ -303,6 +303,10 @@ public final class ComprasRequerimientosUiContractTest {
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
                         + "RequerimientoCompraReclamoPrestacionalServiceImpl.java"
         );
+        String precargaService = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
+                        + "ReclamoPrestacionalCompraPrecargaServiceUtil.java"
+        );
         String migration = leer(
                 "sql/compras/"
                         + "20260625_requerimiento_reclamo_prestacional.sql"
@@ -314,6 +318,14 @@ public final class ComprasRequerimientosUiContractTest {
         String viewReclamoJspf = leer(
                 "ext-web/docroot/html/portlet/autorizaciones/"
                         + "reclamos_prestacionales/view_reclamo.jspf"
+        );
+        String viewReclamoJs = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/view_reclamo.js"
+        );
+        String prestacionEnEdicion = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/datos_edicion_prestacion.jsp"
         );
 
         assertContains(
@@ -413,14 +425,129 @@ public final class ComprasRequerimientosUiContractTest {
                 "int idReclamoPantalla = esAlta || !existeReclamoPersistido"
         );
         assertContains(
-                "precarga Compras muestra estado cero",
-                viewReclamoJspf,
-                "esAlta && !esBorradorCompras && estados.getId()==0"
+                "precarga Compras inicia PENDIENTE",
+                precargaService,
+                ".RECLAMO_PRESTACIONAL_ESTADO_CARGADO"
+        );
+        assertNotContains(
+                "precarga Compras no inicia en PRECARGA",
+                precargaService,
+                "reclamo.setEstado(\n                0"
         );
         assertContains(
                 "render conserva alta Compras",
                 actionReclamo,
                 "if (cmd.equals(Constants.ADD))"
+        );
+        assertContains(
+                "cmd de handoff es ADD",
+                actionCompra,
+                "Constants.ADD"
+        );
+        assertContains(
+                "id_reclamosel usa el id de alta cero",
+                viewReclamoJspf,
+                "id=\"<portlet:namespace />id_reclamosel\""
+        );
+        assertContains(
+                "idreclamoprestacion usa el id de alta cero",
+                viewReclamoJspf,
+                "id=\"<portlet:namespace />idreclamoprestacion\" value=\"<%= idReclamoPantalla %>\""
+        );
+        assertContains(
+                "JS no promueve idreclamoprestacion sin persistencia",
+                viewReclamoJs,
+                "if (reclamoPrestacionalViewConfig.values.hasReclamo)"
+        );
+        assertContains(
+                "primera prestacion temporal alimenta editor",
+                precargaService,
+                ".PRESTACION_EN_PROCESO_DE_EDICION"
+        );
+        assertContains(
+                "editor usa la misma primera prestacion de la lista",
+                precargaService,
+                "prestaciones.get(0)"
+        );
+        assertContains(
+                "editor Compras permanece visible",
+                viewReclamoJs,
+                "if (reclamoPrestacionalViewConfig.values.esBorradorCompras)"
+        );
+        assertContains(
+                "precarga cantidad",
+                precargaService,
+                "prestacion.setCantidad("
+        );
+        assertContains(
+                "precarga importe",
+                precargaService,
+                "prestacion.setImporte("
+        );
+        assertContains(
+                "precarga total comprobante",
+                precargaService,
+                "prestacion.setComprobanteTotal("
+        );
+        assertContains(
+                "precarga cargo OSPIM",
+                precargaService,
+                "prestacion.setCargo_ospim("
+        );
+        assertContains(
+                "precarga cargo prestadora",
+                precargaService,
+                "prestacion.setCargo_ps("
+        );
+        assertContains(
+                "precarga recuperable",
+                precargaService,
+                "prestacion.setRecuperable("
+        );
+        assertContains(
+                "precarga CUIT",
+                precargaService,
+                "prestacion.setComprobanteCUIT("
+        );
+        assertContains(
+                "precarga razon social",
+                precargaService,
+                "prestacion.setComprobanteRazonSocial("
+        );
+        assertContains(
+                "editor muestra importes del comprobante",
+                prestacionEnEdicion,
+                "prestacionEnEdicion.getComprobanteImporte()"
+        );
+        assertContains(
+                "editor muestra total autorizado",
+                prestacionEnEdicion,
+                "prestacionEnEdicion.getTotalString()"
+        );
+        assertContains(
+                "editor muestra prestador adjudicado",
+                prestacionEnEdicion,
+                "prestacionEnEdicion.getComprobanteRazonSocial()"
+        );
+        assertContains(
+                "editor muestra codigo y descripcion de Compras",
+                prestacionEnEdicion,
+                "prestacionEnEdicion.getCodigoPrestacion()"
+        );
+        assertContains(
+                "integracion visible sin depender del JS en Compras",
+                viewReclamoJspf,
+                "esBorradorCompras ? \"inline\" : \"none\""
+        );
+        assertNotContains(
+                "accion de inicio no persiste reclamo",
+                actionCompra,
+                "ReclamosPrestacionesServiceUtil.insertar("
+        );
+        assertNotContains(
+                "precarga no persiste reclamo",
+                precargaService,
+                "ReclamosPrestacionesServiceUtil.insertar("
         );
         assertContains(
                 "servicio consulta relacion",

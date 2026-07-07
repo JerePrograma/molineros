@@ -11,7 +11,11 @@ jQuery('#' + reclamoPrestacionalNamespace + 'divResultadoActualizarOK').hide();
 jQuery('#' + reclamoPrestacionalNamespace + 'cantprestacioneslista').val(reclamoPrestacionalViewConfig.values.cantPrestaciones);
 jQuery("#" + reclamoPrestacionalNamespace + "busqueda_prestaciones").hide();
 jQuery("#" + reclamoPrestacionalNamespace + "busqueda_farmacia").hide();
-jQuery("#" + reclamoPrestacionalNamespace + "datos_edicion_prestacion").hide();
+if (reclamoPrestacionalViewConfig.values.esBorradorCompras) {
+	jQuery("#" + reclamoPrestacionalNamespace + "datos_prestacion_ingreso").hide();
+} else {
+	jQuery("#" + reclamoPrestacionalNamespace + "datos_edicion_prestacion").hide();
+}
 jQuery("#" + reclamoPrestacionalNamespace + "Cierre_Reclamo_Div").hide();
 /* jQuery("#namespacebotoneditareclamo").hide(); */
 jQuery("#" + reclamoPrestacionalNamespace + "lista_prestaciones_asociadas").hide();

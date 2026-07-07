@@ -173,6 +173,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                                 nonceRequest,
                                 reclamo,
                                 prestaciones,
+                                prestaciones.get(0),
                                 revisiones,
                                 contactos,
                                 session.getAttribute(
@@ -182,6 +183,10 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                                 session.getAttribute(
                                         WebKeysAutorizaciones
                                                 .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
+                                ),
+                                session.getAttribute(
+                                        WebKeysAutorizaciones
+                                                .PRESTACION_EN_PROCESO_DE_EDICION
                                 ),
                                 session.getAttribute(
                                         WebKeysAutorizaciones
@@ -203,6 +208,16 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                         WebKeysAutorizaciones
                                 .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION,
                         prestaciones
+                );
+
+                /*
+                 * El editor superior trabaja sobre la misma primera fila
+                 * temporal ya publicada en la grilla; no agrega otra.
+                 */
+                session.setAttribute(
+                        WebKeysAutorizaciones
+                                .PRESTACION_EN_PROCESO_DE_EDICION,
+                        prestaciones.get(0)
                 );
 
                 session.setAttribute(
@@ -292,6 +307,14 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                                 .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION,
                         precarga.getPrestacionesCreadas(),
                         precarga.getPrestacionesAnteriores()
+                );
+
+                restaurarAtributoSiPertenece(
+                        session,
+                        WebKeysAutorizaciones
+                                .PRESTACION_EN_PROCESO_DE_EDICION,
+                        precarga.getPrestacionEnEdicionCreada(),
+                        precarga.getPrestacionEnEdicionAnterior()
                 );
 
                 restaurarAtributoSiPertenece(
@@ -406,9 +429,10 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 "EXCEPCION"
         );
 
-        /* Estado de precarga del editor legacy. */
+        /* Estado PENDIENTE del alta normal de Reclamos Prestacionales. */
         reclamo.setEstado(
-                0
+                WebKeysAutorizaciones
+                        .RECLAMO_PRESTACIONAL_ESTADO_CARGADO
         );
 
         reclamo.setRecuperable(
@@ -1156,6 +1180,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         private final List<PrestacionesReclamo>
                 prestacionesCreadas;
 
+        private final PrestacionesReclamo
+                prestacionEnEdicionCreada;
+
         private final List<RevisionesReclamo>
                 revisionesCreadas;
 
@@ -1166,6 +1193,8 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
         private final Object prestacionesAnteriores;
 
+        private final Object prestacionEnEdicionAnterior;
+
         private final Object revisionesAnteriores;
 
         private final Object contactosAnteriores;
@@ -1174,10 +1203,12 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 String nonce,
                 ReclamoPrestacional reclamoCreado,
                 List<PrestacionesReclamo> prestacionesCreadas,
+                PrestacionesReclamo prestacionEnEdicionCreada,
                 List<RevisionesReclamo> revisionesCreadas,
                 List<ContactoCRM> contactosCreados,
                 Object reclamoAnterior,
                 Object prestacionesAnteriores,
+                Object prestacionEnEdicionAnterior,
                 Object revisionesAnteriores,
                 Object contactosAnteriores) {
 
@@ -1190,6 +1221,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             this.prestacionesCreadas =
                     prestacionesCreadas;
 
+            this.prestacionEnEdicionCreada =
+                    prestacionEnEdicionCreada;
+
             this.revisionesCreadas =
                     revisionesCreadas;
 
@@ -1201,6 +1235,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
             this.prestacionesAnteriores =
                     prestacionesAnteriores;
+
+            this.prestacionEnEdicionAnterior =
+                    prestacionEnEdicionAnterior;
 
             this.revisionesAnteriores =
                     revisionesAnteriores;
@@ -1228,6 +1265,12 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             return prestacionesCreadas;
         }
 
+        private PrestacionesReclamo
+        getPrestacionEnEdicionCreada() {
+
+            return prestacionEnEdicionCreada;
+        }
+
         private List<RevisionesReclamo>
         getRevisionesCreadas() {
 
@@ -1246,6 +1289,10 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
         private Object getPrestacionesAnteriores() {
             return prestacionesAnteriores;
+        }
+
+        private Object getPrestacionEnEdicionAnterior() {
+            return prestacionEnEdicionAnterior;
         }
 
         private Object getRevisionesAnteriores() {
