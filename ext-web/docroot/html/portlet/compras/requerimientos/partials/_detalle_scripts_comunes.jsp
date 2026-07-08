@@ -1,8 +1,9 @@
 <script type="text/javascript">
     var <portlet:namespace />detallesCompra = [];
     var <portlet:namespace />detalleDeletedIds = [];
-    var <portlet:namespace />articulosCompraCache = [];
     var <portlet:namespace />prestadoresEnviadosDetalleCache = [];
+    var <portlet:namespace />sectorDescripcionInicialCompra =
+            '<%= jsDetalleCompra(sectorDescripcionActualString) %>';
     var <portlet:namespace />idPrestadorAdjudicado =
             '<%= jsDetalleCompra(idPrestadorAdjudicadoDetalle) %>';
     var <portlet:namespace />prestadorAdjudicado =
@@ -35,45 +36,11 @@
     %>
 
     <%
-    for (int i = 0; i < articulos.size(); i++) {
-        CompraArticulo articulo = articulos.get(i);
-
-        String idArticulo = articulo.getId() != null
-                ? String.valueOf(articulo.getId().intValue())
-                : "";
-
-        String idSectorArticulo = articulo.getIdSector() != null
-                ? String.valueOf(articulo.getIdSector().intValue())
-                : "";
-
-        String descripcionArticulo = articulo.getDescripcion() != null
-                ? articulo.getDescripcion()
-                : "";
-
-        if (idArticulo.length() > 0 && descripcionArticulo.length() > 0) {
-    %>
-            <portlet:namespace />articulosCompraCache.push({
-                id: '<%= jsDetalleCompra(idArticulo) %>',
-                sector: '<%= jsDetalleCompra(idSectorArticulo) %>',
-                descripcion: '<%= jsDetalleCompra(descripcionArticulo) %>'
-            });
-    <%
-        }
-    }
-    %>
-
-    <%
     for (int i = 0; i < detalles.size(); i++) {
         RequerimientoCompraDetalle detalle = detalles.get(i);
 
         if (detalle == null) {
             continue;
-        }
-
-        String idArticuloDetalle = "";
-
-        if (detalle.getIdArticulo() != null) {
-            idArticuloDetalle = String.valueOf(detalle.getIdArticulo().intValue());
         }
 
         String idDetalleCotizacion =
@@ -116,8 +83,16 @@
     %>
         <portlet:namespace />detallesCompra.push({
             id: '<%= jsDetalleCompra(detalle.getIdString()) %>',
-            idArticulo: '<%= jsDetalleCompra(idArticuloDetalle) %>',
-            articulo: '<%= jsDetalleCompra(detalle.getArticuloVisible()) %>',
+            tipoItem: '<%= jsDetalleCompra(detalle.getTipoItemNormalizado()) %>',
+            codigoItem: '<%= jsDetalleCompra(detalle.getCodigoItemVisible()) %>',
+            descripcionItem: '<%= jsDetalleCompra(detalle.getDescripcionItemVisible()) %>',
+            idPrestacion: '<%= jsDetalleCompra(detalle.getIdPrestacionString()) %>',
+            idTipoNomenclador: '<%= jsDetalleCompra(detalle.getIdTipoNomencladorString()) %>',
+            codigoNomenclador: '<%= jsDetalleCompra(detalle.getCodigoNomencladorVisible()) %>',
+            descripcionNomenclador: '<%= jsDetalleCompra(detalle.getDescripcionNomencladorVisible()) %>',
+            idMedicamento: '<%= jsDetalleCompra(detalle.getIdMedicamentoString()) %>',
+            troquel: '<%= jsDetalleCompra(detalle.getTroquelString()) %>',
+            nombreMedicamento: '<%= jsDetalleCompra(detalle.getNombreMedicamentoVisible()) %>',
             cantidad: '<%= jsDetalleCompra(detalle.getCantidadString()) %>',
             precioUnitario: '<%= jsDetalleCompra(precioUnitarioDetalle) %>',
             precioTotal: '<%= cotizacionRestaurada
@@ -248,19 +223,11 @@
                 '<portlet:namespace />detalle_precio_cell_'
                         + index;
 
-        /*
-         * Búsqueda principal por el ID esperado.
-         */
         var precioInput =
                 document.getElementById(
                         precioInputId
                 );
 
-        /*
-         * Compatibilidad con inputs generados por jQuery legacy:
-         * el campo puede estar visible dentro de la celda aunque
-         * el constructor no haya aplicado correctamente su ID.
-         */
         if (!precioInput) {
             var precioCell =
                     document.getElementById(
@@ -273,17 +240,10 @@
                                 'input'
                         );
 
-                /*
-                 * La celda debe contener un único input de precio.
-                 */
                 if (inputs != null && inputs.length == 1) {
                     precioInput =
                             inputs[0];
 
-                    /*
-                     * Reparar el ID para que las próximas capturas
-                     * puedan encontrarlo directamente.
-                     */
                     precioInput.id =
                             precioInputId;
 
@@ -347,9 +307,6 @@
                 totalElement.textContent =
                         detalle.precioTotal;
             } else {
-                /*
-                 * Compatibilidad con navegadores legacy.
-                 */
                 totalElement.innerText =
                         detalle.precioTotal;
             }
@@ -386,31 +343,48 @@
         return sector;
     }
 
-    function <portlet:namespace />agregarOActualizarArticuloCache(idArticulo, descripcion, idSector) {
-        idArticulo = idArticulo == null ? '' : String(idArticulo);
-        descripcion = descripcion == null ? '' : String(descripcion);
-        idSector = idSector == null ? '' : String(idSector);
+    function <portlet:namespace />getSectorDescripcionSeleccionadoCompra() {
+        var descripcion = '';
 
-        if (idArticulo == '') {
-            return;
+        var bySectorId = jQuery('#<portlet:namespace />sector_id');
+
+        if (bySectorId.length > 0) {
+            descripcion =
+                    jQuery.trim(
+                            bySectorId.find('option:selected').text()
+                    );
         }
 
-        for (var i = 0; i < <portlet:namespace />articulosCompraCache.length; i++) {
-            if (<portlet:namespace />articulosCompraCache[i].id == idArticulo) {
-                <portlet:namespace />articulosCompraCache[i].sector = idSector;
-                <portlet:namespace />articulosCompraCache[i].descripcion = descripcion;
-                return;
+        if (descripcion == '') {
+            var byIdSector = jQuery('#<portlet:namespace />id_sector');
+
+            if (byIdSector.length > 0) {
+                descripcion =
+                        jQuery.trim(
+                                byIdSector.find('option:selected').text()
+                        );
             }
         }
 
-        <portlet:namespace />articulosCompraCache.push({
-            id: idArticulo,
-            sector: idSector,
-            descripcion: descripcion
-        });
+        if (descripcion == '') {
+            descripcion =
+                    <portlet:namespace />sectorDescripcionInicialCompra;
+        }
+
+        return descripcion;
     }
 
+    function <portlet:namespace />esSectorFarmaciaCompra() {
+        var descripcion =
+                <portlet:namespace />getSectorDescripcionSeleccionadoCompra();
 
+        descripcion =
+                descripcion == null
+                        ? ''
+                        : String(descripcion).toUpperCase();
+
+        return descripcion.indexOf('FARMAC') >= 0;
+    }
 
     function <portlet:namespace />renderDetallesCompra() {
         var tbody = jQuery('#<portlet:namespace />detalle_body');
@@ -438,7 +412,9 @@
 
             html += '<tr class="' + rowClass + '">';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.id) + '</td>';
-            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.articulo) + '</td>';
+            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.tipoItem) + '</td>';
+            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.codigoItem) + '</td>';
+            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.descripcionItem) + '</td>';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.cantidad) + '</td>';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.observaciones) + '</td>';
 

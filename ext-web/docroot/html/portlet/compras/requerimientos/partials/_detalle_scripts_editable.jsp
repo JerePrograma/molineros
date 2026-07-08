@@ -1,7 +1,5 @@
 <script type="text/javascript">
     var <portlet:namespace />detalleAccionEnCurso = false;
-    var <portlet:namespace />popupArticuloCompraAbriendo = false;
-    var <portlet:namespace />popupArticuloCompra = null;
 
     var <portlet:namespace />detalleActionURL =
             '<%= detalleActionURL.toString() %>';
@@ -12,238 +10,73 @@
     var <portlet:namespace />idRequerimientoCompraDetalle =
             '<%= idRequerimientoCompraDetalle %>';
 
-    var <portlet:namespace />articulosCompraSectorCargado = {};
+    function <portlet:namespace />resolverTipoItemEditor() {
+        if (typeof <portlet:namespace />esSectorFarmaciaCompra == 'function'
+                && <portlet:namespace />esSectorFarmaciaCompra()) {
 
-    <% if (idSectorActualString != null
-            && idSectorActualString.length() > 0
-            && articulos != null
-            && articulos.size() > 0) { %>
-        <portlet:namespace />articulosCompraSectorCargado['<%= idSectorActualString %>'] = true;
-    <% } %>
-
-    var <portlet:namespace />articulosSectorURL =
-            '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/compras/listar_articulos_sector" /></portlet:renderURL>';
-
-    function <portlet:namespace />abrirAltaArticuloCompra() {
-        if (<portlet:namespace />popupArticuloCompraAbriendo) {
-            return false;
+            return 'MEDICAMENTO';
         }
 
-        <portlet:namespace />popupArticuloCompraAbriendo = true;
-
-        var idSector = <portlet:namespace />getSectorSeleccionadoCompra();
-
-        if (idSector == '' || !/^[0-9]+$/.test(idSector) || parseInt(idSector, 10) <= 0) {
-            alert('Debe seleccionar un sector antes de cargar un artículo.');
-            <portlet:namespace />popupArticuloCompraAbriendo = false;
-            return false;
-        }
-
-        <portlet:namespace />popupArticuloCompra = Liferay.Popup({
-            title: 'Alta de artículo',
-            modal: true,
-            width: 700
-        });
-
-        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-                '&struts_action=/compras/alta_articulo_popup' +
-                '&id_sector=' + encodeURIComponent(idSector) +
-                '&callback=' + encodeURIComponent('<portlet:namespace />seleccionarArticuloCompra');
-
-        jQuery(<portlet:namespace />popupArticuloCompra).load(url, function() {
-            <portlet:namespace />popupArticuloCompraAbriendo = false;
-        });
-
-        return false;
+        return 'NOMENCLADOR';
     }
 
-    function <portlet:namespace />seleccionarArticuloCompra(idArticulo, descripcion, idSector) {
-        var sectorKey = idSector == null ? '' : String(idSector);
-        var sectorYaCargado =
-                sectorKey != ''
-                && <portlet:namespace />articulosCompraSectorCargado[sectorKey];
+    function <portlet:namespace />actualizarTipoItemEditor(preservarValores) {
+        var tipoItem =
+                <portlet:namespace />resolverTipoItemEditor();
 
-        <portlet:namespace />agregarOActualizarArticuloCache(
-                idArticulo,
-                descripcion,
-                idSector
+        jQuery('#<portlet:namespace />detalle_tipo_item').val(tipoItem);
+
+        jQuery('#<portlet:namespace />detalle_tipo_item_label').text(
+                tipoItem == 'MEDICAMENTO'
+                        ? 'Medicamento'
+                        : 'Nomenclador'
         );
 
-        <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(
-                sectorYaCargado,
-                function() {
-                    var select = jQuery('#<portlet:namespace />detalle_id_articulo');
+        if (tipoItem == 'MEDICAMENTO') {
+            jQuery('#<portlet:namespace />detalle_bloque_medicamento').show();
+            jQuery('#<portlet:namespace />detalle_bloque_nomenclador').hide();
 
-                    select.val(idArticulo);
-
-                    <portlet:namespace />cerrarAltaArticuloCompra();
-
-                    jQuery('#<portlet:namespace />detalle_cantidad').focus();
-                }
-        );
-    }
-
-    function <portlet:namespace />seleccionarArticuloCompraCerrar() {
-        <portlet:namespace />cerrarAltaArticuloCompra();
-    }
-
-    function <portlet:namespace />cerrarAltaArticuloCompra() {
-        <portlet:namespace />popupArticuloCompraAbriendo = false;
-
-        if (<portlet:namespace />popupArticuloCompra) {
-            Liferay.Popup.close(<portlet:namespace />popupArticuloCompra);
-            <portlet:namespace />popupArticuloCompra = null;
-        }
-    }
-
-    function <portlet:namespace />cargarArticulosPorSectorRemoto(idSector, callback) {
-        idSector = idSector == null ? '' : String(idSector);
-
-        if (idSector == '' || !/^[0-9]+$/.test(idSector) || parseInt(idSector, 10) <= 0) {
-            if (typeof callback == 'function') {
-                callback();
+            if (!preservarValores) {
+                jQuery('#<portlet:namespace />detalle_id_prestacion').val('');
+                jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador').val('');
+                jQuery('#<portlet:namespace />detalle_codigo_nomenclador').val('');
+                jQuery('#<portlet:namespace />detalle_descripcion_nomenclador').val('');
             }
-
-            return;
-        }
-
-        if (<portlet:namespace />articulosCompraSectorCargado[idSector]) {
-            if (typeof callback == 'function') {
-                callback();
-            }
-
-            return;
-        }
-
-        jQuery.ajax({
-            type: 'GET',
-            url: <portlet:namespace />articulosSectorURL
-                    + '&sector_id=' + encodeURIComponent(idSector)
-                    + '&_ts=' + new Date().getTime(),
-            dataType: 'json',
-            cache: false,
-            success: function(data) {
-                if (data && data.articulos) {
-                    for (var i = 0; i < data.articulos.length; i++) {
-                        var articulo = data.articulos[i];
-
-                        <portlet:namespace />agregarOActualizarArticuloCache(
-                                articulo.id,
-                                articulo.descripcion,
-                                articulo.sector
-                        );
-                    }
-                }
-
-                <portlet:namespace />articulosCompraSectorCargado[idSector] = true;
-
-                if (typeof callback == 'function') {
-                    callback();
-                }
-            },
-            error: function() {
-                alert('No se pudieron cargar los artículos del sector seleccionado.');
-
-                if (typeof callback == 'function') {
-                    callback();
-                }
-            }
-        });
-    }
-
-    function <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(sinCargaRemota, callback) {
-        var select = jQuery('#<portlet:namespace />detalle_id_articulo');
-
-        if (select.length == 0) {
-            if (typeof callback == 'function') {
-                callback();
-            }
-
-            return;
-        }
-
-        var sectorSeleccionado = <portlet:namespace />getSectorSeleccionadoCompra();
-        var sectorSeleccionadoNum = parseInt(sectorSeleccionado, 10);
-
-        if (!sinCargaRemota
-                && sectorSeleccionado != ''
-                && /^[0-9]+$/.test(sectorSeleccionado)
-                && sectorSeleccionadoNum > 0
-                && !<portlet:namespace />articulosCompraSectorCargado[sectorSeleccionado]) {
-
-            select.empty();
-            select.append('<option value="">Cargando artículos...</option>');
-            select.attr('disabled', 'disabled');
-
-            <portlet:namespace />cargarArticulosPorSectorRemoto(
-                    sectorSeleccionado,
-                    function() {
-                        select.removeAttr('disabled');
-
-                        <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(true, callback);
-                    }
-            );
-
-            return;
-        }
-
-        var valorActual = select.val();
-        var valorActualPermitido = false;
-
-        select.empty();
-        select.append('<option value="">Seleccione...</option>');
-
-        for (var i = 0; i < <portlet:namespace />articulosCompraCache.length; i++) {
-            var articulo = <portlet:namespace />articulosCompraCache[i];
-            var sectorArticuloNum = parseInt(articulo.sector, 10);
-
-            var mostrar =
-                    !isNaN(sectorSeleccionadoNum)
-                    && sectorSeleccionadoNum > 0
-                    && !isNaN(sectorArticuloNum)
-                    && sectorArticuloNum == sectorSeleccionadoNum;
-
-            if (mostrar) {
-                var option = jQuery('<option></option>');
-
-                option.val(articulo.id);
-                option.attr('data-sector', articulo.sector);
-                option.text(articulo.descripcion);
-
-                select.append(option);
-
-                if (articulo.id == valorActual) {
-                    valorActualPermitido = true;
-                }
-            }
-        }
-
-        if (valorActual != '' && valorActualPermitido) {
-            select.val(valorActual);
         } else {
-            select.val('');
+            jQuery('#<portlet:namespace />detalle_bloque_nomenclador').show();
+            jQuery('#<portlet:namespace />detalle_bloque_medicamento').hide();
+
+            if (!preservarValores) {
+                jQuery('#<portlet:namespace />detalle_id_medicamento').val('');
+                jQuery('#<portlet:namespace />detalle_troquel').val('');
+                jQuery('#<portlet:namespace />detalle_nombre_medicamento').val('');
+            }
         }
 
-        if (typeof callback == 'function') {
-            callback();
-        }
+        return tipoItem;
     }
-
-    window['<portlet:namespace />cargarArticulosPorSectorSiHaceFalta'] =
-            <portlet:namespace />cargarArticulosPorSectorSiHaceFalta;
-
-    window['<portlet:namespace />filtrarArticulosPorSector'] =
-            <portlet:namespace />cargarArticulosPorSectorSiHaceFalta;
 
     function <portlet:namespace />limpiarEditorDetalle() {
         jQuery('#<portlet:namespace />detalle_edit_index').val('-1');
-        jQuery('#<portlet:namespace />detalle_id_articulo').val('');
+
+        jQuery('#<portlet:namespace />detalle_codigo_item').val('');
+        jQuery('#<portlet:namespace />detalle_descripcion_item').val('');
+
+        jQuery('#<portlet:namespace />detalle_id_prestacion').val('');
+        jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador').val('');
+        jQuery('#<portlet:namespace />detalle_codigo_nomenclador').val('');
+        jQuery('#<portlet:namespace />detalle_descripcion_nomenclador').val('');
+
+        jQuery('#<portlet:namespace />detalle_id_medicamento').val('');
+        jQuery('#<portlet:namespace />detalle_troquel').val('');
+        jQuery('#<portlet:namespace />detalle_nombre_medicamento').val('');
+
         jQuery('#<portlet:namespace />detalle_cantidad').val('1');
         jQuery('#<portlet:namespace />detalle_observaciones').val('');
         jQuery('#<portlet:namespace />detalle_submit').val('Agregar detalle');
         jQuery('#<portlet:namespace />detalle_cancelar').hide();
 
-        <portlet:namespace />cargarArticulosPorSectorSiHaceFalta();
+        <portlet:namespace />actualizarTipoItemEditor(false);
     }
 
     function <portlet:namespace />editarDetalleEnPantalla(index) {
@@ -255,27 +88,64 @@
 
         jQuery('#<portlet:namespace />detalle_edit_index').val(index);
 
-        <portlet:namespace />cargarArticulosPorSectorSiHaceFalta(
-                false,
-                function() {
-                    jQuery('#<portlet:namespace />detalle_id_articulo').val(
-                            <portlet:namespace />detalleValue(detalle.idArticulo)
-                    );
-
-                    jQuery('#<portlet:namespace />detalle_cantidad').val(
-                            <portlet:namespace />detalleValue(detalle.cantidad)
-                    );
-
-                    jQuery('#<portlet:namespace />detalle_observaciones').val(
-                            <portlet:namespace />detalleValue(detalle.observaciones)
-                    );
-
-                    jQuery('#<portlet:namespace />detalle_submit').val('Guardar detalle');
-                    jQuery('#<portlet:namespace />detalle_cancelar').show();
-
-                    jQuery('#<portlet:namespace />detalle_id_articulo').focus();
-                }
+        jQuery('#<portlet:namespace />detalle_tipo_item').val(
+                <portlet:namespace />detalleValue(detalle.tipoItem)
         );
+
+        jQuery('#<portlet:namespace />detalle_codigo_item').val(
+                <portlet:namespace />detalleValue(detalle.codigoItem)
+        );
+
+        jQuery('#<portlet:namespace />detalle_descripcion_item').val(
+                <portlet:namespace />detalleValue(detalle.descripcionItem)
+        );
+
+        jQuery('#<portlet:namespace />detalle_id_prestacion').val(
+                <portlet:namespace />detalleValue(detalle.idPrestacion)
+        );
+
+        jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador').val(
+                <portlet:namespace />detalleValue(detalle.idTipoNomenclador)
+        );
+
+        jQuery('#<portlet:namespace />detalle_codigo_nomenclador').val(
+                <portlet:namespace />detalleValue(detalle.codigoNomenclador)
+        );
+
+        jQuery('#<portlet:namespace />detalle_descripcion_nomenclador').val(
+                <portlet:namespace />detalleValue(detalle.descripcionNomenclador)
+        );
+
+        jQuery('#<portlet:namespace />detalle_id_medicamento').val(
+                <portlet:namespace />detalleValue(detalle.idMedicamento)
+        );
+
+        jQuery('#<portlet:namespace />detalle_troquel').val(
+                <portlet:namespace />detalleValue(detalle.troquel)
+        );
+
+        jQuery('#<portlet:namespace />detalle_nombre_medicamento').val(
+                <portlet:namespace />detalleValue(detalle.nombreMedicamento)
+        );
+
+        jQuery('#<portlet:namespace />detalle_cantidad').val(
+                <portlet:namespace />detalleValue(detalle.cantidad)
+        );
+
+        jQuery('#<portlet:namespace />detalle_observaciones').val(
+                <portlet:namespace />detalleValue(detalle.observaciones)
+        );
+
+        <portlet:namespace />actualizarTipoItemEditor(true);
+
+        jQuery('#<portlet:namespace />detalle_submit').val('Guardar detalle');
+        jQuery('#<portlet:namespace />detalle_cancelar').show();
+
+        if (detalle.tipoItem == 'MEDICAMENTO') {
+            jQuery('#<portlet:namespace />detalle_id_medicamento').focus();
+        } else {
+            jQuery('#<portlet:namespace />detalle_id_prestacion').focus();
+        }
     }
 
     function <portlet:namespace />cancelarEdicionDetalle() {
@@ -337,10 +207,172 @@
         return false;
     }
 
-    function <portlet:namespace />postDetalleServidor(cmd, idDetalle, idArticulo, cantidad, observaciones) {
+    function <portlet:namespace />esEnteroPositivo(value) {
+        value =
+                value == null
+                        ? ''
+                        : jQuery.trim(String(value));
+
+        return value != ''
+                && /^[0-9]+$/.test(value)
+                && parseInt(value, 10) > 0;
+    }
+
+    function <portlet:namespace />leerDetalleEditor() {
+        var tipoItem =
+                <portlet:namespace />actualizarTipoItemEditor(true);
+
+        var cantidad =
+                jQuery.trim(
+                        jQuery('#<portlet:namespace />detalle_cantidad').val()
+                );
+
+        var observaciones =
+                jQuery.trim(
+                        jQuery('#<portlet:namespace />detalle_observaciones').val()
+                );
+
+        var detalle = {
+            id: '',
+            tipoItem: tipoItem,
+            codigoItem: '',
+            descripcionItem: '',
+
+            idPrestacion: '',
+            idTipoNomenclador: '',
+            codigoNomenclador: '',
+            descripcionNomenclador: '',
+
+            idMedicamento: '',
+            troquel: '',
+            nombreMedicamento: '',
+
+            cantidad: cantidad,
+            precioUnitario: '',
+            precioTotal: '',
+            idPrestador: '',
+            prestador: '',
+            observaciones: observaciones
+        };
+
+        if (tipoItem == 'MEDICAMENTO') {
+            detalle.idMedicamento =
+                    jQuery.trim(
+                            jQuery('#<portlet:namespace />detalle_id_medicamento').val()
+                    );
+
+            detalle.troquel =
+                    jQuery.trim(
+                            jQuery('#<portlet:namespace />detalle_troquel').val()
+                    );
+
+            detalle.nombreMedicamento =
+                    jQuery.trim(
+                            jQuery('#<portlet:namespace />detalle_nombre_medicamento').val()
+                    );
+
+            detalle.codigoItem =
+                    detalle.troquel != ''
+                            ? detalle.troquel
+                            : detalle.idMedicamento;
+
+            detalle.descripcionItem =
+                    detalle.nombreMedicamento;
+        } else {
+            detalle.idPrestacion =
+                    jQuery.trim(
+                            jQuery('#<portlet:namespace />detalle_id_prestacion').val()
+                    );
+
+            detalle.idTipoNomenclador =
+                    jQuery.trim(
+                            jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador').val()
+                    );
+
+            detalle.codigoNomenclador =
+                    jQuery.trim(
+                            jQuery('#<portlet:namespace />detalle_codigo_nomenclador').val()
+                    );
+
+            detalle.descripcionNomenclador =
+                    jQuery.trim(
+                            jQuery('#<portlet:namespace />detalle_descripcion_nomenclador').val()
+                    );
+
+            detalle.codigoItem =
+                    detalle.codigoNomenclador;
+
+            detalle.descripcionItem =
+                    detalle.descripcionNomenclador;
+        }
+
+        return detalle;
+    }
+
+    function <portlet:namespace />validarDetalleEditor(detalle) {
+        if (!detalle) {
+            alert('Debe informar el detalle.');
+            return false;
+        }
+
+        if (detalle.tipoItem == 'MEDICAMENTO') {
+            if (!<portlet:namespace />esEnteroPositivo(detalle.idMedicamento)) {
+                alert('Debe seleccionar el medicamento.');
+                jQuery('#<portlet:namespace />detalle_id_medicamento').focus();
+                return false;
+            }
+
+            if (detalle.nombreMedicamento == '') {
+                alert('Debe informar el nombre del medicamento.');
+                jQuery('#<portlet:namespace />detalle_nombre_medicamento').focus();
+                return false;
+            }
+        } else if (detalle.tipoItem == 'NOMENCLADOR') {
+            if (!<portlet:namespace />esEnteroPositivo(detalle.idPrestacion)) {
+                alert('Debe seleccionar la prestación del nomenclador.');
+                jQuery('#<portlet:namespace />detalle_id_prestacion').focus();
+                return false;
+            }
+
+            if (!<portlet:namespace />esEnteroPositivo(detalle.idTipoNomenclador)) {
+                alert('Debe informar el tipo de nomenclador.');
+                jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador').focus();
+                return false;
+            }
+
+            if (detalle.codigoNomenclador == '') {
+                alert('Debe informar el código de nomenclador.');
+                jQuery('#<portlet:namespace />detalle_codigo_nomenclador').focus();
+                return false;
+            }
+
+            if (detalle.descripcionNomenclador == '') {
+                alert('Debe informar la descripción del nomenclador.');
+                jQuery('#<portlet:namespace />detalle_descripcion_nomenclador').focus();
+                return false;
+            }
+        } else {
+            alert('Tipo de ítem inválido.');
+            return false;
+        }
+
+        if (!<portlet:namespace />esEnteroPositivo(detalle.cantidad)) {
+            alert('La cantidad debe ser entera y mayor a cero.');
+            jQuery('#<portlet:namespace />detalle_cantidad').focus();
+            return false;
+        }
+
+        return true;
+    }
+
+    function <portlet:namespace />postDetalleServidor(cmd, detalle) {
         var idReq = <portlet:namespace />idRequerimientoCompraDetalle;
 
-        if (idReq == null || idReq == '' || !/^[0-9]+$/.test(String(idReq)) || parseInt(idReq, 10) <= 0) {
+        if (idReq == null
+                || idReq == ''
+                || !/^[0-9]+$/.test(String(idReq))
+                || parseInt(idReq, 10) <= 0) {
+
             alert('Debe guardar primero la cabecera del requerimiento.');
             return <portlet:namespace />liberarDetalleAccion(0);
         }
@@ -363,10 +395,22 @@
 
         addHidden('<%= Constants.CMD %>', cmd);
         addHidden('id_requerimiento_compra', idReq);
-        addHidden('id_detalle', idDetalle);
-        addHidden('id_articulo', idArticulo);
-        addHidden('cantidad', cantidad);
-        addHidden('observaciones_detalle', observaciones);
+        addHidden('id_detalle', detalle.id);
+        addHidden('tipo_item', detalle.tipoItem);
+        addHidden('codigo_item', detalle.codigoItem);
+        addHidden('descripcion_item', detalle.descripcionItem);
+
+        addHidden('id_prestacion', detalle.idPrestacion);
+        addHidden('id_tipo_nomenclador', detalle.idTipoNomenclador);
+        addHidden('codigo_nomenclador', detalle.codigoNomenclador);
+        addHidden('descripcion_nomenclador', detalle.descripcionNomenclador);
+
+        addHidden('id_medicamento', detalle.idMedicamento);
+        addHidden('troquel', detalle.troquel);
+        addHidden('nombre_medicamento', detalle.nombreMedicamento);
+
+        addHidden('cantidad', detalle.cantidad);
+        addHidden('observaciones_detalle', detalle.observaciones);
 
         document.body.appendChild(form);
 
@@ -380,20 +424,10 @@
             return false;
         }
 
-        var idArticulo = jQuery.trim(jQuery('#<portlet:namespace />detalle_id_articulo').val());
-        var articulo = jQuery.trim(jQuery('#<portlet:namespace />detalle_id_articulo option:selected').text());
-        var cantidad = jQuery.trim(jQuery('#<portlet:namespace />detalle_cantidad').val());
-        var observaciones = jQuery.trim(jQuery('#<portlet:namespace />detalle_observaciones').val());
+        var detalle =
+                <portlet:namespace />leerDetalleEditor();
 
-        if (idArticulo == '' || !/^[0-9]+$/.test(idArticulo) || parseInt(idArticulo, 10) <= 0) {
-            alert('Debe seleccionar un artículo.');
-            jQuery('#<portlet:namespace />detalle_id_articulo').focus();
-            return false;
-        }
-
-        if (cantidad == '' || !/^[0-9]+$/.test(cantidad) || parseInt(cantidad, 10) <= 0) {
-            alert('La cantidad debe ser entera y mayor a cero.');
-            jQuery('#<portlet:namespace />detalle_cantidad').focus();
+        if (!<portlet:namespace />validarDetalleEditor(detalle)) {
             return false;
         }
 
@@ -409,41 +443,18 @@
 
         <portlet:namespace />setDetalleAccionEnCurso(true);
 
-        var detalle = {
-            id: '',
-            idArticulo: idArticulo,
-            articulo: articulo,
-            cantidad: cantidad,
-            precioUnitario: '',
-            precioTotal: '',
-            idPrestador: '',
-            prestador: '',
-            observaciones: observaciones
-        };
-
         if (esEdicion) {
-            detalle.id = <portlet:namespace />detallesCompra[editIndex].id;
+            detalle.id =
+                    <portlet:namespace />detallesCompra[editIndex].id;
         }
 
-        /*
-         * Requerimiento ya guardado:
-         * el detalle se persiste con la action modular nueva.
-         */
         if (<portlet:namespace />requerimientoPersistidoDetalle) {
             return <portlet:namespace />postDetalleServidor(
                     esEdicion ? 'updateItem' : 'addItem',
-                    detalle.id,
-                    detalle.idArticulo,
-                    detalle.cantidad,
-                    detalle.observaciones
+                    detalle
             );
         }
 
-        /*
-         * Requerimiento nuevo:
-         * se conserva el comportamiento anterior en memoria.
-         * El saveAll guarda cabecera + detalles serializados.
-         */
         if (esEdicion) {
             <portlet:namespace />detallesCompra[editIndex] = detalle;
         } else {
@@ -473,10 +484,6 @@
             return <portlet:namespace />liberarDetalleAccion(0);
         }
 
-        /*
-         * Requerimiento ya guardado + detalle persistido:
-         * borrar inmediatamente con action modular.
-         */
         if (<portlet:namespace />requerimientoPersistidoDetalle
                 && detalle.id != null
                 && detalle.id != ''
@@ -484,17 +491,24 @@
 
             return <portlet:namespace />postDetalleServidor(
                     'deleteItem',
-                    detalle.id,
-                    '',
-                    '',
-                    ''
+                    {
+                        id: detalle.id,
+                        tipoItem: '',
+                        codigoItem: '',
+                        descripcionItem: '',
+                        idPrestacion: '',
+                        idTipoNomenclador: '',
+                        codigoNomenclador: '',
+                        descripcionNomenclador: '',
+                        idMedicamento: '',
+                        troquel: '',
+                        nombreMedicamento: '',
+                        cantidad: '',
+                        observaciones: ''
+                    }
             );
         }
 
-        /*
-         * Requerimiento nuevo o detalle no persistido:
-         * se borra solo de memoria y luego saveAll define el estado final.
-         */
         if (detalle.id != null && detalle.id != '' && parseInt(detalle.id, 10) > 0) {
             <portlet:namespace />detalleDeletedIds.push(detalle.id);
         }
@@ -534,10 +548,6 @@
         input.className =
                 'detalle-serializado-compra';
 
-        /*
-         * Se agrega directamente al FORM.
-         * No depender de la ubicación de detalle_payload.
-         */
         form.appendChild(input);
 
         return true;
@@ -549,10 +559,6 @@
                         '#<portlet:namespace />fmCompras'
                 );
 
-        /*
-         * Elimina exclusivamente los hidden generados
-         * por serializarDetallesCompras().
-         */
         form.find(
                 'input.detalle-serializado-compra'
         ).remove();
@@ -587,9 +593,6 @@
             return false;
         }
 
-        /*
-         * Datos generales del payload de detalles.
-         */
         if (!<portlet:namespace />crearHiddenDetalle(
                 'detalle_count',
                 <portlet:namespace />detallesCompra.length
@@ -604,9 +607,6 @@
             return false;
         }
 
-        /*
-         * Prestador adjudicado global.
-         */
         if (typeof <portlet:namespace />capturarPrestadorAdjudicado
                 == 'function') {
 
@@ -645,9 +645,6 @@
             return false;
         }
 
-        /*
-         * Serialización individual de cada detalle.
-         */
         for (
             var i = 0;
             i < <portlet:namespace />detallesCompra.length;
@@ -699,10 +696,10 @@
                             )
                     );
 
-            var idArticulo =
+            var tipoItem =
                     jQuery.trim(
                             <portlet:namespace />detalleValue(
-                                    detalle.idArticulo
+                                    detalle.tipoItem
                             )
                     );
 
@@ -713,21 +710,85 @@
                             )
                     );
 
-            var observaciones =
-                    <portlet:namespace />detalleValue(
-                            detalle.observaciones
-                    );
-
-            if (idArticulo == ''
-                    || !/^[0-9]+$/.test(idArticulo)
-                    || parseInt(idArticulo, 10) <= 0) {
+            if (tipoItem != 'NOMENCLADOR'
+                    && tipoItem != 'MEDICAMENTO') {
 
                 alert(
                         'Detalle #' + (i + 1)
-                                + ': debe seleccionar un artículo.'
+                                + ': tipo de ítem inválido.'
                 );
 
                 return false;
+            }
+
+            if (tipoItem == 'MEDICAMENTO') {
+                if (!<portlet:namespace />esEnteroPositivo(detalle.idMedicamento)) {
+                    alert(
+                            'Detalle #' + (i + 1)
+                                    + ': debe seleccionar el medicamento.'
+                    );
+
+                    return false;
+                }
+
+                if (jQuery.trim(
+                        <portlet:namespace />detalleValue(
+                                detalle.nombreMedicamento
+                        )
+                ) == '') {
+                    alert(
+                            'Detalle #' + (i + 1)
+                                    + ': debe informar el nombre del medicamento.'
+                    );
+
+                    return false;
+                }
+            }
+
+            if (tipoItem == 'NOMENCLADOR') {
+                if (!<portlet:namespace />esEnteroPositivo(detalle.idPrestacion)) {
+                    alert(
+                            'Detalle #' + (i + 1)
+                                    + ': debe seleccionar la prestación del nomenclador.'
+                    );
+
+                    return false;
+                }
+
+                if (!<portlet:namespace />esEnteroPositivo(detalle.idTipoNomenclador)) {
+                    alert(
+                            'Detalle #' + (i + 1)
+                                    + ': debe informar el tipo de nomenclador.'
+                    );
+
+                    return false;
+                }
+
+                if (jQuery.trim(
+                        <portlet:namespace />detalleValue(
+                                detalle.codigoNomenclador
+                        )
+                ) == '') {
+                    alert(
+                            'Detalle #' + (i + 1)
+                                    + ': debe informar el código de nomenclador.'
+                    );
+
+                    return false;
+                }
+
+                if (jQuery.trim(
+                        <portlet:namespace />detalleValue(
+                                detalle.descripcionNomenclador
+                        )
+                ) == '') {
+                    alert(
+                            'Detalle #' + (i + 1)
+                                    + ': debe informar la descripción del nomenclador.'
+                    );
+
+                    return false;
+                }
             }
 
             if (cantidad == ''
@@ -751,8 +812,71 @@
             }
 
             if (!<portlet:namespace />crearHiddenDetalle(
-                    prefix + 'id_articulo',
-                    idArticulo
+                    prefix + 'tipo_item',
+                    tipoItem
+            )) {
+                return false;
+            }
+
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'codigo_item',
+                    detalle.codigoItem
+            )) {
+                return false;
+            }
+
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'descripcion_item',
+                    detalle.descripcionItem
+            )) {
+                return false;
+            }
+
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'id_prestacion',
+                    detalle.idPrestacion
+            )) {
+                return false;
+            }
+
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'id_tipo_nomenclador',
+                    detalle.idTipoNomenclador
+            )) {
+                return false;
+            }
+
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'codigo_nomenclador',
+                    detalle.codigoNomenclador
+            )) {
+                return false;
+            }
+
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'descripcion_nomenclador',
+                    detalle.descripcionNomenclador
+            )) {
+                return false;
+            }
+
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'id_medicamento',
+                    detalle.idMedicamento
+            )) {
+                return false;
+            }
+
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'troquel',
+                    detalle.troquel
+            )) {
+                return false;
+            }
+
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'nombre_medicamento',
+                    detalle.nombreMedicamento
             )) {
                 return false;
             }
@@ -766,18 +890,11 @@
 
             if (!<portlet:namespace />crearHiddenDetalle(
                     prefix + 'observaciones',
-                    observaciones
+                    detalle.observaciones
             )) {
                 return false;
             }
 
-            /*
-             * capturarCotizacionDetalle() ya actualizó
-             * detalle.precioUnitario desde el input visible.
-             *
-             * En estados sin edición de cotización se conserva
-             * el valor cargado originalmente en el objeto.
-             */
             var precioUnitario =
                     jQuery.trim(
                             <portlet:namespace />detalleValue(
@@ -812,10 +929,6 @@
                 return false;
             }
 
-            /*
-             * Verificar que el hidden fue creado dentro del formulario
-             * con el mismo valor capturado desde el input visible.
-             */
             var nombrePrecio =
                     '<portlet:namespace />'
                             + prefix
@@ -846,10 +959,6 @@
                 return false;
             }
 
-            /*
-             * Replicar el adjudicado global en cada detalle para
-             * mantener compatibilidad con el contrato persistente.
-             */
             detalle.idPrestador =
                     idPrestadorAdjudicado;
 
@@ -878,4 +987,15 @@
 
     window['<portlet:namespace />serializarDetallesCompras'] =
             <portlet:namespace />serializarDetallesCompras;
+
+    jQuery(function() {
+        <portlet:namespace />limpiarEditorDetalle();
+
+        jQuery('#<portlet:namespace />sector_id, #<portlet:namespace />id_sector').bind(
+                'change',
+                function() {
+                    <portlet:namespace />limpiarEditorDetalle();
+                }
+        );
+    });
 </script>

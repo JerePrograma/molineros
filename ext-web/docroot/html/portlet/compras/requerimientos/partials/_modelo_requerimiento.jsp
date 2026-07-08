@@ -1,7 +1,6 @@
 <%@ page import="java.lang.reflect.Method" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
-<%@ page import="ar.com.ospim.compras.beans.CompraArticulo" %>
 
 <%!
 private String jsCompra(String value) {
@@ -212,19 +211,6 @@ if (sectores == null) {
     }
 }
 
-Object articulosAttr = renderRequest.getAttribute("ARTICULOS_COMPRA");
-List<CompraArticulo> articulosCompra = null;
-
-if (articulosAttr instanceof List) {
-    articulosCompra = (List<CompraArticulo>) articulosAttr;
-}
-
-if (articulosCompra == null) {
-    articulosCompra = new ArrayList<CompraArticulo>();
-}
-
-renderRequest.setAttribute("ARTICULOS_COMPRA", articulosCompra);
-
 PortletURL volverURL = renderResponse.createRenderURL();
 volverURL.setWindowState(WindowState.MAXIMIZED);
 volverURL.setParameter("struts_action", "/compras/view");
@@ -269,6 +255,8 @@ if (sectorDescripcionSoloLectura.length() == 0 || !sectorRequiereAfiliadoActual)
     }
 }
 
+String sectorDescripcionActualString = sectorDescripcionSoloLectura;
+
 String afiliadoCuilTitular = req.getAfiliadoCuilTitularVisible();
 String afiliadoInt = req.getAfiliadoIntString();
 String idTercerizadora = req.getIdTercerizadora();
@@ -299,11 +287,6 @@ String cargoTercerizadoraVisible =
                 ? "0"
                 : req.getCargoTercerizadoraString();
 
-/*
- * Regla centralizada para la pantalla:
- * recupero = true si existe cargo a tercerizadora mayor a 0.
- * Si negocio exige exactamente 100, cambiar acá y en actualizarRecuperoPorCargoTercerizadora().
- */
 boolean recuperoPorCargoTercerizadoraActual =
         !sectorSinAfiliadoForzaCargoOspim
         && cargoTercerizadoraActual > 0;
@@ -559,22 +542,16 @@ boolean msgRequerimientoGuardado =
                 "requerimiento-compra-guardado"
         );
 
+boolean msgDetalleGuardado =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest,
+                "requerimiento-compra-item-guardado"
+        );
+
 boolean msgDetalleBorrado =
         com.liferay.portal.kernel.servlet.SessionMessages.contains(
                 renderRequest,
                 "requerimiento-compra-item-borrado"
-        );
-
-boolean msgArticuloGuardado =
-        com.liferay.portal.kernel.servlet.SessionMessages.contains(
-                renderRequest,
-                "requerimiento-compra-articulo-guardado"
-        );
-
-boolean msgArticuloBorrado =
-        com.liferay.portal.kernel.servlet.SessionMessages.contains(
-                renderRequest,
-                "requerimiento-compra-articulo-borrado"
         );
 
 boolean msgRequerimientoAnulado =

@@ -368,8 +368,16 @@ CREATE TABLE compras.requerimiento_detalle (
                                                id_requerimiento INTEGER NOT NULL
                                                    REFERENCES compras.requerimiento (id_requerimiento),
 
-                                               id_articulo INTEGER NOT NULL
-                                                   REFERENCES compras.articulo (id_articulo),
+                                               tipo_item VARCHAR(20) NOT NULL,
+
+                                               id_prestacion INTEGER,
+                                               id_tipo_nomenclador INTEGER,
+                                               codigo_nomenclador VARCHAR(100),
+                                               descripcion_nomenclador VARCHAR(500),
+
+                                               id_medicamento INTEGER,
+                                               troquel INTEGER,
+                                               nombre_medicamento VARCHAR(500),
 
                                                cantidad INTEGER NOT NULL,
                                                observaciones TEXT,
@@ -387,8 +395,71 @@ CREATE TABLE compras.requerimiento_detalle (
                                                baja_fecha TIMESTAMP WITHOUT TIME ZONE,
                                                baja_usr VARCHAR(100),
 
+                                               CONSTRAINT ck_compras_detalle_tipo_item
+                                                   CHECK (
+                                                       tipo_item IN (
+                                                                     'NOMENCLADOR',
+                                                                     'MEDICAMENTO'
+                                                           )
+                                                       ),
+
+                                               CONSTRAINT ck_compras_detalle_nomenclador_requerido
+                                                   CHECK (
+                                                       tipo_item <> 'NOMENCLADOR'
+                                                           OR (
+                                                           id_prestacion IS NOT NULL
+                                                               AND id_prestacion > 0
+                                                               AND id_tipo_nomenclador IS NOT NULL
+                                                               AND id_tipo_nomenclador > 0
+                                                               AND codigo_nomenclador IS NOT NULL
+                                                               AND length(btrim(codigo_nomenclador)) > 0
+                                                               AND descripcion_nomenclador IS NOT NULL
+                                                               AND length(btrim(descripcion_nomenclador)) > 0
+                                                           )
+                                                       ),
+
+                                               CONSTRAINT ck_compras_detalle_medicamento_requerido
+                                                   CHECK (
+                                                       tipo_item <> 'MEDICAMENTO'
+                                                           OR (
+                                                           id_medicamento IS NOT NULL
+                                                               AND id_medicamento > 0
+                                                               AND nombre_medicamento IS NOT NULL
+                                                               AND length(btrim(nombre_medicamento)) > 0
+                                                           )
+                                                       ),
+
+                                               CONSTRAINT ck_compras_detalle_nomenclador_sin_medicamento
+                                                   CHECK (
+                                                       tipo_item <> 'NOMENCLADOR'
+                                                           OR (
+                                                           id_medicamento IS NULL
+                                                               AND troquel IS NULL
+                                                               AND nombre_medicamento IS NULL
+                                                           )
+                                                       ),
+
+                                               CONSTRAINT ck_compras_detalle_medicamento_sin_nomenclador
+                                                   CHECK (
+                                                       tipo_item <> 'MEDICAMENTO'
+                                                           OR (
+                                                           id_prestacion IS NULL
+                                                               AND id_tipo_nomenclador IS NULL
+                                                               AND codigo_nomenclador IS NULL
+                                                               AND descripcion_nomenclador IS NULL
+                                                           )
+                                                       ),
+
+                                               CONSTRAINT ck_compras_detalle_troquel
+                                                   CHECK (
+                                                       troquel IS NULL
+                                                           OR troquel > 0
+                                                       ),
+
                                                CONSTRAINT ck_compras_detalle_cantidad
-                                                   CHECK (cantidad > 0),
+                                                   CHECK (
+                                                       cantidad > 0
+                                                       ),
 
                                                CONSTRAINT ck_compras_detalle_precio_unitario
                                                    CHECK (
@@ -410,12 +481,30 @@ CREATE INDEX ix_compras_detalle_requerimiento
         )
     WHERE baja_fecha IS NULL;
 
-CREATE INDEX ix_compras_detalle_articulo
-    ON compras.requerimiento_detalle (id_articulo)
+CREATE INDEX ix_compras_detalle_tipo_item
+    ON compras.requerimiento_detalle (
+                                      tipo_item
+        )
     WHERE baja_fecha IS NULL;
 
+CREATE INDEX ix_compras_detalle_prestacion
+    ON compras.requerimiento_detalle (
+                                      id_prestacion
+        )
+    WHERE baja_fecha IS NULL
+      AND id_prestacion IS NOT NULL;
+
+CREATE INDEX ix_compras_detalle_medicamento
+    ON compras.requerimiento_detalle (
+                                      id_medicamento
+        )
+    WHERE baja_fecha IS NULL
+      AND id_medicamento IS NOT NULL;
+
 CREATE INDEX ix_compras_detalle_prestador
-    ON compras.requerimiento_detalle (id_prestador)
+    ON compras.requerimiento_detalle (
+                                      id_prestador
+        )
     WHERE baja_fecha IS NULL
       AND id_prestador IS NOT NULL;
 
@@ -1996,14 +2085,28 @@ CREATE FUNCTION compras.get_requerimiento_detalle(
     RETURNS TABLE (
                       id INTEGER,
                       id_requerimiento INTEGER,
-                      id_articulo INTEGER,
-                      articulo VARCHAR,
+
+                      tipo_item VARCHAR,
+                      codigo_item VARCHAR,
+                      descripcion_item VARCHAR,
+
+                      id_prestacion INTEGER,
+                      id_tipo_nomenclador INTEGER,
+                      codigo_nomenclador VARCHAR,
+                      descripcion_nomenclador VARCHAR,
+
+                      id_medicamento INTEGER,
+                      troquel INTEGER,
+                      nombre_medicamento VARCHAR,
+
                       cantidad INTEGER,
                       precio_unitario_estimado NUMERIC,
                       precio_total_estimado NUMERIC,
+
                       id_prestador INTEGER,
                       prestador_cuit VARCHAR,
                       prestador_razon_social VARCHAR,
+
                       observaciones TEXT
                   )
     AS $func$
@@ -2012,22 +2115,46 @@ RETURN QUERY
 SELECT
     d.id_detalle,
     d.id_requerimiento,
-    d.id_articulo,
-    a.descripcion,
+
+    d.tipo_item::VARCHAR,
+
+    CASE
+        WHEN d.tipo_item = 'MEDICAMENTO'
+            THEN COALESCE(
+                d.troquel::VARCHAR,
+                d.id_medicamento::VARCHAR
+                 )
+        ELSE d.codigo_nomenclador
+        END::VARCHAR AS codigo_item,
+
+    CASE
+        WHEN d.tipo_item = 'MEDICAMENTO'
+            THEN d.nombre_medicamento
+        ELSE d.descripcion_nomenclador
+        END::VARCHAR AS descripcion_item,
+
+    d.id_prestacion,
+    d.id_tipo_nomenclador,
+    d.codigo_nomenclador,
+    d.descripcion_nomenclador,
+
+    d.id_medicamento,
+    d.troquel,
+    d.nombre_medicamento,
+
     d.cantidad,
     d.precio_unitario_estimado,
     d.precio_total_estimado,
+
     d.id_prestador,
     p.cuit::VARCHAR,
     p.descripcion::VARCHAR,
+
     d.observaciones
 FROM compras.requerimiento_detalle d
-         JOIN compras.articulo a
-              ON a.id_articulo = d.id_articulo
          LEFT JOIN public.prestador p
                    ON p.id_prestador = d.id_prestador
-WHERE d.id_requerimiento =
-      p_id_requerimiento
+WHERE d.id_requerimiento = p_id_requerimiento
   AND d.baja_fecha IS NULL
 ORDER BY d.id_detalle;
 END;
@@ -2035,11 +2162,21 @@ $func$
 LANGUAGE plpgsql
 STABLE;
 
-
 CREATE FUNCTION compras.guardar_requerimiento_detalle(
     p_id INTEGER,
     p_id_requerimiento INTEGER,
-    p_id_articulo INTEGER,
+
+    p_tipo_item VARCHAR,
+
+    p_id_prestacion INTEGER,
+    p_id_tipo_nomenclador INTEGER,
+    p_codigo_nomenclador VARCHAR,
+    p_descripcion_nomenclador VARCHAR,
+
+    p_id_medicamento INTEGER,
+    p_troquel INTEGER,
+    p_nombre_medicamento VARCHAR,
+
     p_cantidad INTEGER,
     p_observaciones TEXT,
     p_usuario VARCHAR
@@ -2049,87 +2186,325 @@ AS $func$
 DECLARE
 v_id INTEGER;
     v_usuario VARCHAR(100);
+    v_tipo_item VARCHAR(20);
+    v_sector VARCHAR(200);
 BEGIN
     v_usuario := compras.normalizar_usuario(
         p_usuario
     );
 
+    v_tipo_item := upper(
+        btrim(
+            COALESCE(
+                p_tipo_item,
+                ''
+            )
+        )
+    );
+
+    IF v_tipo_item NOT IN (
+        'NOMENCLADOR',
+        'MEDICAMENTO'
+    ) THEN
+        RAISE EXCEPTION
+            'Tipo de item invalido. Compras solo permite NOMENCLADOR o MEDICAMENTO.';
+END IF;
+
+    IF p_id_requerimiento IS NULL
+       OR p_id_requerimiento <= 0 THEN
+
+        RAISE EXCEPTION
+            'Debe informar el requerimiento de compra.';
+END IF;
+
     IF p_cantidad IS NULL
        OR p_cantidad <= 0 THEN
+
         RAISE EXCEPTION
             'La cantidad debe ser mayor a cero.';
 END IF;
 
-    IF NOT EXISTS (
-        SELECT 1
-          FROM compras.requerimiento r
-         WHERE r.id_requerimiento =
-               p_id_requerimiento
-           AND r.estado = 1
-           AND r.baja_fecha IS NULL
-    ) THEN
+SELECT upper(
+               btrim(
+                       COALESCE(
+                               sr.descripcion,
+                               ''
+                       )
+               )
+       )
+INTO v_sector
+FROM compras.requerimiento r
+         JOIN compras.sector_requerimiento sr
+              ON sr.id_sector = r.id_sector
+WHERE r.id_requerimiento = p_id_requerimiento
+  AND r.estado = 1
+  AND r.baja_fecha IS NULL;
+
+IF NOT FOUND THEN
         RAISE EXCEPTION
             'Los detalles estructurales solo pueden modificarse en estado PENDIENTE.';
 END IF;
 
-    IF p_id IS NULL OR p_id <= 0 THEN
+    /*
+     * Regla nueva:
+     * FARMACIA => MEDICAMENTO.
+     * Cualquier otro sector => NOMENCLADOR.
+     */
+    IF v_sector LIKE '%FARMAC%' THEN
+        IF v_tipo_item <> 'MEDICAMENTO' THEN
+            RAISE EXCEPTION
+                'El sector Farmacia requiere seleccionar medicamento.';
+END IF;
+ELSE
+        IF v_tipo_item <> 'NOMENCLADOR' THEN
+            RAISE EXCEPTION
+                'El sector informado requiere seleccionar nomenclador.';
+END IF;
+END IF;
+
+    IF v_tipo_item = 'NOMENCLADOR' THEN
+        IF p_id_prestacion IS NULL
+           OR p_id_prestacion <= 0 THEN
+
+            RAISE EXCEPTION
+                'Debe informar la prestacion del nomenclador.';
+END IF;
+
+        IF p_id_tipo_nomenclador IS NULL
+           OR p_id_tipo_nomenclador <= 0 THEN
+
+            RAISE EXCEPTION
+                'Debe informar el tipo de nomenclador.';
+END IF;
+
+        IF p_codigo_nomenclador IS NULL
+           OR length(btrim(p_codigo_nomenclador)) = 0 THEN
+
+            RAISE EXCEPTION
+                'Debe informar el codigo de nomenclador.';
+END IF;
+
+        IF p_descripcion_nomenclador IS NULL
+           OR length(btrim(p_descripcion_nomenclador)) = 0 THEN
+
+            RAISE EXCEPTION
+                'Debe informar la descripcion del nomenclador.';
+END IF;
+END IF;
+
+    IF v_tipo_item = 'MEDICAMENTO' THEN
+        IF p_id_medicamento IS NULL
+           OR p_id_medicamento <= 0 THEN
+
+            RAISE EXCEPTION
+                'Debe informar el medicamento.';
+END IF;
+
+        IF p_nombre_medicamento IS NULL
+           OR length(btrim(p_nombre_medicamento)) = 0 THEN
+
+            RAISE EXCEPTION
+                'Debe informar el nombre del medicamento.';
+END IF;
+END IF;
+
+    IF p_id IS NULL
+       OR p_id <= 0 THEN
+
         INSERT INTO compras.requerimiento_detalle (
             id_requerimiento,
-            id_articulo,
-            cantidad,
 
+            tipo_item,
+
+            id_prestacion,
+            id_tipo_nomenclador,
+            codigo_nomenclador,
+            descripcion_nomenclador,
+
+            id_medicamento,
+            troquel,
+            nombre_medicamento,
+
+            cantidad,
             precio_unitario_estimado,
             precio_total_estimado,
             id_prestador,
 
             observaciones,
-
             alta_usr
         )
         VALUES (
             p_id_requerimiento,
-            p_id_articulo,
-            p_cantidad,
 
+            v_tipo_item,
+
+            CASE
+                WHEN v_tipo_item = 'NOMENCLADOR'
+                    THEN p_id_prestacion
+                ELSE NULL
+            END,
+
+            CASE
+                WHEN v_tipo_item = 'NOMENCLADOR'
+                    THEN p_id_tipo_nomenclador
+                ELSE NULL
+            END,
+
+            CASE
+                WHEN v_tipo_item = 'NOMENCLADOR'
+                    THEN NULLIF(
+                        btrim(
+                            p_codigo_nomenclador
+                        ),
+                        ''
+                    )
+                ELSE NULL
+            END,
+
+            CASE
+                WHEN v_tipo_item = 'NOMENCLADOR'
+                    THEN NULLIF(
+                        btrim(
+                            p_descripcion_nomenclador
+                        ),
+                        ''
+                    )
+                ELSE NULL
+            END,
+
+            CASE
+                WHEN v_tipo_item = 'MEDICAMENTO'
+                    THEN p_id_medicamento
+                ELSE NULL
+            END,
+
+            CASE
+                WHEN v_tipo_item = 'MEDICAMENTO'
+                    THEN p_troquel
+                ELSE NULL
+            END,
+
+            CASE
+                WHEN v_tipo_item = 'MEDICAMENTO'
+                    THEN NULLIF(
+                        btrim(
+                            p_nombre_medicamento
+                        ),
+                        ''
+                    )
+                ELSE NULL
+            END,
+
+            p_cantidad,
             NULL,
             NULL,
             NULL,
 
             NULLIF(
-                btrim(p_observaciones),
+                btrim(
+                    p_observaciones
+                ),
                 ''
             ),
 
             v_usuario
         )
         RETURNING id_detalle
-             INTO v_id;
+        INTO v_id;
 
 RETURN v_id;
 END IF;
 
 UPDATE compras.requerimiento_detalle
-SET id_articulo = p_id_articulo,
+SET tipo_item = v_tipo_item,
+
+    id_prestacion =
+        CASE
+            WHEN v_tipo_item = 'NOMENCLADOR'
+                THEN p_id_prestacion
+            ELSE NULL
+            END,
+
+    id_tipo_nomenclador =
+        CASE
+            WHEN v_tipo_item = 'NOMENCLADOR'
+                THEN p_id_tipo_nomenclador
+            ELSE NULL
+            END,
+
+    codigo_nomenclador =
+        CASE
+            WHEN v_tipo_item = 'NOMENCLADOR'
+                THEN NULLIF(
+                    btrim(
+                            p_codigo_nomenclador
+                    ),
+                    ''
+                     )
+            ELSE NULL
+            END,
+
+    descripcion_nomenclador =
+        CASE
+            WHEN v_tipo_item = 'NOMENCLADOR'
+                THEN NULLIF(
+                    btrim(
+                            p_descripcion_nomenclador
+                    ),
+                    ''
+                     )
+            ELSE NULL
+            END,
+
+    id_medicamento =
+        CASE
+            WHEN v_tipo_item = 'MEDICAMENTO'
+                THEN p_id_medicamento
+            ELSE NULL
+            END,
+
+    troquel =
+        CASE
+            WHEN v_tipo_item = 'MEDICAMENTO'
+                THEN p_troquel
+            ELSE NULL
+            END,
+
+    nombre_medicamento =
+        CASE
+            WHEN v_tipo_item = 'MEDICAMENTO'
+                THEN NULLIF(
+                    btrim(
+                            p_nombre_medicamento
+                    ),
+                    ''
+                     )
+            ELSE NULL
+            END,
+
     cantidad = p_cantidad,
 
+    /*
+     * Si cambia el item estructural, la cotizacion anterior deja de ser
+     * confiable.
+     */
     precio_unitario_estimado = NULL,
     precio_total_estimado = NULL,
     id_prestador = NULL,
 
     observaciones =
         NULLIF(
-                btrim(p_observaciones),
+                btrim(
+                        p_observaciones
+                ),
                 ''
         ),
 
     modi_fecha = now(),
     modi_usr = v_usuario
-
 WHERE id_detalle = p_id
-  AND id_requerimiento =
-      p_id_requerimiento
+  AND id_requerimiento = p_id_requerimiento
   AND baja_fecha IS NULL
-
     RETURNING id_detalle
 INTO v_id;
 
@@ -2143,294 +2518,6 @@ END;
 $func$
 LANGUAGE plpgsql;
 
-
-CREATE FUNCTION compras.borrar_requerimiento_detalle(
-    p_id_detalle INTEGER,
-    p_usuario VARCHAR
-)
-    RETURNS VOID
-AS $func$
-DECLARE
-v_usuario VARCHAR(100);
-BEGIN
-    v_usuario := compras.normalizar_usuario(
-        p_usuario
-    );
-
-UPDATE compras.requerimiento_detalle d
-SET baja_fecha = now(),
-    baja_usr = v_usuario,
-    modi_fecha = now(),
-    modi_usr = v_usuario
-WHERE d.id_detalle = p_id_detalle
-  AND d.baja_fecha IS NULL
-  AND EXISTS (
-    SELECT 1
-    FROM compras.requerimiento r
-    WHERE r.id_requerimiento =
-          d.id_requerimiento
-      AND r.estado = 1
-      AND r.baja_fecha IS NULL
-);
-
-IF NOT FOUND THEN
-        RAISE EXCEPTION
-            'El detalle no existe o el requerimiento no esta PENDIENTE.';
-END IF;
-END;
-$func$
-LANGUAGE plpgsql;
-
-CREATE FUNCTION compras.guardar_cotizacion_requerimiento(
-    p_id_requerimiento INTEGER,
-    p_ids_detalle INTEGER[],
-    p_precios_unitarios NUMERIC[],
-    p_id_prestador INTEGER,
-    p_usuario VARCHAR
-)
-    RETURNS INTEGER
-AS $func$
-DECLARE
-v_estado INTEGER;
-    v_usuario VARCHAR(100);
-    v_cantidad_detalles INTEGER;
-BEGIN
-    IF p_id_requerimiento IS NULL
-       OR p_id_requerimiento <= 0 THEN
-
-        RAISE EXCEPTION
-            'Debe informar el requerimiento de compra.';
-END IF;
-
-    IF p_ids_detalle IS NULL
-       OR p_precios_unitarios IS NULL
-       OR cardinality(p_ids_detalle) = 0 THEN
-
-        RAISE EXCEPTION
-            'Debe informar los detalles de la cotizacion.';
-END IF;
-
-    IF cardinality(p_ids_detalle)
-       <> cardinality(p_precios_unitarios) THEN
-
-        RAISE EXCEPTION
-            'La cantidad de detalles y precios no coincide.';
-END IF;
-
-    IF EXISTS (
-        SELECT 1
-          FROM unnest(p_ids_detalle) AS ids(id_detalle)
-         WHERE ids.id_detalle IS NULL
-            OR ids.id_detalle <= 0
-    ) THEN
-        RAISE EXCEPTION
-            'La lista contiene identificadores de detalle invalidos.';
-END IF;
-
-    IF EXISTS (
-        SELECT ids.id_detalle
-          FROM unnest(p_ids_detalle) AS ids(id_detalle)
-         GROUP BY ids.id_detalle
-        HAVING count(*) > 1
-    ) THEN
-        RAISE EXCEPTION
-            'La lista contiene detalles repetidos.';
-END IF;
-
-    IF EXISTS (
-        SELECT 1
-          FROM unnest(p_precios_unitarios)
-               AS precios(precio)
-         WHERE precios.precio < 0
-    ) THEN
-        RAISE EXCEPTION
-            'El precio unitario no puede ser negativo.';
-END IF;
-
-    v_usuario :=
-        compras.normalizar_usuario(
-            p_usuario
-        );
-
-SELECT r.estado
-INTO v_estado
-FROM compras.requerimiento r
-WHERE r.id_requerimiento =
-      p_id_requerimiento
-  AND r.baja_fecha IS NULL
-    FOR UPDATE;
-
-IF NOT FOUND THEN
-        RAISE EXCEPTION
-            'No se encontro el requerimiento activo.';
-END IF;
-
-    IF v_estado <> 2 THEN
-        RAISE EXCEPTION
-            'Solo se puede guardar cotizacion en estado A COTIZAR.';
-END IF;
-
-    /*
-     * Bloquea todos los detalles antes de validar y actualizar.
-     */
-    PERFORM d.id_detalle
-      FROM compras.requerimiento_detalle d
-     WHERE d.id_requerimiento =
-           p_id_requerimiento
-       AND d.baja_fecha IS NULL
-     ORDER BY d.id_detalle
-     FOR UPDATE;
-
-SELECT count(*)
-INTO v_cantidad_detalles
-FROM compras.requerimiento_detalle d
-WHERE d.id_requerimiento =
-      p_id_requerimiento
-  AND d.baja_fecha IS NULL;
-
-IF v_cantidad_detalles = 0 THEN
-        RAISE EXCEPTION
-            'El requerimiento no tiene detalles activos.';
-END IF;
-
-    IF v_cantidad_detalles
-       <> cardinality(p_ids_detalle) THEN
-
-        RAISE EXCEPTION
-            'Deben informarse exactamente todos los detalles activos.';
-END IF;
-
-    IF EXISTS (
-        SELECT 1
-          FROM compras.requerimiento_detalle d
-         WHERE d.id_requerimiento =
-               p_id_requerimiento
-           AND d.baja_fecha IS NULL
-           AND NOT (
-               d.id_detalle = ANY(p_ids_detalle)
-           )
-    ) THEN
-        RAISE EXCEPTION
-            'Faltan detalles activos en la cotizacion recibida.';
-END IF;
-
-    IF EXISTS (
-        SELECT 1
-          FROM unnest(p_ids_detalle)
-               AS ids(id_detalle)
-         WHERE NOT EXISTS (
-             SELECT 1
-               FROM compras.requerimiento_detalle d
-              WHERE d.id_requerimiento =
-                    p_id_requerimiento
-                AND d.id_detalle =
-                    ids.id_detalle
-                AND d.baja_fecha IS NULL
-         )
-    ) THEN
-        RAISE EXCEPTION
-            'La cotizacion contiene detalles ajenos al requerimiento.';
-END IF;
-
-    IF p_id_prestador IS NOT NULL
-       AND NOT EXISTS (
-           SELECT 1
-             FROM compras.requerimiento_cotizacion_prestador rcp
-            WHERE rcp.id_requerimiento =
-                  p_id_requerimiento
-              AND rcp.id_prestador =
-                  p_id_prestador
-              AND rcp.estado_envio = 'ENVIADO'
-       ) THEN
-
-        RAISE EXCEPTION
-            'El prestador seleccionado no fue notificado correctamente.';
-END IF;
-
-UPDATE compras.requerimiento_detalle d
-SET precio_unitario_estimado =
-        valores.precio_unitario,
-
-    precio_total_estimado =
-        CASE
-            WHEN valores.precio_unitario IS NULL
-                THEN NULL
-            ELSE round(
-                    d.cantidad
-                        * valores.precio_unitario,
-                    2
-                 )
-            END,
-
-    id_prestador =
-        p_id_prestador,
-
-    modi_fecha = now(),
-    modi_usr = v_usuario
-
-    FROM (
-          SELECT
-              p_ids_detalle[indice] AS id_detalle,
-              p_precios_unitarios[indice]
-                  AS precio_unitario
-            FROM generate_subscripts(
-                p_ids_detalle,
-                1
-            ) AS indices(indice)
-      ) valores
-
-WHERE d.id_requerimiento =
-    p_id_requerimiento
-  AND d.id_detalle =
-    valores.id_detalle
-  AND d.baja_fecha IS NULL;
-
-/*
- * Si falta alg�n dato, se guarda el avance y contin�a A COTIZAR.
- */
-IF EXISTS (
-        SELECT 1
-          FROM compras.requerimiento_detalle d
-         WHERE d.id_requerimiento =
-               p_id_requerimiento
-           AND d.baja_fecha IS NULL
-           AND (
-                  d.cantidad <= 0
-               OR d.precio_unitario_estimado IS NULL
-               OR d.precio_unitario_estimado < 0
-               OR d.precio_total_estimado IS NULL
-               OR d.id_prestador IS NULL
-               OR d.precio_total_estimado
-                  <> round(
-                      d.cantidad
-                      * d.precio_unitario_estimado,
-                      2
-                  )
-               OR NOT EXISTS (
-                   SELECT 1
-                     FROM compras.requerimiento_cotizacion_prestador rcp
-                    WHERE rcp.id_requerimiento =
-                          p_id_requerimiento
-                      AND rcp.id_prestador =
-                          d.id_prestador
-                      AND rcp.estado_envio =
-                          'ENVIADO'
-               )
-           )
-    ) THEN
-        RETURN 2;
-END IF;
-
-    PERFORM compras.cambiar_estado_requerimiento(
-        p_id_requerimiento,
-        3,
-        v_usuario
-    );
-
-RETURN 3;
-END;
-$func$
-LANGUAGE plpgsql;
 -- =====================================================================
 -- PRESTADORES PARA COTIZACION
 -- =====================================================================

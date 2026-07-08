@@ -871,23 +871,71 @@ function manejarTipoSector(){
 		// 4. Legales
 		// 5. Liquidaciones
 		// 6. Odonto
-		
-		// En Tipo Reintegro y Sector Farmacia, muestra Medicamento y Troquel
-		// En el resto muestra "Codigo Presentado (nomenclador)
-		if (tipoSector.selectedIndex==3) {
-   			 
-   			if (tipopedido.selectedIndex!=1){
-				if(tipoSector.selectedIndex == 3 && tipopedido.selectedIndex == 2){
-	   				jQuery("#" + reclamoPrestacionalNamespace + "busqueda_farmacia").show();       
-	  				 jQuery("#" + reclamoPrestacionalNamespace + "busqueda_prestaciones").hide();    		
-				}
-   				
-   					       
-  		         jQuery("#" + reclamoPrestacionalNamespace + "nom_seleccionado").val("2"); // se selecciono maestra de farmacia
-   	   		}else{
-   	   		     jQuery("#" + reclamoPrestacionalNamespace + "tipoNomencladorSeguimiento_filtro").val(9);  // farmacia
-   	   		}	 
-        }
+
+		function manejarTipoSector(){
+			var sector = jQuery('#' + reclamoPrestacionalNamespace + 'sector').val();
+
+			jQuery("#" + reclamoPrestacionalNamespace + "busqueda_prestaciones").hide();
+			jQuery("#" + reclamoPrestacionalNamespace + "busqueda_farmacia").hide();
+
+			jQuery("#" + reclamoPrestacionalNamespace + "nom_seleccionado").val("");
+			jQuery("#" + reclamoPrestacionalNamespace + "tipoNomencladorSeguimiento_filtro").val("");
+
+			jQuery('#' + reclamoPrestacionalNamespace + 'troquel').val("");
+			jQuery('#' + reclamoPrestacionalNamespace + 'codigoSeguimiento_filtro').val("");
+			jQuery("#" + reclamoPrestacionalNamespace + "descripcionSeguimiento_filtro").val("");
+
+			if (sector == "FARMACIA") {
+				jQuery("#" + reclamoPrestacionalNamespace + "busqueda_farmacia").show();
+				jQuery("#" + reclamoPrestacionalNamespace + "busqueda_prestaciones").hide();
+
+				/*
+                 * 2 = maestra farmacia en el flujo legacy.
+                 */
+				jQuery("#" + reclamoPrestacionalNamespace + "nom_seleccionado").val("2");
+				jQuery("#" + reclamoPrestacionalNamespace + "tipoNomencladorSeguimiento_filtro").val("9");
+
+				return;
+			}
+
+			if (sector == "PRESTACIONES MEDICAS"
+				|| sector == "LEGALES") {
+
+				jQuery("#" + reclamoPrestacionalNamespace + "busqueda_prestaciones").show();
+				jQuery("#" + reclamoPrestacionalNamespace + "busqueda_farmacia").hide();
+
+				/*
+                 * 1 = maestra de prestaciones/nomenclador en el flujo legacy.
+                 * Tipo 0 permite búsqueda general; PRESTACIONES MEDICAS además
+                 * viaja con esPrestMed=1 en buscarNomencladorAutocompletar().
+                 */
+				jQuery("#" + reclamoPrestacionalNamespace + "nom_seleccionado").val("1");
+				jQuery("#" + reclamoPrestacionalNamespace + "tipoNomencladorSeguimiento_filtro").val("0");
+
+				return;
+			}
+
+			if (sector == "DISCAPACIDAD") {
+				jQuery("#" + reclamoPrestacionalNamespace + "busqueda_prestaciones").show();
+				jQuery("#" + reclamoPrestacionalNamespace + "busqueda_farmacia").hide();
+
+				jQuery("#" + reclamoPrestacionalNamespace + "nom_seleccionado").val("1");
+				jQuery("#" + reclamoPrestacionalNamespace + "tipoNomencladorSeguimiento_filtro").val("8");
+
+				return;
+			}
+
+			if (sector == "ODONTOLOGIA") {
+				jQuery("#" + reclamoPrestacionalNamespace + "busqueda_prestaciones").show();
+				jQuery("#" + reclamoPrestacionalNamespace + "busqueda_farmacia").hide();
+
+				jQuery("#" + reclamoPrestacionalNamespace + "nom_seleccionado").val("1");
+				jQuery("#" + reclamoPrestacionalNamespace + "tipoNomencladorSeguimiento_filtro").val("1");
+
+				return;
+			}
+		}
+
    		if (tipoSector.selectedIndex==1){     	       
    			jQuery("#" + reclamoPrestacionalNamespace + "tipoNomencladorSeguimiento_filtro").val(8); // discapacidad 
    		} else if (tipoSector.selectedIndex==6){

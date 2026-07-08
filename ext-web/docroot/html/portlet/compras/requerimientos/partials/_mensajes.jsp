@@ -1195,15 +1195,72 @@ boolean hayMensajeNotificacionFallback =
     </div>
 </c:if>
 
-<c:if test="<%= msgArticuloGuardado %>">
+<c:if test="<%= msgDetalleGuardado %>">
     <div class="portlet-msg-success">
-        Artículo de compra guardado correctamente.
+        Detalle del requerimiento guardado correctamente.
     </div>
 </c:if>
 
-<c:if test="<%= msgArticuloBorrado %>">
+<c:if test="<%= msgDetalleBorrado %>">
     <div class="portlet-msg-success">
-        Artículo de compra eliminado correctamente.
+        Detalle del requerimiento eliminado correctamente.
+    </div>
+</c:if>
+
+<c:if test="<%= msgRequerimientoAnulado %>">
+    <div class="portlet-msg-success">
+        Requerimiento de compra anulado correctamente.
+    </div>
+</c:if>
+
+<c:if test="<%=
+        mostrarErrorGenericoCompra
+                && !hayResultadoNotificacion
+                && !hayMensajeNotificacionFallback
+%>">
+    <div class="portlet-msg-error">
+        <strong>
+            No se pudo procesar el requerimiento de compra.
+        </strong>
+    </div>
+</c:if>
+
+<c:if test="<%=
+        !WebKeysCompras.isEmpty(errorParaAlert)
+                && !hayResultadoNotificacion
+                && !hayMensajeNotificacionFallback
+%>">
+    <div class="portlet-msg-error">
+        <strong>
+            No se pudo guardar/procesar el requerimiento de compra.
+        </strong>
+
+        <br />
+
+        <%= HtmlUtil.escape(errorParaAlert) %>
+
+        <c:if test="<%= !WebKeysCompras.isEmpty(errorCampoCompra) %>">
+            <br />
+
+            Campo relacionado:
+
+            <strong>
+                <%= HtmlUtil.escape(errorCampoCompra) %>
+            </strong>
+        </c:if>
+
+        <c:if test="<%= !WebKeysCompras.isEmpty(idRequerimientoMensaje) %>">
+            <br />
+
+            ID activo:
+            <%= HtmlUtil.escape(idRequerimientoMensaje) %>
+        </c:if>
+    </div>
+</c:if>
+
+<c:if test="<%= !soloLecturaSolicitada && !puedeABM && !puedeCotizar %>">
+    <div class="portlet-msg-error">
+        No posee permisos para modificar requerimientos de compras.
     </div>
 </c:if>
 

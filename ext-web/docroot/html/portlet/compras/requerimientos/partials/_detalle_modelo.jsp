@@ -1,6 +1,7 @@
+<%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="ar.com.ospim.compras.beans.CompraArticulo" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion" %>
 
 <%!
@@ -156,63 +157,65 @@ if (restaurarCotizacion) {
                 )
         );
 
-                labelsPrestadorCotizacionRestaurados.put(
-                        idDetalleRestaurado,
-                        ParamUtil.getString(
-                                renderRequest,
-                                prefix + "prestador_label",
-                                ""
-                        )
-                );
+        labelsPrestadorCotizacionRestaurados.put(
+                idDetalleRestaurado,
+                ParamUtil.getString(
+                        renderRequest,
+                        prefix + "prestador_label",
+                        ""
+                )
+        );
+    }
+
+    if (WebKeysCompras.isEmpty(idPrestadorAdjudicadoDetalle)) {
+        String prestadorLegacyUnico = "";
+
+        for (String prestadorLegacy :
+                prestadoresCotizacionRestaurados.values()) {
+
+            if (WebKeysCompras.isEmpty(prestadorLegacy)) {
+                continue;
             }
 
-            if (WebKeysCompras.isEmpty(idPrestadorAdjudicadoDetalle)) {
-                String prestadorLegacyUnico = "";
-
-                for (String prestadorLegacy :
-                        prestadoresCotizacionRestaurados.values()) {
-
-                    if (WebKeysCompras.isEmpty(prestadorLegacy)) {
-                        continue;
-                    }
-
-                    if (WebKeysCompras.isEmpty(prestadorLegacyUnico)) {
-                        prestadorLegacyUnico = prestadorLegacy;
-                    } else if (!prestadorLegacyUnico.equals(prestadorLegacy)) {
-                        prestadorLegacyUnico = "";
-                        break;
-                    }
-                }
-
-                idPrestadorAdjudicadoDetalle = prestadorLegacyUnico;
-            }
-
-            if (WebKeysCompras.isEmpty(prestadorAdjudicadoDetalle)
-                    && !WebKeysCompras.isEmpty(idPrestadorAdjudicadoDetalle)) {
-
-                for (Map.Entry<String, String> entry :
-                        prestadoresCotizacionRestaurados.entrySet()) {
-
-                    if (idPrestadorAdjudicadoDetalle.equals(entry.getValue())) {
-                        String label =
-                                labelsPrestadorCotizacionRestaurados.get(
-                                        entry.getKey()
-                                );
-
-                        if (!WebKeysCompras.isEmpty(label)) {
-                            prestadorAdjudicadoDetalle = label;
-                            break;
-                        }
-                    }
-                }
+            if (WebKeysCompras.isEmpty(prestadorLegacyUnico)) {
+                prestadorLegacyUnico = prestadorLegacy;
+            } else if (!prestadorLegacyUnico.equals(prestadorLegacy)) {
+                prestadorLegacyUnico = "";
+                break;
             }
         }
 
-        Integer idSectorActual = reqDetalle.getSectorId();
+        idPrestadorAdjudicadoDetalle = prestadorLegacyUnico;
+    }
+
+    if (WebKeysCompras.isEmpty(prestadorAdjudicadoDetalle)
+            && !WebKeysCompras.isEmpty(idPrestadorAdjudicadoDetalle)) {
+
+        for (Map.Entry<String, String> entry :
+                prestadoresCotizacionRestaurados.entrySet()) {
+
+            if (idPrestadorAdjudicadoDetalle.equals(entry.getValue())) {
+                String label =
+                        labelsPrestadorCotizacionRestaurados.get(
+                                entry.getKey()
+                        );
+
+                if (!WebKeysCompras.isEmpty(label)) {
+                    prestadorAdjudicadoDetalle = label;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+Integer idSectorActual = reqDetalle.getSectorId();
 
 int sectorIdParametro = ParamUtil.getInteger(request, "sector_id", 0);
 
-if ((idSectorActual == null || idSectorActual.intValue() <= 0) && sectorIdParametro > 0) {
+if ((idSectorActual == null || idSectorActual.intValue() <= 0)
+        && sectorIdParametro > 0) {
+
     idSectorActual = Integer.valueOf(sectorIdParametro);
 }
 
@@ -221,21 +224,8 @@ String idSectorActualString =
                 ? String.valueOf(idSectorActual.intValue())
                 : "";
 
-Object articulosAttr = renderRequest.getAttribute("ARTICULOS_COMPRA");
-
-if (articulosAttr == null) {
-    articulosAttr = request.getAttribute("ARTICULOS_COMPRA");
-}
-
-List<CompraArticulo> articulos = null;
-
-if (articulosAttr instanceof List) {
-    articulos = (List<CompraArticulo>) articulosAttr;
-}
-
-if (articulos == null) {
-    articulos = new ArrayList<CompraArticulo>();
-}
+String sectorDescripcionActualString =
+        reqDetalle.getSectorDescripcionVisible();
 
 PortletURL detalleActionURL = renderResponse.createActionURL();
 detalleActionURL.setWindowState(WindowState.MAXIMIZED);
@@ -296,7 +286,7 @@ boolean prestadoresAdjudicadosMixtosDetalle =
         reqDetalle.tienePrestadoresAdjudicadosMixtos();
 
 int detalleColspan =
-        4
+        6
         + (puedeVerCotizacionDetalle ? 2 : 0)
         + (puedeABMDetalle ? 1 : 0);
 %>
