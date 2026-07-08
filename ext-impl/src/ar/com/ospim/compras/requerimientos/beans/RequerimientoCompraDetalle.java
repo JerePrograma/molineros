@@ -5,23 +5,44 @@ import ar.com.ospim.compras.WebKeysCompras;
 import java.math.BigDecimal;
 
 /**
- * Detalle adjudicado de un requerimiento de compra.
+ * Detalle técnico de un requerimiento de compra.
  *
- * El ID de artículo pertenece al módulo Compras y no debe reutilizarse como
- * ID de prestación ni como ID de medicamento del módulo Autorizaciones.
+ * Nuevo contrato de Compras:
+ *
+ * - FARMACIA usa MEDICAMENTO.
+ * - El resto de los sectores usa NOMENCLADOR.
+ *
+ * No se utiliza compras.articulo.
  */
 public class RequerimientoCompraDetalle {
 
+    public static final String TIPO_ITEM_NOMENCLADOR = "NOMENCLADOR";
+    public static final String TIPO_ITEM_MEDICAMENTO = "MEDICAMENTO";
+
     private Integer id;
     private Integer idRequerimiento;
-    private Integer idArticulo;
-    private String articulo;
+
+    private String tipoItem;
+    private String codigoItem;
+    private String descripcionItem;
+
+    private Integer idPrestacion;
+    private Integer idTipoNomenclador;
+    private String codigoNomenclador;
+    private String descripcionNomenclador;
+
+    private Integer idMedicamento;
+    private Integer troquel;
+    private String nombreMedicamento;
+
     private Integer cantidad;
     private BigDecimal precioUnitarioEstimado;
     private BigDecimal precioTotalEstimado;
+
     private Integer idPrestador;
     private String prestadorCuit;
     private String prestadorRazonSocial;
+
     private String observaciones;
 
     public RequerimientoCompraDetalle() {
@@ -93,48 +114,275 @@ public class RequerimientoCompraDetalle {
                         : null;
     }
 
-    public Integer getIdArticulo() {
-        return idArticulo;
+    public String getTipoItem() {
+        return tipoItem;
     }
 
-    public int getIdArticuloInt() {
-        return idArticulo != null
-                ? idArticulo.intValue()
+    public String getTipoItemNormalizado() {
+        String value =
+                WebKeysCompras.trimToNull(
+                        tipoItem
+                );
+
+        return value != null
+                ? value.toUpperCase()
+                : "";
+    }
+
+    public void setTipoItem(
+            String tipoItem) {
+
+        String value =
+                WebKeysCompras.trimToNull(
+                        tipoItem
+                );
+
+        this.tipoItem =
+                value != null
+                        ? value.toUpperCase()
+                        : null;
+    }
+
+    public String getCodigoItem() {
+        return codigoItem;
+    }
+
+    public String getCodigoItemVisible() {
+        if (!WebKeysCompras.isEmpty(
+                codigoItem
+        )) {
+            return codigoItem;
+        }
+
+        if (esMedicamento()) {
+            if (troquel != null
+                    && troquel.intValue() > 0) {
+
+                return String.valueOf(
+                        troquel
+                );
+            }
+
+            return getIdMedicamentoString();
+        }
+
+        if (esNomenclador()) {
+            return getCodigoNomencladorVisible();
+        }
+
+        return "";
+    }
+
+    public void setCodigoItem(
+            String codigoItem) {
+
+        this.codigoItem =
+                WebKeysCompras.trimToNull(
+                        codigoItem
+                );
+    }
+
+    public String getDescripcionItem() {
+        return descripcionItem;
+    }
+
+    public String getDescripcionItemVisible() {
+        if (!WebKeysCompras.isEmpty(
+                descripcionItem
+        )) {
+            return descripcionItem;
+        }
+
+        if (esMedicamento()) {
+            return getNombreMedicamentoVisible();
+        }
+
+        if (esNomenclador()) {
+            return getDescripcionNomencladorVisible();
+        }
+
+        return "";
+    }
+
+    public void setDescripcionItem(
+            String descripcionItem) {
+
+        this.descripcionItem =
+                WebKeysCompras.trimToNull(
+                        descripcionItem
+                );
+    }
+
+    public Integer getIdPrestacion() {
+        return idPrestacion;
+    }
+
+    public int getIdPrestacionInt() {
+        return idPrestacion != null
+                ? idPrestacion.intValue()
                 : 0;
     }
 
-    public String getIdArticuloString() {
-        return idArticulo != null
-                && idArticulo.intValue() > 0
+    public String getIdPrestacionString() {
+        return idPrestacion != null
+                && idPrestacion.intValue() > 0
                 ? String.valueOf(
-                idArticulo
+                idPrestacion
         )
                 : "";
     }
 
-    public void setIdArticulo(
-            Integer idArticulo) {
+    public void setIdPrestacion(
+            Integer idPrestacion) {
 
-        this.idArticulo =
-                idArticulo;
+        this.idPrestacion =
+                idPrestacion != null
+                        && idPrestacion.intValue() > 0
+                        ? idPrestacion
+                        : null;
     }
 
-    public String getArticulo() {
-        return articulo;
+    public Integer getIdTipoNomenclador() {
+        return idTipoNomenclador;
     }
 
-    public String getArticuloVisible() {
-        return articulo != null
-                ? articulo
+    public int getIdTipoNomencladorInt() {
+        return idTipoNomenclador != null
+                ? idTipoNomenclador.intValue()
+                : 0;
+    }
+
+    public String getIdTipoNomencladorString() {
+        return idTipoNomenclador != null
+                && idTipoNomenclador.intValue() > 0
+                ? String.valueOf(
+                idTipoNomenclador
+        )
                 : "";
     }
 
-    public void setArticulo(
-            String articulo) {
+    public void setIdTipoNomenclador(
+            Integer idTipoNomenclador) {
 
-        this.articulo =
+        this.idTipoNomenclador =
+                idTipoNomenclador != null
+                        && idTipoNomenclador.intValue() > 0
+                        ? idTipoNomenclador
+                        : null;
+    }
+
+    public String getCodigoNomenclador() {
+        return codigoNomenclador;
+    }
+
+    public String getCodigoNomencladorVisible() {
+        return codigoNomenclador != null
+                ? codigoNomenclador
+                : "";
+    }
+
+    public void setCodigoNomenclador(
+            String codigoNomenclador) {
+
+        this.codigoNomenclador =
                 WebKeysCompras.trimToNull(
-                        articulo
+                        codigoNomenclador
+                );
+    }
+
+    public String getDescripcionNomenclador() {
+        return descripcionNomenclador;
+    }
+
+    public String getDescripcionNomencladorVisible() {
+        return descripcionNomenclador != null
+                ? descripcionNomenclador
+                : "";
+    }
+
+    public void setDescripcionNomenclador(
+            String descripcionNomenclador) {
+
+        this.descripcionNomenclador =
+                WebKeysCompras.trimToNull(
+                        descripcionNomenclador
+                );
+    }
+
+    public Integer getIdMedicamento() {
+        return idMedicamento;
+    }
+
+    public int getIdMedicamentoInt() {
+        return idMedicamento != null
+                ? idMedicamento.intValue()
+                : 0;
+    }
+
+    public String getIdMedicamentoString() {
+        return idMedicamento != null
+                && idMedicamento.intValue() > 0
+                ? String.valueOf(
+                idMedicamento
+        )
+                : "";
+    }
+
+    public void setIdMedicamento(
+            Integer idMedicamento) {
+
+        this.idMedicamento =
+                idMedicamento != null
+                        && idMedicamento.intValue() > 0
+                        ? idMedicamento
+                        : null;
+    }
+
+    public Integer getTroquel() {
+        return troquel;
+    }
+
+    public int getTroquelInt() {
+        return troquel != null
+                ? troquel.intValue()
+                : 0;
+    }
+
+    public String getTroquelString() {
+        return troquel != null
+                && troquel.intValue() > 0
+                ? String.valueOf(
+                troquel
+        )
+                : "";
+    }
+
+    public void setTroquel(
+            Integer troquel) {
+
+        this.troquel =
+                troquel != null
+                        && troquel.intValue() > 0
+                        ? troquel
+                        : null;
+    }
+
+    public String getNombreMedicamento() {
+        return nombreMedicamento;
+    }
+
+    public String getNombreMedicamentoVisible() {
+        return nombreMedicamento != null
+                ? nombreMedicamento
+                : "";
+    }
+
+    public void setNombreMedicamento(
+            String nombreMedicamento) {
+
+        this.nombreMedicamento =
+                WebKeysCompras.trimToNull(
+                        nombreMedicamento
                 );
     }
 
@@ -199,11 +447,8 @@ public class RequerimientoCompraDetalle {
     }
 
     public String getPrecioTotalEstimadoString() {
-        BigDecimal total =
-                getPrecioTotalEstimado();
-
         return WebKeysCompras.formatearImporte(
-                total
+                getPrecioTotalEstimado()
         );
     }
 
@@ -252,11 +497,6 @@ public class RequerimientoCompraDetalle {
                         : null;
     }
 
-    /*
-     * Alias explícitos para el contrato de un único prestador adjudicado por
-     * requerimiento. Se conserva get/setIdPrestador por compatibilidad con la
-     * persistencia existente.
-     */
     public Integer getIdPrestadorAdjudicado() {
         return getIdPrestador();
     }
@@ -288,21 +528,6 @@ public class RequerimientoCompraDetalle {
     public boolean tienePrestadorAdjudicado() {
         return idPrestador != null
                 && idPrestador.intValue() > 0;
-    }
-
-    public boolean tienePrecioUnitarioEstimado() {
-        return precioUnitarioEstimado != null
-                && precioUnitarioEstimado.compareTo(
-                BigDecimal.ZERO
-        ) >= 0;
-    }
-
-    public boolean estaCompletoParaCotizacion() {
-        return cantidad != null
-                && cantidad.intValue() > 0
-                && tienePrecioUnitarioEstimado()
-                && getPrecioTotalEstimado() != null
-                && tienePrestadorAdjudicado();
     }
 
     public String getPrestadorCuit() {
@@ -378,5 +603,60 @@ public class RequerimientoCompraDetalle {
                 WebKeysCompras.trimToNull(
                         observaciones
                 );
+    }
+
+    public boolean esMedicamento() {
+        return TIPO_ITEM_MEDICAMENTO.equals(
+                getTipoItemNormalizado()
+        );
+    }
+
+    public boolean esNomenclador() {
+        return TIPO_ITEM_NOMENCLADOR.equals(
+                getTipoItemNormalizado()
+        );
+    }
+
+    public boolean tieneMedicamento() {
+        return esMedicamento()
+                && getIdMedicamentoInt() > 0
+                && !WebKeysCompras.isEmpty(
+                nombreMedicamento
+        );
+    }
+
+    public boolean tieneNomenclador() {
+        return esNomenclador()
+                && getIdPrestacionInt() > 0
+                && getIdTipoNomencladorInt() > 0
+                && !WebKeysCompras.isEmpty(
+                codigoNomenclador
+        )
+                && !WebKeysCompras.isEmpty(
+                descripcionNomenclador
+        );
+    }
+
+    public boolean tienePrecioUnitarioEstimado() {
+        return precioUnitarioEstimado != null
+                && precioUnitarioEstimado.compareTo(
+                BigDecimal.ZERO
+        ) >= 0;
+    }
+
+    public boolean estaCompletoParaCarga() {
+        return cantidad != null
+                && cantidad.intValue() > 0
+                && (
+                tieneMedicamento()
+                        || tieneNomenclador()
+        );
+    }
+
+    public boolean estaCompletoParaCotizacion() {
+        return estaCompletoParaCarga()
+                && tienePrecioUnitarioEstimado()
+                && getPrecioTotalEstimado() != null
+                && tienePrestadorAdjudicado();
     }
 }

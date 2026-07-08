@@ -503,15 +503,30 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
         d.setId(getInteger(rs, "id"));
         d.setIdRequerimiento(getInteger(rs, "id_requerimiento"));
-        d.setIdArticulo(getInteger(rs, "id_articulo"));
-        d.setArticulo(getString(rs, "articulo"));
+
+        d.setTipoItem(getString(rs, "tipo_item"));
+        d.setCodigoItem(getString(rs, "codigo_item"));
+        d.setDescripcionItem(getString(rs, "descripcion_item"));
+
+        d.setIdPrestacion(getInteger(rs, "id_prestacion"));
+        d.setIdTipoNomenclador(getInteger(rs, "id_tipo_nomenclador"));
+        d.setCodigoNomenclador(getString(rs, "codigo_nomenclador"));
+        d.setDescripcionNomenclador(getString(rs, "descripcion_nomenclador"));
+
+        d.setIdMedicamento(getInteger(rs, "id_medicamento"));
+        d.setTroquel(getInteger(rs, "troquel"));
+        d.setNombreMedicamento(getString(rs, "nombre_medicamento"));
+
         d.setCantidad(getInteger(rs, "cantidad"));
+
         d.setPrecioUnitarioEstimado(
                 getNullableBigDecimal(rs, "precio_unitario_estimado")
         );
+
         d.setPrecioTotalEstimado(
                 getNullableBigDecimal(rs, "precio_total_estimado")
         );
+
         d.setIdPrestador(getInteger(rs, "id_prestador"));
         d.setPrestadorCuit(getString(rs, "prestador_cuit"));
         d.setPrestadorRazonSocial(getString(rs, "prestador_razon_social"));

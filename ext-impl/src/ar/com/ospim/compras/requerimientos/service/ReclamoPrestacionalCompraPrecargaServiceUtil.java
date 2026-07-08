@@ -659,38 +659,10 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
          * El artículo de Compras no es una prestación ni un medicamento del
          * nomenclador de Autorizaciones.
          */
-        prestacion.setId_prestacion(
-                0
-        );
-
-        prestacion.setId_medicamento(
-                0
-        );
-
-        prestacion.setId_prestacionrecord(
-                0
-        );
-
-        prestacion.setTipoPrestacion(
-                1
-        );
-
-        prestacion.setCodigoPrestacion(
-                detalle.getIdArticulo() != null
-                        ? "ART-" + detalle.getIdArticulo()
-                        : "COMPRA"
-        );
-
-        prestacion.setNombreprestacion(
-                detalle.getArticuloVisible()
-        );
-
-        prestacion.setDescripcion(
-                detalle.getArticuloVisible()
-        );
-
-        prestacion.setNombremedicacion(
-                ""
+        aplicarReferenciaTecnica(
+                prestacion,
+                requerimiento,
+                detalle
         );
 
         prestacion.setFrecuencia(
@@ -842,6 +814,91 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         );
 
         return prestacion;
+    }
+
+    private static void aplicarReferenciaTecnica(
+            PrestacionesReclamo prestacion,
+            RequerimientoCompra requerimiento,
+            RequerimientoCompraDetalle detalle) {
+
+        String sector =
+                mapearSector(
+                        requerimiento.getSectorDescripcion()
+                );
+
+        prestacion.setId_prestacionrecord(
+                0
+        );
+
+        prestacion.setTipoPrestacion(
+                1
+        );
+
+        if ("FARMACIA".equals(
+                sector
+        )) {
+            if (!detalle.tieneMedicamento()) {
+                throw new IllegalArgumentException(
+                        "El detalle de Farmacia debe tener medicamento técnico válido."
+                );
+            }
+
+            prestacion.setId_medicamento(
+                    detalle.getIdMedicamentoInt()
+            );
+
+            prestacion.setId_prestacion(
+                    0
+            );
+
+            prestacion.setCodigoPrestacion(
+                    detalle.getIdMedicamentoString()
+            );
+
+            prestacion.setNombreprestacion(
+                    detalle.getNombreMedicamentoVisible()
+            );
+
+            prestacion.setDescripcion(
+                    detalle.getNombreMedicamentoVisible()
+            );
+
+            prestacion.setNombremedicacion(
+                    detalle.getNombreMedicamentoVisible()
+            );
+
+            return;
+        }
+
+        if (!detalle.tieneNomenclador()) {
+            throw new IllegalArgumentException(
+                    "El detalle de Compras debe tener nomenclador técnico válido."
+            );
+        }
+
+        prestacion.setId_medicamento(
+                0
+        );
+
+        prestacion.setId_prestacion(
+                detalle.getIdPrestacionInt()
+        );
+
+        prestacion.setCodigoPrestacion(
+                detalle.getCodigoNomencladorVisible()
+        );
+
+        prestacion.setNombreprestacion(
+                detalle.getDescripcionNomencladorVisible()
+        );
+
+        prestacion.setDescripcion(
+                detalle.getDescripcionNomencladorVisible()
+        );
+
+        prestacion.setNombremedicacion(
+                ""
+        );
     }
 
     private static void validarRequerimiento(
@@ -1048,14 +1105,21 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         );
 
         observacion.append(
-                requerimiento
-                        .getIdRequerimientoCompra()
+                requerimiento.getIdRequerimientoCompra()
         );
 
         observacion.append(
-                ". Confirmar nomenclador, fecha, comprobante y "
-                        + "reconocido SSS."
+                ". Confirmar fecha, comprobante y reconocido SSS."
         );
+
+        if (detalle != null
+                && !detalle.tieneMedicamento()
+                && !detalle.tieneNomenclador()) {
+
+            observacion.append(
+                    " Confirmar nomenclador/medicamento."
+            );
+        }
 
         agregarObservacion(
                 observacion,

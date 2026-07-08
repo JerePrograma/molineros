@@ -29,7 +29,9 @@ public class EditarRequerimientoCompraServiceImpl {
             "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_GUARDAR_REQUERIMIENTO_DETALLE =
-            "{call compras.guardar_requerimiento_detalle(?,?,?,?,?,?)}";
+            "{call compras.guardar_requerimiento_detalle("
+                    + "?,?,?,?,?,?,?,?,?,?,?,?,?"
+                    + ")}";
 
     private static final String SQL_BORRAR_REQUERIMIENTO_DETALLE =
             "{ call compras.borrar_requerimiento_detalle(?,?) }";
@@ -309,10 +311,10 @@ public class EditarRequerimientoCompraServiceImpl {
             );
 
             /*
-             * La función recibe seis parámetros.
+             * La función recibe trece parámetros.
              *
-             * Ya no existe registerOutParameter():
-             * el INTEGER retornado se obtiene desde el ResultSet.
+             * Ya no existe id_articulo.
+             * El INTEGER retornado se obtiene desde el ResultSet.
              */
             setNullableInteger(
                     stmt,
@@ -326,27 +328,73 @@ public class EditarRequerimientoCompraServiceImpl {
                     idRequerimiento
             );
 
-            setNullableInteger(
-                    stmt,
+            stmt.setString(
                     3,
-                    detalle.getIdArticulo()
+                    emptyToNull(
+                            detalle.getTipoItemNormalizado()
+                    )
             );
 
             setNullableInteger(
                     stmt,
                     4,
+                    detalle.getIdPrestacion()
+            );
+
+            setNullableInteger(
+                    stmt,
+                    5,
+                    detalle.getIdTipoNomenclador()
+            );
+
+            stmt.setString(
+                    6,
+                    emptyToNull(
+                            detalle.getCodigoNomenclador()
+                    )
+            );
+
+            stmt.setString(
+                    7,
+                    emptyToNull(
+                            detalle.getDescripcionNomenclador()
+                    )
+            );
+
+            setNullableInteger(
+                    stmt,
+                    8,
+                    detalle.getIdMedicamento()
+            );
+
+            setNullableInteger(
+                    stmt,
+                    9,
+                    detalle.getTroquel()
+            );
+
+            stmt.setString(
+                    10,
+                    emptyToNull(
+                            detalle.getNombreMedicamento()
+                    )
+            );
+
+            setNullableInteger(
+                    stmt,
+                    11,
                     detalle.getCantidad()
             );
 
             stmt.setString(
-                    5,
+                    12,
                     emptyToNull(
                             detalle.getObservaciones()
                     )
             );
 
             stmt.setString(
-                    6,
+                    13,
                     emptyToNull(usuario)
             );
 
@@ -407,7 +455,12 @@ public class EditarRequerimientoCompraServiceImpl {
                     "No se pudo guardar el detalle del requerimiento. "
                             + "idDetalle=" + detalle.getId()
                             + ", idRequerimiento=" + idRequerimiento
-                            + ", idArticulo=" + detalle.getIdArticulo()
+                            + ", tipoItem=" + detalle.getTipoItemNormalizado()
+                            + ", idPrestacion=" + detalle.getIdPrestacion()
+                            + ", idTipoNomenclador=" + detalle.getIdTipoNomenclador()
+                            + ", codigoNomenclador=" + detalle.getCodigoNomenclador()
+                            + ", idMedicamento=" + detalle.getIdMedicamento()
+                            + ", troquel=" + detalle.getTroquel()
                             + ", cantidad=" + detalle.getCantidad()
                             + ", usuario=" + usuario
                             + ", SQLState=" + sqlState
@@ -912,37 +965,153 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
-    private void validarDetalleParaGuardar(RequerimientoCompraDetalle detalle) throws Exception {
+    private void validarDetalleParaGuardar(
+            RequerimientoCompraDetalle detalle) throws Exception {
+
         if (detalle == null) {
-            throw new Exception("Debe informar el detalle del requerimiento.");
+            throw new Exception(
+                    "Debe informar el detalle del requerimiento."
+            );
         }
 
-        Integer idRequerimiento = getIdRequerimientoDetalle(detalle);
+        Integer idRequerimiento =
+                getIdRequerimientoDetalle(detalle);
 
-        if (idRequerimiento == null || idRequerimiento.intValue() <= 0) {
-            throw new Exception("Debe guardar primero la cabecera del requerimiento.");
-        }
+        if (idRequerimiento == null
+                || idRequerimiento.intValue() <= 0) {
 
-        if (detalle.getIdArticulo() == null || detalle.getIdArticulo().intValue() <= 0) {
-            throw new Exception("Debe informar el artículo.");
+            throw new Exception(
+                    "Debe guardar primero la cabecera del requerimiento."
+            );
         }
 
         if (detalle.getCantidad() == null) {
-            detalle.setCantidad(Integer.valueOf(1));
+            detalle.setCantidad(
+                    Integer.valueOf(
+                            1
+                    )
+            );
         }
 
         if (detalle.getCantidad().intValue() <= 0) {
-            throw new Exception("La cantidad debe ser mayor a cero.");
+            throw new Exception(
+                    "La cantidad debe ser mayor a cero."
+            );
+        }
+
+        String tipoItem =
+                detalle.getTipoItemNormalizado();
+
+        if (WebKeysCompras.isEmpty(
+                tipoItem
+        )) {
+            throw new Exception(
+                    "Debe informar el tipo de item."
+            );
+        }
+
+        if (!RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR.equals(
+                tipoItem
+        )
+                && !RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO.equals(
+                tipoItem
+        )) {
+
+            throw new Exception(
+                    "Tipo de item inválido. Debe seleccionar nomenclador o medicamento."
+            );
+        }
+
+        if (RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR.equals(
+                tipoItem
+        )) {
+            validarDetalleNomencladorParaGuardar(
+                    detalle
+            );
+        }
+
+        if (RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO.equals(
+                tipoItem
+        )) {
+            validarDetalleMedicamentoParaGuardar(
+                    detalle
+            );
         }
 
         if (detalle.getPrecioUnitarioEstimado() != null
-                && detalle.getPrecioUnitarioEstimado().compareTo(BigDecimal.ZERO) < 0) {
-            throw new Exception("El precio unitario estimado no puede ser negativo.");
+                && detalle.getPrecioUnitarioEstimado().compareTo(
+                BigDecimal.ZERO
+        ) < 0) {
+
+            throw new Exception(
+                    "El precio unitario estimado no puede ser negativo."
+            );
         }
 
         if (detalle.getPrecioTotalEstimadoInformado() != null
-                && detalle.getPrecioTotalEstimadoInformado().compareTo(BigDecimal.ZERO) < 0) {
-            throw new Exception("El precio total estimado no puede ser negativo.");
+                && detalle.getPrecioTotalEstimadoInformado().compareTo(
+                BigDecimal.ZERO
+        ) < 0) {
+
+            throw new Exception(
+                    "El precio total estimado no puede ser negativo."
+            );
+        }
+    }
+
+    private void validarDetalleNomencladorParaGuardar(
+            RequerimientoCompraDetalle detalle) throws Exception {
+
+        if (detalle.getIdPrestacion() == null
+                || detalle.getIdPrestacion().intValue() <= 0) {
+
+            throw new Exception(
+                    "Debe seleccionar la prestación del nomenclador."
+            );
+        }
+
+        if (detalle.getIdTipoNomenclador() == null
+                || detalle.getIdTipoNomenclador().intValue() <= 0) {
+
+            throw new Exception(
+                    "Debe informar el tipo de nomenclador."
+            );
+        }
+
+        if (WebKeysCompras.isEmpty(
+                detalle.getCodigoNomenclador()
+        )) {
+            throw new Exception(
+                    "Debe informar el código de nomenclador."
+            );
+        }
+
+        if (WebKeysCompras.isEmpty(
+                detalle.getDescripcionNomenclador()
+        )) {
+            throw new Exception(
+                    "Debe informar la descripción del nomenclador."
+            );
+        }
+    }
+
+    private void validarDetalleMedicamentoParaGuardar(
+            RequerimientoCompraDetalle detalle) throws Exception {
+
+        if (detalle.getIdMedicamento() == null
+                || detalle.getIdMedicamento().intValue() <= 0) {
+
+            throw new Exception(
+                    "Debe seleccionar el medicamento."
+            );
+        }
+
+        if (WebKeysCompras.isEmpty(
+                detalle.getNombreMedicamento()
+        )) {
+            throw new Exception(
+                    "Debe informar el nombre del medicamento."
+            );
         }
     }
 

@@ -182,7 +182,7 @@ public class RequerimientoCompraDetalleHelper {
             String contexto =
                     "Detalle #" + (i + 1);
 
-            if (filaDetalleVacia(
+            if (filaDetalleTecnicaVacia(
                     request,
                     prefix
             )) {
@@ -214,16 +214,13 @@ public class RequerimientoCompraDetalleHelper {
                 );
             }
 
-            int idArticulo =
-                    parseEnteroConDefault(
-                            request,
-                            prefix + "id_articulo",
-                            contexto + " - Artículo",
-                            0
-                    );
-
             RequerimientoCompraDetalle detalle =
-                    new RequerimientoCompraDetalle();
+                    getDetalleFromRequest(
+                            request,
+                            prefix,
+                            contexto,
+                            idRequerimientoCompra
+                    );
 
             detalle.setId(
                     idDetalle > 0
@@ -231,22 +228,10 @@ public class RequerimientoCompraDetalleHelper {
                             : null
             );
 
-            detalle.setIdRequerimientoCompra(
-                    idRequerimientoCompra
-            );
-
-            detalle.setIdArticulo(
-                    idArticulo > 0
-                            ? Integer.valueOf(idArticulo)
-                            : null
-            );
-
-            detalle.setCantidad(
-                    parseCantidadDesdeRequest(
-                            request,
-                            prefix + "cantidad",
-                            contexto + " - Cantidad"
-                    )
+            aplicarTipoItemEsperadoSegunSector(
+                    requerimiento,
+                    detalle,
+                    contexto
             );
 
             /*
@@ -256,14 +241,6 @@ public class RequerimientoCompraDetalleHelper {
             detalle.setPrecioUnitarioEstimado(null);
             detalle.setPrecioTotalEstimado(null);
             detalle.setIdPrestador(null);
-
-            detalle.setObservaciones(
-                    getParametroRaw(
-                            request,
-                            prefix + "observaciones",
-                            null
-                    )
-            );
 
             normalizarDetalleNuevo(detalle);
 
@@ -299,8 +276,18 @@ public class RequerimientoCompraDetalleHelper {
                                 + ", idDetalle=" + detalle.getId()
                                 + ", idRequerimiento="
                                 + idRequerimientoCompra
-                                + ", idArticulo="
-                                + detalle.getIdArticulo()
+                                + ", tipoItem="
+                                + detalle.getTipoItemNormalizado()
+                                + ", idPrestacion="
+                                + detalle.getIdPrestacion()
+                                + ", idTipoNomenclador="
+                                + detalle.getIdTipoNomenclador()
+                                + ", codigoNomenclador="
+                                + detalle.getCodigoNomenclador()
+                                + ", idMedicamento="
+                                + detalle.getIdMedicamento()
+                                + ", troquel="
+                                + detalle.getTroquel()
                                 + ", cantidad="
                                 + detalle.getCantidad()
                                 + ", usuario="
@@ -353,12 +340,12 @@ public class RequerimientoCompraDetalleHelper {
             String usuario) throws Exception {
 
         RequerimientoCompraDetalle detalle = null;
+        String contexto =
+                "Detalle";
 
         try {
             detalle =
                     getDetalleFromRequest(request);
-
-            normalizarDetalleNuevo(detalle);
 
             RequerimientoCompra requerimiento =
                     validarRequerimientoEditable(
@@ -373,7 +360,20 @@ public class RequerimientoCompraDetalleHelper {
                 );
             }
 
-            validarDetalle(detalle);
+            aplicarTipoItemEsperadoSegunSector(
+                    requerimiento,
+                    detalle,
+                    contexto
+            );
+
+            normalizarDetalleNuevo(
+                    detalle
+            );
+
+            validarDetalle(
+                    detalle,
+                    contexto
+            );
 
             int idDetalleGuardado =
                     EditarRequerimientoCompraServiceUtil
@@ -385,7 +385,8 @@ public class RequerimientoCompraDetalleHelper {
             if (idDetalleGuardado <= 0) {
                 errorCampo(
                         "id_detalle",
-                        "El servicio devolvió un identificador "
+                        contexto
+                                + ": el servicio devolvió un identificador "
                                 + "de detalle inválido."
                 );
             }
@@ -400,7 +401,9 @@ public class RequerimientoCompraDetalleHelper {
             _log.error(
                     "No se pudo guardar el detalle recibido "
                             + "desde el formulario. "
-                            + "idDetalle="
+                            + "contexto="
+                            + contexto
+                            + ", idDetalle="
                             + (
                             detalle != null
                                     ? detalle.getId()
@@ -409,20 +412,82 @@ public class RequerimientoCompraDetalleHelper {
                             + ", idRequerimiento="
                             + (
                             detalle != null
-                                    ? detalle
-                                      .getIdRequerimientoCompra()
+                                    ? detalle.getIdRequerimientoCompra()
                                     : getParametroTrim(
                                     request,
                                     "id_requerimiento_compra"
                             )
                     )
-                            + ", idArticulo="
+                            + ", tipoItem="
                             + (
                             detalle != null
-                                    ? detalle.getIdArticulo()
+                                    ? detalle.getTipoItemNormalizado()
                                     : getParametroTrim(
                                     request,
-                                    "id_articulo"
+                                    "tipo_item"
+                            )
+                    )
+                            + ", idPrestacion="
+                            + (
+                            detalle != null
+                                    ? detalle.getIdPrestacion()
+                                    : getParametroTrim(
+                                    request,
+                                    "id_prestacion"
+                            )
+                    )
+                            + ", idTipoNomenclador="
+                            + (
+                            detalle != null
+                                    ? detalle.getIdTipoNomenclador()
+                                    : getParametroTrim(
+                                    request,
+                                    "id_tipo_nomenclador"
+                            )
+                    )
+                            + ", codigoNomenclador="
+                            + (
+                            detalle != null
+                                    ? detalle.getCodigoNomenclador()
+                                    : getParametroTrim(
+                                    request,
+                                    "codigo_nomenclador"
+                            )
+                    )
+                            + ", descripcionNomenclador="
+                            + (
+                            detalle != null
+                                    ? detalle.getDescripcionNomenclador()
+                                    : getParametroTrim(
+                                    request,
+                                    "descripcion_nomenclador"
+                            )
+                    )
+                            + ", idMedicamento="
+                            + (
+                            detalle != null
+                                    ? detalle.getIdMedicamento()
+                                    : getParametroTrim(
+                                    request,
+                                    "id_medicamento"
+                            )
+                    )
+                            + ", troquel="
+                            + (
+                            detalle != null
+                                    ? detalle.getTroquel()
+                                    : getParametroTrim(
+                                    request,
+                                    "troquel"
+                            )
+                    )
+                            + ", nombreMedicamento="
+                            + (
+                            detalle != null
+                                    ? detalle.getNombreMedicamento()
+                                    : getParametroTrim(
+                                    request,
+                                    "nombre_medicamento"
                             )
                     )
                             + ", cantidad="
@@ -486,16 +551,13 @@ public class RequerimientoCompraDetalleHelper {
         );
     }
 
-    public RequerimientoCompraDetalle getDetalleFromRequest(ActionRequest request)
-            throws Exception {
+    public RequerimientoCompraDetalle getDetalleFromRequest(
+            ActionRequest request) throws Exception {
 
-        RequerimientoCompraDetalle detalle = new RequerimientoCompraDetalle();
-
-        int idDetalle = getIdDetalleFromRequest(request);
-
-        detalle.setId(idDetalle > 0 ? Integer.valueOf(idDetalle) : null);
-
-        detalle.setIdRequerimientoCompra(
+        return getDetalleFromRequest(
+                request,
+                "",
+                "Detalle",
                 parseEnteroConDefault(
                         request,
                         "id_requerimiento_compra",
@@ -503,29 +565,451 @@ public class RequerimientoCompraDetalleHelper {
                         0
                 )
         );
+    }
 
-        int idArticulo = parseEnteroConDefault(
-                request,
-                "id_articulo",
-                "Artículo",
-                0
+    private RequerimientoCompraDetalle getDetalleFromRequest(
+            ActionRequest request,
+            String prefix,
+            String contexto,
+            int idRequerimientoCompra) throws Exception {
+
+        RequerimientoCompraDetalle detalle =
+                new RequerimientoCompraDetalle();
+
+        int idDetalle;
+
+        if (WebKeysCompras.isEmpty(prefix)) {
+            idDetalle =
+                    getIdDetalleFromRequest(request);
+        } else {
+            idDetalle =
+                    parseEnteroConDefault(
+                            request,
+                            prefix + "id",
+                            contexto + " - ID",
+                            0
+                    );
+        }
+
+        detalle.setId(
+                idDetalle > 0
+                        ? Integer.valueOf(idDetalle)
+                        : null
         );
 
-        detalle.setIdArticulo(idArticulo > 0 ? Integer.valueOf(idArticulo) : null);
+        detalle.setIdRequerimientoCompra(
+                idRequerimientoCompra
+        );
+
+        cargarDetalleTecnicoDesdeRequest(
+                request,
+                prefix,
+                contexto,
+                detalle
+        );
 
         detalle.setCantidad(
-                parseCantidadDesdeRequest(request, "cantidad", "Cantidad")
+                parseCantidadDesdeRequest(
+                        request,
+                        prefix + "cantidad",
+                        contexto + " - Cantidad"
+                )
         );
 
         detalle.setPrecioUnitarioEstimado(null);
         detalle.setPrecioTotalEstimado(null);
         detalle.setIdPrestador(null);
 
+        String observaciones =
+                getParametroRaw(
+                        request,
+                        prefix + "observaciones",
+                        null
+                );
+
+        if (WebKeysCompras.isEmpty(observaciones)
+                && WebKeysCompras.isEmpty(prefix)) {
+
+            observaciones =
+                    ParamUtil.getString(
+                            request,
+                            "observaciones_detalle",
+                            null
+                    );
+        }
+
         detalle.setObservaciones(
-                ParamUtil.getString(request, "observaciones_detalle", null)
+                observaciones
         );
 
         return detalle;
+    }
+
+    private void validarDetalle(
+            RequerimientoCompraDetalle detalle,
+            String contexto) throws Exception {
+
+        if (detalle == null) {
+            errorCampo(
+                    contexto,
+                    contexto + ": debe informar el detalle del requerimiento."
+            );
+        }
+
+        if (detalle.getIdRequerimientoCompra() <= 0) {
+            errorCampo(
+                    contexto,
+                    contexto + ": debe guardar primero la cabecera del requerimiento."
+            );
+        }
+
+        if (detalle.getCantidad() == null
+                || detalle.getCantidad().intValue() <= 0) {
+
+            errorCampo(
+                    contexto + " - cantidad",
+                    contexto + ": la Cantidad debe ser mayor a cero."
+            );
+        }
+
+        String tipoItem =
+                detalle.getTipoItemNormalizado();
+
+        if (WebKeysCompras.isEmpty(tipoItem)) {
+            errorCampo(
+                    contexto + " - tipo_item",
+                    contexto + ": debe informar el tipo de ítem."
+            );
+        }
+
+        if (!RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR.equals(tipoItem)
+                && !RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO.equals(tipoItem)) {
+
+            errorCampo(
+                    contexto + " - tipo_item",
+                    contexto + ": tipo de ítem inválido. "
+                            + "Debe seleccionar nomenclador o medicamento."
+            );
+        }
+
+        if (RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR.equals(tipoItem)) {
+            validarDetalleNomenclador(
+                    detalle,
+                    contexto
+            );
+        }
+
+        if (RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO.equals(tipoItem)) {
+            validarDetalleMedicamento(
+                    detalle,
+                    contexto
+            );
+        }
+
+        if (detalle.getPrecioUnitarioEstimado() != null
+                && detalle.getPrecioUnitarioEstimado().compareTo(BigDecimal.ZERO) < 0) {
+
+            errorCampo(
+                    contexto + " - precio_unitario_estimado",
+                    contexto + ": el Precio unitario estimado no puede ser negativo."
+            );
+        }
+
+        if (detalle.getPrecioTotalEstimado() != null
+                && detalle.getPrecioTotalEstimado().compareTo(BigDecimal.ZERO) < 0) {
+
+            errorCampo(
+                    contexto + " - precio_total_estimado",
+                    contexto + ": el Precio total estimado no puede ser negativo."
+            );
+        }
+    }
+
+    private void cargarDetalleTecnicoDesdeRequest(
+            ActionRequest request,
+            String prefix,
+            String contexto,
+            RequerimientoCompraDetalle detalle) throws Exception {
+
+        String tipoItem =
+                getParametroTrim(
+                        request,
+                        prefix + "tipo_item"
+                );
+
+        detalle.setTipoItem(tipoItem);
+
+        int idPrestacion =
+                parseEnteroConDefault(
+                        request,
+                        prefix + "id_prestacion",
+                        contexto + " - Prestación",
+                        0
+                );
+
+        int idTipoNomenclador =
+                parseEnteroConDefault(
+                        request,
+                        prefix + "id_tipo_nomenclador",
+                        contexto + " - Tipo de nomenclador",
+                        0
+                );
+
+        int idMedicamento =
+                parseEnteroConDefault(
+                        request,
+                        prefix + "id_medicamento",
+                        contexto + " - Medicamento",
+                        0
+                );
+
+        int troquel =
+                parseEnteroConDefault(
+                        request,
+                        prefix + "troquel",
+                        contexto + " - Troquel",
+                        0
+                );
+
+        detalle.setIdPrestacion(
+                idPrestacion > 0
+                        ? Integer.valueOf(idPrestacion)
+                        : null
+        );
+
+        detalle.setIdTipoNomenclador(
+                idTipoNomenclador > 0
+                        ? Integer.valueOf(idTipoNomenclador)
+                        : null
+        );
+
+        detalle.setCodigoNomenclador(
+                getParametroTrim(
+                        request,
+                        prefix + "codigo_nomenclador"
+                )
+        );
+
+        detalle.setDescripcionNomenclador(
+                getParametroTrim(
+                        request,
+                        prefix + "descripcion_nomenclador"
+                )
+        );
+
+        detalle.setIdMedicamento(
+                idMedicamento > 0
+                        ? Integer.valueOf(idMedicamento)
+                        : null
+        );
+
+        detalle.setTroquel(
+                troquel > 0
+                        ? Integer.valueOf(troquel)
+                        : null
+        );
+
+        detalle.setNombreMedicamento(
+                getParametroTrim(
+                        request,
+                        prefix + "nombre_medicamento"
+                )
+        );
+
+        detalle.setCodigoItem(
+                getParametroTrim(
+                        request,
+                        prefix + "codigo_item"
+                )
+        );
+
+        detalle.setDescripcionItem(
+                getParametroTrim(
+                        request,
+                        prefix + "descripcion_item"
+                )
+        );
+    }
+
+    private void aplicarTipoItemEsperadoSegunSector(
+            RequerimientoCompra requerimiento,
+            RequerimientoCompraDetalle detalle,
+            String contexto) throws Exception {
+
+        String tipoEsperado =
+                resolverTipoItemEsperadoSegunSector(
+                        requerimiento
+                );
+
+        String tipoRecibido =
+                detalle.getTipoItemNormalizado();
+
+        if (WebKeysCompras.isEmpty(tipoRecibido)) {
+            detalle.setTipoItem(
+                    tipoEsperado
+            );
+
+            return;
+        }
+
+        if (!tipoEsperado.equals(tipoRecibido)) {
+            errorCampo(
+                    contexto + " - tipo_item",
+                    contexto + ": el sector del requerimiento exige "
+                            + tipoEsperado
+                            + " y se recibió "
+                            + tipoRecibido
+                            + "."
+            );
+        }
+    }
+
+    private String resolverTipoItemEsperadoSegunSector(
+            RequerimientoCompra requerimiento) throws Exception {
+
+        if (requerimiento == null) {
+            throw new Exception(
+                    "Debe informar el requerimiento para resolver el tipo de ítem."
+            );
+        }
+
+        String sector =
+                requerimiento.getSectorDescripcion();
+
+        String sectorNormalizado =
+                sector != null
+                        ? sector.trim().toUpperCase()
+                        : "";
+
+        if (sectorNormalizado.indexOf("FARMAC") >= 0) {
+            return RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO;
+        }
+
+        return RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR;
+    }
+
+    private void validarDetalleNomenclador(
+            RequerimientoCompraDetalle detalle,
+            String contexto) throws Exception {
+
+        if (detalle.getIdPrestacion() == null
+                || detalle.getIdPrestacion().intValue() <= 0) {
+
+            errorCampo(
+                    contexto + " - id_prestacion",
+                    contexto + ": debe seleccionar la prestación del nomenclador."
+            );
+        }
+
+        if (detalle.getIdTipoNomenclador() == null
+                || detalle.getIdTipoNomenclador().intValue() <= 0) {
+
+            errorCampo(
+                    contexto + " - id_tipo_nomenclador",
+                    contexto + ": debe informar el tipo de nomenclador."
+            );
+        }
+
+        if (WebKeysCompras.isEmpty(
+                detalle.getCodigoNomenclador()
+        )) {
+            errorCampo(
+                    contexto + " - codigo_nomenclador",
+                    contexto + ": debe informar el código de nomenclador."
+            );
+        }
+
+        if (WebKeysCompras.isEmpty(
+                detalle.getDescripcionNomenclador()
+        )) {
+            errorCampo(
+                    contexto + " - descripcion_nomenclador",
+                    contexto + ": debe informar la descripción del nomenclador."
+            );
+        }
+    }
+
+    private void validarDetalleMedicamento(
+            RequerimientoCompraDetalle detalle,
+            String contexto) throws Exception {
+
+        if (detalle.getIdMedicamento() == null
+                || detalle.getIdMedicamento().intValue() <= 0) {
+
+            errorCampo(
+                    contexto + " - id_medicamento",
+                    contexto + ": debe seleccionar el medicamento."
+            );
+        }
+
+        if (WebKeysCompras.isEmpty(
+                detalle.getNombreMedicamento()
+        )) {
+            errorCampo(
+                    contexto + " - nombre_medicamento",
+                    contexto + ": debe informar el nombre del medicamento."
+            );
+        }
+    }
+
+    private boolean filaDetalleTecnicaVacia(
+            ActionRequest request,
+            String prefix) {
+
+        return WebKeysCompras.isEmpty(
+                getParametroTrim(
+                        request,
+                        prefix + "id"
+                )
+        )
+                && WebKeysCompras.isEmpty(
+                getParametroTrim(
+                        request,
+                        prefix + "tipo_item"
+                )
+        )
+                && WebKeysCompras.isEmpty(
+                getParametroTrim(
+                        request,
+                        prefix + "id_prestacion"
+                )
+        )
+                && WebKeysCompras.isEmpty(
+                getParametroTrim(
+                        request,
+                        prefix + "id_tipo_nomenclador"
+                )
+        )
+                && WebKeysCompras.isEmpty(
+                getParametroTrim(
+                        request,
+                        prefix + "codigo_nomenclador"
+                )
+        )
+                && WebKeysCompras.isEmpty(
+                getParametroTrim(
+                        request,
+                        prefix + "descripcion_nomenclador"
+                )
+        )
+                && WebKeysCompras.isEmpty(
+                getParametroTrim(
+                        request,
+                        prefix + "id_medicamento"
+                )
+        )
+                && WebKeysCompras.isEmpty(
+                getParametroTrim(
+                        request,
+                        prefix + "troquel"
+                )
+        )
+                && WebKeysCompras.isEmpty(
+                getParametroTrim(
+                        request,
+                        prefix + "nombre_medicamento"
+                )
+        );
     }
 
     public void validarPermisoABM(User user) throws Exception {
@@ -574,61 +1058,6 @@ public class RequerimientoCompraDetalleHelper {
                 "struts_action",
                 STRUTS_ACTION_EDITAR_REQUERIMIENTO
         );
-    }
-
-    private void validarDetalle(RequerimientoCompraDetalle detalle) throws Exception {
-        validarDetalle(detalle, "Detalle");
-    }
-
-    private void validarDetalle(RequerimientoCompraDetalle detalle, String contexto)
-            throws Exception {
-
-        if (detalle == null) {
-            errorCampo(contexto, contexto + ": debe informar el detalle del requerimiento.");
-        }
-
-        if (detalle.getIdRequerimientoCompra() <= 0) {
-            errorCampo(
-                    contexto,
-                    contexto + ": debe guardar primero la cabecera del requerimiento."
-            );
-        }
-
-        if (detalle.getIdArticulo() == null
-                || detalle.getIdArticulo().intValue() <= 0) {
-
-            errorCampo(
-                    contexto + " - id_articulo",
-                    contexto + ": debe seleccionar un artículo."
-            );
-        }
-
-        if (detalle.getCantidad() == null
-                || detalle.getCantidad().intValue() <= 0) {
-
-            errorCampo(
-                    contexto + " - cantidad",
-                    contexto + ": la Cantidad debe ser mayor a cero."
-            );
-        }
-
-        if (detalle.getPrecioUnitarioEstimado() != null
-                && detalle.getPrecioUnitarioEstimado().compareTo(BigDecimal.ZERO) < 0) {
-
-            errorCampo(
-                    contexto + " - precio_unitario_estimado",
-                    contexto + ": el Precio unitario estimado no puede ser negativo."
-            );
-        }
-
-        if (detalle.getPrecioTotalEstimado() != null
-                && detalle.getPrecioTotalEstimado().compareTo(BigDecimal.ZERO) < 0) {
-
-            errorCampo(
-                    contexto + " - precio_total_estimado",
-                    contexto + ": el Precio total estimado no puede ser negativo."
-            );
-        }
     }
 
     private RequerimientoCompra validarRequerimientoEditable(int idRequerimientoCompra)

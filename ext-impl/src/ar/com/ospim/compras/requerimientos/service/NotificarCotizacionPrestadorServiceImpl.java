@@ -1348,14 +1348,33 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             sb.append("- ");
 
-            if (!WebKeysCompras.isEmpty(
-                    detalle.getArticulo()
-            )) {
+            String tipoItem =
+                    detalle.getTipoItemNormalizado();
+
+            String codigoItem =
+                    detalle.getCodigoItemVisible();
+
+            String descripcionItem =
+                    detalle.getDescripcionItemVisible();
+
+            if (!WebKeysCompras.isEmpty(tipoItem)) {
+                sb.append(tipoItem);
+                sb.append(" | ");
+            }
+
+            if (!WebKeysCompras.isEmpty(codigoItem)) {
+                sb.append(codigoItem);
+                sb.append(" - ");
+            }
+
+            if (!WebKeysCompras.isEmpty(descripcionItem)) {
                 sb.append(
-                        detalle.getArticuloVisible()
+                        descripcionItem
                 );
             } else {
-                sb.append("Item sin descripcion");
+                sb.append(
+                        "Item sin descripcion"
+                );
             }
 
             sb.append(" | Cantidad: ");
@@ -1369,8 +1388,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 sb.append(" | Descripcion: ");
 
                 sb.append(
-                        detalle
-                                .getObservacionesVisible()
+                        detalle.getObservacionesVisible()
                 );
             }
 

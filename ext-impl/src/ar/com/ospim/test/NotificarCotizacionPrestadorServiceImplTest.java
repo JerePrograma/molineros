@@ -229,15 +229,50 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         RequerimientoCompraDetalle detalle =
                 new RequerimientoCompraDetalle();
 
-        detalle.setArticulo("Prótesis");
-        detalle.setCantidad(Integer.valueOf(1));
-        detalle.setObservaciones("Entrega prioritaria");
+        detalle.setTipoItem(
+                RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR
+        );
+
+        detalle.setIdPrestacion(
+                Integer.valueOf(
+                        1001
+                )
+        );
+
+        detalle.setIdTipoNomenclador(
+                Integer.valueOf(
+                        9
+                )
+        );
+
+        detalle.setCodigoNomenclador(
+                "PROT-001"
+        );
+
+        detalle.setDescripcionNomenclador(
+                "Prótesis"
+        );
+
+        detalle.setCantidad(
+                Integer.valueOf(
+                        1
+                )
+        );
+
+        detalle.setObservaciones(
+                "Entrega prioritaria"
+        );
 
         List<RequerimientoCompraDetalle> detalles =
                 new ArrayList<RequerimientoCompraDetalle>();
 
-        detalles.add(detalle);
-        service.requerimiento.setDetalles(detalles);
+        detalles.add(
+                detalle
+        );
+
+        service.requerimiento.setDetalles(
+                detalles
+        );
 
         service.notificarPrestadores(
                 10,
@@ -250,6 +285,7 @@ public class NotificarCotizacionPrestadorServiceImplTest {
                 service.cuerpoEnviado,
                 " | Descripción: Entrega prioritaria"
         );
+
         assertNotContains(
                 "abreviatura anterior eliminada",
                 service.cuerpoEnviado,
