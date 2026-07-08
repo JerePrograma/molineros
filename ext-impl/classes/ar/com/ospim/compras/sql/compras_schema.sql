@@ -2911,8 +2911,20 @@ CREATE FUNCTION compras.get_requerimiento_compra_pdf(
 
                       detalle_id INTEGER,
                       detalle_orden INTEGER,
-                      id_articulo INTEGER,
-                      articulo VARCHAR,
+
+                      tipo_item VARCHAR,
+                      codigo_item VARCHAR,
+                      descripcion_item VARCHAR,
+
+                      id_prestacion INTEGER,
+                      id_tipo_nomenclador INTEGER,
+                      codigo_nomenclador VARCHAR,
+                      descripcion_nomenclador VARCHAR,
+
+                      id_medicamento INTEGER,
+                      troquel INTEGER,
+                      nombre_medicamento VARCHAR,
+
                       cantidad INTEGER,
 
                       precio_unitario_estimado NUMERIC,
@@ -2964,10 +2976,21 @@ SELECT
                 PARTITION BY rb.id
                 ORDER BY d.id
             )::INTEGER
-END,
+END AS detalle_orden,
 
-        d.id_articulo,
-        d.articulo,
+        d.tipo_item,
+        d.codigo_item,
+        d.descripcion_item,
+
+        d.id_prestacion,
+        d.id_tipo_nomenclador,
+        d.codigo_nomenclador,
+        d.descripcion_nomenclador,
+
+        d.id_medicamento,
+        d.troquel,
+        d.nombre_medicamento,
+
         d.cantidad,
 
         d.precio_unitario_estimado,
