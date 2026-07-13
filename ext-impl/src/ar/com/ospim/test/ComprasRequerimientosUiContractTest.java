@@ -280,6 +280,15 @@ public final class ComprasRequerimientosUiContractTest {
         String resultado = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/buscar_item_tecnico_result.jsp"
         );
+        String medicamentoCompartido = leer(
+                "ext-web/docroot/html/portlet/utils/medicamentos/busqueda_medicamentos.jsp"
+        );
+        String medicamentoResultado = leer(
+                "ext-web/docroot/html/portlet/utils/medicamentos/medicamentos_search_result.jsp"
+        );
+        String nomencladorResultado = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/nomenclador/nomenclador_search_result.jsp"
+        );
         String service = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/service/EditarRequerimientoCompraServiceImpl.java"
         );
@@ -287,34 +296,174 @@ public final class ComprasRequerimientosUiContractTest {
                 "ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql"
         );
         String struts = leer("ext-web/docroot/WEB-INF/struts-config.xml");
+        String tiles = leer("ext-web/docroot/WEB-INF/tiles-defs.xml");
         String jasper = leer(
                 "ext-web/docroot/WEB-INF/classes/jasper/compras/requerimiento_compra.jrxml"
         );
+        String flujoTecnico = editor + scripts + resultado;
 
-        assertContains("ids internos hidden", editor, "detalle_id_prestacion\"\n                           value=\"\"");
-        assertContains("id medicamento hidden", editor, "detalle_id_medicamento\"\n                           value=\"\"");
+        assertContains("include medicamento RP", editor,
+                "page=\"/html/portlet/utils/medicamentos/busqueda_medicamentos.jsp\"");
+        assertContains("search URL RP", editor,
+                "value=\"/autorizaciones/buscar_medicamentos\"");
+        assertContains("presentacion visible", editor,
+                "name=\"mostrar_con_presentacion\"");
+        assertContains("presentacion habilitada", editor, "value=\"true\"");
+        assertContains("callback medicamento namespaced", editor,
+                "name=\"callback_seleccion\"");
+        assertContains("callback medicamento Compras", editor,
+                "seleccionarMedicamentoDetalle");
+
+        assertContains("buscar medicamento es enlace", medicamentoCompartido,
+                ">Buscar</a>");
+        assertContains("limpiar medicamento es enlace", editor,
+                ">Limpiar</a>");
+        assertContains("popup medicamento Liferay", medicamentoCompartido,
+                "Liferay.Popup({title:");
+        assertContains("busqueda incremental", medicamentoCompartido,
+                "buscarMedicamentoOnDiv(event)");
+        assertContains("resultado incremental carga en div", medicamentoCompartido,
+                "jQuery(\"#divMedicamento\").load(url)");
+        assertContains("callback medicamento opcional seguro", medicamentoCompartido,
+                "callbackSeleccionMedicamento.matches");
+        assertContains("callback medicamento por window", medicamentoCompartido,
+                "window['<%= callbackSeleccionMedicamento %>']");
+        assertContains("callback medicamento default conservado", medicamentoCompartido,
+                "function pasarParametrosAParentMd");
+
+        assertContains("buscar nomenclador es enlace", editor,
+                ">Buscar</a>");
+        assertContains("limpiar nomenclador es enlace", editor,
+                ">Limpiar</a>");
+        assertContains("popup nomenclador Liferay", scripts,
+                "popupNomencladorDetalle = Liferay.Popup");
+        assertContains("popup nomenclador carga jquery", scripts,
+                "jQuery(<portlet:namespace />popupNomencladorDetalle).load(url)");
+        assertContains("resultado nomenclador compartido", resultado,
+                "/html/portlet/autorizaciones/nomenclador/nomenclador_search_result.jsp");
+        assertContains("solo nomencladores activos", resultado,
+                "name=\"soloActivos\" value=\"true\"");
+        assertContains("callback nomenclador namespaced", resultado,
+                "name=\"callback_seleccion\"");
+        assertContains("resultado devuelve ambos IDs", resultado,
+                "name=\"devolver_ids\" value=\"true\"");
+        assertContains("callback nomenclador sanitizado", nomencladorResultado,
+                "callbackSeleccion.matches");
+        assertContains("id prestacion resultado", nomencladorResultado,
+                "getId_prestacion()");
+        assertContains("id tipo resultado", nomencladorResultado,
+                "getId_tipo_nomenclador()");
+        assertContains("callback RP por defecto conservado", nomencladorResultado,
+                ": \"pasarParametrosAParentNm\"");
+        assertContains("callback RP unico conserva detalle de tipo", nomencladorResultado,
+                "!devolverIds && incluirDescripcionTipo");
+        assertContains("callback RP unico conserva descripcion de tipo", nomencladorResultado,
+                "nom.getDescripcionTipoNomenclador().trim()");
+
+        assertNotContains("sin window.open tecnico", flujoTecnico, "window.open");
+        assertNotContains("sin window.opener tecnico", flujoTecnico, "window.opener");
+        assertNotContains("sin boton Buscar propio", editor, "value=\"Buscar\"");
+        assertNotContains("sin boton Limpiar propio", editor, "value=\"Limpiar\"");
+        assertNotContains("sin buscador medicamento propio", action,
+                "BusquedaMedicamentoServiceUtil");
+        assertNotContains("sin tipo item confiado al browser", action,
+                "ParamUtil.getString(request, \"tipo_item\"");
+
+        assertContains("ids internos hidden", editor, "detalle_id_prestacion");
+        assertContains("id tipo interno hidden", editor,
+                "detalle_id_tipo_nomenclador");
+        assertContains("id medicamento hidden", editor, "detalle_id_medicamento");
         assertNotContains("sin label ID prestacion", editor, "ID Prestaci");
         assertNotContains("sin label ID medicamento", editor, "ID Medicamento");
-        assertContains("buscar medicamento", editor, "buscarMedicamentoDetalle");
-        assertContains("limpiar medicamento", editor, "limpiarSeleccionMedicamento");
-        assertContains("buscar nomenclador", editor, "buscarNomencladorDetalle");
-        assertContains("limpiar nomenclador", editor, "limpiarSeleccionNomenclador");
-        assertContains("texto invalida medicamento", scripts, "limpiarSeleccionMedicamento(false)");
-        assertContains("texto invalida nomenclador", scripts, "limpiarSeleccionNomenclador(false)");
-        assertContains("callback id prestacion", scripts, "idPrestacion,");
-        assertContains("callback id tipo", scripts, "idTipoNomenclador,");
+
+        assertContains("seleccionar medicamento conserva id", scripts,
+                "detalle_id_medicamento').val(idMedicamento)");
+        assertContains("seleccionar medicamento conserva troquel", scripts,
+                "troquel').val(troquel)");
+        assertContains("seleccionar medicamento conserva nombre completo", scripts,
+                "nombre_medicamento').val(nombreCompleto)");
+        assertContains("seleccionar medicamento conserva presentacion", scripts,
+                "detalle_presentacion_medicamento').val(");
+        assertContains("limpiar medicamento borra seleccion", scripts,
+                "med_seleccionado').val('')");
+        assertContains("limpiar medicamento muestra Buscar", scripts,
+                "divBtnBuscaMedicamento').show()");
+        assertContains("editar medicamento precarga id", scripts,
+                "detalleValue(detalle.idMedicamento)");
+        assertContains("editar medicamento marca seleccionado", scripts,
+                "med_seleccionado').val('1')");
+        assertContains("nombre invalida medicamento", scripts,
+                "+ '#<portlet:namespace />nombre_medicamento'");
+        assertContains("troquel invalida medicamento", scripts,
+                "'#<portlet:namespace />troquel, '");
+        assertContains("invalidacion medicamento limpia id", scripts,
+                "limpiarSeleccionMedicamento(false)");
+
+        assertContains("seleccionar nomenclador conserva id prestacion", scripts,
+                "detalle_id_prestacion').val(idPrestacion)");
+        assertContains("seleccionar nomenclador conserva id tipo", scripts,
+                "detalle_id_tipo_nomenclador').val(idTipoNomenclador)");
+        assertContains("seleccionar nomenclador conserva codigo", scripts,
+                "detalle_codigo_nomenclador').val(codigo)");
+        assertContains("seleccionar nomenclador conserva descripcion", scripts,
+                "detalle_descripcion_nomenclador').val(descripcion)");
+        assertContains("seleccionar nomenclador cierra popup", scripts,
+                "Liferay.Popup.close(<portlet:namespace />popupNomencladorDetalle)");
+        assertContains("editar nomenclador precarga id", scripts,
+                "detalleValue(detalle.idPrestacion)");
+        assertContains("codigo invalida nomenclador", scripts,
+                "'#<portlet:namespace />detalle_codigo_nomenclador, '");
+        assertContains("descripcion invalida nomenclador", scripts,
+                "+ '#<portlet:namespace />detalle_descripcion_nomenclador'");
+        assertContains("invalidacion nomenclador limpia IDs", scripts,
+                "limpiarSeleccionNomenclador(false)");
+
+        assertContains("serializa id prestacion", scripts,
+                "prefix + 'id_prestacion'");
+        assertContains("serializa id tipo", scripts,
+                "prefix + 'id_tipo_nomenclador'");
+        assertContains("serializa id medicamento", scripts,
+                "prefix + 'id_medicamento'");
+        assertContains("serializa troquel", scripts, "prefix + 'troquel'");
+        assertContains("serializa nombre medicamento", scripts,
+                "prefix + 'nombre_medicamento'");
+
         assertContains("sector Farmacia exacto", comunes, "== 'FARMACIA'");
         assertContains("sector Prestaciones exacto", comunes, "descripcion == 'PRESTACIONES MEDICAS'");
         assertContains("sector Legales exacto", comunes, "descripcion == 'LEGALES'");
-        assertContains("busqueda medicamento canonica", action, "getBusquedaMedicamentos(");
-        assertContains("busqueda PM canonica", action, "getListaNomencladorPrestacionesMedicas(");
-        assertContains("busqueda Legales canonica", action, "getListaNomenclador(");
-        assertContains("resultado devuelve id prestacion", resultado, "getId_prestacion()");
-        assertContains("resultado devuelve id tipo", resultado, "getId_tipo_nomenclador()");
+        assertContains("cambio sector limpia editor", scripts,
+                "<portlet:namespace />limpiarEditorDetalle();");
+        assertContains("otros sectores deshabilitan alta", scripts,
+                "detalle_submit').attr('disabled', 'disabled')");
+        assertContains("backend rechaza sector no admitido", service,
+                "El sector del requerimiento no admite");
+
+        assertContains("permiso ABM en buscador", action, "validarPermisoABM(user)");
+        assertContains("sector persistido recargado", action,
+                "getRequerimientoCompra(idRequerimiento)");
+        assertContains("sector de alta validado", action, "getSector(idSector)");
+        assertContains("solo pendiente persistido", action,
+                "requerimiento.puedeEditarEstructura()");
+        assertContains("Prestaciones Medicas canonico", resultado,
+                "name=\"esPrestMed\"");
+
+        assertContains("escape medicamento JS", medicamentoResultado,
+                "private String medicamentoJs");
+        assertContains("escape nombre medicamento HTML", medicamentoResultado,
+                "HtmlUtil.escape(medicamento.getNombre().trim())");
+        assertContains("escape nomenclador JS", nomencladorResultado,
+                "private String nomencladorJs");
+        assertContains("escape descripcion nomenclador HTML", nomencladorResultado,
+                "HtmlUtil.escape(liq.getDescripcion().trim())");
+
         assertContains("validacion medicamento DB", service, "obtenerMedicamentoCanonico");
         assertContains("validacion nomenclador DB", service, "obtenerNomencladorCanonico");
         assertContains("sector recargado DB", service, "obtenerRequerimientoDetalle");
         assertContains("mapping buscador", struts, "path=\"/compras/buscar_item_tecnico\"");
+        assertContains("tile buscador", tiles,
+                "name=\"portlet.compras.buscar_item_tecnico\"");
+        assertContains("tile resultado buscador", tiles,
+                "/portlet/compras/requerimientos/buscar_item_tecnico_result.jsp");
         assertContains("Jasper tipo", jasper, "field name=\"tipo_item\"");
         assertContains("Jasper codigo", jasper, "field name=\"codigo_item\"");
         assertContains("Jasper descripcion", jasper, "field name=\"descripcion_item\"");

@@ -1,10 +1,9 @@
 package ar.com.ospim.compras.requerimientos.action;
 
-import ar.com.ospim.autorizaciones.beans.Nomenclador;
-import ar.com.ospim.autorizaciones.services.NomencladorServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.farmacia.beans.Medicamento;
-import ar.com.ospim.farmacia.services.BusquedaMedicamentoServiceUtil;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
+import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
 import com.liferay.portal.struts.PortletAction;
@@ -17,14 +16,11 @@ import javax.portlet.PortletConfig;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class BuscarItemTecnicoComprasAction extends PortletAction {
 
-    private static final int MAX_RESULTADOS = 100;
     private static final Pattern DIACRITICOS =
             Pattern.compile("[\\p{InCombiningDiacriticalMarks}]");
 
@@ -40,133 +36,33 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
         User user = PortalUtil.getUser(request);
         detalleHelper.validarPermisoABM(user);
 
-        String tipoItem = ParamUtil.getString(request, "tipo_item", "").trim();
-        String callback = sanitizarCallback(
-                ParamUtil.getString(request, "callback", "")
+        request.setAttribute(
+                "COMPRAS_CALLBACK_BUSQUEDA",
+                response.getNamespace() + "seleccionarNomencladorDetalle"
         );
 
-        request.setAttribute("COMPRAS_TIPO_ITEM_BUSQUEDA", tipoItem);
-        request.setAttribute("COMPRAS_CALLBACK_BUSQUEDA", callback);
-
-        if (callback.length() == 0) {
-            request.setAttribute(
-                    "COMPRAS_ERROR_BUSQUEDA",
-                    "No se pudo identificar el formulario que recibira la seleccion."
-            );
-            return mapping.findForward("portlet.compras.buscar_item_tecnico");
-        }
-
-        if ("MEDICAMENTO".equals(tipoItem)) {
-            buscarMedicamentos(request);
-        } else if ("NOMENCLADOR".equals(tipoItem)) {
-            buscarNomenclador(request);
-        } else {
-            request.setAttribute(
-                    "COMPRAS_ERROR_BUSQUEDA",
-                    "El tipo de item tecnico informado no es valido."
-            );
-        }
+        buscarNomenclador(request);
 
         return mapping.findForward("portlet.compras.buscar_item_tecnico");
-    }
-
-    private void buscarMedicamentos(RenderRequest request) {
-        String troquelTexto = ParamUtil.getString(request, "troquel", "").trim();
-        String nombre = ParamUtil.getString(request, "nombre", "").trim();
-        String presentacion = ParamUtil.getString(request, "presentacion", "").trim();
-
-        if (troquelTexto.length() == 0
-                && nombre.length() == 0
-                && presentacion.length() == 0) {
-            request.setAttribute(
-                    "COMPRAS_ERROR_BUSQUEDA",
-                    "Ingrese nombre, presentacion o troquel."
-            );
-            return;
-        }
-
-        if (troquelTexto.length() > 0 && !troquelTexto.matches("^[0-9]+$")) {
-            request.setAttribute(
-                    "COMPRAS_ERROR_BUSQUEDA",
-                    "El troquel debe ser numerico."
-            );
-            return;
-        }
-
-        int troquel = troquelTexto.length() > 0
-                ? Integer.parseInt(troquelTexto)
-                : 0;
-
-        List<Medicamento> encontrados =
-                BusquedaMedicamentoServiceUtil.getBusquedaMedicamentos(
-                        troquel,
-                        0,
-                        nombre,
-                        presentacion,
-                        null,
-                        null
-                );
-
-        List<Medicamento> activos = new ArrayList<Medicamento>();
-
-        if (encontrados != null) {
-            for (int i = 0;
-                    i < encontrados.size() && activos.size() < MAX_RESULTADOS;
-                    i++) {
-
-                Medicamento medicamento = encontrados.get(i);
-
-                if (medicamento != null
-                        && medicamento.getId_medicamento() > 0
-                        && medicamento.getFecha_baja() == null) {
-
-                    activos.add(medicamento);
-                }
-            }
-        }
-
-        request.setAttribute("COMPRAS_MEDICAMENTOS_BUSQUEDA", activos);
-        request.setAttribute(
-                "COMPRAS_RESULTADOS_LIMITADOS",
-                Boolean.valueOf(encontrados != null && encontrados.size() > MAX_RESULTADOS)
-        );
     }
 
     private void buscarNomenclador(RenderRequest request) throws Exception {
         String codigo = ParamUtil.getString(request, "codigo", "").trim();
         String descripcion = ParamUtil.getString(request, "descripcion", "").trim();
-        int idTipo = ParamUtil.getInteger(request, "id_tipo_nomenclador", 0);
-        String sector = normalizar(ParamUtil.getString(request, "sector", ""));
+        String sector = resolverSector(request);
 
-        if (codigo.length() == 0 && descripcion.length() == 0 && idTipo <= 0) {
+        if (codigo.length() == 0 && descripcion.length() == 0) {
             request.setAttribute(
                     "COMPRAS_ERROR_BUSQUEDA",
-                    "Ingrese codigo, descripcion o tipo de nomenclador."
+                    "Ingrese codigo o descripcion."
             );
             return;
         }
 
-        List<Nomenclador> encontrados;
-
         if ("PRESTACIONES MEDICAS".equals(sector)) {
-            encontrados = NomencladorServiceUtil
-                    .getListaNomencladorPrestacionesMedicas(
-                            idTipo,
-                            descripcion,
-                            0,
-                            codigo,
-                            Boolean.FALSE,
-                            ""
-                    );
+            request.setAttribute("COMPRAS_ES_PREST_MED", "1");
         } else if ("LEGALES".equals(sector)) {
-            encontrados = NomencladorServiceUtil.getListaNomenclador(
-                    idTipo,
-                    descripcion,
-                    0,
-                    codigo,
-                    Boolean.FALSE,
-                    ""
-            );
+            request.setAttribute("COMPRAS_ES_PREST_MED", "0");
         } else {
             request.setAttribute(
                     "COMPRAS_ERROR_BUSQUEDA",
@@ -175,35 +71,42 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
             return;
         }
 
-        List<Nomenclador> activos = new ArrayList<Nomenclador>();
-
-        if (encontrados != null) {
-            for (int i = 0;
-                    i < encontrados.size() && activos.size() < MAX_RESULTADOS;
-                    i++) {
-
-                Nomenclador nomenclador = encontrados.get(i);
-
-                if (nomenclador != null
-                        && nomenclador.getId_prestacion() > 0
-                        && nomenclador.getId_tipo_nomenclador() > 0
-                        && nomenclador.getBaja_fecha() == null) {
-
-                    activos.add(nomenclador);
-                }
-            }
-        }
-
-        request.setAttribute("COMPRAS_NOMENCLADORES_BUSQUEDA", activos);
-        request.setAttribute(
-                "COMPRAS_RESULTADOS_LIMITADOS",
-                Boolean.valueOf(encontrados != null && encontrados.size() > MAX_RESULTADOS)
-        );
+        request.setAttribute("COMPRAS_CODIGO_NOMENCLADOR", codigo);
+        request.setAttribute("COMPRAS_DESCRIPCION_NOMENCLADOR", descripcion);
+        request.setAttribute("COMPRAS_ID_TIPO_NOMENCLADOR", "0");
     }
 
-    private String sanitizarCallback(String callback) {
-        callback = callback == null ? "" : callback.trim();
-        return callback.matches("^[A-Za-z_$][A-Za-z0-9_$]*$") ? callback : "";
+    private String resolverSector(RenderRequest request) throws Exception {
+        int idRequerimiento =
+                ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
+
+        if (idRequerimiento > 0) {
+            RequerimientoCompra requerimiento =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .getRequerimientoCompra(idRequerimiento);
+
+            if (requerimiento == null) {
+                throw new Exception("No se encontro el requerimiento informado.");
+            }
+
+            if (!requerimiento.puedeEditarEstructura()) {
+                throw new Exception(
+                        "Solo se pueden buscar prestaciones para requerimientos PENDIENTES."
+                );
+            }
+
+            return normalizar(requerimiento.getSectorDescripcion());
+        }
+
+        int idSector = ParamUtil.getInteger(request, "sector_id", 0);
+        RequerimientoCompraSector sector =
+                BusquedaRequerimientoCompraServiceUtil.getSector(idSector);
+
+        if (sector == null || sector.getIdSector() <= 0) {
+            throw new Exception("El sector informado no es valido.");
+        }
+
+        return normalizar(sector.getDescripcion());
     }
 
     private String normalizar(String value) {

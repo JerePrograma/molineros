@@ -1,4 +1,20 @@
 <%@ include file="/html/portlet/utils/medicamentos/init.jsp" %>
+<%!
+private String medicamentoJs(String value) {
+	if (value == null) {
+		return "";
+	}
+
+	return value.replace("\\", "\\\\")
+			.replace("\"", "\\x22")
+			.replace("'", "\\x27")
+			.replace("&", "\\x26")
+			.replace("\r", " ")
+			.replace("\n", " ")
+			.replace("<", "\\x3C")
+			.replace(">", "\\x3E");
+}
+%>
 <%
 	//obtengo lista de session
 	PortletSession ps= renderRequest.getPortletSession();
@@ -32,7 +48,7 @@
 		Medicamento medicamento=(Medicamento) medicamentos.get(0);
 		%>
 			<script type="text/javascript">
-				pasarParametrosAParentMd("<%=medicamento.getTroquel()%>", "<%=medicamento.getNombre().trim()%>", "<%=medicamento.getId_medicamentoAsString()%>", "<%=medicamento.getPresentacion()%>");
+				pasarParametrosAParentMd("<%=medicamento.getTroquel()%>", "<%=medicamentoJs(medicamento.getNombre().trim())%>", "<%=medicamento.getId_medicamentoAsString()%>", "<%=medicamentoJs(medicamento.getPresentacion())%>");
 			</script>
 		<%
 	//More de una coincidencia	
@@ -42,17 +58,19 @@
 		List resultRows = searchContainer.getResultRows();
 	 	for (int i = 0; i < medicamentos.size(); i++) {
 	 		Medicamento medicamento=(Medicamento) medicamentos.get(i);
+			String nombreMedicamentoJs = medicamentoJs(medicamento.getNombre().trim());
+			String presentacionMedicamentoJs = medicamentoJs(medicamento.getPresentacion());
 			ResultRow row = new ResultRow(medicamento.getTroquel(),medicamento.getNombre(), i);			
 			// Name and short description
 			StringBuilder s = new StringBuilder();
 			s.append("<a href='javascript:pasarParametrosAParentMd(\"");
 			s.append(medicamento.getTroquel());
 			s.append("\",\"");
-			s.append(medicamento.getNombre().trim());
+			s.append(nombreMedicamentoJs);
 			s.append("\",\"");
 			s.append(medicamento.getId_medicamentoAsString());
 			s.append("\",\"");
-			s.append(medicamento.getPresentacion()!=null?medicamento.getPresentacion().trim():"");
+			s.append(presentacionMedicamentoJs);
 			s.append("\")'>");		
 			s.append(medicamento.getId_medicamentoAsString());
 			s.append("</a>");
@@ -61,11 +79,11 @@
 			sb.append("<a href='javascript:pasarParametrosAParentMd(\"");
 			sb.append(String.valueOf(medicamento.getTroquel()));
 			sb.append("\",\"");
-			sb.append(medicamento.getNombre().trim());
+			sb.append(nombreMedicamentoJs);
 			sb.append("\",\"");
 			sb.append(medicamento.getId_medicamentoAsString());
 			sb.append("\",\"");
-			sb.append(medicamento.getPresentacion()!=null?medicamento.getPresentacion().trim():"");
+			sb.append(presentacionMedicamentoJs);
 			sb.append("\")'>");			
 			sb.append(String.valueOf(medicamento.getTroquel()));
 			sb.append("</a>");
@@ -74,24 +92,24 @@
 			sb2.append("<a href='javascript:pasarParametrosAParentMd(\"");
 			sb2.append(String.valueOf(medicamento.getTroquel()));
 			sb2.append("\",\"");
-			sb2.append(medicamento.getNombre().trim());
+			sb2.append(nombreMedicamentoJs);
 			sb2.append("\",\"");
 			sb2.append(medicamento.getId_medicamentoAsString());
 			sb2.append("\",\"");
-			sb2.append(medicamento.getPresentacion()!=null?medicamento.getPresentacion().trim():"");
+			sb2.append(presentacionMedicamentoJs);
 			sb2.append("\")'>");
-			sb2.append(medicamento.getNombre().trim());
+			sb2.append(HtmlUtil.escape(medicamento.getNombre().trim()));
 			sb2.append("</a>");
 			row.addText(sb2.toString());
 			StringBuilder sb3 = new StringBuilder();
 			sb3.append("<a href='javascript:pasarParametrosAParentMd(\"");
 			sb3.append(String.valueOf(medicamento.getTroquel()));
 			sb3.append("\",\"");
-			sb3.append(medicamento.getNombre().trim());
+			sb3.append(nombreMedicamentoJs);
 			sb3.append("\",\"");
 			sb3.append(medicamento.getId_medicamentoAsString());
 			sb3.append("\",\"");
-			sb3.append(medicamento.getPresentacion()!=null?medicamento.getPresentacion():"");
+			sb3.append(presentacionMedicamentoJs);
 			sb3.append("\")'>");
 			sb3.append(medicamento.getCod_barra()!=null?medicamento.getCod_barra().trim():"");
 			sb3.append("</a>");
@@ -100,11 +118,11 @@
 			sb4.append("<a href='javascript:pasarParametrosAParentMd(\"");
 			sb4.append(String.valueOf(medicamento.getTroquel()));
 			sb4.append("\",\"");
-			sb4.append(medicamento.getNombre().trim());
+			sb4.append(nombreMedicamentoJs);
 			sb4.append("\",\"");
 			sb4.append(medicamento.getId_medicamentoAsString());
 			sb4.append("\",\"");
-			sb4.append(medicamento.getPresentacion()!=null?medicamento.getPresentacion():"");
+			sb4.append(presentacionMedicamentoJs);
 			sb4.append("\")'>");
 			sb4.append(medicamento.getCod_barra()!=null?medicamento.getCod_barra().trim():"");
 			sb4.append("</a>");
@@ -113,11 +131,11 @@
 			sb5.append("<a href='javascript:pasarParametrosAParentMd(\"");
 			sb5.append(String.valueOf(medicamento.getTroquel()));
 			sb5.append("\",\"");
-			sb5.append(medicamento.getNombre().trim());
+			sb5.append(nombreMedicamentoJs);
 			sb5.append("\",\"");
 			sb5.append(medicamento.getId_medicamentoAsString());
 			sb5.append("\",\"");
-			sb5.append(medicamento.getPresentacion()!=null?medicamento.getPresentacion():"");
+			sb5.append(presentacionMedicamentoJs);
 			sb5.append("\")'>");
 			sb5.append(medicamento.getPrecio()!=null?medicamento.getPrecio().toString():"0");
 			sb5.append("</a>");

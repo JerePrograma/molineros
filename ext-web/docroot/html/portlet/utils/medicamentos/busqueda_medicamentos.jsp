@@ -15,7 +15,15 @@
 			String medicamento = ParamUtil.getString(request,
 					"nombre_medicamento", "");
 			boolean popup=ParamUtil.getBoolean(request, "popup", false);
-			boolean mostrarConPresentacion = ParamUtil.getBoolean(request,"mostrar_con_presentacion", false);%>
+			boolean mostrarConPresentacion = ParamUtil.getBoolean(request,"mostrar_con_presentacion", false);
+			String callbackSeleccionMedicamento = ParamUtil.getString(
+					request,
+					"callback_seleccion",
+					""
+			).trim();
+			if (!callbackSeleccionMedicamento.matches("^[A-Za-z_$][A-Za-z0-9_$]*$")) {
+				callbackSeleccionMedicamento = "";
+			}%>
 			
 <%@ include file="/html/portlet/utils/medicamentos/init.jsp" %>
 		<table>
@@ -172,5 +180,15 @@ function seleccionaCamposMd(id, cod, param, pres) {
     jQuery("#<portlet:namespace />troquel").val(cod);
     jQuery("#<portlet:namespace />med_seleccionado").val("1");
     jQuery("#<portlet:namespace />divBtnBuscaMedicamento").hide();
+	<% if (callbackSeleccionMedicamento.length() > 0) { %>
+	if (typeof window['<%= callbackSeleccionMedicamento %>'] == 'function') {
+		window['<%= callbackSeleccionMedicamento %>'](
+				id,
+				cod,
+				jQuery("#<portlet:namespace />nombre_medicamento").val(),
+				pres
+		);
+	}
+	<% } %>
 }
 </script>

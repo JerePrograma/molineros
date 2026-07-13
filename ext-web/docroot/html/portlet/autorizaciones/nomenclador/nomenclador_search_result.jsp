@@ -4,6 +4,44 @@
 <portlet:defineObjects/>
 <%!
 private static Log _log = LogFactoryUtil.getLog("portal-web.docroot.html.portlet.document_library.search.jsp");
+
+private String nomencladorJs(String value) {
+	if (value == null) {
+		return "";
+	}
+
+	return value.replace("\\", "\\\\")
+			.replace("\"", "\\x22")
+			.replace("'", "\\x27")
+			.replace("&", "\\x26")
+			.replace("\r", " ")
+			.replace("\n", " ")
+			.replace("<", "\\x3C")
+			.replace(">", "\\x3E");
+}
+
+private String invocacionNomenclador(
+		String callback,
+		boolean devolverIds,
+		boolean incluirDescripcionTipo,
+		int idPrestacion,
+		int idTipoNomenclador,
+		String codigo,
+		String descripcion,
+		String descripcionTipo) {
+
+	String argumentos = devolverIds
+			? idPrestacion + "," + idTipoNomenclador
+			: "'" + idTipoNomenclador + "'";
+	String detalleTipo = !devolverIds && incluirDescripcionTipo
+			? ",'','','" + nomencladorJs(descripcionTipo) + "'"
+			: "";
+
+	return callback + "(" + argumentos
+			+ ",'" + nomencladorJs(codigo)
+			+ "','" + nomencladorJs(descripcion) + "'"
+			+ detalleTipo + ")";
+}
 %>
 
 <%
@@ -19,6 +57,14 @@ String from=renderRequest.getParameter("from");
 String marcaReinLiq=renderRequest.getParameter("marcareinliq");
 String soloActivos=renderRequest.getParameter("soloActivos");
 String esPrestMed=renderRequest.getParameter("esPrestMed");
+String callbackSeleccion=renderRequest.getParameter("callback_seleccion");
+boolean callbackSeleccionValido=callbackSeleccion!=null
+		&& callbackSeleccion.matches("^[A-Za-z_$][A-Za-z0-9_$]*$");
+String funcionSeleccion=callbackSeleccionValido
+		? callbackSeleccion
+		: "pasarParametrosAParentNm";
+boolean devolverIds=callbackSeleccionValido
+		&& "true".equalsIgnoreCase(renderRequest.getParameter("devolver_ids"));
 %>
 
 <%
@@ -85,11 +131,11 @@ if(from!=null && "preautorizaciones".equalsIgnoreCase(from)){
 //if(tipoNomenclador==null || "".equalsIgnoreCase(tipoNomenclador) || "0".equalsIgnoreCase(tipoNomenclador) ){
    if(from!=null && "preautorizaciones".equalsIgnoreCase(from)){
 	   String strTipo = TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_TIPOS_NOMENCLADOR_VALIDOS");
-	   
+
 	   String strMarcaRein = TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_DISCAPACIDAD_MARCA_REINLIQ");
 	   List<Nomenclador> archivosAux=new ArrayList<Nomenclador>();
 	   for(Nomenclador n:archivos){
-		   
+
 		    String tipo = n.getId_tipo_nomenclador_string().trim();
 	        int resultado = strTipo.indexOf(tipo);
 
@@ -115,7 +161,7 @@ if(from!=null && "preautorizaciones".equalsIgnoreCase(from)){
 	        		archivosAux.add(n);	
 	        	}
             }
-	        
+
 	   }
 	   archivos=archivosAux;
    }
@@ -124,102 +170,89 @@ if(from!=null && "preautorizaciones".equalsIgnoreCase(from)){
 SearchContainer searchContainer = new SearchContainer(renderRequest, null, null,
 				SearchContainer.DEFAULT_CUR_PARAM,Integer.MAX_VALUE, portletURL, headerNames,
 				LanguageUtil.get(pageContext, "nomenclador-no-encontrado"));
-					
+
 if (archivos != null && !archivos.isEmpty()){
 	int total = archivos.size();	
-	
+
 	pageContext.setAttribute("total", total);	
 	if(total==1){
 		Nomenclador nom=(Nomenclador) archivos.get(0);
 		if(nom.getBaja_fecha()==null || (nom.getBaja_fecha()!=null && viewBaja)){
+			String invocacion = invocacionNomenclador(
+					funcionSeleccion,
+					devolverIds,
+					true,
+					nom.getId_prestacion(),
+					nom.getId_tipo_nomenclador(),
+					nom.getCodigo().trim(),
+					nom.getDescripcion().trim(),
+					nom.getDescripcionTipoNomenclador().trim()
+			);
 		%>
 			<script type="text/javascript">
-				pasarParametrosAParentNm("<%=nom.getId_tipo_nomenclador_string() %>", "<%=nom.getCodigo().trim() %>", "<%=nom.getDescripcion().trim() %>", "", "", "<%=nom.getDescripcionTipoNomenclador().trim()%>");
+				<%= invocacion %>;
 			</script>
 		<%
 		}
 	//More de una coincidencia	
 	}else {
 	  List resultRows = searchContainer.getResultRows();
-	
+
 	  for (int i = 0; i < archivos.size(); i++) {	    
 		Nomenclador liq = (Nomenclador) archivos.get(i);
-		
+
 		if(liq.getBaja_fecha()==null || (liq.getBaja_fecha()!=null && viewBaja)){
-		
+			String invocacion = invocacionNomenclador(
+					funcionSeleccion,
+					devolverIds,
+					false,
+					liq.getId_prestacion(),
+					liq.getId_tipo_nomenclador(),
+					liq.getCodigo().trim(),
+					liq.getDescripcion().trim(),
+					liq.getDescripcionTipoNomenclador().trim()
+			);
+			String inicioEnlace = "<a href=\"javascript:"
+					+ invocacion
+					+ "\">";
+
 	  	    ResultRow row = new ResultRow(liq,new Integer(1+i), i);
 		    PortletURL rowURL = renderResponse.createRenderURL();
 		    rowURL.setWindowState(WindowState.MAXIMIZED);	
-        
+
 		    StringBuilder s = new StringBuilder();
-		    s.append("<a href='javascript:pasarParametrosAParentNm(\"");
-		    s.append(liq.getId_tipo_nomenclador_string());
-		    s.append("\",\"");
-		    s.append(liq.getCodigo().trim());
-		    s.append("\",\"");
-		    s.append(liq.getDescripcion().trim());
-		    s.append("\")'>");		
-		    s.append(liq.getDescripcionTipoNomenclador().trim());
+		    s.append(inicioEnlace);
+		    s.append(HtmlUtil.escape(liq.getDescripcionTipoNomenclador().trim()));
 		    s.append("</a>");
 		    row.addText(s.toString());
-		
+
 		    StringBuilder s1 = new StringBuilder();
-		    s1.append("<a href='javascript:pasarParametrosAParentNm(\"");
-		    s1.append(liq.getId_tipo_nomenclador_string());
-		    s1.append("\",\"");
-		    s1.append(liq.getCodigo().trim());
-		    s1.append("\",\"");
-		    s1.append(liq.getDescripcion().trim());
-		    s1.append("\")'>");		
-		    s1.append(liq.getCodigo().trim());
+		    s1.append(inicioEnlace);
+		    s1.append(HtmlUtil.escape(liq.getCodigo().trim()));
 		    s1.append("</a>");
 		    row.addText(s1.toString());
-		
+
 		    StringBuilder s2 = new StringBuilder();
-		    s2.append("<a href='javascript:pasarParametrosAParentNm(\"");
-		    s2.append(liq.getId_tipo_nomenclador_string());
-		    s2.append("\",\"");
-		    s2.append(liq.getCodigo().trim());
-		    s2.append("\",\"");
-		    s2.append(liq.getDescripcion().trim());
-		    s2.append("\")'>");		
-		    s2.append(liq.getDescripcion().trim());
+		    s2.append(inicioEnlace);
+		    s2.append(HtmlUtil.escape(liq.getDescripcion().trim()));
 		    s2.append("</a>");
 		    row.addText(s2.toString());
-		
+
 		    StringBuilder s3 = new StringBuilder();
-		    s3.append("<a href='javascript:pasarParametrosAParentNm(\"");
-		    s3.append(liq.getId_tipo_nomenclador_string());
-		    s3.append("\",\"");
-		    s3.append(liq.getCodigo().trim());
-		    s3.append("\",\"");
-		    s3.append(liq.getDescripcion().trim());
-		    s3.append("\")'>");		
-		    s3.append(liq.getEspecialidadDescripcion().trim());
+		    s3.append(inicioEnlace);
+		    s3.append(HtmlUtil.escape(liq.getEspecialidadDescripcion().trim()));
 		    s3.append("</a>");
 		    row.addText(s3.toString());
-		
+
 		    StringBuilder s4 = new StringBuilder();
-		    s4.append("<a href='javascript:pasarParametrosAParentNm(\"");
-		    s4.append(liq.getId_tipo_nomenclador_string());
-		    s4.append("\",\"");
-		    s4.append(liq.getCodigo().trim());
-		    s4.append("\",\"");
-		    s4.append(liq.getDescripcion().trim());
-		    s4.append("\")'>");		
+		    s4.append(inicioEnlace);
 		    s4.append(liq.getRecuperaSUR()?"Si":"No");
 		    s4.append("</a>");
 		    row.addText(s4.toString());
-		
+
 		    StringBuilder s5 = new StringBuilder();
-		    s5.append("<a href='javascript:pasarParametrosAParentNm(\"");
-		    s5.append(liq.getId_tipo_nomenclador_string());
-		    s5.append("\",\"");
-		    s5.append(liq.getCodigo().trim());
-		    s5.append("\",\"");
-		    s5.append(liq.getDescripcion().trim());
-		    s5.append("\")'>");		
-		    s5.append(liq.getBaja_fecha()!=null?liq.getBaja_Fecha_string():"");
+		    s5.append(inicioEnlace);
+		    s5.append(HtmlUtil.escape(liq.getBaja_fecha()!=null?liq.getBaja_Fecha_string():""));
 		    s5.append("</a>");
 		    row.addText(s5.toString());
 		    if ( soloPrestacionesActivas) {
@@ -229,16 +262,16 @@ if (archivos != null && !archivos.isEmpty()){
 		    }else{
 		    	resultRows.add(row);	
 		    }
-		    
+
 		}
 	  }
 	}  
 }
 %>
-	
- 		
+
+
 <script type="text/javascript">
 </script>	
 <%=pageContext.getAttribute("total")!= null?"Total Filas encontradas " + pageContext.getAttribute("total"):""%>
-	
+
 <liferay-ui:search-iterator paginate="false" searchContainer="<%= searchContainer %>"/>
