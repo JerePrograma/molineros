@@ -4544,6 +4544,10 @@
 		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_edicion.jsp" />
 	</definition>
 
+	<definition name="portlet.compras.buscar_medicamentos" extends="portlet.compras">
+		<put name="portlet_content" value="/portlet/compras/requerimientos/buscar_medicamentos_result.jsp" />
+	</definition>
+
 	<definition name="portlet.compras.buscar_item_tecnico" extends="portlet.compras">
 		<put name="portlet_content" value="/portlet/compras/requerimientos/buscar_item_tecnico_result.jsp" />
 	</definition>

@@ -78,10 +78,14 @@
         return tipoItem;
     }
 
-    function <portlet:namespace />limpiarSeleccionMedicamento(limpiarCriterios) {
+    function <portlet:namespace />invalidarMedicamentoDetalle() {
         jQuery('#<portlet:namespace />detalle_id_medicamento').val('');
         jQuery('#<portlet:namespace />detalle_nombre_medicamento').val('');
         jQuery('#<portlet:namespace />detalle_presentacion_medicamento').val('');
+    }
+
+    function <portlet:namespace />limpiarSeleccionMedicamento(limpiarCriterios) {
+        <portlet:namespace />invalidarMedicamentoDetalle();
         jQuery('#<portlet:namespace />id_medicamento').val('');
         jQuery('#<portlet:namespace />med_seleccionado').val('');
 
@@ -91,7 +95,7 @@
         }
 
         jQuery('#<portlet:namespace />divBtnBuscaMedicamento').show();
-        jQuery('#divMedicamento').hide();
+        jQuery('#<portlet:namespace />divMedicamento').hide();
 
         return false;
     }
@@ -117,7 +121,7 @@
         );
 
         if (codigo == '' && descripcion == '') {
-            alert('Ingrese codigo o descripcion.');
+            alert('<liferay-ui:message key="ingrese-parametros-busqueda" />');
             return false;
         }
 
@@ -125,7 +129,7 @@
 
         if (<portlet:namespace />popupNomencladorDetalle == null) {
             <portlet:namespace />popupNomencladorDetalle = Liferay.Popup({
-                title: 'Busqueda Nomenclador',
+                title: 'B\u00FAsqueda Nomenclador',
                 modal: true,
                 width: 700,
                 onClose: function() {
@@ -1129,13 +1133,6 @@
 
     jQuery(function() {
         <portlet:namespace />limpiarEditorDetalle();
-
-        jQuery(
-                '#<portlet:namespace />troquel, '
-                        + '#<portlet:namespace />nombre_medicamento'
-        ).bind('input keyup change', function() {
-            <portlet:namespace />limpiarSeleccionMedicamento(false);
-        });
 
         jQuery(
                 '#<portlet:namespace />detalle_codigo_nomenclador, '

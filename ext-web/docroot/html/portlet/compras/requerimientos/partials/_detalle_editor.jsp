@@ -28,7 +28,7 @@
         <tbody id="<portlet:namespace />detalle_bloque_nomenclador">
             <tr>
                 <td>
-                    <label for="<portlet:namespace />detalle_codigo_nomenclador">Codigo:</label>
+                    <label for="<portlet:namespace />detalle_codigo_nomenclador"><liferay-ui:message key="codigo-presentado" />:</label>
                 </td>
                 <td>
                     <input type="text"
@@ -62,10 +62,10 @@
             <tr>
                 <td colspan="4">
                     <liferay-util:include
-                            page="/html/portlet/utils/medicamentos/busqueda_medicamentos.jsp">
+                            page="/html/portlet/compras/requerimientos/busqueda_medicamentos.jsp">
                         <liferay-util:param
                                 name="search_url"
-                                value="/autorizaciones/buscar_medicamentos" />
+                                value="/compras/buscar_medicamentos" />
                         <liferay-util:param name="troquel" value="" />
                         <liferay-util:param name="nombre_medicamento" value="" />
                         <liferay-util:param name="id_medicamento" value="" />
@@ -73,15 +73,7 @@
                         <liferay-util:param
                                 name="mostrar_con_presentacion"
                                 value="true" />
-                        <liferay-util:param
-                                name="callback_seleccion"
-                                value='<%= namespaceDetalleCompra + "seleccionarMedicamentoDetalle" %>' />
                     </liferay-util:include>
-                    <div id="<portlet:namespace />detalle_div_limpiar_medicamento">
-                        <a href="javascript: void(0);"
-                           onclick="return <portlet:namespace />limpiarSeleccionMedicamento();"
-                           tabindex="-1">Limpiar</a>
-                    </div>
                 </td>
             </tr>
         </tbody>
@@ -110,13 +102,13 @@
                 <input type="button"
                        id="<portlet:namespace />detalle_submit"
                        value="Agregar detalle"
-                       onclick="return <%= namespaceDetalleCompra %>agregarOActualizarDetalle();" />
+                       onclick="return <portlet:namespace />agregarOActualizarDetalle();" />
                 &nbsp;&nbsp;
                 <input type="button"
                        id="<portlet:namespace />detalle_cancelar"
                        value="Cancelar edicion"
                        style="display:none;"
-                       onclick="return <%= namespaceDetalleCompra %>cancelarEdicionDetalle();" />
+                       onclick="return <portlet:namespace />cancelarEdicionDetalle();" />
             </td>
         </tr>
     </table>
