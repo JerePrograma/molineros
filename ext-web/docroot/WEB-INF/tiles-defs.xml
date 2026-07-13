@@ -4544,6 +4544,10 @@
 		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_edicion.jsp" />
 	</definition>
 
+	<definition name="portlet.compras.buscar_item_tecnico" extends="portlet.compras">
+		<put name="portlet_content" value="/portlet/compras/requerimientos/buscar_item_tecnico_result.jsp" />
+	</definition>
+
 	<definition name="portlet.compras.ver_requerimiento" extends="portlet.compras">
 		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_vista.jsp" />
 	</definition>
@@ -4560,17 +4564,6 @@
 		<put name="portlet_content" value="/portlet/compras/error.jsp" />
 	</definition>
 
-	<definition name="portlet.compras.alta_articulo_popup"
-	            extends="portlet.compras">
-		<put name="portlet_content"
-		     value="/portlet/compras/requerimientos/editar_articulo_popup.jsp" />
-	</definition>
-
-	<definition name="portlet.compras.articulos_sector"
-	            extends="portlet.compras">
-		<put name="portlet_content"
-		     value="/portlet/compras/requerimientos/articulos_sector.jsp" />
-	</definition>
 	<definition name="portlet.compras.prestadores_enviados"
 	            extends="portlet.compras">
 		<put name="portlet_content"

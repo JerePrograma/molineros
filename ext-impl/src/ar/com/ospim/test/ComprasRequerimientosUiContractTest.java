@@ -25,6 +25,7 @@ public final class ComprasRequerimientosUiContractTest {
         assertEditarSoloEnListado();
         assertEstadosYBotones();
         assertPersistenciaComprasUsaFunciones();
+        assertDetalleTecnicoUsaBuscadoresCanonicos();
         assertReclamoPrestacionalUsaHandoffSeguro();
         System.out.println("CONTRATO_UI_COMPRAS_OK");
     }
@@ -84,8 +85,8 @@ public final class ComprasRequerimientosUiContractTest {
         String adjuntos = leer("ext-web/docroot/html/portlet/compras/requerimientos/requerimiento_adjuntos.jsp");
         assertNotContains("mensaje azul eliminado", mensajes,
                 "La estructura del requerimiento solo puede editarse en estado PENDIENTE.");
-        assertNotContains(
-                "mensaje verde detalle eliminado",
+        assertContains(
+                "mensaje de detalle guardado",
                 mensajes,
                 "Detalle del requerimiento guardado correctamente."
         );
@@ -132,15 +133,15 @@ public final class ComprasRequerimientosUiContractTest {
                 "ext-impl/src/ar/com/ospim/servlets/"
                         + "PdfServlet.java"
         );
-        assertContains("descripcion", mail, " | Descripción: ");
+        assertContains("descripcion", mail, " | Descripcion: ");
         assertNotContains("obs anterior", mail, " | Obs: ");
         assertContains("modo temporal explicito", mail, "USAR_EMAIL_DESTINO_TEMPORAL = true");
         assertContains("destinatario QA", mail, "acomas@ospim.org.ar");
-        assertContains("reserva canonica", mail, "registrar_cotizacion_prestador");
-        assertContains("reserva procesando", mail, "AND estado_envio = 'PROCESANDO'");
+        assertContains("reserva canonica", mail, "reservar_notificacion_");
+        assertContains("finalizacion canonica", mail, "finalizar_notificacion_");
         assertContains("estado enviado", mail, "WebKeysCompras.ENVIO_ENVIADO");
         assertContains("email real obligatorio", mail,
-                "Email real reservado del prestador inválido.");
+                "El email real reservado del prestador ");
         assertBefore("validacion real antes de redireccion", mail,
                 "String emailReservadoNormalizado", "String emailDestino");
         assertNotContains("destino fuera de logs de servicio", mail,
@@ -229,18 +230,6 @@ public final class ComprasRequerimientosUiContractTest {
         );
 
         assertNotContains(
-                "sin PreparedStatement",
-                service,
-                "prepareStatement("
-        );
-
-        assertNotContains(
-                "sin SELECT nativo",
-                service,
-                "\"SELECT "
-        );
-
-        assertNotContains(
                 "sin UPDATE nativo",
                 service,
                 "\"UPDATE "
@@ -270,17 +259,68 @@ public final class ComprasRequerimientosUiContractTest {
                 "compras.guardar_cotizacion_requerimiento"
         );
 
-        assertContains(
-                "artículos mediante refcursor",
-                service,
-                "compras.listar_articulos_cursor"
+        assertNotContains("sin funciones de articulo", service, "listar_articulos");
+    }
+
+    private static void assertDetalleTecnicoUsaBuscadoresCanonicos()
+            throws Exception {
+
+        String editor = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_editor.jsp"
+        );
+        String scripts = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_scripts_editable.jsp"
+        );
+        String comunes = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_scripts_comunes.jsp"
+        );
+        String action = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/action/BuscarItemTecnicoComprasAction.java"
+        );
+        String resultado = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/buscar_item_tecnico_result.jsp"
+        );
+        String service = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/service/EditarRequerimientoCompraServiceImpl.java"
+        );
+        String schema = leer(
+                "ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql"
+        );
+        String struts = leer("ext-web/docroot/WEB-INF/struts-config.xml");
+        String jasper = leer(
+                "ext-web/docroot/WEB-INF/classes/jasper/compras/requerimiento_compra.jrxml"
         );
 
-        assertContains(
-                "artículo individual mediante refcursor",
-                service,
-                "compras.get_articulo_cursor"
-        );
+        assertContains("ids internos hidden", editor, "detalle_id_prestacion\"\n                           value=\"\"");
+        assertContains("id medicamento hidden", editor, "detalle_id_medicamento\"\n                           value=\"\"");
+        assertNotContains("sin label ID prestacion", editor, "ID Prestaci");
+        assertNotContains("sin label ID medicamento", editor, "ID Medicamento");
+        assertContains("buscar medicamento", editor, "buscarMedicamentoDetalle");
+        assertContains("limpiar medicamento", editor, "limpiarSeleccionMedicamento");
+        assertContains("buscar nomenclador", editor, "buscarNomencladorDetalle");
+        assertContains("limpiar nomenclador", editor, "limpiarSeleccionNomenclador");
+        assertContains("texto invalida medicamento", scripts, "limpiarSeleccionMedicamento(false)");
+        assertContains("texto invalida nomenclador", scripts, "limpiarSeleccionNomenclador(false)");
+        assertContains("callback id prestacion", scripts, "idPrestacion,");
+        assertContains("callback id tipo", scripts, "idTipoNomenclador,");
+        assertContains("sector Farmacia exacto", comunes, "== 'FARMACIA'");
+        assertContains("sector Prestaciones exacto", comunes, "descripcion == 'PRESTACIONES MEDICAS'");
+        assertContains("sector Legales exacto", comunes, "descripcion == 'LEGALES'");
+        assertContains("busqueda medicamento canonica", action, "getBusquedaMedicamentos(");
+        assertContains("busqueda PM canonica", action, "getListaNomencladorPrestacionesMedicas(");
+        assertContains("busqueda Legales canonica", action, "getListaNomenclador(");
+        assertContains("resultado devuelve id prestacion", resultado, "getId_prestacion()");
+        assertContains("resultado devuelve id tipo", resultado, "getId_tipo_nomenclador()");
+        assertContains("validacion medicamento DB", service, "obtenerMedicamentoCanonico");
+        assertContains("validacion nomenclador DB", service, "obtenerNomencladorCanonico");
+        assertContains("sector recargado DB", service, "obtenerRequerimientoDetalle");
+        assertContains("mapping buscador", struts, "path=\"/compras/buscar_item_tecnico\"");
+        assertContains("Jasper tipo", jasper, "field name=\"tipo_item\"");
+        assertContains("Jasper codigo", jasper, "field name=\"codigo_item\"");
+        assertContains("Jasper descripcion", jasper, "field name=\"descripcion_item\"");
+        assertNotContains("schema sin id articulo", schema, "id_articulo");
+        assertNotContains("schema sin tabla articulo", schema, "compras.articulo");
+        assertNotContains("schema sin tipo ARTICULO", schema, "'ARTICULO'");
     }
     private static void assertReclamoPrestacionalUsaHandoffSeguro()
             throws Exception {

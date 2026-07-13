@@ -1625,6 +1625,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
         private String motivoCodigo;
         private String motivoDescripcion;
 
+        public ReservaCotizacionPrestador() {
+        }
+
         public boolean isReservado() {
             return reservado;
         }
@@ -1683,6 +1686,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
         private String estadoAnterior;
         private String estadoActual;
         private String motivo;
+
+        public FinalizacionCotizacionPrestador() {
+        }
 
         public boolean isActualizado() {
             return actualizado;

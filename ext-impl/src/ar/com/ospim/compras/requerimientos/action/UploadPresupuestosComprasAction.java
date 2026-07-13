@@ -3,7 +3,6 @@ package ar.com.ospim.compras.requerimientos.action;
 import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.beans.CompraArticulo;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
@@ -61,7 +60,6 @@ public class UploadPresupuestosComprasAction extends PortletAction {
     private static final Log logger =
             LogFactoryUtil.getLog(UploadPresupuestosComprasAction.class);
 
-    private static final String ARTICULOS_COMPRA = "ARTICULOS_COMPRA";
     private static final String MODO_VER = "ver";
     private static final String MODO_EDITAR = "editar";
 
@@ -1588,35 +1586,6 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 BusquedaRequerimientoCompraServiceUtil.listarSectores()
         );
 
-        Integer idSectorRequerimiento = requerimiento != null
-                ? requerimiento.getIdSector()
-                : null;
-
-        if ((idSectorRequerimiento == null
-                || idSectorRequerimiento.intValue() <= 0)
-                && request != null) {
-
-            int idSectorParam =
-                    ParamUtil.getInteger(request, "sector_id", 0);
-
-            if (idSectorParam > 0) {
-                idSectorRequerimiento = Integer.valueOf(idSectorParam);
-            }
-        }
-
-        List<CompraArticulo> articulos =
-                new ArrayList<CompraArticulo>();
-
-        if (idSectorRequerimiento != null
-                && idSectorRequerimiento.intValue() > 0) {
-
-            articulos = EditarRequerimientoCompraServiceUtil.listarArticulos(
-                    idSectorRequerimiento,
-                    null
-            );
-        }
-
-        request.setAttribute(ARTICULOS_COMPRA, articulos);
     }
 
     private void cargarAfiliadoRequerimiento(

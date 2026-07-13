@@ -4,6 +4,9 @@
     var <portlet:namespace />detalleActionURL =
             '<%= detalleActionURL.toString() %>';
 
+    var <portlet:namespace />buscarItemTecnicoURL =
+            '<%= jsDetalleCompra(buscarItemTecnicoURL.toString()) %>';
+
     var <portlet:namespace />requerimientoPersistidoDetalle =
             <%= requerimientoPersistidoDetalle ? "true" : "false" %>;
 
@@ -17,7 +20,13 @@
             return 'MEDICAMENTO';
         }
 
-        return 'NOMENCLADOR';
+        if (typeof <portlet:namespace />esSectorNomencladorCompra == 'function'
+                && <portlet:namespace />esSectorNomencladorCompra()) {
+
+            return 'NOMENCLADOR';
+        }
+
+        return '';
     }
 
     function <portlet:namespace />actualizarTipoItemEditor(preservarValores) {
@@ -26,11 +35,22 @@
 
         jQuery('#<portlet:namespace />detalle_tipo_item').val(tipoItem);
 
-        jQuery('#<portlet:namespace />detalle_tipo_item_label').text(
-                tipoItem == 'MEDICAMENTO'
-                        ? 'Medicamento'
-                        : 'Nomenclador'
-        );
+        var tipoLabel = '-';
+
+        if (tipoItem == 'MEDICAMENTO') {
+            tipoLabel = 'Medicamento';
+        } else if (tipoItem == 'NOMENCLADOR') {
+            tipoLabel = 'Nomenclador';
+        }
+
+        jQuery('#<portlet:namespace />detalle_tipo_item_label').text(tipoLabel);
+        jQuery('#<portlet:namespace />detalle_sector_no_admitido').toggle(tipoItem == '');
+
+        if (tipoItem == '') {
+            jQuery('#<portlet:namespace />detalle_submit').attr('disabled', 'disabled');
+        } else {
+            jQuery('#<portlet:namespace />detalle_submit').removeAttr('disabled');
+        }
 
         if (tipoItem == 'MEDICAMENTO') {
             jQuery('#<portlet:namespace />detalle_bloque_medicamento').show();
@@ -42,7 +62,7 @@
                 jQuery('#<portlet:namespace />detalle_codigo_nomenclador').val('');
                 jQuery('#<portlet:namespace />detalle_descripcion_nomenclador').val('');
             }
-        } else {
+        } else if (tipoItem == 'NOMENCLADOR') {
             jQuery('#<portlet:namespace />detalle_bloque_nomenclador').show();
             jQuery('#<portlet:namespace />detalle_bloque_medicamento').hide();
 
@@ -51,10 +71,132 @@
                 jQuery('#<portlet:namespace />detalle_troquel').val('');
                 jQuery('#<portlet:namespace />detalle_nombre_medicamento').val('');
             }
+        } else {
+            jQuery('#<portlet:namespace />detalle_bloque_nomenclador').hide();
+            jQuery('#<portlet:namespace />detalle_bloque_medicamento').hide();
         }
 
         return tipoItem;
     }
+
+    function <portlet:namespace />abrirBusquedaItemTecnico(parametros) {
+        var separador = <portlet:namespace />buscarItemTecnicoURL.indexOf('?') >= 0
+                ? '&'
+                : '?';
+        var partes = [];
+
+        for (var nombre in parametros) {
+            if (parametros.hasOwnProperty(nombre)) {
+                partes.push(
+                        encodeURIComponent('<portlet:namespace />' + nombre)
+                                + '='
+                                + encodeURIComponent(parametros[nombre] == null ? '' : parametros[nombre])
+                );
+            }
+        }
+
+        window.open(
+                <portlet:namespace />buscarItemTecnicoURL
+                        + separador
+                        + partes.join('&'),
+                '<portlet:namespace />busquedaItemTecnicoCompras',
+                'width=980,height=650,resizable=yes,scrollbars=yes'
+        );
+
+        return false;
+    }
+
+    function <portlet:namespace />limpiarSeleccionMedicamento(limpiarCriterios) {
+        jQuery('#<portlet:namespace />detalle_id_medicamento').val('');
+        jQuery('#<portlet:namespace />detalle_nombre_medicamento').val('');
+        jQuery('#<portlet:namespace />detalle_medicamento_seleccionado').text('');
+
+        if (limpiarCriterios !== false) {
+            jQuery('#<portlet:namespace />detalle_troquel').val('');
+            jQuery('#<portlet:namespace />detalle_nombre_medicamento_busqueda').val('');
+            jQuery('#<portlet:namespace />detalle_presentacion_medicamento_busqueda').val('');
+        }
+
+        return false;
+    }
+
+    function <portlet:namespace />limpiarSeleccionNomenclador(limpiarCriterios) {
+        jQuery('#<portlet:namespace />detalle_id_prestacion').val('');
+        jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador').val('');
+        jQuery('#<portlet:namespace />detalle_nomenclador_seleccionado').text('');
+
+        if (limpiarCriterios !== false) {
+            jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador_busqueda').val('');
+            jQuery('#<portlet:namespace />detalle_codigo_nomenclador').val('');
+            jQuery('#<portlet:namespace />detalle_descripcion_nomenclador').val('');
+        }
+
+        return false;
+    }
+
+    function <portlet:namespace />buscarMedicamentoDetalle() {
+        <portlet:namespace />limpiarSeleccionMedicamento(false);
+
+        return <portlet:namespace />abrirBusquedaItemTecnico({
+            tipo_item: 'MEDICAMENTO',
+            callback: '<portlet:namespace />seleccionarMedicamentoDetalle',
+            troquel: jQuery.trim(jQuery('#<portlet:namespace />detalle_troquel').val()),
+            nombre: jQuery.trim(jQuery('#<portlet:namespace />detalle_nombre_medicamento_busqueda').val()),
+            presentacion: jQuery.trim(jQuery('#<portlet:namespace />detalle_presentacion_medicamento_busqueda').val())
+        });
+    }
+
+    function <portlet:namespace />buscarNomencladorDetalle() {
+        <portlet:namespace />limpiarSeleccionNomenclador(false);
+
+        return <portlet:namespace />abrirBusquedaItemTecnico({
+            tipo_item: 'NOMENCLADOR',
+            callback: '<portlet:namespace />seleccionarNomencladorDetalle',
+            sector: <portlet:namespace />getSectorDescripcionSeleccionadoCompra(),
+            id_tipo_nomenclador: jQuery.trim(jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador_busqueda').val()),
+            codigo: jQuery.trim(jQuery('#<portlet:namespace />detalle_codigo_nomenclador').val()),
+            descripcion: jQuery.trim(jQuery('#<portlet:namespace />detalle_descripcion_nomenclador').val())
+        });
+    }
+
+    function <portlet:namespace />seleccionarMedicamentoDetalle(
+            idMedicamento,
+            troquel,
+            nombre,
+            presentacion) {
+
+        var nombreCompleto = jQuery.trim(
+                (nombre == null ? '' : nombre)
+                        + ' '
+                        + (presentacion == null ? '' : presentacion)
+        );
+
+        jQuery('#<portlet:namespace />detalle_id_medicamento').val(idMedicamento);
+        jQuery('#<portlet:namespace />detalle_troquel').val(troquel);
+        jQuery('#<portlet:namespace />detalle_nombre_medicamento_busqueda').val(nombre);
+        jQuery('#<portlet:namespace />detalle_presentacion_medicamento_busqueda').val(presentacion);
+        jQuery('#<portlet:namespace />detalle_nombre_medicamento').val(nombreCompleto);
+        jQuery('#<portlet:namespace />detalle_medicamento_seleccionado').text('Seleccion valida');
+    }
+
+    function <portlet:namespace />seleccionarNomencladorDetalle(
+            idPrestacion,
+            idTipoNomenclador,
+            codigo,
+            descripcion) {
+
+        jQuery('#<portlet:namespace />detalle_id_prestacion').val(idPrestacion);
+        jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador').val(idTipoNomenclador);
+        jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador_busqueda').val(idTipoNomenclador);
+        jQuery('#<portlet:namespace />detalle_codigo_nomenclador').val(codigo);
+        jQuery('#<portlet:namespace />detalle_descripcion_nomenclador').val(descripcion);
+        jQuery('#<portlet:namespace />detalle_nomenclador_seleccionado').text('Seleccion valida');
+    }
+
+    window['<portlet:namespace />seleccionarMedicamentoDetalle'] =
+            <portlet:namespace />seleccionarMedicamentoDetalle;
+    window['<portlet:namespace />seleccionarNomencladorDetalle'] =
+            <portlet:namespace />seleccionarNomencladorDetalle;
 
     function <portlet:namespace />limpiarEditorDetalle() {
         jQuery('#<portlet:namespace />detalle_edit_index').val('-1');
@@ -66,10 +208,15 @@
         jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador').val('');
         jQuery('#<portlet:namespace />detalle_codigo_nomenclador').val('');
         jQuery('#<portlet:namespace />detalle_descripcion_nomenclador').val('');
+        jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador_busqueda').val('');
+        jQuery('#<portlet:namespace />detalle_nomenclador_seleccionado').text('');
 
         jQuery('#<portlet:namespace />detalle_id_medicamento').val('');
         jQuery('#<portlet:namespace />detalle_troquel').val('');
         jQuery('#<portlet:namespace />detalle_nombre_medicamento').val('');
+        jQuery('#<portlet:namespace />detalle_nombre_medicamento_busqueda').val('');
+        jQuery('#<portlet:namespace />detalle_presentacion_medicamento_busqueda').val('');
+        jQuery('#<portlet:namespace />detalle_medicamento_seleccionado').text('');
 
         jQuery('#<portlet:namespace />detalle_cantidad').val('1');
         jQuery('#<portlet:namespace />detalle_observaciones').val('');
@@ -108,6 +255,10 @@
                 <portlet:namespace />detalleValue(detalle.idTipoNomenclador)
         );
 
+        jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador_busqueda').val(
+                <portlet:namespace />detalleValue(detalle.idTipoNomenclador)
+        );
+
         jQuery('#<portlet:namespace />detalle_codigo_nomenclador').val(
                 <portlet:namespace />detalleValue(detalle.codigoNomenclador)
         );
@@ -128,6 +279,12 @@
                 <portlet:namespace />detalleValue(detalle.nombreMedicamento)
         );
 
+        jQuery('#<portlet:namespace />detalle_nombre_medicamento_busqueda').val(
+                <portlet:namespace />detalleValue(detalle.nombreMedicamento)
+        );
+
+        jQuery('#<portlet:namespace />detalle_presentacion_medicamento_busqueda').val('');
+
         jQuery('#<portlet:namespace />detalle_cantidad').val(
                 <portlet:namespace />detalleValue(detalle.cantidad)
         );
@@ -142,9 +299,11 @@
         jQuery('#<portlet:namespace />detalle_cancelar').show();
 
         if (detalle.tipoItem == 'MEDICAMENTO') {
-            jQuery('#<portlet:namespace />detalle_id_medicamento').focus();
+            jQuery('#<portlet:namespace />detalle_nombre_medicamento_busqueda').focus();
+            jQuery('#<portlet:namespace />detalle_medicamento_seleccionado').text('Seleccion valida');
         } else {
-            jQuery('#<portlet:namespace />detalle_id_prestacion').focus();
+            jQuery('#<portlet:namespace />detalle_codigo_nomenclador').focus();
+            jQuery('#<portlet:namespace />detalle_nomenclador_seleccionado').text('Seleccion valida');
         }
     }
 
@@ -318,25 +477,25 @@
         if (detalle.tipoItem == 'MEDICAMENTO') {
             if (!<portlet:namespace />esEnteroPositivo(detalle.idMedicamento)) {
                 alert('Debe seleccionar el medicamento.');
-                jQuery('#<portlet:namespace />detalle_id_medicamento').focus();
+                jQuery('#<portlet:namespace />detalle_nombre_medicamento_busqueda').focus();
                 return false;
             }
 
             if (detalle.nombreMedicamento == '') {
                 alert('Debe informar el nombre del medicamento.');
-                jQuery('#<portlet:namespace />detalle_nombre_medicamento').focus();
+                jQuery('#<portlet:namespace />detalle_nombre_medicamento_busqueda').focus();
                 return false;
             }
         } else if (detalle.tipoItem == 'NOMENCLADOR') {
             if (!<portlet:namespace />esEnteroPositivo(detalle.idPrestacion)) {
                 alert('Debe seleccionar la prestación del nomenclador.');
-                jQuery('#<portlet:namespace />detalle_id_prestacion').focus();
+                jQuery('#<portlet:namespace />detalle_codigo_nomenclador').focus();
                 return false;
             }
 
             if (!<portlet:namespace />esEnteroPositivo(detalle.idTipoNomenclador)) {
                 alert('Debe informar el tipo de nomenclador.');
-                jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador').focus();
+                jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador_busqueda').focus();
                 return false;
             }
 
@@ -990,6 +1149,22 @@
 
     jQuery(function() {
         <portlet:namespace />limpiarEditorDetalle();
+
+        jQuery(
+                '#<portlet:namespace />detalle_troquel, '
+                        + '#<portlet:namespace />detalle_nombre_medicamento_busqueda, '
+                        + '#<portlet:namespace />detalle_presentacion_medicamento_busqueda'
+        ).bind('input keyup change', function() {
+            <portlet:namespace />limpiarSeleccionMedicamento(false);
+        });
+
+        jQuery(
+                '#<portlet:namespace />detalle_id_tipo_nomenclador_busqueda, '
+                        + '#<portlet:namespace />detalle_codigo_nomenclador, '
+                        + '#<portlet:namespace />detalle_descripcion_nomenclador'
+        ).bind('input keyup change', function() {
+            <portlet:namespace />limpiarSeleccionNomenclador(false);
+        });
 
         jQuery('#<portlet:namespace />sector_id, #<portlet:namespace />id_sector').bind(
                 'change',

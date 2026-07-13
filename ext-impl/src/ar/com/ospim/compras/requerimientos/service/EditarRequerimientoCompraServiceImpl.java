@@ -1,8 +1,11 @@
 package ar.com.ospim.compras.requerimientos.service;
 
+import ar.com.ospim.autorizaciones.beans.Nomenclador;
+import ar.com.ospim.autorizaciones.services.NomencladorServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.beans.CompraArticulo;
 import ar.com.ospim.compras.requerimientos.beans.*;
+import ar.com.ospim.farmacia.beans.Medicamento;
+import ar.com.ospim.farmacia.services.BusquedaMedicamentoServiceUtil;
 import ar.com.ospim.util.ConnectionHelper;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -12,7 +15,6 @@ import java.sql.*;
 import java.text.Normalizer;
 import java.util.Locale;
 import java.util.HashSet;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -42,12 +44,6 @@ public class EditarRequerimientoCompraServiceImpl {
     private static final String SQL_CAMBIAR_ESTADO =
             "{ call compras.cambiar_estado_requerimiento(?,?,?) }";
 
-    private static final String SQL_GUARDAR_ARTICULO =
-            "{ ? = call compras.guardar_articulo(?,?,?) }";
-
-    private static final String SQL_BORRAR_ARTICULO =
-            "{ call compras.borrar_articulo(?) }";
-
     private static final String SQL_REGISTRAR_PRESUPUESTO =
             "{ ? = call compras.registrar_requerimiento_presupuesto("
                     + "?,?,?,?,?,?,?,?,?,?,?) }";
@@ -71,12 +67,6 @@ public class EditarRequerimientoCompraServiceImpl {
                     + "?, "
                     + "?"
                     + ")";
-
-    private static final String SQL_LISTAR_ARTICULOS_CURSOR =
-            "{ ? = call compras.listar_articulos_cursor(?,?) }";
-
-    private static final String SQL_GET_ARTICULO_CURSOR =
-            "{ ? = call compras.get_articulo_cursor(?) }";
 
     public int guardarRequerimientoCompra(
             RequerimientoCompra requerimiento,
@@ -287,17 +277,27 @@ public class EditarRequerimientoCompraServiceImpl {
             RequerimientoCompraDetalle detalle,
             String usuario) throws Exception {
 
+        Integer idRequerimiento =
+                getIdRequerimientoDetalle(detalle);
+
+        RequerimientoCompra requerimiento =
+                validarRequerimientoDetalle(
+                        idRequerimiento
+                );
+
+        validarTipoItemSegunSector(
+                requerimiento,
+                detalle
+        );
+
         validarDetalleParaGuardar(detalle);
 
         Connection con = null;
         CallableStatement stmt = null;
         ResultSet rs = null;
 
-        Integer idRequerimiento =
-                getIdRequerimientoDetalle(detalle);
-
         try {
-            con = ConnectionHelper.getConnection();
+            con = obtenerConexionGuardarDetalle();
 
             if (con == null) {
                 throw new SQLException(
@@ -313,7 +313,6 @@ public class EditarRequerimientoCompraServiceImpl {
             /*
              * La función recibe trece parámetros.
              *
-             * Ya no existe id_articulo.
              * El INTEGER retornado se obtiene desde el ResultSet.
              */
             setNullableInteger(
@@ -688,243 +687,6 @@ public class EditarRequerimientoCompraServiceImpl {
         );
     }
 
-    public List<CompraArticulo> listarArticulos(Integer idSector, String texto) throws Exception {
-        Connection con = null;
-        CallableStatement stmt = null;
-        ResultSet rs = null;
-        boolean autoCommitOriginal = true;
-
-        List<CompraArticulo> articulos =
-                new ArrayList<CompraArticulo>();
-
-        try {
-            con =
-                    ConnectionHelper.getConnection();
-
-            autoCommitOriginal =
-                    con.getAutoCommit();
-
-            con.setAutoCommit(false);
-
-            stmt =
-                    con.prepareCall(
-                            SQL_LISTAR_ARTICULOS_CURSOR
-                    );
-
-            stmt.registerOutParameter(
-                    1,
-                    Types.OTHER
-            );
-
-            setNullableInteger(
-                    stmt,
-                    2,
-                    idSector
-            );
-
-            stmt.setString(
-                    3,
-                    emptyToNull(texto)
-            );
-
-            stmt.execute();
-
-            rs =
-                    (ResultSet) stmt.getObject(1);
-
-            while (rs.next()) {
-                articulos.add(
-                        mapearArticulo(rs)
-                );
-            }
-
-            con.commit();
-
-            return articulos;
-
-        } catch (Exception e) {
-            if (con != null) {
-                try {
-                    con.rollback();
-                } catch (Exception rollbackError) {
-                    _log.error(
-                            rollbackError
-                    );
-                }
-            }
-
-            throw e;
-
-        } finally {
-            cerrar(rs);
-            cerrar(stmt);
-
-            if (con != null) {
-                try {
-                    con.setAutoCommit(
-                            autoCommitOriginal
-                    );
-                } catch (Exception ignored) {
-                }
-
-                try {
-                    con.close();
-                } catch (Exception ignored) {
-                }
-            }
-        }
-    }
-
-    public List<CompraArticulo> listarArticulosPorSector(int idSector) throws Exception {
-        if (idSector <= 0) {
-            throw new Exception("Debe informar el sector.");
-        }
-
-        return listarArticulos(Integer.valueOf(idSector), null);
-    }
-
-    public CompraArticulo getArticulo(int idArticulo) throws Exception {
-        if (idArticulo <= 0) {
-            throw new Exception("Debe informar el artículo.");
-        }
-
-        Connection con = null;
-        CallableStatement stmt = null;
-        ResultSet rs = null;
-        boolean autoCommitOriginal = true;
-
-        try {
-            con =
-                    ConnectionHelper.getConnection();
-
-            autoCommitOriginal =
-                    con.getAutoCommit();
-
-            con.setAutoCommit(false);
-
-            stmt =
-                    con.prepareCall(
-                            SQL_GET_ARTICULO_CURSOR
-                    );
-
-            stmt.registerOutParameter(
-                    1,
-                    Types.OTHER
-            );
-
-            stmt.setInt(
-                    2,
-                    idArticulo
-            );
-
-            stmt.execute();
-
-            rs =
-                    (ResultSet) stmt.getObject(1);
-
-            CompraArticulo articulo = null;
-
-            if (rs.next()) {
-                articulo =
-                        mapearArticulo(rs);
-            }
-
-            con.commit();
-
-            return articulo;
-
-        } catch (Exception e) {
-            if (con != null) {
-                try {
-                    con.rollback();
-                } catch (Exception rollbackError) {
-                    _log.error(
-                            rollbackError
-                    );
-                }
-            }
-
-            throw e;
-
-        } finally {
-            cerrar(rs);
-            cerrar(stmt);
-
-            if (con != null) {
-                try {
-                    con.setAutoCommit(
-                            autoCommitOriginal
-                    );
-                } catch (Exception ignored) {
-                }
-
-                try {
-                    con.close();
-                } catch (Exception ignored) {
-                }
-            }
-        }
-    }
-
-    public int guardarArticulo(Integer idArticulo,
-                               Integer idSector,
-                               String descripcion) throws Exception {
-
-        String descripcionNormalizada = normalizarDescripcionArticulo(descripcion);
-
-        CompraArticulo articulo = new CompraArticulo();
-        articulo.setId(idArticulo);
-        articulo.setIdSector(idSector);
-        articulo.setDescripcion(descripcionNormalizada);
-
-        validarArticuloParaGuardar(articulo);
-        validarArticuloDuplicado(articulo);
-
-        Connection con = null;
-        CallableStatement stmt = null;
-
-        try {
-            con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_GUARDAR_ARTICULO);
-            stmt.registerOutParameter(1, Types.INTEGER);
-
-            setNullableInteger(stmt, 2, idArticulo);
-            setNullableInteger(stmt, 3, idSector);
-            stmt.setString(4, emptyToNull(descripcionNormalizada));
-
-            stmt.execute();
-
-            return stmt.getInt(1);
-        } catch (Exception e) {
-            _log.error(e);
-            throw e;
-        } finally {
-            ConnectionHelper.cerrar(stmt, con);
-        }
-    }
-
-    public void borrarArticulo(int idArticulo) throws Exception {
-        if (idArticulo <= 0) {
-            throw new Exception("Debe informar el artículo.");
-        }
-
-        Connection con = null;
-        CallableStatement stmt = null;
-
-        try {
-            con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_BORRAR_ARTICULO);
-            stmt.setInt(1, idArticulo);
-
-            stmt.execute();
-        } catch (Exception e) {
-            _log.error(e);
-            throw e;
-        } finally {
-            ConnectionHelper.cerrar(stmt, con);
-        }
-    }
-
     private void validarRequerimientoParaGuardar(RequerimientoCompra requerimiento) throws Exception {
         if (requerimiento == null) {
             throw new Exception("Debe informar el requerimiento de compra.");
@@ -1093,6 +855,58 @@ public class EditarRequerimientoCompraServiceImpl {
                     "Debe informar la descripción del nomenclador."
             );
         }
+
+        if (detalle.getIdMedicamento() != null
+                || detalle.getTroquel() != null
+                || !WebKeysCompras.isEmpty(
+                detalle.getNombreMedicamento()
+        )) {
+            throw new Exception(
+                    "Un nomenclador no puede contener datos de medicamento."
+            );
+        }
+
+        Nomenclador nomenclador =
+                obtenerNomencladorCanonico(
+                        detalle.getIdPrestacion().intValue()
+                );
+
+        if (nomenclador == null
+                || nomenclador.getId_prestacion()
+                != detalle.getIdPrestacion().intValue()
+                || nomenclador.getBaja_fecha() != null) {
+
+            throw new Exception(
+                    "La prestación seleccionada no existe o no está activa."
+            );
+        }
+
+        if (nomenclador.getId_tipo_nomenclador()
+                != detalle.getIdTipoNomenclador().intValue()) {
+
+            throw new Exception(
+                    "La prestación no corresponde al tipo de nomenclador informado."
+            );
+        }
+
+        validarTextoTecnico(
+                "código de nomenclador",
+                detalle.getCodigoNomenclador(),
+                nomenclador.getCodigo()
+        );
+
+        validarTextoTecnico(
+                "descripción de nomenclador",
+                detalle.getDescripcionNomenclador(),
+                nomenclador.getDescripcion()
+        );
+
+        detalle.setCodigoNomenclador(
+                emptyToNull(nomenclador.getCodigo())
+        );
+        detalle.setDescripcionNomenclador(
+                emptyToNull(nomenclador.getDescripcion())
+        );
     }
 
     private void validarDetalleMedicamentoParaGuardar(
@@ -1113,6 +927,239 @@ public class EditarRequerimientoCompraServiceImpl {
                     "Debe informar el nombre del medicamento."
             );
         }
+
+        if (detalle.getIdPrestacion() != null
+                || detalle.getIdTipoNomenclador() != null
+                || !WebKeysCompras.isEmpty(
+                detalle.getCodigoNomenclador()
+        )
+                || !WebKeysCompras.isEmpty(
+                detalle.getDescripcionNomenclador()
+        )) {
+
+            throw new Exception(
+                    "Un medicamento no puede contener datos de nomenclador."
+            );
+        }
+
+        Medicamento medicamento =
+                obtenerMedicamentoCanonico(
+                        detalle.getIdMedicamento().intValue()
+                );
+
+        if (medicamento == null
+                || medicamento.getId_medicamento()
+                != detalle.getIdMedicamento().intValue()
+                || medicamento.getFecha_baja() != null) {
+
+            throw new Exception(
+                    "El medicamento seleccionado no existe o no está activo."
+            );
+        }
+
+        Integer troquelCanonico =
+                medicamento.getTroquel() > 0
+                        ? Integer.valueOf(medicamento.getTroquel())
+                        : null;
+
+        if (detalle.getTroquel() != null
+                && (troquelCanonico == null
+                || detalle.getTroquel().intValue()
+                != troquelCanonico.intValue())) {
+
+            throw new Exception(
+                    "El troquel informado no corresponde al medicamento."
+            );
+        }
+
+        String nombreCanonico =
+                nombreMedicamentoCanonico(
+                        medicamento
+                );
+
+        validarTextoTecnico(
+                "nombre del medicamento",
+                detalle.getNombreMedicamento(),
+                nombreCanonico
+        );
+
+        detalle.setTroquel(troquelCanonico);
+        detalle.setNombreMedicamento(nombreCanonico);
+    }
+
+    private RequerimientoCompra validarRequerimientoDetalle(
+            Integer idRequerimiento) throws Exception {
+
+        if (idRequerimiento == null
+                || idRequerimiento.intValue() <= 0) {
+            throw new Exception(
+                    "Debe guardar primero la cabecera del requerimiento."
+            );
+        }
+
+        RequerimientoCompra requerimiento =
+                obtenerRequerimientoDetalle(
+                        idRequerimiento.intValue()
+                );
+
+        if (requerimiento == null
+                || !requerimiento.puedeEditarEstructura()) {
+            throw new Exception(
+                    "Los detalles sólo pueden modificarse en un "
+                            + "requerimiento PENDIENTE activo."
+            );
+        }
+
+        if (requerimiento.getSectorId() == null
+                || requerimiento.getSectorId().intValue() <= 0) {
+            throw new Exception(
+                    "El requerimiento no tiene un sector válido."
+            );
+        }
+
+        return requerimiento;
+    }
+
+    private void validarTipoItemSegunSector(
+            RequerimientoCompra requerimiento,
+            RequerimientoCompraDetalle detalle) throws Exception {
+
+        if (detalle == null) {
+            throw new Exception(
+                    "Debe informar el detalle del requerimiento."
+            );
+        }
+
+        String sector =
+                normalizarClave(
+                        requerimiento.getSectorDescripcion()
+                );
+
+        String esperado;
+
+        if ("FARMACIA".equals(sector)) {
+            esperado =
+                    RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO;
+        } else if ("PRESTACIONES MEDICAS".equals(sector)
+                || "LEGALES".equals(sector)) {
+            esperado =
+                    RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR;
+        } else {
+            throw new Exception(
+                    "El sector del requerimiento no admite "
+                            + "detalles técnicos de Compras."
+            );
+        }
+
+        String recibido =
+                detalle.getTipoItemNormalizado();
+
+        if (!WebKeysCompras.isEmpty(recibido)
+                && !esperado.equals(recibido)) {
+            throw new Exception(
+                    "El tipo de ítem no corresponde al sector "
+                            + "persistido del requerimiento."
+            );
+        }
+
+        detalle.setTipoItem(esperado);
+    }
+
+    protected RequerimientoCompra obtenerRequerimientoDetalle(
+            int idRequerimiento) throws Exception {
+
+        return BusquedaRequerimientoCompraServiceUtil
+                .getRequerimientoCompra(
+                        idRequerimiento
+                );
+    }
+
+    protected Connection obtenerConexionGuardarDetalle()
+            throws Exception {
+
+        return ConnectionHelper.getConnection();
+    }
+
+    protected Nomenclador obtenerNomencladorCanonico(
+            int idPrestacion) throws Exception {
+
+        return NomencladorServiceUtil.buscarNomencladorPorId(
+                idPrestacion
+        );
+    }
+
+    protected Medicamento obtenerMedicamentoCanonico(
+            int idMedicamento) throws Exception {
+
+        return BusquedaMedicamentoServiceUtil.getMedicamento(
+                idMedicamento
+        );
+    }
+
+    private String nombreMedicamentoCanonico(
+            Medicamento medicamento) throws Exception {
+
+        String nombre =
+                emptyToNull(medicamento.getNombre());
+
+        if (nombre == null) {
+            throw new Exception(
+                    "El medicamento canónico no tiene nombre."
+            );
+        }
+
+        String presentacion =
+                emptyToNull(medicamento.getPresentacion());
+
+        return presentacion == null
+                ? nombre
+                : nombre + " " + presentacion;
+    }
+
+    private void validarTextoTecnico(
+            String campo,
+            String recibido,
+            String canonico) throws Exception {
+
+        String recibidoNormalizado =
+                normalizarTextoTecnico(recibido);
+        String canonicoNormalizado =
+                normalizarTextoTecnico(canonico);
+
+        if (recibidoNormalizado == null
+                || canonicoNormalizado == null
+                || !recibidoNormalizado.equalsIgnoreCase(
+                canonicoNormalizado
+        )) {
+            throw new Exception(
+                    "El " + campo
+                            + " no coincide con el registro canónico."
+            );
+        }
+    }
+
+    private String normalizarTextoTecnico(String value) {
+        String result = emptyToNull(value);
+
+        return result == null
+                ? null
+                : result.replaceAll("\\s+", " ");
+    }
+
+    private String normalizarClave(String value) {
+        String result = normalizarTextoTecnico(value);
+
+        if (result == null) {
+            return "";
+        }
+
+        result = Normalizer.normalize(
+                result,
+                Normalizer.Form.NFD
+        );
+        result = DIACRITICOS.matcher(result).replaceAll("");
+
+        return result.toUpperCase(Locale.ROOT);
     }
 
     private RequerimientoCompra validarRequerimientoParaEnviarACotizar(
@@ -1504,31 +1551,6 @@ public class EditarRequerimientoCompraServiceImpl {
 
     }
 
-    private void validarArticuloParaGuardar(CompraArticulo articulo) throws Exception {
-        if (articulo == null) {
-            throw new Exception("Debe informar el artículo.");
-        }
-
-        if (articulo.getIdSector() == null || articulo.getIdSector().intValue() <= 0) {
-            throw new Exception("Debe informar el sector del artículo.");
-        }
-
-        if (WebKeysCompras.isEmpty(articulo.getDescripcion())) {
-            throw new Exception("Debe informar la descripción del artículo.");
-        }
-    }
-
-    private CompraArticulo mapearArticulo(ResultSet rs) throws Exception {
-        CompraArticulo articulo = new CompraArticulo();
-
-        articulo.setId(Integer.valueOf(rs.getInt("id")));
-        articulo.setIdSector(Integer.valueOf(rs.getInt("id_sector")));
-        articulo.setSectorDescripcion(rs.getString("sector_descripcion"));
-        articulo.setDescripcion(rs.getString("descripcion"));
-
-        return articulo;
-    }
-
     private Integer getIdRequerimientoDetalle(RequerimientoCompraDetalle detalle) {
         if (detalle.getIdRequerimiento() != null && detalle.getIdRequerimiento().intValue() > 0) {
             return detalle.getIdRequerimiento();
@@ -1600,75 +1622,6 @@ public class EditarRequerimientoCompraServiceImpl {
         try {
             stmt.close();
         } catch (Exception ignored) {
-        }
-    }
-
-    private String normalizarDescripcionArticulo(String value) {
-        if (value == null) {
-            return null;
-        }
-
-        value = value.trim();
-
-        if (value.length() == 0) {
-            return null;
-        }
-
-        String normalizado = Normalizer.normalize(value, Normalizer.Form.NFD);
-        normalizado = DIACRITICOS.matcher(normalizado).replaceAll("");
-        normalizado = normalizado.replaceAll("\\s+", " ");
-
-        return normalizado.toUpperCase(Locale.ROOT).trim();
-    }
-
-    private void validarArticuloDuplicado(CompraArticulo articulo) throws Exception {
-        if (articulo == null
-                || articulo.getIdSector() == null
-                || articulo.getIdSector().intValue() <= 0
-                || WebKeysCompras.isEmpty(articulo.getDescripcion())) {
-
-            return;
-        }
-
-        String descripcionNormalizada =
-                normalizarDescripcionArticulo(articulo.getDescripcion());
-
-        List<CompraArticulo> existentes =
-                listarArticulos(
-                        articulo.getIdSector(),
-                        null
-                );
-
-        if (existentes == null) {
-            return;
-        }
-
-        for (int i = 0; i < existentes.size(); i++) {
-            CompraArticulo existente = existentes.get(i);
-
-            if (existente == null) {
-                continue;
-            }
-
-            if (articulo.getId() != null
-                    && existente.getId() != null
-                    && articulo.getId().intValue() == existente.getId().intValue()) {
-
-                continue;
-            }
-
-            String descripcionExistente =
-                    normalizarDescripcionArticulo(existente.getDescripcion());
-
-            if (descripcionNormalizada != null
-                    && descripcionNormalizada.equals(descripcionExistente)) {
-
-                throw new Exception(
-                        "Ya existe un artículo con la descripción '"
-                                + descripcionNormalizada
-                                + "' para el sector seleccionado."
-                );
-            }
         }
     }
 

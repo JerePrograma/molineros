@@ -12,7 +12,6 @@ import java.math.BigDecimal;
  * - FARMACIA usa MEDICAMENTO.
  * - El resto de los sectores usa NOMENCLADOR.
  *
- * No se utiliza compras.articulo.
  */
 public class RequerimientoCompraDetalle {
 

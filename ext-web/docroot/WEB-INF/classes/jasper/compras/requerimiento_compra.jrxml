@@ -50,6 +50,16 @@ FROM compras.get_requerimiento_compra_pdf(
     <field name="observaciones" class="java.lang.String"/>
     <field name="detalle_id" class="java.lang.Integer"/>
     <field name="detalle_orden" class="java.lang.Integer"/>
+    <field name="tipo_item" class="java.lang.String"/>
+    <field name="codigo_item" class="java.lang.String"/>
+    <field name="descripcion_item" class="java.lang.String"/>
+    <field name="id_prestacion" class="java.lang.Integer"/>
+    <field name="id_tipo_nomenclador" class="java.lang.Integer"/>
+    <field name="codigo_nomenclador" class="java.lang.String"/>
+    <field name="descripcion_nomenclador" class="java.lang.String"/>
+    <field name="id_medicamento" class="java.lang.Integer"/>
+    <field name="troquel" class="java.lang.Integer"/>
+    <field name="nombre_medicamento" class="java.lang.String"/>
     <field name="cantidad" class="java.lang.Integer"/>
     <field name="precio_unitario_estimado" class="java.math.BigDecimal"/>
     <field name="precio_total_estimado" class="java.math.BigDecimal"/>
@@ -387,7 +397,16 @@ $F{cantidad}
                         <font fontName="SansSerif" size="7"/>
                     </textElement>
                     <textFieldExpression class="java.lang.String"><![CDATA[
-$F{detalle_observaciones}
+($F{tipo_item} == null ? "" : $F{tipo_item})
++ ($F{codigo_item} == null || $F{codigo_item}.trim().length() == 0
+        ? ""
+        : " - " + $F{codigo_item})
++ ($F{descripcion_item} == null || $F{descripcion_item}.trim().length() == 0
+        ? ""
+        : " - " + $F{descripcion_item})
++ ($F{detalle_observaciones} == null || $F{detalle_observaciones}.trim().length() == 0
+        ? ""
+        : "\nObs.: " + $F{detalle_observaciones})
                 ]]></textFieldExpression>
                 </textField>
 

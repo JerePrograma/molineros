@@ -3,7 +3,6 @@ package ar.com.ospim.compras.requerimientos.action;
 import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.beans.CompraArticulo;
 import ar.com.ospim.compras.requerimientos.beans.GuardadoCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
@@ -49,9 +48,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
     private static final Log _log =
             LogFactoryUtil.getLog(EditarRequerimientoCompraAction.class);
-
-    private static final String ARTICULOS_COMPRA =
-            "ARTICULOS_COMPRA";
 
     /*
      * Blindaje anti doble envío.
@@ -766,11 +762,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 BusquedaRequerimientoCompraServiceUtil.listarSectores()
         );
 
-        /* Los artículos continúan cargándose bajo demanda. */
-        request.setAttribute(
-                ARTICULOS_COMPRA,
-                new ArrayList<CompraArticulo>()
-        );
     }
 
     private void cargarAfiliadoRequerimiento(

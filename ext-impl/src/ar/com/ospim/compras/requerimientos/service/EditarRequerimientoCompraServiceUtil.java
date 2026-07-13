@@ -1,6 +1,5 @@
 package ar.com.ospim.compras.requerimientos.service;
 
-import ar.com.ospim.compras.beans.CompraArticulo;
 import ar.com.ospim.compras.requerimientos.beans.*;
 
 import java.util.List;
@@ -87,26 +86,6 @@ public class EditarRequerimientoCompraServiceUtil {
                 detalles,
                 usuario
         );
-    }
-
-    public static List<CompraArticulo> listarArticulos(Integer idSector, String texto) throws Exception {
-        return getInstance().listarArticulos(idSector, texto);
-    }
-
-    public static List<CompraArticulo> listarArticulosPorSector(int idSector) throws Exception {
-        return getInstance().listarArticulosPorSector(idSector);
-    }
-
-    public static CompraArticulo getArticulo(int idArticulo) throws Exception {
-        return getInstance().getArticulo(idArticulo);
-    }
-
-    public static int guardarArticulo(Integer idArticulo, Integer idSector, String descripcion) throws Exception {
-        return getInstance().guardarArticulo(idArticulo, idSector, descripcion);
-    }
-
-    public static void borrarArticulo(int idArticulo) throws Exception {
-        getInstance().borrarArticulo(idArticulo);
     }
 
     private EditarRequerimientoCompraServiceUtil() {

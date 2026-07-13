@@ -3,6 +3,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion" %>
+<%@ page import="ar.com.ospim.liquidaciones.beans.TipoNomenclador" %>
 
 <%!
 private String jsDetalleCompra(String value) {
@@ -230,6 +231,24 @@ String sectorDescripcionActualString =
 PortletURL detalleActionURL = renderResponse.createActionURL();
 detalleActionURL.setWindowState(WindowState.MAXIMIZED);
 detalleActionURL.setParameter("struts_action", "/compras/editar_requerimiento_detalle");
+
+PortletURL buscarItemTecnicoURL = renderResponse.createRenderURL();
+buscarItemTecnicoURL.setWindowState(LiferayWindowState.POP_UP);
+buscarItemTecnicoURL.setParameter("struts_action", "/compras/buscar_item_tecnico");
+
+List<TipoNomenclador> tiposNomencladorDetalle =
+        new ArrayList<TipoNomenclador>();
+
+try {
+    List<TipoNomenclador> tiposCargados =
+            TraeListasServiceUtil.getTiposNomenclador();
+
+    if (tiposCargados != null) {
+        tiposNomencladorDetalle = tiposCargados;
+    }
+} catch (Exception e) {
+    tiposNomencladorDetalle = new ArrayList<TipoNomenclador>();
+}
 
 int idRequerimientoCompraDetalle =
         reqDetalle.getIdRequerimientoCompra();

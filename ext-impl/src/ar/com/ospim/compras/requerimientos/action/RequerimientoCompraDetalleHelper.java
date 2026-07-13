@@ -1,7 +1,6 @@
 package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.beans.CompraArticulo;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
@@ -877,15 +876,20 @@ public class RequerimientoCompraDetalleHelper {
                 requerimiento.getSectorDescripcion();
 
         String sectorNormalizado =
-                sector != null
-                        ? sector.trim().toUpperCase()
-                        : "";
+                normalizarTextoCarga(sector);
 
-        if (sectorNormalizado.indexOf("FARMAC") >= 0) {
+        if ("FARMACIA".equals(sectorNormalizado)) {
             return RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO;
         }
 
-        return RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR;
+        if ("PRESTACIONES MEDICAS".equals(sectorNormalizado)
+                || "LEGALES".equals(sectorNormalizado)) {
+            return RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR;
+        }
+
+        throw new Exception(
+                "El sector del requerimiento no admite detalles tecnicos de Compras."
+        );
     }
 
     private void validarDetalleNomenclador(
@@ -1136,7 +1140,6 @@ public class RequerimientoCompraDetalleHelper {
 
     private boolean filaDetalleVacia(ActionRequest request, String prefix) {
         return WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "id"))
-                && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "id_articulo"))
                 && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "cantidad"))
                 && WebKeysCompras.isEmpty(getParametroTrim(request, prefix + "observaciones"));
     }
@@ -1381,111 +1384,6 @@ public class RequerimientoCompraDetalleHelper {
         }
 
         return Integer.valueOf(parsed);
-    }
-
-    public CompraArticulo guardarArticuloDesdeRequest(ActionRequest request,
-                                                      String usuario) throws Exception {
-
-        int idArticulo = parseEnteroConDefault(
-                request,
-                "id_articulo",
-                "Artículo",
-                0
-        );
-
-        int idSector = parseEnteroConDefault(
-                request,
-                "id_sector",
-                "Sector del artículo",
-                0
-        );
-
-        if (idSector <= 0) {
-            idSector = parseEnteroConDefault(
-                    request,
-                    "sector_id",
-                    "Sector del artículo",
-                    0
-            );
-        }
-
-        String descripcion = getParametroRaw(
-                request,
-                "articulo_descripcion",
-                null
-        );
-
-        if (WebKeysCompras.isEmpty(descripcion)) {
-            descripcion = getParametroRaw(
-                    request,
-                    "articulo",
-                    null
-            );
-        }
-
-        descripcion = normalizarTextoCarga(descripcion);
-
-        validarArticuloParaGuardar(
-                idSector,
-                descripcion
-        );
-
-        int idGuardado =
-                EditarRequerimientoCompraServiceUtil.guardarArticulo(
-                        idArticulo > 0 ? Integer.valueOf(idArticulo) : null,
-                        Integer.valueOf(idSector),
-                        descripcion
-                );
-
-        CompraArticulo articulo =
-                EditarRequerimientoCompraServiceUtil.getArticulo(idGuardado);
-
-        if (articulo != null) {
-            return articulo;
-        }
-
-        articulo = new CompraArticulo();
-        articulo.setId(Integer.valueOf(idGuardado));
-        articulo.setIdSector(Integer.valueOf(idSector));
-        articulo.setDescripcion(descripcion);
-
-        return articulo;
-    }
-
-    public void borrarArticuloDesdeRequest(ActionRequest request) throws Exception {
-        int idArticulo = parseEnteroConDefault(
-                request,
-                "id_articulo",
-                "Artículo",
-                0
-        );
-
-        if (idArticulo <= 0) {
-            errorCampo(
-                    "id_articulo",
-                    "Debe informar el artículo a borrar."
-            );
-        }
-
-        EditarRequerimientoCompraServiceUtil.borrarArticulo(idArticulo);
-    }
-
-    private void validarArticuloParaGuardar(int idSector,
-                                            String descripcion) throws Exception {
-
-        if (idSector <= 0) {
-            errorCampo(
-                    "id_sector",
-                    "Debe informar el sector del artículo."
-            );
-        }
-
-        if (WebKeysCompras.isEmpty(descripcion)) {
-            errorCampo(
-                    "articulo_descripcion",
-                    "Debe informar la descripción del artículo."
-            );
-        }
     }
 
     public String sanitizarCallback(String callback) {

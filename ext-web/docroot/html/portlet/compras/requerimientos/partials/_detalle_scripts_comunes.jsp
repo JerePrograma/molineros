@@ -374,16 +374,38 @@
         return descripcion;
     }
 
+    function <portlet:namespace />normalizarSectorCompra(value) {
+        value = value == null ? '' : String(value);
+
+        if (typeof value.normalize == 'function') {
+            value = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        } else {
+            value = value.replace(/[באהג]/gi, 'a')
+                    .replace(/[יטכך]/gi, 'e')
+                    .replace(/[םלןמ]/gi, 'i')
+                    .replace(/[ףעצפ]/gi, 'o')
+                    .replace(/[תשüû]/gi, 'u');
+        }
+
+        return jQuery.trim(value).toUpperCase();
+    }
+
     function <portlet:namespace />esSectorFarmaciaCompra() {
         var descripcion =
                 <portlet:namespace />getSectorDescripcionSeleccionadoCompra();
 
-        descripcion =
-                descripcion == null
-                        ? ''
-                        : String(descripcion).toUpperCase();
+        return <portlet:namespace />normalizarSectorCompra(descripcion)
+                == 'FARMACIA';
+    }
 
-        return descripcion.indexOf('FARMAC') >= 0;
+    function <portlet:namespace />esSectorNomencladorCompra() {
+        var descripcion =
+                <portlet:namespace />normalizarSectorCompra(
+                        <portlet:namespace />getSectorDescripcionSeleccionadoCompra()
+                );
+
+        return descripcion == 'PRESTACIONES MEDICAS'
+                || descripcion == 'LEGALES';
     }
 
     function <portlet:namespace />renderDetallesCompra() {

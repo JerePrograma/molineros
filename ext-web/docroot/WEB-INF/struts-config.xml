@@ -7048,7 +7048,7 @@
 					path="portlet.compras.error" />
 		</action>
 
-		<!-- DETALLES + ABM de artículos/items -->
+		<!-- Detalles tecnicos del requerimiento -->
 		<action
 				path="/compras/editar_requerimiento_detalle"
 				type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraDetalleAction">
@@ -7058,44 +7058,17 @@
 					path="portlet.compras.editar_requerimiento" />
 
 			<forward
-					name="portlet.compras.alta_articulo_popup"
-					path="portlet.compras.alta_articulo_popup" />
-
-			<forward
-					name="portlet.compras.articulos_sector"
-					path="portlet.compras.articulos_sector" />
-
-			<forward
 					name="portlet.compras.error"
 					path="portlet.compras.error" />
 		</action>
 
-		<!-- Popup alta artículo: responsabilidad del action de detalle -->
 		<action
-				path="/compras/alta_articulo_popup"
-				type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraDetalleAction">
+				path="/compras/buscar_item_tecnico"
+				type="ar.com.ospim.compras.requerimientos.action.BuscarItemTecnicoComprasAction">
 
 			<forward
-					name="portlet.compras.alta_articulo_popup"
-					path="portlet.compras.alta_articulo_popup" />
-
-			<forward
-					name="portlet.compras.editar_requerimiento"
-					path="portlet.compras.editar_requerimiento" />
-
-			<forward
-					name="portlet.compras.error"
-					path="portlet.compras.error" />
-		</action>
-
-		<!-- AJAX artículos por sector: responsabilidad del action de detalle -->
-		<action
-				path="/compras/listar_articulos_sector"
-				type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraDetalleAction">
-
-			<forward
-					name="portlet.compras.articulos_sector"
-					path="portlet.compras.articulos_sector" />
+					name="portlet.compras.buscar_item_tecnico"
+					path="portlet.compras.buscar_item_tecnico" />
 
 			<forward
 					name="portlet.compras.error"
