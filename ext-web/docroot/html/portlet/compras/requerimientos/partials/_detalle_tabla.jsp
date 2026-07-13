@@ -98,9 +98,11 @@
 
     <tr class="portlet-section-header results-header">
         <th>ID</th>
-        <th>Artículo</th>
-        <th>Cantidad</th>
+        <th>Tipo</th>
+        <th>Código / Troquel</th>
         <th>Descripción</th>
+        <th>Cantidad</th>
+        <th>Observaciones</th>
 
         <% if (puedeVerCotizacionDetalle) { %>
             <th>Precio unitario</th>
