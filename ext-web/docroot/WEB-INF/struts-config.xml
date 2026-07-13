@@ -7063,6 +7063,10 @@
 		</action>
 
 		<action
+				path="/compras/buscar_medicamentos"
+				forward="portlet.compras.buscar_medicamentos" />
+
+		<action
 				path="/compras/buscar_item_tecnico"
 				type="ar.com.ospim.compras.requerimientos.action.BuscarItemTecnicoComprasAction">
 
