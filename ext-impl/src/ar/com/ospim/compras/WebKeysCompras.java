@@ -381,7 +381,49 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     }
 
     public static Integer getFiltroTipoNomencladorCompras(
-            String sectorDescripcion) {
+                String sectorDescripcion) {
+
+            String sector =
+                    normalizarSectorCompra(
+                            sectorDescripcion
+                    );
+
+            if ("FARMACIA".equals(sector)) {
+                return Integer.valueOf(
+                        FILTRO_NOMENCLADOR_FARMACIA
+                );
+            }
+
+            if ("DISCAPACIDAD".equals(sector)) {
+                return Integer.valueOf(
+                        FILTRO_NOMENCLADOR_DISCAPACIDAD
+                );
+            }
+
+            if ("ODONTOLOGIA".equals(sector)) {
+                return Integer.valueOf(
+                        FILTRO_NOMENCLADOR_ODONTOLOGIA
+                );
+            }
+
+            if ("PRESTACIONES MEDICAS".equals(sector)
+                    || "LEGALES".equals(sector)) {
+
+                return Integer.valueOf(
+                        FILTRO_NOMENCLADOR_GENERAL
+                );
+            }
+
+            return null;
+    }
+
+    public static boolean esTipoNomencladorValidoParaSectorCompras(
+            String sectorDescripcion,
+            int idTipoNomenclador) {
+
+        if (idTipoNomenclador <= 0) {
+            return false;
+        }
 
         String sector =
                 normalizarSectorCompra(
@@ -389,32 +431,20 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                 );
 
         if ("FARMACIA".equals(sector)) {
-            return Integer.valueOf(
-                    FILTRO_NOMENCLADOR_FARMACIA
-            );
+            return idTipoNomenclador
+                    == FILTRO_NOMENCLADOR_FARMACIA;
         }
 
-        if ("DISCAPACIDAD".equals(sector)) {
-            return Integer.valueOf(
-                    FILTRO_NOMENCLADOR_DISCAPACIDAD
-            );
-        }
-
-        if ("ODONTOLOGIA".equals(sector)) {
-            return Integer.valueOf(
-                    FILTRO_NOMENCLADOR_ODONTOLOGIA
-            );
-        }
-
-        if ("PRESTACIONES MEDICAS".equals(sector)
+        if ("DISCAPACIDAD".equals(sector)
+                || "ODONTOLOGIA".equals(sector)
+                || "PRESTACIONES MEDICAS".equals(sector)
                 || "LEGALES".equals(sector)) {
 
-            return Integer.valueOf(
-                    FILTRO_NOMENCLADOR_GENERAL
-            );
+            return idTipoNomenclador
+                    != FILTRO_NOMENCLADOR_FARMACIA;
         }
 
-        return null;
+        return false;
     }
 
     public static String normalizarSectorCompra(

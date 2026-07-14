@@ -1019,7 +1019,7 @@ public class EditarRequerimientoCompraServiceImpl {
                 || nomenclador.getBaja_fecha() != null) {
 
             throw errorUsuario(
-                    "La prestación seleccionada ya no existe o no est? activa. Vuelva a seleccionarla."
+                    "La prestación seleccionada ya no existe o no está activa. Vuelva a seleccionarla."
             );
         }
 
@@ -1031,34 +1031,39 @@ public class EditarRequerimientoCompraServiceImpl {
             );
         }
 
-        Integer filtroTipoNomenclador =
-                WebKeysCompras
-                        .getFiltroTipoNomencladorCompras(
-                                requerimiento != null
-                                        ? requerimiento
-                                          .getSectorDescripcion()
-                                        : null
-                        );
+        String sectorDescripcion =
+                requerimiento != null
+                        ? requerimiento
+                          .getSectorDescripcion()
+                        : null;
 
-        if (filtroTipoNomenclador == null) {
+        int idTipoNomencladorCanonico =
+                nomenclador
+                        .getId_tipo_nomenclador();
+
+        if (!WebKeysCompras
+                .esTipoNomencladorValidoParaSectorCompras(
+                        sectorDescripcion,
+                        idTipoNomencladorCanonico
+                )) {
+
+            if ("FARMACIA".equals(
+                    WebKeysCompras
+                            .normalizarSectorCompra(
+                                    sectorDescripcion
+                            )
+            )) {
+                throw errorUsuario(
+                        "Para el sector Farmacia sólo pueden "
+                                + "seleccionarse prestaciones del "
+                                + "nomenclador tipo 9."
+                );
+            }
+
             throw errorUsuario(
-                    "El sector del requerimiento no tiene "
-                            + "configurado un nomenclador para Compras."
-            );
-        }
-
-        /*
-         * El cero es un sentinel de búsqueda general.
-         * No se compara con el tipo real seleccionado.
-         */
-        if (filtroTipoNomenclador.intValue() > 0
-                && nomenclador.getId_tipo_nomenclador()
-                != filtroTipoNomenclador.intValue()) {
-
-            throw errorUsuario(
-                    "La prestación seleccionada no corresponde "
-                            + "al nomenclador configurado para el sector. "
-                            + "Vuelva a seleccionarla."
+                    "Las prestaciones del nomenclador tipo 9 "
+                            + "sólo pueden utilizarse en "
+                            + "requerimientos del sector Farmacia."
             );
         }
 

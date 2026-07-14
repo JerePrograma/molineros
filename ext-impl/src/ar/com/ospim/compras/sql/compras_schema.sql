@@ -795,14 +795,16 @@ CREATE TRIGGER trg_compras_requerimiento_validar
                          EXECUTE PROCEDURE compras.validar_requerimiento_fila();
 
 
-CREATE FUNCTION compras.validar_requerimiento_detalle_fila()
-    RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION compras.validar_requerimiento_detalle_fila()
+RETURNS TRIGGER
 AS $func$
 DECLARE
 v_estado INTEGER;
     v_id_sector_requerimiento INTEGER;
     v_sector VARCHAR(200);
     v_tipo_item VARCHAR(20);
+    v_tipo_item_anterior VARCHAR(20);
+    v_id_tipo_nomenclador_real INTEGER;
 BEGIN
 SELECT
     r.estado,
@@ -827,41 +829,85 @@ IF v_estado IS NULL THEN
             'No existe un requerimiento activo para el detalle.';
 END IF;
 
+    IF v_sector NOT IN (
+        'FARMACIA',
+        'DISCAPACIDAD',
+        'ODONTOLOGIA',
+        'PRESTACIONES MEDICAS',
+        'LEGALES'
+    ) THEN
+        RAISE EXCEPTION
+            'El sector % no tiene configurado un nomenclador para Compras.',
+            v_sector;
+END IF;
+
     v_tipo_item := upper(btrim(COALESCE(NEW.tipo_item, '')));
 
-    IF v_sector = 'FARMACIA' THEN
-        IF v_tipo_item <> 'MEDICAMENTO' THEN
-            RAISE EXCEPTION
-                'El sector Farmacia requiere seleccionar medicamento.';
-END IF;
-    ELSIF v_sector IN ('PRESTACIONES MEDICAS', 'LEGALES') THEN
+    IF TG_OP = 'INSERT' THEN
         IF v_tipo_item <> 'NOMENCLADOR' THEN
             RAISE EXCEPTION
-                'El sector % requiere seleccionar nomenclador.', v_sector;
+                'Los detalles nuevos de Compras deben utilizar NOMENCLADOR.';
 END IF;
 ELSE
-        RAISE EXCEPTION
-            'El sector % no admite detalles tecnicos de Compras.', v_sector;
+        v_tipo_item_anterior :=
+            upper(btrim(COALESCE(OLD.tipo_item, '')));
+
+        IF v_tipo_item_anterior = 'MEDICAMENTO' THEN
+            IF v_tipo_item <> 'MEDICAMENTO' THEN
+                RAISE EXCEPTION
+                    'El detalle historico de medicamento no puede convertirse directamente.';
+END IF;
+
+            IF NEW.id_requerimiento
+                    IS DISTINCT FROM OLD.id_requerimiento
+               OR NEW.id_prestacion
+                    IS DISTINCT FROM OLD.id_prestacion
+               OR NEW.id_tipo_nomenclador
+                    IS DISTINCT FROM OLD.id_tipo_nomenclador
+               OR NEW.codigo_nomenclador
+                    IS DISTINCT FROM OLD.codigo_nomenclador
+               OR NEW.descripcion_nomenclador
+                    IS DISTINCT FROM OLD.descripcion_nomenclador
+               OR NEW.id_medicamento
+                    IS DISTINCT FROM OLD.id_medicamento
+               OR NEW.troquel
+                    IS DISTINCT FROM OLD.troquel
+               OR NEW.nombre_medicamento
+                    IS DISTINCT FROM OLD.nombre_medicamento THEN
+
+                RAISE EXCEPTION
+                    'El detalle historico de medicamento solo permite modificar cantidad y observaciones.';
+END IF;
+
+        ELSIF v_tipo_item_anterior = 'NOMENCLADOR' THEN
+            IF v_tipo_item <> 'NOMENCLADOR' THEN
+                RAISE EXCEPTION
+                    'Un detalle de nomenclador no puede convertirse a medicamento.';
+END IF;
+ELSE
+            RAISE EXCEPTION
+                'El detalle persistido tiene un tipo tecnico desconocido.';
+END IF;
 END IF;
 
     NEW.tipo_item := v_tipo_item;
 
     IF v_tipo_item = 'MEDICAMENTO' THEN
-        NEW.id_prestacion := NULL;
-        NEW.id_tipo_nomenclador := NULL;
-        NEW.codigo_nomenclador := NULL;
-        NEW.descripcion_nomenclador := NULL;
-
         IF NEW.id_medicamento IS NULL
            OR NEW.id_medicamento <= 0
            OR NULLIF(btrim(NEW.nombre_medicamento), '') IS NULL THEN
+
             RAISE EXCEPTION
-                'El medicamento debe tener id y nombre.';
+                'El medicamento historico debe conservar id y nombre.';
 END IF;
 ELSE
-        NEW.id_medicamento := NULL;
-        NEW.troquel := NULL;
-        NEW.nombre_medicamento := NULL;
+        IF NEW.id_medicamento IS NOT NULL
+           OR NEW.troquel IS NOT NULL
+           OR NULLIF(btrim(NEW.nombre_medicamento), '') IS NOT NULL THEN
+
+            RAISE EXCEPTION
+                'Un detalle de nomenclador no puede contener datos de medicamento.';
+END IF;
 
         IF NEW.id_prestacion IS NULL
            OR NEW.id_prestacion <= 0
@@ -869,8 +915,39 @@ ELSE
            OR NEW.id_tipo_nomenclador <= 0
            OR NULLIF(btrim(NEW.codigo_nomenclador), '') IS NULL
            OR NULLIF(btrim(NEW.descripcion_nomenclador), '') IS NULL THEN
+
             RAISE EXCEPTION
-                'El nomenclador debe tener prestacion, tipo, codigo y descripcion.';
+                'El nomenclador debe tener prestacion, tipo real positivo, codigo y descripcion.';
+END IF;
+
+SELECT n.id_tipo_nomenclador
+INTO v_id_tipo_nomenclador_real
+FROM autorizaciones.nomenclador n
+WHERE n.id_prestacion = NEW.id_prestacion
+  AND n.baja_fecha IS NULL;
+
+IF NOT FOUND THEN
+            RAISE EXCEPTION
+                'La prestacion seleccionada no existe o no esta activa.';
+END IF;
+
+        IF NEW.id_tipo_nomenclador
+                <> v_id_tipo_nomenclador_real THEN
+
+            RAISE EXCEPTION
+                'El tipo de nomenclador informado no corresponde a la prestacion seleccionada.';
+END IF;
+
+        IF v_sector = 'FARMACIA' THEN
+            IF v_id_tipo_nomenclador_real <> 9 THEN
+                RAISE EXCEPTION
+                    'Para el sector Farmacia el tipo de nomenclador debe ser 9.';
+END IF;
+ELSE
+            IF v_id_tipo_nomenclador_real = 9 THEN
+                RAISE EXCEPTION
+                    'El nomenclador tipo 9 solo puede utilizarse en el sector Farmacia.';
+END IF;
 END IF;
 END IF;
 
@@ -881,7 +958,6 @@ END IF;
 
     IF TG_OP = 'UPDATE' THEN
         IF v_estado = 1 THEN
-            -- En PENDIENTE se permite editar o dar de baja la estructura.
             NULL;
 
         ELSIF v_estado = 2 THEN
@@ -915,7 +991,6 @@ END IF;
                 RAISE EXCEPTION
                     'En estado A COTIZAR la estructura del detalle esta bloqueada.';
 END IF;
-
 ELSE
             RAISE EXCEPTION
                 'El detalle no puede modificarse en el estado actual.';
@@ -951,13 +1026,10 @@ END IF;
         IF NEW.id_prestador IS NOT NULL
            AND NOT EXISTS (
                 SELECT 1
-                  FROM compras.requerimiento_cotizacion_prestador rcp
-                 WHERE rcp.id_requerimiento =
-                       NEW.id_requerimiento
-                   AND rcp.id_prestador =
-                       NEW.id_prestador
-                   AND rcp.estado_envio =
-                       'ENVIADO'
+                FROM compras.requerimiento_cotizacion_prestador rcp
+                WHERE rcp.id_requerimiento = NEW.id_requerimiento
+                  AND rcp.id_prestador = NEW.id_prestador
+                  AND rcp.estado_envio = 'ENVIADO'
            ) THEN
 
             RAISE EXCEPTION
@@ -1979,7 +2051,7 @@ $func$
 LANGUAGE plpgsql
 STABLE;
 
-CREATE FUNCTION compras.guardar_requerimiento_detalle(
+CREATE OR REPLACE FUNCTION compras.guardar_requerimiento_detalle(
     p_id INTEGER,
     p_id_requerimiento INTEGER,
 
@@ -1998,7 +2070,7 @@ CREATE FUNCTION compras.guardar_requerimiento_detalle(
     p_observaciones TEXT,
     p_usuario VARCHAR
 )
-    RETURNS INTEGER
+RETURNS INTEGER
 AS $func$
 DECLARE
 v_id INTEGER;
@@ -2006,21 +2078,22 @@ v_id INTEGER;
     v_tipo_item VARCHAR(20);
     v_tipo_item_actual VARCHAR(20);
     v_sector VARCHAR(200);
+    v_id_tipo_nomenclador_real INTEGER;
 BEGIN
     v_usuario :=
-            compras.normalizar_usuario(
-                    p_usuario
-            );
+        compras.normalizar_usuario(
+            p_usuario
+        );
 
     v_tipo_item :=
-            upper(
-                    btrim(
-                            COALESCE(
-                                    p_tipo_item,
-                                    ''
-                            )
-                    )
-            );
+        upper(
+            btrim(
+                COALESCE(
+                    p_tipo_item,
+                    ''
+                )
+            )
+        );
 
     IF v_tipo_item NOT IN (
         'NOMENCLADOR',
@@ -2109,11 +2182,41 @@ END IF;
                 'Debe informar el tipo real de nomenclador.';
 END IF;
 
+SELECT n.id_tipo_nomenclador
+INTO v_id_tipo_nomenclador_real
+FROM autorizaciones.nomenclador n
+WHERE n.id_prestacion = p_id_prestacion
+  AND n.baja_fecha IS NULL;
+
+IF NOT FOUND THEN
+            RAISE EXCEPTION
+                'La prestacion seleccionada no existe o no esta activa.';
+END IF;
+
+        IF v_id_tipo_nomenclador_real
+                <> p_id_tipo_nomenclador THEN
+
+            RAISE EXCEPTION
+                'El tipo de nomenclador informado no corresponde a la prestacion seleccionada.';
+END IF;
+
+        IF v_sector = 'FARMACIA' THEN
+            IF v_id_tipo_nomenclador_real <> 9 THEN
+                RAISE EXCEPTION
+                    'Para el sector Farmacia el tipo de nomenclador debe ser 9.';
+END IF;
+ELSE
+            IF v_id_tipo_nomenclador_real = 9 THEN
+                RAISE EXCEPTION
+                    'El nomenclador tipo 9 solo puede utilizarse en el sector Farmacia.';
+END IF;
+END IF;
+
         IF p_codigo_nomenclador IS NULL
            OR length(
-                   btrim(
-                           p_codigo_nomenclador
-                   )
+               btrim(
+                   p_codigo_nomenclador
+               )
            ) = 0 THEN
 
             RAISE EXCEPTION
@@ -2122,9 +2225,9 @@ END IF;
 
         IF p_descripcion_nomenclador IS NULL
            OR length(
-                   btrim(
-                           p_descripcion_nomenclador
-                   )
+               btrim(
+                   p_descripcion_nomenclador
+               )
            ) = 0 THEN
 
             RAISE EXCEPTION
@@ -2134,10 +2237,10 @@ END IF;
         IF p_id_medicamento IS NOT NULL
            OR p_troquel IS NOT NULL
            OR NULLIF(
-                   btrim(
-                           p_nombre_medicamento
-                   ),
-                   ''
+               btrim(
+                   p_nombre_medicamento
+               ),
+               ''
            ) IS NOT NULL THEN
 
             RAISE EXCEPTION
@@ -2170,7 +2273,7 @@ VALUES (
            'NOMENCLADOR',
 
            p_id_prestacion,
-           p_id_tipo_nomenclador,
+           v_id_tipo_nomenclador_real,
            NULLIF(
                    btrim(
                            p_codigo_nomenclador
@@ -2294,11 +2397,41 @@ END IF;
             'Debe informar el tipo real de nomenclador.';
 END IF;
 
+SELECT n.id_tipo_nomenclador
+INTO v_id_tipo_nomenclador_real
+FROM autorizaciones.nomenclador n
+WHERE n.id_prestacion = p_id_prestacion
+  AND n.baja_fecha IS NULL;
+
+IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'La prestacion seleccionada no existe o no esta activa.';
+END IF;
+
+    IF v_id_tipo_nomenclador_real
+            <> p_id_tipo_nomenclador THEN
+
+        RAISE EXCEPTION
+            'El tipo de nomenclador informado no corresponde a la prestacion seleccionada.';
+END IF;
+
+    IF v_sector = 'FARMACIA' THEN
+        IF v_id_tipo_nomenclador_real <> 9 THEN
+            RAISE EXCEPTION
+                'Para el sector Farmacia el tipo de nomenclador debe ser 9.';
+END IF;
+ELSE
+        IF v_id_tipo_nomenclador_real = 9 THEN
+            RAISE EXCEPTION
+                'El nomenclador tipo 9 solo puede utilizarse en el sector Farmacia.';
+END IF;
+END IF;
+
     IF p_codigo_nomenclador IS NULL
        OR length(
-               btrim(
-                       p_codigo_nomenclador
-               )
+           btrim(
+               p_codigo_nomenclador
+           )
        ) = 0 THEN
 
         RAISE EXCEPTION
@@ -2307,9 +2440,9 @@ END IF;
 
     IF p_descripcion_nomenclador IS NULL
        OR length(
-               btrim(
-                       p_descripcion_nomenclador
-               )
+           btrim(
+               p_descripcion_nomenclador
+           )
        ) = 0 THEN
 
         RAISE EXCEPTION
@@ -2319,10 +2452,10 @@ END IF;
     IF p_id_medicamento IS NOT NULL
        OR p_troquel IS NOT NULL
        OR NULLIF(
-               btrim(
-                       p_nombre_medicamento
-               ),
-               ''
+           btrim(
+               p_nombre_medicamento
+           ),
+           ''
        ) IS NOT NULL THEN
 
         RAISE EXCEPTION
@@ -2336,7 +2469,7 @@ SET tipo_item = 'NOMENCLADOR',
         p_id_prestacion,
 
     id_tipo_nomenclador =
-        p_id_tipo_nomenclador,
+        v_id_tipo_nomenclador_real,
 
     codigo_nomenclador =
         NULLIF(
@@ -2386,60 +2519,6 @@ IF v_id IS NULL THEN
 END IF;
 
 RETURN v_id;
-END;
-$func$
-LANGUAGE plpgsql;
-
-
-CREATE FUNCTION compras.borrar_requerimiento_detalle(
-    p_id_detalle INTEGER,
-    p_usuario VARCHAR
-)
-    RETURNS VOID
-AS $func$
-DECLARE
-v_estado INTEGER;
-    v_usuario VARCHAR(100);
-BEGIN
-    IF p_id_detalle IS NULL OR p_id_detalle <= 0 THEN
-        RAISE EXCEPTION
-            'Debe informar el detalle del requerimiento.';
-END IF;
-
-    v_usuario := compras.normalizar_usuario(p_usuario);
-
-SELECT r.estado
-INTO v_estado
-FROM compras.requerimiento_detalle d
-         JOIN compras.requerimiento r
-              ON r.id_requerimiento = d.id_requerimiento
-WHERE d.id_detalle = p_id_detalle
-  AND d.baja_fecha IS NULL
-  AND r.baja_fecha IS NULL
-    FOR UPDATE;
-
-IF NOT FOUND THEN
-        RAISE EXCEPTION
-            'No se encontro el detalle activo a borrar.';
-END IF;
-
-    IF v_estado <> 1 THEN
-        RAISE EXCEPTION
-            'Los detalles solo pueden borrarse en estado PENDIENTE.';
-END IF;
-
-UPDATE compras.requerimiento_detalle
-SET baja_fecha = now(),
-    baja_usr = v_usuario,
-    modi_fecha = now(),
-    modi_usr = v_usuario
-WHERE id_detalle = p_id_detalle
-  AND baja_fecha IS NULL;
-
-IF NOT FOUND THEN
-        RAISE EXCEPTION
-            'El detalle ya no se encuentra activo.';
-END IF;
 END;
 $func$
 LANGUAGE plpgsql;

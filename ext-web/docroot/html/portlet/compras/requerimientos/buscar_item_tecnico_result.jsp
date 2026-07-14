@@ -143,6 +143,60 @@ if (errorBusqueda == null
                         );
     }
 
+    List<Nomenclador> archivosFiltrados =
+            new ArrayList<Nomenclador>();
+
+    boolean busquedaFarmacia =
+            idTipoNomencladorBusqueda
+                    == WebKeysCompras
+                    .FILTRO_NOMENCLADOR_FARMACIA;
+
+    if (archivos != null) {
+        for (int i = 0;
+             i < archivos.size();
+             i++) {
+
+            Nomenclador nomenclador =
+                    archivos.get(i);
+
+            if (nomenclador == null
+                    || nomenclador.getBaja_fecha() != null) {
+
+                continue;
+            }
+
+            int idTipoReal =
+                    nomenclador
+                            .getId_tipo_nomenclador();
+
+            if (idTipoReal <= 0) {
+                continue;
+            }
+
+            if (busquedaFarmacia
+                    && idTipoReal
+                    != WebKeysCompras
+                    .FILTRO_NOMENCLADOR_FARMACIA) {
+
+                continue;
+            }
+
+            if (!busquedaFarmacia
+                    && idTipoReal
+                    == WebKeysCompras
+                    .FILTRO_NOMENCLADOR_FARMACIA) {
+
+                continue;
+            }
+
+            archivosFiltrados.add(
+                    nomenclador
+            );
+        }
+    }
+
+    archivos = archivosFiltrados;
+
     PortletURL portletURL =
             renderResponse.createRenderURL();
 
