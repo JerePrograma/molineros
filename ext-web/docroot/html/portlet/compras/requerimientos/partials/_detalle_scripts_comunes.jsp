@@ -434,7 +434,6 @@
 
             html += '<tr class="' + rowClass + '">';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.id) + '</td>';
-            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.tipoItem) + '</td>';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.codigoItem) + '</td>';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.descripcionItem) + '</td>';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.cantidad) + '</td>';

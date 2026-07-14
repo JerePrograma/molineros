@@ -1,0 +1,82 @@
+PAQUETE DEFINITIVO - QUITAR TIPO Y CORREGIR FARMACIA
+=====================================================
+
+Repositorio esperado:
+C:\devmolineros\ext
+Branch/estado esperado:
+main, sin cambios rastreados previos.
+
+El instalador valida los blobs exactos de los 7 archivos actuales antes de escribir.
+Si alguno no coincide, aborta sin modificar el proyecto.
+
+ARCHIVOS AFECTADOS
+------------------
+1. ext-web\docroot\html\portlet\compras\requerimientos\partials\_detalle_editor.jsp
+2. ext-web\docroot\html\portlet\compras\requerimientos\partials\_detalle_tabla.jsp
+3. ext-web\docroot\html\portlet\compras\requerimientos\partials\_detalle_modelo.jsp
+4. ext-web\docroot\html\portlet\compras\requerimientos\partials\_detalle_scripts_comunes.jsp
+5. ext-web\docroot\html\portlet\compras\requerimientos\partials\_detalle_scripts_editable.jsp
+6. ext-web\docroot\html\portlet\autorizaciones\reclamos_prestacionales\view_reclamo.js
+7. ext-impl\src\ar\com\ospim\test\ComprasRequerimientosUiContractTest.java
+
+APLICACION
+----------
+1. Extraer esta carpeta, por ejemplo en:
+   C:\devmolineros\ext\molineros_reemplazo_definitivo
+
+2. Abrir PowerShell 5.1 y ejecutar:
+
+   cd C:\devmolineros\ext\molineros_reemplazo_definitivo
+
+   powershell.exe -NoProfile `
+       -ExecutionPolicy Bypass `
+       -File ".\APLICAR_CAMBIOS_DEFINITIVO.ps1" `
+       -RepoRoot "C:\devmolineros\ext"
+
+El instalador:
+- verifica que no haya cambios rastreados previos;
+- verifica los blobs exactos de main;
+- verifica la integridad de los dos reemplazos completos;
+- prepara todos los cambios antes de escribir;
+- crea un respaldo de los 7 archivos;
+- reemplaza completamente _detalle_editor.jsp y view_reclamo.js;
+- aplica ajustes exactos y únicos en los otros 5 archivos;
+- ejecuta git diff --check;
+- ejecuta node --check sobre view_reclamo.js cuando Node esta instalado;
+- muestra git status y git diff --stat.
+
+VERIFICACION MANUAL POSTERIOR
+-----------------------------
+
+   cd C:\devmolineros\ext
+   git status --short
+   git diff --check
+   git diff --stat
+   git diff
+
+Resultado esperado: 7 archivos rastreados modificados.
+Los archivos del paquete y el respaldo aparecen como no rastreados y no se incluyen
+si se usa git add con las rutas explicitas de los 7 archivos.
+
+REVERSIÓN INMEDIATA
+-------------------
+Para descartar los cambios sin tocar archivos no rastreados:
+
+   cd C:\devmolineros\ext
+   git restore -- `
+     ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_editor.jsp `
+     ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_tabla.jsp `
+     ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_modelo.jsp `
+     ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_scripts_comunes.jsp `
+     ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_scripts_editable.jsp `
+     ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js `
+     ext-impl/src/ar/com/ospim/test/ComprasRequerimientosUiContractTest.java
+
+CAMBIO FUNCIONAL
+----------------
+- Tipo deja de mostrarse en el editor y en la tabla.
+- El tipo tecnico oculto se conserva para persistencia.
+- FARMACIA + EXCEPCION usa Codigo Presentado con nomenclador 9.
+- FARMACIA con otros tipos de pedido usa medicamentos.
+- Se elimina la funcion manejarTipoSector duplicada.
+- La fecha se toma y valida desde el bloque de busqueda realmente visible.

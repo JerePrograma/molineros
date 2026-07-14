@@ -36,15 +36,7 @@
 
         jQuery('#<portlet:namespace />detalle_tipo_item').val(tipoItem);
 
-        var tipoLabel = '-';
 
-        if (tipoItem == 'MEDICAMENTO') {
-            tipoLabel = 'Medicamento';
-        } else if (tipoItem == 'NOMENCLADOR') {
-            tipoLabel = 'Nomenclador';
-        }
-
-        jQuery('#<portlet:namespace />detalle_tipo_item_label').text(tipoLabel);
         jQuery('#<portlet:namespace />detalle_sector_no_admitido').toggle(tipoItem == '');
 
         if (tipoItem == '') {

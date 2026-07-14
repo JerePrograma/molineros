@@ -290,7 +290,7 @@ boolean prestadoresAdjudicadosMixtosDetalle =
         reqDetalle.tienePrestadoresAdjudicadosMixtos();
 
 int detalleColspan =
-        6
+        5
         + (puedeVerCotizacionDetalle ? 2 : 0)
         + (puedeABMDetalle ? 1 : 0);
 %>

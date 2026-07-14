@@ -98,7 +98,6 @@
 
     <tr class="portlet-section-header results-header">
         <th>ID</th>
-        <th>Tipo</th>
         <th>Código / Troquel</th>
         <th>Descripción</th>
         <th>Cantidad</th>

@@ -308,7 +308,7 @@ public final class ComprasRequerimientosUiContractTest {
                 "view_reclamo.js",
                 "ext-web/docroot/html/portlet/autorizaciones/"
                         + "reclamos_prestacionales/view_reclamo.js",
-                "fe6e0bc509e3efc5adae1734b63802af4801b20a"
+                "096cb48eb221d9e785a646c576f838a8e98362ab"
         );
         assertGitBlobHash(
                 "busqueda_medicamentos.jsp",
