@@ -2004,20 +2004,23 @@ DECLARE
 v_id INTEGER;
     v_usuario VARCHAR(100);
     v_tipo_item VARCHAR(20);
+    v_tipo_item_actual VARCHAR(20);
     v_sector VARCHAR(200);
 BEGIN
-    v_usuario := compras.normalizar_usuario(
-        p_usuario
-    );
+    v_usuario :=
+            compras.normalizar_usuario(
+                    p_usuario
+            );
 
-    v_tipo_item := upper(
-        btrim(
-            COALESCE(
-                p_tipo_item,
-                ''
-            )
-        )
-    );
+    v_tipo_item :=
+            upper(
+                    btrim(
+                            COALESCE(
+                                    p_tipo_item,
+                                    ''
+                            )
+                    )
+            );
 
     IF v_tipo_item NOT IN (
         'NOMENCLADOR',
@@ -2042,7 +2045,14 @@ END IF;
 END IF;
 
 SELECT translate(
-               upper(btrim(COALESCE(sr.descripcion, ''))),
+               upper(
+                       btrim(
+                               COALESCE(
+                                       sr.descripcion,
+                                       ''
+                               )
+                       )
+               ),
                'ÁÉÍÓÚÜáéíóúü',
                'AEIOUUAEIOUU'
        )
@@ -2052,34 +2062,39 @@ FROM compras.requerimiento r
               ON sr.id_sector = r.id_sector
 WHERE r.id_requerimiento = p_id_requerimiento
   AND r.estado = 1
-  AND r.baja_fecha IS NULL;
+  AND r.baja_fecha IS NULL
+    FOR UPDATE OF r;
 
 IF NOT FOUND THEN
         RAISE EXCEPTION
             'Los detalles estructurales solo pueden modificarse en estado PENDIENTE.';
 END IF;
 
-    /*
-     * Regla nueva:
-     * FARMACIA => MEDICAMENTO.
-     * PRESTACIONES MEDICAS y LEGALES => NOMENCLADOR.
-     */
-    IF v_sector = 'FARMACIA' THEN
-        IF v_tipo_item <> 'MEDICAMENTO' THEN
-            RAISE EXCEPTION
-                'El sector Farmacia requiere seleccionar medicamento.';
-END IF;
-    ELSIF v_sector IN ('PRESTACIONES MEDICAS', 'LEGALES') THEN
-        IF v_tipo_item <> 'NOMENCLADOR' THEN
-            RAISE EXCEPTION
-                'El sector informado requiere seleccionar nomenclador.';
-END IF;
-ELSE
+    IF v_sector NOT IN (
+        'FARMACIA',
+        'DISCAPACIDAD',
+        'ODONTOLOGIA',
+        'PRESTACIONES MEDICAS',
+        'LEGALES'
+    ) THEN
         RAISE EXCEPTION
-            'El sector % no admite detalles tecnicos de Compras.', v_sector;
+            'El sector % no tiene configurado un nomenclador para Compras.',
+            v_sector;
 END IF;
 
-    IF v_tipo_item = 'NOMENCLADOR' THEN
+    /*
+     * ALTAS
+     *
+     * Todo detalle nuevo se guarda como NOMENCLADOR.
+     */
+    IF p_id IS NULL
+       OR p_id <= 0 THEN
+
+        IF v_tipo_item <> 'NOMENCLADOR' THEN
+            RAISE EXCEPTION
+                'Los detalles nuevos de Compras deben utilizar NOMENCLADOR.';
+END IF;
+
         IF p_id_prestacion IS NULL
            OR p_id_prestacion <= 0 THEN
 
@@ -2091,220 +2106,260 @@ END IF;
            OR p_id_tipo_nomenclador <= 0 THEN
 
             RAISE EXCEPTION
-                'Debe informar el tipo de nomenclador.';
+                'Debe informar el tipo real de nomenclador.';
 END IF;
 
         IF p_codigo_nomenclador IS NULL
-           OR length(btrim(p_codigo_nomenclador)) = 0 THEN
+           OR length(
+                   btrim(
+                           p_codigo_nomenclador
+                   )
+           ) = 0 THEN
 
             RAISE EXCEPTION
                 'Debe informar el codigo de nomenclador.';
 END IF;
 
         IF p_descripcion_nomenclador IS NULL
-           OR length(btrim(p_descripcion_nomenclador)) = 0 THEN
+           OR length(
+                   btrim(
+                           p_descripcion_nomenclador
+                   )
+           ) = 0 THEN
 
             RAISE EXCEPTION
                 'Debe informar la descripcion del nomenclador.';
 END IF;
-END IF;
 
-    IF v_tipo_item = 'MEDICAMENTO' THEN
-        IF p_id_medicamento IS NULL
-           OR p_id_medicamento <= 0 THEN
-
-            RAISE EXCEPTION
-                'Debe informar el medicamento.';
-END IF;
-
-        IF p_nombre_medicamento IS NULL
-           OR length(btrim(p_nombre_medicamento)) = 0 THEN
+        IF p_id_medicamento IS NOT NULL
+           OR p_troquel IS NOT NULL
+           OR NULLIF(
+                   btrim(
+                           p_nombre_medicamento
+                   ),
+                   ''
+           ) IS NOT NULL THEN
 
             RAISE EXCEPTION
-                'Debe informar el nombre del medicamento.';
+                'Un detalle nuevo de nomenclador no puede contener datos de medicamento.';
 END IF;
-END IF;
 
-    IF p_id IS NULL
-       OR p_id <= 0 THEN
+INSERT INTO compras.requerimiento_detalle (
+    id_requerimiento,
+    tipo_item,
 
-        INSERT INTO compras.requerimiento_detalle (
-            id_requerimiento,
+    id_prestacion,
+    id_tipo_nomenclador,
+    codigo_nomenclador,
+    descripcion_nomenclador,
 
-            tipo_item,
+    id_medicamento,
+    troquel,
+    nombre_medicamento,
 
-            id_prestacion,
-            id_tipo_nomenclador,
-            codigo_nomenclador,
-            descripcion_nomenclador,
+    cantidad,
+    precio_unitario_estimado,
+    precio_total_estimado,
+    id_prestador,
 
-            id_medicamento,
-            troquel,
-            nombre_medicamento,
+    observaciones,
+    alta_usr
+)
+VALUES (
+           p_id_requerimiento,
+           'NOMENCLADOR',
 
-            cantidad,
-            precio_unitario_estimado,
-            precio_total_estimado,
-            id_prestador,
+           p_id_prestacion,
+           p_id_tipo_nomenclador,
+           NULLIF(
+                   btrim(
+                           p_codigo_nomenclador
+                   ),
+                   ''
+           ),
+           NULLIF(
+                   btrim(
+                           p_descripcion_nomenclador
+                   ),
+                   ''
+           ),
 
-            observaciones,
-            alta_usr
-        )
-        VALUES (
-            p_id_requerimiento,
+           NULL,
+           NULL,
+           NULL,
 
-            v_tipo_item,
+           p_cantidad,
+           NULL,
+           NULL,
+           NULL,
 
-            CASE
-                WHEN v_tipo_item = 'NOMENCLADOR'
-                    THEN p_id_prestacion
-                ELSE NULL
-            END,
-
-            CASE
-                WHEN v_tipo_item = 'NOMENCLADOR'
-                    THEN p_id_tipo_nomenclador
-                ELSE NULL
-            END,
-
-            CASE
-                WHEN v_tipo_item = 'NOMENCLADOR'
-                    THEN NULLIF(
-                        btrim(
-                            p_codigo_nomenclador
-                        ),
-                        ''
-                    )
-                ELSE NULL
-            END,
-
-            CASE
-                WHEN v_tipo_item = 'NOMENCLADOR'
-                    THEN NULLIF(
-                        btrim(
-                            p_descripcion_nomenclador
-                        ),
-                        ''
-                    )
-                ELSE NULL
-            END,
-
-            CASE
-                WHEN v_tipo_item = 'MEDICAMENTO'
-                    THEN p_id_medicamento
-                ELSE NULL
-            END,
-
-            CASE
-                WHEN v_tipo_item = 'MEDICAMENTO'
-                    THEN p_troquel
-                ELSE NULL
-            END,
-
-            CASE
-                WHEN v_tipo_item = 'MEDICAMENTO'
-                    THEN NULLIF(
-                        btrim(
-                            p_nombre_medicamento
-                        ),
-                        ''
-                    )
-                ELSE NULL
-            END,
-
-            p_cantidad,
-            NULL,
-            NULL,
-            NULL,
-
-            NULLIF(
-                btrim(
-                    p_observaciones
-                ),
-                ''
-            ),
-
-            v_usuario
-        )
-        RETURNING id_detalle
-        INTO v_id;
+           NULLIF(
+                   btrim(
+                           p_observaciones
+                   ),
+                   ''
+           ),
+           v_usuario
+       )
+    RETURNING id_detalle
+INTO v_id;
 
 RETURN v_id;
 END IF;
 
+    /*
+     * EDICIONES
+     *
+     * Se bloquea la fila y se determina el tipo realmente
+     * persistido. El tipo recibido por HTTP no es autoritativo.
+     */
+SELECT d.tipo_item
+INTO v_tipo_item_actual
+FROM compras.requerimiento_detalle d
+WHERE d.id_detalle = p_id
+  AND d.id_requerimiento = p_id_requerimiento
+  AND d.baja_fecha IS NULL
+    FOR UPDATE;
+
+IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No se encontro el detalle activo a modificar.';
+END IF;
+
+    /*
+     * Histórico MEDICAMENTO:
+     *
+     * sólo cambia Cantidad y Observaciones.
+     * No se toca ID, troquel ni nombre.
+     */
+    IF v_tipo_item_actual = 'MEDICAMENTO' THEN
+
+        IF v_tipo_item <> 'MEDICAMENTO' THEN
+            RAISE EXCEPTION
+                'El detalle historico de medicamento no puede convertirse directamente.';
+END IF;
+
 UPDATE compras.requerimiento_detalle
-SET tipo_item = v_tipo_item,
+SET cantidad = p_cantidad,
+
+    precio_unitario_estimado = NULL,
+    precio_total_estimado = NULL,
+    id_prestador = NULL,
+
+    observaciones =
+        NULLIF(
+                btrim(
+                        p_observaciones
+                ),
+                ''
+        ),
+
+    modi_fecha = now(),
+    modi_usr = v_usuario
+WHERE id_detalle = p_id
+  AND id_requerimiento = p_id_requerimiento
+  AND baja_fecha IS NULL
+    RETURNING id_detalle
+INTO v_id;
+
+IF v_id IS NULL THEN
+            RAISE EXCEPTION
+                'No se encontro el detalle historico a modificar.';
+END IF;
+
+RETURN v_id;
+END IF;
+
+    IF v_tipo_item_actual <> 'NOMENCLADOR' THEN
+        RAISE EXCEPTION
+            'El detalle persistido tiene un tipo tecnico desconocido.';
+END IF;
+
+    IF v_tipo_item <> 'NOMENCLADOR' THEN
+        RAISE EXCEPTION
+            'Un detalle de nomenclador no puede convertirse a medicamento.';
+END IF;
+
+    IF p_id_prestacion IS NULL
+       OR p_id_prestacion <= 0 THEN
+
+        RAISE EXCEPTION
+            'Debe informar la prestacion del nomenclador.';
+END IF;
+
+    IF p_id_tipo_nomenclador IS NULL
+       OR p_id_tipo_nomenclador <= 0 THEN
+
+        RAISE EXCEPTION
+            'Debe informar el tipo real de nomenclador.';
+END IF;
+
+    IF p_codigo_nomenclador IS NULL
+       OR length(
+               btrim(
+                       p_codigo_nomenclador
+               )
+       ) = 0 THEN
+
+        RAISE EXCEPTION
+            'Debe informar el codigo de nomenclador.';
+END IF;
+
+    IF p_descripcion_nomenclador IS NULL
+       OR length(
+               btrim(
+                       p_descripcion_nomenclador
+               )
+       ) = 0 THEN
+
+        RAISE EXCEPTION
+            'Debe informar la descripcion del nomenclador.';
+END IF;
+
+    IF p_id_medicamento IS NOT NULL
+       OR p_troquel IS NOT NULL
+       OR NULLIF(
+               btrim(
+                       p_nombre_medicamento
+               ),
+               ''
+       ) IS NOT NULL THEN
+
+        RAISE EXCEPTION
+            'El detalle de nomenclador contiene datos de medicamento.';
+END IF;
+
+UPDATE compras.requerimiento_detalle
+SET tipo_item = 'NOMENCLADOR',
 
     id_prestacion =
-        CASE
-            WHEN v_tipo_item = 'NOMENCLADOR'
-                THEN p_id_prestacion
-            ELSE NULL
-            END,
+        p_id_prestacion,
 
     id_tipo_nomenclador =
-        CASE
-            WHEN v_tipo_item = 'NOMENCLADOR'
-                THEN p_id_tipo_nomenclador
-            ELSE NULL
-            END,
+        p_id_tipo_nomenclador,
 
     codigo_nomenclador =
-        CASE
-            WHEN v_tipo_item = 'NOMENCLADOR'
-                THEN NULLIF(
-                    btrim(
-                            p_codigo_nomenclador
-                    ),
-                    ''
-                     )
-            ELSE NULL
-            END,
+        NULLIF(
+                btrim(
+                        p_codigo_nomenclador
+                ),
+                ''
+        ),
 
     descripcion_nomenclador =
-        CASE
-            WHEN v_tipo_item = 'NOMENCLADOR'
-                THEN NULLIF(
-                    btrim(
-                            p_descripcion_nomenclador
-                    ),
-                    ''
-                     )
-            ELSE NULL
-            END,
+        NULLIF(
+                btrim(
+                        p_descripcion_nomenclador
+                ),
+                ''
+        ),
 
-    id_medicamento =
-        CASE
-            WHEN v_tipo_item = 'MEDICAMENTO'
-                THEN p_id_medicamento
-            ELSE NULL
-            END,
-
-    troquel =
-        CASE
-            WHEN v_tipo_item = 'MEDICAMENTO'
-                THEN p_troquel
-            ELSE NULL
-            END,
-
-    nombre_medicamento =
-        CASE
-            WHEN v_tipo_item = 'MEDICAMENTO'
-                THEN NULLIF(
-                    btrim(
-                            p_nombre_medicamento
-                    ),
-                    ''
-                     )
-            ELSE NULL
-            END,
+    id_medicamento = NULL,
+    troquel = NULL,
+    nombre_medicamento = NULL,
 
     cantidad = p_cantidad,
 
-    /*
-     * Si cambia el item estructural, la cotizacion anterior deja de ser
-     * confiable.
-     */
     precio_unitario_estimado = NULL,
     precio_total_estimado = NULL,
     id_prestador = NULL,

@@ -7,11 +7,15 @@ import java.math.BigDecimal;
 /**
  * Detalle técnico de un requerimiento de compra.
  *
- * Nuevo contrato de Compras:
+ * Contrato actual:
  *
- * - FARMACIA usa MEDICAMENTO.
- * - El resto de los sectores usa NOMENCLADOR.
+ * - Todo detalle nuevo se persiste como NOMENCLADOR.
+ * - El sector determina el filtro de búsqueda correspondiente.
+ * - MEDICAMENTO se conserva exclusivamente para lectura y
+ *   edición no estructural de registros históricos.
  *
+ * No deben eliminarse los atributos de medicamento mientras
+ * existan registros históricos que dependan de ellos.
  */
 public class RequerimientoCompraDetalle {
 

@@ -346,12 +346,20 @@ public class EditarRequerimientoCompraServiceImpl {
                             idRequerimiento
                     );
 
-            validarTipoItemSegunSector(
+            RequerimientoCompraDetalle detallePersistido =
+                    obtenerDetallePersistido(
+                            requerimiento,
+                            detalle.getIdInt()
+                    );
+
+            prepararDetalleParaGuardar(
                     requerimiento,
+                    detallePersistido,
                     detalle
             );
 
             validarDetalleParaGuardar(
+                    requerimiento,
                     detalle
             );
 
@@ -861,6 +869,7 @@ public class EditarRequerimientoCompraServiceImpl {
     }
 
     private void validarDetalleParaGuardar(
+            RequerimientoCompra requerimiento,
             RequerimientoCompraDetalle detalle) throws Exception {
 
         if (detalle == null) {
@@ -918,6 +927,7 @@ public class EditarRequerimientoCompraServiceImpl {
                 .equals(tipoItem)) {
 
             validarDetalleNomencladorParaGuardar(
+                    requerimiento,
                     detalle
             );
         }
@@ -953,6 +963,7 @@ public class EditarRequerimientoCompraServiceImpl {
     }
 
     private void validarDetalleNomencladorParaGuardar(
+            RequerimientoCompra requerimiento,
             RequerimientoCompraDetalle detalle) throws Exception {
 
         if (detalle.getIdPrestacion() == null
@@ -1020,6 +1031,37 @@ public class EditarRequerimientoCompraServiceImpl {
             );
         }
 
+        Integer filtroTipoNomenclador =
+                WebKeysCompras
+                        .getFiltroTipoNomencladorCompras(
+                                requerimiento != null
+                                        ? requerimiento
+                                          .getSectorDescripcion()
+                                        : null
+                        );
+
+        if (filtroTipoNomenclador == null) {
+            throw errorUsuario(
+                    "El sector del requerimiento no tiene "
+                            + "configurado un nomenclador para Compras."
+            );
+        }
+
+        /*
+         * El cero es un sentinel de búsqueda general.
+         * No se compara con el tipo real seleccionado.
+         */
+        if (filtroTipoNomenclador.intValue() > 0
+                && nomenclador.getId_tipo_nomenclador()
+                != filtroTipoNomenclador.intValue()) {
+
+            throw errorUsuario(
+                    "La prestación seleccionada no corresponde "
+                            + "al nomenclador configurado para el sector. "
+                            + "Vuelva a seleccionarla."
+            );
+        }
+
         validarTextoTecnico(
                 "código de nomenclador",
                 detalle.getCodigoNomenclador(),
@@ -1043,11 +1085,23 @@ public class EditarRequerimientoCompraServiceImpl {
     private void validarDetalleMedicamentoParaGuardar(
             RequerimientoCompraDetalle detalle) throws Exception {
 
+        /*
+         * MEDICAMENTO queda admitido exclusivamente para
+         * registros históricos ya persistidos.
+         */
+        if (detalle.getIdInt() <= 0) {
+            throw errorUsuario(
+                    "No se pueden crear nuevos detalles "
+                            + "de tipo MEDICAMENTO en Compras."
+            );
+        }
+
         if (detalle.getIdMedicamento() == null
                 || detalle.getIdMedicamento().intValue() <= 0) {
 
             throw errorUsuario(
-                    "Debe seleccionar el medicamento."
+                    "El detalle histórico de medicamento "
+                            + "no conserva un identificador válido."
             );
         }
 
@@ -1055,7 +1109,8 @@ public class EditarRequerimientoCompraServiceImpl {
                 detalle.getNombreMedicamento()
         )) {
             throw errorUsuario(
-                    "El medicamento seleccionado no tiene un nombre válido."
+                    "El detalle histórico de medicamento "
+                            + "no conserva su descripción."
             );
         }
 
@@ -1069,53 +1124,10 @@ public class EditarRequerimientoCompraServiceImpl {
         )) {
 
             throw errorUsuario(
-                    "Los datos recibidos no corresponden a un medicamento. Actualice la pantalla y vuelva a seleccionarlo."
+                    "El detalle histórico de medicamento "
+                            + "contiene datos técnicos incompatibles."
             );
         }
-
-        Medicamento medicamento =
-                obtenerMedicamentoCanonico(
-                        detalle.getIdMedicamento().intValue()
-                );
-
-        if (medicamento == null
-                || medicamento.getId_medicamento()
-                != detalle.getIdMedicamento().intValue()
-                || medicamento.getFecha_baja() != null) {
-
-            throw errorUsuario(
-                    "El medicamento seleccionado ya no existe o no est? activo. Vuelva a seleccionarlo."
-            );
-        }
-
-        Integer troquelCanonico =
-                medicamento.getTroquel() > 0
-                        ? Integer.valueOf(medicamento.getTroquel())
-                        : null;
-
-        if (detalle.getTroquel() != null
-                && (troquelCanonico == null
-                || detalle.getTroquel().intValue()
-                != troquelCanonico.intValue())) {
-
-            throw errorUsuario(
-                    "El troquel ya no coincide con el medicamento seleccionado. Vuelva a seleccionarlo."
-            );
-        }
-
-        String nombreCanonico =
-                nombreMedicamentoCanonico(
-                        medicamento
-                );
-
-        validarTextoTecnico(
-                "nombre del medicamento",
-                detalle.getNombreMedicamento(),
-                nombreCanonico
-        );
-
-        detalle.setTroquel(troquelCanonico);
-        detalle.setNombreMedicamento(nombreCanonico);
     }
 
     private RequerimientoCompra validarRequerimientoDetalle(
@@ -1150,8 +1162,9 @@ public class EditarRequerimientoCompraServiceImpl {
         return requerimiento;
     }
 
-    private void validarTipoItemSegunSector(
+    private void prepararDetalleParaGuardar(
             RequerimientoCompra requerimiento,
+            RequerimientoCompraDetalle detallePersistido,
             RequerimientoCompraDetalle detalle) throws Exception {
 
         if (detalle == null) {
@@ -1160,37 +1173,157 @@ public class EditarRequerimientoCompraServiceImpl {
             );
         }
 
-        String sector =
-                normalizarClave(
-                        requerimiento.getSectorDescripcion()
+        /*
+         * El único caso en el que MEDICAMENTO sigue siendo válido
+         * es la edición controlada de una fila histórica.
+         *
+         * Los datos técnicos se reconstruyen desde la base:
+         * nunca se confía en los ocultos del navegador.
+         */
+        if (detallePersistido != null
+                && detallePersistido.esMedicamento()) {
+
+            String tipoRecibido =
+                    detalle.getTipoItemNormalizado();
+
+            if (!WebKeysCompras.isEmpty(tipoRecibido)
+                    && !RequerimientoCompraDetalle
+                    .TIPO_ITEM_MEDICAMENTO
+                    .equals(tipoRecibido)) {
+
+                throw errorUsuario(
+                        "El detalle histórico de medicamento "
+                                + "no puede convertirse directamente "
+                                + "a otro tipo."
                 );
+            }
 
-        String esperado;
+            detalle.setTipoItem(
+                    RequerimientoCompraDetalle
+                            .TIPO_ITEM_MEDICAMENTO
+            );
 
-        if ("FARMACIA".equals(sector)) {
-            esperado =
-                    RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO;
-        } else if ("PRESTACIONES MEDICAS".equals(sector)
-                || "LEGALES".equals(sector)) {
-            esperado =
-                    RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR;
-        } else {
+            detalle.setIdPrestacion(null);
+            detalle.setIdTipoNomenclador(null);
+            detalle.setCodigoNomenclador(null);
+            detalle.setDescripcionNomenclador(null);
+
+            detalle.setIdMedicamento(
+                    detallePersistido
+                            .getIdMedicamento()
+            );
+
+            detalle.setTroquel(
+                    detallePersistido
+                            .getTroquel()
+            );
+
+            detalle.setNombreMedicamento(
+                    detallePersistido
+                            .getNombreMedicamento()
+            );
+
+            detalle.setCodigoItem(
+                    detallePersistido
+                            .getCodigoItemVisible()
+            );
+
+            detalle.setDescripcionItem(
+                    detallePersistido
+                            .getDescripcionItemVisible()
+            );
+
+            return;
+        }
+
+        Integer filtroTipoNomenclador =
+                WebKeysCompras
+                        .getFiltroTipoNomencladorCompras(
+                                requerimiento != null
+                                        ? requerimiento
+                                          .getSectorDescripcion()
+                                        : null
+                        );
+
+        if (filtroTipoNomenclador == null) {
             throw errorUsuario(
-                    "El sector seleccionado no admite este tipo de detalle."
+                    "El sector seleccionado no tiene configurado "
+                            + "un nomenclador para Compras."
             );
         }
 
-        String recibido =
+        String tipoRecibido =
                 detalle.getTipoItemNormalizado();
 
-        if (!WebKeysCompras.isEmpty(recibido)
-                && !esperado.equals(recibido)) {
+        if (!WebKeysCompras.isEmpty(tipoRecibido)
+                && !RequerimientoCompraDetalle
+                .TIPO_ITEM_NOMENCLADOR
+                .equals(tipoRecibido)) {
+
             throw errorUsuario(
-                    "El tipo de ?tem no corresponde al sector del requerimiento. Actualice la pantalla y vuelva a intentarlo."
+                    "Los detalles nuevos de Compras deben "
+                            + "utilizar NOMENCLADOR."
             );
         }
 
-        detalle.setTipoItem(esperado);
+        detalle.setTipoItem(
+                RequerimientoCompraDetalle
+                        .TIPO_ITEM_NOMENCLADOR
+        );
+
+        detalle.setIdMedicamento(null);
+        detalle.setTroquel(null);
+        detalle.setNombreMedicamento(null);
+
+        detalle.setCodigoItem(
+                detalle.getCodigoNomenclador()
+        );
+
+        detalle.setDescripcionItem(
+                detalle.getDescripcionNomenclador()
+        );
+    }
+
+    private RequerimientoCompraDetalle obtenerDetallePersistido(
+            RequerimientoCompra requerimiento,
+            int idDetalle) throws Exception {
+
+        if (idDetalle <= 0) {
+            return null;
+        }
+
+        if (requerimiento == null) {
+            throw errorUsuario(
+                    "No se pudo validar el requerimiento del detalle."
+            );
+        }
+
+        List<RequerimientoCompraDetalle> detalles =
+                requerimiento.getDetalles();
+
+        if (detalles != null) {
+            for (int i = 0;
+                 i < detalles.size();
+                 i++) {
+
+                RequerimientoCompraDetalle persistido =
+                        detalles.get(i);
+
+                if (persistido != null
+                        && persistido.getIdInt() == idDetalle
+                        && persistido.getIdRequerimientoCompra()
+                        == requerimiento
+                        .getIdRequerimientoCompra()) {
+
+                    return persistido;
+                }
+            }
+        }
+
+        throw errorUsuario(
+                "El detalle que intenta modificar ya no existe "
+                        + "o no pertenece al requerimiento."
+        );
     }
 
     protected RequerimientoCompra obtenerRequerimientoDetalle(
@@ -1222,26 +1355,6 @@ public class EditarRequerimientoCompraServiceImpl {
         return BusquedaMedicamentoServiceUtil.getMedicamento(
                 idMedicamento
         );
-    }
-
-    private String nombreMedicamentoCanonico(
-            Medicamento medicamento) throws Exception {
-
-        String nombre =
-                emptyToNull(medicamento.getNombre());
-
-        if (nombre == null) {
-            throw errorUsuario(
-                    "El medicamento seleccionado no tiene un nombre disponible."
-            );
-        }
-
-        String presentacion =
-                emptyToNull(medicamento.getPresentacion());
-
-        return presentacion == null
-                ? nombre
-                : nombre + " " + presentacion;
     }
 
     private void validarTextoTecnico(
@@ -1773,17 +1886,6 @@ public class EditarRequerimientoCompraServiceImpl {
 
         try {
             rs.close();
-        } catch (Exception ignored) {
-        }
-    }
-
-    private void cerrar(Statement stmt) {
-        if (stmt == null) {
-            return;
-        }
-
-        try {
-            stmt.close();
         } catch (Exception ignored) {
         }
     }

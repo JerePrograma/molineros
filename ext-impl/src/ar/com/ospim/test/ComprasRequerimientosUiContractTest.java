@@ -525,570 +525,433 @@ public final class ComprasRequerimientosUiContractTest {
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
                         + "partials/_detalle_editor.jsp"
         );
+
+        String tabla = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/"
+                        + "partials/_detalle_tabla.jsp"
+        );
+
         String scripts = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
                         + "partials/_detalle_scripts_editable.jsp"
         );
-        String comunes = leer(
-                "ext-web/docroot/html/portlet/compras/requerimientos/"
-                        + "partials/_detalle_scripts_comunes.jsp"
-        );
+
         String action = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/action/"
                         + "BuscarItemTecnicoComprasAction.java"
         );
+
+        String helper = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/action/"
+                        + "RequerimientoCompraDetalleHelper.java"
+        );
+
         String resultado = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
                         + "buscar_item_tecnico_result.jsp"
         );
-        String medicamentoCompras = leer(
-                "ext-web/docroot/html/portlet/compras/requerimientos/"
-                        + "busqueda_medicamentos.jsp"
+
+        String webKeys = leer(
+                "ext-impl/src/ar/com/ospim/compras/"
+                        + "WebKeysCompras.java"
         );
-        String medicamentoResultadoCompras = leer(
-                "ext-web/docroot/html/portlet/compras/requerimientos/"
-                        + "buscar_medicamentos_result.jsp"
+
+        String bean = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/beans/"
+                        + "RequerimientoCompraDetalle.java"
         );
+
         String service = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
                         + "EditarRequerimientoCompraServiceImpl.java"
         );
+
         String schema = leer(
-                "ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql"
+                "ext-impl/src/ar/com/ospim/compras/sql/"
+                        + "compras_schema.sql"
         );
-        String struts = leer("ext-web/docroot/WEB-INF/struts-config.xml");
-        String tiles = leer("ext-web/docroot/WEB-INF/tiles-defs.xml");
+
+        String struts = leer(
+                "ext-web/docroot/WEB-INF/struts-config.xml"
+        );
+
+        String tiles = leer(
+                "ext-web/docroot/WEB-INF/tiles-defs.xml"
+        );
+
         String jasper = leer(
                 "ext-web/docroot/WEB-INF/classes/jasper/compras/"
                         + "requerimiento_compra.jrxml"
         );
-        String flujoTecnico =
-                editor
-                        + scripts
-                        + resultado
-                        + medicamentoCompras
-                        + medicamentoResultadoCompras;
 
-        assertContains(
-                "wrapper medicamento propio",
-                editor,
-                "page=\"/html/portlet/compras/requerimientos/"
-                        + "busqueda_medicamentos.jsp\""
-        );
-        assertContains(
-                "ruta medicamento propia",
-                editor,
-                "value=\"/compras/buscar_medicamentos\""
-        );
+        /*
+         * Formulario único de Compras.
+         */
         assertNotContains(
-                "editor Compras sin ruta Autorizaciones",
+                "Compras no incluye buscador de medicamentos",
                 editor,
-                "/autorizaciones/"
+                "busqueda_medicamentos.jsp"
         );
-        assertContains(
-                "presentacion visible",
+
+        assertNotContains(
+                "Compras no contiene bloque medicamento",
                 editor,
-                "name=\"mostrar_con_presentacion\""
+                "detalle_bloque_medicamento"
         );
-        assertContains(
-                "presentacion habilitada",
+
+        assertNotContains(
+                "Compras no muestra troquel",
                 editor,
-                "value=\"true\""
+                "name=\"troquel\""
         );
+
         assertNotContains(
-                "sin callback optativo compartido",
-                editor + medicamentoCompras,
-                "callback_seleccion"
-        );
-        assertNotContains(
-                "sin link Limpiar extra en medicamento",
+                "Compras no muestra nombre medicamento",
                 editor,
-                "detalle_div_limpiar_medicamento"
-        );
-        assertContains(
-                "campo nombre medicamento equivalente",
-                medicamentoCompras,
-                "id=\"<portlet:namespace />nombre_medicamento\""
-        );
-        assertContains(
-                "campo troquel medicamento equivalente",
-                medicamentoCompras,
-                "id=\"<portlet:namespace />troquel\""
-        );
-        assertContains(
-                "link Buscar medicamento equivalente",
-                medicamentoCompras,
-                "tabindex=\"-1\">Buscar</a>"
-        );
-        assertContains(
-                "popup medicamento Liferay",
-                medicamentoCompras,
-                "<portlet:namespace />popupMD = Liferay.Popup({"
-        );
-        assertContains(
-                "popup medicamento ancho original",
-                medicamentoCompras,
-                "width: 700"
-        );
-        assertContains(
-                "incremental medicamento namespaced",
-                medicamentoCompras,
-                "function <portlet:namespace />buscarMedicamentoOnDiv(e)"
-        );
-        assertContains(
-                "resultado incremental namespaced",
-                medicamentoCompras,
-                "jQuery('#<portlet:namespace />divMedicamento').load(url)"
-        );
-        assertContains(
-                "callback medicamento Compras namespaced",
-                medicamentoCompras,
-                "function <portlet:namespace />pasarParametrosAParentMd("
-        );
-        assertBefore(
-                "seleccion visible antes de IDs Compras",
-                medicamentoCompras,
-                "<portlet:namespace />seleccionaCamposMd(",
-                "<portlet:namespace />seleccionarMedicamentoDetalle("
-        );
-        assertBefore(
-                "IDs Compras antes del cierre",
-                medicamentoCompras,
-                "<portlet:namespace />seleccionarMedicamentoDetalle(",
-                "<portlet:namespace />cerrarMd();"
-        );
-        assertContains(
-                "edicion invalida medicamento canonico",
-                medicamentoCompras,
-                "'input change paste cut drop'"
-        );
-        assertContains(
-                "edicion distingue tecla fisica",
-                medicamentoCompras,
-                "camposMedicamento.bind('keydown'"
-        );
-        assertContains(
-                "Backspace queda en flujo historico",
-                medicamentoCompras,
-                "medicamentoKeyDown == 8"
-        );
-        assertContains(
-                "Delete queda en flujo historico",
-                medicamentoCompras,
-                "medicamentoKeyDown == 46"
-        );
-        assertNotContains(
-                "sin callback medicamento global",
-                medicamentoCompras,
-                "function pasarParametrosAParentMd("
-        );
-        assertNotContains(
-                "sin popup medicamento global",
-                medicamentoCompras,
-                "var popupMD;"
-        );
-        assertNotContains(
-                "sin div medicamento global",
-                medicamentoCompras,
-                "id=\"divMedicamento\""
-        );
-        assertContains(
-                "mapping medicamento Compras",
-                struts,
-                "path=\"/compras/buscar_medicamentos\""
-        );
-        assertContains(
-                "forward medicamento propio",
-                struts,
-                "forward=\"portlet.compras.buscar_medicamentos\""
-        );
-        assertContains(
-                "tile medicamento Compras",
-                tiles,
-                "name=\"portlet.compras.buscar_medicamentos\""
-        );
-        assertContains(
-                "JSP resultado medicamento Compras",
-                tiles,
-                "/portlet/compras/requerimientos/"
-                        + "buscar_medicamentos_result.jsp"
-        );
-        assertContains(
-                "servicio medicamento canonico",
-                medicamentoResultadoCompras,
-                "BusquedaMedicamentoServiceUtil.getBusquedaMedicamentos("
-        );
-        assertContains(
-                "seis columnas medicamento",
-                medicamentoResultadoCompras,
-                "headerNames.add(\"Precio\")"
-        );
-        assertContains(
-                "resultado unico medicamento Compras",
-                medicamentoResultadoCompras,
-                "if (total == 1)"
-        );
-        assertOccurrences(
-                "seis links medicamento Compras",
-                medicamentoResultadoCompras,
-                "row.addText(comprasMedicamentoEnlace(",
-                6
-        );
-        assertContains(
-                "callback resultado medicamento namespaced",
-                medicamentoResultadoCompras,
-                "renderResponse.getNamespace() + \"pasarParametrosAParentMd\""
-        );
-        assertContains(
-                "escape JS medicamento Compras",
-                medicamentoResultadoCompras,
-                "private String comprasMedicamentoJs"
-        );
-        assertContains(
-                "escape HTML medicamento Compras",
-                medicamentoResultadoCompras,
-                "HtmlUtil.escape(texto)"
+                "nombre_medicamento"
         );
 
         assertContains(
-                "label nomenclador original",
+                "Código Presentado visible",
                 editor,
                 "key=\"codigo-presentado\""
         );
+
         assertContains(
-                "links nomenclador",
+                "Descripción visible",
+                editor,
+                "Descripción:"
+        );
+
+        assertContains(
+                "acción Buscar visible",
                 editor,
                 ">Buscar</a>"
         );
+
         assertContains(
-                "link Limpiar nomenclador",
+                "acción Limpiar visible",
                 editor,
                 ">Limpiar</a>"
         );
-        assertContains(
-                "mensaje nomenclador original",
-                scripts,
-                "key=\"ingrese-parametros-busqueda\""
-        );
-        assertContains(
-                "popup nomenclador original",
-                scripts,
-                "title: 'B\\u00FAsqueda Nomenclador'"
-        );
-        assertContains(
-                "popup nomenclador Liferay",
-                scripts,
-                "popupNomencladorDetalle = Liferay.Popup"
-        );
-        assertContains(
-                "popup nomenclador carga jquery",
-                scripts,
-                "jQuery(<portlet:namespace />popupNomencladorDetalle).load(url)"
-        );
-        assertContains(
-                "callback nomenclador server-side",
-                action,
-                "response.getNamespace() + \"seleccionarNomencladorDetalle\""
-        );
-        assertContains(
-                "servicio nomenclador prestaciones",
-                resultado,
-                "getListaNomencladorPrestacionesMedicas"
-        );
-        assertContains(
-                "servicio nomenclador general",
-                resultado,
-                "NomencladorServiceUtil.getListaNomenclador("
-        );
-        assertContains(
-                "seis columnas nomenclador",
-                resultado,
-                "headerNames.add(\"Recupera SUR\")"
-        );
-        assertContains(
-                "resultado unico nomenclador Compras",
-                resultado,
-                "if (total == 1)"
-        );
-        assertContains(
-                "resultado multiple nomenclador Compras",
-                resultado,
-                "for (int i = 0; i < archivos.size(); i++)"
-        );
-        assertOccurrences(
-                "filtro activo solo en multiples como RP",
-                resultado,
-                "if (nomenclador.getBaja_fecha() == null)",
-                1
-        );
-        assertBefore(
-                "orden IDs nomenclador Compras",
-                resultado,
-                "nomenclador.getId_prestacion()",
-                "nomenclador.getId_tipo_nomenclador()"
-        );
-        assertContains(
-                "escape JS solo Compras",
-                resultado,
-                "private String comprasNomencladorJs"
-        );
-        assertContains(
-                "escape HTML solo Compras",
-                resultado,
-                "HtmlUtil.escape("
-        );
-        assertNotContains(
-                "resultado Compras no incluye JSP Autorizaciones",
-                resultado,
-                "/html/portlet/autorizaciones/nomenclador/"
-        );
-        assertNotContains(
-                "resultado Compras no altera callback historico",
-                resultado,
-                "pasarParametrosAParentNm"
-        );
 
-        assertNotContains(
-                "sin window.open tecnico",
-                flujoTecnico,
-                "window.open"
-        );
-        assertNotContains(
-                "sin window.opener tecnico",
-                flujoTecnico,
-                "window.opener"
-        );
-        assertNotContains(
-                "sin boton Buscar propio",
+        assertContains(
+                "aviso para histórico",
                 editor,
-                "value=\"Buscar\""
-        );
-        assertNotContains(
-                "sin buscador medicamento propio",
-                action,
-                "BusquedaMedicamentoServiceUtil"
-        );
-        assertNotContains(
-                "sin tipo item confiado al browser",
-                action,
-                "ParamUtil.getString(request, \"tipo_item\""
+                "detalle_medicamento_historico_info"
         );
 
-        assertContains("ids internos hidden", editor, "detalle_id_prestacion");
         assertContains(
-                "id tipo interno hidden",
+                "ID prestación interno",
+                editor,
+                "detalle_id_prestacion"
+        );
+
+        assertContains(
+                "ID tipo interno",
                 editor,
                 "detalle_id_tipo_nomenclador"
         );
-        assertContains(
-                "id medicamento hidden",
-                editor,
-                "detalle_id_medicamento"
-        );
-        assertNotContains("sin label ID prestacion", editor, "ID Prestaci");
-        assertNotContains("sin label ID medicamento", editor, "ID Medicamento");
 
-        assertContains(
-                "seleccionar medicamento conserva id",
-                scripts,
-                "detalle_id_medicamento').val(idMedicamento)"
-        );
-        assertContains(
-                "seleccionar medicamento conserva troquel",
-                scripts,
-                "troquel').val(troquel)"
-        );
-        assertContains(
-                "seleccionar medicamento conserva nombre completo",
-                scripts,
-                "nombre_medicamento').val(nombreCompleto)"
-        );
-        assertContains(
-                "seleccionar medicamento conserva presentacion",
-                scripts,
-                "detalle_presentacion_medicamento').val("
-        );
-        assertContains(
-                "limpiar medicamento borra seleccion",
-                scripts,
-                "med_seleccionado').val('')"
-        );
-        assertContains(
-                "limpiar medicamento muestra Buscar",
-                scripts,
-                "divBtnBuscaMedicamento').show()"
-        );
-        assertContains(
-                "editar medicamento precarga id",
-                scripts,
-                "detalleValue(detalle.idMedicamento)"
-        );
-        assertContains(
-                "editar medicamento marca seleccionado",
-                scripts,
-                "med_seleccionado').val('1')"
-        );
-        assertContains(
-                "invalidacion medicamento limpia estado Compras",
-                scripts,
-                "function <portlet:namespace />invalidarMedicamentoDetalle()"
-        );
+        /*
+         * JavaScript: altas sólo NOMENCLADOR.
+         */
         assertNotContains(
-                "incremental no se oculta desde listener Compras",
+                "JS no selecciona medicamentos",
                 scripts,
-                "<portlet:namespace />limpiarSeleccionMedicamento(false)"
+                "seleccionarMedicamentoDetalle"
+        );
+
+        assertNotContains(
+                "JS no limpia medicamentos",
+                scripts,
+                "limpiarSeleccionMedicamento"
+        );
+
+        assertNotContains(
+                "JS no resuelve Farmacia como medicamento",
+                scripts,
+                "return 'MEDICAMENTO'"
         );
 
         assertContains(
-                "seleccionar nomenclador conserva id prestacion",
+                "JS identifica histórico de medicamento",
                 scripts,
-                "detalle_id_prestacion').val(idPrestacion)"
-        );
-        assertContains(
-                "seleccionar nomenclador conserva id tipo",
-                scripts,
-                "detalle_id_tipo_nomenclador').val(idTipoNomenclador)"
-        );
-        assertContains(
-                "seleccionar nomenclador conserva codigo",
-                scripts,
-                "detalle_codigo_nomenclador').val(codigo)"
-        );
-        assertContains(
-                "seleccionar nomenclador conserva descripcion",
-                scripts,
-                "detalle_descripcion_nomenclador').val(descripcion)"
-        );
-        assertContains(
-                "seleccionar nomenclador cierra popup",
-                scripts,
-                "Liferay.Popup.close("
-                        + "<portlet:namespace />popupNomencladorDetalle)"
-        );
-        assertContains(
-                "invalidacion nomenclador limpia IDs",
-                scripts,
-                "limpiarSeleccionNomenclador(false)"
+                "esDetalleMedicamentoHistorico"
         );
 
         assertContains(
-                "serializa id prestacion",
+                "histórico se configura readonly",
+                scripts,
+                "configurarEditorMedicamentoHistorico"
+        );
+
+        assertContains(
+                "serializa ID prestación",
                 scripts,
                 "prefix + 'id_prestacion'"
         );
+
         assertContains(
-                "serializa id tipo",
+                "serializa ID tipo nomenclador",
                 scripts,
                 "prefix + 'id_tipo_nomenclador'"
         );
-        assertContains(
-                "serializa id medicamento",
+
+        assertNotContains(
+                "cliente no serializa ID medicamento",
                 scripts,
                 "prefix + 'id_medicamento'"
         );
-        assertContains(
-                "serializa troquel",
+
+        assertNotContains(
+                "cliente no serializa troquel",
                 scripts,
                 "prefix + 'troquel'"
         );
-        assertContains(
-                "serializa nombre medicamento",
+
+        assertNotContains(
+                "cliente no serializa nombre medicamento",
                 scripts,
                 "prefix + 'nombre_medicamento'"
         );
 
-        assertContains("sector Farmacia exacto", comunes, "== 'FARMACIA'");
+        /*
+         * Mapping central.
+         */
         assertContains(
-                "sector Prestaciones exacto",
-                comunes,
-                "descripcion == 'PRESTACIONES MEDICAS'"
-        );
-        assertContains(
-                "sector Legales exacto",
-                comunes,
-                "descripcion == 'LEGALES'"
-        );
-        assertContains(
-                "cambio sector limpia editor",
-                scripts,
-                "<portlet:namespace />limpiarEditorDetalle();"
-        );
-        assertContains(
-                "otros sectores deshabilitan alta",
-                scripts,
-                "detalle_submit').attr('disabled', 'disabled')"
-        );
-        assertContains(
-                "backend rechaza sector no admitido",
-                service,
-                "El sector del requerimiento no admite"
+                "mapping central de filtro",
+                webKeys,
+                "getFiltroTipoNomencladorCompras"
         );
 
         assertContains(
-                "permiso ABM en buscador",
-                action,
-                "validarPermisoABM(user)"
-        );
-        assertContains(
-                "sector persistido recargado",
-                action,
-                "getRequerimientoCompra(idRequerimiento)"
-        );
-        assertContains(
-                "sector de alta validado",
-                action,
-                "getSector(idSector)"
-        );
-        assertContains(
-                "solo pendiente persistido",
-                action,
-                "requerimiento.puedeEditarEstructura()"
+                "filtro Farmacia 9",
+                webKeys,
+                "FILTRO_NOMENCLADOR_FARMACIA = 9"
         );
 
         assertContains(
-                "validacion medicamento DB",
-                service,
-                "obtenerMedicamentoCanonico"
+                "filtro Discapacidad 8",
+                webKeys,
+                "FILTRO_NOMENCLADOR_DISCAPACIDAD = 8"
         );
+
         assertContains(
-                "validacion nomenclador DB",
-                service,
-                "obtenerNomencladorCanonico"
+                "filtro Odontología 1",
+                webKeys,
+                "FILTRO_NOMENCLADOR_ODONTOLOGIA = 1"
         );
+
         assertContains(
-                "sector recargado DB",
-                service,
-                "obtenerRequerimientoDetalle"
+                "filtro general 0",
+                webKeys,
+                "FILTRO_NOMENCLADOR_GENERAL = 0"
         );
+
+        /*
+         * Buscador.
+         */
         assertContains(
-                "mapping nomenclador Compras",
+                "Action usa mapping central",
+                action,
+                "getFiltroTipoNomencladorCompras"
+        );
+
+        assertContains(
+                "Action recarga requerimiento persistido",
+                action,
+                "getRequerimientoCompra("
+        );
+
+        assertContains(
+                "Action valida sector de alta",
+                action,
+                "getSector("
+        );
+
+        assertContains(
+                "Action exige PENDIENTE",
+                action,
+                "puedeEditarEstructura()"
+        );
+
+        assertContains(
+                "resultado recibe filtro",
+                resultado,
+                "COMPRAS_ID_TIPO_NOMENCLADOR"
+        );
+
+        assertContains(
+                "resultado aplica filtro",
+                resultado,
+                "idTipoNomencladorBusqueda,"
+        );
+
+        assertContains(
+                "resultado devuelve ID prestación",
+                resultado,
+                "nomenclador.getId_prestacion()"
+        );
+
+        assertContains(
+                "resultado devuelve tipo real",
+                resultado,
+                "nomenclador.getId_tipo_nomenclador()"
+        );
+
+        /*
+         * Backend.
+         */
+        assertContains(
+                "helper reconstruye persistido",
+                helper,
+                "getDetallePersistido("
+        );
+
+        assertContains(
+                "helper conserva históricos",
+                helper,
+                "detallePersistido.esMedicamento()"
+        );
+
+        assertContains(
+                "servicio usa detalle persistido",
+                service,
+                "obtenerDetallePersistido("
+        );
+
+        assertContains(
+                "servicio prepara transición",
+                service,
+                "prepararDetalleParaGuardar("
+        );
+
+        assertContains(
+                "servicio conserva validación canónica",
+                service,
+                "obtenerNomencladorCanonico("
+        );
+
+        assertContains(
+                "servicio valida filtro positivo",
+                service,
+                "filtroTipoNomenclador.intValue() > 0"
+        );
+
+        assertContains(
+                "servicio rechaza nuevos medicamentos",
+                service,
+                "No se pueden crear nuevos detalles "
+                        + "de tipo MEDICAMENTO"
+        );
+
+        /*
+         * Persistencia e históricos.
+         */
+        assertContains(
+                "SQL obliga altas NOMENCLADOR",
+                schema,
+                "Los detalles nuevos de Compras deben utilizar NOMENCLADOR"
+        );
+
+        assertNotContains(
+                "SQL no obliga Farmacia medicamento",
+                schema,
+                "El sector Farmacia requiere seleccionar medicamento"
+        );
+
+        assertContains(
+                "SQL conserva histórico MEDICAMENTO",
+                schema,
+                "v_tipo_item_actual = 'MEDICAMENTO'"
+        );
+
+        assertContains(
+                "lectura histórica conserva código",
+                schema,
+                "WHEN d.tipo_item = 'MEDICAMENTO'"
+        );
+
+        assertContains(
+                "bean conserva lectura histórica",
+                bean,
+                "public boolean esMedicamento()"
+        );
+
+        assertContains(
+                "bean proyecta Código visible",
+                bean,
+                "getCodigoItemVisible()"
+        );
+
+        assertContains(
+                "bean proyecta Descripción visible",
+                bean,
+                "getDescripcionItemVisible()"
+        );
+
+        /*
+         * Tabla: no recuperar Tipo ni Troquel.
+         */
+        assertNotContains(
+                "tabla no muestra Tipo",
+                tabla,
+                "<th>Tipo</th>"
+        );
+
+        assertNotContains(
+                "tabla no rotula Troquel",
+                tabla,
+                "Código / Troquel"
+        );
+
+        assertContains(
+                "tabla muestra Código presentado",
+                tabla,
+                "Código presentado"
+        );
+
+        /*
+         * Integración existente.
+         */
+        assertContains(
+                "mapping buscador técnico",
                 struts,
                 "path=\"/compras/buscar_item_tecnico\""
         );
+
         assertContains(
-                "tile nomenclador Compras",
+                "tile buscador técnico",
                 tiles,
                 "name=\"portlet.compras.buscar_item_tecnico\""
         );
+
         assertContains(
-                "JSP resultado nomenclador Compras",
+                "resultado buscador técnico",
                 tiles,
                 "/portlet/compras/requerimientos/"
                         + "buscar_item_tecnico_result.jsp"
         );
-        assertContains("Jasper tipo", jasper, "field name=\"tipo_item\"");
-        assertContains("Jasper codigo", jasper, "field name=\"codigo_item\"");
+
         assertContains(
-                "Jasper descripcion",
+                "Jasper conserva tipo histórico",
+                jasper,
+                "field name=\"tipo_item\""
+        );
+
+        assertContains(
+                "Jasper conserva código común",
+                jasper,
+                "field name=\"codigo_item\""
+        );
+
+        assertContains(
+                "Jasper conserva descripción común",
                 jasper,
                 "field name=\"descripcion_item\""
         );
-        assertNotContains("schema sin id articulo", schema, "id_articulo");
-        assertNotContains(
-                "schema sin tabla articulo",
-                schema,
-                "compras.articulo"
-        );
+
         assertNotContains(
                 "schema sin tipo ARTICULO",
                 schema,

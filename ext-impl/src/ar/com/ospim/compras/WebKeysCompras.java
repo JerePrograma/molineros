@@ -4,10 +4,28 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraEstado;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
+
+    private static final Pattern DIACRITICOS_SECTOR_COMPRAS =
+            Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+
+    /*
+     * Estos valores son filtros para la búsqueda.
+     *
+     * El valor cero significa "sin filtro positivo específico".
+     * No debe persistirse necesariamente como id_tipo_nomenclador:
+     * el resultado seleccionado devuelve el tipo real y positivo.
+     */
+    public static final int FILTRO_NOMENCLADOR_GENERAL = 0;
+    public static final int FILTRO_NOMENCLADOR_ODONTOLOGIA = 1;
+    public static final int FILTRO_NOMENCLADOR_DISCAPACIDAD = 8;
+    public static final int FILTRO_NOMENCLADOR_FARMACIA = 9;
 
     public static final String ROL_VIEW_COMPRAS = "VIEW_Compras";
     public static final String ROL_ABM_COMPRAS = "ABM_Compras";
@@ -360,6 +378,66 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                 estadoActual,
                 estadoNuevo
         );
+    }
+
+    public static Integer getFiltroTipoNomencladorCompras(
+            String sectorDescripcion) {
+
+        String sector =
+                normalizarSectorCompra(
+                        sectorDescripcion
+                );
+
+        if ("FARMACIA".equals(sector)) {
+            return Integer.valueOf(
+                    FILTRO_NOMENCLADOR_FARMACIA
+            );
+        }
+
+        if ("DISCAPACIDAD".equals(sector)) {
+            return Integer.valueOf(
+                    FILTRO_NOMENCLADOR_DISCAPACIDAD
+            );
+        }
+
+        if ("ODONTOLOGIA".equals(sector)) {
+            return Integer.valueOf(
+                    FILTRO_NOMENCLADOR_ODONTOLOGIA
+            );
+        }
+
+        if ("PRESTACIONES MEDICAS".equals(sector)
+                || "LEGALES".equals(sector)) {
+
+            return Integer.valueOf(
+                    FILTRO_NOMENCLADOR_GENERAL
+            );
+        }
+
+        return null;
+    }
+
+    public static String normalizarSectorCompra(
+            String value) {
+
+        if (value == null) {
+            return "";
+        }
+
+        String normalizado =
+                Normalizer.normalize(
+                        value.trim(),
+                        Normalizer.Form.NFD
+                );
+
+        normalizado =
+                DIACRITICOS_SECTOR_COMPRAS
+                        .matcher(normalizado)
+                        .replaceAll("");
+
+        return normalizado
+                .toUpperCase(Locale.ROOT)
+                .trim();
     }
 
     public static BigDecimal normalizarImporte(
