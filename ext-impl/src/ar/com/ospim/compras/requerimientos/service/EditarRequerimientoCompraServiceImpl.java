@@ -68,39 +68,66 @@ public class EditarRequerimientoCompraServiceImpl {
                     + "?"
                     + ")";
 
+    /*
+     * Las excepciones de esta clase terminan siendo mostradas por la capa
+     * de acci?n. Por eso se distingue expl?citamente entre errores aptos
+     * para el usuario y fallas t?cnicas que s?lo deben quedar en el log.
+     */
+    private static final class MensajeUsuarioException extends Exception {
+
+        private MensajeUsuarioException(String mensaje) {
+            super(mensaje);
+        }
+
+        private MensajeUsuarioException(
+                String mensaje,
+                Throwable causa) {
+
+            super(mensaje, causa);
+        }
+    }
+
     public int guardarRequerimientoCompra(
             RequerimientoCompra requerimiento,
             String usuario) throws Exception {
-
-        validarRequerimientoParaGuardar(requerimiento);
-
-        if (requerimiento.getIdRequerimientoCompra() > 0) {
-            RequerimientoCompra actual =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .getRequerimientoCompra(
-                                    requerimiento
-                                            .getIdRequerimientoCompra()
-                            );
-
-            if (actual == null) {
-                throw new Exception(
-                        "No se encontró el requerimiento de compra informado."
-                );
-            }
-
-            if (!actual.puedeEditarEstructura()) {
-                throw new Exception(
-                        "Solo se puede editar la estructura de requerimientos "
-                                + "en estado PENDIENTE."
-                );
-            }
-        }
 
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
+            validarRequerimientoParaGuardar(
+                    requerimiento
+            );
+
+            if (requerimiento.getIdRequerimientoCompra() > 0) {
+                RequerimientoCompra actual =
+                        BusquedaRequerimientoCompraServiceUtil
+                                .getRequerimientoCompra(
+                                        requerimiento
+                                                .getIdRequerimientoCompra()
+                                );
+
+                if (actual == null) {
+                    throw errorUsuario(
+                            "El requerimiento que intenta editar ya no est? disponible."
+                    );
+                }
+
+                if (!actual.puedeEditarEstructura()) {
+                    throw errorUsuario(
+                            "El requerimiento ya no puede modificarse porque "
+                                    + "no se encuentra en estado PENDIENTE."
+                    );
+                }
+            }
+
             con = obtenerConexionGuardarRequerimiento();
+
+            if (con == null) {
+                throw new SQLException(
+                        "No se obtuvo una conexi?n para guardar el requerimiento."
+                );
+            }
 
             stmt = con.prepareCall(
                     SQL_GUARDAR_REQUERIMIENTO
@@ -255,10 +282,29 @@ public class EditarRequerimientoCompraServiceImpl {
 
             stmt.execute();
 
-            return stmt.getInt(1);
+            int idGuardado = stmt.getInt(1);
+
+            if (stmt.wasNull()
+                    || idGuardado <= 0) {
+
+                throw new SQLException(
+                        "La funci?n de guardado devolvi? un identificador inv?lido."
+                );
+            }
+
+            return idGuardado;
+
         } catch (Exception e) {
-            _log.error(e);
-            throw e;
+            throw manejarErrorOperacion(
+                    "guardar el requerimiento de compra",
+                    "No se pudo guardar el requerimiento de compra. "
+                            + "Revise los datos e intente nuevamente.",
+                    e,
+                    "idRequerimiento="
+                            + obtenerIdRequerimientoSeguro(requerimiento)
+                            + ", usuario=" + usuario
+            );
+
         } finally {
             ConnectionHelper.cerrar(
                     stmt,
@@ -277,32 +323,42 @@ public class EditarRequerimientoCompraServiceImpl {
             RequerimientoCompraDetalle detalle,
             String usuario) throws Exception {
 
-        Integer idRequerimiento =
-                getIdRequerimientoDetalle(detalle);
-
-        RequerimientoCompra requerimiento =
-                validarRequerimientoDetalle(
-                        idRequerimiento
-                );
-
-        validarTipoItemSegunSector(
-                requerimiento,
-                detalle
-        );
-
-        validarDetalleParaGuardar(detalle);
-
         Connection con = null;
         CallableStatement stmt = null;
         ResultSet rs = null;
+        Integer idRequerimiento = null;
 
         try {
+            if (detalle == null) {
+                throw errorUsuario(
+                        "Debe informar el detalle del requerimiento."
+                );
+            }
+
+            idRequerimiento =
+                    getIdRequerimientoDetalle(
+                            detalle
+                    );
+
+            RequerimientoCompra requerimiento =
+                    validarRequerimientoDetalle(
+                            idRequerimiento
+                    );
+
+            validarTipoItemSegunSector(
+                    requerimiento,
+                    detalle
+            );
+
+            validarDetalleParaGuardar(
+                    detalle
+            );
+
             con = obtenerConexionGuardarDetalle();
 
             if (con == null) {
                 throw new SQLException(
-                        "No se pudo obtener una conexión para guardar "
-                                + "el detalle del requerimiento."
+                        "No se obtuvo una conexi?n para guardar el detalle."
                 );
             }
 
@@ -310,11 +366,6 @@ public class EditarRequerimientoCompraServiceImpl {
                     SQL_GUARDAR_REQUERIMIENTO_DETALLE
             );
 
-            /*
-             * La función recibe trece parámetros.
-             *
-             * El INTEGER retornado se obtiene desde el ResultSet.
-             */
             setNullableInteger(
                     stmt,
                     1,
@@ -401,83 +452,41 @@ public class EditarRequerimientoCompraServiceImpl {
 
             if (!rs.next()) {
                 throw new SQLException(
-                        "La función compras.guardar_requerimiento_detalle "
-                                + "no devolvió el identificador del detalle."
+                        "La funci?n de guardado no devolvi? el identificador del detalle."
                 );
             }
 
             int idDetalleGuardado =
                     rs.getInt(1);
 
-            if (rs.wasNull()) {
+            if (rs.wasNull()
+                    || idDetalleGuardado <= 0) {
+
                 throw new SQLException(
-                        "La función compras.guardar_requerimiento_detalle "
-                                + "devolvió NULL."
+                        "La funci?n de guardado devolvi? un identificador de detalle inv?lido."
                 );
             }
 
-            if (idDetalleGuardado <= 0) {
-                throw new SQLException(
-                        "La función compras.guardar_requerimiento_detalle "
-                                + "devolvió un identificador inválido: "
-                                + idDetalleGuardado
-                );
-            }
-
-            /*
-             * Una función escalar debe devolver exactamente una fila.
-             */
             if (rs.next()) {
                 throw new SQLException(
-                        "La función compras.guardar_requerimiento_detalle "
-                                + "devolvió más de un resultado."
+                        "La funci?n de guardado devolvi? m?s de un resultado."
                 );
             }
 
             return idDetalleGuardado;
 
         } catch (Exception e) {
-            SQLException sqlException =
-                    buscarSQLException(e);
-
-            String sqlState =
-                    sqlException != null
-                            ? sqlException.getSQLState()
-                            : null;
-
-            int errorCode =
-                    sqlException != null
-                            ? sqlException.getErrorCode()
-                            : 0;
-
-            _log.error(
+            throw manejarErrorOperacion(
+                    "guardar el detalle del requerimiento",
                     "No se pudo guardar el detalle del requerimiento. "
-                            + "idDetalle=" + detalle.getId()
-                            + ", idRequerimiento=" + idRequerimiento
-                            + ", tipoItem=" + detalle.getTipoItemNormalizado()
-                            + ", idPrestacion=" + detalle.getIdPrestacion()
-                            + ", idTipoNomenclador=" + detalle.getIdTipoNomenclador()
-                            + ", codigoNomenclador=" + detalle.getCodigoNomenclador()
-                            + ", idMedicamento=" + detalle.getIdMedicamento()
-                            + ", troquel=" + detalle.getTroquel()
-                            + ", cantidad=" + detalle.getCantidad()
-                            + ", usuario=" + usuario
-                            + ", SQLState=" + sqlState
-                            + ", errorCode=" + errorCode,
-                    e
+                            + "Revise la informaci?n e intente nuevamente.",
+                    e,
+                    construirContextoDetalle(
+                            detalle,
+                            idRequerimiento,
+                            usuario
+                    )
             );
-
-            if (sqlException != null
-                    && sqlException.getNextException() != null
-                    && sqlException.getNextException() != sqlException) {
-
-                _log.error(
-                        "Excepción SQL encadenada al guardar el detalle.",
-                        sqlException.getNextException()
-                );
-            }
-
-            throw e;
 
         } finally {
             cerrar(rs);
@@ -489,94 +498,141 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
-    public void borrarDetalle(int idDetalle, String usuario) throws Exception {
-        if (idDetalle <= 0) {
-            throw new Exception("Debe informar el detalle del requerimiento.");
-        }
+    public void borrarDetalle(
+            int idDetalle,
+            String usuario) throws Exception {
 
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
+            if (idDetalle <= 0) {
+                throw errorUsuario(
+                        "Debe informar el detalle que desea quitar."
+                );
+            }
+
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_BORRAR_REQUERIMIENTO_DETALLE);
+            stmt = con.prepareCall(
+                    SQL_BORRAR_REQUERIMIENTO_DETALLE
+            );
             stmt.setInt(1, idDetalle);
             stmt.setString(2, emptyToNull(usuario));
-
             stmt.execute();
+
         } catch (Exception e) {
-            _log.error(e);
-            throw e;
+            throw manejarErrorOperacion(
+                    "quitar el detalle del requerimiento",
+                    "No se pudo quitar el detalle del requerimiento. "
+                            + "Actualice la pantalla e intente nuevamente.",
+                    e,
+                    "idDetalle=" + idDetalle
+                            + ", usuario=" + usuario
+            );
+
         } finally {
             ConnectionHelper.cerrar(stmt, con);
         }
     }
 
-    public void borrarRequerimientoCompra(int idRequerimientoCompra, String usuario) throws Exception {
-        if (idRequerimientoCompra <= 0) {
-            throw new Exception("Debe informar el requerimiento de compra.");
-        }
+    public void borrarRequerimientoCompra(
+            int idRequerimientoCompra,
+            String usuario) throws Exception {
 
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
+            if (idRequerimientoCompra <= 0) {
+                throw errorUsuario(
+                        "Debe informar el requerimiento de compra que desea eliminar."
+                );
+            }
+
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_BORRAR_REQUERIMIENTO);
+            stmt = con.prepareCall(
+                    SQL_BORRAR_REQUERIMIENTO
+            );
             stmt.setInt(1, idRequerimientoCompra);
             stmt.setString(2, emptyToNull(usuario));
-
             stmt.execute();
+
         } catch (Exception e) {
-            _log.error(e);
-            throw e;
+            throw manejarErrorOperacion(
+                    "eliminar el requerimiento de compra",
+                    "No se pudo eliminar el requerimiento de compra. "
+                            + "Actualice la pantalla e intente nuevamente.",
+                    e,
+                    "idRequerimiento=" + idRequerimientoCompra
+                            + ", usuario=" + usuario
+            );
+
         } finally {
             ConnectionHelper.cerrar(stmt, con);
         }
     }
 
-    public void cambiarEstado(int idRequerimientoCompra, int idEstadoNuevo, String usuario) throws Exception {
-        if (idRequerimientoCompra <= 0) {
-            throw new Exception("Debe informar el requerimiento de compra.");
-        }
-
-        if (!WebKeysCompras.esEstadoValido(idEstadoNuevo)) {
-            throw new Exception("Estado de requerimiento inválido.");
-        }
-
-        RequerimientoCompra requerimientoActual =
-                BusquedaRequerimientoCompraServiceUtil
-                        .getRequerimientoCompra(idRequerimientoCompra);
-
-        if (requerimientoActual == null) {
-            throw new Exception(
-                    "No se encontró el requerimiento de compra informado."
-            );
-        }
-
-        if (!WebKeysCompras.validarTransicionEstado(
-                requerimientoActual.getEstado(),
-                idEstadoNuevo
-        )) {
-            throw new Exception(
-                    "La transición de estado solicitada no es válida."
-            );
-        }
+    public void cambiarEstado(
+            int idRequerimientoCompra,
+            int idEstadoNuevo,
+            String usuario) throws Exception {
 
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
+            if (idRequerimientoCompra <= 0) {
+                throw errorUsuario(
+                        "Debe informar el requerimiento de compra."
+                );
+            }
+
+            if (!WebKeysCompras.esEstadoValido(idEstadoNuevo)) {
+                throw errorUsuario(
+                        "El estado seleccionado no es v?lido."
+                );
+            }
+
+            RequerimientoCompra requerimientoActual =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .getRequerimientoCompra(
+                                    idRequerimientoCompra
+                            );
+
+            if (requerimientoActual == null) {
+                throw errorUsuario(
+                        "El requerimiento ya no est? disponible."
+                );
+            }
+
+            if (!WebKeysCompras.validarTransicionEstado(
+                    requerimientoActual.getEstado(),
+                    idEstadoNuevo
+            )) {
+                throw errorUsuario(
+                        "El requerimiento no puede pasar al estado seleccionado "
+                                + "desde su estado actual."
+                );
+            }
+
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(SQL_CAMBIAR_ESTADO);
             stmt.setInt(1, idRequerimientoCompra);
             stmt.setInt(2, idEstadoNuevo);
             stmt.setString(3, emptyToNull(usuario));
-
             stmt.execute();
+
         } catch (Exception e) {
-            _log.error(e);
-            throw e;
+            throw manejarErrorOperacion(
+                    "actualizar el estado del requerimiento",
+                    "No se pudo actualizar el estado del requerimiento. "
+                            + "Actualice la pantalla e intente nuevamente.",
+                    e,
+                    "idRequerimiento=" + idRequerimientoCompra
+                            + ", idEstadoNuevo=" + idEstadoNuevo
+                            + ", usuario=" + usuario
+            );
+
         } finally {
             ConnectionHelper.cerrar(stmt, con);
         }
@@ -587,41 +643,56 @@ public class EditarRequerimientoCompraServiceImpl {
             String usuario,
             long companyId) throws Exception {
 
-        RequerimientoCompra requerimiento =
-                validarRequerimientoParaEnviarACotizar(idRequerimientoCompra);
+        try {
+            RequerimientoCompra requerimiento =
+                    validarRequerimientoParaEnviarACotizar(
+                            idRequerimientoCompra
+                    );
 
-        NotificacionCotizacionResultado resultado =
-                NotificarCotizacionPrestadorServiceUtil.notificarPrestadores(
-                        requerimiento.getIdRequerimientoCompra(),
-                        usuario,
-                        companyId
+            NotificacionCotizacionResultado resultado =
+                    NotificarCotizacionPrestadorServiceUtil
+                            .notificarPrestadores(
+                                    requerimiento
+                                            .getIdRequerimientoCompra(),
+                                    usuario,
+                                    companyId
+                            );
+
+            if (resultado == null) {
+                throw new IllegalStateException(
+                        "El proceso de notificaci?n no devolvi? resultado."
                 );
+            }
 
-        if (resultado == null) {
+            int estadoFinal =
+                    confirmarEnvioACotizar(
+                            idRequerimientoCompra,
+                            usuario
+                    );
 
-            throw new Exception(
-                    "El proceso de notificación no devolvió un resultado verificable."
+            if (estadoFinal != WebKeysCompras.ESTADO_PENDIENTE
+                    && estadoFinal
+                    != WebKeysCompras.ESTADO_A_COTIZAR) {
+
+                throw new IllegalStateException(
+                        "Estado inesperado al confirmar el env?o: "
+                                + estadoFinal
+                );
+            }
+
+            return resultado;
+
+        } catch (Exception e) {
+            throw manejarErrorOperacion(
+                    "enviar el requerimiento a cotizar",
+                    "No se pudo enviar el requerimiento a cotizar. "
+                            + "Verifique los datos e intente nuevamente.",
+                    e,
+                    "idRequerimiento=" + idRequerimientoCompra
+                            + ", companyId=" + companyId
+                            + ", usuario=" + usuario
             );
         }
-
-        int estadoFinal =
-                confirmarEnvioACotizar(
-                        idRequerimientoCompra,
-                        usuario
-                );
-
-        if (estadoFinal != WebKeysCompras.ESTADO_PENDIENTE
-                && estadoFinal
-                != WebKeysCompras.ESTADO_A_COTIZAR) {
-
-            throw new Exception(
-                    "La base devolvió un estado inesperado "
-                            + "al confirmar el envío a cotizar: "
-                            + estadoFinal
-            );
-        }
-
-        return resultado;
     }
 
     public NotificacionCotizacionResultado reintentarNotificacionesCotizacion(
@@ -629,38 +700,58 @@ public class EditarRequerimientoCompraServiceImpl {
             String usuario,
             long companyId) throws Exception {
 
-        RequerimientoCompra requerimiento =
-                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(
-                        idRequerimientoCompra
+        try {
+            if (idRequerimientoCompra <= 0) {
+                throw errorUsuario(
+                        "Debe informar el requerimiento de compra."
                 );
+            }
 
-        if (requerimiento == null) {
-            throw new Exception("No se encontró el requerimiento de compra informado.");
-        }
+            RequerimientoCompra requerimiento =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .getRequerimientoCompra(
+                                    idRequerimientoCompra
+                            );
 
-        if (!requerimiento.puedeReintentarNotificaciones()) {
-            throw new Exception(
-                    "Solo se pueden reintentar notificaciones de requerimientos en estado A COTIZAR."
+            if (requerimiento == null) {
+                throw errorUsuario(
+                        "El requerimiento ya no est? disponible."
+                );
+            }
+
+            if (!requerimiento.puedeReintentarNotificaciones()) {
+                throw errorUsuario(
+                        "Las notificaciones s?lo pueden reenviarse mientras "
+                                + "el requerimiento est? en estado A COTIZAR."
+                );
+            }
+
+            if (!BusquedaRequerimientoCompraServiceUtil
+                    .hayPrestadoresPendientesNotificacion(
+                            idRequerimientoCompra
+                    )) {
+
+                return new NotificacionCotizacionResultado();
+            }
+
+            return NotificarCotizacionPrestadorServiceUtil
+                    .notificarPrestadores(
+                            idRequerimientoCompra,
+                            usuario,
+                            companyId
+                    );
+
+        } catch (Exception e) {
+            throw manejarErrorOperacion(
+                    "reenviar las notificaciones de cotizaci?n",
+                    "No se pudieron reenviar las notificaciones pendientes. "
+                            + "Intente nuevamente.",
+                    e,
+                    "idRequerimiento=" + idRequerimientoCompra
+                            + ", companyId=" + companyId
+                            + ", usuario=" + usuario
             );
         }
-
-        if (!BusquedaRequerimientoCompraServiceUtil
-                .hayPrestadoresPendientesNotificacion(
-                        idRequerimientoCompra
-                )) {
-
-            /*
-             * Operación idempotente: una petición atrasada o duplicada no
-             * vuelve a enviar correos cuando ya no quedan candidatos.
-             */
-            return new NotificacionCotizacionResultado();
-        }
-
-        return NotificarCotizacionPrestadorServiceUtil.notificarPrestadores(
-                idRequerimientoCompra,
-                usuario,
-                companyId
-        );
     }
 
     public GuardadoCotizacionResultado guardarAvanceCotizacion(
@@ -687,42 +778,78 @@ public class EditarRequerimientoCompraServiceImpl {
         );
     }
 
-    private void validarRequerimientoParaGuardar(RequerimientoCompra requerimiento) throws Exception {
+    private void validarRequerimientoParaGuardar(
+            RequerimientoCompra requerimiento) throws Exception {
+
         if (requerimiento == null) {
-            throw new Exception("Debe informar el requerimiento de compra.");
+            throw errorUsuario(
+                    "Debe informar el requerimiento de compra."
+            );
         }
 
-        if (requerimiento.getIdSector() == null || requerimiento.getIdSector().intValue() <= 0) {
-            throw new Exception("Debe informar el sector.");
+        if (requerimiento.getIdSector() == null
+                || requerimiento.getIdSector().intValue() <= 0) {
+
+            throw errorUsuario(
+                    "Debe seleccionar el sector del requerimiento."
+            );
         }
 
-        validarPorcentaje(requerimiento.getCargoOspim(), "Cargo OSPIM");
-        validarPorcentaje(requerimiento.getCargoTercerizadora(), "Cargo tercerizadora");
+        validarPorcentaje(
+                requerimiento.getCargoOspim(),
+                "El cargo de OSPIM"
+        );
+        validarPorcentaje(
+                requerimiento.getCargoTercerizadora(),
+                "El cargo de la tercerizadora"
+        );
 
-        int cargoOspim = requerimiento.getCargoOspim() != null
-                ? requerimiento.getCargoOspim().intValue()
-                : 0;
+        int cargoOspim =
+                requerimiento.getCargoOspim() != null
+                        ? requerimiento.getCargoOspim().intValue()
+                        : 0;
 
-        int cargoTercerizadora = requerimiento.getCargoTercerizadora() != null
-                ? requerimiento.getCargoTercerizadora().intValue()
-                : 0;
+        int cargoTercerizadora =
+                requerimiento.getCargoTercerizadora() != null
+                        ? requerimiento
+                          .getCargoTercerizadora()
+                          .intValue()
+                        : 0;
 
         if (cargoOspim + cargoTercerizadora > 100) {
-            throw new Exception("La suma de cargos no puede superar 100.");
+            throw errorUsuario(
+                    "La suma de los cargos de OSPIM y la tercerizadora "
+                            + "no puede superar el 100 %."
+            );
         }
 
         if (cargoTercerizadora > 0
-                && WebKeysCompras.isEmpty(requerimiento.getIdTercerizadora())) {
-            throw new Exception("Debe informar la tercerizadora cuando su cargo es mayor a cero.");
+                && WebKeysCompras.isEmpty(
+                requerimiento.getIdTercerizadora()
+        )) {
+            throw errorUsuario(
+                    "Debe seleccionar una tercerizadora cuando su cargo "
+                            + "es mayor que cero."
+            );
         }
 
         if (requerimiento.isRequiereAfiliado()) {
-            if (WebKeysCompras.isEmpty(requerimiento.getAfiliadoCuilTitular())) {
-                throw new Exception("Debe informar el CUIL titular del afiliado.");
+            if (WebKeysCompras.isEmpty(
+                    requerimiento.getAfiliadoCuilTitular()
+            )) {
+                throw errorUsuario(
+                        "Debe informar el CUIL del titular afiliado."
+                );
             }
 
-            if (requerimiento.getAfiliadoInt() == null || requerimiento.getAfiliadoInt().intValue() < 0) {
-                throw new Exception("Debe informar el integrante del afiliado.");
+            if (requerimiento.getAfiliadoInt() == null
+                    || requerimiento
+                    .getAfiliadoInt()
+                    .intValue() < 0) {
+
+                throw errorUsuario(
+                        "Debe informar el integrante del grupo familiar."
+                );
             }
         }
     }
@@ -731,7 +858,7 @@ public class EditarRequerimientoCompraServiceImpl {
             RequerimientoCompraDetalle detalle) throws Exception {
 
         if (detalle == null) {
-            throw new Exception(
+            throw errorUsuario(
                     "Debe informar el detalle del requerimiento."
             );
         }
@@ -742,81 +869,79 @@ public class EditarRequerimientoCompraServiceImpl {
         if (idRequerimiento == null
                 || idRequerimiento.intValue() <= 0) {
 
-            throw new Exception(
-                    "Debe guardar primero la cabecera del requerimiento."
+            throw errorUsuario(
+                    "Primero debe guardar los datos generales del requerimiento."
             );
         }
 
         if (detalle.getCantidad() == null) {
             detalle.setCantidad(
-                    Integer.valueOf(
-                            1
-                    )
+                    Integer.valueOf(1)
             );
         }
 
         if (detalle.getCantidad().intValue() <= 0) {
-            throw new Exception(
-                    "La cantidad debe ser mayor a cero."
+            throw errorUsuario(
+                    "La cantidad debe ser mayor que cero."
             );
         }
 
         String tipoItem =
                 detalle.getTipoItemNormalizado();
 
-        if (WebKeysCompras.isEmpty(
-                tipoItem
-        )) {
-            throw new Exception(
-                    "Debe informar el tipo de item."
+        if (WebKeysCompras.isEmpty(tipoItem)) {
+            throw errorUsuario(
+                    "Debe seleccionar el tipo de ?tem."
             );
         }
 
-        if (!RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR.equals(
-                tipoItem
-        )
-                && !RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO.equals(
-                tipoItem
-        )) {
+        if (!RequerimientoCompraDetalle
+                .TIPO_ITEM_NOMENCLADOR
+                .equals(tipoItem)
+                && !RequerimientoCompraDetalle
+                .TIPO_ITEM_MEDICAMENTO
+                .equals(tipoItem)) {
 
-            throw new Exception(
-                    "Tipo de item inválido. Debe seleccionar nomenclador o medicamento."
+            throw errorUsuario(
+                    "El tipo de ?tem seleccionado no es v?lido."
             );
         }
 
-        if (RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR.equals(
-                tipoItem
-        )) {
+        if (RequerimientoCompraDetalle
+                .TIPO_ITEM_NOMENCLADOR
+                .equals(tipoItem)) {
+
             validarDetalleNomencladorParaGuardar(
                     detalle
             );
         }
 
-        if (RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO.equals(
-                tipoItem
-        )) {
+        if (RequerimientoCompraDetalle
+                .TIPO_ITEM_MEDICAMENTO
+                .equals(tipoItem)) {
+
             validarDetalleMedicamentoParaGuardar(
                     detalle
             );
         }
 
         if (detalle.getPrecioUnitarioEstimado() != null
-                && detalle.getPrecioUnitarioEstimado().compareTo(
-                BigDecimal.ZERO
-        ) < 0) {
+                && detalle
+                .getPrecioUnitarioEstimado()
+                .compareTo(BigDecimal.ZERO) < 0) {
 
-            throw new Exception(
-                    "El precio unitario estimado no puede ser negativo."
+            throw errorUsuario(
+                    "El precio unitario no puede ser negativo."
             );
         }
 
         if (detalle.getPrecioTotalEstimadoInformado() != null
-                && detalle.getPrecioTotalEstimadoInformado().compareTo(
-                BigDecimal.ZERO
-        ) < 0) {
+                && detalle
+                .getPrecioTotalEstimadoInformado()
+                .compareTo(BigDecimal.ZERO) < 0) {
 
-            throw new Exception(
-                    "El precio total estimado no puede ser negativo."
+            throw errorUsuario(
+                    "El precio total no puede ser negativo."
             );
         }
     }
@@ -827,32 +952,32 @@ public class EditarRequerimientoCompraServiceImpl {
         if (detalle.getIdPrestacion() == null
                 || detalle.getIdPrestacion().intValue() <= 0) {
 
-            throw new Exception(
-                    "Debe seleccionar la prestación del nomenclador."
+            throw errorUsuario(
+                    "Debe seleccionar una prestaci?n del nomenclador."
             );
         }
 
         if (detalle.getIdTipoNomenclador() == null
                 || detalle.getIdTipoNomenclador().intValue() <= 0) {
 
-            throw new Exception(
-                    "Debe informar el tipo de nomenclador."
+            throw errorUsuario(
+                    "Debe seleccionar el tipo de nomenclador."
             );
         }
 
         if (WebKeysCompras.isEmpty(
                 detalle.getCodigoNomenclador()
         )) {
-            throw new Exception(
-                    "Debe informar el código de nomenclador."
+            throw errorUsuario(
+                    "La prestaci?n seleccionada no tiene un c?digo v?lido."
             );
         }
 
         if (WebKeysCompras.isEmpty(
                 detalle.getDescripcionNomenclador()
         )) {
-            throw new Exception(
-                    "Debe informar la descripción del nomenclador."
+            throw errorUsuario(
+                    "La prestaci?n seleccionada no tiene una descripci?n v?lida."
             );
         }
 
@@ -861,8 +986,8 @@ public class EditarRequerimientoCompraServiceImpl {
                 || !WebKeysCompras.isEmpty(
                 detalle.getNombreMedicamento()
         )) {
-            throw new Exception(
-                    "Un nomenclador no puede contener datos de medicamento."
+            throw errorUsuario(
+                    "Los datos recibidos no corresponden a una prestaci?n. Actualice la pantalla y vuelva a seleccionarla."
             );
         }
 
@@ -876,27 +1001,27 @@ public class EditarRequerimientoCompraServiceImpl {
                 != detalle.getIdPrestacion().intValue()
                 || nomenclador.getBaja_fecha() != null) {
 
-            throw new Exception(
-                    "La prestación seleccionada no existe o no está activa."
+            throw errorUsuario(
+                    "La prestaci?n seleccionada ya no existe o no est? activa. Vuelva a seleccionarla."
             );
         }
 
         if (nomenclador.getId_tipo_nomenclador()
                 != detalle.getIdTipoNomenclador().intValue()) {
 
-            throw new Exception(
-                    "La prestación no corresponde al tipo de nomenclador informado."
+            throw errorUsuario(
+                    "La prestaci?n seleccionada no corresponde al tipo de nomenclador actual. Vuelva a seleccionarla."
             );
         }
 
         validarTextoTecnico(
-                "código de nomenclador",
+                "c?digo de nomenclador",
                 detalle.getCodigoNomenclador(),
                 nomenclador.getCodigo()
         );
 
         validarTextoTecnico(
-                "descripción de nomenclador",
+                "descripci?n de nomenclador",
                 detalle.getDescripcionNomenclador(),
                 nomenclador.getDescripcion()
         );
@@ -915,7 +1040,7 @@ public class EditarRequerimientoCompraServiceImpl {
         if (detalle.getIdMedicamento() == null
                 || detalle.getIdMedicamento().intValue() <= 0) {
 
-            throw new Exception(
+            throw errorUsuario(
                     "Debe seleccionar el medicamento."
             );
         }
@@ -923,8 +1048,8 @@ public class EditarRequerimientoCompraServiceImpl {
         if (WebKeysCompras.isEmpty(
                 detalle.getNombreMedicamento()
         )) {
-            throw new Exception(
-                    "Debe informar el nombre del medicamento."
+            throw errorUsuario(
+                    "El medicamento seleccionado no tiene un nombre v?lido."
             );
         }
 
@@ -937,8 +1062,8 @@ public class EditarRequerimientoCompraServiceImpl {
                 detalle.getDescripcionNomenclador()
         )) {
 
-            throw new Exception(
-                    "Un medicamento no puede contener datos de nomenclador."
+            throw errorUsuario(
+                    "Los datos recibidos no corresponden a un medicamento. Actualice la pantalla y vuelva a seleccionarlo."
             );
         }
 
@@ -952,8 +1077,8 @@ public class EditarRequerimientoCompraServiceImpl {
                 != detalle.getIdMedicamento().intValue()
                 || medicamento.getFecha_baja() != null) {
 
-            throw new Exception(
-                    "El medicamento seleccionado no existe o no está activo."
+            throw errorUsuario(
+                    "El medicamento seleccionado ya no existe o no est? activo. Vuelva a seleccionarlo."
             );
         }
 
@@ -967,8 +1092,8 @@ public class EditarRequerimientoCompraServiceImpl {
                 || detalle.getTroquel().intValue()
                 != troquelCanonico.intValue())) {
 
-            throw new Exception(
-                    "El troquel informado no corresponde al medicamento."
+            throw errorUsuario(
+                    "El troquel ya no coincide con el medicamento seleccionado. Vuelva a seleccionarlo."
             );
         }
 
@@ -992,8 +1117,8 @@ public class EditarRequerimientoCompraServiceImpl {
 
         if (idRequerimiento == null
                 || idRequerimiento.intValue() <= 0) {
-            throw new Exception(
-                    "Debe guardar primero la cabecera del requerimiento."
+            throw errorUsuario(
+                    "Primero debe guardar los datos generales del requerimiento."
             );
         }
 
@@ -1004,16 +1129,15 @@ public class EditarRequerimientoCompraServiceImpl {
 
         if (requerimiento == null
                 || !requerimiento.puedeEditarEstructura()) {
-            throw new Exception(
-                    "Los detalles sólo pueden modificarse en un "
-                            + "requerimiento PENDIENTE activo."
+            throw errorUsuario(
+                    "Los detalles ya no pueden modificarse porque el requerimiento no se encuentra PENDIENTE."
             );
         }
 
         if (requerimiento.getSectorId() == null
                 || requerimiento.getSectorId().intValue() <= 0) {
-            throw new Exception(
-                    "El requerimiento no tiene un sector válido."
+            throw errorUsuario(
+                    "El requerimiento no tiene un sector v?lido. Actualice sus datos antes de continuar."
             );
         }
 
@@ -1025,7 +1149,7 @@ public class EditarRequerimientoCompraServiceImpl {
             RequerimientoCompraDetalle detalle) throws Exception {
 
         if (detalle == null) {
-            throw new Exception(
+            throw errorUsuario(
                     "Debe informar el detalle del requerimiento."
             );
         }
@@ -1045,9 +1169,8 @@ public class EditarRequerimientoCompraServiceImpl {
             esperado =
                     RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR;
         } else {
-            throw new Exception(
-                    "El sector del requerimiento no admite "
-                            + "detalles técnicos de Compras."
+            throw errorUsuario(
+                    "El sector seleccionado no admite este tipo de detalle."
             );
         }
 
@@ -1056,9 +1179,8 @@ public class EditarRequerimientoCompraServiceImpl {
 
         if (!WebKeysCompras.isEmpty(recibido)
                 && !esperado.equals(recibido)) {
-            throw new Exception(
-                    "El tipo de ítem no corresponde al sector "
-                            + "persistido del requerimiento."
+            throw errorUsuario(
+                    "El tipo de ?tem no corresponde al sector del requerimiento. Actualice la pantalla y vuelva a intentarlo."
             );
         }
 
@@ -1103,8 +1225,8 @@ public class EditarRequerimientoCompraServiceImpl {
                 emptyToNull(medicamento.getNombre());
 
         if (nombre == null) {
-            throw new Exception(
-                    "El medicamento canónico no tiene nombre."
+            throw errorUsuario(
+                    "El medicamento seleccionado no tiene un nombre disponible."
             );
         }
 
@@ -1131,9 +1253,9 @@ public class EditarRequerimientoCompraServiceImpl {
                 || !recibidoNormalizado.equalsIgnoreCase(
                 canonicoNormalizado
         )) {
-            throw new Exception(
+            throw errorUsuario(
                     "El " + campo
-                            + " no coincide con el registro canónico."
+                            + " cambi? o ya no coincide con la informaci?n actual. Vuelva a seleccionarlo."
             );
         }
     }
@@ -1166,7 +1288,7 @@ public class EditarRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         if (idRequerimientoCompra <= 0) {
-            throw new Exception("Debe informar el requerimiento de compra.");
+            throw errorUsuario("Debe informar el requerimiento de compra.");
         }
 
         RequerimientoCompra requerimiento =
@@ -1175,25 +1297,25 @@ public class EditarRequerimientoCompraServiceImpl {
                 );
 
         if (requerimiento == null) {
-            throw new Exception("No se encontró el requerimiento de compra informado.");
+            throw errorUsuario("No se encontr? el requerimiento de compra informado.");
         }
 
         if (!requerimiento.puedeEnviarACotizar()) {
-            throw new Exception("Solo se pueden enviar a cotizar requerimientos en estado PENDIENTE.");
+            throw errorUsuario("El requerimiento s?lo puede enviarse a cotizar mientras est? PENDIENTE.");
         }
 
         if (requerimiento.getIdSector() == null
                 || requerimiento.getIdSector().intValue() <= 0) {
-            throw new Exception("El requerimiento debe tener sector.");
+            throw errorUsuario("Debe seleccionar el sector antes de enviar el requerimiento a cotizar.");
         }
 
         if (!requerimiento.tieneDetalles()) {
-            throw new Exception("El requerimiento debe tener al menos un detalle válido.");
+            throw errorUsuario("Debe agregar al menos un detalle antes de enviar el requerimiento a cotizar.");
         }
 
         if (requerimiento.isRequiereAfiliado()
                 && !requerimiento.tieneAfiliadoInformado()) {
-            throw new Exception("El sector requiere afiliado y el requerimiento no lo tiene informado.");
+            throw errorUsuario("Debe completar los datos del afiliado antes de enviar el requerimiento a cotizar.");
         }
 
         return requerimiento;
@@ -1204,70 +1326,79 @@ public class EditarRequerimientoCompraServiceImpl {
             List<RequerimientoCompraDetalle> detalles,
             String usuario) throws Exception {
 
-        validarDetallesCotizacionRecibidos(
-                detalles
-        );
-
-        Integer idPrestadorAdjudicado =
-                obtenerPrestadorAdjudicadoUnico(
-                        detalles
-                );
-
-        Integer[] idsDetalle =
-                new Integer[detalles.size()];
-
-        BigDecimal[] preciosUnitarios =
-                new BigDecimal[detalles.size()];
-
-        for (int i = 0;
-             i < detalles.size();
-             i++) {
-
-            RequerimientoCompraDetalle detalle =
-                    detalles.get(i);
-
-            idsDetalle[i] =
-                    Integer.valueOf(
-                            detalle.getIdInt()
-                    );
-
-            preciosUnitarios[i] =
-                    detalle.getPrecioUnitarioEstimado() != null
-                            ? WebKeysCompras.normalizarImporte(
-                            detalle.getPrecioUnitarioEstimado()
-                    )
-                            : null;
-        }
-
-        /*
-         * Si la cotización está completa para pasar a COTIZADO,
-         * debe existir al menos un archivo activo de presupuesto
-         * cargado para una tercerizadora/prestador.
-         *
-         * Se valida antes de llamar a la función SQL para evitar
-         * que la base cambie el estado y recién después falle Java.
-         */
-        if (debeValidarPresupuestoParaCotizado(
-                idPrestadorAdjudicado,
-                preciosUnitarios
-        )) {
-            validarTienePresupuestoActivoDeTercerizadora(
-                    idRequerimientoCompra
-            );
-        }
-
         Connection con = null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
+        Integer idPrestadorAdjudicado = null;
 
         try {
-            con =
-                    ConnectionHelper.getConnection();
+            if (idRequerimientoCompra <= 0) {
+                throw errorUsuario(
+                        "Debe informar el requerimiento de compra."
+                );
+            }
 
-            stmt =
-                    con.prepareStatement(
-                            SQL_GUARDAR_COTIZACION_REQUERIMIENTO
+            validarDetallesCotizacionRecibidos(
+                    detalles
+            );
+
+            idPrestadorAdjudicado =
+                    obtenerPrestadorAdjudicadoUnico(
+                            detalles
                     );
+
+            Integer[] idsDetalle =
+                    new Integer[detalles.size()];
+
+            BigDecimal[] preciosUnitarios =
+                    new BigDecimal[detalles.size()];
+
+            for (int i = 0;
+                 i < detalles.size();
+                 i++) {
+
+                RequerimientoCompraDetalle detalle =
+                        detalles.get(i);
+
+                idsDetalle[i] =
+                        Integer.valueOf(
+                                detalle.getIdInt()
+                        );
+
+                preciosUnitarios[i] =
+                        detalle.getPrecioUnitarioEstimado() != null
+                                ? WebKeysCompras.normalizarImporte(
+                                detalle.getPrecioUnitarioEstimado()
+                        )
+                                : null;
+            }
+
+            /*
+             * La base sigue siendo la validaci?n definitiva. Esta comprobaci?n
+             * previa evita que una situaci?n esperable termine mostrando una
+             * excepci?n t?cnica de PostgreSQL en la interfaz.
+             */
+            if (debeValidarPresupuestoParaCotizado(
+                    idPrestadorAdjudicado,
+                    preciosUnitarios
+            )) {
+                validarTienePresupuestoActivoDelPrestador(
+                        idRequerimientoCompra,
+                        idPrestadorAdjudicado.intValue()
+                );
+            }
+
+            con = ConnectionHelper.getConnection();
+
+            if (con == null) {
+                throw new SQLException(
+                        "No se obtuvo una conexi?n para guardar la cotizaci?n."
+                );
+            }
+
+            stmt = con.prepareStatement(
+                    SQL_GUARDAR_COTIZACION_REQUERIMIENTO
+            );
 
             stmt.setInt(
                     1,
@@ -1276,8 +1407,8 @@ public class EditarRequerimientoCompraServiceImpl {
 
             /*
              * El pool c3p0 legacy no implementa Connection.createArrayOf().
-             * Los arrays se envían como literales parametrizados y PostgreSQL
-             * realiza el cast explícito definido en la sentencia.
+             * Los arrays se env?an como literales parametrizados y PostgreSQL
+             * realiza el cast expl?cito definido en la sentencia.
              */
             stmt.setString(
                     2,
@@ -1310,13 +1441,11 @@ public class EditarRequerimientoCompraServiceImpl {
                     emptyToNull(usuario)
             );
 
-            rs =
-                    stmt.executeQuery();
+            rs = stmt.executeQuery();
 
             if (!rs.next()) {
-                throw new Exception(
-                        "La base no devolvió el estado final "
-                                + "de la cotización."
+                throw new SQLException(
+                        "La funci?n de cotizaci?n no devolvi? el estado final."
                 );
             }
 
@@ -1329,9 +1458,9 @@ public class EditarRequerimientoCompraServiceImpl {
                     && estadoFinal
                     != WebKeysCompras.ESTADO_COTIZADO)) {
 
-                throw new Exception(
-                        "La base devolvió un estado final "
-                                + "de cotización inválido."
+                throw new SQLException(
+                        "La funci?n de cotizaci?n devolvi? un estado inv?lido: "
+                                + estadoFinal
                 );
             }
 
@@ -1341,10 +1470,22 @@ public class EditarRequerimientoCompraServiceImpl {
                     estadoFinal
             );
 
-        } finally {
-            cerrar(
-                    rs
+        } catch (Exception e) {
+            throw manejarErrorOperacion(
+                    "guardar la cotizaci?n",
+                    "No se pudo guardar la cotizaci?n. "
+                            + "Revise los datos e intente nuevamente.",
+                    e,
+                    "idRequerimiento=" + idRequerimientoCompra
+                            + ", idPrestadorAdjudicado="
+                            + idPrestadorAdjudicado
+                            + ", cantidadDetalles="
+                            + (detalles != null ? detalles.size() : 0)
+                            + ", usuario=" + usuario
             );
+
+        } finally {
+            cerrar(rs);
 
             ConnectionHelper.cerrar(
                     stmt,
@@ -1359,9 +1500,8 @@ public class EditarRequerimientoCompraServiceImpl {
         if (valores == null
                 || valores.length == 0) {
 
-            throw new Exception(
-                    "Debe informar los identificadores "
-                            + "de detalle de la cotización."
+            throw errorUsuario(
+                    "No se recibieron los detalles de la cotizaci?n. Actualice la pantalla y vuelva a intentarlo."
             );
         }
 
@@ -1377,9 +1517,8 @@ public class EditarRequerimientoCompraServiceImpl {
             if (valor == null
                     || valor.intValue() <= 0) {
 
-                throw new Exception(
-                        "La lista contiene un identificador "
-                                + "de detalle inválido."
+                throw errorUsuario(
+                        "Uno de los detalles ya no es v?lido. Actualice la pantalla y vuelva a intentarlo."
                 );
             }
 
@@ -1403,9 +1542,8 @@ public class EditarRequerimientoCompraServiceImpl {
         if (valores == null
                 || valores.length == 0) {
 
-            throw new Exception(
-                    "Debe informar los precios "
-                            + "de la cotización."
+            throw errorUsuario(
+                    "No se recibieron los precios de la cotizaci?n. Actualice la pantalla y vuelva a intentarlo."
             );
         }
 
@@ -1424,7 +1562,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
             /*
              * NULL sin comillas representa un elemento SQL nulo.
-             * Esto permite guardar avances de cotización incompletos.
+             * Esto permite guardar avances de cotizaci?n incompletos.
              */
             if (valor == null) {
                 array.append("NULL");
@@ -1440,7 +1578,7 @@ public class EditarRequerimientoCompraServiceImpl {
                     BigDecimal.ZERO
             ) < 0) {
 
-                throw new Exception(
+                throw errorUsuario(
                         "El precio unitario no puede ser negativo."
                 );
             }
@@ -1462,8 +1600,8 @@ public class EditarRequerimientoCompraServiceImpl {
         if (detalles == null
                 || detalles.isEmpty()) {
 
-            throw new Exception(
-                    "Debe informar los detalles de la cotización."
+            throw errorUsuario(
+                    "La cotizaci?n no contiene detalles para guardar."
             );
         }
 
@@ -1480,8 +1618,8 @@ public class EditarRequerimientoCompraServiceImpl {
             if (detalle == null
                     || detalle.getIdInt() <= 0) {
 
-                throw new Exception(
-                        "La lista de detalles de cotización fue manipulada."
+                throw errorUsuario(
+                        "Los detalles recibidos no coinciden con el requerimiento. Actualice la pantalla y vuelva a intentarlo."
                 );
             }
 
@@ -1491,10 +1629,8 @@ public class EditarRequerimientoCompraServiceImpl {
                     );
 
             if (!idsRecibidos.add(idDetalle)) {
-                throw new Exception(
-                        "El detalle "
-                                + idDetalle
-                                + " fue informado más de una vez."
+                throw errorUsuario(
+                        "La cotizaci?n contiene un detalle repetido. Actualice la pantalla y vuelva a intentarlo."
                 );
             }
 
@@ -1503,7 +1639,7 @@ public class EditarRequerimientoCompraServiceImpl {
                     .getPrecioUnitarioEstimado()
                     .compareTo(BigDecimal.ZERO) < 0) {
 
-                throw new Exception(
+                throw errorUsuario(
                         "El precio unitario no puede ser negativo."
                 );
             }
@@ -1540,9 +1676,8 @@ public class EditarRequerimientoCompraServiceImpl {
             } else if (idPrestadorAdjudicado.intValue()
                     != idPrestadorDetalle.intValue()) {
 
-                throw new Exception(
-                        "Debe seleccionar un único prestador adjudicado "
-                                + "para todo el requerimiento."
+                throw errorUsuario(
+                        "Debe seleccionar el mismo prestador adjudicado para todos los detalles."
                 );
             }
         }
@@ -1551,23 +1686,45 @@ public class EditarRequerimientoCompraServiceImpl {
 
     }
 
-    private Integer getIdRequerimientoDetalle(RequerimientoCompraDetalle detalle) {
-        if (detalle.getIdRequerimiento() != null && detalle.getIdRequerimiento().intValue() > 0) {
+    private Integer getIdRequerimientoDetalle(
+            RequerimientoCompraDetalle detalle) {
+
+        if (detalle == null) {
+            return null;
+        }
+
+        if (detalle.getIdRequerimiento() != null
+                && detalle
+                .getIdRequerimiento()
+                .intValue() > 0) {
+
             return detalle.getIdRequerimiento();
         }
 
         if (detalle.getIdRequerimientoCompra() > 0) {
-            return Integer.valueOf(detalle.getIdRequerimientoCompra());
+            return Integer.valueOf(
+                    detalle.getIdRequerimientoCompra()
+            );
         }
 
         return null;
     }
 
-    private void validarPorcentaje(Integer value, String label) throws Exception {
-        int parsed = value != null ? value.intValue() : 0;
+    private void validarPorcentaje(
+            Integer value,
+            String label) throws Exception {
 
-        if (parsed < 0 || parsed > 100) {
-            throw new Exception(label + " debe estar entre 0 y 100.");
+        int parsed =
+                value != null
+                        ? value.intValue()
+                        : 0;
+
+        if (parsed < 0
+                || parsed > 100) {
+
+            throw errorUsuario(
+                    label + " debe estar entre 0 y 100 %."
+            );
         }
     }
 
@@ -1578,7 +1735,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
         if (stmt == null) {
             throw new SQLException(
-                    "No se informó el CallableStatement."
+                    "No se inform? el CallableStatement."
             );
         }
 
@@ -1627,27 +1784,28 @@ public class EditarRequerimientoCompraServiceImpl {
 
     public int registrarPresupuesto(
             RequerimientoCompraPresupuesto presupuesto,
-            String usuario)
-            throws Exception {
-
-        validarPresupuestoParaRegistrar(
-                presupuesto
-        );
+            String usuario) throws Exception {
 
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
+            validarPresupuestoParaRegistrar(
+                    presupuesto
+            );
+
             con = ConnectionHelper.getConnection();
+
+            if (con == null) {
+                throw new SQLException(
+                        "No se obtuvo una conexi?n para registrar el presupuesto."
+                );
+            }
 
             stmt = con.prepareCall(
                     SQL_REGISTRAR_PRESUPUESTO
             );
 
-            /*
-             * 1: valor de retorno.
-             * 2..12: argumentos de la función.
-             */
             stmt.registerOutParameter(
                     1,
                     Types.INTEGER
@@ -1737,27 +1895,25 @@ public class EditarRequerimientoCompraServiceImpl {
             if (stmt.wasNull()
                     || idRequerimientoPresupuesto <= 0) {
 
-                throw new Exception(
-                        "La base de datos devolvió un identificador "
-                                + "de presupuesto inválido."
+                throw new SQLException(
+                        "La funci?n de presupuesto devolvi? un identificador inv?lido."
                 );
             }
 
             return idRequerimientoPresupuesto;
+
         } catch (Exception e) {
-            _log.error(
-                    "No se pudo registrar la asociación "
-                            + "del presupuesto. "
-                            + "idRequerimiento="
-                            + presupuesto.getIdRequerimiento()
-                            + ", idPrestador="
-                            + presupuesto.getIdPrestador()
-                            + ", dlFileEntryId="
-                            + presupuesto.getDlFileEntryId(),
-                    e
+            throw manejarErrorOperacion(
+                    "registrar el presupuesto",
+                    "No se pudo registrar el presupuesto. "
+                            + "Vuelva a seleccionar el archivo e intente nuevamente.",
+                    e,
+                    construirContextoPresupuesto(
+                            presupuesto,
+                            usuario
+                    )
             );
 
-            throw e;
         } finally {
             ConnectionHelper.cerrar(
                     stmt,
@@ -1769,27 +1925,25 @@ public class EditarRequerimientoCompraServiceImpl {
     public boolean darDeBajaPresupuesto(
             int idRequerimientoPresupuesto,
             int idRequerimientoCompra,
-            String usuario)
-            throws Exception {
-
-        if (idRequerimientoPresupuesto <= 0) {
-            throw new Exception(
-                    "Debe informar el presupuesto del requerimiento."
-            );
-        }
-
-        if (idRequerimientoCompra <= 0) {
-            throw new Exception(
-                    "Debe informar el requerimiento de compra."
-            );
-        }
+            String usuario) throws Exception {
 
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
-            con = ConnectionHelper.getConnection();
+            if (idRequerimientoPresupuesto <= 0) {
+                throw errorUsuario(
+                        "Debe informar el presupuesto que desea quitar."
+                );
+            }
 
+            if (idRequerimientoCompra <= 0) {
+                throw errorUsuario(
+                        "Debe informar el requerimiento de compra."
+                );
+            }
+
+            con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(
                     SQL_BAJA_PRESUPUESTO
             );
@@ -1821,17 +1975,20 @@ public class EditarRequerimientoCompraServiceImpl {
 
             return !stmt.wasNull()
                     && resultado;
+
         } catch (Exception e) {
-            _log.error(
-                    "No se pudo dar de baja el presupuesto. "
-                            + "idRequerimientoPresupuesto="
+            throw manejarErrorOperacion(
+                    "quitar el presupuesto",
+                    "No se pudo quitar el presupuesto. "
+                            + "Actualice la pantalla e intente nuevamente.",
+                    e,
+                    "idRequerimientoPresupuesto="
                             + idRequerimientoPresupuesto
                             + ", idRequerimiento="
-                            + idRequerimientoCompra,
-                    e
+                            + idRequerimientoCompra
+                            + ", usuario=" + usuario
             );
 
-            throw e;
         } finally {
             ConnectionHelper.cerrar(
                     stmt,
@@ -1842,27 +1999,25 @@ public class EditarRequerimientoCompraServiceImpl {
 
     public boolean reactivarPresupuesto(
             int idRequerimientoPresupuesto,
-            int idRequerimientoCompra)
-            throws Exception {
-
-        if (idRequerimientoPresupuesto <= 0) {
-            throw new Exception(
-                    "Debe informar el presupuesto del requerimiento."
-            );
-        }
-
-        if (idRequerimientoCompra <= 0) {
-            throw new Exception(
-                    "Debe informar el requerimiento de compra."
-            );
-        }
+            int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
         CallableStatement stmt = null;
 
         try {
-            con = ConnectionHelper.getConnection();
+            if (idRequerimientoPresupuesto <= 0) {
+                throw errorUsuario(
+                        "Debe informar el presupuesto que desea reactivar."
+                );
+            }
 
+            if (idRequerimientoCompra <= 0) {
+                throw errorUsuario(
+                        "Debe informar el requerimiento de compra."
+                );
+            }
+
+            con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(
                     SQL_REACTIVAR_PRESUPUESTO
             );
@@ -1889,17 +2044,19 @@ public class EditarRequerimientoCompraServiceImpl {
 
             return !stmt.wasNull()
                     && resultado;
+
         } catch (Exception e) {
-            _log.error(
+            throw manejarErrorOperacion(
+                    "reactivar el presupuesto",
                     "No se pudo reactivar el presupuesto. "
-                            + "idRequerimientoPresupuesto="
+                            + "Actualice la pantalla e intente nuevamente.",
+                    e,
+                    "idRequerimientoPresupuesto="
                             + idRequerimientoPresupuesto
                             + ", idRequerimiento="
-                            + idRequerimientoCompra,
-                    e
+                            + idRequerimientoCompra
             );
 
-            throw e;
         } finally {
             ConnectionHelper.cerrar(
                     stmt,
@@ -1913,7 +2070,7 @@ public class EditarRequerimientoCompraServiceImpl {
             throws Exception {
 
         if (presupuesto == null) {
-            throw new Exception(
+            throw errorUsuario(
                     "Debe informar el presupuesto del requerimiento."
             );
         }
@@ -1923,7 +2080,7 @@ public class EditarRequerimientoCompraServiceImpl {
                 .getIdRequerimiento()
                 .intValue() <= 0) {
 
-            throw new Exception(
+            throw errorUsuario(
                     "Debe informar el requerimiento de compra."
             );
         }
@@ -1933,7 +2090,7 @@ public class EditarRequerimientoCompraServiceImpl {
                 .getIdPrestador()
                 .intValue() <= 0) {
 
-            throw new Exception(
+            throw errorUsuario(
                     "Debe informar el prestador del presupuesto."
             );
         }
@@ -1943,8 +2100,8 @@ public class EditarRequerimientoCompraServiceImpl {
                 .getDlGroupId()
                 .longValue() <= 0L) {
 
-            throw new Exception(
-                    "El groupId del documento no es válido."
+            throw errorUsuario(
+                    "No se pudo identificar correctamente el archivo del presupuesto. Vuelva a seleccionarlo."
             );
         }
 
@@ -1953,8 +2110,8 @@ public class EditarRequerimientoCompraServiceImpl {
                 .getDlFolderId()
                 .longValue() < 0L) {
 
-            throw new Exception(
-                    "El folderId del documento no es válido."
+            throw errorUsuario(
+                    "No se pudo identificar correctamente la carpeta del presupuesto. Vuelva a seleccionar el archivo."
             );
         }
 
@@ -1963,32 +2120,32 @@ public class EditarRequerimientoCompraServiceImpl {
                 .getDlFileEntryId()
                 .longValue() <= 0L) {
 
-            throw new Exception(
-                    "El fileEntryId del documento no es válido."
+            throw errorUsuario(
+                    "No se pudo identificar correctamente el archivo del presupuesto. Vuelva a seleccionarlo."
             );
         }
 
         if (WebKeysCompras.isEmpty(
                 presupuesto.getNombreOriginal()
         )) {
-            throw new Exception(
-                    "El nombre original del presupuesto no es válido."
+            throw errorUsuario(
+                    "El archivo del presupuesto no tiene un nombre v?lido. Vuelva a seleccionarlo."
             );
         }
 
         if (WebKeysCompras.isEmpty(
                 presupuesto.getNombrePersistido()
         )) {
-            throw new Exception(
-                    "El nombre persistido del presupuesto no es válido."
+            throw errorUsuario(
+                    "No se pudo registrar correctamente el archivo del presupuesto. Vuelva a seleccionarlo."
             );
         }
 
         if (WebKeysCompras.isEmpty(
                 presupuesto.getTitulo()
         )) {
-            throw new Exception(
-                    "El título del presupuesto no es válido."
+            throw errorUsuario(
+                    "El archivo del presupuesto no tiene un t?tulo v?lido. Vuelva a seleccionarlo."
             );
         }
     }
@@ -2029,9 +2186,8 @@ public class EditarRequerimientoCompraServiceImpl {
                     stmt.getInt(1);
 
             if (stmt.wasNull()) {
-                throw new Exception(
-                        "La base no devolvió el estado final "
-                                + "del requerimiento."
+                throw new SQLException(
+                        "La confirmaci?n del env?o no devolvi? el estado final."
                 );
             }
 
@@ -2047,8 +2203,12 @@ public class EditarRequerimientoCompraServiceImpl {
 
     private SQLException buscarSQLException(Throwable throwable) {
         Throwable actual = throwable;
+        Set<Throwable> visitados =
+                new HashSet<Throwable>();
 
-        while (actual != null) {
+        while (actual != null
+                && visitados.add(actual)) {
+
             if (actual instanceof SQLException) {
                 return (SQLException) actual;
             }
@@ -2059,8 +2219,15 @@ public class EditarRequerimientoCompraServiceImpl {
         return null;
     }
 
-    private void validarTienePresupuestoActivoDeTercerizadora(
-            int idRequerimientoCompra) throws Exception {
+    private void validarTienePresupuestoActivoDelPrestador(
+            int idRequerimientoCompra,
+            int idPrestadorAdjudicado) throws Exception {
+
+        if (idPrestadorAdjudicado <= 0) {
+            throw errorUsuario(
+                    "Debe seleccionar un prestador adjudicado v?lido."
+            );
+        }
 
         List<RequerimientoCompraPresupuesto> presupuestos =
                 BusquedaRequerimientoCompraServiceUtil
@@ -2068,29 +2235,36 @@ public class EditarRequerimientoCompraServiceImpl {
                                 idRequerimientoCompra
                         );
 
-        if (presupuestos == null
-                || presupuestos.isEmpty()) {
+        if (presupuestos != null) {
+            for (int i = 0;
+                 i < presupuestos.size();
+                 i++) {
 
-            throw new Exception(
-                    "Para pasar el requerimiento a COTIZADO debe cargar "
-                            + "al menos un archivo de presupuesto en una tercerizadora."
-            );
-        }
+                RequerimientoCompraPresupuesto presupuesto =
+                        presupuestos.get(i);
 
-        for (int i = 0; i < presupuestos.size(); i++) {
-            RequerimientoCompraPresupuesto presupuesto =
-                    presupuestos.get(i);
+                if (presupuesto == null
+                        || !esPresupuestoActivoDeTercerizadora(
+                        presupuesto
+                )) {
 
-            if (esPresupuestoActivoDeTercerizadora(
-                    presupuesto
-            )) {
-                return;
+                    continue;
+                }
+
+                Integer idPrestadorPresupuesto =
+                        presupuesto.getIdPrestador();
+
+                if (idPrestadorPresupuesto != null
+                        && idPrestadorPresupuesto.intValue()
+                        == idPrestadorAdjudicado) {
+
+                    return;
+                }
             }
         }
 
-        throw new Exception(
-                "Para pasar el requerimiento a COTIZADO debe existir "
-                        + "al menos un archivo activo cargado en una tercerizadora."
+        throw errorUsuario(
+                "Para cerrar la cotizaci?n, primero cargue un presupuesto activo del prestador adjudicado."
         );
     }
 
@@ -2144,4 +2318,516 @@ public class EditarRequerimientoCompraServiceImpl {
 
         return true;
     }
+
+    private MensajeUsuarioException errorUsuario(
+            String mensaje) {
+
+        return new MensajeUsuarioException(
+                mensaje
+        );
+    }
+
+    private MensajeUsuarioException errorUsuario(
+            String mensaje,
+            Throwable causa) {
+
+        return new MensajeUsuarioException(
+                mensaje,
+                causa
+        );
+    }
+
+    /**
+     * ?nico punto de salida para fallas t?cnicas de esta implementaci?n.
+     * Los detalles quedan en el log y hacia la interfaz s?lo se propagan
+     * mensajes breves, accionables y sin informaci?n interna de PostgreSQL.
+     */
+    private Exception manejarErrorOperacion(
+            String operacion,
+            String mensajePredeterminado,
+            Exception error,
+            String contexto) {
+
+        MensajeUsuarioException errorUsuario =
+                buscarMensajeUsuarioException(
+                        error
+                );
+
+        if (errorUsuario != null) {
+            return errorUsuario;
+        }
+
+        SQLException sqlException =
+                buscarSQLException(
+                        error
+                );
+
+        registrarErrorTecnico(
+                operacion,
+                contexto,
+                error,
+                sqlException
+        );
+
+        if (sqlException != null) {
+            String mensajeSql =
+                    traducirSQLException(
+                            sqlException
+                    );
+
+            if (!WebKeysCompras.isEmpty(mensajeSql)) {
+                return errorUsuario(
+                        mensajeSql,
+                        error
+                );
+            }
+        }
+
+        return errorUsuario(
+                mensajePredeterminado,
+                error
+        );
+    }
+
+    private MensajeUsuarioException buscarMensajeUsuarioException(
+            Throwable error) {
+
+        Throwable actual = error;
+        Set<Throwable> visitados =
+                new HashSet<Throwable>();
+
+        while (actual != null
+                && visitados.add(actual)) {
+
+            if (actual instanceof MensajeUsuarioException) {
+                return (MensajeUsuarioException) actual;
+            }
+
+            actual = actual.getCause();
+        }
+
+        return null;
+    }
+
+    private void registrarErrorTecnico(
+            String operacion,
+            String contexto,
+            Throwable error,
+            SQLException sqlException) {
+
+        StringBuilder mensaje =
+                new StringBuilder();
+
+        mensaje.append(
+                "Error t?cnico al "
+        );
+        mensaje.append(
+                operacion
+        );
+        mensaje.append('.');
+
+        if (!WebKeysCompras.isEmpty(contexto)) {
+            mensaje.append(' ');
+            mensaje.append(contexto);
+        }
+
+        if (sqlException != null) {
+            mensaje.append(
+                    ", SQLState="
+            );
+            mensaje.append(
+                    sqlException.getSQLState()
+            );
+            mensaje.append(
+                    ", errorCode="
+            );
+            mensaje.append(
+                    sqlException.getErrorCode()
+            );
+        }
+
+        _log.error(
+                mensaje.toString(),
+                error
+        );
+
+        if (sqlException != null
+                && sqlException.getNextException() != null
+                && sqlException.getNextException()
+                != sqlException) {
+
+            _log.error(
+                    "Excepci?n SQL encadenada al "
+                            + operacion
+                            + ".",
+                    sqlException.getNextException()
+            );
+        }
+    }
+
+    private String traducirSQLException(
+            SQLException error) {
+
+        String textoCompleto =
+                obtenerTextoCompletoSQLException(
+                        error
+                );
+
+        String clave =
+                normalizarClave(
+                        textoCompleto
+                );
+
+        if (clave.contains(
+                "DEBE EXISTIR UN PRESUPUESTO ACTIVO DEL PRESTADOR ADJUDICADO"
+        )) {
+            return "Para cerrar la cotizaci?n, primero cargue un "
+                    + "presupuesto activo del prestador adjudicado.";
+        }
+
+        if (clave.contains(
+                "EL PRESTADOR ADJUDICADO NO FUE NOTIFICADO CORRECTAMENTE"
+        )) {
+            return "El prestador seleccionado no fue notificado correctamente "
+                    + "para este requerimiento. Verifique el env?o antes de adjudicarlo.";
+        }
+
+        if (clave.contains(
+                "LA COTIZACION SOLO PUEDE GUARDARSE EN ESTADO A COTIZAR"
+        )) {
+            return "La cotizaci?n ya no puede modificarse porque el "
+                    + "requerimiento no se encuentra en estado A COTIZAR.";
+        }
+
+        if (clave.contains(
+                "NO EXISTE EL REQUERIMIENTO ACTIVO INFORMADO"
+        )) {
+            return "El requerimiento ya no est? disponible o fue dado de baja.";
+        }
+
+        if (clave.contains(
+                "LA COTIZACION DEBE INFORMAR EXACTAMENTE TODOS LOS DETALLES ACTIVOS"
+        )
+                || clave.contains(
+                "LA LISTA DE DETALLES FUE MANIPULADA O PERTENECE A OTRO REQUERIMIENTO"
+        )
+                || clave.contains(
+                "LA CANTIDAD DE DETALLES Y PRECIOS NO COINCIDE"
+        )) {
+            return "Los detalles del requerimiento cambiaron mientras editaba "
+                    + "la cotizaci?n. Actualice la pantalla y vuelva a intentarlo.";
+        }
+
+        if (clave.contains(
+                "LA COTIZACION CONTIENE IDENTIFICADORES DE DETALLE INVALIDOS"
+        )
+                || clave.contains(
+                "LA COTIZACION CONTIENE DETALLES DUPLICADOS"
+        )) {
+            return "La cotizaci?n contiene detalles inv?lidos o repetidos. "
+                    + "Actualice la pantalla y vuelva a intentarlo.";
+        }
+
+        if (clave.contains(
+                "LOS PRECIOS UNITARIOS DEBEN SER NULOS O MAYORES O IGUALES QUE CERO"
+        )) {
+            return "Los precios unitarios deben ser iguales o mayores que cero.";
+        }
+
+        if (clave.contains(
+                "EL REQUERIMIENTO NO CONTIENE DETALLES ACTIVOS"
+        )) {
+            return "El requerimiento no tiene detalles activos para cotizar.";
+        }
+
+        if (clave.contains(
+                "EL PRESTADOR ADJUDICADO DEBE SER MAYOR QUE CERO"
+        )) {
+            return "Debe seleccionar un prestador adjudicado v?lido.";
+        }
+
+        if (clave.contains(
+                "NO SE PUDO ACTUALIZAR EL DETALLE"
+        )) {
+            return "No se pudo actualizar uno de los detalles. "
+                    + "Actualice la pantalla y vuelva a intentarlo.";
+        }
+
+        String sqlState =
+                error.getSQLState();
+
+        if ("23505".equals(sqlState)) {
+            return "Ya existe un registro con los mismos datos.";
+        }
+
+        if ("23503".equals(sqlState)) {
+            return "No se pudo completar la operaci?n porque uno de los "
+                    + "datos relacionados ya no existe o est? siendo utilizado.";
+        }
+
+        if ("23502".equals(sqlState)) {
+            return "Falta completar un dato obligatorio.";
+        }
+
+        if ("23514".equals(sqlState)) {
+            return "Uno de los datos ingresados no cumple las condiciones permitidas.";
+        }
+
+        if ("22001".equals(sqlState)) {
+            return "Uno de los textos ingresados supera la longitud permitida.";
+        }
+
+        if ("22003".equals(sqlState)) {
+            return "Uno de los valores num?ricos est? fuera del rango permitido.";
+        }
+
+        if ("22P02".equals(sqlState)) {
+            return "Uno de los datos ingresados tiene un formato inv?lido.";
+        }
+
+        if ("22007".equals(sqlState)
+                || "22008".equals(sqlState)) {
+            return "Una de las fechas ingresadas no es v?lida.";
+        }
+
+        if ("40001".equals(sqlState)
+                || "40P01".equals(sqlState)) {
+            return "La informaci?n cambi? mientras se procesaba la operaci?n. "
+                    + "Actualice la pantalla y vuelva a intentarlo.";
+        }
+
+        if ("57014".equals(sqlState)) {
+            return "La operaci?n demor? m?s de lo esperado. Intente nuevamente.";
+        }
+
+        if (sqlState != null
+                && sqlState.startsWith("08")) {
+            return "No se pudo comunicar con la base de datos. "
+                    + "Intente nuevamente en unos instantes.";
+        }
+
+        /*
+         * PostgreSQL utiliza estados de clase P para excepciones generadas
+         * desde funciones PL/pgSQL. Si el mensaje principal es funcional y
+         * no contiene datos t?cnicos, se conserva sin exponer Where, Detail,
+         * nombres de funciones ni l?neas internas.
+         */
+        if (sqlState != null
+                && sqlState.startsWith("P")) {
+
+            String mensajeFuncion =
+                    extraerMensajePrincipalPostgreSql(
+                            error
+                    );
+
+            if (esMensajeSqlAptoParaUsuario(
+                    mensajeFuncion
+            )) {
+                return asegurarPuntoFinal(
+                        mensajeFuncion
+                );
+            }
+        }
+
+        return null;
+    }
+
+    private String extraerMensajePrincipalPostgreSql(
+            SQLException error) {
+
+        SQLException actual = error;
+        Set<SQLException> visitadas =
+                new HashSet<SQLException>();
+
+        while (actual != null
+                && visitadas.add(actual)) {
+
+            String mensaje =
+                    emptyToNull(
+                            actual.getMessage()
+                    );
+
+            if (mensaje != null) {
+                String[] lineas =
+                        mensaje.split("[\\r\\n]+");
+
+                for (int i = 0;
+                     i < lineas.length;
+                     i++) {
+
+                    String linea =
+                            emptyToNull(
+                                    lineas[i]
+                            );
+
+                    if (linea == null) {
+                        continue;
+                    }
+
+                    String claveLinea =
+                            normalizarClave(
+                                    linea
+                            );
+
+                    if (claveLinea.startsWith("WHERE:")
+                            || claveLinea.startsWith("DETAIL:")
+                            || claveLinea.startsWith("HINT:")
+                            || claveLinea.startsWith("CONTEXT:")) {
+                        continue;
+                    }
+
+                    if (claveLinea.startsWith("ERROR:")) {
+                        linea = linea.substring(
+                                linea.indexOf(':') + 1
+                        ).trim();
+                    }
+
+                    if (!WebKeysCompras.isEmpty(linea)) {
+                        return linea;
+                    }
+                }
+            }
+
+            actual = actual.getNextException();
+        }
+
+        return null;
+    }
+
+    private boolean esMensajeSqlAptoParaUsuario(
+            String mensaje) {
+
+        if (WebKeysCompras.isEmpty(mensaje)
+                || mensaje.length() > 500) {
+            return false;
+        }
+
+        String clave =
+                normalizarClave(
+                        mensaje
+                );
+
+        return !clave.contains("PL/PGSQL")
+                && !clave.contains("PLPGSQL")
+                && !clave.contains("ORG.POSTGRESQL")
+                && !clave.contains("SQLSTATE")
+                && !clave.contains("JDBC")
+                && !clave.contains("RAISE")
+                && !clave.contains("FUNCION ")
+                && !clave.contains("FUNCTION ")
+                && !clave.contains("LINEA ")
+                && !clave.contains("LINE ")
+                && !clave.contains("CONSTRAINT")
+                && !clave.contains("SELECT ")
+                && !clave.contains("INSERT ")
+                && !clave.contains("UPDATE ")
+                && !clave.contains("DELETE ")
+                && !clave.contains("CALL ");
+    }
+
+    private String asegurarPuntoFinal(
+            String mensaje) {
+
+        String limpio =
+                emptyToNull(
+                        mensaje
+                );
+
+        if (limpio == null) {
+            return null;
+        }
+
+        char ultimo =
+                limpio.charAt(
+                        limpio.length() - 1
+                );
+
+        if (ultimo == '.'
+                || ultimo == '!'
+                || ultimo == '?') {
+            return limpio;
+        }
+
+        return limpio + ".";
+    }
+
+    private String obtenerTextoCompletoSQLException(
+            SQLException error) {
+
+        StringBuilder texto =
+                new StringBuilder();
+
+        SQLException actual = error;
+        Set<SQLException> visitadas =
+                new HashSet<SQLException>();
+
+        while (actual != null
+                && visitadas.add(actual)) {
+
+            if (!WebKeysCompras.isEmpty(
+                    actual.getMessage()
+            )) {
+                if (texto.length() > 0) {
+                    texto.append(' ');
+                }
+
+                texto.append(
+                        actual.getMessage()
+                );
+            }
+
+            actual = actual.getNextException();
+        }
+
+        return texto.toString();
+    }
+
+    private int obtenerIdRequerimientoSeguro(
+            RequerimientoCompra requerimiento) {
+
+        return requerimiento != null
+                ? requerimiento.getIdRequerimientoCompra()
+                : 0;
+    }
+
+    private String construirContextoDetalle(
+            RequerimientoCompraDetalle detalle,
+            Integer idRequerimiento,
+            String usuario) {
+
+        if (detalle == null) {
+            return "idRequerimiento=" + idRequerimiento
+                    + ", detalle=null"
+                    + ", usuario=" + usuario;
+        }
+
+        return "idDetalle=" + detalle.getId()
+                + ", idRequerimiento=" + idRequerimiento
+                + ", tipoItem=" + detalle.getTipoItemNormalizado()
+                + ", idPrestacion=" + detalle.getIdPrestacion()
+                + ", idTipoNomenclador=" + detalle.getIdTipoNomenclador()
+                + ", codigoNomenclador=" + detalle.getCodigoNomenclador()
+                + ", idMedicamento=" + detalle.getIdMedicamento()
+                + ", troquel=" + detalle.getTroquel()
+                + ", cantidad=" + detalle.getCantidad()
+                + ", usuario=" + usuario;
+    }
+
+    private String construirContextoPresupuesto(
+            RequerimientoCompraPresupuesto presupuesto,
+            String usuario) {
+
+        if (presupuesto == null) {
+            return "presupuesto=null, usuario=" + usuario;
+        }
+
+        return "idRequerimiento="
+                + presupuesto.getIdRequerimiento()
+                + ", idPrestador="
+                + presupuesto.getIdPrestador()
+                + ", dlFileEntryId="
+                + presupuesto.getDlFileEntryId()
+                + ", usuario=" + usuario;
+    }
+
 }

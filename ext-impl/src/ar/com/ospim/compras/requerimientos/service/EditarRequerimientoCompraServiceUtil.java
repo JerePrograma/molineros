@@ -76,18 +76,6 @@ public class EditarRequerimientoCompraServiceUtil {
         );
     }
 
-    public static GuardadoCotizacionResultado cerrarCotizacion(
-            int idRequerimientoCompra,
-            List<RequerimientoCompraDetalle> detalles,
-            String usuario) throws Exception {
-
-        return getInstance().cerrarCotizacion(
-                idRequerimientoCompra,
-                detalles,
-                usuario
-        );
-    }
-
     private EditarRequerimientoCompraServiceUtil() {
     }
 
