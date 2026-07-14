@@ -16,7 +16,6 @@ import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -397,14 +396,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     e
             );
 
-            ocultarMensajeErrorPredeterminado(
-                    actionRequest
-            );
-
-            SessionErrors.add(
-                    actionRequest,
-                    "requerimiento-compra-error"
-            );
+            /*
+             * El JSP muestra este mensaje de manera controlada.
+             * No se agrega SessionErrors para evitar que Liferay
+             * presente además su mensaje genérico.
+             */
             actionRequest.setAttribute(
                     WebKeysCompras.ERROR_PARA_ALERT,
                     mensaje
@@ -434,7 +430,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                         "struts_action",
                         STRUTS_ACTION_NUEVO_REQUERIMIENTO
                 );
-                actionResponse.setRenderParameter("modo", "alta");
+                actionResponse.setRenderParameter(
+                        "modo",
+                        "alta"
+                );
                 setForward(
                         actionRequest,
                         WebKeysCompras.FORWARD_COMPRAS_ALTA_REQUERIMIENTO
@@ -450,12 +449,18 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 );
             }
 
-            actionResponse.setRenderParameter("compras_error", "true");
+            actionResponse.setRenderParameter(
+                    "compras_error",
+                    "true"
+            );
 
             if ("saveCotizacion".equals(cmd)
                     || "cerrarCotizacion".equals(cmd)) {
 
-                copiarParametrosCotizacion(actionRequest, actionResponse);
+                copiarParametrosCotizacion(
+                        actionRequest,
+                        actionResponse
+                );
             }
 
             actionResponse.setRenderParameter(
@@ -535,7 +540,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 generarTokenGuardadoCompra(renderRequest);
             }
 
-            cargarCatalogos(renderRequest, requerimiento);
+            cargarCatalogos(renderRequest);
             cargarAfiliadoRequerimiento(renderRequest, requerimiento);
             cargarEstadoPrestadoresPendientesNotificacion(
                     renderRequest,
@@ -780,8 +785,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
     }
 
     private void cargarCatalogos(
-            RenderRequest request,
-            RequerimientoCompra requerimiento) throws Exception {
+            RenderRequest request) throws Exception {
 
         request.setAttribute(
                 WebKeysCompras.ESTADOS_REQUERIMIENTO_COMPRA,
@@ -1592,21 +1596,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         return null;
-    }
-
-    private void ocultarMensajeErrorPredeterminado(
-            ActionRequest actionRequest) {
-
-        if (actionRequest == null) {
-            return;
-        }
-
-        SessionMessages.add(
-                actionRequest,
-                PortalUtil.getPortletId(actionRequest)
-                        + SessionMessages
-                        .KEY_SUFFIX_HIDE_DEFAULT_ERROR_MESSAGE
-        );
     }
 
     private String obtenerMensajeUsuario(
