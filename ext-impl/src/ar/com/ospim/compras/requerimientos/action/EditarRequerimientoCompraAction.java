@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -382,30 +383,42 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO
             );
         } catch (Exception e) {
-            String mensaje = e.getMessage();
+            String mensaje =
+                    obtenerMensajeUsuario(
+                            e,
+                            "No se pudo procesar el requerimiento de compra."
+                    );
 
-            if (WebKeysCompras.isEmpty(mensaje)) {
-                mensaje = "No se pudo procesar el requerimiento de compra.";
-            }
+            registrarErrorAction(
+                    "procesar el requerimiento de compra",
+                    cmd,
+                    idRequerimientoCompra,
+                    mensaje,
+                    e
+            );
 
-            SessionErrors.add(actionRequest, "requerimiento-compra-error");
-            actionRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, mensaje);
+            ocultarMensajeErrorPredeterminado(
+                    actionRequest
+            );
 
-            if (e instanceof ValidacionCompraException) {
-                ValidacionCompraException validacion =
-                        (ValidacionCompraException) e;
+            SessionErrors.add(
+                    actionRequest,
+                    "requerimiento-compra-error"
+            );
+            actionRequest.setAttribute(
+                    WebKeysCompras.ERROR_PARA_ALERT,
+                    mensaje
+            );
+
+            String campoError =
+                    obtenerCampoError(
+                            e
+                    );
+
+            if (!WebKeysCompras.isEmpty(campoError)) {
                 actionRequest.setAttribute(
                         WebKeysCompras.ERROR_CAMPO_COMPRA,
-                        validacion.getCampo()
-                );
-            }
-
-            if (e instanceof RequerimientoCompraDetalleHelper.ValidacionCompraException) {
-                RequerimientoCompraDetalleHelper.ValidacionCompraException validacion =
-                        (RequerimientoCompraDetalleHelper.ValidacionCompraException) e;
-                actionRequest.setAttribute(
-                        WebKeysCompras.ERROR_CAMPO_COMPRA,
-                        validacion.getCampo()
+                        campoError
                 );
             }
 
@@ -559,14 +572,31 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     requerimiento.getDetalles()
             );
         } catch (Exception e) {
-            String mensaje = e.getMessage();
+            String mensaje =
+                    obtenerMensajeUsuario(
+                            e,
+                            "No se pudo cargar el requerimiento de compra."
+                    );
 
-            if (WebKeysCompras.isEmpty(mensaje)) {
-                mensaje = "No se pudo cargar el requerimiento de compra.";
-            }
+            registrarErrorAction(
+                    "cargar el requerimiento de compra",
+                    "render",
+                    ParamUtil.getInteger(
+                            renderRequest,
+                            "id_requerimiento_compra",
+                            0
+                    ),
+                    mensaje,
+                    e
+            );
 
-            renderRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, mensaje);
-            return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_ERROR);
+            renderRequest.setAttribute(
+                    WebKeysCompras.ERROR_PARA_ALERT,
+                    mensaje
+            );
+            return mapping.findForward(
+                    WebKeysCompras.FORWARD_COMPRAS_ERROR
+            );
         }
 
         if (Boolean.TRUE.equals(
@@ -940,15 +970,15 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (requerimiento == null) {
             errorCampo(
                     "id_requerimiento_compra",
-                    "No se encontró el requerimiento de compra informado. ID recibido: "
-                            + idRequerimientoCompra + "."
+                    "El requerimiento informado ya no existe o no está disponible."
             );
         }
 
         if (!requerimiento.puedeEditarEstructura()) {
             errorCampo(
                     "estado",
-                    "Solo se puede editar la estructura en estado PENDIENTE. Estado actual: "
+                    "La estructura solo puede modificarse mientras el requerimiento "
+                            + "está PENDIENTE. Estado actual: "
                             + requerimiento.getEstadoDescripcionVisible() + "."
             );
         }
@@ -966,15 +996,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (requerimiento == null) {
             errorCampo(
                     "id_requerimiento_compra",
-                    "No se encontró el requerimiento de compra informado. ID recibido: "
-                            + idRequerimientoCompra + "."
+                    "El requerimiento informado ya no existe o no está disponible."
             );
         }
 
         if (!requerimiento.puedeAnular()) {
             errorCampo(
                     "estado",
-                    "El requerimiento no puede anularse en su estado actual. Estado actual: "
+                    "El requerimiento no puede anularse desde su estado actual: "
                             + requerimiento.getEstadoDescripcionVisible() + "."
             );
         }
@@ -998,8 +1027,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             if (sector == null) {
                 errorCampo(
                         "sector_id",
-                        "Sector: el sector seleccionado no existe o no está disponible. ID recibido: "
-                                + requerimiento.getIdSector() + "."
+                        "El sector seleccionado ya no existe o no está disponible."
                 );
             }
 
@@ -1564,6 +1592,201 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         return null;
+    }
+
+    private void ocultarMensajeErrorPredeterminado(
+            ActionRequest actionRequest) {
+
+        if (actionRequest == null) {
+            return;
+        }
+
+        SessionMessages.add(
+                actionRequest,
+                PortalUtil.getPortletId(actionRequest)
+                        + SessionMessages
+                        .KEY_SUFFIX_HIDE_DEFAULT_ERROR_MESSAGE
+        );
+    }
+
+    private String obtenerMensajeUsuario(
+            Throwable error,
+            String mensajePredeterminado) {
+
+        Throwable actual = error;
+        Set<Throwable> visitados =
+                new HashSet<Throwable>();
+
+        while (actual != null
+                && visitados.add(actual)) {
+
+            if (actual instanceof ValidacionCompraException
+                    || actual instanceof
+                    RequerimientoCompraDetalleHelper
+                    .ValidacionCompraException
+                    || "MensajeUsuarioException".equals(
+                    actual.getClass().getSimpleName()
+            )) {
+
+                String mensaje =
+                        normalizarMensajeUsuario(
+                                actual.getMessage()
+                        );
+
+                if (!WebKeysCompras.isEmpty(mensaje)) {
+                    return mensaje;
+                }
+            }
+
+            actual = actual.getCause();
+        }
+
+        actual = error;
+        visitados.clear();
+
+        while (actual != null
+                && visitados.add(actual)) {
+
+            String mensaje =
+                    normalizarMensajeUsuario(
+                            actual.getMessage()
+                    );
+
+            if (esMensajeAptoParaUsuario(mensaje)) {
+                return mensaje;
+            }
+
+            actual = actual.getCause();
+        }
+
+        return mensajePredeterminado;
+    }
+
+    private String obtenerCampoError(Throwable error) {
+        Throwable actual = error;
+        Set<Throwable> visitados =
+                new HashSet<Throwable>();
+
+        while (actual != null
+                && visitados.add(actual)) {
+
+            if (actual instanceof ValidacionCompraException) {
+                return ((ValidacionCompraException) actual)
+                        .getCampo();
+            }
+
+            if (actual instanceof
+                    RequerimientoCompraDetalleHelper
+                    .ValidacionCompraException) {
+
+                return ((RequerimientoCompraDetalleHelper
+                        .ValidacionCompraException) actual)
+                        .getCampo();
+            }
+
+            actual = actual.getCause();
+        }
+
+        return null;
+    }
+
+    private String normalizarMensajeUsuario(String mensaje) {
+        if (mensaje == null) {
+            return null;
+        }
+
+        String limpio =
+                mensaje
+                        .replace('\r', ' ')
+                        .replace('\n', ' ')
+                        .replaceAll("\\s+", " ")
+                        .trim();
+
+        return limpio.length() > 0
+                ? limpio
+                : null;
+    }
+
+    private boolean esMensajeAptoParaUsuario(String mensaje) {
+        if (WebKeysCompras.isEmpty(mensaje)
+                || mensaje.length() > 500) {
+
+            return false;
+        }
+
+        String clave =
+                mensaje.toUpperCase(Locale.ROOT);
+
+        return !clave.startsWith("ERROR:")
+                && !clave.contains("ORG.POSTGRESQL")
+                && !clave.contains("SQLSTATE")
+                && !clave.contains("PL/PGSQL")
+                && !clave.contains("PLPGSQL")
+                && !clave.contains(" WHERE:")
+                && !clave.contains(" DETAIL:")
+                && !clave.contains(" CONTEXT:")
+                && !clave.contains(" HINT:")
+                && !clave.contains("RAISE")
+                && !clave.contains("JDBC")
+                && !clave.contains("CALLABLESTATEMENT")
+                && !clave.contains("PREPAREDSTATEMENT")
+                && !clave.contains("STACK TRACE")
+                && !clave.contains(".JAVA:")
+                && !clave.contains("SELECT ")
+                && !clave.contains("INSERT ")
+                && !clave.contains("UPDATE ")
+                && !clave.contains("DELETE FROM ");
+    }
+
+    private void registrarErrorAction(
+            String operacion,
+            String cmd,
+            int idRequerimientoCompra,
+            String mensajeUsuario,
+            Throwable error) {
+
+        String contexto =
+                "No se pudo " + operacion
+                        + ". cmd=" + cmd
+                        + ", idRequerimiento="
+                        + idRequerimientoCompra
+                        + ", mensajeUsuario="
+                        + mensajeUsuario;
+
+        if (esErrorFuncional(error)) {
+            _log.warn(contexto);
+            return;
+        }
+
+        _log.error(
+                contexto,
+                error
+        );
+    }
+
+    private boolean esErrorFuncional(Throwable error) {
+        Throwable actual = error;
+        Set<Throwable> visitados =
+                new HashSet<Throwable>();
+
+        while (actual != null
+                && visitados.add(actual)) {
+
+            if (actual instanceof ValidacionCompraException
+                    || actual instanceof
+                    RequerimientoCompraDetalleHelper
+                    .ValidacionCompraException
+                    || "MensajeUsuarioException".equals(
+                    actual.getClass().getSimpleName()
+            )) {
+
+                return true;
+            }
+
+            actual = actual.getCause();
+        }
+
+        return false;
     }
 
     private void errorCampo(String campo, String mensaje)

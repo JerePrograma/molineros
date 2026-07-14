@@ -262,6 +262,63 @@ boolean hayMensajeNotificacionFallback =
         !WebKeysCompras.isEmpty(
                 tituloMensajeNotificacionFallback
         );
+
+boolean mostrarErrorPersonalizadoCompra =
+        !WebKeysCompras.isEmpty(errorParaAlert)
+        && !hayResultadoNotificacion
+        && !hayMensajeNotificacionFallback;
+
+boolean mostrarErrorGenericoUnicoCompra =
+        mostrarErrorGenericoCompra
+        && !hayResultadoNotificacion
+        && !hayMensajeNotificacionFallback;
+
+boolean hayErrorOperacionCompra =
+        mostrarErrorPersonalizadoCompra
+        || mostrarErrorGenericoUnicoCompra;
+
+String tituloErrorCompra =
+        "No se pudo completar la operación.";
+
+if ("saveCotizacion".equals(comprasOperacion)) {
+    tituloErrorCompra =
+            "No se pudo guardar la cotización.";
+} else if ("cerrarCotizacion".equals(comprasOperacion)) {
+    tituloErrorCompra =
+            "No se pudo cerrar la cotización.";
+} else if ("saveAll".equals(comprasOperacion)
+        || Constants.ADD.equals(comprasOperacion)
+        || Constants.UPDATE.equals(comprasOperacion)) {
+
+    tituloErrorCompra =
+            "No se pudo guardar el requerimiento de compra.";
+} else if (Constants.DELETE.equals(comprasOperacion)) {
+    tituloErrorCompra =
+            "No se pudo anular el requerimiento de compra.";
+}
+
+String errorCampoVisible = errorCampoCompra;
+
+if ("id_requerimiento_compra".equals(errorCampoCompra)) {
+    errorCampoVisible = "Requerimiento";
+} else if ("sector_id".equals(errorCampoCompra)) {
+    errorCampoVisible = "Sector";
+} else if ("afiliado_cuil_titular".equals(errorCampoCompra)) {
+    errorCampoVisible = "Afiliado";
+} else if ("id_prestador_adjudicado".equals(errorCampoCompra)) {
+    errorCampoVisible = "Prestador adjudicado";
+} else if ("guardar".equals(errorCampoCompra)) {
+    errorCampoVisible = "Estado de la pantalla";
+} else if ("estado".equals(errorCampoCompra)) {
+    errorCampoVisible = "Estado";
+} else if ("permisos".equals(errorCampoCompra)) {
+    errorCampoVisible = "Permisos";
+} else if ("usuario".equals(errorCampoCompra)) {
+    errorCampoVisible = "Usuario";
+} else if (!WebKeysCompras.isEmpty(errorCampoVisible)) {
+    errorCampoVisible =
+            errorCampoVisible.replace('_', ' ');
+}
 %>
 
 <style type="text/css">
@@ -1189,134 +1246,65 @@ boolean hayMensajeNotificacionFallback =
 
 </c:if>
 
-<c:if test="<%= msgDetalleBorrado %>">
-    <div class="portlet-msg-success">
-        Detalle del requerimiento eliminado correctamente.
-    </div>
-</c:if>
-
-<c:if test="<%= msgDetalleGuardado %>">
+<c:if test="<%= msgDetalleGuardado && !hayErrorOperacionCompra %>">
     <div class="portlet-msg-success">
         Detalle del requerimiento guardado correctamente.
     </div>
 </c:if>
 
-<c:if test="<%= msgDetalleBorrado %>">
+<c:if test="<%= msgDetalleBorrado && !hayErrorOperacionCompra %>">
     <div class="portlet-msg-success">
         Detalle del requerimiento eliminado correctamente.
     </div>
 </c:if>
 
-<c:if test="<%= msgRequerimientoAnulado %>">
+<c:if test="<%= msgRequerimientoAnulado && !hayErrorOperacionCompra %>">
     <div class="portlet-msg-success">
         Requerimiento de compra anulado correctamente.
     </div>
 </c:if>
 
-<c:if test="<%=
-        mostrarErrorGenericoCompra
-                && !hayResultadoNotificacion
-                && !hayMensajeNotificacionFallback
-%>">
-    <div class="portlet-msg-error">
+<c:if test="<%= mostrarErrorGenericoUnicoCompra %>">
+    <div class="portlet-msg-error" role="alert">
         <strong>
-            No se pudo procesar el requerimiento de compra.
+            No se pudo completar la operación.
         </strong>
+
+        <br />
+
+        Actualice la pantalla e intente nuevamente.
     </div>
 </c:if>
 
-<c:if test="<%=
-        !WebKeysCompras.isEmpty(errorParaAlert)
-                && !hayResultadoNotificacion
-                && !hayMensajeNotificacionFallback
-%>">
-    <div class="portlet-msg-error">
+<c:if test="<%= mostrarErrorPersonalizadoCompra %>">
+    <div class="portlet-msg-error" role="alert">
         <strong>
-            No se pudo guardar/procesar el requerimiento de compra.
+            <%= HtmlUtil.escape(tituloErrorCompra) %>
         </strong>
 
         <br />
 
         <%= HtmlUtil.escape(errorParaAlert) %>
 
-        <c:if test="<%= !WebKeysCompras.isEmpty(errorCampoCompra) %>">
+        <c:if test="<%= !WebKeysCompras.isEmpty(errorCampoVisible) %>">
             <br />
 
-            Campo relacionado:
+            Revise también:
 
             <strong>
-                <%= HtmlUtil.escape(errorCampoCompra) %>
+                <%= HtmlUtil.escape(errorCampoVisible) %>
             </strong>
         </c:if>
-
-        <c:if test="<%= !WebKeysCompras.isEmpty(idRequerimientoMensaje) %>">
-            <br />
-
-            ID activo:
-            <%= HtmlUtil.escape(idRequerimientoMensaje) %>
-        </c:if>
-    </div>
-</c:if>
-
-<c:if test="<%= !soloLecturaSolicitada && !puedeABM && !puedeCotizar %>">
-    <div class="portlet-msg-error">
-        No posee permisos para modificar requerimientos de compras.
-    </div>
-</c:if>
-
-<c:if test="<%= msgRequerimientoAnulado %>">
-    <div class="portlet-msg-success">
-        Requerimiento de compra anulado correctamente.
     </div>
 </c:if>
 
 <c:if test="<%=
-        mostrarErrorGenericoCompra
-                && !hayResultadoNotificacion
-                && !hayMensajeNotificacionFallback
+        !soloLecturaSolicitada
+                && !puedeABM
+                && !puedeCotizar
+                && !hayErrorOperacionCompra
 %>">
-    <div class="portlet-msg-error">
-        <strong>
-            No se pudo procesar el requerimiento de compra.
-        </strong>
-    </div>
-</c:if>
-
-<c:if test="<%=
-        !WebKeysCompras.isEmpty(errorParaAlert)
-                && !hayResultadoNotificacion
-                && !hayMensajeNotificacionFallback
-%>">
-    <div class="portlet-msg-error">
-        <strong>
-            No se pudo guardar/procesar el requerimiento de compra.
-        </strong>
-
-        <br />
-
-        <%= HtmlUtil.escape(errorParaAlert) %>
-
-        <c:if test="<%= !WebKeysCompras.isEmpty(errorCampoCompra) %>">
-            <br />
-
-            Campo relacionado:
-
-            <strong>
-                <%= HtmlUtil.escape(errorCampoCompra) %>
-            </strong>
-        </c:if>
-
-        <c:if test="<%= !WebKeysCompras.isEmpty(idRequerimientoMensaje) %>">
-            <br />
-
-            ID activo:
-            <%= HtmlUtil.escape(idRequerimientoMensaje) %>
-        </c:if>
-    </div>
-</c:if>
-
-<c:if test="<%= !soloLecturaSolicitada && !puedeABM && !puedeCotizar %>">
-    <div class="portlet-msg-error">
+    <div class="portlet-msg-error" role="alert">
         No posee permisos para modificar requerimientos de compras.
     </div>
 </c:if>
