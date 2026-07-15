@@ -834,7 +834,13 @@ public final class ComprasRequerimientosUiContractTest {
         );
 
         assertContains(
-                "servicio valida filtro positivo",
+                "servicio valida tipo real según sector",
+                service,
+                "esTipoNomencladorValidoParaSectorCompras"
+        );
+
+        assertNotContains(
+                "servicio no omite validación para filtro general",
                 service,
                 "filtroTipoNomenclador.intValue() > 0"
         );
@@ -1259,6 +1265,23 @@ public final class ComprasRequerimientosUiContractTest {
                 "sin transicion estado RP",
                 actionCompra,
                 "ESTADO_RECLAMO_RP"
+        );
+        assertContains(
+                "precarga admite nomenclador técnico",
+                precargaService,
+                "detalle.tieneNomenclador()"
+        );
+
+        assertContains(
+                "precarga valida tipo por sector",
+                precargaService,
+                "esTipoNomencladorValidoParaSectorCompras"
+        );
+
+        assertNotContains(
+                "precarga no exige medicamento por ser Farmacia",
+                precargaService,
+                "El detalle de Farmacia debe tener medicamento"
         );
     }
 

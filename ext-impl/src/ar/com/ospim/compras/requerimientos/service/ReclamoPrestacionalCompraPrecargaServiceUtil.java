@@ -834,12 +834,75 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 1
         );
 
-        if ("FARMACIA".equals(
-                sector
-        )) {
-            if (!detalle.tieneMedicamento()) {
+        /*
+         * Contrato actual:
+         *
+         * Todo detalle nuevo de Compras es NOMENCLADOR.
+         * Farmacia utiliza nomenclador tipo 9.
+         * Los demás sectores no pueden utilizar el tipo 9.
+         */
+        if (detalle.tieneNomenclador()) {
+            int idTipoNomenclador =
+                    detalle.getIdTipoNomencladorInt();
+
+            if (!WebKeysCompras
+                    .esTipoNomencladorValidoParaSectorCompras(
+                            sector,
+                            idTipoNomenclador
+                    )) {
+
+                if ("FARMACIA".equals(sector)) {
+                    throw new IllegalArgumentException(
+                            "El detalle de Farmacia debe utilizar "
+                                    + "nomenclador tipo 9."
+                    );
+                }
+
                 throw new IllegalArgumentException(
-                        "El detalle de Farmacia debe tener medicamento técnico válido."
+                        "El nomenclador tipo 9 sólo puede utilizarse "
+                                + "en requerimientos de Farmacia."
+                );
+            }
+
+            prestacion.setId_medicamento(
+                    0
+            );
+
+            prestacion.setId_prestacion(
+                    detalle.getIdPrestacionInt()
+            );
+
+            prestacion.setCodigoPrestacion(
+                    detalle.getCodigoNomencladorVisible()
+            );
+
+            prestacion.setNombreprestacion(
+                    detalle.getDescripcionNomencladorVisible()
+            );
+
+            prestacion.setDescripcion(
+                    detalle.getDescripcionNomencladorVisible()
+            );
+
+            prestacion.setNombremedicacion(
+                    ""
+            );
+
+            return;
+        }
+
+        /*
+         * Compatibilidad histórica:
+         *
+         * Los detalles que ya estaban persistidos como MEDICAMENTO
+         * antes de la migración siguen siendo utilizables, pero
+         * solamente para el sector Farmacia.
+         */
+        if (detalle.tieneMedicamento()) {
+            if (!"FARMACIA".equals(sector)) {
+                throw new IllegalArgumentException(
+                        "Un medicamento histórico sólo puede utilizarse "
+                                + "en un requerimiento de Farmacia."
                 );
             }
 
@@ -870,34 +933,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             return;
         }
 
-        if (!detalle.tieneNomenclador()) {
-            throw new IllegalArgumentException(
-                    "El detalle de Compras debe tener nomenclador técnico válido."
-            );
-        }
-
-        prestacion.setId_medicamento(
-                0
-        );
-
-        prestacion.setId_prestacion(
-                detalle.getIdPrestacionInt()
-        );
-
-        prestacion.setCodigoPrestacion(
-                detalle.getCodigoNomencladorVisible()
-        );
-
-        prestacion.setNombreprestacion(
-                detalle.getDescripcionNomencladorVisible()
-        );
-
-        prestacion.setDescripcion(
-                detalle.getDescripcionNomencladorVisible()
-        );
-
-        prestacion.setNombremedicacion(
-                ""
+        throw new IllegalArgumentException(
+                "El detalle de Compras no contiene una "
+                        + "referencia técnica válida."
         );
     }
 
