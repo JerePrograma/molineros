@@ -970,7 +970,7 @@ public class EditarRequerimientoCompraServiceImpl {
                 || detalle.getIdPrestacion().intValue() <= 0) {
 
             throw errorUsuario(
-                    "Debe seleccionar una prestación del nomenclador."
+                    "Debe seleccionar una prestacion del nomenclador."
             );
         }
 
@@ -986,7 +986,7 @@ public class EditarRequerimientoCompraServiceImpl {
                 detalle.getCodigoNomenclador()
         )) {
             throw errorUsuario(
-                    "La prestación seleccionada no tiene un código válido."
+                    "La prestacion seleccionada no tiene un codigo valido."
             );
         }
 
@@ -994,20 +994,33 @@ public class EditarRequerimientoCompraServiceImpl {
                 detalle.getDescripcionNomenclador()
         )) {
             throw errorUsuario(
-                    "La prestación seleccionada no tiene una descripción válida."
+                    "La prestacion seleccionada no tiene una descripcion valida."
             );
         }
 
+        /*
+         * Un detalle NOMENCLADOR no puede contener informacion
+         * tecnica correspondiente a un medicamento.
+         */
         if (detalle.getIdMedicamento() != null
                 || detalle.getTroquel() != null
                 || !WebKeysCompras.isEmpty(
                 detalle.getNombreMedicamento()
         )) {
+
             throw errorUsuario(
-                    "Los datos recibidos no corresponden a una prestación. Actualice la pantalla y vuelva a seleccionarla."
+                    "Los datos recibidos no corresponden a una prestacion. "
+                            + "Actualice la pantalla y vuelva a seleccionarla."
             );
         }
 
+        /*
+         * Se recupera nuevamente la prestacion canonica.
+         *
+         * Los identificadores, el tipo de nomenclador, la marca ReinLiq,
+         * el codigo, la descripcion y el estado activo no se confian
+         * a los valores enviados desde la pantalla.
+         */
         Nomenclador nomenclador =
                 obtenerNomencladorCanonico(
                         detalle.getIdPrestacion().intValue()
@@ -1019,71 +1032,166 @@ public class EditarRequerimientoCompraServiceImpl {
                 || nomenclador.getBaja_fecha() != null) {
 
             throw errorUsuario(
-                    "La prestación seleccionada ya no existe o no está activa. Vuelva a seleccionarla."
+                    "La prestacion seleccionada ya no existe "
+                            + "o no esta activa. Vuelva a seleccionarla."
             );
         }
 
-        if (nomenclador.getId_tipo_nomenclador()
+        int idTipoNomencladorCanonico =
+                nomenclador.getId_tipo_nomenclador();
+
+        if (idTipoNomencladorCanonico <= 0) {
+            throw errorUsuario(
+                    "La prestacion seleccionada no tiene un "
+                            + "tipo de nomenclador valido."
+            );
+        }
+
+        /*
+         * El tipo recibido desde la pantalla debe coincidir con
+         * el tipo real persistido para la prestacion.
+         */
+        if (idTipoNomencladorCanonico
                 != detalle.getIdTipoNomenclador().intValue()) {
 
             throw errorUsuario(
-                    "La prestación seleccionada no corresponde al tipo de nomenclador actual. Vuelva a seleccionarla."
+                    "La prestacion seleccionada no corresponde al "
+                            + "tipo de nomenclador actual. "
+                            + "Vuelva a seleccionarla."
             );
         }
 
         String sectorDescripcion =
                 requerimiento != null
-                        ? requerimiento
-                          .getSectorDescripcion()
+                        ? requerimiento.getSectorDescripcion()
                         : null;
 
-        int idTipoNomencladorCanonico =
-                nomenclador
-                        .getId_tipo_nomenclador();
+        String sector =
+                WebKeysCompras
+                        .normalizarSectorCompra(
+                                sectorDescripcion
+                        );
 
-        if (!WebKeysCompras
-                .esTipoNomencladorValidoParaSectorCompras(
-                        sectorDescripcion,
-                        idTipoNomencladorCanonico
-                )) {
+        if (WebKeysCompras.isEmpty(
+                sector
+        )) {
+            throw errorUsuario(
+                    "No se pudo determinar el sector del requerimiento."
+            );
+        }
 
+        /*
+         * Replica literal de la matriz utilizada por
+         * Reclamos Prestacionales:
+         *
+         * FARMACIA:
+         *     tipo 9.
+         *
+         * DISCAPACIDAD:
+         *     marca ReinLiq 6 o codigo 431003.
+         *
+         * ODONTOLOGIA:
+         *     tipo 1.
+         *
+         * PRESTACIONES MEDICAS:
+         *     cualquier tipo distinto de 1.
+         *
+         * LEGALES:
+         *     cualquier tipo positivo.
+         */
+        boolean nomencladorValido =
+                WebKeysCompras
+                        .esNomencladorValidoParaSectorCompras(
+                                sector,
+                                idTipoNomencladorCanonico,
+                                nomenclador
+                                        .getMarcaReintegroLiquidacion(),
+                                nomenclador.getCodigo()
+                        );
+
+        if (!nomencladorValido) {
             if ("FARMACIA".equals(
-                    WebKeysCompras
-                            .normalizarSectorCompra(
-                                    sectorDescripcion
-                            )
+                    sector
             )) {
                 throw errorUsuario(
-                        "Para el sector Farmacia sólo pueden "
-                                + "seleccionarse prestaciones del "
-                                + "nomenclador tipo 9."
+                        "Para Farmacia debe seleccionar una "
+                                + "prestacion del nomenclador tipo 9."
+                );
+            }
+
+            if ("DISCAPACIDAD".equals(
+                    sector
+            )) {
+                throw errorUsuario(
+                        "Para Discapacidad debe seleccionar una "
+                                + "prestacion con marca ReinLiq 6 "
+                                + "o el codigo 431003."
+                );
+            }
+
+            if ("ODONTOLOGIA".equals(
+                    sector
+            )) {
+                throw errorUsuario(
+                        "Para Odontologia debe seleccionar una "
+                                + "prestacion del nomenclador tipo 1."
+                );
+            }
+
+            if ("PRESTACIONES MEDICAS".equals(
+                    sector
+            )) {
+                throw errorUsuario(
+                        "Prestaciones Medicas no admite "
+                                + "prestaciones del nomenclador tipo 1."
+                );
+            }
+
+            if ("LEGALES".equals(
+                    sector
+            )) {
+                throw errorUsuario(
+                        "La prestacion seleccionada no tiene un "
+                                + "tipo de nomenclador valido."
                 );
             }
 
             throw errorUsuario(
-                    "Las prestaciones del nomenclador tipo 9 "
-                            + "sólo pueden utilizarse en "
-                            + "requerimientos del sector Farmacia."
+                    "La prestacion seleccionada no corresponde "
+                            + "al sector del requerimiento."
             );
         }
 
+        /*
+         * Aunque codigo y descripcion llegaron desde la pantalla,
+         * deben coincidir con los datos canonicos de la prestacion.
+         */
         validarTextoTecnico(
-                "código de nomenclador",
+                "codigo de nomenclador",
                 detalle.getCodigoNomenclador(),
                 nomenclador.getCodigo()
         );
 
         validarTextoTecnico(
-                "descripción de nomenclador",
+                "descripcion de nomenclador",
                 detalle.getDescripcionNomenclador(),
                 nomenclador.getDescripcion()
         );
 
+        /*
+         * Finalmente se reemplazan los textos recibidos por los
+         * valores canonicos obtenidos desde autorizaciones.nomenclador.
+         */
         detalle.setCodigoNomenclador(
-                emptyToNull(nomenclador.getCodigo())
+                emptyToNull(
+                        nomenclador.getCodigo()
+                )
         );
+
         detalle.setDescripcionNomenclador(
-                emptyToNull(nomenclador.getDescripcion())
+                emptyToNull(
+                        nomenclador.getDescripcion()
+                )
         );
     }
 
