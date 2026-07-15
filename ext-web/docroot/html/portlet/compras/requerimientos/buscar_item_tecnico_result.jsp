@@ -26,10 +26,14 @@ private String comprasNomencladorInvocacion(
             + "(" + nomenclador.getId_prestacion()
             + "," + nomenclador.getId_tipo_nomenclador()
             + ",'" + comprasNomencladorJs(
-                    nomenclador.getCodigo().trim()
+                    nomenclador.getCodigo() != null
+                            ? nomenclador.getCodigo().trim()
+                            : ""
             )
             + "','" + comprasNomencladorJs(
-                    nomenclador.getDescripcion().trim()
+                    nomenclador.getDescripcion() != null
+                            ? nomenclador.getDescripcion().trim()
+                            : ""
             )
             + "')";
 }
@@ -61,6 +65,16 @@ String esPrestMedBusqueda =
                 "COMPRAS_ES_PREST_MED"
         );
 
+String sectorBusqueda =
+        (String) request.getAttribute(
+                "COMPRAS_SECTOR_NOMENCLADOR"
+        );
+
+String marcaReinLiqBusqueda =
+        (String) request.getAttribute(
+                "COMPRAS_MARCA_REIN_LIQ"
+        );
+
 String tipoNomencladorBusqueda =
         (String) request.getAttribute(
                 "COMPRAS_ID_TIPO_NOMENCLADOR"
@@ -77,6 +91,24 @@ if (tipoNomencladorBusqueda != null
             );
 }
 
+int marcaReinLiq = 0;
+
+if (marcaReinLiqBusqueda != null
+        && marcaReinLiqBusqueda.matches("^[0-9]+$")) {
+
+    marcaReinLiq =
+            Integer.parseInt(
+                    marcaReinLiqBusqueda
+            );
+}
+
+sectorBusqueda =
+        sectorBusqueda == null
+                ? ""
+                : WebKeysCompras.normalizarSectorCompra(
+                        sectorBusqueda
+                );
+
 if (errorBusqueda == null
         && (
                 callbackBusqueda == null
@@ -87,7 +119,7 @@ if (errorBusqueda == null
 
     errorBusqueda =
             "No se pudo identificar el formulario "
-                    + "que recibirá la selección.";
+                    + "que recibira la seleccion.";
 }
 
 if (errorBusqueda == null
@@ -96,6 +128,14 @@ if (errorBusqueda == null
     errorBusqueda =
             "No se pudo determinar el filtro "
                     + "de nomenclador para el sector.";
+}
+
+if (errorBusqueda == null
+        && sectorBusqueda.length() == 0) {
+
+    errorBusqueda =
+            "No se pudo determinar el sector "
+                    + "del requerimiento.";
 }
 %>
 
@@ -110,16 +150,59 @@ if (errorBusqueda == null
     codigoBusqueda =
             codigoBusqueda == null
                     ? ""
-                    : codigoBusqueda;
+                    : codigoBusqueda.trim();
 
     descripcionBusqueda =
             descripcionBusqueda == null
                     ? ""
-                    : descripcionBusqueda;
+                    : descripcionBusqueda.trim();
 
     List<Nomenclador> archivos;
 
-    if ("1".equals(esPrestMedBusqueda)) {
+    /*
+     * Replica literal de Reclamos Prestacionales:
+     *
+     * FARMACIA:
+     *     busca_nomenclador con tipo 9.
+     *
+     * DISCAPACIDAD:
+     *     busca_nomenclador_marca_reinliq con tipo 0
+     *     y marca 6. La funcion incorpora tambien el
+     *     codigo especial 431003.
+     *
+     * ODONTOLOGIA:
+     *     busca_nomenclador con tipo 1.
+     *
+     * PRESTACIONES MEDICAS:
+     *     busca_nomenclador_prest_med con tipo 0.
+     *
+     * LEGALES:
+     *     busca_nomenclador con tipo 0.
+     */
+    if ("DISCAPACIDAD".equals(sectorBusqueda)
+            && marcaReinLiq
+            == WebKeysCompras
+                    .MARCA_REIN_LIQ_DISCAPACIDAD) {
+
+        archivos =
+                NomencladorServiceUtil
+                        .getListaNomencladorMarcaReinLiq(
+                                WebKeysCompras
+                                        .FILTRO_NOMENCLADOR_GENERAL,
+                                descripcionBusqueda,
+                                0,
+                                codigoBusqueda,
+                                false,
+                                "",
+                                WebKeysCompras
+                                        .MARCA_REIN_LIQ_DISCAPACIDAD
+                        );
+
+    } else if ("1".equals(esPrestMedBusqueda)
+            || "PRESTACIONES MEDICAS".equals(
+                    sectorBusqueda
+            )) {
+
         archivos =
                 NomencladorServiceUtil
                         .getListaNomencladorPrestacionesMedicas(
@@ -130,7 +213,9 @@ if (errorBusqueda == null
                                 false,
                                 ""
                         );
+
     } else {
+
         archivos =
                 NomencladorServiceUtil
                         .getListaNomenclador(
@@ -143,13 +228,15 @@ if (errorBusqueda == null
                         );
     }
 
+    /*
+     * La consulta reproduce el circuito de RP.
+     *
+     * Luego se aplica la misma matriz como defensa adicional,
+     * se eliminan nomencladores dados de baja y se descartan
+     * resultados tecnicamente invalidos.
+     */
     List<Nomenclador> archivosFiltrados =
             new ArrayList<Nomenclador>();
-
-    boolean busquedaFarmacia =
-            idTipoNomencladorBusqueda
-                    == WebKeysCompras
-                    .FILTRO_NOMENCLADOR_FARMACIA;
 
     if (archivos != null) {
         for (int i = 0;
@@ -165,26 +252,27 @@ if (errorBusqueda == null
                 continue;
             }
 
+            int idPrestacionReal =
+                    nomenclador.getId_prestacion();
+
             int idTipoReal =
                     nomenclador
                             .getId_tipo_nomenclador();
 
-            if (idTipoReal <= 0) {
-                continue;
-            }
-
-            if (busquedaFarmacia
-                    && idTipoReal
-                    != WebKeysCompras
-                    .FILTRO_NOMENCLADOR_FARMACIA) {
+            if (idPrestacionReal <= 0
+                    || idTipoReal <= 0) {
 
                 continue;
             }
 
-            if (!busquedaFarmacia
-                    && idTipoReal
-                    == WebKeysCompras
-                    .FILTRO_NOMENCLADOR_FARMACIA) {
+            if (!WebKeysCompras
+                    .esNomencladorValidoParaSectorCompras(
+                            sectorBusqueda,
+                            idTipoReal,
+                            nomenclador
+                                    .getMarcaReintegroLiquidacion(),
+                            nomenclador.getCodigo()
+                    )) {
 
                 continue;
             }
@@ -242,7 +330,7 @@ if (errorBusqueda == null
 
         pageContext.setAttribute(
                 "total",
-                total
+                Integer.valueOf(total)
         );
 
         if (total == 1) {
@@ -270,10 +358,6 @@ if (errorBusqueda == null
                 Nomenclador nomenclador =
                         archivos.get(i);
 
-                if (nomenclador.getBaja_fecha() != null) {
-                    continue;
-                }
-
                 String invocacion =
                         comprasNomencladorInvocacion(
                                 callbackBusqueda,
@@ -288,9 +372,43 @@ if (errorBusqueda == null
                 ResultRow row =
                         new ResultRow(
                                 nomenclador,
-                                new Integer(1 + i),
+                                Integer.valueOf(1 + i),
                                 i
                         );
+
+                String descripcionTipo =
+                        nomenclador
+                                .getDescripcionTipoNomenclador();
+
+                String codigoNomenclador =
+                        nomenclador.getCodigo();
+
+                String descripcionNomenclador =
+                        nomenclador.getDescripcion();
+
+                String especialidadDescripcion =
+                        nomenclador
+                                .getEspecialidadDescripcion();
+
+                descripcionTipo =
+                        descripcionTipo == null
+                                ? ""
+                                : descripcionTipo.trim();
+
+                codigoNomenclador =
+                        codigoNomenclador == null
+                                ? ""
+                                : codigoNomenclador.trim();
+
+                descripcionNomenclador =
+                        descripcionNomenclador == null
+                                ? ""
+                                : descripcionNomenclador.trim();
+
+                especialidadDescripcion =
+                        especialidadDescripcion == null
+                                ? ""
+                                : especialidadDescripcion.trim();
 
                 StringBuilder tipo =
                         new StringBuilder(
@@ -299,9 +417,7 @@ if (errorBusqueda == null
 
                 tipo.append(
                         HtmlUtil.escape(
-                                nomenclador
-                                        .getDescripcionTipoNomenclador()
-                                        .trim()
+                                descripcionTipo
                         )
                 );
 
@@ -315,9 +431,7 @@ if (errorBusqueda == null
 
                 codigo.append(
                         HtmlUtil.escape(
-                                nomenclador
-                                        .getCodigo()
-                                        .trim()
+                                codigoNomenclador
                         )
                 );
 
@@ -331,9 +445,7 @@ if (errorBusqueda == null
 
                 descripcion.append(
                         HtmlUtil.escape(
-                                nomenclador
-                                        .getDescripcion()
-                                        .trim()
+                                descripcionNomenclador
                         )
                 );
 
@@ -347,9 +459,7 @@ if (errorBusqueda == null
 
                 especialidad.append(
                         HtmlUtil.escape(
-                                nomenclador
-                                        .getEspecialidadDescripcion()
-                                        .trim()
+                                especialidadDescripcion
                         )
                 );
 
@@ -363,7 +473,7 @@ if (errorBusqueda == null
 
                 recupera.append(
                         nomenclador.getRecuperaSUR()
-                                ? "Sí"
+                                ? "S\u00ed"
                                 : "No"
                 );
 
@@ -387,7 +497,9 @@ if (errorBusqueda == null
                 baja.append("</a>");
                 row.addText(baja.toString());
 
-                resultRows.add(row);
+                resultRows.add(
+                        row
+                );
             }
         }
     }

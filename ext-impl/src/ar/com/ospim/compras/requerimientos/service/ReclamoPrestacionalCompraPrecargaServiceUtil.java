@@ -1,8 +1,10 @@
 package ar.com.ospim.compras.requerimientos.service;
 
+import ar.com.ospim.autorizaciones.beans.Nomenclador;
 import ar.com.ospim.autorizaciones.beans.PrestacionesReclamo;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import ar.com.ospim.autorizaciones.beans.RevisionesReclamo;
+import ar.com.ospim.autorizaciones.services.NomencladorServiceUtil;
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
@@ -819,12 +821,22 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
     private static void aplicarReferenciaTecnica(
             PrestacionesReclamo prestacion,
             RequerimientoCompra requerimiento,
-            RequerimientoCompraDetalle detalle) {
+            RequerimientoCompraDetalle detalle)
+            throws Exception {
 
         String sector =
                 mapearSector(
                         requerimiento.getSectorDescripcion()
                 );
+
+        if (WebKeysCompras.isEmpty(
+                sector
+        )) {
+            throw new IllegalArgumentException(
+                    "El sector del requerimiento no tiene "
+                            + "una configuracion tecnica valida."
+            );
+        }
 
         prestacion.setId_prestacionrecord(
                 0
@@ -835,32 +847,115 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         );
 
         /*
-         * Contrato actual:
+         * Los nuevos detalles de Compras utilizan NOMENCLADOR.
          *
-         * Todo detalle nuevo de Compras es NOMENCLADOR.
-         * Farmacia utiliza nomenclador tipo 9.
-         * Los demás sectores no pueden utilizar el tipo 9.
+         * La referencia se recupera nuevamente desde el nomenclador
+         * canonico porque el tipo, la marca ReinLiq, el codigo y el
+         * estado activo no deben confiarse a los datos de sesion o HTTP.
          */
         if (detalle.tieneNomenclador()) {
-            int idTipoNomenclador =
+            int idPrestacionDetalle =
+                    detalle.getIdPrestacionInt();
+
+            int idTipoNomencladorDetalle =
                     detalle.getIdTipoNomencladorInt();
 
+            Nomenclador nomenclador =
+                    NomencladorServiceUtil
+                            .buscarNomencladorPorId(
+                                    idPrestacionDetalle
+                            );
+
+            if (nomenclador == null
+                    || nomenclador.getId_prestacion()
+                    != idPrestacionDetalle
+                    || nomenclador.getBaja_fecha() != null) {
+
+                throw new IllegalArgumentException(
+                        "La prestacion seleccionada ya no existe "
+                                + "o no se encuentra activa."
+                );
+            }
+
+            if (nomenclador.getId_tipo_nomenclador()
+                    != idTipoNomencladorDetalle) {
+
+                throw new IllegalArgumentException(
+                        "El tipo de nomenclador persistido no "
+                                + "corresponde a la prestacion seleccionada."
+                );
+            }
+
             if (!WebKeysCompras
-                    .esTipoNomencladorValidoParaSectorCompras(
+                    .esNomencladorValidoParaSectorCompras(
                             sector,
-                            idTipoNomenclador
+                            nomenclador
+                                    .getId_tipo_nomenclador(),
+                            nomenclador
+                                    .getMarcaReintegroLiquidacion(),
+                            nomenclador.getCodigo()
                     )) {
 
                 if ("FARMACIA".equals(sector)) {
                     throw new IllegalArgumentException(
-                            "El detalle de Farmacia debe utilizar "
-                                    + "nomenclador tipo 9."
+                            "Para Farmacia debe utilizarse una "
+                                    + "prestacion del nomenclador tipo 9."
+                    );
+                }
+
+                if ("DISCAPACIDAD".equals(sector)) {
+                    throw new IllegalArgumentException(
+                            "Para Discapacidad debe utilizarse una "
+                                    + "prestacion con marca ReinLiq 6 "
+                                    + "o el codigo 431003."
+                    );
+                }
+
+                if ("ODONTOLOGIA".equals(sector)) {
+                    throw new IllegalArgumentException(
+                            "Para Odontologia debe utilizarse una "
+                                    + "prestacion del nomenclador tipo 1."
+                    );
+                }
+
+                if ("PRESTACIONES MEDICAS".equals(sector)) {
+                    throw new IllegalArgumentException(
+                            "Prestaciones Medicas no admite "
+                                    + "prestaciones del nomenclador tipo 1."
                     );
                 }
 
                 throw new IllegalArgumentException(
-                        "El nomenclador tipo 9 sólo puede utilizarse "
-                                + "en requerimientos de Farmacia."
+                        "La prestacion seleccionada no corresponde "
+                                + "al sector del requerimiento."
+                );
+            }
+
+            String codigoCanonico =
+                    nomenclador.getCodigo() == null
+                            ? ""
+                            : nomenclador.getCodigo().trim();
+
+            String descripcionCanonica =
+                    nomenclador.getDescripcion() == null
+                            ? ""
+                            : nomenclador.getDescripcion().trim();
+
+            if (WebKeysCompras.isEmpty(
+                    codigoCanonico
+            )) {
+                throw new IllegalArgumentException(
+                        "La prestacion seleccionada no tiene "
+                                + "un codigo valido."
+                );
+            }
+
+            if (WebKeysCompras.isEmpty(
+                    descripcionCanonica
+            )) {
+                throw new IllegalArgumentException(
+                        "La prestacion seleccionada no tiene "
+                                + "una descripcion valida."
                 );
             }
 
@@ -869,19 +964,19 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             );
 
             prestacion.setId_prestacion(
-                    detalle.getIdPrestacionInt()
+                    nomenclador.getId_prestacion()
             );
 
             prestacion.setCodigoPrestacion(
-                    detalle.getCodigoNomencladorVisible()
+                    codigoCanonico
             );
 
             prestacion.setNombreprestacion(
-                    detalle.getDescripcionNomencladorVisible()
+                    descripcionCanonica
             );
 
             prestacion.setDescripcion(
-                    detalle.getDescripcionNomencladorVisible()
+                    descripcionCanonica
             );
 
             prestacion.setNombremedicacion(
@@ -892,17 +987,33 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         }
 
         /*
-         * Compatibilidad histórica:
+         * Compatibilidad historica:
          *
-         * Los detalles que ya estaban persistidos como MEDICAMENTO
-         * antes de la migración siguen siendo utilizables, pero
-         * solamente para el sector Farmacia.
+         * Las filas que ya estaban persistidas como MEDICAMENTO
+         * continúan siendo utilizables exclusivamente en Farmacia.
+         * No se habilitan nuevas altas de este tipo.
          */
         if (detalle.tieneMedicamento()) {
-            if (!"FARMACIA".equals(sector)) {
+            if (!"FARMACIA".equals(
+                    sector
+            )) {
                 throw new IllegalArgumentException(
-                        "Un medicamento histórico sólo puede utilizarse "
-                                + "en un requerimiento de Farmacia."
+                        "Un medicamento historico solo puede "
+                                + "utilizarse en Farmacia."
+                );
+            }
+
+            String nombreMedicamento =
+                    detalle.getNombreMedicamentoVisible();
+
+            if (detalle.getIdMedicamentoInt() <= 0
+                    || WebKeysCompras.isEmpty(
+                    nombreMedicamento
+            )) {
+
+                throw new IllegalArgumentException(
+                        "El medicamento historico no conserva "
+                                + "una referencia tecnica valida."
                 );
             }
 
@@ -919,23 +1030,23 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             );
 
             prestacion.setNombreprestacion(
-                    detalle.getNombreMedicamentoVisible()
+                    nombreMedicamento
             );
 
             prestacion.setDescripcion(
-                    detalle.getNombreMedicamentoVisible()
+                    nombreMedicamento
             );
 
             prestacion.setNombremedicacion(
-                    detalle.getNombreMedicamentoVisible()
+                    nombreMedicamento
             );
 
             return;
         }
 
         throw new IllegalArgumentException(
-                "El detalle de Compras no contiene una "
-                        + "referencia técnica válida."
+                "El detalle de Compras no contiene "
+                        + "una referencia tecnica valida."
         );
     }
 

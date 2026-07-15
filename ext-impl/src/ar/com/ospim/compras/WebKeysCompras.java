@@ -26,6 +26,10 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final int FILTRO_NOMENCLADOR_ODONTOLOGIA = 1;
     public static final int FILTRO_NOMENCLADOR_DISCAPACIDAD = 8;
     public static final int FILTRO_NOMENCLADOR_FARMACIA = 9;
+    public static final int MARCA_REIN_LIQ_DISCAPACIDAD = 6;
+
+    public static final String
+            CODIGO_ESPECIAL_DISCAPACIDAD = "431003";
 
     public static final String ROL_VIEW_COMPRAS = "VIEW_Compras";
     public static final String ROL_ABM_COMPRAS = "ABM_Compras";
@@ -394,9 +398,23 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             );
         }
 
-        if ("DISCAPACIDAD".equals(sector)
-                || "ODONTOLOGIA".equals(sector)
-                || "PRESTACIONES MEDICAS".equals(sector)
+        if ("DISCAPACIDAD".equals(sector)) {
+            /*
+             * Reclamos Prestacionales parte del tipo 8,
+             * pero la consulta efectiva utiliza marca ReinLiq 6.
+             */
+            return Integer.valueOf(
+                    FILTRO_NOMENCLADOR_DISCAPACIDAD
+            );
+        }
+
+        if ("ODONTOLOGIA".equals(sector)) {
+            return Integer.valueOf(
+                    FILTRO_NOMENCLADOR_ODONTOLOGIA
+            );
+        }
+
+        if ("PRESTACIONES MEDICAS".equals(sector)
                 || "LEGALES".equals(sector)) {
 
             return Integer.valueOf(
@@ -407,9 +425,11 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return null;
     }
 
-    public static boolean esTipoNomencladorValidoParaSectorCompras(
+    public static boolean esNomencladorValidoParaSectorCompras(
             String sectorDescripcion,
-            int idTipoNomenclador) {
+            int idTipoNomenclador,
+            int marcaReinLiq,
+            String codigoNomenclador) {
 
         if (idTipoNomenclador <= 0) {
             return false;
@@ -420,18 +440,35 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                         sectorDescripcion
                 );
 
+        String codigo =
+                codigoNomenclador == null
+                        ? ""
+                        : codigoNomenclador.trim();
+
         if ("FARMACIA".equals(sector)) {
             return idTipoNomenclador
                     == FILTRO_NOMENCLADOR_FARMACIA;
         }
 
-        if ("DISCAPACIDAD".equals(sector)
-                || "ODONTOLOGIA".equals(sector)
-                || "PRESTACIONES MEDICAS".equals(sector)
-                || "LEGALES".equals(sector)) {
+        if ("DISCAPACIDAD".equals(sector)) {
+            return marcaReinLiq
+                    == MARCA_REIN_LIQ_DISCAPACIDAD
+                    || CODIGO_ESPECIAL_DISCAPACIDAD
+                    .equals(codigo);
+        }
 
+        if ("ODONTOLOGIA".equals(sector)) {
             return idTipoNomenclador
-                    != FILTRO_NOMENCLADOR_FARMACIA;
+                    == FILTRO_NOMENCLADOR_ODONTOLOGIA;
+        }
+
+        if ("PRESTACIONES MEDICAS".equals(sector)) {
+            return idTipoNomenclador
+                    != FILTRO_NOMENCLADOR_ODONTOLOGIA;
+        }
+
+        if ("LEGALES".equals(sector)) {
+            return true;
         }
 
         return false;

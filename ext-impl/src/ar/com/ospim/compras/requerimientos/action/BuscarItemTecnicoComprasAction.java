@@ -103,6 +103,24 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
             return;
         }
 
+        int marcaReinLiq =
+                "DISCAPACIDAD".equals(sector)
+                        ? WebKeysCompras
+                          .MARCA_REIN_LIQ_DISCAPACIDAD
+                        : 0;
+
+        request.setAttribute(
+                "COMPRAS_SECTOR_NOMENCLADOR",
+                sector
+        );
+
+        request.setAttribute(
+                "COMPRAS_MARCA_REIN_LIQ",
+                String.valueOf(
+                        marcaReinLiq
+                )
+        );
+
         request.setAttribute(
                 "COMPRAS_ES_PREST_MED",
                 "PRESTACIONES MEDICAS".equals(sector)
