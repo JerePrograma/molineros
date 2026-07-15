@@ -22,19 +22,50 @@
                 <% if (puedeEditarEstructuraPantalla) { %>
                     <select id="<portlet:namespace />sector_id"
                             onChange="<portlet:namespace />cambiarSectorCompra(true);">
-                        <option value="0" data-requiere-afiliado="false">Seleccione</option>
+                        <option value="0"
+                                data-requiere-afiliado="false"
+                                data-usa-codigo-prestacion="false">
+                            Seleccione
+                        </option>
 
                         <%
                         for (int i = 0; i < sectores.size(); i++) {
-                            RequerimientoCompraSector sector = sectores.get(i);
-                            String sectorId = String.valueOf(sector.getIdSector());
-                            String selected = reqSectorId.equals(sectorId) ? "selected=\"selected\"" : "";
-                            String requiereAfiliado = sector.isRequiereAfiliado() ? "true" : "false";
+                            RequerimientoCompraSector sector =
+                                    sectores.get(i);
+
+                            String sectorId =
+                                    String.valueOf(
+                                            sector.getIdSector()
+                                    );
+
+                            String selected =
+                                    reqSectorId.equals(sectorId)
+                                            ? "selected=\"selected\""
+                                            : "";
+
+                            String requiereAfiliado =
+                                    sector.isRequiereAfiliado()
+                                            ? "true"
+                                            : "false";
+
+                            boolean usaCodigoPrestacion =
+                                    WebKeysCompras
+                                            .getFiltroTipoNomencladorCompras(
+                                                    sector.getDescripcion()
+                                            ) != null;
+
+                            String usaCodigoPrestacionAttr =
+                                    usaCodigoPrestacion
+                                            ? "true"
+                                            : "false";
                         %>
                             <option value="<%= sectorId %>"
                                     data-requiere-afiliado="<%= requiereAfiliado %>"
+                                    data-usa-codigo-prestacion="<%= usaCodigoPrestacionAttr %>"
                                     <%= selected %>>
-                                <%= HtmlUtil.escape(sector.getDescripcionVisible()) %>
+                                <%= HtmlUtil.escape(
+                                        sector.getDescripcionVisible()
+                                ) %>
                             </option>
                         <%
                         }

@@ -331,6 +331,97 @@
         return attr == 'true' || attr == '1' || attr == 'Sí' || attr == 'S';
     }
 
+    function <portlet:namespace />sectorUsaCodigoPrestacion() {
+        var sectorId =
+                <portlet:namespace />trimValue(
+                        'sector_id'
+                );
+
+        if (sectorId == ''
+                || sectorId == '0') {
+
+            return false;
+        }
+
+        var selected =
+                jQuery(
+                        '#<portlet:namespace />sector_id option:selected'
+                );
+
+        var attr =
+                selected.attr(
+                        'data-usa-codigo-prestacion'
+                );
+
+        return attr == 'true'
+                || attr == '1'
+                || attr == 'Sí'
+                || attr == 'S';
+    }
+
+    function <portlet:namespace />actualizarVisibilidadObservaciones(
+            limpiarSiSeOculta) {
+
+        var sectorId =
+                <portlet:namespace />trimValue(
+                        'sector_id'
+                );
+
+        var panel =
+                jQuery(
+                        '#<portlet:namespace />observaciones_panel'
+                );
+
+        var observaciones =
+                jQuery(
+                        '#<portlet:namespace />observaciones'
+                );
+
+        var observacionesHidden =
+                jQuery(
+                        '#<portlet:namespace />observaciones_hidden'
+                );
+
+        if (panel.length == 0) {
+            return;
+        }
+
+        var tieneSector =
+                sectorId != ''
+                && sectorId != '0';
+
+        var usaCodigoPrestacion =
+                tieneSector
+                && <portlet:namespace />sectorUsaCodigoPrestacion();
+
+        var mostrarObservaciones =
+                tieneSector
+                && !usaCodigoPrestacion;
+
+        if (mostrarObservaciones) {
+            panel.show();
+            return;
+        }
+
+        /*
+         * Sólo se limpia cuando el usuario cambia de sector.
+         *
+         * En la carga inicial se oculta, pero se conserva cualquier
+         * valor histórico que ya estuviera persistido.
+         */
+        if (limpiarSiSeOculta) {
+            if (observaciones.length > 0) {
+                observaciones.val('');
+            }
+
+            if (observacionesHidden.length > 0) {
+                observacionesHidden.val('');
+            }
+        }
+
+        panel.hide();
+    }
+
     function <portlet:namespace />sincronizarAfiliadoRequerimiento() {
         jQuery('#<portlet:namespace />afiliado_cuil_titular').val(
                 <portlet:namespace />trimValue('cuil')
@@ -431,9 +522,18 @@
                 <portlet:namespace />trimValue('cargo_tercerizadora')
         );
 
-        jQuery('#<portlet:namespace />observaciones_hidden').val(
-                jQuery('#<portlet:namespace />observaciones').val()
-        );
+        var observacionesInput =
+                jQuery(
+                        '#<portlet:namespace />observaciones'
+                );
+
+        if (observacionesInput.length > 0) {
+            jQuery(
+                    '#<portlet:namespace />observaciones_hidden'
+            ).val(
+                    observacionesInput.val() || ''
+            );
+        }
 
         if (cargoForzadoPorSector) {
             <portlet:namespace />actualizarRecuperoPorCargoTercerizadora(0);
@@ -612,19 +712,34 @@
         }
     }
 
-    function <portlet:namespace />cambiarSectorCompra(limpiarSiNoRequiere) {
-        <portlet:namespace />actualizarVisibilidadAfiliado(limpiarSiNoRequiere);
+    function <portlet:namespace />cambiarSectorCompra(
+            limpiarSiNoRequiere) {
+
+        <portlet:namespace />actualizarVisibilidadAfiliado(
+                limpiarSiNoRequiere
+        );
+
+        <portlet:namespace />actualizarVisibilidadObservaciones(
+                true
+        );
 
         /*
          * Si el usuario cambia hacia un sector que requiere afiliado,
-         * limpiamos cargos para evitar que quede arrastrado el 100/0 forzado.
+         * se limpian los cargos para evitar arrastrar el 100/0 forzado.
          */
-        <portlet:namespace />aplicarReglaCargosPorSector(true);
+        <portlet:namespace />aplicarReglaCargosPorSector(
+                true
+        );
 
         <portlet:namespace />sincronizarFormularioCompra();
 
-        if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
-            window['<portlet:namespace />filtrarArticulosPorSector']();
+        if (typeof window[
+                '<portlet:namespace />filtrarArticulosPorSector'
+        ] == 'function') {
+
+            window[
+                    '<portlet:namespace />filtrarArticulosPorSector'
+            ]();
         }
     }
 
@@ -914,6 +1029,7 @@
         </c:if>
 
         <portlet:namespace />actualizarVisibilidadAfiliado(false);
+        <portlet:namespace />actualizarVisibilidadObservaciones(false);
         <portlet:namespace />aplicarReglaCargosPorSector(false);
         <portlet:namespace />sincronizarFormularioCompra();
 
@@ -955,6 +1071,7 @@
 
         setTimeout(function() {
             <portlet:namespace />actualizarVisibilidadAfiliado(false);
+            <portlet:namespace />actualizarVisibilidadObservaciones(false);
             <portlet:namespace />aplicarReglaCargosPorSector(false);
             <portlet:namespace />sincronizarFormularioCompra();
 
