@@ -29,16 +29,16 @@ public final class ReclamoPrestacionalEditorContractTest {
         );
 
         assertBefore(
-                "editor cargado después del legacy",
+                "editor cargado después del guard de pestañas",
                 view,
-                "view_reclamo.js?v=20260716-p0-3",
-                "view_reclamo_editor_patch.js?v=20260716-p0-3"
+                "view_reclamo_tab_guard.js?v=20260716-p0-4",
+                "view_reclamo_editor_patch.js?v=20260716-p0-4"
         );
         assertBefore(
                 "editor cargado antes del P0 general",
                 view,
-                "view_reclamo_editor_patch.js?v=20260716-p0-3",
-                "view_reclamo_p0_patch.js?v=20260716-p0-3"
+                "view_reclamo_editor_patch.js?v=20260716-p0-4",
+                "view_reclamo_p0_patch.js?v=20260716-p0-4"
         );
 
         assertContains(
