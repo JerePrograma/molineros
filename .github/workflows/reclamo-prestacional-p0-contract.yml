@@ -1,15 +1,31 @@
-name: Reclamo Prestacional P0 Contract
+name: Reclamo Prestacional Contracts
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/autorizaciones/RECLAMOS_PRESTACIONALES_P0_DEPLOY.md'
+      - 'ext-impl/src/ar/com/ospim/autorizaciones/action/ReclamosBaseAction.java'
+      - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java'
+      - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java'
+      - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_editor_patch.js'
+      - '.github/workflows/reclamo-prestacional-p0-contract.yml'
   pull_request:
     paths:
       - 'docs/autorizaciones/RECLAMOS_PRESTACIONALES_P0_DEPLOY.md'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/action/ReclamosBaseAction.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java'
+      - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_editor_patch.js'
       - '.github/workflows/reclamo-prestacional-p0-contract.yml'
   workflow_dispatch:
 
@@ -31,15 +47,21 @@ jobs:
           distribution: temurin
           java-version: '8'
 
-      - name: Compile contract
+      - name: Compile contracts
         run: |
-          rm -rf /tmp/rp-p0-contract
-          mkdir -p /tmp/rp-p0-contract
+          rm -rf /tmp/rp-contracts
+          mkdir -p /tmp/rp-contracts
           javac -encoding UTF-8 \
-            -d /tmp/rp-p0-contract \
-            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java
+            -d /tmp/rp-contracts \
+            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java \
+            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java
 
-      - name: Run contract
+      - name: Run P0 contract
         run: |
-          java -cp /tmp/rp-p0-contract \
+          java -cp /tmp/rp-contracts \
             ar.com.ospim.test.ReclamoPrestacionalP0ContractTest
+
+      - name: Run editor contract
+        run: |
+          java -cp /tmp/rp-contracts \
+            ar.com.ospim.test.ReclamoPrestacionalEditorContractTest
