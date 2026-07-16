@@ -28,182 +28,101 @@ public final class ReclamoAppMobileSyncContractTest {
                 "ext-impl/src/ar/com/ospim/autorizaciones/services/"
                         + "ReclamoAppMobileOutboxDirectService.java"
         );
-
-        assertContains(
-                "éxito limitado a HTTP 200/204",
-                client,
-                "status == 200 || status == 204"
-        );
-        assertContains(
-                "respuesta exitosa explícita",
-                client,
-                "return true;"
-        );
-        assertContains(
-                "respuesta fallida explícita",
-                client,
-                "return false;"
-        );
-        assertContains(
-                "host desde configuración",
-                client,
-                "APP_HOST_WEBSERVICE"
-        );
-        assertContains(
-                "respuesta externa limitada",
-                client,
-                "limitar(response, 1000)"
-        );
-        assertContains(
-                "conexión liberada",
-                client,
-                "post.releaseConnection();"
+        String transactionalDelete = leer(
+                "ext-impl/src/ar/com/ospim/autorizaciones/services/"
+                        + "ReclamoPrestacionalBajaTransaccionalService.java"
         );
 
-        assertContains(
-                "servicio usa cliente confirmado",
-                service,
-                "ReclamoAppMobileSyncClient"
-        );
-        assertContains(
-                "resultado de sincronización evaluado",
-                service,
-                "if (!sincronizado)"
-        );
-        assertContains(
-                "HTTP no confirmado queda pendiente",
-                service,
-                "motivo=HTTP_NO_CONFIRMADO"
-        );
-        assertContains(
-                "éxito sólo después de confirmación",
-                service,
-                "Anulación confirmada por AppMobile"
-        );
-        assertNotContains(
-                "mensaje ambiguo de solicitud enviada",
-                service,
-                "Solicitud de anulación enviada a AppMobile"
-        );
+        assertContains("éxito limitado a HTTP 200/204", client,
+                "status == 200 || status == 204");
+        assertContains("respuesta exitosa explícita", client, "return true;");
+        assertContains("respuesta fallida explícita", client, "return false;");
+        assertContains("host desde configuración", client,
+                "APP_HOST_WEBSERVICE");
+        assertContains("respuesta externa limitada", client,
+                "limitar(response, 1000)");
+        assertContains("conexión liberada", client,
+                "post.releaseConnection();");
 
-        assertContains(
-                "registro concurrente de bajas",
-                service,
-                "new ConcurrentHashMap<Integer, Long>()"
-        );
-        assertContains(
-                "ventana limitada de compatibilidad",
-                service,
-                "BAJA_RECIENTE_TTL_MS = 60000L"
-        );
-        assertContains(
-                "baja registrada después de persistencia local",
-                service,
-                "registrarBajaReciente(id);"
-        );
-        assertBefore(
-                "registro posterior a baja local",
-                service,
-                "getInstance().borrar(id, user.getScreenName());",
-                "registrarBajaReciente(id);"
-        );
-        assertContains(
-                "relectura inmediata suprimida",
-                service,
-                "if (esBajaReciente(id))"
-        );
-        assertContains(
-                "relectura devuelve nulo",
-                service,
-                "Se omite relectura de Reclamo Prestacional dado de baja"
-        );
-        assertContains(
-                "limpieza de marcas expiradas",
-                service,
-                "limpiarBajasRecientesExpiradas"
-        );
+        assertContains("servicio usa cliente confirmado", service,
+                "ReclamoAppMobileSyncClient");
+        assertContains("resultado de sincronización evaluado", service,
+                "if (!sincronizado)");
+        assertContains("HTTP no confirmado queda pendiente", service,
+                "motivo=HTTP_NO_CONFIRMADO");
+        assertContains("éxito sólo después de confirmación", service,
+                "Anulación confirmada por AppMobile");
+        assertNotContains("mensaje ambiguo de solicitud enviada", service,
+                "Solicitud de anulación enviada a AppMobile");
 
-        assertContains(
-                "outbox registrada después de baja",
-                service,
-                "BAJA_LOCAL_CONFIRMADA"
-        );
-        assertContains(
-                "token nulo persistido",
-                service,
-                "registrarOutboxSeguro("
-        );
-        assertContains(
-                "error HTTP persistido",
-                service,
-                "HTTP_NO_CONFIRMADO"
-        );
-        assertContains(
-                "excepción resumida en outbox",
-                service,
-                "EXCEPCION: "
-        );
-        assertContains(
-                "fallo de outbox no revierte baja",
-                service,
-                "RECLAMO_APP_OUTBOX_UNAVAILABLE"
-        );
-        assertContains(
-                "confirmación pendiente visible",
-                service,
-                "RECLAMO_APP_OUTBOX_CONFIRM_PENDING"
-        );
+        assertContains("registro concurrente de bajas", service,
+                "new ConcurrentHashMap<Integer, Long>()");
+        assertContains("ventana limitada de compatibilidad", service,
+                "BAJA_RECIENTE_TTL_MS = 60000L");
+        assertContains("baja registrada después de persistencia local", service,
+                "registrarBajaReciente(id);");
+        assertBefore("guard posterior a baja transaccional", service,
+                "ReclamoPrestacionalBajaTransaccionalService.borrar(",
+                "registrarBajaReciente(id);");
+        assertContains("relectura inmediata suprimida", service,
+                "if (esBajaReciente(id))");
+        assertContains("relectura devuelve nulo", service,
+                "Se omite relectura de Reclamo Prestacional dado de baja");
+        assertContains("limpieza de marcas expiradas", service,
+                "limpiarBajasRecientesExpiradas");
 
-        assertBefore(
-                "baja antes de registrar outbox",
-                service,
-                "getInstance().borrar(id, user.getScreenName());",
-                "BAJA_LOCAL_CONFIRMADA"
-        );
-        assertBefore(
-                "outbox antes de obtener token",
-                service,
-                "BAJA_LOCAL_CONFIRMADA",
-                "ClienteAppMobile.obtenerToken()"
-        );
-        assertBefore(
-                "HTTP antes de confirmar outbox",
-                service,
+        assertContains("token nulo persistido", service,
+                "registrarOutboxSeguro(");
+        assertContains("error HTTP persistido", service,
+                "HTTP_NO_CONFIRMADO");
+        assertContains("excepción resumida en outbox", service,
+                "EXCEPCION: ");
+        assertContains("fallo de outbox visible", service,
+                "RECLAMO_APP_OUTBOX_UNAVAILABLE");
+        assertContains("confirmación pendiente visible", service,
+                "RECLAMO_APP_OUTBOX_CONFIRM_PENDING");
+        assertNotContains("baja antigua prohibida en utilitario", service,
+                "getInstance().borrar(id, user.getScreenName());");
+
+        assertBefore("baja transaccional antes del token", service,
+                "ReclamoPrestacionalBajaTransaccionalService.borrar(",
+                "ClienteAppMobile.obtenerToken()");
+        assertBefore("HTTP antes de confirmar outbox", service,
                 "boolean sincronizado = ReclamoAppMobileSyncClient",
-                "confirmarOutboxSeguro(idReintegroApp.intValue(), \"AN\")"
-        );
-        assertBefore(
-                "confirmación outbox antes de log de éxito",
-                service,
+                "confirmarOutboxSeguro(idReintegroApp.intValue(), \"AN\")");
+        assertBefore("confirmación outbox antes de log de éxito", service,
                 "confirmarOutboxSeguro(idReintegroApp.intValue(), \"AN\")",
-                "Anulación confirmada por AppMobile"
-        );
+                "Anulación confirmada por AppMobile");
 
-        assertContains(
-                "confirmación por clave externa",
-                directOutbox,
-                "WHERE id_reintegro_app = ?"
-        );
-        assertContains(
-                "confirmación sólo de pendientes",
-                directOutbox,
-                "AND procesado_en IS NULL"
-        );
-        assertContains(
-                "estado procesado persistido",
-                directOutbox,
-                "estado_proceso = 'PROCESADO'"
-        );
-        assertContains(
-                "confirmación transaccional",
-                directOutbox,
-                "con.commit();"
-        );
-        assertContains(
-                "rollback de confirmación",
-                directOutbox,
-                "ConnectionHelper.rollback(con)"
-        );
+        assertContains("stored procedure conservado", transactionalDelete,
+                "autorizaciones.borra_reclamo_prestacional");
+        assertContains("outbox usa misma conexión", transactionalDelete,
+                "registrarOutboxEnTransaccion(\n                        con,");
+        assertContains("motivo inicial persistido", transactionalDelete,
+                "BAJA_LOCAL_CONFIRMADA");
+        assertBefore("baja antes de outbox en la transacción",
+                transactionalDelete,
+                "resultado = baja.executeQuery();",
+                "registrarOutboxEnTransaccion(");
+        assertBefore("outbox antes del commit",
+                transactionalDelete,
+                "registrarOutboxEnTransaccion(",
+                "con.commit();");
+        assertContains("resultado cero bloquea baja", transactionalDelete,
+                "resultado.getInt(1) == 0");
+        assertContains("rollback de baja transaccional", transactionalDelete,
+                "ConnectionHelper.rollback(con)");
+
+        assertContains("confirmación por clave externa", directOutbox,
+                "WHERE id_reintegro_app = ?");
+        assertContains("confirmación sólo de pendientes", directOutbox,
+                "AND procesado_en IS NULL");
+        assertContains("estado procesado persistido", directOutbox,
+                "estado_proceso = 'PROCESADO'");
+        assertContains("confirmación transaccional", directOutbox,
+                "con.commit();");
+        assertContains("rollback de confirmación", directOutbox,
+                "ConnectionHelper.rollback(con)");
 
         System.out.println("CONTRATO_SYNC_APPMOBILE_RECLAMO_OK");
     }
@@ -214,26 +133,18 @@ public final class ReclamoAppMobileSyncContractTest {
     }
 
     private static void assertContains(
-            String etiqueta,
-            String contenido,
-            String esperado) {
-
+            String etiqueta, String contenido, String esperado) {
         if (contenido.indexOf(esperado) < 0) {
             throw new AssertionError(
-                    etiqueta + ": no se encontró [" + esperado + "]"
-            );
+                    etiqueta + ": no se encontró [" + esperado + "]");
         }
     }
 
     private static void assertNotContains(
-            String etiqueta,
-            String contenido,
-            String prohibido) {
-
+            String etiqueta, String contenido, String prohibido) {
         if (contenido.indexOf(prohibido) >= 0) {
             throw new AssertionError(
-                    etiqueta + ": se encontró [" + prohibido + "]"
-            );
+                    etiqueta + ": se encontró [" + prohibido + "]");
         }
     }
 
@@ -242,15 +153,12 @@ public final class ReclamoAppMobileSyncContractTest {
             String contenido,
             String primero,
             String segundo) {
-
         int posPrimero = contenido.indexOf(primero);
         int posSegundo = contenido.indexOf(segundo);
-
         if (posPrimero < 0 || posSegundo < 0 || posPrimero >= posSegundo) {
             throw new AssertionError(
                     etiqueta + ": orden inválido entre ["
-                            + primero + "] y [" + segundo + "]"
-            );
+                            + primero + "] y [" + segundo + "]");
         }
     }
 }
