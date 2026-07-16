@@ -67,7 +67,7 @@ public final class ReclamoAppMobileAuthClient {
             if (status != 200) {
                 _log.error("AppMobile rechazó autenticación. http="
                         + status
-                        + " respuesta=" + limitar(response, 1000));
+                        + " responseLength=" + longitud(response));
                 return null;
             }
 
@@ -111,13 +111,7 @@ public final class ReclamoAppMobileAuthClient {
         return normalizado;
     }
 
-    private static String limitar(String texto, int maximo) {
-        if (texto == null) {
-            return "";
-        }
-        if (texto.length() <= maximo) {
-            return texto;
-        }
-        return texto.substring(0, maximo) + "...";
+    private static int longitud(String texto) {
+        return texto == null ? 0 : texto.length();
     }
 }
