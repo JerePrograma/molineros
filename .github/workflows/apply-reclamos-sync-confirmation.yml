@@ -1,0 +1,210 @@
+name: Apply Reclamos AppMobile Confirmation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/apply-reclamos-sync-confirmation.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply exact legacy patches
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              file = Path(path)
+              text = file.read_text(encoding="utf-8")
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(
+                      "%s: se esperaba una coincidencia y se encontraron %s"
+                      % (label, count)
+                  )
+              file.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          mobile_path = (
+              "ext-impl/src/ar/com/ospim/desarrolloAppMobile/beans/"
+              "ClienteAppMobile.java"
+          )
+          mobile_old = '''\tpublic static void actualizarEstadoReintegro(int idReintegro, String nuevoEstado, String token) {
+          \t    if (token == null) {
+          \t        logger.error("Token inválido para actualizar estado del reintegro " + idReintegro);
+          \t        return;
+          \t    }
+
+          \t    String url = ACTUALIZAR_ESTADO_REINTEGRO_URL + idReintegro + "?estado=" + nuevoEstado;
+
+          \t    HttpClient httpClient = new HttpClient();
+          \t    PostMethod post = new PostMethod(url);
+
+          \t    post.addRequestHeader("accept", "application/json");
+          \t    post.addRequestHeader("Authorization", "Bearer " + token);
+
+          \t    try {
+          \t        int status = httpClient.executeMethod(post);
+          \t        String response = post.getResponseBodyAsString();
+
+          \t        if (status == 200 || status == 204) {
+          \t            logger.info("Estado de reintegro actualizado correctamente para el id " + idReintegro + " a: " + nuevoEstado);
+          \t        } else {
+          \t            logger.error("Error al actualizar estado del reintegro. Status: " + status + " Response: " + response);
+          \t        }
+          \t    } catch (Exception e) {
+          \t        logger.error("Excepción al actualizar estado del reintegro " + idReintegro, e);
+          \t    } finally {
+          \t        post.releaseConnection();
+          \t    }
+          \t}'''
+          mobile_new = '''\tpublic static void actualizarEstadoReintegro(int idReintegro, String nuevoEstado, String token) {
+          \t\tactualizarEstadoReintegroConfirmado(idReintegro, nuevoEstado, token);
+          \t}
+
+          \t/**
+          \t * Actualiza el estado externo y devuelve true solamente cuando AppMobile
+          \t * confirma la operación con HTTP 200 o 204.
+          \t */
+          \tpublic static boolean actualizarEstadoReintegroConfirmado(
+          \t\t\tint idReintegro,
+          \t\t\tString nuevoEstado,
+          \t\t\tString token) {
+
+          \t    if (token == null || token.trim().isEmpty()) {
+          \t        logger.error("Token inválido para actualizar estado del reintegro " + idReintegro);
+          \t        return false;
+          \t    }
+
+          \t    String url = ACTUALIZAR_ESTADO_REINTEGRO_URL + idReintegro + "?estado=" + nuevoEstado;
+
+          \t    HttpClient httpClient = new HttpClient();
+          \t    PostMethod post = new PostMethod(url);
+
+          \t    post.addRequestHeader("accept", "application/json");
+          \t    post.addRequestHeader("Authorization", "Bearer " + token);
+
+          \t    try {
+          \t        int status = httpClient.executeMethod(post);
+          \t        String response = post.getResponseBodyAsString();
+
+          \t        if (status == 200 || status == 204) {
+          \t            logger.info("Estado de reintegro actualizado correctamente para el id " + idReintegro + " a: " + nuevoEstado);
+          \t            return true;
+          \t        }
+
+          \t        logger.error("Error al actualizar estado del reintegro. Status: " + status + " Response: " + response);
+          \t        return false;
+          \t    } catch (Exception e) {
+          \t        logger.error("Excepción al actualizar estado del reintegro " + idReintegro, e);
+          \t        return false;
+          \t    } finally {
+          \t        post.releaseConnection();
+          \t    }
+          \t}'''
+          replace_once(
+              mobile_path,
+              mobile_old,
+              mobile_new,
+              "ClienteAppMobile.actualizarEstadoReintegro"
+          )
+
+          service_path = (
+              "ext-impl/src/ar/com/ospim/autorizaciones/services/"
+              "ReclamosPrestacionesServiceUtil.java"
+          )
+          service_old = '''\t\t\t\tClienteAppMobile.actualizarEstadoReintegro(idReintegroApp, "AN", token);
+          \t\t\t\t_log.info("Solicitud de anulación enviada a AppMobile. reclamo=" + id
+          \t\t\t\t\t\t+ " reintegroApp=" + idReintegroApp);'''
+          service_new = '''\t\t\t\tboolean sincronizado = ClienteAppMobile.actualizarEstadoReintegroConfirmado(
+          \t\t\t\t\t\tidReintegroApp,
+          \t\t\t\t\t\t"AN",
+          \t\t\t\t\t\ttoken
+          \t\t\t\t);
+          \t\t\t\tif (!sincronizado) {
+          \t\t\t\t\t_log.error("RECLAMO_APP_SYNC_PENDING reclamo=" + id
+          \t\t\t\t\t\t\t+ " reintegroApp=" + idReintegroApp
+          \t\t\t\t\t\t\t+ " estado=AN motivo=HTTP_NO_CONFIRMADO");
+          \t\t\t\t\treturn;
+          \t\t\t\t}
+          \t\t\t\t_log.info("Anulación confirmada por AppMobile. reclamo=" + id
+          \t\t\t\t\t\t+ " reintegroApp=" + idReintegroApp);'''
+          replace_once(
+              service_path,
+              service_old,
+              service_new,
+              "ReclamosPrestacionesServiceUtil.borrar"
+          )
+
+      - name: Verify synchronization contract
+        shell: python
+        run: |
+          from pathlib import Path
+
+          mobile = Path(
+              "ext-impl/src/ar/com/ospim/desarrolloAppMobile/beans/"
+              "ClienteAppMobile.java"
+          ).read_text(encoding="utf-8")
+          service = Path(
+              "ext-impl/src/ar/com/ospim/autorizaciones/services/"
+              "ReclamosPrestacionesServiceUtil.java"
+          ).read_text(encoding="utf-8")
+
+          required_mobile = [
+              "actualizarEstadoReintegroConfirmado",
+              "return true;",
+              "return false;",
+              "status == 200 || status == 204"
+          ]
+          required_service = [
+              "boolean sincronizado = ClienteAppMobile.actualizarEstadoReintegroConfirmado",
+              "HTTP_NO_CONFIRMADO",
+              "Anulación confirmada por AppMobile"
+          ]
+
+          for token in required_mobile:
+              if token not in mobile:
+                  raise SystemExit("Falta contrato móvil: " + token)
+          for token in required_service:
+              if token not in service:
+                  raise SystemExit("Falta contrato de servicio: " + token)
+
+      - name: Run textual contracts
+        run: |
+          rm -rf /tmp/rp-contracts
+          mkdir -p /tmp/rp-contracts
+          javac -encoding UTF-8 \
+            -d /tmp/rp-contracts \
+            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java \
+            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java
+          java -cp /tmp/rp-contracts \
+            ar.com.ospim.test.ReclamoPrestacionalP0ContractTest
+          java -cp /tmp/rp-contracts \
+            ar.com.ospim.test.ReclamoPrestacionalEditorContractTest
+
+      - name: Commit confirmed synchronization
+        run: |
+          if git diff --quiet; then
+            echo "No hay cambios para confirmar"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            ext-impl/src/ar/com/ospim/desarrolloAppMobile/beans/ClienteAppMobile.java \
+            ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java
+          git commit -m "fix(reclamos): confirma resultado HTTP de sincronización móvil"
+          git push origin HEAD:main
