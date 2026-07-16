@@ -1,0 +1,44 @@
+name: Legacy Source Snapshot
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ext-impl/**'
+      - 'ext-web/**'
+      - 'sql/**'
+      - 'docs/**'
+      - '.github/workflows/source-snapshot.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Package legacy sources
+        run: |
+          tar -czf molineros-legacy-source.tar.gz \
+            ext-impl \
+            ext-web \
+            sql \
+            docs \
+            build.xml \
+            build-parent.xml \
+            build-common.xml
+
+      - name: Upload source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: molineros-legacy-source
+          path: molineros-legacy-source.tar.gz
+          retention-days: 1
+          if-no-files-found: error
