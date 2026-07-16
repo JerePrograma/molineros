@@ -27,6 +27,10 @@ public final class ReclamoPrestacionalP0ContractTest {
                 "ext-web/docroot/html/portlet/autorizaciones/"
                         + "reclamos_prestacionales/view_reclamo_p0_patch.js"
         );
+        String baseAction = leer(
+                "ext-impl/src/ar/com/ospim/autorizaciones/action/"
+                        + "ReclamosBaseAction.java"
+        );
 
         assertContains(
                 "snapshot antes del script legacy",
@@ -100,6 +104,42 @@ public final class ReclamoPrestacionalP0ContractTest {
                 "selector textual rechazado prohibido",
                 patch,
                 "option[value='RECHAZADO']"
+        );
+
+        assertContains(
+                "parser de evaluación centralizado",
+                baseAction,
+                "parseEvaluacionReclamo(evaluacion)"
+        );
+        assertContains(
+                "acepta enum autorizado",
+                baseAction,
+                "\"AUTORIZADA\".equals(normalizada)"
+        );
+        assertContains(
+                "acepta enum rechazado",
+                baseAction,
+                "\"RECHAZADA\".equals(normalizada)"
+        );
+        assertContains(
+                "reconstrucción fail closed",
+                baseAction,
+                "Los datos del Reclamo Prestacional son inválidos."
+        );
+        assertContains(
+                "fallback de gestión visible",
+                baseAction,
+                "tipoGestionCierreReclamo <= 0 && tipoGestionVisible > 0"
+        );
+        assertNotContains(
+                "comparación de String por identidad autorizada",
+                baseAction,
+                "evaluacion  == \"Autorizado\""
+        );
+        assertNotContains(
+                "comparación de String por identidad rechazada",
+                baseAction,
+                "evaluacion  == \"Rechazado\""
         );
 
         System.out.println("CONTRATO_RECLAMO_PRESTACIONAL_P0_OK");
