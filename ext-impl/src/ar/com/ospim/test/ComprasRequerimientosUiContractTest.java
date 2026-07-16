@@ -15,6 +15,14 @@ import java.nio.file.Files;
 public final class ComprasRequerimientosUiContractTest {
 
     public static void main(String[] args) throws Exception {
+        if (args.length == 1
+                && "detalle-sector".equals(args[0])) {
+
+            assertSectoresDetalleYAfiliado();
+            System.out.println("CONTRATO_DETALLE_SECTOR_COMPRAS_OK");
+            return;
+        }
+
         assertFiltroPrestadoresEsCheckbox();
         assertPrestadorAdjudicadoEsUnico();
         assertPrecioCotizacionNoConcatenaAtributos();
@@ -27,6 +35,7 @@ public final class ComprasRequerimientosUiContractTest {
         assertPersistenciaComprasUsaFunciones();
         assertContratoOriginalBuscadoresPreservado();
         assertDetalleTecnicoUsaBuscadoresCanonicos();
+        assertSectoresDetalleYAfiliado();
         assertReclamoPrestacionalUsaHandoffSeguro();
         System.out.println("CONTRATO_UI_COMPRAS_OK");
     }
@@ -654,7 +663,7 @@ public final class ComprasRequerimientosUiContractTest {
         );
 
         /*
-         * JavaScript: altas sólo NOMENCLADOR.
+         * JavaScript: el sector define NOMENCLADOR u OBSERVACION.
          */
         assertNotContains(
                 "JS no selecciona medicamentos",
@@ -855,12 +864,6 @@ public final class ComprasRequerimientosUiContractTest {
         /*
          * Persistencia e históricos.
          */
-        assertContains(
-                "SQL obliga altas NOMENCLADOR",
-                schema,
-                "Los detalles nuevos de Compras deben utilizar NOMENCLADOR"
-        );
-
         assertNotContains(
                 "SQL no obliga Farmacia medicamento",
                 schema,
@@ -964,6 +967,152 @@ public final class ComprasRequerimientosUiContractTest {
                 "'ARTICULO'"
         );
     }
+
+    private static void assertSectoresDetalleYAfiliado()
+            throws Exception {
+
+        String schema = leer(
+                "ext-impl/src/ar/com/ospim/compras/sql/"
+                        + "compras_schema.sql"
+        );
+
+        String webKeys = leer(
+                "ext-impl/src/ar/com/ospim/compras/"
+                        + "WebKeysCompras.java"
+        );
+
+        String helper = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/"
+                        + "action/RequerimientoCompraDetalleHelper.java"
+        );
+
+        String service = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/"
+                        + "service/EditarRequerimientoCompraServiceImpl.java"
+        );
+
+        String afiliado = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/"
+                        + "partials/_afiliado_editable.jsp"
+        );
+
+        String editor = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/"
+                        + "partials/_detalle_editor.jsp"
+        );
+
+        String scripts = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/"
+                        + "partials/_detalle_scripts_editable.jsp"
+        );
+
+        String scriptsComunes = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/"
+                        + "partials/_detalle_scripts_comunes.jsp"
+        );
+
+        String tabla = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/"
+                        + "partials/_detalle_tabla.jsp"
+        );
+
+        assertContains(
+                "Legales requiere afiliado",
+                schema,
+                "(6, 'Legales', TRUE"
+        );
+
+        assertContains(
+                "Legales reutiliza buscador de afiliados",
+                afiliado,
+                "/html/portlet/autorizaciones/busqueda_afiliado.jsp"
+        );
+
+        assertContains(
+                "tipo de detalle Observacion",
+                schema,
+                "'OBSERVACION'"
+        );
+
+        assertContains(
+                "SQL deriva detalle Observacion por sector",
+                schema,
+                "v_tipo_item_esperado := 'OBSERVACION'"
+        );
+
+        assertContains(
+                "Java deriva sectores de Observacion",
+                webKeys,
+                "esSectorDetalleObservacionCompras"
+        );
+
+        assertContains(
+                "Monotributo usa nomenclador general",
+                webKeys,
+                "\"MONOTRIBUTO\".equals(sector)"
+        );
+
+        assertContains(
+                "helper valida Observacion",
+                helper,
+                "validarDetalleObservacion("
+        );
+
+        assertContains(
+                "servicio valida Observacion",
+                service,
+                "validarDetalleObservacionParaGuardar("
+        );
+
+        assertContains(
+                "editor identifica fila Observaciones",
+                editor,
+                "detalle_fila_observaciones"
+        );
+
+        assertContains(
+                "editor admite tipo Observacion",
+                scripts,
+                "return 'OBSERVACION'"
+        );
+
+        assertContains(
+                "editor exige Observaciones",
+                scripts,
+                "Debe informar las Observaciones."
+        );
+
+        assertContains(
+                "matriz incluye Monotributo con codigo",
+                scriptsComunes,
+                "descripcion == 'MONOTRIBUTO'"
+        );
+
+        assertContains(
+                "matriz incluye Legales con Observacion",
+                scriptsComunes,
+                "descripcion == 'LEGALES'"
+        );
+
+        assertContains(
+                "tabla alterna columnas de codigo",
+                tabla,
+                "compras-detalle-columna-codigo"
+        );
+
+        assertContains(
+                "tabla alterna columna de Observacion",
+                tabla,
+                "compras-detalle-columna-observacion"
+        );
+
+        assertContains(
+                "scripts alternan columnas del detalle",
+                scriptsComunes,
+                "actualizarVisibilidadColumnasDetalleCompra"
+        );
+    }
+
     private static void assertReclamoPrestacionalUsaHandoffSeguro()
             throws Exception {
 

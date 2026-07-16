@@ -34,7 +34,15 @@
     }
 
     function <portlet:namespace />resolverTipoItemEditor() {
-        return 'NOMENCLADOR';
+        if (<portlet:namespace />esSectorDetalleConCodigoCompra()) {
+            return 'NOMENCLADOR';
+        }
+
+        if (<portlet:namespace />esSectorDetalleObservacionCompra()) {
+            return 'OBSERVACION';
+        }
+
+        return '';
     }
 
     function <portlet:namespace />configurarEditorMedicamentoHistorico(
@@ -112,7 +120,7 @@
         var tipoItem =
                 esHistorico
                         ? 'MEDICAMENTO'
-                        : 'NOMENCLADOR';
+                        : <portlet:namespace />resolverTipoItemEditor();
 
         jQuery(
                 '#<portlet:namespace />detalle_tipo_item'
@@ -122,13 +130,26 @@
 
         jQuery(
                 '#<portlet:namespace />detalle_bloque_nomenclador'
-        ).show();
+        ).toggle(
+                esHistorico || tipoItem == 'NOMENCLADOR'
+        );
 
         jQuery(
-                '#<portlet:namespace />detalle_submit'
-        ).removeAttr(
-                'disabled'
+                '#<portlet:namespace />detalle_fila_observaciones'
+        ).toggle(
+                tipoItem == 'OBSERVACION'
         );
+
+        var submit =
+                jQuery(
+                        '#<portlet:namespace />detalle_submit'
+                );
+
+        if (tipoItem == '') {
+            submit.attr('disabled', 'disabled');
+        } else {
+            submit.removeAttr('disabled');
+        }
 
         if (!preservarValores
                 && !esHistorico) {
@@ -301,7 +322,7 @@
             jQuery(
                     '#<portlet:namespace />detalle_tipo_item'
             ).val(
-                    'NOMENCLADOR'
+                    ''
             );
 
             jQuery(
@@ -340,13 +361,7 @@
                     '#<portlet:namespace />detalle_cancelar'
             ).hide();
 
-            <portlet:namespace />configurarEditorMedicamentoHistorico(
-                    false
-            );
-
-            jQuery(
-                    '#<portlet:namespace />detalle_bloque_nomenclador'
-            ).show();
+            <portlet:namespace />actualizarTipoItemEditor(false);
         }
 
     function <portlet:namespace />editarDetalleEnPantalla(index) {
@@ -520,6 +535,9 @@
                         detalleExistente
                 );
 
+        var tipoEsperado =
+                <portlet:namespace />resolverTipoItemEditor();
+
         var cantidad =
                 jQuery.trim(
                         jQuery(
@@ -545,7 +563,7 @@
             tipoItem:
                     esHistorico
                             ? 'MEDICAMENTO'
-                            : 'NOMENCLADOR',
+                            : tipoEsperado,
 
             codigoItem: '',
             descripcionItem: '',
@@ -624,6 +642,10 @@
                             detalleExistente.descripcionItem
                     );
 
+            return detalle;
+        }
+
+        if (tipoEsperado == 'OBSERVACION') {
             return detalle;
         }
 
@@ -742,6 +764,18 @@
 
                 jQuery(
                         '#<portlet:namespace />detalle_descripcion_nomenclador'
+                ).focus();
+
+                return false;
+            }
+        } else if (detalle.tipoItem == 'OBSERVACION') {
+            if (detalle.observaciones == '') {
+                alert(
+                        'Debe informar las Observaciones.'
+                );
+
+                jQuery(
+                        '#<portlet:namespace />detalle_observaciones'
                 ).focus();
 
                 return false;
@@ -1118,6 +1152,7 @@
                     && parseInt(idDetalle, 10) > 0;
 
             if (tipoItem != 'NOMENCLADOR'
+                    && tipoItem != 'OBSERVACION'
                     && !esMedicamentoHistorico) {
 
                 alert(
@@ -1182,6 +1217,21 @@
                 }
             }
 
+            if (tipoItem == 'OBSERVACION'
+                    && jQuery.trim(
+                            <portlet:namespace />detalleValue(
+                                    detalle.observaciones
+                            )
+                    ) == '') {
+
+                alert(
+                        'Detalle #' + (i + 1)
+                                + ': debe informar las Observaciones.'
+                );
+
+                return false;
+            }
+
             if (tipoItem == 'MEDICAMENTO') {
                 if (!<portlet:namespace />esEnteroPositivo(detalle.idMedicamento)) {
                     alert(
@@ -1200,52 +1250,6 @@
                     alert(
                             'Detalle #' + (i + 1)
                                     + ': debe informar el nombre del medicamento.'
-                    );
-
-                    return false;
-                }
-            }
-
-            if (tipoItem == 'NOMENCLADOR') {
-                if (!<portlet:namespace />esEnteroPositivo(detalle.idPrestacion)) {
-                    alert(
-                            'Detalle #' + (i + 1)
-                                    + ': debe seleccionar la prestación del nomenclador.'
-                    );
-
-                    return false;
-                }
-
-                if (!<portlet:namespace />esEnteroPositivo(detalle.idTipoNomenclador)) {
-                    alert(
-                            'Detalle #' + (i + 1)
-                                    + ': debe informar el tipo de nomenclador.'
-                    );
-
-                    return false;
-                }
-
-                if (jQuery.trim(
-                        <portlet:namespace />detalleValue(
-                                detalle.codigoNomenclador
-                        )
-                ) == '') {
-                    alert(
-                            'Detalle #' + (i + 1)
-                                    + ': debe informar el código de nomenclador.'
-                    );
-
-                    return false;
-                }
-
-                if (jQuery.trim(
-                        <portlet:namespace />detalleValue(
-                                detalle.descripcionNomenclador
-                        )
-                ) == '') {
-                    alert(
-                            'Detalle #' + (i + 1)
-                                    + ': debe informar la descripción del nomenclador.'
                     );
 
                     return false;
@@ -1428,6 +1432,14 @@
     window['<portlet:namespace />serializarDetallesCompras'] =
             <portlet:namespace />serializarDetallesCompras;
 
+    function <portlet:namespace />filtrarArticulosPorSector() {
+        <portlet:namespace />limpiarEditorDetalle();
+        <portlet:namespace />renderDetallesCompra();
+    }
+
+    window['<portlet:namespace />filtrarArticulosPorSector'] =
+            <portlet:namespace />filtrarArticulosPorSector;
+
     jQuery(function() {
         <portlet:namespace />limpiarEditorDetalle();
 
@@ -1438,11 +1450,5 @@
             <portlet:namespace />limpiarSeleccionNomenclador(false);
         });
 
-        jQuery('#<portlet:namespace />sector_id, #<portlet:namespace />id_sector').bind(
-                'change',
-                function() {
-                    <portlet:namespace />limpiarEditorDetalle();
-                }
-        );
     });
 </script>

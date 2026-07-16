@@ -915,6 +915,9 @@ public class EditarRequerimientoCompraServiceImpl {
                 .equals(tipoItem)
                 && !RequerimientoCompraDetalle
                 .TIPO_ITEM_MEDICAMENTO
+                .equals(tipoItem)
+                && !RequerimientoCompraDetalle
+                .TIPO_ITEM_OBSERVACION
                 .equals(tipoItem)) {
 
             throw errorUsuario(
@@ -937,6 +940,15 @@ public class EditarRequerimientoCompraServiceImpl {
                 .equals(tipoItem)) {
 
             validarDetalleMedicamentoParaGuardar(
+                    detalle
+            );
+        }
+
+        if (RequerimientoCompraDetalle
+                .TIPO_ITEM_OBSERVACION
+                .equals(tipoItem)) {
+
+            validarDetalleObservacionParaGuardar(
                     detalle
             );
         }
@@ -1094,10 +1106,10 @@ public class EditarRequerimientoCompraServiceImpl {
          *     tipo 1.
          *
          * PRESTACIONES MEDICAS:
-         *     cualquier tipo distinto de 1.
+         *     cualquier tipo distinto de 1 y 9.
          *
-         * LEGALES:
-         *     cualquier tipo positivo.
+         * MONOTRIBUTO:
+         *     cualquier tipo positivo distinto de 9.
          */
         boolean nomencladorValido =
                 WebKeysCompras
@@ -1143,16 +1155,16 @@ public class EditarRequerimientoCompraServiceImpl {
             )) {
                 throw errorUsuario(
                         "Prestaciones Medicas no admite "
-                                + "prestaciones del nomenclador tipo 1."
+                                + "prestaciones del nomenclador tipo 1 o 9."
                 );
             }
 
-            if ("LEGALES".equals(
+            if ("MONOTRIBUTO".equals(
                     sector
             )) {
                 throw errorUsuario(
-                        "La prestacion seleccionada no tiene un "
-                                + "tipo de nomenclador valido."
+                        "Monotributo no admite prestaciones "
+                                + "del nomenclador tipo 9."
                 );
             }
 
@@ -1239,6 +1251,32 @@ public class EditarRequerimientoCompraServiceImpl {
             throw errorUsuario(
                     "El detalle histórico de medicamento "
                             + "contiene datos técnicos incompatibles."
+            );
+        }
+    }
+
+    private void validarDetalleObservacionParaGuardar(
+            RequerimientoCompraDetalle detalle) throws Exception {
+
+        if (WebKeysCompras.isEmpty(
+                detalle.getObservaciones()
+        )) {
+            throw errorUsuario(
+                    "Debe informar las Observaciones del detalle."
+            );
+        }
+
+        if (detalle.getIdPrestacion() != null
+                || detalle.getIdTipoNomenclador() != null
+                || !WebKeysCompras.isEmpty(detalle.getCodigoNomenclador())
+                || !WebKeysCompras.isEmpty(detalle.getDescripcionNomenclador())
+                || detalle.getIdMedicamento() != null
+                || detalle.getTroquel() != null
+                || !WebKeysCompras.isEmpty(detalle.getNombreMedicamento())) {
+
+            throw errorUsuario(
+                    "Un detalle de Observación no puede contener "
+                            + "datos de código o medicamento."
             );
         }
     }
@@ -1349,6 +1387,57 @@ public class EditarRequerimientoCompraServiceImpl {
             return;
         }
 
+        boolean sectorObservacion =
+                WebKeysCompras
+                        .esSectorDetalleObservacionCompras(
+                                requerimiento != null
+                                        ? requerimiento
+                                          .getSectorDescripcion()
+                                        : null
+                        );
+
+        if (sectorObservacion) {
+            if (detallePersistido != null
+                    && !detallePersistido.esObservacion()) {
+
+                throw errorUsuario(
+                        "El detalle existente no corresponde al sector "
+                                + "seleccionado. Debe quitarlo antes de "
+                                + "cambiar el sector."
+                );
+            }
+
+            String tipoRecibido =
+                    detalle.getTipoItemNormalizado();
+
+            if (!WebKeysCompras.isEmpty(tipoRecibido)
+                    && !RequerimientoCompraDetalle
+                    .TIPO_ITEM_OBSERVACION
+                    .equals(tipoRecibido)) {
+
+                throw errorUsuario(
+                        "El sector seleccionado requiere un detalle "
+                                + "de OBSERVACION."
+                );
+            }
+
+            detalle.setTipoItem(
+                    RequerimientoCompraDetalle
+                            .TIPO_ITEM_OBSERVACION
+            );
+            detalle.setIdPrestacion(null);
+            detalle.setIdTipoNomenclador(null);
+            detalle.setCodigoNomenclador(null);
+            detalle.setDescripcionNomenclador(null);
+            detalle.setIdMedicamento(null);
+            detalle.setTroquel(null);
+            detalle.setNombreMedicamento(null);
+            detalle.setCodigoItem(null);
+            detalle.setDescripcionItem(null);
+
+            return;
+        }
+
         Integer filtroTipoNomenclador =
                 WebKeysCompras
                         .getFiltroTipoNomencladorCompras(
@@ -1362,6 +1451,16 @@ public class EditarRequerimientoCompraServiceImpl {
             throw errorUsuario(
                     "El sector seleccionado no tiene configurado "
                             + "un nomenclador para Compras."
+            );
+        }
+
+        if (detallePersistido != null
+                && detallePersistido.esObservacion()) {
+
+            throw errorUsuario(
+                    "El detalle existente no corresponde al sector "
+                            + "seleccionado. Debe quitarlo antes de "
+                            + "cambiar el sector."
             );
         }
 

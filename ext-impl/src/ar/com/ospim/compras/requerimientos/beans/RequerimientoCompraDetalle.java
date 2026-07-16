@@ -9,8 +9,8 @@ import java.math.BigDecimal;
  *
  * Contrato actual:
  *
- * - Todo detalle nuevo se persiste como NOMENCLADOR.
- * - El sector determina el filtro de búsqueda correspondiente.
+ * - Los sectores con código se persisten como NOMENCLADOR.
+ * - Los sectores sin código se persisten como OBSERVACION.
  * - MEDICAMENTO se conserva exclusivamente para lectura y
  *   edición no estructural de registros históricos.
  *
@@ -21,6 +21,7 @@ public class RequerimientoCompraDetalle {
 
     public static final String TIPO_ITEM_NOMENCLADOR = "NOMENCLADOR";
     public static final String TIPO_ITEM_MEDICAMENTO = "MEDICAMENTO";
+    public static final String TIPO_ITEM_OBSERVACION = "OBSERVACION";
 
     private Integer id;
     private Integer idRequerimiento;
@@ -616,6 +617,12 @@ public class RequerimientoCompraDetalle {
 
     public boolean esNomenclador() {
         return TIPO_ITEM_NOMENCLADOR.equals(
+                getTipoItemNormalizado()
+        );
+    }
+
+    public boolean esObservacion() {
+        return TIPO_ITEM_OBSERVACION.equals(
                 getTipoItemNormalizado()
         );
     }

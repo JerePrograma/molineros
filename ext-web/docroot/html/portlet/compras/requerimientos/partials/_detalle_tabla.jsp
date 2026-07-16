@@ -98,10 +98,10 @@
 
     <tr class="portlet-section-header results-header">
         <th>ID</th>
-        <th>Código presentado</th>
-        <th>Descripción</th>
+        <th class="compras-detalle-columna-codigo">Código presentado</th>
+        <th class="compras-detalle-columna-codigo">Descripción</th>
         <th>Cantidad</th>
-        <th>Observaciones</th>
+        <th class="compras-detalle-columna-observacion">Observaciones</th>
 
         <% if (puedeVerCotizacionDetalle) { %>
             <th>Precio unitario</th>

@@ -405,7 +405,36 @@
                 );
 
         return descripcion == 'PRESTACIONES MEDICAS'
-                || descripcion == 'LEGALES';
+                || descripcion == 'MONOTRIBUTO'
+                || descripcion == 'DISCAPACIDAD'
+                || descripcion == 'ODONTOLOGIA';
+    }
+
+    function <portlet:namespace />esSectorDetalleConCodigoCompra() {
+        return <portlet:namespace />esSectorFarmaciaCompra()
+                || <portlet:namespace />esSectorNomencladorCompra();
+    }
+
+    function <portlet:namespace />esSectorDetalleObservacionCompra() {
+        var descripcion =
+                <portlet:namespace />normalizarSectorCompra(
+                        <portlet:namespace />getSectorDescripcionSeleccionadoCompra()
+                );
+
+        return descripcion == 'RRHH'
+                || descripcion == 'LEGALES'
+                || descripcion == 'SISTEMAS'
+                || descripcion == 'OTROS';
+    }
+
+    function <portlet:namespace />actualizarVisibilidadColumnasDetalleCompra() {
+        var mostrarCodigo =
+                <portlet:namespace />esSectorDetalleConCodigoCompra();
+        var mostrarObservacion =
+                <portlet:namespace />esSectorDetalleObservacionCompra();
+
+        jQuery('.compras-detalle-columna-codigo').toggle(mostrarCodigo);
+        jQuery('.compras-detalle-columna-observacion').toggle(mostrarObservacion);
     }
 
     function <portlet:namespace />renderDetallesCompra() {
@@ -419,6 +448,8 @@
                     '<td colspan="<%= detalleColspan %>">No hay detalles cargados.</td>' +
                 '</tr>'
             );
+
+            <portlet:namespace />actualizarVisibilidadColumnasDetalleCompra();
 
             return;
         }
@@ -434,10 +465,10 @@
 
             html += '<tr class="' + rowClass + '">';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.id) + '</td>';
-            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.codigoItem) + '</td>';
-            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.descripcionItem) + '</td>';
+            html += '<td class="compras-detalle-columna-codigo">' + <portlet:namespace />detalleEscapeHtml(detalle.codigoItem) + '</td>';
+            html += '<td class="compras-detalle-columna-codigo">' + <portlet:namespace />detalleEscapeHtml(detalle.descripcionItem) + '</td>';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.cantidad) + '</td>';
-            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.observaciones) + '</td>';
+            html += '<td class="compras-detalle-columna-observacion">' + <portlet:namespace />detalleEscapeHtml(detalle.observaciones) + '</td>';
 
             <% if (puedeVerCotizacionDetalle) { %>
                 <% if (puedeCotizarDetalle) { %>
@@ -498,6 +529,8 @@
                 ).append(precioInput);
             <% } %>
         }
+
+        <portlet:namespace />actualizarVisibilidadColumnasDetalleCompra();
     }
 
     jQuery(function() {

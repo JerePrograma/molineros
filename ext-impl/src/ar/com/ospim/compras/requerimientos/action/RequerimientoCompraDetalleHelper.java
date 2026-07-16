@@ -692,12 +692,12 @@ public class RequerimientoCompraDetalleHelper {
         }
 
         if (!RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR.equals(tipoItem)
-                && !RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO.equals(tipoItem)) {
+                && !RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO.equals(tipoItem)
+                && !RequerimientoCompraDetalle.TIPO_ITEM_OBSERVACION.equals(tipoItem)) {
 
             errorCampo(
                     contexto + " - tipo_item",
-                    contexto + ": tipo de ítem inválido. "
-                            + "Debe seleccionar nomenclador o medicamento."
+                    contexto + ": tipo de ítem inválido."
             );
         }
 
@@ -710,6 +710,13 @@ public class RequerimientoCompraDetalleHelper {
 
         if (RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO.equals(tipoItem)) {
             validarDetalleMedicamento(
+                    detalle,
+                    contexto
+            );
+        }
+
+        if (RequerimientoCompraDetalle.TIPO_ITEM_OBSERVACION.equals(tipoItem)) {
+            validarDetalleObservacion(
                     detalle,
                     contexto
             );
@@ -905,6 +912,61 @@ public class RequerimientoCompraDetalleHelper {
             return;
         }
 
+        boolean sectorObservacion =
+                WebKeysCompras
+                        .esSectorDetalleObservacionCompras(
+                                requerimiento != null
+                                        ? requerimiento
+                                          .getSectorDescripcion()
+                                        : null
+                        );
+
+        if (sectorObservacion) {
+            if (detallePersistido != null
+                    && !detallePersistido.esObservacion()) {
+
+                errorCampo(
+                        contexto + " - tipo_item",
+                        contexto
+                                + ": el detalle existente no corresponde "
+                                + "al sector seleccionado. Debe quitarlo "
+                                + "antes de cambiar el sector."
+                );
+            }
+
+            String tipoRecibido =
+                    detalle.getTipoItemNormalizado();
+
+            if (!WebKeysCompras.isEmpty(tipoRecibido)
+                    && !RequerimientoCompraDetalle
+                    .TIPO_ITEM_OBSERVACION
+                    .equals(tipoRecibido)) {
+
+                errorCampo(
+                        contexto + " - tipo_item",
+                        contexto
+                                + ": el sector seleccionado requiere "
+                                + "un detalle de OBSERVACION."
+                );
+            }
+
+            detalle.setTipoItem(
+                    RequerimientoCompraDetalle
+                            .TIPO_ITEM_OBSERVACION
+            );
+            detalle.setIdPrestacion(null);
+            detalle.setIdTipoNomenclador(null);
+            detalle.setCodigoNomenclador(null);
+            detalle.setDescripcionNomenclador(null);
+            detalle.setIdMedicamento(null);
+            detalle.setTroquel(null);
+            detalle.setNombreMedicamento(null);
+            detalle.setCodigoItem(null);
+            detalle.setDescripcionItem(null);
+
+            return;
+        }
+
         Integer filtroTipoNomenclador =
                 WebKeysCompras
                         .getFiltroTipoNomencladorCompras(
@@ -924,6 +986,18 @@ public class RequerimientoCompraDetalleHelper {
             );
 
             return;
+        }
+
+        if (detallePersistido != null
+                && detallePersistido.esObservacion()) {
+
+            errorCampo(
+                    contexto + " - tipo_item",
+                    contexto
+                            + ": el detalle existente no corresponde "
+                            + "al sector seleccionado. Debe quitarlo "
+                            + "antes de cambiar el sector."
+            );
         }
 
         String tipoRecibido =
@@ -1023,6 +1097,36 @@ public class RequerimientoCompraDetalleHelper {
             errorCampo(
                     contexto + " - nombre_medicamento",
                     contexto + ": debe informar el nombre del medicamento."
+            );
+        }
+    }
+
+    private void validarDetalleObservacion(
+            RequerimientoCompraDetalle detalle,
+            String contexto) throws Exception {
+
+        if (WebKeysCompras.isEmpty(
+                detalle.getObservaciones()
+        )) {
+            errorCampo(
+                    contexto + " - observaciones",
+                    contexto + ": debe informar las Observaciones."
+            );
+        }
+
+        if (detalle.getIdPrestacion() != null
+                || detalle.getIdTipoNomenclador() != null
+                || !WebKeysCompras.isEmpty(detalle.getCodigoNomenclador())
+                || !WebKeysCompras.isEmpty(detalle.getDescripcionNomenclador())
+                || detalle.getIdMedicamento() != null
+                || detalle.getTroquel() != null
+                || !WebKeysCompras.isEmpty(detalle.getNombreMedicamento())) {
+
+            errorCampo(
+                    contexto + " - tipo_item",
+                    contexto
+                            + ": un detalle de Observación no puede "
+                            + "contener datos de código o medicamento."
             );
         }
     }

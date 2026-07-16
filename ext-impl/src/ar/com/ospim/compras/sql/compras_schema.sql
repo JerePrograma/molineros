@@ -368,7 +368,8 @@ CREATE TABLE compras.requerimiento_detalle (
                                                    CHECK (
                                                        tipo_item IN (
                                                                      'NOMENCLADOR',
-                                                                     'MEDICAMENTO'
+                                                                     'MEDICAMENTO',
+                                                                     'OBSERVACION'
                                                            )
                                                        ),
 
@@ -416,6 +417,26 @@ CREATE TABLE compras.requerimiento_detalle (
                                                                AND id_tipo_nomenclador IS NULL
                                                                AND codigo_nomenclador IS NULL
                                                                AND descripcion_nomenclador IS NULL
+                                                           )
+                                                       ),
+
+                                               CONSTRAINT ck_compras_detalle_observacion_requerida
+                                                   CHECK (
+                                                       tipo_item <> 'OBSERVACION'
+                                                           OR NULLIF(btrim(observaciones), '') IS NOT NULL
+                                                       ),
+
+                                               CONSTRAINT ck_compras_detalle_observacion_sin_datos_tecnicos
+                                                   CHECK (
+                                                       tipo_item <> 'OBSERVACION'
+                                                           OR (
+                                                           id_prestacion IS NULL
+                                                               AND id_tipo_nomenclador IS NULL
+                                                               AND codigo_nomenclador IS NULL
+                                                               AND descripcion_nomenclador IS NULL
+                                                               AND id_medicamento IS NULL
+                                                               AND troquel IS NULL
+                                                               AND nombre_medicamento IS NULL
                                                            )
                                                        ),
 
@@ -494,7 +515,7 @@ VALUES
     (3, 'Monotributo', TRUE, TRUE, 'sistema'),
     (4, 'Sistemas', FALSE, TRUE, 'sistema'),
     (5, 'RRHH', FALSE, TRUE, 'sistema'),
-    (6, 'Legales', FALSE, TRUE, 'sistema'),
+    (6, 'Legales', TRUE, TRUE, 'sistema'),
     (7, 'Otros', FALSE, TRUE, 'sistema');
 
 SELECT setval(
@@ -804,6 +825,7 @@ v_estado INTEGER;
     v_sector VARCHAR(200);
     v_tipo_item VARCHAR(20);
     v_tipo_item_anterior VARCHAR(20);
+    v_tipo_item_esperado VARCHAR(20);
     v_id_tipo_nomenclador_real INTEGER;
 BEGIN
 SELECT
@@ -829,24 +851,35 @@ IF v_estado IS NULL THEN
             'No existe un requerimiento activo para el detalle.';
 END IF;
 
-    IF v_sector NOT IN (
+    IF v_sector IN (
         'FARMACIA',
         'DISCAPACIDAD',
         'ODONTOLOGIA',
         'PRESTACIONES MEDICAS',
-        'LEGALES'
+        'MONOTRIBUTO'
     ) THEN
+        v_tipo_item_esperado := 'NOMENCLADOR';
+    ELSIF v_sector IN (
+        'RRHH',
+        'LEGALES',
+        'SISTEMAS',
+        'OTROS'
+    ) THEN
+        v_tipo_item_esperado := 'OBSERVACION';
+    ELSE
         RAISE EXCEPTION
-            'El sector % no tiene configurado un nomenclador para Compras.',
+            'El sector % no tiene configurado un tipo de detalle para Compras.',
             v_sector;
 END IF;
 
     v_tipo_item := upper(btrim(COALESCE(NEW.tipo_item, '')));
 
     IF TG_OP = 'INSERT' THEN
-        IF v_tipo_item <> 'NOMENCLADOR' THEN
+        IF v_tipo_item <> v_tipo_item_esperado THEN
             RAISE EXCEPTION
-                'Los detalles nuevos de Compras deben utilizar NOMENCLADOR.';
+                'El sector % requiere detalles de tipo %.',
+                v_sector,
+                v_tipo_item_esperado;
 END IF;
 ELSE
         v_tipo_item_anterior :=
@@ -882,7 +915,12 @@ END IF;
         ELSIF v_tipo_item_anterior = 'NOMENCLADOR' THEN
             IF v_tipo_item <> 'NOMENCLADOR' THEN
                 RAISE EXCEPTION
-                    'Un detalle de nomenclador no puede convertirse a medicamento.';
+                    'Un detalle de nomenclador no puede convertirse a otro tipo.';
+END IF;
+        ELSIF v_tipo_item_anterior = 'OBSERVACION' THEN
+            IF v_tipo_item <> 'OBSERVACION' THEN
+                RAISE EXCEPTION
+                    'Un detalle de observacion no puede convertirse a otro tipo.';
 END IF;
 ELSE
             RAISE EXCEPTION
@@ -892,6 +930,14 @@ END IF;
 
     NEW.tipo_item := v_tipo_item;
 
+    IF v_tipo_item <> 'MEDICAMENTO'
+       AND v_tipo_item <> v_tipo_item_esperado THEN
+        RAISE EXCEPTION
+            'El sector % requiere detalles de tipo %.',
+            v_sector,
+            v_tipo_item_esperado;
+END IF;
+
     IF v_tipo_item = 'MEDICAMENTO' THEN
         IF NEW.id_medicamento IS NULL
            OR NEW.id_medicamento <= 0
@@ -899,6 +945,23 @@ END IF;
 
             RAISE EXCEPTION
                 'El medicamento historico debe conservar id y nombre.';
+END IF;
+    ELSIF v_tipo_item = 'OBSERVACION' THEN
+        IF NULLIF(btrim(NEW.observaciones), '') IS NULL THEN
+            RAISE EXCEPTION
+                'Debe informar las observaciones del detalle.';
+END IF;
+
+        IF NEW.id_prestacion IS NOT NULL
+           OR NEW.id_tipo_nomenclador IS NOT NULL
+           OR NULLIF(btrim(NEW.codigo_nomenclador), '') IS NOT NULL
+           OR NULLIF(btrim(NEW.descripcion_nomenclador), '') IS NOT NULL
+           OR NEW.id_medicamento IS NOT NULL
+           OR NEW.troquel IS NOT NULL
+           OR NULLIF(btrim(NEW.nombre_medicamento), '') IS NOT NULL THEN
+
+            RAISE EXCEPTION
+                'Un detalle de observacion no puede contener datos tecnicos.';
 END IF;
 ELSE
         IF NEW.id_medicamento IS NOT NULL
@@ -2077,6 +2140,7 @@ v_id INTEGER;
     v_usuario VARCHAR(100);
     v_tipo_item VARCHAR(20);
     v_tipo_item_actual VARCHAR(20);
+    v_tipo_item_esperado VARCHAR(20);
     v_sector VARCHAR(200);
     v_id_tipo_nomenclador_real INTEGER;
 BEGIN
@@ -2097,10 +2161,11 @@ BEGIN
 
     IF v_tipo_item NOT IN (
         'NOMENCLADOR',
-        'MEDICAMENTO'
+        'MEDICAMENTO',
+        'OBSERVACION'
     ) THEN
         RAISE EXCEPTION
-            'Tipo de item invalido. Compras solo permite NOMENCLADOR o MEDICAMENTO.';
+            'Tipo de item invalido.';
 END IF;
 
     IF p_id_requerimiento IS NULL
@@ -2143,30 +2208,60 @@ IF NOT FOUND THEN
             'Los detalles estructurales solo pueden modificarse en estado PENDIENTE.';
 END IF;
 
-    IF v_sector NOT IN (
+    IF v_sector IN (
         'FARMACIA',
         'DISCAPACIDAD',
         'ODONTOLOGIA',
         'PRESTACIONES MEDICAS',
-        'LEGALES'
+        'MONOTRIBUTO'
     ) THEN
+        v_tipo_item_esperado := 'NOMENCLADOR';
+    ELSIF v_sector IN (
+        'RRHH',
+        'LEGALES',
+        'SISTEMAS',
+        'OTROS'
+    ) THEN
+        v_tipo_item_esperado := 'OBSERVACION';
+    ELSE
         RAISE EXCEPTION
-            'El sector % no tiene configurado un nomenclador para Compras.',
+            'El sector % no tiene configurado un tipo de detalle para Compras.',
             v_sector;
 END IF;
 
     /*
      * ALTAS
      *
-     * Todo detalle nuevo se guarda como NOMENCLADOR.
+     * El sector determina si el detalle usa nomenclador u observacion.
      */
     IF p_id IS NULL
        OR p_id <= 0 THEN
 
-        IF v_tipo_item <> 'NOMENCLADOR' THEN
+        IF v_tipo_item <> v_tipo_item_esperado THEN
             RAISE EXCEPTION
-                'Los detalles nuevos de Compras deben utilizar NOMENCLADOR.';
+                'El sector % requiere detalles de tipo %.',
+                v_sector,
+                v_tipo_item_esperado;
 END IF;
+
+        IF v_tipo_item = 'OBSERVACION' THEN
+            IF NULLIF(btrim(p_observaciones), '') IS NULL THEN
+                RAISE EXCEPTION
+                    'Debe informar las observaciones del detalle.';
+END IF;
+
+            IF p_id_prestacion IS NOT NULL
+               OR p_id_tipo_nomenclador IS NOT NULL
+               OR NULLIF(btrim(p_codigo_nomenclador), '') IS NOT NULL
+               OR NULLIF(btrim(p_descripcion_nomenclador), '') IS NOT NULL
+               OR p_id_medicamento IS NOT NULL
+               OR p_troquel IS NOT NULL
+               OR NULLIF(btrim(p_nombre_medicamento), '') IS NOT NULL THEN
+
+                RAISE EXCEPTION
+                    'Un detalle de observacion no puede contener datos tecnicos.';
+END IF;
+ELSE
 
         IF p_id_prestacion IS NULL
            OR p_id_prestacion <= 0 THEN
@@ -2246,6 +2341,7 @@ END IF;
             RAISE EXCEPTION
                 'Un detalle nuevo de nomenclador no puede contener datos de medicamento.';
 END IF;
+END IF;
 
 INSERT INTO compras.requerimiento_detalle (
     id_requerimiento,
@@ -2270,22 +2366,24 @@ INSERT INTO compras.requerimiento_detalle (
 )
 VALUES (
            p_id_requerimiento,
-           'NOMENCLADOR',
+           v_tipo_item,
 
-           p_id_prestacion,
-           v_id_tipo_nomenclador_real,
-           NULLIF(
+           CASE WHEN v_tipo_item = 'NOMENCLADOR'
+                THEN p_id_prestacion ELSE NULL END,
+           CASE WHEN v_tipo_item = 'NOMENCLADOR'
+                THEN v_id_tipo_nomenclador_real ELSE NULL END,
+           CASE WHEN v_tipo_item = 'NOMENCLADOR' THEN NULLIF(
                    btrim(
                            p_codigo_nomenclador
                    ),
                    ''
-           ),
-           NULLIF(
+           ) ELSE NULL END,
+           CASE WHEN v_tipo_item = 'NOMENCLADOR' THEN NULLIF(
                    btrim(
                            p_descripcion_nomenclador
                    ),
                    ''
-           ),
+           ) ELSE NULL END,
 
            NULL,
            NULL,
@@ -2327,6 +2425,47 @@ WHERE d.id_detalle = p_id
 IF NOT FOUND THEN
         RAISE EXCEPTION
             'No se encontro el detalle activo a modificar.';
+END IF;
+
+    IF v_tipo_item_actual = 'OBSERVACION' THEN
+        IF v_tipo_item_esperado <> 'OBSERVACION'
+           OR v_tipo_item <> 'OBSERVACION' THEN
+            RAISE EXCEPTION
+                'Un detalle de observacion no puede convertirse a otro tipo.';
+END IF;
+
+        IF NULLIF(btrim(p_observaciones), '') IS NULL THEN
+            RAISE EXCEPTION
+                'Debe informar las observaciones del detalle.';
+END IF;
+
+        IF p_id_prestacion IS NOT NULL
+           OR p_id_tipo_nomenclador IS NOT NULL
+           OR NULLIF(btrim(p_codigo_nomenclador), '') IS NOT NULL
+           OR NULLIF(btrim(p_descripcion_nomenclador), '') IS NOT NULL
+           OR p_id_medicamento IS NOT NULL
+           OR p_troquel IS NOT NULL
+           OR NULLIF(btrim(p_nombre_medicamento), '') IS NOT NULL THEN
+
+            RAISE EXCEPTION
+                'Un detalle de observacion no puede contener datos tecnicos.';
+END IF;
+
+UPDATE compras.requerimiento_detalle
+SET cantidad = p_cantidad,
+    precio_unitario_estimado = NULL,
+    precio_total_estimado = NULL,
+    id_prestador = NULL,
+    observaciones = NULLIF(btrim(p_observaciones), ''),
+    modi_fecha = now(),
+    modi_usr = v_usuario
+WHERE id_detalle = p_id
+  AND id_requerimiento = p_id_requerimiento
+  AND baja_fecha IS NULL
+    RETURNING id_detalle
+INTO v_id;
+
+RETURN v_id;
 END IF;
 
     /*
@@ -2378,9 +2517,16 @@ END IF;
             'El detalle persistido tiene un tipo tecnico desconocido.';
 END IF;
 
+    IF v_tipo_item_esperado <> 'NOMENCLADOR' THEN
+        RAISE EXCEPTION
+            'El sector % requiere detalles de tipo %.',
+            v_sector,
+            v_tipo_item_esperado;
+END IF;
+
     IF v_tipo_item <> 'NOMENCLADOR' THEN
         RAISE EXCEPTION
-            'Un detalle de nomenclador no puede convertirse a medicamento.';
+            'Un detalle de nomenclador no puede convertirse a otro tipo.';
 END IF;
 
     IF p_id_prestacion IS NULL

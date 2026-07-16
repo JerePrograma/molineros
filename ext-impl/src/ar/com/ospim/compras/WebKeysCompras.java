@@ -415,7 +415,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         }
 
         if ("PRESTACIONES MEDICAS".equals(sector)
-                || "LEGALES".equals(sector)) {
+                || "MONOTRIBUTO".equals(sector)) {
 
             return Integer.valueOf(
                     FILTRO_NOMENCLADOR_GENERAL
@@ -464,14 +464,31 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
         if ("PRESTACIONES MEDICAS".equals(sector)) {
             return idTipoNomenclador
-                    != FILTRO_NOMENCLADOR_ODONTOLOGIA;
+                    != FILTRO_NOMENCLADOR_ODONTOLOGIA
+                    && idTipoNomenclador
+                    != FILTRO_NOMENCLADOR_FARMACIA;
         }
 
-        if ("LEGALES".equals(sector)) {
-            return true;
+        if ("MONOTRIBUTO".equals(sector)) {
+            return idTipoNomenclador
+                    != FILTRO_NOMENCLADOR_FARMACIA;
         }
 
         return false;
+    }
+
+    public static boolean esSectorDetalleObservacionCompras(
+            String sectorDescripcion) {
+
+        String sector =
+                normalizarSectorCompra(
+                        sectorDescripcion
+                );
+
+        return "RRHH".equals(sector)
+                || "LEGALES".equals(sector)
+                || "SISTEMAS".equals(sector)
+                || "OTROS".equals(sector);
     }
 
     public static String normalizarSectorCompra(
