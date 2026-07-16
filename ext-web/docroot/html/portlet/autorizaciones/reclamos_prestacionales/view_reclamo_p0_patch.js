@@ -150,7 +150,55 @@ function datosRevisionOkSeguro() {
 }
 
 function esResolucionRechazada(resolucion) {
-    return String(resolucion || "").toUpperCase() !== "AUTORIZADO";
+    var normalizada = String(resolucion || "").toUpperCase();
+    return normalizada !== "AUTORIZADO" && normalizada !== "AUTORIZADA";
+}
+
+function capturarEstadoCierre() {
+    return {
+        estado: valor("estado"),
+        gestion: valor("tipo_gestion_cierre_reclamo"),
+        gestionDisabled: campo("tipo_gestion_cierre_reclamo").prop("disabled"),
+        tipogestion: valor("tipogestion"),
+        observacionCierre: valor("reclamo_observacion_cierre"),
+        revisionesActivas: valor("cantrevisionesactivas"),
+        auditoriaAdministrativa: valor("auditoriaadministrativa"),
+        chkAmparoDisabled: campo("chk_amparo").prop("disabled"),
+        chkSuperintendenciaDisabled: campo("chk_superintendencia").prop("disabled"),
+        chkRecuperableDisabled: campo("chk_recuperable").prop("disabled"),
+        chkEnTramiteDisabled: campo("chk_entramite").prop("disabled")
+    };
+}
+
+function restaurarEstadoCierre(anterior) {
+    if (!anterior) {
+        return;
+    }
+
+    asignar("estado", anterior.estado);
+    asignar("tipo_gestion_cierre_reclamo", anterior.gestion);
+    campo("tipo_gestion_cierre_reclamo").prop(
+            "disabled",
+            anterior.gestionDisabled
+    );
+    asignar("tipogestion", anterior.tipogestion);
+    asignar("reclamo_observacion_cierre", anterior.observacionCierre);
+    asignar("cantrevisionesactivas", anterior.revisionesActivas);
+    asignar("auditoriaadministrativa", anterior.auditoriaAdministrativa);
+    campo("chk_amparo").prop("disabled", anterior.chkAmparoDisabled);
+    campo("chk_superintendencia").prop(
+            "disabled",
+            anterior.chkSuperintendenciaDisabled
+    );
+    campo("chk_recuperable").prop(
+            "disabled",
+            anterior.chkRecuperableDisabled
+    );
+    campo("chk_entramite").prop("disabled", anterior.chkEnTramiteDisabled);
+
+    if (typeof window.controlarEstadoCerrado === "function") {
+        window.controlarEstadoCerrado();
+    }
 }
 
 function configurarCierreRechazado() {
@@ -212,10 +260,9 @@ function invocarGuardadoLuegoDeRevision() {
 
     try {
         if (values.hasReclamo) {
-            funcion(false);
-        } else {
-            funcion();
+            return funcion(false);
         }
+        return funcion();
     } finally {
         window.confirm = confirmarOriginal;
     }
@@ -234,6 +281,7 @@ function agregarRevisionSeguro() {
 
     var resolucion = valor("resolucion");
     var rechazo = esResolucionRechazada(resolucion);
+    var estadoAnterior = capturarEstadoCierre();
 
     if (rechazo && !window.confirm(
             "Confirma el cierre del caso con el rechazo en la revisión?"
@@ -265,6 +313,7 @@ function agregarRevisionSeguro() {
         try {
             configurarCierreRechazado();
         } catch (errorConfiguracion) {
+            restaurarEstadoCierre(estadoAnterior);
             alert(errorConfiguracion.message);
             return false;
         }
@@ -288,9 +337,23 @@ function agregarRevisionSeguro() {
         reiniciarFormularioRevision();
 
         if (rechazo) {
-            invocarGuardadoLuegoDeRevision();
+            try {
+                var resultadoGuardado = invocarGuardadoLuegoDeRevision();
+                if (resultadoGuardado === false) {
+                    alert(
+                            "La revisión fue registrada, pero el cierre del reclamo no se completó. " +
+                            "Revise las validaciones y guarde nuevamente sin volver a crear la revisión."
+                    );
+                }
+            } catch (errorGuardado) {
+                alert(
+                        "La revisión fue registrada, pero ocurrió un error al guardar el cierre: " +
+                        errorGuardado.message
+                );
+            }
         }
     }).fail(function(xhr, estado, error) {
+        restaurarEstadoCierre(estadoAnterior);
         alternarBotonRevision(false);
         alert(
                 "No se pudo registrar la revisión. El reclamo no fue guardado ni cerrado. " +
