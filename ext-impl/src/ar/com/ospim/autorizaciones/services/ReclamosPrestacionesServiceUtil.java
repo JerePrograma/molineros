@@ -141,8 +141,21 @@ public class ReclamosPrestacionesServiceUtil {
 							+ " estado=AN motivo=TOKEN_NULO");
 					return;
 				}
-				ClienteAppMobile.actualizarEstadoReintegro(idReintegroApp, "AN", token);
-				_log.info("Solicitud de anulación enviada a AppMobile. reclamo=" + id
+
+				boolean sincronizado = ReclamoAppMobileSyncClient
+						.actualizarEstadoReintegro(
+								idReintegroApp,
+								"AN",
+								token
+						);
+				if (!sincronizado) {
+					_log.error("RECLAMO_APP_SYNC_PENDING reclamo=" + id
+							+ " reintegroApp=" + idReintegroApp
+							+ " estado=AN motivo=HTTP_NO_CONFIRMADO");
+					return;
+				}
+
+				_log.info("Anulación confirmada por AppMobile. reclamo=" + id
 						+ " reintegroApp=" + idReintegroApp);
 			} catch (Exception e) {
 				_log.error("RECLAMO_APP_SYNC_PENDING reclamo=" + id
