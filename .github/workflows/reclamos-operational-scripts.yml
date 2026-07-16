@@ -1,0 +1,38 @@
+name: Reclamo Operational Scripts
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/reclamos/**'
+      - '.github/workflows/reclamos-operational-scripts.yml'
+  pull_request:
+    paths:
+      - 'scripts/reclamos/**'
+      - '.github/workflows/reclamos-operational-scripts.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate shell syntax
+        run: |
+          bash -n scripts/reclamos/validar_release_reclamos.sh
+          bash -n scripts/reclamos/verificar_outbox_appmobile.sh
+
+      - name: Validate release gate help files
+        run: |
+          test -f scripts/reclamos/README.md
+          grep -q 'ALLOW_LEGACY_APPMOBILE_SECRETS' scripts/reclamos/README.md
+          grep -q 'PENDING_MAX_MINUTES' scripts/reclamos/verificar_outbox_appmobile.sh
+          grep -q 'MAX_ATTEMPTS' scripts/reclamos/verificar_outbox_appmobile.sh
