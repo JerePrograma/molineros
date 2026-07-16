@@ -6,45 +6,76 @@ La baja de un Reclamo Prestacional y la actualización del reintegro en AppMobil
 ocurren en sistemas distintos. No existe una transacción distribuida entre la
 base PostgreSQL de Molineros y el servicio HTTP externo.
 
-La outbox evita que un fallo de token, red o HTTP quede registrado únicamente
-en logs. El estado externo pendiente queda persistido y puede reintentarse sin
-recrear el reclamo eliminado.
+La baja local y el registro de la outbox sí se ejecutan actualmente dentro de
+la misma transacción PostgreSQL. Para reclamos vinculados a AppMobile, si no se
+puede registrar el evento pendiente, también se revierte la baja local.
+
+La outbox evita que un fallo de autenticación, red o HTTP quede registrado
+únicamente en logs. El estado externo pendiente queda persistido y puede
+reintentarse sin recrear el reclamo eliminado.
+
+## Configuración obligatoria
+
+El flujo reparado no utiliza credenciales literales del cliente AppMobile
+legacy. Antes de desplegar deben existir estas claves en la configuración leída
+por `TraeListasServiceUtil.getSystemConfig`:
+
+```text
+APP_HOST_WEBSERVICE
+APP_BACKOFFICE_API_KEY
+APP_BACKOFFICE_EMAIL
+APP_BACKOFFICE_PASSWORD
+```
+
+Requisitos:
+
+- `APP_HOST_WEBSERVICE`: esquema, host y puerto, sin necesidad de `/` final;
+- `APP_BACKOFFICE_API_KEY`: valor de cabecera `api-key`;
+- `APP_BACKOFFICE_EMAIL`: usuario técnico del backoffice;
+- `APP_BACKOFFICE_PASSWORD`: contraseña del usuario técnico.
+
+No registrar estos valores en Git, scripts SQL, logs o documentación operativa.
+La aplicación sólo informa qué clave falta; nunca imprime sus contenidos.
 
 ## Orden obligatorio de despliegue
 
 1. detener o drenar operaciones de baja durante la ventana;
-2. ejecutar el esquema:
+2. confirmar las cuatro claves de configuración anteriores;
+3. ejecutar el esquema:
 
    ```text
    sql/postgresql/autorizaciones/reclamo_appmobile_outbox.sql
    ```
 
-3. verificar tabla, restricciones e índices;
-4. desplegar el WAR que contiene los servicios de outbox;
-5. reiniciar el contenedor según el procedimiento habitual;
-6. comprobar el log `Despachador outbox AppMobile iniciado.`;
-7. ejecutar una baja controlada vinculada a AppMobile;
-8. verificar la fila de outbox y el estado externo `AN`.
+4. verificar tabla, restricciones e índices;
+5. desplegar el WAR que contiene los servicios de outbox;
+6. reiniciar el contenedor según el procedimiento habitual;
+7. comprobar el log `Despachador outbox AppMobile iniciado.`;
+8. ejecutar una baja controlada vinculada a AppMobile;
+9. verificar la fila de outbox y el estado externo `AN`.
 
-No desplegar primero el código y después la tabla. El flujo de baja seguirá
-intentando la sincronización directa, pero el scheduler registrará errores de
-base una vez por minuto hasta que el esquema exista.
+No desplegar primero el código y después la tabla. En un reclamo vinculado a
+AppMobile, la baja transaccional necesita insertar o reactivar la outbox antes
+del commit. Si la tabla no existe, la baja se revierte y se registra un error.
 
 ## Flujo implementado
 
 1. Molineros recupera el reclamo y conserva `idReintegroApp`.
-2. Ejecuta la baja local.
-3. Registra el ID como baja reciente durante 60 segundos para neutralizar la
+2. Abre una transacción PostgreSQL.
+3. Ejecuta `autorizaciones.borra_reclamo_prestacional`.
+4. Dentro de la misma conexión inserta o reactiva el evento
+   `(idReintegroApp, AN)`.
+5. Confirma conjuntamente baja local y outbox.
+6. Registra el ID como baja reciente durante 60 segundos para neutralizar la
    relectura y segunda llamada de la Action legacy.
-4. Inserta o reactiva el evento outbox `(idReintegroApp, AN)`.
-5. Obtiene token y realiza el intento HTTP inmediato.
-6. Sólo HTTP `200` o `204` se considera confirmado.
-7. Si se confirma, la fila pasa a `PROCESADO`.
-8. Si falla, permanece `PENDIENTE` y el scheduler la reintenta.
+7. Obtiene el token mediante configuración y realiza el intento HTTP inmediato.
+8. Sólo HTTP `200` o `204` se considera confirmado.
+9. Si se confirma, la fila pasa a `PROCESADO`.
+10. Si falla, permanece `PENDIENTE` y el scheduler la reintenta.
 
 ## Semántica de entrega
 
-La entrega es **al menos una vez**.
+La entrega hacia AppMobile es **al menos una vez**.
 
 Puede existir una repetición de `AN` cuando:
 
@@ -54,8 +85,11 @@ Puede existir una repetición de `AN` cuando:
 - un lease venció mientras la solicitud externa seguía en curso.
 
 El endpoint de AppMobile debe tratar la transición a `AN` como idempotente. Si
-no lo hace, debe corregirse antes de considerar este flujo transaccionalmente
+no lo hace, debe corregirse antes de considerar este flujo operacionalmente
 seguro.
+
+La atomicidad garantizada se limita a baja local + alta/reactivación de outbox.
+No incluye la llamada HTTP externa.
 
 ## Estados de la tabla
 
@@ -75,6 +109,10 @@ Un registro `PROCESANDO` cuyo `bloqueado_hasta` venció vuelve a ser elegible.
 
 El scheduler se inicia al cargar `ReclamosPrestacionesServiceUtil` y utiliza un
 hilo daemon de prioridad mínima.
+
+En instalaciones con varios nodos, cada JVM puede iniciar su dispatcher. El
+lease en base evita que dos nodos procesen normalmente la misma fila, aunque la
+semántica sigue siendo al menos una vez ante caídas y expiración de leases.
 
 ## Consultas de validación
 
@@ -156,7 +194,9 @@ Buscar:
 RECLAMO_APP_SYNC_PENDING
 RECLAMO_APP_OUTBOX_UNAVAILABLE
 RECLAMO_APP_OUTBOX_CONFIRM_PENDING
+AppMobile rechazó autenticación
 AppMobile rechazó actualización de reintegro
+No se pudo completar baja transaccional
 No se pudo procesar outbox AppMobile
 Outbox AppMobile procesada
 ```
@@ -164,9 +204,11 @@ Outbox AppMobile procesada
 Interpretación:
 
 - `SYNC_PENDING`: el intento inmediato no fue confirmado;
-- `OUTBOX_UNAVAILABLE`: no se pudo persistir o actualizar la cola;
+- `OUTBOX_UNAVAILABLE`: falló una actualización posterior de la cola; la baja
+  inicial vinculada ya creó el evento dentro de su transacción;
 - `OUTBOX_CONFIRM_PENDING`: AppMobile respondió exitosamente, pero falló la
   confirmación en base; puede producirse una repetición;
+- `No se pudo completar baja transaccional`: baja y outbox fueron revertidas;
 - `Outbox ... procesada`: cantidad confirmada en un lote automático.
 
 ## Reconciliación manual
@@ -214,12 +256,18 @@ Después de volver al WAR anterior:
 4. mantener la tabla para auditoría;
 5. eliminarla sólo mediante una decisión posterior y con backup.
 
+Un WAR anterior no conoce la baja transaccional ni el scheduler de outbox. Por
+eso no debe reanudarse el flujo normal de bajas vinculadas hasta definir quién
+procesará los pendientes existentes.
+
 ## Limitaciones pendientes
 
-- La baja local y el insert de outbox todavía son dos transacciones de base
-  separadas. Existe una ventana mínima entre ambas.
 - El guard de baja reciente neutraliza la Action antigua, pero debe retirarse
   cuando se elimine físicamente la segunda llamada de esa Action.
+- El scheduler daemon no está integrado todavía al ciclo de vida formal de
+  Liferay; un redespliegue debe verificar que el classloader anterior se libere.
 - No hay panel administrativo de pendientes.
 - No se persiste todavía el usuario que originó ni el operador que reconcilió.
 - No existe una métrica exportada; el monitoreo actual depende de SQL y logs.
+- Otros flujos legacy de `ClienteAppMobile` todavía deben migrarse para retirar
+  definitivamente credenciales históricas del archivo heredado.
