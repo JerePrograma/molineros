@@ -51,6 +51,10 @@ public class ReclamosPrestacionesServiceUtil {
 	private static final Map<Integer, Long> BAJAS_RECIENTES =
 			new ConcurrentHashMap<Integer, Long>();
 
+	static {
+		ReclamoAppMobileOutboxDispatcher.iniciar();
+	}
+
 	public static ReclamoPrestacionServiceImpl  getInstance() {
 		if (null == instance) {
 			instance = new ReclamoPrestacionServiceImpl ();
