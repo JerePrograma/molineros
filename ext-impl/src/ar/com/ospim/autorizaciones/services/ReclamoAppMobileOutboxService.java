@@ -12,7 +12,6 @@ import com.liferay.portal.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
-import ar.com.ospim.desarrolloAppMobile.beans.ClienteAppMobile;
 import ar.com.ospim.util.ConnectionHelper;
 
 /**
@@ -37,10 +36,6 @@ public final class ReclamoAppMobileOutboxService {
     private ReclamoAppMobileOutboxService() {
     }
 
-    /**
-     * Inserta o reactiva una sincronización pendiente sin duplicar un evento
-     * todavía no procesado para el mismo reintegro y estado destino.
-     */
     public static void registrarPendiente(
             int idReclamo,
             int idReintegroApp,
@@ -103,13 +98,6 @@ public final class ReclamoAppMobileOutboxService {
         }
     }
 
-    /**
-     * Procesa hasta {@code limite} eventos disponibles. Cada registro se toma
-     * con un lease temporal para que otra ejecución pueda recuperarlo si el
-     * proceso cae.
-     *
-     * @return cantidad de eventos confirmados por AppMobile.
-     */
     public static int procesarPendientes(int limite) throws SystemException {
         int limiteSeguro = Math.max(1, Math.min(limite, 100));
         List<EventoOutbox> candidatos = buscarCandidatos(limiteSeguro);
@@ -117,7 +105,7 @@ public final class ReclamoAppMobileOutboxService {
             return 0;
         }
 
-        String token = ClienteAppMobile.obtenerToken();
+        String token = ReclamoAppMobileAuthClient.obtenerToken();
         if (token == null || token.trim().length() == 0) {
             _log.warn("No se procesó outbox AppMobile: token no disponible.");
             return 0;
