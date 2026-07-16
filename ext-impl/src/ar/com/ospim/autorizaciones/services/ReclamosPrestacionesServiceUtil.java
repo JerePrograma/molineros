@@ -4,6 +4,8 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.liferay.portal.SystemException;
 import com.liferay.portal.kernel.log.Log;
@@ -45,6 +47,9 @@ public class ReclamosPrestacionesServiceUtil {
 			.getLog(ReclamoPrestacionServiceImpl.class);
 
 	private static ReclamoPrestacionServiceImpl  instance = null;
+	private static final long BAJA_RECIENTE_TTL_MS = 60000L;
+	private static final Map<Integer, Long> BAJAS_RECIENTES =
+			new ConcurrentHashMap<Integer, Long>();
 
 	public static ReclamoPrestacionServiceImpl  getInstance() {
 		if (null == instance) {
@@ -101,7 +106,10 @@ public class ReclamosPrestacionesServiceUtil {
 	}
 	
 	public static ReclamoPrestacional getReclamoPrestacional (int id) throws Exception {
-		
+		if (esBajaReciente(id)) {
+			_log.debug("Se omite relectura de Reclamo Prestacional dado de baja: " + id);
+			return null;
+		}
 		return getInstance().getReclamoPrestacional(id) ;
 	}
 	
@@ -131,6 +139,7 @@ public class ReclamosPrestacionesServiceUtil {
 		}
 
 		getInstance().borrar(id, user.getScreenName());
+		registrarBajaReciente(id);
 
 		if (idReintegroApp != null) {
 			try {
@@ -409,6 +418,28 @@ public class ReclamosPrestacionesServiceUtil {
 	public static List<MovimientoReclamoHistorico> buscarHistoricoReclamo(
 	        int idReclamo) throws Exception {
 	    return getInstance().buscaHistoricoReclamo(idReclamo);
+	}
+
+	private static void registrarBajaReciente(int idReclamo) {
+		long ahora = System.currentTimeMillis();
+		limpiarBajasRecientesExpiradas(ahora);
+		BAJAS_RECIENTES.put(Integer.valueOf(idReclamo), Long.valueOf(ahora));
+	}
+
+	private static boolean esBajaReciente(int idReclamo) {
+		long ahora = System.currentTimeMillis();
+		limpiarBajasRecientesExpiradas(ahora);
+		Long instante = BAJAS_RECIENTES.get(Integer.valueOf(idReclamo));
+		return instante != null && ahora - instante.longValue() <= BAJA_RECIENTE_TTL_MS;
+	}
+
+	private static void limpiarBajasRecientesExpiradas(long ahora) {
+		for (Map.Entry<Integer, Long> entry : BAJAS_RECIENTES.entrySet()) {
+			Long instante = entry.getValue();
+			if (instante == null || ahora - instante.longValue() > BAJA_RECIENTE_TTL_MS) {
+				BAJAS_RECIENTES.remove(entry.getKey());
+			}
+		}
 	}
 
 }
