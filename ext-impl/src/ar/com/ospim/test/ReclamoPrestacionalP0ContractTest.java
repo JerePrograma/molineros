@@ -52,7 +52,22 @@ public final class ReclamoPrestacionalP0ContractTest {
         assertContains(
                 "assets versionados",
                 view,
-                "?v=20260716-p0-1"
+                "?v=20260716-p0-2"
+        );
+        assertContains(
+                "normaliza fecha seccional vacía",
+                view,
+                "normalizarFechaOpcional(\"fechaseccional\")"
+        );
+        assertContains(
+                "normaliza fecha de cierre vacía",
+                view,
+                "normalizarFechaOpcional(\"fechacierre\")"
+        );
+        assertContains(
+                "intercepta submitForm",
+                view,
+                "window.submitForm = submitFormNormalizado"
         );
 
         assertContains(
