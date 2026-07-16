@@ -6,13 +6,16 @@ on:
       - main
     paths:
       - 'docs/autorizaciones/RECLAMOS_PRESTACIONALES_P0_DEPLOY.md'
+      - 'docs/autorizaciones/RECLAMOS_APPMOBILE_OUTBOX_OPERACION.md'
       - 'sql/postgresql/autorizaciones/reclamo_appmobile_outbox.sql'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/action/ReclamosBaseAction.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java'
+      - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoAppMobileAuthClient.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoAppMobileSyncClient.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoAppMobileOutboxService.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoAppMobileOutboxDirectService.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoAppMobileOutboxDispatcher.java'
+      - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoPrestacionalBajaTransaccionalService.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoAppMobileSyncContractTest.java'
@@ -25,13 +28,16 @@ on:
   pull_request:
     paths:
       - 'docs/autorizaciones/RECLAMOS_PRESTACIONALES_P0_DEPLOY.md'
+      - 'docs/autorizaciones/RECLAMOS_APPMOBILE_OUTBOX_OPERACION.md'
       - 'sql/postgresql/autorizaciones/reclamo_appmobile_outbox.sql'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/action/ReclamosBaseAction.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java'
+      - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoAppMobileAuthClient.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoAppMobileSyncClient.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoAppMobileOutboxService.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoAppMobileOutboxDirectService.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoAppMobileOutboxDispatcher.java'
+      - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoPrestacionalBajaTransaccionalService.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoAppMobileSyncContractTest.java'
