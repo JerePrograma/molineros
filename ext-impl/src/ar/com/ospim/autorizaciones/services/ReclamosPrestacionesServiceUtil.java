@@ -142,9 +142,22 @@ public class ReclamosPrestacionesServiceUtil {
 		registrarBajaReciente(id);
 
 		if (idReintegroApp != null) {
+			registrarOutboxSeguro(
+					id,
+					idReintegroApp.intValue(),
+					"AN",
+					"BAJA_LOCAL_CONFIRMADA"
+			);
+
 			try {
 				String token = ClienteAppMobile.obtenerToken();
 				if (token == null) {
+					registrarOutboxSeguro(
+							id,
+							idReintegroApp.intValue(),
+							"AN",
+							"TOKEN_NULO"
+					);
 					_log.error("RECLAMO_APP_SYNC_PENDING reclamo=" + id
 							+ " reintegroApp=" + idReintegroApp
 							+ " estado=AN motivo=TOKEN_NULO");
@@ -158,15 +171,28 @@ public class ReclamosPrestacionesServiceUtil {
 								token
 						);
 				if (!sincronizado) {
+					registrarOutboxSeguro(
+							id,
+							idReintegroApp.intValue(),
+							"AN",
+							"HTTP_NO_CONFIRMADO"
+					);
 					_log.error("RECLAMO_APP_SYNC_PENDING reclamo=" + id
 							+ " reintegroApp=" + idReintegroApp
 							+ " estado=AN motivo=HTTP_NO_CONFIRMADO");
 					return;
 				}
 
+				confirmarOutboxSeguro(idReintegroApp.intValue(), "AN");
 				_log.info("Anulación confirmada por AppMobile. reclamo=" + id
 						+ " reintegroApp=" + idReintegroApp);
 			} catch (Exception e) {
+				registrarOutboxSeguro(
+						id,
+						idReintegroApp.intValue(),
+						"AN",
+						"EXCEPCION: " + mensajeSeguro(e)
+				);
 				_log.error("RECLAMO_APP_SYNC_PENDING reclamo=" + id
 						+ " reintegroApp=" + idReintegroApp
 						+ " estado=AN motivo=EXCEPCION", e);
@@ -440,6 +466,54 @@ public class ReclamosPrestacionesServiceUtil {
 				BAJAS_RECIENTES.remove(entry.getKey());
 			}
 		}
+	}
+
+	private static void registrarOutboxSeguro(
+			int idReclamo,
+			int idReintegroApp,
+			String estadoDestino,
+			String motivo) {
+
+		try {
+			ReclamoAppMobileOutboxService.registrarPendiente(
+					idReclamo,
+					idReintegroApp,
+					estadoDestino,
+					motivo
+			);
+		} catch (Exception e) {
+			_log.error("RECLAMO_APP_OUTBOX_UNAVAILABLE reclamo=" + idReclamo
+					+ " reintegroApp=" + idReintegroApp
+					+ " estado=" + estadoDestino
+					+ " motivo=" + motivo, e);
+		}
+	}
+
+	private static void confirmarOutboxSeguro(
+			int idReintegroApp,
+			String estadoDestino) {
+
+		try {
+			ReclamoAppMobileOutboxDirectService.confirmarProcesado(
+					idReintegroApp,
+					estadoDestino
+			);
+		} catch (Exception e) {
+			_log.error("RECLAMO_APP_OUTBOX_CONFIRM_PENDING reintegroApp="
+					+ idReintegroApp
+					+ " estado=" + estadoDestino, e);
+		}
+	}
+
+	private static String mensajeSeguro(Exception e) {
+		if (e == null) {
+			return "SIN_DETALLE";
+		}
+		String mensaje = e.getMessage();
+		if (mensaje == null || mensaje.trim().length() == 0) {
+			return e.getClass().getName();
+		}
+		return e.getClass().getName() + ": " + mensaje;
 	}
 
 }
