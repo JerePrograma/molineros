@@ -16,6 +16,10 @@ public final class ReclamoAppMobileSyncContractTest {
     }
 
     public static void main(String[] args) throws Exception {
+        String auth = leer(
+                "ext-impl/src/ar/com/ospim/autorizaciones/services/"
+                        + "ReclamoAppMobileAuthClient.java"
+        );
         String client = leer(
                 "ext-impl/src/ar/com/ospim/autorizaciones/services/"
                         + "ReclamoAppMobileSyncClient.java"
@@ -23,6 +27,10 @@ public final class ReclamoAppMobileSyncContractTest {
         String service = leer(
                 "ext-impl/src/ar/com/ospim/autorizaciones/services/"
                         + "ReclamosPrestacionesServiceUtil.java"
+        );
+        String outbox = leer(
+                "ext-impl/src/ar/com/ospim/autorizaciones/services/"
+                        + "ReclamoAppMobileOutboxService.java"
         );
         String directOutbox = leer(
                 "ext-impl/src/ar/com/ospim/autorizaciones/services/"
@@ -32,6 +40,33 @@ public final class ReclamoAppMobileSyncContractTest {
                 "ext-impl/src/ar/com/ospim/autorizaciones/services/"
                         + "ReclamoPrestacionalBajaTransaccionalService.java"
         );
+
+        assertContains("host de autenticación configurable", auth,
+                "APP_HOST_WEBSERVICE");
+        assertContains("api key configurable", auth,
+                "APP_BACKOFFICE_API_KEY");
+        assertContains("email configurable", auth,
+                "APP_BACKOFFICE_EMAIL");
+        assertContains("password configurable", auth,
+                "APP_BACKOFFICE_PASSWORD");
+        assertContains("configuración leída por servicio", auth,
+                "TraeListasServiceUtil.getSystemConfig(clave)");
+        assertContains("credenciales en JSON", auth,
+                "body.put(\"email\", email)");
+        assertContains("password en JSON", auth,
+                "body.put(\"password\", password)");
+        assertContains("autenticación exige HTTP 200", auth,
+                "if (status != 200)");
+        assertContains("token obligatorio", auth,
+                "json.optString(\"token\", \"\")");
+        assertContains("conexión de login liberada", auth,
+                "post.releaseConnection();");
+        assertNotContains("email literal prohibido", auth,
+                "private static final String EMAIL");
+        assertNotContains("password literal prohibido", auth,
+                "private static final String PASSWORD");
+        assertNotContains("api key literal prohibida", auth,
+                "private static final String API_KEY");
 
         assertContains("éxito limitado a HTTP 200/204", client,
                 "status == 200 || status == 204");
@@ -43,6 +78,15 @@ public final class ReclamoAppMobileSyncContractTest {
                 "limitar(response, 1000)");
         assertContains("conexión liberada", client,
                 "post.releaseConnection();");
+
+        assertContains("baja usa autenticación segura", service,
+                "ReclamoAppMobileAuthClient.obtenerToken()");
+        assertNotContains("baja no usa autenticación legacy", service,
+                "ClienteAppMobile.obtenerToken()");
+        assertContains("worker usa autenticación segura", outbox,
+                "ReclamoAppMobileAuthClient.obtenerToken()");
+        assertNotContains("worker no usa autenticación legacy", outbox,
+                "ClienteAppMobile.obtenerToken()");
 
         assertContains("servicio usa cliente confirmado", service,
                 "ReclamoAppMobileSyncClient");
@@ -86,7 +130,7 @@ public final class ReclamoAppMobileSyncContractTest {
 
         assertBefore("baja transaccional antes del token", service,
                 "ReclamoPrestacionalBajaTransaccionalService.borrar(",
-                "ClienteAppMobile.obtenerToken()");
+                "ReclamoAppMobileAuthClient.obtenerToken()");
         assertBefore("HTTP antes de confirmar outbox", service,
                 "boolean sincronizado = ReclamoAppMobileSyncClient",
                 "confirmarOutboxSeguro(idReintegroApp.intValue(), \"AN\")");
@@ -97,7 +141,7 @@ public final class ReclamoAppMobileSyncContractTest {
         assertContains("stored procedure conservado", transactionalDelete,
                 "autorizaciones.borra_reclamo_prestacional");
         assertContains("outbox usa misma conexión", transactionalDelete,
-                "registrarOutboxEnTransaccion(\n                        con,");
+                "registrarOutboxEnTransaccion(");
         assertContains("motivo inicial persistido", transactionalDelete,
                 "BAJA_LOCAL_CONFIRMADA");
         assertBefore("baja antes de outbox en la transacción",
