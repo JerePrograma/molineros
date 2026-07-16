@@ -1,340 +1,422 @@
-# Reclamos Prestacionales — despliegue P0 y reconciliación
+# Reclamos Prestacionales — despliegue controlado
 
-## Objetivo
+## Estado de este documento
 
-Este PR estabiliza los puntos de mayor riesgo de Reclamos Prestacionales sin
-restaurar el JSP monolítico, sin migraciones SQL y sin reescribir todavía el
-módulo completo.
+Este procedimiento describe el estado actual de `main` después de las
+reparaciones P0, la estabilización del editor, el guard de pestañas y la outbox
+AppMobile.
 
-El alcance está limitado a evitar:
+No representa una reescritura completa del módulo. Continúan existiendo
+componentes legacy que requieren migración gradual.
 
-- pérdida de datos precargados durante la inicialización;
-- revisión rechazada con estado o gestión incorrectos;
-- guardado/cierre antes de confirmar que la revisión fue registrada;
-- pantalla visualmente cerrada después de fallar la revisión;
-- evaluación degradada a `SINEVALUACION` por comparación incorrecta de
-  `String`;
-- continuación del flujo con un reclamo que no pudo reconstruirse;
+## Objetivos cubiertos
+
+El conjunto actual reduce los riesgos de:
+
+- pérdida de código, descripción, troquel o nomenclador precargado;
+- revisión rechazada sin estado cerrado `3` y gestión rechazada `5`;
+- cierre ejecutado antes de confirmar la revisión;
+- pantalla visualmente cerrada después de fallar el endpoint de revisión;
+- evaluación degradada por comparar `String` con `==`;
+- continuación con un reclamo nulo o parcialmente construido;
 - doble submit accidental;
-- pérdida de `idReintegroApp` por consultarlo después de la baja local;
-- mezcla de versiones antiguas y nuevas del JavaScript por caché.
+- editor AJAX inicializado por JavaScript estructuralmente inválido;
+- AJAX síncrono al cargar letras de comprobante;
+- sobrescritura accidental entre dos pestañas del mismo navegador;
+- pérdida de `idReintegroApp` después de la baja;
+- confirmación falsa de sincronización ante HTTP no exitoso;
+- baja local confirmada sin un evento durable de reconciliación;
+- uso de credenciales literales por el flujo AppMobile reparado;
+- registro de cuerpos de respuesta externos potencialmente sensibles.
 
-La auditoría completa contiene defectos adicionales. Este PR no debe tratarse
-como cierre definitivo del módulo.
+## Activos del navegador
 
----
-
-## Cambios implementados
-
-### Navegador
-
-`view_reclamo.jsp` captura un snapshot de la selección técnica antes de ejecutar
-el JavaScript legacy y luego carga:
+`view_reclamo.jsp` carga actualmente, en este orden:
 
 ```text
-view_reclamo.js?v=20260716-p0-2
-view_reclamo_p0_patch.js?v=20260716-p0-2
+view_reclamo.js?v=20260716-p0-4
+view_reclamo_tab_guard.js?v=20260716-p0-4
+view_reclamo_editor_patch.js?v=20260716-p0-4
+view_reclamo_p0_patch.js?v=20260716-p0-4
 ```
 
-La capa `view_reclamo_p0_patch.js`:
+El orden es obligatorio:
 
-- restaura troquel, código, descripción y nomenclador precargados;
-- evita que el render inicial del sector borre la selección técnica;
-- valida la fecha de revisión antes de enviar;
+1. el JavaScript legacy define las funciones originales;
+2. el guard establece propiedad de pestaña y propaga `reclamoDraftId`;
+3. el estabilizador del editor intercepta la carga del fragmento defectuoso;
+4. la capa P0 reemplaza revisión, cierre, precarga y doble submit.
+
+### Capa P0
+
+`view_reclamo_p0_patch.js`:
+
+- restaura la selección técnica precargada;
+- separa render del sector de limpieza destructiva;
+- valida la fecha de revisión;
 - registra la revisión mediante `POST`;
-- espera la respuesta exitosa antes de guardar o cerrar;
-- utiliza los códigos canónicos:
-  - estado cerrado: `3`;
-  - gestión rechazada: `5`;
-- envía los flags leídos por la pantalla, incluido `chk_entramite`;
-- falla cerrado cuando el endpoint de revisión no responde;
-- restaura el estado visual anterior si la revisión falla;
-- diferencia el caso en que la revisión fue registrada pero el guardado del
-  cierre no pudo completarse;
-- impide doble submit durante una ventana corta;
-- intenta reinicializar el editor después de cargar el fragmento AJAX;
-- normaliza fechas opcionales completamente vacías antes del submit.
+- espera éxito antes de intentar el cierre;
+- utiliza `estado=3` y `gestión=5` para rechazo;
+- envía los flags de revisión, incluido `chk_entramite`;
+- falla cerrado si el endpoint no responde;
+- restaura estado y gestión anteriores ante error;
+- distingue revisión persistida de cierre no completado;
+- bloquea doble submit;
+- normaliza fechas opcionales completamente vacías.
 
-### Servidor
+### Estabilizador del editor
 
-`ReclamosBaseAction` recibe cambios quirúrgicos:
+`view_reclamo_editor_patch.js`:
 
-- reemplaza comparaciones `String ==` por un parser explícito;
-- acepta las representaciones legacy y enum:
-  - `AUTORIZADO` / `AUTORIZADA`;
-  - `RECHAZADO` / `RECHAZADA`;
-  - `SINVALOR`;
-  - `SINEVALUACION` / `SIN_EVALUACION`;
-- usa `tipo_gestion_cierre_reclamo` como fallback cuando el hidden
-  `tipogestion` llega vacío o en cero;
-- reemplaza un `&` booleano por `&&`;
-- registra y aborta cuando el constructor del reclamo falla;
-- impide continuar con un objeto nulo después de una reconstrucción fallida.
+- intercepta exclusivamente `editar_reclamosprestaciones`;
+- retira de la respuesta los bloques JavaScript legacy conocidos como rotos;
+- reinicializa el editor de manera controlada;
+- carga letras de comprobante de forma asíncrona;
+- corrige etiquetas de edición, autorización y rechazo;
+- encapsula cálculos numéricos sin variables globales implícitas;
+- presenta un error visible cuando el fragmento no puede cargarse.
 
-El PR **no cambia** deliberadamente las reglas generales de cuenta bancaria,
-afiliado, seccional ni parsing de fechas del formulario legacy. Esas áreas
-requieren tickets separados y pruebas específicas.
+El JavaScript inválido todavía existe físicamente en
+`datos_edicion_prestacion.jsp`. La capa evita su ejecución en la ruta AJAX
+interceptada, pero la eliminación física sigue pendiente.
 
-### Baja local y AppMobile
+### Guard de pestañas
 
-`ReclamosPrestacionesServiceUtil.borrar` ahora:
+`view_reclamo_tab_guard.js`:
 
-1. consulta el reclamo antes de borrarlo;
-2. conserva `idReintegroApp`;
-3. cancela la baja si no puede obtener el snapshot previo;
-4. ejecuta la baja local;
-5. solicita el estado externo `AN` usando el identificador preservado;
-6. registra `RECLAMO_APP_SYNC_PENDING` si no obtiene token o si la llamada
-   arroja una excepción visible para el caller.
+- asigna una identidad única a cada carga de página;
+- conserva un `draftId` por pestaña;
+- detecta pestañas duplicadas que heredaron `sessionStorage`;
+- mantiene un lease compartido mediante `localStorage`;
+- bloquea los controles de pestañas no propietarias;
+- permite tomar control explícitamente;
+- expira el lease si la pestaña propietaria desaparece;
+- agrega `reclamoDraftId` al formulario y a solicitudes AJAX relacionadas.
 
----
+Este guard es una mitigación cliente. Las claves globales de sesión de las
+Actions todavía no fueron migradas completamente al scope backend por borrador.
 
-## Límites de sincronización externa
+## Reconstrucción del reclamo
 
-No existe una transacción distribuida entre PostgreSQL y AppMobile. La baja
-local puede confirmarse y luego fallar la llamada externa.
+`ReclamosBaseAction` contiene cambios deliberadamente acotados:
 
-Además, `ClienteAppMobile.actualizarEstadoReintegro` registra internamente las
-respuestas HTTP no exitosas y no las propaga como excepción. Por eso deben
-buscarse dos familias de logs:
+- parser explícito de evaluación;
+- soporte para `AUTORIZADO/AUTORIZADA` y `RECHAZADO/RECHAZADA`;
+- soporte para `SINVALOR`, `SINEVALUACION` y `SIN_EVALUACION`;
+- fallback del combo visible de gestión cuando el hidden llega vacío;
+- reemplazo de un `&` booleano por `&&`;
+- aborto explícito si el constructor falla;
+- prohibición de continuar con un objeto nulo.
+
+No se reinterpretaron globalmente las reglas de cuentas, afiliados,
+seccionales ni todas las fechas del formulario legacy.
+
+## Scope backend de borradores
+
+`ReclamoPrestacionalDraftScope` define la convención para la migración gradual:
+
+- parámetro: `reclamoDraftId`;
+- formato permitido: letras, números, guion y guion bajo, entre 8 y 80 caracteres;
+- ausencia del parámetro: compatibilidad `legacy`;
+- clave aislada: `<claveBase>::DRAFT::<draftId>`;
+- soporte para `HttpSession` y `PortletSession.APPLICATION_SCOPE`.
+
+El helper está implementado y protegido por contrato, pero aún debe conectarse
+a cada Action y cada fragmento que utiliza claves globales como listas,
+prestación en edición, revisiones y contactos.
+
+## Baja local y AppMobile
+
+### Atomicidad local
+
+Para reclamos vinculados a AppMobile,
+`ReclamoPrestacionalBajaTransaccionalService` ejecuta en la misma conexión y el
+mismo commit PostgreSQL:
+
+1. `autorizaciones.borra_reclamo_prestacional`;
+2. inserción o reactivación del evento outbox `(idReintegroApp, AN)`.
+
+Si la outbox no puede registrarse, la baja local también se revierte.
+
+La semántica del stored procedure se conserva: sólo un resultado `0` impide la
+baja; una ejecución sin filas se trata como éxito, igual que el código legacy.
+
+### Intento inmediato
+
+Después del commit local:
+
+1. se obtiene el token mediante configuración;
+2. se ejecuta la solicitud de estado `AN`;
+3. únicamente HTTP `200` o `204` se considera confirmado;
+4. si se confirma, la outbox pasa a `PROCESADO`;
+5. si falla, permanece `PENDIENTE`.
+
+Los clientes nuevos no escriben cuerpos de respuesta en logs. Sólo registran
+HTTP, longitud de respuesta y contexto técnico no secreto.
+
+### Outbox durable
+
+Es obligatorio ejecutar:
 
 ```text
-RECLAMO_APP_SYNC_PENDING
-Error al actualizar estado del reintegro
-Excepción al actualizar estado del reintegro
+sql/postgresql/autorizaciones/reclamo_appmobile_outbox.sql
 ```
 
-`RECLAMO_APP_SYNC_PENDING` no cubre necesariamente todos los HTTP no exitosos.
-La solución definitiva es una outbox persistente, idempotente y reintentable.
+La tabla utiliza:
 
-La acción legacy todavía contiene una sincronización posterior a la baja. Si la
-baja es lógica y el registro aún puede recuperarse, podría producirse una
-segunda solicitud `AN`. Antes del merge se debe verificar en el entorno real
-que AppMobile trata esa operación de forma idempotente o retirar ese bloque en
-un PR controlado.
+- `PENDIENTE`;
+- `PROCESANDO` con lease de cinco minutos;
+- `PROCESADO`;
+- índice parcial único por `id_reintegro_app + estado_destino` mientras el
+  evento no esté procesado;
+- backoff de 1, 2, 4, 8, 16, 32 y 60 minutos.
 
----
+El dispatcher:
+
+- usa un único hilo daemon por JVM;
+- se inicia al cargar `ReclamosPrestacionesServiceUtil`;
+- ejecuta un lote máximo de 20 eventos cada minuto;
+- evita dos ejecuciones simultáneas dentro de la misma JVM;
+- recupera leases vencidos.
+
+La entrega HTTP es **al menos una vez**. AppMobile debe tratar `AN` como una
+transición idempotente.
+
+### Compatibilidad con la Action legacy
+
+La Action antigua todavía contiene una lectura y una posible segunda llamada
+después de la baja. El servicio registra el ID como baja reciente durante 60
+segundos y devuelve `null` ante esa relectura, neutralizando actualmente la
+segunda solicitud.
+
+Este guard debe retirarse cuando se elimine físicamente el bloque duplicado de
+la Action.
+
+## Configuración obligatoria
+
+El flujo reparado requiere:
+
+```text
+APP_HOST_WEBSERVICE
+APP_BACKOFFICE_API_KEY
+APP_BACKOFFICE_EMAIL
+APP_BACKOFFICE_PASSWORD
+```
+
+Estas claves se leen mediante `TraeListasServiceUtil.getSystemConfig`.
+
+No registrar los valores en Git, SQL, documentación ni logs.
+
+El archivo legacy `ClienteAppMobile.java` todavía conserva credenciales
+históricas embebidas para otros flujos. La baja reparada y el worker de outbox
+ya no utilizan ese autenticador, pero la eliminación física de esos secretos
+sigue siendo obligatoria.
 
 ## Validación automatizada
 
-El PR agrega el workflow:
+El workflow actual se denomina:
 
 ```text
-Reclamo Prestacional P0 Contract
+Reclamo Prestacional Contracts
 ```
 
-Compila y ejecuta con Java 8:
+Compila con Java 8 y ejecuta contratos independientes de Liferay para:
 
-```bash
-mkdir -p /tmp/rp-p0-contract
-javac -encoding UTF-8 \
-  -d /tmp/rp-p0-contract \
-  ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java
+- P0 de revisión/cierre y reconstrucción;
+- estabilizador del editor;
+- guard de pestañas;
+- scope backend de borradores;
+- autenticación y sincronización AppMobile;
+- outbox, leases, scheduler y backoff.
 
-java -cp /tmp/rp-p0-contract \
-  ar.com.ospim.test.ReclamoPrestacionalP0ContractTest
-```
+Estos contratos verifican estructura e invariantes textuales. No sustituyen:
 
-Resultado esperado:
+- compilación completa del proyecto;
+- carga real del WAR;
+- pruebas de navegador;
+- pruebas de stored procedures;
+- llamadas reales a AppMobile.
 
-```text
-CONTRATO_RECLAMO_PRESTACIONAL_P0_OK
-```
+## Por qué CI no compila Liferay completo
 
-Este contrato verifica estructura e invariantes críticas. No compila el
-proyecto completo ni ejecuta Liferay.
+El build Ant depende de:
 
----
+- instalación completa de Liferay y application server;
+- rutas locales `app.server.*`;
+- librerías del portal no reconstruidas por el workflow;
+- propiedades de QA/producción;
+- tareas que copian directamente al servidor.
 
-## Por qué CI no ejecuta el build completo
+Un `ant deploy` genérico en GitHub Actions produciría una validación falsa o
+podría requerir secretos de entorno. La compilación completa debe ejecutarse en
+el entorno legacy controlado.
 
-El build Ant del repositorio depende de:
+## Orden obligatorio de despliegue
 
-- una instalación completa de Liferay y del application server;
-- rutas `app.server.*` locales;
-- librerías del portal;
-- configuración de base y propiedades de QA/producción;
-- tareas de deploy que copian archivos directamente al servidor.
+1. detener o drenar bajas de Reclamos Prestacionales;
+2. confirmar las cuatro claves AppMobile;
+3. ejecutar `reclamo_appmobile_outbox.sql`;
+4. verificar tabla, restricciones e índices;
+5. compilar el proyecto completo en el entorno Liferay;
+6. inspeccionar el WAR y confirmar los cuatro assets `p0-4`;
+7. registrar SHA, checksum y copia del WAR anterior;
+8. desplegar en QA o nodo controlado;
+9. invalidar caché de navegador, proxy o CDN;
+10. ejecutar el smoke test completo;
+11. desplegar en producción durante una ventana controlada;
+12. monitorear base y logs durante al menos 24 horas.
 
-Agregar un workflow genérico de `ant deploy` sin reconstruir ese entorno sería
-una validación falsa o podría exponer configuración sensible.
-
-La compilación completa debe ejecutarse en el entorno de build legacy
-controlado antes del merge.
-
----
+No desplegar el código antes del esquema. Una baja vinculada necesita registrar
+la outbox dentro de su transacción.
 
 ## Smoke test obligatorio
 
-No usar inicialmente un reclamo real con orden de pago. Trabajar con datos de
-prueba trazables y registrar IDs antes y después.
+### Alta normal
 
-### 1. Alta normal
+1. crear un reclamo;
+2. seleccionar afiliado, sector y tipo de pedido;
+3. agregar una prestación;
+4. guardar;
+5. reabrir desde el buscador;
+6. comparar cabecera, flags, evaluación, prestación y montos.
 
-1. Crear un reclamo nuevo.
-2. Seleccionar afiliado, sector y tipo de pedido.
-3. Agregar una prestación.
-4. Guardar.
-5. Volver a abrir desde el buscador.
-6. Comparar cabecera, flags, evaluación, prestación y montos.
+### Precarga desde Compras
 
-Esperado: los datos persistidos coinciden con la pantalla enviada.
+1. iniciar desde un requerimiento `COTIZADO`;
+2. registrar sector, código, descripción, nomenclador, prestador y montos;
+3. esperar la inicialización completa;
+4. confirmar que la precarga no fue limpiada;
+5. guardar y volver a consultar;
+6. verificar que no existe duplicación.
 
-### 2. Precarga desde Compras
+### Editor de prestación
 
-1. Iniciar desde un requerimiento `COTIZADO`.
-2. Registrar sector, código, descripción, tipo de nomenclador, prestador y
-   montos.
-3. Esperar la carga completa de la pantalla.
-4. Confirmar que la inicialización no limpió esos datos.
-5. Completar los campos obligatorios.
-6. Guardar y volver a consultar.
+1. abrir una prestación existente;
+2. verificar ID, código, descripción y montos;
+3. cancelar;
+4. abrir otra fila;
+5. confirmar que no conserva valores de la anterior;
+6. probar edición, autorización y rechazo;
+7. simular fallo del fragmento AJAX y verificar mensaje visible.
 
-Esperado: no se pierde ni duplica la prestación precargada.
+### Revisión autorizada
 
-### 3. Edición de prestación
+1. informar fecha válida y resolución autorizada;
+2. registrar revisión;
+3. verificar que el fragmento responde antes del guardado;
+4. volver a consultar;
+5. confirmar una sola revisión activa.
 
-1. Abrir una prestación existente.
-2. Verificar ID, código, descripción y montos.
-3. Cancelar.
-4. Abrir otra prestación.
-5. Confirmar que no conserva valores de la anterior.
-6. Repetir con edición, autorización y rechazo.
+### Revisión rechazada
 
-Esperado: el editor siempre representa la fila elegida.
-
-### 4. Revisión autorizada
-
-1. Informar fecha válida y resolución autorizada.
-2. Registrar la revisión.
-3. Verificar que el fragmento responde antes del guardado.
-4. Volver a consultar el reclamo.
-
-Esperado: una sola revisión activa y evaluación autorizada.
-
-### 5. Revisión rechazada
-
-1. Informar una revisión rechazada.
-2. Confirmar el cierre.
-3. Antes del submit verificar:
+1. informar resolución rechazada;
+2. confirmar cierre;
+3. verificar antes del submit:
    - `estado=3`;
    - `tipo_gestion_cierre_reclamo=5`;
-   - `tipogestion=5`.
-4. Volver a consultar en base y buscador.
+   - `tipogestion=5`;
+4. consultar base y buscador.
 
-Esperado: revisión persistida, estado cerrado y gestión rechazada.
+### Fallo de revisión
 
-### 6. Error al registrar revisión
-
-Forzar un error controlado o bloquear temporalmente el endpoint.
+Forzar error de red o servidor.
 
 Esperado:
 
-- no se ejecuta el guardado del reclamo;
-- el estado visual vuelve al valor anterior;
-- la gestión visual vuelve al valor anterior;
-- el botón queda nuevamente disponible;
+- no se ejecuta el guardado;
+- estado y gestión vuelven al valor anterior;
+- el botón queda disponible;
 - aparece `El reclamo no fue guardado ni cerrado`.
 
-### 7. Revisión registrada pero cierre inválido
+### Revisión persistida y cierre inválido
 
 Forzar una validación del formulario después de registrar la revisión.
 
 Esperado:
 
-- la pantalla informa que la revisión ya fue registrada;
-- no sugiere volver a crearla;
-- permite corregir el formulario y guardar nuevamente;
-- no se duplica la revisión activa.
+- la pantalla informa que la revisión ya existe;
+- permite corregir y guardar;
+- no crea una segunda revisión activa.
 
-### 8. Doble clic
+### Dos pestañas
 
-Hacer doble clic rápido en Guardar/Editar.
+1. abrir el mismo editor en dos pestañas;
+2. confirmar que una queda bloqueada;
+3. duplicar la pestaña propietaria;
+4. confirmar que la copia obtiene otra identidad y queda bloqueada;
+5. tomar control desde la segunda;
+6. confirmar que la primera pierde propiedad.
 
-Esperado: una sola escritura y un solo mensaje de éxito.
+Esto valida la mitigación cliente, no el aislamiento backend definitivo.
 
-### 9. Baja vinculada a AppMobile
+### Baja vinculada a AppMobile
 
-1. Seleccionar un reclamo de prueba con `idReintegroApp`.
-2. Registrar ID local e ID externo.
-3. Ejecutar la baja.
-4. Verificar la baja local.
-5. Verificar estado externo `AN`.
-6. Revisar todas las marcas de sincronización.
-7. Confirmar si hubo una o dos solicitudes externas.
+1. registrar ID local e `idReintegroApp`;
+2. ejecutar la baja;
+3. verificar que baja local y outbox se confirman juntas;
+4. comprobar estado externo `AN`;
+5. comprobar que la fila queda `PROCESADO`;
+6. forzar token inválido y verificar fila `PENDIENTE`;
+7. restaurar configuración y verificar reintento automático;
+8. comprobar que no existen dos solicitudes causadas por la Action legacy.
 
-Esperado: estado externo final `AN`. Una marca pendiente o un error HTTP implica
-que el caso requiere reconciliación.
+## Monitoreo
 
----
+Buscar:
 
-## Monitoreo posterior
-
-Durante las primeras 24 horas buscar:
-
-```bash
-grep -R "RECLAMO_APP_SYNC_PENDING" <directorio-logs>
-grep -R "Error al actualizar estado del reintegro" <directorio-logs>
-grep -R "Excepción al actualizar estado del reintegro" <directorio-logs>
-grep -R "Los datos del Reclamo Prestacional son inválidos" <directorio-logs>
+```text
+RECLAMO_APP_SYNC_PENDING
+RECLAMO_APP_OUTBOX_UNAVAILABLE
+RECLAMO_APP_OUTBOX_CONFIRM_PENDING
+No se pudo completar baja transaccional
+No se pudo procesar outbox AppMobile
+Outbox AppMobile procesada
+Los datos del Reclamo Prestacional son inválidos
 ```
 
 Controlar también:
 
-- reclamos cerrados con gestión `0`;
-- reclamos rechazados cuyo estado no sea `3`;
+- cerrados con gestión `0`;
+- rechazados cuyo estado no sea `3`;
 - revisiones activas duplicadas;
-- altas desde Compras con nomenclador vacío;
-- bajas locales cuyo reintegro externo no esté en `AN`;
-- repetición de solicitudes de anulación para el mismo ID.
+- precargas de Compras sin referencia técnica;
+- outbox pendiente vencida;
+- leases vencidos;
+- eventos con cinco o más intentos;
+- reintegros externos distintos de `AN` después de una baja.
 
----
+Las consultas SQL y el procedimiento detallado de reconciliación están en:
 
-## Despliegue
-
-1. Compilar el proyecto completo en el entorno legacy.
-2. Confirmar que el WAR contiene `view_reclamo_p0_patch.js`.
-3. Registrar commit, checksum y WAR anterior.
-4. Desplegar primero en QA o nodo controlado.
-5. Invalidar caché del proxy/CDN si existe.
-6. Ejecutar el smoke test completo.
-7. Desplegar en producción durante una ventana controlada.
-8. Monitorear datos y logs durante al menos 24 horas.
-
-No mezclar este despliegue con cambios de esquema, nomenclador o Compras ajenos
-al PR.
-
----
+```text
+docs/autorizaciones/RECLAMOS_APPMOBILE_OUTBOX_OPERACION.md
+```
 
 ## Rollback
 
-Este PR no incluye SQL.
+El rollback del WAR no debe eliminar la tabla de outbox.
 
-1. Retirar el WAR nuevo.
-2. Restaurar el WAR y checksum previos.
-3. Reiniciar el contenedor según el procedimiento habitual.
-4. Confirmar que `view_reclamo_p0_patch.js` ya no se sirve.
-5. Invalidar caché si corresponde.
-6. Auditar las operaciones realizadas durante la ventana.
+1. detener nuevas bajas vinculadas;
+2. retirar el WAR nuevo;
+3. restaurar WAR y checksum anteriores;
+4. reiniciar el contenedor;
+5. invalidar caché;
+6. consultar eventos pendientes y procesando;
+7. reconciliar manualmente AppMobile;
+8. auditar operaciones ejecutadas durante la ventana.
 
-El rollback de código no revierte datos. Revisar especialmente:
+Un WAR anterior no procesa la outbox ni garantiza la atomicidad nueva. No
+reanudar bajas vinculadas hasta decidir quién procesará los eventos existentes.
 
-- revisiones y cierres ejecutados;
-- bajas locales;
-- estados externos `AN`;
-- revisiones activas duplicadas;
-- marcas de sincronización pendiente.
+## Trabajo pendiente
 
----
-
-## Trabajo posterior obligatorio
-
-1. Outbox persistente e idempotente para AppMobile.
-2. Retirar la sincronización duplicada de la Action después de comprobar el
-   comportamiento real de la baja.
-3. Optimistic locking del agregado completo.
-4. `draftId` para aislar pestañas y flujos de sesión.
-5. Migrar mutaciones restantes de `renderURL/GET` a `POST`.
-6. Eliminar físicamente el JavaScript inválido del include de edición.
-7. Dejar de usar hidden y contadores como autoridad de negocio.
-8. Pruebas E2E por sector y tipo de pedido.
+1. eliminar físicamente las credenciales heredadas de `ClienteAppMobile.java` y
+   rotarlas en AppMobile;
+2. eliminar físicamente la segunda sincronización de la Action legacy;
+3. migrar cada clave global de sesión a `ReclamoPrestacionalDraftScope`;
+4. retirar el guard de baja reciente cuando la Action deje de releer;
+5. implementar optimistic locking del agregado completo;
+6. migrar mutaciones restantes de `renderURL/GET` a `POST`;
+7. eliminar físicamente el JavaScript inválido del JSP de edición;
+8. integrar el scheduler al ciclo de vida formal del classloader de Liferay;
+9. agregar panel administrativo y métricas de outbox;
+10. ejecutar pruebas E2E por sector, tipo de pedido y origen Compras.
