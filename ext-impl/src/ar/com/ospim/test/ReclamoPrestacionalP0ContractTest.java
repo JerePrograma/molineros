@@ -95,6 +95,16 @@ public final class ReclamoPrestacionalP0ContractTest {
                 "El reclamo no fue guardado ni cerrado"
         );
         assertContains(
+                "rollback visual si falla revisión",
+                patch,
+                "restaurarEstadoCierre(estadoAnterior);"
+        );
+        assertContains(
+                "advierte cierre parcial",
+                patch,
+                "La revisión fue registrada, pero el cierre del reclamo no se completó."
+        );
+        assertContains(
                 "flags enviados",
                 patch,
                 "chk_entramite: campo(\"chk_entramite\").is(\":checked\")"
