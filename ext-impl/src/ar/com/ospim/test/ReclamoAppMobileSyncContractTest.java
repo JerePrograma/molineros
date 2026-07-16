@@ -61,6 +61,10 @@ public final class ReclamoAppMobileSyncContractTest {
                 "json.optString(\"token\", \"\")");
         assertContains("conexión de login liberada", auth,
                 "post.releaseConnection();");
+        assertContains("login registra sólo longitud", auth,
+                "responseLength=\" + longitud(response)");
+        assertNotContains("login no registra cuerpo", auth,
+                "respuesta=\" +");
         assertNotContains("email literal prohibido", auth,
                 "private static final String EMAIL");
         assertNotContains("password literal prohibido", auth,
@@ -74,8 +78,12 @@ public final class ReclamoAppMobileSyncContractTest {
         assertContains("respuesta fallida explícita", client, "return false;");
         assertContains("host desde configuración", client,
                 "APP_HOST_WEBSERVICE");
-        assertContains("respuesta externa limitada", client,
-                "limitar(response, 1000)");
+        assertContains("sincronización registra sólo longitud", client,
+                "responseLength=\" + longitud(response)");
+        assertNotContains("sincronización no registra cuerpo", client,
+                "respuesta=\" +");
+        assertNotContains("sincronización no limita cuerpo para log", client,
+                "limitar(response");
         assertContains("conexión liberada", client,
                 "post.releaseConnection();");
 
