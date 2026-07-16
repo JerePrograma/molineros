@@ -7,6 +7,7 @@ var STORAGE_KEY = "molineros.reclamoPrestacional.activeEditor";
 var SESSION_KEY = "molineros.reclamoPrestacional.draftId";
 var HEARTBEAT_MS = 5000;
 var LEASE_MS = 20000;
+var pageInstanceId = generarId("page");
 var draftId = obtenerDraftId();
 var esPropietaria = false;
 var heartbeat = null;
@@ -15,9 +16,18 @@ function ahora() {
     return new Date().getTime();
 }
 
-function generarId() {
-    return "rp-" + ahora() + "-" +
+function generarId(prefijo) {
+    return (prefijo || "rp") + "-" + ahora() + "-" +
             Math.floor(Math.random() * 1000000000);
+}
+
+function guardarDraftId(nuevo) {
+    draftId = nuevo;
+    try {
+        window.sessionStorage.setItem(SESSION_KEY, nuevo);
+    } catch (error) {
+        // El formulario mantiene el identificador aunque no haya storage.
+    }
 }
 
 function obtenerDraftId() {
@@ -26,11 +36,11 @@ function obtenerDraftId() {
         if (existente) {
             return existente;
         }
-        var nuevo = generarId();
+        var nuevo = generarId("rp");
         window.sessionStorage.setItem(SESSION_KEY, nuevo);
         return nuevo;
     } catch (error) {
-        return generarId();
+        return generarId("rp");
     }
 }
 
@@ -41,7 +51,8 @@ function leerLease() {
             return null;
         }
         var lease = JSON.parse(raw);
-        if (!lease || !lease.draftId || !lease.timestamp) {
+        if (!lease || !lease.draftId || !lease.instanceId ||
+                !lease.timestamp) {
             return null;
         }
         return lease;
@@ -53,6 +64,7 @@ function leerLease() {
 function guardarLease() {
     var lease = {
         draftId: draftId,
+        instanceId: pageInstanceId,
         timestamp: ahora(),
         reclamoId: valor("id_reclamosel") || "0"
     };
@@ -66,6 +78,18 @@ function guardarLease() {
 
 function leaseVigente(lease) {
     return lease && ahora() - parseInt(lease.timestamp, 10) <= LEASE_MS;
+}
+
+function esOtraInstancia(lease) {
+    return leaseVigente(lease) && lease.instanceId !== pageInstanceId;
+}
+
+function separarDraftDuplicado(lease) {
+    if (lease && lease.draftId === draftId &&
+            lease.instanceId !== pageInstanceId) {
+        guardarDraftId(generarId("rp"));
+        asegurarDraftEnFormulario();
+    }
 }
 
 function campo(sufijo) {
@@ -171,6 +195,7 @@ function establecerPropiedad(propietaria) {
 }
 
 function tomarControl() {
+    separarDraftDuplicado(leerLease());
     guardarLease();
     establecerPropiedad(true);
     iniciarHeartbeat();
@@ -179,12 +204,13 @@ function tomarControl() {
 function evaluarPropiedad() {
     var lease = leerLease();
 
-    if (!leaseVigente(lease) || lease.draftId === draftId) {
-        tomarControl();
+    if (esOtraInstancia(lease)) {
+        separarDraftDuplicado(lease);
+        establecerPropiedad(false);
         return;
     }
 
-    establecerPropiedad(false);
+    tomarControl();
 }
 
 function iniciarHeartbeat() {
@@ -205,7 +231,7 @@ function liberarLease() {
     }
     try {
         var lease = leerLease();
-        if (lease && lease.draftId === draftId) {
+        if (lease && lease.instanceId === pageInstanceId) {
             window.localStorage.removeItem(STORAGE_KEY);
         }
     } catch (error) {
@@ -270,6 +296,9 @@ if (window.addEventListener) {
 window.ReclamoPrestacionalTabGuard = {
     getDraftId: function() {
         return draftId;
+    },
+    getInstanceId: function() {
+        return pageInstanceId;
     },
     isOwner: function() {
         return esPropietaria;
