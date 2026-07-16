@@ -24,6 +24,10 @@ public final class ReclamoAppMobileSyncContractTest {
                 "ext-impl/src/ar/com/ospim/autorizaciones/services/"
                         + "ReclamosPrestacionesServiceUtil.java"
         );
+        String directOutbox = leer(
+                "ext-impl/src/ar/com/ospim/autorizaciones/services/"
+                        + "ReclamoAppMobileOutboxDirectService.java"
+        );
 
         assertContains(
                 "éxito limitado a HTTP 200/204",
@@ -117,6 +121,88 @@ public final class ReclamoAppMobileSyncContractTest {
                 "limpieza de marcas expiradas",
                 service,
                 "limpiarBajasRecientesExpiradas"
+        );
+
+        assertContains(
+                "outbox registrada después de baja",
+                service,
+                "BAJA_LOCAL_CONFIRMADA"
+        );
+        assertContains(
+                "token nulo persistido",
+                service,
+                "registrarOutboxSeguro("
+        );
+        assertContains(
+                "error HTTP persistido",
+                service,
+                "HTTP_NO_CONFIRMADO"
+        );
+        assertContains(
+                "excepción resumida en outbox",
+                service,
+                "EXCEPCION: "
+        );
+        assertContains(
+                "fallo de outbox no revierte baja",
+                service,
+                "RECLAMO_APP_OUTBOX_UNAVAILABLE"
+        );
+        assertContains(
+                "confirmación pendiente visible",
+                service,
+                "RECLAMO_APP_OUTBOX_CONFIRM_PENDING"
+        );
+
+        assertBefore(
+                "baja antes de registrar outbox",
+                service,
+                "getInstance().borrar(id, user.getScreenName());",
+                "BAJA_LOCAL_CONFIRMADA"
+        );
+        assertBefore(
+                "outbox antes de obtener token",
+                service,
+                "BAJA_LOCAL_CONFIRMADA",
+                "ClienteAppMobile.obtenerToken()"
+        );
+        assertBefore(
+                "HTTP antes de confirmar outbox",
+                service,
+                "boolean sincronizado = ReclamoAppMobileSyncClient",
+                "confirmarOutboxSeguro(idReintegroApp.intValue(), \"AN\")"
+        );
+        assertBefore(
+                "confirmación outbox antes de log de éxito",
+                service,
+                "confirmarOutboxSeguro(idReintegroApp.intValue(), \"AN\")",
+                "Anulación confirmada por AppMobile"
+        );
+
+        assertContains(
+                "confirmación por clave externa",
+                directOutbox,
+                "WHERE id_reintegro_app = ?"
+        );
+        assertContains(
+                "confirmación sólo de pendientes",
+                directOutbox,
+                "AND procesado_en IS NULL"
+        );
+        assertContains(
+                "estado procesado persistido",
+                directOutbox,
+                "estado_proceso = 'PROCESADO'"
+        );
+        assertContains(
+                "confirmación transaccional",
+                directOutbox,
+                "con.commit();"
+        );
+        assertContains(
+                "rollback de confirmación",
+                directOutbox,
+                "ConnectionHelper.rollback(con)"
         );
 
         System.out.println("CONTRATO_SYNC_APPMOBILE_RECLAMO_OK");
