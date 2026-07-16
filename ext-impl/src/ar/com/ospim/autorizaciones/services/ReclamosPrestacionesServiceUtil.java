@@ -36,7 +36,6 @@ import ar.com.ospim.crm.beans.ContactoCRM;
 import ar.com.ospim.crm.beans.MotivoContacto;
 import ar.com.ospim.crm.beans.TipoContacto;
 import ar.com.ospim.crm.services.CrmServiceUtil;
-import ar.com.ospim.desarrolloAppMobile.beans.ClienteAppMobile;
 import ar.com.ospim.global.beans.ContactoElectronico;
 import ar.com.ospim.global.services.ProcesosCorreoServiceUtil;
 
@@ -151,7 +150,7 @@ public class ReclamosPrestacionesServiceUtil {
 
 		if (idReintegroApp != null) {
 			try {
-				String token = ClienteAppMobile.obtenerToken();
+				String token = ReclamoAppMobileAuthClient.obtenerToken();
 				if (token == null) {
 					registrarOutboxSeguro(
 							id,
