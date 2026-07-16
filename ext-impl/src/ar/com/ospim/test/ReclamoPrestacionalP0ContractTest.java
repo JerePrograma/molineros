@@ -31,6 +31,10 @@ public final class ReclamoPrestacionalP0ContractTest {
                 "ext-impl/src/ar/com/ospim/autorizaciones/action/"
                         + "ReclamosBaseAction.java"
         );
+        String serviceUtil = leer(
+                "ext-impl/src/ar/com/ospim/autorizaciones/services/"
+                        + "ReclamosPrestacionesServiceUtil.java"
+        );
 
         assertContains(
                 "snapshot antes del script legacy",
@@ -155,6 +159,33 @@ public final class ReclamoPrestacionalP0ContractTest {
                 "comparación de String por identidad rechazada",
                 baseAction,
                 "evaluacion  == \"Rechazado\""
+        );
+
+        assertBefore(
+                "snapshot móvil antes de la baja local",
+                serviceUtil,
+                "ReclamoPrestacional snapshot = getReclamoPrestacional(id)",
+                "getInstance().borrar(id, user.getScreenName())"
+        );
+        assertContains(
+                "usa id externo preservado",
+                serviceUtil,
+                "idReintegroApp = snapshot.getIdReintegroApp()"
+        );
+        assertContains(
+                "anula reintegro externo",
+                serviceUtil,
+                "ClienteAppMobile.actualizarEstadoReintegro("
+        );
+        assertContains(
+                "marca reconciliación pendiente",
+                serviceUtil,
+                "RECLAMO_APP_SYNC_PENDING"
+        );
+        assertContains(
+                "cancela baja si no obtiene snapshot",
+                serviceUtil,
+                "Se cancela la baja para no perder el identificador externo."
         );
 
         System.out.println("CONTRATO_RECLAMO_PRESTACIONAL_P0_OK");
