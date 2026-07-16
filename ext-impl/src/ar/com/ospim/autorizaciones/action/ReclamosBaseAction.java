@@ -115,7 +115,10 @@ public class ReclamosBaseAction  extends PortletAction {
 		
 		String reclamo_observacion_cierre = ParamUtil.getString(req, "reclamo_observacion_cierre");
 		int tipoGestionCierreReclamo2 =  ParamUtil.getInteger(req, "tipo_gestion_cierre_reclamo");
-		int tipoGestionCierreReclamo= ParamUtil.getInteger(req, "tipogestion");		
+		int tipoGestionCierreReclamo= ParamUtil.getInteger(req, "tipogestion");
+		if (tipoGestionCierreReclamo <= 0 && tipoGestionCierreReclamo2 > 0) {
+			tipoGestionCierreReclamo = tipoGestionCierreReclamo2;
+		}
 		int idObservacionMedica = ParamUtil.getInteger(req, "observacion_medica");	
 	    boolean reclamoPsFacturaOspim= ParamUtil.getBoolean(req, "reclamo_ps_factura_ospim");
 	    boolean reclamoPorNegociar= ParamUtil.getBoolean(req, "reclamo_a_negociar");
@@ -135,19 +138,11 @@ public class ReclamosBaseAction  extends PortletAction {
 	    
 	    String  evaluacion = ParamUtil.getString(req, "evaluacionreclamo");	    
 	    String tipoPedido= ParamUtil.getString(req, "tipopedido");
-	    ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO evaluacionReclamo=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINVALOR;
-	    evaluacionReclamo=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINEVALUACION ;
+	    ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO evaluacionReclamo = parseEvaluacionReclamo(evaluacion);
 	    String nroDoc= ParamUtil.getString(req, "nroDoc"); 
 	    String apellido= ParamUtil.getString(req, "apellido");
 	    String nombre= ParamUtil.getString(req, "nombre");
 	    Integer nroLote =ParamUtil.getInteger(req, "nroLote");
-	    	    
-	    if ( evaluacion  == "Autorizado" ) { 
-	    	evaluacionReclamo=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.AUTORIZADA;	
-	    }
-	    if ( evaluacion  == "Rechazado" ) { 
-	    	evaluacionReclamo=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.RECHAZADA;	
-	    }
 	    
 		fechaOspim= null;
 		try {
@@ -193,7 +188,7 @@ public class ReclamosBaseAction  extends PortletAction {
 		}
 		
 	
-		if (cmdAction != null & WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL.equals(cmdAction)){
+		if (cmdAction != null && WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL.equals(cmdAction)){
 			fechaOspim = new Date();
 		}
 
@@ -288,9 +283,13 @@ public class ReclamosBaseAction  extends PortletAction {
 			}
 			
 		} catch (Exception e) {			
-					_log.debug("item: " + e.getMessage() );
+			_log.error("No se pudo reconstruir el Reclamo Prestacional desde la solicitud.", e);
+			throw new IllegalArgumentException("Los datos del Reclamo Prestacional son inválidos.", e);
 		}
 		
+		if (reclamoprestacional == null) {
+			throw new IllegalStateException("La reconstrucción del Reclamo Prestacional no produjo un objeto válido.");
+		}
 		reclamoprestacional.setNroLote(nroLote);
 		int idReclamo = ParamUtil.getInteger(req, "id_reclamosel");
 		reclamoprestacional.setId(idReclamo);
@@ -368,7 +367,11 @@ public ReclamoPrestacional  getReclamoPrestacionalFromRequest(RenderRequest  req
 		String casoVinculado= ParamUtil.getString(req, "caso_vinculado");
 		
 		String reclamoObservacionCierre = ParamUtil.getString(req, "reclamo_observacion_cierre");
-		int tipoGestionCierreReclamo= ParamUtil.getInteger(req, "tipogestion");		
+		int tipoGestionCierreReclamo= ParamUtil.getInteger(req, "tipogestion");
+		int tipoGestionVisible = ParamUtil.getInteger(req, "tipo_gestion_cierre_reclamo");
+		if (tipoGestionCierreReclamo <= 0 && tipoGestionVisible > 0) {
+			tipoGestionCierreReclamo = tipoGestionVisible;
+		}
 		int idObservacionMedica = ParamUtil.getInteger(req, "observacion_medica");		
 	    boolean reclamoPsFacturaOspim= ParamUtil.getBoolean(req, "reclamo_ps_factura_ospim");
 	    boolean reclamoPorNegociar= ParamUtil.getBoolean(req, "reclamo_a_negociar");
@@ -390,15 +393,7 @@ public ReclamoPrestacional  getReclamoPrestacionalFromRequest(RenderRequest  req
 	    Afiliado afi=null;
 	   
 	    
-	    ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO evaluacionReclamo=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINVALOR;	
-	    evaluacionReclamo=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINEVALUACION ;
-	    
-	    if ( evaluacion  == "Autorizado" ) { 
-	    	evaluacionReclamo=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.AUTORIZADA;	
-	    }
-	    if ( evaluacion  == "Rechazado" ) { 
-	    	evaluacionReclamo=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.RECHAZADA;	
-	    }
+	    ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO evaluacionReclamo = parseEvaluacionReclamo(evaluacion);
 		
 	    fechaOspim= null;
 		
@@ -445,14 +440,14 @@ public ReclamoPrestacional  getReclamoPrestacionalFromRequest(RenderRequest  req
 					superIntendencia, amparo ,recuperable, entramite, convenioGerenciadora, Integer.valueOf(casoVinculado), dosporciento, 
 					dictamenComision, justificacionMedica, diagnostico, codigoCie10, tipoPedido, debitoPrestador, evaluacionReclamo, afi, 
 					idObservacionMedica, codIntegracion);
-		} catch (NoSuchAfiliadoEntryException e) {
-			_log.error(e);
-		} catch (NumberFormatException e) {
-			_log.error(e);
-		} catch (SystemException e) {
-			_log.error(e);
+		} catch (Exception e) {
+			_log.error("No se pudo reconstruir el Reclamo Prestacional desde RenderRequest.", e);
+			throw new IllegalArgumentException("Los datos del Reclamo Prestacional son inválidos.", e);
 		}
 		
+		if (reclamoPrestacional == null) {
+			throw new IllegalStateException("La reconstrucción del Reclamo Prestacional no produjo un objeto válido.");
+		}
 		return reclamoPrestacional;
 	}
 
@@ -509,5 +504,26 @@ public ReclamoPrestacional  getReclamoPrestacionalFromRequest(RenderRequest  req
 		return prestador;
 	}
 
-}
+	private ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO parseEvaluacionReclamo(String evaluacion) {
+		if (StringUtils.checkEmpty(evaluacion)) {
+			return ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINEVALUACION;
+		}
 
+		String normalizada = evaluacion.trim().toUpperCase();
+		if ("AUTORIZADO".equals(normalizada) || "AUTORIZADA".equals(normalizada)) {
+			return ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.AUTORIZADA;
+		}
+		if ("RECHAZADO".equals(normalizada) || "RECHAZADA".equals(normalizada)) {
+			return ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.RECHAZADA;
+		}
+		if ("SINVALOR".equals(normalizada)) {
+			return ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINVALOR;
+		}
+		if ("SINEVALUACION".equals(normalizada) || "SIN_EVALUACION".equals(normalizada)) {
+			return ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINEVALUACION;
+		}
+
+		throw new IllegalArgumentException("Valor de evaluación de reclamo inválido: " + evaluacion);
+	}
+
+}
