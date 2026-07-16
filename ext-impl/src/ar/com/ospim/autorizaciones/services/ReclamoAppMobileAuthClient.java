@@ -24,6 +24,8 @@ public final class ReclamoAppMobileAuthClient {
     private static final String CONFIG_EMAIL = "APP_BACKOFFICE_EMAIL";
     private static final String CONFIG_PASSWORD = "APP_BACKOFFICE_PASSWORD";
     private static final String LOGIN_PATH = "/api/auth/backoffice/login";
+    private static final int CONNECTION_TIMEOUT_MS = 3000;
+    private static final int SOCKET_TIMEOUT_MS = 7000;
 
     private ReclamoAppMobileAuthClient() {
     }
@@ -46,6 +48,7 @@ public final class ReclamoAppMobileAuthClient {
         }
 
         HttpClient httpClient = new HttpClient();
+        configurarTimeouts(httpClient);
         PostMethod post = new PostMethod(normalizarHost(host) + LOGIN_PATH);
         post.addRequestHeader("accept", "application/json");
         post.addRequestHeader("api-key", apiKey);
@@ -85,6 +88,13 @@ public final class ReclamoAppMobileAuthClient {
         } finally {
             post.releaseConnection();
         }
+    }
+
+    private static void configurarTimeouts(HttpClient httpClient) {
+        httpClient.getHttpConnectionManager().getParams()
+                .setConnectionTimeout(CONNECTION_TIMEOUT_MS);
+        httpClient.getHttpConnectionManager().getParams()
+                .setSoTimeout(SOCKET_TIMEOUT_MS);
     }
 
     private static String configuracion(String clave) {
