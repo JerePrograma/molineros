@@ -142,17 +142,14 @@ public class ReclamosPrestacionesServiceUtil {
 			throw new SystemException(e);
 		}
 
-		getInstance().borrar(id, user.getScreenName());
+		ReclamoPrestacionalBajaTransaccionalService.borrar(
+				id,
+				user.getScreenName(),
+				idReintegroApp
+		);
 		registrarBajaReciente(id);
 
 		if (idReintegroApp != null) {
-			registrarOutboxSeguro(
-					id,
-					idReintegroApp.intValue(),
-					"AN",
-					"BAJA_LOCAL_CONFIRMADA"
-			);
-
 			try {
 				String token = ClienteAppMobile.obtenerToken();
 				if (token == null) {
