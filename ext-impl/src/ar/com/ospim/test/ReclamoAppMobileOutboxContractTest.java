@@ -24,6 +24,14 @@ public final class ReclamoAppMobileOutboxContractTest {
                 "ext-impl/src/ar/com/ospim/autorizaciones/services/"
                         + "ReclamoAppMobileOutboxService.java"
         );
+        String dispatcher = leer(
+                "ext-impl/src/ar/com/ospim/autorizaciones/services/"
+                        + "ReclamoAppMobileOutboxDispatcher.java"
+        );
+        String reclamos = leer(
+                "ext-impl/src/ar/com/ospim/autorizaciones/services/"
+                        + "ReclamosPrestacionesServiceUtil.java"
+        );
 
         assertContains(
                 "tabla durable",
@@ -128,6 +136,52 @@ public final class ReclamoAppMobileOutboxContractTest {
                 service,
                 "boolean confirmado = ReclamoAppMobileSyncClient",
                 "marcarProcesado(evento.getId())"
+        );
+
+        assertContains(
+                "scheduler único",
+                dispatcher,
+                "newSingleThreadScheduledExecutor"
+        );
+        assertContains(
+                "hilo daemon",
+                dispatcher,
+                "thread.setDaemon(true)"
+        );
+        assertContains(
+                "inicio idempotente",
+                dispatcher,
+                "INICIADO.compareAndSet(false, true)"
+        );
+        assertContains(
+                "ejecución periódica",
+                dispatcher,
+                "scheduleWithFixedDelay"
+        );
+        assertContains(
+                "periodicidad en minutos",
+                dispatcher,
+                "TimeUnit.MINUTES"
+        );
+        assertContains(
+                "exclusión de ejecuciones simultáneas",
+                dispatcher,
+                "EN_EJECUCION.compareAndSet(false, true)"
+        );
+        assertContains(
+                "lote operativo acotado",
+                dispatcher,
+                "TAMANIO_LOTE = 20"
+        );
+        assertContains(
+                "procesador invocado",
+                dispatcher,
+                "ReclamoAppMobileOutboxService"
+        );
+        assertContains(
+                "módulo inicia scheduler",
+                reclamos,
+                "ReclamoAppMobileOutboxDispatcher.iniciar();"
         );
 
         System.out.println("CONTRATO_OUTBOX_APPMOBILE_RECLAMO_OK");
