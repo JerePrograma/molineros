@@ -28,29 +28,33 @@ public final class ReclamoPrestacionalTabGuardContractTest {
                         + "reclamos_prestacionales/view_reclamo_tab_guard.js"
         );
 
-        assertBefore(
-                "guard después del legacy",
-                view,
+        assertBefore("guard después del legacy", view,
                 "view_reclamo.js?v=20260716-p0-4",
-                "view_reclamo_tab_guard.js?v=20260716-p0-4"
-        );
-        assertBefore(
-                "guard antes de parches de edición",
-                view,
+                "view_reclamo_tab_guard.js?v=20260716-p0-4");
+        assertBefore("guard antes de parches de edición", view,
                 "view_reclamo_tab_guard.js?v=20260716-p0-4",
-                "view_reclamo_editor_patch.js?v=20260716-p0-4"
-        );
+                "view_reclamo_editor_patch.js?v=20260716-p0-4");
 
-        assertContains("draft estable por pestaña", guard,
+        assertContains("draft persistido por pestaña", guard,
                 "window.sessionStorage.getItem(SESSION_KEY)");
+        assertContains("instancia única por carga", guard,
+                "var pageInstanceId = generarId(\"page\")");
+        assertContains("lease incluye instancia", guard,
+                "instanceId: pageInstanceId");
         assertContains("lease compartido entre pestañas", guard,
                 "window.localStorage.setItem(STORAGE_KEY");
         assertContains("heartbeat acotado", guard,
                 "var HEARTBEAT_MS = 5000");
         assertContains("lease expirable", guard,
                 "var LEASE_MS = 20000");
-        assertContains("propiedad exclusiva", guard,
+        assertContains("propiedad por instancia", guard,
+                "lease.instanceId !== pageInstanceId");
+        assertContains("detecta draft duplicado", guard,
                 "lease.draftId === draftId");
+        assertContains("regenera draft duplicado", guard,
+                "guardarDraftId(generarId(\"rp\"))");
+        assertContains("libera sólo lease propio", guard,
+                "lease.instanceId === pageInstanceId");
         assertContains("controles bloqueados", guard,
                 "control.prop(\"disabled\", true)");
         assertContains("restaura estado original", guard,
@@ -73,6 +77,8 @@ public final class ReclamoPrestacionalTabGuardContractTest {
                 "window.addEventListener(\"beforeunload\"");
         assertContains("API diagnóstica", guard,
                 "window.ReclamoPrestacionalTabGuard");
+        assertContains("expone instancia diagnóstica", guard,
+                "getInstanceId");
         assertNotContains("sin bloqueo indefinido", guard,
                 "while (true)");
 
