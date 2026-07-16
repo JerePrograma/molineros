@@ -1,0 +1,44 @@
+name: Reclamo Prestacional P0 Contract
+
+on:
+  pull_request:
+    paths:
+      - 'ext-impl/src/ar/com/ospim/autorizaciones/action/ReclamosBaseAction.java'
+      - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java'
+      - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js'
+      - '.github/workflows/reclamo-prestacional-p0-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Compile contract
+        run: |
+          rm -rf /tmp/rp-p0-contract
+          mkdir -p /tmp/rp-p0-contract
+          javac -encoding UTF-8 \
+            -d /tmp/rp-p0-contract \
+            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java
+
+      - name: Run contract
+        run: |
+          java -cp /tmp/rp-p0-contract \
+            ar.com.ospim.test.ReclamoPrestacionalP0ContractTest
