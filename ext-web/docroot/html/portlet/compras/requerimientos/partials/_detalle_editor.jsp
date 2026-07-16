@@ -30,10 +30,11 @@
          style="display:none;">
         Este es un detalle histórico de medicamento.
         El Código y la Descripción se conservan sin cambios.
-        Sólo puede modificar la Cantidad y las Observaciones.
+        Sólo puede modificar la Cantidad.
     </div>
 
     <table class="lfr-table"
+           style="border-collapse: separate; border-spacing: 5px;"
            width="100%">
 
         <tbody id="<portlet:namespace />detalle_bloque_nomenclador">
@@ -95,7 +96,7 @@
             </td>
         </tr>
 
-        <tr>
+        <tr id="<portlet:namespace />detalle_fila_observaciones">
             <td>
                 <label for="<portlet:namespace />detalle_observaciones">
                     Observaciones:
