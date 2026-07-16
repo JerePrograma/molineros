@@ -3,6 +3,7 @@ name: Reclamo Prestacional P0 Contract
 on:
   pull_request:
     paths:
+      - 'docs/autorizaciones/RECLAMOS_PRESTACIONALES_P0_DEPLOY.md'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/action/ReclamosBaseAction.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java'
