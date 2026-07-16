@@ -82,6 +82,43 @@ public final class ReclamoAppMobileSyncContractTest {
                 "Solicitud de anulación enviada a AppMobile"
         );
 
+        assertContains(
+                "registro concurrente de bajas",
+                service,
+                "new ConcurrentHashMap<Integer, Long>()"
+        );
+        assertContains(
+                "ventana limitada de compatibilidad",
+                service,
+                "BAJA_RECIENTE_TTL_MS = 60000L"
+        );
+        assertContains(
+                "baja registrada después de persistencia local",
+                service,
+                "registrarBajaReciente(id);"
+        );
+        assertBefore(
+                "registro posterior a baja local",
+                service,
+                "getInstance().borrar(id, user.getScreenName());",
+                "registrarBajaReciente(id);"
+        );
+        assertContains(
+                "relectura inmediata suprimida",
+                service,
+                "if (esBajaReciente(id))"
+        );
+        assertContains(
+                "relectura devuelve nulo",
+                service,
+                "Se omite relectura de Reclamo Prestacional dado de baja"
+        );
+        assertContains(
+                "limpieza de marcas expiradas",
+                service,
+                "limpiarBajasRecientesExpiradas"
+        );
+
         System.out.println("CONTRATO_SYNC_APPMOBILE_RECLAMO_OK");
     }
 
@@ -110,6 +147,23 @@ public final class ReclamoAppMobileSyncContractTest {
         if (contenido.indexOf(prohibido) >= 0) {
             throw new AssertionError(
                     etiqueta + ": se encontró [" + prohibido + "]"
+            );
+        }
+    }
+
+    private static void assertBefore(
+            String etiqueta,
+            String contenido,
+            String primero,
+            String segundo) {
+
+        int posPrimero = contenido.indexOf(primero);
+        int posSegundo = contenido.indexOf(segundo);
+
+        if (posPrimero < 0 || posSegundo < 0 || posPrimero >= posSegundo) {
+            throw new AssertionError(
+                    etiqueta + ": orden inválido entre ["
+                            + primero + "] y [" + segundo + "]"
             );
         }
     }
