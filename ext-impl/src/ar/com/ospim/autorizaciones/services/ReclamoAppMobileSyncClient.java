@@ -81,7 +81,7 @@ public final class ReclamoAppMobileSyncClient {
                     + idReintegro
                     + " estado=" + nuevoEstado
                     + " http=" + status
-                    + " respuesta=" + limitar(response, 1000));
+                    + " responseLength=" + longitud(response));
             return false;
         } catch (Exception e) {
             _log.error("Error sincronizando reintegro " + idReintegro
@@ -103,13 +103,7 @@ public final class ReclamoAppMobileSyncClient {
         return normalizado;
     }
 
-    private static String limitar(String texto, int maximo) {
-        if (texto == null) {
-            return "";
-        }
-        if (texto.length() <= maximo) {
-            return texto;
-        }
-        return texto.substring(0, maximo) + "...";
+    private static int longitud(String texto) {
+        return texto == null ? 0 : texto.length();
     }
 }
