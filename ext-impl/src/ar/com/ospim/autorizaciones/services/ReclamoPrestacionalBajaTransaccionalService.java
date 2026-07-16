@@ -49,14 +49,11 @@ public final class ReclamoPrestacionalBajaTransaccionalService {
             baja.setString(2, screenName);
 
             resultado = baja.executeQuery();
-            boolean permitido = false;
             while (resultado.next()) {
-                permitido = resultado.getInt(1) != 0;
-            }
-
-            if (!permitido) {
-                ConnectionHelper.rollback(con);
-                throw new ImposibleBorrarReclamoPrestacionalException();
+                if (resultado.getInt(1) == 0) {
+                    ConnectionHelper.rollback(con);
+                    throw new ImposibleBorrarReclamoPrestacionalException();
+                }
             }
 
             if (idReintegroApp != null && idReintegroApp.intValue() > 0) {
