@@ -433,8 +433,14 @@
         var mostrarObservacion =
                 <portlet:namespace />esSectorDetalleObservacionCompra();
 
-        jQuery('.compras-detalle-columna-codigo').toggle(mostrarCodigo);
-        jQuery('.compras-detalle-columna-observacion').toggle(mostrarObservacion);
+        jQuery('.compras-detalle-columna-codigo').css(
+                'display',
+                mostrarCodigo ? '' : 'none'
+        );
+        jQuery('.compras-detalle-columna-observacion').css(
+                'display',
+                mostrarObservacion ? '' : 'none'
+        );
     }
 
     function <portlet:namespace />renderDetallesCompra() {

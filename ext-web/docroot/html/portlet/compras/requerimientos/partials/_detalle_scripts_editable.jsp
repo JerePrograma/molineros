@@ -130,14 +130,20 @@
 
         jQuery(
                 '#<portlet:namespace />detalle_bloque_nomenclador'
-        ).toggle(
+        ).css(
+                'display',
                 esHistorico || tipoItem == 'NOMENCLADOR'
+                        ? ''
+                        : 'none'
         );
 
         jQuery(
                 '#<portlet:namespace />detalle_fila_observaciones'
-        ).toggle(
+        ).css(
+                'display',
                 tipoItem == 'OBSERVACION'
+                        ? ''
+                        : 'none'
         );
 
         var submit =
