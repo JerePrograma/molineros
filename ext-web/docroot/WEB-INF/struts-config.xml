@@ -6974,7 +6974,6 @@
             <forward name="portlet.prestadores.error" path="portlet.prestadores.error" />
         </action>
 
-<<<<<<< .mine
 		<!-- Compras -->
 
 		<action
@@ -7240,12 +7239,6 @@
 					path="portlet.prestadores.historico_cotizacion_result"
 			/>
 		</action>
-    </action-mappings>
-
-||||||| .r7265
- </action-mappings>
-  
-=======
 		<action path="/tesoreria/buscar_saldo_diario_cuentas_bancarias" type="ar.com.ospim.tesoreria.action.BuscarSaldoDiarioCuentasBancariasAction">
 			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" />
 			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" />
@@ -7258,5 +7251,4 @@
 </action>
  </action-mappings>
   
->>>>>>> .r7295
 </struts-config>
