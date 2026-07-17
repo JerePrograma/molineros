@@ -5,7 +5,6 @@ var config = window.ReclamoPrestacionalViewConfig || {};
 var namespace = config.namespace || "";
 var values = config.values || {};
 var urls = config.urls || {};
-var snapshot = window.ReclamoPrestacionalBootstrapSnapshot || null;
 
 var ESTADO_CERRADO = "3";
 var GESTION_RECHAZADO = "5";
@@ -25,65 +24,6 @@ function asignar(sufijo, nuevoValor) {
     if (control.length) {
         control.val(nuevoValor == null ? "" : nuevoValor);
     }
-}
-
-function tieneSeleccionTecnicaInicial() {
-    return snapshot != null && (
-            snapshot.troquel ||
-            snapshot.codigo ||
-            snapshot.descripcion ||
-            snapshot.tipoNomenclador
-    );
-}
-
-function limpiarSeleccionTecnica() {
-    asignar("troquel", "");
-    asignar("codigoSeguimiento_filtro", "");
-    asignar("descripcionSeguimiento_filtro", "");
-    asignar("tipoNomencladorSeguimiento_filtro", "");
-    asignar("tipoNomenclador", "");
-}
-
-function renderModoSector(preservarSeleccion) {
-    var sector = valor("sector");
-    var tipoPedido = valor("tipopedido");
-    var usaMedicamentos = sector === "FARMACIA" && tipoPedido !== "EXCEPCION";
-
-    if (!preservarSeleccion) {
-        limpiarSeleccionTecnica();
-    }
-
-    campo("busqueda_prestaciones").toggle(!usaMedicamentos);
-    campo("busqueda_farmacia").toggle(usaMedicamentos);
-    asignar("nom_seleccionado", usaMedicamentos ? "2" : "1");
-
-    if (usaMedicamentos) {
-        return;
-    }
-
-    if (sector === "FARMACIA" && tipoPedido === "EXCEPCION") {
-        asignar("tipoNomencladorSeguimiento_filtro", "9");
-    } else if (sector === "DISCAPACIDAD") {
-        asignar("tipoNomencladorSeguimiento_filtro", "8");
-    } else if (sector === "ODONTOLOGIA") {
-        asignar("tipoNomencladorSeguimiento_filtro", "1");
-    } else if (sector === "PRESTACIONES MEDICAS" || sector === "LEGALES") {
-        asignar("tipoNomencladorSeguimiento_filtro", "0");
-    }
-}
-
-function restaurarSeleccionInicial() {
-    if (!tieneSeleccionTecnicaInicial()) {
-        return;
-    }
-
-    renderModoSector(true);
-    asignar("troquel", snapshot.troquel);
-    asignar("codigoSeguimiento_filtro", snapshot.codigo);
-    asignar("descripcionSeguimiento_filtro", snapshot.descripcion);
-    asignar("tipoNomencladorSeguimiento_filtro", snapshot.tipoNomenclador);
-    asignar("tipoNomenclador", snapshot.tipoNomencladorSeleccionado);
-    asignar("nom_seleccionado", snapshot.nomSeleccionado);
 }
 
 function fechaValida(anio, mes, dia) {
@@ -417,19 +357,12 @@ function envolverSubmit(nombreFuncion) {
 }
 
 window.DatosRevisionOk = datosRevisionOkSeguro;
-window.manejarTipoSector = function() {
-    renderModoSector(false);
-};
-window.cambioTipoPedido = function() {
-    renderModoSector(false);
-};
 window[namespace + "agregarRevision"] = agregarRevisionSeguro;
 
 envolverSubmit(namespace + "saveReclamo");
 envolverSubmit(namespace + "editaReclamo");
 
 jQuery(document).ready(function() {
-    restaurarSeleccionInicial();
     inicializarEditorPrestacion();
 });
 
