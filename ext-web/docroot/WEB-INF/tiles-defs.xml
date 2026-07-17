@@ -4525,7 +4525,6 @@
 	</definition>
 
 	<!-- FIN PRESTADORES / PRE_1 -->
-<<<<<<< .mine
 
 	<!-- Compras -->
 
@@ -4628,8 +4627,6 @@
 				value="/portlet/prestadores/historico_cotizacion_result.jsp"
 		/>
 	</definition>
-||||||| .r7265
-=======
 	
 	<definition name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" extends="portlet.tesoreria">
 		<put name="portlet_content" value="/portlet/tesoreria/bancos/busqueda_saldo_diario_cuentas_bancarias.jsp" />
@@ -4638,6 +4635,5 @@
 	<definition name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" extends="portlet.tesoreria">
 		<put name="portlet_content" value="/portlet/tesoreria/bancos/busqueda_saldo_diario_cuentas_bancarias_resultado.jsp" />
 	</definition>
-	
->>>>>>> .r7295
+
 </tiles-definitions>
