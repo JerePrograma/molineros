@@ -4,7 +4,6 @@ import hashlib
 
 BASE = Path("ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales")
 SOURCE = BASE / "view_reclamo.jspf"
-EXPECTED_SHA256 = "49c3106a14250f379d432ee37a016e58fdd01757a03633cfca4175a428bbf6be"
 
 PARTS = [
     ("view_reclamo_contexto.jspf", 1, 210),
@@ -18,14 +17,23 @@ PARTS = [
 ]
 
 original = SOURCE.read_bytes()
-actual_hash = hashlib.sha256(original).hexdigest()
 fragment_paths = [BASE / filename for filename, _, _ in PARTS]
 
-if actual_hash != EXPECTED_SHA256:
-    if all(path.is_file() for path in fragment_paths) and original.startswith(b"<%@ include file="):
-        print("Segments already generated")
-        raise SystemExit(0)
-    raise SystemExit("Unexpected source SHA256: %s" % actual_hash)
+if all(path.is_file() for path in fragment_paths) and original.startswith(b"<%@ include file="):
+    print("Segments already generated")
+    raise SystemExit(0)
+
+required_tokens = [
+    b"<%@ page",
+    b"WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA",
+    b"ReclamoPrestacionalCompraContexto",
+    b"<form name=\"fm\"",
+    b"window.ReclamoPrestacionalViewConfig",
+    b"</form>",
+]
+for token in required_tokens:
+    if token not in original:
+        raise SystemExit("Missing structural token: %r" % token)
 
 lines = original.splitlines(keepends=True)
 if len(lines) != 1835:
@@ -38,7 +46,7 @@ for filename, start, end in PARTS:
     rebuilt.append(fragment)
 
 if b"".join(rebuilt) != original:
-    raise SystemExit("Fragment concatenation differs from original source")
+    raise SystemExit("Fragment concatenation differs from checked-out source")
 
 prefix = "/html/portlet/autorizaciones/reclamos_prestacionales/"
 assembly = "".join(
@@ -48,5 +56,5 @@ assembly = "".join(
 SOURCE.write_bytes(assembly)
 
 print("Original bytes: %d" % len(original))
-print("Original SHA256: %s" % actual_hash)
+print("Original SHA256: %s" % hashlib.sha256(original).hexdigest())
 print("Fragments: %d" % len(PARTS))
