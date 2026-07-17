@@ -1,0 +1,381 @@
+	<fieldset class="cabeceraCaso"> 
+		<legend>
+			<liferay-ui:message key="Cabecera Caso" />
+		</legend>
+
+		<!-- DS -->
+		
+		
+		<table >
+		<tr>
+				<td width="10%" ><label><liferay-ui:message key="Fecha Ospim" />
+									:&nbsp;</label></td>
+							<%if(reclamoprestacional == null) {%>
+							<td width="33%"  ><liferay-ui:input-date dayParam="fechaospimDia"
+									dayValue="<%= fechadia.get(Calendar.DATE)%>"
+									dayNullable="<%=true %>" monthParam="fechaospimMes"
+									monthValue="<%= fechadia.get(Calendar.MONTH )%>"
+									monthNullable="<%= true %>" yearParam="fechaospimAnio"
+									yearValue="<%= fechadia.get(Calendar.YEAR)%>"
+									yearRangeStart="<%= fechaospim.get(Calendar.YEAR)-5  %>"
+									yearRangeEnd="<%= fechaospim.get(Calendar.YEAR)  %>"
+									yearNullable="<%= true %>"
+									firstDayOfWeek="<%= fechaospim.getFirstDayOfWeek() - 1 %>"
+									disabled="<%= !esEdicion  %>" /></td>
+							<%}else{ %>
+							<td width="33%" ><liferay-ui:input-date dayParam="fechaospimDia"
+									dayValue="<%= fechaospim.get(Calendar.DATE)%>"
+									dayNullable="<%=true %>" monthParam="fechaospimMes"
+									monthValue="<%= fechaospim.get(Calendar.MONTH )%>"
+									monthNullable="<%= true %>" yearParam="fechaospimAnio"
+									yearValue="<%= fechaospim.get(Calendar.YEAR)%>"
+									yearRangeStart="<%= fechaospim.get(Calendar.YEAR) - 5 %>"
+									yearRangeEnd="<%= fechaospim.get(Calendar.YEAR) + 1 %>"
+									yearNullable="<%= true %>"
+									firstDayOfWeek="<%= fechaospim.getFirstDayOfWeek() - 1 %>"
+									disabled="<%= !esEdicion %>" /></td>
+							<%} %>
+							<td colspan="1"><label>&nbsp;&nbsp;&nbsp;</label></td>
+							
+							<td>
+							<td   width="10%"><label><liferay-ui:message key="Fecha Seccional" />:&nbsp;</label></td>
+							<%if(reclamoprestacional == null || nofechaseccional) {%>
+							<td width="33%  style="text-align: left;"><liferay-ui:input-date
+									dayParam="fechaseccionalDia" dayValue=""
+									dayNullable="<%=true %>" monthParam="fechaseccionalMes"
+									monthValue="-1" monthNullable="<%= true %>"
+									yearParam="fechaseccionalAnio" yearValue=""
+									yearRangeStart="<%= fechaseccional.get(Calendar.YEAR)-5  %>"
+									yearRangeEnd="<%= fechaseccional.get(Calendar.YEAR)  %>"
+									yearNullable="<%= true %>"
+									firstDayOfWeek="<%= fechaseccional.getFirstDayOfWeek() - 1 %>"
+									disabled="<%= !esEdicion %>" /></td>
+							<%}else{ %>
+							<td c width="33%"><liferay-ui:input-date
+									dayParam="fechaseccionalDia"
+									dayValue="<%= fechaseccional.get(Calendar.DATE)%>"
+									dayNullable="<%=true %>" monthParam="fechaseccionalMes"
+									monthValue="<%= fechaseccional.get(Calendar.MONTH)%>"
+									monthNullable="<%= true %>" yearParam="fechaseccionalAnio"
+									yearValue="<%= fechaseccional.get(Calendar.YEAR )%>"
+									yearRangeStart="<%= fechaseccional.get(Calendar.YEAR) - 5 %>"
+									yearRangeEnd="<%= fechaseccional.get(Calendar.YEAR) + 1 %>"
+									yearNullable="<%= true %>"
+									firstDayOfWeek="<%= fechaseccional.getFirstDayOfWeek() - 1 %>"
+									disabled="<%= !esEdicion %>" /></td>
+							<%} %> 
+						
+							
+							<td>&nbsp;</td>
+										
+							<td width="3%"><liferay-ui:message key="Amparo"/>:</td>
+							<td>&nbsp;</td>
+											
+							 <td width="3%"><input type="checkbox"
+									id="<portlet:namespace />chk_amparo"
+									name="<portlet:namespace />chk_amparo"
+									<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isAmparo()  ? "checked" : "Unchecked" %>
+									<% if (!esEdicion) { %> disabled='disabled' <%}%> /> <br>
+							 </td> 
+							 <td>&nbsp;</td>
+							<td width="2%"><label><liferay-ui:message key="Lote" />: </label></td>
+							 <td>&nbsp;</td>
+							<td width="15%"><input id="<portlet:namespace />nroLote"
+								name="<portlet:namespace />nroLote" size="8" maxlength="9"
+								type="text"
+								value="<%=reclamoprestacional==null || reclamoprestacional.getNroLote()==null
+	    						|| reclamoprestacional.getNroLote()==0?"":reclamoprestacional.getNroLote() %>"
+								readonly="readonly" /></td>
+							</td>
+				
+							<td width="37%" >&nbsp;&nbsp;&nbsp;</td>
+							
+						<td>
+							<div class="divheaderNroReclamo">
+								<label><b><liferay-ui:message key="<%= nroreclamo %>" /></b></label>
+							</div>
+							<div  class="divheaderNroOP">
+								<label><b><%= opAsignadaalReclamo %></b></label> 							
+							</div>
+						</td>
+				
+				<tr>
+				<tr>
+					<td></td>
+				</tr>
+					
+		</table>
+		<br>
+		<table>
+				<tr>
+							<td colspan="2"><label><liferay-ui:message key="Tipo Pedido" />:&nbsp;&nbsp;</label></td>
+							<td><table>
+									<select <% if (!esEdicion) { %> disabled='disabled' <%}%>
+										name="<portlet:namespace />tipopedido"
+										id="<portlet:namespace />tipopedido"
+										onchange="cambioTipoPedido();manejarTipoPedidoCierre();"
+										onblur="manejarTipoPedido();">
+										<option value="SELECCIONAR">SELECCIONAR</option>
+										<option value=EXCEPCION
+											<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getTipoPedido())  && reclamoprestacional.getTipoPedido().equals("EXCEPCION") ? "selected" : ""  %>>EXCEPCIÓN</option>
+										<option value="REINTEGRO"
+											<%=Validator.isNotNull(reclamoprestacional)  && Validator.isNotNull(reclamoprestacional.getTipoPedido())  &&  reclamoprestacional.getTipoPedido().equals("REINTEGRO") ? "selected" : ""  %>>REINTEGRO</option>
+										<option value="EXTRACAPITA"
+											<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getTipoPedido())  && reclamoprestacional.getTipoPedido().equals("EXTRACAPITA") ? "selected" : ""  %>>EXTRACÁPITA</option>
+									</select>
+								</table></td>
+							
+							<td colspan="1">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+							
+							<td colspan="2"><label><liferay-ui:message key="Sector" />:&nbsp;&nbsp;</label></td>
+							<td><table> 
+									<select <% if (!esEdicion) { %> disabled='disabled' <%}%>
+										name="<portlet:namespace/>sector"
+										id="<portlet:namespace />sector"
+										onchange="manejarTipoSector();">
+										
+										<option value="" <%= (reclamoprestacional == null || Validator.isNull(reclamoprestacional.getSector())) ? "selected" : "" %>>-- SELECCIONAR --</option>
+
+							            <option value="DISCAPACIDAD"
+							                <%= "DISCAPACIDAD".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
+							                DISCAPACIDAD
+							            </option>
+							
+							            <option value="PRESTACIONES MEDICAS"
+							                <%= "PRESTACIONES MEDICAS".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
+							                PRESTACIONES MÉDICAS
+							            </option>
+							
+							            <option value="FARMACIA"
+							                <%= "FARMACIA".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
+							                FARMACIA
+							            </option>
+							
+							            <option value="LEGALES"
+							                <%= "LEGALES".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
+							                LEGALES
+							            </option>
+							
+							            <%-- 
+							            <option value="LIQUIDACIONES"
+							                <%= "LIQUIDACIONES".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
+							                LIQUIDACIONES
+							            </option>
+							            --%>
+							
+							            <option value="ODONTOLOGIA"
+							                <%= "ODONTOLOGIA".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
+							                ODONTOLOGIA
+							            </option>
+            
+									</select>
+								</table></td>
+
+								<td colspan="1">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								<td><label id="integracion_label" style="display:<%= esBorradorCompras ? "inline" : "none" %>"><liferay-ui:message key="integracion"  />:&nbsp;&nbsp;</label></td>
+								<td><select name="<portlet:namespace/>integracion" id="<portlet:namespace/>integracion"
+									<% if (!esEdicion) { %> disabled='disabled' <%}%> style="display:<%= esBorradorCompras ? "inline" : "none" %>"  >
+										<option value="0">Seleccione Integración</option>
+											<% for (ReclamosPrestacionalesIntegracion integracion : listaIntegracion) { %>
+												<option
+													<%=reclamoprestacional != null  && reclamoprestacional.getCodigoIntegracion() == integracion.getId() ? "selected" : ""  %>
+													value="<%= integracion.getId() %>"><%=integracion.getDescripcion()%>
+												</option>
+												<% } %>
+												
+								</select>
+								</td>
+								<td colspan="1">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								
+								<td>								
+								<div id="integracion_div" style="display:<%= esBorradorCompras ? "block" : "none" %>">
+									<img id="integracion_desc"   height='16'  width='16'  src='/html/themes/classic/images/common/help.png' title=''   />
+									</div>
+								</td>
+							<td>
+							<td colspan="1">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+							<td colspan="1"><label><liferay-ui:message key="Estado" />: &nbsp;</label></td>
+							<td><table>
+									<tr>
+										<td><select <% if (!esEdicion) { %> disabled='disabled'
+											<%}%> name="<portlet:namespace/>estado"
+											onchange="controlarEstadoCerrado();"
+											id="<portlet:namespace/>estado">
+
+												<option value="-1">SELECCIONE</option>
+												<% for (EstadosReclamosPrestacionales estados : listaestados) { %>
+													<%if(esAlta && !esBorradorCompras && estados.getId()==0){ %>
+	
+													<% } else{%>
+													
+														<option
+															<%= reclamoprestacional != null  && reclamoprestacional.getEstado() == estados.getId() ? "selected" : ""  %>
+															value="<%= estados.getId() %>"><%=estados.getDescripcion()%>
+														</option>												
+													<% } %>
+												<% } %>
+
+										</select></td>
+										
+									</tr>
+																	
+								</table></td>
+						</tr>												
+		</table>
+
+		<br>
+		<%-- Observacion como Textarea %>
+		<%-- 
+		<table class="lfr-table"
+			style="border-collapse: separate; border-spacing: 0px;">
+			<tr>
+				<td colspan="8"><liferay-ui:message key="observacion" />:</td>
+				<td><textarea rows="2" cols="150"
+						disabled='disabled'
+						id="<portlet:namespace />estadoObservacion" maxlength="250"
+						name="<portlet:namespace />estadoObservacion"><%=reclamoprestacional != null && reclamoprestacional.getEstadoObservacion() != null
+					? reclamoprestacional.getEstadoObservacion() : ""%>
+														</textarea></td>
+			</tr>
+		</table>
+		--%>
+		
+		<table >
+			<%-- Observacion como Fieldset--%>
+			<%
+			if (reclamoprestacional != null && reclamoprestacional.getEstadoObservacion() != null && reclamoprestacional.getEstadoObservacion().length() >0 ) {
+			%>																	
+			<tr>
+				<td colspan="12">
+					<fieldset class="block-labels">
+						<legend>
+							<liferay-ui:message key="observacion" />
+						</legend>
+						<table>
+							<tr>
+							<%-- class="span-fixed-size" --%>
+								<td><span 
+									id="<portlet:namespace />estadoObservacion"
+									style="color: red;"> <%=reclamoprestacional != null && reclamoprestacional.getEstadoObservacion() != null
+				? reclamoprestacional.getEstadoObservacion() : ""%>
+								</span></td>
+							</tr>
+						</table>
+	
+					</fieldset>
+				</td>
+			</tr>		
+			<%
+			}
+			%>
+		
+			<tr>
+				<td>
+					<!-- DS -->
+					<table 
+						style="border-collapse: separate; border-spacing: 3px;">
+						<tr>
+							<!--  													
+							    <td>
+							    <div class="divheaderNroReclamo">		     
+							    <label><b><liferay-ui:message key="<%= nroreclamo %>" /></b></label>
+							    </div>
+							    <div class="divheaderNroOP">		     
+							    <label><b><liferay-ui:message key="<%= opAsignadaalReclamo %>" /></b></label>
+							    </div>
+							    <% if(idPreautorizacion!=null && idPreautorizacion!=0){ %>
+							      <br>
+							      <div>		     
+							       <span style="font-size: 9pt; color: green; "><label><b>Preautorizacion: <%= idPreautorizacion %></b></label></span>
+							      </div>
+							    <%}%>
+							    
+							    </td>
+							    
+							    <td></td>
+							-->
+							</tr>					
+							<tr>			       	
+						</tr>
+					</table>
+				</td>
+				
+				
+				<!-- DS -->
+				<td>
+<!-- 					<div class="divheaderNroReclamo"> -->
+<%-- 						<label><b><liferay-ui:message key="<%= nroreclamo %>" /></b></label> --%>
+<!-- 					</div> -->
+<!-- 					<div  class="divheaderNroOP"> -->
+<%-- 						<label><b><%= opAsignadaalReclamo %></b></label> 							 --%>
+<!-- 					</div> -->
+
+						<!-- <div class='<%=divcheckbox%>'>-->
+						<!--  table class="lfr-table">-->
+						<!--     <tr><td>&nbsp;</td></tr>
+							<tr>
+								<td>&nbsp;</td>
+								<%-- <td><input type="checkbox"
+									id="<portlet:namespace />chk_amparo"
+									name="<portlet:namespace />chk_amparo"
+									<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isAmparo()  ? "checked" : "Unchecked" %>
+									<% if (!esEdicion) { %> disabled='disabled' <%}%> /> <br>
+								</td> --%>
+								<!-- <td>&nbsp;</td>
+								<td><liferay-ui:message key="Amparo" /><br></td> -->
+						<!-- 	</tr>-->
+<!-- 							<tr><td>&nbsp;</td></tr> -->
+<!-- 							<tr> -->
+<!-- 								<td>&nbsp;</td> -->
+<!-- 								<td><input type="checkbox" -->
+<%-- 									id="<portlet:namespace />chk_superintendencia" --%>
+<%-- 									name="<portlet:namespace />chk_superintendencia" --%>
+<%-- 									<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isSuperintendencia()   ? "checked" : "Unchecked" %> --%>
+<%-- 									<% if (!esEdicion) { %> disabled='disabled' <%}%> /> <br> --%>
+<!-- 								</td> -->
+<!-- 								<td>&nbsp;</td> -->
+<!-- 								<td><liferay-ui:message key="Superintendencia" /><br></td> -->
+
+<!-- 							</tr> -->
+<!--							<tr><td>&nbsp;</td></tr>-->
+<!-- 							<tr> -->
+<!-- 								<td>&nbsp;</td> -->
+<!-- 								<td><input type="checkbox" -->
+<%-- 									id="<portlet:namespace />chk_recuperable" --%>
+<%-- 									name="<portlet:namespace />chk_recuperable" --%>
+<%-- 									<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isRecuperable()   ? "checked" : "Unchecked" %> --%>
+<%-- 									<% if (!esEdicion) { %> disabled='disabled' <%}%> /> <br> --%>
+<!-- 								</td> -->
+<!-- 								<td>&nbsp;</td> -->
+<!-- 								<td><liferay-ui:message key="Recuperable" /><br></td> -->
+<!-- 							</tr> -->
+							<!-- tr>
+								<td>&nbsp;</td>
+								<td><input type="checkbox"
+									id="<portlet:namespace />chk_entramite"
+									name="<portlet:namespace />chk_entramite"
+									<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isEntramite()   ? "checked" : "Unchecked" %>
+									<% if (!esEdicion) { %> disabled='disabled' <%}%> /></td>
+								<td>&nbsp;</td>
+								<td><liferay-ui:message key="Beneficiario en trámite" /></td>
+							</tr-->
+					
+
+						<!-- </table> -->
+					<!-- </div> -->
+					<%if (reclamo_vinculado) {%>
+					<div class="divNroRecord_Vinculado">
+						<liferay-ui:message key="Asociado al Reclamo Nro :" /><%=caso_vinculado%>
+					</div> <%}%> <% if(idPreautorizacion!=null && idPreautorizacion!=0){ %> <br>
+					<div>
+						<span style="font-size: 9pt; color: green;"><label><b>Preautorizaci&oacute;n:
+									<%= idPreautorizacion %></b></label></span>
+					</div> <%}%>
+
+				</td>
+
+				<!-- </td> -->
+			</tr>
+		</table>
+		<!-- DS -->
+	</fieldset> <!-- Cabecera del caso -->

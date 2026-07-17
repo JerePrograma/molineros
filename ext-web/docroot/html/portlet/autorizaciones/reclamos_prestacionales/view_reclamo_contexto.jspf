@@ -1,0 +1,210 @@
+<%@ page
+	import="ar.com.ospim.autorizaciones.services.PreAutorizacionServiceUtil"%>
+<%
+Calendar prestacionFecha = CalendarFactoryUtil.getCalendar();
+String prestacionFechaString = prestacionFecha.get(Calendar.DATE)+"/"+(prestacionFecha.get(Calendar.MONTH) + 1)+"/"+prestacionFecha.get(Calendar.YEAR);
+
+String cmd = (String) request.getAttribute(Constants.CMD);	
+String caso_vinculado = String.valueOf(request.getAttribute("caso_vinculado")!=null?request.getAttribute("caso_vinculado"):0);
+String cuit_titular_vinculado="";
+int inte_vinculado=0;
+boolean reclamo_vinculado =false;
+int cantprestacioneslista=0;
+int cantRevisiones=0;
+boolean debitoTercerizadora = false;
+
+ReclamoPrestacional  reclamoprestacional  = (ReclamoPrestacional)request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
+
+boolean esAlta = cmd != null && cmd.equalsIgnoreCase(Constants.ADD);
+boolean esEdit = cmd != null && cmd.equalsIgnoreCase(Constants.EDIT);
+boolean permiteEditarPantalla = esAlta || esEdit;
+boolean esEdicion = permiteEditarPantalla;
+
+Object contextoComprasObj = request.getSession().getAttribute(
+        WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+);
+String nonceCompras = ParamUtil.getString(
+        request,
+        WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
+        ""
+);
+ReclamoPrestacionalCompraContexto contextoCompras =
+        contextoComprasObj instanceof ReclamoPrestacionalCompraContexto
+        ? (ReclamoPrestacionalCompraContexto) contextoComprasObj
+        : null;
+
+if (contextoCompras != null
+        && (!contextoCompras.coincideNonce(nonceCompras)
+        || !contextoCompras.perteneceAUsuario(
+                user != null ? user.getScreenName() : ""
+        )
+        || !contextoCompras.estaVigente(System.currentTimeMillis()))) {
+    contextoCompras = null;
+}
+
+boolean esBorradorCompras = esAlta && contextoCompras != null;
+
+/*
+ * Un ReclamoPrestacional en sesion puede ser un borrador de alta. La
+ * existencia del objeto no implica que exista un reclamo persistido.
+ */
+boolean existeReclamoPersistido = reclamoprestacional != null
+        && reclamoprestacional.getId_reclamo() > 0;
+boolean esEdicionPersistida = esEdit && existeReclamoPersistido;
+int idReclamoPantalla = esAlta || !existeReclamoPersistido
+        ? 0
+        : reclamoprestacional.getId_reclamo();
+
+String _nuevoEstadoObservado = "";
+if (request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS) != null) {
+  _nuevoEstadoObservado = String.valueOf(request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS));
+  reclamoprestacional.setEstado(Integer.parseInt(_nuevoEstadoObservado));
+}
+request.getSession().removeAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS);
+		
+Calendar fechadia  =Calendar.getInstance(); 		
+Calendar fechaospim  = Calendar.getInstance();	
+Calendar fechacierre  = Calendar.getInstance();
+Calendar fechaseccional  = Calendar.getInstance();
+Calendar fecharevision = Calendar.getInstance();
+String tabValue = ParamUtil.getString(request, "tab", null); // "datos"
+boolean nofechaseccional=true;
+
+boolean showReadOnlyReclamPrestac=PermissionUtil.userContainsRole(user,WebKeysAutorizaciones.ROL_CONSULTA_RECLAMOS_PRESTACIONALES);
+
+fechadia.setTime(new Date());
+//obtengo lista de session
+List<CieDiez> cieDiez=(ArrayList<CieDiez>) request.getSession().getAttribute(WebKeysGlobal.DOCUMENTOS_CIE);
+
+
+String divcheckbox="";
+String nroreclamo="Caso Nro 00000";
+String opAsignadaalReclamo ="";
+boolean opAsignadaalReclamoExiste =false;
+ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO resolucionAutorizado=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINVALOR;
+
+divcheckbox="divheadercheckboxs";
+
+
+boolean PuedeObservar = false;
+int _estadoPendiente = 1;
+int _estadoPrecarga = 0;
+
+if(existeReclamoPersistido){
+	if ((reclamoprestacional.getEstado() == _estadoPendiente) || 
+	    (reclamoprestacional.getEstado() == _estadoPrecarga)) 
+	{
+		PuedeObservar = true;
+	}
+}
+
+if(reclamoprestacional != null  ){
+	Date fechaaux = null;
+	divcheckbox="divcheckboxsEdicion";	
+	fechaaux = Validator.isNotNull(reclamoprestacional)? reclamoprestacional.getAlta_fecha() : null;
+	if (fechaaux != null) {
+		fechaospim.setTime(reclamoprestacional.getAlta_fecha());	
+	}
+	// obtiene el estado de la autorizacion de las prestaciones 
+	resolucionAutorizado= reclamoprestacional.getEstadoResolucionAutorizada();	
+	
+	fechaaux = Validator.isNotNull(reclamoprestacional)? reclamoprestacional.getFecha_cierre()   : null;
+	if (fechaaux != null) {
+		fechacierre.setTime(reclamoprestacional.getFecha_cierre());
+		
+	}
+	
+	fechaaux = Validator.isNotNull(reclamoprestacional)? reclamoprestacional.getSeccional_fecha()  : null;
+	if (fechaaux != null) {
+		fechaseccional.setTime(reclamoprestacional.getSeccional_fecha());
+		nofechaseccional=false;
+	}
+	
+	//cantprestacioneslista=reclamoprestacional.getPrestaciones() != null ? reclamoprestacional.getPrestaciones().size() :0;
+	
+	if (cantprestacioneslista == 0){	
+		//List<PrestacionesReclamo> prestaciones = (List<PrestacionesReclamo>) session.getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);				
+		if (reclamoprestacional != null &&  reclamoprestacional.getPrestaciones()!= null  &&  !reclamoprestacional.getPrestaciones().isEmpty() ){
+			//cantprestacioneslista = prestaciones.size();
+			for (int i = 0; i < reclamoprestacional.getPrestaciones().size(); i++) {	
+				PrestacionesReclamo presreclamo  = (PrestacionesReclamo) reclamoprestacional.getPrestaciones().get(i);
+				if (presreclamo.getEstado() == null || !presreclamo.getEstado().equals(PrestacionesReclamo.ESTADOS.BAJA)){
+						cantprestacioneslista = cantprestacioneslista + 1;
+						if (presreclamo.getCargo_ps() > 0){
+							debitoTercerizadora = true; 
+
+						}
+				}
+			}
+		}
+	}
+
+	if (reclamoprestacional != null &&  reclamoprestacional.getRevisiones()!= null  &&  !reclamoprestacional.getRevisiones().isEmpty() ){
+		for (int i = 0; i < reclamoprestacional.getRevisiones().size(); i++) {
+			RevisionesReclamo revision  = (RevisionesReclamo) reclamoprestacional.getRevisiones().get(i);
+			if (revision.getBaja_fecha() == null){
+				cantRevisiones = cantRevisiones + 1;
+
+			}
+		}	
+	}
+	
+	if (existeReclamoPersistido) {
+		nroreclamo ="Reclamo Nro : " + "000"+  String.valueOf(reclamoprestacional.getId_reclamo());
+		if (reclamoprestacional.getId_lista_reintegro()==0 && reclamoprestacional.getIdOP()==0
+	&& reclamoprestacional.getChequeOP()==null  &&  reclamoprestacional.getFechaOP()==null ){
+		     opAsignadaalReclamo="Sin Orden de Pago";
+	}else{
+		//String.valueOf(reclamoprestacional.getId_lista_reintegro())
+		     String valorLista;
+		  //   String valorCheque ;
+		     String valorFechaCheque ;
+		     String ctaDescrpcion;
+		     String formaPago = "";
+		     String ctaNro;    
+		     String ctaSucursal;
+		     if (reclamoprestacional.getChequeOP()!=null){
+		    	 formaPago =  reclamoprestacional.getChequeOP()==null ? " " :" / CH: "  +  reclamoprestacional.getChequeOP() ;
+		     }else{
+		    	 formaPago =  reclamoprestacional.getCtaNro()==0 ? " " :" / CTA: "  +  reclamoprestacional.getCtaNro()  ;
+		     }
+		     
+		     valorLista= reclamoprestacional.getId_lista_reintegro()==-1 ? " " :String.valueOf(reclamoprestacional.getId_lista_reintegro()) ;
+		     valorFechaCheque=  reclamoprestacional.getFechaOP()==null ? " " :" / "  + reclamoprestacional.getfechaOPAsString() ;
+		     opAsignadaalReclamo ="OP: " + valorLista    + " / " + reclamoprestacional.getIdOP() +  formaPago  +  valorFechaCheque ;
+		     opAsignadaalReclamoExiste=true;
+		}
+	}
+	
+	caso_vinculado =  String.valueOf(reclamoprestacional.getCaso_vinculado()); 
+	if (Integer.valueOf(caso_vinculado)>0)
+	{
+		cuit_titular_vinculado = reclamoprestacional.getCuit_titular();
+		inte_vinculado = reclamoprestacional.getInte();
+		reclamo_vinculado=true;
+	}	
+	
+}else{
+	
+if (Integer.parseInt(caso_vinculado)>0 ){// carga datos del afiliado del cas 
+		ReclamoPrestacional reclamoprestacional1 = ReclamosPrestacionesServiceUtil.getReclamoPrestacional(Integer.parseInt(caso_vinculado));
+		cuit_titular_vinculado = reclamoprestacional1.getCuit_titular();
+		inte_vinculado = reclamoprestacional1.getInte();
+		reclamo_vinculado=true;
+	}
+}
+
+Integer idPreautorizacion=0;
+if (existeReclamoPersistido) {
+	try{
+		idPreautorizacion = PreAutorizacionServiceUtil.buscarPreautorizacionPorIdReclamo(reclamoprestacional.getId_reclamo(),null);
+	}catch(Exception e){}
+}
+SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+
+
+boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysAutorizaciones.ROL_REABRIR_RECLAMO_PRESTACIONAL  );				
+
+
+%>
