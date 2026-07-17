@@ -32,7 +32,7 @@ public final class ReclamoPrestacionalEditorContractTest {
                 "editor cargado antes del P0 general",
                 view,
                 "view_reclamo_editor_patch.js?v=20260717-initial-state-1",
-                "view_reclamo_p0_patch.js?v=20260717-initial-state-1"
+                "view_reclamo_p0_patch.js?v=20260717-legacy-flows-1"
         );
 
         assertNotContains(
