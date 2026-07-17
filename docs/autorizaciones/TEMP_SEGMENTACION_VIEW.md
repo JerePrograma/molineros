@@ -1,1 +1,0 @@
-Análisis temporal de segmentación del view de Reclamos Prestacionales.
