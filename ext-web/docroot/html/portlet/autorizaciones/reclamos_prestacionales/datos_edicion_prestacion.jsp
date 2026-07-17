@@ -25,13 +25,11 @@ if(prestacionEnEdicion != null  ){
 	 if(prestacionEnEdicion.getFechaPrestacion() !=null){
 		 fechaPrestacion.setTime(prestacionEnEdicion.getFechaPrestacion());
 	 }
-	 
 }
 
-String   captionbotoncancelar="Cancelar Edicion de la Prestacion" ;
-String   captionlabelproceso="PRESTACION EN PROCESO DE EDICION";
-String   estiloLabel=""; 
-
+String captionbotoncancelar="Cancelar Edicion de la Prestacion";
+String captionlabelproceso="PRESTACION EN PROCESO DE EDICION";
+String estiloLabel="";
 
 if (tipoedicion==1) {
 	captionbotoncancelar="Cancelar Autorizacion de la Prestacion";
@@ -46,67 +44,46 @@ if (tipoedicion==2) {
 
 ocultarSeccional = (String) request.getAttribute("ocultar");
 
-
-if(prestacionEnEdicion != null  ){
-%>  
-<script type="text/javascript">
-jQuery("#<portlet:namespace />datos_edicion_prestacion").show();
-jQuery("#<portlet:namespace />codigoprestacion").val('<%=prestacionEnEdicion.getCodigoPrestacion()%>');
-jQuery("#<portlet:namespace />idRegistro").val('<%=prestacionEnEdicion.getIdRegistro()%>');
-
-jQuery("#<portlet:namespace />idRegistro").val('<%=prestacionEnEdicion.getIdRegistro()%>');
-
 if (prestacionEnEdicion != null) {
+	String codigoPrestacionEdicion = Validator.isNotNull(prestacionEnEdicion.getCodigoPrestacion())
+			? prestacionEnEdicion.getCodigoPrestacion()
+			: "";
+	String descripcionPrestacionEdicion = Validator.isNotNull(prestacionEnEdicion.getDescripcion())
+			? prestacionEnEdicion.getDescripcion()
+			: "";
 %>
-
 <script type="text/javascript">
-jQuery("#<portlet:namespace />datos_edicion_prestacion").show();
+(function(window, jQuery) {
+	"use strict";
 
-jQuery("#<portlet:namespace />codigoprestacion").val(
-    '<%= prestacionEnEdicion.getCodigoPrestacion() %>'
-);
+	var namespace = "<portlet:namespace />";
+	var codigo = "<%= HtmlUtil.escapeJS(codigoPrestacionEdicion) %>";
+	var descripcion = "<%= HtmlUtil.escapeJS(descripcionPrestacionEdicion) %>";
 
-jQuery("#<portlet:namespace />idRegistro").val(
-    '<%= prestacionEnEdicion.getIdRegistro() %>'
-);
+	jQuery("#" + namespace + "datos_edicion_prestacion").show();
+	jQuery("#" + namespace + "codigoprestacion").val(codigo);
+	jQuery("#" + namespace + "idRegistro").val("<%= prestacionEnEdicion.getIdRegistro() %>");
 
-<%
-if (prestacionEnEdicion.getId_prestacion() != 0) {
-%>
+	<% if (prestacionEnEdicion.getId_prestacion() != 0) { %>
+	jQuery("#" + namespace + "codigoSeguimiento_filtro_edit").val(codigo);
+	jQuery("#" + namespace + "descripcionSeguimiento_filtro_edit").val(descripcion);
 
-jQuery("#<portlet:namespace />codigoSeguimiento_filtro_edit").val(
-    '<%= prestacionEnEdicion.getCodigoPrestacion() %>'
-);
+	var buscarNomenclador = window[namespace + "buscarNomencladorAutocompletar_edit"];
+	if (typeof buscarNomenclador === "function") {
+		buscarNomenclador();
+	}
+	<% } else if (prestacionEnEdicion.getId_medicamento() != 0) { %>
+	jQuery("#" + namespace + "troquel_edit").val("<%= prestacionEnEdicion.getId_medicamento() %>");
+	<% } %>
 
-jQuery("#<portlet:namespace />descripcionSeguimiento_filtro_edit").val(
-    '<%= prestacionEnEdicion.getDescripcion() %>'
-);
-
-<portlet:namespace />buscarNomencladorAutocompletar_edit();
-
-<%
-} else if (prestacionEnEdicion.getId_medicamento() != 0) {
-%>
-
-jQuery("#<portlet:namespace />troquel_edit").val(
-    '<%= prestacionEnEdicion.getId_medicamento() %>'
-);
-
-<%
-}
-%>
-
-<%
-if (ocultarSeccional != null) {
-%>
-
-jQuery("#<portlet:namespace />Autorizado").hide();
-
-<%
-}
-%>
+	<% if (ocultarSeccional != null) { %>
+	jQuery("#" + namespace + "Autorizado").hide();
+	<% } %>
+})(window, jQuery);
 </script>
-<%}%>
+<%
+}
+%>
 	    <input   type="hidden" id="<portlet:namespace />idRegistro" name="<portlet:namespace />idRegistro" size="10" maxlength="10" type="text" value='<%=Validator.isNotNull(prestacionEnEdicion)  ? prestacionEnEdicion.getIdRegistro()      : ""  %>'/></td>
 
         <label <%=estiloLabel %>"><b><liferay-ui:message key="<%=captionlabelproceso%>"/></b></label>
