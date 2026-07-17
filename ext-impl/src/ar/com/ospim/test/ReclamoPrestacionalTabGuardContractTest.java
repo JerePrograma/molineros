@@ -29,11 +29,11 @@ public final class ReclamoPrestacionalTabGuardContractTest {
         );
 
         assertBefore("guard después del legacy", view,
-                "view_reclamo.js?v=20260716-p0-4",
-                "view_reclamo_tab_guard.js?v=20260716-p0-4");
+                "view_reclamo.js?v=20260717-legacy-flows-1",
+                "view_reclamo_tab_guard.js?v=20260717-initial-state-1");
         assertBefore("guard antes de parches de edición", view,
-                "view_reclamo_tab_guard.js?v=20260716-p0-4",
-                "view_reclamo_editor_patch.js?v=20260716-p0-4");
+                "view_reclamo_tab_guard.js?v=20260717-initial-state-1",
+                "view_reclamo_editor_patch.js?v=20260717-initial-state-1");
 
         assertContains("draft persistido por pestaña", guard,
                 "window.sessionStorage.getItem(SESSION_KEY)");
