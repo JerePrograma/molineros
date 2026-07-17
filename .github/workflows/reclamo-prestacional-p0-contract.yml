@@ -9,6 +9,8 @@ on:
       - 'docs/autorizaciones/RECLAMOS_PRESTACIONALES_P1_CLEANUP.md'
       - 'docs/autorizaciones/RECLAMOS_APPMOBILE_OUTBOX_OPERACION.md'
       - 'sql/postgresql/autorizaciones/reclamo_appmobile_outbox.sql'
+      - 'scripts/reclamos/verificar_secretos_appmobile.sh'
+      - 'scripts/reclamos/validar_release_reclamos.sh'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/action/ReclamosBaseAction.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/action/EditarReclamosEntryAction.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java'
@@ -18,6 +20,8 @@ on:
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoAppMobileOutboxDirectService.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoAppMobileOutboxDispatcher.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoPrestacionalBajaTransaccionalService.java'
+      - 'ext-impl/src/ar/com/ospim/desarrolloAppMobile/beans/ClienteAppMobile.java'
+      - 'ext-impl/src/ar/com/ospim/test/ClienteAppMobileLegacySecurityContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP1CleanupContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java'
@@ -37,6 +41,8 @@ on:
       - 'docs/autorizaciones/RECLAMOS_PRESTACIONALES_P1_CLEANUP.md'
       - 'docs/autorizaciones/RECLAMOS_APPMOBILE_OUTBOX_OPERACION.md'
       - 'sql/postgresql/autorizaciones/reclamo_appmobile_outbox.sql'
+      - 'scripts/reclamos/verificar_secretos_appmobile.sh'
+      - 'scripts/reclamos/validar_release_reclamos.sh'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/action/ReclamosBaseAction.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/action/EditarReclamosEntryAction.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java'
@@ -46,6 +52,8 @@ on:
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoAppMobileOutboxDirectService.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoAppMobileOutboxDispatcher.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamoPrestacionalBajaTransaccionalService.java'
+      - 'ext-impl/src/ar/com/ospim/desarrolloAppMobile/beans/ClienteAppMobile.java'
+      - 'ext-impl/src/ar/com/ospim/test/ClienteAppMobileLegacySecurityContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP1CleanupContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java'
@@ -85,12 +93,21 @@ jobs:
           mkdir -p /tmp/rp-contracts
           javac -encoding UTF-8 \
             -d /tmp/rp-contracts \
+            ext-impl/src/ar/com/ospim/test/ClienteAppMobileLegacySecurityContractTest.java \
             ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java \
             ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP1CleanupContractTest.java \
             ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java \
             ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalTabGuardContractTest.java \
             ext-impl/src/ar/com/ospim/test/ReclamoAppMobileSyncContractTest.java \
             ext-impl/src/ar/com/ospim/test/ReclamoAppMobileOutboxContractTest.java
+
+      - name: Verify embedded secrets
+        run: bash scripts/reclamos/verificar_secretos_appmobile.sh
+
+      - name: Run legacy AppMobile security contract
+        run: |
+          java -cp /tmp/rp-contracts \
+            ar.com.ospim.test.ClienteAppMobileLegacySecurityContractTest
 
       - name: Run P0 contract
         run: |
@@ -121,3 +138,19 @@ jobs:
         run: |
           java -cp /tmp/rp-contracts \
             ar.com.ospim.test.ReclamoAppMobileOutboxContractTest
+
+      - name: Run complete release gate
+        shell: bash
+        run: |
+          set -o pipefail
+          bash scripts/reclamos/validar_release_reclamos.sh \
+            2>&1 | tee /tmp/reclamos-release-gate.log
+
+      - name: Upload release gate diagnostic
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reclamos-release-gate-diagnostic
+          path: /tmp/reclamos-release-gate.log
+          if-no-files-found: error
+          retention-days: 3

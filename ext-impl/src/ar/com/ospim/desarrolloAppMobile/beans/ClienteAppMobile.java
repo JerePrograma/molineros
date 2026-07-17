@@ -54,6 +54,7 @@ import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacionalCuenta;
 import ar.com.ospim.autorizaciones.services.PreAutorizacionServiceUtil;
 import ar.com.ospim.autorizaciones.services.ReclamosPrestacionesServiceUtil;
+import ar.com.ospim.autorizaciones.services.ReclamoAppMobileAuthClient;
 import ar.com.ospim.desarrolloAppMobile.services.ClienteAppMobileServiceUtil;
 import ar.com.ospim.global.beans.Comprobante;
 import ar.com.ospim.global.beans.Prestacion;
@@ -64,22 +65,13 @@ import jcifs.smb.FileEntry;
 public class ClienteAppMobile {		
 	
 	private static Log logger = LogFactoryUtil.getLog(ClienteAppMobile.class);
-     
-	//private static final String HOST = "http://181.47.225.183:8081";
-	
 	private static final String HOST = TraeListasServiceUtil.getSystemConfig("APP_HOST_WEBSERVICE");
-	private static final String API_KEY = "a7e0f120a2753b76d4b2fe5fa0f4dd90";
-	private static final String LOGIN_URL = HOST + "/api/auth/backoffice/login";
 	private static final String PEDIDOS_URL = HOST + "/api/auth/pedidoautorizacion/estado?estado=";
 	
 	private static final String ACTUALIZAR_ESTADO_PEDIDO_URL = HOST + "/api/auth/pedidoautorizacion/estado/";
 	
 	private static final String REINTEGROS_URL = HOST + "/api/auth/pedidoreintegro/estado?estado=";
 	private static final String ACTUALIZAR_ESTADO_REINTEGRO_URL = HOST + "/api/auth/pedidoreintegro/estado/";
-	
-	private static final String EMAIL = "integraciones@backoffice.com.ar";
-	private static final String PASSWORD = "mypassword";
-	
 	private static final String IMAGENES_URL_BASE = HOST + "/api/auth/pedidoautorizacion/documentos/";
 	
 	//validaciones para los adjuntos
@@ -90,41 +82,12 @@ public class ClienteAppMobile {
 	private static SimpleDateFormat sdf=new SimpleDateFormat("yyyyMMdd");
 	private static SimpleDateFormat sdf1=new SimpleDateFormat("yyyy-MM-dd");
 	
+	/**
+	 * Compatibilidad para consumidores legacy. La autenticación y sus secretos
+	 * se resuelven exclusivamente desde configuración externa.
+	 */
 	public static String obtenerToken() {
-		HttpClient httpClient = new HttpClient();
-		PostMethod post = new PostMethod(LOGIN_URL);
-
-		post.addRequestHeader("accept", "application/json");
-		post.addRequestHeader("api-key", API_KEY);
-		post.addRequestHeader("Content-Type", "application/json");
-
-		String jsonBody = String.format("{\"email\": \"%s\", \"password\": \"%s\"}", EMAIL, PASSWORD);
-		/*
-		String jsonBody = String.format(
-			    "{\"email\": \"%s\", \"password\": \"%s\", \"document_number\": \"%s\"}",
-			    EMAIL, PASSWORD, "12345678"
-			);
-		*/	
-
-
-		try {
-			post.setRequestEntity(new StringRequestEntity(jsonBody, "application/json", "UTF-8"));
-			int status = httpClient.executeMethod(post);
-			String response = post.getResponseBodyAsString();
-            
-			if (status == 200) {
-				JSONObject json = new JSONObject(response);
-				return json.getString("token");
-			} else {
-				logger.error("Error login AppMobile. Status: " + status + " Response: " + response);
-			}
-		} catch (Exception e) {
-			logger.error("Excepción durante login AppMobile", e);
-		} finally {
-			post.releaseConnection();
-		}
-
-		return null;
+		return ReclamoAppMobileAuthClient.obtenerToken();
 	}
 
 	public static List<PreAutorizacion> getPreAutorizacionessByEstado(String estado, Date fechaIni, Date fechaFin) throws JSONException {

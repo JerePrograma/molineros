@@ -29,7 +29,9 @@ require_command java
 require_command grep
 
 CONTRACTS=(
+  ext-impl/src/ar/com/ospim/test/ClienteAppMobileLegacySecurityContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java
+  ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP1CleanupContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalTabGuardContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalDraftScopeContractTest.java
@@ -44,6 +46,7 @@ done
 
 require_file sql/postgresql/autorizaciones/reclamo_appmobile_outbox.sql
 require_file docs/autorizaciones/RECLAMOS_PRESTACIONALES_P0_DEPLOY.md
+require_file docs/autorizaciones/RECLAMOS_PRESTACIONALES_P1_CLEANUP.md
 require_file docs/autorizaciones/RECLAMOS_APPMOBILE_OUTBOX_OPERACION.md
 require_file ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp
 require_file ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_tab_guard.js
@@ -58,7 +61,9 @@ javac -encoding "$JAVA_ENCODING" \
   "${CONTRACTS[@]}"
 
 TEST_CLASSES=(
+  ar.com.ospim.test.ClienteAppMobileLegacySecurityContractTest
   ar.com.ospim.test.ReclamoPrestacionalP0ContractTest
+  ar.com.ospim.test.ReclamoPrestacionalP1CleanupContractTest
   ar.com.ospim.test.ReclamoPrestacionalEditorContractTest
   ar.com.ospim.test.ReclamoPrestacionalTabGuardContractTest
   ar.com.ospim.test.ReclamoPrestacionalDraftScopeContractTest
@@ -103,15 +108,12 @@ for config_key in \
 done
 info "Cliente reparado usa configuración externa"
 
+bash scripts/reclamos/verificar_secretos_appmobile.sh
+
 LEGACY_CLIENT=ext-impl/src/ar/com/ospim/desarrolloAppMobile/beans/ClienteAppMobile.java
-if grep -Eq 'private static final String (API_KEY|EMAIL|PASSWORD)[[:space:]]*=[[:space:]]*"[^"$]+' "$LEGACY_CLIENT"; then
-  if [[ "${ALLOW_LEGACY_APPMOBILE_SECRETS:-0}" != "1" ]]; then
-    fail "ClienteAppMobile legacy todavía contiene credenciales literales. Rotarlas y retirarlas antes de producción. Para una validación técnica no productiva puede usarse ALLOW_LEGACY_APPMOBILE_SECRETS=1."
-  fi
-  printf 'ADVERTENCIA: se permitió continuar con secretos legacy mediante override.\n' >&2
-else
-  info "No se detectaron credenciales literales en ClienteAppMobile legacy"
-fi
+grep -q 'return ReclamoAppMobileAuthClient.obtenerToken();' "$LEGACY_CLIENT" \
+  || fail "ClienteAppMobile legacy no delega autenticación en el cliente seguro"
+info "Cliente AppMobile legacy delega autenticación segura"
 
 if grep -R -n -E 'async[[:space:]]*:[[:space:]]*false' \
   ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_*patch.js; then
@@ -132,7 +134,7 @@ VALIDACIÓN AUTOMÁTICA COMPLETADA.
 
 Bloqueos manuales todavía obligatorios:
   1. ejecutar la migración de outbox en la base objetivo;
-  2. confirmar las cuatro claves AppMobile en configuración;
+  2. rotar y configurar las cuatro claves AppMobile en QA y producción;
   3. compilar el proyecto completo con el entorno Liferay real;
   4. inspeccionar el WAR generado;
   5. ejecutar smoke tests de alta, Compras, edición, revisión, pestañas y baja;
