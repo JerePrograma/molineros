@@ -1,0 +1,141 @@
+
+<%-- <% if(esEdicion) {%>
+AcomodarControlesEdicion();
+<%}%> --%>
+
+<%-- function  AcomodarControlesEdicion() {
+	// HEADER DATOS INHABILITADOS   
+	                         
+	                         document.getElementById("<portlet:namespace/>sector").disabled = "disabled";
+	                         <%if (Validator.isNotNull(reclamoprestacional) &&   Validator.isNotNull(reclamoprestacional.getTipoPedido()) ) {   %>
+	                         if ( document.getElementById("<portlet:namespace />tipopedido").selectedIndex!=0) {
+	                        	 document.getElementById("<portlet:namespace />tipopedido").disabled = "disabled"; 
+	                         }	                            
+	                         <%}%>
+						 	 document.getElementById("<portlet:namespace />fechaospimDia").disabled = true;
+							 document.getElementById("<portlet:namespace />fechaospimMes").disabled = true;
+							 document.getElementById("<portlet:namespace />fechaospimAnio").disabled = true;
+	// DATOS DE REVISION
+	                         jQuery("#<portlet:namespace />botoneditareclamo").show();
+	                         document.getElementById("<portlet:namespace />estado").disabled = "";
+                        	 document.getElementById("<portlet:namespace />fecharevisionDia").disabled = "";
+							 document.getElementById("<portlet:namespace />fecharevisionMes").disabled = "";
+							 document.getElementById("<portlet:namespace />fecharevisionAnio").disabled = "";
+							 document.getElementById("<portlet:namespace />observacion_revision").disabled = "";
+							 document.getElementById("<portlet:namespace />chk_amparo").disabled = "";
+							 document.getElementById("<portlet:namespace />chk_superintendencia").disabled = "";
+							 document.getElementById("<portlet:namespace />chk_recuperable").disabled = "";						 	 						 
+							 document.getElementById("<portlet:namespace />chk_entramite").disabled = "";
+							 document.getElementById("<portlet:namespace />resolucion").disabled = "";
+							 document.getElementById("<portlet:namespace />respresolucion").disabled = "";
+							 document.getElementById("<portlet:namespace />presentes").disabled = "";
+		// DATOS DE CIERRE NO ES NECESARIO
+		 					/*  document.getElementById("<portlet:namespace />fechacierreDia").disabled = false;
+							 document.getElementById("<portlet:namespace />fechacierreMes").disabled = false;
+							 document.getElementById("<portlet:namespace />fechacierreAnio").disabled = false;
+							
+							
+							 document.getElementById("<portlet:namespace/>tipo_gestion_cierre_reclamo").disabled = "";							
+							 
+							 document.getElementById("<portlet:namespace />reclamo_observacion_cierre").disabled = false;
+							 document.getElementById("<portlet:namespace />reclamo_ps_factura_ospim").disabled = "";
+							 document.getElementById("<portlet:namespace />reclamo_a_negociar").disabled = ""; */
+							 
+	} --%>
+
+<%-- function <portlet:namespace />siguienteSolapa() {		
+	 			
+		var accionEnCurso = document.<portlet:namespace />prestador_fm.<portlet:namespace /><%= Constants.CMD %>.value;
+		document.<portlet:namespace />prestador_fm.<portlet:namespace /><%= Constants.CMD %>.value='<%=Constants.MOVE %>';
+		
+		var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones_entry" /></portlet:actionURL>';
+		url = url + '&accionEnCurso=' + accionEnCurso + '&moverATab=plan_prest' + "&esDatosTab=true";
+		
+		document.<portlet:namespace />prestador_fm.method = 'post';
+		submitForm(document.<portlet:namespace />prestador_fm, url);
+	  
+} --%>
+
+<%-- <%if (!esEdicion){%>
+	document.getElementById("<portlet:namespace/>sector").disabled = "";
+<%}%> --%>
+
+<script type="text/javascript">
+window.ReclamoPrestacionalViewConfig = {
+    namespace: '<portlet:namespace />',
+    contextPath: '<%= request.getContextPath() %>',
+    urls: {
+        borrarPrestaciones: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/borrar_reclamosprestaciones_todos',
+        filtrarLetraComprobante: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/filtrarLetraComprobante&tipo_pedido=',
+        buscarNomenclador: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/buscar_nomenclador',
+        validarReclamoAfiliadoPrestaciones: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/validar_reclamo_afiliado_prestaciones',
+        editarReclamo: '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones_entry" /></portlet:actionURL>',
+        observar: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/observar',
+        proponeLote: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/propone_lote_reclamo_prestacional',
+        listaRevisiones: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/lista_revisiones_reclamo" /></portlet:renderURL>',
+        listaContactos: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/lista_contactos_reclamo" /></portlet:renderURL>',
+        editarPrestaciones: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones" /></portlet:renderURL>',
+        listaPrestaciones: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/lista_prestaciones_reclamos" /></portlet:renderURL>',
+        validarReclamo: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/validar_reclamo',
+        validarExisteComprobante: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/validar_existe_comprobante',
+        editarContactoAfiliados: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/afiliados/editar_contacto_entry',
+        editarContactoCai: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/cai/editar_contacto_entry',
+        autorizaciones: '<portlet:renderURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="tabs1" value="autorizaciones-prestacionales"/><portlet:param name="redirect" value="#"/></portlet:renderURL>',
+        integracionDetalle: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/getIntegracionDetalle&id_integracion=',
+        actualizarDomicilio: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/actualiza_domicilio&id_parentesco=',
+        buscarAfiliadoDatos: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/buscar_afiliado_datos&cuil_titular=',
+        verDomicilio: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/actualiza_domicilio&cuil_titular='
+    },
+    messages: {
+        ingreseParametrosBusqueda: '<liferay-ui:message key="ingrese-parametros-busqueda" />',
+        observacionInterna: "<liferay-ui:message key="observacion-interna" />",
+        detalleContacto: "<liferay-ui:message key="detalle-contacto" />",
+        detalleDomicilio: "<liferay-ui:message key="detalle-domicilio" />"
+    },
+    values: {
+        cantPrestaciones: <%= cantprestacioneslista %>,
+        casoVinculado: <%= caso_vinculado %>,
+        hasReclamo: <%= existeReclamoPersistido %>,
+        reclamoCerrado: <%= existeReclamoPersistido && reclamoprestacional.getEstado() == 3 %>,
+        tipoGestionCierre: <%= reclamoprestacional != null ? reclamoprestacional.getTipo_gestion_cierre_reclamo() : 0 %>,
+        idObservacionMedica: <%= reclamoprestacional != null ? reclamoprestacional.getIdObservacionMedica() : 0 %>,
+        tieneResolucion: <%= resolucionAutorizado != ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINVALOR && resolucionAutorizado != ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINEVALUACION %>,
+        esEdicion: <%= esEdicion %>,
+        esAlta: <%= esAlta %>,
+        esBorradorCompras: <%= esBorradorCompras %>,
+        idReclamo: <%= idReclamoPantalla %>,
+        cantRevisiones: <%= cantRevisiones %>,
+        debitoTercerizadora: <%= debitoTercerizadora %>,
+        codigoCie10Presente: <%= reclamoprestacional != null && reclamoprestacional.getCodigoCie10() != null && !reclamoprestacional.getCodigoCie10().equals("") %>,
+        caiNamespace: <%= renderResponse != null && renderResponse.getNamespace() != null && renderResponse.getNamespace().equals("_CAI_1_") %>,
+        actionParam: '<%= Constants.ACTION %>',
+        cmdParam: '<%= Constants.CMD %>',
+        saveCommand: '<%= Constants.SAVE %>',
+        updateCommand: '<%= Constants.UPDATE %>',
+        restoreCommand: '<%= Constants.RESTORE %>',
+        viewCommand: '<%= Constants.VIEW %>',
+        reclamoPrestacionalSeccional: '<%= WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL %>',
+        parentescoDefault: '<%= WebKeysAfiliados.PARENTESCO_DEFAULT %>',
+        conyugeDefault: '<%= WebKeysAfiliados.CONYUGE_DEFAULT %>',
+        concubinoDefault: '<%= WebKeysAfiliados.CONCUBINO_DEFAULT %>'
+    }
+};
+</script>
+
+
+<style>
+
+.cabeceraCaso {
+	width: 1100px;
+}
+
+.seccionVerificarDomicilio {
+  vertical-align: top;
+  text-align: center;
+  padding: 10px 5px;  
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+</style>

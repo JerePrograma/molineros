@@ -1,0 +1,383 @@
+	<fieldset class="lfr-table"> 
+	
+		<legend>
+			<liferay-ui:message key="Datos de la Prestación" />
+		</legend>
+
+		<div id="<portlet:namespace />busqueda_farmacia" align="left" width="80%">
+			<table class="lfr-table"
+				style="border-collapse: separate; border-spacing: 3px;">
+				<tr>
+					<td colspan="15"><label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;F. Prestación: </label></td>
+					<td colspan="15"><liferay-ui:input-date
+							dayParam="fechaPrestacionDiaFarmacia" dayValue=""
+					dayNullable="<%=true%>"
+					monthParam="fechaPrestacionMesFarmacia" monthValue="-1"
+					monthNullable="<%=true%>"
+							yearParam="fechaPrestacionAnioFarmacia" yearValue=""
+							yearNullable="<%=true%>"
+							yearRangeStart="<%=fechaseccional.get(Calendar.YEAR) - 5%>"
+							yearRangeEnd="<%= fechaseccional.get(Calendar.YEAR)<fechadia.get(Calendar.YEAR)?fechadia.get(Calendar.YEAR):fechadia.get(Calendar.YEAR) %>"
+							firstDayOfWeek="" disabled="<%= !esEdicion %>" /></td>
+					<td colspan="4"><liferay-util:include
+							page="/html/portlet/utils/medicamentos/busqueda_medicamentos.jsp">
+							<liferay-util:param name="search_url"
+								value="/autorizaciones/buscar_medicamentos" />
+							<liferay-util:param name="troquel" value='' />
+							<liferay-util:param name="nombre_medicamento" value='' />
+							<liferay-util:param name="id_medicamento" value='' />
+							<liferay-util:param name="esEditable" value='true' />
+							<liferay-util:param name="mostrar_con_presentacion" value='true' />
+						</liferay-util:include></td>
+
+
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+				</tr>
+
+			</table>
+		</div>
+
+		<div id="<portlet:namespace />busqueda_prestaciones" align="left" width="80%">
+			<table width="75%">
+				<tr>
+					<td ><label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;F. Prestación: </label></td>
+					<td ><liferay-ui:input-date dayParam="fechaPrestacionDia" dayValue="" dayNullable="<%=true%>"
+					monthParam="fechaPrestacionMes" monthValue="-1" monthNullable="<%=true%>"
+					yearParam="fechaPrestacionAnio" yearValue="" yearNullable="<%=true%>"
+							yearRangeStart="<%=fechaseccional.get(Calendar.YEAR) - 5%>"
+							yearRangeEnd="<%=fechaseccional.get(Calendar.YEAR)<fechadia.get(Calendar.YEAR)?fechadia.get(Calendar.YEAR):fechadia.get(Calendar.YEAR)%>"
+							firstDayOfWeek="" disabled="<%= !esEdicion %>" /></td>
+
+
+					<td><label><liferay-ui:message key="codigo-presentado" />:</label></td>
+					<td><input id="<portlet:namespace />codigoSeguimiento_filtro"
+						name="<portlet:namespace />codigoSeguimiento_filtro" size="10"
+						maxlength="20" type="text" value='' /></td>
+					<td><input
+						id="<portlet:namespace />descripcionSeguimiento_filtro"
+						name="<portlet:namespace />descripcionSeguimiento_filtro"
+						size="60" maxlength="200" type="text" value='' /></td>
+					<td><div id="<portlet:namespace />divBtnBusca">
+							<a href="javascript: void(0);"
+								onclick="javascript:<portlet:namespace />buscarNomencladorAutocompletar();"
+								tabindex="-1">Buscar</a> <a href="javascript: void(0);"
+								onclick="javascript:<portlet:namespace />limpiarNomencladorAutocompletar();"
+								tabindex="-1">Limpiar</a>
+						</div></td>
+				</tr>		
+				<tr>
+					<td>&nbsp;</td>
+				</tr>
+
+				
+			</table>
+		</div>
+
+
+		<div id="<portlet:namespace />datos_edicion_prestacion" align="left" width="95%">
+          <table width="95%;"><tr><td>
+			<span><b>Prestaci&oacute;n en Proceso de Edici&oacute;n.</b></span>
+			<liferay-util:include
+				page="/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp">
+			</liferay-util:include>
+		  </td></tr></table>	
+		</div>
+
+		<div id="<portlet:namespace />datos_prestacion_ingreso">
+			<table class="lfr-table"
+				style="border-collapse: separate; border-spacing: 2px; width: 85%;">
+				<tr>
+					<td colspan="15">
+						<fieldset class="block-labels">
+							<legend>
+								<liferay-ui:message key="Datos del Comprobante" />
+							</legend>
+							<table>
+								<tr>
+									<td colspan="10">
+										<table class="lfr-table"
+											style="border-collapse: separate; border-spacing: 3px;" >
+											<tr>
+												<td><label><liferay-ui:message key="Frecuencia" />:</label></td>
+												<td><select <% if (!esEdicion) { %> disabled='disabled'
+													<%}%> name="<portlet:namespace />frecuencia"
+													id="<portlet:namespace />frecuencia">
+														<option value="SELECCIONE">SELECCIONE</option>
+														<option value="UNICA">UNICA</option>
+														<option value="SEMANAL">SEMANAL</option>
+														<option value="TRIMESTRAL">TRIMESTRAL</option>
+														<option value="MENSUAL">MENSUAL</option>
+														<option value="SEMESTRAL">SEMESTRAL</option>
+														<option value="ANUAL">ANUAL</option>
+												</select></td>
+
+												<td><label><liferay-ui:message
+															key="comprobante" />:</label></td>
+												<td><select name="<portlet:namespace />comprobante_tipo"
+													id="<portlet:namespace />comprobante_tipo"
+													<% if (!esEdicion) { %> disabled="disabled" <%} %>>
+														<option value="FCP">FCP</option>
+														<option value="RCB">RCB</option>
+														<option value="OTR">OTRO</option>
+														<!--  <option value="AUT">AUTORIZACION</option> -->
+												</select></td>
+
+												<td><label><liferay-ui:message key="letra" />:</label></td>
+												<td colspan="3"><select
+													name="<portlet:namespace />comprobante_letra"
+													id="<portlet:namespace />comprobante_letra">	
+												</select></td>
+												<td>Suc:</td>
+												<td><input id="<portlet:namespace />comprobante_suc"
+													name="<portlet:namespace />comprobante_suc" size="5"
+													maxlength="5" 
+													onkeydown="allowOnlyDigits(event);"
+													type="text" value="" <% if (!esEdicion) { %>
+													readonly="readonly" <%} %> /></td>
+
+
+												<td>Nro:</td>
+												<td><input id="<portlet:namespace />comprobante_nro"
+													name="<portlet:namespace />comprobante_nro" size="9"
+													maxlength="8" type="text" onkeydown="allowOnlyDigits(event);" 
+													value="" <% if (!esEdicion) { %>
+													readonly="readonly" <%} %> /></td>
+												<td><label>F. Emisi&oacute;n: </label></td>
+												<td colspan="3"><liferay-ui:input-date
+														dayParam="fechaComprobanteDia" dayValue=""
+														dayNullable="<%=true %>" monthParam="fechaComprobanteMes"
+														monthValue="-1" monthNullable="<%= true %>"
+														yearParam="fechaComprobanteAnio" yearValue=""
+														yearRangeStart="<%= fechaseccional.get(Calendar.YEAR)-5  %>"
+														yearRangeEnd="<%=fechaseccional.get(Calendar.YEAR)<fechadia.get(Calendar.YEAR)?fechadia.get(Calendar.YEAR):fechadia.get(Calendar.YEAR)%>"
+														yearNullable="<%= true %>"
+														firstDayOfWeek="<%= fechaseccional.getFirstDayOfWeek() - 1 %>"
+														disabled="<%= !esEdicion %>" /></td>
+														
+												<td>
+										         	<a href="javascript:void(0)" onclick="help(event, 'helpComprobantes')"><img style="height: 25px; width: 25px" src="/html/images/help.png" title="Ayuda" alt="Ayuda"/></a>&nbsp;
+										        </td>		
+											</tr>
+										</table>
+									</td>
+								</tr>
+								<tr>
+									<td>&nbsp;</td>
+								</tr>
+								<tr>
+									<td colspan="15"><liferay-util:include
+											page="/html/portlet/liquidaciones/ordenes_pago/busqueda_padron_entidades.jsp">
+											<liferay-util:param name="esEditable"
+												value='<%= String.valueOf(esEdicion) %>' />
+											<liferay-util:param name="cuit" value='' />
+											<liferay-util:param name="sucu" value='' />
+											<liferay-util:param name="razon" value='' />
+											<liferay-util:param name="id_seccional" value='' />
+											<liferay-util:param name="esEmpresaPrestador" value='true' />
+											<liferay-util:param name="suf_entidad" value='_' />
+										</liferay-util:include></td>
+								</tr>
+
+								<tr>
+									<td>&nbsp;</td>
+								</tr>
+								<tr>
+									<td><label><liferay-ui:message key="Cantidad" />:</label>
+									</td>
+									<td><input id="<portlet:namespace />cantidadFC"
+										<% if (!esEdicion) { %> disabled='disabled' <%}%>
+										name="<portlet:namespace />cantidadFC" size="8" maxlength="9"
+										type="text" value="1" onblur="calculatotalFC()" /></td>
+
+									<td><label><liferay-ui:message key="Importe" />:</label></td>
+									<td><input id="<portlet:namespace />importeUnitarioFC"
+										<% if (!esEdicion) { %> disabled='disabled' <%}%>
+										name="<portlet:namespace />importeUnitarioFC" size="8"
+										maxlength="20" value='' type="text"
+										onkeydown="allowOnlyDigitsAndDecimals(event)"
+										onblur="calculatotalFC()" /></td>
+
+
+									<td><label>Total Comprobante:</label></td>
+									<td><input id="<portlet:namespace />importeFC"
+										<% if (!esEdicion) { %> disabled='disabled' <%}%>
+										name="<portlet:namespace />importeFC" size="8" maxlength="20"
+										value='' type="text"
+										onkeydown="allowOnlyDigitsAndDecimals(event)"
+										readonly="readonly" /></td>
+								</tr>
+							</table>
+						</fieldset>
+
+					</td>
+				</tr>
+				<tr>
+					<td>&nbsp;</td>
+				</tr>
+
+				<tr>
+					<td colspan="15">
+						<fieldset class="block-labels">
+							<legend>
+								<liferay-ui:message key="Autorizado por Área Médica:" />
+							</legend>
+							<table>
+								<tr>
+									<td><label><liferay-ui:message key="Cantidad" />:</label>
+									</td>
+									<td><input id="<portlet:namespace />cantidad"
+										<% if (!esEdicion) { %> disabled='disabled' <%}%>
+										name="<portlet:namespace />cantidad" size="8" maxlength="9"
+										type="text" value="1" onblur="calculatotal()" /></td>
+
+									<td><label><liferay-ui:message key="Importe" />:</label>
+									</td>
+									<td><input id="<portlet:namespace />importe"
+										<% if (!esEdicion) { %> disabled='disabled' <%}%>
+										name="<portlet:namespace />importe" size="8" maxlength="20"
+										value='' type="text"
+										onkeydown="allowOnlyDigitsAndDecimals(event)"
+										onblur="calculatotal()" /></td>
+
+									<td><label><liferay-ui:message key="Total" />:</label></td>
+									<td><input id="<portlet:namespace />total"
+										<% if (!esEdicion) { %> disabled='disabled' <%}%>
+										name="<portlet:namespace />total" size="8" maxlength="20"
+										value='' type="text" readonly="readonly" /></td>
+
+									<td><label><liferay-ui:message key="Cargo OSPIM" />:</label>
+									</td>
+									<td><input id="<portlet:namespace />cargoospim"
+										name="<portlet:namespace />cargoospim" size="8" maxlength="20"
+										value='' <% if (!esEdicion) { %> disabled='disabled' <%}%>
+										type="text" value=""
+										onkeydown="allowOnlyDigitsAndDecimals(event)" /></td>
+									<td><label><liferay-ui:message key="Cargo Prestadora" />:</label>
+									</td>
+									<td><input id="<portlet:namespace />cargops"
+										<% if (!esEdicion) { %> disabled='disabled' <%}%>
+										name="<portlet:namespace />cargops" size="8" maxlength="20"
+										value='' onkeydown="allowOnlyDigitsAndDecimals(event)"
+										type="text" value="" /></td>
+									<td><label>Cargo Monotributo:</label>
+									<td><input id="<portlet:namespace />cargoimesa"
+										<% if (!esEdicion) { %> disabled='disabled' <%}%>
+										name="<portlet:namespace />cargoimesa" size="8" maxlength="20"
+										value='' onkeydown="allowOnlyDigitsAndDecimals(event)"
+										type="text" value="" /></td>
+										
+									<td><label>Reconocido SSS:</label>
+									</td>
+									<td><input id="<portlet:namespace />reconocidoSSS"
+										<% if (!esEdicion) { %> disabled='disabled' <%}%>
+										name="<portlet:namespace />reconocidoSSS" size="8" maxlength="20"
+										value='' onkeydown="allowOnlyDigitsAndDecimals(event)"
+										type="text" value="" /></td>	
+										
+									<td>Recuperable:</label> 
+									
+									<select name="<portlet:namespace />recuperable_sur" id="<portlet:namespace />recuperable_sur"
+									 <% if (!esEdicion) { %> disabled="disabled" <%} %> onchange="cambiorecuperable();">
+														<option value="0">Seleccione</option>
+														<option value="1">SUR</option>
+														<option value="3">Integración</option>
+														<option value="2">NO Recuperable</option>
+									</select>
+									
+
+									</tr>
+							</table>
+						</fieldset>
+					</td>
+				</tr>
+          </table>
+          <table class="lfr-table">
+				<tr>
+					<td colspan="8"><liferay-ui:message key="observacion" />:</td>
+					<td><textarea rows="3" cols="100" <% if (!esEdicion) { %>
+							disabled='disabled' <%}%>
+							id="<portlet:namespace />observacion_prestacion" maxlength="250"
+							name="<portlet:namespace />observacion_prestacion"></textarea> <br>
+						<b><liferay-ui:message
+								key="La observación de 200 caracteres como máximo." /></b></td>
+					<td colspan="12">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+					<td><input type="button"
+						value="<liferay-ui:message key="add-prestacion-reclamo" />"
+						onClick="<portlet:namespace />agregarPrestacion();"
+						id="<portlet:namespace />buttonaddprestacion"
+						name="<portlet:namespace />buttonaddprestacion"
+						title="<liferay-ui:message key="add-prestacion-reclamo" />" /></td>
+					<%if (reclamo_vinculado) {%>
+					<td><input type="button"
+						value="<liferay-ui:message key="Ver Prestaciones del Caso Asociado." />"
+						onClick="<portlet:namespace />verprestacionesasociadas();"
+						id="<portlet:namespace />botonprestacionesasociadas"
+						name="<portlet:namespace />botonprestacionesasociadas"
+						title="<liferay-ui:message key="Ver Prestaciones del Caso Asociado." />" />
+					</td>
+					<%}%>
+				</tr>
+			</table>
+
+		</div>
+
+		<table>
+			<tr>
+				<td><span id="<portlet:namespace />CantidadDePrestacionesDelReclamo" style="color: red;"></span></td>
+			</tr>
+		</table>
+
+       <table style="align:left; width:75%;">
+		<tr>
+		<td colspan="10">
+	   <div id="<portlet:namespace />lista_prestaciones_reclamos"
+			style="
+        max-width: 1100px;
+        max-height: 180px;
+        overflow-x: auto;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #fff;">
+			<liferay-util:include
+							page="/html/portlet/autorizaciones/reclamos_prestacionales/lista_prestaciones_reclamos.jsp">
+			</liferay-util:include>
+						
+		</div>
+		</td>
+		</tr>
+		</table>
+
+	</fieldset> <!-- Fin Datos de la Prestacion -->
+	
+
+	<div id="<portlet:namespace />lista_prestaciones_asociadas"
+		align="center"
+		style="height: 120px; overflow: scroll; overflow-x: hidden;">
+		<span style="background-color: #d4d9d5; font-size: 135%"><b><%= caso_vinculado%>.</b>
+
+		</span>
+		<liferay-util:include page="/html/portlet/autorizaciones/reclamos_prestacionales/lista_prestaciones_reclamoasociado.jsp"></liferay-util:include>
+	</div>
+
+	<%-- 	<input type="hidden" name="<portlet:namespace />estadosel"
+		id="<portlet:namespace />estadosel"
+		value="<%=Validator.isNotNull(reclamoprestacional)  ? reclamoprestacional.getEstado() : "0"  %>" /> --%>
+	<input type="hidden" name="<portlet:namespace />codigoprestacion"
+		id="<portlet:namespace />codigoprestacion"
+		value="<%=Validator.isNotNull(reclamoprestacional)  ? reclamoprestacional.getEstado() : "0"  %>" />
+	<input type="hidden" name="<portlet:namespace />tipogestion"
+		id="<portlet:namespace />tipogestion" value="" /> <input
+		type="hidden" name="<portlet:namespace />idreclamoprestacion"
+		id="<portlet:namespace />idreclamoprestacion" value="<%= idReclamoPantalla %>" /> <input
+		type="hidden" name="<portlet:namespace />consultareclamo"
+		id="<portlet:namespace />consultareclamo"
+		value="<%=esEdicion  ? true  : false  %>" /> <input type="hidden"
+		id="<portlet:namespace />nom_seleccionado"
+		name="<portlet:namespace />nom_seleccionado" value="" /> <input
+		type="hidden" name="<portlet:namespace />caso_vinculado"
+		id="<portlet:namespace />caso_vinculado" value="" />
+
+

@@ -1,0 +1,367 @@
+	<fieldset class="block-labels">
+
+
+		<table class="cabeceraCaso"
+			style="border-collapse: separate; border-spacing: 3px;">
+			<tr>
+				<td colspan="4">
+					<fieldset class="block-labels">
+						<legend>
+							<liferay-ui:message key="Contactos-Afiliado-Reclamo" />
+						</legend>
+						<table>
+							<tr>
+								<td><b><label id="CantidadDeContactosAsociados">
+											Ningún Contacto Asociado. </label></b></td>
+								<td><input type="button"
+									value="Ver Contactos Asociados al Caso."
+									onClick="<portlet:namespace />vercontactosdelreclamo();"
+									id="<portlet:namespace />botoncontactosreclamo"
+									title="<liferay-ui:message key="Ver Contactos Asociados al Caso." />">
+								</td>
+							</tr>
+						</table>
+					</fieldset>
+				</td>
+				<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+				<td style="display: none;">
+
+					<fieldset class="block-labels">
+						<legend>
+							<liferay-ui:message key="Recuperable" />
+						</legend>
+						<table>
+							<tr>
+								<td style="display: none;"><input type="button"
+									value="Buscar Solicitud SUR"
+									title="<liferay-ui:message key="Buscar Solicitud SUR" />">
+								</td>
+							</tr>
+						</table>
+					</fieldset>
+				</td>
+				<td style="display: none;">
+
+					<fieldset class="block-labels">
+						<legend>
+							<liferay-ui:message key="Orden de Pago" />
+						</legend>
+						<table>
+							<tr>
+								<td style="display: none;"><input type="button"
+									value="Buscar OP Reclamo"
+									title="<liferay-ui:message key="Buscar OP Reclamo" />">
+								</td>
+							</tr>
+						</table>
+					</fieldset>
+				</td>
+			</tr>
+		</table>
+
+		<div id="<portlet:namespace />lista_contactos_reclamo" align="center"
+			style="height: 160px; overflow: scroll; overflow-x: hidden;">
+
+			<liferay-util:include page="/html/portlet/autorizaciones/reclamos_prestacionales/lista_contactos_reclamo.jsp">
+			</liferay-util:include>
+		</div>
+
+		<fieldset class="block-labels">
+			<legend>
+				<liferay-ui:message key="rev" />
+			</legend>
+			<table class="lfr-table"
+				style="border-collapse: separate; border-spacing: 3px;">
+				<tr>
+					<td><label><liferay-ui:message key="fecha-revision" />
+							:</label></td>
+					<td><liferay-ui:input-date dayParam="fecharevisionDia"
+							dayValue="<%= fechadia.get(Calendar.DATE)%>"
+							dayNullable="<%=true %>" monthParam="fecharevisionMes"
+							monthValue="<%= fechadia.get(Calendar.MONTH )%>"
+							monthNullable="<%= true %>" yearParam="fecharevisionAnio"
+							yearValue="<%= fechadia.get(Calendar.YEAR)%>"
+							yearRangeStart="<%= fecharevision.get(Calendar.YEAR) - 5 %>"
+							yearRangeEnd="<%= fecharevision.get(Calendar.YEAR)  %>"
+							yearNullable="<%= true %>"
+							firstDayOfWeek="<%= fecharevision.getFirstDayOfWeek() - 1 %>"
+							disabled="<%= !esEdicion %>" /></td>
+
+					<td><label><liferay-ui:message key="responresolucion" />:</label></td>
+					<td><select <% if (!esEdicion) { %> disabled='disabled' <%}%>
+						name="<portlet:namespace/>respresolucion"
+						id="<portlet:namespace />respresolucion">
+							<option value="SELECCIONE">SELECCIONE</option>
+							<option value="AUDITORIA ADMINISTRATIVA">AUDITORIA ADMINISTRATIVA</option>
+							<option value="AUDITORIA DE PRESTACIONES MEDICAS">AUDITORIA DE PRESTACIONES MEDICAS</option>
+							<option value="AUDITORIA FARMACEUTICA">AUDITORIA FARMACEUTICA</option>
+							<option value="AUDITORIA MEDICA">AUDITORIA MEDICA</option>
+							<option value="AUTORIZADO O.S.">AUTORIZADO O.S.</option>
+							<option value="AUDITORIA ODONTOLOGICA">AUDITORIA ODONTOLOGICA</option>
+							<option value="COMISION DIRECTIVA">COMISION DIRECTIVA</option>
+							<option value="DIRIGENTES">DIRIGENTES</option>
+							<option value="EQUIPO INTERDISCIPLINARIO">EQUIPO INTERDISCIPLINARIO</option>
+							<option value="GERENCIADORA">GERENCIADORA</option>
+							<option value="LEGALES">LEGALES</option>
+					</select></td>
+				</tr>
+				<tr>
+					<td><label><liferay-ui:message key="Presentes" />:</label></td>
+					<td><select <% if (!esEdicion) { %> disabled='disabled' <%}%>
+						name="<portlet:namespace/>presentes"
+						id="<portlet:namespace />presentes">
+							<option value="SELECCIONE">SELECCIONE</option>
+							<option value="AUDITORIA MEDICA">AUDITORIA MEDICA</option>
+							<option value="COMISION DIRECTIVA">COMISION DIRECTIVA</option>
+							<option value="EQUIPO INTERDISCIPLINARIO">EQUIPO INTERDISCIPLINARIO</option>
+							<option value="GERENCIADORA">GERENCIADORA</option>
+					</select></td>
+					<td><label><liferay-ui:message key="resolucion" /> :</label></td>
+					<td><select <% if (!esEdicion) { %> disabled='disabled' <%}%>
+						name="<portlet:namespace />resolucion"
+						id="<portlet:namespace />resolucion"
+						onchange="cambioresolucion();">
+							<option value="Seleccione">SELECCIONE</option>
+							<option value="AUTORIZADO">AUTORIZADO</option>
+							<option value="RECHAZADO">RECHAZADO</option>
+					</select></td>
+				</tr>
+					
+				<tr>
+					<td><liferay-ui:message key="observacion" />:</td>
+					<td><textarea rows="3" cols="100"
+							id="<portlet:namespace />observacion_revision" maxlength="200"
+							name="<portlet:namespace />observacion_revision"></textarea> <br>
+						<b><liferay-ui:message
+								key="La observación de 200 caracteres como máximo." /></b></td>
+					<td>
+						<div id="<portlet:namespace />botonrevision">
+							<input type="button"
+								value="<liferay-ui:message key="agregar-revision"  />"
+								onClick="<portlet:namespace />agregarRevision();"
+								title="<liferay-ui:message key="agregar-revision" />" />
+						</div>
+					</td>
+				</tr>
+			</table>
+			<div id="<portlet:namespace />lista_revisiones" align="center"
+				style="height: 120px; overflow: scroll; overflow-x: hidden;">
+				<table>
+					<tr>
+						<td colspan="10"><liferay-util:include
+								page="/html/portlet/autorizaciones/reclamos_prestacionales/lista_revisiones_reclamo.jsp">
+							</liferay-util:include></td>
+					</tr>
+				</table>
+				<label align='center'
+					id="<portlet:namespace/>mensajerevisionefectuada"></label>
+			</div>
+		</fieldset>
+
+
+		<table align="center" class="lfr-table"
+			style="border-collapse: separate; border-spacing: 3px;">
+			<tr>
+				<td colspan="5">
+					<fieldset class="block-labels">
+						<legend>
+							<liferay-ui:message key="Justificación Médica" />
+						</legend>
+						<textarea name="<portlet:namespace />justificacionmedcica_reclamo"
+							id="<portlet:namespace />justificacionmedcica_reclamo" rows="4"
+							cols="80" onkeyup="convertToUppercase(this)"
+							onchange="validarevision();"
+							<% if (!esEdicion ||( reclamoprestacional!=null && reclamoprestacional.getTipo_gestion_cierre_reclamo()>0 ) ) { %>
+							disabled='disabled' <%}%>
+							id="<portlet:namespace />justificacionmedcica_reclamo"
+							name="<portlet:namespace />justificacionmedcica_reclamo">
+				<%=reclamoprestacional!=null && reclamoprestacional.getJustificaconMedica()!=null ?reclamoprestacional.getJustificaconMedica() :""%></textarea>
+					</fieldset>
+				</td>
+				<td colspan="5">
+					<fieldset class="block-labels">
+						<legend>
+							<liferay-ui:message key="Dictamen Comisión" />
+						</legend>
+						<textarea rows="4" cols="70" onkeyup="convertToUppercase(this)"
+							<% if (!esEdicion ||( reclamoprestacional!=null && reclamoprestacional.getTipo_gestion_cierre_reclamo()>0 ) )  { %>
+							disabled='disabled' <%}%>
+							id="<portlet:namespace />dictamencomision_reclamo"
+							name="<portlet:namespace />dictamencomision_reclamo">
+				<%=reclamoprestacional!=null && reclamoprestacional.getDictamenComision()!=null ?reclamoprestacional.getDictamenComision() :""%></textarea>
+					</fieldset>
+				</td>
+			</tr>
+		</table>
+
+		<table align="center" class="lfr-table"
+			style="border-collapse: separate; border-spacing: 3px; columns: 3;">
+			<tr>
+				<td>
+					<div id="<portlet:namespace />Cierre_Reclamo_Div">
+						<fieldset class="block-labels">
+
+							<legend>
+								<liferay-ui:message key="Cierre Reclamo" />
+							</legend>
+							<table class="lfr-table"
+								style="border-collapse: separate; border-spacing: 3px;">
+								<tr>
+									<%if(!existeReclamoPersistido) {%>
+									<td colspan="2"><label><liferay-ui:message
+												key="Fecha Cierre" />:</label> <liferay-ui:input-date
+											dayParam="fechacierreDia"
+											dayValue="<%= fechacierre.get(Calendar.DATE)%>"
+											dayNullable="<%=true %>" monthParam="fechacierreMes"
+											monthValue="<%= fechacierre.get(Calendar.MONTH )%>"
+											monthNullable="<%= true %>" yearParam="fechacierreAnio"
+											yearValue="<%= fechacierre.get(Calendar.YEAR)%>"
+											yearRangeStart="<%= fechacierre.get(Calendar.YEAR) - 5 %>"
+											yearRangeEnd="<%= fechacierre.get(Calendar.YEAR)  %>"
+											yearNullable="<%= true %>"
+											firstDayOfWeek="<%= fechacierre.getFirstDayOfWeek() - 1 %>"
+											disabled="<%= !esEdicion %>" /></td>
+									<%}else{ %>
+									<td colspan="2"><label><liferay-ui:message
+												key="Fecha Cierre" />:</label> <liferay-ui:input-date
+											dayParam="fechacierreDia"
+											dayValue="<%= fechacierre.get(Calendar.DATE)%>"
+											dayNullable="<%=true %>" monthParam="fechacierreMes"
+											monthValue="<%= fechacierre.get(Calendar.MONTH )%>"
+											monthNullable="<%= true %>" yearParam="fechacierreAnio"
+											yearValue="<%= fechacierre.get(Calendar.YEAR)%>"
+											yearRangeStart="<%= fechacierre.get(Calendar.YEAR) - 5  %>"
+											yearRangeEnd="<%= fechacierre.get(Calendar.YEAR)  %>"
+											yearNullable="<%= true %>"
+											firstDayOfWeek="<%= fechacierre.getFirstDayOfWeek() - 1 %>"
+											disabled="<%= !esEdicion %>" /></td>
+									<%} %>
+									<td colspan="2"><label><liferay-ui:message
+												key="Tipo Gestion" />:</label> <select   <% if (!esEdicion) { %>
+										disabled='disabled' <%}%>												
+										name="<portlet:namespace/>tipo_gestion_cierre_reclamo"
+										id="<portlet:namespace/>tipo_gestion_cierre_reclamo"
+										onchange="manejartipogestion();">
+											<option selected value="0">SELECCIONE LA GESTION</option>
+											<% for (TiposDeGestionReclamosPrestacionales tipogestion  : listatipogestionreclamos) { %>
+											<option
+												value="<%=tipogestion.getId()%>"><%=tipogestion.getDescripcion()%>
+											</option>
+											<% } %>
+									</select></td>	
+									<tr id="<portlet:namespace/>observacion_medica_tr" style="display:none;">
+									
+											<td><label><liferay-ui:message key="observaciones-area-medica"/>:</label></td>
+											<td><select name="<portlet:namespace/>observacion_medica" id="<portlet:namespace/>observacion_medica"
+												<% if (!esEdicion) { %> disabled='disabled' <%}%>>												
+													<option value="0">Seleccione observación</option>
+														<% for (ReclamosPrestacionalesRevisionEstado  revisionEstado  : listaRevisionEstado) { %>
+															<option
+																value="<%=revisionEstado.getId()%>"><%=revisionEstado.getDescripcion()%>
+													   		</option>
+													   	<%} %>
+											</select></td>
+									</tr>
+														
+						
+								<tr>
+								</tr>
+								<tr>
+									<td colspan="1"><liferay-ui:message key="observacion" />:
+									</td>
+									<td colspan="3"><textarea rows="3" cols="50"
+											id="<portlet:namespace />reclamo_observacion_cierre"
+											maxlength="200"
+											name="<portlet:namespace />reclamo_observacion_cierre"><%=Validator.isNotNull(reclamoprestacional) &&   Validator.isNotNull(reclamoprestacional.getReclamo_observacion_cierre()) ? reclamoprestacional.getReclamo_observacion_cierre():"" %></textarea>
+									</td>
+								</tr>
+
+			
+
+
+							</table>
+
+
+							<table align="center" width="600px">
+
+								<tr>
+									<td width="600px">&nbsp;</td>
+								</tr>
+
+								<tr>
+									<td width="170px"><liferay-ui:message
+											key="Incluido Convenio con Gerenciadora" />: <input
+										type="checkbox"
+										id="<portlet:namespace />incluido_convenio_gerenciadora"
+										name="<portlet:namespace />incluido_convenio_gerenciadora"
+										<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isReclamo_convenio_gerenciadora()  ? "checked" : "Unchecked"  %>
+										<% if (!esEdicion) { %> disabled='disabled' <%}%>></td>
+
+									<td width="320px"><liferay-ui:message key="2 % UOMA" />:
+										<input type="checkbox" id="<portlet:namespace />dosporciento"
+										name="<portlet:namespace />dosporciento"
+										<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isDosPorciento()   ? "checked" : "Unchecked"  %>
+										<% if (!esEdicion) { %> disabled='disabled' <%}%>></td>
+
+									<td width="210px"><label>Débito Prestadora:</label> <input
+										type="checkbox" id="<portlet:namespace />debitoprestadora"
+										name="<portlet:namespace />debitoprestadora"
+										<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isDebitoPrestadora()    ? "checked" : "Unchecked"  %>
+										<% if (!esEdicion) { %> disabled='disabled' <%}%>></td>
+								</tr>
+							</table>
+
+						</fieldset>
+					</div>
+				</td>
+				<td>
+
+					<fieldset class="block-labels">
+
+						<legend>
+							<liferay-ui:message key="Datos de la OP" />
+						</legend>
+
+						<table class="lfr-table"
+							style="border-collapse: separate; border-spacing: 3px;">
+							<% if (opAsignadaalReclamoExiste){ %>
+							<tr style="font-size: 110%">
+								<td colspan="1"><b>Nro de lista:</b></td>
+								<td colspan="1"
+									style="color: #ada397; font-size: 120%; font-weight: bold;"><%= reclamoprestacional.getId_lista_reintegro()>0  ? reclamoprestacional.getId_lista_reintegro() : ""  %></td>
+							</tr>
+							<tr style="font-size: 110%">
+								<td colspan="1"><b>Nro de OP:</b></td>
+								<td colspan="1"
+									style="color: #ada397; font-size: 120%; font-weight: bold;"><%= reclamoprestacional.getIdOP()>0 ? reclamoprestacional.getIdOP() : ""  %></td>
+							</tr>
+							<%if (reclamoprestacional.getChequeOP()!=null){ %>
+							<tr style="font-size: 110%">
+								<td colspan="1"><b>Nro de cheque:</b></td>
+								<td colspan="1"
+									style="color: #ada397; font-size: 120%; font-weight: bold;"><%= reclamoprestacional.getChequeOP()!= null ? reclamoprestacional.getChequeOP(): ""  %></td>
+							</tr>
+							<%}else{ %>
+								<tr style="font-size: 110%">
+								<td colspan="1"><b>Nro de Cuenta:</b></td>
+								<td colspan="1"
+									style="color: #ada397; font-size: 120%; font-weight: bold;"><%= reclamoprestacional.getCtaNro()!= 0 ? reclamoprestacional.getCtaNro(): ""  %></td>
+							</tr>
+							<%} %>
+							
+							<tr style="font-size: 110%">
+								<td colspan="1"><b>Fecha OP:</b></td>
+								<td colspan="1"
+									style="color: #ada397; font-size: 120%; font-weight: bold;"><%= reclamoprestacional.getfechaOPAsString()   %></td>
+							</tr>
+							<%}else{%>
+							<tr style="font-size: 110%">
+								<td colspan="1"><b>Sin Orden de Pago.</b></td>
+							</tr>
+							<%}%>
+
+						</table>
+				</td>
+				</fieldset>
+			</tr>
+		</table>

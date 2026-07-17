@@ -1,0 +1,143 @@
+<style>
+div.divheadercheckboxs {
+	/*
+  position: absolute;
+  top: 335px;
+  right:30;
+  left:1020px;
+ */
+	background-color: #f2f2f2;
+	width: 170px;
+	height: 150px;
+	border: 1px solid black;
+}
+
+div.divcheckboxsEdicion {
+	/*
+  position: absolute;
+  top: 335px;
+  right:30;
+  left:1050px;
+*/
+	background-color: #f2f2f2;
+	width: 170px;
+	height: 150px;
+	border: 1px solid black;
+}
+
+div.divheaderNroReclamo {
+	/*
+  position: absolute;
+  top: 270px;
+  right:30;
+  left:1000px;
+*/
+	background-color: #cccccc;
+	width: 250px;
+	height: 20px;
+	border: 1px solid black;
+	font-size: 145%
+}
+
+div.divheaderNroOP {
+	/*
+  position: absolute;
+  top: 300px;
+  right:30;
+  left:1000px;
+*/
+	width: 250px;
+	height: 18px;
+	border: 1px solid black;
+	font-size: 100%
+}
+
+div.divNroRecord_Vinculado {
+	/*
+  position: absolute;
+  top: 238px;
+  right:30;
+  left:625px;
+*/
+	/*background-color: #f2f2f2;*/
+	width: 200px;
+	height: 20px;
+	/*  border:1px solid black;*/
+	font-size: 120%
+}
+
+   .alnright { text-align: right; }
+
+span-fixed-size {
+  display: inline-block;
+  width: 20px;
+}
+
+</style>
+
+<liferay-ui:error key="errorAfiliadoSinCobertMed"
+	message="<%=(String)request.getAttribute(\"msgErrorAfiSinCobMed\") %>" />
+
+<liferay-ui:error key="errorPrestacionComprobante"
+	message="<%=(String)request.getAttribute(\"msgErrorPrestacionComprobante\") %>" />
+	
+<form name="<portlet:namespace />reclamo_fm"
+	id="<portlet:namespace />reclamo_fm">
+	
+	
+<div id="<portlet:namespace />global"
+		align="left"
+		style="width:75%;">	
+	
+	<input type="hidden" id="<portlet:namespace />fprest"
+		name="<portlet:namespace />fprest" value="<%=prestacionFechaString%>" />
+	<input type="hidden" id="<portlet:namespace />posforcie10"
+		name="<portlet:namespace />posforcie10" value="0" /> <input
+		type="hidden" id="<portlet:namespace />codigoCie10"
+		name="<portlet:namespace />codigoCie10"
+		value="<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getCodigoCie10())   ? reclamoprestacional.getCodigoCie10()   : ""  %>" />
+	<input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>"
+		value="<%=cmd%>" />
+	<% if (esBorradorCompras) { %>
+	<input type="hidden"
+		name="<portlet:namespace /><%= WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE %>"
+		value="<%= contextoCompras.getNonce() %>" />
+	<% } %>
+	<input type="hidden"
+		name="<portlet:namespace />cantprestacioneslista"
+		id="<portlet:namespace />cantprestacioneslista"
+		value="<%=cantprestacioneslista%>" /> <input type="hidden"
+		name="<portlet:namespace />cuiltitular"
+		id="<portlet:namespace />cuiltitular" /> <input type="hidden"
+		name="<portlet:namespace />intetitular"
+		id="<portlet:namespace />intetitular" /> <input type="hidden"
+		name="<portlet:namespace />cantrevisionesactivas"
+		id="<portlet:namespace />cantrevisionesactivas" value="" /> <input
+		type="hidden" id="<portlet:namespace />id_reclamosel"
+		name="<portlet:namespace />id_reclamosel" size="8"
+		value="<%= idReclamoPantalla %>" />
+	<input type="hidden" id="<portlet:namespace />tipoaccionprestacion"
+		name="<portlet:namespace />tipoaccionprestacion" size="8" value='0' />
+	<input type="hidden" id="<portlet:namespace />evaluacionreclamo"
+		name="<portlet:namespace />evaluacionreclamo" size="8"
+		value="<%=resolucionAutorizado%>" /> <input type="hidden"
+		id="<portlet:namespace />auditoriaadministrativa"
+		name="<portlet:namespace />auditoriaadministrativa" size="8"
+		value="<%=resolucionAutorizado%>" /> <input type="hidden"
+		id="<portlet:namespace />montoPsPrestaciones"
+		name="<portlet:namespace />montoPsPrestaciones" size="8" value='0' />
+	<input type="hidden"
+		id="<portlet:namespace />tipoNomencladorSeguimiento_filtro"
+		name="<portlet:namespace />tipoNomencladorSeguimiento_filtro" size="8"
+		value='0' />
+
+
+	<div id="helpComprobantes" class="containerPlus draggable {buttons:'c', skin:'default', width:'700',title:'Ayuda',closed:'true'}" style="top: 500px; left: 200px">
+			Ejemplo de factura: CUIT 30999999999 FCP B 00001 - 00000028 F. Emisión 2/07/2020 <br>
+			Comprobante: FCP,  <br>
+			Letra: B,  <br>
+			Suc.: 00001 ( o sólo el número 1 y el sistema autocompletará los 0 a izquierda al guardar)  <br>
+			Nro: 00000028 ( o sólo el número 28 y el sistema autocompletará los 0 a izquierda al guardar)  <br>
+			CUIT: 30999999999
+	</div>
+
