@@ -17,6 +17,33 @@ Calendar fechaseccional  = Calendar.getInstance();
 Calendar fechaPrestacion  = Calendar.getInstance();
 
 
+if(prestacionEnEdicion != null  ){
+	 tipoedicion = (Integer) request.getAttribute("tipoEdicion");
+	 if(prestacionEnEdicion.getComprobanteFecha() != null){
+		 fechaseccional.setTime(prestacionEnEdicion.getComprobanteFecha());
+	 }
+	 if(prestacionEnEdicion.getFechaPrestacion() !=null){
+		 fechaPrestacion.setTime(prestacionEnEdicion.getFechaPrestacion());
+	 }
+}
+
+String captionbotoncancelar="Cancelar Edicion de la Prestacion";
+String captionlabelproceso="PRESTACION EN PROCESO DE EDICION";
+String estiloLabel="";
+
+if (tipoedicion==1) {
+	captionbotoncancelar="Cancelar Autorizacion de la Prestacion";
+	captionlabelproceso="PRESTACION EN PROCESO DE AUTORIZACION";
+	estiloLabel="style='color:green;'";
+}
+if (tipoedicion==2) {
+	captionbotoncancelar="Cancelar Rechazo de la Prestacion";
+	captionlabelproceso="PRESTACION EN PROCESO DE RECHAZO";
+	estiloLabel="style='color:red;'";
+}
+
+ocultarSeccional = (String) request.getAttribute("ocultar");
+
 if (prestacionEnEdicion != null) {
 	String codigoPrestacionEdicion = Validator.isNotNull(prestacionEnEdicion.getCodigoPrestacion())
 			? prestacionEnEdicion.getCodigoPrestacion()
