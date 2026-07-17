@@ -42,7 +42,7 @@ if b"".join(rebuilt) != original:
 
 prefix = "/html/portlet/autorizaciones/reclamos_prestacionales/"
 assembly = "".join(
-    '<%@ include file="%s%s" %%>' % (prefix, filename)
+    f'<%@ include file="{prefix}{filename}" %>'
     for filename, _, _ in PARTS
 ).encode("ascii")
 SOURCE.write_bytes(assembly)
