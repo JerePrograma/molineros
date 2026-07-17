@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - agent/segmenta-view-reclamos-prestacionales
     paths:
       - 'scripts/reclamos/**'
       - '.github/workflows/reclamos-operational-scripts.yml'
@@ -25,14 +24,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
 
       - name: Generate exact view fragments on working branch
-        if: github.event_name == 'push' && github.ref == 'refs/heads/agent/segmenta-view-reclamos-prestacionales'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'agent/segmenta-view-reclamos-prestacionales'
         run: python3 scripts/reclamos/generar_segmentos_view_reclamo.py
 
       - name: Commit exact view fragments
-        if: github.event_name == 'push' && github.ref == 'refs/heads/agent/segmenta-view-reclamos-prestacionales'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'agent/segmenta-view-reclamos-prestacionales'
         run: |
+          if git diff --quiet; then
+            echo "No generated changes"
+            exit 0
+          fi
           git diff --check
           test "$(git diff --name-only | grep -c '^ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo')" -eq 9
           git config user.name "github-actions[bot]"
@@ -40,16 +46,16 @@ jobs:
           git add ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jspf
           git add ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_*.jspf
           git commit -m "refactor(reclamos): genera segmentos exactos del view"
-          git push
+          git push origin HEAD:agent/segmenta-view-reclamos-prestacionales
 
       - name: Validate shell syntax
-        if: github.ref != 'refs/heads/agent/segmenta-view-reclamos-prestacionales'
+        if: github.event.pull_request.head.ref != 'agent/segmenta-view-reclamos-prestacionales'
         run: |
           bash -n scripts/reclamos/validar_release_reclamos.sh
           bash -n scripts/reclamos/verificar_outbox_appmobile.sh
 
       - name: Validate release gate help files
-        if: github.ref != 'refs/heads/agent/segmenta-view-reclamos-prestacionales'
+        if: github.event.pull_request.head.ref != 'agent/segmenta-view-reclamos-prestacionales'
         run: |
           test -f scripts/reclamos/README.md
           grep -q 'ALLOW_LEGACY_APPMOBILE_SECRETS' scripts/reclamos/README.md

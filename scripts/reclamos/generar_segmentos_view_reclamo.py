@@ -19,7 +19,12 @@ PARTS = [
 
 original = SOURCE.read_bytes()
 actual_hash = hashlib.sha256(original).hexdigest()
+fragment_paths = [BASE / filename for filename, _, _ in PARTS]
+
 if actual_hash != EXPECTED_SHA256:
+    if all(path.is_file() for path in fragment_paths) and original.startswith(b"<%@ include file="):
+        print("Segments already generated")
+        raise SystemExit(0)
     raise SystemExit("Unexpected source SHA256: %s" % actual_hash)
 
 lines = original.splitlines(keepends=True)
