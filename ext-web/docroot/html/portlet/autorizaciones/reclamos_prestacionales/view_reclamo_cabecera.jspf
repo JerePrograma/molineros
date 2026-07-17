@@ -113,7 +113,7 @@
 									<select <% if (!esEdicion) { %> disabled='disabled' <%}%>
 										name="<portlet:namespace />tipopedido"
 										id="<portlet:namespace />tipopedido"
-										onchange="cambioTipoPedido();manejarTipoPedidoCierre();"
+										onchange="if (typeof <portlet:namespace />actualizarBuscadorPrestacion == 'function') { <portlet:namespace />actualizarBuscadorPrestacion(); } cambioTipoPedido();manejarTipoPedidoCierre();"
 										onblur="manejarTipoPedido();">
 										<option value="SELECCIONAR">SELECCIONAR</option>
 										<option value=EXCEPCION
@@ -132,7 +132,7 @@
 									<select <% if (!esEdicion) { %> disabled='disabled' <%}%>
 										name="<portlet:namespace/>sector"
 										id="<portlet:namespace />sector"
-										onchange="manejarTipoSector();">
+										onchange="if (typeof <portlet:namespace />actualizarBuscadorPrestacion == 'function') { <portlet:namespace />actualizarBuscadorPrestacion(); } manejarTipoSector();">
 										
 										<option value="" <%= (reclamoprestacional == null || Validator.isNull(reclamoprestacional.getSector())) ? "selected" : "" %>>-- SELECCIONAR --</option>
 
