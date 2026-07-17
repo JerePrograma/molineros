@@ -52,39 +52,7 @@ if (prestacionEnEdicion != null) {
 			? prestacionEnEdicion.getDescripcion()
 			: "";
 %>
-<script type="text/javascript">
-(function(window, jQuery) {
-	"use strict";
-
-	var namespace = "<portlet:namespace />";
-	var codigo = "<%= HtmlUtil.escapeJS(codigoPrestacionEdicion) %>";
-	var descripcion = "<%= HtmlUtil.escapeJS(descripcionPrestacionEdicion) %>";
-
-	jQuery("#" + namespace + "datos_edicion_prestacion").show();
-	jQuery("#" + namespace + "codigoprestacion").val(codigo);
-	jQuery("#" + namespace + "idRegistro").val("<%= prestacionEnEdicion.getIdRegistro() %>");
-
-	<% if (prestacionEnEdicion.getId_prestacion() != 0) { %>
-	jQuery("#" + namespace + "codigoSeguimiento_filtro_edit").val(codigo);
-	jQuery("#" + namespace + "descripcionSeguimiento_filtro_edit").val(descripcion);
-
-	var buscarNomenclador = window[namespace + "buscarNomencladorAutocompletar_edit"];
-	if (typeof buscarNomenclador === "function") {
-		buscarNomenclador();
-	}
-	<% } else if (prestacionEnEdicion.getId_medicamento() != 0) { %>
-	jQuery("#" + namespace + "troquel_edit").val("<%= prestacionEnEdicion.getId_medicamento() %>");
-	<% } %>
-
-	<% if (ocultarSeccional != null) { %>
-	jQuery("#" + namespace + "Autorizado").hide();
-	<% } %>
-})(window, jQuery);
-</script>
-<%
-}
-%>
-	    <input   type="hidden" id="<portlet:namespace />idRegistro" name="<portlet:namespace />idRegistro" size="10" maxlength="10" type="text" value='<%=Validator.isNotNull(prestacionEnEdicion)  ? prestacionEnEdicion.getIdRegistro()      : ""  %>'/></td>
+<input   type="hidden" id="<portlet:namespace />idRegistro" name="<portlet:namespace />idRegistro" size="10" maxlength="10" type="text" value='<%=Validator.isNotNull(prestacionEnEdicion)  ? prestacionEnEdicion.getIdRegistro()      : ""  %>'/></td>
 
         <label <%=estiloLabel %>"><b><liferay-ui:message key="<%=captionlabelproceso%>"/></b></label>
         		
@@ -486,6 +454,33 @@ function completarConCeros(value, longitud) {
     ).slice(-longitud);
 }
 
+</script>
+
+
+<script type="text/javascript">
+jQuery(function() {
+    var namespace = "<portlet:namespace />";
+    var codigo = jQuery("#" + namespace + "codigoSeguimiento_filtro_edit").val() || "";
+
+    jQuery("#" + namespace + "datos_edicion_prestacion").show();
+    jQuery("#" + namespace + "codigoprestacion").val(codigo);
+
+    <% if (prestacionEnEdicion.getId_prestacion() != 0) { %>
+    var buscarNomenclador =
+            window[namespace + "buscarNomencladorAutocompletar_edit"];
+    if (codigo && typeof buscarNomenclador === "function") {
+        window.setTimeout(buscarNomenclador, 0);
+    }
+    <% } else if (prestacionEnEdicion.getId_medicamento() != 0) { %>
+    jQuery("#" + namespace + "troquel_edit").val(
+            "<%= prestacionEnEdicion.getId_medicamento() %>"
+    );
+    <% } %>
+
+    <% if (ocultarSeccional != null) { %>
+    jQuery("#" + namespace + "Autorizado").hide();
+    <% } %>
+});
 </script>
 
 <%

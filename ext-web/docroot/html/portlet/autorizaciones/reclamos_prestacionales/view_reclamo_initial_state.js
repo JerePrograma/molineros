@@ -94,13 +94,15 @@ jQuery(function() {
     window.setTimeout(aplicarEstadoInicial, 0);
 });
 
-jQuery(document).on(
-        "change",
-        "#" + namespace + "sector, #" + namespace + "tipopedido",
-        function() {
-            window.setTimeout(mostrarBuscadorSegunSeleccion, 0);
-        }
-);
+function actualizarBuscadorPrestacion() {
+    mostrarBuscadorSegunSeleccion();
+}
+
+/* Compatible con el jQuery legacy incluido por Liferay 5.2. */
+campo("sector").change(actualizarBuscadorPrestacion);
+campo("tipopedido").change(actualizarBuscadorPrestacion);
+window[namespace + "actualizarBuscadorPrestacion"] =
+        actualizarBuscadorPrestacion;
 
 window.ReclamoPrestacionalInitialStateOk = true;
 })(window, jQuery);
