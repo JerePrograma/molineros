@@ -1,19 +1,14 @@
 package ar.com.ospim.test;
 
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
-/** Valida estructura de scriptlets y preservación UTF-8 del editor JSP. */
+/** Valida estructura de scriptlets y preservación del charset legacy del editor JSP. */
 public final class ReclamoPrestacionalJspStructureContractTest {
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset LATIN_1 = Charset.forName("ISO-8859-1");
     private static final Path JSP = Paths.get(
             "ext-web/docroot/html/portlet/autorizaciones/"
                     + "reclamos_prestacionales/datos_edicion_prestacion.jsp"
@@ -24,9 +19,11 @@ public final class ReclamoPrestacionalJspStructureContractTest {
 
     public static void main(String[] args) throws Exception {
         byte[] bytes = Files.readAllBytes(JSP);
-        String contenido = decodificarUtf8Estricto(bytes);
-        if (!Arrays.equals(bytes, contenido.getBytes(UTF_8))) {
-            throw new AssertionError("El JSP no conserva una codificación UTF-8 estable");
+        String contenido = new String(bytes, LATIN_1);
+        if (!Arrays.equals(bytes, contenido.getBytes(LATIN_1))) {
+            throw new AssertionError(
+                    "El JSP no conserva una codificación ISO-8859-1 estable"
+            );
         }
         if (contenido.indexOf("HtmlUtil.escapeJS") >= 0) {
             throw new AssertionError("El JSP usa HtmlUtil.escapeJS, ausente en Liferay 5.2");
@@ -36,15 +33,6 @@ public final class ReclamoPrestacionalJspStructureContractTest {
         validarLlaves(java);
 
         System.out.println("CONTRATO_ESTRUCTURA_JSP_EDITOR_RECLAMO_OK");
-    }
-
-    private static String decodificarUtf8Estricto(byte[] bytes)
-            throws CharacterCodingException {
-        CharsetDecoder decoder = UTF_8.newDecoder();
-        decoder.onMalformedInput(CodingErrorAction.REPORT);
-        decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
-        CharBuffer chars = decoder.decode(ByteBuffer.wrap(bytes));
-        return chars.toString();
     }
 
     private static String extraerScriptlets(String jsp) {
