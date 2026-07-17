@@ -1,0 +1,56 @@
+name: Apply Reclamos P1 Cleanup
+
+on:
+  push:
+    branches:
+      - fix/reclamos-prestacionales-p1-cleanup
+    paths:
+      - 'scripts/reclamos/patches/20260717_reclamos_p1_cleanup.patch'
+      - '.github/workflows/apply-reclamos-p1-cleanup.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/reclamos-prestacionales-p1-cleanup
+          fetch-depth: 0
+
+      - name: Validate patch
+        run: git apply --check scripts/reclamos/patches/20260717_reclamos_p1_cleanup.patch
+
+      - name: Apply patch
+        run: git apply scripts/reclamos/patches/20260717_reclamos_p1_cleanup.patch
+
+      - name: Validate repaired invariants
+        run: |
+          ! grep -q 'ClienteAppMobile.actualizarEstadoReintegro' \
+            ext-impl/src/ar/com/ospim/autorizaciones/action/EditarReclamosEntryAction.java
+          ! grep -q 'BAJAS_RECIENTES' \
+            ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java
+          ! grep -q 'esBajaReciente' \
+            ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java
+          ! grep -q 'if (prestacionEnEdicion != null) {' \
+            <(sed -n '54,75p' ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp)
+          grep -q 'HtmlUtil.escapeJS' \
+            ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp
+          grep -q 'ReclamoPrestacionalBajaTransaccionalService.borrar' \
+            ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java
+
+      - name: Commit repaired files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            ext-impl/src/ar/com/ospim/autorizaciones/action/EditarReclamosEntryAction.java \
+            ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java \
+            ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp
+          git commit -m 'fix(reclamos): elimina duplicidad móvil y repara editor'
+          git push origin HEAD:fix/reclamos-prestacionales-p1-cleanup
