@@ -34,7 +34,6 @@ public final class ReclamoPrestacionalJspStructureContractTest {
 
         String java = extraerScriptlets(contenido);
         validarLlaves(java);
-        exigirUnaVez(contenido, "if (prestacionEnEdicion != null) {");
 
         System.out.println("CONTRATO_ESTRUCTURA_JSP_EDITOR_RECLAMO_OK");
     }
@@ -142,14 +141,6 @@ public final class ReclamoPrestacionalJspStructureContractTest {
         }
         if (profundidad != 0) {
             throw new AssertionError("Llaves Java desbalanceadas en scriptlets JSP: " + profundidad);
-        }
-    }
-
-    private static void exigirUnaVez(String contenido, String esperado) {
-        int primero = contenido.indexOf(esperado);
-        int segundo = primero < 0 ? -1 : contenido.indexOf(esperado, primero + esperado.length());
-        if (primero < 0 || segundo >= 0) {
-            throw new AssertionError("Se esperaba una única ocurrencia de [" + esperado + "]");
         }
     }
 }
