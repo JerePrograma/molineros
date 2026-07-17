@@ -138,3 +138,6 @@ jobs:
         run: |
           java -cp /tmp/rp-contracts \
             ar.com.ospim.test.ReclamoAppMobileOutboxContractTest
+
+      - name: Run complete release gate
+        run: bash scripts/reclamos/validar_release_reclamos.sh
