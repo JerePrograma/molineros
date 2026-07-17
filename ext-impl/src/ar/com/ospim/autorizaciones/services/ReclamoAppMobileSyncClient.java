@@ -23,6 +23,8 @@ public final class ReclamoAppMobileSyncClient {
     private static final String CONFIG_HOST = "APP_HOST_WEBSERVICE";
     private static final String PATH_ESTADO_REINTEGRO =
             "/api/auth/pedidoreintegro/estado/";
+    private static final int CONNECTION_TIMEOUT_MS = 3000;
+    private static final int SOCKET_TIMEOUT_MS = 7000;
 
     private ReclamoAppMobileSyncClient() {
     }
@@ -63,6 +65,7 @@ public final class ReclamoAppMobileSyncClient {
                 + nuevoEstado.trim();
 
         HttpClient httpClient = new HttpClient();
+        configurarTimeouts(httpClient);
         PostMethod post = new PostMethod(url);
         post.addRequestHeader("accept", "application/json");
         post.addRequestHeader("Authorization", "Bearer " + token.trim());
@@ -90,6 +93,13 @@ public final class ReclamoAppMobileSyncClient {
         } finally {
             post.releaseConnection();
         }
+    }
+
+    private static void configurarTimeouts(HttpClient httpClient) {
+        httpClient.getHttpConnectionManager().getParams()
+                .setConnectionTimeout(CONNECTION_TIMEOUT_MS);
+        httpClient.getHttpConnectionManager().getParams()
+                .setSoTimeout(SOCKET_TIMEOUT_MS);
     }
 
     private static String normalizarHost(String host) {
