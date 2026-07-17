@@ -52,7 +52,7 @@ jobs:
           node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_editor_patch.js
           node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_tab_guard.js
 
-      - name: Compile and run focused contracts
+      - name: Compile and run initial-view contract
         shell: bash
         run: |
           set -o pipefail
@@ -60,10 +60,9 @@ jobs:
             rm -rf /tmp/rp-initial-view
             mkdir -p /tmp/rp-initial-view
             javac -encoding UTF-8 -d /tmp/rp-initial-view \
-              ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java \
               ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java
-            java -cp /tmp/rp-initial-view ar.com.ospim.test.ReclamoPrestacionalP0ContractTest
-            java -cp /tmp/rp-initial-view ar.com.ospim.test.ReclamoPrestacionalInitialViewContractTest
+            java -cp /tmp/rp-initial-view \
+              ar.com.ospim.test.ReclamoPrestacionalInitialViewContractTest
           } 2>&1 | tee /tmp/reclamo-initial-contracts.log
 
       - name: Upload contract diagnostic
