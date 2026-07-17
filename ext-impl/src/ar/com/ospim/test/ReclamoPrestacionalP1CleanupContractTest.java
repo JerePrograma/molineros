@@ -79,6 +79,43 @@ public final class ReclamoPrestacionalP1CleanupContractTest {
         );
 
         assertContains(
+                "tipo de edición conservado",
+                editor,
+                "tipoedicion = (Integer) request.getAttribute(\"tipoEdicion\")"
+        );
+        assertContains(
+                "fecha de comprobante conservada",
+                editor,
+                "fechaseccional.setTime(prestacionEnEdicion.getComprobanteFecha())"
+        );
+        assertContains(
+                "fecha de prestación conservada",
+                editor,
+                "fechaPrestacion.setTime(prestacionEnEdicion.getFechaPrestacion())"
+        );
+        assertContains(
+                "caption de edición conservado",
+                editor,
+                "captionbotoncancelar=\"Cancelar Edicion de la Prestacion\""
+        );
+        assertContains(
+                "caption de proceso conservado",
+                editor,
+                "captionlabelproceso=\"PRESTACION EN PROCESO DE EDICION\""
+        );
+        assertContains(
+                "regla seccional conservada",
+                editor,
+                "ocultarSeccional = (String) request.getAttribute(\"ocultar\")"
+        );
+        assertOccurrences(
+                "preparación legacy no duplicada",
+                editor,
+                "if(prestacionEnEdicion != null  ){",
+                1
+        );
+
+        assertContains(
                 "código escapado para JavaScript",
                 editor,
                 "HtmlUtil.escapeJS(codigoPrestacionEdicion)"
@@ -99,9 +136,9 @@ public final class ReclamoPrestacionalP1CleanupContractTest {
                 "typeof buscarNomenclador === \"function\""
         );
         assertNotContains(
-                "scriptlet inválido eliminado",
+                "script Java embebido eliminado",
                 editor,
-                "if(prestacionEnEdicion != null  ){"
+                "if (prestacionEnEdicion != null) {\n%>\n\n<script"
         );
         assertNotContains(
                 "asignación duplicada eliminada",
@@ -161,6 +198,27 @@ public final class ReclamoPrestacionalP1CleanupContractTest {
         if (contenido.indexOf(prohibido) >= 0) {
             throw new AssertionError(
                     etiqueta + ": se encontró [" + prohibido + "]"
+            );
+        }
+    }
+
+    private static void assertOccurrences(
+            String etiqueta,
+            String contenido,
+            String buscado,
+            int esperado) {
+
+        int cantidad = 0;
+        int posicion = 0;
+        while ((posicion = contenido.indexOf(buscado, posicion)) >= 0) {
+            cantidad++;
+            posicion += buscado.length();
+        }
+        if (cantidad != esperado) {
+            throw new AssertionError(
+                    etiqueta + ": se esperaban " + esperado
+                            + " coincidencias de [" + buscado + "] y se encontraron "
+                            + cantidad
             );
         }
     }
