@@ -27,7 +27,7 @@ required_tokens = [
     b"<%@ page",
     b"WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA",
     b"ReclamoPrestacionalCompraContexto",
-    b"<form name=\"fm\"",
+    b'<form name="<portlet:namespace />reclamo_fm"',
     b"window.ReclamoPrestacionalViewConfig",
     b"</form>",
 ]
