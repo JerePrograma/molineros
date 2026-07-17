@@ -34,6 +34,7 @@ CONTRACTS=(
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalLegacyFlowContractTest.java
+  ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalJspStructureContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP1CleanupContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalTabGuardContractTest.java
@@ -76,6 +77,7 @@ javac -encoding "$JAVA_ENCODING" \
 TEST_CLASSES=(
   ar.com.ospim.test.ReclamoPrestacionalInitialViewContractTest
   ar.com.ospim.test.ReclamoPrestacionalLegacyFlowContractTest
+  ar.com.ospim.test.ReclamoPrestacionalJspStructureContractTest
   ar.com.ospim.test.ClienteAppMobileLegacySecurityContractTest
   ar.com.ospim.test.ReclamoPrestacionalP0ContractTest
   ar.com.ospim.test.ReclamoPrestacionalP1CleanupContractTest
