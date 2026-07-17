@@ -46,7 +46,22 @@ jobs:
 
       - name: Apply deterministic transformation
         if: steps.state.outputs.applied != 'true'
-        run: python3 scripts/reclamos/aplicar_limpieza_p1.py
+        shell: bash
+        run: |
+          set +e
+          python3 scripts/reclamos/aplicar_limpieza_p1.py > reclamos-p1-diagnostic.log 2>&1
+          status=$?
+          cat reclamos-p1-diagnostic.log
+          exit $status
+
+      - name: Upload transformation diagnostic
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reclamos-p1-diagnostic
+          path: reclamos-p1-diagnostic.log
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Validate repaired invariants
         run: |
