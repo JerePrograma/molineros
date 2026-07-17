@@ -28,7 +28,7 @@ public final class ReclamoPrestacionalInitialViewContractTest {
         antes(view, "view_reclamo_initial_state.js?v=", "view_reclamo.js?v=");
         contiene(view, "diagnóstico asset", "RECLAMO_PRESTACIONAL_ASSET_ERROR");
         contiene(view, "fallback excluye Compras", "if (<%= esBorradorCompras %>)");
-        contiene(view, "fallback síncrono nomenclador", "busqueda_prestaciones\").toggle(!usaBuscadorFarmacia)");
+        contiene(view, "fallback síncrono nomenclador", "jQuery(\"#\" + namespace + \"busqueda_prestaciones\").show()");
 
         contiene(initial, "defaults seguros", "config.values = jQuery.extend");
         contiene(initial, "preserva Compras", "if (config.values.esBorradorCompras)");
