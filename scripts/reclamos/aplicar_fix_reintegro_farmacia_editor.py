@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import re
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -29,6 +30,10 @@ editor_path, editor = leer_legacy(
     "ext-web/docroot/html/portlet/autorizaciones/"
     "reclamos_prestacionales/datos_edicion_prestacion.jsp"
 )
+
+if "HtmlUtil.escapeJS" not in editor:
+    print("FIX_REINTEGRO_FARMACIA_EDITOR_YA_APLICADO")
+    sys.exit(0)
 
 bloque_temprano = re.compile(
     r'<script type="text/javascript">\s*'
