@@ -53,14 +53,27 @@ jobs:
           node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_tab_guard.js
 
       - name: Compile and run focused contracts
+        shell: bash
         run: |
-          rm -rf /tmp/rp-initial-view
-          mkdir -p /tmp/rp-initial-view
-          javac -encoding UTF-8 -d /tmp/rp-initial-view \
-            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java \
-            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java
-          java -cp /tmp/rp-initial-view ar.com.ospim.test.ReclamoPrestacionalP0ContractTest
-          java -cp /tmp/rp-initial-view ar.com.ospim.test.ReclamoPrestacionalInitialViewContractTest
+          set -o pipefail
+          {
+            rm -rf /tmp/rp-initial-view
+            mkdir -p /tmp/rp-initial-view
+            javac -encoding UTF-8 -d /tmp/rp-initial-view \
+              ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java \
+              ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java
+            java -cp /tmp/rp-initial-view ar.com.ospim.test.ReclamoPrestacionalP0ContractTest
+            java -cp /tmp/rp-initial-view ar.com.ospim.test.ReclamoPrestacionalInitialViewContractTest
+          } 2>&1 | tee /tmp/reclamo-initial-contracts.log
+
+      - name: Upload contract diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reclamo-initial-contracts-diagnostic
+          path: /tmp/reclamo-initial-contracts.log
+          if-no-files-found: error
+          retention-days: 3
 
       - name: Validate final scope and commit
         run: |
