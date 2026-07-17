@@ -114,9 +114,9 @@ done
 if grep -q -E 'window\.(manejarTipoSector|cambioTipoPedido)' "$P0_JS"; then
   fail "El P0 sigue sobrescribiendo handlers legacy de Tipo Pedido/Sector"
 fi
-grep -q 'function manejarTipoSector()' "$BASE_JS" \
+grep -q 'function manejarTipoSector(){' "$BASE_JS" \
   || fail "Falta el handler legacy manejarTipoSector"
-grep -q "sector == 'FARMACIA' && tipoPedido != 'EXCEPCION'" "$BASE_JS" \
+grep -q "return sector == 'FARMACIA' && tipoPedido != 'EXCEPCION';" "$BASE_JS" \
   || fail "Falta la matriz legacy FARMACIA salvo EXCEPCION"
 if grep -q '\.on(' "$VIEW_JSP"; then
   fail "Se detectó jQuery.on en la vista Liferay 5.2"
