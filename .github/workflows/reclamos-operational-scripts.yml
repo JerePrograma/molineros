@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - 'scripts/reclamos/**'
+      - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java'
+      - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_cabecera.jspf'
@@ -14,6 +16,8 @@ on:
   pull_request:
     paths:
       - 'scripts/reclamos/**'
+      - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java'
+      - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_cabecera.jspf'
@@ -42,6 +46,16 @@ jobs:
         run: |
           python3 scripts/reclamos/verificar_reclamo_editor_jsp.py
           node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js
+
+      - name: Run focused Java contracts
+        run: |
+          CONTRACT_DIR="$RUNNER_TEMP/reclamo-editor-contracts"
+          mkdir -p "$CONTRACT_DIR"
+          javac -encoding UTF-8 -d "$CONTRACT_DIR" \
+            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java \
+            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java
+          java -cp "$CONTRACT_DIR" ar.com.ospim.test.ReclamoPrestacionalEditorContractTest
+          java -cp "$CONTRACT_DIR" ar.com.ospim.test.ReclamoPrestacionalInitialViewContractTest
 
       - name: Validate release gate help files
         run: |
