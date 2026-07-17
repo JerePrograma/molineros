@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+from typing import Tuple
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -13,6 +14,20 @@ def require(condition: bool, message: str) -> None:
         raise RuntimeError(message)
 
 
+def read_source(path: Path) -> Tuple[str, str]:
+    raw = path.read_bytes()
+    for encoding in ("utf-8", "iso-8859-1"):
+        try:
+            return raw.decode(encoding), encoding
+        except UnicodeDecodeError:
+            continue
+    raise RuntimeError(f"No se pudo detectar la codificación de {path}")
+
+
+def write_source(path: Path, text: str, encoding: str) -> None:
+    path.write_bytes(text.encode(encoding))
+
+
 def replace_once(text: str, old: str, new: str, label: str) -> str:
     count = text.count(old)
     require(count == 1, f"{label}: se esperó 1 coincidencia y se encontraron {count}")
@@ -20,7 +35,7 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 
 def update_action() -> None:
-    text = ACTION.read_text(encoding="utf-8")
+    text, encoding = read_source(ACTION)
 
     text = replace_once(
         text,
@@ -53,11 +68,11 @@ def update_action() -> None:
 
     require("ClienteAppMobile.actualizarEstadoReintegro" not in text, "quedó una llamada directa AN en la Action")
     require("ClienteAppMobile.obtenerToken" not in text, "quedó autenticación AppMobile en la Action")
-    ACTION.write_text(text, encoding="utf-8")
+    write_source(ACTION, text, encoding)
 
 
 def update_service() -> None:
-    text = SERVICE.read_text(encoding="utf-8")
+    text, encoding = read_source(SERVICE)
 
     text = replace_once(text, "import java.util.Map;\n", "", "import Map")
     text = replace_once(
@@ -94,11 +109,11 @@ def update_service() -> None:
         "ReclamoPrestacionalBajaTransaccionalService.borrar" in text,
         "se perdió la baja transaccional",
     )
-    SERVICE.write_text(text, encoding="utf-8")
+    write_source(SERVICE, text, encoding)
 
 
 def update_editor() -> None:
-    text = EDITOR.read_text(encoding="utf-8")
+    text, encoding = read_source(EDITOR)
 
     start_marker = "if(prestacionEnEdicion != null  ){"
     end_marker = "\t    <input   type=\"hidden\""
@@ -152,7 +167,7 @@ def update_editor() -> None:
     require("HtmlUtil.escapeJS" in text, "el editor no escapa valores JavaScript")
     require("if (prestacionEnEdicion != null) {\n%>\n\n<script" not in text, "persistió el script anidado")
     require(text.count("jQuery(\"#<portlet:namespace />idRegistro\").val") == 0, "persistió inicialización duplicada")
-    EDITOR.write_text(text, encoding="utf-8")
+    write_source(EDITOR, text, encoding)
 
 
 def main() -> None:
