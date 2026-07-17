@@ -28,6 +28,7 @@ on:
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalLegacyFlowContractTest.java'
+      - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalJspStructureContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP1CleanupContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalTabGuardContractTest.java'
@@ -72,6 +73,7 @@ on:
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalLegacyFlowContractTest.java'
+      - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalJspStructureContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP1CleanupContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalTabGuardContractTest.java'
@@ -121,6 +123,7 @@ jobs:
             ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java \
             ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java \
             ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalLegacyFlowContractTest.java \
+            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalJspStructureContractTest.java \
             ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP1CleanupContractTest.java \
             ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java \
             ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalTabGuardContractTest.java \
@@ -143,6 +146,11 @@ jobs:
         run: |
           java -cp /tmp/rp-contracts \
             ar.com.ospim.test.ReclamoPrestacionalLegacyFlowContractTest
+
+      - name: Run JSP structure contract
+        run: |
+          java -cp /tmp/rp-contracts \
+            ar.com.ospim.test.ReclamoPrestacionalJspStructureContractTest
 
       - name: Verify embedded secrets
         run: bash scripts/reclamos/verificar_secretos_appmobile.sh
