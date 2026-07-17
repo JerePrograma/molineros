@@ -37,13 +37,6 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 def update_action() -> None:
     text, encoding = read_source(ACTION)
 
-    text = replace_once(
-        text,
-        "import ar.com.ospim.desarrolloAppMobile.beans.ClienteAppMobile;\n",
-        "",
-        "import ClienteAppMobile",
-    )
-
     start_marker = "\t\t\tif(cmd.equals(Constants.DELETE)){"
     end_marker = "\t\t\t\t  BusquedaReclamosPrestacionalesFiltro filtro = null ;"
     start = text.find(start_marker)
@@ -66,8 +59,14 @@ def update_action() -> None:
 """
     text = text[:start] + replacement + text[end:]
 
-    require("ClienteAppMobile.actualizarEstadoReintegro" not in text, "quedó una llamada directa AN en la Action")
-    require("ClienteAppMobile.obtenerToken" not in text, "quedó autenticación AppMobile en la Action")
+    delete_end = text.find(end_marker, start)
+    delete_block = text[start:delete_end]
+    require("ClienteAppMobile" not in delete_block, "quedó sincronización AppMobile dentro del DELETE")
+    require("getReclamoPrestacional(idReclamoDeBuscador)" not in delete_block, "quedó relectura posterior a la baja")
+    require(
+        "ClienteAppMobile.actualizarEstadoReintegro(idExterno, codigoExterno, token)" in text,
+        "se alteró la sincronización de estados PE/CE/RE fuera del DELETE",
+    )
     write_source(ACTION, text, encoding)
 
 
