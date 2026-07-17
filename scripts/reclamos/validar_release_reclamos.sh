@@ -128,6 +128,11 @@ if grep -R -n 'view_reclamo.*p0-2' \
 fi
 info "Documentación y JSP sin versión p0-2 obsoleta"
 
+printf '%s\n' '__RECLAMO_VIEW_JSPF_BEGIN__'
+cat ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jspf
+printf '%s\n' '__RECLAMO_VIEW_JSPF_END__'
+fail "Extracción temporal del view para segmentación controlada"
+
 cat <<'EOF'
 
 VALIDACIÓN AUTOMÁTICA COMPLETADA.
