@@ -331,32 +331,14 @@ import ar.com.ospim.util.StringUtils;
 			if(cmd.equals(Constants.DELETE)){
 				
 				try {
-				  ReclamosPrestacionesServiceUtil.borrar(idReclamoDeBuscador , user);
-				  
-				  	//buscar el reclamo para obtener idExterno
-			        ReclamoPrestacional rp = ReclamosPrestacionesServiceUtil.getReclamoPrestacional(idReclamoDeBuscador);
-
-			        if (rp != null) {
-			            Integer idExterno = rp.getIdReintegroApp();
-			            if (idExterno != null && idExterno > 0) {
-			                String token = ClienteAppMobile.obtenerToken();
-			                if (token != null) {
-			                    try {
-			                        // actualiza estado RE en base externa
-			                        ClienteAppMobile.actualizarEstadoReintegro(idExterno, "AN", token);
-			                    } catch (Exception e) {
-			                        _log.error("Error al actualizar estado");
-			                    }
-			                } else {
-			                    _log.warn("Token nulo al eliminar reclamo");
-			                }
-			            } else {
-			                _log.debug("Reclamo eliminado");
-			            }
-			        }
-
+					ReclamosPrestacionesServiceUtil.borrar(idReclamoDeBuscador, user);
+					_log.info("Reclamo Prestacional dado de baja: " + idReclamoDeBuscador);
 			    } catch (Exception e) {
-			        _log.error("Error eliminando reclamo");
+			        _log.error(
+			        		"Error eliminando Reclamo Prestacional " + idReclamoDeBuscador,
+			        		e
+			        );
+			        SessionErrors.add(renderRequest, "error-delete-reclamo");
 			    }
 				
 				  BusquedaReclamosPrestacionalesFiltro filtro = null ;
