@@ -6,10 +6,18 @@ on:
       - main
     paths:
       - 'scripts/reclamos/**'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_cabecera.jspf'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp'
       - '.github/workflows/reclamos-operational-scripts.yml'
   pull_request:
     paths:
       - 'scripts/reclamos/**'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_cabecera.jspf'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp'
       - '.github/workflows/reclamos-operational-scripts.yml'
   workflow_dispatch:
 
@@ -29,6 +37,11 @@ jobs:
         run: |
           bash -n scripts/reclamos/validar_release_reclamos.sh
           bash -n scripts/reclamos/verificar_outbox_appmobile.sh
+
+      - name: Validate Reclamo Prestacional editor
+        run: |
+          python3 scripts/reclamos/verificar_reclamo_editor_jsp.py
+          node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js
 
       - name: Validate release gate help files
         run: |
