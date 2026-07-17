@@ -29,7 +29,20 @@ jobs:
           fetch-depth: 0
 
       - name: Apply audited normalization
-        run: python3 scripts/reclamos/aplicar_normalizacion_vista_inicial_v2.py
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 scripts/reclamos/aplicar_normalizacion_vista_inicial_v2.py \
+            2>&1 | tee /tmp/reclamo-initial-normalization.log
+
+      - name: Upload normalization diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reclamo-initial-normalization-diagnostic
+          path: /tmp/reclamo-initial-normalization.log
+          if-no-files-found: error
+          retention-days: 3
 
       - name: Validate JavaScript syntax
         run: |
