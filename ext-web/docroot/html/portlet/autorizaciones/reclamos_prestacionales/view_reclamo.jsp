@@ -26,8 +26,14 @@ window.ReclamoPrestacionalAssetError = function(nombre) {
     var usaBuscadorFarmacia =
             sector === "FARMACIA" && tipoPedido !== "EXCEPCION";
 
-    jQuery("#" + namespace + "busqueda_farmacia").toggle(usaBuscadorFarmacia);
-    jQuery("#" + namespace + "busqueda_prestaciones").toggle(!usaBuscadorFarmacia);
+    if (usaBuscadorFarmacia) {
+        jQuery("#" + namespace + "busqueda_farmacia").show();
+        jQuery("#" + namespace + "busqueda_prestaciones").hide();
+    } else {
+        jQuery("#" + namespace + "busqueda_prestaciones").show();
+        jQuery("#" + namespace + "busqueda_farmacia").hide();
+    }
+
     jQuery("#" + namespace + "nom_seleccionado").val(
             usaBuscadorFarmacia ? "2" : "1"
     );
