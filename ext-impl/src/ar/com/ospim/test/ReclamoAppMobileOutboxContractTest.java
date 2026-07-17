@@ -75,9 +75,19 @@ public final class ReclamoAppMobileOutboxContractTest {
                 "AND procesado_en IS NULL"
         );
         assertContains(
-                "reactiva pendiente",
+                "reactiva estado pendiente",
                 service,
-                "estado_proceso = ?, proximo_intento = NOW()"
+                "SET id_reclamo = ?, estado_proceso = ?, "
+        );
+        assertContains(
+                "reactiva intento inmediato",
+                service,
+                "proximo_intento = NOW(), bloqueado_hasta = NULL, "
+        );
+        assertContains(
+                "reactivación actualiza auditoría",
+                service,
+                "ultimo_error = ?, actualizado_en = NOW()"
         );
         assertContains(
                 "lease temporal",
