@@ -115,30 +115,25 @@ public final class ReclamoPrestacionalP1CleanupContractTest {
                 1
         );
 
-        assertContains(
-                "código escapado para JavaScript",
+        assertNotContains(
+                "API no disponible eliminada",
                 editor,
-                "HtmlUtil.escapeJS(codigoPrestacionEdicion)"
+                "HtmlUtil.escapeJS"
         );
         assertContains(
-                "descripción escapada para JavaScript",
+                "inicialización posterior al render",
                 editor,
-                "HtmlUtil.escapeJS(descripcionPrestacionEdicion)"
+                "jQuery(function() {"
         );
         assertContains(
-                "inicialización encapsulada",
+                "código leído desde el control renderizado",
                 editor,
-                "(function(window, jQuery) {"
+                "codigoSeguimiento_filtro_edit\").val() || \"\""
         );
         assertContains(
                 "búsqueda de nomenclador defensiva",
                 editor,
                 "typeof buscarNomenclador === \"function\""
-        );
-        assertNotContains(
-                "script Java embebido eliminado",
-                editor,
-                "if (prestacionEnEdicion != null) {\n%>\n\n<script"
         );
         assertNotContains(
                 "asignación duplicada eliminada",
