@@ -1,0 +1,232 @@
+diff --git a/ext-impl/src/ar/com/ospim/autorizaciones/action/EditarReclamosEntryAction.java b/ext-impl/src/ar/com/ospim/autorizaciones/action/EditarReclamosEntryAction.java
+index de8e912..0000000 100644
+--- a/ext-impl/src/ar/com/ospim/autorizaciones/action/EditarReclamosEntryAction.java
++++ b/ext-impl/src/ar/com/ospim/autorizaciones/action/EditarReclamosEntryAction.java
+@@ -57,7 +57,6 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+ import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+ import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
+ import ar.com.ospim.crm.beans.ContactoCRM;
+-import ar.com.ospim.desarrolloAppMobile.beans.ClienteAppMobile;
+ import ar.com.ospim.global.WebKeysGlobal;
+ import ar.com.ospim.global.services.TraeListasServiceUtil;
+ import ar.com.ospim.liquidaciones.beans.Prestador;
+@@ -330,35 +329,14 @@ public class EditarReclamosEntryAction extends ReclamosBaseAction {
+ 			
+ 			if(cmd.equals(Constants.DELETE)){
+ 				
+ 				try {
+-				  ReclamosPrestacionesServiceUtil.borrar(idReclamoDeBuscador , user);
+-				  
+-				  	//buscar el reclamo para obtener idExterno
+-			        ReclamoPrestacional rp = ReclamosPrestacionesServiceUtil.getReclamoPrestacional(idReclamoDeBuscador);
+-
+-			        if (rp != null) {
+-			            Integer idExterno = rp.getIdReintegroApp();
+-			            if (idExterno != null && idExterno > 0) {
+-			                String token = ClienteAppMobile.obtenerToken();
+-			                if (token != null) {
+-			                    try {
+-			                        // actualiza estado RE en base externa
+-			                        ClienteAppMobile.actualizarEstadoReintegro(idExterno, "AN", token);
+-			                    } catch (Exception e) {
+-			                        _log.error("Error al actualizar estado");
+-			                    }
+-			                } else {
+-			                    _log.warn("Token nulo al eliminar reclamo");
+-			                }
+-			            } else {
+-			                _log.debug("Reclamo eliminado");
+-			            }
+-			        }
+-
++					ReclamosPrestacionesServiceUtil.borrar(idReclamoDeBuscador, user);
++					_log.info("Reclamo Prestacional dado de baja: " + idReclamoDeBuscador);
+ 			    } catch (Exception e) {
+-			        _log.error("Error eliminando reclamo");
++			        _log.error(
++			        		"Error eliminando Reclamo Prestacional " + idReclamoDeBuscador,
++			        		e
++			        );
++			        SessionErrors.add(renderRequest, "error-delete-reclamo");
+ 			    }
+ 				
+ 				  BusquedaReclamosPrestacionalesFiltro filtro = null ;
+diff --git a/ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java b/ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java
+index d097dae..0000000 100644
+--- a/ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java
++++ b/ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java
+@@ -6,8 +6,6 @@ import java.text.ParseException;
+ import java.util.ArrayList;
+ import java.util.Date;
+ import java.util.List;
+-import java.util.Map;
+-import java.util.concurrent.ConcurrentHashMap;
+ 
+ import com.liferay.portal.SystemException;
+ import com.liferay.portal.kernel.log.Log;
+@@ -48,9 +46,6 @@ public class ReclamosPrestacionesServiceUtil {
+ 			.getLog(ReclamoPrestacionServiceImpl.class);
+ 
+ 	private static ReclamoPrestacionServiceImpl  instance = null;
+-	private static final long BAJA_RECIENTE_TTL_MS = 60000L;
+-	private static final Map<Integer, Long> BAJAS_RECIENTES =
+-			new ConcurrentHashMap<Integer, Long>();
+ 
+ 	static {
+ 		ReclamoAppMobileOutboxDispatcher.iniciar();
+@@ -111,10 +106,6 @@ public class ReclamosPrestacionesServiceUtil {
+ 	}
+ 	
+ 	public static ReclamoPrestacional getReclamoPrestacional (int id) throws Exception {
+-		if (esBajaReciente(id)) {
+-			_log.debug("Se omite relectura de Reclamo Prestacional dado de baja: " + id);
+-			return null;
+-		}
+ 		return getInstance().getReclamoPrestacional(id) ;
+ 	}
+@@ -145,7 +136,6 @@ public class ReclamosPrestacionesServiceUtil {
+ 				user.getScreenName(),
+ 				idReintegroApp
+ 		);
+-		registrarBajaReciente(id);
+ 
+ 		if (idReintegroApp != null) {
+ 			try {
+@@ -450,27 +440,6 @@ public class ReclamosPrestacionesServiceUtil {
+ 	    return getInstance().buscaHistoricoReclamo(idReclamo);
+ 	}
+ 
+-	private static void registrarBajaReciente(int idReclamo) {
+-		long ahora = System.currentTimeMillis();
+-		limpiarBajasRecientesExpiradas(ahora);
+-		BAJAS_RECIENTES.put(Integer.valueOf(idReclamo), Long.valueOf(ahora));
+-	}
+-
+-	private static boolean esBajaReciente(int idReclamo) {
+-		long ahora = System.currentTimeMillis();
+-		limpiarBajasRecientesExpiradas(ahora);
+-		Long instante = BAJAS_RECIENTES.get(Integer.valueOf(idReclamo));
+-		return instante != null && ahora - instante.longValue() <= BAJA_RECIENTE_TTL_MS;
+-	}
+-
+-	private static void limpiarBajasRecientesExpiradas(long ahora) {
+-		for (Map.Entry<Integer, Long> entry : BAJAS_RECIENTES.entrySet()) {
+-			Long instante = entry.getValue();
+-			if (instante == null || ahora - instante.longValue() > BAJA_RECIENTE_TTL_MS) {
+-				BAJAS_RECIENTES.remove(entry.getKey());
+-			}
+-		}
+-	}
+-
+ 	private static void registrarOutboxSeguro(
+ 			int idReclamo,
+ 			int idReintegroApp,
+diff --git a/ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp b/ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp
+index 37e0c9e..0000000 100644
+--- a/ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp
++++ b/ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp
+@@ -49,66 +49,57 @@ if (tipoedicion==2) {
+ ocultarSeccional = (String) request.getAttribute("ocultar");
+ 
+ 
+-if(prestacionEnEdicion != null  ){
+-%>  
+-<script type="text/javascript">
+-jQuery("#<portlet:namespace />datos_edicion_prestacion").show();
+-jQuery("#<portlet:namespace />codigoprestacion").val('<%=prestacionEnEdicion.getCodigoPrestacion()%>');
+-jQuery("#<portlet:namespace />idRegistro").val('<%=prestacionEnEdicion.getIdRegistro()%>');
+-
+-jQuery("#<portlet:namespace />idRegistro").val('<%=prestacionEnEdicion.getIdRegistro()%>');
+-
+-if (prestacionEnEdicion != null) {
+-%>
+-
++if (prestacionEnEdicion != null) {
++	String codigoPrestacionEdicion = Validator.isNotNull(prestacionEnEdicion.getCodigoPrestacion())
++			? prestacionEnEdicion.getCodigoPrestacion()
++			: "";
++	String descripcionPrestacionEdicion = Validator.isNotNull(prestacionEnEdicion.getDescripcion())
++			? prestacionEnEdicion.getDescripcion()
++			: "";
++%>
+ <script type="text/javascript">
+-jQuery("#<portlet:namespace />datos_edicion_prestacion").show();
+-
+-jQuery("#<portlet:namespace />codigoprestacion").val(
+-    '<%= prestacionEnEdicion.getCodigoPrestacion() %>'
+-);
+-
+-jQuery("#<portlet:namespace />idRegistro").val(
+-    '<%= prestacionEnEdicion.getIdRegistro() %>'
+-);
+-
+-<%
+-if (prestacionEnEdicion.getId_prestacion() != 0) {
+-%>
+-
+-jQuery("#<portlet:namespace />codigoSeguimiento_filtro_edit").val(
+-    '<%= prestacionEnEdicion.getCodigoPrestacion() %>'
+-);
+-
+-jQuery("#<portlet:namespace />descripcionSeguimiento_filtro_edit").val(
+-    '<%= prestacionEnEdicion.getDescripcion() %>'
+-);
+-
+-<portlet:namespace />buscarNomencladorAutocompletar_edit();
+-
+-<%
+-} else if (prestacionEnEdicion.getId_medicamento() != 0) {
+-%>
+-
+-jQuery("#<portlet:namespace />troquel_edit").val(
+-    '<%= prestacionEnEdicion.getId_medicamento() %>'
+-);
+-
+-<%
+-}
+-%>
+-
+-<%
+-if (ocultarSeccional != null) {
+-%>
+-
+-jQuery("#<portlet:namespace />Autorizado").hide();
+-
+-<%
+-}
+-%>
++(function(window, jQuery) {
++	"use strict";
++
++	var namespace = "<portlet:namespace />";
++	var codigo = "<%= HtmlUtil.escapeJS(codigoPrestacionEdicion) %>";
++	var descripcion = "<%= HtmlUtil.escapeJS(descripcionPrestacionEdicion) %>";
++
++	jQuery("#" + namespace + "datos_edicion_prestacion").show();
++	jQuery("#" + namespace + "codigoprestacion").val(codigo);
++	jQuery("#" + namespace + "idRegistro").val("<%= prestacionEnEdicion.getIdRegistro() %>");
++
++	<% if (prestacionEnEdicion.getId_prestacion() != 0) { %>
++	jQuery("#" + namespace + "codigoSeguimiento_filtro_edit").val(codigo);
++	jQuery("#" + namespace + "descripcionSeguimiento_filtro_edit").val(descripcion);
++
++	var buscarNomenclador = window[namespace + "buscarNomencladorAutocompletar_edit"];
++	if (typeof buscarNomenclador === "function") {
++		buscarNomenclador();
++	}
++	<% } else if (prestacionEnEdicion.getId_medicamento() != 0) { %>
++	jQuery("#" + namespace + "troquel_edit").val("<%= prestacionEnEdicion.getId_medicamento() %>");
++	<% } %>
++
++	<% if (ocultarSeccional != null) { %>
++	jQuery("#" + namespace + "Autorizado").hide();
++	<% } %>
++})(window, jQuery);
+ </script>
+-<%}%>
++<%
++}
++%>
+ 	    <input   type="hidden" id="<portlet:namespace />idRegistro" name="<portlet:namespace />idRegistro" size="10" maxlength="10" type="text" value='<%=Validator.isNotNull(prestacionEnEdicion)  ? prestacionEnEdicion.getIdRegistro()      : ""  %>'/></td>
+ 
+         <label <%=estiloLabel %>"><b><liferay-ui:message key="<%=captionlabelproceso%>"/></b></label>
