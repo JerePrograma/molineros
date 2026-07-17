@@ -80,16 +80,18 @@ done
 info "Contratos textuales compilados y ejecutados"
 
 VIEW_JSP=ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp
+grep -q 'view_reclamo_initial_state.js?v=20260717-initial-state-2' "$VIEW_JSP" \
+  || fail "Estado inicial ausente o sin versión initial-state-2"
+
 for asset in \
-  view_reclamo_initial_state.js \
   view_reclamo.js \
   view_reclamo_tab_guard.js \
   view_reclamo_editor_patch.js \
   view_reclamo_p0_patch.js; do
   grep -q "${asset}?v=20260717-initial-state-1" "$VIEW_JSP" \
-    || fail "Asset ausente o sin versión p0-4: $asset"
+    || fail "Asset legacy ausente o sin versión initial-state-1: $asset"
 done
-info "Assets initial-state-1 conectados"
+info "Estado inicial v2 y assets legacy v1 conectados"
 
 MIGRATION=sql/postgresql/autorizaciones/reclamo_appmobile_outbox.sql
 grep -q 'CREATE TABLE IF NOT EXISTS autorizaciones.reclamo_appmobile_outbox' "$MIGRATION" \
