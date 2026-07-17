@@ -24,13 +24,18 @@ public final class ReclamoPrestacionalInitialViewContractTest {
         String config = leer(DIR + "view_reclamo_configuracion.jspf");
 
         contiene(view, "namespace independiente", "window.ReclamoPrestacionalNamespace");
-        contiene(view, "capa antes de legacy", "view_reclamo_initial_state.js?v=20260717-initial-state-1");
+        contiene(view, "capa antes de legacy", "view_reclamo_initial_state.js?v=20260717-initial-state-2");
         antes(view, "view_reclamo_initial_state.js?v=", "view_reclamo.js?v=");
         contiene(view, "diagnóstico asset", "RECLAMO_PRESTACIONAL_ASSET_ERROR");
         contiene(initial, "defaults seguros", "config.values = jQuery.extend");
-        contiene(initial, "preserva Compras", "config.values.esBorradorCompras");
+        contiene(initial, "preserva Compras", "config.values.esBorradorCompras || sectorNoSeleccionado()");
         contiene(initial, "espera ready legacy", "window.setTimeout(aplicarEstadoInicial, 0)");
         contiene(initial, "sector vacío", "sector.prop(\"selectedIndex\") <= 0");
+        contiene(initial, "selector positivo", "function mostrarBuscadorSegunSeleccion()");
+        contiene(initial, "farmacia normal", "sector === \"FARMACIA\" && tipoPedido !== \"EXCEPCION\"");
+        contiene(initial, "muestra farmacia", "campo(\"busqueda_farmacia\").show()");
+        contiene(initial, "muestra nomenclador", "campo(\"busqueda_prestaciones\").show()");
+        contiene(initial, "reacciona a selección", "window.setTimeout(mostrarBuscadorSegunSeleccion, 0)");
         contiene(initial, "marca ejecutada", "ReclamoPrestacionalInitialStateOk = true");
 
         contiene(afiliado, "mensaje oculto", "divResultadoActualizarOK\" style=\"display:none;\"");
