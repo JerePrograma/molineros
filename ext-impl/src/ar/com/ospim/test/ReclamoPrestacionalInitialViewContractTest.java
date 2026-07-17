@@ -38,13 +38,13 @@ public final class ReclamoPrestacionalInitialViewContractTest {
                 "jQuery(document).ajaxComplete(function");
 
         contiene(legacy, "único dueño del selector",
-                "function manejarTipoSector()");
-        contiene(legacy, "farmacia salvo excepción",
-                "if(sector == 'FARMACIA' && tipoPedido != 'EXCEPCION')");
+                "function manejarTipoSector(){");
+        contiene(legacy, "regla productiva farmacia salvo excepción",
+                "return sector == 'FARMACIA' && tipoPedido != 'EXCEPCION';");
         contiene(legacy, "farmacia usa troquel",
-                "jQuery('#'+namespace+'busqueda_farmacia').show()");
+                "reclamoPrestacionalNamespace + \"busqueda_farmacia\").show()");
         contiene(legacy, "farmacia oculta código presentado",
-                "jQuery('#'+namespace+'busqueda_prestaciones').hide()");
+                "reclamoPrestacionalNamespace + \"busqueda_prestaciones\").hide()");
         contiene(legacy, "excepción farmacia usa nomenclador 9",
                 "sector == 'FARMACIA' && tipoPedido == 'EXCEPCION'");
         contiene(legacy, "discapacidad usa nomenclador 8",
@@ -52,7 +52,7 @@ public final class ReclamoPrestacionalInitialViewContractTest {
         contiene(legacy, "odontología usa nomenclador 1",
                 "sector == 'ODONTOLOGIA'");
         contiene(legacy, "tipo pedido delega al selector",
-                "function cambioTipoPedido()");
+                "function cambioTipoPedido(){");
         contiene(legacy, "selector ejecutado en carga",
                 "manejarTipoSector();");
 
