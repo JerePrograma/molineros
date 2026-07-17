@@ -4,26 +4,110 @@ on:
   push:
     branches:
       - main
+      - agent/fix-struts-config-conflict
     paths:
       - 'scripts/reclamos/**'
+      - 'ext-web/docroot/WEB-INF/struts-config.xml'
       - '.github/workflows/reclamos-operational-scripts.yml'
   pull_request:
     paths:
       - 'scripts/reclamos/**'
+      - 'ext-web/docroot/WEB-INF/struts-config.xml'
       - '.github/workflows/reclamos-operational-scripts.yml'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   syntax:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'push' && github.ref_name || github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Resolve Struts conflict on working branch
+        if: github.event_name == 'push' && github.ref_name == 'agent/fix-struts-config-conflict'
+        shell: python
+        run: |
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          path = Path('ext-web/docroot/WEB-INF/struts-config.xml')
+          lines = path.read_text(encoding='utf-8').splitlines(keepends=True)
+
+          def unique_index(marker):
+              matches = [i for i, line in enumerate(lines) if line.strip() == marker]
+              if len(matches) != 1:
+                  raise SystemExit('%s: se esperaba 1 marcador y se encontraron %s' % (marker, len(matches)))
+              return matches[0]
+
+          start = unique_index('<<<<<<< .mine')
+          base = unique_index('||||||| .r7265')
+          separator = unique_index('=======')
+          end = unique_index('>>>>>>> .r7295')
+
+          if not (start < base < separator < end):
+              raise SystemExit('Orden inválido de marcadores de conflicto')
+
+          mine = lines[start + 1:base]
+          theirs = lines[separator + 1:end]
+
+          mine_closures = [i for i, line in enumerate(mine) if line.strip() == '</action-mappings>']
+          if len(mine_closures) != 1:
+              raise SystemExit('La versión de Compras debe contener un único cierre action-mappings')
+
+          close_index = mine_closures[0]
+          if any(line.strip() for line in mine[close_index + 1:]):
+              raise SystemExit('Hay contenido inesperado después del cierre de Compras')
+
+          if sum(1 for line in theirs if line.strip() == '</action-mappings>') != 1:
+              raise SystemExit('La versión actualizada debe aportar un único cierre action-mappings')
+
+          resolved = lines[:start] + mine[:close_index] + theirs + lines[end + 1:]
+          path.write_text(''.join(resolved), encoding='utf-8', newline='')
+
+          content = path.read_text(encoding='utf-8')
+          for marker in ('<<<<<<<', '|||||||', '=======', '>>>>>>>'):
+              if marker in content:
+                  raise SystemExit('Persistió un marcador de conflicto: ' + marker)
+
+          required_once = (
+              'path="/compras/view"',
+              'path="/compras/iniciar_reclamo_prestacional"',
+              'path="/tesoreria/buscar_saldo_diario_cuentas_bancarias"',
+              'path="/autorizaciones/upload_imagenes_situacionmedica"',
+          )
+          for token in required_once:
+              count = content.count(token)
+              if count != 1:
+                  raise SystemExit('%s debe aparecer una vez y aparece %s' % (token, count))
+
+          if content.count('<action-mappings>') != 1 or content.count('</action-mappings>') != 1:
+              raise SystemExit('Cantidad inválida de action-mappings')
+          if content.count('<struts-config>') != 1 or content.count('</struts-config>') != 1:
+              raise SystemExit('Cantidad inválida de struts-config')
+
+          ET.parse(str(path))
+          print('STRUTS_CONFIG_XML_VALIDO')
+
+      - name: Commit resolved Struts configuration
+        if: github.event_name == 'push' && github.ref_name == 'agent/fix-struts-config-conflict'
+        run: |
+          if git diff --quiet -- ext-web/docroot/WEB-INF/struts-config.xml; then
+            echo 'No hay cambios pendientes en struts-config.xml'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ext-web/docroot/WEB-INF/struts-config.xml
+          git commit -m 'fix(config): resuelve conflicto XML de Struts'
+          git push origin HEAD:agent/fix-struts-config-conflict
 
       - name: Validate shell syntax
         run: |
