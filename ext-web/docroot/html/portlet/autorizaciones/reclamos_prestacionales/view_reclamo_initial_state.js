@@ -36,13 +36,33 @@ function sectorNoSeleccionado() {
     return !sector.length || sector.prop("selectedIndex") <= 0 || !sector.val();
 }
 
-function normalizarBuscadoresSinSector() {
-    if (!sectorNoSeleccionado()) {
-        return;
-    }
+function ocultarBuscadoresPrestacion() {
     campo("busqueda_prestaciones").hide();
     campo("busqueda_farmacia").hide();
     campo("nom_seleccionado").val("0");
+}
+
+function mostrarBuscadorSegunSeleccion() {
+    if (config.values.esBorradorCompras || sectorNoSeleccionado()) {
+        ocultarBuscadoresPrestacion();
+        return;
+    }
+
+    var sector = campo("sector").val();
+    var tipoPedido = campo("tipopedido").val();
+    var usaBuscadorFarmacia =
+            sector === "FARMACIA" && tipoPedido !== "EXCEPCION";
+
+    if (usaBuscadorFarmacia) {
+        campo("busqueda_farmacia").show();
+        campo("busqueda_prestaciones").hide();
+        campo("nom_seleccionado").val("2");
+        return;
+    }
+
+    campo("busqueda_prestaciones").show();
+    campo("busqueda_farmacia").hide();
+    campo("nom_seleccionado").val("1");
 }
 
 function aplicarEstadoInicial() {
@@ -61,7 +81,7 @@ function aplicarEstadoInicial() {
     campo("Cierre_Reclamo_Div").toggle(
             !!config.values.reclamoCerrado
     );
-    normalizarBuscadoresSinSector();
+    mostrarBuscadorSegunSeleccion();
 }
 
 if (!configDisponible && window.console && window.console.error) {
@@ -79,7 +99,7 @@ jQuery(document).on(
         "change",
         "#" + namespace + "sector, #" + namespace + "tipopedido",
         function() {
-            window.setTimeout(normalizarBuscadoresSinSector, 0);
+            window.setTimeout(mostrarBuscadorSegunSeleccion, 0);
         }
 );
 

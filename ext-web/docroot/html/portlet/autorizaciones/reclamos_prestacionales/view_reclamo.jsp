@@ -37,7 +37,7 @@ window.ReclamoPrestacionalAssetError = function(nombre) {
 </script>
 
 <script type="text/javascript"
-	src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js?v=20260717-initial-state-1"
+	src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js?v=20260717-initial-state-2"
 	onerror="window.ReclamoPrestacionalAssetError('view_reclamo_initial_state.js');"></script>
 <script type="text/javascript"
 	src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js?v=20260717-initial-state-1"
