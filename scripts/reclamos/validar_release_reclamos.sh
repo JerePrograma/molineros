@@ -31,6 +31,7 @@ require_command grep
 CONTRACTS=(
   ext-impl/src/ar/com/ospim/test/ClienteAppMobileLegacySecurityContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java
+  ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP1CleanupContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalTabGuardContractTest.java
@@ -63,6 +64,7 @@ javac -encoding "$JAVA_ENCODING" \
 TEST_CLASSES=(
   ar.com.ospim.test.ClienteAppMobileLegacySecurityContractTest
   ar.com.ospim.test.ReclamoPrestacionalP0ContractTest
+  ar.com.ospim.test.ReclamoPrestacionalInitialViewContractTest
   ar.com.ospim.test.ReclamoPrestacionalP1CleanupContractTest
   ar.com.ospim.test.ReclamoPrestacionalEditorContractTest
   ar.com.ospim.test.ReclamoPrestacionalTabGuardContractTest
@@ -79,14 +81,15 @@ info "Contratos textuales compilados y ejecutados"
 
 VIEW_JSP=ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp
 for asset in \
+  view_reclamo_initial_state.js \
   view_reclamo.js \
   view_reclamo_tab_guard.js \
   view_reclamo_editor_patch.js \
   view_reclamo_p0_patch.js; do
-  grep -q "${asset}?v=20260716-p0-4" "$VIEW_JSP" \
+  grep -q "${asset}?v=20260717-initial-state-1" "$VIEW_JSP" \
     || fail "Asset ausente o sin versión p0-4: $asset"
 done
-info "Assets p0-4 conectados"
+info "Assets initial-state-1 conectados"
 
 MIGRATION=sql/postgresql/autorizaciones/reclamo_appmobile_outbox.sql
 grep -q 'CREATE TABLE IF NOT EXISTS autorizaciones.reclamo_appmobile_outbox' "$MIGRATION" \

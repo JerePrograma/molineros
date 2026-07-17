@@ -60,7 +60,7 @@
 		</table>
 
 		<div id="<portlet:namespace />lista_contactos_reclamo" align="center"
-			style="height: 160px; overflow: scroll; overflow-x: hidden;">
+			style="display:none; height: 160px; overflow: scroll; overflow-x: hidden;">
 
 			<liferay-util:include page="/html/portlet/autorizaciones/reclamos_prestacionales/lista_contactos_reclamo.jsp">
 			</liferay-util:include>
@@ -198,7 +198,8 @@
 			style="border-collapse: separate; border-spacing: 3px; columns: 3;">
 			<tr>
 				<td>
-					<div id="<portlet:namespace />Cierre_Reclamo_Div">
+					<div id="<portlet:namespace />Cierre_Reclamo_Div"
+						style="<%= existeReclamoPersistido && reclamoprestacional.getEstado() == 3 ? "" : "display:none;" %>">
 						<fieldset class="block-labels">
 
 							<legend>

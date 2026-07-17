@@ -1,0 +1,87 @@
+(function(window, jQuery) {
+"use strict";
+
+var configDisponible = !!window.ReclamoPrestacionalViewConfig;
+var config = window.ReclamoPrestacionalViewConfig || {};
+config.values = jQuery.extend({
+    cantPrestaciones: 0,
+    casoVinculado: "0",
+    hasReclamo: false,
+    reclamoCerrado: false,
+    tipoGestionCierre: 0,
+    idObservacionMedica: 0,
+    tieneResolucion: false,
+    esEdicion: false,
+    esAlta: false,
+    esBorradorCompras: false,
+    idReclamo: 0,
+    cantRevisiones: 0,
+    debitoTercerizadora: false,
+    codigoCie10Presente: false,
+    caiNamespace: false
+}, config.values || {});
+config.urls = config.urls || {};
+config.messages = config.messages || {};
+config.namespace = config.namespace || window.ReclamoPrestacionalNamespace || "";
+window.ReclamoPrestacionalViewConfig = config;
+
+var namespace = config.namespace;
+
+function campo(sufijo) {
+    return jQuery("#" + namespace + sufijo);
+}
+
+function sectorNoSeleccionado() {
+    var sector = campo("sector");
+    return !sector.length || sector.prop("selectedIndex") <= 0 || !sector.val();
+}
+
+function normalizarBuscadoresSinSector() {
+    if (!sectorNoSeleccionado()) {
+        return;
+    }
+    campo("busqueda_prestaciones").hide();
+    campo("busqueda_farmacia").hide();
+    campo("nom_seleccionado").val("0");
+}
+
+function aplicarEstadoInicial() {
+    campo("divResultadoActualizarOK").hide();
+    campo("lista_prestaciones_asociadas").hide();
+    campo("lista_contactos_reclamo").hide();
+
+    if (config.values.esBorradorCompras) {
+        campo("datos_prestacion_ingreso").hide();
+        campo("datos_edicion_prestacion").show();
+    } else {
+        campo("datos_edicion_prestacion").hide();
+        campo("datos_prestacion_ingreso").show();
+    }
+
+    campo("Cierre_Reclamo_Div").toggle(
+            !!config.values.reclamoCerrado
+    );
+    normalizarBuscadoresSinSector();
+}
+
+if (!configDisponible && window.console && window.console.error) {
+    window.console.error("RECLAMO_PRESTACIONAL_CONFIG_AUSENTE");
+}
+
+aplicarEstadoInicial();
+
+jQuery(function() {
+    /* Se ejecuta después de los ready handlers legacy. */
+    window.setTimeout(aplicarEstadoInicial, 0);
+});
+
+jQuery(document).on(
+        "change",
+        "#" + namespace + "sector, #" + namespace + "tipopedido",
+        function() {
+            window.setTimeout(normalizarBuscadoresSinSector, 0);
+        }
+);
+
+window.ReclamoPrestacionalInitialStateOk = true;
+})(window, jQuery);

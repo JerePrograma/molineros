@@ -46,13 +46,13 @@ public final class ReclamoPrestacionalP0ContractTest {
         assertBefore(
                 "patch P0 después de legacy",
                 view,
-                "view_reclamo.js?v=20260716-p0-4",
-                "view_reclamo_p0_patch.js?v=20260716-p0-4"
+                "view_reclamo.js?v=20260717-initial-state-1",
+                "view_reclamo_p0_patch.js?v=20260717-initial-state-1"
         );
         assertContains(
                 "assets versionados",
                 view,
-                "?v=20260716-p0-4"
+                "?v=20260717-initial-state-1"
         );
         assertContains(
                 "normaliza fecha seccional vacía",
