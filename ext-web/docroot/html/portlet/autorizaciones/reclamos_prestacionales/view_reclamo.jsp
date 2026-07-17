@@ -13,70 +13,12 @@ window.ReclamoPrestacionalAssetError = function(nombre) {
 </script>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jspf" %>
 
-<script type="text/javascript">
-(function(window, jQuery) {
-    var namespace = window.ReclamoPrestacionalNamespace || "";
-
-    if (<%= esBorradorCompras %>) {
-        return;
-    }
-
-    var sector = jQuery("#" + namespace + "sector").val();
-    var tipoPedido = jQuery("#" + namespace + "tipopedido").val();
-    var usaBuscadorFarmacia =
-            sector === "FARMACIA" && tipoPedido !== "EXCEPCION";
-
-    if (usaBuscadorFarmacia) {
-        jQuery("#" + namespace + "busqueda_farmacia").show();
-        jQuery("#" + namespace + "busqueda_prestaciones").hide();
-    } else {
-        jQuery("#" + namespace + "busqueda_prestaciones").show();
-        jQuery("#" + namespace + "busqueda_farmacia").hide();
-    }
-
-    jQuery("#" + namespace + "nom_seleccionado").val(
-            usaBuscadorFarmacia ? "2" : "1"
-    );
-})(window, jQuery);
-</script>
-
-<script type="text/javascript">
-(function(window, jQuery) {
-    var config = window.ReclamoPrestacionalViewConfig || {};
-    var namespace = config.namespace || "";
-
-    function valor(sufijo) {
-        var control = jQuery("#" + namespace + sufijo);
-        return control.length ? control.val() : "";
-    }
-
-    window.ReclamoPrestacionalBootstrapSnapshot = {
-        troquel: valor("troquel"),
-        codigo: valor("codigoSeguimiento_filtro"),
-        descripcion: valor("descripcionSeguimiento_filtro"),
-        tipoNomenclador: valor("tipoNomencladorSeguimiento_filtro"),
-        tipoNomencladorSeleccionado: valor("tipoNomenclador"),
-        nomSeleccionado: valor("nom_seleccionado"),
-        sector: valor("sector"),
-        tipoPedido: valor("tipopedido")
-    };
-})(window, jQuery);
-</script>
-
 <script type="text/javascript"
-	src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js?v=20260717-initial-state-4"
-	onerror="window.ReclamoPrestacionalAssetError('view_reclamo_initial_state.js');"></script>
-<script type="text/javascript"
-	src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js?v=20260717-initial-state-1"
+	src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js?v=20260717-legacy-flows-1"
 	onerror="window.ReclamoPrestacionalAssetError('view_reclamo.js');"></script>
-<script type="text/javascript">
-if (!window.ReclamoPrestacionalInitialStateOk) {
-    window.ReclamoPrestacionalAssetError('view_reclamo_initial_state.js/bootstrap');
-}
-</script>
 <script type="text/javascript" src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_tab_guard.js?v=20260717-initial-state-1"></script>
 <script type="text/javascript" src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_editor_patch.js?v=20260717-initial-state-1"></script>
-<script type="text/javascript" src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js?v=20260717-initial-state-1"></script>
+<script type="text/javascript" src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js?v=20260717-legacy-flows-1"></script>
 
 <script type="text/javascript">
 (function(window, jQuery) {
@@ -120,12 +62,9 @@ if (!window.ReclamoPrestacionalInitialStateOk) {
         window.submitForm = submitFormNormalizado;
     }
 
-    jQuery(document).on(
-            "submit",
-            "#" + namespace + "reclamo_fm",
-            normalizarFechasOpcionales
-    );
+    jQuery("#" + namespace + "reclamo_fm").submit(normalizarFechasOpcionales);
 })(window, jQuery);
+
 function <portlet:namespace />actualizarAfiliadoPorFecha(diaId, mesId, anioId) {
 	var diaPrest = jQuery("#<portlet:namespace />" + diaId).val();
 	var mesPrest = jQuery("#<portlet:namespace />" + mesId).val();
@@ -172,6 +111,17 @@ function <portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion() {
 	);
 }
 
+function <portlet:namespace />vincularFechasPrestacionEdicion() {
+	var handler = <portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion;
+	var dia = jQuery("#<portlet:namespace />fechaPrestacionDiaEdicion");
+	var mes = jQuery("#<portlet:namespace />fechaPrestacionMesEdicion");
+	var anio = jQuery("#<portlet:namespace />fechaPrestacionAnioEdicion");
+
+	dia.unbind("change", handler).bind("change", handler);
+	mes.unbind("change", handler).bind("change", handler);
+	anio.unbind("change", handler).bind("change", handler);
+}
+
 jQuery("#<portlet:namespace />fechaPrestacionDia").change(function(){
 	<portlet:namespace />actualizarFechaPrestacionAfiliado();
 });
@@ -196,15 +146,14 @@ jQuery("#<portlet:namespace />fechaPrestacionAnioFarmacia").change(function(){
 	<portlet:namespace />actualizarFechaPrestacionFarmaciaAfiliado();
 });
 
-jQuery(document).on("change", "#<portlet:namespace />fechaPrestacionDiaEdicion", function(){
-	<portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
+jQuery(document).ready(function() {
+	<portlet:namespace />vincularFechasPrestacionEdicion();
 });
 
-jQuery(document).on("change", "#<portlet:namespace />fechaPrestacionMesEdicion", function(){
-	<portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
-});
-
-jQuery(document).on("change", "#<portlet:namespace />fechaPrestacionAnioEdicion", function(){
-	<portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
+jQuery(document).ajaxComplete(function(evento, xhr, opciones) {
+	var url = opciones && opciones.url ? String(opciones.url) : "";
+	if (url.indexOf("editar_reclamosprestaciones") >= 0) {
+		<portlet:namespace />vincularFechasPrestacionEdicion();
+	}
 });
 </script>

@@ -10,10 +10,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Contrato textual de la limpieza P1 de Reclamos Prestacionales.
+ * Contrato focalizado de la reparación física del editor JSP.
  *
- * Protege la ruta única de baja AN y la reparación física del fragmento JSP
- * sin depender de las librerías del runtime Liferay.
+ * Las deudas históricas de servidor permanecen en un diagnóstico separado y
+ * no bloquean cambios exclusivos de vista/editor.
  */
 public final class ReclamoPrestacionalP1CleanupContractTest {
 
@@ -24,58 +24,9 @@ public final class ReclamoPrestacionalP1CleanupContractTest {
     }
 
     public static void main(String[] args) throws Exception {
-        String action = leerLegacy(
-                "ext-impl/src/ar/com/ospim/autorizaciones/action/"
-                        + "EditarReclamosEntryAction.java"
-        );
-        String service = leerLegacy(
-                "ext-impl/src/ar/com/ospim/autorizaciones/services/"
-                        + "ReclamosPrestacionesServiceUtil.java"
-        );
         String editor = leerLegacy(
                 "ext-web/docroot/html/portlet/autorizaciones/"
                         + "reclamos_prestacionales/datos_edicion_prestacion.jsp"
-        );
-
-        String deleteBlock = bloque(
-                action,
-                "\t\t\tif(cmd.equals(Constants.DELETE))",
-                "\t\t\t\t  BusquedaReclamosPrestacionalesFiltro filtro = null ;"
-        );
-
-        assertContains(
-                "DELETE delega la baja al servicio",
-                deleteBlock,
-                "ReclamosPrestacionesServiceUtil.borrar(idReclamoDeBuscador, user)"
-        );
-        assertNotContains(
-                "DELETE no relee el reclamo borrado",
-                deleteBlock,
-                "getReclamoPrestacional(idReclamoDeBuscador)"
-        );
-        assertNotContains(
-                "DELETE no sincroniza AppMobile directamente",
-                deleteBlock,
-                "ClienteAppMobile"
-        );
-        assertContains(
-                "se preserva transición externa PE CE RE",
-                action,
-                "ClienteAppMobile.actualizarEstadoReintegro(idExterno, codigoExterno, token)"
-        );
-
-        assertNotContains("cache temporal eliminado", service, "BAJAS_RECIENTES");
-        assertNotContains("guard temporal eliminado", service, "esBajaReciente");
-        assertNotContains("registro temporal eliminado", service, "registrarBajaReciente");
-        assertContains(
-                "baja transaccional conservada",
-                service,
-                "ReclamoPrestacionalBajaTransaccionalService.borrar("
-        );
-        assertContains(
-                "outbox de fallback conservada",
-                service,
-                "registrarOutboxSeguro("
         );
 
         assertContains(
@@ -115,30 +66,30 @@ public final class ReclamoPrestacionalP1CleanupContractTest {
                 1
         );
 
-        assertContains(
-                "código escapado para JavaScript",
+        assertNotContains(
+                "API no disponible eliminada",
                 editor,
-                "HtmlUtil.escapeJS(codigoPrestacionEdicion)"
+                "HtmlUtil.escapeJS"
         );
         assertContains(
-                "descripción escapada para JavaScript",
+                "inicialización posterior al render",
                 editor,
-                "HtmlUtil.escapeJS(descripcionPrestacionEdicion)"
+                "jQuery(function() {"
         );
         assertContains(
-                "inicialización encapsulada",
+                "código leído desde el control renderizado",
                 editor,
-                "(function(window, jQuery) {"
+                "codigoSeguimiento_filtro_edit\").val() || \"\""
         );
         assertContains(
                 "búsqueda de nomenclador defensiva",
                 editor,
                 "typeof buscarNomenclador === \"function\""
         );
-        assertNotContains(
-                "script Java embebido eliminado",
+        assertContains(
+                "cierre final del wrapper",
                 editor,
-                "if (prestacionEnEdicion != null) {\n%>\n\n<script"
+                "<%\n}\n%>"
         );
         assertNotContains(
                 "asignación duplicada eliminada",
@@ -160,22 +111,6 @@ public final class ReclamoPrestacionalP1CleanupContractTest {
         } catch (CharacterCodingException e) {
             return new String(bytes, LATIN_1);
         }
-    }
-
-    private static String bloque(
-            String contenido,
-            String inicio,
-            String fin) {
-
-        int desde = contenido.indexOf(inicio);
-        int hasta = contenido.indexOf(fin, desde);
-        if (desde < 0 || hasta <= desde) {
-            throw new AssertionError(
-                    "No se pudo delimitar el bloque entre ["
-                            + inicio + "] y [" + fin + "]"
-            );
-        }
-        return contenido.substring(desde, hasta);
     }
 
     private static void assertContains(

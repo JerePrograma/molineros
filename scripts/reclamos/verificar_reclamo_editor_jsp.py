@@ -46,7 +46,8 @@ def verificar_balance_java(jsp):
 
 def main():
     editor = leer("datos_edicion_prestacion.jsp")
-    initial = leer("view_reclamo_initial_state.js")
+    legacy = leer("view_reclamo.js")
+    patch = leer("view_reclamo_p0_patch.js")
     cabecera = leer("view_reclamo_cabecera.jspf")
     view = leer("view_reclamo.jsp")
 
@@ -65,32 +66,52 @@ def main():
     verificar_balance_java(editor)
 
     exigir(
-        'sector === "FARMACIA" && tipoPedido !== "EXCEPCION"' in initial,
-        "la regla REINTEGRO + FARMACIA no usa el buscador de medicamentos",
+        "function manejarTipoSector(){" in legacy,
+        "falta el selector legacy Tipo Pedido por Sector",
     )
     exigir(
-        'campo("sector").change(actualizarBuscadorPrestacion)' in initial,
-        "falta el binding compatible con jQuery legacy para sector",
+        "return sector == 'FARMACIA' && tipoPedido != 'EXCEPCION';" in legacy,
+        "la regla productiva FARMACIA salvo EXCEPCION no está preservada",
     )
     exigir(
-        'campo("tipopedido").change(actualizarBuscadorPrestacion)' in initial,
-        "falta el binding compatible con jQuery legacy para tipo de pedido",
+        "reclamoPrestacionalNamespace + \"busqueda_farmacia\").show()" in legacy,
+        "el selector legacy no muestra Medicamento/Troquel para Farmacia",
     )
     exigir(
-        "jQuery(document).on(" not in initial,
+        "window.manejarTipoSector" not in patch,
+        "el P0 vuelve a sobrescribir manejarTipoSector",
+    )
+    exigir(
+        "window.cambioTipoPedido" not in patch,
+        "el P0 vuelve a sobrescribir cambioTipoPedido",
+    )
+    exigir(
+        "renderModoSector" not in patch,
+        "el P0 vuelve a duplicar la matriz Tipo Pedido por Sector",
+    )
+    exigir(
+        "cambioTipoPedido();manejarTipoPedidoCierre();" in cabecera,
+        "Tipo Pedido no conserva el handler legacy",
+    )
+    exigir(
+        "manejarTipoSector();" in cabecera,
+        "Sector no conserva el handler legacy",
+    )
+    exigir(
+        "view_reclamo_initial_state.js" not in view,
+        "la vista todavía carga la segunda máquina de estado",
+    )
+    exigir(
+        "view_reclamo.js?v=20260717-legacy-flows-1" in view,
+        "el cache key no fuerza el JavaScript legacy corregido",
+    )
+    exigir(
+        "view_reclamo_p0_patch.js?v=20260717-legacy-flows-1" in view,
+        "el cache key no fuerza el P0 sin selector duplicado",
+    )
+    exigir(
+        "jQuery(document).on(" not in view,
         "se reintrodujo una API no disponible en el jQuery de Liferay 5.2",
-    )
-    exigir(
-        "actualizarBuscadorPrestacion(); } cambioTipoPedido()" in cabecera,
-        "Tipo Pedido no invoca primero el selector seguro",
-    )
-    exigir(
-        "actualizarBuscadorPrestacion(); } manejarTipoSector()" in cabecera,
-        "Sector no invoca primero el selector seguro",
-    )
-    exigir(
-        "view_reclamo_initial_state.js?v=20260717-initial-state-4" in view,
-        "el cache key no fuerza la nueva capa de estado",
     )
 
     print("VERIFICACION_RECLAMO_EDITOR_JSP_OK")

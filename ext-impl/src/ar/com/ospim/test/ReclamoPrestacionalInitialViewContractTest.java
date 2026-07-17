@@ -5,7 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-/** Contrato textual del estado inicial de Nuevo Reclamo Prestacional. */
+/** Contrato textual del selector legacy Tipo de Pedido x Sector. */
 public final class ReclamoPrestacionalInitialViewContractTest {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final String DIR =
@@ -17,48 +17,63 @@ public final class ReclamoPrestacionalInitialViewContractTest {
 
     public static void main(String[] args) throws Exception {
         String view = leer(DIR + "view_reclamo.jsp");
-        String initial = leer(DIR + "view_reclamo_initial_state.js");
+        String legacy = leer(DIR + "view_reclamo.js");
+        String patch = leer(DIR + "view_reclamo_p0_patch.js");
         String cabecera = leer(DIR + "view_reclamo_cabecera.jspf");
-        String afiliado = leer(DIR + "view_reclamo_afiliado_diagnostico.jspf");
         String prestaciones = leer(DIR + "view_reclamo_prestaciones.jspf");
-        String seguimiento = leer(DIR + "view_reclamo_seguimiento_cierre.jspf");
-        String config = leer(DIR + "view_reclamo_configuracion.jspf");
 
-        contiene(view, "namespace independiente", "window.ReclamoPrestacionalNamespace");
-        contiene(view, "capa antes de legacy", "view_reclamo_initial_state.js?v=20260717-initial-state-4");
-        antes(view, "view_reclamo_initial_state.js?v=", "view_reclamo.js?v=");
-        contiene(view, "diagnóstico asset", "RECLAMO_PRESTACIONAL_ASSET_ERROR");
-        contiene(view, "fallback excluye Compras", "if (<%= esBorradorCompras %>)");
-        contiene(view, "fallback síncrono nomenclador", "jQuery(\"#\" + namespace + \"busqueda_prestaciones\").show()");
+        contiene(view, "carga del legacy versionada",
+                "view_reclamo.js?v=20260717-legacy-flows-1");
+        contiene(view, "P0 posterior al legacy",
+                "view_reclamo_p0_patch.js?v=20260717-legacy-flows-1");
+        antes(view, "view_reclamo.js?v=", "view_reclamo_p0_patch.js?v=");
+        noContiene(view, "segunda máquina de estado retirada",
+                "view_reclamo_initial_state.js");
+        noContiene(view, "snapshot compensatorio retirado",
+                "ReclamoPrestacionalBootstrapSnapshot");
+        noContiene(view, "API jQuery moderna incompatible", ".on(");
+        contiene(view, "submit compatible con jQuery legacy",
+                ").submit(normalizarFechasOpcionales)");
+        contiene(view, "rebind AJAX compatible con jQuery legacy",
+                "jQuery(document).ajaxComplete(function");
 
-        contiene(initial, "defaults seguros", "config.values = jQuery.extend");
-        contiene(initial, "preserva Compras", "if (config.values.esBorradorCompras)");
-        contiene(initial, "espera ready legacy", "window.setTimeout(aplicarEstadoInicial, 0)");
-        contiene(initial, "selector positivo", "function mostrarBuscadorSegunSeleccion()");
-        contiene(initial, "farmacia reintegro", "sector === \"FARMACIA\" && tipoPedido !== \"EXCEPCION\"");
-        contiene(initial, "muestra farmacia", "campo(\"busqueda_farmacia\").show()");
-        contiene(initial, "muestra nomenclador", "campo(\"busqueda_prestaciones\").show()");
-        contiene(initial, "Nuevo usa Código Presentado", "Comportamiento legacy: Nuevo comienza con Código Presentado visible");
-        contiene(initial, "binding jQuery legacy sector", "campo(\"sector\").change(actualizarBuscadorPrestacion)");
-        contiene(initial, "binding jQuery legacy pedido", "campo(\"tipopedido\").change(actualizarBuscadorPrestacion)");
-        contiene(initial, "función namespaced", "window[namespace + \"actualizarBuscadorPrestacion\"]");
-        noContiene(initial, "API jQuery moderna incompatible", "jQuery(document).on(");
-        contiene(initial, "marca ejecutada", "ReclamoPrestacionalInitialStateOk = true");
+        contiene(legacy, "único dueño del selector",
+                "function manejarTipoSector(){");
+        contiene(legacy, "regla productiva farmacia salvo excepción",
+                "return sector == 'FARMACIA' && tipoPedido != 'EXCEPCION';");
+        contiene(legacy, "farmacia usa troquel",
+                "reclamoPrestacionalNamespace + \"busqueda_farmacia\").show()");
+        contiene(legacy, "farmacia oculta código presentado",
+                "reclamoPrestacionalNamespace + \"busqueda_prestaciones\").hide()");
+        contiene(legacy, "excepción farmacia usa nomenclador 9",
+                "sector == 'FARMACIA' && tipoPedido == 'EXCEPCION'");
+        contiene(legacy, "discapacidad usa nomenclador 8",
+                "sector == 'DISCAPACIDAD'");
+        contiene(legacy, "odontología usa nomenclador 1",
+                "sector == 'ODONTOLOGIA'");
+        contiene(legacy, "tipo pedido delega al selector",
+                "function cambioTipoPedido(){");
+        contiene(legacy, "selector ejecutado en carga",
+                "manejarTipoSector();");
 
-        contiene(cabecera, "tipo pedido invoca selector seguro", "actualizarBuscadorPrestacion(); } cambioTipoPedido()");
-        contiene(cabecera, "sector invoca selector seguro", "actualizarBuscadorPrestacion(); } manejarTipoSector()");
+        noContiene(patch, "P0 no sobrescribe sector",
+                "window.manejarTipoSector");
+        noContiene(patch, "P0 no sobrescribe pedido",
+                "window.cambioTipoPedido");
+        noContiene(patch, "P0 no duplica matriz", "renderModoSector");
+        noContiene(patch, "P0 no restaura snapshot",
+                "restaurarSeleccionInicial");
 
-        contiene(afiliado, "mensaje oculto", "divResultadoActualizarOK\" style=\"display:none;\"");
-        contiene(prestaciones, "farmacia protegida", "busqueda_farmacia\" align=\"left\" width=\"80%\" style=\"display:none;\"");
-        contiene(prestaciones, "nomenclador protegido", "busqueda_prestaciones\" align=\"left\" width=\"80%\" style=\"display:none;\"");
-        contiene(prestaciones, "editor Compras", "esBorradorCompras ? \"\" : \"display:none;\"");
-        contiene(prestaciones, "ingreso normal", "esBorradorCompras ? \"display:none;\" : \"\"");
-        contiene(prestaciones, "asociadas ocultas", "style=\"display:none; height: 120px;");
-        contiene(seguimiento, "CRM oculto", "style=\"display:none; height: 160px;");
-        contiene(seguimiento, "cierre persistido", "existeReclamoPersistido && reclamoprestacional.getEstado() == 3");
-        contiene(config, "flag Compras", "esBorradorCompras: <%= esBorradorCompras %>");
+        contiene(cabecera, "tipo pedido mantiene handler legacy",
+                "cambioTipoPedido();manejarTipoPedidoCierre();");
+        contiene(cabecera, "sector mantiene handler legacy",
+                "manejarTipoSector();");
+        contiene(prestaciones, "farmacia inicia protegida",
+                "busqueda_farmacia\" align=\"left\" width=\"80%\" style=\"display:none;\"");
+        contiene(prestaciones, "código presentado inicia protegido",
+                "busqueda_prestaciones\" align=\"left\" width=\"80%\" style=\"display:none;\"");
 
-        System.out.println("CONTRATO_RECLAMO_PRESTACIONAL_VISTA_INICIAL_OK");
+        System.out.println("CONTRATO_RECLAMO_PRESTACIONAL_SELECTOR_LEGACY_OK");
     }
 
     private static String leer(String ruta) throws Exception {
