@@ -26,12 +26,14 @@ require_command() {
 
 require_command javac
 require_command java
+require_command node
 require_command grep
 
 CONTRACTS=(
   ext-impl/src/ar/com/ospim/test/ClienteAppMobileLegacySecurityContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java
+  ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalLegacyFlowContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP1CleanupContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalTabGuardContractTest.java
@@ -50,9 +52,19 @@ require_file docs/autorizaciones/RECLAMOS_PRESTACIONALES_P0_DEPLOY.md
 require_file docs/autorizaciones/RECLAMOS_PRESTACIONALES_P1_CLEANUP.md
 require_file docs/autorizaciones/RECLAMOS_APPMOBILE_OUTBOX_OPERACION.md
 require_file ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp
+require_file ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js
 require_file ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_tab_guard.js
 require_file ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_editor_patch.js
 require_file ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js
+
+for javascript in \
+  ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js \
+  ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_tab_guard.js \
+  ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_editor_patch.js \
+  ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js; do
+  node --check "$javascript"
+done
+info "JavaScript legacy y parches con sintaxis válida"
 
 rm -rf "$CONTRACT_DIR"
 mkdir -p "$CONTRACT_DIR"
@@ -62,9 +74,10 @@ javac -encoding "$JAVA_ENCODING" \
   "${CONTRACTS[@]}"
 
 TEST_CLASSES=(
+  ar.com.ospim.test.ReclamoPrestacionalInitialViewContractTest
+  ar.com.ospim.test.ReclamoPrestacionalLegacyFlowContractTest
   ar.com.ospim.test.ClienteAppMobileLegacySecurityContractTest
   ar.com.ospim.test.ReclamoPrestacionalP0ContractTest
-  ar.com.ospim.test.ReclamoPrestacionalInitialViewContractTest
   ar.com.ospim.test.ReclamoPrestacionalP1CleanupContractTest
   ar.com.ospim.test.ReclamoPrestacionalEditorContractTest
   ar.com.ospim.test.ReclamoPrestacionalTabGuardContractTest
@@ -80,18 +93,33 @@ done
 info "Contratos textuales compilados y ejecutados"
 
 VIEW_JSP=ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp
-grep -q 'view_reclamo_initial_state.js?v=20260717-initial-state-4' "$VIEW_JSP" \
-  || fail "Estado inicial ausente o sin versión initial-state-4"
+BASE_JS=ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js
+P0_JS=ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js
+INITIAL_JS=ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js
 
+grep -q 'view_reclamo.js?v=20260717-legacy-flows-1' "$VIEW_JSP" \
+  || fail "El JavaScript legacy no está conectado con versión legacy-flows-1"
+grep -q 'view_reclamo_p0_patch.js?v=20260717-legacy-flows-1' "$VIEW_JSP" \
+  || fail "El P0 no está conectado con versión legacy-flows-1"
 for asset in \
-  view_reclamo.js \
   view_reclamo_tab_guard.js \
-  view_reclamo_editor_patch.js \
-  view_reclamo_p0_patch.js; do
+  view_reclamo_editor_patch.js; do
   grep -q "${asset}?v=20260717-initial-state-1" "$VIEW_JSP" \
-    || fail "Asset legacy ausente o sin versión initial-state-1: $asset"
+    || fail "Asset legacy ausente o sin versión esperada: $asset"
 done
-info "Estado inicial v4 y assets legacy v1 conectados"
+[[ ! -e "$INITIAL_JS" ]] \
+  || fail "Persiste la segunda máquina de estado view_reclamo_initial_state.js"
+if grep -q -E 'window\.(manejarTipoSector|cambioTipoPedido)' "$P0_JS"; then
+  fail "El P0 sigue sobrescribiendo handlers legacy de Tipo Pedido/Sector"
+fi
+grep -q 'function manejarTipoSector()' "$BASE_JS" \
+  || fail "Falta el handler legacy manejarTipoSector"
+grep -q "sector == 'FARMACIA' && tipoPedido != 'EXCEPCION'" "$BASE_JS" \
+  || fail "Falta la matriz legacy FARMACIA salvo EXCEPCION"
+if grep -q '\.on(' "$VIEW_JSP"; then
+  fail "Se detectó jQuery.on en la vista Liferay 5.2"
+fi
+info "Una sola matriz Tipo Pedido/Sector y APIs jQuery legacy"
 
 MIGRATION=sql/postgresql/autorizaciones/reclamo_appmobile_outbox.sql
 grep -q 'CREATE TABLE IF NOT EXISTS autorizaciones.reclamo_appmobile_outbox' "$MIGRATION" \
