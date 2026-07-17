@@ -7,12 +7,20 @@ on:
     paths:
       - 'scripts/reclamos/patches/20260717_reclamos_p1_cleanup.patch'
       - '.github/workflows/apply-reclamos-p1-cleanup.yml'
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 permissions:
   contents: write
 
 jobs:
   apply-patch:
+    if: github.event_name == 'push' || github.head_ref == 'fix/reclamos-prestacionales-p1-cleanup'
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -23,10 +31,22 @@ jobs:
           ref: fix/reclamos-prestacionales-p1-cleanup
           fetch-depth: 0
 
+      - name: Detect already applied patch
+        id: state
+        shell: bash
+        run: |
+          if git apply --reverse --check scripts/reclamos/patches/20260717_reclamos_p1_cleanup.patch; then
+            echo 'applied=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'applied=false' >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Validate patch
+        if: steps.state.outputs.applied != 'true'
         run: git apply --check scripts/reclamos/patches/20260717_reclamos_p1_cleanup.patch
 
       - name: Apply patch
+        if: steps.state.outputs.applied != 'true'
         run: git apply scripts/reclamos/patches/20260717_reclamos_p1_cleanup.patch
 
       - name: Validate repaired invariants
@@ -45,6 +65,7 @@ jobs:
             ext-impl/src/ar/com/ospim/autorizaciones/services/ReclamosPrestacionesServiceUtil.java
 
       - name: Commit repaired files
+        if: steps.state.outputs.applied != 'true'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
