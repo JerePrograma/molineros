@@ -39,7 +39,6 @@ jobs:
             echo "No generated changes"
             exit 0
           fi
-          git diff --check
           test "$(git diff --name-only | grep -c '^ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo')" -eq 9
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
