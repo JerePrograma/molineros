@@ -107,20 +107,15 @@ public final class ReclamoAppMobileSyncContractTest {
         assertNotContains("mensaje ambiguo de solicitud enviada", service,
                 "Solicitud de anulación enviada a AppMobile");
 
-        assertContains("registro concurrente de bajas", service,
-                "new ConcurrentHashMap<Integer, Long>()");
-        assertContains("ventana limitada de compatibilidad", service,
-                "BAJA_RECIENTE_TTL_MS = 60000L");
-        assertContains("baja registrada después de persistencia local", service,
-                "registrarBajaReciente(id);");
-        assertBefore("guard posterior a baja transaccional", service,
-                "ReclamoPrestacionalBajaTransaccionalService.borrar(",
-                "registrarBajaReciente(id);");
-        assertContains("relectura inmediata suprimida", service,
+        assertNotContains("cache concurrente de bajas eliminado", service,
+                "ConcurrentHashMap<Integer, Long>");
+        assertNotContains("ventana temporal eliminada", service,
+                "BAJA_RECIENTE_TTL_MS");
+        assertNotContains("registro temporal eliminado", service,
+                "registrarBajaReciente(id)");
+        assertNotContains("guard temporal eliminado", service,
                 "if (esBajaReciente(id))");
-        assertContains("relectura devuelve nulo", service,
-                "Se omite relectura de Reclamo Prestacional dado de baja");
-        assertContains("limpieza de marcas expiradas", service,
+        assertNotContains("limpieza temporal eliminada", service,
                 "limpiarBajasRecientesExpiradas");
 
         assertContains("token nulo persistido", service,
