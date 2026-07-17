@@ -1,0 +1,61 @@
+name: TEMP Normaliza Nuevo Reclamo Prestacional
+
+on:
+  push:
+    branches:
+      - agent/normaliza-nuevo-reclamo-prestacional
+    paths:
+      - 'scripts/reclamos/aplicar_normalizacion_vista_inicial.py'
+      - '.github/workflows/tmp-aplica-normalizacion-nuevo-reclamo.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/normaliza-nuevo-reclamo-prestacional
+          fetch-depth: 0
+
+      - name: Apply audited normalization
+        run: python3 scripts/reclamos/aplicar_normalizacion_vista_inicial.py
+
+      - name: Validate JavaScript syntax
+        run: |
+          node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js
+          node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js
+          node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_editor_patch.js
+          node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_tab_guard.js
+
+      - name: Compile and run focused contracts
+        run: |
+          rm -rf /tmp/rp-initial-view
+          mkdir -p /tmp/rp-initial-view
+          javac -encoding UTF-8 -d /tmp/rp-initial-view \
+            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java \
+            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java
+          java -cp /tmp/rp-initial-view ar.com.ospim.test.ReclamoPrestacionalP0ContractTest
+          java -cp /tmp/rp-initial-view ar.com.ospim.test.ReclamoPrestacionalInitialViewContractTest
+
+      - name: Validate final scope and commit
+        run: |
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp \
+            ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js \
+            ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_afiliado_diagnostico.jspf \
+            ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_prestaciones.jspf \
+            ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_seguimiento_cierre.jspf \
+            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java \
+            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java \
+            scripts/reclamos/validar_release_reclamos.sh \
+            .github/workflows/reclamo-prestacional-p0-contract.yml
+          git commit -m 'fix(reclamos): normaliza el estado inicial del alta'
+          git push origin HEAD:agent/normaliza-nuevo-reclamo-prestacional
