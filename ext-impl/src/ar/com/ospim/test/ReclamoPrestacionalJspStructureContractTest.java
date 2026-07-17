@@ -55,6 +55,18 @@ public final class ReclamoPrestacionalJspStructureContractTest {
             if (inicio < 0) {
                 break;
             }
+
+            if (jsp.startsWith("<%--", inicio)) {
+                int finComentario = jsp.indexOf("--%>", inicio + 4);
+                if (finComentario < 0) {
+                    throw new AssertionError(
+                            "Comentario JSP sin cierre desde posición " + inicio
+                    );
+                }
+                pos = finComentario + 4;
+                continue;
+            }
+
             int fin = jsp.indexOf("%>", inicio + 2);
             if (fin < 0) {
                 throw new AssertionError("Scriptlet JSP sin cierre desde posición " + inicio);
@@ -62,8 +74,7 @@ public final class ReclamoPrestacionalJspStructureContractTest {
 
             if (!jsp.startsWith("<%@", inicio)
                     && !jsp.startsWith("<%=", inicio)
-                    && !jsp.startsWith("<%!", inicio)
-                    && !jsp.startsWith("<%--", inicio)) {
+                    && !jsp.startsWith("<%!", inicio)) {
                 java.append(jsp.substring(inicio + 2, fin)).append('\n');
             }
             pos = fin + 2;
