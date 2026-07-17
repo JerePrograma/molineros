@@ -49,18 +49,33 @@ jobs:
             ar.com.ospim.test.ReclamoPrestacionalInitialViewContractTest
 
       - name: Commit audited normalization
+        shell: bash
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add \
-            ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp \
-            ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js \
-            ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_afiliado_diagnostico.jspf \
-            ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_prestaciones.jspf \
-            ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_seguimiento_cierre.jspf \
-            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java \
-            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java \
-            scripts/reclamos/validar_release_reclamos.sh \
-            .github/workflows/reclamo-prestacional-p0-contract.yml
-          git commit -m 'fix(reclamos): normaliza el estado inicial del alta'
-          git push origin HEAD:agent/normaliza-nuevo-reclamo-prestacional
+          set -o pipefail
+          {
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add \
+              ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp \
+              ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js \
+              ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_afiliado_diagnostico.jspf \
+              ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_prestaciones.jspf \
+              ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_seguimiento_cierre.jspf \
+              ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalP0ContractTest.java \
+              ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java \
+              scripts/reclamos/validar_release_reclamos.sh \
+              .github/workflows/reclamo-prestacional-p0-contract.yml
+            git status --short
+            git diff --cached --stat
+            git commit -m 'fix(reclamos): normaliza el estado inicial del alta'
+            git push origin HEAD:agent/normaliza-nuevo-reclamo-prestacional
+          } 2>&1 | tee /tmp/reclamo-initial-publish.log
+
+      - name: Upload publish diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reclamo-initial-publish-diagnostic
+          path: /tmp/reclamo-initial-publish.log
+          if-no-files-found: error
+          retention-days: 3
