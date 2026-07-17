@@ -239,6 +239,13 @@ if (portlet_name == null || portlet_name.trim().equals("")){
 				jQuery('#<portlet:namespace />cuil_titular').focus();
 				return false;
 			}
+			
+			if(!esCUITValida(cuil_titular)){
+				alert("CUIL inválido");
+				jQuery('#<portlet:namespace />cuil_titular').focus();
+				return false;
+			}
+				
 			if (trim(apellido).length == 0) {
 				alert("<liferay-ui:message key='apellido-obligatorio' />");
 				jQuery('#<portlet:namespace />apellido').focus();
@@ -319,8 +326,7 @@ if (portlet_name == null || portlet_name.trim().equals("")){
 					return false;
 				}
 			}
-	
-			if (nacionalidad == 10 && nroDoc > 60000000 ) {
+			if (nacionalidad == 10 && ((nroDoc > 60000000 && nroDoc < 70000000) || (nroDoc > 90000000 )  )) {
 				var opcion = confirm('Este afiliado tiene documento de extranjero, revise la nacionalidad por favor');
 				if (opcion == true) {
 				 return true;
@@ -328,7 +334,6 @@ if (portlet_name == null || portlet_name.trim().equals("")){
      			 return false;
 				}	 
 			}
-			
 		} catch (err) {
 			return false;
 		}

@@ -47,6 +47,9 @@ if (equipoInterdisciplinario != null &&  equipoInterdisciplinario.getAfiliado() 
 			}catch(Exception e){}
 			List<FirmaAutorizante> firmas = equipoInterdisciplinario.getFirmaAutorizante();
 			
+//DS Agregado el 11/06/2026 por licencia de Marianela			
+esFirmaAsistenteSocial = true;
+
 			if(firmas !=  null && !firmas.isEmpty()){
 				for (FirmaAutorizante  firma : firmas) {
 					if (firma.getTipoDictamen() == 2){ //asistente-social

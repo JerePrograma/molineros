@@ -946,4 +946,50 @@ public class BusquedaAfiliadoServiceImpl {
 
 		return 0;
 	}
+	
+	public String getCredencialAfiliadoPlan(String tipoDoc, String nroDoc) throws Exception {
+
+	    Connection con = null;
+	    CallableStatement stmt = null;
+	    ResultSet rs = null;
+
+	    String credencial = "";
+
+	    try {
+	        String sql = "select public.buscar_credencial_afiliado_plan_WS(?, ?) as credencial";
+
+	        con = ConnectionHelper.getConnection();
+	        stmt = con.prepareCall(sql);
+
+	        stmt.setString(1, tipoDoc);
+	        stmt.setString(2, nroDoc);
+
+	        rs = stmt.executeQuery();
+
+	        if (rs.next()) {
+	            credencial = rs.getString("credencial");
+	        }
+
+	        if (credencial == null) {
+	            credencial = "";
+	        }
+
+	    } catch (Exception e) {
+	        _log.error("Error consultando buscar_credencial_afiliado_plan");
+	        _log.error(e);
+	        throw e;
+	    } finally {
+	        try {
+	            if (rs != null) {
+	                rs.close();
+	            }
+	        } catch (Exception e) {
+	            _log.error("Error cerrando ResultSet getCredencialAfiliadoPlan", e);
+	        }
+
+	        ConnectionHelper.cerrar(stmt, con);
+	    }
+
+	    return credencial;
+	}
 }

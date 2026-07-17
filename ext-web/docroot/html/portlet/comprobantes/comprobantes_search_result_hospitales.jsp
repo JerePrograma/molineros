@@ -273,7 +273,8 @@ List<String> errores = (List<String>)request.getAttribute("errores");
 	 
 	    var url = '<portlet:renderURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/comprobantes/editar_liquidacion_entry" /></portlet:renderURL>';
           //  url += '&p_p_id=LIQ_1&p_p_lifecycle=0&p_p_state=exclusive&p_p_mode=view';
-	        url += "&origen=hospitales";
+           url += "&origen=";
+	        //url += "&origen=hospitales";
             url += '&id_liquidacion='+id_liquidacion;
             
         window.open(url,'mywindow') ;

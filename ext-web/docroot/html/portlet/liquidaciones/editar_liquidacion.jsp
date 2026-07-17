@@ -1066,7 +1066,6 @@ jQuery("#<portlet:namespace />cuit_entidad").blur(function(){ validaMontoOrigina
 		jQuery('#<portlet:namespace />buscandoPrestaciones').hide();
 
 		function <portlet:namespace />validarCampos() {		
-
 			/*
 			if (!validaMontoOriginalReclamo()){
 				jQuery("#<portlet:namespace />importe").focus();
@@ -1150,7 +1149,7 @@ jQuery("#<portlet:namespace />cuit_entidad").blur(function(){ validaMontoOrigina
 			//si cualquiera no es vacía, mando a guardar el encabezado solamente
 			<c:if test="<%= Validator.isNotNull(liquidacion) %>">
 				if (cuil != '' || inte != '' || id_prestacion != '' || cantidad != '' ||  importe != '') {														
-			</c:if>						
+			</c:if>	
 					var diaE = document.getElementById("<portlet:namespace />fechaEDia").value; 
 					var mesE = document.getElementById("<portlet:namespace />fechaEMes").value; //per.substring(0,per.indexOf("_"));
 					var anioE = document.getElementById("<portlet:namespace />fechaEAnio").value;//per.substring(per.indexOf("_")+1);
@@ -1196,8 +1195,7 @@ jQuery("#<portlet:namespace />cuit_entidad").blur(function(){ validaMontoOrigina
 						alert("El afiliado debe tener un plan vigente en la fecha de la prestación");
 						return false;
 					}
-					
-															
+
 					if (  (parseFloat(jQuery('#<portlet:namespace />cargo_prestadora').val()) != "0" || 
 							    parseFloat(jQuery('#<portlet:namespace />cargo_imesa').val()) != "0")
 							&&  jQuery('#<portlet:namespace />id_tercerizadora').val() != "PRS" //Se agrego 08/09/2025 a pedido S.Linska    
@@ -1242,6 +1240,7 @@ jQuery("#<portlet:namespace />cuit_entidad").blur(function(){ validaMontoOrigina
 						jQuery('#<portlet:namespace />importe').focus();
 						return false;
 					}
+					
 					document.getElementById("<portlet:namespace />tercerizado_cab").disabled = false;
 					if (jQuery("#<portlet:namespace />incapacidad_af").val() == '1') {				
 						<portlet:namespace />validarTopesDiscapacidad();
@@ -1403,10 +1402,9 @@ jQuery("#<portlet:namespace />cuit_entidad").blur(function(){ validaMontoOrigina
 
 		//Guarda la pantalla como una liquidación, no haced caso del nombre.
 		function <portlet:namespace />validarTopes() {
-			
 			<% if ( !(Validator.isNotNull(liquidacion) && liquidacion.getId_liquidacion()  != 0)  && !esView 	) { 	%>
 				<portlet:namespace />habilitaControlBusquedaAfiliado(true);						
-			<%}%>			
+			<%}%>
 			<portlet:namespace />desactivaControlesPrestacionDesdeReclamo(false);
 
 			document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= liquidacion == null || (liquidacion != null && liquidacion.getId_liquidacion() == 0) ? Constants.ADD : Constants.UPDATE %>";

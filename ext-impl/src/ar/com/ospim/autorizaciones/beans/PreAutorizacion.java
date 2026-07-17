@@ -80,6 +80,7 @@ public class PreAutorizacion implements Serializable{
 	private boolean ART;
 	private Prestador prestador;
 	private int idPedidoApp;
+	private Integer nroAutorizacionPrestacional;
 	
 	public Integer getDiasParaAlertaGerencial() {
 		return diasParaAlertaGerencial;
@@ -192,6 +193,10 @@ public class PreAutorizacion implements Serializable{
 		}catch(Exception e) {}   
 		preAut.setPrestador(prestador);
 		preAut.setIdPedidoApp(rs.getInt("id_pedido_app"));
+		
+		try {
+			preAut.setNroAutorizacionPrestacional(rs.getInt("nro_autorizacion"));
+		}catch(Exception e) {} 
 		return preAut;
 	}
 	
@@ -727,6 +732,14 @@ public class PreAutorizacion implements Serializable{
 
 	public void setIdPedidoApp(int idPedidoApp) {
 		this.idPedidoApp = idPedidoApp;
+	}
+
+	public Integer getNroAutorizacionPrestacional() {
+		return nroAutorizacionPrestacional;
+	}
+
+	public void setNroAutorizacionPrestacional(Integer nroAutorizacionPrestacional) {
+		this.nroAutorizacionPrestacional = nroAutorizacionPrestacional;
 	}
 	
 	

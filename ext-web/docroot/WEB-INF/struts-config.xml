@@ -5479,6 +5479,9 @@
 				name="portlet.autorizaciones.situacionmedica.editar_situacionmedica_entry"
 				path="portlet.autorizaciones.situacionmedica.editar_situacionmedica_entry" />
 			<forward name="portlet.autorizaciones.error" path="portlet.autorizaciones.error" />
+			
+			<forward name="portlet.autorizaciones.patologias.editar_registro_situacionmedica_entry_imagen"
+         path="portlet.autorizaciones.patologias.editar_registro_situacionmedica_entry" />
 		</action>
 
 		<action path="/autorizaciones/consulta_popup_situmedica"
@@ -6603,8 +6606,7 @@
       </action>
       
       <action path="/tesoreria/facturacion_precios_verificar" type="ar.com.ospim.tesoreria.action.PrecioPlanSuperadorJSONAction"/>
-       <action path="/tesoreria/facturacion_lista_ajustes" forward="portlet.tesoreria.facturacion.listaajustes" />     
-       
+      <action path="/tesoreria/facturacion_lista_ajustes" forward="portlet.tesoreria.facturacion.listaajustes" />     
        
       <action path="/tesoreria/facturacion_ajustes" type="ar.com.ospim.tesoreria.action.AjustePlanSuperadorAction">
         <forward name="portlet.tesoreria.facturacion.listaajustes" path="portlet.tesoreria.facturacion.listaajustes" />
@@ -6612,16 +6614,20 @@
 		<forward name="portlet.tesoreria.facturacion.listaajustes.parentescos" path="portlet.tesoreria.facturacion.listaajustes.parentescos" />
 		<forward name="portlet.tesoreria.facturacion.listaajustes.planes" path="portlet.tesoreria.facturacion.listaajustes.planes" />
 		<forward name="portlet.tesoreria.facturacion.listaajustes.localidades" path="portlet.tesoreria.facturacion.listaajustes.localidades" />
-		<forward name="portlet.tesoreria.facturacion.listaprecios.cuiles" path="portlet.tesoreria.facturacion.listaprecios.cuiles" />
+		<forward name="portlet.tesoreria.facturacion.listaajustes.cuiles" path="portlet.tesoreria.facturacion.listaajustes.cuiles" />
 		<forward name="portlet.tesoreria.facturacion.listaajustes.result" path="portlet.tesoreria.facturacion.listaajustes.result" />
 		<forward name="portlet.tesoreria.error" path="portlet.tesoreria.error" />
       </action>
+      
 <!-- FIN FACTURACION OSPIM -->  
 
 	<action path="/afiliados/solicitud_afiliacion" type="ar.com.ospim.afiliados.action.SolicitudAfiliacionAction">
 	    <forward name="portlet.afiliados.seguimiento.form" path="portlet.afiliados.seguimiento.form" />
 	    <forward name="portlet.afiliados.seguimiento.list" path="portlet.afiliados.seguimiento.list" />
 	    <forward name="portlet.afiliados.formulario.detalle" path="portlet.afiliados.formulario.detalle" />
+	    <forward name="portlet.afiliados.formulario.cotizar" path="portlet.afiliados.formulario.cotizar" />
+	    <forward name="portlet.afiliados.formulario.cotizar.ajustes" path="portlet.afiliados.formulario.cotizar.ajustes" />
+	    <forward name="portlet.afiliados.formulario.cotizar.ajustes.asignados" path="portlet.afiliados.formulario.cotizar.ajustes.asignados" />
 	</action>
 	
 	<action path="/afiliados/vendedor" type="ar.com.ospim.afiliados.action.VendedorAction">
@@ -6968,6 +6974,7 @@
             <forward name="portlet.prestadores.error" path="portlet.prestadores.error" />
         </action>
 
+<<<<<<< .mine
 		<!-- Compras -->
 
 		<action
@@ -7235,4 +7242,21 @@
 		</action>
     </action-mappings>
 
+||||||| .r7265
+ </action-mappings>
+  
+=======
+		<action path="/tesoreria/buscar_saldo_diario_cuentas_bancarias" type="ar.com.ospim.tesoreria.action.BuscarSaldoDiarioCuentasBancariasAction">
+			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" />
+			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" />
+		</action>
+
+<action path="/autorizaciones/upload_imagenes_situacionmedica"
+        type="ar.com.ospim.autorizaciones.action.UploadImagenesSituacionMedicaAction">
+    <forward name="portlet.autorizaciones.patologias.editar_registro_situacionmedica_entry_imagen"
+             path="portlet.autorizaciones.situacionmedica.editar_situacionmedica_entry" />
+</action>
+ </action-mappings>
+  
+>>>>>>> .r7295
 </struts-config>

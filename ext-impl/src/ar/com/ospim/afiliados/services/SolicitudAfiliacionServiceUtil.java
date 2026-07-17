@@ -4,6 +4,10 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import ar.com.ospim.afiliados.beans.Afiliado;
+import ar.com.ospim.tesoreria.beans.AjustePlanSuperador;
+import ar.com.ospim.tesoreria.beans.PrecioPlanSuperador;
+
 public class SolicitudAfiliacionServiceUtil {
 
     private static SolicitudAfiliacionServiceUtil instance = null;
@@ -139,5 +143,25 @@ public class SolicitudAfiliacionServiceUtil {
     public static void generarLinkDdjjSolicitud(Long idSolicitud) throws Exception {
         getInstance();
         SolicitudAfiliacionServiceImpl.generarLinkDdjjSolicitud(idSolicitud);
+    }
+    
+    public static List<Afiliado> getGrupoFamiliarDDJJ(Long idSolicitud) throws Exception {
+        getInstance();
+        return SolicitudAfiliacionServiceImpl.getGrupoFamiliarDDJJ(idSolicitud);
+    }
+    
+    public static void saveCotizacion(long idSolicitud, List<PrecioPlanSuperador>precios,List<AjustePlanSuperador>ajustes,String usuario) throws Exception {
+    	SolicitudAfiliacionServiceImpl.deleteCotizacion(idSolicitud);
+        SolicitudAfiliacionServiceImpl.saveCotizacion(idSolicitud,precios,ajustes,usuario);
+    }
+    
+    public static List<AjustePlanSuperador> getCotizacionAjustesById(Long idSolicitud) throws Exception {
+        getInstance();
+        return SolicitudAfiliacionServiceImpl.getCotizacionAjustesById(idSolicitud);
+    }
+    
+    public static List<PrecioPlanSuperador> getCotizacionPreciosById(Long idSolicitud) throws Exception {
+        getInstance();
+        return SolicitudAfiliacionServiceImpl.getCotizacionPreciosById(idSolicitud);
     }
 }

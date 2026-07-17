@@ -1,12 +1,16 @@
 package ar.com.ospim.afiliados.services;
 
 import java.math.BigDecimal;
+import java.sql.Array;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -388,6 +392,110 @@ public class AfiliacionesServiceImpl {
     	    }
     	}
     
+    public Map<String, Object> cotizarPlanesLuma(
+    	    Integer edad,
+    	    String provincia,
+    	    Boolean tienePareja,
+    	    Integer edadPareja,
+    	    Boolean tieneHijos,
+    	    Integer cantidadHijos21,
+    	    Integer cantidadHijos25
+    	) throws Exception {
+
+    	    List<String> grupoFamiliar = new ArrayList<String>();
+
+    	    grupoFamiliar.add("1-" + edad);
+
+    	    if (Boolean.TRUE.equals(tienePareja) && edadPareja != null) {
+    	        grupoFamiliar.add("1-" + edadPareja);
+    	    }
+
+    	    int h21 = cantidadHijos21 == null ? 0 : cantidadHijos21.intValue();
+    	    int h25 = cantidadHijos25 == null ? 0 : cantidadHijos25.intValue();
+
+    	    for (int i = 0; i < h21; i++) {
+    	        grupoFamiliar.add("2-10");
+    	    }
+
+    	    for (int i = 0; i < h25; i++) {
+    	        grupoFamiliar.add("2-23");
+    	    }
+
+    	    //ID que vienen de la tabla plan
+    	    BigDecimal precioLuma400 = cotizarPlan(62, null, "2026-06-10", grupoFamiliar);
+    	    BigDecimal precioLuma200 = cotizarPlan(61, null, "2026-06-10", grupoFamiliar);
+
+    	    Map<String, Object> out = new HashMap<String, Object>();
+
+    	    List<Map<String, Object>> planes = new ArrayList<Map<String, Object>>();
+
+    	    Map<String, Object> luma200 = new HashMap<String, Object>();
+    	    luma200.put("id", "200");
+    	    luma200.put("nombre", "LUMA 200");
+    	    luma200.put("precioBase", precioLuma200);
+
+    	    Map<String, Object> luma400 = new HashMap<String, Object>();
+    	    luma400.put("id", "400");
+    	    luma400.put("nombre", "LUMA 400");
+    	    luma400.put("precioBase", precioLuma400);
+    	    luma400.put("destacado", true);
+    	    luma400.put("badge", "MÁS ELEGIDO");
+
+    	    planes.add(luma200);
+    	    planes.add(luma400);
+
+    	    out.put("planes", planes);
+    	    out.put("grupoFamiliar", grupoFamiliar);
+
+    	    return out;
+    	}
+
+    private BigDecimal cotizarPlan(
+    	    Integer idPlan,
+    	    Integer idProvincia,
+    	    String fechaVigente,
+    	    List<String> grupoFamiliar
+    	) throws Exception {
+
+    	    Connection con = null;
+    	    PreparedStatement ps = null;
+    	    ResultSet rs = null;
+
+    	    try {
+    	        con = ConnectionHelper.getConnection();
+
+    	        ps = con.prepareStatement(
+    	            "select coalesce(sum(coalesce(importe_bruto, 0) + coalesce(ajuste, 0)), 0) as total " +
+    	            "from facturacion.planes_superadores_cotizar_v01(?, ?, ?, ?::text[])"
+    	        );
+
+    	        ps.setInt(1, idPlan);
+
+    	        if (idProvincia == null) {
+    	            ps.setNull(2, Types.INTEGER);
+    	        } else {
+    	            ps.setInt(2, idProvincia.intValue());
+    	        }
+
+    	        ps.setDate(3, java.sql.Date.valueOf(fechaVigente));
+
+    	        ps.setString(4, textArray(grupoFamiliar));
+
+    	        rs = ps.executeQuery();
+
+    	        if (rs.next()) {
+    	            return rs.getBigDecimal("total");
+    	        }
+
+    	        return BigDecimal.ZERO;
+
+    	    } finally {
+    	        closeQuietly(rs);
+    	        closeQuietly(ps);
+    	        closeQuietly(con);
+    	    }
+    	}
+    	
     private void setNullableString(PreparedStatement ps, int idx, String value) throws Exception {
         if (value == null || value.trim().isEmpty()) ps.setNull(idx, Types.VARCHAR);
         else ps.setString(idx, value.trim());
@@ -434,5 +542,33 @@ public class AfiliacionesServiceImpl {
         try {
             if (ps != null) ps.close();
         } catch (Exception ignored) {}
+    }
+    
+    private String textArray(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return "{}";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+
+        for (int i = 0; i < values.size(); i++) {
+            if (i > 0) {
+                sb.append(",");
+            }
+
+            String value = values.get(i);
+
+            if (value == null) {
+                sb.append("NULL");
+            } else {
+                sb.append("\"");
+                sb.append(value.replace("\\", "\\\\").replace("\"", "\\\""));
+                sb.append("\"");
+            }
+        }
+
+        sb.append("}");
+        return sb.toString();
     }
 }

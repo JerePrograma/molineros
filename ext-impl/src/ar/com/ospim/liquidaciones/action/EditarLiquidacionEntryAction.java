@@ -328,6 +328,9 @@ public class EditarLiquidacionEntryAction extends PortletAction {
 						if(liquidacion.getImporte()==null) {
 							liquidacion.setImporte(liq.getImporte());
 						}
+						if(liquidacion.getPeriodo()==null){
+							liquidacion.setPeriodo(liq.getPeriodo());
+						}
 					}
 					if(lPrestacion.getCargoPrestadora()==null) lPrestacion.setCargoPrestadora(BigDecimal.ZERO);
 					lPrestacion.setId_prestacion(0);

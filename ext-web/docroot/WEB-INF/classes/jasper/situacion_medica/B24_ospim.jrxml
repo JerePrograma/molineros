@@ -1,0 +1,865 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="B24_ospim" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="584"/>
+	<parameter name="ID_SITUACION" class="java.lang.String"/>
+	<parameter name="LOGO_OSPIM" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[SELECT
+    sm.id AS id_situacion,
+    form.formulario_nro,
+    current_date AS fecha_impresion,
+
+    sm.cuil_titular,
+    sm.inte,
+    sm.tipo_situ_medica,
+    sm.vigen_desde,
+    sm.vigen_hasta,
+    sm.detalle_tipo_situ,
+
+    a.apellido,
+    a.nombre,
+    a.documento_tipo,
+    a.docu_numero,
+    a.sexo,
+    a.naci_fecha,
+
+    COALESCE(a.nro_afiliado::varchar, a.id_ospim::varchar, '') || '/' || sm.inte::varchar AS afiliado_nro,
+
+    p.descripcion AS plan_descripcion,
+
+    TRIM(
+        COALESCE(d.calle, '') || ' ' ||
+        COALESCE(d.numero, '') ||
+        CASE WHEN d.piso IS NOT NULL AND d.piso <> '' THEN ' Piso ' || d.piso ELSE '' END ||
+        CASE WHEN d.depto IS NOT NULL AND d.depto <> '' THEN ' Depto ' || d.depto ELSE '' END
+    ) AS domicilio,
+
+    COALESCE(d.localidad::varchar, '') AS localidad,
+
+    TRIM(
+        COALESCE(t.codigo_area, '') ||
+        CASE WHEN t.codigo_area IS NOT NULL AND t.codigo_area <> '' THEN '-' ELSE '' END ||
+        COALESCE(t.numero, '')
+    ) AS telefono
+
+FROM public.afi_situ_medica sm
+
+LEFT JOIN public.afi_situ_medica_formulario form
+       ON form.id_situ_medica = sm.id
+
+LEFT JOIN public.afiliado a
+       ON a.cuil_titular = sm.cuil_titular
+      AND a.inte = sm.inte
+
+LEFT JOIN public.afi_plan ap
+       ON ap.cuil_titular = sm.cuil_titular
+      AND ap.inte = sm.inte
+      AND ap.vigen_hasta IS NULL
+
+LEFT JOIN public.plan p
+       ON p.id_plan = ap.id_plan
+
+LEFT JOIN (
+    SELECT DISTINCT ON (cuil_titular, inte)
+        cuil_titular,
+        inte,
+        id_domicilio,
+        calle,
+        numero,
+        piso,
+        depto,
+        localidad
+    FROM public.afi_domicilio
+    WHERE baja_fecha IS NULL
+    ORDER BY cuil_titular, inte, vigen_desde DESC, alta_fecha DESC, id_domicilio DESC
+) d
+       ON d.cuil_titular = sm.cuil_titular
+      AND d.inte = sm.inte
+
+LEFT JOIN (
+    SELECT DISTINCT ON (cuil_titular, inte)
+        cuil_titular,
+        inte,
+        id_telefono,
+        codigo_area,
+        numero
+    FROM public.afi_telefono
+    WHERE baja_fecha IS NULL
+    ORDER BY cuil_titular, inte, vigen_desde DESC, id_telefono DESC
+) t
+       ON t.cuil_titular = sm.cuil_titular
+      AND t.inte = sm.inte
+
+WHERE sm.id = CAST($P{ID_SITUACION} AS integer)]]>
+	</queryString>
+	<field name="id_situacion" class="java.lang.Integer"/>
+	<field name="formulario_nro" class="java.lang.Integer"/>
+	<field name="fecha_impresion" class="java.sql.Date"/>
+	<field name="cuil_titular" class="java.lang.String"/>
+	<field name="inte" class="java.lang.Integer"/>
+	<field name="tipo_situ_medica" class="java.lang.Integer"/>
+	<field name="vigen_desde" class="java.sql.Date"/>
+	<field name="vigen_hasta" class="java.sql.Date"/>
+	<field name="detalle_tipo_situ" class="java.lang.String"/>
+	<field name="apellido" class="java.lang.String"/>
+	<field name="nombre" class="java.lang.String"/>
+	<field name="documento_tipo" class="java.lang.String"/>
+	<field name="docu_numero" class="java.lang.String"/>
+	<field name="sexo" class="java.lang.String"/>
+	<field name="naci_fecha" class="java.sql.Date"/>
+	<field name="afiliado_nro" class="java.lang.String"/>
+	<field name="plan_descripcion" class="java.lang.String"/>
+	<field name="domicilio" class="java.lang.String"/>
+	<field name="localidad" class="java.lang.String"/>
+	<field name="telefono" class="java.lang.String"/>
+	<detail>
+		<band height="699">
+			<rectangle>
+				<reportElement x="0" y="341" width="555" height="117"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="4" y="19" width="240" height="14"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Entrega Mensual]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="270" y="12" width="92" height="16"/>
+				<textElement>
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Formulario Nro:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="360" y="12" width="70" height="16"/>
+				<textElement>
+					<font size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{formulario_nro} == null ? "" : String.valueOf($F{formulario_nro})]]></textFieldExpression>
+			</textField>
+			<image>
+				<reportElement x="438" y="0" width="105" height="45"/>
+				<imageExpression class="java.io.InputStream"><![CDATA[Thread.currentThread().getContextClassLoader().getResourceAsStream($P{LOGO_OSPIM})]]></imageExpression>
+			</image>
+			<rectangle>
+				<reportElement x="438" y="50" width="105" height="20"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="442" y="54" width="35" height="12"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Fecha:]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="480" y="54" width="58" height="12"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[$F{fecha_impresion}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="53" width="150" height="15"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[DATOS DEL PACIENTE:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="78" width="90" height="13"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Apellido y Nombre:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="92" y="78" width="210" height="13"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[(
+($F{sexo} == null ? "" : $F{sexo}.substring(0,1).toUpperCase())
++ " " +
+($F{nombre} == null || $F{nombre}.length() < 2 ? "" : $F{nombre}.substring(0,2).toUpperCase())
++ " " +
+($F{apellido} == null || $F{apellido}.length() < 2 ? "" : $F{apellido}.substring(0,2).toUpperCase())
++ " " +
+($F{naci_fecha} == null ? "" : new java.text.SimpleDateFormat("ddMMyyyy").format($F{naci_fecha}))
+)]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="96" width="70" height="13"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Afiliado Nº:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="92" y="96" width="100" height="13"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{afiliado_nro}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="220" y="96" width="60" height="13"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[D.N.I. Nº:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="282" y="96" width="95" height="13"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{docu_numero}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="390" y="96" width="35" height="13"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Plan:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="430" y="96" width="120" height="13"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{plan_descripcion}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="114" width="45" height="13"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Titular]]></text>
+			</staticText>
+			<ellipse>
+				<reportElement x="48" y="112" width="16" height="16"/>
+			</ellipse>
+			<textField>
+				<reportElement x="52" y="113" width="8" height="13"/>
+				<textElement textAlignment="Center">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{inte} != null && $F{inte}.intValue() == 0 ? "X" : ""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="70" y="114" width="50" height="13"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Familiar]]></text>
+			</staticText>
+			<ellipse>
+				<reportElement x="122" y="112" width="16" height="16"/>
+			</ellipse>
+			<textField>
+				<reportElement x="126" y="113" width="8" height="13"/>
+				<textElement textAlignment="Center">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{inte} != null && $F{inte}.intValue() != 0 ? "X" : ""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="155" y="114" width="95" height="13"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Fecha Nacimiento:]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="252" y="114" width="75" height="13"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[$F{naci_fecha}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="345" y="114" width="35" height="13"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Sexo:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="382" y="114" width="15" height="13"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[M]]></text>
+			</staticText>
+			<ellipse>
+				<reportElement x="398" y="112" width="16" height="16"/>
+			</ellipse>
+			<textField>
+				<reportElement x="402" y="113" width="8" height="13"/>
+				<textElement textAlignment="Center">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{sexo} != null && $F{sexo}.equalsIgnoreCase("M") ? "X" : ""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="420" y="114" width="15" height="13"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[F]]></text>
+			</staticText>
+			<ellipse>
+				<reportElement x="435" y="112" width="16" height="16"/>
+			</ellipse>
+			<textField>
+				<reportElement x="439" y="113" width="8" height="13"/>
+				<textElement textAlignment="Center">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{sexo} != null && $F{sexo}.equalsIgnoreCase("F") ? "X" : ""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="132" width="60" height="13"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Domicilio:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="64" y="132" width="190" height="13"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{domicilio}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="270" y="132" width="60" height="13"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Localidad:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="332" y="132" width="95" height="13"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{localidad}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="445" y="132" width="25" height="13"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Tel:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="472" y="132" width="78" height="13"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{telefono}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement x="26" y="170" width="475" height="15"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="33" y="173" width="67" height="12"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Estado Clínico:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="11" y="324" width="250" height="12"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Drogas en uso]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="481" width="220" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[ESQUEMA DE TRATAMIENTO:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="2" y="662" width="350" height="12"/>
+				<textElement>
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[Institución donde asistió al paciente: ....................................................................................................]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="613" width="200" height="14"/>
+				<textElement>
+					<font size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[DATOS DEL MEDICO TRATANTE]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="2" y="629" width="350" height="12"/>
+				<textElement>
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[Apellido y Nombre: ....................................................................................]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement x="385" y="606" width="170" height="76"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="390" y="665" width="100" height="12"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Firma y Sello]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="2" y="689" width="120" height="10"/>
+				<textElement>
+					<font size="6" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Emitido por: ospim]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="2" y="645" width="350" height="12"/>
+				<textElement>
+					<font size="7"/>
+				</textElement>
+				<text><![CDATA[Matrícula MP: ..................................  MN:  ..................................................]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="4" y="4" width="240" height="14"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[PROGRAMA B24 CON COBERTURA 100%]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="152" y="172" width="285" height="12"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[A1        A2        A3        B1        B2        C1        C2        C3]]></text>
+			</staticText>
+			<line>
+				<reportElement x="539" y="341" width="1" height="117"/>
+			</line>
+			<staticText>
+				<reportElement x="33" y="193" width="194" height="12"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Vacunas aplicadas en los últimos meses:]]></text>
+			</staticText>
+			<ellipse>
+				<reportElement x="260" y="208" width="16" height="16"/>
+			</ellipse>
+			<staticText>
+				<reportElement x="245" y="211" width="10" height="12"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Si]]></text>
+			</staticText>
+			<ellipse>
+				<reportElement x="302" y="208" width="16" height="16"/>
+			</ellipse>
+			<staticText>
+				<reportElement x="285" y="211" width="15" height="12"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[No]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="345" y="211" width="194" height="12"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Numero de Expediente:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="33" y="225" width="194" height="12"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Carga Viral:]]></text>
+			</staticText>
+			<line>
+				<reportElement x="170" y="500" width="1" height="85"/>
+			</line>
+			<line>
+				<reportElement x="0" y="537" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement x="292" y="500" width="1" height="85"/>
+			</line>
+			<line>
+				<reportElement x="340" y="500" width="1" height="85"/>
+			</line>
+			<staticText>
+				<reportElement x="2" y="519" width="11" height="15"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[1.]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement x="0" y="500" width="555" height="85"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="344" y="502" width="72" height="16"/>
+				<textElement textAlignment="Center">
+					<font size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[CONSUMO DIARIO EN UNIDADES]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="174" y="505" width="58" height="10"/>
+				<textElement textAlignment="Center">
+					<font size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[FORMA]]></text>
+			</staticText>
+			<line>
+				<reportElement x="235" y="500" width="1" height="85"/>
+			</line>
+			<line>
+				<reportElement x="0" y="516" width="555" height="1"/>
+			</line>
+			<staticText>
+				<reportElement x="424" y="502" width="70" height="16"/>
+				<textElement textAlignment="Center">
+					<font size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[DURACIÓN DEL TRATAMIENTO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="501" y="502" width="50" height="16"/>
+				<textElement textAlignment="Center">
+					<font size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[CANTIDAD DE ENVASES]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="238" y="505" width="50" height="10"/>
+				<textElement textAlignment="Center">
+					<font size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[CONTENIDO]]></text>
+			</staticText>
+			<line>
+				<reportElement x="498" y="500" width="1" height="85"/>
+			</line>
+			<staticText>
+				<reportElement x="296" y="505" width="40" height="10"/>
+				<textElement textAlignment="Center">
+					<font size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[POTENCIA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="2" y="542" width="11" height="14"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[2.]]></text>
+			</staticText>
+			<line>
+				<reportElement x="420" y="500" width="1" height="85"/>
+			</line>
+			<line>
+				<reportElement x="0" y="559" width="555" height="1"/>
+			</line>
+			<staticText>
+				<reportElement x="5" y="505" width="160" height="10"/>
+				<textElement textAlignment="Center">
+					<font size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[PRINCIPIO ACTIVO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="2" y="563" width="11" height="18"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[3.]]></text>
+			</staticText>
+			<line>
+				<reportElement x="0" y="538" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement x="169" y="500" width="1" height="85"/>
+			</line>
+			<line>
+				<reportElement x="292" y="500" width="1" height="85"/>
+			</line>
+			<line>
+				<reportElement x="340" y="500" width="1" height="85"/>
+			</line>
+			<rectangle>
+				<reportElement x="26" y="244" width="475" height="60"/>
+			</rectangle>
+			<staticText>
+				<reportElement x="33" y="247" width="122" height="12"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Esquema de tratamiento:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="67" y="342" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[ABACAVIR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="43" y="197" width="0" height="12"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Estado Clínico:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="60" y="353" width="62" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[AMPRENAVIR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="255" y="342" width="74" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[HIDROXUREA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="437" y="342" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[TENOFOVIR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="61" y="363" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[ATAZANAVIR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="64" y="373" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[DARUNAVIR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="66" y="405" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[EFAVIRENZ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="63" y="384" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[DELAVIROIN]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="62" y="395" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[DIDANOSINA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="63" y="416" width="69" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[ENFUVIRTIDE]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="66" y="426" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[ETRAVIRINA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="79" y="447" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[FTC]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="56" y="436" width="84" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[FOSAMPRENAVIR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="251" y="436" width="84" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[SANQUINAVIR RF]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="258" y="373" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[MARAVIROC]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="256" y="405" width="64" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[RALTEGRAVIR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="259" y="383" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[NELFINAVIR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="262" y="447" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[STAVUDINA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="256" y="352" width="62" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[LAMIVUDINA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="259" y="426" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[SAQUINAVIR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="259" y="394" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[NEVIRAPINA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="258" y="363" width="59" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[LOPINAVIRA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="262" y="416" width="57" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[RITONAVIR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="433" y="353" width="62" height="12"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[ZALCITABINA]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement x="1" y="1" width="244" height="34"/>
+			</rectangle>
+			<line>
+				<reportElement x="0" y="351" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="362" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="372" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="382" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="393" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="404" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="414" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="425" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="435" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement x="0" y="445" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement x="184" y="341" width="1" height="117"/>
+			</line>
+			<line>
+				<reportElement x="385" y="341" width="1" height="117"/>
+			</line>
+			<staticText>
+				<reportElement x="2" y="520" width="11" height="14"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[1.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="3" y="4" width="240" height="14"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[PROGRAMA B24 CON COBERTURA 100%]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="3" y="22" width="240" height="14"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Entrega Mensual]]></text>
+			</staticText>
+			<line>
+				<reportElement x="201" y="341" width="1" height="117"/>
+			</line>
+			<line>
+				<reportElement x="401" y="341" width="1" height="117"/>
+			</line>
+			<staticText>
+				<reportElement x="33" y="210" width="194" height="12"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Notificacion Programa Nacional de SIDA:]]></text>
+			</staticText>
+		</band>
+	</detail>
+</jasperReport>

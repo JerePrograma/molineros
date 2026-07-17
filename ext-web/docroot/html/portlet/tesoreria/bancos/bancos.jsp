@@ -44,6 +44,13 @@
 				row2.addText("Canje de cheques propios", rowURL2);
 					resultRows.add(row2);
 			
+				ResultRow row3 = new ResultRow(1, 1, 3);
+				PortletURL rowURL3 = renderResponse.createRenderURL();
+				rowURL3.setWindowState(WindowState.MAXIMIZED);
+				rowURL3.setParameter("struts_action","/" + portlet_name + "/buscar_saldo_diario_cuentas_bancarias");
+				rowURL3.setParameter("cmd", "inicial");
+				row3.addText("Saldo diario cuentas bancarias para tablero de control", rowURL3);
+				resultRows.add(row3);		
 			
 %>
 

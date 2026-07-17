@@ -3173,4 +3173,74 @@ public class TraeListasServiceImpl {
 		return lista;
 	}
 	
+	
+	 public List<Plan> getPlanesFacturables() {
+			Connection con = null;
+			List<Plan> planes = null;
+			CallableStatement stmt = null;
+			try {
+				String sql = "{call trae_planes_facturables()}";
+				con = ConnectionHelper.getConnection();
+				stmt = con.prepareCall(sql.toString());
+				ResultSet rs = stmt.executeQuery();
+				planes = new ArrayList<Plan>();
+				while (rs.next()) {
+					Plan plan = new Plan(rs.getInt("id_plan"), rs
+							.getString("descripcion"),rs.getBoolean("uoma"),rs.getBoolean("ospim"),rs.getBoolean("amtima"),rs.getBoolean("molinero"));
+					planes.add(plan);
+				}
+			} catch (Exception e) {
+				_log.debug(e);
+			} finally {
+				ConnectionHelper.cerrar(stmt, con);
+			}
+			return planes;
+	}
+	 
+	 public List<Parentesco> getParentescosFacturables() {
+			
+			Connection con = null;
+			List<Parentesco> listaParent = new ArrayList<Parentesco>();
+			CallableStatement stmt = null;
+			
+			try {
+				String sql = "{call trae_parentescos_facturables()}";
+				con = ConnectionHelper.getConnection();
+				stmt = con.prepareCall(sql.toString());
+				ResultSet rs = stmt.executeQuery();
+				
+				while (rs.next()) {
+					Parentesco par = Parentesco.getMapping(rs,"par_");
+					listaParent.add(par);
+				}
+			} catch (Exception e) {
+				_log.debug("error al traer parentescos facturables", e);
+			} finally {
+				ConnectionHelper.cerrar(stmt, con);
+			}
+			return listaParent;
+	}
+	 
+	 public List<Provincia> getProvinciasFacturables() {
+			Connection con = null;
+			List<Provincia> listaProvincias = null;
+			CallableStatement stmt = null;
+			Provincia provincia = null;
+			try {
+				String sql = "{call trae_provincias_facturables()}";
+				con = ConnectionHelper.getConnection();
+				stmt = con.prepareCall(sql.toString());
+				ResultSet rs = stmt.executeQuery();
+				listaProvincias = new ArrayList<Provincia>();
+				while (rs.next()) {
+					provincia = Provincia.getMapping(rs);
+					listaProvincias.add(provincia);
+				}
+			} catch (Exception e) {
+				_log.debug(e);
+			} finally {
+				ConnectionHelper.cerrar(stmt, con);
+			}
+			return listaProvincias;
+	} 
 }

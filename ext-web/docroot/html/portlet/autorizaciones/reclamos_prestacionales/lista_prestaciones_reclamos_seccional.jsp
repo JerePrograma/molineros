@@ -225,8 +225,14 @@ function editarPrestacion(idRegistro,codigoPrestacion, tipoEdicion ){
 		url = url+'&idRegistro='+idRegistro +'&tipoEdicion='+tipoEdicion +'&codigoPrestacion='+  codigoPrestacion +'&estadoAprobacion='+tipoEdicion ;
 		url = url + params;
 		
-		
-		jQuery("#<portlet:namespace />datos_edicion_prestacion").load(url);		
+		//se modifica para que cargue plan y tercerizadora respecto a la fecha de prestacion
+		jQuery("#<portlet:namespace />datos_edicion_prestacion").load(url, function(){
+
+			setTimeout(function(){
+				<portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
+			}, 300);
+
+		});			
 	}else{
 
 		valor=document.getElementById("<portlet:namespace />tipoaccionprestacion").value;

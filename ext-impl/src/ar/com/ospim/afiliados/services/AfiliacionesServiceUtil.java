@@ -88,4 +88,24 @@ public class AfiliacionesServiceUtil {
 		) throws Exception {
 		    getInstance().crearDdjjPorSolicitud(idSolicitud, token, ddjjUrl);
 		}
+  
+  public static Map<String, Object> cotizarPlanesLuma(
+		    Integer edad,
+		    String provincia,
+		    Boolean tienePareja,
+		    Integer edadPareja,
+		    Boolean tieneHijos,
+		    Integer cantidadHijos21,
+		    Integer cantidadHijos25
+		) throws Exception {
+		    return getInstance().cotizarPlanesLuma(
+		        edad,
+		        provincia,
+		        tienePareja,
+		        edadPareja,
+		        tieneHijos,
+		        cantidadHijos21,
+		        cantidadHijos25
+		    );
+		}
 }

@@ -104,7 +104,58 @@ public class WSAPPSController {
 
 		return new ModelAndView("jsonView", model);
 	}
+	
+	@RequestMapping(value = "/AFILIADO_SEARCH_PLAN", method = RequestMethod.GET)
+	protected ModelAndView validaAfiliadoSearchPlan(
+	        @RequestParam("tipoDoc") String tipoDoc,
+	        @RequestParam("nroDoc") String nroDoc,
+	        HttpServletRequest request) throws Exception {
 
+	    Map<String, String> model = new HashMap<String, String>();
+
+	    String credencial = "";
+
+	    if (!validarIngresoPlan(tipoDoc, nroDoc)) {
+	        model.put("estado", "DATOS INGRESADOS NO VALIDOS");
+	        model.put("credencial", "");
+	        return new ModelAndView("jsonView", model);
+	    }
+
+	    try {
+
+	        credencial = BusquedaAfiliadoServiceUtil.getCredencialAfiliadoPlan(tipoDoc, nroDoc);
+
+	        if (credencial != null && credencial.trim().length() > 0) {
+	            model.put("estado", "HABILITADO");
+	            model.put("credencial", credencial);
+	        } else {
+	            model.put("estado", "INHABILITADO");
+	            model.put("credencial", "");
+	        }
+
+	    } catch (Exception e) {
+	        _log.error("AFILIADO_PLAN ERROR");
+	        _log.error(e);
+	        model.put("estado", "ERROR AL CONSULTAR AFILIADO");
+	        model.put("credencial", "");
+	    }
+
+	    return new ModelAndView("jsonView", model);
+	}
+	
+	public boolean validarIngresoPlan(String tipoDoc, String nroDoc) {
+
+	    if (tipoDoc == null || tipoDoc.trim().length() == 0 || "null".equalsIgnoreCase(tipoDoc.trim())) {
+	        return false;
+	    }
+
+	    if (nroDoc == null || nroDoc.trim().length() == 0 || "null".equalsIgnoreCase(nroDoc.trim())) {
+	        return false;
+	    }
+
+	    return true;
+	}
+	
 	public boolean validarIngreso(String tipoDoc,
 			String nroDoc,String fecha) {
 		/*

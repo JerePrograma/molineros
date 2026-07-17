@@ -1,19 +1,27 @@
 package ar.com.ospim.afiliados.action;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-
 import java.util.Date;
-
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-import javax.portlet.PortletConfig;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
+import javax.portlet.PortletConfig;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 import org.apache.struts.action.ActionForm;
@@ -26,28 +34,22 @@ import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.User;
-import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.struts.PortletAction;
+import com.liferay.portal.util.PortalUtil;
 
 import ar.com.ospim.afiliados.WebKeysAfiliados;
+import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.afiliados.services.SolicitudAfiliacionServiceUtil;
-
+import ar.com.ospim.tesoreria.WebKeysTesoreria;
+import ar.com.ospim.tesoreria.beans.AjustePlanSuperador;
+import ar.com.ospim.tesoreria.beans.PrecioPlanSuperador;
 import ar.com.ospim.util.PermissionUtil;
-
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.Map;
 
 public class SolicitudAfiliacionAction extends PortletAction {
 
 	private Logger _log = Logger.getLogger(this.getClass());
-
+	SimpleDateFormat formatoDeFechas = new SimpleDateFormat("dd/MM/yyyy");
+	
 	public ActionForward render(
 			ActionMapping mapping, 
 			ActionForm form,
@@ -69,8 +71,25 @@ public class SolicitudAfiliacionAction extends PortletAction {
 		     if ("verFormulario".equals(cmd)) {
 		         return verFormulario(mapping, renderRequest);
 		     }
-	
-		     //pantalla con filtros/buscador
+		     if ("cotizarFormulario".equals(cmd)) {
+		         return cotizarFormulario(mapping, renderRequest);
+		     }
+		     
+		     if ("seleccionarAjuste".equals(cmd)) {
+		    	 return seleccionarAjuste(mapping, renderRequest);
+		     }
+		     
+		     if ("agregarAjuste".equals(cmd)) {
+		    	 return agregarAjuste(mapping, renderRequest);
+		     }
+		     
+		     if ("sacarAjuste".equals(cmd)) {
+		    	 return sacarAjuste(mapping, renderRequest);
+		     }
+		     
+		     if ("grabarCotizar".equals(cmd)) {
+		         return grabarCotizacion(mapping, renderRequest);
+		     }
 		     return mapping.findForward("portlet.afiliados.seguimiento.form");
 		 }	    
 		
@@ -266,6 +285,28 @@ public class SolicitudAfiliacionAction extends PortletAction {
 	        return;
 	    }
 	    
+        if ("cotizarFormulario".equals(cmd)  ||
+        		"seleccionarAjuste".equals(cmd) || "agregarAjuste".equals(cmd) || "sacarAjuste".equals(cmd)) {
+        	actionResponse.setRenderParameter("tabs1", "seguimiento-formulario");
+	        actionResponse.setRenderParameter("cmd", "verFormulario");
+	        actionResponse.setRenderParameter("id", String.valueOf(ParamUtil.getLong(actionRequest, "id")));
+	        actionResponse.setRenderParameter("modo", ParamUtil.getString(actionRequest, "modo", "editar"));
+
+	        actionResponse.setRenderParameter("segDesdeDia", ParamUtil.getString(actionRequest, "segDesdeDia"));
+	        actionResponse.setRenderParameter("segDesdeMes", ParamUtil.getString(actionRequest, "segDesdeMes"));
+	        actionResponse.setRenderParameter("segDesdeAnio", ParamUtil.getString(actionRequest, "segDesdeAnio"));
+	        actionResponse.setRenderParameter("segHastaDia", ParamUtil.getString(actionRequest, "segHastaDia"));
+	        actionResponse.setRenderParameter("segHastaMes", ParamUtil.getString(actionRequest, "segHastaMes"));
+	        actionResponse.setRenderParameter("segHastaAnio", ParamUtil.getString(actionRequest, "segHastaAnio"));
+
+	        actionResponse.setRenderParameter("nombre", ParamUtil.getString(actionRequest, "filtroNombre"));
+	        actionResponse.setRenderParameter("dni", ParamUtil.getString(actionRequest, "filtroDni"));
+	        actionResponse.setRenderParameter("estado", ParamUtil.getString(actionRequest, "filtroEstado"));
+	        actionResponse.setRenderParameter("provincia", ParamUtil.getString(actionRequest, "filtroProvincia"));
+	        actionResponse.setRenderParameter("molinero", ParamUtil.getString(actionRequest, "filtroMolinero"));
+	        return;
+	    }
+	    	    
 	    super.processAction(mapping, form, portletConfig, actionRequest, actionResponse);
 	}
 
@@ -345,9 +386,6 @@ public class SolicitudAfiliacionAction extends PortletAction {
 
 	        User user = PortalUtil.getUser(renderRequest);
 	        
-	        _log.error("USER=" + (user != null ? user.getScreenName() : "null"));
-	        _log.error("EMAIL=" + (user != null ? user.getEmailAddress() : "null"));
-	        
 	        boolean veTodos = (user != null) &&
 	            PermissionUtil.userContainsRole(user, WebKeysAfiliados.COMERCIAL_ADMINISTRADOR);
 
@@ -361,10 +399,6 @@ public class SolicitudAfiliacionAction extends PortletAction {
 	        boolean veConsulta = (user != null) &&
 		    	    PermissionUtil.userContainsRole(user, WebKeysAfiliados.COMERCIAL_CONSULTA);
 	        
-	        	_log.error("ROL_TODOS=" + veTodos);
-	        	_log.error("ROL_MOLINEROS=" + veMolineros);
-	        	_log.error("ROL_NO_MOLINEROS=" + veNoMolineros);
-	        	
 	        if (!veTodos  && !veConsulta) {
 	            if (user == null) {
 	                renderRequest.setAttribute("resultados", new ArrayList<Map<String,Object>>());
@@ -760,4 +794,262 @@ public class SolicitudAfiliacionAction extends PortletAction {
 	        if (conn != null) conn.disconnect();
 	    }
 	}
+	
+	private ActionForward cotizarFormulario(ActionMapping mapping, RenderRequest renderRequest) {
+	    try {
+	    	
+	    	HttpServletRequest httpServletRequest = PortalUtil.getHttpServletRequest(renderRequest);
+			HttpSession session = (HttpSession) httpServletRequest.getSession();
+	        long id = ParamUtil.getLong(renderRequest, "id");
+	        String modo = ParamUtil.getString(renderRequest, "modo", "ver");
+	        String origen = ParamUtil.getString(renderRequest, "origen", "recot");
+	        Map<String,Object> formulario = SolicitudAfiliacionServiceUtil.getSolicitudById(id);
+	        List<Afiliado >grupo = SolicitudAfiliacionServiceUtil.getGrupoFamiliarDDJJ(id);
+	      
+	        String cotizaDia  = ParamUtil.getString(renderRequest, "cotizaDia", "");
+	        String cotizaMes  = ParamUtil.getString(renderRequest, "cotizaMes", "");
+	        String cotizaAnio = ParamUtil.getString(renderRequest, "cotizaAnio", "");
+	        
+	        if(cotizaDia.isEmpty()) {
+	        	cotizaDia=  formulario.get("fecha_ingreso").toString().substring(8,10);
+	        }
+	        if(cotizaMes.isEmpty()) {
+	        	cotizaMes=  formulario.get("fecha_ingreso").toString().substring(5,7);
+	        	cotizaMes=  String.format("%02d",Integer.parseInt(cotizaMes)-1);
+	        }
+	        
+	        if(cotizaAnio.isEmpty()) {
+	        	cotizaAnio=  formulario.get("fecha_ingreso").toString().substring(0,4);
+	        }
+	        
+	        if (formulario == null) {
+	            renderRequest.setAttribute("mensaje", "No se encontró la solicitud.");
+	            return mapping.findForward("portlet.afiliados.seguimiento.form");
+	        }
+
+	        User user = PortalUtil.getUser(renderRequest);
+	        boolean veTodos = (user != null) &&
+	            PermissionUtil.userContainsRole(user, WebKeysAfiliados.COMERCIAL_ADMINISTRADOR);
+
+	        boolean veConsulta = (user != null) &&
+	        	    PermissionUtil.userContainsRole(user, WebKeysAfiliados.COMERCIAL_CONSULTA);
+	        
+	        /*
+	        if (!veTodos  && !veConsulta) {
+	            if (user == null) {
+	                renderRequest.setAttribute("mensaje", "No se pudo identificar el usuario logueado.");
+	                return mapping.findForward("portlet.afiliados.seguimiento.form");
+	            }
+
+	            Long idVendedorLogueado =
+	                SolicitudAfiliacionServiceUtil.getIdVendedorByEmail(user.getEmailAddress());
+
+	            if (idVendedorLogueado == null || idVendedorLogueado.longValue() <= 0) {
+	                renderRequest.setAttribute("mensaje", "El usuario no tiene vendedor asociado.");
+	                return mapping.findForward("portlet.afiliados.seguimiento.form");
+	            }
+
+	           
+	        }
+	        */
+	        renderRequest.setAttribute("formulario", formulario);
+	        renderRequest.setAttribute("grupoFamiliar", grupo);
+	        renderRequest.setAttribute("modo", modo);
+	        renderRequest.setAttribute("cotizaDia", cotizaDia);
+	        renderRequest.setAttribute("cotizaMes", cotizaMes);
+	        renderRequest.setAttribute("cotizaAnio", cotizaAnio);
+	        
+	        
+	        List<PrecioPlanSuperador>precios = new ArrayList<PrecioPlanSuperador>();;
+	        List<AjustePlanSuperador>ajustes = new ArrayList<AjustePlanSuperador>();
+	        
+	        
+	        if("cot".equalsIgnoreCase(origen)) {
+	            ajustes=SolicitudAfiliacionServiceUtil.getCotizacionAjustesById(id);
+	            precios = SolicitudAfiliacionServiceUtil.getCotizacionPreciosById(id);
+	        }    
+	        session.setAttribute(WebKeysTesoreria.PRECIOS_COTIZACION_RESULT, precios);
+	        
+	        session.setAttribute(WebKeysTesoreria.AJUSTES_COTIZACION_ASIGNADOS, ajustes);
+	        session.setAttribute(WebKeysTesoreria.AJUSTES_COTIZACION_SELECCIONADO, new AjustePlanSuperador());
+	        session.setAttribute(WebKeysTesoreria.AJUSTE_COTIZACION_FECHA,cotizaDia + "/" +
+	        		String.format("%02d",Integer.parseInt(cotizaMes) + 1) + "/" + cotizaAnio);
+
+	        return mapping.findForward("portlet.afiliados.formulario.cotizar");
+
+	    } catch (Exception e) {
+	        _log.error("Error cotizar Grupo Familiar", e);
+	        renderRequest.setAttribute("mensaje", "Error cargando grupo familiar a cotizar.");
+	        return mapping.findForward("portlet.afiliados.seguimiento.form");
+	    }
+	}
+	
+	
+	private ActionForward seleccionarAjuste(ActionMapping mapping, RenderRequest renderRequest) {
+	    try {
+	    	HttpServletRequest httpServletRequest = PortalUtil.getHttpServletRequest(renderRequest);
+			HttpSession session = (HttpSession) httpServletRequest.getSession();
+			List<AjustePlanSuperador> disponibles = (List<AjustePlanSuperador>)session.getAttribute(WebKeysTesoreria.AJUSTES_COTIZACION_RESULT);
+			
+			
+			
+	    	String ajustes = ParamUtil.getString(renderRequest,"ajustesid");
+			String[] ajustesArray=ajustes.split(",");
+			Integer ajusteId=0;
+			if(ajustesArray.length>0) {
+			   ajusteId = Integer.parseInt(ajustesArray[0]);
+			}
+			for(AjustePlanSuperador aj:disponibles) {
+				if(aj.getId().equals(ajusteId)) {
+					session.setAttribute(WebKeysTesoreria.AJUSTES_COTIZACION_SELECCIONADO,aj);
+					break;
+				}
+			}
+			return mapping
+    				.findForward("portlet.afiliados.formulario.cotizar.ajustes");
+	    } catch (Exception e) {
+	        _log.error("Error cotizar Grupo Familiar - Ajustes", e);
+	        renderRequest.setAttribute("mensaje", "Error cargando ajustes a cotizar.");
+	        return mapping.findForward("portlet.afiliados.formulario.cotizar.ajustes");
+	    }
+	}
+	
+	private ActionForward agregarAjuste(ActionMapping mapping, RenderRequest renderRequest) {
+	    try {
+	    	HttpServletRequest httpServletRequest = PortalUtil.getHttpServletRequest(renderRequest);
+			HttpSession session = (HttpSession) httpServletRequest.getSession();
+			List<AjustePlanSuperador> asignados = (List<AjustePlanSuperador>)session.getAttribute(WebKeysTesoreria.AJUSTES_COTIZACION_ASIGNADOS);
+			if(asignados==null) asignados = new ArrayList<AjustePlanSuperador>();
+			
+	    	Integer id = ParamUtil.getInteger(renderRequest,"ajusteid");
+	    	String  descripcion =ParamUtil.getString(renderRequest, "ajustede");
+	    	Double porcentaje = ParamUtil.getDouble(renderRequest, "ajusteporcentaje");
+	    	Double importe = ParamUtil.getDouble(renderRequest, "ajusteimporte");
+	    	
+	    	String fechaDia = ParamUtil.getString(renderRequest,"fechadesdedia");
+			String fechaMes = ParamUtil.getString(renderRequest,"fechadesdemes");
+			String fechaAnio = ParamUtil.getString(renderRequest,"fechadesdeanio");
+			
+			String fechaDiaH = ParamUtil.getString(renderRequest,"fechahastadia");
+			String fechaMesH = ParamUtil.getString(renderRequest,"fechahastames");
+			String fechaAnioH = ParamUtil.getString(renderRequest,"fechahastaanio");
+			
+			Date fechaD = null;
+			try {
+				fechaD = formatoDeFechas.parse(fechaDia + "/"
+						+ (Integer.parseInt(fechaMes) + 1) + "/"
+						+ fechaAnio);
+			} catch (Exception e) {
+				fechaD = null;
+			}
+			
+			Date fechaH = null;
+			try {
+				fechaH = formatoDeFechas.parse(fechaDiaH + "/"
+						+ (Integer.parseInt(fechaMesH) + 1) + "/"
+						+ fechaAnioH);
+			} catch (Exception e) {
+				fechaH = null;
+			}
+	    	
+	    	
+	    	AjustePlanSuperador ajuste = new AjustePlanSuperador();
+	    	ajuste.setId(id);
+	    	ajuste.setDescripcion(descripcion);
+	    	ajuste.setPorcentaje(porcentaje);
+	    	ajuste.setImporte(new BigDecimal(importe));
+	    	ajuste.setFechaDesde(fechaD);
+	    	ajuste.setFechaHasta(fechaH);
+	    	asignados.add(ajuste);
+			session.setAttribute(WebKeysTesoreria.AJUSTES_COTIZACION_ASIGNADOS,asignados);
+			
+			return mapping
+    				.findForward("portlet.afiliados.formulario.cotizar.ajustes.asignados");
+	    } catch (Exception e) {
+	        _log.error("Error cotizar Grupo Familiar - Ajustes asignados agregar", e);
+	        renderRequest.setAttribute("mensaje", "Error cargando ajustes a cotizar.");
+	        return mapping.findForward("portlet.afiliados.formulario.cotizar.ajustes.asignados");
+	    }
+	}
+	
+	private ActionForward sacarAjuste(ActionMapping mapping, RenderRequest renderRequest) {
+	    try {
+	    	HttpServletRequest httpServletRequest = PortalUtil.getHttpServletRequest(renderRequest);
+			HttpSession session = (HttpSession) httpServletRequest.getSession();
+			List<AjustePlanSuperador> asignados = (List<AjustePlanSuperador>)session.getAttribute(WebKeysTesoreria.AJUSTES_COTIZACION_ASIGNADOS);
+			if(asignados==null) asignados = new ArrayList<AjustePlanSuperador>();
+			
+	    	int orden = ParamUtil.getInteger(renderRequest,"orden");
+	    	
+	    	asignados.remove(orden);
+			session.setAttribute(WebKeysTesoreria.AJUSTES_COTIZACION_ASIGNADOS,asignados);
+			
+			return mapping
+    				.findForward("portlet.afiliados.formulario.cotizar.ajustes.asignados");
+	    } catch (Exception e) {
+	        _log.error("Error cotizar Grupo Familiar - Ajustes asignados eliminar", e);
+	        renderRequest.setAttribute("mensaje", "Error cargando ajustes a cotizar.");
+	        return mapping.findForward("portlet.afiliados.formulario.cotizar.ajustes.asignados");
+	    }
+	}
+	
+	
+	private ActionForward grabarCotizacion(ActionMapping mapping, RenderRequest renderRequest) {
+	    try {
+	    	
+	    	HttpServletRequest httpServletRequest = PortalUtil.getHttpServletRequest(renderRequest);
+			HttpSession session = (HttpSession) httpServletRequest.getSession();
+	        long id = ParamUtil.getLong(renderRequest, "id");
+	        String modo = ParamUtil.getString(renderRequest, "modo", "ver");
+	        Map<String,Object> formulario = SolicitudAfiliacionServiceUtil.getSolicitudById(id);
+	        List<Afiliado >grupo = SolicitudAfiliacionServiceUtil.getGrupoFamiliarDDJJ(id);
+	        if (formulario == null) {
+	            renderRequest.setAttribute("mensaje", "No se encontró la solicitud.");
+	            return mapping.findForward("portlet.afiliados.seguimiento.form");
+	        }
+
+	        renderRequest.setAttribute("formulario", formulario);
+	        renderRequest.setAttribute("modo", modo);
+	        
+	        String cotizaDia  = ParamUtil.getString(renderRequest, "cotizaDia", "");
+	        String cotizaMes  = ParamUtil.getString(renderRequest, "cotizaMes", "");
+	        String cotizaAnio = ParamUtil.getString(renderRequest, "cotizaAnio", "");
+	        
+	        if(cotizaDia.isEmpty()) {
+	        	cotizaDia=  formulario.get("fecha_ingreso").toString().substring(8,10);
+	        }
+	        if(cotizaMes.isEmpty()) {
+	        	cotizaMes=  formulario.get("fecha_ingreso").toString().substring(5,7);
+	        	cotizaMes=  String.format("%02d",Integer.parseInt(cotizaMes)-1);
+	        }
+	        
+	        if(cotizaAnio.isEmpty()) {
+	        	cotizaAnio=  formulario.get("fecha_ingreso").toString().substring(0,4);
+	        }
+	        
+	        session.setAttribute(WebKeysTesoreria.AJUSTE_COTIZACION_FECHA,cotizaDia + "/" +
+	        		String.format("%02d",Integer.parseInt(cotizaMes) + 1) + "/" + cotizaAnio);
+	        User user = PortalUtil.getUser(renderRequest);
+	        
+	        List<AjustePlanSuperador> ajustes= (List<AjustePlanSuperador>) session.getAttribute(WebKeysTesoreria.AJUSTES_COTIZACION_ASIGNADOS);
+	        List<PrecioPlanSuperador> precios=(List<PrecioPlanSuperador>) session.getAttribute(WebKeysTesoreria.PRECIOS_COTIZACION_RESULT);
+	        
+	        SolicitudAfiliacionServiceUtil.saveCotizacion(id, precios, ajustes, user.getScreenName());
+	        
+	        renderRequest.setAttribute("formulario", formulario);
+	        renderRequest.setAttribute("grupoFamiliar", grupo);
+	        renderRequest.setAttribute("modo", modo);
+	        renderRequest.setAttribute("cotizaDia", cotizaDia);
+	        renderRequest.setAttribute("cotizaMes", cotizaMes);
+	        renderRequest.setAttribute("cotizaAnio", cotizaAnio);
+	        
+	        return mapping.findForward("portlet.afiliados.formulario.cotizar");
+
+	    } catch (Exception e) {
+	        _log.error("Error Grabar Cotizacion", e);
+	        renderRequest.setAttribute("mensaje", "Error guardar cotizacion.");
+	        return mapping.findForward("portlet.afiliados.seguimiento.form");
+	    }
+	}
+
 }

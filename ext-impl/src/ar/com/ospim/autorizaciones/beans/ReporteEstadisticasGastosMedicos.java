@@ -13,6 +13,8 @@ import com.liferay.portal.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
+import ar.com.ospim.afiliados.action.ActionUtil;
+import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.automatico.AgendadoJava;
 import ar.com.ospim.automatico.beans.ReporteAutomatico;
 import ar.com.ospim.automatico.service.ReportesServiceUtil;
@@ -20,6 +22,10 @@ import ar.com.ospim.autorizaciones.reportes.action.ReporteEstadisticaGastoMedico
 import ar.com.ospim.autorizaciones.reportes.action.ReporteReclamosPrestacionales;
 import ar.com.ospim.autorizaciones.services.AutorizacionesServiceUtil;
 import ar.com.ospim.autorizaciones.services.ReclamosPrestacionesServiceUtil;
+import ar.com.ospim.global.beans.Domicilio;
+import ar.com.ospim.global.beans.Localidad;
+import ar.com.ospim.global.beans.Provincia;
+import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.mail.MailUtils;
 import ar.com.ospim.util.DateUtils;
 
@@ -33,6 +39,10 @@ public class ReporteEstadisticasGastosMedicos extends AgendadoJava implements Se
 
 		ar.com.ospim.automatico.ReportesScheduler.ReportesAutomaticosConfiguracion rac = null;
 		HSSFWorkbook wb = new HSSFWorkbook();		
+		
+		List<Provincia> provincias = TraeListasServiceUtil.getProvincias();
+		List<Localidad> localidades = TraeListasServiceUtil.getLocalidades();
+		
 		try{
 			rac = ReportesServiceUtil.getConfiguracion();
 			
@@ -77,6 +87,28 @@ public class ReporteEstadisticasGastosMedicos extends AgendadoJava implements Se
 
             try {
                  reclamosPrestacionales= AutorizacionesServiceUtil.getListaReclamosPrestacionales (filtro);
+             	for(ReclamoPrestacionalExcel archivo:reclamosPrestacionales) {
+    			    try {
+    				   Afiliado a = ActionUtil.getAfiliadoInclusoDadoBajaByCuilInte(archivo.getAfiliado().getCuil(), archivo.getAfiliado().getInte());
+    				   archivo.getAfiliado().setEmail(a.getEmail());
+    				   archivo.getAfiliado().setDomicilios(a.getDomicilios());
+    				   if(archivo.getAfiliado().getDomicilios()!=null) {
+    				      int indice = provincias.indexOf(archivo.getAfiliado().getDomicilioDefault().getProvincia());
+    				      if(indice!=-1) {
+    				        archivo.getAfiliado().getDomicilioDefault().setProvincia(provincias.get(indice));
+    				      }
+    				      indice = localidades.indexOf(archivo.getAfiliado().getDomicilioDefault().getLocalidad());
+    				      if(indice!=-1) {
+    				        archivo.getAfiliado().getDomicilioDefault().setLocalidad(localidades.get(indice));
+    				      }
+    				   }else {
+    					  Domicilio[] domicilios = null; 
+    					  archivo.getAfiliado().setDomicilios( domicilios); 
+    				   }
+    				}catch(Exception e) {
+    					logger.error("Error al generar reporte de reclamos prestacionales domicilios",e);
+    				}   
+    			}  
                  wb=ReporteReclamosPrestacionales.generaReporteReclamosPrestacionales(reclamosPrestacionales, filtro, wb);
             } catch (Exception e) {
                 logger.debug("Error al generar Estadistico de Gastos Médicos Cierre Reclamos (Agendado)");
@@ -91,7 +123,7 @@ public class ReporteEstadisticasGastosMedicos extends AgendadoJava implements Se
 			  
 			   emails=ra.getEmailsAsList();	
 			
-//			   emails.add("dsulfaro@uoma.org.ar");
+			   //emails.add("dsulfaro@uoma.org.ar");
 			   
 			   String nbeArchivo="EstadisticasGastosMedicos_"+ sdf.format(fechaDde)+".xls";
 			   List<String>lem = new ArrayList<String>();

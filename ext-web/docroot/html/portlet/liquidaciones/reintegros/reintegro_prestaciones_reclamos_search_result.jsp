@@ -333,11 +333,12 @@ function pasadatosaformulario(codigo,importe,cantidad,total, idreclamo, idpresta
 			
 			jQuery('#<portlet:namespace />cuit_prestador').val(comprobanteCuit);
 			jQuery('#<portlet:namespace />sucu').val(comprobanteSucursal);
+
 			
-			/*
 			jQuery('#<portlet:namespace />fechaEDia').val(parseInt(comprobanteFecha.substring(0,2)) );
 			jQuery('#<portlet:namespace />fechaEMes').val(parseInt(comprobanteFecha.substring(3,5))-1 );
 			jQuery('#<portlet:namespace />fechaEAnio').val(parseInt(comprobanteFecha.substring(6,10)) );
+			/*
 			jQuery('#<portlet:namespace />fechaRDia').val(parseInt(comprobanteFecha.substring(0,2)) );
 			jQuery('#<portlet:namespace />fechaRMes').val(parseInt(comprobanteFecha.substring(3,5))-1 );
 			jQuery('#<portlet:namespace />fechaRAnio').val(parseInt(comprobanteFecha.substring(6,10)) );

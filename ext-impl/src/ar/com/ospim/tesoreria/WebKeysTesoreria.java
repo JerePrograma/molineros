@@ -107,13 +107,21 @@ public class WebKeysTesoreria implements com.liferay.portal.kernel.util.WebKeys 
     public static final String PRECIO_EN_SESSION_PLANES="PRECIO_EN_SESSION_PLANES";
     public static final String PRECIO_EN_SESSION_PROVINCIAS="PRECIO_EN_SESSION_PROVINCIAS";
     public static final String PRECIOS_RESULT="PRECIOS_RESULT";
+    public static final String PRECIOS_COTIZACION_RESULT="PRECIOS_COTIZACION_RESULT";
+    public static final String PRECIO_COTIZACION="PRECIOS_COTIZACION";
     
     public static final String AJUSTE_EN_SESSION="AJUSTE_EN_SESSION";
-    public static final String AJSUTE_EN_EDICION="AJUSTE_EN_EDICION";
+    public static final String AJUSTE_EN_EDICION="AJUSTE_EN_EDICION";
     public static final String AJUSTE_EN_SESSION_PARENTESCOS="AJUSTE_EN_SESSION_PARENTESCOS";
     public static final String AJUSTE_EN_SESSION_PLANES="AJUSTE_EN_SESSION_PLANES";
     public static final String AJUSTE_EN_SESSION_PROVINCIAS="AJSUTE_EN_SESSION_PROVINCIAS";
     public static final String AJUSTES_RESULT="AJUSTES_RESULT";
+    public static final String AJUSTES_COTIZACION_RESULT="AJUSTES_COTIZACION_RESULT";
+    public static final String AJUSTES_COTIZACION_SELECCIONADO="AJUSTES_COTIZACION_SELECCIONADO";
+    public static final String AJUSTES_COTIZACION_ASIGNADOS="AJUSTES_COTIZACION_ASIGNADOS";
+    public static final String AJUSTE_COTIZACION="AJUSTE_COTIZACION";
+    public static final String AJUSTE_COTIZACION_FECHA="AJUSTE_COTIZACION_FECHA";
     
+    public static final String SALDOS_DIARIOS_CUENTAS_BANCARIAS ="SALDOS_DIARIOS_CUENTAS_BANCARIAS";
 	
 }

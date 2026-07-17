@@ -11,7 +11,8 @@
 		//u 'odo' de liquidacion odontología, si es nulo se setea por default a 'pre' 
 		String tipo_liquidacion = ParamUtil.getString(request, "tipo_liquidacion", "pre");
 		
-		boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysLiquidaciones.ROL_ABM_LIQUIDACIONES);
+		//boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysLiquidaciones.ROL_ABM_LIQUIDACIONES);
+		boolean showABMButtons =false;
 		
 		boolean esLiquidadorExterno = PermissionUtil.userContainsRole(user,WebKeysLiquidaciones.ROL_LIQUIDACIONES_HOSPITALES);
 		

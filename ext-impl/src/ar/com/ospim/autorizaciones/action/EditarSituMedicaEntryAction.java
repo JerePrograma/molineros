@@ -88,6 +88,33 @@ import ar.com.ospim.util.StringUtils;
         
         SituacionMedica situacionMedica =null;
 		
+        String tab = ParamUtil.getString(renderRequest, "tab", null);
+
+        if (!StringUtils.checkEmpty(tab) && "archivos".equalsIgnoreCase(tab)) {
+
+        	SituacionMedica situacionMedicaSesion =
+        		(SituacionMedica) session.getAttribute(WebKeysAutorizaciones.SITUACION_MEDICA_EN_EDICION);
+
+        	if (situacionMedicaSesion != null) {
+        		renderRequest.setAttribute(Constants.CMD, Constants.EDIT);
+        		renderRequest.setAttribute("tab", tab);
+
+        		renderRequest.setAttribute(
+        			"id_registro_sitmed",
+        			String.valueOf(situacionMedicaSesion.getId_Situacion())
+        		);
+
+        		renderRequest.setAttribute(
+        			"idSituacionMedica",
+        			String.valueOf(situacionMedicaSesion.getId_Situacion())
+        		);
+
+        		return mapping.findForward(
+        			getForward(renderRequest, "portlet.autorizaciones.situacionmedica.editar_situacionmedica_entry")
+        		);
+        	}
+        }
+        
 		if(!StringUtils.checkEmpty(cmd) ){
 			
 			if(cmd.equals(Constants.DELETE)){ // delete desde el buscador de situaciones medicas 
@@ -184,12 +211,35 @@ import ar.com.ospim.util.StringUtils;
 			}
 			
 			if(cmd.equals(Constants.EDIT ) ||  cmd.equals(Constants.VIEW )){
-				situacionMedica = SituacionesMedicasServiceUtil.getSituacionMedica(idRegSituacionMedica ,null,0 );
-				session.setAttribute(WebKeysAutorizaciones.SITUACION_MEDICA_EN_EDICION  , situacionMedica   );	
-				session.setAttribute(WebKeysAutorizaciones.LISTADO_PATOLOGIAS_SITUACION_MEDICA_EN_SESION , situacionMedica.getPatologias() );					
-				renderRequest.setAttribute(Constants.CMD, Constants.EDIT);					
-				if (cmd.equals(Constants.VIEW ) ){
-					renderRequest.setAttribute(Constants.CMD,Constants.VIEW);						
+
+				if (idRegSituacionMedica == 0) {
+					SituacionMedica situacionMedicaSesion = 
+						(SituacionMedica) session.getAttribute(WebKeysAutorizaciones.SITUACION_MEDICA_EN_EDICION);
+
+					if (situacionMedicaSesion != null) {
+						situacionMedica = situacionMedicaSesion;
+					}
+				}
+
+				if (situacionMedica == null && idRegSituacionMedica != 0) {
+					situacionMedica = SituacionesMedicasServiceUtil.getSituacionMedica(idRegSituacionMedica, null, 0);
+				}
+
+				if (situacionMedica != null) {
+					session.setAttribute(WebKeysAutorizaciones.SITUACION_MEDICA_EN_EDICION, situacionMedica);
+
+					if (situacionMedica.getPatologias() != null) {
+						session.setAttribute(
+							WebKeysAutorizaciones.LISTADO_PATOLOGIAS_SITUACION_MEDICA_EN_SESION,
+							situacionMedica.getPatologias()
+						);
+					}
+				}
+
+				renderRequest.setAttribute(Constants.CMD, Constants.EDIT);
+
+				if (cmd.equals(Constants.VIEW)) {
+					renderRequest.setAttribute(Constants.CMD, Constants.VIEW);
 				}
 			}
 			

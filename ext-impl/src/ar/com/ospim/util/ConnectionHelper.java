@@ -238,7 +238,7 @@ public class ConnectionHelper implements Serializable {
 
 		return conn;
 	}
-	
+	/*
 	public static Connection getConnectionPortalEmpleadores() {
 		Connection conn = null;
 		if (portalempleadores == null) {
@@ -255,7 +255,7 @@ public class ConnectionHelper implements Serializable {
 
 		return conn;
 	}
-
+    */
 	public static Connection getConnectionPortalEmpleadoresV01() {
 		Connection conn = null;
 		if (portalempleadoresV01 == null) {

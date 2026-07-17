@@ -4249,12 +4249,18 @@
 		<put name="portlet_content" value="/portlet/tesoreria/facturacion/facturacion_ajustes_edit_localidades.jsp" />
 	</definition>
 	
-	<definition name="portlet.tesoreria.facturacion.listaajustes.valores" extends="portlet.tesoreria">
-		<put name="portlet_content" value="/portlet/tesoreria/facturacion/facturacion_ajustes_edit_valores.jsp" />
+	<definition name="portlet.tesoreria.facturacion.listaajustes.cuiles" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/facturacion/facturacion_ajustes_edit_cuiles.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.facturacion.listaajustes.result" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/facturacion/facturacion_ajustes_result.jsp" />
 	</definition>
 	
 <!-- FIN FACTURACION OSPIM -->
 
+
+<!-- LUMA -->
 	<definition name="portlet.afiliados.seguimiento.list" extends="portlet.afiliados">
 	    <put name="portlet_content" value="/portlet/afiliados/seguimiento_list.jsp" />
 	</definition>
@@ -4274,6 +4280,20 @@
 	<definition name="portlet.afiliados.vendedor.detalle" extends="portlet.afiliados">
 	    <put name="portlet_content" value="/portlet/afiliados/vendedores_detalle.jsp" />
 	</definition>
+	
+	<definition name="portlet.afiliados.formulario.cotizar" extends="portlet.afiliados">
+	    <put name="portlet_content" value="/portlet/afiliados/formulario_cotizar.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.formulario.cotizar.ajustes" extends="portlet.afiliados">
+	    <put name="portlet_content" value="/portlet/afiliados/formulario_cotizar_ajustes.jsp" />
+	</definition>
+	
+	<definition name="portlet.afiliados.formulario.cotizar.ajustes.asignados" extends="portlet.afiliados">
+	    <put name="portlet_content" value="/portlet/afiliados/formulario_cotizar_ajustes_asignados.jsp" />
+	</definition>
+	
+<!-- FIN LUMA -->	
 
 	<!-- PRESTADORES / PRE_1 -->
 
@@ -4505,6 +4525,7 @@
 	</definition>
 
 	<!-- FIN PRESTADORES / PRE_1 -->
+<<<<<<< .mine
 
 	<!-- Compras -->
 
@@ -4607,4 +4628,16 @@
 				value="/portlet/prestadores/historico_cotizacion_result.jsp"
 		/>
 	</definition>
+||||||| .r7265
+=======
+	
+	<definition name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/bancos/busqueda_saldo_diario_cuentas_bancarias.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/bancos/busqueda_saldo_diario_cuentas_bancarias_resultado.jsp" />
+	</definition>
+	
+>>>>>>> .r7295
 </tiles-definitions>

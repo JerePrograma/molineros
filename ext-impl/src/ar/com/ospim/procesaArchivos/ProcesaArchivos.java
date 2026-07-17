@@ -2197,6 +2197,8 @@ ConnectionHelper.cerrar(con1);
 		       Cell celda;
 		       Integer qCel=0;
 		       int lastColumn = row.getLastCellNum();
+		       cliente = new Cliente();
+		       
 		       for ( qCel = 0; qCel < lastColumn; qCel++) {
 		       //while (cellIterator.hasNext()){
 		    	   

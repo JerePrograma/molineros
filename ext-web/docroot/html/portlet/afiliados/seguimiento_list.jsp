@@ -32,6 +32,7 @@
   String viewIcon = themeDisplay.getPathThemeImages() + "/common/view.png";
   String editIcon = themeDisplay.getPathThemeImages() + "/common/edit.png";
   String plusIcon = themeDisplay.getPathThemeImages() + "/common/assign.png";
+  String cotizarIcon = themeDisplay.getPathThemeImages() + "/common/subscribe.png";
   
   SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
@@ -259,6 +260,29 @@
       desasignarURL.setParameter("idSolicitud", String.valueOf(r.get("id_solicitud")));
       desasignarURL.setParameter("redirect", volverURL.toString());
       
+      
+      PortletURL cotizarURL = renderResponse.createRenderURL();
+      cotizarURL.setWindowState(LiferayWindowState.MAXIMIZED);
+      cotizarURL.setParameter("struts_action", "/afiliados/solicitud_afiliacion");
+      cotizarURL.setParameter("tabs1", "seguimiento-formulario");
+      cotizarURL.setParameter("cmd", "cotizarFormulario");
+      cotizarURL.setParameter("id", idStr);
+      cotizarURL.setParameter("modo", "editar");
+      cotizarURL.setParameter("origen", "cot");
+      
+      cotizarURL.setParameter("segDesdeDia", segDesdeDia);
+      cotizarURL.setParameter("segDesdeMes", segDesdeMes);
+      cotizarURL.setParameter("segDesdeAnio", segDesdeAnio);
+      cotizarURL.setParameter("segHastaDia", segHastaDia);
+      cotizarURL.setParameter("segHastaMes", segHastaMes);
+      cotizarURL.setParameter("segHastaAnio", segHastaAnio);
+      cotizarURL.setParameter("nombre", fNombre);
+      cotizarURL.setParameter("dni", fDni);
+      cotizarURL.setParameter("molinero", fMolinero);
+      cotizarURL.setParameter("estado", fEstado);
+      cotizarURL.setParameter("provincia", fProv);
+      
+      
       String acciones =
     	      "<div style='display:inline-flex; gap:6px; align-items:center; white-space:nowrap;'>" +
     	        "<a title='Ver' href='" + verURL.toString() + "'>" +
@@ -282,6 +306,13 @@
     	        "<img src='" + plusIcon + "' alt='Gestionar asignación' style='border:none;vertical-align:middle;'/>" +
     	      "</button>";
     	}
+    	
+//Falta ver en que condiciones mostrar
+    	 acciones +=
+     	        "<a title='Cotizar' href='" + cotizarURL.toString() + "'>" +
+     	          "<img src='" + cotizarIcon + "' alt='Cotizar' style='border:none;vertical-align:middle;'/>" +
+     	        "</a>";
+    	
 
     	acciones += "</div>";
 

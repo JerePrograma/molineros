@@ -182,4 +182,8 @@ public class BusquedaAfiliadoServiceUtil {
 		return getInstance().buscarConsultasIGS_xls(filtro);
 	}
 	
+	public static String getCredencialAfiliadoPlan(String tipoDoc, String nroDoc) throws Exception {
+	    return getInstance().getCredencialAfiliadoPlan(tipoDoc, nroDoc);
+	}
+	
 }

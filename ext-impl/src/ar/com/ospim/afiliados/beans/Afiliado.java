@@ -108,6 +108,7 @@ public class Afiliado implements Comparable<Afiliado> , Serializable {
 	private List<Incidente> incidentes;
 	
 	private List<AfiSuspencionCobertura> suspencionCobertura;
+	private Integer edad;
 	
 	public Afiliado() {
 	}
@@ -1631,6 +1632,14 @@ public class Afiliado implements Comparable<Afiliado> , Serializable {
 			suspencionCobertura.add(asc);
 		}
 		
+	}
+
+	public Integer getEdad() {
+		return edad;
+	}
+
+	public void setEdad(Integer edad) {
+		this.edad = edad;
 	}
 	
 	

@@ -53,7 +53,7 @@
 	 					row.addText(medicamento.getMedicamento().getTroquel()!=0?String.valueOf(medicamento.getMedicamento().getTroquel()):"");
 	 					
 	 					if (medicamento.getIdReclamoPrestacional()   >0){
-	 						reclamodata="(Reclamo)";
+	 						reclamodata=" (Reclamo: " + medicamento.getIdReclamoPrestacional() + ")";
 	 					}else{
 	 						reclamodata="";
 	 					}

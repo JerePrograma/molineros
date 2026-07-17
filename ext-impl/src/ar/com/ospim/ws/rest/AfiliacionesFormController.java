@@ -298,6 +298,77 @@ public class AfiliacionesFormController {
       }
   }
   
+  @RequestMapping(value = "/AFILIACIONES_COTIZAR_PLANES", method = RequestMethod.POST)
+  public ModelAndView cotizarPlanes(
+      @RequestParam("edad") Integer edad,
+      @RequestParam(value="provincia", required=false) String provincia,
+      @RequestParam(value="tiene_pareja", required=false) String tienePareja,
+      @RequestParam(value="edad_pareja", required=false) Integer edadPareja,
+      @RequestParam(value="tiene_hijos", required=false) String tieneHijos,
+      @RequestParam(value="cantidad_hijos21", required=false) Integer cantidadHijos21,
+      @RequestParam(value="cantidad_hijos25", required=false) Integer cantidadHijos25,
+      @RequestParam(value="apiKey", required=false) String apiKey
+  ) {
+      Map<String, Object> model = new HashMap<String, Object>();
+
+      if (apiKey == null || !API_KEY.equals(apiKey)) {
+          model.put("ok", false);
+          model.put("error", "No autorizado");
+          return new ModelAndView("jsonView", model);
+      }
+
+      try {
+          Boolean tieneParejaBool = parseBoolean(tienePareja, Boolean.FALSE);
+          Boolean tieneHijosBool = parseBoolean(tieneHijos, Boolean.FALSE);
+
+          if (edad == null || edad.intValue() < 18 || edad.intValue() > 120) {
+              model.put("ok", false);
+              model.put("error", "Edad inválida");
+              return new ModelAndView("jsonView", model);
+          }
+
+          if (Boolean.TRUE.equals(tieneParejaBool) && edadPareja == null) {
+              model.put("ok", false);
+              model.put("error", "Falta edad de la pareja");
+              return new ModelAndView("jsonView", model);
+          }
+
+          int h21 = Boolean.TRUE.equals(tieneHijosBool) && cantidadHijos21 != null
+              ? cantidadHijos21.intValue()
+              : 0;
+
+          int h25 = Boolean.TRUE.equals(tieneHijosBool) && cantidadHijos25 != null
+              ? cantidadHijos25.intValue()
+              : 0;
+
+          if (h21 < 0 || h25 < 0) {
+              model.put("ok", false);
+              model.put("error", "Cantidad de hijos inválida");
+              return new ModelAndView("jsonView", model);
+          }
+
+          Map<String, Object> out = AfiliacionesServiceUtil.cotizarPlanesLuma(
+              edad,
+              safe(provincia).trim(),
+              tieneParejaBool,
+              edadPareja,
+              tieneHijosBool,
+              h21,
+              h25
+          );
+
+          model.put("ok", true);
+          model.putAll(out);
+          return new ModelAndView("jsonView", model);
+
+      } catch (Exception e) {
+          _log.error("Error cotizando planes LUMA", e);
+          model.put("ok", false);
+          model.put("error", "Error interno");
+          return new ModelAndView("jsonView", model);
+      }
+  }
+  
   private static String safe(String s) {
     return s == null ? "" : s;
   }

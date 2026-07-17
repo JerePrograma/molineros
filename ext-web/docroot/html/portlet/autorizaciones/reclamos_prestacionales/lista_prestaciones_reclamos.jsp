@@ -232,7 +232,11 @@ function editarPrestacion(idRegistro,codigoPrestacion, tipoEdicion ){
 		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/editar_reclamosprestaciones';		
 		url = url+'&idRegistro='+idRegistro +'&tipoEdicion='+tipoEdicion +'&codigoPrestacion='+  codigoPrestacion +'&estadoAprobacion='+tipoEdicion ;	
 		
-		jQuery("#<portlet:namespace />datos_edicion_prestacion").load(url);		
+		jQuery("#<portlet:namespace />datos_edicion_prestacion").load(url, function(){
+			setTimeout(function(){
+				<portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
+			}, 300);
+		});
 	}else{
         try{
     		valor=document.getElementById("<portlet:namespace />tipoaccionprestacion").value;

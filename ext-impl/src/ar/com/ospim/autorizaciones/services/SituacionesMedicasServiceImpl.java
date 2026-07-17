@@ -158,9 +158,16 @@ public int insertar(SituacionMedica situacionMedica , User user ) throws SystemE
 
 
 public SituacionMedica    getSituacionMedica(int id , String   cuil , int inte ) throws SystemException {
+	
+	if (id == 0 && (cuil == null || "".equalsIgnoreCase(cuil.trim())) && inte == 0) {
+		_log.warn("No se busca situacion medica porque no se recibio id, cuil ni inte");
+		return null;
+	}
+	
 	Connection con = null;
 	CallableStatement stmt = null;
-	SituacionMedica sitMedica = new SituacionMedica(); // null;
+	//SituacionMedica sitMedica = new SituacionMedica(); // null;
+	SituacionMedica sitMedica = null;
 	
 	try {
 		String sql = "{call buscar_situaciones_medicas_by_id_o_cuil_inte(?,?,?)}";
@@ -183,7 +190,7 @@ public SituacionMedica    getSituacionMedica(int id , String   cuil , int inte )
 		}
 		
 		ResultSet rs = stmt.executeQuery();
-		while (rs.next()) {
+		if (rs.next()) {
 			sitMedica  = SituacionMedica.getMapping(rs, "sm_");
 						  }
 	} catch (Exception e) {

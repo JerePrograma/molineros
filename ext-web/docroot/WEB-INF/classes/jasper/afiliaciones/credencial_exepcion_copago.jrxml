@@ -129,7 +129,9 @@
 				<imageExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "logo_ospim.jpg"]]></imageExpression>
 			</image>
 			<image>
-				<reportElement x="160" y="8" width="87" height="22"/>
+				<reportElement x="160" y="8" width="87" height="22">
+					<printWhenExpression><![CDATA[$F{logo}!=null && !"".equals( $F{logo})]]></printWhenExpression>
+				</reportElement>
 				<imageExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + $F{logo}]]></imageExpression>
 			</image>
 		</band>

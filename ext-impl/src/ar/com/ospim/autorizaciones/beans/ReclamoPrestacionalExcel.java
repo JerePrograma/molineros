@@ -56,6 +56,8 @@ public class ReclamoPrestacionalExcel extends ReclamoPrestacional {
     private String descIntegracion;
     private String recuperableSur;
     
+    private String idTercerizadora;
+    
 	public void setTroquel(String troquel) {
 		Troquel = troquel;
 	}
@@ -248,6 +250,7 @@ public class ReclamoPrestacionalExcel extends ReclamoPrestacional {
         archivo.setDictamenComision(rs.getString("dictamen_comision"));   
         archivo.setFechaOP(rs.getDate("fecha_op"));
         archivo.setReconocidoSSS(rs.getDouble("rpt_prestacion_reconocido_sss"));
+        archivo.setIdTercerizadora(rs.getString("rpt_id_tercerizadora"));
 		return archivo;
 	}
 
@@ -419,6 +422,14 @@ public class ReclamoPrestacionalExcel extends ReclamoPrestacional {
 
 	public void setDiscapacitado(String discapacitado) {
 		this.discapacitado = discapacitado;
+	}
+	
+	public String getIdTercerizadora() {
+	    return idTercerizadora;
+	}
+
+	public void setIdTercerizadora(String idTercerizadora) {
+	    this.idTercerizadora = idTercerizadora;
 	}
 	
 	

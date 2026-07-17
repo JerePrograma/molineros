@@ -1750,4 +1750,16 @@ public class TraeListasServiceUtil {
 	public static List<CentroCosto> getSectoresLiquidacionSueldos(String entidad) {
 		return getInstance().getSectoresLiquidacionSueldos(entidad);
 	}
+	
+	public static List<Plan> getPlanesFacturables() {
+		return getInstance().getPlanesFacturables();
+	}
+	
+	public static List<Parentesco> getParentescosFacturables() throws SystemException {
+		return getInstance().getParentescosFacturables();
+	}
+	
+	public static List<Provincia> getProvinciasFacturables() {
+		return getInstance().getProvinciasFacturables();
+	}
 }

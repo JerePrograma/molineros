@@ -11,6 +11,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ar.com.ospim.afiliados.beans.Afiliado;
+import ar.com.ospim.tesoreria.beans.AjustePlanSuperador;
+import ar.com.ospim.tesoreria.beans.PrecioPlanSuperador;
 import ar.com.ospim.util.ConnectionHelper;
 
 import org.apache.log4j.Logger;
@@ -77,6 +80,8 @@ public class SolicitudAfiliacionServiceImpl {
             m.put("contrato_estado", rs.getString("contrato_estado"));
             m.put("contrato_pdf", rs.getString("contrato_pdf"));
             m.put("contrato_url", rs.getString("contrato_url"));
+            m.put("cuil", rs.getString("cuil"));
+            
 
             return m;
 
@@ -516,6 +521,189 @@ public class SolicitudAfiliacionServiceImpl {
             cs.execute();
         } finally {
             ConnectionHelper.cerrar(cs);
+            ConnectionHelper.cerrar(conn);
+        }
+    }
+    
+    public static List<Afiliado> getGrupoFamiliarDDJJ(long idSolicitud) throws Exception {
+
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            conn = ConnectionHelper.getConnection();
+            
+
+            ps = conn.prepareStatement("SELECT * FROM comercial.get_grupo_familiar_ddjj(?)");
+            ps.setLong(1, idSolicitud);
+            
+            rs = ps.executeQuery();
+
+            List<Afiliado> resultados = new ArrayList<Afiliado>();
+            while (rs.next()) {
+            	
+            	Afiliado a = new Afiliado();
+            	a.setInte(rs.getInt("inte"));
+            	a.setApellido(rs.getString("apellido"));
+            	a.setNombre(rs.getString("nombre"));
+            	a.setParentesco(rs.getString("parentesco"));
+            	a.setId_parentesco(rs.getInt("parentesco_id"));
+            	a.setDocu_numero(rs.getString("dni"));
+            	a.setCuil(rs.getString("cuil"));
+            	a.setNaci_fecha(rs.getDate("fecha_nacimiento"));
+            	a.setSexo(rs.getString("sexo"));
+            	a.setNacionalidad_string(rs.getString("nacionalidad"));
+            	a.setEdad(rs.getInt("edad"));
+            	
+                resultados.add(a);
+            }
+
+            return resultados;
+
+        } catch (Exception e) {
+            _log.error("Error grupo familiar ddjj", e);
+            throw e;
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+            ConnectionHelper.cerrar(ps);
+            ConnectionHelper.cerrar(conn);
+        }
+    }
+    
+    public static void saveCotizacion(Long idSolicitud,List<PrecioPlanSuperador>precios,List<AjustePlanSuperador>ajustes,String usuario) throws Exception {
+        Connection conn = null;
+        CallableStatement cs = null;
+
+        try {
+            conn = ConnectionHelper.getConnection();
+            cs = conn.prepareCall("{ call comercial.save_cotizacion_precios(?,?,?,?,?) }");
+            for(PrecioPlanSuperador pre: precios) {
+              cs.setLong(1, idSolicitud.longValue());
+              cs.setInt(2, pre.getId());
+              cs.setDouble(3, pre.getImporteBruto());
+              cs.setDouble(4, pre.getAjuste());
+              cs.setString(5, usuario);
+              cs.execute();
+            }
+            
+            cs = conn.prepareCall("{ call comercial.save_cotizacion_ajustes(?,?,?,?,?,?,?) }");
+            for(AjustePlanSuperador pre: ajustes) {
+              cs.setLong(1, idSolicitud.longValue());
+              cs.setInt(2, pre.getId());
+              if(pre.getFechaDesde() != null){
+  				cs.setDate(3,new java.sql.Date(pre.getFechaDesde().getTime()));
+  			  }else{
+  				cs.setNull(3, Types.DATE);
+  			  }
+              
+              if(pre.getFechaHasta() != null){
+    			cs.setDate(4,new java.sql.Date(pre.getFechaHasta().getTime()));
+    		  }else{
+    			cs.setNull(4, Types.DATE);
+    		  }
+              cs.setDouble(5, pre.getPorcentaje());
+              cs.setDouble(6, pre.getImporte().doubleValue());
+              cs.setString(7, usuario);
+              cs.execute();
+            }
+            
+            
+        } finally {
+            ConnectionHelper.cerrar(cs);
+            ConnectionHelper.cerrar(conn);
+        }
+    }
+    
+    
+    public static void deleteCotizacion(Long idSolicitud) throws Exception {
+        Connection conn = null;
+        CallableStatement cs = null;
+
+        try {
+            conn = ConnectionHelper.getConnection();
+            cs = conn.prepareCall("{ call comercial.delete_cotizacion(?) }");
+            cs.setLong(1, idSolicitud.longValue());
+            cs.execute();
+        } finally {
+            ConnectionHelper.cerrar(cs);
+            ConnectionHelper.cerrar(conn);
+        }
+    }
+    
+    public static List<AjustePlanSuperador> getCotizacionAjustesById(long idSolicitud) throws Exception {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+       
+        try {
+            conn = ConnectionHelper.getConnection();
+            
+
+            ps = conn.prepareStatement("SELECT * FROM comercial.get_cotizacion_ajustes_by_id(?)");
+            ps.setLong(1, idSolicitud);
+            
+            rs = ps.executeQuery();
+            List<AjustePlanSuperador> resultados=new ArrayList<AjustePlanSuperador>();
+            while (rs.next()) {
+            	
+            	AjustePlanSuperador a = new AjustePlanSuperador();
+            	
+            	a.setId(rs.getInt("ajuste_id"));
+            	a.setDescripcion(rs.getString("descripcion"));
+            	a.setFechaDesde(rs.getDate("vigente_desde"));
+            	a.setFechaHasta(rs.getDate("vigente_hasta"));
+            	a.setPorcentaje(rs.getDouble("porcentaje"));
+            	a.setImporte(rs.getBigDecimal("importe"));
+            	resultados.add(a);
+            }
+
+            return resultados;
+
+        } catch (Exception e) {
+            _log.error("Error al traer ajustes de la cotizacion", e);
+            throw e;
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+            ConnectionHelper.cerrar(ps);
+            ConnectionHelper.cerrar(conn);
+        }
+    }
+    
+    public static List<PrecioPlanSuperador> getCotizacionPreciosById(long idSolicitud) throws Exception {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+       
+        try {
+            conn = ConnectionHelper.getConnection();
+            
+
+            ps = conn.prepareStatement("SELECT * FROM comercial.get_cotizacion_precios_by_id(?)");
+            ps.setLong(1, idSolicitud);
+            
+            rs = ps.executeQuery();
+            List<PrecioPlanSuperador> resultados=new ArrayList<PrecioPlanSuperador>();
+            while (rs.next()) {
+            	
+            	PrecioPlanSuperador a = new PrecioPlanSuperador();
+            	
+            	a.setId(rs.getInt("precio_id"));
+            	a.setDescripcion(rs.getString("descripcion"));
+            	a.setImporteBruto(rs.getDouble("importe_precio"));
+            	a.setAjuste(rs.getDouble("importe_ajuste"));
+            	a.setEdadDesde(rs.getInt("edad_desde"));
+            	resultados.add(a);
+            }
+
+            return resultados;
+
+        } catch (Exception e) {
+            _log.error("Error al traer precios de la cotizacion", e);
+            throw e;
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+            ConnectionHelper.cerrar(ps);
             ConnectionHelper.cerrar(conn);
         }
     }

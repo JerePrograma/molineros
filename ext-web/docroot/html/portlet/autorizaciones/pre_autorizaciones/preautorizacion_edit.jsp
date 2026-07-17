@@ -79,8 +79,6 @@
 	String organizacionId = user.getOrganizations().size()>0?String.valueOf(user.getOrganizations().get(0).getOrganizationId()):"";
     String tabValue = ParamUtil.getString(request, "tab", null); // "datos"
 
-    //boolean incluirBajas = ParamUtil.getBoolean(request, "incluir_bajas", false);
-
     String prestacionPideTipoOpc=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_DISCAPACIDAD_PIDE_TIPO");
     String marcaReinLiqDiscapacidad=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_DISCAPACIDAD_MARCA_REINLIQ");
     boolean rolAlertaRoja = PermissionUtil.userContainsRole(user,WebKeysAutorizaciones.ROL_PREAUTORIZACION_ALERTA_ROJA );
@@ -1069,7 +1067,7 @@ var popupImg;
 <portlet:namespace />initDateFields();
 <portlet:namespace />configuraCarga();
 <portlet:namespace />manejoDiscapacidad();
-<portlet:namespace />sincronizarIncluirBajas();
+
 
 function <portlet:namespace />initDateFields(){
 	jQuery('#<portlet:namespace />divResultadoActualizarOK').hide();
@@ -1321,24 +1319,6 @@ function <portlet:namespace />validarCampos(){
     	}  
     }
 	
-	/*
-    <portlet:namespace />sincronizarIncluirBajas();
-
-    var incluirBajas = jQuery("#<portlet:namespace />incluir_bajas").is(":checked");
-
-    if(baja_fecha != null && baja_fecha != "" && baja_fecha != "null"){
-        var valuesStart = baja_fecha.split("/");
-
-        if(valuesStart.length == 3){
-            var dateStart = new Date(valuesStart[2], (valuesStart[1] - 1), valuesStart[0]);
-
-            if(dateStart < date && !incluirBajas){
-                alert("Afiliado dado de baja. Para continuar, marque 'Incluir bajas'.");
-                return false;
-            }
-        }
-    }
-    */
 	if (cuil_titu==null || cuil_titu=="" || cuil_titu=="null" || cuil_titu.length==0){
 		
 		alert("Debe ingresar el Nro de Cuil.");
@@ -1525,8 +1505,6 @@ function <portlet:namespace />validarCampos(){
 
     function <portlet:namespace />salvarEdicion(){
         window.onbeforeunload = null;
-
-        //<portlet:namespace />sincronizarIncluirBajas();
 
         document.getElementById("<portlet:namespace />estadoPreautorizacion").disabled=false;
 
@@ -2034,8 +2012,7 @@ function borraPreautorizacionCodigoNomenclador(idMod){
 
 
 function <portlet:namespace />siguienteSolapa() {
-	//<portlet:namespace />sincronizarIncluirBajas();
-
+	
 	document.getElementById("<portlet:namespace/>discapacidadChk").disabled=false;
 	document.getElementById("<portlet:namespace />estadoPreautorizacion").disabled=false;
 	document.getElementById("<portlet:namespace/>medicamentoChk").disabled=false;
@@ -2410,20 +2387,6 @@ function <portlet:namespace />manejoAlojamiento(){
 		jQuery('#<portlet:namespace />divAlojamiento').hide();
 	}
 }
-
-/*
-    function <portlet:namespace />sincronizarIncluirBajas(){
-        var incluirBajas = jQuery("#<portlet:namespace />incluir_bajas").is(":checked");
-
-        jQuery("#<portlet:namespace />baja").val(incluirBajas ? "true" : "false");
-
-        jQuery("#<portlet:namespace />baja_filtro").prop("checked", incluirBajas);
-        jQuery("#<portlet:namespace />baja_filtro").val(incluirBajas ? "true" : "false");
-
-        jQuery("#<portlet:namespace />incluir_bajas_filtro").prop("checked", incluirBajas);
-        jQuery("#<portlet:namespace />incluir_bajas_filtro").val(incluirBajas ? "true" : "false");
-    }
- */   
 </script>
 
 

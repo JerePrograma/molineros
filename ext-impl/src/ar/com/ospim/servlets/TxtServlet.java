@@ -1,9 +1,7 @@
 package ar.com.ospim.servlets;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
@@ -56,15 +54,16 @@ import ar.com.ospim.autorizaciones.beans.IntegracionDetalleDR;
 import ar.com.ospim.autorizaciones.beans.IntegracionDetalleDS;
 import ar.com.ospim.autorizaciones.beans.OrdenPagoConError;
 import ar.com.ospim.autorizaciones.beans.PagosInterbanking;
+import ar.com.ospim.autorizaciones.beans.PreAutorizacion;
 import ar.com.ospim.autorizaciones.beans.PrestacionesReclamo;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import ar.com.ospim.autorizaciones.constantes.interbaking.ConstantesInterbanking;
 import ar.com.ospim.autorizaciones.services.IntegracionServiceUtil;
 import ar.com.ospim.autorizaciones.services.OrdenesPagoInterbanking;
+import ar.com.ospim.autorizaciones.services.PreAutorizacionServiceUtil;
 import ar.com.ospim.autorizaciones.services.ReclamosPrestacionesServiceUtil;
 import ar.com.ospim.comprobantesPortalProveedores.beans.ComprobanteFiltro;
 import ar.com.ospim.comprobantesPortalProveedores.beans.ComprobanteIntegracion;
-import ar.com.ospim.farmaciaOspim.action.DescargarR331Action;
 import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.global.beans.Comprobante;
 import ar.com.ospim.global.beans.OrdenPago;
@@ -1348,7 +1347,9 @@ public class TxtServlet extends HttpServlet {
 				DynamicQuery dlf = DynamicQueryFactoryUtil.forClass(DLFileEntry.class,
 						PortletClassLoaderUtil.getClassLoader());
 				DLFolder f = DLFolderLocalServiceUtil.getFolder(10136, 0L, "PREAUTORIZACIONES");
-
+				
+				DLFolder fAut = DLFolderLocalServiceUtil.getFolder(10136, 0L, "AutorizacionesPrestacionales");
+				
 				Company company = PortalUtil.getCompany(req);
 				User user = PortalUtil.getUser(req);
 
@@ -1407,11 +1408,39 @@ public class TxtServlet extends HttpServlet {
 								fin.close();
 								zos.closeEntry();
 							}
+///// - Imagenes Autorizaciones							
+							PreAutorizacion pre = PreAutorizacionServiceUtil.buscarPreautorizacionPorId(Integer.parseInt(rps[i]));
+							if(pre.getNroAutorizacionPrestacional()>0) {
+							   Criterion criterion2 = null;
+							   criterion2 = RestrictionsFactoryUtil.eq("folderId",fAut.getFolderId());
+							   criterion2=RestrictionsFactoryUtil.and(criterion2,
+							   RestrictionsFactoryUtil.ilike("title", pre.getNroAutorizacionPrestacional()+"%" ));
+							   dlf = DynamicQueryFactoryUtil.forClass(DLFileEntry.class,
+										PortletClassLoaderUtil.getClassLoader());
+							   dlf.add(criterion2);
+							   List<Object> resultsAut = DLFolderLocalServiceUtil.dynamicQuery(dlf);
+							   for (Object f1 : resultsAut) {
+								   DLFileEntry fileEntry = (DLFileEntry) f1;
+								   FileInputStream fin = (FileInputStream) DLFileEntryLocalServiceUtil.getFileAsStream(
+										company.getCompanyId(), user.getUserId(), fAut.getFolderId(), fileEntry.getName());
+								   byte[] buffer = new byte[1024];
+								   int length;
+								   zos.putNextEntry(new ZipEntry(fileEntry.getName()));
+								   length = 0;
+								   while ((length = fin.read(buffer)) > 0) {
+									  zos.write(buffer, 0, length);
+								   }
+								   fin.close();
+								   zos.closeEntry();
+							   }
+							}
+/////							
 							zos.flush();
 							zos.close();
 							zipOut.write(baos.toByteArray());
 							zipOut.closeEntry();
 						}
+						
 					}
 
 					zipOut.finish();

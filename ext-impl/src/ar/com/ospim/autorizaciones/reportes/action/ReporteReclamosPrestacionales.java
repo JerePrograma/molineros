@@ -533,13 +533,13 @@ public class ReporteReclamosPrestacionales  extends ReporteXLS {
 		cell19H.setCellValue(new HSSFRichTextString("Plan Tercerizadora"));
 		cell19H.setCellStyle(styleBold);
 		
-		
+		HSSFCell cell19BH = rowHeader.createCell(++col);
+		cell19BH.setCellValue(new HSSFRichTextString("ID Tercerizadora"));
+		cell19BH.setCellStyle(styleBold);		
 
 		HSSFCell cell20H = rowHeader.createCell(++col);
 		cell20H.setCellValue(new HSSFRichTextString("Código"));
-		cell20H.setCellStyle(styleBold);
-	
-	
+		cell20H.setCellStyle(styleBold);	
 
 		HSSFCell cell21H = rowHeader.createCell(++col);
 		cell21H.setCellValue(new HSSFRichTextString("Prestación"));
@@ -738,6 +738,7 @@ public class ReporteReclamosPrestacionales  extends ReporteXLS {
 		sheet.autoSizeColumn((short) 47);
 		sheet.autoSizeColumn((short) 48);
 		sheet.autoSizeColumn((short) 49);
+		sheet.autoSizeColumn((short) 50);
 		return wb;
 	}
 
@@ -889,13 +890,19 @@ public class ReporteReclamosPrestacionales  extends ReporteXLS {
 		
 		HSSFCell cell19 = rowHeader.createCell(++col);
 		cell19.setCellValue(new HSSFRichTextString(autorizaciones.getAfiliado().getNombrePlan() ));
-		cell19.setCellStyle(styleAll);
+		cell19.setCellStyle(styleAll);	
 		
 		HSSFCell cell20 = rowHeader.createCell(++col);
 		cell20.setCellValue(new HSSFRichTextString(autorizaciones.getPlanPrevencion()  ));
 		cell20.setCellStyle(styleAll);
 		
-
+		HSSFCell cell19BH = rowHeader.createCell(++col);
+		cell19BH.setCellValue(
+		    new HSSFRichTextString(
+		        autorizaciones.getIdTercerizadora() != null ? autorizaciones.getIdTercerizadora() : ""
+		    )
+		);
+		cell19BH.setCellStyle(styleAll);
 
 		HSSFCell cell21 = rowHeader.createCell(++col);
 		cell21.setCellValue(new HSSFRichTextString( String.valueOf( autorizaciones.getTroquel() ) ));
@@ -1186,7 +1193,7 @@ public class ReporteReclamosPrestacionales  extends ReporteXLS {
 		cell0HA.setCellValue(new HSSFRichTextString(titulo1.toString()));
 		cell0HA.setCellStyle(styleHeaderEnca);
 
-		sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 41));
+		sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 47));
 
 		index++;
 		HSSFRow row1 = sheet.createRow(index);
@@ -1198,7 +1205,7 @@ public class ReporteReclamosPrestacionales  extends ReporteXLS {
 		cell1.setCellValue(new HSSFRichTextString(fechaImpresion.toString()));
 		//cell1HA.setCellStyle(styleBold);
 	
-		sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 41));
+		sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 47));
 
 		index++;
 		HSSFRow rowSeparador = sheet.createRow(index++);
@@ -1342,7 +1349,7 @@ public class ReporteReclamosPrestacionales  extends ReporteXLS {
 		cell2.setCellValue(new HSSFRichTextString(aux.toString()));
 		cell2.setCellStyle(styleHeaderEnca2);
 
-		sheet.addMergedRegion(new CellRangeAddress(3, 3, 0, 41));
+		sheet.addMergedRegion(new CellRangeAddress(3, 3, 0, 47));
 		
 		
 		//index++;
@@ -1428,9 +1435,28 @@ public class ReporteReclamosPrestacionales  extends ReporteXLS {
 
 		HSSFCell cell17H = rowHeader.createCell(++col);
 		cell17H.setCellValue(new HSSFRichTextString("Seccional Afiliado"));
-		cell17H.setCellStyle(styleBold);
-		
+		cell17H.setCellStyle(styleBold);	
 	
+		HSSFCell cell17H1 = rowHeader.createCell(++col);
+		cell17H1.setCellValue(new HSSFRichTextString("Provincia"));
+		cell17H1.setCellStyle(styleBold);
+
+		HSSFCell cell17H2 = rowHeader.createCell(++col);
+		cell17H2.setCellValue(new HSSFRichTextString("Localidad"));
+		cell17H2.setCellStyle(styleBold);
+
+		HSSFCell cell17H3 = rowHeader.createCell(++col);
+		cell17H3.setCellValue(new HSSFRichTextString("Domicilio"));
+		cell17H3.setCellStyle(styleBold);
+
+		HSSFCell cell17H4 = rowHeader.createCell(++col);
+		cell17H4.setCellValue(new HSSFRichTextString("Email"));
+		cell17H4.setCellStyle(styleBold);
+
+		HSSFCell cell17H5 = rowHeader.createCell(++col);
+		cell17H5.setCellValue(new HSSFRichTextString("Teléfono"));
+		cell17H5.setCellStyle(styleBold);
+		
 		HSSFCell cell18H = rowHeader.createCell(++col);
 		cell18H.setCellValue(new HSSFRichTextString("Plan Molineros"));
 		cell18H.setCellStyle(styleBold);
@@ -1439,7 +1465,9 @@ public class ReporteReclamosPrestacionales  extends ReporteXLS {
 		cell19H.setCellValue(new HSSFRichTextString("Plan Tercerizadora"));
 		cell19H.setCellStyle(styleBold);
 		
-		
+		HSSFCell cell19BH = rowHeader.createCell(++col);
+		cell19BH.setCellValue(new HSSFRichTextString("Id Tercerizadora"));
+		cell19BH.setCellStyle(styleBold);
 
 		HSSFCell cell20H = rowHeader.createCell(++col);
 		cell20H.setCellValue(new HSSFRichTextString("Código"));
@@ -1639,6 +1667,10 @@ public class ReporteReclamosPrestacionales  extends ReporteXLS {
 		sheet.autoSizeColumn((short) 41);
 		sheet.autoSizeColumn((short) 42);
 		sheet.autoSizeColumn((short) 43);
+		sheet.autoSizeColumn((short) 44);
+		sheet.autoSizeColumn((short) 45);
+		sheet.autoSizeColumn((short) 46);
+		sheet.autoSizeColumn((short) 47);
 		return wb;
 	}
 

@@ -134,7 +134,11 @@ public class BajaAfiliadoPlanReglasAction extends PortletAction {
 			
 //			Regla 1: si el motivo de baja es: 1-"RENUNCIA", 2-"FALLECIMIENTO", 3-"DESPIDO", 21-"DESEMPLEO"
 //			Se debe bajar los planes: 1-"INTEGRAL",2-"TOTAL" a su respectivo plan_base ej, pasamos Integral y Total a 19-Cobertura-Usufructo
-			if( (idPlanActual == 1 || idPlanActual == 2) 
+//                                    60 -OSPIM Integral; 59-OSPIM TOTAL  			
+			if( ( (idPlanActual == 1 || idPlanActual == 2) 
+				 && (idMotBaja == 1 || (idMotBaja == 2 && hayRestodeGrupoFliar) || idMotBaja == 3 || idMotBaja == 21 ))
+				||
+				(idPlanActual == 60 || idPlanActual == 59) 
 				 && (idMotBaja == 1 || (idMotBaja == 2 && hayRestodeGrupoFliar) || idMotBaja == 3 || idMotBaja == 21 ) 
 			  ){
 //				recuperamos plan para buscar su plan_base

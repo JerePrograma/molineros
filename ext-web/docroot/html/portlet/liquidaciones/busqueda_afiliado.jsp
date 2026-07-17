@@ -224,6 +224,12 @@
 			'&fecha_referencia='+fecha_prestacion+'&popup=true';
 	    </c:if>
         
+	      <c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_AUT_1_"))%>'>	
+             url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/buscar_afiliados&cuil='+cuil+
+		    '&inte='+inte+'&tipoDoc='+tipoDoc+'&nroDoc='+nroDoc+'&seccional='+seccional+'&nombre='+encodeURI(nombre)+'&apellido='+encodeURI(apellido)+'&entidad='+entidad+'&numero_afi='+numero_afi+
+		    '&fecha_referencia='+fecha_prestacion+'&popup=true';
+    	  </c:if>
+	    
         </c:if>
         <c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
         	var fecha_prestacion = 'null';
@@ -262,6 +268,12 @@
 				'&inte='+inte+'&tipoDoc='+tipoDoc+'&nroDoc='+nroDoc+'&seccional='+seccional+'&nombre='+encodeURI(nombre)+'&apellido='+encodeURI(apellido)+'&entidad='+entidad+'&numero_afi='+numero_afi+
 				'&fecha_referencia='+fecha_prestacion+'&popup=true';
 		    </c:if>
+		    
+		    <c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_AUT_1_"))%>'>	
+                url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/buscar_afiliados&cuil='+cuil+
+		        '&inte='+inte+'&tipoDoc='+tipoDoc+'&nroDoc='+nroDoc+'&seccional='+seccional+'&nombre='+encodeURI(nombre)+'&apellido='+encodeURI(apellido)+'&entidad='+entidad+'&numero_afi='+numero_afi+
+		        '&fecha_referencia='+fecha_prestacion+'&popup=true';
+   	        </c:if>
         </c:if>
         jQuery(popupAfill).load(url);
 	}

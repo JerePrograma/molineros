@@ -143,7 +143,7 @@ String tabsANames = StringUtil.replace(tabsAValues.toString(), StringPool.UNDERL
 				return false;			
 			}	
 			
-			if (nacionalidad == 10 && nroDoc > 60000000 ) {
+			if (nacionalidad == 10 && ((nroDoc > 60000000 && nroDoc < 70000000) || (nroDoc > 90000000 )  ) ){
 				
 				  var opcion = confirm('Este afiliado tiene documento de extranjero, revise la nacionalidad por favor');
 				  if (opcion == true) {

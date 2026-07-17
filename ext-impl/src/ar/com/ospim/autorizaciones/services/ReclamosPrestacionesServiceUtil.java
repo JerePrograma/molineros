@@ -45,10 +45,6 @@ public class ReclamosPrestacionesServiceUtil {
 
 	private static ReclamoPrestacionServiceImpl  instance = null;
 
-	static {
-		ReclamoAppMobileOutboxDispatcher.iniciar();
-	}
-
 	public static ReclamoPrestacionServiceImpl  getInstance() {
 		if (null == instance) {
 			instance = new ReclamoPrestacionServiceImpl ();
@@ -104,6 +100,7 @@ public class ReclamosPrestacionesServiceUtil {
 	}
 	
 	public static ReclamoPrestacional getReclamoPrestacional (int id) throws Exception {
+		
 		return getInstance().getReclamoPrestacional(id) ;
 	}
 	
@@ -112,87 +109,14 @@ public class ReclamosPrestacionesServiceUtil {
 	}
 	 
 	
-	/**
-	 * Conserva el identificador externo antes de ejecutar la baja local. La
-	 * implementaci贸n anterior intentaba recuperar el reclamo despu茅s de
-	 * borrarlo y pod铆a perder definitivamente idReintegroApp.
-	 */
 	public static void borrar(int id, User user)
 			throws ImposibleBorrarReclamoPrestacionalException, SystemException{
-		Integer idReintegroApp = null;
-		try {
-			ReclamoPrestacional snapshot = getReclamoPrestacional(id);
-			if (snapshot != null && snapshot.getIdReintegroApp() != null
-					&& snapshot.getIdReintegroApp() > 0) {
-				idReintegroApp = snapshot.getIdReintegroApp();
-			}
-		} catch (Exception e) {
-			_log.error("No se pudo obtener el snapshot previo al borrado del Reclamo Prestacional "
-					+ id + ". Se cancela la baja para no perder el identificador externo.", e);
-			throw new SystemException(e);
-		}
-
-		ReclamoPrestacionalBajaTransaccionalService.borrar(
-				id,
-				user.getScreenName(),
-				idReintegroApp
-		);
-
-		if (idReintegroApp != null) {
-			try {
-				String token = ReclamoAppMobileAuthClient.obtenerToken();
-				if (token == null) {
-					registrarOutboxSeguro(
-							id,
-							idReintegroApp.intValue(),
-							"AN",
-							"TOKEN_NULO"
-					);
-					_log.error("RECLAMO_APP_SYNC_PENDING reclamo=" + id
-							+ " reintegroApp=" + idReintegroApp
-							+ " estado=AN motivo=TOKEN_NULO");
-					return;
-				}
-
-				boolean sincronizado = ReclamoAppMobileSyncClient
-						.actualizarEstadoReintegro(
-								idReintegroApp,
-								"AN",
-								token
-						);
-				if (!sincronizado) {
-					registrarOutboxSeguro(
-							id,
-							idReintegroApp.intValue(),
-							"AN",
-							"HTTP_NO_CONFIRMADO"
-					);
-					_log.error("RECLAMO_APP_SYNC_PENDING reclamo=" + id
-							+ " reintegroApp=" + idReintegroApp
-							+ " estado=AN motivo=HTTP_NO_CONFIRMADO");
-					return;
-				}
-
-				confirmarOutboxSeguro(idReintegroApp.intValue(), "AN");
-				_log.info("Anulaci贸n confirmada por AppMobile. reclamo=" + id
-						+ " reintegroApp=" + idReintegroApp);
-			} catch (Exception e) {
-				registrarOutboxSeguro(
-						id,
-						idReintegroApp.intValue(),
-						"AN",
-						"EXCEPCION: " + mensajeSeguro(e)
-				);
-				_log.error("RECLAMO_APP_SYNC_PENDING reclamo=" + id
-						+ " reintegroApp=" + idReintegroApp
-						+ " estado=AN motivo=EXCEPCION", e);
-			}
-		}
+		    getInstance().borrar(id, user.getScreenName());
 	}
 	
 	/*
 	 Registra el contacto en CRM : tipo = 6  "CORREO SALIENTE" , descripcion =  "RECLAMO PRESTACIONAL NRO " NNNN
-	 campo estado CERRADO   categoria = 2  "RECLAMO"  id motivo = 5 PRESTACIONES M脡DICAS
+	 campo estado CERRADO   categoria = 2  "RECLAMO"  id motivo = 5 PRESTACIONES M蒁ICAS
 	 */
 	public static void grabarContactoCRM(ReclamoPrestacional reclamo, User user) throws SystemException {
 	    ContactoCRM contactoCrm = new ContactoCRM();
@@ -214,10 +138,10 @@ public class ReclamosPrestacionesServiceUtil {
 	        contactoCrm.setAltaSector(altaSector);
 	        contactoCrm.setTipo(new TipoContacto(6, "CORREO SALIENTE"));
 	        contactoCrm.setCategoria(new CategoriaContacto(2, "RECLAMO"));
-	        contactoCrm.setMotivo(new MotivoContacto(5, "PRESTACIONES M脡DICAS"));
+	        contactoCrm.setMotivo(new MotivoContacto(5, "PRESTACIONES M蒁ICAS"));
 	        contactoCrm.setDescripcion("RECLAMO PRESTACIONAL NRO::" + String.valueOf(reclamo.getId_reclamo()));
 	        contactoCrm.setIdCrmRelacionado(0);
-	        contactoCrm.setComentarioCierre("Cierre autom谩tico por carga de reclamo prestacional");
+	        contactoCrm.setComentarioCierre("Cierre autom醫ico por carga de reclamo prestacional");
 	        contactoCrm.setEstado(ContactoCRM.ESTADOS.CERRADO);
 
 	        CrmServiceUtil.insertaContacto(
@@ -238,7 +162,7 @@ public class ReclamosPrestacionesServiceUtil {
 		String subjectautorizados=" Reclamo Prestacional Nro:" + String.valueOf(reclamo.getId_reclamo()) + ", Afiliado:" +  reclamo.getAfiliado().getApeNombre() + "(" + reclamo.getEstadoResolucionAutorizadaString()  + ")." ;
 		String subjectSeccionalCAB =" Reclamo Prestacional Nro:" + String.valueOf(reclamo.getId_reclamo()) + ", Afiliado:" +  reclamo.getAfiliado().getApeNombre()  ;
 		String bodyAutorizados = "Se ha cerrado el reclamo Nro " + String.valueOf(reclamo.getId_reclamo()) + " con resolucion " +  reclamo.getEstadoResolucionAutorizadaString()    +   "." +"\n\n\n";		
-		String bodySeccionalCAB = "Prestaci贸n evaluada por Auditor铆a M茅dica. Cont谩ctese al 0810-345-0208.";
+		String bodySeccionalCAB = "Prestaci髇 evaluada por Auditor韆 M閐ica. Cont醕tese al 0810-345-0208.";
 		
 		List<String>emails = new ArrayList<String>();
 		List<String>emailsSeccionalCAB= new ArrayList<String>();
@@ -254,7 +178,7 @@ public class ReclamosPrestacionesServiceUtil {
 					emailsSeccionalCAB.add(contac.getContacto() );					
 				} 
 			}				
-			// a帽ade mails si es RECHAZADO
+			// a馻de mails si es RECHAZADO
 			if (reclamo.getEstadoResolucionAutorizada().equals(ESTADOSEVALUACIONRECLAMO.RECHAZADA ) ){		  
 				List<String> destinatarios = ProcesosCorreoServiceUtil.getListaCorreoDestinatariosInformadosPorProceso(ProcesosCorreoServiceUtil.CIERRE_RECLAMO_PRESTACIONAL_RECHAZO );
 				for (String  desti : destinatarios ) {			
@@ -282,14 +206,14 @@ public class ReclamosPrestacionesServiceUtil {
 					"CUIL TITULAR: " +reclamo.getAfiliado().getCuil_titular()   + "\n" +
 					"CUIL: " +reclamo.getAfiliado().getCuil() + "\n" +					
 					"ID Reclamo: " +reclamo.getId_reclamo()  + "\n"
-					+ "\n"	+ "\n Prestaci贸n/es"+ "\n";
+					+ "\n"	+ "\n Prestaci髇/es"+ "\n";
 					for (PrestacionesReclamo  pres : reclamo.getPrestaciones()) {
 						if ( pres.getEstadoRechazoAprobado()==2) { //autorizado
 							bodyAutorizados = bodyAutorizados + pres.getDescripcion() + "\n";	
 						} 
 					}
 					bodyAutorizados = bodyAutorizados + "\n\n";	
-					bodyAutorizados = bodyAutorizados + "Resoluci贸n:"+  reclamo.getEstadoResolucionAutorizadaString() ;		
+					bodyAutorizados = bodyAutorizados + "Resoluci髇:"+  reclamo.getEstadoResolucionAutorizadaString() ;		
 		}
 		List<String> lm =new ArrayList<String>();
 		if(!user.getScreenName().equalsIgnoreCase("liquidaciones")){
@@ -434,54 +358,6 @@ public class ReclamosPrestacionesServiceUtil {
 	public static List<MovimientoReclamoHistorico> buscarHistoricoReclamo(
 	        int idReclamo) throws Exception {
 	    return getInstance().buscaHistoricoReclamo(idReclamo);
-	}
-
-	private static void registrarOutboxSeguro(
-			int idReclamo,
-			int idReintegroApp,
-			String estadoDestino,
-			String motivo) {
-
-		try {
-			ReclamoAppMobileOutboxService.registrarPendiente(
-					idReclamo,
-					idReintegroApp,
-					estadoDestino,
-					motivo
-			);
-		} catch (Exception e) {
-			_log.error("RECLAMO_APP_OUTBOX_UNAVAILABLE reclamo=" + idReclamo
-					+ " reintegroApp=" + idReintegroApp
-					+ " estado=" + estadoDestino
-					+ " motivo=" + motivo, e);
-		}
-	}
-
-	private static void confirmarOutboxSeguro(
-			int idReintegroApp,
-			String estadoDestino) {
-
-		try {
-			ReclamoAppMobileOutboxDirectService.confirmarProcesado(
-					idReintegroApp,
-					estadoDestino
-			);
-		} catch (Exception e) {
-			_log.error("RECLAMO_APP_OUTBOX_CONFIRM_PENDING reintegroApp="
-					+ idReintegroApp
-					+ " estado=" + estadoDestino, e);
-		}
-	}
-
-	private static String mensajeSeguro(Exception e) {
-		if (e == null) {
-			return "SIN_DETALLE";
-		}
-		String mensaje = e.getMessage();
-		if (mensaje == null || mensaje.trim().length() == 0) {
-			return e.getClass().getName();
-		}
-		return e.getClass().getName() + ": " + mensaje;
 	}
 
 }

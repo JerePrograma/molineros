@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report name" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="581" leftMargin="7" rightMargin="7" topMargin="7" bottomMargin="7">
 	<property name="ireport.zoom" value="2.0"/>
-	<property name="ireport.x" value="193"/>
-	<property name="ireport.y" value="325"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="85"/>
 	<parameter name="id_lote" class="java.lang.String"/>
 	<parameter name="SUBREPORT_DIR" class="java.lang.String"/>
 	<parameter name="vto" class="java.lang.String"/>
@@ -65,7 +65,7 @@
 				<textElement>
 					<font isBold="true"/>
 				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA["Plan médico: " + ($F{categoria}.contains("MONO")?"UNICO": $F{plan_omint})]]></textFieldExpression>
+				<textFieldExpression class="java.lang.String"><![CDATA["Plan médico: " + ($F{plan_p}.contains("MONO")?"UNICO": $F{plan_omint})]]></textFieldExpression>
 			</textField>
 			<rectangle radius="10">
 				<reportElement x="8" y="164" width="566" height="84"/>
@@ -75,14 +75,14 @@
 				<textElement>
 					<font isBold="true"/>
 				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA["Plan farmacia: " + ($F{categoria}.contains("MONO")?"A": "")]]></textFieldExpression>
+				<textFieldExpression class="java.lang.String"><![CDATA["Plan farmacia: " + ($F{plan_p}.contains("MONO")?"A": "")]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement x="443" y="134" width="117" height="15"/>
 				<textElement>
 					<font isBold="true"/>
 				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA["Ticket Coseguro: " + ($F{categoria}.contains("MONO")?"SI": "NO")]]></textFieldExpression>
+				<textFieldExpression class="java.lang.String"><![CDATA["Ticket Coseguro: " + ($F{plan_p}.contains("MONO")?"SI": "NO")]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement x="290" y="208" width="270" height="20"/>

@@ -385,9 +385,8 @@
 		</div>
 		</td>
 		
-		
-		
-		<c:if test="<%=Validator.isNotNull(tratamiento)%>"> 
+		<%-- 29/06/26 se quita validación para mostrar siempre Cantidad Tickets Copago --%>
+		<%-- <c:if test="<%=Validator.isNotNull(tratamiento)%>">--%> 
 		<td>
 		  <label >Cantidad Tickets Copago: </label>
 		  <select name="<portlet:namespace/>copago" id="<portlet:namespace/>copago">
@@ -401,7 +400,7 @@
 		  </select>	
 		</td>
 		
-		</c:if>
+		<%--</c:if>--%>
 		
 		
 	</tr>
@@ -1192,8 +1191,11 @@
 	}
 
 	function <portlet:namespace />imprimirAT(){
-		window.location.href ='/pdfservlet/?accion=<%="autorizacionTratamiento"%>&id_tratamiento=<%=tratamiento != null ? tratamiento
-							.getId_String() : "0"%>';
+	    var copago = jQuery("#<portlet:namespace/>copago").val();
+	    var tipoPdf = parseInt(copago, 10) >= 1 ? "CON_COPAGO" : "SIN_COPAGO";
+
+	    window.location.href = '/pdfservlet/?accion=<%="autorizacionTratamiento"%>&id_tratamiento=<%=tratamiento != null ? tratamiento.getId_String() : "0"%>&tipoPdf=' + tipoPdf;
+
 	    enviarEmailPestador();
 	}
 
@@ -1555,10 +1557,12 @@ function <portlet:namespace />duplicarTratamientoDiscapacidad() {
 	
 		}
 	}
-	
+
 function <portlet:namespace />imprimirAT_PDF(){
-	window.location.href ='/pdfservlet/?accion=<%="autorizacionTratamiento"%>&id_tratamiento=<%=tratamiento != null ? tratamiento
-						.getId_String() : "0"%>';
+    var copago = jQuery("#<portlet:namespace/>copago").val();
+    var tipoPdf = parseInt(copago, 10) >= 1 ? "CON_COPAGO" : "SIN_COPAGO";
+
+    window.location.href = '/pdfservlet/?accion=<%="autorizacionTratamiento"%>&id_tratamiento=<%=tratamiento != null ? tratamiento.getId_String() : "0"%>&tipoPdf=' + tipoPdf;
 }
 
 </script>
