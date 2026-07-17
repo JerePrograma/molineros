@@ -29,20 +29,7 @@ jobs:
           fetch-depth: 0
 
       - name: Apply audited normalization
-        shell: bash
-        run: |
-          set -o pipefail
-          python3 scripts/reclamos/aplicar_normalizacion_vista_inicial_v3.py \
-            2>&1 | tee /tmp/reclamo-initial-normalization.log
-
-      - name: Upload normalization diagnostic
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: reclamo-initial-normalization-diagnostic
-          path: /tmp/reclamo-initial-normalization.log
-          if-no-files-found: error
-          retention-days: 3
+        run: python3 scripts/reclamos/aplicar_normalizacion_vista_inicial_v3.py
 
       - name: Validate JavaScript syntax
         run: |
@@ -52,31 +39,17 @@ jobs:
           node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_editor_patch.js
           node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_tab_guard.js
 
-      - name: Compile and run initial-view contract
-        shell: bash
+      - name: Run initial-view contract
         run: |
-          set -o pipefail
-          {
-            rm -rf /tmp/rp-initial-view
-            mkdir -p /tmp/rp-initial-view
-            javac -encoding UTF-8 -d /tmp/rp-initial-view \
-              ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java
-            java -cp /tmp/rp-initial-view \
-              ar.com.ospim.test.ReclamoPrestacionalInitialViewContractTest
-          } 2>&1 | tee /tmp/reclamo-initial-contracts.log
+          rm -rf /tmp/rp-initial-view
+          mkdir -p /tmp/rp-initial-view
+          javac -encoding UTF-8 -d /tmp/rp-initial-view \
+            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalInitialViewContractTest.java
+          java -cp /tmp/rp-initial-view \
+            ar.com.ospim.test.ReclamoPrestacionalInitialViewContractTest
 
-      - name: Upload contract diagnostic
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: reclamo-initial-contracts-diagnostic
-          path: /tmp/reclamo-initial-contracts.log
-          if-no-files-found: error
-          retention-days: 3
-
-      - name: Validate final scope and commit
+      - name: Commit audited normalization
         run: |
-          git diff --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add \
