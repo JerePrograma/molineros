@@ -31,11 +31,6 @@ function campo(sufijo) {
     return jQuery("#" + namespace + sufijo);
 }
 
-function sectorNoSeleccionado() {
-    var sector = campo("sector");
-    return !sector.length || sector.prop("selectedIndex") <= 0 || !sector.val();
-}
-
 function ocultarBuscadoresPrestacion() {
     campo("busqueda_prestaciones").hide();
     campo("busqueda_farmacia").hide();
@@ -43,7 +38,7 @@ function ocultarBuscadoresPrestacion() {
 }
 
 function mostrarBuscadorSegunSeleccion() {
-    if (config.values.esBorradorCompras || sectorNoSeleccionado()) {
+    if (config.values.esBorradorCompras) {
         ocultarBuscadoresPrestacion();
         return;
     }
@@ -60,6 +55,10 @@ function mostrarBuscadorSegunSeleccion() {
         return;
     }
 
+    /*
+     * Comportamiento legacy: Nuevo comienza con Código Presentado visible,
+     * incluso mientras el sector permanece en -- SELECCIONAR --.
+     */
     campo("busqueda_prestaciones").show();
     campo("busqueda_farmacia").hide();
     campo("nom_seleccionado").val("1");
