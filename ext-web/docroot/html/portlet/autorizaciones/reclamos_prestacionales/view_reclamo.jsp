@@ -3,6 +3,14 @@
 <%@ include file="/html/portlet/autorizaciones/init.jsp"%>
 <%@ include
 	file="/html/portlet/autorizaciones/reclamos_prestacionales/init.jsp"%>
+<script type="text/javascript">
+window.ReclamoPrestacionalNamespace = '<portlet:namespace />';
+window.ReclamoPrestacionalAssetError = function(nombre) {
+    if (window.console && window.console.error) {
+        window.console.error("RECLAMO_PRESTACIONAL_ASSET_ERROR: " + nombre);
+    }
+};
+</script>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jspf" %>
 
 <script type="text/javascript">
@@ -28,10 +36,20 @@
 })(window, jQuery);
 </script>
 
-<script type="text/javascript" src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js?v=20260716-p0-4"></script>
-<script type="text/javascript" src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_tab_guard.js?v=20260716-p0-4"></script>
-<script type="text/javascript" src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_editor_patch.js?v=20260716-p0-4"></script>
-<script type="text/javascript" src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js?v=20260716-p0-4"></script>
+<script type="text/javascript"
+	src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js?v=20260717-initial-state-1"
+	onerror="window.ReclamoPrestacionalAssetError('view_reclamo_initial_state.js');"></script>
+<script type="text/javascript"
+	src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js?v=20260717-initial-state-1"
+	onerror="window.ReclamoPrestacionalAssetError('view_reclamo.js');"></script>
+<script type="text/javascript">
+if (!window.ReclamoPrestacionalInitialStateOk) {
+    window.ReclamoPrestacionalAssetError('view_reclamo_initial_state.js/bootstrap');
+}
+</script>
+<script type="text/javascript" src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_tab_guard.js?v=20260717-initial-state-1"></script>
+<script type="text/javascript" src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_editor_patch.js?v=20260717-initial-state-1"></script>
+<script type="text/javascript" src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js?v=20260717-initial-state-1"></script>
 
 <script type="text/javascript">
 (function(window, jQuery) {

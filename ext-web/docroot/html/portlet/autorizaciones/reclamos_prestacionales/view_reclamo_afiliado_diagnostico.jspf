@@ -62,7 +62,7 @@
 				            
 				        <tr>   
 				         <td> 
-				            <div id="<portlet:namespace />divResultadoActualizarOK">
+				            <div id="<portlet:namespace />divResultadoActualizarOK" style="display:none;">
 					           <p><b><liferay-ui:message key="crm-actualiza-domicilio"/></b></p>
 				            </div>
 			             </td>

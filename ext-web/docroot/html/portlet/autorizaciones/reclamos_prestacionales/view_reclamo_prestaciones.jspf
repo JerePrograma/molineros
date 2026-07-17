@@ -4,7 +4,7 @@
 			<liferay-ui:message key="Datos de la Prestación" />
 		</legend>
 
-		<div id="<portlet:namespace />busqueda_farmacia" align="left" width="80%">
+		<div id="<portlet:namespace />busqueda_farmacia" align="left" width="80%" style="display:none;">
 			<table class="lfr-table"
 				style="border-collapse: separate; border-spacing: 3px;">
 				<tr>
@@ -39,7 +39,7 @@
 			</table>
 		</div>
 
-		<div id="<portlet:namespace />busqueda_prestaciones" align="left" width="80%">
+		<div id="<portlet:namespace />busqueda_prestaciones" align="left" width="80%" style="display:none;">
 			<table width="75%">
 				<tr>
 					<td ><label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;F. Prestación: </label></td>
@@ -76,7 +76,8 @@
 		</div>
 
 
-		<div id="<portlet:namespace />datos_edicion_prestacion" align="left" width="95%">
+		<div id="<portlet:namespace />datos_edicion_prestacion" align="left" width="95%"
+		style="<%= esBorradorCompras ? "" : "display:none;" %>">
           <table width="95%;"><tr><td>
 			<span><b>Prestaci&oacute;n en Proceso de Edici&oacute;n.</b></span>
 			<liferay-util:include
@@ -85,7 +86,8 @@
 		  </td></tr></table>	
 		</div>
 
-		<div id="<portlet:namespace />datos_prestacion_ingreso">
+		<div id="<portlet:namespace />datos_prestacion_ingreso"
+		style="<%= esBorradorCompras ? "display:none;" : "" %>">
 			<table class="lfr-table"
 				style="border-collapse: separate; border-spacing: 2px; width: 85%;">
 				<tr>
@@ -355,7 +357,7 @@
 
 	<div id="<portlet:namespace />lista_prestaciones_asociadas"
 		align="center"
-		style="height: 120px; overflow: scroll; overflow-x: hidden;">
+		style="display:none; height: 120px; overflow: scroll; overflow-x: hidden;">
 		<span style="background-color: #d4d9d5; font-size: 135%"><b><%= caso_vinculado%>.</b>
 
 		</span>
