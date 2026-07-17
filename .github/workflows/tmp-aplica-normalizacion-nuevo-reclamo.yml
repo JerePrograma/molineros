@@ -5,7 +5,7 @@ on:
     branches:
       - agent/normaliza-nuevo-reclamo-prestacional
     paths:
-      - 'scripts/reclamos/aplicar_normalizacion_vista_inicial.py'
+      - 'scripts/reclamos/aplicar_normalizacion_vista_inicial_v2.py'
       - '.github/workflows/tmp-aplica-normalizacion-nuevo-reclamo.yml'
 
 permissions:
@@ -23,10 +23,11 @@ jobs:
           fetch-depth: 0
 
       - name: Apply audited normalization
-        run: python3 scripts/reclamos/aplicar_normalizacion_vista_inicial.py
+        run: python3 scripts/reclamos/aplicar_normalizacion_vista_inicial_v2.py
 
       - name: Validate JavaScript syntax
         run: |
+          node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js
           node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js
           node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js
           node --check ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_editor_patch.js
@@ -46,10 +47,10 @@ jobs:
         run: |
           git diff --check
           git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.email '418982866+github-actions[bot]@users.noreply.github.com'
           git add \
             ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp \
-            ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js \
+            ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js \
             ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_afiliado_diagnostico.jspf \
             ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_prestaciones.jspf \
             ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_seguimiento_cierre.jspf \
