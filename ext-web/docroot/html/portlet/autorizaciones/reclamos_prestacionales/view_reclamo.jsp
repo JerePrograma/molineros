@@ -15,6 +15,27 @@ window.ReclamoPrestacionalAssetError = function(nombre) {
 
 <script type="text/javascript">
 (function(window, jQuery) {
+    var namespace = window.ReclamoPrestacionalNamespace || "";
+
+    if (<%= esBorradorCompras %>) {
+        return;
+    }
+
+    var sector = jQuery("#" + namespace + "sector").val();
+    var tipoPedido = jQuery("#" + namespace + "tipopedido").val();
+    var usaBuscadorFarmacia =
+            sector === "FARMACIA" && tipoPedido !== "EXCEPCION";
+
+    jQuery("#" + namespace + "busqueda_farmacia").toggle(usaBuscadorFarmacia);
+    jQuery("#" + namespace + "busqueda_prestaciones").toggle(!usaBuscadorFarmacia);
+    jQuery("#" + namespace + "nom_seleccionado").val(
+            usaBuscadorFarmacia ? "2" : "1"
+    );
+})(window, jQuery);
+</script>
+
+<script type="text/javascript">
+(function(window, jQuery) {
     var config = window.ReclamoPrestacionalViewConfig || {};
     var namespace = config.namespace || "";
 
@@ -37,7 +58,7 @@ window.ReclamoPrestacionalAssetError = function(nombre) {
 </script>
 
 <script type="text/javascript"
-	src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js?v=20260717-initial-state-2"
+	src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_initial_state.js?v=20260717-initial-state-3"
 	onerror="window.ReclamoPrestacionalAssetError('view_reclamo_initial_state.js');"></script>
 <script type="text/javascript"
 	src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js?v=20260717-initial-state-1"
