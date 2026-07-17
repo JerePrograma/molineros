@@ -32,27 +32,11 @@ public final class ReclamoPrestacionalP0ContractTest {
                         + "ReclamosBaseAction.java"
         );
 
-        assertContains(
-                "snapshot antes del script legacy",
-                view,
-                "ReclamoPrestacionalBootstrapSnapshot"
-        );
-        assertBefore(
-                "snapshot antes de legacy",
-                view,
-                "ReclamoPrestacionalBootstrapSnapshot",
-                "view_reclamo.js?v="
-        );
         assertBefore(
                 "patch P0 después de legacy",
                 view,
-                "view_reclamo.js?v=20260717-initial-state-1",
-                "view_reclamo_p0_patch.js?v=20260717-initial-state-1"
-        );
-        assertContains(
-                "assets versionados",
-                view,
-                "?v=20260717-initial-state-1"
+                "view_reclamo.js?v=20260717-legacy-flows-1",
+                "view_reclamo_p0_patch.js?v=20260717-legacy-flows-1"
         );
         assertContains(
                 "normaliza fecha seccional vacía",
@@ -68,6 +52,11 @@ public final class ReclamoPrestacionalP0ContractTest {
                 "intercepta submitForm",
                 view,
                 "window.submitForm = submitFormNormalizado"
+        );
+        assertContains(
+                "submit compatible con jQuery legacy",
+                view,
+                ").submit(normalizarFechasOpcionales)"
         );
 
         assertContains(
@@ -106,11 +95,6 @@ public final class ReclamoPrestacionalP0ContractTest {
                 "chk_entramite: campo(\"chk_entramite\").is(\":checked\")"
         );
         assertContains(
-                "restaura precarga",
-                patch,
-                "restaurarSeleccionInicial();"
-        );
-        assertContains(
                 "editor reinicializado",
                 patch,
                 "editar_reclamosprestaciones"
@@ -119,6 +103,16 @@ public final class ReclamoPrestacionalP0ContractTest {
                 "doble submit bloqueado",
                 patch,
                 "if (submitEnCurso)"
+        );
+        assertNotContains(
+                "P0 no reimplementa Tipo Pedido x Sector",
+                patch,
+                "renderModoSector"
+        );
+        assertNotContains(
+                "P0 no sobrescribe handler legacy",
+                patch,
+                "window.manejarTipoSector"
         );
         assertNotContains(
                 "selector textual cerrado prohibido",
