@@ -76,8 +76,14 @@
 		</div>
 
 
+<%
+boolean hayPrestacionEnProcesoDeEdicion =
+		request.getSession().getAttribute(
+				WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION
+		) != null;
+%>
 		<div id="<portlet:namespace />datos_edicion_prestacion" align="left" width="95%"
-		style="<%= esBorradorCompras ? "" : "display:none;" %>">
+		style="<%= hayPrestacionEnProcesoDeEdicion ? "" : "display:none;" %>">
           <table width="95%;"><tr><td>
 			<span><b>Prestaci&oacute;n en Proceso de Edici&oacute;n.</b></span>
 			<liferay-util:include
@@ -87,7 +93,7 @@
 		</div>
 
 		<div id="<portlet:namespace />datos_prestacion_ingreso"
-		style="<%= esBorradorCompras ? "display:none;" : "" %>">
+		style="<%= hayPrestacionEnProcesoDeEdicion ? "display:none;" : "" %>">
 			<table class="lfr-table"
 				style="border-collapse: separate; border-spacing: 2px; width: 85%;">
 				<tr>
