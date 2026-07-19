@@ -1,1 +1,27 @@
-<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_contexto.jspf" %><%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_inicio_formulario.jspf" %><%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_cabecera.jspf" %><%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_afiliado_diagnostico.jspf" %><%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_prestaciones.jspf" %><%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_seguimiento_cierre.jspf" %><%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_acciones.jspf" %><%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_configuracion.jspf" %>
+<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_contexto.jspf" %>
+<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_inicio_formulario.jspf" %>
+<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_cabecera.jspf" %>
+<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_afiliado_diagnostico.jspf" %>
+<%
+boolean esBorradorComprasAntesDePrestaciones = esBorradorCompras;
+Object tipoEdicionAntesDePrestaciones = request.getAttribute("tipoEdicion");
+boolean hayPrestacionEnProcesoDeEdicion = request.getSession().getAttribute(
+		WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION) != null;
+
+esBorradorCompras = hayPrestacionEnProcesoDeEdicion;
+if (hayPrestacionEnProcesoDeEdicion && tipoEdicionAntesDePrestaciones == null) {
+	request.setAttribute("tipoEdicion", Integer.valueOf(0));
+}
+%>
+<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_prestaciones.jspf" %>
+<%
+esBorradorCompras = esBorradorComprasAntesDePrestaciones;
+if (tipoEdicionAntesDePrestaciones == null) {
+	request.removeAttribute("tipoEdicion");
+} else {
+	request.setAttribute("tipoEdicion", tipoEdicionAntesDePrestaciones);
+}
+%>
+<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_seguimiento_cierre.jspf" %>
+<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_acciones.jspf" %>
+<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_configuracion.jspf" %>
