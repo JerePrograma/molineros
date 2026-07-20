@@ -394,8 +394,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 sector
         )) {
             throw new Exception(
-                    "El sector del requerimiento no puede mapearse a un "
-                            + "sector de Reclamos Prestacionales."
+                    "El sector de Compras '"
+                            + requerimiento.getSectorDescripcionVisible()
+                            + "' no permite generar un Reclamo Prestacional."
             );
         }
 
@@ -498,46 +499,10 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
     public static String mapearSector(
             String sectorCompras) {
 
-        String sector =
-                normalizarTexto(
+        return WebKeysCompras
+                .getSectorReclamoPrestacional(
                         sectorCompras
                 );
-
-        if (sector.indexOf(
-                "DISCAPAC"
-        ) >= 0) {
-            return "DISCAPACIDAD";
-        }
-
-        if (sector.indexOf(
-                "FARMAC"
-        ) >= 0) {
-            return "FARMACIA";
-        }
-
-        if (sector.indexOf(
-                "ODONTO"
-        ) >= 0) {
-            return "ODONTOLOGIA";
-        }
-
-        if (sector.indexOf(
-                "LEGAL"
-        ) >= 0) {
-            return "LEGALES";
-        }
-
-        if (sector.indexOf(
-                "PRESTACION"
-        ) >= 0
-                && sector.indexOf(
-                "MEDIC"
-        ) >= 0) {
-
-            return "PRESTACIONES MEDICAS";
-        }
-
-        return "";
     }
 
     /**

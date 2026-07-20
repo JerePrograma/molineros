@@ -414,9 +414,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             );
         }
 
-        if ("PRESTACIONES MEDICAS".equals(sector)
-                || "MONOTRIBUTO".equals(sector)) {
-
+        if ("PRESTACIONES MEDICAS".equals(sector)) {
             return Integer.valueOf(
                     FILTRO_NOMENCLADOR_GENERAL
             );
@@ -469,11 +467,6 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                     != FILTRO_NOMENCLADOR_FARMACIA;
         }
 
-        if ("MONOTRIBUTO".equals(sector)) {
-            return idTipoNomenclador
-                    != FILTRO_NOMENCLADOR_FARMACIA;
-        }
-
         return false;
     }
 
@@ -509,9 +502,83 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                         .matcher(normalizado)
                         .replaceAll("");
 
-        return normalizado
-                .toUpperCase(Locale.ROOT)
-                .trim();
+        String sector =
+                normalizado
+                        .toUpperCase(Locale.ROOT)
+                        .trim();
+
+        /*
+         * MONOTRIBUTO no constituye un circuito diferente para Compras
+         * ni para Reclamos Prestacionales.
+         *
+         * Cualquier descripción que identifique Monotributo se procesa
+         * con las reglas de PRESTACIONES MEDICAS.
+         */
+        if (sector.indexOf("MONOTRIBUTO") >= 0) {
+            return "PRESTACIONES MEDICAS";
+        }
+
+        return sector;
+    }
+
+    public static String getSectorReclamoPrestacional(
+            String sectorDescripcion) {
+
+        String sector =
+                normalizarSectorCompra(
+                        sectorDescripcion
+                );
+
+        /*
+         * MONOTRIBUTO ya fue convertido por normalizarSectorCompra()
+         * en PRESTACIONES MEDICAS.
+         */
+        if ("PRESTACIONES MEDICAS".equals(sector)) {
+            return "PRESTACIONES MEDICAS";
+        }
+
+        if ("DISCAPACIDAD".equals(sector)
+                || sector.indexOf("DISCAPAC") >= 0) {
+
+            return "DISCAPACIDAD";
+        }
+
+        if ("FARMACIA".equals(sector)
+                || sector.indexOf("FARMAC") >= 0) {
+
+            return "FARMACIA";
+        }
+
+        if ("ODONTOLOGIA".equals(sector)
+                || sector.indexOf("ODONTO") >= 0) {
+
+            return "ODONTOLOGIA";
+        }
+
+        if ("LEGALES".equals(sector)
+                || sector.indexOf("LEGAL") >= 0) {
+
+            return "LEGALES";
+        }
+
+        /*
+         * OTROS, SISTEMAS, RRHH y cualquier sector no reconocido
+         * no pueden generar Reclamos Prestacionales.
+         *
+         * La regla es deliberadamente fail closed: un sector nuevo
+         * tampoco queda habilitado accidentalmente.
+         */
+        return "";
+    }
+
+    public static boolean puedeGenerarReclamoPrestacional(
+            String sectorDescripcion) {
+
+        return !isEmpty(
+                getSectorReclamoPrestacional(
+                        sectorDescripcion
+                )
+        );
     }
 
     public static BigDecimal normalizarImporte(

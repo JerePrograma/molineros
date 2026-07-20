@@ -3,6 +3,16 @@
 <%
 int botoneraIdRequerimientoActual = req != null ? req.getIdRequerimientoCompra() : 0;
 int botoneraEstadoActual = req != null ? req.getEstado() : 0;
+String botoneraSectorDescripcionActual =
+        req != null
+                ? req.getSectorDescripcion()
+                : "";
+
+boolean botoneraSectorPermiteReclamoPrestacional =
+        WebKeysCompras
+                .puedeGenerarReclamoPrestacional(
+                        botoneraSectorDescripcionActual
+                );
 
 boolean botoneraRequerimientoPersistido =
         req != null && botoneraIdRequerimientoActual > 0;
@@ -96,6 +106,7 @@ boolean botoneraPuedeImprimir =
 
 boolean botoneraPuedeCrearReclamoPrestacional =
         botoneraRequerimientoPersistido
+        && botoneraSectorPermiteReclamoPrestacional
         && WebKeysCompras.esCotizado(botoneraEstadoActual)
         && (puedeABM || botoneraTieneRolCotizar)
         && botoneraTieneRolCrearReclamo
