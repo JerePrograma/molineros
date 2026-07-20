@@ -1044,6 +1044,68 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             return;
         }
 
+        /*
+         * Los sectores sin código (actualmente LEGALES dentro del flujo de
+         * Reclamo Prestacional) se cotizan válidamente como OBSERVACION.
+         *
+         * No se fabrica un ID médico: se restaura el contrato original de la
+         * integración y se crea una referencia temporal ART-{idDetalle}. El
+         * usuario debe confirmar el nomenclador o medicamento real antes de
+         * persistir la prestación en Autorizaciones.
+         */
+        if (detalle.esObservacion()) {
+            String descripcionPendiente =
+                    WebKeysCompras.trimToNull(
+                            detalle.getObservacionesVisible()
+                    );
+
+            if (descripcionPendiente == null) {
+                throw new IllegalArgumentException(
+                        "El detalle de observacion de Compras no contiene "
+                                + "una descripcion para precargar."
+                );
+            }
+
+            if (descripcionPendiente.length() > MAX_OBSERVACION) {
+                descripcionPendiente =
+                        descripcionPendiente.substring(
+                                0,
+                                MAX_OBSERVACION
+                        );
+            }
+
+            String codigoTemporal =
+                    detalle.getIdInt() > 0
+                            ? "ART-" + detalle.getIdInt()
+                            : "COMPRA";
+
+            prestacion.setId_medicamento(
+                    0
+            );
+
+            prestacion.setId_prestacion(
+                    0
+            );
+
+            prestacion.setCodigoPrestacion(
+                    codigoTemporal
+            );
+
+            prestacion.setNombreprestacion(
+                    descripcionPendiente
+            );
+
+            prestacion.setDescripcion(
+                    descripcionPendiente
+            );
+
+            prestacion.setNombremedicacion(
+                    ""
+            );
+
+            return;
+        }
+
         throw new IllegalArgumentException(
                 "El detalle de Compras no contiene "
                         + "una referencia tecnica valida."
@@ -1114,20 +1176,76 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         }
     }
 
+    /**
+     * Valida exclusivamente el contrato económico de una cotización cerrada.
+     *
+     * La referencia técnica no forma parte de esta validación: Compras admite
+     * detalles OBSERVACION en sectores sin código. Esos detalles se convierten
+     * luego en una referencia temporal y deben completarse en Autorizaciones.
+     */
     private static void validarDetalleCotizado(
             RequerimientoCompraDetalle detalle)
             throws Exception {
 
-        if (detalle == null
-                || !detalle.estaCompletoParaCotizacion()
-                || detalle.getCantidad() == null
-                || detalle.getPrecioUnitarioEstimado() == null
-                || detalle.getPrecioTotalEstimado() == null) {
+        if (detalle == null) {
+            throw new Exception(
+                    "El requerimiento figura COTIZADO, pero contiene "
+                            + "un ítem nulo."
+            );
+        }
+
+        String idItem =
+                !WebKeysCompras.isEmpty(
+                        detalle.getIdString()
+                )
+                        ? detalle.getIdString()
+                        : "sin ID";
+
+        if (detalle.getCantidad() == null
+                || detalle.getCantidad().intValue() <= 0) {
 
             throw new Exception(
-                    "El requerimiento figura COTIZADO, "
-                            + "pero contiene un ítem sin cantidad, "
-                            + "precio o prestador adjudicado."
+                    "El ítem " + idItem
+                            + " del requerimiento COTIZADO no tiene "
+                            + "una cantidad válida."
+            );
+        }
+
+        BigDecimal precioUnitario =
+                detalle.getPrecioUnitarioEstimado();
+
+        if (precioUnitario == null
+                || precioUnitario.compareTo(
+                BigDecimal.ZERO
+        ) < 0) {
+
+            throw new Exception(
+                    "El ítem " + idItem
+                            + " del requerimiento COTIZADO no tiene "
+                            + "un precio unitario válido."
+            );
+        }
+
+        BigDecimal precioTotal =
+                detalle.getPrecioTotalEstimado();
+
+        if (precioTotal == null
+                || precioTotal.compareTo(
+                BigDecimal.ZERO
+        ) < 0) {
+
+            throw new Exception(
+                    "El ítem " + idItem
+                            + " del requerimiento COTIZADO no tiene "
+                            + "un precio total válido."
+            );
+        }
+
+        if (!detalle.tienePrestadorAdjudicado()) {
+            throw new Exception(
+                    "El ítem " + idItem
+                            + " del requerimiento COTIZADO no tiene "
+                            + "un prestador adjudicado."
             );
         }
     }

@@ -11,11 +11,13 @@ on:
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalLegacyFlowContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalJspStructureContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalPrestacionRulesContractTest.java'
+      - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalCompraPrecargaContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamosBaseActionLegacyDiagnosticTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ComprasRequerimientoConnectionContractTest.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/action/EditarPrestacionReclamoAction.java'
       - 'ext-impl/src/ar/com/ospim/compras/requerimientos/service/BusquedaRequerimientoCompraServiceUtil.java'
       - 'ext-impl/src/ar/com/ospim/compras/requerimientos/service/BusquedaRequerimientoCompraLecturaSeguraServiceImpl.java'
+      - 'ext-impl/src/ar/com/ospim/compras/requerimientos/service/ReclamoPrestacionalCompraPrecargaServiceUtil.java'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js'
@@ -33,11 +35,13 @@ on:
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalLegacyFlowContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalJspStructureContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalPrestacionRulesContractTest.java'
+      - 'ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalCompraPrecargaContractTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ReclamosBaseActionLegacyDiagnosticTest.java'
       - 'ext-impl/src/ar/com/ospim/test/ComprasRequerimientoConnectionContractTest.java'
       - 'ext-impl/src/ar/com/ospim/autorizaciones/action/EditarPrestacionReclamoAction.java'
       - 'ext-impl/src/ar/com/ospim/compras/requerimientos/service/BusquedaRequerimientoCompraServiceUtil.java'
       - 'ext-impl/src/ar/com/ospim/compras/requerimientos/service/BusquedaRequerimientoCompraLecturaSeguraServiceImpl.java'
+      - 'ext-impl/src/ar/com/ospim/compras/requerimientos/service/ReclamoPrestacionalCompraPrecargaServiceUtil.java'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js'
@@ -86,6 +90,7 @@ jobs:
             ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalLegacyFlowContractTest.java \
             ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalJspStructureContractTest.java \
             ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalPrestacionRulesContractTest.java \
+            ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalCompraPrecargaContractTest.java \
             ext-impl/src/ar/com/ospim/test/ReclamosBaseActionLegacyDiagnosticTest.java \
             ext-impl/src/ar/com/ospim/test/ComprasRequerimientoConnectionContractTest.java
           java -cp "$CONTRACT_DIR" ar.com.ospim.test.ReclamoPrestacionalEditorContractTest
@@ -93,6 +98,7 @@ jobs:
           java -cp "$CONTRACT_DIR" ar.com.ospim.test.ReclamoPrestacionalLegacyFlowContractTest
           java -cp "$CONTRACT_DIR" ar.com.ospim.test.ReclamoPrestacionalJspStructureContractTest
           java -cp "$CONTRACT_DIR" ar.com.ospim.test.ReclamoPrestacionalPrestacionRulesContractTest
+          java -cp "$CONTRACT_DIR" ar.com.ospim.test.ReclamoPrestacionalCompraPrecargaContractTest
           java -cp "$CONTRACT_DIR" ar.com.ospim.test.ComprasRequerimientoConnectionContractTest
 
       - name: Diagnose pre-existing ReclamosBaseAction debt
