@@ -207,6 +207,10 @@ window.ReclamoPrestacionalAssetError = function(nombre) {
     };
 })(window, window.jQuery);
 </script>
+<script type="text/javascript">
+window.ReclamoPrestacionalJQueryLoadOriginal =
+        window.jQuery && window.jQuery.fn ? window.jQuery.fn.load : null;
+</script>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jspf" %>
 
 <script type="text/javascript"
@@ -216,7 +220,7 @@ window.ReclamoPrestacionalAssetError = function(nombre) {
 <script type="text/javascript" src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_editor_patch.js?v=20260717-initial-state-1"></script>
 <script type="text/javascript" src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js?v=20260717-legacy-flows-1"></script>
 <script type="text/javascript"
-	src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_prestacion_rules_patch.js?v=20260720-recuperable-neutro-1"
+	src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_prestacion_rules_patch.js?v=20260720-recuperable-neutro-2"
 	onerror="window.ReclamoPrestacionalAssetError('view_reclamo_prestacion_rules_patch.js');"></script>
 
 <script type="text/javascript">
