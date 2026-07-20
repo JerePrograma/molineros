@@ -8,6 +8,10 @@ public class BusquedaRequerimientoCompraServiceUtil {
 
     private static BusquedaRequerimientoCompraServiceImpl instance = null;
 
+    private static final BusquedaRequerimientoCompraLecturaSeguraServiceImpl
+            lecturaSeguraInstance =
+            new BusquedaRequerimientoCompraLecturaSeguraServiceImpl();
+
     public static BusquedaRequerimientoCompraServiceImpl getInstance() {
         if (instance == null) {
             instance = new BusquedaRequerimientoCompraServiceImpl();
@@ -25,7 +29,9 @@ public class BusquedaRequerimientoCompraServiceUtil {
     public static RequerimientoCompra getRequerimientoCompra(
             int idRequerimientoCompra) throws Exception {
 
-        return getInstance().getRequerimientoCompra(idRequerimientoCompra);
+        return lecturaSeguraInstance.getRequerimientoCompra(
+                idRequerimientoCompra
+        );
     }
 
     public static List<RequerimientoCompraDetalle> getDetalles(
