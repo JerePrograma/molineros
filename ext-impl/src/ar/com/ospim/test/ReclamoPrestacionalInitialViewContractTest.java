@@ -5,7 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-/** Contrato textual del selector legacy Tipo de Pedido x Sector. */
+/** Contrato textual del selector legacy Tipo de Pedido x Sector y del editor. */
 public final class ReclamoPrestacionalInitialViewContractTest {
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final String DIR =
@@ -17,6 +17,7 @@ public final class ReclamoPrestacionalInitialViewContractTest {
 
     public static void main(String[] args) throws Exception {
         String view = leer(DIR + "view_reclamo.jsp");
+        String ensamblador = leer(DIR + "view_reclamo.jspf");
         String legacy = leer(DIR + "view_reclamo.js");
         String patch = leer(DIR + "view_reclamo_p0_patch.js");
         String cabecera = leer(DIR + "view_reclamo_cabecera.jspf");
@@ -72,6 +73,30 @@ public final class ReclamoPrestacionalInitialViewContractTest {
                 "busqueda_farmacia\" align=\"left\" width=\"80%\" style=\"display:none;\"");
         contiene(prestaciones, "código presentado inicia protegido",
                 "busqueda_prestaciones\" align=\"left\" width=\"80%\" style=\"display:none;\"");
+
+        contiene(prestaciones, "estado visual basado en edición real",
+                "boolean hayPrestacionEnProcesoDeEdicion =");
+        contiene(prestaciones, "consulta de la prestación activa",
+                "WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION");
+        contiene(prestaciones, "editor visible sólo con edición activa",
+                "style=\"<%= hayPrestacionEnProcesoDeEdicion ? \"\" : \"display:none;\" %>\"");
+        contiene(prestaciones, "carga manual visible sin edición activa",
+                "style=\"<%= hayPrestacionEnProcesoDeEdicion ? \"display:none;\" : \"\" %>\"");
+        noContiene(prestaciones, "el origen Compras no controla el editor",
+                "style=\"<%= esBorradorCompras ?");
+
+        contiene(ensamblador, "default de edición común",
+                "request.setAttribute(\"tipoEdicion\", Integer.valueOf(0));");
+        contiene(ensamblador, "limpieza del default temporal",
+                "request.removeAttribute(\"tipoEdicion\");");
+        noContiene(ensamblador, "el ensamblador no redefine el origen Compras",
+                "esBorradorCompras =");
+        antes(ensamblador,
+                "request.setAttribute(\"tipoEdicion\", Integer.valueOf(0));",
+                "view_reclamo_prestaciones.jspf");
+        antes(ensamblador,
+                "view_reclamo_prestaciones.jspf",
+                "request.removeAttribute(\"tipoEdicion\");");
 
         System.out.println("CONTRATO_RECLAMO_PRESTACIONAL_SELECTOR_LEGACY_OK");
     }
