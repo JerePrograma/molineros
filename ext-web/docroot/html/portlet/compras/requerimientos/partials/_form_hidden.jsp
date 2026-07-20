@@ -42,7 +42,7 @@
     <input type="hidden"
            name="<portlet:namespace />surge"
            id="<portlet:namespace />surge_hidden"
-           value="<%= surgeValue %>" />
+           value="<%= esNuevo ? "" : (req.isSurge() ? "1" : "0") %>" />
 
     <input type="hidden"
            name="<portlet:namespace />afiliado_cuil_titular"
