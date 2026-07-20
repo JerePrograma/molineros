@@ -62,6 +62,63 @@ public final class ReclamoPrestacionalEditorContractTest {
                 "view_reclamo.jspf"
         );
 
+        assertContains(
+                "guard del afiliado instalado",
+                view,
+                "ajaxAfiliadoNoBloqueante.__rpAfiliadoNoBloqueante = true"
+        );
+        assertContains(
+                "permanencia del afiliado no bloqueante",
+                view,
+                "evalua_permanencia_afiliado"
+        );
+        assertContains(
+                "observaciones del afiliado no bloqueantes",
+                view,
+                "tiene_observaciones_afiliado"
+        );
+        assertContains(
+                "datos complementarios no bloqueantes",
+                view,
+                "buscar_afiliado_datos"
+        );
+        assertContains(
+                "diagnóstico de XHR de afiliado",
+                view,
+                "RECLAMO_PRESTACIONAL_AFILIADO_ASYNC"
+        );
+        assertContains(
+                "loader de afiliados reemplazado",
+                view,
+                "jQuery.fn.load = loadAfiliadoSeguro"
+        );
+        assertContains(
+                "loader limitado al buscador de autorizaciones",
+                view,
+                "struts_action=/autorizaciones/buscar_afiliados"
+        );
+        assertContains(
+                "timeout explícito del buscador",
+                view,
+                "var TIMEOUT_AFILIADO_MS = 15000"
+        );
+        assertContains(
+                "error visible del buscador",
+                view,
+                "No se pudo completar la búsqueda de "
+        );
+        assertContains(
+                "API de diagnóstico del afiliado",
+                view,
+                "window.ReclamoPrestacionalAfiliadoSearchPatch"
+        );
+        assertBefore(
+                "protección del afiliado activa antes del componente legacy",
+                view,
+                "ajaxAfiliadoNoBloqueante.__rpAfiliadoNoBloqueante = true",
+                "view_reclamo.jspf"
+        );
+
         assertNotContains(
                 "método no disponible en Liferay 5.2",
                 editorJsp,
