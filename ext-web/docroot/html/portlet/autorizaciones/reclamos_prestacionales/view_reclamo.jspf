@@ -14,6 +14,7 @@ if (aplicarTipoEdicionComun) {
 	request.setAttribute("tipoEdicion", Integer.valueOf(0));
 }
 %>
+<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_recuperable_neutro.jspf" %>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_prestaciones.jspf" %>
 <%
 if (aplicarTipoEdicionComun) {
