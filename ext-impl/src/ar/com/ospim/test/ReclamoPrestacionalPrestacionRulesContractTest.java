@@ -25,6 +25,10 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
                 JSP_DIR + "view_reclamo_prestacion_rules_patch.js"
         );
         String action = leer(ACTION);
+        String estructura = leer(JSP_DIR + "view_reclamo.jspf");
+        String neutralizacionServidor = leer(
+                JSP_DIR + "view_reclamo_recuperable_neutro.jspf"
+        );
 
         contiene(
                 view,
@@ -45,6 +49,42 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
                 view,
                 "view_reclamo_p0_patch.js",
                 "view_reclamo_prestacion_rules_patch.js"
+        );
+
+        contiene(
+                estructura,
+                "neutralización server-side incluida",
+                "view_reclamo_recuperable_neutro.jspf"
+        );
+        antes(
+                estructura,
+                "view_reclamo_recuperable_neutro.jspf",
+                "view_reclamo_prestaciones.jspf"
+        );
+        contiene(
+                neutralizacionServidor,
+                "lista de sesión neutralizada",
+                "LISTADO_PRESTACIONES_RECLAMOS_EN_SESION"
+        );
+        contiene(
+                neutralizacionServidor,
+                "prestación en edición neutralizada",
+                "PRESTACION_EN_PROCESO_DE_EDICION"
+        );
+        contiene(
+                neutralizacionServidor,
+                "recuperable neutral en servidor",
+                "prestacionNeutra.setRecuperable("
+        );
+        contiene(
+                neutralizacionServidor,
+                "bandera SUR neutral en servidor",
+                "prestacionNeutra.setRecuperableSur("
+        );
+        contiene(
+                neutralizacionServidor,
+                "reconocido SSS neutral en servidor",
+                "prestacionNeutra.setReconocidoSSS("
         );
 
         contiene(
