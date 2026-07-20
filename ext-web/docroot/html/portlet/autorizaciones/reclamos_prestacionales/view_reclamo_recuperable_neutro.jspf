@@ -1,0 +1,58 @@
+<%@ page import="java.util.List" %>
+<%@ page import="ar.com.ospim.autorizaciones.beans.PrestacionesReclamo" %>
+<%
+/*
+ * Recuperable SUR y Reconocido SSS están fuera de uso en Reclamo
+ * Prestacional. La normalización se realiza también en servidor para que el
+ * listado temporal de sesión no conserve valores heredados de Compras ni de
+ * reclamos históricos, aunque el JavaScript no llegue a ejecutarse.
+ */
+Object listadoPrestacionesNeutro =
+        session.getAttribute(
+                WebKeysAutorizaciones
+                        .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
+        );
+
+if (listadoPrestacionesNeutro instanceof List) {
+    List prestacionesNeutras =
+            (List) listadoPrestacionesNeutro;
+
+    for (Object prestacionObj : prestacionesNeutras) {
+        if (prestacionObj instanceof PrestacionesReclamo) {
+            PrestacionesReclamo prestacionNeutra =
+                    (PrestacionesReclamo) prestacionObj;
+
+            prestacionNeutra.setRecuperable(
+                    Integer.valueOf(0)
+            );
+            prestacionNeutra.setRecuperableSur(
+                    Boolean.FALSE
+            );
+            prestacionNeutra.setReconocidoSSS(
+                    Double.valueOf(0D)
+            );
+        }
+    }
+}
+
+Object prestacionEnEdicionNeutra =
+        session.getAttribute(
+                WebKeysAutorizaciones
+                        .PRESTACION_EN_PROCESO_DE_EDICION
+        );
+
+if (prestacionEnEdicionNeutra instanceof PrestacionesReclamo) {
+    PrestacionesReclamo prestacionNeutra =
+            (PrestacionesReclamo) prestacionEnEdicionNeutra;
+
+    prestacionNeutra.setRecuperable(
+            Integer.valueOf(0)
+    );
+    prestacionNeutra.setRecuperableSur(
+            Boolean.FALSE
+    );
+    prestacionNeutra.setReconocidoSSS(
+            Double.valueOf(0D)
+    );
+}
+%>
