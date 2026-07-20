@@ -25,6 +25,8 @@ on:
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_prestacion_rules_patch.js'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_tab_guard.js'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_cabecera.jspf'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_recuperable_neutro.jspf'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jspf'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp'
       - '.github/workflows/reclamos-operational-scripts.yml'
   pull_request:
@@ -49,6 +51,8 @@ on:
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_prestacion_rules_patch.js'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_tab_guard.js'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_cabecera.jspf'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_recuperable_neutro.jspf'
+      - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jspf'
       - 'ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp'
       - '.github/workflows/reclamos-operational-scripts.yml'
   workflow_dispatch:
