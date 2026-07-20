@@ -86,8 +86,8 @@
         }
 
         /*
-         * S√≥lo 0 y 1 son valores v√°lidos.
-         * Cualquier otro valor se normaliza a vac√≠o.
+         * SÛlo 0 y 1 son valores v·lidos.
+         * Cualquier otro valor se normaliza a vacÌo.
          */
         if (surgeValue != '0'
                 && surgeValue != '1') {
@@ -117,7 +117,7 @@
             return true;
         }
 
-        alert('Surge: debe seleccionar S√≠ o No.');
+        alert('Surge: debe seleccionar SÌ o No.');
 
         if (surgeEl
                 && typeof surgeEl.focus == 'function') {
@@ -136,7 +136,7 @@
             return true;
         }
 
-        alert('Surge: debe seleccionar S√≠ o No.');
+        alert('Surge: debe seleccionar SÌ o No.');
 
         if (surgeEl && typeof surgeEl.focus == 'function') {
             surgeEl.focus();

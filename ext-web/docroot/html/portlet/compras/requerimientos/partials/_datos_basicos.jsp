@@ -102,7 +102,7 @@
                                 <%= "1".equals(surgeSeleccionadoCompra)
                                         ? "selected=\"selected\""
                                         : "" %>>
-                            SÃ­
+                            Sí
                         </option>
 
                         <option value="0"
@@ -172,7 +172,7 @@
                            aria-disabled="true" />
                 <% } else { %>
                     <div class="compras-campo-solo-lectura">
-                        <%= recuperoPorCargoTercerizadoraActual ? "SÃ­" : "No" %>
+                        <%= recuperoPorCargoTercerizadoraActual ? "Sí" : "No" %>
                     </div>
                 <% } %>
             </td>

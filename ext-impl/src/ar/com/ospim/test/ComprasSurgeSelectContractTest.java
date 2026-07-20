@@ -69,7 +69,7 @@ public final class ComprasSurgeSelectContractTest {
 
         contiene(
                 formHidden,
-                "alta conserva Seleccione vacÃ­o",
+                "alta conserva Seleccione vacío",
                 "esNuevo ? \"\""
         );
         contiene(
@@ -80,23 +80,23 @@ public final class ComprasSurgeSelectContractTest {
 
         contiene(
                 scripts,
-                "sincronizaciÃ³n sÃ³lo admite cero o uno",
+                "sincronización sólo admite cero o uno",
                 "surgeValue != '0' && surgeValue != '1'"
         );
         contiene(
                 scripts,
-                "validaciÃ³n permite No",
+                "validación permite No",
                 "surgeValue == '0'"
         );
         contiene(
                 scripts,
-                "validaciÃ³n permite Si",
+                "validación permite Si",
                 "surgeValue == '1'"
         );
         contiene(
                 scripts,
                 "mensaje obligatorio",
-                "Surge: debe seleccionar SÃ­ o No."
+                "Surge: debe seleccionar Sí o No."
         );
         contiene(
                 scripts,
@@ -112,26 +112,26 @@ public final class ComprasSurgeSelectContractTest {
 
         contiene(
                 action,
-                "Action sÃ³lo acepta cero o uno",
+                "Action sólo acepta cero o uno",
                 "!\"0\".equals(value)"
         );
 
         contiene(
                 action,
-                "Action valida tambiÃ©n el valor uno",
+                "Action valida también el valor uno",
                 "&& !\"1\".equals(value)"
         );
 
         contiene(
                 action,
-                "Action devuelve verdadero sÃ³lo para uno",
+                "Action devuelve verdadero sólo para uno",
                 "return \"1\".equals(value);"
         );
 
         contiene(
                 action,
                 "mensaje obligatorio del servidor",
-                "Surge: debe seleccionar SÃ­ o No."
+                "Surge: debe seleccionar Sí o No."
         );
 
         noContiene(
