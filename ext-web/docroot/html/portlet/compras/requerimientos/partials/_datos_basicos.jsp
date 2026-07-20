@@ -1,3 +1,9 @@
+<%
+String surgeSeleccionadoCompra =
+        esNuevo
+                ? ""
+                : (req.isSurge() ? "1" : "0");
+%>
 <fieldset class="block-labels">
     <legend><%= tituloPantalla %></legend>
 
@@ -18,7 +24,7 @@
 
         <tr>
             <td><label>Sector:</label></td>
-            <td colspan="5">
+            <td>
                 <% if (puedeEditarEstructuraPantalla) { %>
                     <select id="<portlet:namespace />sector_id"
                             onChange="<portlet:namespace />cambiarSectorCompra(true);">
@@ -77,6 +83,33 @@
                     </div>
                 <% } %>
             </td>
+
+            <td><label>Surge:</label></td>
+            <td colspan="3">
+                <% if (puedeEditarEstructuraPantalla) { %>
+                    <select id="<portlet:namespace />surge"
+                            required="required"
+                            aria-required="true"
+                            onchange="<portlet:namespace />actualizarSurgeCompra(); <portlet:namespace />sincronizarFormularioCompra();">
+                        <option value=""
+                                <%= "".equals(surgeSeleccionadoCompra) ? "selected=\"selected\"" : "" %>>
+                            Seleccione
+                        </option>
+                        <option value="1"
+                                <%= "1".equals(surgeSeleccionadoCompra) ? "selected=\"selected\"" : "" %>>
+                            Sí
+                        </option>
+                        <option value="0"
+                                <%= "0".equals(surgeSeleccionadoCompra) ? "selected=\"selected\"" : "" %>>
+                            No
+                        </option>
+                    </select>
+                <% } else { %>
+                    <div class="compras-campo-solo-lectura">
+                        <%= HtmlUtil.escape(req.getSurgeDescripcion()) %>
+                    </div>
+                <% } %>
+            </td>
         </tr>
 
         <tr>
@@ -129,21 +162,7 @@
                            aria-disabled="true" />
                 <% } else { %>
                     <div class="compras-campo-solo-lectura">
-                        <%= recuperoPorCargoTercerizadoraActual ? "S�" : "No" %>
-                    </div>
-                <% } %>
-            </td>
-            <td><label>Surge:</label></td>
-            <td colspan="5">
-                <% if (puedeEditarEstructuraPantalla) { %>
-                    <input type="checkbox"
-                           id="<portlet:namespace />surge"
-                           value="true"
-                           <%= surgeChecked %>
-                           onchange="<portlet:namespace />sincronizarFormularioCompra();" />
-                <% } else { %>
-                    <div class="compras-campo-solo-lectura">
-                        <%= HtmlUtil.escape(req.getSurgeDescripcion()) %>
+                        <%= recuperoPorCargoTercerizadoraActual ? "Sí" : "No" %>
                     </div>
                 <% } %>
             </td>
