@@ -28,8 +28,18 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
 
         contiene(
                 view,
-                "carga del contrato de prestación",
-                "view_reclamo_prestacion_rules_patch.js"
+                "carga del contrato de prestación actualizado",
+                "view_reclamo_prestacion_rules_patch.js?v=20260720-recuperable-neutro-2"
+        );
+        contiene(
+                view,
+                "captura del load nativo anterior al estabilizador",
+                "window.ReclamoPrestacionalJQueryLoadOriginal"
+        );
+        antes(
+                view,
+                "window.ReclamoPrestacionalJQueryLoadOriginal",
+                "view_reclamo_editor_patch.js"
         );
         antes(
                 view,
@@ -44,6 +54,26 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
         );
         contiene(
                 reglas,
+                "edición namespaced reemplazada",
+                "window[nombreEditar] = guardarEdicionSeguro"
+        );
+        contiene(
+                reglas,
+                "acción original conservada",
+                "guardarEdicionSeguro.__rpOriginal"
+        );
+        contiene(
+                reglas,
+                "marca de edición creada aunque falte en el JSP",
+                "id: namespace + \"tipoaccionprestacion\""
+        );
+        contiene(
+                reglas,
+                "marca relaciona acción e id de registro",
+                "String(idRegistro || \"\")"
+        );
+        contiene(
+                reglas,
                 "combo opcional validado",
                 "if (combo)"
         );
@@ -52,17 +82,38 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
                 "if (combo)",
                 "combo.selectedIndex = 0"
         );
+
         contiene(
                 reglas,
-                "edición envuelta",
-                "envolverAccion(\"editarPrestacionSeleccionada\""
+                "botón seguro de edición creado fuera del HTML inválido",
+                "rp_guardar_prestacion_seguro"
         );
         contiene(
                 reglas,
-                "alta envuelta",
-                "envolverAccion(\"agregarPrestacion\")"
+                "botón seguro de cancelación creado fuera del HTML inválido",
+                "rp_cancelar_prestacion_seguro"
+        );
+        contiene(
+                reglas,
+                "handler directo de edición",
+                "botonGuardar[0].onclick"
+        );
+        contiene(
+                reglas,
+                "handler directo de cancelación",
+                "botonCancelar[0].onclick"
         );
 
+        contiene(
+                reglas,
+                "guardado usa load nativo y no el cargador de editor",
+                "window.ReclamoPrestacionalJQueryLoadOriginal"
+        );
+        contiene(
+                reglas,
+                "guardado se distingue por grabaedicion",
+                "valorBooleano(datos.grabaedicion)"
+        );
         contiene(
                 reglas,
                 "recuperable enviado neutral",
@@ -75,18 +126,29 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
         );
         contiene(
                 reglas,
+                "sesión inicial neutralizada mediante endpoint existente",
+                "RECLAMO_PRESTACIONAL_RECUPERABLE_SESION_NEUTRALIZADO"
+        );
+        contiene(
+                reglas,
+                "fila histórica SUR ocultada de la grilla",
+                "normalizarListadoVisual"
+        );
+
+        contiene(
+                reglas,
                 "select visible fijado en cero",
-                ".val(\"0\")"
+                "selects[i].val(\"0\")"
         );
         contiene(
                 reglas,
                 "select bloqueado",
-                ".attr(\"disabled\", \"disabled\")"
+                "selects[i].attr(\"disabled\", \"disabled\")"
         );
         contiene(
                 reglas,
                 "reconocido bloqueado",
-                ".attr(\"readonly\", \"readonly\")"
+                "reconocidos[i].attr(\"readonly\", \"readonly\")"
         );
 
         contiene(
