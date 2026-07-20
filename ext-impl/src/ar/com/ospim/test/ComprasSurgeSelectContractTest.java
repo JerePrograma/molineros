@@ -106,13 +106,38 @@ public final class ComprasSurgeSelectContractTest {
 
         contiene(
                 action,
-                "Action consume el parámetro Surge",
-                "requerimiento.setSurge(getParametroBoolean(request, \"surge\"))"
+                "Action usa parser estricto de Surge",
+                "parseSurgeObligatorio(request)"
         );
+
         contiene(
                 action,
-                "Action interpreta uno como verdadero",
-                "\"1\".equals(value)"
+                "Action sólo acepta cero o uno",
+                "!\"0\".equals(value)"
+        );
+
+        contiene(
+                action,
+                "Action valida también el valor uno",
+                "&& !\"1\".equals(value)"
+        );
+
+        contiene(
+                action,
+                "Action devuelve verdadero sólo para uno",
+                "return \"1\".equals(value);"
+        );
+
+        contiene(
+                action,
+                "mensaje obligatorio del servidor",
+                "Surge: debe seleccionar Sí o No."
+        );
+
+        noContiene(
+                action,
+                "Surge no puede usar parser booleano permisivo",
+                "setSurge(getParametroBoolean(request, \"surge\"))"
         );
 
         System.out.println(

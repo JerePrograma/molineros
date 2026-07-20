@@ -42,7 +42,7 @@
     <input type="hidden"
            name="<portlet:namespace />surge"
            id="<portlet:namespace />surge_hidden"
-           value="<%= esNuevo ? "" : (req.isSurge() ? "1" : "0") %>" />
+           value="<%= HtmlUtil.escape(surgeSeleccionadoCompra) %>" />
 
     <input type="hidden"
            name="<portlet:namespace />afiliado_cuil_titular"

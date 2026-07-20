@@ -1,9 +1,3 @@
-<%
-String surgeSeleccionadoCompra =
-        esNuevo
-                ? ""
-                : (req.isSurge() ? "1" : "0");
-%>
 <fieldset class="block-labels">
     <legend><%= tituloPantalla %></legend>
 
@@ -23,11 +17,11 @@ String surgeSeleccionadoCompra =
         </tr>
 
         <tr>
-            <td><label>Sector:</label></td>
+            <td><label for="<portlet:namespace />sector_id">Sector:</label></td>
             <td>
                 <% if (puedeEditarEstructuraPantalla) { %>
                     <select id="<portlet:namespace />sector_id"
-                            onChange="<portlet:namespace />cambiarSectorCompra(true);">
+                            onchange="<portlet:namespace />cambiarSectorCompra(true);">
                         <option value="0"
                                 data-requiere-afiliado="false"
                                 data-usa-codigo-prestacion="false">
@@ -79,34 +73,50 @@ String surgeSeleccionadoCompra =
                     </select>
                 <% } else { %>
                     <div class="compras-campo-solo-lectura">
-                        <%= HtmlUtil.escape(sectorDescripcionSoloLectura) %>
+                        <%= HtmlUtil.escape(
+                                sectorDescripcionSoloLectura
+                        ) %>
                     </div>
                 <% } %>
             </td>
 
-            <td><label>Surge:</label></td>
+            <td>
+                <label for="<portlet:namespace />surge">
+                    Surge:
+                </label>
+            </td>
             <td colspan="3">
                 <% if (puedeEditarEstructuraPantalla) { %>
                     <select id="<portlet:namespace />surge"
                             required="required"
                             aria-required="true"
-                            onchange="<portlet:namespace />actualizarSurgeCompra(); <portlet:namespace />sincronizarFormularioCompra();">
+                            onchange="<portlet:namespace />actualizarSurgeCompra();">
                         <option value=""
-                                <%= "".equals(surgeSeleccionadoCompra) ? "selected=\"selected\"" : "" %>>
+                                <%= "".equals(surgeSeleccionadoCompra)
+                                        ? "selected=\"selected\""
+                                        : "" %>>
                             Seleccione
                         </option>
+
                         <option value="1"
-                                <%= "1".equals(surgeSeleccionadoCompra) ? "selected=\"selected\"" : "" %>>
+                                <%= "1".equals(surgeSeleccionadoCompra)
+                                        ? "selected=\"selected\""
+                                        : "" %>>
                             Sí
                         </option>
+
                         <option value="0"
-                                <%= "0".equals(surgeSeleccionadoCompra) ? "selected=\"selected\"" : "" %>>
+                                <%= "0".equals(surgeSeleccionadoCompra)
+                                        ? "selected=\"selected\""
+                                        : "" %>>
                             No
                         </option>
                     </select>
                 <% } else { %>
                     <div class="compras-campo-solo-lectura">
-                        <%= HtmlUtil.escape(req.getSurgeDescripcion()) %>
+                        <%= HtmlUtil.escape(
+                                req.getSurgeDescripcion()
+                        ) %>
                     </div>
                 <% } %>
             </td>

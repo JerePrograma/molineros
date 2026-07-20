@@ -1352,7 +1352,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 cargoTercerizadora != null
                         && cargoTercerizadora.intValue() > 0
         );
-        requerimiento.setSurge(getParametroBoolean(request, "surge"));
+        requerimiento.setSurge(
+                parseSurgeObligatorio(request)
+        );
         requerimiento.setObservaciones(
                 getParametroRaw(request, "observaciones", null)
         );
@@ -1787,6 +1789,28 @@ public class EditarRequerimientoCompraAction extends PortletAction {
     private String getParametroTrim(ActionRequest request, String nombre) {
         String value = getParametroRaw(request, nombre, null);
         return value != null ? value.trim() : "";
+    }
+
+    private boolean parseSurgeObligatorio(
+            ActionRequest request)
+            throws ValidacionCompraException {
+
+        String value =
+                getParametroTrim(
+                        request,
+                        "surge"
+                );
+
+        if (!"0".equals(value)
+                && !"1".equals(value)) {
+
+            errorCampo(
+                    "surge",
+                    "Surge: debe seleccionar Sí o No."
+            );
+        }
+
+        return "1".equals(value);
     }
 
     private boolean getParametroBoolean(

@@ -912,6 +912,10 @@
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
+        if (!<portlet:namespace />validarSurgeCompra()) {
+            return <portlet:namespace />cancelarGuardadoCompra();
+        }
+
         var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
 
         if (!requiereAfiliado) {
@@ -1054,7 +1058,7 @@
         });
 
         jQuery('#<portlet:namespace />surge').change(function() {
-            <portlet:namespace />sincronizarFormularioCompra();
+            <portlet:namespace />actualizarSurgeCompra();
         });
 
         jQuery('#<portlet:namespace />cuil, #<portlet:namespace />inte, #<portlet:namespace />id_tercerizadora').change(function() {

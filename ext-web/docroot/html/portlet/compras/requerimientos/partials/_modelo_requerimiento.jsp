@@ -158,6 +158,10 @@ if (req == null) {
 }
 
 boolean esNuevo = req.getIdRequerimientoCompra() == 0;
+String surgeSeleccionadoCompra =
+        esNuevo
+                ? ""
+                : (req.isSurge() ? "1" : "0");
 boolean puedeABM = user != null && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
 boolean puedeCotizar = user != null && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS);
 
@@ -513,9 +517,6 @@ boolean tieneAfiliadoVisible =
 boolean mostrarPanelAfiliadoEnVista = sectorRequiereAfiliadoActual || tieneAfiliadoVisible;
 
 String recuperoChecked = recuperoPorCargoTercerizadoraActual ? "checked=\"checked\"" : "";
-boolean surgeActual = req.isSurge();
-String surgeChecked = surgeActual ? "checked=\"checked\"" : "";
-String surgeValue = surgeActual ? "true" : "false";
 String camposSoloLectura = !modoEditable ? "readonly=\"readonly\"" : "";
 
 String bloqueoSinEstiloVista = !modoEditable
