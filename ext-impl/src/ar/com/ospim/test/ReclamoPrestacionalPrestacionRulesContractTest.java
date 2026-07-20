@@ -116,6 +116,21 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
         );
         contiene(
                 reglas,
+                "callback libera el bloqueo de guardado",
+                "guardadoEnCurso = false;"
+        );
+        contiene(
+                reglas,
+                "compatibilidad con jQuery legacy",
+                ".find(\"option\").eq(0)"
+        );
+        noContiene(
+                reglas,
+                "no depende de first de jQuery moderno",
+                ".find(\"option\").first()"
+        );
+        contiene(
+                reglas,
                 "recuperable enviado neutral",
                 "datos.recuperableSur = 0"
         );
