@@ -46,31 +46,54 @@ public final class ComprasRequerimientoConnectionContractTest {
         antes(
                 metodoPublico,
                 "getCabeceraRequerimiento(idRequerimientoCompra)",
-                "detalleService.getDetalles(idRequerimientoCompra)"
+                "getDetallesRequerimiento(idRequerimientoCompra)"
         );
 
         String metodoCabecera = extraerMetodo(
                 segura,
                 "private RequerimientoCompra getCabeceraRequerimiento("
         );
-        contiene(
+        validarConsultaAislada(
                 metodoCabecera,
-                "la cabecera cierra recursos en finally",
-                "ConnectionHelper.cerrar(stmt, con);"
+                "cabecera",
+                "getDetallesRequerimiento("
         );
-        contiene(
-                metodoCabecera,
-                "la consulta tiene timeout",
-                "stmt.setQueryTimeout(QUERY_TIMEOUT_SEGUNDOS);"
+
+        String metodoDetalles = extraerMetodo(
+                segura,
+                "private List<RequerimientoCompraDetalle> "
+                        + "getDetallesRequerimiento("
         );
-        noContiene(
-                metodoCabecera,
-                "la cabecera no solicita detalles con la conexion abierta",
-                "getDetalles("
+        validarConsultaAislada(
+                metodoDetalles,
+                "detalles",
+                "getCabeceraRequerimiento("
         );
 
         System.out.println(
                 "CONTRATO_COMPRAS_REQUERIMIENTO_CONEXION_SECUENCIAL_OK"
+        );
+    }
+
+    private static void validarConsultaAislada(
+            String metodo,
+            String etapa,
+            String llamadaProhibida) {
+
+        contiene(
+                metodo,
+                etapa + " cierra recursos en finally",
+                "ConnectionHelper.cerrar(stmt, con);"
+        );
+        contiene(
+                metodo,
+                etapa + " tiene timeout SQL",
+                "stmt.setQueryTimeout(QUERY_TIMEOUT_SEGUNDOS);"
+        );
+        noContiene(
+                metodo,
+                etapa + " no inicia la otra consulta con recursos abiertos",
+                llamadaProhibida
         );
     }
 
