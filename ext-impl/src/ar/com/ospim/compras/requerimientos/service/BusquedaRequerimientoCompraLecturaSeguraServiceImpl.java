@@ -1,14 +1,18 @@
 package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.util.ConnectionHelper;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
+import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Carga la cabecera y los detalles de un requerimiento en dos etapas.
@@ -16,8 +20,8 @@ import java.sql.ResultSet;
  * La implementacion historica solicitaba la conexion de detalles mientras
  * todavia conservaba abierta la conexion de cabecera. Con un pool pequeno o
  * saturado, la misma peticion podia quedar esperando indefinidamente una
- * segunda conexion. Esta clase libera completamente la cabecera antes de
- * solicitar los detalles.
+ * segunda conexion. Esta clase libera completamente cada consulta antes de
+ * iniciar la siguiente y limita el tiempo de ejecucion SQL.
  */
 public final class BusquedaRequerimientoCompraLecturaSeguraServiceImpl {
 
@@ -29,10 +33,10 @@ public final class BusquedaRequerimientoCompraLecturaSeguraServiceImpl {
     private static final String SQL_GET_REQUERIMIENTO =
             "{call compras.get_requerimiento(?)}";
 
-    private static final int QUERY_TIMEOUT_SEGUNDOS = 30;
+    private static final String SQL_GET_REQUERIMIENTO_DETALLE =
+            "{call compras.get_requerimiento_detalle(?)}";
 
-    private final BusquedaRequerimientoCompraServiceImpl detalleService =
-            new BusquedaRequerimientoCompraServiceImpl();
+    private static final int QUERY_TIMEOUT_SEGUNDOS = 30;
 
     public RequerimientoCompra getRequerimientoCompra(
             int idRequerimientoCompra) throws Exception {
@@ -53,7 +57,7 @@ public final class BusquedaRequerimientoCompraLecturaSeguraServiceImpl {
          * nunca compite con una conexion retenida por esta misma peticion.
          */
         requerimiento.setDetalles(
-                detalleService.getDetalles(idRequerimientoCompra)
+                getDetallesRequerimiento(idRequerimientoCompra)
         );
 
         return requerimiento;
@@ -67,15 +71,7 @@ public final class BusquedaRequerimientoCompraLecturaSeguraServiceImpl {
         ResultSet rs = null;
 
         try {
-            con = ConnectionHelper.getConnection();
-
-            if (con == null) {
-                throw new Exception(
-                        "No se pudo obtener una conexion para leer el "
-                                + "requerimiento de compra."
-                );
-            }
-
+            con = obtenerConexion("cabecera");
             stmt = con.prepareCall(SQL_GET_REQUERIMIENTO);
             stmt.setQueryTimeout(QUERY_TIMEOUT_SEGUNDOS);
             stmt.setInt(1, idRequerimientoCompra);
@@ -95,6 +91,55 @@ public final class BusquedaRequerimientoCompraLecturaSeguraServiceImpl {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
         }
+    }
+
+    private List<RequerimientoCompraDetalle> getDetallesRequerimiento(
+            int idRequerimientoCompra) throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+        List<RequerimientoCompraDetalle> detalles =
+                new ArrayList<RequerimientoCompraDetalle>();
+
+        try {
+            con = obtenerConexion("detalles");
+            stmt = con.prepareCall(SQL_GET_REQUERIMIENTO_DETALLE);
+            stmt.setQueryTimeout(QUERY_TIMEOUT_SEGUNDOS);
+            stmt.setInt(1, idRequerimientoCompra);
+            rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                detalles.add(mapDetalle(rs));
+            }
+
+            return detalles;
+
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudieron recuperar los detalles del requerimiento. "
+                            + "idRequerimiento=" + idRequerimientoCompra,
+                    e
+            );
+            throw e;
+
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    private Connection obtenerConexion(String etapa) throws Exception {
+        Connection con = ConnectionHelper.getConnection();
+
+        if (con == null) {
+            throw new Exception(
+                    "No se pudo obtener una conexion para leer "
+                            + etapa + " del requerimiento de compra."
+            );
+        }
+
+        return con;
     }
 
     private RequerimientoCompra mapRequerimiento(ResultSet rs)
@@ -149,6 +194,42 @@ public final class BusquedaRequerimientoCompraLecturaSeguraServiceImpl {
         return r;
     }
 
+    private RequerimientoCompraDetalle mapDetalle(ResultSet rs)
+            throws Exception {
+
+        RequerimientoCompraDetalle d = new RequerimientoCompraDetalle();
+
+        d.setId(getInteger(rs, "id"));
+        d.setIdRequerimiento(getInteger(rs, "id_requerimiento"));
+        d.setTipoItem(getString(rs, "tipo_item"));
+        d.setCodigoItem(getString(rs, "codigo_item"));
+        d.setDescripcionItem(getString(rs, "descripcion_item"));
+        d.setIdPrestacion(getInteger(rs, "id_prestacion"));
+        d.setIdTipoNomenclador(getInteger(rs, "id_tipo_nomenclador"));
+        d.setCodigoNomenclador(getString(rs, "codigo_nomenclador"));
+        d.setDescripcionNomenclador(
+                getString(rs, "descripcion_nomenclador")
+        );
+        d.setIdMedicamento(getInteger(rs, "id_medicamento"));
+        d.setTroquel(getInteger(rs, "troquel"));
+        d.setNombreMedicamento(getString(rs, "nombre_medicamento"));
+        d.setCantidad(getInteger(rs, "cantidad"));
+        d.setPrecioUnitarioEstimado(
+                getNullableBigDecimal(rs, "precio_unitario_estimado")
+        );
+        d.setPrecioTotalEstimado(
+                getNullableBigDecimal(rs, "precio_total_estimado")
+        );
+        d.setIdPrestador(getInteger(rs, "id_prestador"));
+        d.setPrestadorCuit(getString(rs, "prestador_cuit"));
+        d.setPrestadorRazonSocial(
+                getString(rs, "prestador_razon_social")
+        );
+        d.setObservaciones(getString(rs, "observaciones"));
+
+        return d;
+    }
+
     private String getString(ResultSet rs, String column) throws Exception {
         return hasColumn(rs, column) ? rs.getString(column) : null;
     }
@@ -169,6 +250,13 @@ public final class BusquedaRequerimientoCompraLecturaSeguraServiceImpl {
 
         boolean value = rs.getBoolean(column);
         return rs.wasNull() ? null : Boolean.valueOf(value);
+    }
+
+    private BigDecimal getNullableBigDecimal(
+            ResultSet rs,
+            String column) throws Exception {
+
+        return hasColumn(rs, column) ? rs.getBigDecimal(column) : null;
     }
 
     private boolean hasColumn(ResultSet rs, String column) {
