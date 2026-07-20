@@ -11,6 +11,42 @@ window.ReclamoPrestacionalAssetError = function(nombre) {
     }
 };
 </script>
+<script type="text/javascript">
+(function(window, jQuery) {
+    if (!jQuery || typeof jQuery.ajax !== "function"
+            || jQuery.ajax.__rpFiltroLetraNoBloqueante) {
+        return;
+    }
+
+    var ajaxOriginal = jQuery.ajax;
+    var ajaxNoBloqueante = function(opciones) {
+        if (arguments.length === 1
+                && opciones
+                && typeof opciones === "object"
+                && opciones.async === false
+                && String(opciones.url || "")
+                        .indexOf("filtrarLetraComprobante") >= 0) {
+
+            opciones = jQuery.extend({}, opciones);
+            opciones.async = true;
+
+            if (window.console && window.console.warn) {
+                window.console.warn(
+                        "RECLAMO_PRESTACIONAL_FILTRO_LETRA_ASYNC"
+                );
+            }
+
+            return ajaxOriginal.call(this, opciones);
+        }
+
+        return ajaxOriginal.apply(this, arguments);
+    };
+
+    ajaxNoBloqueante.__rpFiltroLetraNoBloqueante = true;
+    ajaxNoBloqueante.__rpAjaxOriginal = ajaxOriginal;
+    jQuery.ajax = ajaxNoBloqueante;
+})(window, window.jQuery);
+</script>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jspf" %>
 
 <script type="text/javascript"
