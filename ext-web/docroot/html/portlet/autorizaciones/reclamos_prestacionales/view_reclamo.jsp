@@ -47,6 +47,166 @@ window.ReclamoPrestacionalAssetError = function(nombre) {
     jQuery.ajax = ajaxNoBloqueante;
 })(window, window.jQuery);
 </script>
+<script type="text/javascript">
+(function(window, jQuery) {
+    if (!jQuery || typeof jQuery.ajax !== "function") {
+        return;
+    }
+
+    var TIMEOUT_AFILIADO_MS = 15000;
+
+    function esEndpointAfiliadoNoBloqueante(url) {
+        return url.indexOf("evalua_permanencia_afiliado") >= 0
+                || url.indexOf("tiene_observaciones_afiliado") >= 0
+                || url.indexOf("buscar_afiliado_datos") >= 0;
+    }
+
+    function diagnosticar(codigo, detalle) {
+        if (window.console && window.console.warn) {
+            window.console.warn(
+                    codigo + (detalle ? ": " + detalle : "")
+            );
+        }
+    }
+
+    if (!jQuery.ajax.__rpAfiliadoNoBloqueante) {
+        var ajaxAnterior = jQuery.ajax;
+        var ajaxAfiliadoNoBloqueante = function(opciones) {
+            if (arguments.length === 1
+                    && opciones
+                    && typeof opciones === "object"
+                    && opciones.async === false) {
+
+                var url = String(opciones.url || "");
+
+                if (esEndpointAfiliadoNoBloqueante(url)) {
+                    opciones = jQuery.extend({}, opciones);
+                    opciones.async = true;
+
+                    if (opciones.timeout == null) {
+                        opciones.timeout = TIMEOUT_AFILIADO_MS;
+                    }
+
+                    diagnosticar(
+                            "RECLAMO_PRESTACIONAL_AFILIADO_ASYNC",
+                            url
+                    );
+
+                    return ajaxAnterior.call(this, opciones);
+                }
+            }
+
+            return ajaxAnterior.apply(this, arguments);
+        };
+
+        ajaxAfiliadoNoBloqueante.__rpAfiliadoNoBloqueante = true;
+        ajaxAfiliadoNoBloqueante.__rpAjaxAnterior = ajaxAnterior;
+        jQuery.ajax = ajaxAfiliadoNoBloqueante;
+    }
+
+    if (!jQuery.fn
+            || typeof jQuery.fn.load !== "function"
+            || jQuery.fn.load.__rpAfiliadoTimeout) {
+        return;
+    }
+
+    var loadOriginal = jQuery.fn.load;
+    var xhrBusquedaAfiliado = null;
+
+    var loadAfiliadoSeguro = function(url, parametros, callback) {
+        if (typeof url !== "string"
+                || url.indexOf(
+                        "struts_action=/autorizaciones/buscar_afiliados"
+                ) < 0) {
+
+            return loadOriginal.apply(this, arguments);
+        }
+
+        var destino = this;
+        var datos = parametros;
+        var completar = callback;
+        var metodo = "GET";
+
+        if (typeof parametros === "function") {
+            completar = parametros;
+            datos = undefined;
+        } else if (parametros && typeof parametros === "object") {
+            metodo = "POST";
+        }
+
+        if (xhrBusquedaAfiliado
+                && xhrBusquedaAfiliado.readyState !== 4) {
+            xhrBusquedaAfiliado.abort();
+        }
+
+        destino.html(
+                '<div class="portlet-msg-info">'
+                        + 'Buscando afiliados...'
+                        + '</div>'
+        );
+
+        xhrBusquedaAfiliado = jQuery.ajax({
+            url: url,
+            type: metodo,
+            data: datos,
+            dataType: "html",
+            timeout: TIMEOUT_AFILIADO_MS,
+            success: function(respuesta, estado, xhr) {
+                destino.html(respuesta);
+
+                if (typeof completar === "function") {
+                    completar.call(
+                            destino.length ? destino[0] : destino,
+                            respuesta,
+                            estado,
+                            xhr
+                    );
+                }
+            },
+            error: function(xhr, estado) {
+                if (estado === "abort") {
+                    return;
+                }
+
+                destino.html(
+                        '<div class="portlet-msg-error">'
+                                + 'No se pudo completar la búsqueda de '
+                                + 'afiliados. Cierre esta ventana e '
+                                + 'intente nuevamente.'
+                                + '</div>'
+                );
+
+                diagnosticar(
+                        "RECLAMO_PRESTACIONAL_AFILIADO_ERROR",
+                        estado || "error"
+                );
+
+                if (typeof completar === "function") {
+                    completar.call(
+                            destino.length ? destino[0] : destino,
+                            xhr && xhr.responseText
+                                    ? xhr.responseText
+                                    : "",
+                            estado,
+                            xhr
+                    );
+                }
+            }
+        });
+
+        return destino;
+    };
+
+    loadAfiliadoSeguro.__rpAfiliadoTimeout = true;
+    loadAfiliadoSeguro.__rpLoadOriginal = loadOriginal;
+    jQuery.fn.load = loadAfiliadoSeguro;
+
+    window.ReclamoPrestacionalAfiliadoSearchPatch = {
+        timeoutMs: TIMEOUT_AFILIADO_MS,
+        esEndpointNoBloqueante: esEndpointAfiliadoNoBloqueante
+    };
+})(window, window.jQuery);
+</script>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jspf" %>
 
 <script type="text/javascript"
