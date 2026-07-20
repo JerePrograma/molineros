@@ -35,6 +35,33 @@ public final class ReclamoPrestacionalEditorContractTest {
                 "view_reclamo_p0_patch.js?v=20260717-legacy-flows-1"
         );
 
+        assertContains(
+                "guard de XHR síncrono instalado",
+                view,
+                "ajaxNoBloqueante.__rpFiltroLetraNoBloqueante = true"
+        );
+        assertContains(
+                "guard limitado al filtro de letra",
+                view,
+                ".indexOf(\"filtrarLetraComprobante\") >= 0"
+        );
+        assertContains(
+                "filtro de letra forzado a asíncrono",
+                view,
+                "opciones.async = true"
+        );
+        assertContains(
+                "diagnóstico del desbloqueo",
+                view,
+                "RECLAMO_PRESTACIONAL_FILTRO_LETRA_ASYNC"
+        );
+        assertBefore(
+                "guard activo antes del JSP legacy",
+                view,
+                "ajaxNoBloqueante.__rpFiltroLetraNoBloqueante = true",
+                "view_reclamo.jspf"
+        );
+
         assertNotContains(
                 "método no disponible en Liferay 5.2",
                 editorJsp,
