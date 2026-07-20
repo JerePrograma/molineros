@@ -43,7 +43,7 @@ function forzarRecuperableSeleccione() {
             selects[i].attr("disabled", "disabled");
             selects[i].attr("aria-disabled", "true");
 
-            var primeraOpcion = selects[i].find("option").first();
+            var primeraOpcion = selects[i].find("option").eq(0);
             if (primeraOpcion.length) {
                 primeraOpcion.attr("selected", "selected");
                 primeraOpcion.text("SELECCIONE");
@@ -197,7 +197,31 @@ function ejecutarConReglaRecuperable(original, contexto, argumentos) {
                 var loadNativo =
                         window.ReclamoPrestacionalJQueryLoadOriginal;
                 if (typeof loadNativo === "function") {
-                    return loadNativo.call(this, url, datos, callback);
+                    var destino = this;
+                    var callbackOriginal = callback;
+                    var callbackSeguro = function(respuesta, estado, xhr) {
+                        try {
+                            if (typeof callbackOriginal === "function") {
+                                callbackOriginal.call(
+                                        destino.length ? destino[0] : destino,
+                                        respuesta,
+                                        estado,
+                                        xhr
+                                );
+                            }
+                        } finally {
+                            guardadoEnCurso = false;
+                            forzarRecuperableSeleccione();
+                            normalizarListadoVisual();
+                        }
+                    };
+
+                    return loadNativo.call(
+                            destino,
+                            url,
+                            datos,
+                            callbackSeguro
+                    );
                 }
             }
         }
@@ -306,6 +330,17 @@ function instalarBotonesSeguros() {
     campo("btnedita_prestacion").hide();
     campo("btnautoriza_prestacion").hide();
     campo("btnrechaza_prestacion").hide();
+
+    editor.find("input[type=button]").each(function() {
+        var boton = jQuery(this);
+        var id = String(boton.attr("id") || "");
+        var valor = String(boton.val() || "");
+
+        if (id !== namespace + "rp_cancelar_prestacion_seguro" &&
+                valor.indexOf("Cancelar Edición") === 0) {
+            boton.hide();
+        }
+    });
 
     if (!contenedor.length) {
         contenedor = jQuery("<div/>", {
