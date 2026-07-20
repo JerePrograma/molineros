@@ -66,9 +66,66 @@
     function <portlet:namespace />actualizarSurgeCompra() {
         var surgeEl = document.getElementById('<portlet:namespace />surge');
         var surgeHiddenEl = document.getElementById('<portlet:namespace />surge_hidden');
+        var surgeValue = '';
 
-        if (surgeHiddenEl && surgeEl) {
-            surgeHiddenEl.value = surgeEl.checked ? 'true' : 'false';
+        if (surgeEl && typeof surgeEl.value != 'undefined') {
+            surgeValue = String(surgeEl.value).replace(/^\s+|\s+$/g, '');
         }
+
+        if (surgeValue != '0' && surgeValue != '1') {
+            surgeValue = '';
+        }
+
+        if (surgeHiddenEl) {
+            surgeHiddenEl.value = surgeValue;
+        }
+
+        return surgeValue;
+    }
+
+    function <portlet:namespace />validarSurgeCompra() {
+        var surgeValue = <portlet:namespace />actualizarSurgeCompra();
+        var surgeEl = document.getElementById('<portlet:namespace />surge');
+
+        if (surgeValue == '0' || surgeValue == '1') {
+            return true;
+        }
+
+        alert('Surge: debe seleccionar Sí o No.');
+
+        if (surgeEl && typeof surgeEl.focus == 'function') {
+            surgeEl.focus();
+        }
+
+        return false;
+    }
+
+    function <portlet:namespace />instalarValidacionSurgeCompra() {
+        var nombreGuardar = '<portlet:namespace />guardar';
+        var guardarOriginal = window[nombreGuardar];
+
+        if (typeof guardarOriginal != 'function'
+                || guardarOriginal.__comprasSurgeObligatorio) {
+            return;
+        }
+
+        var guardarConSurgeObligatorio = function() {
+            if (!<portlet:namespace />validarSurgeCompra()) {
+                return false;
+            }
+
+            return guardarOriginal.apply(this, arguments);
+        };
+
+        guardarConSurgeObligatorio.__comprasSurgeObligatorio = true;
+        guardarConSurgeObligatorio.__comprasGuardarOriginal = guardarOriginal;
+        window[nombreGuardar] = guardarConSurgeObligatorio;
+    }
+
+    if (window.jQuery) {
+        jQuery(document).ready(function() {
+            <portlet:namespace />instalarValidacionSurgeCompra();
+            <portlet:namespace />actualizarSurgeCompra();
+        });
     }
 </script>
