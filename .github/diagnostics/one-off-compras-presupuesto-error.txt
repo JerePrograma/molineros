@@ -1,15 +1,4 @@
-status=1
-Traceback (most recent call last):
-  File "/tmp/patch_compras.py", line 395, in <module>
-    web_keys = WEB_KEYS.read_text(encoding="utf-8")
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/pathlib.py", line 1030, in read_text
-    return f.read()
-           ^^^^^^^^
-  File "<frozen codecs>", line 322, in decode
-UnicodeDecodeError: 'utf-8' codec can't decode byte 0xfa in position 565: invalid start byte
-error: file not found: ext-impl/src/ar/com/ospim/test/ComprasPresupuestoPrestadorContractTest.java
-Usage: javac <options> <source files>
-use --help for a list of possible options
-Error: Could not find or load main class ar.com.ospim.test.ComprasPresupuestoPrestadorContractTest
-Caused by: java.lang.ClassNotFoundException: ar.com.ospim.test.ComprasPresupuestoPrestadorContractTest
+status=0
+.github/one-off/patch_compras.b64: OK
+/tmp/patch_compras.py: OK
+CONTRATO_COMPRAS_PRESUPUESTO_PRESTADOR_OK
