@@ -1,19 +1,15 @@
 <fieldset class="block-labels">
     <legend><%= tituloPantalla %></legend>
 
-    <table class="lfr-table">
+    <table class="lfr-table compras-resumen-requerimiento">
         <tr>
             <td><label>ID:</label></td>
             <td><%= HtmlUtil.escape(req.getIdString()) %></td>
 
             <td><label>Estado:</label></td>
-            <td colspan="3">
+            <td>
                 <strong><%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %></strong>
             </td>
-        </tr>
-
-        <tr>
-            <td colspan="6">&nbsp;</td>
         </tr>
 
         <tr>
@@ -85,7 +81,7 @@
                     Surge:
                 </label>
             </td>
-            <td colspan="3">
+            <td>
                 <% if (puedeEditarEstructuraPantalla) { %>
                     <select id="<portlet:namespace />surge"
                             required="required"
@@ -102,14 +98,14 @@
                                 <%= "1".equals(surgeSeleccionadoCompra)
                                         ? "selected=\"selected\""
                                         : "" %>>
-                            Sí
+                            SI
                         </option>
 
                         <option value="0"
                                 <%= "0".equals(surgeSeleccionadoCompra)
                                         ? "selected=\"selected\""
                                         : "" %>>
-                            No
+                            NO
                         </option>
                     </select>
                 <% } else { %>
@@ -121,11 +117,9 @@
                 <% } %>
             </td>
         </tr>
+    </table>
 
-        <tr>
-            <td colspan="6">&nbsp;</td>
-        </tr>
-
+    <table class="lfr-table compras-cargos-requerimiento">
         <tr id="<portlet:namespace />fila_cargos_compra"
             style="<%= puedeEditarEstructuraPantalla && sectorSinAfiliadoForzaCargoOspim ? "display:none;" : "" %>">
             <td><label>Cargo OSPIM %:</label></td>

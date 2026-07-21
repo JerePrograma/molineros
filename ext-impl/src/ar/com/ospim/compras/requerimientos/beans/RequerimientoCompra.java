@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class RequerimientoCompra {
 
@@ -245,7 +246,9 @@ public class RequerimientoCompra {
     }
 
     public String getSectorDescripcionVisible() {
-        return sectorDescripcion != null ? sectorDescripcion : "";
+        return sectorDescripcion != null
+                ? sectorDescripcion.toUpperCase(Locale.ROOT)
+                : "";
     }
 
     public void setSectorDescripcion(String sectorDescripcion) {
@@ -333,7 +336,7 @@ public class RequerimientoCompra {
     }
 
     public String getSurgeDescripcion() {
-        return WebKeysCompras.getBooleanDescripcion(surge);
+        return isSurge() ? "SI" : "NO";
     }
 
     public void setSurge(Boolean surge) {

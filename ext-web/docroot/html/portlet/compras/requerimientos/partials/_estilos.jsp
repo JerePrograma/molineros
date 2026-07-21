@@ -17,6 +17,28 @@
         min-height: 18px;
     }
 
+    .compras-resumen-requerimiento {
+        width: auto;
+        max-width: 100%;
+        margin-bottom: 8px;
+    }
+
+    .compras-resumen-requerimiento td {
+        padding: 3px 12px 3px 0;
+        vertical-align: middle;
+        white-space: normal;
+    }
+
+    .compras-resumen-requerimiento .compras-campo-solo-lectura {
+        display: inline-block;
+        padding: 0;
+        min-height: 0;
+    }
+
+    .compras-cargos-requerimiento {
+        margin-top: 8px;
+    }
+
     .compras-observaciones-vista {
         white-space: pre-wrap;
         border: 1px solid #cccccc;

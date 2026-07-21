@@ -39,7 +39,7 @@ headerNames.add("afiliado-dni");
 headerNames.add("tercerizadora");
 headerNames.add("cargo-ospim");
 headerNames.add("cargo-tercerizadora");
-headerNames.add("recupero");
+headerNames.add("SURGE");
 headerNames.add("alta-fecha");
 headerNames.add("acciones");
 
@@ -93,7 +93,7 @@ for (int i = 0; i < requerimientos.size(); i++) {
     row.addText(HtmlUtil.escape(req.getIdTercerizadora() != null ? req.getIdTercerizadora() : ""), verURL);
     row.addText(HtmlUtil.escape(req.getCargoOspimString()) + "%", verURL);
     row.addText(HtmlUtil.escape(req.getCargoTercerizadoraString()) + "%", verURL);
-    row.addText(HtmlUtil.escape(req.getRecuperoDescripcion()), verURL);
+    row.addText(HtmlUtil.escape(req.getSurgeDescripcion()), verURL);
     row.addText(HtmlUtil.escape(req.getAltaFechaAsString()), verURL);
 
     row.addJSP("right", SearchEntry.DEFAULT_VALIGN, "/html/portlet/compras/requerimientos/editar_borrar_requerimiento.jsp");

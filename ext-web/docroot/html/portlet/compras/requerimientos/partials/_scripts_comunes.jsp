@@ -128,20 +128,4 @@
         return false;
     }
 
-    function <portlet:namespace />validarSurgeCompra() {
-        var surgeValue = <portlet:namespace />actualizarSurgeCompra();
-        var surgeEl = document.getElementById('<portlet:namespace />surge');
-
-        if (surgeValue == '0' || surgeValue == '1') {
-            return true;
-        }
-
-        alert('Surge: debe seleccionar Sí o No.');
-
-        if (surgeEl && typeof surgeEl.focus == 'function') {
-            surgeEl.focus();
-        }
-
-        return false;
-    }
 </script>
