@@ -7,20 +7,22 @@
 -- Base existente:
 -- El SQL debe aplicarse antes de desplegar Java/JSP.
 --   1. Realizar backup y poner el modulo Compras en mantenimiento.
---   2. Ejecutar:
---      psql -X -v ON_ERROR_STOP=1 -f 20260721_presupuesto_activo_prestador.sql
---      Alternativa: definir PGCLIENTENCODING=LATIN1 antes de ejecutar psql.
+--   2. Ejecutar este archivo completo desde pgAdmin, DBeaver o cualquier
+--      cliente que envie SQL directamente al servidor.
+--      Desde psql:
+--      psql -X -v ON_ERROR_STOP=1 -f 20260721_presupuesto_activo_prestador_corregido.sql
 --   3. Desplegar Java/JSP solamente despues de confirmar el COMMIT.
 --
 -- Instalacion nueva:
 --   Ejecutar compras_schema.sql. No ejecutar este script.
 --
--- Este script no elimina ni corrige presupuestos activos duplicados.
--- Ante datos incompatibles aborta con un diagnostico para resolucion manual.
+-- IMPORTANTE:
+--   - Este archivo es SQL puro: no contiene metacomandos \set ni \encoding.
+--   - Debe guardarse como UTF-8.
+--   - Ante cualquier error, la transaccion queda abortada y el COMMIT final
+--     no aplica cambios parciales.
+--   - El script no elimina ni corrige presupuestos activos duplicados.
 -- =====================================================================
-
-\set ON_ERROR_STOP on
-\encoding LATIN1
 
 BEGIN;
 
@@ -447,33 +449,33 @@ CREATE OR REPLACE FUNCTION compras.validar_requerimiento_fila()
     RETURNS TRIGGER
 AS $func$
 DECLARE
-v_requiere_afiliado BOOLEAN;
+    v_requiere_afiliado BOOLEAN;
     v_cambio_estructura BOOLEAN;
     v_usuario VARCHAR(100);
 BEGIN
-SELECT s.requiere_afiliado
-INTO v_requiere_afiliado
-FROM compras.sector_requerimiento s
-WHERE s.id_sector = NEW.id_sector
-  AND s.activo = TRUE
-  AND s.baja_fecha IS NULL;
+    SELECT s.requiere_afiliado
+      INTO v_requiere_afiliado
+      FROM compras.sector_requerimiento s
+     WHERE s.id_sector = NEW.id_sector
+       AND s.activo = TRUE
+       AND s.baja_fecha IS NULL;
 
-IF v_requiere_afiliado IS NULL THEN
+    IF v_requiere_afiliado IS NULL THEN
         RAISE EXCEPTION
             'El sector informado no existe o no esta activo.';
-END IF;
+    END IF;
 
     IF TG_OP = 'INSERT' THEN
         IF NEW.estado <> 1 THEN
             RAISE EXCEPTION
                 'Un requerimiento nuevo debe crearse en estado PENDIENTE.';
-END IF;
-ELSE
+        END IF;
+    ELSE
         IF OLD.estado IN (3, 4, 5, 99)
            AND NEW IS DISTINCT FROM OLD THEN
             RAISE EXCEPTION
                 'El requerimiento no puede modificarse en el estado actual.';
-END IF;
+        END IF;
 
         v_cambio_estructura :=
                NEW.id_sector IS DISTINCT FROM OLD.id_sector
@@ -514,7 +516,7 @@ END IF;
         IF v_cambio_estructura AND OLD.estado <> 1 THEN
             RAISE EXCEPTION
                 'La estructura solo puede modificarse en estado PENDIENTE.';
-END IF;
+        END IF;
 
         IF NEW.estado IS DISTINCT FROM OLD.estado THEN
             IF NOT (
@@ -525,12 +527,12 @@ END IF;
                     'Transicion de estado invalida: % -> %.',
                     OLD.estado,
                     NEW.estado;
-END IF;
+            END IF;
 
             IF NEW.estado IN (4, 5) THEN
                 RAISE EXCEPTION
                     'RECLAMO (RP) y ORDEN DE COMPRA son estados de solo lectura.';
-END IF;
+            END IF;
 
             IF OLD.estado = 1 AND NEW.estado = 2 THEN
                 IF NOT EXISTS (
@@ -541,7 +543,7 @@ END IF;
                 ) THEN
                     RAISE EXCEPTION
                         'Debe existir al menos un detalle antes de enviar a cotizar.';
-END IF;
+                END IF;
 
                 IF NOT EXISTS (
                     SELECT 1
@@ -552,8 +554,8 @@ END IF;
                 ) THEN
                     RAISE EXCEPTION
                         'Debe existir al menos un prestador notificado como ENVIADO antes de pasar a A COTIZAR.';
-END IF;
-END IF;
+                END IF;
+            END IF;
 
             IF OLD.estado = 2 AND NEW.estado = 3 THEN
                 IF NOT EXISTS (
@@ -564,7 +566,7 @@ END IF;
                 ) THEN
                     RAISE EXCEPTION
                         'No se puede cerrar una cotizacion sin detalles.';
-END IF;
+                END IF;
 
                 IF EXISTS (
                     SELECT 1
@@ -606,8 +608,8 @@ END IF;
                 ) THEN
                     RAISE EXCEPTION
                         'No se puede cerrar la cotizacion: existen detalles incompletos o invalidos.';
-END IF;
-END IF;
+                END IF;
+            END IF;
 
             IF NEW.estado = 99 THEN
                 v_usuario := compras.normalizar_usuario(
@@ -622,9 +624,9 @@ END IF;
                     NULLIF(btrim(NEW.baja_usr), ''),
                     v_usuario
                 );
-END IF;
-END IF;
-END IF;
+            END IF;
+        END IF;
+    END IF;
 
     IF v_requiere_afiliado THEN
         IF NULLIF(
@@ -633,14 +635,14 @@ END IF;
         ) IS NULL THEN
             RAISE EXCEPTION
                 'Debe informar el CUIL titular del afiliado.';
-END IF;
+        END IF;
 
         IF NEW.afiliado_int IS NULL
            OR NEW.afiliado_int < 0 THEN
             RAISE EXCEPTION
                 'Debe informar el integrante del afiliado.';
-END IF;
-ELSE
+        END IF;
+    ELSE
         NEW.afiliado_cuil_titular := NULL;
         NEW.afiliado_int := NULL;
         NEW.afiliado_id_ospim := NULL;
@@ -660,9 +662,9 @@ ELSE
         NEW.cargo_tercerizadora := 0;
         NEW.id_tercerizadora := NULL;
         NEW.recupero := FALSE;
-END IF;
+    END IF;
 
-RETURN NEW;
+    RETURN NEW;
 END;
 $func$
 LANGUAGE plpgsql;
@@ -671,7 +673,7 @@ CREATE OR REPLACE FUNCTION compras.validar_requerimiento_detalle_fila()
 RETURNS TRIGGER
 AS $func$
 DECLARE
-v_estado INTEGER;
+    v_estado INTEGER;
     v_id_sector_requerimiento INTEGER;
     v_sector VARCHAR(200);
     v_tipo_item VARCHAR(20);
@@ -679,28 +681,28 @@ v_estado INTEGER;
     v_tipo_item_esperado VARCHAR(20);
     v_id_tipo_nomenclador_real INTEGER;
 BEGIN
-SELECT
-    r.estado,
-    r.id_sector,
-    translate(
+    SELECT
+        r.estado,
+        r.id_sector,
+        translate(
             upper(btrim(sr.descripcion)),
-            'ÁÉÍÓÚÜáéíóúü',
-            'AEIOUUAEIOUU'
-    )
-INTO
-    v_estado,
-    v_id_sector_requerimiento,
-    v_sector
-FROM compras.requerimiento r
-         JOIN compras.sector_requerimiento sr
-              ON sr.id_sector = r.id_sector
-WHERE r.id_requerimiento = NEW.id_requerimiento
-  AND r.baja_fecha IS NULL;
+            U&'\00C1\00C9\00CD\00D3\00DA\00DC',
+            'AEIOUU'
+        )
+      INTO
+        v_estado,
+        v_id_sector_requerimiento,
+        v_sector
+      FROM compras.requerimiento r
+      JOIN compras.sector_requerimiento sr
+        ON sr.id_sector = r.id_sector
+     WHERE r.id_requerimiento = NEW.id_requerimiento
+       AND r.baja_fecha IS NULL;
 
-IF v_estado IS NULL THEN
+    IF v_estado IS NULL THEN
         RAISE EXCEPTION
             'No existe un requerimiento activo para el detalle.';
-END IF;
+    END IF;
 
     IF v_sector IN (
         'FARMACIA',
@@ -721,7 +723,7 @@ END IF;
         RAISE EXCEPTION
             'El sector % no tiene configurado un tipo de detalle para Compras.',
             v_sector;
-END IF;
+    END IF;
 
     v_tipo_item := upper(btrim(COALESCE(NEW.tipo_item, '')));
 
@@ -731,8 +733,8 @@ END IF;
                 'El sector % requiere detalles de tipo %.',
                 v_sector,
                 v_tipo_item_esperado;
-END IF;
-ELSE
+        END IF;
+    ELSE
         v_tipo_item_anterior :=
             upper(btrim(COALESCE(OLD.tipo_item, '')));
 
@@ -740,7 +742,7 @@ ELSE
             IF v_tipo_item <> 'MEDICAMENTO' THEN
                 RAISE EXCEPTION
                     'El detalle historico de medicamento no puede convertirse directamente.';
-END IF;
+            END IF;
 
             IF NEW.id_requerimiento
                     IS DISTINCT FROM OLD.id_requerimiento
@@ -761,23 +763,23 @@ END IF;
 
                 RAISE EXCEPTION
                     'El detalle historico de medicamento solo permite modificar cantidad y observaciones.';
-END IF;
+            END IF;
 
         ELSIF v_tipo_item_anterior = 'NOMENCLADOR' THEN
             IF v_tipo_item <> 'NOMENCLADOR' THEN
                 RAISE EXCEPTION
                     'Un detalle de nomenclador no puede convertirse a otro tipo.';
-END IF;
+            END IF;
         ELSIF v_tipo_item_anterior = 'OBSERVACION' THEN
             IF v_tipo_item <> 'OBSERVACION' THEN
                 RAISE EXCEPTION
                     'Un detalle de observacion no puede convertirse a otro tipo.';
-END IF;
-ELSE
+            END IF;
+        ELSE
             RAISE EXCEPTION
                 'El detalle persistido tiene un tipo tecnico desconocido.';
-END IF;
-END IF;
+        END IF;
+    END IF;
 
     NEW.tipo_item := v_tipo_item;
 
@@ -787,7 +789,7 @@ END IF;
             'El sector % requiere detalles de tipo %.',
             v_sector,
             v_tipo_item_esperado;
-END IF;
+    END IF;
 
     IF v_tipo_item = 'MEDICAMENTO' THEN
         IF NEW.id_medicamento IS NULL
@@ -796,12 +798,12 @@ END IF;
 
             RAISE EXCEPTION
                 'El medicamento historico debe conservar id y nombre.';
-END IF;
+        END IF;
     ELSIF v_tipo_item = 'OBSERVACION' THEN
         IF NULLIF(btrim(NEW.observaciones), '') IS NULL THEN
             RAISE EXCEPTION
                 'Debe informar las observaciones del detalle.';
-END IF;
+        END IF;
 
         IF NEW.id_prestacion IS NOT NULL
            OR NEW.id_tipo_nomenclador IS NOT NULL
@@ -813,15 +815,15 @@ END IF;
 
             RAISE EXCEPTION
                 'Un detalle de observacion no puede contener datos tecnicos.';
-END IF;
-ELSE
+        END IF;
+    ELSE
         IF NEW.id_medicamento IS NOT NULL
            OR NEW.troquel IS NOT NULL
            OR NULLIF(btrim(NEW.nombre_medicamento), '') IS NOT NULL THEN
 
             RAISE EXCEPTION
                 'Un detalle de nomenclador no puede contener datos de medicamento.';
-END IF;
+        END IF;
 
         IF NEW.id_prestacion IS NULL
            OR NEW.id_prestacion <= 0
@@ -832,43 +834,43 @@ END IF;
 
             RAISE EXCEPTION
                 'El nomenclador debe tener prestacion, tipo real positivo, codigo y descripcion.';
-END IF;
+        END IF;
 
-SELECT n.id_tipo_nomenclador
-INTO v_id_tipo_nomenclador_real
-FROM autorizaciones.nomenclador n
-WHERE n.id_prestacion = NEW.id_prestacion
-  AND n.baja_fecha IS NULL;
+        SELECT n.id_tipo_nomenclador
+          INTO v_id_tipo_nomenclador_real
+          FROM autorizaciones.nomenclador n
+         WHERE n.id_prestacion = NEW.id_prestacion
+           AND n.baja_fecha IS NULL;
 
-IF NOT FOUND THEN
+        IF NOT FOUND THEN
             RAISE EXCEPTION
                 'La prestacion seleccionada no existe o no esta activa.';
-END IF;
+        END IF;
 
         IF NEW.id_tipo_nomenclador
                 <> v_id_tipo_nomenclador_real THEN
 
             RAISE EXCEPTION
                 'El tipo de nomenclador informado no corresponde a la prestacion seleccionada.';
-END IF;
+        END IF;
 
         IF v_sector = 'FARMACIA' THEN
             IF v_id_tipo_nomenclador_real <> 9 THEN
                 RAISE EXCEPTION
                     'Para el sector Farmacia el tipo de nomenclador debe ser 9.';
-END IF;
-ELSE
+            END IF;
+        ELSE
             IF v_id_tipo_nomenclador_real = 9 THEN
                 RAISE EXCEPTION
                     'El nomenclador tipo 9 solo puede utilizarse en el sector Farmacia.';
-END IF;
-END IF;
-END IF;
+            END IF;
+        END IF;
+    END IF;
 
     IF TG_OP = 'INSERT' AND v_estado <> 1 THEN
         RAISE EXCEPTION
             'Los detalles solo pueden crearse en estado PENDIENTE.';
-END IF;
+    END IF;
 
     IF TG_OP = 'UPDATE' THEN
         IF v_estado = 1 THEN
@@ -904,12 +906,12 @@ END IF;
 
                 RAISE EXCEPTION
                     'En estado A COTIZAR la estructura del detalle esta bloqueada.';
-END IF;
-ELSE
+            END IF;
+        ELSE
             RAISE EXCEPTION
                 'El detalle no puede modificarse en el estado actual.';
-END IF;
-END IF;
+        END IF;
+    END IF;
 
     IF v_estado = 1 THEN
         IF NEW.precio_unitario_estimado IS NOT NULL
@@ -918,40 +920,40 @@ END IF;
 
             RAISE EXCEPTION
                 'Un requerimiento PENDIENTE no puede tener datos de cotizacion.';
-END IF;
+        END IF;
 
     ELSIF v_estado = 2 THEN
         IF NEW.precio_unitario_estimado < 0 THEN
             RAISE EXCEPTION
                 'El precio unitario estimado no puede ser negativo.';
-END IF;
+        END IF;
 
         IF NEW.precio_unitario_estimado IS NULL THEN
             NEW.precio_total_estimado := NULL;
-ELSE
+        ELSE
             NEW.precio_total_estimado :=
                 round(
                     NEW.cantidad
                     * NEW.precio_unitario_estimado,
                     2
                 );
-END IF;
+        END IF;
 
         IF NEW.id_prestador IS NOT NULL
            AND NOT EXISTS (
                 SELECT 1
-                FROM compras.requerimiento_cotizacion_prestador rcp
-                WHERE rcp.id_requerimiento = NEW.id_requerimiento
-                  AND rcp.id_prestador = NEW.id_prestador
-                  AND rcp.estado_envio IN ('ENVIADO', 'COTIZADO')
+                  FROM compras.requerimiento_cotizacion_prestador rcp
+                 WHERE rcp.id_requerimiento = NEW.id_requerimiento
+                   AND rcp.id_prestador = NEW.id_prestador
+                   AND rcp.estado_envio IN ('ENVIADO', 'COTIZADO')
            ) THEN
 
             RAISE EXCEPTION
                 'El prestador seleccionado no fue notificado correctamente para este requerimiento.';
-END IF;
-END IF;
+        END IF;
+    END IF;
 
-RETURN NEW;
+    RETURN NEW;
 END;
 $func$
 LANGUAGE plpgsql;
@@ -963,10 +965,10 @@ CREATE OR REPLACE FUNCTION compras.guardar_cotizacion_requerimiento(
     p_id_prestador INTEGER,
     p_usuario VARCHAR
 )
-    RETURNS INTEGER
+RETURNS INTEGER
 AS $func$
 DECLARE
-v_estado INTEGER;
+    v_estado INTEGER;
     v_usuario VARCHAR(100);
     v_total_detalles INTEGER;
     v_total_ids INTEGER;
@@ -979,32 +981,32 @@ BEGIN
     IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
         RAISE EXCEPTION
             'Debe informar el requerimiento de compra.';
-END IF;
+    END IF;
 
     v_usuario := compras.normalizar_usuario(p_usuario);
 
-SELECT r.estado
-INTO v_estado
-FROM compras.requerimiento r
-WHERE r.id_requerimiento = p_id_requerimiento
-  AND r.baja_fecha IS NULL
-    FOR UPDATE;
+    SELECT r.estado
+      INTO v_estado
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento = p_id_requerimiento
+       AND r.baja_fecha IS NULL
+     FOR UPDATE;
 
-IF NOT FOUND THEN
+    IF NOT FOUND THEN
         RAISE EXCEPTION
             'No existe el requerimiento activo informado.';
-END IF;
+    END IF;
 
     -- Una repeticion del mismo POST luego del cierre no debe reabrir ni
     -- modificar la cotizacion.
     IF v_estado = 3 THEN
         RETURN 3;
-END IF;
+    END IF;
 
     IF v_estado <> 2 THEN
         RAISE EXCEPTION
             'La cotizacion solo puede guardarse en estado A COTIZAR.';
-END IF;
+    END IF;
 
     IF p_ids_detalle IS NULL
        OR p_precios_unitarios IS NULL
@@ -1012,7 +1014,7 @@ END IF;
        OR array_ndims(p_precios_unitarios) <> 1 THEN
         RAISE EXCEPTION
             'Debe informar arreglos unidimensionales de detalles y precios.';
-END IF;
+    END IF;
 
     v_total_ids := COALESCE(array_length(p_ids_detalle, 1), 0);
     v_total_precios := COALESCE(array_length(p_precios_unitarios, 1), 0);
@@ -1020,7 +1022,7 @@ END IF;
     IF v_total_ids <= 0 OR v_total_ids <> v_total_precios THEN
         RAISE EXCEPTION
             'La cantidad de detalles y precios no coincide.';
-END IF;
+    END IF;
 
     IF EXISTS (
         SELECT 1
@@ -1030,18 +1032,18 @@ END IF;
     ) THEN
         RAISE EXCEPTION
             'La cotizacion contiene identificadores de detalle invalidos.';
-END IF;
+    END IF;
 
     IF (
-SELECT count(*)
-FROM unnest(p_ids_detalle) AS ids(id_detalle)
+        SELECT count(*)
+          FROM unnest(p_ids_detalle) AS ids(id_detalle)
     ) <> (
         SELECT count(DISTINCT ids.id_detalle)
           FROM unnest(p_ids_detalle) AS ids(id_detalle)
     ) THEN
         RAISE EXCEPTION
             'La cotizacion contiene detalles duplicados.';
-END IF;
+    END IF;
 
     IF EXISTS (
         SELECT 1
@@ -1054,23 +1056,23 @@ END IF;
     ) THEN
         RAISE EXCEPTION
             'Los precios unitarios deben ser nulos o mayores o iguales que cero.';
-END IF;
+    END IF;
 
-SELECT count(*)
-INTO v_total_detalles
-FROM compras.requerimiento_detalle d
-WHERE d.id_requerimiento = p_id_requerimiento
-  AND d.baja_fecha IS NULL;
+    SELECT count(*)
+      INTO v_total_detalles
+      FROM compras.requerimiento_detalle d
+     WHERE d.id_requerimiento = p_id_requerimiento
+       AND d.baja_fecha IS NULL;
 
-IF v_total_detalles <= 0 THEN
+    IF v_total_detalles <= 0 THEN
         RAISE EXCEPTION
             'El requerimiento no contiene detalles activos.';
-END IF;
+    END IF;
 
     IF v_total_detalles <> v_total_ids THEN
         RAISE EXCEPTION
             'La cotizacion debe informar exactamente todos los detalles activos.';
-END IF;
+    END IF;
 
     IF EXISTS (
         SELECT 1
@@ -1083,7 +1085,7 @@ END IF;
     ) THEN
         RAISE EXCEPTION
             'La lista de detalles fue manipulada o pertenece a otro requerimiento.';
-END IF;
+    END IF;
 
     -- Bloquea la estructura completa antes de actualizar valores de cotizacion.
     PERFORM 1
@@ -1093,11 +1095,11 @@ END IF;
      ORDER BY d.id_detalle
      FOR UPDATE;
 
-IF p_id_prestador IS NOT NULL THEN
+    IF p_id_prestador IS NOT NULL THEN
         IF p_id_prestador <= 0 THEN
             RAISE EXCEPTION
                 'El prestador adjudicado debe ser mayor que cero.';
-END IF;
+        END IF;
 
         IF NOT EXISTS (
             SELECT 1
@@ -1108,10 +1110,10 @@ END IF;
         ) THEN
             RAISE EXCEPTION
                 'El prestador adjudicado no fue notificado correctamente para este requerimiento.';
-END IF;
-END IF;
+        END IF;
+    END IF;
 
-FOR v_indice IN 1..v_total_ids LOOP
+    FOR v_indice IN 1..v_total_ids LOOP
         v_id_detalle := p_ids_detalle[
             array_lower(p_ids_detalle, 1) + v_indice - 1
         ];
@@ -1120,37 +1122,37 @@ FOR v_indice IN 1..v_total_ids LOOP
             array_lower(p_precios_unitarios, 1) + v_indice - 1
         ];
 
-UPDATE compras.requerimiento_detalle
-SET precio_unitario_estimado = v_precio,
-    id_prestador = p_id_prestador,
-    modi_fecha = now(),
-    modi_usr = v_usuario
-WHERE id_detalle = v_id_detalle
-  AND id_requerimiento = p_id_requerimiento
-  AND baja_fecha IS NULL;
+        UPDATE compras.requerimiento_detalle
+           SET precio_unitario_estimado = v_precio,
+               id_prestador = p_id_prestador,
+               modi_fecha = now(),
+               modi_usr = v_usuario
+         WHERE id_detalle = v_id_detalle
+           AND id_requerimiento = p_id_requerimiento
+           AND baja_fecha IS NULL;
 
-IF NOT FOUND THEN
+        IF NOT FOUND THEN
             RAISE EXCEPTION
                 'No se pudo actualizar el detalle %.', v_id_detalle;
-END IF;
-END LOOP;
+        END IF;
+    END LOOP;
 
-SELECT NOT EXISTS (
-    SELECT 1
-    FROM compras.requerimiento_detalle d
-    WHERE d.id_requerimiento = p_id_requerimiento
-      AND d.baja_fecha IS NULL
-      AND (
-        d.precio_unitario_estimado IS NULL
-            OR d.precio_total_estimado IS NULL
-            OR d.id_prestador IS NULL
-        )
-)
-INTO v_completa;
+    SELECT NOT EXISTS (
+        SELECT 1
+          FROM compras.requerimiento_detalle d
+         WHERE d.id_requerimiento = p_id_requerimiento
+           AND d.baja_fecha IS NULL
+           AND (
+                d.precio_unitario_estimado IS NULL
+                OR d.precio_total_estimado IS NULL
+                OR d.id_prestador IS NULL
+           )
+    )
+      INTO v_completa;
 
-IF NOT v_completa THEN
+    IF NOT v_completa THEN
         RETURN 2;
-END IF;
+    END IF;
 
     IF NOT EXISTS (
         SELECT 1
@@ -1161,7 +1163,7 @@ END IF;
     ) THEN
         RAISE EXCEPTION
             'Debe existir un presupuesto activo del prestador adjudicado antes de cerrar la cotizacion.';
-END IF;
+    END IF;
 
     IF NOT EXISTS (
         SELECT 1
@@ -1172,7 +1174,7 @@ END IF;
     ) THEN
         RAISE EXCEPTION
             'El prestador adjudicado debe encontrarse COTIZADO antes de cerrar la cotizacion.';
-END IF;
+    END IF;
 
     PERFORM compras.cambiar_estado_requerimiento(
         p_id_requerimiento,
@@ -1180,7 +1182,7 @@ END IF;
         v_usuario
     );
 
-RETURN 3;
+    RETURN 3;
 END;
 $func$
 LANGUAGE plpgsql;
@@ -1190,17 +1192,17 @@ CREATE OR REPLACE FUNCTION compras.buscar_prestadores_enviados(
     p_texto VARCHAR,
     p_limite INTEGER
 )
-    RETURNS TABLE (
-                      id_prestador INTEGER,
-                      descripcion VARCHAR,
-                      cuit VARCHAR,
-                      email VARCHAR,
-                      id_tipo_prestador INTEGER,
-                      tipo_prestador VARCHAR
-                  )
-    AS $func$
+RETURNS TABLE (
+    id_prestador INTEGER,
+    descripcion VARCHAR,
+    cuit VARCHAR,
+    email VARCHAR,
+    id_tipo_prestador INTEGER,
+    tipo_prestador VARCHAR
+)
+AS $func$
 DECLARE
-v_texto VARCHAR;
+    v_texto VARCHAR;
     v_cuit VARCHAR;
     v_limite INTEGER;
 BEGIN
@@ -1227,56 +1229,40 @@ BEGIN
         50
     );
 
-RETURN QUERY
-SELECT DISTINCT
-    p.id_prestador::INTEGER,
-    p.descripcion::VARCHAR,
-    p.cuit::VARCHAR,
-    p.contacto::VARCHAR,
-    p.id_tipo_prestador::INTEGER,
-    tp.descripcion::VARCHAR
-FROM compras.requerimiento r
-         JOIN compras.requerimiento_cotizacion_prestador rcp
-              ON rcp.id_requerimiento =
-                 r.id_requerimiento
-                   AND rcp.estado_envio IN (
-                       'ENVIADO',
-                       'COTIZADO'
-                   )
-         JOIN public.prestador p
-              ON p.id_prestador =
-                 rcp.id_prestador
-         LEFT JOIN trae_tipos_prestadores() tp
-                   ON tp.id_tipo_prestador =
-                      p.id_tipo_prestador
-WHERE r.id_requerimiento =
-      p_id_requerimiento
-  AND r.estado IN (2, 3)
-  AND (
-    v_texto IS NULL
-
-        OR upper(
-                   COALESCE(
-                           p.descripcion,
-                           ''
-                   )
-           ) LIKE '%' || v_texto || '%'
-
-        OR (
-        v_cuit IS NOT NULL
-            AND regexp_replace(
-                        COALESCE(
-                                p.cuit,
-                                ''
-                        ),
+    RETURN QUERY
+    SELECT DISTINCT
+        p.id_prestador::INTEGER,
+        p.descripcion::VARCHAR,
+        p.cuit::VARCHAR,
+        p.contacto::VARCHAR,
+        p.id_tipo_prestador::INTEGER,
+        tp.descripcion::VARCHAR
+      FROM compras.requerimiento r
+      JOIN compras.requerimiento_cotizacion_prestador rcp
+        ON rcp.id_requerimiento = r.id_requerimiento
+       AND rcp.estado_envio IN ('ENVIADO', 'COTIZADO')
+      JOIN public.prestador p
+        ON p.id_prestador = rcp.id_prestador
+      LEFT JOIN trae_tipos_prestadores() tp
+        ON tp.id_tipo_prestador = p.id_tipo_prestador
+     WHERE r.id_requerimiento = p_id_requerimiento
+       AND r.estado IN (2, 3)
+       AND (
+            v_texto IS NULL
+            OR upper(COALESCE(p.descripcion, ''))
+               LIKE '%' || v_texto || '%'
+            OR (
+                v_cuit IS NOT NULL
+                AND regexp_replace(
+                        COALESCE(p.cuit, ''),
                         '[^0-9]',
                         '',
                         'g'
-                ) LIKE '%' || v_cuit || '%'
-        )
-    )
-ORDER BY 2
-    LIMIT v_limite;
+                    ) LIKE '%' || v_cuit || '%'
+            )
+       )
+     ORDER BY 2
+     LIMIT v_limite;
 END;
 $func$
 LANGUAGE plpgsql
@@ -1608,58 +1594,51 @@ SELECT
     r.id_sector,
 
     COUNT(
-            DISTINCT CASE
-                         WHEN p.id_prestador IS NOT NULL
-                             THEN p.id_prestador
+        DISTINCT CASE
+            WHEN p.id_prestador IS NOT NULL
+            THEN p.id_prestador
         END
-    )::INTEGER
-        AS prestadores_habilitados,
+    )::INTEGER AS prestadores_habilitados,
 
     COUNT(
-            DISTINCT CASE
-                         WHEN stp.id_tipo_prestador IS NOT NULL
-                             THEN p.id_prestador
+        DISTINCT CASE
+            WHEN stp.id_tipo_prestador IS NOT NULL
+            THEN p.id_prestador
         END
-    )::INTEGER
-        AS prestadores_compatibles_sector,
+    )::INTEGER AS prestadores_compatibles_sector,
 
     COUNT(
-            DISTINCT CASE
-                         WHEN stp.id_tipo_prestador IS NOT NULL
-                              AND rcp.estado_envio IN (
-                                                       'ENVIADO',
-                                                       'COTIZADO',
-                                                       'PROCESANDO'
-                                 )
-                             THEN p.id_prestador
+        DISTINCT CASE
+            WHEN stp.id_tipo_prestador IS NOT NULL
+             AND rcp.estado_envio IN (
+                    'ENVIADO',
+                    'COTIZADO',
+                    'PROCESANDO'
+                 )
+            THEN p.id_prestador
         END
-    )::INTEGER
-        AS prestadores_bloqueados_estado_previo
+    )::INTEGER AS prestadores_bloqueados_estado_previo
 
 FROM compras.requerimiento r
 
-         LEFT JOIN public.prestador p
-                   ON COALESCE(
-                              p.solicitar_cotizacion,
-                              FALSE
-                      ) = TRUE
-                       AND p.baja_fecha IS NULL
+LEFT JOIN public.prestador p
+  ON COALESCE(p.solicitar_cotizacion, FALSE) = TRUE
+ AND p.baja_fecha IS NULL
 
-         LEFT JOIN compras.sector_tipo_prestador stp
-                   ON stp.id_sector = r.id_sector
-                       AND stp.id_tipo_prestador = p.id_tipo_prestador
-                       AND stp.activo = TRUE
-                       AND stp.baja_fecha IS NULL
+LEFT JOIN compras.sector_tipo_prestador stp
+  ON stp.id_sector = r.id_sector
+ AND stp.id_tipo_prestador = p.id_tipo_prestador
+ AND stp.activo = TRUE
+ AND stp.baja_fecha IS NULL
 
-         LEFT JOIN compras.requerimiento_cotizacion_prestador rcp
-                   ON rcp.id_requerimiento = r.id_requerimiento
-                       AND rcp.id_prestador = p.id_prestador
+LEFT JOIN compras.requerimiento_cotizacion_prestador rcp
+  ON rcp.id_requerimiento = r.id_requerimiento
+ AND rcp.id_prestador = p.id_prestador
 
 WHERE r.id_requerimiento = p_id_requerimiento
   AND r.baja_fecha IS NULL
 
-GROUP BY
-    r.id_sector;
+GROUP BY r.id_sector;
 $function$;
 
 CREATE OR REPLACE FUNCTION
@@ -1679,7 +1658,7 @@ LANGUAGE plpgsql
 AS
 $function$
 DECLARE
-v_usuario VARCHAR(100);
+    v_usuario VARCHAR(100);
     v_id_sector INTEGER;
     v_email_real VARCHAR(320);
     v_email_guardado VARCHAR(320);
@@ -1690,14 +1669,14 @@ BEGIN
 
         RAISE EXCEPTION
             'El id de requerimiento debe ser mayor que cero.';
-END IF;
+    END IF;
 
     IF p_id_prestador IS NULL
        OR p_id_prestador <= 0 THEN
 
         RAISE EXCEPTION
             'El id de prestador debe ser mayor que cero.';
-END IF;
+    END IF;
 
     v_usuario :=
         LEFT(
@@ -1711,163 +1690,146 @@ END IF;
             100
         );
 
-SELECT
-    r.id_sector
-INTO
-    v_id_sector
-FROM compras.requerimiento r
-WHERE r.id_requerimiento = p_id_requerimiento
-  AND r.baja_fecha IS NULL;
+    SELECT r.id_sector
+      INTO v_id_sector
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento = p_id_requerimiento
+       AND r.baja_fecha IS NULL;
 
-IF NOT FOUND THEN
+    IF NOT FOUND THEN
         RAISE EXCEPTION
             'No existe el requerimiento activo %.',
             p_id_requerimiento;
-END IF;
+    END IF;
 
-SELECT
-    NULLIF(
-            BTRIM(p.contacto),
-            ''
-    )
-INTO
-    v_email_real
-FROM public.prestador p
-WHERE p.id_prestador = p_id_prestador
-  AND COALESCE(
-              p.solicitar_cotizacion,
-              FALSE
-      ) = TRUE
-  AND p.baja_fecha IS NULL;
+    SELECT NULLIF(BTRIM(p.contacto), '')
+      INTO v_email_real
+      FROM public.prestador p
+     WHERE p.id_prestador = p_id_prestador
+       AND COALESCE(p.solicitar_cotizacion, FALSE) = TRUE
+       AND p.baja_fecha IS NULL;
 
-IF NOT FOUND THEN
+    IF NOT FOUND THEN
         RAISE EXCEPTION
             'El prestador % no existe, esta dado de baja '
             'o no esta habilitado para cotizar.',
             p_id_prestador;
-END IF;
+    END IF;
 
     IF NOT EXISTS (
-        SELECT
-            1
-        FROM public.prestador p
-        INNER JOIN compras.sector_tipo_prestador stp
-            ON stp.id_tipo_prestador =
-                p.id_tipo_prestador
-           AND stp.id_sector =
-                v_id_sector
+        SELECT 1
+          FROM public.prestador p
+          JOIN compras.sector_tipo_prestador stp
+            ON stp.id_tipo_prestador = p.id_tipo_prestador
+           AND stp.id_sector = v_id_sector
            AND stp.activo = TRUE
            AND stp.baja_fecha IS NULL
-        WHERE p.id_prestador =
-            p_id_prestador
-          AND p.baja_fecha IS NULL
+         WHERE p.id_prestador = p_id_prestador
+           AND p.baja_fecha IS NULL
     ) THEN
-
         RAISE EXCEPTION
             'El prestador % no es compatible con el sector %.',
             p_id_prestador,
             v_id_sector;
-END IF;
+    END IF;
 
     /*
-     * Se crea la fila si todavía no existe.
+     * Se crea la fila si todavia no existe.
      *
-     * ON CONFLICT evita una excepción si dos transacciones
-     * intentan crearla simultáneamente.
+     * ON CONFLICT evita una excepcion si dos transacciones
+     * intentan crearla simultaneamente.
      */
-INSERT INTO compras.requerimiento_cotizacion_prestador (
-    id_requerimiento,
-    id_prestador,
-    estado_envio,
-    intentos,
-    email_destino,
-    fecha_creacion,
-    alta_usr
-)
-VALUES (
-           p_id_requerimiento,
-           p_id_prestador,
-           'PENDIENTE',
-           0,
-           v_email_real,
-           clock_timestamp(),
-           v_usuario
-       )
+    INSERT INTO compras.requerimiento_cotizacion_prestador (
+        id_requerimiento,
+        id_prestador,
+        estado_envio,
+        intentos,
+        email_destino,
+        fecha_creacion,
+        alta_usr
+    )
+    VALUES (
+        p_id_requerimiento,
+        p_id_prestador,
+        'PENDIENTE',
+        0,
+        v_email_real,
+        clock_timestamp(),
+        v_usuario
+    )
     ON CONFLICT (
         id_requerimiento,
         id_prestador
     )
     DO NOTHING;
 
-/*
- * El bloqueo garantiza que sólo una ejecución pueda
- * analizar y modificar esta fila a la vez.
- */
-SELECT
-    rcp.estado_envio,
-    rcp.email_destino
-INTO
-    v_estado_actual,
-    v_email_guardado
-FROM compras.requerimiento_cotizacion_prestador rcp
-WHERE rcp.id_requerimiento =
-      p_id_requerimiento
-  AND rcp.id_prestador =
-      p_id_prestador
-    FOR UPDATE;
+    /*
+     * El bloqueo garantiza que solo una ejecucion pueda
+     * analizar y modificar esta fila a la vez.
+     */
+    SELECT
+        rcp.estado_envio,
+        rcp.email_destino
+      INTO
+        v_estado_actual,
+        v_email_guardado
+      FROM compras.requerimiento_cotizacion_prestador rcp
+     WHERE rcp.id_requerimiento = p_id_requerimiento
+       AND rcp.id_prestador = p_id_prestador
+     FOR UPDATE;
 
-IF NOT FOUND THEN
+    IF NOT FOUND THEN
         RAISE EXCEPTION
             'No se pudo crear ni localizar la fila de '
             'notificacion para requerimiento % y prestador %.',
             p_id_requerimiento,
             p_id_prestador;
-END IF;
+    END IF;
 
     IF v_estado_actual = 'ENVIADO' THEN
         RETURN QUERY
-SELECT
-    FALSE,
-    v_estado_actual::TEXT,
-    v_email_guardado::TEXT,
-    'YA_ENVIADO'::TEXT,
-    (
-        'El prestador ya se encontraba ENVIADO. '
-            || 'No se realizo un reenvio.'
-        )::TEXT;
+        SELECT
+            FALSE,
+            v_estado_actual::TEXT,
+            v_email_guardado::TEXT,
+            'YA_ENVIADO'::TEXT,
+            (
+                'El prestador ya se encontraba ENVIADO. '
+                || 'No se realizo un reenvio.'
+            )::TEXT;
 
-RETURN;
-END IF;
+        RETURN;
+    END IF;
 
     IF v_estado_actual = 'COTIZADO' THEN
         RETURN QUERY
-SELECT
-    FALSE,
-    v_estado_actual::TEXT,
-    v_email_guardado::TEXT,
-    'YA_COTIZADO'::TEXT,
-    (
-        'El prestador ya se encontraba COTIZADO. '
-            || 'No se realizo un reenvio.'
-        )::TEXT;
+        SELECT
+            FALSE,
+            v_estado_actual::TEXT,
+            v_email_guardado::TEXT,
+            'YA_COTIZADO'::TEXT,
+            (
+                'El prestador ya se encontraba COTIZADO. '
+                || 'No se realizo un reenvio.'
+            )::TEXT;
 
-RETURN;
-END IF;
+        RETURN;
+    END IF;
 
     IF v_estado_actual = 'PROCESANDO' THEN
         RETURN QUERY
-SELECT
-    FALSE,
-    v_estado_actual::TEXT,
-    v_email_guardado::TEXT,
-    'YA_PROCESANDO'::TEXT,
-    (
-        'El prestador ya se encontraba PROCESANDO, '
-            || 'posiblemente por otra ejecucion concurrente.'
-        )::TEXT;
+        SELECT
+            FALSE,
+            v_estado_actual::TEXT,
+            v_email_guardado::TEXT,
+            'YA_PROCESANDO'::TEXT,
+            (
+                'El prestador ya se encontraba PROCESANDO, '
+                || 'posiblemente por otra ejecucion concurrente.'
+            )::TEXT;
 
-RETURN;
-END IF;
+        RETURN;
+    END IF;
 
     /*
      * Los estados reintentables son:
@@ -1876,45 +1838,26 @@ END IF;
      * ERROR
      * EMAIL_INVALIDO
      */
-UPDATE compras.requerimiento_cotizacion_prestador
-SET
-    estado_envio =
-        'PROCESANDO',
+    UPDATE compras.requerimiento_cotizacion_prestador
+       SET estado_envio = 'PROCESANDO',
+           intentos = intentos + 1,
+           email_destino = v_email_real,
+           fecha_ultimo_intento = clock_timestamp(),
+           fecha_envio = NULL,
+           ultimo_error = NULL,
+           modi_fecha = clock_timestamp(),
+           modi_usr = v_usuario
+     WHERE id_requerimiento = p_id_requerimiento
+       AND id_prestador = p_id_prestador;
 
-    intentos =
-        intentos + 1,
-
-    email_destino =
-        v_email_real,
-
-    fecha_ultimo_intento =
-        clock_timestamp(),
-
-    fecha_envio =
-        NULL,
-
-    ultimo_error =
-        NULL,
-
-    modi_fecha =
-        clock_timestamp(),
-
-    modi_usr =
-        v_usuario
-
-WHERE id_requerimiento =
-      p_id_requerimiento
-  AND id_prestador =
-      p_id_prestador;
-
-RETURN QUERY
-SELECT
-    TRUE,
-    'PROCESANDO'::TEXT,
-    v_email_real::TEXT,
-    'RESERVA_OTORGADA'::TEXT,
-    (
-        'La ejecucion obtuvo la reserva exclusiva '
+    RETURN QUERY
+    SELECT
+        TRUE,
+        'PROCESANDO'::TEXT,
+        v_email_real::TEXT,
+        'RESERVA_OTORGADA'::TEXT,
+        (
+            'La ejecucion obtuvo la reserva exclusiva '
             || 'y la fila quedo PROCESANDO.'
         )::TEXT;
 END;
