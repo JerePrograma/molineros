@@ -88,6 +88,11 @@ public final class ComprasPresupuestoPrestadorContractTest {
                 "sin proyeccion visual",
                 "PrestadorCotizacionConPresupuesto"
         );
+        contiene(
+                editUtil,
+                "import de lista conservado",
+                "import java.util.List;"
+        );
         noContiene(
                 editUtil,
                 "sin synchronized local",
