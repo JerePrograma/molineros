@@ -68,7 +68,7 @@ jobs:
           }
           trap report_failure ERR
 
-          EXPECTED_BASE=bee232a10eb8948a446d3054274b2cd787c71e6c
+          EXPECTED_BASE=7e0dddeb32776b62630c0e81564b37fb0aee87d3
           WORKFLOW=.github/workflows/one-off-compras-presupuestos-integridad.yml
           test "$(git branch --show-current)" = main
           test "$(git rev-parse HEAD^)" = "$EXPECTED_BASE"
@@ -87,12 +87,12 @@ jobs:
           cp /tmp/compras-payload/apply_compras_presupuestos.py /tmp/
           cp /tmp/compras-payload/compras_migration_baseline.sql /tmp/
           cp /tmp/compras-payload/compras_external_stubs.sql /tmp/
-          cat > /tmp/compras-payload.sha256 <<'PAYLOAD_SHA'
-          b5e250876bca938c134c64dd7784cd1982fbcdf6bad90f4b9918fc98fc4cd85  /tmp/apply_compras_presupuestos.py
-          50db45e0a52f0149979559facc4144041a375ac576d02f148c1fc32512563680  /tmp/compras_migration_baseline.sql
-          286dc3e82ef843222c5f242c269981707e894ee9db999f489fec87176aebe551  /tmp/compras_external_stubs.sql
-          PAYLOAD_SHA
-          sha256sum -c /tmp/compras-payload.sha256
+          test "$(sha256sum /tmp/apply_compras_presupuestos.py | cut -d' ' -f1)" = \
+            b5e250876bca938c134c64dd7784cd1982fbcdf6bad90f4b9918fc98fc4cd85
+          test "$(sha256sum /tmp/compras_migration_baseline.sql | cut -d' ' -f1)" = \
+            50db45e0a52f0149979559facc4144041a375ac576d02f148c1fc32512563680
+          test "$(sha256sum /tmp/compras_external_stubs.sql | cut -d' ' -f1)" = \
+            286dc3e82ef843222c5f242c269981707e894ee9db999f489fec87176aebe551
 
           python3 - <<'PY_PREFLIGHT_SQL'
           from pathlib import Path
@@ -107,6 +107,24 @@ jobs:
 
           python3 -m py_compile /tmp/apply_compras_presupuestos.py
           python3 /tmp/apply_compras_presupuestos.py
+
+          python3 - <<'PY_CLEAN_JSP'
+          from pathlib import Path
+          path = Path('ext-web/docroot/html/portlet/compras/requerimientos/requerimiento_adjuntos_search_documentos.jsp')
+          raw = path.read_bytes()
+          try:
+              text = raw.decode('utf-8')
+              encoding = 'utf-8'
+          except UnicodeDecodeError:
+              text = raw.decode('latin-1')
+              encoding = 'latin-1'
+          had_newline = text.endswith('\n')
+          cleaned = '\n'.join(line.rstrip(' \t') for line in text.splitlines())
+          if had_newline:
+              cleaned += '\n'
+          path.write_bytes(cleaned.encode(encoding))
+          PY_CLEAN_JSP
+
           git diff --check
 
           python3 - <<'PY_VALIDATE'
