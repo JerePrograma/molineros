@@ -26,6 +26,8 @@
 --   - persistencia de surge como cabecera del requerimiento.
 --   - PDF con afiliado_id_ospim, integrante y documento.
 --   - destinatario de cotizacion persistido por prestador.
+--   - un presupuesto activo por requerimiento y prestador.
+--   - estado individual COTIZADO mientras el presupuesto permanece activo.
 --   - borrado logico de detalles PENDIENTES.
 --   - guardado atomico de cotizacion y cierre a COTIZADO.
 --
@@ -33,10 +35,13 @@
 --   public.prestador
 --   trae_tipos_prestadores()
 --
--- Ejecutar con psql -v ON_ERROR_STOP=1.
+-- Ejecutar con psql -X -v ON_ERROR_STOP=1.
 -- Requiere que el esquema compras no exista al comenzar.
 -- Si la sesion esta abortada, ejecutar ROLLBACK antes de este archivo.
 -- =====================================================================
+
+\set ON_ERROR_STOP on
+\encoding LATIN1
 
 BEGIN;
 
@@ -512,7 +517,7 @@ INSERT INTO compras.sector_requerimiento (
 )
 VALUES
     (1, 'Farmacia', TRUE, TRUE, 'sistema'),
-    (2, 'Prestaciones M√©dicas', TRUE, TRUE, 'sistema'),
+    (2, 'Prestaciones MÈdicas', TRUE, TRUE, 'sistema'),
     (3, 'Monotributo', TRUE, TRUE, 'sistema'),
     (4, 'Sistemas', FALSE, TRUE, 'sistema'),
     (5, 'RRHH', FALSE, TRUE, 'sistema'),
@@ -742,7 +747,16 @@ END IF;
                                    AND rcp.id_prestador =
                                        d.id_prestador
                                    AND rcp.estado_envio =
-                                       'ENVIADO'
+                                       'COTIZADO'
+                           )
+                           OR NOT EXISTS (
+                                SELECT 1
+                                  FROM compras.requerimiento_presupuesto rp
+                                 WHERE rp.id_requerimiento =
+                                       NEW.id_requerimiento
+                                   AND rp.id_prestador =
+                                       d.id_prestador
+                                   AND rp.baja_fecha IS NULL
                            )
                        )
                 ) THEN
@@ -834,7 +848,7 @@ SELECT
     r.id_sector,
     translate(
             upper(btrim(sr.descripcion)),
-            '√Å√â√ç√ì√ö√ú√°√©√≠√≥√∫√º',
+            '¡…Õ”⁄‹·ÈÌÛ˙¸',
             'AEIOUUAEIOUU'
     )
 INTO
@@ -1093,7 +1107,7 @@ END IF;
                 FROM compras.requerimiento_cotizacion_prestador rcp
                 WHERE rcp.id_requerimiento = NEW.id_requerimiento
                   AND rcp.id_prestador = NEW.id_prestador
-                  AND rcp.estado_envio = 'ENVIADO'
+                  AND rcp.estado_envio IN ('ENVIADO', 'COTIZADO')
            ) THEN
 
             RAISE EXCEPTION
@@ -2192,7 +2206,7 @@ SELECT translate(
                                )
                        )
                ),
-               '√Å√â√ç√ì√ö√ú√°√©√≠√≥√∫√º',
+               '¡…Õ”⁄‹·ÈÌÛ˙¸',
                'AEIOUUAEIOUU'
        )
 INTO v_sector
@@ -2470,9 +2484,9 @@ RETURN v_id;
 END IF;
 
     /*
-     * Hist√≥rico MEDICAMENTO:
+     * HistÛrico MEDICAMENTO:
      *
-     * s√≥lo cambia Cantidad y Observaciones.
+     * sÛlo cambia Cantidad y Observaciones.
      * No se toca ID, troquel ni nombre.
      */
     IF v_tipo_item_actual = 'MEDICAMENTO' THEN
@@ -2819,7 +2833,7 @@ END IF;
               FROM compras.requerimiento_cotizacion_prestador rcp
              WHERE rcp.id_requerimiento = p_id_requerimiento
                AND rcp.id_prestador = p_id_prestador
-               AND rcp.estado_envio = 'ENVIADO'
+               AND rcp.estado_envio IN ('ENVIADO', 'COTIZADO')
         ) THEN
             RAISE EXCEPTION
                 'El prestador adjudicado no fue notificado correctamente para este requerimiento.';
@@ -2876,6 +2890,17 @@ END IF;
     ) THEN
         RAISE EXCEPTION
             'Debe existir un presupuesto activo del prestador adjudicado antes de cerrar la cotizacion.';
+END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+          FROM compras.requerimiento_cotizacion_prestador rcp
+         WHERE rcp.id_requerimiento = p_id_requerimiento
+           AND rcp.id_prestador = p_id_prestador
+           AND rcp.estado_envio = 'COTIZADO'
+    ) THEN
+        RAISE EXCEPTION
+            'El prestador adjudicado debe encontrarse COTIZADO antes de cerrar la cotizacion.';
 END IF;
 
     PERFORM compras.cambiar_estado_requerimiento(
@@ -3203,8 +3228,10 @@ FROM compras.requerimiento r
          JOIN compras.requerimiento_cotizacion_prestador rcp
               ON rcp.id_requerimiento =
                  r.id_requerimiento
-                  AND rcp.estado_envio =
-                      'ENVIADO'
+                   AND rcp.estado_envio IN (
+                       'ENVIADO',
+                       'COTIZADO'
+                   )
          JOIN public.prestador p
               ON p.id_prestador =
                  rcp.id_prestador
@@ -3589,6 +3616,7 @@ RETURNS BOOLEAN
 AS $func$
 DECLARE
     v_id_prestador INTEGER;
+    v_estado_requerimiento INTEGER;
     v_usuario VARCHAR(100);
 BEGIN
     IF p_id_requerimiento_presupuesto IS NULL
@@ -3600,12 +3628,25 @@ BEGIN
 
     v_usuario := COALESCE(NULLIF(btrim(p_usuario), ''), 'sistema');
 
+    SELECT r.estado
+      INTO v_estado_requerimiento
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento = p_id_requerimiento
+       AND r.baja_fecha IS NULL
+     FOR UPDATE;
+
+    IF NOT FOUND OR v_estado_requerimiento <> 2 THEN
+        RAISE EXCEPTION
+            'Los presupuestos solo pueden eliminarse en estado A COTIZAR.';
+    END IF;
+
     SELECT rp.id_prestador
       INTO v_id_prestador
       FROM compras.requerimiento_presupuesto rp
      WHERE rp.id_requerimiento_presupuesto = p_id_requerimiento_presupuesto
        AND rp.id_requerimiento = p_id_requerimiento
-       AND rp.baja_fecha IS NULL;
+       AND rp.baja_fecha IS NULL
+     FOR UPDATE;
 
     IF NOT FOUND THEN
         RETURN FALSE;
@@ -3647,6 +3688,11 @@ BEGIN
          WHERE id_requerimiento = p_id_requerimiento
            AND id_prestador = v_id_prestador
            AND estado_envio = 'COTIZADO';
+
+        IF NOT FOUND THEN
+            RAISE EXCEPTION
+                'No se pudo restaurar el estado ENVIADO del prestador.';
+        END IF;
     END IF;
 
     RETURN TRUE;
@@ -3662,6 +3708,7 @@ RETURNS BOOLEAN
 AS $func$
 DECLARE
     v_id_prestador INTEGER;
+    v_estado_requerimiento INTEGER;
 BEGIN
     IF p_id_requerimiento_presupuesto IS NULL
        OR p_id_requerimiento_presupuesto <= 0
@@ -3670,12 +3717,25 @@ BEGIN
         RETURN FALSE;
     END IF;
 
+    SELECT r.estado
+      INTO v_estado_requerimiento
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento = p_id_requerimiento
+       AND r.baja_fecha IS NULL
+     FOR UPDATE;
+
+    IF NOT FOUND OR v_estado_requerimiento <> 2 THEN
+        RAISE EXCEPTION
+            'Los presupuestos solo pueden reactivarse en estado A COTIZAR.';
+    END IF;
+
     SELECT rp.id_prestador
       INTO v_id_prestador
       FROM compras.requerimiento_presupuesto rp
      WHERE rp.id_requerimiento_presupuesto = p_id_requerimiento_presupuesto
        AND rp.id_requerimiento = p_id_requerimiento
-       AND rp.baja_fecha IS NOT NULL;
+       AND rp.baja_fecha IS NOT NULL
+     FOR UPDATE;
 
     IF NOT FOUND THEN
         RETURN FALSE;
@@ -4100,7 +4160,7 @@ VOLATILE;
  *
  * compras.listar_prestadores_cotizacion_requerimiento(integer)
  *
- * Esa funci√≥n ya era utilizada por el servicio anterior.
+ * Esa funciÛn ya era utilizada por el servicio anterior.
  */
 CREATE OR REPLACE FUNCTION
 compras.listar_prestadores_notificacion_cotizacion(
@@ -4136,7 +4196,7 @@ $function$;
 
 /*
  * ============================================================
- * 2. DIAGN√ìSTICO GENERAL
+ * 2. DIAGN”STICO GENERAL
  * ============================================================
  *
  * Diferencia:
@@ -4145,10 +4205,10 @@ $function$;
  *   solicitar_cotizacion = true y sin baja.
  *
  * - prestadores_compatibles_sector:
- *   habilitados cuyo tipo est√° asociado al sector.
+ *   habilitados cuyo tipo est· asociado al sector.
  *
  * - prestadores_bloqueados_estado_previo:
- *   compatibles que ya estaban ENVIADO o PROCESANDO antes
+ *   compatibles que ya estaban ENVIADO, COTIZADO o PROCESANDO antes
  *   de confeccionar la lista de candidatos.
  */
 CREATE OR REPLACE FUNCTION
@@ -4187,9 +4247,10 @@ SELECT
     COUNT(
             DISTINCT CASE
                          WHEN stp.id_tipo_prestador IS NOT NULL
-                             AND rcp.estado_envio IN (
-                                                      'ENVIADO',
-                                                      'PROCESANDO'
+                              AND rcp.estado_envio IN (
+                                                       'ENVIADO',
+                                                       'COTIZADO',
+                                                       'PROCESANDO'
                                  )
                              THEN p.id_prestador
         END
@@ -4225,13 +4286,13 @@ $function$;
 
 /*
  * ============================================================
- * 3. RESERVA AT√ìMICA
+ * 3. RESERVA AT”MICA
  * ============================================================
  *
  * Devuelve:
  *
  * reservado = true
- *   La fila qued√≥ PROCESANDO y esta ejecuci√≥n obtuvo la
+ *   La fila quedÛ PROCESANDO y esta ejecuciÛn obtuvo la
  *   reserva exclusiva.
  *
  * reservado = false
@@ -4239,7 +4300,7 @@ $function$;
  *   mediante motivo_codigo y motivo_descripcion.
  *
  * La fila se bloquea con FOR UPDATE para impedir que dos
- * ejecuciones env√≠en simult√°neamente al mismo prestador.
+ * ejecuciones envÌen simult·neamente al mismo prestador.
  */
 CREATE OR REPLACE FUNCTION
 compras.reservar_notificacion_cotizacion_prestador(
@@ -4349,10 +4410,10 @@ END IF;
 END IF;
 
     /*
-     * Se crea la fila si todav√≠a no existe.
+     * Se crea la fila si todavÌa no existe.
      *
-     * ON CONFLICT evita una excepci√≥n si dos transacciones
-     * intentan crearla simult√°neamente.
+     * ON CONFLICT evita una excepciÛn si dos transacciones
+     * intentan crearla simult·neamente.
      */
 INSERT INTO compras.requerimiento_cotizacion_prestador (
     id_requerimiento,
@@ -4379,7 +4440,7 @@ VALUES (
     DO NOTHING;
 
 /*
- * El bloqueo garantiza que s√≥lo una ejecuci√≥n pueda
+ * El bloqueo garantiza que sÛlo una ejecuciÛn pueda
  * analizar y modificar esta fila a la vez.
  */
 SELECT
@@ -4412,6 +4473,21 @@ SELECT
     'YA_ENVIADO'::TEXT,
     (
         'El prestador ya se encontraba ENVIADO. '
+            || 'No se realizo un reenvio.'
+        )::TEXT;
+
+RETURN;
+END IF;
+
+    IF v_estado_actual = 'COTIZADO' THEN
+        RETURN QUERY
+SELECT
+    FALSE,
+    v_estado_actual::TEXT,
+    v_email_guardado::TEXT,
+    'YA_COTIZADO'::TEXT,
+    (
+        'El prestador ya se encontraba COTIZADO. '
             || 'No se realizo un reenvio.'
         )::TEXT;
 
@@ -4486,10 +4562,10 @@ $function$;
 
 /*
  * ============================================================
- * 4. FINALIZACI√ìN AT√ìMICA
+ * 4. FINALIZACI”N AT”MICA
  * ============================================================
  *
- * S√≥lo permite finalizar una fila que contin√∫a PROCESANDO.
+ * SÛlo permite finalizar una fila que contin˙a PROCESANDO.
  *
  * Estados finales aceptados:
  *
@@ -4679,12 +4755,12 @@ $function$;
 
 /*
  * ============================================================
- * 5. VALIDACIONES POSTERIORES A LA INSTALACI√ìN
+ * 5. VALIDACIONES POSTERIORES A LA INSTALACI”N
  * ============================================================
  */
 
 /*
- * No ejecutar las pruebas de reserva/finalizaci√≥n sobre un
+ * No ejecutar las pruebas de reserva/finalizaciÛn sobre un
  * requerimiento productivo sin reemplazar los identificadores.
  *
  * Ejemplo:
