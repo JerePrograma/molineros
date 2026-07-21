@@ -58,7 +58,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     + "FROM compras.requerimiento r "
                     + "JOIN compras.requerimiento_cotizacion_prestador rcp "
                     + "  ON rcp.id_requerimiento = r.id_requerimiento "
-                    + " AND rcp.estado_envio = ? "
+                    + " AND rcp.estado_envio IN (?, ?) "
                     + "JOIN public.prestador p "
                     + "  ON p.id_prestador = rcp.id_prestador "
                     + "LEFT JOIN trae_tipos_prestadores() tp "
@@ -320,11 +320,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
             con = ConnectionHelper.getConnection();
             stmt = con.prepareStatement(SQL_LISTAR_PRESTADORES_ENVIADOS);
             stmt.setString(1, WebKeysCompras.ENVIO_ENVIADO);
-            stmt.setInt(2, idRequerimientoCompra);
-            stmt.setInt(3, WebKeysCompras.ESTADO_A_COTIZAR);
-            stmt.setInt(4, WebKeysCompras.ESTADO_COTIZADO);
+            stmt.setString(2, WebKeysCompras.ENVIO_COTIZADO);
+            stmt.setInt(3, idRequerimientoCompra);
+            stmt.setInt(4, WebKeysCompras.ESTADO_A_COTIZAR);
+            stmt.setInt(5, WebKeysCompras.ESTADO_COTIZADO);
             stmt.setInt(
-                    5,
+                    6,
                     WebKeysCompras.MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO + 1
             );
             rs = stmt.executeQuery();

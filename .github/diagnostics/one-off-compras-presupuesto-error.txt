@@ -1,4 +1,0 @@
-status=0
-.github/one-off/patch_compras.b64: OK
-/tmp/patch_compras.py: OK
-CONTRATO_COMPRAS_PRESUPUESTO_PRESTADOR_OK

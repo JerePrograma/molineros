@@ -125,6 +125,34 @@ boolean hayPrestadoresEnviadosPresupuestos =
         prestadoresEnviadosPresupuestos != null
         && !prestadoresEnviadosPresupuestos.isEmpty();
 
+List<PrestadorCotizacion> prestadoresDisponiblesPresupuestos =
+        new ArrayList<PrestadorCotizacion>();
+
+for (int i = 0;
+        prestadoresEnviadosPresupuestos != null
+        && i < prestadoresEnviadosPresupuestos.size();
+        i++) {
+
+    PrestadorCotizacion prestadorDisponible =
+            prestadoresEnviadosPresupuestos.get(i);
+
+    if (prestadorDisponible != null
+            && prestadorDisponible.getIdPrestador() > 0
+            && WebKeysCompras.ENVIO_ENVIADO.equals(
+                    prestadorDisponible.getEstadoEnvio()
+            )) {
+        prestadoresDisponiblesPresupuestos.add(prestadorDisponible);
+    }
+}
+
+boolean hayPrestadoresDisponiblesPresupuestos =
+        !prestadoresDisponiblesPresupuestos.isEmpty();
+
+int maxPresupuestosCargaActual = Math.min(
+        WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA,
+        prestadoresDisponiblesPresupuestos.size()
+);
+
 PortletURL uploadPresupuestosURL =
         renderResponse.createActionURL();
 
@@ -313,10 +341,25 @@ boolean msgPresupuestoBorrado =
 
         <c:if test="<%=
                 puedeEditarPresupuestos
+                && hayPrestadoresEnviadosPresupuestos
+                && !hayPrestadoresDisponiblesPresupuestos
                 && WebKeysCompras.isEmpty(
                         errorPrestadoresPresupuestos
                 )
-                && hayPrestadoresEnviadosPresupuestos
+        %>">
+            <div class="portlet-msg-info">
+                Todos los prestadores notificados ya tienen un presupuesto
+                cargado. Para reemplazar uno, primero debe eliminar el archivo
+                existente.
+            </div>
+        </c:if>
+
+        <c:if test="<%=
+                puedeEditarPresupuestos
+                && WebKeysCompras.isEmpty(
+                        errorPrestadoresPresupuestos
+                )
+                && hayPrestadoresDisponiblesPresupuestos
         %>">
 
             <table class="lfr-table"
@@ -351,11 +394,11 @@ boolean msgPresupuestoBorrado =
 
                 <%
                 for (int i = 0;
-                        i < prestadoresEnviadosPresupuestos.size();
+                        i < prestadoresDisponiblesPresupuestos.size();
                         i++) {
 
                     PrestadorCotizacion prestadorPresupuesto =
-                            prestadoresEnviadosPresupuestos.get(i);
+                            prestadoresDisponiblesPresupuestos.get(i);
 
                     if (prestadorPresupuesto == null
                             || prestadorPresupuesto
@@ -486,7 +529,7 @@ boolean msgPresupuestoBorrado =
                 botonSubir.show();
 
                 if (rows.length
-                        < <%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>) {
+                        < <%= maxPresupuestosCargaActual %>) {
 
                     botonAgregar.show();
                 } else {
@@ -521,11 +564,11 @@ boolean msgPresupuestoBorrado =
                 ).length;
 
         if (cantidad
-                >= <%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>) {
+                >= <%= maxPresupuestosCargaActual %>) {
 
             alert(
                     'Se pueden cargar hasta '
-                            + '<%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>'
+                            + '<%= maxPresupuestosCargaActual %>'
                             + ' presupuestos por operación.'
             );
 
@@ -701,7 +744,7 @@ boolean msgPresupuestoBorrado =
 
         if (rows.length <= 0
                 || rows.length
-                        > <%= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA %>) {
+                        > <%= maxPresupuestosCargaActual %>) {
 
             alert(
                     'La cantidad de presupuestos no es válida.'
@@ -712,6 +755,8 @@ boolean msgPresupuestoBorrado =
 
         var valido =
                 true;
+        var prestadoresSeleccionados =
+                {};
 
         rows.each(function(index) {
             var row =
@@ -741,6 +786,19 @@ boolean msgPresupuestoBorrado =
 
                 return false;
             }
+
+            if (prestadoresSeleccionados[prestador]) {
+                alert(
+                        'El prestador del presupuesto '
+                                + (index + 1)
+                                + ' está repetido. Sólo puede cargarse '
+                                + 'un archivo por prestador.'
+                );
+                valido = false;
+                return false;
+            }
+
+            prestadoresSeleccionados[prestador] = true;
 
             if (archivo.length == 0
                     || archivo.val() == '') {
@@ -833,7 +891,7 @@ boolean msgPresupuestoBorrado =
 
     jQuery(function() {
         <% if (puedeEditarPresupuestos
-                && hayPrestadoresEnviadosPresupuestos
+                && hayPrestadoresDisponiblesPresupuestos
                 && WebKeysCompras.isEmpty(
                         errorPrestadoresPresupuestos
                 )) { %>

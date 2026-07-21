@@ -536,6 +536,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         List<PresupuestoValidado> validados =
                 new ArrayList<PresupuestoValidado>();
+        Set<Integer> prestadoresSeleccionados =
+                new HashSet<Integer>();
 
         for (int i = 0; i < cantidad; i++) {
             PresupuestoEntrada entrada = entradas.get(i);
@@ -606,6 +608,17 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         "El prestador del presupuesto " + (i + 1)
                                 + " no fue notificado correctamente "
                                 + "para este requerimiento."
+                );
+            }
+
+            Integer idPrestadorSeleccionado =
+                    Integer.valueOf(entrada.idPrestador);
+
+            if (!prestadoresSeleccionados.add(idPrestadorSeleccionado)) {
+                throw new Exception(
+                        "El prestador del presupuesto " + (i + 1)
+                                + " está repetido. Sólo puede cargarse "
+                                + "un archivo por prestador."
                 );
             }
 

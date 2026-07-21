@@ -2,10 +2,7 @@ package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.requerimientos.beans.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class BusquedaRequerimientoCompraServiceUtil {
 
@@ -87,75 +84,9 @@ public class BusquedaRequerimientoCompraServiceUtil {
     public static List<PrestadorCotizacion> listarPrestadoresEnviados(
             int idRequerimientoCompra) throws Exception {
 
-        List<PrestadorCotizacion> prestadores =
-                getInstance().listarPrestadoresEnviados(
-                        idRequerimientoCompra
-                );
-
-        if (prestadores == null || prestadores.isEmpty()) {
-            return prestadores;
-        }
-
-        List<RequerimientoCompraPresupuesto> presupuestos =
-                getInstance().listarPresupuestos(
-                        idRequerimientoCompra
-                );
-
-        if (presupuestos == null || presupuestos.isEmpty()) {
-            return prestadores;
-        }
-
-        Set<Integer> idsPrestadoresConPresupuesto =
-                new HashSet<Integer>();
-
-        for (int i = 0; i < presupuestos.size(); i++) {
-            RequerimientoCompraPresupuesto presupuesto =
-                    presupuestos.get(i);
-
-            if (presupuesto != null
-                    && presupuesto.isActivo()
-                    && presupuesto.getIdPrestador() != null
-                    && presupuesto.getIdPrestador().intValue() > 0) {
-
-                idsPrestadoresConPresupuesto.add(
-                        presupuesto.getIdPrestador()
-                );
-            }
-        }
-
-        if (idsPrestadoresConPresupuesto.isEmpty()) {
-            return prestadores;
-        }
-
-        List<PrestadorCotizacion> resultado =
-                new ArrayList<PrestadorCotizacion>(
-                        prestadores.size()
-                );
-
-        for (int i = 0; i < prestadores.size(); i++) {
-            PrestadorCotizacion prestador =
-                    prestadores.get(i);
-
-            if (prestador != null
-                    && idsPrestadoresConPresupuesto.contains(
-                            Integer.valueOf(
-                                    prestador.getIdPrestador()
-                            )
-                    )) {
-
-                resultado.add(
-                        new PrestadorCotizacionConPresupuesto(
-                                prestador
-                        )
-                );
-            } else {
-                resultado.add(
-                        prestador
-                );
-            }
-        }
-
-        return resultado;
+        return getInstance().listarPrestadoresEnviados(
+                idRequerimientoCompra
+        );
     }
 
     public static boolean hayPrestadoresPendientesNotificacion(

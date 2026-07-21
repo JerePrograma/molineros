@@ -2,7 +2,6 @@ package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.requerimientos.beans.*;
 
-import java.util.List;
 
 public class EditarRequerimientoCompraServiceUtil {
 
@@ -79,67 +78,15 @@ public class EditarRequerimientoCompraServiceUtil {
     private EditarRequerimientoCompraServiceUtil() {
     }
 
-    public static synchronized int registrarPresupuesto(
+    public static int registrarPresupuesto(
             RequerimientoCompraPresupuesto presupuesto,
             String usuario)
             throws Exception {
 
-        validarPresupuestoUnicoPorPrestador(
-                presupuesto
+        return getInstance().registrarPresupuesto(
+                presupuesto,
+                usuario
         );
-
-        return getInstance()
-                .registrarPresupuesto(
-                        presupuesto,
-                        usuario
-                );
-    }
-
-    private static void validarPresupuestoUnicoPorPrestador(
-            RequerimientoCompraPresupuesto presupuesto)
-            throws Exception {
-
-        if (presupuesto == null
-                || presupuesto.getIdRequerimiento() == null
-                || presupuesto.getIdRequerimiento().intValue() <= 0
-                || presupuesto.getIdPrestador() == null
-                || presupuesto.getIdPrestador().intValue() <= 0) {
-
-            return;
-        }
-
-        int idRequerimiento =
-                presupuesto.getIdRequerimiento().intValue();
-
-        int idPrestador =
-                presupuesto.getIdPrestador().intValue();
-
-        List<RequerimientoCompraPresupuesto> existentes =
-                BusquedaRequerimientoCompraServiceUtil
-                        .listarPresupuestos(
-                                idRequerimiento
-                        );
-
-        for (int i = 0;
-                existentes != null && i < existentes.size();
-                i++) {
-
-            RequerimientoCompraPresupuesto existente =
-                    existentes.get(i);
-
-            if (existente != null
-                    && existente.isActivo()
-                    && existente.getIdPrestador() != null
-                    && existente.getIdPrestador().intValue()
-                    == idPrestador) {
-
-                throw new Exception(
-                        "El prestador ya tiene un presupuesto cargado "
-                                + "para este requerimiento. Debe eliminarlo "
-                                + "antes de cargar otro archivo."
-                );
-            }
-        }
     }
 
     public static boolean darDeBajaPresupuesto(
