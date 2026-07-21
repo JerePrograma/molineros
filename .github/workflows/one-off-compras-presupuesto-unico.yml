@@ -14,7 +14,6 @@ concurrency:
 
 jobs:
   apply:
-    if: github.event.issue.title == '[automation] aplicar presupuesto único por prestador'
     runs-on: ubuntu-latest
 
     steps:
