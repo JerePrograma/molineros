@@ -55,13 +55,13 @@ jobs:
           PAYLOAD_ISSUE=37
           gh api --paginate \
             "repos/${GITHUB_REPOSITORY}/issues/${PAYLOAD_ISSUE}/comments?per_page=100" \
-            --jq '.[] | select(.body | startswith("RUNNER-00")) | (.body | split("\n")[1])' \
-            > /tmp/compras-runner.b64
-          test "$(wc -l < /tmp/compras-runner.b64 | tr -d ' ')" = "1"
-          tr -d '\n\r' < /tmp/compras-runner.b64 \
+            --jq '.[] | select(.body | startswith("RUNNER-V2-00\n")) | ((.body | split("\n")[1] | sub("^sha256:"; "")) + "\t" + (.body | split("\n")[2]))' \
+            > /tmp/compras-runner.tsv
+          test "$(wc -l < /tmp/compras-runner.tsv | tr -d ' ')" = "1"
+          IFS=$'\t' read -r EXPECTED_HASH RUNNER_B64 < /tmp/compras-runner.tsv
+          printf '%s' "$RUNNER_B64" \
             | base64 -d \
             | gzip -d > /tmp/compras-runner.sh
-          test "$(sha256sum /tmp/compras-runner.sh | cut -d' ' -f1)" = \
-            074f302aea801b66afcb84e16ffa25f3b46c768de53c2c33d7dd21543c8c19e6
+          test "$(sha256sum /tmp/compras-runner.sh | cut -d' ' -f1)" = "$EXPECTED_HASH"
           chmod 700 /tmp/compras-runner.sh
           /tmp/compras-runner.sh
