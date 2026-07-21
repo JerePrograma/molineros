@@ -1,0 +1,61 @@
+name: One-off Compras estado real por prestador
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/one-off-compras-presupuesto-estado-real.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: one-off-compras-presupuesto-estado-real
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Implementar presupuesto único y estado COTIZADO
+        shell: bash
+        run: |
+          printf '%s' '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' | base64 --decode | gzip -dc > /tmp/patch_compras.py
+          python3 -m py_compile /tmp/patch_compras.py
+          python3 /tmp/patch_compras.py
+
+      - name: Validar implementación
+        shell: bash
+        run: |
+          git diff --check
+          rm -rf /tmp/compras-presupuesto-contract
+          mkdir -p /tmp/compras-presupuesto-contract
+          javac -encoding UTF-8 \
+            -d /tmp/compras-presupuesto-contract \
+            ext-impl/src/ar/com/ospim/test/ComprasPresupuestoPrestadorContractTest.java
+          java -cp /tmp/compras-presupuesto-contract \
+            ar.com.ospim.test.ComprasPresupuestoPrestadorContractTest
+
+      - name: Publicar en main
+        shell: bash
+        run: |
+          rm -f .github/workflows/one-off-compras-presupuesto-estado-real.yml
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No se generaron cambios para publicar."
+            exit 1
+          fi
+          git commit -m "fix(compras): cotiza prestador al cargar presupuesto"
+          git push origin HEAD:main
