@@ -1,4 +1,5 @@
 \set ON_ERROR_STOP on
+\encoding LATIN1
 
 -- Requiere registros canonicos activos. Consultas orientativas para QA:
 -- SELECT * FROM buscar_medicamentos(0, 0, NULL, NULL, NULL, NULL)
@@ -10,41 +11,9 @@
 -- psql -X -v ON_ERROR_STOP=1 -v med_id=... -v med_troquel=... \
 --   -v med_nombre='...' -v nom_id=... -v nom_tipo=... \
 --   -v nom_codigo='...' -v nom_descripcion='...' -f compras_smoke_test.sql
-
-\if :{?med_id}
-\else
-\echo 'Falta -v med_id=<id_medicamento activo>'
-\quit 3
-\endif
-\if :{?med_troquel}
-\else
-\set med_troquel NULL
-\endif
-\if :{?med_nombre}
-\else
-\echo 'Falta -v med_nombre=<nombre y presentacion canonicos>'
-\quit 3
-\endif
-\if :{?nom_id}
-\else
-\echo 'Falta -v nom_id=<id_prestacion activo>'
-\quit 3
-\endif
-\if :{?nom_tipo}
-\else
-\echo 'Falta -v nom_tipo=<id_tipo_nomenclador canonico>'
-\quit 3
-\endif
-\if :{?nom_codigo}
-\else
-\echo 'Falta -v nom_codigo=<codigo canonico>'
-\quit 3
-\endif
-\if :{?nom_descripcion}
-\else
-\echo 'Falta -v nom_descripcion=<descripcion canonica>'
-\quit 3
-\endif
+-- Todos los parametros son obligatorios para conservar compatibilidad con
+-- psql 9.6, que no dispone de los metacomandos condicionales \if/\endif.
+-- Informar -v med_troquel=NULL cuando el medicamento no tenga troquel.
 
 BEGIN;
 
@@ -120,7 +89,7 @@ WITH creado AS (
     FROM compras.sector_requerimiento
     WHERE translate(
         upper(descripcion),
-        '√Å√â√ç√ì√ö√ú√°√©√≠√≥√∫√º',
+        '¡…Õ”⁄‹·ÈÌÛ˙¸',
         'AEIOUUAEIOUU'
     ) = 'PRESTACIONES MEDICAS'
     RETURNING id_requerimiento
@@ -415,7 +384,6 @@ BEGIN
         FROM pg_proc p
         JOIN pg_namespace n ON n.oid = p.pronamespace
         WHERE n.nspname = 'compras'
-          AND p.prokind = 'f'
           AND (
               pg_get_functiondef(p.oid) ILIKE '%id_articulo%'
               OR pg_get_functiondef(p.oid) ILIKE '%compras.articulo%'

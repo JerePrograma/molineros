@@ -4,6 +4,7 @@ import ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraActio
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
@@ -14,29 +15,25 @@ import javax.portlet.ActionRequest;
 public class EditarRequerimientoCompraActionTest {
 
     public static void main(String[] args) throws Exception {
-        assertSurgeAusentePersisteFalse();
-        assertSurgeTruePersisteTrue();
-        assertSurgeOnPersisteTrue();
+        assertSurgeAusenteEsRechazado();
+        assertSurgeInvalidoEsRechazado("true");
+        assertSurgeInvalidoEsRechazado("on");
+        assertSurgeInvalidoEsRechazado("false");
         assertSurgeUnoPersisteTrue();
-        assertSurgeFalseExplicitoPersisteFalse();
+        assertSurgeCeroPersisteFalse();
     }
 
-    private static void assertSurgeAusentePersisteFalse()
+    private static void assertSurgeAusenteEsRechazado()
             throws Exception {
 
-        RequerimientoCompra requerimiento =
-                requerimientoDesdeRequest(
-                        parametrosBase()
-                );
-
-        assertBoolean(
+        assertSurgeInvalido(
                 "surge ausente",
-                false,
-                requerimiento.isSurge()
+                parametrosBase()
         );
     }
 
-    private static void assertSurgeTruePersisteTrue()
+    private static void assertSurgeInvalidoEsRechazado(
+            String valor)
             throws Exception {
 
         Map<String, String> params =
@@ -44,42 +41,35 @@ public class EditarRequerimientoCompraActionTest {
 
         params.put(
                 "surge",
-                "true"
+                valor
         );
 
-        RequerimientoCompra requerimiento =
-                requerimientoDesdeRequest(
-                        params
-                );
-
-        assertBoolean(
-                "surge true",
-                true,
-                requerimiento.isSurge()
+        assertSurgeInvalido(
+                "surge invalido " + valor,
+                params
         );
     }
 
-    private static void assertSurgeOnPersisteTrue()
+    private static void assertSurgeInvalido(
+            String descripcion,
+            Map<String, String> params)
             throws Exception {
 
-        Map<String, String> params =
-                parametrosBase();
+        try {
+            requerimientoDesdeRequest(params);
+            throw new AssertionError(
+                    descripcion + ": se esperaba rechazo"
+            );
+        } catch (InvocationTargetException e) {
+            Throwable causa = e.getCause();
 
-        params.put(
-                "surge",
-                "on"
-        );
+            if (causa == null
+                    || causa.getMessage() == null
+                    || causa.getMessage().indexOf("Surge") < 0) {
 
-        RequerimientoCompra requerimiento =
-                requerimientoDesdeRequest(
-                        params
-                );
-
-        assertBoolean(
-                "surge on",
-                true,
-                requerimiento.isSurge()
-        );
+                throw e;
+            }
+        }
     }
 
     private static void assertSurgeUnoPersisteTrue()
@@ -105,7 +95,7 @@ public class EditarRequerimientoCompraActionTest {
         );
     }
 
-    private static void assertSurgeFalseExplicitoPersisteFalse()
+    private static void assertSurgeCeroPersisteFalse()
             throws Exception {
 
         Map<String, String> params =
@@ -113,7 +103,7 @@ public class EditarRequerimientoCompraActionTest {
 
         params.put(
                 "surge",
-                "false"
+                "0"
         );
 
         RequerimientoCompra requerimiento =
@@ -122,7 +112,7 @@ public class EditarRequerimientoCompraActionTest {
                 );
 
         assertBoolean(
-                "surge false",
+                "surge 0",
                 false,
                 requerimiento.isSurge()
         );

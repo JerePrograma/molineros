@@ -47,6 +47,12 @@ public class UploadPresupuestosComprasActionTest {
                             ".pdf"
                     );
 
+            File archivoVacio =
+                    File.createTempFile(
+                            "presupuesto-vacio",
+                            ".pdf"
+                    );
+
             archivos.add(
                     archivoUno
             );
@@ -59,6 +65,10 @@ public class UploadPresupuestosComprasActionTest {
                     archivoTres
             );
 
+            archivos.add(
+                    archivoVacio
+            );
+
             assertAcceso();
 
             assertColeccionValida(
@@ -67,8 +77,18 @@ public class UploadPresupuestosComprasActionTest {
                     archivoTres
             );
 
+            assertPrestadorRepetidoRechazado(
+                    archivoUno,
+                    archivoDos
+            );
+
             assertPrestadorInvalido(
                     archivoUno
+            );
+
+            assertArchivoInvalido(
+                    archivoUno,
+                    archivoVacio
             );
 
             assertFilaSinArchivo(
@@ -267,7 +287,7 @@ public class UploadPresupuestosComprasActionTest {
                         2,
                         archivoTres,
                         "tres.pdf",
-                        20,
+                        22,
                         "TERCER LABEL"
                 )
         );
@@ -281,7 +301,7 @@ public class UploadPresupuestosComprasActionTest {
                 );
 
         assertInt(
-                "colecci贸n de tres archivos",
+                "colecci髇 de tres archivos",
                 3,
                 resultados.size()
         );
@@ -303,15 +323,15 @@ public class UploadPresupuestosComprasActionTest {
         );
 
         assertInt(
-                "prestador repetido permitido",
-                20,
+                "tercer prestador",
+                22,
                 resultados.get(
                         2
                 ).idPrestador
         );
 
         assertString(
-                "metadata can贸nica",
+                "metadata can髇ica",
                 "PRESTADOR CANONICO - 20-12345678-9",
                 resultados.get(
                         0
@@ -345,12 +365,60 @@ public class UploadPresupuestosComprasActionTest {
         );
 
         assertTrue(
-                "t铆tulo conserva nombre original",
+                "t韙ulo conserva nombre original",
                 resultados.get(
                         0
                 ).titulo.startsWith(
                         "PRESUPUESTO-COMPRA-25-uno.pdf_"
                 )
+        );
+    }
+
+    private static void assertPrestadorRepetidoRechazado(
+            final File archivoUno,
+            File archivoDos)
+            throws Exception {
+
+        final AccionPrueba accion =
+                new AccionPrueba();
+
+        final List<EntradaPrueba> entradas =
+                new ArrayList<EntradaPrueba>();
+
+        entradas.add(
+                new EntradaPrueba(
+                        0,
+                        archivoUno,
+                        "uno.pdf",
+                        20,
+                        ""
+                )
+        );
+
+        entradas.add(
+                new EntradaPrueba(
+                        1,
+                        archivoDos,
+                        "dos.doc",
+                        20,
+                        ""
+                )
+        );
+
+        assertException(
+                "prestador repetido",
+                new Ejecucion() {
+                    public void ejecutar()
+                            throws Exception {
+
+                        accion.validar(
+                                25,
+                                2,
+                                entradas,
+                                prestadoresEnviados()
+                        );
+                    }
+                }
         );
     }
 
@@ -381,7 +449,7 @@ public class UploadPresupuestosComprasActionTest {
         );
 
         assertException(
-                "prestador con env铆o fallido",
+                "prestador con env韔 fallido",
                 new Ejecucion() {
                     public void ejecutar()
                             throws Exception {
@@ -394,6 +462,107 @@ public class UploadPresupuestosComprasActionTest {
                                         40
                                 ),
                                 prestadoresConEnvioFallido()
+                        );
+                    }
+                }
+        );
+
+        assertException(
+                "prestador ya cotizado",
+                new Ejecucion() {
+                    public void ejecutar()
+                            throws Exception {
+
+                        accion.validar(
+                                25,
+                                1,
+                                entradas(
+                                        archivo,
+                                        41
+                                ),
+                                prestadoresConEnvioCotizado()
+                        );
+                    }
+                }
+        );
+    }
+
+    private static void assertArchivoInvalido(
+            final File archivo,
+            final File archivoVacio)
+            throws Exception {
+
+        final AccionPrueba accion =
+                new AccionPrueba();
+
+        assertException(
+                "archivo vacio",
+                new Ejecucion() {
+                    public void ejecutar()
+                            throws Exception {
+
+                        accion.validar(
+                                25,
+                                1,
+                                entradas(
+                                        archivoVacio,
+                                        20
+                                ),
+                                prestadoresEnviados()
+                        );
+                    }
+                }
+        );
+
+        final List<EntradaPrueba> extensionInvalida =
+                entradas(
+                        archivo,
+                        20
+                );
+
+        extensionInvalida.set(
+                0,
+                new EntradaPrueba(
+                        0,
+                        archivo,
+                        "presupuesto.exe",
+                        20,
+                        ""
+                )
+        );
+
+        assertException(
+                "extension no permitida",
+                new Ejecucion() {
+                    public void ejecutar()
+                            throws Exception {
+
+                        accion.validar(
+                                25,
+                                1,
+                                extensionInvalida,
+                                prestadoresEnviados()
+                        );
+                    }
+                }
+        );
+
+        assertException(
+                "archivo demasiado grande",
+                new Ejecucion() {
+                    public void ejecutar()
+                            throws Exception {
+
+                        accion.validarConLimites(
+                                25,
+                                1,
+                                entradas(
+                                        archivo,
+                                        20
+                                ),
+                                prestadoresEnviados(),
+                                1L,
+                                EXTENSIONES
                         );
                     }
                 }
@@ -508,7 +677,7 @@ public class UploadPresupuestosComprasActionTest {
         );
 
         assertException(
-                "铆ndice manipulado",
+                "韓dice manipulado",
                 new Ejecucion() {
                     public void ejecutar()
                             throws Exception {
@@ -606,13 +775,13 @@ public class UploadPresupuestosComprasActionTest {
         );
 
         assertInt(
-                "primera asociaci贸n registrada",
+                "primera asociaci髇 registrada",
                 1,
                 accion.asociacionesRegistradas.size()
         );
 
         assertInt(
-                "asociaci贸n compensada",
+                "asociaci髇 compensada",
                 1,
                 accion.asociacionesBaja.size()
         );
@@ -634,7 +803,7 @@ public class UploadPresupuestosComprasActionTest {
         );
 
         assertInt(
-                "sin reactivaci贸n cuando la limpieza f铆sica funciona",
+                "sin reactivaci髇 cuando la limpieza f韘ica funciona",
                 0,
                 accion.asociacionesReactivadas.size()
         );
@@ -661,7 +830,7 @@ public class UploadPresupuestosComprasActionTest {
                 1;
 
         assertException(
-                "falla al registrar asociaci贸n",
+                "falla al registrar asociaci髇",
                 new Ejecucion() {
                     public void ejecutar()
                             throws Exception {
@@ -678,13 +847,13 @@ public class UploadPresupuestosComprasActionTest {
         );
 
         assertInt(
-                "sin asociaci贸n completada",
+                "sin asociaci髇 completada",
                 0,
                 accion.asociacionesRegistradas.size()
         );
 
         assertInt(
-                "documento hu茅rfano eliminado",
+                "documento hu閞fano eliminado",
                 1,
                 accion.eliminados.size()
         );
@@ -745,7 +914,7 @@ public class UploadPresupuestosComprasActionTest {
                 true;
 
         assertException(
-                "falla de eliminaci贸n durante compensaci贸n",
+                "falla de eliminaci髇 durante compensaci髇",
                 new Ejecucion() {
                     public void ejecutar()
                             throws Exception {
@@ -756,13 +925,13 @@ public class UploadPresupuestosComprasActionTest {
         );
 
         assertInt(
-                "una asociaci贸n dada de baja",
+                "una asociaci髇 dada de baja",
                 1,
                 accion.asociacionesBaja.size()
         );
 
         assertInt(
-                "asociaci贸n reactivada al conservarse el documento",
+                "asociaci髇 reactivada al conservarse el documento",
                 1,
                 accion.asociacionesReactivadas.size()
         );
@@ -774,7 +943,7 @@ public class UploadPresupuestosComprasActionTest {
         );
 
         assertInt(
-                "la misma asociaci贸n fue reactivada",
+                "la misma asociaci髇 fue reactivada",
                 accion.asociacionesBaja.get(
                         0
                 ).intValue(),
@@ -823,6 +992,14 @@ public class UploadPresupuestosComprasActionTest {
                 )
         );
 
+        prestadores.add(
+                prestador(
+                        22,
+                        "Tercer Prestador",
+                        "30-22222222-2"
+                )
+        );
+
         return prestadores;
     }
 
@@ -846,6 +1023,31 @@ public class UploadPresupuestosComprasActionTest {
 
         prestadores.add(
                 fallido
+        );
+
+        return prestadores;
+    }
+
+    private static List<PrestadorCotizacion>
+    prestadoresConEnvioCotizado() {
+
+        List<PrestadorCotizacion> prestadores =
+                prestadoresEnviados();
+
+        PrestadorCotizacion cotizado =
+                prestador(
+                        41,
+                        "Prestador Cotizado",
+                        "30-22222222-3"
+                );
+
+        cotizado.setEstadoEnvio(
+                WebKeysCompras
+                        .ENVIO_COTIZADO
+        );
+
+        prestadores.add(
+                cotizado
         );
 
         return prestadores;
@@ -932,7 +1134,7 @@ public class UploadPresupuestosComprasActionTest {
                         2,
                         archivoTres,
                         "tres.pdf",
-                        20,
+                        22,
                         ""
                 )
         );
@@ -1000,7 +1202,7 @@ public class UploadPresupuestosComprasActionTest {
 
             throw new AssertionError(
                     descripcion
-                            + ": expresi贸n="
+                            + ": expresi髇="
                             + expresion
                             + ", actual="
                             + actual
@@ -1195,6 +1397,25 @@ public class UploadPresupuestosComprasActionTest {
                 List<PrestadorCotizacion> prestadores)
                 throws Exception {
 
+            return validarConLimites(
+                    idRequerimiento,
+                    cantidad,
+                    entradas,
+                    prestadores,
+                    5120000L,
+                    EXTENSIONES
+            );
+        }
+
+        public List<ResultadoPrueba> validarConLimites(
+                int idRequerimiento,
+                int cantidad,
+                List<EntradaPrueba> entradas,
+                List<PrestadorCotizacion> prestadores,
+                long maximoTamanoArchivo,
+                String[] extensionesPermitidas)
+                throws Exception {
+
             List<PresupuestoEntrada> entradasAction =
                     new ArrayList<PresupuestoEntrada>();
 
@@ -1229,8 +1450,8 @@ public class UploadPresupuestosComprasActionTest {
                             cantidad,
                             entradasAction,
                             prestadores,
-                            5120000L,
-                            EXTENSIONES
+                            maximoTamanoArchivo,
+                            extensionesPermitidas
                     );
 
             List<ResultadoPrueba> resultados =
@@ -1326,7 +1547,7 @@ public class UploadPresupuestosComprasActionTest {
                             == fallarEnRegistro) {
 
                 throw new Exception(
-                        "Falla simulada al registrar la asociaci贸n SQL."
+                        "Falla simulada al registrar la asociaci髇 SQL."
                 );
             }
 
