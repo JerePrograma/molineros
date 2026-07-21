@@ -2,6 +2,7 @@ package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.requerimientos.beans.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -122,24 +123,39 @@ public class BusquedaRequerimientoCompraServiceUtil {
             }
         }
 
+        if (idsPrestadoresConPresupuesto.isEmpty()) {
+            return prestadores;
+        }
+
+        List<PrestadorCotizacion> resultado =
+                new ArrayList<PrestadorCotizacion>(
+                        prestadores.size()
+                );
+
         for (int i = 0; i < prestadores.size(); i++) {
             PrestadorCotizacion prestador =
                     prestadores.get(i);
 
-            if (prestador == null) {
-                continue;
-            }
-
-            prestador.setPresupuestoCargado(
-                    idsPrestadoresConPresupuesto.contains(
+            if (prestador != null
+                    && idsPrestadoresConPresupuesto.contains(
                             Integer.valueOf(
-                                    prestador.getIdPrestadorPersistido()
+                                    prestador.getIdPrestador()
                             )
-                    )
-            );
+                    )) {
+
+                resultado.add(
+                        new PrestadorCotizacionConPresupuesto(
+                                prestador
+                        )
+                );
+            } else {
+                resultado.add(
+                        prestador
+                );
+            }
         }
 
-        return prestadores;
+        return resultado;
     }
 
     public static boolean hayPrestadoresPendientesNotificacion(
