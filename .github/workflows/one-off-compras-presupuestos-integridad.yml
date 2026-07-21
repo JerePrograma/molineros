@@ -68,7 +68,7 @@ jobs:
           }
           trap report_failure ERR
 
-          EXPECTED_BASE=e17dcc5a0f90f77af498d850bf12d21438438d63
+          EXPECTED_BASE=bee232a10eb8948a446d3054274b2cd787c71e6c
           WORKFLOW=.github/workflows/one-off-compras-presupuestos-integridad.yml
           test "$(git branch --show-current)" = main
           test "$(git rev-parse HEAD^)" = "$EXPECTED_BASE"
@@ -93,6 +93,17 @@ jobs:
           286dc3e82ef843222c5f242c269981707e894ee9db999f489fec87176aebe551  /tmp/compras_external_stubs.sql
           PAYLOAD_SHA
           sha256sum -c /tmp/compras-payload.sha256
+
+          python3 - <<'PY_PREFLIGHT_SQL'
+          from pathlib import Path
+          path = Path('ext-impl/src/ar/com/ospim/compras/sql/20260721_presupuesto_activo_prestador.sql')
+          text = path.read_bytes().decode('utf-8', 'strict')
+          old = r'  - Este archivo es SQL puro: no contiene metacomandos \set ni \encoding.'
+          new = '  - Este archivo es SQL puro: no contiene metacomandos de cliente.'
+          if text.count(old) != 1:
+              raise SystemExit('No se encontró una única mención documental de metacomandos psql.')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY_PREFLIGHT_SQL
 
           python3 -m py_compile /tmp/apply_compras_presupuestos.py
           python3 /tmp/apply_compras_presupuestos.py
