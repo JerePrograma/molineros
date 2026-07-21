@@ -8,6 +8,9 @@ on:
       - .github/workflows/one-off-compras-presupuesto-estado-real.yml
   schedule:
     - cron: '*/5 * * * *'
+  issues:
+    types:
+      - opened
 
 permissions:
   contents: write
@@ -18,7 +21,10 @@ concurrency:
 
 jobs:
   apply:
-    if: github.actor != 'github-actions[bot]'
+    if: >
+      github.actor != 'github-actions[bot]' &&
+      (github.event_name != 'issues' ||
+       github.event.issue.title == '[one-off] aplicar estado real por prestador')
     runs-on: ubuntu-latest
 
     steps:
