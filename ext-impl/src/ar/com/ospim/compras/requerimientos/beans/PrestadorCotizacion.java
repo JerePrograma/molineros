@@ -13,8 +13,15 @@ public class PrestadorCotizacion {
     private int idTipoPrestador;
     private String tipoPrestador;
     private String estadoEnvio;
+    private boolean presupuestoCargado;
 
     public int getIdPrestador() {
+        return presupuestoCargado
+                ? 0
+                : idPrestador;
+    }
+
+    public int getIdPrestadorPersistido() {
         return idPrestador;
     }
 
@@ -116,6 +123,10 @@ public class PrestadorCotizacion {
     }
 
     public String getEstadoEnvioVisible() {
+        if (presupuestoCargado) {
+            return "COTIZADO";
+        }
+
         return estadoEnvio != null
                 ? estadoEnvio
                 : "";
@@ -128,5 +139,16 @@ public class PrestadorCotizacion {
                 WebKeysCompras.trimToNull(
                         estadoEnvio
                 );
+    }
+
+    public boolean isPresupuestoCargado() {
+        return presupuestoCargado;
+    }
+
+    public void setPresupuestoCargado(
+            boolean presupuestoCargado) {
+
+        this.presupuestoCargado =
+                presupuestoCargado;
     }
 }
