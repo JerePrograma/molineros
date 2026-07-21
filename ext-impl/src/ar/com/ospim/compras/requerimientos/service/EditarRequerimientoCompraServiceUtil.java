@@ -2,6 +2,7 @@ package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.requerimientos.beans.*;
 
+import java.util.List;
 
 public class EditarRequerimientoCompraServiceUtil {
 
