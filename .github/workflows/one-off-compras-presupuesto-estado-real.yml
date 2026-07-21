@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - .github/workflows/one-off-compras-presupuesto-estado-real.yml
+  schedule:
+    - cron: '*/5 * * * *'
 
 permissions:
   contents: write
