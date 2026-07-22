@@ -43,7 +43,7 @@ if (puedeCotizarDetalle
         }
     } catch (Exception e) {
         errorPresupuestosPrestadoresDetalle =
-                "No se pudo verificar qué prestadores tienen un archivo "
+                "No se pudo verificar qu\u00e9 prestadores tienen un archivo "
                         + "de presupuesto cargado.";
     }
 }
@@ -144,13 +144,13 @@ if (puedeCotizarDetalle
 <% if (prestadoresAdjudicadosMixtosDetalle) { %>
     <div class="portlet-msg-error">
         El requerimiento contiene prestadores adjudicados diferentes.
-        Seleccione un único prestador antes de guardar la cotización.
+        Seleccione un &uacute;nico prestador antes de guardar la cotizaci&oacute;n.
     </div>
 <% } %>
 
 <% if (puedeVerCotizacionDetalle) { %>
     <fieldset class="block-labels">
-        <legend>Adjudicación</legend>
+        <legend>Adjudicaci&oacute;n</legend>
 
         <table class="lfr-table">
             <tr>
@@ -237,8 +237,8 @@ if (puedeCotizarDetalle
 
     <tr class="portlet-section-header results-header">
         <th>ID</th>
-        <th class="compras-detalle-columna-codigo">Código presentado</th>
-        <th class="compras-detalle-columna-codigo">Descripción</th>
+        <th class="compras-detalle-columna-codigo">C&oacute;digo presentado</th>
+        <th class="compras-detalle-columna-codigo">Descripci&oacute;n</th>
         <th>Cantidad</th>
         <th class="compras-detalle-columna-observacion">Observaciones</th>
 
