@@ -10,9 +10,7 @@
             <td>
                 <strong><%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %></strong>
             </td>
-        </tr>
 
-        <tr>
             <td><label for="<portlet:namespace />sector_id">Sector:</label></td>
             <td>
                 <% if (puedeEditarEstructuraPantalla) { %>
@@ -75,13 +73,75 @@
                     </div>
                 <% } %>
             </td>
+        </tr>
+    </table>
 
-            <td>
+    <table class="lfr-table compras-cargos-requerimiento">
+        <tr>
+            <td style="padding: 0; vertical-align: middle;">
+                <div id="<portlet:namespace />fila_cargos_compra"
+                     style="<%= puedeEditarEstructuraPantalla && sectorSinAfiliadoForzaCargoOspim ? "display:none;" : "" %>">
+                    <table class="lfr-table">
+                        <tr>
+                            <td><label>Cargo OSPIM %:</label></td>
+                            <td>
+                                <% if (puedeEditarEstructuraPantalla) { %>
+                                    <input type="text"
+                                           id="<portlet:namespace />cargo_ospim"
+                                           value="<%= HtmlUtil.escape(cargoOspimVisible) %>"
+                                           size="5"
+                                           maxlength="3"
+                                           onkeyup="<portlet:namespace />sincronizarFormularioCompra();"
+                                           onchange="<portlet:namespace />sincronizarFormularioCompra();"
+                                           onblur="<portlet:namespace />sincronizarFormularioCompra();" />
+                                <% } else { %>
+                                    <div class="compras-campo-solo-lectura"><%= HtmlUtil.escape(cargoOspimVisible) %></div>
+                                <% } %>
+                            </td>
+
+                            <td><label>Cargo tercerizadora %:</label></td>
+                            <td>
+                                <% if (puedeEditarEstructuraPantalla) { %>
+                                    <input type="text"
+                                           id="<portlet:namespace />cargo_tercerizadora"
+                                           value="<%= HtmlUtil.escape(cargoTercerizadoraVisible) %>"
+                                           size="5"
+                                           maxlength="3"
+                                           onchange="<portlet:namespace />sincronizarFormularioCompra();"
+                                           onblur="<portlet:namespace />sincronizarFormularioCompra();" />
+                                <% } else { %>
+                                    <div class="compras-campo-solo-lectura"><%= HtmlUtil.escape(cargoTercerizadoraVisible) %></div>
+                                <% } %>
+                            </td>
+
+                            <td><label>Recupero:</label></td>
+                            <td>
+                                <% if (puedeEditarEstructuraPantalla) { %>
+                                    <input type="checkbox"
+                                           id="<portlet:namespace />recupero"
+                                           value="true"
+                                           <%= recuperoChecked %>
+                                           onclick="return false;"
+                                           onkeydown="return false;"
+                                           tabindex="-1"
+                                           aria-disabled="true" />
+                                <% } else { %>
+                                    <div class="compras-campo-solo-lectura">
+                                        <%= recuperoPorCargoTercerizadoraActual ? "Sí" : "No" %>
+                                    </div>
+                                <% } %>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </td>
+
+            <td style="vertical-align: middle;">
                 <label for="<portlet:namespace />surge">
                     Surge:
                 </label>
             </td>
-            <td>
+            <td style="vertical-align: middle;">
                 <% if (puedeEditarEstructuraPantalla) { %>
                     <select id="<portlet:namespace />surge"
                             required="required"
@@ -113,60 +173,6 @@
                         <%= HtmlUtil.escape(
                                 req.getSurgeDescripcion()
                         ) %>
-                    </div>
-                <% } %>
-            </td>
-        </tr>
-    </table>
-
-    <table class="lfr-table compras-cargos-requerimiento">
-        <tr id="<portlet:namespace />fila_cargos_compra"
-            style="<%= puedeEditarEstructuraPantalla && sectorSinAfiliadoForzaCargoOspim ? "display:none;" : "" %>">
-            <td><label>Cargo OSPIM %:</label></td>
-            <td>
-                <% if (puedeEditarEstructuraPantalla) { %>
-                    <input type="text"
-                           id="<portlet:namespace />cargo_ospim"
-                           value="<%= HtmlUtil.escape(cargoOspimVisible) %>"
-                           size="5"
-                           maxlength="3"
-                           onkeyup="<portlet:namespace />sincronizarFormularioCompra();"
-                           onchange="<portlet:namespace />sincronizarFormularioCompra();"
-                           onblur="<portlet:namespace />sincronizarFormularioCompra();" />
-                <% } else { %>
-                    <div class="compras-campo-solo-lectura"><%= HtmlUtil.escape(cargoOspimVisible) %></div>
-                <% } %>
-            </td>
-
-            <td><label>Cargo tercerizadora %:</label></td>
-            <td>
-                <% if (puedeEditarEstructuraPantalla) { %>
-                    <input type="text"
-                           id="<portlet:namespace />cargo_tercerizadora"
-                           value="<%= HtmlUtil.escape(cargoTercerizadoraVisible) %>"
-                           size="5"
-                           maxlength="3"
-                           onchange="<portlet:namespace />sincronizarFormularioCompra();"
-                           onblur="<portlet:namespace />sincronizarFormularioCompra();" />
-                <% } else { %>
-                    <div class="compras-campo-solo-lectura"><%= HtmlUtil.escape(cargoTercerizadoraVisible) %></div>
-                <% } %>
-            </td>
-
-            <td><label>Recupero:</label></td>
-            <td>
-                <% if (puedeEditarEstructuraPantalla) { %>
-                    <input type="checkbox"
-                           id="<portlet:namespace />recupero"
-                           value="true"
-                           <%= recuperoChecked %>
-                           onclick="return false;"
-                           onkeydown="return false;"
-                           tabindex="-1"
-                           aria-disabled="true" />
-                <% } else { %>
-                    <div class="compras-campo-solo-lectura">
-                        <%= recuperoPorCargoTercerizadoraActual ? "Sí" : "No" %>
                     </div>
                 <% } %>
             </td>
