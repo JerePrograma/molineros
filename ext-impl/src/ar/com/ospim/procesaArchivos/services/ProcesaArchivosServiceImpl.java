@@ -2933,6 +2933,27 @@ public class ProcesaArchivosServiceImpl {
         return resp;
     }
     
+    public boolean buscaPeriodoProcesadoAdmifarmOspimGeneral(String nombreTabla) {
+        Connection con = null;
+        CallableStatement stmt = null;
+        boolean resp = false;
+        try {
+            String sql = "{? = call buscar_periodo_procesado_admifarm_ospim_general(?)}";
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql);
+            stmt.registerOutParameter(1, java.sql.Types.BOOLEAN);
+            stmt.setString(2, nombreTabla);
+            stmt.execute();
+
+            resp = stmt.getBoolean(1);
+        } catch (Exception e) {
+            logger.error("Error al buscar período procesado ADMIFARM", e);
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+        return resp;
+    }
+    
 
 public int grabaArchivoSubsidiosGF(ArchivoSubsidioMitigacionAsimetricas archivo) throws SQLException {
 

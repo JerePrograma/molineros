@@ -7244,11 +7244,47 @@
 			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" />
 		</action>
 
-<action path="/autorizaciones/upload_imagenes_situacionmedica"
-        type="ar.com.ospim.autorizaciones.action.UploadImagenesSituacionMedicaAction">
-    <forward name="portlet.autorizaciones.patologias.editar_registro_situacionmedica_entry_imagen"
-             path="portlet.autorizaciones.situacionmedica.editar_situacionmedica_entry" />
-</action>
+        <action path="/autorizaciones/upload_imagenes_situacionmedica"
+                type="ar.com.ospim.autorizaciones.action.UploadImagenesSituacionMedicaAction">
+            <forward name="portlet.autorizaciones.patologias.editar_registro_situacionmedica_entry_imagen"
+                     path="portlet.autorizaciones.situacionmedica.editar_situacionmedica_entry" />
+        </action>
+
+        <action
+                path="/afiliados/pre_afiliados_pendientes"
+                type="ar.com.ospim.novedades.action.PreAfiliadosPendientesAction">
+
+            <forward
+                    name="portlet.afiliados.pre_afiliados_pendientes"
+                    path="portlet.afiliados.pre_afiliados_pendientes" />
+
+        </action>
+
+        <action
+                path="/afiliados/importar_documentacion_comercial"
+                type="ar.com.ospim.afiliados.action.ImportarDocumentacionComercialAction" />
+
+        <action
+                path="/afiliados/familiares_comerciales_pendientes"
+                type="ar.com.ospim.afiliados.action.FamiliaresComercialesPendientesAction">
+
+            <forward
+                    name="portlet.afiliados.familiares_comerciales_pendientes"
+                    path="portlet.afiliados.familiares_comerciales_pendientes" />
+
+        </action>
+
+        <action
+                path="/afiliados/generar_pre_afiliado_integrante_comercial"
+                type="ar.com.ospim.afiliados.action.GenerarPreAfiliadoIntegranteComercialAction" />
+
+        <action path="/farmaciaospim/upload_admifarm_general"
+                type="ar.com.ospim.farmaciaOspim.action.UploadAdmifarmOspimGeneralAction">
+
+            <forward name="portlet.farmaciaospim.view" path="portlet.farmaciaospim.view" />
+            <forward name="portlet.farmaciaospim.error" path="portlet.farmaciaospim.error" />
+        </action>
  </action-mappings>
   
 </struts-config>
+	  

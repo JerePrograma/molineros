@@ -665,6 +665,36 @@ public List<DetalleDesglose> getListaDesgloseArchivoFarmacia   (String nombreArc
 	return list;
 	}
 
+	public List<ArchivoAdmifarm> getArchivosSubidosAdmifarmOspimGeneral()
+			throws SystemException {
+	
+	Connection con = null;
+	CallableStatement stmt = null;
+	List<ArchivoAdmifarm> list = null;
+	
+	try {
+		con = ConnectionHelper.getConnection();
+		String sql = "{call farmacia.trae_ultimos_archivos_admifarm_ospim_general()}";
+		stmt = con.prepareCall(sql);
+	
+		ResultSet rs = stmt.executeQuery();
+		list = new ArrayList<ArchivoAdmifarm>();
+	
+		while (rs.next()) {
+			ArchivoAdmifarm archivo = ArchivoAdmifarm.getMapping(rs);
+			list.add(archivo);
+		}
+	
+	} catch (Exception e) {
+		logger.error("Error al buscar ultimas importaciones Admifarm Ospim General", e);
+		throw new SystemException(e);
+	} finally {
+		ConnectionHelper.cerrar(stmt, con);
+	}
+	
+	return list;
+	}
+	
 	public List<DetalleAdmifarm> getListaDetalleAdmifarm(String nombreTabla)
 	        throws SystemException {
 	    Connection con = null;
@@ -686,6 +716,35 @@ public List<DetalleDesglose> getListaDesgloseArchivoFarmacia   (String nombreArc
 
 	    } catch (Exception e) {
 	        logger.error("Error cargando detalle ADMIFARM", e);
+	        throw new SystemException(e);
+	    } finally {
+	        ConnectionHelper.cerrar(stmt, con);
+	    }
+
+	    return list;
+	}
+	
+	public List<DetalleAdmifarm> getListaDetalleAdmifarmOspimGeneral(String nombreTabla)
+	        throws SystemException {
+	    Connection con = null;
+	    CallableStatement stmt = null;
+	    List<DetalleAdmifarm> list = new ArrayList<DetalleAdmifarm>();
+
+	    try {
+	        String sql = "{call reporte_admifarm_ospim_general(?)}";
+
+	        con = ConnectionHelper.getConnection();
+	        stmt = con.prepareCall(sql);
+	        stmt.setString(1, nombreTabla);
+
+	        ResultSet rs = stmt.executeQuery();
+
+	        while (rs.next()) {
+	            list.add(DetalleAdmifarm.getMapping(rs));
+	        }
+
+	    } catch (Exception e) {
+	        logger.error("Error cargando detalle ADMIFARM OSPIM GENERAL", e);
 	        throw new SystemException(e);
 	    } finally {
 	        ConnectionHelper.cerrar(stmt, con);

@@ -185,6 +185,7 @@ public class WebKeysAutorizaciones implements
 	
 	public static final String HISTORICO_RECLAMO = "HISTORICO_RECLAMO";
 	
+	public static final String RECLAMOS_PRESTACIONALES_REVISION_ESTADO_AUTORIZADO_EN_SESION = "RECLAMOS_PRESTACIONALES_REVISION_ESTADO_AUTORIZADO_EN_SESION";
 }
 	
 	

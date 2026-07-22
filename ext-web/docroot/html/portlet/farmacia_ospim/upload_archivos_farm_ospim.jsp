@@ -17,6 +17,11 @@
 <liferay-ui:error key="erroradmifarmperiodoyaprocesado" message="error-admifarm-periodoyaprocesado"/>
 <liferay-ui:error key="erroradmifarmdatosdentrodearchivo" message="error-admifarm-datosdentrodearchivo"/>
 
+<liferay-ui:error key="erroradmifarmgeneralperiodonocoincide" message="error-admifarm-general-periodonocoincide"/>
+<liferay-ui:error key="erroradmifarmgeneralarchivonombre" message="error-admifarm-general-archivonombre"/>
+<liferay-ui:error key="erroradmifarmgeneralperiodoyaprocesado" message="error-admifarm-general-periodoyaprocesado"/>
+<liferay-ui:error key="erroradmifarmgeneraldatosdentrodearchivo" message="error-admifarm-general-datosdentrodearchivo"/>
+
 <c:choose>
 	<c:when
 		test='<%= SessionMessages.contains(renderRequest, "request_processed") %>'>
@@ -35,6 +40,12 @@
 		<liferay-ui:success key="request_processed_admifarm" message="Ok-admifarm-grabacion" />		
 	</c:when>
 </c:choose>
+<c:choose>
+	<c:when 
+		test='<%= SessionMessages.contains(renderRequest, "request_processed_admifarm_general") %>'>
+		<liferay-ui:success key="request_processed_admifarm_general" message="Ok-admifarm-general-grabacion"/>
+	</c:when>
+</c:choose>
 <%
 
 Calendar fechaDesde = CalendarFactoryUtil.getCalendar();
@@ -49,6 +60,8 @@ if (SessionMessages.contains(renderRequest, "sel_proceso_archivo")) {
     opcionSeleccionada = "1"; // desglose compañía farmacia
 } else if (SessionMessages.contains(renderRequest, "sel_proceso_admifarm")) {
     opcionSeleccionada = "2"; // admifarm monotributo
+} else if (SessionMessages.contains(renderRequest, "sel_proceso_general")) {
+	opcionSeleccionada = "3"; // admifarm general
 }
 
 List<Prestador> list = TraeListasServiceUtil.getPrestodresInexistentesMedicacionEspecial();
@@ -67,6 +80,10 @@ List<Prestador> list = TraeListasServiceUtil.getPrestodresInexistentesMedicacion
 
 <td>
 <input type="radio" name="<portlet:namespace />importacion_tipo" id="admifarmradio" onclick="abrirDiv(2);" value="false"> Archivo Admifarm Monotributo
+</td>
+
+<td>
+<input type="radio" name="<portlet:namespace />importacion_tipo" id="generalradio" onclick="abrirDiv(3);" value="false"> Archivo Admifarm General Ospim
 </td>
 
 <td colspan="4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
@@ -285,6 +302,104 @@ List<Prestador> list = TraeListasServiceUtil.getPrestodresInexistentesMedicacion
 </form>
 </div>
 
+<div id="<portlet:namespace />divadmifarmgeneral">
+	<form action=""
+		  method="post"
+		  name="<portlet:namespace />frmadmifarmgeneral"
+		  enctype="multipart/form-data">
+
+		<fieldset class="block-labels">
+			<legend>Subir Archivo Admifarm Ospim General</legend>
+
+			<table style="width: 900px;">
+				<tr>
+					<td>
+						<table>
+							<tr>
+								<td colspan="3">
+									<label>Período archivo:</label>&nbsp;
+
+									<liferay-ui:input-date
+										dayParam="fechaAdmifarmGeneralDia"
+										dayNullable="<%= true %>"
+										dayValue="01"
+										monthParam="fechaAdmifarmGeneralMes"
+										monthValue="<%= fechaDesde.get(Calendar.MONTH) + 1 %>"
+										yearParam="fechaAdmifarmGeneralAnio"
+										yearValue="<%= fechaDesde.get(Calendar.YEAR) %>"
+										yearRangeStart="<%= current.get(Calendar.YEAR) - 10 %>"
+										yearRangeEnd="<%= fechaDesde.get(Calendar.YEAR) + 1 %>"
+										firstDayOfWeek="<%= fechaDesde.getFirstDayOfWeek() - 1 %>"
+										monthAndYearNullable="<%= false %>"
+										disabled="<%= false %>"
+									/>
+								</td>
+							</tr>
+
+							<tr>
+								<td colspan="3">&nbsp;</td>
+							</tr>
+
+							<tr>
+								<td>
+									<input type="file" name="archivo"/>
+								</td>
+
+								<td>
+									<a href="javascript:void(0)"
+									   onclick="help(event, 'helpAdmifarmGeneral')">
+
+										<img
+											style="height:16px;width:16px"
+											src="/html/images/help.png"
+											title="Ayuda"
+											alt="Ayuda"
+										/>
+									</a>
+								</td>
+
+								<td>
+									<input
+										type="submit"
+										value="<liferay-ui:message key='upload-file' />"
+										onclick="<portlet:namespace />uploadArchivoAdmifarmGeneral()"
+									/>
+								</td>
+							</tr>
+						</table>
+					</td>
+
+					<td>&nbsp;</td>
+					<td>&nbsp;</td>
+
+					<td>
+						<table>
+							<tr>
+								<td>
+									<label>Listado Archivos Admifarm Ospim General:</label>
+								</td>
+							</tr>
+
+							<tr>
+								<td>&nbsp;</td>
+							</tr>
+
+							<tr>
+								<td>
+									<div id="<portlet:namespace />archivos_admifarm_ospim_general">
+										<jsp:include
+											page="/html/portlet/farmacia_ospim/archivos_admifarm_ospim_general.jsp"
+										/>
+									</div>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</fieldset>
+	</form>
+</div>
 
 <div id="helpArchivoPrevencion" class="containerPlus draggable {buttons:'c', skin:'default', width:'700',title:'Ayuda',closed:'true'}" style="top: 20px; left: 150px">
 El diseño del archivo prevencion farmacia es:<br> 
@@ -348,6 +463,28 @@ El sistema valida que:<br>
 </ul> 
 </div>
 
+<div id="helpAdmifarmGeneral" class="containerPlus draggable {buttons:'c', skin:'default', width:'700',title:'Ayuda',closed:'true'}" style="top: 20px; left: 150px">
+El diseño del archivo Admifarm Ospim General es:<br> 
+Período, CodPlan, DescPlan, CodAfiliado, NombreAfiliado, Prescripcion, Venta,
+TipoMatrícula, Matrícula, NombrePrestador, RegMed, Troquel, Nombre, Presentación,
+AF, PA, NroLote, NroOrden, NroReceta, NroItem, Cantidad, PU100, Total, PorcDesc,
+ACargoOS, PorcBonif, ImpBonif, ImpNeto, CodFarmacia, DenomComercial, Localidad,
+Provincia, Región, Laboratorio, Autorización
+  
+<hr>
+Los datos deben ir separados por | (pipe) <br>
+El archivo informado debe llamarse <b>CONSUMOOSPIMGENERAL_mmaaaa.CSV</b>&nbsp;donde:<br>
+mm    : indica el mes del archivo a procesar de 01 a 12. <br>
+aaaa  : indica el año del archivo a procesar por ejemplo 2017,2018,... 
+<hr>
+El sistema valida que:<br>
+ <ul>
+  <li>El nombre del archivo cumpla con el formato requerido.</li>
+  <li>No se procese un archivo de per&iacute;odo ya procesado</li>
+  <li>El archivo debe incluir la primera fila con los nombres de las columnas (encabezado)</li>  
+</ul> 
+</div>
+
 <!-- Div para mostrar procesando -->
 <div align="center" id="<portlet:namespace />procesando">
 		<table style="align:center;">
@@ -371,6 +508,8 @@ jQuery("#<portlet:namespace />fechaDesgloseArchivoDia").hide();
 jQuery("#<portlet:namespace />divarchivodesglose").hide();
 jQuery("#<portlet:namespace />divadmifarm").hide();
 jQuery("#<portlet:namespace />procesando").hide();
+jQuery("#<portlet:namespace />fechaAdmifarmGeneralDia").hide();
+jQuery("#<portlet:namespace />divadmifarmgeneral").hide();
 
 var radio = document.getElementsByClassName('<portlet:namespace />importacion_tipo');
 
@@ -382,6 +521,11 @@ var radio = document.getElementsByClassName('<portlet:namespace />importacion_ti
 <% if (opcionSeleccionada=="2"){%>
 jQuery("#admifarmradio").attr('checked', 'checked');
 abrirDiv("2");
+<%}%>
+
+<% if (opcionSeleccionada=="3"){%>
+jQuery("#generalradio").attr('checked', 'checked');
+abrirDiv("3");
 <%}%>
 
 	function <portlet:namespace />buscaArchivos(){
@@ -457,22 +601,32 @@ abrirDiv("2");
 		    jQuery("#<portlet:namespace />procesando").hide();
 		}
 
+		function <portlet:namespace />uploadArchivoAdmifarmGeneral() {
+			jQuery("#<portlet:namespace />procesando").show("slow");
+		    var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"/>&struts_action=/<%=portlet_name%>/upload_admifarm_general';
+			document.<portlet:namespace />frmadmifarmgeneral.method = "post";
+			submitForm(document.<portlet:namespace />frmadmifarmgeneral,url);
+			jQuery("#<portlet:namespace />procesando").hide();
+		}
 
-		function abrirDiv(tipo){		
-			if(tipo == 0 ){
+		function abrirDiv(tipo) {
+
+			jQuery("#<portlet:namespace />divmedespecial").hide();
+			jQuery("#<portlet:namespace />divarchivodesglose").hide();
+			jQuery("#<portlet:namespace />divadmifarm").hide();
+			jQuery("#<portlet:namespace />divadmifarmgeneral").hide();
+
+			if (tipo == 0) {
 				jQuery("#<portlet:namespace />divmedespecial").show();
-				jQuery("#<portlet:namespace />divarchivodesglose").hide();
-				jQuery("#<portlet:namespace />divadmifarm").hide();
 			}
-			else if(tipo == 1){
-				jQuery("#<portlet:namespace />divmedespecial").hide();
+			else if (tipo == 1) {
 				jQuery("#<portlet:namespace />divarchivodesglose").show();
-				jQuery("#<portlet:namespace />divadmifarm").hide();
 			}
-			else if(tipo == 2){
-				jQuery("#<portlet:namespace />divmedespecial").hide();
-				jQuery("#<portlet:namespace />divarchivodesglose").hide();
+			else if (tipo == 2) {
 				jQuery("#<portlet:namespace />divadmifarm").show();
+			}
+			else if (tipo == 3) {
+				jQuery("#<portlet:namespace />divadmifarmgeneral").show();
 			}
 		}	
 	

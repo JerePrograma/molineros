@@ -49,6 +49,9 @@ public class ValidarReclamo extends JSONAction  {
 		boolean fechaComprobante =  DateUtils.esMayor(prestacionFromRequest.getComprobanteFecha(), new Date());
 		boolean fechaBaja =false;
 		
+		boolean fechaPrestacionMayorFechaEmision = DateUtils.esMayor(DateUtils.getMismoDia_00_00hs(prestacionFromRequest.getFechaPrestacion()),
+			    DateUtils.getMismoDia_00_00hs(prestacionFromRequest.getComprobanteFecha()));
+		
 		if(prestacionFromRequest.getBajaFecha()!=null) {
 		  fechaBaja=DateUtils.esMayor( DateUtils.getMismoDia_00_00hs(prestacionFromRequest.getFechaPrestacion()), DateUtils.getMismoDia_00_00hs(prestacionFromRequest.getBajaFecha())); 
 		}
@@ -61,6 +64,9 @@ public class ValidarReclamo extends JSONAction  {
 			codError = "2";
 		}
 		
+		if (fechaPrestacionMayorFechaEmision == true){
+		    codError = "7";
+		}
 		
 		if (!"REINTEGRO".equalsIgnoreCase(tipoPedido)){
 			List<Prestador> lp = PrestadorServiceUtil.getPrestadores(0, prestacionFromRequest.getComprobanteCUIT() ,null, false);

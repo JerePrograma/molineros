@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -35,9 +36,12 @@ import com.liferay.portal.model.User;
 import com.liferay.portal.util.PortalUtil;
 
 import ar.com.ospim.afiliados.beans.AfiCuentasBancarias;
+import ar.com.ospim.afiliados.beans.AfiPlan;
 import ar.com.ospim.afiliados.beans.AfiSuspencionCobertura;
+import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.afiliados.beans.CieDiez;
 import ar.com.ospim.afiliados.services.AfiCuentasBancariasServiceUtil;
+import ar.com.ospim.afiliados.services.EditarAfiliadoServiceUtil;
 import ar.com.ospim.afiliados.services.PlanServiceUtil;
 import ar.com.ospim.autorizaciones.beans.AfiCuentaBancaria;
 import ar.com.ospim.autorizaciones.beans.ItemReclamoPrestacionalesTotal;
@@ -65,6 +69,10 @@ import ar.com.ospim.util.StringUtils;
 	
 	private static final String RECLAMO_PRESTACION_ESTADO_ORIGINAL =
             "RECLAMO_PRESTACION_ESTADO_ORIGINAL";
+	
+	private static final int PLAN_COBERTURA = 3;
+	private static final int PLAN_COBERTURA_TOTAL_O = 9;
+	private static final int PLAN_COBERTURA_TOTAL_M = 20;
 	
 	public void processAction(ActionMapping mapping, ActionForm form,
 			PortletConfig portletConfig, ActionRequest actionRequest,
@@ -476,6 +484,29 @@ import ar.com.ospim.util.StringUtils;
 			
 			Integer estado = Integer.parseInt(ParamUtil.getString(renderRequest, "estado",reclamoPrestacional!=null?String.valueOf(reclamoPrestacional.getEstado()):"0"));		
 
+			AfiPlan afiPlanActual = obtenerPlanActual(reclamoPrestacional
+);
+
+				Integer idPlanActual = null;
+				String nombrePlanActual = "";
+
+				if (afiPlanActual != null && afiPlanActual.getPlan() != null) {
+
+				    idPlanActual = afiPlanActual.getPlan().getId();
+				    nombrePlanActual = afiPlanActual.getPlan().getDescripcion();
+				}
+
+				boolean planBloqueado = esPlanBloqueadoParaReclamo(idPlanActual);
+
+				if (planBloqueado) {
+
+				    String mensajePlan = "Afiliado con plan \"" + nombrePlanActual + "\" no puede cargar un reclamo.";
+
+				    SessionErrors.add(renderRequest,"errorPlanNoPermiteReclamo");
+
+				    renderRequest.setAttribute("msgErrorPlanNoPermiteReclamo",mensajePlan);
+				}
+			
 //			Validamos que el afiliado no tenga suspendida la cobertura médica
 			List<AfiSuspencionCobertura> suspCoberMedica = null;
 			if(reclamoPrestacional.getAfiliado()!=null && StringUtils.checkNotEmpty(reclamoPrestacional.getAfiliado().getCuil_titular())) {
@@ -534,8 +565,8 @@ import ar.com.ospim.util.StringUtils;
 					&& reclamoPrestacional.getTipo_gestion_cierre_reclamo() != 5 ){ 
 				for( PrestacionesReclamo r : prestacionesAux) {
 					if(!PrestacionesReclamo.ESTADOS.BAJA.equals(r.getEstado()) 
-							&&  ((r.getCargo_ospim()==0 && r.getCargo_ps()==0 && r.getCargo_imesa()==0 ) ||
-								  ( Math.abs((r.getCantidad()*r.getImporte()) -r.getCargo_ospim()-r.getCargo_ps()-r.getCargo_imesa())>0.01D  )	
+							&&  ((r.getCargo_ospim()==0 && r.getCargo_ps()==0 && r.getCargo_imesa()==0 && r.getReconocidoSSS()==0) ||
+								  ( Math.abs((r.getCantidad()*r.getImporte()) -r.getCargo_ospim()-r.getCargo_ps()-r.getCargo_imesa() - r.getReconocidoSSS())>0.01D  )	
 								)
 							&& !(r.getEstadoRechazoAprobado() == 2) // debería ser rechazado, pero se actualiza recíen en la bd ?
 //							&&  !(reclamoPrestacional.getTipo_gestion_cierre_reclamo() == 2) //RECHAZADO
@@ -606,6 +637,20 @@ import ar.com.ospim.util.StringUtils;
 			if (validaOk == false && (Constants.VIEW.equals(cmd) || Constants.EDIT.equals(cmd))){
 				viewAndEdit(mapping, renderRequest, renderResponse, session, reclamoPrestacional, cmdAction, cmdAction, idReclamoDeBuscador);
 			}
+			
+			/*
+			 * Bloqueo definitivo antes de insertar o actualizar.
+			 */
+			if (
+			    planBloqueado &&
+			    (
+			        Constants.SAVE.equals(cmd) ||
+			        Constants.UPDATE.equals(cmd)
+			    )
+			) {
+			    validaOk = false;
+			}
+			
 			// final de validaciones minimas de ingreso		
 			if(validaOk){
 				
@@ -1246,5 +1291,58 @@ import ar.com.ospim.util.StringUtils;
 	    return cuenta;
 	}
 
+	private boolean esPlanBloqueadoParaReclamo(Integer idPlan) {
+
+	    if (idPlan == null) {
+	        return false;
+	    }
+
+	    return idPlan.intValue() == PLAN_COBERTURA
+	        || idPlan.intValue() == PLAN_COBERTURA_TOTAL_O
+	        || idPlan.intValue() == PLAN_COBERTURA_TOTAL_M;
+	}
+	
+	private AfiPlan obtenerPlanActual(ReclamoPrestacional reclamo) {
+
+	    if (reclamo == null) {
+	        return null;
+	    }
+
+	    String cuilTitular = null;
+
+	    if (reclamo.getAfiliado() != null) {
+
+	        cuilTitular = reclamo.getAfiliado().getCuil_titular();
+
+	    } else {
+	        cuilTitular = reclamo.getCuit_titular();
+	    }
+
+	    if (StringUtils.checkEmpty(cuilTitular)) {
+	        return null;
+	    }
+
+	    try {
+
+	        AfiPlan afiPlan = PlanServiceUtil.getInstance().buscarUltimoPlanAportes(cuilTitular);
+
+	        if (afiPlan != null && afiPlan.getPlan() != null) {
+	            return afiPlan;
+	        }
+
+	    } catch (Exception e) {
+	        _log.error("Error consultando el plan del afiliado " + cuilTitular, e);
+	    }
+
+	    /*Respaldo por si el plan ya viene cargado dentro del objeto del reclamo*/
+	    if (reclamo.getAfiliado() != null &&
+	        reclamo.getAfiliado().getAfiPlan() != null &&
+	        reclamo.getAfiliado().getAfiPlan().getPlan() != null) {
+	    	
+	        return reclamo.getAfiliado().getAfiPlan();
+	    }
+
+	    return null;
+	}
 	
 }

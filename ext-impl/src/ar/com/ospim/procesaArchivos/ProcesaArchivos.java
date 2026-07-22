@@ -106,6 +106,7 @@ import ar.com.ospim.procesaArchivos.beans.transferenciaexterna.DetalleTransferen
 import ar.com.ospim.procesaArchivos.beans.transferenciaexterna.FooterTransferenciaExterna;
 import ar.com.ospim.procesaArchivos.beans.transferenciaexterna.HeaderTransferenciaExterna;
 import ar.com.ospim.procesaArchivos.exception.AfipCantidadRegistrosIncorrectaException;
+import ar.com.ospim.procesaArchivos.exception.ArchivoAdmifarmGeneralOspimIncorrectoException;
 import ar.com.ospim.procesaArchivos.exception.ArchivoAdmifarmIncorrectoException;
 import ar.com.ospim.procesaArchivos.exception.ArchivoMedEsIncorrectoException;
 import ar.com.ospim.procesaArchivos.exception.RendicionBancoNacionRegistroDuplicado;
@@ -2863,6 +2864,44 @@ public void procesarArchivoAdmifarm(User usuario, BufferedReader scanner, Date f
     } catch (Exception e) {
         _log.error("Error procesando archivo Admifarm", e);
         throw new ArchivoAdmifarmIncorrectoException(
+                4, 
+                "Error procesando archivo Admifarm: " + e.getMessage()
+        );
+    }
+}
+
+@SuppressWarnings("deprecation")
+public void procesarArchivoAdmifarmOspimGeneral(User usuario, BufferedReader scanner, Date fechaArchivo) 
+        throws Exception {
+
+    //determina período
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(fechaArchivo);
+    int mes = cal.get(Calendar.MONTH) + 1;
+    int anio = cal.get(Calendar.YEAR);
+
+    String nombreTabla = "admifarm_ospim_general_" + String.format("%02d", mes) + anio;
+
+    //verifica si el período ya fue procesado antes de leer el archivo
+    if (servicio.buscaPeriodoProcesadoAdmifarmOspimGeneral(nombreTabla)) {
+        throw new ArchivoAdmifarmGeneralOspimIncorrectoException(3); // período ya procesado
+    }
+
+    try {
+
+        //procesa archivo completo
+        new ProcesaArchivosAdmifarm().procesarArchivoAdmifarmOspimGeneral(
+                usuario,
+                scanner,
+                fechaArchivo
+        );
+
+    } catch (ArchivoAdmifarmGeneralOspimIncorrectoException e) {
+        throw e;
+
+    } catch (Exception e) {
+        _log.error("Error procesando archivo Admifarm", e);
+        throw new ArchivoAdmifarmGeneralOspimIncorrectoException(
                 4, 
                 "Error procesando archivo Admifarm: " + e.getMessage()
         );

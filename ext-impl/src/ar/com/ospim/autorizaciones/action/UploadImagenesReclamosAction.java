@@ -56,11 +56,13 @@ public class UploadImagenesReclamosAction extends PortletAction {
 			ActionResponse actionResponse) throws Exception {                                                  
 
 		String cmd = ParamUtil.getString(actionRequest, "imagen", null);
-		
 		String cmdSeccional = ParamUtil.getString(actionRequest, Constants.ACTION, null);
+		String solapa = ParamUtil.getString(actionRequest, "solapa", "");
 
-		String solapa = ParamUtil.getString(actionRequest,"solapa", null);
-		
+		if (StringUtils.checkEmpty(solapa) || "null".equalsIgnoreCase(solapa)) {
+			solapa = "archivos";
+		}
+			
 		User user = PortalUtil.getUser(actionRequest);
 		
 		String msgError = null;
@@ -168,9 +170,20 @@ public class UploadImagenesReclamosAction extends PortletAction {
 			}			
 		}	
 		
-		actionRequest.setAttribute("tab", solapa);
 		
-		actionRequest.setAttribute(Constants.CMD,Constants.MOVE );
+		 //estos atributos son necesarios porque setForward incluye el JSP usando el ActionRequest actual		 
+		actionRequest.setAttribute("solapa", solapa);
+		actionRequest.setAttribute("tab", solapa);
+		actionRequest.setAttribute("tab_seleccionada", solapa);
+		actionRequest.setAttribute("moverATab", solapa);
+		actionRequest.setAttribute(Constants.CMD, Constants.MOVE);
+
+		//estos parametros se conservan para la siguiente fase render,especialmente para CTA Bancaria
+		actionResponse.setRenderParameter("solapa", solapa);
+		actionResponse.setRenderParameter("tab", solapa);
+		actionResponse.setRenderParameter("tab_seleccionada", solapa);
+		actionResponse.setRenderParameter("moverATab", solapa);
+		actionResponse.setRenderParameter(Constants.CMD, Constants.MOVE);
 		
 		if (msgError == null && "cta_bancaria".equalsIgnoreCase(solapa)){
 			//Se lo dejamos al render
@@ -192,7 +205,16 @@ public class UploadImagenesReclamosAction extends PortletAction {
 	public ActionForward render(ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
 			RenderRequest renderRequest, RenderResponse renderResponse) throws Exception {
 		
-		String solapa = ParamUtil.getString(renderRequest,"solapa", null);
+		String solapa = ParamUtil.getString(renderRequest,"solapa", "archivos");
+
+		if (StringUtils.checkEmpty(solapa) || "null".equalsIgnoreCase(solapa)) {
+		        solapa = "archivos";
+		}
+		
+		renderRequest.setAttribute("tab", solapa);
+		renderRequest.setAttribute("tab_seleccionada", solapa);	    
+		renderRequest.setAttribute(Constants.CMD, Constants.MOVE);
+		 
 		String cmdSeccional = ParamUtil.getString(renderRequest, Constants.ACTION, null);
 		
 		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();

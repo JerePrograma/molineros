@@ -1762,4 +1762,9 @@ public class TraeListasServiceUtil {
 	public static List<Provincia> getProvinciasFacturables() {
 		return getInstance().getProvinciasFacturables();
 	}
+	
+	public static List<ReclamosPrestacionalesRevisionEstado> getReclamosPrestacionalesRevisionEstadoAutorizado() {
+		return getInstance().getReclamosPrestacionalesRevisionEstadoAutorizado();
+	}	
+	
 }

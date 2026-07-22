@@ -16,7 +16,11 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
+import ar.com.ospim.autorizaciones.beans.BusquedaReporteReclamoFiltro;
+import ar.com.ospim.autorizaciones.beans.ReclamoPrestacionalExcel;
 import ar.com.ospim.autorizaciones.beans.ReportePreCargaReclamo;
+import ar.com.ospim.autorizaciones.reportes.action.ReporteReclamosPrestacionales;
+import ar.com.ospim.autorizaciones.services.AutorizacionesServiceUtil;
 import ar.com.ospim.autorizaciones.services.ReclamosPrestacionesServiceUtil;
 import ar.com.ospim.liquidaciones.ordenespago.reportes.ReporteXLS;
 import ar.com.ospim.util.DateUtils;
@@ -25,22 +29,16 @@ public class ReportePreCargaMasReclamosExcel extends ReporteXLS {
 	private static Log _log = LogFactoryUtil.getLog(ReportePreCargaMasReclamosExcel.class);
 
 	public static HSSFWorkbook generaReporte() {
-
-		
 		try {
-			
-
 			List<ReportePreCargaReclamo> busqueda = ReclamosPrestacionesServiceUtil.reclamosPrestacionalPreCarga();
-
 			return generarReporte( busqueda);
-			
 		} catch (Exception e) {
 			_log.error("Error al generar reporte reclamos pre carga", e);
 			return null;
 		}
 	}
 
-	private static HSSFWorkbook generarReporte(List<ReportePreCargaReclamo> reclamos) {
+ 	private static HSSFWorkbook generarReporte(List<ReportePreCargaReclamo> reclamos) {
 		
 		SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy");
 
@@ -299,4 +297,28 @@ public class ReportePreCargaMasReclamosExcel extends ReporteXLS {
 		index = index +1;
 		return index;
 	}
+
+	
+	
+	
+   public static HSSFWorkbook generaReportePendientesSURGE() {
+		try {
+			BusquedaReporteReclamoFiltro filtro = new BusquedaReporteReclamoFiltro();
+			filtro.setEstado(1);//Pendiente
+			filtro.setRecuperableSur(1);//Recuperable SURGE
+			filtro.setCodigoTipoGestion("0");
+			HSSFWorkbook wb = new HSSFWorkbook();
+			List<ReclamoPrestacionalExcel> reclamosPrestacionales= AutorizacionesServiceUtil.getListaReclamosPrestacionales (filtro);
+			return 	ReporteReclamosPrestacionales.generaReporteReclamosPrestacionales(reclamosPrestacionales, filtro, wb);
+			
+		} catch (Exception e) {
+			_log.error("Error al generar reporte reclamos pendientes SURGE", e);
+			return null;
+		}
+	}
+	
+   
+   
+   
+   
 }

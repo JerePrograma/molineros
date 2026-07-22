@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report name" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="581" leftMargin="7" rightMargin="7" topMargin="7" bottomMargin="7">
 	<property name="ireport.zoom" value="2.0"/>
-	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="1713"/>
+	<property name="ireport.x" value="18"/>
+	<property name="ireport.y" value="357"/>
 	<style name="table">
 		<box>
 			<pen lineWidth="1.0" lineColor="#000000"/>
@@ -76,6 +76,7 @@
 	<field name="coseguros_consulta" class="java.lang.String"/>
 	<field name="coseguros_rehabilitacion" class="java.lang.String"/>
 	<field name="coseguros_domicilio" class="java.lang.String"/>
+	<field name="pmi" class="java.lang.String"/>
 	<background>
 		<band height="156">
 			<image>
@@ -225,46 +226,169 @@
 				<textFieldExpression class="java.lang.String"><![CDATA["Farmacias"]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement mode="Opaque" x="5" y="256" width="203" height="20" forecolor="#FFFFFF" backcolor="#E56F6F"/>
+				<reportElement mode="Opaque" x="5" y="256" width="203" height="20" forecolor="#FFFFFF" backcolor="#E56F6F">
+                    <printWhenExpression>
+                            <![CDATA[$F{pmi} == null || $F{pmi}.trim().isEmpty()]]>
+                        </printWhenExpression>
+                    </reportElement>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font size="8"/>
 				</textElement>
 				<text><![CDATA[Plan Farmacia]]></text>
 			</staticText>
+
+            <staticText>
+				<reportElement mode="Opaque" x="5" y="256" width="142" height="20" forecolor="#FFFFFF" backcolor="#E56F6F">
+                    <printWhenExpression>
+                        <![CDATA[$F{pmi} != null && !$F{pmi}.trim().isEmpty()]]>
+                    </printWhenExpression>
+                </reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Plan Farmacia]]></text>
+			</staticText>
+
+
 			<staticText>
-				<reportElement mode="Opaque" x="208" y="256" width="203" height="20" forecolor="#FFFFFF" backcolor="#E56F6F"/>
+				<reportElement mode="Opaque" x="208" y="256" width="203" height="20" forecolor="#FFFFFF" backcolor="#E56F6F">
+                    <printWhenExpression>
+                          <![CDATA[$F{pmi} == null || $F{pmi}.trim().isEmpty()]]>
+                     </printWhenExpression>
+                    </reportElement>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font size="8"/>
 				</textElement>
 				<text><![CDATA[Descuento en Farmacia]]></text>
 			</staticText>
+
+            <staticText>
+				<reportElement mode="Opaque" x="147" y="256" width="142" height="20" forecolor="#FFFFFF" backcolor="#E56F6F">
+                    <printWhenExpression>
+                          <![CDATA[$F{pmi} != null && !$F{pmi}.trim().isEmpty()]]>
+                     </printWhenExpression>
+                    </reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Descuento en Farmacia]]></text>
+			</staticText>
+
 			<staticText>
-				<reportElement mode="Opaque" x="411" y="256" width="160" height="20" forecolor="#FFFFFF" backcolor="#E56F6F"/>
+				<reportElement mode="Opaque" x="411" y="256" width="160" height="20" forecolor="#FFFFFF" backcolor="#E56F6F">
+                    <printWhenExpression>
+                          <![CDATA[$F{pmi} == null || $F{pmi}.trim().isEmpty()]]>
+                     </printWhenExpression>
+                </reportElement>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font size="8"/>
 				</textElement>
 				<text><![CDATA[Vademecum]]></text>
 			</staticText>
+
+            <staticText>
+				<reportElement mode="Opaque" x="289" y="256" width="142" height="20" forecolor="#FFFFFF" backcolor="#E56F6F">
+                    <printWhenExpression>
+                          <![CDATA[$F{pmi} != null && !$F{pmi}.trim().isEmpty()]]>
+                     </printWhenExpression>
+                </reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Vademecum]]></text>
+			</staticText>
+
+			<staticText>
+				<reportElement mode="Opaque" x="431" y="256" width="141" height="20" forecolor="#FFFFFF" backcolor="#E56F6F">
+                    <printWhenExpression>
+                    <![CDATA[$F{pmi} != null && !$F{pmi}.trim().isEmpty()]]>
+                    </printWhenExpression>
+                </reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[PMI]]></text>
+			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement x="207" y="276" width="202" height="15"/>
+				<reportElement x="208" y="276" width="203" height="15">
+                <printWhenExpression>
+                    <![CDATA[$F{pmi} == null || $F{pmi}.trim().isEmpty()]]>
+                    </printWhenExpression>
+                </reportElement>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font size="8" isBold="true" isItalic="false"/>
 				</textElement>
 				<textFieldExpression class="java.lang.String"><![CDATA[$F{farmacia_descuento}.trim()]]></textFieldExpression>
 			</textField>
+
+            <textField isBlankWhenNull="true">
+				<reportElement x="147" y="276" width="142" height="15">
+                    <printWhenExpression>
+                    <![CDATA[$F{pmi} != null && !$F{pmi}.trim().isEmpty()]]>
+                    </printWhenExpression>
+                </reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true" isItalic="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{farmacia_descuento}.trim()]]></textFieldExpression>
+			</textField>
+
 			<textField isBlankWhenNull="true">
-				<reportElement x="409" y="276" width="162" height="15"/>
+				<reportElement x="411" y="276" width="160" height="15">
+                    <printWhenExpression>
+                    <![CDATA[$F{pmi} == null || $F{pmi}.trim().isEmpty()]]>
+                    </printWhenExpression>
+                </reportElement>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font size="8" isBold="true" isItalic="false"/>
 				</textElement>
 				<textFieldExpression class="java.lang.String"><![CDATA[$F{farmacia_vademecum}.trim()]]></textFieldExpression>
 			</textField>
+            <textField isBlankWhenNull="true">
+				<reportElement x="289" y="276" width="142" height="15">
+                    <printWhenExpression>
+                    <![CDATA[$F{pmi} != null && !$F{pmi}.trim().isEmpty()]]>
+                    </printWhenExpression>
+                </reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true" isItalic="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{farmacia_vademecum}.trim()]]></textFieldExpression>
+			</textField>
+
 			<textField isBlankWhenNull="true">
-				<reportElement x="5" y="276" width="202" height="15"/>
+				<reportElement x="5" y="276" width="203" height="15">
+                    <printWhenExpression>
+                    <![CDATA[$F{pmi} == null || $F{pmi}.trim().isEmpty()]]>
+                    </printWhenExpression>
+                </reportElement>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font size="8" isBold="true"/>
 				</textElement>
 				<textFieldExpression class="java.lang.String"><![CDATA[$F{farmacia_plan}]]></textFieldExpression>
+			</textField>
+            <textField isBlankWhenNull="true">
+				<reportElement x="5" y="276" width="142" height="15">
+                <printWhenExpression>
+                    <![CDATA[$F{pmi} != null && !$F{pmi}.trim().isEmpty()]]>
+                    </printWhenExpression>
+                </reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{farmacia_plan}]]></textFieldExpression>
+			</textField>
+
+			<textField isBlankWhenNull="true">
+				<reportElement x="431" y="276" width="141" height="15">
+                    <printWhenExpression>
+                    <![CDATA[$F{pmi} != null && !$F{pmi}.trim().isEmpty()]]>
+                    </printWhenExpression>
+                </reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{pmi}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement mode="Opaque" x="6" y="317" width="203" height="20" forecolor="#FFFFFF" backcolor="#E56F6F"/>

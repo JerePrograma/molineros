@@ -1,9 +1,11 @@
 package ar.com.ospim.tesoreria.afip.action;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -33,7 +35,12 @@ import ar.com.ospim.tesoreria.afip.ErrorProcesandoArchivosAfipException;
 import ar.com.uoma.facturacion.Cliente;
 import ar.com.uoma.facturacion.Factura;
 import ar.com.uoma.facturacion.services.FacturacionServiceUtil;
+import jcifs.smb.FileEntry;
 
+import com.liferay.documentlibrary.DuplicateFileException;
+import com.liferay.documentlibrary.FileNameException;
+import com.liferay.documentlibrary.FileSizeException;
+import com.liferay.documentlibrary.NoSuchFileException;
 import com.liferay.portal.PortalException;
 import com.liferay.portal.SystemException;
 import com.liferay.portal.kernel.log.Log;
@@ -41,10 +48,18 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
+import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.User;
+import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.service.ServiceContextFactory;
 import com.liferay.portal.struts.PortletAction;
+import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
+import com.liferay.portlet.documentlibrary.model.DLFolder;
+import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
+import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
 
 public class UploadArchivoAfipAction extends PortletAction {
 
@@ -68,6 +83,9 @@ public class UploadArchivoAfipAction extends PortletAction {
 				if (fileName.toUpperCase().startsWith("EXPORT") && fileName.endsWith(".zip")){
 					proceso=true;
 					errores = procesarZipFacturacionHoteles(actionRequest, zip);
+			    } else if (fileName.toUpperCase().startsWith("REPORTE") && fileName.endsWith(".zip")){
+					proceso=true;
+					errores = procesarZipTransferenciasInterbanking(actionRequest, zip);
 			    }else if (fileName.endsWith(".zip")) {
 					proceso=true;
 					errores = procesarZip(actionRequest, zip);
@@ -477,11 +495,100 @@ public class UploadArchivoAfipAction extends PortletAction {
 	}
 	
 	
+	private List<String> procesarZipTransferenciasInterbanking(ActionRequest actionRequest, File zip)
+			throws IOException {
+		
+		User user = null;
+		try {
+			user = PortalUtil.getUser(actionRequest);
+		} catch (PortalException e1) {
+			user = null;
+		} catch (SystemException e1) {
+			user=null;
+		}
+		
+        
+		List<String> errores = new ArrayList<String>();
+		ZipInputStream in = new ZipInputStream(new FileInputStream(zip));
+		try {
+
+		 ThemeDisplay themeDisplay = (ThemeDisplay) actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
+		 ServiceContext serviceContext = ServiceContextFactory.getInstance(FileEntry.class.getName(), actionRequest);
+	     DLFolder f = DLFolderLocalServiceUtil.getFolder(10136, 0L, "Interbanking");
+	        
+		 long folderId = f.getFolderId();
+		 ZipEntry entry = in.getNextEntry();
+		 while (entry != null) {
+			String upperName = entry.getName().toUpperCase();
+			logger.debug(upperName);
+			if (!entry.isDirectory() && entry.getName().toLowerCase().endsWith(".pdf")) {
+                
+                // Extraer solo el nombre del archivo (eliminando rutas de carpetas internas del ZIP)
+                String fileName = entry.getName().substring(entry.getName().lastIndexOf('/') + 1);
+                
+                // Leer el contenido del PDF a un arreglo de bytes
+                byte[] bytes = readStreamToByteArray(in);
+                
+                if (bytes.length > 0) {
+                    String title = fileName; // El título visible en la interfaz
+                    String description = "Interbanking " + title;
+                    String extraSettings = ""; // Propiedad requerida en Liferay 5.2.3 para metadatos extra
+                    
+                    
+                    // 3. Persistir el archivo en la base de datos y en el FileSystem de Liferay
+                    DLFileEntryLocalServiceUtil.addFileEntry(
+                        user.getUserId(),   // ID del usuario creador
+                        folderId,        // ID de la carpeta destino
+                        fileName,        // Nombre físico del archivo
+                        title,           // Título en la interfaz
+                        description,     // Descripción corta
+                        extraSettings,   // Configuración extra (vacío por defecto)
+                        bytes,           // Contenido del PDF en bytes
+                        serviceContext   
+                    );
+                    logger.debug("AGREGAR IMAGEN Interbanking: " + fileName);
+                }
+                in.closeEntry();
+            }
+			entry = in.getNextEntry();
+		  }
+		}catch(FileSizeException e){
+  			errores.add("El archivo a subir supera el tamaño permitido" +" "+e.getMessage());
+			logger.error(e);
+  		}catch(FileNameException e){
+  			errores.add("El tipo de archivo a subir no está permitido" +" "+e.getMessage());
+			logger.error(e); 
+  		}catch(DuplicateFileException e){
+  			errores.add("Archivo ya subido " +" "+e.getMessage());
+			logger.error(e); 
+  		}catch (Exception e) {
+			logger.debug("Error al procesar archivo " + zip.getName(), e);
+			errores.add(zip.getName()+" "+e.getCause() +" "+e.getLocalizedMessage()+" "+e.getMessage());
+	    } finally {
+	    	in.close();
+	    }
+		return errores;
+	}
+
+	
+	
 	public ActionForward render(ActionMapping mapping, ActionForm form,
 			PortletConfig portletConfig, RenderRequest renderRequest,
 			RenderResponse renderResponse) throws Exception {
 
 		return mapping.findForward(getForward(renderRequest, "portlet.tesoreria.view"));
 	}
+	
+	private byte[] readStreamToByteArray(InputStream in) throws Exception {
+	    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+	    int nRead;
+	    byte[] data = new byte[4096];
+	    while ((nRead = in.read(data, 0, data.length)) != -1) {
+	        buffer.write(data, 0, nRead);
+	    }
+	    buffer.flush();
+	    return buffer.toByteArray();
+	}
+
 
 }

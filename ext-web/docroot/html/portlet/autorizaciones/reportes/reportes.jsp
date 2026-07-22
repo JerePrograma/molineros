@@ -17,15 +17,13 @@
 		int total = 1;
 		searchContainer.setTotal(total);
 	 	List resultRows = searchContainer.getResultRows();
-		/*
-	 	ResultRow row = new ResultRow(1, 1, 1);
+		ResultRow row = new ResultRow(1, 1, 1);
 		PortletURL rowURL = renderResponse.createRenderURL();		 				
 		rowURL.setWindowState(LiferayWindowState.MAXIMIZED);		 				
 		rowURL.setParameter("struts_action","/autorizaciones/reporte_igs");
 		rowURL.setParameter("ir_a_filtro","true");
-		row.addText("Consultas IGS", rowURL);
+		row.addText("Consultas CES", rowURL);
 		resultRows.add(row);
-		*/
 		
 		if(preautorizacionGerencial){
 		

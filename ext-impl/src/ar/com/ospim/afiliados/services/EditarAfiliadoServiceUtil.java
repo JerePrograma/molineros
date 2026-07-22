@@ -858,4 +858,20 @@ public class EditarAfiliadoServiceUtil {
         getInstance().reenviarAutorizacionesRecortadasPorBaja(cuilTitular, bajaFecha, motivoBaja, usuario);
     }
     
+    public static Afiliado buscarBeneficiarioVigentePorDni(
+            String documentoTipo,
+            String docuNumero,
+            String cuilTitularActual,
+            int inteActual,
+            Date vigenFecha) throws SystemException {
+
+        return getInstance().buscarBeneficiarioVigentePorDni(
+                documentoTipo,
+                docuNumero,
+                cuilTitularActual,
+                inteActual,
+                vigenFecha
+        );
+    }
+	
 }

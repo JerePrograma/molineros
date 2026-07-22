@@ -74,6 +74,7 @@ import ar.com.ospim.farmacia.ordenespago.reportes.ReporteOPReintegrosFarmaciaPre
 import ar.com.ospim.farmacia.reportes.GeneraVademecumAltasBajasXLS;
 import ar.com.ospim.farmacia.reportes.GeneraVademecumXLS;
 import ar.com.ospim.farmaciaOspim.reportes.action.ReporteArchivoAdmifarmMonotributo;
+import ar.com.ospim.farmaciaOspim.reportes.action.ReporteArchivoAdmifarmOspimGeneral;
 import ar.com.ospim.farmaciaOspim.reportes.action.ReporteDesgloseFarmacia;
 import ar.com.ospim.farmaciaOspim.reportes.action.ReporteMedicamentosOspim;
 import ar.com.ospim.farmaciaOspim.reportes.action.ReportePrestadoresInexistentesExcel;
@@ -300,7 +301,8 @@ public class XLSServlet extends HttpServlet {
 	private static final String REPORTE_UPLOAD_ARCHIVOS="REPORTE_UPLOAD_ARCHIVOS";
 	private static final String REPORTE_PRECIOS_FACTURACION="REPORTE_PRECIOS_FACTURACION";
 	private static final String REPORTE_AJUSTES_FACTURACION="REPORTE_AJUSTES_FACTURACION";
-	
+	private static final String REPORTE_ARCHIVO_ADMIFARM_OSPIM_GENERAL_PERIODO = "REPORTE_ARCHIVO_ADMIFARM_OSPIM_GENERAL_PERIODO";
+
 	
 
 	private static Log _log = LogFactoryUtil.getLog(XLSServlet.class);
@@ -902,6 +904,9 @@ public class XLSServlet extends HttpServlet {
 		} else if (reporte.equals(REPORTE_ARCHIVO_ADMIFARM_PERIODO)) {
 			wb = ReporteArchivoAdmifarmMonotributo.generaReporteAdmifarmMonotributo(req, res);
 			res.setHeader("Content-Disposition", "attachment; filename=\"archivo_admifarm_monotributo.xls\"");
+		} else if (reporte.equals(REPORTE_ARCHIVO_ADMIFARM_OSPIM_GENERAL_PERIODO)) {
+			wb = ReporteArchivoAdmifarmOspimGeneral.generaReporteAdmifarmOspimGeneral(req, res);
+			res.setHeader("Content-Disposition", "attachment; filename=\"archivo_admifarm_ospim_general.xls\"");
 		} else if(reporte.equals(REPORTE_CENTROS_COSTOS_CONTABLE)) {
 			wb = ReportePorCuentaContablePorCentroCosto.generar(req, res);
 			res.setHeader("Content-Disposition", "attachment; filename=\"reporteCentroCosto.xls\"");
@@ -917,11 +922,9 @@ public class XLSServlet extends HttpServlet {
 		}else if(reporte.equals(REPORTE_PRECIOS_FACTURACION)) {
 		    wb = ReportePreciosPlanesSuperadores.generarListado(req, res);
 			res.setHeader("Content-Disposition", "attachment; filename=\"reportePreciosPlanesSuperadores.xls\"");
-			
 		}else if(reporte.equals(REPORTE_AJUSTES_FACTURACION)) {
 		    wb = ReportePreciosPlanesSuperadores.generarListadoAjustes(req, res);
-			res.setHeader("Content-Disposition", "attachment; filename=\"reportePreciosPlanesSuperadores.xls\"");
-			
+			res.setHeader("Content-Disposition", "attachment; filename=\"reporteAjustesPlanesSuperadores.xls\"");
 		}else if (reporte.equals("test")) {
 			wb = test(req, res);
 		}

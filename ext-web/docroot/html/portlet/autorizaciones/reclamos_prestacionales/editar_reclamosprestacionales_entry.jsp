@@ -105,6 +105,7 @@ if (contextoCompraNonce != null
 <liferay-ui:error key="error-cargos-reclamo" message="completar-area-medica" />
 <liferay-ui:error key="error-comprobante-invalido" message="tipo-comprobante-invalido" />
 <liferay-ui:error key="error-comprobante-duplicado" message="comprobante-duplicado" />
+<liferay-ui:error key="errorPlanNoPermiteReclamo" message="<%=(String) request.getAttribute(\"msgErrorPlanNoPermiteReclamo\")%>"/>
 
 <liferay-ui:error key="errorCuentaReclamo" message="<%=(String)request.getAttribute(\"msgErrorCuentaReclamo\") %>" />
 

@@ -1,6 +1,8 @@
 package ar.com.ospim.ws.rest;
 
 import java.net.URLEncoder;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,7 +116,9 @@ public class WSAPPSController {
 	    Map<String, String> model = new HashMap<String, String>();
 
 	    String credencial = "";
-
+	    Afiliado afiliado = null;
+	    String fecha="";
+	    String ip = request.getRemoteAddr();
 	    if (!validarIngresoPlan(tipoDoc, nroDoc)) {
 	        model.put("estado", "DATOS INGRESADOS NO VALIDOS");
 	        model.put("credencial", "");
@@ -124,6 +128,13 @@ public class WSAPPSController {
 	    try {
 
 	        credencial = BusquedaAfiliadoServiceUtil.getCredencialAfiliadoPlan(tipoDoc, nroDoc);
+	        LocalDateTime ahora = LocalDateTime.now();
+	        DateTimeFormatter formato = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+	        fecha = ahora.format(formato);
+	        afiliado = BusquedaAfiliadoServiceUtil
+						.registraConsultaAfiliadoIGS(null, null, "",
+								!"null".equals(tipoDoc) ? tipoDoc : null,
+								nroDoc, ip,fecha);
 
 	        if (credencial != null && credencial.trim().length() > 0) {
 	            model.put("estado", "HABILITADO");

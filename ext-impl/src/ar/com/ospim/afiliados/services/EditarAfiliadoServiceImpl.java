@@ -2184,7 +2184,54 @@ public class EditarAfiliadoServiceImpl {
 	    }
 	}
 
+	public Afiliado buscarBeneficiarioVigentePorDni(
+	        String documentoTipo,
+	        String docuNumero,
+	        String cuilTitularActual,
+	        int inteActual,
+	        Date vigenFecha) throws SystemException {
 
+	    Connection con = null;
+	    PreparedStatement stmt = null;
+	    ResultSet rs = null;
+	    Afiliado afiliado = null;
+
+	    try {
+	        con = ConnectionHelper.getConnection();
+
+	        String sql =
+	            "SELECT * FROM public.buscar_beneficiario_vigente_por_dni(?, ?, ?, ?, ?)";
+
+	        stmt = con.prepareStatement(sql);
+	        stmt.setString(1, documentoTipo);
+	        stmt.setString(2, docuNumero);
+	        stmt.setString(3, cuilTitularActual);
+	        stmt.setInt(4, inteActual);
+	        stmt.setDate(5, vigenFecha != null ? new java.sql.Date(vigenFecha.getTime()) : null);
+
+	        rs = stmt.executeQuery();
+
+	        if (rs.next()) {
+	            afiliado = new Afiliado();
+
+	            afiliado.setCuil_titular(rs.getString("cuil_titular"));
+	            afiliado.setInte(rs.getInt("inte"));
+	            afiliado.setApellido(rs.getString("apellido"));
+	            afiliado.setNombre(rs.getString("nombre"));
+	            afiliado.setCuil(rs.getString("cuil"));
+	            afiliado.setDocumento_tipo(rs.getString("documento_tipo"));
+	            afiliado.setDocu_numero(rs.getString("docu_numero"));
+	        }
+
+	    } catch (Exception e) {
+	        _log.debug(e.getMessage());
+	        throw new SystemException(e);
+	    } finally {
+	        ConnectionHelper.cerrar(stmt, con);
+	    }
+
+	    return afiliado;
+	}
 
 
 

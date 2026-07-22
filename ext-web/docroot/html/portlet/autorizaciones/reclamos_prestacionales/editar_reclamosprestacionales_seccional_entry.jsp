@@ -61,6 +61,7 @@ portletURL.setParameter(Constants.ACTION, WebKeysAutorizaciones.RECLAMO_PRESTACI
 <liferay-ui:error key="error-comprobante-invalido" message="tipo-comprobante-invalido" />
 <liferay-ui:error key="error-comprobante-duplicado" message="comprobante-duplicado" />
 <liferay-ui:error key="error-afi-baja-reclamo" message="afiliado-dado-de-baja" />
+<liferay-ui:error key="errorPlanNoPermiteReclamo" message="<%=(String) request.getAttribute(\"msgErrorPlanNoPermiteReclamo\")%>"/>
 
 
 <liferay-ui:error key="error-enviar-mail"

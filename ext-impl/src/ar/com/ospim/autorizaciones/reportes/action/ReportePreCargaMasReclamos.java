@@ -23,6 +23,7 @@ public class ReportePreCargaMasReclamos extends AgendadoJava {
 	private static Log _log = LogFactoryUtil
 			.getLog(ReportePreCargaMasReclamos.class);
 	private HSSFWorkbook wb;
+	private HSSFWorkbook wbSURGE;
 	
 	@Override
 	public void correrAgendado(ReporteAutomatico ra) {
@@ -35,13 +36,12 @@ public class ReportePreCargaMasReclamos extends AgendadoJava {
 		
 		
 		wb = new HSSFWorkbook();	
-	
 		wb= ReportePreCargaMasReclamosExcel.generaReporte();
-
-	
 		enviarReporte(fecha, wb);
 		
-	
+        wbSURGE = new HSSFWorkbook();	
+		wbSURGE= ReportePreCargaMasReclamosExcel.generaReportePendientesSURGE();
+		enviarReporteSURGE(fecha, wbSURGE);
 		
 			
 	}
@@ -80,14 +80,6 @@ public class ReportePreCargaMasReclamos extends AgendadoJava {
 //Fin Agregado			
 			
 		}
-
-//DS - Comentado 28-10-2022 para probar si se soluciona problema de gmail que no envia todos los mails		
-/*		
-		MailUtils.enviarMailGmailconXls(rac.getMailFrom(), rac.getPass(),
-				emails, "Reclamos prestacionales en estado pre-carga y pendiente " + fecha,
-				"Reclamos prestacionales en estado pre-carga y pendiente " + fecha, wb, "Reclamos prestacionales en estado pre-carga y pendiente " + fecha + ".xls");
-*/				
-		
 	}
 	
 	
@@ -97,6 +89,38 @@ public class ReportePreCargaMasReclamos extends AgendadoJava {
 		return null;
 	}
 	
-	
+	private void enviarReporteSURGE(String fecha, HSSFWorkbook wb) {
+		
+		// obtener configuracion del reporte_automatico
+		ReportesAutomaticosConfiguracion rac = null;
+      	try {
+	         rac = ReportesServiceUtil.getConfiguracion();Integer delay=Integer.parseInt(TraeListasServiceUtil.getSystemConfig("EMAIL_DELAY"));
+		
+		} catch (SystemException e) {
+			e.printStackTrace();
+		}
+		
+		List<String> emails;
+		String destinos;
+		
+		emails = new ArrayList<String>();
+		destinos=TraeListasServiceUtil.getSystemConfig("EMAIL_DESTINATARIO_RECLAMO_PENDIENTE_SURGE");
+		Integer delay=Integer.parseInt(TraeListasServiceUtil.getSystemConfig("EMAIL_DELAY"));
+		
+		String[] auxDestinos = destinos.split(";");
+		for (String to : auxDestinos) {
+			emails = new ArrayList<String>(); //DS Agregado 28-10-2022 por problema en envia de email. A efectos de generar una prueba
+			emails.add(to);
+
+			MailUtils.enviarMailGmailconXls(rac.getMailFrom(), rac.getPass(),
+					emails, "Reclamos prestacionales en estado pendiente y recuperables SURGE " + fecha,
+					"Reclamos prestacionales en estado pendiente y recuperables SURGE" + fecha, wb, "Reclamos prestacionales en estado pendiente y recuperables SURGE " + fecha + ".xls");
+			try {
+				Thread.sleep(delay *1000);
+			} catch (InterruptedException e) {}
+			
+		}
+		
+	}
 	
 }

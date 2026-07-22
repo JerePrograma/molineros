@@ -3243,4 +3243,47 @@ public class TraeListasServiceImpl {
 			}
 			return listaProvincias;
 	} 
+	 
+	 public List<ReclamosPrestacionalesRevisionEstado> getReclamosPrestacionalesRevisionEstadoAutorizado() {
+	
+	 Connection con = null;
+	 CallableStatement stmt = null;
+	
+	 List<ReclamosPrestacionalesRevisionEstado> listaEstadosRevision = new ArrayList<ReclamosPrestacionalesRevisionEstado>();
+	
+	 try {
+	
+	     String sql =
+	         "{call autorizaciones.traer_reclamos_prestacionales_revision_estado_autorizado()}";
+	
+	     con = ConnectionHelper.getConnection();
+	     stmt = con.prepareCall(sql);
+	
+	     ResultSet rs = stmt.executeQuery();
+	
+	     while (rs.next()) {
+	
+	         ReclamosPrestacionalesRevisionEstado estadoReclamo =
+	             new ReclamosPrestacionalesRevisionEstado(
+	                 rs.getInt("id"),
+	                 rs.getString("descripcion")
+	             );
+	
+	         listaEstadosRevision.add(estadoReclamo);
+	     }
+	
+	 } catch (Exception e) {
+	
+	     _log.error(
+	         "Error obteniendo las observaciones especiales de reclamos prestacionales",
+	         e
+	     );
+	
+	 } finally {
+	
+	     ConnectionHelper.cerrar(stmt, con);
+	 }
+	
+	 return listaEstadosRevision;
+	}
 }

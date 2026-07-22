@@ -421,58 +421,58 @@ on A.rp_id_reclamo   = C.r_id_reclamo_prestacional]]>
 			<staticText>
 				<reportElement x="165" y="20" width="45" height="16"/>
 				<textElement>
-					<font size="8" isBold="true"/>
+					<font size="7" isBold="true"/>
 				</textElement>
 				<text><![CDATA[Código]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="10" y="20" width="149" height="16"/>
 				<textElement>
-					<font size="8" isBold="true"/>
+					<font size="7" isBold="true"/>
 				</textElement>
 				<text><![CDATA[Prestación / Módulo Solicitado]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="343" y="20" width="62" height="16"/>
 				<textElement>
-					<font size="8" isBold="true"/>
+					<font size="7" isBold="true"/>
 				</textElement>
 				<text><![CDATA[Cargo OSPIM]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="216" y="20" width="45" height="16"/>
 				<textElement>
-					<font size="8" isBold="true"/>
+					<font size="7" isBold="true"/>
 				</textElement>
 				<text><![CDATA[Importe]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="265" y="20" width="76" height="16"/>
 				<textElement>
-					<font size="8" isBold="true"/>
+					<font size="7" isBold="true"/>
 				</textElement>
 				<text><![CDATA[Cargo EnSalud]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="486" y="18" width="45" height="16"/>
 				<textElement>
-					<font size="8" isBold="true"/>
+					<font size="7" isBold="true"/>
 				</textElement>
 				<text><![CDATA[Recupera]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="536" y="19" width="27" height="11"/>
 				<textElement>
-					<font size="8" isBold="true"/>
+					<font size="7" isBold="true"/>
 				</textElement>
 				<text><![CDATA[R.SSS]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="410" y="19" width="71" height="16"/>
-				<textElement textAlignment="Right">
-					<font size="8" isBold="true"/>
+				<textElement textAlignment="Left">
+					<font size="7" isBold="true"/>
 				</textElement>
-				<text><![CDATA[Cargo IMESA]]></text>
+				<text><![CDATA[Cargo Prestadora]]></text>
 			</staticText>
 		</band>
 		<band height="83">

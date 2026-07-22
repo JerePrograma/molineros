@@ -36,6 +36,12 @@ public class BusquedaReporteReclamoFiltro implements Serializable {
 	private int recuperableSur;
 	
 	
+	
+	public BusquedaReporteReclamoFiltro() {
+		super();
+	}
+
+
 	public BusquedaReporteReclamoFiltro(Date fechaOspim, Date fechaOspim1, int inte, String cuilTitular, int nroReclamo,
 			String codePrestacion, int tipoPrestacion, int estado, Date fechaCierre, Date fechaCierre1,
 			String codigoTipoGestion, String resolucion, String sectorSeleccionado, String tipoPedido, Integer nroLote,

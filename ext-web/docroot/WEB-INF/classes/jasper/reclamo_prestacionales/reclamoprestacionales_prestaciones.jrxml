@@ -41,35 +41,35 @@
 			<textField pattern="¤ #,##0.00" isBlankWhenNull="true">
 				<reportElement x="277" y="0" width="60" height="12"/>
 				<textElement>
-					<font size="7"/>
+					<font size="6"/>
 				</textElement>
 				<textFieldExpression class="java.lang.Double"><![CDATA[$F{pr_cargo_ps}]]></textFieldExpression>
 			</textField>
 			<textField pattern="¤ #,##0.00" isBlankWhenNull="true">
 				<reportElement x="209" y="0" width="60" height="12"/>
 				<textElement>
-					<font size="7"/>
+					<font size="6"/>
 				</textElement>
 				<textFieldExpression class="java.lang.Double"><![CDATA[$F{pr_importe}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
 				<reportElement x="4" y="0" width="154" height="12"/>
 				<textElement>
-					<font size="7"/>
+					<font size="6"/>
 				</textElement>
 				<textFieldExpression class="java.lang.String"><![CDATA[$F{pr_nombreprestacion}]]></textFieldExpression>
 			</textField>
 			<textField pattern="¤ #,##0.00" isBlankWhenNull="true">
 				<reportElement x="352" y="0" width="60" height="12"/>
 				<textElement>
-					<font size="7"/>
+					<font size="6"/>
 				</textElement>
 				<textFieldExpression class="java.lang.Double"><![CDATA[$F{pr_cargo_ospim}]]></textFieldExpression>
 			</textField>
 			<textField pattern="000000" isBlankWhenNull="true">
 				<reportElement x="165" y="1" width="37" height="12"/>
 				<textElement textAlignment="Justified">
-					<font size="7"/>
+					<font size="6"/>
 				</textElement>
 				<textFieldExpression class="java.lang.String"><![CDATA[$F{pr_codigo_prestacion}]]></textFieldExpression>
 			</textField>
@@ -96,15 +96,15 @@
 			</textField>
 			<textField pattern="¤ #,##0.00">
 				<reportElement x="516" y="1" width="51" height="12"/>
-				<textElement textAlignment="Right">
-					<font size="7"/>
+				<textElement textAlignment="Left">
+					<font size="6"/>
 				</textElement>
 				<textFieldExpression class="java.lang.Double"><![CDATA[$F{pr_reconocido_sss}]]></textFieldExpression>
 			</textField>
 			<textField pattern="¤ #,##0.00" isBlankWhenNull="true">
 				<reportElement x="416" y="1" width="60" height="11"/>
 				<textElement textAlignment="Right">
-					<font size="7"/>
+					<font size="6"/>
 				</textElement>
 				<textFieldExpression class="java.lang.Double"><![CDATA[$F{pr_cargo_imesa}]]></textFieldExpression>
 			</textField>

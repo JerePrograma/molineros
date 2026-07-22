@@ -76,10 +76,20 @@ import ar.com.ospim.procesaArchivos.beans.farmaciaospim.DetalleAdmifarm;
 			throws SystemException {
 	return getInstance().getArchivosSubidosAdmifarm();
 	}
+	
+	public static List<ArchivoAdmifarm> getArchivosSubidosAdmifarmOspimGeneral()
+			throws SystemException {
+	return getInstance().getArchivosSubidosAdmifarmOspimGeneral();
+	}
 
 	public static List<DetalleAdmifarm> getListaDetalleAdmifarm(String nombreTabla)
 	        throws SystemException {
 	    return getInstance().getListaDetalleAdmifarm(nombreTabla);
+	}
+	
+	public static List<DetalleAdmifarm> getListaDetalleAdmifarmOspimGeneral(String nombreTabla)
+	        throws SystemException {
+	    return getInstance().getListaDetalleAdmifarmOspimGeneral(nombreTabla);
 	}
 	
 	public static List<TiposDeVentas> getTipoDeVentas() {

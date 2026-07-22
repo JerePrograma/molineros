@@ -83,6 +83,11 @@ public class GuardarOtrosDatosAction extends PortletAction {
 		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(actionRequest).getSession();
 		PortletSession portletSession = actionRequest.getPortletSession();
 		Afiliado afiliadoInSession = (Afiliado) session.getAttribute(WebKeysAfiliados.AFILIADO_EN_EDICION);
+		
+		if (StringUtils.checkEmpty(updateAfiBorrado)) {
+		    validarDniBeneficiarioVigente(actionRequest, afiliadoInSession);
+		}
+		
 		Afiliado afiliadoEnBase = ActionUtil.getAfiliadoInclusoDadoBajaByCuilInte(
 				afiliadoInSession.getCuil_titular(), 0);
 		
@@ -759,6 +764,10 @@ public class GuardarOtrosDatosAction extends PortletAction {
 
 	private boolean existenSitusLaboralesVigente(List<SituacionLaboral> situLaborales, Date vigen_fecha) {
 		
+		if (situLaborales == null || situLaborales.isEmpty()) {
+	        return true; // no hay situación laboral vigente
+	    }
+		
 		int i = 0;
 		boolean existeSituVigente = false;
 		boolean existeSituVigenteActual = false;
@@ -1213,5 +1222,41 @@ public class GuardarOtrosDatosAction extends PortletAction {
 		}
 		
 		return result;
+	}
+	
+	private void validarDniBeneficiarioVigente(ActionRequest actionRequest, Afiliado afiliado)
+	        throws SystemException {
+
+	    if (afiliado == null) {
+	        return;
+	    }
+
+	    String tipoDoc = afiliado.getDocumento_tipo();
+	    String nroDoc = afiliado.getDocu_numero();
+
+	    if (tipoDoc == null || nroDoc == null || nroDoc.trim().equals("")) {
+	        return;
+	    }
+
+	    if ("ET".equalsIgnoreCase(tipoDoc)) {
+	        return;
+	    }
+
+	    Afiliado existente = EditarAfiliadoServiceUtil.buscarBeneficiarioVigentePorDni(
+	            tipoDoc,
+	            nroDoc,
+	            afiliado.getCuil_titular(),
+	            afiliado.getInte(),
+	            afiliado.getVigen_fecha()
+	    );
+
+	    if (existente != null) {
+	        String mensaje = "El DNI " + nroDoc + " ya se encuentra activo en el grupo familiar "
+	                + existente.getCuil_titular() + "-" + existente.getInte()
+	                + " (" + existente.getApellido() + ", " + existente.getNombre() + ").";
+
+	        actionRequest.setAttribute("Invalido", mensaje);
+	        SessionErrors.add(actionRequest, FaltanDatosAfiliadoException.class.getName());
+	    }
 	}
 }
