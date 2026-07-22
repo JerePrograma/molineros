@@ -12,7 +12,7 @@
 						<table>
 							<tr>
 								<td><b><label id="CantidadDeContactosAsociados">
-											Ning鷑 Contacto Asociado. </label></b></td>
+											Ning煤n Contacto Asociado. </label></b></td>
 								<td><input type="button"
 									value="Ver Contactos Asociados al Caso."
 									onClick="<portlet:namespace />vercontactosdelreclamo();"
@@ -133,7 +133,7 @@
 							id="<portlet:namespace />observacion_revision" maxlength="200"
 							name="<portlet:namespace />observacion_revision"></textarea> <br>
 						<b><liferay-ui:message
-								key="La observaci髇 de 200 caracteres como m醲imo." /></b></td>
+								key="La observaci贸n de 200 caracteres como m谩ximo." /></b></td>
 					<td>
 						<div id="<portlet:namespace />botonrevision">
 							<input type="button"
@@ -165,7 +165,7 @@
 				<td colspan="5">
 					<fieldset class="block-labels">
 						<legend>
-							<liferay-ui:message key="Justificaci髇 M閐ica" />
+							<liferay-ui:message key="Justificaci贸n M茅dica" />
 						</legend>
 						<textarea name="<portlet:namespace />justificacionmedcica_reclamo"
 							id="<portlet:namespace />justificacionmedcica_reclamo" rows="4"
@@ -181,7 +181,7 @@
 				<td colspan="5">
 					<fieldset class="block-labels">
 						<legend>
-							<liferay-ui:message key="Dictamen Comisi髇" />
+							<liferay-ui:message key="Dictamen Comisi贸n" />
 						</legend>
 						<textarea rows="4" cols="70" onkeyup="convertToUppercase(this)"
 							<% if (!esEdicion ||( reclamoprestacional!=null && reclamoprestacional.getTipo_gestion_cierre_reclamo()>0 ) )  { %>
@@ -255,7 +255,7 @@
 											<td><label><liferay-ui:message key="observaciones-area-medica"/>:</label></td>
 											<td><select name="<portlet:namespace/>observacion_medica" id="<portlet:namespace/>observacion_medica"
 												<% if (!esEdicion) { %> disabled='disabled' <%}%>>												
-													<option value="0">Seleccione observaci髇</option>
+													<option value="0">Seleccione observaci贸n</option>
 														<% for (ReclamosPrestacionalesRevisionEstado  revisionEstado  : listaRevisionEstado) { %>
 															<option
 																value="<%=revisionEstado.getId()%>"><%=revisionEstado.getDescripcion()%>
@@ -304,7 +304,7 @@
 										<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isDosPorciento()   ? "checked" : "Unchecked"  %>
 										<% if (!esEdicion) { %> disabled='disabled' <%}%>></td>
 
-									<td width="210px"><label>D閎ito Prestadora:</label> <input
+									<td width="210px"><label>D茅bito Prestadora:</label> <input
 										type="checkbox" id="<portlet:namespace />debitoprestadora"
 										name="<portlet:namespace />debitoprestadora"
 										<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isDebitoPrestadora()    ? "checked" : "Unchecked"  %>

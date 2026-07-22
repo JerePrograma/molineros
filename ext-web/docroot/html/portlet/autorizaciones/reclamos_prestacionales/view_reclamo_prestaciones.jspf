@@ -1,14 +1,14 @@
 	<fieldset class="lfr-table"> 
 	
 		<legend>
-			<liferay-ui:message key="Datos de la Prestaci髇" />
+			<liferay-ui:message key="Datos de la Prestaci贸n" />
 		</legend>
 
 		<div id="<portlet:namespace />busqueda_farmacia" align="left" width="80%" style="display:none;">
 			<table class="lfr-table"
 				style="border-collapse: separate; border-spacing: 3px;">
 				<tr>
-					<td colspan="15"><label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;F. Prestaci髇: </label></td>
+					<td colspan="15"><label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;F. Prestaci贸n: </label></td>
 					<td colspan="15"><liferay-ui:input-date
 							dayParam="fechaPrestacionDiaFarmacia" dayValue=""
 					dayNullable="<%=true%>"
@@ -42,7 +42,7 @@
 		<div id="<portlet:namespace />busqueda_prestaciones" align="left" width="80%" style="display:none;">
 			<table width="75%">
 				<tr>
-					<td ><label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;F. Prestaci髇: </label></td>
+					<td ><label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;F. Prestaci贸n: </label></td>
 					<td ><liferay-ui:input-date dayParam="fechaPrestacionDia" dayValue="" dayNullable="<%=true%>"
 					monthParam="fechaPrestacionMes" monthValue="-1" monthNullable="<%=true%>"
 					yearParam="fechaPrestacionAnio" yearValue="" yearNullable="<%=true%>"
@@ -82,6 +82,12 @@ boolean hayPrestacionEnProcesoDeEdicion =
 				WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION
 		) != null;
 %>
+		<% if (esBorradorCompras) { %>
+		<div class="portlet-msg-info">
+			Cargo OSPIM: <%= cargoOspimPorcentajeInicial %>% -
+			Cargo Prestadora: <%= cargoPrestadoraPorcentajeInicial %>%
+		</div>
+		<% } %>
 		<div id="<portlet:namespace />datos_edicion_prestacion" align="left" width="95%"
 		style="<%= hayPrestacionEnProcesoDeEdicion ? "" : "display:none;" %>">
           <table width="95%;"><tr><td>
@@ -229,7 +235,7 @@ boolean hayPrestacionEnProcesoDeEdicion =
 					<td colspan="15">
 						<fieldset class="block-labels">
 							<legend>
-								<liferay-ui:message key="Autorizado por 羠ea M閐ica:" />
+								<liferay-ui:message key="Autorizado por 脕rea M茅dica:" />
 							</legend>
 							<table>
 								<tr>
@@ -290,7 +296,7 @@ boolean hayPrestacionEnProcesoDeEdicion =
 									 <% if (!esEdicion) { %> disabled="disabled" <%} %> onchange="cambiorecuperable();">
 														<option value="0">Seleccione</option>
 														<option value="1">SUR</option>
-														<option value="3">Integraci髇</option>
+														<option value="3">Integraci贸n</option>
 														<option value="2">NO Recuperable</option>
 									</select>
 									
@@ -309,7 +315,7 @@ boolean hayPrestacionEnProcesoDeEdicion =
 							id="<portlet:namespace />observacion_prestacion" maxlength="250"
 							name="<portlet:namespace />observacion_prestacion"></textarea> <br>
 						<b><liferay-ui:message
-								key="La observaci髇 de 200 caracteres como m醲imo." /></b></td>
+								key="La observaci贸n de 200 caracteres como m谩ximo." /></b></td>
 					<td colspan="12">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 					<td><input type="button"
 						value="<liferay-ui:message key="add-prestacion-reclamo" />"

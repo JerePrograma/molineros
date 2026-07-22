@@ -39,6 +39,9 @@ CONTRACTS=(
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalEditorContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalTabGuardContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalDraftScopeContractTest.java
+  ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalPrestacionRulesContractTest.java
+  ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalCompraPrecargaContractTest.java
+  ext-impl/src/ar/com/ospim/test/ReclamoPrestacionalSegmentationContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoAppMobileSyncContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoAppMobileOutboxContractTest.java
   ext-impl/src/ar/com/ospim/test/ReclamoAppMobileHttpTimeoutContractTest.java
@@ -57,12 +60,14 @@ require_file ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales
 require_file ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_tab_guard.js
 require_file ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_editor_patch.js
 require_file ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js
+require_file ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_prestacion_rules_patch.js
 
 for javascript in \
   ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.js \
   ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_tab_guard.js \
   ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_editor_patch.js \
-  ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js; do
+  ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_p0_patch.js \
+  ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_prestacion_rules_patch.js; do
   node --check "$javascript"
 done
 info "JavaScript legacy y parches con sintaxis válida"
@@ -84,6 +89,9 @@ TEST_CLASSES=(
   ar.com.ospim.test.ReclamoPrestacionalEditorContractTest
   ar.com.ospim.test.ReclamoPrestacionalTabGuardContractTest
   ar.com.ospim.test.ReclamoPrestacionalDraftScopeContractTest
+  ar.com.ospim.test.ReclamoPrestacionalPrestacionRulesContractTest
+  ar.com.ospim.test.ReclamoPrestacionalCompraPrecargaContractTest
+  ar.com.ospim.test.ReclamoPrestacionalSegmentationContractTest
   ar.com.ospim.test.ReclamoAppMobileSyncContractTest
   ar.com.ospim.test.ReclamoAppMobileOutboxContractTest
   ar.com.ospim.test.ReclamoAppMobileHttpTimeoutContractTest
