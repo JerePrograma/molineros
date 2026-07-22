@@ -23,10 +23,14 @@ public final class ReclamoPrestacionalLegacyFlowContractTest {
                 + "IniciarReclamoPrestacionalCompraAction.java");
         String contexto = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/beans/"
                 + "ReclamoPrestacionalCompraContexto.java");
+        String view = leer("ext-web/docroot/html/portlet/autorizaciones/"
+                + "reclamos_prestacionales/view_reclamo.jsp");
         String jspContexto = leer("ext-web/docroot/html/portlet/autorizaciones/"
                 + "reclamos_prestacionales/view_reclamo_contexto.jspf");
         String inicio = leer("ext-web/docroot/html/portlet/autorizaciones/"
                 + "reclamos_prestacionales/view_reclamo_inicio_formulario.jspf");
+        String acciones = leer("ext-web/docroot/html/portlet/autorizaciones/"
+                + "reclamos_prestacionales/view_reclamo_acciones.jspf");
         String editor = leer("ext-web/docroot/html/portlet/autorizaciones/"
                 + "reclamos_prestacionales/datos_edicion_prestacion.jsp");
 
@@ -70,11 +74,32 @@ public final class ReclamoPrestacionalLegacyFlowContractTest {
         contiene(contexto, "nonce comparado", "coincideNonce");
         contiene(contexto, "usuario comparado", "perteneceAUsuario");
         contiene(contexto, "vigencia comparada", "estaVigente");
+
+        contiene(view, "guard de alta usa parámetro ADD",
+                "Constants.ADD.equalsIgnoreCase(cmdParametroCompras)");
+        contiene(view, "guard de alta exige origen Compras",
+                "\"compras\".equalsIgnoreCase(origenReclamoCompras)");
+        contiene(view, "guard de alta valida nonce",
+                "contextoReclamoCompras.coincideNonce(nonceReclamoCompras)");
+        contiene(view, "guard de alta valida usuario",
+                "contextoReclamoCompras.perteneceAUsuario");
+        contiene(view, "guard de alta valida vigencia",
+                "contextoReclamoCompras.estaVigente");
+        contiene(view, "guard de alta normaliza CMD",
+                "request.setAttribute(\n            Constants.CMD,\n            Constants.ADD");
+        antes(view, "request.setAttribute(", "view_reclamo.jspf");
+
         contiene(jspContexto, "JSP valida nonce", "contextoCompras.coincideNonce(nonceCompras)");
         contiene(jspContexto, "JSP valida usuario", "contextoCompras.perteneceAUsuario");
         contiene(jspContexto, "JSP valida vigencia", "contextoCompras.estaVigente");
         contiene(inicio, "nonce preservado al guardar",
                 "PARAM_RECLAMO_PRESTACIONAL_NONCE");
+        contiene(acciones, "alta renderiza Grabar", "<%if(esAlta){ %>");
+        contiene(acciones, "Grabar conserva handler legacy", "saveReclamo();");
+        contiene(acciones, "edición persistida renderiza Actualizar",
+                "<%if(esEdicionPersistida) {%>");
+        contiene(acciones, "Actualizar conserva handler legacy",
+                "editaReclamo(false);");
 
         noContiene(editor, "API ausente en Liferay 5.2", "HtmlUtil.escapeJS");
         contiene(editor, "wrapper de prestación balanceable",
@@ -97,6 +122,18 @@ public final class ReclamoPrestacionalLegacyFlowContractTest {
     private static void noContiene(String contenido, String etiqueta, String prohibido) {
         if (contenido.indexOf(prohibido) >= 0) {
             throw new AssertionError(etiqueta + ": se encontró [" + prohibido + "]");
+        }
+    }
+
+    private static void antes(String contenido, String primero, String segundo) {
+        int posicionPrimero = contenido.indexOf(primero);
+        int posicionSegundo = contenido.indexOf(segundo);
+        if (posicionPrimero < 0
+                || posicionSegundo < 0
+                || posicionPrimero >= posicionSegundo) {
+            throw new AssertionError(
+                    "Orden inválido entre [" + primero + "] y [" + segundo + "]"
+            );
         }
     }
 }
