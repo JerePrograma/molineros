@@ -3,6 +3,58 @@
 <%@ include file="/html/portlet/autorizaciones/init.jsp"%>
 <%@ include
 	file="/html/portlet/autorizaciones/reclamos_prestacionales/init.jsp"%>
+<%
+/*
+ * Normaliza exclusivamente el handoff válido Compras -> Reclamo
+ * Prestacional antes de que el ensamblado legacy resuelva el modo.
+ *
+ * En una navegación cross-portlet, el parámetro cmd=add puede convivir con
+ * un atributo Constants.CMD distinto. El contexto validado por nonce,
+ * usuario y vigencia es la evidencia necesaria para mantener este flujo en
+ * alta y permitir que la botonera renderice Grabar.
+ */
+String cmdParametroCompras = ParamUtil.getString(
+        request,
+        Constants.CMD,
+        ""
+);
+String origenReclamoCompras = ParamUtil.getString(
+        request,
+        "origen",
+        ""
+);
+String nonceReclamoCompras = ParamUtil.getString(
+        request,
+        WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
+        ""
+);
+Object contextoReclamoComprasObj = request.getSession().getAttribute(
+        WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+);
+ReclamoPrestacionalCompraContexto contextoReclamoCompras =
+        contextoReclamoComprasObj instanceof ReclamoPrestacionalCompraContexto
+        ? (ReclamoPrestacionalCompraContexto) contextoReclamoComprasObj
+        : null;
+
+boolean handoffReclamoComprasValido =
+        Constants.ADD.equalsIgnoreCase(cmdParametroCompras)
+        && "compras".equalsIgnoreCase(origenReclamoCompras)
+        && contextoReclamoCompras != null
+        && contextoReclamoCompras.coincideNonce(nonceReclamoCompras)
+        && contextoReclamoCompras.perteneceAUsuario(
+                user != null ? user.getScreenName() : ""
+        )
+        && contextoReclamoCompras.estaVigente(
+                System.currentTimeMillis()
+        );
+
+if (handoffReclamoComprasValido) {
+    request.setAttribute(
+            Constants.CMD,
+            Constants.ADD
+    );
+}
+%>
 <script type="text/javascript">
 window.ReclamoPrestacionalNamespace = '<portlet:namespace />';
 window.ReclamoPrestacionalAssetError = function(nombre) {
