@@ -1357,7 +1357,11 @@ public class NotificarCotizacionPrestadorServiceImpl {
             String descripcionItem =
                     detalle.getDescripcionItemVisible();
 
-            if (!WebKeysCompras.isEmpty(tipoItem)) {
+            if (!WebKeysCompras.isEmpty(tipoItem)
+                    && !"NOMENCLADOR".equalsIgnoreCase(
+                    tipoItem.trim()
+            )) {
+
                 sb.append(tipoItem);
                 sb.append(" | ");
             }

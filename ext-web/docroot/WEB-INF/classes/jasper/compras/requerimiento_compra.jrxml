@@ -397,17 +397,58 @@ $F{cantidad}
                         <font fontName="SansSerif" size="7"/>
                     </textElement>
                     <textFieldExpression class="java.lang.String"><![CDATA[
-($F{tipo_item} == null ? "" : $F{tipo_item})
-+ ($F{codigo_item} == null || $F{codigo_item}.trim().length() == 0
+(
+    $F{tipo_item} == null
+    || $F{tipo_item}.trim().length() == 0
+    || "NOMENCLADOR".equalsIgnoreCase(
+            $F{tipo_item}.trim()
+       )
         ? ""
-        : " - " + $F{codigo_item})
-+ ($F{descripcion_item} == null || $F{descripcion_item}.trim().length() == 0
+        : $F{tipo_item}.trim()
+)
++ (
+    $F{codigo_item} == null
+    || $F{codigo_item}.trim().length() == 0
         ? ""
-        : " - " + $F{descripcion_item})
-+ ($F{detalle_observaciones} == null || $F{detalle_observaciones}.trim().length() == 0
+        : (
+            $F{tipo_item} == null
+            || $F{tipo_item}.trim().length() == 0
+            || "NOMENCLADOR".equalsIgnoreCase(
+                    $F{tipo_item}.trim()
+               )
+                ? ""
+                : " - "
+          )
+          + $F{codigo_item}.trim()
+)
++ (
+    $F{descripcion_item} == null
+    || $F{descripcion_item}.trim().length() == 0
         ? ""
-        : "\nObs.: " + $F{detalle_observaciones})
-                ]]></textFieldExpression>
+        : (
+            (
+                $F{tipo_item} != null
+                && $F{tipo_item}.trim().length() > 0
+                && !"NOMENCLADOR".equalsIgnoreCase(
+                        $F{tipo_item}.trim()
+                   )
+            )
+            || (
+                $F{codigo_item} != null
+                && $F{codigo_item}.trim().length() > 0
+            )
+                ? " - "
+                : ""
+          )
+          + $F{descripcion_item}.trim()
+)
++ (
+    $F{detalle_observaciones} == null
+    || $F{detalle_observaciones}.trim().length() == 0
+        ? ""
+        : "\nObs.: " + $F{detalle_observaciones}
+)
+]]></textFieldExpression>
                 </textField>
 
                 <textField isBlankWhenNull="true">
@@ -442,14 +483,25 @@ $F{precio_total_estimado} == null
                         <font fontName="SansSerif" size="7"/>
                     </textElement>
                     <textFieldExpression class="java.lang.String"><![CDATA[
-($F{prestador_razon_social} == null
+(
+    $F{prestador_cuit} == null
+    || $F{prestador_cuit}.trim().length() == 0
         ? ""
-        : $F{prestador_razon_social})
-+ ($F{prestador_cuit} == null
-   || $F{prestador_cuit}.trim().length() == 0
+        : $F{prestador_cuit}.trim()
+)
++ (
+    $F{prestador_razon_social} == null
+    || $F{prestador_razon_social}.trim().length() == 0
         ? ""
-        : " - " + $F{prestador_cuit})
-                ]]></textFieldExpression>
+        : (
+            $F{prestador_cuit} == null
+            || $F{prestador_cuit}.trim().length() == 0
+                ? ""
+                : " - "
+          )
+          + $F{prestador_razon_social}.trim()
+)
+]]></textFieldExpression>
                 </textField>
 
                 <line>
