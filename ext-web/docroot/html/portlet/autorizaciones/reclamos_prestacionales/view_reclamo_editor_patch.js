@@ -75,15 +75,15 @@ function limpiarScriptsLegacy(html) {
 
 function etiquetaObservacion() {
     if (campo("btnedita_prestacion").length) {
-        return "Observaci贸n de edici贸n:";
+        return "Observaci髇 de edici髇:";
     }
     if (campo("btnautoriza_prestacion").length) {
-        return "Observaci贸n de autorizaci贸n:";
+        return "Observaci髇 de autorizaci髇:";
     }
     if (campo("btnrechaza_prestacion").length) {
-        return "Observaci贸n de rechazo:";
+        return "Observaci髇 de rechazo:";
     }
-    return "Observaci贸n:";
+    return "Observaci髇:";
 }
 
 function repararEtiquetaObservacion() {
@@ -293,7 +293,7 @@ function cargarEditorSeguro(url, parametros, callback) {
         error: function(xhr, estado, error) {
             destino.html(
                     '<div class="portlet-msg-error">' +
-                    "No se pudo cargar el editor de la prestaci贸n." +
+                    "No se pudo cargar el editor de la prestaci髇." +
                     "</div>"
             );
 
@@ -310,7 +310,7 @@ function cargarEditorSeguro(url, parametros, callback) {
 
             if (window.console && window.console.error) {
                 window.console.error(
-                        "Error cargando editor de prestaci贸n",
+                        "Error cargando editor de prestaci髇",
                         error || estado
                 );
             }

@@ -135,12 +135,12 @@ function banner() {
         css: { display: "none", marginBottom: "12px" }
     });
     var texto = jQuery("<span/>", {
-        text: "Este editor est√° activo en otra pesta√±a. " +
-                "Para evitar sobrescribir datos, esta pesta√±a qued√≥ bloqueada."
+        text: "Este editor est· activo en otra pestaÒa. " +
+                "Para evitar sobrescribir datos, esta pestaÒa quedÛ bloqueada."
     });
     var boton = jQuery("<button/>", {
         type: "button",
-        text: "Tomar control en esta pesta√±a",
+        text: "Tomar control en esta pestaÒa",
         css: { marginLeft: "12px" }
     });
 
@@ -235,7 +235,7 @@ function liberarLease() {
             window.localStorage.removeItem(STORAGE_KEY);
         }
     } catch (error) {
-        // La expiraci√≥n temporal libera el lease aunque no pueda borrarse.
+        // La expiraciÛn temporal libera el lease aunque no pueda borrarse.
     }
 }
 

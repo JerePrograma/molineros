@@ -2,10 +2,10 @@
 <%@ page import="ar.com.ospim.autorizaciones.beans.PrestacionesReclamo" %>
 <%
 /*
- * Recuperable SUR y Reconocido SSS estÃ¡n fuera de uso en Reclamo
- * Prestacional. La normalizaciÃ³n se realiza tambiÃ©n en servidor para que el
- * listado temporal de sesiÃ³n no conserve valores heredados de Compras ni de
- * reclamos histÃ³ricos, aunque el JavaScript no llegue a ejecutarse.
+ * Recuperable SUR y Reconocido SSS están fuera de uso en Reclamo
+ * Prestacional. La normalización se realiza también en servidor para que el
+ * listado temporal de sesión no conserve valores heredados de Compras ni de
+ * reclamos históricos, aunque el JavaScript no llegue a ejecutarse.
  */
 Object listadoPrestacionesNeutro =
         session.getAttribute(

@@ -117,11 +117,11 @@
 										onblur="manejarTipoPedido();">
 										<option value="SELECCIONAR">SELECCIONAR</option>
 										<option value=EXCEPCION
-											<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getTipoPedido())  && reclamoprestacional.getTipoPedido().equals("EXCEPCION") ? "selected" : ""  %>>EXCEPCI√ìN</option>
+											<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getTipoPedido())  && reclamoprestacional.getTipoPedido().equals("EXCEPCION") ? "selected" : ""  %>>EXCEPCI”N</option>
 										<option value="REINTEGRO"
 											<%=Validator.isNotNull(reclamoprestacional)  && Validator.isNotNull(reclamoprestacional.getTipoPedido())  &&  reclamoprestacional.getTipoPedido().equals("REINTEGRO") ? "selected" : ""  %>>REINTEGRO</option>
 										<option value="EXTRACAPITA"
-											<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getTipoPedido())  && reclamoprestacional.getTipoPedido().equals("EXTRACAPITA") ? "selected" : ""  %>>EXTRAC√ÅPITA</option>
+											<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getTipoPedido())  && reclamoprestacional.getTipoPedido().equals("EXTRACAPITA") ? "selected" : ""  %>>EXTRAC¡PITA</option>
 									</select>
 								</table></td>
 							
@@ -143,7 +143,7 @@
 							
 							            <option value="PRESTACIONES MEDICAS"
 							                <%= "PRESTACIONES MEDICAS".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
-							                PRESTACIONES M√âDICAS
+							                PRESTACIONES M…DICAS
 							            </option>
 							
 							            <option value="FARMACIA"
@@ -175,7 +175,7 @@
 								<td><label id="integracion_label" style="display:<%= esBorradorCompras ? "inline" : "none" %>"><liferay-ui:message key="integracion"  />:&nbsp;&nbsp;</label></td>
 								<td><select name="<portlet:namespace/>integracion" id="<portlet:namespace/>integracion"
 									<% if (!esEdicion) { %> disabled='disabled' <%}%> style="display:<%= esBorradorCompras ? "inline" : "none" %>"  >
-										<option value="0">Seleccione Integraci√≥n</option>
+										<option value="0">Seleccione IntegraciÛn</option>
 											<% for (ReclamosPrestacionalesIntegracion integracion : listaIntegracion) { %>
 												<option
 													<%=reclamoprestacional != null  && reclamoprestacional.getCodigoIntegracion() == integracion.getId() ? "selected" : ""  %>
@@ -357,7 +357,7 @@
 									<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isEntramite()   ? "checked" : "Unchecked" %>
 									<% if (!esEdicion) { %> disabled='disabled' <%}%> /></td>
 								<td>&nbsp;</td>
-								<td><liferay-ui:message key="Beneficiario en tr√°mite" /></td>
+								<td><liferay-ui:message key="Beneficiario en tr·mite" /></td>
 							</tr-->
 					
 

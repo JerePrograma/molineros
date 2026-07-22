@@ -133,11 +133,11 @@ span-fixed-size {
 
 
 	<div id="helpComprobantes" class="containerPlus draggable {buttons:'c', skin:'default', width:'700',title:'Ayuda',closed:'true'}" style="top: 500px; left: 200px">
-			Ejemplo de factura: CUIT 30999999999 FCP B 00001 - 00000028 F. EmisiÃ³n 2/07/2020 <br>
+			Ejemplo de factura: CUIT 30999999999 FCP B 00001 - 00000028 F. Emisión 2/07/2020 <br>
 			Comprobante: FCP,  <br>
 			Letra: B,  <br>
-			Suc.: 00001 ( o sÃ³lo el nÃºmero 1 y el sistema autocompletarÃ¡ los 0 a izquierda al guardar)  <br>
-			Nro: 00000028 ( o sÃ³lo el nÃºmero 28 y el sistema autocompletarÃ¡ los 0 a izquierda al guardar)  <br>
+			Suc.: 00001 ( o sólo el número 1 y el sistema autocompletará los 0 a izquierda al guardar)  <br>
+			Nro: 00000028 ( o sólo el número 28 y el sistema autocompletará los 0 a izquierda al guardar)  <br>
 			CUIT: 30999999999
 	</div>
 

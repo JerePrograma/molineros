@@ -245,7 +245,7 @@ function ejecutarConReglaRecuperable(original, contexto, argumentos) {
                     "RECLAMO_PRESTACIONAL_ACCION_PRESTACION_ERROR",
                     error && (error.stack || error.message || error)
             );
-            alert("No se pudo completar la acciÃ³n de la prestaciÃ³n.");
+            alert("No se pudo completar la acción de la prestación.");
             resultado = false;
         }
     } finally {
@@ -271,7 +271,7 @@ function guardarEdicionSeguro(tipoAccion) {
     }
 
     if (typeof original !== "function") {
-        alert("No se encontrÃ³ la acciÃ³n de ediciÃ³n de la prestaciÃ³n.");
+        alert("No se encontró la acción de edición de la prestación.");
         return false;
     }
 
@@ -323,8 +323,8 @@ function instalarBotonesSeguros() {
     }
 
     tipoAccion = detectarTipoAccion();
-    etiqueta = tipoAccion === 1 ? "Autorizar PrestaciÃ³n" :
-            (tipoAccion === 2 ? "Rechazar PrestaciÃ³n" : "Editar PrestaciÃ³n");
+    etiqueta = tipoAccion === 1 ? "Autorizar Prestación" :
+            (tipoAccion === 2 ? "Rechazar Prestación" : "Editar Prestación");
 
     campo("botones_edicion_prestacion").hide();
     campo("btnedita_prestacion").hide();
@@ -337,7 +337,7 @@ function instalarBotonesSeguros() {
         var valor = String(boton.val() || "");
 
         if (id !== namespace + "rp_cancelar_prestacion_seguro" &&
-                valor.indexOf("Cancelar EdiciÃ³n") === 0) {
+                valor.indexOf("Cancelar Edición") === 0) {
             boton.hide();
         }
     });
@@ -362,7 +362,7 @@ function instalarBotonesSeguros() {
     });
     var botonCancelar = jQuery("<input/>", {
         type: "button",
-        value: "Cancelar EdiciÃ³n de la PrestaciÃ³n",
+        value: "Cancelar Edición de la Prestación",
         id: namespace + "rp_cancelar_prestacion_seguro"
     });
 
