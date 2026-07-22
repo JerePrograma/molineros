@@ -85,38 +85,26 @@ if (listaIntegracion == null) {
             PortletSession.APPLICATION_SCOPE
     );
 }
-<<<<<<< .mine
-||||||| .r7295
 
-
-
-
-=======
-
-
-List<ReclamosPrestacionalesRevisionEstado> listaRevisionEstadoAutorizado =
-    (List<ReclamosPrestacionalesRevisionEstado>)
-        portletSession.getAttribute(
-            WebKeysAutorizaciones
-                .RECLAMOS_PRESTACIONALES_REVISION_ESTADO_AUTORIZADO_EN_SESION,
-            PortletSession.APPLICATION_SCOPE
-        );
+List<ReclamosPrestacionalesRevisionEstado>
+        listaRevisionEstadoAutorizado =
+                (List<ReclamosPrestacionalesRevisionEstado>)
+                        portletSession.getAttribute(
+                                WebKeysAutorizaciones
+                                        .RECLAMOS_PRESTACIONALES_REVISION_ESTADO_AUTORIZADO_EN_SESION,
+                                PortletSession.APPLICATION_SCOPE
+                        );
 
 if (listaRevisionEstadoAutorizado == null) {
-
->>>>>>> .r7305
     listaRevisionEstadoAutorizado =
-        TraeListasServiceUtil
-            .getReclamosPrestacionalesRevisionEstadoAutorizado();
+            TraeListasServiceUtil
+                    .getReclamosPrestacionalesRevisionEstadoAutorizado();
 
     portletSession.setAttribute(
-        WebKeysAutorizaciones
-            .RECLAMOS_PRESTACIONALES_REVISION_ESTADO_AUTORIZADO_EN_SESION,
-        listaRevisionEstadoAutorizado,
-        PortletSession.APPLICATION_SCOPE
+            WebKeysAutorizaciones
+                    .RECLAMOS_PRESTACIONALES_REVISION_ESTADO_AUTORIZADO_EN_SESION,
+            listaRevisionEstadoAutorizado,
+            PortletSession.APPLICATION_SCOPE
     );
 }
-
-
-
 %>
