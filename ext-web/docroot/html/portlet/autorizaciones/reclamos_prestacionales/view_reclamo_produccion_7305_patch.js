@@ -208,7 +208,7 @@ function validarFechaPrestacionAlta() {
     }
 
     window.alert(
-            "La fecha de prestaci贸n no puede ser posterior a la fecha de emisi贸n"
+            "La fecha de prestaci髇 no puede ser posterior a la fecha de emisi髇"
     );
     return false;
 }
@@ -230,7 +230,7 @@ function validarFechaPrestacionEdicion() {
     }
 
     window.alert(
-            "La fecha de prestaci贸n no puede ser posterior a la fecha de emisi贸n"
+            "La fecha de prestaci髇 no puede ser posterior a la fecha de emisi髇"
     );
     return false;
 }

@@ -5,10 +5,10 @@
 	file="/html/portlet/autorizaciones/reclamos_prestacionales/init.jsp"%>
 <%
 /*
- * Normaliza exclusivamente el handoff vÃ¡lido Compras -> Reclamo
+ * Normaliza exclusivamente el handoff válido Compras -> Reclamo
  * Prestacional antes de que el ensamblado legacy resuelva el modo.
  *
- * En una navegaciÃ³n cross-portlet, el parÃ¡metro cmd=add puede convivir con
+ * En una navegación cross-portlet, el parámetro cmd=add puede convivir con
  * un atributo Constants.CMD distinto. El contexto validado por nonce,
  * usuario y vigencia es la evidencia necesaria para mantener este flujo en
  * alta y permitir que la botonera renderice Grabar.
@@ -222,7 +222,7 @@ window.ReclamoPrestacionalAssetError = function(nombre) {
 
                 destino.html(
                         '<div class="portlet-msg-error">'
-                                + 'No se pudo completar la bÃºsqueda de '
+                                + 'No se pudo completar la búsqueda de '
                                 + 'afiliados. Cierre esta ventana e '
                                 + 'intente nuevamente.'
                                 + '</div>'
