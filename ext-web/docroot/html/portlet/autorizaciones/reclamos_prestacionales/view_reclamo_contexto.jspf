@@ -4,7 +4,11 @@
 Calendar prestacionFecha = CalendarFactoryUtil.getCalendar();
 String prestacionFechaString = prestacionFecha.get(Calendar.DATE)+"/"+(prestacionFecha.get(Calendar.MONTH) + 1)+"/"+prestacionFecha.get(Calendar.YEAR);
 
-String cmd = (String) request.getAttribute(Constants.CMD);	
+String cmd = (String) request.getAttribute(Constants.CMD);
+if (Validator.isNull(cmd)) {
+	cmd = ParamUtil.getString(request, Constants.CMD, "");
+}
+
 String caso_vinculado = String.valueOf(request.getAttribute("caso_vinculado")!=null?request.getAttribute("caso_vinculado"):0);
 String cuit_titular_vinculado="";
 int inte_vinculado=0;
@@ -44,6 +48,13 @@ if (contextoCompras != null
 
 boolean esBorradorCompras = esAlta && contextoCompras != null;
 
+int cargoOspimPorcentajeInicial = esBorradorCompras
+        ? contextoCompras.getCargoOspimPorcentaje()
+        : 0;
+int cargoPrestadoraPorcentajeInicial = esBorradorCompras
+        ? contextoCompras.getCargoPrestadoraPorcentaje()
+        : 0;
+
 /*
  * Un ReclamoPrestacional en sesion puede ser un borrador de alta. La
  * existencia del objeto no implica que exista un reclamo persistido.
@@ -56,11 +67,16 @@ int idReclamoPantalla = esAlta || !existeReclamoPersistido
         : reclamoprestacional.getId_reclamo();
 
 String _nuevoEstadoObservado = "";
-if (request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS) != null) {
-  _nuevoEstadoObservado = String.valueOf(request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS));
-  reclamoprestacional.setEstado(Integer.parseInt(_nuevoEstadoObservado));
+Object nuevoEstadoObservadoObj = request.getSession().getAttribute(
+        WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS
+);
+if (nuevoEstadoObservadoObj != null && reclamoprestacional != null) {
+    _nuevoEstadoObservado = String.valueOf(nuevoEstadoObservadoObj);
+    reclamoprestacional.setEstado(Integer.parseInt(_nuevoEstadoObservado));
 }
-request.getSession().removeAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS);
+request.getSession().removeAttribute(
+        WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS
+);
 		
 Calendar fechadia  =Calendar.getInstance(); 		
 Calendar fechaospim  = Calendar.getInstance();	
@@ -78,7 +94,10 @@ List<CieDiez> cieDiez=(ArrayList<CieDiez>) request.getSession().getAttribute(Web
 
 
 String divcheckbox="";
-String nroreclamo="Caso Nro 00000";
+String nroreclamo = esBorradorCompras
+        ? "Nuevo Reclamo Prestacional - Requerimiento #"
+                + contextoCompras.getIdRequerimientoCompra()
+        : "Nuevo Reclamo Prestacional";
 String opAsignadaalReclamo ="";
 boolean opAsignadaalReclamoExiste =false;
 ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO resolucionAutorizado=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINVALOR;
