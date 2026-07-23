@@ -10,7 +10,7 @@ AcomodarControlesEdicion();
 	                         <%if (Validator.isNotNull(reclamoprestacional) &&   Validator.isNotNull(reclamoprestacional.getTipoPedido()) ) {   %>
 	                         if ( document.getElementById("<portlet:namespace />tipopedido").selectedIndex!=0) {
 	                        	 document.getElementById("<portlet:namespace />tipopedido").disabled = "disabled"; 
-	                         }	                            
+	                         }                            
 	                         <%}%>
 						 	 document.getElementById("<portlet:namespace />fechaospimDia").disabled = true;
 							 document.getElementById("<portlet:namespace />fechaospimMes").disabled = true;
@@ -18,7 +18,7 @@ AcomodarControlesEdicion();
 	// DATOS DE REVISION
 	                         jQuery("#<portlet:namespace />botoneditareclamo").show();
 	                         document.getElementById("<portlet:namespace />estado").disabled = "";
-                        	 document.getElementById("<portlet:namespace />fecharevisionDia").disabled = "";
+                         	 document.getElementById("<portlet:namespace />fecharevisionDia").disabled = "";
 							 document.getElementById("<portlet:namespace />fecharevisionMes").disabled = "";
 							 document.getElementById("<portlet:namespace />fecharevisionAnio").disabled = "";
 							 document.getElementById("<portlet:namespace />observacion_revision").disabled = "";
@@ -63,7 +63,8 @@ AcomodarControlesEdicion();
 <script type="text/javascript">
 window.ReclamoPrestacionalViewConfig = {
     namespace: '<portlet:namespace />',
-    contextPath: '<%= request.getContextPath() %>',
+    contextPath: '<%= reclamoPrestacionalContextPath %>',
+    assetBase: '<%= reclamoPrestacionalAssetBase %>',
     urls: {
         borrarPrestaciones: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/borrar_reclamosprestaciones_todos',
         filtrarLetraComprobante: '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/filtrarLetraComprobante&tipo_pedido=',
