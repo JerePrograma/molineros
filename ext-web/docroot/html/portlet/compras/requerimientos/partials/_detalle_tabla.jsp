@@ -135,8 +135,7 @@ if (puedeCotizarDetalle
         && !hayPrestadoresHabilitadosDetalle) { %>
 
     <div class="portlet-msg-info">
-        No hay prestadores notificados correctamente con un archivo
-        de presupuesto activo cargado para este requerimiento.
+        No hay cotizaciones cargadas para poder seleccionar un prestador adjudicado
     </div>
 
 <% } %>
