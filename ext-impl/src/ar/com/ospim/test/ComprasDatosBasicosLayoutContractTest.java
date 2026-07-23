@@ -4,8 +4,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
-/** Contrato textual de la distribución de datos básicos de Compras. */
+/** Contrato textual de la tabla de datos basicos de Compras. */
 public final class ComprasDatosBasicosLayoutContractTest {
 
     private static final Charset ISO_8859_1 =
@@ -19,63 +20,156 @@ public final class ComprasDatosBasicosLayoutContractTest {
     }
 
     public static void main(String[] args) throws Exception {
-        String jsp = leer(DATOS_BASICOS);
+        Path path = Paths.get(DATOS_BASICOS);
+        byte[] bytes = Files.readAllBytes(path);
+        String jsp = new String(bytes, ISO_8859_1);
 
         contiene(
                 jsp,
-                "Sector comparte la fila de ID y Estado",
-                "</strong>\n"
-                        + "            </td>\n\n"
-                        + "            <td><label for=\"<portlet:namespace />sector_id\">Sector:</label></td>"
+                "tabla exterior unica de datos basicos",
+                "<table class=\"lfr-table compras-resumen-requerimiento "
+                        + "compras-cargos-requerimiento "
+                        + "compras-datos-basicos-requerimiento\""
+        );
+        ocurrencias(
+                jsp,
+                "una sola tabla exterior compartida",
+                "compras-datos-basicos-requerimiento",
+                1
         );
         noContiene(
                 jsp,
-                "Sector no abre una segunda fila de resumen",
-                "</tr>\n\n"
-                        + "        <tr>\n"
-                        + "            <td><label for=\"<portlet:namespace />sector_id\">Sector:</label></td>"
+                "sin segunda tabla exterior de cargos",
+                "<table class=\"lfr-table compras-cargos-requerimiento\">"
         );
 
         contiene(
                 jsp,
-                "la fila visual de cargos se conserva",
-                "<table class=\"lfr-table compras-cargos-requerimiento\">\n"
-                        + "        <tr>"
+                "ID se muestra en textbox readonly",
+                "id=\"<portlet:namespace />requerimiento_id_visual\""
         );
         contiene(
                 jsp,
-                "Surge queda en la misma fila visual que los cargos",
-                "</table>\n"
-                        + "                </div>\n"
-                        + "            </td>\n\n"
-                        + "            <td style=\"vertical-align: middle;\">\n"
-                        + "                <label for=\"<portlet:namespace />surge\">"
+                "Estado se muestra en textbox readonly",
+                "id=\"<portlet:namespace />estado_visual\""
         );
         contiene(
                 jsp,
-                "el grupo ocultable conserva los tres datos de cargos",
+                "campos visuales no se pueden editar",
+                "readonly=\"readonly\""
+        );
+
+        antes(
+                jsp,
+                "requerimiento_id_visual",
+                "estado_visual"
+        );
+        antes(
+                jsp,
+                "estado_visual",
+                "sector_id"
+        );
+        antes(
+                jsp,
+                "fila_cargos_compra",
+                "id=\"<portlet:namespace />surge\""
+        );
+
+        contiene(
+                jsp,
+                "Sector conserva select en creacion y edicion",
+                "<select id=\"<portlet:namespace />sector_id\""
+        );
+        contiene(
+                jsp,
+                "Sector usa textbox en vista",
+                "value=\"<%= HtmlUtil.escape(sectorDescripcionSoloLectura) %>\""
+        );
+        contiene(
+                jsp,
+                "Surge conserva select en creacion y edicion",
+                "<select id=\"<portlet:namespace />surge\""
+        );
+        contiene(
+                jsp,
+                "Surge usa textbox en vista",
+                "value=\"<%= HtmlUtil.escape(req.getSurgeDescripcion()) %>\""
+        );
+
+        contiene(
+                jsp,
+                "Cargo OSPIM conserva sincronizacion",
+                "onkeyup=\"<portlet:namespace />sincronizarFormularioCompra();\""
+        );
+        contiene(
+                jsp,
+                "Cargo tercerizadora conserva sincronizacion",
+                "id=\"<portlet:namespace />cargo_tercerizadora\""
+        );
+        contiene(
+                jsp,
+                "Recupero conserva checkbox calculado al editar",
+                "<input type=\"checkbox\"\n"
+                        + "                                           id=\"<portlet:namespace />recupero\""
+        );
+        contiene(
+                jsp,
+                "Recupero usa textbox en vista",
+                "value=\"<%= recuperoPorCargoTercerizadoraActual "
+                        + "? \"S&iacute;\" : \"No\" %>\""
+        );
+
+        contiene(
+                jsp,
+                "grupo ocultable de cargos preservado",
                 "id=\"<portlet:namespace />fila_cargos_compra\""
         );
         noContiene(
                 jsp,
-                "Surge no se oculta con la fila automática de cargos",
+                "Surge no se oculta con los cargos",
                 "<tr id=\"<portlet:namespace />fila_cargos_compra\""
         );
+        noContiene(
+                jsp,
+                "vista sin divs de texto plano",
+                "<div class=\"compras-campo-solo-lectura\">"
+        );
 
-        contiene(jsp, "creación y edición conservan Sector", "id=\"<portlet:namespace />sector_id\"");
-        contiene(jsp, "vista conserva Sector", "sectorDescripcionSoloLectura");
-        contiene(jsp, "creación y edición conservan Surge", "id=\"<portlet:namespace />surge\"");
-        contiene(jsp, "vista conserva Surge", "req.getSurgeDescripcion()");
-        contiene(jsp, "Cargo OSPIM se conserva", "id=\"<portlet:namespace />cargo_ospim\"");
-        contiene(jsp, "Cargo tercerizadora se conserva", "id=\"<portlet:namespace />cargo_tercerizadora\"");
-        contiene(jsp, "Recupero se conserva", "id=\"<portlet:namespace />recupero\"");
+        verificaCodificacion(path, bytes, jsp);
 
         System.out.println("CONTRATO_COMPRAS_DATOS_BASICOS_LAYOUT_OK");
     }
 
-    private static String leer(String ruta) throws Exception {
-        Path path = Paths.get(ruta);
-        return new String(Files.readAllBytes(path), ISO_8859_1);
+    private static void verificaCodificacion(
+            Path path,
+            byte[] bytes,
+            String contenido) {
+
+        if (bytes.length >= 3
+                && (bytes[0] & 0xFF) == 0xEF
+                && (bytes[1] & 0xFF) == 0xBB
+                && (bytes[2] & 0xFF) == 0xBF) {
+
+            throw new AssertionError("BOM UTF-8 no permitido: " + path);
+        }
+
+        if (!Arrays.equals(bytes, contenido.getBytes(ISO_8859_1))) {
+            throw new AssertionError(
+                    "El archivo no hace round-trip ISO-8859-1: " + path
+            );
+        }
+
+        noContiene(contenido, "sin mojibake A tilde", "\u00C3");
+        noContiene(contenido, "sin mojibake A circunflejo", "\u00C2");
+        noContiene(contenido, "sin reemplazo Unicode", "\uFFFD");
+
+        for (int i = 0; i < bytes.length; i++) {
+            if ((bytes[i] & 0x80) != 0) {
+                throw new AssertionError(
+                        "El JSP modificado no es ASCII/ISO-8859-1: byte=" + i
+                );
+            }
+        }
     }
 
     private static void contiene(
@@ -98,6 +192,53 @@ public final class ComprasDatosBasicosLayoutContractTest {
         if (contenido.indexOf(prohibido) >= 0) {
             throw new AssertionError(
                     etiqueta + ": se encontro [" + prohibido + "]"
+            );
+        }
+    }
+
+    private static void antes(
+            String contenido,
+            String primero,
+            String segundo) {
+
+        int posicionPrimero = contenido.indexOf(primero);
+        int posicionSegundo = contenido.indexOf(segundo);
+
+        if (posicionPrimero < 0
+                || posicionSegundo < 0
+                || posicionPrimero >= posicionSegundo) {
+
+            throw new AssertionError(
+                    "Orden invalido entre ["
+                            + primero
+                            + "] y ["
+                            + segundo
+                            + "]"
+            );
+        }
+    }
+
+    private static void ocurrencias(
+            String contenido,
+            String etiqueta,
+            String buscado,
+            int esperado) {
+
+        int cantidad = 0;
+        int posicion = 0;
+
+        while ((posicion = contenido.indexOf(buscado, posicion)) >= 0) {
+            cantidad++;
+            posicion += buscado.length();
+        }
+
+        if (cantidad != esperado) {
+            throw new AssertionError(
+                    etiqueta
+                            + ": esperado="
+                            + esperado
+                            + " actual="
+                            + cantidad
             );
         }
     }
