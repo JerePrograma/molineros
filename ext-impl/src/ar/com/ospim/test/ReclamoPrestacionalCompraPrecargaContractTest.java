@@ -151,6 +151,41 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
                 "recuperable_sur_compra_inicial"
         );
 
+        contiene(
+                view,
+                "normaliza ADD antes de resolver el contexto",
+                "boolean handoffComprasModoValido"
+        );
+        contiene(
+                view,
+                "exige nonce del handoff",
+                "Validator.isNotNull(nonceComprasModo)"
+        );
+        contiene(
+                view,
+                "valida coincidencia del nonce",
+                "contextoComprasModo.coincideNonce(nonceComprasModo)"
+        );
+        contiene(
+                view,
+                "valida pertenencia al usuario",
+                "contextoComprasModo.perteneceAUsuario("
+        );
+        contiene(
+                view,
+                "valida vigencia del contexto",
+                "contextoComprasModo.estaVigente("
+        );
+        noContiene(
+                view,
+                "no depende del parametro generico origen",
+                "\"origen\""
+        );
+        antes(
+                view,
+                "request.setAttribute(Constants.CMD, Constants.ADD);",
+                "view_reclamo_contexto.jspf"
+        );
         antes(
                 view,
                 "view_reclamo_cabecera.jspf",
