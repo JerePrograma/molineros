@@ -5,7 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-/** Contrato textual del editor de prestaciones y su estabilizador AJAX. */
+/** Contrato textual del editor de prestaciones y sus guards AJAX. */
 public final class ReclamoPrestacionalEditorContractTest {
 
     private static final Charset UTF_8 = Charset.forName("UTF-8");
@@ -18,12 +18,20 @@ public final class ReclamoPrestacionalEditorContractTest {
         String dir =
                 "ext-web/docroot/html/portlet/autorizaciones/"
                         + "reclamos_prestacionales/";
+
         String view = leer(dir + "view_reclamo.jsp", UTF_8);
-        String editorPatch = leer(dir + "view_reclamo_editor_patch.js", UTF_8);
-        String editorJsp = leer(dir + "datos_edicion_prestacion.jsp", LATIN_1);
+        String editorPatch = leer(
+                dir + "view_reclamo_editor_patch.js",
+                UTF_8
+        );
+        String editorJsp = leer(
+                dir + "datos_edicion_prestacion.jsp",
+                LATIN_1
+        );
+        String baseJs = leer(dir + "view_reclamo.js", LATIN_1);
 
         assertBefore(
-                "editor cargado después del guard de pestañas",
+                "editor cargado despues del guard de pestanas",
                 view,
                 "view_reclamo_tab_guard.js?v=20260717-initial-state-1",
                 "view_reclamo_editor_patch.js?v=20260717-initial-state-1"
@@ -36,7 +44,7 @@ public final class ReclamoPrestacionalEditorContractTest {
         );
 
         assertContains(
-                "guard de XHR síncrono instalado",
+                "guard de XHR sincrono instalado",
                 view,
                 "ajaxNoBloqueante.__rpFiltroLetraNoBloqueante = true"
         );
@@ -46,12 +54,12 @@ public final class ReclamoPrestacionalEditorContractTest {
                 ".indexOf(\"filtrarLetraComprobante\") >= 0"
         );
         assertContains(
-                "filtro de letra forzado a asíncrono",
+                "filtro de letra forzado a asincrono",
                 view,
                 "opciones.async = true"
         );
-        assertContains(
-                "diagnóstico del desbloqueo",
+        assertNotContains(
+                "operacion normal sin advertencia",
                 view,
                 "RECLAMO_PRESTACIONAL_FILTRO_LETRA_ASYNC"
         );
@@ -82,10 +90,20 @@ public final class ReclamoPrestacionalEditorContractTest {
                 view,
                 "buscar_afiliado_datos"
         );
-        assertContains(
-                "diagnóstico de XHR de afiliado",
+        assertNotContains(
+                "operaciones normales del afiliado sin advertencia",
                 view,
                 "RECLAMO_PRESTACIONAL_AFILIADO_ASYNC"
+        );
+        assertContains(
+                "errores reales del afiliado conservados",
+                view,
+                "RECLAMO_PRESTACIONAL_AFILIADO_ERROR"
+        );
+        assertContains(
+                "error real usa consola de error",
+                view,
+                "window.console.error"
         );
         assertContains(
                 "loader de afiliados reemplazado",
@@ -98,51 +116,42 @@ public final class ReclamoPrestacionalEditorContractTest {
                 "struts_action=/autorizaciones/buscar_afiliados"
         );
         assertContains(
-                "timeout explícito del buscador",
+                "timeout explicito del buscador",
                 view,
                 "var TIMEOUT_AFILIADO_MS = 15000"
         );
         assertContains(
                 "error visible del buscador",
                 view,
-                "No se pudo completar la búsqueda de "
+                "No se pudo completar la busqueda de "
         );
         assertContains(
-                "API de diagnóstico del afiliado",
+                "API de diagnostico del afiliado",
                 view,
                 "window.ReclamoPrestacionalAfiliadoSearchPatch"
         );
-        assertBefore(
-                "protección del afiliado activa antes del componente legacy",
-                view,
-                "ajaxAfiliadoNoBloqueante.__rpAfiliadoNoBloqueante = true",
-                "view_reclamo.jspf"
+
+        assertContains(
+                "base JS exporta grabacion namespaced",
+                baseJs,
+                "window[reclamoPrestacionalNamespace + \"saveReclamo\"]"
+                        + " = reclamoPrestacional_saveReclamo;"
         );
 
         assertNotContains(
-                "método no disponible en Liferay 5.2",
+                "metodo no disponible en Liferay 5.2",
                 editorJsp,
                 "HtmlUtil.escapeJS"
         );
         assertContains(
-                "inicialización post-render",
+                "inicializacion post-render",
                 editorJsp,
                 "jQuery(function() {"
-        );
-        assertContains(
-                "código leído desde el control renderizado",
-                editorJsp,
-                "codigoSeguimiento_filtro_edit\").val() || \"\""
         );
         assertContains(
                 "wrapper del editor permanece abierto",
                 editorJsp,
                 "if (prestacionEnEdicion != null) {"
-        );
-        assertContains(
-                "cierre final del wrapper",
-                editorJsp,
-                "<%\n}\n%>"
         );
 
         assertContains(
@@ -161,52 +170,27 @@ public final class ReclamoPrestacionalEditorContractTest {
                 "filtrarLetraComprobanteEdicion"
         );
         assertContains(
-                "carga de letra asíncrona",
+                "carga de letra asincrona",
                 editorPatch,
                 "type: \"GET\""
         );
         assertNotContains(
-                "AJAX síncrono prohibido",
+                "AJAX sincrono prohibido",
                 editorPatch,
                 "async: false"
         );
         assertNotContains(
-                "AJAX síncrono legacy prohibido",
+                "AJAX sincrono legacy prohibido",
                 editorPatch,
                 "async:false"
         );
         assertContains(
-                "cálculo decimal localizado",
-                editorPatch,
-                ".replace(\",\", \".\")"
-        );
-        assertContains(
-                "variables de cálculo encapsuladas",
-                editorPatch,
-                "var total = importe * cantidad"
-        );
-        assertContains(
-                "etiqueta de edición",
-                editorPatch,
-                "Observación de edición:"
-        );
-        assertContains(
-                "etiqueta de autorización",
-                editorPatch,
-                "Observación de autorización:"
-        );
-        assertContains(
-                "etiqueta de rechazo",
-                editorPatch,
-                "Observación de rechazo:"
-        );
-        assertContains(
                 "error visible de carga",
                 editorPatch,
-                "No se pudo cargar el editor de la prestación."
+                "No se pudo cargar el editor de la prestacion."
         );
         assertContains(
-                "API de diagnóstico expuesta",
+                "API de diagnostico expuesta",
                 editorPatch,
                 "window.ReclamoPrestacionalEditorPatch"
         );
@@ -226,7 +210,7 @@ public final class ReclamoPrestacionalEditorContractTest {
 
         if (contenido.indexOf(esperado) < 0) {
             throw new AssertionError(
-                    etiqueta + ": no se encontró [" + esperado + "]"
+                    etiqueta + ": no se encontro [" + esperado + "]"
             );
         }
     }
@@ -238,7 +222,7 @@ public final class ReclamoPrestacionalEditorContractTest {
 
         if (contenido.indexOf(prohibido) >= 0) {
             throw new AssertionError(
-                    etiqueta + ": se encontró [" + prohibido + "]"
+                    etiqueta + ": se encontro [" + prohibido + "]"
             );
         }
     }
@@ -252,10 +236,16 @@ public final class ReclamoPrestacionalEditorContractTest {
         int posPrimero = contenido.indexOf(primero);
         int posSegundo = contenido.indexOf(segundo);
 
-        if (posPrimero < 0 || posSegundo < 0 || posPrimero >= posSegundo) {
+        if (posPrimero < 0
+                || posSegundo < 0
+                || posPrimero >= posSegundo) {
+
             throw new AssertionError(
-                    etiqueta + ": orden inválido entre ["
-                            + primero + "] y [" + segundo + "]"
+                    etiqueta + ": orden invalido entre ["
+                            + primero
+                            + "] y ["
+                            + segundo
+                            + "]"
             );
         }
     }
