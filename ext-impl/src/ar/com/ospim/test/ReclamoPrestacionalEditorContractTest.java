@@ -22,7 +22,7 @@ public final class ReclamoPrestacionalEditorContractTest {
         String view = leer(dir + "view_reclamo.jsp", UTF_8);
         String editorPatch = leer(
                 dir + "view_reclamo_editor_patch.js",
-                UTF_8
+                LATIN_1
         );
         String editorJsp = leer(
                 dir + "datos_edicion_prestacion.jsp",

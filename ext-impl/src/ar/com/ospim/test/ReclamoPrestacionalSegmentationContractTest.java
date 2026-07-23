@@ -122,9 +122,9 @@ public final class ReclamoPrestacionalSegmentationContractTest {
         notContains(assembler, "assembler sin ruta protocol-relative",
                 "request.getContextPath() %>/html/");
         occurrences(view, "src=\"<%= reclamoPrestacionalAssetBase %>", 6);
-        occurrences(assembler, "src=\"<%= reclamoPrestacionalAssetBase %>", 1);
+        occurrences(assembler, "src=\"<%= reclamoPrestacionalAssetBase %>", 2);
         occurrences(view, "onerror=\"window.ReclamoPrestacionalAssetError", 6);
-        occurrences(assembler, "onerror=\"window.ReclamoPrestacionalAssetError", 1);
+        occurrences(assembler, "onerror=\"window.ReclamoPrestacionalAssetError", 2);
 
         before(view, "view_reclamo.jspf", "view_reclamo.js?v=");
         before(view, "view_reclamo.js?v=", "view_reclamo_tab_guard.js?v=");
