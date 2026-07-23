@@ -1,3 +1,35 @@
+<%
+Object contextoComprasModoObj = request.getSession().getAttribute(
+        WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+);
+String nonceComprasModo = ParamUtil.getString(
+        request,
+        WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
+        ""
+);
+ReclamoPrestacionalCompraContexto contextoComprasModo =
+        contextoComprasModoObj instanceof ReclamoPrestacionalCompraContexto
+        ? (ReclamoPrestacionalCompraContexto) contextoComprasModoObj
+        : null;
+
+boolean handoffComprasModoValido =
+        Constants.ADD.equalsIgnoreCase(
+                ParamUtil.getString(request, Constants.CMD, "")
+        )
+        && contextoComprasModo != null
+        && Validator.isNotNull(nonceComprasModo)
+        && contextoComprasModo.coincideNonce(nonceComprasModo)
+        && contextoComprasModo.perteneceAUsuario(
+                user != null ? user.getScreenName() : ""
+        )
+        && contextoComprasModo.estaVigente(
+                System.currentTimeMillis()
+        );
+
+if (handoffComprasModoValido) {
+    request.setAttribute(Constants.CMD, Constants.ADD);
+}
+%>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_contexto.jspf" %>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_inicio_formulario.jspf" %>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_cabecera.jspf" %>
