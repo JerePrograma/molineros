@@ -20,11 +20,28 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
             "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
                     + "ReclamoPrestacionalCompraPrecargaServiceUtil.java";
 
+    private static final String VIEW =
+            "ext-web/docroot/html/portlet/autorizaciones/"
+                    + "reclamos_prestacionales/view_reclamo.jspf";
+
+    private static final String RECUPERABLE =
+            "ext-web/docroot/html/portlet/autorizaciones/"
+                    + "reclamos_prestacionales/"
+                    + "view_reclamo_recuperable_neutro.jspf";
+
+    private static final String SURGE_PATCH =
+            "ext-web/docroot/html/portlet/autorizaciones/"
+                    + "reclamos_prestacionales/"
+                    + "view_reclamo_compras_surge_patch.js";
+
     private ReclamoPrestacionalCompraPrecargaContractTest() {
     }
 
     public static void main(String[] args) throws Exception {
         String service = leer(SERVICE);
+        String view = leer(VIEW);
+        String recuperable = leer(RECUPERABLE);
+        String surgePatch = leer(SURGE_PATCH);
 
         String validacion = extraerMetodo(
                 service,
@@ -98,6 +115,75 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
                 "Confirmar nomenclador/medicamento."
         );
 
+        contiene(
+                recuperable,
+                "reconoce el borrador de Compras",
+                "esBorradorCompras\n        && contextoCompras != null"
+        );
+        contiene(
+                recuperable,
+                "obtiene SUR exclusivamente desde surge",
+                "contextoCompras.isSurge()"
+        );
+        contiene(
+                recuperable,
+                "conserva la lista de prestaciones precargadas",
+                "LISTADO_PRESTACIONES_RECLAMOS_EN_SESION"
+        );
+        contiene(
+                recuperable,
+                "conserva la prestacion activa en edicion",
+                "PRESTACION_EN_PROCESO_DE_EDICION"
+        );
+        noContiene(
+                recuperable,
+                "no elimina la cabecera ni la precarga de sesion",
+                "session.removeAttribute("
+        );
+        noContiene(
+                recuperable,
+                "no convierte el borrador en alta vacia",
+                "esBorradorCompras = false"
+        );
+        contiene(
+                recuperable,
+                "expone el valor inicial para el cliente",
+                "recuperable_sur_compra_inicial"
+        );
+
+        antes(
+                view,
+                "view_reclamo_cabecera.jspf",
+                "view_reclamo_recuperable_neutro.jspf"
+        );
+        antes(
+                view,
+                "view_reclamo_recuperable_neutro.jspf",
+                "view_reclamo_prestaciones.jspf"
+        );
+        contiene(
+                view,
+                "invalida cache del parche restaurado",
+                "view_reclamo_compras_surge_patch.js"
+                        + "?v=20260723-restaura-precarga-1"
+        );
+
+        contiene(
+                surgePatch,
+                "propaga Recuperable SUR en solicitudes AJAX",
+                "copia.recuperableSur = parseInt(valorActual, 10);"
+        );
+        noContiene(
+                surgePatch,
+                "no oculta el editor de la prestacion precargada",
+                ".hide()"
+        );
+        noContiene(
+                surgePatch,
+                "no fuerza el formulario de carga vacio",
+                ".show()"
+        );
+
         System.out.println(
                 "CONTRATO_RECLAMO_PRESTACIONAL_COMPRAS_PRECARGA_OK"
         );
@@ -133,6 +219,28 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
         }
 
         throw new AssertionError("Metodo sin cierre: " + firma);
+    }
+
+    private static void antes(
+            String contenido,
+            String primero,
+            String segundo) {
+
+        int posicionPrimero = contenido.indexOf(primero);
+        int posicionSegundo = contenido.indexOf(segundo);
+
+        if (posicionPrimero < 0
+                || posicionSegundo < 0
+                || posicionPrimero >= posicionSegundo) {
+
+            throw new AssertionError(
+                    "Orden invalido entre ["
+                            + primero
+                            + "] y ["
+                            + segundo
+                            + "]"
+            );
+        }
     }
 
     private static void contiene(
