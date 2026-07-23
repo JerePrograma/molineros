@@ -71,6 +71,18 @@ public final class ReclamoPrestacionalComprasValidacionVisualContractTest {
         );
 
         contiene(
+                ensamblador,
+                "parche Compras cargado en el ensamblador",
+                "view_reclamo_compras_surge_patch.js"
+                        + "?v=20260723-restaura-precarga-1"
+        );
+        noContiene(
+                ensamblador,
+                "ensamblador sin logica duplicada de guardado",
+                "ReclamoPrestacionalComprasGuardadoFinal"
+        );
+
+        contiene(
                 compras,
                 "fallback para jQuery sin ajaxPrefilter",
                 "jQuery.ajaxPrefilter = function(prefiltro)"
@@ -119,7 +131,7 @@ public final class ReclamoPrestacionalComprasValidacionVisualContractTest {
         contiene(
                 compras,
                 "datos documentales ocultos solo para Compras",
-                "comprobante = campo(\"datos_comprobante\")"
+                "var comprobante = campo(\"datos_comprobante\")"
         );
         contiene(
                 compras,
@@ -148,54 +160,69 @@ public final class ReclamoPrestacionalComprasValidacionVisualContractTest {
         );
 
         contiene(
-                ensamblador,
-                "override final exclusivo de Compras",
+                compras,
+                "API final exclusiva de Compras",
                 "window.ReclamoPrestacionalComprasGuardadoFinal"
         );
         contiene(
-                ensamblador,
+                compras,
+                "fecha de prestacion usa sufijo Edicion",
+                "fechaAusente(\"fechaPrestacion\", \"Edicion\")"
+        );
+        contiene(
+                compras,
                 "fecha de prestacion usa id real de dia",
                 "valor(\"fechaPrestacionDiaEdicion\")"
         );
         contiene(
-                ensamblador,
+                compras,
                 "fecha de prestacion usa id real de mes",
                 "valor(\"fechaPrestacionMesEdicion\")"
         );
         contiene(
-                ensamblador,
+                compras,
                 "fecha de prestacion usa id real de anio",
                 "valor(\"fechaPrestacionAnioEdicion\")"
         );
         contiene(
-                ensamblador,
+                compras,
                 "rechaza referencia temporal ART",
                 "codigo.indexOf(\"ART-\") === 0"
         );
         contiene(
-                ensamblador,
+                compras,
                 "guarda como OTR",
                 "cpbte_tipo: \"OTR\""
         );
         contiene(
-                ensamblador,
+                compras,
                 "no exige sucursal documental",
                 "cpbte_cuit_sucursal: \"\""
         );
         contiene(
-                ensamblador,
+                compras,
                 "no exige fecha documental",
                 "cpbte_anio: \"\""
         );
         contiene(
-                ensamblador,
+                compras,
                 "usa cargador nativo para guardar",
                 "window.ReclamoPrestacionalJQueryLoadOriginal"
         );
         contiene(
-                ensamblador,
+                compras,
                 "reemplaza la accion legacy de editar",
                 "window[namespace + \"editarPrestacionSeleccionada\"]"
+        );
+        contiene(
+                compras,
+                "recuperable sincronizado antes del envio",
+                "sincronizarAliasRecuperable();"
+        );
+        contiene(
+                compras,
+                "contrato historico de Surge preservado",
+                "copia.recuperableSur = parseInt(valorActual, 10);"
         );
 
         String javascript = compras + ensamblador;
