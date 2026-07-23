@@ -24,6 +24,14 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
             "ext-web/docroot/html/portlet/autorizaciones/"
                     + "reclamos_prestacionales/view_reclamo.jspf";
 
+    private static final String CONTEXTO =
+            "ext-web/docroot/html/portlet/autorizaciones/"
+                    + "reclamos_prestacionales/view_reclamo_contexto.jspf";
+
+    private static final String CABECERA =
+            "ext-web/docroot/html/portlet/autorizaciones/"
+                    + "reclamos_prestacionales/view_reclamo_cabecera.jspf";
+
     private static final String RECUPERABLE =
             "ext-web/docroot/html/portlet/autorizaciones/"
                     + "reclamos_prestacionales/"
@@ -40,6 +48,8 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
     public static void main(String[] args) throws Exception {
         String service = leer(SERVICE);
         String view = leer(VIEW);
+        String contexto = leer(CONTEXTO);
+        String cabecera = leer(CABECERA);
         String recuperable = leer(RECUPERABLE);
         String surgePatch = leer(SURGE_PATCH);
 
@@ -149,6 +159,42 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
                 recuperable,
                 "expone el valor inicial para el cliente",
                 "recuperable_sur_compra_inicial"
+        );
+
+        contiene(
+                contexto,
+                "restaura el titulo legacy del alta",
+                "String nroreclamo = \"Caso Nro 00000\";"
+        );
+        contiene(
+                contexto,
+                "muestra el requerimiento en el campo inferior",
+                "String opAsignadaalReclamo = esBorradorCompras"
+        );
+        contiene(
+                contexto,
+                "identifica el requerimiento de Compras",
+                "\"Requerimiento #\""
+        );
+        noContiene(
+                contexto,
+                "no mezcla el requerimiento con el titulo principal",
+                "\"Nuevo Reclamo Prestacional - Requerimiento #\""
+        );
+        contiene(
+                contexto,
+                "conserva el titulo del reclamo persistido",
+                "nroreclamo =\"Reclamo Nro : \""
+        );
+        contiene(
+                contexto,
+                "conserva la leyenda sin orden de pago",
+                "opAsignadaalReclamo=\"Sin Orden de Pago\""
+        );
+        antes(
+                cabecera,
+                "<%= nroreclamo %>",
+                "<%= opAsignadaalReclamo %>"
         );
 
         contiene(
