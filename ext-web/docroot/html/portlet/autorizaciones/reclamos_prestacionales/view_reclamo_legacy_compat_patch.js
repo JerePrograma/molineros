@@ -11,6 +11,7 @@ var values = config.values || {};
 var MARCA_PROP = "__rpPropLegacyCompatible";
 var MARCA_OFFSET = "__rpOffsetLegacySeguro";
 var MARCA_TIPO_PEDIDO = "rpIntegracionComprasInstalada";
+var MARCA_VALIDACION_AJAX = "__rpValidacionAfiliadoSegura";
 
 function campo(sufijo) {
     return jQuery("#" + namespace + sufijo);
@@ -80,6 +81,50 @@ function instalarOffsetSeguro() {
     offsetSeguro[MARCA_OFFSET] = true;
     offsetSeguro.__rpOffsetOriginal = offsetOriginal;
     jQuery.fn.offset = offsetSeguro;
+}
+
+function esRespuestaHtml(data) {
+    var texto;
+
+    if (typeof data !== "string") {
+        return false;
+    }
+
+    texto = data.replace(/^\s+/, "");
+    return texto.charAt(0) === "<";
+}
+
+function instalarValidacionAfiliadoSegura() {
+    if (window[MARCA_VALIDACION_AJAX] ||
+            typeof jQuery.ajaxPrefilter !== "function") {
+
+        return;
+    }
+
+    window[MARCA_VALIDACION_AJAX] = true;
+
+    jQuery.ajaxPrefilter(function(opciones) {
+        var url = String(opciones && opciones.url || "");
+        var successOriginal;
+
+        if (url.indexOf(
+                "validar_reclamo_afiliado_prestaciones"
+        ) < 0 || typeof opciones.success !== "function") {
+
+            return;
+        }
+
+        successOriginal = opciones.success;
+        opciones.success = function(data) {
+            if (esRespuestaHtml(data)) {
+                throw new Error(
+                        "No se pudo validar la fecha de baja del afiliado."
+                );
+            }
+
+            return successOriginal.apply(this, arguments);
+        };
+    });
 }
 
 function normalizarTexto(valor) {
@@ -163,6 +208,7 @@ instalarPropLegacy();
 instalarOffsetSeguro();
 
 jQuery(function() {
+    instalarValidacionAfiliadoSegura();
     estabilizarInterfazCompras();
     window.setTimeout(estabilizarInterfazCompras, 50);
     window.setTimeout(estabilizarInterfazCompras, 250);
