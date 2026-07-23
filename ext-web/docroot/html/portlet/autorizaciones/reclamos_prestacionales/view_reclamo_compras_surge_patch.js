@@ -11,7 +11,7 @@
         );
 
         if (!inicial.length
-                || jQuery.fn.__rpComprasSurInstalado) {
+                || jQuery.fn.__rpComprasSurPrecargaInstalado) {
             return;
         }
 
@@ -75,20 +75,6 @@
             return copia;
         }
 
-        function envolverCallback(callback) {
-            if (typeof callback !== "function") {
-                return callback;
-            }
-
-            return function() {
-                var resultado = callback.apply(this, arguments);
-
-                window.setTimeout(aplicarSelector, 0);
-
-                return resultado;
-            };
-        }
-
         function registrarCambios(selector) {
             selector.each(function() {
                 var control = jQuery(this);
@@ -117,15 +103,13 @@
             registrarCambios(alta);
             registrarCambios(edicion);
 
-            alta.removeAttr("disabled").val(valorActual);
-            edicion.removeAttr("disabled").val(valorActual);
+            if (alta.length) {
+                alta.removeAttr("disabled").val(valorActual);
+            }
 
-            jQuery(
-                    "#" + namespace + "datos_edicion_prestacion"
-            ).hide();
-            jQuery(
-                    "#" + namespace + "datos_prestacion_ingreso"
-            ).show();
+            if (edicion.length) {
+                edicion.removeAttr("disabled").val(valorActual);
+            }
 
             if (typeof window.cambiorecuperable === "function") {
                 window.cambiorecuperable();
@@ -136,9 +120,23 @@
             }
         }
 
+        function envolverCallback(callback) {
+            if (typeof callback !== "function") {
+                return callback;
+            }
+
+            return function() {
+                var resultado = callback.apply(this, arguments);
+
+                window.setTimeout(aplicarSelector, 0);
+
+                return resultado;
+            };
+        }
+
         function envolverLoad(loadOriginal) {
             if (typeof loadOriginal !== "function"
-                    || loadOriginal.__rpComprasSur) {
+                    || loadOriginal.__rpComprasSurPrecarga) {
                 return loadOriginal;
             }
 
@@ -175,8 +173,8 @@
                 );
             };
 
-            loadCompras.__rpComprasSur = true;
-            loadCompras.__rpComprasSurOriginal = loadOriginal;
+            loadCompras.__rpComprasSurPrecarga = true;
+            loadCompras.__rpComprasSurPrecargaOriginal = loadOriginal;
 
             return loadCompras;
         }
@@ -184,10 +182,9 @@
         var ajaxOriginal = jQuery.ajax;
 
         if (typeof ajaxOriginal === "function"
-                && !ajaxOriginal.__rpComprasSur) {
+                && !ajaxOriginal.__rpComprasSurPrecarga) {
 
             var ajaxCompras = function(opciones) {
-                var args = arguments;
                 var configuracion;
 
                 if (arguments.length === 1
@@ -212,11 +209,11 @@
                     );
                 }
 
-                return ajaxOriginal.apply(this, args);
+                return ajaxOriginal.apply(this, arguments);
             };
 
-            ajaxCompras.__rpComprasSur = true;
-            ajaxCompras.__rpComprasSurOriginal = ajaxOriginal;
+            ajaxCompras.__rpComprasSurPrecarga = true;
+            ajaxCompras.__rpComprasSurPrecargaOriginal = ajaxOriginal;
             jQuery.ajax = ajaxCompras;
         }
 
@@ -231,7 +228,7 @@
                     );
         }
 
-        jQuery.fn.__rpComprasSurInstalado = true;
+        jQuery.fn.__rpComprasSurPrecargaInstalado = true;
 
         jQuery(document).ajaxComplete(function() {
             window.setTimeout(aplicarSelector, 0);
