@@ -64,6 +64,21 @@ public final class ReclamoPrestacionalRuntimeFixContractTest {
         );
         contiene(
                 compat,
+                "prefilter acotado a la validacion del afiliado",
+                "validar_reclamo_afiliado_prestaciones"
+        );
+        contiene(
+                compat,
+                "detecta una pagina HTML inesperada",
+                "esRespuestaHtml(data)"
+        );
+        contiene(
+                compat,
+                "error funcional sin exponer parseJSON",
+                "No se pudo validar la fecha de baja del afiliado."
+        );
+        contiene(
+                compat,
                 "integracion no recuperable de Compras",
                 "texto === \"NO RECUPERABLE\""
         );
