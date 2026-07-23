@@ -1,17 +1,43 @@
 <fieldset class="block-labels">
     <legend><%= tituloPantalla %></legend>
 
-    <table class="lfr-table compras-resumen-requerimiento">
+    <table class="lfr-table compras-resumen-requerimiento compras-cargos-requerimiento compras-datos-basicos-requerimiento"
+           style="width: 100%;">
         <tr>
-            <td><label>ID:</label></td>
-            <td><%= HtmlUtil.escape(req.getIdString()) %></td>
-
-            <td><label>Estado:</label></td>
             <td>
-                <strong><%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %></strong>
+                <label for="<portlet:namespace />requerimiento_id_visual">
+                    ID:
+                </label>
+            </td>
+            <td>
+                <input type="text"
+                       id="<portlet:namespace />requerimiento_id_visual"
+                       value="<%= HtmlUtil.escape(req.getIdString()) %>"
+                       size="10"
+                       readonly="readonly"
+                       class="compras-campo-solo-lectura" />
             </td>
 
-            <td><label for="<portlet:namespace />sector_id">Sector:</label></td>
+            <td>
+                <label for="<portlet:namespace />estado_visual">
+                    Estado:
+                </label>
+            </td>
+            <td>
+                <input type="text"
+                       id="<portlet:namespace />estado_visual"
+                       value="<%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %>"
+                       size="20"
+                       readonly="readonly"
+                       class="compras-campo-solo-lectura"
+                       style="font-weight: bold;" />
+            </td>
+
+            <td>
+                <label for="<portlet:namespace />sector_id">
+                    Sector:
+                </label>
+            </td>
             <td>
                 <% if (puedeEditarEstructuraPantalla) { %>
                     <select id="<portlet:namespace />sector_id"
@@ -66,24 +92,29 @@
                         %>
                     </select>
                 <% } else { %>
-                    <div class="compras-campo-solo-lectura">
-                        <%= HtmlUtil.escape(
-                                sectorDescripcionSoloLectura
-                        ) %>
-                    </div>
+                    <input type="text"
+                           id="<portlet:namespace />sector_id"
+                           value="<%= HtmlUtil.escape(sectorDescripcionSoloLectura) %>"
+                           size="25"
+                           readonly="readonly"
+                           class="compras-campo-solo-lectura" />
                 <% } %>
             </td>
         </tr>
-    </table>
 
-    <table class="lfr-table compras-cargos-requerimiento">
         <tr>
-            <td style="padding: 0; vertical-align: middle;">
+            <td colspan="4"
+                style="padding: 0; vertical-align: middle;">
                 <div id="<portlet:namespace />fila_cargos_compra"
                      style="<%= puedeEditarEstructuraPantalla && sectorSinAfiliadoForzaCargoOspim ? "display:none;" : "" %>">
-                    <table class="lfr-table">
+                    <table class="lfr-table"
+                           style="width: 100%;">
                         <tr>
-                            <td><label>Cargo OSPIM %:</label></td>
+                            <td>
+                                <label for="<portlet:namespace />cargo_ospim">
+                                    Cargo OSPIM %:
+                                </label>
+                            </td>
                             <td>
                                 <% if (puedeEditarEstructuraPantalla) { %>
                                     <input type="text"
@@ -95,11 +126,20 @@
                                            onchange="<portlet:namespace />sincronizarFormularioCompra();"
                                            onblur="<portlet:namespace />sincronizarFormularioCompra();" />
                                 <% } else { %>
-                                    <div class="compras-campo-solo-lectura"><%= HtmlUtil.escape(cargoOspimVisible) %></div>
+                                    <input type="text"
+                                           id="<portlet:namespace />cargo_ospim"
+                                           value="<%= HtmlUtil.escape(cargoOspimVisible) %>"
+                                           size="5"
+                                           readonly="readonly"
+                                           class="compras-campo-solo-lectura" />
                                 <% } %>
                             </td>
 
-                            <td><label>Cargo tercerizadora %:</label></td>
+                            <td>
+                                <label for="<portlet:namespace />cargo_tercerizadora">
+                                    Cargo tercerizadora %:
+                                </label>
+                            </td>
                             <td>
                                 <% if (puedeEditarEstructuraPantalla) { %>
                                     <input type="text"
@@ -110,11 +150,20 @@
                                            onchange="<portlet:namespace />sincronizarFormularioCompra();"
                                            onblur="<portlet:namespace />sincronizarFormularioCompra();" />
                                 <% } else { %>
-                                    <div class="compras-campo-solo-lectura"><%= HtmlUtil.escape(cargoTercerizadoraVisible) %></div>
+                                    <input type="text"
+                                           id="<portlet:namespace />cargo_tercerizadora"
+                                           value="<%= HtmlUtil.escape(cargoTercerizadoraVisible) %>"
+                                           size="5"
+                                           readonly="readonly"
+                                           class="compras-campo-solo-lectura" />
                                 <% } %>
                             </td>
 
-                            <td><label>Recupero:</label></td>
+                            <td>
+                                <label for="<portlet:namespace />recupero">
+                                    Recupero:
+                                </label>
+                            </td>
                             <td>
                                 <% if (puedeEditarEstructuraPantalla) { %>
                                     <input type="checkbox"
@@ -126,9 +175,12 @@
                                            tabindex="-1"
                                            aria-disabled="true" />
                                 <% } else { %>
-                                    <div class="compras-campo-solo-lectura">
-                                        <%= recuperoPorCargoTercerizadoraActual ? "Sí" : "No" %>
-                                    </div>
+                                    <input type="text"
+                                           id="<portlet:namespace />recupero"
+                                           value="<%= recuperoPorCargoTercerizadoraActual ? "S&iacute;" : "No" %>"
+                                           size="5"
+                                           readonly="readonly"
+                                           class="compras-campo-solo-lectura" />
                                 <% } %>
                             </td>
                         </tr>
@@ -169,11 +221,12 @@
                         </option>
                     </select>
                 <% } else { %>
-                    <div class="compras-campo-solo-lectura">
-                        <%= HtmlUtil.escape(
-                                req.getSurgeDescripcion()
-                        ) %>
-                    </div>
+                    <input type="text"
+                           id="<portlet:namespace />surge"
+                           value="<%= HtmlUtil.escape(req.getSurgeDescripcion()) %>"
+                           size="12"
+                           readonly="readonly"
+                           class="compras-campo-solo-lectura" />
                 <% } %>
             </td>
         </tr>
