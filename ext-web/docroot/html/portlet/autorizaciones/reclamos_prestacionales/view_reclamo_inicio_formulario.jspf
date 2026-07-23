@@ -66,13 +66,35 @@ div.divNroRecord_Vinculado {
 	font-size: 120%
 }
 
-   .alnright { text-align: right; }
-
-span-fixed-size {
-  display: inline-block;
-  width: 20px;
+.alnright {
+	text-align: right;
 }
 
+span-fixed-size {
+	display: inline-block;
+	width: 20px;
+}
+
+.rp-validacion-resumen {
+	display: none;
+	margin: 0 0 12px 0;
+	padding: 10px 14px;
+}
+
+.rp-validacion-resumen ul {
+	margin: 6px 0 0 20px;
+	padding: 0;
+}
+
+.rp-campo-error {
+	background-color: #fff2f2 !important;
+	border: 2px solid #b30000 !important;
+}
+
+.rp-campo-error-contenedor {
+	background-color: #fff2f2 !important;
+	outline: 2px solid #b30000;
+}
 </style>
 
 <liferay-ui:error key="errorAfiliadoSinCobertMed"
@@ -83,11 +105,19 @@ span-fixed-size {
 	
 <form name="<portlet:namespace />reclamo_fm"
 	id="<portlet:namespace />reclamo_fm">
-	
+
+<div id="<portlet:namespace />reclamo_validacion_resumen"
+	 class="portlet-msg-error rp-validacion-resumen"
+	 role="alert"
+	 aria-live="assertive">
+	<strong>No se pudo grabar el Reclamo Prestacional.</strong>
+	<div>Revise los campos obligatorios indicados:</div>
+	<ul id="<portlet:namespace />reclamo_validacion_lista"></ul>
+</div>
 	
 <div id="<portlet:namespace />global"
 		align="left"
-		style="width:75%;">	
+		style="width:75%;">
 	
 	<input type="hidden" id="<portlet:namespace />fprest"
 		name="<portlet:namespace />fprest" value="<%=prestacionFechaString%>" />
@@ -98,6 +128,18 @@ span-fixed-size {
 		value="<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getCodigoCie10())   ? reclamoprestacional.getCodigoCie10()   : ""  %>" />
 	<input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>"
 		value="<%=cmd%>" />
+	<input type="hidden"
+		id="<portlet:namespace />reclamoDraftId"
+		name="<portlet:namespace />reclamoDraftId"
+		value="" />
+	<input type="hidden"
+		id="<portlet:namespace />plan_reclamo_bloqueado"
+		name="<portlet:namespace />plan_reclamo_bloqueado"
+		value="0" />
+	<input type="hidden"
+		id="<portlet:namespace />nombre_plan_reclamo_bloqueado"
+		name="<portlet:namespace />nombre_plan_reclamo_bloqueado"
+		value="" />
 	<% if (esBorradorCompras) { %>
 	<input type="hidden"
 		name="<portlet:namespace /><%= WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE %>"
@@ -131,13 +173,11 @@ span-fixed-size {
 		name="<portlet:namespace />tipoNomencladorSeguimiento_filtro" size="8"
 		value='0' />
 
-
 	<div id="helpComprobantes" class="containerPlus draggable {buttons:'c', skin:'default', width:'700',title:'Ayuda',closed:'true'}" style="top: 500px; left: 200px">
-			Ejemplo de factura: CUIT 30999999999 FCP B 00001 - 00000028 F. Emisión 2/07/2020 <br>
+			Ejemplo de factura: CUIT 30999999999 FCP B 00001 - 00000028 F. Emisi&oacute;n 2/07/2020 <br>
 			Comprobante: FCP,  <br>
 			Letra: B,  <br>
-			Suc.: 00001 ( o sólo el número 1 y el sistema autocompletará los 0 a izquierda al guardar)  <br>
-			Nro: 00000028 ( o sólo el número 28 y el sistema autocompletará los 0 a izquierda al guardar)  <br>
+			Suc.: 00001 ( o s&oacute;lo el n&uacute;mero 1 y el sistema autocompletar&aacute; los 0 a izquierda al guardar)  <br>
+			Nro: 00000028 ( o s&oacute;lo el n&uacute;mero 28 y el sistema autocompletar&aacute; los 0 a izquierda al guardar)  <br>
 			CUIT: 30999999999
 	</div>
-
