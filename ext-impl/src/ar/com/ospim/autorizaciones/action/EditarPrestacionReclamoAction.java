@@ -46,10 +46,7 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 		double cargoOspim = ParamUtil.getDouble(renderRequest, "cargoospim");
 		double cargoPs = ParamUtil.getDouble(renderRequest, "cargops");
 		double cargoImesa = ParamUtil.getDouble(renderRequest, "cargoimesa");
-		/*
-		 * Recuperable SUR queda fuera de uso en Reclamo Prestacional. El servidor
-		 * no confía en el valor enviado por el cliente y normaliza ambos campos.
-		 */
+		/* Reconocido SSS permanece neutralizado en este flujo. */
 		double reconocidoSSS = 0D;
 		String prestacion= ParamUtil.getString(renderRequest, "prestacion");
 		String observaciones= ParamUtil.getString(renderRequest, "observaciones");		
@@ -58,7 +55,17 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 		int tipoEdicion= ParamUtil.getInteger(renderRequest, "tipoEdicion");
 		boolean GrabaEdicion= ParamUtil.getBoolean(renderRequest, "grabaedicion");
 		int estadoAprobaRechazado = ParamUtil.getInteger(renderRequest, "estadoAprobacion");
-		Integer recuperable = Integer.valueOf(0);
+		int recuperableSur = ParamUtil.getInteger(
+				renderRequest,
+				"recuperableSur",
+				0
+		);
+
+		if (recuperableSur < 0 || recuperableSur > 3) {
+			recuperableSur = 0;
+		}
+
+		Integer recuperable = Integer.valueOf(recuperableSur);
 		
 		String idTercerizadora = ParamUtil.getString(renderRequest, "id_tercerizadora", "");
 
@@ -164,6 +171,9 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 					presta.setIdTercerizadora(idTercerizadora);
 				}
 				presta.setRecuperable(recuperable);
+				presta.setRecuperableSur(
+						Boolean.valueOf(recuperable.intValue() == 1)
+				);
 				presta.setEstado(PrestacionesReclamo.ESTADOS.MODIF);
 				presta.setEstadoRechazoAprobado(!PrestacionesReclamo.ESTADOS.BAJA.equals(presta.getEstado()) ? estadoAprobaRechazado : 0);
 				presta.setIdRegistro(idRegistro);
@@ -203,7 +213,10 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 					Empresa empr = EmpresaServiceUtil.getEmpleadorCompleto(presta.getComprobanteCUIT(), presta.getComprobanteCUITSucursal());
 					presta.setComprobanteRazonSocial(empr!=null&&StringUtils.checkNotEmpty(empr.getRazon_soc())?empr.getRazon_soc():"");
 				}
-				presta.setRecuperable(Integer.valueOf(0));
+				presta.setRecuperable(recuperable);
+				presta.setRecuperableSur(
+						Boolean.valueOf(recuperable.intValue() == 1)
+				);
 				presta.setReconocidoSSS(0D);
 				session.setAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION, presta);
 			}
