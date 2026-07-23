@@ -2,18 +2,137 @@
 <%@ page import="ar.com.ospim.autorizaciones.beans.PrestacionesReclamo" %>
 <%
 /*
- * Recuperable SUR y Reconocido SSS están fuera de uso en Reclamo
- * Prestacional. La normalización se realiza también en servidor para que el
- * listado temporal de sesión no conserve valores heredados de Compras ni de
- * reclamos históricos, aunque el JavaScript no llegue a ejecutarse.
+ * El handoff de Compras conserva solamente el nonce, el requerimiento origen
+ * y la marca Surge. La cabecera, el afiliado, los cargos y las prestaciones
+ * precargadas se descartan una sola vez antes de renderizar el alta.
  */
+boolean contextoComprasActivo =
+        contextoCompras != null
+        && Validator.isNotNull(nonceCompras)
+        && contextoCompras.coincideNonce(nonceCompras);
+
+boolean nonceComprasIncluidoEnFormulario =
+        esBorradorCompras;
+
+int recuperableSurInicialCompras =
+        contextoComprasActivo
+        && contextoCompras.isSurge()
+                ? 1
+                : 0;
+
+String marcaNeutralizacionCompras =
+        WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                + "_NEUTRALIZADO";
+
+boolean neutralizadoAhora = false;
+
+if (contextoComprasActivo && existeReclamoPersistido) {
+    /*
+     * El contexto puede ser requerido por el flujo que vincula ambos modulos.
+     * Se conserva en sesion, pero deja de influir sobre el reclamo persistido.
+     */
+    contextoComprasActivo = false;
+}
+
+if (contextoComprasActivo && !existeReclamoPersistido) {
+    synchronized (session) {
+        Object contextoActual = session.getAttribute(
+                WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+        );
+        Object nonceNeutralizado = session.getAttribute(
+                marcaNeutralizacionCompras
+        );
+
+        if (contextoActual == contextoCompras
+                && !nonceCompras.equals(nonceNeutralizado)) {
+
+            session.removeAttribute(
+                    WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION
+            );
+            session.removeAttribute(
+                    WebKeysAutorizaciones
+                            .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
+            );
+            session.removeAttribute(
+                    WebKeysAutorizaciones
+                            .LISTADO_REVISIONES_RECLAMOS_EN_SESION
+            );
+            session.removeAttribute(
+                    WebKeysAutorizaciones
+                            .LISTADO_CONTACTOS_RECLAMOS_EN_SESION
+            );
+            session.removeAttribute(
+                    WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION
+            );
+            session.removeAttribute(
+                    WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS
+            );
+
+            session.setAttribute(
+                    marcaNeutralizacionCompras,
+                    nonceCompras
+            );
+
+            neutralizadoAhora = true;
+        }
+    }
+}
+
+if (neutralizadoAhora) {
+    reclamoprestacional = null;
+    existeReclamoPersistido = false;
+    esEdicionPersistida = false;
+    idReclamoPantalla = 0;
+
+    caso_vinculado = "0";
+    cuit_titular_vinculado = "";
+    inte_vinculado = 0;
+    reclamo_vinculado = false;
+
+    cantprestacioneslista = 0;
+    cantRevisiones = 0;
+    debitoTercerizadora = false;
+
+    divcheckbox = "divheadercheckboxs";
+    opAsignadaalReclamo = "";
+    opAsignadaalReclamoExiste = false;
+    resolucionAutorizado =
+            ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINVALOR;
+    PuedeObservar = false;
+
+    fechaospim = Calendar.getInstance();
+    fechacierre = Calendar.getInstance();
+    fechaseccional = Calendar.getInstance();
+    fecharevision = Calendar.getInstance();
+    nofechaseccional = true;
+    idPreautorizacion = Integer.valueOf(0);
+}
+
+if (contextoComprasActivo && !existeReclamoPersistido) {
+    /* El formulario debe comportarse exactamente como un alta normal. */
+    cmd = Constants.ADD;
+    esAlta = true;
+    esEdit = false;
+    permiteEditarPantalla = true;
+    esEdicion = true;
+    esBorradorCompras = false;
+
+    cargoOspimPorcentajeInicial = 0;
+    cargoPrestadoraPorcentajeInicial = 0;
+    nroreclamo = "Nuevo Reclamo Prestacional";
+}
+
+boolean normalizarRecuperableNeutro =
+        !contextoComprasActivo;
+
 Object listadoPrestacionesNeutro =
         session.getAttribute(
                 WebKeysAutorizaciones
                         .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
         );
 
-if (listadoPrestacionesNeutro instanceof List) {
+if (normalizarRecuperableNeutro
+        && listadoPrestacionesNeutro instanceof List) {
     List prestacionesNeutras =
             (List) listadoPrestacionesNeutro;
 
@@ -41,7 +160,8 @@ Object prestacionEnEdicionNeutra =
                         .PRESTACION_EN_PROCESO_DE_EDICION
         );
 
-if (prestacionEnEdicionNeutra instanceof PrestacionesReclamo) {
+if (normalizarRecuperableNeutro
+        && prestacionEnEdicionNeutra instanceof PrestacionesReclamo) {
     PrestacionesReclamo prestacionNeutra =
             (PrestacionesReclamo) prestacionEnEdicionNeutra;
 
@@ -56,3 +176,15 @@ if (prestacionEnEdicionNeutra instanceof PrestacionesReclamo) {
     );
 }
 %>
+<% if (contextoComprasActivo && !existeReclamoPersistido) { %>
+    <% if (!nonceComprasIncluidoEnFormulario) { %>
+        <input type="hidden"
+               name="<portlet:namespace /><%= WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE %>"
+               value="<%= HtmlUtil.escape(nonceCompras) %>" />
+    <% } %>
+
+    <input type="hidden"
+           id="<portlet:namespace />recuperable_sur_compra_inicial"
+           name="<portlet:namespace />recuperable_sur_compra_inicial"
+           value="<%= recuperableSurInicialCompras %>" />
+<% } %>
