@@ -59,3 +59,334 @@ if (aplicarTipoEdicionComun) {
 <script type="text/javascript"
         src="<%= reclamoPrestacionalAssetBase %>view_reclamo_compras_surge_patch.js?v=20260723-restaura-precarga-1"
         onerror="window.ReclamoPrestacionalAssetError('view_reclamo_compras_surge_patch.js');"></script>
+<script type="text/javascript">
+(function(window, jQuery) {
+    if (!jQuery) {
+        return;
+    }
+
+    var config = window.ReclamoPrestacionalViewConfig || {};
+    var namespace = config.namespace || "";
+    var values = config.values || {};
+    var urls = config.urls || {};
+
+    function campo(sufijo) {
+        return jQuery("#" + namespace + sufijo);
+    }
+
+    function valor(sufijo) {
+        var control = campo(sufijo);
+        return control.length ? control.val() : "";
+    }
+
+    function numero(valorActual) {
+        var texto = String(valorActual == null ? "" : valorActual)
+                .replace(/\s/g, "")
+                .replace(",", ".");
+        var resultado = parseFloat(texto);
+        return isNaN(resultado) ? 0 : resultado;
+    }
+
+    function esBorradorCompras() {
+        return values.esBorradorCompras === true ||
+                String(values.esBorradorCompras) === "true";
+    }
+
+    function limpiarErrores() {
+        jQuery(".rp-campo-error").removeClass("rp-campo-error");
+        jQuery(".rp-campo-error-contenedor")
+                .removeClass("rp-campo-error-contenedor");
+        campo("reclamo_validacion_lista").empty();
+        campo("reclamo_validacion_resumen").css("display", "none");
+    }
+
+    function agregarError(errores, mensaje, control) {
+        if (control && control.length) {
+            control.addClass("rp-campo-error");
+        }
+        errores.push({
+            mensaje: mensaje,
+            control: control
+        });
+    }
+
+    function agregarErrorFecha(errores, mensaje) {
+        var dia = campo("fechaPrestacionDiaEdicion");
+        var mes = campo("fechaPrestacionMesEdicion");
+        var anio = campo("fechaPrestacionAnioEdicion");
+
+        dia.addClass("rp-campo-error");
+        mes.addClass("rp-campo-error");
+        anio.addClass("rp-campo-error");
+
+        errores.push({
+            mensaje: mensaje,
+            control: dia.length ? dia : (mes.length ? mes : anio)
+        });
+    }
+
+    function mostrarErrores(errores) {
+        var lista = campo("reclamo_validacion_lista");
+        var resumen = campo("reclamo_validacion_resumen");
+        var primero = null;
+        var posicion;
+        var i;
+        var item;
+
+        if (!errores.length) {
+            return false;
+        }
+
+        lista.empty();
+
+        for (i = 0; i < errores.length; i++) {
+            item = jQuery("<li></li>");
+            item.text(errores[i].mensaje);
+            lista.append(item);
+
+            if (!primero && errores[i].control &&
+                    errores[i].control.length) {
+                primero = errores[i].control.eq(0);
+            }
+        }
+
+        resumen.css("display", "block");
+
+        if (primero && primero.length) {
+            posicion = primero.offset();
+            if (posicion) {
+                window.scrollTo(0, Math.max(0, posicion.top - 100));
+            }
+            try {
+                primero.focus();
+            } catch (errorFoco) {
+                // El resumen permanece visible.
+            }
+        }
+
+        return true;
+    }
+
+    function fechaPrestacionAusente() {
+        var dia = valor("fechaPrestacionDiaEdicion");
+        var mes = valor("fechaPrestacionMesEdicion");
+        var anio = valor("fechaPrestacionAnioEdicion");
+
+        return dia == null || dia === "" || String(dia) === "0" ||
+                mes == null || mes === "" || String(mes) === "-1" ||
+                anio == null || anio === "" || String(anio) === "0";
+    }
+
+    function validar() {
+        var errores = [];
+        var frecuencia = String(valor("frecuenciaEdicion") || "");
+        var codigo = String(valor("codigoSeguimiento_filtro_edit") || "");
+        var descripcion = String(
+                valor("descripcionSeguimiento_filtro_edit") || ""
+        );
+        var medicamento = String(valor("troquel_edit") || "");
+        var cantidad = numero(valor("cantidadEdicion"));
+        var importe = numero(valor("importeEdicion"));
+        var total = Math.round(cantidad * importe * 100) / 100;
+        var cargos = Math.round((
+                numero(valor("cargoospimEdicion")) +
+                numero(valor("cargopsEdicion")) +
+                numero(valor("cargoimesaEdicion"))
+        ) * 100) / 100;
+
+        if (!frecuencia || frecuencia === "SELECCIONE") {
+            agregarError(
+                    errores,
+                    "Debe seleccionar la frecuencia correspondiente.",
+                    campo("frecuenciaEdicion")
+            );
+        }
+
+        if (fechaPrestacionAusente()) {
+            agregarErrorFecha(
+                    errores,
+                    "Debe ingresar la fecha de la Prestacion."
+            );
+        }
+
+        if ((!codigo || codigo.indexOf("ART-") === 0) && !medicamento) {
+            agregarError(
+                    errores,
+                    "Debe confirmar el nomenclador o medicamento de la prestacion.",
+                    campo("codigoSeguimiento_filtro_edit")
+            );
+        } else if (codigo && codigo.indexOf("ART-") !== 0 && !descripcion) {
+            agregarError(
+                    errores,
+                    "Debe confirmar la descripcion de la prestacion.",
+                    campo("descripcionSeguimiento_filtro_edit")
+            );
+        }
+
+        if (cantidad <= 0) {
+            agregarError(
+                    errores,
+                    "La cantidad de la prestacion debe ser mayor a cero.",
+                    campo("cantidadEdicion")
+            );
+        }
+
+        if (importe <= 0) {
+            agregarError(
+                    errores,
+                    "El importe de la prestacion debe ser mayor a cero.",
+                    campo("importeEdicion")
+            );
+        }
+
+        if (Math.abs(total - cargos) > 0.01) {
+            agregarError(
+                    errores,
+                    "La suma de los cargos debe coincidir con el total de la prestacion.",
+                    campo("cargoospimEdicion")
+            );
+            campo("cargopsEdicion").addClass("rp-campo-error");
+            campo("cargoimesaEdicion").addClass("rp-campo-error");
+        }
+
+        return errores;
+    }
+
+    function guardarPrestacionComprasFinal() {
+        var errores;
+        var destino;
+        var cargador;
+        var nomSeleccionado;
+        var tipoNomenclador;
+        var recuperableInicial;
+        var params;
+
+        limpiarErrores();
+        errores = validar();
+
+        if (mostrarErrores(errores)) {
+            return false;
+        }
+
+        nomSeleccionado = valor("nom_seleccionado_edit") ||
+                valor("nom_seleccionado") || "1";
+        tipoNomenclador = valor("tipoNomenclador_edit") ||
+                valor("tipoNomenclador") || "0";
+        recuperableInicial = valor("recuperable_sur_compra_inicial") || "0";
+
+        params = {
+            frecuencia: valor("frecuenciaEdicion"),
+            importe: valor("importeEdicion"),
+            cargoospim: valor("cargoospimEdicion"),
+            cargops: valor("cargopsEdicion"),
+            cargoimesa: valor("cargoimesaEdicion"),
+            prestacion: valor("codigoSeguimiento_filtro_edit"),
+            codigoPrestacion: valor("codigoSeguimiento_filtro_edit"),
+            idprestacion: valor("codigoprestacion"),
+            idRegistro: valor("idRegistro"),
+            tipoEdicion: 0,
+            grabaedicion: true,
+            estadoAprobacion: 0,
+            recuperableSur: parseInt(recuperableInicial, 10) || 0,
+            cantidad: valor("cantidadEdicion"),
+            observaciones: valor("observacion_prestacionEdicion"),
+            cpbte_tipo: "OTR",
+            cpbte_nro: "",
+            cpbte_dia: "",
+            cpbte_mes: "",
+            cpbte_anio: "",
+            cpbte_cantidad: valor("cantidadFC_edicion"),
+            cpbte_importe: valor("importeUnitarioFC_edicion"),
+            cpbte_cuit: valor("cuit_entidad_edicion"),
+            cpbte_sucursal: "",
+            importeFC: valor("importeFC_edicion"),
+            cpbte_cuit_sucursal: "",
+            cpbte_letra: "",
+            fecha_prestacion_dia: valor("fechaPrestacionDiaEdicion"),
+            fecha_prestacion_mes: valor("fechaPrestacionMesEdicion"),
+            fecha_prestacion_anio: valor("fechaPrestacionAnioEdicion"),
+            id_medicamento_edit: valor("troquel_edit"),
+            nombre_medicamento_edit: valor("nombre_medicamento_edit"),
+            codigoSeguimiento_filtro_edit:
+                    valor("codigoSeguimiento_filtro_edit"),
+            descripcionSeguimiento_filtro_edit:
+                    valor("descripcionSeguimiento_filtro_edit"),
+            nom_seleccionado_edit: nomSeleccionado,
+            tipoNomenclador_edit: tipoNomenclador,
+            reconocidoSSS: 0,
+            cuil: valor("cuil"),
+            inte: valor("inte"),
+            id_tercerizadora: valor("id_tercerizadora")
+        };
+
+        destino = campo("lista_prestaciones_reclamos");
+        cargador = window.ReclamoPrestacionalJQueryLoadOriginal;
+        campo("buscando").css("display", "block");
+
+        var completar = function(respuesta, estado) {
+            var cancelar;
+
+            campo("buscando").css("display", "none");
+
+            if (estado === "error") {
+                mostrarErrores([{
+                    mensaje: "No se pudo actualizar la prestacion precargada.",
+                    control: destino
+                }]);
+                return;
+            }
+
+            campo("tipoaccionprestacion").val("0");
+            cancelar = window[namespace + "cancelaEdicionPrestacion"];
+
+            if (typeof cancelar === "function") {
+                cancelar();
+            } else {
+                campo("datos_edicion_prestacion").css("display", "none");
+                campo("datos_prestacion_ingreso").css("display", "block");
+            }
+
+            limpiarErrores();
+        };
+
+        if (typeof cargador === "function") {
+            cargador.call(destino, urls.editarPrestaciones, params, completar);
+        } else {
+            destino.load(urls.editarPrestaciones, params, completar);
+        }
+
+        return false;
+    }
+
+    function instalar() {
+        var boton;
+
+        if (!esBorradorCompras()) {
+            return;
+        }
+
+        window[namespace + "editarPrestacionSeleccionada"] =
+                guardarPrestacionComprasFinal;
+
+        boton = campo("rp_guardar_prestacion_seguro");
+        if (boton.length) {
+            boton[0].onclick = function() {
+                return guardarPrestacionComprasFinal();
+            };
+        }
+
+        window.ReclamoPrestacionalComprasGuardadoFinal = {
+            validar: validar,
+            guardar: guardarPrestacionComprasFinal
+        };
+    }
+
+    jQuery(function() {
+        window.setTimeout(instalar, 25);
+    });
+
+    jQuery(document).ajaxComplete(function() {
+        window.setTimeout(instalar, 25);
+    });
+})(window, window.jQuery);
+</script>
