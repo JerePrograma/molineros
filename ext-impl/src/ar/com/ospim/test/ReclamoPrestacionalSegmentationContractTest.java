@@ -176,6 +176,32 @@ public final class ReclamoPrestacionalSegmentationContractTest {
         notContains(legacyJs, "sin fetch", "fetch(");
         notContains(legacyJs, "sin let", "let ");
         notContains(legacyJs, "sin const", "const ");
+        notContains(
+                legacyJs,
+                "sin closest incompatible con jQuery legacy",
+                ".closest("
+        );
+
+        contains(
+                expanded,
+                "cargos iniciales de compras agrupados",
+                "<legend>Cargos iniciales de Compras</legend>"
+        );
+        contains(
+                expanded,
+                "cargo OSPIM inicial visible como control",
+                "cargoospim_compra_inicial_visible"
+        );
+        contains(
+                expanded,
+                "cargo prestadora inicial visible como control",
+                "cargops_compra_inicial_visible"
+        );
+        notContains(
+                expanded,
+                "sin resumen de cargos como mensaje suelto",
+                "Cargo OSPIM: <%= cargoOspimPorcentajeInicial %>% -"
+        );
 
         verifyEncoding(viewPath, true);
         verifyEncoding(assemblerPath, true);

@@ -1,4 +1,4 @@
-	<fieldset class="lfr-table"> 
+	<fieldset class="block-labels">
 	
 		<legend>
 			<liferay-ui:message key="Datos de la Prestación" />
@@ -83,10 +83,44 @@ boolean hayPrestacionEnProcesoDeEdicion =
 		) != null;
 %>
 		<% if (esBorradorCompras) { %>
-		<div class="portlet-msg-info">
-			Cargo OSPIM: <%= cargoOspimPorcentajeInicial %>% -
-			Cargo Prestadora: <%= cargoPrestadoraPorcentajeInicial %>%
-		</div>
+		<fieldset class="block-labels">
+			<legend>Cargos iniciales de Compras</legend>
+
+			<table class="lfr-table"
+				style="border-collapse: separate; border-spacing: 3px;">
+				<tr>
+					<td>
+						<label for="<portlet:namespace />cargoospim_compra_inicial_visible">
+							Cargo OSPIM:
+						</label>
+					</td>
+					<td>
+						<input
+							type="text"
+							id="<portlet:namespace />cargoospim_compra_inicial_visible"
+							size="8"
+							value="<%= cargoOspimPorcentajeInicial %>%"
+							readonly="readonly"
+							tabindex="-1" />
+					</td>
+
+					<td>
+						<label for="<portlet:namespace />cargops_compra_inicial_visible">
+							Cargo Prestadora:
+						</label>
+					</td>
+					<td>
+						<input
+							type="text"
+							id="<portlet:namespace />cargops_compra_inicial_visible"
+							size="8"
+							value="<%= cargoPrestadoraPorcentajeInicial %>%"
+							readonly="readonly"
+							tabindex="-1" />
+					</td>
+				</tr>
+			</table>
+		</fieldset>
 		<% } %>
 		<div
 			id="<portlet:namespace />datos_edicion_prestacion"

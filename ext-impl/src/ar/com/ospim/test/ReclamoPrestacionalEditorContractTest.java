@@ -153,7 +153,36 @@ public final class ReclamoPrestacionalEditorContractTest {
                 editorJsp,
                 "if (prestacionEnEdicion != null) {"
         );
-
+        assertContains(
+                "id de prestacion tratado como primitivo",
+                editorJsp,
+                "prestacionEnEdicion.getId_prestacion() != 0"
+        );
+        assertContains(
+                "id de medicamento tratado como primitivo",
+                editorJsp,
+                "prestacionEnEdicion.getId_medicamento() != 0"
+        );
+        assertNotContains(
+                "id de prestacion sin comparacion nula",
+                editorJsp,
+                "getId_prestacion() != null"
+        );
+        assertNotContains(
+                "id de prestacion sin intValue",
+                editorJsp,
+                "getId_prestacion().intValue()"
+        );
+        assertNotContains(
+                "id de medicamento sin comparacion nula",
+                editorJsp,
+                "getId_medicamento() != null"
+        );
+        assertNotContains(
+                "id de medicamento sin intValue",
+                editorJsp,
+                "getId_medicamento().intValue()"
+        );
         assertContains(
                 "intercepta solamente el editor legacy",
                 editorPatch,

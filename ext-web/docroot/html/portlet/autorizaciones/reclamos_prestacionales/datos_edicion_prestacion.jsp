@@ -90,13 +90,15 @@ if (prestacionEnEdicion != null) {
 				</td>
 
 				<%
-				Integer idPrest = prestacionEnEdicion.getId_prestacion();
-				Integer idMedic = prestacionEnEdicion.getId_medicamento();
+				int idPrest =
+						prestacionEnEdicion.getId_prestacion();
+				int idMedic =
+						prestacionEnEdicion.getId_medicamento();
 
 				boolean sinMedicamento =
-						idMedic == null || idMedic.intValue() == 0;
+						idMedic == 0;
 				boolean hayPrestacion =
-						idPrest != null && idPrest.intValue() != 0;
+						idPrest != 0;
 				boolean mostrarCodigoPresentado =
 						hayPrestacion || sinMedicamento;
 				%>
@@ -582,15 +584,17 @@ jQuery(function() {
     jQuery("#" + namespace + "datos_edicion_prestacion").show();
     jQuery("#" + namespace + "codigoprestacion").val(codigo);
 
-    <% if (prestacionEnEdicion.getId_prestacion() != null
-    		&& prestacionEnEdicion.getId_prestacion().intValue() != 0) { %>
+    <% if (prestacionEnEdicion.getId_prestacion() != 0) { %>
     var buscarNomenclador =
             window[namespace + "buscarNomencladorAutocompletar_edit"];
+
     if (codigo && typeof buscarNomenclador === "function") {
-        window.setTimeout(buscarNomenclador, 0);
+        window.setTimeout(
+                buscarNomenclador,
+                0
+        );
     }
-    <% } else if (prestacionEnEdicion.getId_medicamento() != null
-    		&& prestacionEnEdicion.getId_medicamento().intValue() != 0) { %>
+    <% } else if (prestacionEnEdicion.getId_medicamento() != 0) { %>
     jQuery("#" + namespace + "troquel_edit").val(
             "<%= prestacionEnEdicion.getId_medicamento() %>"
     );

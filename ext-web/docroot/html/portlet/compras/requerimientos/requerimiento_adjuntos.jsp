@@ -203,27 +203,54 @@ boolean msgPresupuestoBorrado =
 <style type="text/css">
     #<portlet:namespace />tabla_carga_presupuestos {
         width: 100%;
-        table-layout: auto;
+        border-collapse: separate;
+        border-spacing: 3px;
     }
 
-    #<portlet:namespace />tabla_carga_presupuestos th,
+    #<portlet:namespace />tabla_carga_presupuestos th {
+        text-align: left;
+        vertical-align: middle;
+    }
+
     #<portlet:namespace />tabla_carga_presupuestos td {
         vertical-align: middle;
+    }
+
+    #<portlet:namespace />tabla_carga_presupuestos
+    td.presupuesto-campo-prestador {
+
+        width: 40%;
+    }
+
+    #<portlet:namespace />tabla_carga_presupuestos
+    td.presupuesto-campo-archivo {
+
+        width: 35%;
+    }
+
+    #<portlet:namespace />tabla_carga_presupuestos
+    td.presupuesto-acciones {
+
+        width: 25%;
         white-space: nowrap;
     }
 
     #<portlet:namespace />tabla_carga_presupuestos
     select.presupuesto-prestador {
 
-        width: 100%;
-        box-sizing: border-box;
+        width: 98%;
     }
 
     #<portlet:namespace />tabla_carga_presupuestos
     input.presupuesto-archivo {
 
-        width: 100%;
-        box-sizing: border-box;
+        width: 98%;
+    }
+
+    #<portlet:namespace />tabla_carga_presupuestos
+    td.presupuesto-acciones input {
+
+        margin-right: 4px;
     }
 </style>
 
@@ -234,7 +261,7 @@ boolean msgPresupuestoBorrado =
       enctype="multipart/form-data">
 
     <fieldset class="block-labels">
-        <legend>Presupuestos</legend>
+        <legend>Pedidos de presupuestos</legend>
 
         <liferay-ui:error
                 key="errorUploadFile"
@@ -362,24 +389,21 @@ boolean msgPresupuestoBorrado =
                 && hayPrestadoresDisponiblesPresupuestos
         %>">
 
-            <table class="lfr-table"
-                   id="<portlet:namespace />tabla_carga_presupuestos">
+            <table
+                class="lfr-table taglib-search-iterator"
+                id="<portlet:namespace />tabla_carga_presupuestos">
 
                 <colgroup>
-                    <col style="width: 37%;" />
-                    <col style="width: 23%;" />
-                    <col style="width: 7%;" />
-                    <col style="width: 7%;" />
-                    <col style="width: 26%;" />
+                    <col style="width: 40%;" />
+                    <col style="width: 35%;" />
+                    <col style="width: 25%;" />
                 </colgroup>
 
                 <thead>
                     <tr>
                         <th>Prestador enviado</th>
                         <th>Archivo</th>
-                        <th>&nbsp;</th>
-                        <th>&nbsp;</th>
-                        <th>&nbsp;</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
 
@@ -620,14 +644,16 @@ boolean msgPresupuestoBorrado =
                                 + 'type="button" '
                                 + 'class="presupuesto-borrar" '
                                 + 'value="Borrar" '
+                                + 'title="Quitar esta fila de presupuesto" '
                                 + '/>'
                 );
 
         borrar.click(function() {
             jQuery(this)
-                    .closest(
+                    .parents(
                             'tr'
                     )
+                    .eq(0)
                     .remove();
 
             /*
@@ -649,6 +675,7 @@ boolean msgPresupuestoBorrado =
                                 + 'type="button" '
                                 + 'class="presupuesto-agregar" '
                                 + 'value="Agregar otro presupuesto" '
+                                + 'title="Agregar otra fila de presupuesto" '
                                 + '/>'
                 );
 
@@ -661,9 +688,30 @@ boolean msgPresupuestoBorrado =
                         '<tr></tr>'
                 );
 
+        var acciones =
+                jQuery(
+                        '<td class="presupuesto-acciones"></td>'
+                );
+
+        acciones.append(
+                subir
+        );
+        acciones.append(
+                document.createTextNode(' ')
+        );
+        acciones.append(
+                borrar
+        );
+        acciones.append(
+                document.createTextNode(' ')
+        );
+        acciones.append(
+                agregar
+        );
+
         row.append(
                 jQuery(
-                        '<td></td>'
+                        '<td class="presupuesto-campo-prestador"></td>'
                 ).append(
                         prestador
                 )
@@ -671,34 +719,14 @@ boolean msgPresupuestoBorrado =
 
         row.append(
                 jQuery(
-                        '<td></td>'
+                        '<td class="presupuesto-campo-archivo"></td>'
                 ).append(
                         archivo
                 )
         );
 
         row.append(
-                jQuery(
-                        '<td></td>'
-                ).append(
-                        subir
-                )
-        );
-
-        row.append(
-                jQuery(
-                        '<td></td>'
-                ).append(
-                        borrar
-                )
-        );
-
-        row.append(
-                jQuery(
-                        '<td></td>'
-                ).append(
-                        agregar
-                )
+                acciones
         );
 
         tbody.append(
