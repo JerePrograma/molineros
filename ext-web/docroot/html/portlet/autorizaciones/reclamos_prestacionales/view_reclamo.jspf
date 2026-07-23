@@ -57,4 +57,5 @@ if (aplicarTipoEdicionComun) {
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_acciones.jspf" %>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_configuracion.jspf" %>
 <script type="text/javascript"
-        src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_compras_surge_patch.js?v=20260723-restaura-precarga-1"></script>
+        src="<%= reclamoPrestacionalAssetBase %>view_reclamo_compras_surge_patch.js?v=20260723-assets-root-1"
+        onerror="window.ReclamoPrestacionalAssetError('view_reclamo_compras_surge_patch.js');"></script>
