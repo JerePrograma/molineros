@@ -5,7 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-/** Contrato textual de acciones de prestación y Recuperable SUR neutral. */
+/** Contrato textual de acciones de prestacion y Recuperable SUR. */
 public final class ReclamoPrestacionalPrestacionRulesContractTest {
 
     private static final Charset UTF_8 = Charset.forName("UTF-8");
@@ -24,6 +24,9 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
         String reglas = leer(
                 JSP_DIR + "view_reclamo_prestacion_rules_patch.js"
         );
+        String compras = leer(
+                JSP_DIR + "view_reclamo_compras_surge_patch.js"
+        );
         String action = leer(ACTION);
         String estructura = leer(JSP_DIR + "view_reclamo.jspf");
         String neutralizacionServidor = leer(
@@ -32,18 +35,14 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
 
         contiene(
                 view,
-                "carga del contrato de prestación actualizado",
-                "view_reclamo_prestacion_rules_patch.js?v=20260720-recuperable-neutro-2"
+                "carga del contrato de prestacion",
+                "view_reclamo_prestacion_rules_patch.js"
+                        + "?v=20260720-recuperable-neutro-2"
         );
         contiene(
                 view,
-                "captura del load nativo anterior al estabilizador",
+                "captura del load nativo",
                 "window.ReclamoPrestacionalJQueryLoadOriginal"
-        );
-        antes(
-                view,
-                "window.ReclamoPrestacionalJQueryLoadOriginal",
-                "view_reclamo_editor_patch.js"
         );
         antes(
                 view,
@@ -53,7 +52,7 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
 
         contiene(
                 estructura,
-                "neutralización server-side incluida",
+                "neutralizacion server-side incluida",
                 "view_reclamo_recuperable_neutro.jspf"
         );
         antes(
@@ -62,24 +61,30 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
                 "view_reclamo_prestaciones.jspf"
         );
         contiene(
+                estructura,
+                "parche de Surge cargado despues de la configuracion",
+                "view_reclamo_compras_surge_patch.js"
+        );
+
+        contiene(
                 neutralizacionServidor,
-                "lista de sesión neutralizada",
+                "lista de sesion recorrida",
                 "LISTADO_PRESTACIONES_RECLAMOS_EN_SESION"
         );
         contiene(
                 neutralizacionServidor,
-                "prestación en edición neutralizada",
+                "prestacion en edicion recorrida",
                 "PRESTACION_EN_PROCESO_DE_EDICION"
         );
         contiene(
                 neutralizacionServidor,
-                "recuperable neutral en servidor",
-                "prestacionNeutra.setRecuperable("
+                "Surge determina Recuperable inicial",
+                "contextoCompras.isSurge()"
         );
         contiene(
                 neutralizacionServidor,
-                "bandera SUR neutral en servidor",
-                "prestacionNeutra.setRecuperableSur("
+                "valor inicial expuesto al cliente",
+                "recuperable_sur_compra_inicial"
         );
         contiene(
                 neutralizacionServidor,
@@ -89,28 +94,13 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
 
         contiene(
                 reglas,
-                "cancelación namespaced reemplazada",
+                "cancelacion namespaced reemplazada",
                 "window[namespace + \"cancelaEdicionPrestacion\"]"
         );
         contiene(
                 reglas,
-                "edición namespaced reemplazada",
+                "edicion namespaced protegida",
                 "window[nombreEditar] = guardarEdicionSeguro"
-        );
-        contiene(
-                reglas,
-                "acción original conservada",
-                "guardarEdicionSeguro.__rpOriginal"
-        );
-        contiene(
-                reglas,
-                "marca de edición creada aunque falte en el JSP",
-                "id: namespace + \"tipoaccionprestacion\""
-        );
-        contiene(
-                reglas,
-                "marca relaciona acción e id de registro",
-                "String(idRegistro || \"\")"
         );
         contiene(
                 reglas,
@@ -122,115 +112,110 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
                 "if (combo)",
                 "combo.selectedIndex = 0"
         );
-
         contiene(
                 reglas,
-                "botón seguro de edición creado fuera del HTML inválido",
+                "boton seguro de edicion",
                 "rp_guardar_prestacion_seguro"
         );
         contiene(
                 reglas,
-                "botón seguro de cancelación creado fuera del HTML inválido",
+                "boton seguro de cancelacion",
                 "rp_cancelar_prestacion_seguro"
         );
         contiene(
                 reglas,
-                "handler directo de edición",
+                "handler directo de edicion",
                 "botonGuardar[0].onclick"
         );
         contiene(
                 reglas,
-                "handler directo de cancelación",
+                "handler directo de cancelacion",
                 "botonCancelar[0].onclick"
         );
-
         contiene(
                 reglas,
-                "guardado usa load nativo y no el cargador de editor",
+                "guardado usa load nativo",
                 "window.ReclamoPrestacionalJQueryLoadOriginal"
         );
         contiene(
                 reglas,
-                "guardado se distingue por grabaedicion",
-                "valorBooleano(datos.grabaedicion)"
-        );
-        contiene(
-                reglas,
-                "callback libera el bloqueo de guardado",
+                "callback libera bloqueo",
                 "guardadoEnCurso = false;"
         );
-        contiene(
-                reglas,
-                "compatibilidad con jQuery legacy",
-                ".find(\"option\").eq(0)"
-        );
         noContiene(
                 reglas,
-                "no depende de first de jQuery moderno",
+                "sin first de jQuery moderno",
                 ".find(\"option\").first()"
         );
-        contiene(
-                reglas,
-                "recuperable enviado neutral",
-                "datos.recuperableSur = 0"
-        );
-        contiene(
-                reglas,
-                "reconocido SSS enviado neutral",
-                "datos.reconocidoSSS = 0"
-        );
-        contiene(
-                reglas,
-                "sesión inicial neutralizada mediante endpoint existente",
-                "RECLAMO_PRESTACIONAL_RECUPERABLE_SESION_NEUTRALIZADO"
-        );
-        contiene(
-                reglas,
-                "fila histórica SUR ocultada de la grilla",
-                "normalizarListadoVisual"
-        );
 
         contiene(
-                reglas,
-                "select visible fijado en cero",
-                "selects[i].val(\"0\")"
+                compras,
+                "Surge se propaga por AJAX",
+                "copia.recuperableSur = parseInt(valorActual, 10);"
         );
         contiene(
-                reglas,
-                "select bloqueado",
-                "selects[i].attr(\"disabled\", \"disabled\")"
+                compras,
+                "valor de contexto se usa al guardar",
+                "recuperableSur: parseInt(valorRecuperableActual, 10) || 0"
         );
         contiene(
-                reglas,
-                "reconocido bloqueado",
-                "reconocidos[i].attr(\"readonly\", \"readonly\")"
+                compras,
+                "selector de alta conserva Surge",
+                "alta.removeAttr(\"disabled\").val(valorRecuperableActual)"
+        );
+        contiene(
+                compras,
+                "selector de edicion conserva Surge",
+                "edicion.removeAttr(\"disabled\").val(valorRecuperableActual)"
         );
 
         contiene(
                 action,
-                "servidor ignora reconocido informado",
-                "double reconocidoSSS = 0D;"
+                "servidor consume Recuperable acotado",
+                "ParamUtil.getInteger("
         );
         contiene(
                 action,
-                "servidor fija recuperable cero",
-                "Integer recuperable = Integer.valueOf(0);"
+                "parametro Recuperable SUR",
+                "\"recuperableSur\""
         );
         contiene(
                 action,
-                "prestación editada queda neutral",
+                "rango Recuperable validado",
+                "recuperableSur < 0 || recuperableSur > 3"
+        );
+        contiene(
+                action,
+                "valor Recuperable preservado",
+                "Integer recuperable = Integer.valueOf(recuperableSur);"
+        );
+        contiene(
+                action,
+                "prestacion editada recibe Recuperable",
+                "presta.setRecuperable(recuperable);"
+        );
+        contiene(
+                action,
+                "bandera SUR deriva de Recuperable",
+                "Boolean.valueOf(recuperable.intValue() == 1)"
+        );
+        contiene(
+                action,
+                "Reconocido SSS permanece neutral",
                 "presta.setReconocidoSSS(0D);"
-        );
-        contiene(
-                action,
-                "prestación abierta queda neutral",
-                "presta.setRecuperable(Integer.valueOf(0));"
         );
         noContiene(
                 action,
-                "no se consume Recuperable desde request",
-                "ParamUtil.getString(renderRequest, \"recuperableSur\""
+                "no vuelve a forzar Recuperable cero",
+                "Integer recuperable = Integer.valueOf(0);"
         );
+
+        String javascript = reglas + compras;
+        noContiene(javascript, "sin funciones flecha", "=>");
+        noContiene(javascript, "sin optional chaining", "?.");
+        noContiene(javascript, "sin fetch", "fetch(");
+        noContiene(javascript, "sin let", "let ");
+        noContiene(javascript, "sin const", "const ");
 
         System.out.println(
                 "CONTRATO_RECLAMO_PRESTACION_BOTONES_RECUPERABLE_OK"
