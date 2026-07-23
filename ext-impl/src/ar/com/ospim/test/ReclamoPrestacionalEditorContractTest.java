@@ -187,7 +187,7 @@ public final class ReclamoPrestacionalEditorContractTest {
         assertContains(
                 "error visible de carga",
                 editorPatch,
-                "No se pudo cargar el editor de la prestacion."
+                "No se pudo cargar el editor de la prestaci\u00f3n."
         );
         assertContains(
                 "API de diagnostico expuesta",
