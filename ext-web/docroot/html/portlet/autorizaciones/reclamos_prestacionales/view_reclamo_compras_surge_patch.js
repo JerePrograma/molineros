@@ -1,4 +1,4 @@
-(function(window, jQuery) {
+(function(window, document, jQuery) {
     if (!jQuery) {
         return;
     }
@@ -8,6 +8,9 @@
     var values = config.values || {};
     var urls = config.urls || {};
     var MARCA_VALIDACION = "__rpComprasValidacionVisual";
+    var MARCA_LOAD = "__rpComprasSurPrecarga";
+    var MARCA_AJAX = "__rpComprasSurPrecarga";
+    var valorRecuperableActual = "0";
 
     function campo(sufijo) {
         return jQuery("#" + namespace + sufijo);
@@ -18,19 +21,23 @@
         return control.length ? control.val() : "";
     }
 
-    function esVacio(valorActual) {
-        return valorActual == null || String(valorActual) === "";
-    }
-
     function esBorradorCompras() {
         return values.esBorradorCompras === true ||
                 String(values.esBorradorCompras) === "true";
     }
 
-    /*
-     * Liferay 5.2 puede exponer una version de jQuery sin ajaxPrefilter.
-     * Se instala una compatibilidad minima antes de que cargue tab_guard.
-     */
+    function esVacio(valorActual) {
+        return valorActual == null || String(valorActual) === "";
+    }
+
+    function numero(valorActual) {
+        var texto = String(valorActual == null ? "" : valorActual)
+                .replace(/\s/g, "")
+                .replace(",", ".");
+        var resultado = parseFloat(texto);
+        return isNaN(resultado) ? 0 : resultado;
+    }
+
     function instalarAjaxPrefilterLegacy() {
         if (typeof jQuery.ajaxPrefilter === "function") {
             return;
@@ -45,8 +52,7 @@
             }
         };
 
-        if (typeof ajaxOriginal !== "function" ||
-                ajaxOriginal.__rpAjaxPrefilterLegacy) {
+        if (typeof ajaxOriginal !== "function") {
             return;
         }
 
@@ -73,12 +79,11 @@
         jQuery.ajax = ajaxCompatible;
     }
 
+    /* Debe ejecutarse antes de cargar view_reclamo_tab_guard.js. */
     instalarAjaxPrefilterLegacy();
 
     function reemplazarPorHiddenSeguro(sufijo) {
-        var controles = campo(sufijo);
-
-        controles.each(function() {
+        campo(sufijo).each(function() {
             var actual = this;
             var tipo = String(actual.type || "").toLowerCase();
             var reemplazo;
@@ -106,20 +111,12 @@
         reemplazarPorHiddenSeguro("nombre_plan_reclamo_bloqueado");
     }
 
-    function resumenValidacion() {
-        return campo("reclamo_validacion_resumen");
-    }
-
-    function listaValidacion() {
-        return campo("reclamo_validacion_lista");
-    }
-
     function limpiarErroresVisuales() {
         jQuery(".rp-campo-error").removeClass("rp-campo-error");
         jQuery(".rp-campo-error-contenedor")
                 .removeClass("rp-campo-error-contenedor");
-        listaValidacion().empty();
-        resumenValidacion().css("display", "none");
+        campo("reclamo_validacion_lista").empty();
+        campo("reclamo_validacion_resumen").css("display", "none");
     }
 
     function marcarControl(control) {
@@ -136,8 +133,7 @@
         }
     }
 
-    function agregarError(errores, mensaje, sufijo) {
-        var control = sufijo ? campo(sufijo) : jQuery();
+    function agregarError(errores, mensaje, control) {
         marcarControl(control);
         errores.push({
             mensaje: mensaje,
@@ -161,12 +157,12 @@
     }
 
     function mostrarErrores(errores) {
-        var lista = listaValidacion();
-        var resumen = resumenValidacion();
+        var lista = campo("reclamo_validacion_lista");
+        var resumen = campo("reclamo_validacion_resumen");
         var primero = null;
-        var i;
-        var item;
         var posicion;
+        var item;
+        var i;
 
         if (!errores.length) {
             return false;
@@ -175,7 +171,7 @@
         lista.empty();
 
         for (i = 0; i < errores.length; i++) {
-            item = jQuery("<li></li>");
+            item = jQuery(document.createElement("li"));
             item.text(errores[i].mensaje);
             lista.append(item);
 
@@ -192,10 +188,11 @@
             if (posicion) {
                 window.scrollTo(0, Math.max(0, posicion.top - 100));
             }
+
             try {
                 primero.focus();
             } catch (errorFoco) {
-                // El resumen sigue visible aunque el control no acepte foco.
+                // El resumen sigue visible si el control no admite foco.
             }
         } else {
             posicion = resumen.offset();
@@ -230,8 +227,9 @@
                 esVacio(anio) || String(anio) === "0";
     }
 
-    function valorNoSeleccionado(sufijo) {
+    function noSeleccionado(sufijo) {
         var actual = String(valor(sufijo) || "").toUpperCase();
+
         return actual === "" || actual === "0" ||
                 actual === "SELECCIONAR" || actual === "SELECCIONE";
     }
@@ -248,7 +246,7 @@
             agregarError(
                     errores,
                     "El plan del afiliado no permite cargar un reclamo.",
-                    "plan"
+                    campo("plan")
             );
         }
 
@@ -256,7 +254,7 @@
             agregarError(
                     errores,
                     "Debe seleccionar el afiliado asociado al reclamo.",
-                    "cuil"
+                    campo("cuil")
             );
             marcarControl(campo("inte"));
         }
@@ -269,11 +267,11 @@
             );
         }
 
-        if (valorNoSeleccionado("sector")) {
+        if (noSeleccionado("sector")) {
             agregarError(
                     errores,
                     "Debe seleccionar el sector del reclamo.",
-                    "sector"
+                    campo("sector")
             );
         }
 
@@ -282,7 +280,7 @@
             agregarError(
                     errores,
                     "Debe seleccionar el Tipo de Pedido.",
-                    "tipopedido"
+                    campo("tipopedido")
             );
         }
 
@@ -290,16 +288,16 @@
             agregarError(
                     errores,
                     "Debe existir al menos una prestacion activa.",
-                    "lista_prestaciones_reclamos"
+                    campo("lista_prestaciones_reclamos")
             );
         }
 
         if (tipoPedido === "EXCEPCION" && campo("integracion").length &&
-                valorNoSeleccionado("integracion")) {
+                noSeleccionado("integracion")) {
             agregarError(
                     errores,
                     "Debe seleccionar un tipo de integracion.",
-                    "integracion"
+                    campo("integracion")
             );
         }
 
@@ -346,10 +344,10 @@
     function ejecutarConAlertasVisuales(original, contexto, argumentos) {
         var alertOriginal = window.alert;
         var mensajes = [];
-        var resultado;
         var errores = [];
-        var i;
+        var resultado;
         var control;
+        var i;
 
         window.alert = function(mensaje) {
             mensajes.push(String(mensaje || "Error de validacion."));
@@ -380,14 +378,29 @@
 
         for (i = 0; i < mensajes.length; i++) {
             control = controlPorMensaje(mensajes[i]);
-            marcarControl(control);
-            errores.push({
-                mensaje: mensajes[i],
-                control: control
-            });
+            agregarError(errores, mensajes[i], control);
         }
 
         mostrarErrores(errores);
+        return false;
+    }
+
+    function cadenaContieneMarca(funcion, marca) {
+        var actual = funcion;
+        var pasos = 0;
+
+        while (typeof actual === "function" && pasos < 12) {
+            if (actual[marca]) {
+                return true;
+            }
+
+            actual = actual.__rpProduccion7305Original ||
+                    actual.__rpComprasValidacionOriginal ||
+                    actual.__rpOriginal ||
+                    null;
+            pasos++;
+        }
+
         return false;
     }
 
@@ -395,7 +408,8 @@
         var original = window[nombreFuncion];
         var envuelta;
 
-        if (typeof original !== "function" || original[MARCA_VALIDACION]) {
+        if (typeof original !== "function" ||
+                cadenaContieneMarca(original, MARCA_VALIDACION)) {
             return;
         }
 
@@ -421,16 +435,205 @@
         window[nombreFuncion] = envuelta;
     }
 
-    function numero(valorActual) {
-        var normalizado = String(valorActual == null ? "" : valorActual)
-                .replace(/\s/g, "")
-                .replace(",", ".");
-        var convertido = parseFloat(normalizado);
-        return isNaN(convertido) ? 0 : convertido;
+    function normalizarRecuperable(valorEntrada) {
+        var convertido = parseInt(valorEntrada, 10);
+
+        return convertido >= 0 && convertido <= 3 ?
+                String(convertido) : "0";
+    }
+
+    function leerRecuperableInicial() {
+        valorRecuperableActual = normalizarRecuperable(
+                valor("recuperable_sur_compra_inicial")
+        );
+    }
+
+    function esEndpointPrestacion(url) {
+        var texto = String(url || "");
+
+        return texto.indexOf(
+                "struts_action=/autorizaciones/lista_prestaciones_reclamos"
+        ) >= 0 || texto.indexOf(
+                "struts_action=/autorizaciones/editar_reclamosprestaciones"
+        ) >= 0;
+    }
+
+    function corregirUrl(url) {
+        var texto = String(url || "");
+        var patron = /([?&])recuperableSur=[^&]*/;
+
+        if (!esEndpointPrestacion(texto)) {
+            return url;
+        }
+
+        if (patron.test(texto)) {
+            return texto.replace(
+                    patron,
+                    "$1recuperableSur=" + valorRecuperableActual
+            );
+        }
+
+        return texto + (texto.indexOf("?") >= 0 ? "&" : "?") +
+                "recuperableSur=" + valorRecuperableActual;
+    }
+
+    function corregirDatos(datos) {
+        var copia;
+
+        if (datos == null) {
+            copia = {};
+        } else if (typeof datos === "object") {
+            copia = jQuery.extend({}, datos);
+        } else {
+            return datos;
+        }
+
+        copia.recuperableSur = parseInt(valorActual, 10);
+        return copia;
+    }
+
+    /* Alias estable requerido por la correccion historica de Surge. */
+    var valorActual = valorRecuperableActual;
+
+    function sincronizarAliasRecuperable() {
+        valorActual = valorRecuperableActual;
+    }
+
+    function envolverLoadRecuperable(loadOriginal) {
+        if (typeof loadOriginal !== "function" || loadOriginal[MARCA_LOAD]) {
+            return loadOriginal;
+        }
+
+        var envuelta = function(url, datos, callback) {
+            var urlCorregida = corregirUrl(url);
+            var datosCorregidos = datos;
+            var callbackCorregido = callback;
+
+            if (typeof datos === "function") {
+                callbackCorregido = datos;
+                datosCorregidos = undefined;
+            }
+
+            if (esEndpointPrestacion(urlCorregida) &&
+                    datosCorregidos !== undefined) {
+                sincronizarAliasRecuperable();
+                datosCorregidos = corregirDatos(datosCorregidos);
+            }
+
+            if (datosCorregidos === undefined) {
+                return loadOriginal.call(
+                        this,
+                        urlCorregida,
+                        callbackCorregido
+                );
+            }
+
+            return loadOriginal.call(
+                    this,
+                    urlCorregida,
+                    datosCorregidos,
+                    callbackCorregido
+            );
+        };
+
+        envuelta[MARCA_LOAD] = true;
+        envuelta.__rpComprasSurPrecargaOriginal = loadOriginal;
+        return envuelta;
+    }
+
+    function envolverAjaxRecuperable() {
+        var ajaxOriginal = jQuery.ajax;
+
+        if (typeof ajaxOriginal !== "function" || ajaxOriginal[MARCA_AJAX]) {
+            return;
+        }
+
+        var envuelta = function(opciones) {
+            var configuracion;
+
+            if (arguments.length === 1 && opciones &&
+                    typeof opciones === "object" &&
+                    esEndpointPrestacion(opciones.url)) {
+
+                configuracion = jQuery.extend({}, opciones);
+                configuracion.url = corregirUrl(configuracion.url);
+                sincronizarAliasRecuperable();
+                configuracion.data = corregirDatos(configuracion.data);
+                return ajaxOriginal.call(this, configuracion);
+            }
+
+            return ajaxOriginal.apply(this, arguments);
+        };
+
+        envuelta[MARCA_AJAX] = true;
+        envuelta.__rpComprasSurPrecargaOriginal = ajaxOriginal;
+        jQuery.ajax = envuelta;
+    }
+
+    function registrarCambioRecuperable(control) {
+        if (!control.length || control.data("rpComprasSurCambio")) {
+            return;
+        }
+
+        control.data("rpComprasSurCambio", true);
+        control.change(function() {
+            valorRecuperableActual = normalizarRecuperable(
+                    jQuery(this).val()
+            );
+            sincronizarAliasRecuperable();
+        });
+    }
+
+    function aplicarRecuperableCompras() {
+        var alta = campo("recuperable_sur");
+        var edicion = campo("recuperable_surEdicion");
+
+        registrarCambioRecuperable(alta);
+        registrarCambioRecuperable(edicion);
+
+        if (alta.length) {
+            alta.removeAttr("disabled").val(valorRecuperableActual);
+        }
+        if (edicion.length) {
+            edicion.removeAttr("disabled").val(valorRecuperableActual);
+        }
+
+        if (typeof window.cambiorecuperable === "function") {
+            window.cambiorecuperable();
+        }
+        if (typeof window.cambiorecuperableEdicion === "function") {
+            window.cambiorecuperableEdicion();
+        }
+    }
+
+    function prepararInterfazCompras() {
+        var comprobante = campo("datos_comprobante");
+        var aviso = campo("rp_compras_comprobante_info");
+
+        comprobante.css("display", "none");
+        comprobante.attr("aria-hidden", "true");
+        campo("comprobante_tipo_edicion").val("OTR");
+
+        if (!aviso.length && comprobante.length) {
+            aviso = jQuery(document.createElement("div"));
+            aviso.attr("id", namespace + "rp_compras_comprobante_info");
+            aviso.addClass("portlet-msg-info");
+            aviso.text(
+                    "La cotizacion de Compras no es una factura. " +
+                    "Los datos de comprobante no se solicitan en esta precarga."
+            );
+            comprobante.before(aviso);
+        }
     }
 
     function validarPrestacionCompras() {
         var errores = [];
+        var frecuencia = String(valor("frecuenciaEdicion") || "");
+        var codigo = String(valor("codigoSeguimiento_filtro_edit") || "");
+        var descripcion = String(
+                valor("descripcionSeguimiento_filtro_edit") || ""
+        );
+        var medicamento = String(valor("troquel_edit") || "");
         var cantidad = numero(valor("cantidadEdicion"));
         var importe = numero(valor("importeEdicion"));
         var total = Math.round(cantidad * importe * 100) / 100;
@@ -439,39 +642,34 @@
                 numero(valor("cargopsEdicion")) +
                 numero(valor("cargoimesaEdicion"))
         ) * 100) / 100;
-        var codigo = String(valor("codigoSeguimiento_filtro_edit") || "");
-        var descripcion = String(
-                valor("descripcionSeguimiento_filtro_edit") || ""
-        );
-        var medicamento = String(valor("troquel_edit") || "");
 
-        if (valorNoSeleccionado("frecuenciaEdicion")) {
+        if (!frecuencia || frecuencia === "SELECCIONE") {
             agregarError(
                     errores,
                     "Debe seleccionar la frecuencia correspondiente.",
-                    "frecuenciaEdicion"
+                    campo("frecuenciaEdicion")
             );
         }
 
-        if (fechaAusente("fechaPrestacion" + "Edicion")) {
+        if (fechaAusente("fechaPrestacion")) {
             agregarErrorFecha(
                     errores,
                     "Debe ingresar la fecha de la Prestacion.",
-                    "fechaPrestacionEdicion"
+                    "fechaPrestacion"
             );
         }
 
-        if (!codigo && !medicamento) {
+        if ((!codigo || codigo.indexOf("ART-") === 0) && !medicamento) {
             agregarError(
                     errores,
                     "Debe confirmar el nomenclador o medicamento de la prestacion.",
-                    "codigoSeguimiento_filtro_edit"
+                    campo("codigoSeguimiento_filtro_edit")
             );
-        } else if (codigo && !descripcion) {
+        } else if (codigo && codigo.indexOf("ART-") !== 0 && !descripcion) {
             agregarError(
                     errores,
                     "Debe confirmar la descripcion de la prestacion.",
-                    "descripcionSeguimiento_filtro_edit"
+                    campo("descripcionSeguimiento_filtro_edit")
             );
         }
 
@@ -479,7 +677,7 @@
             agregarError(
                     errores,
                     "La cantidad de la prestacion debe ser mayor a cero.",
-                    "cantidadEdicion"
+                    campo("cantidadEdicion")
             );
         }
 
@@ -487,7 +685,7 @@
             agregarError(
                     errores,
                     "El importe de la prestacion debe ser mayor a cero.",
-                    "importeEdicion"
+                    campo("importeEdicion")
             );
         }
 
@@ -495,7 +693,7 @@
             agregarError(
                     errores,
                     "La suma de los cargos debe coincidir con el total de la prestacion.",
-                    "cargoospimEdicion"
+                    campo("cargoospimEdicion")
             );
             marcarControl(campo("cargopsEdicion"));
             marcarControl(campo("cargoimesaEdicion"));
@@ -507,9 +705,10 @@
     function guardarPrestacionCompras() {
         var errores;
         var destino;
+        var cargador;
+        var completar;
         var nomSeleccionado;
         var tipoNomenclador;
-        var recuperableInicial;
         var params;
 
         limpiarErroresVisuales();
@@ -523,7 +722,6 @@
                 valor("nom_seleccionado") || "1";
         tipoNomenclador = valor("tipoNomenclador_edit") ||
                 valor("tipoNomenclador") || "0";
-        recuperableInicial = valor("recuperable_sur_compra_inicial") || "0";
 
         params = {
             frecuencia: valor("frecuenciaEdicion"),
@@ -538,7 +736,7 @@
             tipoEdicion: 0,
             grabaedicion: true,
             estadoAprobacion: 0,
-            recuperableSur: parseInt(recuperableInicial, 10) || 0,
+            recuperableSur: parseInt(valorRecuperableActual, 10) || 0,
             cantidad: valor("cantidadEdicion"),
             observaciones: valor("observacion_prestacionEdicion"),
             cpbte_tipo: "OTR",
@@ -569,318 +767,88 @@
             inte: valor("inte"),
             id_tercerizadora: valor("id_tercerizadora")
         };
+        params[namespace + "reclamoDraftId"] = valor("reclamoDraftId");
 
         destino = campo("lista_prestaciones_reclamos");
+        cargador = window.ReclamoPrestacionalJQueryLoadOriginal;
         campo("buscando").css("display", "block");
 
-        destino.load(
-                urls.editarPrestaciones,
-                params,
-                function(respuesta, estado) {
-                    campo("buscando").css("display", "none");
+        completar = function(respuesta, estado) {
+            var cancelar;
 
-                    if (estado === "error") {
-                        mostrarErrores([{
-                            mensaje: "No se pudo actualizar la prestacion precargada.",
-                            control: destino
-                        }]);
-                        return;
-                    }
+            campo("buscando").css("display", "none");
 
-                    campo("tipoaccionprestacion").val("0");
-                    campo("datos_edicion_prestacion").css("display", "none");
-                    campo("datos_prestacion_ingreso").css("display", "block");
-                    limpiarErroresVisuales();
-                }
-        );
+            if (estado === "error") {
+                mostrarErrores([{
+                    mensaje: "No se pudo actualizar la prestacion precargada.",
+                    control: destino
+                }]);
+                return;
+            }
+
+            campo("tipoaccionprestacion").val("0");
+            cancelar = window[namespace + "cancelaEdicionPrestacion"];
+
+            if (typeof cancelar === "function") {
+                cancelar();
+            } else {
+                campo("datos_edicion_prestacion").css("display", "none");
+                campo("datos_prestacion_ingreso").css("display", "block");
+            }
+
+            limpiarErroresVisuales();
+        };
+
+        if (typeof cargador === "function") {
+            cargador.call(destino, urls.editarPrestaciones, params, completar);
+        } else {
+            destino.load(urls.editarPrestaciones, params, completar);
+        }
 
         return false;
     }
 
-    function prepararInterfazCompras() {
-        var comprobante;
-        var aviso;
-        var botonSeguro;
-
-        if (!esBorradorCompras()) {
-            return;
-        }
-
-        comprobante = campo("datos_comprobante");
-        comprobante.css("display", "none");
-        comprobante.attr("aria-hidden", "true");
-        campo("comprobante_tipo_edicion").val("OTR");
-
-        aviso = campo("rp_compras_comprobante_info");
-        if (!aviso.length && comprobante.length) {
-            aviso = jQuery("<div></div>", {
-                id: namespace + "rp_compras_comprobante_info",
-                class: "portlet-msg-info"
-            });
-            aviso.text(
-                    "La cotizacion de Compras no es una factura. " +
-                    "Los datos de comprobante no se solicitan en esta precarga."
-            );
-            comprobante.before(aviso);
-        }
+    function instalarGuardadoPrestacionCompras() {
+        var boton;
 
         window[namespace + "editarPrestacionSeleccionada"] =
                 guardarPrestacionCompras;
 
-        botonSeguro = campo("rp_guardar_prestacion_seguro");
-        if (botonSeguro.length) {
-            botonSeguro[0].onclick = function() {
+        boton = campo("rp_guardar_prestacion_seguro");
+        if (boton.length) {
+            boton[0].onclick = function() {
                 return guardarPrestacionCompras();
             };
         }
     }
 
-    function instalarValidacionVisual() {
+    function instalar() {
         normalizarAuxiliares();
-        prepararInterfazCompras();
         envolverGuardado(namespace + "saveReclamo");
         envolverGuardado(namespace + "editaReclamo");
-    }
 
-    function instalar() {
-        var inicial = campo("recuperable_sur_compra_inicial");
-
-        if (!inicial.length ||
-                jQuery.fn.__rpComprasSurPrecargaInstalado) {
-            instalarValidacionVisual();
+        if (!esBorradorCompras()) {
             return;
         }
 
-        var valorActual = inicial.val() === "1" ? "1" : "0";
+        leerRecuperableInicial();
+        aplicarRecuperableCompras();
+        prepararInterfazCompras();
+        envolverAjaxRecuperable();
+        jQuery.fn.load = envolverLoadRecuperable(jQuery.fn.load);
+        instalarGuardadoPrestacionCompras();
 
-        function normalizarValor(valorEntrada) {
-            var numeroValor = parseInt(valorEntrada, 10);
-
-            return numeroValor >= 0 && numeroValor <= 3
-                    ? String(numeroValor)
-                    : "0";
-        }
-
-        function esEndpointPrestacion(url) {
-            var texto = String(url || "");
-
-            return texto.indexOf(
-                    "struts_action=/autorizaciones/" +
-                            "lista_prestaciones_reclamos"
-            ) >= 0
-                    || texto.indexOf(
-                            "struts_action=/autorizaciones/" +
-                                    "editar_reclamosprestaciones"
-                    ) >= 0;
-        }
-
-        function corregirUrl(url) {
-            var texto = String(url || "");
-            var patron = /([?&])recuperableSur=[^&]*/;
-
-            if (!esEndpointPrestacion(texto)) {
-                return url;
-            }
-
-            if (patron.test(texto)) {
-                return texto.replace(
-                        patron,
-                        "$1recuperableSur=" + valorActual
-                );
-            }
-
-            return texto
-                    + (texto.indexOf("?") >= 0 ? "&" : "?")
-                    + "recuperableSur="
-                    + valorActual;
-        }
-
-        function corregirDatos(datos) {
-            var copia;
-
-            if (datos == null) {
-                copia = {};
-            } else if (typeof datos === "object") {
-                copia = jQuery.extend({}, datos);
-            } else {
-                return datos;
-            }
-
-            copia.recuperableSur = parseInt(valorActual, 10);
-
-            return copia;
-        }
-
-        function registrarCambios(selector) {
-            selector.each(function() {
-                var control = jQuery(this);
-
-                if (control.data("rpComprasSurCambio")) {
-                    return;
-                }
-
-                control.data("rpComprasSurCambio", true);
-                control.change(function() {
-                    valorActual = normalizarValor(
-                            jQuery(this).val()
-                    );
-                });
-            });
-        }
-
-        function aplicarSelector() {
-            var alta = campo("recuperable_sur");
-            var edicion = campo("recuperable_surEdicion");
-
-            registrarCambios(alta);
-            registrarCambios(edicion);
-
-            if (alta.length) {
-                alta.removeAttr("disabled").val(valorActual);
-            }
-
-            if (edicion.length) {
-                edicion.removeAttr("disabled").val(valorActual);
-            }
-
-            if (typeof window.cambiorecuperable === "function") {
-                window.cambiorecuperable();
-            }
-
-            if (typeof window.cambiorecuperableEdicion === "function") {
-                window.cambiorecuperableEdicion();
-            }
-        }
-
-        function envolverCallback(callback) {
-            if (typeof callback !== "function") {
-                return callback;
-            }
-
-            return function() {
-                var resultado = callback.apply(this, arguments);
-
-                window.setTimeout(function() {
-                    aplicarSelector();
-                    instalarValidacionVisual();
-                }, 0);
-
-                return resultado;
-            };
-        }
-
-        function envolverLoad(loadOriginal) {
-            if (typeof loadOriginal !== "function" ||
-                    loadOriginal.__rpComprasSurPrecarga) {
-                return loadOriginal;
-            }
-
-            var loadCompras = function(url, datos, callback) {
-                var urlCorregida = corregirUrl(url);
-                var datosCorregidos = datos;
-                var callbackCorregido = callback;
-
-                if (typeof datos === "function") {
-                    callbackCorregido = datos;
-                    datosCorregidos = undefined;
-                }
-
-                if (esEndpointPrestacion(urlCorregida)) {
-                    datosCorregidos = corregirDatos(datosCorregidos);
-                    callbackCorregido = envolverCallback(
-                            callbackCorregido
-                    );
-                }
-
-                if (datosCorregidos === undefined) {
-                    return loadOriginal.call(
-                            this,
-                            urlCorregida,
-                            callbackCorregido
-                    );
-                }
-
-                return loadOriginal.call(
-                        this,
-                        urlCorregida,
-                        datosCorregidos,
-                        callbackCorregido
-                );
-            };
-
-            loadCompras.__rpComprasSurPrecarga = true;
-            loadCompras.__rpComprasSurPrecargaOriginal = loadOriginal;
-
-            return loadCompras;
-        }
-
-        var ajaxOriginal = jQuery.ajax;
-
-        if (typeof ajaxOriginal === "function" &&
-                !ajaxOriginal.__rpComprasSurPrecarga) {
-
-            var ajaxCompras = function(opciones) {
-                var configuracion;
-
-                if (arguments.length === 1 &&
-                        opciones &&
-                        typeof opciones === "object" &&
-                        esEndpointPrestacion(opciones.url)) {
-
-                    configuracion = jQuery.extend({}, opciones);
-                    configuracion.url = corregirUrl(
-                            configuracion.url
-                    );
-                    configuracion.data = corregirDatos(
-                            configuracion.data
-                    );
-                    configuracion.complete = envolverCallback(
-                            configuracion.complete
-                    );
-
-                    return ajaxOriginal.call(
-                            this,
-                            configuracion
-                    );
-                }
-
-                return ajaxOriginal.apply(this, arguments);
-            };
-
-            ajaxCompras.__rpComprasSurPrecarga = true;
-            ajaxCompras.__rpComprasSurPrecargaOriginal = ajaxOriginal;
-            jQuery.ajax = ajaxCompras;
-        }
-
-        jQuery.fn.load = envolverLoad(jQuery.fn.load);
-
-        if (typeof window.ReclamoPrestacionalJQueryLoadOriginal ===
-                "function") {
-
-            window.ReclamoPrestacionalJQueryLoadOriginal =
-                    envolverLoad(
-                            window.ReclamoPrestacionalJQueryLoadOriginal
-                    );
-        }
-
-        jQuery.fn.__rpComprasSurPrecargaInstalado = true;
-
-        jQuery(document).ajaxComplete(function() {
-            window.setTimeout(function() {
-                aplicarSelector();
-                instalarValidacionVisual();
-            }, 0);
-        });
-
-        aplicarSelector();
-        instalarValidacionVisual();
-        window.setTimeout(function() {
-            aplicarSelector();
-            instalarValidacionVisual();
-        }, 0);
+        window.ReclamoPrestacionalComprasGuardadoFinal = {
+            validar: validarPrestacionCompras,
+            guardar: guardarPrestacionCompras
+        };
     }
 
     jQuery(function() {
-        window.setTimeout(instalar, 0);
+        window.setTimeout(instalar, 25);
     });
-})(window, window.jQuery);
+
+    jQuery(document).ajaxComplete(function() {
+        window.setTimeout(instalar, 25);
+    });
+})(window, document, window.jQuery);
