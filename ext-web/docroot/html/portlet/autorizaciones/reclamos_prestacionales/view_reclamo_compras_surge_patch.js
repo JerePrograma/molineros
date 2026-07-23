@@ -128,7 +128,7 @@
         control.addClass("rp-campo-error");
 
         if (String(control.attr("type") || "").toLowerCase() === "hidden") {
-            control.closest("fieldset, td, div")
+            control.parents("fieldset, td, div")
                     .eq(0)
                     .addClass("rp-campo-error-contenedor");
         }

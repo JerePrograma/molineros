@@ -11,10 +11,22 @@ jQuery('#' + reclamoPrestacionalNamespace + 'divResultadoActualizarOK').hide();
 jQuery('#' + reclamoPrestacionalNamespace + 'cantprestacioneslista').val(reclamoPrestacionalViewConfig.values.cantPrestaciones);
 jQuery("#" + reclamoPrestacionalNamespace + "busqueda_prestaciones").hide();
 jQuery("#" + reclamoPrestacionalNamespace + "busqueda_farmacia").hide();
-if (reclamoPrestacionalViewConfig.values.esBorradorCompras) {
-	jQuery("#" + reclamoPrestacionalNamespace + "datos_prestacion_ingreso").hide();
+
+var editorPrestacion = jQuery(
+		"#" + reclamoPrestacionalNamespace + "datos_edicion_prestacion"
+);
+var ingresoPrestacion = jQuery(
+		"#" + reclamoPrestacionalNamespace + "datos_prestacion_ingreso"
+);
+
+if (reclamoPrestacionalViewConfig.values.esBorradorCompras ||
+		editorPrestacion.children().length) {
+
+	editorPrestacion.show().attr("aria-hidden", "false");
+	ingresoPrestacion.hide().attr("aria-hidden", "true");
 } else {
-	jQuery("#" + reclamoPrestacionalNamespace + "datos_edicion_prestacion").hide();
+	editorPrestacion.hide().attr("aria-hidden", "true");
+	ingresoPrestacion.show().attr("aria-hidden", "false");
 }
 jQuery("#" + reclamoPrestacionalNamespace + "Cierre_Reclamo_Div").hide();
 /* jQuery("#namespacebotoneditareclamo").hide(); */
@@ -531,60 +543,60 @@ function ValidarDatosObligatorios(Edicion){
 
 	// valida datos del cierre del reclamo
 	var idgestion = jQuery('#' + reclamoPrestacionalNamespace + 'tipo_gestion_cierre_reclamo').val();
-	
+
 	var justificacion=jQuery('#' + reclamoPrestacionalNamespace + 'justificacionmedcica_reclamo').val();
 
-	
+
 	if (idgestion == 0  && jQuery('#' + reclamoPrestacionalNamespace + 'estado option:selected').text().trim() == 'CERRADO' ){
 		alert('Debe ingresar el tipo de gestión del Reclamo ( Sección Cierre de Reclamo) ');
 		document.getElementById("" + reclamoPrestacionalNamespace + "tipo_gestion_cierre_reclamo").focus();
 		return false;
 	}
-	
+
 	/* if (idgestion==5){ */
 	if (idgestion==5){
-	/* 	var isDisabled = jQuery('#namespacedosporciento').is(':disabled');			
+	/* 	var isDisabled = jQuery('#namespacedosporciento').is(':disabled');
 	    if (!isDisabled) { */
 			if(! confirm("Al seleccionar la opción RECHAZADO el sistema rechazará todas las prestaciones del caso, no podrá asociarlas a reintegros. Está seguro ?")){
-				return false;	
+				return false;
 			/* } */
-	    }	
+	    }
 	}
 		var respResolucion = document.getElementById("" + reclamoPrestacionalNamespace + "respresolucion");
-		
-		if ( jQuery('#' + reclamoPrestacionalNamespace + 'auditoriaadministrativa').val()!="Ok" ){ // auditoria administrativa 
 
-			if (justificacion.length ==0  && resp ){ // no hay revisiones activas 
+		if ( jQuery('#' + reclamoPrestacionalNamespace + 'auditoriaadministrativa').val()!="Ok" ){ // auditoria administrativa
+
+			if (justificacion.length ==0  && resp ){ // no hay revisiones activas
 				alert('Tiene que ingresar la justificación médica del Caso para efectuar el Cierre del Caso.');
 				jQuery('#' + reclamoPrestacionalNamespace + 'justificacionmedcica_reclamo').focus();
 				resp=false;
-			}		
+			}
 		}
-		// validar si 
+		// validar si
 		if (idgestion<1  && resp && jQuery('#' + reclamoPrestacionalNamespace + 'estado option:selected').text() == 'CERRADO' ){
 			alert('Debe ingresar el tipo de gestión del Reclamo ( Sección Cierre de Reclamo) ');
 			document.getElementById("" + reclamoPrestacionalNamespace + "tipo_gestion_cierre_reclamo").focus();
 			resp=false;
 		}
-		
+
 			if ((dia2 || mes2 || anio2)  && resp )  {
 				alert('Debe ingresar la fecha de Cierre del Reclamo');
 				document.getElementById("" + reclamoPrestacionalNamespace + "fechacierreDia").focus();
 				resp=false;
 			}
-		
+
 		if(tipoSelecttipopedido == 3){ //si estado = cerrado
-			if (jQuery('#' + reclamoPrestacionalNamespace + 'cantrevisionesactivas').val()<1  && resp ){ // no hay revisiones activas 
-				alert('Recuerde, debe tener registrada por lo menos una revisión activa para el cierre del caso!!!!.');			
+			if (jQuery('#' + reclamoPrestacionalNamespace + 'cantrevisionesactivas').val()<1  && resp ){ // no hay revisiones activas
+				alert('Recuerde, debe tener registrada por lo menos una revisión activa para el cierre del caso!!!!.');
 				resp=false;
 			}
 		}
-		
-		
+
+
 // SI ES CIERRE DEL CASO NO SE CONTROLA SI SE DIERON DE BAJA TODAS LAS PRESTACIONES
 
 	valor=jQuery('#' + reclamoPrestacionalNamespace + 'cantprestacioneslista').val();
-	
+
 
     if (Edicion && addprestacion) {
     	if (valor <1   && resp){
@@ -593,17 +605,17 @@ function ValidarDatosObligatorios(Edicion){
     	}
     }else{
     		if (valor <1  && resp ){
-    			
-    		}	
+
+    		}
     }
-    
+
     var integracion = jQuery("#" + reclamoPrestacionalNamespace + "integracion").val();
 	 if ('EXCEPCION' ==  jQuery("#" + reclamoPrestacionalNamespace + "tipopedido").val()){
 		if (integracion == '0'){
 			alert('Debe seleccionar un tipo de integración ');
 			resp=false;
 		}
-		 
+
 	 }
 
 	 if (Edicion && resp ) {
@@ -612,58 +624,58 @@ function ValidarDatosObligatorios(Edicion){
 	    		alert('Debe tener ingresada por lo menos una prestación para poder cerrar el reclamo.');
 	    		resp=false;
 	    	}
-		 } 	
+		 }
 	 }
-		
-	 var codError='';	
+
+	 var codError='';
 	 var baja =  jQuery('#' + reclamoPrestacionalNamespace + 'baja_fecha').val();
 	 var url = reclamoPrestacionalViewConfig.urls.validarReclamoAfiliadoPrestaciones;
 	 url +='&baja='+baja;
-	 
-	 jQuery.ajax({   
+
+	 jQuery.ajax({
 		   url: url,
 		   async: false,
 		   success: function(data) {
 			  var obj = jQuery.parseJSON(data);
 			  codError = obj.codError;
 	   		}
-	 }); 
-		   
+	 });
+
 	 if(codError == '6'){
 	       alert('La fecha de la prestación no puede ser posterior a la fecha de baja del afiliado');
-		   resp=false;	   
+		   resp=false;
 	 }
 
-	 
-	return resp;	
+
+	return resp;
 }
 
 
 function reclamoPrestacional_saveReclamo() {
-	
+
 /* 	// para el alta
 	habilitarControlesCierre();	 */
-	
+
 	if ( ValidarDatosObligatorios(false))  {
-				
+
 	/*esta chanchada es porque el action toma el id de cierre de tipogestion que es un hidden y no de tipo_gestion_cierre_reclamo*/
 	var idgestion=jQuery('#' + reclamoPrestacionalNamespace + 'tipo_gestion_cierre_reclamo').val();
 	jQuery('#' + reclamoPrestacionalNamespace + 'tipogestion').val(idgestion);
-		
+
 	var accionEnCurso = document[reclamoPrestacionalNamespace + "reclamo_fm"][reclamoPrestacionalNamespace + reclamoPrestacionalViewConfig.values.cmdParam].value;
 	document[reclamoPrestacionalNamespace + "reclamo_fm"][reclamoPrestacionalNamespace + reclamoPrestacionalViewConfig.values.cmdParam].value=reclamoPrestacionalViewConfig.values.saveCommand;
-	
+
 	/* 	var chk_amparo=jQuery("#namespacechk_amparo").is(':checked');
 		var chk_superintendencia=jQuery("#namespacechk_superintendencia").is(':checked');
-		var chk_recuperable = jQuery("#namespacechk_recuperable").is(':checked');	
-		var chk_entramite = jQuery("#namespacechk_entramite").is(':checked');	 */	
-	
+		var chk_recuperable = jQuery("#namespacechk_recuperable").is(':checked');
+		var chk_entramite = jQuery("#namespacechk_entramite").is(':checked');	 */
+
 		var url = reclamoPrestacionalViewConfig.urls.editarReclamo;
 		url = url + "&esDatosTab=true";
 		document[reclamoPrestacionalNamespace + "reclamo_fm"].method = 'post';
-		submitForm(document[reclamoPrestacionalNamespace + "reclamo_fm"], url);		
-	
-	}							  	
+		submitForm(document[reclamoPrestacionalNamespace + "reclamo_fm"], url);
+
+	}
 }
 
 /* Cambia estado a Observado */
@@ -672,90 +684,90 @@ function reclamoPrestacional_volverEstadoObservado() {
 	var confirmar = false;
 	/* Recupera el Id del Reclamo */
 	var idgestion=jQuery('#' + reclamoPrestacionalNamespace + 'id_reclamosel').val();
-	
-	confirmar=confirm ('Estas observando la precarga, la misma será devuelta ' + 
+
+	confirmar=confirm ('Estas observando la precarga, la misma será devuelta ' +
 			'a la seccional. ' + '\nEstas seguro?');
-	
-	if(confirmar) {  	
+
+	if(confirmar) {
 		popup = Liferay.Popup({title:reclamoPrestacionalViewConfig.messages.observacionInterna,modal:true,width:700});
 		var url = reclamoPrestacionalViewConfig.urls.observar;
 		url = url + "&idReclamo=" + idgestion;
-		jQuery(popup).load(url);		
-	}  
+		jQuery(popup).load(url);
+	}
 }
 
 function reclamoPrestacional_editaReclamo(fromAutoriza) {
-	
+
 	if (fromAutoriza) {
 		abreAutorizacion();
 	}
-	
+
 	if ( ValidarDatosObligatorios(true))  {
-		
+
 	  /* var data=jQuery('#namespaceestado').val();
-	  if ( document.getElementById("namespaceestadosel").value == data){	 	
-		 document.getElementById("namespaceestado").value="0";		
+	  if ( document.getElementById("namespaceestadosel").value == data){
+		 document.getElementById("namespaceestado").value="0";
 	  } */
 
 	 /*  if ( document.getElementById("namespacetipopedido").disabled = "disabled"){
-		document.getElementById("namespacetipopedido").disabled = "";	
+		document.getElementById("namespacetipopedido").disabled = "";
 	  } */
-	
+
 	  /*esta chanchada es porque el action toma el id de cierre de tipogestion que es un hidden y no de tipo_gestion_cierre_reclamo*/
 		var idgestion=jQuery('#' + reclamoPrestacionalNamespace + 'tipo_gestion_cierre_reclamo').val()
 		jQuery('#' + reclamoPrestacionalNamespace + 'tipogestion').val(idgestion);
 	    //jQuery('#namespaceid_reclamosel').val(0);
-	  
+
 	  var accionEnCurso = document[reclamoPrestacionalNamespace + "reclamo_fm"][reclamoPrestacionalNamespace + reclamoPrestacionalViewConfig.values.cmdParam].value;
 	  document[reclamoPrestacionalNamespace + "reclamo_fm"][reclamoPrestacionalNamespace + reclamoPrestacionalViewConfig.values.cmdParam].value=reclamoPrestacionalViewConfig.values.updateCommand;
 
 	  /* habilitarControlesCierre(); */
-	  
-	  
 
-	
+
+
+
 	  var url = reclamoPrestacionalViewConfig.urls.editarReclamo;
 	  url = url + "&esDatosTab=true";
 	  document[reclamoPrestacionalNamespace + "reclamo_fm"].method = 'post';
 
-	  
+
 	  submitForm(document[reclamoPrestacionalNamespace + "reclamo_fm"], url);
-		
+
 	  /* onOffControlesRequest(true); */
-	}							  	
+	}
 }
 
 
 function reclamoPrestacional_reabrirReclamo(fromAutoriza) {
-	
+
 	if (fromAutoriza) {
 		abreAutorizacion();
 	}
-	
-		
+
+
 /* 	  var data=jQuery('#namespaceestado').val();
-	  if ( document.getElementById("namespaceestadosel").value == data){	 	
-		 document.getElementById("namespaceestado").value="0";		
+	  if ( document.getElementById("namespaceestadosel").value == data){
+		 document.getElementById("namespaceestado").value="0";
 	  } */
-	
+
 	/*   if ( document.getElementById("namespacetipopedido").disabled = "disabled"){
-		document.getElementById("namespacetipopedido").disabled = "";	
+		document.getElementById("namespacetipopedido").disabled = "";
 	  } */
-	
+
 	  var accionEnCurso = document[reclamoPrestacionalNamespace + "reclamo_fm"][reclamoPrestacionalNamespace + reclamoPrestacionalViewConfig.values.cmdParam].value;
 	  document[reclamoPrestacionalNamespace + "reclamo_fm"][reclamoPrestacionalNamespace + reclamoPrestacionalViewConfig.values.cmdParam].value=reclamoPrestacionalViewConfig.values.restoreCommand;
 
 	  /* habilitarControlesCierre(); */
-	
+
 	  var url = reclamoPrestacionalViewConfig.urls.editarReclamo;
 	  url = url + '&accionEnCurso=' + accionEnCurso + '&moverATab=plan_prest' + "&esDatosTab=false";
-	
+
 	  document[reclamoPrestacionalNamespace + "reclamo_fm"].method = 'post';
-	
+
 	  submitForm(document[reclamoPrestacionalNamespace + "reclamo_fm"], url);
-		
+
 /* 	  onOffControlesRequest(true); */
-							  	
+
 }
 
 
@@ -764,63 +776,63 @@ function reclamoPrestacional_reabrirReclamo(fromAutoriza) {
 function manejartipogestion(){
 
 	/* var tipoGestionArray = jQuery('#namespacetipo_gestion_cierre_reclamo').val().split("|");	 */
-	var idgestion = jQuery('#' + reclamoPrestacionalNamespace + 'tipo_gestion_cierre_reclamo').val();	
+	var idgestion = jQuery('#' + reclamoPrestacionalNamespace + 'tipo_gestion_cierre_reclamo').val();
 	/* var idgestion =tipoGestionArray [0];	 */
 	var sector=jQuery('#' + reclamoPrestacionalNamespace + 'sector').val();
 	var nroLote=jQuery('#' + reclamoPrestacionalNamespace + 'nroLote').val();
-	jQuery('#' + reclamoPrestacionalNamespace + 'tipogestion').val(idgestion);	
+	jQuery('#' + reclamoPrestacionalNamespace + 'tipogestion').val(idgestion);
 	if("1"==idgestion && sector=="PRESTACIONES MEDICAS" && (nroLote==null || nroLote=="" || nroLote=="0")){
-		
-		 var url = reclamoPrestacionalViewConfig.urls.proponeLote;		 
-			jQuery.ajax({   
+
+		 var url = reclamoPrestacionalViewConfig.urls.proponeLote;
+			jQuery.ajax({
 				url: url,
 				success: function(data){
 					var obj = jQuery.parseJSON(data);
 					jQuery('#' + reclamoPrestacionalNamespace + 'nroLote').val(obj.lote);
 				}
-			}); 
+			});
 	}
 	if("1"!=idgestion || sector!="PRESTACIONES MEDICAS"){
 		jQuery('#' + reclamoPrestacionalNamespace + 'nroLote').val("");
 	}
-	
-	
-	
+
+
+
 }
 
 
 function manejarListaPresentes(){
 	var tipoSelect  =document.getElementById("" + reclamoPrestacionalNamespace + "presenteslista");
-	jQuery("#" + reclamoPrestacionalNamespace + "presentes").val(tipoSelect.value); // asigna el valor de la lista al control oculto 
+	jQuery("#" + reclamoPrestacionalNamespace + "presentes").val(tipoSelect.value); // asigna el valor de la lista al control oculto
 }
 
 
 function cambioresolucion(){
-	
+
 	try{
 		var tipoSelect  =document.getElementById("" + reclamoPrestacionalNamespace + "resolucion");
 		var justificacion=jQuery('#' + reclamoPrestacionalNamespace + 'justificacionmedcica_reclamo').val();
 		if  (tipoSelect.selectedIndex>0 && justificacion.length ==0  && document.getElementById("" + reclamoPrestacionalNamespace + "respresolucion").selectedIndex!=1){
 				jQuery('#' + reclamoPrestacionalNamespace + 'justificacionmedcica_reclamo').focus();
 				tipoSelect.selectedIndex=0;
-				alert('Tiene que ingresar la Justificacion Medica del Caso para ingresar la revision.');			
-			}	
+				alert('Tiene que ingresar la Justificacion Medica del Caso para ingresar la revision.');
+			}
 
-	}catch (err) {}	
-	
+	}catch (err) {}
+
 }
 
 
 function manejarTipoPedido(){
 	var tipoPedido =document.getElementById("" + reclamoPrestacionalNamespace + "tipopedido");
 	if ( tipoPedido.selectedIndex==0 ){
-		alert("El tipo de pedido es obligatorio");	
+		alert("El tipo de pedido es obligatorio");
 		document.getElementById("" + reclamoPrestacionalNamespace + "tipopedido").focus();
 	}
 	//if(tipoPedido.value!="EXTRACAPITA"){
 	//	jQuery("#namespacecomprobante_letra").append(new Option("A", "A"));
 	//}
-	
+
 }
 
 function cambioTipoPedido(){
@@ -908,73 +920,73 @@ function manejarTipoSector(){
 
 
 
-function reclamoPrestacional_agregarRevision() {		
-     
+function reclamoPrestacional_agregarRevision() {
+
 	var  revisionConCierre =false;
-	
+
 	if ( DatosRevisionOk())  {
-		
+
 		var resolucion = jQuery('#' + reclamoPrestacionalNamespace + 'resolucion').val();
-		
+
 		var presentes = jQuery('#' + reclamoPrestacionalNamespace + 'presentes').val();
-		var respresolucion = jQuery('#' + reclamoPrestacionalNamespace + 'respresolucion').val();		
-		var revisionFechaVtoDia = jQuery('#' + reclamoPrestacionalNamespace + 'fecharevisionDia').val(); 
-		var revisionFechaVtoMes = jQuery('#' + reclamoPrestacionalNamespace + 'fecharevisionMes').val(); 
+		var respresolucion = jQuery('#' + reclamoPrestacionalNamespace + 'respresolucion').val();
+		var revisionFechaVtoDia = jQuery('#' + reclamoPrestacionalNamespace + 'fecharevisionDia').val();
+		var revisionFechaVtoMes = jQuery('#' + reclamoPrestacionalNamespace + 'fecharevisionMes').val();
 		var revisionFechaVtoAnio = jQuery('#' + reclamoPrestacionalNamespace + 'fecharevisionAnio').val();
-		
+
 		var observacionMedica = jQuery('#' + reclamoPrestacionalNamespace + 'observacion_medica').val();
 
-		
-		
+
+
 		var reclamoobservacion  = jQuery('#' + reclamoPrestacionalNamespace + 'observacion_revision').val();
 		var chk_amparo=jQuery("#" + reclamoPrestacionalNamespace + "chk_amparo").is(':checked');
 		var chk_superintendencia=jQuery("#" + reclamoPrestacionalNamespace + "chk_superintendencia").is(':checked');
 		var chk_recuperable = jQuery("#" + reclamoPrestacionalNamespace + "chk_recuperable").is(':checked');
 		var chk_entramite = jQuery("#portlet:namespace />chk_entramite").is(':checked');
-	
+
 	    if (document.getElementById("" + reclamoPrestacionalNamespace + "resolucion").selectedIndex==0 ) {
-	    	resolucion="";     
+	    	resolucion="";
 	    }
-	    if (document.getElementById("" + reclamoPrestacionalNamespace + "presentes").selectedIndex==0 ) { 
-	    	presentes="";     
+	    if (document.getElementById("" + reclamoPrestacionalNamespace + "presentes").selectedIndex==0 ) {
+	    	presentes="";
 	    }
 	    if (document.getElementById("" + reclamoPrestacionalNamespace + "respresolucion").selectedIndex==0 ) {
-	    	respresolucion="";     
+	    	respresolucion="";
 	    }
 	    jQuery('#' + reclamoPrestacionalNamespace + 'auditoriaadministrativa').val('');
 	    if (document.getElementById("" + reclamoPrestacionalNamespace + "respresolucion").selectedIndex==1 ) {
 	    	jQuery('#' + reclamoPrestacionalNamespace + 'auditoriaadministrativa').val('Ok');
 	    }
-	    
-	   
-	    
+
+
+
 		var params = {"resolucion":resolucion,
 							   "presentes":presentes,
 							   "respresolucion":respresolucion,
 							   "revisionFechaVtoDia":revisionFechaVtoDia,
 							   "revisionFechaVtoMes":revisionFechaVtoMes,
-							   "revisionFechaVtoAnio":revisionFechaVtoAnio,						   
+							   "revisionFechaVtoAnio":revisionFechaVtoAnio,
 							   "reclamoobservacion":reclamoobservacion,
-							   "observacionMedica":observacionMedica					   
+							   "observacionMedica":observacionMedica
 							   };
-			
-		
+
+
 		var url = reclamoPrestacionalViewConfig.urls.listaRevisiones;
-		
-		
+
+
 		if (resolucion.toUpperCase()!="AUTORIZADO"){
 			if(confirm("Confirma el Cierre del Caso con el Rechazo en la revision ?")){
 	 			    /* var estadoSelectsector  =document.getElementById("namespaceestado"); */
 				    //estadoSelectsector.selectedIndex = 2; // setea el estado en cerrado
-				    /* estadoSelectsector.selectedIndex = ubicacionOpcionEstadoCerradoCombo();	 */		    
+				    /* estadoSelectsector.selectedIndex = ubicacionOpcionEstadoCerradoCombo();	 */
 				    /* jQuery("#namespaceestado option[value='3']").attr("selected", true); //CERARADO */
 				    jQuery("#" + reclamoPrestacionalNamespace + "estado option[value='CERRADO']").attr("selected",true);
 				    controlarEstadoCerrado(); // hace visible los controles del estado cerrado
-				    
+
 				    document.getElementById("" + reclamoPrestacionalNamespace + "tipo_gestion_cierre_reclamo").disabled = false;
-					
+
 					var tipoSelectsector  =document.getElementById("" + reclamoPrestacionalNamespace + "tipo_gestion_cierre_reclamo");
-					
+
 					seteaControlesFacturacionDirecta(true);
 					/* tipoSelectsector.selectedIndex= ubicacionOpcionRechazadoenCombo(); */
 				    /* jQuery("#namespacetipo_gestion_cierre_reclamo option[value='5']").attr("selected", true); //RECHAZADO */
@@ -982,9 +994,9 @@ function reclamoPrestacional_agregarRevision() {
 
 					/* var tipoGestionArray=jQuery('#namespacetipo_gestion_cierre_reclamo').val().split("|"); */
 					var idgestion=jQuery('#' + reclamoPrestacionalNamespace + 'tipo_gestion_cierre_reclamo').val()
-					
+
 					/* var idgestion =tipoGestionArray [0]; */
-					jQuery('#' + reclamoPrestacionalNamespace + 'tipogestion').val(idgestion);				
+					jQuery('#' + reclamoPrestacionalNamespace + 'tipogestion').val(idgestion);
 					jQuery('#' + reclamoPrestacionalNamespace + 'reclamo_observacion_cierre').val('RECHAZO DE LA PRESTACION EN LA REVISION.');
 					revisionConCierre=true;
 					jQuery('#' + reclamoPrestacionalNamespace + 'cantrevisionesactivas').val(1); // para que no valide esto
@@ -1426,23 +1438,47 @@ function reclamoPrestacional_editarPrestacionSeleccionada(tipoAccion) {
 
 
 function reclamoPrestacional_cancelaEdicionPrestacion() {
-	
-	// oculta div de datos de edicion
-	jQuery("#" + reclamoPrestacionalNamespace + "datos_edicion_prestacion").hide();
-	// habilita el buscador segun el sector
-	manejarTipoSector();	
-	jQuery("#" + reclamoPrestacionalNamespace + "datos_prestacion_ingreso").show();
-	
+	var editor = jQuery(
+			"#" + reclamoPrestacionalNamespace + "datos_edicion_prestacion"
+	);
+	var ingreso = jQuery(
+			"#" + reclamoPrestacionalNamespace + "datos_prestacion_ingreso"
+	);
+	var tipoAccion = document.getElementById(
+			reclamoPrestacionalNamespace + "tipoaccionprestacion"
+	);
+	var datos = tipoAccion ? String(tipoAccion.value || "") : "";
+	var partes;
+	var idPrestacion;
+	var comboEstado;
+
+	editor.hide().attr("aria-hidden", "true");
+
+	manejarTipoSector();
+
+	ingreso.show().attr("aria-hidden", "false");
+
 	reclamoPrestacional_limpiarNomencladorAutocompletar();
-	onOffcombosestadosprestaciones(true);	
-	// mover el combo a la posicion de cargado porque no se confirmo el rechazo o la autorizacion
-	
-	var datos = document.getElementById("" + reclamoPrestacionalNamespace + "tipoaccionprestacion").value;	
-	var datasplit =datos.split('-');
-	var idPrestacion = datasplit[1];	
-	document.getElementById('comboestadosreclamo'+ idPrestacion ).selectedIndex = "0";	
-	document.getElementById("" + reclamoPrestacionalNamespace + "tipoaccionprestacion").value="";
-	
+	onOffcombosestadosprestaciones(true);
+
+	if (datos) {
+		partes = datos.split("-");
+		idPrestacion = partes.length > 1 ? partes[1] : "";
+
+		if (idPrestacion) {
+			comboEstado = document.getElementById(
+					"comboestadosreclamo" + idPrestacion
+			);
+
+			if (comboEstado) {
+				comboEstado.selectedIndex = 0;
+			}
+		}
+	}
+
+	if (tipoAccion) {
+		tipoAccion.value = "";
+	}
 }
 
 function reclamoPrestacional_agregarPrestacion() {	

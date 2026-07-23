@@ -60,5 +60,5 @@ if (aplicarTipoEdicionComun) {
         src="<%= reclamoPrestacionalAssetBase %>view_reclamo_legacy_compat_patch.js?v=20260723-runtime-2"
         onerror="window.ReclamoPrestacionalAssetError('view_reclamo_legacy_compat_patch.js');"></script>
 <script type="text/javascript"
-        src="<%= reclamoPrestacionalAssetBase %>view_reclamo_compras_surge_patch.js?v=20260723-restaura-precarga-1&fix=ajaxprefilter-auxiliares-2"
+        src="<%= reclamoPrestacionalAssetBase %>view_reclamo_compras_surge_patch.js?v=20260723-editor-dom-clean-1"
         onerror="window.ReclamoPrestacionalAssetError('view_reclamo_compras_surge_patch.js');"></script>

@@ -53,15 +53,20 @@ function extraerMetadatos(html) {
 function esScriptLegacyDelEditor(cuerpo) {
     var texto = String(cuerpo || "");
 
-    var inicializacionRota =
-            texto.indexOf("prestacionEnEdicion != null") >= 0 &&
-            texto.indexOf("datos_edicion_prestacion") >= 0;
+    var inicializacionLegacy =
+            texto.indexOf("datos_edicion_prestacion") >= 0 &&
+            (
+                    texto.indexOf(
+                            "buscarNomencladorAutocompletar_edit"
+                    ) >= 0 ||
+                    texto.indexOf("troquel_edit") >= 0
+            );
 
     var utilidadesLocalesInseguras =
             texto.indexOf("filtrarLetraComprobanteEdicion") >= 0 &&
             texto.indexOf("calculatotalFCEdicion") >= 0;
 
-    return inicializacionRota || utilidadesLocalesInseguras;
+    return inicializacionLegacy || utilidadesLocalesInseguras;
 }
 
 function limpiarScriptsLegacy(html) {
@@ -92,7 +97,9 @@ function repararEtiquetaObservacion() {
         return;
     }
 
-    var celdaEtiqueta = textarea.closest("td").prev("td");
+    var celdaEtiqueta =
+            campo("observacion_prestacionEdicion_label");
+
     if (celdaEtiqueta.length) {
         celdaEtiqueta.text(etiquetaObservacion());
     }
@@ -231,6 +238,7 @@ function repararEditor(contenedor, metadatos) {
     }
 
     contenedor.show();
+    contenedor.attr("aria-hidden", "false");
     contenedor.data("rpEditorMeta", datos);
 
     if (datos.ocultarAutorizado) {

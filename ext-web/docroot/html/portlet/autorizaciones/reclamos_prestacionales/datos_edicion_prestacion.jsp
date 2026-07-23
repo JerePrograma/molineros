@@ -17,9 +17,13 @@ Calendar fechaseccional  = Calendar.getInstance();
 Calendar fechaPrestacion  = Calendar.getInstance();
 
 
-if(prestacionEnEdicion != null  ){
-	 tipoedicion = (Integer) request.getAttribute("tipoEdicion");
-	 if(prestacionEnEdicion.getComprobanteFecha() != null){
+if (prestacionEnEdicion != null) {
+	Object tipoEdicionObj = request.getAttribute("tipoEdicion");
+	tipoedicion = tipoEdicionObj instanceof Integer
+			? (Integer) tipoEdicionObj
+			: Integer.valueOf(0);
+
+	if (prestacionEnEdicion.getComprobanteFecha() != null) {
 		 fechaseccional.setTime(prestacionEnEdicion.getComprobanteFecha());
 	 }
 	 if(prestacionEnEdicion.getFechaPrestacion() !=null){
@@ -52,85 +56,123 @@ if (prestacionEnEdicion != null) {
 			? prestacionEnEdicion.getDescripcion()
 			: "";
 %>
-<input   type="hidden" id="<portlet:namespace />idRegistro" name="<portlet:namespace />idRegistro" size="10" maxlength="10" type="text" value='<%=Validator.isNotNull(prestacionEnEdicion)  ? prestacionEnEdicion.getIdRegistro()      : ""  %>'/></td>
+<input type="hidden"
+	id="<portlet:namespace />idRegistro"
+	name="<portlet:namespace />idRegistro"
+	value="<%= prestacionEnEdicion.getIdRegistro() %>" />
 
-        <label <%=estiloLabel %>"><b><liferay-ui:message key="<%=captionlabelproceso%>"/></b></label>
+<label <%= estiloLabel %>><b><liferay-ui:message key="<%= captionlabelproceso %>" /></b></label>
         		
-		<table class="lfr-table" style="border-collapse: separate; border-spacing: 3px;">			
-		<tr>
-		
-		 <td>
-		<label>F. Prestación: </label>
-		<liferay-ui:input-date dayParam="fechaPrestacionDiaEdicion"
-			dayValue="<%=prestacionEnEdicion!=null && prestacionEnEdicion.getFechaPrestacion()!=null?fechaPrestacion.get(Calendar.DAY_OF_MONTH ):0%>" dayNullable="<%=true%>"
-			monthParam="fechaPrestacionMesEdicion"   monthValue='<%=prestacionEnEdicion!=null && prestacionEnEdicion.getFechaPrestacion()!=null?fechaPrestacion.get(Calendar.MONTH):-1 %>'			
-			monthNullable="<%=true%>" yearParam="fechaPrestacionAnioEdicion"
-			yearValue='<%=prestacionEnEdicion!=null && prestacionEnEdicion.getFechaPrestacion()!=null?fechaPrestacion.get(Calendar.YEAR):-1 %>'
-			 yearNullable="<%=true%>"
-			yearRangeStart="<%=fechaseccional.get(Calendar.YEAR) - 5%>"
-			yearRangeEnd="<%=fechaseccional.get(Calendar.YEAR)+1%>"
-			firstDayOfWeek="" />
-		</td>	
-		<td>
-		
-		<%
-		Integer idPrest = null;
-		Integer idMedic = null;
-		
-		if (prestacionEnEdicion != null) {
-		    idPrest = prestacionEnEdicion.getId_prestacion();
-		    idMedic = prestacionEnEdicion.getId_medicamento();
-		}
-		
-		//sin medicamento: no viene nada desde la app
-		boolean sinMedicamento = (idMedic == null || idMedic.intValue() == 0);
-		
-		// hay prestacion cargada distinta de 0
-		boolean hayPrestacion = (idPrest != null && idPrest.intValue() != 0);
-		
-		// mostrar código presentado si hay prestación, o si no hay medicamento
-		boolean mostrarCodigoPresentado = hayPrestacion || sinMedicamento;
-		%>	
-			<%if (mostrarCodigoPresentado){ %>
-	   	<td>	<label><liferay-ui:message key="codigo-presentado" />:</label></td>
-					<td><input id="<portlet:namespace />codigoSeguimiento_filtro_edit"
-						name="<portlet:namespace />codigoSeguimiento_filtro_edit" size="10"
-						maxlength="20" type="text" value='<%= prestacionEnEdicion != null && prestacionEnEdicion.getCodigoPrestacion() != null ? HtmlUtil.escape(prestacionEnEdicion.getCodigoPrestacion()) : "" %>' /></td>
-					<td><input
-						id="<portlet:namespace />descripcionSeguimiento_filtro_edit"
-						name="<portlet:namespace />descripcionSeguimiento_filtro_edit"
-						size="60" maxlength="200" type="text" value='<%= prestacionEnEdicion != null && prestacionEnEdicion.getDescripcion() != null ? HtmlUtil.escape(prestacionEnEdicion.getDescripcion()) : "" %>' /></td>
-					<td><div style="width:4%;" id="<portlet:namespace />divBtnBusca">
-							<a href="javascript: void(0);"
-								onclick="javascript:<portlet:namespace />buscarNomencladorAutocompletar_edit();"
-								tabindex="-1">Buscar</a> <a href="javascript: void(0);"
-								onclick="javascript:<portlet:namespace />limpiarNomencladorAutocompletar();"
+		<table class="lfr-table"
+			style="border-collapse: separate; border-spacing: 3px;">
+			<tr>
+				<td>
+					<label>F. Prestación: </label>
+					<liferay-ui:input-date
+						dayParam="fechaPrestacionDiaEdicion"
+						dayValue="<%= prestacionEnEdicion.getFechaPrestacion() != null
+								? fechaPrestacion.get(Calendar.DAY_OF_MONTH)
+								: 0 %>"
+						dayNullable="<%= true %>"
+						monthParam="fechaPrestacionMesEdicion"
+						monthValue="<%= prestacionEnEdicion.getFechaPrestacion() != null
+								? fechaPrestacion.get(Calendar.MONTH)
+								: -1 %>"
+						monthNullable="<%= true %>"
+						yearParam="fechaPrestacionAnioEdicion"
+						yearValue="<%= prestacionEnEdicion.getFechaPrestacion() != null
+								? fechaPrestacion.get(Calendar.YEAR)
+								: -1 %>"
+						yearNullable="<%= true %>"
+						yearRangeStart="<%= fechaseccional.get(Calendar.YEAR) - 5 %>"
+						yearRangeEnd="<%= fechaseccional.get(Calendar.YEAR) + 1 %>"
+						firstDayOfWeek="" />
+				</td>
+
+				<%
+				Integer idPrest = prestacionEnEdicion.getId_prestacion();
+				Integer idMedic = prestacionEnEdicion.getId_medicamento();
+
+				boolean sinMedicamento =
+						idMedic == null || idMedic.intValue() == 0;
+				boolean hayPrestacion =
+						idPrest != null && idPrest.intValue() != 0;
+				boolean mostrarCodigoPresentado =
+						hayPrestacion || sinMedicamento;
+				%>
+
+				<% if (mostrarCodigoPresentado) { %>
+					<td>
+						<label><liferay-ui:message key="codigo-presentado" />:</label>
+					</td>
+					<td>
+						<input
+							id="<portlet:namespace />codigoSeguimiento_filtro_edit"
+							name="<portlet:namespace />codigoSeguimiento_filtro_edit"
+							size="10"
+							maxlength="20"
+							type="text"
+							value="<%= HtmlUtil.escape(
+									Validator.isNotNull(
+											prestacionEnEdicion.getCodigoPrestacion()
+									)
+									? prestacionEnEdicion.getCodigoPrestacion()
+									: ""
+							) %>" />
+					</td>
+					<td>
+						<input
+							id="<portlet:namespace />descripcionSeguimiento_filtro_edit"
+							name="<portlet:namespace />descripcionSeguimiento_filtro_edit"
+							size="60"
+							maxlength="200"
+							type="text"
+							value="<%= HtmlUtil.escape(
+									Validator.isNotNull(
+											prestacionEnEdicion.getDescripcion()
+									)
+									? prestacionEnEdicion.getDescripcion()
+									: ""
+							) %>" />
+					</td>
+					<td>
+						<div
+							id="<portlet:namespace />divBtnBuscaEdicion"
+							style="width: 4%;">
+							<a
+								href="javascript:void(0);"
+								onclick="<portlet:namespace />buscarNomencladorAutocompletar_edit();"
+								tabindex="-1">Buscar</a>
+							<a
+								href="javascript:void(0);"
+								onclick="<portlet:namespace />limpiarNomencladorAutocompletar();"
 								tabindex="-1">Limpiar</a>
 						</div>
-						<td>
-	    	<%}else { %>
-	    					
-   			<td colspan="6">
-   			  
+					</td>
+				<% } else { %>
+					<td colspan="4">
 						<liferay-util:include
 							page="/html/portlet/utils/medicamentos_edit/busqueda_medicamentos_edit.jsp">
-							<liferay-util:param name="search_url_edit"
+							<liferay-util:param
+								name="search_url_edit"
 								value="/autorizaciones/buscar_medicamentos_edit" />
-							<liferay-util:param name="troquel" value='' />
-							<liferay-util:param name="nombre_medicamento_edit" value='' />
-							<liferay-util:param name="id_medicamento_edit" value='' />
-							<liferay-util:param name="esEditable" value='true' />
-							<liferay-util:param name="mostrar_con_presentacion_edit" value='true' />
-						</liferay-util:include> 
-				
-	    	</td>
-	    	<%} %>
-		
-		<td>&nbsp; </td>
-		<td>&nbsp; </td>
-		
-		
-		</tr>
+							<liferay-util:param name="troquel" value="" />
+							<liferay-util:param
+								name="nombre_medicamento_edit"
+								value="" />
+							<liferay-util:param
+								name="id_medicamento_edit"
+								value="" />
+							<liferay-util:param
+								name="esEditable"
+								value="true" />
+							<liferay-util:param
+								name="mostrar_con_presentacion_edit"
+								value="true" />
+						</liferay-util:include>
+					</td>
+				<% } %>
+			</tr>
 		</table>
 		
       
@@ -209,7 +251,6 @@ if (prestacionEnEdicion != null) {
 					   />
 			      </td>
 			     </tr>
-			  <tr><td>&nbsp;</td></tr>
 			  <tr>
 			       <td colspan="15"><liferay-util:include
 					page="/html/portlet/liquidaciones/ordenes_pago/busqueda_padron_entidades.jsp">
@@ -226,7 +267,6 @@ if (prestacionEnEdicion != null) {
 			  </td>
 			</tr>
 			
-		    <tr><td>&nbsp;</td></tr>
 		         <tr>
 			     <td><label><liferay-ui:message key="Cantidad" />:</label> </td>
 			     <td><input id="<portlet:namespace />cantidadFC_edicion"   
@@ -288,12 +328,29 @@ if (prestacionEnEdicion != null) {
                    <label><liferay-ui:message key="Cargo OSPIM" />:</label>
                 </td>
 			    <td><input id="<portlet:namespace />cargoospimEdicion"
-				     name="<portlet:namespace />cargoospimEdicion" size="12" maxlength="20" value ='<%=Validator.isNotNull(prestacionEnEdicion)  ? new BigDecimal(prestacionEnEdicion.getCargo_ospim()).setScale(2, RoundingMode.HALF_UP).toPlainString() : ""  %>' 
-				    type="text" value=""  onkeypress="return validaMonto(event,this)" onkeydown="allowOnlyDigitsAndDecimals(event)"/></td>			
+				     name="<portlet:namespace />cargoospimEdicion"
+				     size="12"
+				     maxlength="20"
+				     value='<%= Validator.isNotNull(prestacionEnEdicion)
+				    		 ? new BigDecimal(prestacionEnEdicion.getCargo_ospim())
+				    		 		 .setScale(2, RoundingMode.HALF_UP)
+				    		 		 .toPlainString()
+				    		 : "" %>'
+				     type="text"
+				     onkeypress="return validaMonto(event,this)"
+				     onkeydown="allowOnlyDigitsAndDecimals(event)" /></td>
 			    <td><label><liferay-ui:message key="Cargo Prestadora" />:</label></td>
 			    <td><input id="<portlet:namespace />cargopsEdicion"
-				    name="<portlet:namespace />cargopsEdicion" size="12" maxlength="20" value ='<%=Validator.isNotNull(prestacionEnEdicion)  ? new BigDecimal(prestacionEnEdicion.getCargo_ps()).setScale(2, RoundingMode.HALF_UP).toPlainString() : ""  %>'     
-				    type="text" value=""  onkeypress="return validaMonto(event,this)" /></td>
+				    name="<portlet:namespace />cargopsEdicion"
+				    size="12"
+				    maxlength="20"
+				    value='<%= Validator.isNotNull(prestacionEnEdicion)
+				    		? new BigDecimal(prestacionEnEdicion.getCargo_ps())
+				    				.setScale(2, RoundingMode.HALF_UP)
+				    				.toPlainString()
+				    		: "" %>'
+				    type="text"
+				    onkeypress="return validaMonto(event,this)" /></td>
 				    
 				 <td>
                    <label><liferay-ui:message key="Cargo Monotributo" />:</label>
@@ -305,9 +362,14 @@ if (prestacionEnEdicion != null) {
 				    
 				<td><label>Reconocido SSS:</label></td>
 			    <td><input id="<portlet:namespace />reconocidoSSSEdicion"
-				    name="<portlet:namespace />reconocidoSSSEdicion" size="12" maxlength="20" 
-				    value ='<%=Validator.isNotNull(prestacionEnEdicion)  ? prestacionEnEdicion.getReconocidoSSS()  : ""  %>'     
-				    type="text" value=""  onkeypress="return validaMonto(event,this)" /></td>    
+				    name="<portlet:namespace />reconocidoSSSEdicion"
+				    size="12"
+				    maxlength="20"
+				    value='<%= Validator.isNotNull(prestacionEnEdicion)
+				    		? prestacionEnEdicion.getReconocidoSSS()
+				    		: "" %>'
+				    type="text"
+				    onkeypress="return validaMonto(event,this)" /></td>
 				
 			    <td><label><liferay-ui:message key="Recuperable SUR" />:</label></td>
 				<td>
@@ -325,137 +387,192 @@ if (prestacionEnEdicion != null) {
            
 </td>           								
 </tr>
-<tr>		
-			
-       <td> 
-       	<c:choose>		
-		<c:when test='<%= tipoedicion==1 %>'>
-			<liferay-ui:message key="Observacion Edicion" />:
-		</c:when>		
-		<c:when test='<%= tipoedicion==2 %>'>
-			<liferay-ui:message key="Observacion Autorizacion" />:
-		</c:when>
-		<c:when test='<%= tipoedicion==3 %>'>
-			<liferay-ui:message key="Observacion Rechazo" />:
-		</c:when>
-		<c:otherwise>
-        	<liferay-ui:message key="Observacion" />:
-        </c:otherwise>
-		</c:choose>	
-        
-       </td>				
-       	<td>
-       	<c:choose>		
-		<c:when test='<%= tipoedicion==1 %>'>
-			<textarea rows="3" cols="70" id="<portlet:namespace />observacion_prestacionEdicion" maxlength="250"
-	    	name="<portlet:namespace />observacion_prestacionEdicion"><%=Validator.isNotNull(prestacionEnEdicion) && Validator.isNotNull(prestacionEnEdicion.getObservaciones() ) ? prestacionEnEdicion.getObservaciones():"" %></textarea>		
-		</c:when>
-       	<c:otherwise>
-		 	<textarea rows="3" cols="70" 	id="<portlet:namespace />observacion_prestacionEdicion" maxlength="250"
-	    	name="<portlet:namespace />observacion_prestacionEdicion"><%=Validator.isNotNull(prestacionEnEdicion) && Validator.isNotNull(prestacionEnEdicion.getObservaciones() ) ? prestacionEnEdicion.getObservaciones():"" %> </textarea>
-        </c:otherwise>
-       </c:choose>
-       
-       				
-       </td>		
-		<td></td><td></td>
-		
+<tr>
+	<td id="<portlet:namespace />observacion_prestacionEdicion_label">
+		<c:choose>
+			<c:when test="<%= tipoedicion.intValue() == 1 %>">
+				<liferay-ui:message key="Observacion Autorizacion" />:
+			</c:when>
+			<c:when test="<%= tipoedicion.intValue() == 2 %>">
+				<liferay-ui:message key="Observacion Rechazo" />:
+			</c:when>
+			<c:otherwise>
+				<liferay-ui:message key="Observacion Edicion" />:
+			</c:otherwise>
+		</c:choose>
+	</td>
+
+	<td>
+		<textarea
+			rows="3"
+			cols="70"
+			id="<portlet:namespace />observacion_prestacionEdicion"
+			maxlength="250"
+			name="<portlet:namespace />observacion_prestacionEdicion"><%= Validator.isNotNull(
+					prestacionEnEdicion.getObservaciones()
+			) ? prestacionEnEdicion.getObservaciones() : "" %></textarea>
+	</td>
+
+	<td>
 		<div id="<portlet:namespace />botones_edicion_prestacion">
-		<td>
-		<%	if(tipoedicion ==0) { 	%>		
-		<input type="button" name="<portlet:namespace />btnedita_prestacion" id="<portlet:namespace />btnedita_prestacion" value="<liferay-ui:message key="Editar Prestación" />"  onClick="<portlet:namespace />editarPrestacionSeleccionada(<%=tipoedicion%>);"  title="<liferay-ui:message key="Edita la prestacion" />" />
-		<%}%>		
-		<%	if(tipoedicion ==1) { 	%>		
-		<input type="button" name="<portlet:namespace />btnautoriza_prestacion" id="<portlet:namespace />btnautoriza_prestacion" value="<liferay-ui:message key="Autoriza  Prestación" />"  onClick="<portlet:namespace />editarPrestacionSeleccionada(<%=tipoedicion%>);"  title="<liferay-ui:message key="Autoriza la prestacion" />"/>
-		<%}%>
-		<%	if(tipoedicion ==2) { 	%>		
-		<input type="button" name="<portlet:namespace />btnrechaza_prestacion" id="<portlet:namespace />btnrechaza_prestacion" value="<liferay-ui:message key="Rechaza Prestación" />"  onClick="<portlet:namespace />editarPrestacionSeleccionada(<%=tipoedicion%>);"  title="<liferay-ui:message key="Rechaza la Prestacion" />" />
-		<%}%>
-		
-		</td>
-		<td></td><td></td>		
-		<td><input type="button" value="<liferay-ui:message key="<%=captionbotoncancelar %>" />"  onClick="<portlet:namespace />cancelaEdicionPrestacion();"  /></td>
-		</div>	      					
- </tr>
+			<% if (tipoedicion.intValue() == 0) { %>
+				<input
+					type="button"
+					name="<portlet:namespace />btnedita_prestacion"
+					id="<portlet:namespace />btnedita_prestacion"
+					value="<liferay-ui:message key="Editar Prestación" />"
+					onclick="<portlet:namespace />editarPrestacionSeleccionada(0);"
+					title="<liferay-ui:message key="Edita la prestacion" />" />
+			<% } %>
+
+			<% if (tipoedicion.intValue() == 1) { %>
+				<input
+					type="button"
+					name="<portlet:namespace />btnautoriza_prestacion"
+					id="<portlet:namespace />btnautoriza_prestacion"
+					value="<liferay-ui:message key="Autoriza  Prestación" />"
+					onclick="<portlet:namespace />editarPrestacionSeleccionada(1);"
+					title="<liferay-ui:message key="Autoriza la prestacion" />" />
+			<% } %>
+
+			<% if (tipoedicion.intValue() == 2) { %>
+				<input
+					type="button"
+					name="<portlet:namespace />btnrechaza_prestacion"
+					id="<portlet:namespace />btnrechaza_prestacion"
+					value="<liferay-ui:message key="Rechaza Prestación" />"
+					onclick="<portlet:namespace />editarPrestacionSeleccionada(2);"
+					title="<liferay-ui:message key="Rechaza la Prestacion" />" />
+			<% } %>
+
+			<input
+				type="button"
+				value="<liferay-ui:message key="<%= captionbotoncancelar %>" />"
+				onclick="<portlet:namespace />cancelaEdicionPrestacion();" />
+		</div>
+	</td>
+</tr>
 </table>
-	
-	
-	
-			
 
 <script type="text/javascript">
-
 filtrarLetraComprobanteEdicion();
 cambiorecuperableEdicion();
 
-function calculatotal(){
-	importe=jQuery("#<portlet:namespace />importeEdicion").val();
-	importe1 = importe.replace(",",".");
-	cantidad=jQuery("#<portlet:namespace />cantidadEdicion").val();
-	total= importe1 * cantidad  ;
+function calculatotal() {
+	var importe = String(
+			jQuery("#<portlet:namespace />importeEdicion").val() || ""
+	).replace(",", ".");
+	var cantidad = String(
+			jQuery("#<portlet:namespace />cantidadEdicion").val() || ""
+	).replace(",", ".");
+	var total = parseFloat(importe) * parseFloat(cantidad);
+
+	if (isNaN(total)) {
+		total = 0;
+	}
+
 	jQuery("#<portlet:namespace />totalEdicion").val(total.toFixed(2));
-}  	
+}
 
-function calculatotalFCEdicion(){
-	importe=jQuery("#<portlet:namespace />importeUnitarioFC_edicion").val();
-	cantidad=jQuery("#<portlet:namespace />cantidadFC_edicion").val();
-	total= importe * cantidad  ;
-	jQuery("#<portlet:namespace />importeFC_edicion").val(Math.round(total.toFixed(2) * 100)/100);
+function calculatotalFCEdicion() {
+	var importe = String(
+			jQuery("#<portlet:namespace />importeUnitarioFC_edicion").val() || ""
+	).replace(",", ".");
+	var cantidad = String(
+			jQuery("#<portlet:namespace />cantidadFC_edicion").val() || ""
+	).replace(",", ".");
+	var total = parseFloat(importe) * parseFloat(cantidad);
 
+	if (isNaN(total)) {
+		total = 0;
+	}
+
+	jQuery("#<portlet:namespace />importeFC_edicion").val(
+			Math.round(total * 100) / 100
+	);
 }
 
 function filtrarLetraComprobanteEdicion() {
-	var tipoPedido = jQuery("#<portlet:namespace />tipopedido").val();
-	var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/filtrarLetraComprobante&tipo_pedido='+tipoPedido;
-	jQuery("#<portlet:namespace/>comprobante_letra_edicion").attr('disabled', 'disabled');
-	
-	jQuery.ajax({   
-		url: url,
-		async:false,
-		success: function(data){
-			document.getElementById("<portlet:namespace/>comprobante_letra_edicion").length = 0;
-			jQuery("#<portlet:namespace/>comprobante_letra_edicion").removeAttr('disabled');
-			var obj = jQuery.parseJSON(data);
-			jQuery('#<portlet:namespace />comprobante_letra_edicion').html(data).fadeIn();
+	var tipoPedido =
+			jQuery("#<portlet:namespace />tipopedido").val() || "";
+	var url =
+			'<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>'
+			+ '&struts_action=/autorizaciones/filtrarLetraComprobante'
+			+ '&tipo_pedido=' + tipoPedido;
+	var select =
+			jQuery("#<portlet:namespace />comprobante_letra_edicion");
 
+	if (!select.length) {
+		return;
+	}
+
+	select.attr("disabled", "disabled");
+
+	jQuery.ajax({
+		url: url,
+		type: "GET",
+		dataType: "html",
+		cache: false,
+		success: function(data) {
+			select.html(data);
+			jQuery(
+					"#<portlet:namespace />comprobante_letra_edicion"
+			).val(
+					"<%= prestacionEnEdicion.getComprobanteLetra() != null
+							? prestacionEnEdicion.getComprobanteLetra()
+							: "" %>"
+			);
+		},
+		error: function() {
+			select.empty().append(
+					jQuery("<option/>", {
+						value: "",
+						text: "No se pudo cargar"
+					})
+			);
+		},
+		complete: function() {
+			select.removeAttr("disabled");
 		}
 	});
-	
-	jQuery("#<portlet:namespace />comprobante_letra_edicion").val("<%=prestacionEnEdicion != null ? prestacionEnEdicion.getComprobanteLetra() : ""%>");
 }
 
+function cambiorecuperableEdicion() {
+	var recuperable = String(
+			jQuery(
+					"#<portlet:namespace />recuperable_surEdicion"
+			).val() || ""
+	);
+	var reconocido =
+			jQuery("#<portlet:namespace />reconocidoSSSEdicion");
 
-function cambiorecuperableEdicion(){
-	
-	try{
-		var recuperable=jQuery('#<portlet:namespace />recuperable_surEdicion').val();
-		if(recuperable==3 || recuperable==1){
-			jQuery('#<portlet:namespace/>reconocidoSSSEdicion').attr('readonly', false);
-		}else{
-			jQuery('#<portlet:namespace/>reconocidoSSSEdicion').val(0);
-			jQuery('#<portlet:namespace/>reconocidoSSSEdicion').attr('readonly', true);
-		}
-		
-			
+	if (!reconocido.length) {
+		return;
+	}
 
-	}catch (err) {}	
-	
+	if (recuperable === "1" || recuperable === "3") {
+		reconocido.removeAttr("readonly");
+	} else {
+		reconocido.val("0").attr("readonly", "readonly");
+	}
 }
 
 function completarConCeros(value, longitud) {
-    if (!value) {
-        return "";
-    }
+	var digitos = String(value || "").replace(/\D/g, "");
+	var ceros = "";
+	var i;
 
-    value = value.replace(/\D/g, "");
+	if (!digitos) {
+		return "";
+	}
 
-    return (
-        "0".repeat(longitud) + value
-    ).slice(-longitud);
+	for (i = 0; i < longitud; i++) {
+		ceros += "0";
+	}
+
+	return (ceros + digitos).slice(-longitud);
 }
-
 </script>
-
 
 <script type="text/javascript">
 jQuery(function() {
@@ -465,13 +582,15 @@ jQuery(function() {
     jQuery("#" + namespace + "datos_edicion_prestacion").show();
     jQuery("#" + namespace + "codigoprestacion").val(codigo);
 
-    <% if (prestacionEnEdicion.getId_prestacion() != 0) { %>
+    <% if (prestacionEnEdicion.getId_prestacion() != null
+    		&& prestacionEnEdicion.getId_prestacion().intValue() != 0) { %>
     var buscarNomenclador =
             window[namespace + "buscarNomencladorAutocompletar_edit"];
     if (codigo && typeof buscarNomenclador === "function") {
         window.setTimeout(buscarNomenclador, 0);
     }
-    <% } else if (prestacionEnEdicion.getId_medicamento() != 0) { %>
+    <% } else if (prestacionEnEdicion.getId_medicamento() != null
+    		&& prestacionEnEdicion.getId_medicamento().intValue() != 0) { %>
     jQuery("#" + namespace + "troquel_edit").val(
             "<%= prestacionEnEdicion.getId_medicamento() %>"
     );
