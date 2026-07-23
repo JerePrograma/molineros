@@ -48,6 +48,7 @@ public class ValidarReclamoAfiliadoPrestaciones extends JSONAction  {
         String baja = ParamUtil.getString(req, "baja");
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+		sdf.setLenient(false);
 		Date bajaFecha =null;
 		try {
 		  bajaFecha= sdf.parse(baja);
@@ -56,8 +57,11 @@ public class ValidarReclamoAfiliadoPrestaciones extends JSONAction  {
 		}
 		
 		boolean fechaBaja =false;
-		if(bajaFecha !=null) {
+		if(bajaFecha !=null && prestaciones != null) {
 		   for(PrestacionesReclamo p:prestaciones) {
+			if (p == null || p.getFechaPrestacion() == null) {
+				continue;
+			}
 			fechaBaja=DateUtils.esMayor(p.getFechaPrestacion(),bajaFecha);
 			if(fechaBaja) break;
 		   }
