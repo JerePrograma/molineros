@@ -1,6 +1,5 @@
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_contexto.jspf" %>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_inicio_formulario.jspf" %>
-<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_recuperable_neutro.jspf" %>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_cabecera.jspf" %>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_afiliado_diagnostico.jspf" %>
 <%
@@ -15,6 +14,7 @@ if (aplicarTipoEdicionComun) {
 	request.setAttribute("tipoEdicion", Integer.valueOf(0));
 }
 %>
+<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_recuperable_neutro.jspf" %>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_prestaciones.jspf" %>
 <%
 if (aplicarTipoEdicionComun) {
@@ -25,4 +25,4 @@ if (aplicarTipoEdicionComun) {
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_acciones.jspf" %>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_configuracion.jspf" %>
 <script type="text/javascript"
-        src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_compras_surge_patch.js"></script>
+        src="<%= request.getContextPath() %>/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_compras_surge_patch.js?v=20260723-restaura-precarga-1"></script>
