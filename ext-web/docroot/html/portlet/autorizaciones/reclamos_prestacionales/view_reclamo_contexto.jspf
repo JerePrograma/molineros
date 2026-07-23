@@ -94,11 +94,11 @@ List<CieDiez> cieDiez=(ArrayList<CieDiez>) request.getSession().getAttribute(Web
 
 
 String divcheckbox="";
-String nroreclamo = esBorradorCompras
-        ? "Nuevo Reclamo Prestacional - Requerimiento #"
+String nroreclamo = "Caso Nro 00000";
+String opAsignadaalReclamo = esBorradorCompras
+        ? "Requerimiento #"
                 + contextoCompras.getIdRequerimientoCompra()
-        : "Nuevo Reclamo Prestacional";
-String opAsignadaalReclamo ="";
+        : "";
 boolean opAsignadaalReclamoExiste =false;
 ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO resolucionAutorizado=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINVALOR;
 
