@@ -100,7 +100,7 @@ public final class ReclamoPrestacionalRuntimeFixContractTest {
 
         antes(
                 view,
-                "view_reclamo_legacy_compat_patch.js?v=20260723-runtime-1",
+                "view_reclamo_legacy_compat_patch.js?v=20260723-runtime-2",
                 "view_reclamo_compras_surge_patch.js"
         );
 
