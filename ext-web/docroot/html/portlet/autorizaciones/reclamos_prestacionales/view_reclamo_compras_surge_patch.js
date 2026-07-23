@@ -11,6 +11,7 @@
     var MARCA_LOAD = "__rpComprasSurPrecarga";
     var MARCA_AJAX = "__rpComprasSurPrecarga";
     var valorRecuperableActual = "0";
+    var valorActual = "0";
 
     function campo(sufijo) {
         return jQuery("#" + namespace + sufijo);
@@ -26,12 +27,12 @@
                 String(values.esBorradorCompras) === "true";
     }
 
-    function esVacio(valorActual) {
-        return valorActual == null || String(valorActual) === "";
+    function esVacio(valorActualCampo) {
+        return valorActualCampo == null || String(valorActualCampo) === "";
     }
 
-    function numero(valorActual) {
-        var texto = String(valorActual == null ? "" : valorActual)
+    function numero(valorActualCampo) {
+        var texto = String(valorActualCampo == null ? "" : valorActualCampo)
                 .replace(/\s/g, "")
                 .replace(",", ".");
         var resultado = parseFloat(texto);
@@ -141,10 +142,16 @@
         });
     }
 
-    function agregarErrorFecha(errores, mensaje, prefijo) {
-        var dia = campo(prefijo + "Dia");
-        var mes = campo(prefijo + "Mes");
-        var anio = campo(prefijo + "Anio");
+    function agregarErrorFecha(
+            errores,
+            mensaje,
+            prefijo,
+            sufijoFinal) {
+
+        var sufijo = sufijoFinal || "";
+        var dia = campo(prefijo + "Dia" + sufijo);
+        var mes = campo(prefijo + "Mes" + sufijo);
+        var anio = campo(prefijo + "Anio" + sufijo);
 
         marcarControl(dia);
         marcarControl(mes);
@@ -204,10 +211,11 @@
         return true;
     }
 
-    function fechaParcial(prefijo) {
-        var dia = valor(prefijo + "Dia");
-        var mes = valor(prefijo + "Mes");
-        var anio = valor(prefijo + "Anio");
+    function fechaParcial(prefijo, sufijoFinal) {
+        var sufijo = sufijoFinal || "";
+        var dia = valor(prefijo + "Dia" + sufijo);
+        var mes = valor(prefijo + "Mes" + sufijo);
+        var anio = valor(prefijo + "Anio" + sufijo);
         var diaVacio = esVacio(dia) || String(dia) === "0";
         var mesVacio = esVacio(mes) || String(mes) === "-1";
         var anioVacio = esVacio(anio) || String(anio) === "0";
@@ -217,10 +225,11 @@
         return !todosVacios && !todosCompletos;
     }
 
-    function fechaAusente(prefijo) {
-        var dia = valor(prefijo + "Dia");
-        var mes = valor(prefijo + "Mes");
-        var anio = valor(prefijo + "Anio");
+    function fechaAusente(prefijo, sufijoFinal) {
+        var sufijo = sufijoFinal || "";
+        var dia = valor(prefijo + "Dia" + sufijo);
+        var mes = valor(prefijo + "Mes" + sufijo);
+        var anio = valor(prefijo + "Anio" + sufijo);
 
         return esVacio(dia) || String(dia) === "0" ||
                 esVacio(mes) || String(mes) === "-1" ||
@@ -259,11 +268,12 @@
             marcarControl(campo("inte"));
         }
 
-        if (fechaParcial("fechaseccional")) {
+        if (fechaParcial("fechaseccional", "")) {
             agregarErrorFecha(
                     errores,
                     "Complete todos los componentes de Fecha Seccional o dejelos vacios.",
-                    "fechaseccional"
+                    "fechaseccional",
+                    ""
             );
         }
 
@@ -442,10 +452,15 @@
                 String(convertido) : "0";
     }
 
+    function sincronizarAliasRecuperable() {
+        valorActual = valorRecuperableActual;
+    }
+
     function leerRecuperableInicial() {
         valorRecuperableActual = normalizarRecuperable(
                 valor("recuperable_sur_compra_inicial")
         );
+        sincronizarAliasRecuperable();
     }
 
     function esEndpointPrestacion(url) {
@@ -490,13 +505,6 @@
 
         copia.recuperableSur = parseInt(valorActual, 10);
         return copia;
-    }
-
-    /* Alias estable requerido por la correccion historica de Surge. */
-    var valorActual = valorRecuperableActual;
-
-    function sincronizarAliasRecuperable() {
-        valorActual = valorRecuperableActual;
     }
 
     function envolverLoadRecuperable(loadOriginal) {
@@ -651,11 +659,12 @@
             );
         }
 
-        if (fechaAusente("fechaPrestacion")) {
+        if (fechaAusente("fechaPrestacion", "Edicion")) {
             agregarErrorFecha(
                     errores,
                     "Debe ingresar la fecha de la Prestacion.",
-                    "fechaPrestacion"
+                    "fechaPrestacion",
+                    "Edicion"
             );
         }
 
