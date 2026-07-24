@@ -32,14 +32,14 @@ if (prestacionEnEdicion != null) {
 }
 
 String captionbotoncancelar =
-		"Cancelar Edici\u00f3n de la Prestaci\u00f3n";
+		"Cancelar Edición de la Prestación";
 String captionlabelproceso =
 		"PRESTACION EN PROCESO DE EDICION";
 String estiloLabel = "";
 
 if (tipoedicion == 1) {
 	captionbotoncancelar =
-			"Cancelar Autorizaci\u00f3n de la Prestaci\u00f3n";
+			"Cancelar Autorización de la Prestación";
 	captionlabelproceso =
 			"PRESTACION EN PROCESO DE AUTORIZACION";
 	estiloLabel = "style='color:green;'";
@@ -47,7 +47,7 @@ if (tipoedicion == 1) {
 
 if (tipoedicion == 2) {
 	captionbotoncancelar =
-			"Cancelar Rechazo de la Prestaci\u00f3n";
+			"Cancelar Rechazo de la Prestación";
 	captionlabelproceso =
 			"PRESTACION EN PROCESO DE RECHAZO";
 	estiloLabel = "style='color:red;'";

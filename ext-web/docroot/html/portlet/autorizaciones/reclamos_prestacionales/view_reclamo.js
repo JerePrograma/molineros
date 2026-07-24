@@ -409,11 +409,11 @@ function DatosRevisionOk(){
 	 
 	  
 	if (dia || mes || anio){
-	   alert("Debe ingresar la fecha de Revisi\u00F3n");
+	   alert("Debe ingresar la fecha de Revisión");
 		return false ;
 	}
 	if (dia || mes || anio ||  jQuery('#' + reclamoPrestacionalNamespace + 'resolucion').val()=='' ){
-		   alert("Debe ingresar la resoluci\u00F3n");
+		   alert("Debe ingresar la resolución");
 			return false ;
 		}
 		

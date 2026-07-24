@@ -84,15 +84,15 @@
 
     function etiquetaObservacion() {
         if (campo("btnedita_prestacion").length) {
-            return "Observaci\u00f3n de edici\u00f3n:";
+            return "Observación de edición:";
         }
         if (campo("btnautoriza_prestacion").length) {
-            return "Observaci\u00f3n de autorizaci\u00f3n:";
+            return "Observación de autorización:";
         }
         if (campo("btnrechaza_prestacion").length) {
-            return "Observaci\u00f3n de rechazo:";
+            return "Observación de rechazo:";
         }
-        return "Observaci\u00f3n:";
+        return "Observación:";
     }
 
     function repararEtiquetaObservacion() {
@@ -116,14 +116,14 @@
 
     function textoCancelacionEditor() {
         if (campo("btnautoriza_prestacion").length) {
-            return "Cancelar Autorizaci\u00f3n de la Prestaci\u00f3n";
+            return "Cancelar Autorización de la Prestación";
         }
 
         if (campo("btnrechaza_prestacion").length) {
-            return "Cancelar Rechazo de la Prestaci\u00f3n";
+            return "Cancelar Rechazo de la Prestación";
         }
 
-        return "Cancelar Edici\u00f3n de la Prestaci\u00f3n";
+        return "Cancelar Edición de la Prestación";
     }
 
     function repararBotonesEditor(contenedor) {
@@ -150,11 +150,11 @@
             }
 
             if (id === namespace + "btnedita_prestacion") {
-                texto = "Editar Prestaci\u00f3n";
+                texto = "Editar Prestación";
             } else if (id === namespace + "btnautoriza_prestacion") {
-                texto = "Autoriza Prestaci\u00f3n";
+                texto = "Autoriza Prestación";
             } else if (id === namespace + "btnrechaza_prestacion") {
-                texto = "Rechaza Prestaci\u00f3n";
+                texto = "Rechaza Prestación";
             } else if (id === namespace + "btncancelar_prestacion") {
                 texto = textoCancelacionEditor();
             } else if (!this.id && !this.name) {
@@ -509,7 +509,7 @@
             error: function(xhr, estado, error) {
                 destino.html(
                     '<div class="portlet-msg-error">' +
-                    "No se pudo cargar el editor de la prestaci\u00f3n." +
+                    "No se pudo cargar el editor de la prestación." +
                     "</div>"
                 );
 
@@ -528,7 +528,7 @@
 
                 if (window.console && window.console.error) {
                     window.console.error(
-                        "Error cargando editor de prestaci\u00f3n",
+                        "Error cargando editor de prestación",
                         error || estado
                     );
                 }

@@ -301,8 +301,8 @@ if (errorBusqueda == null
             new ArrayList<String>();
 
     headerNames.add("Tipo");
-    headerNames.add("C\u00f3digo");
-    headerNames.add("Descripci\u00f3n");
+    headerNames.add("Código");
+    headerNames.add("Descripción");
     headerNames.add("Especialidad");
     headerNames.add("Recupera SUR");
     headerNames.add("Fecha Baja");
