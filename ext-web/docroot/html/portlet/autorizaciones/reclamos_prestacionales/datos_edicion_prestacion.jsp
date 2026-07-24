@@ -424,43 +424,43 @@ if (prestacionEnEdicion != null) {
 
 	<td>
 		<div id="<portlet:namespace />botones_edicion_prestacion">
-        	<% if (tipoedicion.intValue() == 0) { %>
-        		<input
-        			type="button"
-        			name="<portlet:namespace />btnedita_prestacion"
-        			id="<portlet:namespace />btnedita_prestacion"
-        			value="Editar Prestaci&oacute;n"
-        			onclick="<portlet:namespace />editarPrestacionSeleccionada(0);"
-        			title="Edita la prestaci&oacute;n" />
-        	<% } %>
+			<% if (tipoedicion.intValue() == 0) { %>
+				<input
+					type="button"
+					name="<portlet:namespace />btnedita_prestacion"
+					id="<portlet:namespace />btnedita_prestacion"
+					value="Editar Prestaci&oacute;n"
+					onclick="<portlet:namespace />editarPrestacionSeleccionada(0);"
+					title="Edita la prestaci&oacute;n" />
+			<% } %>
 
-        	<% if (tipoedicion.intValue() == 1) { %>
-        		<input
-        			type="button"
-        			name="<portlet:namespace />btnautoriza_prestacion"
-        			id="<portlet:namespace />btnautoriza_prestacion"
-        			value="Autoriza Prestaci&oacute;n"
-        			onclick="<portlet:namespace />editarPrestacionSeleccionada(1);"
-        			title="Autoriza la prestaci&oacute;n" />
-        	<% } %>
+			<% if (tipoedicion.intValue() == 1) { %>
+				<input
+					type="button"
+					name="<portlet:namespace />btnautoriza_prestacion"
+					id="<portlet:namespace />btnautoriza_prestacion"
+					value="Autoriza Prestaci&oacute;n"
+					onclick="<portlet:namespace />editarPrestacionSeleccionada(1);"
+					title="Autoriza la prestaci&oacute;n" />
+			<% } %>
 
-        	<% if (tipoedicion.intValue() == 2) { %>
-        		<input
-        			type="button"
-        			name="<portlet:namespace />btnrechaza_prestacion"
-        			id="<portlet:namespace />btnrechaza_prestacion"
-        			value="Rechaza Prestaci&oacute;n"
-        			onclick="<portlet:namespace />editarPrestacionSeleccionada(2);"
-        			title="Rechaza la prestaci&oacute;n" />
-        	<% } %>
+			<% if (tipoedicion.intValue() == 2) { %>
+				<input
+					type="button"
+					name="<portlet:namespace />btnrechaza_prestacion"
+					id="<portlet:namespace />btnrechaza_prestacion"
+					value="Rechaza Prestaci&oacute;n"
+					onclick="<portlet:namespace />editarPrestacionSeleccionada(2);"
+					title="Rechaza la prestaci&oacute;n" />
+			<% } %>
 
-        	<input
-        		type="button"
-        		name="<portlet:namespace />btncancelar_prestacion"
-        		id="<portlet:namespace />btncancelar_prestacion"
-        		value="<%= HtmlUtil.escape(captionbotoncancelar) %>"
-        		onclick="<portlet:namespace />cancelaEdicionPrestacion();" />
-        </div>
+			<input
+				type="button"
+				name="<portlet:namespace />btncancelar_prestacion"
+				id="<portlet:namespace />btncancelar_prestacion"
+				value="<%= HtmlUtil.escape(captionbotoncancelar) %>"
+				onclick="<portlet:namespace />cancelaEdicionPrestacion();" />
+		</div>
 	</td>
 </tr>
 </table>
