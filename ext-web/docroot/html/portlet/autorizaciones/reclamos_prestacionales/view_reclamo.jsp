@@ -271,10 +271,10 @@ window.ReclamoPrestacionalJQueryLoadOriginal =
         src="<%= reclamoPrestacionalAssetBase %>view_reclamo_tab_guard.js?v=20260717-initial-state-1"
         onerror="window.ReclamoPrestacionalAssetError('view_reclamo_tab_guard.js');"></script>
 <script type="text/javascript"
-        src="<%= reclamoPrestacionalAssetBase %>view_reclamo_editor_patch.js?v=20260723-editor-dom-clean-1"
+        src="<%= reclamoPrestacionalAssetBase %>view_reclamo_editor_patch.js?v=20260723-popup-clean-2"
         onerror="window.ReclamoPrestacionalAssetError('view_reclamo_editor_patch.js');"></script>
 <script type="text/javascript"
-        src="<%= reclamoPrestacionalAssetBase %>view_reclamo_p0_patch.js?v=20260717-legacy-flows-1"
+        src="<%= reclamoPrestacionalAssetBase %>view_reclamo_p0_patch.js?v=20260723-popup-clean-2"
         onerror="window.ReclamoPrestacionalAssetError('view_reclamo_p0_patch.js');"></script>
 <script type="text/javascript"
 	src="<%= reclamoPrestacionalAssetBase %>view_reclamo_prestacion_rules_patch.js?v=20260720-recuperable-neutro-2"

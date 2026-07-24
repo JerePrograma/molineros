@@ -9,6 +9,10 @@ var config = window.ReclamoPrestacionalViewConfig || {};
 var namespace = config.namespace || "";
 var ENDPOINT_EDITOR = "editar_reclamosprestaciones";
 var loadOriginal = jQuery.fn.load;
+var NOMBRE_BUSQUEDA_EDITOR =
+        namespace + "buscarNomencladorAutocompletar_edit";
+var NOMBRE_CIERRE_NOMENCLADOR = namespace + "cerrarNm";
+var busquedaInicialBloqueada = true;
 
 function campo(sufijo) {
     return jQuery("#" + namespace + sufijo);
@@ -80,15 +84,15 @@ function limpiarScriptsLegacy(html) {
 
 function etiquetaObservacion() {
     if (campo("btnedita_prestacion").length) {
-        return "Observación de edición:";
+        return "Observaci\u00f3n de edici\u00f3n:";
     }
     if (campo("btnautoriza_prestacion").length) {
-        return "Observación de autorización:";
+        return "Observaci\u00f3n de autorizaci\u00f3n:";
     }
     if (campo("btnrechaza_prestacion").length) {
-        return "Observación de rechazo:";
+        return "Observaci\u00f3n de rechazo:";
     }
-    return "Observación:";
+    return "Observaci\u00f3n:";
 }
 
 function repararEtiquetaObservacion() {
@@ -103,6 +107,128 @@ function repararEtiquetaObservacion() {
     if (celdaEtiqueta.length) {
         celdaEtiqueta.text(etiquetaObservacion());
     }
+}
+
+function esTextoVacio(valor) {
+    return String(valor == null ? "" : valor)
+            .replace(/^\s+|\s+$/g, "") === "";
+}
+
+function limpiarResiduosEditor(contenedor) {
+    if (!contenedor || !contenedor.length) {
+        return;
+    }
+
+    contenedor.find("input").each(function() {
+        var control = jQuery(this);
+        var tipo = String(this.type || "text").toLowerCase();
+        var sinIdentidad = !this.id && !this.name;
+        var tipoVisualVacio = tipo === "text" || tipo === "button";
+
+        if (sinIdentidad && tipoVisualVacio &&
+                esTextoVacio(control.val())) {
+            control.remove();
+        }
+    });
+
+    contenedor.find("div").each(function() {
+        var nodo = jQuery(this);
+        var sinIdentidad = !this.id &&
+                esTextoVacio(this.className || "");
+
+        if (sinIdentidad && !nodo.children().length &&
+                esTextoVacio(nodo.text())) {
+            nodo.remove();
+        }
+    });
+}
+
+function asignarNomencladorSeguro(tipoNomenclador, codigo, descripcion) {
+    campo("codigoSeguimiento_filtro").val(codigo);
+    campo("descripcionSeguimiento_filtro").val(descripcion);
+    campo("nom_seleccionado").val("1");
+    campo("tipoNomenclador").val(tipoNomenclador);
+
+    campo("codigoSeguimiento_filtro_edit").val(codigo);
+    campo("descripcionSeguimiento_filtro_edit").val(descripcion);
+    campo("nom_seleccionado_edit").val("1");
+    campo("tipoNomenclador_edit").val(tipoNomenclador);
+    campo("codigoprestacion").val(codigo);
+}
+
+function instalarCierreNomencladorSeguro() {
+    var cerrarOriginal = window[NOMBRE_CIERRE_NOMENCLADOR];
+    var cierreEnCurso = false;
+    var cerrarSeguro;
+
+    if (typeof cerrarOriginal === "function" &&
+            !cerrarOriginal.__rpCierreNomencladorSeguro) {
+
+        cerrarSeguro = function() {
+            if (cierreEnCurso) {
+                return false;
+            }
+
+            cierreEnCurso = true;
+            try {
+                return cerrarOriginal.apply(this, arguments);
+            } finally {
+                window.setTimeout(function() {
+                    cierreEnCurso = false;
+                }, 0);
+            }
+        };
+
+        cerrarSeguro.__rpCierreNomencladorSeguro = true;
+        cerrarSeguro.__rpCierreNomencladorOriginal = cerrarOriginal;
+        window[NOMBRE_CIERRE_NOMENCLADOR] = cerrarSeguro;
+    }
+
+    window.seleccionaCamposNm = asignarNomencladorSeguro;
+    window.pasarParametrosAParentNm = function(
+            tipoNomenclador,
+            codigo,
+            descripcion) {
+
+        var cerrar;
+
+        asignarNomencladorSeguro(
+                tipoNomenclador,
+                codigo,
+                descripcion
+        );
+
+        cerrar = window[NOMBRE_CIERRE_NOMENCLADOR];
+        if (typeof cerrar === "function") {
+            cerrar();
+        }
+    };
+}
+
+function instalarBloqueoBusquedaInicial() {
+    var buscarOriginal = window[NOMBRE_BUSQUEDA_EDITOR];
+    var buscarSeguro;
+
+    if (typeof buscarOriginal !== "function" ||
+            buscarOriginal.__rpBusquedaNomencladorSegura) {
+        return;
+    }
+
+    buscarSeguro = function() {
+        if (busquedaInicialBloqueada) {
+            return false;
+        }
+
+        return buscarOriginal.apply(this, arguments);
+    };
+
+    buscarSeguro.__rpBusquedaNomencladorSegura = true;
+    buscarSeguro.__rpBusquedaNomencladorOriginal = buscarOriginal;
+    window[NOMBRE_BUSQUEDA_EDITOR] = buscarSeguro;
+}
+
+function habilitarBusquedaManual() {
+    busquedaInicialBloqueada = false;
 }
 
 function calcularTotalSeguro(
@@ -250,6 +376,7 @@ function repararEditor(contenedor, metadatos) {
         campo("codigoprestacion").val(codigo);
     }
 
+    limpiarResiduosEditor(contenedor);
     repararEtiquetaObservacion();
     cambiorecuperableEdicionSeguro();
 
@@ -257,12 +384,6 @@ function repararEditor(contenedor, metadatos) {
             datos.letraComprobante,
             datos.urlFiltroLetra
     );
-
-    var buscarNomenclador =
-            window[namespace + "buscarNomencladorAutocompletar_edit"];
-    if (codigo && typeof buscarNomenclador === "function") {
-        window.setTimeout(buscarNomenclador, 0);
-    }
 }
 
 function cargarEditorSeguro(url, parametros, callback) {
@@ -301,7 +422,7 @@ function cargarEditorSeguro(url, parametros, callback) {
         error: function(xhr, estado, error) {
             destino.html(
                     '<div class="portlet-msg-error">' +
-                    "No se pudo cargar el editor de la prestación." +
+                    "No se pudo cargar el editor de la prestaci\u00f3n." +
                     "</div>"
             );
 
@@ -318,7 +439,7 @@ function cargarEditorSeguro(url, parametros, callback) {
 
             if (window.console && window.console.error) {
                 window.console.error(
-                        "Error cargando editor de prestación",
+                        "Error cargando editor de prestaci\u00f3n",
                         error || estado
                 );
             }
@@ -346,17 +467,30 @@ window.cambiorecuperableEdicion = cambiorecuperableEdicionSeguro;
 window.completarConCeros = completarConCerosSeguro;
 window.filtrarLetraComprobanteEdicion =
         filtrarLetraComprobanteEdicionSeguro;
+
+instalarCierreNomencladorSeguro();
+instalarBloqueoBusquedaInicial();
+
 window.ReclamoPrestacionalEditorPatch = {
     limpiarScriptsLegacy: limpiarScriptsLegacy,
     extraerMetadatos: extraerMetadatos,
-    repararEditor: repararEditor
+    limpiarResiduosEditor: limpiarResiduosEditor,
+    repararEditor: repararEditor,
+    asignarNomencladorSeguro: asignarNomencladorSeguro,
+    habilitarBusquedaManual: habilitarBusquedaManual
 };
 
 jQuery(document).ready(function() {
     var editor = campo("datos_edicion_prestacion");
+
+    instalarCierreNomencladorSeguro();
+    instalarBloqueoBusquedaInicial();
+
     if (editor.length && editor.children().length) {
         repararEditor(editor, obtenerMetadatosEditor());
     }
+
+    window.setTimeout(habilitarBusquedaManual, 0);
 });
 
 })(window, jQuery);

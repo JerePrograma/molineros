@@ -19,9 +19,17 @@ public final class ReclamoPrestacionalEditorContractTest {
                 "ext-web/docroot/html/portlet/autorizaciones/"
                         + "reclamos_prestacionales/";
 
-        String view = leer(dir + "view_reclamo.jsp", UTF_8);
+        String view = leer(dir + "view_reclamo.jsp", LATIN_1);
         String editorPatch = leer(
                 dir + "view_reclamo_editor_patch.js",
+                LATIN_1
+        );
+        String p0Patch = leer(
+                dir + "view_reclamo_p0_patch.js",
+                LATIN_1
+        );
+        String cabecera = leer(
+                dir + "view_reclamo_cabecera.jspf",
                 LATIN_1
         );
         String editorJsp = leer(
@@ -34,13 +42,13 @@ public final class ReclamoPrestacionalEditorContractTest {
                 "editor cargado despues del guard de pestanas",
                 view,
                 "view_reclamo_tab_guard.js?v=20260717-initial-state-1",
-                "view_reclamo_editor_patch.js?v=20260723-editor-dom-clean-1"
+                "view_reclamo_editor_patch.js?v=20260723-popup-clean-2"
         );
         assertBefore(
                 "editor cargado antes del P0 general",
                 view,
-                "view_reclamo_editor_patch.js?v=20260723-editor-dom-clean-1",
-                "view_reclamo_p0_patch.js?v=20260717-legacy-flows-1"
+                "view_reclamo_editor_patch.js?v=20260723-popup-clean-2",
+                "view_reclamo_p0_patch.js?v=20260723-popup-clean-2"
         );
 
         assertContains(
@@ -138,6 +146,47 @@ public final class ReclamoPrestacionalEditorContractTest {
                         + " = reclamoPrestacional_saveReclamo;"
         );
 
+        assertContains(
+                "cabecera usa tabla legacy valida",
+                cabecera,
+                "<table class=\"lfr-table\""
+        );
+        assertContains(
+                "cabecera conserva fecha OSPIM",
+                cabecera,
+                "dayParam=\"fechaospimDia\""
+        );
+        assertContains(
+                "cabecera conserva fecha seccional",
+                cabecera,
+                "dayParam=\"fechaseccionalDia\""
+        );
+        assertContains(
+                "cabecera conserva contratos de compras",
+                cabecera,
+                "id=\"<portlet:namespace />integracion\""
+        );
+        assertNotContains(
+                "cabecera sin atributo width roto",
+                cabecera,
+                "width=\"33%  style="
+        );
+        assertNotContains(
+                "cabecera sin celda con atributo fantasma",
+                cabecera,
+                "<td c width="
+        );
+        assertNotContains(
+                "cabecera sin checkbox invalido",
+                cabecera,
+                "Unchecked"
+        );
+        assertNotContains(
+                "cabecera sin tablas envolviendo selects",
+                cabecera,
+                "<td><table>"
+        );
+
         assertNotContains(
                 "metodo no disponible en Liferay 5.2",
                 editorJsp,
@@ -183,6 +232,7 @@ public final class ReclamoPrestacionalEditorContractTest {
                 editorJsp,
                 "getId_medicamento().intValue()"
         );
+
         assertContains(
                 "intercepta solamente el editor legacy",
                 editorPatch,
@@ -216,12 +266,53 @@ public final class ReclamoPrestacionalEditorContractTest {
         assertContains(
                 "error visible de carga",
                 editorPatch,
-                "No se pudo cargar el editor de la prestaci\u00f3n."
+                "No se pudo cargar el editor de la prestaci"
         );
         assertContains(
                 "API de diagnostico expuesta",
                 editorPatch,
                 "window.ReclamoPrestacionalEditorPatch"
+        );
+
+        assertContains(
+                "seleccion de nomenclador sin cierre interno",
+                editorPatch,
+                "window.seleccionaCamposNm = asignarNomencladorSeguro;"
+        );
+        assertContains(
+                "seleccion y cierre coordinados una sola vez",
+                editorPatch,
+                "window.pasarParametrosAParentNm = function("
+        );
+        assertContains(
+                "cierre protegido contra reentrada",
+                editorPatch,
+                "__rpCierreNomencladorSeguro"
+        );
+        assertContains(
+                "busqueda inicial bloqueada",
+                editorPatch,
+                "var busquedaInicialBloqueada = true;"
+        );
+        assertContains(
+                "limpieza focalizada de residuos del editor",
+                editorPatch,
+                "function limpiarResiduosEditor(contenedor)"
+        );
+        assertNotContains(
+                "reparacion sin apertura automatica del popup",
+                editorPatch,
+                "window.setTimeout(buscarNomenclador, 0)"
+        );
+        assertNotContains(
+                "P0 sin apertura automatica del popup",
+                p0Patch,
+                "buscarNomencladorAutocompletar_edit"
+        );
+        assertContains(
+                "P0 conserva codigo tecnico sin buscar",
+                p0Patch,
+                "asignar(\"codigoprestacion\", codigo);"
         );
 
         System.out.println("CONTRATO_EDITOR_RECLAMO_PRESTACIONAL_OK");
