@@ -203,14 +203,44 @@ public final class ReclamoPrestacionalEditorContractTest {
                 "if (prestacionEnEdicion != null) {"
         );
         assertContains(
-                "id de prestacion tratado como primitivo",
+                "id de prestacion copiado a primitivo",
                 editorJsp,
-                "prestacionEnEdicion.getId_prestacion() != 0"
+                "int idPrest ="
         );
         assertContains(
-                "id de medicamento tratado como primitivo",
+                "id de prestacion leido del modelo",
                 editorJsp,
-                "prestacionEnEdicion.getId_medicamento() != 0"
+                "prestacionEnEdicion.getId_prestacion();"
+        );
+        assertContains(
+                "id de medicamento copiado a primitivo",
+                editorJsp,
+                "int idMedic ="
+        );
+        assertContains(
+                "id de medicamento leido del modelo",
+                editorJsp,
+                "prestacionEnEdicion.getId_medicamento();"
+        );
+        assertContains(
+                "medicamento se inicializa solo sin prestacion",
+                editorJsp,
+                "prestacionEnEdicion.getId_prestacion() == 0"
+        );
+        assertContains(
+                "medicamento exige identificador valido",
+                editorJsp,
+                "&& prestacionEnEdicion.getId_medicamento() != 0"
+        );
+        assertNotContains(
+                "editor no abre nomenclador automaticamente",
+                editorJsp,
+                "var buscarNomenclador ="
+        );
+        assertNotContains(
+                "editor no programa apertura automatica",
+                editorJsp,
+                "window.setTimeout("
         );
         assertNotContains(
                 "id de prestacion sin comparacion nula",

@@ -122,12 +122,12 @@ if (prestacionEnEdicion != null) {
 							maxlength="20"
 							type="text"
 							value="<%= HtmlUtil.escape(
-									Validator.isNotNull(
-											prestacionEnEdicion.getCodigoPrestacion()
-									)
-									? prestacionEnEdicion.getCodigoPrestacion()
-									: ""
-							) %>" />
+        Validator.isNotNull(
+                prestacionEnEdicion.getCodigoPrestacion()
+        )
+        ? prestacionEnEdicion.getCodigoPrestacion()
+        : ""
+) %>" />
 					</td>
 					<td>
 						<input
@@ -309,92 +309,203 @@ if (prestacionEnEdicion != null) {
 	</tr>
 <tr>		
 	
-<td colspan="8">
-	  <div id="<portlet:namespace />Autorizado">
-	  	
-	  	  <fieldset class="block-labels">
-	         <legend>
-		         <liferay-ui:message key="Autorizado por Área Médica:" />
-	         </legend> 
-	  		
-			<table>					
-	         <tr>		
-	            <td><label><liferay-ui:message key="Cantidad" />:</label></td>
-	            <td><input id="<portlet:namespace />cantidadEdicion"
-				     name="<portlet:namespace />cantidadEdicion" size="2" maxlength="20" type="text" value='<%=Validator.isNotNull(prestacionEnEdicion)  ? prestacionEnEdicion.getCantidad()    : ""  %>'
-				     onkeypress="return validaMonto(event,this)" onblur="calculatotal()" /></td>
-			
-			    <td><label><liferay-ui:message key="Importe" />:</label></td>
-			    <td><input id="<portlet:namespace />importeEdicion"
-				     name="<portlet:namespace />importeEdicion" size="12" maxlength="20" type="text" value='<%=Validator.isNotNull(prestacionEnEdicion)  ? new BigDecimal(prestacionEnEdicion.getImporte()).setScale(2, RoundingMode.HALF_UP).toPlainString(): ""  %>'
-				     onkeypress="return validaMonto(event,this)" onblur="calculatotal()" /></td>
-		
-			    <td><label><liferay-ui:message key="Total" />:</label></td>
-				<td><input id="<portlet:namespace />totalEdicion"
-				    name="<portlet:namespace />totalEdicion" size="12" maxlength="20" readonly="readonly" type="text" value='<%=Validator.isNotNull(prestacionEnEdicion)  ? prestacionEnEdicion.getTotalString() : ""  %>' /></td>
-				
-                <td>
-                   <label><liferay-ui:message key="Cargo OSPIM" />:</label>
-                </td>
-			    <td><input id="<portlet:namespace />cargoospimEdicion"
-				     name="<portlet:namespace />cargoospimEdicion"
-				     size="12"
-				     maxlength="20"
-				     value='<%= Validator.isNotNull(prestacionEnEdicion)
-				    		 ? new BigDecimal(prestacionEnEdicion.getCargo_ospim())
-				    		 		 .setScale(2, RoundingMode.HALF_UP)
-				    		 		 .toPlainString()
-				    		 : "" %>'
-				     type="text"
-				     onkeypress="return validaMonto(event,this)"
-				     onkeydown="allowOnlyDigitsAndDecimals(event)" /></td>
-			    <td><label><liferay-ui:message key="Cargo Prestadora" />:</label></td>
-			    <td><input id="<portlet:namespace />cargopsEdicion"
-				    name="<portlet:namespace />cargopsEdicion"
-				    size="12"
-				    maxlength="20"
-				    value='<%= Validator.isNotNull(prestacionEnEdicion)
-				    		? new BigDecimal(prestacionEnEdicion.getCargo_ps())
-				    				.setScale(2, RoundingMode.HALF_UP)
-				    				.toPlainString()
-				    		: "" %>'
-				    type="text"
-				    onkeypress="return validaMonto(event,this)" /></td>
-				    
-				 <td>
-                   <label><liferay-ui:message key="Cargo Monotributo" />:</label>
-                </td>
-			    <td><input id="<portlet:namespace />cargoimesaEdicion"
-				     name="<portlet:namespace />cargoimesaEdicion" size="12" maxlength="20" value ='<%=Validator.isNotNull(prestacionEnEdicion)  ? new BigDecimal(prestacionEnEdicion.getCargo_imesa()).setScale(2, RoundingMode.HALF_UP).toPlainString(): ""  %>' 
-				    type="text" value=""  onkeypress="return validaMonto(event,this)" onkeydown="allowOnlyDigitsAndDecimals(event)"/></td>	
-				 
-				    
-				<td><label>Reconocido SSS:</label></td>
-			    <td><input id="<portlet:namespace />reconocidoSSSEdicion"
-				    name="<portlet:namespace />reconocidoSSSEdicion"
-				    size="12"
-				    maxlength="20"
-				    value='<%= Validator.isNotNull(prestacionEnEdicion)
-				    		? prestacionEnEdicion.getReconocidoSSS()
-				    		: "" %>'
-				    type="text"
-				    onkeypress="return validaMonto(event,this)" /></td>
-				
-			    <td><label><liferay-ui:message key="Recuperable SUR" />:</label></td>
-				<td>
-				<select name="<portlet:namespace />recuperable_surEdicion" id="<portlet:namespace />recuperable_surEdicion" onchange="cambiorecuperableEdicion();">
-						<option value="0">Seleccione Integración</option>
-						<option value="1" <%=Validator.isNotNull(prestacionEnEdicion) &&  prestacionEnEdicion.getRecuperable() != null &&  prestacionEnEdicion.getRecuperable()==1 ? "selected" : ""  %>>SUR</option>
-						<option value="3" <%=Validator.isNotNull(prestacionEnEdicion) &&  prestacionEnEdicion.getRecuperable() != null &&  prestacionEnEdicion.getRecuperable()==3 ? "selected" : ""  %>>Integración</option>
-						<option value="2" <%=Validator.isNotNull(prestacionEnEdicion) &&  prestacionEnEdicion.getRecuperable() != null &&  prestacionEnEdicion.getRecuperable()==2 ? "selected" : ""  %>>NO Recuperable</option>
-				</select>
-				</td>
-			 </tr>   
-           </table>	
-           </fieldset>
-       	  </div>
-           
-</td>           								
+<td colspan="15">
+	<div id="<portlet:namespace />Autorizado">
+		<fieldset class="block-labels">
+			<legend>
+				<liferay-ui:message key="Autorizado por Área Médica:" />
+			</legend>
+
+			<table class="lfr-table"
+				style="width: 100%; border-collapse: separate; border-spacing: 3px;">
+				<tr>
+					<td>
+						<label><liferay-ui:message key="Cantidad" />:</label>
+					</td>
+					<td>
+						<input
+							id="<portlet:namespace />cantidadEdicion"
+							name="<portlet:namespace />cantidadEdicion"
+							size="2"
+							maxlength="20"
+							type="text"
+							value='<%= Validator.isNotNull(prestacionEnEdicion)
+									? prestacionEnEdicion.getCantidad()
+									: "" %>'
+							onkeypress="return validaMonto(event,this)"
+							onblur="calculatotal()" />
+					</td>
+
+					<td>
+						<label><liferay-ui:message key="Importe" />:</label>
+					</td>
+					<td>
+						<input
+							id="<portlet:namespace />importeEdicion"
+							name="<portlet:namespace />importeEdicion"
+							size="12"
+							maxlength="20"
+							type="text"
+							value='<%= Validator.isNotNull(prestacionEnEdicion)
+									? new BigDecimal(
+											prestacionEnEdicion.getImporte()
+									).setScale(
+											2,
+											RoundingMode.HALF_UP
+									).toPlainString()
+									: "" %>'
+							onkeypress="return validaMonto(event,this)"
+							onblur="calculatotal()" />
+					</td>
+
+					<td>
+						<label><liferay-ui:message key="Total" />:</label>
+					</td>
+					<td>
+						<input
+							id="<portlet:namespace />totalEdicion"
+							name="<portlet:namespace />totalEdicion"
+							size="12"
+							maxlength="20"
+							readonly="readonly"
+							type="text"
+							value='<%= Validator.isNotNull(prestacionEnEdicion)
+									? prestacionEnEdicion.getTotalString()
+									: "" %>' />
+					</td>
+				</tr>
+
+				<tr>
+					<td>
+						<label><liferay-ui:message key="Cargo OSPIM" />:</label>
+					</td>
+					<td>
+						<input
+							id="<portlet:namespace />cargoospimEdicion"
+							name="<portlet:namespace />cargoospimEdicion"
+							size="12"
+							maxlength="20"
+							type="text"
+							value='<%= Validator.isNotNull(prestacionEnEdicion)
+									? new BigDecimal(
+											prestacionEnEdicion.getCargo_ospim()
+									).setScale(
+											2,
+											RoundingMode.HALF_UP
+									).toPlainString()
+									: "" %>'
+							onkeypress="return validaMonto(event,this)"
+							onkeydown="allowOnlyDigitsAndDecimals(event)" />
+					</td>
+
+					<td>
+						<label><liferay-ui:message key="Cargo Prestadora" />:</label>
+					</td>
+					<td>
+						<input
+							id="<portlet:namespace />cargopsEdicion"
+							name="<portlet:namespace />cargopsEdicion"
+							size="12"
+							maxlength="20"
+							type="text"
+							value='<%= Validator.isNotNull(prestacionEnEdicion)
+									? new BigDecimal(
+											prestacionEnEdicion.getCargo_ps()
+									).setScale(
+											2,
+											RoundingMode.HALF_UP
+									).toPlainString()
+									: "" %>'
+							onkeypress="return validaMonto(event,this)" />
+					</td>
+
+					<td>
+						<label><liferay-ui:message key="Cargo Monotributo" />:</label>
+					</td>
+					<td>
+						<input
+							id="<portlet:namespace />cargoimesaEdicion"
+							name="<portlet:namespace />cargoimesaEdicion"
+							size="12"
+							maxlength="20"
+							type="text"
+							value='<%= Validator.isNotNull(prestacionEnEdicion)
+									? new BigDecimal(
+											prestacionEnEdicion.getCargo_imesa()
+									).setScale(
+											2,
+											RoundingMode.HALF_UP
+									).toPlainString()
+									: "" %>'
+							onkeypress="return validaMonto(event,this)"
+							onkeydown="allowOnlyDigitsAndDecimals(event)" />
+					</td>
+				</tr>
+
+				<tr>
+					<td>
+						<label>Reconocido SSS:</label>
+					</td>
+					<td>
+						<input
+							id="<portlet:namespace />reconocidoSSSEdicion"
+							name="<portlet:namespace />reconocidoSSSEdicion"
+							size="12"
+							maxlength="20"
+							type="text"
+							value='<%= Validator.isNotNull(prestacionEnEdicion)
+									? prestacionEnEdicion.getReconocidoSSS()
+									: "" %>'
+							onkeypress="return validaMonto(event,this)" />
+					</td>
+
+					<td>
+						<label><liferay-ui:message key="Recuperable SUR" />:</label>
+					</td>
+					<td>
+						<select
+							name="<portlet:namespace />recuperable_surEdicion"
+							id="<portlet:namespace />recuperable_surEdicion"
+							onchange="cambiorecuperableEdicion();">
+							<option value="0">
+								Seleccione Integración
+							</option>
+							<option
+								value="1"
+								<%= Validator.isNotNull(prestacionEnEdicion)
+										&& prestacionEnEdicion.getRecuperable() != null
+										&& prestacionEnEdicion.getRecuperable() == 1
+										? "selected"
+										: "" %>>
+								SUR
+							</option>
+							<option
+								value="3"
+								<%= Validator.isNotNull(prestacionEnEdicion)
+										&& prestacionEnEdicion.getRecuperable() != null
+										&& prestacionEnEdicion.getRecuperable() == 3
+										? "selected"
+										: "" %>>
+								Integración
+							</option>
+							<option
+								value="2"
+								<%= Validator.isNotNull(prestacionEnEdicion)
+										&& prestacionEnEdicion.getRecuperable() != null
+										&& prestacionEnEdicion.getRecuperable() == 2
+										? "selected"
+										: "" %>>
+								NO Recuperable
+							</option>
+						</select>
+					</td>
+
+					<td colspan="2">&nbsp;</td>
+				</tr>
+			</table>
+		</fieldset>
+	</div>
+</td>
 </tr>
 <tr>
 	<td id="<portlet:namespace />observacion_prestacionEdicion_label">
@@ -593,17 +704,8 @@ jQuery(function() {
     jQuery("#" + namespace + "datos_edicion_prestacion").show();
     jQuery("#" + namespace + "codigoprestacion").val(codigo);
 
-    <% if (prestacionEnEdicion.getId_prestacion() != 0) { %>
-    var buscarNomenclador =
-            window[namespace + "buscarNomencladorAutocompletar_edit"];
-
-    if (codigo && typeof buscarNomenclador === "function") {
-        window.setTimeout(
-                buscarNomenclador,
-                0
-        );
-    }
-    <% } else if (prestacionEnEdicion.getId_medicamento() != 0) { %>
+    <% if (prestacionEnEdicion.getId_prestacion() == 0
+            && prestacionEnEdicion.getId_medicamento() != 0) { %>
     jQuery("#" + namespace + "troquel_edit").val(
             "<%= prestacionEnEdicion.getId_medicamento() %>"
     );
