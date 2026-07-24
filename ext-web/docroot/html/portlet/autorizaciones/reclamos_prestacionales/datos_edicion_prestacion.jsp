@@ -31,19 +31,26 @@ if (prestacionEnEdicion != null) {
 	 }
 }
 
-String captionbotoncancelar="Cancelar Edicion de la Prestacion";
-String captionlabelproceso="PRESTACION EN PROCESO DE EDICION";
-String estiloLabel="";
+String captionbotoncancelar =
+		"Cancelar Edici\u00f3n de la Prestaci\u00f3n";
+String captionlabelproceso =
+		"PRESTACION EN PROCESO DE EDICION";
+String estiloLabel = "";
 
-if (tipoedicion==1) {
-	captionbotoncancelar="Cancelar Autorizacion de la Prestacion";
-	captionlabelproceso="PRESTACION EN PROCESO DE AUTORIZACION";
-	estiloLabel="style='color:green;'";
+if (tipoedicion == 1) {
+	captionbotoncancelar =
+			"Cancelar Autorizaci\u00f3n de la Prestaci\u00f3n";
+	captionlabelproceso =
+			"PRESTACION EN PROCESO DE AUTORIZACION";
+	estiloLabel = "style='color:green;'";
 }
-if (tipoedicion==2) {
-	captionbotoncancelar="Cancelar Rechazo de la Prestacion";
-	captionlabelproceso="PRESTACION EN PROCESO DE RECHAZO";
-	estiloLabel="style='color:red;'";
+
+if (tipoedicion == 2) {
+	captionbotoncancelar =
+			"Cancelar Rechazo de la Prestaci\u00f3n";
+	captionlabelproceso =
+			"PRESTACION EN PROCESO DE RECHAZO";
+	estiloLabel = "style='color:red;'";
 }
 
 ocultarSeccional = (String) request.getAttribute("ocultar");
@@ -417,41 +424,43 @@ if (prestacionEnEdicion != null) {
 
 	<td>
 		<div id="<portlet:namespace />botones_edicion_prestacion">
-			<% if (tipoedicion.intValue() == 0) { %>
-				<input
-					type="button"
-					name="<portlet:namespace />btnedita_prestacion"
-					id="<portlet:namespace />btnedita_prestacion"
-					value="<liferay-ui:message key="Editar Prestación" />"
-					onclick="<portlet:namespace />editarPrestacionSeleccionada(0);"
-					title="<liferay-ui:message key="Edita la prestacion" />" />
-			<% } %>
+        	<% if (tipoedicion.intValue() == 0) { %>
+        		<input
+        			type="button"
+        			name="<portlet:namespace />btnedita_prestacion"
+        			id="<portlet:namespace />btnedita_prestacion"
+        			value="Editar Prestaci&oacute;n"
+        			onclick="<portlet:namespace />editarPrestacionSeleccionada(0);"
+        			title="Edita la prestaci&oacute;n" />
+        	<% } %>
 
-			<% if (tipoedicion.intValue() == 1) { %>
-				<input
-					type="button"
-					name="<portlet:namespace />btnautoriza_prestacion"
-					id="<portlet:namespace />btnautoriza_prestacion"
-					value="<liferay-ui:message key="Autoriza  Prestación" />"
-					onclick="<portlet:namespace />editarPrestacionSeleccionada(1);"
-					title="<liferay-ui:message key="Autoriza la prestacion" />" />
-			<% } %>
+        	<% if (tipoedicion.intValue() == 1) { %>
+        		<input
+        			type="button"
+        			name="<portlet:namespace />btnautoriza_prestacion"
+        			id="<portlet:namespace />btnautoriza_prestacion"
+        			value="Autoriza Prestaci&oacute;n"
+        			onclick="<portlet:namespace />editarPrestacionSeleccionada(1);"
+        			title="Autoriza la prestaci&oacute;n" />
+        	<% } %>
 
-			<% if (tipoedicion.intValue() == 2) { %>
-				<input
-					type="button"
-					name="<portlet:namespace />btnrechaza_prestacion"
-					id="<portlet:namespace />btnrechaza_prestacion"
-					value="<liferay-ui:message key="Rechaza Prestación" />"
-					onclick="<portlet:namespace />editarPrestacionSeleccionada(2);"
-					title="<liferay-ui:message key="Rechaza la Prestacion" />" />
-			<% } %>
+        	<% if (tipoedicion.intValue() == 2) { %>
+        		<input
+        			type="button"
+        			name="<portlet:namespace />btnrechaza_prestacion"
+        			id="<portlet:namespace />btnrechaza_prestacion"
+        			value="Rechaza Prestaci&oacute;n"
+        			onclick="<portlet:namespace />editarPrestacionSeleccionada(2);"
+        			title="Rechaza la prestaci&oacute;n" />
+        	<% } %>
 
-			<input
-				type="button"
-				value="<liferay-ui:message key="<%= captionbotoncancelar %>" />"
-				onclick="<portlet:namespace />cancelaEdicionPrestacion();" />
-		</div>
+        	<input
+        		type="button"
+        		name="<portlet:namespace />btncancelar_prestacion"
+        		id="<portlet:namespace />btncancelar_prestacion"
+        		value="<%= HtmlUtil.escape(captionbotoncancelar) %>"
+        		onclick="<portlet:namespace />cancelaEdicionPrestacion();" />
+        </div>
 	</td>
 </tr>
 </table>

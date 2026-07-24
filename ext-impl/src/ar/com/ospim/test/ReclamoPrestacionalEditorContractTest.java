@@ -42,12 +42,12 @@ public final class ReclamoPrestacionalEditorContractTest {
                 "editor cargado despues del guard de pestanas",
                 view,
                 "view_reclamo_tab_guard.js?v=20260717-initial-state-1",
-                "view_reclamo_editor_patch.js?v=20260723-popup-clean-2"
+                "view_reclamo_editor_patch.js?v=20260724-editor-buttons-1"
         );
         assertBefore(
                 "editor cargado antes del P0 general",
                 view,
-                "view_reclamo_editor_patch.js?v=20260723-popup-clean-2",
+                "view_reclamo_editor_patch.js?v=20260724-editor-buttons-1",
                 "view_reclamo_p0_patch.js?v=20260723-popup-clean-2"
         );
 
@@ -232,7 +232,36 @@ public final class ReclamoPrestacionalEditorContractTest {
                 editorJsp,
                 "getId_medicamento().intValue()"
         );
-
+        assertContains(
+                "boton editar con texto estable",
+                editorJsp,
+                "value=\"Editar Prestaci&oacute;n\""
+        );
+        assertContains(
+                "boton autorizar con texto estable",
+                editorJsp,
+                "value=\"Autoriza Prestaci&oacute;n\""
+        );
+        assertContains(
+                "boton rechazar con texto estable",
+                editorJsp,
+                "value=\"Rechaza Prestaci&oacute;n\""
+        );
+        assertContains(
+                "boton cancelar con identidad",
+                editorJsp,
+                "id=\"<portlet:namespace />btncancelar_prestacion\""
+        );
+        assertContains(
+                "boton cancelar usa texto calculado seguro",
+                editorJsp,
+                "value=\"<%= HtmlUtil.escape(captionbotoncancelar) %>\""
+        );
+        assertNotContains(
+                "boton editar no depende de clave libre de language",
+                editorJsp,
+                "value=\"<liferay-ui:message key=\"Editar Prestaci"
+        );
         assertContains(
                 "intercepta solamente el editor legacy",
                 editorPatch,
@@ -298,6 +327,27 @@ public final class ReclamoPrestacionalEditorContractTest {
                 "limpieza focalizada de residuos del editor",
                 editorPatch,
                 "function limpiarResiduosEditor(contenedor)"
+        );
+        assertContains(
+                "reparacion defensiva de botones del editor",
+                editorPatch,
+                "function repararBotonesEditor(contenedor)"
+        );
+        assertContains(
+                "limpieza no elimina botones funcionales",
+                editorPatch,
+                "var tipoVisualVacio = tipo === \"text\";"
+        );
+        assertContains(
+                "boton cancelar recibe identidad estable",
+                editorPatch,
+                "namespace + \"btncancelar_prestacion\""
+        );
+        assertBefore(
+                "botones reparados antes de limpiar residuos",
+                editorPatch,
+                "repararBotonesEditor(contenedor);",
+                "limpiarResiduosEditor(contenedor);"
         );
         assertNotContains(
                 "reparacion sin apertura automatica del popup",
