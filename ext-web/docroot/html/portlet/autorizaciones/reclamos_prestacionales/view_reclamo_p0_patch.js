@@ -48,17 +48,17 @@ function datosRevisionOkSeguro() {
     var resolucion = campo("resolucion");
 
     if (isNaN(diaRevision) || isNaN(mesRevision) || isNaN(anioRevision)) {
-        alert("Debe ingresar la fecha de Revisión");
+        alert("Debe ingresar la fecha de Revisi\u00f3n");
         return false;
     }
 
     if (!fechaValida(anioRevision, mesRevision, diaRevision)) {
-        alert("Error en la fecha de revisión ingresada.");
+        alert("Error en la fecha de revisi\u00f3n ingresada.");
         return false;
     }
 
     if (!resolucion.length || resolucion.prop("selectedIndex") <= 0 || !resolucion.val()) {
-        alert("Debe seleccionar el tipo de resolución de la lista.");
+        alert("Debe seleccionar el tipo de resoluci\u00f3n de la lista.");
         return false;
     }
 
@@ -68,7 +68,7 @@ function datosRevisionOkSeguro() {
 
     if (isNaN(diaOspim) || isNaN(mesOspim) || isNaN(anioOspim) ||
             !fechaValida(anioOspim, mesOspim, diaOspim)) {
-        alert("La fecha OSPIM del reclamo no es válida.");
+        alert("La fecha OSPIM del reclamo no es v\u00e1lida.");
         return false;
     }
 
@@ -77,12 +77,12 @@ function datosRevisionOkSeguro() {
     var hoy = new Date();
 
     if (inicioDelDia(fechaRevision) < inicioDelDia(fechaOspim)) {
-        alert("La fecha de revisión no puede ser inferior a la fecha de ingreso del reclamo.");
+        alert("La fecha de revisi\u00f3n no puede ser inferior a la fecha de ingreso del reclamo.");
         return false;
     }
 
     if (inicioDelDia(fechaRevision) > inicioDelDia(hoy)) {
-        alert("La fecha de revisión no puede ser superior a la fecha de hoy.");
+        alert("La fecha de revisi\u00f3n no puede ser superior a la fecha de hoy.");
         return false;
     }
 
@@ -152,7 +152,7 @@ function configurarCierreRechazado() {
 
     gestion.prop("disabled", false).val(GESTION_RECHAZADO);
     if (gestion.val() !== GESTION_RECHAZADO) {
-        throw new Error("No existe la gestión RECHAZADO (5) en la pantalla.");
+        throw new Error("No existe la gesti\u00f3n RECHAZADO (5) en la pantalla.");
     }
 
     asignar("tipogestion", GESTION_RECHAZADO);
@@ -185,13 +185,13 @@ function invocarGuardadoLuegoDeRevision() {
     var funcion = window[nombreFuncion];
 
     if (typeof funcion !== "function") {
-        throw new Error("No se encontró la función de guardado del reclamo.");
+        throw new Error("No se encontr\u00f3 la funci\u00f3n de guardado del reclamo.");
     }
 
     var confirmarOriginal = window.confirm;
     window.confirm = function(mensaje) {
         if (String(mensaje || "").indexOf(
-                "Al seleccionar la opción RECHAZADO"
+                "Al seleccionar la opci\u00f3n RECHAZADO"
         ) === 0) {
             return true;
         }
@@ -224,7 +224,7 @@ function agregarRevisionSeguro() {
     var estadoAnterior = capturarEstadoCierre();
 
     if (rechazo && !window.confirm(
-            "Confirma el cierre del caso con el rechazo en la revisión?"
+            "Confirma el cierre del caso con el rechazo en la revisi\u00f3n?"
     )) {
         return false;
     }
@@ -272,7 +272,7 @@ function agregarRevisionSeguro() {
         campo("lista_revisiones").html(html);
         campo("botonrevision").hide();
         campo("mensajerevisionefectuada").html(
-                "Revisión efectuada. El sistema admite una sola revisión activa."
+                "Revisi\u00f3n efectuada. El sistema admite una sola revisi\u00f3n activa."
         );
         reiniciarFormularioRevision();
 
@@ -281,13 +281,13 @@ function agregarRevisionSeguro() {
                 var resultadoGuardado = invocarGuardadoLuegoDeRevision();
                 if (resultadoGuardado === false) {
                     alert(
-                            "La revisión fue registrada, pero el cierre del reclamo no se completó. " +
-                            "Revise las validaciones y guarde nuevamente sin volver a crear la revisión."
+                            "La revisi\u00f3n fue registrada, pero el cierre del reclamo no se complet\u00f3. " +
+                            "Revise las validaciones y guarde nuevamente sin volver a crear la revisi\u00f3n."
                     );
                 }
             } catch (errorGuardado) {
                 alert(
-                        "La revisión fue registrada, pero ocurrió un error al guardar el cierre: " +
+                        "La revisi\u00f3n fue registrada, pero ocurri\u00f3 un error al guardar el cierre: " +
                         errorGuardado.message
                 );
             }
@@ -296,8 +296,8 @@ function agregarRevisionSeguro() {
         restaurarEstadoCierre(estadoAnterior);
         alternarBotonRevision(false);
         alert(
-                "No se pudo registrar la revisión. El reclamo no fue guardado ni cerrado. " +
-                (error || estado || "Error de comunicación")
+                "No se pudo registrar la revisi\u00f3n. El reclamo no fue guardado ni cerrado. " +
+                (error || estado || "Error de comunicaci\u00f3n")
         );
     }).always(function() {
         campo("buscando").hide();
@@ -313,12 +313,8 @@ function inicializarEditorPrestacion() {
     }
 
     var codigo = valor("codigoSeguimiento_filtro_edit");
-    var buscar = window[namespace + "buscarNomencladorAutocompletar_edit"];
-
-    if (codigo && typeof buscar === "function") {
-        window.setTimeout(function() {
-            buscar();
-        }, 0);
+    if (codigo) {
+        asignar("codigoprestacion", codigo);
         return;
     }
 
