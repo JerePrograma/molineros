@@ -31,7 +31,11 @@
         var metadatos = {
             letraComprobante: "",
             urlFiltroLetra: "",
-            ocultarAutorizado: false
+            ocultarAutorizado: false,
+            cuitEntidad: "",
+            sucursalEntidad: "",
+            razonEntidad: "",
+            idSeccionalEntidad: ""
         };
 
         var letra = texto.match(
@@ -46,6 +50,34 @@
         );
         if (url) {
             metadatos.urlFiltroLetra = url[1];
+        }
+
+        var cuit = texto.match(
+            /var\s+cuitJs\s*=\s*["']([^"']*)["']\s*;/i
+        );
+        if (cuit) {
+            metadatos.cuitEntidad = cuit[1];
+        }
+
+        var sucursal = texto.match(
+            /var\s+sucuJs\s*=\s*["']([^"']*)["']\s*;/i
+        );
+        if (sucursal) {
+            metadatos.sucursalEntidad = sucursal[1];
+        }
+
+        var razon = texto.match(
+            /var\s+razonJs\s*=\s*["']([^"']*)["']\s*;/i
+        );
+        if (razon) {
+            metadatos.razonEntidad = razon[1];
+        }
+
+        var idSeccional = texto.match(
+            /var\s+id_seccionalJs\s*=\s*["']([^"']*)["']\s*;/i
+        );
+        if (idSeccional) {
+            metadatos.idSeccionalEntidad = idSeccional[1];
         }
 
         metadatos.ocultarAutorizado =
@@ -217,6 +249,52 @@
                 nodo.remove();
             }
         });
+    }
+
+    function repararPadronComprobanteEdicion(metadatos) {
+        var datos = metadatos || {};
+        var cuit = campo("cuit_entidad_edicion");
+        var sucursal = campo("sucursal_entidad_edicion");
+        var razon = campo("entidad_edicion");
+        var idSeccional = campo("id_seccional_edicion");
+        var sucursalInicial = datos.sucursalEntidad;
+
+        if (cuit.length && esTextoVacio(cuit.val()) &&
+            !esTextoVacio(datos.cuitEntidad)) {
+
+            cuit.val(datos.cuitEntidad);
+        }
+
+        /*
+         * busqueda_padron_entidades.jsp renderiza la sucursal con
+         * value="" y la completa mediante un script inline. Al insertar
+         * el editor por AJAX esa inicialización puede ocurrir tarde o no
+         * ejecutarse; por eso se restaura el valor antes de validar.
+         */
+        if (sucursal.length && esTextoVacio(sucursal.val())) {
+            if (esTextoVacio(sucursalInicial) &&
+                !esTextoVacio(datos.idSeccionalEntidad) &&
+                datos.idSeccionalEntidad !== "0") {
+
+                sucursalInicial = datos.idSeccionalEntidad;
+            }
+
+            if (!esTextoVacio(sucursalInicial)) {
+                sucursal.val(sucursalInicial);
+            }
+        }
+
+        if (razon.length && esTextoVacio(razon.val()) &&
+            !esTextoVacio(datos.razonEntidad)) {
+
+            razon.val(datos.razonEntidad);
+        }
+
+        if (idSeccional.length && esTextoVacio(idSeccional.val()) &&
+            !esTextoVacio(datos.idSeccionalEntidad)) {
+
+            idSeccional.val(datos.idSeccionalEntidad);
+        }
     }
 
     function asignarNomencladorSeguro(tipoNomenclador, codigo, descripcion) {
@@ -456,6 +534,8 @@
             campo("Autorizado").hide();
         }
 
+        repararPadronComprobanteEdicion(datos);
+
         codigo = campo("codigoSeguimiento_filtro_edit").val();
 
         if (codigo) {
@@ -583,6 +663,8 @@
         extraerMetadatos: extraerMetadatos,
         repararBotonesEditor: repararBotonesEditor,
         limpiarResiduosEditor: limpiarResiduosEditor,
+        repararPadronComprobanteEdicion:
+            repararPadronComprobanteEdicion,
         repararEditor: repararEditor,
         asignarNomencladorSeguro: asignarNomencladorSeguro,
         habilitarBusquedaManual: habilitarBusquedaManual

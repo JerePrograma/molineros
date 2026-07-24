@@ -1125,316 +1125,731 @@ function reclamoPrestacional_vercontactosdelreclamo() {
 															  });			 	 
 		}					
 	}
-	
-
-function reclamoPrestacional_editarPrestacionSeleccionada(tipoAccion) {
-	//tipoAccion=1 edicion 
-	//tipoAccion=2 Autorizacion prestacion 
-	//tipoAccion=3 Rechazo de  prestacion	
-		
-	var frecuencia= jQuery('#' + reclamoPrestacionalNamespace + 'frecuenciaEdicion').val();
-	var cantidad =  jQuery('#' + reclamoPrestacionalNamespace + 'cantidadEdicion').val();
-	var importe = jQuery('#' + reclamoPrestacionalNamespace + 'importeEdicion').val();
-	var cargoospim= jQuery('#' + reclamoPrestacionalNamespace + 'cargoospimEdicion').val();
-	var cargops= jQuery('#' + reclamoPrestacionalNamespace + 'cargopsEdicion').val();
-	var cargoimesa= jQuery('#' + reclamoPrestacionalNamespace + 'cargoimesaEdicion').val();
-	var reconocidoSSS= jQuery('#' + reclamoPrestacionalNamespace + 'reconocidoSSSEdicion').val();
-	var observaciones= jQuery('#' + reclamoPrestacionalNamespace + 'observacion_prestacionEdicion').val();
-    var prestacion= "Graba Edicion";
-    var idprestacion =  jQuery("#" + reclamoPrestacionalNamespace + "codigoprestacion").val();
-    var idRegistro=jQuery('#' + reclamoPrestacionalNamespace + 'idRegistro').val();
-
-    var estadoAprobacion = tipoAccion;
-    var recuperableSur  =  jQuery('#' + reclamoPrestacionalNamespace + 'recuperable_surEdicion').val();  
-    
-    var cpbteTipo=jQuery('#' + reclamoPrestacionalNamespace + 'comprobante_tipo_edicion').val();
-
-    var cpbteNro=jQuery('#' + reclamoPrestacionalNamespace + 'comprobante_nro_edicion').val();
-    var cpbteDia=jQuery('#' + reclamoPrestacionalNamespace + 'fechaComprobanteDiaEdicion').val();
-    var cpbteMes=jQuery('#' + reclamoPrestacionalNamespace + 'fechaComprobanteMesEdicion').val();
-    var cpbteAnio=jQuery('#' + reclamoPrestacionalNamespace + 'fechaComprobanteAnioEdicion').val();
-    var cpbteCantidad=jQuery('#' + reclamoPrestacionalNamespace + 'cantidadFC_edicion').val();
-    var cpbteImporte= jQuery('#' + reclamoPrestacionalNamespace + 'importeUnitarioFC_edicion').val();
-    var importeFC = jQuery('#' + reclamoPrestacionalNamespace + 'importeFC_edicion').val();
-    var cpbteCuit=jQuery('#' + reclamoPrestacionalNamespace + 'cuit_entidad_edicion').val();
-    var cpbteSucursal=jQuery('#' + reclamoPrestacionalNamespace + 'comprobante_suc_edicion').val();
-    var cpbteCuitSucursal=jQuery('#' + reclamoPrestacionalNamespace + 'sucursal_entidad_edicion').val();
-    var cpbteLetra=jQuery('#' + reclamoPrestacionalNamespace + 'comprobante_letra_edicion').val();
 
 
-    var flagAmparo = false; 
-    var estado=jQuery('#' + reclamoPrestacionalNamespace + 'estado').val();
-	var chk_amparo=jQuery("#" + reclamoPrestacionalNamespace + "chk_amparo").is(':checked');
+    function reclamoPrestacional_editarPrestacionSeleccionada(tipoAccion) {
+        /*
+         * tipoAccion:
+         * 0 = edición
+         * 1 = autorización
+         * 2 = rechazo
+         */
 
-	if (estado == 4 && chk_amparo == true ){
-		//Si esta en estado inconsistente y es amparo permitimos grabar sin datos de comprobante
-		flagAmparo = true;
-	}
+        function valorCampo(sufijo) {
+            var control = jQuery(
+                '#' + reclamoPrestacionalNamespace + sufijo
+            );
+            var valor = control.length && control.val() != null ?
+                String(control.val()) :
+                "";
 
+            valor = valor.replace(/^\s+|\s+$/g, "");
 
-	// Solo validar montos si completó algo del área médica
-	var tieneDatosAreaMedica = (
-	    (importe != null && importe != '' && importe != 0) ||
-	    (cargoospim != null && cargoospim != '' && cargoospim != 0) ||
-	    (cargops != null && cargops != '' && cargops != 0) ||
-	    (cargoimesa != null && cargoimesa != '' && cargoimesa != 0) ||
-	    (reconocidoSSS != null && reconocidoSSS != '' && reconocidoSSS != 0)
-	);
+            if (control.length &&
+                String(
+                    control.val() == null ?
+                        "" :
+                        control.val()
+                ) != valor) {
 
-	if (tieneDatosAreaMedica) {
-	    if (recuperableSur == 0) {
-	        alert('Debe seleccionar el campo Recuperable');
-	        return false;
-	    }
+                control.val(valor);
+            }
 
-	    //validación de montos
-	    if (!validaMontosEdicion()) {       
-	        return false;
-	    }
-	}
-    
-	/*
-    if (!validaMontosEdicion()){       
-   		return false;
-	}*/
+            return valor;
+        }
 
-/*    
-        importe=importe.replace(',','.');
-        cargoospim=cargoospim.replace(',','.');
-        cargops=cargops.replace(',','.');
-*/
+        function esVacio(valor) {
+            return String(valor == null ? "" : valor)
+                .replace(/^\s+|\s+$/g, "") == "";
+        }
 
-    if (frecuencia=="SELECCIONE"){
-    	frecuencia="";    
-	}
-	
-	var sector=jQuery('#' + reclamoPrestacionalNamespace + 'sector').val();
-	
-	var fechaPrestacionDia='';
-	var fechaPrestacionMes='';
-	var fechaPrestacionAnio='';
-	
-    
-    fechaPrestacionDia=jQuery('#' + reclamoPrestacionalNamespace + 'fechaPrestacionDiaEdicion').val(); 
-    fechaPrestacionMes=jQuery('#' + reclamoPrestacionalNamespace + 'fechaPrestacionMesEdicion').val();
-    fechaPrestacionAnio=jQuery('#' + reclamoPrestacionalNamespace + 'fechaPrestacionAnioEdicion').val();
-    
-    id_medicamento_edit=jQuery('#' + reclamoPrestacionalNamespace + 'troquel_edit').val();
-	var nombre_medicamento_edit = jQuery('#' + reclamoPrestacionalNamespace + 'nombre_medicamento_edit').val();
+        function numeroDecimal(valor) {
+            var normalizado = String(
+                valor == null ?
+                    "" :
+                    valor
+            )
+                .replace(/\s/g, "")
+                .replace(",", ".");
 
-    if (flagAmparo == false  && (frecuencia ==null ||  frecuencia=='')){
-    		alert('Debe seleccionar la frecuencia correspondiente.');
-    		return false ;
+            var numero = parseFloat(normalizado);
+
+            return isNaN(numero) ?
+                null :
+                numero;
+        }
+
+        function esNumeroPositivo(valor) {
+            var numero = numeroDecimal(valor);
+
+            return numero != null && numero > 0;
+        }
+
+        function esNumeroNoCero(valor) {
+            var numero = numeroDecimal(valor);
+
+            return numero != null && numero != 0;
+        }
+
+        function fechaIncompleta(dia, mes, anio) {
+            return esVacio(dia) ||
+                dia == "0" ||
+                esVacio(mes) ||
+                mes == "-1" ||
+                esVacio(anio) ||
+                anio == "0";
+        }
+
+        function limpiarEditorDespuesDeGuardar() {
+            var frecuenciaControl = document.getElementById(
+                reclamoPrestacionalNamespace +
+                "frecuenciaEdicion"
+            );
+
+            var recuperableControl = document.getElementById(
+                reclamoPrestacionalNamespace +
+                "recuperable_surEdicion"
+            );
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'cantidadEdicion'
+            ).val('1');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'importeEdicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'totalEdicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'cargoospimEdicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'cargopsEdicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'cargoimesaEdicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'reconocidoSSSEdicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'observacion_prestacionEdicion'
+            ).val('');
+
+            if (frecuenciaControl) {
+                frecuenciaControl.selectedIndex = 0;
+            }
+
+            if (recuperableControl) {
+                recuperableControl.selectedIndex = 0;
+            }
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'comprobante_tipo_edicion'
+            ).val('FCP');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'comprobante_letra_edicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'comprobante_nro_edicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'comprobante_suc_edicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'fechaComprobanteDiaEdicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'fechaComprobanteMesEdicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'fechaComprobanteAnioEdicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'cantidadFC_edicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'importeUnitarioFC_edicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'importeFC_edicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'cuit_entidad_edicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'sucursal_entidad_edicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'entidad_edicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'fechaPrestacionDiaEdicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'fechaPrestacionMesEdicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'fechaPrestacionAnioEdicion'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'troquel_edit'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'nombre_medicamento_edit'
+            ).val('');
+
+            jQuery(
+                '#' +
+                reclamoPrestacionalNamespace +
+                'divBtnBuscaMedicamento_edit'
+            ).show();
+
+            reclamoPrestacional_limpiarNomencladorAutocompletar();
+
+            addprestacion = false;
+
+            reclamoPrestacional_cancelaEdicionPrestacion();
+        }
+
+        var frecuencia =
+            valorCampo('frecuenciaEdicion');
+
+        var cantidad =
+            valorCampo('cantidadEdicion');
+
+        var importe =
+            valorCampo('importeEdicion');
+
+        var cargoospim =
+            valorCampo('cargoospimEdicion');
+
+        var cargops =
+            valorCampo('cargopsEdicion');
+
+        var cargoimesa =
+            valorCampo('cargoimesaEdicion');
+
+        var reconocidoSSS =
+            valorCampo('reconocidoSSSEdicion');
+
+        var observaciones = jQuery(
+            '#' +
+            reclamoPrestacionalNamespace +
+            'observacion_prestacionEdicion'
+        ).val() || "";
+
+        var prestacion = "Graba Edicion";
+
+        var idprestacion =
+            valorCampo("codigoprestacion");
+
+        var idRegistro =
+            valorCampo('idRegistro');
+
+        var estadoAprobacion =
+            tipoAccion;
+
+        var recuperableSur =
+            valorCampo('recuperable_surEdicion');
+
+        var cpbteTipo = valorCampo(
+            'comprobante_tipo_edicion'
+        ).toUpperCase();
+
+        var cpbteNro =
+            valorCampo('comprobante_nro_edicion');
+
+        var cpbteDia =
+            valorCampo('fechaComprobanteDiaEdicion');
+
+        var cpbteMes =
+            valorCampo('fechaComprobanteMesEdicion');
+
+        var cpbteAnio =
+            valorCampo('fechaComprobanteAnioEdicion');
+
+        var cpbteCantidad =
+            valorCampo('cantidadFC_edicion');
+
+        var cpbteImporte =
+            valorCampo('importeUnitarioFC_edicion');
+
+        var importeFC =
+            valorCampo('importeFC_edicion');
+
+        var cpbteCuit =
+            valorCampo('cuit_entidad_edicion');
+
+        var cpbteSucursal =
+            valorCampo('comprobante_suc_edicion');
+
+        var cpbteCuitSucursal =
+            valorCampo('sucursal_entidad_edicion');
+
+        var cpbteLetra =
+            valorCampo('comprobante_letra_edicion');
+
+        var estado =
+            valorCampo('estado');
+
+        var chkAmparo = jQuery(
+            "#" +
+            reclamoPrestacionalNamespace +
+            "chk_amparo"
+        ).is(':checked');
+
+        var flagAmparo =
+            estado == "4" && chkAmparo;
+
+        var requiereDatosFiscales =
+            cpbteTipo != 'OTR' &&
+            cpbteTipo != 'AUT';
+
+        var fechaPrestacionDia =
+            valorCampo('fechaPrestacionDiaEdicion');
+
+        var fechaPrestacionMes =
+            valorCampo('fechaPrestacionMesEdicion');
+
+        var fechaPrestacionAnio =
+            valorCampo('fechaPrestacionAnioEdicion');
+
+        var idMedicamentoEdit =
+            valorCampo('troquel_edit');
+
+        var nombreMedicamentoEdit =
+            valorCampo('nombre_medicamento_edit');
+
+        var codigoSeguimientoFiltroEdit =
+            valorCampo(
+                'codigoSeguimiento_filtro_edit'
+            );
+
+        var descripcionSeguimientoFiltroEdit =
+            valorCampo(
+                'descripcionSeguimiento_filtro_edit'
+            );
+
+        var nomSeleccionadoEdit =
+            valorCampo('nom_seleccionado_edit');
+
+        var tipoNomencladorEdit =
+            valorCampo('tipoNomenclador_edit');
+
+        var cuil =
+            valorCampo('cuil');
+
+        var inte =
+            valorCampo('inte');
+
+        var idTercerizadora =
+            valorCampo('id_tercerizadora');
+
+        var tieneDatosAreaMedica =
+            esNumeroNoCero(importe) ||
+            esNumeroNoCero(cargoospim) ||
+            esNumeroNoCero(cargops) ||
+            esNumeroNoCero(cargoimesa) ||
+            esNumeroNoCero(reconocidoSSS);
+
+        /*
+         * Este bloque se mantiene por compatibilidad con el patch actual de
+         * Recuperable. El patch habilita temporalmente el valor 2 antes de
+         * invocar la función legacy y después envía recuperableSur=0.
+         */
+        if (tieneDatosAreaMedica) {
+            if (esVacio(recuperableSur) ||
+                recuperableSur == "0") {
+
+                alert(
+                    'Debe seleccionar el campo Recuperable'
+                );
+
+                return false;
+            }
+
+            if (!validaMontosEdicion()) {
+                return false;
+            }
+        }
+
+        if (frecuencia == "SELECCIONE") {
+            frecuencia = "";
+        }
+
+        if (!flagAmparo && esVacio(frecuencia)) {
+            alert(
+                'Debe seleccionar la frecuencia correspondiente.'
+            );
+
+            return false;
+        }
+
+        if (!flagAmparo && esVacio(cpbteTipo)) {
+            alert(
+                'Debe seleccionar el tipo correspondiente del Comprobante'
+            );
+
+            return false;
+        }
+
+        if (!flagAmparo &&
+            requiereDatosFiscales &&
+            esVacio(cpbteLetra)) {
+
+            alert(
+                'Debe seleccionar la letra del comprobante'
+            );
+
+            return false;
+        }
+
+        if (!flagAmparo &&
+            requiereDatosFiscales &&
+            !esNumeroPositivo(cpbteCuit)) {
+
+            alert(
+                'Debe ingresar el CUIT del Comprobante'
+            );
+
+            return false;
+        }
+
+        if (!flagAmparo &&
+            requiereDatosFiscales &&
+            !esNumeroPositivo(cpbteCuitSucursal)) {
+
+            alert(
+                'Debe ingresar la sucursal del CUIT del Comprobante'
+            );
+
+            return false;
+        }
+
+        if (!flagAmparo &&
+            requiereDatosFiscales &&
+            !esNumeroPositivo(cpbteSucursal)) {
+
+            alert(
+                'Debe ingresar la Sucursal del Comprobante'
+            );
+
+            return false;
+        }
+
+        if (!flagAmparo &&
+            requiereDatosFiscales &&
+            !esNumeroPositivo(cpbteNro)) {
+
+            alert(
+                'Debe ingresar el Nro del Comprobante'
+            );
+
+            return false;
+        }
+
+        if (!flagAmparo &&
+            fechaIncompleta(
+                cpbteDia,
+                cpbteMes,
+                cpbteAnio
+            )) {
+
+            alert(
+                'Debe ingresar la fecha del Comprobante'
+            );
+
+            return false;
+        }
+
+        if (!flagAmparo &&
+            !esNumeroPositivo(cpbteCantidad)) {
+
+            alert(
+                'Debe ingresar la cantidad del Comprobante'
+            );
+
+            return false;
+        }
+
+        if (!flagAmparo &&
+            !esNumeroPositivo(cpbteImporte)) {
+
+            alert(
+                'Debe ingresar importe unitario del Comprobante'
+            );
+
+            return false;
+        }
+
+        if (!flagAmparo &&
+            !esNumeroPositivo(importeFC)) {
+
+            alert(
+                'Debe ingresar importe total del Comprobante'
+            );
+
+            return false;
+        }
+
+        /*
+         * Se usan primero los controles específicos de edición.
+         * El fallback conserva compatibilidad con respuestas legacy.
+         */
+        if (esVacio(nomSeleccionadoEdit)) {
+            nomSeleccionadoEdit =
+                valorCampo('nom_seleccionado');
+        }
+
+        if (esVacio(tipoNomencladorEdit)) {
+            tipoNomencladorEdit =
+                valorCampo('tipoNomenclador');
+        }
+
+        if (nomSeleccionadoEdit == "1") {
+            if (esVacio(
+                codigoSeguimientoFiltroEdit
+            ) || esVacio(
+                descripcionSeguimientoFiltroEdit
+            )) {
+
+                alert(
+                    'Debe seleccionar la prestación'
+                );
+
+                return false;
+            }
+        } else {
+            if (!esNumeroPositivo(
+                idMedicamentoEdit
+            ) || esVacio(
+                nombreMedicamentoEdit
+            )) {
+
+                alert(
+                    'Debe seleccionar el medicamento'
+                );
+
+                return false;
+            }
+        }
+
+        if (fechaIncompleta(
+            fechaPrestacionDia,
+            fechaPrestacionMes,
+            fechaPrestacionAnio
+        )) {
+
+            alert(
+                'Debe ingresar la fecha de la Prestación'
+            );
+
+            return false;
+        }
+
+        /*
+         * El backend omite la validación de comprobantes para el estado
+         * especial de Amparo. El cliente debe respetar la misma excepción.
+         */
+        if (!flagAmparo &&
+            !ValidaDatosReclamoEditar()) {
+
+            return false;
+        }
+
+        var params = {
+            "frecuencia": frecuencia,
+            "importe": importe,
+            "cargoospim": cargoospim,
+            "cargops": cargops,
+            "cargoimesa": cargoimesa,
+            "prestacion": prestacion,
+            "idprestacion": idprestacion,
+            "idRegistro": idRegistro,
+            "grabaedicion": true,
+            "estadoAprobacion": estadoAprobacion,
+            "recuperableSur": recuperableSur,
+            "cantidad": cantidad,
+            "observaciones": observaciones,
+            "cpbte_tipo": cpbteTipo,
+            "cpbte_nro": cpbteNro,
+            "cpbte_dia": cpbteDia,
+            "cpbte_mes": cpbteMes,
+            "cpbte_anio": cpbteAnio,
+            "cpbte_cantidad": cpbteCantidad,
+            "cpbte_importe": cpbteImporte,
+            "cpbte_cuit": cpbteCuit,
+            "cpbte_sucursal": cpbteSucursal,
+            "importeFC": importeFC,
+            "cpbte_cuit_sucursal":
+            cpbteCuitSucursal,
+            "cpbte_letra": cpbteLetra,
+            "fecha_prestacion_dia":
+            fechaPrestacionDia,
+            "fecha_prestacion_mes":
+            fechaPrestacionMes,
+            "fecha_prestacion_anio":
+            fechaPrestacionAnio,
+            "id_medicamento_edit":
+            idMedicamentoEdit,
+            "nombre_medicamento_edit":
+            nombreMedicamentoEdit,
+            "codigoSeguimiento_filtro_edit":
+            codigoSeguimientoFiltroEdit,
+            "descripcionSeguimiento_filtro_edit":
+            descripcionSeguimientoFiltroEdit,
+            "nom_seleccionado_edit":
+            nomSeleccionadoEdit,
+            "tipoNomenclador_edit":
+            tipoNomencladorEdit,
+
+            /*
+             * Alias requeridos por validarExisteComprobante.
+             * Evitan enviar parámetros con valor "undefined".
+             */
+            "tiponomenclador":
+            nomSeleccionadoEdit,
+            "tiponomnecladorprestacion":
+            tipoNomencladorEdit,
+
+            "reconocidoSSS": reconocidoSSS,
+            "cuil": cuil,
+            "inte": inte,
+            "id_tercerizadora":
+            idTercerizadora
+        };
+
+        if (!flagAmparo &&
+            requiereDatosFiscales &&
+            !validarExisteComprobante(params)) {
+
+            return false;
+        }
+
+        jQuery(
+            '#' +
+            reclamoPrestacionalNamespace +
+            'buscando'
+        ).show();
+
+        jQuery(
+            '#' +
+            reclamoPrestacionalNamespace +
+            'lista_prestaciones_reclamos'
+        ).load(
+            reclamoPrestacionalViewConfig
+                .urls
+                .editarPrestaciones,
+            params,
+            function(
+                respuesta,
+                estadoCarga,
+                xhr
+            ) {
+
+                jQuery(
+                    '#' +
+                    reclamoPrestacionalNamespace +
+                    'buscando'
+                ).hide();
+
+                /*
+                 * No limpiar el formulario antes de confirmar que la
+                 * solicitud terminó correctamente.
+                 */
+                if (estadoCarga != "success" &&
+                    estadoCarga != "notmodified") {
+
+                    alert(
+                        'No se pudo guardar la edición de la prestación.'
+                    );
+
+                    return;
+                }
+
+                limpiarEditorDespuesDeGuardar();
+            }
+        );
+
+        return false;
     }
-		
-	if (flagAmparo == false && (cpbteTipo != 'OTR' && cpbteTipo != 'AUT')  && cpbteLetra==''){
-		  alert('Debe seleccionar la letra del comprobante');
-		  return false;
-	}	
-	
-	if(flagAmparo == false && (importeFC==null || importeFC==0)){
-	  	alert('Debe ingresar el importe de la Factura.');
-		return false ;
-	}
-	
-   
-    if(flagAmparo == false && (cpbteCuit==null || cpbteCuit=='')){
-    	alert('Debe ingresar el CUIT del Comprobante');
-		return false ;
-    }
-    
-
-    if(flagAmparo == false && (cpbteCuitSucursal==null || cpbteCuitSucursal=='')){
-    	alert('Debe ingresar la sucursal del CUIT del Comprobante');
-		return false ;
-    }
-    
-    
-    if(flagAmparo == false && (cpbteTipo != 'OTR' && cpbteTipo != 'AUT') && (cpbteSucursal==null || cpbteSucursal=='')){
-    	alert('Debe ingresar la Sucursal del Comprobante');
-		return false ;
-    }
-    
-    if(flagAmparo == false && (cpbteTipo != 'OTR' && cpbteTipo != 'AUT') && (cpbteNro==null || cpbteNro=='')){
-    	alert('Debe ingresar el Nro del Comprobante');
-		return false ;
-    }
-    
-    if (flagAmparo == false){
-	    if(cpbteDia==null || cpbteDia==0 || cpbteDia=='' ||
-	       cpbteMes==null || cpbteMes==-1 || cpbteMes=='' ||
-	       cpbteAnio==null || cpbteAnio==0 || cpbteAnio==''){
-	       alert('Debe ingresar la fecha del Comprobante');
-	       return false;	
-	    }
-    }
-	
-    if(flagAmparo == false && (cpbteCantidad==null || cpbteCantidad==0 || cpbteCantidad=='')){
-   		alert('Debe ingresar la cantidad del Comprobante');
-        return false;	
-    }
-   
-    if(flagAmparo == false && (cpbteImporte==null || cpbteImporte==0 || cpbteImporte=='')){
-  	 	alert('Debe ingresar importe unitario del Comprobante');
-        return false;	
-   }
-   
-   if(flagAmparo == false && (importeFC==null || importeFC==0 || importeFC=='')){
-     	alert('Debe ingresar importe total del Comprobante');
-        return false;	
-   }
-    
-    var codigoSeguimiento_filtro_edit = jQuery('#' + reclamoPrestacionalNamespace + 'codigoSeguimiento_filtro_edit').val();
-	var descripcionSeguimiento_filtro_edit = jQuery("#" + reclamoPrestacionalNamespace + "descripcionSeguimiento_filtro_edit").val();
-	var nom_seleccionado_edit = jQuery("#" + reclamoPrestacionalNamespace + "nom_seleccionado").val(); 
-	var tipoNomenclador_edit = jQuery('#' + reclamoPrestacionalNamespace + 'tipoNomenclador').val();
-		
-
-	if (nom_seleccionado_edit ==1){		 
-		if (codigoSeguimiento_filtro_edit<1  ) {
-		  alert('Debe seleccionar la prestación');
-		  return false;
-		} 	
-	    if(descripcionSeguimiento_filtro_edit==null || descripcionSeguimiento_filtro_edit==''){
-			  alert('Debe seleccionar la prestación');		  
-			  return false;
-	    }
-		
-	}else{		
-		if ( id_medicamento_edit <1) {
-			alert('Debe seleccionar el medicamento');
-			return false;
-		}
-		if ( nombre_medicamento_edit==null || nombre_medicamento_edit=='') {
-			alert('Debe seleccionar el medicamento');
-			return false;
-		}
-		
-
-	}    
-	
-    	
-    if(fechaPrestacionDia==null || fechaPrestacionDia==0 || fechaPrestacionDia=='' ||
-    	       fechaPrestacionMes==null || fechaPrestacionMes==-1 || fechaPrestacionMes=='' ||
-    	       fechaPrestacionAnio==null || fechaPrestacionAnio==0 || fechaPrestacionAnio==''){
-    	       alert('Debe ingresar la fecha de la Prestación');
-    	return false;	
-    }
-    
-    
-    if (!ValidaDatosReclamoEditar()){       
-   		return false;
-	}
-    
-    
-    var cuil=jQuery('#' + reclamoPrestacionalNamespace + 'cuil').val();
-	var inte=jQuery('#' + reclamoPrestacionalNamespace + 'inte').val();	
-	
-	var idTecerizadora = jQuery('#' + reclamoPrestacionalNamespace + 'id_tercerizadora').val();
-	
-	var params = {"frecuencia":frecuencia,
-						   "importe":importe,	
-						   "cargoospim":cargoospim,
-						   "cargops":cargops,
-						   "cargoimesa":cargoimesa,
-						   "prestacion":prestacion,
-						   "idprestacion":idprestacion,
-						   "idRegistro":idRegistro,
-						   "grabaedicion":true,
-						   "estadoAprobacion": estadoAprobacion,
-						   "recuperableSur": recuperableSur,
-						   "cantidad": cantidad,
-						   "observaciones":observaciones,
-						   "cpbte_tipo":cpbteTipo,
-						   "cpbte_nro":cpbteNro,
-						   "cpbte_dia":cpbteDia,
-						   "cpbte_mes":cpbteMes,
-						   "cpbte_anio":cpbteAnio,
-						   "cpbte_cantidad":cpbteCantidad,
-						   "cpbte_importe":cpbteImporte,
-						   "cpbte_cuit":cpbteCuit,
-						   "cpbte_sucursal":cpbteSucursal,
-						   "importeFC":importeFC,
-						   "cpbte_cuit_sucursal":cpbteCuitSucursal,
-						   "cpbte_letra":cpbteLetra,
-						   "fecha_prestacion_dia":fechaPrestacionDia,
-						   "fecha_prestacion_mes":fechaPrestacionMes,
-						   "fecha_prestacion_anio":fechaPrestacionAnio,
-						   "id_medicamento_edit":id_medicamento_edit,
-						   "nombre_medicamento_edit":nombre_medicamento_edit,
-						   "codigoSeguimiento_filtro_edit":codigoSeguimiento_filtro_edit,
-						   "descripcionSeguimiento_filtro_edit":descripcionSeguimiento_filtro_edit,
-						   "nom_seleccionado_edit":nom_seleccionado_edit,
-						   "tipoNomenclador_edit":tipoNomenclador_edit,
-						   "reconocidoSSS":reconocidoSSS,
-						   "cuil":cuil,
-						   "inte":inte,
-						   "id_tercerizadora": idTecerizadora
-						   };	
-	
- 	var url = reclamoPrestacionalViewConfig.urls.editarPrestaciones;
- 	
-	if(cpbteTipo != 'OTR' && cpbteTipo != 'AUT'){
-	  if (!validarExisteComprobante(params)){   
-	   	return false;
-	  }
-	}
-	    
- 	
-	jQuery('#' + reclamoPrestacionalNamespace + 'lista_prestaciones_reclamos').load(url,params, function(){
-									jQuery('#' + reclamoPrestacionalNamespace + 'buscando').hide();            															
-													  });			
-	jQuery('#' + reclamoPrestacionalNamespace + 'cantidadEdicion').val('1');
-	jQuery('#' + reclamoPrestacionalNamespace + 'importeEdicion').val('');
-	jQuery('#' + reclamoPrestacionalNamespace + 'totalEdicion').val('');
- 	jQuery('#' + reclamoPrestacionalNamespace + 'cargoospimEdicion').val('');
- 	jQuery('#' + reclamoPrestacionalNamespace + 'cargopsEdicion').val('');
- 	jQuery('#' + reclamoPrestacionalNamespace + 'cargoimesaEdicion').val('');
- 	jQuery('#' + reclamoPrestacionalNamespace + 'reconocidoSSSEdicion').val('');
- 	jQuery('#' + reclamoPrestacionalNamespace + 'observacion_prestacionEdicion').val('');
- 	document.getElementById("" + reclamoPrestacionalNamespace + "frecuenciaEdicion").selectedIndex = 0;
-	jQuery('#' + reclamoPrestacionalNamespace + 'troquel').val(""); // farmacia 
-	jQuery('#' + reclamoPrestacionalNamespace + 'codigoSeguimiento_filtro').val("");// prestaciones medicas 
-	//jQuery('#namespacerecuperable_sur').attr('checked', false);	
-	document.getElementById("" + reclamoPrestacionalNamespace + "recuperable_sur").selectedIndex = 0; 	
-	
-	jQuery('#' + reclamoPrestacionalNamespace + 'comprobante_tipo_edicion').val('FCP');
-	jQuery('#' + reclamoPrestacionalNamespace + 'comprobante_letra_edicion').val('');
-	jQuery('#' + reclamoPrestacionalNamespace + 'comprobante_nro_edicion').val('');
-	jQuery('#' + reclamoPrestacionalNamespace + 'comprobante_suc_edicion').val('');
-	jQuery('#' + reclamoPrestacionalNamespace + 'fechaComprobanteDiaEdicion').val('');
-	jQuery('#' + reclamoPrestacionalNamespace + 'fechaComprobanteMesEdicion').val('');
-	jQuery('#' + reclamoPrestacionalNamespace + 'fechaComprobanteAnioEdicion').val('');
-	jQuery('#' + reclamoPrestacionalNamespace + 'cantidadFC_edicion').val('');
-	jQuery('#' + reclamoPrestacionalNamespace + 'importeUnitarioFC_edicion').val('');
-	jQuery('#' + reclamoPrestacionalNamespace + 'importeFC_edicion').val('');
-	jQuery('#' + reclamoPrestacionalNamespace + 'cuit_entidad_edicion').val('');
-    jQuery('#' + reclamoPrestacionalNamespace + 'sucursal_entidad_edicion').val('');
-    jQuery('#' + reclamoPrestacionalNamespace + 'entidad_edicion').val('');
-    
-	jQuery('#' + reclamoPrestacionalNamespace + 'fechaPrestacionDiaFarmacia').val(''); 
-    jQuery('#' + reclamoPrestacionalNamespace + 'fechaPrestacionMesFarmacia').val('');
-    jQuery('#' + reclamoPrestacionalNamespace + 'fechaPrestacionAnioFarmacia').val('');
-    
-	jQuery('#' + reclamoPrestacionalNamespace + 'fechaPrestacionDia').val(''); 
-    jQuery('#' + reclamoPrestacionalNamespace + 'fechaPrestacionMes').val('');
-    jQuery('#' + reclamoPrestacionalNamespace + 'fechaPrestacionAnio').val('');
-	
-    
-    jQuery('#' + reclamoPrestacionalNamespace + 'fechaPrestacionDiaEdicion').val('');
-    jQuery('#' + reclamoPrestacionalNamespace + 'fechaPrestacionMesEdicion').val('');
-    jQuery('#' + reclamoPrestacionalNamespace + 'fechaPrestacionAnioEdicion').val('');
-
-    jQuery("#" + reclamoPrestacionalNamespace + "nombre_medicamento_edit").val('');
-    jQuery("#" + reclamoPrestacionalNamespace + "divBtnBuscaMedicamento_edit").show();
-    
-    
-	reclamoPrestacional_limpiarNomencladorAutocompletar();
-	   
-    addprestacion=false;
-    reclamoPrestacional_cancelaEdicionPrestacion();
-
-}
 
 
 function reclamoPrestacional_cancelaEdicionPrestacion() {
@@ -1614,13 +2029,13 @@ function reclamoPrestacional_agregarPrestacion() {
 		return false ;
     }
     
-    if(flagAmparo == false && (cpbteCuit==null || cpbteCuit=='')){
+    if(flagAmparo == false && (cpbteTipo != 'OTR' && cpbteTipo != 'AUT') && (cpbteCuit==null || cpbteCuit=='')){
     	alert('Debe ingresar el CUIT del Comprobante');
 		return false ;
     }
     
     
-    if(flagAmparo == false && (cpbteCuitSucursal==null || cpbteCuitSucursal=='')){
+    if(flagAmparo == false && (cpbteTipo != 'OTR' && cpbteTipo != 'AUT') && (cpbteCuitSucursal==null || cpbteCuitSucursal=='')){
     	alert('Debe ingresar la sucursal del CUIT del Comprobante');
 		return false ;
     }
