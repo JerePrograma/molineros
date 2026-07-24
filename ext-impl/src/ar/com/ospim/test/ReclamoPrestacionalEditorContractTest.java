@@ -42,12 +42,12 @@ public final class ReclamoPrestacionalEditorContractTest {
                 "editor cargado despues del guard de pestanas",
                 view,
                 "view_reclamo_tab_guard.js?v=20260717-initial-state-1",
-                "view_reclamo_editor_patch.js?v=20260724-editor-buttons-1"
+                "view_reclamo_editor_patch.js?v=20260724-editor-buttons-2"
         );
         assertBefore(
                 "editor cargado antes del P0 general",
                 view,
-                "view_reclamo_editor_patch.js?v=20260724-editor-buttons-1",
+                "view_reclamo_editor_patch.js?v=20260724-editor-buttons-2",
                 "view_reclamo_p0_patch.js?v=20260723-popup-clean-2"
         );
 
@@ -362,6 +362,26 @@ public final class ReclamoPrestacionalEditorContractTest {
                 "reparacion defensiva de botones del editor",
                 editorPatch,
                 "function repararBotonesEditor(contenedor)"
+        );
+        assertContains(
+                "boton actualiza atributo value visible",
+                editorPatch,
+                "control.attr(\"value\", texto);"
+        );
+        assertContains(
+                "boton actualiza propiedad value visible",
+                editorPatch,
+                "control.val(texto);"
+        );
+        assertContains(
+                "botonera elimina campos text vacios",
+                editorPatch,
+                "if (tipo === \"text\" && esTextoVacio(control.val()))"
+        );
+        assertNotContains(
+                "editor sin estilo ancho agregado",
+                editorJsp,
+                "style=\"width: 100%; border-collapse: separate; border-spacing: 3px;\""
         );
         assertContains(
                 "limpieza no elimina botones funcionales",

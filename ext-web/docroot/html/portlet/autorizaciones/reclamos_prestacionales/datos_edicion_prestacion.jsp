@@ -309,15 +309,14 @@ if (prestacionEnEdicion != null) {
 	</tr>
 <tr>		
 	
-<td colspan="15">
+<td colspan="8">
 	<div id="<portlet:namespace />Autorizado">
 		<fieldset class="block-labels">
 			<legend>
 				<liferay-ui:message key="Autorizado por Área Médica:" />
 			</legend>
 
-			<table class="lfr-table"
-				style="width: 100%; border-collapse: separate; border-spacing: 3px;">
+			<table>
 				<tr>
 					<td>
 						<label><liferay-ui:message key="Cantidad" />:</label>
@@ -373,9 +372,7 @@ if (prestacionEnEdicion != null) {
 									? prestacionEnEdicion.getTotalString()
 									: "" %>' />
 					</td>
-				</tr>
 
-				<tr>
 					<td>
 						<label><liferay-ui:message key="Cargo OSPIM" />:</label>
 					</td>
@@ -440,9 +437,7 @@ if (prestacionEnEdicion != null) {
 							onkeypress="return validaMonto(event,this)"
 							onkeydown="allowOnlyDigitsAndDecimals(event)" />
 					</td>
-				</tr>
 
-				<tr>
 					<td>
 						<label>Reconocido SSS:</label>
 					</td>
@@ -499,8 +494,6 @@ if (prestacionEnEdicion != null) {
 							</option>
 						</select>
 					</td>
-
-					<td colspan="2">&nbsp;</td>
 				</tr>
 			</table>
 		</fieldset>

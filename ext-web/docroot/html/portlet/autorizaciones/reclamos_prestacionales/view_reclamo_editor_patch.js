@@ -145,6 +145,16 @@
             var id = String(this.id || "");
             var texto = "";
 
+            /*
+             * La botonera no contiene campos de texto funcionales.
+             * Un input text vacío dentro de este contenedor es un residuo
+             * de la reconstrucción legacy del HTML.
+             */
+            if (tipo === "text" && esTextoVacio(control.val())) {
+                control.remove();
+                return;
+            }
+
             if (tipo !== "button" && tipo !== "submit") {
                 return;
             }
@@ -158,10 +168,6 @@
             } else if (id === namespace + "btncancelar_prestacion") {
                 texto = textoCancelacionEditor();
             } else if (!this.id && !this.name) {
-                /*
-                 * Compatibilidad con respuestas antiguas del JSP, donde el
-                 * boton Cancelar no tenia id ni name.
-                 */
                 texto = textoCancelacionEditor();
 
                 control.attr(
@@ -174,12 +180,16 @@
                 );
             }
 
-            if (texto && esTextoVacio(control.val())) {
+            if (texto) {
+                /*
+                 * Se actualizan atributo y propiedad para navegadores legacy
+                 * que los desincronizan después de insertar HTML vía AJAX.
+                 */
+                control.attr("value", texto);
                 control.val(texto);
             }
         });
     }
-
     function limpiarResiduosEditor(contenedor) {
         if (!contenedor || !contenedor.length) {
             return;
