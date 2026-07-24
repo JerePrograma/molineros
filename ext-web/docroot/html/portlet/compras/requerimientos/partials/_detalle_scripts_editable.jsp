@@ -206,7 +206,7 @@
 
         if (<portlet:namespace />popupNomencladorDetalle == null) {
             <portlet:namespace />popupNomencladorDetalle = Liferay.Popup({
-                title: 'B\u00FAsqueda Nomenclador',
+                title: 'Búsqueda Nomenclador',
                 modal: true,
                 width: 700,
                 onClose: function() {

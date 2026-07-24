@@ -102,7 +102,7 @@ function <portlet:namespace />buscarMedicamento() {
         alert('<liferay-ui:message key="ingrese-parametros-busqueda" />');
     } else {
         <portlet:namespace />popupMD = Liferay.Popup({
-            title: 'B\u00FAsqueda Medicamentos',
+            title: 'Búsqueda Medicamentos',
             modal: true,
             width: 700
         });
