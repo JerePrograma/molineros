@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -495,7 +496,7 @@ import ar.com.ospim.util.StringUtils;
 				    nombrePlanActual = afiPlanActual.getPlan().getDescripcion();
 				}
 
-				boolean planBloqueado = esPlanBloqueadoParaReclamo(idPlanActual, reclamoPrestacional.getTipoPedido());
+				boolean planBloqueado = esPlanBloqueadoParaReclamo(idPlanActual);
 
 				if (planBloqueado) {
 
@@ -593,14 +594,7 @@ import ar.com.ospim.util.StringUtils;
 				for( PrestacionesReclamo r : prestacionesAux) {
 					if(!PrestacionesReclamo.ESTADOS.BAJA.equals(r.getEstado()) 
 							&&  ((r.getCargo_ospim()==0 && r.getCargo_ps()==0 && r.getCargo_imesa()==0 && r.getReconocidoSSS()==0) ||
-<<<<<<< .mine
 								  ( Math.abs((r.getCantidad()*r.getImporte()) -r.getCargo_ospim()-r.getCargo_ps()-r.getCargo_imesa() - r.getReconocidoSSS())>0.01D  )
-||||||| .r7305
-								  ( Math.abs((r.getCantidad()*r.getImporte()) -r.getCargo_ospim()-r.getCargo_ps()-r.getCargo_imesa() - r.getReconocidoSSS())>0.01D  )	
-=======
-								  ( Math.abs((r.getCantidad()*r.getImporte()) -r.getCargo_ospim()-r.getCargo_ps()-r.getCargo_imesa() - 
-										  (r.getRecuperable()==1?0:r.getReconocidoSSS())   )>0.01D  )	
->>>>>>> .r7311
 								)
 							&& !(r.getEstadoRechazoAprobado() == 2) // debería ser rechazado, pero se actualiza recíen en la bd ?
 //							&&  !(reclamoPrestacional.getTipo_gestion_cierre_reclamo() == 2) //RECHAZADO
@@ -1338,24 +1332,15 @@ import ar.com.ospim.util.StringUtils;
 	    return cuenta;
 	}
 
-	private boolean esPlanBloqueadoParaReclamo(
-	        Integer idPlan,
-	        String tipoPedido) {
-
-	    if (!"REINTEGRO".equalsIgnoreCase(tipoPedido)) {
-	        return false;
-	    }
+	private boolean esPlanBloqueadoParaReclamo(Integer idPlan) {
 
 	    if (idPlan == null) {
 	        return false;
 	    }
 
-	    return idPlan.intValue() ==
-	            PLAN_COBERTURA
-	        || idPlan.intValue() ==
-	            PLAN_COBERTURA_TOTAL_O
-	        || idPlan.intValue() ==
-	            PLAN_COBERTURA_TOTAL_M;
+	    return idPlan.intValue() == PLAN_COBERTURA
+	        || idPlan.intValue() == PLAN_COBERTURA_TOTAL_O
+	        || idPlan.intValue() == PLAN_COBERTURA_TOTAL_M;
 	}
 	
 	private AfiPlan obtenerPlanActual(ReclamoPrestacional reclamo) {

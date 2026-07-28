@@ -6214,9 +6214,6 @@
 		    <forward name="portlet.comprobantes.comprobantes_search_result_gerenciadoras" path="portlet.comprobantes.comprobantes_search_result_gerenciadoras"/>
 		    <forward name="portlet.comprobantes.comprobante_gerenciadoras_editar" path="portlet.comprobantes.comprobante_gerenciadoras_editar" />
 	</action>
-	
-	<action path="/comprobantes/traer_conceptos_liquidacion_para_fecha"
-			type="ar.com.ospim.global.actions.TraeConceptosLiquidacionParaFechaAction" />
 <!-- Fin Comprobantes -->  
 
 <!-- Centros de Costos Contabilidad -->
@@ -7247,46 +7244,15 @@
 			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" />
 		</action>
 
-<<<<<<< .mine
         <action path="/autorizaciones/upload_imagenes_situacionmedica"
                 type="ar.com.ospim.autorizaciones.action.UploadImagenesSituacionMedicaAction">
             <forward name="portlet.autorizaciones.patologias.editar_registro_situacionmedica_entry_imagen"
                      path="portlet.autorizaciones.situacionmedica.editar_situacionmedica_entry" />
         </action>
-||||||| .r7305
-<action path="/autorizaciones/upload_imagenes_situacionmedica"
-        type="ar.com.ospim.autorizaciones.action.UploadImagenesSituacionMedicaAction">
-    <forward name="portlet.autorizaciones.patologias.editar_registro_situacionmedica_entry_imagen"
-             path="portlet.autorizaciones.situacionmedica.editar_situacionmedica_entry" />
-</action>
-=======
-        <action path="/autorizaciones/upload_imagenes_situacionmedica"
-               type="ar.com.ospim.autorizaciones.action.UploadImagenesSituacionMedicaAction">
-           <forward name="portlet.autorizaciones.patologias.editar_registro_situacionmedica_entry_imagen"
-                  path="portlet.autorizaciones.situacionmedica.editar_situacionmedica_entry" />
-        </action>
->>>>>>> .r7311
 
-<<<<<<< .mine
         <action
                 path="/afiliados/pre_afiliados_pendientes"
                 type="ar.com.ospim.novedades.action.PreAfiliadosPendientesAction">
-||||||| .r7305
-<action
-    path="/afiliados/pre_afiliados_pendientes"
-    type="ar.com.ospim.novedades.action.PreAfiliadosPendientesAction">
-=======
-        <action path="/liquidaciones/comprobantes_consulta_interbanking"
-			type="ar.com.ospim.liquidaciones.comprobantes.action.ComprobantesConsultaInterbankingAction">
-			<forward name="portlet.liquidaciones.comprobantes.interbanking.search.result"
-				path="portlet.liquidaciones.comprobantes.interbanking.search.result" />
-			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
-		</action>
-
-<action
-    path="/afiliados/pre_afiliados_pendientes"
-    type="ar.com.ospim.novedades.action.PreAfiliadosPendientesAction">
->>>>>>> .r7311
 
             <forward
                     name="portlet.afiliados.pre_afiliados_pendientes"

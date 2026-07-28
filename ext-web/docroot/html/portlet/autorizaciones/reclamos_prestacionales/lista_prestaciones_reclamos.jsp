@@ -50,7 +50,6 @@ headerNames.add("Monotributo");
 headerNames.add("Reconocido SSS");
 headerNames.add("OP");
 headerNames.add("Observación");
-
 	
 if (!inHabilitar){
 	String vereditarborrar = "Elimina";		 		
@@ -115,7 +114,7 @@ if (prestacionesDelReclamo != null && prestacionesDelReclamo.size()>0){
 	 	//row.addText( presreclamo.isRecuperableSur() == null ? "" : presreclamo.isRecuperableSur() ? "Si" : "No"   );
 	 	
 	 	row.addText( presreclamo.getRecuperable() == null  || presreclamo.getRecuperable()==0? "" : 
-	 		presreclamo.getRecuperable()==1 ? "SUR" : presreclamo.getRecuperable()==3?"Integración":""   );
+	 		presreclamo.getRecuperable()==1 ? "SURGE" : presreclamo.getRecuperable()==3?"Integración":""   );
 	 	row.addText(presreclamo.getFechaPrestacion()!=null?sdf.format(presreclamo.getFechaPrestacion()):"");	 
 	 	row.addText((presreclamo.getComprobanteTipo()!=null?presreclamo.getComprobanteTipo():"") +  " " + 
 	 				(presreclamo.getComprobanteLetra()!=null?presreclamo.getComprobanteLetra():"") +  " " + 
