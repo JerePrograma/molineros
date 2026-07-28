@@ -33,9 +33,14 @@ function esCompras() {
     var editor = c("datos_edicion_prestacion");
     var texto = editor.length ? editor.text().toLowerCase() : "";
 
-    return v.esBorradorCompras === true ||
-        v.esReclamoCompras === true ||
-        v.desdeCompras === true ||
+    if (texto.indexOf("compras no es una factura") < 0 &&
+            texto.indexOf("cotización de compras") < 0) {
+        texto = c("global").text().toLowerCase();
+    }
+
+    return String(v.esBorradorCompras) === "true" ||
+        String(v.esReclamoCompras) === "true" ||
+        String(v.desdeCompras) === "true" ||
         texto.indexOf("compras no es una factura") >= 0 ||
         texto.indexOf("cotización de compras") >= 0;
 }
@@ -66,7 +71,7 @@ function ocultarComprobanteCompras() {
         control = c(ids[i]);
         if (control.length) {
             tabla = control.closest("table");
-            if (tabla.find("#" + ns + "cuit_entidad_edicion").length) {
+            if (tabla.closest("#" + ns + "datos_comprobante").length) {
                 tabla.hide().attr("aria-hidden", "true");
             } else {
                 control.closest("td").hide().attr("aria-hidden", "true");
@@ -83,10 +88,10 @@ function textoBoton(id) {
         return "Editar Prestación";
     }
     if (id === ns + "btnautoriza_prestacion") {
-        return "Autorizar Prestación";
+        return "Autoriza Prestación";
     }
     if (id === ns + "btnrechaza_prestacion") {
-        return "Rechazar Prestación";
+        return "Rechaza Prestación";
     }
     if (id === ns + "btncancelar_prestacion") {
         if (c("btnautoriza_prestacion").length) {
@@ -205,15 +210,18 @@ function repararListas() {
 
     c("lista_prestaciones_reclamos")
         .add(c("lista_prestaciones_asociadas"))
-        .css({
-            width: "100%",
-            maxWidth: "100%",
-            overflowX: "auto",
-            boxSizing: "border-box"
-        })
-        .find("table").first().css({
-            minWidth: "1380px",
-            tableLayout: "auto"
+        .each(function() {
+            var lista = jQuery(this);
+            lista.css({
+                width: "100%",
+                maxWidth: "100%",
+                overflowX: "auto",
+                boxSizing: "border-box"
+            });
+            lista.find("table").first().css({
+                minWidth: "1380px",
+                tableLayout: "auto"
+            });
         });
 }
 
