@@ -275,7 +275,7 @@
 		<td>
 			<select name="<portlet:namespace />recuperable_sur" id="<portlet:namespace />recuperable_sur">
 					<option value="0">Seleccione</option>
-					<option value="1">SUR</option>
+					<option value="1">SURGE</option>
 					<option value="3">Integración</option>
 					<option value="2">NO Recuperable</option>
 			</select>
