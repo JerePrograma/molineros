@@ -1,297 +1,241 @@
+(function(document) {
+    var s = document.getElementsByTagName("script");
+    var actual = s.length ? s[s.length - 1].src : "";
+    var legacy = actual.replace(
+        /view_reclamo_produccion_7305_patch\.js(?:\?.*)?$/,
+        "view_reclamo_produccion_7305_legacy_patch.js?v=20260728-visual-2"
+    );
+    if (legacy && legacy !== actual) {
+        document.write('<script type="text/javascript" src="' +
+            legacy + '"><\/script>');
+    }
+})(document);
+
 (function(window, jQuery) {
 "use strict";
-
 if (!jQuery) {
     return;
 }
 
-var config = window.ReclamoPrestacionalViewConfig || {};
-var namespace = config.namespace || "";
-var MARCA_ENVUELTA = "__rpProduccion7305Envuelta";
-var ultimoPlanAfiliadoDetectado = null;
-var intervaloPlanAfiliado = null;
+var cfg = window.ReclamoPrestacionalViewConfig || {};
+var ns = cfg.namespace || "";
 
-function campo(sufijo) {
-    return jQuery("#" + namespace + sufijo);
+function c(id) {
+    return jQuery("#" + ns + id);
 }
 
-function valor(sufijo) {
-    var control = campo(sufijo);
-    return control.length ? control.val() : "";
+function limpio(valor) {
+    return String(valor == null ? "" : valor).replace(/^\s+|\s+$/g, "");
 }
 
-function asegurarCampoOculto(sufijo, valorInicial) {
-    var control = campo(sufijo);
-    var formulario;
+function esCompras() {
+    var v = cfg.values || {};
+    var editor = c("datos_edicion_prestacion");
+    var texto = editor.length ? editor.text().toLowerCase() : "";
 
-    if (control.length) {
-        return control;
-    }
-
-    formulario = campo("reclamo_fm");
-    if (!formulario.length) {
-        return control;
-    }
-
-    control = jQuery("<input />")
-            .attr("type", "hidden")
-            .attr("id", namespace + sufijo)
-            .attr("name", namespace + sufijo)
-            .val(valorInicial == null ? "" : valorInicial);
-
-    formulario.append(control);
-    return control;
+    return v.esBorradorCompras === true ||
+        v.esReclamoCompras === true ||
+        v.desdeCompras === true ||
+        texto.indexOf("compras no es una factura") >= 0 ||
+        texto.indexOf("cotización de compras") >= 0;
 }
 
-function asegurarCamposPlan() {
-    asegurarCampoOculto("plan_reclamo_bloqueado", "0");
-    asegurarCampoOculto("nombre_plan_reclamo_bloqueado", "");
-}
+function ocultarComprobanteCompras() {
+    var ids;
+    var i;
+    var control;
+    var tabla;
 
-function normalizarNombrePlan(nombrePlan) {
-    if (nombrePlan == null) {
-        return "";
-    }
-
-    return String(nombrePlan)
-            .toUpperCase()
-            .replace(/^\s+|\s+$/g, "")
-            .replace(/\s+/g, " ");
-}
-
-function esPlanBloqueadoParaReclamo(nombrePlan) {
-    var planNormalizado = normalizarNombrePlan(nombrePlan);
-
-    return planNormalizado === "COBERTURA" ||
-            planNormalizado === "COBERTURA TOTAL O" ||
-            planNormalizado === "COBERTURA TOTAL M";
-}
-
-function validarPlanParaReclamo(nombrePlan, mostrarMensaje) {
-    var bloqueado = esPlanBloqueadoParaReclamo(nombrePlan);
-
-    asegurarCamposPlan();
-    campo("plan_reclamo_bloqueado").val(bloqueado ? "1" : "0");
-    campo("nombre_plan_reclamo_bloqueado").val(nombrePlan || "");
-
-    if (!bloqueado) {
-        return true;
-    }
-
-    if (mostrarMensaje) {
-        window.alert(
-                'Afiliado con plan "' + nombrePlan +
-                '" no puede cargar un reclamo.'
-        );
-    }
-
-    return false;
-}
-
-function verificarPlanAfiliadoDelReclamo() {
-    var campoPlan = campo("plan");
-    var nombrePlan;
-
-    if (!campoPlan.length) {
+    if (!esCompras()) {
         return;
     }
 
-    nombrePlan = campoPlan.val();
-    if (nombrePlan == null) {
-        nombrePlan = "";
-    }
-    nombrePlan = String(nombrePlan);
+    c("datos_comprobante").hide().attr("aria-hidden", "true");
+    ids = [
+        "cuit_entidad_edicion",
+        "sucursal_entidad_edicion",
+        "entidad_edicion",
+        "comprobante_suc_edicion",
+        "comprobante_nro_edicion",
+        "cantidadFC_edicion",
+        "importeUnitarioFC_edicion",
+        "importeFC_edicion"
+    ];
 
-    if (nombrePlan === ultimoPlanAfiliadoDetectado) {
-        return;
-    }
-
-    ultimoPlanAfiliadoDetectado = nombrePlan;
-    validarPlanParaReclamo(nombrePlan, true);
-}
-
-function bloquearPorPlan(mensajeSolapa) {
-    var nombrePlan = valor("plan");
-
-    validarPlanParaReclamo(nombrePlan, false);
-    if (valor("plan_reclamo_bloqueado") !== "1") {
-        return false;
-    }
-
-    nombrePlan = valor("nombre_plan_reclamo_bloqueado");
-    if (mensajeSolapa) {
-        window.alert(
-                'No se permite cargar un reclamo para el afiliado con plan "' +
-                nombrePlan + '".'
-        );
-    } else {
-        window.alert(
-                'Afiliado con plan "' + nombrePlan +
-                '" no puede cargar un reclamo.'
-        );
-    }
-
-    return true;
-}
-
-function leerFecha(diaSufijo, mesSufijo, anioSufijo) {
-    var diaTexto = valor(diaSufijo);
-    var mesTexto = valor(mesSufijo);
-    var anioTexto = valor(anioSufijo);
-    var dia;
-    var mes;
-    var anio;
-
-    if (diaTexto == null || diaTexto === "" || diaTexto === "0" ||
-            mesTexto == null || mesTexto === "" || mesTexto === "-1" ||
-            anioTexto == null || anioTexto === "" || anioTexto === "0") {
-        return null;
-    }
-
-    dia = parseInt(diaTexto, 10);
-    mes = parseInt(mesTexto, 10);
-    anio = parseInt(anioTexto, 10);
-
-    if (isNaN(dia) || isNaN(mes) || isNaN(anio)) {
-        return null;
-    }
-
-    return {
-        anio: anio,
-        mes: mes,
-        dia: dia
-    };
-}
-
-function fechaPosterior(primera, segunda) {
-    if (!primera || !segunda) {
-        return false;
-    }
-
-    if (primera.anio !== segunda.anio) {
-        return primera.anio > segunda.anio;
-    }
-    if (primera.mes !== segunda.mes) {
-        return primera.mes > segunda.mes;
-    }
-    return primera.dia > segunda.dia;
-}
-
-function fechaPrestacionAlta() {
-    var fecha = leerFecha(
-            "fechaPrestacionDia",
-            "fechaPrestacionMes",
-            "fechaPrestacionAnio"
-    );
-
-    if (fecha) {
-        return fecha;
-    }
-
-    return leerFecha(
-            "fechaPrestacionDiaFarmacia",
-            "fechaPrestacionMesFarmacia",
-            "fechaPrestacionAnioFarmacia"
-    );
-}
-
-function validarFechaPrestacionAlta() {
-    var fechaPrestacion = fechaPrestacionAlta();
-    var fechaEmision = leerFecha(
-            "fechaComprobanteDia",
-            "fechaComprobanteMes",
-            "fechaComprobanteAnio"
-    );
-
-    if (!fechaPosterior(fechaPrestacion, fechaEmision)) {
-        return true;
-    }
-
-    window.alert(
-            "La fecha de prestación no puede ser posterior a la fecha de emisión"
-    );
-    return false;
-}
-
-function validarFechaPrestacionEdicion() {
-    var fechaPrestacion = leerFecha(
-            "fechaPrestacionDiaEdicion",
-            "fechaPrestacionMesEdicion",
-            "fechaPrestacionAnioEdicion"
-    );
-    var fechaEmision = leerFecha(
-            "fechaComprobanteDiaEdicion",
-            "fechaComprobanteMesEdicion",
-            "fechaComprobanteAnioEdicion"
-    );
-
-    if (!fechaPosterior(fechaPrestacion, fechaEmision)) {
-        return true;
-    }
-
-    window.alert(
-            "La fecha de prestación no puede ser posterior a la fecha de emisión"
-    );
-    return false;
-}
-
-function envolver(nombreFuncion, validacion) {
-    var original = window[nombreFuncion];
-    var envuelta;
-
-    if (typeof original !== "function" || original[MARCA_ENVUELTA]) {
-        return;
-    }
-
-    envuelta = function() {
-        if (!validacion.apply(this, arguments)) {
-            return false;
+    for (i = 0; i < ids.length; i++) {
+        control = c(ids[i]);
+        if (control.length) {
+            tabla = control.closest("table");
+            if (tabla.find("#" + ns + "cuit_entidad_edicion").length) {
+                tabla.hide().attr("aria-hidden", "true");
+            } else {
+                control.closest("td").hide().attr("aria-hidden", "true");
+            }
         }
-        return original.apply(this, arguments);
-    };
-    envuelta[MARCA_ENVUELTA] = true;
-    envuelta.__rpProduccion7305Original = original;
-    window[nombreFuncion] = envuelta;
-}
-
-function instalarGuardas() {
-    envolver(namespace + "saveReclamo", function() {
-        return !bloquearPorPlan(false);
-    });
-    envolver(namespace + "editaReclamo", function() {
-        return !bloquearPorPlan(false);
-    });
-    envolver(namespace + "siguienteSolapa", function() {
-        return !bloquearPorPlan(true);
-    });
-    envolver(namespace + "agregarPrestacion", validarFechaPrestacionAlta);
-    envolver(
-            namespace + "editarPrestacionSeleccionada",
-            validarFechaPrestacionEdicion
-    );
-}
-
-function inicializar() {
-    asegurarCamposPlan();
-    instalarGuardas();
-    verificarPlanAfiliadoDelReclamo();
-
-    if (intervaloPlanAfiliado == null) {
-        intervaloPlanAfiliado = window.setInterval(
-                verificarPlanAfiliadoDelReclamo,
-                500
-        );
     }
+
+    jQuery("#divEntidad_edicion").hide();
+    c("divBtnBuscaEntidad_edicion").hide();
 }
 
-window.normalizarNombrePlan = normalizarNombrePlan;
-window.esPlanBloqueadoParaReclamo = esPlanBloqueadoParaReclamo;
-window[namespace + "validarPlanParaReclamo"] = validarPlanParaReclamo;
+function textoBoton(id) {
+    if (id === ns + "btnedita_prestacion") {
+        return "Editar Prestación";
+    }
+    if (id === ns + "btnautoriza_prestacion") {
+        return "Autorizar Prestación";
+    }
+    if (id === ns + "btnrechaza_prestacion") {
+        return "Rechazar Prestación";
+    }
+    if (id === ns + "btncancelar_prestacion") {
+        if (c("btnautoriza_prestacion").length) {
+            return "Cancelar Autorización de la Prestación";
+        }
+        if (c("btnrechaza_prestacion").length) {
+            return "Cancelar Rechazo de la Prestación";
+        }
+        return "Cancelar Edición de la Prestación";
+    }
+    return "";
+}
 
-jQuery(document).ready(inicializar);
+function repararEditor() {
+    var editor = c("datos_edicion_prestacion");
+    var etiqueta = c("observacion_prestacionEdicion_label");
+    var textarea = c("observacion_prestacionEdicion");
+    var botones = c("botones_edicion_prestacion");
+    var texto = "Observación de edición:";
+    var fila;
+
+    if (c("btnautoriza_prestacion").length) {
+        texto = "Observación de autorización:";
+    } else if (c("btnrechaza_prestacion").length) {
+        texto = "Observación de rechazo:";
+    }
+
+    etiqueta.text(texto);
+    botones.find("input[type='text']").filter(function() {
+        return limpio(jQuery(this).val()) === "";
+    }).remove();
+
+    botones.find("input[type='button'],input[type='submit']").each(function() {
+        var control = jQuery(this);
+        var valor = textoBoton(String(this.id || ""));
+        if (valor) {
+            control.attr("value", valor).val(valor);
+        }
+        control.css({
+            display: "inline-block",
+            width: "auto",
+            minWidth: "145px",
+            margin: "2px 4px 2px 0"
+        });
+    }).end().css({
+        whiteSpace: "normal",
+        minWidth: "155px"
+    });
+
+    if (textarea.length) {
+        textarea.css({
+            width: "100%",
+            maxWidth: "760px",
+            boxSizing: "border-box"
+        });
+        fila = textarea.closest("tr");
+        fila.children("td").eq(0).css({
+            width: "180px",
+            whiteSpace: "nowrap",
+            verticalAlign: "top"
+        });
+        fila.children("td").eq(1).css("verticalAlign", "top");
+        fila.children("td").eq(2).css({
+            width: "190px",
+            verticalAlign: "top"
+        });
+    }
+
+    editor.css({
+        width: "100%",
+        maxWidth: "100%",
+        boxSizing: "border-box"
+    });
+    ocultarComprobanteCompras();
+}
+
+function repararCabecera() {
+    jQuery("fieldset.cabeceraCaso").each(function() {
+        var fieldset = jQuery(this);
+        var tabla = fieldset.children("table.lfr-table").eq(0);
+        var fila = tabla.find("tr:first");
+        var resumen = fila.children("td:last");
+        var nuevaFila;
+
+        fieldset.add(tabla).css({
+            width: "100%",
+            maxWidth: "100%",
+            boxSizing: "border-box"
+        });
+
+        if (resumen.find(".divheaderNroReclamo,.divheaderNroOP").length &&
+                !resumen.data("rpResumenReubicado")) {
+            resumen.data("rpResumenReubicado", true);
+            if (!limpio(resumen.text())) {
+                resumen.hide();
+            } else {
+                nuevaFila = jQuery("<tr />");
+                resumen.attr("colspan", fila.children("td").length).css({
+                    width: "auto",
+                    textAlign: "right",
+                    whiteSpace: "normal"
+                });
+                nuevaFila.append(resumen);
+                fila.after(nuevaFila);
+            }
+        }
+    });
+}
+
+function repararListas() {
+    c("global").css({
+        width: "100%",
+        maxWidth: "100%",
+        boxSizing: "border-box"
+    });
+
+    c("lista_prestaciones_reclamos")
+        .add(c("lista_prestaciones_asociadas"))
+        .css({
+            width: "100%",
+            maxWidth: "100%",
+            overflowX: "auto",
+            boxSizing: "border-box"
+        })
+        .find("table").first().css({
+            minWidth: "1380px",
+            tableLayout: "auto"
+        });
+}
+
+function normalizarVisual() {
+    repararCabecera();
+    repararListas();
+    repararEditor();
+}
+
+window.ReclamoPrestacionalVisualPatch = {
+    esCompras: esCompras,
+    ocultarComprobanteCompras: ocultarComprobanteCompras,
+    normalizarVisual: normalizarVisual
+};
+
+jQuery(document).ready(function() {
+    normalizarVisual();
+    window.setTimeout(normalizarVisual, 0);
+    window.setTimeout(normalizarVisual, 100);
+});
 jQuery(document).ajaxComplete(function() {
-    instalarGuardas();
-    verificarPlanAfiliadoDelReclamo();
+    window.setTimeout(normalizarVisual, 0);
 });
 
 })(window, jQuery);
