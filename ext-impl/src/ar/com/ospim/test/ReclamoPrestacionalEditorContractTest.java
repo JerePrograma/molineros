@@ -32,6 +32,18 @@ public final class ReclamoPrestacionalEditorContractTest {
                 dir + "view_reclamo_cabecera.jspf",
                 LATIN_1
         );
+        String seguimiento = leer(
+                dir + "view_reclamo_seguimiento_cierre.jspf",
+                LATIN_1
+        );
+        String inicioFormulario = leer(
+                dir + "view_reclamo_inicio_formulario.jspf",
+                LATIN_1
+        );
+        String configuracion = leer(
+                dir + "view_reclamo_configuracion.jspf",
+                LATIN_1
+        );
         String editorJsp = leer(
                 dir + "datos_edicion_prestacion.jsp",
                 LATIN_1
@@ -187,6 +199,69 @@ public final class ReclamoPrestacionalEditorContractTest {
                 "<td><table>"
         );
 
+        assertContains(
+                "formulario usa ancho disponible",
+                inicioFormulario,
+                "style=\"width:100%; box-sizing:border-box;\""
+        );
+        assertContains(
+                "cabecera visual usa ancho flexible",
+                configuracion,
+                "width: 100%;"
+        );
+        assertNotContains(
+                "cabecera visual sin ancho fijo",
+                configuracion,
+                "width: 1100px;"
+        );
+        assertContains(
+                "revisiones sin alto vacio fijo",
+                seguimiento,
+                "max-height: 120px; overflow-y: auto;"
+        );
+        assertNotContains(
+                "revisiones sin scroll permanente",
+                seguimiento,
+                "height: 120px; overflow: scroll;"
+        );
+        assertNotContains(
+                "revisiones sin tabla envolvente",
+                seguimiento,
+                "<td colspan=\"10\"><liferay-util:include"
+        );
+        assertNotContains(
+                "seguimiento sin checkbox invalido",
+                seguimiento,
+                "Unchecked"
+        );
+        assertNotContains(
+                "seguimiento sin tabla fija de 600px",
+                seguimiento,
+                "width=\"600px\""
+        );
+        assertContains(
+                "observacion medica completa cuatro columnas",
+                seguimiento,
+                "<td colspan=\"3\"><select name=\"<portlet:namespace/>observacion_medica\""
+        );
+        assertTokenBalance(
+                "fieldset balanceados en seguimiento",
+                seguimiento,
+                "<fieldset",
+                "</fieldset>"
+        );
+        assertTokenBalance(
+                "filas balanceadas en seguimiento",
+                seguimiento,
+                "<tr",
+                "</tr>"
+        );
+        assertTokenBalance(
+                "celdas balanceadas en seguimiento",
+                seguimiento,
+                "<td",
+                "</td>"
+        );
         assertNotContains(
                 "metodo no disponible en Liferay 5.2",
                 editorJsp,
@@ -444,6 +519,42 @@ public final class ReclamoPrestacionalEditorContractTest {
             throw new AssertionError(
                     etiqueta + ": se encontro [" + prohibido + "]"
             );
+        }
+    }
+
+    private static void assertTokenBalance(
+            String etiqueta,
+            String contenido,
+            String apertura,
+            String cierre) {
+
+        int cantidadAperturas = contar(contenido, apertura);
+        int cantidadCierres = contar(contenido, cierre);
+
+        if (cantidadAperturas != cantidadCierres) {
+            throw new AssertionError(
+                    etiqueta
+                            + ": aperturas="
+                            + cantidadAperturas
+                            + ", cierres="
+                            + cantidadCierres
+            );
+        }
+    }
+
+    private static int contar(String contenido, String token) {
+        int cantidad = 0;
+        int posicion = 0;
+
+        while (true) {
+            posicion = contenido.indexOf(token, posicion);
+
+            if (posicion < 0) {
+                return cantidad;
+            }
+
+            cantidad++;
+            posicion += token.length();
         }
     }
 

@@ -117,7 +117,7 @@ span-fixed-size {
 	
 <div id="<portlet:namespace />global"
 		align="left"
-		style="width:75%;">
+		style="width:100%; box-sizing:border-box;">
 	
 	<input type="hidden" id="<portlet:namespace />fprest"
 		name="<portlet:namespace />fprest" value="<%=prestacionFechaString%>" />
