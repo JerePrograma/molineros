@@ -50,4 +50,41 @@
     .compras-afiliado-readonly td {
         padding: 4px 8px 4px 0;
     }
+
+    /* CQA-001: ritmo visual exclusivo del formulario de Compras. */
+    .compras-formulario-requerimiento fieldset.block-labels
+    table.lfr-table td {
+        padding-top: 5px;
+        padding-bottom: 5px;
+        vertical-align: middle;
+    }
+
+    .compras-formulario-requerimiento label {
+        margin-right: 6px;
+        line-height: 26px;
+        vertical-align: middle;
+    }
+
+    .compras-formulario-requerimiento input[type="text"],
+    .compras-formulario-requerimiento input[type="search"],
+    .compras-formulario-requerimiento input[type="number"],
+    .compras-formulario-requerimiento select {
+        height: 26px;
+        line-height: 20px;
+        padding: 2px 5px;
+        box-sizing: border-box;
+        vertical-align: middle;
+        margin-top: 1px;
+        margin-bottom: 1px;
+        max-width: 100%;
+    }
+
+    .compras-formulario-requerimiento textarea {
+        padding: 5px;
+        box-sizing: border-box;
+        vertical-align: top;
+        max-width: 100%;
+        margin-top: 2px;
+        margin-bottom: 2px;
+    }
 </style>

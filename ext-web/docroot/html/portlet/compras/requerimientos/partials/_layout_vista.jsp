@@ -2,7 +2,7 @@
 <%@ include file="/html/portlet/compras/requerimientos/partials/_mensajes.jsp" %>
 
 <div id="<portlet:namespace />compras_layout"
-     class="compras-modo-vista">
+     class="compras-formulario-requerimiento compras-modo-vista">
 
     <%@ include file="/html/portlet/compras/requerimientos/partials/_datos_basicos.jsp" %>
 

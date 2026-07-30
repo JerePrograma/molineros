@@ -6,7 +6,7 @@
 <% } %>
 
 <div id="<portlet:namespace />compras_layout"
-     class="<%= !modoEditable ? "compras-modo-vista" : "" %>">
+     class="compras-formulario-requerimiento <%= !modoEditable ? "compras-modo-vista" : "" %>">
 
     <%@ include file="/html/portlet/compras/requerimientos/partials/_datos_basicos.jsp" %>
 
