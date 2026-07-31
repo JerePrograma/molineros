@@ -318,6 +318,8 @@ boolean msgPresupuestoBorrado =
                             <tr>
                                 <th>Razón social</th>
                                 <th>CUIT</th>
+                                <th>Email registrado</th>
+                                <th>Email destino</th>
                                 <th>Estado de notificación</th>
                             </tr>
                         </thead>
@@ -334,6 +336,23 @@ boolean msgPresupuestoBorrado =
                                 if (prestadorEnviado == null) {
                                     continue;
                                 }
+
+                                String emailRegistradoVisible =
+                                        prestadorEnviado.getEmailVisible();
+
+                                String emailDestinoVisible =
+                                        prestadorEnviado.getEmailDestinoVisible();
+
+                                boolean emailDestinoDifiere =
+                                        !WebKeysCompras.isEmpty(
+                                                emailRegistradoVisible
+                                        )
+                                        && !WebKeysCompras.isEmpty(
+                                                emailDestinoVisible
+                                        )
+                                        && !emailRegistradoVisible.equalsIgnoreCase(
+                                                emailDestinoVisible
+                                        );
                             %>
                                 <tr>
                                     <td>
@@ -348,6 +367,37 @@ boolean msgPresupuestoBorrado =
                                                 prestadorEnviado
                                                         .getCuitVisible()
                                         ) %>
+                                    </td>
+
+                                    <td>
+                                        <% if (WebKeysCompras.isEmpty(
+                                                emailRegistradoVisible
+                                        )) { %>
+                                            No informado
+                                        <% } else { %>
+                                            <%= HtmlUtil.escape(
+                                                    emailRegistradoVisible
+                                            ) %>
+                                        <% } %>
+                                    </td>
+
+                                    <td>
+                                        <% if (WebKeysCompras.isEmpty(
+                                                emailDestinoVisible
+                                        )) { %>
+                                            No informado
+                                        <% } else { %>
+                                            <%= HtmlUtil.escape(
+                                                    emailDestinoVisible
+                                            ) %>
+
+                                            <% if (emailDestinoDifiere) { %>
+                                                <br />
+                                                <em>
+                                                    Difiere del email registrado actual
+                                                </em>
+                                            <% } %>
+                                        <% } %>
                                     </td>
 
                                     <td>

@@ -1179,7 +1179,7 @@ if ("id_requerimiento_compra".equals(errorCampoCompra)) {
                                                 + "compras-notificacion-estado-advertencia";
 
                                 estadoVisible =
-                                        "Revisar email";
+                                        "Email a revisar";
 
                                 if (WebKeysCompras.isEmpty(
                                         motivoVisible
