@@ -143,13 +143,13 @@ if (puedeCotizarDetalle
 <% if (prestadoresAdjudicadosMixtosDetalle) { %>
     <div class="portlet-msg-error">
         El requerimiento contiene prestadores adjudicados diferentes.
-        Seleccione un &uacute;nico prestador antes de guardar la cotizaci&oacute;n.
+        Seleccione un &uacute;nico prestador antes de guardar la cotización.
     </div>
 <% } %>
 
 <% if (puedeVerCotizacionDetalle) { %>
     <fieldset class="block-labels">
-        <legend>Adjudicaci&oacute;n</legend>
+        <legend>Adjudicación</legend>
 
         <table class="lfr-table">
             <tr>
@@ -236,13 +236,17 @@ if (puedeCotizarDetalle
 
     <tr class="portlet-section-header results-header">
         <th>ID</th>
+
         <th class="compras-detalle-columna-codigo">
             C&oacute;digo presentado
         </th>
+
         <th class="compras-detalle-columna-codigo">
             Descripci&oacute;n
         </th>
+
         <th>Cantidad</th>
+
         <th class="compras-detalle-columna-observacion">
             Observaciones
         </th>
