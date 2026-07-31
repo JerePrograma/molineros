@@ -1,47 +1,154 @@
-<fieldset class="block-labels">
+<style type="text/css">
+    /*
+     * Estilos limitados exclusivamente a la cabecera de Compras.
+     * No modificar inputs, selects ni labels de otras pantallas.
+     */
+    .compras-cabecera-requerimiento {
+        margin-bottom: 8px;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-datos-basicos-requerimiento td {
+        padding-top: 6px;
+        padding-bottom: 6px;
+        vertical-align: middle;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-celda-label {
+        padding-right: 10px;
+        white-space: nowrap;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-celda-control {
+        padding-right: 32px;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-celda-control-final {
+        padding-right: 0;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-celda-label label,
+    .compras-cabecera-requerimiento
+    .compras-grupo-cargo label {
+        display: inline-block;
+        margin: 0;
+        line-height: 24px;
+        vertical-align: middle;
+    }
+
+    /*
+     * Anchos controlados. No depender del atributo size.
+     */
+    .compras-cabecera-requerimiento
+    .compras-control-id {
+        width: 125px;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-control-estado {
+        width: 180px;
+        font-weight: bold;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-control-sector {
+        width: 220px;
+        max-width: 100%;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-control-porcentaje {
+        width: 70px;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-control-recupero {
+        width: 70px;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-control-surge {
+        width: 120px;
+    }
+
+    /*
+     * Segunda fila: cargos y Recupero permanecen juntos.
+     * Surge conserva su posicion y no se oculta junto con los cargos.
+     */
+    .compras-cabecera-requerimiento
+    .compras-cargos-celda {
+        padding-right: 32px;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-grupo-cargo {
+        display: inline-block;
+        margin-right: 34px;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-grupo-cargo label {
+        margin-right: 10px;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-checkbox-recupero {
+        margin: 0;
+        vertical-align: middle;
+    }
+</style>
+
+<fieldset class="block-labels compras-cabecera-requerimiento">
     <legend><%= tituloPantalla %></legend>
 
-    <table class="lfr-table compras-resumen-requerimiento compras-cargos-requerimiento compras-datos-basicos-requerimiento"
-           style="width: 100%;">
+    <table class="lfr-table compras-resumen-requerimiento compras-cargos-requerimiento compras-datos-basicos-requerimiento">
         <tr>
-            <td>
+            <td class="compras-celda-label">
                 <label for="<portlet:namespace />requerimiento_id_visual">
                     ID:
                 </label>
             </td>
-            <td>
+
+            <td class="compras-celda-control">
                 <input type="text"
                        id="<portlet:namespace />requerimiento_id_visual"
                        value="<%= HtmlUtil.escape(req.getIdString()) %>"
-                       size="10"
                        readonly="readonly"
-                       class="compras-campo-solo-lectura" />
+                       class="compras-control compras-control-id compras-campo-solo-lectura" />
             </td>
 
-            <td>
+            <td class="compras-celda-label">
                 <label for="<portlet:namespace />estado_visual">
                     Estado:
                 </label>
             </td>
-            <td>
+
+            <td class="compras-celda-control">
                 <input type="text"
                        id="<portlet:namespace />estado_visual"
                        value="<%= HtmlUtil.escape(req.getEstadoDescripcionVisible()) %>"
-                       size="20"
                        readonly="readonly"
-                       class="compras-campo-solo-lectura"
-                       style="font-weight: bold;" />
+                       class="compras-control compras-control-estado compras-campo-solo-lectura" />
             </td>
 
-            <td>
+            <td class="compras-celda-label">
                 <label for="<portlet:namespace />sector_id">
                     Sector:
                 </label>
             </td>
-            <td>
+
+            <td class="compras-celda-control compras-celda-control-final">
                 <% if (puedeEditarEstructuraPantalla) { %>
                     <select id="<portlet:namespace />sector_id"
+                            class="compras-control compras-control-sector"
                             onchange="<portlet:namespace />cambiarSectorCompra(true);">
+
                         <option value="0"
                                 data-requiere-afiliado="false"
                                 data-usa-codigo-prestacion="false">
@@ -79,6 +186,7 @@
                                             ? "true"
                                             : "false";
                         %>
+
                             <option value="<%= sectorId %>"
                                     data-requiere-afiliado="<%= requiereAfiliado %>"
                                     data-usa-codigo-prestacion="<%= usaCodigoPrestacionAttr %>"
@@ -87,6 +195,7 @@
                                         sector.getDescripcionVisible()
                                 ) %>
                             </option>
+
                         <%
                         }
                         %>
@@ -95,116 +204,115 @@
                     <input type="text"
                            id="<portlet:namespace />sector_id"
                            value="<%= HtmlUtil.escape(sectorDescripcionSoloLectura) %>"
-                           size="25"
                            readonly="readonly"
-                           class="compras-campo-solo-lectura" />
+                           class="compras-control compras-control-sector compras-campo-solo-lectura" />
                 <% } %>
             </td>
         </tr>
 
         <tr>
             <td colspan="4"
-                style="padding: 0; vertical-align: middle;">
+                class="compras-cargos-celda">
+
                 <div id="<portlet:namespace />fila_cargos_compra"
-                     style="<%= puedeEditarEstructuraPantalla && sectorSinAfiliadoForzaCargoOspim ? "display:none;" : "" %>">
-                    <table class="lfr-table"
-                           style="width: 100%;">
-                        <tr>
-                            <td>
-                                <label for="<portlet:namespace />cargo_ospim">
-                                    Cargo OSPIM %:
-                                </label>
-                            </td>
-                            <td>
-                                <% if (puedeEditarEstructuraPantalla) { %>
-                                    <input type="text"
-                                           id="<portlet:namespace />cargo_ospim"
-                                           value="<%= HtmlUtil.escape(cargoOspimVisible) %>"
-                                           size="5"
-                                           maxlength="3"
-                                           onkeyup="<portlet:namespace />sincronizarFormularioCompra();"
-                                           onchange="<portlet:namespace />sincronizarFormularioCompra();"
-                                           onblur="<portlet:namespace />sincronizarFormularioCompra();" />
-                                <% } else { %>
-                                    <input type="text"
-                                           id="<portlet:namespace />cargo_ospim"
-                                           value="<%= HtmlUtil.escape(cargoOspimVisible) %>"
-                                           size="5"
-                                           readonly="readonly"
-                                           class="compras-campo-solo-lectura" />
-                                <% } %>
-                            </td>
+                     style="<%= puedeEditarEstructuraPantalla
+                            && sectorSinAfiliadoForzaCargoOspim
+                                    ? "display:none;"
+                                    : "" %>">
 
-                            <td>
-                                <label for="<portlet:namespace />cargo_tercerizadora">
-                                    Cargo tercerizadora %:
-                                </label>
-                            </td>
-                            <td>
-                                <% if (puedeEditarEstructuraPantalla) { %>
-                                    <input type="text"
-                                           id="<portlet:namespace />cargo_tercerizadora"
-                                           value="<%= HtmlUtil.escape(cargoTercerizadoraVisible) %>"
-                                           size="5"
-                                           maxlength="3"
-                                           onchange="<portlet:namespace />sincronizarFormularioCompra();"
-                                           onblur="<portlet:namespace />sincronizarFormularioCompra();" />
-                                <% } else { %>
-                                    <input type="text"
-                                           id="<portlet:namespace />cargo_tercerizadora"
-                                           value="<%= HtmlUtil.escape(cargoTercerizadoraVisible) %>"
-                                           size="5"
-                                           readonly="readonly"
-                                           class="compras-campo-solo-lectura" />
-                                <% } %>
-                            </td>
+                    <span class="compras-grupo-cargo">
+                        <label for="<portlet:namespace />cargo_ospim">
+                            Cargo OSPIM %:
+                        </label>
 
-                            <%--
-                                CQA-005: Recupero se conserva en edicion y
-                                vista, pero no se muestra durante el alta.
-                            --%>
-                            <% if (!esNuevo) { %>
-                                <td>
-                                    <label for="<portlet:namespace />recupero">
-                                        Recupero:
-                                    </label>
-                                </td>
-                                <td>
-                                    <% if (puedeEditarEstructuraPantalla) { %>
-                                        <input type="checkbox"
-                                               id="<portlet:namespace />recupero"
-                                               value="true"
-                                               <%= recuperoChecked %>
-                                               onclick="return false;"
-                                               onkeydown="return false;"
-                                               tabindex="-1"
-                                               aria-disabled="true" />
-                                    <% } else { %>
-                                        <input type="text"
-                                               id="<portlet:namespace />recupero"
-                                               value="<%= recuperoPorCargoTercerizadoraActual ? "S&iacute;" : "No" %>"
-                                               size="5"
-                                               readonly="readonly"
-                                               class="compras-campo-solo-lectura" />
-                                    <% } %>
-                                </td>
+                        <% if (puedeEditarEstructuraPantalla) { %>
+                            <input type="text"
+                                   id="<portlet:namespace />cargo_ospim"
+                                   value="<%= HtmlUtil.escape(cargoOspimVisible) %>"
+                                   maxlength="3"
+                                   class="compras-control compras-control-porcentaje"
+                                   onkeyup="<portlet:namespace />sincronizarFormularioCompra();"
+                                   onchange="<portlet:namespace />sincronizarFormularioCompra();"
+                                   onblur="<portlet:namespace />sincronizarFormularioCompra();" />
+                        <% } else { %>
+                            <input type="text"
+                                   id="<portlet:namespace />cargo_ospim"
+                                   value="<%= HtmlUtil.escape(cargoOspimVisible) %>"
+                                   readonly="readonly"
+                                   class="compras-control compras-control-porcentaje compras-campo-solo-lectura" />
+                        <% } %>
+                    </span>
+
+                    <span class="compras-grupo-cargo">
+                        <label for="<portlet:namespace />cargo_tercerizadora">
+                            Cargo tercerizadora %:
+                        </label>
+
+                        <% if (puedeEditarEstructuraPantalla) { %>
+                            <input type="text"
+                                   id="<portlet:namespace />cargo_tercerizadora"
+                                   value="<%= HtmlUtil.escape(cargoTercerizadoraVisible) %>"
+                                   maxlength="3"
+                                   class="compras-control compras-control-porcentaje"
+                                   onchange="<portlet:namespace />sincronizarFormularioCompra();"
+                                   onblur="<portlet:namespace />sincronizarFormularioCompra();" />
+                        <% } else { %>
+                            <input type="text"
+                                   id="<portlet:namespace />cargo_tercerizadora"
+                                   value="<%= HtmlUtil.escape(cargoTercerizadoraVisible) %>"
+                                   readonly="readonly"
+                                   class="compras-control compras-control-porcentaje compras-campo-solo-lectura" />
+                        <% } %>
+                    </span>
+
+                    <%--
+                        CQA-005: Recupero se conserva en edicion y vista,
+                        pero no se muestra durante el alta.
+                    --%>
+                    <% if (!esNuevo) { %>
+                        <span class="compras-grupo-cargo">
+                            <label for="<portlet:namespace />recupero">
+                                Recupero:
+                            </label>
+
+                            <% if (puedeEditarEstructuraPantalla) { %>
+                                <input type="checkbox"
+                                       id="<portlet:namespace />recupero"
+                                       value="true"
+                                       <%= recuperoChecked %>
+                                       class="compras-checkbox-recupero"
+                                       onclick="return false;"
+                                       onkeydown="return false;"
+                                       tabindex="-1"
+                                       aria-disabled="true" />
+                            <% } else { %>
+                                <input type="text"
+                                       id="<portlet:namespace />recupero"
+                                       value="<%= recuperoPorCargoTercerizadoraActual
+                                                ? "S&iacute;"
+                                                : "No" %>"
+                                       readonly="readonly"
+                                       class="compras-control compras-control-recupero compras-campo-solo-lectura" />
                             <% } %>
-                        </tr>
-                    </table>
+                        </span>
+                    <% } %>
                 </div>
             </td>
 
-            <td style="vertical-align: middle;">
+            <td class="compras-celda-label">
                 <label for="<portlet:namespace />surge">
                     Surge:
                 </label>
             </td>
-            <td style="vertical-align: middle;">
+
+            <td class="compras-celda-control compras-celda-control-final">
                 <% if (puedeEditarEstructuraPantalla) { %>
                     <select id="<portlet:namespace />surge"
+                            class="compras-control compras-control-surge"
                             required="required"
                             aria-required="true"
                             onchange="<portlet:namespace />actualizarSurgeCompra();">
+
                         <option value=""
                                 <%= "".equals(surgeSeleccionadoCompra)
                                         ? "selected=\"selected\""
@@ -230,9 +338,8 @@
                     <input type="text"
                            id="<portlet:namespace />surge"
                            value="<%= HtmlUtil.escape(req.getSurgeDescripcion()) %>"
-                           size="12"
                            readonly="readonly"
-                           class="compras-campo-solo-lectura" />
+                           class="compras-control compras-control-surge compras-campo-solo-lectura" />
                 <% } %>
             </td>
         </tr>
