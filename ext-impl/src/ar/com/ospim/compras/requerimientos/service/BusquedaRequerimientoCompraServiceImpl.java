@@ -560,8 +560,27 @@ public class BusquedaRequerimientoCompraServiceImpl {
                 idPrestador != null ? idPrestador.intValue() : 0
         );
         prestador.setDescripcion(getString(rs, "descripcion"));
-        prestador.setCuit(getString(rs, "cuit"));
-        prestador.setEmail(getString(rs, "email"));
+        prestador.setCuit(
+                getString(
+                        rs,
+                        "cuit"
+                )
+        );
+
+        prestador.setEmail(
+                getString(
+                        rs,
+                        "email"
+                )
+        );
+
+        prestador.setEmailDestino(
+                getString(
+                        rs,
+                        "email_destino"
+                )
+        );
+
         prestador.setIdTipoPrestador(
                 idTipoPrestador != null ? idTipoPrestador.intValue() : 0
         );
