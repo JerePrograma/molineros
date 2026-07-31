@@ -23,6 +23,15 @@ public final class ComprasRequerimientosUiContractTest {
             return;
         }
 
+        if (args.length == 1
+                && "adjudicacion".equals(args[0])) {
+
+            assertPrestadorAdjudicadoEsUnico();
+            System.out.println(
+                    "CONTRATO_ADJUDICACION_COMPRAS_OK"
+            );
+            return;
+        }
         assertFiltroPrestadoresEsCheckbox();
         assertPrestadorAdjudicadoEsUnico();
         assertPrecioCotizacionNoConcatenaAtributos();
@@ -52,11 +61,29 @@ public final class ComprasRequerimientosUiContractTest {
     }
 
     private static void assertPrestadorAdjudicadoEsUnico() throws Exception {
-        String tabla = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_tabla.jsp");
+        String adjudicacion = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/"
+                        + "partials/_adjudicacion.jsp"
+        );
+
+        String tabla = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/"
+                        + "partials/_detalle_tabla.jsp"
+        );
         String comunes = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_scripts_comunes.jsp");
         String editable = leer("ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_scripts_editable.jsp");
         String service = leer("ext-impl/src/ar/com/ospim/compras/requerimientos/service/EditarRequerimientoCompraServiceImpl.java");
-        assertContains("selector global", tabla, "id_prestador_adjudicado");
+        assertContains(
+                "selector global",
+                adjudicacion,
+                "id_prestador_adjudicado"
+        );
+
+        assertNotContains(
+                "selector fuera del detalle",
+                tabla,
+                "id_prestador_adjudicado"
+        );
         assertNotContains("aplicar a todos", comunes, "Aplicar a todos");
         assertNotContains("selector por detalle", comunes, "detalle_id_prestador_");
         assertContains("parametro unico", editable, "PARAM_ID_PRESTADOR_ADJUDICADO");
