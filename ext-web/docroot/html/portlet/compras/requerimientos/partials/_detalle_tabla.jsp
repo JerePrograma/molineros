@@ -236,10 +236,16 @@ if (puedeCotizarDetalle
 
     <tr class="portlet-section-header results-header">
         <th>ID</th>
-        <th class="compras-detalle-columna-codigo">C&oacute;digo presentado</th>
-        <th class="compras-detalle-columna-codigo">Descripci&oacute;n</th>
+        <th class="compras-detalle-columna-codigo">
+            C&oacute;digo presentado
+        </th>
+        <th class="compras-detalle-columna-codigo">
+            Descripci&oacute;n
+        </th>
         <th>Cantidad</th>
-        <th class="compras-detalle-columna-observacion">Observaciones</th>
+        <th class="compras-detalle-columna-observacion">
+            Observaciones
+        </th>
 
         <% if (puedeVerCotizacionDetalle) { %>
             <th>Precio unitario</th>
