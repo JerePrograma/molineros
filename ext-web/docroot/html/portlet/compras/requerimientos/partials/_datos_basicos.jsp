@@ -159,30 +159,36 @@
                                 <% } %>
                             </td>
 
-                            <td>
-                                <label for="<portlet:namespace />recupero">
-                                    Recupero:
-                                </label>
-                            </td>
-                            <td>
-                                <% if (puedeEditarEstructuraPantalla) { %>
-                                    <input type="checkbox"
-                                           id="<portlet:namespace />recupero"
-                                           value="true"
-                                           <%= recuperoChecked %>
-                                           onclick="return false;"
-                                           onkeydown="return false;"
-                                           tabindex="-1"
-                                           aria-disabled="true" />
-                                <% } else { %>
-                                    <input type="text"
-                                           id="<portlet:namespace />recupero"
-                                           value="<%= recuperoPorCargoTercerizadoraActual ? "S&iacute;" : "No" %>"
-                                           size="5"
-                                           readonly="readonly"
-                                           class="compras-campo-solo-lectura" />
-                                <% } %>
-                            </td>
+                            <%--
+                                CQA-005: Recupero se conserva en edicion y
+                                vista, pero no se muestra durante el alta.
+                            --%>
+                            <% if (!esNuevo) { %>
+                                <td>
+                                    <label for="<portlet:namespace />recupero">
+                                        Recupero:
+                                    </label>
+                                </td>
+                                <td>
+                                    <% if (puedeEditarEstructuraPantalla) { %>
+                                        <input type="checkbox"
+                                               id="<portlet:namespace />recupero"
+                                               value="true"
+                                               <%= recuperoChecked %>
+                                               onclick="return false;"
+                                               onkeydown="return false;"
+                                               tabindex="-1"
+                                               aria-disabled="true" />
+                                    <% } else { %>
+                                        <input type="text"
+                                               id="<portlet:namespace />recupero"
+                                               value="<%= recuperoPorCargoTercerizadoraActual ? "S&iacute;" : "No" %>"
+                                               size="5"
+                                               readonly="readonly"
+                                               class="compras-campo-solo-lectura" />
+                                    <% } %>
+                                </td>
+                            <% } %>
                         </tr>
                     </table>
                 </div>
