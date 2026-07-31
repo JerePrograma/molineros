@@ -3271,6 +3271,121 @@ $func$
 LANGUAGE plpgsql
 STABLE;
 
+CREATE OR REPLACE FUNCTION compras.listar_prestadores_enviados(
+    p_id_requerimiento INTEGER,
+    p_limite INTEGER
+)
+    RETURNS TABLE (
+        id_prestador INTEGER,
+        descripcion VARCHAR,
+        cuit VARCHAR,
+        email VARCHAR,
+        email_destino VARCHAR,
+        id_tipo_prestador INTEGER,
+        tipo_prestador VARCHAR,
+        estado_envio VARCHAR
+    )
+AS $func$
+DECLARE
+v_limite INTEGER;
+BEGIN
+    IF p_id_requerimiento IS NULL
+            OR p_id_requerimiento <= 0 THEN
+
+        RAISE EXCEPTION
+            'Debe informar el requerimiento de compra.';
+END IF;
+
+    IF p_limite IS NULL
+            OR p_limite <= 0 THEN
+
+        RAISE EXCEPTION
+            'El limite de prestadores debe ser mayor que cero.';
+END IF;
+
+    v_limite := p_limite;
+
+RETURN QUERY
+SELECT DISTINCT
+    p.id_prestador::INTEGER,
+    p.descripcion::VARCHAR,
+    p.cuit::VARCHAR,
+
+    NULLIF(
+            btrim(p.contacto),
+            ''
+    )::VARCHAR AS email,
+
+    NULLIF(
+            btrim(rcp.email_destino),
+            ''
+    )::VARCHAR AS email_destino,
+
+    p.id_tipo_prestador::INTEGER,
+    tp.descripcion::VARCHAR,
+    rcp.estado_envio::VARCHAR
+
+FROM compras.requerimiento r
+
+         JOIN compras.requerimiento_cotizacion_prestador rcp
+              ON rcp.id_requerimiento =
+                 r.id_requerimiento
+                  AND rcp.estado_envio IN (
+                                           'ENVIADO',
+                                           'COTIZADO'
+                      )
+
+         JOIN public.prestador p
+              ON p.id_prestador =
+                 rcp.id_prestador
+
+         LEFT JOIN trae_tipos_prestadores() tp
+                   ON tp.id_tipo_prestador =
+                      p.id_tipo_prestador
+
+WHERE r.id_requerimiento =
+      p_id_requerimiento
+  AND r.estado IN (
+                   2,
+                   3
+    )
+
+ORDER BY
+    2,
+    3,
+    1
+
+    LIMIT v_limite;
+END;
+$func$
+LANGUAGE plpgsql
+STABLE;
+
+
+CREATE OR REPLACE FUNCTION compras.hay_prestadores_pendientes_notificacion(
+    p_id_requerimiento INTEGER
+)
+    RETURNS BOOLEAN
+AS $func$
+BEGIN
+    IF p_id_requerimiento IS NULL
+            OR p_id_requerimiento <= 0 THEN
+
+        RAISE EXCEPTION
+            'Debe informar el requerimiento de compra.';
+END IF;
+
+RETURN EXISTS (
+    SELECT 1
+    FROM compras.listar_prestadores_cotizacion_requerimiento(
+            p_id_requerimiento
+         )
+);
+END;
+$func$
+LANGUAGE plpgsql
+STABLE;
+
 -- =====================================================================
 -- PDF
 -- =====================================================================

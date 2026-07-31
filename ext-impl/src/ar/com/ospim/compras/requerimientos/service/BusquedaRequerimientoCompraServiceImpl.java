@@ -46,38 +46,13 @@ public class BusquedaRequerimientoCompraServiceImpl {
             "{call compras.get_sector_requerimiento(?)}";
 
     private static final String SQL_BUSCAR_PRESTADORES_ENVIADOS =
-            "SELECT id_prestador, descripcion, cuit, email, "
-                    + "id_tipo_prestador, tipo_prestador "
-                    + "FROM compras.buscar_prestadores_enviados(?, ?, ?)";
+            "{call compras.buscar_prestadores_enviados(?,?,?)}";
 
     private static final String SQL_LISTAR_PRESTADORES_ENVIADOS =
-            "SELECT DISTINCT p.id_prestador, p.descripcion, p.cuit, "
-                    + "p.contacto AS email, p.id_tipo_prestador, "
-                    + "tp.descripcion AS tipo_prestador, "
-                    + "rcp.estado_envio "
-                    + "FROM compras.requerimiento r "
-                    + "JOIN compras.requerimiento_cotizacion_prestador rcp "
-                    + "  ON rcp.id_requerimiento = r.id_requerimiento "
-                    + " AND rcp.estado_envio IN (?, ?) "
-                    + "JOIN public.prestador p "
-                    + "  ON p.id_prestador = rcp.id_prestador "
-                    + "LEFT JOIN trae_tipos_prestadores() tp "
-                    + "  ON tp.id_tipo_prestador = p.id_tipo_prestador "
-                    + "WHERE r.id_requerimiento = ? "
-                    + "  AND r.estado IN (?, ?) "
-                    + "ORDER BY p.descripcion, p.cuit, p.id_prestador "
-                    + "LIMIT ?";
+            "{call compras.listar_prestadores_enviados(?,?)}";
 
-    /*
-     * Se reutiliza exactamente la misma función canónica que consume el
-     * servicio de notificaciones. Así la visibilidad del botón y la operación
-     * real no pueden divergir por tener filtros SQL diferentes.
-     */
     private static final String SQL_HAY_PRESTADORES_PENDIENTES_NOTIFICACION =
-            "SELECT EXISTS ("
-                    + "SELECT 1 "
-                    + "FROM compras.listar_prestadores_cotizacion_requerimiento(?)"
-                    + ") AS hay_pendientes";
+            "{call compras.hay_prestadores_pendientes_notificacion(?)}";
 
     private static final String SQL_LISTAR_PRESUPUESTOS =
             "{call compras.listar_requerimiento_presupuestos(?)}";
@@ -278,14 +253,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
         List<PrestadorCotizacion> prestadores =
                 new ArrayList<PrestadorCotizacion>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_BUSCAR_PRESTADORES_ENVIADOS);
+            stmt = con.prepareCall(SQL_BUSCAR_PRESTADORES_ENVIADOS);
             stmt.setInt(1, idRequerimientoCompra);
             stmt.setString(2, emptyToNull(texto));
             stmt.setInt(3, limite);
@@ -308,34 +283,47 @@ public class BusquedaRequerimientoCompraServiceImpl {
     public List<PrestadorCotizacion> listarPrestadoresEnviados(
             int idRequerimientoCompra) throws Exception {
 
-        validarIdRequerimiento(idRequerimientoCompra);
+        validarIdRequerimiento(
+                idRequerimientoCompra
+        );
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
+
         List<PrestadorCotizacion> prestadores =
                 new ArrayList<PrestadorCotizacion>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_LISTAR_PRESTADORES_ENVIADOS);
-            stmt.setString(1, WebKeysCompras.ENVIO_ENVIADO);
-            stmt.setString(2, WebKeysCompras.ENVIO_COTIZADO);
-            stmt.setInt(3, idRequerimientoCompra);
-            stmt.setInt(4, WebKeysCompras.ESTADO_A_COTIZAR);
-            stmt.setInt(5, WebKeysCompras.ESTADO_COTIZADO);
-            stmt.setInt(
-                    6,
-                    WebKeysCompras.MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO + 1
+
+            stmt = con.prepareCall(
+                    SQL_LISTAR_PRESTADORES_ENVIADOS
             );
+
+            stmt.setInt(
+                    1,
+                    idRequerimientoCompra
+            );
+
+            stmt.setInt(
+                    2,
+                    WebKeysCompras
+                            .MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO
+                            + 1
+            );
+
             rs = stmt.executeQuery();
 
             while (rs.next()) {
-                prestadores.add(mapPrestadorCotizacion(rs));
+                prestadores.add(
+                        mapPrestadorCotizacion(rs)
+                );
             }
 
             if (prestadores.size()
-                    > WebKeysCompras.MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO) {
+                    > WebKeysCompras
+                    .MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO) {
 
                 throw new Exception(
                         "El requerimiento supera el máximo permitido de "
@@ -356,21 +344,30 @@ public class BusquedaRequerimientoCompraServiceImpl {
     public boolean hayPrestadoresPendientesNotificacion(
             int idRequerimientoCompra) throws Exception {
 
-        validarIdRequerimiento(idRequerimientoCompra);
+        validarIdRequerimiento(
+                idRequerimientoCompra
+        );
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(
+
+            stmt = con.prepareCall(
                     SQL_HAY_PRESTADORES_PENDIENTES_NOTIFICACION
             );
-            stmt.setInt(1, idRequerimientoCompra);
+
+            stmt.setInt(
+                    1,
+                    idRequerimientoCompra
+            );
+
             rs = stmt.executeQuery();
 
-            return rs.next() && rs.getBoolean("hay_pendientes");
+            return rs.next()
+                    && rs.getBoolean(1);
         } catch (Exception e) {
             _log.error(
                     "No se pudo determinar si existen prestadores pendientes "
@@ -378,6 +375,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
                             + idRequerimientoCompra,
                     e
             );
+
             throw e;
         } finally {
             closeQuietly(rs);

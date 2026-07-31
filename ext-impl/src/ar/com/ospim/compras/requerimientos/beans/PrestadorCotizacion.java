@@ -13,6 +13,8 @@ public class PrestadorCotizacion {
     private int idTipoPrestador;
     private String tipoPrestador;
     private String estadoEnvio;
+    private String emailRegistrado;
+    private String emailDestino;
 
     public int getIdPrestador() {
         return idPrestador;
@@ -128,5 +130,21 @@ public class PrestadorCotizacion {
                 WebKeysCompras.trimToNull(
                         estadoEnvio
                 );
+    }
+
+    public String getEmailRegistrado() {
+        return emailRegistrado;
+    }
+
+    public void setEmailRegistrado(String emailRegistrado) {
+        this.emailRegistrado = emailRegistrado;
+    }
+
+    public String getEmailDestino() {
+        return emailDestino;
+    }
+
+    public void setEmailDestino(String emailDestino) {
+        this.emailDestino = emailDestino;
     }
 }
