@@ -70,11 +70,11 @@ function ocultarComprobanteCompras() {
     for (i = 0; i < ids.length; i++) {
         control = c(ids[i]);
         if (control.length) {
-            tabla = control.closest("table");
-            if (tabla.closest("#" + ns + "datos_comprobante").length) {
+            tabla = control.parents("table").eq(0);
+            if (tabla.parents("#" + ns + "datos_comprobante").eq(0).length) {
                 tabla.hide().attr("aria-hidden", "true");
             } else {
-                control.closest("td").hide().attr("aria-hidden", "true");
+                control.parents("td").eq(0).hide().attr("aria-hidden", "true");
             }
         }
     }
@@ -147,7 +147,7 @@ function repararEditor() {
             maxWidth: "760px",
             boxSizing: "border-box"
         });
-        fila = textarea.closest("tr");
+        fila = textarea.parents("tr").eq(0);
         fila.children("td").eq(0).css({
             width: "180px",
             whiteSpace: "nowrap",
@@ -218,7 +218,7 @@ function repararListas() {
                 overflowX: "auto",
                 boxSizing: "border-box"
             });
-            lista.find("table").first().css({
+            lista.find("table").eq(0).css({
                 minWidth: "1380px",
                 tableLayout: "auto"
             });
