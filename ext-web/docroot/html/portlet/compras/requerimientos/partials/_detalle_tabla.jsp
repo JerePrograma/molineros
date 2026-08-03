@@ -5,11 +5,11 @@
         <th>ID</th>
 
         <th class="compras-detalle-columna-codigo">
-            C&oacute;digo presentado
+            Código presentado
         </th>
 
         <th class="compras-detalle-columna-codigo">
-            Descripci&oacute;n
+            Descripción
         </th>
 
         <th>Cantidad</th>

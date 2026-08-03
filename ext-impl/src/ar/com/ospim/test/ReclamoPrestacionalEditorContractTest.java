@@ -341,17 +341,17 @@ public final class ReclamoPrestacionalEditorContractTest {
         assertContains(
                 "boton editar con texto estable",
                 editorJsp,
-                "value=\"Editar Prestaci&oacute;n\""
+                "value=\"Editar Prestación\""
         );
         assertContains(
                 "boton autorizar con texto estable",
                 editorJsp,
-                "value=\"Autoriza Prestaci&oacute;n\""
+                "value=\"Autoriza Prestación\""
         );
         assertContains(
                 "boton rechazar con texto estable",
                 editorJsp,
-                "value=\"Rechaza Prestaci&oacute;n\""
+                "value=\"Rechaza Prestación\""
         );
         assertContains(
                 "boton cancelar con identidad",

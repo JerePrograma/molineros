@@ -327,12 +327,12 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
         <div class="portlet-msg-error">
             El requerimiento contiene prestadores adjudicados diferentes.
             Seleccione un &uacute;nico prestador antes de guardar
-            la cotizaci&oacute;n.
+            la cotización.
         </div>
     <% } %>
 
     <fieldset class="block-labels compras-adjudicacion">
-        <legend>Adjudicaci&oacute;n</legend>
+        <legend>Adjudicación</legend>
 
         <table class="lfr-table">
             <tr>
