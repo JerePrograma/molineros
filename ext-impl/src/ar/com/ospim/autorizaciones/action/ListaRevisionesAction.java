@@ -16,6 +16,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import ar.com.ospim.autorizaciones.beans.RevisionesReclamo;
 import ar.com.ospim.autorizaciones.exceptions.RevisionesReclamosException;
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
@@ -43,6 +44,18 @@ public class ListaRevisionesAction extends PortletAction {
 			RenderRequest renderRequest, RenderResponse renderResponse) throws Exception {
 		
 		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
+		ReclamoPrestacional reclamo = (ReclamoPrestacional) session.getAttribute(
+				WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION
+		);
+
+		if (reclamo == null || reclamo.getId_reclamo() <= 0 || reclamo.getEstado() == 3) {
+			agregarErrorRevision(
+					renderRequest,
+					"La revision requiere un reclamo persistido, editable y no cerrado."
+			);
+			return mapping.findForward(getForward(renderRequest,
+					"portlet.autorizaciones.reclamosprestacionales.revision.reclamo"));
+		}
 		
 		String resolucion = ParamUtil.getString(renderRequest, "resolucion");		
 		String presentes = ParamUtil.getString(renderRequest, "presentes");

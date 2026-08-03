@@ -32,6 +32,10 @@ public final class ReclamoPrestacionalIntegridadContractTest {
         noContiene(estructura, "no elimina lista precargada",
                 "removeAttribute(\n            WebKeysAutorizaciones.LISTADO_PRESTACIONES");
 
+        contiene(action, "reclamo persistido requerido",
+                "reclamo.getId_reclamo() <= 0");
+        contiene(action, "reclamo cerrado rechazado",
+                "reclamo.getEstado() == 3");
         contiene(action, "fecha estricta", "setLenient(false)");
         contiene(action, "serializa alta de revision", "synchronized (session)");
         contiene(action, "bloquea revision activa", "tieneRevisionActiva(");
