@@ -191,7 +191,7 @@ if (puedeCotizarAdjudicacion
         }
     } catch (Exception e) {
         errorPresupuestosAdjudicacion =
-                "No se pudo verificar qu\u00e9 prestadores tienen "
+                "No se pudo verificar qué prestadores tienen "
                         + "un archivo de presupuesto cargado.";
     }
 }

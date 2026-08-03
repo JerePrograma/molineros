@@ -16,6 +16,16 @@ function campo(sufijo) {
     return jQuery("#" + namespace + sufijo);
 }
 
+    function hayEdicionPrestacionActiva() {
+        var editor = campo("datos_edicion_prestacion");
+        var idRegistro = campo("idRegistro");
+
+        return editor.length > 0 &&
+            editor.children().length > 0 &&
+            idRegistro.length > 0 &&
+            String(idRegistro.val() || "") !== "";
+    }
+
 function diagnosticar(codigo, detalle) {
     if (window.console && window.console.warn) {
         window.console.warn(codigo + (detalle ? ": " + detalle : ""));
@@ -398,7 +408,6 @@ function instalarBotonesSeguros() {
     };
 
     contenedor.append(botonGuardar);
-    contenedor.append("\u00a0\u00a0");
     contenedor.append(botonCancelar);
 
     asegurarMarcaEdicion(tipoAccion);

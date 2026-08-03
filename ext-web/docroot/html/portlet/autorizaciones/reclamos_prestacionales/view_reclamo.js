@@ -19,8 +19,7 @@ var ingresoPrestacion = jQuery(
 		"#" + reclamoPrestacionalNamespace + "datos_prestacion_ingreso"
 );
 
-if (reclamoPrestacionalViewConfig.values.esBorradorCompras ||
-		editorPrestacion.children().length) {
+if (editorPrestacion.children().length) {
 
 	editorPrestacion.show().attr("aria-hidden", "false");
 	ingresoPrestacion.hide().attr("aria-hidden", "true");

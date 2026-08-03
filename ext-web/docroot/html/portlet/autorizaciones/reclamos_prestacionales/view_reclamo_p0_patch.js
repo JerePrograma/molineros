@@ -68,7 +68,7 @@ function datosRevisionOkSeguro() {
 
     if (isNaN(diaOspim) || isNaN(mesOspim) || isNaN(anioOspim) ||
             !fechaValida(anioOspim, mesOspim, diaOspim)) {
-        alert("La fecha OSPIM del reclamo no es v\u00e1lida.");
+        alert("La fecha OSPIM del reclamo no es válida.");
         return false;
     }
 

@@ -473,7 +473,7 @@ if (errorBusqueda == null
 
                 recupera.append(
                         nomenclador.getRecuperaSUR()
-                                ? "S\u00ed"
+                                ? "Sí"
                                 : "No"
                 );
 
