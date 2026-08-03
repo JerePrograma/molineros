@@ -10,11 +10,12 @@ import java.nio.file.Paths;
  *
  * Evita volver a mezclar la completitud economica de una cotizacion con la
  * existencia de una referencia medica canonica. Los detalles OBSERVACION son
- * validos en Compras y deben llegar como referencia temporal al editor de RP.
+ * validos en Compras y deben llegar como referencia temporal al alta de RP.
  */
 public final class ReclamoPrestacionalCompraPrecargaContractTest {
 
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset ISO_8859_1 =
+            Charset.forName("ISO-8859-1");
 
     private static final String SERVICE =
             "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
@@ -140,20 +141,12 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
                 "conserva la lista de prestaciones precargadas",
                 "LISTADO_PRESTACIONES_RECLAMOS_EN_SESION"
         );
-        contiene(
-                recuperable,
-                "conserva la prestacion activa en edicion",
-                "PRESTACION_EN_PROCESO_DE_EDICION"
-        );
         noContiene(
                 recuperable,
-                "no elimina la cabecera ni la precarga de sesion",
-                "session.removeAttribute("
-        );
-        noContiene(
-                recuperable,
-                "no convierte el borrador en alta vacia",
-                "esBorradorCompras = false"
+                "no elimina la lista precargada",
+                "removeAttribute(\n"
+                        + "                WebKeysAutorizaciones\n"
+                        + "                        .LISTADO_PRESTACIONES"
         );
         contiene(
                 recuperable,
@@ -232,6 +225,61 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
                 "request.setAttribute(Constants.CMD, Constants.ADD);",
                 "view_reclamo_contexto.jspf"
         );
+
+        contiene(
+                view,
+                "neutraliza solo el editor inicial de Compras",
+                "boolean neutralizarEdicionInicialCompras"
+        );
+        contiene(
+                view,
+                "exige modo de alta validado",
+                "esBorradorCompras"
+        );
+        contiene(
+                view,
+                "no pisa una edicion explicitamente tipada",
+                "request.getAttribute(\"tipoEdicion\") == null"
+        );
+        contiene(
+                view,
+                "elimina solo el estado de edicion de prestacion",
+                "removeAttribute(\n"
+                        + "            WebKeysAutorizaciones"
+                        + ".PRESTACION_EN_PROCESO_DE_EDICION"
+        );
+        antes(
+                view,
+                "neutralizarEdicionInicialCompras",
+                "Object tipoEdicionOriginalAntesDePrestaciones"
+        );
+
+        contiene(
+                view,
+                "corrige el modo visual despues del JavaScript legacy",
+                "function asegurarAltaInicialCompras()"
+        );
+        contiene(
+                view,
+                "no oculta una edicion explicita con contenido",
+                "editor.children().length"
+        );
+        contiene(
+                view,
+                "oculta el editor vacio",
+                "editor.hide().attr(\"aria-hidden\", \"true\")"
+        );
+        contiene(
+                view,
+                "muestra el formulario de alta",
+                "ingreso.show().attr(\"aria-hidden\", \"false\")"
+        );
+        contiene(
+                view,
+                "programa la correccion despues de los scripts",
+                "window.setTimeout(asegurarAltaInicialCompras, 0);"
+        );
+
         antes(
                 view,
                 "view_reclamo_cabecera.jspf",
@@ -244,9 +292,8 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
         );
         contiene(
                 view,
-                "invalida cache del parche restaurado",
+                "conserva el parche de Compras",
                 "view_reclamo_compras_surge_patch.js"
-                        + "?v=20260723-restaura-precarga-1"
         );
 
         contiene(
@@ -256,13 +303,8 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
         );
         noContiene(
                 surgePatch,
-                "no oculta el editor de la prestacion precargada",
-                ".hide()"
-        );
-        noContiene(
-                surgePatch,
-                "no fuerza el formulario de carga vacio",
-                ".show()"
+                "no elimina el contexto de Compras",
+                "CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA"
         );
 
         System.out.println(
@@ -272,7 +314,7 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
 
     private static String leer(String ruta) throws Exception {
         Path path = Paths.get(ruta);
-        return new String(Files.readAllBytes(path), UTF_8);
+        return new String(Files.readAllBytes(path), ISO_8859_1);
     }
 
     private static String extraerMetodo(String contenido, String firma) {
