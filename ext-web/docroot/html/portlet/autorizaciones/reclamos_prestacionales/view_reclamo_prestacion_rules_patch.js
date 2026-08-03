@@ -380,7 +380,7 @@ function instalarBotonesSeguros() {
 
     var botonCancelar = jQuery(document.createElement("input"));
     var textoCancelar =
-            "Cancelar Edici\u00f3n de la Prestaci\u00f3n";
+            "Cancelar Edición de la Prestación";
 
     botonCancelar.attr("type", "button");
     botonCancelar.attr(

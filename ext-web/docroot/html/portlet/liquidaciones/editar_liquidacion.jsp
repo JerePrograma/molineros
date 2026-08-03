@@ -1385,7 +1385,7 @@ jQuery("#<portlet:namespace />cuit_entidad").blur(function(){ validaMontoOrigina
 		
 		function <portlet:namespace />saveLiquidacionEntry() {
 		   if (jQuery('#<portlet:namespace />importeoriginalnovalidado').val()!='') {
-		      alert('El total ingresado no debe superar ' + jQuery('#<portlet:namespace />importeoriginalreclamo').val() + ' que es el original autorizado para esta prestaci\u00f3n en el reclamo.');
+		      alert('El total ingresado no debe superar ' + jQuery('#<portlet:namespace />importeoriginalreclamo').val() + ' que es el original autorizado para esta prestación en el reclamo.');
 			  return false; 	
 		    }	
 		    jQuery('#<portlet:namespace />importeoriginalnovalidado').val('');
@@ -1907,7 +1907,7 @@ jQuery("#<portlet:namespace />cuit_entidad").blur(function(){ validaMontoOrigina
 	    	   totalHistorico=jQuery('#<portlet:namespace />importeoriginalreclamo').val() ;
 	    	   jQuery('#<portlet:namespace />importeoriginalnovalidado').val('') ;
 		   	   if ( Math.round(total) >Math.round(totalHistorico)  ){
-		   		   alert('El monto ingresado no debe superar ' + jQuery('#<portlet:namespace />importeoriginalreclamo').val() + ' que es el original autorizado para esta prestaci\u00f3n en el reclamo.');		    		   
+		   		   alert('El monto ingresado no debe superar ' + jQuery('#<portlet:namespace />importeoriginalreclamo').val() + ' que es el original autorizado para esta prestación en el reclamo.');
 		   		   valor=false;
 		   		   jQuery('#<portlet:namespace />importeoriginalnovalidado').val('bad') ;
 		   	   }    	   
