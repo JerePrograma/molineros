@@ -171,7 +171,7 @@ String usuario_modi = user.getScreenName();
  <div id="cabecera" align="center">
   <p> <%=secc.getDescripcion().toUpperCase() + " ( " + idSeccional + " )" %>  </p>
   <!-- </br> -->
-  <p style="font-size: 12px; font-style: normal; text-align: left;" >Horario Atenci&oacute;n de <%=StringUtils.checkNotEmpty(secc.getHorarioAtencion())?secc.getHorarioAtencion():"N/D" %>  </br>
+  <p style="font-size: 12px; font-style: normal; text-align: left;" >Horario Atención de <%=StringUtils.checkNotEmpty(secc.getHorarioAtencion())?secc.getHorarioAtencion():"N/D" %>  </br>
   Domicilio: <%=domicilio %> </br>
   Contacto: <%=secc.getContacto() %> </br>
   Contactos: <%=contactosSecc %></br>
@@ -203,7 +203,7 @@ String usuario_modi = user.getScreenName();
   </p>
  </div>
  <div id="contenido">
-  <h2>Comisi&oacute;n Ejecutiva</h2> <!-- Integrantes -->
+  <h2>Comisión Ejecutiva</h2> <!-- Integrantes -->
   	<!-- <div> -->
   		<%ArrayList<Contacto> colaboradores = new ArrayList<Contacto>(); %>
 		<ul>
@@ -229,7 +229,7 @@ String usuario_modi = user.getScreenName();
  </div>
  
  <div id="contenido">
-  <h2>Padr&oacute;n</h2>
+  <h2>Padrón</h2>
   
   <div>
   <%-- <ul>

@@ -194,7 +194,7 @@
 				</div>
 				</td>
 			<td>
-			<td><label>Resoluci&oacute;n:</label></td>	
+			<td><label>Resolución:</label></td>
 			<td>					
 			<select name="<portlet:namespace/>resolucion"
 						id="<portlet:namespace />resolucion"  > 

@@ -38,12 +38,12 @@
 
 <form action="" method="post" name="<portlet:namespace />fm" enctype="multipart/form-data">
 	
-<fieldset class="block-labels"><legend>Imagenes Autorizaci&oacute;n</legend>
+<fieldset class="block-labels"><legend>Imagenes Autorización</legend>
 
 <liferay-ui:error key="errorUploadFile" message="<%=(String)request.getAttribute(\"msgInsertError\") %>" />
 <liferay-ui:error key="errorAfiliadoNull" message="<%=(String)request.getAttribute(\"msgInsertError\") %>" />
 
-<h1> Nro. Autorizaci&oacute;n  <%=tratamiento.getNroAutorizacion()%></h1>
+<h1> Nro. Autorización  <%=tratamiento.getNroAutorizacion()%></h1>
 
 <table class="lfr-table">
   <tr>

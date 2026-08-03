@@ -151,7 +151,7 @@ div.divHeaderNro {
 			value="<%= medicacion != null &&  medicacion.getNombre()!=null ? medicacion.getNombre():"" %>" />			
 		</td>
 		
-		<td colspan="1"><label>Presentaci&oacute;n :</label></td>
+		<td colspan="1"><label>Presentación :</label></td>
 		<td colspan="5"><input <% if (!esEdicion) { %><%="disabled='disabled'" %><%}%> id="<portlet:namespace />presentacion"
 			name="<portlet:namespace />presentacion" size="50" maxlength="100"
 			type="text"
@@ -168,7 +168,7 @@ div.divHeaderNro {
 			type="text"
 			value="<%= medicacion != null &&  medicacion.getLaboratorio() !=null   ? medicacion.getLaboratorio()   : "" %>" />			
 		</td>
-		<td colspan="1"><label>Acci&oacute;n</label></td>
+		<td colspan="1"><label>Acción</label></td>
 		<td colspan="5"><input <% if (!esEdicion) { %><%="disabled='disabled'" %><%}%>  id="<portlet:namespace />accion"
 			name="<portlet:namespace />accion" size="50" maxlength="100"
 			type="text"			

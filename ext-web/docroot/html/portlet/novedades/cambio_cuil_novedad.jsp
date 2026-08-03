@@ -51,7 +51,7 @@ ArrayList<TipoNovedad> tiposNov = (ArrayList<TipoNovedad>) TraeListasServiceUtil
 			firstDayOfWeek="<%= fechaAltaOS.getFirstDayOfWeek() %>"
 			disabled="<%= true %>" />
 		</td>
-		<td><label>Fecha cierre presentaci&oacute;n:</label></td>
+		<td><label>Fecha cierre presentación:</label></td>
 		<td colspan="1">
 		<liferay-ui:input-date
 			dayParam="fechaCierrePresDia"

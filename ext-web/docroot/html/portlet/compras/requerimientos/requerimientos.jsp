@@ -238,37 +238,6 @@ if (tercerizadoras == null) {
                     %>
                 </select>
             </td>
-
-            <td>
-                <label>Recupero:</label>
-            </td>
-
-            <td>
-                <select id="<portlet:namespace />recupero"
-                        name="<portlet:namespace />recupero">
-
-                    <option value=""
-                            <%= "".equals(recuperoFiltro)
-                                    ? "selected"
-                                    : "" %>>
-                        Todos
-                    </option>
-
-                    <option value="true"
-                            <%= "true".equals(recuperoFiltro)
-                                    ? "selected"
-                                    : "" %>>
-                        Sí
-                    </option>
-
-                    <option value="false"
-                            <%= "false".equals(recuperoFiltro)
-                                    ? "selected"
-                                    : "" %>>
-                        No
-                    </option>
-                </select>
-            </td>
         </tr>
 
         <tr>

@@ -157,7 +157,7 @@
 											reclamoprestacional.getTipoPedido()
 									)
 									? "selected=\"selected\""
-									: "" %>>EXCEPCI&Oacute;N</option>
+									: "" %>>EXCEPCIóN</option>
 						<option
 							value="REINTEGRO"
 							<%= Validator.isNotNull(reclamoprestacional)
@@ -247,7 +247,7 @@
 						<% if (!esEdicion) { %>
 							disabled="disabled"
 						<% } %>>
-						<option value="0">Seleccione Integraci&oacute;n</option>
+						<option value="0">Seleccione Integración</option>
 						<% for (ReclamosPrestacionalesIntegracion integracion : listaIntegracion) { %>
 							<option
 								value="<%= integracion.getId() %>"
@@ -330,7 +330,7 @@
 						<% if (idPreautorizacion != null && idPreautorizacion != 0) { %>
 							<div>
 								<span style="font-size: 9pt; color: green;">
-									<label><b>Preautorizaci&oacute;n: <%= idPreautorizacion %></b></label>
+									<label><b>Preautorización: <%= idPreautorizacion %></b></label>
 								</span>
 							</div>
 						<% } %>

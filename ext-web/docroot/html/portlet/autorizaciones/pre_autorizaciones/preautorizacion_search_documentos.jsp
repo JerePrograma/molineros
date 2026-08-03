@@ -47,7 +47,7 @@ String keywords = ParamUtil.getString(request, "keywords","PREAUT_"+preautorizac
 <form action="" method="post" name="<portlet:namespace />fm" onSubmit="submitForm(this); return false;" >
 
 <% if(preautorizacion!=null && preautorizacion.getPreAutorizAsociada()>0){%>
-<p style="font-size: 14px;" align="center"><b>Las imágenes fueron movidas a la preautorizaci&oacute;n id: <%=preautorizacion.getPreAutorizAsociada()%></b></p>
+<p style="font-size: 14px;" align="center"><b>Las imágenes fueron movidas a la preautorización id: <%=preautorizacion.getPreAutorizAsociada()%></b></p>
 <%} %>
 <%
 PortletURL portletURL = renderResponse.createRenderURL();

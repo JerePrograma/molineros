@@ -533,9 +533,9 @@ if (prestacionEnEdicion != null) {
 					type="button"
 					name="<portlet:namespace />btnedita_prestacion"
 					id="<portlet:namespace />btnedita_prestacion"
-					value="Editar Prestaci&oacute;n"
+					value="Editar Prestación"
 					onclick="<portlet:namespace />editarPrestacionSeleccionada(0);"
-					title="Edita la prestaci&oacute;n" />
+					title="Edita la prestación" />
 			<% } %>
 
 			<% if (tipoedicion.intValue() == 1) { %>
@@ -543,9 +543,9 @@ if (prestacionEnEdicion != null) {
 					type="button"
 					name="<portlet:namespace />btnautoriza_prestacion"
 					id="<portlet:namespace />btnautoriza_prestacion"
-					value="Autoriza Prestaci&oacute;n"
+					value="Autoriza Prestación"
 					onclick="<portlet:namespace />editarPrestacionSeleccionada(1);"
-					title="Autoriza la prestaci&oacute;n" />
+					title="Autoriza la prestación" />
 			<% } %>
 
 			<% if (tipoedicion.intValue() == 2) { %>
@@ -553,9 +553,9 @@ if (prestacionEnEdicion != null) {
 					type="button"
 					name="<portlet:namespace />btnrechaza_prestacion"
 					id="<portlet:namespace />btnrechaza_prestacion"
-					value="Rechaza Prestaci&oacute;n"
+					value="Rechaza Prestación"
 					onclick="<portlet:namespace />editarPrestacionSeleccionada(2);"
-					title="Rechaza la prestaci&oacute;n" />
+					title="Rechaza la prestación" />
 			<% } %>
 
 			<input

@@ -192,7 +192,7 @@ boolean hayPrestacionEnProcesoDeEdicion =
 													maxlength="8" type="text" onkeydown="allowOnlyDigits(event);" 
 													value="" <% if (!esEdicion) { %>
 													readonly="readonly" <%} %> /></td>
-												<td><label>F. Emisi&oacute;n: </label></td>
+												<td><label>F. Emisión: </label></td>
 												<td colspan="3"><liferay-ui:input-date
 														dayParam="fechaComprobanteDia" dayValue=""
 														dayNullable="<%=true %>" monthParam="fechaComprobanteMes"

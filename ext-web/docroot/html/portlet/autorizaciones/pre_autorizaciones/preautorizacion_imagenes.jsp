@@ -33,12 +33,12 @@
 
 <form action="" method="post" name="<portlet:namespace />fmSI" enctype="multipart/form-data">
 	
-<fieldset class="block-labels"><legend>Imagenes Preautorizaci&oacute;n</legend>
+<fieldset class="block-labels"><legend>Imagenes Preautorización</legend>
 
 <liferay-ui:error key="errorUploadFile" message="<%=(String)request.getAttribute(\"msgInsertError\") %>" />
 <liferay-ui:error key="errorAfiliadoNull" message="<%=(String)request.getAttribute(\"msgInsertError\") %>" />
 
-<h1>Preautorizaci&oacute;n Nro. <%=preautorizacion!=null && preautorizacion.getId()!=null? preautorizacion.getId().toString() + "-" + preautorizacion.getAfiliado().getApeNombre().toUpperCase() :""%></h1>
+<h1>Preautorización Nro. <%=preautorizacion!=null && preautorizacion.getId()!=null? preautorizacion.getId().toString() + "-" + preautorizacion.getAfiliado().getApeNombre().toUpperCase() :""%></h1>
 
 <table class="lfr-table">
   <tr>

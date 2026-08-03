@@ -59,7 +59,7 @@
 						<%}%>
 					<%} %>
 			</select><a href="javascript:void(0)" onclick="help(event, 'helpEjercicio')"><img style="height: 16px; width: 16px" src="/html/images/help.png" title="Ayuda" alt="Ayuda"/></a>&nbsp;
-				N&uacute;mero:&nbsp;<input type="text" id="numero" name="numero" value="" size="10" /> <a href="javascript:void(0)" onclick="help(event, 'helpNumero')"><img style="height: 16px; width: 16px" src="/html/images/help.png" title="Ayuda" alt="Ayuda"/></a>&nbsp; Descripci&oacute;n:&nbsp;
+				N&uacute;mero:&nbsp;<input type="text" id="numero" name="numero" value="" size="10" /> <a href="javascript:void(0)" onclick="help(event, 'helpNumero')"><img style="height: 16px; width: 16px" src="/html/images/help.png" title="Ayuda" alt="Ayuda"/></a>&nbsp; Descripción:&nbsp;
 				<input type="text" id="descripcion" name="descripcion" value="" size="50" /><a href="javascript:void(0)" onclick="help(event, 'helpDescripcion')"><img style="height: 16px; width: 16px" src="/html/images/help.png" title="Ayuda" alt="Ayuda"/></a> 
 			</td>
 		</tr>
