@@ -277,7 +277,7 @@ window.ReclamoPrestacionalJQueryLoadOriginal =
         src="<%= reclamoPrestacionalAssetBase %>view_reclamo_p0_patch.js?v=20260723-popup-clean-2"
         onerror="window.ReclamoPrestacionalAssetError('view_reclamo_p0_patch.js');"></script>
 <script type="text/javascript"
-	src="<%= reclamoPrestacionalAssetBase %>view_reclamo_prestacion_rules_patch.js?v=20260720-recuperable-neutro-2"
+	src="<%= reclamoPrestacionalAssetBase %>view_reclamo_prestacion_rules_patch.js?v=20260803-jquery-legacy-4"
 	onerror="window.ReclamoPrestacionalAssetError('view_reclamo_prestacion_rules_patch.js');"></script>
 <script type="text/javascript"
 	src="<%= reclamoPrestacionalAssetBase %>view_reclamo_produccion_7305_patch.js?v=20260803-jquery-legacy-2"

@@ -93,11 +93,16 @@ function asegurarMarcaEdicion(tipoAccion) {
     var destino;
 
     if (!marca.length) {
-        marca = jQuery("<input/>", {
-            type: "hidden",
-            id: namespace + "tipoaccionprestacion",
-            name: namespace + "tipoaccionprestacion"
-        });
+        marca = jQuery(document.createElement("input"));
+        marca.attr("type", "hidden");
+        marca.attr(
+                "id",
+                namespace + "tipoaccionprestacion"
+        );
+        marca.attr(
+                "name",
+                namespace + "tipoaccionprestacion"
+        );
 
         destino = formulario.length ? formulario : campo("datos_edicion_prestacion");
         destino.append(marca);
@@ -322,6 +327,13 @@ function instalarBotonesSeguros() {
         return;
     }
 
+    if (window.ReclamoPrestacionalEditorPatch &&
+            typeof window.ReclamoPrestacionalEditorPatch
+                    .limpiarResiduosEditor === "function") {
+        window.ReclamoPrestacionalEditorPatch
+                .limpiarResiduosEditor(editor);
+    }
+
     tipoAccion = detectarTipoAccion();
     etiqueta = tipoAccion === 1 ? "Autorizar Prestación" :
             (tipoAccion === 2 ? "Rechazar Prestación" : "Editar Prestación");
@@ -343,9 +355,11 @@ function instalarBotonesSeguros() {
     });
 
     if (!contenedor.length) {
-        contenedor = jQuery("<div/>", {
-            id: namespace + "rp_botones_prestacion_seguros"
-        });
+        contenedor = jQuery(document.createElement("div"));
+        contenedor.attr(
+                "id",
+                namespace + "rp_botones_prestacion_seguros"
+        );
         contenedor.css({
             marginTop: "10px",
             marginBottom: "10px"
@@ -355,16 +369,26 @@ function instalarBotonesSeguros() {
 
     contenedor.empty();
 
-    var botonGuardar = jQuery("<input/>", {
-        type: "button",
-        value: etiqueta,
-        id: namespace + "rp_guardar_prestacion_seguro"
-    });
-    var botonCancelar = jQuery("<input/>", {
-        type: "button",
-        value: "Cancelar Edición de la Prestación",
-        id: namespace + "rp_cancelar_prestacion_seguro"
-    });
+    var botonGuardar = jQuery(document.createElement("input"));
+    botonGuardar.attr("type", "button");
+    botonGuardar.attr(
+            "id",
+            namespace + "rp_guardar_prestacion_seguro"
+    );
+    botonGuardar.attr("value", etiqueta);
+    botonGuardar.val(etiqueta);
+
+    var botonCancelar = jQuery(document.createElement("input"));
+    var textoCancelar =
+            "Cancelar Edici\u00f3n de la Prestaci\u00f3n";
+
+    botonCancelar.attr("type", "button");
+    botonCancelar.attr(
+            "id",
+            namespace + "rp_cancelar_prestacion_seguro"
+    );
+    botonCancelar.attr("value", textoCancelar);
+    botonCancelar.val(textoCancelar);
 
     botonGuardar[0].onclick = function() {
         return guardarEdicionSeguro(tipoAccion);
