@@ -1,26 +1,26 @@
-# Reclamos Prestacionales: botones de prestaci√≥n y Recuperable SUR
+# Reclamos Prestacionales: botones de prestaciÛn y Recuperable SUR
 
-## S√≠ntomas
+## SÌntomas
 
-1. **Editar Prestaci√≥n** no completaba el guardado cuando la prestaci√≥n ten√≠a importes del √°rea m√©dica y `Recuperable SUR` permanec√≠a en `SELECCIONE`.
-2. **Cancelar Edici√≥n de la Prestaci√≥n** pod√≠a no hacer nada y dejar la pantalla en un estado parcial.
-3. El flujo todav√≠a permit√≠a seleccionar y persistir valores hist√≥ricos de Recuperable SUR e importe Reconocido SSS.
+1. **Editar PrestaciÛn** no completaba el guardado cuando la prestaciÛn tenÌa importes del ·rea mÈdica y `Recuperable SUR` permanecÌa en `SELECCIONE`.
+2. **Cancelar EdiciÛn de la PrestaciÛn** podÌa no hacer nada y dejar la pantalla en un estado parcial.
+3. El flujo todavÌa permitÌa seleccionar y persistir valores histÛricos de Recuperable SUR e importe Reconocido SSS.
 
 ## Causas
 
-### Cancelaci√≥n
+### CancelaciÛn
 
-La funci√≥n legacy separaba `tipoaccionprestacion` usando `-` y asum√≠a que siempre exist√≠a un identificador de prestaci√≥n. En edici√≥n com√∫n y en la precarga desde Compras, el hidden pod√≠a contener solamente `0`.
+La funciÛn legacy separaba `tipoaccionprestacion` usando `-` y asumÌa que siempre existÌa un identificador de prestaciÛn. En ediciÛn com˙n y en la precarga desde Compras, el hidden podÌa contener solamente `0`.
 
-El c√≥digo intentaba entonces modificar:
+El cÛdigo intentaba entonces modificar:
 
 `comboestadosreclamoundefined`
 
-Sin verificar que el elemento existiera. El resultado era una excepci√≥n JavaScript al asignar `selectedIndex`.
+Sin verificar que el elemento existiera. El resultado era una excepciÛn JavaScript al asignar `selectedIndex`.
 
-### Edici√≥n y alta
+### EdiciÛn y alta
 
-Las funciones legacy exig√≠an elegir Recuperable cuando exist√≠an importes del √°rea m√©dica. Adem√°s, las validaciones de montos interpretaban cualquier valor distinto de `NO Recuperable` como obligaci√≥n de informar `Reconocido SSS`.
+Las funciones legacy exigÌan elegir Recuperable cuando existÌan importes del ·rea mÈdica. Adem·s, las validaciones de montos interpretaban cualquier valor distinto de `NO Recuperable` como obligaciÛn de informar `Reconocido SSS`.
 
 Esa regla es incompatible con el nuevo requerimiento: Recuperable SUR debe permanecer neutral en `SELECCIONE`.
 
@@ -31,14 +31,14 @@ Para todas las prestaciones de Reclamo Prestacional:
 - `Recuperable SUR = 0 / SELECCIONE`;
 - el selector permanece deshabilitado;
 - `Reconocido SSS = 0`;
-- el campo Reconocido SSS permanece de s√≥lo lectura;
+- el campo Reconocido SSS permanece de sÛlo lectura;
 - las validaciones legacy no impiden agregar o editar por esta regla retirada;
-- el request de alta o edici√≥n siempre env√≠a ambos valores en cero;
-- el Action de edici√≥n vuelve a normalizar ambos valores, aunque el request sea manipulado.
+- el request de alta o ediciÛn siempre envÌa ambos valores en cero;
+- el Action de ediciÛn vuelve a normalizar ambos valores, aunque el request sea manipulado.
 
-La regla no modifica el checkbox general `chk_recuperable` del encabezado/revisi√≥n del reclamo. Ese indicador pertenece a otro nivel funcional y no debe confundirse con el Recuperable de cada prestaci√≥n.
+La regla no modifica el checkbox general `chk_recuperable` del encabezado/revisiÛn del reclamo. Ese indicador pertenece a otro nivel funcional y no debe confundirse con el Recuperable de cada prestaciÛn.
 
-## Implementaci√≥n
+## ImplementaciÛn
 
 ### Cliente
 
@@ -46,53 +46,53 @@ La regla no modifica el checkbox general `chk_recuperable` del encabezado/revisi
 
 - envuelve las funciones namespaced de agregar y editar;
 - atraviesa de forma controlada las validaciones antiguas;
-- normaliza los par√°metros antes de ejecutar el `.load()`;
-- reemplaza la cancelaci√≥n por una versi√≥n segura;
-- s√≥lo resetea el combo de estado cuando el elemento existe;
-- reaplica la regla despu√©s de cargas AJAX del editor y del listado.
+- normaliza los par·metros antes de ejecutar el `.load()`;
+- reemplaza la cancelaciÛn por una versiÛn segura;
+- sÛlo resetea el combo de estado cuando el elemento existe;
+- reaplica la regla despuÈs de cargas AJAX del editor y del listado.
 
-Se mantiene el JavaScript legacy intacto para evitar una reescritura masiva de un archivo con codificaci√≥n hist√≥rica.
+Se mantiene el JavaScript legacy intacto para evitar una reescritura masiva de un archivo con codificaciÛn histÛrica.
 
 ### Servidor
 
 `EditarPrestacionReclamoAction`:
 
 - ignora `recuperableSur` y `reconocidoSSS` enviados por el cliente;
-- publica la prestaci√≥n en edici√≥n ya normalizada;
+- publica la prestaciÛn en ediciÛn ya normalizada;
 - guarda siempre `recuperable=0` y `reconocidoSSS=0`.
 
-## Contrato autom√°tico
+## Contrato autom·tico
 
 `ReclamoPrestacionalPrestacionRulesContractTest` verifica:
 
 - orden de carga del patch;
 - envoltura de Agregar y Editar;
-- cancelaci√≥n sin acceso a elementos nulos;
-- par√°metros neutralizados;
+- cancelaciÛn sin acceso a elementos nulos;
+- par·metros neutralizados;
 - selects y campos bloqueados;
-- normalizaci√≥n del Action.
+- normalizaciÛn del Action.
 
-El workflow ejecuta tambi√©n `node --check` sobre el nuevo patch.
+El workflow ejecuta tambiÈn `node --check` sobre el nuevo patch.
 
 ## Smoke test obligatorio
 
 1. Abrir un reclamo con prestaciones existentes.
-2. Presionar el √≠cono **Editar Prestaci√≥n**.
-3. Confirmar que Recuperable muestra `SELECCIONE` y est√° deshabilitado.
-4. Confirmar que Reconocido SSS muestra `0` y est√° readonly.
-5. Modificar un dato v√°lido y presionar **Editar Prestaci√≥n**.
-6. Confirmar actualizaci√≥n de la fila y cierre del editor sin errores de consola.
-7. Volver a editar y presionar **Cancelar Edici√≥n de la Prestaci√≥n**.
-8. Confirmar retorno al formulario de carga y habilitaci√≥n de los combos de estado.
+2. Presionar el Ìcono **Editar PrestaciÛn**.
+3. Confirmar que Recuperable muestra `SELECCIONE` y est· deshabilitado.
+4. Confirmar que Reconocido SSS muestra `0` y est· readonly.
+5. Modificar un dato v·lido y presionar **Editar PrestaciÛn**.
+6. Confirmar actualizaciÛn de la fila y cierre del editor sin errores de consola.
+7. Volver a editar y presionar **Cancelar EdiciÛn de la PrestaciÛn**.
+8. Confirmar retorno al formulario de carga y habilitaciÛn de los combos de estado.
 9. Repetir desde una precarga iniciada en Compras.
-10. Agregar una prestaci√≥n nueva con importes del √°rea m√©dica sin seleccionar Recuperable.
-11. Recargar el reclamo desde base y verificar Recuperable vac√≠o y Reconocido SSS en cero.
-12. Verificar edici√≥n, autorizaci√≥n y rechazo para asegurar que la regla neutral no altera esos modos.
+10. Agregar una prestaciÛn nueva con importes del ·rea mÈdica sin seleccionar Recuperable.
+11. Recargar el reclamo desde base y verificar Recuperable vacÌo y Reconocido SSS en cero.
+12. Verificar ediciÛn, autorizaciÛn y rechazo para asegurar que la regla neutral no altera esos modos.
 
 ## Despliegue
 
-No requiere migraci√≥n de base de datos. Los registros hist√≥ricos no se actualizan masivamente; se normalizan cuando participan del flujo de edici√≥n y en las nuevas altas. Para limpiar hist√≥ricos en bloque se necesita una migraci√≥n separada, con definici√≥n expl√≠cita de alcance y auditor√≠a.
+No requiere migraciÛn de base de datos. Los registros histÛricos no se actualizan masivamente; se normalizan cuando participan del flujo de ediciÛn y en las nuevas altas. Para limpiar histÛricos en bloque se necesita una migraciÛn separada, con definiciÛn explÌcita de alcance y auditorÌa.
 
 ## Rollback
 
-Revertir el commit completo. No debe retirarse s√≥lo la capa de cliente o s√≥lo la normalizaci√≥n del Action, porque volver√≠a a existir divergencia entre pantalla, sesi√≥n y persistencia.
+Revertir el commit completo. No debe retirarse sÛlo la capa de cliente o sÛlo la normalizaciÛn del Action, porque volverÌa a existir divergencia entre pantalla, sesiÛn y persistencia.

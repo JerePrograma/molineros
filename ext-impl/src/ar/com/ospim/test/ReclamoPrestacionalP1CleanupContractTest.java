@@ -10,9 +10,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Contrato focalizado de la reparaciÃ³n fÃ­sica del editor JSP.
+ * Contrato focalizado de la reparación física del editor JSP.
  *
- * Las deudas histÃ³ricas de servidor permanecen en un diagnÃ³stico separado y
+ * Las deudas históricas de servidor permanecen en un diagnóstico separado y
  * no bloquean cambios exclusivos de vista/editor.
  */
 public final class ReclamoPrestacionalP1CleanupContractTest {
@@ -30,7 +30,7 @@ public final class ReclamoPrestacionalP1CleanupContractTest {
         );
 
         assertContains(
-                "tipo de ediciÃ³n conservado",
+                "tipo de edición conservado",
                 editor,
                 "tipoedicion = (Integer) request.getAttribute(\"tipoEdicion\")"
         );
@@ -40,12 +40,12 @@ public final class ReclamoPrestacionalP1CleanupContractTest {
                 "fechaseccional.setTime(prestacionEnEdicion.getComprobanteFecha())"
         );
         assertContains(
-                "fecha de prestaciÃ³n conservada",
+                "fecha de prestación conservada",
                 editor,
                 "fechaPrestacion.setTime(prestacionEnEdicion.getFechaPrestacion())"
         );
         assertContains(
-                "caption de ediciÃ³n conservado",
+                "caption de edición conservado",
                 editor,
                 "captionbotoncancelar=\"Cancelar Edicion de la Prestacion\""
         );
@@ -60,7 +60,7 @@ public final class ReclamoPrestacionalP1CleanupContractTest {
                 "ocultarSeccional = (String) request.getAttribute(\"ocultar\")"
         );
         assertOccurrences(
-                "preparaciÃ³n legacy no duplicada",
+                "preparación legacy no duplicada",
                 editor,
                 "if(prestacionEnEdicion != null  ){",
                 1
@@ -72,17 +72,17 @@ public final class ReclamoPrestacionalP1CleanupContractTest {
                 "HtmlUtil.escapeJS"
         );
         assertContains(
-                "inicializaciÃ³n posterior al render",
+                "inicialización posterior al render",
                 editor,
                 "jQuery(function() {"
         );
         assertContains(
-                "cÃ³digo leÃ­do desde el control renderizado",
+                "código leído desde el control renderizado",
                 editor,
                 "codigoSeguimiento_filtro_edit\").val() || \"\""
         );
         assertContains(
-                "bÃºsqueda de nomenclador defensiva",
+                "búsqueda de nomenclador defensiva",
                 editor,
                 "typeof buscarNomenclador === \"function\""
         );
@@ -92,7 +92,7 @@ public final class ReclamoPrestacionalP1CleanupContractTest {
                 "<%\n}\n%>"
         );
         assertNotContains(
-                "asignaciÃ³n duplicada eliminada",
+                "asignación duplicada eliminada",
                 editor,
                 "jQuery(\"#<portlet:namespace />idRegistro\").val"
         );
@@ -120,7 +120,7 @@ public final class ReclamoPrestacionalP1CleanupContractTest {
 
         if (contenido.indexOf(esperado) < 0) {
             throw new AssertionError(
-                    etiqueta + ": no se encontrÃ³ [" + esperado + "]"
+                    etiqueta + ": no se encontró [" + esperado + "]"
             );
         }
     }
@@ -132,7 +132,7 @@ public final class ReclamoPrestacionalP1CleanupContractTest {
 
         if (contenido.indexOf(prohibido) >= 0) {
             throw new AssertionError(
-                    etiqueta + ": se encontrÃ³ [" + prohibido + "]"
+                    etiqueta + ": se encontró [" + prohibido + "]"
             );
         }
     }
