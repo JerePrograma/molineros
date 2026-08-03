@@ -13,7 +13,8 @@ import java.nio.file.Paths;
  */
 public final class ReclamoPrestacionalTabGuardContractTest {
 
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset ISO_8859_1 =
+        Charset.forName("ISO-8859-1");
 
     private ReclamoPrestacionalTabGuardContractTest() {
     }
@@ -87,7 +88,10 @@ public final class ReclamoPrestacionalTabGuardContractTest {
 
     private static String leer(String ruta) throws Exception {
         Path path = Paths.get(ruta);
-        return new String(Files.readAllBytes(path), UTF_8);
+        return new String(
+        Files.readAllBytes(path),
+        ISO_8859_1
+);
     }
 
     private static void assertContains(

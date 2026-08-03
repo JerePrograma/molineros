@@ -19,7 +19,8 @@ import java.util.regex.Pattern;
 /** Contrato semantico del ensamblado segmentado de view_reclamo. */
 public final class ReclamoPrestacionalSegmentationContractTest {
 
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset ISO_8859_1 =
+        Charset.forName("ISO-8859-1");
     private static final Charset LATIN_1 = Charset.forName("ISO-8859-1");
 
     private static final String JSP_DIR =

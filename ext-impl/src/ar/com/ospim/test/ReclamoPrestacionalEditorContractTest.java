@@ -8,7 +8,8 @@ import java.nio.file.Paths;
 /** Contrato textual del editor de prestaciones y sus guards AJAX. */
 public final class ReclamoPrestacionalEditorContractTest {
 
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset ISO_8859_1 =
+        Charset.forName("ISO-8859-1");
     private static final Charset LATIN_1 = Charset.forName("ISO-8859-1");
 
     private ReclamoPrestacionalEditorContractTest() {

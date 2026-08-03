@@ -387,6 +387,10 @@ function instalarBotonesSeguros() {
     );
     botonGuardar.attr("value", etiqueta);
     botonGuardar.val(etiqueta);
+    botonGuardar.css(
+        "marginRight",
+        "8px"
+    );
 
     var botonCancelar = jQuery(document.createElement("input"));
     var textoCancelar =
@@ -470,7 +474,13 @@ function instalarReglas() {
             cancelarEdicionSeguro;
 
     envolverAlta();
-    normalizarPrestacionInicialEnSesion(valorRecuperableInicial);
+
+    if (hayEdicionPrestacionActiva()) {
+        normalizarPrestacionInicialEnSesion(
+            valorRecuperableInicial
+        );
+    }
+
     forzarRecuperableSeleccione();
     normalizarListadoVisual();
     instalarBotonesSeguros();

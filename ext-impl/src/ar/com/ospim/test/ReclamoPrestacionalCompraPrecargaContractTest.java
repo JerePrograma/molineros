@@ -25,6 +25,10 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
             "ext-web/docroot/html/portlet/autorizaciones/"
                     + "reclamos_prestacionales/view_reclamo.jspf";
 
+    private static final String VIEW_JS =
+            "ext-web/docroot/html/portlet/autorizaciones/"
+                    + "reclamos_prestacionales/view_reclamo.js";
+
     private static final String CONTEXTO =
             "ext-web/docroot/html/portlet/autorizaciones/"
                     + "reclamos_prestacionales/view_reclamo_contexto.jspf";
@@ -49,6 +53,7 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
     public static void main(String[] args) throws Exception {
         String service = leer(SERVICE);
         String view = leer(VIEW);
+        String viewJs = leer(VIEW_JS);
         String contexto = leer(CONTEXTO);
         String cabecera = leer(CABECERA);
         String recuperable = leer(RECUPERABLE);
@@ -254,30 +259,31 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
                 "Object tipoEdicionOriginalAntesDePrestaciones"
         );
 
-        contiene(
+        noContiene(
                 view,
-                "corrige el modo visual despues del JavaScript legacy",
+                "no conserva compensacion visual duplicada",
                 "function asegurarAltaInicialCompras()"
         );
-        contiene(
+        noContiene(
                 view,
-                "no oculta una edicion explicita con contenido",
-                "editor.children().length"
+                "no conserva temporizador compensatorio",
+                "setTimeout(asegurarAltaInicialCompras"
         );
         contiene(
-                view,
-                "oculta el editor vacio",
-                "editor.hide().attr(\"aria-hidden\", \"true\")"
+                viewJs,
+                "muestra editor solo con contenido real",
+                "if (editorPrestacion.children().length) {"
         );
-        contiene(
-                view,
-                "muestra el formulario de alta",
-                "ingreso.show().attr(\"aria-hidden\", \"false\")"
+        noContiene(
+                viewJs,
+                "Compras no equivale a edicion",
+                "values.esBorradorCompras ||"
         );
-        contiene(
-                view,
-                "programa la correccion despues de los scripts",
-                "window.setTimeout(asegurarAltaInicialCompras, 0);"
+        noContiene(
+                viewJs,
+                "no usa el origen Compras para mostrar editor",
+                "reclamoPrestacionalViewConfig.values"
+                        + ".esBorradorCompras ||"
         );
 
         antes(

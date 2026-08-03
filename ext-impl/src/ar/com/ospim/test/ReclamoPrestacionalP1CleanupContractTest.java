@@ -17,7 +17,8 @@ import java.nio.file.Paths;
  */
 public final class ReclamoPrestacionalP1CleanupContractTest {
 
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset ISO_8859_1 =
+        Charset.forName("ISO-8859-1");
     private static final Charset LATIN_1 = Charset.forName("ISO-8859-1");
 
     private ReclamoPrestacionalP1CleanupContractTest() {

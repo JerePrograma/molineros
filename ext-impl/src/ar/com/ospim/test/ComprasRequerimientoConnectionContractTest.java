@@ -8,7 +8,8 @@ import java.nio.file.Paths;
 /** Contrato textual para evitar bloqueos del pool al cargar requerimientos. */
 public final class ComprasRequerimientoConnectionContractTest {
 
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset ISO_8859_1 =
+        Charset.forName("ISO-8859-1");
 
     private static final String SERVICE_DIR =
             "ext-impl/src/ar/com/ospim/compras/requerimientos/service/";
@@ -99,7 +100,10 @@ public final class ComprasRequerimientoConnectionContractTest {
 
     private static String leer(String ruta) throws Exception {
         Path path = Paths.get(ruta);
-        return new String(Files.readAllBytes(path), UTF_8);
+        return new String(
+        Files.readAllBytes(path),
+        ISO_8859_1
+);
     }
 
     private static String extraerMetodo(String contenido, String firma) {

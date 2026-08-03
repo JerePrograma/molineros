@@ -8,7 +8,8 @@ import java.nio.file.Paths;
 /** Contrato textual de acciones de prestacion y Recuperable SUR. */
 public final class ReclamoPrestacionalPrestacionRulesContractTest {
 
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset ISO_8859_1 =
+        Charset.forName("ISO-8859-1");
     private static final String JSP_DIR =
             "ext-web/docroot/html/portlet/autorizaciones/"
                     + "reclamos_prestacionales/";
@@ -37,8 +38,69 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
                 view,
                 "carga del contrato de prestacion",
                 "view_reclamo_prestacion_rules_patch.js"
-                        + "?v=20260720-recuperable-neutro-2"
+                        + "?v=20260803-compras-alta-directa-2"
         );
+
+        contiene(
+                view,
+                "invalida cache de la seleccion inicial",
+                "view_reclamo.js"
+                        + "?v=20260803-compras-alta-directa-2"
+        );
+
+        contiene(
+                reglas,
+                "detecta una edicion real",
+                "function hayEdicionPrestacionActiva()"
+        );
+        contiene(
+                reglas,
+                "exige contenido real en el editor",
+                "editor.children().length > 0"
+        );
+        contiene(
+                reglas,
+                "exige idRegistro renderizado",
+                "idRegistro.length > 0"
+        );
+        contiene(
+                reglas,
+                "normaliza solo una edicion activa",
+                "if (hayEdicionPrestacionActiva()) {"
+        );
+        contiene(
+                reglas,
+                "llamada protegida por el guard",
+                "if (hayEdicionPrestacionActiva()) {\n"
+                        + "        normalizarPrestacionInicialEnSesion("
+        );
+
+        contiene(
+                reglas,
+                "separacion de botones mediante CSS",
+                "botonGuardar.css("
+        );
+        contiene(
+                reglas,
+                "margen derecho del boton guardar",
+                "\"marginRight\","
+        );
+        noContiene(
+                reglas,
+                "sin separador textual anonimo",
+                "contenedor.append(\"\\u00a0\\u00a0\")"
+        );
+        noContiene(
+                reglas,
+                "sin escapes Unicode en el parche focalizado",
+                "\\u00"
+        );
+        contiene(
+                reglas,
+                "texto directo de cancelacion",
+                "\"Cancelar Edición de la Prestación\""
+        );
+
         contiene(
                 view,
                 "captura del load nativo",
@@ -224,7 +286,10 @@ public final class ReclamoPrestacionalPrestacionRulesContractTest {
 
     private static String leer(String ruta) throws Exception {
         Path path = Paths.get(ruta);
-        return new String(Files.readAllBytes(path), UTF_8);
+        return new String(
+        Files.readAllBytes(path),
+        ISO_8859_1
+);
     }
 
     private static void contiene(

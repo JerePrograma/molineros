@@ -265,8 +265,8 @@ window.ReclamoPrestacionalJQueryLoadOriginal =
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jspf" %>
 
 <script type="text/javascript"
-	src="<%= reclamoPrestacionalAssetBase %>view_reclamo.js?v=20260723-editor-dom-clean-1"
-	onerror="window.ReclamoPrestacionalAssetError('view_reclamo.js');"></script>
+    src="<%= reclamoPrestacionalAssetBase %>view_reclamo.js?v=20260803-compras-alta-directa-2"
+    onerror="window.ReclamoPrestacionalAssetError('view_reclamo.js');"></script>
 <script type="text/javascript"
         src="<%= reclamoPrestacionalAssetBase %>view_reclamo_tab_guard.js?v=20260717-initial-state-1"
         onerror="window.ReclamoPrestacionalAssetError('view_reclamo_tab_guard.js');"></script>
@@ -277,8 +277,8 @@ window.ReclamoPrestacionalJQueryLoadOriginal =
         src="<%= reclamoPrestacionalAssetBase %>view_reclamo_p0_patch.js?v=20260723-popup-clean-2"
         onerror="window.ReclamoPrestacionalAssetError('view_reclamo_p0_patch.js');"></script>
 <script type="text/javascript"
-	src="<%= reclamoPrestacionalAssetBase %>view_reclamo_prestacion_rules_patch.js?v=20260803-jquery-legacy-4"
-	onerror="window.ReclamoPrestacionalAssetError('view_reclamo_prestacion_rules_patch.js');"></script>
+    src="<%= reclamoPrestacionalAssetBase %>view_reclamo_prestacion_rules_patch.js?v=20260803-compras-alta-directa-2"
+    onerror="window.ReclamoPrestacionalAssetError('view_reclamo_prestacion_rules_patch.js');"></script>
 <script type="text/javascript"
 	src="<%= reclamoPrestacionalAssetBase %>view_reclamo_produccion_7305_patch.js?v=20260803-jquery-legacy-2"
 	onerror="window.ReclamoPrestacionalAssetError('view_reclamo_produccion_7305_patch.js');"></script>
