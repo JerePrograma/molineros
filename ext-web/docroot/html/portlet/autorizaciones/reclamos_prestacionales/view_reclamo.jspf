@@ -31,6 +31,20 @@ if (handoffComprasModoValido) {
 }
 %>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_contexto.jspf" %>
+<%
+boolean neutralizarEdicionInicialCompras =
+        esBorradorCompras
+        && request.getAttribute("tipoEdicion") == null
+        && request.getSession().getAttribute(
+                WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION
+        ) != null;
+
+if (neutralizarEdicionInicialCompras) {
+    request.getSession().removeAttribute(
+            WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION
+    );
+}
+%>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_inicio_formulario.jspf" %>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_cabecera.jspf" %>
 <%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo_afiliado_diagnostico.jspf" %>
@@ -62,3 +76,41 @@ if (aplicarTipoEdicionComun) {
 <script type="text/javascript"
         src="<%= reclamoPrestacionalAssetBase %>view_reclamo_compras_surge_patch.js?v=20260723-editor-dom-clean-1"
         onerror="window.ReclamoPrestacionalAssetError('view_reclamo_compras_surge_patch.js');"></script>
+<script type="text/javascript">
+(function(window, jQuery) {
+    if (!jQuery) {
+        return;
+    }
+
+    var config = window.ReclamoPrestacionalViewConfig || {};
+    var namespace = config.namespace || "";
+    var values = config.values || {};
+
+    function esBorradorCompras() {
+        return values.esBorradorCompras === true ||
+                String(values.esBorradorCompras) === "true";
+    }
+
+    function asegurarAltaInicialCompras() {
+        var editor;
+        var ingreso;
+
+        if (!esBorradorCompras()) {
+            return;
+        }
+
+        editor = jQuery("#" + namespace + "datos_edicion_prestacion");
+        ingreso = jQuery("#" + namespace + "datos_prestacion_ingreso");
+
+        if (!editor.length || editor.children().length) {
+            return;
+        }
+
+        editor.hide().attr("aria-hidden", "true");
+        ingreso.show().attr("aria-hidden", "false");
+    }
+
+    window.setTimeout(asegurarAltaInicialCompras, 0);
+    jQuery(asegurarAltaInicialCompras);
+})(window, window.jQuery);
+</script>
