@@ -76,3 +76,6 @@ if (aplicarTipoEdicionComun) {
 <script type="text/javascript"
         src="<%= reclamoPrestacionalAssetBase %>view_reclamo_compras_surge_patch.js?v=20260723-editor-dom-clean-1"
         onerror="window.ReclamoPrestacionalAssetError('view_reclamo_compras_surge_patch.js');"></script>
+<script type="text/javascript"
+        src="<%= reclamoPrestacionalAssetBase %>view_reclamo_integridad_patch.js?v=20260803-revision-comprobante-ayuda-1"
+        onerror="window.ReclamoPrestacionalAssetError('view_reclamo_integridad_patch.js');"></script>

@@ -173,11 +173,19 @@ span-fixed-size {
 		name="<portlet:namespace />tipoNomencladorSeguimiento_filtro" size="8"
 		value='0' />
 
-	<div id="helpComprobantes" class="containerPlus draggable {buttons:'c', skin:'default', width:'700',title:'Ayuda',closed:'true'}" style="top: 500px; left: 200px">
-			Ejemplo de factura: CUIT 30999999999 FCP B 00001 - 00000028 F. Emisión 2/07/2020 <br>
-			Comprobante: FCP,  <br>
-			Letra: B,  <br>
-			Suc.: 00001 ( o sólo el n&uacute;mero 1 y el sistema autocompletar&aacute; los 0 a izquierda al guardar)  <br>
-			Nro: 00000028 ( o sólo el n&uacute;mero 28 y el sistema autocompletar&aacute; los 0 a izquierda al guardar)  <br>
-			CUIT: 30999999999
+	<div id="<portlet:namespace />helpComprobantes"
+		 class="portlet-msg-info"
+		 role="dialog"
+		 aria-hidden="true"
+		 style="display:none; position:absolute; z-index:1000; width:680px; box-sizing:border-box;">
+		<div style="text-align:right;">
+			<a href="javascript:void(0);"
+			   onclick="<portlet:namespace />cerrarAyudaComprobantes(); return false;">Cerrar</a>
+		</div>
+		Ejemplo de factura: CUIT 30999999999 FCP B 00001 - 00000028 F. Emisión 2/07/2020 <br>
+		Comprobante: FCP,  <br>
+		Letra: B,  <br>
+		Suc.: 00001 ( o sólo el n&uacute;mero 1 y el sistema autocompletar&aacute; los 0 a izquierda al guardar)  <br>
+		Nro: 00000028 ( o sólo el n&uacute;mero 28 y el sistema autocompletar&aacute; los 0 a izquierda al guardar)  <br>
+		CUIT: 30999999999
 	</div>
