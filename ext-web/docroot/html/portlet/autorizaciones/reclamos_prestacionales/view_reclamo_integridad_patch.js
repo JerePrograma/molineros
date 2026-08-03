@@ -161,7 +161,9 @@ function puedeGestionarRevisiones() {
 
 function cantidadRevisionesActivas() {
     var control = campo("cantrevisionesactivas");
-    return control.length ? entero(control.val()) : entero(values.cantRevisiones);
+    var valor = control.length ? String(control.val() || "") : "";
+
+    return valor !== "" ? entero(valor) : entero(values.cantRevisiones);
 }
 
 function hayRevisionActivaEnListado() {
