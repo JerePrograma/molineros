@@ -2,6 +2,9 @@ package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
+import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
+import ar.com.ospim.autorizaciones.services.ReclamoPrestacionServiceImpl;
+import com.liferay.portal.model.User;
 import ar.com.ospim.util.ConnectionHelper;
 
 import com.liferay.portal.kernel.log.Log;
@@ -288,5 +291,163 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
 
     protected interface Parametrizador {
         void parametrizar(PreparedStatement stmt) throws Exception;
+    }
+
+    public void reservarCreacion(
+            Connection con,
+            final int idRequerimientoCompra,
+            final String tokenReserva,
+            final String usuario) throws Exception {
+
+        validarIdRequerimiento(
+                idRequerimientoCompra
+        );
+
+        validarToken(
+                tokenReserva
+        );
+
+        ejecutarBoolean(
+                con,
+                SQL_RESERVAR,
+                new Parametrizador() {
+                    public void parametrizar(
+                            PreparedStatement stmt)
+                            throws Exception {
+
+                        stmt.setInt(
+                                1,
+                                idRequerimientoCompra
+                        );
+
+                        stmt.setString(
+                                2,
+                                tokenReserva
+                        );
+
+                        stmt.setString(
+                                3,
+                                normalizarUsuario(usuario)
+                        );
+                    }
+                },
+                "No se pudo reservar la creación "
+                        + "del Reclamo Prestacional."
+        );
+    }
+
+    protected boolean ejecutarBoolean(
+            Connection con,
+            String sql,
+            Parametrizador parametrizador,
+            String mensajeError) throws Exception {
+
+        if (con == null) {
+            throw new Exception(
+                    "No se informó la conexión transaccional."
+            );
+        }
+
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            stmt =
+                    con.prepareStatement(
+                            sql
+                    );
+
+            parametrizador.parametrizar(
+                    stmt
+            );
+
+            rs =
+                    stmt.executeQuery();
+
+            if (!rs.next()
+                    || !rs.getBoolean(1)) {
+
+                throw new Exception(
+                        mensajeError
+                );
+            }
+
+            return true;
+
+        } finally {
+            closeQuietly(
+                    rs
+            );
+
+            ConnectionHelper.cerrar(
+                    stmt
+            );
+        }
+    }
+
+    public int crearYVincular(
+            int idRequerimientoCompra,
+            String tokenReserva,
+            ReclamoPrestacional reclamo,
+            User user) throws Exception {
+
+        Connection con = null;
+
+        String usuario =
+                user != null
+                        ? user.getScreenName()
+                        : "sistema";
+
+        try {
+            con =
+                    ConnectionHelper
+                            .getConnectionForTransaction();
+
+            reservarCreacion(
+                    con,
+                    idRequerimientoCompra,
+                    tokenReserva,
+                    usuario
+            );
+
+            int idReclamo =
+                    new ReclamoPrestacionServiceImpl()
+                            .insertar(
+                                    con,
+                                    reclamo,
+                                    user
+                            );
+
+            if (idReclamo <= 0) {
+                throw new Exception(
+                        "La inserción no devolvió un identificador "
+                                + "válido de Reclamo Prestacional."
+                );
+            }
+
+            finalizarCreacion(
+                    con,
+                    idRequerimientoCompra,
+                    tokenReserva,
+                    idReclamo,
+                    usuario
+            );
+
+            con.commit();
+
+            return idReclamo;
+
+        } catch (Exception e) {
+            ConnectionHelper.rollback(
+                    con
+            );
+
+            throw e;
+
+        } finally {
+            ConnectionHelper.cerrar(
+                    con
+            );
+        }
     }
 }

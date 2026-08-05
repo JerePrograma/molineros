@@ -1,6 +1,8 @@
 package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
+import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
+import com.liferay.portal.model.User;
 
 public class RequerimientoCompraReclamoPrestacionalServiceUtil {
 
@@ -81,5 +83,19 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
     }
 
     private RequerimientoCompraReclamoPrestacionalServiceUtil() {
+    }
+
+    public static int crearYVincular(
+            int idRequerimientoCompra,
+            String tokenReserva,
+            ReclamoPrestacional reclamo,
+            User user) throws Exception {
+
+        return getInstance().crearYVincular(
+                idRequerimientoCompra,
+                tokenReserva,
+                reclamo,
+                user
+        );
     }
 }

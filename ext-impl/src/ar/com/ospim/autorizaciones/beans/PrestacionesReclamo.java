@@ -958,6 +958,17 @@ public class PrestacionesReclamo implements Serializable {
 	public void setIdTercerizadora(String idTercerizadora) {
 	    this.idTercerizadora = idTercerizadora;
 	}
+
+    public boolean tieneReferenciaTecnicaValida() {
+        boolean tienePrestacion =
+                idPrestacion > 0;
+
+        boolean tieneMedicamento =
+                idMedicamento > 0;
+
+        return tienePrestacion
+                != tieneMedicamento;
+    }
 }
 
 

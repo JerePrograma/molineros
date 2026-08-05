@@ -37,9 +37,15 @@ StringBuilder tabValues = new StringBuilder("datos");
 
 String cmd = (String) request.getAttribute(Constants.CMD);
 
-if (contextoCompra != null) {
+if (contextoCompra != null
+        && idReclamoAux == 0) {
+
     cmd = Constants.ADD;
-    request.setAttribute(Constants.CMD, Constants.ADD);
+
+    request.setAttribute(
+            Constants.CMD,
+            Constants.ADD
+    );
 }
 
 boolean showReadOnlyReclamPrestac=PermissionUtil.userContainsRole(user,WebKeysAutorizaciones.ROL_CONSULTA_RECLAMOS_PRESTACIONALES);
@@ -63,8 +69,7 @@ if(tabValue == null || StringUtils.checkEmpty(tabValue)){
 
 if (idReclamoAux == 0 ){
 	tabNames="Datos Generales" ;
-	 tabValues.append("datos");
-	
+
 }else if ("REINTEGRO".equalsIgnoreCase(reclamoprestacional.getTipoPedido())){
 		
 	tabNames="Datos Generales,CTA Bancaria, Archivos, Histórico de Movimientos" ;

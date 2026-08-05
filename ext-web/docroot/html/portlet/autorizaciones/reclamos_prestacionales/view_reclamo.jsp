@@ -5,8 +5,20 @@
 <%@ page
 	import="ar.com.ospim.autorizaciones.services.PreAutorizacionServiceUtil"%>
 <%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacional" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto" %>
 <%
+ReclamoPrestacional reclamoprestacional =
+        (ReclamoPrestacional) request
+                .getSession()
+                .getAttribute(
+                        WebKeysAutorizaciones
+                                .RECLAMO_PRESTACION_EN_EDICION
+                );
+
+boolean reclamoPersistido =
+        reclamoprestacional != null
+        && reclamoprestacional.getId_reclamo() > 0;
 String reclamoPortletNamespace = renderResponse.getNamespace();
 String cmdParametroCompras = ParamUtil.getString(
         request,
@@ -45,32 +57,52 @@ boolean handoffReclamoComprasValido =
 
 if (handoffReclamoComprasValido) {
     request.setAttribute(Constants.CMD, Constants.ADD);
-} else if (contextoReclamoCompras != null
-        || !StringUtils.checkEmpty(nonceReclamoCompras)
-        || "compras".equalsIgnoreCase(origenReclamoCompras)) {
+} else if (!reclamoPersistido
+        && Constants.ADD.equalsIgnoreCase(
+                cmdParametroCompras
+        )
+        && (contextoReclamoCompras != null
+            || !StringUtils.checkEmpty(
+                    nonceReclamoCompras
+            )
+            || "compras".equalsIgnoreCase(
+                    origenReclamoCompras
+            ))) {
 
     request.getSession().removeAttribute(
-            WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+            WebKeysCompras
+                    .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
     );
+
     request.getSession().removeAttribute(
-            WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION
+            WebKeysAutorizaciones
+                    .RECLAMO_PRESTACION_EN_EDICION
     );
+
     request.getSession().removeAttribute(
-            WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
+            WebKeysAutorizaciones
+                    .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
     );
+
     request.getSession().removeAttribute(
-            WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION
+            WebKeysAutorizaciones
+                    .PRESTACION_EN_PROCESO_DE_EDICION
     );
+
     request.getSession().removeAttribute(
-            WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION
+            WebKeysAutorizaciones
+                    .LISTADO_REVISIONES_RECLAMOS_EN_SESION
     );
+
     request.getSession().removeAttribute(
-            WebKeysAutorizaciones.LISTADO_CONTACTOS_RECLAMOS_EN_SESION
+            WebKeysAutorizaciones
+                    .LISTADO_CONTACTOS_RECLAMOS_EN_SESION
     );
-    request.getSession().removeAttribute(
-            WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS
+
+    request.setAttribute(
+            Constants.CMD,
+            Constants.VIEW
     );
-    request.setAttribute(Constants.CMD, Constants.VIEW);
 }
 
 Calendar prestacionFecha = CalendarFactoryUtil.getCalendar();
@@ -1459,15 +1491,23 @@ span-fixed-size {
 						<legend>
 							<liferay-ui:message key="Justificación Médica" />
 						</legend>
-						<textarea name="<%= reclamoPortletNamespace %>justificacionmedcica_reclamo"
-							id="<%= reclamoPortletNamespace %>justificacionmedcica_reclamo" rows="4"
-							cols="80" onkeyup="convertToUppercase(this)"
-							onchange="validarevision();"
-							<% if (!esEdicion ||( reclamoprestacional!=null && reclamoprestacional.getTipo_gestion_cierre_reclamo()>0 ) ) { %>
-							disabled='disabled' <%}%>
-							id="<%= reclamoPortletNamespace %>justificacionmedcica_reclamo"
-							name="<%= reclamoPortletNamespace %>justificacionmedcica_reclamo">
-				<%=reclamoprestacional!=null && reclamoprestacional.getJustificaconMedica()!=null ?reclamoprestacional.getJustificaconMedica() :""%></textarea>
+						<textarea
+                            id="<%= reclamoPortletNamespace %>justificacionmedcica_reclamo"
+                            name="<%= reclamoPortletNamespace %>justificacionmedcica_reclamo"
+                            rows="4"
+                            cols="80"
+                            onkeyup="convertToUppercase(this)"
+                            onchange="validarevision();"
+                            <% if (!esEdicion
+                                    || (reclamoprestacional != null
+                                        && reclamoprestacional
+                                                .getTipo_gestion_cierre_reclamo() > 0)) { %>
+                                disabled="disabled"
+                            <% } %>>
+                        <%= reclamoprestacional != null
+                                && reclamoprestacional.getJustificaconMedica() != null
+                                ? reclamoprestacional.getJustificaconMedica()
+                                : "" %></textarea>
 					</fieldset>
 				</td>
 				<td colspan="5">
@@ -1757,7 +1797,7 @@ span-fixed-size {
 <script type="text/javascript">
 
 var popupMD;
-
+var guardandoReclamo = false;
 var popupDomicilio;
 
 jQuery('#<%= reclamoPortletNamespace %>divResultadoActualizarOK').hide();
@@ -1773,7 +1813,15 @@ jQuery("#<%= reclamoPortletNamespace %>lista_contactos_reclamo").hide();
 jQuery("#<%= reclamoPortletNamespace %>justificacion_medica_reclamo").hide();
 jQuery("#<%= reclamoPortletNamespace %>caso_vinculado").val(<%=caso_vinculado%>);
 jQuery('#<%= reclamoPortletNamespace %>reconocidoSSS').attr('readonly', true);
+var nom_seleccionado_edit =
+    jQuery(
+        "#<%= reclamoPortletNamespace %>nom_seleccionado_edit"
+    ).val();
 
+var tipoNomenclador_edit =
+    jQuery(
+        "#<%= reclamoPortletNamespace %>tipoNomenclador_edit"
+    ).val();
 
 var addprestacion=false;
 var load =false;
@@ -2373,27 +2421,56 @@ function <%= reclamoPortletNamespace %>cerrarNm(){
 }
 
 
-function DatosRevisionOk(){
-	 
-	var dianro  = jQuery("#<%= reclamoPortletNamespace %>fecharevisionDia").val();
-	var mesnro  = jQuery("#<%= reclamoPortletNamespace %>fecharevisionMes").val()  ;
-	var anionro   = jQuery("#<%= reclamoPortletNamespace %>fecharevisionAnio").val();
-	 
-	  
-	if (dia || mes || anio){
-	   alert("Debe ingresar la fecha de Revisi\u00F3n");
-		return false ;
-	}
-	if (dia || mes || anio ||  jQuery('#<%= reclamoPortletNamespace %>resolucion').val()=='' ){
-		   alert("Debe ingresar la resoluci\u00F3n");
-			return false ;
-		}
-		
-	var resolucion   =document.getElementById("<%= reclamoPortletNamespace %>resolucion");
-	if (resolucion.selectedIndex==0){
-		alert('Debe seleccionar el tipo de resolucion de la lista.');
-		return false ;
-	}		
+function DatosRevisionOk() {
+    var diaRevision =
+        jQuery(
+            "#<%= reclamoPortletNamespace %>fecharevisionDia"
+        ).val();
+
+    var mesRevision =
+        jQuery(
+            "#<%= reclamoPortletNamespace %>fecharevisionMes"
+        ).val();
+
+    var anioRevision =
+        jQuery(
+            "#<%= reclamoPortletNamespace %>fecharevisionAnio"
+        ).val();
+
+    var diaRevisionInvalido =
+        isNaN(parseInt(diaRevision, 10));
+
+    var mesRevisionInvalido =
+        isNaN(parseInt(mesRevision, 10));
+
+    var anioRevisionInvalido =
+        isNaN(parseInt(anioRevision, 10));
+
+    if (diaRevisionInvalido
+            || mesRevisionInvalido
+            || anioRevisionInvalido) {
+
+        alert(
+            "Debe ingresar una fecha de Revisión válida."
+        );
+
+        return false;
+    }
+
+    var resolucion =
+        document.getElementById(
+            "<%= reclamoPortletNamespace %>resolucion"
+        );
+
+    if (resolucion == null
+            || resolucion.selectedIndex == 0) {
+
+        alert(
+            "Debe seleccionar el tipo de resolución."
+        );
+
+        return false;
+    }
 	
 	var diaExist  = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fecharevisionDia").val()));
 	var mesExist  = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fecharevisionMes").val()));
@@ -2598,12 +2675,26 @@ function ValidarDatosObligatorios(Edicion){
 				resp=false;
 			}
 		
-		if(tipoSelecttipopedido == 3){ //si estado = cerrado
-			if (jQuery('#<%= reclamoPortletNamespace %>cantrevisionesactivas').val()<1  && resp ){ // no hay revisiones activas 
-				alert('Recuerde, debe tener registrada por lo menos una revisión activa para el cierre del caso!!!!.');			
-				resp=false;
-			}
-		}
+		if (jQuery(
+                "#<%= reclamoPortletNamespace %>estado"
+            ).val() == "3") {
+
+            if (parseInt(
+                    jQuery(
+                        "#<%= reclamoPortletNamespace %>cantrevisionesactivas"
+                    ).val(),
+                    10
+                ) < 1
+                && resp) {
+
+                alert(
+                    "Debe registrar por lo menos una revisión "
+                            + "activa para cerrar el reclamo."
+                );
+
+                resp = false;
+            }
+        }
 		
 		
 // SI ES CIERRE DEL CASO NO SE CONTROLA SI SE DIERON DE BAJA TODAS LAS PRESTACIONES
@@ -2665,30 +2756,52 @@ function ValidarDatosObligatorios(Edicion){
 
 
 function <%= reclamoPortletNamespace %>saveReclamo() {
-	
-/* 	// para el alta
-	habilitarControlesCierre();	 */
-	
-	if ( ValidarDatosObligatorios(false))  {
-				
-	/*esta chanchada es porque el action toma el id de cierre de tipogestion que es un hidden y no de tipo_gestion_cierre_reclamo*/
-	var idgestion=jQuery('#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo').val();
-	jQuery('#<%= reclamoPortletNamespace %>tipogestion').val(idgestion);
-		
-	var accionEnCurso = document.<%= reclamoPortletNamespace %>reclamo_fm.<%= reclamoPortletNamespace %><%= Constants.CMD %>.value;
-	document.<%= reclamoPortletNamespace %>reclamo_fm.<%= reclamoPortletNamespace %><%= Constants.CMD %>.value='<%=Constants.SAVE  %>';
-	
-	/* 	var chk_amparo=jQuery("#<%= reclamoPortletNamespace %>chk_amparo").is(':checked');
-		var chk_superintendencia=jQuery("#<%= reclamoPortletNamespace %>chk_superintendencia").is(':checked');
-		var chk_recuperable = jQuery("#<%= reclamoPortletNamespace %>chk_recuperable").is(':checked');	
-		var chk_entramite = jQuery("#<%= reclamoPortletNamespace %>chk_entramite").is(':checked');	 */	
-	
-		var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones_entry" /></portlet:actionURL>';
-		url = url + "&esDatosTab=true";
-		document.<%= reclamoPortletNamespace %>reclamo_fm.method = 'post';
-		submitForm(document.<%= reclamoPortletNamespace %>reclamo_fm, url);		
-	
-	}							  	
+    if (guardandoReclamo) {
+        return false;
+    }
+
+    if (!ValidarDatosObligatorios(false)) {
+        return false;
+    }
+
+    var idgestion =
+        jQuery(
+            '#<%= reclamoPortletNamespace %>'
+                    + 'tipo_gestion_cierre_reclamo'
+        ).val();
+
+    jQuery(
+        '#<%= reclamoPortletNamespace %>tipogestion'
+    ).val(idgestion);
+
+    document
+        .<%= reclamoPortletNamespace %>reclamo_fm
+        .<%= reclamoPortletNamespace %><%= Constants.CMD %>
+        .value = '<%= Constants.SAVE %>';
+
+    guardandoReclamo = true;
+
+    var url =
+        '<portlet:actionURL windowState="'
+        + '<%= LiferayWindowState.MAXIMIZED.toString() %>'
+        + '"><portlet:param name="struts_action" '
+        + 'value="/autorizaciones/'
+        + 'editar_reclamosprestaciones_entry" />'
+        + '</portlet:actionURL>';
+
+    url += "&esDatosTab=true";
+
+    document
+        .<%= reclamoPortletNamespace %>reclamo_fm
+        .method = "post";
+
+    submitForm(
+        document
+            .<%= reclamoPortletNamespace %>reclamo_fm,
+        url
+    );
+
+    return false;
 }
 
 /* Cambia estado a Observado */
@@ -2990,7 +3103,10 @@ function <%= reclamoPortletNamespace %>agregarRevision() {
 				    //estadoSelectsector.selectedIndex = 2; // setea el estado en cerrado
 				    /* estadoSelectsector.selectedIndex = ubicacionOpcionEstadoCerradoCombo();	 */		    
 				    /* jQuery("#<%= reclamoPortletNamespace %>estado option[value='3']").attr("selected", true); //CERARADO */
-				    jQuery("#<%= reclamoPortletNamespace %>estado option[value='CERRADO']").attr("selected",true);
+				    jQuery("#<%= reclamoPortletNamespace %>estado jQuery(
+                                                                      "#<%= reclamoPortletNamespace %>estado"
+                                                                  ).val("3");
+                                                                  ").attr("selected",true);
 				    controlarEstadoCerrado(); // hace visible los controles del estado cerrado
 				    
 				    document.getElementById("<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo").disabled = false;
@@ -3025,9 +3141,43 @@ function <%= reclamoPortletNamespace %>agregarRevision() {
 		jQuery("#<%= reclamoPortletNamespace %>botonrevision").hide();
 		jQuery("#<%= reclamoPortletNamespace %>mensajerevisionefectuada").html("Revisión Efectuada, el Sistema soporta solo una revisión activa (No de baja).");
 	
-	 	jQuery('#<%= reclamoPortletNamespace %>lista_revisiones').load(url,params, function(){
-															jQuery('#<%= reclamoPortletNamespace %>buscando').hide();            															
-														  });
+	 	jQuery(
+            '#<%= reclamoPortletNamespace %>lista_revisiones'
+        ).load(
+            url,
+            params,
+            function() {
+                jQuery(
+                    '#<%= reclamoPortletNamespace %>buscando'
+                ).hide();
+
+                jQuery(
+                    '#<%= reclamoPortletNamespace %>resolucion'
+                ).val('');
+
+                jQuery(
+                    '#<%= reclamoPortletNamespace %>presentes'
+                ).val('');
+
+                jQuery(
+                    '#<%= reclamoPortletNamespace %>respresolucion'
+                ).val('');
+
+                jQuery(
+                    '#<%= reclamoPortletNamespace %>observacion_revision'
+                ).val('');
+
+                if (revisionConCierre) {
+                    <% if (reclamoPersistido) { %>
+                    <%= reclamoPortletNamespace %>editaReclamo(
+                            false
+                    );
+                    <% } else { %>
+                    <%= reclamoPortletNamespace %>saveReclamo();
+                    <% } %>
+                }
+            }
+        );
 	 	
 		 jQuery('#<%= reclamoPortletNamespace %>resolucion').val('');
 		 jQuery('#<%= reclamoPortletNamespace %>presentes').val('');
@@ -3037,15 +3187,17 @@ function <%= reclamoPortletNamespace %>agregarRevision() {
 		 document.getElementById("<%= reclamoPortletNamespace %>fecharevisionAnio").selectedIndex = 0;
 		 document.getElementById("<%= reclamoPortletNamespace %>fecharevisionAnio").selectedIndex = 0;
 		 jQuery('#<%= reclamoPortletNamespace %>observacion_revision').val('');
-		 <%if(reclamoprestacional != null  ){%>
-		 	if (revisionConCierre==true){			 
-		 		<%= reclamoPortletNamespace %>editaReclamo(false); 
-		 	}
-		 <%}else{%>
-		 	if (revisionConCierre==true){
-			 <%= reclamoPortletNamespace %>saveReclamo();
-		 	}
-		 <%}%>
+		 <% if (reclamoPersistido) { %>
+             if (revisionConCierre) {
+                 <%= reclamoPortletNamespace %>editaReclamo(
+                         false
+                 );
+             }
+         <% } else { %>
+             if (revisionConCierre) {
+                 <%= reclamoPortletNamespace %>saveReclamo();
+             }
+         <% } %>
 	}
 }       		
 
@@ -3770,7 +3922,13 @@ function <%= reclamoPortletNamespace %>agregarPrestacion() {
 
 function controlarEstadoCerrado() {
 
-	var  varCantRevisiones = <%=cantRevisiones%>;
+	var varCantRevisiones =
+        parseInt(
+            jQuery(
+                "#<%= reclamoPortletNamespace %>cantrevisionesactivas"
+            ).val(),
+            10
+        ) || 0;
 	
 	var  varDebitoTercerizadora = <%=debitoTercerizadora%>;
 	

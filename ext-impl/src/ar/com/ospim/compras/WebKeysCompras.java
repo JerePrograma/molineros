@@ -355,14 +355,21 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
          * Orden de Compra reales.
          */
         if (estadoActual == estadoNuevo
-                || esAnulado(estadoActual)
-                || esCotizado(estadoActual)) {
+                || esAnulado(estadoActual)) {
 
             return false;
         }
 
+        if (esCotizado(estadoActual)) {
+            return esReclamoRP(
+                    estadoNuevo
+            );
+        }
+
         if (esAnulado(estadoNuevo)) {
-            return puedeAnular(estadoActual);
+            return puedeAnular(
+                    estadoActual
+            );
         }
 
         if (esPendiente(estadoActual)

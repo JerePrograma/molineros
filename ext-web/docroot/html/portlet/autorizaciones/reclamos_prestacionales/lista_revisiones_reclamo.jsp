@@ -95,18 +95,44 @@ if (revisionesreclamo != null && revisionesreclamo.size()>0){
 
 <script>
 <%if (cantrevisionesok>0) {%>
-jQuery("#<portlet:namespace />cantrevisionesactivas").val('<%=cantrevisionesok%>');
+jQuery(
+    "#<portlet:namespace />cantrevisionesactivas"
+).val(
+    "<%= cantrevisionesok %>"
+);
 <%}%>
 <%if (auditoriaAdministrativa) {%>
-jQuery("#<portlet:namespace />auditoriaadministrativa").val('Ok');
+jQuery(
+    "#<portlet:namespace />auditoriaadministrativa"
+).val(
+    "<%= auditoriaAdministrativa ? "Ok" : "" %>"
+);
 <%}%>
 
-function borrarRevision (idRevision){
-	var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/borrar_reclamosrevisiones';
-	url = url+'&idRevision='+idRevision;	
-		jQuery("#<portlet:namespace />lista_revisiones").load(url);		
-	// visualizar el boton de agregar revision  
-		jQuery("#<portlet:namespace />botonrevision").show();
-		jQuery("#<portlet:namespace/>mensajerevisionefectuada").html("");		
-	}
+function borrarRevision(idRevision) {
+    var url =
+        '<portlet:renderURL windowState="'
+        + '<%= LiferayWindowState.EXCLUSIVE.toString() %>'
+        + '"/>'
+        + '&struts_action=/autorizaciones/'
+        + 'borrar_reclamosrevisiones'
+        + '&idRevision='
+        + encodeURIComponent(idRevision);
+
+    jQuery(
+        "#<portlet:namespace />lista_revisiones"
+    ).load(
+        url,
+        function() {
+            jQuery(
+                "#<portlet:namespace />botonrevision"
+            ).show();
+
+            jQuery(
+                "#<portlet:namespace />"
+                        + "mensajerevisionefectuada"
+            ).html("");
+        }
+    );
+}
 </script>

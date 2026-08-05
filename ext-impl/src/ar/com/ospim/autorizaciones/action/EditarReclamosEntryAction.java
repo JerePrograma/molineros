@@ -96,17 +96,24 @@ import ar.com.ospim.util.StringUtils;
 				""
 		);
 
-		if (!StringUtils.checkEmpty(contextoCompraNonce)) {
-			actionResponse.setRenderParameter(
-					WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
-					contextoCompraNonce
-			);
-			actionResponse.setRenderParameter("origen", "compras");
-			actionResponse.setRenderParameter(
-					Constants.CMD,
-					Constants.ADD
-			);
-		}
+        if (!StringUtils.checkEmpty(contextoCompraNonce)) {
+            actionResponse.setRenderParameter(
+                    WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
+                    contextoCompraNonce
+            );
+
+            actionResponse.setRenderParameter(
+                    "origen",
+                    "compras"
+            );
+
+            actionResponse.setRenderParameter(
+                    Constants.CMD,
+                    Constants.SAVE.equals(cmd)
+                            ? Constants.SAVE
+                            : Constants.ADD
+            );
+        }
 		
 		if(!StringUtils.checkEmpty(cmd)){
 			if(cmd.equals("upload")){
@@ -591,51 +598,39 @@ import ar.com.ospim.util.StringUtils;
 			}  
 			
 			String ErrorMsg = "";
-			if (cmd.equals(Constants.UPDATE ) && prestacionesAux != null && estado != 4 ){			
-				for( PrestacionesReclamo r : prestacionesAux) {
-					if(!PrestacionesReclamo.ESTADOS.BAJA.equals(r.getEstado())  ) {
-						ErrorMsg = this.validarReclamoPrestacionesIncompletas(r);
-						if (!StringUtils.checkEmpty(ErrorMsg)){
-							SessionErrors.add(renderRequest, "errorPrestacionComprobante");
-							renderRequest.setAttribute("msgErrorPrestacionComprobante",ErrorMsg);
-							validaOk = false;
-							break;
-						}
-					}
-				}
-			}
-			
-		
-			
-			
-			if (estado==3 // si estado reclamo es CERRADO
-					&& prestacionesAux != null
-					&& validaOk 
-					&& reclamoPrestacional.getEstadoResolucionAutorizada().compareTo(ESTADOSEVALUACIONRECLAMO.RECHAZADA)!=0
-					&& reclamoPrestacional.getTipo_gestion_cierre_reclamo() != 5 ){ 
-				for( PrestacionesReclamo r : prestacionesAux) {
-					if(!PrestacionesReclamo.ESTADOS.BAJA.equals(r.getEstado()) 
-							&&  ((r.getCargo_ospim()==0 && r.getCargo_ps()==0 && r.getCargo_imesa()==0 && r.getReconocidoSSS()==0) ||
-								  ( Math.abs((r.getCantidad()*r.getImporte()) -r.getCargo_ospim()-r.getCargo_ps()-r.getCargo_imesa() - 
-										  (r.getRecuperable()==1?0:r.getReconocidoSSS())   )>0.01D  )	
-								)
-							&& !(r.getEstadoRechazoAprobado() == 2) // debería ser rechazado, pero se actualiza recíen en la bd ?
-//							&&  !(reclamoPrestacional.getTipo_gestion_cierre_reclamo() == 2) //RECHAZADO
-							){ 
-						SessionErrors.add(renderRequest, "error-cargos-reclamo");
-						validaOk=false;
-						break;
-					}
-					
-//					//Aborta si tipo comprobante es AUTorizacion
-//					if(!PrestacionesReclamo.ESTADOS.BAJA.equals(r.getEstado())  && "AUT".equalsIgnoreCase(r.getComprobanteTipo())) {
-//						SessionErrors.add(renderRequest, "error-comprobante-invalido");
-//						validaOk=false;
-//						break;
-//					}
-					
-				}	
-			}
+            if ((Constants.SAVE.equals(cmd)
+                    || Constants.UPDATE.equals(cmd))
+                    && prestacionesAux != null
+                    && estado != 4) {
+
+                for (PrestacionesReclamo prestacion : prestacionesAux) {
+                    if (PrestacionesReclamo.ESTADOS.BAJA.equals(
+                            prestacion.getEstado()
+                    )) {
+                        continue;
+                    }
+
+                    ErrorMsg =
+                            validarReclamoPrestacionesIncompletas(
+                                    prestacion
+                            );
+
+                    if (!StringUtils.checkEmpty(ErrorMsg)) {
+                        SessionErrors.add(
+                                renderRequest,
+                                "errorPrestacionComprobante"
+                        );
+
+                        renderRequest.setAttribute(
+                                "msgErrorPrestacionComprobante",
+                                ErrorMsg
+                        );
+
+                        validaOk = false;
+                        break;
+                    }
+                }
+            }
 			
 			
 			List<PrestacionesReclamo> prestaciones= (List<PrestacionesReclamo>) session.getAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION);
@@ -770,32 +765,35 @@ import ar.com.ospim.util.StringUtils;
 
 							reservaCompraTomada = true;
 
-							idReclamoCreado = ReclamosPrestacionesServiceUtil
-									.insertar(reclamoPrestacional, user);
-							idReclamo = idReclamoCreado;
-							reclamoPrestacional = ReclamosPrestacionesServiceUtil
-									.getReclamoPrestacional(idReclamoCreado);
+                            idReclamoCreado =
+                                    RequerimientoCompraReclamoPrestacionalServiceUtil
+                                            .crearYVincular(
+                                                    contextoCompra
+                                                            .getIdRequerimientoCompra(),
+                                                    contextoCompra.getNonce(),
+                                                    reclamoPrestacional,
+                                                    user
+                                            );
 
-							if (reclamoPrestacional == null) {
-								throw new Exception(
-										"El Reclamo Prestacional fue insertado, "
-												+ "pero no pudo recuperarse."
-								);
-							}
+                            reclamoPrestacional =
+                                    ReclamosPrestacionesServiceUtil
+                                            .getReclamoPrestacional(
+                                                    idReclamoCreado
+                                            );
 
-							RequerimientoCompraReclamoPrestacionalServiceUtil
-									.finalizarCreacion(
-											contextoCompra
-													.getIdRequerimientoCompra(),
-											contextoCompra.getNonce(),
-											idReclamoCreado,
-											usuarioActual
-									);
+                            if (reclamoPrestacional == null) {
+                                throw new Exception(
+                                        "El Reclamo Prestacional fue creado, "
+                                                + "pero no pudo recuperarse."
+                                );
+                            }
 
-							session.removeAttribute(
-									WebKeysCompras
-											.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
-							);
+                            idReclamo = idReclamoCreado;
+
+                            session.removeAttribute(
+                                    WebKeysCompras
+                                            .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                            );
 						} catch (Exception e) {
 							if (reservaCompraTomada) {
 								registrarFalloVinculacionCompra(
@@ -1056,10 +1054,24 @@ import ar.com.ospim.util.StringUtils;
 					   renderRequest.setAttribute(Constants.CMD,Constants.VIEW);					                                    
 				}
 					    //renderRequest.setAttribute("tabs1", "reclamos-prestacionales");					    
-			} else {
-				renderRequest.setAttribute(Constants.CMD, Constants.EDIT);
-				reclamoPrestacional.setMarcaReabrirReclamo(true);
-			}
+            } else {
+                boolean reclamoPersistido =
+                        reclamoPrestacional != null
+                                && reclamoPrestacional.getId_reclamo() > 0;
+
+                renderRequest.setAttribute(
+                        Constants.CMD,
+                        reclamoPersistido
+                                ? Constants.EDIT
+                                : Constants.ADD
+                );
+
+                if (reclamoPersistido) {
+                    reclamoPrestacional.setMarcaReabrirReclamo(
+                            true
+                    );
+                }
+            }
 				
 		}else{ // es Nuevo			
 			  
@@ -1529,6 +1541,27 @@ import ar.com.ospim.util.StringUtils;
 	}
 	
 	private String validarReclamoPrestacionesIncompletas(PrestacionesReclamo reclamoPrestacional){
+        if (prestacion.getId_prestacion() <= 0
+                && prestacion.getId_medicamento() <= 0) {
+
+            String codigo =
+                    StringUtils.checkEmpty(
+                            prestacion.getCodigoPrestacion()
+                    )
+                            ? "sin código"
+                            : prestacion.getCodigoPrestacion();
+
+            return "La prestación "
+                    + codigo
+                    + " debe editarse y asociarse a una prestación "
+                    + "o medicamento válido antes de grabar.";
+        }
+        if (prestacion.getId_prestacion() > 0
+                && prestacion.getId_medicamento() > 0) {
+
+            return "La prestación tiene simultáneamente una prestación "
+                    + "y un medicamento asociados.";
+        }
 		String outMsg = "";
 		BigDecimal  comprobanteCUIT = new BigDecimal(0);
 		BigDecimal cpbteSucursal = new BigDecimal(0);

@@ -73,6 +73,20 @@ jQuery("#<portlet:namespace />Autorizado").hide();
 <%}%>
 	    <input   type="hidden" id="<portlet:namespace />idRegistro" name="<portlet:namespace />idRegistro" size="10" maxlength="10" type="text" value='<%=Validator.isNotNull(prestacionEnEdicion)  ? prestacionEnEdicion.getIdRegistro()      : ""  %>'/></td>
 
+        <input
+            type="hidden"
+            id="<portlet:namespace />nom_seleccionado_edit"
+            name="<portlet:namespace />nom_seleccionado_edit"
+            value=""
+        />
+
+        <input
+            type="hidden"
+            id="<portlet:namespace />tipoNomenclador_edit"
+            name="<portlet:namespace />tipoNomenclador_edit"
+            value=""
+        />
+
         <label <%=estiloLabel %>"><b><liferay-ui:message key="<%=captionlabelproceso%>"/></b></label>
         		
 		<table class="lfr-table" style="border-collapse: separate; border-spacing: 3px;">			
