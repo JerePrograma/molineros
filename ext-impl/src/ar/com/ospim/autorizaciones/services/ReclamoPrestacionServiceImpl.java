@@ -2108,4 +2108,4 @@ public class ReclamoPrestacionServiceImpl {
 	    }
 	}
 
-}				throw new SystemException(e);
+}
