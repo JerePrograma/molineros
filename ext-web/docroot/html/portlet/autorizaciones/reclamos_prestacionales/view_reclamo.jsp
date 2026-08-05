@@ -3509,7 +3509,7 @@ function <%= reclamoPortletNamespace %>editarPrestacionSeleccionada(tipoAccion) 
 	var nom_seleccionado_edit =
     jQuery(
         "#<%= reclamoPortletNamespace %>nom_seleccionado_edit"
-    ).val(); 
+    ).val();
 	var tipoNomenclador_edit =
     jQuery(
         "#<%= reclamoPortletNamespace %>tipoNomenclador_edit"
