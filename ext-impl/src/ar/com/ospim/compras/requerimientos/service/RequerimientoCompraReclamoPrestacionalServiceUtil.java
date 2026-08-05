@@ -40,20 +40,6 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
         );
     }
 
-    public static void finalizarCreacion(
-            int idRequerimientoCompra,
-            String tokenReserva,
-            int idReclamoPrestacional,
-            String usuario) throws Exception {
-
-        getInstance().finalizarCreacion(
-                idRequerimientoCompra,
-                tokenReserva,
-                idReclamoPrestacional,
-                usuario
-        );
-    }
-
     public static boolean liberarReserva(
             int idRequerimientoCompra,
             String tokenReserva,
@@ -96,6 +82,20 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
                 tokenReserva,
                 reclamo,
                 user
+        );
+    }
+
+    public static void finalizarCreacion(
+            int idRequerimientoCompra,
+            String tokenReserva,
+            int idReclamoPrestacional,
+            String usuario) throws Exception {
+
+        getInstance().finalizarCreacion(
+                idRequerimientoCompra,
+                tokenReserva,
+                idReclamoPrestacional,
+                usuario
         );
     }
 }

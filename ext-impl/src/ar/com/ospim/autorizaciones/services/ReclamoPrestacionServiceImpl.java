@@ -1792,7 +1792,7 @@ public class ReclamoPrestacionServiceImpl {
 
         if (con == null) {
             throw new SystemException(
-                    "No se informó la conexión transaccional."
+                    "No se informo la conexion transaccional."
             );
         }
 
@@ -1845,20 +1845,44 @@ public class ReclamoPrestacionServiceImpl {
         }
     }
 
-    public int insertar(ReclamoPrestacional reclamoPrestacional, User user ) throws SystemException {
+    private int insertarInterno(
+            Connection con,
+            ReclamoPrestacional reclamoPrestacional,
+            User user) throws SystemException {
 
-        Connection con = null;
-        CallableStatement stmt = null, stmt2 = null, stmt3 = null, stmt4 = null, stmt5 = null, stmt6 = null ;
+        CallableStatement stmt = null;
+        CallableStatement stmt2 = null;
+        CallableStatement stmt3 = null;
+        CallableStatement stmt4 = null;
+        CallableStatement stmt5 = null;
+        CallableStatement stmt6 = null;
 
-        String screenName = user.getScreenName();
-        int idReclamo=0;
+        String screenName =
+                user.getScreenName();
 
-        String sql  = "{call autorizaciones.inserta_reclamoprestacional(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
-        String sql2 = "{call autorizaciones.inserta_reclamo_estado(?,?,?)}";
-        String sql3 ="{call autorizaciones.inserta_reclamo_prestaciones(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
-        String sql4 ="{call autorizaciones.inserta_reclamo_revisiones (?,?,?,?,?,?,?)}";
-        String sql5 ="{call autorizaciones.inserta_reclamo_cierre (?,?,?,?,?,?,?,?,?, ?,?)}";
-        String sql6 ="{call autorizaciones.inserta_reclamo_contacto  (?,?,?)}";
+        int idReclamo = 0;
+
+        String sql =
+                "{call autorizaciones.inserta_reclamoprestacional("
+                        + "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+
+        String sql2 =
+                "{call autorizaciones.inserta_reclamo_estado(?,?,?)}";
+
+        String sql3 =
+                "{call autorizaciones.inserta_reclamo_prestaciones("
+                        + "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+
+        String sql4 =
+                "{call autorizaciones.inserta_reclamo_revisiones("
+                        + "?,?,?,?,?,?,?)}";
+
+        String sql5 =
+                "{call autorizaciones.inserta_reclamo_cierre("
+                        + "?,?,?,?,?,?,?,?,?,?,?)}";
+
+        String sql6 =
+                "{call autorizaciones.inserta_reclamo_contacto(?,?,?)}";
 
         try {
 

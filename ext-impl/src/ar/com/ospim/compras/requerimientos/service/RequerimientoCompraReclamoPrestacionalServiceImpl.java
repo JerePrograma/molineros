@@ -1,5 +1,6 @@
 package ar.com.ospim.compras.requerimientos.service;
 
+import com.liferay.portal.SystemException;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
@@ -88,37 +89,6 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                     }
                 },
                 "No se pudo reservar la creación del Reclamo Prestacional."
-        );
-    }
-
-    public void finalizarCreacion(
-            final int idRequerimientoCompra,
-            final String tokenReserva,
-            final int idReclamoPrestacional,
-            final String usuario) throws Exception {
-
-        validarIdRequerimiento(idRequerimientoCompra);
-        validarToken(tokenReserva);
-
-        if (idReclamoPrestacional <= 0) {
-            throw new Exception(
-                    "Debe informar el Reclamo Prestacional creado."
-            );
-        }
-
-        ejecutarBoolean(
-                SQL_FINALIZAR,
-                new Parametrizador() {
-                    public void parametrizar(PreparedStatement stmt)
-                            throws Exception {
-
-                        stmt.setInt(1, idRequerimientoCompra);
-                        stmt.setString(2, tokenReserva);
-                        stmt.setInt(3, idReclamoPrestacional);
-                        stmt.setString(4, normalizarUsuario(usuario));
-                    }
-                },
-                "No se pudo finalizar la relación con el Reclamo Prestacional."
         );
     }
 
@@ -449,5 +419,123 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                     con
             );
         }
+    }
+
+    public void finalizarCreacion(
+            final int idRequerimientoCompra,
+            final String tokenReserva,
+            final int idReclamoPrestacional,
+            final String usuario) throws Exception {
+
+        validarIdRequerimiento(
+                idRequerimientoCompra
+        );
+
+        validarToken(
+                tokenReserva
+        );
+
+        if (idReclamoPrestacional <= 0) {
+            throw new Exception(
+                    "Debe informar el Reclamo Prestacional creado."
+            );
+        }
+
+        ejecutarBoolean(
+                SQL_FINALIZAR,
+                new Parametrizador() {
+                    public void parametrizar(
+                            PreparedStatement stmt)
+                            throws Exception {
+
+                        stmt.setInt(
+                                1,
+                                idRequerimientoCompra
+                        );
+
+                        stmt.setString(
+                                2,
+                                tokenReserva
+                        );
+
+                        stmt.setInt(
+                                3,
+                                idReclamoPrestacional
+                        );
+
+                        stmt.setString(
+                                4,
+                                normalizarUsuario(
+                                        usuario
+                                )
+                        );
+                    }
+                },
+                "No se pudo finalizar la relacion "
+                        + "con el Reclamo Prestacional."
+        );
+    }
+
+    private void finalizarCreacion(
+            Connection con,
+            final int idRequerimientoCompra,
+            final String tokenReserva,
+            final int idReclamoPrestacional,
+            final String usuario) throws Exception {
+
+        if (con == null) {
+            throw new Exception(
+                    "No se informo la conexion transaccional."
+            );
+        }
+
+        validarIdRequerimiento(
+                idRequerimientoCompra
+        );
+
+        validarToken(
+                tokenReserva
+        );
+
+        if (idReclamoPrestacional <= 0) {
+            throw new Exception(
+                    "Debe informar el Reclamo Prestacional creado."
+            );
+        }
+
+        ejecutarBoolean(
+                con,
+                SQL_FINALIZAR,
+                new Parametrizador() {
+                    public void parametrizar(
+                            PreparedStatement stmt)
+                            throws Exception {
+
+                        stmt.setInt(
+                                1,
+                                idRequerimientoCompra
+                        );
+
+                        stmt.setString(
+                                2,
+                                tokenReserva
+                        );
+
+                        stmt.setInt(
+                                3,
+                                idReclamoPrestacional
+                        );
+
+                        stmt.setString(
+                                4,
+                                normalizarUsuario(
+                                        usuario
+                                )
+                        );
+                    }
+                },
+                "No se pudo finalizar la relacion "
+                        + "con el Reclamo Prestacional."
+        );
     }
 }

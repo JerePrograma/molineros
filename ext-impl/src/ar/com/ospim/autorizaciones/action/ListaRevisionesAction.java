@@ -2,15 +2,14 @@ package ar.com.ospim.autorizaciones.action;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import javax.portlet.PortletConfig;
-import javax.portlet.RenderRequest;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
+import javax.portlet.PortletConfig;
+import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import javax.servlet.http.HttpSession;
 
@@ -20,26 +19,12 @@ import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.autorizaciones.beans.RevisionesReclamo;
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
-import ar.com.ospim.global.beans.Provincia;
-import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
-import ar.com.ospim.prestadores.action.ListaMatriculasAction;
-import ar.com.ospim.prestadores.exception.MatriculaNacionalPrestadorException;
-import ar.com.ospim.prestadores.exception.MatriculaProvincialPrestadorException;
-import ar.com.ospim.liquidaciones.beans.MatriculaPrestador;
-import ar.com.ospim.util.PermissionUtil;
 
-import com.liferay.portal.SystemException;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
 
-
-public class ListaRevisionesAction extends PortletAction {	
-	
-	private static Log _log = LogFactoryUtil.getLog(ListaRevisionesAction.class);
+public class ListaRevisionesAction extends PortletAction {
 
     public void processAction(
             ActionMapping mapping,
@@ -49,38 +34,11 @@ public class ListaRevisionesAction extends PortletAction {
             ActionResponse actionResponse) throws Exception {
 
         HttpSession session =
-                (HttpSession) PortalUtil
+                PortalUtil
                         .getHttpServletRequest(
                                 actionRequest
                         )
                         .getSession();
-
-        User user =
-                PortalUtil.getUser(
-                        actionRequest
-                );
-
-        if (user == null) {
-            throw new Exception(
-                    "Debe iniciar sesión para agregar una revisión."
-            );
-        }
-
-        if (!PermissionUtil.userContainsRole(
-                user,
-                WebKeysAutorizaciones
-                        .ROL_ABM_RECLAMOS_PRESTACIONALES
-        )) {
-            throw new Exception(
-                    "No posee permiso para agregar revisiones."
-            );
-        }
-
-        validarContextoAltaCompra(
-                session,
-                actionRequest,
-                user
-        );
 
         RevisionesReclamo revision =
                 construirRevision(
@@ -101,9 +59,11 @@ public class ListaRevisionesAction extends PortletAction {
                         new ArrayList<RevisionesReclamo>();
             }
 
-            if (tieneRevisionActiva(revisiones)) {
+            if (tieneRevisionActiva(
+                    revisiones
+            )) {
                 throw new Exception(
-                        "El reclamo ya posee una revisión activa."
+                        "El reclamo ya posee una revision activa."
                 );
             }
 
@@ -146,6 +106,126 @@ public class ListaRevisionesAction extends PortletAction {
         );
     }
 
+    private RevisionesReclamo construirRevision(
+            ActionRequest actionRequest) throws Exception {
+
+        RevisionesReclamo revision =
+                new RevisionesReclamo();
+
+        String dia =
+                ParamUtil.getString(
+                        actionRequest,
+                        "fechaRevisionDay"
+                );
+
+        String mes =
+                ParamUtil.getString(
+                        actionRequest,
+                        "fechaRevisionMonth"
+                );
+
+        String anio =
+                ParamUtil.getString(
+                        actionRequest,
+                        "fechaRevisionYear"
+                );
+
+        if (!esVacio(dia)
+                && !esVacio(mes)
+                && !esVacio(anio)) {
+
+            revision.setFecha_revision(
+                    parsearFecha(
+                            dia,
+                            mes,
+                            anio
+                    )
+            );
+        }
+
+        revision.setUsr_presente(
+                normalizar(
+                        ParamUtil.getString(
+                                actionRequest,
+                                "usr_presente"
+                        )
+                )
+        );
+
+        revision.setUsr_resolucion(
+                normalizar(
+                        ParamUtil.getString(
+                                actionRequest,
+                                "usr_resolucion"
+                        )
+                )
+        );
+
+        revision.setUsr_responsable_resolucion(
+                normalizar(
+                        ParamUtil.getString(
+                                actionRequest,
+                                "usr_responsable_resolucion"
+                        )
+                )
+        );
+
+        revision.setObservacion(
+                normalizar(
+                        ParamUtil.getString(
+                                actionRequest,
+                                "observacion"
+                        )
+                )
+        );
+
+        return revision;
+    }
+
+    private boolean tieneRevisionActiva(
+            List<RevisionesReclamo> revisiones) {
+
+        if (revisiones == null) {
+            return false;
+        }
+
+        for (RevisionesReclamo revision : revisiones) {
+            if (revision == null) {
+                continue;
+            }
+
+            if (!RevisionesReclamo.ESTADOS.BAJA.equals(
+                    revision.getEstado()
+            )) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private int obtenerIdTemporal(
+            List<RevisionesReclamo> revisiones) {
+
+        int idTemporal =
+                -1;
+
+        if (revisiones == null) {
+            return idTemporal;
+        }
+
+        for (RevisionesReclamo revision : revisiones) {
+            if (revision != null
+                    && revision.getId() <= idTemporal) {
+
+                idTemporal =
+                        revision.getId() - 1;
+            }
+        }
+
+        return idTemporal;
+    }
+
     private Date parsearFecha(
             String dia,
             String mes,
@@ -169,4 +249,25 @@ public class ListaRevisionesAction extends PortletAction {
         );
     }
 
+    private String normalizar(
+            String valor) {
+
+        if (valor == null) {
+            return null;
+        }
+
+        valor =
+                valor.trim();
+
+        return valor.length() == 0
+                ? null
+                : valor;
+    }
+
+    private boolean esVacio(
+            String valor) {
+
+        return valor == null
+                || valor.trim().length() == 0;
+    }
 }
