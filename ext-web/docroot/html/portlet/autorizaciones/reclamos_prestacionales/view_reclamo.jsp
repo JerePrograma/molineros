@@ -18,6 +18,11 @@ String cmdParametroCompras = ParamUtil.getString(
         Constants.CMD,
         ""
 );
+String origenReclamoCompras = ParamUtil.getString(
+        request,
+        "origen",
+        ""
+);
 String nonceReclamoCompras = ParamUtil.getString(
         request,
         WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
@@ -33,6 +38,7 @@ ReclamoPrestacionalCompraContexto contextoReclamoCompras =
 
 boolean handoffReclamoComprasValido =
         Constants.ADD.equalsIgnoreCase(cmdParametroCompras)
+        && "compras".equalsIgnoreCase(origenReclamoCompras)
         && contextoReclamoCompras != null
         && Validator.isNotNull(nonceReclamoCompras)
         && contextoReclamoCompras.coincideNonce(nonceReclamoCompras)
@@ -48,6 +54,32 @@ if (handoffReclamoComprasValido) {
             Constants.CMD,
             Constants.ADD
     );
+} else if (contextoReclamoCompras != null
+        || Validator.isNotNull(nonceReclamoCompras)
+        || "compras".equalsIgnoreCase(origenReclamoCompras)) {
+
+    request.getSession().removeAttribute(
+            WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+    );
+    request.getSession().removeAttribute(
+            WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION
+    );
+    request.getSession().removeAttribute(
+            WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
+    );
+    request.getSession().removeAttribute(
+            WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION
+    );
+    request.getSession().removeAttribute(
+            WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION
+    );
+    request.getSession().removeAttribute(
+            WebKeysAutorizaciones.LISTADO_CONTACTOS_RECLAMOS_EN_SESION
+    );
+    request.getSession().removeAttribute(
+            WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS
+    );
+    request.setAttribute(Constants.CMD, Constants.VIEW);
 }
 
 /*

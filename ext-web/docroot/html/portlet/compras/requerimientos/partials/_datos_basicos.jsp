@@ -269,6 +269,33 @@
                         CQA-005: Recupero se conserva en edicion y vista,
                         pero no se muestra durante el alta.
                     --%>
+                    <% if (!esNuevo) { %>
+                        <span class="compras-grupo-cargo">
+                            <label for="<portlet:namespace />recupero">
+                                Recupero:
+                            </label>
+
+                            <% if (puedeEditarEstructuraPantalla) { %>
+                                <input type="checkbox"
+                                       id="<portlet:namespace />recupero"
+                                       value="true"
+                                       <%= recuperoChecked %>
+                                       class="compras-checkbox-recupero"
+                                       onclick="return false;"
+                                       onkeydown="return false;"
+                                       tabindex="-1"
+                                       aria-disabled="true" />
+                            <% } else { %>
+                                <input type="text"
+                                       id="<portlet:namespace />recupero"
+                                       value="<%= recuperoPorCargoTercerizadoraActual
+                                                ? "S&iacute;"
+                                                : "No" %>"
+                                       readonly="readonly"
+                                       class="compras-control compras-control-recupero compras-campo-solo-lectura" />
+                            <% } %>
+                        </span>
+                    <% } %>
                 </div>
             </td>
 

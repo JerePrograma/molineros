@@ -10,7 +10,7 @@
 --   2. Ejecutar este archivo completo desde pgAdmin, DBeaver o cualquier
 --      cliente que envie SQL directamente al servidor.
 --      Desde psql:
---      psql -X -v ON_ERROR_STOP=1 -f 20260721_presupuesto_activo_prestador_corregido.sql
+--      psql -X -v ON_ERROR_STOP=1 -f 20260721_presupuesto_activo_prestador.sql
 --   3. Desplegar Java/JSP solamente despues de confirmar el COMMIT.
 --
 -- Instalacion nueva:
@@ -18,7 +18,7 @@
 --
 -- IMPORTANTE:
 --   - Este archivo es SQL puro: no contiene metacomandos \set ni \encoding.
---   - Debe guardarse como UTF-8.
+--   - Debe guardarse como ISO-8859-1 sin BOM.
 --   - Ante cualquier error, la transaccion queda abortada y el COMMIT final
 --     no aplica cambios parciales.
 --   - El script no elimina ni corrige presupuestos activos duplicados.

@@ -4,8 +4,10 @@ import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.ReclamoPrestacionalCompraPrecargaServiceUtil;
+import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.kernel.log.Log;
@@ -44,12 +46,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 /**
- * Inicia la edici√≥n de un Reclamo Prestacional nuevo a partir de un
+ * Inicia la ediciÛn de un Reclamo Prestacional nuevo a partir de un
  * requerimiento de compra COTIZADO.
  *
- * Esta acci√≥n no inserta el Reclamo Prestacional y no crea ni reserva una
- * relaci√≥n persistente entre Compras y Autorizaciones. S√≥lo construye un
- * borrador temporal en sesi√≥n y redirige al formulario de alta del portlet
+ * Esta acciÛn no inserta el Reclamo Prestacional y no crea ni reserva una
+ * relaciÛn persistente entre Compras y Autorizaciones. SÛlo construye un
+ * borrador temporal en sesiÛn y redirige al formulario de alta del portlet
  * de Autorizaciones.
  */
 public class IniciarReclamoPrestacionalCompraAction
@@ -67,10 +69,10 @@ public class IniciarReclamoPrestacionalCompraAction
             "/compras/ver_requerimiento";
 
     /*
-     * Portlet-name ra√≠z definido en portlet-ext.xml y
+     * Portlet-name raÌz definido en portlet-ext.xml y
      * liferay-portlet-ext.xml.
      *
-     * Al ser instanceable, la navegaci√≥n utiliza el ID completo encontrado
+     * Al ser instanceable, la navegaciÛn utiliza el ID completo encontrado
      * en el layout: AUT_1_INSTANCE_<instanceId>.
      */
     private static final String AUTORIZACIONES_ROOT_PORTLET_ID =
@@ -81,6 +83,9 @@ public class IniciarReclamoPrestacionalCompraAction
 
     private static final String ORIGEN_COMPRAS =
             "compras";
+
+    private static final String PARAM_ID_RECLAMO =
+            "id_reclamosel";
 
     @Override
     public void processAction(
@@ -112,14 +117,16 @@ public class IniciarReclamoPrestacionalCompraAction
                             actionRequest
                     );
 
-            validarPermisoCreacion(
-                    user
-            );
-
             RequerimientoCompra requerimiento =
                     obtenerRequerimientoCotizado(
                             idRequerimientoCompra
                     );
+
+            RequerimientoCompraReclamoPrestacional relacion =
+                    RequerimientoCompraReclamoPrestacionalServiceUtil
+                            .obtenerPorRequerimiento(
+                                    idRequerimientoCompra
+                            );
 
             HttpServletRequest httpRequest =
                     PortalUtil.getHttpServletRequest(
@@ -128,12 +135,73 @@ public class IniciarReclamoPrestacionalCompraAction
 
             if (httpRequest == null) {
                 throw new Exception(
-                        "No se pudo obtener la petici√≥n HTTP actual."
+                        "No se pudo obtener la peticiÛn HTTP actual."
                 );
             }
 
             session =
                     httpRequest.getSession();
+
+            if (relacion != null
+                    && relacion.isVinculado()) {
+
+                validarPermisoConsulta(
+                        user
+                );
+
+                int idReclamo =
+                        relacion.getIdReclamoPrestacionalInt();
+
+                if (idReclamo <= 0) {
+                    throw new Exception(
+                            "La relaciÛn de Compras est· vinculada, "
+                                    + "pero no contiene un identificador "
+                                    + "v·lido de Reclamo Prestacional."
+                    );
+                }
+
+                DestinoPortlet destino =
+                        resolverDestinoAutorizaciones(
+                                actionRequest
+                        );
+
+                String redirect =
+                        construirURLAutorizaciones(
+                                httpRequest,
+                                destino,
+                                null,
+                                Integer.valueOf(
+                                        idReclamo
+                                )
+                        );
+
+                prepararSesionParaConsulta(
+                        session
+                );
+
+                actionResponse.sendRedirect(
+                        redirect
+                );
+
+                return;
+            }
+
+            if (relacion != null) {
+                throw new Exception(
+                        relacion.isError()
+                                ? "El Reclamo Prestacional fue creado, "
+                                + "pero su vinculaciÛn requiere "
+                                + "reconciliaciÛn. No se permite "
+                                + "crear otro reclamo."
+                                : "Ya existe una creaciÛn de Reclamo "
+                                + "Prestacional en proceso para "
+                                + "este requerimiento."
+                );
+            }
+
+            validarPermisoCreacion(
+                    user
+            );
 
             String usuario =
                     user.getScreenName();
@@ -167,8 +235,8 @@ public class IniciarReclamoPrestacionalCompraAction
                     );
 
             /*
-             * La URL se resuelve antes de tocar la sesi√≥n. Si no existe una
-             * instancia v√°lida de Autorizaciones, no se descarta ning√∫n
+             * La URL se resuelve antes de tocar la sesiÛn. Si no existe una
+             * instancia v·lida de Autorizaciones, no se descarta ning˙n
              * borrador anterior.
              */
             DestinoPortlet destino =
@@ -180,12 +248,13 @@ public class IniciarReclamoPrestacionalCompraAction
                     construirURLAutorizaciones(
                             httpRequest,
                             destino,
-                            contextoHandoff.getNonce()
+                            contextoHandoff.getNonce(),
+                            null
                     );
 
             /*
-             * Se registra √∫nicamente metadata temporal del requerimiento
-             * origen. No se genera ID de RP, no se reserva una relaci√≥n y no
+             * Se registra ˙nicamente metadata temporal del requerimiento
+             * origen. No se genera ID de RP, no se reserva una relaciÛn y no
              * se reutiliza idRequerimientoCompra como idReclamo.
              */
             registrarContextoBorrador(
@@ -194,7 +263,7 @@ public class IniciarReclamoPrestacionalCompraAction
             );
 
             /*
-             * Construye en sesi√≥n la cabecera temporal y la lista temporal
+             * Construye en sesiÛn la cabecera temporal y la lista temporal
              * de prestaciones. No ejecuta INSERT ni UPDATE.
              */
             precargaHandoff =
@@ -265,7 +334,7 @@ public class IniciarReclamoPrestacionalCompraAction
     }
 
     /**
-     * Despu√©s de una redirecci√≥n exitosa no interviene en el render del
+     * DespuÈs de una redirecciÛn exitosa no interviene en el render del
      * portlet de Autorizaciones. Se conserva para el retorno de error dentro
      * de COMPRA_1.
      */
@@ -284,19 +353,17 @@ public class IniciarReclamoPrestacionalCompraAction
     }
 
     /**
-     * Construye una URL de alta de RP nuevo.
-     *
-     * No recibe idReclamo porque en esta etapa todav√≠a no existe un RP
-     * persistido.
+     * Construye la URL de alta o de consulta del RP asociado.
      */
     private String construirURLAutorizaciones(
             HttpServletRequest httpRequest,
             DestinoPortlet destino,
-            String nonce) throws Exception {
+            String nonce,
+            Integer idReclamo) throws Exception {
 
         if (httpRequest == null) {
             throw new Exception(
-                    "No se pudo obtener la petici√≥n HTTP para navegar "
+                    "No se pudo obtener la peticiÛn HTTP para navegar "
                             + "al portlet de Autorizaciones."
             );
         }
@@ -309,7 +376,7 @@ public class IniciarReclamoPrestacionalCompraAction
 
             throw new Exception(
                     "No se pudo determinar el portlet de Autorizaciones "
-                            + "y la p√°gina que lo contiene."
+                            + "y la p·gina que lo contiene."
             );
         }
 
@@ -337,15 +404,6 @@ public class IniciarReclamoPrestacionalCompraAction
                 STRUTS_ACTION_RECLAMO
         );
 
-        /*
-         * Es un alta nueva. El ID del requerimiento no se env√≠a como
-         * id_reclamosel y nunca se utiliza como identificador de RP.
-         */
-        url.setParameter(
-                Constants.CMD,
-                Constants.ADD
-        );
-
         url.setParameter(
                 PARAM_ORIGEN,
                 ORIGEN_COMPRAS
@@ -358,6 +416,32 @@ public class IniciarReclamoPrestacionalCompraAction
                     WebKeysCompras
                             .PARAM_RECLAMO_PRESTACIONAL_NONCE,
                     nonce
+            );
+        }
+
+        if (idReclamo != null
+                && idReclamo.intValue() > 0) {
+
+            url.setParameter(
+                    Constants.CMD,
+                    Constants.VIEW
+            );
+
+            url.setParameter(
+                    PARAM_ID_RECLAMO,
+                    String.valueOf(
+                            idReclamo.intValue()
+                    )
+            );
+
+        } else {
+            /*
+             * Es un alta nueva. El ID del requerimiento no se envÌa como
+             * id_reclamosel y nunca se utiliza como identificador de RP.
+             */
+            url.setParameter(
+                    Constants.CMD,
+                    Constants.ADD
             );
         }
 
@@ -374,7 +458,7 @@ public class IniciarReclamoPrestacionalCompraAction
 
         if (httpRequest == null) {
             throw new Exception(
-                    "No se pudo obtener la petici√≥n HTTP actual."
+                    "No se pudo obtener la peticiÛn HTTP actual."
             );
         }
 
@@ -387,7 +471,7 @@ public class IniciarReclamoPrestacionalCompraAction
                 || themeDisplay.getLayout() == null) {
 
             throw new Exception(
-                    "No se pudo determinar la p√°gina actual de Liferay."
+                    "No se pudo determinar la p·gina actual de Liferay."
             );
         }
 
@@ -395,7 +479,7 @@ public class IniciarReclamoPrestacionalCompraAction
                 themeDisplay.getLayout();
 
         /*
-         * Primera prioridad: instancia colocada en la misma p√°gina.
+         * Primera prioridad: instancia colocada en la misma p·gina.
          */
         DestinoPortlet destino =
                 buscarDestinoEnLayout(
@@ -407,8 +491,8 @@ public class IniciarReclamoPrestacionalCompraAction
         }
 
         /*
-         * Segunda prioridad: otra p√°gina del mismo sitio y misma
-         * visibilidad p√∫blica/privada.
+         * Segunda prioridad: otra p·gina del mismo sitio y misma
+         * visibilidad p˙blica/privada.
          */
         destino =
                 buscarDestinoUnicoEnGrupo(
@@ -422,7 +506,7 @@ public class IniciarReclamoPrestacionalCompraAction
         }
 
         /*
-         * √öltima alternativa: p√°gina del mismo sitio con visibilidad
+         * ⁄ltima alternativa: p·gina del mismo sitio con visibilidad
          * contraria.
          */
         destino =
@@ -437,9 +521,9 @@ public class IniciarReclamoPrestacionalCompraAction
         }
 
         throw new Exception(
-                "No se encontr√≥ una instancia de "
+                "No se encontrÛ una instancia de "
                         + AUTORIZACIONES_ROOT_PORTLET_ID
-                        + " colocada en una p√°gina del sitio actual."
+                        + " colocada en una p·gina del sitio actual."
         );
     }
 
@@ -486,9 +570,9 @@ public class IniciarReclamoPrestacionalCompraAction
                 throw new Exception(
                         "Se encontraron varias instancias del portlet "
                                 + AUTORIZACIONES_ROOT_PORTLET_ID
-                                + " en p√°ginas del sitio. "
+                                + " en p·ginas del sitio. "
                                 + "No es seguro seleccionar una "
-                                + "autom√°ticamente. Instancias: "
+                                + "autom·ticamente. Instancias: "
                                 + encontrado.getPortletId()
                                 + " en plid "
                                 + encontrado.getPlid()
@@ -572,12 +656,12 @@ public class IniciarReclamoPrestacionalCompraAction
             )) {
 
                 throw new Exception(
-                        "La p√°gina con plid "
+                        "La p·gina con plid "
                                 + layout.getPlid()
-                                + " contiene m√°s de una instancia de "
+                                + " contiene m·s de una instancia de "
                                 + AUTORIZACIONES_ROOT_PORTLET_ID
                                 + ". No es seguro seleccionar una "
-                                + "autom√°ticamente."
+                                + "autom·ticamente."
                 );
             }
 
@@ -589,10 +673,10 @@ public class IniciarReclamoPrestacionalCompraAction
     }
 
     /**
-     * Reemplaza exclusivamente un borrador anterior que tambi√©n haya sido
+     * Reemplaza exclusivamente un borrador anterior que tambiÈn haya sido
      * originado desde Compras.
      *
-     * Si existe una edici√≥n normal iniciada desde Autorizaciones, se bloquea
+     * Si existe una ediciÛn normal iniciada desde Autorizaciones, se bloquea
      * para no destruir trabajo del usuario.
      */
     private void registrarContextoBorrador(
@@ -602,7 +686,7 @@ public class IniciarReclamoPrestacionalCompraAction
 
         if (session == null) {
             throw new Exception(
-                    "No se pudo obtener la sesi√≥n del usuario."
+                    "No se pudo obtener la sesiÛn del usuario."
             );
         }
 
@@ -630,7 +714,7 @@ public class IniciarReclamoPrestacionalCompraAction
                     );
 
             /*
-             * Un RP en sesi√≥n sin contexto de Compras pertenece al flujo
+             * Un RP en sesiÛn sin contexto de Compras pertenece al flujo
              * normal de Autorizaciones y no debe ser sustituido.
              */
             if (reclamoEnEdicion != null
@@ -638,15 +722,15 @@ public class IniciarReclamoPrestacionalCompraAction
                     instanceof ReclamoPrestacionalCompraContexto)) {
 
                 throw new Exception(
-                        "Existe un Reclamo Prestacional en edici√≥n iniciado "
-                                + "desde Autorizaciones. Final√≠celo o "
-                                + "desc√°rtelo antes de precargar uno desde "
+                        "Existe un Reclamo Prestacional en ediciÛn iniciado "
+                                + "desde Autorizaciones. FinalÌcelo o "
+                                + "desc·rtelo antes de precargar uno desde "
                                 + "Compras."
                 );
             }
 
             /*
-             * Si hab√≠a contexto de Compras, lo existente era un borrador
+             * Si habÌa contexto de Compras, lo existente era un borrador
              * temporal. Se reemplaza por el requerimiento seleccionado.
              */
             limpiarBorradorComprasEnSesion(
@@ -700,6 +784,69 @@ public class IniciarReclamoPrestacionalCompraAction
         );
     }
 
+    private void prepararSesionParaConsulta(
+            HttpSession session) throws Exception {
+
+        if (session == null) {
+            throw new Exception(
+                    "No se pudo obtener la sesiÛn del usuario."
+            );
+        }
+
+        synchronized (session) {
+            validarSinReclamoEnEdicion(
+                    session
+            );
+
+            Object contextoObj =
+                    session.getAttribute(
+                            WebKeysCompras
+                                    .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                    );
+
+            if (contextoObj
+                    instanceof ReclamoPrestacionalCompraContexto) {
+
+                ReclamoPrestacionalCompraContexto contexto =
+                        (ReclamoPrestacionalCompraContexto)
+                                contextoObj;
+
+                if (contexto.estaVigente(
+                        System.currentTimeMillis()
+                )) {
+
+                    throw new Exception(
+                            "Ya existe un inicio de Reclamo Prestacional "
+                                    + "desde Compras en proceso en esta "
+                                    + "sesiÛn. FinalÌcelo o descarte esa "
+                                    + "ediciÛn antes de consultar otro."
+                    );
+                }
+            }
+
+            session.removeAttribute(
+                    WebKeysCompras
+                            .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+            );
+        }
+    }
+
+    private void validarSinReclamoEnEdicion(
+            HttpSession session) throws Exception {
+
+        if (session.getAttribute(
+                WebKeysAutorizaciones
+                        .RECLAMO_PRESTACION_EN_EDICION
+        ) != null) {
+
+            throw new Exception(
+                    "Ya existe un Reclamo Prestacional en ediciÛn "
+                            + "en esta sesiÛn. Finalice o descarte "
+                            + "esa ediciÛn antes de navegar desde Compras."
+            );
+        }
+    }
+
     private RequerimientoCompra obtenerRequerimientoCotizado(
             int idRequerimientoCompra) throws Exception {
 
@@ -719,7 +866,7 @@ public class IniciarReclamoPrestacionalCompraAction
                 || requerimiento.getBajaFecha() != null) {
 
             throw new Exception(
-                    "No se encontr√≥ el requerimiento de compra activo."
+                    "No se encontrÛ el requerimiento de compra activo."
             );
         }
 
@@ -727,14 +874,14 @@ public class IniciarReclamoPrestacionalCompraAction
                 requerimiento.getEstado()
         )) {
             throw new Exception(
-                    "El Reclamo Prestacional s√≥lo puede iniciarse "
+                    "El Reclamo Prestacional sÛlo puede iniciarse "
                             + "desde un requerimiento COTIZADO."
             );
         }
 
         if (!requerimiento.tieneAfiliadoInformado()) {
             throw new Exception(
-                    "El requerimiento no tiene un afiliado v√°lido "
+                    "El requerimiento no tiene un afiliado v·lido "
                             + "para iniciar el Reclamo Prestacional."
             );
         }
@@ -772,6 +919,53 @@ public class IniciarReclamoPrestacionalCompraAction
             throw new Exception(
                     "No posee permisos para crear un Reclamo "
                             + "Prestacional desde Compras."
+            );
+        }
+    }
+
+    private void validarPermisoConsulta(
+            User user) throws Exception {
+
+        validarUsuario(
+                user
+        );
+
+        boolean permisoCompras =
+                PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_VIEW_COMPRAS
+                )
+                        || PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_ABM_COMPRAS
+                )
+                        || PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_COTIZAR_COMPRAS
+                )
+                        || PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_ANULAR_COMPRAS
+                );
+
+        boolean permisoReclamo =
+                PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysAutorizaciones
+                                .ROL_ABM_RECLAM_PREST
+                )
+                        || PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysAutorizaciones
+                                .ROL_CONSULTA_RECLAMOS_PRESTACIONALES
+                );
+
+        if (!permisoCompras
+                || !permisoReclamo) {
+
+            throw new Exception(
+                    "No posee permisos para consultar el Reclamo "
+                            + "Prestacional asociado."
             );
         }
     }

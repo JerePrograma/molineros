@@ -35,6 +35,11 @@ StringBuilder tabValues = new StringBuilder();
 
 String cmd = (String) request.getAttribute(Constants.CMD);
 
+if (contextoCompra != null) {
+    cmd = Constants.ADD;
+    request.setAttribute(Constants.CMD, Constants.ADD);
+}
+
 boolean showReadOnlyReclamPrestac=PermissionUtil.userContainsRole(user,WebKeysAutorizaciones.ROL_CONSULTA_RECLAMOS_PRESTACIONALES);
 
 Integer idReclamoAux = reclamoprestacional!=null?reclamoprestacional.getId_reclamo():0;
@@ -96,6 +101,8 @@ if (contextoCompraNonce != null
             WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
             contextoCompraNonce
     );
+    portletURL.setParameter("origen", "compras");
+    portletURL.setParameter(Constants.CMD, Constants.ADD);
 }
 
 %>

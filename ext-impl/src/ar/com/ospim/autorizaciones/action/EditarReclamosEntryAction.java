@@ -53,6 +53,11 @@ import ar.com.ospim.autorizaciones.beans.RevisionesReclamo;
 import ar.com.ospim.autorizaciones.services.ReclamoPrestacionServiceImpl;
 import ar.com.ospim.autorizaciones.services.ReclamosPrestacionesServiceUtil;
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
+import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
 import ar.com.ospim.crm.beans.ContactoCRM;
 import ar.com.ospim.desarrolloAppMobile.beans.ClienteAppMobile;
 import ar.com.ospim.global.WebKeysGlobal;
@@ -60,6 +65,7 @@ import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.liquidaciones.beans.Prestador;
 import ar.com.ospim.liquidaciones.services.PrestadorServiceUtil;
 import ar.com.ospim.util.ConnectionHelper;
+import ar.com.ospim.util.PermissionUtil;
 import ar.com.ospim.util.StringUtils;
 
 
@@ -85,6 +91,23 @@ import ar.com.ospim.util.StringUtils;
 		
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
 		String cmdAction = ParamUtil.getString(actionRequest, Constants.ACTION);
+		String contextoCompraNonce = ParamUtil.getString(
+				actionRequest,
+				WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
+				""
+		);
+
+		if (!StringUtils.checkEmpty(contextoCompraNonce)) {
+			actionResponse.setRenderParameter(
+					WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
+					contextoCompraNonce
+			);
+			actionResponse.setRenderParameter("origen", "compras");
+			actionResponse.setRenderParameter(
+					Constants.CMD,
+					Constants.ADD
+			);
+		}
 		
 		if(!StringUtils.checkEmpty(cmd)){
 			if(cmd.equals("upload")){
@@ -186,6 +209,34 @@ import ar.com.ospim.util.StringUtils;
 		}
 		
 		User user = PortalUtil.getUser(renderRequest);
+		ReclamoPrestacionalCompraContexto contextoCompra = null;
+
+		try {
+			contextoCompra = resolverContextoCompra(
+					session,
+					renderRequest,
+					user
+			);
+		} catch (Exception contextoError) {
+			limpiarSesionHandoffCompra(session);
+			_log.warn(
+					"Se rechazo un contexto invalido de Compras.",
+					contextoError
+			);
+			SessionErrors.add(renderRequest, "error-reclamo-compras");
+			renderRequest.setAttribute(
+					"msgErrorReclamoCompras",
+					contextoError.getMessage()
+			);
+			renderRequest.setAttribute(Constants.CMD, Constants.ADD);
+
+			return mapping.findForward(getForward(
+					renderRequest,
+					"portlet.autorizaciones.reclamosprestacionales."
+							+ "editar_reclamos_entry"
+			));
+		}
+
 		String seccionalDefecto=user.getExpandoBridge().getAttribute("id_seccional").toString();
 		
 		String tabSel = ParamUtil.get(renderRequest, "tab_seleccionada", "datos");
@@ -689,7 +740,12 @@ import ar.com.ospim.util.StringUtils;
 								
 				if(cmd.equals(Constants.SAVE)){
 					
-					asignarTercerizadoraAPrestaciones(renderRequest, prestaciones);//se agrega
+					if (contextoCompra == null) {
+						asignarTercerizadoraAPrestaciones(
+								renderRequest,
+								prestaciones
+						);
+					}
 					
 					reclamoPrestacional.setPrestaciones(prestaciones);
 					reclamoPrestacional.setRevisiones(revisiones);
@@ -701,8 +757,108 @@ import ar.com.ospim.util.StringUtils;
 					// id seccional
 					reclamoPrestacional.setIdSeccional(Integer.parseInt(seccionalDefecto));
 					
-					idReclamo = ReclamosPrestacionesServiceUtil.insertar(reclamoPrestacional , user );
-					reclamoPrestacional = ReclamosPrestacionesServiceUtil.getReclamoPrestacional(idReclamo);
+					if (contextoCompra == null) {
+						idReclamo = ReclamosPrestacionesServiceUtil
+								.insertar(reclamoPrestacional, user);
+						reclamoPrestacional = ReclamosPrestacionesServiceUtil
+								.getReclamoPrestacional(idReclamo);
+					} else {
+						boolean reservaCompraTomada = false;
+						int idReclamoCreado = 0;
+						String usuarioActual =
+								user != null ? user.getScreenName() : "sistema";
+
+						try {
+							reclamoPrestacional.setRecuperable(
+									contextoCompra.isRecupero()
+											|| contextoCompra.isSurge()
+							);
+							reclamoPrestacional.setSuperintendencia(
+									contextoCompra.isSurge()
+							);
+
+							RequerimientoCompra requerimientoCompra =
+									validarContextoCompraParaGuardar(
+											contextoCompra,
+											reclamoPrestacional,
+											user
+									);
+							asignarTercerizadoraAPrestaciones(
+									requerimientoCompra,
+									prestaciones
+							);
+
+							RequerimientoCompraReclamoPrestacionalServiceUtil
+									.reservarCreacion(
+											contextoCompra
+													.getIdRequerimientoCompra(),
+											contextoCompra.getNonce(),
+											usuarioActual
+									);
+
+							reservaCompraTomada = true;
+
+							idReclamoCreado = ReclamosPrestacionesServiceUtil
+									.insertar(reclamoPrestacional, user);
+							idReclamo = idReclamoCreado;
+							reclamoPrestacional = ReclamosPrestacionesServiceUtil
+									.getReclamoPrestacional(idReclamoCreado);
+
+							if (reclamoPrestacional == null) {
+								throw new Exception(
+										"El Reclamo Prestacional fue insertado, "
+												+ "pero no pudo recuperarse."
+								);
+							}
+
+							RequerimientoCompraReclamoPrestacionalServiceUtil
+									.finalizarCreacion(
+											contextoCompra
+													.getIdRequerimientoCompra(),
+											contextoCompra.getNonce(),
+											idReclamoCreado,
+											usuarioActual
+									);
+
+							session.removeAttribute(
+									WebKeysCompras
+											.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+							);
+						} catch (Exception e) {
+							if (reservaCompraTomada) {
+								registrarFalloVinculacionCompra(
+										contextoCompra,
+										idReclamoCreado,
+										e,
+										usuarioActual
+								);
+							}
+
+							_log.error(
+									"No se pudo completar el alta del Reclamo "
+											+ "Prestacional iniciado desde Compras.",
+									e
+							);
+							SessionErrors.add(
+									renderRequest,
+									"error-reclamo-compras"
+							);
+							renderRequest.setAttribute(
+									"msgErrorReclamoCompras",
+									mensajeSeguroVinculacion(e, idReclamoCreado)
+							);
+							renderRequest.setAttribute(
+									Constants.CMD,
+									Constants.ADD
+							);
+
+							return mapping.findForward(getForward(
+									renderRequest,
+									"portlet.autorizaciones.reclamosprestacionales."
+											+ "editar_reclamos_entry"
+							));
+						}
+					}
 					
 
 					session.removeAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
@@ -1006,6 +1162,234 @@ import ar.com.ospim.util.StringUtils;
 		}
 	}	
 
+	private void limpiarSesionHandoffCompra(HttpSession session) {
+		if (session == null) {
+			return;
+		}
+
+		session.removeAttribute(
+				WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+		);
+		session.removeAttribute(
+				WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION
+		);
+		session.removeAttribute(
+				WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
+		);
+		session.removeAttribute(
+				WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION
+		);
+		session.removeAttribute(
+				WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION
+		);
+		session.removeAttribute(
+				WebKeysAutorizaciones.LISTADO_CONTACTOS_RECLAMOS_EN_SESION
+		);
+		session.removeAttribute(
+				WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS
+		);
+	}
+
+	private ReclamoPrestacionalCompraContexto resolverContextoCompra(
+			HttpSession session,
+			PortletRequest request,
+			User user) throws Exception {
+
+		String nonceRequest = ParamUtil.getString(
+				request,
+				WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
+				""
+		);
+		Object contextoObj = session.getAttribute(
+				WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+		);
+
+		/*
+		 * Sin nonce y sin contexto se conserva el flujo ordinario de Reclamos.
+		 * Si hay un handoff de Compras, la ausencia del nonce debe fallar
+		 * cerrada: nunca puede degradarse a un alta generica.
+		 */
+		if (StringUtils.checkEmpty(nonceRequest)) {
+			if (contextoObj != null) {
+				throw new Exception(
+						"El contexto de Compras requiere un nonce valido. "
+								+ "Vuelva al requerimiento e inicie nuevamente "
+								+ "el Reclamo Prestacional."
+				);
+			}
+			return null;
+		}
+
+		if (!(contextoObj instanceof ReclamoPrestacionalCompraContexto)) {
+			throw new Exception(
+					"El contexto de Compras expiro o ya no esta disponible."
+			);
+		}
+
+		ReclamoPrestacionalCompraContexto contexto =
+				(ReclamoPrestacionalCompraContexto) contextoObj;
+		String usuario = user != null ? user.getScreenName() : "";
+
+		if (!contexto.coincideNonce(nonceRequest)
+				|| !contexto.perteneceAUsuario(usuario)
+				|| !contexto.estaVigente(System.currentTimeMillis())) {
+
+			throw new Exception(
+					"El contexto de Compras no es valido o vencio. "
+							+ "Vuelva al requerimiento e inicie nuevamente "
+							+ "el Reclamo Prestacional."
+			);
+		}
+
+		return contexto;
+	}
+
+	private RequerimientoCompra validarContextoCompraParaGuardar(
+			ReclamoPrestacionalCompraContexto contexto,
+			ReclamoPrestacional reclamoPrestacional,
+			User user) throws Exception {
+
+		if (contexto == null || reclamoPrestacional == null) {
+			throw new Exception(
+					"No se pudo validar el origen Compras "
+							+ "del Reclamo Prestacional."
+			);
+		}
+
+		if (user == null) {
+			throw new Exception(
+					"No se pudo determinar el usuario actual."
+			);
+		}
+
+		boolean permisoCompras = PermissionUtil.userContainsRole(
+				user,
+				WebKeysCompras.ROL_ABM_COMPRAS
+		) || PermissionUtil.userContainsRole(
+				user,
+				WebKeysCompras.ROL_COTIZAR_COMPRAS
+		);
+		boolean permisoReclamo = PermissionUtil.userContainsRole(
+				user,
+				WebKeysAutorizaciones.ROL_ABM_RECLAM_PREST
+		);
+
+		if (!permisoCompras || !permisoReclamo) {
+			throw new Exception(
+					"No posee permisos para crear el Reclamo "
+							+ "Prestacional desde Compras."
+			);
+		}
+
+		RequerimientoCompra requerimiento =
+				BusquedaRequerimientoCompraServiceUtil
+						.getRequerimientoCompra(
+								contexto.getIdRequerimientoCompra()
+						);
+
+		if (requerimiento == null
+				|| requerimiento.getBajaFecha() != null) {
+
+			throw new Exception(
+					"El requerimiento de compra ya no esta activo."
+			);
+		}
+
+		if (!WebKeysCompras.esCotizado(requerimiento.getEstado())) {
+			throw new Exception(
+					"El requerimiento de compra ya no esta COTIZADO."
+			);
+		}
+
+		String cuilRequerimiento = normalizarCuil(
+				requerimiento.getAfiliadoCuilTitular()
+		);
+		String cuilReclamo = normalizarCuil(
+				reclamoPrestacional.getCuit_titular()
+		);
+		int integranteRequerimiento = requerimiento.getAfiliadoInt() != null
+				? requerimiento.getAfiliadoInt().intValue()
+				: -1;
+
+		if (WebKeysCompras.isEmpty(cuilRequerimiento)
+				|| !cuilRequerimiento.equals(cuilReclamo)
+				|| integranteRequerimiento != reclamoPrestacional.getInte()) {
+
+			throw new Exception(
+					"El afiliado del Reclamo Prestacional no coincide "
+							+ "con el requerimiento de compra."
+			);
+		}
+
+		return requerimiento;
+	}
+
+	private void registrarFalloVinculacionCompra(
+			ReclamoPrestacionalCompraContexto contexto,
+			int idReclamoCreado,
+			Exception error,
+			String usuario) {
+
+		try {
+			if (idReclamoCreado > 0) {
+				RequerimientoCompraReclamoPrestacionalServiceUtil
+						.marcarErrorPosteriorAlInsert(
+								contexto.getIdRequerimientoCompra(),
+								contexto.getNonce(),
+								idReclamoCreado,
+								error != null ? error.getMessage() : null,
+								usuario
+						);
+			} else {
+				RequerimientoCompraReclamoPrestacionalServiceUtil
+						.liberarReserva(
+								contexto.getIdRequerimientoCompra(),
+								contexto.getNonce(),
+								usuario
+						);
+			}
+		} catch (Exception compensacionError) {
+			_log.error(
+					"No se pudo compensar la reserva del Reclamo "
+							+ "Prestacional iniciado desde Compras. "
+							+ "idRequerimiento="
+							+ contexto.getIdRequerimientoCompra()
+							+ ", idReclamo="
+							+ idReclamoCreado,
+					compensacionError
+			);
+		}
+	}
+
+	private String mensajeSeguroVinculacion(
+			Exception error,
+			int idReclamoCreado) {
+
+		if (idReclamoCreado > 0) {
+			return "El Reclamo Prestacional "
+					+ idReclamoCreado
+					+ " fue creado, pero no pudo vincularse "
+					+ "completamente con Compras. "
+					+ "No intente crearlo nuevamente; "
+					+ "requiere reconciliacion.";
+		}
+
+		if (error != null
+				&& !WebKeysCompras.isEmpty(error.getMessage())) {
+			return error.getMessage();
+		}
+
+		return "No se pudo crear el Reclamo Prestacional desde Compras.";
+	}
+
+	private String normalizarCuil(String value) {
+		if (value == null) {
+			return "";
+		}
+
+		return value.replaceAll("[^0-9]", "");
+	}
+
 	//se agrega
 	private void asignarTercerizadoraAPrestaciones(
 	        PortletRequest request,
@@ -1026,6 +1410,31 @@ import ar.com.ospim.util.StringUtils;
 	            }
 	        }
 	    }
+	}
+
+	private void asignarTercerizadoraAPrestaciones(
+			RequerimientoCompra requerimiento,
+			List<PrestacionesReclamo> prestaciones) {
+
+		String idTercerizadora = null;
+		if (requerimiento != null
+				&& requerimiento.getCargoTercerizadora() != null
+				&& requerimiento.getCargoTercerizadora().intValue() > 0) {
+
+			idTercerizadora = requerimiento.getIdTercerizadora();
+		}
+
+		if (prestaciones != null) {
+			for (PrestacionesReclamo prestacion : prestaciones) {
+				if (prestacion.getEstado() == null
+						|| !PrestacionesReclamo.ESTADOS.BAJA.equals(
+						prestacion.getEstado()
+				)) {
+
+					prestacion.setIdTercerizadora(idTercerizadora);
+				}
+			}
+		}
 	}
 	
     private	void asignarReferenciasAlosContactos (HttpSession session, RenderRequest  renderRequest)
