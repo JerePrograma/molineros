@@ -7,6 +7,13 @@
 <%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto" %>
 <%
+ReclamoPrestacional reclamoprestacional =
+        (ReclamoPrestacional) request
+                .getSession()
+                .getAttribute(
+                        WebKeysAutorizaciones
+                                .RECLAMO_PRESTACION_EN_EDICION
+                );
 boolean reclamoPersistido =
         reclamoprestacional != null
         && reclamoprestacional.getId_reclamo() > 0;
@@ -108,8 +115,6 @@ boolean esEdicion = false;
 int cantprestacioneslista=0;
 int cantRevisiones=0;
 boolean debitoTercerizadora = false;
-
-ReclamoPrestacional  reclamoprestacional  = (ReclamoPrestacional)request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
 
 String _nuevoEstadoObservado = "";
 Object nuevoEstadoObservadoObj =
@@ -3501,8 +3506,14 @@ function <%= reclamoPortletNamespace %>editarPrestacionSeleccionada(tipoAccion) 
     
     var codigoSeguimiento_filtro_edit = jQuery('#<%= reclamoPortletNamespace %>codigoSeguimiento_filtro_edit').val();
 	var descripcionSeguimiento_filtro_edit = jQuery("#<%= reclamoPortletNamespace %>descripcionSeguimiento_filtro_edit").val();
-	var nom_seleccionado_edit = jQuery("#<%= reclamoPortletNamespace %>nom_seleccionado").val(); 
-	var tipoNomenclador_edit = jQuery('#<%= reclamoPortletNamespace %>tipoNomenclador').val();
+	var nom_seleccionado_edit =
+    jQuery(
+        "#<%= reclamoPortletNamespace %>nom_seleccionado_edit"
+    ).val(); 
+	var tipoNomenclador_edit =
+    jQuery(
+        "#<%= reclamoPortletNamespace %>tipoNomenclador_edit"
+    ).val();
 		
 
 	if (nom_seleccionado_edit ==1){		 
