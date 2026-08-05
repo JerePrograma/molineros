@@ -5,17 +5,8 @@
 <%@ page
 	import="ar.com.ospim.autorizaciones.services.PreAutorizacionServiceUtil"%>
 <%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
-<%@ page import="ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacional" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto" %>
 <%
-ReclamoPrestacional reclamoprestacional =
-        (ReclamoPrestacional) request
-                .getSession()
-                .getAttribute(
-                        WebKeysAutorizaciones
-                                .RECLAMO_PRESTACION_EN_EDICION
-                );
-
 boolean reclamoPersistido =
         reclamoprestacional != null
         && reclamoprestacional.getId_reclamo() > 0;
@@ -121,11 +112,31 @@ boolean debitoTercerizadora = false;
 ReclamoPrestacional  reclamoprestacional  = (ReclamoPrestacional)request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
 
 String _nuevoEstadoObservado = "";
-if (request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS) != null) {
-  _nuevoEstadoObservado = String.valueOf(request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS));
-  reclamoprestacional.setEstado(Integer.parseInt(_nuevoEstadoObservado));
+Object nuevoEstadoObservadoObj =
+        request.getSession().getAttribute(
+                WebKeysAutorizaciones
+                        .RECLAMO_NUEVO_ESTADO_OBS
+        );
+
+if (nuevoEstadoObservadoObj != null
+        && reclamoprestacional != null) {
+
+    String nuevoEstadoObservado =
+            String.valueOf(
+                    nuevoEstadoObservadoObj
+            );
+
+    reclamoprestacional.setEstado(
+            Integer.parseInt(
+                    nuevoEstadoObservado
+            )
+    );
 }
-request.getSession().removeAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS);
+
+request.getSession().removeAttribute(
+        WebKeysAutorizaciones
+                .RECLAMO_NUEVO_ESTADO_OBS
+);
 		
 Calendar fechadia  =Calendar.getInstance(); 		
 Calendar fechaospim  = Calendar.getInstance();	
@@ -1068,12 +1079,12 @@ span-fixed-size {
 												<td><label><liferay-ui:message key="letra" />:</label></td>
 												<td colspan="3"><select
 													name="<%= reclamoPortletNamespace %>comprobante_letra"
-													id="<%= reclamoPortletNamespace %>comprobante_letra">	
+													id="<%= reclamoPortletNamespace %>comprobante_letra">
 												</select></td>
 												<td>Suc:</td>
 												<td><input id="<%= reclamoPortletNamespace %>comprobante_suc"
 													name="<%= reclamoPortletNamespace %>comprobante_suc" size="5"
-													maxlength="5" 
+													maxlength="5"
 													onkeydown="allowOnlyDigits(event);"
 													type="text" value="" <% if (!esEdicion) { %>
 													readonly="readonly" <%} %> /></td>
@@ -1082,7 +1093,7 @@ span-fixed-size {
 												<td>Nro:</td>
 												<td><input id="<%= reclamoPortletNamespace %>comprobante_nro"
 													name="<%= reclamoPortletNamespace %>comprobante_nro" size="9"
-													maxlength="8" type="text" onkeydown="allowOnlyDigits(event);" 
+													maxlength="8" type="text" onkeydown="allowOnlyDigits(event);"
 													value="" <% if (!esEdicion) { %>
 													readonly="readonly" <%} %> /></td>
 												<td><label>F. Emisi&oacute;n: </label></td>
@@ -1096,10 +1107,10 @@ span-fixed-size {
 														yearNullable="<%= true %>"
 														firstDayOfWeek="<%= fechaseccional.getFirstDayOfWeek() - 1 %>"
 														disabled="<%= !esEdicion %>" /></td>
-														
+
 												<td>
 										         	<a href="javascript:void(0)" onclick="help(event, 'helpComprobantes')"><img style="height: 25px; width: 25px" src="/html/images/help.png" title="Ayuda" alt="Ayuda"/></a>&nbsp;
-										        </td>		
+										        </td>
 											</tr>
 										</table>
 									</td>
@@ -1208,17 +1219,17 @@ span-fixed-size {
 										name="<%= reclamoPortletNamespace %>cargoimesa" size="8" maxlength="20"
 										value='' onkeydown="allowOnlyDigitsAndDecimals(event)"
 										type="text" value="" /></td>
-										
+
 									<td><label>Reconocido SSS:</label>
 									</td>
 									<td><input id="<%= reclamoPortletNamespace %>reconocidoSSS"
 										<% if (!esEdicion) { %> disabled='disabled' <%}%>
 										name="<%= reclamoPortletNamespace %>reconocidoSSS" size="8" maxlength="20"
 										value='' onkeydown="allowOnlyDigitsAndDecimals(event)"
-										type="text" value="" /></td>	
-										
-									<td>Recuperable:</label> 
-									
+										type="text" value="" /></td>
+
+									<td>Recuperable:</label>
+
 									<select name="<%= reclamoPortletNamespace %>recuperable_sur" id="<%= reclamoPortletNamespace %>recuperable_sur"
 									 <% if (!esEdicion) { %> disabled="disabled" <%} %> onchange="cambiorecuperable();">
 														<option value="0">Seleccione</option>
@@ -1226,7 +1237,7 @@ span-fixed-size {
 														<option value="3">Integración</option>
 														<option value="2">NO Recuperable</option>
 									</select>
-									
+
 
 									</tr>
 							</table>
@@ -1285,14 +1296,14 @@ span-fixed-size {
 			<liferay-util:include
 							page="/html/portlet/autorizaciones/reclamos_prestacionales/lista_prestaciones_reclamos.jsp">
 			</liferay-util:include>
-						
+
 		</div>
 		</td>
 		</tr>
 		</table>
 
 	</fieldset> <!-- Fin Datos de la Prestacion -->
-	
+
 
 	<div id="<%= reclamoPortletNamespace %>lista_prestaciones_asociadas"
 		align="center"
@@ -1450,7 +1461,7 @@ span-fixed-size {
 							<option value="RECHAZADO">RECHAZADO</option>
 					</select></td>
 				</tr>
-					
+
 				<tr>
 					<td><liferay-ui:message key="observacion" />:</td>
 					<td><textarea rows="3" cols="100"
@@ -1570,7 +1581,7 @@ span-fixed-size {
 									<%} %>
 									<td colspan="2"><label><liferay-ui:message
 												key="Tipo Gestion" />:</label> <select   <% if (!esEdicion) { %>
-										disabled='disabled' <%}%>												
+										disabled='disabled' <%}%>
 										name="<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo"
 										id="<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo"
 										onchange="manejartipogestion();">
@@ -1580,17 +1591,17 @@ span-fixed-size {
 												value="<%=tipogestion.getId()%>"><%=tipogestion.getDescripcion()%>
 											</option>
 											<% } %>
-									</select></td>	
+									</select></td>
 									<tr id="<%= reclamoPortletNamespace %>observacion_medica_tr" style="display:none;">
-									
+
 											<td><label><liferay-ui:message key="observaciones-area-medica"/>:</label></td>
 											<td><select name="<%= reclamoPortletNamespace %>observacion_medica" id="<%= reclamoPortletNamespace %>observacion_medica"
-												    <% if (!esEdicion) { %> disabled="disabled" <% } %>>										
+												    <% if (!esEdicion) { %> disabled="disabled" <% } %>>
 												    <option value="0">Seleccione observación</option>
 												</select></td>
 									</tr>
-														
-						
+
+
 								<tr>
 								</tr>
 								<tr>
@@ -1603,7 +1614,7 @@ span-fixed-size {
 									</td>
 								</tr>
 
-			
+
 
 
 							</table>
@@ -1675,7 +1686,7 @@ span-fixed-size {
 									style="color: #ada397; font-size: 120%; font-weight: bold;"><%= reclamoprestacional.getCtaNro()!= 0 ? reclamoprestacional.getCtaNro(): ""  %></td>
 							</tr>
 							<%} %>
-							
+
 							<tr style="font-size: 110%">
 								<td colspan="1"><b>Fecha OP:</b></td>
 								<td colspan="1"
@@ -1717,10 +1728,10 @@ span-fixed-size {
 						value="<liferay-ui:message key="Actualizar" />"
 						onClick="<%= reclamoPortletNamespace %>editaReclamo(false);"
 						title="<liferay-ui:message key="Actualiza los Datos Ingresados." />" />
-					</td>				
+					</td>
 					<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 					<%-- Si es Pendiente y NO ES ReadOnly, no muestra las opcion para volver a Recarga --%>
-					<% if ((PuedeObservar) && (!showReadOnlyReclamPrestac)) {%>						
+					<% if ((PuedeObservar) && (!showReadOnlyReclamPrestac)) {%>
 						<td><input type="button"
 							value="<liferay-ui:message key="Observar" />"
 							onClick="<%= reclamoPortletNamespace %>volverEstadoObservado();"
@@ -1737,8 +1748,8 @@ span-fixed-size {
 			</table>
 		</div>
 		<%} %>
-		<% if( reclamoprestacional!=null 
-		&& showABMButtons == true 
+		<% if( reclamoprestacional!=null
+		&& showABMButtons == true
 		&& reclamoprestacional.getEstado()== 3  && reclamoprestacional.getIdOP() == 0
 		&& !reclamoprestacional.isMarcaReabrirReclamo()) { // cerrado sin OP %>
 
@@ -1791,7 +1802,7 @@ span-fixed-size {
 			name="<%= reclamoPortletNamespace %>tipoNomenclador" type="hidden" value="" />
 
 		<div id='validarExistenciaCuit' style="float: right;"></div>
-</div>		
+</div>
 </form>
 
 <script type="text/javascript">
@@ -1963,7 +1974,7 @@ function verificarPlanAfiliadoDelReclamo() {
     if (tipoPedido == null) {
         tipoPedido = "";
     }
-    
+
     var claveValidacion =
         nombrePlan + "|" + tipoPedido;
 
@@ -1984,9 +1995,9 @@ jQuery(document).ready(function() {
 	//jQuery('#<%= reclamoPortletNamespace %>observacion_medica_div').hide();
 	if ('EXCEPCION' ==  jQuery("#<%= reclamoPortletNamespace %>tipopedido").val()){
 		traerDescripcion();
-	}			 
-	
-	
+	}
+
+
 	var observacionMedicaInicial = null;
 
 	<%
@@ -2032,27 +2043,27 @@ jQuery(document).ready(function() {
 
 
 jQuery("#<%= reclamoPortletNamespace %>sector").change(function(){
-	
-	try {	
+
+	try {
    		var valor=jQuery('#<%= reclamoPortletNamespace %>cantprestacioneslista').val();
 
-   		
+
 		if (valor >= 1 && load == true){
-			
+
 	        var params = "&<%= Constants.ACTION %>=" + "<%= WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL %>";
-			
+
 			var confirmar = false;
 			confirmar=confirm ('Se eliminaran los ítems por no pertenecer al tipo correspondiente '+'\nDesea hacerlo?');
 			if(confirmar){
 				 var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/borrar_reclamosprestaciones_todos';
     			 url = url + params;
-    			jQuery("#<%= reclamoPortletNamespace %>lista_prestaciones_reclamos").load(url);	
+    			jQuery("#<%= reclamoPortletNamespace %>lista_prestaciones_reclamos").load(url);
 			}else{
 				jQuery("#<%= reclamoPortletNamespace %>sector option[value="+sectorIni+"]").attr("selected",true);
-			}	
-			
+			}
+
 		}
-   		
+
 	}
 	catch (err) {
 		alert('error manejarTipoSector ');
@@ -2061,25 +2072,25 @@ jQuery("#<%= reclamoPortletNamespace %>sector").change(function(){
 });
 
 jQuery("#<%= reclamoPortletNamespace %>integracion").change(function(){
-	
-	try {	
-		traerDescripcion();	
+
+	try {
+		traerDescripcion();
 	}
 	catch (err) {
 		alert('error integracion ');
 	}
 });
- 
+
 jQuery("#<%= reclamoPortletNamespace %>estado").change(function(){
-	
-	try {	
+
+	try {
    		var estado =jQuery('#<%= reclamoPortletNamespace %>estado').val();
 
    		var chk_amparo =jQuery("#<%= reclamoPortletNamespace %>chk_amparo").is(':checked');
-   		
+
    		if (estado == 4 && chk_amparo == false ){
    			alert('Debe seleccionar la marca de Amparo ')	;
-		
+
 			jQuery("#<%= reclamoPortletNamespace %>estado option[value=1]").attr("selected",true);
 
    		}
@@ -2100,7 +2111,7 @@ jQuery("#<%= reclamoPortletNamespace %>tipopedido").change(function() {
 	        tipoGestionCierreReclamo();
 
 	        verificarPlanAfiliadoDelReclamo();
-	        
+
 	    } catch (err) {
 	        alert("Error al cambiar el tipo de pedido");
 	    }
@@ -2108,17 +2119,17 @@ jQuery("#<%= reclamoPortletNamespace %>tipopedido").change(function() {
 
 
 jQuery("#<%= reclamoPortletNamespace %>chk_amparo").change(function(){
-	
-	try {	
+
+	try {
    		var estado =jQuery('#<%= reclamoPortletNamespace %>estado').val();
 
    		var chk_amparo =jQuery("#<%= reclamoPortletNamespace %>chk_amparo").is(':checked');
-   		
+
    		if (estado == 4 && chk_amparo == false){
    			alert ('No puede sacar la marca de aparo si el estado es Incompleto ');
    			jQuery("#<%= reclamoPortletNamespace %>chk_amparo").attr('checked', true);
    		}
-			
+
 	}catch (err) {
 		alert('error chk_amparo ');
 	}
@@ -2127,12 +2138,12 @@ jQuery("#<%= reclamoPortletNamespace %>chk_amparo").change(function(){
 
 jQuery("#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo").change(function(){
 	tipoGestionCierreReclamo();
-	
+
 });
 
-jQuery("#<%= reclamoPortletNamespace %>observacion_medica").change(function(){	
-	try {	   		
-   		jQuery("#<%= reclamoPortletNamespace %>reclamo_observacion_cierre").text(''); 		
+jQuery("#<%= reclamoPortletNamespace %>observacion_medica").change(function(){
+	try {
+   		jQuery("#<%= reclamoPortletNamespace %>reclamo_observacion_cierre").text('');
 	}
 	catch (err) {
 		alert('error observacion_medica text');
@@ -2144,7 +2155,7 @@ function tipoGestionCierreReclamo(observacionSeleccionada) {
     try {
 
         var tipoPedido = jQuery("#<%= reclamoPortletNamespace %>tipopedido").val();
-        var idGestion = String(jQuery("#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo").val() || "0");           
+        var idGestion = String(jQuery("#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo").val() || "0");
         var filaObservacion = jQuery("#<%= reclamoPortletNamespace %>observacion_medica_tr");
         var comboObservacion = jQuery("#<%= reclamoPortletNamespace %>observacion_medica");
         var esRechazado = idGestion == "5";
@@ -2182,7 +2193,7 @@ function tipoGestionCierreReclamo(observacionSeleccionada) {
 }
 
 function integracionReclamo(){
-	try {	
+	try {
 		 if ('EXCEPCION' ==  jQuery("#<%= reclamoPortletNamespace %>tipopedido").val()){
 			 jQuery('#integracion_label').show();
 			 jQuery('#<%= reclamoPortletNamespace %>integracion').show();
@@ -2193,7 +2204,7 @@ function integracionReclamo(){
 			 jQuery('#<%= reclamoPortletNamespace %>integracion').hide();
 			 jQuery('#integracion_desc').show();
 			 jQuery('#integracion_div').hide();
-		 }	
+		 }
 	}
 	catch (err) {
 		alert('error integracion ');
@@ -2208,38 +2219,38 @@ jQuery("#<%= reclamoPortletNamespace %>idreclamoprestacion").val("0");
 <% if(reclamoprestacional != null) {%>
 jQuery("#<%= reclamoPortletNamespace %>idreclamoprestacion").val(<%=reclamoprestacional.getId_reclamo() %>);
 /* jQuery("#<%= reclamoPortletNamespace %>botoneditareclamo").show(); */
-      <% if(reclamoprestacional.getEstado()==3 ) {%>            
+      <% if(reclamoprestacional.getEstado()==3 ) {%>
             jQuery("#<%= reclamoPortletNamespace %>Cierre_Reclamo_Div").show();
             jQuery("#<%= reclamoPortletNamespace %>botonrevision").hide();
-          
 
-            
-      <%}%>      
-manejarTipoPedidoCierre();      
+
+
+      <%}%>
+manejarTipoPedidoCierre();
 manejarTipoSector();
 
-<%if( resolucionAutorizado!=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINVALOR && resolucionAutorizado!=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINEVALUACION) {%> 
+<%if( resolucionAutorizado!=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINVALOR && resolucionAutorizado!=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINEVALUACION) {%>
 	// oculta boton de agregar porque existe una evaluacion de rECHAZO o APROBACION no de baja
 	jQuery("#<%= reclamoPortletNamespace %>botonrevision").hide();
 	jQuery("#<%= reclamoPortletNamespace %>mensajerevisionefectuada").html("Revision Efectuada, el Sistema soporta solo una revision activa (No de baja).");
-<%}%> 
+<%}%>
 
 <%}%>
 
 
 <% if(!esEdicion) {%>
-    /* jQuery("#<%= reclamoPortletNamespace %>botoneditareclamo").hide();   */  
+    /* jQuery("#<%= reclamoPortletNamespace %>botoneditareclamo").hide();   */
     /* document.getElementById("<%= reclamoPortletNamespace %>sector").disabled = "disabled"; */
-    
+
     document.getElementById("<%= reclamoPortletNamespace %>reclamo_observacion_cierre").disabled = "disabled";
-    
+
     jQuery("#<%= reclamoPortletNamespace %>botonrevision").hide();
-    jQuery("#<%= reclamoPortletNamespace %>buttonaddprestacion").hide();    
-    
+    jQuery("#<%= reclamoPortletNamespace %>buttonaddprestacion").hide();
+
     //document.getElementById("<%= reclamoPortletNamespace %>buscadorcie10buscador").disabled = "disabled";
-       
-    
-    
+
+
+
 <%}%>
 
 <% if (Constants.ADD.equalsIgnoreCase(cmd) && cantRevisiones == 0) { %>
@@ -2252,8 +2263,8 @@ function filtrarLetraComprobante() {
 	var tipoPedido = jQuery("#<%= reclamoPortletNamespace %>tipopedido").val();
 	var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/filtrarLetraComprobante&tipo_pedido='+tipoPedido;
 	jQuery("#<%= reclamoPortletNamespace %>comprobante_letra").attr('disabled', 'disabled');
-	
-	jQuery.ajax({   
+
+	jQuery.ajax({
 		url: url,
 		async:false,
 		success: function(data){
@@ -2276,13 +2287,13 @@ AcomodarControlesEdicion();
 aplicaEstiloBordeRojoDatosObligatorio();
 
 <%-- function  AcomodarControlesEdicion() {
-	// HEADER DATOS INHABILITADOS   
-	                         
+	// HEADER DATOS INHABILITADOS
+
 	                         document.getElementById("<%= reclamoPortletNamespace %>sector").disabled = "disabled";
 	                         <%if (Validator.isNotNull(reclamoprestacional) &&   Validator.isNotNull(reclamoprestacional.getTipoPedido()) ) {   %>
 	                         if ( document.getElementById("<%= reclamoPortletNamespace %>tipopedido").selectedIndex!=0) {
-	                        	 document.getElementById("<%= reclamoPortletNamespace %>tipopedido").disabled = "disabled"; 
-	                         }	                            
+	                        	 document.getElementById("<%= reclamoPortletNamespace %>tipopedido").disabled = "disabled";
+	                         }
 	                         <%}%>
 						 	 document.getElementById("<%= reclamoPortletNamespace %>fechaospimDia").disabled = true;
 							 document.getElementById("<%= reclamoPortletNamespace %>fechaospimMes").disabled = true;
@@ -2296,7 +2307,7 @@ aplicaEstiloBordeRojoDatosObligatorio();
 							 document.getElementById("<%= reclamoPortletNamespace %>observacion_revision").disabled = "";
 							 document.getElementById("<%= reclamoPortletNamespace %>chk_amparo").disabled = "";
 							 document.getElementById("<%= reclamoPortletNamespace %>chk_superintendencia").disabled = "";
-							 document.getElementById("<%= reclamoPortletNamespace %>chk_recuperable").disabled = "";						 	 						 
+							 document.getElementById("<%= reclamoPortletNamespace %>chk_recuperable").disabled = "";
 							 document.getElementById("<%= reclamoPortletNamespace %>chk_entramite").disabled = "";
 							 document.getElementById("<%= reclamoPortletNamespace %>resolucion").disabled = "";
 							 document.getElementById("<%= reclamoPortletNamespace %>respresolucion").disabled = "";
@@ -2305,14 +2316,14 @@ aplicaEstiloBordeRojoDatosObligatorio();
 		 					/*  document.getElementById("<%= reclamoPortletNamespace %>fechacierreDia").disabled = false;
 							 document.getElementById("<%= reclamoPortletNamespace %>fechacierreMes").disabled = false;
 							 document.getElementById("<%= reclamoPortletNamespace %>fechacierreAnio").disabled = false;
-							
-							
-							 document.getElementById("<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo").disabled = "";							
-							 
+
+
+							 document.getElementById("<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo").disabled = "";
+
 							 document.getElementById("<%= reclamoPortletNamespace %>reclamo_observacion_cierre").disabled = false;
 							 document.getElementById("<%= reclamoPortletNamespace %>reclamo_ps_factura_ospim").disabled = "";
 							 document.getElementById("<%= reclamoPortletNamespace %>reclamo_a_negociar").disabled = ""; */
-							 
+
 	} --%>
 
 
@@ -2321,29 +2332,29 @@ function <%= reclamoPortletNamespace %>buscarNomencladorAutocompletar(){
 	var nombre_nomenclador=jQuery("#<%= reclamoPortletNamespace %>descripcionSeguimiento_filtro").val();
 	var codigo_nomenclador=jQuery("#<%= reclamoPortletNamespace %>codigoSeguimiento_filtro").val();
     var tipoNomenclador=jQuery("#<%= reclamoPortletNamespace %>tipoNomencladorSeguimiento_filtro").val();
-    
+
     // Marca ReinLiq no se utiliza en esta busqueda
     var marcaReinliq=null;
 	if(nombre_nomenclador.length==0 && codigo_nomenclador.length==0){
-        alert('<liferay-ui:message key="ingrese-parametros-busqueda" />'); 
+        alert('<liferay-ui:message key="ingrese-parametros-busqueda" />');
     }else {
     	if(popupMD==null)
     		popupMD = Liferay.Popup({title:"Búsqueda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
-    	
-    	
+
+
     	if(tipoNomenclador==8){
     		marcaReinliq=6;
-    	}    
+    	}
 
     	var esPrestMed = 0;
     	sector = jQuery("#<%= reclamoPortletNamespace %>sector").val();
     	if (sector == "PRESTACIONES MEDICAS")
     		esPrestMed = 1;
-    		    	
+
 	    var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/buscar_nomenclador';
 	    url += '&descripcionnomenclador='+encodeURI(nombre_nomenclador)+'&tiponomenclador='+tipoNomenclador +'&codigonomenclador='+encodeURI(codigo_nomenclador)+'&soloActivos=true';
 	    url += '&marcareinliq='+marcaReinliq+'&esPrestMed='+esPrestMed;
-	    	   
+
 	    jQuery(popupMD).load(url);
     }
 }
@@ -2353,13 +2364,13 @@ function <%= reclamoPortletNamespace %>buscarNomencladorAutocompletar_edit(){
 	var nombre_nomenclador=jQuery("#<%= reclamoPortletNamespace %>descripcionSeguimiento_filtro_edit").val();
 	var codigo_nomenclador=jQuery("#<%= reclamoPortletNamespace %>codigoSeguimiento_filtro_edit").val();
     var tipoNomenclador=jQuery("#<%= reclamoPortletNamespace %>tipoNomencladorSeguimiento_filtro_edit").val();
-    tipoNomenclador = '0';   
+    tipoNomenclador = '0';
 	if(nombre_nomenclador.length==0 && codigo_nomenclador.length==0){
-        alert('<liferay-ui:message key="ingrese-parametros-busqueda" />'); 
+        alert('<liferay-ui:message key="ingrese-parametros-busqueda" />');
     }else {
     	if(popupMD==null)
     		popupMD = Liferay.Popup({title:"Búsqueda Nomenclador",modal:true,width:700,onClose: function() { popupMD = null;}});
-    	
+
 	    var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/buscar_nomenclador';
 	    url += '&descripcionnomenclador='+encodeURI(nombre_nomenclador)+'&tiponomenclador='+tipoNomenclador +'&codigonomenclador='+encodeURI(codigo_nomenclador)+'&soloActivos=true';
 	    jQuery(popupMD).load(url);
@@ -2367,43 +2378,43 @@ function <%= reclamoPortletNamespace %>buscarNomencladorAutocompletar_edit(){
 }
 
 
-function <%= reclamoPortletNamespace %>limpiarNomencladorAutocompletar(){	
+function <%= reclamoPortletNamespace %>limpiarNomencladorAutocompletar(){
 	jQuery("#<%= reclamoPortletNamespace %>descripcionSeguimiento_filtro").val('');
 	jQuery("#<%= reclamoPortletNamespace %>codigoSeguimiento_filtro").val('');
 	jQuery("#<%= reclamoPortletNamespace %>descripcionSeguimiento_filtro_edit").val('');
 	jQuery("#<%= reclamoPortletNamespace %>codigoSeguimiento_filtro_edit").val('');
 }
 
-<%-- function <%= reclamoPortletNamespace %>siguienteSolapa() {		
-	 			
+<%-- function <%= reclamoPortletNamespace %>siguienteSolapa() {
+
 		var accionEnCurso = document.<%= reclamoPortletNamespace %>prestador_fm.<%= reclamoPortletNamespace %><%= Constants.CMD %>.value;
 		document.<%= reclamoPortletNamespace %>prestador_fm.<%= reclamoPortletNamespace %><%= Constants.CMD %>.value='<%=Constants.MOVE %>';
-		
+
 		var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones_entry" /></portlet:actionURL>';
 		url = url + '&accionEnCurso=' + accionEnCurso + '&moverATab=plan_prest' + "&esDatosTab=true";
-		
+
 		document.<%= reclamoPortletNamespace %>prestador_fm.method = 'post';
 		submitForm(document.<%= reclamoPortletNamespace %>prestador_fm, url);
-	  
-} --%>	 
- 
+
+} --%>
+
 function seleccionaCamposNm(tipoNomenclador, codigo, descripcion) {
 	jQuery('#<%= reclamoPortletNamespace %>codigoSeguimiento_filtro').val(codigo);
 	jQuery("#<%= reclamoPortletNamespace %>descripcionSeguimiento_filtro").val(descripcion);
-	jQuery("#<%= reclamoPortletNamespace %>nom_seleccionado").val("1"); // selecciona el tipo de nomenclador	 
+	jQuery("#<%= reclamoPortletNamespace %>nom_seleccionado").val("1"); // selecciona el tipo de nomenclador
 	jQuery('#<%= reclamoPortletNamespace %>tipoNomenclador').val(tipoNomenclador);
-	
-	
+
+
 	jQuery('#<%= reclamoPortletNamespace %>codigoSeguimiento_filtro_edit').val(codigo);
 	jQuery("#<%= reclamoPortletNamespace %>descripcionSeguimiento_filtro_edit").val(descripcion);
-	jQuery("#<%= reclamoPortletNamespace %>nom_seleccionado_edit").val("1"); // selecciona el tipo de nomenclador	 
+	jQuery("#<%= reclamoPortletNamespace %>nom_seleccionado_edit").val("1"); // selecciona el tipo de nomenclador
 	jQuery('#<%= reclamoPortletNamespace %>tipoNomenclador_edit').val(tipoNomenclador);
-	
+
 	Liferay.Popup.close(popupMD);
 
 }
 
-function pasarParametrosAParentNm(tipoNomenclador,codigo,descripcion) {	
+function pasarParametrosAParentNm(tipoNomenclador,codigo,descripcion) {
 	seleccionaCamposNm(tipoNomenclador, codigo, descripcion);
     <%= reclamoPortletNamespace %>cerrarNm();
 }
@@ -2471,41 +2482,92 @@ function DatosRevisionOk() {
 
         return false;
     }
-	
-	var diaExist  = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fecharevisionDia").val()));
-	var mesExist  = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fecharevisionMes").val()));
-	var anioExist   = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fecharevisionAnio").val()));
-	
-	var dia  = jQuery('#<%= reclamoPortletNamespace %>fechaospimDia').val();
-	var mes  = jQuery("#<%= reclamoPortletNamespace %>fechaospimMes").val() ;
-	var anio   = jQuery("#<%= reclamoPortletNamespace %>fechaospimAnio").val();
-	
-	var fechaOspim  = new Date(anio, mes ,dia);
-	var fechaRevision  = new Date(anionro,mesnro, dianro);
-	var t = Date.now();
-	var hoy = new Date(t);
-	    
-    diff  = new Date(fechaRevision - fechaOspim);
-    days  = diff/1000/60/60/24;     
-    
-    if (diaExist || mesExist || anioExist) {
-    	alert('Error en la fecha de revision ingresada.');
-    	return false;
+
+    var diaOspim =
+        parseInt(
+            jQuery(
+                "#<%= reclamoPortletNamespace %>fechaospimDia"
+            ).val(),
+            10
+        );
+
+    var mesOspim =
+        parseInt(
+            jQuery(
+                "#<%= reclamoPortletNamespace %>fechaospimMes"
+            ).val(),
+            10
+        );
+
+    var anioOspim =
+        parseInt(
+            jQuery(
+                "#<%= reclamoPortletNamespace %>fechaospimAnio"
+            ).val(),
+            10
+        );
+
+    var diaRevisionNumero =
+        parseInt(
+            diaRevision,
+            10
+        );
+
+    var mesRevisionNumero =
+        parseInt(
+            mesRevision,
+            10
+        );
+
+    var anioRevisionNumero =
+        parseInt(
+            anioRevision,
+            10
+        );
+
+    var fechaOspim =
+        new Date(
+            anioOspim,
+            mesOspim,
+            diaOspim
+        );
+
+    var fechaRevision =
+        new Date(
+            anioRevisionNumero,
+            mesRevisionNumero,
+            diaRevisionNumero
+        );
+
+    var hoy = new Date();
+
+    hoy.setHours(
+        23,
+        59,
+        59,
+        999
+    );
+
+    if (fechaRevision.getTime() < fechaOspim.getTime()) {
+        alert(
+            "La fecha de revision no puede ser inferior "
+                    + "a la fecha de Ingreso del Reclamo "
+                    + "(Fecha Ospim)."
+        );
+
+        return false;
     }
-	if(days<0){
-		alert('La fecha de revision no puede ser inferior a la fecha de Ingreso del Reclamo (Fecha Ospim).');
-		return false;
-	}
-	
-	diff  = new Date(hoy  - fechaRevision);
-    days  = diff/1000/60/60/24;
-	if(days<0){
-		alert('La fecha de revision no puede ser superior a la fecha de hoy.');
-		return false;
-	}
-	
-	
-	return true ;		
+
+    if (fechaRevision.getTime() > hoy.getTime()) {
+        alert(
+            "La fecha de revision no puede ser superior "
+                    + "a la fecha de hoy."
+        );
+
+        return false;
+    }
+
+    return true;
 }
 
 function ValidarDatosObligatorios(Edicion){
@@ -2520,55 +2582,55 @@ function ValidarDatosObligatorios(Edicion){
 
 		    return false;
 		}
-		
+
 	var valor = 0;
 	valor=jQuery('#<%= reclamoPortletNamespace %>cantprestacioneslista').val();
-	
-	
+
+
 	var dia  = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fechaospimDia").val()));
 	var mes  = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fechaospimMes").val()));
 	var anio   = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fechaospimAnio").val()));
-	
+
 	var dia1  = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fechaseccionalDia").val()));
 	var mes1  = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fechaseccionalMes").val()));
-	var anio1   = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fechaseccionalAnio").val()));	
-	
-	
+	var anio1   = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fechaseccionalAnio").val()));
+
+
 	var dia2  = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fechacierreDia").val()));
 	var mes2  = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fechacierreMes").val()));
 	var anio2   = isNaN(parseInt(jQuery("#<%= reclamoPortletNamespace %>fechacierreAnio").val()));
-	
-	
-	var msgs = ["Error en la fecha Ospim.", "Debe seleccionar el sector que inicia  el reclamo.", "Debe seleccionar el estado del reclamo.","Debe seleccionar al Afiliado asociado al reclamo.","Complete la Fecha Seccional o dejela en blanco","Debe seleccionar el tipo de Pedido"]; 
+
+
+	var msgs = ["Error en la fecha Ospim.", "Debe seleccionar el sector que inicia  el reclamo.", "Debe seleccionar el estado del reclamo.","Debe seleccionar al Afiliado asociado al reclamo.","Complete la Fecha Seccional o dejela en blanco","Debe seleccionar el tipo de Pedido"];
 	var condiciones =[5];
 	var controles  =[5];
-		
+
 	var tipoSelectsector  =document.getElementById("<%= reclamoPortletNamespace %>sector");
 	var tipoSelectestado  =document.getElementById("<%= reclamoPortletNamespace %>estado");
 	var tipoSelecttipopedido =document.getElementById("<%= reclamoPortletNamespace %>tipopedido");
 	/* document.getElementById("<%= reclamoPortletNamespace %>tipopedido").selectedIndex==0 */
 	var cuil=jQuery('#<%= reclamoPortletNamespace %>cuil').val();
-	var inte=jQuery('#<%= reclamoPortletNamespace %>inte').val();	
-	
-	
-	
+	var inte=jQuery('#<%= reclamoPortletNamespace %>inte').val();
+
+
+
 	var  resp=true;
-	
-	controles[0]=document.getElementById("<%= reclamoPortletNamespace %>fechaospimDia"); 	
+
+	controles[0]=document.getElementById("<%= reclamoPortletNamespace %>fechaospimDia");
 	controles[1]=tipoSelectsector;
-	controles[2]=tipoSelectestado; 	
-	controles[3]=document.getElementById("<%= reclamoPortletNamespace %>cuil");	
+	controles[2]=tipoSelectestado;
+	controles[3]=document.getElementById("<%= reclamoPortletNamespace %>cuil");
 	controles[4]=document.getElementById("<%= reclamoPortletNamespace %>fechaseccionalDia");
 	controles[5]=tipoSelecttipopedido;
-	
-	condiciones[0]=dia || mes || anio;	
-	
+
+	condiciones[0]=dia || mes || anio;
+
 	condiciones[1]=(tipoSelectsector.selectedIndex==0);
-	condiciones[2]=(tipoSelectestado.selectedIndex==0);	
+	condiciones[2]=(tipoSelectestado.selectedIndex==0);
 	condiciones[3]=(cuil=="" || inte=="" );
 	condiciones[4]=(dia1 || mes1 || anio1) && (!dia1 || !mes1 || !anio1) ;
 	condiciones[5]=(tipoSelecttipopedido.selectedIndex==0);
-	
+
 	if (condiciones[0]){
 		resp=false;
 		alert (msgs[0] );
@@ -2603,7 +2665,7 @@ function ValidarDatosObligatorios(Edicion){
 
 	// valida datos del cierre del reclamo
 	var idgestion = jQuery('#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo').val();
-	
+
 	var justificacion=jQuery('#<%= reclamoPortletNamespace %>justificacionmedcica_reclamo').val();
 
 	var tipoPedidoCierre = jQuery("#<%= reclamoPortletNamespace %>tipopedido").val();
@@ -2636,45 +2698,45 @@ function ValidarDatosObligatorios(Edicion){
 
 		    return false;
 		}
-	
+
 	if (idgestion == 0  && jQuery('#<%= reclamoPortletNamespace %>estado option:selected').text().trim() == 'CERRADO' ){
 		alert('Debe ingresar el tipo de gestión del Reclamo ( Sección Cierre de Reclamo) ');
 		document.getElementById("<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo").focus();
 		return false;
 	}
-	
+
 	/* if (idgestion==5){ */
 	if (idgestion==5){
-	/* 	var isDisabled = jQuery('#<%= reclamoPortletNamespace %>dosporciento').is(':disabled');			
+	/* 	var isDisabled = jQuery('#<%= reclamoPortletNamespace %>dosporciento').is(':disabled');
 	    if (!isDisabled) { */
 			if(! confirm("Al seleccionar la opción RECHAZADO el sistema rechazará todas las prestaciones del caso, no podrá asociarlas a reintegros. Está seguro ?")){
-				return false;	
+				return false;
 			/* } */
-	    }	
+	    }
 	}
 		var respResolucion = document.getElementById("<%= reclamoPortletNamespace %>respresolucion");
-		
-		if ( jQuery('#<%= reclamoPortletNamespace %>auditoriaadministrativa').val()!="Ok" ){ // auditoria administrativa 
 
-			if (justificacion.length ==0  && resp ){ // no hay revisiones activas 
+		if ( jQuery('#<%= reclamoPortletNamespace %>auditoriaadministrativa').val()!="Ok" ){ // auditoria administrativa
+
+			if (justificacion.length ==0  && resp ){ // no hay revisiones activas
 				alert('Tiene que ingresar la justificación médica del Caso para efectuar el Cierre del Caso.');
 				jQuery('#<%= reclamoPortletNamespace %>justificacionmedcica_reclamo').focus();
 				resp=false;
-			}		
+			}
 		}
-		// validar si 
+		// validar si
 		if (idgestion<1  && resp && jQuery('#<%= reclamoPortletNamespace %>estado option:selected').text() == 'CERRADO' ){
 			alert('Debe ingresar el tipo de gestión del Reclamo ( Sección Cierre de Reclamo) ');
 			document.getElementById("<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo").focus();
 			resp=false;
 		}
-		
+
 			if ((dia2 || mes2 || anio2)  && resp )  {
 				alert('Debe ingresar la fecha de Cierre del Reclamo');
 				document.getElementById("<%= reclamoPortletNamespace %>fechacierreDia").focus();
 				resp=false;
 			}
-		
+
 		if (jQuery(
                 "#<%= reclamoPortletNamespace %>estado"
             ).val() == "3") {
@@ -2695,12 +2757,12 @@ function ValidarDatosObligatorios(Edicion){
                 resp = false;
             }
         }
-		
-		
+
+
 // SI ES CIERRE DEL CASO NO SE CONTROLA SI SE DIERON DE BAJA TODAS LAS PRESTACIONES
 
 	valor=jQuery('#<%= reclamoPortletNamespace %>cantprestacioneslista').val();
-	
+
 
     if (Edicion && addprestacion) {
     	if (valor <1   && resp){
@@ -2709,17 +2771,17 @@ function ValidarDatosObligatorios(Edicion){
     	}
     }else{
     		if (valor <1  && resp ){
-    			
-    		}	
+
+    		}
     }
-    
+
     var integracion = jQuery("#<%= reclamoPortletNamespace %>integracion").val();
 	 if ('EXCEPCION' ==  jQuery("#<%= reclamoPortletNamespace %>tipopedido").val()){
 		if (integracion == '0'){
 			alert('Debe seleccionar un tipo de integración ');
 			resp=false;
 		}
-		 
+
 	 }
 
 	 if (Edicion && resp ) {
@@ -2728,30 +2790,30 @@ function ValidarDatosObligatorios(Edicion){
 	    		alert('Debe tener ingresada por lo menos una prestación para poder cerrar el reclamo.');
 	    		resp=false;
 	    	}
-		 } 	
+		 }
 	 }
-		
-	 var codError='';	
+
+	 var codError='';
 	 var baja =  jQuery('#<%= reclamoPortletNamespace %>baja_fecha').val();
 	 var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/validar_reclamo_afiliado_prestaciones';
 	 url +='&baja='+baja;
-	 
-	 jQuery.ajax({   
+
+	 jQuery.ajax({
 		   url: url,
 		   async: false,
 		   success: function(data) {
 			  var obj = jQuery.parseJSON(data);
 			  codError = obj.codError;
 	   		}
-	 }); 
-		   
+	 });
+
 	 if(codError == '6'){
 	       alert('La fecha de la prestación no puede ser posterior a la fecha de baja del afiliado');
-		   resp=false;	   
+		   resp=false;
 	 }
 
-	 
-	return resp;	
+
+	return resp;
 }
 
 
@@ -2782,12 +2844,7 @@ function <%= reclamoPortletNamespace %>saveReclamo() {
     guardandoReclamo = true;
 
     var url =
-        '<portlet:actionURL windowState="'
-        + '<%= LiferayWindowState.MAXIMIZED.toString() %>'
-        + '"><portlet:param name="struts_action" '
-        + 'value="/autorizaciones/'
-        + 'editar_reclamosprestaciones_entry" />'
-        + '</portlet:actionURL>';
+        '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones_entry" /></portlet:actionURL>';
 
     url += "&esDatosTab=true";
 
@@ -2810,90 +2867,90 @@ function <%= reclamoPortletNamespace %>volverEstadoObservado() {
 	var confirmar = false;
 	/* Recupera el Id del Reclamo */
 	var idgestion=jQuery('#<%= reclamoPortletNamespace %>id_reclamosel').val();
-	
-	confirmar=confirm ('Estas observando la precarga, la misma será devuelta ' + 
+
+	confirmar=confirm ('Estas observando la precarga, la misma será devuelta ' +
 			'a la seccional. ' + '\nEstas seguro?');
-	
-	if(confirmar) {  	
+
+	if(confirmar) {
 		popup = Liferay.Popup({title:"<liferay-ui:message key="observacion-interna" />",modal:true,width:700});
 		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/observar';
 		url = url + "&idReclamo=" + idgestion;
-		jQuery(popup).load(url);		
-	}  
+		jQuery(popup).load(url);
+	}
 }
 
 function <%= reclamoPortletNamespace %>editaReclamo(fromAutoriza) {
-	
+
 	if (fromAutoriza) {
 		abreAutorizacion();
 	}
-	
+
 	if ( ValidarDatosObligatorios(true))  {
-		
+
 	  /* var data=jQuery('#<%= reclamoPortletNamespace %>estado').val();
-	  if ( document.getElementById("<%= reclamoPortletNamespace %>estadosel").value == data){	 	
-		 document.getElementById("<%= reclamoPortletNamespace %>estado").value="0";		
+	  if ( document.getElementById("<%= reclamoPortletNamespace %>estadosel").value == data){
+		 document.getElementById("<%= reclamoPortletNamespace %>estado").value="0";
 	  } */
 
 	 /*  if ( document.getElementById("<%= reclamoPortletNamespace %>tipopedido").disabled = "disabled"){
-		document.getElementById("<%= reclamoPortletNamespace %>tipopedido").disabled = "";	
+		document.getElementById("<%= reclamoPortletNamespace %>tipopedido").disabled = "";
 	  } */
-	
+
 	  /*esta chanchada es porque el action toma el id de cierre de tipogestion que es un hidden y no de tipo_gestion_cierre_reclamo*/
 		var idgestion=jQuery('#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo').val()
 		jQuery('#<%= reclamoPortletNamespace %>tipogestion').val(idgestion);
 	    //jQuery('#<%= reclamoPortletNamespace %>id_reclamosel').val(0);
-	  
+
 	  var accionEnCurso = document.<%= reclamoPortletNamespace %>reclamo_fm.<%= reclamoPortletNamespace %><%= Constants.CMD %>.value;
 	  document.<%= reclamoPortletNamespace %>reclamo_fm.<%= reclamoPortletNamespace %><%= Constants.CMD %>.value='<%=Constants.UPDATE %>';
 
 	  /* habilitarControlesCierre(); */
-	  
-	  
 
-	
+
+
+
 	  var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones_entry" /></portlet:actionURL>';
 	  url = url + "&esDatosTab=true";
 	  document.<%= reclamoPortletNamespace %>reclamo_fm.method = 'post';
 
-	  
+
 	  submitForm(document.<%= reclamoPortletNamespace %>reclamo_fm, url);
-		
+
 	  /* onOffControlesRequest(true); */
-	}							  	
+	}
 }
 
 
 function <%= reclamoPortletNamespace %>reabrirReclamo(fromAutoriza) {
-	
+
 	if (fromAutoriza) {
 		abreAutorizacion();
 	}
-	
-		
+
+
 /* 	  var data=jQuery('#<%= reclamoPortletNamespace %>estado').val();
-	  if ( document.getElementById("<%= reclamoPortletNamespace %>estadosel").value == data){	 	
-		 document.getElementById("<%= reclamoPortletNamespace %>estado").value="0";		
+	  if ( document.getElementById("<%= reclamoPortletNamespace %>estadosel").value == data){
+		 document.getElementById("<%= reclamoPortletNamespace %>estado").value="0";
 	  } */
-	
+
 	/*   if ( document.getElementById("<%= reclamoPortletNamespace %>tipopedido").disabled = "disabled"){
-		document.getElementById("<%= reclamoPortletNamespace %>tipopedido").disabled = "";	
+		document.getElementById("<%= reclamoPortletNamespace %>tipopedido").disabled = "";
 	  } */
-	
+
 	  var accionEnCurso = document.<%= reclamoPortletNamespace %>reclamo_fm.<%= reclamoPortletNamespace %><%= Constants.CMD %>.value;
 	  document.<%= reclamoPortletNamespace %>reclamo_fm.<%= reclamoPortletNamespace %><%= Constants.CMD %>.value='<%=Constants.RESTORE %>';
 
 	  /* habilitarControlesCierre(); */
-	
+
 	  var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones_entry" /></portlet:actionURL>';
 	  url = url + '&accionEnCurso=' + accionEnCurso + '&moverATab=plan_prest' + "&esDatosTab=false";
-	
+
 	  document.<%= reclamoPortletNamespace %>reclamo_fm.method = 'post';
-	
+
 	  submitForm(document.<%= reclamoPortletNamespace %>reclamo_fm, url);
-		
+
 /* 	  onOffControlesRequest(true); */
-							  	
+
 }
 
 
@@ -2902,63 +2959,63 @@ function <%= reclamoPortletNamespace %>reabrirReclamo(fromAutoriza) {
 function manejartipogestion(){
 
 	/* var tipoGestionArray = jQuery('#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo').val().split("|");	 */
-	var idgestion = jQuery('#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo').val();	
+	var idgestion = jQuery('#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo').val();
 	/* var idgestion =tipoGestionArray [0];	 */
 	var sector=jQuery('#<%= reclamoPortletNamespace %>sector').val();
 	var nroLote=jQuery('#<%= reclamoPortletNamespace %>nroLote').val();
-	jQuery('#<%= reclamoPortletNamespace %>tipogestion').val(idgestion);	
+	jQuery('#<%= reclamoPortletNamespace %>tipogestion').val(idgestion);
 	if("1"==idgestion && sector=="PRESTACIONES MEDICAS" && (nroLote==null || nroLote=="" || nroLote=="0")){
-		
-		 var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/propone_lote_reclamo_prestacional';		 
-			jQuery.ajax({   
+
+		 var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/propone_lote_reclamo_prestacional';
+			jQuery.ajax({
 				url: url,
 				success: function(data){
 					var obj = jQuery.parseJSON(data);
 					jQuery('#<%= reclamoPortletNamespace %>nroLote').val(obj.lote);
 				}
-			}); 
+			});
 	}
 	if("1"!=idgestion || sector!="PRESTACIONES MEDICAS"){
 		jQuery('#<%= reclamoPortletNamespace %>nroLote').val("");
 	}
-	
-	
-	
+
+
+
 }
 
 
 function manejarListaPresentes(){
 	var tipoSelect  =document.getElementById("<%= reclamoPortletNamespace %>presenteslista");
-	jQuery("#<%= reclamoPortletNamespace %>presentes").val(tipoSelect.value); // asigna el valor de la lista al control oculto 
+	jQuery("#<%= reclamoPortletNamespace %>presentes").val(tipoSelect.value); // asigna el valor de la lista al control oculto
 }
 
 
 function cambioresolucion(){
-	
+
 	try{
 		var tipoSelect  =document.getElementById("<%= reclamoPortletNamespace %>resolucion");
 		var justificacion=jQuery('#<%= reclamoPortletNamespace %>justificacionmedcica_reclamo').val();
 		if  (tipoSelect.selectedIndex>0 && justificacion.length ==0  && document.getElementById("<%= reclamoPortletNamespace %>respresolucion").selectedIndex!=1){
 				jQuery('#<%= reclamoPortletNamespace %>justificacionmedcica_reclamo').focus();
 				tipoSelect.selectedIndex=0;
-				alert('Tiene que ingresar la Justificacion Medica del Caso para ingresar la revision.');			
-			}	
+				alert('Tiene que ingresar la Justificacion Medica del Caso para ingresar la revision.');
+			}
 
-	}catch (err) {}	
-	
+	}catch (err) {}
+
 }
 
 
 function manejarTipoPedido(){
 	var tipoPedido =document.getElementById("<%= reclamoPortletNamespace %>tipopedido");
 	if ( tipoPedido.selectedIndex==0 ){
-		alert("El tipo de pedido es obligatorio");	
+		alert("El tipo de pedido es obligatorio");
 		document.getElementById("<%= reclamoPortletNamespace %>tipopedido").focus();
 	}
 	//if(tipoPedido.value!="EXTRACAPITA"){
 	//	jQuery("#<%= reclamoPortletNamespace %>comprobante_letra").append(new Option("A", "A"));
 	//}
-	
+
 }
 
 function cambioTipoPedido(){
@@ -2998,39 +3055,39 @@ function manejarTipoSector(){
 	try {
 		jQuery("#<%= reclamoPortletNamespace %>busqueda_prestaciones").show();
 		jQuery("#<%= reclamoPortletNamespace %>busqueda_farmacia").hide();
-		jQuery("#<%= reclamoPortletNamespace %>nom_seleccionado").val("1"); // se selecciono maestra de prestaciones medicas 
-		jQuery('#<%= reclamoPortletNamespace %>troquel').val("");  
+		jQuery("#<%= reclamoPortletNamespace %>nom_seleccionado").val("1"); // se selecciono maestra de prestaciones medicas
+		jQuery('#<%= reclamoPortletNamespace %>troquel').val("");
 		jQuery('#<%= reclamoPortletNamespace %>codigoSeguimiento_filtro').val("");
 		jQuery("#<%= reclamoPortletNamespace %>tipoNomencladorSeguimiento_filtro").val("");
-		
+
 		// 1. Discapacidad
 		// 2. Prest Medicas
 		// 3. Farmacia
 		// 4. Legales
 		// 5. Liquidaciones
 		// 6. Odonto
-		
+
 		// En Tipo Reintegro y Sector Farmacia, muestra Medicamento y Troquel
 		// En el resto muestra "Codigo Presentado (nomenclador)
 		if (tipoSector.selectedIndex==3) {
-   			 
+
    			if (tipopedido.selectedIndex!=1){
 				if(tipoSector.selectedIndex == 3 && tipopedido.selectedIndex == 2){
-	   				jQuery("#<%= reclamoPortletNamespace %>busqueda_farmacia").show();       
-	  				 jQuery("#<%= reclamoPortletNamespace %>busqueda_prestaciones").hide();    		
+	   				jQuery("#<%= reclamoPortletNamespace %>busqueda_farmacia").show();
+	  				 jQuery("#<%= reclamoPortletNamespace %>busqueda_prestaciones").hide();
 				}
-   				
-   					       
+
+
   		         jQuery("#<%= reclamoPortletNamespace %>nom_seleccionado").val("2"); // se selecciono maestra de farmacia
    	   		}else{
    	   		     jQuery("#<%= reclamoPortletNamespace %>tipoNomencladorSeguimiento_filtro").val(9);  // farmacia
-   	   		}	 
+   	   		}
         }
-   		if (tipoSector.selectedIndex==1){     	       
-   			jQuery("#<%= reclamoPortletNamespace %>tipoNomencladorSeguimiento_filtro").val(8); // discapacidad 
+   		if (tipoSector.selectedIndex==1){
+   			jQuery("#<%= reclamoPortletNamespace %>tipoNomencladorSeguimiento_filtro").val(8); // discapacidad
    		} else if (tipoSector.selectedIndex==6){
    			/* ODONTOLOGIA Tipo Nomenclador 1 */
-   			jQuery("#<%= reclamoPortletNamespace %>tipoNomencladorSeguimiento_filtro").val(1); // discapacidad	
+   			jQuery("#<%= reclamoPortletNamespace %>tipoNomencladorSeguimiento_filtro").val(1); // discapacidad
    		}
 	}
 	catch (err) {
@@ -3043,104 +3100,103 @@ function manejarTipoSector(){
 
 
 
-function <%= reclamoPortletNamespace %>agregarRevision() {		
-     
+function <%= reclamoPortletNamespace %>agregarRevision() {
+
 	var  revisionConCierre =false;
-	
+
 	if ( DatosRevisionOk())  {
-		
+
 		var resolucion = jQuery('#<%= reclamoPortletNamespace %>resolucion').val();
-		
+
 		var presentes = jQuery('#<%= reclamoPortletNamespace %>presentes').val();
-		var respresolucion = jQuery('#<%= reclamoPortletNamespace %>respresolucion').val();		
-		var revisionFechaVtoDia = jQuery('#<%= reclamoPortletNamespace %>fecharevisionDia').val(); 
-		var revisionFechaVtoMes = jQuery('#<%= reclamoPortletNamespace %>fecharevisionMes').val(); 
+		var respresolucion = jQuery('#<%= reclamoPortletNamespace %>respresolucion').val();
+		var revisionFechaVtoDia = jQuery('#<%= reclamoPortletNamespace %>fecharevisionDia').val();
+		var revisionFechaVtoMes = jQuery('#<%= reclamoPortletNamespace %>fecharevisionMes').val();
 		var revisionFechaVtoAnio = jQuery('#<%= reclamoPortletNamespace %>fecharevisionAnio').val();
-		
+
 		var observacionMedica = jQuery('#<%= reclamoPortletNamespace %>observacion_medica').val();
 
-		
-		
+
+
 		var reclamoobservacion  = jQuery('#<%= reclamoPortletNamespace %>observacion_revision').val();
 		var chk_amparo=jQuery("#<%= reclamoPortletNamespace %>chk_amparo").is(':checked');
 		var chk_superintendencia=jQuery("#<%= reclamoPortletNamespace %>chk_superintendencia").is(':checked');
 		var chk_recuperable = jQuery("#<%= reclamoPortletNamespace %>chk_recuperable").is(':checked');
 		var chk_entramite = jQuery("#portlet:namespace />chk_entramite").is(':checked');
-	
+
 	    if (document.getElementById("<%= reclamoPortletNamespace %>resolucion").selectedIndex==0 ) {
-	    	resolucion="";     
+	    	resolucion="";
 	    }
-	    if (document.getElementById("<%= reclamoPortletNamespace %>presentes").selectedIndex==0 ) { 
-	    	presentes="";     
+	    if (document.getElementById("<%= reclamoPortletNamespace %>presentes").selectedIndex==0 ) {
+	    	presentes="";
 	    }
 	    if (document.getElementById("<%= reclamoPortletNamespace %>respresolucion").selectedIndex==0 ) {
-	    	respresolucion="";     
+	    	respresolucion="";
 	    }
 	    jQuery('#<%= reclamoPortletNamespace %>auditoriaadministrativa').val('');
 	    if (document.getElementById("<%= reclamoPortletNamespace %>respresolucion").selectedIndex==1 ) {
 	    	jQuery('#<%= reclamoPortletNamespace %>auditoriaadministrativa').val('Ok');
 	    }
-	    
-	   
-	    
+
+
+
 		var params = {"resolucion":resolucion,
 							   "presentes":presentes,
 							   "respresolucion":respresolucion,
 							   "revisionFechaVtoDia":revisionFechaVtoDia,
 							   "revisionFechaVtoMes":revisionFechaVtoMes,
-							   "revisionFechaVtoAnio":revisionFechaVtoAnio,						   
+							   "revisionFechaVtoAnio":revisionFechaVtoAnio,
 							   "reclamoobservacion":reclamoobservacion,
-							   "observacionMedica":observacionMedica					   
+							   "observacionMedica":observacionMedica
 							   };
-			
-		
+
+
 		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/lista_revisiones_reclamo" /></portlet:renderURL>';
-		
-		
+
+
 		if (resolucion.toUpperCase()!="AUTORIZADO"){
 			if(confirm("Confirma el Cierre del Caso con el Rechazo en la revision ?")){
 	 			    /* var estadoSelectsector  =document.getElementById("<%= reclamoPortletNamespace %>estado"); */
 				    //estadoSelectsector.selectedIndex = 2; // setea el estado en cerrado
-				    /* estadoSelectsector.selectedIndex = ubicacionOpcionEstadoCerradoCombo();	 */		    
+				    /* estadoSelectsector.selectedIndex = ubicacionOpcionEstadoCerradoCombo();	 */
 				    /* jQuery("#<%= reclamoPortletNamespace %>estado option[value='3']").attr("selected", true); //CERARADO */
-				    jQuery("#<%= reclamoPortletNamespace %>estado jQuery(
-                                                                      "#<%= reclamoPortletNamespace %>estado"
-                                                                  ).val("3");
-                                                                  ").attr("selected",true);
+				    jQuery(
+                        "#<%= reclamoPortletNamespace %>estado"
+                    ).val("3");
 				    controlarEstadoCerrado(); // hace visible los controles del estado cerrado
-				    
+
 				    document.getElementById("<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo").disabled = false;
-					
+
 					var tipoSelectsector  =document.getElementById("<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo");
-					
+
 					seteaControlesFacturacionDirecta(true);
 					/* tipoSelectsector.selectedIndex= ubicacionOpcionRechazadoenCombo(); */
 				    /* jQuery("#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo option[value='5']").attr("selected", true); //RECHAZADO */
 				    /*jQuery("#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo option[value='RECHAZADO']").attr("selected",true);*/
-				    
-				    
+
+
 				    jQuery("#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo").val("5");
 				    tipoGestionCierreReclamo();
-				    
+
 					/* var tipoGestionArray=jQuery('#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo').val().split("|"); */
 					var idgestion=jQuery('#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo').val()
-					
+
 					/* var idgestion =tipoGestionArray [0]; */
-					jQuery('#<%= reclamoPortletNamespace %>tipogestion').val(idgestion);				
+					jQuery('#<%= reclamoPortletNamespace %>tipogestion').val(idgestion);
 					jQuery('#<%= reclamoPortletNamespace %>reclamo_observacion_cierre').val('RECHAZO DE LA PRESTACION EN LA REVISION.');
 					revisionConCierre=true;
 					jQuery('#<%= reclamoPortletNamespace %>cantrevisionesactivas').val(1); // para que no valide esto
-					desactivaCheckCierre();							
-					
+					desactivaCheckCierre();
+
 	 		}else{
-					return false;	
-			}	
+					return false;
+			}
 		}
-			
+
 		// oculta boton de agreagr revision porque solo se admite un aprobacion o un rechazo no hay parciales dentro del reclamo
 		jQuery("#<%= reclamoPortletNamespace %>botonrevision").hide();
 		jQuery("#<%= reclamoPortletNamespace %>mensajerevisionefectuada").html("Revisión Efectuada, el Sistema soporta solo una revisión activa (No de baja).");
-	
+
 	 	jQuery(
             '#<%= reclamoPortletNamespace %>lista_revisiones'
         ).load(
@@ -3187,17 +3243,6 @@ function <%= reclamoPortletNamespace %>agregarRevision() {
 		 document.getElementById("<%= reclamoPortletNamespace %>fecharevisionAnio").selectedIndex = 0;
 		 document.getElementById("<%= reclamoPortletNamespace %>fecharevisionAnio").selectedIndex = 0;
 		 jQuery('#<%= reclamoPortletNamespace %>observacion_revision').val('');
-		 <% if (reclamoPersistido) { %>
-             if (revisionConCierre) {
-                 <%= reclamoPortletNamespace %>editaReclamo(
-                         false
-                 );
-             }
-         <% } else { %>
-             if (revisionConCierre) {
-                 <%= reclamoPortletNamespace %>saveReclamo();
-             }
-         <% } %>
 	}
 }       		
 
