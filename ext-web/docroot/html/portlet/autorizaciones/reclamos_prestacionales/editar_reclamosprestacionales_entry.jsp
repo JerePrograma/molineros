@@ -31,14 +31,38 @@ ReclamoPrestacionalCompraContexto contextoCompra =
                 ? contextoCompraSesion
                 : null;
 String contextoCompraNonce =
-        contextoCompra != null ? contextoCompra.getNonce() : "";
-String tabNames="" ;
-StringBuilder tabValues = new StringBuilder("datos");
+        contextoCompra != null
+                ? contextoCompra.getNonce()
+                : "";
 
-String cmd = (String) request.getAttribute(Constants.CMD);
+String tabNames = "";
+StringBuilder tabValues =
+        new StringBuilder("datos");
 
+Integer idReclamoAux =
+        reclamoprestacional != null
+                ? reclamoprestacional.getId_reclamo()
+                : Integer.valueOf(0);
+
+String idReclamoString =
+        reclamoprestacional != null
+                ? reclamoprestacional.getId_String()
+                : "";
+
+String cmd =
+        (String) request.getAttribute(
+                Constants.CMD
+        );
+
+/*
+ * El contexto de Compras sólo puede forzar ADD mientras el
+ * Reclamo Prestacional continúa siendo un borrador ID 0.
+ *
+ * Un reclamo ya persistido nunca debe volver a modo ADD aunque
+ * permanezca temporalmente el contexto de Compras en sesión.
+ */
 if (contextoCompra != null
-        && idReclamoAux == 0) {
+        && idReclamoAux.intValue() == 0) {
 
     cmd = Constants.ADD;
 
@@ -49,9 +73,6 @@ if (contextoCompra != null
 }
 
 boolean showReadOnlyReclamPrestac=PermissionUtil.userContainsRole(user,WebKeysAutorizaciones.ROL_CONSULTA_RECLAMOS_PRESTACIONALES);
-
-Integer idReclamoAux = reclamoprestacional!=null?reclamoprestacional.getId_reclamo():0;
-String  idReclamoString  = reclamoprestacional!=null?reclamoprestacional.getId_String() :"";
 
 String tabValue = ParamUtil.getString(request, "tab", null);
  
@@ -91,17 +112,24 @@ portletURL.setParameter("tab", tabValue);
 portletURL.setParameter("cmd", cmd);
 portletURL.setParameter("reclamo_id", String.valueOf(idReclamoAux));
 
-if (!StringUtils.checkEmpty(contextoCompraNonce)) {
+if (!StringUtils.checkEmpty(contextoCompraNonce)
+        && idReclamoAux.intValue() == 0) {
+
     portletURL.setParameter(
             WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
             contextoCompraNonce
     );
-    portletURL.setParameter("origen", "compras");
-    portletURL.setParameter(Constants.CMD, Constants.ADD);
+
+    portletURL.setParameter(
+            "origen",
+            "compras"
+    );
+
+    portletURL.setParameter(
+            Constants.CMD,
+            Constants.ADD
+    );
 }
-
-
-
 
 %>
 <liferay-ui:error key="error-estado-reclamo" message="falta-estado-reclamo-prestacion" />
