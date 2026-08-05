@@ -25,6 +25,18 @@ public final class ComprasRequerimientosUiContractTest {
                 "ext-impl/src/ar/com/ospim/autorizaciones/services/"
                         + "ReclamoPrestacionServiceImpl.java"
         );
+        String precarga = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
+                        + "ReclamoPrestacionalCompraPrecargaServiceUtil.java"
+        );
+        String revision = leer(
+                "ext-impl/src/ar/com/ospim/autorizaciones/action/"
+                        + "ListaRevisionesAction.java"
+        );
+        String editarPrestacion = leer(
+                "ext-impl/src/ar/com/ospim/autorizaciones/action/"
+                        + "EditarPrestacionReclamoAction.java"
+        );
         String vista = leer(
                 "ext-web/docroot/html/portlet/autorizaciones/"
                         + "reclamos_prestacionales/view_reclamo.jsp"
@@ -33,6 +45,14 @@ public final class ComprasRequerimientosUiContractTest {
                 "ext-web/docroot/html/portlet/autorizaciones/"
                         + "reclamos_prestacionales/"
                         + "editar_reclamosprestacionales_entry.jsp"
+        );
+        String editorPrestacion = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/datos_edicion_prestacion.jsp"
+        );
+        String listaPrestaciones = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/lista_prestaciones_reclamos.jsp"
         );
         String botonera = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
@@ -145,6 +165,38 @@ public final class ComprasRequerimientosUiContractTest {
                 "ConnectionHelper.rollback(con);",
                 "throw new SystemException(e);"
         );
+        assertContains(
+                "render conserva ADD",
+                editar,
+                "Constants.ADD.equals(cmd) ? Constants.ADD : Constants.EDIT"
+        );
+        assertNotContains(
+                "precarga no abre editor de prestacion",
+                precarga,
+                "prestaciones.get(0)"
+        );
+        assertNotContains(
+                "precarga no completa comprobante",
+                precarga,
+                "prestacion.setComprobante"
+        );
+        assertOrden(
+                "edita la prestacion seleccionada",
+                editarPrestacion,
+                "listaPrestacionesReclamo.indexOf(presta)",
+                "session.setAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION"
+        );
+        assertOrden(
+                "editor consume y limpia prestacion temporal",
+                editorPrestacion,
+                "getAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION",
+                "removeAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION"
+        );
+        assertContains(
+                "grilla admite comprobante pendiente",
+                listaPrestaciones,
+                "getComprobanteTotal()!=null"
+        );
 
         assertContains(
                 "guard de handoff",
@@ -172,11 +224,41 @@ public final class ComprasRequerimientosUiContractTest {
                 "WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION",
                 "datos_edicion_prestacion.jsp"
         );
+        assertContains(
+                "titulo inequívoco de alta",
+                vista,
+                "Nuevo Reclamo Prestacional"
+        );
         assertContains("boton legacy grabar", vista, "key=\"Grabar\"");
+        assertNotContains(
+                "alta no oculta Grabar",
+                vista,
+                "botonsavereclamo\").hide();"
+        );
         assertContains(
                 "boton legacy actualizar",
                 vista,
                 "key=\"Actualizar\""
+        );
+        assertContains(
+                "revision visible en alta sin revision activa",
+                vista,
+                "Constants.ADD.equalsIgnoreCase(cmd) && cantRevisiones == 0"
+        );
+        assertContains(
+                "funcion agregar revision",
+                vista,
+                "function <%= reclamoPortletNamespace %>agregarRevision()"
+        );
+        assertContains(
+                "ruta agregar revision",
+                vista,
+                "/autorizaciones/lista_revisiones_reclamo"
+        );
+        assertContains(
+                "revision agregada a la sesion",
+                revision,
+                "revisionesreclamo.add(revreclamo)"
         );
         assertNotContains(
                 "sin vista segmentada",

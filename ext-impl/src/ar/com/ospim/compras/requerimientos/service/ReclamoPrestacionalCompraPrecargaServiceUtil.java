@@ -174,7 +174,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                                 nonceRequest,
                                 reclamo,
                                 prestaciones,
-                                prestaciones.get(0),
+                                null,
                                 revisiones,
                                 contactos,
                                 session.getAttribute(
@@ -209,16 +209,6 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                         WebKeysAutorizaciones
                                 .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION,
                         prestaciones
-                );
-
-                /*
-                 * El editor superior trabaja sobre la misma primera fila
-                 * temporal ya publicada en la grilla; no agrega otra.
-                 */
-                session.setAttribute(
-                        WebKeysAutorizaciones
-                                .PRESTACION_EN_PROCESO_DE_EDICION,
-                        prestaciones.get(0)
                 );
 
                 session.setAttribute(
@@ -696,64 +686,6 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                           .getAfiliadoInt()
                           .intValue()
                         : 0
-        );
-
-        /*
-         * Una cotización no es una factura. Se usa OTR como tipo temporal y
-         * se dejan vacíos los datos documentales que el usuario debe
-         * confirmar.
-         */
-        prestacion.setComprobanteTipo(
-                "OTR"
-        );
-
-        prestacion.setComprobanteNro(
-                null
-        );
-
-        prestacion.setComprobanteFecha(
-                null
-        );
-
-        prestacion.setComprobanteLetra(
-                null
-        );
-
-        prestacion.setComprobanteSucursal(
-                null
-        );
-
-        prestacion.setComprobanteCUITSucursal(
-                null
-        );
-
-        prestacion.setComprobanteCUIT(
-                normalizarCuit(
-                        detalle.getPrestadorCuit()
-                )
-        );
-
-        prestacion.setComprobanteRazonSocial(
-                detalle.getPrestadorRazonSocial()
-        );
-
-        /* Datos presentados provenientes de la adjudicación. */
-        prestacion.setComprobanteCantidad(
-                Double.valueOf(
-                        cantidad.doubleValue()
-                )
-        );
-
-        prestacion.setComprobanteImporte(
-                Double.valueOf(
-                        importeUnitario.doubleValue()
-                )
-        );
-
-        prestacion.setComprobanteTotal(
-                Double.valueOf(
-                        total.doubleValue()
-                )
         );
 
         /* Debe ser confirmada por el usuario. */

@@ -1048,7 +1048,10 @@ import ar.com.ospim.util.StringUtils;
 					String successMessage = ParamUtil.getString(renderRequest, "successMessage");
 					SessionMessages.add(renderRequest, "request_processed", successMessage);																
 				}
-				renderRequest.setAttribute(Constants.CMD, Constants.EDIT);					
+				renderRequest.setAttribute(
+						Constants.CMD,
+						Constants.ADD.equals(cmd) ? Constants.ADD : Constants.EDIT
+				);
 				if (cmd.equals(Constants.VIEW) ){
 					   renderRequest.setAttribute(Constants.CMD,Constants.VIEW);					                                    
 				}

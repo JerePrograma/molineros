@@ -111,7 +111,9 @@ List<CieDiez> cieDiez=(ArrayList<CieDiez>) request.getSession().getAttribute(Web
 
 
 String divcheckbox="";
-String nroreclamo="Caso Nro 00000";
+String nroreclamo=Constants.ADD.equalsIgnoreCase(cmd)
+        ? "Nuevo Reclamo Prestacional"
+        : "Caso Nro 00000";
 String opAsignadaalReclamo ="";
 boolean opAsignadaalReclamoExiste =false;
 ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO resolucionAutorizado=ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.SINVALOR;
@@ -185,7 +187,9 @@ if(reclamoprestacional != null  ){
 		}	
 	}
 	
-	nroreclamo ="Reclamo Nro : " + "000"+  String.valueOf(reclamoprestacional.getId_reclamo());
+	if (reclamoprestacional.getId_reclamo() > 0) {
+		nroreclamo ="Reclamo Nro : " + "000"+  String.valueOf(reclamoprestacional.getId_reclamo());
+	}
 	if (reclamoprestacional.getId_lista_reintegro()==0 && reclamoprestacional.getIdOP()==0 
 	&& reclamoprestacional.getChequeOP()==null  &&  reclamoprestacional.getFechaOP()==null ){
 		     opAsignadaalReclamo="Sin Orden de Pago";
@@ -2156,7 +2160,6 @@ jQuery("#<%= reclamoPortletNamespace %>idreclamoprestacion").val("0");
 <% if(reclamoprestacional != null) {%>
 jQuery("#<%= reclamoPortletNamespace %>idreclamoprestacion").val(<%=reclamoprestacional.getId_reclamo() %>);
 /* jQuery("#<%= reclamoPortletNamespace %>botoneditareclamo").show(); */
-jQuery("#<%= reclamoPortletNamespace %>botonsavereclamo").hide();
       <% if(reclamoprestacional.getEstado()==3 ) {%>            
             jQuery("#<%= reclamoPortletNamespace %>Cierre_Reclamo_Div").show();
             jQuery("#<%= reclamoPortletNamespace %>botonrevision").hide();
@@ -2190,6 +2193,10 @@ manejarTipoSector();
     
     
 <%}%>
+
+<% if (Constants.ADD.equalsIgnoreCase(cmd) && cantRevisiones == 0) { %>
+    jQuery("#<%= reclamoPortletNamespace %>botonrevision").show();
+<% } %>
 
 
 

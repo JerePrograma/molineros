@@ -123,7 +123,7 @@ if (prestacionesDelReclamo != null && prestacionesDelReclamo.size()>0){
 	 	            (presreclamo.getComprobanteFecha()!=null?sdf.format(presreclamo.getComprobanteFecha()):"")
 	 	            );
 	 	row.addText((presreclamo.getComprobanteCUIT()!=null?presreclamo.getComprobanteCUIT():""));
-	 	row.addText(format2D.format(presreclamo.getComprobanteTotal()));	 
+		row.addText(presreclamo.getComprobanteTotal()!=null?format2D.format(presreclamo.getComprobanteTotal()):"");
 	 	row.addText( presreclamo.getCantidadString());
 	 	//row.addText(format2D.format(presreclamo.getComprobanteTotal()));	 	
 	 	//row.addText(format2D.format(presreclamo.getCantidad() * presreclamo.getComprobanteTotal()));
