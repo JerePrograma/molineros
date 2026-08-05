@@ -1514,11 +1514,10 @@ span-fixed-size {
                                         && reclamoprestacional
                                                 .getTipo_gestion_cierre_reclamo() > 0)) { %>
                                 disabled="disabled"
-                            <% } %>>
-                        <%= reclamoprestacional != null
-                                && reclamoprestacional.getJustificaconMedica() != null
-                                ? reclamoprestacional.getJustificaconMedica()
-                                : "" %></textarea>
+                            <% } %>><%= reclamoprestacional != null
+                                    && reclamoprestacional.getJustificaconMedica() != null
+                                    ? reclamoprestacional.getJustificaconMedica()
+                                    : "" %></textarea>
 					</fieldset>
 				</td>
 				<td colspan="5">
@@ -3140,19 +3139,24 @@ function <%= reclamoPortletNamespace %>agregarRevision() {
 
 
 
-		var params = {"resolucion":resolucion,
-							   "presentes":presentes,
-							   "respresolucion":respresolucion,
-							   "revisionFechaVtoDia":revisionFechaVtoDia,
-							   "revisionFechaVtoMes":revisionFechaVtoMes,
-							   "revisionFechaVtoAnio":revisionFechaVtoAnio,
-							   "reclamoobservacion":reclamoobservacion,
-							   "observacionMedica":observacionMedica
-							   };
+		var params = {
+            "resolucion": resolucion,
+            "presentes": presentes,
+            "respresolucion": respresolucion,
+            "revisionFechaVtoDia": revisionFechaVtoDia,
+            "revisionFechaVtoMes": revisionFechaVtoMes,
+            "revisionFechaVtoAnio": revisionFechaVtoAnio,
+            "reclamoobservacion": reclamoobservacion,
+            "observacionMedica": observacionMedica,
+            "<%= WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE %>":
+                "<%= handoffReclamoComprasValido
+                        ? contextoReclamoCompras.getNonce()
+                        : "" %>"
+        };
 
 
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/lista_revisiones_reclamo" /></portlet:renderURL>';
-
+        var url =
+            '<portlet:actionURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/lista_revisiones_reclamo" /></portlet:actionURL>';
 
 		if (resolucion.toUpperCase()!="AUTORIZADO"){
 			if(confirm("Confirma el Cierre del Caso con el Rechazo en la revision ?")){
