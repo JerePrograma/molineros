@@ -53,7 +53,7 @@ public final class ComprasPresupuestoPrestadorContractTest {
 
         verificarEsquemaCanonico(schema);
         verificarMigracion(migracion);
-        verificarListadoPersistido(searchImpl, webKeys);
+        verificarListadoPersistido(schema, searchImpl, webKeys);
         verificarCarga(action, jsp);
         verificarAusenciaDeSincronizacionLocal(action, editImpl);
         verificarAusenciaDeProyeccionVisual(searchUtil);
@@ -286,10 +286,27 @@ public final class ComprasPresupuestoPrestadorContractTest {
     }
 
     private static void verificarMigracion(String migracion) {
+        noContiene(
+                migracion,
+                "migracion sin metacomando psql set",
+                "\n\\set "
+        );
+        noContiene(
+                migracion,
+                "migracion sin metacomando psql encoding",
+                "\n\\encoding "
+        );
         contiene(
                 migracion,
-                "migracion ejecutable con ON_ERROR_STOP",
-                "\\set ON_ERROR_STOP on"
+                "ON_ERROR_STOP se configura desde psql",
+                "psql -X -v ON_ERROR_STOP=1 -f "
+                        + "20260721_presupuesto_activo_prestador.sql"
+        );
+        antesDe(
+                migracion,
+                "transaccion SQL explicita",
+                "BEGIN;",
+                "COMMIT;"
         );
         contiene(
                 migracion,
@@ -472,6 +489,7 @@ public final class ComprasPresupuestoPrestadorContractTest {
     }
 
     private static void verificarListadoPersistido(
+            String schema,
             String searchImpl,
             String webKeys) {
 
@@ -488,21 +506,34 @@ public final class ComprasPresupuestoPrestadorContractTest {
                 "private static final String "
                         + "SQL_HAY_PRESTADORES_PENDIENTES_NOTIFICACION"
         );
+        contiene(
+                sqlListado,
+                "Java usa la funcion canonica de listado",
+                "{call compras.listar_prestadores_enviados(?,?)}"
+        );
 
+        String funcionListado = seccion(
+                schema,
+                "funcion de listado de prestadores",
+                "CREATE OR REPLACE FUNCTION compras.listar_prestadores_enviados(",
+                "CREATE OR REPLACE FUNCTION compras.hay_prestadores_pendientes_notificacion("
+        );
+        String funcionListadoNormalizada =
+                normalizarEspacios(funcionListado);
         contiene(
-                sqlListado,
+                funcionListadoNormalizada,
                 "listado conserva el id real",
-                "SELECT DISTINCT p.id_prestador"
+                "SELECT DISTINCT p.id_prestador::INTEGER"
         );
         contiene(
-                sqlListado,
+                funcionListadoNormalizada,
                 "listado conserva el estado persistido",
-                "+ \"rcp.estado_envio \""
+                "rcp.estado_envio::VARCHAR"
         );
         contiene(
-                sqlListado,
-                "listado parametriza ENVIADO y COTIZADO",
-                "rcp.estado_envio IN (?, ?)"
+                funcionListadoNormalizada,
+                "listado admite ENVIADO y COTIZADO",
+                "rcp.estado_envio IN ( 'ENVIADO', 'COTIZADO' )"
         );
 
         String metodoListado = seccion(
@@ -511,13 +542,19 @@ public final class ComprasPresupuestoPrestadorContractTest {
                 "public List<PrestadorCotizacion> listarPrestadoresEnviados(",
                 "public boolean hayPrestadoresPendientesNotificacion("
         );
-
-        enOrden(
+        contiene(
                 metodoListado,
-                "parametros ENVIADO y COTIZADO",
-                "stmt.setString(1, WebKeysCompras.ENVIO_ENVIADO)",
-                "stmt.setString(2, WebKeysCompras.ENVIO_COTIZADO)",
-                "rs = stmt.executeQuery()",
+                "metodo prepara la funcion canonica",
+                "SQL_LISTAR_PRESTADORES_ENVIADOS"
+        );
+        contiene(
+                metodoListado,
+                "metodo limita el resultado antes de mapear",
+                ".MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO"
+        );
+        contiene(
+                metodoListado,
+                "metodo mapea el estado persistido",
                 "mapPrestadorCotizacion(rs)"
         );
     }

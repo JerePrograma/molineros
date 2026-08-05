@@ -40,32 +40,25 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 
 		String cmdSeccional = ParamUtil.getString(renderRequest, Constants.ACTION, null);
 
+		
+		
 		String frecuencia = ParamUtil.getString(renderRequest, "frecuencia");
 		double importe  = ParamUtil.getDouble(renderRequest, "importe");
 		double cantidad = ParamUtil.getDouble(renderRequest, "cantidad");
 		double cargoOspim = ParamUtil.getDouble(renderRequest, "cargoospim");
 		double cargoPs = ParamUtil.getDouble(renderRequest, "cargops");
 		double cargoImesa = ParamUtil.getDouble(renderRequest, "cargoimesa");
-		/* Reconocido SSS permanece neutralizado en este flujo. */
-		double reconocidoSSS = 0D;
+		double reconocidoSSS = ParamUtil.getDouble(renderRequest, "reconocidoSSS");
 		String prestacion= ParamUtil.getString(renderRequest, "prestacion");
 		String observaciones= ParamUtil.getString(renderRequest, "observaciones");		
 		int idPrestacion= ParamUtil.getInteger(renderRequest, "idprestacion");
 		int idRegistro= ParamUtil.getInteger(renderRequest, "idRegistro");
 		int tipoEdicion= ParamUtil.getInteger(renderRequest, "tipoEdicion");
 		boolean GrabaEdicion= ParamUtil.getBoolean(renderRequest, "grabaedicion");
-		int estadoAprobaRechazado = ParamUtil.getInteger(renderRequest, "estadoAprobacion");
-		int recuperableSur = ParamUtil.getInteger(
-				renderRequest,
-				"recuperableSur",
-				0
-		);
-
-		if (recuperableSur < 0 || recuperableSur > 3) {
-			recuperableSur = 0;
-		}
-
-		Integer recuperable = Integer.valueOf(recuperableSur);
+		int estadoAprobaRechazado = ParamUtil.getInteger(renderRequest, "estadoAprobacion"); // 1 editado 2 autorizado 3 rechazado 
+		boolean recuperableSur= false; //ParamUtil.getBoolean(renderRequest, "recuperableSur");		
+		
+		String recuperableSurAux =   ParamUtil.getString(renderRequest, "recuperableSur","0");	
 		
 		String idTercerizadora = ParamUtil.getString(renderRequest, "id_tercerizadora", "");
 
@@ -75,7 +68,23 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 			idTercerizadora = null;
 		}
 		
+		/*
+		if ("1".equals(recuperableSurAux) || "3".equals(recuperableSurAux)){
+			recuperableSur =  true;
+		}else if ("2".equals(recuperableSurAux)){
+			recuperableSur =  false;
+		}
+		*/
+		
+		Integer recuperable =0;
+		try {
+			recuperable=recuperableSurAux!=null && !"".equals(recuperableSurAux) ? Integer.parseInt(recuperableSurAux):0;
+		}catch(Exception e) {}
+		
 		String codigoPrestacion= ParamUtil.getString(renderRequest, "codigoPrestacion");
+		
+		//double importeFC  = ParamUtil.getDouble(renderRequest, "importeFC");
+		
 		String cpteTipo= ParamUtil.getString(renderRequest, "cpbte_tipo");
 		String cpteNro= ParamUtil.getString(renderRequest, "cpbte_nro");
 		int cpteDia=ParamUtil.getInteger(renderRequest,"cpbte_dia");
@@ -95,6 +104,8 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 		int idMedicamentoEdit = ParamUtil.getInteger(renderRequest, "id_medicamento_edit");
 		String nombreMedicamentoEdit = ParamUtil.getString(renderRequest, "nombre_medicamento_edit");
 
+		
+
 		String codigoSeguimientoFiltroEdit= ParamUtil.getString(renderRequest, "codigoSeguimiento_filtro_edit");
 		String descripcionSeguimientoFiltroEdit= ParamUtil.getString(renderRequest, "descripcionSeguimiento_filtro_edit");
 		int nomSeleccionadoEdit= ParamUtil.getInteger(renderRequest, "nom_seleccionado_edit",0);
@@ -102,28 +113,30 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 
 		String cpbteLetra = ParamUtil.getString(renderRequest, "cpbte_letra");
 
-		int idPrestacionNomenclador = 0;
+
+		int  idPrestacionNomenclador = 0;
 		
 		if (nomSeleccionadoEdit==1){
+			// buscar id de la prestacion
 			idPrestacionNomenclador=0;
 			List<Nomenclador> nomencladores = NomencladorServiceUtil.getListaNomenclador(tipoNomencladorEdit,"",0, codigoSeguimientoFiltroEdit,false,"");
-			for(Nomenclador nom:nomencladores){				   
-				if(codigoSeguimientoFiltroEdit.equals(nom.getCodigo())){
-					idPrestacionNomenclador= nom.getId_prestacion();
-				}	   
-			}
-			if (idPrestacionNomenclador==0){
-				_log.debug("Error en la busqueda de id prestacion : ");
-			}
-		}
-		
+			   for(Nomenclador nom:nomencladores){			   				   
+				   if(codigoSeguimientoFiltroEdit.equals(nom.getCodigo())  ){
+					   idPrestacionNomenclador= nom.getId_prestacion();
+				   }   
+			   }
+            if ( idPrestacionNomenclador==0){
+            	_log.debug("Error en la busqueda de id prestacion : ");
+            }     
+		}    
+            
 		Calendar cpbteFecha = null;
 		try {
 			if(cpteAnio>0 && cpteDia > 0) {
 				cpbteFecha = Calendar.getInstance();
 				cpbteFecha.set(cpteAnio, cpteMes, cpteDia);
 			}	
-		}catch(Exception e){		
+		}catch( Exception e) {		
 			cpbteFecha=null;	
 		}
 		
@@ -133,96 +146,107 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 				fechaPrestacion = Calendar.getInstance();
 				fechaPrestacion.set(fechaPrestacionAnio, fechaPrestacionMes, fechaPrestacionDia);
 			}	
-		}catch(Exception e){		
+		}catch( Exception e) {		
 			fechaPrestacion=null;	
 		}
 		
 		renderRequest.setAttribute("tipoEdicion", tipoEdicion);
 		
-		if (WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL.equals(cmdSeccional)){
+		if ( WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL.equals(cmdSeccional)){
 			renderRequest.setAttribute("ocultar", "S");
 		}
 
-		PrestacionesReclamo presta = new PrestacionesReclamo();
-		presta.setIdRegistro(idRegistro);
-		_log.debug("Editando prestacion id: " + idRegistro);
-		presta.setCodigoPrestacion(codigoPrestacion);
-		List<PrestacionesReclamo> listaPrestacionesReclamo = (ArrayList<PrestacionesReclamo>) session.getAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION);
-		try {
-			int pos = listaPrestacionesReclamo.indexOf(presta);
-			presta = listaPrestacionesReclamo.get(pos);
-			if (GrabaEdicion) {
-				if (estadoAprobaRechazado >1 && observaciones!=""){
-					presta.setObservacionesAutorizaRechaza(presta.getObservaciones() + " (OBSERVACION: " + observaciones + " )");
-					presta.setObservaciones(presta.getObservaciones() + " (OBSERVACION: " + observaciones + " )");
-				}else{
-					presta.setObservaciones(observaciones);
-				}
-				presta.setCantidad(cantidad);
-				presta.setImporte(importe);
-				presta.setFrecuencia(frecuencia);
-				presta.setCargo_ospim(cargoOspim);
-				presta.setReconocidoSSS(0D);
-				presta.setCargo_ps(cargoPs);
-				presta.setCargo_imesa(cargoImesa);
-				if (!StringUtils.checkEmpty(idTercerizadora)
-				        && !"null".equalsIgnoreCase(idTercerizadora)
-				        && !"undefined".equalsIgnoreCase(idTercerizadora)) {
-					presta.setIdTercerizadora(idTercerizadora);
-				}
-				presta.setRecuperable(recuperable);
-				presta.setRecuperableSur(
-						Boolean.valueOf(recuperable.intValue() == 1)
-				);
-				presta.setEstado(PrestacionesReclamo.ESTADOS.MODIF);
-				presta.setEstadoRechazoAprobado(!PrestacionesReclamo.ESTADOS.BAJA.equals(presta.getEstado()) ? estadoAprobaRechazado : 0);
-				presta.setIdRegistro(idRegistro);
-				presta.setComprobanteCantidad(cpbteCantidad);
-				presta.setComprobanteFecha(cpbteFecha!=null?cpbteFecha.getTime():null);
-				presta.setComprobanteImporte(StringUtils.checkNotEmpty(cpbteImporte)?cpbteImporte:null);
-				presta.setComprobanteNro(StringUtils.checkNotEmpty(cpteNro)?cpteNro:null);
-				presta.setComprobanteTipo(StringUtils.checkNotEmpty(cpteTipo)?cpteTipo:null);
-				presta.setComprobanteTotal(StringUtils.checkNotEmpty(cpbteTotal)?cpbteTotal:null);
-				presta.setComprobanteCUIT(cpteCUIT);
-				presta.setComprobanteSucursal(cpteSucursal);
-				presta.setComprobanteLetra(cpbteLetra);
-				presta.setComprobanteCUITSucursal(cpteCUITSucursal);
-				presta.setFechaPrestacion(fechaPrestacion!=null?fechaPrestacion.getTime():null);
-				presta.setId_medicamento(idMedicamentoEdit);
-				presta.setId_prestacion(idPrestacionNomenclador);
-				if (idMedicamentoEdit != 0){
-					presta.setCodigoPrestacion(String.valueOf(idMedicamentoEdit));
-					presta.setDescripcion(nombreMedicamentoEdit);
-				}else{
-					presta.setCodigoPrestacion(codigoSeguimientoFiltroEdit);
-					presta.setDescripcion(descripcionSeguimientoFiltroEdit);
-				}
+		
+		PrestacionesReclamo presta  = new PrestacionesReclamo();
+		presta.setIdRegistro(idRegistro);  				
+		_log.debug("Editando prestacion id: " + idRegistro);		
+	    presta.setCodigoPrestacion(codigoPrestacion);	    
+		List<PrestacionesReclamo> listaPrestacionesReclamo = (ArrayList<PrestacionesReclamo>) session.getAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION );
+		try {			
+		
+		int pos = listaPrestacionesReclamo.indexOf(presta);  
+		
+//		obtiene la instancia en memoria 
+ 	     presta= listaPrestacionesReclamo.get(pos);
+		 if  (GrabaEdicion) {    
+			 if (estadoAprobaRechazado >1 && observaciones!=""){ // observacion de rechazo o autorizacion
+				 presta.setObservacionesAutorizaRechaza(presta.getObservaciones() + " (OBSERVACION: "  +  observaciones + " )" ) ;
+				 presta.setObservaciones(presta.getObservaciones() + " (OBSERVACION: "  +  observaciones + " )" ) ;
+			 }else{
+				 presta.setObservaciones(observaciones); 
+			 } 
+			    presta.setCantidad(cantidad);
+			    presta.setImporte(importe);
+			    
+			    presta.setFrecuencia(frecuencia);		
+			    presta.setCargo_ospim(cargoOspim);
+			    presta.setReconocidoSSS(reconocidoSSS);
+			    presta.setCargo_ps(cargoPs);
+			    presta.setCargo_imesa(cargoImesa);
+//			    presta.setRecuperableSur(recuperableSur);
+			    if (!StringUtils.checkEmpty(idTercerizadora)
+			            && !"null".equalsIgnoreCase(idTercerizadora)
+			            && !"undefined".equalsIgnoreCase(idTercerizadora)) {
+			        presta.setIdTercerizadora(idTercerizadora);
+			    }
+			    presta.setRecuperable(recuperable);
+			    presta.setEstado(PrestacionesReclamo.ESTADOS.MODIF );
+			    presta.setEstadoRechazoAprobado(!PrestacionesReclamo.ESTADOS.BAJA.equals(presta.getEstado()) ? estadoAprobaRechazado : 0);
+			    presta.setIdRegistro(idRegistro);
+			    presta.setComprobanteCantidad(cpbteCantidad);
+			    presta.setComprobanteFecha(cpbteFecha!=null?cpbteFecha.getTime():null);
+			    presta.setComprobanteImporte(StringUtils.checkNotEmpty(cpbteImporte)?cpbteImporte:null);
+			    presta.setComprobanteNro(StringUtils.checkNotEmpty(cpteNro)?cpteNro:null);
+			    presta.setComprobanteTipo(StringUtils.checkNotEmpty(cpteTipo)?cpteTipo:null);
+			    presta.setComprobanteTotal(StringUtils.checkNotEmpty(cpbteTotal)?cpbteTotal:null);
+			    presta.setComprobanteCUIT(cpteCUIT);
+			    presta.setComprobanteSucursal(cpteSucursal);
+			    presta.setComprobanteLetra(cpbteLetra);
+			    presta.setComprobanteCUITSucursal(cpteCUITSucursal);
+			    presta.setFechaPrestacion(fechaPrestacion!=null?fechaPrestacion.getTime():null);
+			    presta.setId_medicamento(idMedicamentoEdit);
+			    presta.setId_prestacion(idPrestacionNomenclador); 
+			    if (idMedicamentoEdit != 0){
+			    	presta.setCodigoPrestacion(String.valueOf(idMedicamentoEdit));
+			    	presta.setDescripcion(nombreMedicamentoEdit);			    	
+			    }else{
+			    	presta.setCodigoPrestacion(codigoSeguimientoFiltroEdit);
+			    	presta.setDescripcion(descripcionSeguimientoFiltroEdit);	
+			    }
 
-				listaPrestacionesReclamo.remove(pos);
-				session.removeAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION);
-				listaPrestacionesReclamo.add(presta);
-				session.setAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION, listaPrestacionesReclamo);
-				
+			    listaPrestacionesReclamo.remove(pos);
+			    session.removeAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION   );
+			    listaPrestacionesReclamo.add(presta);
+			    session.setAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION, listaPrestacionesReclamo);
+			    
 				if (WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL.equals(cmdSeccional)){
-					return mapping.findForward("portlet.autorizaciones.reclamosprestacionales.prestacion_reclamo_seccional");
-				}else{
-					return mapping.findForward("portlet.autorizaciones.reclamosprestacionales.prestacion_reclamo");
+					return mapping.findForward("portlet.autorizaciones.reclamosprestacionales.prestacion_reclamo_seccional");	
+				}else{					
+					return mapping.findForward("portlet.autorizaciones.reclamosprestacionales.prestacion_reclamo");	
 				}
-			}else{
-				if(StringUtils.checkNotEmpty(presta.getComprobanteCUIT())) {
-					Empresa empr = EmpresaServiceUtil.getEmpleadorCompleto(presta.getComprobanteCUIT(), presta.getComprobanteCUITSucursal());
-					presta.setComprobanteRazonSocial(empr!=null&&StringUtils.checkNotEmpty(empr.getRazon_soc())?empr.getRazon_soc():"");
-				}
-				presta.setRecuperable(recuperable);
-				presta.setRecuperableSur(
-						Boolean.valueOf(recuperable.intValue() == 1)
-				);
-				presta.setReconocidoSSS(0D);
-				session.setAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION, presta);
-			}
-		}catch(Exception e){
-			_log.error("Editando prestacion", e);
+			    
+			    
+		 }else{       //				pasa los datos de la instancia al JSP para su edicion
+			 if(StringUtils.checkNotEmpty(presta.getComprobanteCUIT())) {
+				 Empresa empr = EmpresaServiceUtil.getEmpleadorCompleto(presta.getComprobanteCUIT(), presta.getComprobanteCUITSucursal());
+				 presta.setComprobanteRazonSocial(empr!=null&&StringUtils.checkNotEmpty(empr.getRazon_soc())?empr.getRazon_soc():"");
+			 }
+			 
+			    session.setAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION   , presta);
+			   
+		 }
+			 
+		    
+		    
 		}
+		catch (Exception e) {
+			_log.error("Editando prestacion", e);	
+		}		
 		return mapping.findForward("portlet.autorizaciones.reclamosprestacionales.edicion_prestacion_reclamo");
+		
+		
+		                            
 	}
+	
 }
+

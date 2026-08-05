@@ -13,7 +13,6 @@ import java.util.List;
 import ar.com.ospim.global.beans.ContactoElectronico;
 import ar.com.ospim.global.beans.Telefono;
 import ar.com.ospim.liquidaciones.ImposibleBorrarPrestadorException;
-import ar.com.ospim.prestadores.beans.HistoricoPrestadorCotizacion;
 import ar.com.ospim.prestadores.exception.DuplicatePrestadorIdException;
 import ar.com.ospim.liquidaciones.beans.EspecialidadPrestador;
 import ar.com.ospim.liquidaciones.beans.MatriculaPrestador;
@@ -177,75 +176,6 @@ public class PrestadorServiceImpl {
 		} finally {
 			ConnectionHelper.cerrar(stmt, con);
 		}
-		return listaPrestadores;
-	}
-
-	public List<Prestador> getPrestadores(
-			int id,
-			String cuit,
-			String descripcion,
-			int provincia,
-			int localidad,
-			boolean soloVigentes,
-			int profesion,
-			int especialidad,
-			int subEspecialidad,
-			int tipoPrestador,
-			String hospital,
-			boolean soloHabilitadosCotizar) {
-
-		Connection con = null;
-		CallableStatement stmt = null;
-		List<Prestador> listaPrestadores = null;
-
-		try {
-			String sql =
-					"{call buscar_prestadores(?,?,?,?,?,?,?,?,?,?,?,?)}";
-
-			con = ConnectionHelper.getConnection();
-			stmt = con.prepareCall(sql);
-
-			if (cuit != null && cuit.trim().equals("")) {
-				cuit = null;
-			}
-
-			stmt.setString(1, cuit);
-			stmt.setString(2, descripcion);
-			stmt.setInt(3, id);
-			stmt.setInt(4, provincia);
-			stmt.setInt(5, localidad);
-			stmt.setBoolean(6, soloVigentes);
-			stmt.setInt(7, profesion);
-			stmt.setInt(8, especialidad);
-			stmt.setInt(9, subEspecialidad);
-			stmt.setInt(10, tipoPrestador);
-			stmt.setString(11, hospital);
-			stmt.setBoolean(12, soloHabilitadosCotizar);
-
-			ResultSet rs = stmt.executeQuery();
-
-			listaPrestadores = new ArrayList<Prestador>();
-
-			while (rs.next()) {
-				Prestador prestador =
-						Prestador.getMapping(rs, "prs__");
-
-				prestador.setCbu(
-						rs.getString("prs__cbu")
-				);
-
-				listaPrestadores.add(prestador);
-			}
-
-		} catch (Exception e) {
-			_log.error(
-					"Error en busqueda prestadores",
-					e
-			);
-		} finally {
-			ConnectionHelper.cerrar(stmt, con);
-		}
-
 		return listaPrestadores;
 	}
 
@@ -1193,31 +1123,69 @@ public class PrestadorServiceImpl {
 		return listaPrestadores;
 	}
 
-	public int actualizarSolicitarCotizacionPrestador(
-			int idPrestador,
-			boolean solicitarCotizacion,
-			String screenName) throws SystemException {
+	public List<Prestador> getPrestadores(int id, String cuit,
+			String descripcion, int provincia, int localidad, boolean soloVigentes,
+			int profesion, int especialidad, int subEspecialidad, int tipoPrestador,
+			String hospital, boolean soloHabilitadosCotizar) {
+		Connection con = null;
+		CallableStatement stmt = null;
+		List<Prestador> listaPrestadores = null;
+		Prestador pr = null;
 
+		try {
+			String sql = "{call buscar_prestadores(?,?,?,?,?,?,?,?,?,?,?,?)}";
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+			if (cuit != null && cuit.trim().equals("")) {
+				cuit = null;
+			}
+			stmt.setString(1, cuit);
+			stmt.setString(2, descripcion);
+			stmt.setInt(3, id);
+			stmt.setInt(4, provincia);
+			stmt.setInt(5, localidad);
+			stmt.setBoolean(6, soloVigentes);
+			stmt.setInt(7, profesion);
+			stmt.setInt(8, especialidad);
+			stmt.setInt(9, subEspecialidad);
+			stmt.setInt(10, tipoPrestador);
+			stmt.setString(11, hospital);
+			stmt.setBoolean(12, soloHabilitadosCotizar);
+
+			ResultSet rs = stmt.executeQuery();
+			listaPrestadores = new ArrayList<Prestador>();
+			while (rs.next()) {
+				pr = Prestador.getMapping(rs, "prs__");
+				pr.setCbu(rs.getString("prs__cbu"));
+				listaPrestadores.add(pr);
+			}
+		} catch (Exception e) {
+			_log.error("Error en busqueda prestadores", e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return listaPrestadores;
+	}
+
+	public int actualizarSolicitarCotizacionPrestador(
+			int idPrestador, boolean solicitarCotizacion,
+			String screenName) throws SystemException {
 		Connection con = null;
 		CallableStatement stmt = null;
 		int resultado = 0;
 
 		try {
 			String sql = "{call autorizaciones.actualizar_solicitar_cotizacion_prestador(?,?,?)}";
-
 			con = ConnectionHelper.getConnection();
 			stmt = con.prepareCall(sql);
-
 			stmt.setInt(1, idPrestador);
 			stmt.setBoolean(2, solicitarCotizacion);
 			stmt.setString(3, screenName);
 
 			ResultSet rs = stmt.executeQuery();
-
 			while (rs.next()) {
 				resultado = rs.getInt(1);
 			}
-
 		} catch (SQLException e) {
 			_log.error("Error al actualizar solicitar cotizacion del prestador", e);
 			throw new SystemException(e);
@@ -1228,67 +1196,4 @@ public class PrestadorServiceImpl {
 		return resultado;
 	}
 
-	public List<HistoricoPrestadorCotizacion>
-	listarHistoricoCotizacionPrestador(int idPrestador)
-			throws SystemException {
-
-		Connection con = null;
-		CallableStatement stmt = null;
-		ResultSet rs = null;
-
-		List<HistoricoPrestadorCotizacion> resultado =
-				new ArrayList<HistoricoPrestadorCotizacion>();
-
-		try {
-			con = ConnectionHelper.getConnection();
-
-			stmt = con.prepareCall(
-					"{call autorizaciones.listar_historico_prestador_cotizacion(?)}"
-			);
-
-			stmt.setInt(1, idPrestador);
-
-			rs = stmt.executeQuery();
-
-			while (rs.next()) {
-				HistoricoPrestadorCotizacion historico =
-						new HistoricoPrestadorCotizacion();
-
-				historico.setIdHistorico(
-						rs.getInt("id_historico")
-				);
-
-				historico.setIdPrestador(
-						rs.getInt("id_prestador")
-				);
-
-				historico.setUsuario(
-						rs.getString("usr_alta")
-				);
-
-				historico.setFecha(
-						rs.getTimestamp("fecha_alta")
-				);
-
-				historico.setEstadoACotizar(
-						rs.getBoolean("estado_a_cotizar")
-				);
-
-				resultado.add(historico);
-			}
-
-			return resultado;
-
-		} catch (SQLException e) {
-			_log.error(
-					"Error al consultar el histórico de cotización del prestador",
-					e
-			);
-
-			throw new SystemException(e);
-
-		} finally {
-			ConnectionHelper.cerrar(stmt, con);
-		}
-	}
 }

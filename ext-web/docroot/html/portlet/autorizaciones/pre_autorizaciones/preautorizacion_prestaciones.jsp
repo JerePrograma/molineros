@@ -102,7 +102,7 @@ List<OpcionesPrestacion> listaOpciones = TraeListasServiceUtil.getOpcionesPresta
 		      </td>
 	    
 	          <td><input type="checkbox"  name="<portlet:namespace />requiereAutorizacion" 
-				   id="<portlet:namespace />requiereAutorizacion" disabled="disabled" > Requiere Autorización</td>
+				   id="<portlet:namespace />requiereAutorizacion" disabled="disabled" > Requiere Autorizaci&oacute;n</td>
 				   
 			  <td><input type="checkbox"  name="<portlet:namespace />supra" 
 				   id="<portlet:namespace />supra" disabled="disabled" > SUPRA</td>	   

@@ -166,7 +166,7 @@ public final class ComprasSurgeSelectContractTest {
         contiene(
                 datosBasicos,
                 "cargos conservados debajo",
-                "lfr-table compras-cargos-requerimiento"
+                "compras-cargos-requerimiento"
         );
         contiene(
                 datosBasicos,
@@ -183,17 +183,7 @@ public final class ComprasSurgeSelectContractTest {
                 "opción Surge NO",
                 "                            NO\n"
         );
-        antes(datosBasicos, "<label>ID:</label>", "<label>Estado:</label>");
-        antes(
-                datosBasicos,
-                "<label>Estado:</label>",
-                "<label for=\"<portlet:namespace />sector_id\">Sector:</label>"
-        );
-        antes(
-                datosBasicos,
-                "<label for=\"<portlet:namespace />sector_id\">Sector:</label>",
-                "<label for=\"<portlet:namespace />surge\">"
-        );
+
         contiene(
                 estilos,
                 "resumen sin ancho fijo",

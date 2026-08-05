@@ -229,5 +229,6 @@ public class WebKeysLiquidaciones implements
 	
 	public static final String ROL_LIQUIDACIONES_HOSPITALES = "liquidaciones_hospitales";	
 
+	public static final String BUSQUEDA_COMPROBANTES_INTERBANKING = "BUSQUEDA_COMPROBANTES_INTERBANKING";
 		
 }

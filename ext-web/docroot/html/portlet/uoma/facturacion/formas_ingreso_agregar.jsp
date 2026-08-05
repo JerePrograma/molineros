@@ -110,7 +110,7 @@ if (factura != null){
 				<tr>
 					<td>
 						<span id="<portlet:namespace />numeroSpan">
-						<liferay-ui:message key="numero"/>operación:
+						<liferay-ui:message key="numero"/>operaci&oacute;n:
 						</span>						
 					</td>
 					

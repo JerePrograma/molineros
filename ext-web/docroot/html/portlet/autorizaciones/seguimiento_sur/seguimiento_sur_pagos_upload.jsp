@@ -79,7 +79,7 @@ Id Seguimiento,Fecha Cambio,Nuevo Estado. <br>El nombre del archivo a importar d
 <br>
 <br>
 El formato de archivo de actualización masiva de estado es:<br>
-Nro de Solicitud, Fecha (formato dd/mm/aaaa), Descripcón estado, Observaciones. (Sin Títulos)<br>El nombre del archivo a importar debe ser: <b>cambioMasivoEstadoSur.xls</b>
+Nro de Solicitud, Fecha (formato dd/mm/aaaa), Descripc&oacute;n estado, Observaciones. (Sin Títulos)<br>El nombre del archivo a importar debe ser: <b>cambioMasivoEstadoSur.xls</b> 
 <br>
 </div>
 <script type="text/javascript">	

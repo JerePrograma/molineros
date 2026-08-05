@@ -133,7 +133,7 @@
 						      
 						      <tr>
 						        <td colspan="2">
-						          <label style="color: blue">Click sobre botón para ver Detalle</label>
+						          <label style="color: blue">Click sobre bot&oacute;n para ver Detalle</label>
 						        </td>
 						      </tr>
 						     

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN" "http://jakarta.apache.org/struts/dtds/struts-config_1_2.dtd">
 
 <struts-config>
@@ -5702,7 +5703,7 @@
 	   
 	    <!--Fin  Integracion -->
 	    
-	    <!-- GestiÃ³n Seccionales -->
+	    <!-- Gestión Seccionales -->
 	    <action path="/sec/view" type="ar.com.ospim.seccional.action.InicializarGestionSeccionalAction">
 			<forward name="portlet.gestion_seccional.view" path="portlet.gestion_seccional.view" />
 			<forward name="portlet.gestion_seccional.tablero" path="portlet.gestion_seccional.tablero" />
@@ -6245,7 +6246,7 @@
 <!-- Fin Centros de Costos Contabilidad -->  
      
      
-<!-- GestiÃ³n de Demandas Judiciales -->
+ <!-- Gestión de Demandas Judiciales -->
 <action path="/estudio_isidro/demandas_editar" type="ar.com.ospim.estudioisidro.action.DemandaJudicialAction">
 		    <forward name="portlet.estudio_isidro.demanda_editar" path="portlet.estudio_isidro.demanda_editar" />
 		    <forward name="portlet.estudio_isidro.demandas.result.search" path="portlet.estudio_isidro.demandas.result.search"/>
@@ -6718,7 +6719,7 @@
 			<forward name="portlet.prestadores.error"
 			         path="portlet.prestadores.error" />
 
-			<!-- Compatibilidad: esta action todavÃ­a devuelve este forward -->
+			<!-- Compatibilidad: esta action todavía devuelve este forward -->
 			<forward name="portlet.prestadores.lista_convenio_prest_detalle"
 			         path="portlet.prestadores.lista_convenio_prest_detalle" />
 		</action>
@@ -6735,7 +6736,7 @@
 			<forward name="portlet.prestadores.error"
 			         path="portlet.prestadores.error" />
 
-			<!-- Compatibilidad: esta action todavÃ­a hace setForward a este nombre -->
+			<!-- Compatibilidad: esta action todavía hace setForward a este nombre -->
 			<forward name="portlet.liquidaciones.importar_contratos"
 			         path="portlet.prestadores.importar_contratos" />
 		</action>
@@ -6801,7 +6802,7 @@
 			<forward name="portlet.prestadores.error"
 			         path="portlet.prestadores.error" />
 
-			<!-- Compatibilidad: esta action todavÃ­a devuelve este forward -->
+			<!-- Compatibilidad: esta action todavía devuelve este forward -->
 			<forward name="portlet.liquidaciones.prestador_externo.result"
 			         path="portlet.prestadores.editar_prestadores_externos" />
 		</action>
@@ -6813,7 +6814,7 @@
 			<forward name="portlet.prestadores.error"
 			         path="portlet.prestadores.error" />
 
-			<!-- Compatibilidad: esta action todavÃ­a devuelve este forward -->
+			<!-- Compatibilidad: esta action todavía devuelve este forward -->
 			<forward name="portlet.liquidaciones.aumento_prestaciones"
 			         path="portlet.prestadores.aumento_prestaciones" />
 		</action>
@@ -7230,15 +7231,6 @@
 					path="portlet.compras.error" />
 		</action>
 
-		<action
-				path="/prestadores/historico_cotizacion"
-				type="ar.com.ospim.prestadores.action.HistoricoPrestadorCotizacionAction">
-
-			<forward
-					name="portlet.prestadores.historico_cotizacion_result"
-					path="portlet.prestadores.historico_cotizacion_result"
-			/>
-		</action>
 		<action path="/tesoreria/buscar_saldo_diario_cuentas_bancarias" type="ar.com.ospim.tesoreria.action.BuscarSaldoDiarioCuentasBancariasAction">
 			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" />
 			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" />

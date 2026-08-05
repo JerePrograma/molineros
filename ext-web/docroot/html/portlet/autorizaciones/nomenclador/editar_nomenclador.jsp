@@ -109,7 +109,7 @@
 	      <td><input type="checkbox"  name="<portlet:namespace />recuperaSUR" id="<portlet:namespace />recuperaSUR" 
 	  	    <%if(nomenclador.getRecuperaSUR() ){%> checked="checked" <% } %>> Recupera SUR</td>							 
 	      <td><input type="checkbox"  name="<portlet:namespace />requiereAutorizacion" id="<portlet:namespace />requiereAutorizacion" 
-	        <%if(nomenclador.getRequiereAutorizacion() ){%> checked="checked" <% } %>> Requiere Autorización</td>
+	        <%if(nomenclador.getRequiereAutorizacion() ){%> checked="checked" <% } %>> Requiere Autorizaci&oacute;n</td>
 	      <td><input type="checkbox"  name="<portlet:namespace />supra" id="<portlet:namespace />supra" 
 	  	    <%if(nomenclador.isSupra() ){%> checked="checked" <% } %>> SUPRA</td>	
 	      <td><input type="checkbox"  name="<portlet:namespace />cirugia" id="<portlet:namespace />cirugia" 
@@ -134,7 +134,7 @@
 	</tr>
 </table>
   
-  <fieldset class="block-labels"><legend>Modalidad de Atención</legend>
+  <fieldset class="block-labels"><legend>Modalidad de Atenci&oacute;n</legend>
     <table>
       <tr>
 		<td colspan="9">

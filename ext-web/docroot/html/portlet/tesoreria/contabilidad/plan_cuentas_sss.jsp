@@ -38,7 +38,7 @@
 		</tr>
 		<tr>
 		  <td>
-		   N&uacute;mero:&nbsp;<input type="text" id="numero" name="numero" value="" size="10" /> &nbsp; Descripción:&nbsp;
+		   N&uacute;mero:&nbsp;<input type="text" id="numero" name="numero" value="" size="10" /> &nbsp; Descripci&oacute;n:&nbsp;
 				<input type="text" id="descripcion" name="descripcion" value="" size="50" />
 		  </td>		
         </tr> 				

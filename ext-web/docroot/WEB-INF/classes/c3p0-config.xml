@@ -8,11 +8,16 @@
 		<property name="initialPoolSize">5</property> 
 		<property name="minPoolSize">5</property> 
 		<property name="maxPoolSize">20</property> 
-		<!-- fbrachi adopts a different approach to configuring statement caching --> 
+		<!-- fbrachi adopts a different approach to configuring statement caching -->
 		<property name="maxStatements">0</property> 
 		<property name="maxStatementsPerConnection">30</property>
 		<property name="unreturnedConnectionTimeout">200</property> <!-- seconds -->
-		<property name="debugUnreturnedConnectionStackTraces">true</property> 
+		<property name="debugUnreturnedConnectionStackTraces">true</property>
+		<!-- Prueba de configuracion para evitar colapso en la peticion de conexiones -->
+		<property name="numHelperThreads">3</property>
+        <property name="acquireRetryDelay">2000</property>
+        <property name="acquireRetryAttempts">3</property>
+  	    <!--Fin Prueba -->
 	</named-config>
 	<named-config name="portal-lportal"> 
 		<property name="driverClass">org.postgresql.Driver</property>
@@ -28,6 +33,11 @@
 		<property name="maxStatementsPerConnection">5</property>
 		<property name="unreturnedConnectionTimeout">200</property> <!-- seconds -->
 		<property name="debugUnreturnedConnectionStackTraces">true</property> 
+		<!-- Prueba de configuracion para evitar colapso en la peticion de conexiones -->
+		<property name="numHelperThreads">3</property>
+        <property name="acquireRetryDelay">2000</property>
+        <property name="acquireRetryAttempts">3</property>
+  	    <!--Fin Prueba -->
 	</named-config>
 	<named-config name="portal-ospim-reportes"> 
 		<property name="driverClass">org.postgresql.Driver</property>
@@ -35,15 +45,22 @@
 		<property name="user">postgres</property>
 		<property name="password">@PASS@</property>
 		<property name="acquireIncrement">1</property> 
-		<property name="initialPoolSize">5</property> 
-		<property name="minPoolSize">5</property> 
+		<property name="initialPoolSize">0</property> 
+		<property name="minPoolSize">0</property> 
 		<property name="maxPoolSize">20</property> 
-		<!-- fbrachi adopts a different approach to configuring statement caching --> 
+		<!-- fbrachi adopts a different approach to configuring statement caching -->
 		<property name="maxStatements">0</property> 
 		<property name="maxStatementsPerConnection">30</property>
-		<property name="unreturnedConnectionTimeout">1200</property> <!-- seconds -->
-		<property name="debugUnreturnedConnectionStackTraces">true</property> 
-	</named-config>
+		<property name="unreturnedConnectionTimeout">3600</property> <!-- seconds -->
+		<property name="debugUnreturnedConnectionStackTraces">true</property>
+        <!-- Prueba de configuracion para evitar colapso en la peticion de conexiones -->
+		<property name="numHelperThreads">3</property>
+        <property name="acquireRetryDelay">2000</property>
+        <property name="acquireRetryAttempts">3</property>
+  	    <!--Fin Prueba -->   
+     </named-config>
+	
+	<!-- 
 	<named-config name="portal-cgt"> 
 		<property name="driverClass">org.postgresql.Driver</property>
 		<property name="jdbcUrl">jdbc:postgresql://@IP@:5432/cgt</property>
@@ -53,10 +70,10 @@
 		<property name="initialPoolSize">5</property> 
 		<property name="minPoolSize">5</property> 
 		<property name="maxPoolSize">20</property> 
-		<!-- fbrachi adopts a different approach to configuring statement caching --> 
+		<property name="numHelperThreads">4</property> 
 		<property name="maxStatements">0</property> 
 		<property name="maxStatementsPerConnection">30</property>
-		<property name="unreturnedConnectionTimeout">200</property> <!-- seconds -->
+		<property name="unreturnedConnectionTimeout">200</property>
 		<property name="debugUnreturnedConnectionStackTraces">true</property> 
 	</named-config>
 	<named-config name="portal-mailing"> 
@@ -68,41 +85,45 @@
 		<property name="initialPoolSize">5</property> 
 		<property name="minPoolSize">5</property> 
 		<property name="maxPoolSize">20</property> 
-		<!-- fbrachi adopts a different approach to configuring statement caching --> 
+		<property name="numHelperThreads">4</property>
 		<property name="maxStatements">0</property> 
 		<property name="maxStatementsPerConnection">30</property>
-		<property name="unreturnedConnectionTimeout">200</property> <!-- seconds -->
+		<property name="unreturnedConnectionTimeout">200</property> 
 		<property name="debugUnreturnedConnectionStackTraces">true</property> 
 	</named-config>
-	
+	 -->
 	
 	<named-config name="portalempleadoresV01"> 
 		<property name="driverClass">org.postgresql.Driver</property>
 		<!-- DESARROLLO 
-		<property name="jdbcUrl">jdbc:postgresql://12.5.1.10:5432/portalempresasV2</property>
+		<property name="jdbcUrl">jdbc:postgresql://12.1.1.12:5432/portalempresasV2</property>
 		<property name="user">postgres</property>
 		<property name="password">postgres</property>
 		-->
-		
+
+<!-- PRODUCCION -->			
 		<property name="jdbcUrl">jdbc:postgresql://12.20.1.16:5432/portalempresasV2</property>
 		<property name="user">tecnicos</property>
-		<property name="password">Valkyria01</property> 
+		<property name="password">Valkyria01</property>
+	 
 		<property name="acquireIncrement">1</property> 
-		<property name="initialPoolSize">5</property> 
-		<property name="minPoolSize">5</property> 
+		<property name="initialPoolSize">0</property> 
+		<property name="minPoolSize">0</property> 
 		<property name="maxPoolSize">20</property> 
 		<property name="maxStatements">0</property> 
 		<property name="maxStatementsPerConnection">30</property>
 		<property name="unreturnedConnectionTimeout">1200</property> <!-- seconds -->
-		<property name="debugUnreturnedConnectionStackTraces">true</property> 
+		<property name="debugUnreturnedConnectionStackTraces">true</property>
+		<!-- Prueba de configuracion para evitar colapso en la peticion de conexiones -->
+		<property name="numHelperThreads">3</property>
+        <property name="acquireRetryDelay">2000</property>
+        <property name="acquireRetryAttempts">3</property>
+  	    <!--Fin Prueba -->
 	</named-config>
 	
-  	
+  	<!--  
 	<named-config name="portalempleadores"> 
 		<property name="driverClass">org.postgresql.Driver</property>
-		<!--  <property name="jdbcUrl">jdbc:postgresql://12.1.1.5:5432/portalempresas</property>-->
-		<!--  <property name="user">postgres</property>-->
-		<!--  <property name="password">barracud5</property>-->
 		<property name="jdbcUrl">jdbc:postgresql://12.20.1.16:5432/portalempresas</property>
 		<property name="user">tecnicos</property>
 		<property name="password">Valkyria01</property>
@@ -110,28 +131,29 @@
 		<property name="initialPoolSize">5</property> 
 		<property name="minPoolSize">5</property> 
 		<property name="maxPoolSize">20</property> 
+		<property name="numHelperThreads">4</property>
 		<property name="maxStatements">0</property> 
 		<property name="maxStatementsPerConnection">30</property>
 		<property name="unreturnedConnectionTimeout">700</property> 
 		<property name="debugUnreturnedConnectionStackTraces">true</property> 
 	</named-config>
-	
-	
+	-->
+
+<!--  	
 	<named-config name="portal-postgres"> 
 		<property name="driverClass">org.postgresql.Driver</property>
 	    <property name="jdbcUrl">jdbc:postgresql://@IP@:5432/postgres</property>
 	    <property name="user">postgres</property> 
         <property name="password">@PASS@</property>
-<!--  		<property name="jdbcUrl">jdbc:postgresql://12.1.1.5:5432/postgres</property> -->
-<!--		<property name="password">barracud5</property> -->
 		<property name="acquireIncrement">1</property> 
 		<property name="initialPoolSize">5</property> 
 		<property name="minPoolSize">5</property> 
 		<property name="maxPoolSize">20</property> 
 		<property name="maxStatements">0</property> 
 		<property name="maxStatementsPerConnection">30</property>
-		<property name="unreturnedConnectionTimeout">200</property> <!-- seconds -->
+		<property name="unreturnedConnectionTimeout">200</property> 
 		<property name="debugUnreturnedConnectionStackTraces">true</property> 
 	</named-config>
+-->	
 	
 </c3p0-config>

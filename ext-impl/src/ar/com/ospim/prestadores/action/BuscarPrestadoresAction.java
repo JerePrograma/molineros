@@ -3,8 +3,8 @@
 
 package ar.com.ospim.prestadores.action;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -54,7 +54,7 @@ public class BuscarPrestadoresAction extends PrestadoresBaseAction {
 			int provincia = 0;
 			int localidad = 0;
 			String hospital=null;
-
+			
 			if (null != renderRequest.getParameter("cuit")) {
 				cuit = renderRequest.getParameter("cuit").trim().length() > 0 ? renderRequest
 						.getParameter("cuit")
@@ -67,19 +67,19 @@ public class BuscarPrestadoresAction extends PrestadoresBaseAction {
 //				if(descripcion!=null && descripcion.contains("%26")){
 //					descripcion.replace("%26", "&");
 //				}
-
-//				FIXME sacar espacio en blanco y Ã±, Ã‘ de la busqueda, se podrÃ­a mejorar ? 		
+			
+//				FIXME sacar espacio en blanco y ñ, Ñ de la busqueda, se podría mejorar ? 		
 				if(descripcion!=null && (descripcion.contains("%C3%B1") || descripcion.contains("%C3%91") ) ){
-//					descripcion.replace("%C3%B1", "Ã±");
-//					descripcion.replaceAll("%C3%B1", "Ã±");
-
+//					descripcion.replace("%C3%B1", "ñ");
+//					descripcion.replaceAll("%C3%B1", "ñ");
+				
 					String[] spliteoEnies = descripcion.split("%C3%B1");
 					if(spliteoEnies == null){
 						spliteoEnies = descripcion.split("%C3%91");
 					}
 					descripcion = "";
 					for (int i = 0; i < spliteoEnies.length; i++) {
-						descripcion = descripcion + spliteoEnies[i] + (i < spliteoEnies.length-1?"Ã±":""); 
+						descripcion = descripcion + spliteoEnies[i] + (i < spliteoEnies.length-1?"ñ":""); 
 					}
 				}
 				if(descripcion!=null && descripcion.contains("%20")){
@@ -97,48 +97,36 @@ public class BuscarPrestadoresAction extends PrestadoresBaseAction {
 			id = ParamUtil.getInteger(renderRequest,  "id_prestador" , 0);
 			provincia = ParamUtil.getInteger(renderRequest,  "provincia" , 0);
 			localidad = ParamUtil.getInteger(renderRequest,  "localidad" , 0);
-
+			
 			int profesion = ParamUtil.getInteger(renderRequest,  "profesion" , 0);
 			int especialidad = ParamUtil.getInteger(renderRequest,  "especialidad" , 0);
 			int subEspecialidad = ParamUtil.getInteger(renderRequest,  "subEspecialidad" , 0);
 			int tipoPrestado = ParamUtil.getInteger(renderRequest,  "tipoPrestador" , 0);
-
+			
 			if (null != renderRequest.getParameter("hospital")) {
 				hospital = renderRequest.getParameter("hospital").trim().length() > 0 ? renderRequest
 						.getParameter("hospital")
 						: null;
 			}
 
-			boolean soloHabilitadosCotizar =
-					ParamUtil.getBoolean(
-							renderRequest,
-							"solicitarCotizacionFiltro",
-							false
-					);
-
+			boolean soloHabilitadosCotizar = ParamUtil.getBoolean(
+					renderRequest,
+					"solicitarCotizacionFiltro",
+					false);
+			
 			List<Prestador> busqueda = PrestadorServiceUtil
-					.getPrestadores(
-							id,
-							cuit,
-							descripcion,
-							provincia,
-							localidad,
-							soloVigentes,
-							profesion,
-							especialidad,
-							subEspecialidad,
-							tipoPrestado,
-							hospital,
-							soloHabilitadosCotizar
-					);
-
+					.getPrestadores(id,cuit,descripcion, provincia, localidad, soloVigentes, 
+							profesion, especialidad, subEspecialidad, tipoPrestado,hospital,
+							soloHabilitadosCotizar);
+			
 			renderRequest.removeAttribute(WebKeysLiquidaciones.BUSQUEDA_PRESTADORES);
 			renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_PRESTADORES, busqueda);			
-
+			
 		} catch (Exception e) {
 			_log.error("Error buscando prestadores", e);
 		}
-
+		
 		return mapping.findForward("portlet.prestadores.result.search");
 	}
+	
 }

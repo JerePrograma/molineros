@@ -9,7 +9,7 @@
 		portletURL.setParameter("struts_action", "/prestadores/view");
 
 	    List<Prestador.TipoPrestador> _tiposPrestador = TraeListasServiceUtil.getTiposPrestador();
-
+	
 %>
 <form action="<%= portletURL %>" method="get"
 	name="<portlet:namespace />fm"
@@ -73,7 +73,7 @@
 							value="<%= prof.getIdProfesion() %>"><%=prof.getDescripcion()%></option>
 						<% } %>
 				</select></td>
-
+				
 				<td><label><liferay-ui:message key="Especialidad" />:</label></td>
 				<td><select 
 					name="<portlet:namespace/>especialidad"
@@ -85,7 +85,7 @@
 							value="<%= espe.getIdEspecialidad() %>"><%=espe.getDescripcion()%></option>
 						<% } %>
 				</select></td>
-
+				
 				<td><label><liferay-ui:message key="Sub Especialidad" />:</label></td>
 				<td><select
 				 name="<portlet:namespace/>sub-especialidad"
@@ -106,21 +106,19 @@
 					<option value="<%= tipo.getId() %>"><%=tipo.getDescripcion()%></option>
 					<% } %>
 			</select></td>	
-
-				<td>Código Hospital:</td>
+			
+			<td>Código Hospital:</td>
 				<td><input id="<portlet:namespace />cod_hospital"
 					name="<portlet:namespace />cod_hospital" type="text" maxlength="10"
 					size="10" value="" /></td>
 
-				<td><label for="<portlet:namespace />solicitar_cotizacion_filtro">
-					Habilitados a Cotizar:
-				</label></td>
-				<td>
-					<input id="<portlet:namespace />solicitar_cotizacion_filtro"
-						name="<portlet:namespace />solicitar_cotizacion_filtro"
-						type="checkbox"
-						value="true" />
-				</td>
+			<td><label for="<portlet:namespace />solicitar_cotizacion_filtro">
+				Habilitados a Cotizar:
+			</label></td>
+			<td><input id="<portlet:namespace />solicitar_cotizacion_filtro"
+				name="<portlet:namespace />solicitar_cotizacion_filtro"
+				type="checkbox" value="true" /></td>
+			
 			</tr>
 			<tr>
 				<td>&nbsp;</td>
@@ -175,7 +173,7 @@
 				jQuery('#<portlet:namespace />solicitar_cotizacion_filtro').is(':checked')
 						? 'true'
 						: '';
-
+		
 /* 		if(!<portlet:namespace />validarBusqueda(id_prestador,cuit,descripcion)){
 			return false;
 		} */
@@ -186,29 +184,20 @@
 			}
 		}		
 		jQuery('#<portlet:namespace />buscando').show();		
-
+		
 		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/prestadores/buscar_prestadores" /></portlet:renderURL>';
-
-		var busquedaPrest = {
-			"id_prestador": id_prestador,
-			"cuit": cuit,
-			"descripcion": encodeURI(descripcion),
-			"provincia": provincia,
-			"localidad": localidad,
-			"profesion": profesion,
-			"especialidad": especialidad,
-			"subEspecialidad": subEspecialidad,
-			"tipoPrestador": tipoPrestador,
-			"hospital": hospital,
-			"solicitarCotizacionFiltro": solicitarCotizacionFiltro
-		};
-
+		  
+		var busquedaPrest = { "id_prestador": id_prestador, "cuit":cuit, "descripcion": encodeURI(descripcion), "provincia":provincia,
+								"localidad":localidad, "profesion":profesion, "especialidad":especialidad, "subEspecialidad":subEspecialidad,
+								"tipoPrestador":tipoPrestador,"hospital":hospital,
+								"solicitarCotizacionFiltro":solicitarCotizacionFiltro}
+		
 		jQuery('#<portlet:namespace />busquedaPrestadorDiv').load(url, busquedaPrest, function() {
         																jQuery('#<portlet:namespace />buscando').hide();            															
         															  }
         );	
 	});
-
+	
 	function <portlet:namespace />validarBusqueda(id_prestador,cuit,descripcion){
 		if(trim(id_prestador).length==0 && trim(cuit).length==0 && trim(descripcion).length==0){
 			alert('<liferay-ui:message key="ingrese-parametros-busqueda"/>');
@@ -223,7 +212,7 @@
 		document.<portlet:namespace />fm.method = 'post';
 		submitForm(document.<portlet:namespace />fm, url);
 	}     
-
+	
 	function manejarProfesion(){		
 		var idProfesion = jQuery('#<portlet:namespace/>profesion').val();		
 		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/id_profesion_especialidad&idProfesion='+idProfesion;
@@ -243,7 +232,7 @@
 			}
 		});
 	}
-
+	
 	function manejarEspecialidad(){
 		var idEspecialidad = jQuery('#<portlet:namespace/>especialidad').val();		
 		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/prestadores/id_especialidad_subEspecialidad&idEspecialidad='+idEspecialidad;
@@ -261,7 +250,7 @@
 			}
 		}); 
 	}
-
+			
 	function addElementToSelect(id_combo, texto, valor) {
 		var combo = document.getElementById(id_combo);
 		var idxElemento = combo.options.length; //Numero de elementos de la combo si esta vacio es 0. Este indice será el del nuevo elemento

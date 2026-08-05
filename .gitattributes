@@ -10,3 +10,26 @@
 *.sh text eol=lf
 *.bat text eol=crlf
 *.cmd text eol=crlf
+
+# Preserve the exact mixed legacy bytes imported from SVN production.
+/sql-scripts/** -text
+/sql/** -text
+
+# Keep exact production bytes for mixed-line-ending legacy files in this tree.
+/.gitattributes -text
+/app.server.properties -text
+/ext-impl/src/ar/com/ospim/crm/beans/ReportePreCargaMasReclamosExcel.java -text
+/ext-impl/src/ar/com/ospim/liquidaciones/beans/Prestador.java -text
+/ext-impl/src/ar/com/ospim/liquidaciones/services/PrestadorServiceImpl.java -text
+/ext-impl/src/ar/com/ospim/liquidaciones/services/PrestadorServiceUtil.java -text
+/ext-impl/src/ar/com/ospim/liquidaciones/WebKeysLiquidaciones.java -text
+/ext-impl/src/ar/com/ospim/servlets/PdfServlet.java -text
+/ext-impl/src/ar/com/ospim/liquidaciones/comprobantes/action/ComprobantesConsultaInterbankingAction.java -text
+/ext-web/docroot/WEB-INF/classes/jasper/orden_pago/ordenPagoOSPIM.jrxml -text
+/ext-web/docroot/html/portlet/autorizaciones/pre_autorizaciones/preautorizacion_prestaciones.jsp -text
+/ext-web/docroot/html/portlet/autorizaciones/pre_autorizaciones/preautorizacion_search_documentos.jsp -text
+/ext-web/docroot/html/portlet/farmacia/busqueda_medicamento.jsp -text
+/ext-web/docroot/html/portlet/liquidaciones/comprobantes/comprobantes_consulta_interbanking.jsp -text
+/ext-web/docroot/html/portlet/liquidaciones/comprobantes/comprobantes_interbanking_search_result.jsp -text
+/ext-web/docroot/html/portlet/uoma/facturacion/formas_ingreso_agregar.jsp -text
+/ext-web/docroot/html/portlet/uoma/reportes/control_ingresos_egresos.jsp -text

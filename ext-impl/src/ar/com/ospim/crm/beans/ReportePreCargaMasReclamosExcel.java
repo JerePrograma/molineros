@@ -16,17 +16,25 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
+import ar.com.ospim.afiliados.action.ActionUtil;
+import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.autorizaciones.beans.BusquedaReporteReclamoFiltro;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacionalExcel;
 import ar.com.ospim.autorizaciones.beans.ReportePreCargaReclamo;
 import ar.com.ospim.autorizaciones.reportes.action.ReporteReclamosPrestacionales;
 import ar.com.ospim.autorizaciones.services.AutorizacionesServiceUtil;
 import ar.com.ospim.autorizaciones.services.ReclamosPrestacionesServiceUtil;
+import ar.com.ospim.global.beans.Domicilio;
+import ar.com.ospim.global.beans.Localidad;
+import ar.com.ospim.global.beans.Provincia;
+import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.liquidaciones.ordenespago.reportes.ReporteXLS;
 import ar.com.ospim.util.DateUtils;
 
 public class ReportePreCargaMasReclamosExcel extends ReporteXLS {
 	private static Log _log = LogFactoryUtil.getLog(ReportePreCargaMasReclamosExcel.class);
+	static List<Provincia>provincias =TraeListasServiceUtil.getProvincias();
+	static List<Localidad>localidades=TraeListasServiceUtil.getLocalidades();
 
 	public static HSSFWorkbook generaReporte() {
 		try {
@@ -309,6 +317,32 @@ public class ReportePreCargaMasReclamosExcel extends ReporteXLS {
 			filtro.setCodigoTipoGestion("0");
 			HSSFWorkbook wb = new HSSFWorkbook();
 			List<ReclamoPrestacionalExcel> reclamosPrestacionales= AutorizacionesServiceUtil.getListaReclamosPrestacionales (filtro);
+			
+			
+			for(ReclamoPrestacionalExcel archivo:reclamosPrestacionales) {
+			    try {
+				   Afiliado a = ActionUtil.getAfiliadoInclusoDadoBajaByCuilInte(archivo.getAfiliado().getCuil(), archivo.getAfiliado().getInte());
+				   archivo.getAfiliado().setEmail(a.getEmail());
+				   archivo.getAfiliado().setDomicilios(a.getDomicilios());
+				   if(archivo.getAfiliado().getDomicilios()!=null) {
+				      int indice = provincias.indexOf(archivo.getAfiliado().getDomicilioDefault().getProvincia());
+				      if(indice!=-1) {
+				        archivo.getAfiliado().getDomicilioDefault().setProvincia(provincias.get(indice));
+				      }
+				      indice = localidades.indexOf(archivo.getAfiliado().getDomicilioDefault().getLocalidad());
+				      if(indice!=-1) {
+				        archivo.getAfiliado().getDomicilioDefault().setLocalidad(localidades.get(indice));
+				      }
+				   }else {
+					  Domicilio[] domicilios = null; 
+					  archivo.getAfiliado().setDomicilios( domicilios); 
+				   }
+				}catch(Exception e) {
+					_log.error("Error al generar reporte de reclamos prestacionales domicilios",e);
+				}   
+			}    
+			
+			
 			return 	ReporteReclamosPrestacionales.generaReporteReclamosPrestacionales(reclamosPrestacionales, filtro, wb);
 			
 		} catch (Exception e) {

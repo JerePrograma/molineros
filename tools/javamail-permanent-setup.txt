@@ -1,9 +1,0 @@
-Fecha: 2026-06-26 11:25:43
-Repositorio: C:\devmolineros\ext
-Tomcat: C:\apache-tomcat-8.5.23
-JavaMail repositorio: C:\devmolineros\ext\lib\development\mail.jar
-JavaMail repositorio SHA-1: 9ADD058589D5D85ADEB625859BF2C5EEAAEDF12D
-JavaMail runtime: C:\apache-tomcat-8.5.23\lib\ext\mail.jar
-JavaMail runtime SHA-1: 9ADD058589D5D85ADEB625859BF2C5EEAAEDF12D
-Sincronizador: C:\devmolineros\ext\tools\sync-javamail-runtime.ps1
-Wrapper Ant: C:\devmolineros\ext\tools\ant-with-javamail.ps1

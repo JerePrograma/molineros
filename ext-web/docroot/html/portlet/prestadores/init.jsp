@@ -56,7 +56,6 @@
 
 <%@ page import="com.liferay.portal.kernel.dao.orm.QueryUtil" %>
 <%@ page import="com.liferay.portal.service.permission.RolePermissionUtil" %>
-<%@ page import="com.liferay.portal.service.RoleLocalServiceUtil" %>
 <%@ page import="com.liferay.portal.service.OrganizationLocalServiceUtil" %>
 <%@ page import="com.liferay.portal.service.GroupLocalServiceUtil" %>
 <%@ page import="com.liferay.portal.service.UserLocalServiceUtil" %>

@@ -16,9 +16,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import ar.com.ospim.autorizaciones.beans.RevisionesReclamo;
-import ar.com.ospim.autorizaciones.exceptions.RevisionesReclamosException;
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.global.beans.Provincia;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
@@ -44,18 +42,6 @@ public class ListaRevisionesAction extends PortletAction {
 			RenderRequest renderRequest, RenderResponse renderResponse) throws Exception {
 		
 		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
-		ReclamoPrestacional reclamo = (ReclamoPrestacional) session.getAttribute(
-				WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION
-		);
-
-		if (reclamo == null || reclamo.getId_reclamo() <= 0 || reclamo.getEstado() == 3) {
-			agregarErrorRevision(
-					renderRequest,
-					"La revision requiere un reclamo persistido, editable y no cerrado."
-			);
-			return mapping.findForward(getForward(renderRequest,
-					"portlet.autorizaciones.reclamosprestacionales.revision.reclamo"));
-		}
 		
 		String resolucion = ParamUtil.getString(renderRequest, "resolucion");		
 		String presentes = ParamUtil.getString(renderRequest, "presentes");
@@ -64,7 +50,6 @@ public class ListaRevisionesAction extends PortletAction {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTimeInMillis(System.currentTimeMillis());
 		SimpleDateFormat formatoDePeriodo = new SimpleDateFormat("dd/MM/yyyy");
-		formatoDePeriodo.setLenient(false);
 
 		String revisionFechaVtoDia = ParamUtil.getString(renderRequest,"revisionFechaVtoDia");
 		String revisionFechaVtoMes = ParamUtil.getString(renderRequest,"revisionFechaVtoMes");
@@ -90,58 +75,39 @@ public class ListaRevisionesAction extends PortletAction {
 			} catch (Exception e) {
 				fechaRevision = null;
 			}
-
-		if (fechaRevision == null || resolucion.trim().length() == 0) {
-			agregarErrorRevision(
-					renderRequest,
-					"La revision no contiene una fecha y resolucion validas."
-			);
-			return mapping.findForward(getForward(renderRequest,
-					"portlet.autorizaciones.reclamosprestacionales.revision.reclamo"));
+				
+		   
+		
+//		me aseguro sea un numero negativo para no confundir con IDs de BD
+		Random r = new Random(System.currentTimeMillis());
+		int idAux = r.nextInt(); // sale neg o pos, si es pos, lo pasamos con (-1)
+		if(idAux > 0){
+			idAux = (-1)*idAux;
 		}
+		
+		RevisionesReclamo revreclamo = new RevisionesReclamo(fechaRevision ,presentes ,resolucion ,respresolucion , observacion);
+				 
+		
+		revreclamo.setEstado(RevisionesReclamo.ESTADOS.NUEVO); 
+		
+		revreclamo.setId(idAux);
+		
+		_log.debug("Agrega revision : " + revreclamo.toString());
+		
+		
+		@SuppressWarnings("unchecked")
+		List<RevisionesReclamo > revisionesreclamo  = (ArrayList<RevisionesReclamo >) session.getAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION);
 
-		synchronized (session) {
-			@SuppressWarnings("unchecked")
-			List<RevisionesReclamo> revisionesActuales =
-					(List<RevisionesReclamo>) session.getAttribute(
-							WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION
-					);
-
-			if (tieneRevisionActiva(revisionesActuales)) {
-				agregarErrorRevision(
-						renderRequest,
-						"El reclamo ya contiene una revision activa."
-				);
-				return mapping.findForward(getForward(renderRequest,
-						"portlet.autorizaciones.reclamosprestacionales.revision.reclamo"));
-			}
-
-//			me aseguro sea un numero negativo para no confundir con IDs de BD
-			Random r = new Random(System.currentTimeMillis());
-			int idAux = r.nextInt();
-			if(idAux >= 0){
-				idAux = idAux == 0 ? -1 : (-1)*idAux;
-			}
-
-			RevisionesReclamo revreclamo = new RevisionesReclamo(
-					fechaRevision, presentes, resolucion, respresolucion, observacion
-			);
-			revreclamo.setEstado(RevisionesReclamo.ESTADOS.NUEVO);
-			revreclamo.setId(idAux);
-
-			List<RevisionesReclamo> revisionesreclamo =
-					revisionesActuales == null
-							? new ArrayList<RevisionesReclamo>()
-							: new ArrayList<RevisionesReclamo>(revisionesActuales);
-
-			revisionesreclamo.add(revreclamo);
-			session.setAttribute(
-					WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION,
-					revisionesreclamo
-			);
-
-			_log.debug("Agrega revision : " + revreclamo.toString());
-		}
+		session.removeAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION);
+		
+		if(revisionesreclamo   == null){
+			revisionesreclamo  = new ArrayList<RevisionesReclamo>();
+		}				
+		
+		revisionesreclamo.add(revreclamo);		
+		
+		//pongo la lista en session		
+		session.setAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION, revisionesreclamo );	
 		
 //		return mapping.findForward("portlet.liquidaciones.matricula.prestador");
 		return mapping.findForward(getForward(renderRequest,
@@ -149,28 +115,4 @@ public class ListaRevisionesAction extends PortletAction {
 	}
 	
 			
-	private boolean tieneRevisionActiva(List<RevisionesReclamo> revisiones) {
-		if (revisiones == null) {
-			return false;
-		}
-
-		for (RevisionesReclamo revision : revisiones) {
-			if (revision != null
-					&& (revision.getEstado() == null
-					|| !RevisionesReclamo.ESTADOS.BAJA.equals(revision.getEstado()))) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	private void agregarErrorRevision(RenderRequest renderRequest, String mensaje) {
-		SessionErrors.add(
-				renderRequest,
-				RevisionesReclamosException.class.getName(),
-				new RevisionesReclamosException(mensaje)
-		);
-	}
-
 }

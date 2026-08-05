@@ -584,6 +584,7 @@ public class ReclamoPrestacionServiceImpl {
 			} catch (SQLException e) {
 				_log.error("Error al insertar reclamo prestacional y sus componentes", e);
 				ConnectionHelper.rollback(con);
+				throw new SystemException(e);
 			} finally {
 				ConnectionHelper.cerrar(stmt);
 				ConnectionHelper.cerrar(stmt2);			
@@ -2108,4 +2109,4 @@ public class ReclamoPrestacionServiceImpl {
 	    }
 	}
 
-}				throw new SystemException(e);
+}

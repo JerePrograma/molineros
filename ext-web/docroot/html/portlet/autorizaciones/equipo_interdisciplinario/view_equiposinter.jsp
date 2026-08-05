@@ -1420,7 +1420,7 @@ function aplicaEstiloBordeRojoDatosObligatorio() {
 	
 	
 <% if (equipoInterdisciplinario == null ){ %>
-	jQuery("#<portlet:namespace/>mensajeborde").html("Borde rojo indica datos obligatorios si selecciona el afiliado y la provincia ó el diagnóstico el sistema autocompletara los datos.");
+	jQuery("#<portlet:namespace/>mensajeborde").html("Borde rojo indica datos obligatorios si selecciona el afiliado y la provincia &oacute el diagn&oacute;stico el sistema autocompletara los datos.");
 	<%}else{%>
 	jQuery("#<portlet:namespace/>mensajeborde").html("Borde rojo indica datos obligatorios.");
 	<%}%>

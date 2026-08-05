@@ -18,7 +18,7 @@ import java.util.Map;
 public final class ComprasDetalleTecnicoServiceContractTest {
 
     public static void main(String[] args) throws Exception {
-        assertMedicamentoCanonicoYParametros();
+        assertMedicamentoNuevoRechazado();
         assertNomencladorCanonicoYParametros();
         assertCamposCruzadosRechazados();
         assertTipoIncompatibleConSectorRechazado();
@@ -28,8 +28,8 @@ public final class ComprasDetalleTecnicoServiceContractTest {
         System.out.println("CONTRATO_DETALLE_TECNICO_COMPRAS_OK");
     }
 
-    private static void assertMedicamentoCanonicoYParametros() throws Exception {
-        Servicio servicio = new Servicio("Farmacia");
+    private static void assertMedicamentoNuevoRechazado() throws Exception {
+        final Servicio servicio = new Servicio("Farmacia");
         Medicamento medicamento = new Medicamento();
         medicamento.setId_medicamento(101);
         medicamento.setTroquel(12345);
@@ -37,25 +37,20 @@ public final class ComprasDetalleTecnicoServiceContractTest {
         medicamento.setPresentacion("10 MG");
         servicio.medicamento = medicamento;
 
-        RequerimientoCompraDetalle detalle = base("MEDICAMENTO");
+        final RequerimientoCompraDetalle detalle = base("MEDICAMENTO");
         detalle.setIdMedicamento(Integer.valueOf(101));
         detalle.setTroquel(Integer.valueOf(12345));
         detalle.setNombreMedicamento("MEDICAMENTO 10 MG");
 
-        int id = servicio.guardarDetalle(detalle, "tester");
-
-        assertEquals("id retornado", Integer.valueOf(777), Integer.valueOf(id));
-        assertEquals("firma de 13 parametros", Integer.valueOf(13),
-                Integer.valueOf(servicio.parametros.size()));
-        assertEquals("13 placeholders", Integer.valueOf(13),
-                Integer.valueOf(contar(servicio.sql, '?')));
-        assertEquals("tipo", "MEDICAMENTO", servicio.parametros.get(Integer.valueOf(3)));
-        assertEquals("nomenclador nulo", null, servicio.parametros.get(Integer.valueOf(4)));
-        assertEquals("id medicamento", Integer.valueOf(101), servicio.parametros.get(Integer.valueOf(8)));
-        assertEquals("troquel", Integer.valueOf(12345), servicio.parametros.get(Integer.valueOf(9)));
-        assertEquals("nombre canonico", "MEDICAMENTO 10 MG", servicio.parametros.get(Integer.valueOf(10)));
-        assertEquals("cantidad", Integer.valueOf(2), servicio.parametros.get(Integer.valueOf(11)));
-        assertEquals("usuario", "tester", servicio.parametros.get(Integer.valueOf(13)));
+        assertRechazoConMensaje(
+                "medicamento nuevo",
+                "Los detalles nuevos de Compras deben utilizar NOMENCLADOR.",
+                new Ejecucion() {
+                    public void ejecutar() throws Exception {
+                        servicio.guardarDetalle(detalle, "tester");
+                    }
+                }
+        );
     }
 
     private static void assertNomencladorCanonicoYParametros() throws Exception {
@@ -181,6 +176,29 @@ public final class ComprasDetalleTecnicoServiceContractTest {
         } catch (Exception esperado) {
             return;
         }
+        throw new AssertionError(nombre + ": se esperaba rechazo");
+    }
+
+    private static void assertRechazoConMensaje(
+            String nombre,
+            String mensaje,
+            Ejecucion ejecucion) throws Exception {
+
+        try {
+            ejecucion.ejecutar();
+        } catch (Exception esperado) {
+            if (mensaje.equals(esperado.getMessage())) {
+                return;
+            }
+            throw new AssertionError(
+                    nombre
+                            + ": mensaje esperado="
+                            + mensaje
+                            + ", actual="
+                            + esperado.getMessage()
+            );
+        }
+
         throw new AssertionError(nombre + ": se esperaba rechazo");
     }
 

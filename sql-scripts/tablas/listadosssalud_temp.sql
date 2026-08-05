@@ -1,0 +1,2 @@
+create table listadosssalud_temp(id numeric, registro numeric, atc varchar, generico varchar, nombre varchar, presentacion varchar, pvp numeric, acargos numeric, acargoafil numeric,
+laboratorio varchar, cober numeric, grupoter numeric, observaciones varchar)

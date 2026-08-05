@@ -1,5 +1,6 @@
 package ar.com.ospim.autorizaciones.action;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +23,7 @@ import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
 
 
-public class BorrarPatologiaSituacionMedicaAction extends PortletAction {
+public class BorrarPAtologiaSituacionMedicaAction extends PortletAction {
 	private static Log _log = LogFactoryUtil.getLog(BorrarPrestacionEquipoInterdisciplinarioAction.class);
 
 	public ActionForward render(

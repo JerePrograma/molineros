@@ -13,8 +13,6 @@ import ar.com.ospim.liquidaciones.beans.MatriculaPrestador;
 import ar.com.ospim.liquidaciones.beans.Prestador;
 import ar.com.ospim.liquidaciones.beans.PrestadorPlan;
 
-import ar.com.ospim.prestadores.beans.HistoricoPrestadorCotizacion;
-import com.liferay.portal.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.model.User;
@@ -57,37 +55,7 @@ public class PrestadorServiceUtil {
 				profesion, especialidad, subEspecialidad, tipoPrestador );
 	}
 
-	public static List<Prestador> getPrestadores(
-			int id,
-			String cuit,
-			String descripcion,
-			int provincia,
-			int localidad,
-			boolean soloVigentes,
-			int profesion,
-			int especialidad,
-			int subEspecialidad,
-			int tipoPrestador,
-			String hospital,
-			boolean soloHabilitadosCotizar)
-			throws Exception {
-
-		return getInstance().getPrestadores(
-				id,
-				cuit,
-				descripcion,
-				provincia,
-				localidad,
-				soloVigentes,
-				profesion,
-				especialidad,
-				subEspecialidad,
-				tipoPrestador,
-				hospital,
-				soloHabilitadosCotizar
-		);
-	}
-
+	
 	public static Prestador getPrestador(int id) throws Exception {
 		return getInstance().getPrestador(id);
 	}
@@ -160,8 +128,7 @@ public class PrestadorServiceUtil {
 	public static List<PrestadorPlan> getPlanesDelPrestador(int idPrestador) {
 		return getInstance().getPlanesDelPrestador(idPrestador);
 	}
-
-	// POSIBLEMENTE ELIMINAR TANTO FUNCIONES COMO MÉTODOS.
+	
 	public static List<Prestador> getPrestadores(int id, String cuit, String descripcion, int provincia, int localidad, boolean soloVigentes,
 			int profesion, int especialidad, int subEspecialidad, int tipoPrestador,String hospital)
 		throws Exception {
@@ -170,22 +137,18 @@ public class PrestadorServiceUtil {
 				profesion, especialidad, subEspecialidad, tipoPrestador,hospital );
 	}
 
-	public static int actualizarSolicitarCotizacionPrestador(
-			int idPrestador,
-			boolean solicitarCotizacion,
-			User user) throws Exception {
-
-		return getInstance().actualizarSolicitarCotizacionPrestador(
-				idPrestador,
-				solicitarCotizacion,
-				user.getScreenName()
-		);
+	public static List<Prestador> getPrestadores(int id, String cuit, String descripcion,
+			int provincia, int localidad, boolean soloVigentes, int profesion,
+			int especialidad, int subEspecialidad, int tipoPrestador, String hospital,
+			boolean soloHabilitadosCotizar) throws Exception {
+		return getInstance().getPrestadores(id, cuit, descripcion, provincia, localidad,
+				soloVigentes, profesion, especialidad, subEspecialidad, tipoPrestador,
+				hospital, soloHabilitadosCotizar);
 	}
 
-	public static List<HistoricoPrestadorCotizacion>
-	listarHistoricoCotizacionPrestador(int idPrestador)
-			throws SystemException {
-		return getInstance().listarHistoricoCotizacionPrestador(
-				idPrestador);
+	public static int actualizarSolicitarCotizacionPrestador(
+			int idPrestador, boolean solicitarCotizacion, User user) throws Exception {
+		return getInstance().actualizarSolicitarCotizacionPrestador(
+				idPrestador, solicitarCotizacion, user.getScreenName());
 	}
 }

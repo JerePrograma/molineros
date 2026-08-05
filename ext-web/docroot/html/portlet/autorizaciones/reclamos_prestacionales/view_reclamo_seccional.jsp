@@ -489,7 +489,7 @@ span-fixed-size {
 
 		<div id="<portlet:namespace />datos_edicion_prestacion">
 
-			<span><b>Prestación en Proceso de Edición.</b></span>
+			<span><b>Prestaci&oacute;n en Proceso de Edici&oacute;n.</b></span>
 			<liferay-util:include
 				page="/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp">
 			</liferay-util:include>
@@ -546,7 +546,7 @@ span-fixed-size {
 													maxlength="8" type="text" onkeydown="allowOnlyDigits(event);"
 													value="" <% if (!esEdicion) { %>
 													readonly="readonly" <%} %> /></td>
-												<td><label>F. Emisión: </label></td>
+												<td><label>F. Emisi&oacute;n: </label></td>
 												<td colspan="3"><liferay-ui:input-date
 														dayParam="fechaComprobanteDia" dayValue=""
 														dayNullable="<%=true %>" monthParam="fechaComprobanteMes"
@@ -1250,11 +1250,11 @@ function DatosRevisionOk(){
 	 
 	  
 	if (dia || mes || anio){
-	   alert("Debe ingresar la fecha de Revisión");
+	   alert("Debe ingresar la fecha de Revisi\u00F3n");
 		return false ;
 	}
 	if (dia || mes || anio ||  jQuery('#<portlet:namespace />resolucion').val()=='' ){
-		   alert("Debe ingresar la resolución");
+		   alert("Debe ingresar la resoluci\u00F3n");
 			return false ;
 		}
 		

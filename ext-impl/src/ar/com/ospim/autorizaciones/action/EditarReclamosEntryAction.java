@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -547,7 +546,7 @@ import ar.com.ospim.util.StringUtils;
 				    nombrePlanActual = afiPlanActual.getPlan().getDescripcion();
 				}
 
-				boolean planBloqueado = esPlanBloqueadoParaReclamo(idPlanActual);
+				boolean planBloqueado = esPlanBloqueadoParaReclamo(idPlanActual, reclamoPrestacional.getTipoPedido());
 
 				if (planBloqueado) {
 
@@ -592,47 +591,19 @@ import ar.com.ospim.util.StringUtils;
 			}  
 			
 			String ErrorMsg = "";
-            if (validaOk
-                    && Constants.UPDATE.equals(cmd)
-                    && prestacionesAux != null
-                    && estado != 4) {
-
-                for (PrestacionesReclamo prestacion : prestacionesAux) {
-
-                    /*
-                     * Las prestaciones dadas de baja no participan de la validación.
-                     * Una referencia nula, en cambio, se envía al validador para
-                     * mantener un comportamiento fail-closed.
-                     */
-                    if (prestacion != null
-                            && PrestacionesReclamo.ESTADOS.BAJA.equals(
-                            prestacion.getEstado()
-                    )) {
-
-                        continue;
-                    }
-
-                    String errorMsg =
-                            validarReclamoPrestacionesIncompletas(
-                                    prestacion
-                            );
-
-                    if (!StringUtils.checkEmpty(errorMsg)) {
-                        SessionErrors.add(
-                                renderRequest,
-                                "errorPrestacionComprobante"
-                        );
-
-                        renderRequest.setAttribute(
-                                "msgErrorPrestacionComprobante",
-                                errorMsg
-                        );
-
-                        validaOk = false;
-                        break;
-                    }
-                }
-            }
+			if (cmd.equals(Constants.UPDATE ) && prestacionesAux != null && estado != 4 ){			
+				for( PrestacionesReclamo r : prestacionesAux) {
+					if(!PrestacionesReclamo.ESTADOS.BAJA.equals(r.getEstado())  ) {
+						ErrorMsg = this.validarReclamoPrestacionesIncompletas(r);
+						if (!StringUtils.checkEmpty(ErrorMsg)){
+							SessionErrors.add(renderRequest, "errorPrestacionComprobante");
+							renderRequest.setAttribute("msgErrorPrestacionComprobante",ErrorMsg);
+							validaOk = false;
+							break;
+						}
+					}
+				}
+			}
 			
 		
 			
@@ -645,7 +616,8 @@ import ar.com.ospim.util.StringUtils;
 				for( PrestacionesReclamo r : prestacionesAux) {
 					if(!PrestacionesReclamo.ESTADOS.BAJA.equals(r.getEstado()) 
 							&&  ((r.getCargo_ospim()==0 && r.getCargo_ps()==0 && r.getCargo_imesa()==0 && r.getReconocidoSSS()==0) ||
-								  ( Math.abs((r.getCantidad()*r.getImporte()) -r.getCargo_ospim()-r.getCargo_ps()-r.getCargo_imesa() - r.getReconocidoSSS())>0.01D  )
+								  ( Math.abs((r.getCantidad()*r.getImporte()) -r.getCargo_ospim()-r.getCargo_ps()-r.getCargo_imesa() - 
+										  (r.getRecuperable()==1?0:r.getReconocidoSSS())   )>0.01D  )	
 								)
 							&& !(r.getEstadoRechazoAprobado() == 2) // debería ser rechazado, pero se actualiza recíen en la bd ?
 //							&&  !(reclamoPrestacional.getTipo_gestion_cierre_reclamo() == 2) //RECHAZADO
@@ -1407,8 +1379,8 @@ import ar.com.ospim.util.StringUtils;
 	        for (PrestacionesReclamo p : prestaciones) {
 	            if (p.getEstado() == null || !PrestacionesReclamo.ESTADOS.BAJA.equals(p.getEstado())) {
 	                p.setIdTercerizadora(idTercerizadora);
-	            }
-	        }
+		    }
+		}
 	    }
 	}
 
@@ -1552,91 +1524,78 @@ import ar.com.ospim.util.StringUtils;
 			 }
 		 }
 	}
+	
+	private String validarReclamoPrestacionesIncompletas(PrestacionesReclamo reclamoPrestacional){
+		String outMsg = "";
+		BigDecimal  comprobanteCUIT = new BigDecimal(0);
+		BigDecimal cpbteSucursal = new BigDecimal(0);
+		BigDecimal cpbteNro = new BigDecimal(0);
 
-        private String validarReclamoPrestacionesIncompletas(
-                PrestacionesReclamo reclamoPrestacional) {
-
-            String tipoComprobante;
-
-            if (reclamoPrestacional == null) {
-                return "No se pudo validar la prestación del Reclamo";
-            }
-
-            if (reclamoPrestacional.getComprobanteFecha() == null) {
-                return "Debe ingresar la fecha del Comprobante";
-            }
-
-            if (StringUtils.checkEmpty(
-                    reclamoPrestacional.getFrecuencia())) {
-
-                return "Debe seleccionar la frecuencia correspondiente del Comprobante";
-            }
-
-            tipoComprobante =
-                    reclamoPrestacional.getComprobanteTipo();
-
-            if (StringUtils.checkEmpty(tipoComprobante)) {
-                return "Debe seleccionar el tipo correspondiente del Comprobante";
-            }
-
-            boolean requiereDatosFiscales =
-                    !"OTR".equalsIgnoreCase(tipoComprobante)
-                            && !"AUT".equalsIgnoreCase(tipoComprobante);
-
-            if (requiereDatosFiscales) {
-                if (StringUtils.checkEmpty(
-                        reclamoPrestacional.getComprobanteLetra())) {
-
-                    return "Debe seleccionar la letra del Comprobante";
-                }
-
-                if (!esNumeroPositivo(
-                        reclamoPrestacional.getComprobanteCUIT())) {
-
-                    return "Debe ingresar el CUIT del Comprobante";
-                }
-
-                if (!esNumeroPositivo(
-                        reclamoPrestacional.getComprobanteCUITSucursal())) {
-
-                    return "Debe ingresar la sucursal del CUIT del Comprobante";
-                }
-
-                if (!esNumeroPositivo(
-                        reclamoPrestacional.getComprobanteSucursal())) {
-
-                    return "Debe ingresar la Sucursal del Comprobante";
-                }
-
-                if (!esNumeroPositivo(
-                        reclamoPrestacional.getComprobanteNro())) {
-
-                    return "Debe ingresar el Nro del Comprobante";
-                }
-            }
-
-            if (reclamoPrestacional.getComprobanteImporte() == null
-                    || reclamoPrestacional.getComprobanteImporte()
-                    .doubleValue() <= 0) {
-
-                return "Debe ingresar el importe de la Factura del Comprobante";
-            }
-
-            return "";
-        }
-
-        private boolean esNumeroPositivo(String valor) {
-            if (StringUtils.checkEmpty(valor)) {
-                return false;
-            }
-
-            try {
-                return new BigDecimal(valor.trim())
-                        .compareTo(BigDecimal.ZERO) > 0;
-            } catch (NumberFormatException e) {
-                return false;
-            }
-        }
+		
+		
+		try {
+			comprobanteCUIT = new BigDecimal(reclamoPrestacional.getComprobanteCUIT());
+			cpbteSucursal  =  new BigDecimal(reclamoPrestacional.getComprobanteSucursal());
+			cpbteNro  =  new BigDecimal(reclamoPrestacional.getComprobanteNro());
+		} catch (Exception e) {
+			comprobanteCUIT =  new BigDecimal("0");
+			cpbteSucursal = new BigDecimal(0);
+			cpbteNro =  new BigDecimal(0);
+		}
+		
+		
+		
+		if (reclamoPrestacional.getComprobanteFecha() == null){
+			return "Debe ingresar la fecha del Comprobante";
+		}
+		if (StringUtils.checkEmpty(reclamoPrestacional.getFrecuencia())){
+			return "Debe seleccionar la frecuencia correspondiente del Comprobante";
+		}
+		if (StringUtils.checkEmpty(reclamoPrestacional.getComprobanteTipo())){
+			return "Debe seleccionar el tipo correspondiente del Comprobante";
+		}
+		if (StringUtils.checkEmpty(reclamoPrestacional.getComprobanteLetra()) 
+				&& ((!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("OTR")) &&
+						(!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("AUT")))
+		){
+			return "Debe seleccionar la letra del Comprobante";
+		}
+		 
+		if ( StringUtils.checkEmpty(reclamoPrestacional.getComprobanteCUITSucursal()) 
+				&& ((!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("OTR")) &&
+						(!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("AUT")))
+		){
+			return "Debe ingresar el CUIT sucursal del Comprobante";
+		}
+	
+		if ( comprobanteCUIT.compareTo(BigDecimal.ZERO) == 0 
+				&& ((!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("OTR")) &&
+						(!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("AUT")))
+		){
+			return "Debe ingresar la sucursal del CUIT del Comprobante";
+		}
+		
+		if ( reclamoPrestacional.getComprobanteImporte() <= 0 ){
+			return "Debe ingresar el importe de la Factura del Comprobante";
+		}
+		
+		if ( cpbteSucursal == null 
+				&& ((!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("OTR")) &&
+						(!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("AUT")))
+		){
+			return "Debe ingresar la Sucursal del Comprobante";
+		}
+		
+	    if(cpbteNro.compareTo(BigDecimal.ZERO) == 0 
+	    		&& ((!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("OTR")) &&
+						(!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("AUT")))
+		){
+	    	return "Debe ingresar el Nro del Comprobante";
+	    }
+		
+		return outMsg;
+		
+	}
 	
 	
 	private boolean  validarReclamoSeccional(ReclamoPrestacional reclamo, RenderRequest renderRequest){
@@ -1741,15 +1700,24 @@ import ar.com.ospim.util.StringUtils;
 	    return cuenta;
 	}
 
-	private boolean esPlanBloqueadoParaReclamo(Integer idPlan) {
+	private boolean esPlanBloqueadoParaReclamo(
+	        Integer idPlan,
+	        String tipoPedido) {
+
+	    if (!"REINTEGRO".equalsIgnoreCase(tipoPedido)) {
+	        return false;
+	    }
 
 	    if (idPlan == null) {
 	        return false;
 	    }
 
-	    return idPlan.intValue() == PLAN_COBERTURA
-	        || idPlan.intValue() == PLAN_COBERTURA_TOTAL_O
-	        || idPlan.intValue() == PLAN_COBERTURA_TOTAL_M;
+	    return idPlan.intValue() ==
+	            PLAN_COBERTURA
+	        || idPlan.intValue() ==
+	            PLAN_COBERTURA_TOTAL_O
+	        || idPlan.intValue() ==
+	            PLAN_COBERTURA_TOTAL_M;
 	}
 	
 	private AfiPlan obtenerPlanActual(ReclamoPrestacional reclamo) {

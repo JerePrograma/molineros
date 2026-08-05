@@ -1385,7 +1385,7 @@ jQuery("#<portlet:namespace />cuit_entidad").blur(function(){ validaMontoOrigina
 		
 		function <portlet:namespace />saveLiquidacionEntry() {
 		   if (jQuery('#<portlet:namespace />importeoriginalnovalidado').val()!='') {
-		      alert('El total ingresado no debe superar ' + jQuery('#<portlet:namespace />importeoriginalreclamo').val() + ' que es el original autorizado para esta prestación en el reclamo.');
+		      alert('El total ingresado no debe superar ' + jQuery('#<portlet:namespace />importeoriginalreclamo').val() + ' que es el original autorizado para esta prestaci\u00f3n en el reclamo.');
 			  return false; 	
 		    }	
 		    jQuery('#<portlet:namespace />importeoriginalnovalidado').val('');
@@ -1782,8 +1782,8 @@ jQuery("#<portlet:namespace />cuit_entidad").blur(function(){ validaMontoOrigina
 			var params = { "cuil":cuil,  "inte":inte , "reintegro":false };
 			
 			
-			var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/lista_prestaciones_reclamos_reintegros" /></portlet:renderURL>';
-																																				  
+			//var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/liquidaciones/lista_prestaciones_reclamos_reintegros" /></portlet:renderURL>';
+			var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/<%=portlet_name%>/lista_prestaciones_reclamos_reintegros';																																				  
 						
 			jQuery('#<portlet:namespace />div_reclamos_prestaciones').load(url,params, function(){
 												jQuery('#<portlet:namespace />buscando').hide();            															
@@ -1907,7 +1907,7 @@ jQuery("#<portlet:namespace />cuit_entidad").blur(function(){ validaMontoOrigina
 	    	   totalHistorico=jQuery('#<portlet:namespace />importeoriginalreclamo').val() ;
 	    	   jQuery('#<portlet:namespace />importeoriginalnovalidado').val('') ;
 		   	   if ( Math.round(total) >Math.round(totalHistorico)  ){
-		   		   alert('El monto ingresado no debe superar ' + jQuery('#<portlet:namespace />importeoriginalreclamo').val() + ' que es el original autorizado para esta prestación en el reclamo.');
+		   		   alert('El monto ingresado no debe superar ' + jQuery('#<portlet:namespace />importeoriginalreclamo').val() + ' que es el original autorizado para esta prestaci\u00f3n en el reclamo.');		    		   
 		   		   valor=false;
 		   		   jQuery('#<portlet:namespace />importeoriginalnovalidado').val('bad') ;
 		   	   }    	   

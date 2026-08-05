@@ -23,7 +23,20 @@ import ar.com.ospim.afiliados.services.AfiliacionesServiceUtil;
 public class AfiliacionesFormController {
 
   private static final Log _log = LogFactoryUtil.getLog(AfiliacionesFormController.class);
-  private static final String API_KEY = "TEST-OSPIM-2025";
+  private static final String API_KEY = loadApiKey();
+
+  private static String loadApiKey() {
+    String configuredApiKey = System.getProperty("ospim.forms.api.key");
+    if (configuredApiKey == null || configuredApiKey.trim().length() == 0) {
+      configuredApiKey = System.getenv("OSPIM_FORMS_API_KEY");
+    }
+    return configuredApiKey;
+  }
+
+  private static boolean isInvalidApiKey(String suppliedApiKey) {
+    return API_KEY == null || API_KEY.trim().length() == 0
+        || suppliedApiKey == null || !API_KEY.equals(suppliedApiKey);
+  }
 
   @RequestMapping(value = "/AFILIACIONES_FORM_GUARDAR", method = RequestMethod.POST)
   public ModelAndView guardar(
@@ -58,7 +71,7 @@ public class AfiliacionesFormController {
   ) {
     Map<String, Object> model = new HashMap<String, Object>();
 
-    if (apiKey == null || !API_KEY.equals(apiKey)) {
+    if (isInvalidApiKey(apiKey)) {
       model.put("estado", "ERROR");
       model.put("mensaje", "No autorizado");
       return new ModelAndView("jsonView", model);
@@ -227,7 +240,7 @@ public class AfiliacionesFormController {
   ) {
       Map<String, Object> model = new HashMap<String, Object>();
 
-      if (apiKey == null || !API_KEY.equals(apiKey)) {
+      if (isInvalidApiKey(apiKey)) {
           model.put("ok", false);
           model.put("error", "No autorizado");
           return new ModelAndView("jsonView", model);
@@ -253,7 +266,7 @@ public class AfiliacionesFormController {
   ) {
       Map<String, Object> model = new HashMap<String, Object>();
 
-      if (apiKey == null || !API_KEY.equals(apiKey)) {
+      if (isInvalidApiKey(apiKey)) {
           model.put("ok", false);
           model.put("error", "No autorizado");
           return new ModelAndView("jsonView", model);
@@ -280,7 +293,7 @@ public class AfiliacionesFormController {
   ) {
       Map<String, Object> model = new HashMap<String, Object>();
 
-      if (apiKey == null || !API_KEY.equals(apiKey)) {
+      if (isInvalidApiKey(apiKey)) {
           model.put("ok", false);
           model.put("error", "No autorizado");
           return new ModelAndView("jsonView", model);
@@ -311,7 +324,7 @@ public class AfiliacionesFormController {
   ) {
       Map<String, Object> model = new HashMap<String, Object>();
 
-      if (apiKey == null || !API_KEY.equals(apiKey)) {
+      if (isInvalidApiKey(apiKey)) {
           model.put("ok", false);
           model.put("error", "No autorizado");
           return new ModelAndView("jsonView", model);

@@ -5,16 +5,18 @@
 <liferay-theme:defineObjects />
 <%
 ReclamoPrestacional  reclamoprestacional  = (ReclamoPrestacional)request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
-String contextoCompraNonceRequest =
-        ParamUtil.getString(
-                request,
-                WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
-                ""
-        );
+String contextoCompraNonceRequest = ParamUtil.getString(
+        request,
+        WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
+        ""
+);
+Object contextoCompraSesionObj = request.getSession().getAttribute(
+        WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+);
 ReclamoPrestacionalCompraContexto contextoCompraSesion =
-        (ReclamoPrestacionalCompraContexto) request.getSession().getAttribute(
-                WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
-        );
+        contextoCompraSesionObj instanceof ReclamoPrestacionalCompraContexto
+                ? (ReclamoPrestacionalCompraContexto) contextoCompraSesionObj
+                : null;
 ReclamoPrestacionalCompraContexto contextoCompra =
         contextoCompraSesion != null
                 && contextoCompraSesion.coincideNonce(
@@ -30,8 +32,8 @@ ReclamoPrestacionalCompraContexto contextoCompra =
                 : null;
 String contextoCompraNonce =
         contextoCompra != null ? contextoCompra.getNonce() : "";
-String tabNames = "";
-StringBuilder tabValues = new StringBuilder();
+String tabNames="" ;
+StringBuilder tabValues = new StringBuilder("datos");
 
 String cmd = (String) request.getAttribute(Constants.CMD);
 
@@ -59,44 +61,32 @@ if(tabValue == null || StringUtils.checkEmpty(tabValue)){
 	tabValue = "datos";
 }
 
-if (idReclamoAux == 0) {
-    tabNames = "Datos Generales";
-    tabValues.append("datos");
+if (idReclamoAux == 0 ){
+	tabNames="Datos Generales" ;
+	 tabValues.append("datos");
+	
+}else if ("REINTEGRO".equalsIgnoreCase(reclamoprestacional.getTipoPedido())){
+		
+	tabNames="Datos Generales,CTA Bancaria, Archivos, Histórico de Movimientos" ;
+	tabValues.append(",cta_bancaria");
+	tabValues.append(",archivos");
+	tabValues.append(",historico_movimientos");	
+	
+}else{
+	 tabNames="Datos Generales,Archivos, Histórico de Movimientos" ;
+	 tabValues.append(",archivos");
+	 tabValues.append(",historico_movimientos");
 
-} else if ("REINTEGRO".equalsIgnoreCase(
-        reclamoprestacional.getTipoPedido())) {
-
-    tabNames =
-            "Datos Generales,CTA Bancaria, Archivos, "
-                    + "Histórico de Movimientos";
-
-    tabValues.append("datos");
-    tabValues.append(",cta_bancaria");
-    tabValues.append(",archivos");
-    tabValues.append(",historico_movimientos");
-
-} else {
-    tabNames =
-            "Datos Generales,Archivos, "
-                    + "Histórico de Movimientos";
-
-    tabValues.append("datos");
-    tabValues.append(",archivos");
-    tabValues.append(",historico_movimientos");
 }
 
 PortletURL portletURL = renderResponse.createRenderURL();
 portletURL.setWindowState(LiferayWindowState.MAXIMIZED);
 portletURL.setParameter("struts_action", "/autorizaciones/editar_reclamosprestaciones_entry");
 portletURL.setParameter("tab", tabValue);
-if (cmd != null) {
-    portletURL.setParameter("cmd", cmd);
-}
+portletURL.setParameter("cmd", cmd);
 portletURL.setParameter("reclamo_id", String.valueOf(idReclamoAux));
 
-if (contextoCompraNonce != null
-        && contextoCompraNonce.trim().length() > 0) {
-
+if (!StringUtils.checkEmpty(contextoCompraNonce)) {
     portletURL.setParameter(
             WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
             contextoCompraNonce
@@ -104,6 +94,9 @@ if (contextoCompraNonce != null
     portletURL.setParameter("origen", "compras");
     portletURL.setParameter(Constants.CMD, Constants.ADD);
 }
+
+
+
 
 %>
 <liferay-ui:error key="error-estado-reclamo" message="falta-estado-reclamo-prestacion" />
@@ -124,7 +117,6 @@ if (contextoCompraNonce != null
 <liferay-ui:error
     key="error-reclamo-ya-cerrado"
     message="<%=(String)request.getAttribute(\"msgErrorReclamoYaCerrado\") %>" />
-
 
 <liferay-ui:error
     key="error-reclamo-compras"
@@ -203,4 +195,3 @@ function deleteImagenReclamoPrestacional(folderId,fileName,solapa) {
 }
 
 </script>
-

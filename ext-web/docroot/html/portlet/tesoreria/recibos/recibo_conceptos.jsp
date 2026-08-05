@@ -88,7 +88,7 @@ int id_seccional= recibo!= null && recibo.getEmpresa() != null && recibo.getEmpr
 	
 	<% if(!portlet_name.equals("tesoreria")){ %>
 	<tr>
-		<td colspan="4" align="left">Elija una opción &nbsp;
+		<td colspan="4" align="left">Elija una opci&oacute;n &nbsp;
 			<input type="radio" name="<portlet:namespace />entidadIngreso"  value="Entidad" <% if(!opcionIngreso){ %> checked="checked" <%} %>  onselect="cambiarAEntidad()" onchange="cambiarAEntidad()">Empresa &nbsp;
 			<input type="radio" name="<portlet:namespace />entidadIngreso"  value="Afiliado"<% if(opcionIngreso){ %> checked="checked" <%} %>  onselect="cambiarAAfiliado()" onchange="cambiarAAfiliado()">Afiliado &nbsp;
 		</td>

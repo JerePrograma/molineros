@@ -1,69 +1,39 @@
 package ar.com.ospim.test;
 
+import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
- * Contrato textual de la precarga Compras -> Reclamo Prestacional.
- *
- * Evita volver a mezclar la completitud economica de una cotizacion con la
- * existencia de una referencia medica canonica. Los detalles OBSERVACION son
- * validos en Compras y deben llegar como referencia temporal al alta de RP.
+ * Contrato ejecutable de la precarga Compras -> Reclamo Prestacional.
  */
 public final class ReclamoPrestacionalCompraPrecargaContractTest {
 
-    private static final Charset ISO_8859_1 =
+    private static final Charset LATIN1 =
             Charset.forName("ISO-8859-1");
 
-    private static final String SERVICE =
-            "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
-                    + "ReclamoPrestacionalCompraPrecargaServiceUtil.java";
-
-    private static final String VIEW =
-            "ext-web/docroot/html/portlet/autorizaciones/"
-                    + "reclamos_prestacionales/view_reclamo.jspf";
-
-    private static final String VIEW_JS =
-            "ext-web/docroot/html/portlet/autorizaciones/"
-                    + "reclamos_prestacionales/view_reclamo.js";
-
-    private static final String CONTEXTO =
-            "ext-web/docroot/html/portlet/autorizaciones/"
-                    + "reclamos_prestacionales/view_reclamo_contexto.jspf";
-
-    private static final String CABECERA =
-            "ext-web/docroot/html/portlet/autorizaciones/"
-                    + "reclamos_prestacionales/view_reclamo_cabecera.jspf";
-
-    private static final String RECUPERABLE =
-            "ext-web/docroot/html/portlet/autorizaciones/"
-                    + "reclamos_prestacionales/"
-                    + "view_reclamo_recuperable_neutro.jspf";
-
-    private static final String SURGE_PATCH =
-            "ext-web/docroot/html/portlet/autorizaciones/"
-                    + "reclamos_prestacionales/"
-                    + "view_reclamo_compras_surge_patch.js";
-
-    private ReclamoPrestacionalCompraPrecargaContractTest() {
-    }
-
     public static void main(String[] args) throws Exception {
-        String service = leer(SERVICE);
-        String view = leer(VIEW);
-        String viewJs = leer(VIEW_JS);
-        String contexto = leer(CONTEXTO);
-        String cabecera = leer(CABECERA);
-        String recuperable = leer(RECUPERABLE);
-        String surgePatch = leer(SURGE_PATCH);
+        String service = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
+                        + "ReclamoPrestacionalCompraPrecargaServiceUtil.java"
+        );
+        String contexto = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/beans/"
+                        + "ReclamoPrestacionalCompraContexto.java"
+        );
+        String guardar = leer(
+                "ext-impl/src/ar/com/ospim/autorizaciones/action/"
+                        + "EditarReclamosEntryAction.java"
+        );
+        String view = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/view_reclamo.jsp"
+        );
 
         String validacion = extraerMetodo(
                 service,
                 "private static void validarDetalleCotizado("
         );
-
         noContiene(
                 validacion,
                 "la cotizacion no depende de una referencia tecnica",
@@ -94,223 +64,138 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
                 service,
                 "private static void aplicarReferenciaTecnica("
         );
-
         contiene(
                 referencia,
-                "mantiene validacion canonica del nomenclador",
+                "consulta el nomenclador canonico",
                 "NomencladorServiceUtil"
         );
         contiene(
                 referencia,
-                "mantiene compatibilidad de medicamento historico",
+                "mantiene medicamento historico",
                 "detalle.tieneMedicamento()"
         );
         contiene(
                 referencia,
-                "acepta detalles de observacion",
+                "acepta detalle observacion",
                 "detalle.esObservacion()"
         );
         contiene(
                 referencia,
-                "no fabrica id medico para observacion",
-                "prestacion.setId_prestacion(\n                    0"
+                "no fabrica id medico",
+                "prestacion.setId_prestacion("
         );
         contiene(
                 referencia,
-                "crea codigo temporal trazable",
+                "codigo temporal trazable",
                 "\"ART-\" + detalle.getIdInt()"
         );
+
         contiene(
-                referencia,
-                "usa el texto de observacion como descripcion temporal",
-                "detalle.getObservacionesVisible()"
+                service,
+                "precarga cabecera en sesion",
+                ".RECLAMO_PRESTACION_EN_EDICION"
         );
         contiene(
                 service,
-                "obliga a confirmar la referencia medica",
-                "Confirmar nomenclador/medicamento."
-        );
-
-        contiene(
-                recuperable,
-                "reconoce el borrador de Compras",
-                "esBorradorCompras\n        && contextoCompras != null"
+                "precarga prestaciones en sesion",
+                ".LISTADO_PRESTACIONES_RECLAMOS_EN_SESION"
         );
         contiene(
-                recuperable,
-                "obtiene SUR exclusivamente desde surge",
-                "contextoCompras.isSurge()"
+                service,
+                "precarga nonce temporal",
+                ".CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA"
         );
         contiene(
-                recuperable,
-                "conserva la lista de prestaciones precargadas",
-                "LISTADO_PRESTACIONES_RECLAMOS_EN_SESION"
-        );
-        noContiene(
-                recuperable,
-                "no elimina la lista precargada",
-                "removeAttribute(\n"
-                        + "                WebKeysAutorizaciones\n"
-                        + "                        .LISTADO_PRESTACIONES"
+                service,
+                "cabecera conserva recupero",
+                "reclamo.setRecuperable("
         );
         contiene(
-                recuperable,
-                "expone el valor inicial para el cliente",
-                "recuperable_sur_compra_inicial"
+                service,
+                "cabecera conserva surge",
+                "reclamo.setSuperintendencia("
         );
 
         contiene(
                 contexto,
-                "restaura el titulo legacy del alta",
-                "String nroreclamo = \"Caso Nro 00000\";"
+                "contexto conserva recupero",
+                "public boolean isRecupero()"
         );
         contiene(
                 contexto,
-                "muestra el requerimiento en el campo inferior",
-                "String opAsignadaalReclamo = esBorradorCompras"
+                "contexto conserva surge",
+                "public boolean isSurge()"
         );
-        contiene(
+        String recuperable = extraerMetodo(
                 contexto,
-                "identifica el requerimiento de Compras",
-                "\"Requerimiento #\""
-        );
-        noContiene(
-                contexto,
-                "no mezcla el requerimiento con el titulo principal",
-                "\"Nuevo Reclamo Prestacional - Requerimiento #\""
-        );
-        contiene(
-                contexto,
-                "conserva el titulo del reclamo persistido",
-                "nroreclamo =\"Reclamo Nro : \""
-        );
-        contiene(
-                contexto,
-                "conserva la leyenda sin orden de pago",
-                "opAsignadaalReclamo=\"Sin Orden de Pago\""
+                "public int getRecuperableInicial("
         );
         antes(
-                cabecera,
-                "<%= nroreclamo %>",
-                "<%= opAsignadaalReclamo %>"
+                recuperable,
+                "if (surge)",
+                "if (recupero)"
         );
 
         contiene(
-                view,
-                "normaliza ADD antes de resolver el contexto",
-                "boolean handoffComprasModoValido"
+                guardar,
+                "save restaura recupero del contexto",
+                "contextoCompra.isRecupero()"
         );
         contiene(
-                view,
-                "exige nonce del handoff",
-                "Validator.isNotNull(nonceComprasModo)"
+                guardar,
+                "save restaura surge del contexto",
+                "reclamoPrestacional.setSuperintendencia("
         );
         contiene(
-                view,
-                "valida coincidencia del nonce",
-                "contextoComprasModo.coincideNonce(nonceComprasModo)"
+                guardar,
+                "save restaura tercerizadora del requerimiento",
+                "idTercerizadora = requerimiento.getIdTercerizadora();"
         );
-        contiene(
-                view,
-                "valida pertenencia al usuario",
-                "contextoComprasModo.perteneceAUsuario("
-        );
-        contiene(
-                view,
-                "valida vigencia del contexto",
-                "contextoComprasModo.estaVigente("
-        );
-        noContiene(
-                view,
-                "no depende del parametro generico origen",
-                "\"origen\""
+        String resolverContexto = extraerMetodo(
+                guardar,
+                "private ReclamoPrestacionalCompraContexto "
+                        + "resolverContextoCompra("
         );
         antes(
-                view,
-                "request.setAttribute(Constants.CMD, Constants.ADD);",
-                "view_reclamo_contexto.jspf"
-        );
-
-        contiene(
-                view,
-                "neutraliza solo el editor inicial de Compras",
-                "boolean neutralizarEdicionInicialCompras"
+                resolverContexto,
+                "Object contextoObj = session.getAttribute(",
+                "if (StringUtils.checkEmpty(nonceRequest))"
         );
         contiene(
-                view,
-                "exige modo de alta validado",
-                "esBorradorCompras"
+                resolverContexto,
+                "handoff sin nonce falla cerrado",
+                "if (contextoObj != null)"
         );
         contiene(
-                view,
-                "no pisa una edicion explicitamente tipada",
-                "request.getAttribute(\"tipoEdicion\") == null"
-        );
-        contiene(
-                view,
-                "elimina solo el estado de edicion de prestacion",
-                "removeAttribute(\n"
-                        + "            WebKeysAutorizaciones"
-                        + ".PRESTACION_EN_PROCESO_DE_EDICION"
+                resolverContexto,
+                "handoff sin nonce no degrada a alta generica",
+                "El contexto de Compras requiere un nonce valido."
         );
         antes(
-                view,
-                "neutralizarEdicionInicialCompras",
-                "Object tipoEdicionOriginalAntesDePrestaciones"
-        );
-
-        noContiene(
-                view,
-                "no conserva compensacion visual duplicada",
-                "function asegurarAltaInicialCompras()"
-        );
-        noContiene(
-                view,
-                "no conserva temporizador compensatorio",
-                "setTimeout(asegurarAltaInicialCompras"
-        );
-        contiene(
-                viewJs,
-                "muestra editor solo con contenido real",
-                "if (editorPrestacion.children().length) {"
-        );
-        noContiene(
-                viewJs,
-                "Compras no equivale a edicion",
-                "values.esBorradorCompras ||"
-        );
-        noContiene(
-                viewJs,
-                "no usa el origen Compras para mostrar editor",
-                "reclamoPrestacionalViewConfig.values"
-                        + ".esBorradorCompras ||"
-        );
-
-        antes(
-                view,
-                "view_reclamo_cabecera.jspf",
-                "view_reclamo_recuperable_neutro.jspf"
-        );
-        antes(
-                view,
-                "view_reclamo_recuperable_neutro.jspf",
-                "view_reclamo_prestaciones.jspf"
-        );
-        contiene(
-                view,
-                "conserva el parche de Compras",
-                "view_reclamo_compras_surge_patch.js"
+                guardar,
+                "reclamoPrestacional.setRecuperable(",
+                ".insertar(reclamoPrestacional, user)"
         );
 
         contiene(
-                surgePatch,
-                "propaga Recuperable SUR en solicitudes AJAX",
-                "copia.recuperableSur = parseInt(valorActual, 10);"
+                view,
+                "vista monolitica valida el contexto",
+                "boolean handoffReclamoComprasValido"
+        );
+        contiene(
+                view,
+                "vista exige origen Compras",
+                "\"compras\".equalsIgnoreCase(origenReclamoCompras)"
         );
         noContiene(
-                surgePatch,
-                "no elimina el contexto de Compras",
-                "CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA"
+                view,
+                "sin includes experimentales",
+                "view_reclamo.jspf"
+        );
+        noContiene(
+                view,
+                "sin fuente comprimida",
+                "__JSP_STATIC_NAMESPACE_"
         );
 
         System.out.println(
@@ -318,35 +203,61 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
         );
     }
 
-    private static String leer(String ruta) throws Exception {
-        Path path = Paths.get(ruta);
-        return new String(Files.readAllBytes(path), ISO_8859_1);
+    private static String leer(String path) throws Exception {
+        byte[] bytes = Files.readAllBytes(new File(path).toPath());
+        sinBom(path, bytes);
+        String contenido = new String(bytes, LATIN1);
+        noContiene(
+                contenido,
+                path + " sin mojibake C3",
+                String.valueOf((char) 0x00C3)
+        );
+        noContiene(
+                contenido,
+                path + " sin mojibake C2",
+                String.valueOf((char) 0x00C2)
+        );
+        noContiene(
+                contenido,
+                path + " sin reemplazo",
+                String.valueOf((char) 0xFFFD)
+        );
+        return contenido;
+    }
+
+    private static void sinBom(String path, byte[] bytes) {
+        boolean utf8 = bytes.length >= 3
+                && (bytes[0] & 0xFF) == 0xEF
+                && (bytes[1] & 0xFF) == 0xBB
+                && (bytes[2] & 0xFF) == 0xBF;
+        boolean utf16 = bytes.length >= 2
+                && (((bytes[0] & 0xFF) == 0xFF
+                && (bytes[1] & 0xFF) == 0xFE)
+                || ((bytes[0] & 0xFF) == 0xFE
+                && (bytes[1] & 0xFF) == 0xFF));
+        if (utf8 || utf16) {
+            throw new AssertionError(path + " contiene BOM");
+        }
     }
 
     private static String extraerMetodo(String contenido, String firma) {
         int inicio = contenido.indexOf(firma);
-        if (inicio < 0) {
+        int apertura = contenido.indexOf('{', inicio);
+        if (inicio < 0 || apertura < 0) {
             throw new AssertionError("No se encontro la firma: " + firma);
         }
-
-        int apertura = contenido.indexOf('{', inicio);
-        if (apertura < 0) {
-            throw new AssertionError("No se encontro apertura para: " + firma);
-        }
-
         int nivel = 0;
         for (int i = apertura; i < contenido.length(); i++) {
-            char c = contenido.charAt(i);
-            if (c == '{') {
+            char caracter = contenido.charAt(i);
+            if (caracter == '{') {
                 nivel++;
-            } else if (c == '}') {
+            } else if (caracter == '}') {
                 nivel--;
                 if (nivel == 0) {
                     return contenido.substring(inicio, i + 1);
                 }
             }
         }
-
         throw new AssertionError("Metodo sin cierre: " + firma);
     }
 
@@ -356,18 +267,10 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
             String segundo) {
 
         int posicionPrimero = contenido.indexOf(primero);
-        int posicionSegundo = contenido.indexOf(segundo);
-
-        if (posicionPrimero < 0
-                || posicionSegundo < 0
-                || posicionPrimero >= posicionSegundo) {
-
+        int posicionSegundo = contenido.indexOf(segundo, posicionPrimero + 1);
+        if (posicionPrimero < 0 || posicionSegundo <= posicionPrimero) {
             throw new AssertionError(
-                    "Orden invalido entre ["
-                            + primero
-                            + "] y ["
-                            + segundo
-                            + "]"
+                    "Orden invalido entre [" + primero + "] y [" + segundo + "]"
             );
         }
     }
@@ -394,5 +297,8 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
                     etiqueta + ": se encontro [" + prohibido + "]"
             );
         }
+    }
+
+    private ReclamoPrestacionalCompraPrecargaContractTest() {
     }
 }

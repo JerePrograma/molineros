@@ -34,7 +34,7 @@ public final class ComprasDatosBasicosLayoutContractTest {
         ocurrencias(
                 jsp,
                 "una sola tabla exterior compartida",
-                "compras-datos-basicos-requerimiento",
+                "<table class=\"lfr-table compras-resumen-requerimiento ",
                 1
         );
         noContiene(
@@ -109,14 +109,13 @@ public final class ComprasDatosBasicosLayoutContractTest {
         contiene(
                 jsp,
                 "Recupero conserva checkbox calculado al editar",
-                "<input type=\"checkbox\"\n"
-                        + "                                           id=\"<portlet:namespace />recupero\""
+                "class=\"compras-checkbox-recupero\""
         );
         contiene(
                 jsp,
                 "Recupero usa textbox en vista",
-                "value=\"<%= recuperoPorCargoTercerizadoraActual "
-                        + "? \"S&iacute;\" : \"No\" %>\""
+                "class=\"compras-control compras-control-recupero "
+                        + "compras-campo-solo-lectura\""
         );
 
         contiene(

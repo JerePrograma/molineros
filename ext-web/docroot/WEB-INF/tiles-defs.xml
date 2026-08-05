@@ -4618,16 +4618,6 @@
 		     value="/portlet/afiliados/error.jsp" />
 	</definition>
 
-	<definition
-			name="portlet.prestadores.historico_cotizacion_result"
-			extends="portlet.prestadores">
-
-		<put
-				name="portlet_content"
-				value="/portlet/prestadores/historico_cotizacion_result.jsp"
-		/>
-	</definition>
-	
 	<definition name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" extends="portlet.tesoreria">
 		<put name="portlet_content" value="/portlet/tesoreria/bancos/busqueda_saldo_diario_cuentas_bancarias.jsp" />
 	</definition>

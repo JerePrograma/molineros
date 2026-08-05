@@ -422,7 +422,7 @@ El sistema valida que:<br>
 
 
 <div id="helpMedEsp22" class="containerPlus draggable {buttons:'c', skin:'default', width:'700',title:'Ayuda',closed:'true'}" style="top: 100px; left: 250px">
-El formato de archivo medicación especial es:<br>
+El formato de archivo medicaci&oacuten especial es:<br> 
 Periodo,Fec Doc Cont , Nro Req , Nombre Tipo Proveedor , Proveedor , Cuil Afiliado , Nombre Afiliado , 
 <br> Desc Articulo , Cantidad , Moneda , Precio Unitario Sin Iva , Iva Unitario , Precio Unitario Con Iva ,  <br>
 Total Con Iva, Iva Total  , Total Sin Iva , Cuenta , Plan , Afiliado, Documento , Troquel

@@ -59,7 +59,7 @@
 						<%}%>
 					<%} %>
 			</select><a href="javascript:void(0)" onclick="help(event, 'helpEjercicio')"><img style="height: 16px; width: 16px" src="/html/images/help.png" title="Ayuda" alt="Ayuda"/></a>&nbsp;
-				N&uacute;mero:&nbsp;<input type="text" id="numero" name="numero" value="" size="10" /> <a href="javascript:void(0)" onclick="help(event, 'helpNumero')"><img style="height: 16px; width: 16px" src="/html/images/help.png" title="Ayuda" alt="Ayuda"/></a>&nbsp; DescripciÃ³n:&nbsp;
+				N&uacute;mero:&nbsp;<input type="text" id="numero" name="numero" value="" size="10" /> <a href="javascript:void(0)" onclick="help(event, 'helpNumero')"><img style="height: 16px; width: 16px" src="/html/images/help.png" title="Ayuda" alt="Ayuda"/></a>&nbsp; Descripci&oacute;n:&nbsp;
 				<input type="text" id="descripcion" name="descripcion" value="" size="50" /><a href="javascript:void(0)" onclick="help(event, 'helpDescripcion')"><img style="height: 16px; width: 16px" src="/html/images/help.png" title="Ayuda" alt="Ayuda"/></a> 
 			</td>
 		</tr>
@@ -138,37 +138,37 @@
 	searchContainer="<%= searchContainer %>" />
 
 <div id="helpNumero" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Nï¿½mero: Se completa sï¿½lo cuando se quiere efectuar una bï¿½squeda que filtre por el nï¿½mero de cuenta o parte del mismo. Tomarï¿½ sï¿½lo las cuentas del ejercicio que se indique. Luego de ingresar el texto, se deberï¿½ seleccionar el botï¿½n "Buscar" para visualizar el resultado en el  cuadro inferior de esta pantalla.
+Número: Se completa sólo cuando se quiere efectuar una búsqueda que filtre por el número de cuenta o parte del mismo. Tomará sólo las cuentas del ejercicio que se indique. Luego de ingresar el texto, se deberá seleccionar el botón "Buscar" para visualizar el resultado en el  cuadro inferior de esta pantalla.
 </div>
 <div id="helpDescripcion" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Descripciï¿½n: Se completa sï¿½lo cuando se quiere efectuar una bï¿½squeda que filtre por la descripciï¿½n, el texto ingresado. Tomarï¿½ sï¿½lo las cuentas del ejercicio que se indique. Se deberï¿½ seleccionar el botï¿½n "Buscar" para visualizar el resultado en el  cuadro inferior de esta pantalla.
+Descripción: Se completa sólo cuando se quiere efectuar una búsqueda que filtre por la descripción, el texto ingresado. Tomará sólo las cuentas del ejercicio que se indique. Se deberá seleccionar el botón "Buscar" para visualizar el resultado en el  cuadro inferior de esta pantalla.
 </div>
 <div id="helpEjercicio" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Ejercicio: Se indica el ejercicio por el cual se quiere efectuar la bï¿½squeda. Se deberï¿½ seleccionar el botï¿½n "Buscar" para visualizar el resultado en el cuadro inferior de esta pantalla.
+Ejercicio: Se indica el ejercicio por el cual se quiere efectuar la búsqueda. Se deberá seleccionar el botón "Buscar" para visualizar el resultado en el cuadro inferior de esta pantalla.
 </div>
 <div id="helpBuscar" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Buscar: De acuerdo a los parï¿½metros previos, seleccionando este botï¿½n, se ejecuta la bï¿½squeda de registros coincidentes. El resultado se visualiza en el cuadro inferior de esta pantalla.
+Buscar: De acuerdo a los parámetros previos, seleccionando este botón, se ejecuta la búsqueda de registros coincidentes. El resultado se visualiza en el cuadro inferior de esta pantalla.
 </div>
 <div id="helpAlta" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Alta Cuenta: Seleccionando este botï¿½n, se abrirï¿½ la pantalla de alta de una nueva cuenta contable.
+Alta Cuenta: Seleccionando este botón, se abrirá la pantalla de alta de una nueva cuenta contable.
 </div>
 <div id="helpEjercicio2" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Ejercicio: Es el ejercicio al cual pertenecen los registros del cuadro inferior de la pantalla. Es decir, de la ï¿½ltima bï¿½squeda efectuada.
+Ejercicio: Es el ejercicio al cual pertenecen los registros del cuadro inferior de la pantalla. Es decir, de la última búsqueda efectuada.
 </div>
 <div id="helpNumeroHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Nï¿½mero: Indica el nï¿½mero o cï¿½digo que se asignï¿½ a la cuenta contable.
+Número: Indica el número o código que se asignó a la cuenta contable.
 </div>
 <div id="helpCuentaHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Cuenta: Indica la descripciï¿½n de la cuenta contable.
+Cuenta: Indica la descripción de la cuenta contable.
 </div>
 <div id="helpImputableHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Imputable: Indica si la cuenta puede ser utilizada en asientos y equivalencias o se trata de un tï¿½tulo/subtï¿½tulo de un capï¿½tulo del plan de cuentas.
+Imputable: Indica si la cuenta puede ser utilizada en asientos y equivalencias o se trata de un título/subtítulo de un capítulo del plan de cuentas.
 </div>
 <div id="helpEditarHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Editar: Se selecciona en el caso que se desee efectuar cambios sobre algï¿½n dato de un registro. Se abrirï¿½ una nueva pantalla de actualizaciï¿½n.
+Editar: Se selecciona en el caso que se desee efectuar cambios sobre algún dato de un registro. Se abrirá una nueva pantalla de actualización.
 </div>
 <div id="helpEliminarHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Eliminar: Se selecciona en el caso que se desee un registro. No podrï¿½ borrarse un registro que fuera utilizado en alguna tabla o transacciï¿½n del sistema.
+Eliminar: Se selecciona en el caso que se desee un registro. No podrá borrarse un registro que fuera utilizado en alguna tabla o transacción del sistema.
 </div>
 
 <script type="text/javascript">

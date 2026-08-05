@@ -100,7 +100,7 @@ List<ClaseBase> emisoresTarjetas = TraeListasServiceUtil.getTarjetasDebitoCredit
 								</tr>
 								<tr>
 									<td><span id="<portlet:namespace />numeroSpan"> <liferay-ui:message
-												key="numero" />operación:
+												key="numero" />operaci&oacute;n:
 									</span></td>
 
 									<td><span id="<portlet:namespace />numeroSpan2"> 

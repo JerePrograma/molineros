@@ -71,7 +71,7 @@ if (showOspim && rolVEROP){
 	}
 	tabs1Values += "comprobantes";
 	if(showComprobantesGral){
-		tabs1Values += ",comprobantes-consulta-general";
+		tabs1Values += ",comprobantes-consulta-general,consulta_interbanking";
 	}
 	tabs1Values += ",ordenes-pago-ospim";	
 }else if(showOspim && showComprobantesGral){
@@ -83,7 +83,7 @@ if (showOspim && rolVEROP){
 	}else{
 		 tabs1Values += ",";
 	}
-	tabs1Values += "comprobantes-consulta-general";
+	tabs1Values += "comprobantes-consulta-general,consulta_interbanking";
 }
 
 /*
@@ -189,6 +189,10 @@ currentURL = PortalUtil.getCurrentURL(request);
 	<c:when test='<%= tabs1.equals("reportes") %>'>
 		<liferay-util:include page="/html/portlet/liquidaciones/reportes/reportes.jsp"/>	
 	</c:when>
+	<c:when test='<%= tabs1.equals("consulta_interbanking") %>'>	
+		<liferay-util:include page="/html/portlet/liquidaciones/comprobantes/comprobantes_consulta_interbanking.jsp"/>
+	</c:when>
+	
 
 </c:choose>
 

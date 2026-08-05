@@ -34,14 +34,6 @@
 
 	String cuil = ParamUtil.getString(request, "cuil", "");
 	String inte = ParamUtil.getString(request, "inte", "");
-
-	String namespaceActual = "";
-
-	if (renderResponse != null && renderResponse.getNamespace() != null) {
-		namespaceActual = renderResponse.getNamespace();
-	}
-
-	boolean esCompras = namespaceActual.indexOf("COMPRA") >= 0;
 %>
 
 <style type="text/css">
@@ -327,12 +319,6 @@
 				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
 				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true';
 		</c:if>
-
-		<c:if test="<%= esCompras %>">
-		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliados&cuil=' + cuil +
-				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
-				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true';
-		</c:if>
 		</c:if>
 
 		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_HOT_1_"))%>'>
@@ -380,12 +366,6 @@
 
 		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_HOT_1_"))%>'>
 		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/hoteles/buscar_afiliados&cuil=' + cuil +
-				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
-				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true';
-		</c:if>
-
-		<c:if test="<%= esCompras %>">
-		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliados&cuil=' + cuil +
 				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
 				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true';
 		</c:if>
@@ -437,12 +417,6 @@
 		<c:if test="<%= !Boolean.parseBoolean(pag_reintegro) %>">
 		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/buscar_afiliados&cuil=' + cuil +
 				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi + '&origen=<%=prefijo%>&popup=true&fecha_referencia=' + fecha_prestacion;
-
-		<c:if test="<%= esCompras %>">
-		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliados&cuil=' + cuil +
-				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
-				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true';
-		</c:if>
 		</c:if>
 
 		<c:if test="<%= Boolean.parseBoolean(pag_reintegro) %>">
@@ -471,12 +445,6 @@
 
 		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_HOT_1_"))%>'>
 		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/hoteles/buscar_afiliados&cuil=' + cuil +
-				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
-				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true' + ext;
-		</c:if>
-
-		<c:if test="<%= esCompras %>">
-		url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliados&cuil=' + cuil +
 				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
 				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true' + ext;
 		</c:if>
@@ -583,13 +551,7 @@
 		     url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
 		            '&struts_action=/tesoreria/buscar_afiliado_datos&cuil_titular=' + cuil +
 		            '&inte=' + inte;
-		</c:if>
-
-		<c:if test="<%= esCompras %>">
-		     url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-		            '&struts_action=/compras/buscar_afiliado_datos&cuil_titular=' + cuil +
-		            '&inte=' + inte;
-		</c:if>
+		</c:if>    
 		
 
 		jQuery.ajax({
@@ -666,9 +628,6 @@
 				var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/buscar_afiliado_fecha_vto_documentacion&cuil_titular=' + cuil + '&inte=' + inte;
 				<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_TES_1_"))%>'>
 				url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/tesoreria/buscar_afiliado_fecha_vto_documentacion&cuil_titular=' + cuil + '&inte=' + inte;
-				</c:if>
-				<c:if test="<%= esCompras %>">
-				url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/compras/buscar_afiliado_fecha_vto_documentacion&cuil_titular=' + cuil + '&inte=' + inte;
 				</c:if>
 				jQuery.ajax({
 					url: url,

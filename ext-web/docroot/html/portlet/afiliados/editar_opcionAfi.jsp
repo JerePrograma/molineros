@@ -388,11 +388,11 @@ if(detOpcionSS != null && detOpcionSS.getLocalidad() != null){
 								value="SI">SI</option>
 						</select>
 				</td>
-				<td><label>Apellido y Nombre Cónyuge:</label></td>
+				<td><label>Apellido y Nombre C&oacute;nyuge:</label></td>
 				<td><input id="<portlet:namespace />apeyNomConyuge" name="<portlet:namespace />apeyNomConyuge" size="30" type="text" maxlength="30"
 							value="<%=detOpcionSS!=null?detOpcionSS.getApeNomConyuge():"" %>" />
 				</td>			
-				<td><label>Cuil Cónyuge:</label></td>
+				<td><label>Cuil C&oacute;nyuge:</label></td>
 				<td><input id="<portlet:namespace />cuilConyuge" name="<portlet:namespace />cuilConyuge" 
 						   size="13" type="text" maxlength="11"
 						   onblur="javascript:<portlet:namespace />validaCuit(this);"

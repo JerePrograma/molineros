@@ -47,25 +47,41 @@ import com.liferay.portlet.documentlibrary.service.DLFolderServiceUtil;
 import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.global.beans.Comprobante;
 import ar.com.ospim.global.beans.Empresa;
+import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.servlets.PdfServlet;
 import sun.misc.BASE64Decoder;
 
 
 public class ClienteProveedoresLPA {
 
-	private static final String DEFAULT_USER = "OSPIM_API";
-	private static final String DEFAULT_PASS = "aRmcAIxyz";
+	private static final String CONFIG_HOST = "PROVEEDORES_LPA_HOST";
+	private static final String CONFIG_USER = "PROVEEDORES_LPA_USER";
+	private static final String CONFIG_PASSWORD = "PROVEEDORES_LPA_PASSWORD";
 	private static Log logger = LogFactoryUtil.getLog(ClienteProveedoresLPA.class);
 	private String error;
-	private static String auth = DEFAULT_USER + ":" + DEFAULT_PASS;
-	private static byte[] encodedAuth =Base64.getEncoder().encode( auth.getBytes(StandardCharsets.ISO_8859_1)) ;
-	private static String authHeader = "Basic " + new String(encodedAuth);		
-	
-	//Producción
-	private static String host="https://portalproveedores.ospim.org.ar/";
-	
-	//QA
-	//private static String host="https://portalproveedoresqa.digitrack.com.ar/";
+
+	private static String getRequiredSystemConfig(String key) {
+		String value = TraeListasServiceUtil.getSystemConfig(key);
+
+		if (value == null || value.trim().length() == 0) {
+			throw new IllegalStateException("Falta configuracion requerida: " + key);
+		}
+
+		return value;
+	}
+
+	private static String getHost() {
+		return getRequiredSystemConfig(CONFIG_HOST);
+	}
+
+	private static String getAuthHeader() {
+		String auth = getRequiredSystemConfig(CONFIG_USER) + ":"
+				+ getRequiredSystemConfig(CONFIG_PASSWORD);
+		byte[] encodedAuth = Base64.getEncoder().encode(
+				auth.getBytes(StandardCharsets.ISO_8859_1));
+
+		return "Basic " + new String(encodedAuth, StandardCharsets.ISO_8859_1);
+	}
 	
 	private static SimpleDateFormat sdf=new SimpleDateFormat("yyyyMMdd");
 	private static SimpleDateFormat sdf1=new SimpleDateFormat("yyyy-MM-dd");
@@ -136,9 +152,9 @@ public class ClienteProveedoresLPA {
 			
 			HttpClient httpclient = new HttpClient();
 			String responseBodyAsString;
-			String url =host+endPoint+p;
+			String url =getHost() +endPoint+p;
 			GetMethod httpGet = new GetMethod(url);
-			httpGet.addRequestHeader("Authorization", authHeader);
+			httpGet.addRequestHeader("Authorization", getAuthHeader());
 			httpGet.addRequestHeader("accept", "application/json");
 			httpGet.addRequestHeader("content-type", "application/json");
 			httpGet.addRequestHeader("User-Agent","telnet");
@@ -204,9 +220,9 @@ public class ClienteProveedoresLPA {
 		String params= HttpUtil.encodeURL(status,true) +"/range/"+sdf.format(fechaIni)+"/"+sdf.format(fechaFin);
 		HttpClient httpclient = new HttpClient();
 		String responseBodyAsString;
-		GetMethod httpGet = new GetMethod( host+endPoint+params);
+		GetMethod httpGet = new GetMethod( getHost() +endPoint+params);
 		
-		httpGet.addRequestHeader("Authorization", authHeader);
+		httpGet.addRequestHeader("Authorization", getAuthHeader());
 		httpGet.addRequestHeader("accept", "application/json");
 		httpGet.addRequestHeader("content-type", "application/json");
 		httpGet.addRequestHeader("User-Agent","telnet");
@@ -354,9 +370,9 @@ public class ClienteProveedoresLPA {
 		
 		HttpClient httpclient = new HttpClient();
 		String responseBodyAsString;
-		GetMethod httpGet = new GetMethod(host+endPoint+params);
+		GetMethod httpGet = new GetMethod(getHost() +endPoint+params);
 		
-		httpGet.addRequestHeader("Authorization", authHeader);
+		httpGet.addRequestHeader("Authorization", getAuthHeader());
 		httpGet.addRequestHeader("accept", "application/json");
 		httpGet.addRequestHeader("content-type", "application/json");
 		httpGet.addRequestHeader("User-Agent","telnet");
@@ -403,12 +419,11 @@ public class ClienteProveedoresLPA {
 		HttpClient httpclient = new HttpClient();
 		String responseBodyAsString;
 		//Produccion
-		PostMethod httpPost = new PostMethod(host+endPoint);
+		PostMethod httpPost = new PostMethod(getHost() +endPoint);
 		
 		//QA
-//		PostMethod httpPost = new PostMethod("https://portalproveedoresqa.digitrack.com.ar/api/v1/comprobante/UploadOP");
 		
-		httpPost.addRequestHeader("Authorization", authHeader);
+		httpPost.addRequestHeader("Authorization", getAuthHeader());
 		httpPost.addRequestHeader("accept", "application/json");
 		httpPost.addRequestHeader("content-type", "application/json");
 		httpPost.addRequestHeader("User-Agent","telnet");
@@ -458,12 +473,11 @@ public static String setOrdenPagoWithPDF(Integer id,Integer idOP,Calendar fechaO
 		HttpClient httpclient = new HttpClient();
 		String responseBodyAsString;
 		//Produccion
-		PostMethod httpPost = new PostMethod(host+endPoint);
+		PostMethod httpPost = new PostMethod(getHost() +endPoint);
 		
 		//QA
-		//PostMethod httpPost = new PostMethod("https://portalproveedoresqa.digitrack.com.ar/api/v1/comprobante/UploadOPWithFile");
 		
-		httpPost.addRequestHeader("Authorization", authHeader);
+		httpPost.addRequestHeader("Authorization", getAuthHeader());
 		httpPost.addRequestHeader("accept", "application/json");
 		httpPost.addRequestHeader("content-type", "multipart/form-data");
 		httpPost.addRequestHeader("User-Agent","telnet");
@@ -569,9 +583,9 @@ public static String setOrdenPagoWithPDF(Integer id,Integer idOP,Calendar fechaO
 		
 		HttpClient httpclient = new HttpClient();
 		String responseBodyAsString;
-		String url =host+endPoint+p;
+		String url =getHost() +endPoint+p;
 		GetMethod httpGet = new GetMethod(url);
-		httpGet.addRequestHeader("Authorization", authHeader);
+		httpGet.addRequestHeader("Authorization", getAuthHeader());
 		httpGet.addRequestHeader("accept", "application/json");
 		httpGet.addRequestHeader("content-type", "application/json");
 		httpGet.addRequestHeader("User-Agent","telnet");
@@ -632,40 +646,6 @@ public static String setOrdenPagoWithPDF(Integer id,Integer idOP,Calendar fechaO
 
 
     
-   /*
-    public static void main(String[] args) throws Exception {
-		Calendar c1 = Calendar.getInstance();
-        c1.set(2023, Calendar.AUGUST, 2);
-        c1.set(Calendar.HOUR_OF_DAY, 15);
-        c1.set(Calendar.MINUTE, 30);
-        c1.set(Calendar.SECOND, 24);
-		//Date fechaIni=  c1.getTime();
-		//Date fechaFin= new Date(); //c1.getTime();
-		
-		//List<Comprobante>cc=getComprobantesByEstado("Verificado",fechaIni,fechaFin);
-		
-		// Id real PROD 320889  3075829963 FCP B 5406
-        //String rta=setOrdenPago(3451, 176132, c1);
-		
-		//String rta=setOrdenPago(3423, 777, c1);
-		//String rta=setOrdenPago(3453, 176132, c1);
-		
-		
-		//Calendar c2 = Calendar.getInstance();
-        //c2.set(2022, Calendar.NOVEMBER, 3);
-        //fechaFin=c2.getTime();
-		
-		//List <Empresa> cs = getUsuariosRegistrados();
-		//for(Comprobante c:cs) {
-		//	System.out.println(c.getPtoVenta()+ " - " +  c.getNroComprobante());
-		//}
-		
-        //String rta=setOrdenPago(9000, 176178, c1);
-        String rta=setOrdenPago(3451, 176132, c1);
-        
-		System.out.println("RTA: " + rta);
-		System.out.println("Salio");
-	}
-  */
+
   
 }

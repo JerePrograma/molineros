@@ -1,143 +1,68 @@
-# ------------------------------------------------------------
-# OSPIM / Liferay EXT (Ant)
-# Ignorar basura local/generada + exclusiones completas pedidas.
-# ------------------------------------------------------------
-
-# --- Sistema operativo ---
+# IDE and local metadata
+/.classpath
+/.project
+/.settings/
+/.vscode/
+/.svn/
 .DS_Store
 Thumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-.Spotlight-V100/
-.Trashes/
 
-# --- Temporales de editores ---
+# Generated build and runtime outputs
+/output/
+/ext-web/tmp/
+/ext-impl/classes/
+/ext-service/classes/
+/ext-impl/ext-impl.jar
+/ext-service/ext-service.jar
+/ROOT.war
+/sql-scripts/ROOT.war
+/lib/versions.xml
+/ext-impl/src/ar/com/ospim/test/*.pdf
+*.class
+*.log
+
+# Personal environment files
+/app.server.Jerem.properties
+/app.server.daniel.properties
+/app.server.fbrachi.properties
+/app.server.pablo.properties
+/app.server.programador2.properties
+/app.server.restorebackup.properties
+/app.server.sergio.properties
+/build.fbrachi.properties
+/build.sergio.properties
+
+# Local credentials and sensitive runtime configuration
+/conf/data_store/StoredCredential
+*.ppk
+/ext-impl/src/portal-ext.properties
+/ext-web/docroot/WEB-INF/classes/c3p0-config.xml
+/ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client.properties
+/ext-impl/src/ar/com/uoma/facturacion/afip_ws/wsaa_client_inicial.properties
+/classes/subida_ftp_padron_igs.properties
+/classes/subida_ftp_padron_pf.properties
+/classes/subida_imagenes_afiliaciones.properties
+/sql-scripts/funciones/novedades/buscar_novedades_empleadores_altas.sql
+/sql-scripts/funciones/novedades/buscar_novedades_empleadores_cambio_plan.sql
+/sql-scripts/tablas/reportes_automaticos_configuracion.sql
+/sql-scripts/tablas/reportes_automaticos.sql
+/sql/sql.properties
+/sql/lportal.properties
+/sql/lportal.script
+/sql/portal-data-sample.vm
+/.env
+/.env.local
+
+# Conflict copies, editor temporaries and focused backups
 *~
 *.swp
 *.swo
 *.tmp
-
-# --- IDEs / editores ---
-# NO ignorar .idea completa: puede tener configuraci�n �til del proyecto.
-# Se ignoran solo archivos vol�tiles/locales.
-.vscode/
-.recommenders/
-
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/shelf/
-.idea/httpRequests/
-.idea/dataSources/
-.idea/dataSources.local.xml
-.idea/sonarlint/
-.idea/caches/
-
-# Eclipse / STS: normalmente local, no del proyecto.
-.classpath
-.project
-.settings/
-
-# NetBeans
-nbproject/private/
-
-# SVN legacy
-.svn/
-
-# --- Build local / salidas generadas ---
-out/
-target/
-build/
-output/
-**/output/
-
-**/tmp/
-**/work/
-**/logs/
-
-# --- Reportes y volcados de runtime ---
-*.log
-hs_err_pid*
-replay_pid*
-
-# --- Cobertura / an�lisis ---
-coverage/
-.coverage
-
-# --- Tooling local opcional ---
-.gradle/
-node_modules/
-
-# --- Java / build artifacts generados ---
-*.class
-*.ser
-
-# No ignorar *.jar globalmente:
-# en este proyecto legacy puede haber JARs necesarios en lib/, ext-lib/, etc.
-
-# No ignorar *.war globalmente:
-# ROOT.war queda trackeable si decid�s versionarlo.
-
-# Artefactos puntuales generados por Liferay EXT
-/ext-impl/ext-impl.jar
-/ext-service/ext-service.jar
-
-# --- Backups locales generados por scripts ---
-_backup_*/
+*.mine
+*.orig
+*.rej
+*.r[0-9]*
 *.bak
 *.bak-*
 *.backup
 *.backup-*
-
-# --- Archivos de entorno sensibles gen�ricos ---
-# OJO: no se ignora app.server.* porque en este repo quer�s trackear deploy local expl�cito.
-.env
-.env.*
-*.local
-
-# --- Reportes locales de auditor�a ---
-tracked-build-properties-audit.txt
-
-# ------------------------------------------------------------
-# Exclusiones completas pedidas
-# ------------------------------------------------------------
-
-# Runtime / bundles locales
-/bundles/
-
-# Scripts SQL completos
-/sql-scripts/
-
-# ------------------------------------------------------------
-# Exclusiones completas adicionales
-# ------------------------------------------------------------
-
-# SQL legacy/base completo
-/sql/
-!/sql/
-/sql/*
-!/sql/compras/
-/sql/compras/*
-!/sql/compras/20260619_correcciones_reunion_compras.sql
-!/sql/compras/20260619_correcciones_reunion_compras_smoke.sql
-!/sql/compras/20260624_surge_requerimiento_compra.sql
-!/sql/compras/20260624_surge_requerimiento_compra_smoke.sql
-
-# Tests locales / pruebas legacy
-/test/
-
-# Archivos puntuales/versiones generadas o locales
-/lib/versions.xml
-
-# PDFs de prueba dentro de src
-/ext-impl/src/ar/com/ospim/test/*.pdf
-
-.editorconfig
-
-ext-impl/src/ar/com/ospim/autorizaciones/action/BorrarPatologiaSituacionMedicaAction
-ext-impl/src/ar/com/ospim/autorizaciones/action/BorrarPatologiaSituacionMedicaAction.java
-ext-impl/src/ar/com/ospim/autorizaciones/action/BorrarPAtologiaSituacionMedicaAction.java
-
-ext-impl/classes/
-# Build artifacts
-*.war
-ROOT.war

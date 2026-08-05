@@ -1,11 +1,9 @@
 package ar.com.global.services;
 
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.axis.AxisFault;
 import org.jfree.util.Log;
 
 import ar.com.global.beans.Boletin;
@@ -15,6 +13,7 @@ import ar.com.global.webservices.agnitas_webservice.EmmWebService_PortProxy;
 import ar.com.global.webservices.agnitas_webservice.EmmWebService_PortService;
 import ar.com.global.webservices.agnitas_webservice.EmmWebService_PortServiceLocator;
 import ar.com.global.webservices.agnitas_webservice.StringArrayType;
+import ar.com.ospim.global.services.TraeListasServiceUtil;
 
 public class OpenemmClient {
 
@@ -28,13 +27,25 @@ public class OpenemmClient {
 	private static final String BINDING_TYPE_TEST = "T";
 	private static final String BINDING_REMARK = "Lista generada desde Liferay";
 	private static final String DOUBLE_CHECK_FIELD = "email";
-	private static final String WS_USER = "portalmolineros";
-	private static final String WS_PASS = "portalmolineros";
+	private static final String CONFIG_WS_USER = "OPENEMM_WS_USER";
+	private static final String CONFIG_WS_PASSWORD = "OPENEMM_WS_PASSWORD";
+	private static final String WS_USER = getRequiredSystemConfig(CONFIG_WS_USER);
+	private static final String WS_PASS = getRequiredSystemConfig(CONFIG_WS_PASSWORD);
 	private static final boolean OVERWRITE = true;
 	private static final boolean DOUBLE_CHECK = true;
 	public static final int MOROSIDAD_TEMPLATE_TEXTO = 60;
 	public static final int DDHH_TEMPLATE = 35;
 	public static final int DDHH_TEMPLATE_TEXTO = 40;
+
+	private static String getRequiredSystemConfig(String key) {
+		String value = TraeListasServiceUtil.getSystemConfig(key);
+
+		if (value == null || value.trim().length() == 0) {
+			throw new IllegalStateException("Falta configuracion requerida: " + key);
+		}
+
+		return value;
+	}
 
 	public static List<Destinatario> insertSubscriberList(
 			List<Destinatario> destinatarios, int id_lista) throws Exception {
@@ -257,108 +268,5 @@ public class OpenemmClient {
 		return sendMail;
 	}
 
-	public static void main(String[] args) {
-		try {
-			EmmWebService_PortProxy emm = new EmmWebService_PortProxy();
-
-			StringArrayType addSParameters = new StringArrayType(6);
-			addSParameters.setX(0, new String("email"));
-			addSParameters.setX(1, new String("mailtype"));
-			addSParameters.setX(2, new String("gender"));
-			addSParameters.setX(3, new String("firstname"));
-			addSParameters.setX(4, new String("lastname"));
-			addSParameters.setX(5, new String("title"));
-
-			StringArrayType addSValues = new StringArrayType(6);
-			addSValues.setX(0, new String("fbrachi@ospim.org.ar"));
-			addSValues.setX(1, new String("1"));
-			addSValues.setX(2, new String("1"));
-			addSValues.setX(3, new String("EMPRESA PRUEBA"));
-			addSValues.setX(4, new String("Doe"));
-			addSValues.setX(5, new String("Mr."));
-
-			int idResult = emm.addSubscriber("portalmolineros",
-					"portalmolineros", true, "email", false, addSParameters,
-					addSValues);
-			System.out.println("RESULT: " + idResult);
-
-			int binding = emm.setSubscriberBinding("portalmolineros",
-					"portalmolineros", idResult, 9, 0, 1, "A",
-					"prueba WebService", 0);
-
-			int content = emm.insertContent("portalmolineros",
-					"portalmolineros", 9, "Description", "EMPRESA PRUEBA!", 0,
-					0);
-			/*
-			 * int content2=emm.insertContent("portalmolineros",
-			 * "portalmolineros", 6, "ResumenHeader",
-			 * "Este es el boletín de la organización.", 0, 0); int
-			 * content3=emm.insertContent("portalmolineros", "portalmolineros",
-			 * 6, "Title", "DD.HH. CGT", 0, 0); int
-			 * content4=emm.insertContent("portalmolineros", "portalmolineros",
-			 * 6, "TituloLista1", "SECCIONES:", 0, 0); int
-			 * content5=emm.insertContent("portalmolineros", "portalmolineros",
-			 * 6, "Lista1Item1", "Cárceles", 0, 0); int
-			 * content6=emm.insertContent("portalmolineros", "portalmolineros",
-			 * 6, "Lista1Item2", "Mujer", 0, 0); int
-			 * content7=emm.insertContent("portalmolineros", "portalmolineros",
-			 * 6, "Lista1Item3", "Minorías", 0, 0); int
-			 * content8=emm.insertContent("portalmolineros", "portalmolineros",
-			 * 6, "Lista1Item4", "Legales", 0, 0); int
-			 * content9=emm.insertContent("portalmolineros", "portalmolineros",
-			 * 6, "Lista1Item5", "Minoridad", 0, 0); int
-			 * content10=emm.insertContent("portalmolineros", "portalmolineros",
-			 * 6, "TituloArticuloPrincipal", "NUEVO PRIMER BOLETÍN DE LA ORG.",
-			 * 0, 0); StringBuffer sb= new
-			 * StringBuffer("Este es el NUEVO texto del artículo principal");
-			 * int content11=emm.insertContent("portalmolineros",
-			 * "portalmolineros", 6, "TextoArticuloPrincipal", sb.toString(), 0,
-			 * 0); int content12=emm.insertContent("portalmolineros",
-			 * "portalmolineros", 6, "TituloArticuloSecundario",
-			 * "ARTICULO SECUNDARIO", 0, 0); StringBuffer sb2= new StringBuffer(
-			 * "Este es el NUeVO texto del artículo secundario. Puede ser cualquier cosa que se considere secundaria \n\r"
-			 * ); int content13=emm.insertContent("portalmolineros",
-			 * "portalmolineros", 6, "TextoArticuloSecundario", sb2.toString(),
-			 * 0, 0); int content16=emm.insertContent("portalmolineros",
-			 * "portalmolineros", 6,
-			 * "TituloNotaInferior1","Título de nota Inferior", 0, 0);
-			 * StringBuffer sb4= new StringBuffer(
-			 * "Este es el NUEVO texto de la nota inferior. Puede ser cualquier cosa que se considere posicionar aquí\n\r"
-			 * ); sb4.append(
-			 * "Puede tener muchas líneas y etc. Y porque no, más lineas. Y más, y más, y más, y más y más.\n\r"
-			 * ); sb4.append(
-			 * "Puede tener muchas líneas y etc. Y porque no, más lineas. Y más, y más, y más, y más y más.\n\r"
-			 * ); int content17=emm.insertContent("portalmolineros",
-			 * "portalmolineros", 6, "TextoNotaInferior1",sb4.toString(), 0, 0);
-			 * int content18=emm.insertContent("portalmolineros",
-			 * "portalmolineros", 6, "Organizacion","Sec. DD.HH. CGT", 0, 0);
-			 * int content19=emm.insertContent("portalmolineros",
-			 * "portalmolineros", 6,
-			 * "WebOrganizacion","secretariadeddhhcgt.blogspot.com", 0, 0); int
-			 * content20=emm.insertContent("portalmolineros", "portalmolineros",
-			 * 6, "NroBoletin","1", 0, 0);
-			 */
-
-			String prueba = emm.getSubscriberBinding("portalmolineros",
-					"portalmolineros", idResult, 9, 0);
-			int sendMail = emm.sendMailing("portalmolineros",
-					"portalmolineros", 9, "A",
-					(int) (System.currentTimeMillis() / 100L), 0, 0);
-			// int result=emm.addMailinglist("openemm", "openemm",
-			// "NUEVA LISTA", "Nueva Lista Main");
-			// System.out.println("Binding: " + binding);
-			// System.out.println("Mailing: " + result);
-			System.out.println("Send Mail: " + sendMail);
-			// System.out.println("ID recipient: " + sendMail);
-
-		} catch (AxisFault e) {
-			e.printStackTrace();
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	} // end main
 
 }

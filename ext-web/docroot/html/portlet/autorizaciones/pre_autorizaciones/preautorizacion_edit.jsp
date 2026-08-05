@@ -114,7 +114,7 @@
 		
 
 	<fieldset class="block-labels"> 
-		<legend>Preautorización</legend>
+		<legend>Preautorizaci&oacute;n</legend>
 		
 		<table class="lfr-table">
 		   <tr>
@@ -589,7 +589,7 @@
 	          <td style="color:#0000ff">
 	            <div id="<portlet:namespace />divchAN" <%if(!preautorizacion.isAnatomiaPatologica() && !preautorizacion.getExisteAnatomiaPatologica() ){%> hidden="hidden"<%}%> >
 	             <input type="checkbox" id="<portlet:namespace />chAN" name="<portlet:namespace />chAN"
-	             <%if(preautorizacion.isAnatomiaPatologica() ){%> checked="checked" <% } %>><font size=3> Anatom&iacute;a Patológica</font>
+	             <%if(preautorizacion.isAnatomiaPatologica() ){%> checked="checked" <% } %>><font size=3> Anatom&iacute;a Patol&oacute;gica</font>
 	            </div> 
 	           </td>
 	           <td colspan="1">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
@@ -606,7 +606,7 @@
 	<tr><td>
 	<div id="<portlet:namespace />divGestionOspim" <%if(!rolGestionOspim ||  !(preautorizacion.isSupra() || preautorizacion.isMedicamento())|| preautorizacion.getFechaEmail()==null || !"GO".equalsIgnoreCase(preautorizacion.getUltimoEstado().getId())){%> hidden='hidden' style="visibility: hidden; height:0px;" <%}%>>
 	  <fieldset class="block-labels" > 
-		<legend>Gestión OSPIM</legend>
+		<legend>Gesti&oacute;n OSPIM</legend>
 		
 		<table class="lfr-table">
 		   <tr>
@@ -641,7 +641,7 @@
 				   </select>
 			  </td>
 			  
-			  <td>Tipo Gestión</td>
+			  <td>Tipo Gesti&oacute;n</td>
 			  <td><select name="<portlet:namespace />gestionOSPIM"
 					  id="<portlet:namespace />gestionOSPIM" >
 						<%for(int i = 0; i < WebKeysAutorizaciones.PREAUTORIZACIONES_GESTION_OSPIM_TIPOS_GESTION.length; i++ ) {%>
@@ -717,11 +717,11 @@
 	<div id="<portlet:namespace />divDocumentacionTercerizadora">
 	  <br>
 	  <fieldset class="block-labels"> 
-		  <legend>Env&iacute;o de documentación a OSPIM central</legend>
+		  <legend>Env&iacute;o de documentaci&oacute;n a OSPIM central</legend>
 		    <table class="lfr-table">
 		      <tr>
 		         <td>
-			       <label>Env&iacute;o de Documentación Original:</label>
+			       <label>Env&iacute;o de Documentaci&oacute;n Original:</label>
 			     </td>
 			     <td>  
 			       <liferay-ui:input-date
@@ -740,7 +740,7 @@
 			     </td>
 			     
 			     <td>
-			       <label>Recepción de Documentación:</label>
+			       <label>Recepci&oacute;n de Documentaci&oacute;n:</label>
 			     </td>
 			     <td>  
 			       <liferay-ui:input-date
@@ -764,7 +764,7 @@
 	<br>
 	<div id="<portlet:namespace />divPrevencion">
 	  <fieldset class="block-labels"> 
-		<legend>Respuesta de autorización</legend>
+		<legend>Respuesta de autorizaci&oacute;n</legend>
 		
 		<table class="lfr-table" style="border-collapse: separate; border-spacing: 5px;">
 		   <tr>
@@ -980,7 +980,7 @@
 	   <table>
 	      <tr>
 	       <td>
-<!-- Se comenta la condición subyacente para que aparezca el botï¿½n Enviar Mail para los estados CARGADO,OBSERVADO,GESTION OSPIM -- DS 27/02/2020  -->	       
+<!-- Se comenta la condición subyacente para que aparezca el botón Enviar Mail para los estados CARGADO,OBSERVADO,GESTION OSPIM -- DS 27/02/2020  -->	       
 	            <%/*if (preautorizacion != null && preautorizacion.getId() != null 
 	            	      && preautorizacion.getFechaEmail() == null){*/%>
 	          
@@ -1541,7 +1541,7 @@ function <portlet:namespace />limpiarNomencladorAutocompletar(){
 }
 
 <c:if test='<%="N".equalsIgnoreCase((String)request.getSession().getAttribute("esPopUp"))%>'>
-//	window.onbeforeunload = function(){return "Esta seguro de abandonar la pï¿½gina?";};
+//	window.onbeforeunload = function(){return "Esta seguro de abandonar la página?";};
 </c:if>
 
 function <portlet:namespace />configuraCarga(){
@@ -2331,7 +2331,7 @@ function editarPreautorizacionMedicamento(idMod,idModAux,idMedicamento,descripci
 
 function <portlet:namespace />reintentarCaso() {
     
-    var respuesta=confirm ('Está seguro que desea generar una nueva preautorizaciï¿½n copiando los datos de ï¿½sta misma '+'\nDesea continuar?');
+    var respuesta=confirm ('Está seguro que desea generar una nueva preautorización copiando los datos de ésta misma '+'\nDesea continuar?');
 		   
 	if (respuesta) {
 		

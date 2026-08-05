@@ -28,6 +28,17 @@
 
 	String cuil = ParamUtil.getString(request, "cuil", "");
 	String inte = ParamUtil.getString(request, "inte", "");
+	
+	
+	String portlet_name = "liquidaciones";
+	if(renderResponse.getNamespace().equals("_COR_1_")){
+		portlet_name = "correspondencia";
+	} else if(renderResponse.getNamespace().equals("_COM_1_")){
+			portlet_name = "comprobantes";
+	} else{
+		portlet_name = "liquidaciones";
+	}
+
 
 %>
 
@@ -331,7 +342,7 @@
          <c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_COM_1_"))%>'>
 	        url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/comprobantes/buscar_afiliados&cuil='+cuil+
 			'&inte='+inte+'&tipoDoc='+tipoDoc+'&nroDoc='+nroDoc+'&seccional='+seccional+'&nombre='+encodeURI(nombre)+'&apellido='+encodeURI(apellido)+'&entidad='+entidad+'&numero_afi='+numero_afi+
-			'&fecha_referencia='+fecha_prestacion+'&popup=true';
+			'&fecha_referencia='+fecha_prestacion+'&popup=true'+'&reintegro_reclamo='+reintegro_reclamo;
 	    </c:if>
 
         </c:if>
@@ -374,7 +385,7 @@
             <c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_COM_1_"))%>'>
                 url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/comprobantes/buscar_afiliados&cuil='+cuil+
 		       '&inte='+inte+'&tipoDoc='+tipoDoc+'&nroDoc='+nroDoc+'&seccional='+seccional+'&nombre='+encodeURI(nombre)+'&apellido='+encodeURI(apellido)+'&entidad='+entidad+'&numero_afi='+numero_afi+
-		       '&fecha_referencia='+fecha_prestacion+'&origen=<%=prefijo%>&popup=true';
+		       '&fecha_referencia='+fecha_prestacion+'&reintegro_reclamo='+reintegro_reclamo+'&origen=<%=prefijo%>&popup=true';
             </c:if>
 
         </c:if>
@@ -397,6 +408,7 @@
 		var numero_afi=jQuery('#<portlet:namespace />numero_afi<%=prefijo%>').val();
 		var nroCredencialPrevencion=jQuery('#<portlet:namespace />nroCredencialPrevencion<%=prefijo%>').val();
 		var nroSocioPrevencion=jQuery('#<portlet:namespace />nroSocioPrevencion<%=prefijo%>').val();
+		
 		if(!<portlet:namespace />validarBusqueda<%=prefijo%>(cuil,inte,tipoDoc,nroDoc,seccional,apellido,nombre,entidad,numero_afi)){
 			return false;
 		}
@@ -568,8 +580,10 @@
 				jQuery('#<portlet:namespace />div_tratamientos_discapacidad').show();
 				jQuery('#<portlet:namespace />discapacidad').show();
 				jQuery('#<portlet:namespace />discapacidad_vto').show();
-				var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/buscar_afiliado_fecha_vto_documentacion&cuil_titular='+cuil+'&inte='+inte;
-
+//				var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/buscar_afiliado_fecha_vto_documentacion&cuil_titular='+cuil+'&inte='+inte;
+				
+				var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/<%=portlet_name%>/buscar_afiliado_fecha_vto_documentacion&cuil_titular='+cuil+'&inte='+inte;
+				
 				jQuery.ajax({
 					url: url,
 					success: function(data){

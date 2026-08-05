@@ -453,226 +453,89 @@ public class Prestador implements Serializable {
 		
 		return prestador;
 	}
-
-	public static Prestador getMapping(
-			ResultSet rs,
-			String prefix
-	) throws SQLException {
-
+	
+	public static Prestador getMapping(ResultSet rs, String prefix)
+			throws SQLException {
 		Prestador prestador = new Prestador();
-
-		prestador.setId_prestador(
-				rs.getInt(prefix + "id_prestador")
-		);
-
-		prestador.setCuit(
-				rs.getString(prefix + "cuit")
-		);
-
-		prestador.setId_tipo_prestador(
-				rs.getInt(prefix + "id_tipo_prestador")
-		);
-
-		TipoPrestador tp = new TipoPrestador(
-				rs.getInt(prefix + "id_tipo_prestador"),
-				rs.getString(
-						prefix + "descripcion_tipo_prestador"
-				)
-		);
-
+		  
+		prestador.setId_prestador(rs.getInt(prefix + "id_prestador"));
+		prestador.setCuit(rs.getString(prefix + "cuit"));
+		prestador.setId_tipo_prestador(rs.getInt(prefix + "id_tipo_prestador"));
+		TipoPrestador tp = new TipoPrestador(rs.getInt(prefix + "id_tipo_prestador"), rs.getString(prefix + "descripcion_tipo_prestador"));
 		prestador.setTipo(tp);
-
-		prestador.setContacto(
-				rs.getString(prefix + "contacto")
-		);
-
-		prestador.setObservaciones(
-				rs.getString(prefix + "observaciones")
-		);
-
-		prestador.setRein_liqui(
-				rs.getInt(prefix + "rein_liqui")
-		);
-
-		/*
-		 * Se usa getTimestamp para conservar fecha y hora.
-		 */
-		prestador.setAlta_fecha(
-				rs.getTimestamp(prefix + "alta_fecha")
-		);
-
-		prestador.setAlta_usr(
-				rs.getString(prefix + "alta_usr")
-		);
-
-		prestador.setModi_fecha(
-				rs.getTimestamp(prefix + "modi_fecha")
-		);
-
-		prestador.setModi_usr(
-				rs.getString(prefix + "modi_usr")
-		);
-
-		prestador.setBaja_fecha(
-				rs.getDate(prefix + "baja_fecha")
-		);
-
-		prestador.setBaja_usr(
-				rs.getString(prefix + "baja_usr")
-		);
-
-		prestador.setDescripcion(
-				rs.getString(prefix + "descripcion")
-		);
-
-		prestador.setCodigoHospital(
-				rs.getString(prefix + "codigo_htal")
-		);
-
-		prestador.setCertificacionProfesional(
-				rs.getBoolean(
-						prefix + "certificacion_profesional"
-				)
-		);
-
-		prestador.setFechaVtoCertificacion(
-				rs.getDate(prefix + "vto_certificacion")
-		);
-
-		prestador.setSeguroCobertura(
-				rs.getBoolean(prefix + "seguro_cobertura")
-		);
-
-		prestador.setCiaSeguro(
-				rs.getString(prefix + "cia_seguro")
-		);
-
-		prestador.setFechaVtoSeguro(
-				rs.getDate(
-						prefix + "vto_cobertura_seguro"
-				)
-		);
-
-		prestador.setOtorgaCertificacion(
-				rs.getString(prefix + "otorga_cert")
-		);
-
-		prestador.setEmpresaCaiCaeNumero(
-				rs.getString(
-						prefix + "cai_cae_numero_completo"
-				)
-		);
-
-		prestador.setSolicitarCotizacion(
-				rs.getBoolean(
-						prefix + "solicitar_cotizacion"
-				)
-		);
+		prestador.setContacto(rs.getString(prefix + "contacto"));
+//		prestador.setId_seccional(rs.getInt(prefix + "id_seccional"));
+		prestador.setObservaciones(rs.getString(prefix + "observaciones"));
+		prestador.setRein_liqui(rs.getInt(prefix + "rein_liqui"));
+		prestador.setAlta_fecha(rs.getDate(prefix + "alta_fecha"));
+		prestador.setAlta_usr(rs.getString(prefix + "alta_usr"));
+		prestador.setModi_fecha(rs.getDate(prefix + "modi_fecha"));
+		prestador.setModi_usr(rs.getString(prefix + "modi_usr"));
+		prestador.setBaja_fecha(rs.getDate(prefix + "baja_fecha"));
+		prestador.setBaja_usr(rs.getString(prefix + "baja_usr"));
+		prestador.setDescripcion(rs.getString(prefix + "descripcion"));
+		prestador.setCodigoHospital(rs.getString(prefix + "codigo_htal"));
+		prestador.setCertificacionProfesional(rs.getBoolean(prefix + "certificacion_profesional"));
+		prestador.setFechaVtoCertificacion(rs.getDate(prefix + "vto_certificacion"));
+		prestador.setSeguroCobertura(rs.getBoolean(prefix + "seguro_cobertura"));
+		prestador.setCiaSeguro(rs.getString(prefix + "cia_seguro"));
+		prestador.setFechaVtoSeguro(rs.getDate(prefix + "vto_cobertura_seguro"));
+		prestador.setOtorgaCertificacion(rs.getString(prefix + "otorga_cert"));
+		prestador.setSolicitarCotizacion(getBooleanIfPresent(
+				rs,
+				prefix + "solicitar_cotizacion"
+		));
+		prestador.setEmpresaCaiCaeNumero(rs.getString(prefix +"cai_cae_numero_completo"));
 
 		return prestador;
+		
+	}
+	
+	public static Prestador getMappingSimple(ResultSet rs, String prefix)
+			throws SQLException {
+		Prestador prestador = new Prestador();
+		  
+		prestador.setId_prestador(rs.getInt(prefix + "id_prestador"));
+		prestador.setCuit(rs.getString(prefix + "cuit"));
+		prestador.setId_tipo_prestador(rs.getInt(prefix + "id_tipo_prestador"));		
+//		TipoPrestador tp = new TipoPrestador(rs.getInt(prefix + "id_tipo_prestador"), rs.getString(prefix + "descripcion_tipo_prestador"));
+//		prestador.setTipo(tp);
+		prestador.setContacto(rs.getString(prefix + "contacto"));	
+//		prestador.setId_seccional(rs.getInt(prefix + "id_seccional"));			
+		prestador.setObservaciones(rs.getString(prefix + "observaciones"));
+		prestador.setRein_liqui(rs.getInt(prefix + "rein_liqui"));		
+		prestador.setAlta_fecha(rs.getDate(prefix + "alta_fecha"));
+		prestador.setAlta_usr(rs.getString(prefix + "alta_usr"));
+		prestador.setModi_fecha(rs.getDate(prefix + "modi_fecha"));
+		prestador.setModi_usr(rs.getString(prefix + "modi_usr"));
+		prestador.setBaja_fecha(rs.getDate(prefix + "baja_fecha"));
+		prestador.setBaja_usr(rs.getString(prefix + "baja_usr"));
+		prestador.setDescripcion(rs.getString(prefix + "descripcion"));
+		prestador.setCodigoHospital(rs.getString(prefix + "codigo_htal"));
+		prestador.setCertificacionProfesional(rs.getBoolean(prefix + "certificacion_profesional"));
+		prestador.setFechaVtoCertificacion(rs.getDate(prefix + "vto_certificacion"));
+		prestador.setSeguroCobertura(rs.getBoolean(prefix + "seguro_cobertura"));
+		prestador.setCiaSeguro(rs.getString(prefix + "cia_seguro"));
+		prestador.setFechaVtoSeguro(rs.getDate(prefix + "vto_cobertura_seguro"));
+		prestador.setOtorgaCertificacion(rs.getString(prefix + "otorga_cert"));
+		prestador.setSolicitarCotizacion(getBooleanIfPresent(
+				rs,
+				prefix + "solicitar_cotizacion"
+		));
+
+		return prestador;
+		
 	}
 
-	public static Prestador getMappingSimple(
+	private static boolean getBooleanIfPresent(
 			ResultSet rs,
-			String prefix
-	) throws SQLException {
+			String columnName) {
 
-		Prestador prestador = new Prestador();
-
-		prestador.setId_prestador(
-				rs.getInt(prefix + "id_prestador")
-		);
-
-		prestador.setCuit(
-				rs.getString(prefix + "cuit")
-		);
-
-		prestador.setId_tipo_prestador(
-				rs.getInt(prefix + "id_tipo_prestador")
-		);
-
-		prestador.setContacto(
-				rs.getString(prefix + "contacto")
-		);
-
-		prestador.setObservaciones(
-				rs.getString(prefix + "observaciones")
-		);
-
-		prestador.setRein_liqui(
-				rs.getInt(prefix + "rein_liqui")
-		);
-
-		/*
-		 * Se usa getTimestamp para conservar fecha y hora.
-		 */
-		prestador.setAlta_fecha(
-				rs.getTimestamp(prefix + "alta_fecha")
-		);
-
-		prestador.setAlta_usr(
-				rs.getString(prefix + "alta_usr")
-		);
-
-		prestador.setModi_fecha(
-				rs.getTimestamp(prefix + "modi_fecha")
-		);
-
-		prestador.setModi_usr(
-				rs.getString(prefix + "modi_usr")
-		);
-
-		prestador.setBaja_fecha(
-				rs.getDate(prefix + "baja_fecha")
-		);
-
-		prestador.setBaja_usr(
-				rs.getString(prefix + "baja_usr")
-		);
-
-		prestador.setDescripcion(
-				rs.getString(prefix + "descripcion")
-		);
-
-		prestador.setCodigoHospital(
-				rs.getString(prefix + "codigo_htal")
-		);
-
-		prestador.setCertificacionProfesional(
-				rs.getBoolean(
-						prefix + "certificacion_profesional"
-				)
-		);
-
-		prestador.setFechaVtoCertificacion(
-				rs.getDate(prefix + "vto_certificacion")
-		);
-
-		prestador.setSeguroCobertura(
-				rs.getBoolean(prefix + "seguro_cobertura")
-		);
-
-		prestador.setCiaSeguro(
-				rs.getString(prefix + "cia_seguro")
-		);
-
-		prestador.setFechaVtoSeguro(
-				rs.getDate(
-						prefix + "vto_cobertura_seguro"
-				)
-		);
-
-		prestador.setOtorgaCertificacion(
-				rs.getString(prefix + "otorga_cert")
-		);
-
-		prestador.setSolicitarCotizacion(
-				rs.getBoolean(
-						prefix + "solicitar_cotizacion"
-				)
-		);
-
-		return prestador;
+		try {
+			return rs.getBoolean(columnName);
+		} catch (SQLException e) {
+			return false;
+		}
 	}
 	
 	public List<ProfesionPrestador> getProfesiones() {
@@ -798,6 +661,8 @@ public class Prestador implements Serializable {
 	public void setSolicitarCotizacion(boolean solicitarCotizacion) {
 		this.solicitarCotizacion = solicitarCotizacion;
 	}
+	
+	
 }
 
 
