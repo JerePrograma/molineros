@@ -1174,78 +1174,144 @@ public class ReclamoPrestacionServiceImpl {
         ResultSet rs = null;
         String result = null;
 
+        final String mensajeDatosInvalidos =
+                "No se puede validar el comprobante porque sus datos están incompletos.";
+
+        final String mensajeErrorTecnico =
+                "No se pudo validar el comprobante. Intente nuevamente.";
+
         try {
             if (reclamo == null) {
-                _log.error("No se puede validar el comprobante: el reclamo es null");
-                return null;
+                _log.error(
+                        "No se puede validar el comprobante: el reclamo es null"
+                );
+                return mensajeDatosInvalidos;
+            }
+
+            if (StringUtils.checkEmpty(reclamo.getComprobanteTipo())) {
+                _log.error(
+                        "No se puede validar el comprobante: el tipo es null o vacío. " +
+                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
+                );
+                return mensajeDatosInvalidos;
+            }
+
+            if (StringUtils.checkEmpty(reclamo.getComprobanteNro())) {
+                _log.error(
+                        "No se puede validar el comprobante: el número es null o vacío. " +
+                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
+                );
+                return mensajeDatosInvalidos;
+            }
+
+            if (StringUtils.checkEmpty(reclamo.getComprobanteCUIT())) {
+                _log.error(
+                        "No se puede validar el comprobante: el CUIT es null o vacío. " +
+                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
+                );
+                return mensajeDatosInvalidos;
+            }
+
+            if (StringUtils.checkEmpty(reclamo.getComprobanteLetra())) {
+                _log.error(
+                        "No se puede validar el comprobante: la letra es null o vacía. " +
+                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
+                );
+                return mensajeDatosInvalidos;
+            }
+
+            if (StringUtils.checkEmpty(reclamo.getComprobanteSucursal())) {
+                _log.error(
+                        "No se puede validar el comprobante: la sucursal es null o vacía. " +
+                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
+                );
+                return mensajeDatosInvalidos;
             }
 
             if (reclamo.getFechaPrestacion() == null) {
                 _log.error(
-                        "No se puede validar el comprobante: la fecha de prestacion es null. " +
+                        "No se puede validar el comprobante: la fecha de prestación es null. " +
                                 "Id reclamo: " + reclamo.getIdprestacionReclamo()
                 );
-                return null;
-            }
-
-            Integer idPrestacion = reclamo.getId_prestacion();
-            Integer idMedicamento = reclamo.getId_medicamento();
-            Integer idRegistro = reclamo.getIdRegistro();
-            Integer inte = reclamo.getInte();
-
-            if (idPrestacion == null) {
-                _log.error(
-                        "No se puede validar el comprobante: el id de prestacion es null. " +
-                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
-                );
-                return null;
-            }
-
-            if (idRegistro == null) {
-                _log.error(
-                        "No se puede validar el comprobante: el id de registro es null. " +
-                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
-                );
-                return null;
-            }
-
-            if (inte == null) {
-                _log.error(
-                        "No se puede validar el comprobante: inte es null. " +
-                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
-                );
-                return null;
+                return mensajeDatosInvalidos;
             }
 
             String sql =
-                    "{call autorizaciones.validar_reclamos_prestacionales_prestaciones_compro" +
+                    "{call autorizaciones." +
+                            "validar_reclamos_prestacionales_prestaciones_compro" +
                             "(?,?,?,?,?,?,?,?,?,?,?)}";
 
             con = ConnectionHelper.getConnection();
+
+            if (con == null) {
+                throw new SQLException(
+                        "ConnectionHelper.getConnection() devolvió null"
+                );
+            }
+
             stmt = con.prepareCall(sql);
 
-            stmt.setString(1, reclamo.getComprobanteTipo());
-            stmt.setString(2, reclamo.getComprobanteNro());
-            stmt.setString(3, reclamo.getComprobanteCUIT());
-            stmt.setString(4, reclamo.getComprobanteLetra());
-            stmt.setString(5, reclamo.getComprobanteSucursal());
+            stmt.setString(
+                    1,
+                    reclamo.getComprobanteTipo()
+            );
+
+            stmt.setString(
+                    2,
+                    reclamo.getComprobanteNro()
+            );
+
+            stmt.setString(
+                    3,
+                    reclamo.getComprobanteCUIT()
+            );
+
+            stmt.setString(
+                    4,
+                    reclamo.getComprobanteLetra()
+            );
+
+            stmt.setString(
+                    5,
+                    reclamo.getComprobanteSucursal()
+            );
 
             stmt.setDate(
                     6,
-                    new java.sql.Date(reclamo.getFechaPrestacion().getTime())
+                    new java.sql.Date(
+                            reclamo.getFechaPrestacion().getTime()
+                    )
             );
 
-            stmt.setInt(7, idPrestacion.intValue());
+            /*
+             * Se conserva el contrato original del procedimiento almacenado.
+             * El valor 0 continúa representando que no existe prestación o
+             * medicamento seleccionado según el tipo de registro.
+             */
+            stmt.setInt(
+                    7,
+                    reclamo.getId_prestacion()
+            );
 
-            if (idMedicamento != null) {
-                stmt.setInt(8, idMedicamento.intValue());
-            } else {
-                stmt.setNull(8, java.sql.Types.INTEGER);
-            }
+            stmt.setInt(
+                    8,
+                    reclamo.getId_medicamento()
+            );
 
-            stmt.setInt(9, idRegistro.intValue());
-            stmt.setString(10, reclamo.getCuilTitular());
-            stmt.setInt(11, inte.intValue());
+            stmt.setInt(
+                    9,
+                    reclamo.getIdRegistro()
+            );
+
+            stmt.setString(
+                    10,
+                    reclamo.getCuilTitular()
+            );
+
+            stmt.setInt(
+                    11,
+                    reclamo.getInte()
+            );
 
             rs = stmt.executeQuery();
 
@@ -1255,35 +1321,44 @@ public class ReclamoPrestacionServiceImpl {
 
         } catch (SQLException e) {
             _log.error(
-                    "Error al validar la existencia del comprobante. Id reclamo: " +
-                            (reclamo != null ? reclamo.getIdprestacionReclamo() : "null"),
+                    "Error SQL al validar la existencia del comprobante. " +
+                            "Id reclamo: " +
+                            (reclamo != null
+                                    ? reclamo.getIdprestacionReclamo()
+                                    : "null"),
                     e
             );
-            result = null;
+
+            return mensajeErrorTecnico;
 
         } catch (RuntimeException e) {
-            /*
-             * Evita que una entrada invalida termine generando una pagina HTML
-             * de error que luego el JavaScript intenta interpretar como JSON.
-             */
             _log.error(
-                    "Datos invalidos al validar la existencia del comprobante. " +
+                    "Error inesperado al validar la existencia del comprobante. " +
                             "Id reclamo: " +
-                            (reclamo != null ? reclamo.getIdprestacionReclamo() : "null"),
+                            (reclamo != null
+                                    ? reclamo.getIdprestacionReclamo()
+                                    : "null"),
                     e
             );
-            result = null;
+
+            return mensajeErrorTecnico;
 
         } finally {
             if (rs != null) {
                 try {
                     rs.close();
                 } catch (SQLException e) {
-                    _log.warn("No se pudo cerrar el ResultSet", e);
+                    _log.warn(
+                            "No se pudo cerrar el ResultSet de validarExisteComprobante",
+                            e
+                    );
                 }
             }
 
-            ConnectionHelper.cerrar(stmt, con);
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
         }
 
         return result;
