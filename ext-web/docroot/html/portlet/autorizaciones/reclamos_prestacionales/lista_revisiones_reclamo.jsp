@@ -111,9 +111,7 @@ jQuery(
 
 function borrarRevision(idRevision) {
     var url =
-        '<portlet:renderURL windowState="'
-        + '<%= LiferayWindowState.EXCLUSIVE.toString() %>'
-        + '"/>'
+        '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>'
         + '&struts_action=/autorizaciones/'
         + 'borrar_reclamosrevisiones'
         + '&idRevision='
