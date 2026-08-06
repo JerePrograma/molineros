@@ -1,5 +1,6 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
@@ -176,7 +177,9 @@ public class IniciarReclamoPrestacionalCompraAction
                         );
 
                 prepararSesionParaConsulta(
-                        session
+                        session,
+                        idRequerimientoCompra,
+                        idReclamo
                 );
 
                 actionResponse.sendRedirect(
@@ -1168,5 +1171,34 @@ public class IniciarReclamoPrestacionalCompraAction
                 "[^0-9]",
                 ""
         );
+    }
+
+    private boolean hayEstadoEdicionEnSesion(
+            HttpSession session) {
+
+        if (session == null) {
+            return false;
+        }
+
+        return session.getAttribute(
+                WebKeysAutorizaciones
+                        .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
+        ) != null
+                || session.getAttribute(
+                WebKeysAutorizaciones
+                        .PRESTACION_EN_PROCESO_DE_EDICION
+        ) != null
+                || session.getAttribute(
+                WebKeysAutorizaciones
+                        .LISTADO_REVISIONES_RECLAMOS_EN_SESION
+        ) != null
+                || session.getAttribute(
+                WebKeysAutorizaciones
+                        .LISTADO_CONTACTOS_RECLAMOS_EN_SESION
+        ) != null
+                || session.getAttribute(
+                WebKeysAutorizaciones
+                        .RECLAMO_NUEVO_ESTADO_OBS
+        ) != null;
     }
 }

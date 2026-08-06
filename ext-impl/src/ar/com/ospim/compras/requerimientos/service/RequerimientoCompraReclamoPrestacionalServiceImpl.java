@@ -250,101 +250,6 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
         void parametrizar(PreparedStatement stmt) throws Exception;
     }
 
-    public void reservarCreacion(
-            int idRequerimientoCompra,
-            String tokenReserva,
-            String usuario) throws Exception {
-
-        validarIdRequerimiento(
-                idRequerimientoCompra
-        );
-
-        validarToken(
-                tokenReserva
-        );
-
-        Connection con =
-                null;
-
-        try {
-            con =
-                    ConnectionHelper
-                            .getConnectionForTransaction();
-
-            bloquearRequerimiento(
-                    con,
-                    idRequerimientoCompra
-            );
-
-            RequerimientoCompraReclamoPrestacional relacion =
-                    obtenerPorRequerimiento(
-                            con,
-                            idRequerimientoCompra
-                    );
-
-            /*
-             * Una repetición posterior a un guardado exitoso se considera
-             * satisfecha. crearYVincular devolverá el mismo ID persistido.
-             */
-            if (relacion != null
-                    && relacion.isVinculado()) {
-
-                con.commit();
-
-                return;
-            }
-
-            /*
-             * Una reserva propia con el mismo token también es un resultado
-             * idempotente. No se vuelve a ejecutar la función SQL.
-             */
-            if (relacion != null) {
-                validarReservaCompatible(
-                        relacion,
-                        tokenReserva,
-                        usuario
-                );
-
-                con.commit();
-
-                return;
-            }
-
-            reservarCreacion(
-                    con,
-                    idRequerimientoCompra,
-                    tokenReserva,
-                    usuario
-            );
-
-            relacion =
-                    obtenerPorRequerimiento(
-                            con,
-                            idRequerimientoCompra
-                    );
-
-            validarReservaCompatible(
-                    relacion,
-                    tokenReserva,
-                    usuario
-            );
-
-            con.commit();
-
-        } catch (Exception e) {
-            ConnectionHelper.rollback(
-                    con
-            );
-
-            throw e;
-
-        } finally {
-            ConnectionHelper.cerrar(
-                    con
-            );
-        }
-    }
-
     protected boolean ejecutarBoolean(
             Connection con,
             String sql,
@@ -871,17 +776,14 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                 tokenReserva
         );
 
-        Connection con = null;
+        Connection con =
+                null;
 
         try {
             con =
                     ConnectionHelper
                             .getConnectionForTransaction();
 
-            /*
-             * Serializa todos los intentos de creación correspondientes
-             * al mismo requerimiento.
-             */
             bloquearRequerimiento(
                     con,
                     idRequerimientoCompra
@@ -893,10 +795,6 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                             idRequerimientoCompra
                     );
 
-            /*
-             * Si el requerimiento ya está vinculado, la operación solicitada
-             * ya fue completada. No se crea ni reemplaza otra reserva.
-             */
             if (relacion != null
                     && relacion.isVinculado()) {
 
@@ -905,11 +803,6 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                 return;
             }
 
-            /*
-             * Si ya existe una relación, únicamente se acepta cuando representa
-             * la misma reserva. Una reserva diferente o un estado ERROR debe
-             * fallar cerrado.
-             */
             if (relacion != null) {
                 validarReservaCompatible(
                         relacion,
@@ -922,10 +815,6 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                 return;
             }
 
-            /*
-             * No existe relación: se ejecuta la operación SQL de bajo nivel
-             * utilizando la misma conexión y transacción.
-             */
             reservarCreacion(
                     con,
                     idRequerimientoCompra,
@@ -933,10 +822,6 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                     usuario
             );
 
-            /*
-             * Se comprueba que la función SQL haya dejado una reserva
-             * recuperable y compatible con este intento.
-             */
             relacion =
                     obtenerPorRequerimiento(
                             con,
