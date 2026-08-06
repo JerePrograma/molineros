@@ -524,8 +524,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
     /**
      * Construye una prestación CARGADA, no AUTORIZADA.
      *
-     * Los valores del área médica se precargan como propuesta económica para
-     * que el usuario pueda revisarlos; estadoRechazoAprobado permanece en 0.
+     * Los valores del área médica y del comprobante se precargan desde
+     * la cotización del requerimiento para que el usuario pueda revisarlos.
+     * estadoRechazoAprobado permanece en 0.
      */
     private static PrestacionesReclamo crearPrestacion(
             RequerimientoCompra requerimiento,
@@ -570,9 +571,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         );
 
         /*
-         * Se usa el total recalculado para que los campos presentados, el
-         * total autorizado y la distribución de cargos partan de la misma
-         * base monetaria.
+         * Se usa el total recalculado para que los datos del comprobante,
+         * el total autorizado y la distribución de cargos partan de la
+         * misma base monetaria.
          */
         BigDecimal total =
                 totalCalculado;
@@ -611,10 +612,6 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 idRegistro
         );
 
-        /*
-         * El artículo de Compras no es una prestación ni un medicamento del
-         * nomenclador de Autorizaciones.
-         */
         aplicarReferenciaTecnica(
                 prestacion,
                 requerimiento,
@@ -623,6 +620,18 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
         prestacion.setFrecuencia(
                 "UNICA"
+        );
+
+        /*
+         * Precarga exclusivamente los datos de comprobante que tienen
+         * correspondencia directa y verificable en Compras.
+         */
+        precargarDatosComprobante(
+                prestacion,
+                detalle,
+                cantidad,
+                importeUnitario,
+                total
         );
 
         /* Propuesta para Autorizado por Área Médica. */
@@ -705,6 +714,72 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         );
 
         return prestacion;
+    }
+
+    /**
+     * Precarga los datos de comprobante que poseen una correspondencia
+     * inequívoca con el detalle cotizado de Compras.
+     *
+     * No se inventan tipo, letra, punto de venta, número ni fechas.
+     */
+    private static void precargarDatosComprobante(
+            PrestacionesReclamo prestacion,
+            RequerimientoCompraDetalle detalle,
+            BigDecimal cantidad,
+            BigDecimal importeUnitario,
+            BigDecimal total) {
+
+        if (prestacion == null
+                || detalle == null) {
+
+            return;
+        }
+
+        if (cantidad != null) {
+            prestacion.setComprobanteCantidad(
+                    Double.valueOf(
+                            cantidad.doubleValue()
+                    )
+            );
+        }
+
+        if (importeUnitario != null) {
+            prestacion.setComprobanteImporte(
+                    Double.valueOf(
+                            importeUnitario.doubleValue()
+                    )
+            );
+        }
+
+        if (total != null) {
+            prestacion.setComprobanteTotal(
+                    Double.valueOf(
+                            total.doubleValue()
+                    )
+            );
+        }
+
+        String prestadorCuit =
+                WebKeysCompras.trimToNull(
+                        detalle.getPrestadorCuit()
+                );
+
+        if (prestadorCuit != null) {
+            prestacion.setComprobanteCUIT(
+                    prestadorCuit
+            );
+        }
+
+        String prestadorRazonSocial =
+                WebKeysCompras.trimToNull(
+                        detalle.getPrestadorRazonSocial()
+                );
+
+        if (prestadorRazonSocial != null) {
+            prestacion.setComprobanteRazonSocial(
+                    prestadorRazonSocial
+            );
+        }
     }
 
     private static void aplicarReferenciaTecnica(

@@ -224,17 +224,19 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 				}else{					
 					return mapping.findForward("portlet.autorizaciones.reclamosprestacionales.prestacion_reclamo");	
 				}
-			    
-			    
-		 }else{       //				pasa los datos de la instancia al JSP para su edicion
-			 if(StringUtils.checkNotEmpty(presta.getComprobanteCUIT())) {
-				 Empresa empr = EmpresaServiceUtil.getEmpleadorCompleto(presta.getComprobanteCUIT(), presta.getComprobanteCUITSucursal());
-				 presta.setComprobanteRazonSocial(empr!=null&&StringUtils.checkNotEmpty(empr.getRazon_soc())?empr.getRazon_soc():"");
-			 }
-			 
-			    session.setAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION   , presta);
-			   
-		 }
+
+         }else{       // pasa los datos de la instancia al JSP para su edicion
+
+             completarRazonSocialComprobante(
+                     presta
+             );
+
+             session.setAttribute(
+                     WebKeysAutorizaciones
+                             .PRESTACION_EN_PROCESO_DE_EDICION,
+                     presta
+             );
+         }
 			 
 		    
 		    
@@ -247,6 +249,60 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 		
 		                            
 	}
-	
+
+    /**
+     * Completa la razón social desde el padrón únicamente cuando la
+     * prestación todavía no la posee.
+     *
+     * Si Compras ya informó una razón social válida, se conserva.
+     * Si el padrón no encuentra el CUIT, tampoco se borra el valor existente.
+     */
+    private void completarRazonSocialComprobante(
+            PrestacionesReclamo prestacion) {
+
+        if (prestacion == null
+                || StringUtils.checkEmpty(
+                prestacion.getComprobanteCUIT()
+        )
+                || StringUtils.checkNotEmpty(
+                prestacion.getComprobanteRazonSocial()
+        )) {
+
+            return;
+        }
+
+        try {
+            Empresa empresa =
+                    EmpresaServiceUtil
+                            .getEmpleadorCompleto(
+                                    prestacion
+                                            .getComprobanteCUIT(),
+                                    prestacion
+                                            .getComprobanteCUITSucursal()
+                            );
+
+            if (empresa != null
+                    && StringUtils.checkNotEmpty(
+                    empresa.getRazon_soc()
+            )) {
+
+                prestacion.setComprobanteRazonSocial(
+                        empresa.getRazon_soc()
+                );
+            }
+
+        } catch (Exception e) {
+            /*
+             * El padrón es un complemento. Su indisponibilidad no debe borrar
+             * los datos recibidos desde Compras ni impedir abrir la edición.
+             */
+            _log.warn(
+                    "No se pudo completar la razón social del comprobante "
+                            + "desde el padrón. Se conserva el valor "
+                            + "precargado en la prestación.",
+                    e
+            );
+        }
+    }
 }
 
