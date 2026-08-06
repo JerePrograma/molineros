@@ -917,6 +917,156 @@ if ("id_requerimiento_compra".equals(errorCampoCompra)) {
         </div>
     </div>
 
+    <c:if test="<%=
+                    detallesNotificacionResultado != null
+                            && !detallesNotificacionResultado.isEmpty()
+            %>">
+                <div class="compras-notificacion-detalle-cabecera">
+                    <div class="compras-notificacion-detalle-titulo">
+                        Destinatarios evaluados
+
+                        <span class="compras-notificacion-contador">
+                            <%= detallesNotificacionResultado.size() %>
+                        </span>
+                    </div>
+
+                    <div class="compras-notificacion-detalle-aclaracion">
+                        El email real corresponde al prestador.
+                        El destino efectivo indica la casilla a la que
+                        se entregó el mensaje.
+                    </div>
+                </div>
+
+                <div class="compras-notificacion-tabla-contenedor">
+                    <table
+                        class="taglib-search-iterator compras-notificacion-tabla"
+                        cellspacing="0"
+                        cellpadding="0"
+                    >
+                        <thead>
+                            <tr class="portlet-section-header">
+                                <th style="width: 25%;">
+                                    Prestador
+                                </th>
+
+                                <th style="width: 27%;">
+                                    Email real
+                                </th>
+
+                                <th style="width: 27%;">
+                                    Destino efectivo
+                                </th>
+
+                                <th style="width: 21%;">
+                                    Resultado
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <%
+                            int filaDestinatario = 0;
+
+                            for (int i = 0;
+                                    i < detallesNotificacionResultado.size();
+                                    i++) {
+
+                                ar.com.ospim.compras.requerimientos.beans
+                                        .NotificacionCotizacionDetalle
+                                        detalleDestinatario =
+                                        detallesNotificacionResultado.get(i);
+
+                                if (detalleDestinatario == null) {
+                                    continue;
+                                }
+
+                                String prestadorVisible =
+                                        detalleDestinatario.getPrestador();
+
+                                if (WebKeysCompras.isEmpty(
+                                        prestadorVisible
+                                )) {
+                                    prestadorVisible =
+                                            "Prestador #"
+                                                    + detalleDestinatario
+                                                            .getIdPrestador();
+                                }
+
+                                String emailRealVisible =
+                                        detalleDestinatario.getEmailReal();
+
+                                if (WebKeysCompras.isEmpty(
+                                        emailRealVisible
+                                )) {
+                                    emailRealVisible = "-";
+                                }
+
+                                String emailDestinoVisible =
+                                        detalleDestinatario.getEmailDestino();
+
+                                if (WebKeysCompras.isEmpty(
+                                        emailDestinoVisible
+                                )) {
+                                    emailDestinoVisible = "-";
+                                }
+
+                                String resultadoVisible =
+                                        detalleDestinatario.getResultado();
+
+                                if (WebKeysCompras.isEmpty(
+                                        resultadoVisible
+                                )) {
+                                    resultadoVisible = "-";
+                                }
+
+                                String claseFilaDestinatario =
+                                        filaDestinatario % 2 == 0
+                                                ? "portlet-section-body"
+                                                : "portlet-section-alternate";
+
+                                filaDestinatario++;
+                            %>
+
+                                <tr class="<%= claseFilaDestinatario %>">
+                                    <td>
+                                        <%= HtmlUtil.escape(
+                                                prestadorVisible
+                                        ) %>
+
+                                        <div class="compras-notificacion-prestador-id">
+                                            ID:
+                                            <%= detalleDestinatario
+                                                    .getIdPrestador() %>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <%= HtmlUtil.escape(
+                                                emailRealVisible
+                                        ) %>
+                                    </td>
+
+                                    <td>
+                                        <%= HtmlUtil.escape(
+                                                emailDestinoVisible
+                                        ) %>
+                                    </td>
+
+                                    <td>
+                                        <%= HtmlUtil.escape(
+                                                resultadoVisible
+                                        ) %>
+                                    </td>
+                                </tr>
+
+                            <%
+                            }
+                            %>
+                        </tbody>
+                    </table>
+                </div>
+            </c:if>
+
     <c:if test="<%= hayDetalleIncidencias %>">
 
         <script type="text/javascript">
@@ -961,156 +1111,6 @@ if ("id_requerimiento_compra".equals(errorCampoCompra)) {
                 return false;
             }
         </script>
-
-        <c:if test="<%=
-                detallesNotificacionResultado != null
-                        && !detallesNotificacionResultado.isEmpty()
-        %>">
-            <div class="compras-notificacion-detalle-cabecera">
-                <div class="compras-notificacion-detalle-titulo">
-                    Destinatarios evaluados
-
-                    <span class="compras-notificacion-contador">
-                        <%= detallesNotificacionResultado.size() %>
-                    </span>
-                </div>
-
-                <div class="compras-notificacion-detalle-aclaracion">
-                    El email real corresponde al prestador.
-                    El destino efectivo indica la casilla a la que
-                    se entregó el mensaje.
-                </div>
-            </div>
-
-            <div class="compras-notificacion-tabla-contenedor">
-                <table
-                    class="taglib-search-iterator compras-notificacion-tabla"
-                    cellspacing="0"
-                    cellpadding="0"
-                >
-                    <thead>
-                        <tr class="portlet-section-header">
-                            <th style="width: 25%;">
-                                Prestador
-                            </th>
-
-                            <th style="width: 27%;">
-                                Email real
-                            </th>
-
-                            <th style="width: 27%;">
-                                Destino efectivo
-                            </th>
-
-                            <th style="width: 21%;">
-                                Resultado
-                            </th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        <%
-                        int filaDestinatario = 0;
-
-                        for (int i = 0;
-                                i < detallesNotificacionResultado.size();
-                                i++) {
-
-                            ar.com.ospim.compras.requerimientos.beans
-                                    .NotificacionCotizacionDetalle
-                                    detalleDestinatario =
-                                    detallesNotificacionResultado.get(i);
-
-                            if (detalleDestinatario == null) {
-                                continue;
-                            }
-
-                            String prestadorVisible =
-                                    detalleDestinatario.getPrestador();
-
-                            if (WebKeysCompras.isEmpty(
-                                    prestadorVisible
-                            )) {
-                                prestadorVisible =
-                                        "Prestador #"
-                                                + detalleDestinatario
-                                                        .getIdPrestador();
-                            }
-
-                            String emailRealVisible =
-                                    detalleDestinatario.getEmailReal();
-
-                            if (WebKeysCompras.isEmpty(
-                                    emailRealVisible
-                            )) {
-                                emailRealVisible = "-";
-                            }
-
-                            String emailDestinoVisible =
-                                    detalleDestinatario.getEmailDestino();
-
-                            if (WebKeysCompras.isEmpty(
-                                    emailDestinoVisible
-                            )) {
-                                emailDestinoVisible = "-";
-                            }
-
-                            String resultadoVisible =
-                                    detalleDestinatario.getResultado();
-
-                            if (WebKeysCompras.isEmpty(
-                                    resultadoVisible
-                            )) {
-                                resultadoVisible = "-";
-                            }
-
-                            String claseFilaDestinatario =
-                                    filaDestinatario % 2 == 0
-                                            ? "portlet-section-body"
-                                            : "portlet-section-alternate";
-
-                            filaDestinatario++;
-                        %>
-
-                            <tr class="<%= claseFilaDestinatario %>">
-                                <td>
-                                    <%= HtmlUtil.escape(
-                                            prestadorVisible
-                                    ) %>
-
-                                    <div class="compras-notificacion-prestador-id">
-                                        ID:
-                                        <%= detalleDestinatario
-                                                .getIdPrestador() %>
-                                    </div>
-                                </td>
-
-                                <td>
-                                    <%= HtmlUtil.escape(
-                                            emailRealVisible
-                                    ) %>
-                                </td>
-
-                                <td>
-                                    <%= HtmlUtil.escape(
-                                            emailDestinoVisible
-                                    ) %>
-                                </td>
-
-                                <td>
-                                    <%= HtmlUtil.escape(
-                                            resultadoVisible
-                                    ) %>
-                                </td>
-                            </tr>
-
-                        <%
-                        }
-                        %>
-                    </tbody>
-                </table>
-            </div>
-        </c:if>
 
         <div class="compras-notificacion-acciones">
             <a

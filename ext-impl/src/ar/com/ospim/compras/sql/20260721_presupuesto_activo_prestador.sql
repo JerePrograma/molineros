@@ -375,9 +375,14 @@ ALTER TABLE compras.requerimiento_cotizacion_prestador
 
 ALTER TABLE compras.requerimiento_cotizacion_prestador
     ADD CONSTRAINT ck_compras_cotizacion_fecha_envio
-    CHECK (
-        estado_envio NOT IN ('ENVIADO', 'COTIZADO')
-        OR fecha_envio IS NOT NULL
+        CHECK (
+            estado_envio NOT IN (
+                                 'ENVIADO',
+                                 'ENVIADO_QA',
+                                 'COTIZADO'
+                )
+                OR fecha_envio IS NOT NULL
+            )
     );
 
 UPDATE compras.requerimiento_cotizacion_prestador rcp

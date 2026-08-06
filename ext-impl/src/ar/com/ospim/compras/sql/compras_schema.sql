@@ -241,8 +241,8 @@ CREATE TABLE compras.requerimiento_cotizacion_prestador (
                                                                                          'COTIZADO'
                                                                         )
                                                                         OR fecha_envio IS NOT NULL
+                                                                    )
 );
-
 CREATE INDEX ix_compras_cotizacion_requerimiento_estado
     ON compras.requerimiento_cotizacion_prestador (
                                                    id_requerimiento,
@@ -2979,7 +2979,8 @@ FROM (
              COALESCE(
              ce.modi_fecha,
              ce.alta_fecha,
-             ce.vigen_desde::TIMESTAMP
+             ce.vigen_desde,
+             pce.vigen_desde
              ) AS fecha_orden,
 
              ce.id_contacto_e::INTEGER,
@@ -3015,8 +3016,13 @@ FROM (
            AND ce.baja_fecha IS NULL
 
            AND (
+             pce.vigen_desde IS NULL
+            OR pce.vigen_desde <= LOCALTIMESTAMP
+             )
+
+           AND (
              ce.vigen_desde IS NULL
-            OR ce.vigen_desde <= CURRENT_DATE
+            OR ce.vigen_desde <= LOCALTIMESTAMP
              )
      ) candidato
 
@@ -3214,7 +3220,8 @@ VALUES (
                IN (
                'PENDIENTE',
                'ERROR',
-               'EMAIL_INVALIDO'
+               'EMAIL_INVALIDO',
+               'ENVIADO_QA'
                )
                RETURNING TRUE
        INTO v_reservado;
@@ -4612,14 +4619,6 @@ IF NOT FOUND THEN
             p_id_requerimiento;
 END IF;
 
-SELECT
-    r.id_sector
-INTO
-    v_id_sector
-FROM compras.requerimiento r
-WHERE r.id_requerimiento = p_id_requerimiento
-  AND r.baja_fecha IS NULL;
-
 IF NOT FOUND THEN
     RAISE EXCEPTION
         'No existe el requerimiento activo %.',
@@ -4896,9 +4895,10 @@ END IF;
         );
 
     IF v_estado_solicitado NOT IN (
-        'ENVIADO',
-        'ERROR',
-        'EMAIL_INVALIDO'
+    'ENVIADO',
+    'ENVIADO_QA',
+    'ERROR',
+    'EMAIL_INVALIDO'
     ) THEN
         RAISE EXCEPTION
             'Estado final no permitido: %.',
@@ -4974,20 +4974,23 @@ SET
 
     fecha_envio =
         CASE
-            WHEN v_estado_solicitado = 'ENVIADO'
+            WHEN v_estado_solicitado IN (
+                                         'ENVIADO',
+                                         'ENVIADO_QA'
+                )
                 THEN clock_timestamp()
             ELSE NULL
-            END,
+            END
 
     ultimo_error =
         CASE
             WHEN v_estado_solicitado = 'ENVIADO'
                 THEN NULL
             ELSE COALESCE(
-                    v_error,
-                    'Error sin detalle informado.'
-                 )
-            END,
+                v_error,
+                'Error sin detalle informado.'
+            )
+        END
 
     modi_fecha =
         clock_timestamp(),
