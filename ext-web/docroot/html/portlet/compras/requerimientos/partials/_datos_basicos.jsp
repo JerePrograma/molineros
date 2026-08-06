@@ -66,18 +66,12 @@
     }
 
     .compras-cabecera-requerimiento
-    .compras-control-recupero {
-        width: 70px;
-    }
-
-    .compras-cabecera-requerimiento
     .compras-control-surge {
         width: 120px;
     }
 
     /*
-     * Segunda fila: cargos y Recupero permanecen juntos.
-     * Surge conserva su posicion y no se oculta junto con los cargos.
+     * Segunda fila: cargos y Surge.
      */
     .compras-cabecera-requerimiento
     .compras-cargos-celda {
@@ -95,12 +89,6 @@
     .compras-cabecera-requerimiento
     .compras-grupo-cargo label {
         margin-right: 10px;
-    }
-
-    .compras-cabecera-requerimiento
-    .compras-checkbox-recupero {
-        margin: 0;
-        vertical-align: middle;
     }
 </style>
 
@@ -265,37 +253,6 @@
                         <% } %>
                     </span>
 
-                    <%--
-                        CQA-005: Recupero se conserva en edicion y vista,
-                        pero no se muestra durante el alta.
-                    --%>
-                    <% if (!esNuevo) { %>
-                        <span class="compras-grupo-cargo">
-                            <label for="<portlet:namespace />recupero">
-                                Recupero:
-                            </label>
-
-                            <% if (puedeEditarEstructuraPantalla) { %>
-                                <input type="checkbox"
-                                       id="<portlet:namespace />recupero"
-                                       value="true"
-                                       <%= recuperoChecked %>
-                                       class="compras-checkbox-recupero"
-                                       onclick="return false;"
-                                       onkeydown="return false;"
-                                       tabindex="-1"
-                                       aria-disabled="true" />
-                            <% } else { %>
-                                <input type="text"
-                                       id="<portlet:namespace />recupero"
-                                       value="<%= recuperoPorCargoTercerizadoraActual
-                                                ? "S&iacute;"
-                                                : "No" %>"
-                                       readonly="readonly"
-                                       class="compras-control compras-control-recupero compras-campo-solo-lectura" />
-                            <% } %>
-                        </span>
-                    <% } %>
                 </div>
             </td>
 

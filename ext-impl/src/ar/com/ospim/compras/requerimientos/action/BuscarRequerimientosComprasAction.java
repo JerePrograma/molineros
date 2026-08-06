@@ -32,7 +32,6 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             "afiliado_cuil_titular",
             "afiliado_int",
             "id_tercerizadora",
-            "recupero",
             "surge",
             "texto"
     };
@@ -219,11 +218,6 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             if (!"0".equals(idTercerizadora)) {
                 filtro.setIdTercerizadora(idTercerizadora.toUpperCase());
             }
-        }
-        String recupero = ParamUtil.getString(request, "recupero", null);
-
-        if (!WebKeysCompras.isEmpty(recupero)) {
-            filtro.setRecupero(Boolean.valueOf("true".equalsIgnoreCase(recupero) || "1".equals(recupero)));
         }
 
         String surge = ParamUtil.getString(request, "surge", null);

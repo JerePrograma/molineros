@@ -664,12 +664,16 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
         prestacion.setRecuperable(
                 Integer.valueOf(
-                        NO_RECUPERABLE
+                        resolverRecuperable(
+                                requerimiento
+                        )
                 )
         );
 
         prestacion.setRecuperableSur(
-                Boolean.FALSE
+                Boolean.valueOf(
+                        requerimiento.isSurge()
+                )
         );
 
         prestacion.setIdTercerizadora(

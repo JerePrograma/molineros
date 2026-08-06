@@ -78,19 +78,6 @@ if (WebKeysCompras.isEmpty(sectorFiltro)) {
     sectorFiltro = "0";
 }
 
-String recuperoFiltro =
-        ParamUtil.getString(
-                renderRequest,
-                "recupero",
-                ""
-        );
-
-if (!"true".equals(recuperoFiltro)
-        && !"false".equals(recuperoFiltro)) {
-
-    recuperoFiltro = "";
-}
-
 String surgeFiltro =
         ParamUtil.getString(
                 renderRequest,
@@ -605,10 +592,6 @@ if (tercerizadoras == null) {
         jQuery(
                 '#<portlet:namespace />sector_id'
         ).val('0');
-
-        jQuery(
-                '#<portlet:namespace />recupero'
-        ).val('');
 
         jQuery(
                 '#<portlet:namespace />surge'
@@ -1275,11 +1258,6 @@ if (tercerizadoras == null) {
         var id_tercerizadora =
                 <portlet:namespace />sincronizarTercerizadoraFiltro();
 
-        var recupero =
-                jQuery(
-                        '#<portlet:namespace />recupero'
-                ).val();
-
         var surge =
                 jQuery(
                         '#<portlet:namespace />surge'
@@ -1328,10 +1306,6 @@ if (tercerizadoras == null) {
                     + encodeURIComponent(
                             id_tercerizadora
                     ) +
-                '&recupero='
-                    + encodeURIComponent(
-                            recupero
-                    ) +
                 '&surge='
                     + encodeURIComponent(
                             surge
@@ -1372,10 +1346,6 @@ if (tercerizadoras == null) {
                     + encodeURIComponent(
                             id_tercerizadora
                     ) +
-                '&<portlet:namespace />recupero='
-                    + encodeURIComponent(
-                            recupero
-                    ) +
                 '&<portlet:namespace />surge='
                     + encodeURIComponent(
                             surge
@@ -1415,7 +1385,6 @@ if (tercerizadoras == null) {
         jQuery(
                 '#<portlet:namespace />estado, '
                 + '#<portlet:namespace />sector_id, '
-                + '#<portlet:namespace />recupero, '
                 + '#<portlet:namespace />surge'
         ).change(function() {
             <portlet:namespace />buscarRequerimientos();
