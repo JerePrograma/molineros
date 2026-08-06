@@ -1166,42 +1166,128 @@ public class ReclamoPrestacionServiceImpl {
 			ConnectionHelper.cerrar(stmt, con);
 		}
 	}
-	
-	
-	public String validarExisteComprobante(PrestacionesReclamo reclamo) {
-		Connection con = null;
-		CallableStatement stmt = null;
-		String result = null;
-		try {  
-			String sql = "{call autorizaciones.validar_reclamos_prestacionales_prestaciones_compro(?,?,?,?,?,?,?,?,?,?,?)}";
-			con = ConnectionHelper.getConnection();
-			stmt = con.prepareCall(sql.toString());
-			stmt.setString(1, reclamo.getComprobanteTipo());
-			stmt.setString(2, reclamo.getComprobanteNro());
-			stmt.setString(3, reclamo.getComprobanteCUIT());
-			stmt.setString(4, reclamo.getComprobanteLetra());
-			stmt.setString(5, reclamo.getComprobanteSucursal());
-			stmt.setDate(6, new java.sql.Date(reclamo.getFechaPrestacion().getTime()));
-			stmt.setInt(7, reclamo.getId_prestacion());
-			stmt.setInt(8, reclamo.getId_medicamento());
-			stmt.setInt(9, reclamo.getIdRegistro());
-			stmt.setString(10, reclamo.getCuilTitular());
-			stmt.setInt(11, reclamo.getInte());
 
-			
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {				
-				result = rs.getString(1);
-			}
-			
-		} catch (SQLException  e) {
-			_log.error("Error para reabrir Reclamo Prestacional " + reclamo.getIdprestacionReclamo() + " ", e);
-			result = null;
-		} finally {
-			ConnectionHelper.cerrar(stmt, con);
-		}
-		return result;
-	}
+
+    public String validarExisteComprobante(PrestacionesReclamo reclamo) {
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+        String result = null;
+
+        try {
+            if (reclamo == null) {
+                _log.error("No se puede validar el comprobante: el reclamo es null");
+                return null;
+            }
+
+            if (reclamo.getFechaPrestacion() == null) {
+                _log.error(
+                        "No se puede validar el comprobante: la fecha de prestacion es null. " +
+                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
+                );
+                return null;
+            }
+
+            Integer idPrestacion = reclamo.getId_prestacion();
+            Integer idMedicamento = reclamo.getId_medicamento();
+            Integer idRegistro = reclamo.getIdRegistro();
+            Integer inte = reclamo.getInte();
+
+            if (idPrestacion == null) {
+                _log.error(
+                        "No se puede validar el comprobante: el id de prestacion es null. " +
+                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
+                );
+                return null;
+            }
+
+            if (idRegistro == null) {
+                _log.error(
+                        "No se puede validar el comprobante: el id de registro es null. " +
+                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
+                );
+                return null;
+            }
+
+            if (inte == null) {
+                _log.error(
+                        "No se puede validar el comprobante: inte es null. " +
+                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
+                );
+                return null;
+            }
+
+            String sql =
+                    "{call autorizaciones.validar_reclamos_prestacionales_prestaciones_compro" +
+                            "(?,?,?,?,?,?,?,?,?,?,?)}";
+
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(sql);
+
+            stmt.setString(1, reclamo.getComprobanteTipo());
+            stmt.setString(2, reclamo.getComprobanteNro());
+            stmt.setString(3, reclamo.getComprobanteCUIT());
+            stmt.setString(4, reclamo.getComprobanteLetra());
+            stmt.setString(5, reclamo.getComprobanteSucursal());
+
+            stmt.setDate(
+                    6,
+                    new java.sql.Date(reclamo.getFechaPrestacion().getTime())
+            );
+
+            stmt.setInt(7, idPrestacion.intValue());
+
+            if (idMedicamento != null) {
+                stmt.setInt(8, idMedicamento.intValue());
+            } else {
+                stmt.setNull(8, java.sql.Types.INTEGER);
+            }
+
+            stmt.setInt(9, idRegistro.intValue());
+            stmt.setString(10, reclamo.getCuilTitular());
+            stmt.setInt(11, inte.intValue());
+
+            rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                result = rs.getString(1);
+            }
+
+        } catch (SQLException e) {
+            _log.error(
+                    "Error al validar la existencia del comprobante. Id reclamo: " +
+                            (reclamo != null ? reclamo.getIdprestacionReclamo() : "null"),
+                    e
+            );
+            result = null;
+
+        } catch (RuntimeException e) {
+            /*
+             * Evita que una entrada invalida termine generando una pagina HTML
+             * de error que luego el JavaScript intenta interpretar como JSON.
+             */
+            _log.error(
+                    "Datos invalidos al validar la existencia del comprobante. " +
+                            "Id reclamo: " +
+                            (reclamo != null ? reclamo.getIdprestacionReclamo() : "null"),
+                    e
+            );
+            result = null;
+
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                    _log.warn("No se pudo cerrar el ResultSet", e);
+                }
+            }
+
+            ConnectionHelper.cerrar(stmt, con);
+        }
+
+        return result;
+    }
 
 
 	
