@@ -1,9 +1,6 @@
 package ar.com.ospim.compras.requerimientos.service;
 
-import ar.com.ospim.autorizaciones.beans.Nomenclador;
-import ar.com.ospim.autorizaciones.beans.PrestacionesReclamo;
-import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
-import ar.com.ospim.autorizaciones.beans.RevisionesReclamo;
+import ar.com.ospim.autorizaciones.beans.*;
 import ar.com.ospim.autorizaciones.services.NomencladorServiceUtil;
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.compras.WebKeysCompras;
@@ -11,6 +8,7 @@ import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContex
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.crm.beans.ContactoCRM;
+import ar.com.ospim.global.services.TraeListasServiceUtil;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -38,8 +36,13 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
     private static final int RECUPERABLE_SUR = 1;
     private static final int NO_RECUPERABLE = 2;
     private static final int RECUPERABLE_INTEGRACION = 3;
+    private static final String
+            DESCRIPCION_INTEGRACION_CABECERA_NO_RECUPERABLE =
+            "NO RECUPERABLE";
     private static final String COMPROBANTE_TIPO_INICIAL = "OTR";
-    private static final String COMPROBANTE_SUCURSAL_INICIAL = "000";
+    private static final String
+            COMPROBANTE_CUIT_SUCURSAL_INICIAL =
+            "000";
 
     private static final int ESTADO_PRESTACION_CARGADA = 0;
 
@@ -437,6 +440,14 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 false
         );
 
+        /*
+         * El flag recuperable de la cabecera es independiente del combo
+         * Integracion. El combo utiliza codigoIntegracion.
+         */
+        reclamo.setCodigoIntegracion(
+                resolverCodigoIntegracionCabeceraNoRecuperable()
+        );
+
         reclamo.setDebitoPrestadora(
                 porcentaje(
                         requerimiento
@@ -493,6 +504,74 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 .getSectorReclamoPrestacional(
                         sectorCompras
                 );
+    }
+
+    private static int
+    resolverCodigoIntegracionCabeceraNoRecuperable()
+            throws Exception {
+
+        List<ReclamosPrestacionalesIntegracion> integraciones =
+                TraeListasServiceUtil
+                        .getReclamosPrestacionalesIntegracion();
+
+        Integer codigoEncontrado =
+                null;
+
+        if (integraciones != null) {
+            for (ReclamosPrestacionalesIntegracion integracion
+                    : integraciones) {
+
+                if (integracion == null
+                        || integracion.getDescripcion() == null) {
+
+                    continue;
+                }
+
+                String descripcion =
+                        integracion
+                                .getDescripcion()
+                                .trim();
+
+                if (!DESCRIPCION_INTEGRACION_CABECERA_NO_RECUPERABLE
+                        .equalsIgnoreCase(
+                                descripcion
+                        )) {
+
+                    continue;
+                }
+
+                if (integracion.getId() <= 0) {
+                    throw new Exception(
+                            "La integracion NO RECUPERABLE "
+                                    + "no tiene un codigo valido."
+                    );
+                }
+
+                if (codigoEncontrado != null
+                        && codigoEncontrado.intValue()
+                        != integracion.getId()) {
+
+                    throw new Exception(
+                            "Existe mas de una integracion "
+                                    + "NO RECUPERABLE."
+                    );
+                }
+
+                codigoEncontrado =
+                        Integer.valueOf(
+                                integracion.getId()
+                        );
+            }
+        }
+
+        if (codigoEncontrado == null) {
+            throw new Exception(
+                    "No se encontro la integracion "
+                            + "NO RECUPERABLE."
+            );
+        }
+
+        return codigoEncontrado.intValue();
     }
 
     /**
@@ -722,9 +801,12 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
      * inequívoca con el detalle cotizado de Compras.
      *
      * Por regla de negocio del handoff desde Compras, el tipo inicial
-     * es OTR y la sucursal inicial es 000.
+     * del comprobante es OTR.
      *
-     * No se inventan letra, número ni fechas.
+     * La sucursal 000 corresponde al prestador asociado al CUIT,
+     * no al punto de venta o sucursal del comprobante.
+     *
+     * No se inventan letra, punto de venta, numero ni fechas.
      */
     private static void precargarDatosComprobante(
             PrestacionesReclamo prestacion,
@@ -743,8 +825,8 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 COMPROBANTE_TIPO_INICIAL
         );
 
-        prestacion.setComprobanteSucursal(
-                COMPROBANTE_SUCURSAL_INICIAL
+        prestacion.setComprobanteCUITSucursal(
+                COMPROBANTE_CUIT_SUCURSAL_INICIAL
         );
 
         if (cantidad != null) {

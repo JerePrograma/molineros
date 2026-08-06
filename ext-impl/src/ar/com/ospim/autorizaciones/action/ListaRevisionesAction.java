@@ -179,7 +179,35 @@ public class ListaRevisionesAction extends PortletAction {
                 )
         );
 
+        validarRevision(
+                revision
+        );
+
         return revision;
+    }
+
+    private void validarRevision(
+            RevisionesReclamo revision)
+            throws Exception {
+
+        if (revision == null
+                || revision.getFecha_revision() == null
+                || esVacio(
+                revision.getUsr_presente()
+        )
+                || esVacio(
+                revision.getUsr_resolucion()
+        )
+                || esVacio(
+                revision
+                        .getUsr_responsable_resolucion()
+        )) {
+
+            throw new Exception(
+                    "Debe informar fecha, presentes, resolucion "
+                            + "y responsable de resolucion."
+            );
+        }
     }
 
     private boolean tieneRevisionActiva(

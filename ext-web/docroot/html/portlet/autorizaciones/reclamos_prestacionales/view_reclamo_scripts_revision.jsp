@@ -125,15 +125,7 @@ function <%= reclamoPortletNamespace %>agregarRevision() {
         var revisionFechaVtoMes = jQuery('#<%= reclamoPortletNamespace %>fecharevisionMes').val();
         var revisionFechaVtoAnio = jQuery('#<%= reclamoPortletNamespace %>fecharevisionAnio').val();
 
-        var observacionMedica = jQuery('#<%= reclamoPortletNamespace %>observacion_medica').val();
-
-
-
         var reclamoobservacion  = jQuery('#<%= reclamoPortletNamespace %>observacion_revision').val();
-        var chk_amparo=jQuery("#<%= reclamoPortletNamespace %>chk_amparo").is(':checked');
-        var chk_superintendencia=jQuery("#<%= reclamoPortletNamespace %>chk_superintendencia").is(':checked');
-        var chk_recuperable = jQuery("#<%= reclamoPortletNamespace %>chk_recuperable").is(':checked');
-        var chk_entramite = jQuery("#portlet:namespace />chk_entramite").is(':checked');
 
         if (document.getElementById("<%= reclamoPortletNamespace %>resolucion").selectedIndex==0 ) {
             resolucion="";
@@ -152,18 +144,31 @@ function <%= reclamoPortletNamespace %>agregarRevision() {
 
 
         var params = {
-            "resolucion": resolucion,
-            "presentes": presentes,
-            "respresolucion": respresolucion,
-            "revisionFechaVtoDia": revisionFechaVtoDia,
-            "revisionFechaVtoMes": revisionFechaVtoMes,
-            "revisionFechaVtoAnio": revisionFechaVtoAnio,
-            "reclamoobservacion": reclamoobservacion,
-            "observacionMedica": observacionMedica,
+            "usr_presente":
+                    presentes,
+
+            "usr_resolucion":
+                    resolucion,
+
+            "usr_responsable_resolucion":
+                    respresolucion,
+
+            "fechaRevisionDay":
+                    revisionFechaVtoDia,
+
+            "fechaRevisionMonth":
+                    revisionFechaVtoMes,
+
+            "fechaRevisionYear":
+                    revisionFechaVtoAnio,
+
+            "observacion":
+                    reclamoobservacion,
+
             "<%= WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE %>":
-                "<%= handoffReclamoComprasValido
-                        ? contextoReclamoCompras.getNonce()
-                        : "" %>"
+                    "<%= handoffReclamoComprasValido
+                            ? contextoReclamoCompras.getNonce()
+                            : "" %>"
         };
 
 
@@ -214,51 +219,94 @@ function <%= reclamoPortletNamespace %>agregarRevision() {
         jQuery("#<%= reclamoPortletNamespace %>mensajerevisionefectuada").html("Revisión Efectuada, el Sistema soporta solo una revisión activa (No de baja).");
 
          jQuery(
-            '#<%= reclamoPortletNamespace %>lista_revisiones'
-        ).load(
-            url,
-            params,
-            function() {
-                jQuery(
-                    '#<%= reclamoPortletNamespace %>buscando'
-                ).hide();
+             '#<%= reclamoPortletNamespace %>lista_revisiones'
+         ).load(
+             url,
+             params,
+             function(responseText, status) {
 
-                jQuery(
-                    '#<%= reclamoPortletNamespace %>resolucion'
-                ).val('');
+                 jQuery(
+                     '#<%= reclamoPortletNamespace %>buscando'
+                 ).hide();
 
-                jQuery(
-                    '#<%= reclamoPortletNamespace %>presentes'
-                ).val('');
+                 if (status == "error") {
+                     jQuery(
+                         "#<%= reclamoPortletNamespace %>botonrevision"
+                     ).show();
 
-                jQuery(
-                    '#<%= reclamoPortletNamespace %>respresolucion'
-                ).val('');
+                     jQuery(
+                         "#<%= reclamoPortletNamespace %>"
+                                 + "mensajerevisionefectuada"
+                     ).html(
+                         ""
+                     );
 
-                jQuery(
-                    '#<%= reclamoPortletNamespace %>observacion_revision'
-                ).val('');
+                     return;
+                 }
 
-                if (revisionConCierre) {
-                    <% if (reclamoPersistido) { %>
-                    <%= reclamoPortletNamespace %>editaReclamo(
-                            false
-                    );
-                    <% } else { %>
-                    <%= reclamoPortletNamespace %>saveReclamo();
-                    <% } %>
-                }
-            }
-        );
+                 jQuery(
+                     "#<%= reclamoPortletNamespace %>botonrevision"
+                 ).hide();
 
-         jQuery('#<%= reclamoPortletNamespace %>resolucion').val('');
-         jQuery('#<%= reclamoPortletNamespace %>presentes').val('');
-         jQuery('#<%= reclamoPortletNamespace %>respresolucion').val('');
-         document.getElementById("<%= reclamoPortletNamespace %>fecharevisionDia").selectedIndex = 0;
-         document.getElementById("<%= reclamoPortletNamespace %>fecharevisionMes").selectedIndex = 0;
-         document.getElementById("<%= reclamoPortletNamespace %>fecharevisionAnio").selectedIndex = 0;
-         document.getElementById("<%= reclamoPortletNamespace %>fecharevisionAnio").selectedIndex = 0;
-         jQuery('#<%= reclamoPortletNamespace %>observacion_revision').val('');
+                 jQuery(
+                     "#<%= reclamoPortletNamespace %>"
+                             + "mensajerevisionefectuada"
+                 ).html(
+                     "Revisión Efectuada, el Sistema soporta "
+                             + "solo una revisión activa (No de baja)."
+                 );
+
+                 jQuery(
+                     '#<%= reclamoPortletNamespace %>resolucion'
+                 ).val(
+                     ''
+                 );
+
+                 jQuery(
+                     '#<%= reclamoPortletNamespace %>presentes'
+                 ).val(
+                     ''
+                 );
+
+                 jQuery(
+                     '#<%= reclamoPortletNamespace %>respresolucion'
+                 ).val(
+                     ''
+                 );
+
+                 document.getElementById(
+                     "<%= reclamoPortletNamespace %>fecharevisionDia"
+                 ).selectedIndex = 0;
+
+                 document.getElementById(
+                     "<%= reclamoPortletNamespace %>fecharevisionMes"
+                 ).selectedIndex = 0;
+
+                 document.getElementById(
+                     "<%= reclamoPortletNamespace %>fecharevisionAnio"
+                 ).selectedIndex = 0;
+
+                 jQuery(
+                     '#<%= reclamoPortletNamespace %>observacion_revision'
+                 ).val(
+                     ''
+                 );
+
+                 if (revisionConCierre) {
+                     <% if (reclamoPersistido) { %>
+
+                     <%= reclamoPortletNamespace %>editaReclamo(
+                             false
+                     );
+
+                     <% } else { %>
+
+                     <%= reclamoPortletNamespace %>saveReclamo();
+
+                     <% } %>
+                 }
+             }
+         );
     }
 }
 
