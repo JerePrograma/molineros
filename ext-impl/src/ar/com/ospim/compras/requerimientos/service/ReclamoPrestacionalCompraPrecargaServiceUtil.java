@@ -38,6 +38,8 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
     private static final int RECUPERABLE_SUR = 1;
     private static final int NO_RECUPERABLE = 2;
     private static final int RECUPERABLE_INTEGRACION = 3;
+    private static final String COMPROBANTE_TIPO_INICIAL = "OTR";
+    private static final String COMPROBANTE_SUCURSAL_INICIAL = "000";
 
     private static final int ESTADO_PRESTACION_CARGADA = 0;
 
@@ -427,13 +429,12 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                         .RECLAMO_PRESTACIONAL_ESTADO_CARGADO
         );
 
-        reclamo.setRecuperable(
-                requerimiento.isRecupero()
-                        || requerimiento.isSurge()
-        );
-
         reclamo.setSuperintendencia(
                 requerimiento.isSurge()
+        );
+
+        reclamo.setRecuperable(
+                false
         );
 
         reclamo.setDebitoPrestadora(
@@ -663,16 +664,12 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
         prestacion.setRecuperable(
                 Integer.valueOf(
-                        resolverRecuperable(
-                                requerimiento
-                        )
+                        NO_RECUPERABLE
                 )
         );
 
         prestacion.setRecuperableSur(
-                Boolean.valueOf(
-                        requerimiento.isSurge()
-                )
+                Boolean.FALSE
         );
 
         prestacion.setIdTercerizadora(
@@ -724,62 +721,52 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
      */
     private static void precargarDatosComprobante(
             PrestacionesReclamo prestacion,
-            RequerimientoCompraDetalle detalle,
-            BigDecimal cantidad,
-            BigDecimal importeUnitario,
-            BigDecimal total) {
+            double cantidad,
+            double precioUnitario) {
 
-        if (prestacion == null
-                || detalle == null) {
-
+        if (prestacion == null) {
             return;
         }
 
-        if (cantidad != null) {
-            prestacion.setComprobanteCantidad(
-                    Double.valueOf(
-                            cantidad.doubleValue()
-                    )
-            );
-        }
+        /*
+         * Regla exclusiva de la precarga originada desde Compras.
+         */
+        prestacion.setComprobanteTipo(
+                COMPROBANTE_TIPO_INICIAL
+        );
 
-        if (importeUnitario != null) {
-            prestacion.setComprobanteImporte(
-                    Double.valueOf(
-                            importeUnitario.doubleValue()
-                    )
-            );
-        }
+        prestacion.setComprobanteSucursal(
+                COMPROBANTE_SUCURSAL_INICIAL
+        );
 
-        if (total != null) {
-            prestacion.setComprobanteTotal(
-                    Double.valueOf(
-                            total.doubleValue()
-                    )
-            );
-        }
-
-        String prestadorCuit =
-                WebKeysCompras.trimToNull(
-                        detalle.getPrestadorCuit()
+        double cantidadComprobante =
+                normalizarCantidad(
+                        cantidad
                 );
 
-        if (prestadorCuit != null) {
-            prestacion.setComprobanteCUIT(
-                    prestadorCuit
-            );
-        }
-
-        String prestadorRazonSocial =
-                WebKeysCompras.trimToNull(
-                        detalle.getPrestadorRazonSocial()
+        double importeUnitarioComprobante =
+                normalizarImporte(
+                        precioUnitario
                 );
 
-        if (prestadorRazonSocial != null) {
-            prestacion.setComprobanteRazonSocial(
-                    prestadorRazonSocial
-            );
-        }
+        prestacion.setComprobanteCantidad(
+                Double.valueOf(
+                        cantidadComprobante
+                )
+        );
+
+        prestacion.setComprobanteImporte(
+                Double.valueOf(
+                        importeUnitarioComprobante
+                )
+        );
+
+        prestacion.setComprobanteTotal(
+                Double.valueOf(
+                        cantidadComprobante
+                                * importeUnitarioComprobante
+                )
+        );
     }
 
     private static void aplicarReferenciaTecnica(
