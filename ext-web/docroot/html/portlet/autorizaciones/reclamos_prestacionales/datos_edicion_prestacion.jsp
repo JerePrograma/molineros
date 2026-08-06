@@ -45,6 +45,15 @@ if (tipoedicion==2) {
 
 ocultarSeccional = (String) request.getAttribute("ocultar");
 
+String frecuenciaEdicion =
+        prestacionEnEdicion != null
+                ? prestacionEnEdicion.getFrecuencia()
+                : null;
+
+String comprobanteTipoEdicion =
+        prestacionEnEdicion != null
+                ? prestacionEnEdicion.getComprobanteTipo()
+                : null;
 
 if(prestacionEnEdicion != null  ){
 %>  
@@ -183,23 +192,56 @@ jQuery("#<portlet:namespace />Autorizado").hide();
 					<select 
 						name="<portlet:namespace />frecuenciaEdicion"
 						id="<portlet:namespace />frecuenciaEdicion" >  
-						<option value="SELECCIONE" <%=Validator.isNotNull(prestacionEnEdicion) && prestacionEnEdicion.getFrecuencia().equals("SELECCIONE") ? "selected":"" %>>SELECCIONE</option>
-						<option value="UNICA" <%=Validator.isNotNull(prestacionEnEdicion) && prestacionEnEdicion.getFrecuencia().equals("UNICA") ? "selected":""%>>UNICA</option>
-						<option value="SEMANAL" <%=Validator.isNotNull(prestacionEnEdicion) && prestacionEnEdicion.getFrecuencia().equals("SEMANAL") ? "selected":""%>>SEMANAL</option>
-						<option value="TRIMESTRAL" <%=Validator.isNotNull(prestacionEnEdicion) && prestacionEnEdicion.getFrecuencia().equals("TRIMESTRAL") ? "selected":""%>>TRIMESTRAL</option>
-						<option value="MENSUAL" <%=Validator.isNotNull(prestacionEnEdicion) && prestacionEnEdicion.getFrecuencia().equals("MENSUAL") ? "selected":""%>>MENSUAL</option>
-						<option value="SEMESTRAL" <%=Validator.isNotNull(prestacionEnEdicion) && prestacionEnEdicion.getFrecuencia().equals("SEMESTRAL") ? "selected" :""%>>SEMESTRAL</option>					
-						<option value="ANUAL" <%=Validator.isNotNull(prestacionEnEdicion) && prestacionEnEdicion.getFrecuencia().equals("ANUAL") ? "selected" :""%>>ANUAL</option>
+						<option value="SELECCIONE"
+                                 <%="SELECCIONE".equals(frecuenciaEdicion) ? "selected" : ""%>>
+                             SELECCIONE
+                         </option>
+                         <option value="UNICA"
+                                 <%="UNICA".equals(frecuenciaEdicion) ? "selected" : ""%>>
+                             UNICA
+                         </option>
+                         <option value="SEMANAL"
+                                 <%="SEMANAL".equals(frecuenciaEdicion) ? "selected" : ""%>>
+                             SEMANAL
+                         </option>
+                         <option value="TRIMESTRAL"
+                                 <%="TRIMESTRAL".equals(frecuenciaEdicion) ? "selected" : ""%>>
+                             TRIMESTRAL
+                         </option>
+                         <option value="MENSUAL"
+                                 <%="MENSUAL".equals(frecuenciaEdicion) ? "selected" : ""%>>
+                             MENSUAL
+                         </option>
+                         <option value="SEMESTRAL"
+                                 <%="SEMESTRAL".equals(frecuenciaEdicion) ? "selected" : ""%>>
+                             SEMESTRAL
+                         </option>
+                         <option value="ANUAL"
+                                 <%="ANUAL".equals(frecuenciaEdicion) ? "selected" : ""%>>
+                             ANUAL
+                         </option>
 					</select>
 				  </td>	  	
 				<%}%>
 				  <td><label><liferay-ui:message key="comprobante" />:</label></td>
 			      <td>
 			         <select name="<portlet:namespace/>comprobante_tipo_edicion" id="<portlet:namespace/>comprobante_tipo_edicion">
-				        <option value="FCP"  <%=Validator.isNotNull(prestacionEnEdicion) && prestacionEnEdicion.getComprobanteTipo().equals("FCP") ? "selected":"" %>>FCP</option>
-				        <option value="RCB" <%=Validator.isNotNull(prestacionEnEdicion) && prestacionEnEdicion.getComprobanteTipo().equals("RCB") ? "selected":""%>>RCB</option>
-				        <option value="OTR" <%=Validator.isNotNull(prestacionEnEdicion) && prestacionEnEdicion.getComprobanteTipo().equals("OTR") ? "selected":""%>>OTR</option>
-				        <option value="AUT" <%=Validator.isNotNull(prestacionEnEdicion) && prestacionEnEdicion.getComprobanteTipo().equals("AUT") ? "selected":""%>>AUT</option>
+				        <option value="FCP"
+                                <%="FCP".equals(comprobanteTipoEdicion) ? "selected" : ""%>>
+                            FCP
+                        </option>
+                        <option value="RCB"
+                                <%="RCB".equals(comprobanteTipoEdicion) ? "selected" : ""%>>
+                            RCB
+                        </option>
+                        <option value="OTR"
+                                <%="OTR".equals(comprobanteTipoEdicion) ? "selected" : ""%>>
+                            OTR
+                        </option>
+                        <option value="AUT"
+                                <%="AUT".equals(comprobanteTipoEdicion) ? "selected" : ""%>>
+                            AUT
+                        </option>
 			         </select> 
 			      </td>
 			      
