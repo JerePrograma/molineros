@@ -533,6 +533,122 @@ SELECT setval(
 -- FUNCIONES AUXILIARES
 -- =====================================================================
 
+CREATE OR REPLACE FUNCTION
+compras.resolver_email_cotizacion_prestador(
+    p_id_prestador INTEGER
+)
+RETURNS VARCHAR
+LANGUAGE sql
+STABLE
+AS
+$function$
+
+SELECT candidato.email
+FROM (
+         /*
+          * Prioridad 1:
+          * contacto de cabecera, únicamente si parece un email.
+          */
+         SELECT
+             1::INTEGER AS prioridad_fuente,
+             0::INTEGER AS prioridad_domicilio,
+             COALESCE(
+                     p.modi_fecha,
+                     p.alta_fecha
+             ) AS fecha_orden,
+             NULL::INTEGER AS id_contacto_e,
+             NULLIF(
+                     BTRIM(p.contacto),
+                     ''
+             )::VARCHAR AS email
+
+         FROM public.prestador p
+
+         WHERE p.id_prestador = p_id_prestador
+           AND p.baja_fecha IS NULL
+
+         UNION ALL
+
+         /*
+          * Prioridad 2:
+          * contactos electrónicos de tipo EMAIL.
+          */
+         SELECT
+             2::INTEGER AS prioridad_fuente,
+
+             CASE
+                 WHEN pce.id_domicilio IS NULL
+                     THEN 0
+                 ELSE 1
+                 END AS prioridad_domicilio,
+
+             COALESCE(
+                     ce.modi_fecha,
+                     ce.alta_fecha,
+                     ce.vigen_desde,
+                     pce.vigen_desde
+             ) AS fecha_orden,
+
+             ce.id_contacto_e,
+
+             NULLIF(
+                     BTRIM(ce.contacto),
+                     ''
+             )::VARCHAR AS email
+
+         FROM public.prestad_contacto_e pce
+
+                  INNER JOIN public.contacto_e ce
+                             ON ce.id_contacto_e = pce.id_contacto_e
+
+         WHERE pce.id_prestador = p_id_prestador
+
+             /*
+              * Solo email normal.
+              * No F, P, S ni EC.
+              */
+           AND UPPER(
+                       BTRIM(
+                               COALESCE(
+                                       ce.tipo_contacto_e,
+                                       ''
+                               )
+                       )
+               ) = 'E'
+
+           AND ce.baja_fecha IS NULL
+
+           AND (
+             pce.vigen_desde IS NULL
+                 OR pce.vigen_desde <= LOCALTIMESTAMP
+             )
+
+           AND (
+             ce.vigen_desde IS NULL
+                 OR ce.vigen_desde <= LOCALTIMESTAMP
+             )
+
+     ) candidato
+
+WHERE candidato.email IS NOT NULL
+
+  AND candidato.email
+    ~* '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'
+
+ORDER BY
+    candidato.prioridad_fuente,
+    candidato.prioridad_domicilio,
+    candidato.fecha_orden DESC NULLS LAST,
+    candidato.id_contacto_e DESC NULLS LAST
+
+    LIMIT 1;
+
+$function$;
+
+ALTER FUNCTION
+    compras.resolver_email_cotizacion_prestador(INTEGER)
+    OWNER TO postgres;
+
 CREATE FUNCTION compras.normalizar_usuario(
     p_usuario VARCHAR
 )
