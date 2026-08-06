@@ -13,6 +13,11 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import javax.servlet.http.HttpSession;
 
+import ar.com.ospim.autorizaciones.exceptions.RevisionesReclamosException;
+import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
+import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.model.User;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -40,51 +45,75 @@ public class ListaRevisionesAction extends PortletAction {
                         )
                         .getSession();
 
-        RevisionesReclamo revision =
-                construirRevision(
+        try {
+            RevisionesReclamo revision =
+                    construirRevision(
+                            actionRequest
+                    );
+
+            synchronized (session) {
+                validarContextoComprasSiCorresponde(
+                        session,
                         actionRequest
                 );
 
-        synchronized (session) {
-            @SuppressWarnings("unchecked")
-            List<RevisionesReclamo> revisiones =
-                    (List<RevisionesReclamo>)
-                            session.getAttribute(
-                                    WebKeysAutorizaciones
-                                            .LISTADO_REVISIONES_RECLAMOS_EN_SESION
-                            );
+                @SuppressWarnings("unchecked")
+                List<RevisionesReclamo> revisiones =
+                        (List<RevisionesReclamo>)
+                                session.getAttribute(
+                                        WebKeysAutorizaciones
+                                                .LISTADO_REVISIONES_RECLAMOS_EN_SESION
+                                );
 
-            if (revisiones == null) {
-                revisiones =
-                        new ArrayList<RevisionesReclamo>();
-            }
+                if (revisiones == null) {
+                    revisiones =
+                            new ArrayList<RevisionesReclamo>();
+                }
 
-            if (tieneRevisionActiva(
-                    revisiones
-            )) {
-                throw new Exception(
-                        "El reclamo ya posee una revision activa."
+                if (tieneRevisionActiva(
+                        revisiones
+                )) {
+                    throw new RevisionesReclamosException(
+                            "El reclamo ya posee "
+                                    + "una revision activa."
+                    );
+                }
+
+                revision.setId(
+                        obtenerIdTemporal(
+                                revisiones
+                        )
+                );
+
+                revision.setEstado(
+                        RevisionesReclamo.ESTADOS.NUEVO
+                );
+
+                revisiones.add(
+                        revision
+                );
+
+                session.setAttribute(
+                        WebKeysAutorizaciones
+                                .LISTADO_REVISIONES_RECLAMOS_EN_SESION,
+                        revisiones
                 );
             }
 
-            revision.setId(
-                    obtenerIdTemporal(
-                            revisiones
-                    )
+            actionResponse.setRenderParameter(
+                    "revisionOperacionOk",
+                    "1"
             );
 
-            revision.setEstado(
-                    RevisionesReclamo.ESTADOS.NUEVO
+        } catch (RevisionesReclamosException e) {
+            SessionErrors.add(
+                    actionRequest,
+                    e.getClass().getName()
             );
 
-            revisiones.add(
-                    revision
-            );
-
-            session.setAttribute(
-                    WebKeysAutorizaciones
-                            .LISTADO_REVISIONES_RECLAMOS_EN_SESION,
-                    revisiones
+            actionResponse.setRenderParameter(
+                    "revisionOperacionOk",
+                    "0"
             );
         }
     }
@@ -203,7 +232,7 @@ public class ListaRevisionesAction extends PortletAction {
                         .getUsr_responsable_resolucion()
         )) {
 
-            throw new Exception(
+            throw new RevisionesReclamosException(
                     "Debe informar fecha, presentes, resolucion "
                             + "y responsable de resolucion."
             );
@@ -297,5 +326,91 @@ public class ListaRevisionesAction extends PortletAction {
 
         return valor == null
                 || valor.trim().length() == 0;
+    }
+
+    private void validarContextoComprasSiCorresponde(
+            HttpSession session,
+            ActionRequest actionRequest)
+            throws RevisionesReclamosException {
+
+        String nonceRequest =
+                ParamUtil.getString(
+                        actionRequest,
+                        WebKeysCompras
+                                .PARAM_RECLAMO_PRESTACIONAL_NONCE,
+                        ""
+                );
+
+        Object contextoObj =
+                session.getAttribute(
+                        WebKeysCompras
+                                .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                );
+
+        /*
+         * Sin contexto y sin nonce se conserva el flujo manual.
+         * Si existe un contexto de Compras, el nonce es obligatorio.
+         */
+        if (WebKeysCompras.isEmpty(
+                nonceRequest
+        )) {
+            if (contextoObj != null) {
+                throw new RevisionesReclamosException(
+                        "El contexto de Compras requiere "
+                                + "un nonce valido."
+                );
+            }
+
+            return;
+        }
+
+        if (!(contextoObj
+                instanceof ReclamoPrestacionalCompraContexto)) {
+
+            throw new RevisionesReclamosException(
+                    "El contexto de Compras expiro "
+                            + "o ya no esta disponible."
+            );
+        }
+
+        ReclamoPrestacionalCompraContexto contexto =
+                (ReclamoPrestacionalCompraContexto)
+                        contextoObj;
+
+        User user;
+
+        try {
+            user =
+                    PortalUtil.getUser(
+                            actionRequest
+                    );
+        } catch (Exception e) {
+            throw new RevisionesReclamosException(
+                    "No se pudo determinar "
+                            + "el usuario actual.",
+                    e
+            );
+        }
+
+        String usuario =
+                user != null
+                        ? user.getScreenName()
+                        : "";
+
+        if (!contexto.coincideNonce(
+                nonceRequest
+        )
+                || !contexto.perteneceAUsuario(
+                usuario
+        )
+                || !contexto.estaVigente(
+                System.currentTimeMillis()
+        )) {
+
+            throw new RevisionesReclamosException(
+                    "El contexto de Compras no es valido "
+                            + "o vencio."
+            );
+        }
     }
 }

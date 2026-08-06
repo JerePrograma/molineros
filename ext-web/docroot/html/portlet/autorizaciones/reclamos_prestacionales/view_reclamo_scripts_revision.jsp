@@ -214,10 +214,6 @@ function <%= reclamoPortletNamespace %>agregarRevision() {
             }
         }
 
-        // oculta boton de agreagr revision porque solo se admite un aprobacion o un rechazo no hay parciales dentro del reclamo
-        jQuery("#<%= reclamoPortletNamespace %>botonrevision").hide();
-        jQuery("#<%= reclamoPortletNamespace %>mensajerevisionefectuada").html("Revisión Efectuada, el Sistema soporta solo una revisión activa (No de baja).");
-
          jQuery(
              '#<%= reclamoPortletNamespace %>lista_revisiones'
          ).load(
