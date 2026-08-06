@@ -785,7 +785,9 @@ public class IniciarReclamoPrestacionalCompraAction
     }
 
     private void prepararSesionParaConsulta(
-            HttpSession session) throws Exception {
+            HttpSession session,
+            int idRequerimientoCompra,
+            int idReclamoPrestacional) throws Exception {
 
         if (session == null) {
             throw new Exception(
@@ -793,16 +795,31 @@ public class IniciarReclamoPrestacionalCompraAction
             );
         }
 
-        synchronized (session) {
-            validarSinReclamoEnEdicion(
-                    session
-            );
+        if (idRequerimientoCompra <= 0
+                || idReclamoPrestacional <= 0) {
 
+            throw new Exception(
+                    "No se pudo determinar el Reclamo Prestacional "
+                            + "que debe consultarse."
+            );
+        }
+
+        synchronized (session) {
             Object contextoObj =
                     session.getAttribute(
                             WebKeysCompras
                                     .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
                     );
+
+            if (contextoObj != null
+                    && !(contextoObj
+                    instanceof ReclamoPrestacionalCompraContexto)) {
+
+                throw new Exception(
+                        "Existe un contexto temporal inválido "
+                                + "en la sesión."
+                );
+            }
 
             if (contextoObj
                     instanceof ReclamoPrestacionalCompraContexto) {
@@ -811,22 +828,100 @@ public class IniciarReclamoPrestacionalCompraAction
                         (ReclamoPrestacionalCompraContexto)
                                 contextoObj;
 
+                /*
+                 * Si el contexto corresponde al requerimiento que ya quedó
+                 * vinculado, el borrador temporal debe descartarse para que
+                 * Autorizaciones cargue el RP persistido.
+                 */
+                if (contexto.getIdRequerimientoCompra()
+                        == idRequerimientoCompra) {
+
+                    limpiarBorradorComprasEnSesion(
+                            session
+                    );
+
+                    return;
+                }
+
+                /*
+                 * No se destruye un borrador vigente perteneciente a otro
+                 * requerimiento.
+                 */
                 if (contexto.estaVigente(
                         System.currentTimeMillis()
                 )) {
 
                     throw new Exception(
                             "Ya existe un inicio de Reclamo Prestacional "
-                                    + "desde Compras en proceso en esta "
-                                    + "sesión. Finalícelo o descarte esa "
-                                    + "edición antes de consultar otro."
+                                    + "desde Compras en proceso para el "
+                                    + "requerimiento "
+                                    + contexto.getIdRequerimientoCompra()
+                                    + ". Finalícelo o descártelo antes "
+                                    + "de consultar otro."
                     );
                 }
+
+                /*
+                 * El contexto venció. Se elimina sólo el contexto; cualquier
+                 * edición ordinaria restante se valida a continuación.
+                 */
+                session.removeAttribute(
+                        WebKeysCompras
+                                .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                );
             }
 
-            session.removeAttribute(
-                    WebKeysCompras
-                            .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+            Object reclamoObj =
+                    session.getAttribute(
+                            WebKeysAutorizaciones
+                                    .RECLAMO_PRESTACION_EN_EDICION
+                    );
+
+            if (reclamoObj == null) {
+                if (hayEstadoEdicionEnSesion(
+                        session
+                )) {
+
+                    throw new Exception(
+                            "Existe información parcial de otro Reclamo "
+                                    + "Prestacional en edición en esta sesión."
+                    );
+                }
+
+                return;
+            }
+
+            if (!(reclamoObj
+                    instanceof ReclamoPrestacional)) {
+
+                throw new Exception(
+                        "Existe un Reclamo Prestacional inválido "
+                                + "en la sesión."
+                );
+            }
+
+            ReclamoPrestacional reclamoEnEdicion =
+                    (ReclamoPrestacional)
+                            reclamoObj;
+
+            /*
+             * Si ya estaba cargado el mismo RP persistido, se limpia para que
+             * la consulta lo recupere nuevamente desde base de datos.
+             */
+            if (reclamoEnEdicion.getId_reclamo()
+                    == idReclamoPrestacional) {
+
+                limpiarBorradorComprasEnSesion(
+                        session
+                );
+
+                return;
+            }
+
+            throw new Exception(
+                    "Ya existe otro Reclamo Prestacional en edición "
+                            + "en esta sesión. Finalícelo o descártelo "
+                            + "antes de navegar desde Compras."
             );
         }
     }
@@ -1028,5 +1123,50 @@ public class IniciarReclamoPrestacionalCompraAction
                     otro.portletId
             );
         }
+    }
+
+    private void liberarReservaInicioFallido(
+            ReclamoPrestacionalCompraContexto contexto,
+            String usuario) {
+
+        if (contexto == null
+                || contexto.getIdRequerimientoCompra() <= 0
+                || WebKeysCompras.isEmpty(
+                contexto.getNonce()
+        )) {
+
+            return;
+        }
+
+        try {
+            RequerimientoCompraReclamoPrestacionalServiceUtil
+                    .liberarReserva(
+                            contexto.getIdRequerimientoCompra(),
+                            contexto.getNonce(),
+                            usuario
+                    );
+
+        } catch (Exception liberarError) {
+            _log.error(
+                    "No se pudo liberar la reserva creada durante "
+                            + "un inicio fallido de Reclamo Prestacional. "
+                            + "idRequerimiento="
+                            + contexto.getIdRequerimientoCompra(),
+                    liberarError
+            );
+        }
+    }
+
+    private String normalizarCuil(
+            String value) {
+
+        if (value == null) {
+            return "";
+        }
+
+        return value.replaceAll(
+                "[^0-9]",
+                ""
+        );
     }
 }
