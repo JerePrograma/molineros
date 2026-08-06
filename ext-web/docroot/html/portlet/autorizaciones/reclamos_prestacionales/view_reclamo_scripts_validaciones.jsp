@@ -430,7 +430,20 @@ function validaMontosEdicion(){
     var recuperable  =  jQuery('#<%= reclamoPortletNamespace %>recuperable_surEdicion').val();
 
     var importeFC = parseFloat(jQuery('#<%= reclamoPortletNamespace %>importeFC').val());
-    var importeFCEdicion = parseFloat(jQuery('#<%= reclamoPortletNamespace %>importeFC_edicion').val());
+    var importeFCEdicionRaw =
+            jQuery(
+                '#<%= reclamoPortletNamespace %>importeFC_edicion'
+            ).val();
+
+    var importeFCEdicion =
+            parseFloat(
+                String(
+                    importeFCEdicionRaw || ""
+                ).replace(
+                    ",",
+                    "."
+                )
+            );
     if(isNaN(importeFC)) {
 //	jQuery('#<%= reclamoPortletNamespace %>importeFC').val();
        importeFC=0;
@@ -464,8 +477,19 @@ cargopsdouble= parseFloat(strcargops.replace(',','.'));
     var importeAreaMedica = Math.round((importedouble) * 100) / 100;
     var importeFactura = Math.round((importeFCEdicion) * 100) / 100;
 
-    if( importeAreaMedica - importeFactura   >  .01){
-        alert('El importe autorizado por el Area Médica no puede superar el Importe de la Factura. Area Medica: ' + importeAreaMedica +" - Comprobante: " +importeFactura);
+    if (
+        importeFactura > 0 &&
+        importeAreaMedica - importeFactura > .01
+    ) {
+        alert(
+            'El importe autorizado por el Area Médica ' +
+            'no puede superar el Importe de la Factura. ' +
+            'Area Medica: ' +
+            importeAreaMedica +
+            ' - Comprobante: ' +
+            importeFactura
+        );
+
         return false;
     }
 
