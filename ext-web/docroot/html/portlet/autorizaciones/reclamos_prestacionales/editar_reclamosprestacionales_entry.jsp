@@ -168,7 +168,13 @@ if (!StringUtils.checkEmpty(contextoCompraNonce)
 		
 <c:choose>
 	<c:when test='<%= tabValue.equals("datos") %>'>
-		<liferay-util:include page="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp"/>
+		<liferay-util:include
+			page="/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp">
+			<liferay-util:param
+				name="cmd"
+				value="<%= cmd %>"
+			/>
+		</liferay-util:include>
 	</c:when>
 	<c:when test='<%= tabValue.equals("cta_bancaria") %>'>
 		<liferay-util:include page="/html/portlet/autorizaciones/reclamos_prestacionales/cta_bancaria_reclamo.jsp"/>
