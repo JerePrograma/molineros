@@ -625,31 +625,67 @@ span-fixed-size {
 								</table></td>
 
 								<td colspan="1">&nbsp;&nbsp;&nbsp;&nbsp;</td>
-								<td><label id="integracion_label"  style="display:none"><liferay-ui:message key="integracion"  />:&nbsp;&nbsp;</label></td>
-								<td>
+
+                                <td>
+                                    <label
+                                        id="integracion_label"
+                                        style="display:none">
+                                        <liferay-ui:message key="integracion" />:&nbsp;&nbsp;
+                                    </label>
+                                </td>
+
+                                <td>
                                     <select
                                         name="<%= reclamoPortletNamespace %>integracion"
                                         id="<%= reclamoPortletNamespace %>integracion"
-                                        <% if (!esEdicion) { %> disabled="disabled" <% } %>
+                                        <% if (!esEdicion) { %>
+                                            disabled="disabled"
+                                        <% } %>
                                         style="display:none">
-										<option value="0">Seleccione Integración</option>
-											<% for (ReclamosPrestacionalesIntegracion integracion : listaIntegracion) { %>
-												<option
-													<%=reclamoprestacional != null  && reclamoprestacional.getCodigoIntegracion() == integracion.getId() ? "selected" : ""  %>
-													value="<%= integracion.getId() %>"><%=integracion.getDescripcion()%>
-												</option>
-												<% } %>
-												
-								</select>
-								</td>
-								<td colspan="1">&nbsp;&nbsp;&nbsp;&nbsp;</td>
-								
-								<td>								
-								<div id="integracion_div"  style="display:none">
-									<img id="integracion_desc"   height='16'  width='16'  src='/html/themes/classic/images/common/help.png' title=''   />
-									</div>
-								</td>
-							<td>
+
+                                        <option
+                                            value="0"
+                                            <%= reclamoprestacional == null
+                                                    || reclamoprestacional.getCodigoIntegracion() == 0
+                                                    ? "selected=\"selected\""
+                                                    : "" %>>
+                                            Seleccione Integración
+                                        </option>
+
+                                        <% for (ReclamosPrestacionalesIntegracion integracion
+                                                : listaIntegracion) { %>
+
+                                            <option
+                                                value="<%= integracion.getId() %>"
+                                                <%= reclamoprestacional != null
+                                                        && reclamoprestacional.getCodigoIntegracion()
+                                                                == integracion.getId()
+                                                        ? "selected=\"selected\""
+                                                        : "" %>>
+                                                <%= integracion.getDescripcion() %>
+                                            </option>
+
+                                        <% } %>
+
+                                    </select>
+                                </td>
+
+                                <td>
+                                    <div
+                                        id="integracion_div"
+                                        style="display:none">
+
+                                        <img
+                                            id="integracion_desc"
+                                            height="16"
+                                            width="16"
+                                            src="/html/themes/classic/images/common/help.png"
+                                            title="" />
+
+                                    </div>
+                                </td>
+
+                                <td colspan="1">&nbsp;&nbsp;&nbsp;&nbsp;</td>
 							<td colspan="1">&nbsp;&nbsp;&nbsp;&nbsp;</td>
 							<td colspan="1"><label><liferay-ui:message key="Estado" />: &nbsp;</label></td>
 							<td><table>
@@ -662,22 +698,22 @@ span-fixed-size {
 												<option value="-1">SELECCIONE</option>
 												<% for (EstadosReclamosPrestacionales estados : listaestados) { %>
 													<%if(cmd!=null && cmd.equalsIgnoreCase(Constants.ADD) &&  estados.getId()==0){ %>
-	
+
 													<% } else{%>
-													
+
 														<option
 															<%= reclamoprestacional != null  && reclamoprestacional.getEstado() == estados.getId() ? "selected" : ""  %>
 															value="<%= estados.getId() %>"><%=estados.getDescripcion()%>
-														</option>												
+														</option>
 													<% } %>
 												<% } %>
 
 										</select></td>
-										
+
 									</tr>
-																	
+
 								</table></td>
-						</tr>												
+						</tr>
 		</table>
 
 		<br>
