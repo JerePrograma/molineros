@@ -521,21 +521,32 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
             for (ReclamosPrestacionalesIntegracion integracion
                     : integraciones) {
 
-                if (integracion == null
-                        || integracion.getDescripcion() == null) {
-
+                if (integracion == null) {
                     continue;
                 }
 
                 String descripcion =
-                        integracion
-                                .getDescripcion()
-                                .trim();
+                        integracion.getDescripcion();
 
-                if (!DESCRIPCION_INTEGRACION_CABECERA_NO_RECUPERABLE
-                        .equalsIgnoreCase(
-                                descripcion
-                        )) {
+                String descripcionLarga =
+                        integracion.getDescripcionLarga();
+
+                boolean coincideDescripcion =
+                        descripcion != null
+                                && DESCRIPCION_INTEGRACION_CABECERA_NO_RECUPERABLE
+                                .equalsIgnoreCase(
+                                        descripcion.trim()
+                                );
+
+                boolean coincideDescripcionLarga =
+                        descripcionLarga != null
+                                && DESCRIPCION_INTEGRACION_CABECERA_NO_RECUPERABLE
+                                .equalsIgnoreCase(
+                                        descripcionLarga.trim()
+                                );
+
+                if (!coincideDescripcion
+                        && !coincideDescripcionLarga) {
 
                     continue;
                 }

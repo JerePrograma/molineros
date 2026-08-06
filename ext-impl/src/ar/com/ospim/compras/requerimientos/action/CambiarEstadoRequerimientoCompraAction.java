@@ -388,9 +388,14 @@ public class CambiarEstadoRequerimientoCompraAction
         if (hayEmailsInvalidos
                 || hayErroresTecnicos) {
 
+            boolean cambioAAcotizarConfirmado =
+                    cambiaAAcotizar
+                            && estadoPersistido
+                            == WebKeysCompras.ESTADO_A_COTIZAR;
+
             SessionMessages.add(
                     actionRequest,
-                    cambiaAAcotizar
+                    cambioAAcotizarConfirmado
                             ? "requerimiento-compra-enviado-a-cotizar-con-errores"
                             : "cotizacion-prestadores-notificados-con-errores"
             );
@@ -398,7 +403,12 @@ public class CambiarEstadoRequerimientoCompraAction
             return;
         }
 
-        if (cambiaAAcotizar) {
+        boolean cambioAAcotizarConfirmado =
+                cambiaAAcotizar
+                        && estadoPersistido
+                        == WebKeysCompras.ESTADO_A_COTIZAR;
+
+        if (cambioAAcotizarConfirmado) {
             SessionMessages.add(
                     actionRequest,
                     "requerimiento-compra-enviado-a-cotizar"

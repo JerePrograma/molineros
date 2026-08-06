@@ -626,8 +626,12 @@ span-fixed-size {
 
 								<td colspan="1">&nbsp;&nbsp;&nbsp;&nbsp;</td>
 								<td><label id="integracion_label"  style="display:none"><liferay-ui:message key="integracion"  />:&nbsp;&nbsp;</label></td>
-								<td><select name="<%= reclamoPortletNamespace %>integracion" id="<%= reclamoPortletNamespace %>integracion"
-									<% if (!esEdicion) { %> disabled='disabled' <%}%> style15"display:none"  >												
+								<td>
+                                    <select
+                                        name="<%= reclamoPortletNamespace %>integracion"
+                                        id="<%= reclamoPortletNamespace %>integracion"
+                                        <% if (!esEdicion) { %> disabled="disabled" <% } %>
+                                        style="display:none">
 										<option value="0">Seleccione Integración</option>
 											<% for (ReclamosPrestacionalesIntegracion integracion : listaIntegracion) { %>
 												<option

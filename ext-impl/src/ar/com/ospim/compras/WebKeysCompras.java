@@ -138,6 +138,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String ENVIO_PENDIENTE = "PENDIENTE";
     public static final String ENVIO_PROCESANDO = "PROCESANDO";
     public static final String ENVIO_ENVIADO = "ENVIADO";
+    public static final String ENVIO_ENVIADO_QA = "ENVIADO_QA";
     public static final String ENVIO_COTIZADO = "COTIZADO";
     public static final String ENVIO_ERROR = "ERROR";
     public static final String ENVIO_EMAIL_INVALIDO = "EMAIL_INVALIDO";

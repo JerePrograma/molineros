@@ -57,9 +57,24 @@ for (int i = 0; i < prestadores.size(); i++) {
 %>
         {
             "id": "<%= prestador.getIdPrestador() %>",
-            "cuit": "<%= jsonPrestadorCompra(prestador.getCuitVisible()) %>",
-            "razonSocial": "<%= jsonPrestadorCompra(prestador.getDescripcionVisible()) %>",
-            "label": "<%= jsonPrestadorCompra(prestador.getEtiquetaVisible()) %>"
+            "cuit": "<%= jsonPrestadorCompra(
+                    prestador.getCuitVisible()
+            ) %>",
+            "razonSocial": "<%= jsonPrestadorCompra(
+                    prestador.getDescripcionVisible()
+            ) %>",
+            "label": "<%= jsonPrestadorCompra(
+                    prestador.getEtiquetaVisible()
+            ) %>",
+            "emailActual": "<%= jsonPrestadorCompra(
+                    prestador.getEmailVisible()
+            ) %>",
+            "emailDestino": "<%= jsonPrestadorCompra(
+                    prestador.getEmailDestinoVisible()
+            ) %>",
+            "estadoEnvio": "<%= jsonPrestadorCompra(
+                    prestador.getEstadoEnvioVisible()
+            ) %>"
         }
 <%
 }

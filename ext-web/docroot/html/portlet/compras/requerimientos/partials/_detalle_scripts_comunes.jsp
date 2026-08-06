@@ -26,8 +26,21 @@
     %>
             <portlet:namespace />prestadoresEnviadosDetalleCache.push({
                 id: '<%= prestadorDetalle.getIdPrestador() %>',
+
                 label: '<%= jsDetalleCompra(
                         prestadorDetalle.getEtiquetaVisible()
+                ) %>',
+
+                emailActual: '<%= jsDetalleCompra(
+                        prestadorDetalle.getEmailVisible()
+                ) %>',
+
+                emailDestino: '<%= jsDetalleCompra(
+                        prestadorDetalle.getEmailDestinoVisible()
+                ) %>',
+
+                estadoEnvio: '<%= jsDetalleCompra(
+                        prestadorDetalle.getEstadoEnvioVisible()
                 ) %>'
             });
     <%

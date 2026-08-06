@@ -572,11 +572,16 @@ public class NotificarCotizacionPrestadorServiceImpl {
          * El helper de correo aceptó el mensaje.
          * Recién ahora se intenta persistir ENVIADO.
          */
+        String estadoEnvioPersistido =
+                USAR_EMAIL_DESTINO_TEMPORAL
+                        ? WebKeysCompras.ENVIO_ENVIADO_QA
+                        : WebKeysCompras.ENVIO_ENVIADO;
+
         boolean enviadoPersistido =
                 finalizarConControl(
                         idRequerimiento,
                         idPrestador,
-                        WebKeysCompras.ENVIO_ENVIADO,
+                        estadoEnvioPersistido,
                         null,
                         usuario
                 );

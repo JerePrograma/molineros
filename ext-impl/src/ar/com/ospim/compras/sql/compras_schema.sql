@@ -223,6 +223,7 @@ CREATE TABLE compras.requerimiento_cotizacion_prestador (
                                                                                      'PENDIENTE',
                                                                                      'PROCESANDO',
                                                                                      'ENVIADO',
+                                                                                     'ENVIADO_QA',
                                                                                      'COTIZADO',
                                                                                      'ERROR',
                                                                                      'EMAIL_INVALIDO'
@@ -234,9 +235,12 @@ CREATE TABLE compras.requerimiento_cotizacion_prestador (
 
                                                             CONSTRAINT ck_compras_cotizacion_fecha_envio
                                                                 CHECK (
-                                                                    estado_envio NOT IN ('ENVIADO', 'COTIZADO')
+                                                                    estado_envio NOT IN (
+                                                                                         'ENVIADO',
+                                                                                         'ENVIADO_QA',
+                                                                                         'COTIZADO'
+                                                                        )
                                                                         OR fecha_envio IS NOT NULL
-                                                                    )
 );
 
 CREATE INDEX ix_compras_cotizacion_requerimiento_estado
@@ -532,122 +536,6 @@ SELECT setval(
 -- =====================================================================
 -- FUNCIONES AUXILIARES
 -- =====================================================================
-
-CREATE OR REPLACE FUNCTION
-compras.resolver_email_cotizacion_prestador(
-    p_id_prestador INTEGER
-)
-RETURNS VARCHAR
-LANGUAGE sql
-STABLE
-AS
-$function$
-
-SELECT candidato.email
-FROM (
-         /*
-          * Prioridad 1:
-          * contacto de cabecera, únicamente si parece un email.
-          */
-         SELECT
-             1::INTEGER AS prioridad_fuente,
-             0::INTEGER AS prioridad_domicilio,
-             COALESCE(
-                     p.modi_fecha,
-                     p.alta_fecha
-             ) AS fecha_orden,
-             NULL::INTEGER AS id_contacto_e,
-             NULLIF(
-                     BTRIM(p.contacto),
-                     ''
-             )::VARCHAR AS email
-
-         FROM public.prestador p
-
-         WHERE p.id_prestador = p_id_prestador
-           AND p.baja_fecha IS NULL
-
-         UNION ALL
-
-         /*
-          * Prioridad 2:
-          * contactos electrónicos de tipo EMAIL.
-          */
-         SELECT
-             2::INTEGER AS prioridad_fuente,
-
-             CASE
-                 WHEN pce.id_domicilio IS NULL
-                     THEN 0
-                 ELSE 1
-                 END AS prioridad_domicilio,
-
-             COALESCE(
-                     ce.modi_fecha,
-                     ce.alta_fecha,
-                     ce.vigen_desde,
-                     pce.vigen_desde
-             ) AS fecha_orden,
-
-             ce.id_contacto_e,
-
-             NULLIF(
-                     BTRIM(ce.contacto),
-                     ''
-             )::VARCHAR AS email
-
-         FROM public.prestad_contacto_e pce
-
-                  INNER JOIN public.contacto_e ce
-                             ON ce.id_contacto_e = pce.id_contacto_e
-
-         WHERE pce.id_prestador = p_id_prestador
-
-             /*
-              * Solo email normal.
-              * No F, P, S ni EC.
-              */
-           AND UPPER(
-                       BTRIM(
-                               COALESCE(
-                                       ce.tipo_contacto_e,
-                                       ''
-                               )
-                       )
-               ) = 'E'
-
-           AND ce.baja_fecha IS NULL
-
-           AND (
-             pce.vigen_desde IS NULL
-                 OR pce.vigen_desde <= LOCALTIMESTAMP
-             )
-
-           AND (
-             ce.vigen_desde IS NULL
-                 OR ce.vigen_desde <= LOCALTIMESTAMP
-             )
-
-     ) candidato
-
-WHERE candidato.email IS NOT NULL
-
-  AND candidato.email
-    ~* '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'
-
-ORDER BY
-    candidato.prioridad_fuente,
-    candidato.prioridad_domicilio,
-    candidato.fecha_orden DESC NULLS LAST,
-    candidato.id_contacto_e DESC NULLS LAST
-
-    LIMIT 1;
-
-$function$;
-
-ALTER FUNCTION
-    compras.resolver_email_cotizacion_prestador(INTEGER)
-    OWNER TO postgres;
 
 CREATE FUNCTION compras.normalizar_usuario(
     p_usuario VARCHAR
@@ -3031,6 +2919,129 @@ LANGUAGE plpgsql;
 -- PRESTADORES PARA COTIZACION
 -- =====================================================================
 
+CREATE OR REPLACE FUNCTION
+compras.resolver_email_cotizacion_prestador(
+    p_id_prestador INTEGER
+)
+RETURNS VARCHAR
+LANGUAGE sql
+STABLE
+AS
+$function$
+SELECT
+    candidato.email
+FROM (
+         /*
+          * Prioridad 1:
+          * contacto general de la cabecera del prestador.
+          *
+          * Solo será utilizado si supera la validacion de formato
+          * aplicada fuera del UNION.
+          */
+         SELECT
+             1::INTEGER AS prioridad_fuente,
+             0::INTEGER AS prioridad_domicilio,
+             NULL::TIMESTAMP WITHOUT TIME ZONE AS fecha_orden,
+        NULL::INTEGER AS id_contacto_e,
+
+        NULLIF(
+            BTRIM(p.contacto),
+            ''
+        )::VARCHAR AS email
+
+         FROM public.prestador p
+
+         WHERE p.id_prestador = p_id_prestador
+           AND p.baja_fecha IS NULL
+
+         UNION ALL
+
+         /*
+          * Prioridad 2:
+          * contactos electronicos expresamente clasificados como EMAIL.
+          *
+          * No se consideran:
+          *
+          * F  = fax
+          * P  = personal
+          * S  = sitio web
+          * EC = email relacionado con CBU
+          */
+         SELECT
+             2::INTEGER AS prioridad_fuente,
+
+             CASE
+             WHEN pce.id_domicilio IS NULL
+             THEN 0
+             ELSE 1
+             END::INTEGER AS prioridad_domicilio,
+
+             COALESCE(
+             ce.modi_fecha,
+             ce.alta_fecha,
+             ce.vigen_desde::TIMESTAMP
+             ) AS fecha_orden,
+
+             ce.id_contacto_e::INTEGER,
+
+             NULLIF(
+             BTRIM(ce.contacto),
+             ''
+             )::VARCHAR AS email
+
+         FROM public.prestad_contacto_e pce
+
+             INNER JOIN public.contacto_e ce
+         ON ce.id_contacto_e =
+             pce.id_contacto_e
+
+             INNER JOIN public.prestador p
+             ON p.id_prestador =
+             pce.id_prestador
+             AND p.baja_fecha IS NULL
+
+         WHERE pce.id_prestador =
+             p_id_prestador
+
+           AND UPPER(
+             BTRIM(
+             COALESCE(
+             ce.tipo_contacto_e,
+             ''
+             )
+             )
+             ) = 'E'
+
+           AND ce.baja_fecha IS NULL
+
+           AND (
+             ce.vigen_desde IS NULL
+            OR ce.vigen_desde <= CURRENT_DATE
+             )
+     ) candidato
+
+WHERE candidato.email IS NOT NULL
+
+    /*
+     * Validacion basica y deliberadamente conservadora.
+     * La validacion definitiva tambien se realiza en Java.
+     */
+  AND candidato.email
+    ~* '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'
+
+ORDER BY
+    candidato.prioridad_fuente,
+    candidato.prioridad_domicilio,
+    candidato.fecha_orden DESC NULLS LAST,
+    candidato.id_contacto_e DESC NULLS LAST
+
+    LIMIT 1;
+$function$;
+
+ALTER FUNCTION
+    compras.resolver_email_cotizacion_prestador(INTEGER)
+    OWNER TO postgres;
+
 CREATE FUNCTION compras.listar_prestadores_cotizacion_requerimiento(
     p_id_requerimiento INTEGER
 )
@@ -3049,10 +3060,9 @@ SELECT DISTINCT
     p.id_prestador::INTEGER,
     p.descripcion::VARCHAR,
     p.cuit::VARCHAR,
-    NULLIF(
-            btrim(p.contacto),
-            ''
-    )::VARCHAR,
+    compras.resolver_email_cotizacion_prestador(
+            p.id_prestador
+    )::VARCHAR AS email,
     p.id_tipo_prestador::INTEGER,
     tp.descripcion::VARCHAR
 FROM compras.requerimiento r
@@ -3094,7 +3104,8 @@ WHERE r.id_requerimiento =
                 OR rcp.estado_envio IN (
                                         'PENDIENTE',
                                         'ERROR',
-                                        'EMAIL_INVALIDO'
+                                        'EMAIL_INVALIDO',
+                                        'ENVIADO_QA'
                 )
             )
         )
@@ -3122,11 +3133,12 @@ BEGIN
         p_usuario
     );
 
-SELECT NULLIF(
-               btrim(p.contacto),
-               ''
-       )::VARCHAR
-INTO v_email
+SELECT
+    compras.resolver_email_cotizacion_prestador(
+            p_id_prestador
+    )
+INTO
+    v_email
 FROM compras.requerimiento r
          JOIN compras.sector_tipo_prestador stp
               ON stp.id_sector =
@@ -3236,6 +3248,7 @@ BEGIN
 
     IF v_estado NOT IN (
         'ENVIADO',
+        'ENVIADO_QA',
         'ERROR',
         'EMAIL_INVALIDO'
     ) THEN
@@ -3259,14 +3272,20 @@ SET estado_envio = v_estado,
 
     fecha_envio =
         CASE
-            WHEN v_estado = 'ENVIADO'
+            WHEN v_estado IN (
+                              'ENVIADO',
+                              'ENVIADO_QA'
+                )
                 THEN now()
             ELSE NULL
             END,
 
     ultimo_error =
         CASE
-            WHEN v_estado = 'ENVIADO'
+            WHEN v_estado IN (
+                              'ENVIADO',
+                              'ENVIADO_QA'
+                )
                 THEN NULL
             ELSE v_error
             END,
@@ -3333,7 +3352,9 @@ SELECT DISTINCT
     p.id_prestador::INTEGER,
     p.descripcion::VARCHAR,
     p.cuit::VARCHAR,
-    p.contacto::VARCHAR,
+    compras.resolver_email_cotizacion_prestador(
+            p.id_prestador
+    )::VARCHAR AS email,
     p.id_tipo_prestador::INTEGER,
     tp.descripcion::VARCHAR
 FROM compras.requerimiento r
@@ -3423,9 +3444,8 @@ SELECT DISTINCT
     p.descripcion::VARCHAR,
     p.cuit::VARCHAR,
 
-    NULLIF(
-            btrim(p.contacto),
-            ''
+    compras.resolver_email_cotizacion_prestador(
+            p.id_prestador
     )::VARCHAR AS email,
 
     NULLIF(
@@ -4593,47 +4613,75 @@ IF NOT FOUND THEN
 END IF;
 
 SELECT
-    NULLIF(
-            BTRIM(p.contacto),
-            ''
-    )
+    r.id_sector
 INTO
-    v_email_real
+    v_id_sector
+FROM compras.requerimiento r
+WHERE r.id_requerimiento = p_id_requerimiento
+  AND r.baja_fecha IS NULL;
+
+IF NOT FOUND THEN
+    RAISE EXCEPTION
+        'No existe el requerimiento activo %.',
+        p_id_requerimiento;
+END IF;
+
+/*
+ * Primero se valida la existencia funcional del prestador.
+ *
+ * No se usa el resultado de esta consulta para resolver
+ * el email. La validacion y la resolucion son responsabilidades
+ * separadas.
+ */
+PERFORM 1
 FROM public.prestador p
 WHERE p.id_prestador = p_id_prestador
   AND COALESCE(
-              p.solicitar_cotizacion,
-              FALSE
+          p.solicitar_cotizacion,
+          FALSE
       ) = TRUE
   AND p.baja_fecha IS NULL;
 
 IF NOT FOUND THEN
-        RAISE EXCEPTION
-            'El prestador % no existe, esta dado de baja '
-            'o no esta habilitado para cotizar.',
-            p_id_prestador;
+    RAISE EXCEPTION
+        'El prestador % no existe, esta dado de baja '
+        'o no esta habilitado para cotizar.',
+        p_id_prestador;
 END IF;
 
-    IF NOT EXISTS (
-        SELECT
-            1
-        FROM public.prestador p
-        INNER JOIN compras.sector_tipo_prestador stp
-            ON stp.id_tipo_prestador =
-                p.id_tipo_prestador
-           AND stp.id_sector =
-                v_id_sector
-           AND stp.activo = TRUE
-           AND stp.baja_fecha IS NULL
-        WHERE p.id_prestador =
+/*
+ * Se obtiene el destinatario mediante la politica canonica.
+ *
+ * Puede devolver NULL. Eso no constituye una falla de reserva:
+ * el servicio Java debe clasificarlo como EMAIL_INVALIDO
+ * o como advertencia cuando se utiliza el destino temporal.
+ */
+SELECT
+    compras.resolver_email_cotizacion_prestador(
             p_id_prestador
-          AND p.baja_fecha IS NULL
-    ) THEN
+    )
+INTO
+    v_email_real;
 
-        RAISE EXCEPTION
-            'El prestador % no es compatible con el sector %.',
-            p_id_prestador,
-            v_id_sector;
+IF NOT EXISTS (
+    SELECT
+        1
+    FROM public.prestador p
+    INNER JOIN compras.sector_tipo_prestador stp
+        ON stp.id_tipo_prestador =
+            p.id_tipo_prestador
+       AND stp.id_sector =
+            v_id_sector
+       AND stp.activo = TRUE
+       AND stp.baja_fecha IS NULL
+    WHERE p.id_prestador =
+        p_id_prestador
+      AND p.baja_fecha IS NULL
+) THEN
+    RAISE EXCEPTION
+        'El prestador % no es compatible con el sector %.',
+        p_id_prestador,
+        v_id_sector;
 END IF;
 
     /*
