@@ -1146,8 +1146,7 @@ jQuery(document).bind(
                     "<%= reclamoPortletNamespace %>"
                     + "fechaPrestacionAnioEdicion"
         ) {
-            <%= reclamoPortletNamespace %>
-                actualizarAfiliadoPorFechaPrestacionEdicion();
+            <%= reclamoPortletNamespace %>actualizarAfiliadoPorFechaPrestacionEdicion();
         }
     }
 );

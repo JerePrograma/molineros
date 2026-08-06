@@ -686,8 +686,7 @@ function <%= reclamoPortletNamespace %>cancelaEdicionPrestacion() {
         + "datos_prestacion_ingreso"
     ).show();
 
-    <%= reclamoPortletNamespace %>
-        limpiarNomencladorAutocompletar();
+    <%= reclamoPortletNamespace %>limpiarNomencladorAutocompletar();
 
     onOffcombosestadosprestaciones(
         true
