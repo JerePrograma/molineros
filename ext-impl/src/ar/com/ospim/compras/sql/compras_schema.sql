@@ -39,10 +39,6 @@
 -- Requiere que el esquema compras no exista al comenzar.
 -- Si la sesion esta abortada, ejecutar ROLLBACK antes de este archivo.
 -- =====================================================================
-
-\set ON_ERROR_STOP on
-\encoding LATIN1
-
 BEGIN;
 
 CREATE SCHEMA compras;
