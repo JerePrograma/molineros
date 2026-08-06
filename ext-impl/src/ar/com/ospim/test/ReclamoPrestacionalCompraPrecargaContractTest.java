@@ -29,6 +29,16 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
                 "ext-web/docroot/html/portlet/autorizaciones/"
                         + "reclamos_prestacionales/view_reclamo.jsp"
         );
+        String entry = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/"
+                        + "editar_reclamosprestacionales_entry.jsp"
+        );
+        String scripts = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/"
+                        + "view_reclamo_scripts_inicial.jsp"
+        );
 
         String validacion = extraerMetodo(
                 service,
@@ -177,6 +187,26 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
                 ".insertar(reclamoPrestacional, user)"
         );
 
+        String processAction = extraerMetodo(
+                guardar,
+                "public void processAction("
+        );
+        contiene(
+                processAction,
+                "action recibe el nonce del formulario",
+                "WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE"
+        );
+        antes(
+                processAction,
+                "String contextoCompraNonce = ParamUtil.getString(",
+                "actionResponse.setRenderParameter("
+        );
+        contiene(
+                processAction,
+                "action conserva el nonce para el render",
+                "actionResponse.setRenderParameter("
+        );
+
         contiene(
                 view,
                 "vista monolitica valida el contexto",
@@ -196,6 +226,60 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
                 view,
                 "sin fuente comprimida",
                 "__JSP_STATIC_NAMESPACE_"
+        );
+
+        String formulario = extraerEntre(
+                view,
+                "<form name=\"<%= reclamoPortletNamespace %>reclamo_fm\"",
+                "</form>"
+        );
+        contiene(
+                formulario,
+                "formulario transporta el nonce de Compras",
+                "WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE"
+        );
+        contiene(
+                formulario,
+                "hidden usa exclusivamente el contexto validado",
+                "handoffReclamoComprasValido "
+                        + "? contextoReclamoCompras.getNonce() : \"\""
+        );
+
+        antes(
+                entry,
+                "cmd = Constants.ADD;",
+                "view_reclamo.jsp\">"
+        );
+        String includeView = extraerEntre(
+                entry,
+                "page=\"/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/view_reclamo.jsp\">",
+                "</liferay-util:include>"
+        );
+        contiene(
+                includeView,
+                "include transmite el comando normalizado",
+                "name=\"cmd\""
+        );
+        contiene(
+                includeView,
+                "include usa el ADD resuelto para el borrador",
+                "value=\"<%= cmd %>\""
+        );
+
+        String saveReclamo = extraerMetodo(
+                scripts,
+                "function <%= reclamoPortletNamespace %>saveReclamo()"
+        );
+        antes(
+                saveReclamo,
+                ".value = '<%= Constants.SAVE %>';",
+                "submitForm("
+        );
+        contiene(
+                saveReclamo,
+                "save envia el formulario completo",
+                ".<%= reclamoPortletNamespace %>reclamo_fm,"
         );
 
         System.out.println(
@@ -238,6 +322,25 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
         if (utf8 || utf16) {
             throw new AssertionError(path + " contiene BOM");
         }
+    }
+
+    private static String extraerEntre(
+            String contenido,
+            String inicio,
+            String fin) {
+
+        int posicionInicio = contenido.indexOf(inicio);
+        int posicionFin = contenido.indexOf(fin, posicionInicio);
+        if (posicionInicio < 0 || posicionFin < posicionInicio) {
+            throw new AssertionError(
+                    "No se encontro el bloque entre ["
+                            + inicio + "] y [" + fin + "]"
+            );
+        }
+        return contenido.substring(
+                posicionInicio,
+                posicionFin + fin.length()
+        );
     }
 
     private static String extraerMetodo(String contenido, String firma) {
