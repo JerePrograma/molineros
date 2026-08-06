@@ -36,9 +36,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
     private static final int RECUPERABLE_SUR = 1;
     private static final int NO_RECUPERABLE = 2;
     private static final int RECUPERABLE_INTEGRACION = 3;
-    private static final String
-            DESCRIPCION_INTEGRACION_CABECERA_NO_RECUPERABLE =
-            "NO RECUPERABLE";
+    private static final int CODIGO_INTEGRACION_NO_APLICA = 0;
     private static final String COMPROBANTE_TIPO_INICIAL = "OTR";
     private static final String
             COMPROBANTE_CUIT_SUCURSAL_INICIAL =
@@ -441,11 +439,11 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         );
 
         /*
-         * El flag recuperable de la cabecera es independiente del combo
-         * Integracion. El combo utiliza codigoIntegracion.
+         * Una cabecera no recuperable no tiene una integracion asociada.
+         * El cero representa la opcion sin integracion del editor legacy.
          */
         reclamo.setCodigoIntegracion(
-                resolverCodigoIntegracionCabeceraNoRecuperable()
+                CODIGO_INTEGRACION_NO_APLICA
         );
 
         reclamo.setDebitoPrestadora(
@@ -504,85 +502,6 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 .getSectorReclamoPrestacional(
                         sectorCompras
                 );
-    }
-
-    private static int
-    resolverCodigoIntegracionCabeceraNoRecuperable()
-            throws Exception {
-
-        List<ReclamosPrestacionalesIntegracion> integraciones =
-                TraeListasServiceUtil
-                        .getReclamosPrestacionalesIntegracion();
-
-        Integer codigoEncontrado =
-                null;
-
-        if (integraciones != null) {
-            for (ReclamosPrestacionalesIntegracion integracion
-                    : integraciones) {
-
-                if (integracion == null) {
-                    continue;
-                }
-
-                String descripcion =
-                        integracion.getDescripcion();
-
-                String descripcionLarga =
-                        integracion.getDescripcionLarga();
-
-                boolean coincideDescripcion =
-                        descripcion != null
-                                && DESCRIPCION_INTEGRACION_CABECERA_NO_RECUPERABLE
-                                .equalsIgnoreCase(
-                                        descripcion.trim()
-                                );
-
-                boolean coincideDescripcionLarga =
-                        descripcionLarga != null
-                                && DESCRIPCION_INTEGRACION_CABECERA_NO_RECUPERABLE
-                                .equalsIgnoreCase(
-                                        descripcionLarga.trim()
-                                );
-
-                if (!coincideDescripcion
-                        && !coincideDescripcionLarga) {
-
-                    continue;
-                }
-
-                if (integracion.getId() <= 0) {
-                    throw new Exception(
-                            "La integracion NO RECUPERABLE "
-                                    + "no tiene un codigo valido."
-                    );
-                }
-
-                if (codigoEncontrado != null
-                        && codigoEncontrado.intValue()
-                        != integracion.getId()) {
-
-                    throw new Exception(
-                            "Existe mas de una integracion "
-                                    + "NO RECUPERABLE."
-                    );
-                }
-
-                codigoEncontrado =
-                        Integer.valueOf(
-                                integracion.getId()
-                        );
-            }
-        }
-
-        if (codigoEncontrado == null) {
-            throw new Exception(
-                    "No se encontro la integracion "
-                            + "NO RECUPERABLE."
-            );
-        }
-
-        return codigoEncontrado.intValue();
     }
 
     /**
