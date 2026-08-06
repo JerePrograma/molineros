@@ -1,0 +1,890 @@
+diff --git a/ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java b/ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java
+index f5691f3e..2d5aed17 100644
+--- a/ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java
++++ b/ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java
+@@ -138,6 +138,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
+     public static final String ENVIO_PENDIENTE = "PENDIENTE";
+     public static final String ENVIO_PROCESANDO = "PROCESANDO";
+     public static final String ENVIO_ENVIADO = "ENVIADO";
++    public static final String ENVIO_ENVIADO_QA = "ENVIADO_QA";
+     public static final String ENVIO_COTIZADO = "COTIZADO";
+     public static final String ENVIO_ERROR = "ERROR";
+     public static final String ENVIO_EMAIL_INVALIDO = "EMAIL_INVALIDO";
+diff --git a/ext-impl/src/ar/com/ospim/compras/requerimientos/action/CambiarEstadoRequerimientoCompraAction.java b/ext-impl/src/ar/com/ospim/compras/requerimientos/action/CambiarEstadoRequerimientoCompraAction.java
+index 28d81b4f..7e1bc94c 100644
+--- a/ext-impl/src/ar/com/ospim/compras/requerimientos/action/CambiarEstadoRequerimientoCompraAction.java
++++ b/ext-impl/src/ar/com/ospim/compras/requerimientos/action/CambiarEstadoRequerimientoCompraAction.java
+@@ -388,9 +388,14 @@ public class CambiarEstadoRequerimientoCompraAction
+         if (hayEmailsInvalidos
+                 || hayErroresTecnicos) {
+ 
++            boolean cambioAAcotizarConfirmado =
++                    cambiaAAcotizar
++                            && estadoPersistido
++                            == WebKeysCompras.ESTADO_A_COTIZAR;
++
+             SessionMessages.add(
+                     actionRequest,
+-                    cambiaAAcotizar
++                    cambioAAcotizarConfirmado
+                             ? "requerimiento-compra-enviado-a-cotizar-con-errores"
+                             : "cotizacion-prestadores-notificados-con-errores"
+             );
+@@ -398,7 +403,12 @@ public class CambiarEstadoRequerimientoCompraAction
+             return;
+         }
+ 
+-        if (cambiaAAcotizar) {
++        boolean cambioAAcotizarConfirmado =
++                cambiaAAcotizar
++                        && estadoPersistido
++                        == WebKeysCompras.ESTADO_A_COTIZAR;
++
++        if (cambioAAcotizarConfirmado) {
+             SessionMessages.add(
+                     actionRequest,
+                     "requerimiento-compra-enviado-a-cotizar"
+diff --git a/ext-impl/src/ar/com/ospim/compras/requerimientos/service/NotificarCotizacionPrestadorServiceImpl.java b/ext-impl/src/ar/com/ospim/compras/requerimientos/service/NotificarCotizacionPrestadorServiceImpl.java
+index 6e44d5d3..58b403a4 100644
+--- a/ext-impl/src/ar/com/ospim/compras/requerimientos/service/NotificarCotizacionPrestadorServiceImpl.java
++++ b/ext-impl/src/ar/com/ospim/compras/requerimientos/service/NotificarCotizacionPrestadorServiceImpl.java
+@@ -572,11 +572,16 @@ public class NotificarCotizacionPrestadorServiceImpl {
+          * El helper de correo aceptó el mensaje.
+          * Recién ahora se intenta persistir ENVIADO.
+          */
++        String estadoEnvioPersistido =
++                USAR_EMAIL_DESTINO_TEMPORAL
++                        ? WebKeysCompras.ENVIO_ENVIADO_QA
++                        : WebKeysCompras.ENVIO_ENVIADO;
++
+         boolean enviadoPersistido =
+                 finalizarConControl(
+                         idRequerimiento,
+                         idPrestador,
+-                        WebKeysCompras.ENVIO_ENVIADO,
++                        estadoEnvioPersistido,
+                         null,
+                         usuario
+                 );
+diff --git a/ext-impl/src/ar/com/ospim/compras/requerimientos/service/ReclamoPrestacionalCompraPrecargaServiceUtil.java b/ext-impl/src/ar/com/ospim/compras/requerimientos/service/ReclamoPrestacionalCompraPrecargaServiceUtil.java
+index 560a074c..533a390a 100644
+--- a/ext-impl/src/ar/com/ospim/compras/requerimientos/service/ReclamoPrestacionalCompraPrecargaServiceUtil.java
++++ b/ext-impl/src/ar/com/ospim/compras/requerimientos/service/ReclamoPrestacionalCompraPrecargaServiceUtil.java
+@@ -521,21 +521,32 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
+             for (ReclamosPrestacionalesIntegracion integracion
+                     : integraciones) {
+ 
+-                if (integracion == null
+-                        || integracion.getDescripcion() == null) {
+-
++                if (integracion == null) {
+                     continue;
+                 }
+ 
+                 String descripcion =
+-                        integracion
+-                                .getDescripcion()
+-                                .trim();
+-
+-                if (!DESCRIPCION_INTEGRACION_CABECERA_NO_RECUPERABLE
+-                        .equalsIgnoreCase(
+-                                descripcion
+-                        )) {
++                        integracion.getDescripcion();
++
++                String descripcionLarga =
++                        integracion.getDescripcionLarga();
++
++                boolean coincideDescripcion =
++                        descripcion != null
++                                && DESCRIPCION_INTEGRACION_CABECERA_NO_RECUPERABLE
++                                .equalsIgnoreCase(
++                                        descripcion.trim()
++                                );
++
++                boolean coincideDescripcionLarga =
++                        descripcionLarga != null
++                                && DESCRIPCION_INTEGRACION_CABECERA_NO_RECUPERABLE
++                                .equalsIgnoreCase(
++                                        descripcionLarga.trim()
++                                );
++
++                if (!coincideDescripcion
++                        && !coincideDescripcionLarga) {
+ 
+                     continue;
+                 }
+diff --git a/ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql b/ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql
+index bc76cade..e24cbaac 100644
+--- a/ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql
++++ b/ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql
+@@ -223,6 +223,7 @@ CREATE TABLE compras.requerimiento_cotizacion_prestador (
+                                                                                      'PENDIENTE',
+                                                                                      'PROCESANDO',
+                                                                                      'ENVIADO',
++                                                                                     'ENVIADO_QA',
+                                                                                      'COTIZADO',
+                                                                                      'ERROR',
+                                                                                      'EMAIL_INVALIDO'
+@@ -234,9 +235,12 @@ CREATE TABLE compras.requerimiento_cotizacion_prestador (
+ 
+                                                             CONSTRAINT ck_compras_cotizacion_fecha_envio
+                                                                 CHECK (
+-                                                                    estado_envio NOT IN ('ENVIADO', 'COTIZADO')
++                                                                    estado_envio NOT IN (
++                                                                                         'ENVIADO',
++                                                                                         'ENVIADO_QA',
++                                                                                         'COTIZADO'
++                                                                        )
+                                                                         OR fecha_envio IS NOT NULL
+-                                                                    )
+ );
+ 
+ CREATE INDEX ix_compras_cotizacion_requerimiento_estado
+@@ -533,122 +537,6 @@ SELECT setval(
+ -- FUNCIONES AUXILIARES
+ -- =====================================================================
+ 
+-CREATE OR REPLACE FUNCTION
+-compras.resolver_email_cotizacion_prestador(
+-    p_id_prestador INTEGER
+-)
+-RETURNS VARCHAR
+-LANGUAGE sql
+-STABLE
+-AS
+-$function$
+-
+-SELECT candidato.email
+-FROM (
+-         /*
+-          * Prioridad 1:
+-          * contacto de cabecera, únicamente si parece un email.
+-          */
+-         SELECT
+-             1::INTEGER AS prioridad_fuente,
+-             0::INTEGER AS prioridad_domicilio,
+-             COALESCE(
+-                     p.modi_fecha,
+-                     p.alta_fecha
+-             ) AS fecha_orden,
+-             NULL::INTEGER AS id_contacto_e,
+-             NULLIF(
+-                     BTRIM(p.contacto),
+-                     ''
+-             )::VARCHAR AS email
+-
+-         FROM public.prestador p
+-
+-         WHERE p.id_prestador = p_id_prestador
+-           AND p.baja_fecha IS NULL
+-
+-         UNION ALL
+-
+-         /*
+-          * Prioridad 2:
+-          * contactos electrónicos de tipo EMAIL.
+-          */
+-         SELECT
+-             2::INTEGER AS prioridad_fuente,
+-
+-             CASE
+-                 WHEN pce.id_domicilio IS NULL
+-                     THEN 0
+-                 ELSE 1
+-                 END AS prioridad_domicilio,
+-
+-             COALESCE(
+-                     ce.modi_fecha,
+-                     ce.alta_fecha,
+-                     ce.vigen_desde,
+-                     pce.vigen_desde
+-             ) AS fecha_orden,
+-
+-             ce.id_contacto_e,
+-
+-             NULLIF(
+-                     BTRIM(ce.contacto),
+-                     ''
+-             )::VARCHAR AS email
+-
+-         FROM public.prestad_contacto_e pce
+-
+-                  INNER JOIN public.contacto_e ce
+-                             ON ce.id_contacto_e = pce.id_contacto_e
+-
+-         WHERE pce.id_prestador = p_id_prestador
+-
+-             /*
+-              * Solo email normal.
+-              * No F, P, S ni EC.
+-              */
+-           AND UPPER(
+-                       BTRIM(
+-                               COALESCE(
+-                                       ce.tipo_contacto_e,
+-                                       ''
+-                               )
+-                       )
+-               ) = 'E'
+-
+-           AND ce.baja_fecha IS NULL
+-
+-           AND (
+-             pce.vigen_desde IS NULL
+-                 OR pce.vigen_desde <= LOCALTIMESTAMP
+-             )
+-
+-           AND (
+-             ce.vigen_desde IS NULL
+-                 OR ce.vigen_desde <= LOCALTIMESTAMP
+-             )
+-
+-     ) candidato
+-
+-WHERE candidato.email IS NOT NULL
+-
+-  AND candidato.email
+-    ~* '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'
+-
+-ORDER BY
+-    candidato.prioridad_fuente,
+-    candidato.prioridad_domicilio,
+-    candidato.fecha_orden DESC NULLS LAST,
+-    candidato.id_contacto_e DESC NULLS LAST
+-
+-    LIMIT 1;
+-
+-$function$;
+-
+-ALTER FUNCTION
+-    compras.resolver_email_cotizacion_prestador(INTEGER)
+-    OWNER TO postgres;
+-
+ CREATE FUNCTION compras.normalizar_usuario(
+     p_usuario VARCHAR
+ )
+@@ -3031,6 +2919,129 @@ LANGUAGE plpgsql;
+ -- PRESTADORES PARA COTIZACION
+ -- =====================================================================
+ 
++CREATE OR REPLACE FUNCTION
++compras.resolver_email_cotizacion_prestador(
++    p_id_prestador INTEGER
++)
++RETURNS VARCHAR
++LANGUAGE sql
++STABLE
++AS
++$function$
++SELECT
++    candidato.email
++FROM (
++         /*
++          * Prioridad 1:
++          * contacto general de la cabecera del prestador.
++          *
++          * Solo será utilizado si supera la validacion de formato
++          * aplicada fuera del UNION.
++          */
++         SELECT
++             1::INTEGER AS prioridad_fuente,
++             0::INTEGER AS prioridad_domicilio,
++             NULL::TIMESTAMP WITHOUT TIME ZONE AS fecha_orden,
++        NULL::INTEGER AS id_contacto_e,
++
++        NULLIF(
++            BTRIM(p.contacto),
++            ''
++        )::VARCHAR AS email
++
++         FROM public.prestador p
++
++         WHERE p.id_prestador = p_id_prestador
++           AND p.baja_fecha IS NULL
++
++         UNION ALL
++
++         /*
++          * Prioridad 2:
++          * contactos electronicos expresamente clasificados como EMAIL.
++          *
++          * No se consideran:
++          *
++          * F  = fax
++          * P  = personal
++          * S  = sitio web
++          * EC = email relacionado con CBU
++          */
++         SELECT
++             2::INTEGER AS prioridad_fuente,
++
++             CASE
++             WHEN pce.id_domicilio IS NULL
++             THEN 0
++             ELSE 1
++             END::INTEGER AS prioridad_domicilio,
++
++             COALESCE(
++             ce.modi_fecha,
++             ce.alta_fecha,
++             ce.vigen_desde::TIMESTAMP
++             ) AS fecha_orden,
++
++             ce.id_contacto_e::INTEGER,
++
++             NULLIF(
++             BTRIM(ce.contacto),
++             ''
++             )::VARCHAR AS email
++
++         FROM public.prestad_contacto_e pce
++
++             INNER JOIN public.contacto_e ce
++         ON ce.id_contacto_e =
++             pce.id_contacto_e
++
++             INNER JOIN public.prestador p
++             ON p.id_prestador =
++             pce.id_prestador
++             AND p.baja_fecha IS NULL
++
++         WHERE pce.id_prestador =
++             p_id_prestador
++
++           AND UPPER(
++             BTRIM(
++             COALESCE(
++             ce.tipo_contacto_e,
++             ''
++             )
++             )
++             ) = 'E'
++
++           AND ce.baja_fecha IS NULL
++
++           AND (
++             ce.vigen_desde IS NULL
++            OR ce.vigen_desde <= CURRENT_DATE
++             )
++     ) candidato
++
++WHERE candidato.email IS NOT NULL
++
++    /*
++     * Validacion basica y deliberadamente conservadora.
++     * La validacion definitiva tambien se realiza en Java.
++     */
++  AND candidato.email
++    ~* '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'
++
++ORDER BY
++    candidato.prioridad_fuente,
++    candidato.prioridad_domicilio,
++    candidato.fecha_orden DESC NULLS LAST,
++    candidato.id_contacto_e DESC NULLS LAST
++
++    LIMIT 1;
++$function$;
++
++ALTER FUNCTION
++    compras.resolver_email_cotizacion_prestador(INTEGER)
++    OWNER TO postgres;
++
+ CREATE FUNCTION compras.listar_prestadores_cotizacion_requerimiento(
+     p_id_requerimiento INTEGER
+ )
+@@ -3049,10 +3060,9 @@ SELECT DISTINCT
+     p.id_prestador::INTEGER,
+     p.descripcion::VARCHAR,
+     p.cuit::VARCHAR,
+-    NULLIF(
+-            btrim(p.contacto),
+-            ''
+-    )::VARCHAR,
++    compras.resolver_email_cotizacion_prestador(
++            p.id_prestador
++    )::VARCHAR AS email,
+     p.id_tipo_prestador::INTEGER,
+     tp.descripcion::VARCHAR
+ FROM compras.requerimiento r
+@@ -3094,7 +3104,8 @@ WHERE r.id_requerimiento =
+                 OR rcp.estado_envio IN (
+                                         'PENDIENTE',
+                                         'ERROR',
+-                                        'EMAIL_INVALIDO'
++                                        'EMAIL_INVALIDO',
++                                        'ENVIADO_QA'
+                 )
+             )
+         )
+@@ -3122,11 +3133,12 @@ BEGIN
+         p_usuario
+     );
+ 
+-SELECT NULLIF(
+-               btrim(p.contacto),
+-               ''
+-       )::VARCHAR
+-INTO v_email
++SELECT
++    compras.resolver_email_cotizacion_prestador(
++            p_id_prestador
++    )
++INTO
++    v_email
+ FROM compras.requerimiento r
+          JOIN compras.sector_tipo_prestador stp
+               ON stp.id_sector =
+@@ -3236,6 +3248,7 @@ BEGIN
+ 
+     IF v_estado NOT IN (
+         'ENVIADO',
++        'ENVIADO_QA',
+         'ERROR',
+         'EMAIL_INVALIDO'
+     ) THEN
+@@ -3259,14 +3272,20 @@ SET estado_envio = v_estado,
+ 
+     fecha_envio =
+         CASE
+-            WHEN v_estado = 'ENVIADO'
++            WHEN v_estado IN (
++                              'ENVIADO',
++                              'ENVIADO_QA'
++                )
+                 THEN now()
+             ELSE NULL
+             END,
+ 
+     ultimo_error =
+         CASE
+-            WHEN v_estado = 'ENVIADO'
++            WHEN v_estado IN (
++                              'ENVIADO',
++                              'ENVIADO_QA'
++                )
+                 THEN NULL
+             ELSE v_error
+             END,
+@@ -3333,7 +3352,9 @@ SELECT DISTINCT
+     p.id_prestador::INTEGER,
+     p.descripcion::VARCHAR,
+     p.cuit::VARCHAR,
+-    p.contacto::VARCHAR,
++    compras.resolver_email_cotizacion_prestador(
++            p.id_prestador
++    )::VARCHAR AS email,
+     p.id_tipo_prestador::INTEGER,
+     tp.descripcion::VARCHAR
+ FROM compras.requerimiento r
+@@ -3423,9 +3444,8 @@ SELECT DISTINCT
+     p.descripcion::VARCHAR,
+     p.cuit::VARCHAR,
+ 
+-    NULLIF(
+-            btrim(p.contacto),
+-            ''
++    compras.resolver_email_cotizacion_prestador(
++            p.id_prestador
+     )::VARCHAR AS email,
+ 
+     NULLIF(
+@@ -4593,47 +4613,75 @@ IF NOT FOUND THEN
+ END IF;
+ 
+ SELECT
+-    NULLIF(
+-            BTRIM(p.contacto),
+-            ''
+-    )
++    r.id_sector
+ INTO
+-    v_email_real
++    v_id_sector
++FROM compras.requerimiento r
++WHERE r.id_requerimiento = p_id_requerimiento
++  AND r.baja_fecha IS NULL;
++
++IF NOT FOUND THEN
++    RAISE EXCEPTION
++        'No existe el requerimiento activo %.',
++        p_id_requerimiento;
++END IF;
++
++/*
++ * Primero se valida la existencia funcional del prestador.
++ *
++ * No se usa el resultado de esta consulta para resolver
++ * el email. La validacion y la resolucion son responsabilidades
++ * separadas.
++ */
++PERFORM 1
+ FROM public.prestador p
+ WHERE p.id_prestador = p_id_prestador
+   AND COALESCE(
+-              p.solicitar_cotizacion,
+-              FALSE
++          p.solicitar_cotizacion,
++          FALSE
+       ) = TRUE
+   AND p.baja_fecha IS NULL;
+ 
+ IF NOT FOUND THEN
+-        RAISE EXCEPTION
+-            'El prestador % no existe, esta dado de baja '
+-            'o no esta habilitado para cotizar.',
+-            p_id_prestador;
++    RAISE EXCEPTION
++        'El prestador % no existe, esta dado de baja '
++        'o no esta habilitado para cotizar.',
++        p_id_prestador;
+ END IF;
+ 
+-    IF NOT EXISTS (
+-        SELECT
+-            1
+-        FROM public.prestador p
+-        INNER JOIN compras.sector_tipo_prestador stp
+-            ON stp.id_tipo_prestador =
+-                p.id_tipo_prestador
+-           AND stp.id_sector =
+-                v_id_sector
+-           AND stp.activo = TRUE
+-           AND stp.baja_fecha IS NULL
+-        WHERE p.id_prestador =
++/*
++ * Se obtiene el destinatario mediante la politica canonica.
++ *
++ * Puede devolver NULL. Eso no constituye una falla de reserva:
++ * el servicio Java debe clasificarlo como EMAIL_INVALIDO
++ * o como advertencia cuando se utiliza el destino temporal.
++ */
++SELECT
++    compras.resolver_email_cotizacion_prestador(
+             p_id_prestador
+-          AND p.baja_fecha IS NULL
+-    ) THEN
+-
+-        RAISE EXCEPTION
+-            'El prestador % no es compatible con el sector %.',
+-            p_id_prestador,
+-            v_id_sector;
++    )
++INTO
++    v_email_real;
++
++IF NOT EXISTS (
++    SELECT
++        1
++    FROM public.prestador p
++    INNER JOIN compras.sector_tipo_prestador stp
++        ON stp.id_tipo_prestador =
++            p.id_tipo_prestador
++       AND stp.id_sector =
++            v_id_sector
++       AND stp.activo = TRUE
++       AND stp.baja_fecha IS NULL
++    WHERE p.id_prestador =
++        p_id_prestador
++      AND p.baja_fecha IS NULL
++) THEN
++    RAISE EXCEPTION
++        'El prestador % no es compatible con el sector %.',
++        p_id_prestador,
++        v_id_sector;
+ END IF;
+ 
+     /*
+diff --git a/ext-impl/src/ar/com/ospim/global/beans/ContactoElectronico.java b/ext-impl/src/ar/com/ospim/global/beans/ContactoElectronico.java
+index db08ceda..65cd3eed 100644
+--- a/ext-impl/src/ar/com/ospim/global/beans/ContactoElectronico.java
++++ b/ext-impl/src/ar/com/ospim/global/beans/ContactoElectronico.java
+@@ -15,7 +15,8 @@ public class ContactoElectronico implements Serializable {
+ 	//Estos ids se corresponden con los ids de la base de datos.
+ 	//Si este conjunto crece, se deberian obtener de la base y sacar este hardcode
+ 	 public enum Tipo { 
+-		 EMAIL ("E"), SITIOWEB ("S"), FAX ("F"), PERSONAL ("P"),EMAILCBU ("EC");
++		 EMAIL ("E"), SITIOWEB ("S"), FAX ("F"), PERSONAL ("P"),EMAILCBU ("EC"),
++        DESCONOCIDO(null);
+ 		 
+ 		 private String id;
+ 		 Tipo (String id){
+@@ -25,15 +26,30 @@ public class ContactoElectronico implements Serializable {
+ 		 public String getId(){
+ 			 return this.id;
+ 		 }
+-		 
+-		 public static Tipo getTipoById(String id){
+-			 for (Tipo tipo: Tipo.values()){
+-				 if (tipo.getId().equals(id)){
+-					 return tipo;
+-				 }				 
+-			 }			 
+-			 return Tipo.EMAIL;
+-		 }
++
++        public static Tipo getTipoById(
++                String id) {
++
++            String idNormalizado =
++                    id != null
++                            ? id.trim()
++                            : null;
++
++            if (idNormalizado != null
++                    && idNormalizado.length() > 0) {
++
++                for (Tipo tipo : Tipo.values()) {
++                    if (tipo.getId() != null
++                            && tipo.getId().equalsIgnoreCase(
++                            idNormalizado
++                    )) {
++                        return tipo;
++                    }
++                }
++            }
++
++            return Tipo.DESCONOCIDO;
++        }
+ 		 
+ 	}
+ 
+diff --git a/ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp b/ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp
+index 4112d098..54fca1fc 100644
+--- a/ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp
++++ b/ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp
+@@ -626,8 +626,12 @@ span-fixed-size {
+ 
+ 								<td colspan="1">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+ 								<td><label id="integracion_label"  style="display:none"><liferay-ui:message key="integracion"  />:&nbsp;&nbsp;</label></td>
+-								<td><select name="<%= reclamoPortletNamespace %>integracion" id="<%= reclamoPortletNamespace %>integracion"
+-									<% if (!esEdicion) { %> disabled='disabled' <%}%> style15"display:none"  >												
++								<td>
++                                    <select
++                                        name="<%= reclamoPortletNamespace %>integracion"
++                                        id="<%= reclamoPortletNamespace %>integracion"
++                                        <% if (!esEdicion) { %> disabled="disabled" <% } %>
++                                        style="display:none">
+ 										<option value="0">Seleccione Integración</option>
+ 											<% for (ReclamosPrestacionalesIntegracion integracion : listaIntegracion) { %>
+ 												<option
+diff --git a/ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_scripts_comunes.jsp b/ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_scripts_comunes.jsp
+index b07e4cf3..90b4498a 100644
+--- a/ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_scripts_comunes.jsp
++++ b/ext-web/docroot/html/portlet/compras/requerimientos/partials/_detalle_scripts_comunes.jsp
+@@ -26,8 +26,21 @@
+     %>
+             <portlet:namespace />prestadoresEnviadosDetalleCache.push({
+                 id: '<%= prestadorDetalle.getIdPrestador() %>',
++
+                 label: '<%= jsDetalleCompra(
+                         prestadorDetalle.getEtiquetaVisible()
++                ) %>',
++
++                emailActual: '<%= jsDetalleCompra(
++                        prestadorDetalle.getEmailVisible()
++                ) %>',
++
++                emailDestino: '<%= jsDetalleCompra(
++                        prestadorDetalle.getEmailDestinoVisible()
++                ) %>',
++
++                estadoEnvio: '<%= jsDetalleCompra(
++                        prestadorDetalle.getEstadoEnvioVisible()
+                 ) %>'
+             });
+     <%
+diff --git a/ext-web/docroot/html/portlet/compras/requerimientos/partials/_mensajes.jsp b/ext-web/docroot/html/portlet/compras/requerimientos/partials/_mensajes.jsp
+index 3178dfec..680a75bd 100644
+--- a/ext-web/docroot/html/portlet/compras/requerimientos/partials/_mensajes.jsp
++++ b/ext-web/docroot/html/portlet/compras/requerimientos/partials/_mensajes.jsp
+@@ -962,6 +962,156 @@ if ("id_requerimiento_compra".equals(errorCampoCompra)) {
+             }
+         </script>
+ 
++        <c:if test="<%=
++                detallesNotificacionResultado != null
++                        && !detallesNotificacionResultado.isEmpty()
++        %>">
++            <div class="compras-notificacion-detalle-cabecera">
++                <div class="compras-notificacion-detalle-titulo">
++                    Destinatarios evaluados
++
++                    <span class="compras-notificacion-contador">
++                        <%= detallesNotificacionResultado.size() %>
++                    </span>
++                </div>
++
++                <div class="compras-notificacion-detalle-aclaracion">
++                    El email real corresponde al prestador.
++                    El destino efectivo indica la casilla a la que
++                    se entregó el mensaje.
++                </div>
++            </div>
++
++            <div class="compras-notificacion-tabla-contenedor">
++                <table
++                    class="taglib-search-iterator compras-notificacion-tabla"
++                    cellspacing="0"
++                    cellpadding="0"
++                >
++                    <thead>
++                        <tr class="portlet-section-header">
++                            <th style="width: 25%;">
++                                Prestador
++                            </th>
++
++                            <th style="width: 27%;">
++                                Email real
++                            </th>
++
++                            <th style="width: 27%;">
++                                Destino efectivo
++                            </th>
++
++                            <th style="width: 21%;">
++                                Resultado
++                            </th>
++                        </tr>
++                    </thead>
++
++                    <tbody>
++                        <%
++                        int filaDestinatario = 0;
++
++                        for (int i = 0;
++                                i < detallesNotificacionResultado.size();
++                                i++) {
++
++                            ar.com.ospim.compras.requerimientos.beans
++                                    .NotificacionCotizacionDetalle
++                                    detalleDestinatario =
++                                    detallesNotificacionResultado.get(i);
++
++                            if (detalleDestinatario == null) {
++                                continue;
++                            }
++
++                            String prestadorVisible =
++                                    detalleDestinatario.getPrestador();
++
++                            if (WebKeysCompras.isEmpty(
++                                    prestadorVisible
++                            )) {
++                                prestadorVisible =
++                                        "Prestador #"
++                                                + detalleDestinatario
++                                                        .getIdPrestador();
++                            }
++
++                            String emailRealVisible =
++                                    detalleDestinatario.getEmailReal();
++
++                            if (WebKeysCompras.isEmpty(
++                                    emailRealVisible
++                            )) {
++                                emailRealVisible = "-";
++                            }
++
++                            String emailDestinoVisible =
++                                    detalleDestinatario.getEmailDestino();
++
++                            if (WebKeysCompras.isEmpty(
++                                    emailDestinoVisible
++                            )) {
++                                emailDestinoVisible = "-";
++                            }
++
++                            String resultadoVisible =
++                                    detalleDestinatario.getResultado();
++
++                            if (WebKeysCompras.isEmpty(
++                                    resultadoVisible
++                            )) {
++                                resultadoVisible = "-";
++                            }
++
++                            String claseFilaDestinatario =
++                                    filaDestinatario % 2 == 0
++                                            ? "portlet-section-body"
++                                            : "portlet-section-alternate";
++
++                            filaDestinatario++;
++                        %>
++
++                            <tr class="<%= claseFilaDestinatario %>">
++                                <td>
++                                    <%= HtmlUtil.escape(
++                                            prestadorVisible
++                                    ) %>
++
++                                    <div class="compras-notificacion-prestador-id">
++                                        ID:
++                                        <%= detalleDestinatario
++                                                .getIdPrestador() %>
++                                    </div>
++                                </td>
++
++                                <td>
++                                    <%= HtmlUtil.escape(
++                                            emailRealVisible
++                                    ) %>
++                                </td>
++
++                                <td>
++                                    <%= HtmlUtil.escape(
++                                            emailDestinoVisible
++                                    ) %>
++                                </td>
++
++                                <td>
++                                    <%= HtmlUtil.escape(
++                                            resultadoVisible
++                                    ) %>
++                                </td>
++                            </tr>
++
++                        <%
++                        }
++                        %>
++                    </tbody>
++                </table>
++            </div>
++        </c:if>
++
+         <div class="compras-notificacion-acciones">
+             <a
+                 id="<portlet:namespace />enlaceDetalleNotificacion"
+diff --git a/ext-web/docroot/html/portlet/compras/requerimientos/prestadores_enviados.jsp b/ext-web/docroot/html/portlet/compras/requerimientos/prestadores_enviados.jsp
+index d8d38f63..f67db1fc 100644
+--- a/ext-web/docroot/html/portlet/compras/requerimientos/prestadores_enviados.jsp
++++ b/ext-web/docroot/html/portlet/compras/requerimientos/prestadores_enviados.jsp
+@@ -57,9 +57,24 @@ for (int i = 0; i < prestadores.size(); i++) {
+ %>
+         {
+             "id": "<%= prestador.getIdPrestador() %>",
+-            "cuit": "<%= jsonPrestadorCompra(prestador.getCuitVisible()) %>",
+-            "razonSocial": "<%= jsonPrestadorCompra(prestador.getDescripcionVisible()) %>",
+-            "label": "<%= jsonPrestadorCompra(prestador.getEtiquetaVisible()) %>"
++            "cuit": "<%= jsonPrestadorCompra(
++                    prestador.getCuitVisible()
++            ) %>",
++            "razonSocial": "<%= jsonPrestadorCompra(
++                    prestador.getDescripcionVisible()
++            ) %>",
++            "label": "<%= jsonPrestadorCompra(
++                    prestador.getEtiquetaVisible()
++            ) %>",
++            "emailActual": "<%= jsonPrestadorCompra(
++                    prestador.getEmailVisible()
++            ) %>",
++            "emailDestino": "<%= jsonPrestadorCompra(
++                    prestador.getEmailDestinoVisible()
++            ) %>",
++            "estadoEnvio": "<%= jsonPrestadorCompra(
++                    prestador.getEstadoEnvioVisible()
++            ) %>"
+         }
+ <%
+ }
