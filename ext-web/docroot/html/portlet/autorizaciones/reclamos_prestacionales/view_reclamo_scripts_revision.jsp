@@ -672,22 +672,63 @@ function <%= reclamoPortletNamespace %>editarPrestacionSeleccionada(tipoAccion) 
 
 function <%= reclamoPortletNamespace %>cancelaEdicionPrestacion() {
 
-    // oculta div de datos de edicion
-    jQuery("#<%= reclamoPortletNamespace %>datos_edicion_prestacion").hide();
-    // habilita el buscador segun el sector
+    // Oculta el sector de edición.
+    jQuery(
+        "#<%= reclamoPortletNamespace %>"
+        + "datos_edicion_prestacion"
+    ).hide();
+
+    // Habilita el buscador correspondiente al sector.
     manejarTipoSector();
-    jQuery("#<%= reclamoPortletNamespace %>datos_prestacion_ingreso").show();
 
-    <%= reclamoPortletNamespace %>limpiarNomencladorAutocompletar();
-    onOffcombosestadosprestaciones(true);
-    // mover el combo a la posicion de cargado porque no se confirmo el rechazo o la autorizacion
+    jQuery(
+        "#<%= reclamoPortletNamespace %>"
+        + "datos_prestacion_ingreso"
+    ).show();
 
-    var datos = document.getElementById("<%= reclamoPortletNamespace %>tipoaccionprestacion").value;
-    var datasplit =datos.split('-');
-    var idPrestacion = datasplit[1];
-    document.getElementById('comboestadosreclamo'+ idPrestacion ).selectedIndex = "0";
-    document.getElementById("<%= reclamoPortletNamespace %>tipoaccionprestacion").value="";
+    <%= reclamoPortletNamespace %>
+        limpiarNomencladorAutocompletar();
 
+    onOffcombosestadosprestaciones(
+        true
+    );
+
+    /*
+     * El combo de estado puede no existir en un reclamo nuevo
+     * originado desde Compras.
+     */
+    var tipoAccionPrestacion =
+            document.getElementById(
+                "<%= reclamoPortletNamespace %>"
+                + "tipoaccionprestacion"
+            );
+
+    if (tipoAccionPrestacion != null) {
+        var datos =
+                tipoAccionPrestacion.value || "";
+
+        var datasplit =
+                datos.split("-");
+
+        var idPrestacion =
+                datasplit.length > 1
+                        ? datasplit[1]
+                        : "";
+
+        if (idPrestacion != "") {
+            var comboEstado =
+                    document.getElementById(
+                        "comboestadosreclamo"
+                        + idPrestacion
+                    );
+
+            if (comboEstado != null) {
+                comboEstado.selectedIndex = 0;
+            }
+        }
+
+        tipoAccionPrestacion.value = "";
+    }
 }
 
 function <%= reclamoPortletNamespace %>agregarPrestacion() {
