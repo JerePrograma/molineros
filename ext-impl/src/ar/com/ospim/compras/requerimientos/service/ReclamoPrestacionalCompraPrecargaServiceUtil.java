@@ -717,20 +717,24 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
      * Precarga los datos de comprobante que poseen una correspondencia
      * inequívoca con el detalle cotizado de Compras.
      *
-     * No se inventan tipo, letra, punto de venta, número ni fechas.
+     * Por regla de negocio del handoff desde Compras, el tipo inicial
+     * es OTR y la sucursal inicial es 000.
+     *
+     * No se inventan letra, número ni fechas.
      */
     private static void precargarDatosComprobante(
             PrestacionesReclamo prestacion,
-            double cantidad,
-            double precioUnitario) {
+            RequerimientoCompraDetalle detalle,
+            BigDecimal cantidad,
+            BigDecimal importeUnitario,
+            BigDecimal total) {
 
-        if (prestacion == null) {
+        if (prestacion == null
+                || detalle == null) {
+
             return;
         }
 
-        /*
-         * Regla exclusiva de la precarga originada desde Compras.
-         */
         prestacion.setComprobanteTipo(
                 COMPROBANTE_TIPO_INICIAL
         );
@@ -739,34 +743,51 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 COMPROBANTE_SUCURSAL_INICIAL
         );
 
-        double cantidadComprobante =
-                normalizarCantidad(
-                        cantidad
+        if (cantidad != null) {
+            prestacion.setComprobanteCantidad(
+                    Double.valueOf(
+                            cantidad.doubleValue()
+                    )
+            );
+        }
+
+        if (importeUnitario != null) {
+            prestacion.setComprobanteImporte(
+                    Double.valueOf(
+                            importeUnitario.doubleValue()
+                    )
+            );
+        }
+
+        if (total != null) {
+            prestacion.setComprobanteTotal(
+                    Double.valueOf(
+                            total.doubleValue()
+                    )
+            );
+        }
+
+        String prestadorCuit =
+                WebKeysCompras.trimToNull(
+                        detalle.getPrestadorCuit()
                 );
 
-        double importeUnitarioComprobante =
-                normalizarImporte(
-                        precioUnitario
+        if (prestadorCuit != null) {
+            prestacion.setComprobanteCUIT(
+                    prestadorCuit
+            );
+        }
+
+        String prestadorRazonSocial =
+                WebKeysCompras.trimToNull(
+                        detalle.getPrestadorRazonSocial()
                 );
 
-        prestacion.setComprobanteCantidad(
-                Double.valueOf(
-                        cantidadComprobante
-                )
-        );
-
-        prestacion.setComprobanteImporte(
-                Double.valueOf(
-                        importeUnitarioComprobante
-                )
-        );
-
-        prestacion.setComprobanteTotal(
-                Double.valueOf(
-                        cantidadComprobante
-                                * importeUnitarioComprobante
-                )
-        );
+        if (prestadorRazonSocial != null) {
+            prestacion.setComprobanteRazonSocial(
+                    prestadorRazonSocial
+            );
+        }
     }
 
     private static void aplicarReferenciaTecnica(
