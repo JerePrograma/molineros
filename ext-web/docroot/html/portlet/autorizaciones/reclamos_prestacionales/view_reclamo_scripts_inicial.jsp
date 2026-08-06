@@ -588,7 +588,6 @@ AcomodarControlesEdicion();
 <%}%> --%>
 
 
-aplicaEstiloBordeRojoDatosObligatorio();
 
 <%-- function  AcomodarControlesEdicion() {
     // HEADER DATOS INHABILITADOS

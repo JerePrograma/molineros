@@ -1100,15 +1100,32 @@ jQuery("#<%= reclamoPortletNamespace %>fechaPrestacionAnioFarmacia").change(func
     <%= reclamoPortletNamespace %>actualizarFechaPrestacionFarmaciaAfiliado();
 });
 
-jQuery(document).on("change", "#<%= reclamoPortletNamespace %>fechaPrestacionDiaEdicion", function(){
-    <%= reclamoPortletNamespace %>actualizarAfiliadoPorFechaPrestacionEdicion();
-});
+jQuery(document).bind(
+    "change",
+    function(event) {
+        var target =
+                event.target ||
+                event.srcElement;
 
-jQuery(document).on("change", "#<%= reclamoPortletNamespace %>fechaPrestacionMesEdicion", function(){
-    <%= reclamoPortletNamespace %>actualizarAfiliadoPorFechaPrestacionEdicion();
-});
+        if (!target) {
+            return;
+        }
 
-jQuery(document).on("change", "#<%= reclamoPortletNamespace %>fechaPrestacionAnioEdicion", function(){
-    <%= reclamoPortletNamespace %>actualizarAfiliadoPorFechaPrestacionEdicion();
-});
+        if (
+            target.id ==
+                    "<%= reclamoPortletNamespace %>"
+                    + "fechaPrestacionDiaEdicion" ||
+            target.id ==
+                    "<%= reclamoPortletNamespace %>"
+                    + "fechaPrestacionMesEdicion" ||
+            target.id ==
+                    "<%= reclamoPortletNamespace %>"
+                    + "fechaPrestacionAnioEdicion"
+        ) {
+            <%= reclamoPortletNamespace %>
+                actualizarAfiliadoPorFechaPrestacionEdicion();
+        }
+    }
+);
+aplicaEstiloBordeRojoDatosObligatorio();
 </script>
