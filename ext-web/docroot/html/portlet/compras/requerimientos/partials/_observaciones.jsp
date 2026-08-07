@@ -1,5 +1,5 @@
 <fieldset class="block-labels">
-    <legend>Observaciones / Descripción</legend>
+    <legend>Observación / Descripción</legend>
 
     <% if (puedeEditarEstructuraPantalla) { %>
         <table class="lfr-table">

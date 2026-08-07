@@ -1,11 +1,8 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 
-
-
 <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle_modelo.jsp" %>
 
-&nbsp;&nbsp;&nbsp;
 <fieldset class="block-labels">
     <legend>Detalle del requerimiento</legend>
 
@@ -15,6 +12,7 @@
     <% } %>
 
     <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle_tabla.jsp" %>
+
     <%@ include file="/html/portlet/compras/requerimientos/partials/_observaciones.jsp" %>
 </fieldset>
 

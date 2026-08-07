@@ -250,7 +250,7 @@ String botoneraAnularURL =
             <% if (botoneraPuedeEnviarACotizar) { %>
                 <input type="button"
                        id="<portlet:namespace />btnEnviarCotizarRequerimientoCompra"
-                       value="A Cotizar"
+                       value="Enviar a Cotizar"
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
                                '<%= botoneraEnviarCotizarFormId %>',
                                '<portlet:namespace />btnEnviarCotizarRequerimientoCompra',
