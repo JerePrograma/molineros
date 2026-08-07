@@ -1261,18 +1261,10 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         sb.append("\n\n");
 
-        sb.append("Requerimiento: #");
-
         appendDetalles(
                 sb,
                 requerimiento
         );
-
-        sb.append(
-                requerimiento
-                        .getIdRequerimientoCompra()
-        );
-        sb.append("\n");
 
         if (!WebKeysCompras.isEmpty(
                 requerimiento.getObservaciones()
@@ -1286,6 +1278,15 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             sb.append("\n");
         }
+
+        sb.append("\n");
+
+        sb.append("Requerimiento: # ");
+        sb.append(
+                requerimiento
+                        .getIdRequerimientoCompra()
+        );
+        sb.append("\n");
 
         sb.append("Sector: ");
         sb.append(
@@ -1317,12 +1318,8 @@ public class NotificarCotizacionPrestadorServiceImpl {
         sb.append(
                 "\nPor favor responder este correo "
                         + "informando disponibilidad, plazo "
-                        + "e importe de cotizacion a kfernandez@ospim.org.ar\n.\n\n"
-        );
-
-        sb.append(
-                "*Este mensaje fue generado automaticamente "
-                        + "por el sistema de Compras de OSPIM.*\n"
+                        + "e importe de cotizacion a "
+                        + "kfernandez@ospim.org.ar"
         );
 
         return sb.toString();
