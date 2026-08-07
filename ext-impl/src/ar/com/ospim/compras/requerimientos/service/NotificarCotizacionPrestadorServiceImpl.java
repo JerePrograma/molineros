@@ -1256,12 +1256,18 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         sb.append(
                 "OSPIM solicita cotizacion para el "
-                        + "siguiente requerimiento de compra."
+                        + "siguiente requerimiento de compra:"
         );
 
         sb.append("\n\n");
 
         sb.append("Requerimiento: #");
+
+        appendDetalles(
+                sb,
+                requerimiento
+        );
+
         sb.append(
                 requerimiento
                         .getIdRequerimientoCompra()
@@ -1308,20 +1314,15 @@ public class NotificarCotizacionPrestadorServiceImpl {
             sb.append("\n");
         }
 
-        appendDetalles(
-                sb,
-                requerimiento
-        );
-
         sb.append(
                 "\nPor favor responder este correo "
                         + "informando disponibilidad, plazo "
-                        + "e importe de cotizacion.\n\n"
+                        + "e importe de cotizacion a kfernandez@ospim.org.ar\n.\n\n"
         );
 
         sb.append(
-                "Este mensaje fue generado automaticamente "
-                        + "por el sistema de Compras de OSPIM.\n"
+                "*Este mensaje fue generado automaticamente "
+                        + "por el sistema de Compras de OSPIM.*\n"
         );
 
         return sb.toString();

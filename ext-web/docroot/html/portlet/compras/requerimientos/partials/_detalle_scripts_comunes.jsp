@@ -418,7 +418,6 @@
                 );
 
         return descripcion == 'PRESTACIONES MEDICAS'
-                || descripcion == 'MONOTRIBUTO'
                 || descripcion == 'DISCAPACIDAD'
                 || descripcion == 'ODONTOLOGIA';
     }

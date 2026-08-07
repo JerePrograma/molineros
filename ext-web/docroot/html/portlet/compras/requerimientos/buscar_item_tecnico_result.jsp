@@ -176,8 +176,6 @@ if (errorBusqueda == null
      * PRESTACIONES MEDICAS:
      *     busca_nomenclador_prest_med con tipo 0.
      *
-     * MONOTRIBUTO:
-     *     busca_nomenclador con tipo 0.
      */
     if ("DISCAPACIDAD".equals(sectorBusqueda)
             && marcaReinLiq

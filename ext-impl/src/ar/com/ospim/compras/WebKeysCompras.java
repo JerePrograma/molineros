@@ -515,17 +515,6 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                         .toUpperCase(Locale.ROOT)
                         .trim();
 
-        /*
-         * MONOTRIBUTO no constituye un circuito diferente para Compras
-         * ni para Reclamos Prestacionales.
-         *
-         * Cualquier descripción que identifique Monotributo se procesa
-         * con las reglas de PRESTACIONES MEDICAS.
-         */
-        if (sector.indexOf("MONOTRIBUTO") >= 0) {
-            return "PRESTACIONES MEDICAS";
-        }
-
         return sector;
     }
 
@@ -537,10 +526,6 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                         sectorDescripcion
                 );
 
-        /*
-         * MONOTRIBUTO ya fue convertido por normalizarSectorCompra()
-         * en PRESTACIONES MEDICAS.
-         */
         if ("PRESTACIONES MEDICAS".equals(sector)) {
             return "PRESTACIONES MEDICAS";
         }

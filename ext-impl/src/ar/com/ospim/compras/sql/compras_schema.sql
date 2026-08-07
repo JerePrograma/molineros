@@ -516,11 +516,10 @@ INSERT INTO compras.sector_requerimiento (
 VALUES
     (1, 'Farmacia', TRUE, TRUE, 'sistema'),
     (2, 'Prestaciones Médicas', TRUE, TRUE, 'sistema'),
-    (3, 'Monotributo', TRUE, TRUE, 'sistema'),
-    (4, 'Sistemas', FALSE, TRUE, 'sistema'),
-    (5, 'RRHH', FALSE, TRUE, 'sistema'),
-    (6, 'Legales', TRUE, TRUE, 'sistema'),
-    (7, 'Otros', FALSE, TRUE, 'sistema');
+    (3, 'Sistemas', FALSE, TRUE, 'sistema'),
+    (4, 'RRHH', FALSE, TRUE, 'sistema'),
+    (5, 'Legales', TRUE, TRUE, 'sistema'),
+    (6, 'Otros', FALSE, TRUE, 'sistema');
 
 SELECT setval(
                pg_get_serial_sequence(
@@ -868,8 +867,7 @@ END IF;
         'FARMACIA',
         'DISCAPACIDAD',
         'ODONTOLOGIA',
-        'PRESTACIONES MEDICAS',
-        'MONOTRIBUTO'
+        'PRESTACIONES MEDICAS'
     ) THEN
         v_tipo_item_esperado := 'NOMENCLADOR';
     ELSIF v_sector IN (
@@ -2225,8 +2223,7 @@ END IF;
         'FARMACIA',
         'DISCAPACIDAD',
         'ODONTOLOGIA',
-        'PRESTACIONES MEDICAS',
-        'MONOTRIBUTO'
+        'PRESTACIONES MEDICAS'
     ) THEN
         v_tipo_item_esperado := 'NOMENCLADOR';
     ELSIF v_sector IN (

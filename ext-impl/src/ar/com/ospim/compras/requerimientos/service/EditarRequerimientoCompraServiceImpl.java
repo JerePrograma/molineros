@@ -1108,8 +1108,6 @@ public class EditarRequerimientoCompraServiceImpl {
          * PRESTACIONES MEDICAS:
          *     cualquier tipo distinto de 1 y 9.
          *
-         * MONOTRIBUTO:
-         *     cualquier tipo positivo distinto de 9.
          */
         boolean nomencladorValido =
                 WebKeysCompras
@@ -1156,15 +1154,6 @@ public class EditarRequerimientoCompraServiceImpl {
                 throw errorUsuario(
                         "Prestaciones Medicas no admite "
                                 + "prestaciones del nomenclador tipo 1 o 9."
-                );
-            }
-
-            if ("MONOTRIBUTO".equals(
-                    sector
-            )) {
-                throw errorUsuario(
-                        "Monotributo no admite prestaciones "
-                                + "del nomenclador tipo 9."
                 );
             }
 
