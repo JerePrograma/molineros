@@ -1,3 +1,40 @@
+<%
+Object soloLecturaCargosAttr =
+        renderRequest.getAttribute(
+                WebKeysCompras.SOLO_LECTURA_ATTR
+        );
+
+String modoCargosPantalla =
+        ParamUtil.getString(
+                renderRequest,
+                "modo",
+                ""
+        );
+
+String strutsActionCargosPantalla =
+        ParamUtil.getString(
+                renderRequest,
+                "struts_action",
+                ""
+        );
+
+boolean cargosSoloLecturaPantalla =
+        Boolean.TRUE.equals(
+                soloLecturaCargosAttr
+        )
+        || ParamUtil.getBoolean(
+                request,
+                "solo_lectura",
+                false
+        )
+        || "ver".equalsIgnoreCase(
+                modoCargosPantalla
+        )
+        || "/compras/ver_requerimiento".equals(
+                strutsActionCargosPantalla
+        );
+%>
+
 <style type="text/css">
     /*
      * Estilos limitados exclusivamente a la cabecera de Compras.
@@ -76,6 +113,11 @@
     .compras-cabecera-requerimiento
     .compras-cargos-celda {
         padding-right: 32px;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-fila-cargos {
+        display: block !important;
     }
 
     .compras-cabecera-requerimiento
@@ -203,17 +245,14 @@
                 class="compras-cargos-celda">
 
                 <div id="<portlet:namespace />fila_cargos_compra"
-                     style="<%= puedeEditarEstructuraPantalla
-                            && sectorSinAfiliadoForzaCargoOspim
-                                    ? "display:none;"
-                                    : "" %>">
+                     class="compras-fila-cargos">
 
                     <span class="compras-grupo-cargo">
                         <label for="<portlet:namespace />cargo_ospim">
                             Cargo OSPIM %:
                         </label>
 
-                        <% if (puedeEditarEstructuraPantalla) { %>
+                        <% if (!cargosSoloLecturaPantalla) { %>
                             <input type="text"
                                    id="<portlet:namespace />cargo_ospim"
                                    value="<%= HtmlUtil.escape(cargoOspimVisible) %>"
@@ -226,6 +265,7 @@
                             <input type="text"
                                    id="<portlet:namespace />cargo_ospim"
                                    value="<%= HtmlUtil.escape(cargoOspimVisible) %>"
+                                   maxlength="3"
                                    readonly="readonly"
                                    class="compras-control compras-control-porcentaje compras-campo-solo-lectura" />
                         <% } %>
@@ -236,7 +276,7 @@
                             Cargo tercerizadora %:
                         </label>
 
-                        <% if (puedeEditarEstructuraPantalla) { %>
+                        <% if (!cargosSoloLecturaPantalla) { %>
                             <input type="text"
                                    id="<portlet:namespace />cargo_tercerizadora"
                                    value="<%= HtmlUtil.escape(cargoTercerizadoraVisible) %>"
@@ -248,6 +288,7 @@
                             <input type="text"
                                    id="<portlet:namespace />cargo_tercerizadora"
                                    value="<%= HtmlUtil.escape(cargoTercerizadoraVisible) %>"
+                                   maxlength="3"
                                    readonly="readonly"
                                    class="compras-control compras-control-porcentaje compras-campo-solo-lectura" />
                         <% } %>
