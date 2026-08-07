@@ -16,9 +16,13 @@
     --%>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_afiliado_editable.jsp" %>
 
+&nbsp;&nbsp;&nbsp;
     <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle.jsp" %>
+&nbsp;&nbsp;&nbsp;
     <%@ include file="/html/portlet/compras/requerimientos/partials/_adjuntos.jsp" %>
+&nbsp;&nbsp;&nbsp;
     <%@ include file="/html/portlet/compras/requerimientos/partials/_adjudicacion.jsp" %>
+&nbsp;&nbsp;&nbsp;
     <%@ include file="/html/portlet/compras/requerimientos/partials/_botonera.jsp" %>
 </div>
 
