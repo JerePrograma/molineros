@@ -223,7 +223,6 @@ CREATE TABLE compras.requerimiento_cotizacion_prestador (
                                                                                      'PENDIENTE',
                                                                                      'PROCESANDO',
                                                                                      'ENVIADO',
-                                                                                     'ENVIADO_QA',
                                                                                      'COTIZADO',
                                                                                      'ERROR',
                                                                                      'EMAIL_INVALIDO'
@@ -237,7 +236,6 @@ CREATE TABLE compras.requerimiento_cotizacion_prestador (
                                                                 CHECK (
                                                                     estado_envio NOT IN (
                                                                                          'ENVIADO',
-                                                                                         'ENVIADO_QA',
                                                                                          'COTIZADO'
                                                                         )
                                                                         OR fecha_envio IS NOT NULL
@@ -3110,8 +3108,7 @@ WHERE r.id_requerimiento =
                 OR rcp.estado_envio IN (
                                         'PENDIENTE',
                                         'ERROR',
-                                        'EMAIL_INVALIDO',
-                                        'ENVIADO_QA'
+                                        'EMAIL_INVALIDO'
                 )
             )
         )
@@ -3220,8 +3217,7 @@ VALUES (
                IN (
                'PENDIENTE',
                'ERROR',
-               'EMAIL_INVALIDO',
-               'ENVIADO_QA'
+               'EMAIL_INVALIDO'
                )
                RETURNING TRUE
        INTO v_reservado;
@@ -3255,7 +3251,6 @@ BEGIN
 
     IF v_estado NOT IN (
         'ENVIADO',
-        'ENVIADO_QA',
         'ERROR',
         'EMAIL_INVALIDO'
     ) THEN
@@ -3279,20 +3274,14 @@ SET estado_envio = v_estado,
 
     fecha_envio =
         CASE
-            WHEN v_estado IN (
-                              'ENVIADO',
-                              'ENVIADO_QA'
-                )
+            WHEN v_estado = 'ENVIADO'
                 THEN now()
             ELSE NULL
             END,
 
     ultimo_error =
         CASE
-            WHEN v_estado IN (
-                              'ENVIADO',
-                              'ENVIADO_QA'
-                )
+            WHEN v_estado = 'ENVIADO'
                 THEN NULL
             ELSE v_error
             END,
@@ -4896,7 +4885,6 @@ END IF;
 
     IF v_estado_solicitado NOT IN (
     'ENVIADO',
-    'ENVIADO_QA',
     'ERROR',
     'EMAIL_INVALIDO'
     ) THEN
@@ -4974,13 +4962,10 @@ SET
 
     fecha_envio =
         CASE
-            WHEN v_estado_solicitado IN (
-                                         'ENVIADO',
-                                         'ENVIADO_QA'
-                )
+            WHEN v_estado_solicitado = 'ENVIADO'
                 THEN clock_timestamp()
             ELSE NULL
-            END
+            END,
 
     ultimo_error =
         CASE
@@ -4990,7 +4975,7 @@ SET
                 v_error,
                 'Error sin detalle informado.'
             )
-        END
+        END,
 
     modi_fecha =
         clock_timestamp(),
