@@ -341,7 +341,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     }
 
     public static boolean puedeAnular(int estado) {
-        return esPendiente(estado);
+        return esPendiente(estado) || esACotizar(estado);
     }
 
     public static boolean esSoloLectura(int estado) {
