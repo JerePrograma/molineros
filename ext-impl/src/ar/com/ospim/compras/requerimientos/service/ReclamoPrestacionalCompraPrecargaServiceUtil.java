@@ -474,6 +474,15 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 requerimiento
         );
 
+        BigDecimal totalComprobante =
+                BigDecimal.ZERO.setScale(
+                        2,
+                        RoundingMode.HALF_UP
+                );
+
+        String cuitComprobante =
+                null;
+
         int idRegistro = 1;
 
         for (RequerimientoCompraDetalle detalle
@@ -483,15 +492,85 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                 continue;
             }
 
-            prestaciones.add(
+            PrestacionesReclamo prestacion =
                     crearPrestacion(
                             requerimiento,
                             detalle,
                             idRegistro
-                    )
+                    );
+
+            String cuitDetalle =
+                    normalizarCuit(
+                            detalle.getPrestadorCuit()
+                    );
+
+            if (cuitDetalle == null) {
+                throw new Exception(
+                        "El item "
+                                + detalle.getIdString()
+                                + " del requerimiento COTIZADO no tiene "
+                                + "un CUIT de prestador valido para "
+                                + "consolidar el comprobante."
+                );
+            }
+
+            if (cuitComprobante == null) {
+                cuitComprobante =
+                        cuitDetalle;
+
+            } else if (!cuitComprobante.equals(
+                    cuitDetalle
+            )) {
+
+                throw new Exception(
+                        "El requerimiento COTIZADO contiene items "
+                                + "adjudicados a prestadores con CUIT "
+                                + "diferentes. No se puede precargar "
+                                + "un unico comprobante consolidado."
+                );
+            }
+
+            BigDecimal cantidadDetalle =
+                    BigDecimal.valueOf(
+                            detalle
+                                    .getCantidad()
+                                    .intValue()
+                    );
+
+            BigDecimal importeUnitarioDetalle =
+                    normalizarImporte(
+                            detalle
+                                    .getPrecioUnitarioEstimado()
+                    );
+
+            BigDecimal totalDetalle =
+                    cantidadDetalle.multiply(
+                            importeUnitarioDetalle
+                    ).setScale(
+                            2,
+                            RoundingMode.HALF_UP
+                    );
+
+            totalComprobante =
+                    totalComprobante.add(
+                            totalDetalle
+                    ).setScale(
+                            2,
+                            RoundingMode.HALF_UP
+                    );
+
+            prestaciones.add(
+                    prestacion
             );
 
             idRegistro++;
+        }
+
+        if (!prestaciones.isEmpty()) {
+            precargarImportesComprobanteConsolidado(
+                    prestaciones,
+                    totalComprobante
+            );
         }
 
         return prestaciones;
@@ -868,6 +947,58 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         }
     }
 
+    /**
+     * El handoff desde Compras representa un unico comprobante para todas
+     * las prestaciones precargadas.
+     *
+     * El modelo legacy almacena los datos del comprobante dentro de cada
+     * PrestacionesReclamo. Se replica por eso el mismo importe consolidado
+     * sin modificar cantidad, importe ni cargos del Area Medica.
+     */
+    private static void precargarImportesComprobanteConsolidado(
+            List<PrestacionesReclamo> prestaciones,
+            BigDecimal totalComprobante) {
+
+        if (prestaciones == null
+                || prestaciones.isEmpty()
+                || totalComprobante == null) {
+
+            return;
+        }
+
+        BigDecimal totalNormalizado =
+                totalComprobante.setScale(
+                        2,
+                        RoundingMode.HALF_UP
+                );
+
+        Double totalLegacy =
+                Double.valueOf(
+                        totalNormalizado.doubleValue()
+                );
+
+        for (PrestacionesReclamo prestacion
+                : prestaciones) {
+
+            if (prestacion == null) {
+                continue;
+            }
+
+            prestacion.setComprobanteCantidad(
+                    Double.valueOf(
+                            1D
+                    )
+            );
+
+            prestacion.setComprobanteImporte(
+                    totalLegacy
+            );
+
+            prestacion.setComprobanteTotal(
+                    totalLegacy
+            );
+        }
+    }
     private static void aplicarReferenciaTecnica(
             PrestacionesReclamo prestacion,
             RequerimientoCompra requerimiento,
