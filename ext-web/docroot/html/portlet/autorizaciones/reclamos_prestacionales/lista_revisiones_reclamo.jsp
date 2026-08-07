@@ -344,9 +344,42 @@ if (revisionesreclamo != null
     value="<%=revisionOperacionOk%>"
 />
 
+<% if (revisionesreclamo == null
+        || revisionesreclamo.isEmpty()) { %>
+
+<table class="lfr-table" style="width: 100%;">
+    <thead>
+        <tr>
+            <th><%=headerNames.get(0)%></th>
+            <th><%=headerNames.get(1)%></th>
+            <th><%=headerNames.get(2)%></th>
+            <th><%=headerNames.get(3)%></th>
+            <th><%=headerNames.get(4)%></th>
+            <th><%=headerNames.get(5)%></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td
+                colspan="<%=headerNames.size()%>"
+                align="center"
+            >
+                <%=LanguageUtil.get(
+                        pageContext,
+                        "no-revisiones-were-found"
+                )%>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<% } else { %>
+
 <liferay-ui:search-iterator
     searchContainer="<%=searchContainer%>"
 />
+
+<% } %>
 
 <script type="text/javascript">
 
