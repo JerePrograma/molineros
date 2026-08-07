@@ -441,9 +441,6 @@ try {
         );
     }
 %>
-
-<br /><br />
-
 <liferay-ui:search-iterator
         searchContainer="<%= searchContainer %>" />
 
