@@ -2,7 +2,6 @@
        width="100%">
 
     <tr class="portlet-section-header results-header">
-        <th>ID</th>
 
         <th class="compras-detalle-columna-codigo">
             Código presentado
