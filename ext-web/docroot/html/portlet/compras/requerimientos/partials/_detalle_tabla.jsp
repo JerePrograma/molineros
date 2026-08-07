@@ -1,4 +1,4 @@
-<table class="lfr-table taglib-search-iterator"
+<table class="lfr-table taglib-search-iterator compras-detalle-tabla"
        width="100%">
 
     <tr class="portlet-section-header results-header">

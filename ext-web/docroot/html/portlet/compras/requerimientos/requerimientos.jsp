@@ -132,7 +132,29 @@ if (tercerizadoras == null) {
 }
 %>
 
-<fieldset class="block-labels">
+<style type="text/css">
+    .compras-filtro-requerimientos {
+        margin-bottom: 12px;
+    }
+
+    .compras-filtro-requerimientos
+    .compras-filtro-afiliado > td {
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    .compras-filtro-requerimientos
+    .compras-filtro-acciones > td {
+        padding-top: 12px;
+    }
+
+    .compras-filtro-requerimientos
+    .compras-filtro-boton-buscar {
+        margin-right: 8px;
+    }
+</style>
+
+<fieldset class="block-labels compras-filtro-requerimientos">
     <legend>
         Filtro de búsqueda de requerimientos de compras
     </legend>
@@ -227,11 +249,7 @@ if (tercerizadoras == null) {
             </td>
         </tr>
 
-        <tr>
-            <td colspan="6">&nbsp;</td>
-        </tr>
-
-        <tr>
+        <tr class="compras-filtro-afiliado">
             <td colspan="6">
                 <fieldset class="block-labels">
                     <legend>
@@ -282,10 +300,6 @@ if (tercerizadoras == null) {
                            value="" />
                 </fieldset>
             </td>
-        </tr>
-
-        <tr>
-            <td colspan="6">&nbsp;</td>
         </tr>
 
         <tr>
@@ -373,21 +387,16 @@ if (tercerizadoras == null) {
                 </select>
             </td>
 
-            <td colspan="2">&nbsp;</td>
+            <td colspan="2"></td>
         </tr>
 
-        <tr>
-            <td colspan="6">&nbsp;</td>
-        </tr>
-
-        <tr>
+        <tr class="compras-filtro-acciones">
             <td colspan="1">
                 <input id="<portlet:namespace />buscar"
                        value="<liferay-ui:message key='buscar' />"
                        title="<liferay-ui:message key='buscar' />"
+                       class="compras-filtro-boton-buscar"
                        type="button" />
-
-                &nbsp;&nbsp;
 
                 <input type="button"
                        value="Limpiar"
@@ -406,7 +415,7 @@ if (tercerizadoras == null) {
     </table>
 </fieldset>
 
-<fieldset class="block-labels">
+<fieldset class="block-labels compras-resultados-requerimientos">
     <div align="center"
          id="<portlet:namespace />buscando">
 

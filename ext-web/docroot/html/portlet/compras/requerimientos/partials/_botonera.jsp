@@ -222,15 +222,15 @@ String botoneraAnularURL =
     </form>
 <% } %>
 
+<div class="compras-seccion compras-seccion-botonera">
 <table class="lfr-table">
     <tr>
-        <td>
+        <td class="compras-botonera-acciones">
             <% if (modoEditable && puedeEditarEstructuraPantalla) { %>
                 <input type="button"
                        id="<portlet:namespace />btnGuardarCompras"
                        value="Guardar"
                        onClick="return <%= namespaceCompra %>guardar();" />
-                &nbsp;&nbsp;
             <% } %>
 
             <% if (modoEditable && puedeEditarCotizacionPantalla) { %>
@@ -238,7 +238,6 @@ String botoneraAnularURL =
                        id="<portlet:namespace />btnGuardarCotizacionCompra"
                        value="Guardar cotización"
                        onClick="return <%= namespaceCompra %>guardarCotizacion();" />
-                &nbsp;&nbsp;
             <% } %>
 
             <%--
@@ -257,7 +256,6 @@ String botoneraAnularURL =
                                '\u00bfConfirma enviar a Cotizar a los prestadores habilitados?',
                                'Notificando...'
                        );" />
-                &nbsp;&nbsp;
             <% } %>
 
             <% if (botoneraPuedeReintentarCotizacion) { %>
@@ -270,14 +268,12 @@ String botoneraAnularURL =
                                '¿Confirma notificar nuevamente a los prestadores pendientes?',
                                'Notificando...'
                        );" />
-                &nbsp;&nbsp;
             <% } %>
 
             <% if (botoneraPuedeAnular) { %>
                 <span id="<portlet:namespace />btnAnularRequerimientoCompra">
                     <liferay-ui:icon-delete url="<%= botoneraAnularURL %>" />
                 </span>
-                &nbsp;&nbsp;
             <% } %>
 
             <% if (botoneraPuedeCrearReclamoPrestacional) { %>
@@ -285,7 +281,6 @@ String botoneraAnularURL =
                        id="<portlet:namespace />btnCrearReclamoPrestacional"
                        value="Crear Reclamo Prestacional"
                        onClick="submitForm(document.getElementById('<%= botoneraReclamoPrestacionalFormId %>')); return false;" />
-                &nbsp;&nbsp;
             <% } %>
 
             <% if (botoneraPuedeVerReclamoPrestacional) { %>
@@ -293,7 +288,6 @@ String botoneraAnularURL =
                        id="<portlet:namespace />btnVerReclamoPrestacional"
                        value="Ver Reclamo Prestacional"
                        onClick="submitForm(document.getElementById('<%= botoneraReclamoPrestacionalFormId %>')); return false;" />
-                &nbsp;&nbsp;
             <% } %>
 
             <% if (botoneraReclamoEnProceso
@@ -304,7 +298,6 @@ String botoneraAnularURL =
                                ? "Reclamo creado: vinculación pendiente"
                                : "Creación de reclamo en proceso" %>"
                        disabled="disabled" />
-                &nbsp;&nbsp;
             <% } %>
 
             <% if (botoneraPuedeImprimir) { %>
@@ -312,7 +305,6 @@ String botoneraAnularURL =
                        id="<portlet:namespace />btnImprimirRequerimientoCompra"
                        value="Imprimir PDF"
                        onClick="return <%= namespaceCompra %>imprimirRequerimientoCompra();" />
-                &nbsp;&nbsp;
             <% } %>
 
             <input type="button"
@@ -323,6 +315,7 @@ String botoneraAnularURL =
         </td>
     </tr>
 </table>
+</div>
 
 <iframe id="<portlet:namespace />iframeImpresionRequerimientoCompra"
         name="<portlet:namespace />iframeImpresionRequerimientoCompra"

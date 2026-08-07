@@ -253,14 +253,14 @@ boolean msgPresupuestoBorrado =
         margin-right: 4px;
     }
 </style>
-&nbsp;&nbsp;&nbsp;
 <form action="<%= uploadPresupuestosURL.toString() %>"
       method="post"
       name="<portlet:namespace />compra_presupuesto_fm"
       id="<portlet:namespace />compra_presupuesto_fm"
+      class="compras-adjuntos-formulario"
       enctype="multipart/form-data">
 
-    <fieldset class="block-labels">
+    <fieldset class="block-labels compras-adjuntos-pedidos">
         <legend>Pedidos de presupuestos</legend>
 
         <liferay-ui:error
@@ -506,7 +506,7 @@ boolean msgPresupuestoBorrado =
             </div>
         </c:if>
     </fieldset>
-&nbsp;&nbsp;&nbsp;
+
     <input type="hidden"
            name="<portlet:namespace />presupuesto_accion"
            id="<portlet:namespace />presupuesto_accion"
@@ -532,7 +532,7 @@ boolean msgPresupuestoBorrado =
            id="<portlet:namespace />modo_presupuesto"
            value="<%= HtmlUtil.escape(modoRetornoPresupuestos) %>" />
 
-    <fieldset class="block-labels cotizaciones-fieldset">
+    <fieldset class="block-labels cotizaciones-fieldset compras-adjuntos-cotizaciones">
         <legend>Cotizaciones</legend>
 
         <div id="<portlet:namespace />listado_presupuestos_requerimiento">
@@ -541,7 +541,7 @@ boolean msgPresupuestoBorrado =
         </div>
     </fieldset>
 </form>
-&nbsp;&nbsp;&nbsp;
+
 <script type="text/javascript">
     function <portlet:namespace />reindexarFilasPresupuesto() {
         var rows =

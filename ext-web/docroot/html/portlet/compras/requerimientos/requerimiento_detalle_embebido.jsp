@@ -3,12 +3,11 @@
 
 <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle_modelo.jsp" %>
 
-<fieldset class="block-labels">
+<fieldset class="block-labels compras-seccion compras-seccion-detalle">
     <legend>Detalle del requerimiento</legend>
 
     <% if (puedeABMDetalle) { %>
         <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle_editor.jsp" %>
-        <br />
     <% } %>
 
     <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle_tabla.jsp" %>

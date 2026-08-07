@@ -282,6 +282,7 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
 %>
 
 <% if (puedeVerCotizacionAdjudicacion) { %>
+    <div class="compras-seccion compras-seccion-adjudicacion">
 
     <% if (puedeCotizarAdjudicacion
             && !WebKeysCompras.isEmpty(
@@ -422,4 +423,5 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
             </tr>
         </table>
     </fieldset>
+    </div>
 <% } %>

@@ -1,4 +1,4 @@
-<fieldset class="block-labels">
+<fieldset class="block-labels compras-observaciones">
     <legend>Observación / Descripción</legend>
 
     <% if (puedeEditarEstructuraPantalla) { %>

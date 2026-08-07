@@ -18,6 +18,7 @@ boolean ocultarPanelAfiliado =
 %>
 
 <div id="<portlet:namespace />afiliado_requerimiento_panel"
+     class="compras-seccion compras-seccion-afiliado"
      style="<%= ocultarPanelAfiliado ? "display:none;" : "" %>">
     <fieldset class="block-labels">
         <legend>

@@ -141,6 +141,22 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
         margin: 8px 0 15px 0;
         color: #555555;
     }
+
+    .compras-configuracion-prestadores
+    .configuracion-sector {
+        margin-bottom: 12px;
+    }
+
+    .compras-configuracion-prestadores
+    .configuracion-formulario {
+        margin: 0;
+    }
+
+    .compras-configuracion-prestadores
+    .configuracion-formulario
+    > fieldset.block-labels {
+        margin-bottom: 0;
+    }
 </style>
 
 <div class="compras-configuracion-prestadores">
@@ -169,7 +185,7 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
         </div>
     <% } %>
 
-    <fieldset class="block-labels">
+    <fieldset class="block-labels configuracion-sector">
         <legend>Sector de compras</legend>
 
         <table class="lfr-table">
@@ -244,13 +260,14 @@ for (int i = 0; i < tiposPrestador.size(); i++) {
         <form action="<%= guardarConfiguracionURL.toString() %>"
               method="post"
               id="<portlet:namespace />guardarConfiguracionPrestadoresForm"
+              class="configuracion-formulario"
               onsubmit="return <%= namespaceConfiguracion %>confirmarGuardado();">
 
             <input type="hidden"
                    name="<portlet:namespace />id_sector"
                    value="<%= idSectorSeleccionado %>" />
 
-            <fieldset class="block-labels">
+            <fieldset class="block-labels configuracion-tipos-fieldset">
                 <legend>Tipos de prestador habilitados</legend>
 
                 <div class="configuracion-resumen">

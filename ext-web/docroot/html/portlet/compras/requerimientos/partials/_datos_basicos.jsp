@@ -134,7 +134,7 @@ boolean cargosSoloLecturaPantalla =
     }
 </style>
 
-<fieldset class="block-labels compras-cabecera-requerimiento">
+<fieldset class="block-labels compras-cabecera-requerimiento compras-seccion compras-seccion-datos-basicos">
     <legend><%= tituloPantalla %></legend>
 
     <table class="lfr-table compras-resumen-requerimiento compras-cargos-requerimiento compras-datos-basicos-requerimiento">

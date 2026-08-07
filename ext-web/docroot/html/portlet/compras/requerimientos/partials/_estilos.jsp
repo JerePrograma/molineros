@@ -51,6 +51,87 @@
         padding: 4px 8px 4px 0;
     }
 
+    /*
+     * Separación vertical uniforme entre las secciones principales.
+     * El margen pertenece al bloque que efectivamente se renderiza, por lo
+     * que una sección condicional no deja espacios vacíos al ocultarse.
+     */
+    .compras-formulario-requerimiento > .compras-seccion {
+        margin-top: 0;
+        margin-bottom: 12px;
+    }
+
+    .compras-formulario-requerimiento
+    > .compras-seccion
+    > fieldset.block-labels {
+        margin: 0;
+    }
+
+    .compras-formulario-requerimiento
+    > .compras-seccion-botonera {
+        margin-bottom: 0;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-seccion-botonera
+    table.lfr-table {
+        margin: 0;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-botonera-acciones
+    > input,
+    .compras-formulario-requerimiento
+    .compras-botonera-acciones
+    > span {
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-botonera-acciones
+    > input.compras-btn-volver {
+        margin-right: 0;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-seccion-detalle
+    > .compras-detalle-editor {
+        margin: 0 0 12px 0;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-seccion-detalle
+    > .compras-detalle-tabla {
+        margin: 0 0 12px 0;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-seccion-detalle
+    > .compras-observaciones {
+        margin: 0;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-seccion-adjuntos
+    .compras-adjuntos-formulario {
+        margin: 0;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-seccion-adjuntos
+    .compras-adjuntos-formulario
+    > fieldset.block-labels {
+        margin: 0;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-seccion-adjuntos
+    .compras-adjuntos-formulario
+    > fieldset.compras-adjuntos-cotizaciones {
+        margin-top: 12px;
+    }
+
     /* CQA-001: ritmo visual exclusivo del formulario de Compras. */
     .compras-formulario-requerimiento fieldset.block-labels
     table.lfr-table td {

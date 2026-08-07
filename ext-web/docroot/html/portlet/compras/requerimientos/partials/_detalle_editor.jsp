@@ -1,4 +1,4 @@
-<fieldset class="block-labels">
+<fieldset class="block-labels compras-detalle-editor">
     <legend>Agregar / editar detalle</legend>
 
     <input type="hidden"
