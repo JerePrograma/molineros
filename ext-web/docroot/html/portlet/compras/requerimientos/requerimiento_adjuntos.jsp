@@ -252,6 +252,12 @@ boolean msgPresupuestoBorrado =
 
         margin-right: 4px;
     }
+
+    #<portlet:namespace />compra_presupuesto_fm
+    fieldset.cotizaciones-fieldset {
+
+        margin-top: 15px;
+    }
 </style>
 
 <form action="<%= uploadPresupuestosURL.toString() %>"
@@ -532,10 +538,14 @@ boolean msgPresupuestoBorrado =
            id="<portlet:namespace />modo_presupuesto"
            value="<%= HtmlUtil.escape(modoRetornoPresupuestos) %>" />
 
-    <div id="<portlet:namespace />listado_presupuestos_requerimiento">
-        <jsp:include
-                page="/html/portlet/compras/requerimientos/requerimiento_adjuntos_search_documentos.jsp" />
-    </div>
+    <fieldset class="block-labels cotizaciones-fieldset">
+        <legend>Cotizaciones</legend>
+
+        <div id="<portlet:namespace />listado_presupuestos_requerimiento">
+            <jsp:include
+                    page="/html/portlet/compras/requerimientos/requerimiento_adjuntos_search_documentos.jsp" />
+        </div>
+    </fieldset>
 </form>
 
 <script type="text/javascript">
