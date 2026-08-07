@@ -5,6 +5,7 @@
 
 <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle_modelo.jsp" %>
 
+&nbsp;&nbsp;&nbsp;
 <fieldset class="block-labels">
     <legend>Detalle del requerimiento</legend>
 
