@@ -252,6 +252,25 @@ boolean msgPresupuestoBorrado =
 
         margin-right: 4px;
     }
+
+    #<portlet:namespace />compra_presupuesto_fm
+    fieldset.cotizaciones-fieldset {
+
+        margin-top: 0;
+        padding-top: 4px;
+    }
+
+    #<portlet:namespace />listado_presupuestos_requerimiento
+    .separator {
+
+        display: none;
+    }
+
+    #<portlet:namespace />listado_presupuestos_requerimiento
+    .taglib-search-iterator {
+
+        margin-top: 0;
+    }
 </style>
 
 <form action="<%= uploadPresupuestosURL.toString() %>"
@@ -532,7 +551,7 @@ boolean msgPresupuestoBorrado =
            id="<portlet:namespace />modo_presupuesto"
            value="<%= HtmlUtil.escape(modoRetornoPresupuestos) %>" />
 
-    <fieldset class="block-labels">
+    <fieldset class="block-labels cotizaciones-fieldset">
         <legend>Cotizaciones</legend>
 
         <div id="<portlet:namespace />listado_presupuestos_requerimiento">
