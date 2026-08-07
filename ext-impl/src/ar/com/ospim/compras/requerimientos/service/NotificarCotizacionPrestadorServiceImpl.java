@@ -1274,6 +1274,19 @@ public class NotificarCotizacionPrestadorServiceImpl {
         );
         sb.append("\n");
 
+        if (!WebKeysCompras.isEmpty(
+                requerimiento.getObservaciones()
+        )) {
+            sb.append("\nDetalle / observaciones:\n");
+
+            sb.append(
+                    requerimiento
+                            .getObservacionesVisible()
+            );
+
+            sb.append("\n");
+        }
+
         sb.append("Sector: ");
         sb.append(
                 requerimiento
@@ -1298,19 +1311,6 @@ public class NotificarCotizacionPrestadorServiceImpl {
             sb.append(
                     requerimiento.getAltaUsr()
             );
-            sb.append("\n");
-        }
-
-        if (!WebKeysCompras.isEmpty(
-                requerimiento.getObservaciones()
-        )) {
-            sb.append("\nDetalle / observaciones:\n");
-
-            sb.append(
-                    requerimiento
-                            .getObservacionesVisible()
-            );
-
             sb.append("\n");
         }
 

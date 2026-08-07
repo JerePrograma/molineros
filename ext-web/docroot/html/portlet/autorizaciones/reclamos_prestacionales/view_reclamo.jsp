@@ -106,7 +106,7 @@ if (handoffReclamoComprasValido) {
 Calendar prestacionFecha = CalendarFactoryUtil.getCalendar();
 String prestacionFechaString = prestacionFecha.get(Calendar.DATE)+"/"+(prestacionFecha.get(Calendar.MONTH) + 1)+"/"+prestacionFecha.get(Calendar.YEAR);
 
-String cmd = (String) request.getAttribute(Constants.CMD);	
+String cmd = (String) request.getAttribute(Constants.CMD);
 String caso_vinculado = String.valueOf(request.getAttribute("caso_vinculado")!=null?request.getAttribute("caso_vinculado"):0);
 String cuit_titular_vinculado="";
 int inte_vinculado=0;
@@ -142,9 +142,9 @@ request.getSession().removeAttribute(
         WebKeysAutorizaciones
                 .RECLAMO_NUEVO_ESTADO_OBS
 );
-		
-Calendar fechadia  =Calendar.getInstance(); 		
-Calendar fechaospim  = Calendar.getInstance();	
+
+Calendar fechadia  =Calendar.getInstance();
+Calendar fechaospim  = Calendar.getInstance();
 Calendar fechacierre  = Calendar.getInstance();
 Calendar fechaseccional  = Calendar.getInstance();
 Calendar fecharevision = Calendar.getInstance();
@@ -169,7 +169,7 @@ ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO resolucionAutorizado=ReclamoPrestac
 divcheckbox="divheadercheckboxs";
 
 if (cmd != null && (cmd.equalsIgnoreCase(Constants.EDIT) || cmd.equalsIgnoreCase(Constants.ADD)) ){
-    esEdicion = true;	
+    esEdicion = true;
 }
 
 boolean PuedeObservar = false;
@@ -177,8 +177,8 @@ int _estadoPendiente = 1;
 int _estadoPrecarga = 0;
 
 if(reclamoprestacional != null  ){
-	if ((reclamoprestacional.getEstado() == _estadoPendiente) || 
-	    (reclamoprestacional.getEstado() == _estadoPrecarga)) 
+	if ((reclamoprestacional.getEstado() == _estadoPendiente) ||
+	    (reclamoprestacional.getEstado() == _estadoPrecarga))
 	{
 		PuedeObservar = true;
 	}
@@ -186,38 +186,38 @@ if(reclamoprestacional != null  ){
 
 if(reclamoprestacional != null  ){
 	Date fechaaux = null;
-	divcheckbox="divcheckboxsEdicion";	
+	divcheckbox="divcheckboxsEdicion";
 	fechaaux = Validator.isNotNull(reclamoprestacional)? reclamoprestacional.getAlta_fecha() : null;
 	if (fechaaux != null) {
-		fechaospim.setTime(reclamoprestacional.getAlta_fecha());	
+		fechaospim.setTime(reclamoprestacional.getAlta_fecha());
 	}
-	// obtiene el estado de la autorizacion de las prestaciones 
-	resolucionAutorizado= reclamoprestacional.getEstadoResolucionAutorizada();	
-	
+	// obtiene el estado de la autorizacion de las prestaciones
+	resolucionAutorizado= reclamoprestacional.getEstadoResolucionAutorizada();
+
 	fechaaux = Validator.isNotNull(reclamoprestacional)? reclamoprestacional.getFecha_cierre()   : null;
 	if (fechaaux != null) {
 		fechacierre.setTime(reclamoprestacional.getFecha_cierre());
-		
+
 	}
-	
+
 	fechaaux = Validator.isNotNull(reclamoprestacional)? reclamoprestacional.getSeccional_fecha()  : null;
 	if (fechaaux != null) {
 		fechaseccional.setTime(reclamoprestacional.getSeccional_fecha());
 		nofechaseccional=false;
 	}
-	
+
 	//cantprestacioneslista=reclamoprestacional.getPrestaciones() != null ? reclamoprestacional.getPrestaciones().size() :0;
-	
-	if (cantprestacioneslista == 0){	
-		//List<PrestacionesReclamo> prestaciones = (List<PrestacionesReclamo>) session.getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);				
+
+	if (cantprestacioneslista == 0){
+		//List<PrestacionesReclamo> prestaciones = (List<PrestacionesReclamo>) session.getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
 		if (reclamoprestacional != null &&  reclamoprestacional.getPrestaciones()!= null  &&  !reclamoprestacional.getPrestaciones().isEmpty() ){
 			//cantprestacioneslista = prestaciones.size();
-			for (int i = 0; i < reclamoprestacional.getPrestaciones().size(); i++) {	
+			for (int i = 0; i < reclamoprestacional.getPrestaciones().size(); i++) {
 				PrestacionesReclamo presreclamo  = (PrestacionesReclamo) reclamoprestacional.getPrestaciones().get(i);
 				if (presreclamo.getEstado() == null || !presreclamo.getEstado().equals(PrestacionesReclamo.ESTADOS.BAJA)){
 						cantprestacioneslista = cantprestacioneslista + 1;
 						if (presreclamo.getCargo_ps() > 0){
-							debitoTercerizadora = true; 
+							debitoTercerizadora = true;
 
 						}
 				}
@@ -232,13 +232,13 @@ if(reclamoprestacional != null  ){
 				cantRevisiones = cantRevisiones + 1;
 
 			}
-		}	
+		}
 	}
-	
+
 	if (reclamoprestacional.getId_reclamo() > 0) {
 		nroreclamo ="Reclamo Nro : " + "000"+  String.valueOf(reclamoprestacional.getId_reclamo());
 	}
-	if (reclamoprestacional.getId_lista_reintegro()==0 && reclamoprestacional.getIdOP()==0 
+	if (reclamoprestacional.getId_lista_reintegro()==0 && reclamoprestacional.getIdOP()==0
 	&& reclamoprestacional.getChequeOP()==null  &&  reclamoprestacional.getFechaOP()==null ){
 		     opAsignadaalReclamo="Sin Orden de Pago";
 	}else{
@@ -248,31 +248,31 @@ if(reclamoprestacional != null  ){
 		     String valorFechaCheque ;
 		     String ctaDescrpcion;
 		     String formaPago = "";
-		     String ctaNro;    
+		     String ctaNro;
 		     String ctaSucursal;
 		     if (reclamoprestacional.getChequeOP()!=null){
 		    	 formaPago =  reclamoprestacional.getChequeOP()==null ? " " :" / CH: "  +  reclamoprestacional.getChequeOP() ;
 		     }else{
 		    	 formaPago =  reclamoprestacional.getCtaNro()==0 ? " " :" / CTA: "  +  reclamoprestacional.getCtaNro()  ;
 		     }
-		     
+
 		     valorLista= reclamoprestacional.getId_lista_reintegro()==-1 ? " " :String.valueOf(reclamoprestacional.getId_lista_reintegro()) ;
 		     valorFechaCheque=  reclamoprestacional.getFechaOP()==null ? " " :" / "  + reclamoprestacional.getfechaOPAsString() ;
 		     opAsignadaalReclamo ="OP: " + valorLista    + " / " + reclamoprestacional.getIdOP() +  formaPago  +  valorFechaCheque ;
 		     opAsignadaalReclamoExiste=true;
 	}
-	
-	caso_vinculado =  String.valueOf(reclamoprestacional.getCaso_vinculado()); 
+
+	caso_vinculado =  String.valueOf(reclamoprestacional.getCaso_vinculado());
 	if (Integer.valueOf(caso_vinculado)>0)
 	{
 		cuit_titular_vinculado = reclamoprestacional.getCuit_titular();
 		inte_vinculado = reclamoprestacional.getInte();
 		reclamo_vinculado=true;
-	}	
-	
+	}
+
 }else{
-	
-if (Integer.parseInt(caso_vinculado)>0 ){// carga datos del afiliado del cas 
+
+if (Integer.parseInt(caso_vinculado)>0 ){// carga datos del afiliado del cas
 		ReclamoPrestacional reclamoprestacional1 = ReclamosPrestacionesServiceUtil.getReclamoPrestacional(Integer.parseInt(caso_vinculado));
 		cuit_titular_vinculado = reclamoprestacional1.getCuit_titular();
 		inte_vinculado = reclamoprestacional1.getInte();
@@ -292,7 +292,7 @@ SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
 
-boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysAutorizaciones.ROL_REABRIR_RECLAMO_PRESTACIONAL  );				
+boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysAutorizaciones.ROL_REABRIR_RECLAMO_PRESTACIONAL  );
 
 
 %>
@@ -378,22 +378,22 @@ span-fixed-size {
 
 <liferay-ui:error key="errorPrestacionComprobante"
 	message="<%=(String)request.getAttribute(\"msgErrorPrestacionComprobante\") %>" />
-	
+
 <form name="<%= reclamoPortletNamespace %>reclamo_fm"
 	id="<%= reclamoPortletNamespace %>reclamo_fm">
-	
-	
+
+
 <div id="<%= reclamoPortletNamespace %>global"
 		align="left"
-		style="width:75%;">	
-	
+		style="width:75%;">
+
 	<input
 	    type="hidden"
 	    id="<%= reclamoPortletNamespace %>plan_reclamo_bloqueado"
 	    name="<%= reclamoPortletNamespace %>plan_reclamo_bloqueado"
 	    value="0"
 	/>
-	
+
 	<input
 	    type="hidden"
 	    id="<%= reclamoPortletNamespace %>nombre_plan_reclamo_bloqueado"
@@ -451,14 +451,14 @@ span-fixed-size {
 			CUIT: 30999999999
 	</div>
 
-	<fieldset class="cabeceraCaso"> 
+	<fieldset class="cabeceraCaso">
 		<legend>
 			<liferay-ui:message key="Cabecera Caso" />
 		</legend>
 
 		<!-- DS -->
-		
-		
+
+
 		<table >
 		<tr>
 				<td width="10%" ><label><liferay-ui:message key="Fecha Ospim" />
@@ -489,7 +489,7 @@ span-fixed-size {
 									disabled="<%= !esEdicion %>" /></td>
 							<%} %>
 							<td colspan="1"><label>&nbsp;&nbsp;&nbsp;</label></td>
-							
+
 							<td>
 							<td   width="10%"><label><liferay-ui:message key="Fecha Seccional" />:&nbsp;</label></td>
 							<%if(reclamoprestacional == null || nofechaseccional) {%>
@@ -516,20 +516,20 @@ span-fixed-size {
 									yearNullable="<%= true %>"
 									firstDayOfWeek="<%= fechaseccional.getFirstDayOfWeek() - 1 %>"
 									disabled="<%= !esEdicion %>" /></td>
-							<%} %> 
-						
-							
+							<%} %>
+
+
 							<td>&nbsp;</td>
-										
+
 							<td width="3%"><liferay-ui:message key="Amparo"/>:</td>
 							<td>&nbsp;</td>
-											
+
 							 <td width="3%"><input type="checkbox"
 									id="<%= reclamoPortletNamespace %>chk_amparo"
 									name="<%= reclamoPortletNamespace %>chk_amparo"
 									<%=Validator.isNotNull(reclamoprestacional) && reclamoprestacional.isAmparo()  ? "checked" : "Unchecked" %>
 									<% if (!esEdicion) { %> disabled='disabled' <%}%> /> <br>
-							 </td> 
+							 </td>
 							 <td>&nbsp;</td>
 							<td width="2%"><label><liferay-ui:message key="Lote" />: </label></td>
 							 <td>&nbsp;</td>
@@ -540,23 +540,23 @@ span-fixed-size {
 	    						|| reclamoprestacional.getNroLote()==0?"":reclamoprestacional.getNroLote() %>"
 								readonly="readonly" /></td>
 							</td>
-				
+
 							<td width="37%" >&nbsp;&nbsp;&nbsp;</td>
-							
+
 						<td>
 							<div class="divheaderNroReclamo">
 								<label><b><liferay-ui:message key="<%= nroreclamo %>" /></b></label>
 							</div>
 							<div  class="divheaderNroOP">
-								<label><b><%= opAsignadaalReclamo %></b></label> 							
+								<label><b><%= opAsignadaalReclamo %></b></label>
 							</div>
 						</td>
-				
+
 				<tr>
 				<tr>
 					<td></td>
 				</tr>
-					
+
 		</table>
 		<br>
 		<table>
@@ -577,50 +577,50 @@ span-fixed-size {
 											<%=Validator.isNotNull(reclamoprestacional) && Validator.isNotNull(reclamoprestacional.getTipoPedido())  && reclamoprestacional.getTipoPedido().equals("EXTRACAPITA") ? "selected" : ""  %>>EXTRACÁPITA</option>
 									</select>
 								</table></td>
-							
+
 							<td colspan="1">&nbsp;&nbsp;&nbsp;&nbsp;</td>
-							
+
 							<td colspan="2"><label><liferay-ui:message key="Sector" />:&nbsp;&nbsp;</label></td>
-							<td><table> 
+							<td><table>
 									<select <% if (!esEdicion) { %> disabled='disabled' <%}%>
 										name="<%= reclamoPortletNamespace %>sector"
 										id="<%= reclamoPortletNamespace %>sector"
 										onchange="manejarTipoSector();">
-										
+
 										<option value="" <%= (reclamoprestacional == null || Validator.isNull(reclamoprestacional.getSector())) ? "selected" : "" %>>-- SELECCIONAR --</option>
 
 							            <option value="DISCAPACIDAD"
 							                <%= "DISCAPACIDAD".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
 							                DISCAPACIDAD
 							            </option>
-							
+
 							            <option value="PRESTACIONES MEDICAS"
 							                <%= "PRESTACIONES MEDICAS".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
 							                PRESTACIONES MÉDICAS
 							            </option>
-							
+
 							            <option value="FARMACIA"
 							                <%= "FARMACIA".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
 							                FARMACIA
 							            </option>
-							
+
 							            <option value="LEGALES"
 							                <%= "LEGALES".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
 							                LEGALES
 							            </option>
-							
-							            <%-- 
+
+							            <%--
 							            <option value="LIQUIDACIONES"
 							                <%= "LIQUIDACIONES".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
 							                LIQUIDACIONES
 							            </option>
 							            --%>
-							
+
 							            <option value="ODONTOLOGIA"
 							                <%= "ODONTOLOGIA".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
 							                ODONTOLOGIA
 							            </option>
-            
+
 									</select>
 								</table></td>
 
@@ -718,7 +718,7 @@ span-fixed-size {
 
 		<br>
 		<%-- Observacion como Textarea %>
-		<%-- 
+		<%--
 		<table class="lfr-table"
 			style="border-collapse: separate; border-spacing: 0px;">
 			<tr>
@@ -732,12 +732,12 @@ span-fixed-size {
 			</tr>
 		</table>
 		--%>
-		
+
 		<table >
 			<%-- Observacion como Fieldset--%>
 			<%
 			if (reclamoprestacional != null && reclamoprestacional.getEstadoObservacion() != null && reclamoprestacional.getEstadoObservacion().length() >0 ) {
-			%>																	
+			%>
 			<tr>
 				<td colspan="12">
 					<fieldset class="block-labels">
@@ -747,53 +747,53 @@ span-fixed-size {
 						<table>
 							<tr>
 							<%-- class="span-fixed-size" --%>
-								<td><span 
+								<td><span
 									id="<%= reclamoPortletNamespace %>estadoObservacion"
 									style="color: red;"> <%=reclamoprestacional != null && reclamoprestacional.getEstadoObservacion() != null
 				? reclamoprestacional.getEstadoObservacion() : ""%>
 								</span></td>
 							</tr>
 						</table>
-	
+
 					</fieldset>
 				</td>
-			</tr>		
+			</tr>
 			<%
 			}
 			%>
-		
+
 			<tr>
 				<td>
 					<!-- DS -->
-					<table 
+					<table
 						style="border-collapse: separate; border-spacing: 3px;">
 						<tr>
-							<!--  													
+							<!--
 							    <td>
-							    <div class="divheaderNroReclamo">		     
+							    <div class="divheaderNroReclamo">
 							    <label><b><liferay-ui:message key="<%= nroreclamo %>" /></b></label>
 							    </div>
-							    <div class="divheaderNroOP">		     
+							    <div class="divheaderNroOP">
 							    <label><b><liferay-ui:message key="<%= opAsignadaalReclamo %>" /></b></label>
 							    </div>
 							    <% if(idPreautorizacion!=null && idPreautorizacion!=0){ %>
 							      <br>
-							      <div>		     
+							      <div>
 							       <span style="font-size: 9pt; color: green; "><label><b>Preautorizacion: <%= idPreautorizacion %></b></label></span>
 							      </div>
 							    <%}%>
-							    
+
 							    </td>
-							    
+
 							    <td></td>
 							-->
-							</tr>					
-							<tr>			       	
+							</tr>
+							<tr>
 						</tr>
 					</table>
 				</td>
-				
-				
+
+
 				<!-- DS -->
 				<td>
 <!-- 					<div class="divheaderNroReclamo"> -->

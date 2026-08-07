@@ -1,38 +1,27 @@
-<%@ include file="/html/portlet/autorizaciones/init.jsp"%>
+<%@ include file="/html/portlet/autorizaciones/init.jsp" %>
+<%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 
-<%@ taglib
-    uri="http://java.sun.com/portlet_2_0"
-    prefix="portlet"
-/>
-
-<portlet:defineObjects/>
+<portlet:defineObjects />
 
 <%
 PortletURL portletURL =
         renderResponse.createRenderURL();
-
-boolean inHabilitar =
-        false;
-
-boolean auditoriaAdministrativa =
-        false;
 
 String cmd =
         (String) request.getAttribute(
                 Constants.CMD
         );
 
+boolean inHabilitar =
+        Constants.VIEW.equalsIgnoreCase(
+                cmd
+        );
+
 int cantrevisionesok =
         0;
 
-if (cmd != null
-        && cmd.equalsIgnoreCase(
-                Constants.VIEW
-        )) {
-
-    inHabilitar =
-            true;
-}
+boolean auditoriaAdministrativa =
+        false;
 
 @SuppressWarnings("unchecked")
 List<RevisionesReclamo> revisionesreclamo =
@@ -96,11 +85,8 @@ SearchContainer searchContainer =
 if (revisionesreclamo != null
         && !revisionesreclamo.isEmpty()) {
 
-    int total =
-            revisionesreclamo.size();
-
     searchContainer.setTotal(
-            total
+            revisionesreclamo.size()
     );
 
     @SuppressWarnings("rawtypes")
@@ -124,56 +110,116 @@ if (revisionesreclamo != null
                 new ResultRow(
                         revreclamo,
                         Integer.valueOf(
-                                1 + i
+                                i + 1
                         ),
                         i
                 );
 
+        /*
+         * Fecha de revisión.
+         */
         row.addText(
                 revreclamo
                         .getFecha_revisionTostring()
         );
 
+        /*
+         * Usuarios presentes.
+         */
         row.addText(
                 Validator.isNotNull(
                         revreclamo.getUsr_presente()
                 )
-                        ? revreclamo.getUsr_presente()
+                        ? com.liferay.portal.kernel.util.HtmlUtil.escape(
+                                revreclamo.getUsr_presente()
+                        )
                         : ""
         );
 
+        /*
+         * Usuario que resolvió.
+         */
         row.addText(
                 Validator.isNotNull(
                         revreclamo.getUsr_resolucion()
                 )
-                        ? revreclamo.getUsr_resolucion()
+                        ? com.liferay.portal.kernel.util.HtmlUtil.escape(
+                                revreclamo.getUsr_resolucion()
+                        )
                         : ""
         );
 
+        /*
+         * Responsable de la resolución.
+         */
         row.addText(
                 Validator.isNotNull(
                         revreclamo
                                 .getUsr_responsable_resolucion()
                 )
-                        ? revreclamo
-                                .getUsr_responsable_resolucion()
+                        ? com.liferay.portal.kernel.util.HtmlUtil.escape(
+                                revreclamo
+                                        .getUsr_responsable_resolucion()
+                        )
                         : ""
         );
 
-        if (revreclamo.getObservacion() != null
-                && revreclamo
-                        .getObservacion()
-                        .length() > 15) {
+        /*
+         * Observación.
+         *
+         * Para observaciones largas se guarda el texto escapado en un
+         * elemento oculto. De esta forma no se inserta directamente el
+         * contenido dentro de una cadena JavaScript.
+         */
+        String observacion =
+                revreclamo.getObservacion();
+
+        if (observacion == null) {
+            observacion =
+                    "";
+        }
+
+        String observacionEscapada =
+                com.liferay.portal.kernel.util.HtmlUtil.escape(
+                        observacion
+                );
+
+        if (observacion.length() > 15) {
+
+            String observacionId =
+                    renderResponse.getNamespace()
+                            + "observacion_"
+                            + i;
 
             StringBuilder sbo =
                     new StringBuilder();
+
+            sbo.append(
+                    "<span id=\""
+            );
+
+            sbo.append(
+                    observacionId
+            );
+
+            sbo.append(
+                    "\" style=\"display:none;\">"
+            );
+
+            sbo.append(
+                    observacionEscapada
+            );
+
+            sbo.append(
+                    "</span>"
+            );
 
             sbo.append(
                     "&nbsp;&nbsp;&nbsp;&nbsp;"
             );
 
             sbo.append(
-                    "<img alt=\"edita prestacion\" src=\""
+                    "<img alt=\"ver observacion\" src=\""
             );
 
             sbo.append(
@@ -185,29 +231,39 @@ if (revisionesreclamo != null
             );
 
             sbo.append(
-                    " title='"
+                    " title=\""
             );
 
             sbo.append(
-                    revreclamo.getObservacion()
+                    observacionEscapada
             );
 
             sbo.append(
-                    "'"
+                    "\""
             );
 
             sbo.append(
-                    " onClick=\"javascript:VtnaObs('"
+                    " style=\"cursor:pointer;\""
             );
 
             sbo.append(
-                    String.valueOf(
-                            revreclamo.getObservacion()
-                    )
+                    " onclick=\"VtnaObs("
             );
 
             sbo.append(
-                    "','Observacion de la Revision');\""
+                    "jQuery(document.getElementById('"
+            );
+
+            sbo.append(
+                    observacionId
+            );
+
+            sbo.append(
+                    "')).text(), "
+            );
+
+            sbo.append(
+                    "'Observacion de la Revision');\""
             );
 
             sbo.append(
@@ -219,46 +275,62 @@ if (revisionesreclamo != null
             );
 
         } else {
+
             row.addText(
-                    Validator.isNotNull(
-                            revreclamo.getObservacion()
-                    )
-                            ? revreclamo.getObservacion()
-                            : ""
+                    observacionEscapada
             );
         }
 
-        if (revreclamo
-                .getUsr_responsable_resolucion()
-                != null
-                && "AUDITORIA ADMINISTRATIVA"
-                        .equals(
-                                revreclamo
-                                        .getUsr_responsable_resolucion()
-                        )) {
+        /*
+         * Una revisión es activa mientras no tenga estado BAJA.
+         *
+         * El conteo no depende de que el JSP se encuentre en modo
+         * edición o vista.
+         */
+        boolean revisionActiva =
+                revreclamo.getEstado() == null
+                        || !RevisionesReclamo
+                                .ESTADOS
+                                .BAJA
+                                .equals(
+                                        revreclamo.getEstado()
+                                );
 
-            auditoriaAdministrativa =
-                    true;
+        if (revisionActiva) {
+
+            cantrevisionesok++;
+
+            /*
+             * Auditoría Administrativa solamente debe marcarse cuando
+             * la revisión que la originó continúa activa.
+             */
+            if ("AUDITORIA ADMINISTRATIVA"
+                    .equals(
+                            revreclamo
+                                    .getUsr_responsable_resolucion()
+                    )) {
+
+                auditoriaAdministrativa =
+                        true;
+            }
         }
 
+        /*
+         * Columna Eliminar.
+         */
         StringBuilder sb =
                 new StringBuilder();
 
-        if (revreclamo.getEstado() == null
-                || !RevisionesReclamo
-                        .ESTADOS
-                        .BAJA
-                        .equals(
-                                revreclamo.getEstado()
-                        )) {
+        if (revisionActiva) {
 
             if (!inHabilitar) {
+
                 sb.append(
                         "&nbsp;&nbsp;&nbsp;&nbsp;"
                 );
 
                 sb.append(
-                        "<img alt=\"borrar especialidades\" src=\""
+                        "<img alt=\"borrar revision\" src=\""
                 );
 
                 sb.append(
@@ -270,7 +342,15 @@ if (revisionesreclamo != null
                 );
 
                 sb.append(
-                        " onClick=\"javascript:borrarRevision('"
+                        " title=\"Eliminar revision\""
+                );
+
+                sb.append(
+                        " style=\"cursor:pointer;\""
+                );
+
+                sb.append(
+                        " onclick=\"borrarRevision('"
                 );
 
                 sb.append(
@@ -286,34 +366,36 @@ if (revisionesreclamo != null
                 sb.append(
                         " />"
                 );
-
-                cantrevisionesok++;
-
-            } else {
-                sb.append(
-                        " "
-                );
             }
 
         } else {
+
             sb.append(
                     "&nbsp;&nbsp;&nbsp;&nbsp;"
             );
 
             sb.append(
-                    "<img height='16'"
+                    "<img alt=\"revision eliminada\""
             );
 
             sb.append(
-                    " width='16'"
+                    " height=\"16\""
             );
 
             sb.append(
-                    " src='/html/themes/classic/"
+                    " width=\"16\""
             );
 
             sb.append(
-                    "images/common/close.png'"
+                    " src=\""
+            );
+
+            sb.append(
+                    themeDisplay.getPathThemeImages()
+            );
+
+            sb.append(
+                    "/common/close.png\""
             );
 
             sb.append(
@@ -341,28 +423,53 @@ if (revisionesreclamo != null
     type="hidden"
     id="<portlet:namespace />revision_operacion_ok"
     name="<portlet:namespace />revision_operacion_ok"
-    value="<%=revisionOperacionOk%>"
+    value="<%=com.liferay.portal.kernel.util.HtmlUtil.escape(
+            revisionOperacionOk
+    )%>"
 />
 
-<% if (revisionesreclamo == null
-        || revisionesreclamo.isEmpty()) { %>
+<%
+if (revisionesreclamo == null
+        || revisionesreclamo.isEmpty()) {
+%>
 
-<table class="lfr-table" style="width: 100%;">
+<table
+    class="lfr-table"
+    style="width: 100%;"
+>
     <thead>
         <tr>
-            <th><%=headerNames.get(0)%></th>
-            <th><%=headerNames.get(1)%></th>
-            <th><%=headerNames.get(2)%></th>
-            <th><%=headerNames.get(3)%></th>
-            <th><%=headerNames.get(4)%></th>
-            <th><%=headerNames.get(5)%></th>
+            <th>
+                <%=headerNames.get(0)%>
+            </th>
+
+            <th>
+                <%=headerNames.get(1)%>
+            </th>
+
+            <th>
+                <%=headerNames.get(2)%>
+            </th>
+
+            <th>
+                <%=headerNames.get(3)%>
+            </th>
+
+            <th>
+                <%=headerNames.get(4)%>
+            </th>
+
+            <th>
+                <%=headerNames.get(5)%>
+            </th>
         </tr>
     </thead>
+
     <tbody>
         <tr>
             <td
                 colspan="<%=headerNames.size()%>"
-                align="center"
+                style="text-align:center;"
             >
                 <%=LanguageUtil.get(
                         pageContext,
@@ -373,20 +480,47 @@ if (revisionesreclamo != null
     </tbody>
 </table>
 
-<% } else { %>
+<%
+} else {
+%>
 
 <liferay-ui:search-iterator
     searchContainer="<%=searchContainer%>"
 />
 
-<% } %>
+<%
+}
+%>
+
+<%--
+La URL se genera completamente en el servidor.
+
+Se utiliza un marcador para idRevision y luego se reemplaza desde
+JavaScript. Esto evita intentar construir un tag JSP concatenando
+cadenas JavaScript.
+--%>
+<portlet:renderURL
+    var="borrarRevisionURL"
+    windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"
+    escapeXml="false"
+>
+    <portlet:param
+        name="struts_action"
+        value="/autorizaciones/borrar_reclamosrevisiones"
+    />
+
+    <portlet:param
+        name="idRevision"
+        value="__ID_REVISION__"
+    />
+</portlet:renderURL>
 
 <script type="text/javascript">
 
 /*
  * Se actualiza siempre, incluso cuando no quedan revisiones activas.
- * De esta forma no permanece el valor 1 después de eliminar la
- * última revisión.
+ * De esta forma no permanece el valor anterior después de eliminar
+ * la última revisión.
  */
 jQuery(
     "#<portlet:namespace />cantrevisionesactivas"
@@ -395,8 +529,8 @@ jQuery(
 );
 
 /*
- * También debe limpiarse cuando la revisión de Auditoría
- * Administrativa deja de existir.
+ * Debe quedar vacío cuando ya no existe una revisión activa cuyo
+ * responsable sea Auditoría Administrativa.
  */
 jQuery(
     "#<portlet:namespace />auditoriaadministrativa"
@@ -407,15 +541,14 @@ jQuery(
 function borrarRevision(idRevision) {
 
     var url =
-            '<portlet:renderURL '
-            + 'windowState="'
-            + '<%=LiferayWindowState.EXCLUSIVE.toString()%>'
-            + '"/>'
-            + '&struts_action=/autorizaciones/'
-            + 'borrar_reclamosrevisiones'
-            + '&idRevision='
-            + encodeURIComponent(
-                    idRevision
+            "<%=borrarRevisionURL%>";
+
+    url =
+            url.replace(
+                    "__ID_REVISION__",
+                    encodeURIComponent(
+                            idRevision
+                    )
             );
 
     jQuery(
@@ -424,9 +557,20 @@ function borrarRevision(idRevision) {
         url,
         function(
                 responseText,
-                status) {
+                status,
+                xhr) {
 
-            if (status == "error") {
+            if (status === "error") {
+
+                if (window.console
+                        && window.console.error) {
+
+                    window.console.error(
+                            "No se pudo eliminar la revisión.",
+                            xhr
+                    );
+                }
+
                 return;
             }
 
