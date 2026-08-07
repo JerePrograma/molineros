@@ -1,4 +1,3 @@
-&nbsp;&nbsp;&nbsp;
 <fieldset class="block-labels">
     <legend>Observaciones / Descripción</legend>
 

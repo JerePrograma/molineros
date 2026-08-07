@@ -15,6 +15,7 @@
     <% } %>
 
     <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle_tabla.jsp" %>
+    <%@ include file="/html/portlet/compras/requerimientos/partials/_observaciones.jsp" %>
 </fieldset>
 
 <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle_scripts_comunes.jsp" %>
