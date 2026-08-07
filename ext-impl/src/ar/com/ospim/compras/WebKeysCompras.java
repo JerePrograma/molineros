@@ -137,15 +137,14 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final int ESTADO_A_COTIZAR = 2;
     public static final int ESTADO_COTIZADO = 3;
     public static final int ESTADO_RECLAMO_RP = 4;
+    public static final int ESTADO_ORDEN_COMPRA = 5;
+    public static final int ESTADO_ANULADO = 99;
 
     /**
      * @deprecated Alias exclusivo para compatibilidad con código legacy.
      */
     @Deprecated
     public static final int ESTADO_AUTORIZADO = ESTADO_RECLAMO_RP;
-
-    public static final int ESTADO_ORDEN_COMPRA = 5;
-    public static final int ESTADO_ANULADO = 99;
 
     public static final String ENVIO_PENDIENTE = "PENDIENTE";
     public static final String ENVIO_PROCESANDO = "PROCESANDO";
