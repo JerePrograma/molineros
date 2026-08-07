@@ -252,27 +252,8 @@ boolean msgPresupuestoBorrado =
 
         margin-right: 4px;
     }
-
-    #<portlet:namespace />compra_presupuesto_fm
-    fieldset.cotizaciones-fieldset {
-
-        margin-top: 0;
-        padding-top: 4px;
-    }
-
-    #<portlet:namespace />listado_presupuestos_requerimiento
-    .separator {
-
-        display: none;
-    }
-
-    #<portlet:namespace />listado_presupuestos_requerimiento
-    .taglib-search-iterator {
-
-        margin-top: 0;
-    }
 </style>
-
+&nbsp;&nbsp;&nbsp;
 <form action="<%= uploadPresupuestosURL.toString() %>"
       method="post"
       name="<portlet:namespace />compra_presupuesto_fm"
@@ -525,7 +506,7 @@ boolean msgPresupuestoBorrado =
             </div>
         </c:if>
     </fieldset>
-
+&nbsp;&nbsp;&nbsp;
     <input type="hidden"
            name="<portlet:namespace />presupuesto_accion"
            id="<portlet:namespace />presupuesto_accion"
@@ -560,7 +541,7 @@ boolean msgPresupuestoBorrado =
         </div>
     </fieldset>
 </form>
-
+&nbsp;&nbsp;&nbsp;
 <script type="text/javascript">
     function <portlet:namespace />reindexarFilasPresupuesto() {
         var rows =
