@@ -13,6 +13,11 @@
 
     <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle_tabla.jsp" %>
 
+    <%
+    RequerimientoCompra req = reqDetalle;
+    boolean puedeEditarEstructuraPantalla = puedeABMDetalle;
+    %>
+
     <%@ include file="/html/portlet/compras/requerimientos/partials/_observaciones.jsp" %>
 </fieldset>
 

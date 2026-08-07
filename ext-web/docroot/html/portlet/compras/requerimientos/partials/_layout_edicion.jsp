@@ -17,7 +17,6 @@
     <%@ include file="/html/portlet/compras/requerimientos/partials/_afiliado_editable.jsp" %>
 
     <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle.jsp" %>
-    <%@ include file="/html/portlet/compras/requerimientos/partials/_observaciones.jsp" %>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_adjuntos.jsp" %>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_adjudicacion.jsp" %>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_botonera.jsp" %>
