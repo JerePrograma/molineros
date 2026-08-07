@@ -115,7 +115,14 @@ boolean botoneraPuedeCrearReclamoPrestacional =
 
 boolean botoneraPuedeVerReclamoPrestacional =
         botoneraRequerimientoPersistido
-        && WebKeysCompras.esCotizado(botoneraEstadoActual)
+        && (
+                WebKeysCompras.esCotizado(
+                        botoneraEstadoActual
+                )
+                || WebKeysCompras.esReclamoRP(
+                        botoneraEstadoActual
+                )
+        )
         && (
                 botoneraTieneRolView
                 || puedeABM

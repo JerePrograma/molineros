@@ -92,6 +92,15 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String RELACION_RECLAMO_PRESTACIONAL_COMPRA =
             "RELACION_RECLAMO_PRESTACIONAL_COMPRA";
 
+    public static final String RELACIONES_RECLAMO_PRESTACIONAL_COMPRA =
+            "RELACIONES_RECLAMO_PRESTACIONAL_COMPRA";
+
+    public static final String MOSTRAR_NRO_RP_LISTADO =
+            "MOSTRAR_NRO_RP_LISTADO";
+
+    public static final String COTIZADOS_INCLUYE_RECLAMO_RP =
+            "COTIZADOS_INCLUYE_RECLAMO_RP";
+
     public static final String RELACION_RECLAMO_PRESTACIONAL_CONSULTA_OK =
             "RELACION_RECLAMO_PRESTACIONAL_CONSULTA_OK";
 
@@ -100,6 +109,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
     public static final String PARAM_ID_REQUERIMIENTO_COMPRA =
             "id_requerimiento_compra";
+
+    public static final String PARAM_COTIZADOS_INCLUYE_RECLAMO_RP =
+            "cotizados_incluye_rp";
 
     public static final String PARAM_RECLAMO_PRESTACIONAL_NONCE =
             "compras_reclamo_nonce";
@@ -227,7 +239,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             case ESTADO_PENDIENTE:
                 return "PENDIENTE";
             case ESTADO_A_COTIZAR:
-                return "A COTIZAR";
+                return "ENVIADO A COTIZAR";
             case ESTADO_COTIZADO:
                 return "COTIZADO";
             case ESTADO_RECLAMO_RP:
@@ -329,7 +341,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     }
 
     public static boolean puedeAnular(int estado) {
-        return esPendiente(estado) || esACotizar(estado);
+        return esPendiente(estado);
     }
 
     public static boolean esSoloLectura(int estado) {
@@ -350,9 +362,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         }
 
         /*
-         * Los estados 4 y 5 siguen reconocidos, pero continúan sin transición
-         * activa hasta implementar y vincular el Reclamo Prestacional y la
-         * Orden de Compra reales.
+         * RECLAMO_RP se activa únicamente cuando existe un Reclamo
+         * Prestacional real y correctamente vinculado. ORDEN_COMPRA continúa
+         * reconocido sin transición activa dentro de este flujo.
          */
         if (estadoActual == estadoNuevo
                 || esAnulado(estadoActual)) {

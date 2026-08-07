@@ -10,6 +10,13 @@ String estadoForzado =
 boolean estadoForzadoActivo =
         !WebKeysCompras.isEmpty(estadoForzado);
 
+boolean cotizadosIncluyeReclamoRp =
+        Boolean.TRUE.equals(
+                request.getAttribute(
+                        WebKeysCompras.COTIZADOS_INCLUYE_RECLAMO_RP
+                )
+        );
+
 boolean showABMButtons =
         user != null
         && PermissionUtil.userContainsRole(
@@ -196,7 +203,15 @@ if (tercerizadoras == null) {
                                         : "" %>>
 
                             <%= HtmlUtil.escape(
-                                    estado.getDescripcionVisible()
+                                    cotizadosIncluyeReclamoRp
+                                    && idEstado.equals(
+                                            String.valueOf(
+                                                    WebKeysCompras
+                                                            .ESTADO_COTIZADO
+                                            )
+                                    )
+                                            ? "COTIZADO / RECLAMO (RP)"
+                                            : estado.getDescripcionVisible()
                             ) %>
                         </option>
 
@@ -1358,6 +1373,12 @@ if (tercerizadoras == null) {
                 '&<portlet:namespace />surge='
                     + encodeURIComponent(
                             surge
+                    )
+                + '&<%= WebKeysCompras.PARAM_COTIZADOS_INCLUYE_RECLAMO_RP %>='
+                    + encodeURIComponent(
+                            '<%= cotizadosIncluyeReclamoRp
+                                    ? "true"
+                                    : "false" %>'
                     );
 
         jQuery(

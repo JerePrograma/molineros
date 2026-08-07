@@ -14,6 +14,9 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class RequerimientoCompraReclamoPrestacionalServiceImpl {
 
@@ -25,6 +28,13 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
     private static final String SQL_GET_RELACION =
             "SELECT * "
                     + "FROM compras.get_requerimiento_reclamo_prestacional(?)";
+
+    private static final String SQL_GET_RELACIONES_BATCH =
+            "SELECT * "
+                    + "FROM compras.requerimiento_reclamo_prestacional "
+                    + "WHERE estado = ? "
+                    + "AND id_reclamo_prestacional IS NOT NULL "
+                    + "AND id_requerimiento = ANY (CAST(? AS INTEGER[]))";
 
     private static final String SQL_RESERVAR =
             "SELECT compras.reservar_reclamo_prestacional(?,?,?)";
@@ -47,6 +57,16 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
 
     private static final String SQL_BLOQUEAR_REQUERIMIENTO =
             "SELECT pg_advisory_xact_lock(?,?)";
+
+    private static final String SQL_GET_ESTADO_REQUERIMIENTO_FOR_UPDATE =
+            "SELECT estado "
+                    + "FROM compras.requerimiento "
+                    + "WHERE id_requerimiento = ? "
+                    + "AND baja_fecha IS NULL "
+                    + "FOR UPDATE";
+
+    private static final String SQL_CAMBIAR_ESTADO_REQUERIMIENTO =
+            "SELECT compras.cambiar_estado_requerimiento(?,?,?)";
 
     public RequerimientoCompraReclamoPrestacional obtenerPorRequerimiento(
             int idRequerimientoCompra) throws Exception {
@@ -77,6 +97,149 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
         }
+    }
+
+    public Map<Integer, RequerimientoCompraReclamoPrestacional>
+            obtenerVinculadasPorRequerimientos(
+                    List<Integer> idsRequerimientos)
+                    throws Exception {
+
+        Map<Integer, RequerimientoCompraReclamoPrestacional> relaciones =
+                new HashMap<Integer, RequerimientoCompraReclamoPrestacional>();
+
+        String idsArray =
+                construirArrayIdsRequerimientos(
+                        idsRequerimientos
+                );
+
+        if (idsArray == null) {
+            return relaciones;
+        }
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con =
+                    ConnectionHelper.getConnection();
+
+            stmt =
+                    con.prepareStatement(
+                            SQL_GET_RELACIONES_BATCH
+                    );
+
+            stmt.setString(
+                    1,
+                    WebKeysCompras.VINCULO_RECLAMO_VINCULADO
+            );
+
+            stmt.setString(
+                    2,
+                    idsArray
+            );
+
+            rs =
+                    stmt.executeQuery();
+
+            while (rs.next()) {
+                RequerimientoCompraReclamoPrestacional relacion =
+                        mapRelacion(
+                                rs
+                        );
+
+                if (relacion != null
+                        && relacion.isVinculado()) {
+
+                    relaciones.put(
+                            Integer.valueOf(
+                                    relacion
+                                            .getIdRequerimientoCompra()
+                            ),
+                            relacion
+                    );
+                }
+            }
+
+            return relaciones;
+
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudieron consultar en lote las relaciones "
+                            + "entre requerimientos de compra y Reclamos "
+                            + "Prestacionales.",
+                    e
+            );
+
+            throw e;
+
+        } finally {
+            closeQuietly(
+                    rs
+            );
+
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
+        }
+    }
+
+    private String construirArrayIdsRequerimientos(
+            List<Integer> idsRequerimientos) {
+
+        if (idsRequerimientos == null
+                || idsRequerimientos.isEmpty()) {
+
+            return null;
+        }
+
+        StringBuilder value =
+                new StringBuilder();
+
+        value.append(
+                '{'
+        );
+
+        boolean primero =
+                true;
+
+        for (int i = 0;
+                i < idsRequerimientos.size();
+                i++) {
+
+            Integer id =
+                    idsRequerimientos.get(i);
+
+            if (id == null
+                    || id.intValue() <= 0) {
+
+                continue;
+            }
+
+            if (!primero) {
+                value.append(
+                        ','
+                );
+            }
+
+            value.append(
+                    id.intValue()
+            );
+
+            primero =
+                    false;
+        }
+
+        if (primero) {
+            return null;
+        }
+
+        value.append(
+                '}'
+        );
+
+        return value.toString();
     }
 
     public boolean liberarReserva(
@@ -369,6 +532,12 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                     );
                 }
 
+                asegurarEstadoReclamoPrestacional(
+                        con,
+                        idRequerimientoCompra,
+                        usuario
+                );
+
                 con.commit();
 
                 return idReclamoExistente;
@@ -444,6 +613,12 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                                 + "confirmada correctamente."
                 );
             }
+
+            asegurarEstadoReclamoPrestacional(
+                    con,
+                    idRequerimientoCompra,
+                    usuario
+            );
 
             con.commit();
 
@@ -678,6 +853,162 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                                 + "la creación del Reclamo Prestacional."
                 );
             }
+
+        } finally {
+            closeQuietly(
+                    rs
+            );
+
+            ConnectionHelper.cerrar(
+                    stmt
+            );
+        }
+    }
+
+    private void asegurarEstadoReclamoPrestacional(
+            Connection con,
+            int idRequerimientoCompra,
+            String usuario) throws Exception {
+
+        int estadoActual =
+                obtenerEstadoRequerimientoForUpdate(
+                        con,
+                        idRequerimientoCompra
+                );
+
+        if (estadoActual
+                == WebKeysCompras.ESTADO_RECLAMO_RP) {
+
+            return;
+        }
+
+        if (!WebKeysCompras.validarTransicionEstado(
+                estadoActual,
+                WebKeysCompras.ESTADO_RECLAMO_RP
+        )) {
+
+            throw new Exception(
+                    "El requerimiento vinculado al Reclamo Prestacional "
+                            + "no puede pasar a RECLAMO (RP) desde su "
+                            + "estado actual: "
+                            + WebKeysCompras.getEstadoDescripcion(
+                                    estadoActual
+                            )
+                            + "."
+            );
+        }
+
+        PreparedStatement stmt =
+                null;
+
+        try {
+            stmt =
+                    con.prepareStatement(
+                            SQL_CAMBIAR_ESTADO_REQUERIMIENTO
+                    );
+
+            stmt.setInt(
+                    1,
+                    idRequerimientoCompra
+            );
+
+            stmt.setInt(
+                    2,
+                    WebKeysCompras.ESTADO_RECLAMO_RP
+            );
+
+            stmt.setString(
+                    3,
+                    normalizarUsuario(
+                            usuario
+                    )
+            );
+
+            stmt.execute();
+
+        } finally {
+            ConnectionHelper.cerrar(
+                    stmt
+            );
+        }
+
+        int estadoFinal =
+                obtenerEstadoRequerimientoForUpdate(
+                        con,
+                        idRequerimientoCompra
+                );
+
+        if (estadoFinal
+                != WebKeysCompras.ESTADO_RECLAMO_RP) {
+
+            throw new Exception(
+                    "El Reclamo Prestacional quedó vinculado, pero "
+                            + "el requerimiento no confirmó el estado "
+                            + "RECLAMO (RP)."
+            );
+        }
+    }
+
+    private int obtenerEstadoRequerimientoForUpdate(
+            Connection con,
+            int idRequerimientoCompra) throws Exception {
+
+        if (con == null) {
+            throw new Exception(
+                    "No se informó la conexión transaccional."
+            );
+        }
+
+        validarIdRequerimiento(
+                idRequerimientoCompra
+        );
+
+        PreparedStatement stmt =
+                null;
+
+        ResultSet rs =
+                null;
+
+        try {
+            stmt =
+                    con.prepareStatement(
+                            SQL_GET_ESTADO_REQUERIMIENTO_FOR_UPDATE
+                    );
+
+            stmt.setInt(
+                    1,
+                    idRequerimientoCompra
+            );
+
+            rs =
+                    stmt.executeQuery();
+
+            if (!rs.next()) {
+                throw new Exception(
+                        "No se encontró el requerimiento activo "
+                                + "durante la vinculación del Reclamo "
+                                + "Prestacional."
+                );
+            }
+
+            int estado =
+                    rs.getInt(
+                            1
+                    );
+
+            if (rs.wasNull()
+                    || !WebKeysCompras.esEstadoValido(
+                            estado
+                    )) {
+
+                throw new Exception(
+                        "El requerimiento posee un estado inválido "
+                                + "durante la vinculación del Reclamo "
+                                + "Prestacional."
+                );
+            }
+
+            return estado;
 
         } finally {
             closeQuietly(

@@ -252,6 +252,11 @@ boolean msgPresupuestoBorrado =
 
         margin-right: 4px;
     }
+
+    .compras-pdf-pendiente {
+        font-size: 18px;
+        cursor: help;
+    }
 </style>
 <form action="<%= uploadPresupuestosURL.toString() %>"
       method="post"
@@ -321,6 +326,7 @@ boolean msgPresupuestoBorrado =
                                 <th>Email registrado</th>
                                 <th>Email destino</th>
                                 <th>Estado de notificación</th>
+                                <th>PDF</th>
                             </tr>
                         </thead>
 
@@ -352,6 +358,14 @@ boolean msgPresupuestoBorrado =
                                         )
                                         && !emailRegistradoVisible.equalsIgnoreCase(
                                                 emailDestinoVisible
+                                        );
+
+                                boolean pdfPendiente =
+                                        reqPresupuestos
+                                                .puedeAdministrarPresupuestos()
+                                        && WebKeysCompras.ENVIO_ENVIADO.equals(
+                                                prestadorEnviado
+                                                        .getEstadoEnvio()
                                         );
                             %>
                                 <tr>
@@ -405,6 +419,15 @@ boolean msgPresupuestoBorrado =
                                                 prestadorEnviado
                                                         .getEstadoEnvioVisible()
                                         ) %>
+                                    </td>
+
+                                    <td style="text-align:center;">
+                                        <% if (pdfPendiente) { %>
+                                            <span class="compras-pdf-pendiente"
+                                                  title="PDF pendiente de carga">
+                                                &#128161;
+                                            </span>
+                                        <% } %>
                                     </td>
                                 </tr>
                             <%

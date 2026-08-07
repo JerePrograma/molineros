@@ -3,7 +3,9 @@ package ar.com.ospim.compras.requerimientos.action;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraFiltro;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -18,7 +20,11 @@ import org.apache.struts.action.ActionMapping;
 
 import javax.portlet.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BuscarRequerimientosComprasAction extends PortletAction {
 
@@ -33,7 +39,8 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             "afiliado_int",
             "id_tercerizadora",
             "surge",
-            "texto"
+            "texto",
+            WebKeysCompras.PARAM_COTIZADOS_INCLUYE_RECLAMO_RP
     };
 
     public void processAction(ActionMapping mapping, ActionForm form,
@@ -69,23 +76,71 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             User user = PortalUtil.getUser(renderRequest);
             validarPermisoView(user);
 
-            RequerimientoCompraFiltro filtro = getFiltroFromRequest(renderRequest);
+            RequerimientoCompraFiltro filtro =
+                    getFiltroFromRequest(
+                            renderRequest
+                    );
+
+            boolean cotizadosIncluyeReclamoRp =
+                    ParamUtil.getBoolean(
+                            renderRequest,
+                            WebKeysCompras
+                                    .PARAM_COTIZADOS_INCLUYE_RECLAMO_RP,
+                            false
+                    );
+
+            boolean mostrarNroRpListado =
+                    cotizadosIncluyeReclamoRp
+                    && filtro.getIdEstado() != null
+                    && filtro.getIdEstado().intValue()
+                            == WebKeysCompras.ESTADO_COTIZADO;
 
             List<RequerimientoCompra> requerimientos =
-                    BusquedaRequerimientoCompraServiceUtil.buscarRequerimientos(filtro);
+                    buscarRequerimientosListado(
+                            filtro,
+                            mostrarNroRpListado
+                    );
 
-            if (requerimientos == null) {
-                requerimientos = new ArrayList<RequerimientoCompra>();
-            }
+            Map<Integer, RequerimientoCompraReclamoPrestacional>
+                    relacionesRp =
+                    mostrarNroRpListado
+                            ? cargarRelacionesRpListado(
+                                    requerimientos
+                            )
+                            : new HashMap<Integer, RequerimientoCompraReclamoPrestacional>();
 
             cargarCatalogos(renderRequest);
             setResultadoBusqueda(renderRequest, filtro, requerimientos);
+
+            renderRequest.setAttribute(
+                    WebKeysCompras.MOSTRAR_NRO_RP_LISTADO,
+                    Boolean.valueOf(
+                            mostrarNroRpListado
+                    )
+            );
+
+            renderRequest.setAttribute(
+                    WebKeysCompras
+                            .RELACIONES_RECLAMO_PRESTACIONAL_COMPRA,
+                    relacionesRp
+            );
         } catch (Exception e) {
             _log.error(e);
 
             renderRequest.setAttribute(
                     WebKeysCompras.ERROR_PARA_ALERT,
                     getMensajeError(e)
+            );
+
+            renderRequest.setAttribute(
+                    WebKeysCompras.MOSTRAR_NRO_RP_LISTADO,
+                    Boolean.FALSE
+            );
+
+            renderRequest.setAttribute(
+                    WebKeysCompras
+                            .RELACIONES_RECLAMO_PRESTACIONAL_COMPRA,
+                    new HashMap<Integer, RequerimientoCompraReclamoPrestacional>()
             );
 
             setResultadoBusqueda(
@@ -96,6 +151,120 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
         }
 
         return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_RESULT_SEARCH);
+    }
+
+    private List<RequerimientoCompra> buscarRequerimientosListado(
+            RequerimientoCompraFiltro filtro,
+            boolean incluirReclamoRp) throws Exception {
+
+        List<RequerimientoCompra> requerimientos =
+                BusquedaRequerimientoCompraServiceUtil
+                        .buscarRequerimientos(
+                                filtro
+                        );
+
+        if (requerimientos == null) {
+            requerimientos =
+                    new ArrayList<RequerimientoCompra>();
+        }
+
+        if (!incluirReclamoRp) {
+            return requerimientos;
+        }
+
+        Integer estadoOriginal =
+                filtro.getIdEstado();
+
+        try {
+            filtro.setIdEstado(
+                    Integer.valueOf(
+                            WebKeysCompras.ESTADO_RECLAMO_RP
+                    )
+            );
+
+            List<RequerimientoCompra> requerimientosRp =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .buscarRequerimientos(
+                                    filtro
+                            );
+
+            if (requerimientosRp != null
+                    && !requerimientosRp.isEmpty()) {
+
+                requerimientos.addAll(
+                        requerimientosRp
+                );
+            }
+        } finally {
+            filtro.setIdEstado(
+                    estadoOriginal
+            );
+        }
+
+        Collections.sort(
+                requerimientos,
+                new Comparator<RequerimientoCompra>() {
+                    public int compare(
+                            RequerimientoCompra a,
+                            RequerimientoCompra b) {
+
+                        int idA =
+                                a != null
+                                        ? a.getIdRequerimientoCompra()
+                                        : 0;
+
+                        int idB =
+                                b != null
+                                        ? b.getIdRequerimientoCompra()
+                                        : 0;
+
+                        if (idA == idB) {
+                            return 0;
+                        }
+
+                        return idA > idB
+                                ? -1
+                                : 1;
+                    }
+                }
+        );
+
+        return requerimientos;
+    }
+
+    private Map<Integer, RequerimientoCompraReclamoPrestacional>
+            cargarRelacionesRpListado(
+                    List<RequerimientoCompra> requerimientos)
+                    throws Exception {
+
+        List<Integer> ids =
+                new ArrayList<Integer>();
+
+        for (int i = 0;
+                requerimientos != null
+                && i < requerimientos.size();
+                i++) {
+
+            RequerimientoCompra requerimiento =
+                    requerimientos.get(i);
+
+            if (requerimiento != null
+                    && requerimiento
+                            .getIdRequerimientoCompra() > 0) {
+
+                ids.add(
+                        Integer.valueOf(
+                                requerimiento
+                                        .getIdRequerimientoCompra()
+                        )
+                );
+            }
+        }
+
+        return RequerimientoCompraReclamoPrestacionalServiceUtil
+                .obtenerVinculadasPorRequerimientos(
+                        ids
+                );
     }
 
     private void validarPermisoView(User user) throws Exception {

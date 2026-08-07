@@ -1,3 +1,4 @@
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional" %>
 <%
 Object soloLecturaCargosAttr =
         renderRequest.getAttribute(
@@ -33,6 +34,32 @@ boolean cargosSoloLecturaPantalla =
         || "/compras/ver_requerimiento".equals(
                 strutsActionCargosPantalla
         );
+
+Object relacionReclamoCabeceraAttr =
+        renderRequest.getAttribute(
+                WebKeysCompras
+                        .RELACION_RECLAMO_PRESTACIONAL_COMPRA
+        );
+
+RequerimientoCompraReclamoPrestacional relacionReclamoCabecera =
+        relacionReclamoCabeceraAttr
+                instanceof RequerimientoCompraReclamoPrestacional
+                ? (RequerimientoCompraReclamoPrestacional)
+                        relacionReclamoCabeceraAttr
+                : null;
+
+boolean mostrarNroRpCabecera =
+        cargosSoloLecturaPantalla
+        && relacionReclamoCabecera != null
+        && relacionReclamoCabecera.isVinculado()
+        && relacionReclamoCabecera
+                .getIdReclamoPrestacionalInt() > 0;
+
+int nroRpCabecera =
+        mostrarNroRpCabecera
+                ? relacionReclamoCabecera
+                        .getIdReclamoPrestacionalInt()
+                : 0;
 %>
 
 <style type="text/css">
@@ -239,6 +266,21 @@ boolean cargosSoloLecturaPantalla =
                 <% } %>
             </td>
         </tr>
+
+        <% if (mostrarNroRpCabecera) { %>
+            <tr>
+                <td class="compras-celda-label">
+                    <strong>Nro. RP:</strong>
+                </td>
+
+                <td colspan="5"
+                    class="compras-celda-control compras-celda-control-final">
+                    <span class="compras-nro-rp">
+                        <%= nroRpCabecera %>
+                    </span>
+                </td>
+            </tr>
+        <% } %>
 
         <tr>
             <td colspan="4"

@@ -168,4 +168,9 @@
         margin-top: 2px;
         margin-bottom: 2px;
     }
+
+    .compras-formulario-requerimiento .compras-nro-rp {
+        color: #0066cc;
+        font-weight: bold;
+    }
 </style>

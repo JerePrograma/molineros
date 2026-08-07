@@ -4,6 +4,9 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrest
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import com.liferay.portal.model.User;
 
+import java.util.List;
+import java.util.Map;
+
 public class RequerimientoCompraReclamoPrestacionalServiceUtil {
 
     private static RequerimientoCompraReclamoPrestacionalServiceImpl instance;
@@ -26,6 +29,17 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
         return getInstance().obtenerPorRequerimiento(
                 idRequerimientoCompra
         );
+    }
+
+    public static Map<Integer, RequerimientoCompraReclamoPrestacional>
+            obtenerVinculadasPorRequerimientos(
+                    List<Integer> idsRequerimientos)
+                    throws Exception {
+
+        return getInstance()
+                .obtenerVinculadasPorRequerimientos(
+                        idsRequerimientos
+                );
     }
 
     public static void reservarCreacion(

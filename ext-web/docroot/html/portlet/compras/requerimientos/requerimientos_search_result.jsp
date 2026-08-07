@@ -1,5 +1,8 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
 
 
 <%!
@@ -26,12 +29,36 @@ if (requerimientos == null) {
     requerimientos = new ArrayList<RequerimientoCompra>();
 }
 
+boolean mostrarNroRpListado =
+        Boolean.TRUE.equals(
+                renderRequest.getAttribute(
+                        WebKeysCompras.MOSTRAR_NRO_RP_LISTADO
+                )
+        );
+
+Map<Integer, RequerimientoCompraReclamoPrestacional> relacionesRp =
+        (Map<Integer, RequerimientoCompraReclamoPrestacional>)
+                renderRequest.getAttribute(
+                        WebKeysCompras
+                                .RELACIONES_RECLAMO_PRESTACIONAL_COMPRA
+                );
+
+if (relacionesRp == null) {
+    relacionesRp =
+            new HashMap<Integer, RequerimientoCompraReclamoPrestacional>();
+}
+
 PortletURL portletURL = renderResponse.createRenderURL();
 portletURL.setWindowState(WindowState.MAXIMIZED);
 portletURL.setParameter("struts_action", "/compras/buscar_requerimientos");
 
 List<String> headerNames = new ArrayList<String>();
-headerNames.add("id");
+headerNames.add("Id");
+
+if (mostrarNroRpListado) {
+    headerNames.add("Nro. RP");
+}
+
 headerNames.add("estado");
 headerNames.add("sector");
 headerNames.add("afiliado-nombre");
@@ -83,9 +110,38 @@ for (int i = 0; i < requerimientos.size(); i++) {
 
     afiliadoDocumento = normalizarDocumentoAfiliado(afiliadoDocumento);
 
+    RequerimientoCompraReclamoPrestacional relacionRp =
+            relacionesRp.get(
+                    Integer.valueOf(
+                            req.getIdRequerimientoCompra()
+                    )
+            );
+
+    String nroRpVisible = "";
+
+    if (relacionRp != null
+            && relacionRp.isVinculado()
+            && relacionRp.getIdReclamoPrestacionalInt() > 0) {
+
+        nroRpVisible =
+                String.valueOf(
+                        relacionRp.getIdReclamoPrestacionalInt()
+                );
+    }
+
     ResultRow row = new ResultRow(req, req.getIdRequerimientoCompraString(), i);
 
     row.addText(HtmlUtil.escape(req.getIdString()), verURL);
+
+    if (mostrarNroRpListado) {
+        row.addText(
+                HtmlUtil.escape(
+                        nroRpVisible
+                ),
+                verURL
+        );
+    }
+
     row.addText(HtmlUtil.escape(req.getEstadoDescripcionVisible()), verURL);
     row.addText(HtmlUtil.escape(req.getSectorDescripcionVisible()), verURL);
     row.addText(HtmlUtil.escape(afiliadoNombreApellido), verURL);

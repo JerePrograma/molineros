@@ -119,7 +119,7 @@ public class IniciarReclamoPrestacionalCompraAction
                     );
 
             RequerimientoCompra requerimiento =
-                    obtenerRequerimientoCotizado(
+                    obtenerRequerimientoActivo(
                             idRequerimientoCompra
                     );
 
@@ -145,6 +145,10 @@ public class IniciarReclamoPrestacionalCompraAction
 
             if (relacion != null
                     && relacion.isVinculado()) {
+
+                validarRequerimientoParaConsultarReclamo(
+                        requerimiento
+                );
 
                 validarPermisoConsulta(
                         user
@@ -201,6 +205,10 @@ public class IniciarReclamoPrestacionalCompraAction
                                 + "este requerimiento."
                 );
             }
+
+            validarRequerimientoParaCrearReclamo(
+                    requerimiento
+            );
 
             validarPermisoCreacion(
                     user
@@ -945,7 +953,7 @@ public class IniciarReclamoPrestacionalCompraAction
         }
     }
 
-    private RequerimientoCompra obtenerRequerimientoCotizado(
+    private RequerimientoCompra obtenerRequerimientoActivo(
             int idRequerimientoCompra) throws Exception {
 
         if (idRequerimientoCompra <= 0) {
@@ -968,9 +976,17 @@ public class IniciarReclamoPrestacionalCompraAction
             );
         }
 
-        if (!WebKeysCompras.esCotizado(
-                requerimiento.getEstado()
-        )) {
+        return requerimiento;
+    }
+
+    private void validarRequerimientoParaCrearReclamo(
+            RequerimientoCompra requerimiento) throws Exception {
+
+        if (requerimiento == null
+                || !WebKeysCompras.esCotizado(
+                        requerimiento.getEstado()
+                )) {
+
             throw new Exception(
                     "El Reclamo Prestacional sólo puede iniciarse "
                             + "desde un requerimiento COTIZADO."
@@ -983,8 +999,27 @@ public class IniciarReclamoPrestacionalCompraAction
                             + "para iniciar el Reclamo Prestacional."
             );
         }
+    }
 
-        return requerimiento;
+    private void validarRequerimientoParaConsultarReclamo(
+            RequerimientoCompra requerimiento) throws Exception {
+
+        if (requerimiento == null
+                || (
+                        !WebKeysCompras.esCotizado(
+                                requerimiento.getEstado()
+                        )
+                        && !WebKeysCompras.esReclamoRP(
+                                requerimiento.getEstado()
+                        )
+                )) {
+
+            throw new Exception(
+                    "El Reclamo Prestacional asociado no puede "
+                            + "consultarse desde el estado actual "
+                            + "del requerimiento."
+            );
+        }
     }
 
     private void validarPermisoCreacion(

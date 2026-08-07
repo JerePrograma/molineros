@@ -670,9 +670,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (requerimiento != null
                 && requerimiento.getIdRequerimientoCompra() > 0
-                && WebKeysCompras.esCotizado(
-                        requerimiento.getEstado()
-                )) {
+                && (
+                    WebKeysCompras.esCotizado(
+                            requerimiento.getEstado()
+                    )
+                    || WebKeysCompras.esReclamoRP(
+                            requerimiento.getEstado()
+                    )
+            )) {
 
             try {
                 relacion =
