@@ -27,7 +27,7 @@ boolean showAnularButtons =
         user != null
         && PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ANULAR_COMPRAS
+                WebKeysCompras.ROL_ABM_COMPRAS
         );
 
 boolean showEditarButton =

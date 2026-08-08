@@ -1078,7 +1078,7 @@ public class IniciarReclamoPrestacionalCompraAction
                 )
                         || PermissionUtil.userContainsRole(
                         user,
-                        WebKeysCompras.ROL_ANULAR_COMPRAS
+                        WebKeysCompras.ROL_ABM_COMPRAS
                 );
 
         boolean permisoReclamo =

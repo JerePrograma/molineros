@@ -1493,7 +1493,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         );
         boolean puedeAnular = PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ANULAR_COMPRAS
+                WebKeysCompras.ROL_ABM_COMPRAS
         );
 
         if (!puedeVer && !puedeAdministrar && !puedeCotizar && !puedeAnular) {

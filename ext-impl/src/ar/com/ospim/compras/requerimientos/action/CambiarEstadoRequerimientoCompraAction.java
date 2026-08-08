@@ -494,7 +494,7 @@ public class CambiarEstadoRequerimientoCompraAction
         if (user == null
                 || !PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ANULAR_COMPRAS
+                WebKeysCompras.ROL_ABM_COMPRAS
         )) {
             throw new Exception(
                     "No posee permisos para anular "

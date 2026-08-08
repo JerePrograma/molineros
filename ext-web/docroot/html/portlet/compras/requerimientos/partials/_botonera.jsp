@@ -19,7 +19,7 @@ boolean botoneraRequerimientoPersistido =
 
 boolean botoneraTieneRolAnular =
         user != null
-        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ANULAR_COMPRAS);
+        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
 
 boolean botoneraTieneRolView =
         user != null

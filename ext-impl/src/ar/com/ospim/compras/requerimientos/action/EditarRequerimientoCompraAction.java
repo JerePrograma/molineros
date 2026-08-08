@@ -906,7 +906,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         );
         boolean puedeAnular = PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ANULAR_COMPRAS
+                WebKeysCompras.ROL_ABM_COMPRAS
         );
 
         if (!puedeVer && !puedeAdministrar && !puedeCotizar && !puedeAnular) {
@@ -956,7 +956,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (!PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ANULAR_COMPRAS
+                WebKeysCompras.ROL_ABM_COMPRAS
         )) {
             errorCampo(
                     "permisos",
