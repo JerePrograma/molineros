@@ -731,7 +731,7 @@ public class EditarRequerimientoCompraServiceImpl {
             if (!requerimiento.puedeReintentarNotificaciones()) {
                 throw errorUsuario(
                         "Las notificaciones solo pueden reenviarse mientras "
-                                + "el requerimiento est? en estado A COTIZAR."
+                                + "el requerimiento está en estado ENVIADO A COTIZAR."
                 );
             }
 
@@ -2805,7 +2805,7 @@ public class EditarRequerimientoCompraServiceImpl {
                 "LA COTIZACION SOLO PUEDE GUARDARSE EN ESTADO A COTIZAR"
         )) {
             return "La cotización ya no puede modificarse porque el "
-                    + "requerimiento no se encuentra en estado A COTIZAR.";
+                    + "requerimiento no se encuentra en estado ENVIADO A COTIZAR.";
         }
 
         if (clave.contains(

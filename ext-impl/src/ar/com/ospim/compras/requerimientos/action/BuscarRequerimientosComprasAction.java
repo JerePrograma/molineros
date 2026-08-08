@@ -113,7 +113,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             setResultadoBusqueda(renderRequest, filtro, requerimientos);
 
             renderRequest.setAttribute(
-                    WebKeysCompras.MOSTRAR_NRO_RP_LISTADO,
+                    WebKeysCompras.MOSTRAR_ID_RP_LISTADO,
                     Boolean.valueOf(
                             mostrarNroRpListado
                     )
@@ -133,7 +133,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             );
 
             renderRequest.setAttribute(
-                    WebKeysCompras.MOSTRAR_NRO_RP_LISTADO,
+                    WebKeysCompras.MOSTRAR_ID_RP_LISTADO,
                     Boolean.FALSE
             );
 

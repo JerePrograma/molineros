@@ -95,8 +95,8 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String RELACIONES_RECLAMO_PRESTACIONAL_COMPRA =
             "RELACIONES_RECLAMO_PRESTACIONAL_COMPRA";
 
-    public static final String MOSTRAR_NRO_RP_LISTADO =
-            "MOSTRAR_NRO_RP_LISTADO";
+    public static final String MOSTRAR_ID_RP_LISTADO =
+            "MOSTRAR_ID_RP_LISTADO";
 
     public static final String COTIZADOS_INCLUYE_RECLAMO_RP =
             "COTIZADOS_INCLUYE_RECLAMO_RP";
