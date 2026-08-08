@@ -89,7 +89,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
                             false
                     );
 
-            boolean mostrarNroRpListado =
+            boolean mostrarIdRpListado =
                     cotizadosIncluyeReclamoRp
                     && filtro.getIdEstado() != null
                     && filtro.getIdEstado().intValue()
@@ -98,12 +98,12 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             List<RequerimientoCompra> requerimientos =
                     buscarRequerimientosListado(
                             filtro,
-                            mostrarNroRpListado
+                            mostrarIdRpListado
                     );
 
             Map<Integer, RequerimientoCompraReclamoPrestacional>
                     relacionesRp =
-                    mostrarNroRpListado
+                    mostrarIdRpListado
                             ? cargarRelacionesRpListado(
                                     requerimientos
                             )
@@ -115,7 +115,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             renderRequest.setAttribute(
                     WebKeysCompras.MOSTRAR_ID_RP_LISTADO,
                     Boolean.valueOf(
-                            mostrarNroRpListado
+                            mostrarIdRpListado
                     )
             );
 

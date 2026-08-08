@@ -29,10 +29,10 @@ if (requerimientos == null) {
     requerimientos = new ArrayList<RequerimientoCompra>();
 }
 
-boolean mostrarNroRpListado =
+boolean mostrarIdRpListado =
         Boolean.TRUE.equals(
                 renderRequest.getAttribute(
-                        WebKeysCompras.MOSTRAR_NRO_RP_LISTADO
+                        WebKeysCompras.MOSTRAR_ID_RP_LISTADO
                 )
         );
 
@@ -55,8 +55,8 @@ portletURL.setParameter("struts_action", "/compras/buscar_requerimientos");
 List<String> headerNames = new ArrayList<String>();
 headerNames.add("Id");
 
-if (mostrarNroRpListado) {
-    headerNames.add("Nro. RP");
+if (mostrarIdRpListado) {
+    headerNames.add("Id RP");
 }
 
 headerNames.add("estado");
@@ -117,13 +117,13 @@ for (int i = 0; i < requerimientos.size(); i++) {
                     )
             );
 
-    String nroRpVisible = "";
+    String idRpVisible = "";
 
     if (relacionRp != null
             && relacionRp.isVinculado()
             && relacionRp.getIdReclamoPrestacionalInt() > 0) {
 
-        nroRpVisible =
+        idRpVisible =
                 String.valueOf(
                         relacionRp.getIdReclamoPrestacionalInt()
                 );
@@ -133,7 +133,7 @@ for (int i = 0; i < requerimientos.size(); i++) {
 
     row.addText(HtmlUtil.escape(req.getIdString()), verURL);
 
-    if (mostrarNroRpListado) {
+    if (mostrarIdRpListado) {
         row.addText(
                 HtmlUtil.escape(
                         nroRpVisible
