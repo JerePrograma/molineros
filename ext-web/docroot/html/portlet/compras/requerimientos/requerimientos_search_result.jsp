@@ -136,7 +136,7 @@ for (int i = 0; i < requerimientos.size(); i++) {
     if (mostrarIdRpListado) {
         row.addText(
                 HtmlUtil.escape(
-                        nroRpVisible
+                        idRpVisible
                 ),
                 verURL
         );
