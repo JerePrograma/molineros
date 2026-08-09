@@ -48,15 +48,26 @@ RequerimientoCompraReclamoPrestacional relacionReclamoCabecera =
                         relacionReclamoCabeceraAttr
                 : null;
 
-boolean mostrarNroRpCabecera =
+String fechaAltaCabecera =
+        req != null
+                ? req.getAltaFechaAsString()
+                : "";
+
+boolean mostrarFechaAltaCabecera =
+        cargosSoloLecturaPantalla
+        && !WebKeysCompras.isEmpty(
+                fechaAltaCabecera
+        );
+
+boolean mostrarIdRpCabecera =
         cargosSoloLecturaPantalla
         && relacionReclamoCabecera != null
         && relacionReclamoCabecera.isVinculado()
         && relacionReclamoCabecera
                 .getIdReclamoPrestacionalInt() > 0;
 
-int nroRpCabecera =
-        mostrarNroRpCabecera
+int idRpCabecera =
+        mostrarIdRpCabecera
                 ? relacionReclamoCabecera
                         .getIdReclamoPrestacionalInt()
                 : 0;
@@ -267,18 +278,45 @@ int nroRpCabecera =
             </td>
         </tr>
 
-        <% if (mostrarNroRpCabecera) { %>
+        <% if (mostrarFechaAltaCabecera || mostrarIdRpCabecera) { %>
             <tr>
                 <td class="compras-celda-label">
-                    <strong>Nro. RP:</strong>
+                    <strong>Fecha Alta:</strong>
                 </td>
 
-                <td colspan="5"
-                    class="compras-celda-control compras-celda-control-final">
-                    <span class="compras-nro-rp">
-                        <%= nroRpCabecera %>
+                <td class="compras-celda-control">
+                    <span class="compras-campo-solo-lectura">
+                        <%= HtmlUtil.escape(
+                                fechaAltaCabecera
+                        ) %>
                     </span>
                 </td>
+
+                <% if (mostrarIdRpCabecera) { %>
+
+                    <td class="compras-celda-label">
+                        <strong>Id RP:</strong>
+                    </td>
+
+                    <td class="compras-celda-control">
+                        <span class="compras-nro-rp">
+                            <%= idRpCabecera %>
+                        </span>
+                    </td>
+
+                    <td colspan="2"
+                        class="compras-celda-control compras-celda-control-final">
+                        &nbsp;
+                    </td>
+
+                <% } else { %>
+
+                    <td colspan="4"
+                        class="compras-celda-control compras-celda-control-final">
+                        &nbsp;
+                    </td>
+
+                <% } %>
             </tr>
         <% } %>
 

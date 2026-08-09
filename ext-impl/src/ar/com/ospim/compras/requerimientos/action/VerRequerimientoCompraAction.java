@@ -215,9 +215,14 @@ public class VerRequerimientoCompraAction extends PortletAction {
 
         if (requerimiento != null
                 && requerimiento.getIdRequerimientoCompra() > 0
-                && WebKeysCompras.esCotizado(
+                && (
+                WebKeysCompras.esCotizado(
                         requerimiento.getEstado()
-                )) {
+                )
+                        || WebKeysCompras.esReclamoRP(
+                        requerimiento.getEstado()
+                )
+        )) {
 
             try {
                 relacion =
@@ -235,7 +240,7 @@ public class VerRequerimientoCompraAction extends PortletAction {
                                 + "La acción permanecerá oculta. "
                                 + "idRequerimiento="
                                 + requerimiento
-                                        .getIdRequerimientoCompra(),
+                                .getIdRequerimientoCompra(),
                         e
                 );
             }
@@ -246,6 +251,7 @@ public class VerRequerimientoCompraAction extends PortletAction {
                         .RELACION_RECLAMO_PRESTACIONAL_COMPRA,
                 relacion
         );
+
         renderRequest.setAttribute(
                 WebKeysCompras
                         .RELACION_RECLAMO_PRESTACIONAL_CONSULTA_OK,

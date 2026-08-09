@@ -89,25 +89,32 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
                             false
                     );
 
-            boolean mostrarIdRpListado =
+            boolean incluirReclamoRpEnCotizados =
                     cotizadosIncluyeReclamoRp
-                    && filtro.getIdEstado() != null
-                    && filtro.getIdEstado().intValue()
+                            && filtro.getIdEstado() != null
+                            && filtro.getIdEstado().intValue()
                             == WebKeysCompras.ESTADO_COTIZADO;
 
             List<RequerimientoCompra> requerimientos =
                     buscarRequerimientosListado(
                             filtro,
-                            mostrarIdRpListado
+                            incluirReclamoRpEnCotizados
                     );
 
+            /*
+             * Id RP debe estar disponible tanto en la solapa general
+             * Requerimientos como en Cotizados.
+             *
+             * Las relaciones se recuperan en una única consulta batch;
+             * no se consulta individualmente desde el JSP.
+             */
             Map<Integer, RequerimientoCompraReclamoPrestacional>
                     relacionesRp =
-                    mostrarIdRpListado
-                            ? cargarRelacionesRpListado(
-                                    requerimientos
-                            )
-                            : new HashMap<Integer, RequerimientoCompraReclamoPrestacional>();
+                    cargarRelacionesRpListado(
+                            requerimientos
+                    );
+
+            boolean mostrarIdRpListado = true;
 
             cargarCatalogos(renderRequest);
             setResultadoBusqueda(renderRequest, filtro, requerimientos);
