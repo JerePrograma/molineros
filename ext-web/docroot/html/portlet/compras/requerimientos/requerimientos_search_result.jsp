@@ -54,11 +54,6 @@ portletURL.setParameter("struts_action", "/compras/buscar_requerimientos");
 
 List<String> headerNames = new ArrayList<String>();
 headerNames.add("Id");
-
-if (mostrarIdRpListado) {
-    headerNames.add("Id RP");
-}
-
 headerNames.add("estado");
 headerNames.add("sector");
 headerNames.add("afiliado-nombre");
@@ -68,6 +63,9 @@ headerNames.add("cargo-ospim");
 headerNames.add("cargo-tercerizadora");
 headerNames.add("SURGE");
 headerNames.add("alta-fecha");
+if (mostrarIdRpListado) {
+    headerNames.add("Id RP");
+}
 headerNames.add("acciones");
 
 SearchContainer searchContainer = new SearchContainer(
@@ -133,15 +131,6 @@ for (int i = 0; i < requerimientos.size(); i++) {
 
     row.addText(HtmlUtil.escape(req.getIdString()), verURL);
 
-    if (mostrarIdRpListado) {
-        row.addText(
-                HtmlUtil.escape(
-                        idRpVisible
-                ),
-                verURL
-        );
-    }
-
     row.addText(HtmlUtil.escape(req.getEstadoDescripcionVisible()), verURL);
     row.addText(HtmlUtil.escape(req.getSectorDescripcionVisible()), verURL);
     row.addText(HtmlUtil.escape(afiliadoNombreApellido), verURL);
@@ -151,6 +140,15 @@ for (int i = 0; i < requerimientos.size(); i++) {
     row.addText(HtmlUtil.escape(req.getCargoTercerizadoraString()) + "%", verURL);
     row.addText(HtmlUtil.escape(req.getSurgeDescripcion()), verURL);
     row.addText(HtmlUtil.escape(req.getAltaFechaAsString()), verURL);
+
+    if (mostrarIdRpListado) {
+        row.addText(
+                HtmlUtil.escape(
+                        idRpVisible
+                ),
+                verURL
+        );
+    }
 
     row.addJSP("right", SearchEntry.DEFAULT_VALIGN, "/html/portlet/compras/requerimientos/editar_borrar_requerimiento.jsp");
 
