@@ -1317,9 +1317,15 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         sb.append(
                 "\nPor favor responder este correo "
-                        + "informando disponibilidad, plazo "
+                        + "informando disponibilidad, "
+                        + "plazo de entrega "
                         + "e importe de cotizacion a "
                         + "kfernandez@ospim.org.ar"
+        );
+
+        sb.append(
+                "\n\nSe reciben cotizaciones dentro de las 48hs, "
+                        + "horario de cierre 18hs."
         );
 
         return sb.toString();
