@@ -76,7 +76,7 @@ public class WebKeysGlobal implements com.liferay.portal.kernel.util.WebKeys {
 	//
 	public static final String DESCRIPCION_CONCEPTO_REINTEGROS = "REINTEGRO AFILIADOS";
 	public static final String DESCRIPCION_CONCEPTO_REINTEGROS_FARMACIA = "REINTEGRO AFILIADOS FARMACIA";
-	public static final String DESCRIPCION_CONCEPTO_PRESTACIONES_MEDICAS = "PRESTACIONES MÉDICAS";
+	public static final String DESCRIPCION_CONCEPTO_PRESTACIONES_MEDICAS = "PRESTACIONES MEDICAS";
 	public static final String CONSOLIDAR_CUIT = "30520634971";
 	public static final String OMINT_CUIT = "30550245309";
 	public static final String PREVENCION_CUIT = "30713045000";

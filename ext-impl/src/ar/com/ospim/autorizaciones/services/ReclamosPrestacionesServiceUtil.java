@@ -116,7 +116,7 @@ public class ReclamosPrestacionesServiceUtil {
 	
 	/*
 	 Registra el contacto en CRM : tipo = 6  "CORREO SALIENTE" , descripcion =  "RECLAMO PRESTACIONAL NRO " NNNN
-	 campo estado CERRADO   categoria = 2  "RECLAMO"  id motivo = 5 PRESTACIONES MÉDICAS
+	 campo estado CERRADO   categoria = 2  "RECLAMO"  id motivo = 5 PRESTACIONES MEDICAS
 	 */
 	public static void grabarContactoCRM(ReclamoPrestacional reclamo, User user) throws SystemException {
 	    ContactoCRM contactoCrm = new ContactoCRM();
@@ -138,7 +138,7 @@ public class ReclamosPrestacionesServiceUtil {
 	        contactoCrm.setAltaSector(altaSector);
 	        contactoCrm.setTipo(new TipoContacto(6, "CORREO SALIENTE"));
 	        contactoCrm.setCategoria(new CategoriaContacto(2, "RECLAMO"));
-	        contactoCrm.setMotivo(new MotivoContacto(5, "PRESTACIONES MÉDICAS"));
+	        contactoCrm.setMotivo(new MotivoContacto(5, "PRESTACIONES MEDICAS"));
 	        contactoCrm.setDescripcion("RECLAMO PRESTACIONAL NRO::" + String.valueOf(reclamo.getId_reclamo()));
 	        contactoCrm.setIdCrmRelacionado(0);
 	        contactoCrm.setComentarioCierre("Cierre automático por carga de reclamo prestacional");

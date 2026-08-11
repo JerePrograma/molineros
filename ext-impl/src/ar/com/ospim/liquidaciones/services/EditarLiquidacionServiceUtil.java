@@ -488,7 +488,7 @@ public class EditarLiquidacionServiceUtil {
 
 		if (total_importe.compareTo(total_debitos.add(total_conceptos).add(total_prestaciones_no_estadisticas)) == 0) {
 			guardarCambiosPrestaciones (listaPrestacionAjuste, comprobante, user);			
-			//ACTUALIZA CONCEPTO POR PRESTACIONES MÉDICAS
+			//ACTUALIZA CONCEPTO POR PRESTACIONES MEDICAS
 			generarConceptoPrestacionesMedicas(liquidacion, comprobante, action);
 			
 			//actualiza conceptos asociados al comprobante que se está actualizando.

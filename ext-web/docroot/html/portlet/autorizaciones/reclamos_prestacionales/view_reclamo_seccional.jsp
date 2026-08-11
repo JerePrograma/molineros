@@ -312,7 +312,7 @@ span-fixed-size {
 										<option value="DISCAPACIDAD"
 										    <%=Validator.isNotNull(reclamoprestacional) && "DISCAPACIDAD".equals(reclamoprestacional.getSector()) ? "selected" : ""  %>>DISCAPACIDAD</option>
 										<option value="PRESTACIONES MEDICAS"
-										    <%=Validator.isNotNull(reclamoprestacional) && "PRESTACIONES MEDICAS".equals(reclamoprestacional.getSector()) ? "selected" : ""  %>>PRESTACIONES MÉDICAS</option>
+										    <%=Validator.isNotNull(reclamoprestacional) && "PRESTACIONES MEDICAS".equals(reclamoprestacional.getSector()) ? "selected" : ""  %>>PRESTACIONES MEDICAS</option>
 										<option value="FARMACIA"
 										    <%=Validator.isNotNull(reclamoprestacional) && "FARMACIA".equals(reclamoprestacional.getSector()) ? "selected" : ""  %>>FARMACIA</option>
 										<option value="ODONTOLOGIA"

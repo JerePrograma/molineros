@@ -596,7 +596,7 @@ span-fixed-size {
 
 							            <option value="PRESTACIONES MEDICAS"
 							                <%= "PRESTACIONES MEDICAS".equals(reclamoprestacional != null ? reclamoprestacional.getSector() : "") ? "selected" : "" %>>
-							                PRESTACIONES MÉDICAS
+							                PRESTACIONES MEDICAS
 							            </option>
 
 							            <option value="FARMACIA"
