@@ -36,6 +36,16 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                     + "AND id_reclamo_prestacional IS NOT NULL "
                     + "AND id_requerimiento = ANY (CAST(? AS INTEGER[]))";
 
+    private static final String SQL_GET_RELACION_POR_RECLAMO =
+            "SELECT relacion.* "
+                    + "FROM compras.requerimiento_reclamo_prestacional relacion "
+                    + "JOIN compras.requerimiento requerimiento "
+                    + "ON requerimiento.id_requerimiento = "
+                    + "relacion.id_requerimiento "
+                    + "WHERE relacion.id_reclamo_prestacional = ? "
+                    + "AND relacion.estado = ? "
+                    + "AND requerimiento.baja_fecha IS NULL";
+
     private static final String SQL_RESERVAR =
             "SELECT compras.reservar_reclamo_prestacional(?,?,?)";
 
@@ -90,6 +100,69 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
                             + "de compra y el Reclamo Prestacional. "
                             + "idRequerimiento="
                             + idRequerimientoCompra,
+                    e
+            );
+            throw e;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public RequerimientoCompraReclamoPrestacional
+            getRelacionPorReclamoPrestacional(
+                    int idReclamoPrestacional) throws Exception {
+
+        if (idReclamoPrestacional <= 0) {
+            throw new Exception(
+                    "Debe informar el Reclamo Prestacional."
+            );
+        }
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            if (con == null) {
+                throw new Exception(
+                        "No se obtuvo una conexión para consultar "
+                                + "el vínculo con Compras."
+                );
+            }
+
+            stmt = con.prepareStatement(SQL_GET_RELACION_POR_RECLAMO);
+            stmt.setInt(1, idReclamoPrestacional);
+            stmt.setString(
+                    2,
+                    WebKeysCompras.VINCULO_RECLAMO_VINCULADO
+            );
+            rs = stmt.executeQuery();
+
+            if (!rs.next()) {
+                return null;
+            }
+
+            RequerimientoCompraReclamoPrestacional relacion =
+                    mapRelacion(rs);
+
+            if (rs.next()) {
+                throw new Exception(
+                        "Existe mas de un requerimiento vinculado al "
+                                + "Reclamo Prestacional."
+                );
+            }
+
+            return relacion != null && relacion.isVinculado()
+                    ? relacion
+                    : null;
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudo consultar el requerimiento vinculado al "
+                            + "Reclamo Prestacional. idReclamoPrestacional="
+                            + idReclamoPrestacional,
                     e
             );
             throw e;
@@ -625,9 +698,11 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             return idReclamo;
 
         } catch (Exception e) {
-            ConnectionHelper.rollback(
-                    con
-            );
+            if (con != null) {
+                ConnectionHelper.rollback(
+                        con
+                );
+            }
 
             throw e;
 

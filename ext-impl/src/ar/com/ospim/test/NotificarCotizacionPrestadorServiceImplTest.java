@@ -7,6 +7,8 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.service.NotificarCotizacionPrestadorServiceImpl;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +30,11 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         assertCuerpoUsaDescripcion();
         assertPdfSeGeneraUnaVezYSeAdjunta();
         assertFalloPdfNoReservaNiEnvia();
+        assertHistoricoSinOrdenMedicaConservaPdfSolo();
+        assertOrdenMedicaSeRecuperaAntesDeReservarYSeAdjunta();
+        assertFalloOrdenMedicaNoReservaNiEnvia();
+        assertFirmasOrdenMedica();
+        assertNoMantieneOrdenMedicaEnEstadoCompartido();
         assertDiagnosticoSinCompatiblesSector();
         assertDiagnosticoTodosBloqueadosPorEstadoPrevio();
     }
@@ -346,6 +353,253 @@ public class NotificarCotizacionPrestadorServiceImplTest {
                 service.estadosFinalizados.size()
         );
     }
+
+    private static void assertHistoricoSinOrdenMedicaConservaPdfSolo()
+            throws Exception {
+
+        ServicioPrueba service =
+                servicioConPrestador(
+                        "listado@ospim.org.ar",
+                        "reservado@ospim.org.ar"
+                );
+
+        service.notificarPrestadores(
+                10,
+                "tester",
+                1L
+        );
+
+        assertInt("mail historico", 1, service.mailsEnviados);
+
+        if (service.envioConOrdenMedica) {
+            throw new AssertionError(
+                    "Un requerimiento historico sin Orden medica "
+                            + "no debe inventar un segundo adjunto."
+            );
+        }
+    }
+
+    private static void
+    assertOrdenMedicaSeRecuperaAntesDeReservarYSeAdjunta()
+            throws Exception {
+
+        ServicioPrueba service =
+                servicioConPrestador(
+                        "listado@ospim.org.ar",
+                        "reservado@ospim.org.ar"
+                );
+
+        byte[] ordenMedica = new byte[] {
+                (byte) 0xFF,
+                (byte) 0xD8,
+                (byte) 0xFF,
+                0x01
+        };
+
+        service.registrarEventoOrdenMedica = true;
+        service.usarOrdenMedica(
+                ordenMedica,
+                "orden-original.jpeg",
+                "image/jpeg"
+        );
+
+        NotificacionCotizacionResultado resultado =
+                service.notificarPrestadores(
+                        10,
+                        "tester",
+                        1L
+                );
+
+        assertInt("enviados con Orden medica", 1, resultado.getEnviados());
+        assertEvento(service, 0, "orden_medica");
+        assertEvento(service, 1, "reservar");
+        assertEvento(service, 2, "enviar");
+        assertEvento(service, 3, "finalizar:" + ENVIADO);
+
+        if (!service.envioConOrdenMedica
+                || service.ordenMedicaEnviada != ordenMedica) {
+
+            throw new AssertionError(
+                    "La Orden medica recuperada no llego al helper de correo."
+            );
+        }
+
+        assertString(
+                "nombre original Orden medica",
+                "orden-original.jpeg",
+                service.nombreOrdenMedicaEnviado
+        );
+        assertString(
+                "MIME Orden medica",
+                "image/jpeg",
+                service.contentTypeOrdenMedicaEnviado
+        );
+    }
+
+    private static void assertFalloOrdenMedicaNoReservaNiEnvia()
+            throws Exception {
+
+        ServicioPrueba service =
+                servicioConPrestador(
+                        "listado@ospim.org.ar",
+                        "reservado@ospim.org.ar"
+                );
+
+        service.registrarEventoOrdenMedica = true;
+        service.errorOrdenMedica =
+                new Exception("identidad DL inconsistente");
+
+        boolean fallo = false;
+
+        try {
+            service.notificarPrestadores(
+                    10,
+                    "tester",
+                    1L
+            );
+        } catch (Exception e) {
+            fallo = true;
+            assertContains(
+                    "error Orden medica propagado",
+                    e.getMessage(),
+                    "identidad DL inconsistente"
+            );
+        }
+
+        if (!fallo) {
+            throw new AssertionError(
+                    "Se esperaba el rechazo de la Orden medica inconsistente."
+            );
+        }
+
+        assertInt("PDF previo a Orden medica", 1, service.pdfsGenerados);
+        assertEvento(service, 0, "orden_medica");
+        assertInt("sin reserva por Orden medica", 1, service.eventos.size());
+        assertInt("sin mail por Orden medica", 0, service.mailsEnviados);
+        assertInt(
+                "sin finalizacion por Orden medica",
+                0,
+                service.estadosFinalizados.size()
+        );
+    }
+
+    private static void assertFirmasOrdenMedica()
+            throws Exception {
+
+        ServicioPrueba service = new ServicioPrueba();
+
+        assertString(
+                "firma JPEG",
+                "image/jpeg",
+                service.validarContenido(
+                        new byte[] {
+                                (byte) 0xFF,
+                                (byte) 0xD8,
+                                (byte) 0xFF
+                        },
+                        "orden.jpg"
+                )
+        );
+
+        assertString(
+                "firma PNG",
+                "image/png",
+                service.validarContenido(
+                        new byte[] {
+                                (byte) 0x89,
+                                0x50,
+                                0x4E,
+                                0x47,
+                                0x0D,
+                                0x0A,
+                                0x1A,
+                                0x0A
+                        },
+                        "orden.png"
+                )
+        );
+
+        assertContenidoOrdenMedicaInvalido(
+                service,
+                new byte[0],
+                "orden.jpg",
+                "vac\u00eda"
+        );
+        assertContenidoOrdenMedicaInvalido(
+                service,
+                new byte[] {
+                        0x01,
+                        0x02,
+                        0x03
+                },
+                "orden.jpeg",
+                "firma"
+        );
+        assertContenidoOrdenMedicaInvalido(
+                service,
+                new byte[] {
+                        (byte) 0xFF,
+                        (byte) 0xD8,
+                        (byte) 0xFF
+                },
+                "orden.pdf",
+                "JPEG/JPG ni PNG"
+        );
+    }
+
+    private static void assertContenidoOrdenMedicaInvalido(
+            ServicioPrueba service,
+            byte[] contenido,
+            String nombre,
+            String mensaje) throws Exception {
+
+        boolean fallo = false;
+
+        try {
+            service.validarContenido(
+                    contenido,
+                    nombre
+            );
+        } catch (Exception e) {
+            fallo = true;
+            assertContains(
+                    "validacion Orden medica",
+                    e.getMessage(),
+                    mensaje
+            );
+        }
+
+        if (!fallo) {
+            throw new AssertionError(
+                    "Se esperaba rechazo del contenido de Orden medica."
+            );
+        }
+    }
+
+    private static void assertNoMantieneOrdenMedicaEnEstadoCompartido() {
+        Field[] fields = NotificarCotizacionPrestadorServiceImpl.class
+                .getDeclaredFields();
+
+        for (int i = 0; i < fields.length; i++) {
+            Field field = fields[i];
+
+            if (!Modifier.isStatic(field.getModifiers())
+                    && (field.getType().equals(byte[].class)
+                    || field.getType().getName().indexOf(
+                            "OrdenMedicaAdjunta"
+                    ) >= 0
+                    || field.getName().toLowerCase().indexOf(
+                            "ordenmedica"
+                    ) >= 0)) {
+
+                throw new AssertionError(
+                        "Estado compartido de Orden medica detectado: "
+                                + field.getName()
+                );
+            }
+        }
+    }
+
     private static void assertDiagnosticoSinCompatiblesSector()
             throws Exception {
 
@@ -581,11 +835,18 @@ public class NotificarCotizacionPrestadorServiceImplTest {
         private Exception errorEnvio;
         private Exception errorFinalizarEnviado;
         private Exception errorPdf;
+        private Exception errorOrdenMedica;
         private String errorFinalizarEstado;
         private int mailsEnviados;
         private int pdfsGenerados;
         private byte[] pdfEnviado;
         private String nombrePdfEnviado;
+        private boolean registrarEventoOrdenMedica;
+        private boolean envioConOrdenMedica;
+        private OrdenMedicaAdjunta ordenMedicaAdjunta;
+        private byte[] ordenMedicaEnviada;
+        private String nombreOrdenMedicaEnviado;
+        private String contentTypeOrdenMedicaEnviado;
         private int prestadoresHabilitados = 1;
         private int prestadoresCompatiblesSector = 1;
         private int prestadoresBloqueadosEstadoPrevio;
@@ -661,6 +922,43 @@ public class NotificarCotizacionPrestadorServiceImplTest {
             };
         }
 
+        protected OrdenMedicaAdjunta recuperarOrdenMedicaAdjunta(
+                int idRequerimientoCompra,
+                long companyId) throws Exception {
+
+            if (registrarEventoOrdenMedica) {
+                eventos.add("orden_medica");
+            }
+
+            if (errorOrdenMedica != null) {
+                throw errorOrdenMedica;
+            }
+
+            return ordenMedicaAdjunta;
+        }
+
+        private void usarOrdenMedica(
+                byte[] contenido,
+                String nombreOriginal,
+                String contentType) {
+
+            ordenMedicaAdjunta = crearOrdenMedicaAdjunta(
+                    contenido,
+                    nombreOriginal,
+                    contentType
+            );
+        }
+
+        private String validarContenido(
+                byte[] contenido,
+                String nombreOriginal) throws Exception {
+
+            return validarContenidoOrdenMedica(
+                    contenido,
+                    nombreOriginal
+            );
+        }
+
         protected void enviarMail(
                 long companyId,
                 String email,
@@ -680,6 +978,33 @@ public class NotificarCotizacionPrestadorServiceImplTest {
             if (errorEnvio != null) {
                 throw errorEnvio;
             }
+        }
+
+        protected void enviarMail(
+                long companyId,
+                String email,
+                String asunto,
+                String cuerpo,
+                byte[] pedidoPresupuestoPdf,
+                String nombrePedidoPresupuestoPdf,
+                byte[] ordenMedica,
+                String nombreOrdenMedica,
+                String contentTypeOrdenMedica)
+                throws Exception {
+
+            envioConOrdenMedica = true;
+            ordenMedicaEnviada = ordenMedica;
+            nombreOrdenMedicaEnviado = nombreOrdenMedica;
+            contentTypeOrdenMedicaEnviado = contentTypeOrdenMedica;
+
+            enviarMail(
+                    companyId,
+                    email,
+                    asunto,
+                    cuerpo,
+                    pedidoPresupuestoPdf,
+                    nombrePedidoPresupuestoPdf
+            );
         }
 
         protected FinalizacionCotizacionPrestador

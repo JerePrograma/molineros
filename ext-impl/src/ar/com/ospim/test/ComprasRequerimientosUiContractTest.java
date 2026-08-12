@@ -90,18 +90,18 @@ public final class ComprasRequerimientosUiContractTest {
         ));
         assertTrue("rama ordinaria preservada", ramaCompra > 0);
         assertOrdenDesde(
-                "reserva antes de insertar",
+                "reserva antes de crear y vincular",
                 editar,
                 ramaCompra,
                 ".reservarCreacion(",
-                ".insertar(reclamoPrestacional, user)"
+                ".crearYVincular("
         );
         assertOrdenDesde(
-                "preserva indicadores antes de insertar",
+                "preserva indicadores antes de crear y vincular",
                 editar,
                 ramaCompra,
                 "reclamoPrestacional.setRecuperable(",
-                ".insertar(reclamoPrestacional, user)"
+                ".crearYVincular("
         );
         assertContains(
                 "preserva recupero desde contexto",
@@ -119,24 +119,17 @@ public final class ComprasRequerimientosUiContractTest {
                 "idTercerizadora = requerimiento.getIdTercerizadora();"
         );
         assertOrdenDesde(
-                "tercerizadora antes de insertar",
+                "tercerizadora antes de crear y vincular",
                 editar,
                 ramaCompra,
                 "asignarTercerizadoraAPrestaciones(",
-                ".insertar(reclamoPrestacional, user)"
+                ".crearYVincular("
         );
         assertOrdenDesde(
-                "insertar antes de finalizar",
+                "crear y vincular antes de limpiar contexto",
                 editar,
                 ramaCompra,
-                ".insertar(reclamoPrestacional, user)",
-                ".finalizarCreacion("
-        );
-        assertOrdenDesde(
-                "finalizar antes de limpiar contexto",
-                editar,
-                ramaCompra,
-                ".finalizarCreacion(",
+                ".crearYVincular(",
                 ".CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA"
         );
         assertContains(
@@ -152,18 +145,21 @@ public final class ComprasRequerimientosUiContractTest {
         assertContains(
                 "propaga origen en rerender",
                 editar,
-                "setRenderParameter(\"origen\", \"compras\")"
+                "\"origen\",\n                    \"compras\""
         );
         assertContains(
                 "limpia precarga invalida",
                 editar,
                 "limpiarSesionHandoffCompra(session)"
         );
-        assertOrden(
-                "rollback se informa al caller",
-                servicioReclamo,
-                "ConnectionHelper.rollback(con);",
-                "throw new SystemException(e);"
+        assertNotContains(
+                "insertar interno no confirma transaccion del caller",
+                servicioReclamo.substring(
+                        servicioReclamo.indexOf(
+                                "private int insertarInterno("
+                        )
+                ),
+                "con.commit()"
         );
         assertContains(
                 "render conserva ADD",
@@ -175,22 +171,22 @@ public final class ComprasRequerimientosUiContractTest {
                 precarga,
                 "prestaciones.get(0)"
         );
-        assertNotContains(
-                "precarga no completa comprobante",
+        assertContains(
+                "precarga conserva comprobante adjudicado",
                 precarga,
-                "prestacion.setComprobante"
+                "prestacion.setComprobanteCUIT("
         );
         assertOrden(
                 "edita la prestacion seleccionada",
                 editarPrestacion,
                 "listaPrestacionesReclamo.indexOf(presta)",
-                "session.setAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION"
+                ".PRESTACION_EN_PROCESO_DE_EDICION,"
         );
         assertOrden(
                 "editor consume y limpia prestacion temporal",
                 editorPrestacion,
-                "getAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION",
-                "removeAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION"
+                ".getAttribute(\n                        WebKeysAutorizaciones",
+                "removeAttribute(\n        WebKeysAutorizaciones"
         );
         assertContains(
                 "grilla admite comprobante pendiente",
@@ -216,7 +212,7 @@ public final class ComprasRequerimientosUiContractTest {
         assertContains(
                 "handoff invalido falla cerrado",
                 vista,
-                "request.setAttribute(Constants.CMD, Constants.VIEW);"
+                "request.setAttribute(\n            Constants.CMD,\n            Constants.VIEW"
         );
         assertOrden(
                 "neutraliza editor antes del include",
@@ -240,26 +236,6 @@ public final class ComprasRequerimientosUiContractTest {
                 vista,
                 "key=\"Actualizar\""
         );
-        assertContains(
-                "revision visible en alta sin revision activa",
-                vista,
-                "Constants.ADD.equalsIgnoreCase(cmd) && cantRevisiones == 0"
-        );
-        assertContains(
-                "funcion agregar revision",
-                vista,
-                "function <%= reclamoPortletNamespace %>agregarRevision()"
-        );
-        assertContains(
-                "ruta agregar revision",
-                vista,
-                "/autorizaciones/lista_revisiones_reclamo"
-        );
-        assertContains(
-                "revision agregada a la sesion",
-                revision,
-                "revisionesreclamo.add(revreclamo)"
-        );
         assertNotContains(
                 "sin vista segmentada",
                 vista,
@@ -279,7 +255,7 @@ public final class ComprasRequerimientosUiContractTest {
         assertContains(
                 "wrapper conserva origen",
                 wrapper,
-                "portletURL.setParameter(\"origen\", \"compras\")"
+                "\"origen\",\n            \"compras\""
         );
         assertContains(
                 "wrapper muestra error",

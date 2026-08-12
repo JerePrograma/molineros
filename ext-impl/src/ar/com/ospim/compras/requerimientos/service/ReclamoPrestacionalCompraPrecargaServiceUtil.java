@@ -483,6 +483,9 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         String cuitComprobante =
                 null;
 
+        Integer idPrestadorComprobante =
+                null;
+
         int idRegistro = 1;
 
         for (RequerimientoCompraDetalle detalle
@@ -503,6 +506,31 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
                     normalizarCuit(
                             detalle.getPrestadorCuit()
                     );
+
+            Integer idPrestadorDetalle =
+                    detalle.getIdPrestador();
+
+            if (idPrestadorDetalle == null
+                    || idPrestadorDetalle.intValue() <= 0) {
+
+                throw new Exception(
+                        "El ítem "
+                                + detalle.getIdString()
+                                + " del requerimiento COTIZADO no tiene "
+                                + "un prestador adjudicado válido."
+                );
+            }
+
+            if (idPrestadorComprobante == null) {
+                idPrestadorComprobante = idPrestadorDetalle;
+            } else if (idPrestadorComprobante.intValue()
+                    != idPrestadorDetalle.intValue()) {
+
+                throw new Exception(
+                        "El requerimiento COTIZADO contiene ítems "
+                                + "adjudicados a prestadores diferentes."
+                );
+            }
 
             if (cuitDetalle == null) {
                 throw new Exception(

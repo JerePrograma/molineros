@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Properties;
 
 import javax.activation.DataHandler;
@@ -40,6 +41,58 @@ public class CotizacionPrestadorMailHelper {
             String cuerpo,
             byte[] pedidoPresupuestoPdf,
             String nombrePedidoPresupuestoPdf)
+            throws Exception {
+
+        enviarInterno(
+                emailDestino,
+                asunto,
+                cuerpo,
+                pedidoPresupuestoPdf,
+                nombrePedidoPresupuestoPdf,
+                null,
+                null,
+                null
+        );
+    }
+
+    public void enviar(
+            String emailDestino,
+            String asunto,
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf,
+            byte[] ordenMedica,
+            String nombreOrdenMedica,
+            String contentTypeOrdenMedica)
+            throws Exception {
+
+        validarOrdenMedica(
+                ordenMedica,
+                nombreOrdenMedica,
+                contentTypeOrdenMedica
+        );
+
+        enviarInterno(
+                emailDestino,
+                asunto,
+                cuerpo,
+                pedidoPresupuestoPdf,
+                nombrePedidoPresupuestoPdf,
+                ordenMedica,
+                nombreOrdenMedica,
+                contentTypeOrdenMedica
+        );
+    }
+
+    private void enviarInterno(
+            String emailDestino,
+            String asunto,
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf,
+            byte[] ordenMedica,
+            String nombreOrdenMedica,
+            String contentTypeOrdenMedica)
             throws Exception {
 
         validarParametros(
@@ -166,44 +219,15 @@ public class CotizacionPrestadorMailHelper {
                 "UTF-8"
         );
 
-        MimeBodyPart parteTexto =
-                new MimeBodyPart();
-
-        parteTexto.setText(
-                cuerpo,
-                "UTF-8"
-        );
-
-        MimeBodyPart partePdf =
-                new MimeBodyPart();
-
-        partePdf.setDataHandler(
-                new DataHandler(
-                        new PdfAdjuntoDataSource(
-                                pedidoPresupuestoPdf,
-                                nombrePedidoPresupuestoPdf
-                        )
-                )
-        );
-
-        partePdf.setFileName(
-                MimeUtility.encodeText(
-                        nombrePedidoPresupuestoPdf,
-                        "UTF-8",
-                        null
-                )
-        );
-
         Multipart multipart =
-                new MimeMultipart();
-
-        multipart.addBodyPart(
-                parteTexto
-        );
-
-        multipart.addBodyPart(
-                partePdf
-        );
+                construirMultipart(
+                        cuerpo,
+                        pedidoPresupuestoPdf,
+                        nombrePedidoPresupuestoPdf,
+                        ordenMedica,
+                        nombreOrdenMedica,
+                        contentTypeOrdenMedica
+                );
 
         mensaje.setContent(
                 multipart
@@ -254,6 +278,92 @@ public class CotizacionPrestadorMailHelper {
         }
     }
 
+    protected Multipart construirMultipart(
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf,
+            byte[] ordenMedica,
+            String nombreOrdenMedica,
+            String contentTypeOrdenMedica)
+            throws Exception {
+
+        if (cuerpo == null) {
+            throw new Exception(
+                    "Debe informar el cuerpo del correo."
+            );
+        }
+
+        validarPedidoPresupuesto(
+                pedidoPresupuestoPdf,
+                nombrePedidoPresupuestoPdf
+        );
+
+        boolean incluyeOrdenMedica = ordenMedica != null
+                || nombreOrdenMedica != null
+                || contentTypeOrdenMedica != null;
+
+        if (incluyeOrdenMedica) {
+            validarOrdenMedica(
+                    ordenMedica,
+                    nombreOrdenMedica,
+                    contentTypeOrdenMedica
+            );
+        }
+
+        MimeBodyPart parteTexto = new MimeBodyPart();
+        parteTexto.setText(cuerpo, "UTF-8");
+
+        Multipart multipart = new MimeMultipart();
+        multipart.addBodyPart(parteTexto);
+        multipart.addBodyPart(
+                crearParteAdjunto(
+                        pedidoPresupuestoPdf,
+                        nombrePedidoPresupuestoPdf,
+                        "application/pdf"
+                )
+        );
+
+        if (incluyeOrdenMedica) {
+            multipart.addBodyPart(
+                    crearParteAdjunto(
+                            ordenMedica,
+                            nombreOrdenMedica,
+                            contentTypeOrdenMedica
+                    )
+            );
+        }
+
+        return multipart;
+    }
+
+    private MimeBodyPart crearParteAdjunto(
+            byte[] contenido,
+            String nombre,
+            String contentType) throws Exception {
+
+        MimeBodyPart parte = new MimeBodyPart();
+
+        parte.setDataHandler(
+                new DataHandler(
+                        new AdjuntoDataSource(
+                                contenido,
+                                nombre,
+                                contentType
+                        )
+                )
+        );
+
+        parte.setFileName(
+                MimeUtility.encodeText(
+                        nombre,
+                        "UTF-8",
+                        null
+                )
+        );
+
+        return parte;
+    }
+
     private void validarParametros(
             String emailDestino,
             String asunto,
@@ -285,6 +395,17 @@ public class CotizacionPrestadorMailHelper {
             );
         }
 
+        validarPedidoPresupuesto(
+                pedidoPresupuestoPdf,
+                nombrePedidoPresupuestoPdf
+        );
+    }
+
+    private void validarPedidoPresupuesto(
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf)
+            throws Exception {
+
         if (pedidoPresupuestoPdf == null
                 || pedidoPresupuestoPdf.length == 0) {
 
@@ -296,12 +417,50 @@ public class CotizacionPrestadorMailHelper {
 
         if (isEmpty(nombrePedidoPresupuestoPdf)
                 || !nombrePedidoPresupuestoPdf
-                .toLowerCase()
+                .toLowerCase(Locale.ENGLISH)
                 .endsWith(".pdf")) {
 
             throw new Exception(
                     "El nombre del adjunto PDF "
                             + "no es válido."
+            );
+        }
+    }
+
+    private void validarOrdenMedica(
+            byte[] ordenMedica,
+            String nombreOrdenMedica,
+            String contentTypeOrdenMedica)
+            throws Exception {
+
+        if (ordenMedica == null || ordenMedica.length == 0) {
+            throw new Exception(
+                    "La Orden médica no fue recuperada."
+            );
+        }
+
+        if (isEmpty(nombreOrdenMedica)) {
+            throw new Exception(
+                    "El nombre original de la Orden médica no es válido."
+            );
+        }
+
+        String nombre = nombreOrdenMedica.toLowerCase(Locale.ENGLISH);
+        boolean jpeg = "image/jpeg".equals(contentTypeOrdenMedica);
+        boolean png = "image/png".equals(contentTypeOrdenMedica);
+
+        if (!(jpeg || png)) {
+            throw new Exception(
+                    "El tipo MIME de la Orden médica no es válido."
+            );
+        }
+
+        if ((jpeg && !(nombre.endsWith(".jpg")
+                || nombre.endsWith(".jpeg")))
+                || (png && !nombre.endsWith(".png"))) {
+
+            throw new Exception(
+                    "El tipo MIME de la Orden médica no coincide con su nombre."
             );
         }
     }
@@ -363,21 +522,26 @@ public class CotizacionPrestadorMailHelper {
         }
     }
 
-    private static final class PdfAdjuntoDataSource
+    private static final class AdjuntoDataSource
             implements DataSource {
 
         private final byte[] contenido;
         private final String nombre;
+        private final String contentType;
 
-        private PdfAdjuntoDataSource(
+        private AdjuntoDataSource(
                 byte[] contenido,
-                String nombre) {
+                String nombre,
+                String contentType) {
 
             this.contenido =
                     contenido;
 
             this.nombre =
                     nombre;
+
+            this.contentType =
+                    contentType;
         }
 
         public InputStream getInputStream() {
@@ -390,12 +554,12 @@ public class CotizacionPrestadorMailHelper {
                 throws IOException {
 
             throw new IOException(
-                    "El adjunto PDF es de solo lectura."
+                    "El adjunto es de solo lectura."
             );
         }
 
         public String getContentType() {
-            return "application/pdf";
+            return contentType;
         }
 
         public String getName() {

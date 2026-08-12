@@ -31,6 +31,15 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
         );
     }
 
+    public static RequerimientoCompraReclamoPrestacional
+            getRelacionPorReclamoPrestacional(
+                    int idReclamoPrestacional) throws Exception {
+
+        return getInstance().getRelacionPorReclamoPrestacional(
+                idReclamoPrestacional
+        );
+    }
+
     public static Map<Integer, RequerimientoCompraReclamoPrestacional>
             obtenerVinculadasPorRequerimientos(
                     List<Integer> idsRequerimientos)

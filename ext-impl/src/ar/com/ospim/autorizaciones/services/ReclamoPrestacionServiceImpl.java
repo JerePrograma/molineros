@@ -1987,9 +1987,11 @@ public class ReclamoPrestacionServiceImpl {
             return idReclamo;
 
         } catch (Exception e) {
-            ConnectionHelper.rollback(
-                    con
-            );
+            if (con != null) {
+                ConnectionHelper.rollback(
+                        con
+                );
+            }
 
             if (e instanceof SystemException) {
                 throw (SystemException) e;
@@ -2010,6 +2012,12 @@ public class ReclamoPrestacionServiceImpl {
             Connection con,
             ReclamoPrestacional reclamoPrestacional,
             User user) throws SystemException {
+
+        if (con == null) {
+            throw new SystemException(
+                    "No se informo la conexion transaccional."
+            );
+        }
 
         CallableStatement stmt = null;
         CallableStatement stmt2 = null;
@@ -2046,9 +2054,6 @@ public class ReclamoPrestacionServiceImpl {
                 "{call autorizaciones.inserta_reclamo_contacto(?,?,?)}";
 
         try {
-
-            con = ConnectionHelper.getConnectionForTransaction();
-
             //			*** RECLAMO PRESTACIONAL***
             stmt = con.prepareCall(sql.toString());
             stmt.registerOutParameter(1, Types.INTEGER);
@@ -2340,18 +2345,15 @@ public class ReclamoPrestacionServiceImpl {
                 stmt5.executeUpdate();
             }
 
-            con.commit();
-
         } catch (SQLException e) {
             _log.error("Error al insertar reclamo prestacional y sus componentes", e);
-            ConnectionHelper.rollback(con);
             throw new SystemException(e);
         } finally {
             ConnectionHelper.cerrar(stmt);
             ConnectionHelper.cerrar(stmt2);
             ConnectionHelper.cerrar(stmt3);
             ConnectionHelper.cerrar(stmt4);
-            ConnectionHelper.cerrar(stmt5, con);
+            ConnectionHelper.cerrar(stmt5);
             ConnectionHelper.cerrar(
                     stmt6
             );

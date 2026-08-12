@@ -63,6 +63,20 @@ public class BusquedaRequerimientoCompraServiceImpl {
     private static final String SQL_GET_ORDEN_MEDICA =
             "{call compras.get_requerimiento_orden_medica(?)}";
 
+    private static final String SQL_GET_PRESTADOR_ADJUDICADO =
+            "SELECT DISTINCT d.id_prestador "
+                    + "FROM compras.requerimiento_detalle d "
+                    + "WHERE d.id_requerimiento = ? "
+                    + "AND d.baja_fecha IS NULL";
+
+    private static final String SQL_GET_PRESUPUESTO_ADJUDICADO =
+            "SELECT rp.* "
+                    + "FROM compras.requerimiento_presupuesto rp "
+                    + "WHERE rp.id_requerimiento = ? "
+                    + "AND rp.id_prestador = ? "
+                    + "AND rp.tipo_documento = 1 "
+                    + "AND rp.baja_fecha IS NULL";
+
     public List<RequerimientoCompra> buscarRequerimientos(
             RequerimientoCompraFiltro filtro) throws Exception {
 
@@ -483,6 +497,107 @@ public class BusquedaRequerimientoCompraServiceImpl {
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public RequerimientoCompraPresupuesto getPresupuestoAdjudicado(
+            int idRequerimientoCompra) throws Exception {
+
+        validarIdRequerimiento(idRequerimientoCompra);
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = obtenerConexionDocumentacionCompras();
+
+            if (con == null) {
+                throw new Exception(
+                        "No se obtuvo una conexión para consultar "
+                                + "el presupuesto adjudicado."
+                );
+            }
+
+            int idPrestador = resolverPrestadorAdjudicado(
+                    con,
+                    idRequerimientoCompra
+            );
+
+            stmt = con.prepareStatement(SQL_GET_PRESUPUESTO_ADJUDICADO);
+            stmt.setInt(1, idRequerimientoCompra);
+            stmt.setInt(2, idPrestador);
+            rs = stmt.executeQuery();
+
+            RequerimientoCompraPresupuesto presupuesto =
+                    rs.next() ? mapPresupuesto(rs) : null;
+
+            if (rs.next()) {
+                throw new Exception(
+                        "Existe más de un presupuesto activo para "
+                                + "el prestador adjudicado."
+                );
+            }
+
+            return presupuesto;
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudo recuperar el presupuesto adjudicado. "
+                            + "idRequerimiento=" + idRequerimientoCompra,
+                    e
+            );
+            throw e;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    protected Connection obtenerConexionDocumentacionCompras()
+            throws Exception {
+
+        return ConnectionHelper.getConnection();
+    }
+
+    private int resolverPrestadorAdjudicado(
+            Connection con,
+            int idRequerimientoCompra) throws Exception {
+
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            stmt = con.prepareStatement(SQL_GET_PRESTADOR_ADJUDICADO);
+            stmt.setInt(1, idRequerimientoCompra);
+            rs = stmt.executeQuery();
+
+            if (!rs.next()) {
+                throw new Exception(
+                        "El requerimiento no tiene detalles activos "
+                                + "con un prestador adjudicado."
+                );
+            }
+
+            int idPrestador = rs.getInt("id_prestador");
+
+            if (rs.wasNull() || idPrestador <= 0) {
+                throw new Exception(
+                        "Todos los detalles activos deben tener "
+                                + "un prestador adjudicado válido."
+                );
+            }
+
+            if (rs.next()) {
+                throw new Exception(
+                        "Todos los detalles activos deben tener "
+                                + "el mismo prestador adjudicado."
+                );
+            }
+
+            return idPrestador;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt);
         }
     }
 

@@ -184,7 +184,7 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
         antes(
                 guardar,
                 "reclamoPrestacional.setRecuperable(",
-                ".insertar(reclamoPrestacional, user)"
+                ".crearYVincular("
         );
 
         String processAction = extraerMetodo(

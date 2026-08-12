@@ -4924,6 +4924,9 @@
 	<!-- Imagenes Reclamos Prestacionales -->
 	
 	<action path="/autorizaciones/documentacion_adjunta_recuperar" type="ar.com.global.action.GetFileActionExt" />
+	<action
+		path="/autorizaciones/descargar_documento_compra_reclamo"
+		type="ar.com.ospim.autorizaciones.action.DescargarDocumentoCompraReclamoAction" />
 	
     <action path="/autorizaciones/upload_imagenes_reclamosprestacionales"
 		type="ar.com.ospim.autorizaciones.action.UploadImagenesReclamosAction">

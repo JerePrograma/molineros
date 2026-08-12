@@ -123,6 +123,14 @@ public class BusquedaRequerimientoCompraServiceUtil {
         );
     }
 
+    public static RequerimientoCompraPresupuesto getPresupuestoAdjudicado(
+            int idRequerimientoCompra) throws Exception {
+
+        return getInstance().getPresupuestoAdjudicado(
+                idRequerimientoCompra
+        );
+    }
+
     private BusquedaRequerimientoCompraServiceUtil() {
     }
 }
