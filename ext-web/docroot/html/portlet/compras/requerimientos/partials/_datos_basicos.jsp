@@ -201,73 +201,11 @@ int idRpCabecera =
             </td>
 
             <td class="compras-celda-control compras-celda-control-final">
-                <% if (puedeEditarEstructuraPantalla) { %>
-                    <select id="<portlet:namespace />sector_id"
-                            class="compras-control compras-control-sector"
-                            onchange="<portlet:namespace />cambiarSectorCompra(true);">
 
-                        <option value="0"
-                                data-requiere-afiliado="false"
-                                data-usa-codigo-prestacion="false">
-                            Seleccione
-                        </option>
+                <span class="compras-sector-rp-contenedor">
 
-                        <%
-                        for (int i = 0; i < sectores.size(); i++) {
-                            RequerimientoCompraSector sector =
-                                    sectores.get(i);
-
-                            String sectorId =
-                                    String.valueOf(
-                                            sector.getIdSector()
-                                    );
-
-                            String selected =
-                                    reqSectorId.equals(sectorId)
-                                            ? "selected=\"selected\""
-                                            : "";
-
-                            String requiereAfiliado =
-                                    sector.isRequiereAfiliado()
-                                            ? "true"
-                                            : "false";
-
-                            boolean usaCodigoPrestacion =
-                                    WebKeysCompras
-                                            .getFiltroTipoNomencladorCompras(
-                                                    sector.getDescripcion()
-                                            ) != null;
-
-                            String usaCodigoPrestacionAttr =
-                                    usaCodigoPrestacion
-                                            ? "true"
-                                            : "false";
-                        %>
-
-                            <option value="<%= sectorId %>"
-                                    data-requiere-afiliado="<%= requiereAfiliado %>"
-                                    data-usa-codigo-prestacion="<%= usaCodigoPrestacionAttr %>"
-                                    <%= selected %>>
-                                <%= HtmlUtil.escape(
-                                        sector.getDescripcionVisible()
-                                ) %>
-                            </option>
-
-                        <%
-                        }
-                        %>
-                    </select>
-                <% } else { %>
-                    <input type="text"
-                           id="<portlet:namespace />sector_id"
-                           value="<%= HtmlUtil.escape(sectorDescripcionSoloLectura) %>"
-                           readonly="readonly"
-                           class="compras-control compras-control-sector compras-campo-solo-lectura" />
-                <% } %>
-
-
-                <td class="compras-celda-control compras-celda-control-final">
                     <% if (puedeEditarEstructuraPantalla) { %>
+
                         <select id="<portlet:namespace />sector_id"
                                 class="compras-control compras-control-sector"
                                 onchange="<portlet:namespace />cambiarSectorCompra(true);">
@@ -280,10 +218,13 @@ int idRpCabecera =
 
                             <%
                             for (int i = 0; i < sectores.size(); i++) {
-                                RequerimientoCompraSector sector = sectores.get(i);
+                                RequerimientoCompraSector sector =
+                                        sectores.get(i);
 
                                 String sectorId =
-                                        String.valueOf(sector.getIdSector());
+                                        String.valueOf(
+                                                sector.getIdSector()
+                                        );
 
                                 String selected =
                                         reqSectorId.equals(sectorId)
@@ -333,18 +274,18 @@ int idRpCabecera =
 
                     <% if (mostrarIdRpCabecera) { %>
 
-                        <span class="compras-id-rp-cabecera"
-                              style="margin-left: 18px; white-space: nowrap;">
+                        <span class="compras-id-rp-cabecera">
                             <strong>Id RP:</strong>
 
-                            <span class="compras-nro-rp"
-                                  style="font-size: 24px; font-weight: bold; margin-left: 5px;">
+                            <span class="compras-nro-rp">
                                 <%= idRpCabecera %>
                             </span>
                         </span>
 
                     <% } %>
-                </td>
+
+                </span>
+
             </td>
         </tr>
 
