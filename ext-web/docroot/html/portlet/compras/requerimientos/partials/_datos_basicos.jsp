@@ -267,31 +267,30 @@ int idRpCabecera =
 
 
                 <% if (mostrarIdRpCabecera) { %>
-                        <% if (mostrarIdRpCabecera) { %>
 
-                            <td class="compras-celda-label">
-                                <strong>Id RP:</strong>
-                            </td>
+                    <td class="compras-celda-label">
+                        <strong>Id RP:</strong>
+                    </td>
 
-                            <td class="compras-celda-control" size="10">
-                                <span class="compras-nro-rp">
-                                    <%= idRpCabecera %>
-                                </span>
-                            </td>
+                    <td class="compras-celda-control">
+                        <span class="compras-nro-rp"
+                              style="font-size: 24px; font-weight: bold;">
+                            <%= idRpCabecera %>
+                        </span>
+                    </td>
 
-                            <td colspan="2"
-                                class="compras-celda-control compras-celda-control-final">
-                                &nbsp;
-                            </td>
+                    <td colspan="2"
+                        class="compras-celda-control compras-celda-control-final">
+                        &nbsp;
+                    </td>
 
-                        <% } else { %>
+                <% } else { %>
 
-                            <td colspan="4"
-                                class="compras-celda-control compras-celda-control-final">
-                                &nbsp;
-                            </td>
+                    <td colspan="4"
+                        class="compras-celda-control compras-celda-control-final">
+                        &nbsp;
+                    </td>
 
-                        <% } %>
                 <% } %>
             </td>
         </tr>
