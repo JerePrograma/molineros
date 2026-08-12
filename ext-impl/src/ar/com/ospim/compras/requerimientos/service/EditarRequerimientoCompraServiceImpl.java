@@ -16,10 +16,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.text.Normalizer;
-import java.util.Locale;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class EditarRequerimientoCompraServiceImpl {
