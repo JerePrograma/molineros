@@ -266,7 +266,21 @@ boolean msgPresupuestoBorrado =
       enctype="multipart/form-data">
 
     <fieldset class="block-labels compras-adjuntos-pedidos">
-        <legend>Pedidos de presupuestos</legend>
+        <legend>
+            Pedidos de presupuestos
+
+            <a href="javascript:void(0)"
+               onclick="return comprasHelp(
+                       event,
+                       '<portlet:namespace />helpCargaPresupuestos'
+               );">
+                <img
+                        style="height: 25px; width: 25px; vertical-align: middle;"
+                        src="/html/images/help.png"
+                        title="Ayuda para carga de cotizaciones"
+                        alt="Ayuda" />
+            </a>
+        </legend>
 
         <liferay-ui:error
                 key="errorUploadFile"
@@ -530,6 +544,57 @@ boolean msgPresupuestoBorrado =
         </c:if>
     </fieldset>
 
+    <div
+            id="<portlet:namespace />helpCargaPresupuestos"
+            class="containerPlus draggable compras-container-ayuda {buttons:'c', skin:'default', width:'700',title:'Ayuda - Carga de cotizaciones',closed:'true'}"
+            style="top: 500px; left: 200px">
+
+        <strong>Requisitos para cargar cotizaciones</strong>
+        <br /><br />
+
+        - El requerimiento debe estar guardado y enviado a cotizar.
+        <br />
+
+        - La carga de presupuestos se encuentra disponible en estado
+          A COTIZAR y para usuarios con permiso de cotización.
+        <br />
+
+        - Sólo se pueden cargar presupuestos para prestadores cuya
+          notificación haya finalizado correctamente.
+        <br />
+
+        - Debe seleccionar el prestador al que corresponde cada presupuesto.
+        <br />
+
+        - El presupuesto debe presentarse en formato PDF.
+        <br />
+
+        - Debe seleccionar un archivo no vacío.
+        <br />
+
+        - Un mismo prestador no puede repetirse dentro de la misma carga.
+        <br />
+
+        - Sólo puede existir un presupuesto activo por prestador.
+          Para reemplazarlo, primero debe eliminar el presupuesto existente.
+        <br />
+
+        - Puede utilizar "Agregar otro presupuesto" para cargar varios
+          presupuestos en una misma operación.
+        <br />
+
+        - La cantidad máxima de presupuestos de una operación depende
+          de los prestadores disponibles y del máximo configurado por el sistema.
+        <br />
+
+        - El archivo debe respetar el tamaño máximo permitido por
+          Document Library.
+        <br />
+
+        - La lamparita de la columna PDF indica que el prestador fue
+          notificado y todavía tiene pendiente la carga de su presupuesto.
+    </div>
+
     <input type="hidden"
            name="<portlet:namespace />presupuesto_accion"
            id="<portlet:namespace />presupuesto_accion"
@@ -698,6 +763,7 @@ boolean msgPresupuestoBorrado =
                         '<input '
                                 + 'type="file" '
                                 + 'class="presupuesto-archivo" '
+                                + 'accept=".pdf,application/pdf" '
                                 + '/>'
                 );
 

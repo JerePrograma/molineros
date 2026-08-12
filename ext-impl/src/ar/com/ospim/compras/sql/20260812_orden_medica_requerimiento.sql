@@ -839,103 +839,121 @@ CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_orden_medica(
 RETURNS INTEGER
 AS $func$
 DECLARE
-    v_id INTEGER;
+v_id INTEGER;
     v_estado_requerimiento INTEGER;
     v_usuario VARCHAR(100);
 BEGIN
-    IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
+    IF p_id_requerimiento IS NULL
+       OR p_id_requerimiento <= 0 THEN
+
         RAISE EXCEPTION
             'El requerimiento informado no es valido.';
-    END IF;
+END IF;
 
     IF p_fecha_documento IS NULL THEN
         RAISE EXCEPTION
             'Debe informar la fecha de la Orden médica.';
-    END IF;
+END IF;
 
-    IF p_dl_group_id IS NULL OR p_dl_group_id <= 0
-       OR p_dl_folder_id IS NULL OR p_dl_folder_id < 0
-       OR p_dl_file_entry_id IS NULL OR p_dl_file_entry_id <= 0
+    IF p_dl_group_id IS NULL
+       OR p_dl_group_id <= 0
+       OR p_dl_folder_id IS NULL
+       OR p_dl_folder_id < 0
+       OR p_dl_file_entry_id IS NULL
+       OR p_dl_file_entry_id <= 0
        OR NULLIF(btrim(p_dl_file_uuid), '') IS NULL THEN
+
         RAISE EXCEPTION
             'La identidad del documento de Orden médica no es válida.';
-    END IF;
+END IF;
 
     IF NULLIF(btrim(p_nombre_original), '') IS NULL
        OR NULLIF(btrim(p_nombre_persistido), '') IS NULL THEN
+
         RAISE EXCEPTION
             'Los nombres del documento de Orden médica no son válidos.';
-    END IF;
+END IF;
 
     IF btrim(COALESCE(p_titulo, '')) <> 'Orden médica' THEN
         RAISE EXCEPTION
             'El título del documento debe ser Orden médica.';
-    END IF;
+END IF;
 
-    v_usuario := COALESCE(NULLIF(btrim(p_usuario), ''), 'sistema');
+    v_usuario :=
+        COALESCE(
+            NULLIF(btrim(p_usuario), ''),
+            'sistema'
+        );
 
-    SELECT r.estado
-      INTO v_estado_requerimiento
-      FROM compras.requerimiento r
-     WHERE r.id_requerimiento = p_id_requerimiento
-       AND r.baja_fecha IS NULL
-     FOR UPDATE;
+    /*
+     * Se conserva el bloqueo del requerimiento.
+     *
+     * Además de validar que continúe activo/PENDIENTE,
+     * serializa las registraciones documentales concurrentes
+     * para el mismo requerimiento.
+     */
+SELECT r.estado
+INTO v_estado_requerimiento
+FROM compras.requerimiento r
+WHERE r.id_requerimiento = p_id_requerimiento
+  AND r.baja_fecha IS NULL
+    FOR UPDATE;
 
-    IF NOT FOUND THEN
+IF NOT FOUND THEN
         RAISE EXCEPTION
             'No existe el requerimiento activo informado.';
-    END IF;
+END IF;
 
     IF v_estado_requerimiento <> 1 THEN
         RAISE EXCEPTION
-            'La Orden médica solo puede registrarse durante el alta de un requerimiento PENDIENTE.';
-    END IF;
+            'La Orden médica solo puede registrarse durante '
+            'el alta de un requerimiento PENDIENTE.';
+END IF;
 
-    IF EXISTS (
-        SELECT 1
-          FROM compras.requerimiento_presupuesto rp
-         WHERE rp.id_requerimiento = p_id_requerimiento
-           AND rp.tipo_documento = 2
-           AND rp.baja_fecha IS NULL
-    ) THEN
-        RAISE EXCEPTION
-            'El requerimiento ya tiene una Orden médica activa.';
-    END IF;
-
-    INSERT INTO compras.requerimiento_presupuesto (
-        id_requerimiento,
-        tipo_documento,
-        fecha_documento,
-        id_prestador,
-        dl_group_id,
-        dl_folder_id,
-        dl_file_entry_id,
-        dl_file_uuid,
-        nombre_original,
-        nombre_persistido,
-        titulo,
-        descripcion_prestador,
-        alta_usr
-    )
-    VALUES (
-        p_id_requerimiento,
-        2,
-        p_fecha_documento,
-        NULL,
-        p_dl_group_id,
-        p_dl_folder_id,
-        p_dl_file_entry_id,
-        btrim(p_dl_file_uuid),
-        btrim(p_nombre_original),
-        btrim(p_nombre_persistido),
-        'Orden médica',
-        NULL,
-        v_usuario
-    )
+    /*
+     * IMPORTANTE:
+     *
+     * No se valida la existencia previa de otra Orden médica.
+     * Un mismo requerimiento puede tener varias Órdenes médicas
+     * activas.
+     *
+     * Cada archivo conserva su propia fila y su propia
+     * fecha_documento.
+     */
+INSERT INTO compras.requerimiento_presupuesto (
+    id_requerimiento,
+    tipo_documento,
+    fecha_documento,
+    id_prestador,
+    dl_group_id,
+    dl_folder_id,
+    dl_file_entry_id,
+    dl_file_uuid,
+    nombre_original,
+    nombre_persistido,
+    titulo,
+    descripcion_prestador,
+    alta_usr
+)
+VALUES (
+           p_id_requerimiento,
+           2,
+           p_fecha_documento,
+           NULL,
+           p_dl_group_id,
+           p_dl_folder_id,
+           p_dl_file_entry_id,
+           btrim(p_dl_file_uuid),
+           btrim(p_nombre_original),
+           btrim(p_nombre_persistido),
+           'Orden médica',
+           NULL,
+           v_usuario
+       )
     RETURNING id_requerimiento_presupuesto
-    INTO v_id;
+INTO v_id;
 
-    RETURN v_id;
+RETURN v_id;
 END;
 $func$
 LANGUAGE plpgsql;

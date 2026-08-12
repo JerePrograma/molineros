@@ -146,7 +146,21 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
             id="<portlet:namespace />orden_medica_fieldset"
             class="block-labels compras-seccion compras-seccion-orden-medica">
 
-        <legend>Orden médica</legend>
+        <legend>
+            Orden médica
+
+            <a href="javascript:void(0)"
+               onclick="return comprasHelp(
+                       event,
+                       '<portlet:namespace />helpCargaOrdenMedica'
+               );">
+                <img
+                        style="height: 25px; width: 25px; vertical-align: middle;"
+                        src="/html/images/help.png"
+                        title="Ayuda para carga de órdenes médicas"
+                        alt="Ayuda" />
+            </a>
+        </legend>
 
         <table
                 class="lfr-table compras-resumen-requerimiento"
@@ -368,6 +382,56 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
         <div id="<portlet:namespace />orden_medica_calendario">
         </div>
     </fieldset>
+
+    <div
+            id="<portlet:namespace />helpCargaOrdenMedica"
+            class="containerPlus draggable compras-container-ayuda {buttons:'c', skin:'default', width:'700',title:'Ayuda - Carga de órdenes médicas',closed:'true'}"
+            style="top: 500px; left: 200px">
+
+        <strong>Requisitos para cargar órdenes médicas</strong>
+        <br /><br />
+
+        - Para dar de alta un requerimiento nuevo debe cargarse
+          al menos una Orden médica.
+        <br />
+
+        - Los formatos permitidos son JPG, JPEG y PNG.
+        <br />
+
+        - El archivo debe contener realmente una imagen JPEG o PNG válida;
+          no alcanza con cambiarle la extensión.
+        <br />
+
+        - El archivo no puede estar vacío.
+        <br />
+
+        - Cada Orden médica debe tener informada su propia fecha.
+        <br />
+
+        - La fecha debe seleccionarse utilizando el botón "Calendario".
+        <br />
+
+        - Puede utilizar "Agregar otra orden médica" para asociar
+          más de una Orden médica al mismo requerimiento.
+        <br />
+
+        - Se pueden cargar hasta
+          <%= maxOrdenesMedicasPorCarga %>
+          órdenes médicas en una misma operación.
+        <br />
+
+        - El botón "Borrar" elimina únicamente la fila de la carga actual,
+          antes de guardar el requerimiento.
+        <br />
+
+        - Los archivos deben respetar el tamaño máximo permitido por
+          Document Library.
+        <br />
+
+        - Si el guardado falla por una validación, por seguridad del navegador
+          deberá volver a seleccionar los archivos. Las fechas y la cantidad
+          de filas sí pueden conservarse.
+    </div>
 
     <script type="text/javascript">
         var <portlet:namespace />ordenMedicaCalendarioInputVisible =

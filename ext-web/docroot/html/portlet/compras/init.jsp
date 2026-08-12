@@ -51,3 +51,63 @@
 
 <script src="/html/js/utils.js" type="text/javascript"></script>
 <script src="/html/js/formCheck.js" type="text/javascript"></script>
+
+<link rel="stylesheet"
+      type="text/css"
+      href="/html/jquery.mb.containerPlus/css/mbContainer.css" />
+
+<script type="text/javascript"
+        src="/html/jquery.mb.containerPlus/inc/jquery.metadata.js"></script>
+
+<script type="text/javascript"
+        src="/html/jquery.mb.containerPlus/inc/mbContainer.js"></script>
+
+<script type="text/javascript">
+jQuery(document).ready(function() {
+    jQuery(".compras-container-ayuda").buildContainers({
+        containment: "document",
+        elementsPath: "/html/jquery.mb.containerPlus/elements/",
+        onResize: function(o) {},
+        onClose: function(o) {},
+        onCollapse: function(o) {},
+        onIconize: function(o) {},
+        onDrag: function(o) {},
+        onLoad: function(o) {}
+    });
+});
+
+function comprasCloseHelps() {
+    var elements =
+            jQuery(
+                    '.compras-container-ayuda'
+            );
+
+    elements.each(function() {
+        jQuery(this).mb_close();
+    });
+}
+
+function comprasHelp(event, id) {
+    comprasCloseHelps();
+
+    var ayuda =
+            jQuery(
+                    "#" + id
+            );
+
+    ayuda.mb_open();
+
+    ayuda.css(
+            "top",
+            event.clientY
+                    + jQuery(document).scrollTop()
+    );
+
+    ayuda.css(
+            "left",
+            300
+    );
+
+    return false;
+}
+</script>

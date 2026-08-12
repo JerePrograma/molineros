@@ -1697,27 +1697,19 @@ public class NotificarCotizacionPrestadorServiceImpl {
             sb.append("\n");
         }
 
-        if (!WebKeysCompras.isEmpty(
-                requerimiento.getAltaUsr()
-        )) {
-            sb.append("Usuario solicitante: ");
-            sb.append(
-                    requerimiento.getAltaUsr()
-            );
-            sb.append("\n");
-        }
-
         sb.append(
                 "\nPor favor responder este correo "
                         + "informando disponibilidad, "
                         + "plazo de entrega "
-                        + "e importe de cotizacion a "
-                        + "kfernandez@ospim.org.ar"
+                        + "e importe de cotización a "
+                        + "kfernandez@ospim.org.ar."
         );
 
         sb.append(
-                "\n\nSe reciben cotizaciones dentro de las 48hs, "
-                        + "horario de cierre 18hs."
+                "\n\nLos presupuestos se deben presentar en formato .PDF, "
+                        + "fijando como plazo límite de entrega "
+                        + "las próximas 48 horas, "
+                        + "con horario tope de recepción a las 18:00 hs."
         );
 
         return sb.toString();

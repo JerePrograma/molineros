@@ -580,18 +580,6 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
             String extension = obtenerExtensionSegura(nombreOriginal);
 
-            if (WebKeysCompras.isEmpty(extension)
-                    || !esExtensionPermitida(
-                            extension,
-                            extensionesPermitidas
-                    )) {
-
-                throw new Exception(
-                        "El tipo del presupuesto " + (i + 1)
-                                + " no está permitido."
-                );
-            }
-
             if (entrada.idPrestador <= 0) {
                 throw new Exception(
                         "Debe seleccionar el prestador del presupuesto "
