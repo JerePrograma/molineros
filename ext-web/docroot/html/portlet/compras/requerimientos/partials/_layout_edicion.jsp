@@ -9,16 +9,23 @@
      class="compras-formulario-requerimiento <%= !modoEditable ? "compras-modo-vista" : "" %>">
 
     <%@ include file="/html/portlet/compras/requerimientos/partials/_datos_basicos.jsp" %>
-    <%@ include file="/html/portlet/compras/requerimientos/partials/_orden_medica_alta.jsp" %>
 
     <%--
         Se usa el mismo componente de afiliado en ALTA, EDICION y VISTA.
         El propio partial decide si el componente debe ser editable o readonly.
     --%>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_afiliado_editable.jsp" %>
+
     <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle.jsp" %>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_adjuntos.jsp" %>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_adjudicacion.jsp" %>
+
+    <%@ include file="/html/portlet/compras/requerimientos/partials/_orden_medica_alta.jsp" %>
+
+    <c:if test="<%= !esNuevo %>">
+        <%@ include file="/html/portlet/compras/requerimientos/partials/_orden_medica_vista.jsp" %>
+    </c:if>
+
     <%@ include file="/html/portlet/compras/requerimientos/partials/_botonera.jsp" %>
 </div>
 

@@ -6,15 +6,16 @@
 
     <%@ include file="/html/portlet/compras/requerimientos/partials/_datos_basicos.jsp" %>
 
-    <%--
-        La vista utiliza el mismo componente que ALTA/EDICION, configurado
-        automaticamente como readonly por _afiliado_editable.jsp.
-    --%>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_afiliado_editable.jsp" %>
 
     <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle.jsp" %>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_adjuntos.jsp" %>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_adjudicacion.jsp" %>
+
+    <c:if test="<%= !esNuevo %>">
+        <%@ include file="/html/portlet/compras/requerimientos/partials/_orden_medica_vista.jsp" %>
+    </c:if>
+
     <%@ include file="/html/portlet/compras/requerimientos/partials/_botonera.jsp" %>
 </div>
 
