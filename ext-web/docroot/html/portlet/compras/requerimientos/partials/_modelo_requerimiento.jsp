@@ -3,21 +3,6 @@
 <%@ page import="java.util.List" %>
 
 <%!
-private String jsCompra(String value) {
-    if (value == null) {
-        return "";
-    }
-
-    return value
-            .replace("\\", "\\\\")
-            .replace("'", "\\'")
-            .replace("\"", "\\\"")
-            .replace("\r", " ")
-            .replace("\n", " ")
-            .replace("<", "\\x3C")
-            .replace(">", "\\x3E");
-}
-
 private String valorMetodoCompra(Object bean, String metodoNombre) {
     if (bean == null || metodoNombre == null) {
         return "";

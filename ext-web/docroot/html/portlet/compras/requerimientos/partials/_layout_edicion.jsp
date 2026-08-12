@@ -1,5 +1,5 @@
 <%@ include file="/html/portlet/compras/requerimientos/partials/_estilos.jsp" %>
-<%@ include file="/html/portlet/compras/requerimientos/partials/_mensajes.jsp" %>
+<jsp:include page="/html/portlet/compras/requerimientos/partials/runtime/_mensajes_runtime.jsp" />
 
 <% if (modoEditable) { %>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_form_hidden.jsp" %>
@@ -8,7 +8,7 @@
 <div id="<portlet:namespace />compras_layout"
      class="compras-formulario-requerimiento <%= !modoEditable ? "compras-modo-vista" : "" %>">
 
-    <%@ include file="/html/portlet/compras/requerimientos/partials/_datos_basicos.jsp" %>
+    <jsp:include page="/html/portlet/compras/requerimientos/partials/runtime/_datos_basicos_runtime.jsp" />
 
     <%--
         Se usa el mismo componente de afiliado en ALTA, EDICION y VISTA.
@@ -18,21 +18,21 @@
 
     <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle.jsp" %>
     <%@ include file="/html/portlet/compras/requerimientos/partials/_adjuntos.jsp" %>
-    <%@ include file="/html/portlet/compras/requerimientos/partials/_adjudicacion.jsp" %>
+    <jsp:include page="/html/portlet/compras/requerimientos/partials/runtime/_adjudicacion_runtime.jsp" />
 
-    <%@ include file="/html/portlet/compras/requerimientos/partials/_orden_medica_alta.jsp" %>
+    <jsp:include page="/html/portlet/compras/requerimientos/partials/runtime/_orden_medica_alta_runtime.jsp" />
 
     <c:if test="<%= !esNuevo %>">
-        <%@ include file="/html/portlet/compras/requerimientos/partials/_orden_medica_vista.jsp" %>
+        <jsp:include page="/html/portlet/compras/requerimientos/partials/runtime/_orden_medica_vista_runtime.jsp" />
     </c:if>
 
-    <%@ include file="/html/portlet/compras/requerimientos/partials/_botonera.jsp" %>
+    <jsp:include page="/html/portlet/compras/requerimientos/partials/runtime/_botonera_runtime.jsp" />
 </div>
 
 <%@ include file="/html/portlet/compras/requerimientos/partials/_scripts_comunes.jsp" %>
 
 <% if (modoEditable) { %>
-    <%@ include file="/html/portlet/compras/requerimientos/partials/_scripts_edicion.jsp" %>
+    <jsp:include page="/html/portlet/compras/requerimientos/partials/runtime/_scripts_edicion_runtime.jsp" />
 <% } else { %>
-    <%@ include file="/html/portlet/compras/requerimientos/partials/_scripts_vista.jsp" %>
+    <jsp:include page="/html/portlet/compras/requerimientos/partials/runtime/_scripts_vista_runtime.jsp" />
 <% } %>
