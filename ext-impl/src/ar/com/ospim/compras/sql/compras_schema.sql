@@ -605,7 +605,7 @@ INSERT INTO compras.sector_requerimiento (
 )
 VALUES
     (1, 'Farmacia', TRUE, TRUE, 'sistema'),
-    (2, 'Prestaciones Médicas', TRUE, TRUE, 'sistema'),
+    (2, 'Prestaciones Medicas', TRUE, TRUE, 'sistema'),
     (3, 'Sistemas', FALSE, TRUE, 'sistema'),
     (4, 'RRHH', FALSE, TRUE, 'sistema'),
     (5, 'Legales', TRUE, TRUE, 'sistema'),

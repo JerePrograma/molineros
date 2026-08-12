@@ -417,7 +417,7 @@
                         <portlet:namespace />getSectorDescripcionSeleccionadoCompra()
                 );
 
-        return descripcion == 'PRESTACIONES MEDICAS'
+        return descripcion == 'PRESTACIONES MÉDICAS'
                 || descripcion == 'DISCAPACIDAD'
                 || descripcion == 'ODONTOLOGIA';
     }

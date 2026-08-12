@@ -297,7 +297,7 @@ public class ReporteAlertaPreautorizaciones extends AgendadoJava implements Seri
 			to=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_PRESTACIONES_MEDICAS_FECHA_CARGA_EMAIL");
 //to="dsulfaro@uoma.org.ar";			
 			if(mPrestacionesMedicasFechaCarga.size()>0){
-				generarInformePrestacionesMedicas(to,"Preautorizaciones - Prestaciones Médicas (Sin Enviar) ",mPrestacionesMedicasFechaCarga,"AvisoPreautorizacion_con_demora_Sin_Enviar.xls",rac,false,false,false);
+				generarInformePrestacionesMedicas(to,"Preautorizaciones - Prestaciones Medica (Sin Enviar) ",mPrestacionesMedicasFechaCarga,"AvisoPreautorizacion_con_demora_Sin_Enviar.xls",rac,false,false,false);
 			}
 			
 

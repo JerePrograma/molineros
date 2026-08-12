@@ -1348,7 +1348,7 @@ public class EditarRequerimientoCompraServiceImpl {
          * ODONTOLOGIA:
          *     tipo 1.
          *
-         * PRESTACIONES MEDICAS:
+         * PRESTACIONES MÉDICAS:
          *     cualquier tipo distinto de 1 y 9.
          *
          */
@@ -1391,11 +1391,11 @@ public class EditarRequerimientoCompraServiceImpl {
                 );
             }
 
-            if ("PRESTACIONES MEDICAS".equals(
+            if ("PRESTACIONES MÉDICAS".equals(
                     sector
             )) {
                 throw errorUsuario(
-                        "Prestaciones Medicas no admite "
+                        "Prestaciones Médicas no admite "
                                 + "prestaciones del nomenclador tipo 1 o 9."
                 );
             }

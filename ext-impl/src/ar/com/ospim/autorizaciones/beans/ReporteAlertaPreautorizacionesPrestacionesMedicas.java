@@ -215,7 +215,7 @@ public class ReporteAlertaPreautorizacionesPrestacionesMedicas extends AgendadoJ
 		
 //to="dsulfaro@uoma.org.ar";			
 			if(mPrestacionesMedicasCA.size()>0){
-				generarInformePrestacionesMedicas(to,"Preautorizaciones con Demora - Prestaciones Médicas (Cargados) ",mPrestacionesMedicasCA,"AvisoPreautorizacion_con_demora_Prestaciones_Medicas_CA.xls",rac,false,false);
+				generarInformePrestacionesMedicas(to,"Preautorizaciones con Demora - Prestaciones Medica (Cargados) ",mPrestacionesMedicasCA,"AvisoPreautorizacion_con_demora_Prestaciones_Medicas_CA.xls",rac,false,false);
 			}
 			
 						
@@ -230,7 +230,7 @@ public class ReporteAlertaPreautorizacionesPrestacionesMedicas extends AgendadoJ
 			ra.setUltimaEjecucion(new Date());
 			ReportesServiceUtil.reporteEjecutado(ra);
 			
-			logger.debug("Fin de Envío de Avisos de Preautorizaciones Prestaciones Médicas");
+			logger.debug("Fin de Envío de Avisos de Preautorizaciones Prestaciones Medica");
 		} catch (NumberFormatException e) {
 			logger.error(e);
 		} catch (SystemException e) {

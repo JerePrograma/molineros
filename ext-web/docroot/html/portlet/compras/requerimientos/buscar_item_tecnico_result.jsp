@@ -173,7 +173,7 @@ if (errorBusqueda == null
      * ODONTOLOGIA:
      *     busca_nomenclador con tipo 1.
      *
-     * PRESTACIONES MEDICAS:
+     * PRESTACIONES MÉDICAS:
      *     busca_nomenclador_prest_med con tipo 0.
      *
      */
@@ -197,7 +197,7 @@ if (errorBusqueda == null
                         );
 
     } else if ("1".equals(esPrestMedBusqueda)
-            || "PRESTACIONES MEDICAS".equals(
+            || "PRESTACIONES MÉDICAS".equals(
                     sectorBusqueda
             )) {
 
