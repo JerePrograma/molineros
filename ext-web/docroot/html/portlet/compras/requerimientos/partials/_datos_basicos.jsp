@@ -273,7 +273,7 @@ int idRpCabecera =
                                 <strong>Id RP:</strong>
                             </td>
 
-                            <td class="compras-celda-control">
+                            <td class="compras-celda-control" size="10">
                                 <span class="compras-nro-rp">
                                     <%= idRpCabecera %>
                                 </span>
