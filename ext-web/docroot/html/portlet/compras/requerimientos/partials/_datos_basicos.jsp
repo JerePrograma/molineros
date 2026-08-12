@@ -266,32 +266,85 @@ int idRpCabecera =
                 <% } %>
 
 
-                <% if (mostrarIdRpCabecera) { %>
+                <td class="compras-celda-control compras-celda-control-final">
+                    <% if (puedeEditarEstructuraPantalla) { %>
+                        <select id="<portlet:namespace />sector_id"
+                                class="compras-control compras-control-sector"
+                                onchange="<portlet:namespace />cambiarSectorCompra(true);">
 
-                    <td class="compras-celda-label">
-                        <strong>Id RP:</strong>
-                    </td>
+                            <option value="0"
+                                    data-requiere-afiliado="false"
+                                    data-usa-codigo-prestacion="false">
+                                Seleccione
+                            </option>
 
-                    <td class="compras-celda-control">
-                        <span class="compras-nro-rp"
-                              style="font-size: 24px; font-weight: bold;">
-                            <%= idRpCabecera %>
+                            <%
+                            for (int i = 0; i < sectores.size(); i++) {
+                                RequerimientoCompraSector sector = sectores.get(i);
+
+                                String sectorId =
+                                        String.valueOf(sector.getIdSector());
+
+                                String selected =
+                                        reqSectorId.equals(sectorId)
+                                                ? "selected=\"selected\""
+                                                : "";
+
+                                String requiereAfiliado =
+                                        sector.isRequiereAfiliado()
+                                                ? "true"
+                                                : "false";
+
+                                boolean usaCodigoPrestacion =
+                                        WebKeysCompras
+                                                .getFiltroTipoNomencladorCompras(
+                                                        sector.getDescripcion()
+                                                ) != null;
+
+                                String usaCodigoPrestacionAttr =
+                                        usaCodigoPrestacion
+                                                ? "true"
+                                                : "false";
+                            %>
+
+                                <option value="<%= sectorId %>"
+                                        data-requiere-afiliado="<%= requiereAfiliado %>"
+                                        data-usa-codigo-prestacion="<%= usaCodigoPrestacionAttr %>"
+                                        <%= selected %>>
+                                    <%= HtmlUtil.escape(
+                                            sector.getDescripcionVisible()
+                                    ) %>
+                                </option>
+
+                            <%
+                            }
+                            %>
+                        </select>
+
+                    <% } else { %>
+
+                        <input type="text"
+                               id="<portlet:namespace />sector_id"
+                               value="<%= HtmlUtil.escape(sectorDescripcionSoloLectura) %>"
+                               readonly="readonly"
+                               class="compras-control compras-control-sector compras-campo-solo-lectura" />
+
+                    <% } %>
+
+                    <% if (mostrarIdRpCabecera) { %>
+
+                        <span class="compras-id-rp-cabecera"
+                              style="margin-left: 18px; white-space: nowrap;">
+                            <strong>Id RP:</strong>
+
+                            <span class="compras-nro-rp"
+                                  style="font-size: 24px; font-weight: bold; margin-left: 5px;">
+                                <%= idRpCabecera %>
+                            </span>
                         </span>
-                    </td>
 
-                    <td colspan="2"
-                        class="compras-celda-control compras-celda-control-final">
-                        &nbsp;
-                    </td>
-
-                <% } else { %>
-
-                    <td colspan="4"
-                        class="compras-celda-control compras-celda-control-final">
-                        &nbsp;
-                    </td>
-
-                <% } %>
+                    <% } %>
+                </td>
             </td>
         </tr>
 
