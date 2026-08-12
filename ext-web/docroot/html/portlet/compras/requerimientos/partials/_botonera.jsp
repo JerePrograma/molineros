@@ -53,8 +53,8 @@ Object botoneraPendientesNotificacionAttr =
         );
 
 /*
- * Fail closed: el botón solo se muestra cuando el action confirmó mediante
- * la consulta canónica que realmente existen prestadores pendientes.
+ * Fail closed: el boton solo se muestra cuando el action confirmo mediante
+ * la consulta canonica que realmente existen prestadores pendientes.
  */
 boolean botoneraHayPrestadoresPendientesNotificacion =
         Boolean.TRUE.equals(
@@ -94,11 +94,6 @@ boolean botoneraPuedeReintentarCotizacion =
                 botoneraEstadoActual,
                 botoneraHayPrestadoresPendientesNotificacion
         );
-
-boolean botoneraPuedeAnular =
-        botoneraRequerimientoPersistido
-        && botoneraTieneRolAnular
-        && WebKeysCompras.puedeAnular(botoneraEstadoActual);
 
 boolean botoneraPuedeImprimir =
         botoneraRequerimientoPersistido
@@ -159,20 +154,8 @@ String botoneraEnviarCotizarFormId =
         namespaceCompra + "enviarCotizarRequerimientoCompraForm";
 String botoneraReintentarCotizacionFormId =
         namespaceCompra + "reintentarCotizacionRequerimientoCompraForm";
-String botoneraAnularFormId =
-        namespaceCompra + "anularRequerimientoCompraForm";
 String botoneraReclamoPrestacionalFormId =
         namespaceCompra + "reclamoPrestacionalCompraForm";
-String botoneraAnularURL =
-        "javascript:"
-        + namespaceCompra
-        + "cambiarEstadoRequerimientoCompra('"
-        + botoneraAnularFormId
-        + "','"
-        + renderResponse.getNamespace()
-        + "btnAnularRequerimientoCompra'"
-        + ",'¿Confirma anular el requerimiento?'"
-        + ",'Anulando...');";
 %>
 
 <% if (botoneraPuedeEnviarACotizar) { %>
@@ -203,20 +186,6 @@ String botoneraAnularURL =
     </form>
 <% } %>
 
-<% if (botoneraPuedeAnular) { %>
-    <form action="<%= botoneraCambiarEstadoURL.toString() %>"
-          method="post"
-          id="<%= botoneraAnularFormId %>"
-          style="display:none;">
-        <input type="hidden"
-               name="<portlet:namespace />id_requerimiento_compra"
-               value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
-        <input type="hidden"
-               name="<portlet:namespace />estado_nuevo"
-               value="<%= String.valueOf(WebKeysCompras.ESTADO_ANULADO) %>" />
-    </form>
-<% } %>
-
 <% if (botoneraPuedeCrearReclamoPrestacional
         || botoneraPuedeVerReclamoPrestacional) { %>
     <form action="<%= botoneraReclamoPrestacionalURL.toString() %>"
@@ -243,14 +212,14 @@ String botoneraAnularURL =
             <% if (modoEditable && puedeEditarCotizacionPantalla) { %>
                 <input type="button"
                        id="<portlet:namespace />btnGuardarCotizacionCompra"
-                       value="Guardar cotización"
+                       value="Guardar cotizaci&#243;n"
                        onClick="return <%= namespaceCompra %>guardarCotizacion();" />
             <% } %>
 
             <%--
                 No se muestra Editar dentro de la vista.
-                La edición continúa disponible en el menú de acciones del
-                listado, respetando la observación funcional más reciente.
+                La edicion continua disponible en el menu de acciones del
+                listado, respetando la observacion funcional mas reciente.
             --%>
 
             <% if (botoneraPuedeEnviarACotizar) { %>
@@ -272,15 +241,9 @@ String botoneraAnularURL =
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
                                '<%= botoneraReintentarCotizacionFormId %>',
                                '<portlet:namespace />btnReintentarCotizacionRequerimientoCompra',
-                               '¿Confirma notificar nuevamente a los prestadores pendientes?',
+                               '\u00bfConfirma notificar nuevamente a los prestadores pendientes?',
                                'Notificando...'
                        );" />
-            <% } %>
-
-            <% if (botoneraPuedeAnular) { %>
-                <span id="<portlet:namespace />btnAnularRequerimientoCompra">
-                    <liferay-ui:icon-delete url="<%= botoneraAnularURL %>" />
-                </span>
             <% } %>
 
             <% if (botoneraPuedeCrearReclamoPrestacional) { %>
@@ -302,8 +265,8 @@ String botoneraAnularURL =
                         || botoneraTieneRolCrearReclamo)) { %>
                 <input type="button"
                        value="<%= botoneraRelacionReclamo.isError()
-                               ? "Reclamo creado: vinculación pendiente"
-                               : "Creación de reclamo en proceso" %>"
+                               ? "Reclamo creado: vinculaci\u00f3n pendiente"
+                               : "Creaci\u00f3n de reclamo en proceso" %>"
                        disabled="disabled" />
             <% } %>
 
@@ -356,7 +319,7 @@ String botoneraAnularURL =
         var iframe = document.getElementById('<portlet:namespace />iframeImpresionRequerimientoCompra');
 
         if (!iframe) {
-            alert('No se pudo preparar la impresión del requerimiento.');
+            alert('No se pudo preparar la impresi\u00f3n del requerimiento.');
             return false;
         }
 
@@ -368,7 +331,7 @@ String botoneraAnularURL =
                 iframe.contentWindow.focus();
                 iframe.contentWindow.print();
             } catch (e) {
-                alert('No se pudo imprimir automáticamente el PDF.');
+                alert('No se pudo imprimir autom\u00e1ticamente el PDF.');
             }
         };
 
