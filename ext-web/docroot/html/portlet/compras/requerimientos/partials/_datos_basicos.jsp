@@ -159,6 +159,28 @@ int idRpCabecera =
     .compras-grupo-cargo label {
         margin-right: 10px;
     }
+
+    .compras-sector-rp-contenedor {
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+    }
+
+    .compras-id-rp-cabecera {
+        display: inline-flex;
+        align-items: baseline;
+        margin-left: 16px;
+        white-space: nowrap;
+    }
+
+    .compras-id-rp-cabecera strong {
+        margin-right: 6px;
+    }
+
+    .compras-nro-rp {
+        font-size: 24px;
+        font-weight: bold;
+    }
 </style>
 
 <fieldset class="block-labels compras-cabecera-requerimiento compras-seccion compras-seccion-datos-basicos">
