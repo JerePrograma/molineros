@@ -60,6 +60,9 @@ public class BusquedaRequerimientoCompraServiceImpl {
     private static final String SQL_GET_PRESUPUESTO =
             "{call compras.get_requerimiento_presupuesto(?,?)}";
 
+    private static final String SQL_GET_ORDEN_MEDICA =
+            "{call compras.get_requerimiento_orden_medica(?)}";
+
     public List<RequerimientoCompra> buscarRequerimientos(
             RequerimientoCompraFiltro filtro) throws Exception {
 
@@ -455,6 +458,34 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
     }
 
+    public RequerimientoCompraPresupuesto getOrdenMedica(
+            int idRequerimientoCompra) throws Exception {
+
+        validarIdRequerimiento(idRequerimientoCompra);
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_GET_ORDEN_MEDICA);
+            stmt.setInt(1, idRequerimientoCompra);
+            rs = stmt.executeQuery();
+            return rs.next() ? mapPresupuesto(rs) : null;
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudo recuperar la Orden médica del requerimiento. "
+                            + "idRequerimiento=" + idRequerimientoCompra,
+                    e
+            );
+            throw e;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
     private RequerimientoCompra mapRequerimiento(ResultSet rs) throws Exception {
         RequerimientoCompra r = new RequerimientoCompra();
 
@@ -600,6 +631,15 @@ public class BusquedaRequerimientoCompraServiceImpl {
         );
         presupuesto.setIdRequerimiento(getInteger(rs, "id_requerimiento"));
         presupuesto.setIdPrestador(getInteger(rs, "id_prestador"));
+
+        if (hasColumn(rs, "tipo_documento")) {
+            presupuesto.setTipoDocumento(getInteger(rs, "tipo_documento"));
+        }
+
+        if (hasColumn(rs, "fecha_documento")) {
+            presupuesto.setFechaDocumento(rs.getDate("fecha_documento"));
+        }
+
         presupuesto.setDlGroupId(getLong(rs, "dl_group_id"));
         presupuesto.setDlFolderId(getLong(rs, "dl_folder_id"));
         presupuesto.setDlFileEntryId(getLong(rs, "dl_file_entry_id"));

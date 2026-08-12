@@ -1,6 +1,8 @@
 package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.requerimientos.beans.*;
+import ar.com.ospim.compras.requerimientos.documentos.GestorOrdenMedicaDocumento;
+import ar.com.ospim.compras.requerimientos.documentos.OrdenMedicaValidada;
 
 import java.util.List;
 
@@ -18,6 +20,20 @@ public class EditarRequerimientoCompraServiceUtil {
 
     public static int guardarRequerimientoCompra(RequerimientoCompra requerimiento, String usuario) throws Exception {
         return getInstance().guardarRequerimientoCompra(requerimiento, usuario);
+    }
+
+    public static int guardarNuevoRequerimientoCompraConOrdenMedica(
+            RequerimientoCompra requerimiento,
+            OrdenMedicaValidada ordenMedica,
+            GestorOrdenMedicaDocumento gestorDocumento,
+            String usuario) throws Exception {
+
+        return getInstance().guardarNuevoRequerimientoCompraConOrdenMedica(
+                requerimiento,
+                ordenMedica,
+                gestorDocumento,
+                usuario
+        );
     }
 
     public static int guardarDetalle(RequerimientoCompraDetalle detalle, String usuario) throws Exception {

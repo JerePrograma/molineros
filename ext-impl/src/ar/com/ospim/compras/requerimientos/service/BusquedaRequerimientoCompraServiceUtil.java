@@ -115,6 +115,14 @@ public class BusquedaRequerimientoCompraServiceUtil {
         );
     }
 
+    public static RequerimientoCompraPresupuesto getOrdenMedica(
+            int idRequerimientoCompra) throws Exception {
+
+        return getInstance().getOrdenMedica(
+                idRequerimientoCompra
+        );
+    }
+
     private BusquedaRequerimientoCompraServiceUtil() {
     }
 }

@@ -4,6 +4,9 @@ import ar.com.ospim.autorizaciones.beans.Nomenclador;
 import ar.com.ospim.autorizaciones.services.NomencladorServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.*;
+import ar.com.ospim.compras.requerimientos.documentos.DocumentoComprasCreado;
+import ar.com.ospim.compras.requerimientos.documentos.GestorOrdenMedicaDocumento;
+import ar.com.ospim.compras.requerimientos.documentos.OrdenMedicaValidada;
 import ar.com.ospim.farmacia.beans.Medicamento;
 import ar.com.ospim.farmacia.services.BusquedaMedicamentoServiceUtil;
 import ar.com.ospim.util.ConnectionHelper;
@@ -48,6 +51,10 @@ public class EditarRequerimientoCompraServiceImpl {
     private static final String SQL_REGISTRAR_PRESUPUESTO =
             "{ ? = call compras.registrar_requerimiento_presupuesto("
                     + "?,?,?,?,?,?,?,?,?,?,?) }";
+
+    private static final String SQL_REGISTRAR_ORDEN_MEDICA =
+            "{ ? = call compras.registrar_requerimiento_orden_medica("
+                    + "?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_BAJA_PRESUPUESTO =
             "{ ? = call compras.baja_requerimiento_presupuesto("
@@ -99,6 +106,14 @@ public class EditarRequerimientoCompraServiceImpl {
             validarRequerimientoParaGuardar(
                     requerimiento
             );
+
+            if (requerimiento.getIdRequerimientoCompra() <= 0) {
+                throw errorUsuario(
+                        "Los requerimientos nuevos deben registrarse junto "
+                                + "con su Orden médica mediante la operación "
+                                + "de alta documental."
+                );
+            }
 
             if (requerimiento.getIdRequerimientoCompra() > 0) {
                 RequerimientoCompra actual =
@@ -318,6 +333,234 @@ public class EditarRequerimientoCompraServiceImpl {
             throws Exception {
 
         return ConnectionHelper.getConnection();
+    }
+
+    public int guardarNuevoRequerimientoCompraConOrdenMedica(
+            RequerimientoCompra requerimiento,
+            OrdenMedicaValidada ordenMedica,
+            GestorOrdenMedicaDocumento gestorDocumento,
+            String usuario) throws Exception {
+
+        Connection con = null;
+        DocumentoComprasCreado documento = null;
+
+        try {
+            validarRequerimientoParaGuardar(requerimiento);
+
+            if (requerimiento.getIdRequerimientoCompra() > 0) {
+                throw errorUsuario(
+                        "La Orden médica obligatoria sólo se registra "
+                                + "durante el alta de un requerimiento nuevo."
+                );
+            }
+
+            if (ordenMedica == null
+                    || ordenMedica.getFechaDocumento() == null) {
+
+                throw errorUsuario(
+                        "Debe seleccionar la Orden médica e informar su fecha."
+                );
+            }
+
+            if (gestorDocumento == null) {
+                throw new SQLException(
+                        "No se obtuvo el gestor de Document Library para la Orden médica."
+                );
+            }
+
+            con = obtenerConexionGuardarNuevoConOrdenMedica();
+
+            if (con == null) {
+                throw new SQLException(
+                        "No se obtuvo una conexión transaccional para guardar "
+                                + "el requerimiento y su Orden médica."
+                );
+            }
+
+            int idRequerimiento = guardarCabeceraEnConexion(
+                    con,
+                    requerimiento,
+                    usuario
+            );
+
+            documento = gestorDocumento.crearOrdenMedica(
+                    idRequerimiento,
+                    ordenMedica
+            );
+
+            registrarOrdenMedicaEnConexion(
+                    con,
+                    idRequerimiento,
+                    ordenMedica,
+                    documento,
+                    usuario
+            );
+
+            con.commit();
+            return idRequerimiento;
+        } catch (Exception e) {
+            boolean rollbackConfirmado = con == null;
+
+            if (con != null) {
+                try {
+                    con.rollback();
+                    rollbackConfirmado = true;
+                } catch (Exception rollbackError) {
+                    _log.error(
+                            "No se pudo confirmar el rollback SQL del alta "
+                                    + "con Orden médica. No se eliminará "
+                                    + "el archivo de Document Library ante "
+                                    + "un estado transaccional ambiguo. "
+                                    + "fileEntryId="
+                                    + (documento != null
+                                    ? documento.getFileEntryId()
+                                    : null)
+                                    + ", folderId="
+                                    + (documento != null
+                                    ? documento.getFolderId()
+                                    : null)
+                                    + ", nombre="
+                                    + (documento != null
+                                    ? documento.getNombrePersistido()
+                                    : null),
+                            rollbackError
+                    );
+                }
+            }
+
+            if (documento != null
+                    && gestorDocumento != null
+                    && rollbackConfirmado) {
+
+                try {
+                    gestorDocumento.eliminarDocumento(documento);
+                } catch (Exception cleanupError) {
+                    _log.error(
+                            "No se pudo compensar la Orden médica creada "
+                                    + "después del rollback SQL. fileEntryId="
+                                    + documento.getFileEntryId()
+                                    + ", folderId=" + documento.getFolderId()
+                                    + ", nombre="
+                                    + documento.getNombrePersistido(),
+                            cleanupError
+                    );
+                }
+            }
+
+            throw manejarErrorOperacion(
+                    "guardar el requerimiento nuevo con Orden médica",
+                    "No se pudo guardar el requerimiento con su Orden médica. "
+                            + "Vuelva a seleccionar la imagen e intente nuevamente.",
+                    e,
+                    "idRequerimiento="
+                            + obtenerIdRequerimientoSeguro(requerimiento)
+                            + ", usuario=" + usuario
+            );
+        } finally {
+            ConnectionHelper.cerrar(con);
+        }
+    }
+
+    protected Connection obtenerConexionGuardarNuevoConOrdenMedica()
+            throws Exception {
+
+        return ConnectionHelper.getConnectionForTransaction();
+    }
+
+    protected int guardarCabeceraEnConexion(
+            Connection con,
+            RequerimientoCompra requerimiento,
+            String usuario) throws Exception {
+
+        CallableStatement stmt = null;
+
+        try {
+            stmt = con.prepareCall(SQL_GUARDAR_REQUERIMIENTO);
+            stmt.registerOutParameter(1, Types.INTEGER);
+            setNullableInteger(stmt, 2, requerimiento.getId());
+            stmt.setString(3, emptyToNull(requerimiento.getAfiliadoCuilTitular()));
+            setNullableInteger(stmt, 4, requerimiento.getAfiliadoInt());
+            setNullableInteger(stmt, 5, requerimiento.getAfiliadoIdOspim());
+            stmt.setString(6, emptyToNull(requerimiento.getAfiliadoNombre()));
+            stmt.setString(7, emptyToNull(requerimiento.getAfiliadoApellido()));
+            stmt.setString(8, emptyToNull(requerimiento.getAfiliadoDocumentoTipo()));
+            stmt.setString(9, emptyToNull(requerimiento.getAfiliadoDocumentoNro()));
+            stmt.setString(10, emptyToNull(requerimiento.getAfiliadoDireccion()));
+            stmt.setString(11, emptyToNull(requerimiento.getAfiliadoLocalidad()));
+            stmt.setString(12, emptyToNull(requerimiento.getAfiliadoProvincia()));
+            stmt.setString(13, emptyToNull(requerimiento.getAfiliadoCelular()));
+            stmt.setString(14, emptyToNull(requerimiento.getAfiliadoTelefono()));
+            stmt.setString(15, emptyToNull(requerimiento.getAfiliadoEmail()));
+            setNullableInteger(stmt, 16, requerimiento.getIdSector());
+            setNullableInteger(stmt, 17, requerimiento.getCargoOspim());
+            setNullableInteger(stmt, 18, requerimiento.getCargoTercerizadora());
+            stmt.setString(19, emptyToNull(requerimiento.getIdTercerizadora()));
+            stmt.setBoolean(20, requerimiento.isRecupero());
+            stmt.setBoolean(21, requerimiento.isSurge());
+            stmt.setString(22, emptyToNull(requerimiento.getObservaciones()));
+            stmt.setString(23, emptyToNull(usuario));
+            stmt.execute();
+
+            int idGuardado = stmt.getInt(1);
+
+            if (stmt.wasNull() || idGuardado <= 0) {
+                throw new SQLException(
+                        "La función de guardado devolvió un identificador inválido."
+                );
+            }
+
+            return idGuardado;
+        } finally {
+            ConnectionHelper.cerrar(stmt);
+        }
+    }
+
+    private void registrarOrdenMedicaEnConexion(
+            Connection con,
+            int idRequerimiento,
+            OrdenMedicaValidada ordenMedica,
+            DocumentoComprasCreado documento,
+            String usuario) throws Exception {
+
+        if (documento == null
+                || documento.getGroupId() <= 0L
+                || documento.getFolderId() <= 0L
+                || documento.getFileEntryId() <= 0L
+                || WebKeysCompras.isEmpty(documento.getNombrePersistido())) {
+
+            throw new SQLException(
+                    "Document Library no devolvió una identidad válida "
+                            + "para la Orden médica."
+            );
+        }
+
+        CallableStatement stmt = null;
+
+        try {
+            stmt = con.prepareCall(SQL_REGISTRAR_ORDEN_MEDICA);
+            stmt.registerOutParameter(1, Types.INTEGER);
+            stmt.setInt(2, idRequerimiento);
+            stmt.setLong(3, documento.getGroupId());
+            stmt.setLong(4, documento.getFolderId());
+            stmt.setLong(5, documento.getFileEntryId());
+            stmt.setString(6, emptyToNull(documento.getUuid()));
+            stmt.setString(7, emptyToNull(ordenMedica.getNombreOriginal()));
+            stmt.setString(8, emptyToNull(documento.getNombrePersistido()));
+            stmt.setString(9, "Orden médica");
+            stmt.setDate(10, ordenMedica.getFechaDocumento());
+            stmt.setString(11, emptyToNull(usuario));
+            stmt.execute();
+
+            int idDocumento = stmt.getInt(1);
+
+            if (stmt.wasNull() || idDocumento <= 0) {
+                throw new SQLException(
+                        "La función de Orden médica devolvió un identificador inválido."
+                );
+            }
+        } finally {
+            ConnectionHelper.cerrar(stmt);
+        }
     }
 
     public int guardarDetalle(

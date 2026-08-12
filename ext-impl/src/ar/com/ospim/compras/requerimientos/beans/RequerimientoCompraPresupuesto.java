@@ -4,9 +4,15 @@ import java.util.Date;
 
 public class RequerimientoCompraPresupuesto {
 
+    public static final int TIPO_DOCUMENTO_PRESUPUESTO = 1;
+    public static final int TIPO_DOCUMENTO_ORDEN_MEDICA = 2;
+
     private Integer idRequerimientoPresupuesto;
     private Integer idRequerimiento;
     private Integer idPrestador;
+    private Integer tipoDocumento =
+            Integer.valueOf(TIPO_DOCUMENTO_PRESUPUESTO);
+    private Date fechaDocumento;
 
     private Long dlGroupId;
     private Long dlFolderId;
@@ -44,6 +50,12 @@ public class RequerimientoCompraPresupuesto {
         this.bajaUsr = bajaUsr;
     }
 
+    public RequerimientoCompraPresupuesto(Integer idRequerimientoPresupuesto, Integer idRequerimiento, Integer idPrestador, Integer tipoDocumento, Date fechaDocumento, Long dlGroupId, Long dlFolderId, Long dlFileEntryId, String dlFileUuid, String nombreOriginal, String nombrePersistido, String titulo, String descripcionPrestador, Date altaFecha, String altaUsr, Date bajaFecha, String bajaUsr) {
+        this(idRequerimientoPresupuesto, idRequerimiento, idPrestador, dlGroupId, dlFolderId, dlFileEntryId, dlFileUuid, nombreOriginal, nombrePersistido, titulo, descripcionPrestador, altaFecha, altaUsr, bajaFecha, bajaUsr);
+        this.tipoDocumento = tipoDocumento;
+        this.fechaDocumento = fechaDocumento;
+    }
+
     public Integer getIdRequerimientoPresupuesto() {
         return idRequerimientoPresupuesto;
     }
@@ -66,6 +78,22 @@ public class RequerimientoCompraPresupuesto {
 
     public void setIdPrestador(Integer idPrestador) {
         this.idPrestador = idPrestador;
+    }
+
+    public Integer getTipoDocumento() {
+        return tipoDocumento;
+    }
+
+    public void setTipoDocumento(Integer tipoDocumento) {
+        this.tipoDocumento = tipoDocumento;
+    }
+
+    public Date getFechaDocumento() {
+        return fechaDocumento;
+    }
+
+    public void setFechaDocumento(Date fechaDocumento) {
+        this.fechaDocumento = fechaDocumento;
     }
 
     public Long getDlGroupId() {

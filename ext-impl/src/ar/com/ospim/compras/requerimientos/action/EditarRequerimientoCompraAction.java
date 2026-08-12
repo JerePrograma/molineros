@@ -7,6 +7,8 @@ import ar.com.ospim.compras.requerimientos.beans.GuardadoCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
+import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
+import ar.com.ospim.compras.requerimientos.documentos.OrdenMedicaValidada;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
@@ -17,6 +19,7 @@ import ar.com.ospim.util.PermissionUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.SessionMessages;
+import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
@@ -33,9 +36,11 @@ import javax.portlet.PortletConfig;
 import javax.portlet.PortletSession;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
+import javax.portlet.filter.ActionRequestWrapper;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -148,6 +153,17 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             ActionRequest actionRequest,
             ActionResponse actionResponse) throws Exception {
 
+        ActionRequest actionRequestOriginal = actionRequest;
+        UploadPortletRequest uploadRequest =
+                obtenerUploadPortletRequest(actionRequestOriginal);
+
+        if (uploadRequest != null) {
+            actionRequest = new MultipartActionRequest(
+                    actionRequestOriginal,
+                    uploadRequest
+            );
+        }
+
         String cmd = getParametroTrim(actionRequest, Constants.CMD);
 
         int idRequerimientoCompra =
@@ -250,12 +266,13 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 prepararRequerimientoParaGuardar(requerimiento);
                 validarCabecera(requerimiento);
 
-                idRequerimientoCompra =
-                        EditarRequerimientoCompraServiceUtil
-                                .guardarRequerimientoCompra(
-                                        requerimiento,
-                                        usuario
-                                );
+                idRequerimientoCompra = guardarCabeceraRequerimiento(
+                        actionRequestOriginal,
+                        actionRequest,
+                        uploadRequest,
+                        requerimiento,
+                        usuario
+                );
 
                 detalleHelper.guardarDetallesDesdeRequest(
                         actionRequest,
@@ -311,12 +328,13 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 prepararRequerimientoParaGuardar(requerimiento);
                 validarCabecera(requerimiento);
 
-                idRequerimientoCompra =
-                        EditarRequerimientoCompraServiceUtil
-                                .guardarRequerimientoCompra(
-                                        requerimiento,
-                                        usuario
-                                );
+                idRequerimientoCompra = guardarCabeceraRequerimiento(
+                        actionRequestOriginal,
+                        actionRequest,
+                        uploadRequest,
+                        requerimiento,
+                        usuario
+                );
 
                 actionResponse.setRenderParameter("compras_guardado", "true");
                 actionResponse.setRenderParameter("compras_operacion", cmd);
@@ -427,6 +445,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             if (altaOriginal && idRequerimientoCompra <= 0) {
                 actionResponse.setRenderParameter(
+                        DocumentoLibraryComprasHelper.PARAM_FECHA_ORDEN_MEDICA,
+                        getParametroTrim(
+                                actionRequest,
+                                DocumentoLibraryComprasHelper
+                                        .PARAM_FECHA_ORDEN_MEDICA
+                        )
+                );
+                actionResponse.setRenderParameter(
                         "struts_action",
                         STRUTS_ACTION_NUEVO_REQUERIMIENTO
                 );
@@ -467,6 +493,117 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     "compras_operacion",
                     cmd != null ? cmd : ""
             );
+        }
+    }
+
+    private int guardarCabeceraRequerimiento(
+            ActionRequest actionRequestOriginal,
+            ActionRequest actionRequest,
+            UploadPortletRequest uploadRequest,
+            RequerimientoCompra requerimiento,
+            String usuario) throws Exception {
+
+        if (requerimiento.getIdRequerimientoCompra() > 0) {
+            return EditarRequerimientoCompraServiceUtil
+                    .guardarRequerimientoCompra(
+                            requerimiento,
+                            usuario
+                    );
+        }
+
+        if (uploadRequest == null) {
+            errorCampo(
+                    DocumentoLibraryComprasHelper.PARAM_ARCHIVO_ORDEN_MEDICA,
+                    "Orden médica: debe seleccionar una imagen JPEG o PNG."
+            );
+        }
+
+        DocumentoLibraryComprasHelper gestorDocumento =
+                DocumentoLibraryComprasHelper.crear(actionRequestOriginal);
+
+        OrdenMedicaValidada ordenMedica;
+
+        try {
+            ordenMedica = gestorDocumento.validarOrdenMedica(
+                    uploadRequest,
+                    getParametroTrim(
+                            actionRequest,
+                            DocumentoLibraryComprasHelper
+                                    .PARAM_FECHA_ORDEN_MEDICA
+                    )
+            );
+        } catch (Exception e) {
+            String mensaje = obtenerMensajeUsuario(
+                    e,
+                    "No se pudo validar la Orden médica."
+            );
+            String campo = mensaje != null
+                    && mensaje.toLowerCase(Locale.ROOT)
+                    .indexOf("fecha") >= 0
+                    ? DocumentoLibraryComprasHelper
+                            .PARAM_FECHA_ORDEN_MEDICA
+                    : DocumentoLibraryComprasHelper
+                            .PARAM_ARCHIVO_ORDEN_MEDICA;
+
+            errorCampo(campo, mensaje);
+            return 0;
+        }
+
+        return EditarRequerimientoCompraServiceUtil
+                .guardarNuevoRequerimientoCompraConOrdenMedica(
+                        requerimiento,
+                        ordenMedica,
+                        gestorDocumento,
+                        usuario
+                );
+    }
+
+    private UploadPortletRequest obtenerUploadPortletRequest(
+            ActionRequest actionRequest) {
+
+        if (actionRequest == null) {
+            return null;
+        }
+
+        String contentType = actionRequest.getContentType();
+
+        if (contentType == null
+                || !contentType.toLowerCase(Locale.ROOT)
+                .startsWith("multipart/")) {
+
+            return null;
+        }
+
+        return PortalUtil.getUploadPortletRequest(actionRequest);
+    }
+
+    private static class MultipartActionRequest
+            extends ActionRequestWrapper {
+
+        private final UploadPortletRequest uploadRequest;
+
+        public MultipartActionRequest(
+                ActionRequest actionRequest,
+                UploadPortletRequest uploadRequest) {
+
+            super(actionRequest);
+            this.uploadRequest = uploadRequest;
+        }
+
+        public String getParameter(String name) {
+            return uploadRequest.getParameter(name);
+        }
+
+        public Map getParameterMap() {
+            return uploadRequest.getParameterMap();
+        }
+
+        public Enumeration getParameterNames() {
+            return uploadRequest.getParameterNames();
+        }
+
+        public String[] getParameterValues(String name) {
+            return uploadRequest.getParameterValues(name);
         }
     }
 

@@ -4,8 +4,13 @@ import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.GuardadoCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
+import ar.com.ospim.compras.requerimientos.documentos.DocumentoComprasCreado;
+import ar.com.ospim.compras.requerimientos.documentos.GestorOrdenMedicaDocumento;
+import ar.com.ospim.compras.requerimientos.documentos.OrdenMedicaValidada;
 import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceImpl;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -36,6 +41,9 @@ public class EditarRequerimientoCompraServiceImplTest {
         assertPrestadoresMixtosRechazados();
         assertResultadoEstadoFinal();
         assertGuardarRequerimientoVinculaAfiliadoIdOspim();
+        assertAltaSinOrdenMedicaRechazadaPorMetodoHistorico();
+        assertAltaConOrdenMedicaConfirmaTransaccion();
+        assertFalloSqlPosteriorADlCompensaYRevierte();
     }
 
     private static void assertConjuntoCompletoAceptado()
@@ -358,7 +366,7 @@ public class EditarRequerimientoCompraServiceImplTest {
         requerimiento.setObservaciones("Observaciones");
 
         int id =
-                service.guardarRequerimientoCompra(
+                service.guardarCabeceraPrueba(
                         requerimiento,
                         "tester"
                 );
@@ -396,6 +404,119 @@ public class EditarRequerimientoCompraServiceImplTest {
         assertObject("p_surge", Boolean.TRUE, service.parametros.get(Integer.valueOf(21)));
         assertObject("p_observaciones", "Observaciones", service.parametros.get(Integer.valueOf(22)));
         assertObject("p_usuario", "tester", service.parametros.get(Integer.valueOf(23)));
+    }
+
+    private static void assertAltaSinOrdenMedicaRechazadaPorMetodoHistorico()
+            throws Exception {
+
+        EditarRequerimientoCompraServiceImpl service =
+                new EditarRequerimientoCompraServiceImpl();
+
+        try {
+            service.guardarRequerimientoCompra(
+                    requerimientoAltaValido(),
+                    "tester"
+            );
+            throw new AssertionError(
+                    "el método histórico no debe crear sin Orden médica"
+            );
+        } catch (Exception expected) {
+            if (expected.getMessage() == null
+                    || expected.getMessage().indexOf("Orden médica") < 0) {
+
+                throw expected;
+            }
+        }
+    }
+
+    private static void assertAltaConOrdenMedicaConfirmaTransaccion()
+            throws Exception {
+
+        ServicioAltaOrdenMedicaPrueba service =
+                new ServicioAltaOrdenMedicaPrueba(false);
+        GestorDocumentoPrueba gestor = new GestorDocumentoPrueba();
+        File archivo = crearImagenTemporal();
+
+        try {
+            int id = service.guardarNuevoRequerimientoCompraConOrdenMedica(
+                    requerimientoAltaValido(),
+                    ordenMedicaValida(archivo),
+                    gestor,
+                    "tester"
+            );
+
+            assertInt("id alta con Orden médica", 987, id);
+            assertBoolean("commit alta con Orden médica", true, service.commit);
+            assertBoolean("sin rollback exitoso", false, service.rollback);
+            assertBoolean("sin compensación exitosa", false, gestor.eliminado);
+            assertBoolean("archivo DL creado", true, gestor.creado);
+        } finally {
+            archivo.delete();
+        }
+    }
+
+    private static void assertFalloSqlPosteriorADlCompensaYRevierte()
+            throws Exception {
+
+        ServicioAltaOrdenMedicaPrueba service =
+                new ServicioAltaOrdenMedicaPrueba(true);
+        GestorDocumentoPrueba gestor = new GestorDocumentoPrueba();
+        File archivo = crearImagenTemporal();
+
+        try {
+            try {
+                service.guardarNuevoRequerimientoCompraConOrdenMedica(
+                        requerimientoAltaValido(),
+                        ordenMedicaValida(archivo),
+                        gestor,
+                        "tester"
+                );
+                throw new AssertionError("se esperaba fallo SQL posterior a DL");
+            } catch (Exception expected) {
+                assertBoolean("rollback por fallo SQL", true, service.rollback);
+                assertBoolean("sin commit por fallo SQL", false, service.commit);
+                assertBoolean("compensación DL", true, gestor.eliminado);
+            }
+        } finally {
+            archivo.delete();
+        }
+    }
+
+    private static RequerimientoCompra requerimientoAltaValido() {
+        RequerimientoCompra requerimiento = new RequerimientoCompra();
+        requerimiento.setIdSector(Integer.valueOf(5));
+        requerimiento.setCargoOspim(Integer.valueOf(100));
+        requerimiento.setCargoTercerizadora(Integer.valueOf(0));
+        return requerimiento;
+    }
+
+    private static OrdenMedicaValidada ordenMedicaValida(File archivo) {
+        return new OrdenMedicaValidada(
+                archivo,
+                "orden-medica.png",
+                ".png",
+                "image/png",
+                java.sql.Date.valueOf("2026-08-12")
+        );
+    }
+
+    private static File crearImagenTemporal() throws Exception {
+        File archivo = File.createTempFile("orden-medica", ".png");
+        FileOutputStream out = null;
+
+        try {
+            out = new FileOutputStream(archivo);
+            out.write(new byte[] {
+                    (byte) 0x89, 0x50, 0x4E, 0x47,
+                    0x0D, 0x0A, 0x1A, 0x0A
+            });
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+        }
+
+        return archivo;
     }
 
     private static RequerimientoCompraDetalle detalle(
@@ -649,6 +770,123 @@ public class EditarRequerimientoCompraServiceImplTest {
                     new Class[] {Connection.class},
                     new ConnectionHandler(this)
             );
+        }
+
+        private int guardarCabeceraPrueba(
+                RequerimientoCompra requerimiento,
+                String usuario) throws Exception {
+
+            return guardarCabeceraEnConexion(
+                    obtenerConexionGuardarRequerimiento(),
+                    requerimiento,
+                    usuario
+            );
+        }
+    }
+
+    private static class ServicioAltaOrdenMedicaPrueba
+            extends EditarRequerimientoCompraServiceImpl {
+
+        private final boolean fallarRegistroOrden;
+        private boolean commit;
+        private boolean rollback;
+        private int prepareCallCount;
+
+        private ServicioAltaOrdenMedicaPrueba(boolean fallarRegistroOrden) {
+            this.fallarRegistroOrden = fallarRegistroOrden;
+        }
+
+        protected Connection obtenerConexionGuardarNuevoConOrdenMedica() {
+            return (Connection) Proxy.newProxyInstance(
+                    Connection.class.getClassLoader(),
+                    new Class[] {Connection.class},
+                    new InvocationHandler() {
+                        public Object invoke(
+                                Object proxy,
+                                Method method,
+                                Object[] args) throws Throwable {
+
+                            String name = method.getName();
+
+                            if ("prepareCall".equals(name)) {
+                                prepareCallCount++;
+                                return crearCallableAlta(
+                                        fallarRegistroOrden
+                                                && prepareCallCount == 2
+                                );
+                            }
+
+                            if ("commit".equals(name)) {
+                                commit = true;
+                                return null;
+                            }
+
+                            if ("rollback".equals(name)) {
+                                rollback = true;
+                                return null;
+                            }
+
+                            return defaultValue(method.getReturnType());
+                        }
+                    }
+            );
+        }
+
+        private CallableStatement crearCallableAlta(final boolean fallar) {
+            return (CallableStatement) Proxy.newProxyInstance(
+                    CallableStatement.class.getClassLoader(),
+                    new Class[] {CallableStatement.class},
+                    new InvocationHandler() {
+                        public Object invoke(
+                                Object proxy,
+                                Method method,
+                                Object[] args) throws Throwable {
+
+                            String name = method.getName();
+
+                            if ("execute".equals(name)) {
+                                if (fallar) {
+                                    throw new java.sql.SQLException(
+                                            "fallo simulado después de DL"
+                                    );
+                                }
+                                return Boolean.TRUE;
+                            }
+
+                            if ("getInt".equals(name)) {
+                                return Integer.valueOf(987);
+                            }
+
+                            return defaultValue(method.getReturnType());
+                        }
+                    }
+            );
+        }
+    }
+
+    private static class GestorDocumentoPrueba
+            implements GestorOrdenMedicaDocumento {
+
+        private boolean creado;
+        private boolean eliminado;
+
+        public DocumentoComprasCreado crearOrdenMedica(
+                int idRequerimiento,
+                OrdenMedicaValidada ordenMedica) {
+
+            creado = true;
+            return new DocumentoComprasCreado(
+                    10112L,
+                    50L,
+                    99L,
+                    "uuid-prueba",
+                    "ORDEN-MEDICA-COMPRA-" + idRequerimiento + "-abc.png",
+                    "Orden médica"
+            );
+        }
+
+        public void eliminarDocumento(DocumentoComprasCreado documento) {
+            eliminado = true;
         }
     }
 

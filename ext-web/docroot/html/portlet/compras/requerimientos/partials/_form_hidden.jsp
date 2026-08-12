@@ -1,5 +1,6 @@
 <form action="<%= actionURL.toString() %>"
       method="post"
+      enctype="multipart/form-data"
       name="<portlet:namespace />fmCompras"
       id="<portlet:namespace />fmCompras"
       class="compras-form-colector">
@@ -63,6 +64,17 @@
            name="<portlet:namespace />observaciones"
            id="<portlet:namespace />observaciones_hidden"
            value="<%= HtmlUtil.escape(req.getObservacionesVisible()) %>" />
+
+    <input type="hidden"
+           name="<portlet:namespace />fecha_orden_medica"
+           id="<portlet:namespace />fecha_orden_medica_hidden"
+           value="<%= HtmlUtil.escape(
+                   ParamUtil.getString(
+                           renderRequest,
+                           "fecha_orden_medica",
+                           ""
+                   )
+           ) %>" />
 
     <div id="<portlet:namespace />detalle_payload"></div>
 </form>

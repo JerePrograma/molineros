@@ -259,11 +259,14 @@ CREATE TABLE compras.requerimiento_presupuesto (
                                                    id_requerimiento INTEGER NOT NULL
                                                        REFERENCES compras.requerimiento (id_requerimiento),
 
+                                                   tipo_documento SMALLINT NOT NULL DEFAULT 1,
+                                                   fecha_documento DATE,
+
     /*
      * Identificador externo.
      * No agregar FK porque public.prestador pertenece a otro modelo.
      */
-                                                   id_prestador INTEGER NOT NULL,
+                                                   id_prestador INTEGER,
 
     /*
      * Identidad exacta del documento en Liferay Document Library.
@@ -290,8 +293,27 @@ CREATE TABLE compras.requerimiento_presupuesto (
                                                    CONSTRAINT ck_compras_presupuesto_requerimiento
                                                        CHECK (id_requerimiento > 0),
 
+                                                   CONSTRAINT ck_compras_presupuesto_tipo_documento
+                                                       CHECK (tipo_documento IN (1, 2)),
+
                                                    CONSTRAINT ck_compras_presupuesto_prestador
-                                                       CHECK (id_prestador > 0),
+                                                       CHECK (
+                                                           (
+                                                               tipo_documento = 1
+                                                               AND id_prestador IS NOT NULL
+                                                               AND id_prestador > 0
+                                                           )
+                                                           OR (
+                                                               tipo_documento = 2
+                                                               AND id_prestador IS NULL
+                                                           )
+                                                       ),
+
+                                                   CONSTRAINT ck_compras_presupuesto_fecha_documento
+                                                       CHECK (
+                                                           tipo_documento <> 2
+                                                           OR fecha_documento IS NOT NULL
+                                                       ),
 
                                                    CONSTRAINT ck_compras_presupuesto_group
                                                        CHECK (dl_group_id > 0),
@@ -311,6 +333,15 @@ CREATE TABLE compras.requerimiento_presupuesto (
                                                    CONSTRAINT ck_compras_presupuesto_titulo
                                                        CHECK (NULLIF(btrim(titulo), '') IS NOT NULL),
 
+                                                   CONSTRAINT ck_compras_orden_medica_datos
+                                                       CHECK (
+                                                           tipo_documento <> 2
+                                                           OR (
+                                                               titulo = 'Orden médica'
+                                                               AND descripcion_prestador IS NULL
+                                                           )
+                                                       ),
+
                                                    CONSTRAINT uq_compras_presupuesto_dl_file_entry
                                                        UNIQUE (dl_file_entry_id)
 );
@@ -327,7 +358,15 @@ CREATE UNIQUE INDEX ux_compras_presupuesto_requerimiento_prestador_activo
         id_requerimiento,
         id_prestador
     )
-    WHERE baja_fecha IS NULL;
+    WHERE baja_fecha IS NULL
+      AND tipo_documento = 1;
+
+CREATE UNIQUE INDEX ux_compras_orden_medica_requerimiento_activa
+    ON compras.requerimiento_presupuesto (
+        id_requerimiento
+    )
+    WHERE baja_fecha IS NULL
+      AND tipo_documento = 2;
 
 CREATE INDEX ix_compras_presupuesto_folder_name
     ON compras.requerimiento_presupuesto (
@@ -878,6 +917,7 @@ END IF;
                                   FROM compras.requerimiento_presupuesto rp
                                  WHERE rp.id_requerimiento =
                                        NEW.id_requerimiento
+                                   AND rp.tipo_documento = 1
                                    AND rp.id_prestador =
                                        d.id_prestador
                                    AND rp.baja_fecha IS NULL
@@ -2913,6 +2953,7 @@ END IF;
         SELECT 1
           FROM compras.requerimiento_presupuesto rp
          WHERE rp.id_requerimiento = p_id_requerimiento
+           AND rp.tipo_documento = 1
            AND rp.id_prestador = p_id_prestador
            AND rp.baja_fecha IS NULL
     ) THEN
@@ -3762,6 +3803,7 @@ BEGIN
         SELECT 1
           FROM compras.requerimiento_presupuesto rp
          WHERE rp.id_requerimiento = p_id_requerimiento
+           AND rp.tipo_documento = 1
            AND rp.id_prestador = p_id_prestador
            AND rp.baja_fecha IS NULL
     ) THEN
@@ -3771,6 +3813,8 @@ BEGIN
 
     INSERT INTO compras.requerimiento_presupuesto (
         id_requerimiento,
+        tipo_documento,
+        fecha_documento,
         id_prestador,
         dl_group_id,
         dl_folder_id,
@@ -3784,6 +3828,8 @@ BEGIN
     )
     VALUES (
         p_id_requerimiento,
+        1,
+        NULL,
         p_id_prestador,
         p_dl_group_id,
         p_dl_folder_id,
@@ -3816,6 +3862,139 @@ END;
 $func$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_orden_medica(
+    p_id_requerimiento INTEGER,
+    p_dl_group_id BIGINT,
+    p_dl_folder_id BIGINT,
+    p_dl_file_entry_id BIGINT,
+    p_dl_file_uuid VARCHAR,
+    p_nombre_original VARCHAR,
+    p_nombre_persistido VARCHAR,
+    p_titulo VARCHAR,
+    p_fecha_documento DATE,
+    p_usuario VARCHAR
+)
+RETURNS INTEGER
+AS $func$
+DECLARE
+    v_id INTEGER;
+    v_estado_requerimiento INTEGER;
+    v_usuario VARCHAR(100);
+BEGIN
+    IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
+        RAISE EXCEPTION
+            'El requerimiento informado no es valido.';
+    END IF;
+
+    IF p_fecha_documento IS NULL THEN
+        RAISE EXCEPTION
+            'Debe informar la fecha de la Orden médica.';
+    END IF;
+
+    IF p_dl_group_id IS NULL OR p_dl_group_id <= 0
+       OR p_dl_folder_id IS NULL OR p_dl_folder_id < 0
+       OR p_dl_file_entry_id IS NULL OR p_dl_file_entry_id <= 0
+       OR NULLIF(btrim(p_dl_file_uuid), '') IS NULL THEN
+        RAISE EXCEPTION
+            'La identidad del documento de Orden médica no es válida.';
+    END IF;
+
+    IF NULLIF(btrim(p_nombre_original), '') IS NULL
+       OR NULLIF(btrim(p_nombre_persistido), '') IS NULL THEN
+        RAISE EXCEPTION
+            'Los nombres del documento de Orden médica no son válidos.';
+    END IF;
+
+    IF btrim(COALESCE(p_titulo, '')) <> 'Orden médica' THEN
+        RAISE EXCEPTION
+            'El título del documento debe ser Orden médica.';
+    END IF;
+
+    v_usuario := COALESCE(NULLIF(btrim(p_usuario), ''), 'sistema');
+
+    SELECT r.estado
+      INTO v_estado_requerimiento
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento = p_id_requerimiento
+       AND r.baja_fecha IS NULL
+     FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No existe el requerimiento activo informado.';
+    END IF;
+
+    IF v_estado_requerimiento <> 1 THEN
+        RAISE EXCEPTION
+            'La Orden médica solo puede registrarse durante el alta de un requerimiento PENDIENTE.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+          FROM compras.requerimiento_presupuesto rp
+         WHERE rp.id_requerimiento = p_id_requerimiento
+           AND rp.tipo_documento = 2
+           AND rp.baja_fecha IS NULL
+    ) THEN
+        RAISE EXCEPTION
+            'El requerimiento ya tiene una Orden médica activa.';
+    END IF;
+
+    INSERT INTO compras.requerimiento_presupuesto (
+        id_requerimiento,
+        tipo_documento,
+        fecha_documento,
+        id_prestador,
+        dl_group_id,
+        dl_folder_id,
+        dl_file_entry_id,
+        dl_file_uuid,
+        nombre_original,
+        nombre_persistido,
+        titulo,
+        descripcion_prestador,
+        alta_usr
+    )
+    VALUES (
+        p_id_requerimiento,
+        2,
+        p_fecha_documento,
+        NULL,
+        p_dl_group_id,
+        p_dl_folder_id,
+        p_dl_file_entry_id,
+        btrim(p_dl_file_uuid),
+        btrim(p_nombre_original),
+        btrim(p_nombre_persistido),
+        'Orden médica',
+        NULL,
+        v_usuario
+    )
+    RETURNING id_requerimiento_presupuesto
+    INTO v_id;
+
+    RETURN v_id;
+END;
+$func$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION compras.get_requerimiento_orden_medica(
+    p_id_requerimiento INTEGER
+)
+RETURNS SETOF compras.requerimiento_presupuesto
+AS $func$
+BEGIN
+RETURN QUERY
+SELECT rp.*
+FROM compras.requerimiento_presupuesto rp
+WHERE rp.id_requerimiento = p_id_requerimiento
+  AND rp.tipo_documento = 2
+  AND rp.baja_fecha IS NULL;
+END;
+$func$
+LANGUAGE plpgsql
+STABLE;
+
 CREATE OR REPLACE FUNCTION compras.listar_requerimiento_presupuestos(
     p_id_requerimiento INTEGER
 )
@@ -3823,6 +4002,8 @@ RETURNS TABLE (
     id_requerimiento_presupuesto INTEGER,
     id_requerimiento INTEGER,
     id_prestador INTEGER,
+    tipo_documento SMALLINT,
+    fecha_documento DATE,
     dl_group_id BIGINT,
     dl_folder_id BIGINT,
     dl_file_entry_id BIGINT,
@@ -3841,6 +4022,8 @@ SELECT
     rp.id_requerimiento_presupuesto,
     rp.id_requerimiento,
     rp.id_prestador,
+    rp.tipo_documento,
+    rp.fecha_documento,
     rp.dl_group_id,
     rp.dl_folder_id,
     rp.dl_file_entry_id,
@@ -3853,6 +4036,7 @@ SELECT
     rp.alta_usr
 FROM compras.requerimiento_presupuesto rp
 WHERE rp.id_requerimiento = p_id_requerimiento
+  AND rp.tipo_documento = 1
   AND rp.baja_fecha IS NULL
 ORDER BY
     rp.alta_fecha DESC,
@@ -3875,6 +4059,7 @@ FROM compras.requerimiento_presupuesto rp
 WHERE rp.id_requerimiento_presupuesto =
       p_id_requerimiento_presupuesto
   AND rp.id_requerimiento = p_id_requerimiento
+  AND rp.tipo_documento = 1
   AND rp.baja_fecha IS NULL;
 END;
 $func$
@@ -3919,6 +4104,7 @@ BEGIN
       FROM compras.requerimiento_presupuesto rp
      WHERE rp.id_requerimiento_presupuesto = p_id_requerimiento_presupuesto
        AND rp.id_requerimiento = p_id_requerimiento
+       AND rp.tipo_documento = 1
        AND rp.baja_fecha IS NULL
      FOR UPDATE;
 
@@ -3942,6 +4128,7 @@ BEGIN
            baja_usr = v_usuario
      WHERE id_requerimiento_presupuesto = p_id_requerimiento_presupuesto
        AND id_requerimiento = p_id_requerimiento
+       AND tipo_documento = 1
        AND baja_fecha IS NULL;
 
     IF NOT FOUND THEN
@@ -3952,6 +4139,7 @@ BEGIN
         SELECT 1
           FROM compras.requerimiento_presupuesto rp
          WHERE rp.id_requerimiento = p_id_requerimiento
+           AND rp.tipo_documento = 1
            AND rp.id_prestador = v_id_prestador
            AND rp.baja_fecha IS NULL
     ) THEN
@@ -4008,6 +4196,7 @@ BEGIN
       FROM compras.requerimiento_presupuesto rp
      WHERE rp.id_requerimiento_presupuesto = p_id_requerimiento_presupuesto
        AND rp.id_requerimiento = p_id_requerimiento
+       AND rp.tipo_documento = 1
        AND rp.baja_fecha IS NOT NULL
      FOR UPDATE;
 
@@ -4030,6 +4219,7 @@ BEGIN
         SELECT 1
           FROM compras.requerimiento_presupuesto rp
          WHERE rp.id_requerimiento = p_id_requerimiento
+           AND rp.tipo_documento = 1
            AND rp.id_prestador = v_id_prestador
            AND rp.baja_fecha IS NULL
            AND rp.id_requerimiento_presupuesto <> p_id_requerimiento_presupuesto
@@ -4043,6 +4233,7 @@ BEGIN
            baja_usr = NULL
      WHERE id_requerimiento_presupuesto = p_id_requerimiento_presupuesto
        AND id_requerimiento = p_id_requerimiento
+       AND tipo_documento = 1
        AND baja_fecha IS NOT NULL;
 
     IF NOT FOUND THEN

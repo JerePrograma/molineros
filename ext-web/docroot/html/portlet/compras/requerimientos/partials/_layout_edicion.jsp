@@ -9,6 +9,7 @@
      class="compras-formulario-requerimiento <%= !modoEditable ? "compras-modo-vista" : "" %>">
 
     <%@ include file="/html/portlet/compras/requerimientos/partials/_datos_basicos.jsp" %>
+    <%@ include file="/html/portlet/compras/requerimientos/partials/_orden_medica_alta.jsp" %>
 
     <%--
         Se usa el mismo componente de afiliado en ALTA, EDICION y VISTA.

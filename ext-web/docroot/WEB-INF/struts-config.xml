@@ -7230,6 +7230,9 @@
 					name="portlet.compras.error"
 					path="portlet.compras.error" />
 		</action>
+		<action
+				path="/compras/descargar_orden_medica"
+				type="ar.com.ospim.compras.requerimientos.action.DescargarOrdenMedicaCompraAction" />
 
 		<action path="/tesoreria/buscar_saldo_diario_cuentas_bancarias" type="ar.com.ospim.tesoreria.action.BuscarSaldoDiarioCuentasBancariasAction">
 			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" />

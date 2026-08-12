@@ -1,3 +1,7 @@
+<c:if test="<%= !esNuevo %>">
+    <%@ include file="/html/portlet/compras/requerimientos/partials/_orden_medica_vista.jsp" %>
+</c:if>
+
 <c:if test="<%= !esNuevo && req.puedeVerPresupuestos() %>">
     <div class="compras-seccion compras-seccion-adjuntos">
         <liferay-util:include

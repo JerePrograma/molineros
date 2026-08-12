@@ -14,7 +14,7 @@ public final class ComprasPresupuestoPrestadorContractTest {
     private static final String BASE = "ext-impl/src/ar/com/ospim/compras/";
 
     private static final String MIGRACION =
-            BASE + "sql/20260721_presupuesto_activo_prestador.sql";
+            BASE + "sql/20260812_orden_medica_requerimiento.sql";
 
     private static final String INDICE_PRESUPUESTO_ACTIVO =
             "ux_compras_presupuesto_requerimiento_prestador_activo";
@@ -50,10 +50,15 @@ public final class ComprasPresupuestoPrestadorContractTest {
                 BASE + "requerimientos/service/"
                         + "BusquedaRequerimientoCompraServiceUtil.java"
         );
+        String bean = leer(
+                BASE + "requerimientos/beans/"
+                        + "RequerimientoCompraPresupuesto.java"
+        );
 
         verificarEsquemaCanonico(schema);
         verificarMigracion(migracion);
         verificarListadoPersistido(schema, searchImpl, webKeys);
+        verificarModeloOrdenMedica(bean, searchImpl, searchUtil);
         verificarCarga(action, jsp);
         verificarAusenciaDeSincronizacionLocal(action, editImpl);
         verificarAusenciaDeProyeccionVisual(searchUtil);
@@ -85,6 +90,40 @@ public final class ComprasPresupuestoPrestadorContractTest {
                         + "'EMAIL_INVALIDO' ) )"
         );
 
+        String tablaDocumentos = normalizarEspacios(
+                seccion(
+                        schema,
+                        "tabla documental de requerimiento",
+                        "CREATE TABLE compras.requerimiento_presupuesto (",
+                        "CREATE INDEX ix_compras_presupuesto_requerimiento_activo"
+                )
+        );
+        contiene(
+                tablaDocumentos,
+                "tipo documental canonico",
+                "tipo_documento SMALLINT NOT NULL DEFAULT 1"
+        );
+        contiene(
+                tablaDocumentos,
+                "fecha documental canonica",
+                "fecha_documento DATE"
+        );
+        contiene(
+                tablaDocumentos,
+                "prestador nullable",
+                "id_prestador INTEGER,"
+        );
+        contiene(
+                tablaDocumentos,
+                "fecha obligatoria para Orden medica",
+                "tipo_documento <> 2 OR fecha_documento IS NOT NULL"
+        );
+        contiene(
+                tablaDocumentos,
+                "Orden medica sin prestador",
+                "tipo_documento = 2 AND id_prestador IS NULL"
+        );
+
         String indice = seccion(
                 schema,
                 "indice unico parcial canonico",
@@ -93,6 +132,12 @@ public final class ComprasPresupuestoPrestadorContractTest {
         );
 
         verificarIndiceParcial(indice, "indice unico parcial canonico");
+        contiene(
+                normalizarEspacios(indice),
+                "unicidad de Orden medica activa",
+                "CREATE UNIQUE INDEX "
+                        + "ux_compras_orden_medica_requerimiento_activa"
+        );
 
         String registrar = seccion(
                 schema,
@@ -131,6 +176,70 @@ public final class ComprasPresupuestoPrestadorContractTest {
                 "SET estado_envio = 'COTIZADO'",
                 "AND estado_envio = 'ENVIADO'"
         );
+        contiene(
+                registrar,
+                "alta de presupuesto filtra tipo 1",
+                "AND rp.tipo_documento = 1"
+        );
+        enOrden(
+                normalizarEspacios(registrar),
+                "alta de presupuesto tipa explicitamente",
+                "INSERT INTO compras.requerimiento_presupuesto",
+                "tipo_documento,",
+                "VALUES ( p_id_requerimiento, 1, NULL, p_id_prestador"
+        );
+
+        String ordenMedica = seccion(
+                schema,
+                "contratos de Orden medica",
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.registrar_requerimiento_orden_medica(",
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.listar_requerimiento_presupuestos("
+        );
+        contiene(
+                ordenMedica,
+                "Orden medica exige fecha",
+                "IF p_fecha_documento IS NULL THEN"
+        );
+        contiene(
+                normalizarEspacios(ordenMedica),
+                "Orden medica inserta tipo 2 sin prestador",
+                "p_id_requerimiento, 2, p_fecha_documento, NULL"
+        );
+        contiene(
+                ordenMedica,
+                "Orden medica tiene getter separado",
+                "compras.get_requerimiento_orden_medica("
+        );
+
+        String listarPresupuestos = seccion(
+                schema,
+                "listado historico de presupuestos",
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.listar_requerimiento_presupuestos(",
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.get_requerimiento_presupuesto("
+        );
+        contiene(
+                listarPresupuestos,
+                "listado excluye Orden medica",
+                "AND rp.tipo_documento = 1"
+        );
+
+        String getPresupuesto = seccion(
+                schema,
+                "getter historico de presupuesto",
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.get_requerimiento_presupuesto(",
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.baja_requerimiento_presupuesto("
+        );
+        contiene(
+                getPresupuesto,
+                "getter excluye Orden medica",
+                "AND rp.tipo_documento = 1"
+        );
 
         String baja = seccion(
                 schema,
@@ -151,6 +260,11 @@ public final class ComprasPresupuestoPrestadorContractTest {
                 baja,
                 "baja logica de la asociacion",
                 "SET baja_fecha = now()"
+        );
+        contiene(
+                baja,
+                "baja opera solo sobre tipo presupuesto",
+                "AND rp.tipo_documento = 1"
         );
         enOrden(
                 baja,
@@ -186,6 +300,11 @@ public final class ComprasPresupuestoPrestadorContractTest {
                 "rp.id_requerimiento_presupuesto "
                         + "<> p_id_requerimiento_presupuesto"
         );
+        contiene(
+                reactivar,
+                "reactivacion opera solo sobre tipo presupuesto",
+                "AND rp.tipo_documento = 1"
+        );
         enOrden(
                 reactivar,
                 "reactivacion y estado COTIZADO",
@@ -206,7 +325,7 @@ public final class ComprasPresupuestoPrestadorContractTest {
         );
 
         String cierreTrigger = seccion(
-                trigger,
+                normalizarEspacios(trigger),
                 "cierre 2 a 3 por trigger",
                 "IF OLD.estado = 2 AND NEW.estado = 3 THEN",
                 "IF NEW.estado = 99 THEN"
@@ -229,6 +348,11 @@ public final class ComprasPresupuestoPrestadorContractTest {
                 "presupuesto activo en cierre",
                 "AND rp.baja_fecha IS NULL"
         );
+        contiene(
+                cierreTriggerNormalizado,
+                "cierre solo considera tipo presupuesto",
+                "AND rp.tipo_documento = 1"
+        );
 
         String guardarCotizacion = seccion(
                 schema,
@@ -242,6 +366,7 @@ public final class ComprasPresupuestoPrestadorContractTest {
                 guardarCotizacion,
                 "cierre funcional exige presupuesto y COTIZADO",
                 "FROM compras.requerimiento_presupuesto rp",
+                "AND rp.tipo_documento = 1",
                 "AND rp.baja_fecha IS NULL",
                 "FROM compras.requerimiento_cotizacion_prestador rcp",
                 "AND rcp.estado_envio = 'COTIZADO'",
@@ -300,7 +425,7 @@ public final class ComprasPresupuestoPrestadorContractTest {
                 migracion,
                 "ON_ERROR_STOP se configura desde psql",
                 "psql -X -v ON_ERROR_STOP=1 -f "
-                        + "20260721_presupuesto_activo_prestador.sql"
+                        + "20260812_orden_medica_requerimiento.sql"
         );
         antesDe(
                 migracion,
@@ -328,7 +453,7 @@ public final class ComprasPresupuestoPrestadorContractTest {
         contiene(
                 migracionMinusculas,
                 "esquema reservado para instalacion nueva",
-                "instalacion nueva"
+                "instalación nueva"
         );
         contiene(
                 migracionMinusculas,
@@ -346,66 +471,87 @@ public final class ComprasPresupuestoPrestadorContractTest {
 
         contiene(
                 migracionSql,
-                "preflight agrupa la clave activa",
-                "GROUP BY rp.id_requerimiento, rp.id_prestador"
+                "historicos se tipan como presupuesto",
+                "SET tipo_documento = 1 WHERE tipo_documento IS NULL"
         );
         contiene(
                 migracionSql,
-                "preflight detecta duplicados activos",
-                "HAVING count(*) > 1"
+                "prestador pasa a nullable",
+                "ALTER COLUMN id_prestador DROP NOT NULL"
         );
         contiene(
                 migracionSql,
+                "fecha documental incremental",
+                "ADD COLUMN IF NOT EXISTS fecha_documento DATE"
+        );
+        contiene(
+                migracionSql,
+                "tipo documental obligatorio",
+                "ALTER COLUMN tipo_documento SET NOT NULL"
+        );
+        contiene(
+                migracionSql,
+                "preflight de presupuestos duplicados",
+                "GROUP BY rp.id_requerimiento, rp.id_prestador HAVING count(*) > 1"
+        );
+        contiene(
+                migracionSql,
+                "preflight de Orden medica duplicada",
+                "GROUP BY rp.id_requerimiento HAVING count(*) > 1"
+        );
+        contiene(
+                migracion,
                 "preflight aborta con diagnostico",
                 "RAISE EXCEPTION"
         );
-        contiene(
-                migracionMinusculas,
-                "diagnostico funcional de duplicados",
-                "duplicad"
-        );
         antesDe(
                 migracion,
-                "preflight anterior al indice",
+                "preflight anterior a los indices",
                 "HAVING count(*) > 1",
                 INDICE_PRESUPUESTO_ACTIVO
         );
 
         contiene(
                 migracionSql,
-                "migracion amplia el CHECK",
-                "ADD CONSTRAINT ck_compras_cotizacion_estado_envio CHECK"
+                "CHECK tipa documentos",
+                "CHECK (tipo_documento IN (1, 2))"
         );
         contiene(
                 migracionSql,
-                "migracion admite COTIZADO",
-                "'COTIZADO'"
+                "CHECK fecha de Orden medica",
+                "tipo_documento <> 2 OR fecha_documento IS NOT NULL"
         );
         contiene(
                 migracionSql,
-                "indice validado por catalogo",
-                "FROM pg_index i"
+                "CHECK prestador por tipo",
+                "tipo_documento = 2 AND id_prestador IS NULL"
         );
+
         contiene(
                 migracionSql,
-                "indice exige unicidad y validez",
-                "i.indisunique AND i.indisvalid AND i.indisready "
-                        + "AND i.indnatts = 2"
-        );
-        contiene(
-                migracionSql,
-                "indice incorrecto se reemplaza",
-                "DROP INDEX compras."
+                "indice de presupuesto se reemplaza",
+                "DROP INDEX IF EXISTS compras."
                         + INDICE_PRESUPUESTO_ACTIVO
         );
         contiene(
                 migracionSql,
-                "indice se crea cuando falta",
+                "indice de presupuesto se crea",
                 "CREATE UNIQUE INDEX " + INDICE_PRESUPUESTO_ACTIVO
         );
         verificarIndiceParcial(
                 migracion,
                 "indice unico parcial incremental"
+        );
+        contiene(
+                migracionSql,
+                "unicidad de Orden medica activa",
+                "CREATE UNIQUE INDEX "
+                        + "ux_compras_orden_medica_requerimiento_activa"
+        );
+        contiene(
+                migracionSql,
+                "indice de Orden medica tipado",
+                "WHERE baja_fecha IS NULL AND tipo_documento = 2"
         );
 
         contiene(
@@ -416,27 +562,39 @@ public final class ComprasPresupuestoPrestadorContractTest {
         );
         contiene(
                 migracion,
-                "migracion reemplaza integridad de detalle",
-                "CREATE OR REPLACE FUNCTION "
-                        + "compras.validar_requerimiento_detalle_fila()"
-        );
-        contiene(
-                migracion,
                 "migracion reemplaza guardado de cotizacion",
                 "CREATE OR REPLACE FUNCTION "
                         + "compras.guardar_cotizacion_requerimiento("
         );
         contiene(
                 migracion,
-                "migracion reemplaza busqueda de prestadores",
-                "CREATE OR REPLACE FUNCTION "
-                        + "compras.buscar_prestadores_enviados("
-        );
-        contiene(
-                migracion,
                 "migracion reemplaza alta de presupuesto",
                 "CREATE OR REPLACE FUNCTION "
                         + "compras.registrar_requerimiento_presupuesto("
+        );
+        contiene(
+                migracion,
+                "migracion agrega alta de Orden medica",
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.registrar_requerimiento_orden_medica("
+        );
+        contiene(
+                migracion,
+                "migracion agrega lectura de Orden medica",
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.get_requerimiento_orden_medica("
+        );
+        contiene(
+                migracion,
+                "migracion reemplaza listado de presupuestos",
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.listar_requerimiento_presupuestos("
+        );
+        contiene(
+                migracion,
+                "migracion reemplaza get de presupuesto",
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.get_requerimiento_presupuesto("
         );
         contiene(
                 migracion,
@@ -450,23 +608,22 @@ public final class ComprasPresupuestoPrestadorContractTest {
                 "CREATE OR REPLACE FUNCTION "
                         + "compras.reactivar_requerimiento_presupuesto("
         );
-        contiene(
-                migracion,
-                "migracion reemplaza diagnostico de notificacion",
-                "compras.diagnosticar_prestadores_notificacion_cotizacion("
-        );
-        contiene(
-                migracion,
-                "migracion protege el reintento COTIZADO",
-                "compras.reservar_notificacion_cotizacion_prestador("
+        noContiene(
+                migracionSql,
+                "migracion no borra documentos",
+                "DELETE FROM compras.requerimiento_presupuesto"
         );
         enOrden(
                 migracion,
                 "migracion transaccional completa",
                 "BEGIN;",
-                "HAVING count(*) > 1",
+                "SET tipo_documento = 1",
                 INDICE_PRESUPUESTO_ACTIVO,
+                "compras.validar_requerimiento_fila()",
+                "compras.guardar_cotizacion_requerimiento(",
                 "compras.registrar_requerimiento_presupuesto(",
+                "compras.registrar_requerimiento_orden_medica(",
+                "compras.listar_requerimiento_presupuestos(",
                 "compras.baja_requerimiento_presupuesto(",
                 "compras.reactivar_requerimiento_presupuesto(",
                 "COMMIT;"
@@ -485,6 +642,11 @@ public final class ComprasPresupuestoPrestadorContractTest {
                 "ON compras.requerimiento_presupuesto ( "
                         + "id_requerimiento, id_prestador ) "
                         + "WHERE baja_fecha IS NULL"
+        );
+        contiene(
+                normalizado,
+                etiqueta + " tipado como presupuesto",
+                "AND tipo_documento = 1"
         );
     }
 
@@ -556,6 +718,53 @@ public final class ComprasPresupuestoPrestadorContractTest {
                 metodoListado,
                 "metodo mapea el estado persistido",
                 "mapPrestadorCotizacion(rs)"
+        );
+    }
+
+    private static void verificarModeloOrdenMedica(
+            String bean,
+            String searchImpl,
+            String searchUtil) {
+
+        contiene(
+                bean,
+                "constante de presupuesto",
+                "TIPO_DOCUMENTO_PRESUPUESTO = 1"
+        );
+        contiene(
+                bean,
+                "constante de Orden medica",
+                "TIPO_DOCUMENTO_ORDEN_MEDICA = 2"
+        );
+        contiene(bean, "campo tipo documental", "private Integer tipoDocumento");
+        contiene(bean, "campo fecha documental", "private Date fechaDocumento;");
+        contiene(bean, "getter tipo documental", "getTipoDocumento()");
+        contiene(bean, "getter fecha documental", "getFechaDocumento()");
+
+        contiene(
+                searchImpl,
+                "SQL de Orden medica separado",
+                "{call compras.get_requerimiento_orden_medica(?)}"
+        );
+        contiene(
+                searchImpl,
+                "mapper de tipo documental",
+                "setTipoDocumento(getInteger(rs, \"tipo_documento\"))"
+        );
+        contiene(
+                searchImpl,
+                "mapper de fecha documental",
+                "setFechaDocumento(rs.getDate(\"fecha_documento\"))"
+        );
+        contiene(
+                searchImpl,
+                "servicio de Orden medica separado",
+                "public RequerimientoCompraPresupuesto getOrdenMedica("
+        );
+        contiene(
+                searchUtil,
+                "util de Orden medica separado",
+                "public static RequerimientoCompraPresupuesto getOrdenMedica("
         );
     }
 

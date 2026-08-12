@@ -811,6 +811,112 @@
         return true;
     }
 
+    <c:if test="<%= esNuevo %>">
+        function <portlet:namespace />validarOrdenMedicaAlta(form) {
+            var archivo = document.getElementById(
+                    '<portlet:namespace />orden_medica'
+            );
+            var fecha = document.getElementById(
+                    '<portlet:namespace />fecha_orden_medica'
+            );
+
+            if (!archivo || jQuery.trim(archivo.value || '') == '') {
+                alert('Orden médica: debe seleccionar una imagen JPEG o PNG.');
+
+                if (archivo) {
+                    archivo.focus();
+                }
+
+                return false;
+            }
+
+            var nombreArchivo = (archivo.value || '')
+                    .replace(/^.*[\\\/]/, '');
+
+            if (!/\.(jpe?g|png)$/i.test(nombreArchivo)) {
+                alert('Orden médica: sólo se permiten archivos JPG, JPEG o PNG.');
+                archivo.focus();
+                return false;
+            }
+
+            var fechaValor = fecha ? jQuery.trim(fecha.value || '') : '';
+
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaValor)) {
+                alert('Fecha de la orden médica: debe informar una fecha válida con formato AAAA-MM-DD.');
+
+                if (fecha) {
+                    fecha.focus();
+                }
+
+                return false;
+            }
+
+            var partesFecha = fechaValor.split('-');
+            var fechaControl = new Date(
+                    parseInt(partesFecha[0], 10),
+                    parseInt(partesFecha[1], 10) - 1,
+                    parseInt(partesFecha[2], 10)
+            );
+
+            if (fechaControl.getFullYear() != parseInt(partesFecha[0], 10)
+                    || fechaControl.getMonth() != parseInt(partesFecha[1], 10) - 1
+                    || fechaControl.getDate() != parseInt(partesFecha[2], 10)) {
+
+                alert('Fecha de la orden médica: la fecha informada no existe.');
+                fecha.focus();
+                return false;
+            }
+
+            var fechaHidden = document.getElementById(
+                    '<portlet:namespace />fecha_orden_medica_hidden'
+            );
+
+            if (!fechaHidden) {
+                alert('No se pudo preparar la fecha de la Orden médica para el envío.');
+                return false;
+            }
+
+            fechaHidden.value = fechaValor;
+            return true;
+        }
+
+        function <portlet:namespace />incorporarArchivoOrdenMedica(form) {
+            var archivo = document.getElementById(
+                    '<portlet:namespace />orden_medica'
+            );
+
+            if (!form || !archivo || !archivo.parentNode) {
+                return null;
+            }
+
+            var contexto = {
+                archivo: archivo,
+                padre: archivo.parentNode,
+                siguiente: archivo.nextSibling
+            };
+
+            form.appendChild(archivo);
+            return contexto;
+        }
+
+        function <portlet:namespace />restaurarArchivoOrdenMedica(contexto) {
+            if (!contexto || !contexto.archivo || !contexto.padre) {
+                return;
+            }
+
+            if (contexto.siguiente
+                    && contexto.siguiente.parentNode == contexto.padre) {
+
+                contexto.padre.insertBefore(
+                        contexto.archivo,
+                        contexto.siguiente
+                );
+            } else {
+                contexto.padre.appendChild(contexto.archivo);
+            }
+        }
+    </c:if>
+
     function <portlet:namespace />obtenerSerializadorDetallesCompra() {
         if (typeof <portlet:namespace />serializarDetallesCompras == 'function') {
             return <portlet:namespace />serializarDetallesCompras;
@@ -903,6 +1009,12 @@
 
             return <portlet:namespace />cancelarGuardadoCompra();
         }
+
+        <c:if test="<%= esNuevo %>">
+            if (!<portlet:namespace />validarOrdenMedicaAlta(form)) {
+                return <portlet:namespace />cancelarGuardadoCompra();
+            }
+        </c:if>
 
         var sectorId = <portlet:namespace />trimValue('sector_id');
 
@@ -1018,7 +1130,25 @@
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
+        var contextoOrdenMedica = null;
+
+        <c:if test="<%= esNuevo %>">
+            contextoOrdenMedica =
+                    <portlet:namespace />incorporarArchivoOrdenMedica(form);
+
+            if (!contextoOrdenMedica) {
+                alert('No se pudo incorporar la Orden médica al formulario de envío.');
+                return <portlet:namespace />cancelarGuardadoCompra();
+            }
+        </c:if>
+
         if (!<portlet:namespace />submitFormularioCompra(form)) {
+            <c:if test="<%= esNuevo %>">
+                <portlet:namespace />restaurarArchivoOrdenMedica(
+                        contextoOrdenMedica
+                );
+            </c:if>
+
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
