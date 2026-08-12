@@ -27,6 +27,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 
 import java.io.InputStream;
+import java.util.List;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -35,9 +36,10 @@ import javax.servlet.http.HttpServletResponse;
 
 public class DescargarOrdenMedicaCompraAction extends PortletAction {
 
-    private static final Log _log = LogFactoryUtil.getLog(
-            DescargarOrdenMedicaCompraAction.class
-    );
+    private static final Log _log =
+            LogFactoryUtil.getLog(
+                    DescargarOrdenMedicaCompraAction.class
+            );
 
     public void processAction(
             ActionMapping mapping,
@@ -46,17 +48,25 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
             ActionRequest actionRequest,
             ActionResponse actionResponse) throws Exception {
 
-        InputStream input = null;
+        InputStream input =
+                null;
 
         try {
-            User user = PortalUtil.getUser(actionRequest);
-            validarPermisoConsulta(user);
+            User user =
+                    PortalUtil.getUser(
+                            actionRequest
+                    );
 
-            int idRequerimientoCompra = ParamUtil.getInteger(
-                    actionRequest,
-                    "id_requerimiento_compra",
-                    0
+            validarPermisoConsulta(
+                    user
             );
+
+            int idRequerimientoCompra =
+                    ParamUtil.getInteger(
+                            actionRequest,
+                            "id_requerimiento_compra",
+                            0
+                    );
 
             if (idRequerimientoCompra <= 0) {
                 throw new Exception(
@@ -64,9 +74,17 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                 );
             }
 
+            long dlFileEntryIdSolicitado =
+                    ParamUtil.getLong(
+                            actionRequest,
+                            "dl_file_entry_id",
+                            0L
+                    );
+
             RequerimientoCompraPresupuesto ordenMedica =
-                    BusquedaRequerimientoCompraServiceUtil.getOrdenMedica(
-                            idRequerimientoCompra
+                    resolverOrdenMedica(
+                            idRequerimientoCompra,
+                            dlFileEntryIdSolicitado
                     );
 
             validarRelacionOrdenMedica(
@@ -74,29 +92,52 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                     idRequerimientoCompra
             );
 
-            DLFileEntry entry = DLFileEntryLocalServiceUtil.getDLFileEntry(
-                    ordenMedica.getDlFileEntryId().longValue()
-            );
-            DocumentoComprasCreado identidad = crearIdentidad(ordenMedica);
+            DLFileEntry entry =
+                    DLFileEntryLocalServiceUtil
+                            .getDLFileEntry(
+                                    ordenMedica
+                                            .getDlFileEntryId()
+                                            .longValue()
+                            );
+
+            DocumentoComprasCreado identidad =
+                    crearIdentidad(
+                            ordenMedica
+                    );
+
             DocumentoLibraryComprasHelper gestorDocumento =
-                    DocumentoLibraryComprasHelper.crear(actionRequest);
+                    DocumentoLibraryComprasHelper.crear(
+                            actionRequest
+                    );
 
-            gestorDocumento.validarIdentidadDocumento(identidad);
+            gestorDocumento.validarIdentidadDocumento(
+                    identidad
+            );
 
-            if (!gestorDocumento.coincideIdentidad(identidad, entry)) {
+            if (!gestorDocumento.coincideIdentidad(
+                    identidad,
+                    entry
+            )) {
+
                 throw new Exception(
-                        "La identidad de la Orden m\u00e9dica no coincide con Document Library."
+                        "La identidad de la Orden m\u00e9dica "
+                                + "no coincide con Document Library."
                 );
             }
 
-            ThemeDisplay themeDisplay = (ThemeDisplay)
-                    actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
+            ThemeDisplay themeDisplay =
+                    (ThemeDisplay)
+                            actionRequest.getAttribute(
+                                    WebKeys.THEME_DISPLAY
+                            );
 
             if (themeDisplay == null
-                    || entry.getGroupId() != themeDisplay.getScopeGroupId()) {
+                    || entry.getGroupId()
+                    != themeDisplay.getScopeGroupId()) {
 
                 throw new Exception(
-                        "La Orden m\u00e9dica no pertenece al sitio actual."
+                        "La Orden m\u00e9dica no pertenece "
+                                + "al sitio actual."
                 );
             }
 
@@ -107,32 +148,40 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                     ActionKeys.VIEW
             );
 
-            String nombreDescarga = obtenerNombreDescarga(
-                    ordenMedica.getNombreOriginal(),
-                    entry.getTitleWithExtension()
-            );
-            String contentType = MimeTypesUtil.getContentType(
-                    nombreDescarga
-            );
+            String nombreDescarga =
+                    obtenerNombreDescarga(
+                            ordenMedica.getNombreOriginal(),
+                            entry.getTitleWithExtension()
+                    );
+
+            String contentType =
+                    MimeTypesUtil.getContentType(
+                            nombreDescarga
+                    );
 
             if (!"image/jpeg".equals(contentType)
                     && !"image/png".equals(contentType)) {
 
                 throw new Exception(
-                        "El tipo de archivo de la Orden m\u00e9dica no es v\u00e1lido."
+                        "El tipo de archivo de la Orden m\u00e9dica "
+                                + "no es v\u00e1lido."
                 );
             }
 
-            input = DLFileEntryLocalServiceUtil.getFileAsStream(
-                    themeDisplay.getCompanyId(),
-                    themeDisplay.getUserId(),
-                    entry.getFolderId(),
-                    entry.getName(),
-                    entry.getVersion()
-            );
+            input =
+                    DLFileEntryLocalServiceUtil
+                            .getFileAsStream(
+                                    themeDisplay.getCompanyId(),
+                                    themeDisplay.getUserId(),
+                                    entry.getFolderId(),
+                                    entry.getName(),
+                                    entry.getVersion()
+                            );
 
             HttpServletResponse response =
-                    PortalUtil.getHttpServletResponse(actionResponse);
+                    PortalUtil.getHttpServletResponse(
+                            actionResponse
+                    );
 
             ServletResponseUtil.sendFile(
                     response,
@@ -141,17 +190,85 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                     entry.getSize(),
                     contentType
             );
-            input = null;
-            setForward(actionRequest, ActionConstants.COMMON_NULL);
+
+            input =
+                    null;
+
+            setForward(
+                    actionRequest,
+                    ActionConstants.COMMON_NULL
+            );
+
         } catch (Exception e) {
             _log.error(
-                    "No se pudo descargar de forma segura la Orden m\u00e9dica de Compras.",
+                    "No se pudo descargar de forma segura "
+                            + "la Orden m\u00e9dica de Compras.",
                     e
             );
-            PortalUtil.sendError(e, actionRequest, actionResponse);
+
+            PortalUtil.sendError(
+                    e,
+                    actionRequest,
+                    actionResponse
+            );
+
         } finally {
-            ServletResponseUtil.cleanUp(input);
+            ServletResponseUtil.cleanUp(
+                    input
+            );
         }
+    }
+
+    /*
+     * Si la URL nueva identifica un fileEntry concreto, se busca
+     * exactamente esa Orden médica dentro del requerimiento.
+     *
+     * Si no viene ese parámetro se conserva el comportamiento
+     * histórico mediante getOrdenMedica(idRequerimientoCompra).
+     */
+    private RequerimientoCompraPresupuesto resolverOrdenMedica(
+            int idRequerimientoCompra,
+            long dlFileEntryIdSolicitado) throws Exception {
+
+        if (dlFileEntryIdSolicitado <= 0L) {
+            return BusquedaRequerimientoCompraServiceUtil
+                    .getOrdenMedica(
+                            idRequerimientoCompra
+                    );
+        }
+
+        List<RequerimientoCompraPresupuesto> ordenesMedicas =
+                BusquedaRequerimientoCompraServiceUtil
+                        .listarOrdenesMedicas(
+                                idRequerimientoCompra
+                        );
+
+        if (ordenesMedicas != null) {
+            for (int i = 0;
+                 i < ordenesMedicas.size();
+                 i++) {
+
+                RequerimientoCompraPresupuesto ordenMedica =
+                        ordenesMedicas.get(i);
+
+                if (ordenMedica == null
+                        || ordenMedica.getDlFileEntryId() == null) {
+
+                    continue;
+                }
+
+                if (ordenMedica.getDlFileEntryId().longValue()
+                        == dlFileEntryIdSolicitado) {
+
+                    return ordenMedica;
+                }
+            }
+        }
+
+        throw new Exception(
+                "La Orden m\u00e9dica solicitada "
+                        + "no pertenece al requerimiento informado."
+        );
     }
 
     private void validarRelacionOrdenMedica(
@@ -165,21 +282,28 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                 || ordenMedica.getTipoDocumento() == null
                 || ordenMedica.getTipoDocumento().intValue()
                 != RequerimientoCompraPresupuesto
-                        .TIPO_DOCUMENTO_ORDEN_MEDICA
+                .TIPO_DOCUMENTO_ORDEN_MEDICA
                 || ordenMedica.getIdPrestador() != null
                 || !ordenMedica.isActivo()
                 || ordenMedica.getFechaDocumento() == null
                 || ordenMedica.getDlGroupId() == null
                 || ordenMedica.getDlFolderId() == null
                 || ordenMedica.getDlFileEntryId() == null
-                || WebKeysCompras.isEmpty(ordenMedica.getDlFileUuid())
-                || WebKeysCompras.isEmpty(ordenMedica.getNombrePersistido())
-                || !DocumentoLibraryComprasHelper.TITULO_ORDEN_MEDICA.equals(
+                || WebKeysCompras.isEmpty(
+                ordenMedica.getDlFileUuid()
+        )
+                || WebKeysCompras.isEmpty(
+                ordenMedica.getNombrePersistido()
+        )
+                || !DocumentoLibraryComprasHelper
+                .TITULO_ORDEN_MEDICA
+                .equals(
                         ordenMedica.getTitulo()
                 )) {
 
             throw new Exception(
-                    "No existe una Orden m\u00e9dica activa y v\u00e1lida para el requerimiento."
+                    "No existe una Orden m\u00e9dica activa "
+                            + "y v\u00e1lida para el requerimiento."
             );
         }
     }
@@ -201,45 +325,78 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
             String nombreOriginal,
             String nombreFallback) {
 
-        String nombre = !WebKeysCompras.isEmpty(nombreOriginal)
-                ? nombreOriginal
-                : nombreFallback;
+        String nombre =
+                !WebKeysCompras.isEmpty(
+                        nombreOriginal
+                )
+                        ? nombreOriginal
+                        : nombreFallback;
 
         if (nombre == null) {
-            nombre = "orden-medica";
+            nombre =
+                    "orden-medica";
         }
 
-        nombre = nombre.replace('\\', '_').replace('/', '_');
-        nombre = nombre.replace('\r', '_').replace('\n', '_');
-        nombre = nombre.replace('"', '_').trim();
+        nombre =
+                nombre.replace(
+                        '\\',
+                        '_'
+                ).replace(
+                        '/',
+                        '_'
+                );
 
-        return nombre.length() > 0 ? nombre : "orden-medica";
+        nombre =
+                nombre.replace(
+                        '\r',
+                        '_'
+                ).replace(
+                        '\n',
+                        '_'
+                );
+
+        nombre =
+                nombre.replace(
+                        '"',
+                        '_'
+                ).trim();
+
+        return nombre.length() > 0
+                ? nombre
+                : "orden-medica";
     }
 
-    private void validarPermisoConsulta(User user) throws Exception {
+    private void validarPermisoConsulta(
+            User user) throws Exception {
+
         if (user == null) {
             throw new Exception(
                     "No se pudo determinar el usuario actual."
             );
         }
 
-        boolean permitido = PermissionUtil.userContainsRole(
-                user,
-                WebKeysCompras.ROL_VIEW_COMPRAS
-        ) || PermissionUtil.userContainsRole(
-                user,
-                WebKeysCompras.ROL_ABM_COMPRAS
-        ) || PermissionUtil.userContainsRole(
-                user,
-                WebKeysCompras.ROL_COTIZAR_COMPRAS
-        ) || PermissionUtil.userContainsRole(
-                user,
-                WebKeysCompras.ROL_ANULAR_COMPRAS
-        );
+        boolean permitido =
+                PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_VIEW_COMPRAS
+                )
+                        || PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_ABM_COMPRAS
+                )
+                        || PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_COTIZAR_COMPRAS
+                )
+                        || PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_ANULAR_COMPRAS
+                );
 
         if (!permitido) {
             throw new Exception(
-                    "No posee permisos para consultar documentos de Compras."
+                    "No posee permisos para consultar "
+                            + "documentos de Compras."
             );
         }
     }

@@ -79,96 +79,6 @@ public class DocumentoLibraryComprasHelper
         validarContextoDocumentLibrary(groupId, userId);
     }
 
-    public OrdenMedicaValidada validarOrdenMedica(
-            UploadPortletRequest uploadRequest) throws Exception {
-
-        String fecha = uploadRequest != null
-                ? ParamUtil.getString(
-                        uploadRequest,
-                        PARAM_FECHA_ORDEN_MEDICA,
-                        null
-                )
-                : null;
-
-        return validarOrdenMedica(uploadRequest, fecha);
-    }
-
-    public OrdenMedicaValidada validarOrdenMedica(
-            UploadPortletRequest uploadRequest,
-            String fechaNormalizada) throws Exception {
-
-        if (uploadRequest == null) {
-            throw new Exception(
-                    "No se recibi\u00f3 el formulario multipart de la Orden m\u00e9dica."
-            );
-        }
-
-        Date fechaDocumento = parseFechaDocumento(fechaNormalizada);
-        File archivo = uploadRequest.getFile(PARAM_ARCHIVO_ORDEN_MEDICA);
-        String nombreOriginal = obtenerNombreArchivo(
-                uploadRequest.getFileName(PARAM_ARCHIVO_ORDEN_MEDICA)
-        );
-
-        if (archivo == null || !archivo.exists() || archivo.length() <= 0L) {
-            throw new Exception(
-                    "Orden m\u00e9dica: debe seleccionar una imagen no vac\u00eda."
-            );
-        }
-
-        if (WebKeysCompras.isEmpty(nombreOriginal)) {
-            throw new Exception(
-                    "Orden m\u00e9dica: el nombre del archivo no es v\u00e1lido."
-            );
-        }
-
-        long maximoTamanoArchivo = obtenerMaximoTamanoArchivo();
-
-        if (maximoTamanoArchivo > 0L
-                && archivo.length() > maximoTamanoArchivo) {
-
-            throw new Exception(
-                    "Orden m\u00e9dica: el archivo supera el tama\u00f1o permitido."
-            );
-        }
-
-        String extension = obtenerExtensionSegura(nombreOriginal);
-
-        if (!esExtensionOrdenMedica(extension)) {
-            throw new Exception(
-                    "Orden m\u00e9dica: s\u00f3lo se permiten archivos JPG, JPEG o PNG."
-            );
-        }
-
-        String contentTypeUpload = normalizarContentType(
-                uploadRequest.getContentType(PARAM_ARCHIVO_ORDEN_MEDICA)
-        );
-        String contentTypeDetectado = normalizarContentType(
-                detectarContentTypePorNombre(nombreOriginal)
-        );
-        String contentTypeEsperado = ".png".equals(extension)
-                ? CONTENT_TYPE_PNG
-                : CONTENT_TYPE_JPEG;
-
-        validarContentTypeCompatible(
-                "declarado",
-                contentTypeUpload,
-                contentTypeEsperado
-        );
-        validarContentTypeCompatible(
-                "detectado",
-                contentTypeDetectado,
-                contentTypeEsperado
-        );
-        validarFirmaImagen(archivo, contentTypeEsperado);
-
-        return new OrdenMedicaValidada(
-                archivo,
-                nombreOriginal,
-                extension,
-                contentTypeEsperado,
-                fechaDocumento
-        );
-    }
 
     public DocumentoComprasCreado crearOrdenMedica(
             int idRequerimientoCompra,
@@ -668,5 +578,161 @@ public class DocumentoLibraryComprasHelper
                     "No se pudo determinar el usuario de Document Library."
             );
         }
+    }
+
+    public OrdenMedicaValidada validarOrdenMedica(
+            UploadPortletRequest uploadRequest) throws Exception {
+
+        String fecha =
+                uploadRequest != null
+                        ? ParamUtil.getString(
+                        uploadRequest,
+                        PARAM_FECHA_ORDEN_MEDICA,
+                        null
+                )
+                        : null;
+
+        return validarOrdenMedica(
+                uploadRequest,
+                PARAM_ARCHIVO_ORDEN_MEDICA,
+                fecha
+        );
+    }
+
+    public OrdenMedicaValidada validarOrdenMedica(
+            UploadPortletRequest uploadRequest,
+            String fechaNormalizada) throws Exception {
+
+        /*
+         * Contrato histórico.
+         *
+         * Conserva exactamente el nombre del campo original y delega
+         * al nuevo método parametrizado.
+         */
+        return validarOrdenMedica(
+                uploadRequest,
+                PARAM_ARCHIVO_ORDEN_MEDICA,
+                fechaNormalizada
+        );
+    }
+
+    public OrdenMedicaValidada validarOrdenMedica(
+            UploadPortletRequest uploadRequest,
+            String nombreCampoArchivo,
+            String fechaNormalizada)
+            throws Exception {
+
+        if (uploadRequest == null) {
+            throw new Exception(
+                    "No se recibió el formulario multipart de la Orden médica."
+            );
+        }
+
+        if (WebKeysCompras.isEmpty(nombreCampoArchivo)) {
+            throw new Exception(
+                    "No se informó el campo de archivo de la Orden médica."
+            );
+        }
+
+        nombreCampoArchivo =
+                nombreCampoArchivo.trim();
+
+        Date fechaDocumento =
+                parseFechaDocumento(
+                        fechaNormalizada
+                );
+
+        File archivo =
+                uploadRequest.getFile(
+                        nombreCampoArchivo
+                );
+
+        String nombreOriginal =
+                obtenerNombreArchivo(
+                        uploadRequest.getFileName(
+                                nombreCampoArchivo
+                        )
+                );
+
+        if (archivo == null
+                || !archivo.exists()
+                || archivo.length() <= 0L) {
+
+            throw new Exception(
+                    "Orden médica: debe seleccionar una imagen no vacía."
+            );
+        }
+
+        if (WebKeysCompras.isEmpty(nombreOriginal)) {
+            throw new Exception(
+                    "Orden médica: el nombre del archivo no es válido."
+            );
+        }
+
+        long maximoTamanoArchivo =
+                obtenerMaximoTamanoArchivo();
+
+        if (maximoTamanoArchivo > 0L
+                && archivo.length() > maximoTamanoArchivo) {
+
+            throw new Exception(
+                    "Orden médica: el archivo supera el tamaño permitido."
+            );
+        }
+
+        String extension =
+                obtenerExtensionSegura(
+                        nombreOriginal
+                );
+
+        if (!esExtensionOrdenMedica(extension)) {
+            throw new Exception(
+                    "Orden médica: sólo se permiten archivos JPG, JPEG o PNG."
+            );
+        }
+
+        String contentTypeUpload =
+                normalizarContentType(
+                        uploadRequest.getContentType(
+                                nombreCampoArchivo
+                        )
+                );
+
+        String contentTypeDetectado =
+                normalizarContentType(
+                        detectarContentTypePorNombre(
+                                nombreOriginal
+                        )
+                );
+
+        String contentTypeEsperado =
+                ".png".equals(extension)
+                        ? CONTENT_TYPE_PNG
+                        : CONTENT_TYPE_JPEG;
+
+        validarContentTypeCompatible(
+                "declarado",
+                contentTypeUpload,
+                contentTypeEsperado
+        );
+
+        validarContentTypeCompatible(
+                "detectado",
+                contentTypeDetectado,
+                contentTypeEsperado
+        );
+
+        validarFirmaImagen(
+                archivo,
+                contentTypeEsperado
+        );
+
+        return new OrdenMedicaValidada(
+                archivo,
+                nombreOriginal,
+                extension,
+                contentTypeEsperado,
+                fechaDocumento
+        );
     }
 }

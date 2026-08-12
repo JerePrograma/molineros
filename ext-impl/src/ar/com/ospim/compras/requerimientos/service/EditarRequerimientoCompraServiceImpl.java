@@ -76,6 +76,8 @@ public class EditarRequerimientoCompraServiceImpl {
                     + "?"
                     + ")";
 
+    private static final int MAX_ORDENES_MEDICAS_POR_ALTA = 20;
+
     /*
      * Las excepciones de esta clase terminan siendo mostradas por la capa
      * de acción. Por eso se distingue explícitamente entre errores aptos
@@ -341,11 +343,42 @@ public class EditarRequerimientoCompraServiceImpl {
             GestorOrdenMedicaDocumento gestorDocumento,
             String usuario) throws Exception {
 
+        /*
+         * Contrato histórico.
+         *
+         * Se conserva para callers existentes y se adapta internamente
+         * al nuevo contrato plural.
+         */
+        List<OrdenMedicaValidada> ordenesMedicas =
+                new ArrayList<OrdenMedicaValidada>(1);
+
+        ordenesMedicas.add(
+                ordenMedica
+        );
+
+        return guardarNuevoRequerimientoCompraConOrdenesMedicas(
+                requerimiento,
+                ordenesMedicas,
+                gestorDocumento,
+                usuario
+        );
+    }
+
+    public int guardarNuevoRequerimientoCompraConOrdenesMedicas(
+            RequerimientoCompra requerimiento,
+            List<OrdenMedicaValidada> ordenesMedicas,
+            GestorOrdenMedicaDocumento gestorDocumento,
+            String usuario) throws Exception {
+
         Connection con = null;
-        DocumentoComprasCreado documento = null;
+
+        List<DocumentoComprasCreado> documentosCreados =
+                new ArrayList<DocumentoComprasCreado>();
 
         try {
-            validarRequerimientoParaGuardar(requerimiento);
+            validarRequerimientoParaGuardar(
+                    requerimiento
+            );
 
             if (requerimiento.getIdRequerimientoCompra() > 0) {
                 throw errorUsuario(
@@ -354,110 +387,219 @@ public class EditarRequerimientoCompraServiceImpl {
                 );
             }
 
-            if (ordenMedica == null
-                    || ordenMedica.getFechaDocumento() == null) {
+            if (ordenesMedicas == null
+                    || ordenesMedicas.isEmpty()) {
 
                 throw errorUsuario(
                         "Debe seleccionar la Orden médica e informar su fecha."
                 );
             }
 
-            if (gestorDocumento == null) {
-                throw new SQLException(
-                        "No se obtuvo el gestor de Document Library para la Orden médica."
+            if (ordenesMedicas.size()
+                    > MAX_ORDENES_MEDICAS_POR_ALTA) {
+
+                throw errorUsuario(
+                        "Se pueden registrar hasta "
+                                + MAX_ORDENES_MEDICAS_POR_ALTA
+                                + " Órdenes médicas por requerimiento."
                 );
             }
 
-            con = obtenerConexionGuardarNuevoConOrdenMedica();
+            for (int i = 0;
+                 i < ordenesMedicas.size();
+                 i++) {
+
+                OrdenMedicaValidada ordenMedica =
+                        ordenesMedicas.get(i);
+
+                if (ordenMedica == null
+                        || ordenMedica.getFechaDocumento() == null) {
+
+                    /*
+                     * Se conserva el mensaje histórico para no alterar
+                     * el contrato del método singular.
+                     */
+                    throw errorUsuario(
+                            "Debe seleccionar la Orden médica "
+                                    + "e informar su fecha."
+                    );
+                }
+            }
+
+            if (gestorDocumento == null) {
+                throw new SQLException(
+                        "No se obtuvo el gestor de Document Library "
+                                + "para la Orden médica."
+                );
+            }
+
+            con =
+                    obtenerConexionGuardarNuevoConOrdenMedica();
 
             if (con == null) {
                 throw new SQLException(
-                        "No se obtuvo una conexión transaccional para guardar "
-                                + "el requerimiento y su Orden médica."
+                        "No se obtuvo una conexión transaccional "
+                                + "para guardar el requerimiento "
+                                + "y su Orden médica."
                 );
             }
 
-            int idRequerimiento = guardarCabeceraEnConexion(
-                    con,
-                    requerimiento,
-                    usuario
-            );
+            int idRequerimiento =
+                    guardarCabeceraEnConexion(
+                            con,
+                            requerimiento,
+                            usuario
+                    );
 
-            documento = gestorDocumento.crearOrdenMedica(
-                    idRequerimiento,
-                    ordenMedica
-            );
+            /*
+             * Importante:
+             *
+             * todas las Órdenes se crean y registran dentro del mismo
+             * contexto transaccional de la cabecera.
+             *
+             * El DocumentoComprasCreado se incorpora a la colección
+             * inmediatamente después de ser creado y ANTES de registrar
+             * la fila SQL. Así, si falla esa inserción, el archivo también
+             * queda incluido en la compensación.
+             */
+            for (int i = 0;
+                 i < ordenesMedicas.size();
+                 i++) {
 
-            registrarOrdenMedicaEnConexion(
-                    con,
-                    idRequerimiento,
-                    ordenMedica,
-                    documento,
-                    usuario
-            );
+                OrdenMedicaValidada ordenMedica =
+                        ordenesMedicas.get(i);
+
+                DocumentoComprasCreado documento =
+                        gestorDocumento.crearOrdenMedica(
+                                idRequerimiento,
+                                ordenMedica
+                        );
+
+                documentosCreados.add(
+                        documento
+                );
+
+                registrarOrdenMedicaEnConexion(
+                        con,
+                        idRequerimiento,
+                        ordenMedica,
+                        documento,
+                        usuario
+                );
+            }
 
             con.commit();
+
             return idRequerimiento;
+
         } catch (Exception e) {
-            boolean rollbackConfirmado = con == null;
+            boolean rollbackConfirmado =
+                    con == null;
 
             if (con != null) {
                 try {
                     con.rollback();
                     rollbackConfirmado = true;
+
                 } catch (Exception rollbackError) {
+                    /*
+                     * Se conserva el principio fail-safe existente:
+                     * ante estado SQL ambiguo no se eliminan documentos,
+                     * porque alguno de los registros podría haber quedado
+                     * persistido.
+                     */
                     _log.error(
                             "No se pudo confirmar el rollback SQL del alta "
-                                    + "con Orden médica. No se eliminará "
-                                    + "el archivo de Document Library ante "
+                                    + "con Orden médica. No se eliminarán "
+                                    + "los archivos de Document Library ante "
                                     + "un estado transaccional ambiguo. "
-                                    + "fileEntryId="
-                                    + (documento != null
-                                    ? documento.getFileEntryId()
-                                    : null)
-                                    + ", folderId="
-                                    + (documento != null
-                                    ? documento.getFolderId()
-                                    : null)
-                                    + ", nombre="
-                                    + (documento != null
-                                    ? documento.getNombrePersistido()
-                                    : null),
+                                    + "cantidadDocumentosCreados="
+                                    + documentosCreados.size(),
                             rollbackError
                     );
                 }
             }
 
-            if (documento != null
+            if (rollbackConfirmado
                     && gestorDocumento != null
-                    && rollbackConfirmado) {
+                    && !documentosCreados.isEmpty()) {
 
-                try {
-                    gestorDocumento.eliminarDocumento(documento);
-                } catch (Exception cleanupError) {
-                    _log.error(
-                            "No se pudo compensar la Orden médica creada "
-                                    + "después del rollback SQL. fileEntryId="
-                                    + documento.getFileEntryId()
-                                    + ", folderId=" + documento.getFolderId()
-                                    + ", nombre="
-                                    + documento.getNombrePersistido(),
-                            cleanupError
-                    );
-                }
+                compensarOrdenesMedicasCreadas(
+                        documentosCreados,
+                        gestorDocumento
+                );
             }
 
             throw manejarErrorOperacion(
                     "guardar el requerimiento nuevo con Orden médica",
                     "No se pudo guardar el requerimiento con su Orden médica. "
-                            + "Vuelva a seleccionar la imagen e intente nuevamente.",
+                            + "Vuelva a seleccionar la imagen "
+                            + "e intente nuevamente.",
                     e,
                     "idRequerimiento="
-                            + obtenerIdRequerimientoSeguro(requerimiento)
-                            + ", usuario=" + usuario
+                            + obtenerIdRequerimientoSeguro(
+                            requerimiento
+                    )
+                            + ", usuario="
+                            + usuario
+                            + ", cantidadOrdenesMedicas="
+                            + (ordenesMedicas != null
+                            ? ordenesMedicas.size()
+                            : 0)
             );
+
         } finally {
-            ConnectionHelper.cerrar(con);
+            ConnectionHelper.cerrar(
+                    con
+            );
+        }
+    }
+
+    private void compensarOrdenesMedicasCreadas(
+            List<DocumentoComprasCreado> documentosCreados,
+            GestorOrdenMedicaDocumento gestorDocumento) {
+
+        if (documentosCreados == null
+                || documentosCreados.isEmpty()
+                || gestorDocumento == null) {
+
+            return;
+        }
+
+        /*
+         * La compensación se realiza en orden inverso al de creación.
+         * Un fallo al eliminar un documento no impide intentar eliminar
+         * los restantes y nunca oculta la excepción original.
+         */
+        for (int i = documentosCreados.size() - 1;
+             i >= 0;
+             i--) {
+
+            DocumentoComprasCreado documento =
+                    documentosCreados.get(i);
+
+            if (documento == null) {
+                continue;
+            }
+
+            try {
+                gestorDocumento.eliminarDocumento(
+                        documento
+                );
+
+            } catch (Exception cleanupError) {
+                _log.error(
+                        "No se pudo compensar una Orden médica creada "
+                                + "después del rollback SQL. "
+                                + "fileEntryId="
+                                + documento.getFileEntryId()
+                                + ", folderId="
+                                + documento.getFolderId()
+                                + ", nombre="
+                                + documento.getNombrePersistido(),
+                        cleanupError
+                );
+            }
         }
     }
 

@@ -18,42 +18,110 @@ public class EditarRequerimientoCompraServiceUtil {
         return instance;
     }
 
-    public static int guardarRequerimientoCompra(RequerimientoCompra requerimiento, String usuario) throws Exception {
-        return getInstance().guardarRequerimientoCompra(requerimiento, usuario);
+    public static int guardarRequerimientoCompra(
+            RequerimientoCompra requerimiento,
+            String usuario) throws Exception {
+
+        return getInstance().guardarRequerimientoCompra(
+                requerimiento,
+                usuario
+        );
     }
 
+    /*
+     * Contrato histórico.
+     *
+     * Se mantiene para no romper callers existentes que todavía
+     * registren una única Orden médica.
+     */
     public static int guardarNuevoRequerimientoCompraConOrdenMedica(
             RequerimientoCompra requerimiento,
             OrdenMedicaValidada ordenMedica,
             GestorOrdenMedicaDocumento gestorDocumento,
             String usuario) throws Exception {
 
-        return getInstance().guardarNuevoRequerimientoCompraConOrdenMedica(
-                requerimiento,
-                ordenMedica,
-                gestorDocumento,
+        return getInstance()
+                .guardarNuevoRequerimientoCompraConOrdenMedica(
+                        requerimiento,
+                        ordenMedica,
+                        gestorDocumento,
+                        usuario
+                );
+    }
+
+    /*
+     * Nuevo contrato para el alta de un requerimiento con una o más
+     * Órdenes médicas.
+     *
+     * La implementación debe conservar una única transacción SQL y
+     * compensar todos los documentos creados en Document Library si
+     * la operación completa no puede confirmarse.
+     */
+    public static int guardarNuevoRequerimientoCompraConOrdenesMedicas(
+            RequerimientoCompra requerimiento,
+            List<OrdenMedicaValidada> ordenesMedicas,
+            GestorOrdenMedicaDocumento gestorDocumento,
+            String usuario) throws Exception {
+
+        return getInstance()
+                .guardarNuevoRequerimientoCompraConOrdenesMedicas(
+                        requerimiento,
+                        ordenesMedicas,
+                        gestorDocumento,
+                        usuario
+                );
+    }
+
+    public static int guardarDetalle(
+            RequerimientoCompraDetalle detalle,
+            String usuario) throws Exception {
+
+        return getInstance().guardarDetalle(
+                detalle,
                 usuario
         );
     }
 
-    public static int guardarDetalle(RequerimientoCompraDetalle detalle, String usuario) throws Exception {
-        return getInstance().guardarDetalle(detalle, usuario);
+    public static void borrarDetalle(
+            int idDetalle,
+            String usuario) throws Exception {
+
+        getInstance().borrarDetalle(
+                idDetalle,
+                usuario
+        );
     }
 
-    public static void borrarDetalle(int idDetalle, String usuario) throws Exception {
-        getInstance().borrarDetalle(idDetalle, usuario);
+    public static void borrarItem(
+            int idItem,
+            String usuario) throws Exception {
+
+        borrarDetalle(
+                idItem,
+                usuario
+        );
     }
 
-    public static void borrarItem(int idItem, String usuario) throws Exception {
-        borrarDetalle(idItem, usuario);
+    public static void borrarRequerimientoCompra(
+            int idRequerimientoCompra,
+            String usuario) throws Exception {
+
+        getInstance().borrarRequerimientoCompra(
+                idRequerimientoCompra,
+                usuario
+        );
     }
 
-    public static void borrarRequerimientoCompra(int idRequerimientoCompra, String usuario) throws Exception {
-        getInstance().borrarRequerimientoCompra(idRequerimientoCompra, usuario);
-    }
+    public static void cambiarEstado(
+            int idRequerimientoCompra,
+            int idEstadoNuevo,
+            String usuario) throws Exception {
 
-    public static void cambiarEstado(int idRequerimientoCompra, int idEstadoNuevo, String usuario) throws Exception {
-        getInstance().cambiarEstado(idRequerimientoCompra, idEstadoNuevo, usuario);
+        getInstance().cambiarEstado(
+                idRequerimientoCompra,
+                idEstadoNuevo,
+                usuario
+        );
     }
 
     public static NotificacionCotizacionResultado enviarACotizar(
@@ -68,16 +136,18 @@ public class EditarRequerimientoCompraServiceUtil {
         );
     }
 
-    public static NotificacionCotizacionResultado reintentarNotificacionesCotizacion(
+    public static NotificacionCotizacionResultado
+    reintentarNotificacionesCotizacion(
             int idRequerimientoCompra,
             String usuario,
             long companyId) throws Exception {
 
-        return getInstance().reintentarNotificacionesCotizacion(
-                idRequerimientoCompra,
-                usuario,
-                companyId
-        );
+        return getInstance()
+                .reintentarNotificacionesCotizacion(
+                        idRequerimientoCompra,
+                        usuario,
+                        companyId
+                );
     }
 
     public static GuardadoCotizacionResultado guardarAvanceCotizacion(
@@ -90,9 +160,6 @@ public class EditarRequerimientoCompraServiceUtil {
                 detalles,
                 usuario
         );
-    }
-
-    private EditarRequerimientoCompraServiceUtil() {
     }
 
     public static int registrarPresupuesto(
@@ -130,5 +197,8 @@ public class EditarRequerimientoCompraServiceUtil {
                         idRequerimientoPresupuesto,
                         idRequerimientoCompra
                 );
+    }
+
+    private EditarRequerimientoCompraServiceUtil() {
     }
 }

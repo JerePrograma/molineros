@@ -472,6 +472,71 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
     }
 
+    public List<RequerimientoCompraPresupuesto> listarOrdenesMedicas(
+            int idRequerimientoCompra)
+            throws Exception {
+
+        validarIdRequerimiento(
+                idRequerimientoCompra
+        );
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+
+        List<RequerimientoCompraPresupuesto> ordenesMedicas =
+                new ArrayList<RequerimientoCompraPresupuesto>();
+
+        try {
+            con =
+                    ConnectionHelper.getConnection();
+
+            stmt =
+                    con.prepareCall(
+                            SQL_GET_ORDEN_MEDICA
+                    );
+
+            stmt.setInt(
+                    1,
+                    idRequerimientoCompra
+            );
+
+            rs =
+                    stmt.executeQuery();
+
+            while (rs.next()) {
+                ordenesMedicas.add(
+                        mapPresupuesto(
+                                rs
+                        )
+                );
+            }
+
+            return ordenesMedicas;
+
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudieron recuperar las Órdenes médicas "
+                            + "del requerimiento. "
+                            + "idRequerimiento="
+                            + idRequerimientoCompra,
+                    e
+            );
+
+            throw e;
+
+        } finally {
+            closeQuietly(
+                    rs
+            );
+
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
+        }
+    }
+
     public RequerimientoCompraPresupuesto getOrdenMedica(
             int idRequerimientoCompra) throws Exception {
 

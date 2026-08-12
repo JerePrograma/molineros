@@ -7,6 +7,7 @@ import java.util.List;
 public class BusquedaRequerimientoCompraServiceUtil {
 
     private static BusquedaRequerimientoCompraServiceImpl instance = null;
+
     private static final BusquedaRequerimientoCompraLecturaSeguraServiceImpl
             lecturaSeguraInstance =
             new BusquedaRequerimientoCompraLecturaSeguraServiceImpl();
@@ -22,7 +23,9 @@ public class BusquedaRequerimientoCompraServiceUtil {
     public static List<RequerimientoCompra> buscarRequerimientos(
             RequerimientoCompraFiltro filtro) throws Exception {
 
-        return getInstance().buscarRequerimientos(filtro);
+        return getInstance().buscarRequerimientos(
+                filtro
+        );
     }
 
     public static RequerimientoCompra getRequerimientoCompra(
@@ -36,13 +39,17 @@ public class BusquedaRequerimientoCompraServiceUtil {
     public static List<RequerimientoCompraDetalle> getDetalles(
             int idRequerimientoCompra) throws Exception {
 
-        return getInstance().getDetalles(idRequerimientoCompra);
+        return getInstance().getDetalles(
+                idRequerimientoCompra
+        );
     }
 
     public static List<RequerimientoCompraDetalle> getItems(
             int idRequerimientoCompra) throws Exception {
 
-        return getInstance().getDetalles(idRequerimientoCompra);
+        return getInstance().getDetalles(
+                idRequerimientoCompra
+        );
     }
 
     public static List<RequerimientoCompraEstado> listarEstados()
@@ -57,16 +64,20 @@ public class BusquedaRequerimientoCompraServiceUtil {
         return getInstance().listarSectores();
     }
 
-    public static RequerimientoCompraEstado getEstado(int idEstado)
-            throws Exception {
+    public static RequerimientoCompraEstado getEstado(
+            int idEstado) throws Exception {
 
-        return getInstance().getEstado(idEstado);
+        return getInstance().getEstado(
+                idEstado
+        );
     }
 
-    public static RequerimientoCompraSector getSector(int idSector)
-            throws Exception {
+    public static RequerimientoCompraSector getSector(
+            int idSector) throws Exception {
 
-        return getInstance().getSector(idSector);
+        return getInstance().getSector(
+                idSector
+        );
     }
 
     public static List<PrestadorCotizacion> buscarPrestadoresEnviados(
@@ -115,6 +126,25 @@ public class BusquedaRequerimientoCompraServiceUtil {
         );
     }
 
+    /*
+     * Nuevo contrato plural.
+     */
+    public static List<RequerimientoCompraPresupuesto>
+    listarOrdenesMedicas(
+            int idRequerimientoCompra) throws Exception {
+
+        return getInstance().listarOrdenesMedicas(
+                idRequerimientoCompra
+        );
+    }
+
+    /*
+     * Contrato histórico.
+     *
+     * Debe mantenerse. Su implementación continuará devolviendo una
+     * Orden médica para callers legacy que todavía trabajen en modo
+     * singular.
+     */
     public static RequerimientoCompraPresupuesto getOrdenMedica(
             int idRequerimientoCompra) throws Exception {
 
