@@ -266,9 +266,7 @@ int idRpCabecera =
                 <% } %>
 
 
-
                 <% if (mostrarIdRpCabecera) { %>
-                    <tr>
                         <% if (mostrarIdRpCabecera) { %>
 
                             <td class="compras-celda-label">
@@ -294,7 +292,6 @@ int idRpCabecera =
                             </td>
 
                         <% } %>
-                    </tr>
                 <% } %>
             </td>
         </tr>
