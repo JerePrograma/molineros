@@ -80,6 +80,17 @@ public class BusquedaRequerimientoCompraServiceUtil {
         );
     }
 
+    public static boolean tieneSituacionMedicaVigente(
+            String cuilTitular,
+            int inte) throws Exception {
+
+        return getInstance()
+                .tieneSituacionMedicaVigente(
+                        cuilTitular,
+                        inte
+                );
+    }
+
     public static List<PrestadorCotizacion> buscarPrestadoresEnviados(
             int idRequerimientoCompra,
             String texto,

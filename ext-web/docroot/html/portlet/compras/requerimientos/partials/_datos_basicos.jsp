@@ -234,6 +234,24 @@ int idRpCabecera =
         padding: 0;
     }
 
+    /*
+     * ==========================================================
+     * SITUACION MEDICA
+     * ==========================================================
+     */
+
+    .compras-cabecera-requerimiento
+    .compras-celda-situacion-medica {
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    .compras-cabecera-requerimiento
+    .compras-boton-situacion-medica {
+        min-width: 150px;
+    }
+
 </style>
 
 <fieldset class="block-labels compras-cabecera-requerimiento compras-seccion compras-seccion-datos-basicos">
@@ -403,8 +421,15 @@ int idRpCabecera =
             <% } else { %>
 
                 <td colspan="2"
-                    class="compras-celda-control compras-celda-control-final compras-celda-rp-vacia">
-                    &nbsp;
+                    class="compras-celda-control compras-celda-control-final compras-celda-situacion-medica">
+
+                    <input type="button"
+                           id="<portlet:namespace />btnSituacionMedica"
+                           class="compras-boton-situacion-medica"
+                           value="Situación Médica"
+                           title="Ver situación médica vigente"
+                           style="display:none;" />
+
                 </td>
 
             <% } %>

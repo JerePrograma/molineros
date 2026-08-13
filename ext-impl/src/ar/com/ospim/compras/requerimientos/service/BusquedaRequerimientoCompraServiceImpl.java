@@ -77,6 +77,19 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     + "AND rp.tipo_documento = 1 "
                     + "AND rp.baja_fecha IS NULL";
 
+    private static final String SQL_TIENE_SITUACION_MEDICA_VIGENTE =
+            "SELECT EXISTS ("
+                    + "SELECT 1 "
+                    + "FROM public.afi_situ_medica sm "
+                    + "WHERE sm.cuil_titular = ? "
+                    + "AND sm.inte = ? "
+                    + "AND sm.baja_fecha IS NULL "
+                    + "AND ("
+                    + "sm.vigen_hasta IS NULL "
+                    + "OR sm.vigen_hasta > CURRENT_DATE"
+                    + ")"
+                    + ")";
+
     public List<RequerimientoCompra> buscarRequerimientos(
             RequerimientoCompraFiltro filtro) throws Exception {
 
@@ -255,6 +268,93 @@ public class BusquedaRequerimientoCompraServiceImpl {
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public boolean tieneSituacionMedicaVigente(
+            String cuilTitular,
+            int inte) throws Exception {
+
+        String cuilNormalizado =
+                emptyToNull(
+                        cuilTitular
+                );
+
+        if (cuilNormalizado == null) {
+            throw new Exception(
+                    "Debe informar el CUIL titular."
+            );
+        }
+
+        /*
+         * El integrante 0 es válido para el titular.
+         */
+        if (inte < 0) {
+            throw new Exception(
+                    "Debe informar un integrante válido."
+            );
+        }
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con =
+                    ConnectionHelper.getConnection();
+
+            if (con == null) {
+                throw new Exception(
+                        "No se obtuvo conexión para consultar "
+                                + "la situación médica."
+                );
+            }
+
+            stmt =
+                    con.prepareStatement(
+                            SQL_TIENE_SITUACION_MEDICA_VIGENTE
+                    );
+
+            stmt.setString(
+                    1,
+                    cuilNormalizado
+            );
+
+            stmt.setInt(
+                    2,
+                    inte
+            );
+
+            rs =
+                    stmt.executeQuery();
+
+            if (!rs.next()) {
+                return false;
+            }
+
+            return rs.getBoolean(1);
+
+        } catch (Exception e) {
+            /*
+             * No registrar CUIL ni información clínica en el log.
+             */
+            _log.error(
+                    "No se pudo determinar si el afiliado posee "
+                            + "una situación médica vigente.",
+                    e
+            );
+
+            throw e;
+
+        } finally {
+            closeQuietly(
+                    rs
+            );
+
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
         }
     }
 
