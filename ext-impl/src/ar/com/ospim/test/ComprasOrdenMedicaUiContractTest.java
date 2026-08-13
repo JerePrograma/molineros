@@ -61,7 +61,7 @@ public final class ComprasOrdenMedicaUiContractTest {
         assertContains(
                 "fecha obligatoria visible",
                 alta,
-                "Fecha de la orden m\u00e9dica:"
+                "Fecha de la orden médica:"
         );
         assertContains(
                 "cliente valida extension",
@@ -97,7 +97,7 @@ public final class ComprasOrdenMedicaUiContractTest {
         assertContains(
                 "vista muestra fecha",
                 vista,
-                "Fecha de la orden m\u00e9dica"
+                "Fecha de la orden médica"
         );
         assertContains(
                 "vista muestra original",

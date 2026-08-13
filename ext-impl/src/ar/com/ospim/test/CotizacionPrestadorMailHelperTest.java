@@ -78,7 +78,7 @@ public class CotizacionPrestadorMailHelperTest {
             throws Exception {
 
         HelperPrueba helper = new HelperPrueba();
-        String nombreOriginal = "orden-m\u00e9dica.jpeg";
+        String nombreOriginal = "orden-médica.jpeg";
         Multipart multipart = helper.construir(
                 "Cuerpo con adjuntos",
                 pdf(),

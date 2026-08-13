@@ -523,7 +523,7 @@ public class NotificarCotizacionPrestadorServiceImplTest {
                 service,
                 new byte[0],
                 "orden.jpg",
-                "vac\u00eda"
+                "vacía"
         );
         assertContenidoOrdenMedicaInvalido(
                 service,

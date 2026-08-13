@@ -813,7 +813,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         if (contenido == null || contenido.length == 0) {
             throw new Exception(
-                    "La Orden médica persistida está vac\u00eda."
+                    "La Orden médica persistida está vacía."
             );
         }
 
@@ -982,7 +982,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             if (contenido.length != entry.getSize()) {
                 throw new Exception(
-                        "El tamaño le\u00eddo de la Orden médica no coincide con Document Library."
+                        "El tamaño leído de la Orden médica no coincide con Document Library."
                 );
             }
 

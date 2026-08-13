@@ -189,7 +189,7 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
                 || relacion.getIdRequerimientoCompra() <= 0) {
 
             throw new Exception(
-                    "El Reclamo Prestacional no posee un v\u00ednculo v\u00e1lido con Compras."
+                    "El Reclamo Prestacional no posee un vínculo válido con Compras."
             );
         }
     }
@@ -202,7 +202,7 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
                 || idRequerimientoPresupuesto <= 0) {
 
             throw new Exception(
-                    "Los identificadores del documento de Compras no son v\u00e1lidos."
+                    "Los identificadores del documento de Compras no son válidos."
             );
         }
 
@@ -230,7 +230,7 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
         }
 
         throw new Exception(
-                "El documento solicitado no es documentaci\u00f3n autorizada del Reclamo Prestacional."
+                "El documento solicitado no es documentación autorizada del Reclamo Prestacional."
         );
     }
 
@@ -258,7 +258,7 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
                 || WebKeysCompras.isEmpty(documento.getTitulo())) {
 
             throw new Exception(
-                    "El documento de Compras no posee una identidad activa v\u00e1lida."
+                    "El documento de Compras no posee una identidad activa válida."
             );
         }
 
@@ -276,7 +276,7 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
                             )) {
 
                 throw new Exception(
-                        "La Orden m\u00e9dica vinculada no es v\u00e1lida."
+                        "La Orden médica vinculada no es válida."
                 );
             }
         } else if (tipoDocumento
@@ -287,12 +287,12 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
                     || documento.getIdPrestador().intValue() <= 0) {
 
                 throw new Exception(
-                        "El presupuesto adjudicado no posee un prestador v\u00e1lido."
+                        "El presupuesto adjudicado no posee un prestador válido."
                 );
             }
         } else {
             throw new Exception(
-                    "El tipo de documento de Compras no est\u00e1 autorizado para el Reclamo Prestacional."
+                    "El tipo de documento de Compras no está autorizado para el Reclamo Prestacional."
             );
         }
     }
@@ -369,7 +369,7 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
                 && !"image/png".equals(contentType)) {
 
             throw new Exception(
-                    "El tipo MIME de la Orden m\u00e9dica no es v\u00e1lido."
+                    "El tipo MIME de la Orden médica no es válido."
             );
         }
 

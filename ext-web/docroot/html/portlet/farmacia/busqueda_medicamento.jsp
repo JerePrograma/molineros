@@ -389,7 +389,7 @@
 	    		   totalOriginalReclamo=jQuery('#<portlet:namespace />importeoriginalreclamo').val() ;
 	    		   
 		    	   if ( Math.round(total) >Math.round(totalOriginalReclamo )  ){
-		    		   alert('El monto ingresado no debe superar ' + jQuery('#<portlet:namespace />importeoriginalreclamo').val() + ' que es el original autorizado para esta prestaci\u00f3n en el reclamo.');
+		    		   alert('El monto ingresado no debe superar ' + jQuery('#<portlet:namespace />importeoriginalreclamo').val() + ' que es el original autorizado para esta prestación en el reclamo.');
 		    		   return false;		    		
 		    	   }    	   	
 			}			

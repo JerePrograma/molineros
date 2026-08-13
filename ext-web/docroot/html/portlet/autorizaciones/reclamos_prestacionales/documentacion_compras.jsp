@@ -47,7 +47,7 @@ if (reclamoprestacional != null
     } catch (Exception errorDocumentacion) {
         if (mostrarDocumentacionCompras) {
             errorDocumentacionCompras =
-                    "No se pudo recuperar la documentaci\u00f3n de Compras.";
+                    "No se pudo recuperar la documentación de Compras.";
         }
     }
 }
