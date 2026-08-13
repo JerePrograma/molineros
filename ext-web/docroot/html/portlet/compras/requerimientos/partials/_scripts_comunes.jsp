@@ -128,4 +128,241 @@
         return false;
     }
 
+        /*
+         * ==========================================================
+         * VENCIMIENTO CUD DEL AFILIADO
+         * ==========================================================
+         *
+         * El componente compartido de afiliado ya contiene:
+         *
+         *   discapacidad
+         *   discapacidad_vto
+         *
+         * Compras únicamente completa su estado consultando el
+         * endpoint existente de Autorizaciones.
+         *
+         * La secuencia evita que una respuesta AJAX vieja pueda
+         * sobrescribir los datos de un afiliado seleccionado después.
+         */
+
+        var <portlet:namespace />vencimientoCudSecuencia =
+                0;
+
+        var <portlet:namespace />vencimientoCudRequest =
+                null;
+
+        function <portlet:namespace />invalidarConsultaVencimientoCud() {
+
+            <portlet:namespace />vencimientoCudSecuencia++;
+
+            if (<portlet:namespace />vencimientoCudRequest
+                    && <portlet:namespace />vencimientoCudRequest.readyState != 4) {
+
+                try {
+                    <portlet:namespace />vencimientoCudRequest.abort();
+                } catch (e) {
+                    // No alterar el flujo de Compras por un aborto AJAX.
+                }
+            }
+
+            <portlet:namespace />vencimientoCudRequest =
+                    null;
+        }
+
+        function <portlet:namespace />limpiarVisualVencimientoCud() {
+
+            jQuery(
+                    '#<portlet:namespace />discapacidad'
+            ).hide();
+
+            jQuery(
+                    '#<portlet:namespace />discapacidad_vto'
+            )
+                    .text('')
+                    .hide();
+        }
+
+        function <portlet:namespace />ocultarVencimientoCudAfiliado() {
+
+            <portlet:namespace />invalidarConsultaVencimientoCud();
+
+            <portlet:namespace />limpiarVisualVencimientoCud();
+        }
+
+        function <portlet:namespace />actualizarVencimientoCudAfiliado(
+                cuil,
+                inte,
+                incapacidad) {
+
+            cuil =
+                    cuil != null
+                            ? jQuery.trim(String(cuil))
+                            : '';
+
+            inte =
+                    inte != null
+                            ? jQuery.trim(String(inte))
+                            : '';
+
+            incapacidad =
+                    incapacidad != null
+                            ? jQuery.trim(String(incapacidad))
+                            : '';
+
+            /*
+             * Se invalida cualquier consulta anterior antes de
+             * comenzar a trabajar con el nuevo afiliado.
+             */
+            <portlet:namespace />invalidarConsultaVencimientoCud();
+
+            if (incapacidad != '1'
+                    || cuil == ''
+                    || inte == '') {
+
+                <portlet:namespace />limpiarVisualVencimientoCud();
+                return;
+            }
+
+            var discapacidad =
+                    jQuery(
+                            '#<portlet:namespace />discapacidad'
+                    );
+
+            var vencimiento =
+                    jQuery(
+                            '#<portlet:namespace />discapacidad_vto'
+                    );
+
+            discapacidad.show();
+
+            vencimiento
+                    .text('Vto. CUD: consultando...')
+                    .show();
+
+            var secuenciaActual =
+                    <portlet:namespace />vencimientoCudSecuencia;
+
+            var url =
+                    '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>'
+                    + '&struts_action=/autorizaciones/buscar_afiliado_fecha_vto_documentacion';
+
+            <portlet:namespace />vencimientoCudRequest =
+                    jQuery.ajax({
+                        url: url,
+                        data: {
+                            cuil_titular: cuil,
+                            inte: inte
+                        },
+                        cache: false,
+
+                        success: function(data) {
+
+                            /*
+                             * Ignorar respuestas pertenecientes a una
+                             * selección de afiliado anterior.
+                             */
+                            if (secuenciaActual
+                                    != <portlet:namespace />vencimientoCudSecuencia) {
+
+                                return;
+                            }
+
+                            var obj =
+                                    null;
+
+                            try {
+                                obj =
+                                        typeof data == 'string'
+                                                ? jQuery.parseJSON(data)
+                                                : data;
+                            } catch (e) {
+                                vencimiento
+                                        .text('Vto. CUD: no disponible')
+                                        .show();
+
+                                return;
+                            }
+
+                            var discapacitado =
+                                    obj != null
+                                    && obj.discapacitado != null
+                                            ? jQuery.trim(
+                                                    String(
+                                                            obj.discapacitado
+                                                    )
+                                            )
+                                            : '';
+
+                            /*
+                             * También se respeta el valor canónico devuelto
+                             * por el servidor.
+                             */
+                            if (discapacitado != '1') {
+                                <portlet:namespace />limpiarVisualVencimientoCud();
+                                return;
+                            }
+
+                            var fechaVto =
+                                    obj != null
+                                    && obj.fechaVto != null
+                                            ? jQuery.trim(
+                                                    String(
+                                                            obj.fechaVto
+                                                    )
+                                            )
+                                            : '';
+
+                            discapacidad.show();
+
+                            if (fechaVto != '') {
+                                vencimiento
+                                        .text(
+                                                'Vto. CUD: '
+                                                        + fechaVto
+                                        )
+                                        .show();
+                            } else {
+                                vencimiento
+                                        .text(
+                                                'Vto. CUD: sin fecha informada'
+                                        )
+                                        .show();
+                            }
+                        },
+
+                        error: function(xhr, estado) {
+
+                            if (secuenciaActual
+                                    != <portlet:namespace />vencimientoCudSecuencia) {
+
+                                return;
+                            }
+
+                            /*
+                             * abort es esperado cuando se cambia de afiliado.
+                             */
+                            if (estado == 'abort') {
+                                return;
+                            }
+
+                            discapacidad.show();
+
+                            vencimiento
+                                    .text(
+                                            'Vto. CUD: no disponible'
+                                    )
+                                    .show();
+                        },
+
+                        complete: function() {
+
+                            if (secuenciaActual
+                                    == <portlet:namespace />vencimientoCudSecuencia) {
+
+                                <portlet:namespace />vencimientoCudRequest =
+                                        null;
+                            }
+                        }
+                    });
+        }
 </script>

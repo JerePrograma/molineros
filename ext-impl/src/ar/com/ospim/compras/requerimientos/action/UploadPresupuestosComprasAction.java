@@ -38,6 +38,8 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -578,7 +580,23 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 );
             }
 
-            String extension = obtenerExtensionSegura(nombreOriginal);
+            String extension =
+                    obtenerExtensionSegura(
+                            nombreOriginal
+                    );
+
+            if (!".pdf".equals(extension)) {
+                throw new Exception(
+                        "El presupuesto "
+                                + (i + 1)
+                                + " debe presentarse en formato PDF."
+                );
+            }
+
+            validarContenidoPdf(
+                    entrada.archivo,
+                    i + 1
+            );
 
             if (entrada.idPrestador <= 0) {
                 throw new Exception(
@@ -1794,6 +1812,84 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         public RequerimientoCompraPresupuesto getAsociacion() {
             return asociacion;
+        }
+    }
+
+    private void validarContenidoPdf(
+            File archivo,
+            int numeroPresupuesto) throws Exception {
+
+        if (archivo == null
+                || !archivo.exists()
+                || archivo.length() < 5L) {
+
+            throw new Exception(
+                    "El presupuesto "
+                            + numeroPresupuesto
+                            + " no contiene un archivo PDF válido."
+            );
+        }
+
+        InputStream input = null;
+
+        try {
+            input =
+                    new FileInputStream(
+                            archivo
+                    );
+
+            byte[] firma =
+                    new byte[5];
+
+            int totalLeido =
+                    0;
+
+            while (totalLeido < firma.length) {
+                int leido =
+                        input.read(
+                                firma,
+                                totalLeido,
+                                firma.length - totalLeido
+                        );
+
+                if (leido < 0) {
+                    break;
+                }
+
+                totalLeido +=
+                        leido;
+            }
+
+            boolean pdf =
+                    totalLeido == firma.length
+                            && firma[0] == '%'
+                            && firma[1] == 'P'
+                            && firma[2] == 'D'
+                            && firma[3] == 'F'
+                            && firma[4] == '-';
+
+            if (!pdf) {
+                throw new Exception(
+                        "El presupuesto "
+                                + numeroPresupuesto
+                                + " no contiene un archivo PDF válido."
+                );
+            }
+
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (Exception closeError) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(
+                                "No se pudo cerrar la validación "
+                                        + "del archivo PDF.",
+                                closeError
+                        );
+                    }
+                }
+            }
         }
     }
 }

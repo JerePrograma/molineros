@@ -767,6 +767,13 @@ boolean msgPresupuestoBorrado =
                                 + '/>'
                 );
 
+        var ayudaArchivo =
+                jQuery(
+                        '<div class="compras-ayuda-campo">'
+                                + 'Formatos permitidos: PDF'
+                                + '</div>'
+                );
+
         var subir =
                 jQuery(
                         '<input '
@@ -865,6 +872,8 @@ boolean msgPresupuestoBorrado =
                         '<td class="presupuesto-campo-archivo"></td>'
                 ).append(
                         archivo
+                ).append(
+                        ayudaArchivo
                 )
         );
 
@@ -982,6 +991,23 @@ boolean msgPresupuestoBorrado =
 
                 valido =
                         false;
+
+                return false;
+            }
+
+            var nombreArchivo =
+                    jQuery.trim(
+                            archivo.val()
+                    );
+
+            if (!/\.pdf$/i.test(nombreArchivo)) {
+                alert(
+                        'El archivo del presupuesto '
+                                + (index + 1)
+                                + ' debe estar en formato PDF.'
+                );
+
+                valido = false;
 
                 return false;
             }

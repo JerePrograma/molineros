@@ -124,6 +124,21 @@
             <portlet:namespace />cargarAfiliadoVista();
 
             /*
+             * En modo vista no se ejecuta seleccionaCamposAfiliado().
+             * Se consulta explícitamente el vencimiento CUD utilizando
+             * el afiliado ya recuperado por Compras.
+             *
+             * La consulta se realiza una sola vez. El segundo llamado
+             * a cargarAfiliadoVista() únicamente reaplica los valores
+             * del componente legacy.
+             */
+            <portlet:namespace />actualizarVencimientoCudAfiliado(
+                    '<%= jsCompra(afiliadoCuilVisible) %>',
+                    '<%= jsCompra(afiliadoIntVisible) %>',
+                    '<%= jsCompra(afiliadoIncapacidad) %>'
+            );
+
+            /*
              * Algunos includes legacy terminan de inicializar sus controles
              * después del ready. Se reaplica una sola vez sin alterar datos.
              */
