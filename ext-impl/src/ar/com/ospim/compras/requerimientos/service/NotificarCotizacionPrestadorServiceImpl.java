@@ -8,6 +8,7 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
+import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.servlets.PdfServlet;
 import ar.com.ospim.util.ConnectionHelper;
 
@@ -48,6 +49,8 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
     private static final String EMAIL_DESTINO_TEMPORAL =
             "acomas@ospim.org.ar";
+
+    private static final String EMAIL_COPIA_COTIZACION = TraeListasServiceUtil.getSystemConfig("REQUERIMIENTO_EMAIL_CC");
 
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile(
@@ -754,7 +757,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 || entry.getSize() > maximoTamano) {
 
             throw new Exception(
-                    "La Orden m\u00e9dica persistida tiene un tama\u00f1o inv\u00e1lido."
+                    "La Orden médica persistida tiene un tama\u00f1o inv\u00e1lido."
             );
         }
 
@@ -810,7 +813,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         if (contenido == null || contenido.length == 0) {
             throw new Exception(
-                    "La Orden m\u00e9dica persistida est\u00e1 vac\u00eda."
+                    "La Orden médica persistida est\u00e1 vac\u00eda."
             );
         }
 
@@ -833,7 +836,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                     || contenido[7] != 0x0A) {
 
                 throw new Exception(
-                        "La Orden m\u00e9dica PNG no conserva una firma v\u00e1lida."
+                        "La Orden médica PNG no conserva una firma v\u00e1lida."
                 );
             }
 
@@ -849,7 +852,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                     || (contenido[2] & 0xFF) != 0xFF) {
 
                 throw new Exception(
-                        "La Orden m\u00e9dica JPEG no conserva una firma v\u00e1lida."
+                        "La Orden médica JPEG no conserva una firma v\u00e1lida."
                 );
             }
 
@@ -857,7 +860,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
         }
 
         throw new Exception(
-                "La Orden m\u00e9dica persistida no es JPEG/JPG ni PNG."
+                "La Orden médica persistida no es JPEG/JPG ni PNG."
         );
     }
 
@@ -896,7 +899,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                         )) {
 
             throw new Exception(
-                    "La asociaci\u00f3n de la Orden m\u00e9dica activa es inconsistente."
+                    "La asociaci\u00f3n de la Orden médica activa es inconsistente."
             );
         }
     }
@@ -926,7 +929,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         if (!coincide) {
             throw new Exception(
-                    "La Orden m\u00e9dica no coincide con su identidad en Document Library."
+                    "La Orden médica no coincide con su identidad en Document Library."
             );
         }
     }
@@ -948,7 +951,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             if (input == null) {
                 throw new Exception(
-                        "Document Library no devolvi\u00f3 la Orden m\u00e9dica."
+                        "Document Library no devolvi\u00f3 la Orden médica."
                 );
             }
 
@@ -968,7 +971,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
                 if (total > maximoTamano) {
                     throw new Exception(
-                            "La Orden m\u00e9dica supera dl.file.max.size."
+                            "La Orden médica supera dl.file.max.size."
                     );
                 }
 
@@ -979,7 +982,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             if (contenido.length != entry.getSize()) {
                 throw new Exception(
-                        "El tama\u00f1o le\u00eddo de la Orden m\u00e9dica no coincide con Document Library."
+                        "El tama\u00f1o le\u00eddo de la Orden médica no coincide con Document Library."
                 );
             }
 
@@ -991,7 +994,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 } catch (Exception closeError) {
                     if (_log.isDebugEnabled()) {
                         _log.debug(
-                                "No se pudo cerrar la lectura de la Orden m\u00e9dica.",
+                                "No se pudo cerrar la lectura de la Orden médica.",
                                 closeError
                         );
                     }
@@ -1030,7 +1033,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 || nombreOriginal.matches(".*\\p{Cntrl}.*")) {
 
             throw new Exception(
-                    "El nombre original de la Orden m\u00e9dica es inv\u00e1lido."
+                    "El nombre original de la Orden médica es inv\u00e1lido."
             );
         }
     }
@@ -1417,6 +1420,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         mailHelper.enviar(
                 email,
+                resolverEmailsCopiaCotizacion(),
                 asunto,
                 cuerpo,
                 pedidoPresupuestoPdf,
@@ -1438,6 +1442,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         mailHelper.enviar(
                 email,
+                resolverEmailsCopiaCotizacion(),
                 asunto,
                 cuerpo,
                 pedidoPresupuestoPdf,
@@ -1616,6 +1621,24 @@ public class NotificarCotizacionPrestadorServiceImpl {
         }
 
         return normalizarEmail(emailReservado);
+    }
+
+    private String[] resolverEmailsCopiaCotizacion() {
+
+        /*
+         * Mientras el envío esté redirigido al destinatario temporal
+         * de QA, no se incluyen las copias productivas.
+         *
+         * Esto evita que una ejecución de prueba genere correos reales
+         * hacia los destinatarios fijos.
+         */
+        if (USAR_EMAIL_DESTINO_TEMPORAL) {
+            return new String[0];
+        }
+
+        return new String[] {
+                EMAIL_COPIA_COTIZACION
+        };
     }
 
     private String construirAsunto(

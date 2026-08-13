@@ -120,7 +120,7 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
             )) {
 
                 throw new Exception(
-                        "La identidad de la Orden m\u00e9dica "
+                        "La identidad de la Orden médica "
                                 + "no coincide con Document Library."
                 );
             }
@@ -136,7 +136,7 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                     != themeDisplay.getScopeGroupId()) {
 
                 throw new Exception(
-                        "La Orden m\u00e9dica no pertenece "
+                        "La Orden médica no pertenece "
                                 + "al sitio actual."
                 );
             }
@@ -163,7 +163,7 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                     && !"image/png".equals(contentType)) {
 
                 throw new Exception(
-                        "El tipo de archivo de la Orden m\u00e9dica "
+                        "El tipo de archivo de la Orden médica "
                                 + "no es v\u00e1lido."
                 );
             }
@@ -202,7 +202,7 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
         } catch (Exception e) {
             _log.error(
                     "No se pudo descargar de forma segura "
-                            + "la Orden m\u00e9dica de Compras.",
+                            + "la Orden médica de Compras.",
                     e
             );
 
@@ -266,7 +266,7 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
         }
 
         throw new Exception(
-                "La Orden m\u00e9dica solicitada "
+                "La Orden médica solicitada "
                         + "no pertenece al requerimiento informado."
         );
     }
@@ -302,7 +302,7 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                 )) {
 
             throw new Exception(
-                    "No existe una Orden m\u00e9dica activa "
+                    "No existe una Orden médica activa "
                             + "y v\u00e1lida para el requerimiento."
             );
         }

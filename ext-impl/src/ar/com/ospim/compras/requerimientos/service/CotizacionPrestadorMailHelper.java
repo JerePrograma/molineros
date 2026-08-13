@@ -43,8 +43,28 @@ public class CotizacionPrestadorMailHelper {
             String nombrePedidoPresupuestoPdf)
             throws Exception {
 
+        enviar(
+                emailDestino,
+                null,
+                asunto,
+                cuerpo,
+                pedidoPresupuestoPdf,
+                nombrePedidoPresupuestoPdf
+        );
+    }
+
+    public void enviar(
+            String emailDestino,
+            String[] emailsCopia,
+            String asunto,
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf)
+            throws Exception {
+
         enviarInterno(
                 emailDestino,
+                emailsCopia,
                 asunto,
                 cuerpo,
                 pedidoPresupuestoPdf,
@@ -66,6 +86,31 @@ public class CotizacionPrestadorMailHelper {
             String contentTypeOrdenMedica)
             throws Exception {
 
+        enviar(
+                emailDestino,
+                null,
+                asunto,
+                cuerpo,
+                pedidoPresupuestoPdf,
+                nombrePedidoPresupuestoPdf,
+                ordenMedica,
+                nombreOrdenMedica,
+                contentTypeOrdenMedica
+        );
+    }
+
+    public void enviar(
+            String emailDestino,
+            String[] emailsCopia,
+            String asunto,
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf,
+            byte[] ordenMedica,
+            String nombreOrdenMedica,
+            String contentTypeOrdenMedica)
+            throws Exception {
+
         validarOrdenMedica(
                 ordenMedica,
                 nombreOrdenMedica,
@@ -74,6 +119,7 @@ public class CotizacionPrestadorMailHelper {
 
         enviarInterno(
                 emailDestino,
+                emailsCopia,
                 asunto,
                 cuerpo,
                 pedidoPresupuestoPdf,
@@ -86,6 +132,7 @@ public class CotizacionPrestadorMailHelper {
 
     private void enviarInterno(
             String emailDestino,
+            String[] emailsCopia,
             String asunto,
             String cuerpo,
             byte[] pedidoPresupuestoPdf,
@@ -97,6 +144,7 @@ public class CotizacionPrestadorMailHelper {
 
         validarParametros(
                 emailDestino,
+                emailsCopia,
                 asunto,
                 cuerpo,
                 pedidoPresupuestoPdf,
@@ -212,6 +260,11 @@ public class CotizacionPrestadorMailHelper {
                         emailDestino.trim(),
                         true
                 )
+        );
+
+        agregarDestinatariosCopia(
+                mensaje,
+                emailsCopia
         );
 
         mensaje.setSubject(
@@ -366,6 +419,7 @@ public class CotizacionPrestadorMailHelper {
 
     private void validarParametros(
             String emailDestino,
+            String[] emailsCopia,
             String asunto,
             String cuerpo,
             byte[] pedidoPresupuestoPdf,
@@ -381,6 +435,10 @@ public class CotizacionPrestadorMailHelper {
         validarEmail(
                 emailDestino,
                 "destino"
+        );
+
+        validarEmailsCopia(
+                emailsCopia
         );
 
         if (isEmpty(asunto)) {
@@ -585,5 +643,51 @@ public class CotizacionPrestadorMailHelper {
             String value) {
 
         return normalizar(value) == null;
+    }
+
+    private void validarEmailsCopia(
+            String[] emailsCopia) throws Exception {
+
+        if (emailsCopia == null
+                || emailsCopia.length == 0) {
+
+            return;
+        }
+
+        for (int i = 0; i < emailsCopia.length; i++) {
+
+            if (isEmpty(emailsCopia[i])) {
+                throw new Exception(
+                        "Existe un email de copia vacío."
+                );
+            }
+
+            validarEmail(
+                    emailsCopia[i],
+                    "de copia"
+            );
+        }
+    }
+
+    private void agregarDestinatariosCopia(
+            MimeMessage mensaje,
+            String[] emailsCopia) throws Exception {
+
+        if (emailsCopia == null
+                || emailsCopia.length == 0) {
+
+            return;
+        }
+
+        for (int i = 0; i < emailsCopia.length; i++) {
+
+            mensaje.addRecipient(
+                    Message.RecipientType.CC,
+                    new InternetAddress(
+                            emailsCopia[i].trim(),
+                            true
+                    )
+            );
+        }
     }
 }

@@ -33,7 +33,7 @@ public class DocumentoLibraryComprasHelper
     private static final Log _log =
             LogFactoryUtil.getLog(DocumentoLibraryComprasHelper.class);
 
-    public static final String TITULO_ORDEN_MEDICA = "Orden m\u00e9dica";
+    public static final String TITULO_ORDEN_MEDICA = "Orden médica";
     public static final String PARAM_ARCHIVO_ORDEN_MEDICA = "orden_medica";
     public static final String PARAM_FECHA_ORDEN_MEDICA =
             "fecha_orden_medica";
@@ -50,7 +50,7 @@ public class DocumentoLibraryComprasHelper
 
         if (actionRequest == null) {
             throw new Exception(
-                    "No se pudo preparar la carga de la Orden m\u00e9dica."
+                    "No se pudo preparar la carga de la Orden médica."
             );
         }
 
@@ -117,7 +117,7 @@ public class DocumentoLibraryComprasHelper
         try {
             if (entry == null || entry.getFileEntryId() <= 0L) {
                 throw new Exception(
-                        "Document Library no devolvi\u00f3 una Orden m\u00e9dica v\u00e1lida."
+                        "Document Library no devolvi\u00f3 una Orden médica v\u00e1lida."
                 );
             }
 
@@ -137,7 +137,7 @@ public class DocumentoLibraryComprasHelper
                     || !TITULO_ORDEN_MEDICA.equals(entry.getTitle())) {
 
                 throw new Exception(
-                        "La Orden m\u00e9dica creada no conserva la identidad requerida."
+                        "La Orden médica creada no conserva la identidad requerida."
                 );
             }
 
@@ -148,7 +148,7 @@ public class DocumentoLibraryComprasHelper
                     DLFileEntryLocalServiceUtil.deleteFileEntry(entry);
                 } catch (Exception cleanupError) {
                     _log.error(
-                            "Fall\u00f3 la compensaci\u00f3n de una Orden m\u00e9dica "
+                            "Fall\u00f3 la compensaci\u00f3n de una Orden médica "
                                     + "creada pero no validada. fileEntryId="
                                     + entry.getFileEntryId()
                                     + ", folderId=" + entry.getFolderId()
@@ -227,7 +227,7 @@ public class DocumentoLibraryComprasHelper
                 || !esExtensionOrdenMedica(extension)) {
 
             throw new Exception(
-                    "No se pudo construir el nombre persistido de la Orden m\u00e9dica."
+                    "No se pudo construir el nombre persistido de la Orden médica."
             );
         }
 
@@ -312,7 +312,7 @@ public class DocumentoLibraryComprasHelper
 
         if (WebKeysCompras.isEmpty(fecha)) {
             throw new Exception(
-                    "Fecha de la Orden m\u00e9dica: debe informar una fecha."
+                    "Fecha de la Orden médica: debe informar una fecha."
             );
         }
 
@@ -323,7 +323,7 @@ public class DocumentoLibraryComprasHelper
 
         if (parsed == null || posicion.getIndex() != fecha.length()) {
             throw new Exception(
-                    "Fecha de la Orden m\u00e9dica: el formato no es v\u00e1lido."
+                    "Fecha de la Orden médica: el formato no es v\u00e1lido."
             );
         }
 
@@ -376,7 +376,7 @@ public class DocumentoLibraryComprasHelper
 
             if (!valida) {
                 throw new Exception(
-                        "Orden m\u00e9dica: el contenido no coincide con una imagen JPEG o PNG v\u00e1lida."
+                        "Orden médica: el contenido no coincide con una imagen JPEG o PNG v\u00e1lida."
                 );
             }
         } finally {
@@ -404,7 +404,7 @@ public class DocumentoLibraryComprasHelper
                 || "application/octet-stream".equals(contentType)) {
 
             throw new Exception(
-                    "Orden m\u00e9dica: el tipo MIME "
+                    "Orden médica: el tipo MIME "
                             + origen
                             + " no identifica una imagen JPEG o PNG."
             );
@@ -412,7 +412,7 @@ public class DocumentoLibraryComprasHelper
 
         if (!esperado.equals(contentType)) {
             throw new Exception(
-                    "Orden m\u00e9dica: el tipo MIME "
+                    "Orden médica: el tipo MIME "
                             + origen
                             + " no coincide con la extensi\u00f3n del archivo."
             );
@@ -457,7 +457,7 @@ public class DocumentoLibraryComprasHelper
                 || CONTENT_TYPE_PNG.equals(ordenMedica.getContentType()))) {
 
             throw new Exception(
-                    "La Orden m\u00e9dica validada no contiene todos los datos requeridos."
+                    "La Orden médica validada no contiene todos los datos requeridos."
             );
         }
 
@@ -470,7 +470,7 @@ public class DocumentoLibraryComprasHelper
                 > WebKeysCompras.DOCUMENT_LIBRARY_MAX_TITLE_LENGTH) {
 
             throw new Exception(
-                    "La Orden m\u00e9dica validada tiene un nombre de archivo inv\u00e1lido."
+                    "La Orden médica validada tiene un nombre de archivo inv\u00e1lido."
             );
         }
 
@@ -478,7 +478,7 @@ public class DocumentoLibraryComprasHelper
 
         if (!ordenMedica.getExtension().equals(extensionNombre)) {
             throw new Exception(
-                    "La extensi\u00f3n de la Orden m\u00e9dica no coincide con su nombre original."
+                    "La extensi\u00f3n de la Orden médica no coincide con su nombre original."
             );
         }
 
@@ -486,7 +486,7 @@ public class DocumentoLibraryComprasHelper
 
         if (ordenMedica.getArchivo().length() > maximoTamanoArchivo) {
             throw new Exception(
-                    "La Orden m\u00e9dica validada supera el tama\u00f1o permitido."
+                    "La Orden médica validada supera el tama\u00f1o permitido."
             );
         }
 
