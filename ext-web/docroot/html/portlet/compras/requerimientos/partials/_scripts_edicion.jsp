@@ -1010,107 +1010,362 @@
     }
 
     <c:if test="<%= esNuevo %>">
+        function <portlet:namespace />ordenMedicaDosDigitos(valor) {
+            valor = parseInt(valor, 10);
+
+            return valor < 10
+                    ? '0' + valor
+                    : String(valor);
+        }
+
         function <portlet:namespace />validarOrdenMedicaAlta(form) {
-            var archivo = document.getElementById(
-                    '<portlet:namespace />orden_medica'
+            var filas = jQuery(
+                    '#<portlet:namespace />ordenes_medicas_body tr'
             );
-            var fecha = document.getElementById(
-                    '<portlet:namespace />fecha_orden_medica'
-            );
-
-            if (!archivo || jQuery.trim(archivo.value || '') == '') {
-                alert('Orden médica: debe seleccionar una imagen JPEG o PNG.');
-
-                if (archivo) {
-                    archivo.focus();
-                }
-
-                return false;
-            }
-
-            var nombreArchivo = (archivo.value || '')
-                    .replace(/^.*[\\\/]/, '');
-
-            if (!/\.(jpe?g|png)$/i.test(nombreArchivo)) {
-                alert('Orden médica: sólo se permiten archivos JPG, JPEG o PNG.');
-                archivo.focus();
-                return false;
-            }
-
-            var fechaValor = fecha ? jQuery.trim(fecha.value || '') : '';
-
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaValor)) {
-                alert('Fecha de la orden médica: debe informar una fecha válida con formato AAAA-MM-DD.');
-
-                if (fecha) {
-                    fecha.focus();
-                }
-
-                return false;
-            }
-
-            var partesFecha = fechaValor.split('-');
-            var fechaControl = new Date(
-                    parseInt(partesFecha[0], 10),
-                    parseInt(partesFecha[1], 10) - 1,
-                    parseInt(partesFecha[2], 10)
-            );
-
-            if (fechaControl.getFullYear() != parseInt(partesFecha[0], 10)
-                    || fechaControl.getMonth() != parseInt(partesFecha[1], 10) - 1
-                    || fechaControl.getDate() != parseInt(partesFecha[2], 10)) {
-
-                alert('Fecha de la orden médica: la fecha informada no existe.');
-                fecha.focus();
-                return false;
-            }
 
             var fechaHidden = document.getElementById(
                     '<portlet:namespace />fecha_orden_medica_hidden'
             );
 
-            if (!fechaHidden) {
-                alert('No se pudo preparar la fecha de la Orden médica para el envío.');
+            if (!form || filas.length == 0 || !fechaHidden) {
+                alert('No se pudieron preparar las Órdenes médicas para el envío.');
                 return false;
             }
 
-            fechaHidden.value = fechaValor;
+            var valido = true;
+
+            filas.each(function(index) {
+                if (!valido) {
+                    return;
+                }
+
+                var fila = jQuery(this);
+
+                var archivo =
+                        fila.find(
+                                'input.orden-medica-archivo'
+                        ).get(0);
+
+                /*
+                 * Este hidden continúa siendo el valor que se envía
+                 * al backend en formato AAAA-MM-DD.
+                 */
+                var fechaValorInput =
+                        fila.find(
+                                'input.orden-medica-fecha-valor'
+                        ).get(0);
+
+                /*
+                 * La fecha visible ya no es un input de texto ni un
+                 * calendario JavaScript propio.
+                 *
+                 * Se toma de Día / Mes / Año.
+                 *
+                 * Mes conserva la semántica de Calendar.MONTH:
+                 * enero = 0, diciembre = 11.
+                 */
+                var fechaDia =
+                        fila.find(
+                                'select.orden-medica-fecha-dia'
+                        ).get(0);
+
+                var fechaMes =
+                        fila.find(
+                                'select.orden-medica-fecha-mes'
+                        ).get(0);
+
+                var fechaAnio =
+                        fila.find(
+                                'select.orden-medica-fecha-anio'
+                        ).get(0);
+
+                var numeroReceta =
+                        fila.find(
+                                'input.orden-medica-numero-receta'
+                        ).get(0);
+
+                var numeroOrden = index + 1;
+
+                if (!archivo
+                        || jQuery.trim(
+                                archivo.value || ''
+                        ) == '') {
+
+                    alert(
+                            'Orden médica '
+                                    + numeroOrden
+                                    + ': debe seleccionar una imagen JPEG o PNG.'
+                    );
+
+                    if (archivo) {
+                        archivo.focus();
+                    }
+
+                    valido = false;
+                    return;
+                }
+
+                var nombreArchivo =
+                        (archivo.value || '')
+                                .replace(
+                                        /^.*[\\\/]/,
+                                        ''
+                                );
+
+                if (!/\.(jpe?g|png)$/i.test(nombreArchivo)) {
+                    alert(
+                            'Orden médica '
+                                    + numeroOrden
+                                    + ': sólo se permiten archivos JPG, JPEG o PNG.'
+                    );
+
+                    archivo.focus();
+
+                    valido = false;
+                    return;
+                }
+
+                if (!fechaDia
+                        || !fechaMes
+                        || !fechaAnio
+                        || !fechaValorInput) {
+
+                    alert(
+                            'No se pudo preparar la fecha de la Orden médica '
+                                    + numeroOrden
+                                    + '.'
+                    );
+
+                    valido = false;
+                    return;
+                }
+
+                var dia =
+                        parseInt(
+                                fechaDia.value,
+                                10
+                        );
+
+                var mes =
+                        parseInt(
+                                fechaMes.value,
+                                10
+                        );
+
+                var anio =
+                        parseInt(
+                                fechaAnio.value,
+                                10
+                        );
+
+                /*
+                 * Los controles nullable utilizan -1.
+                 */
+                if (isNaN(dia)
+                        || isNaN(mes)
+                        || isNaN(anio)
+                        || dia < 1
+                        || mes < 0
+                        || anio < 1) {
+
+                    alert(
+                            'Fecha de la orden médica '
+                                    + numeroOrden
+                                    + ': debe informar día, mes y año.'
+                    );
+
+                    fechaDia.focus();
+
+                    valido = false;
+                    return;
+                }
+
+                var fechaControl =
+                        new Date(
+                                anio,
+                                mes,
+                                dia
+                        );
+
+                /*
+                 * Evita fechas como 31/02.
+                 */
+                if (fechaControl.getFullYear() != anio
+                        || fechaControl.getMonth() != mes
+                        || fechaControl.getDate() != dia) {
+
+                    alert(
+                            'Fecha de la orden médica '
+                                    + numeroOrden
+                                    + ': la fecha informada no existe.'
+                    );
+
+                    fechaDia.focus();
+
+                    valido = false;
+                    return;
+                }
+
+                /*
+                 * El backend conserva su contrato AAAA-MM-DD.
+                 *
+                 * El +1 es obligatorio porque el selector de mes
+                 * utiliza enero=0.
+                 */
+                var fechaISO =
+                        String(anio)
+                                + '-'
+                                + <portlet:namespace />ordenMedicaDosDigitos(
+                                        mes + 1
+                                )
+                                + '-'
+                                + <portlet:namespace />ordenMedicaDosDigitos(
+                                        dia
+                                );
+
+                fechaValorInput.value =
+                        fechaISO;
+
+                if (!numeroReceta) {
+                    alert(
+                            'No se pudo preparar el número de receta de la Orden médica '
+                                    + numeroOrden
+                                    + '.'
+                    );
+
+                    valido = false;
+                    return;
+                }
+
+                if ((numeroReceta.value || '').length > 100) {
+                    alert(
+                            'Número de receta de la Orden médica '
+                                    + numeroOrden
+                                    + ': no puede superar los 100 caracteres.'
+                    );
+
+                    numeroReceta.focus();
+
+                    valido = false;
+                    return;
+                }
+
+                /*
+                 * Compatibilidad con el parámetro histórico correspondiente
+                 * a la primera Orden médica.
+                 */
+                if (index == 0) {
+                    fechaHidden.value =
+                            fechaISO;
+                }
+            });
+
+            if (!valido) {
+                return false;
+            }
+
+            var cantidad = document.getElementById(
+                    '<portlet:namespace />orden_medica_count'
+            );
+
+            if (!cantidad) {
+                alert(
+                        'No se pudo preparar la cantidad de Órdenes médicas para el envío.'
+                );
+
+                return false;
+            }
+
+            cantidad.value =
+                    filas.length;
+
             return true;
         }
 
-        function <portlet:namespace />incorporarArchivoOrdenMedica(form) {
-            var archivo = document.getElementById(
-                    '<portlet:namespace />orden_medica'
+        function <portlet:namespace />incorporarOrdenesMedicas(form) {
+            var filas = jQuery(
+                    '#<portlet:namespace />ordenes_medicas_body tr'
+            );
+            var cantidad = document.getElementById(
+                    '<portlet:namespace />orden_medica_count'
             );
 
-            if (!form || !archivo || !archivo.parentNode) {
+            if (!form || filas.length == 0 || !cantidad) {
                 return null;
             }
 
-            var contexto = {
-                archivo: archivo,
-                padre: archivo.parentNode,
-                siguiente: archivo.nextSibling
-            };
+            var contextos = [];
+            var valido = true;
 
-            form.appendChild(archivo);
-            return contexto;
+            function incorporarNodo(nodo) {
+                if (!nodo || !nodo.parentNode) {
+                    valido = false;
+                    return;
+                }
+
+                contextos.push({
+                    nodo: nodo,
+                    padre: nodo.parentNode,
+                    siguiente: nodo.nextSibling
+                });
+
+                form.appendChild(nodo);
+            }
+
+            filas.each(function() {
+                if (!valido) {
+                    return;
+                }
+
+                var fila = jQuery(this);
+
+                incorporarNodo(
+                        fila.find('input.orden-medica-archivo').get(0)
+                );
+                incorporarNodo(
+                        fila.find('input.orden-medica-fecha-valor').get(0)
+                );
+                incorporarNodo(
+                        fila.find('input.orden-medica-numero-receta').get(0)
+                );
+            });
+
+            if (valido) {
+                incorporarNodo(cantidad);
+            }
+
+            if (!valido) {
+                <portlet:namespace />restaurarOrdenesMedicas(
+                        contextos
+                );
+                return null;
+            }
+
+            return contextos;
         }
 
-        function <portlet:namespace />restaurarArchivoOrdenMedica(contexto) {
-            if (!contexto || !contexto.archivo || !contexto.padre) {
+        function <portlet:namespace />restaurarOrdenesMedicas(contextos) {
+            if (!contextos) {
                 return;
             }
 
-            if (contexto.siguiente
-                    && contexto.siguiente.parentNode == contexto.padre) {
+            for (var i = contextos.length - 1; i >= 0; i--) {
+                var contexto = contextos[i];
 
-                contexto.padre.insertBefore(
-                        contexto.archivo,
-                        contexto.siguiente
-                );
-            } else {
-                contexto.padre.appendChild(contexto.archivo);
+                if (!contexto || !contexto.nodo || !contexto.padre) {
+                    continue;
+                }
+
+                if (contexto.siguiente
+                        && contexto.siguiente.parentNode == contexto.padre) {
+
+                    contexto.padre.insertBefore(
+                            contexto.nodo,
+                            contexto.siguiente
+                    );
+                } else {
+                    contexto.padre.appendChild(contexto.nodo);
+                }
             }
         }
     </c:if>
@@ -1328,22 +1583,22 @@
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
-        var contextoOrdenMedica = null;
+        var contextosOrdenesMedicas = null;
 
         <c:if test="<%= esNuevo %>">
-            contextoOrdenMedica =
-                    <portlet:namespace />incorporarArchivoOrdenMedica(form);
+            contextosOrdenesMedicas =
+                    <portlet:namespace />incorporarOrdenesMedicas(form);
 
-            if (!contextoOrdenMedica) {
-                alert('No se pudo incorporar la Orden médica al formulario de envío.');
+            if (!contextosOrdenesMedicas) {
+                alert('No se pudieron incorporar las Órdenes médicas al formulario de envío.');
                 return <portlet:namespace />cancelarGuardadoCompra();
             }
         </c:if>
 
         if (!<portlet:namespace />submitFormularioCompra(form)) {
             <c:if test="<%= esNuevo %>">
-                <portlet:namespace />restaurarArchivoOrdenMedica(
-                        contextoOrdenMedica
+                <portlet:namespace />restaurarOrdenesMedicas(
+                        contextosOrdenesMedicas
                 );
             </c:if>
 

@@ -42,13 +42,19 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
         #<portlet:namespace />tabla_ordenes_medicas
         td.orden-medica-campo-archivo {
 
-            width: 40%;
+            width: 30%;
         }
 
         #<portlet:namespace />tabla_ordenes_medicas
         td.orden-medica-campo-fecha {
 
-            width: 30%;
+            width: 20%;
+        }
+
+        #<portlet:namespace />tabla_ordenes_medicas
+        td.orden-medica-campo-receta {
+
+            width: 20%;
         }
 
         #<portlet:namespace />tabla_ordenes_medicas
@@ -69,6 +75,12 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
 
             width: 95px;
             margin-right: 4px;
+        }
+
+        #<portlet:namespace />tabla_ordenes_medicas
+        input.orden-medica-numero-receta {
+
+            width: 95%;
         }
 
         #<portlet:namespace />tabla_ordenes_medicas
@@ -167,8 +179,9 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                 id="<portlet:namespace />tabla_ordenes_medicas">
 
             <colgroup>
-                <col style="width: 40%;" />
                 <col style="width: 30%;" />
+                <col style="width: 20%;" />
+                <col style="width: 20%;" />
                 <col style="width: 30%;" />
             </colgroup>
 
@@ -176,6 +189,7 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                 <tr>
                     <th>Orden médica</th>
                     <th>Fecha de la orden médica</th>
+                    <th>Número de receta</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -192,10 +206,22 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                     ? "fecha_orden_medica"
                                     : "fecha_orden_medica_" + i;
 
+                    String parametroNumeroRecetaOrdenMedica =
+                            i == 0
+                                    ? "numero_receta_orden_medica"
+                                    : "numero_receta_orden_medica_" + i;
+
                     String fechaOrdenMedicaGuardada =
                             ParamUtil.getString(
                                     renderRequest,
                                     parametroFechaOrdenMedica,
+                                    ""
+                            );
+
+                    String numeroRecetaOrdenMedicaGuardado =
+                            ParamUtil.getString(
+                                    renderRequest,
+                                    parametroNumeroRecetaOrdenMedica,
                                     ""
                             );
 
@@ -301,6 +327,14 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                     : "fecha_orden_medica_"
                                             + i
                                             + "_valor";
+
+                    String nombreCampoNumeroReceta =
+                            i == 0
+                                    ? "numero_receta_orden_medica"
+                                    : "numero_receta_orden_medica_" + i;
+
+                    String idCampoNumeroReceta =
+                            nombreCampoNumeroReceta;
                 %>
 
                     <tr>
@@ -347,6 +381,22 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
 
                             <div class="compras-ayuda-campo">
                                 Seleccione la fecha desde el calendario.
+                            </div>
+                        </td>
+
+                        <td class="orden-medica-campo-receta">
+                            <input
+                                    type="text"
+                                    class="orden-medica-numero-receta"
+                                    id="<portlet:namespace /><%= idCampoNumeroReceta %>"
+                                    name="<%= nombreCampoNumeroReceta %>"
+                                    maxlength="100"
+                                    value="<%= HtmlUtil.escape(
+                                            numeroRecetaOrdenMedicaGuardado
+                                    ) %>" />
+
+                            <div class="compras-ayuda-campo">
+                                Opcional.
                             </div>
                         </td>
 
@@ -406,6 +456,9 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
         <br />
 
         - Cada Orden médica debe tener informada su propia fecha.
+        <br />
+
+        - El número de receta es opcional.
         <br />
 
         - La fecha debe seleccionarse utilizando el botón "Calendario".
@@ -976,6 +1029,11 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                 'input.orden-medica-fecha-valor'
                         );
 
+                var numeroReceta =
+                        row.find(
+                                'input.orden-medica-numero-receta'
+                        );
+
                 var botonAgregar =
                         row.find(
                                 'input.orden-medica-agregar'
@@ -1010,6 +1068,16 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                     fechaValor.attr(
                             'id',
                             '<portlet:namespace />fecha_orden_medica_valor'
+                    );
+
+                    numeroReceta.attr(
+                            'name',
+                            'numero_receta_orden_medica'
+                    );
+
+                    numeroReceta.attr(
+                            'id',
+                            '<portlet:namespace />numero_receta_orden_medica'
                     );
 
                 } else {
@@ -1049,6 +1117,18 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                             '<portlet:namespace />fecha_orden_medica_'
                                     + index
                                     + '_valor'
+                    );
+
+                    numeroReceta.attr(
+                            'name',
+                            'numero_receta_orden_medica_'
+                                    + index
+                    );
+
+                    numeroReceta.attr(
+                            'id',
+                            '<portlet:namespace />numero_receta_orden_medica_'
+                                    + index
                     );
                 }
 
@@ -1194,6 +1274,15 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                     + '/>'
                     );
 
+            var numeroReceta =
+                    jQuery(
+                            '<input '
+                                    + 'type="text" '
+                                    + 'class="orden-medica-numero-receta" '
+                                    + 'maxlength="100" '
+                                    + '/>'
+                    );
+
             var botonCalendario =
                     jQuery(
                             '<input '
@@ -1275,6 +1364,23 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                             + '</div>'
             );
 
+            var tdNumeroReceta =
+                    jQuery(
+                            '<td '
+                                    + 'class="orden-medica-campo-receta">'
+                                    + '</td>'
+                    );
+
+            tdNumeroReceta.append(
+                    numeroReceta
+            );
+
+            tdNumeroReceta.append(
+                    '<div class="compras-ayuda-campo">'
+                            + 'Opcional.'
+                            + '</div>'
+            );
+
             var tdAcciones =
                     jQuery(
                             '<td '
@@ -1300,6 +1406,10 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
 
             row.append(
                     tdFecha
+            );
+
+            row.append(
+                    tdNumeroReceta
             );
 
             row.append(

@@ -13,6 +13,7 @@ public class RequerimientoCompraPresupuesto {
     private Integer tipoDocumento =
             Integer.valueOf(TIPO_DOCUMENTO_PRESUPUESTO);
     private Date fechaDocumento;
+    private String numeroReceta;
 
     private Long dlGroupId;
     private Long dlFolderId;
@@ -94,6 +95,14 @@ public class RequerimientoCompraPresupuesto {
 
     public void setFechaDocumento(Date fechaDocumento) {
         this.fechaDocumento = fechaDocumento;
+    }
+
+    public String getNumeroReceta() {
+        return numeroReceta;
+    }
+
+    public void setNumeroReceta(String numeroReceta) {
+        this.numeroReceta = numeroReceta;
     }
 
     public Long getDlGroupId() {

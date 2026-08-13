@@ -920,6 +920,10 @@ public class BusquedaRequerimientoCompraServiceImpl {
             presupuesto.setFechaDocumento(rs.getDate("fecha_documento"));
         }
 
+        if (hasColumn(rs, "numero_receta")) {
+            presupuesto.setNumeroReceta(getString(rs, "numero_receta"));
+        }
+
         presupuesto.setDlGroupId(getLong(rs, "dl_group_id"));
         presupuesto.setDlFolderId(getLong(rs, "dl_folder_id"));
         presupuesto.setDlFileEntryId(getLong(rs, "dl_file_entry_id"));

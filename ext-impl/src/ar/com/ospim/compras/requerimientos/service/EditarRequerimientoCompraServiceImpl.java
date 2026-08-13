@@ -51,7 +51,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
     private static final String SQL_REGISTRAR_ORDEN_MEDICA =
             "{ ? = call compras.registrar_requerimiento_orden_medica("
-                    + "?,?,?,?,?,?,?,?,?,?) }";
+                    + "?,?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_BAJA_PRESUPUESTO =
             "{ ? = call compras.baja_requerimiento_presupuesto("
@@ -687,7 +687,8 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.setString(8, emptyToNull(documento.getNombrePersistido()));
             stmt.setString(9, "Orden médica");
             stmt.setDate(10, ordenMedica.getFechaDocumento());
-            stmt.setString(11, emptyToNull(usuario));
+            stmt.setString(11, emptyToNull(ordenMedica.getNumeroReceta()));
+            stmt.setString(12, emptyToNull(usuario));
             stmt.execute();
 
             int idDocumento = stmt.getInt(1);

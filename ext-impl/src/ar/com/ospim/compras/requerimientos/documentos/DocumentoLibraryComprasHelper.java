@@ -38,6 +38,7 @@ public class DocumentoLibraryComprasHelper
     public static final String PARAM_FECHA_ORDEN_MEDICA =
             "fecha_orden_medica";
 
+    private static final String DESCRIPCION_ORDEN_MEDICA = "Orden médica";
     private static final String CONTENT_TYPE_JPEG = "image/jpeg";
     private static final String CONTENT_TYPE_PNG = "image/png";
 
@@ -108,7 +109,7 @@ public class DocumentoLibraryComprasHelper
                         folder.getFolderId(),
                         nombrePersistido,
                         TITULO_ORDEN_MEDICA,
-                        "",
+                        DESCRIPCION_ORDEN_MEDICA,
                         "",
                         ordenMedica.getArchivo(),
                         serviceContext
@@ -622,6 +623,21 @@ public class DocumentoLibraryComprasHelper
             String fechaNormalizada)
             throws Exception {
 
+        return validarOrdenMedica(
+                uploadRequest,
+                nombreCampoArchivo,
+                fechaNormalizada,
+                null
+        );
+    }
+
+    public OrdenMedicaValidada validarOrdenMedica(
+            UploadPortletRequest uploadRequest,
+            String nombreCampoArchivo,
+            String fechaNormalizada,
+            String numeroReceta)
+            throws Exception {
+
         if (uploadRequest == null) {
             throw new Exception(
                     "No se recibió el formulario multipart de la Orden médica."
@@ -732,7 +748,8 @@ public class DocumentoLibraryComprasHelper
                 nombreOriginal,
                 extension,
                 contentTypeEsperado,
-                fechaDocumento
+                fechaDocumento,
+                numeroReceta
         );
     }
 }
