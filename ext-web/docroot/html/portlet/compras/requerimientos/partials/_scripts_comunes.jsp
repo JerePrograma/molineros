@@ -244,7 +244,7 @@
 
             var url =
                     '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>'
-                    + '&struts_action=/autorizaciones/buscar_afiliado_fecha_vto_documentacion';
+                    + '&struts_action=/compras/buscar_afiliado_fecha_vto_documentacion';
 
             <portlet:namespace />vencimientoCudRequest =
                     jQuery.ajax({
