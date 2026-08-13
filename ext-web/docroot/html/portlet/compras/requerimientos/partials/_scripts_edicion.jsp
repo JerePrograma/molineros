@@ -1019,8 +1019,11 @@
         }
 
         function <portlet:namespace />validarOrdenMedicaAlta(form) {
+            <portlet:namespace />actualizarContratoFilasOrdenMedica();
+
             var filas = jQuery(
-                    '#<portlet:namespace />ordenes_medicas_body tr'
+                    '#<portlet:namespace />ordenes_medicas_body '
+                            + 'tr.orden-medica-activa'
             );
 
             var fechaHidden = document.getElementById(
@@ -1077,11 +1080,6 @@
                 var fechaAnio =
                         fila.find(
                                 'select.orden-medica-fecha-anio'
-                        ).get(0);
-
-                var numeroReceta =
-                        fila.find(
-                                'input.orden-medica-numero-receta'
                         ).get(0);
 
                 var numeroOrden = index + 1;
@@ -1159,7 +1157,7 @@
                         );
 
                 /*
-                 * Los controles nullable utilizan -1.
+                 * Los controles nullable utilizan una opción vacía.
                  */
                 if (isNaN(dia)
                         || isNaN(mes)
@@ -1259,8 +1257,11 @@
         }
 
         function <portlet:namespace />incorporarOrdenesMedicas(form) {
+            <portlet:namespace />actualizarContratoFilasOrdenMedica();
+
             var filas = jQuery(
-                    '#<portlet:namespace />ordenes_medicas_body tr'
+                    '#<portlet:namespace />ordenes_medicas_body '
+                            + 'tr.orden-medica-activa'
             );
             var cantidad = document.getElementById(
                     '<portlet:namespace />orden_medica_count'
@@ -1285,7 +1286,11 @@
                     siguiente: nodo.nextSibling
                 });
 
-                form.appendChild(nodo);
+                try {
+                    form.appendChild(nodo);
+                } catch (e) {
+                    valido = false;
+                }
             }
 
             filas.each(function() {
@@ -1300,9 +1305,6 @@
                 );
                 incorporarNodo(
                         fila.find('input.orden-medica-fecha-valor').get(0)
-                );
-                incorporarNodo(
-                        fila.find('input.orden-medica-numero-receta').get(0)
                 );
             });
 

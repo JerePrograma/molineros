@@ -46,19 +46,13 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
         #<portlet:namespace />tabla_ordenes_medicas
         td.orden-medica-campo-archivo {
 
-            width: 30%;
+            width: 40%;
         }
 
         #<portlet:namespace />tabla_ordenes_medicas
         td.orden-medica-campo-fecha {
 
-            width: 20%;
-        }
-
-        #<portlet:namespace />tabla_ordenes_medicas
-        td.orden-medica-campo-receta {
-
-            width: 20%;
+            width: 30%;
         }
 
         #<portlet:namespace />tabla_ordenes_medicas
@@ -72,12 +66,6 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
         input.orden-medica-archivo {
 
             width: 98%;
-        }
-
-        #<portlet:namespace />tabla_ordenes_medicas
-        input.orden-medica-numero-receta {
-
-            width: 95%;
         }
 
         #<portlet:namespace />tabla_ordenes_medicas
@@ -118,9 +106,8 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                 id="<portlet:namespace />tabla_ordenes_medicas">
 
             <colgroup>
+                <col style="width: 40%;" />
                 <col style="width: 30%;" />
-                <col style="width: 20%;" />
-                <col style="width: 20%;" />
                 <col style="width: 30%;" />
             </colgroup>
 
@@ -136,32 +123,25 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
 
                 <%
                 for (int i = 0;
-                        i < cantidadOrdenesMedicasInicial;
+                        i < maxOrdenesMedicasPorCarga;
                         i++) {
+
+                    boolean ordenMedicaActiva =
+                            i < cantidadOrdenesMedicasInicial;
 
                     String parametroFechaOrdenMedica =
                             i == 0
                                     ? "fecha_orden_medica"
                                     : "fecha_orden_medica_" + i;
 
-                    String parametroNumeroRecetaOrdenMedica =
-                            i == 0
-                                    ? "numero_receta_orden_medica"
-                                    : "numero_receta_orden_medica_" + i;
-
                     String fechaOrdenMedicaGuardada =
-                            ParamUtil.getString(
-                                    renderRequest,
-                                    parametroFechaOrdenMedica,
-                                    ""
-                            );
-
-                    String numeroRecetaOrdenMedicaGuardado =
-                            ParamUtil.getString(
-                                    renderRequest,
-                                    parametroNumeroRecetaOrdenMedica,
-                                    ""
-                            );
+                            ordenMedicaActiva
+                                    ? ParamUtil.getString(
+                                            renderRequest,
+                                            parametroFechaOrdenMedica,
+                                            ""
+                                    )
+                                    : "";
 
                     /*
                      * Compatibilidad con cualquier retorno anterior
@@ -215,6 +195,35 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                         );
                     }
 
+                    int diaOrdenMedica = 0;
+                    int mesOrdenMedica = -1;
+                    int anioOrdenMedica = 0;
+
+                    if (!WebKeysCompras.isEmpty(
+                            fechaOrdenMedicaISO
+                    )) {
+
+                        try {
+                            anioOrdenMedica = Integer.parseInt(
+                                    fechaOrdenMedicaISO.substring(0, 4)
+                            );
+
+                            mesOrdenMedica = Integer.parseInt(
+                                    fechaOrdenMedicaISO.substring(5, 7)
+                            ) - 1;
+
+                            diaOrdenMedica = Integer.parseInt(
+                                    fechaOrdenMedicaISO.substring(8, 10)
+                            );
+
+                        } catch (Exception e) {
+                            diaOrdenMedica = 0;
+                            mesOrdenMedica = -1;
+                            anioOrdenMedica = 0;
+                            fechaOrdenMedicaISO = "";
+                        }
+                    }
+
                     String nombreCampoArchivo =
                             i == 0
                                     ? "orden_medica"
@@ -237,16 +246,34 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                             + i
                                             + "_valor";
 
-                    String nombreCampoNumeroReceta =
+                    String parametroFechaDia =
                             i == 0
-                                    ? "numero_receta_orden_medica"
-                                    : "numero_receta_orden_medica_" + i;
+                                    ? "fechaOrdenMedicaDia"
+                                    : "fechaOrdenMedicaDia_" + i;
 
-                    String idCampoNumeroReceta =
-                            nombreCampoNumeroReceta;
+                    String parametroFechaMes =
+                            i == 0
+                                    ? "fechaOrdenMedicaMes"
+                                    : "fechaOrdenMedicaMes_" + i;
+
+                    String parametroFechaAnio =
+                            i == 0
+                                    ? "fechaOrdenMedicaAnio"
+                                    : "fechaOrdenMedicaAnio_" + i;
+
+                    String idCalendarioFecha =
+                            "ordenMedicaFechaCalendario_" + i;
                 %>
 
-                    <tr>
+                    <tr
+                            class="orden-medica-fila <%= ordenMedicaActiva
+                                    ? "orden-medica-activa"
+                                    : "orden-medica-inactiva" %>"
+                            data-orden-medica-indice="<%= i %>"
+                            style="<%= ordenMedicaActiva
+                                    ? ""
+                                    : "display:none;" %>">
+
                         <td class="orden-medica-campo-archivo">
                             <input
                                     type="file"
@@ -263,6 +290,26 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                         <td class="orden-medica-campo-fecha">
 
                             <span class="orden-medica-fecha-liferay">
+                                <liferay-ui:input-date
+                                        dayParam="<%= parametroFechaDia %>"
+                                        dayValue="<%= diaOrdenMedica %>"
+                                        dayNullable="<%= true %>"
+
+                                        monthParam="<%= parametroFechaMes %>"
+                                        monthValue="<%= mesOrdenMedica %>"
+                                        monthNullable="<%= true %>"
+
+                                        yearParam="<%= parametroFechaAnio %>"
+                                        yearValue="<%= anioOrdenMedica %>"
+                                        yearNullable="<%= true %>"
+
+                                        yearRangeStart="<%= fechaOrdenMedicaReferencia.get(Calendar.YEAR) - 5 %>"
+                                        yearRangeEnd="<%= fechaOrdenMedicaReferencia.get(Calendar.YEAR) %>"
+
+                                        firstDayOfWeek="<%= fechaOrdenMedicaReferencia.getFirstDayOfWeek() - 1 %>"
+                                        imageInputId="<%= idCalendarioFecha %>"
+                                        disabled="<%= false %>"
+                                />
                             </span>
 
                             <input
@@ -273,6 +320,10 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                     value="<%= HtmlUtil.escape(
                                             fechaOrdenMedicaISO
                                     ) %>" />
+
+                            <div class="compras-ayuda-campo">
+                                Seleccione día, mes y año.
+                            </div>
                         </td>
 
                         <td class="orden-medica-acciones">
@@ -287,7 +338,7 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                     class="orden-medica-agregar"
                                     value="Agregar otra orden médica"
                                     title="Agregar otra orden médica"
-                                    style="<%= i == 0 ? "" : "display:none;" %>" />
+                                    style="display:none;" />
                         </td>
                     </tr>
 
@@ -303,32 +354,6 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                 name="orden_medica_count"
                 id="<portlet:namespace />orden_medica_count"
                 value="<%= cantidadOrdenesMedicasInicial %>" />
-
-        <div
-                id="<portlet:namespace />orden_medica_fecha_template"
-                style="display:none;">
-
-            <liferay-ui:input-date
-                    dayParam="ordenMedicaTemplateDia"
-                    dayValue=""
-                    dayNullable="<%= true %>"
-
-                    monthParam="ordenMedicaTemplateMes"
-                    monthValue="-1"
-                    monthNullable="<%= true %>"
-
-                    yearParam="ordenMedicaTemplateAnio"
-                    yearValue=""
-                    yearNullable="<%= true %>"
-
-                    yearRangeStart="<%= fechaOrdenMedicaReferencia.get(Calendar.YEAR) - 5 %>"
-                    yearRangeEnd="<%= fechaOrdenMedicaReferencia.get(Calendar.YEAR) %>"
-
-                    firstDayOfWeek="<%= fechaOrdenMedicaReferencia.getFirstDayOfWeek() %>"
-
-                    disabled="<%= false %>"
-            />
-        </div>
     </fieldset>
 
     <div
@@ -356,7 +381,7 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
         - Cada Orden médica debe tener informada su propia fecha.
         <br />
 
-        - La fecha debe seleccionarse utilizando el botón "Calendario".
+        - La fecha debe seleccionarse mediante Día, Mes y Año.
         <br />
 
         - Puede utilizar "Agregar otra orden médica" para asociar
@@ -382,210 +407,88 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
     </div>
 
     <script type="text/javascript">
-        function <portlet:namespace />parametroFechaOrdenMedica(
-                base,
-                index) {
-
-            if (index == 0) {
-                return base;
-            }
-
-            return base
-                    + '_'
-                    + index;
+        function <portlet:namespace />filasActivasOrdenMedica() {
+            return jQuery(
+                    '#<portlet:namespace />ordenes_medicas_body '
+                            + 'tr.orden-medica-activa'
+            );
         }
 
-        function <portlet:namespace />inicializarInputDateOrdenMedica(
-                row,
-                index) {
+        function <portlet:namespace />prepararControlesFechaOrdenMedica(
+                row) {
 
-            var contenedor =
+            var fechaDia =
                     row.find(
-                            '.orden-medica-fecha-liferay'
+                            'select[id*="fechaOrdenMedicaDia"]'
                     );
 
-            if (contenedor.length == 0) {
-                return false;
-            }
-
-            var template =
-                    jQuery(
-                            '#<portlet:namespace />orden_medica_fecha_template'
-                    ).html();
-
-            if (!template) {
-                return false;
-            }
-
-            var parametroDia =
-                    <portlet:namespace />parametroFechaOrdenMedica(
-                            'fechaOrdenMedicaDia',
-                            index
+            var fechaMes =
+                    row.find(
+                            'select[id*="fechaOrdenMedicaMes"]'
                     );
 
-            var parametroMes =
-                    <portlet:namespace />parametroFechaOrdenMedica(
-                            'fechaOrdenMedicaMes',
-                            index
+            var fechaAnio =
+                    row.find(
+                            'select[id*="fechaOrdenMedicaAnio"]'
                     );
 
-            var parametroAnio =
-                    <portlet:namespace />parametroFechaOrdenMedica(
-                            'fechaOrdenMedicaAnio',
-                            index
-                    );
-
-            /*
-             * Clonar el markup generado por liferay-ui:input-date,
-             * reemplazando los parámetros utilizados exclusivamente
-             * en la plantilla.
-             */
-            template =
-                    template.replace(
-                            /ordenMedicaTemplateDia/g,
-                            parametroDia
-                    );
-
-            template =
-                    template.replace(
-                            /ordenMedicaTemplateMes/g,
-                            parametroMes
-                    );
-
-            template =
-                    template.replace(
-                            /ordenMedicaTemplateAnio/g,
-                            parametroAnio
-                    );
-
-            contenedor.html(
-                    template
-            );
-
-            var dia =
-                    document.getElementById(
-                            '<portlet:namespace />'
-                                    + parametroDia
-                    );
-
-            var mes =
-                    document.getElementById(
-                            '<portlet:namespace />'
-                                    + parametroMes
-                    );
-
-            var anio =
-                    document.getElementById(
-                            '<portlet:namespace />'
-                                    + parametroAnio
-                    );
-
-            if (!dia
-                    || !mes
-                    || !anio) {
-
-                contenedor.empty();
+            if (fechaDia.length != 1
+                    || fechaMes.length != 1
+                    || fechaAnio.length != 1) {
 
                 return false;
             }
 
-            jQuery(dia).addClass(
+            fechaDia.addClass(
                     'orden-medica-fecha-dia'
             );
 
-            jQuery(mes).addClass(
+            fechaMes.addClass(
                     'orden-medica-fecha-mes'
             );
 
-            jQuery(anio).addClass(
+            fechaAnio.addClass(
                     'orden-medica-fecha-anio'
             );
 
-            var fechaValor =
-                    row.find(
-                            'input.orden-medica-fecha-valor'
-                    );
+            fechaDia.unbind(
+                    'change.ordenMedica'
+            );
 
-            var fechaISO =
-                    fechaValor.length > 0
-                            ? jQuery.trim(
-                                    fechaValor.val() || ''
-                            )
-                            : '';
+            fechaMes.unbind(
+                    'change.ordenMedica'
+            );
 
-            var match =
-                    /^(\d{4})-(\d{2})-(\d{2})$/.exec(
-                            fechaISO
-                    );
+            fechaAnio.unbind(
+                    'change.ordenMedica'
+            );
 
-            if (match) {
-                var valorAnio =
-                        parseInt(
-                                match[1],
-                                10
+            fechaDia.bind(
+                    'change.ordenMedica',
+                    function() {
+                        <portlet:namespace />sincronizarFechaOrdenMedicaFila(
+                                row
                         );
+                    }
+            );
 
-                var valorMes =
-                        parseInt(
-                                match[2],
-                                10
-                        ) - 1;
-
-                var valorDia =
-                        parseInt(
-                                match[3],
-                                10
+            fechaMes.bind(
+                    'change.ordenMedica',
+                    function() {
+                        <portlet:namespace />sincronizarFechaOrdenMedicaFila(
+                                row
                         );
+                    }
+            );
 
-                jQuery(dia).val(
-                        String(valorDia)
-                );
-
-                jQuery(mes).val(
-                        String(valorMes)
-                );
-
-                jQuery(anio).val(
-                        String(valorAnio)
-                );
-
-            } else {
-                jQuery(dia).val(
-                        '-1'
-                );
-
-                jQuery(mes).val(
-                        '-1'
-                );
-
-                jQuery(anio).val(
-                        '-1'
-                );
-            }
-
-            jQuery(
-                    dia
-            ).change(function() {
-                <portlet:namespace />sincronizarFechaOrdenMedicaFila(
-                        row
-                );
-            });
-
-            jQuery(
-                    mes
-            ).change(function() {
-                <portlet:namespace />sincronizarFechaOrdenMedicaFila(
-                        row
-                );
-            });
-
-            jQuery(
-                    anio
-            ).change(function() {
-                <portlet:namespace />sincronizarFechaOrdenMedicaFila(
-                        row
-                );
-            });
+            fechaAnio.bind(
+                    'change.ordenMedica',
+                    function() {
+                        <portlet:namespace />sincronizarFechaOrdenMedicaFila(
+                                row
+                        );
+                    }
+            );
 
             return true;
         }
@@ -617,8 +520,7 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                 return false;
             }
 
-            fechaValor.value =
-                    '';
+            fechaValor.value = '';
 
             if (!dia
                     || !mes
@@ -627,23 +529,20 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                 return false;
             }
 
-            var diaNumero =
-                    parseInt(
-                            dia.value,
-                            10
-                    );
+            var diaNumero = parseInt(
+                    dia.value,
+                    10
+            );
 
-            var mesNumero =
-                    parseInt(
-                            mes.value,
-                            10
-                    );
+            var mesNumero = parseInt(
+                    mes.value,
+                    10
+            );
 
-            var anioNumero =
-                    parseInt(
-                            anio.value,
-                            10
-                    );
+            var anioNumero = parseInt(
+                    anio.value,
+                    10
+            );
 
             if (isNaN(diaNumero)
                     || isNaN(mesNumero)
@@ -655,12 +554,11 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                 return false;
             }
 
-            var fecha =
-                    new Date(
-                            anioNumero,
-                            mesNumero,
-                            diaNumero
-                    );
+            var fecha = new Date(
+                    anioNumero,
+                    mesNumero,
+                    diaNumero
+            );
 
             if (fecha.getFullYear() != anioNumero
                     || fecha.getMonth() != mesNumero
@@ -683,207 +581,140 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
             return true;
         }
 
-        function <portlet:namespace />reindexarFilasOrdenMedica() {
-            var rows =
+        function <portlet:namespace />limpiarFilaOrdenMedica(row) {
+            var archivo =
+                    row.find(
+                            'input.orden-medica-archivo'
+                    ).get(0);
+
+            if (!archivo) {
+                return false;
+            }
+
+            try {
+                archivo.value = '';
+            } catch (e) {
+                return false;
+            }
+
+            if (jQuery.trim(
+                    archivo.value || ''
+            ) != '') {
+
+                return false;
+            }
+
+            row.find(
+                    'select.orden-medica-fecha-dia, '
+                            + 'select.orden-medica-fecha-mes, '
+                            + 'select.orden-medica-fecha-anio'
+            ).val('');
+
+            row.find(
+                    'input.orden-medica-fecha-valor'
+            ).val('');
+
+            row.find(
+                    '.orden-medica-fecha-liferay input[type="hidden"]'
+            ).val('');
+
+            return true;
+        }
+
+        function <portlet:namespace />actualizarContratoFilasOrdenMedica() {
+            var todasLasFilas =
                     jQuery(
-                            '#<portlet:namespace />ordenes_medicas_body tr'
+                            '#<portlet:namespace />ordenes_medicas_body '
+                                    + 'tr.orden-medica-fila'
                     );
 
-            rows.each(function(index) {
-                var row =
-                        jQuery(this);
+            var filasActivas =
+                    <portlet:namespace />filasActivasOrdenMedica();
 
-                var archivo =
-                        row.find(
-                                'input.orden-medica-archivo'
-                        );
+            filasActivas.each(function(index) {
+                var row = jQuery(this);
+                var sufijo = index == 0
+                        ? ''
+                        : '_' + index;
 
-                var fechaValor =
-                        row.find(
-                                'input.orden-medica-fecha-valor'
-                        );
+                row.find(
+                        'input.orden-medica-archivo'
+                ).attr(
+                        'name',
+                        'orden_medica' + sufijo
+                );
 
-                var fechaDia =
-                        row.find(
-                                'select.orden-medica-fecha-dia'
-                        );
+                row.find(
+                        'input.orden-medica-fecha-valor'
+                ).attr(
+                        'name',
+                        'fecha_orden_medica' + sufijo
+                );
 
-                var fechaMes =
-                        row.find(
-                                'select.orden-medica-fecha-mes'
-                        );
-
-                var fechaAnio =
-                        row.find(
-                                'select.orden-medica-fecha-anio'
-                        );
-
-                var numeroReceta =
-                        row.find(
-                                'input.orden-medica-numero-receta'
-                        );
-
-                var botonAgregar =
-                        row.find(
-                                'input.orden-medica-agregar'
-                        );
-
-                if (index == 0) {
-                    archivo.attr(
-                            'name',
-                            'orden_medica'
-                    );
-
-                    archivo.attr(
-                            'id',
-                            '<portlet:namespace />orden_medica'
-                    );
-
-                    fechaDia.attr(
-                            'name',
-                            '<portlet:namespace />fechaOrdenMedicaDia'
-                    );
-
-                    fechaDia.attr(
-                            'id',
-                            '<portlet:namespace />fechaOrdenMedicaDia'
-                    );
-
-                    fechaMes.attr(
-                            'name',
-                            '<portlet:namespace />fechaOrdenMedicaMes'
-                    );
-
-                    fechaMes.attr(
-                            'id',
-                            '<portlet:namespace />fechaOrdenMedicaMes'
-                    );
-
-                    fechaAnio.attr(
-                            'name',
-                            '<portlet:namespace />fechaOrdenMedicaAnio'
-                    );
-
-                    fechaAnio.attr(
-                            'id',
-                            '<portlet:namespace />fechaOrdenMedicaAnio'
-                    );
-
-                    fechaValor.attr(
-                            'name',
-                            'fecha_orden_medica'
-                    );
-
-                    fechaValor.attr(
-                            'id',
-                            '<portlet:namespace />fecha_orden_medica_valor'
-                    );
-
-                    numeroReceta.attr(
-                            'name',
-                            'numero_receta_orden_medica'
-                    );
-
-                    numeroReceta.attr(
-                            'id',
-                            '<portlet:namespace />numero_receta_orden_medica'
-                    );
-
-                } else {
-                    archivo.attr(
-                            'name',
-                            'orden_medica_'
-                                    + index
-                    );
-
-                    archivo.attr(
-                            'id',
-                            '<portlet:namespace />orden_medica_'
-                                    + index
-                    );
-
-                    fechaDia.attr(
-                            'name',
-                            '<portlet:namespace />fechaOrdenMedicaDia_'
-                                    + index
-                    );
-
-                    fechaDia.attr(
-                            'id',
-                            '<portlet:namespace />fechaOrdenMedicaDia_'
-                                    + index
-                    );
-
-                    fechaMes.attr(
-                            'name',
-                            '<portlet:namespace />fechaOrdenMedicaMes_'
-                                    + index
-                    );
-
-                    fechaMes.attr(
-                            'id',
-                            '<portlet:namespace />fechaOrdenMedicaMes_'
-                                    + index
-                    );
-
-                    fechaAnio.attr(
-                            'name',
-                            '<portlet:namespace />fechaOrdenMedicaAnio_'
-                                    + index
-                    );
-
-                    fechaAnio.attr(
-                            'id',
-                            '<portlet:namespace />fechaOrdenMedicaAnio_'
-                                    + index
-                    );
-
-                    fechaValor.attr(
-                            'name',
-                            'fecha_orden_medica_'
-                                    + index
-                    );
-
-                    fechaValor.attr(
-                            'id',
-                            '<portlet:namespace />fecha_orden_medica_'
-                                    + index
-                                    + '_valor'
-                    );
-
-                    numeroReceta.attr(
-                            'name',
-                            'numero_receta_orden_medica_'
-                                    + index
-                    );
-
-                    numeroReceta.attr(
-                            'id',
-                            '<portlet:namespace />numero_receta_orden_medica_'
-                                    + index
-                    );
-                }
-
-                /*
-                 * Igual que en presupuestos:
-                 * Agregar solamente se muestra en la primera fila.
-                 */
-                if (index == 0
-                        && rows.length
-                                < <%= maxOrdenesMedicasPorCarga %>) {
-
-                    botonAgregar.show();
-
-                } else {
-                    botonAgregar.hide();
-                }
+                row.css(
+                        'display',
+                        ''
+                );
             });
+
+            todasLasFilas.filter(
+                    '.orden-medica-inactiva'
+            ).each(function() {
+                var row = jQuery(this);
+                var indice = row.attr(
+                        'data-orden-medica-indice'
+                );
+
+                row.find(
+                        'input.orden-medica-archivo'
+                ).attr(
+                        'name',
+                        'orden_medica_slot_' + indice
+                );
+
+                row.find(
+                        'input.orden-medica-fecha-valor'
+                ).attr(
+                        'name',
+                        'fecha_orden_medica_slot_' + indice
+                );
+
+                row.hide();
+            });
+
+            todasLasFilas.find(
+                    'input.orden-medica-agregar'
+            ).hide();
+
+            if (filasActivas.length > 0
+                    && filasActivas.length
+                            < <%= maxOrdenesMedicasPorCarga %>) {
+
+                filasActivas.eq(0).find(
+                        'input.orden-medica-agregar'
+                ).show();
+            }
 
             jQuery(
                     '#<portlet:namespace />orden_medica_count'
             ).val(
-                    rows.length
+                    filasActivas.length
             );
+
+            var fechaHistorica = document.getElementById(
+                    '<portlet:namespace />fecha_orden_medica_hidden'
+            );
+
+            if (fechaHistorica) {
+                fechaHistorica.value =
+                        filasActivas.length > 0
+                                ? filasActivas.eq(0).find(
+                                        'input.orden-medica-fecha-valor'
+                                ).val() || ''
+                                : '';
+            }
+
+            return filasActivas.length > 0;
         }
 
         function <portlet:namespace />vincularAccionesFilaOrdenMedica(
@@ -900,56 +731,64 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                     );
 
             botonBorrar.unbind(
-                    'click'
+                    'click.ordenMedica'
             );
 
-            botonBorrar.click(function() {
-                var tbody =
-                        jQuery(
-                                '#<portlet:namespace />ordenes_medicas_body'
-                        );
+            botonBorrar.bind(
+                    'click.ordenMedica',
+                    function() {
+                        var fila = jQuery(this).parents(
+                                'tr.orden-medica-fila'
+                        ).eq(0);
 
-                jQuery(this)
-                        .parents(
-                                'tr'
-                        )
-                        .eq(0)
-                        .remove();
+                        if (!<portlet:namespace />limpiarFilaOrdenMedica(
+                                fila
+                        )) {
 
-                if (tbody.find('tr').length == 0) {
-                    <portlet:namespace />agregarFilaOrdenMedica();
-                } else {
-                    <portlet:namespace />reindexarFilasOrdenMedica();
-                }
+                            alert(
+                                    'No se pudo limpiar la Orden médica seleccionada.'
+                            );
 
-                return false;
-            });
+                            return false;
+                        }
+
+                        if (<portlet:namespace />filasActivasOrdenMedica().length
+                                > 1) {
+
+                            fila.removeClass(
+                                    'orden-medica-activa'
+                            );
+
+                            fila.addClass(
+                                    'orden-medica-inactiva'
+                            );
+
+                            fila.hide();
+                        }
+
+                        <portlet:namespace />actualizarContratoFilasOrdenMedica();
+
+                        return false;
+                    }
+            );
 
             botonAgregar.unbind(
-                    'click'
+                    'click.ordenMedica'
             );
 
-            botonAgregar.click(function() {
-                return <portlet:namespace />agregarFilaOrdenMedica();
-            });
+            botonAgregar.bind(
+                    'click.ordenMedica',
+                    function() {
+                        return <portlet:namespace />agregarFilaOrdenMedica();
+                    }
+            );
         }
 
         function <portlet:namespace />agregarFilaOrdenMedica() {
-            var tbody =
-                    jQuery(
-                            '#<portlet:namespace />ordenes_medicas_body'
-                    );
+            var filasActivas =
+                    <portlet:namespace />filasActivasOrdenMedica();
 
-            if (tbody.length == 0) {
-                return false;
-            }
-
-            var cantidad =
-                    tbody.find(
-                            'tr'
-                    ).length;
-
-            if (cantidad
+            if (filasActivas.length
                     >= <%= maxOrdenesMedicasPorCarga %>) {
 
                 alert(
@@ -961,194 +800,54 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                 return false;
             }
 
-            var archivo =
+            var fila =
                     jQuery(
-                            '<input '
-                                    + 'type="file" '
-                                    + 'class="orden-medica-archivo" '
-                                    + 'accept=".jpg,.jpeg,.png,image/jpeg,image/png" '
-                                    + '/>'
-                    );
+                            '#<portlet:namespace />ordenes_medicas_body '
+                                    + 'tr.orden-medica-inactiva'
+                    ).eq(0);
 
-            var fechaLiferay =
-                    jQuery(
-                            '<span '
-                                    + 'class="orden-medica-fecha-liferay">'
-                                    + '</span>'
-                    );
-
-            var fechaValor =
-                    jQuery(
-                            '<input '
-                                    + 'type="hidden" '
-                                    + 'class="orden-medica-fecha-valor" '
-                                    + '/>'
-                    );
-
-            var numeroReceta =
-                    jQuery(
-                            '<input '
-                                    + 'type="text" '
-                                    + 'class="orden-medica-numero-receta" '
-                                    + 'maxlength="100" '
-                                    + '/>'
-                    );
-
-            var botonBorrar =
-                    jQuery(
-                            '<input '
-                                    + 'type="button" '
-                                    + 'class="orden-medica-borrar" '
-                                    + 'value="Borrar" '
-                                    + 'title="Quitar esta orden médica" '
-                                    + '/>'
-                    );
-
-            var botonAgregar =
-                    jQuery(
-                            '<input '
-                                    + 'type="button" '
-                                    + 'class="orden-medica-agregar" '
-                                    + 'value="Agregar otra orden médica" '
-                                    + 'title="Agregar otra orden médica" '
-                                    + '/>'
-                    );
-
-            var row =
-                    jQuery(
-                            '<tr></tr>'
-                    );
-
-            var tdArchivo =
-                    jQuery(
-                            '<td '
-                                    + 'class="orden-medica-campo-archivo">'
-                                    + '</td>'
-                    );
-
-            tdArchivo.append(
-                    archivo
-            );
-
-            tdArchivo.append(
-                    '<div class="compras-ayuda-campo">'
-                            + 'Formatos permitidos: JPG, JPEG o PNG.'
-                            + '</div>'
-            );
-
-            var tdFecha =
-                    jQuery(
-                            '<td '
-                                    + 'class="orden-medica-campo-fecha">'
-                                    + '</td>'
-                    );
-
-            tdFecha.append(
-                    fechaLiferay
-            );
-
-            tdFecha.append(
-                    fechaValor
-            );
-
-            tdFecha.append(
-                    '<div class="compras-ayuda-campo">'
-                            + 'Seleccione día, mes y año.'
-                            + '</div>'
-            );
-
-            var tdNumeroReceta =
-                    jQuery(
-                            '<td '
-                                    + 'class="orden-medica-campo-receta">'
-                                    + '</td>'
-                    );
-
-            tdNumeroReceta.append(
-                    numeroReceta
-            );
-
-            tdNumeroReceta.append(
-                    '<div class="compras-ayuda-campo">'
-                            + 'Opcional.'
-                            + '</div>'
-            );
-
-            var tdAcciones =
-                    jQuery(
-                            '<td '
-                                    + 'class="orden-medica-acciones">'
-                                    + '</td>'
-                    );
-
-            tdAcciones.append(
-                    botonBorrar
-            );
-
-            tdAcciones.append(
-                    document.createTextNode(' ')
-            );
-
-            tdAcciones.append(
-                    botonAgregar
-            );
-
-            row.append(
-                    tdArchivo
-            );
-
-            row.append(
-                    tdFecha
-            );
-
-            row.append(
-                    tdNumeroReceta
-            );
-
-            row.append(
-                    tdAcciones
-            );
-
-            tbody.append(
-                    row
-            );
-
-            if (!<portlet:namespace />inicializarInputDateOrdenMedica(
-                    row,
-                    cantidad
-            )) {
-
-                row.remove();
+            if (fila.length == 0
+                    || !<portlet:namespace />limpiarFilaOrdenMedica(
+                            fila
+                    )) {
 
                 alert(
-                        'No se pudo preparar la fecha de la nueva Orden médica.'
+                        'No se pudo preparar una nueva Orden médica.'
                 );
 
                 return false;
             }
 
-            <portlet:namespace />vincularAccionesFilaOrdenMedica(
-                    row
+            fila.removeClass(
+                    'orden-medica-inactiva'
             );
 
-            <portlet:namespace />reindexarFilasOrdenMedica();
+            fila.addClass(
+                    'orden-medica-activa'
+            );
+
+            fila.css(
+                    'display',
+                    ''
+            );
+
+            <portlet:namespace />actualizarContratoFilasOrdenMedica();
 
             return false;
         }
 
         jQuery(function() {
-            var rows =
+            var filas =
                     jQuery(
-                            '#<portlet:namespace />ordenes_medicas_body tr'
+                            '#<portlet:namespace />ordenes_medicas_body '
+                                    + 'tr.orden-medica-fila'
                     );
 
-            rows.each(function(index) {
-                var row =
-                        jQuery(this);
+            filas.each(function() {
+                var row = jQuery(this);
 
-                <portlet:namespace />inicializarInputDateOrdenMedica(
-                        row,
-                        index
+                <portlet:namespace />prepararControlesFechaOrdenMedica(
+                        row
                 );
 
                 <portlet:namespace />vincularAccionesFilaOrdenMedica(
@@ -1156,7 +855,13 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                 );
             });
 
-            <portlet:namespace />reindexarFilasOrdenMedica();
+            <portlet:namespace />filasActivasOrdenMedica().each(function() {
+                <portlet:namespace />sincronizarFechaOrdenMedicaFila(
+                        jQuery(this)
+                );
+            });
+
+            <portlet:namespace />actualizarContratoFilasOrdenMedica();
         });
     </script>
 </c:if>
