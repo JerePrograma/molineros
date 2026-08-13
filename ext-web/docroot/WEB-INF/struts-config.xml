@@ -7237,9 +7237,13 @@
 				path="/compras/descargar_orden_medica"
 				type="ar.com.ospim.compras.requerimientos.action.DescargarOrdenMedicaCompraAction" />
 
-        <action
-                path="/compras/buscar_afiliado_fecha_vto_documentacion"
-                type="ar.com.ospim.autorizaciones.action.BuscarAfiliadoFechaVtoDiscapacidad"/>
+		<action
+				path="/compras/tiene_situacion_medica_vigente"
+				type="ar.com.ospim.compras.requerimientos.action.TieneSituacionMedicaVigenteCompraAction" />
+
+		<action
+				path="/compras/buscar_afiliado_fecha_vto_documentacion"
+				type="ar.com.ospim.autorizaciones.action.BuscarAfiliadoFechaVtoDiscapacidad" />
 
 		<action path="/tesoreria/buscar_saldo_diario_cuentas_bancarias" type="ar.com.ospim.tesoreria.action.BuscarSaldoDiarioCuentasBancariasAction">
 			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" />
