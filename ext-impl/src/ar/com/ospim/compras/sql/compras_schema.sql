@@ -3957,6 +3957,13 @@ BEGIN
             'El título del documento debe ser Orden médica.';
     END IF;
 
+    IF p_numero_receta IS NOT NULL
+       AND length(p_numero_receta) > 100 THEN
+
+        RAISE EXCEPTION
+            'El número de receta admite hasta 100 caracteres.';
+    END IF;
+
     v_numero_receta :=
         NULLIF(
             regexp_replace(

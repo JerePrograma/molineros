@@ -713,6 +713,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             return null;
         }
 
+        if (value.codePointCount(0, value.length())
+                > MAX_NUMERO_RECETA_ORDEN_MEDICA) {
+
+            throw new Exception(
+                    "Número de receta: no puede superar los 100 caracteres."
+            );
+        }
+
         StringBuilder sinEspacios =
                 new StringBuilder(value.length());
 

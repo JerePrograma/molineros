@@ -1,5 +1,9 @@
+<%@ page import="java.util.Calendar" %>
 <%
 final int maxOrdenesMedicasPorCarga = 20;
+
+Calendar fechaOrdenMedicaReferencia =
+        Calendar.getInstance();
 
 int cantidadOrdenesMedicasInicial =
         ParamUtil.getInteger(
@@ -71,13 +75,6 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
         }
 
         #<portlet:namespace />tabla_ordenes_medicas
-        input.orden-medica-fecha-visible {
-
-            width: 95px;
-            margin-right: 4px;
-        }
-
-        #<portlet:namespace />tabla_ordenes_medicas
         input.orden-medica-numero-receta {
 
             width: 95%;
@@ -89,68 +86,10 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
             margin-right: 4px;
         }
 
-        #<portlet:namespace />orden_medica_calendario {
-            position: absolute;
-            display: none;
-            z-index: 10000;
-            width: 250px;
-            padding: 8px;
-            border: 1px solid #999999;
-            background: #ffffff;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-        }
+        #<portlet:namespace />tabla_ordenes_medicas
+        td.orden-medica-campo-fecha select {
 
-        #<portlet:namespace />orden_medica_calendario
-        .orden-medica-calendario-cabecera {
-
-            text-align: center;
-            margin-bottom: 6px;
-            white-space: nowrap;
-        }
-
-        #<portlet:namespace />orden_medica_calendario
-        .orden-medica-calendario-titulo {
-
-            display: inline-block;
-            min-width: 130px;
-            font-weight: bold;
-        }
-
-        #<portlet:namespace />orden_medica_calendario table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        #<portlet:namespace />orden_medica_calendario th {
-            padding: 2px;
-            text-align: center;
-            font-size: 11px;
-        }
-
-        #<portlet:namespace />orden_medica_calendario td {
-            padding: 1px;
-            text-align: center;
-        }
-
-        #<portlet:namespace />orden_medica_calendario
-        input.orden-medica-calendario-dia {
-
-            width: 28px;
-            padding: 2px;
-            text-align: center;
-        }
-
-        #<portlet:namespace />orden_medica_calendario
-        .orden-medica-calendario-pie {
-
-            margin-top: 6px;
-            text-align: center;
-        }
-
-        #<portlet:namespace />orden_medica_calendario
-        .orden-medica-calendario-pie input {
-
-            margin-right: 4px;
+            margin-right: 2px;
         }
     </style>
 
@@ -244,7 +183,6 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                     }
 
                     String fechaOrdenMedicaISO = "";
-                    String fechaOrdenMedicaVisible = "";
 
                     if (fechaOrdenMedicaGuardada != null) {
                         fechaOrdenMedicaGuardada =
@@ -259,26 +197,10 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                         fechaOrdenMedicaISO =
                                 fechaOrdenMedicaGuardada;
 
-                        fechaOrdenMedicaVisible =
-                                fechaOrdenMedicaGuardada.substring(8, 10)
-                                        + "/"
-                                        + fechaOrdenMedicaGuardada.substring(
-                                                5,
-                                                7
-                                        )
-                                        + "/"
-                                        + fechaOrdenMedicaGuardada.substring(
-                                                0,
-                                                4
-                                        );
-
                     } else if (fechaOrdenMedicaGuardada != null
                             && fechaOrdenMedicaGuardada.matches(
                                     "\\d{2}/\\d{2}/\\d{4}"
                             )) {
-
-                        fechaOrdenMedicaVisible =
-                                fechaOrdenMedicaGuardada;
 
                         fechaOrdenMedicaISO =
                                 fechaOrdenMedicaGuardada.substring(6, 10)
@@ -303,18 +225,6 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                             i == 0
                                     ? "orden_medica"
                                     : "orden_medica_" + i;
-
-                    String nombreCampoFechaVisible =
-                            i == 0
-                                    ? "<portlet:namespace />fecha_orden_medica_visible"
-                                    : "<portlet:namespace />fecha_orden_medica_"
-                                            + i
-                                            + "_visible";
-
-                    String idCampoFechaVisible =
-                            i == 0
-                                    ? "fecha_orden_medica"
-                                    : "fecha_orden_medica_" + i;
 
                     String nombreCampoFecha =
                             i == 0
@@ -352,17 +262,9 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                         </td>
 
                         <td class="orden-medica-campo-fecha">
-                            <input
-                                    type="text"
-                                    readonly="readonly"
-                                    class="orden-medica-fecha-visible"
-                                    id="<portlet:namespace /><%= idCampoFechaVisible %>"
-                                    name="<%= nombreCampoFechaVisible %>"
-                                    maxlength="10"
-                                    size="12"
-                                    value="<%= HtmlUtil.escape(
-                                            fechaOrdenMedicaVisible
-                                    ) %>" />
+
+                            <span class="orden-medica-fecha-liferay">
+                            </span>
 
                             <input
                                     type="hidden"
@@ -373,14 +275,8 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                             fechaOrdenMedicaISO
                                     ) %>" />
 
-                            <input
-                                    type="button"
-                                    class="orden-medica-calendario-abrir"
-                                    value="Calendario"
-                                    title="Seleccionar fecha de la orden médica" />
-
                             <div class="compras-ayuda-campo">
-                                Seleccione la fecha desde el calendario.
+                                Seleccione día, mes y año.
                             </div>
                         </td>
 
@@ -429,7 +325,30 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                 id="<portlet:namespace />orden_medica_count"
                 value="<%= cantidadOrdenesMedicasInicial %>" />
 
-        <div id="<portlet:namespace />orden_medica_calendario">
+        <div
+                id="<portlet:namespace />orden_medica_fecha_template"
+                style="display:none;">
+
+            <liferay-ui:input-date
+                    dayParam="ordenMedicaTemplateDia"
+                    dayValue=""
+                    dayNullable="<%= true %>"
+
+                    monthParam="ordenMedicaTemplateMes"
+                    monthValue="-1"
+                    monthNullable="<%= true %>"
+
+                    yearParam="ordenMedicaTemplateAnio"
+                    yearValue=""
+                    yearNullable="<%= true %>"
+
+                    yearRangeStart="<%= fechaOrdenMedicaReferencia.get(Calendar.YEAR) - 5 %>"
+                    yearRangeEnd="<%= fechaOrdenMedicaReferencia.get(Calendar.YEAR) %>"
+
+                    firstDayOfWeek="<%= fechaOrdenMedicaReferencia.getFirstDayOfWeek() %>"
+
+                    disabled="<%= false %>"
+            />
         </div>
     </fieldset>
 
@@ -487,435 +406,136 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
     </div>
 
     <script type="text/javascript">
-        var <portlet:namespace />ordenMedicaCalendarioInputVisible =
-                null;
+        function <portlet:namespace />parametroFechaOrdenMedica(
+                base,
+                index) {
 
-        var <portlet:namespace />ordenMedicaCalendarioInputValor =
-                null;
+            if (index == 0) {
+                return base;
+            }
 
-        var <portlet:namespace />ordenMedicaCalendarioAnio =
-                0;
-
-        var <portlet:namespace />ordenMedicaCalendarioMes =
-                0;
-
-        function <portlet:namespace />ordenMedicaDosDigitos(valor) {
-            return valor < 10
-                    ? '0' + valor
-                    : String(valor);
+            return base
+                    + '_'
+                    + index;
         }
 
-        function <portlet:namespace />ordenMedicaFechaISO(
-                anio,
-                mes,
-                dia) {
+        function <portlet:namespace />inicializarInputDateOrdenMedica(
+                row,
+                index) {
 
-            return String(anio)
-                    + '-'
-                    + <portlet:namespace />ordenMedicaDosDigitos(
-                            mes + 1
-                    )
-                    + '-'
-                    + <portlet:namespace />ordenMedicaDosDigitos(
-                            dia
+            var contenedor =
+                    row.find(
+                            '.orden-medica-fecha-liferay'
                     );
-        }
 
-        function <portlet:namespace />ordenMedicaFechaVisible(
-                anio,
-                mes,
-                dia) {
-
-            return <portlet:namespace />ordenMedicaDosDigitos(
-                    dia
-            )
-                    + '/'
-                    + <portlet:namespace />ordenMedicaDosDigitos(
-                            mes + 1
-                    )
-                    + '/'
-                    + String(anio);
-        }
-
-        function <portlet:namespace />cerrarCalendarioOrdenMedica() {
-            jQuery(
-                    '#<portlet:namespace />orden_medica_calendario'
-            ).hide();
-
-            <portlet:namespace />ordenMedicaCalendarioInputVisible =
-                    null;
-
-            <portlet:namespace />ordenMedicaCalendarioInputValor =
-                    null;
-        }
-
-        function <portlet:namespace />seleccionarFechaOrdenMedica(
-                anio,
-                mes,
-                dia) {
-
-            if (!<portlet:namespace />ordenMedicaCalendarioInputVisible
-                    || !<portlet:namespace />ordenMedicaCalendarioInputValor) {
-
+            if (contenedor.length == 0) {
                 return false;
             }
 
-            <portlet:namespace />ordenMedicaCalendarioInputVisible.val(
-                    <portlet:namespace />ordenMedicaFechaVisible(
-                            anio,
-                            mes,
-                            dia
-                    )
-            );
-
-            <portlet:namespace />ordenMedicaCalendarioInputValor.val(
-                    <portlet:namespace />ordenMedicaFechaISO(
-                            anio,
-                            mes,
-                            dia
-                    )
-            );
-
-            <portlet:namespace />cerrarCalendarioOrdenMedica();
-
-            return false;
-        }
-
-        function <portlet:namespace />renderizarCalendarioOrdenMedica() {
-            var calendario =
+            var template =
                     jQuery(
-                            '#<portlet:namespace />orden_medica_calendario'
-                    );
+                            '#<portlet:namespace />orden_medica_fecha_template'
+                    ).html();
 
-            var nombresMeses = [
-                'Enero',
-                'Febrero',
-                'Marzo',
-                'Abril',
-                'Mayo',
-                'Junio',
-                'Julio',
-                'Agosto',
-                'Septiembre',
-                'Octubre',
-                'Noviembre',
-                'Diciembre'
-            ];
-
-            calendario.empty();
-
-            var cabecera =
-                    jQuery(
-                            '<div '
-                                    + 'class="orden-medica-calendario-cabecera">'
-                                    + '</div>'
-                    );
-
-            var anterior =
-                    jQuery(
-                            '<input '
-                                    + 'type="button" '
-                                    + 'value="<" '
-                                    + 'title="Mes anterior" '
-                                    + '/>'
-                    );
-
-            anterior.click(function() {
-                <portlet:namespace />ordenMedicaCalendarioMes--;
-
-                if (<portlet:namespace />ordenMedicaCalendarioMes < 0) {
-                    <portlet:namespace />ordenMedicaCalendarioMes = 11;
-                    <portlet:namespace />ordenMedicaCalendarioAnio--;
-                }
-
-                <portlet:namespace />renderizarCalendarioOrdenMedica();
-
+            if (!template) {
                 return false;
-            });
+            }
 
-            var titulo =
-                    jQuery(
-                            '<span '
-                                    + 'class="orden-medica-calendario-titulo">'
-                                    + '</span>'
+            var parametroDia =
+                    <portlet:namespace />parametroFechaOrdenMedica(
+                            'fechaOrdenMedicaDia',
+                            index
                     );
 
-            titulo.text(
-                    nombresMeses[
-                            <portlet:namespace />ordenMedicaCalendarioMes
-                    ]
-                            + ' '
-                            + <portlet:namespace />ordenMedicaCalendarioAnio
-            );
-
-            var siguiente =
-                    jQuery(
-                            '<input '
-                                    + 'type="button" '
-                                    + 'value=">" '
-                                    + 'title="Mes siguiente" '
-                                    + '/>'
+            var parametroMes =
+                    <portlet:namespace />parametroFechaOrdenMedica(
+                            'fechaOrdenMedicaMes',
+                            index
                     );
 
-            siguiente.click(function() {
-                <portlet:namespace />ordenMedicaCalendarioMes++;
-
-                if (<portlet:namespace />ordenMedicaCalendarioMes > 11) {
-                    <portlet:namespace />ordenMedicaCalendarioMes = 0;
-                    <portlet:namespace />ordenMedicaCalendarioAnio++;
-                }
-
-                <portlet:namespace />renderizarCalendarioOrdenMedica();
-
-                return false;
-            });
-
-            cabecera.append(
-                    anterior
-            );
-
-            cabecera.append(
-                    document.createTextNode(' ')
-            );
-
-            cabecera.append(
-                    titulo
-            );
-
-            cabecera.append(
-                    document.createTextNode(' ')
-            );
-
-            cabecera.append(
-                    siguiente
-            );
-
-            calendario.append(
-                    cabecera
-            );
-
-            var tabla =
-                    jQuery(
-                            '<table></table>'
+            var parametroAnio =
+                    <portlet:namespace />parametroFechaOrdenMedica(
+                            'fechaOrdenMedicaAnio',
+                            index
                     );
 
-            var encabezado =
-                    jQuery(
-                            '<tr>'
-                                    + '<th>Dom</th>'
-                                    + '<th>Lun</th>'
-                                    + '<th>Mar</th>'
-                                    + '<th>Mié</th>'
-                                    + '<th>Jue</th>'
-                                    + '<th>Vie</th>'
-                                    + '<th>Sáb</th>'
-                                    + '</tr>'
+            /*
+             * Clonar el markup generado por liferay-ui:input-date,
+             * reemplazando los parámetros utilizados exclusivamente
+             * en la plantilla.
+             */
+            template =
+                    template.replace(
+                            /ordenMedicaTemplateDia/g,
+                            parametroDia
                     );
 
-            tabla.append(
-                    encabezado
+            template =
+                    template.replace(
+                            /ordenMedicaTemplateMes/g,
+                            parametroMes
+                    );
+
+            template =
+                    template.replace(
+                            /ordenMedicaTemplateAnio/g,
+                            parametroAnio
+                    );
+
+            contenedor.html(
+                    template
             );
-
-            var primerDia =
-                    new Date(
-                            <portlet:namespace />ordenMedicaCalendarioAnio,
-                            <portlet:namespace />ordenMedicaCalendarioMes,
-                            1
-                    ).getDay();
-
-            var diasMes =
-                    new Date(
-                            <portlet:namespace />ordenMedicaCalendarioAnio,
-                            <portlet:namespace />ordenMedicaCalendarioMes + 1,
-                            0
-                    ).getDate();
 
             var dia =
-                    1;
-
-            var fila =
-                    null;
-
-            for (var celda = 0;
-                    celda < 42;
-                    celda++) {
-
-                if (celda % 7 == 0) {
-                    fila =
-                            jQuery(
-                                    '<tr></tr>'
-                            );
-
-                    tabla.append(
-                            fila
-                    );
-                }
-
-                var td =
-                        jQuery(
-                                '<td></td>'
-                        );
-
-                if (celda < primerDia
-                        || dia > diasMes) {
-
-                    td.html(
-                            '&nbsp;'
+                    document.getElementById(
+                            '<portlet:namespace />'
+                                    + parametroDia
                     );
 
-                } else {
-                    var botonDia =
-                            jQuery(
-                                    '<input '
-                                            + 'type="button" '
-                                            + 'class="orden-medica-calendario-dia" '
-                                            + '/>'
-                            );
-
-                    botonDia.val(
-                            dia
+            var mes =
+                    document.getElementById(
+                            '<portlet:namespace />'
+                                    + parametroMes
                     );
 
-                    botonDia.attr(
-                            'data-dia',
-                            String(dia)
+            var anio =
+                    document.getElementById(
+                            '<portlet:namespace />'
+                                    + parametroAnio
                     );
 
-                    botonDia.click(function() {
-                        var diaSeleccionado =
-                                parseInt(
-                                        jQuery(this).attr(
-                                                'data-dia'
-                                        ),
-                                        10
-                                );
+            if (!dia
+                    || !mes
+                    || !anio) {
 
-                        return <portlet:namespace />seleccionarFechaOrdenMedica(
-                                <portlet:namespace />ordenMedicaCalendarioAnio,
-                                <portlet:namespace />ordenMedicaCalendarioMes,
-                                diaSeleccionado
-                        );
-                    });
-
-                    td.append(
-                            botonDia
-                    );
-
-                    dia++;
-                }
-
-                fila.append(
-                        td
-                );
-
-                if (dia > diasMes
-                        && celda >= primerDia + diasMes
-                        && (celda + 1) % 7 == 0) {
-
-                    break;
-                }
-            }
-
-            calendario.append(
-                    tabla
-            );
-
-            var pie =
-                    jQuery(
-                            '<div '
-                                    + 'class="orden-medica-calendario-pie">'
-                                    + '</div>'
-                    );
-
-            var hoy =
-                    jQuery(
-                            '<input '
-                                    + 'type="button" '
-                                    + 'value="Hoy" '
-                                    + '/>'
-                    );
-
-            hoy.click(function() {
-                var fechaHoy =
-                        new Date();
-
-                return <portlet:namespace />seleccionarFechaOrdenMedica(
-                        fechaHoy.getFullYear(),
-                        fechaHoy.getMonth(),
-                        fechaHoy.getDate()
-                );
-            });
-
-            var cerrar =
-                    jQuery(
-                            '<input '
-                                    + 'type="button" '
-                                    + 'value="Cerrar" '
-                                    + '/>'
-                    );
-
-            cerrar.click(function() {
-                <portlet:namespace />cerrarCalendarioOrdenMedica();
+                contenedor.empty();
 
                 return false;
-            });
+            }
 
-            pie.append(
-                    hoy
+            jQuery(dia).addClass(
+                    'orden-medica-fecha-dia'
             );
 
-            pie.append(
-                    document.createTextNode(' ')
+            jQuery(mes).addClass(
+                    'orden-medica-fecha-mes'
             );
 
-            pie.append(
-                    cerrar
+            jQuery(anio).addClass(
+                    'orden-medica-fecha-anio'
             );
 
-            calendario.append(
-                    pie
-            );
-        }
-
-        function <portlet:namespace />abrirCalendarioOrdenMedica(
-                boton) {
-
-            var row =
-                    jQuery(boton)
-                            .parents(
-                                    'tr'
-                            )
-                            .eq(0);
-
-            var visible =
-                    row.find(
-                            'input.orden-medica-fecha-visible'
-                    );
-
-            var valor =
+            var fechaValor =
                     row.find(
                             'input.orden-medica-fecha-valor'
                     );
 
-            if (visible.length == 0
-                    || valor.length == 0) {
-
-                return false;
-            }
-
-            <portlet:namespace />ordenMedicaCalendarioInputVisible =
-                    visible;
-
-            <portlet:namespace />ordenMedicaCalendarioInputValor =
-                    valor;
-
-            var fechaBase =
-                    new Date();
-
             var fechaISO =
-                    jQuery.trim(
-                            valor.val()
-                    );
+                    fechaValor.length > 0
+                            ? jQuery.trim(
+                                    fechaValor.val() || ''
+                            )
+                            : '';
 
             var match =
                     /^(\d{4})-(\d{2})-(\d{2})$/.exec(
@@ -923,85 +543,168 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                     );
 
             if (match) {
-                var anio =
+                var valorAnio =
                         parseInt(
                                 match[1],
                                 10
                         );
 
-                var mes =
+                var valorMes =
                         parseInt(
                                 match[2],
                                 10
                         ) - 1;
 
-                var dia =
+                var valorDia =
                         parseInt(
                                 match[3],
                                 10
                         );
 
-                var fechaParseada =
-                        new Date(
-                                anio,
-                                mes,
-                                dia
-                        );
+                jQuery(dia).val(
+                        String(valorDia)
+                );
 
-                if (fechaParseada.getFullYear() == anio
-                        && fechaParseada.getMonth() == mes
-                        && fechaParseada.getDate() == dia) {
+                jQuery(mes).val(
+                        String(valorMes)
+                );
 
-                    fechaBase =
-                            fechaParseada;
-                }
+                jQuery(anio).val(
+                        String(valorAnio)
+                );
+
+            } else {
+                jQuery(dia).val(
+                        '-1'
+                );
+
+                jQuery(mes).val(
+                        '-1'
+                );
+
+                jQuery(anio).val(
+                        '-1'
+                );
             }
 
-            <portlet:namespace />ordenMedicaCalendarioAnio =
-                    fechaBase.getFullYear();
+            jQuery(
+                    dia
+            ).change(function() {
+                <portlet:namespace />sincronizarFechaOrdenMedicaFila(
+                        row
+                );
+            });
 
-            <portlet:namespace />ordenMedicaCalendarioMes =
-                    fechaBase.getMonth();
+            jQuery(
+                    mes
+            ).change(function() {
+                <portlet:namespace />sincronizarFechaOrdenMedicaFila(
+                        row
+                );
+            });
 
-            <portlet:namespace />renderizarCalendarioOrdenMedica();
+            jQuery(
+                    anio
+            ).change(function() {
+                <portlet:namespace />sincronizarFechaOrdenMedicaFila(
+                        row
+                );
+            });
 
-            var calendario =
-                    jQuery(
-                            '#<portlet:namespace />orden_medica_calendario'
+            return true;
+        }
+
+        function <portlet:namespace />sincronizarFechaOrdenMedicaFila(
+                row) {
+
+            var dia =
+                    row.find(
+                            'select.orden-medica-fecha-dia'
+                    ).get(0);
+
+            var mes =
+                    row.find(
+                            'select.orden-medica-fecha-mes'
+                    ).get(0);
+
+            var anio =
+                    row.find(
+                            'select.orden-medica-fecha-anio'
+                    ).get(0);
+
+            var fechaValor =
+                    row.find(
+                            'input.orden-medica-fecha-valor'
+                    ).get(0);
+
+            if (!fechaValor) {
+                return false;
+            }
+
+            fechaValor.value =
+                    '';
+
+            if (!dia
+                    || !mes
+                    || !anio) {
+
+                return false;
+            }
+
+            var diaNumero =
+                    parseInt(
+                            dia.value,
+                            10
                     );
 
-            var fieldset =
-                    jQuery(
-                            '#<portlet:namespace />orden_medica_fieldset'
+            var mesNumero =
+                    parseInt(
+                            mes.value,
+                            10
                     );
 
-            var botonJQuery =
-                    jQuery(
-                            boton
+            var anioNumero =
+                    parseInt(
+                            anio.value,
+                            10
                     );
 
-            var offsetFieldset =
-                    fieldset.offset();
+            if (isNaN(diaNumero)
+                    || isNaN(mesNumero)
+                    || isNaN(anioNumero)
+                    || diaNumero < 1
+                    || mesNumero < 0
+                    || anioNumero < 1) {
 
-            var offsetBoton =
-                    botonJQuery.offset();
+                return false;
+            }
 
-            calendario.css(
-                    {
-                        left:
-                                offsetBoton.left
-                                        - offsetFieldset.left,
-                        top:
-                                offsetBoton.top
-                                        - offsetFieldset.top
-                                        + botonJQuery.outerHeight()
-                                        + 3
-                    }
-            );
+            var fecha =
+                    new Date(
+                            anioNumero,
+                            mesNumero,
+                            diaNumero
+                    );
 
-            calendario.show();
+            if (fecha.getFullYear() != anioNumero
+                    || fecha.getMonth() != mesNumero
+                    || fecha.getDate() != diaNumero) {
 
-            return false;
+                return false;
+            }
+
+            fechaValor.value =
+                    String(anioNumero)
+                            + '-'
+                            + <portlet:namespace />ordenMedicaDosDigitos(
+                                    mesNumero + 1
+                            )
+                            + '-'
+                            + <portlet:namespace />ordenMedicaDosDigitos(
+                                    diaNumero
+                            );
+
+            return true;
         }
 
         function <portlet:namespace />reindexarFilasOrdenMedica() {
@@ -1019,14 +722,24 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                 'input.orden-medica-archivo'
                         );
 
-                var fechaVisible =
-                        row.find(
-                                'input.orden-medica-fecha-visible'
-                        );
-
                 var fechaValor =
                         row.find(
                                 'input.orden-medica-fecha-valor'
+                        );
+
+                var fechaDia =
+                        row.find(
+                                'select.orden-medica-fecha-dia'
+                        );
+
+                var fechaMes =
+                        row.find(
+                                'select.orden-medica-fecha-mes'
+                        );
+
+                var fechaAnio =
+                        row.find(
+                                'select.orden-medica-fecha-anio'
                         );
 
                 var numeroReceta =
@@ -1050,14 +763,34 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                             '<portlet:namespace />orden_medica'
                     );
 
-                    fechaVisible.attr(
+                    fechaDia.attr(
                             'name',
-                            '<portlet:namespace />fecha_orden_medica_visible'
+                            '<portlet:namespace />fechaOrdenMedicaDia'
                     );
 
-                    fechaVisible.attr(
+                    fechaDia.attr(
                             'id',
-                            '<portlet:namespace />fecha_orden_medica'
+                            '<portlet:namespace />fechaOrdenMedicaDia'
+                    );
+
+                    fechaMes.attr(
+                            'name',
+                            '<portlet:namespace />fechaOrdenMedicaMes'
+                    );
+
+                    fechaMes.attr(
+                            'id',
+                            '<portlet:namespace />fechaOrdenMedicaMes'
+                    );
+
+                    fechaAnio.attr(
+                            'name',
+                            '<portlet:namespace />fechaOrdenMedicaAnio'
+                    );
+
+                    fechaAnio.attr(
+                            'id',
+                            '<portlet:namespace />fechaOrdenMedicaAnio'
                     );
 
                     fechaValor.attr(
@@ -1093,16 +826,39 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                     + index
                     );
 
-                    fechaVisible.attr(
+                    fechaDia.attr(
                             'name',
-                            '<portlet:namespace />fecha_orden_medica_'
+                            '<portlet:namespace />fechaOrdenMedicaDia_'
                                     + index
-                                    + '_visible'
                     );
 
-                    fechaVisible.attr(
+                    fechaDia.attr(
                             'id',
-                            '<portlet:namespace />fecha_orden_medica_'
+                            '<portlet:namespace />fechaOrdenMedicaDia_'
+                                    + index
+                    );
+
+                    fechaMes.attr(
+                            'name',
+                            '<portlet:namespace />fechaOrdenMedicaMes_'
+                                    + index
+                    );
+
+                    fechaMes.attr(
+                            'id',
+                            '<portlet:namespace />fechaOrdenMedicaMes_'
+                                    + index
+                    );
+
+                    fechaAnio.attr(
+                            'name',
+                            '<portlet:namespace />fechaOrdenMedicaAnio_'
+                                    + index
+                    );
+
+                    fechaAnio.attr(
+                            'id',
+                            '<portlet:namespace />fechaOrdenMedicaAnio_'
                                     + index
                     );
 
@@ -1157,11 +913,6 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
         function <portlet:namespace />vincularAccionesFilaOrdenMedica(
                 row) {
 
-            var botonCalendario =
-                    row.find(
-                            'input.orden-medica-calendario-abrir'
-                    );
-
             var botonBorrar =
                     row.find(
                             'input.orden-medica-borrar'
@@ -1172,16 +923,6 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                             'input.orden-medica-agregar'
                     );
 
-            botonCalendario.unbind(
-                    'click'
-            );
-
-            botonCalendario.click(function() {
-                return <portlet:namespace />abrirCalendarioOrdenMedica(
-                        this
-                );
-            });
-
             botonBorrar.unbind(
                     'click'
             );
@@ -1191,8 +932,6 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                         jQuery(
                                 '#<portlet:namespace />ordenes_medicas_body'
                         );
-
-                <portlet:namespace />cerrarCalendarioOrdenMedica();
 
                 jQuery(this)
                         .parents(
@@ -1255,15 +994,11 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                     + '/>'
                     );
 
-            var fechaVisible =
+            var fechaLiferay =
                     jQuery(
-                            '<input '
-                                    + 'type="text" '
-                                    + 'readonly="readonly" '
-                                    + 'class="orden-medica-fecha-visible" '
-                                    + 'maxlength="10" '
-                                    + 'size="12" '
-                                    + '/>'
+                            '<span '
+                                    + 'class="orden-medica-fecha-liferay">'
+                                    + '</span>'
                     );
 
             var fechaValor =
@@ -1280,16 +1015,6 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                     + 'type="text" '
                                     + 'class="orden-medica-numero-receta" '
                                     + 'maxlength="100" '
-                                    + '/>'
-                    );
-
-            var botonCalendario =
-                    jQuery(
-                            '<input '
-                                    + 'type="button" '
-                                    + 'class="orden-medica-calendario-abrir" '
-                                    + 'value="Calendario" '
-                                    + 'title="Seleccionar fecha de la orden médica" '
                                     + '/>'
                     );
 
@@ -1343,11 +1068,7 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                     );
 
             tdFecha.append(
-                    fechaVisible
-            );
-
-            tdFecha.append(
-                    document.createTextNode(' ')
+                    fechaLiferay
             );
 
             tdFecha.append(
@@ -1355,12 +1076,8 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
             );
 
             tdFecha.append(
-                    botonCalendario
-            );
-
-            tdFecha.append(
                     '<div class="compras-ayuda-campo">'
-                            + 'Seleccione la fecha desde el calendario.'
+                            + 'Seleccione día, mes y año.'
                             + '</div>'
             );
 
@@ -1420,6 +1137,20 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                     row
             );
 
+            if (!<portlet:namespace />inicializarInputDateOrdenMedica(
+                    row,
+                    cantidad
+            )) {
+
+                row.remove();
+
+                alert(
+                        'No se pudo preparar la fecha de la nueva Orden médica.'
+                );
+
+                return false;
+            }
+
             <portlet:namespace />vincularAccionesFilaOrdenMedica(
                     row
             );
@@ -1435,27 +1166,21 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                             '#<portlet:namespace />ordenes_medicas_body tr'
                     );
 
-            rows.each(function() {
+            rows.each(function(index) {
+                var row =
+                        jQuery(this);
+
+                <portlet:namespace />inicializarInputDateOrdenMedica(
+                        row,
+                        index
+                );
+
                 <portlet:namespace />vincularAccionesFilaOrdenMedica(
-                        jQuery(this)
+                        row
                 );
             });
 
             <portlet:namespace />reindexarFilasOrdenMedica();
-
-            jQuery(
-                    '#<portlet:namespace />orden_medica_calendario'
-            ).click(function(event) {
-                if (event
-                        && event.stopPropagation) {
-
-                    event.stopPropagation();
-                }
-            });
-
-            jQuery(document).click(function() {
-                <portlet:namespace />cerrarCalendarioOrdenMedica();
-            });
         });
     </script>
 </c:if>
