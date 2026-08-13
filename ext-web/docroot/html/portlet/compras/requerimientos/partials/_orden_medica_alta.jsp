@@ -128,7 +128,6 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                 <tr>
                     <th>Orden médica</th>
                     <th>Fecha de la orden médica</th>
-                    <th>Número de receta</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -355,9 +354,6 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
         <br />
 
         - Cada Orden médica debe tener informada su propia fecha.
-        <br />
-
-        - El número de receta es opcional.
         <br />
 
         - La fecha debe seleccionarse utilizando el botón "Calendario".

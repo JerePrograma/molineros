@@ -1226,30 +1226,6 @@
                 fechaValorInput.value =
                         fechaISO;
 
-                if (!numeroReceta) {
-                    alert(
-                            'No se pudo preparar el número de receta de la Orden médica '
-                                    + numeroOrden
-                                    + '.'
-                    );
-
-                    valido = false;
-                    return;
-                }
-
-                if ((numeroReceta.value || '').length > 100) {
-                    alert(
-                            'Número de receta de la Orden médica '
-                                    + numeroOrden
-                                    + ': no puede superar los 100 caracteres.'
-                    );
-
-                    numeroReceta.focus();
-
-                    valido = false;
-                    return;
-                }
-
                 /*
                  * Compatibilidad con el parámetro histórico correspondiente
                  * a la primera Orden médica.
