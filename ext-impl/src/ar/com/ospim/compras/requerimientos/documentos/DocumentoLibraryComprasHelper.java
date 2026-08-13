@@ -97,10 +97,16 @@ public class DocumentoLibraryComprasHelper
         String identificador = UUID.randomUUID()
                 .toString()
                 .replace("-", "");
+
         String nombrePersistido = construirNombreOrdenMedica(
                 idRequerimientoCompra,
                 identificador,
                 ordenMedica.getExtension()
+        );
+
+        String tituloPersistido = construirTituloOrdenMedica(
+                idRequerimientoCompra,
+                identificador
         );
 
         DLFileEntry entry =
@@ -108,7 +114,7 @@ public class DocumentoLibraryComprasHelper
                         userId,
                         folder.getFolderId(),
                         nombrePersistido,
-                        TITULO_ORDEN_MEDICA,
+                        tituloPersistido,
                         DESCRIPCION_ORDEN_MEDICA,
                         "",
                         ordenMedica.getArchivo(),
@@ -135,7 +141,7 @@ public class DocumentoLibraryComprasHelper
             validarIdentidadDocumento(documento);
 
             if (!coincideIdentidad(documento, entry)
-                    || !TITULO_ORDEN_MEDICA.equals(entry.getTitle())) {
+                    || !tituloPersistido.equals(entry.getTitle())) {
 
                 throw new Exception(
                         "La Orden médica creada no conserva la identidad requerida."
@@ -215,6 +221,26 @@ public class DocumentoLibraryComprasHelper
         return coincide
                 && (WebKeysCompras.isEmpty(documento.getUuid())
                 || documento.getUuid().equals(entry.getUuid()));
+    }
+
+    public String construirTituloOrdenMedica(
+            int idRequerimientoCompra,
+            String identificador) throws Exception {
+
+        if (idRequerimientoCompra <= 0
+                || WebKeysCompras.isEmpty(identificador)
+                || !identificador.matches("^[A-Za-z0-9]+$")) {
+
+            throw new Exception(
+                    "No se pudo construir el título persistido de la Orden médica."
+            );
+        }
+
+        return TITULO_ORDEN_MEDICA
+                + " "
+                + idRequerimientoCompra
+                + " "
+                + identificador;
     }
 
     public String construirNombreOrdenMedica(
