@@ -265,8 +265,8 @@ String botoneraReclamoPrestacionalFormId =
                         || botoneraTieneRolCrearReclamo)) { %>
                 <input type="button"
                        value="<%= botoneraRelacionReclamo.isError()
-                               ? "Reclamo creado: vinculaci\u00f3n pendiente"
-                               : "Creaci\u00f3n de reclamo en proceso" %>"
+                               ? "Reclamo creado: vinculación pendiente"
+                               : "Creación de reclamo en proceso" %>"
                        disabled="disabled" />
             <% } %>
 
@@ -319,7 +319,7 @@ String botoneraReclamoPrestacionalFormId =
         var iframe = document.getElementById('<portlet:namespace />iframeImpresionRequerimientoCompra');
 
         if (!iframe) {
-            alert('No se pudo preparar la impresi\u00f3n del requerimiento.');
+            alert('No se pudo preparar la impresión del requerimiento.');
             return false;
         }
 
@@ -331,7 +331,7 @@ String botoneraReclamoPrestacionalFormId =
                 iframe.contentWindow.focus();
                 iframe.contentWindow.print();
             } catch (e) {
-                alert('No se pudo imprimir autom\u00e1ticamente el PDF.');
+                alert('No se pudo imprimir automáticamente el PDF.');
             }
         };
 

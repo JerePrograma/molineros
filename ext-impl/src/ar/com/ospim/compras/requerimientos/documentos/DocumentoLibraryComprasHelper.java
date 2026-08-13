@@ -87,7 +87,7 @@ public class DocumentoLibraryComprasHelper
 
         if (idRequerimientoCompra <= 0) {
             throw new Exception(
-                    "El requerimiento de compra no es v\u00e1lido."
+                    "El requerimiento de compra no es válido."
             );
         }
 
@@ -118,7 +118,7 @@ public class DocumentoLibraryComprasHelper
         try {
             if (entry == null || entry.getFileEntryId() <= 0L) {
                 throw new Exception(
-                        "Document Library no devolvi\u00f3 una Orden médica v\u00e1lida."
+                        "Document Library no devolvió una Orden médica válida."
                 );
             }
 
@@ -149,7 +149,7 @@ public class DocumentoLibraryComprasHelper
                     DLFileEntryLocalServiceUtil.deleteFileEntry(entry);
                 } catch (Exception cleanupError) {
                     _log.error(
-                            "Fall\u00f3 la compensaci\u00f3n de una Orden médica "
+                            "Falló la compensación de una Orden médica "
                                     + "creada pero no validada. fileEntryId="
                                     + entry.getFileEntryId()
                                     + ", folderId=" + entry.getFolderId()
@@ -193,7 +193,7 @@ public class DocumentoLibraryComprasHelper
                 || WebKeysCompras.isEmpty(documento.getTitulo())) {
 
             throw new Exception(
-                    "La identidad del documento de Compras no es v\u00e1lida."
+                    "La identidad del documento de Compras no es válida."
             );
         }
     }
@@ -302,7 +302,7 @@ public class DocumentoLibraryComprasHelper
             return maximo > 0L ? maximo : Long.MAX_VALUE;
         } catch (NumberFormatException e) {
             throw new Exception(
-                    "La configuraci\u00f3n dl.file.max.size no es v\u00e1lida.",
+                    "La configuración dl.file.max.size no es válida.",
                     e
             );
         }
@@ -324,7 +324,7 @@ public class DocumentoLibraryComprasHelper
 
         if (parsed == null || posicion.getIndex() != fecha.length()) {
             throw new Exception(
-                    "Fecha de la Orden médica: el formato no es v\u00e1lido."
+                    "Fecha de la Orden médica: el formato no es válido."
             );
         }
 
@@ -377,7 +377,7 @@ public class DocumentoLibraryComprasHelper
 
             if (!valida) {
                 throw new Exception(
-                        "Orden médica: el contenido no coincide con una imagen JPEG o PNG v\u00e1lida."
+                        "Orden médica: el contenido no coincide con una imagen JPEG o PNG válida."
                 );
             }
         } finally {
@@ -415,7 +415,7 @@ public class DocumentoLibraryComprasHelper
             throw new Exception(
                     "Orden médica: el tipo MIME "
                             + origen
-                            + " no coincide con la extensi\u00f3n del archivo."
+                            + " no coincide con la extensión del archivo."
             );
         }
     }
@@ -471,7 +471,7 @@ public class DocumentoLibraryComprasHelper
                 > WebKeysCompras.DOCUMENT_LIBRARY_MAX_TITLE_LENGTH) {
 
             throw new Exception(
-                    "La Orden médica validada tiene un nombre de archivo inv\u00e1lido."
+                    "La Orden médica validada tiene un nombre de archivo inválido."
             );
         }
 
@@ -479,7 +479,7 @@ public class DocumentoLibraryComprasHelper
 
         if (!ordenMedica.getExtension().equals(extensionNombre)) {
             throw new Exception(
-                    "La extensi\u00f3n de la Orden médica no coincide con su nombre original."
+                    "La extensión de la Orden médica no coincide con su nombre original."
             );
         }
 
@@ -487,7 +487,7 @@ public class DocumentoLibraryComprasHelper
 
         if (ordenMedica.getArchivo().length() > maximoTamanoArchivo) {
             throw new Exception(
-                    "La Orden médica validada supera el tama\u00f1o permitido."
+                    "La Orden médica validada supera el tamaño permitido."
             );
         }
 
@@ -527,7 +527,7 @@ public class DocumentoLibraryComprasHelper
         } catch (NoSuchFolderException e) {
             if (_log.isDebugEnabled()) {
                 _log.debug(
-                        "La carpeta de documentos de Compras no existe; se crear\u00e1. groupId="
+                        "La carpeta de documentos de Compras no existe; se creará. groupId="
                                 + groupId
                 );
             }

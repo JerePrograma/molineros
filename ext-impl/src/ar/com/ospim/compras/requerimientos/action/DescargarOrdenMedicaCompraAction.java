@@ -164,7 +164,7 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
 
                 throw new Exception(
                         "El tipo de archivo de la Orden médica "
-                                + "no es v\u00e1lido."
+                                + "no es válido."
                 );
             }
 
@@ -303,7 +303,7 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
 
             throw new Exception(
                     "No existe una Orden médica activa "
-                            + "y v\u00e1lida para el requerimiento."
+                            + "y válida para el requerimiento."
             );
         }
     }

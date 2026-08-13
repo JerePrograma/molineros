@@ -130,7 +130,6 @@ DECLARE
     v_inte INTEGER;
     v_numero_receta VARCHAR;
     v_id_requerimiento_duplicado INTEGER;
-    v_id_documento_duplicado INTEGER;
     v_usuario VARCHAR(100);
 BEGIN
     IF p_id_requerimiento IS NULL
@@ -240,12 +239,8 @@ BEGIN
             )
         );
 
-        SELECT
-            rp.id_requerimiento,
-            rp.id_requerimiento_presupuesto
-        INTO
-            v_id_requerimiento_duplicado,
-            v_id_documento_duplicado
+        SELECT rp.id_requerimiento
+        INTO v_id_requerimiento_duplicado
         FROM compras.requerimiento_presupuesto rp
         INNER JOIN compras.requerimiento r
             ON r.id_requerimiento = rp.id_requerimiento
@@ -263,11 +258,10 @@ BEGIN
 
         IF FOUND THEN
             RAISE EXCEPTION
-                'Ya existe una Orden médica activa con número de receta % y fecha % en el requerimiento % (documento %).',
-                v_numero_receta,
+                'La Orden médica ya fue cargada con fecha % y número de receta % en el requerimiento %.',
                 to_char(p_fecha_documento, 'DD-MM-YYYY'),
-                v_id_requerimiento_duplicado,
-                v_id_documento_duplicado;
+                v_numero_receta,
+                v_id_requerimiento_duplicado;
         END IF;
     END IF;
 

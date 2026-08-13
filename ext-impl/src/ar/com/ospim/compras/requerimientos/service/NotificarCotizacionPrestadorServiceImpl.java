@@ -757,7 +757,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 || entry.getSize() > maximoTamano) {
 
             throw new Exception(
-                    "La Orden médica persistida tiene un tama\u00f1o inv\u00e1lido."
+                    "La Orden médica persistida tiene un tamaño inválido."
             );
         }
 
@@ -813,7 +813,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         if (contenido == null || contenido.length == 0) {
             throw new Exception(
-                    "La Orden médica persistida est\u00e1 vac\u00eda."
+                    "La Orden médica persistida está vac\u00eda."
             );
         }
 
@@ -836,7 +836,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                     || contenido[7] != 0x0A) {
 
                 throw new Exception(
-                        "La Orden médica PNG no conserva una firma v\u00e1lida."
+                        "La Orden médica PNG no conserva una firma válida."
                 );
             }
 
@@ -852,7 +852,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                     || (contenido[2] & 0xFF) != 0xFF) {
 
                 throw new Exception(
-                        "La Orden médica JPEG no conserva una firma v\u00e1lida."
+                        "La Orden médica JPEG no conserva una firma válida."
                 );
             }
 
@@ -899,7 +899,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                         )) {
 
             throw new Exception(
-                    "La asociaci\u00f3n de la Orden médica activa es inconsistente."
+                    "La asociación de la Orden médica activa es inconsistente."
             );
         }
     }
@@ -951,7 +951,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             if (input == null) {
                 throw new Exception(
-                        "Document Library no devolvi\u00f3 la Orden médica."
+                        "Document Library no devolvió la Orden médica."
                 );
             }
 
@@ -982,7 +982,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
             if (contenido.length != entry.getSize()) {
                 throw new Exception(
-                        "El tama\u00f1o le\u00eddo de la Orden médica no coincide con Document Library."
+                        "El tamaño le\u00eddo de la Orden médica no coincide con Document Library."
                 );
             }
 
@@ -1015,7 +1015,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
             return maximo > 0L ? maximo : Long.MAX_VALUE;
         } catch (NumberFormatException e) {
             throw new Exception(
-                    "La configuraci\u00f3n dl.file.max.size no es v\u00e1lida.",
+                    "La configuración dl.file.max.size no es válida.",
                     e
             );
         }
@@ -1033,7 +1033,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 || nombreOriginal.matches(".*\\p{Cntrl}.*")) {
 
             throw new Exception(
-                    "El nombre original de la Orden médica es inv\u00e1lido."
+                    "El nombre original de la Orden médica es inválido."
             );
         }
     }
