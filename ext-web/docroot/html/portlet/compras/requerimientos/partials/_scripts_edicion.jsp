@@ -491,6 +491,8 @@
         );
 
         if (typeof <portlet:namespace />mostrarMensajeAfiliadoInicial == 'function') {
+            <portlet:namespace />mostrarMensajeAfiliadoInicial('');
+        }
     }
 
     function <portlet:namespace />sectorRequiereAfiliado() {
