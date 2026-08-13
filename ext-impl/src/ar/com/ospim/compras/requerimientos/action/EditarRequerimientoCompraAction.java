@@ -83,12 +83,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
     private static final String PARAM_ORDEN_MEDICA_COUNT =
             "orden_medica_count";
 
-    private static final String PARAM_NUMERO_RECETA_ORDEN_MEDICA =
-            "numero_receta_orden_medica";
-
     private static final int MAX_ORDENES_MEDICAS_POR_CARGA = 20;
-
-    private static final int MAX_NUMERO_RECETA_ORDEN_MEDICA = 100;
 
     /*
      * La lógica de detalles queda separada en helper:
@@ -561,20 +556,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                             indice
                     );
 
-            String campoNumeroReceta =
-                    obtenerCampoNumeroRecetaOrdenMedica(
-                            indice
-                    );
-
             try {
-                String numeroReceta =
-                        normalizarNumeroRecetaOrdenMedica(
-                                getParametroRaw(
-                                        actionRequest,
-                                        campoNumeroReceta,
-                                        null
-                                )
-                        );
 
                 OrdenMedicaValidada ordenMedica =
                         gestorDocumento.validarOrdenMedica(
@@ -584,7 +566,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                                         actionRequest,
                                         campoFecha
                                 ),
-                                numeroReceta
+                                null
                         );
 
                 ordenesMedicas.add(
@@ -607,8 +589,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 if (mensajeNormalizado.indexOf("fecha") >= 0) {
                     campo = campoFecha;
-                } else if (mensajeNormalizado.indexOf("receta") >= 0) {
-                    campo = campoNumeroReceta;
                 }
 
                 errorCampo(
@@ -694,73 +674,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 + indice;
     }
 
-    private String obtenerCampoNumeroRecetaOrdenMedica(
-            int indice) {
-
-        if (indice <= 0) {
-            return PARAM_NUMERO_RECETA_ORDEN_MEDICA;
-        }
-
-        return PARAM_NUMERO_RECETA_ORDEN_MEDICA
-                + "_"
-                + indice;
-    }
-
-    private String normalizarNumeroRecetaOrdenMedica(
-            String value) throws Exception {
-
-        if (value == null) {
-            return null;
-        }
-
-        if (value.codePointCount(0, value.length())
-                > MAX_NUMERO_RECETA_ORDEN_MEDICA) {
-
-            throw new Exception(
-                    "Número de receta: no puede superar los 100 caracteres."
-            );
-        }
-
-        StringBuilder sinEspacios =
-                new StringBuilder(value.length());
-
-        for (int offset = 0; offset < value.length();) {
-            int codePoint = value.codePointAt(offset);
-            offset += Character.charCount(codePoint);
-
-            if (Character.isWhitespace(codePoint)
-                    || Character.isSpaceChar(codePoint)) {
-
-                continue;
-            }
-
-            if (Character.getType(codePoint) == Character.CONTROL) {
-                throw new Exception(
-                        "Número de receta: contiene caracteres de control no permitidos."
-                );
-            }
-
-            sinEspacios.appendCodePoint(codePoint);
-        }
-
-        if (sinEspacios.length() == 0) {
-            return null;
-        }
-
-        String numeroReceta =
-                sinEspacios.toString().toUpperCase(Locale.ROOT);
-
-        if (numeroReceta.codePointCount(0, numeroReceta.length())
-                > MAX_NUMERO_RECETA_ORDEN_MEDICA) {
-
-            throw new Exception(
-                    "Número de receta: no puede superar los 100 caracteres."
-            );
-        }
-
-        return numeroReceta;
-    }
-
     private void copiarParametrosOrdenesMedicas(
             ActionRequest actionRequest,
             ActionResponse actionResponse) {
@@ -804,25 +717,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                             indice
                     );
 
-            String campoNumeroReceta =
-                    obtenerCampoNumeroRecetaOrdenMedica(
-                            indice
-                    );
-
             actionResponse.setRenderParameter(
                     campoFecha,
                     getParametroTrim(
                             actionRequest,
                             campoFecha
-                    )
-            );
-
-            actionResponse.setRenderParameter(
-                    campoNumeroReceta,
-                    getParametroRaw(
-                            actionRequest,
-                            campoNumeroReceta,
-                            ""
                     )
             );
         }

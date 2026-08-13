@@ -687,7 +687,10 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.setString(8, emptyToNull(documento.getNombrePersistido()));
             stmt.setString(9, "Orden médica");
             stmt.setDate(10, ordenMedica.getFechaDocumento());
-            stmt.setString(11, emptyToNull(ordenMedica.getNumeroReceta()));
+            stmt.setNull(
+                    11,
+                    Types.VARCHAR
+            );
             stmt.setString(12, emptyToNull(usuario));
             stmt.execute();
 

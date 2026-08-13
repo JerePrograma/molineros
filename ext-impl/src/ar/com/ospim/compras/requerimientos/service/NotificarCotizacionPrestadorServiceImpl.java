@@ -918,14 +918,11 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 && entry.getFolderId()
                 == ordenMedica.getDlFolderId().longValue()
                 && ordenMedica.getDlFileUuid().equals(
-                        entry.getUuid()
-                )
+                entry.getUuid()
+        )
                 && ordenMedica.getNombrePersistido().equals(
-                        entry.getName()
-                )
-                && ordenMedica.getTitulo().equals(
-                        entry.getTitle()
-                );
+                entry.getName()
+        );
 
         if (!coincide) {
             throw new Exception(
@@ -1628,17 +1625,38 @@ public class NotificarCotizacionPrestadorServiceImpl {
         /*
          * Mientras el envío esté redirigido al destinatario temporal
          * de QA, no se incluyen las copias productivas.
-         *
-         * Esto evita que una ejecución de prueba genere correos reales
-         * hacia los destinatarios fijos.
          */
         if (USAR_EMAIL_DESTINO_TEMPORAL) {
             return new String[0];
         }
 
-        return new String[] {
-                EMAIL_COPIA_COTIZACION
-        };
+        String configuracion =
+                EMAIL_COPIA_COTIZACION != null
+                        ? EMAIL_COPIA_COTIZACION
+                        : "";
+
+        /*
+         * El -1 conserva también elementos vacíos al final.
+         *
+         * Esto es deliberado: una configuración como
+         * "uno@dominio.com;" o "uno@dominio.com;;dos@dominio.com"
+         * debe llegar al MailHelper como inválida, en lugar de enviar
+         * silenciosamente el correo con una lista incompleta.
+         */
+        String[] emails =
+                configuracion.split(
+                        ";",
+                        -1
+                );
+
+        for (int i = 0; i < emails.length; i++) {
+            emails[i] =
+                    emails[i] != null
+                            ? emails[i].trim()
+                            : "";
+        }
+
+        return emails;
     }
 
     private String construirAsunto(
