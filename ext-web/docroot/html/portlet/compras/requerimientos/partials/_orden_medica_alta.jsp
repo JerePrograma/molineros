@@ -274,26 +274,6 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                     value="<%= HtmlUtil.escape(
                                             fechaOrdenMedicaISO
                                     ) %>" />
-
-                            <div class="compras-ayuda-campo">
-                                Seleccione día, mes y año.
-                            </div>
-                        </td>
-
-                        <td class="orden-medica-campo-receta">
-                            <input
-                                    type="text"
-                                    class="orden-medica-numero-receta"
-                                    id="<portlet:namespace /><%= idCampoNumeroReceta %>"
-                                    name="<%= nombreCampoNumeroReceta %>"
-                                    maxlength="100"
-                                    value="<%= HtmlUtil.escape(
-                                            numeroRecetaOrdenMedicaGuardado
-                                    ) %>" />
-
-                            <div class="compras-ayuda-campo">
-                                Opcional.
-                            </div>
                         </td>
 
                         <td class="orden-medica-acciones">
