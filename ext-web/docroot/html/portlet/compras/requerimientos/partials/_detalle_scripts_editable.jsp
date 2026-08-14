@@ -523,7 +523,7 @@
 
                 alert(
                         'Tipo Nomenclador: debe seleccionar '
-                                + 'un tipo válido para Prestaciones Médicas.'
+                                + 'un tipo válido para PRESTACIONES MEDICAS.'
                 );
 
                 if (select.length > 0) {
@@ -725,7 +725,7 @@
          * Farmacia:
          *     9
          *
-         * Prestaciones Médicas:
+         * PRESTACIONES MEDICAS:
          *     4, 2, 10, 6 o 3.
          *
          * Los demás sectores mantienen la búsqueda legacy.

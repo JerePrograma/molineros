@@ -564,7 +564,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                 );
 
         if ("PRESTACIONES MEDICAS".equals(sector)) {
-            return "PRESTACIONES MÉDICAS";
+            return "PRESTACIONES MEDICAS";
         }
 
         if ("DISCAPACIDAD".equals(sector)

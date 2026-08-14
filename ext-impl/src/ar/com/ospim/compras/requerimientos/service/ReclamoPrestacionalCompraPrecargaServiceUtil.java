@@ -1129,7 +1129,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
 
                 if ("PRESTACIONES MEDICAS".equals(sector)) {
                     throw new IllegalArgumentException(
-                            "Prestaciones Médicas no admite "
+                            "PRESTACIONES MEDICAS no admite "
                                     + "prestaciones del nomenclador tipo 1."
                     );
                 }
