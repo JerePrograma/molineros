@@ -715,11 +715,7 @@
 		jQuery.ajax({
 			url: url,
 			success: function(data){
-				var obj = jQuery.parseJSON(data);				
-				if ( parseInt(obj.receta) > 0 ){
-					alert('El número de receta: ' + numReceta + ', no está permitido porque fue cargado en el sistema previamente, verifíquelo.');
-					jQuery('#<portlet:namespace />receta').val('');
-				}
+				var obj = jQuery.parseJSON(data);
 			}
 		});		
 	} --%>

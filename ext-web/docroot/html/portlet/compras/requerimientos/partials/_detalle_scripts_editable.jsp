@@ -184,23 +184,18 @@
 
     var <portlet:namespace />tiposNomencladorPrestacionesMedicas = [
         {
-            id: '2',
             descripcion: 'NOM.NAC.PRACTICAS ESPECIALIZADAS'
         },
         {
-            id: '3',
             descripcion: 'NOM-PROPIO'
         },
         {
-            id: '4',
-            descripcion: 'NOM.NAC ANALISIS CLINICOS',
+            descripcion: 'NOM.NAC ANALISIS CLINICOS'
         },
         {
-            id: '6',
             descripcion: 'NOM.NAC QUIRURGICO'
         },
         {
-            id: '10',
             descripcion: 'PROTESIS E INSUMOS'
         }
     ];
@@ -331,9 +326,6 @@
                     tipo.id
                             + ' - '
                             + tipo.descripcion
-                            + ' ('
-                            + tipo.codigo
-                            + ')'
             );
         }
     }
@@ -582,6 +574,24 @@
     }
 
     function <portlet:namespace />validarTipoNomencladorDetalleSeleccionado() {
+
+        var tipoItem =
+                jQuery.trim(
+                        jQuery(
+                                '#<portlet:namespace />detalle_tipo_item'
+                        ).val() || ''
+                );
+
+        /*
+         * La validación Tipo Nomenclador aplica exclusivamente
+         * a detalles NOMENCLADOR.
+         *
+         * MEDICAMENTO histórico y OBSERVACION utilizan sus
+         * contratos específicos.
+         */
+        if (tipoItem != 'NOMENCLADOR') {
+            return true;
+        }
 
         var idTipoEsperado =
                 <portlet:namespace />obtenerTipoNomencladorBusquedaDetalle();
@@ -1975,14 +1985,54 @@
             <portlet:namespace />filtrarArticulosPorSector;
 
     jQuery(function() {
+
         <portlet:namespace />limpiarEditorDetalle();
+
+        /*
+         * El sector puede venir seleccionado desde el render inicial.
+         * Inicializamos explícitamente el SELECT de Tipo Nomenclador
+         * sin limpiar datos por un supuesto cambio de sector.
+         */
+        <portlet:namespace />actualizarTipoNomencladorDetallePorSector(
+                false
+        );
+
+        jQuery(
+                '#<portlet:namespace />detalle_tipo_nomenclador_select'
+        ).change(function() {
+
+            var teniaNomencladorSeleccionado =
+                    jQuery.trim(
+                            jQuery(
+                                    '#<portlet:namespace />detalle_id_prestacion'
+                            ).val() || ''
+                    ) != '';
+
+            /*
+             * Si existía una prestación seleccionada, también se
+             * eliminan Código y Descripción porque pertenecían al
+             * Tipo Nomenclador anterior.
+             *
+             * Si sólo eran criterios todavía no seleccionados,
+             * se conservan para permitir repetir la búsqueda
+             * bajo el nuevo Tipo.
+             */
+            <portlet:namespace />limpiarSeleccionNomenclador(
+                    teniaNomencladorSeleccionado
+            );
+        });
 
         jQuery(
                 '#<portlet:namespace />detalle_codigo_nomenclador, '
                         + '#<portlet:namespace />detalle_descripcion_nomenclador'
-        ).bind('input keyup change', function() {
-            <portlet:namespace />limpiarSeleccionNomenclador(false);
-        });
+        ).bind(
+                'input keyup change',
+                function() {
 
+                    <portlet:namespace />limpiarSeleccionNomenclador(
+                            false
+                    );
+                }
+        );
     });
 </script>

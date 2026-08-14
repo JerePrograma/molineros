@@ -103,6 +103,46 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
             return;
         }
 
+        /*
+         * PRESTACIONES MEDICAS no tiene un único tipo fijo por sector.
+         *
+         * El tipo concreto debe ser el seleccionado por el usuario
+         * en el editor del detalle.
+         *
+         * Se valida nuevamente en servidor para no confiar en el
+         * parámetro recibido desde JavaScript.
+         */
+        if ("PRESTACIONES MEDICAS".equals(
+                sector
+        )) {
+
+            int idTipoNomencladorSolicitado =
+                    ParamUtil.getInteger(
+                            request,
+                            "id_tipo_nomenclador",
+                            0
+                    );
+
+            if (!WebKeysCompras
+                    .esTipoNomencladorPrestacionesMedicas(
+                            idTipoNomencladorSolicitado
+                    )) {
+
+                request.setAttribute(
+                        "COMPRAS_ERROR_BUSQUEDA",
+                        "Debe seleccionar un Tipo Nomenclador válido "
+                                + "para PRESTACIONES MEDICAS."
+                );
+
+                return;
+            }
+
+            filtroTipoNomenclador =
+                    Integer.valueOf(
+                            idTipoNomencladorSolicitado
+                    );
+        }
+
         int marcaReinLiq =
                 "DISCAPACIDAD".equals(sector)
                         ? WebKeysCompras

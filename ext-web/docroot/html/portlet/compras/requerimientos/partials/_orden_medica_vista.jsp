@@ -61,7 +61,6 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                     <tr>
                         <th>Documento</th>
                         <th>Fecha de la orden médica</th>
-                        <th>Número de receta</th>
                         <th>Nombre original</th>
                         <th>Acción</th>
                     </tr>

@@ -1479,8 +1479,7 @@ public class EditarRequerimientoCompraServiceImpl {
         }
 
         /*
-         * Replica literal de la matriz utilizada por
-         * Reclamos Prestacionales:
+         * Matriz válida de nomencladores para Compras:
          *
          * FARMACIA:
          *     tipo 9.
@@ -1492,7 +1491,7 @@ public class EditarRequerimientoCompraServiceImpl {
          *     tipo 1.
          *
          * PRESTACIONES MEDICAS:
-         *     cualquier tipo distinto de 1 y 9.
+         *     tipos 2, 3, 4, 6 o 10.
          *
          */
         boolean nomencladorValido =
@@ -1538,8 +1537,9 @@ public class EditarRequerimientoCompraServiceImpl {
                     sector
             )) {
                 throw errorUsuario(
-                        "PRESTACIONES MEDICAS no admite "
-                                + "prestaciones del nomenclador tipo 1 o 9."
+                        "Para PRESTACIONES MEDICAS debe seleccionar "
+                                + "una prestacion de nomenclador "
+                                + "tipo 2, 3, 4, 6 o 10."
                 );
             }
 

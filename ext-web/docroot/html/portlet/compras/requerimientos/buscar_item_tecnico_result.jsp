@@ -137,6 +137,19 @@ if (errorBusqueda == null
             "No se pudo determinar el sector "
                     + "del requerimiento.";
 }
+if (errorBusqueda == null
+        && "PRESTACIONES MEDICAS".equals(
+                sectorBusqueda
+        )
+        && !WebKeysCompras
+                .esTipoNomencladorPrestacionesMedicas(
+                        idTipoNomencladorBusqueda
+                )) {
+
+    errorBusqueda =
+            "El Tipo Nomenclador informado no es válido "
+                    + "para PRESTACIONES MEDICAS.";
+}
 %>
 
 <% if (errorBusqueda != null
@@ -160,7 +173,7 @@ if (errorBusqueda == null
     List<Nomenclador> archivos;
 
     /*
-     * Replica literal de Reclamos Prestacionales:
+     * Matriz de búsqueda:
      *
      * FARMACIA:
      *     busca_nomenclador con tipo 9.
@@ -174,7 +187,8 @@ if (errorBusqueda == null
      *     busca_nomenclador con tipo 1.
      *
      * PRESTACIONES MEDICAS:
-     *     busca_nomenclador_prest_med con tipo 0.
+     *     busca_nomenclador_prest_med con el Tipo
+     *     Nomenclador seleccionado: 2, 3, 4, 6 o 10.
      *
      */
     if ("DISCAPACIDAD".equals(sectorBusqueda)
@@ -271,6 +285,22 @@ if (errorBusqueda == null
                                     .getMarcaReintegroLiquidacion(),
                             nomenclador.getCodigo()
                     )) {
+
+                continue;
+            }
+
+            /*
+             * Para PRESTACIONES MEDICAS no alcanza con que el tipo
+             * pertenezca al conjunto permitido.
+             *
+             * Debe coincidir exactamente con el Tipo Nomenclador
+             * seleccionado para esta búsqueda.
+             */
+            if ("PRESTACIONES MEDICAS".equals(
+                    sectorBusqueda
+            )
+                    && idTipoReal
+                    != idTipoNomencladorBusqueda) {
 
                 continue;
             }
