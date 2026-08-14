@@ -61,6 +61,7 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                     <tr>
                         <th>Documento</th>
                         <th>Fecha de la orden médica</th>
+                        <th>Nro. receta</th>
                         <th>Nombre original</th>
                         <th>Acción</th>
                     </tr>
@@ -176,8 +177,12 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
 
                                     <a href="<%= HtmlUtil.escape(
                                             urlOrdenMedicaCompraVista
-                                    ) %>">
-                                        Ver / descargar
+                                    ) %>"
+                                       title="Ver / descargar Orden médica">
+                                        <img
+                                            src="<%= themeDisplay.getPathThemeImages() %>/common/view.png"
+                                            alt="Ver / descargar Orden médica"
+                                            style="border:0;" />
                                     </a>
 
                                 <% } else { %>

@@ -173,4 +173,37 @@
         color: #0066cc;
         font-weight: bold;
     }
+
+    .compras-afiliado-contacto-layout {
+        width: 100%;
+    }
+
+    .compras-afiliado-contacto-datos {
+        vertical-align: top;
+    }
+
+    .compras-afiliado-contacto-acciones {
+        width: 150px;
+        padding-left: 12px;
+        vertical-align: top;
+    }
+
+    .compras-verificar-contacto {
+        padding: 8px 5px;
+        text-align: center;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-verificar-contacto label {
+        display: block;
+        margin: 0 0 10px 0;
+        line-height: 16px;
+    }
+
+    .compras-verificar-contacto input[type="button"] {
+        width: 100px;
+        height: 30px;
+        padding: 3px 0;
+        font-size: 12px;
+    }
 </style>

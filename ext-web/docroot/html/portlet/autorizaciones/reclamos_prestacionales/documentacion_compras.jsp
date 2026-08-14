@@ -161,7 +161,7 @@ if (presupuestoDocumentacionComprasValido) {
                     <th>Acci&oacute;n</th>
                 </tr>
                 <tr>
-                    <td>Orden m&eacute;dica</td>
+                    <td>Orden médica</td>
                     <% if (ordenMedicaDocumentacionComprasValida) { %>
                         <td><%= HtmlUtil.escape(
                                 fechaOrdenMedicaDocumentacionCompras
@@ -173,7 +173,13 @@ if (presupuestoDocumentacionComprasValido) {
                         <td>
                             <a href="<%= HtmlUtil.escape(
                                     urlOrdenMedicaDocumentacionCompras
-                            ) %>">Ver / descargar</a>
+                            ) %>"
+                               title="Ver / descargar Orden médica">
+                                <img
+                                    src="<%= themeDisplay.getPathThemeImages() %>/common/view.png"
+                                    alt="Ver / descargar Orden médica"
+                                    style="border:0;" />
+                            </a>
                         </td>
                     <% } else { %>
                         <td colspan="3">No disponible</td>
@@ -190,7 +196,13 @@ if (presupuestoDocumentacionComprasValido) {
                         <td>
                             <a href="<%= HtmlUtil.escape(
                                     urlPresupuestoDocumentacionCompras
-                            ) %>">Ver / descargar</a>
+                            ) %>"
+                               title="Ver / descargar presupuesto adjudicado">
+                                <img
+                                    src="<%= themeDisplay.getPathThemeImages() %>/common/view.png"
+                                    alt="Ver / descargar presupuesto adjudicado"
+                                    style="border:0;" />
+                            </a>
                         </td>
                     <% } else { %>
                         <td colspan="2">No disponible</td>

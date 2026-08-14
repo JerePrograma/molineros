@@ -1648,6 +1648,16 @@ public class NotificarCotizacionPrestadorServiceImpl {
                             : "";
         }
 
+        if (_log.isInfoEnabled()) {
+            _log.info(
+                    "Destinatarios CC de cotizacion resueltos. "
+                            + "cantidadCc="
+                            + emails.length
+                            + ", modoTemporal="
+                            + USAR_EMAIL_DESTINO_TEMPORAL
+            );
+        }
+
         return emails;
     }
 
