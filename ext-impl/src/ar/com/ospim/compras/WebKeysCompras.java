@@ -191,6 +191,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String AFILIADO_REQUERIMIENTO_COMPRA =
             "AFILIADO_REQUERIMIENTO_COMPRA";
 
+    public static final String SITUACIONES_MEDICAS_VIGENTES_COMPRA =
+            "SITUACIONES_MEDICAS_VIGENTES_COMPRA";
+
     public static final String FORWARD_COMPRAS_SITUACION_MEDICA_VIGENTE =
             "portlet.compras.situacion_medica_vigente";
 
