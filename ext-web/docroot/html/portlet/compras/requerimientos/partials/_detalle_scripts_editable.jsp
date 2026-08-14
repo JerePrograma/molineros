@@ -184,18 +184,23 @@
 
     var <portlet:namespace />tiposNomencladorPrestacionesMedicas = [
         {
+            id: '2',
             descripcion: 'NOM.NAC.PRACTICAS ESPECIALIZADAS'
         },
         {
+            id: '3',
             descripcion: 'NOM-PROPIO'
         },
         {
+            id: '4',
             descripcion: 'NOM.NAC ANALISIS CLINICOS'
         },
         {
+            id: '6',
             descripcion: 'NOM.NAC QUIRURGICO'
         },
         {
+            id: '10',
             descripcion: 'PROTESIS E INSUMOS'
         }
     ];
