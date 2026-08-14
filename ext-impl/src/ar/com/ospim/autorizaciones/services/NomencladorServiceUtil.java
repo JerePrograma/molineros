@@ -71,7 +71,28 @@ public class NomencladorServiceUtil {
 			throws SystemException {
 		return getInstance().getListaNomencladorPrestacionesMedicas(tipoNomenclador,descripcionNomenclador,especialidad,codigoNomenclador,recuperaSUR,resolucionNomenclador);
 	}
-	
+
+    public static List<Nomenclador>
+    getListaNomencladorPrestacionesMedicasCompras(
+            int tipoNomenclador,
+            String descripcionNomenclador,
+            int especialidad,
+            String codigoNomenclador,
+            Boolean recuperaSUR,
+            String resolucionNomenclador)
+            throws SystemException {
+
+        return getInstance()
+                .getListaNomencladorPrestacionesMedicasCompras(
+                        tipoNomenclador,
+                        descripcionNomenclador,
+                        especialidad,
+                        codigoNomenclador,
+                        recuperaSUR,
+                        resolucionNomenclador
+                );
+    }
+
 	public static List<Nomenclador> getListaNomencladorPreautorizaciones(
 			int tipoNomenclador,String descripcionNomenclador,int especialidad,String codigoNomenclador,Boolean recuperaSUR,String resolucionNomenclador)
 			throws SystemException {

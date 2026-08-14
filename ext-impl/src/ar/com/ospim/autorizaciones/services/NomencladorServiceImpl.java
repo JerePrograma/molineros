@@ -144,7 +144,154 @@ public class NomencladorServiceImpl {
 			ConnectionHelper.cerrar(stmt, con);
 		}
 		return list;
-	}	
+	}
+
+    public List<Nomenclador> getListaNomencladorPrestacionesMedicasCompras(
+            int tipoNomenclador,
+            String descripcionNomenclador,
+            int especialidad,
+            String codigoNomenclador,
+            Boolean recuperaSUR,
+            String resolucionNomenclador)
+            throws SystemException {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        List<Nomenclador> list = null;
+
+        try {
+            String sql =
+                    "{call autorizaciones."
+                            + "busca_nomenclador_prest_med_compras"
+                            + "(?,?,?,?,?,?)}";
+
+            con =
+                    ConnectionHelper.getConnection();
+
+            stmt =
+                    con.prepareCall(
+                            sql
+                    );
+
+            if (tipoNomenclador > 0) {
+                stmt.setInt(
+                        1,
+                        tipoNomenclador
+                );
+            } else {
+                stmt.setNull(
+                        1,
+                        Types.INTEGER
+                );
+            }
+
+            if (descripcionNomenclador != null
+                    && descripcionNomenclador.trim().length() > 0) {
+
+                stmt.setString(
+                        2,
+                        descripcionNomenclador.trim()
+                );
+            } else {
+                stmt.setNull(
+                        2,
+                        Types.VARCHAR
+                );
+            }
+
+            if (especialidad > 0) {
+                stmt.setInt(
+                        3,
+                        especialidad
+                );
+            } else {
+                stmt.setNull(
+                        3,
+                        Types.INTEGER
+                );
+            }
+
+            if (codigoNomenclador != null
+                    && codigoNomenclador.trim().length() > 0) {
+
+                stmt.setString(
+                        4,
+                        codigoNomenclador.trim()
+                );
+            } else {
+                stmt.setNull(
+                        4,
+                        Types.VARCHAR
+                );
+            }
+
+            /*
+             * Mantener el contrato legacy comprobado:
+             * para este buscador Compras utiliza false.
+             */
+            if (recuperaSUR != null) {
+                stmt.setBoolean(
+                        5,
+                        recuperaSUR.booleanValue()
+                );
+            } else {
+                stmt.setNull(
+                        5,
+                        Types.BOOLEAN
+                );
+            }
+
+            if (resolucionNomenclador != null
+                    && resolucionNomenclador.trim().length() > 0) {
+
+                stmt.setString(
+                        6,
+                        resolucionNomenclador.trim()
+                );
+            } else {
+                stmt.setNull(
+                        6,
+                        Types.VARCHAR
+                );
+            }
+
+            ResultSet rs =
+                    stmt.executeQuery();
+
+            list =
+                    new ArrayList<Nomenclador>();
+
+            while (rs.next()) {
+                Nomenclador archivo =
+                        Nomenclador.getMapping(
+                                rs
+                        );
+
+                list.add(
+                        archivo
+                );
+            }
+
+        } catch (Exception e) {
+            _log.error(
+                    "Error al buscar Nomenclador "
+                            + "de Prestaciones Medicas para Compras",
+                    e
+            );
+
+            throw new SystemException(
+                    e
+            );
+
+        } finally {
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
+        }
+
+        return list;
+    }
 	
 	public List<Nomenclador> getListaNomenclador(int tipoNomenclador,String descripcionNomenclador,int especialidad,String codigoNomenclador,Boolean recuperaSUR,String resolucionNomenclador)
 			throws SystemException {

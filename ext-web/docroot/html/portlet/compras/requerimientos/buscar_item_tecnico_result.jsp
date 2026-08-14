@@ -257,7 +257,7 @@ if (errorBusqueda == null
 
         archivos =
                 NomencladorServiceUtil
-                        .getListaNomencladorPrestacionesMedicas(
+                        .getListaNomencladorPrestacionesMedicasCompras(
                                 idTipoNomencladorBusqueda,
                                 descripcionBusqueda,
                                 0,
