@@ -1,6 +1,7 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ page import="ar.com.ospim.autorizaciones.beans.Nomenclador" %>
 <%@ page import="ar.com.ospim.autorizaciones.services.NomencladorServiceUtil" %>
+<%@ page import="com.liferay.portal.kernel.util.ParamUtil" %>
 
 <%!
 private String comprasNomencladorJs(String value) {
@@ -60,11 +61,6 @@ String descripcionBusqueda =
                 "COMPRAS_DESCRIPCION_NOMENCLADOR"
         );
 
-String esPrestMedBusqueda =
-        (String) request.getAttribute(
-                "COMPRAS_ES_PREST_MED"
-        );
-
 String sectorBusqueda =
         (String) request.getAttribute(
                 "COMPRAS_SECTOR_NOMENCLADOR"
@@ -91,6 +87,24 @@ if (tipoNomencladorBusqueda != null
             );
 }
 
+/*
+ * El Tipo Nomenclador seleccionado viaja también como
+ * parámetro de la request.
+ *
+ * Se conserva el atributo preparado por el Action como
+ * fuente principal, pero el parámetro permite compatibilidad
+ * con despliegues legacy del Action que todavía dejaban
+ * filtro general 0 para PRESTACIONES MEDICAS.
+ *
+ * El valor nunca se acepta sin validar contra la whitelist.
+ */
+int idTipoNomencladorSolicitado =
+        ParamUtil.getInteger(
+                renderRequest,
+                "id_tipo_nomenclador",
+                0
+        );
+
 int marcaReinLiq = 0;
 
 if (marcaReinLiqBusqueda != null
@@ -108,6 +122,33 @@ sectorBusqueda =
                 : WebKeysCompras.normalizarSectorCompra(
                         sectorBusqueda
                 );
+
+/*
+ * El Action actual ya debe haber dejado el tipo correcto
+ * en COMPRAS_ID_TIPO_NOMENCLADOR.
+ *
+ * Este fallback sólo actúa si ese atributo no contiene
+ * un tipo válido de PRESTACIONES MEDICAS y la request
+ * sí contiene el valor seleccionado por el usuario.
+ *
+ * Esto evita depender de un Action legacy desplegado
+ * que todavía propagaba FILTRO_NOMENCLADOR_GENERAL = 0.
+ */
+if ("PRESTACIONES MEDICAS".equals(
+        sectorBusqueda
+)
+        && !WebKeysCompras
+                .esTipoNomencladorPrestacionesMedicas(
+                        idTipoNomencladorBusqueda
+                )
+        && WebKeysCompras
+                .esTipoNomencladorPrestacionesMedicas(
+                        idTipoNomencladorSolicitado
+                )) {
+
+    idTipoNomencladorBusqueda =
+            idTipoNomencladorSolicitado;
+}
 
 if (errorBusqueda == null
         && (
@@ -210,10 +251,9 @@ if (errorBusqueda == null
                                         .MARCA_REIN_LIQ_DISCAPACIDAD
                         );
 
-    } else if ("1".equals(esPrestMedBusqueda)
-            || "PRESTACIONES MEDICAS".equals(
-                    sectorBusqueda
-            )) {
+    } else if ("PRESTACIONES MEDICAS".equals(
+            sectorBusqueda
+    )) {
 
         archivos =
                 NomencladorServiceUtil
@@ -222,7 +262,7 @@ if (errorBusqueda == null
                                 descripcionBusqueda,
                                 0,
                                 codigoBusqueda,
-                                false,
+                                null,
                                 ""
                         );
 
