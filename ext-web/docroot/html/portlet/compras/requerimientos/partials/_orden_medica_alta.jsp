@@ -322,7 +322,7 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                     ) %>" />
 
                             <div class="compras-ayuda-campo">
-                                Seleccione día, mes y año.
+                                Seleccione mes, día y año.
                             </div>
                         </td>
 
