@@ -184,29 +184,24 @@
 
     var <portlet:namespace />tiposNomencladorPrestacionesMedicas = [
         {
-            id: '4',
-            descripcion: 'NOM.NAC ANALISIS CLINICOS',
-            codigo: 'AC'
-        },
-        {
             id: '2',
-            descripcion: 'NOM.NAC.PRACTICAS ESPECIALIZADAS',
-            codigo: 'NM'
-        },
-        {
-            id: '10',
-            descripcion: 'PROTESIS E INSUMOS',
-            codigo: 'PR'
-        },
-        {
-            id: '6',
-            descripcion: 'NOM.NAC QUIRURGICO',
-            codigo: 'NQ'
+            descripcion: 'NOM.NAC.PRACTICAS ESPECIALIZADAS'
         },
         {
             id: '3',
-            descripcion: 'NOM-PROPIO',
-            codigo: 'NP'
+            descripcion: 'NOM-PROPIO'
+        },
+        {
+            id: '4',
+            descripcion: 'NOM.NAC ANALISIS CLINICOS',
+        },
+        {
+            id: '6',
+            descripcion: 'NOM.NAC QUIRURGICO'
+        },
+        {
+            id: '10',
+            descripcion: 'PROTESIS E INSUMOS'
         }
     ];
 
@@ -351,7 +346,7 @@
         <portlet:namespace />agregarOpcionTipoNomenclador(
                 select,
                 '9',
-                '9 - MEDICAMENTOS (ME)'
+                '9 - MEDICAMENTOS'
         );
 
         select.val('9');
