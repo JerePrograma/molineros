@@ -1622,14 +1622,6 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
     private String[] resolverEmailsCopiaCotizacion() {
 
-        /*
-         * Mientras el envío esté redirigido al destinatario temporal
-         * de QA, no se incluyen las copias productivas.
-         */
-        if (USAR_EMAIL_DESTINO_TEMPORAL) {
-            return new String[0];
-        }
-
         String configuracion =
                 EMAIL_COPIA_COTIZACION != null
                         ? EMAIL_COPIA_COTIZACION

@@ -262,7 +262,7 @@ if (errorBusqueda == null
                                 descripcionBusqueda,
                                 0,
                                 codigoBusqueda,
-                                null,
+                                false,
                                 ""
                         );
 
