@@ -328,9 +328,7 @@
             <portlet:namespace />agregarOpcionTipoNomenclador(
                     select,
                     tipo.id,
-                    tipo.id
-                            + ' - '
-                            + tipo.descripcion
+                    tipo.descripcion
             );
         }
     }
@@ -343,7 +341,7 @@
         <portlet:namespace />agregarOpcionTipoNomenclador(
                 select,
                 '9',
-                '9 - MEDICAMENTOS'
+                'MEDICAMENTOS'
         );
 
         select.val('9');
