@@ -1534,7 +1534,7 @@ public class EditarRequerimientoCompraServiceImpl {
                 );
             }
 
-            if ("PRESTACIONES MÉDICAS".equals(
+            if ("PRESTACIONES MEDICAS".equals(
                     sector
             )) {
                 throw errorUsuario(

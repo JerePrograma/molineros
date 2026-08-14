@@ -182,7 +182,458 @@
         return false;
     }
 
+    var <portlet:namespace />tiposNomencladorPrestacionesMedicas = [
+        {
+            id: '4',
+            descripcion: 'NOM.NAC ANALISIS CLINICOS',
+            codigo: 'AC'
+        },
+        {
+            id: '2',
+            descripcion: 'NOM.NAC.PRACTICAS ESPECIALIZADAS',
+            codigo: 'NM'
+        },
+        {
+            id: '10',
+            descripcion: 'PROTESIS E INSUMOS',
+            codigo: 'PR'
+        },
+        {
+            id: '6',
+            descripcion: 'NOM.NAC QUIRURGICO',
+            codigo: 'NQ'
+        },
+        {
+            id: '3',
+            descripcion: 'NOM-PROPIO',
+            codigo: 'NP'
+        }
+    ];
+
+    function <portlet:namespace />normalizarSectorTipoNomenclador(
+            value) {
+
+        if (value == null
+                || typeof value == 'undefined') {
+
+            return '';
+        }
+
+        return jQuery.trim(
+                String(value)
+        )
+                .toUpperCase()
+                .replace(
+                        /[\u00C1\u00C0\u00C4\u00C2]/g,
+                        'A'
+                )
+                .replace(
+                        /[\u00C9\u00C8\u00CB\u00CA]/g,
+                        'E'
+                )
+                .replace(
+                        /[\u00CD\u00CC\u00CF\u00CE]/g,
+                        'I'
+                )
+                .replace(
+                        /[\u00D3\u00D2\u00D6\u00D4]/g,
+                        'O'
+                )
+                .replace(
+                        /[\u00DA\u00D9\u00DC\u00DB]/g,
+                        'U'
+                )
+                .replace(
+                        /\s+/g,
+                        ' '
+                );
+    }
+
+    function <portlet:namespace />obtenerSectorDescripcionTipoNomenclador() {
+        var opcion =
+                jQuery(
+                        '#<portlet:namespace />sector_id option:selected'
+                );
+
+        if (opcion.length == 0) {
+            return '';
+        }
+
+        return <portlet:namespace />normalizarSectorTipoNomenclador(
+                opcion.text()
+        );
+    }
+
+    function <portlet:namespace />esSectorFarmaciaTipoNomenclador() {
+        return <portlet:namespace />obtenerSectorDescripcionTipoNomenclador()
+                == 'FARMACIA';
+    }
+
+    function <portlet:namespace />esSectorPrestacionesMedicasTipoNomenclador() {
+        return <portlet:namespace />obtenerSectorDescripcionTipoNomenclador()
+                == 'PRESTACIONES MEDICAS';
+    }
+
+    function <portlet:namespace />esTipoNomencladorPrestacionesMedicas(
+            idTipoNomenclador) {
+
+        idTipoNomenclador =
+                idTipoNomenclador != null
+                        ? jQuery.trim(
+                                String(
+                                        idTipoNomenclador
+                                )
+                        )
+                        : '';
+
+        return idTipoNomenclador == '4'
+                || idTipoNomenclador == '2'
+                || idTipoNomenclador == '10'
+                || idTipoNomenclador == '6'
+                || idTipoNomenclador == '3';
+    }
+
+    function <portlet:namespace />agregarOpcionTipoNomenclador(
+            select,
+            value,
+            descripcion) {
+
+        select.append(
+                jQuery(
+                        '<option></option>'
+                )
+                        .attr(
+                                'value',
+                                value
+                        )
+                        .text(
+                                descripcion
+                        )
+        );
+    }
+
+    function <portlet:namespace />cargarTiposNomencladorPrestacionesMedicas(
+            select) {
+
+        select.empty();
+
+        <portlet:namespace />agregarOpcionTipoNomenclador(
+                select,
+                '',
+                'Seleccione...'
+        );
+
+        for (var i = 0;
+                i < <portlet:namespace />tiposNomencladorPrestacionesMedicas.length;
+                i++) {
+
+            var tipo =
+                    <portlet:namespace />tiposNomencladorPrestacionesMedicas[i];
+
+            <portlet:namespace />agregarOpcionTipoNomenclador(
+                    select,
+                    tipo.id,
+                    tipo.id
+                            + ' - '
+                            + tipo.descripcion
+                            + ' ('
+                            + tipo.codigo
+                            + ')'
+            );
+        }
+    }
+
+    function <portlet:namespace />cargarTipoNomencladorFarmacia(
+            select) {
+
+        select.empty();
+
+        <portlet:namespace />agregarOpcionTipoNomenclador(
+                select,
+                '9',
+                '9 - MEDICAMENTOS (ME)'
+        );
+
+        select.val('9');
+    }
+
+    function <portlet:namespace />actualizarTipoNomencladorDetallePorSector(
+            limpiarSeleccion) {
+
+        var fila =
+                jQuery(
+                        '#<portlet:namespace />detalle_fila_tipo_nomenclador'
+                );
+
+        var select =
+                jQuery(
+                        '#<portlet:namespace />detalle_tipo_nomenclador_select'
+                );
+
+        var hiddenTipoReal =
+                jQuery(
+                        '#<portlet:namespace />detalle_id_tipo_nomenclador'
+                );
+
+        if (fila.length == 0
+                || select.length == 0) {
+
+            return;
+        }
+
+        var valorAnterior =
+                jQuery.trim(
+                        select.val() || ''
+                );
+
+        var tipoRealAnterior =
+                hiddenTipoReal.length > 0
+                        ? jQuery.trim(
+                                hiddenTipoReal.val() || ''
+                        )
+                        : '';
+
+        /*
+         * Cuando cambia manualmente el sector, una prestación
+         * previamente seleccionada deja de ser válida.
+         */
+        if (limpiarSeleccion) {
+            <portlet:namespace />limpiarSeleccionNomenclador(
+                    false
+            );
+
+            if (hiddenTipoReal.length > 0) {
+                hiddenTipoReal.val('');
+            }
+
+            valorAnterior = '';
+            tipoRealAnterior = '';
+        }
+
+        if (<portlet:namespace />esSectorFarmaciaTipoNomenclador()) {
+
+            <portlet:namespace />cargarTipoNomencladorFarmacia(
+                    select
+            );
+
+            /*
+             * Farmacia está forzada al tipo 9.
+             *
+             * Se deshabilita visualmente porque el usuario
+             * no puede elegir otro tipo.
+             *
+             * La búsqueda NO depende del submit de este select:
+             * obtenerTipoNomencladorBusquedaDetalle() devuelve 9.
+             */
+            select.attr(
+                    'disabled',
+                    'disabled'
+            );
+
+            fila.show();
+
+            return;
+        }
+
+        if (<portlet:namespace />esSectorPrestacionesMedicasTipoNomenclador()) {
+
+            <portlet:namespace />cargarTiposNomencladorPrestacionesMedicas(
+                    select
+            );
+
+            select.removeAttr(
+                    'disabled'
+            );
+
+            /*
+             * En edición se intenta conservar primero el tipo real
+             * correspondiente al detalle ya cargado.
+             */
+            if (!limpiarSeleccion
+                    && <portlet:namespace />esTipoNomencladorPrestacionesMedicas(
+                            tipoRealAnterior
+                    )) {
+
+                select.val(
+                        tipoRealAnterior
+                );
+
+            } else if (!limpiarSeleccion
+                    && <portlet:namespace />esTipoNomencladorPrestacionesMedicas(
+                            valorAnterior
+                    )) {
+
+                select.val(
+                        valorAnterior
+                );
+
+            } else {
+                select.val('');
+            }
+
+            fila.show();
+
+            return;
+        }
+
+        /*
+         * Otros sectores conservan el comportamiento existente.
+         */
+        select.empty();
+
+        <portlet:namespace />agregarOpcionTipoNomenclador(
+                select,
+                '',
+                'Seleccione...'
+        );
+
+        select.val('');
+
+        select.attr(
+                'disabled',
+                'disabled'
+        );
+
+        fila.hide();
+    }
+
+    function <portlet:namespace />obtenerTipoNomencladorBusquedaDetalle() {
+
+        if (<portlet:namespace />esSectorFarmaciaTipoNomenclador()) {
+            return '9';
+        }
+
+        if (<portlet:namespace />esSectorPrestacionesMedicasTipoNomenclador()) {
+
+            var select =
+                    jQuery(
+                            '#<portlet:namespace />detalle_tipo_nomenclador_select'
+                    );
+
+            var idTipoNomenclador =
+                    select.length > 0
+                            ? jQuery.trim(
+                                    select.val() || ''
+                            )
+                            : '';
+
+            if (!<portlet:namespace />esTipoNomencladorPrestacionesMedicas(
+                    idTipoNomenclador
+            )) {
+
+                alert(
+                        'Tipo Nomenclador: debe seleccionar '
+                                + 'un tipo válido para Prestaciones Médicas.'
+                );
+
+                if (select.length > 0) {
+                    select.focus();
+                }
+
+                return null;
+            }
+
+            return idTipoNomenclador;
+        }
+
+        /*
+         * Para Odontología, Discapacidad y demás sectores
+         * no agregamos un filtro nuevo: conservan su contrato actual.
+         */
+        return '';
+    }
+
+    function <portlet:namespace />validarTipoNomencladorResultadoDetalle(
+            idTipoNomencladorResultado) {
+
+        var idTipoEsperado =
+                <portlet:namespace />obtenerTipoNomencladorBusquedaDetalle();
+
+        if (idTipoEsperado === null) {
+            return false;
+        }
+
+        /*
+         * Los sectores sin filtro explícito nuevo continúan
+         * utilizando la validación histórica.
+         */
+        if (idTipoEsperado == '') {
+            return true;
+        }
+
+        var idTipoResultado =
+                idTipoNomencladorResultado != null
+                        ? jQuery.trim(
+                                String(
+                                        idTipoNomencladorResultado
+                                )
+                        )
+                        : '';
+
+        if (idTipoResultado != idTipoEsperado) {
+
+            alert(
+                    'El nomenclador seleccionado pertenece al Tipo '
+                            + idTipoResultado
+                            + ', pero la búsqueda fue realizada para el Tipo '
+                            + idTipoEsperado
+                            + '. Vuelva a realizar la búsqueda.'
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
+    function <portlet:namespace />validarTipoNomencladorDetalleSeleccionado() {
+
+        var idTipoEsperado =
+                <portlet:namespace />obtenerTipoNomencladorBusquedaDetalle();
+
+        if (idTipoEsperado === null) {
+            return false;
+        }
+
+        if (idTipoEsperado == '') {
+            return true;
+        }
+
+        var idTipoReal =
+                jQuery.trim(
+                        jQuery(
+                                '#<portlet:namespace />detalle_id_tipo_nomenclador'
+                        ).val() || ''
+                );
+
+        if (idTipoReal == '') {
+
+            alert(
+                    'Debe buscar y seleccionar un nomenclador '
+                            + 'del Tipo Nomenclador elegido.'
+            );
+
+            return false;
+        }
+
+        if (idTipoReal != idTipoEsperado) {
+
+            alert(
+                    'El nomenclador seleccionado es de Tipo '
+                            + idTipoReal
+                            + ' y el Tipo Nomenclador elegido es '
+                            + idTipoEsperado
+                            + '. Vuelva a seleccionar el nomenclador.'
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
     function <portlet:namespace />buscarNomencladorDetalle() {
+
         if (jQuery(
                 '#<portlet:namespace />detalle_codigo_nomenclador'
         ).attr('readonly')) {
@@ -190,42 +641,109 @@
             return false;
         }
 
-        var codigo = jQuery.trim(
-                jQuery('#<portlet:namespace />detalle_codigo_nomenclador').val()
-        );
-        var descripcion = jQuery.trim(
-                jQuery('#<portlet:namespace />detalle_descripcion_nomenclador').val()
-        );
+        var idTipoNomenclador =
+                <portlet:namespace />obtenerTipoNomencladorBusquedaDetalle();
 
-        if (codigo == '' && descripcion == '') {
-            alert('<liferay-ui:message key="ingrese-parametros-busqueda" />');
+        /*
+         * null significa que el sector exige una selección
+         * explícita y ésta no es válida.
+         */
+        if (idTipoNomenclador === null) {
             return false;
         }
 
-        <portlet:namespace />limpiarSeleccionNomenclador(false);
+        var codigo =
+                jQuery.trim(
+                        jQuery(
+                                '#<portlet:namespace />detalle_codigo_nomenclador'
+                        ).val()
+                );
 
-        if (<portlet:namespace />popupNomencladorDetalle == null) {
-            <portlet:namespace />popupNomencladorDetalle = Liferay.Popup({
-                title: 'Búsqueda Nomenclador',
-                modal: true,
-                width: 700,
-                onClose: function() {
-                    <portlet:namespace />popupNomencladorDetalle = null;
-                }
-            });
+        var descripcion =
+                jQuery.trim(
+                        jQuery(
+                                '#<portlet:namespace />detalle_descripcion_nomenclador'
+                        ).val()
+                );
+
+        if (codigo == ''
+                && descripcion == '') {
+
+            alert(
+                    '<liferay-ui:message key="ingrese-parametros-busqueda" />'
+            );
+
+            return false;
         }
 
-        var url = <portlet:namespace />buscarItemTecnicoURL
-                + '&<portlet:namespace />id_requerimiento_compra='
-                + encodeURIComponent(<portlet:namespace />idRequerimientoCompraDetalle)
-                + '&<portlet:namespace />sector_id='
-                + encodeURIComponent(<portlet:namespace />getSectorSeleccionadoCompra())
-                + '&<portlet:namespace />codigo='
-                + encodeURIComponent(codigo)
-                + '&<portlet:namespace />descripcion='
-                + encodeURIComponent(descripcion);
+        /*
+         * El texto ingresado ya quedó copiado en variables locales.
+         *
+         * Se invalida cualquier nomenclador seleccionado anteriormente.
+         */
+        <portlet:namespace />limpiarSeleccionNomenclador(
+                false
+        );
 
-        jQuery(<portlet:namespace />popupNomencladorDetalle).load(url);
+        if (<portlet:namespace />popupNomencladorDetalle == null) {
+
+            <portlet:namespace />popupNomencladorDetalle =
+                    Liferay.Popup({
+                        title: 'Búsqueda Nomenclador',
+                        modal: true,
+                        width: 700,
+
+                        onClose: function() {
+                            <portlet:namespace />popupNomencladorDetalle =
+                                    null;
+                        }
+                    });
+        }
+
+        var url =
+                <portlet:namespace />buscarItemTecnicoURL
+                + '&<portlet:namespace />id_requerimiento_compra='
+                + encodeURIComponent(
+                        <portlet:namespace />idRequerimientoCompraDetalle
+                )
+                + '&<portlet:namespace />sector_id='
+                + encodeURIComponent(
+                        <portlet:namespace />getSectorSeleccionadoCompra()
+                )
+                + '&<portlet:namespace />codigo='
+                + encodeURIComponent(
+                        codigo
+                )
+                + '&<portlet:namespace />descripcion='
+                + encodeURIComponent(
+                        descripcion
+                );
+
+        /*
+         * Sólo agregamos el parámetro explícito cuando corresponde:
+         *
+         * Farmacia:
+         *     9
+         *
+         * Prestaciones Médicas:
+         *     4, 2, 10, 6 o 3.
+         *
+         * Los demás sectores mantienen la búsqueda legacy.
+         */
+        if (idTipoNomenclador != '') {
+
+            url +=
+                    '&<portlet:namespace />id_tipo_nomenclador='
+                    + encodeURIComponent(
+                            idTipoNomenclador
+                    );
+        }
+
+        jQuery(
+                <portlet:namespace />popupNomencladorDetalle
+        ).load(
+                url
+        );
 
         return false;
     }
@@ -266,6 +784,13 @@
         ).val(
                 'NOMENCLADOR'
         );
+
+        if (!<portlet:namespace />validarTipoNomencladorResultadoDetalle(
+                idTipoNomenclador
+        )) {
+
+            return false;
+        }
 
         jQuery(
                 '#<portlet:namespace />detalle_id_prestacion'
@@ -397,6 +922,10 @@
 
         jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador').val(
                 <portlet:namespace />detalleValue(detalle.idTipoNomenclador)
+        );
+
+        <portlet:namespace />actualizarTipoNomencladorDetallePorSector(
+                false
         );
 
         jQuery('#<portlet:namespace />detalle_codigo_nomenclador').val(
@@ -870,6 +1399,10 @@
                 <portlet:namespace />leerDetalleEditor();
 
         if (!<portlet:namespace />validarDetalleEditor(detalle)) {
+            return false;
+        }
+
+        if (!<portlet:namespace />validarTipoNomencladorDetalleSeleccionado()) {
             return false;
         }
 

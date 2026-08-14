@@ -28,6 +28,27 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final int FILTRO_NOMENCLADOR_FARMACIA = 9;
     public static final int MARCA_REIN_LIQ_DISCAPACIDAD = 6;
 
+    public static final int TIPO_NOMENCLADOR_PRACTICAS_ESPECIALIZADAS = 2;
+    public static final int TIPO_NOMENCLADOR_PROPIO = 3;
+    public static final int TIPO_NOMENCLADOR_ANALISIS_CLINICOS = 4;
+    public static final int TIPO_NOMENCLADOR_QUIRURGICO = 6;
+    public static final int TIPO_NOMENCLADOR_PROTESIS_INSUMOS = 10;
+
+    public static boolean esTipoNomencladorPrestacionesMedicas(
+            int idTipoNomenclador) {
+
+        return idTipoNomenclador
+                == TIPO_NOMENCLADOR_ANALISIS_CLINICOS
+                || idTipoNomenclador
+                == TIPO_NOMENCLADOR_PRACTICAS_ESPECIALIZADAS
+                || idTipoNomenclador
+                == TIPO_NOMENCLADOR_PROTESIS_INSUMOS
+                || idTipoNomenclador
+                == TIPO_NOMENCLADOR_QUIRURGICO
+                || idTipoNomenclador
+                == TIPO_NOMENCLADOR_PROPIO;
+    }
+
     public static final String
             CODIGO_ESPECIAL_DISCAPACIDAD = "431003";
 
@@ -169,6 +190,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
     public static final String AFILIADO_REQUERIMIENTO_COMPRA =
             "AFILIADO_REQUERIMIENTO_COMPRA";
+
+    public static final String FORWARD_COMPRAS_SITUACION_MEDICA_VIGENTE =
+            "portlet.compras.situacion_medica_vigente";
 
     public static final String FORWARD_COMPRAS_VIEW =
             "portlet.compras.view";
@@ -433,7 +457,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             );
         }
 
-        if ("PRESTACIONES MÉDICAS".equals(sector)) {
+        if ("PRESTACIONES MEDICAS".equals(sector)) {
             return Integer.valueOf(
                     FILTRO_NOMENCLADOR_GENERAL
             );
@@ -479,11 +503,10 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                     == FILTRO_NOMENCLADOR_ODONTOLOGIA;
         }
 
-        if ("PRESTACIONES MÉDICAS".equals(sector)) {
-            return idTipoNomenclador
-                    != FILTRO_NOMENCLADOR_ODONTOLOGIA
-                    && idTipoNomenclador
-                    != FILTRO_NOMENCLADOR_FARMACIA;
+        if ("PRESTACIONES MEDICAS".equals(sector)) {
+            return esTipoNomencladorPrestacionesMedicas(
+                    idTipoNomenclador
+            );
         }
 
         return false;
@@ -537,7 +560,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                         sectorDescripcion
                 );
 
-        if ("PRESTACIONES MÉDICAS".equals(sector)) {
+        if ("PRESTACIONES MEDICAS".equals(sector)) {
             return "PRESTACIONES MÉDICAS";
         }
 

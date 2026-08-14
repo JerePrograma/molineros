@@ -1,4 +1,261 @@
+<portlet:renderURL
+        var="comprasBuscarVencimientoCudURL"
+        windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+
+    <portlet:param
+            name="struts_action"
+            value="/compras/buscar_afiliado_fecha_vto_documentacion" />
+
+</portlet:renderURL>
+
+<portlet:renderURL
+        var="comprasTieneSituacionMedicaURL"
+        windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+
+    <portlet:param
+            name="struts_action"
+            value="/compras/tiene_situacion_medica_vigente" />
+
+</portlet:renderURL>
+
+<portlet:renderURL
+        var="comprasVerSituacionMedicaURL"
+        windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+
+    <portlet:param
+            name="struts_action"
+            value="/compras/ver_situacion_medica_vigente" />
+
+</portlet:renderURL>
 <script type="text/javascript">
+    var <portlet:namespace />situacionMedicaSecuencia =
+            0;
+
+    var <portlet:namespace />situacionMedicaRequest =
+            null;
+
+    var <portlet:namespace />popupSituacionMedica =
+            null;
+
+    function <portlet:namespace />ocultarSituacionMedicaAfiliado() {
+
+        <portlet:namespace />situacionMedicaSecuencia++;
+
+        if (<portlet:namespace />situacionMedicaRequest
+                && <portlet:namespace />situacionMedicaRequest.readyState != 4) {
+
+            try {
+                <portlet:namespace />situacionMedicaRequest.abort();
+            } catch (e) {
+                /*
+                 * Un aborto esperado no debe alterar la pantalla.
+                 */
+            }
+        }
+
+        <portlet:namespace />situacionMedicaRequest =
+                null;
+
+        jQuery(
+                '#<portlet:namespace />btnSituacionMedica'
+        ).hide();
+    }
+
+    function <portlet:namespace />actualizarSituacionMedicaAfiliado(
+            cuil,
+            inte) {
+
+        cuil =
+                cuil != null
+                        ? jQuery.trim(String(cuil))
+                        : '';
+
+        inte =
+                inte != null
+                        ? jQuery.trim(String(inte))
+                        : '';
+
+        /*
+         * Invalida primero el estado anterior.
+         *
+         * Esto impide que permanezca visible la situación médica
+         * correspondiente al afiliado previamente seleccionado.
+         */
+        <portlet:namespace />ocultarSituacionMedicaAfiliado();
+
+        if (cuil == ''
+                || inte == '') {
+
+            return;
+        }
+
+        /*
+         * Fail-closed también del lado cliente.
+         */
+        if (!/^[0-9]{11}$/.test(cuil)
+                || !/^[0-9]+$/.test(inte)) {
+
+            return;
+        }
+
+        var secuenciaActual =
+                <portlet:namespace />situacionMedicaSecuencia;
+
+        <portlet:namespace />situacionMedicaRequest =
+                jQuery.ajax({
+
+                    url:
+                            '${comprasTieneSituacionMedicaURL}',
+
+                    data: {
+                        cuil_titular: cuil,
+                        inte: inte
+                    },
+
+                    cache: false,
+
+                    success: function(data) {
+
+                        if (secuenciaActual
+                                != <portlet:namespace />situacionMedicaSecuencia) {
+
+                            return;
+                        }
+
+                        var obj =
+                                null;
+
+                        try {
+                            obj =
+                                    typeof data == 'string'
+                                            ? jQuery.parseJSON(data)
+                                            : data;
+
+                        } catch (e) {
+
+                            jQuery(
+                                    '#<portlet:namespace />btnSituacionMedica'
+                            ).hide();
+
+                            return;
+                        }
+
+                        var tieneSituacion =
+                                obj != null
+                                && (
+                                        obj.tieneSituacionMedica === true
+                                        || obj.tieneSituacionMedica == 'true'
+                                );
+
+                        if (tieneSituacion) {
+
+                            jQuery(
+                                    '#<portlet:namespace />btnSituacionMedica'
+                            ).show();
+
+                        } else {
+
+                            jQuery(
+                                    '#<portlet:namespace />btnSituacionMedica'
+                            ).hide();
+                        }
+                    },
+
+                    error: function(xhr, estado) {
+
+                        if (secuenciaActual
+                                != <portlet:namespace />situacionMedicaSecuencia) {
+
+                            return;
+                        }
+
+                        if (estado == 'abort') {
+                            return;
+                        }
+
+                        /*
+                         * Fail-closed.
+                         */
+                        jQuery(
+                                '#<portlet:namespace />btnSituacionMedica'
+                        ).hide();
+                    },
+
+                    complete: function() {
+
+                        if (secuenciaActual
+                                == <portlet:namespace />situacionMedicaSecuencia) {
+
+                            <portlet:namespace />situacionMedicaRequest =
+                                    null;
+                        }
+                    }
+                });
+    }
+
+    function <portlet:namespace />abrirSituacionMedicaAfiliado() {
+
+        var cuil =
+                <portlet:namespace />valorInputCompra(
+                        'cuil'
+                );
+
+        var inte =
+                <portlet:namespace />valorInputCompra(
+                        'inte'
+                );
+
+        if (cuil == ''
+                || inte == '') {
+
+            return false;
+        }
+
+        if (!/^[0-9]{11}$/.test(cuil)
+                || !/^[0-9]+$/.test(inte)) {
+
+            return false;
+        }
+
+        if (<portlet:namespace />popupSituacionMedica != null) {
+
+            try {
+                Liferay.Popup.close(
+                        <portlet:namespace />popupSituacionMedica
+                );
+            } catch (e) {
+                /*
+                 * El popup puede haber sido cerrado manualmente.
+                 */
+            }
+
+            <portlet:namespace />popupSituacionMedica =
+                    null;
+        }
+
+        <portlet:namespace />popupSituacionMedica =
+                Liferay.Popup({
+                    title: 'Situación Médica',
+                    modal: true,
+                    width: 950
+                });
+
+        var url =
+                '${comprasVerSituacionMedicaURL}'
+                + '&cuil_titular='
+                + encodeURIComponent(cuil)
+                + '&inte='
+                + encodeURIComponent(inte);
+
+        jQuery(
+                <portlet:namespace />popupSituacionMedica
+        ).load(
+                url
+        );
+
+        return false;
+    }
+
     function <portlet:namespace />valorInputCompra(id) {
         var el = document.getElementById('<portlet:namespace />' + id);
 
@@ -243,8 +500,7 @@
                     <portlet:namespace />vencimientoCudSecuencia;
 
             var url =
-                    '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>'
-                    + '&struts_action=/compras/buscar_afiliado_fecha_vto_documentacion';
+                    '${comprasBuscarVencimientoCudURL}';
 
             <portlet:namespace />vencimientoCudRequest =
                     jQuery.ajax({

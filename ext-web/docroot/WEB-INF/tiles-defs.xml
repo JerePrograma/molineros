@@ -4526,7 +4526,7 @@
 
 	<!-- FIN PRESTADORES / PRE_1 -->
 
-	<!-- Compras -->
+	<!-- COMPRAS -->
 
 	<definition name="portlet.compras" extends="portlet">
 	</definition>
@@ -4618,7 +4618,19 @@
 		     value="/portlet/afiliados/error.jsp" />
 	</definition>
 
-	<definition name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" extends="portlet.tesoreria">
+    <definition
+            name="portlet.compras.situacion_medica_vigente"
+            extends="portlet.compras">
+
+        <put
+                name="portlet_content"
+                value="/portlet/compras/requerimientos/situacion_medica_vigente.jsp" />
+
+    </definition>
+
+    <!-- COMPRAS -->
+
+    <definition name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" extends="portlet.tesoreria">
 		<put name="portlet_content" value="/portlet/tesoreria/bancos/busqueda_saldo_diario_cuentas_bancarias.jsp" />
 	</definition>
 	

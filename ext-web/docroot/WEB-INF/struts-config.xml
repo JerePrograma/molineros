@@ -6978,7 +6978,7 @@
             <forward name="portlet.prestadores.error" path="portlet.prestadores.error" />
         </action>
 
-		<!-- Compras -->
+		<!-- COMPRAS -->
 
 		<action
 				path="/compras/view"
@@ -7241,9 +7241,29 @@
 				path="/compras/tiene_situacion_medica_vigente"
 				type="ar.com.ospim.compras.requerimientos.action.TieneSituacionMedicaVigenteCompraAction" />
 
-		<action
-				path="/compras/buscar_afiliado_fecha_vto_documentacion"
-				type="ar.com.ospim.autorizaciones.action.BuscarAfiliadoFechaVtoDiscapacidad" />
+        <action
+                path="/compras/buscar_afiliado_fecha_vto_documentacion"
+                type="ar.com.ospim.compras.requerimientos.action.BuscarAfiliadoFechaVtoDocumentacionCompraAction" />
+
+        <action
+                path="/compras/tiene_situacion_medica_vigente"
+                type="ar.com.ospim.compras.requerimientos.action.TieneSituacionMedicaVigenteCompraAction" />
+
+        <action
+                path="/compras/ver_situacion_medica_vigente"
+                type="ar.com.ospim.compras.requerimientos.action.VerSituacionMedicaVigenteCompraAction">
+
+            <forward
+                    name="portlet.compras.situacion_medica_vigente"
+                    path="portlet.compras.situacion_medica_vigente" />
+
+        </action>
+
+        <action
+                path="/compras/buscar_afiliado_fecha_vto_documentacion"
+                type="ar.com.ospim.compras.requerimientos.action.BuscarAfiliadoFechaVtoDocumentacionCompraAction" />
+
+        <!-- COMPRAS -->
 
 		<action path="/tesoreria/buscar_saldo_diario_cuentas_bancarias" type="ar.com.ospim.tesoreria.action.BuscarSaldoDiarioCuentasBancariasAction">
 			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" />

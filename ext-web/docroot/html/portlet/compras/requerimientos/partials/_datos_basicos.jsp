@@ -421,15 +421,8 @@ int idRpCabecera =
             <% } else { %>
 
                 <td colspan="2"
-                    class="compras-celda-control compras-celda-control-final compras-celda-situacion-medica">
-
-                    <input type="button"
-                           id="<portlet:namespace />btnSituacionMedica"
-                           class="compras-boton-situacion-medica"
-                           value="Situación Médica"
-                           title="Ver situación médica vigente"
-                           style="display:none;" />
-
+                    class="compras-celda-control compras-celda-control-final compras-celda-rp-vacia">
+                    &nbsp;
                 </td>
 
             <% } %>
@@ -594,8 +587,16 @@ int idRpCabecera =
              --%>
 
             <td colspan="2"
-                class="compras-celda-control compras-celda-control-final compras-celda-rp-vacia">
-                &nbsp;
+                class="compras-celda-control compras-celda-control-final compras-celda-situacion-medica">
+
+                <input type="button"
+                       id="<portlet:namespace />btnSituacionMedica"
+                       class="compras-boton-situacion-medica"
+                       value="Situación Médica"
+                       title="Ver situación médica vigente"
+                       onclick="return <portlet:namespace />abrirSituacionMedicaAfiliado();"
+                       style="display:none;" />
+
             </td>
 
         </tr>

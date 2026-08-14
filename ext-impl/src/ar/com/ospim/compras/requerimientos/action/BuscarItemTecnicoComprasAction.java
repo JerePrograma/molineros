@@ -123,7 +123,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
 
         request.setAttribute(
                 "COMPRAS_ES_PREST_MED",
-                "PRESTACIONES MÉDICAS".equals(sector)
+                "PRESTACIONES MEDICAS".equals(sector)
                         ? "1"
                         : "0"
         );

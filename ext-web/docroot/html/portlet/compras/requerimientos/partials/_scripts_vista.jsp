@@ -139,6 +139,17 @@
             );
 
             /*
+             * Situación Médica también debe resolverse en modo vista.
+             *
+             * La función pertenece a _scripts_comunes.jsp, que se carga
+             * antes de este partial.
+             */
+            <portlet:namespace />actualizarSituacionMedicaAfiliado(
+                    '<%= jsCompra(afiliadoCuilVisible) %>',
+                    '<%= jsCompra(afiliadoIntVisible) %>'
+            );
+
+            /*
              * Algunos includes legacy terminan de inicializar sus controles
              * después del ready. Se reaplica una sola vez sin alterar datos.
              */

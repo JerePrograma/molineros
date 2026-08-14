@@ -15,7 +15,9 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import com.liferay.portal.struts.ActionConstants;
 
+import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 
@@ -31,6 +33,37 @@ public class TieneSituacionMedicaVigenteCompraAction
             Pattern.compile(
                     "^[0-9]{11}$"
             );
+
+    @Override
+    public ActionForward execute(
+            ActionMapping mapping,
+            ActionForm form,
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws Exception {
+
+        super.execute(
+                mapping,
+                form,
+                request,
+                response
+        );
+
+        /*
+         * JSONAction escribe la respuesta JSON y retorna null.
+         *
+         * PortletRequestProcessor interpreta ese null como un forward
+         * inexistente y registra:
+         *
+         *     Forward does not exist
+         *
+         * /common/null.jsp es el contrato legacy explícitamente previsto
+         * por Liferay para una respuesta que no debe renderizar otro JSP.
+         */
+        return new ActionForward(
+                ActionConstants.COMMON_NULL
+        );
+    }
 
     @Override
     public String getJSON(

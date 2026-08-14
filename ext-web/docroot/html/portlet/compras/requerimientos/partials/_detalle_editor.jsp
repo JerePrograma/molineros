@@ -38,6 +38,20 @@
            width="100%">
 
         <tbody id="<portlet:namespace />detalle_bloque_nomenclador">
+            <tr id="<portlet:namespace />detalle_fila_tipo_nomenclador"
+                style="display:none;">
+                <td>
+                    <label for="<portlet:namespace />detalle_tipo_nomenclador_select">
+                        Tipo Nomenclador:
+                    </label>
+                </td>
+
+                <td colspan="3">
+                    <select id="<portlet:namespace />detalle_tipo_nomenclador_select">
+                        <option value="">Seleccione...</option>
+                    </select>
+                </td>
+            </tr>
             <tr>
                 <td>
                     <label for="<portlet:namespace />detalle_codigo_nomenclador">

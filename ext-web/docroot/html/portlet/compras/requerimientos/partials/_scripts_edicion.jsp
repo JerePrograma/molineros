@@ -1,13 +1,16 @@
+<portlet:renderURL
+        var="comprasBuscarAfiliadosURL"
+        windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+
+    <portlet:param
+            name="struts_action"
+            value="/compras/buscar_afiliados" />
+
+</portlet:renderURL>
 <script type="text/javascript">
     var popup = null;
     var popupAfill = null;
     var <portlet:namespace />guardandoCompra = false;
-
-    var <portlet:namespace />situacionMedicaSecuencia =
-            0;
-
-    var <portlet:namespace />situacionMedicaRequest =
-            null;
 
     function <portlet:namespace />setGuardandoCompraActivo(activo) {
         <portlet:namespace />guardandoCompra = activo;
@@ -61,158 +64,6 @@
         }
 
         return value;
-    }
-
-    function <portlet:namespace />ocultarSituacionMedicaAfiliado() {
-
-        <portlet:namespace />situacionMedicaSecuencia++;
-
-        if (<portlet:namespace />situacionMedicaRequest
-                && <portlet:namespace />situacionMedicaRequest.readyState != 4) {
-
-            try {
-                <portlet:namespace />situacionMedicaRequest.abort();
-            } catch (e) {
-                /*
-                 * Un aborto AJAX no debe afectar el flujo
-                 * de selección del afiliado.
-                 */
-            }
-        }
-
-        <portlet:namespace />situacionMedicaRequest =
-                null;
-
-        jQuery(
-                '#<portlet:namespace />btnSituacionMedica'
-        ).hide();
-    }
-
-    function <portlet:namespace />actualizarSituacionMedicaAfiliado(
-            cuil,
-            inte) {
-
-        cuil =
-                cuil != null
-                        ? jQuery.trim(
-                                String(cuil)
-                        )
-                        : '';
-
-        inte =
-                inte != null
-                        ? jQuery.trim(
-                                String(inte)
-                        )
-                        : '';
-
-        /*
-         * Siempre ocultar primero.
-         *
-         * Nunca conservar el resultado correspondiente
-         * al afiliado seleccionado anteriormente.
-         */
-        <portlet:namespace />ocultarSituacionMedicaAfiliado();
-
-        if (cuil == ''
-                || inte == '') {
-
-            return;
-        }
-
-        var secuenciaActual =
-                <portlet:namespace />situacionMedicaSecuencia;
-
-        var url =
-                '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>'
-                + '&struts_action=/compras/tiene_situacion_medica_vigente';
-
-        <portlet:namespace />situacionMedicaRequest =
-                jQuery.ajax({
-                    url: url,
-
-                    data: {
-                        cuil_titular: cuil,
-                        inte: inte
-                    },
-
-                    cache: false,
-
-                    success: function(data) {
-
-                        if (secuenciaActual
-                                != <portlet:namespace />situacionMedicaSecuencia) {
-
-                            return;
-                        }
-
-                        var obj =
-                                null;
-
-                        try {
-                            obj =
-                                    typeof data == 'string'
-                                            ? jQuery.parseJSON(
-                                                    data
-                                            )
-                                            : data;
-
-                        } catch (e) {
-                            jQuery(
-                                    '#<portlet:namespace />btnSituacionMedica'
-                            ).hide();
-
-                            return;
-                        }
-
-                        var tieneSituacion =
-                                obj != null
-                                && (
-                                        obj.tieneSituacionMedica === true
-                                        || obj.tieneSituacionMedica == 'true'
-                                );
-
-                        if (tieneSituacion) {
-                            jQuery(
-                                    '#<portlet:namespace />btnSituacionMedica'
-                            ).show();
-                        } else {
-                            jQuery(
-                                    '#<portlet:namespace />btnSituacionMedica'
-                            ).hide();
-                        }
-                    },
-
-                    error: function(xhr, estado) {
-
-                        if (secuenciaActual
-                                != <portlet:namespace />situacionMedicaSecuencia) {
-
-                            return;
-                        }
-
-                        if (estado == 'abort') {
-                            return;
-                        }
-
-                        /*
-                         * Fail-closed.
-                         */
-                        jQuery(
-                                '#<portlet:namespace />btnSituacionMedica'
-                        ).hide();
-                    },
-
-                    complete: function() {
-
-                        if (secuenciaActual
-                                == <portlet:namespace />situacionMedicaSecuencia) {
-
-                            <portlet:namespace />situacionMedicaRequest =
-                                    null;
-                        }
-                    }
-                });
     }
 
     function <portlet:namespace />fechaReferenciaAfiliado() {
@@ -286,22 +137,34 @@
             width: 830
         });
 
-        var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-            '&struts_action=/compras/buscar_afiliados' +
-            '&cuil=' + encodeURIComponent(cuil) +
-            '&inte=' + encodeURIComponent(inte) +
-            '&tipoDoc=' + encodeURIComponent(tipoDoc) +
-            '&nroDoc=' + encodeURIComponent(nroDoc) +
-            '&seccional=' + encodeURIComponent(seccional) +
-            '&nombre=' + encodeURIComponent(nombre) +
-            '&apellido=' + encodeURIComponent(apellido) +
-            '&entidad=' + encodeURIComponent(entidad) +
-            '&numero_afi=' + encodeURIComponent(numeroAfi) +
-            '&fecha_referencia=' + encodeURIComponent(fechaReferencia) +
-            '&nroCredencialPrevencion=' + encodeURIComponent(nroCredencialPrevencion) +
-            '&nroSocioPrevencion=' + encodeURIComponent(nroSocioPrevencion) +
-            '&origen=' +
-            '&popup=true';
+        var url =
+                '${comprasBuscarAfiliadosURL}'
+                + '&cuil='
+                + encodeURIComponent(cuil)
+                + '&inte='
+                + encodeURIComponent(inte)
+                + '&tipoDoc='
+                + encodeURIComponent(tipoDoc)
+                + '&nroDoc='
+                + encodeURIComponent(nroDoc)
+                + '&seccional='
+                + encodeURIComponent(seccional)
+                + '&nombre='
+                + encodeURIComponent(nombre)
+                + '&apellido='
+                + encodeURIComponent(apellido)
+                + '&entidad='
+                + encodeURIComponent(entidad)
+                + '&numero_afi='
+                + encodeURIComponent(numeroAfi)
+                + '&fecha_referencia='
+                + encodeURIComponent(fechaReferencia)
+                + '&nroCredencialPrevencion='
+                + encodeURIComponent(nroCredencialPrevencion)
+                + '&nroSocioPrevencion='
+                + encodeURIComponent(nroSocioPrevencion)
+                + '&origen='
+                + '&popup=true';
 
         jQuery(popupAfill).load(url);
 
@@ -838,6 +701,16 @@
                 '<%= jsCompra(afiliadoIncapacidad) %>'
         );
 
+        /*
+         * En edición de un requerimiento existente no se ejecuta
+         * seleccionaCamposAfiliado(), por lo tanto también debe
+         * inicializarse explícitamente Situación Médica.
+         */
+        <portlet:namespace />actualizarSituacionMedicaAfiliado(
+                '<%= jsCompra(afiliadoCuilVisible) %>',
+                '<%= jsCompra(afiliadoIntVisible) %>'
+        );
+
         <portlet:namespace />sincronizarAfiliadoRequerimiento();
     }
 
@@ -930,6 +803,17 @@
         );
 
         <portlet:namespace />sincronizarFormularioCompra();
+
+        if (typeof window[
+                '<portlet:namespace />actualizarTipoNomencladorDetallePorSector'
+        ] == 'function') {
+
+            window[
+                    '<portlet:namespace />actualizarTipoNomencladorDetallePorSector'
+            ](
+                    true
+            );
+        }
 
         if (typeof window[
                 '<portlet:namespace />filtrarArticulosPorSector'
