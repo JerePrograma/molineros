@@ -112,6 +112,15 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                                     "/compras/descargar_orden_medica"
                             );
 
+                            /*
+                             * OBLIGATORIO en Liferay legacy para evitar que
+                             * StripFilter modifique el contenido binario.
+                             */
+                            descargarOrdenMedicaCompraURL.setParameter(
+                                    "strip",
+                                    "false"
+                            );
+
                             descargarOrdenMedicaCompraURL.setParameter(
                                     "id_requerimiento_compra",
                                     String.valueOf(
@@ -122,14 +131,12 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                             descargarOrdenMedicaCompraURL.setParameter(
                                     "dl_file_entry_id",
                                     String.valueOf(
-                                            dlFileEntryIdOrdenMedica
-                                                    .longValue()
+                                            dlFileEntryIdOrdenMedica.longValue()
                                     )
                             );
 
                             urlOrdenMedicaCompraVista =
-                                    descargarOrdenMedicaCompraURL
-                                            .toString();
+                                    descargarOrdenMedicaCompraURL.toString();
                         }
                     %>
 
