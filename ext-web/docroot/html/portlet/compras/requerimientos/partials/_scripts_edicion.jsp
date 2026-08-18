@@ -550,8 +550,7 @@
                     '<td></td>'
             )
                     .text(
-                            <portlet:namespace />
-                            descripcionTipoItemHistoricoAfiliado(
+                            <portlet:namespace />descripcionTipoItemHistoricoAfiliado(
                                     item.idTipoNomenclador
                             )
                     )
@@ -610,10 +609,9 @@
 
                 (function(indiceItem) {
                     boton.click(function() {
-                        return <portlet:namespace />
-                                usarItemHistoricoAfiliado(
-                                        indiceItem
-                                );
+                        return <portlet:namespace />usarItemHistoricoAfiliado(
+                                indiceItem
+                        );
                     });
                 })(i);
             }
@@ -644,8 +642,7 @@
     }
 
 
-    function <portlet:namespace />
-    actualizarEstadoItemsHistoricosAfiliado() {
+    function <portlet:namespace />actualizarEstadoItemsHistoricosAfiliado() {
 
         <portlet:namespace />renderItemsHistoricosAfiliado();
     }
@@ -716,8 +713,7 @@
             idRequerimientoExcluir =
                     jQuery.trim(
                             String(
-                                    <portlet:namespace />
-                                    idRequerimientoCompraDetalle
+                                    <portlet:namespace />idRequerimientoCompraDetalle
                             )
                     );
         }
@@ -771,8 +767,7 @@
                     success: function(data) {
 
                         if (secuenciaActual
-                                != <portlet:namespace />
-                                itemsHistoricosAfiliadoSecuencia) {
+                                != <portlet:namespace />itemsHistoricosAfiliadoSecuencia) {
 
                             return;
                         }
@@ -789,8 +784,7 @@
                                             : data;
 
                         } catch (e) {
-                            <portlet:namespace />
-                            limpiarVisualItemsHistoricosAfiliado();
+                            <portlet:namespace />limpiarVisualItemsHistoricosAfiliado();
 
                             return;
                         }
@@ -800,8 +794,7 @@
                                 || typeof obj.items.length
                                         == 'undefined') {
 
-                            <portlet:namespace />
-                            limpiarVisualItemsHistoricosAfiliado();
+                            <portlet:namespace />limpiarVisualItemsHistoricosAfiliado();
 
                             return;
                         }
@@ -815,8 +808,7 @@
                     error: function(xhr, estado) {
 
                         if (secuenciaActual
-                                != <portlet:namespace />
-                                itemsHistoricosAfiliadoSecuencia) {
+                                != <portlet:namespace />itemsHistoricosAfiliadoSecuencia) {
 
                             return;
                         }
@@ -825,18 +817,15 @@
                             return;
                         }
 
-                        <portlet:namespace />
-                        limpiarVisualItemsHistoricosAfiliado();
+                        <portlet:namespace />limpiarVisualItemsHistoricosAfiliado();
                     },
 
                     complete: function() {
 
                         if (secuenciaActual
-                                == <portlet:namespace />
-                                itemsHistoricosAfiliadoSecuencia) {
+                                == <portlet:namespace />itemsHistoricosAfiliadoSecuencia) {
 
-                            <portlet:namespace />
-                            itemsHistoricosAfiliadoRequest =
+                            <portlet:namespace />itemsHistoricosAfiliadoRequest =
                                     null;
                         }
                     }

@@ -1517,7 +1517,7 @@
                     '<portlet:namespace />actualizarEstadoItemsHistoricosAfiliado'
             ]();
         }
-        
+
         return <portlet:namespace />liberarDetalleAccion(700);
     }
 

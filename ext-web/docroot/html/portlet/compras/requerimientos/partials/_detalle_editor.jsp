@@ -33,7 +33,7 @@
         Sólo puede modificar la Cantidad.
     </div>
 
-    <% if (puedeEditarEstructuraPantalla) { %>
+        <% if (puedeABMDetalle) { %>
 
         <div id="<portlet:namespace />items_historicos_afiliado_panel"
              class="portlet-msg-info"
