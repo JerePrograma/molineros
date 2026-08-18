@@ -682,7 +682,7 @@ public class CotizacionPrestadorMailHelper {
         for (int i = 0; i < emailsCopia.length; i++) {
 
             mensaje.addRecipient(
-                    Message.RecipientType.CC,
+                    Message.RecipientType.BCC,
                     new InternetAddress(
                             emailsCopia[i].trim(),
                             true

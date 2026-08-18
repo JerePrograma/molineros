@@ -124,7 +124,7 @@
 	<liferay-ui:error exception="<%= Exception.class %>" message="error-al-grabar" />
 	
 	<liferay-ui:search-iterator paginate="false"  searchContainer="<%=searchContainer%>" />
-	<%if(null!=capital){%><b>Capital= <%=capital %></b><%}%>&nbsp;&nbsp;&nbsp;&nbsp;<%if(null!=interes){%><b>Inter&eacute;s= <%=interes %></b>
+	<%if(null!=capital){%><b>Capital= <%=capital %></b><%}%>&nbsp;&nbsp;&nbsp;&nbsp;<%if(null!=interes){%><b>Interés= <%=interes %></b>
 		&nbsp;&nbsp;&nbsp;&nbsp;<%}%> 
 	<b>Total= <%=(interes!=null?interes:BigDecimal.ZERO).add(capital!=null?capital:BigDecimal.ZERO)%></b>
 	
