@@ -90,6 +90,61 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     + ")"
                     + ")";
 
+    private static final int MAX_ITEMS_HISTORICOS_AFILIADO =
+            20;
+
+    private static final String SQL_BUSCAR_ITEMS_HISTORICOS_AFILIADO =
+            "SELECT historico.id_prestacion, "
+                    + "historico.id_tipo_nomenclador, "
+                    + "historico.codigo, "
+                    + "historico.descripcion "
+                    + "FROM ("
+                    + "SELECT DISTINCT ON ("
+                    + "d.id_prestacion, "
+                    + "d.id_tipo_nomenclador"
+                    + ") "
+                    + "d.id_prestacion, "
+                    + "d.id_tipo_nomenclador, "
+                    + "COALESCE("
+                    + "NULLIF(BTRIM(d.codigo_nomenclador), ''), "
+                    + "NULLIF(BTRIM(d.codigo_item), '')"
+                    + ") AS codigo, "
+                    + "COALESCE("
+                    + "NULLIF(BTRIM(d.descripcion_nomenclador), ''), "
+                    + "NULLIF(BTRIM(d.descripcion_item), '')"
+                    + ") AS descripcion, "
+                    + "r.alta_fecha AS fecha_requerimiento, "
+                    + "r.id AS id_requerimiento_origen, "
+                    + "d.id AS id_detalle_origen "
+                    + "FROM compras.requerimiento r "
+                    + "INNER JOIN compras.requerimiento_detalle d "
+                    + "ON d.id_requerimiento = r.id "
+                    + "WHERE r.afiliado_cuil_titular = ? "
+                    + "AND r.afiliado_int = ? "
+                    + "AND r.id_sector = ? "
+                    + "AND r.id <> ? "
+                    + "AND r.baja_fecha IS NULL "
+                    + "AND d.baja_fecha IS NULL "
+                    + "AND d.tipo_item = 'NOMENCLADOR' "
+                    + "AND d.id_prestacion IS NOT NULL "
+                    + "AND d.id_prestacion > 0 "
+                    + "AND d.id_tipo_nomenclador IS NOT NULL "
+                    + "AND d.id_tipo_nomenclador > 0 "
+                    + "ORDER BY "
+                    + "d.id_prestacion, "
+                    + "d.id_tipo_nomenclador, "
+                    + "r.alta_fecha DESC NULLS LAST, "
+                    + "r.id DESC, "
+                    + "d.id DESC"
+                    + ") historico "
+                    + "WHERE historico.codigo IS NOT NULL "
+                    + "AND historico.descripcion IS NOT NULL "
+                    + "ORDER BY "
+                    + "historico.fecha_requerimiento DESC NULLS LAST, "
+                    + "historico.id_requerimiento_origen DESC, "
+                    + "historico.id_detalle_origen DESC "
+                    + "LIMIT ?";
+
     public List<RequerimientoCompra> buscarRequerimientos(
             RequerimientoCompraFiltro filtro) throws Exception {
 
@@ -196,6 +251,141 @@ public class BusquedaRequerimientoCompraServiceImpl {
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public List<RequerimientoCompraDetalle>
+    buscarItemsHistoricosAfiliado(
+            String cuilTitular,
+            int inte,
+            int idSector,
+            int idRequerimientoExcluir)
+            throws Exception {
+
+        String cuilNormalizado =
+                emptyToNull(
+                        cuilTitular
+                );
+
+        if (cuilNormalizado == null
+                || !cuilNormalizado.matches(
+                "^[0-9]{11}$"
+        )) {
+
+            throw new Exception(
+                    "Debe informar un CUIL titular válido."
+            );
+        }
+
+        /*
+         * El integrante cero corresponde al titular
+         * y debe considerarse válido.
+         */
+        if (inte < 0) {
+            throw new Exception(
+                    "Debe informar un integrante válido."
+            );
+        }
+
+        if (idSector <= 0) {
+            throw new Exception(
+                    "Debe informar el sector del requerimiento."
+            );
+        }
+
+        int idRequerimientoExcluirNormalizado =
+                idRequerimientoExcluir > 0
+                        ? idRequerimientoExcluir
+                        : 0;
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        List<RequerimientoCompraDetalle> items =
+                new ArrayList<RequerimientoCompraDetalle>();
+
+        try {
+            con =
+                    ConnectionHelper.getConnection();
+
+            if (con == null) {
+                throw new Exception(
+                        "No se obtuvo conexión para consultar "
+                                + "los ítems históricos."
+                );
+            }
+
+            stmt =
+                    con.prepareStatement(
+                            SQL_BUSCAR_ITEMS_HISTORICOS_AFILIADO
+                    );
+
+            stmt.setString(
+                    1,
+                    cuilNormalizado
+            );
+
+            stmt.setInt(
+                    2,
+                    inte
+            );
+
+            stmt.setInt(
+                    3,
+                    idSector
+            );
+
+            /*
+             * Para un requerimiento nuevo se envía cero.
+             * Como los IDs persistidos son positivos,
+             * r.id <> 0 no excluye ninguna cabecera.
+             */
+            stmt.setInt(
+                    4,
+                    idRequerimientoExcluirNormalizado
+            );
+
+            stmt.setInt(
+                    5,
+                    MAX_ITEMS_HISTORICOS_AFILIADO
+            );
+
+            rs =
+                    stmt.executeQuery();
+
+            while (rs.next()) {
+                items.add(
+                        mapItemHistoricoAfiliado(
+                                rs
+                        )
+                );
+            }
+
+            return items;
+
+        } catch (Exception e) {
+            /*
+             * No registrar CUIL, integrante ni otra
+             * información identificatoria en el log.
+             */
+            _log.error(
+                    "No se pudieron recuperar los ítems históricos "
+                            + "del afiliado para Compras.",
+                    e
+            );
+
+            throw e;
+
+        } finally {
+            closeQuietly(
+                    rs
+            );
+
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
         }
     }
 
@@ -764,6 +954,75 @@ public class BusquedaRequerimientoCompraServiceImpl {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt);
         }
+    }
+
+    private RequerimientoCompraDetalle mapItemHistoricoAfiliado(
+            ResultSet rs) throws Exception {
+
+        RequerimientoCompraDetalle detalle =
+                new RequerimientoCompraDetalle();
+
+        String codigo =
+                getString(
+                        rs,
+                        "codigo"
+                );
+
+        String descripcion =
+                getString(
+                        rs,
+                        "descripcion"
+                );
+
+        detalle.setTipoItem(
+                RequerimientoCompraDetalle
+                        .TIPO_ITEM_NOMENCLADOR
+        );
+
+        detalle.setIdPrestacion(
+                getInteger(
+                        rs,
+                        "id_prestacion"
+                )
+        );
+
+        detalle.setIdTipoNomenclador(
+                getInteger(
+                        rs,
+                        "id_tipo_nomenclador"
+                )
+        );
+
+        detalle.setCodigoNomenclador(
+                codigo
+        );
+
+        detalle.setDescripcionNomenclador(
+                descripcion
+        );
+
+        /*
+         * Mantener consistentes también los campos
+         * genéricos utilizados por la tabla y el editor.
+         */
+        detalle.setCodigoItem(
+                codigo
+        );
+
+        detalle.setDescripcionItem(
+                descripcion
+        );
+
+        /*
+         * La cantidad histórica no se reutiliza.
+         */
+        detalle.setCantidad(
+                Integer.valueOf(
+                        1
+                )
+        );
+
+        return detalle;
     }
 
     private RequerimientoCompra mapRequerimiento(ResultSet rs) throws Exception {

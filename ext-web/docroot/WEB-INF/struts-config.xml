@@ -7263,6 +7263,10 @@
                 path="/compras/buscar_afiliado_fecha_vto_documentacion"
                 type="ar.com.ospim.compras.requerimientos.action.BuscarAfiliadoFechaVtoDocumentacionCompraAction" />
 
+        <action
+                path="/compras/buscar_items_historicos_afiliado"
+                type="ar.com.ospim.compras.requerimientos.action.BuscarItemsHistoricosAfiliadoCompraAction" />
+
         <!-- COMPRAS -->
 
 		<action path="/tesoreria/buscar_saldo_diario_cuentas_bancarias" type="ar.com.ospim.tesoreria.action.BuscarSaldoDiarioCuentasBancariasAction">

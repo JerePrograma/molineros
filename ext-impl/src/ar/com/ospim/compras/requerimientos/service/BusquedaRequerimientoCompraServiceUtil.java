@@ -52,6 +52,23 @@ public class BusquedaRequerimientoCompraServiceUtil {
         );
     }
 
+    public static List<RequerimientoCompraDetalle>
+    buscarItemsHistoricosAfiliado(
+            String cuilTitular,
+            int inte,
+            int idSector,
+            int idRequerimientoExcluir)
+            throws Exception {
+
+        return getInstance()
+                .buscarItemsHistoricosAfiliado(
+                        cuilTitular,
+                        inte,
+                        idSector,
+                        idRequerimientoExcluir
+                );
+    }
+
     public static List<RequerimientoCompraEstado> listarEstados()
             throws Exception {
 

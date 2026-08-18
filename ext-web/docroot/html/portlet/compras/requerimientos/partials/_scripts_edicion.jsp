@@ -8,10 +8,28 @@
             value="/compras/buscar_afiliados" />
 
 </portlet:renderURL>
+<portlet:renderURL
+        var="comprasBuscarItemsHistoricosAfiliadoURL"
+        windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+
+    <portlet:param
+            name="struts_action"
+            value="/compras/buscar_items_historicos_afiliado" />
+
+</portlet:renderURL>
 <script type="text/javascript">
     var popup = null;
     var popupAfill = null;
     var <portlet:namespace />guardandoCompra = false;
+
+    var <portlet:namespace />itemsHistoricosAfiliadoSecuencia =
+            0;
+
+    var <portlet:namespace />itemsHistoricosAfiliadoRequest =
+            null;
+
+    var <portlet:namespace />itemsHistoricosAfiliado =
+            [];
 
     function <portlet:namespace />setGuardandoCompraActivo(activo) {
         <portlet:namespace />guardandoCompra = activo;
@@ -96,6 +114,733 @@
 
     function <portlet:namespace />paramCredencialAfiliado() {
         return 'num' + 'ero_afi';
+    }
+
+    function <portlet:namespace />invalidarConsultaItemsHistoricosAfiliado() {
+
+        <portlet:namespace />itemsHistoricosAfiliadoSecuencia++;
+
+        if (<portlet:namespace />itemsHistoricosAfiliadoRequest
+                && <portlet:namespace />itemsHistoricosAfiliadoRequest
+                        .readyState != 4) {
+
+            try {
+                <portlet:namespace />itemsHistoricosAfiliadoRequest
+                        .abort();
+
+            } catch (e) {
+                /*
+                 * El aborto es esperado cuando cambia
+                 * el afiliado o el sector.
+                 */
+            }
+        }
+
+        <portlet:namespace />itemsHistoricosAfiliadoRequest =
+                null;
+    }
+
+
+    function <portlet:namespace />limpiarVisualItemsHistoricosAfiliado() {
+
+        <portlet:namespace />itemsHistoricosAfiliado =
+                [];
+
+        jQuery(
+                '#<portlet:namespace />items_historicos_afiliado_estado'
+        )
+                .text('')
+                .hide();
+
+        jQuery(
+                '#<portlet:namespace />items_historicos_afiliado_body'
+        ).empty();
+
+        jQuery(
+                '#<portlet:namespace />items_historicos_afiliado_tabla'
+        ).hide();
+
+        jQuery(
+                '#<portlet:namespace />items_historicos_afiliado_panel'
+        ).hide();
+    }
+
+
+    function <portlet:namespace />ocultarItemsHistoricosAfiliado() {
+
+        <portlet:namespace />invalidarConsultaItemsHistoricosAfiliado();
+
+        <portlet:namespace />limpiarVisualItemsHistoricosAfiliado();
+    }
+
+
+    function <portlet:namespace />claveItemHistoricoAfiliado(
+            item) {
+
+        if (!item) {
+            return '';
+        }
+
+        var idPrestacion =
+                item.idPrestacion != null
+                        ? jQuery.trim(
+                                String(
+                                        item.idPrestacion
+                                )
+                        )
+                        : '';
+
+        var idTipoNomenclador =
+                item.idTipoNomenclador != null
+                        ? jQuery.trim(
+                                String(
+                                        item.idTipoNomenclador
+                                )
+                        )
+                        : '';
+
+        if (!/^[0-9]+$/.test(idPrestacion)
+                || parseInt(idPrestacion, 10) <= 0
+                || !/^[0-9]+$/.test(idTipoNomenclador)
+                || parseInt(idTipoNomenclador, 10) <= 0) {
+
+            return '';
+        }
+
+        return idPrestacion
+                + ':'
+                + idTipoNomenclador;
+    }
+
+
+    function <portlet:namespace />clavesDetallesActuales() {
+
+        var claves =
+                {};
+
+        var detalles =
+                typeof <portlet:namespace />detallesCompra
+                        != 'undefined'
+                && <portlet:namespace />detallesCompra
+                        ? <portlet:namespace />detallesCompra
+                        : [];
+
+        for (var i = 0; i < detalles.length; i++) {
+            var detalle =
+                    detalles[i];
+
+            if (!detalle
+                    || detalle.tipoItem != 'NOMENCLADOR') {
+
+                continue;
+            }
+
+            var clave =
+                    <portlet:namespace />claveItemHistoricoAfiliado({
+                        idPrestacion:
+                                detalle.idPrestacion,
+
+                        idTipoNomenclador:
+                                detalle.idTipoNomenclador
+                    });
+
+            if (clave != '') {
+                claves[clave] =
+                        true;
+            }
+        }
+
+        return claves;
+    }
+
+
+    function <portlet:namespace />descripcionTipoItemHistoricoAfiliado(
+            idTipoNomenclador) {
+
+        var id =
+                idTipoNomenclador != null
+                        ? jQuery.trim(
+                                String(
+                                        idTipoNomenclador
+                                )
+                        )
+                        : '';
+
+        if (id == '9') {
+            return 'MEDICAMENTOS';
+        }
+
+        if (typeof <portlet:namespace />tiposNomencladorPrestacionesMedicas
+                != 'undefined'
+                && <portlet:namespace />tiposNomencladorPrestacionesMedicas) {
+
+            for (var i = 0;
+                    i < <portlet:namespace />tiposNomencladorPrestacionesMedicas
+                            .length;
+                    i++) {
+
+                var tipo =
+                        <portlet:namespace />tiposNomencladorPrestacionesMedicas[i];
+
+                if (tipo
+                        && String(tipo.id) == id) {
+
+                    return tipo.descripcion;
+                }
+            }
+        }
+
+        return id != ''
+                ? 'Tipo ' + id
+                : '';
+    }
+
+
+    function <portlet:namespace />editorDetalleTieneDatosNoGuardados() {
+
+        var editIndex =
+                parseInt(
+                        jQuery(
+                                '#<portlet:namespace />detalle_edit_index'
+                        ).val(),
+                        10
+                );
+
+        if (!isNaN(editIndex)
+                && editIndex >= 0) {
+
+            return true;
+        }
+
+        var idPrestacion =
+                jQuery.trim(
+                        jQuery(
+                                '#<portlet:namespace />detalle_id_prestacion'
+                        ).val() || ''
+                );
+
+        var codigo =
+                jQuery.trim(
+                        jQuery(
+                                '#<portlet:namespace />detalle_codigo_nomenclador'
+                        ).val() || ''
+                );
+
+        var descripcion =
+                jQuery.trim(
+                        jQuery(
+                                '#<portlet:namespace />detalle_descripcion_nomenclador'
+                        ).val() || ''
+                );
+
+        var cantidad =
+                jQuery.trim(
+                        jQuery(
+                                '#<portlet:namespace />detalle_cantidad'
+                        ).val() || ''
+                );
+
+        var observaciones =
+                jQuery.trim(
+                        jQuery(
+                                '#<portlet:namespace />detalle_observaciones'
+                        ).val() || ''
+                );
+
+        return idPrestacion != ''
+                || codigo != ''
+                || descripcion != ''
+                || observaciones != ''
+                || (
+                        cantidad != ''
+                        && cantidad != '1'
+                );
+    }
+
+
+    function <portlet:namespace />usarItemHistoricoAfiliado(
+            index) {
+
+        if (typeof <portlet:namespace />detalleAccionEnCurso
+                != 'undefined'
+                && <portlet:namespace />detalleAccionEnCurso) {
+
+            return false;
+        }
+
+        var item =
+                <portlet:namespace />itemsHistoricosAfiliado[index];
+
+        if (!item) {
+            return false;
+        }
+
+        var clavesActuales =
+                <portlet:namespace />clavesDetallesActuales();
+
+        var clave =
+                <portlet:namespace />claveItemHistoricoAfiliado(
+                        item
+                );
+
+        if (clave == ''
+                || clavesActuales[clave] === true) {
+
+            return false;
+        }
+
+        if (<portlet:namespace />editorDetalleTieneDatosNoGuardados()
+                && !confirm(
+                        'Se reemplazarán los datos no guardados '
+                                + 'del editor de detalle. ¿Continuar?'
+                )) {
+
+            return false;
+        }
+
+        <portlet:namespace />limpiarEditorDetalle();
+
+        <portlet:namespace />actualizarTipoNomencladorDetallePorSector(
+                false
+        );
+
+        var selectTipo =
+                jQuery(
+                        '#<portlet:namespace />detalle_tipo_nomenclador_select'
+                );
+
+        var idTipoNomenclador =
+                String(
+                        item.idTipoNomenclador
+                );
+
+        /*
+         * Prestaciones Médicas permite seleccionar el tipo.
+         * Farmacia mantiene el select deshabilitado y forzado a 9.
+         */
+        if (selectTipo.length > 0
+                && !selectTipo.attr(
+                        'disabled'
+                )) {
+
+            selectTipo.val(
+                    idTipoNomenclador
+            );
+
+            if (jQuery.trim(
+                    selectTipo.val() || ''
+            ) != idTipoNomenclador) {
+
+                alert(
+                        'El ítem histórico no es compatible '
+                                + 'con el sector seleccionado.'
+                );
+
+                return false;
+            }
+        }
+
+        <portlet:namespace />seleccionarNomencladorDetalle(
+                item.idPrestacion,
+                item.idTipoNomenclador,
+                item.codigo,
+                item.descripcion
+        );
+
+        /*
+         * seleccionarNomencladorDetalle() retorna false tanto
+         * al completar como al rechazar la selección.
+         * Se verifica el hidden para distinguir ambos casos.
+         */
+        var idSeleccionado =
+                jQuery.trim(
+                        jQuery(
+                                '#<portlet:namespace />detalle_id_prestacion'
+                        ).val() || ''
+                );
+
+        if (idSeleccionado
+                != String(
+                        item.idPrestacion
+                )) {
+
+            return false;
+        }
+
+        jQuery(
+                '#<portlet:namespace />detalle_cantidad'
+        ).val(
+                '1'
+        );
+
+        jQuery(
+                '#<portlet:namespace />detalle_observaciones'
+        ).val(
+                ''
+        );
+
+        jQuery(
+                '#<portlet:namespace />detalle_cantidad'
+        ).focus();
+
+        return false;
+    }
+
+
+    function <portlet:namespace />renderItemsHistoricosAfiliado() {
+
+        var panel =
+                jQuery(
+                        '#<portlet:namespace />items_historicos_afiliado_panel'
+                );
+
+        if (panel.length == 0) {
+            return;
+        }
+
+        var tabla =
+                jQuery(
+                        '#<portlet:namespace />items_historicos_afiliado_tabla'
+                );
+
+        var estado =
+                jQuery(
+                        '#<portlet:namespace />items_historicos_afiliado_estado'
+                );
+
+        var body =
+                jQuery(
+                        '#<portlet:namespace />items_historicos_afiliado_body'
+                );
+
+        body.empty();
+
+        estado
+                .text('')
+                .hide();
+
+        var clavesActuales =
+                <portlet:namespace />clavesDetallesActuales();
+
+        var cantidadRenderizada =
+                0;
+
+        for (var i = 0;
+                i < <portlet:namespace />itemsHistoricosAfiliado.length;
+                i++) {
+
+            var item =
+                    <portlet:namespace />itemsHistoricosAfiliado[i];
+
+            var clave =
+                    <portlet:namespace />claveItemHistoricoAfiliado(
+                            item
+                    );
+
+            if (clave == '') {
+                continue;
+            }
+
+            var fila =
+                    jQuery(
+                            '<tr></tr>'
+                    );
+
+            jQuery(
+                    '<td></td>'
+            )
+                    .text(
+                            <portlet:namespace />
+                            descripcionTipoItemHistoricoAfiliado(
+                                    item.idTipoNomenclador
+                            )
+                    )
+                    .appendTo(
+                            fila
+                    );
+
+            jQuery(
+                    '<td></td>'
+            )
+                    .text(
+                            item.codigo != null
+                                    ? String(item.codigo)
+                                    : ''
+                    )
+                    .appendTo(
+                            fila
+                    );
+
+            jQuery(
+                    '<td></td>'
+            )
+                    .text(
+                            item.descripcion != null
+                                    ? String(item.descripcion)
+                                    : ''
+                    )
+                    .appendTo(
+                            fila
+                    );
+
+            var celdaAccion =
+                    jQuery(
+                            '<td></td>'
+                    );
+
+            var boton =
+                    jQuery(
+                            '<input type="button" />'
+                    );
+
+            if (clavesActuales[clave] === true) {
+                boton.val(
+                        'Ya agregado'
+                );
+
+                boton.attr(
+                        'disabled',
+                        'disabled'
+                );
+
+            } else {
+                boton.val(
+                        'Usar'
+                );
+
+                (function(indiceItem) {
+                    boton.click(function() {
+                        return <portlet:namespace />
+                                usarItemHistoricoAfiliado(
+                                        indiceItem
+                                );
+                    });
+                })(i);
+            }
+
+            celdaAccion.append(
+                    boton
+            );
+
+            fila.append(
+                    celdaAccion
+            );
+
+            body.append(
+                    fila
+            );
+
+            cantidadRenderizada++;
+        }
+
+        if (cantidadRenderizada == 0) {
+            tabla.hide();
+            panel.hide();
+            return;
+        }
+
+        tabla.show();
+        panel.show();
+    }
+
+
+    function <portlet:namespace />
+    actualizarEstadoItemsHistoricosAfiliado() {
+
+        <portlet:namespace />renderItemsHistoricosAfiliado();
+    }
+
+
+    window[
+            '<portlet:namespace />actualizarEstadoItemsHistoricosAfiliado'
+    ] =
+            <portlet:namespace />actualizarEstadoItemsHistoricosAfiliado;
+
+
+    function <portlet:namespace />consultarItemsHistoricosAfiliado(
+            cuil,
+            inte) {
+
+        <portlet:namespace />invalidarConsultaItemsHistoricosAfiliado();
+
+        <portlet:namespace />limpiarVisualItemsHistoricosAfiliado();
+
+        var panel =
+                jQuery(
+                        '#<portlet:namespace />items_historicos_afiliado_panel'
+                );
+
+        if (panel.length == 0) {
+            return;
+        }
+
+        cuil =
+                cuil != null
+                        ? jQuery.trim(
+                                String(
+                                        cuil
+                                )
+                        )
+                        : '';
+
+        inte =
+                inte != null
+                        ? jQuery.trim(
+                                String(
+                                        inte
+                                )
+                        )
+                        : '';
+
+        var idSector =
+                <portlet:namespace />trimValue(
+                        'sector_id'
+                );
+
+        if (!/^[0-9]{11}$/.test(cuil)
+                || !/^[0-9]+$/.test(inte)
+                || !/^[0-9]+$/.test(idSector)
+                || parseInt(idSector, 10) <= 0
+                || !<portlet:namespace />sectorUsaCodigoPrestacion()) {
+
+            return;
+        }
+
+        var idRequerimientoExcluir =
+                '0';
+
+        if (typeof <portlet:namespace />idRequerimientoCompraDetalle
+                != 'undefined'
+                && <portlet:namespace />idRequerimientoCompraDetalle != null) {
+
+            idRequerimientoExcluir =
+                    jQuery.trim(
+                            String(
+                                    <portlet:namespace />
+                                    idRequerimientoCompraDetalle
+                            )
+                    );
+        }
+
+        if (!/^[0-9]+$/.test(idRequerimientoExcluir)
+                || parseInt(
+                        idRequerimientoExcluir,
+                        10
+                ) <= 0) {
+
+            idRequerimientoExcluir =
+                    '0';
+        }
+
+        var secuenciaActual =
+                <portlet:namespace />itemsHistoricosAfiliadoSecuencia;
+
+        jQuery(
+                '#<portlet:namespace />items_historicos_afiliado_estado'
+        )
+                .text(
+                        'Consultando ítems históricos...'
+                )
+                .show();
+
+        panel.show();
+
+        <portlet:namespace />itemsHistoricosAfiliadoRequest =
+                jQuery.ajax({
+
+                    url:
+                            '${comprasBuscarItemsHistoricosAfiliadoURL}',
+
+                    data: {
+                        cuil_titular:
+                                cuil,
+
+                        inte:
+                                inte,
+
+                        id_sector:
+                                idSector,
+
+                        id_requerimiento_excluir:
+                                idRequerimientoExcluir
+                    },
+
+                    cache:
+                            false,
+
+                    success: function(data) {
+
+                        if (secuenciaActual
+                                != <portlet:namespace />
+                                itemsHistoricosAfiliadoSecuencia) {
+
+                            return;
+                        }
+
+                        var obj =
+                                null;
+
+                        try {
+                            obj =
+                                    typeof data == 'string'
+                                            ? jQuery.parseJSON(
+                                                    data
+                                            )
+                                            : data;
+
+                        } catch (e) {
+                            <portlet:namespace />
+                            limpiarVisualItemsHistoricosAfiliado();
+
+                            return;
+                        }
+
+                        if (!obj
+                                || typeof obj.items != 'object'
+                                || typeof obj.items.length
+                                        == 'undefined') {
+
+                            <portlet:namespace />
+                            limpiarVisualItemsHistoricosAfiliado();
+
+                            return;
+                        }
+
+                        <portlet:namespace />itemsHistoricosAfiliado =
+                                obj.items;
+
+                        <portlet:namespace />renderItemsHistoricosAfiliado();
+                    },
+
+                    error: function(xhr, estado) {
+
+                        if (secuenciaActual
+                                != <portlet:namespace />
+                                itemsHistoricosAfiliadoSecuencia) {
+
+                            return;
+                        }
+
+                        if (estado == 'abort') {
+                            return;
+                        }
+
+                        <portlet:namespace />
+                        limpiarVisualItemsHistoricosAfiliado();
+                    },
+
+                    complete: function() {
+
+                        if (secuenciaActual
+                                == <portlet:namespace />
+                                itemsHistoricosAfiliadoSecuencia) {
+
+                            <portlet:namespace />
+                            itemsHistoricosAfiliadoRequest =
+                                    null;
+                        }
+                    }
+                });
     }
 
     var <portlet:namespace />popupDomicilioAfiliado =
@@ -832,6 +1577,11 @@
                 inte
         );
 
+        <portlet:namespace />consultarItemsHistoricosAfiliado(
+                cuil,
+                inte
+        );
+
         if (typeof <portlet:namespace />mostrarMensajeAfiliadoInicial == 'function') {
             <portlet:namespace />mostrarMensajeAfiliadoInicial('');
         }
@@ -1235,6 +1985,8 @@
 
         <portlet:namespace />ocultarSituacionMedicaAfiliado();
 
+        <portlet:namespace />ocultarItemsHistoricosAfiliado();
+
         <portlet:namespace />mostrarMensajeAfiliadoInicial('');
     }
 
@@ -1302,6 +2054,15 @@
                     '<portlet:namespace />filtrarArticulosPorSector'
             ]();
         }
+
+        <portlet:namespace />consultarItemsHistoricosAfiliado(
+                <portlet:namespace />trimValue(
+                        'cuil'
+                ),
+                <portlet:namespace />trimValue(
+                        'inte'
+                )
+        );
     }
 
     function <portlet:namespace />parsePorcentaje(id, label) {
@@ -1961,6 +2722,15 @@
         <portlet:namespace />aplicarReglaCargosPorSector(false);
         <portlet:namespace />sincronizarFormularioCompra();
 
+        <portlet:namespace />consultarItemsHistoricosAfiliado(
+                <portlet:namespace />trimValue(
+                        'cuil'
+                ),
+                <portlet:namespace />trimValue(
+                        'inte'
+                )
+        );
+
         jQuery('#<portlet:namespace />cargo_ospim, #<portlet:namespace />cargo_tercerizadora').change(function() {
             <portlet:namespace />sincronizarFormularioCompra();
         });
@@ -1997,6 +2767,7 @@
 
             <portlet:namespace />ocultarVencimientoCudAfiliado();
             <portlet:namespace />ocultarSituacionMedicaAfiliado();
+            <portlet:namespace />ocultarItemsHistoricosAfiliado();
             <portlet:namespace />sincronizarFormularioCompra();
         });
 
@@ -2007,6 +2778,7 @@
 
             <portlet:namespace />ocultarVencimientoCudAfiliado();
             <portlet:namespace />ocultarSituacionMedicaAfiliado();
+            <portlet:namespace />ocultarItemsHistoricosAfiliado();
             <portlet:namespace />sincronizarFormularioCompra();
         });
 

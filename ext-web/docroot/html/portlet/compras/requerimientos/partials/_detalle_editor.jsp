@@ -33,6 +33,51 @@
         Sólo puede modificar la Cantidad.
     </div>
 
+    <% if (puedeEditarEstructuraPantalla) { %>
+
+        <div id="<portlet:namespace />items_historicos_afiliado_panel"
+             class="portlet-msg-info"
+             style="display:none; margin-bottom:10px;">
+
+            <strong>
+                Ítems utilizados anteriormente para este afiliado
+            </strong>
+
+            <div id="<portlet:namespace />items_historicos_afiliado_estado"
+                 style="display:none; margin-top:8px;"></div>
+
+            <table id="<portlet:namespace />items_historicos_afiliado_tabla"
+                   class="lfr-table"
+                   width="100%"
+                   style="display:none; margin-top:8px;">
+
+                <thead>
+                    <tr>
+                        <th>
+                            Tipo Nomenclador
+                        </th>
+
+                        <th>
+                            Código
+                        </th>
+
+                        <th>
+                            Descripción
+                        </th>
+
+                        <th>
+                            &nbsp;
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody id="<portlet:namespace />items_historicos_afiliado_body">
+                </tbody>
+            </table>
+        </div>
+
+    <% } %>
+
     <table class="lfr-table"
            style="border-collapse: separate; border-spacing: 5px;"
            width="100%">

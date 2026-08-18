@@ -1447,6 +1447,15 @@
         <portlet:namespace />limpiarEditorDetalle();
         <portlet:namespace />renderDetallesCompra();
 
+        if (typeof window[
+                '<portlet:namespace />actualizarEstadoItemsHistoricosAfiliado'
+        ] == 'function') {
+
+            window[
+                    '<portlet:namespace />actualizarEstadoItemsHistoricosAfiliado'
+            ]();
+        }
+
         return <portlet:namespace />liberarDetalleAccion(300);
     }
 
@@ -1500,6 +1509,15 @@
         <portlet:namespace />limpiarEditorDetalle();
         <portlet:namespace />renderDetallesCompra();
 
+        if (typeof window[
+                '<portlet:namespace />actualizarEstadoItemsHistoricosAfiliado'
+        ] == 'function') {
+
+            window[
+                    '<portlet:namespace />actualizarEstadoItemsHistoricosAfiliado'
+            ]();
+        }
+        
         return <portlet:namespace />liberarDetalleAccion(700);
     }
 
