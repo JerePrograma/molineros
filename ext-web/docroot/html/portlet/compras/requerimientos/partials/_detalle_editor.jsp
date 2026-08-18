@@ -33,7 +33,7 @@
         Sólo puede modificar la Cantidad.
     </div>
 
-        <% if (puedeABMDetalle) { %>
+    <% if (puedeABMDetalle) { %>
 
         <div id="<portlet:namespace />items_historicos_afiliado_panel"
              class="portlet-msg-info"
@@ -44,7 +44,8 @@
             </strong>
 
             <div id="<portlet:namespace />items_historicos_afiliado_estado"
-                 style="display:none; margin-top:8px;"></div>
+                 style="display:none; margin-top:8px;">
+            </div>
 
             <table id="<portlet:namespace />items_historicos_afiliado_tabla"
                    class="lfr-table"
@@ -53,6 +54,13 @@
 
                 <thead>
                     <tr>
+                        <th style="width:35px; text-align:center;">
+                            <input type="checkbox"
+                                   id="<portlet:namespace />items_historicos_afiliado_seleccionar_todos"
+                                   title="Seleccionar todos"
+                                   onclick="<portlet:namespace />seleccionarTodosItemsHistoricosAfiliado(this.checked);" />
+                        </th>
+
                         <th>
                             Tipo Nomenclador
                         </th>
@@ -64,16 +72,22 @@
                         <th>
                             Descripción
                         </th>
-
-                        <th>
-                            &nbsp;
-                        </th>
                     </tr>
                 </thead>
 
                 <tbody id="<portlet:namespace />items_historicos_afiliado_body">
                 </tbody>
             </table>
+
+            <div id="<portlet:namespace />items_historicos_afiliado_acciones"
+                 style="display:none; margin-top:8px; text-align:right;">
+
+                <input type="button"
+                       id="<portlet:namespace />items_historicos_afiliado_agregar"
+                       value="Agregar seleccionados"
+                       onclick="return <portlet:namespace />agregarItemsHistoricosSeleccionados();" />
+            </div>
+
         </div>
 
     <% } %>
@@ -83,8 +97,10 @@
            width="100%">
 
         <tbody id="<portlet:namespace />detalle_bloque_nomenclador">
+
             <tr id="<portlet:namespace />detalle_fila_tipo_nomenclador"
                 style="display:none;">
+
                 <td>
                     <label for="<portlet:namespace />detalle_tipo_nomenclador_select">
                         Tipo Nomenclador:
@@ -96,8 +112,11 @@
                         <option value="">Seleccione...</option>
                     </select>
                 </td>
+
             </tr>
+
             <tr>
+
                 <td>
                     <label for="<portlet:namespace />detalle_codigo_nomenclador">
                         <liferay-ui:message key="codigo-presentado" />:
@@ -126,6 +145,7 @@
 
                 <td>
                     <div id="<portlet:namespace />detalle_div_btn_busca_nomenclador">
+
                         <a href="javascript: void(0);"
                            onclick="return <portlet:namespace />buscarNomencladorDetalle();"
                            tabindex="-1">Buscar</a>
@@ -135,12 +155,16 @@
                         <a href="javascript: void(0);"
                            onclick="return <portlet:namespace />limpiarSeleccionNomenclador();"
                            tabindex="-1">Limpiar</a>
+
                     </div>
                 </td>
+
             </tr>
+
         </tbody>
 
         <tr>
+
             <td>
                 <label for="<portlet:namespace />detalle_cantidad">
                     Cantidad:
@@ -153,9 +177,11 @@
                        size="8"
                        value="1" />
             </td>
+
         </tr>
 
         <tr id="<portlet:namespace />detalle_fila_observaciones">
+
             <td>
                 <label for="<portlet:namespace />detalle_observaciones">
                     Observaciones:
@@ -169,9 +195,11 @@
                        maxlength="500"
                        value="" />
             </td>
+
         </tr>
 
         <tr>
+
             <td colspan="4"
                 align="center">
 
@@ -187,7 +215,11 @@
                        value="Cancelar edición"
                        style="display:none;"
                        onclick="return <portlet:namespace />cancelarEdicionDetalle();" />
+
             </td>
+
         </tr>
+
     </table>
+
 </fieldset>
