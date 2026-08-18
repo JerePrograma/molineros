@@ -1,12 +1,14 @@
 package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.WebKeysCompras;
+
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.model.User;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -19,37 +21,89 @@ import javax.portlet.RenderResponse;
 
 public class EditarRequerimientoCompraDetalleAction extends PortletAction {
 
+    private static final String CMD_ADD_ITEMS =
+            "addItems";
+
     private final RequerimientoCompraDetalleHelper detalleHelper =
             new RequerimientoCompraDetalleHelper();
 
-    public void processAction(ActionMapping mapping,
-                              ActionForm form,
-                              PortletConfig portletConfig,
-                              ActionRequest actionRequest,
-                              ActionResponse actionResponse) throws Exception {
+    public void processAction(
+            ActionMapping mapping,
+            ActionForm form,
+            PortletConfig portletConfig,
+            ActionRequest actionRequest,
+            ActionResponse actionResponse) throws Exception {
 
-        String cmd = detalleHelper.getParametroTrim(actionRequest, Constants.CMD);
-        int idRequerimientoCompra = 0;
+        String cmd =
+                detalleHelper.getParametroTrim(
+                        actionRequest,
+                        Constants.CMD
+                );
+
+        int idRequerimientoCompra =
+                0;
 
         try {
             idRequerimientoCompra =
-                    detalleHelper.getIdRequerimientoCompraFromRequest(actionRequest);
+                    detalleHelper.getIdRequerimientoCompraFromRequest(
+                            actionRequest
+                    );
         } catch (Exception e) {
-            idRequerimientoCompra = 0;
+            idRequerimientoCompra =
+                    0;
         }
 
         try {
-            User user = PortalUtil.getUser(actionRequest);
-            detalleHelper.validarPermisoABM(user);
-            String usuario = detalleHelper.getUsuario(user);
+            User user =
+                    PortalUtil.getUser(
+                            actionRequest
+                    );
 
-            if ("addItem".equals(cmd) || "updateItem".equals(cmd)) {
+            detalleHelper.validarPermisoABM(
+                    user
+            );
+
+            String usuario =
+                    detalleHelper.getUsuario(
+                            user
+                    );
+
+            if ("addItem".equals(cmd)
+                    || "updateItem".equals(cmd)) {
+
                 detalleHelper.guardarDetalleDesdeRequest(
                         actionRequest,
                         actionResponse,
                         usuario
                 );
+
+            } else if (CMD_ADD_ITEMS.equals(cmd)) {
+
+                int cantidadGuardada =
+                        detalleHelper.guardarDetallesDesdeRequest(
+                                actionRequest,
+                                idRequerimientoCompra,
+                                usuario
+                        );
+
+                detalleHelper.setRenderEdicion(
+                        actionResponse,
+                        idRequerimientoCompra
+                );
+
+                if (cantidadGuardada > 0) {
+                    /*
+                     * Se reutiliza el mensaje existente de detalle guardado
+                     * para no ampliar el contrato de mensajes del módulo.
+                     */
+                    SessionMessages.add(
+                            actionRequest,
+                            "requerimiento-compra-item-guardado"
+                    );
+                }
+
             } else if ("deleteItem".equals(cmd)) {
+
                 detalleHelper.borrarDetalleDesdeRequest(
                         actionRequest,
                         actionResponse,
@@ -60,7 +114,9 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                         actionRequest,
                         "requerimiento-compra-item-borrado"
                 );
+
             } else {
+
                 detalleHelper.setRenderEdicion(
                         actionResponse,
                         idRequerimientoCompra
@@ -71,11 +127,19 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                     actionRequest,
                     WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO
             );
-        } catch (Exception e) {
-            String mensaje = e.getMessage();
 
-            if (WebKeysCompras.isEmpty(mensaje)) {
-                mensaje = "No se pudo procesar el detalle del requerimiento de compra.";
+        } catch (Exception e) {
+
+            String mensaje =
+                    e.getMessage();
+
+            if (WebKeysCompras.isEmpty(
+                    mensaje
+            )) {
+
+                mensaje =
+                        "No se pudo procesar el detalle "
+                                + "del requerimiento de compra.";
             }
 
             SessionErrors.add(
@@ -88,9 +152,13 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                     mensaje
             );
 
-            if (e instanceof RequerimientoCompraDetalleHelper.ValidacionCompraException) {
-                RequerimientoCompraDetalleHelper.ValidacionCompraException validacion =
-                        (RequerimientoCompraDetalleHelper.ValidacionCompraException) e;
+            if (e instanceof
+                    RequerimientoCompraDetalleHelper.ValidacionCompraException) {
+
+                RequerimientoCompraDetalleHelper.ValidacionCompraException
+                        validacion =
+                        (RequerimientoCompraDetalleHelper.ValidacionCompraException)
+                                e;
 
                 actionRequest.setAttribute(
                         WebKeysCompras.ERROR_CAMPO_COMPRA,
@@ -103,10 +171,16 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                     idRequerimientoCompra
             );
 
-            actionResponse.setRenderParameter("compras_error", "true");
+            actionResponse.setRenderParameter(
+                    "compras_error",
+                    "true"
+            );
+
             actionResponse.setRenderParameter(
                     "compras_operacion",
-                    cmd != null ? cmd : ""
+                    cmd != null
+                            ? cmd
+                            : ""
             );
 
             setForward(
@@ -116,24 +190,39 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
         }
     }
 
-    public ActionForward render(ActionMapping mapping,
-                                ActionForm form,
-                                PortletConfig portletConfig,
-                                RenderRequest renderRequest,
-                                RenderResponse renderResponse) throws Exception {
+    public ActionForward render(
+            ActionMapping mapping,
+            ActionForm form,
+            PortletConfig portletConfig,
+            RenderRequest renderRequest,
+            RenderResponse renderResponse) throws Exception {
 
         try {
-            User user = PortalUtil.getUser(renderRequest);
-            detalleHelper.validarPermisoABM(user);
+            User user =
+                    PortalUtil.getUser(
+                            renderRequest
+                    );
+
+            detalleHelper.validarPermisoABM(
+                    user
+            );
 
             return mapping.findForward(
                     WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO
             );
-        } catch (Exception e) {
-            String mensaje = e.getMessage();
 
-            if (WebKeysCompras.isEmpty(mensaje)) {
-                mensaje = "No posee permisos para administrar detalles de compras.";
+        } catch (Exception e) {
+
+            String mensaje =
+                    e.getMessage();
+
+            if (WebKeysCompras.isEmpty(
+                    mensaje
+            )) {
+
+                mensaje =
+                        "No posee permisos para administrar "
+                                + "detalles de compras.";
             }
 
             renderRequest.setAttribute(
@@ -141,7 +230,9 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                     mensaje
             );
 
-            return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_ERROR);
+            return mapping.findForward(
+                    WebKeysCompras.FORWARD_COMPRAS_ERROR
+            );
         }
     }
 }

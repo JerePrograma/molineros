@@ -206,4 +206,113 @@
         padding: 3px 0;
         font-size: 12px;
     }
+
+    /*
+     * Sugerencias de ítems históricos del afiliado.
+     *
+     * Se utiliza la misma gramática visual de las tablas legacy
+     * de Liferay: lfr-table, taglib-search-iterator, results-header
+     * y results-row.
+     *
+     * No se fija table-layout porque la Descripción debe aprovechar
+     * naturalmente todo el ancho disponible.
+     */
+    .compras-formulario-requerimiento
+    .compras-historicos-panel {
+        margin: 0 0 14px 0;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-historicos-encabezado {
+        margin: 0 0 7px 0;
+        padding: 0;
+        line-height: 18px;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-historicos-ayuda {
+        margin-left: 8px;
+        color: #666666;
+        font-size: 11px;
+        font-weight: normal;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-historicos-estado {
+        margin: 0 0 7px 0;
+        color: #666666;
+        line-height: 18px;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-historicos-tabla {
+        width: 100%;
+        margin: 0;
+        border-collapse: collapse;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-historicos-tabla th,
+    .compras-formulario-requerimiento
+    .compras-historicos-tabla td {
+        padding: 6px 8px;
+        vertical-align: middle;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-historicos-col-check {
+        width: 36px;
+        text-align: center;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-historicos-col-check input[type="checkbox"] {
+        margin: 0;
+        padding: 0;
+        vertical-align: middle;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-historicos-col-tipo {
+        width: 190px;
+        white-space: normal;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-historicos-col-codigo {
+        width: 120px;
+        white-space: nowrap;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-historicos-col-descripcion {
+        white-space: normal;
+        word-wrap: break-word;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-historicos-fila-agregada td {
+        color: #777777;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-historicos-estado-item {
+        display: inline-block;
+        margin-left: 9px;
+        color: #777777;
+        font-size: 11px;
+        font-style: italic;
+        white-space: nowrap;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-historicos-acciones {
+        margin: 8px 0 0 0;
+        text-align: right;
+    }
+
+    .compras-formulario-requerimiento
+    .compras-historicos-acciones input[type="button"] {
+        min-width: 90px;
+    }
 </style>
