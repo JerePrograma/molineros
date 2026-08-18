@@ -125,7 +125,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
          * El PDF se genera antes de reservar al primer prestador.
          *
          * Si Jasper falla, no queda ninguna fila PROCESANDO
-         * ni se realizan envíos parciales.
+         * ni se realizan envios parciales.
          */
         byte[] pedidoPresupuestoPdf =
                 generarPedidoPresupuestoPdf(
@@ -138,13 +138,19 @@ public class NotificarCotizacionPrestadorServiceImpl {
                         + ".pdf";
 
         /*
-         * La Orden medica se recupera y valida completamente antes de
-         * reservar al primer prestador. Una ausencia total corresponde al
-         * contrato historico; una asociacion existente pero inconsistente
-         * debe fallar cerrada sin dejar filas PROCESANDO.
+         * Todas las Ordenes medicas se recuperan y validan
+         * completamente antes de reservar al primer prestador.
+         *
+         * Los requerimientos historicos pueden no poseer
+         * Orden medica, en cuyo caso la lista sera vacia
+         * y se conserva el envio historico solamente con el PDF.
+         *
+         * Si existe una Orden medica activa pero alguna de sus
+         * asociaciones, identidades o contenidos es inconsistente,
+         * el proceso falla cerrado antes de dejar filas PROCESANDO.
          */
-        OrdenMedicaAdjunta ordenMedicaAdjunta =
-                recuperarOrdenMedicaAdjunta(
+        List<OrdenMedicaAdjunta> ordenesMedicasAdjuntas =
+                recuperarOrdenesMedicasAdjuntas(
                         idRequerimientoCompra,
                         companyId
                 );
@@ -158,7 +164,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                     resultado,
                     pedidoPresupuestoPdf,
                     nombrePedidoPresupuestoPdf,
-                    ordenMedicaAdjunta
+                    ordenesMedicasAdjuntas
             );
         }
 
@@ -188,7 +194,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
             NotificacionCotizacionResultado resultado,
             byte[] pedidoPresupuestoPdf,
             String nombrePedidoPresupuestoPdf,
-            OrdenMedicaAdjunta ordenMedicaAdjunta) {
+            List<OrdenMedicaAdjunta> ordenesMedicasAdjuntas) {
 
         if (prestador == null) {
             _log.error(
@@ -522,13 +528,20 @@ public class NotificarCotizacionPrestadorServiceImpl {
          * de persistir ENVIADO.
          */
         try {
-            String asunto = construirAsunto(requerimiento);
-            String cuerpo = construirCuerpo(
-                    requerimiento,
-                    prestador
-            );
+            String asunto =
+                    construirAsunto(
+                            requerimiento
+                    );
 
-            if (ordenMedicaAdjunta == null) {
+            String cuerpo =
+                    construirCuerpo(
+                            requerimiento,
+                            prestador
+                    );
+
+            if (ordenesMedicasAdjuntas == null
+                    || ordenesMedicasAdjuntas.isEmpty()) {
+
                 enviarMail(
                         companyId,
                         emailDestino,
@@ -537,7 +550,9 @@ public class NotificarCotizacionPrestadorServiceImpl {
                         pedidoPresupuestoPdf,
                         nombrePedidoPresupuestoPdf
                 );
+
             } else {
+
                 enviarMail(
                         companyId,
                         emailDestino,
@@ -545,9 +560,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
                         cuerpo,
                         pedidoPresupuestoPdf,
                         nombrePedidoPresupuestoPdf,
-                        ordenMedicaAdjunta.getContenido(),
-                        ordenMedicaAdjunta.getNombreOriginal(),
-                        ordenMedicaAdjunta.getContentType()
+                        ordenesMedicasAdjuntas
                 );
             }
 
@@ -709,21 +722,28 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 );
     }
 
-    protected OrdenMedicaAdjunta recuperarOrdenMedicaAdjunta(
+    protected List<OrdenMedicaAdjunta> recuperarOrdenesMedicasAdjuntas(
             int idRequerimientoCompra,
             long companyId) throws Exception {
 
-        RequerimientoCompraPresupuesto ordenMedica =
-                getOrdenMedica(
+        List<RequerimientoCompraPresupuesto> ordenesMedicas =
+                listarOrdenesMedicas(
                         idRequerimientoCompra
                 );
 
+        List<OrdenMedicaAdjunta> ordenesMedicasAdjuntas =
+                new ArrayList<OrdenMedicaAdjunta>();
+
         /*
-         * Los requerimientos historicos pueden no tener Orden medica.
-         * El alta nueva atomica incorporada por Compras no puede producir
-         * esa ausencia, por lo que no se utiliza una heuristica de fecha o ID.
+         * Los requerimientos historicos pueden no tener
+         * Orden medica.
+         *
+         * En ese caso se conserva el envio historico
+         * solamente con el PDF.
          */
-        if (ordenMedica == null) {
+        if (ordenesMedicas == null
+                || ordenesMedicas.isEmpty()) {
+
             if (_log.isInfoEnabled()) {
                 _log.info(
                         "El requerimiento no posee Orden medica activa; "
@@ -733,49 +753,84 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 );
             }
 
-            return null;
+            return ordenesMedicasAdjuntas;
         }
 
-        validarRelacionOrdenMedica(
-                ordenMedica,
-                idRequerimientoCompra
-        );
+        /*
+         * Se obtiene una unica vez porque el limite
+         * es comun para todos los documentos.
+         */
+        long maximoTamano =
+                obtenerMaximoTamanoDocumento();
 
-        DLFileEntry entry = getFileEntryOrdenMedica(
-                ordenMedica.getDlFileEntryId().longValue()
-        );
+        for (int i = 0;
+             i < ordenesMedicas.size();
+             i++) {
 
-        validarIdentidadOrdenMedica(
-                ordenMedica,
-                entry,
-                companyId
-        );
+            RequerimientoCompraPresupuesto ordenMedica =
+                    ordenesMedicas.get(i);
 
-        long maximoTamano = obtenerMaximoTamanoDocumento();
+            /*
+             * La consulta plural no deberia devolver
+             * elementos nulos. Si ocurre, se falla cerrado
+             * antes de reservar prestadores.
+             */
+            if (ordenMedica == null) {
+                throw new Exception(
+                        "La lista de Ordenes medicas "
+                                + "contiene un elemento nulo."
+                );
+            }
 
-        if (entry.getSize() <= 0
-                || entry.getSize() > maximoTamano) {
+            validarRelacionOrdenMedica(
+                    ordenMedica,
+                    idRequerimientoCompra
+            );
 
-            throw new Exception(
-                    "La Orden médica persistida tiene un tamaño inválido."
+            DLFileEntry entry =
+                    getFileEntryOrdenMedica(
+                            ordenMedica
+                                    .getDlFileEntryId()
+                                    .longValue()
+                    );
+
+            validarIdentidadOrdenMedica(
+                    ordenMedica,
+                    entry,
+                    companyId
+            );
+
+            if (entry.getSize() <= 0
+                    || entry.getSize() > maximoTamano) {
+
+                throw new Exception(
+                        "La Orden médica persistida "
+                                + "tiene un tamaño inválido."
+                );
+            }
+
+            byte[] contenido =
+                    leerOrdenMedica(
+                            entry,
+                            maximoTamano
+                    );
+
+            String contentType =
+                    validarContenidoOrdenMedica(
+                            contenido,
+                            ordenMedica.getNombreOriginal()
+                    );
+
+            ordenesMedicasAdjuntas.add(
+                    crearOrdenMedicaAdjunta(
+                            contenido,
+                            ordenMedica.getNombreOriginal(),
+                            contentType
+                    )
             );
         }
 
-        byte[] contenido = leerOrdenMedica(
-                entry,
-                maximoTamano
-        );
-
-        String contentType = validarContenidoOrdenMedica(
-                contenido,
-                ordenMedica.getNombreOriginal()
-        );
-
-        return crearOrdenMedicaAdjunta(
-                contenido,
-                ordenMedica.getNombreOriginal(),
-                contentType
-        );
+        return ordenesMedicasAdjuntas;
     }
 
     protected OrdenMedicaAdjunta crearOrdenMedicaAdjunta(
@@ -795,6 +850,15 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
         return BusquedaRequerimientoCompraServiceUtil
                 .getOrdenMedica(
+                        idRequerimientoCompra
+                );
+    }
+
+    protected List<RequerimientoCompraPresupuesto> listarOrdenesMedicas(
+            int idRequerimientoCompra) throws Exception {
+
+        return BusquedaRequerimientoCompraServiceUtil
+                .listarOrdenesMedicas(
                         idRequerimientoCompra
                 );
     }
@@ -1447,6 +1511,85 @@ public class NotificarCotizacionPrestadorServiceImpl {
                 ordenMedica,
                 nombreOrdenMedica,
                 contentTypeOrdenMedica
+        );
+    }
+
+    protected void enviarMail(
+            long companyId,
+            String email,
+            String asunto,
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf,
+            List<OrdenMedicaAdjunta> ordenesMedicasAdjuntas)
+            throws Exception {
+
+        if (ordenesMedicasAdjuntas == null
+                || ordenesMedicasAdjuntas.isEmpty()) {
+
+            enviarMail(
+                    companyId,
+                    email,
+                    asunto,
+                    cuerpo,
+                    pedidoPresupuestoPdf,
+                    nombrePedidoPresupuestoPdf
+            );
+
+            return;
+        }
+
+        List<byte[]> contenidosOrdenesMedicas =
+                new ArrayList<byte[]>(
+                        ordenesMedicasAdjuntas.size()
+                );
+
+        List<String> nombresOrdenesMedicas =
+                new ArrayList<String>(
+                        ordenesMedicasAdjuntas.size()
+                );
+
+        List<String> contentTypesOrdenesMedicas =
+                new ArrayList<String>(
+                        ordenesMedicasAdjuntas.size()
+                );
+
+        for (int i = 0;
+             i < ordenesMedicasAdjuntas.size();
+             i++) {
+
+            OrdenMedicaAdjunta ordenMedicaAdjunta =
+                    ordenesMedicasAdjuntas.get(i);
+
+            if (ordenMedicaAdjunta == null) {
+                throw new Exception(
+                        "Existe una Orden médica adjunta nula."
+                );
+            }
+
+            contenidosOrdenesMedicas.add(
+                    ordenMedicaAdjunta.getContenido()
+            );
+
+            nombresOrdenesMedicas.add(
+                    ordenMedicaAdjunta.getNombreOriginal()
+            );
+
+            contentTypesOrdenesMedicas.add(
+                    ordenMedicaAdjunta.getContentType()
+            );
+        }
+
+        mailHelper.enviar(
+                email,
+                resolverEmailsCopiaCotizacion(),
+                asunto,
+                cuerpo,
+                pedidoPresupuestoPdf,
+                nombrePedidoPresupuestoPdf,
+                contenidosOrdenesMedicas,
+                nombresOrdenesMedicas,
+                contentTypesOrdenesMedicas
         );
     }
 
