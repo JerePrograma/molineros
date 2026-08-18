@@ -39,37 +39,48 @@
              class="portlet-msg-info"
              style="display:none; margin-bottom:10px;">
 
-            <strong>
-                Ítems utilizados anteriormente para este afiliado
-            </strong>
+            <div style="margin-bottom:10px;">
+                <strong>
+                    Ítems utilizados anteriormente para este afiliado
+                </strong>
+            </div>
 
             <div id="<portlet:namespace />items_historicos_afiliado_estado"
-                 style="display:none; margin-top:8px;">
+                 style="display:none; margin-bottom:8px;">
             </div>
 
             <table id="<portlet:namespace />items_historicos_afiliado_tabla"
                    class="lfr-table"
                    width="100%"
-                   style="display:none; margin-top:8px;">
+                   cellspacing="0"
+                   cellpadding="4"
+                   style="display:none; table-layout:fixed;">
+
+                <colgroup>
+                    <col style="width:40px;" />
+                    <col style="width:190px;" />
+                    <col style="width:130px;" />
+                    <col />
+                </colgroup>
 
                 <thead>
                     <tr>
-                        <th style="width:35px; text-align:center;">
+                        <th style="text-align:center; vertical-align:middle;">
                             <input type="checkbox"
                                    id="<portlet:namespace />items_historicos_afiliado_seleccionar_todos"
                                    title="Seleccionar todos"
-                                   onclick="<portlet:namespace />seleccionarTodosItemsHistoricosAfiliado(this.checked);" />
+                                   onclick="return <portlet:namespace />seleccionarTodosItemsHistoricosAfiliado(this.checked);" />
                         </th>
 
-                        <th>
+                        <th style="text-align:left;">
                             Tipo Nomenclador
                         </th>
 
-                        <th>
+                        <th style="text-align:left;">
                             Código
                         </th>
 
-                        <th>
+                        <th style="text-align:left;">
                             Descripción
                         </th>
                     </tr>
@@ -77,15 +88,17 @@
 
                 <tbody id="<portlet:namespace />items_historicos_afiliado_body">
                 </tbody>
+
             </table>
 
             <div id="<portlet:namespace />items_historicos_afiliado_acciones"
-                 style="display:none; margin-top:8px; text-align:right;">
+                 style="display:none; margin-top:10px; text-align:right;">
 
                 <input type="button"
                        id="<portlet:namespace />items_historicos_afiliado_agregar"
                        value="Agregar seleccionados"
                        onclick="return <portlet:namespace />agregarItemsHistoricosSeleccionados();" />
+
             </div>
 
         </div>
@@ -93,7 +106,7 @@
     <% } %>
 
     <table class="lfr-table"
-           style="border-collapse: separate; border-spacing: 5px;"
+           style="border-collapse:separate; border-spacing:5px;"
            width="100%">
 
         <tbody id="<portlet:namespace />detalle_bloque_nomenclador">
@@ -116,7 +129,6 @@
             </tr>
 
             <tr>
-
                 <td>
                     <label for="<portlet:namespace />detalle_codigo_nomenclador">
                         <liferay-ui:message key="codigo-presentado" />:
@@ -146,25 +158,23 @@
                 <td>
                     <div id="<portlet:namespace />detalle_div_btn_busca_nomenclador">
 
-                        <a href="javascript: void(0);"
+                        <a href="javascript:void(0);"
                            onclick="return <portlet:namespace />buscarNomencladorDetalle();"
                            tabindex="-1">Buscar</a>
 
                         &nbsp;
 
-                        <a href="javascript: void(0);"
+                        <a href="javascript:void(0);"
                            onclick="return <portlet:namespace />limpiarSeleccionNomenclador();"
                            tabindex="-1">Limpiar</a>
 
                     </div>
                 </td>
-
             </tr>
 
         </tbody>
 
         <tr>
-
             <td>
                 <label for="<portlet:namespace />detalle_cantidad">
                     Cantidad:
@@ -177,11 +187,9 @@
                        size="8"
                        value="1" />
             </td>
-
         </tr>
 
         <tr id="<portlet:namespace />detalle_fila_observaciones">
-
             <td>
                 <label for="<portlet:namespace />detalle_observaciones">
                     Observaciones:
@@ -195,11 +203,9 @@
                        maxlength="500"
                        value="" />
             </td>
-
         </tr>
 
         <tr>
-
             <td colspan="4"
                 align="center">
 
@@ -217,7 +223,6 @@
                        onclick="return <portlet:namespace />cancelarEdicionDetalle();" />
 
             </td>
-
         </tr>
 
     </table>
