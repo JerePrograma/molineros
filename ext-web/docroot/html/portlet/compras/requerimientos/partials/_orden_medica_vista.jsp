@@ -61,7 +61,6 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                     <tr>
                         <th>Documento</th>
                         <th>Fecha de la orden médica</th>
-                        <th>Nro. receta</th>
                         <th>Nombre original</th>
                         <th>Acción</th>
                     </tr>
@@ -143,24 +142,6 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                                 <%= HtmlUtil.escape(
                                         fechaOrdenMedicaCompraVista
                                 ) %>
-                            </td>
-
-                            <td>
-                                <% if (WebKeysCompras.isEmpty(
-                                        ordenMedicaCompraVista
-                                                .getNumeroReceta()
-                                )) { %>
-
-                                    No informado
-
-                                <% } else { %>
-
-                                    <%= HtmlUtil.escape(
-                                            ordenMedicaCompraVista
-                                                    .getNumeroReceta()
-                                    ) %>
-
-                                <% } %>
                             </td>
 
                             <td>
