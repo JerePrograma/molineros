@@ -117,19 +117,6 @@ public class DescargarOrdenMedicaCompraAction
                             );
 
             /*
-             * La Orden medica debe pertenecer al sitio actualmente
-             * visualizado por el usuario.
-             */
-            if (entry.getGroupId()
-                    != themeDisplay.getScopeGroupId()) {
-
-                throw new Exception(
-                        "La Orden médica no pertenece "
-                                + "al sitio actual."
-                );
-            }
-
-            /*
              * El permiso sobre Document Library se comprueba antes de
              * acceder al contenido fisico.
              *
@@ -149,7 +136,7 @@ public class DescargarOrdenMedicaCompraAction
              *
              * - asociada al requerimiento;
              * - validada contra Document Library;
-             * - limitada al sitio actual;
+             * - validada contra la identidad DL persistida;
              * - autorizada mediante VIEW.
              *
              * Recién ahora se recupera y valida el contenido binario.

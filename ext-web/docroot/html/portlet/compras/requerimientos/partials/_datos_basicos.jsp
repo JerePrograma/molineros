@@ -36,6 +36,10 @@ boolean cargosSoloLecturaPantalla =
                 strutsActionCargosPantalla
         );
 
+boolean cargosEditablesPantalla =
+        puedeEditarEstructuraPantalla
+        && !cargosSoloLecturaPantalla;
+
 Object relacionReclamoCabeceraAttr =
         renderRequest.getAttribute(
                 WebKeysCompras
@@ -464,7 +468,7 @@ int idRpCabecera =
                             Cargo OSPIM %:
                         </label>
 
-                        <% if (!cargosSoloLecturaPantalla) { %>
+                        <% if (cargosEditablesPantalla) { %>
 
                             <input type="text"
                                    id="<portlet:namespace />cargo_ospim"
@@ -497,7 +501,7 @@ int idRpCabecera =
                             Cargo tercerizadora %:
                         </label>
 
-                        <% if (!cargosSoloLecturaPantalla) { %>
+                        <% if (cargosEditablesPantalla) { %>
 
                             <input type="text"
                                    id="<portlet:namespace />cargo_tercerizadora"
@@ -537,7 +541,7 @@ int idRpCabecera =
 
             <td class="compras-celda-control">
 
-                <% if (puedeEditarEstructuraPantalla) { %>
+                <% if (puedeEditarSurgePantalla) { %>
 
                     <select id="<portlet:namespace />surge"
                             class="compras-control compras-control-surge"

@@ -94,12 +94,21 @@ boolean soloLecturaSolicitada =
 boolean editablePorEstado =
         esNuevo || req.puedeEditarEstructura();
 
+boolean surgeEditablePorEstado =
+        esNuevo || req.puedeEditarSurge();
+
 boolean cotizacionEditablePorEstado =
         req.puedeEditarCotizacion();
 
 boolean puedeEditarEstructuraPantalla =
         puedeABM
-        && editablePorEstado;
+        && editablePorEstado
+        && !soloLecturaSolicitada;
+
+boolean puedeEditarSurgePantalla =
+        puedeABM
+        && surgeEditablePorEstado
+        && !soloLecturaSolicitada;
 
 boolean puedeEditarCotizacionPantalla =
         !esNuevo
@@ -111,6 +120,7 @@ boolean layoutEdicion =
         !modoVistaForzado
         && (
                 puedeEditarEstructuraPantalla
+                || puedeEditarSurgePantalla
                 || puedeEditarCotizacionPantalla
         );
 

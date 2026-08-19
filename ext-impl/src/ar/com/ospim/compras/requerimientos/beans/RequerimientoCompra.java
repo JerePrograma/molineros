@@ -558,6 +558,10 @@ public class RequerimientoCompra {
         return WebKeysCompras.puedeEditarEstructura(getEstado()) && bajaFecha == null;
     }
 
+    public boolean puedeEditarSurge() {
+        return WebKeysCompras.puedeEditarSurge(getEstado()) && bajaFecha == null;
+    }
+
     public boolean puedeEditarCotizacion() {
         return WebKeysCompras.puedeEditarCotizacion(getEstado()) && bajaFecha == null;
     }

@@ -244,10 +244,23 @@ public void processAction(
                 RequerimientoCompra requerimiento =
                         getRequerimientoFromRequest(actionRequest);
 
+                boolean guardarDetallesEstructura = true;
+
                 if (requerimiento.getIdRequerimientoCompra() <= 0) {
                     requerimiento.setIdEstado(
                             WebKeysCompras.ESTADO_PENDIENTE
                     );
+                } else {
+                    RequerimientoCompra actual =
+                            BusquedaRequerimientoCompraServiceUtil
+                                    .getRequerimientoCompra(
+                                            requerimiento
+                                                    .getIdRequerimientoCompra()
+                                    );
+
+                    guardarDetallesEstructura =
+                            actual != null
+                                    && actual.puedeEditarEstructura();
                 }
 
                 idRequerimientoCompra = guardarCabeceraRequerimiento(
@@ -258,11 +271,13 @@ public void processAction(
                         usuario
                 );
 
-                detalleHelper.guardarDetallesDesdeRequest(
-                        actionRequest,
-                        idRequerimientoCompra,
-                        usuario
-                );
+                if (guardarDetallesEstructura) {
+                    detalleHelper.guardarDetallesDesdeRequest(
+                            actionRequest,
+                            idRequerimientoCompra,
+                            usuario
+                    );
+                }
 
                 actionResponse.setRenderParameter("compras_guardado", "true");
                 actionResponse.setRenderParameter("compras_operacion", "saveAll");
@@ -601,387 +616,391 @@ public void processAction(
                     "Debe informar al menos una Orden médica."
             );
             return 0;
-        }
+``````
 
-        if (cantidad > EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA) {
-            errorCampo(
-                    PARAM_ORDEN_MEDICA_COUNT,
-                    "Se pueden cargar hasta "
-                            + EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA
-                            + " Órdenes médicas por operación."
-            );
-            return 0;
-        }
-
-        return cantidad;
     }
 
-    private String obtenerCampoArchivoOrdenMedica(
-            int indice) {
+    if (cantidad > EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA) {
+        errorCampo(
+                PARAM_ORDEN_MEDICA_COUNT,
+                "Se pueden cargar hasta "
+                        + EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA
+                        + " Órdenes médicas por operación."
+        );
+        return 0;
+    }
 
-        if (indice <= 0) {
-            return DocumentoLibraryComprasHelper
-                    .PARAM_ARCHIVO_ORDEN_MEDICA;
-        }
+    return cantidad;
+}
 
+private String obtenerCampoArchivoOrdenMedica(
+        int indice) {
+
+    if (indice <= 0) {
         return DocumentoLibraryComprasHelper
-                .PARAM_ARCHIVO_ORDEN_MEDICA
-                + "_"
-                + indice;
+                .PARAM_ARCHIVO_ORDEN_MEDICA;
     }
 
-    private String obtenerCampoFechaOrdenMedica(
-            int indice) {
+    return DocumentoLibraryComprasHelper
+            .PARAM_ARCHIVO_ORDEN_MEDICA
+            + "_"
+            + indice;
+}
 
-        if (indice <= 0) {
-            return DocumentoLibraryComprasHelper
-                    .PARAM_FECHA_ORDEN_MEDICA;
-        }
+private String obtenerCampoFechaOrdenMedica(
+        int indice) {
 
+    if (indice <= 0) {
         return DocumentoLibraryComprasHelper
-                .PARAM_FECHA_ORDEN_MEDICA
-                + "_"
-                + indice;
+                .PARAM_FECHA_ORDEN_MEDICA;
     }
 
-    private void copiarParametrosOrdenesMedicas(
-            ActionRequest actionRequest,
-            ActionResponse actionResponse) {
+    return DocumentoLibraryComprasHelper
+            .PARAM_FECHA_ORDEN_MEDICA
+            + "_"
+            + indice;
+}
 
-        int cantidad =
-                1;
+private void copiarParametrosOrdenesMedicas(
+        ActionRequest actionRequest,
+        ActionResponse actionResponse) {
 
-        try {
-            cantidad =
-                    obtenerCantidadOrdenesMedicas(
-                            actionRequest
-                    );
-        } catch (Exception e) {
-            /*
-             * Estamos procesando un retorno por error.
-             * No debe reemplazarse el error original por otro error
-             * generado mientras se reconstruye la pantalla.
-             */
-            cantidad = 1;
-        }
+    int cantidad =
+            1;
 
-        if (cantidad <= 0) {
-            cantidad = 1;
-        }
+    try {
+        cantidad =
+                obtenerCantidadOrdenesMedicas(
+                        actionRequest
+                );
+    } catch (Exception e) {
+        /*
+         * Estamos procesando un retorno por error.
+         * No debe reemplazarse el error original por otro error
+         * generado mientras se reconstruye la pantalla.
+         */
+        cantidad = 1;
+    }
 
-        if (cantidad > EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA) {
-            cantidad = EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA;
-        }
+    if (cantidad <= 0) {
+        cantidad = 1;
+    }
+
+    if (cantidad > EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA) {
+        cantidad = EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA;
+    }
+
+    actionResponse.setRenderParameter(
+            PARAM_ORDEN_MEDICA_COUNT,
+            String.valueOf(cantidad)
+    );
+
+    for (int indice = 0;
+         indice < cantidad;
+         indice++) {
+
+        String campoFecha =
+                obtenerCampoFechaOrdenMedica(
+                        indice
+                );
 
         actionResponse.setRenderParameter(
-                PARAM_ORDEN_MEDICA_COUNT,
-                String.valueOf(cantidad)
+                campoFecha,
+                getParametroTrim(
+                        actionRequest,
+                        campoFecha
+                )
+        );
+    }
+}
+
+private UploadPortletRequest obtenerUploadPortletRequest(
+        ActionRequest actionRequest) {
+
+    if (actionRequest == null) {
+        return null;
+    }
+
+    String contentType = actionRequest.getContentType();
+
+    if (contentType == null
+            || !contentType.toLowerCase(Locale.ROOT)
+            .startsWith("multipart/")) {
+
+        return null;
+    }
+
+    return PortalUtil.getUploadPortletRequest(actionRequest);
+}
+
+private static class MultipartActionRequest
+        extends ActionRequestWrapper {
+
+    private final UploadPortletRequest uploadRequest;
+
+    public MultipartActionRequest(
+            ActionRequest actionRequest,
+            UploadPortletRequest uploadRequest) {
+
+        super(actionRequest);
+        this.uploadRequest = uploadRequest;
+    }
+
+    public String getParameter(String name) {
+        return uploadRequest.getParameter(name);
+    }
+
+    public Map getParameterMap() {
+        return uploadRequest.getParameterMap();
+    }
+
+    public Enumeration getParameterNames() {
+        return uploadRequest.getParameterNames();
+    }
+
+    public String[] getParameterValues(String name) {
+        return uploadRequest.getParameterValues(name);
+    }
+}
+
+public ActionForward render(
+        ActionMapping mapping,
+        ActionForm form,
+        PortletConfig portletConfig,
+        RenderRequest renderRequest,
+        RenderResponse renderResponse) throws Exception {
+
+    try {
+        User user = PortalUtil.getUser(renderRequest);
+
+        int idRequerimientoCompra =
+                ParamUtil.getInteger(
+                        renderRequest,
+                        "id_requerimiento_compra",
+                        0
+                );
+
+        Object idAttr =
+                renderRequest.getAttribute(
+                        WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION
+                );
+
+        if (idRequerimientoCompra == 0 && idAttr instanceof Integer) {
+            idRequerimientoCompra = ((Integer) idAttr).intValue();
+        }
+
+        if (idRequerimientoCompra > 0) {
+            validarPermisoConsulta(user);
+        } else {
+            validarPermisoABM(user);
+        }
+
+        RequerimientoCompra requerimiento;
+
+        if (idRequerimientoCompra > 0) {
+            requerimiento =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .getRequerimientoCompra(idRequerimientoCompra);
+
+            if (requerimiento == null) {
+                throw new Exception(
+                        "No se encontró el requerimiento de compra informado."
+                );
+            }
+        } else {
+            requerimiento = new RequerimientoCompra();
+
+            int idSectorParam =
+                    ParamUtil.getInteger(renderRequest, "sector_id", 0);
+
+            if (idSectorParam > 0) {
+                requerimiento.setIdSector(Integer.valueOf(idSectorParam));
+            }
+        }
+
+        boolean soloLectura = esModoSoloLectura(renderRequest);
+
+        if (!puedeEditarRender(user, requerimiento)) {
+            soloLectura = true;
+        }
+
+        renderRequest.setAttribute(
+                WebKeysCompras.SOLO_LECTURA_ATTR,
+                Boolean.valueOf(soloLectura)
         );
 
-        for (int indice = 0;
-             indice < cantidad;
-             indice++) {
-
-            String campoFecha =
-                    obtenerCampoFechaOrdenMedica(
-                            indice
-                    );
-
-            actionResponse.setRenderParameter(
-                    campoFecha,
-                    getParametroTrim(
-                            actionRequest,
-                            campoFecha
-                    )
-            );
-        }
-    }
-
-    private UploadPortletRequest obtenerUploadPortletRequest(
-            ActionRequest actionRequest) {
-
-        if (actionRequest == null) {
-            return null;
+        if (!soloLectura) {
+            generarTokenGuardadoCompra(renderRequest);
         }
 
-        String contentType = actionRequest.getContentType();
+        cargarCatalogos(renderRequest);
+        cargarAfiliadoRequerimiento(renderRequest, requerimiento);
+        cargarEstadoPrestadoresPendientesNotificacion(
+                renderRequest,
+                requerimiento
+        );
+        cargarRelacionReclamoPrestacional(
+                renderRequest,
+                requerimiento
+        );
 
-        if (contentType == null
-                || !contentType.toLowerCase(Locale.ROOT)
-                .startsWith("multipart/")) {
+        RequerimientoCompraRenderActionUtil
+                .publicarContexto(
+                        renderRequest,
+                        requerimiento
+                );
 
-            return null;
-        }
-
-        return PortalUtil.getUploadPortletRequest(actionRequest);
-    }
-
-    private static class MultipartActionRequest
-            extends ActionRequestWrapper {
-
-        private final UploadPortletRequest uploadRequest;
-
-        public MultipartActionRequest(
-                ActionRequest actionRequest,
-                UploadPortletRequest uploadRequest) {
-
-            super(actionRequest);
-            this.uploadRequest = uploadRequest;
-        }
-
-        public String getParameter(String name) {
-            return uploadRequest.getParameter(name);
-        }
-
-        public Map getParameterMap() {
-            return uploadRequest.getParameterMap();
-        }
-
-        public Enumeration getParameterNames() {
-            return uploadRequest.getParameterNames();
-        }
-
-        public String[] getParameterValues(String name) {
-            return uploadRequest.getParameterValues(name);
-        }
-    }
-
-    public ActionForward render(
-            ActionMapping mapping,
-            ActionForm form,
-            PortletConfig portletConfig,
-            RenderRequest renderRequest,
-            RenderResponse renderResponse) throws Exception {
-
-        try {
-            User user = PortalUtil.getUser(renderRequest);
-
-            int idRequerimientoCompra =
-                    ParamUtil.getInteger(
-                            renderRequest,
-                            "id_requerimiento_compra",
-                            0
-                    );
-
-            Object idAttr =
-                    renderRequest.getAttribute(
-                            WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION
-                    );
-
-            if (idRequerimientoCompra == 0 && idAttr instanceof Integer) {
-                idRequerimientoCompra = ((Integer) idAttr).intValue();
-            }
-
-            if (idRequerimientoCompra > 0) {
-                validarPermisoConsulta(user);
-            } else {
-                validarPermisoABM(user);
-            }
-
-            RequerimientoCompra requerimiento;
-
-            if (idRequerimientoCompra > 0) {
-                requerimiento =
-                        BusquedaRequerimientoCompraServiceUtil
-                                .getRequerimientoCompra(idRequerimientoCompra);
-
-                if (requerimiento == null) {
-                    throw new Exception(
-                            "No se encontró el requerimiento de compra informado."
-                    );
-                }
-            } else {
-                requerimiento = new RequerimientoCompra();
-
-                int idSectorParam =
-                        ParamUtil.getInteger(renderRequest, "sector_id", 0);
-
-                if (idSectorParam > 0) {
-                    requerimiento.setIdSector(Integer.valueOf(idSectorParam));
-                }
-            }
-
-            boolean soloLectura = esModoSoloLectura(renderRequest);
-
-            if (!puedeEditarRender(user, requerimiento)) {
-                soloLectura = true;
-            }
-
+        if (soloLectura) {
             renderRequest.setAttribute(
-                    WebKeysCompras.SOLO_LECTURA_ATTR,
-                    Boolean.valueOf(soloLectura)
-            );
-
-            if (!soloLectura) {
-                generarTokenGuardadoCompra(renderRequest);
-            }
-
-            cargarCatalogos(renderRequest);
-            cargarAfiliadoRequerimiento(renderRequest, requerimiento);
-            cargarEstadoPrestadoresPendientesNotificacion(
-                    renderRequest,
+                    WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW,
                     requerimiento
             );
-            cargarRelacionReclamoPrestacional(
-                    renderRequest,
+            renderRequest.setAttribute(
+                    WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_VIEW,
+                    requerimiento.getDetalles()
+            );
+        } else {
+            renderRequest.setAttribute(
+                    WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION,
                     requerimiento
             );
-
-            RequerimientoCompraRenderActionUtil
-                    .publicarContexto(
-                            renderRequest,
-                            requerimiento
-                    );
-
-            if (soloLectura) {
-                renderRequest.setAttribute(
-                        WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW,
-                        requerimiento
-                );
-                renderRequest.setAttribute(
-                        WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_VIEW,
-                        requerimiento.getDetalles()
-                );
-            } else {
-                renderRequest.setAttribute(
-                        WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION,
-                        requerimiento
-                );
-                renderRequest.setAttribute(
-                        WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION,
-                        requerimiento.getDetalles()
-                );
-            }
-
-            /* Compatibilidad con JSP legacy que leen siempre el atributo EDICION. */
             renderRequest.setAttribute(
                     WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION,
                     requerimiento.getDetalles()
             );
-        } catch (Exception e) {
-            String mensaje =
-                    obtenerMensajeUsuario(
-                            e,
-                            "No se pudo cargar el requerimiento de compra."
-                    );
-
-            registrarErrorAction(
-                    "cargar el requerimiento de compra",
-                    "render",
-                    ParamUtil.getInteger(
-                            renderRequest,
-                            "id_requerimiento_compra",
-                            0
-                    ),
-                    mensaje,
-                    e
-            );
-
-            renderRequest.setAttribute(
-                    WebKeysCompras.ERROR_PARA_ALERT,
-                    mensaje
-            );
-            return mapping.findForward(
-                    WebKeysCompras.FORWARD_COMPRAS_ERROR
-            );
         }
 
-        if (Boolean.TRUE.equals(
-                renderRequest.getAttribute(WebKeysCompras.SOLO_LECTURA_ATTR)
-        ) || esModoSoloLectura(renderRequest)) {
-
-            return mapping.findForward(
-                    WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO
-            );
-        }
-
-        if (esAltaRequerimiento(renderRequest)) {
-            return mapping.findForward(
-                    WebKeysCompras.FORWARD_COMPRAS_ALTA_REQUERIMIENTO
-            );
-        }
-
-        return mapping.findForward(
-                WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO
+        /* Compatibilidad con JSP legacy que leen siempre el atributo EDICION. */
+        renderRequest.setAttribute(
+                WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION,
+                requerimiento.getDetalles()
         );
-    }
-
-    private void cargarEstadoPrestadoresPendientesNotificacion(
-            RenderRequest renderRequest,
-            RequerimientoCompra requerimiento) throws Exception {
-
-        boolean hayPendientes = false;
-
-        if (requerimiento != null
-                && requerimiento.getIdRequerimientoCompra() > 0
-                && requerimiento.puedeReintentarNotificaciones()) {
-
-            try {
-                hayPendientes =
-                        BusquedaRequerimientoCompraServiceUtil
-                                .hayPrestadoresPendientesNotificacion(
-                                        requerimiento
-                                                .getIdRequerimientoCompra()
-                                );
-            } catch (Exception e) {
-                _log.warn(
-                        "No se pudo confirmar si quedan prestadores "
-                                + "pendientes de notificación. "
-                                + "El botón permanecerá oculto. "
-                                + "idRequerimiento="
-                                + requerimiento
-                                        .getIdRequerimientoCompra(),
-                        e
+    } catch (Exception e) {
+        String mensaje =
+                obtenerMensajeUsuario(
+                        e,
+                        "No se pudo cargar el requerimiento de compra."
                 );
-                hayPendientes = false;
-            }
-        }
+
+        registrarErrorAction(
+                "cargar el requerimiento de compra",
+                "render",
+                ParamUtil.getInteger(
+                        renderRequest,
+                        "id_requerimiento_compra",
+                        0
+                ),
+                mensaje,
+                e
+        );
 
         renderRequest.setAttribute(
-                WebKeysCompras.HAY_PRESTADORES_PENDIENTES_NOTIFICACION,
-                Boolean.valueOf(hayPendientes)
+                WebKeysCompras.ERROR_PARA_ALERT,
+                mensaje
+        );
+        return mapping.findForward(
+                WebKeysCompras.FORWARD_COMPRAS_ERROR
         );
     }
 
-    private void cargarRelacionReclamoPrestacional(
-            RenderRequest renderRequest,
-            RequerimientoCompra requerimiento) {
+    if (Boolean.TRUE.equals(
+            renderRequest.getAttribute(WebKeysCompras.SOLO_LECTURA_ATTR)
+    ) || esModoSoloLectura(renderRequest)) {
 
-        boolean consultaOk = true;
-        Object relacion = null;
+        return mapping.findForward(
+                WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO
+        );
+    }
 
-        if (requerimiento != null
-                && requerimiento.getIdRequerimientoCompra() > 0
-                && (
-                    WebKeysCompras.esCotizado(
-                            requerimiento.getEstado()
-                    )
-                    || WebKeysCompras.esReclamoRP(
-                            requerimiento.getEstado()
-                    )
-            )) {
+    if (esAltaRequerimiento(renderRequest)) {
+        return mapping.findForward(
+                WebKeysCompras.FORWARD_COMPRAS_ALTA_REQUERIMIENTO
+        );
+    }
 
-            try {
-                relacion =
-                        reclamoHelper
-                                .obtenerPorRequerimiento(
-                                        requerimiento
-                                                .getIdRequerimientoCompra()
-                                );
-            } catch (Exception e) {
-                consultaOk = false;
+    return mapping.findForward(
+            WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO
+    );
+}
 
-                _log.warn(
-                        "No se pudo consultar la relación con el "
-                                + "Reclamo Prestacional. "
-                                + "La acción permanecerá oculta. "
-                                + "idRequerimiento="
-                                + requerimiento
-                                        .getIdRequerimientoCompra(),
-                        e
-                );
-            }
+private void cargarEstadoPrestadoresPendientesNotificacion(
+        RenderRequest renderRequest,
+        RequerimientoCompra requerimiento) throws Exception {
+
+    boolean hayPendientes = false;
+
+    if (requerimiento != null
+            && requerimiento.getIdRequerimientoCompra() > 0
+            && requerimiento.puedeReintentarNotificaciones()) {
+
+        try {
+            hayPendientes =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .hayPrestadoresPendientesNotificacion(
+                                    requerimiento
+                                            .getIdRequerimientoCompra()
+                            );
+        } catch (Exception e) {
+            _log.warn(
+                    "No se pudo confirmar si quedan prestadores "
+                            + "pendientes de notificación. "
+                            + "El botón permanecerá oculto. "
+                            + "idRequerimiento="
+                            + requerimiento
+                                    .getIdRequerimientoCompra(),
+                    e
+            );
+            hayPendientes = false;
         }
+    }
+
+    renderRequest.setAttribute(
+            WebKeysCompras.HAY_PRESTADORES_PENDIENTES_NOTIFICACION,
+            Boolean.valueOf(hayPendientes)
+    );
+}
+
+private void cargarRelacionReclamoPrestacional(
+        RenderRequest renderRequest,
+        RequerimientoCompra requerimiento) {
+
+    boolean consultaOk = true;
+    Object relacion = null;
+
+    if (requerimiento != null
+            && requerimiento.getIdRequerimientoCompra() > 0
+            && (
+                WebKeysCompras.esCotizado(
+                        requerimiento.getEstado()
+                )
+                || WebKeysCompras.esReclamoRP(
+                        requerimiento.getEstado()
+                )
+        )) {
+
+        try {
+            relacion =
+                    reclamoHelper
+                            .obtenerPorRequerimiento(
+                                    requerimiento
+                                            .getIdRequerimientoCompra()
+                            );
+        } catch (Exception e) {
+            consultaOk = false;
+
+            _log.warn(
+                    "No se pudo consultar la relación con el "
+                            + "Reclamo Prestacional. "
+                            + "La acción permanecerá oculta. "
+                            + "idRequerimiento="
+                            + requerimiento
+                                    .getIdRequerimientoCompra(),
+                    e
+            );
+        }
+    }
+
+``````
 
         renderRequest.setAttribute(
                 WebKeysCompras
@@ -1158,7 +1177,10 @@ public void processAction(
         if (PermissionUtil.userContainsRole(
                 user,
                 WebKeysCompras.ROL_ABM_COMPRAS
-        ) && requerimiento.puedeEditarEstructura()) {
+        ) && (
+                requerimiento.puedeEditarEstructura()
+                        || requerimiento.puedeEditarSurge()
+        )) {
 
             return true;
         }
@@ -1431,6 +1453,8 @@ private RequerimientoCompra getRequerimientoFromRequest(
             int idPrestadorDetalle = parseEnteroConDefault(
                     request,
                     prefix + "id_prestador",
+``````
+
                     "Detalle #" + (i + 1) + " - Prestador",
                     0
             );

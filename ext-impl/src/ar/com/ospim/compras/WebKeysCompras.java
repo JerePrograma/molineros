@@ -330,6 +330,10 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return esPendiente(estado);
     }
 
+    public static boolean puedeEditarSurge(int estado) {
+        return esPendiente(estado) || esACotizar(estado);
+    }
+
     public static boolean puedeEditarCotizacion(int estado) {
         return esACotizar(estado);
     }
