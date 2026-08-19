@@ -40,6 +40,11 @@ request.setAttribute(
 );
 
 request.setAttribute(
+        "compras.requerimiento.puedeEditarSurge",
+        Boolean.valueOf(puedeEditarSurgePantalla)
+);
+
+request.setAttribute(
         "compras.requerimiento.puedeEditarCotizacion",
         Boolean.valueOf(puedeEditarCotizacionPantalla)
 );
