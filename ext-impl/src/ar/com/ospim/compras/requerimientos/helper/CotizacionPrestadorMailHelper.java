@@ -1,8 +1,8 @@
 package ar.com.ospim.compras.requerimientos.helper;
 
-import ar.com.ospim.automatico.ReportesScheduler
-        .ReportesAutomaticosConfiguracion;
+import ar.com.ospim.automatico.ReportesScheduler.ReportesAutomaticosConfiguracion;
 import ar.com.ospim.automatico.service.ReportesServiceUtil;
+import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.mail.MailUtils;
 
 import com.liferay.portal.kernel.log.Log;
@@ -634,34 +634,26 @@ public class CotizacionPrestadorMailHelper {
             );
         }
 
-        String nombre =
-                nombreOrdenMedica
-                        .toLowerCase(Locale.ENGLISH);
+        /*
+         * Vuelve a comprobar el contenido real antes de construir
+         * el MimeBodyPart. Esto también protege los overloads legacy
+         * que pueden ser invocados sin pasar previamente por el flujo
+         * normal de recuperación desde Document Library.
+         */
+        String contentTypeValidado =
+                DocumentoLibraryComprasHelper
+                        .validarContenidoOrdenMedica(
+                                ordenMedica,
+                                nombreOrdenMedica
+                        );
 
-        boolean jpeg =
-                "image/jpeg".equals(
-                        contentTypeOrdenMedica
-                );
-
-        boolean png =
-                "image/png".equals(
-                        contentTypeOrdenMedica
-                );
-
-        if (!(jpeg || png)) {
-            throw new Exception(
-                    "El tipo MIME de la Orden médica no es válido."
-            );
-        }
-
-        if ((jpeg
-                && !(nombre.endsWith(".jpg")
-                || nombre.endsWith(".jpeg")))
-                || (png
-                && !nombre.endsWith(".png"))) {
+        if (!contentTypeValidado.equals(
+                contentTypeOrdenMedica
+        )) {
 
             throw new Exception(
-                    "El tipo MIME de la Orden médica no coincide con su nombre."
+                    "El tipo MIME de la Orden médica "
+                            + "no coincide con su contenido real."
             );
         }
     }

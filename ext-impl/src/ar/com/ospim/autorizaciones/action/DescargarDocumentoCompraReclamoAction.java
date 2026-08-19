@@ -6,7 +6,6 @@ import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
-import ar.com.ospim.compras.requerimientos.documentos.DocumentoComprasCreado;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
@@ -14,7 +13,6 @@ import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
 import com.liferay.portal.security.permission.ActionKeys;
@@ -31,50 +29,67 @@ import com.liferay.util.servlet.ServletResponseUtil;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.List;
+import java.util.Locale;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
 import javax.servlet.http.HttpServletResponse;
 
-public class DescargarDocumentoCompraReclamoAction extends PortletAction {
+public class DescargarDocumentoCompraReclamoAction
+        extends PortletAction {
 
-    private static final Log _log = LogFactoryUtil.getLog(
-            DescargarDocumentoCompraReclamoAction.class
-    );
+    private static final Log _log =
+            LogFactoryUtil.getLog(
+                    DescargarDocumentoCompraReclamoAction.class
+            );
 
     public void processAction(
             ActionMapping mapping,
             ActionForm form,
             PortletConfig portletConfig,
             ActionRequest actionRequest,
-            ActionResponse actionResponse) throws Exception {
+            ActionResponse actionResponse)
+            throws Exception {
 
         InputStream input = null;
+
         int idReclamoPrestacional = 0;
         int idRequerimientoPresupuesto = 0;
 
         try {
-            User user = PortalUtil.getUser(actionRequest);
-            validarPermisoReclamoPrestacional(user);
+            User user =
+                    PortalUtil.getUser(
+                            actionRequest
+                    );
 
-            idReclamoPrestacional = ParamUtil.getInteger(
-                    actionRequest,
-                    "id_reclamo_prestacional",
-                    0
+            validarPermisoReclamoPrestacional(
+                    user
             );
-            idRequerimientoPresupuesto = ParamUtil.getInteger(
-                    actionRequest,
-                    "id_requerimiento_presupuesto",
-                    0
-            );
+
+            idReclamoPrestacional =
+                    ParamUtil.getInteger(
+                            actionRequest,
+                            "id_reclamo_prestacional",
+                            0
+                    );
+
+            idRequerimientoPresupuesto =
+                    ParamUtil.getInteger(
+                            actionRequest,
+                            "id_requerimiento_presupuesto",
+                            0
+                    );
 
             if (idReclamoPrestacional <= 0
                     || idRequerimientoPresupuesto <= 0) {
 
                 throw new Exception(
-                        "Debe informar el Reclamo Prestacional y el documento de Compras."
+                        "Debe informar el Reclamo Prestacional "
+                                + "y el documento de Compras."
                 );
             }
 
@@ -88,44 +103,71 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
                     relacion,
                     idReclamoPrestacional
             );
-            validarReclamoPersistido(idReclamoPrestacional);
+
+            validarReclamoPersistido(
+                    idReclamoPrestacional
+            );
+
+            int idRequerimientoCompra =
+                    relacion.getIdRequerimientoCompra();
 
             RequerimientoCompraPresupuesto documento =
                     resolverDocumentoAutorizado(
-                            relacion.getIdRequerimientoCompra(),
+                            idRequerimientoCompra,
                             idRequerimientoPresupuesto
                     );
 
             validarDocumento(
                     documento,
-                    relacion.getIdRequerimientoCompra()
+                    idRequerimientoCompra
             );
 
-            DLFileEntry entry = DLFileEntryLocalServiceUtil.getDLFileEntry(
-                    documento.getDlFileEntryId().longValue()
-            );
-            DocumentoComprasCreado identidad = crearIdentidad(documento);
-            DocumentoLibraryComprasHelper gestorDocumento =
-                    DocumentoLibraryComprasHelper.crear(actionRequest);
+            ThemeDisplay themeDisplay =
+                    (ThemeDisplay)
+                            actionRequest.getAttribute(
+                                    WebKeys.THEME_DISPLAY
+                            );
 
-            gestorDocumento.validarIdentidadDocumento(identidad);
-
-            if (!gestorDocumento.coincideIdentidad(identidad, entry)
-                    || !documento.getTitulo().equals(entry.getTitle())) {
-
+            if (themeDisplay == null) {
                 throw new Exception(
-                        "La identidad del documento de Compras no coincide con Document Library."
+                        "No se pudo determinar el contexto del portal."
                 );
             }
 
-            ThemeDisplay themeDisplay = (ThemeDisplay)
-                    actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
+            DLFileEntry entry =
+                    DLFileEntryLocalServiceUtil
+                            .getDLFileEntry(
+                                    documento
+                                            .getDlFileEntryId()
+                                            .longValue()
+                            );
 
-            if (themeDisplay == null
-                    || entry.getGroupId() != themeDisplay.getScopeGroupId()) {
+            DocumentoLibraryComprasHelper
+                    .validarIdentidadAsociacionDocumento(
+                            documento
+                    );
+
+            if (entry == null
+                    || entry.getCompanyId()
+                    != themeDisplay.getCompanyId()
+                    || !DocumentoLibraryComprasHelper
+                    .coincideIdentidadAsociacionDocumento(
+                            documento,
+                            entry
+                    )) {
 
                 throw new Exception(
-                        "El documento de Compras no pertenece al sitio actual."
+                        "La identidad del documento de Compras "
+                                + "no coincide con Document Library."
+                );
+            }
+
+            if (entry.getGroupId()
+                    != themeDisplay.getScopeGroupId()) {
+
+                throw new Exception(
+                        "El documento de Compras "
+                                + "no pertenece al sitio actual."
                 );
             }
 
@@ -136,33 +178,57 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
                     ActionKeys.VIEW
             );
 
-            String nombreDescarga = validarNombreDescarga(
-                    documento.getNombreOriginal()
-            );
-            String contentType = validarContentType(
-                    documento,
-                    nombreDescarga
-            );
+            String nombreDescarga =
+                    validarNombreDescarga(
+                            documento.getNombreOriginal()
+                    );
 
-            input = DLFileEntryLocalServiceUtil.getFileAsStream(
-                    themeDisplay.getCompanyId(),
-                    themeDisplay.getUserId(),
-                    entry.getFolderId(),
-                    entry.getName(),
-                    entry.getVersion()
-            );
+            /*
+             * Lee directamente desde DL sin atravesar
+             * DLFileRank/Counter.
+             */
+            byte[] contenido =
+                    DocumentoLibraryComprasHelper
+                            .leerContenidoDocumentLibrary(
+                                    entry
+                            );
+
+            String contentType =
+                    validarContenidoDocumento(
+                            documento,
+                            nombreDescarga,
+                            contenido
+                    );
+
+            input =
+                    new ByteArrayInputStream(
+                            contenido
+                    );
 
             HttpServletResponse response =
-                    PortalUtil.getHttpServletResponse(actionResponse);
+                    PortalUtil.getHttpServletResponse(
+                            actionResponse
+                    );
+
+            if (response == null) {
+                throw new Exception(
+                        "No se pudo preparar la respuesta de descarga."
+                );
+            }
 
             ServletResponseUtil.sendFile(
                     response,
                     nombreDescarga,
                     input,
-                    entry.getSize(),
+                    contenido.length,
                     contentType
             );
-            setForward(actionRequest, ActionConstants.COMMON_NULL);
+
+            setForward(
+                    actionRequest,
+                    ActionConstants.COMMON_NULL
+            );
+
         } catch (Exception e) {
             _log.error(
                     "Descarga segura de documento Compras/RP rechazada. "
@@ -172,15 +238,24 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
                             + idRequerimientoPresupuesto,
                     e
             );
-            PortalUtil.sendError(e, actionRequest, actionResponse);
+
+            PortalUtil.sendError(
+                    e,
+                    actionRequest,
+                    actionResponse
+            );
+
         } finally {
-            ServletResponseUtil.cleanUp(input);
+            ServletResponseUtil.cleanUp(
+                    input
+            );
         }
     }
 
     protected void validarRelacion(
             RequerimientoCompraReclamoPrestacional relacion,
-            int idReclamoPrestacional) throws Exception {
+            int idReclamoPrestacional)
+            throws Exception {
 
         if (relacion == null
                 || !relacion.isVinculado()
@@ -189,30 +264,48 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
                 || relacion.getIdRequerimientoCompra() <= 0) {
 
             throw new Exception(
-                    "El Reclamo Prestacional no posee un vínculo válido con Compras."
+                    "El Reclamo Prestacional no posee "
+                            + "un vínculo válido con Compras."
             );
         }
     }
 
     protected RequerimientoCompraPresupuesto resolverDocumentoAutorizado(
             int idRequerimientoCompra,
-            int idRequerimientoPresupuesto) throws Exception {
+            int idRequerimientoPresupuesto)
+            throws Exception {
 
         if (idRequerimientoCompra <= 0
                 || idRequerimientoPresupuesto <= 0) {
 
             throw new Exception(
-                    "Los identificadores del documento de Compras no son válidos."
+                    "Los identificadores del documento "
+                            + "de Compras no son válidos."
             );
         }
 
-        RequerimientoCompraPresupuesto ordenMedica =
-                BusquedaRequerimientoCompraServiceUtil.getOrdenMedica(
-                        idRequerimientoCompra
-                );
+        List<RequerimientoCompraPresupuesto> ordenesMedicas =
+                BusquedaRequerimientoCompraServiceUtil
+                        .listarOrdenesMedicas(
+                                idRequerimientoCompra
+                        );
 
-        if (tieneId(ordenMedica, idRequerimientoPresupuesto)) {
-            return ordenMedica;
+        if (ordenesMedicas != null) {
+            for (int i = 0;
+                 i < ordenesMedicas.size();
+                 i++) {
+
+                RequerimientoCompraPresupuesto ordenMedica =
+                        ordenesMedicas.get(i);
+
+                if (tieneId(
+                        ordenMedica,
+                        idRequerimientoPresupuesto
+                )) {
+
+                    return ordenMedica;
+                }
+            }
         }
 
         RequerimientoCompraPresupuesto presupuestoAdjudicado =
@@ -230,13 +323,15 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
         }
 
         throw new Exception(
-                "El documento solicitado no es documentación autorizada del Reclamo Prestacional."
+                "El documento solicitado no es documentación "
+                        + "autorizada del Reclamo Prestacional."
         );
     }
 
     protected void validarDocumento(
             RequerimientoCompraPresupuesto documento,
-            int idRequerimientoCompra) throws Exception {
+            int idRequerimientoCompra)
+            throws Exception {
 
         if (documento == null
                 || documento.getIdRequerimientoPresupuesto() == null
@@ -252,65 +347,141 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
                 || documento.getDlFolderId().longValue() <= 0L
                 || documento.getDlFileEntryId() == null
                 || documento.getDlFileEntryId().longValue() <= 0L
-                || WebKeysCompras.isEmpty(documento.getDlFileUuid())
-                || WebKeysCompras.isEmpty(documento.getNombreOriginal())
-                || WebKeysCompras.isEmpty(documento.getNombrePersistido())
-                || WebKeysCompras.isEmpty(documento.getTitulo())) {
+                || WebKeysCompras.isEmpty(
+                documento.getDlFileUuid()
+        )
+                || WebKeysCompras.isEmpty(
+                documento.getNombreOriginal()
+        )
+                || WebKeysCompras.isEmpty(
+                documento.getNombrePersistido()
+        )
+                || WebKeysCompras.isEmpty(
+                documento.getTitulo()
+        )) {
 
             throw new Exception(
-                    "El documento de Compras no posee una identidad activa válida."
+                    "El documento de Compras no posee "
+                            + "una identidad activa válida."
             );
         }
 
-        int tipoDocumento = documento.getTipoDocumento().intValue();
+        int tipoDocumento =
+                documento.getTipoDocumento().intValue();
 
         if (tipoDocumento
                 == RequerimientoCompraPresupuesto
-                        .TIPO_DOCUMENTO_ORDEN_MEDICA) {
+                .TIPO_DOCUMENTO_ORDEN_MEDICA) {
 
-            if (documento.getIdPrestador() != null
-                    || documento.getFechaDocumento() == null
-                    || !DocumentoLibraryComprasHelper
-                            .TITULO_ORDEN_MEDICA.equals(
-                                    documento.getTitulo()
-                            )) {
+            DocumentoLibraryComprasHelper
+                    .validarRelacionOrdenMedica(
+                            documento,
+                            idRequerimientoCompra
+                    );
 
-                throw new Exception(
-                        "La Orden médica vinculada no es válida."
-                );
-            }
         } else if (tipoDocumento
                 == RequerimientoCompraPresupuesto
-                        .TIPO_DOCUMENTO_PRESUPUESTO) {
+                .TIPO_DOCUMENTO_PRESUPUESTO) {
 
             if (documento.getIdPrestador() == null
                     || documento.getIdPrestador().intValue() <= 0) {
 
                 throw new Exception(
-                        "El presupuesto adjudicado no posee un prestador válido."
+                        "El presupuesto adjudicado "
+                                + "no posee un prestador válido."
                 );
             }
+
         } else {
             throw new Exception(
-                    "El tipo de documento de Compras no está autorizado para el Reclamo Prestacional."
+                    "El tipo de documento de Compras "
+                            + "no está autorizado "
+                            + "para el Reclamo Prestacional."
+            );
+        }
+    }
+
+    private String validarContenidoDocumento(
+            RequerimientoCompraPresupuesto documento,
+            String nombreDescarga,
+            byte[] contenido)
+            throws Exception {
+
+        int tipoDocumento =
+                documento.getTipoDocumento().intValue();
+
+        if (tipoDocumento
+                == RequerimientoCompraPresupuesto
+                .TIPO_DOCUMENTO_ORDEN_MEDICA) {
+
+            return DocumentoLibraryComprasHelper
+                    .validarContenidoOrdenMedica(
+                            contenido,
+                            nombreDescarga
+                    );
+        }
+
+        if (tipoDocumento
+                == RequerimientoCompraPresupuesto
+                .TIPO_DOCUMENTO_PRESUPUESTO) {
+
+            validarContenidoPdf(
+                    contenido,
+                    nombreDescarga
+            );
+
+            return "application/pdf";
+        }
+
+        throw new Exception(
+                "El tipo de documento solicitado no es válido."
+        );
+    }
+
+    private void validarContenidoPdf(
+            byte[] contenido,
+            String nombreDescarga)
+            throws Exception {
+
+        if (contenido == null
+                || contenido.length < 5
+                || WebKeysCompras.isEmpty(
+                nombreDescarga
+        )
+                || !nombreDescarga
+                .toLowerCase(Locale.ENGLISH)
+                .endsWith(".pdf")
+                || contenido[0] != '%'
+                || contenido[1] != 'P'
+                || contenido[2] != 'D'
+                || contenido[3] != 'F'
+                || contenido[4] != '-') {
+
+            throw new Exception(
+                    "El presupuesto adjudicado "
+                            + "no conserva un contenido PDF válido."
             );
         }
     }
 
     private void validarReclamoPersistido(
-            int idReclamoPrestacional) throws Exception {
+            int idReclamoPrestacional)
+            throws Exception {
 
         ReclamoPrestacional reclamo =
-                ReclamosPrestacionesServiceUtil.getReclamoPrestacional(
-                        idReclamoPrestacional
-                );
+                ReclamosPrestacionesServiceUtil
+                        .getReclamoPrestacional(
+                                idReclamoPrestacional
+                        );
 
         if (reclamo == null
-                || reclamo.getId_reclamo() != idReclamoPrestacional
+                || reclamo.getId_reclamo()
+                != idReclamoPrestacional
                 || reclamo.getBaja_fecha() != null) {
 
             throw new Exception(
-                    "El Reclamo Prestacional informado no existe o no esta activo."
+                    "El Reclamo Prestacional informado "
+                            + "no existe o no esta activo."
             );
         }
     }
@@ -321,24 +492,16 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
 
         return documento != null
                 && documento.getIdRequerimientoPresupuesto() != null
-                && documento.getIdRequerimientoPresupuesto().intValue()
+                && documento
+                .getIdRequerimientoPresupuesto()
+                .intValue()
                 == idRequerimientoPresupuesto;
     }
 
-    private DocumentoComprasCreado crearIdentidad(
-            RequerimientoCompraPresupuesto documento) {
+    private String validarNombreDescarga(
+            String nombre)
+            throws Exception {
 
-        return new DocumentoComprasCreado(
-                documento.getDlGroupId().longValue(),
-                documento.getDlFolderId().longValue(),
-                documento.getDlFileEntryId().longValue(),
-                documento.getDlFileUuid(),
-                documento.getNombrePersistido(),
-                documento.getTitulo()
-        );
-    }
-
-    private String validarNombreDescarga(String nombre) throws Exception {
         if (WebKeysCompras.isEmpty(nombre)
                 || nombre.indexOf('/') >= 0
                 || nombre.indexOf('\\') >= 0
@@ -346,39 +509,21 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
                 || nombre.indexOf('\r') >= 0
                 || nombre.indexOf('\n') >= 0
                 || nombre.indexOf('"') >= 0
-                || nombre.matches(".*\\p{Cntrl}.*")) {
+                || nombre.matches(
+                ".*\\p{Cntrl}.*"
+        )) {
 
             throw new Exception(
-                    "El nombre original del documento de Compras no es seguro."
+                    "El nombre original del documento "
+                            + "de Compras no es seguro."
             );
         }
 
         return nombre;
     }
 
-    private String validarContentType(
-            RequerimientoCompraPresupuesto documento,
-            String nombreDescarga) throws Exception {
-
-        String contentType = MimeTypesUtil.getContentType(nombreDescarga);
-
-        if (documento.getTipoDocumento().intValue()
-                == RequerimientoCompraPresupuesto
-                        .TIPO_DOCUMENTO_ORDEN_MEDICA
-                && !"image/jpeg".equals(contentType)
-                && !"image/png".equals(contentType)) {
-
-            throw new Exception(
-                    "El tipo MIME de la Orden médica no es válido."
-            );
-        }
-
-        return !WebKeysCompras.isEmpty(contentType)
-                ? contentType
-                : "application/octet-stream";
-    }
-
-    private void validarPermisoReclamoPrestacional(User user)
+    private void validarPermisoReclamoPrestacional(
+            User user)
             throws Exception {
 
         if (user == null) {
@@ -387,22 +532,27 @@ public class DescargarDocumentoCompraReclamoAction extends PortletAction {
             );
         }
 
-        boolean permitido = PermissionUtil.userContainsRole(
-                user,
-                WebKeysAutorizaciones.ROL_ABM_RECLAM_PREST
-        ) || PermissionUtil.userContainsRole(
-                user,
-                WebKeysAutorizaciones
-                        .ROL_CONSULTA_RECLAMOS_PRESTACIONALES
-        ) || PermissionUtil.userContainsRole(
-                user,
-                WebKeysAutorizaciones
-                        .ROL_REABRIR_RECLAMO_PRESTACIONAL
-        );
+        boolean permitido =
+                PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysAutorizaciones
+                                .ROL_ABM_RECLAM_PREST
+                )
+                        || PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysAutorizaciones
+                                .ROL_CONSULTA_RECLAMOS_PRESTACIONALES
+                )
+                        || PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysAutorizaciones
+                                .ROL_REABRIR_RECLAMO_PRESTACIONAL
+                );
 
         if (!permitido) {
             throw new Exception(
-                    "No posee permisos para consultar documentos del Reclamo Prestacional."
+                    "No posee permisos para consultar "
+                            + "documentos del Reclamo Prestacional."
             );
         }
     }

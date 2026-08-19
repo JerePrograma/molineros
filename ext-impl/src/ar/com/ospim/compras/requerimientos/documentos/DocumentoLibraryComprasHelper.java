@@ -269,125 +269,22 @@ public class DocumentoLibraryComprasHelper
             DLFileEntry entry,
             String nombreOriginal) throws Exception {
 
-        if (entry == null
-                || entry.getFileEntryId() <= 0L) {
-
-            throw new Exception(
-                    "No se pudo recuperar la Orden médica "
-                            + "desde Document Library."
-            );
-        }
-
-        long maximoTamano =
-                obtenerMaximoTamanoDocumento();
-
-        if (entry.getSize() <= 0
-                || entry.getSize() > maximoTamano) {
-
-            throw new Exception(
-                    "La Orden médica persistida tiene un tamaño inválido."
-            );
-        }
-
-        InputStream input =
-                null;
-
-        try {
-            /*
-             * Acceso directo a la capa de almacenamiento de Document Library.
-             *
-             * Se evita DLFileEntryLocalServiceUtil.getFileAsStream porque
-             * esa API legacy ejecuta efectos secundarios de ranking antes
-             * de devolver el contenido.
-             */
-            input =
-                    DLLocalServiceUtil.getFileAsStream(
-                            entry.getCompanyId(),
-                            entry.getFolderId(),
-                            entry.getName(),
-                            entry.getVersion()
-                    );
-
-            if (input == null) {
-                throw new Exception(
-                        "Document Library no devolvió la Orden médica."
+        byte[] contenido =
+                leerContenidoDocumentLibrary(
+                        entry
                 );
-            }
 
-            ByteArrayOutputStream output =
-                    new ByteArrayOutputStream(
-                            entry.getSize()
-                    );
-
-            byte[] buffer =
-                    new byte[8192];
-
-            long total =
-                    0L;
-
-            int cantidad;
-
-            while ((cantidad = input.read(buffer)) >= 0) {
-                if (cantidad == 0) {
-                    continue;
-                }
-
-                total +=
-                        cantidad;
-
-                if (total > maximoTamano) {
-                    throw new Exception(
-                            "La Orden médica supera dl.file.max.size."
-                    );
-                }
-
-                output.write(
-                        buffer,
-                        0,
-                        cantidad
+        String contentType =
+                validarContenidoOrdenMedica(
+                        contenido,
+                        nombreOriginal
                 );
-            }
 
-            byte[] contenido =
-                    output.toByteArray();
-
-            if (contenido.length
-                    != entry.getSize()) {
-
-                throw new Exception(
-                        "El tamaño leído de la Orden médica "
-                                + "no coincide con Document Library."
-                );
-            }
-
-            String contentType =
-                    validarContenidoOrdenMedica(
-                            contenido,
-                            nombreOriginal
-                    );
-
-            return new OrdenMedicaContenido(
-                    contenido,
-                    nombreOriginal,
-                    contentType
-            );
-
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-
-                } catch (Exception closeError) {
-                    if (_log.isDebugEnabled()) {
-                        _log.debug(
-                                "No se pudo cerrar la lectura "
-                                        + "de la Orden médica.",
-                                closeError
-                        );
-                    }
-                }
-            }
-        }
+        return new OrdenMedicaContenido(
+                contenido,
+                nombreOriginal,
+                contentType
+        );
     }
 
     public static OrdenMedicaContenido recuperarOrdenMedicaValidada(
@@ -447,21 +344,13 @@ public class DocumentoLibraryComprasHelper
                         ? CONTENT_TYPE_PNG
                         : CONTENT_TYPE_JPEG;
 
+        /*
+         * La firma binaria es la fuente autoritativa.
+         * No depender de MimeTypesUtil para aceptar/rechazar
+         * un documento ya validado por contenido.
+         */
         validarFirmaImagen(
                 contenido,
-                contentTypeEsperado
-        );
-
-        String contentTypeDetectado =
-                normalizarContentType(
-                        MimeTypesUtil.getContentType(
-                                nombreOriginal
-                        )
-                );
-
-        validarContentTypeCompatible(
-                "detectado",
-                contentTypeDetectado,
                 contentTypeEsperado
         );
 
@@ -1268,22 +1157,9 @@ public class DocumentoLibraryComprasHelper
                         ordenMedica.getContentType()
                 );
 
-        String contentTypeDetectado =
-                normalizarContentType(
-                        detectarContentTypePorNombre(
-                                nombreOriginal
-                        )
-                );
-
         validarContentTypeCompatible(
                 "informado",
                 contentTypeInformado,
-                contentTypeEsperado
-        );
-
-        validarContentTypeCompatible(
-                "detectado",
-                contentTypeDetectado,
                 contentTypeEsperado
         );
 
@@ -1561,38 +1437,12 @@ public class DocumentoLibraryComprasHelper
             );
         }
 
-        String contentTypeUpload =
-                normalizarContentType(
-                        uploadRequest.getContentType(
-                                nombreCampoArchivo
-                        )
-                );
-
-        String contentTypeDetectado =
-                normalizarContentType(
-                        detectarContentTypePorNombre(
-                                nombreOriginal
-                        )
-                );
-
         String contentTypeEsperado =
                 ".png".equals(
                         extension
                 )
                         ? CONTENT_TYPE_PNG
                         : CONTENT_TYPE_JPEG;
-
-        validarContentTypeCompatible(
-                "declarado",
-                contentTypeUpload,
-                contentTypeEsperado
-        );
-
-        validarContentTypeCompatible(
-                "detectado",
-                contentTypeDetectado,
-                contentTypeEsperado
-        );
 
         validarFirmaImagen(
                 archivo,
@@ -1640,6 +1490,111 @@ public class DocumentoLibraryComprasHelper
 
         public String getContentType() {
             return contentType;
+        }
+    }
+
+    public static byte[] leerContenidoDocumentLibrary(
+            DLFileEntry entry) throws Exception {
+
+        if (entry == null
+                || entry.getFileEntryId() <= 0L) {
+
+            throw new Exception(
+                    "No se pudo recuperar el documento "
+                            + "desde Document Library."
+            );
+        }
+
+        long maximoTamano =
+                obtenerMaximoTamanoDocumento();
+
+        if (entry.getSize() <= 0
+                || entry.getSize() > maximoTamano) {
+
+            throw new Exception(
+                    "El documento persistido tiene un tamaño inválido."
+            );
+        }
+
+        InputStream input =
+                null;
+
+        try {
+            input =
+                    DLLocalServiceUtil.getFileAsStream(
+                            entry.getCompanyId(),
+                            entry.getFolderId(),
+                            entry.getName(),
+                            entry.getVersion()
+                    );
+
+            if (input == null) {
+                throw new Exception(
+                        "Document Library no devolvió el documento."
+                );
+            }
+
+            ByteArrayOutputStream output =
+                    new ByteArrayOutputStream(
+                            entry.getSize()
+                    );
+
+            byte[] buffer =
+                    new byte[8192];
+
+            long total =
+                    0L;
+
+            int cantidad;
+
+            while ((cantidad = input.read(buffer)) >= 0) {
+                if (cantidad == 0) {
+                    continue;
+                }
+
+                total += cantidad;
+
+                if (total > maximoTamano) {
+                    throw new Exception(
+                            "El documento supera dl.file.max.size."
+                    );
+                }
+
+                output.write(
+                        buffer,
+                        0,
+                        cantidad
+                );
+            }
+
+            byte[] contenido =
+                    output.toByteArray();
+
+            if (contenido.length
+                    != entry.getSize()) {
+
+                throw new Exception(
+                        "El tamaño leído del documento "
+                                + "no coincide con Document Library."
+                );
+            }
+
+            return contenido;
+
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (Exception closeError) {
+                    if (_log.isDebugEnabled()) {
+                        _log.debug(
+                                "No se pudo cerrar la lectura "
+                                        + "del documento.",
+                                closeError
+                        );
+                    }
+                }
+            }
         }
     }
 }
