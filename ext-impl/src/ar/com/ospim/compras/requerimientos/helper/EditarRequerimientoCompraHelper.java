@@ -943,8 +943,6 @@ public class EditarRequerimientoCompraHelper {
                         "Debe informar el CUIL del titular afiliado."
                 );
             }
-``````
-
 
         if (requerimiento.getAfiliadoInt() == null
                 || requerimiento.getAfiliadoInt().intValue() < 0) {
@@ -1551,7 +1549,6 @@ private void prepararDetalleParaGuardar(
                 "El sector seleccionado no tiene configurado "
                         + "un nomenclador para Compras."
         );
-``````
 
         }
 
