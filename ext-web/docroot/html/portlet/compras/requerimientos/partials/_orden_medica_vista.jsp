@@ -7,33 +7,50 @@
 
 <%
 List<RequerimientoCompraPresupuesto> ordenesMedicasCompraVista =
-        new ArrayList<RequerimientoCompraPresupuesto>();
+        (List<RequerimientoCompraPresupuesto>) request.getAttribute(
+                "compras.requerimiento.ordenesMedicas"
+        );
 
 String errorOrdenMedicaCompraVista =
-        null;
+        (String) request.getAttribute(
+                "compras.requerimiento.errorOrdenesMedicas"
+        );
 
-try {
-    List<RequerimientoCompraPresupuesto> ordenesRecuperadas =
-            BusquedaRequerimientoCompraServiceUtil
-                    .listarOrdenesMedicas(
-                            req.getIdRequerimientoCompra()
-                    );
+/*
+ * Contrato objetivo: el Action publica la lista de Ordenes medicas.
+ * Se conserva el fallback para reemplazo inmediato sin alterar el flujo
+ * actual de alta/edicion/vista.
+ */
+if (ordenesMedicasCompraVista == null) {
+    ordenesMedicasCompraVista =
+            new ArrayList<RequerimientoCompraPresupuesto>();
 
-    if (ordenesRecuperadas != null) {
-        ordenesMedicasCompraVista =
-                ordenesRecuperadas;
+    try {
+        List<RequerimientoCompraPresupuesto> ordenesRecuperadas =
+                BusquedaRequerimientoCompraServiceUtil
+                        .listarOrdenesMedicas(
+                                req.getIdRequerimientoCompra()
+                        );
+
+        if (ordenesRecuperadas != null) {
+            ordenesMedicasCompraVista =
+                    ordenesRecuperadas;
+        }
+
+    } catch (Exception errorOrdenMedica) {
+        errorOrdenMedicaCompraVista =
+                "No se pudieron recuperar las Órdenes médicas "
+                        + "del requerimiento.";
     }
+}
 
-} catch (Exception errorOrdenMedica) {
-    errorOrdenMedicaCompraVista =
-            "No se pudieron recuperar las Órdenes médicas "
-                    + "del requerimiento.";
+if (errorOrdenMedicaCompraVista != null
+        && errorOrdenMedicaCompraVista.trim().length() == 0) {
+    errorOrdenMedicaCompraVista = null;
 }
 
 SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
-        new SimpleDateFormat(
-                "dd/MM/yyyy"
-        );
+        new SimpleDateFormat("dd/MM/yyyy");
 %>
 
 <div class="compras-seccion compras-seccion-orden-medica compras-seccion-adjuntos">
@@ -43,9 +60,7 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
         <% if (errorOrdenMedicaCompraVista != null) { %>
 
             <div class="portlet-msg-error">
-                <%= HtmlUtil.escape(
-                        errorOrdenMedicaCompraVista
-                ) %>
+                <%= HtmlUtil.escape(errorOrdenMedicaCompraVista) %>
             </div>
 
         <% } else if (ordenesMedicasCompraVista.isEmpty()) { %>
@@ -80,8 +95,7 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                             continue;
                         }
 
-                        String fechaOrdenMedicaCompraVista =
-                                "";
+                        String fechaOrdenMedicaCompraVista = "";
 
                         if (ordenMedicaCompraVista
                                 .getFechaDocumento() != null) {
@@ -94,8 +108,7 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                                             );
                         }
 
-                        String urlOrdenMedicaCompraVista =
-                                "";
+                        String urlOrdenMedicaCompraVista = "";
 
                         Long dlFileEntryIdOrdenMedica =
                                 ordenMedicaCompraVista
@@ -141,9 +154,7 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                     %>
 
                         <tr>
-                            <td>
-                                Orden médica
-                            </td>
+                            <td>Orden médica</td>
 
                             <td>
                                 <%= HtmlUtil.escape(
@@ -168,15 +179,13 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                                     ) %>"
                                        title="Ver / descargar Orden médica">
                                         <img
-                                            src="<%= themeDisplay.getPathThemeImages() %>/common/view.png"
-                                            alt="Ver / descargar Orden médica"
-                                            style="border:0;" />
+                                                src="<%= themeDisplay.getPathThemeImages() %>/common/view.png"
+                                                alt="Ver / descargar Orden médica"
+                                                style="border:0;" />
                                     </a>
 
                                 <% } else { %>
-
                                     No disponible
-
                                 <% } %>
                             </td>
                         </tr>

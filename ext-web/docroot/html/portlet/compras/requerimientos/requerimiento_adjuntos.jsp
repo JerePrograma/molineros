@@ -15,9 +15,16 @@
 
 <%
 RequerimientoCompra reqPresupuestos =
-        (RequerimientoCompra) renderRequest.getAttribute(
-                WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION
+        (RequerimientoCompra) request.getAttribute(
+                "compras.requerimiento.req"
         );
+
+if (reqPresupuestos == null) {
+    reqPresupuestos =
+            (RequerimientoCompra) renderRequest.getAttribute(
+                    WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION
+            );
+}
 
 if (reqPresupuestos == null) {
     reqPresupuestos =
@@ -27,8 +34,7 @@ if (reqPresupuestos == null) {
 }
 
 if (reqPresupuestos == null) {
-    reqPresupuestos =
-            new RequerimientoCompra();
+    reqPresupuestos = new RequerimientoCompra();
 }
 
 int idRequerimientoCompraPresupuestos =
@@ -70,54 +76,72 @@ boolean soloLecturaParamPresupuestos =
         );
 
 boolean soloLecturaPresupuestos =
-        Boolean.TRUE.equals(
-                soloLecturaAttrPresupuestos
-        )
+        Boolean.TRUE.equals(soloLecturaAttrPresupuestos)
         || soloLecturaParamPresupuestos
-        || "ver".equalsIgnoreCase(
-                modoPresupuestos
-        )
+        || "ver".equalsIgnoreCase(modoPresupuestos)
         || "/compras/ver_requerimiento".equals(
                 strutsActionPresupuestos
         );
 
-boolean puedeCotizarPresupuestos =
-        user != null
-        && PermissionUtil.userContainsRole(
-                user,
-                WebKeysCompras.ROL_COTIZAR_COMPRAS
+Object puedeCotizarAttrPresupuestos =
+        request.getAttribute(
+                "compras.requerimiento.puedeCotizar"
         );
+
+boolean puedeCotizarPresupuestos =
+        puedeCotizarAttrPresupuestos instanceof Boolean
+                ? Boolean.TRUE.equals(puedeCotizarAttrPresupuestos)
+                : user != null
+                        && PermissionUtil.userContainsRole(
+                                user,
+                                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                        );
 
 boolean puedeEditarPresupuestos =
         idRequerimientoCompraPresupuestos > 0
         && puedeCotizarPresupuestos
-        && reqPresupuestos
-                .puedeAdministrarPresupuestos()
+        && reqPresupuestos.puedeAdministrarPresupuestos()
         && !soloLecturaPresupuestos;
 
 boolean puedeVerPrestadoresEnviadosPresupuestos =
         idRequerimientoCompraPresupuestos > 0
-        && reqPresupuestos
-                .puedeVerPresupuestos();
+        && reqPresupuestos.puedeVerPresupuestos();
 
+/*
+ * El Action puede publicar esta lista una sola vez y compartirla con detalle,
+ * adjudicacion y adjuntos. El fallback conserva el contrato actual.
+ */
 List<PrestadorCotizacion> prestadoresEnviadosPresupuestos =
-        new ArrayList<PrestadorCotizacion>();
+        (List<PrestadorCotizacion>) request.getAttribute(
+                "compras.requerimiento.prestadoresEnviados"
+        );
 
 String errorPrestadoresPresupuestos =
-        "";
+        (String) request.getAttribute(
+                "compras.requerimiento.errorPrestadoresEnviados"
+        );
 
-if (puedeVerPrestadoresEnviadosPresupuestos) {
-    try {
-        prestadoresEnviadosPresupuestos =
-                BusquedaRequerimientoCompraServiceUtil
-                        .listarPrestadoresEnviados(
-                                idRequerimientoCompraPresupuestos
-                        );
-    } catch (Exception e) {
-        errorPrestadoresPresupuestos =
-                e.getMessage() != null
-                        ? e.getMessage()
-                        : "No se pudieron cargar los prestadores enviados.";
+if (errorPrestadoresPresupuestos == null) {
+    errorPrestadoresPresupuestos = "";
+}
+
+if (prestadoresEnviadosPresupuestos == null) {
+    prestadoresEnviadosPresupuestos =
+            new ArrayList<PrestadorCotizacion>();
+
+    if (puedeVerPrestadoresEnviadosPresupuestos) {
+        try {
+            prestadoresEnviadosPresupuestos =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .listarPrestadoresEnviados(
+                                    idRequerimientoCompraPresupuestos
+                            );
+        } catch (Exception e) {
+            errorPrestadoresPresupuestos =
+                    e.getMessage() != null
+                            ? e.getMessage()
+                            : "No se pudieron cargar los prestadores enviados.";
+        }
     }
 }
 
@@ -126,32 +150,43 @@ boolean hayPrestadoresEnviadosPresupuestos =
         && !prestadoresEnviadosPresupuestos.isEmpty();
 
 List<PrestadorCotizacion> prestadoresDisponiblesPresupuestos =
-        new ArrayList<PrestadorCotizacion>();
+        (List<PrestadorCotizacion>) request.getAttribute(
+                "compras.requerimiento.prestadoresDisponiblesPresupuesto"
+        );
 
-for (int i = 0;
-        prestadoresEnviadosPresupuestos != null
-        && i < prestadoresEnviadosPresupuestos.size();
-        i++) {
+if (prestadoresDisponiblesPresupuestos == null) {
+    prestadoresDisponiblesPresupuestos =
+            new ArrayList<PrestadorCotizacion>();
 
-    PrestadorCotizacion prestadorDisponible =
-            prestadoresEnviadosPresupuestos.get(i);
+    for (int i = 0;
+            prestadoresEnviadosPresupuestos != null
+            && i < prestadoresEnviadosPresupuestos.size();
+            i++) {
 
-    if (prestadorDisponible != null
-            && prestadorDisponible.getIdPrestador() > 0
-            && WebKeysCompras.ENVIO_ENVIADO.equals(
-                    prestadorDisponible.getEstadoEnvio()
-            )) {
-        prestadoresDisponiblesPresupuestos.add(prestadorDisponible);
+        PrestadorCotizacion prestadorDisponible =
+                prestadoresEnviadosPresupuestos.get(i);
+
+        if (prestadorDisponible != null
+                && prestadorDisponible.getIdPrestador() > 0
+                && WebKeysCompras.ENVIO_ENVIADO.equals(
+                        prestadorDisponible.getEstadoEnvio()
+                )) {
+
+            prestadoresDisponiblesPresupuestos.add(
+                    prestadorDisponible
+            );
+        }
     }
 }
 
 boolean hayPrestadoresDisponiblesPresupuestos =
         !prestadoresDisponiblesPresupuestos.isEmpty();
 
-int maxPresupuestosCargaActual = Math.min(
-        WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA,
-        prestadoresDisponiblesPresupuestos.size()
-);
+int maxPresupuestosCargaActual =
+        Math.min(
+                WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA,
+                prestadoresDisponiblesPresupuestos.size()
+        );
 
 PortletURL uploadPresupuestosURL =
         renderResponse.createActionURL();
@@ -176,8 +211,7 @@ String msgInsertErrorPresupuestos =
         );
 
 if (msgInsertErrorPresupuestos == null) {
-    msgInsertErrorPresupuestos =
-            "";
+    msgInsertErrorPresupuestos = "";
 }
 
 boolean msgPresupuestoGuardado =
@@ -218,38 +252,32 @@ boolean msgPresupuestoBorrado =
 
     #<portlet:namespace />tabla_carga_presupuestos
     td.presupuesto-campo-prestador {
-
         width: 40%;
     }
 
     #<portlet:namespace />tabla_carga_presupuestos
     td.presupuesto-campo-archivo {
-
         width: 35%;
     }
 
     #<portlet:namespace />tabla_carga_presupuestos
     td.presupuesto-acciones {
-
         width: 25%;
         white-space: nowrap;
     }
 
     #<portlet:namespace />tabla_carga_presupuestos
     select.presupuesto-prestador {
-
         width: 98%;
     }
 
     #<portlet:namespace />tabla_carga_presupuestos
     input.presupuesto-archivo {
-
         width: 98%;
     }
 
     #<portlet:namespace />tabla_carga_presupuestos
     td.presupuesto-acciones input {
-
         margin-right: 4px;
     }
 
@@ -258,6 +286,7 @@ boolean msgPresupuestoBorrado =
         cursor: help;
     }
 </style>
+
 <form action="<%= uploadPresupuestosURL.toString() %>"
       method="post"
       name="<portlet:namespace />compra_presupuesto_fm"
@@ -370,9 +399,10 @@ boolean msgPresupuestoBorrado =
                                         && !WebKeysCompras.isEmpty(
                                                 emailDestinoVisible
                                         )
-                                        && !emailRegistradoVisible.equalsIgnoreCase(
-                                                emailDestinoVisible
-                                        );
+                                        && !emailRegistradoVisible
+                                                .equalsIgnoreCase(
+                                                        emailDestinoVisible
+                                                );
 
                                 boolean pdfPendiente =
                                         reqPresupuestos
@@ -476,9 +506,8 @@ boolean msgPresupuestoBorrado =
                 && hayPrestadoresDisponiblesPresupuestos
         %>">
 
-            <table
-                class="lfr-table taglib-search-iterator"
-                id="<portlet:namespace />tabla_carga_presupuestos">
+            <table class="lfr-table taglib-search-iterator"
+                   id="<portlet:namespace />tabla_carga_presupuestos">
 
                 <colgroup>
                     <col style="width: 40%;" />
@@ -514,7 +543,6 @@ boolean msgPresupuestoBorrado =
                     if (prestadorPresupuesto == null
                             || prestadorPresupuesto
                                     .getIdPrestador() <= 0) {
-
                         continue;
                     }
                 %>
@@ -522,8 +550,7 @@ boolean msgPresupuestoBorrado =
                             prestadorPresupuesto.getIdPrestador()
                     %>">
                         <%= HtmlUtil.escape(
-                                prestadorPresupuesto
-                                        .getEtiquetaVisible()
+                                prestadorPresupuesto.getEtiquetaVisible()
                         ) %>
                     </option>
                 <%
@@ -677,26 +704,19 @@ boolean msgPresupuestoBorrado =
 
             archivo.attr(
                     'name',
-                    'presupuesto_'
-                            + index
+                    'presupuesto_' + index
             );
 
             archivo.attr(
                     'id',
-                    '<portlet:namespace />presupuesto_'
-                            + index
+                    '<portlet:namespace />presupuesto_' + index
             );
 
-            /*
-             * Subir y Agregar son acciones generales.
-             * Solo deben mostrarse en la primera fila.
-             */
             if (index == 0) {
                 botonSubir.show();
 
                 if (rows.length
                         < <%= maxPresupuestosCargaActual %>) {
-
                     botonAgregar.show();
                 } else {
                     botonAgregar.hide();
@@ -709,9 +729,7 @@ boolean msgPresupuestoBorrado =
 
         jQuery(
                 '#<portlet:namespace />presupuesto_count'
-        ).val(
-                rows.length
-        );
+        ).val(rows.length);
     }
 
     function <portlet:namespace />agregarFilaPresupuesto() {
@@ -725,19 +743,14 @@ boolean msgPresupuestoBorrado =
         }
 
         var cantidad =
-                tbody.find(
-                        'tr'
-                ).length;
+                tbody.find('tr').length;
 
-        if (cantidad
-                >= <%= maxPresupuestosCargaActual %>) {
-
+        if (cantidad >= <%= maxPresupuestosCargaActual %>) {
             alert(
                     'Se pueden cargar hasta '
                             + '<%= maxPresupuestosCargaActual %>'
                             + ' presupuestos por operación.'
             );
-
             return false;
         }
 
@@ -746,17 +759,9 @@ boolean msgPresupuestoBorrado =
                         '#<portlet:namespace />prestador_presupuesto_template'
                 ).clone();
 
-        prestador.removeAttr(
-                'id'
-        );
-
-        prestador.removeAttr(
-                'style'
-        );
-
-        prestador.addClass(
-                'presupuesto-prestador'
-        );
+        prestador.removeAttr('id');
+        prestador.removeAttr('style');
+        prestador.addClass('presupuesto-prestador');
 
         var archivo =
                 jQuery(
@@ -800,16 +805,10 @@ boolean msgPresupuestoBorrado =
 
         borrar.click(function() {
             jQuery(this)
-                    .parents(
-                            'tr'
-                    )
+                    .parents('tr')
                     .eq(0)
                     .remove();
 
-            /*
-             * Al mover Agregar dentro de la fila,
-             * no se puede dejar la tabla sin filas.
-             */
             if (tbody.find('tr').length == 0) {
                 <portlet:namespace />agregarFilaPresupuesto();
             } else {
@@ -833,60 +832,34 @@ boolean msgPresupuestoBorrado =
             return <portlet:namespace />agregarFilaPresupuesto();
         });
 
-        var row =
-                jQuery(
-                        '<tr></tr>'
-                );
-
+        var row = jQuery('<tr></tr>');
         var acciones =
                 jQuery(
                         '<td class="presupuesto-acciones"></td>'
                 );
 
-        acciones.append(
-                subir
-        );
-        acciones.append(
-                document.createTextNode(' ')
-        );
-        acciones.append(
-                borrar
-        );
-        acciones.append(
-                document.createTextNode(' ')
-        );
-        acciones.append(
-                agregar
-        );
+        acciones.append(subir);
+        acciones.append(document.createTextNode(' '));
+        acciones.append(borrar);
+        acciones.append(document.createTextNode(' '));
+        acciones.append(agregar);
 
         row.append(
                 jQuery(
                         '<td class="presupuesto-campo-prestador"></td>'
-                ).append(
-                        prestador
-                )
+                ).append(prestador)
         );
 
         row.append(
                 jQuery(
                         '<td class="presupuesto-campo-archivo"></td>'
-                ).append(
-                        archivo
-                ).append(
-                        ayudaArchivo
-                )
+                ).append(archivo).append(ayudaArchivo)
         );
 
-        row.append(
-                acciones
-        );
-
-        tbody.append(
-                row
-        );
+        row.append(acciones);
+        tbody.append(row);
 
         <portlet:namespace />reindexarFilasPresupuesto();
-
         return false;
     }
 
@@ -906,14 +879,10 @@ boolean msgPresupuestoBorrado =
                         '<portlet:namespace />id_requerimiento_presupuesto'
                 );
 
-        if (!form
-                || !accion
-                || !idPresupuesto) {
-
+        if (!form || !accion || !idPresupuesto) {
             alert(
                     'No se pudo preparar la subida del presupuesto.'
             );
-
             return false;
         }
 
@@ -923,24 +892,16 @@ boolean msgPresupuestoBorrado =
                 );
 
         if (rows.length <= 0
-                || rows.length
-                        > <%= maxPresupuestosCargaActual %>) {
-
-            alert(
-                    'La cantidad de presupuestos no es válida.'
-            );
-
+                || rows.length > <%= maxPresupuestosCargaActual %>) {
+            alert('La cantidad de presupuestos no es válida.');
             return false;
         }
 
-        var valido =
-                true;
-        var prestadoresSeleccionados =
-                {};
+        var valido = true;
+        var prestadoresSeleccionados = {};
 
         rows.each(function(index) {
-            var row =
-                    jQuery(this);
+            var row = jQuery(this);
 
             var prestador =
                     jQuery.trim(
@@ -960,10 +921,7 @@ boolean msgPresupuestoBorrado =
                                 + (index + 1)
                                 + '.'
                 );
-
-                valido =
-                        false;
-
+                valido = false;
                 return false;
             }
 
@@ -980,25 +938,18 @@ boolean msgPresupuestoBorrado =
 
             prestadoresSeleccionados[prestador] = true;
 
-            if (archivo.length == 0
-                    || archivo.val() == '') {
-
+            if (archivo.length == 0 || archivo.val() == '') {
                 alert(
                         'Debe seleccionar el archivo del presupuesto '
                                 + (index + 1)
                                 + '.'
                 );
-
-                valido =
-                        false;
-
+                valido = false;
                 return false;
             }
 
             var nombreArchivo =
-                    jQuery.trim(
-                            archivo.val()
-                    );
+                    jQuery.trim(archivo.val());
 
             if (!/\.pdf$/i.test(nombreArchivo)) {
                 alert(
@@ -1006,9 +957,7 @@ boolean msgPresupuestoBorrado =
                                 + (index + 1)
                                 + ' debe estar en formato PDF.'
                 );
-
                 valido = false;
-
                 return false;
             }
         });
@@ -1017,14 +966,10 @@ boolean msgPresupuestoBorrado =
             return false;
         }
 
-        accion.value =
-                '<%= Constants.ADD %>';
-
-        idPresupuesto.value =
-                '';
+        accion.value = '<%= Constants.ADD %>';
+        idPresupuesto.value = '';
 
         <portlet:namespace />reindexarFilasPresupuesto();
-
         form.submit();
 
         return false;
@@ -1063,7 +1008,6 @@ boolean msgPresupuestoBorrado =
             alert(
                     'No se pudo preparar la eliminación del presupuesto.'
             );
-
             return false;
         }
 
@@ -1073,14 +1017,8 @@ boolean msgPresupuestoBorrado =
             return false;
         }
 
-        accion.value =
-                '<%= Constants.DELETE %>';
-
-        idPresupuesto.value =
-                String(
-                        idNumerico
-                );
-
+        accion.value = '<%= Constants.DELETE %>';
+        idPresupuesto.value = String(idNumerico);
         form.submit();
 
         return false;

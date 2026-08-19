@@ -13,9 +13,16 @@
 
 <%
 RequerimientoCompra reqAdjudicacion =
-        (RequerimientoCompra) renderRequest.getAttribute(
-                WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION
+        (RequerimientoCompra) request.getAttribute(
+                "compras.requerimiento.req"
         );
+
+if (reqAdjudicacion == null) {
+    reqAdjudicacion =
+            (RequerimientoCompra) renderRequest.getAttribute(
+                    WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION
+            );
+}
 
 if (reqAdjudicacion == null) {
     reqAdjudicacion =
@@ -48,9 +55,7 @@ String modoAdjudicacion =
         );
 
 boolean soloLecturaAdjudicacion =
-        Boolean.TRUE.equals(
-                soloLecturaAttrAdjudicacion
-        )
+        Boolean.TRUE.equals(soloLecturaAttrAdjudicacion)
         || ParamUtil.getBoolean(
                 request,
                 "solo_lectura",
@@ -59,18 +64,25 @@ boolean soloLecturaAdjudicacion =
         || "/compras/ver_requerimiento".equals(
                 strutsActionAdjudicacion
         )
-        || "ver".equalsIgnoreCase(
-                modoAdjudicacion
+        || "ver".equalsIgnoreCase(modoAdjudicacion);
+
+Object puedeEditarCotizacionAttrAdjudicacion =
+        request.getAttribute(
+                "compras.requerimiento.puedeEditarCotizacion"
         );
 
 boolean puedeCotizarAdjudicacion =
-        user != null
-        && PermissionUtil.userContainsRole(
-                user,
-                WebKeysCompras.ROL_COTIZAR_COMPRAS
-        )
-        && reqAdjudicacion.puedeEditarCotizacion()
-        && !soloLecturaAdjudicacion;
+        puedeEditarCotizacionAttrAdjudicacion instanceof Boolean
+                ? Boolean.TRUE.equals(
+                        puedeEditarCotizacionAttrAdjudicacion
+                )
+                : user != null
+                        && PermissionUtil.userContainsRole(
+                                user,
+                                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                        )
+                        && reqAdjudicacion.puedeEditarCotizacion()
+                        && !soloLecturaAdjudicacion;
 
 boolean puedeVerCotizacionAdjudicacion =
         reqAdjudicacion.puedeVerCotizacion();
@@ -116,25 +128,43 @@ String idPrestadorAdjudicadoAdjudicacion =
 String prestadorAdjudicadoAdjudicacion =
         reqAdjudicacion.getPrestadorAdjudicadoVisible();
 
+/*
+ * Contrato objetivo: los Actions publican las colecciones de cotizacion.
+ * El fallback mantiene compatibilidad inmediata con el backend actual.
+ */
 List<PrestadorCotizacion> prestadoresEnviadosAdjudicacion =
-        new ArrayList<PrestadorCotizacion>();
+        (List<PrestadorCotizacion>) request.getAttribute(
+                "compras.requerimiento.prestadoresEnviados"
+        );
 
-String errorPrestadoresAdjudicacion = "";
+String errorPrestadoresAdjudicacion =
+        (String) request.getAttribute(
+                "compras.requerimiento.errorPrestadoresEnviados"
+        );
 
-if (puedeCotizarAdjudicacion
-        && requerimientoPersistidoAdjudicacion) {
+if (errorPrestadoresAdjudicacion == null) {
+    errorPrestadoresAdjudicacion = "";
+}
 
-    try {
-        prestadoresEnviadosAdjudicacion =
-                BusquedaRequerimientoCompraServiceUtil
-                        .listarPrestadoresEnviados(
-                                idRequerimientoAdjudicacion
-                        );
-    } catch (Exception e) {
-        errorPrestadoresAdjudicacion =
-                e.getMessage() != null
-                        ? e.getMessage()
-                        : "No se pudieron cargar los prestadores enviados.";
+if (prestadoresEnviadosAdjudicacion == null) {
+    prestadoresEnviadosAdjudicacion =
+            new ArrayList<PrestadorCotizacion>();
+
+    if (puedeCotizarAdjudicacion
+            && requerimientoPersistidoAdjudicacion) {
+
+        try {
+            prestadoresEnviadosAdjudicacion =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .listarPrestadoresEnviados(
+                                    idRequerimientoAdjudicacion
+                            );
+        } catch (Exception e) {
+            errorPrestadoresAdjudicacion =
+                    e.getMessage() != null
+                            ? e.getMessage()
+                            : "No se pudieron cargar los prestadores enviados.";
+        }
     }
 }
 
@@ -143,62 +173,83 @@ boolean hayPrestadoresEnviadosAdjudicacion =
         && !prestadoresEnviadosAdjudicacion.isEmpty();
 
 Set<Integer> idsPrestadoresConPresupuestoAdjudicacion =
-        new HashSet<Integer>();
+        (Set<Integer>) request.getAttribute(
+                "compras.requerimiento.idsPrestadoresConPresupuesto"
+        );
 
-Set<Integer> idsPrestadoresHabilitadosAdjudicacion =
-        new HashSet<Integer>();
+String errorPresupuestosAdjudicacion =
+        (String) request.getAttribute(
+                "compras.requerimiento.errorPresupuestos"
+        );
 
-String errorPresupuestosAdjudicacion = "";
+if (errorPresupuestosAdjudicacion == null) {
+    errorPresupuestosAdjudicacion = "";
+}
 
-if (puedeCotizarAdjudicacion
-        && requerimientoPersistidoAdjudicacion
-        && hayPrestadoresEnviadosAdjudicacion) {
+if (idsPrestadoresConPresupuestoAdjudicacion == null) {
+    idsPrestadoresConPresupuestoAdjudicacion =
+            new HashSet<Integer>();
 
-    try {
-        List<RequerimientoCompraPresupuesto>
+    if (puedeCotizarAdjudicacion
+            && requerimientoPersistidoAdjudicacion
+            && hayPrestadoresEnviadosAdjudicacion) {
+
+        try {
+            List<RequerimientoCompraPresupuesto> presupuestosAdjudicacion =
+                    (List<RequerimientoCompraPresupuesto>)
+                            request.getAttribute(
+                                    "compras.requerimiento.presupuestos"
+                            );
+
+            if (presupuestosAdjudicacion == null) {
                 presupuestosAdjudicacion =
                         BusquedaRequerimientoCompraServiceUtil
                                 .listarPresupuestos(
                                         idRequerimientoAdjudicacion
                                 );
-
-        for (int i = 0;
-                presupuestosAdjudicacion != null
-                        && i < presupuestosAdjudicacion.size();
-                i++) {
-
-            RequerimientoCompraPresupuesto presupuestoAdjudicacion =
-                    presupuestosAdjudicacion.get(i);
-
-            if (presupuestoAdjudicacion == null
-                    || presupuestoAdjudicacion.getBajaFecha() != null
-                    || presupuestoAdjudicacion.getIdPrestador() == null
-                    || presupuestoAdjudicacion
-                            .getIdPrestador()
-                            .intValue() <= 0
-                    || presupuestoAdjudicacion
-                            .getDlFileEntryId() == null
-                    || presupuestoAdjudicacion
-                            .getDlFileEntryId()
-                            .longValue() <= 0L) {
-
-                continue;
             }
 
-            idsPrestadoresConPresupuestoAdjudicacion.add(
-                    presupuestoAdjudicacion.getIdPrestador()
-            );
+            for (int i = 0;
+                    presupuestosAdjudicacion != null
+                    && i < presupuestosAdjudicacion.size();
+                    i++) {
+
+                RequerimientoCompraPresupuesto presupuestoAdjudicacion =
+                        presupuestosAdjudicacion.get(i);
+
+                if (presupuestoAdjudicacion == null
+                        || presupuestoAdjudicacion.getBajaFecha() != null
+                        || presupuestoAdjudicacion.getIdPrestador() == null
+                        || presupuestoAdjudicacion
+                                .getIdPrestador()
+                                .intValue() <= 0
+                        || presupuestoAdjudicacion
+                                .getDlFileEntryId() == null
+                        || presupuestoAdjudicacion
+                                .getDlFileEntryId()
+                                .longValue() <= 0L) {
+
+                    continue;
+                }
+
+                idsPrestadoresConPresupuestoAdjudicacion.add(
+                        presupuestoAdjudicacion.getIdPrestador()
+                );
+            }
+        } catch (Exception e) {
+            errorPresupuestosAdjudicacion =
+                    "No se pudo verificar qué prestadores tienen "
+                            + "un archivo de presupuesto cargado.";
         }
-    } catch (Exception e) {
-        errorPresupuestosAdjudicacion =
-                "No se pudo verificar qué prestadores tienen "
-                        + "un archivo de presupuesto cargado.";
     }
 }
 
+Set<Integer> idsPrestadoresHabilitadosAdjudicacion =
+        new HashSet<Integer>();
+
 for (int i = 0;
         prestadoresEnviadosAdjudicacion != null
-                && i < prestadoresEnviadosAdjudicacion.size();
+        && i < prestadoresEnviadosAdjudicacion.size();
         i++) {
 
     PrestadorCotizacion prestadorAdjudicacion =
@@ -249,11 +300,10 @@ if (puedeCotizarAdjudicacion
     }
 }
 
-if (WebKeysCompras.isEmpty(
-        prestadorAdjudicadoAdjudicacion
-) && !WebKeysCompras.isEmpty(
-        idPrestadorAdjudicadoAdjudicacion
-)) {
+if (WebKeysCompras.isEmpty(prestadorAdjudicadoAdjudicacion)
+        && !WebKeysCompras.isEmpty(
+                idPrestadorAdjudicadoAdjudicacion
+        )) {
 
     for (int i = 0;
             i < prestadoresEnviadosAdjudicacion.size();
@@ -265,13 +315,10 @@ if (WebKeysCompras.isEmpty(
         if (prestadorAdjudicacion != null
                 && String.valueOf(
                         prestadorAdjudicacion.getIdPrestador()
-                ).equals(
-                        idPrestadorAdjudicadoAdjudicacion
-                )) {
+                ).equals(idPrestadorAdjudicadoAdjudicacion)) {
 
             prestadorAdjudicadoAdjudicacion =
                     prestadorAdjudicacion.getEtiquetaVisible();
-
             break;
         }
     }
@@ -282,7 +329,7 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
 %>
 
 <% if (puedeVerCotizacionAdjudicacion) { %>
-    <div class="compras-seccion compras-seccion-adjudicacion">
+<div class="compras-seccion compras-seccion-adjudicacion">
 
     <% if (puedeCotizarAdjudicacion
             && !WebKeysCompras.isEmpty(
@@ -290,9 +337,7 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
             )) { %>
 
         <div class="portlet-msg-error">
-            <%= HtmlUtil.escape(
-                    errorPrestadoresAdjudicacion
-            ) %>
+            <%= HtmlUtil.escape(errorPrestadoresAdjudicacion) %>
         </div>
 
     <% } else if (puedeCotizarAdjudicacion
@@ -309,9 +354,7 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
             )) { %>
 
         <div class="portlet-msg-error">
-            <%= HtmlUtil.escape(
-                    errorPresupuestosAdjudicacion
-            ) %>
+            <%= HtmlUtil.escape(errorPresupuestosAdjudicacion) %>
         </div>
 
     <% } else if (puedeCotizarAdjudicacion
@@ -327,8 +370,7 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
     <% if (prestadoresAdjudicadosMixtosAdjudicacion) { %>
         <div class="portlet-msg-error">
             El requerimiento contiene prestadores adjudicados diferentes.
-            Seleccione un &uacute;nico prestador antes de guardar
-            la cotización.
+            Seleccione un único prestador antes de guardar la cotización.
         </div>
     <% } %>
 
@@ -346,13 +388,13 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
                 <td>
                     <% if (puedeCotizarAdjudicacion) { %>
                         <select
-                            id="<portlet:namespace />id_prestador_adjudicado"
-                            style="max-width: 520px; width: 100%;"
-                            onchange="<portlet:namespace />capturarPrestadorAdjudicado();"
-                            <%= hayPrestadoresHabilitadosAdjudicacion
-                                    ? ""
-                                    : "disabled=\"disabled\"" %>
-                        >
+                                id="<portlet:namespace />id_prestador_adjudicado"
+                                style="max-width: 520px; width: 100%;"
+                                onchange="<portlet:namespace />capturarPrestadorAdjudicado();"
+                                <%= hayPrestadoresHabilitadosAdjudicacion
+                                        ? ""
+                                        : "disabled=\"disabled\"" %>>
+
                             <option value="">Seleccione...</option>
 
                             <%
@@ -366,7 +408,6 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
                                 if (prestadorAdjudicacion == null
                                         || prestadorAdjudicacion
                                                 .getIdPrestador() <= 0) {
-
                                     continue;
                                 }
 
@@ -386,17 +427,17 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
                                                 );
                             %>
                                 <option
-                                    value="<%= idPrestadorAdjudicacion %>"
-                                    <%= prestadorHabilitadoAdjudicacion
-                                            && idPrestadorAdjudicacion.equals(
-                                                    idPrestadorAdjudicadoAdjudicacion
-                                            )
-                                                    ? "selected=\"selected\""
-                                                    : "" %>
-                                    <%= prestadorHabilitadoAdjudicacion
-                                            ? ""
-                                            : "disabled=\"disabled\"" %>
-                                >
+                                        value="<%= idPrestadorAdjudicacion %>"
+                                        <%= prestadorHabilitadoAdjudicacion
+                                                && idPrestadorAdjudicacion.equals(
+                                                        idPrestadorAdjudicadoAdjudicacion
+                                                )
+                                                        ? "selected=\"selected\""
+                                                        : "" %>
+                                        <%= prestadorHabilitadoAdjudicacion
+                                                ? ""
+                                                : "disabled=\"disabled\"" %>>
+
                                     <%= HtmlUtil.escape(
                                             prestadorAdjudicacion
                                                     .getEtiquetaVisible()
@@ -423,5 +464,5 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
             </tr>
         </table>
     </fieldset>
-    </div>
+</div>
 <% } %>

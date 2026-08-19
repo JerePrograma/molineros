@@ -25,11 +25,22 @@ private String jsDetalleCompra(String value) {
 String namespaceDetalleCompra = renderResponse.getNamespace();
 
 RequerimientoCompra reqDetalle =
-        (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION);
+        (RequerimientoCompra) request.getAttribute(
+                "compras.requerimiento.req"
+        );
 
 if (reqDetalle == null) {
     reqDetalle =
-            (RequerimientoCompra) renderRequest.getAttribute(WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW);
+            (RequerimientoCompra) renderRequest.getAttribute(
+                    WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION
+            );
+}
+
+if (reqDetalle == null) {
+    reqDetalle =
+            (RequerimientoCompra) renderRequest.getAttribute(
+                    WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW
+            );
 }
 
 if (reqDetalle == null) {
@@ -37,33 +48,77 @@ if (reqDetalle == null) {
 }
 
 Object soloLecturaAttrDetalle =
-        renderRequest.getAttribute(WebKeysCompras.SOLO_LECTURA_ATTR);
+        renderRequest.getAttribute(
+                WebKeysCompras.SOLO_LECTURA_ATTR
+        );
 
-String strutsActionDetalle = ParamUtil.getString(renderRequest, "struts_action", "");
-String modoDetalle = ParamUtil.getString(renderRequest, "modo", "");
+String strutsActionDetalle =
+        ParamUtil.getString(
+                renderRequest,
+                "struts_action",
+                ""
+        );
+
+String modoDetalle =
+        ParamUtil.getString(
+                renderRequest,
+                "modo",
+                ""
+        );
 
 boolean soloLecturaDetalle =
         Boolean.TRUE.equals(soloLecturaAttrDetalle)
-        || ParamUtil.getBoolean(request, "solo_lectura", false)
+        || ParamUtil.getBoolean(
+                request,
+                "solo_lectura",
+                false
+        )
         || "/compras/ver_requerimiento".equals(strutsActionDetalle)
         || "ver".equalsIgnoreCase(modoDetalle);
 
+Object puedeEditarEstructuraAttr =
+        request.getAttribute(
+                "compras.requerimiento.puedeEditarEstructura"
+        );
+
+Object puedeEditarCotizacionAttr =
+        request.getAttribute(
+                "compras.requerimiento.puedeEditarCotizacion"
+        );
+
 boolean usuarioPuedeABMDetalle =
-        user != null
-        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-        && reqDetalle.puedeEditarEstructura();
+        puedeEditarEstructuraAttr instanceof Boolean
+                ? Boolean.TRUE.equals(puedeEditarEstructuraAttr)
+                : user != null
+                        && PermissionUtil.userContainsRole(
+                                user,
+                                WebKeysCompras.ROL_ABM_COMPRAS
+                        )
+                        && reqDetalle.puedeEditarEstructura();
 
 boolean usuarioPuedeCotizarDetalle =
-        user != null
-        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
-        && reqDetalle.puedeEditarCotizacion();
+        puedeEditarCotizacionAttr instanceof Boolean
+                ? Boolean.TRUE.equals(puedeEditarCotizacionAttr)
+                : user != null
+                        && PermissionUtil.userContainsRole(
+                                user,
+                                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                        )
+                        && reqDetalle.puedeEditarCotizacion();
 
-boolean puedeABMDetalle = usuarioPuedeABMDetalle && !soloLecturaDetalle;
-boolean puedeCotizarDetalle = usuarioPuedeCotizarDetalle && !soloLecturaDetalle;
+boolean puedeABMDetalle =
+        usuarioPuedeABMDetalle
+        && !soloLecturaDetalle;
+
+boolean puedeCotizarDetalle =
+        usuarioPuedeCotizarDetalle
+        && !soloLecturaDetalle;
+
 boolean puedeVerCotizacionDetalle =
         reqDetalle.puedeVerCotizacion();
 
-List<RequerimientoCompraDetalle> detalles = reqDetalle.getDetalles();
+List<RequerimientoCompraDetalle> detalles =
+        reqDetalle.getDetalles();
 
 if (detalles == null) {
     detalles = new ArrayList<RequerimientoCompraDetalle>();
@@ -82,19 +137,22 @@ boolean restaurarCotizacion =
                 "compras_error",
                 false
         )
-        && ("saveCotizacion".equals(
-                ParamUtil.getString(
-                        renderRequest,
-                        "compras_operacion",
-                        ""
+        && (
+                "saveCotizacion".equals(
+                        ParamUtil.getString(
+                                renderRequest,
+                                "compras_operacion",
+                                ""
+                        )
                 )
-        ) || "cerrarCotizacion".equals(
-                ParamUtil.getString(
-                        renderRequest,
-                        "compras_operacion",
-                        ""
+                || "cerrarCotizacion".equals(
+                        ParamUtil.getString(
+                                renderRequest,
+                                "compras_operacion",
+                                ""
+                        )
                 )
-        ));
+        );
 
 String idPrestadorAdjudicadoDetalle =
         restaurarCotizacion
@@ -116,14 +174,9 @@ if (restaurarCotizacion) {
                     0
             );
 
-    for (int i = 0;
-            i < cantidadDetallesRestaurados;
-            i++) {
-
+    for (int i = 0; i < cantidadDetallesRestaurados; i++) {
         String prefix =
-                "detalle_"
-                        + i
-                        + "_";
+                "detalle_" + i + "_";
 
         String idDetalleRestaurado =
                 ParamUtil.getString(
@@ -132,9 +185,7 @@ if (restaurarCotizacion) {
                         ""
                 );
 
-        if (WebKeysCompras.isEmpty(
-                idDetalleRestaurado
-        )) {
+        if (WebKeysCompras.isEmpty(idDetalleRestaurado)) {
             continue;
         }
 
@@ -142,8 +193,7 @@ if (restaurarCotizacion) {
                 idDetalleRestaurado,
                 ParamUtil.getString(
                         renderRequest,
-                        prefix
-                                + "precio_unitario_estimado",
+                        prefix + "precio_unitario_estimado",
                         ""
                 )
         );
@@ -209,9 +259,15 @@ if (restaurarCotizacion) {
     }
 }
 
-Integer idSectorActual = reqDetalle.getSectorId();
+Integer idSectorActual =
+        reqDetalle.getSectorId();
 
-int sectorIdParametro = ParamUtil.getInteger(request, "sector_id", 0);
+int sectorIdParametro =
+        ParamUtil.getInteger(
+                request,
+                "sector_id",
+                0
+        );
 
 if ((idSectorActual == null || idSectorActual.intValue() <= 0)
         && sectorIdParametro > 0) {
@@ -220,20 +276,29 @@ if ((idSectorActual == null || idSectorActual.intValue() <= 0)
 }
 
 String idSectorActualString =
-        idSectorActual != null && idSectorActual.intValue() > 0
+        idSectorActual != null
+        && idSectorActual.intValue() > 0
                 ? String.valueOf(idSectorActual.intValue())
                 : "";
 
 String sectorDescripcionActualString =
         reqDetalle.getSectorDescripcionVisible();
 
-PortletURL detalleActionURL = renderResponse.createActionURL();
+PortletURL detalleActionURL =
+        renderResponse.createActionURL();
 detalleActionURL.setWindowState(WindowState.MAXIMIZED);
-detalleActionURL.setParameter("struts_action", "/compras/editar_requerimiento_detalle");
+detalleActionURL.setParameter(
+        "struts_action",
+        "/compras/editar_requerimiento_detalle"
+);
 
-PortletURL buscarItemTecnicoURL = renderResponse.createRenderURL();
+PortletURL buscarItemTecnicoURL =
+        renderResponse.createRenderURL();
 buscarItemTecnicoURL.setWindowState(LiferayWindowState.EXCLUSIVE);
-buscarItemTecnicoURL.setParameter("struts_action", "/compras/buscar_item_tecnico");
+buscarItemTecnicoURL.setParameter(
+        "struts_action",
+        "/compras/buscar_item_tecnico"
+);
 
 int idRequerimientoCompraDetalle =
         reqDetalle.getIdRequerimientoCompra();
@@ -241,23 +306,44 @@ int idRequerimientoCompraDetalle =
 boolean requerimientoPersistidoDetalle =
         idRequerimientoCompraDetalle > 0;
 
+/*
+ * Contrato preparado para el cierre definitivo JSP -> Action.
+ * Mientras los Actions actuales no publiquen esta lista, se conserva el
+ * fallback legacy para no alterar la funcionalidad existente.
+ */
 List<PrestadorCotizacion> prestadoresEnviadosDetalle =
-        new ArrayList<PrestadorCotizacion>();
+        (List<PrestadorCotizacion>) request.getAttribute(
+                "compras.requerimiento.prestadoresEnviados"
+        );
 
-String errorPrestadoresEnviadosDetalle = "";
+String errorPrestadoresEnviadosDetalle =
+        (String) request.getAttribute(
+                "compras.requerimiento.errorPrestadoresEnviados"
+        );
 
-if (puedeCotizarDetalle && requerimientoPersistidoDetalle) {
-    try {
-        prestadoresEnviadosDetalle =
-                BusquedaRequerimientoCompraServiceUtil
-                        .listarPrestadoresEnviados(
-                                idRequerimientoCompraDetalle
-                        );
-    } catch (Exception e) {
-        errorPrestadoresEnviadosDetalle =
-                e.getMessage() != null
-                        ? e.getMessage()
-                        : "No se pudieron cargar los prestadores enviados.";
+if (errorPrestadoresEnviadosDetalle == null) {
+    errorPrestadoresEnviadosDetalle = "";
+}
+
+if (prestadoresEnviadosDetalle == null) {
+    prestadoresEnviadosDetalle =
+            new ArrayList<PrestadorCotizacion>();
+
+    if (puedeCotizarDetalle
+            && requerimientoPersistidoDetalle) {
+
+        try {
+            prestadoresEnviadosDetalle =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .listarPrestadoresEnviados(
+                                    idRequerimientoCompraDetalle
+                            );
+        } catch (Exception e) {
+            errorPrestadoresEnviadosDetalle =
+                    e.getMessage() != null
+                            ? e.getMessage()
+                            : "No se pudieron cargar los prestadores enviados.";
+        }
     }
 }
 
@@ -276,8 +362,9 @@ if (WebKeysCompras.isEmpty(prestadorAdjudicadoDetalle)
                 prestadoresEnviadosDetalle.get(i);
 
         if (prestador != null
-                && String.valueOf(prestador.getIdPrestador())
-                        .equals(idPrestadorAdjudicadoDetalle)) {
+                && String.valueOf(
+                        prestador.getIdPrestador()
+                ).equals(idPrestadorAdjudicadoDetalle)) {
 
             prestadorAdjudicadoDetalle =
                     prestador.getEtiquetaVisible();

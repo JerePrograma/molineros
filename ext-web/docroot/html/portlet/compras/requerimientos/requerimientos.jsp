@@ -25,6 +25,10 @@ boolean showABMButtons =
         )
         && !estadoForzadoActivo;
 
+/*
+ * ViewComprasAction y BuscarRequerimientosComprasAction publican estos
+ * catalogos. El JSP deja de abrir consultas de respaldo para estados/sectores.
+ */
 List<RequerimientoCompraSector> sectores =
         (List<RequerimientoCompraSector>)
                 renderRequest.getAttribute(
@@ -32,14 +36,8 @@ List<RequerimientoCompraSector> sectores =
                 );
 
 if (sectores == null) {
-    try {
-        sectores =
-                BusquedaRequerimientoCompraServiceUtil
-                        .listarSectores();
-    } catch (Exception e) {
-        sectores =
-                new ArrayList<RequerimientoCompraSector>();
-    }
+    sectores =
+            new ArrayList<RequerimientoCompraSector>();
 }
 
 List<RequerimientoCompraEstado> estados =
@@ -49,14 +47,8 @@ List<RequerimientoCompraEstado> estados =
                 );
 
 if (estados == null) {
-    try {
-        estados =
-                BusquedaRequerimientoCompraServiceUtil
-                        .listarEstados();
-    } catch (Exception e) {
-        estados =
-                new ArrayList<RequerimientoCompraEstado>();
-    }
+    estados =
+            new ArrayList<RequerimientoCompraEstado>();
 }
 
 String estadoFiltro =
@@ -94,7 +86,6 @@ String surgeFiltro =
 
 if (!"true".equals(surgeFiltro)
         && !"false".equals(surgeFiltro)) {
-
     surgeFiltro = "";
 }
 
@@ -105,9 +96,7 @@ String idTercerizadoraFiltro =
                 ""
         );
 
-if (WebKeysCompras.isEmpty(
-        idTercerizadoraFiltro
-)) {
+if (WebKeysCompras.isEmpty(idTercerizadoraFiltro)) {
     idTercerizadoraFiltro =
             ParamUtil.getString(
                     renderRequest,
@@ -128,10 +117,22 @@ if ("0".equals(idTercerizadoraFiltro)) {
     idTercerizadoraFiltro = "";
 }
 
+/*
+ * Contrato objetivo para quitar la ultima consulta auxiliar de este JSP.
+ * El fallback conserva compatibilidad hasta que View/Buscar publiquen el
+ * atributo compras.requerimientos.tercerizadoras.
+ */
 List<TercerizadoraServicio> tercerizadoras =
-        TraeListasServiceUtil.getTercerizadoraServicio(
-                renderRequest
+        (List<TercerizadoraServicio>) request.getAttribute(
+                "compras.requerimientos.tercerizadoras"
         );
+
+if (tercerizadoras == null) {
+    tercerizadoras =
+            TraeListasServiceUtil.getTercerizadoraServicio(
+                    renderRequest
+            );
+}
 
 if (tercerizadoras == null) {
     tercerizadoras =
@@ -191,6 +192,10 @@ if (tercerizadoras == null) {
                         RequerimientoCompraEstado estado =
                                 estados.get(i);
 
+                        if (estado == null) {
+                            continue;
+                        }
+
                         String idEstado =
                                 String.valueOf(
                                         estado.getIdEstado()
@@ -240,6 +245,10 @@ if (tercerizadoras == null) {
                     for (int i = 0; i < sectores.size(); i++) {
                         RequerimientoCompraSector sector =
                                 sectores.get(i);
+
+                        if (sector == null) {
+                            continue;
+                        }
 
                         String idSector =
                                 String.valueOf(
@@ -420,7 +429,6 @@ if (tercerizadoras == null) {
 
             <td colspan="5">
                 <c:if test="<%= showABMButtons %>">
-
                     <input type="button"
                            value="Nuevo requerimiento"
                            onClick="<portlet:namespace />altaRequerimiento();" />
@@ -601,7 +609,6 @@ if (tercerizadoras == null) {
     function <portlet:namespace />limpiarTodosCamposFiltro() {
         if (typeof <portlet:namespace />limpiarCamposAfiliado
                 == 'function') {
-
             <portlet:namespace />limpiarCamposAfiliado();
         }
 
@@ -716,11 +723,11 @@ if (tercerizadoras == null) {
 
         if (cuil.length > 0
                 && cuil.length == 11
-                && typeof validarCuil == "function") {
+                && typeof validarCuil == 'function') {
 
             if (!validarCuil(
                     cuil,
-                    "CUIL titular inválido."
+                    'CUIL titular inválido.'
             )) {
                 jQuery(
                         '#<portlet:namespace />cuil'
@@ -735,49 +742,23 @@ if (tercerizadoras == null) {
 
     function <portlet:namespace />buscarAfiliados() {
         var cuil =
-                jQuery(
-                        '#<portlet:namespace />cuil'
-                ).val();
-
+                jQuery('#<portlet:namespace />cuil').val();
         var inte =
-                jQuery(
-                        '#<portlet:namespace />inte'
-                ).val();
-
+                jQuery('#<portlet:namespace />inte').val();
         var tipoDoc =
-                jQuery(
-                        '#<portlet:namespace />tipoDoc'
-                ).val();
-
+                jQuery('#<portlet:namespace />tipoDoc').val();
         var nroDoc =
-                jQuery(
-                        '#<portlet:namespace />nroDoc'
-                ).val();
-
+                jQuery('#<portlet:namespace />nroDoc').val();
         var seccional =
-                jQuery(
-                        '#<portlet:namespace />id_seccional'
-                ).val();
-
+                jQuery('#<portlet:namespace />id_seccional').val();
         var apellido =
-                jQuery(
-                        '#<portlet:namespace />apellido'
-                ).val();
-
+                jQuery('#<portlet:namespace />apellido').val();
         var nombre =
-                jQuery(
-                        '#<portlet:namespace />nombre'
-                ).val();
-
+                jQuery('#<portlet:namespace />nombre').val();
         var entidad =
-                jQuery(
-                        '#<portlet:namespace />entidad'
-                ).val();
-
+                jQuery('#<portlet:namespace />entidad').val();
         var numeroAfi =
-                jQuery(
-                        '#<portlet:namespace />numero_afi'
-                ).val();
+                jQuery('#<portlet:namespace />numero_afi').val();
 
         if (!<portlet:namespace />validarBusqueda(
                 cuil,
@@ -794,31 +775,23 @@ if (tercerizadoras == null) {
         }
 
         if (cuil.length > 0) {
-            if (typeof validarCuil == "function"
+            if (typeof validarCuil == 'function'
                     && !validarCuil(
                             cuil,
-                            "<liferay-ui:message key='valida-cuil-mensaje-limpiar'/>"
+                            '<liferay-ui:message key="valida-cuil-mensaje-limpiar"/>'
                     )) {
 
-                jQuery(
-                        '#<portlet:namespace />cuil'
-                ).focus();
-
+                jQuery('#<portlet:namespace />cuil').focus();
                 return false;
             }
         }
 
         if (jQuery(
-                "#<portlet:namespace />secc_seleccionada"
-        ).val() != "1") {
+                '#<portlet:namespace />secc_seleccionada'
+        ).val() != '1') {
 
-            jQuery(
-                    "#<portlet:namespace />seccional"
-            ).val("");
-
-            jQuery(
-                    "#<portlet:namespace />id_seccional"
-            ).val("");
+            jQuery('#<portlet:namespace />seccional').val('');
+            jQuery('#<portlet:namespace />id_seccional').val('');
         }
 
         popupAfill = Liferay.Popup({
@@ -829,42 +802,34 @@ if (tercerizadoras == null) {
         });
 
         var url =
-                '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-                '&struts_action=/compras/buscar_afiliados' +
-                '&cuil=' + encodeURIComponent(cuil) +
-                '&inte=' + encodeURIComponent(inte) +
-                '&tipoDoc=' + encodeURIComponent(tipoDoc) +
-                '&nroDoc=' + encodeURIComponent(nroDoc) +
-                '&seccional=' + encodeURIComponent(seccional) +
-                '&nombre=' + encodeURIComponent(nombre) +
-                '&apellido=' + encodeURIComponent(apellido) +
-                '&entidad=' + encodeURIComponent(entidad) +
-                '&numero_afi=' + encodeURIComponent(numeroAfi) +
-                '&fecha_referencia=null' +
-                '&origen=' +
-                '&popup=true';
+                '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>'
+                + '&struts_action=/compras/buscar_afiliados'
+                + '&cuil=' + encodeURIComponent(cuil)
+                + '&inte=' + encodeURIComponent(inte)
+                + '&tipoDoc=' + encodeURIComponent(tipoDoc)
+                + '&nroDoc=' + encodeURIComponent(nroDoc)
+                + '&seccional=' + encodeURIComponent(seccional)
+                + '&nombre=' + encodeURIComponent(nombre)
+                + '&apellido=' + encodeURIComponent(apellido)
+                + '&entidad=' + encodeURIComponent(entidad)
+                + '&numero_afi=' + encodeURIComponent(numeroAfi)
+                + '&fecha_referencia=null'
+                + '&origen='
+                + '&popup=true';
 
         jQuery(popupAfill).load(url);
-
         return false;
     }
 
-    function <portlet:namespace />buscarAfiliados_(
-            fechaReferencia) {
-
+    function <portlet:namespace />buscarAfiliados_(fechaReferencia) {
         return <portlet:namespace />buscarAfiliados();
     }
 
     function <portlet:namespace />buscarSeccional() {
         var id_seccional =
-                jQuery(
-                        "#<portlet:namespace />id_seccional"
-                ).val();
-
+                jQuery('#<portlet:namespace />id_seccional').val();
         var seccional =
-                jQuery(
-                        "#<portlet:namespace />seccional"
-                ).val();
+                jQuery('#<portlet:namespace />seccional').val();
 
         if (!<portlet:namespace />validaFormSecc(
                 id_seccional,
@@ -881,63 +846,42 @@ if (tercerizadoras == null) {
         });
 
         var url =
-                '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-                '&struts_action=/compras/buscar_seccional' +
-                '&id_seccional='
-                    + encodeURIComponent(id_seccional) +
-                '&seccional='
-                    + encodeURIComponent(seccional) +
-                '&prefijo=';
+                '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>'
+                + '&struts_action=/compras/buscar_seccional'
+                + '&id_seccional=' + encodeURIComponent(id_seccional)
+                + '&seccional=' + encodeURIComponent(seccional)
+                + '&prefijo=';
 
         jQuery(popup).load(url);
-
         return false;
     }
 
     function <portlet:namespace />buscarSeccionalOnDiv(e) {
         var evtobj = window.event ? event : e;
-
         var keyPressed =
                 evtobj.keyCode
                         ? evtobj.keyCode
                         : evtobj.charCode;
 
         if (jQuery(
-                "#<portlet:namespace />secc_seleccionada"
-        ).val() == "1"
+                '#<portlet:namespace />secc_seleccionada'
+        ).val() == '1'
                 && keyPressed != 9
                 && keyPressed != 16) {
 
-            jQuery(
-                    "#<portlet:namespace />seccional"
-            ).val("");
-
-            jQuery(
-                    "#<portlet:namespace />id_seccional"
-            ).val("");
-
-            jQuery(
-                    "#<portlet:namespace />secc_seleccionada"
-            ).val("");
-
-            jQuery(
-                    "#<portlet:namespace />btnBuscarSeccional"
-            ).show();
+            jQuery('#<portlet:namespace />seccional').val('');
+            jQuery('#<portlet:namespace />id_seccional').val('');
+            jQuery('#<portlet:namespace />secc_seleccionada').val('');
+            jQuery('#<portlet:namespace />btnBuscarSeccional').show();
 
             <portlet:namespace />sincronizarAfiliadoFiltro();
-
             return false;
         }
 
         var id_seccional =
-                jQuery(
-                        "#<portlet:namespace />id_seccional"
-                ).val();
-
+                jQuery('#<portlet:namespace />id_seccional').val();
         var seccional =
-                jQuery(
-                        "#<portlet:namespace />seccional"
-                ).val();
+                jQuery('#<portlet:namespace />seccional').val();
 
         if ((seccional.length >= 3
                 || id_seccional.length > 2)
@@ -945,40 +889,31 @@ if (tercerizadoras == null) {
                 && keyPressed != 16) {
 
             if (id_seccional.length > 2) {
-                jQuery(
-                        "#<portlet:namespace />seccional"
-                ).val("");
+                jQuery('#<portlet:namespace />seccional').val('');
             } else {
-                jQuery(
-                        "#<portlet:namespace />id_seccional"
-                ).val("");
+                jQuery('#<portlet:namespace />id_seccional').val('');
             }
 
             var url =
-                    '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-                    '&struts_action=/compras/buscar_seccional' +
-                    '&id_seccional='
-                        + encodeURIComponent(id_seccional) +
-                    '&seccional='
-                        + encodeURIComponent(seccional) +
-                    '&prefijo=';
+                    '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>'
+                    + '&struts_action=/compras/buscar_seccional'
+                    + '&id_seccional=' + encodeURIComponent(id_seccional)
+                    + '&seccional=' + encodeURIComponent(seccional)
+                    + '&prefijo=';
 
-            jQuery(
-                    "#divSeccional"
-            ).load(url);
-
-            jQuery(
-                    "#divSeccional"
-            ).show();
+            jQuery('#divSeccional').load(url);
+            jQuery('#divSeccional').show();
         } else {
-            jQuery(
-                    "#divSeccional"
-            ).hide("slow");
+            jQuery('#divSeccional').hide('slow');
         }
 
         return true;
     }
 
+    /*
+     * Firma global legacy consumida por el resultado de busqueda de afiliado.
+     * No modificar orden ni cantidad de parametros.
+     */
     function seleccionaCamposAfiliado(
             cuil,
             inte,
@@ -1004,115 +939,73 @@ if (tercerizadoras == null) {
             fechaRecepcion,
             tieneAntecedentes) {
 
-        jQuery(
-                '#<portlet:namespace />cuil'
-        ).val(cuil);
-
-        jQuery(
-                '#<portlet:namespace />inte'
-        ).val(inte);
-
-        jQuery(
-                '#<portlet:namespace />tipoDoc'
-        ).val(docu_tipo);
-
-        jQuery(
-                '#<portlet:namespace />nroDoc'
-        ).val(docu_nro);
-
-        jQuery(
-                '#<portlet:namespace />id_seccional'
-        ).val(id_secc);
-
-        jQuery(
-                '#<portlet:namespace />seccional'
-        ).val(desc_secc);
-
-        jQuery(
-                '#<portlet:namespace />apellido'
-        ).val(apellido);
-
-        jQuery(
-                '#<portlet:namespace />nombre'
-        ).val(nombre);
-
-        jQuery(
-                '#<portlet:namespace />secc_seleccionada'
-        ).val('1');
+        jQuery('#<portlet:namespace />cuil').val(cuil);
+        jQuery('#<portlet:namespace />inte').val(inte);
+        jQuery('#<portlet:namespace />tipoDoc').val(docu_tipo);
+        jQuery('#<portlet:namespace />nroDoc').val(docu_nro);
+        jQuery('#<portlet:namespace />id_seccional').val(id_secc);
+        jQuery('#<portlet:namespace />seccional').val(desc_secc);
+        jQuery('#<portlet:namespace />apellido').val(apellido);
+        jQuery('#<portlet:namespace />nombre').val(nombre);
+        jQuery('#<portlet:namespace />secc_seleccionada').val('1');
 
         var entidadSeleccionada =
-                jQuery(
-                        '#<portlet:namespace />entidad'
-                ).val();
+                jQuery('#<portlet:namespace />entidad').val();
 
         var numeroAfiliado = '';
 
         if (entidadSeleccionada
                 == '<%= WebKeysGlobal.ENTIDADES_UOMA[0] %>') {
-
             numeroAfiliado = ospim;
         }
 
         if (entidadSeleccionada
                 == '<%= WebKeysGlobal.ENTIDADES_UOMA[2] %>') {
-
             numeroAfiliado = uoma;
         }
 
         if (entidadSeleccionada
                 == '<%= WebKeysGlobal.ENTIDADES_UOMA[1] %>') {
-
             numeroAfiliado = amtima;
         }
 
         if (numeroAfiliado == null
                 || numeroAfiliado == 'null') {
-
             numeroAfiliado = '';
         }
 
-        jQuery(
-                '#<portlet:namespace />numero_afi'
-        ).val(numeroAfiliado);
+        jQuery('#<portlet:namespace />numero_afi').val(numeroAfiliado);
 
         if (bajaFecha != null
                 && bajaFecha != 'null') {
 
-            jQuery(
-                    '#<portlet:namespace />baja_fecha'
-            ).val(bajaFecha);
+            jQuery('#<portlet:namespace />baja_fecha').val(bajaFecha);
 
             var bajaFechaInput =
                     document.getElementById(
-                            "<portlet:namespace />baja_fecha"
+                            '<portlet:namespace />baja_fecha'
                     );
 
             if (bajaFechaInput) {
                 if (bajaFecha != '') {
-                    bajaFechaInput.style.background = "red";
-                    bajaFechaInput.style.color = "white";
+                    bajaFechaInput.style.background = 'red';
+                    bajaFechaInput.style.color = 'white';
                 } else {
-                    bajaFechaInput.style.background = "white";
-                    bajaFechaInput.style.color = "black";
+                    bajaFechaInput.style.background = 'white';
+                    bajaFechaInput.style.color = 'black';
                 }
             }
         }
 
-        jQuery(
-                '#<portlet:namespace />fecha_alta_af'
-        ).val(
+        jQuery('#<portlet:namespace />fecha_alta_af').val(
                 fecha_alta_af != null
                 && fecha_alta_af != 'null'
                         ? fecha_alta_af
                         : ''
         );
 
-        if (jQuery(
-                '#<portlet:namespace />nombre_plan'
-        ).length > 0) {
-            jQuery(
-                    '#<portlet:namespace />nombre_plan'
-            ).val(
+        if (jQuery('#<portlet:namespace />nombre_plan').length > 0) {
+            jQuery('#<portlet:namespace />nombre_plan').val(
                     nombre_plan != null
                     && nombre_plan != 'null'
                             ? nombre_plan
@@ -1120,12 +1013,8 @@ if (tercerizadoras == null) {
             );
         }
 
-        if (jQuery(
-                '#<portlet:namespace />id_plan'
-        ).length > 0) {
-            jQuery(
-                    '#<portlet:namespace />id_plan'
-            ).val(
+        if (jQuery('#<portlet:namespace />id_plan').length > 0) {
+            jQuery('#<portlet:namespace />id_plan').val(
                     id_plan != null
                     && id_plan != 'null'
                             ? id_plan
@@ -1133,12 +1022,8 @@ if (tercerizadoras == null) {
             );
         }
 
-        if (jQuery(
-                '#<portlet:namespace />id_tercerizadora'
-        ).length > 0) {
-            jQuery(
-                    '#<portlet:namespace />id_tercerizadora'
-            ).val(
+        if (jQuery('#<portlet:namespace />id_tercerizadora').length > 0) {
+            jQuery('#<portlet:namespace />id_tercerizadora').val(
                     id_tercerizadora != null
                     && id_tercerizadora != 'null'
                             ? id_tercerizadora
@@ -1146,12 +1031,8 @@ if (tercerizadoras == null) {
             );
         }
 
-        if (jQuery(
-                '#<portlet:namespace />afi_tercerizadora'
-        ).length > 0) {
-            jQuery(
-                    '#<portlet:namespace />afi_tercerizadora'
-            ).val(
+        if (jQuery('#<portlet:namespace />afi_tercerizadora').length > 0) {
+            jQuery('#<portlet:namespace />afi_tercerizadora').val(
                     afi_tercerizadora != null
                     && afi_tercerizadora != 'null'
                             ? afi_tercerizadora
@@ -1159,12 +1040,8 @@ if (tercerizadoras == null) {
             );
         }
 
-        if (jQuery(
-                '#<portlet:namespace />incapacidad_af'
-        ).length > 0) {
-            jQuery(
-                    '#<portlet:namespace />incapacidad_af'
-            ).val(
+        if (jQuery('#<portlet:namespace />incapacidad_af').length > 0) {
+            jQuery('#<portlet:namespace />incapacidad_af').val(
                     incapacidad_af != null
                     && incapacidad_af != 'null'
                             ? incapacidad_af
@@ -1172,12 +1049,8 @@ if (tercerizadoras == null) {
             );
         }
 
-        if (jQuery(
-                '#<portlet:namespace />nroSocioPrevencion'
-        ).length > 0) {
-            jQuery(
-                    '#<portlet:namespace />nroSocioPrevencion'
-            ).val(
+        if (jQuery('#<portlet:namespace />nroSocioPrevencion').length > 0) {
+            jQuery('#<portlet:namespace />nroSocioPrevencion').val(
                     nroSocioPrev != null
                     && nroSocioPrev != 'null'
                             ? nroSocioPrev
@@ -1185,12 +1058,8 @@ if (tercerizadoras == null) {
             );
         }
 
-        if (jQuery(
-                '#<portlet:namespace />nroCredencialPrevencion'
-        ).length > 0) {
-            jQuery(
-                    '#<portlet:namespace />nroCredencialPrevencion'
-            ).val(
+        if (jQuery('#<portlet:namespace />nroCredencialPrevencion').length > 0) {
+            jQuery('#<portlet:namespace />nroCredencialPrevencion').val(
                     nroCredenPrev != null
                     && nroCredenPrev != 'null'
                             ? nroCredenPrev
@@ -1198,12 +1067,8 @@ if (tercerizadoras == null) {
             );
         }
 
-        if (jQuery(
-                '#<portlet:namespace />tieneAntecedentes'
-        ).length > 0) {
-            jQuery(
-                    '#<portlet:namespace />tieneAntecedentes'
-            ).val(
+        if (jQuery('#<portlet:namespace />tieneAntecedentes').length > 0) {
+            jQuery('#<portlet:namespace />tieneAntecedentes').val(
                     tieneAntecedentes == '1'
                             ? '1'
                             : '0'
@@ -1234,146 +1099,85 @@ if (tercerizadoras == null) {
 
         if (estado == '') {
             estado =
-                    jQuery(
-                            '#<portlet:namespace />estado'
-                    ).val();
+                    jQuery('#<portlet:namespace />estado').val();
         }
 
         var sector_id =
-                jQuery(
-                        '#<portlet:namespace />sector_id'
-                ).val();
+                jQuery('#<portlet:namespace />sector_id').val();
 
         var afiliado_cuil_titular =
-                jQuery(
-                        '#<portlet:namespace />afiliado_cuil_titular'
-                ).val();
+                jQuery('#<portlet:namespace />afiliado_cuil_titular').val();
 
         var afiliado_int =
-                jQuery(
-                        '#<portlet:namespace />afiliado_int'
-                ).val();
+                jQuery('#<portlet:namespace />afiliado_int').val();
 
         var afiliado_tipo_doc =
-                jQuery(
-                        '#<portlet:namespace />afiliado_tipo_doc'
-                ).val();
+                jQuery('#<portlet:namespace />afiliado_tipo_doc').val();
 
         var afiliado_nro_doc =
-                jQuery(
-                        '#<portlet:namespace />afiliado_nro_doc'
-                ).val();
+                jQuery('#<portlet:namespace />afiliado_nro_doc').val();
 
         var afiliado_apellido =
-                jQuery(
-                        '#<portlet:namespace />afiliado_apellido'
-                ).val();
+                jQuery('#<portlet:namespace />afiliado_apellido').val();
 
         var afiliado_nombre =
-                jQuery(
-                        '#<portlet:namespace />afiliado_nombre'
-                ).val();
+                jQuery('#<portlet:namespace />afiliado_nombre').val();
 
         var afiliado_id_seccional =
-                jQuery(
-                        '#<portlet:namespace />afiliado_id_seccional'
-                ).val();
+                jQuery('#<portlet:namespace />afiliado_id_seccional').val();
 
         var id_tercerizadora =
                 <portlet:namespace />sincronizarTercerizadoraFiltro();
 
         var surge =
-                jQuery(
-                        '#<portlet:namespace />surge'
-                ).val();
+                jQuery('#<portlet:namespace />surge').val();
 
-        jQuery(
-                '#<portlet:namespace />buscando'
-        ).show();
+        jQuery('#<portlet:namespace />buscando').show();
 
         var url =
-                '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" />' +
-                '&struts_action=/compras/buscar_requerimientos' +
-                '&estado='
-                    + encodeURIComponent(estado) +
-                '&sector_id='
-                    + encodeURIComponent(sector_id) +
-                '&afiliado_cuil_titular='
-                    + encodeURIComponent(
-                            afiliado_cuil_titular
-                    ) +
-                '&afiliado_int='
-                    + encodeURIComponent(
-                            afiliado_int
-                    ) +
-                '&afiliado_tipo_doc='
-                    + encodeURIComponent(
-                            afiliado_tipo_doc
-                    ) +
-                '&afiliado_nro_doc='
-                    + encodeURIComponent(
-                            afiliado_nro_doc
-                    ) +
-                '&afiliado_apellido='
-                    + encodeURIComponent(
-                            afiliado_apellido
-                    ) +
-                '&afiliado_nombre='
-                    + encodeURIComponent(
-                            afiliado_nombre
-                    ) +
-                '&afiliado_id_seccional='
-                    + encodeURIComponent(
-                            afiliado_id_seccional
-                    ) +
-                '&id_tercerizadora='
-                    + encodeURIComponent(
-                            id_tercerizadora
-                    ) +
-                '&surge='
-                    + encodeURIComponent(
-                            surge
-                    ) +
-                '&<portlet:namespace />estado='
-                    + encodeURIComponent(estado) +
-                '&<portlet:namespace />sector_id='
-                    + encodeURIComponent(sector_id) +
-                '&<portlet:namespace />afiliado_cuil_titular='
-                    + encodeURIComponent(
-                            afiliado_cuil_titular
-                    ) +
-                '&<portlet:namespace />afiliado_int='
-                    + encodeURIComponent(
-                            afiliado_int
-                    ) +
-                '&<portlet:namespace />afiliado_tipo_doc='
-                    + encodeURIComponent(
-                            afiliado_tipo_doc
-                    ) +
-                '&<portlet:namespace />afiliado_nro_doc='
-                    + encodeURIComponent(
-                            afiliado_nro_doc
-                    ) +
-                '&<portlet:namespace />afiliado_apellido='
-                    + encodeURIComponent(
-                            afiliado_apellido
-                    ) +
-                '&<portlet:namespace />afiliado_nombre='
-                    + encodeURIComponent(
-                            afiliado_nombre
-                    ) +
-                '&<portlet:namespace />afiliado_id_seccional='
-                    + encodeURIComponent(
-                            afiliado_id_seccional
-                    ) +
-                '&<portlet:namespace />id_tercerizadora='
-                    + encodeURIComponent(
-                            id_tercerizadora
-                    ) +
-                '&<portlet:namespace />surge='
-                    + encodeURIComponent(
-                            surge
-                    )
+                '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" />'
+                + '&struts_action=/compras/buscar_requerimientos'
+                + '&estado=' + encodeURIComponent(estado)
+                + '&sector_id=' + encodeURIComponent(sector_id)
+                + '&afiliado_cuil_titular='
+                    + encodeURIComponent(afiliado_cuil_titular)
+                + '&afiliado_int='
+                    + encodeURIComponent(afiliado_int)
+                + '&afiliado_tipo_doc='
+                    + encodeURIComponent(afiliado_tipo_doc)
+                + '&afiliado_nro_doc='
+                    + encodeURIComponent(afiliado_nro_doc)
+                + '&afiliado_apellido='
+                    + encodeURIComponent(afiliado_apellido)
+                + '&afiliado_nombre='
+                    + encodeURIComponent(afiliado_nombre)
+                + '&afiliado_id_seccional='
+                    + encodeURIComponent(afiliado_id_seccional)
+                + '&id_tercerizadora='
+                    + encodeURIComponent(id_tercerizadora)
+                + '&surge=' + encodeURIComponent(surge)
+                + '&<portlet:namespace />estado='
+                    + encodeURIComponent(estado)
+                + '&<portlet:namespace />sector_id='
+                    + encodeURIComponent(sector_id)
+                + '&<portlet:namespace />afiliado_cuil_titular='
+                    + encodeURIComponent(afiliado_cuil_titular)
+                + '&<portlet:namespace />afiliado_int='
+                    + encodeURIComponent(afiliado_int)
+                + '&<portlet:namespace />afiliado_tipo_doc='
+                    + encodeURIComponent(afiliado_tipo_doc)
+                + '&<portlet:namespace />afiliado_nro_doc='
+                    + encodeURIComponent(afiliado_nro_doc)
+                + '&<portlet:namespace />afiliado_apellido='
+                    + encodeURIComponent(afiliado_apellido)
+                + '&<portlet:namespace />afiliado_nombre='
+                    + encodeURIComponent(afiliado_nombre)
+                + '&<portlet:namespace />afiliado_id_seccional='
+                    + encodeURIComponent(afiliado_id_seccional)
+                + '&<portlet:namespace />id_tercerizadora='
+                    + encodeURIComponent(id_tercerizadora)
+                + '&<portlet:namespace />surge='
+                    + encodeURIComponent(surge)
                 + '&<%= WebKeysCompras.PARAM_COTIZADOS_INCLUYE_RECLAMO_RP %>='
                     + encodeURIComponent(
                             '<%= cotizadosIncluyeReclamoRp
@@ -1386,9 +1190,7 @@ if (tercerizadoras == null) {
         ).load(
                 url,
                 function() {
-                    jQuery(
-                            '#<portlet:namespace />buscando'
-                    ).hide();
+                    jQuery('#<portlet:namespace />buscando').hide();
                 }
         );
 
@@ -1397,18 +1199,16 @@ if (tercerizadoras == null) {
 
     function <portlet:namespace />altaRequerimiento() {
         var url =
-                '<portlet:renderURL windowState="<%= WindowState.MAXIMIZED.toString() %>">' +
-                '<portlet:param name="struts_action" value="/compras/nuevo_requerimiento" />' +
-                '<portlet:param name="modo" value="alta" />' +
-                '</portlet:renderURL>';
+                '<portlet:renderURL windowState="<%= WindowState.MAXIMIZED.toString() %>">'
+                + '<portlet:param name="struts_action" value="/compras/nuevo_requerimiento" />'
+                + '<portlet:param name="modo" value="alta" />'
+                + '</portlet:renderURL>';
 
         window.location.href = url;
     }
 
     jQuery(function() {
-        jQuery(
-                '#<portlet:namespace />buscar'
-        ).click(function() {
+        jQuery('#<portlet:namespace />buscar').click(function() {
             <portlet:namespace />buscarRequerimientos();
         });
 
@@ -1470,11 +1270,7 @@ if (tercerizadoras == null) {
         });
 
         <portlet:namespace />desbloquearTercerizadoraFiltro(false);
-
-        jQuery(
-                '#<portlet:namespace />buscando'
-        ).show();
-
+        jQuery('#<portlet:namespace />buscando').show();
         <portlet:namespace />buscarRequerimientos();
     });
 </script>

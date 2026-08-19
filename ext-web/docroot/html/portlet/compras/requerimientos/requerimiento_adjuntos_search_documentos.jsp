@@ -7,7 +7,6 @@
 <%@ page import="ar.com.ospim.util.PermissionUtil" %>
 <%@ page import="com.liferay.portal.kernel.dao.search.ResultRow" %>
 <%@ page import="com.liferay.portal.kernel.dao.search.SearchContainer" %>
-<%@ page import="com.liferay.portal.kernel.language.LanguageUtil" %>
 <%@ page import="com.liferay.portal.kernel.log.Log" %>
 <%@ page import="com.liferay.portal.kernel.log.LogFactoryUtil" %>
 <%@ page import="com.liferay.portal.kernel.portlet.LiferayWindowState" %>
@@ -19,6 +18,7 @@
 <%@ page import="javax.portlet.PortletURL" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
 
 <%
 Log logPresupuestos =
@@ -33,9 +33,16 @@ long groupIdPresupuestos =
         themeDisplay.getScopeGroupId();
 
 RequerimientoCompra reqPresupuestos =
-        (RequerimientoCompra) renderRequest.getAttribute(
-                WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION
+        (RequerimientoCompra) request.getAttribute(
+                "compras.requerimiento.req"
         );
+
+if (reqPresupuestos == null) {
+    reqPresupuestos =
+            (RequerimientoCompra) renderRequest.getAttribute(
+                    WebKeysCompras.REQUERIMIENTO_COMPRA_EN_EDICION
+            );
+}
 
 if (reqPresupuestos == null) {
     reqPresupuestos =
@@ -45,13 +52,9 @@ if (reqPresupuestos == null) {
 }
 
 int idRequerimientoCompraPresupuestos =
-        0;
-
-if (reqPresupuestos != null) {
-    idRequerimientoCompraPresupuestos =
-            reqPresupuestos
-                    .getIdRequerimientoCompra();
-}
+        reqPresupuestos != null
+                ? reqPresupuestos.getIdRequerimientoCompra()
+                : 0;
 
 if (idRequerimientoCompraPresupuestos <= 0) {
     idRequerimientoCompraPresupuestos =
@@ -81,38 +84,37 @@ String strutsActionPresupuestos =
                 ""
         );
 
-boolean soloLecturaParamPresupuestos =
-        ParamUtil.getBoolean(
+boolean soloLecturaPresupuestos =
+        Boolean.TRUE.equals(soloLecturaAttrPresupuestos)
+        || ParamUtil.getBoolean(
                 request,
                 "solo_lectura",
                 false
-        );
-
-boolean soloLecturaPresupuestos =
-        Boolean.TRUE.equals(
-                soloLecturaAttrPresupuestos
         )
-        || soloLecturaParamPresupuestos
-        || "ver".equalsIgnoreCase(
-                modoPresupuestos
-        )
+        || "ver".equalsIgnoreCase(modoPresupuestos)
         || "/compras/ver_requerimiento".equals(
                 strutsActionPresupuestos
         );
 
-boolean puedeCotizarPresupuestos =
-        user != null
-        && PermissionUtil.userContainsRole(
-                user,
-                WebKeysCompras.ROL_COTIZAR_COMPRAS
+Object puedeCotizarAttr =
+        request.getAttribute(
+                "compras.requerimiento.puedeCotizar"
         );
+
+boolean puedeCotizarPresupuestos =
+        puedeCotizarAttr instanceof Boolean
+                ? Boolean.TRUE.equals(puedeCotizarAttr)
+                : user != null
+                        && PermissionUtil.userContainsRole(
+                                user,
+                                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                        );
 
 boolean puedeEliminarPresupuestos =
         idRequerimientoCompraPresupuestos > 0
         && puedeCotizarPresupuestos
         && reqPresupuestos != null
-        && reqPresupuestos
-                .puedeAdministrarPresupuestos()
+        && reqPresupuestos.puedeAdministrarPresupuestos()
         && !soloLecturaPresupuestos;
 
 PortletURL portletURL =
@@ -124,22 +126,10 @@ portletURL.setWindowState(
 
 List<String> headerNames =
         new ArrayList<String>();
-
-headerNames.add(
-        "Archivo"
-);
-
-headerNames.add(
-        "Prestador"
-);
-
-headerNames.add(
-        "Descargar"
-);
-
-headerNames.add(
-        "Eliminar"
-);
+headerNames.add("Archivo");
+headerNames.add("Prestador");
+headerNames.add("Descargar");
+headerNames.add("Eliminar");
 
 String mensajeSinResultados =
         idRequerimientoCompraPresupuestos > 0
@@ -158,16 +148,43 @@ SearchContainer searchContainer =
                 mensajeSinResultados
         );
 
-try {
-    List<RequerimientoCompraPresupuesto> presupuestos =
-            new ArrayList<RequerimientoCompraPresupuesto>();
+/*
+ * Contrato de migracion:
+ * - compras.requerimiento.presupuestos
+ * - compras.requerimiento.presupuestoDocumentoValido (Map<Integer, Boolean>)
+ * - compras.requerimiento.presupuestoDownloadURL (Map<Integer, String>)
+ *
+ * Si los Actions ya publican esos atributos, este JSP no toca Document
+ * Library. El fallback mantiene intacto el funcionamiento del despliegue
+ * actual hasta que se complete ese wiring.
+ */
+List<RequerimientoCompraPresupuesto> presupuestos =
+        (List<RequerimientoCompraPresupuesto>) request.getAttribute(
+                "compras.requerimiento.presupuestos"
+        );
 
-    if (idRequerimientoCompraPresupuestos > 0) {
+Map<Integer, Boolean> documentosValidosPreparados =
+        (Map<Integer, Boolean>) request.getAttribute(
+                "compras.requerimiento.presupuestoDocumentoValido"
+        );
+
+Map<Integer, String> downloadUrlsPreparadas =
+        (Map<Integer, String>) request.getAttribute(
+                "compras.requerimiento.presupuestoDownloadURL"
+        );
+
+try {
+    if (presupuestos == null) {
         presupuestos =
-                BusquedaRequerimientoCompraServiceUtil
-                        .listarPresupuestos(
-                                idRequerimientoCompraPresupuestos
-                        );
+                new ArrayList<RequerimientoCompraPresupuesto>();
+
+        if (idRequerimientoCompraPresupuestos > 0) {
+            presupuestos =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .listarPresupuestos(
+                                    idRequerimientoCompraPresupuestos
+                            );
+        }
     }
 
     if (presupuestos == null) {
@@ -175,48 +192,32 @@ try {
                 new ArrayList<RequerimientoCompraPresupuesto>();
     }
 
-    int total =
-            presupuestos.size();
+    int total = presupuestos.size();
+    searchContainer.setTotal(total);
 
-    searchContainer.setTotal(
-            total
-    );
-
-    int inicio =
-            searchContainer.getStart();
-
-    int fin =
-            searchContainer.getEnd();
+    int inicio = searchContainer.getStart();
+    int fin = searchContainer.getEnd();
 
     if (inicio < 0) {
-        inicio =
-                0;
+        inicio = 0;
     }
 
     if (fin > total) {
-        fin =
-                total;
+        fin = total;
     }
 
     List resultRows =
             searchContainer.getResultRows();
 
-    for (int i = inicio;
-            i < fin;
-            i++) {
-
+    for (int i = inicio; i < fin; i++) {
         RequerimientoCompraPresupuesto presupuesto =
-                presupuestos.get(
-                        i
-                );
+                presupuestos.get(i);
 
         if (presupuesto == null
-                || presupuesto
-                        .getIdRequerimientoPresupuesto() == null
+                || presupuesto.getIdRequerimientoPresupuesto() == null
                 || presupuesto
                         .getIdRequerimientoPresupuesto()
                         .intValue() <= 0) {
-
             continue;
         }
 
@@ -232,170 +233,172 @@ try {
                         i
                 );
 
-        row.setObject(
-                presupuesto
-        );
+        row.setObject(presupuesto);
 
         String archivoVisible =
                 presupuesto.getNombreOriginal();
 
-        if (WebKeysCompras.isEmpty(
-                archivoVisible
-        )) {
-            archivoVisible =
-                    presupuesto.getTitulo();
+        if (WebKeysCompras.isEmpty(archivoVisible)) {
+            archivoVisible = presupuesto.getTitulo();
         }
 
-        if (WebKeysCompras.isEmpty(
-                archivoVisible
-        )) {
-            archivoVisible =
-                    presupuesto.getNombrePersistido();
+        if (WebKeysCompras.isEmpty(archivoVisible)) {
+            archivoVisible = presupuesto.getNombrePersistido();
         }
 
         row.addText(
-                HtmlUtil.escape(
-                        archivoVisible
-                )
+                HtmlUtil.escape(archivoVisible)
         );
 
         row.addText(
                 HtmlUtil.escape(
-                        presupuesto
-                                .getDescripcionPrestador()
+                        presupuesto.getDescripcionPrestador()
                 )
         );
 
-        DLFileEntry fileEntry =
-                null;
+        boolean documentoValido = false;
+        String downloadURL = "";
 
-        boolean documentoValido =
-                false;
-
-        try {
-            if (presupuesto.getDlFileEntryId() != null
-                    && presupuesto
-                            .getDlFileEntryId()
-                            .longValue() > 0L) {
-
-                fileEntry =
-                        DLFileEntryLocalServiceUtil
-                                .getDLFileEntry(
-                                        presupuesto
-                                                .getDlFileEntryId()
-                                                .longValue()
-                                );
-            }
+        if (documentosValidosPreparados != null
+                && downloadUrlsPreparadas != null
+                && documentosValidosPreparados.containsKey(
+                        Integer.valueOf(idRequerimientoPresupuesto)
+                )) {
 
             documentoValido =
-                    fileEntry != null
-                    && presupuesto.getDlGroupId() != null
-                    && presupuesto.getDlFolderId() != null
-                    && presupuesto.getNombrePersistido() != null
-                    && fileEntry.getFileEntryId()
-                            == presupuesto
-                                    .getDlFileEntryId()
-                                    .longValue()
-                    && fileEntry.getGroupId()
-                            == presupuesto
-                                    .getDlGroupId()
-                                    .longValue()
-                    && fileEntry.getFolderId()
-                            == presupuesto
-                                    .getDlFolderId()
-                                    .longValue()
-                    && presupuesto
-                            .getNombrePersistido()
-                            .equals(
-                                    fileEntry.getName()
-                            );
+                    Boolean.TRUE.equals(
+                            documentosValidosPreparados.get(
+                                    Integer.valueOf(
+                                            idRequerimientoPresupuesto
+                                    )
+                            )
+                    );
 
-            if (documentoValido
-                    && !WebKeysCompras.isEmpty(
-                            presupuesto.getDlFileUuid()
-                    )) {
+            String urlPreparada =
+                    downloadUrlsPreparadas.get(
+                            Integer.valueOf(
+                                    idRequerimientoPresupuesto
+                            )
+                    );
+
+            downloadURL =
+                    urlPreparada != null
+                            ? urlPreparada
+                            : "";
+
+        } else {
+            /*
+             * Compatibilidad transitoria. Esta rama debe desaparecer cuando
+             * el Action publique el estado documental mediante el helper
+             * canonico de Document Library.
+             */
+            DLFileEntry fileEntry = null;
+
+            try {
+                if (presupuesto.getDlFileEntryId() != null
+                        && presupuesto
+                                .getDlFileEntryId()
+                                .longValue() > 0L) {
+
+                    fileEntry =
+                            DLFileEntryLocalServiceUtil
+                                    .getDLFileEntry(
+                                            presupuesto
+                                                    .getDlFileEntryId()
+                                                    .longValue()
+                                    );
+                }
 
                 documentoValido =
-                        presupuesto
-                                .getDlFileUuid()
-                                .equals(
-                                        fileEntry.getUuid()
-                                );
-            }
+                        fileEntry != null
+                        && presupuesto.getDlGroupId() != null
+                        && presupuesto.getDlFolderId() != null
+                        && presupuesto.getNombrePersistido() != null
+                        && fileEntry.getFileEntryId()
+                                == presupuesto
+                                        .getDlFileEntryId()
+                                        .longValue()
+                        && fileEntry.getGroupId()
+                                == presupuesto
+                                        .getDlGroupId()
+                                        .longValue()
+                        && fileEntry.getFolderId()
+                                == presupuesto
+                                        .getDlFolderId()
+                                        .longValue()
+                        && presupuesto
+                                .getNombrePersistido()
+                                .equals(fileEntry.getName());
 
-            if (documentoValido
-                    && groupIdPresupuestos > 0L) {
+                if (documentoValido
+                        && !WebKeysCompras.isEmpty(
+                                presupuesto.getDlFileUuid()
+                        )) {
 
-                documentoValido =
-                        fileEntry.getGroupId()
-                                == groupIdPresupuestos;
-            }
-        } catch (Exception documentoError) {
-            documentoValido =
-                    false;
+                    documentoValido =
+                            presupuesto
+                                    .getDlFileUuid()
+                                    .equals(fileEntry.getUuid());
+                }
 
-            if (logPresupuestos.isDebugEnabled()) {
-                logPresupuestos.debug(
-                        "No se pudo validar el documento asociado "
-                                + "al presupuesto. "
-                                + "idRequerimientoPresupuesto="
-                                + idRequerimientoPresupuesto,
-                        documentoError
-                );
+                if (documentoValido
+                        && groupIdPresupuestos > 0L) {
+
+                    documentoValido =
+                            fileEntry.getGroupId()
+                                    == groupIdPresupuestos;
+                }
+
+                if (documentoValido) {
+                    downloadURL =
+                            themeDisplay.getPathMain()
+                                    + "/document_library/get_file?folderId="
+                                    + fileEntry.getFolderId()
+                                    + "&name="
+                                    + HttpUtil.encodeURL(
+                                            fileEntry.getName()
+                                    );
+                }
+            } catch (Exception documentoError) {
+                documentoValido = false;
+                downloadURL = "";
+
+                if (logPresupuestos.isDebugEnabled()) {
+                    logPresupuestos.debug(
+                            "No se pudo validar el documento asociado "
+                                    + "al presupuesto. "
+                                    + "idRequerimientoPresupuesto="
+                                    + idRequerimientoPresupuesto,
+                            documentoError
+                    );
+                }
             }
         }
 
         StringBuilder descargar =
                 new StringBuilder();
 
-        if (documentoValido) {
-            String downloadURL =
-                    themeDisplay.getPathMain()
-                            + "/document_library/get_file?folderId="
-                            + fileEntry.getFolderId()
-                            + "&name="
-                            + HttpUtil.encodeURL(
-                                    fileEntry.getName()
-                            );
+        if (documentoValido
+                && !WebKeysCompras.isEmpty(downloadURL)) {
 
-            descargar.append(
-                    "<a href=\""
-            );
-
-            descargar.append(
-                    HtmlUtil.escape(
-                            downloadURL
-                    )
-            );
-
-            descargar.append(
-                    "\" target=\"_blank\">"
-            );
-
+            descargar.append("<a href=\"");
+            descargar.append(HtmlUtil.escape(downloadURL));
+            descargar.append("\" target=\"_blank\">");
             descargar.append(
                     "<img alt=\"Descargar presupuesto\" src=\""
             );
-
             descargar.append(
                     themeDisplay.getPathThemeImages()
             );
-
-            descargar.append(
-                    "/common/view.png\" />"
-            );
-
-            descargar.append(
-                    "</a>"
-            );
+            descargar.append("/common/view.png\" />");
+            descargar.append("</a>");
         } else {
             descargar.append(
                     "<span title=\"El documento asociado no está disponible\">No disponible</span>"
             );
         }
 
-        row.addText(
-                descargar.toString()
-        );
+        row.addText(descargar.toString());
 
         StringBuilder borrar =
                 new StringBuilder();
@@ -406,39 +409,22 @@ try {
             borrar.append(
                     "<img alt=\"Eliminar presupuesto\" src=\""
             );
-
             borrar.append(
                     themeDisplay.getPathThemeImages()
             );
-
             borrar.append(
                     "/common/delete.png\" style=\"cursor: pointer;\" onclick=\"return "
             );
-
-            borrar.append(
-                    namespaceAdjuntos
-            );
-
+            borrar.append(namespaceAdjuntos);
             borrar.append(
                     "deletePresupuestoRequerimientoCompra("
             );
-
-            borrar.append(
-                    idRequerimientoPresupuesto
-            );
-
-            borrar.append(
-                    ");\" />"
-            );
+            borrar.append(idRequerimientoPresupuesto);
+            borrar.append(");\" />");
         }
 
-        row.addText(
-                borrar.toString()
-        );
-
-        resultRows.add(
-                row
-        );
+        row.addText(borrar.toString());
+        resultRows.add(row);
     }
 %>
 <liferay-ui:search-iterator

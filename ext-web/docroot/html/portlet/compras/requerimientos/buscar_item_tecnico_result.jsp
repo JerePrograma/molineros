@@ -82,22 +82,9 @@ if (tipoNomencladorBusqueda != null
         && tipoNomencladorBusqueda.matches("^[0-9]+$")) {
 
     idTipoNomencladorBusqueda =
-            Integer.parseInt(
-                    tipoNomencladorBusqueda
-            );
+            Integer.parseInt(tipoNomencladorBusqueda);
 }
 
-/*
- * El Tipo Nomenclador seleccionado viaja también como
- * parámetro de la request.
- *
- * Se conserva el atributo preparado por el Action como
- * fuente principal, pero el parámetro permite compatibilidad
- * con despliegues legacy del Action que todavía dejaban
- * filtro general 0 para PRESTACIONES MEDICAS.
- *
- * El valor nunca se acepta sin validar contra la whitelist.
- */
 int idTipoNomencladorSolicitado =
         ParamUtil.getInteger(
                 renderRequest,
@@ -111,9 +98,7 @@ if (marcaReinLiqBusqueda != null
         && marcaReinLiqBusqueda.matches("^[0-9]+$")) {
 
     marcaReinLiq =
-            Integer.parseInt(
-                    marcaReinLiqBusqueda
-            );
+            Integer.parseInt(marcaReinLiqBusqueda);
 }
 
 sectorBusqueda =
@@ -123,20 +108,7 @@ sectorBusqueda =
                         sectorBusqueda
                 );
 
-/*
- * El Action actual ya debe haber dejado el tipo correcto
- * en COMPRAS_ID_TIPO_NOMENCLADOR.
- *
- * Este fallback sólo actúa si ese atributo no contiene
- * un tipo válido de PRESTACIONES MEDICAS y la request
- * sí contiene el valor seleccionado por el usuario.
- *
- * Esto evita depender de un Action legacy desplegado
- * que todavía propagaba FILTRO_NOMENCLADOR_GENERAL = 0.
- */
-if ("PRESTACIONES MEDICAS".equals(
-        sectorBusqueda
-)
+if ("PRESTACIONES MEDICAS".equals(sectorBusqueda)
         && !WebKeysCompras
                 .esTipoNomencladorPrestacionesMedicas(
                         idTipoNomencladorBusqueda
@@ -178,10 +150,9 @@ if (errorBusqueda == null
             "No se pudo determinar el sector "
                     + "del requerimiento.";
 }
+
 if (errorBusqueda == null
-        && "PRESTACIONES MEDICAS".equals(
-                sectorBusqueda
-        )
+        && "PRESTACIONES MEDICAS".equals(sectorBusqueda)
         && !WebKeysCompras
                 .esTipoNomencladorPrestacionesMedicas(
                         idTipoNomencladorBusqueda
@@ -211,147 +182,119 @@ if (errorBusqueda == null
                     ? ""
                     : descripcionBusqueda.trim();
 
-    List<Nomenclador> archivos;
-
     /*
-     * Matriz de búsqueda:
+     * Contrato objetivo: BuscarItemTecnicoComprasAction publica la lista ya
+     * consultada y validada en COMPRAS_RESULTADOS_NOMENCLADOR.
      *
-     * FARMACIA:
-     *     busca_nomenclador con tipo 9.
-     *
-     * DISCAPACIDAD:
-     *     busca_nomenclador_marca_reinliq con tipo 0
-     *     y marca 6. La funcion incorpora tambien el
-     *     codigo especial 431003.
-     *
-     * ODONTOLOGIA:
-     *     busca_nomenclador con tipo 1.
-     *
-     * PRESTACIONES MEDICAS:
-     *     busca_nomenclador_prest_med con el Tipo
-     *     Nomenclador seleccionado: 2, 3, 4, 6 o 10.
-     *
+     * El bloque de consulta/filtrado se conserva como fallback hasta que ese
+     * wiring sea incorporado al Action actual.
      */
-    if ("DISCAPACIDAD".equals(sectorBusqueda)
-            && marcaReinLiq
-            == WebKeysCompras
-                    .MARCA_REIN_LIQ_DISCAPACIDAD) {
-
-        archivos =
-                NomencladorServiceUtil
-                        .getListaNomencladorMarcaReinLiq(
-                                WebKeysCompras
-                                        .FILTRO_NOMENCLADOR_GENERAL,
-                                descripcionBusqueda,
-                                0,
-                                codigoBusqueda,
-                                false,
-                                "",
-                                WebKeysCompras
-                                        .MARCA_REIN_LIQ_DISCAPACIDAD
-                        );
-
-    } else if ("PRESTACIONES MEDICAS".equals(
-            sectorBusqueda
-    )) {
-
-        archivos =
-                NomencladorServiceUtil
-                        .getListaNomencladorPrestacionesMedicasCompras(
-                                idTipoNomencladorBusqueda,
-                                descripcionBusqueda,
-                                0,
-                                codigoBusqueda,
-                                false,
-                                ""
-                        );
-
-    } else {
-
-        archivos =
-                NomencladorServiceUtil
-                        .getListaNomenclador(
-                                idTipoNomencladorBusqueda,
-                                descripcionBusqueda,
-                                0,
-                                codigoBusqueda,
-                                false,
-                                ""
-                        );
-    }
-
-    /*
-     * La consulta reproduce el circuito de RP.
-     *
-     * Luego se aplica la misma matriz como defensa adicional,
-     * se eliminan nomencladores dados de baja y se descartan
-     * resultados tecnicamente invalidos.
-     */
-    List<Nomenclador> archivosFiltrados =
-            new ArrayList<Nomenclador>();
-
-    if (archivos != null) {
-        for (int i = 0;
-             i < archivos.size();
-             i++) {
-
-            Nomenclador nomenclador =
-                    archivos.get(i);
-
-            if (nomenclador == null
-                    || nomenclador.getBaja_fecha() != null) {
-
-                continue;
-            }
-
-            int idPrestacionReal =
-                    nomenclador.getId_prestacion();
-
-            int idTipoReal =
-                    nomenclador
-                            .getId_tipo_nomenclador();
-
-            if (idPrestacionReal <= 0
-                    || idTipoReal <= 0) {
-
-                continue;
-            }
-
-            if (!WebKeysCompras
-                    .esNomencladorValidoParaSectorCompras(
-                            sectorBusqueda,
-                            idTipoReal,
-                            nomenclador
-                                    .getMarcaReintegroLiquidacion(),
-                            nomenclador.getCodigo()
-                    )) {
-
-                continue;
-            }
-
-            /*
-             * Para PRESTACIONES MEDICAS no alcanza con que el tipo
-             * pertenezca al conjunto permitido.
-             *
-             * Debe coincidir exactamente con el Tipo Nomenclador
-             * seleccionado para esta búsqueda.
-             */
-            if ("PRESTACIONES MEDICAS".equals(
-                    sectorBusqueda
-            )
-                    && idTipoReal
-                    != idTipoNomencladorBusqueda) {
-
-                continue;
-            }
-
-            archivosFiltrados.add(
-                    nomenclador
+    List<Nomenclador> archivos =
+            (List<Nomenclador>) request.getAttribute(
+                    "COMPRAS_RESULTADOS_NOMENCLADOR"
             );
+
+    if (archivos == null) {
+        if ("DISCAPACIDAD".equals(sectorBusqueda)
+                && marcaReinLiq
+                == WebKeysCompras.MARCA_REIN_LIQ_DISCAPACIDAD) {
+
+            archivos =
+                    NomencladorServiceUtil
+                            .getListaNomencladorMarcaReinLiq(
+                                    WebKeysCompras
+                                            .FILTRO_NOMENCLADOR_GENERAL,
+                                    descripcionBusqueda,
+                                    0,
+                                    codigoBusqueda,
+                                    false,
+                                    "",
+                                    WebKeysCompras
+                                            .MARCA_REIN_LIQ_DISCAPACIDAD
+                            );
+
+        } else if ("PRESTACIONES MEDICAS".equals(
+                sectorBusqueda
+        )) {
+
+            archivos =
+                    NomencladorServiceUtil
+                            .getListaNomencladorPrestacionesMedicasCompras(
+                                    idTipoNomencladorBusqueda,
+                                    descripcionBusqueda,
+                                    0,
+                                    codigoBusqueda,
+                                    false,
+                                    ""
+                            );
+
+        } else {
+            archivos =
+                    NomencladorServiceUtil
+                            .getListaNomenclador(
+                                    idTipoNomencladorBusqueda,
+                                    descripcionBusqueda,
+                                    0,
+                                    codigoBusqueda,
+                                    false,
+                                    ""
+                            );
         }
+
+        List<Nomenclador> archivosFiltrados =
+                new ArrayList<Nomenclador>();
+
+        if (archivos != null) {
+            for (int i = 0;
+                    i < archivos.size();
+                    i++) {
+
+                Nomenclador nomenclador =
+                        archivos.get(i);
+
+                if (nomenclador == null
+                        || nomenclador.getBaja_fecha() != null) {
+                    continue;
+                }
+
+                int idPrestacionReal =
+                        nomenclador.getId_prestacion();
+
+                int idTipoReal =
+                        nomenclador.getId_tipo_nomenclador();
+
+                if (idPrestacionReal <= 0
+                        || idTipoReal <= 0) {
+                    continue;
+                }
+
+                if (!WebKeysCompras
+                        .esNomencladorValidoParaSectorCompras(
+                                sectorBusqueda,
+                                idTipoReal,
+                                nomenclador
+                                        .getMarcaReintegroLiquidacion(),
+                                nomenclador.getCodigo()
+                        )) {
+                    continue;
+                }
+
+                if ("PRESTACIONES MEDICAS".equals(sectorBusqueda)
+                        && idTipoReal
+                        != idTipoNomencladorBusqueda) {
+                    continue;
+                }
+
+                archivosFiltrados.add(nomenclador);
+            }
+        }
+
+        archivos = archivosFiltrados;
     }
 
-    archivos = archivosFiltrados;
+    if (archivos == null) {
+        archivos = new ArrayList<Nomenclador>();
+    }
 
     PortletURL portletURL =
             renderResponse.createRenderURL();
@@ -390,11 +333,8 @@ if (errorBusqueda == null
                     )
             );
 
-    if (archivos != null
-            && !archivos.isEmpty()) {
-
-        int total =
-                archivos.size();
+    if (!archivos.isEmpty()) {
+        int total = archivos.size();
 
         pageContext.setAttribute(
                 "total",
@@ -445,8 +385,7 @@ if (errorBusqueda == null
                         );
 
                 String descripcionTipo =
-                        nomenclador
-                                .getDescripcionTipoNomenclador();
+                        nomenclador.getDescripcionTipoNomenclador();
 
                 String codigoNomenclador =
                         nomenclador.getCodigo();
@@ -455,8 +394,7 @@ if (errorBusqueda == null
                         nomenclador.getDescripcion();
 
                 String especialidadDescripcion =
-                        nomenclador
-                                .getEspecialidadDescripcion();
+                        nomenclador.getEspecialidadDescripcion();
 
                 descripcionTipo =
                         descripcionTipo == null
@@ -479,80 +417,45 @@ if (errorBusqueda == null
                                 : especialidadDescripcion.trim();
 
                 StringBuilder tipo =
-                        new StringBuilder(
-                                inicioEnlace
-                        );
-
-                tipo.append(
-                        HtmlUtil.escape(
-                                descripcionTipo
-                        )
-                );
-
+                        new StringBuilder(inicioEnlace);
+                tipo.append(HtmlUtil.escape(descripcionTipo));
                 tipo.append("</a>");
                 row.addText(tipo.toString());
 
                 StringBuilder codigo =
-                        new StringBuilder(
-                                inicioEnlace
-                        );
-
-                codigo.append(
-                        HtmlUtil.escape(
-                                codigoNomenclador
-                        )
-                );
-
+                        new StringBuilder(inicioEnlace);
+                codigo.append(HtmlUtil.escape(codigoNomenclador));
                 codigo.append("</a>");
                 row.addText(codigo.toString());
 
                 StringBuilder descripcion =
-                        new StringBuilder(
-                                inicioEnlace
-                        );
-
+                        new StringBuilder(inicioEnlace);
                 descripcion.append(
-                        HtmlUtil.escape(
-                                descripcionNomenclador
-                        )
+                        HtmlUtil.escape(descripcionNomenclador)
                 );
-
                 descripcion.append("</a>");
                 row.addText(descripcion.toString());
 
                 StringBuilder especialidad =
-                        new StringBuilder(
-                                inicioEnlace
-                        );
-
+                        new StringBuilder(inicioEnlace);
                 especialidad.append(
-                        HtmlUtil.escape(
-                                especialidadDescripcion
-                        )
+                        HtmlUtil.escape(especialidadDescripcion)
                 );
-
                 especialidad.append("</a>");
                 row.addText(especialidad.toString());
 
                 StringBuilder recupera =
-                        new StringBuilder(
-                                inicioEnlace
-                        );
-
+                        new StringBuilder(inicioEnlace);
                 recupera.append(
                         nomenclador.getRecuperaSUR()
                                 ? "Sí"
                                 : "No"
                 );
-
                 recupera.append("</a>");
                 row.addText(recupera.toString());
 
                 StringBuilder baja =
-                        new StringBuilder(
-                                inicioEnlace
-                        );
-
+                        new StringBuilder(inicioEnlace);
                 baja.append(
                         HtmlUtil.escape(
                                 nomenclador.getBaja_fecha() != null
@@ -561,13 +464,10 @@ if (errorBusqueda == null
                                         : ""
                         )
                 );
-
                 baja.append("</a>");
                 row.addText(baja.toString());
 
-                resultRows.add(
-                        row
-                );
+                resultRows.add(row);
             }
         }
     }
