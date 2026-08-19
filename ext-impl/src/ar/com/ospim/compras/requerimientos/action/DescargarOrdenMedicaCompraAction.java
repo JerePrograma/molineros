@@ -102,11 +102,11 @@ public class DescargarOrdenMedicaCompraAction
             }
 
             /*
-             * La validacion estructural y de identidad DL vive en una unica
-             * fuente documental.
+             * Primero se valida completamente la relacion persistida
+             * SQL -> Document Library.
              *
-             * Todavia no se abre el contenido: primero debe comprobarse
-             * el permiso Liferay VIEW.
+             * Esta operacion obtiene solamente los metadatos de la entrada.
+             * Todavia no se lee el contenido binario.
              */
             DLFileEntry entry =
                     DocumentoLibraryComprasHelper
@@ -116,6 +116,10 @@ public class DescargarOrdenMedicaCompraAction
                                     themeDisplay.getCompanyId()
                             );
 
+            /*
+             * La Orden medica debe pertenecer al sitio actualmente
+             * visualizado por el usuario.
+             */
             if (entry.getGroupId()
                     != themeDisplay.getScopeGroupId()) {
 
@@ -126,8 +130,12 @@ public class DescargarOrdenMedicaCompraAction
             }
 
             /*
-             * El permiso sigue siendo responsabilidad del Action porque
-             * depende del usuario HTTP actual.
+             * El permiso sobre Document Library se comprueba antes de
+             * acceder al contenido fisico.
+             *
+             * La lectura posterior utiliza la capa baja de DL para evitar
+             * los efectos secundarios de DLFileRank del servicio legacy.
+             * Por eso esta comprobacion de VIEW no debe quitarse.
              */
             DLFileEntryPermission.check(
                     themeDisplay.getPermissionChecker(),
@@ -137,8 +145,14 @@ public class DescargarOrdenMedicaCompraAction
             );
 
             /*
-             * Recién después del permiso se abre, limita y valida el
-             * contenido binario.
+             * La entrada ya fue:
+             *
+             * - asociada al requerimiento;
+             * - validada contra Document Library;
+             * - limitada al sitio actual;
+             * - autorizada mediante VIEW.
+             *
+             * Recién ahora se recupera y valida el contenido binario.
              */
             DocumentoLibraryComprasHelper.OrdenMedicaContenido documento =
                     DocumentoLibraryComprasHelper
@@ -147,9 +161,20 @@ public class DescargarOrdenMedicaCompraAction
                                     ordenMedica.getNombreOriginal()
                             );
 
+            byte[] contenido =
+                    documento.getContenido();
+
+            if (contenido == null
+                    || contenido.length == 0) {
+
+                throw new Exception(
+                        "La Orden médica recuperada está vacía."
+                );
+            }
+
             input =
                     new ByteArrayInputStream(
-                            documento.getContenido()
+                            contenido
                     );
 
             HttpServletResponse response =
@@ -157,17 +182,31 @@ public class DescargarOrdenMedicaCompraAction
                             actionResponse
                     );
 
+            if (response == null) {
+                throw new Exception(
+                        "No se pudo preparar la respuesta "
+                                + "de descarga de la Orden médica."
+                );
+            }
+
+            /*
+             * Se utiliza el tamaño del byte[] efectivamente validado,
+             * no un tamaño externo o inferido.
+             */
             ServletResponseUtil.sendFile(
                     response,
                     documento.getNombreOriginal(),
                     input,
-                    documento.getContenido().length,
+                    contenido.length,
                     documento.getContentType()
             );
 
-            input =
-                    null;
-
+            /*
+             * No poner input = null.
+             *
+             * El finally conserva la responsabilidad de cerrar el stream
+             * también en el camino exitoso.
+             */
             setForward(
                     actionRequest,
                     ActionConstants.COMMON_NULL
@@ -194,8 +233,8 @@ public class DescargarOrdenMedicaCompraAction
     }
 
     /*
-     * Si la URL identifica un fileEntry concreto, se busca exactamente esa
-     * Orden médica dentro del requerimiento.
+     * Si la URL identifica un fileEntry concreto, se busca exactamente
+     * esa Orden médica dentro del requerimiento.
      *
      * Si no viene ese parametro se conserva el comportamiento historico
      * mediante getOrdenMedica(idRequerimientoCompra).

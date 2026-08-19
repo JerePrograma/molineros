@@ -3,6 +3,7 @@ package ar.com.ospim.compras.requerimientos.documentos;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 
+import com.liferay.documentlibrary.service.DLLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.NoSuchFolderException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -248,7 +249,21 @@ public class DocumentoLibraryComprasHelper
     }
 
     /**
-     * Lee y valida el documento ya autorizado para lectura.
+     * Lee el contenido binario de una Orden medica ya autorizada.
+     *
+     * IMPORTANTE:
+     *
+     * No utilizar DLFileEntryLocalServiceUtil.getFileAsStream(...)
+     * en esta frontera.
+     *
+     * En Liferay legacy esa llamada actualiza DLFileRank y readCount antes
+     * de recuperar el archivo. El update de DLFileRank depende de Counter
+     * y puede impedir la lectura de un archivo valido por un fallo ajeno
+     * al almacenamiento del documento.
+     *
+     * La identidad de la entrada debe haber sido validada previamente y
+     * el Action de descarga debe comprobar DLFileEntryPermission VIEW antes
+     * de invocar este metodo.
      */
     public static OrdenMedicaContenido leerOrdenMedicaValidada(
             DLFileEntry entry,
@@ -278,10 +293,16 @@ public class DocumentoLibraryComprasHelper
                 null;
 
         try {
+            /*
+             * Acceso directo a la capa de almacenamiento de Document Library.
+             *
+             * Se evita DLFileEntryLocalServiceUtil.getFileAsStream porque
+             * esa API legacy ejecuta efectos secundarios de ranking antes
+             * de devolver el contenido.
+             */
             input =
-                    DLFileEntryLocalServiceUtil.getFileAsStream(
+                    DLLocalServiceUtil.getFileAsStream(
                             entry.getCompanyId(),
-                            entry.getUserId(),
                             entry.getFolderId(),
                             entry.getName(),
                             entry.getVersion()
@@ -311,7 +332,8 @@ public class DocumentoLibraryComprasHelper
                     continue;
                 }
 
-                total += cantidad;
+                total +=
+                        cantidad;
 
                 if (total > maximoTamano) {
                     throw new Exception(
@@ -354,6 +376,7 @@ public class DocumentoLibraryComprasHelper
             if (input != null) {
                 try {
                     input.close();
+
                 } catch (Exception closeError) {
                     if (_log.isDebugEnabled()) {
                         _log.debug(
@@ -412,6 +435,7 @@ public class DocumentoLibraryComprasHelper
         if (!esExtensionOrdenMedicaSegura(
                 extension
         )) {
+
             throw new Exception(
                     "La Orden médica persistida "
                             + "no es JPEG/JPG ni PNG."
@@ -975,7 +999,8 @@ public class DocumentoLibraryComprasHelper
                     break;
                 }
 
-                leidos += cantidad;
+                leidos +=
+                        cantidad;
             }
 
             validarFirmaImagen(
@@ -988,6 +1013,7 @@ public class DocumentoLibraryComprasHelper
             if (input != null) {
                 try {
                     input.close();
+
                 } catch (Exception closeError) {
                     if (_log.isDebugEnabled()) {
                         _log.debug(
