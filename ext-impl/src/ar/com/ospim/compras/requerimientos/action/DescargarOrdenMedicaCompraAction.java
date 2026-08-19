@@ -2,14 +2,12 @@ package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
-import ar.com.ospim.compras.requerimientos.documentos.DocumentoComprasCreado;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
 import com.liferay.portal.security.permission.ActionKeys;
@@ -19,13 +17,13 @@ import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
-import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.permission.DLFileEntryPermission;
 import com.liferay.util.servlet.ServletResponseUtil;
 
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
 
@@ -34,7 +32,8 @@ import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
 import javax.servlet.http.HttpServletResponse;
 
-public class DescargarOrdenMedicaCompraAction extends PortletAction {
+public class DescargarOrdenMedicaCompraAction
+        extends PortletAction {
 
     private static final Log _log =
             LogFactoryUtil.getLog(
@@ -46,7 +45,8 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
             ActionForm form,
             PortletConfig portletConfig,
             ActionRequest actionRequest,
-            ActionResponse actionResponse) throws Exception {
+            ActionResponse actionResponse)
+            throws Exception {
 
         InputStream input =
                 null;
@@ -87,53 +87,36 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                             dlFileEntryIdSolicitado
                     );
 
-            DocumentoLibraryComprasHelper.validarRelacionOrdenMedica(
-                    ordenMedica,
-                    idRequerimientoCompra
-            );
-
-            DLFileEntry entry =
-                    DLFileEntryLocalServiceUtil
-                            .getDLFileEntry(
-                                    ordenMedica
-                                            .getDlFileEntryId()
-                                            .longValue()
-                            );
-
-            DocumentoComprasCreado identidad =
-                    DocumentoLibraryComprasHelper
-                            .crearIdentidadOrdenMedica(
-                                    ordenMedica
-                            );
-
-            DocumentoLibraryComprasHelper gestorDocumento =
-                    DocumentoLibraryComprasHelper.crear(
-                            actionRequest
-                    );
-
-            gestorDocumento.validarIdentidadDocumento(
-                    identidad
-            );
-
-            if (!gestorDocumento.coincideIdentidad(
-                    identidad,
-                    entry
-            )) {
-
-                throw new Exception(
-                        "La identidad de la Orden médica "
-                                + "no coincide con Document Library."
-                );
-            }
-
             ThemeDisplay themeDisplay =
                     (ThemeDisplay)
                             actionRequest.getAttribute(
                                     WebKeys.THEME_DISPLAY
                             );
 
-            if (themeDisplay == null
-                    || entry.getGroupId()
+            if (themeDisplay == null) {
+                throw new Exception(
+                        "No se pudo determinar el contexto "
+                                + "del portal para descargar "
+                                + "la Orden médica."
+                );
+            }
+
+            /*
+             * La validacion estructural y de identidad DL vive en una unica
+             * fuente documental.
+             *
+             * Todavia no se abre el contenido: primero debe comprobarse
+             * el permiso Liferay VIEW.
+             */
+            DLFileEntry entry =
+                    DocumentoLibraryComprasHelper
+                            .obtenerEntradaOrdenMedicaValidada(
+                                    ordenMedica,
+                                    idRequerimientoCompra,
+                                    themeDisplay.getCompanyId()
+                            );
+
+            if (entry.getGroupId()
                     != themeDisplay.getScopeGroupId()) {
 
                 throw new Exception(
@@ -142,6 +125,10 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                 );
             }
 
+            /*
+             * El permiso sigue siendo responsabilidad del Action porque
+             * depende del usuario HTTP actual.
+             */
             DLFileEntryPermission.check(
                     themeDisplay.getPermissionChecker(),
                     entry.getFolderId(),
@@ -149,35 +136,21 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                     ActionKeys.VIEW
             );
 
-            String nombreDescarga =
-                    obtenerNombreDescarga(
-                            ordenMedica.getNombreOriginal(),
-                            entry.getTitleWithExtension()
-                    );
-
-            String contentType =
-                    MimeTypesUtil.getContentType(
-                            nombreDescarga
-                    );
-
-            if (!"image/jpeg".equals(contentType)
-                    && !"image/png".equals(contentType)) {
-
-                throw new Exception(
-                        "El tipo de archivo de la Orden médica "
-                                + "no es válido."
-                );
-            }
+            /*
+             * Recién después del permiso se abre, limita y valida el
+             * contenido binario.
+             */
+            DocumentoLibraryComprasHelper.OrdenMedicaContenido documento =
+                    DocumentoLibraryComprasHelper
+                            .leerOrdenMedicaValidada(
+                                    entry,
+                                    ordenMedica.getNombreOriginal()
+                            );
 
             input =
-                    DLFileEntryLocalServiceUtil
-                            .getFileAsStream(
-                                    themeDisplay.getCompanyId(),
-                                    themeDisplay.getUserId(),
-                                    entry.getFolderId(),
-                                    entry.getName(),
-                                    entry.getVersion()
-                            );
+                    new ByteArrayInputStream(
+                            documento.getContenido()
+                    );
 
             HttpServletResponse response =
                     PortalUtil.getHttpServletResponse(
@@ -186,10 +159,10 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
 
             ServletResponseUtil.sendFile(
                     response,
-                    nombreDescarga,
+                    documento.getNombreOriginal(),
                     input,
-                    entry.getSize(),
-                    contentType
+                    documento.getContenido().length,
+                    documento.getContentType()
             );
 
             input =
@@ -221,15 +194,16 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
     }
 
     /*
-     * Si la URL nueva identifica un fileEntry concreto, se busca
-     * exactamente esa Orden médica dentro del requerimiento.
+     * Si la URL identifica un fileEntry concreto, se busca exactamente esa
+     * Orden médica dentro del requerimiento.
      *
-     * Si no viene ese parámetro se conserva el comportamiento
-     * histórico mediante getOrdenMedica(idRequerimientoCompra).
+     * Si no viene ese parametro se conserva el comportamiento historico
+     * mediante getOrdenMedica(idRequerimientoCompra).
      */
     private RequerimientoCompraPresupuesto resolverOrdenMedica(
             int idRequerimientoCompra,
-            long dlFileEntryIdSolicitado) throws Exception {
+            long dlFileEntryIdSolicitado)
+            throws Exception {
 
         if (dlFileEntryIdSolicitado <= 0L) {
             return BusquedaRequerimientoCompraServiceUtil
@@ -258,7 +232,9 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                     continue;
                 }
 
-                if (ordenMedica.getDlFileEntryId().longValue()
+                if (ordenMedica
+                        .getDlFileEntryId()
+                        .longValue()
                         == dlFileEntryIdSolicitado) {
 
                     return ordenMedica;
@@ -270,51 +246,6 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                 "La Orden médica solicitada "
                         + "no pertenece al requerimiento informado."
         );
-    }
-
-private String obtenerNombreDescarga(
-            String nombreOriginal,
-            String nombreFallback) {
-
-        String nombre =
-                !WebKeysCompras.isEmpty(
-                        nombreOriginal
-                )
-                        ? nombreOriginal
-                        : nombreFallback;
-
-        if (nombre == null) {
-            nombre =
-                    "orden-medica";
-        }
-
-        nombre =
-                nombre.replace(
-                        '\\',
-                        '_'
-                ).replace(
-                        '/',
-                        '_'
-                );
-
-        nombre =
-                nombre.replace(
-                        '\r',
-                        '_'
-                ).replace(
-                        '\n',
-                        '_'
-                );
-
-        nombre =
-                nombre.replace(
-                        '"',
-                        '_'
-                ).trim();
-
-        return nombre.length() > 0
-                ? nombre
-                : "orden-medica";
     }
 
     private void validarPermisoConsulta(

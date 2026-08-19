@@ -19,6 +19,7 @@ import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
 
 import javax.portlet.ActionRequest;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -32,16 +33,27 @@ public class DocumentoLibraryComprasHelper
         implements GestorOrdenMedicaDocumento {
 
     private static final Log _log =
-            LogFactoryUtil.getLog(DocumentoLibraryComprasHelper.class);
+            LogFactoryUtil.getLog(
+                    DocumentoLibraryComprasHelper.class
+            );
 
-    public static final String TITULO_ORDEN_MEDICA = "Orden médica";
-    public static final String PARAM_ARCHIVO_ORDEN_MEDICA = "orden_medica";
+    public static final String TITULO_ORDEN_MEDICA =
+            "Orden médica";
+
+    public static final String PARAM_ARCHIVO_ORDEN_MEDICA =
+            "orden_medica";
+
     public static final String PARAM_FECHA_ORDEN_MEDICA =
             "fecha_orden_medica";
 
-    private static final String DESCRIPCION_ORDEN_MEDICA = "Orden médica";
-    private static final String CONTENT_TYPE_JPEG = "image/jpeg";
-    private static final String CONTENT_TYPE_PNG = "image/png";
+    private static final String DESCRIPCION_ORDEN_MEDICA =
+            "Orden médica";
+
+    private static final String CONTENT_TYPE_JPEG =
+            "image/jpeg";
+
+    private static final String CONTENT_TYPE_PNG =
+            "image/png";
 
     private final ServiceContext serviceContext;
     private final long groupId;
@@ -62,31 +74,103 @@ public class DocumentoLibraryComprasHelper
                 || ordenMedica.getIdPrestador() != null
                 || !ordenMedica.isActivo()
                 || ordenMedica.getFechaDocumento() == null
-                || ordenMedica.getDlGroupId() == null
-                || ordenMedica.getDlGroupId().longValue() <= 0L
-                || ordenMedica.getDlFolderId() == null
-                || ordenMedica.getDlFolderId().longValue() <= 0L
-                || ordenMedica.getDlFileEntryId() == null
-                || ordenMedica.getDlFileEntryId().longValue() <= 0L
-                || WebKeysCompras.isEmpty(ordenMedica.getDlFileUuid())
-                || WebKeysCompras.isEmpty(ordenMedica.getNombrePersistido())
-                || WebKeysCompras.isEmpty(ordenMedica.getNombreOriginal())
-                || !TITULO_ORDEN_MEDICA.equals(ordenMedica.getTitulo())) {
+                || WebKeysCompras.isEmpty(
+                ordenMedica.getDlFileUuid()
+        )
+                || WebKeysCompras.isEmpty(
+                ordenMedica.getNombreOriginal()
+        )
+                || !TITULO_ORDEN_MEDICA.equals(
+                ordenMedica.getTitulo()
+        )) {
 
             throw new Exception(
                     "La asociacion de la Orden medica activa es inconsistente."
             );
         }
+
+        validarIdentidadAsociacionDocumento(
+                ordenMedica
+        );
+    }
+
+    /**
+     * Regla generica de identidad SQL -> Document Library reutilizable
+     * tanto por Orden medica como por Presupuesto.
+     */
+    public static void validarIdentidadAsociacionDocumento(
+            RequerimientoCompraPresupuesto documento)
+            throws Exception {
+
+        if (documento == null
+                || documento.getDlGroupId() == null
+                || documento.getDlGroupId().longValue() <= 0L
+                || documento.getDlFolderId() == null
+                || documento.getDlFolderId().longValue() <= 0L
+                || documento.getDlFileEntryId() == null
+                || documento.getDlFileEntryId().longValue() <= 0L
+                || WebKeysCompras.isEmpty(
+                documento.getNombrePersistido()
+        )) {
+
+            throw new Exception(
+                    "La asociacion del documento contiene "
+                            + "una identidad de Document Library invalida."
+            );
+        }
+    }
+
+    public static boolean coincideIdentidadAsociacionDocumento(
+            RequerimientoCompraPresupuesto documento,
+            DLFileEntry entry) {
+
+        if (documento == null
+                || entry == null
+                || documento.getDlGroupId() == null
+                || documento.getDlFolderId() == null
+                || documento.getDlFileEntryId() == null
+                || WebKeysCompras.isEmpty(
+                documento.getNombrePersistido()
+        )) {
+
+            return false;
+        }
+
+        boolean coincide =
+                entry.getFileEntryId()
+                        == documento.getDlFileEntryId().longValue()
+                        && entry.getGroupId()
+                        == documento.getDlGroupId().longValue()
+                        && entry.getFolderId()
+                        == documento.getDlFolderId().longValue()
+                        && documento.getNombrePersistido().equals(
+                        entry.getName()
+                );
+
+        String uuidPersistido =
+                documento.getDlFileUuid();
+
+        if (coincide
+                && !WebKeysCompras.isEmpty(
+                uuidPersistido
+        )) {
+
+            coincide =
+                    uuidPersistido.equals(
+                            entry.getUuid()
+                    );
+        }
+
+        return coincide;
     }
 
     public static DocumentoComprasCreado crearIdentidadOrdenMedica(
-            RequerimientoCompraPresupuesto ordenMedica) throws Exception {
+            RequerimientoCompraPresupuesto ordenMedica)
+            throws Exception {
 
-        if (ordenMedica == null) {
-            throw new Exception(
-                    "No se informo la Orden medica."
-            );
-        }
+        validarIdentidadAsociacionDocumento(
+                ordenMedica
+        );
 
         return new DocumentoComprasCreado(
                 ordenMedica.getDlGroupId().longValue(),
@@ -96,6 +180,268 @@ public class DocumentoLibraryComprasHelper
                 ordenMedica.getNombrePersistido(),
                 ordenMedica.getTitulo()
         );
+    }
+
+    /**
+     * Recupera la entrada de Document Library y comprueba toda la identidad
+     * persistida de la Orden medica.
+     *
+     * No abre el contenido. Eso permite que un Action de descarga realice
+     * primero su DLFileEntryPermission.check().
+     */
+    public static DLFileEntry obtenerEntradaOrdenMedicaValidada(
+            RequerimientoCompraPresupuesto ordenMedica,
+            int idRequerimientoCompra,
+            long companyId) throws Exception {
+
+        validarRelacionOrdenMedica(
+                ordenMedica,
+                idRequerimientoCompra
+        );
+
+        if (companyId <= 0L) {
+            throw new Exception(
+                    "No se pudo determinar la empresa "
+                            + "de la Orden médica."
+            );
+        }
+
+        DLFileEntry entry =
+                DLFileEntryLocalServiceUtil.getDLFileEntry(
+                        ordenMedica
+                                .getDlFileEntryId()
+                                .longValue()
+                );
+
+        validarIdentidadOrdenMedicaPersistida(
+                ordenMedica,
+                entry,
+                companyId
+        );
+
+        return entry;
+    }
+
+    public static void validarIdentidadOrdenMedicaPersistida(
+            RequerimientoCompraPresupuesto ordenMedica,
+            DLFileEntry entry,
+            long companyId) throws Exception {
+
+        validarIdentidadAsociacionDocumento(
+                ordenMedica
+        );
+
+        boolean coincide =
+                entry != null
+                        && entry.getCompanyId() == companyId
+                        && coincideIdentidadAsociacionDocumento(
+                        ordenMedica,
+                        entry
+                );
+
+        if (!coincide) {
+            throw new Exception(
+                    "La Orden médica no coincide con "
+                            + "su identidad en Document Library."
+            );
+        }
+    }
+
+    /**
+     * Lee y valida el documento ya autorizado para lectura.
+     */
+    public static OrdenMedicaContenido leerOrdenMedicaValidada(
+            DLFileEntry entry,
+            String nombreOriginal) throws Exception {
+
+        if (entry == null
+                || entry.getFileEntryId() <= 0L) {
+
+            throw new Exception(
+                    "No se pudo recuperar la Orden médica "
+                            + "desde Document Library."
+            );
+        }
+
+        long maximoTamano =
+                obtenerMaximoTamanoDocumento();
+
+        if (entry.getSize() <= 0
+                || entry.getSize() > maximoTamano) {
+
+            throw new Exception(
+                    "La Orden médica persistida tiene un tamaño inválido."
+            );
+        }
+
+        InputStream input =
+                null;
+
+        try {
+            input =
+                    DLFileEntryLocalServiceUtil.getFileAsStream(
+                            entry.getCompanyId(),
+                            entry.getUserId(),
+                            entry.getFolderId(),
+                            entry.getName(),
+                            entry.getVersion()
+                    );
+
+            if (input == null) {
+                throw new Exception(
+                        "Document Library no devolvió la Orden médica."
+                );
+            }
+
+            ByteArrayOutputStream output =
+                    new ByteArrayOutputStream(
+                            entry.getSize()
+                    );
+
+            byte[] buffer =
+                    new byte[8192];
+
+            long total =
+                    0L;
+
+            int cantidad;
+
+            while ((cantidad = input.read(buffer)) >= 0) {
+                if (cantidad == 0) {
+                    continue;
+                }
+
+                total += cantidad;
+
+                if (total > maximoTamano) {
+                    throw new Exception(
+                            "La Orden médica supera dl.file.max.size."
+                    );
+                }
+
+                output.write(
+                        buffer,
+                        0,
+                        cantidad
+                );
+            }
+
+            byte[] contenido =
+                    output.toByteArray();
+
+            if (contenido.length
+                    != entry.getSize()) {
+
+                throw new Exception(
+                        "El tamaño leído de la Orden médica "
+                                + "no coincide con Document Library."
+                );
+            }
+
+            String contentType =
+                    validarContenidoOrdenMedica(
+                            contenido,
+                            nombreOriginal
+                    );
+
+            return new OrdenMedicaContenido(
+                    contenido,
+                    nombreOriginal,
+                    contentType
+            );
+
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (Exception closeError) {
+                    if (_log.isDebugEnabled()) {
+                        _log.debug(
+                                "No se pudo cerrar la lectura "
+                                        + "de la Orden médica.",
+                                closeError
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    public static OrdenMedicaContenido recuperarOrdenMedicaValidada(
+            RequerimientoCompraPresupuesto ordenMedica,
+            int idRequerimientoCompra,
+            long companyId) throws Exception {
+
+        DLFileEntry entry =
+                obtenerEntradaOrdenMedicaValidada(
+                        ordenMedica,
+                        idRequerimientoCompra,
+                        companyId
+                );
+
+        return leerOrdenMedicaValidada(
+                entry,
+                ordenMedica.getNombreOriginal()
+        );
+    }
+
+    /**
+     * Fuente unica de validacion del contenido persistido de una Orden medica.
+     */
+    public static String validarContenidoOrdenMedica(
+            byte[] contenido,
+            String nombreOriginal) throws Exception {
+
+        if (contenido == null
+                || contenido.length == 0) {
+
+            throw new Exception(
+                    "La Orden médica persistida está vacía."
+            );
+        }
+
+        validarNombreOriginalOrdenMedicaPersistido(
+                nombreOriginal
+        );
+
+        String extension =
+                obtenerExtensionSeguraDocumento(
+                        nombreOriginal
+                );
+
+        if (!esExtensionOrdenMedicaSegura(
+                extension
+        )) {
+            throw new Exception(
+                    "La Orden médica persistida "
+                            + "no es JPEG/JPG ni PNG."
+            );
+        }
+
+        String contentTypeEsperado =
+                ".png".equals(extension)
+                        ? CONTENT_TYPE_PNG
+                        : CONTENT_TYPE_JPEG;
+
+        validarFirmaImagen(
+                contenido,
+                contentTypeEsperado
+        );
+
+        String contentTypeDetectado =
+                normalizarContentType(
+                        MimeTypesUtil.getContentType(
+                                nombreOriginal
+                        )
+                );
+
+        validarContentTypeCompatible(
+                "detectado",
+                contentTypeDetectado,
+                contentTypeEsperado
+        );
+
+        return contentTypeEsperado;
     }
 
     public static DocumentoLibraryComprasHelper crear(
@@ -113,7 +459,9 @@ public class DocumentoLibraryComprasHelper
                         actionRequest
                 );
 
-        return new DocumentoLibraryComprasHelper(serviceContext);
+        return new DocumentoLibraryComprasHelper(
+                serviceContext
+        );
     }
 
     protected DocumentoLibraryComprasHelper(
@@ -125,17 +473,25 @@ public class DocumentoLibraryComprasHelper
             );
         }
 
-        this.serviceContext = serviceContext;
-        this.groupId = serviceContext.getScopeGroupId();
-        this.userId = serviceContext.getUserId();
+        this.serviceContext =
+                serviceContext;
 
-        validarContextoDocumentLibrary(groupId, userId);
+        this.groupId =
+                serviceContext.getScopeGroupId();
+
+        this.userId =
+                serviceContext.getUserId();
+
+        validarContextoDocumentLibrary(
+                groupId,
+                userId
+        );
     }
-
 
     public DocumentoComprasCreado crearOrdenMedica(
             int idRequerimientoCompra,
-            OrdenMedicaValidada ordenMedica) throws Exception {
+            OrdenMedicaValidada ordenMedica)
+            throws Exception {
 
         if (idRequerimientoCompra <= 0) {
             throw new Exception(
@@ -143,23 +499,30 @@ public class DocumentoLibraryComprasHelper
             );
         }
 
-        validarOrdenMedicaPreparada(ordenMedica);
-
-        DLFolder folder = obtenerOCrearFolderCompras();
-        String identificador = UUID.randomUUID()
-                .toString()
-                .replace("-", "");
-
-        String nombrePersistido = construirNombreOrdenMedica(
-                idRequerimientoCompra,
-                identificador,
-                ordenMedica.getExtension()
+        validarOrdenMedicaPreparada(
+                ordenMedica
         );
 
-        String tituloPersistido = construirTituloOrdenMedica(
-                idRequerimientoCompra,
-                identificador
-        );
+        DLFolder folder =
+                obtenerOCrearFolderCompras();
+
+        String identificador =
+                UUID.randomUUID()
+                        .toString()
+                        .replace("-", "");
+
+        String nombrePersistido =
+                construirNombreOrdenMedica(
+                        idRequerimientoCompra,
+                        identificador,
+                        ordenMedica.getExtension()
+                );
+
+        String tituloPersistido =
+                construirTituloOrdenMedica(
+                        idRequerimientoCompra,
+                        identificador
+                );
 
         DLFileEntry entry =
                 DLFileEntryLocalServiceUtil.addFileEntry(
@@ -174,9 +537,12 @@ public class DocumentoLibraryComprasHelper
                 );
 
         try {
-            if (entry == null || entry.getFileEntryId() <= 0L) {
+            if (entry == null
+                    || entry.getFileEntryId() <= 0L) {
+
                 throw new Exception(
-                        "Document Library no devolvió una Orden médica válida."
+                        "Document Library no devolvió "
+                                + "una Orden médica válida."
                 );
             }
 
@@ -190,28 +556,45 @@ public class DocumentoLibraryComprasHelper
                             entry.getTitle()
                     );
 
-            validarIdentidadDocumento(documento);
+            validarIdentidadDocumento(
+                    documento
+            );
 
-            if (!coincideIdentidad(documento, entry)
-                    || !tituloPersistido.equals(entry.getTitle())) {
+            if (!coincideIdentidad(
+                    documento,
+                    entry
+            )
+                    || !tituloPersistido.equals(
+                    entry.getTitle()
+            )) {
 
                 throw new Exception(
-                        "La Orden médica creada no conserva la identidad requerida."
+                        "La Orden médica creada no conserva "
+                                + "la identidad requerida."
                 );
             }
 
             return documento;
+
         } catch (Exception postAddError) {
-            if (entry != null && entry.getFileEntryId() > 0L) {
+            if (entry != null
+                    && entry.getFileEntryId() > 0L) {
+
                 try {
-                    DLFileEntryLocalServiceUtil.deleteFileEntry(entry);
+                    DLFileEntryLocalServiceUtil
+                            .deleteFileEntry(
+                                    entry
+                            );
+
                 } catch (Exception cleanupError) {
                     _log.error(
                             "Falló la compensación de una Orden médica "
                                     + "creada pero no validada. fileEntryId="
                                     + entry.getFileEntryId()
-                                    + ", folderId=" + entry.getFolderId()
-                                    + ", nombre=" + entry.getName(),
+                                    + ", folderId="
+                                    + entry.getFolderId()
+                                    + ", nombre="
+                                    + entry.getName(),
                             cleanupError
                     );
                 }
@@ -222,33 +605,48 @@ public class DocumentoLibraryComprasHelper
     }
 
     public void eliminarDocumento(
-            DocumentoComprasCreado documento) throws Exception {
+            DocumentoComprasCreado documento)
+            throws Exception {
 
-        validarIdentidadDocumento(documento);
+        validarIdentidadDocumento(
+                documento
+        );
 
         DLFileEntry entry =
                 DLFileEntryLocalServiceUtil.getDLFileEntry(
                         documento.getFileEntryId()
                 );
 
-        if (!coincideIdentidad(documento, entry)) {
+        if (!coincideIdentidad(
+                documento,
+                entry
+        )) {
+
             throw new Exception(
-                    "El documento a compensar no coincide con la identidad persistida."
+                    "El documento a compensar no coincide "
+                            + "con la identidad persistida."
             );
         }
 
-        DLFileEntryLocalServiceUtil.deleteFileEntry(entry);
+        DLFileEntryLocalServiceUtil.deleteFileEntry(
+                entry
+        );
     }
 
     public void validarIdentidadDocumento(
-            DocumentoComprasCreado documento) throws Exception {
+            DocumentoComprasCreado documento)
+            throws Exception {
 
         if (documento == null
                 || documento.getGroupId() <= 0L
                 || documento.getFolderId() <= 0L
                 || documento.getFileEntryId() <= 0L
-                || WebKeysCompras.isEmpty(documento.getNombrePersistido())
-                || WebKeysCompras.isEmpty(documento.getTitulo())) {
+                || WebKeysCompras.isEmpty(
+                documento.getNombrePersistido()
+        )
+                || WebKeysCompras.isEmpty(
+                documento.getTitulo()
+        )) {
 
             throw new Exception(
                     "La identidad del documento de Compras no es válida."
@@ -260,31 +658,50 @@ public class DocumentoLibraryComprasHelper
             DocumentoComprasCreado documento,
             DLFileEntry entry) {
 
-        if (documento == null || entry == null) {
+        if (documento == null
+                || entry == null) {
+
             return false;
         }
 
-        boolean coincide = entry.getFileEntryId()
+        boolean coincide =
+                entry.getFileEntryId()
                         == documento.getFileEntryId()
-                && entry.getGroupId() == documento.getGroupId()
-                && entry.getFolderId() == documento.getFolderId()
-                && documento.getNombrePersistido().equals(entry.getName());
+                        && entry.getGroupId()
+                        == documento.getGroupId()
+                        && entry.getFolderId()
+                        == documento.getFolderId()
+                        && documento.getNombrePersistido().equals(
+                        entry.getName()
+                );
 
         return coincide
-                && (WebKeysCompras.isEmpty(documento.getUuid())
-                || documento.getUuid().equals(entry.getUuid()));
+                && (
+                WebKeysCompras.isEmpty(
+                        documento.getUuid()
+                )
+                        || documento.getUuid().equals(
+                        entry.getUuid()
+                )
+        );
     }
 
     public String construirTituloOrdenMedica(
             int idRequerimientoCompra,
-            String identificador) throws Exception {
+            String identificador)
+            throws Exception {
 
         if (idRequerimientoCompra <= 0
-                || WebKeysCompras.isEmpty(identificador)
-                || !identificador.matches("^[A-Za-z0-9]+$")) {
+                || WebKeysCompras.isEmpty(
+                identificador
+        )
+                || !identificador.matches(
+                "^[A-Za-z0-9]+$"
+        )) {
 
             throw new Exception(
-                    "No se pudo construir el título persistido de la Orden médica."
+                    "No se pudo construir el título persistido "
+                            + "de la Orden médica."
             );
         }
 
@@ -298,15 +715,23 @@ public class DocumentoLibraryComprasHelper
     public String construirNombreOrdenMedica(
             int idRequerimientoCompra,
             String identificador,
-            String extension) throws Exception {
+            String extension)
+            throws Exception {
 
         if (idRequerimientoCompra <= 0
-                || WebKeysCompras.isEmpty(identificador)
-                || !identificador.matches("^[A-Za-z0-9]+$")
-                || !esExtensionOrdenMedica(extension)) {
+                || WebKeysCompras.isEmpty(
+                identificador
+        )
+                || !identificador.matches(
+                "^[A-Za-z0-9]+$"
+        )
+                || !esExtensionOrdenMedica(
+                extension
+        )) {
 
             throw new Exception(
-                    "No se pudo construir el nombre persistido de la Orden médica."
+                    "No se pudo construir el nombre persistido "
+                            + "de la Orden médica."
             );
         }
 
@@ -317,20 +742,30 @@ public class DocumentoLibraryComprasHelper
                 + extension;
     }
 
-    public String obtenerNombreArchivo(String filename) {
+    /**
+     * Primitiva documental comun.
+     */
+    public static String normalizarNombreArchivoSeguro(
+            String filename) {
+
         if (filename == null) {
             return "";
         }
 
-        String nombre = filename.trim();
+        String nombre =
+                filename.trim();
 
-        if (WebKeysCompras.isEmpty(nombre)
+        if (WebKeysCompras.isEmpty(
+                nombre
+        )
                 || ".".equals(nombre)
                 || "..".equals(nombre)
                 || nombre.indexOf("..") >= 0
                 || nombre.indexOf('/') >= 0
                 || nombre.indexOf('\\') >= 0
-                || nombre.matches(".*\\p{Cntrl}.*")) {
+                || nombre.matches(
+                ".*\\p{Cntrl}.*"
+        )) {
 
             return "";
         }
@@ -338,46 +773,109 @@ public class DocumentoLibraryComprasHelper
         return nombre;
     }
 
-    public String obtenerExtensionSegura(String nombreOriginal) {
-        if (WebKeysCompras.isEmpty(nombreOriginal)) {
-            return "";
-        }
+    public String obtenerNombreArchivo(
+            String filename) {
 
-        int posicionExtension = nombreOriginal.lastIndexOf('.');
-
-        if (posicionExtension < 0
-                || posicionExtension >= nombreOriginal.length() - 1) {
-            return "";
-        }
-
-        String extension = nombreOriginal.substring(posicionExtension);
-
-        if (extension.length()
-                > WebKeysCompras.DOCUMENT_LIBRARY_MAX_EXTENSION_LENGTH
-                || !extension.matches("^\\.[A-Za-z0-9]+$")) {
-
-            return "";
-        }
-
-        return extension.toLowerCase(Locale.ENGLISH);
+        return normalizarNombreArchivoSeguro(
+                filename
+        );
     }
 
-    public boolean esExtensionOrdenMedica(String extension) {
+    /**
+     * Primitiva documental comun.
+     */
+    public static String obtenerExtensionSeguraDocumento(
+            String nombreOriginal) {
+
+        if (WebKeysCompras.isEmpty(
+                nombreOriginal
+        )) {
+
+            return "";
+        }
+
+        int posicionExtension =
+                nombreOriginal.lastIndexOf('.');
+
+        if (posicionExtension < 0
+                || posicionExtension
+                >= nombreOriginal.length() - 1) {
+
+            return "";
+        }
+
+        String extension =
+                nombreOriginal.substring(
+                        posicionExtension
+                );
+
+        if (extension.length()
+                > WebKeysCompras
+                .DOCUMENT_LIBRARY_MAX_EXTENSION_LENGTH
+                || !extension.matches(
+                "^\\.[A-Za-z0-9]+$"
+        )) {
+
+            return "";
+        }
+
+        return extension.toLowerCase(
+                Locale.ENGLISH
+        );
+    }
+
+    public String obtenerExtensionSegura(
+            String nombreOriginal) {
+
+        return obtenerExtensionSeguraDocumento(
+                nombreOriginal
+        );
+    }
+
+    private static boolean esExtensionOrdenMedicaSegura(
+            String extension) {
+
         return ".jpg".equals(extension)
                 || ".jpeg".equals(extension)
                 || ".png".equals(extension);
     }
 
-    public long obtenerMaximoTamanoArchivo() throws Exception {
-        String valor = PropsUtil.get("dl.file.max.size");
+    public boolean esExtensionOrdenMedica(
+            String extension) {
 
-        if (WebKeysCompras.isEmpty(valor)) {
+        return esExtensionOrdenMedicaSegura(
+                extension
+        );
+    }
+
+    /**
+     * Primitiva documental comun.
+     */
+    public static long obtenerMaximoTamanoDocumento()
+            throws Exception {
+
+        String valor =
+                PropsUtil.get(
+                        "dl.file.max.size"
+                );
+
+        if (WebKeysCompras.isEmpty(
+                valor
+        )) {
+
             return Long.MAX_VALUE;
         }
 
         try {
-            long maximo = Long.parseLong(valor.trim());
-            return maximo > 0L ? maximo : Long.MAX_VALUE;
+            long maximo =
+                    Long.parseLong(
+                            valor.trim()
+                    );
+
+            return maximo > 0L
+                    ? maximo
+                    : Long.MAX_VALUE;
+
         } catch (NumberFormatException e) {
             throw new Exception(
                     "La configuración dl.file.max.size no es válida.",
@@ -386,46 +884,92 @@ public class DocumentoLibraryComprasHelper
         }
     }
 
-    protected Date parseFechaDocumento(String value) throws Exception {
-        String fecha = value != null ? value.trim() : "";
+    public long obtenerMaximoTamanoArchivo()
+            throws Exception {
 
-        if (WebKeysCompras.isEmpty(fecha)) {
+        return obtenerMaximoTamanoDocumento();
+    }
+
+    protected Date parseFechaDocumento(
+            String value) throws Exception {
+
+        String fecha =
+                value != null
+                        ? value.trim()
+                        : "";
+
+        if (WebKeysCompras.isEmpty(
+                fecha
+        )) {
+
             throw new Exception(
-                    "Fecha de la Orden médica: debe informar una fecha."
+                    "Fecha de la Orden médica: "
+                            + "debe informar una fecha."
             );
         }
 
-        SimpleDateFormat formato = new SimpleDateFormat("yyyy-MM-dd");
-        formato.setLenient(false);
-        ParsePosition posicion = new ParsePosition(0);
-        java.util.Date parsed = formato.parse(fecha, posicion);
+        SimpleDateFormat formato =
+                new SimpleDateFormat(
+                        "yyyy-MM-dd"
+                );
 
-        if (parsed == null || posicion.getIndex() != fecha.length()) {
+        formato.setLenient(
+                false
+        );
+
+        ParsePosition posicion =
+                new ParsePosition(
+                        0
+                );
+
+        java.util.Date parsed =
+                formato.parse(
+                        fecha,
+                        posicion
+                );
+
+        if (parsed == null
+                || posicion.getIndex()
+                != fecha.length()) {
+
             throw new Exception(
-                    "Fecha de la Orden médica: el formato no es válido."
+                    "Fecha de la Orden médica: "
+                            + "el formato no es válido."
             );
         }
 
-        return new Date(parsed.getTime());
+        return new Date(
+                parsed.getTime()
+        );
     }
 
     protected void validarFirmaImagen(
             File archivo,
-            String contentTypeEsperado) throws Exception {
+            String contentTypeEsperado)
+            throws Exception {
 
-        InputStream input = null;
+        InputStream input =
+                null;
 
         try {
-            input = new FileInputStream(archivo);
-            byte[] firma = new byte[8];
-            int leidos = 0;
+            input =
+                    new FileInputStream(
+                            archivo
+                    );
+
+            byte[] firma =
+                    new byte[8];
+
+            int leidos =
+                    0;
 
             while (leidos < firma.length) {
-                int cantidad = input.read(
-                        firma,
-                        leidos,
-                        firma.length - leidos
-                );
+                int cantidad =
+                        input.read(
+                                firma,
+                                leidos,
+                                firma.length - leidos
+                        );
 
                 if (cantidad < 0) {
                     break;
@@ -434,30 +978,12 @@ public class DocumentoLibraryComprasHelper
                 leidos += cantidad;
             }
 
-            boolean valida;
+            validarFirmaImagen(
+                    firma,
+                    leidos,
+                    contentTypeEsperado
+            );
 
-            if (CONTENT_TYPE_PNG.equals(contentTypeEsperado)) {
-                valida = leidos >= 8
-                        && (firma[0] & 0xFF) == 0x89
-                        && firma[1] == 0x50
-                        && firma[2] == 0x4E
-                        && firma[3] == 0x47
-                        && firma[4] == 0x0D
-                        && firma[5] == 0x0A
-                        && firma[6] == 0x1A
-                        && firma[7] == 0x0A;
-            } else {
-                valida = leidos >= 3
-                        && (firma[0] & 0xFF) == 0xFF
-                        && (firma[1] & 0xFF) == 0xD8
-                        && (firma[2] & 0xFF) == 0xFF;
-            }
-
-            if (!valida) {
-                throw new Exception(
-                        "Orden médica: el contenido no coincide con una imagen JPEG o PNG válida."
-                );
-            }
         } finally {
             if (input != null) {
                 try {
@@ -465,7 +991,8 @@ public class DocumentoLibraryComprasHelper
                 } catch (Exception closeError) {
                     if (_log.isDebugEnabled()) {
                         _log.debug(
-                                "No se pudo cerrar la lectura de la firma de imagen.",
+                                "No se pudo cerrar la lectura "
+                                        + "de la firma de imagen.",
                                 closeError
                         );
                     }
@@ -474,13 +1001,73 @@ public class DocumentoLibraryComprasHelper
         }
     }
 
-    private void validarContentTypeCompatible(
+    private static void validarFirmaImagen(
+            byte[] contenido,
+            String contentTypeEsperado)
+            throws Exception {
+
+        validarFirmaImagen(
+                contenido,
+                contenido != null
+                        ? contenido.length
+                        : 0,
+                contentTypeEsperado
+        );
+    }
+
+    private static void validarFirmaImagen(
+            byte[] firma,
+            int leidos,
+            String contentTypeEsperado)
+            throws Exception {
+
+        boolean valida;
+
+        if (CONTENT_TYPE_PNG.equals(
+                contentTypeEsperado
+        )) {
+
+            valida =
+                    firma != null
+                            && leidos >= 8
+                            && (firma[0] & 0xFF) == 0x89
+                            && firma[1] == 0x50
+                            && firma[2] == 0x4E
+                            && firma[3] == 0x47
+                            && firma[4] == 0x0D
+                            && firma[5] == 0x0A
+                            && firma[6] == 0x1A
+                            && firma[7] == 0x0A;
+
+        } else {
+            valida =
+                    firma != null
+                            && leidos >= 3
+                            && (firma[0] & 0xFF) == 0xFF
+                            && (firma[1] & 0xFF) == 0xD8
+                            && (firma[2] & 0xFF) == 0xFF;
+        }
+
+        if (!valida) {
+            throw new Exception(
+                    "Orden médica: el contenido no coincide "
+                            + "con una imagen JPEG o PNG válida."
+            );
+        }
+    }
+
+    private static void validarContentTypeCompatible(
             String origen,
             String contentType,
-            String esperado) throws Exception {
+            String esperado)
+            throws Exception {
 
-        if (WebKeysCompras.isEmpty(contentType)
-                || "application/octet-stream".equals(contentType)) {
+        if (WebKeysCompras.isEmpty(
+                contentType
+        )
+                || "application/octet-stream".equals(
+                contentType
+        )) {
 
             throw new Exception(
                     "Orden médica: el tipo MIME "
@@ -489,7 +1076,10 @@ public class DocumentoLibraryComprasHelper
             );
         }
 
-        if (!esperado.equals(contentType)) {
+        if (!esperado.equals(
+                contentType
+        )) {
+
             throw new Exception(
                     "Orden médica: el tipo MIME "
                             + origen
@@ -498,114 +1088,239 @@ public class DocumentoLibraryComprasHelper
         }
     }
 
-    private String normalizarContentType(String value) {
+    private static String normalizarContentType(
+            String value) {
+
         if (value == null) {
             return "";
         }
 
-        String contentType = value.trim().toLowerCase(Locale.ENGLISH);
-        int separador = contentType.indexOf(';');
+        String contentType =
+                value.trim()
+                        .toLowerCase(
+                                Locale.ENGLISH
+                        );
+
+        int separador =
+                contentType.indexOf(';');
 
         if (separador >= 0) {
-            contentType = contentType.substring(0, separador).trim();
+            contentType =
+                    contentType.substring(
+                            0,
+                            separador
+                    ).trim();
         }
 
-        if ("image/jpg".equals(contentType)
-                || "image/pjpeg".equals(contentType)) {
+        if ("image/jpg".equals(
+                contentType
+        )
+                || "image/pjpeg".equals(
+                contentType
+        )) {
+
             return CONTENT_TYPE_JPEG;
         }
 
-        if ("image/x-png".equals(contentType)) {
+        if ("image/x-png".equals(
+                contentType
+        )) {
+
             return CONTENT_TYPE_PNG;
         }
 
         return contentType;
     }
 
+    private static void validarNombreOriginalOrdenMedicaPersistido(
+            String nombreOriginal)
+            throws Exception {
+
+        if (WebKeysCompras.isEmpty(
+                nombreOriginal
+        )
+                || nombreOriginal.length() > 255
+                || !nombreOriginal.equals(
+                nombreOriginal.trim()
+        )
+                || WebKeysCompras.isEmpty(
+                normalizarNombreArchivoSeguro(
+                        nombreOriginal
+                )
+        )) {
+
+            throw new Exception(
+                    "El nombre original de la Orden médica es inválido."
+            );
+        }
+    }
+
     private void validarOrdenMedicaPreparada(
-            OrdenMedicaValidada ordenMedica) throws Exception {
+            OrdenMedicaValidada ordenMedica)
+            throws Exception {
 
         if (ordenMedica == null
                 || ordenMedica.getArchivo() == null
                 || !ordenMedica.getArchivo().exists()
                 || ordenMedica.getArchivo().length() <= 0L
-                || WebKeysCompras.isEmpty(ordenMedica.getNombreOriginal())
-                || !esExtensionOrdenMedica(ordenMedica.getExtension())
-                || ordenMedica.getFechaDocumento() == null
-                || !(CONTENT_TYPE_JPEG.equals(ordenMedica.getContentType())
-                || CONTENT_TYPE_PNG.equals(ordenMedica.getContentType()))) {
-
-            throw new Exception(
-                    "La Orden médica validada no contiene todos los datos requeridos."
-            );
-        }
-
-        String nombreOriginal = obtenerNombreArchivo(
+                || WebKeysCompras.isEmpty(
                 ordenMedica.getNombreOriginal()
-        );
+        )
+                || !esExtensionOrdenMedica(
+                ordenMedica.getExtension()
+        )
+                || ordenMedica.getFechaDocumento() == null
+                || !(
+                CONTENT_TYPE_JPEG.equals(
+                        ordenMedica.getContentType()
+                )
+                        || CONTENT_TYPE_PNG.equals(
+                        ordenMedica.getContentType()
+                )
+        )) {
 
-        if (WebKeysCompras.isEmpty(nombreOriginal)
+            throw new Exception(
+                    "La Orden médica validada no contiene "
+                            + "todos los datos requeridos."
+            );
+        }
+
+        String nombreOriginal =
+                obtenerNombreArchivo(
+                        ordenMedica.getNombreOriginal()
+                );
+
+        if (WebKeysCompras.isEmpty(
+                nombreOriginal
+        )
                 || nombreOriginal.length()
-                > WebKeysCompras.DOCUMENT_LIBRARY_MAX_TITLE_LENGTH) {
+                > WebKeysCompras
+                .DOCUMENT_LIBRARY_MAX_TITLE_LENGTH) {
 
             throw new Exception(
-                    "La Orden médica validada tiene un nombre de archivo inválido."
+                    "La Orden médica validada tiene "
+                            + "un nombre de archivo inválido."
             );
         }
 
-        String extensionNombre = obtenerExtensionSegura(nombreOriginal);
+        String extensionNombre =
+                obtenerExtensionSegura(
+                        nombreOriginal
+                );
 
-        if (!ordenMedica.getExtension().equals(extensionNombre)) {
+        if (!ordenMedica.getExtension().equals(
+                extensionNombre
+        )) {
+
             throw new Exception(
-                    "La extensión de la Orden médica no coincide con su nombre original."
+                    "La extensión de la Orden médica "
+                            + "no coincide con su nombre original."
             );
         }
 
-        long maximoTamanoArchivo = obtenerMaximoTamanoArchivo();
+        long maximoTamanoArchivo =
+                obtenerMaximoTamanoArchivo();
 
-        if (ordenMedica.getArchivo().length() > maximoTamanoArchivo) {
+        if (ordenMedica.getArchivo().length()
+                > maximoTamanoArchivo) {
+
             throw new Exception(
-                    "La Orden médica validada supera el tamaño permitido."
+                    "La Orden médica validada "
+                            + "supera el tamaño permitido."
             );
         }
 
-        String contentTypeEsperado = ".png".equals(extensionNombre)
-                ? CONTENT_TYPE_PNG
-                : CONTENT_TYPE_JPEG;
-        String contentTypeInformado = normalizarContentType(
-                ordenMedica.getContentType()
-        );
-        String contentTypeDetectado = normalizarContentType(
-                detectarContentTypePorNombre(nombreOriginal)
-        );
+        String contentTypeEsperado =
+                ".png".equals(
+                        extensionNombre
+                )
+                        ? CONTENT_TYPE_PNG
+                        : CONTENT_TYPE_JPEG;
+
+        String contentTypeInformado =
+                normalizarContentType(
+                        ordenMedica.getContentType()
+                );
+
+        String contentTypeDetectado =
+                normalizarContentType(
+                        detectarContentTypePorNombre(
+                                nombreOriginal
+                        )
+                );
 
         validarContentTypeCompatible(
                 "informado",
                 contentTypeInformado,
                 contentTypeEsperado
         );
+
         validarContentTypeCompatible(
                 "detectado",
                 contentTypeDetectado,
                 contentTypeEsperado
         );
+
         validarFirmaImagen(
                 ordenMedica.getArchivo(),
                 contentTypeEsperado
         );
     }
 
-    protected String detectarContentTypePorNombre(String nombreOriginal) {
-        return MimeTypesUtil.getContentType(nombreOriginal);
+    protected String detectarContentTypePorNombre(
+            String nombreOriginal) {
+
+        return MimeTypesUtil.getContentType(
+                nombreOriginal
+        );
     }
 
-    private DLFolder obtenerOCrearFolderCompras() throws Exception {
+    /**
+     * Primitiva comun para Presupuestos y Ordenes medicas.
+     */
+    public static void validarContextoDocumentLibrary(
+            ServiceContext serviceContext)
+            throws Exception {
+
+        if (serviceContext == null) {
+            throw new Exception(
+                    "No se pudo preparar el contexto de Document Library."
+            );
+        }
+
+        validarContextoDocumentLibrary(
+                serviceContext.getScopeGroupId(),
+                serviceContext.getUserId()
+        );
+    }
+
+    /**
+     * Primitiva comun para obtener la carpeta de documentos de Compras.
+     */
+    public static DLFolder obtenerOCrearFolderCompras(
+            ServiceContext serviceContext)
+            throws Exception {
+
+        validarContextoDocumentLibrary(
+                serviceContext
+        );
+
+        long groupId =
+                serviceContext.getScopeGroupId();
+
+        long userId =
+                serviceContext.getUserId();
+
         try {
-            return getFolderCompras();
+            return getFolderCompras(
+                    groupId
+            );
+
         } catch (NoSuchFolderException e) {
             if (_log.isDebugEnabled()) {
                 _log.debug(
-                        "La carpeta de documentos de Compras no existe; se creará. groupId="
+                        "La carpeta de documentos de Compras "
+                                + "no existe; se intentara crear. groupId="
                                 + groupId
                 );
             }
@@ -615,36 +1330,59 @@ public class DocumentoLibraryComprasHelper
             return DLFolderLocalServiceUtil.addFolder(
                     userId,
                     groupId,
-                    WebKeysCompras.DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS,
-                    WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS,
-                    WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_DESCRIPCION_COMPRAS,
+                    WebKeysCompras
+                            .DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS,
+                    WebKeysCompras
+                            .DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS,
+                    WebKeysCompras
+                            .DOCUMENT_LIBRARY_FOLDER_DESCRIPCION_COMPRAS,
                     serviceContext
             );
+
         } catch (Exception createError) {
             try {
-                return getFolderCompras();
+                return getFolderCompras(
+                        groupId
+                );
+
             } catch (Exception lookupError) {
                 _log.error(
-                        "No se pudo crear ni recuperar la carpeta de documentos de Compras. groupId="
+                        "No se pudo crear ni recuperar "
+                                + "la carpeta de documentos de Compras. "
+                                + "groupId="
                                 + groupId,
                         createError
                 );
+
                 throw createError;
             }
         }
     }
 
-    private DLFolder getFolderCompras() throws Exception {
-        return DLFolderLocalServiceUtil.getFolder(
-                groupId,
-                WebKeysCompras.DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS,
-                WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS
+    private DLFolder obtenerOCrearFolderCompras()
+            throws Exception {
+
+        return obtenerOCrearFolderCompras(
+                serviceContext
         );
     }
 
-    private void validarContextoDocumentLibrary(
+    private static DLFolder getFolderCompras(
+            long groupId) throws Exception {
+
+        return DLFolderLocalServiceUtil.getFolder(
+                groupId,
+                WebKeysCompras
+                        .DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS,
+                WebKeysCompras
+                        .DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS
+        );
+    }
+
+    private static void validarContextoDocumentLibrary(
             long groupId,
-            long userId) throws Exception {
+            long userId)
+            throws Exception {
 
         if (groupId <= 0L) {
             throw new Exception(
@@ -654,13 +1392,15 @@ public class DocumentoLibraryComprasHelper
 
         if (userId <= 0L) {
             throw new Exception(
-                    "No se pudo determinar el usuario de Document Library."
+                    "No se pudo determinar el usuario "
+                            + "de Document Library."
             );
         }
     }
 
     public OrdenMedicaValidada validarOrdenMedica(
-            UploadPortletRequest uploadRequest) throws Exception {
+            UploadPortletRequest uploadRequest)
+            throws Exception {
 
         String fecha =
                 uploadRequest != null
@@ -680,14 +1420,9 @@ public class DocumentoLibraryComprasHelper
 
     public OrdenMedicaValidada validarOrdenMedica(
             UploadPortletRequest uploadRequest,
-            String fechaNormalizada) throws Exception {
+            String fechaNormalizada)
+            throws Exception {
 
-        /*
-         * Contrato histórico.
-         *
-         * Conserva exactamente el nombre del campo original y delega
-         * al nuevo método parametrizado.
-         */
         return validarOrdenMedica(
                 uploadRequest,
                 PARAM_ARCHIVO_ORDEN_MEDICA,
@@ -718,13 +1453,18 @@ public class DocumentoLibraryComprasHelper
 
         if (uploadRequest == null) {
             throw new Exception(
-                    "No se recibió el formulario multipart de la Orden médica."
+                    "No se recibió el formulario multipart "
+                            + "de la Orden médica."
             );
         }
 
-        if (WebKeysCompras.isEmpty(nombreCampoArchivo)) {
+        if (WebKeysCompras.isEmpty(
+                nombreCampoArchivo
+        )) {
+
             throw new Exception(
-                    "No se informó el campo de archivo de la Orden médica."
+                    "No se informó el campo de archivo "
+                            + "de la Orden médica."
             );
         }
 
@@ -753,11 +1493,15 @@ public class DocumentoLibraryComprasHelper
                 || archivo.length() <= 0L) {
 
             throw new Exception(
-                    "Orden médica: debe seleccionar una imagen no vacía."
+                    "Orden médica: debe seleccionar "
+                            + "una imagen no vacía."
             );
         }
 
-        if (WebKeysCompras.isEmpty(nombreOriginal)) {
+        if (WebKeysCompras.isEmpty(
+                nombreOriginal
+        )) {
+
             throw new Exception(
                     "Orden médica: el nombre del archivo no es válido."
             );
@@ -767,10 +1511,12 @@ public class DocumentoLibraryComprasHelper
                 obtenerMaximoTamanoArchivo();
 
         if (maximoTamanoArchivo > 0L
-                && archivo.length() > maximoTamanoArchivo) {
+                && archivo.length()
+                > maximoTamanoArchivo) {
 
             throw new Exception(
-                    "Orden médica: el archivo supera el tamaño permitido."
+                    "Orden médica: el archivo supera "
+                            + "el tamaño permitido."
             );
         }
 
@@ -779,9 +1525,13 @@ public class DocumentoLibraryComprasHelper
                         nombreOriginal
                 );
 
-        if (!esExtensionOrdenMedica(extension)) {
+        if (!esExtensionOrdenMedica(
+                extension
+        )) {
+
             throw new Exception(
-                    "Orden médica: sólo se permiten archivos JPG, JPEG o PNG."
+                    "Orden médica: sólo se permiten "
+                            + "archivos JPG, JPEG o PNG."
             );
         }
 
@@ -800,7 +1550,9 @@ public class DocumentoLibraryComprasHelper
                 );
 
         String contentTypeEsperado =
-                ".png".equals(extension)
+                ".png".equals(
+                        extension
+                )
                         ? CONTENT_TYPE_PNG
                         : CONTENT_TYPE_JPEG;
 
@@ -829,5 +1581,39 @@ public class DocumentoLibraryComprasHelper
                 fechaDocumento,
                 numeroReceta
         );
+    }
+
+    public static final class OrdenMedicaContenido {
+
+        private final byte[] contenido;
+        private final String nombreOriginal;
+        private final String contentType;
+
+        private OrdenMedicaContenido(
+                byte[] contenido,
+                String nombreOriginal,
+                String contentType) {
+
+            this.contenido =
+                    contenido;
+
+            this.nombreOriginal =
+                    nombreOriginal;
+
+            this.contentType =
+                    contentType;
+        }
+
+        public byte[] getContenido() {
+            return contenido;
+        }
+
+        public String getNombreOriginal() {
+            return nombreOriginal;
+        }
+
+        public String getContentType() {
+            return contentType;
+        }
     }
 }

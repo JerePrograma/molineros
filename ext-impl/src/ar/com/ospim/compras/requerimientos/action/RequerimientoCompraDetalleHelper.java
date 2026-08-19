@@ -325,6 +325,32 @@ public class RequerimientoCompraDetalleHelper {
         );
     }
 
+    private int getIdDetalleFromRequest(
+            ActionRequest request) throws ValidacionCompraException {
+
+        int idDetalle =
+                parseEnteroConDefault(
+                        request,
+                        "id_detalle",
+                        "ID del detalle",
+                        0
+                );
+
+        if (idDetalle > 0) {
+            return idDetalle;
+        }
+
+        /*
+         * Compatibilidad con el nombre utilizado por callers legacy.
+         */
+        return parseEnteroConDefault(
+                request,
+                "id_item",
+                "ID del detalle",
+                0
+        );
+    }
+
     public RequerimientoCompraDetalle getDetalleFromRequest(
             ActionRequest request) throws Exception {
 

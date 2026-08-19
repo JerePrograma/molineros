@@ -4,20 +4,18 @@ import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
+import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 
 import com.liferay.documentlibrary.DuplicateFileException;
 import com.liferay.documentlibrary.FileNameException;
 import com.liferay.documentlibrary.FileSizeException;
-import com.liferay.portlet.documentlibrary.NoSuchFolderException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
-import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -71,7 +68,9 @@ public final class PresupuestoCompraHelper {
                                 idRequerimientoCompra
                         );
 
-        validarAccesoCarga(requerimiento);
+        validarAccesoCarga(
+                requerimiento
+        );
 
         List<PrestadorCotizacion> prestadores =
                 BusquedaRequerimientoCompraServiceUtil
@@ -84,30 +83,33 @@ public final class PresupuestoCompraHelper {
                         idRequerimientoCompra,
                         entradas,
                         prestadores,
-                        obtenerMaximoTamanoArchivo()
+                        DocumentoLibraryComprasHelper
+                                .obtenerMaximoTamanoDocumento()
                 );
 
-        /*
-         * Revalidacion inmediatamente antes de crear documentos.
-         */
         RequerimientoCompra actual =
                 BusquedaRequerimientoCompraServiceUtil
                         .getRequerimientoCompra(
                                 idRequerimientoCompra
                         );
 
-        validarAccesoCarga(actual);
-        validarContextoDocumentLibrary(serviceContext);
+        validarAccesoCarga(
+                actual
+        );
 
-        long groupId = serviceContext.getScopeGroupId();
-        long userId = serviceContext.getUserId();
-
-        DLFolder folder =
-                obtenerOCrearFolderCompras(
-                        groupId,
-                        userId,
+        DocumentoLibraryComprasHelper
+                .validarContextoDocumentLibrary(
                         serviceContext
                 );
+
+        long userId =
+                serviceContext.getUserId();
+
+        DLFolder folder =
+                DocumentoLibraryComprasHelper
+                        .obtenerOCrearFolderCompras(
+                                serviceContext
+                        );
 
         guardarPresupuestosValidados(
                 idRequerimientoCompra,
@@ -151,7 +153,9 @@ public final class PresupuestoCompraHelper {
                                 idRequerimientoCompra
                         );
 
-        validarAccesoCarga(requerimiento);
+        validarAccesoCarga(
+                requerimiento
+        );
 
         RequerimientoCompraPresupuesto presupuesto =
                 BusquedaRequerimientoCompraServiceUtil
@@ -167,18 +171,24 @@ public final class PresupuestoCompraHelper {
             );
         }
 
-        validarIdentidadAsociacion(presupuesto);
+        validarIdentidadAsociacion(
+                presupuesto
+        );
 
         if (presupuesto.getDlGroupId().longValue()
                 != scopeGroupId) {
+
             throw new Exception(
-                    "El presupuesto informado no pertenece al sitio actual."
+                    "El presupuesto informado no pertenece "
+                            + "al sitio actual."
             );
         }
 
         DLFileEntry fileEntry =
                 DLFileEntryLocalServiceUtil.getDLFileEntry(
-                        presupuesto.getDlFileEntryId().longValue()
+                        presupuesto
+                                .getDlFileEntryId()
+                                .longValue()
                 );
 
         validarDocumentoAsociado(
@@ -195,8 +205,8 @@ public final class PresupuestoCompraHelper {
 
         if (!asociacionDadaDeBaja) {
             throw new Exception(
-                    "El presupuesto ya fue eliminado o fue modificado "
-                            + "por otro proceso."
+                    "El presupuesto ya fue eliminado "
+                            + "o fue modificado por otro proceso."
             );
         }
 
@@ -222,10 +232,12 @@ public final class PresupuestoCompraHelper {
                                     + idRequerimientoPresupuesto
                     );
                 }
+
             } catch (Exception reactivarError) {
                 _log.error(
                         "La eliminacion fisica del presupuesto fallo y "
-                                + "tambien fallo la reactivacion de su asociacion. "
+                                + "tambien fallo la reactivacion "
+                                + "de su asociacion. "
                                 + "idRequerimientoPresupuesto="
                                 + idRequerimientoPresupuesto,
                         reactivarError
@@ -246,18 +258,23 @@ public final class PresupuestoCompraHelper {
                 new HashMap<Integer, PrestadorCotizacion>();
 
         for (int i = 0;
-             prestadores != null && i < prestadores.size();
+             prestadores != null
+                     && i < prestadores.size();
              i++) {
 
-            PrestadorCotizacion prestador = prestadores.get(i);
+            PrestadorCotizacion prestador =
+                    prestadores.get(i);
 
             if (prestador != null
                     && prestador.getIdPrestador() > 0
                     && WebKeysCompras.ENVIO_ENVIADO.equals(
                     prestador.getEstadoEnvio()
             )) {
+
                 prestadoresPorId.put(
-                        Integer.valueOf(prestador.getIdPrestador()),
+                        Integer.valueOf(
+                                prestador.getIdPrestador()
+                        ),
                         prestador
                 );
             }
@@ -269,10 +286,16 @@ public final class PresupuestoCompraHelper {
         Set<Integer> prestadoresSeleccionados =
                 new HashSet<Integer>();
 
-        for (int i = 0; i < entradas.size(); i++) {
-            PresupuestoEntrada entrada = entradas.get(i);
+        for (int i = 0;
+             i < entradas.size();
+             i++) {
 
-            if (entrada == null || entrada.getIndice() != i) {
+            PresupuestoEntrada entrada =
+                    entradas.get(i);
+
+            if (entrada == null
+                    || entrada.getIndice() != i) {
+
                 throw new Exception(
                         "El indice del presupuesto "
                                 + (i + 1)
@@ -280,20 +303,25 @@ public final class PresupuestoCompraHelper {
                 );
             }
 
-            File archivo = entrada.getArchivo();
+            File archivo =
+                    entrada.getArchivo();
 
             if (archivo == null
                     || !archivo.exists()
                     || archivo.length() <= 0L) {
+
                 throw new Exception(
-                        "Debe seleccionar el archivo del presupuesto "
+                        "Debe seleccionar el archivo "
+                                + "del presupuesto "
                                 + (i + 1)
                                 + "."
                 );
             }
 
             if (maximoTamanoArchivo > 0L
-                    && archivo.length() > maximoTamanoArchivo) {
+                    && archivo.length()
+                    > maximoTamanoArchivo) {
+
                 throw new Exception(
                         "El presupuesto "
                                 + (i + 1)
@@ -302,11 +330,15 @@ public final class PresupuestoCompraHelper {
             }
 
             String nombreOriginal =
-                    obtenerNombreArchivo(
-                            entrada.getNombreOriginal()
-                    );
+                    DocumentoLibraryComprasHelper
+                            .normalizarNombreArchivoSeguro(
+                                    entrada.getNombreOriginal()
+                            );
 
-            if (WebKeysCompras.isEmpty(nombreOriginal)) {
+            if (WebKeysCompras.isEmpty(
+                    nombreOriginal
+            )) {
+
                 throw new Exception(
                         "El nombre del presupuesto "
                                 + (i + 1)
@@ -315,11 +347,15 @@ public final class PresupuestoCompraHelper {
             }
 
             String extension =
-                    obtenerExtensionSegura(
-                            nombreOriginal
-                    );
+                    DocumentoLibraryComprasHelper
+                            .obtenerExtensionSeguraDocumento(
+                                    nombreOriginal
+                            );
 
-            if (!".pdf".equals(extension)) {
+            if (!".pdf".equals(
+                    extension
+            )) {
+
                 throw new Exception(
                         "El presupuesto "
                                 + (i + 1)
@@ -334,7 +370,8 @@ public final class PresupuestoCompraHelper {
 
             if (entrada.getIdPrestador() <= 0) {
                 throw new Exception(
-                        "Debe seleccionar el prestador del presupuesto "
+                        "Debe seleccionar el prestador "
+                                + "del presupuesto "
                                 + (i + 1)
                                 + "."
                 );
@@ -361,7 +398,10 @@ public final class PresupuestoCompraHelper {
                             prestador.getIdPrestador()
                     );
 
-            if (!prestadoresSeleccionados.add(idPrestador)) {
+            if (!prestadoresSeleccionados.add(
+                    idPrestador
+            )) {
+
                 throw new Exception(
                         "El prestador del presupuesto "
                                 + (i + 1)
@@ -405,15 +445,22 @@ public final class PresupuestoCompraHelper {
             long userId,
             long folderId,
             String usuario,
-            ServiceContext serviceContext) throws Exception {
+            ServiceContext serviceContext)
+            throws Exception {
 
         List<PresupuestoCreado> creados =
                 new ArrayList<PresupuestoCreado>();
 
         try {
-            for (int i = 0; i < presupuestos.size(); i++) {
-                PresupuestoValidado presupuesto = presupuestos.get(i);
-                DocumentoPresupuestoCreado documento = null;
+            for (int i = 0;
+                 i < presupuestos.size();
+                 i++) {
+
+                PresupuestoValidado presupuesto =
+                        presupuestos.get(i);
+
+                DocumentoPresupuestoCreado documento =
+                        null;
 
                 try {
                     documento =
@@ -446,11 +493,12 @@ public final class PresupuestoCompraHelper {
                                     documento.getFolderId(),
                                     documento.getNombre()
                             );
+
                         } catch (Exception cleanupError) {
                             _log.error(
-                                    "No se pudo eliminar el documento creado "
-                                            + "antes de fallar su asociacion. "
-                                            + "fileEntryId="
+                                    "No se pudo eliminar el documento "
+                                            + "creado antes de fallar "
+                                            + "su asociacion. fileEntryId="
                                             + documento.getFileEntryId(),
                                     cleanupError
                             );
@@ -468,7 +516,9 @@ public final class PresupuestoCompraHelper {
                     usuario
             );
 
-            throw traducirErrorDocumento(errorPrincipal);
+            throw traducirErrorDocumento(
+                    errorPrincipal
+            );
         }
     }
 
@@ -477,12 +527,17 @@ public final class PresupuestoCompraHelper {
             List<PresupuestoCreado> creados,
             String usuario) {
 
-        for (int i = creados.size() - 1; i >= 0; i--) {
-            PresupuestoCreado creado = creados.get(i);
+        for (int i = creados.size() - 1;
+             i >= 0;
+             i--) {
+
+            PresupuestoCreado creado =
+                    creados.get(i);
 
             if (creado == null
                     || creado.getAsociacion() == null
                     || creado.getDocumento() == null) {
+
                 continue;
             }
 
@@ -492,10 +547,12 @@ public final class PresupuestoCompraHelper {
 
             if (idAsociacion == null
                     || idAsociacion.intValue() <= 0) {
+
                 continue;
             }
 
-            boolean asociacionDadaDeBaja = false;
+            boolean asociacionDadaDeBaja =
+                    false;
 
             try {
                 asociacionDadaDeBaja =
@@ -504,10 +561,12 @@ public final class PresupuestoCompraHelper {
                                 idRequerimientoCompra,
                                 usuario
                         );
+
             } catch (Exception cleanupSqlError) {
                 _log.error(
-                        "No se pudo dar de baja una asociacion durante "
-                                + "la compensacion de presupuestos. "
+                        "No se pudo dar de baja una asociacion "
+                                + "durante la compensacion "
+                                + "de presupuestos. "
                                 + "idRequerimientoPresupuesto="
                                 + idAsociacion,
                         cleanupSqlError
@@ -520,14 +579,18 @@ public final class PresupuestoCompraHelper {
 
             try {
                 eliminarArchivoPresupuesto(
-                        creado.getDocumento().getFolderId(),
-                        creado.getDocumento().getNombre()
+                        creado.getDocumento()
+                                .getFolderId(),
+                        creado.getDocumento()
+                                .getNombre()
                 );
+
             } catch (Exception cleanupFileError) {
                 _log.error(
-                        "No se pudo eliminar un presupuesto durante "
-                                + "la compensacion. fileEntryId="
-                                + creado.getDocumento().getFileEntryId(),
+                        "No se pudo eliminar un presupuesto "
+                                + "durante la compensacion. fileEntryId="
+                                + creado.getDocumento()
+                                .getFileEntryId(),
                         cleanupFileError
                 );
 
@@ -536,10 +599,12 @@ public final class PresupuestoCompraHelper {
                             idAsociacion.intValue(),
                             idRequerimientoCompra
                     );
+
                 } catch (Exception reactivarError) {
                     _log.error(
-                            "No se pudo reactivar la asociacion despues de "
-                                    + "fallar la eliminacion del documento. "
+                            "No se pudo reactivar la asociacion "
+                                    + "despues de fallar la eliminacion "
+                                    + "del documento. "
                                     + "idRequerimientoPresupuesto="
                                     + idAsociacion,
                             reactivarError
@@ -553,24 +618,29 @@ public final class PresupuestoCompraHelper {
             long userId,
             long folderId,
             PresupuestoValidado presupuesto,
-            ServiceContext serviceContext) throws Exception {
+            ServiceContext serviceContext)
+            throws Exception {
 
         DLFileEntry entry =
-                DLFileEntryLocalServiceUtil.addOrOverwriteFileEntry(
-                        userId,
-                        folderId,
-                        presupuesto.getNombrePersistido(),
-                        presupuesto.getNombreOriginal(),
-                        presupuesto.getTitulo(),
-                        presupuesto.getDescripcionPrestador(),
-                        "",
-                        presupuesto.getArchivo(),
-                        serviceContext
-                );
+                DLFileEntryLocalServiceUtil
+                        .addOrOverwriteFileEntry(
+                                userId,
+                                folderId,
+                                presupuesto.getNombrePersistido(),
+                                presupuesto.getNombreOriginal(),
+                                presupuesto.getTitulo(),
+                                presupuesto.getDescripcionPrestador(),
+                                "",
+                                presupuesto.getArchivo(),
+                                serviceContext
+                        );
 
-        if (entry == null || entry.getFileEntryId() <= 0L) {
+        if (entry == null
+                || entry.getFileEntryId() <= 0L) {
+
             throw new Exception(
-                    "Document Library no devolvio un documento valido."
+                    "Document Library no devolvio "
+                            + "un documento valido."
             );
         }
 
@@ -588,30 +658,58 @@ public final class PresupuestoCompraHelper {
             int idRequerimientoCompra,
             PresupuestoValidado presupuesto,
             DocumentoPresupuestoCreado documento,
-            String usuario) throws Exception {
+            String usuario)
+            throws Exception {
 
         RequerimientoCompraPresupuesto asociacion =
                 new RequerimientoCompraPresupuesto();
 
         asociacion.setIdRequerimiento(
-                Integer.valueOf(idRequerimientoCompra)
+                Integer.valueOf(
+                        idRequerimientoCompra
+                )
         );
+
         asociacion.setIdPrestador(
-                Integer.valueOf(presupuesto.getIdPrestador())
+                Integer.valueOf(
+                        presupuesto.getIdPrestador()
+                )
         );
+
         asociacion.setDlGroupId(
-                Long.valueOf(documento.getGroupId())
+                Long.valueOf(
+                        documento.getGroupId()
+                )
         );
+
         asociacion.setDlFolderId(
-                Long.valueOf(documento.getFolderId())
+                Long.valueOf(
+                        documento.getFolderId()
+                )
         );
+
         asociacion.setDlFileEntryId(
-                Long.valueOf(documento.getFileEntryId())
+                Long.valueOf(
+                        documento.getFileEntryId()
+                )
         );
-        asociacion.setDlFileUuid(documento.getUuid());
-        asociacion.setNombreOriginal(presupuesto.getNombreOriginal());
-        asociacion.setNombrePersistido(documento.getNombre());
-        asociacion.setTitulo(documento.getTitulo());
+
+        asociacion.setDlFileUuid(
+                documento.getUuid()
+        );
+
+        asociacion.setNombreOriginal(
+                presupuesto.getNombreOriginal()
+        );
+
+        asociacion.setNombrePersistido(
+                documento.getNombre()
+        );
+
+        asociacion.setTitulo(
+                documento.getTitulo()
+        );
+
         asociacion.setDescripcionPrestador(
                 presupuesto.getDescripcionPrestador()
         );
@@ -624,221 +722,120 @@ public final class PresupuestoCompraHelper {
 
         if (id <= 0) {
             throw new Exception(
-                    "No se pudo obtener el identificador de la asociacion "
-                            + "del presupuesto."
+                    "No se pudo obtener el identificador "
+                            + "de la asociacion del presupuesto."
             );
         }
 
         asociacion.setIdRequerimientoPresupuesto(
-                Integer.valueOf(id)
+                Integer.valueOf(
+                        id
+                )
         );
 
         return asociacion;
     }
 
-    private void validarCantidadPresupuestos(int cantidad) throws Exception {
+    private void validarCantidadPresupuestos(
+            int cantidad)
+            throws Exception {
+
         if (cantidad <= 0
-                || cantidad > WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA) {
+                || cantidad
+                > WebKeysCompras
+                .MAX_PRESUPUESTOS_POR_CARGA) {
+
             throw new Exception(
                     "La cantidad de presupuestos debe estar entre 1 y "
-                            + WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA
+                            + WebKeysCompras
+                            .MAX_PRESUPUESTOS_POR_CARGA
                             + "."
             );
         }
     }
 
     private void validarAccesoCarga(
-            RequerimientoCompra requerimiento) throws Exception {
+            RequerimientoCompra requerimiento)
+            throws Exception {
 
         if (requerimiento == null
-                || requerimiento.getIdRequerimientoCompra() <= 0) {
+                || requerimiento
+                .getIdRequerimientoCompra() <= 0) {
+
             throw new Exception(
                     "No se encontro el requerimiento de compra informado."
             );
         }
 
-        if (!requerimiento.puedeAdministrarPresupuestos()) {
+        if (!requerimiento
+                .puedeAdministrarPresupuestos()) {
+
             throw new Exception(
                     "Solo se pueden administrar presupuestos "
                             + "en estado A COTIZAR. Estado actual: "
-                            + requerimiento.getEstadoDescripcionVisible()
+                            + requerimiento
+                            .getEstadoDescripcionVisible()
                             + "."
             );
         }
     }
 
     private void validarIdentidadAsociacion(
-            RequerimientoCompraPresupuesto presupuesto) throws Exception {
+            RequerimientoCompraPresupuesto presupuesto)
+            throws Exception {
 
-        if (presupuesto.getDlGroupId() == null
-                || presupuesto.getDlGroupId().longValue() <= 0L
-                || presupuesto.getDlFolderId() == null
-                || presupuesto.getDlFolderId().longValue() <= 0L
-                || presupuesto.getDlFileEntryId() == null
-                || presupuesto.getDlFileEntryId().longValue() <= 0L
-                || WebKeysCompras.isEmpty(
-                presupuesto.getNombrePersistido()
-        )) {
-            throw new Exception(
-                    "La asociacion del presupuesto contiene una identidad "
-                            + "de documento invalida."
-            );
-        }
+        DocumentoLibraryComprasHelper
+                .validarIdentidadAsociacionDocumento(
+                        presupuesto
+                );
     }
 
     private void validarDocumentoAsociado(
             RequerimientoCompraPresupuesto presupuesto,
-            DLFileEntry fileEntry) throws Exception {
+            DLFileEntry fileEntry)
+            throws Exception {
 
         if (fileEntry == null) {
             throw new Exception(
-                    "No se encontro el documento asociado al presupuesto."
+                    "No se encontro el documento "
+                            + "asociado al presupuesto."
             );
         }
 
-        boolean coincide =
-                fileEntry.getFileEntryId()
-                        == presupuesto.getDlFileEntryId().longValue()
-                        && fileEntry.getGroupId()
-                        == presupuesto.getDlGroupId().longValue()
-                        && fileEntry.getFolderId()
-                        == presupuesto.getDlFolderId().longValue()
-                        && presupuesto.getNombrePersistido().equals(
-                        fileEntry.getName()
-                );
+        if (!DocumentoLibraryComprasHelper
+                .coincideIdentidadAsociacionDocumento(
+                        presupuesto,
+                        fileEntry
+                )) {
 
-        String uuidPersistido = presupuesto.getDlFileUuid();
-
-        if (coincide && !WebKeysCompras.isEmpty(uuidPersistido)) {
-            coincide = uuidPersistido.equals(fileEntry.getUuid());
-        }
-
-        if (!coincide) {
             throw new Exception(
-                    "El documento persistido no coincide con la asociacion "
-                            + "del presupuesto."
-            );
-        }
-    }
-
-    private DLFolder obtenerOCrearFolderCompras(
-            long groupId,
-            long userId,
-            ServiceContext serviceContext) throws Exception {
-
-        try {
-            return getFolderCompras(groupId);
-        } catch (NoSuchFolderException e) {
-            if (_log.isDebugEnabled()) {
-                _log.debug(
-                        "La carpeta de presupuestos de Compras no existe; "
-                                + "se intentara crear. groupId="
-                                + groupId
-                );
-            }
-        }
-
-        try {
-            return DLFolderLocalServiceUtil.addFolder(
-                    userId,
-                    groupId,
-                    WebKeysCompras.DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS,
-                    WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS,
-                    WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_DESCRIPCION_COMPRAS,
-                    serviceContext
-            );
-        } catch (Exception createError) {
-            try {
-                return getFolderCompras(groupId);
-            } catch (Exception lookupError) {
-                _log.error(
-                        "No se pudo crear ni recuperar la carpeta de "
-                                + "presupuestos de Compras. groupId="
-                                + groupId,
-                        createError
-                );
-                throw createError;
-            }
-        }
-    }
-
-    private DLFolder getFolderCompras(long groupId) throws Exception {
-        return DLFolderLocalServiceUtil.getFolder(
-                groupId,
-                WebKeysCompras.DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS,
-                WebKeysCompras.DOCUMENT_LIBRARY_FOLDER_PRESUPUESTOS_COMPRAS
-        );
-    }
-
-    private void validarContextoDocumentLibrary(
-            ServiceContext serviceContext) throws Exception {
-
-        if (serviceContext == null
-                || serviceContext.getScopeGroupId() <= 0L
-                || serviceContext.getUserId() <= 0L) {
-            throw new Exception(
-                    "No se pudo preparar el contexto de Document Library."
+                    "El documento persistido no coincide "
+                            + "con la asociacion del presupuesto."
             );
         }
     }
 
     private void eliminarArchivoPresupuesto(
             long folderId,
-            String nombre) throws Exception {
+            String nombre)
+            throws Exception {
 
-        if (folderId <= 0L || WebKeysCompras.isEmpty(nombre)) {
+        if (folderId <= 0L
+                || WebKeysCompras.isEmpty(
+                nombre
+        )) {
+
             throw new Exception(
-                    "La identidad del documento a eliminar no es valida."
+                    "La identidad del documento "
+                            + "a eliminar no es valida."
             );
         }
 
-        DLFileEntryLocalServiceUtil.deleteFileEntry(
-                folderId,
-                nombre
-        );
-    }
-
-    private String obtenerNombreArchivo(String filename) {
-        if (filename == null) {
-            return "";
-        }
-
-        String nombre = filename.trim();
-
-        if (WebKeysCompras.isEmpty(nombre)
-                || ".".equals(nombre)
-                || "..".equals(nombre)
-                || nombre.indexOf("..") >= 0
-                || nombre.indexOf('/') >= 0
-                || nombre.indexOf('\\') >= 0
-                || nombre.matches(".*\\p{Cntrl}.*")) {
-            return "";
-        }
-
-        return nombre;
-    }
-
-    private String obtenerExtensionSegura(String nombreOriginal) {
-        if (WebKeysCompras.isEmpty(nombreOriginal)) {
-            return "";
-        }
-
-        int posicionExtension = nombreOriginal.lastIndexOf('.');
-
-        if (posicionExtension < 0
-                || posicionExtension >= nombreOriginal.length() - 1) {
-            return "";
-        }
-
-        String extension = nombreOriginal.substring(posicionExtension);
-
-        if (extension.length()
-                > WebKeysCompras.DOCUMENT_LIBRARY_MAX_EXTENSION_LENGTH
-                || !extension.matches("^\\.[A-Za-z0-9]+$")) {
-            return "";
-        }
-
-        return extension.toLowerCase(Locale.ENGLISH);
+        DLFileEntryLocalServiceUtil
+                .deleteFileEntry(
+                        folderId,
+                        nombre
+                );
     }
 
     private String construirNombrePersistido(
@@ -847,9 +844,10 @@ public final class PresupuestoCompraHelper {
             String identificador,
             String extension) {
 
-        return WebKeysCompras.getPrefijoDocumentoRequerimientoCompra(
-                idRequerimientoCompra
-        )
+        return WebKeysCompras
+                .getPrefijoDocumentoRequerimientoCompra(
+                        idRequerimientoCompra
+                )
                 + "PRESTADOR-"
                 + idPrestador
                 + "-"
@@ -863,71 +861,88 @@ public final class PresupuestoCompraHelper {
             String identificador) {
 
         String prefijo =
-                WebKeysCompras.getPrefijoDocumentoRequerimientoCompra(
-                        idRequerimientoCompra
+                WebKeysCompras
+                        .getPrefijoDocumentoRequerimientoCompra(
+                                idRequerimientoCompra
+                        );
+
+        String sufijo =
+                "_"
+                        + identificador.substring(
+                        0,
+                        8
                 );
 
-        String sufijo = "_" + identificador.substring(0, 8);
-
         int longitudDisponible =
-                WebKeysCompras.DOCUMENT_LIBRARY_MAX_TITLE_LENGTH
+                WebKeysCompras
+                        .DOCUMENT_LIBRARY_MAX_TITLE_LENGTH
                         - prefijo.length()
                         - sufijo.length();
 
-        String nombre = normalizarComponenteTitulo(nombreOriginal);
+        String nombre =
+                normalizarComponenteTitulo(
+                        nombreOriginal
+                );
 
         if (longitudDisponible <= 0) {
-            nombre = "";
-        } else if (nombre.length() > longitudDisponible) {
-            nombre = nombre.substring(0, longitudDisponible);
+            nombre =
+                    "";
+
+        } else if (nombre.length()
+                > longitudDisponible) {
+
+            nombre =
+                    nombre.substring(
+                            0,
+                            longitudDisponible
+                    );
         }
 
-        return prefijo + nombre + sufijo;
+        return prefijo
+                + nombre
+                + sufijo;
     }
 
-    private String normalizarComponenteTitulo(String nombreOriginal) {
+    private String normalizarComponenteTitulo(
+            String nombreOriginal) {
+
         if (nombreOriginal == null) {
             return "";
         }
 
         String nombre =
                 nombreOriginal
-                        .replaceAll("[\\p{Cntrl}\\\\/:*?\"<>|]+", "_")
-                        .replaceAll("\\s+", " ")
+                        .replaceAll(
+                                "[\\p{Cntrl}\\\\/:*?\"<>|]+",
+                                "_"
+                        )
+                        .replaceAll(
+                                "\\s+",
+                                " "
+                        )
                         .trim();
 
-        return ".".equals(nombre) || "..".equals(nombre)
+        return ".".equals(nombre)
+                || "..".equals(nombre)
                 ? ""
                 : nombre;
     }
 
-    private long obtenerMaximoTamanoArchivo() throws Exception {
-        String valor = PropsUtil.get("dl.file.max.size");
-
-        if (WebKeysCompras.isEmpty(valor)) {
-            return Long.MAX_VALUE;
-        }
-
-        try {
-            long maximo = Long.parseLong(valor.trim());
-            return maximo > 0L
-                    ? maximo
-                    : Long.MAX_VALUE;
-        } catch (NumberFormatException e) {
-            throw new Exception(
-                    "La configuracion dl.file.max.size no es valida.",
-                    e
-            );
-        }
-    }
-
+    /**
+     * Regla especifica de Presupuesto.
+     *
+     * No se mueve a DocumentoLibraryComprasHelper porque la firma PDF es una
+     * regla propia de este tipo documental, no una primitiva comun de DL.
+     */
     private void validarContenidoPdf(
             File archivo,
-            int numeroPresupuesto) throws Exception {
+            int numeroPresupuesto)
+            throws Exception {
 
         if (archivo == null
                 || !archivo.exists()
                 || archivo.length() < 5L) {
+
             throw new Exception(
                     "El presupuesto "
                             + numeroPresupuesto
@@ -935,30 +950,43 @@ public final class PresupuestoCompraHelper {
             );
         }
 
-        InputStream input = null;
+        InputStream input =
+                null;
 
         try {
-            input = new FileInputStream(archivo);
-            byte[] firma = new byte[5];
-            int totalLeido = 0;
+            input =
+                    new FileInputStream(
+                            archivo
+                    );
 
-            while (totalLeido < firma.length) {
+            byte[] firma =
+                    new byte[5];
+
+            int totalLeido =
+                    0;
+
+            while (totalLeido
+                    < firma.length) {
+
                 int leido =
                         input.read(
                                 firma,
                                 totalLeido,
-                                firma.length - totalLeido
+                                firma.length
+                                        - totalLeido
                         );
 
                 if (leido < 0) {
                     break;
                 }
 
-                totalLeido += leido;
+                totalLeido +=
+                        leido;
             }
 
             boolean pdf =
-                    totalLeido == firma.length
+                    totalLeido
+                            == firma.length
                             && firma[0] == '%'
                             && firma[1] == 'P'
                             && firma[2] == 'D'
@@ -977,10 +1005,12 @@ public final class PresupuestoCompraHelper {
             if (input != null) {
                 try {
                     input.close();
+
                 } catch (Exception closeError) {
                     if (_log.isDebugEnabled()) {
                         _log.debug(
-                                "No se pudo cerrar la validacion del PDF.",
+                                "No se pudo cerrar "
+                                        + "la validacion del PDF.",
                                 closeError
                         );
                     }
@@ -989,7 +1019,9 @@ public final class PresupuestoCompraHelper {
         }
     }
 
-    private Exception traducirErrorDocumento(Exception error) {
+    private Exception traducirErrorDocumento(
+            Exception error) {
+
         if (error instanceof DuplicateFileException) {
             return new Exception(
                     "Uno de los presupuestos se encuentra duplicado.",
@@ -1006,7 +1038,8 @@ public final class PresupuestoCompraHelper {
 
         if (error instanceof FileNameException) {
             return new Exception(
-                    "El tipo de uno de los presupuestos no esta permitido.",
+                    "El tipo de uno de los presupuestos "
+                            + "no esta permitido.",
                     error
             );
         }
@@ -1014,8 +1047,14 @@ public final class PresupuestoCompraHelper {
         return error;
     }
 
-    private String normalizarUsuario(String usuario) {
-        String value = WebKeysCompras.trimToNull(usuario);
+    private String normalizarUsuario(
+            String usuario) {
+
+        String value =
+                WebKeysCompras.trimToNull(
+                        usuario
+                );
+
         return value != null
                 ? value
                 : "sistema";
@@ -1034,10 +1073,17 @@ public final class PresupuestoCompraHelper {
                 String nombreOriginal,
                 int idPrestador) {
 
-            this.indice = indice;
-            this.archivo = archivo;
-            this.nombreOriginal = nombreOriginal;
-            this.idPrestador = idPrestador;
+            this.indice =
+                    indice;
+
+            this.archivo =
+                    archivo;
+
+            this.nombreOriginal =
+                    nombreOriginal;
+
+            this.idPrestador =
+                    idPrestador;
         }
 
         public int getIndice() {
@@ -1074,12 +1120,23 @@ public final class PresupuestoCompraHelper {
                 String titulo,
                 String descripcionPrestador) {
 
-            this.archivo = archivo;
-            this.nombreOriginal = nombreOriginal;
-            this.prestador = prestador;
-            this.nombrePersistido = nombrePersistido;
-            this.titulo = titulo;
-            this.descripcionPrestador = descripcionPrestador;
+            this.archivo =
+                    archivo;
+
+            this.nombreOriginal =
+                    nombreOriginal;
+
+            this.prestador =
+                    prestador;
+
+            this.nombrePersistido =
+                    nombrePersistido;
+
+            this.titulo =
+                    titulo;
+
+            this.descripcionPrestador =
+                    descripcionPrestador;
         }
 
         private File getArchivo() {
@@ -1126,12 +1183,23 @@ public final class PresupuestoCompraHelper {
                 String nombre,
                 String titulo) {
 
-            this.groupId = groupId;
-            this.folderId = folderId;
-            this.fileEntryId = fileEntryId;
-            this.uuid = uuid;
-            this.nombre = nombre;
-            this.titulo = titulo;
+            this.groupId =
+                    groupId;
+
+            this.folderId =
+                    folderId;
+
+            this.fileEntryId =
+                    fileEntryId;
+
+            this.uuid =
+                    uuid;
+
+            this.nombre =
+                    nombre;
+
+            this.titulo =
+                    titulo;
         }
 
         private long getGroupId() {
@@ -1168,8 +1236,11 @@ public final class PresupuestoCompraHelper {
                 DocumentoPresupuestoCreado documento,
                 RequerimientoCompraPresupuesto asociacion) {
 
-            this.documento = documento;
-            this.asociacion = asociacion;
+            this.documento =
+                    documento;
+
+            this.asociacion =
+                    asociacion;
         }
 
         private DocumentoPresupuestoCreado getDocumento() {

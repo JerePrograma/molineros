@@ -3,30 +3,28 @@ package ar.com.ospim.compras.requerimientos.helper;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.CotizacionPrestadorDiagnostico;
 import ar.com.ospim.compras.requerimientos.beans.FinalizacionCotizacionPrestador;
-import ar.com.ospim.compras.requerimientos.beans.ReservaCotizacionPrestador;
-import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
-import ar.com.ospim.compras.requerimientos.service.NotificarCotizacionPrestadorServiceImpl;
 import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionDetalle;
 import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
+import ar.com.ospim.compras.requerimientos.beans.ReservaCotizacionPrestador;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
+import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.service.NotificarCotizacionPrestadorServiceImpl;
 import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.servlets.PdfServlet;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class NotificarCotizacionPrestadorHelper {
@@ -39,18 +37,23 @@ public class NotificarCotizacionPrestadorHelper {
     /*
      * Modo temporal de QA.
      *
-     * Mientras permanezca en true, todos los correos se envían
-     * al destinatario fijo configurado.
-     *
-     * El email real del prestador igualmente se captura y valida.
-     * Si es inválido, queda registrado como advertencia.
+     * Se conserva el comportamiento existente. No se cambia este contrato
+     * dentro de la correccion documental porque requiere definir antes una
+     * configuracion externa estable por ambiente.
      */
     private static final boolean USAR_EMAIL_DESTINO_TEMPORAL = true;
 
     private static final String EMAIL_DESTINO_TEMPORAL =
             "acomas@ospim.org.ar";
 
-    private static final String EMAIL_COPIA_COTIZACION = TraeListasServiceUtil.getSystemConfig("REQUERIMIENTO_EMAIL_CC");
+    /*
+     * El nombre historico de la configuracion se conserva por compatibilidad.
+     * Los destinatarios se envian actualmente como BCC.
+     */
+    private static final String EMAIL_COPIA_COTIZACION =
+            TraeListasServiceUtil.getSystemConfig(
+                    "REQUERIMIENTO_EMAIL_CC"
+            );
 
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile(
@@ -128,7 +131,7 @@ public class NotificarCotizacionPrestadorHelper {
          * El PDF se genera antes de reservar al primer prestador.
          *
          * Si Jasper falla, no queda ninguna fila PROCESANDO
-         * ni se realizan envíos parciales.
+         * ni se realizan envios parciales.
          */
         byte[] pedidoPresupuestoPdf =
                 generarPedidoPresupuestoPdf(
@@ -141,13 +144,14 @@ public class NotificarCotizacionPrestadorHelper {
                         + ".pdf";
 
         /*
-         * La Orden medica se recupera y valida completamente antes de
-         * reservar al primer prestador. Una ausencia total corresponde al
-         * contrato historico; una asociacion existente pero inconsistente
-         * debe fallar cerrada sin dejar filas PROCESANDO.
+         * Todas las Ordenes medicas activas se recuperan y validan antes de
+         * reservar al primer prestador.
+         *
+         * Esto mantiene la regla fail-closed y evita que una asociacion
+         * documental inconsistente produzca envios parciales.
          */
-        OrdenMedicaAdjunta ordenMedicaAdjunta =
-                recuperarOrdenMedicaAdjunta(
+        List<OrdenMedicaAdjunta> ordenesMedicasAdjuntas =
+                recuperarOrdenesMedicasAdjuntas(
                         idRequerimientoCompra,
                         companyId
                 );
@@ -161,7 +165,7 @@ public class NotificarCotizacionPrestadorHelper {
                     resultado,
                     pedidoPresupuestoPdf,
                     nombrePedidoPresupuestoPdf,
-                    ordenMedicaAdjunta
+                    ordenesMedicasAdjuntas
             );
         }
 
@@ -191,7 +195,7 @@ public class NotificarCotizacionPrestadorHelper {
             NotificacionCotizacionResultado resultado,
             byte[] pedidoPresupuestoPdf,
             String nombrePedidoPresupuestoPdf,
-            OrdenMedicaAdjunta ordenMedicaAdjunta) {
+            List<OrdenMedicaAdjunta> ordenesMedicasAdjuntas) {
 
         if (prestador == null) {
             _log.error(
@@ -248,10 +252,6 @@ public class NotificarCotizacionPrestadorHelper {
                     );
 
         } catch (Exception e) {
-            /*
-             * El detalle técnico completo queda exclusivamente
-             * en el log. No debe exponerse en la interfaz.
-             */
             _log.error(
                     "No se pudo reservar la notificacion "
                             + "de cotizacion. "
@@ -353,12 +353,6 @@ public class NotificarCotizacionPrestadorHelper {
                         emailReservadoNormalizado
                 );
 
-        /*
-         * En modo QA, un email real inválido no bloquea el envío,
-         * porque se utiliza EMAIL_DESTINO_TEMPORAL.
-         *
-         * Sin embargo, queda registrado como advertencia.
-         */
         boolean emailRealInvalidoAdvertido =
                 USAR_EMAIL_DESTINO_TEMPORAL
                         && emailRealInvalido;
@@ -445,10 +439,6 @@ public class NotificarCotizacionPrestadorHelper {
             return;
         }
 
-        /*
-         * Esta validación contempla especialmente un error de
-         * configuración del destinatario temporal.
-         */
         if (!esEmailValido(emailDestino)) {
             String errorTecnico;
 
@@ -520,10 +510,6 @@ public class NotificarCotizacionPrestadorHelper {
             return;
         }
 
-        /*
-         * La llamada al servicio de correo debe ocurrir antes
-         * de persistir ENVIADO.
-         */
         try {
             String asunto = construirAsunto(requerimiento);
             String cuerpo = construirCuerpo(
@@ -531,36 +517,17 @@ public class NotificarCotizacionPrestadorHelper {
                     prestador
             );
 
-            if (ordenMedicaAdjunta == null) {
-                enviarMail(
-                        companyId,
-                        emailDestino,
-                        asunto,
-                        cuerpo,
-                        pedidoPresupuestoPdf,
-                        nombrePedidoPresupuestoPdf
-                );
-            } else {
-                enviarMail(
-                        companyId,
-                        emailDestino,
-                        asunto,
-                        cuerpo,
-                        pedidoPresupuestoPdf,
-                        nombrePedidoPresupuestoPdf,
-                        ordenMedicaAdjunta.getContenido(),
-                        ordenMedicaAdjunta.getNombreOriginal(),
-                        ordenMedicaAdjunta.getContentType()
-                );
-            }
+            enviarMail(
+                    companyId,
+                    emailDestino,
+                    asunto,
+                    cuerpo,
+                    pedidoPresupuestoPdf,
+                    nombrePedidoPresupuestoPdf,
+                    ordenesMedicasAdjuntas
+            );
 
         } catch (Exception e) {
-            /*
-             * El detalle técnico se utiliza para el log y para
-             * registrar internamente el estado ERROR.
-             *
-             * La interfaz recibe solamente un mensaje operativo.
-             */
             String detalleError =
                     construirDetalleError(e);
 
@@ -613,10 +580,6 @@ public class NotificarCotizacionPrestadorHelper {
             return;
         }
 
-        /*
-         * El helper de correo aceptó el mensaje.
-         * Recién ahora se intenta persistir ENVIADO.
-         */
         boolean enviadoPersistido =
                 finalizarConControl(
                         idRequerimiento,
@@ -699,6 +662,12 @@ public class NotificarCotizacionPrestadorHelper {
                             + ", modoTemporal="
                             + USAR_EMAIL_DESTINO_TEMPORAL
                             + ", estadoEnvio=ENVIADO"
+                            + ", ordenesMedicasAdjuntas="
+                            + (
+                            ordenesMedicasAdjuntas != null
+                                    ? ordenesMedicasAdjuntas.size()
+                                    : 0
+                    )
             );
         }
     }
@@ -712,21 +681,25 @@ public class NotificarCotizacionPrestadorHelper {
                 );
     }
 
-    protected OrdenMedicaAdjunta recuperarOrdenMedicaAdjunta(
+    /**
+     * Contrato canonico para el flujo actual: recupera todas las Ordenes
+     * medicas activas del requerimiento.
+     */
+    protected List<OrdenMedicaAdjunta> recuperarOrdenesMedicasAdjuntas(
             int idRequerimientoCompra,
             long companyId) throws Exception {
 
-        RequerimientoCompraPresupuesto ordenMedica =
-                getOrdenMedica(
+        List<OrdenMedicaAdjunta> resultado =
+                new ArrayList<OrdenMedicaAdjunta>();
+
+        List<RequerimientoCompraPresupuesto> ordenesMedicas =
+                getOrdenesMedicas(
                         idRequerimientoCompra
                 );
 
-        /*
-         * Los requerimientos historicos pueden no tener Orden medica.
-         * El alta nueva atomica incorporada por Compras no puede producir
-         * esa ausencia, por lo que no se utiliza una heuristica de fecha o ID.
-         */
-        if (ordenMedica == null) {
+        if (ordenesMedicas == null
+                || ordenesMedicas.isEmpty()) {
+
             if (_log.isInfoEnabled()) {
                 _log.info(
                         "El requerimiento no posee Orden medica activa; "
@@ -736,6 +709,87 @@ public class NotificarCotizacionPrestadorHelper {
                 );
             }
 
+            return resultado;
+        }
+
+        Set<Long> fileEntryIds =
+                new HashSet<Long>();
+
+        for (int i = 0;
+             i < ordenesMedicas.size();
+             i++) {
+
+            RequerimientoCompraPresupuesto ordenMedica =
+                    ordenesMedicas.get(i);
+
+            DocumentoLibraryComprasHelper.validarRelacionOrdenMedica(
+                    ordenMedica,
+                    idRequerimientoCompra
+            );
+
+            long fileEntryId =
+                    ordenMedica
+                            .getDlFileEntryId()
+                            .longValue();
+
+            if (!fileEntryIds.add(
+                    Long.valueOf(fileEntryId)
+            )) {
+                throw new Exception(
+                        "El requerimiento contiene mas de una "
+                                + "Orden medica activa asociada al mismo "
+                                + "documento de Document Library."
+                );
+            }
+
+            DLFileEntry entry =
+                    getFileEntryOrdenMedica(
+                            fileEntryId
+                    );
+
+            DocumentoLibraryComprasHelper
+                    .validarIdentidadOrdenMedicaPersistida(
+                            ordenMedica,
+                            entry,
+                            companyId
+                    );
+
+            DocumentoLibraryComprasHelper.OrdenMedicaContenido documento =
+                    DocumentoLibraryComprasHelper
+                            .leerOrdenMedicaValidada(
+                                    entry,
+                                    ordenMedica.getNombreOriginal()
+                            );
+
+            resultado.add(
+                    crearOrdenMedicaAdjunta(
+                            documento.getContenido(),
+                            documento.getNombreOriginal(),
+                            documento.getContentType()
+                    )
+            );
+        }
+
+        return resultado;
+    }
+
+    /**
+     * Contrato legacy conservado para tests y subclases existentes.
+     *
+     * Devuelve exclusivamente la primera Orden medica, reproduciendo el
+     * comportamiento historico. El flujo productivo actual no utiliza este
+     * metodo para enviar cotizaciones.
+     */
+    protected OrdenMedicaAdjunta recuperarOrdenMedicaAdjunta(
+            int idRequerimientoCompra,
+            long companyId) throws Exception {
+
+        RequerimientoCompraPresupuesto ordenMedica =
+                getOrdenMedica(
+                        idRequerimientoCompra
+                );
+
+        if (ordenMedica == null) {
             return null;
         }
 
@@ -744,40 +798,31 @@ public class NotificarCotizacionPrestadorHelper {
                 idRequerimientoCompra
         );
 
-        DLFileEntry entry = getFileEntryOrdenMedica(
-                ordenMedica.getDlFileEntryId().longValue()
-        );
+        DLFileEntry entry =
+                getFileEntryOrdenMedica(
+                        ordenMedica
+                                .getDlFileEntryId()
+                                .longValue()
+                );
 
-        validarIdentidadOrdenMedica(
-                ordenMedica,
-                entry,
-                companyId
-        );
+        DocumentoLibraryComprasHelper
+                .validarIdentidadOrdenMedicaPersistida(
+                        ordenMedica,
+                        entry,
+                        companyId
+                );
 
-        long maximoTamano = obtenerMaximoTamanoDocumento();
-
-        if (entry.getSize() <= 0
-                || entry.getSize() > maximoTamano) {
-
-            throw new Exception(
-                    "La Orden médica persistida tiene un tamaño inválido."
-            );
-        }
-
-        byte[] contenido = leerOrdenMedica(
-                entry,
-                maximoTamano
-        );
-
-        String contentType = validarContenidoOrdenMedica(
-                contenido,
-                ordenMedica.getNombreOriginal()
-        );
+        DocumentoLibraryComprasHelper.OrdenMedicaContenido documento =
+                DocumentoLibraryComprasHelper
+                        .leerOrdenMedicaValidada(
+                                entry,
+                                ordenMedica.getNombreOriginal()
+                        );
 
         return crearOrdenMedicaAdjunta(
-                contenido,
-                ordenMedica.getNombreOriginal(),
-                contentType
+                documento.getContenido(),
+                documento.getNombreOriginal(),
+                documento.getContentType()
         );
     }
 
@@ -791,6 +836,15 @@ public class NotificarCotizacionPrestadorHelper {
                 nombreOriginal,
                 contentType
         );
+    }
+
+    protected List<RequerimientoCompraPresupuesto> getOrdenesMedicas(
+            int idRequerimientoCompra) throws Exception {
+
+        return BusquedaRequerimientoCompraServiceUtil
+                .listarOrdenesMedicas(
+                        idRequerimientoCompra
+                );
     }
 
     protected RequerimientoCompraPresupuesto getOrdenMedica(
@@ -810,192 +864,19 @@ public class NotificarCotizacionPrestadorHelper {
         );
     }
 
+    /**
+     * Firma legacy conservada. La regla canonica vive ahora en
+     * DocumentoLibraryComprasHelper.
+     */
     protected String validarContenidoOrdenMedica(
             byte[] contenido,
             String nombreOriginal) throws Exception {
 
-        if (contenido == null || contenido.length == 0) {
-            throw new Exception(
-                    "La Orden médica persistida está vacía."
-            );
-        }
-
-        validarNombreOriginalOrdenMedica(
-                nombreOriginal
-        );
-
-        String nombreNormalizado =
-                nombreOriginal.toLowerCase(Locale.ENGLISH);
-
-        if (nombreNormalizado.endsWith(".png")) {
-            if (contenido.length < 8
-                    || (contenido[0] & 0xFF) != 0x89
-                    || contenido[1] != 0x50
-                    || contenido[2] != 0x4E
-                    || contenido[3] != 0x47
-                    || contenido[4] != 0x0D
-                    || contenido[5] != 0x0A
-                    || contenido[6] != 0x1A
-                    || contenido[7] != 0x0A) {
-
-                throw new Exception(
-                        "La Orden médica PNG no conserva una firma válida."
+        return DocumentoLibraryComprasHelper
+                .validarContenidoOrdenMedica(
+                        contenido,
+                        nombreOriginal
                 );
-            }
-
-            return "image/png";
-        }
-
-        if (nombreNormalizado.endsWith(".jpg")
-                || nombreNormalizado.endsWith(".jpeg")) {
-
-            if (contenido.length < 3
-                    || (contenido[0] & 0xFF) != 0xFF
-                    || (contenido[1] & 0xFF) != 0xD8
-                    || (contenido[2] & 0xFF) != 0xFF) {
-
-                throw new Exception(
-                        "La Orden médica JPEG no conserva una firma válida."
-                );
-            }
-
-            return "image/jpeg";
-        }
-
-        throw new Exception(
-                "La Orden médica persistida no es JPEG/JPG ni PNG."
-        );
-    }
-
-private void validarIdentidadOrdenMedica(
-            RequerimientoCompraPresupuesto ordenMedica,
-            DLFileEntry entry,
-            long companyId) throws Exception {
-
-        boolean coincide = entry != null
-                && entry.getCompanyId() == companyId
-                && entry.getFileEntryId()
-                == ordenMedica.getDlFileEntryId().longValue()
-                && entry.getGroupId()
-                == ordenMedica.getDlGroupId().longValue()
-                && entry.getFolderId()
-                == ordenMedica.getDlFolderId().longValue()
-                && ordenMedica.getDlFileUuid().equals(
-                entry.getUuid()
-        )
-                && ordenMedica.getNombrePersistido().equals(
-                entry.getName()
-        );
-
-        if (!coincide) {
-            throw new Exception(
-                    "La Orden médica no coincide con su identidad en Document Library."
-            );
-        }
-    }
-
-    private byte[] leerOrdenMedica(
-            DLFileEntry entry,
-            long maximoTamano) throws Exception {
-
-        InputStream input = null;
-
-        try {
-            input = DLFileEntryLocalServiceUtil.getFileAsStream(
-                    entry.getCompanyId(),
-                    entry.getUserId(),
-                    entry.getFolderId(),
-                    entry.getName(),
-                    entry.getVersion()
-            );
-
-            if (input == null) {
-                throw new Exception(
-                        "Document Library no devolvió la Orden médica."
-                );
-            }
-
-            ByteArrayOutputStream output = new ByteArrayOutputStream(
-                    entry.getSize()
-            );
-            byte[] buffer = new byte[8192];
-            long total = 0L;
-            int cantidad;
-
-            while ((cantidad = input.read(buffer)) >= 0) {
-                if (cantidad == 0) {
-                    continue;
-                }
-
-                total += cantidad;
-
-                if (total > maximoTamano) {
-                    throw new Exception(
-                            "La Orden médica supera dl.file.max.size."
-                    );
-                }
-
-                output.write(buffer, 0, cantidad);
-            }
-
-            byte[] contenido = output.toByteArray();
-
-            if (contenido.length != entry.getSize()) {
-                throw new Exception(
-                        "El tamaño leído de la Orden médica no coincide con Document Library."
-                );
-            }
-
-            return contenido;
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (Exception closeError) {
-                    if (_log.isDebugEnabled()) {
-                        _log.debug(
-                                "No se pudo cerrar la lectura de la Orden médica.",
-                                closeError
-                        );
-                    }
-                }
-            }
-        }
-    }
-
-    private long obtenerMaximoTamanoDocumento() throws Exception {
-        String valor = PropsUtil.get("dl.file.max.size");
-
-        if (WebKeysCompras.isEmpty(valor)) {
-            return Long.MAX_VALUE;
-        }
-
-        try {
-            long maximo = Long.parseLong(valor.trim());
-            return maximo > 0L ? maximo : Long.MAX_VALUE;
-        } catch (NumberFormatException e) {
-            throw new Exception(
-                    "La configuración dl.file.max.size no es válida.",
-                    e
-            );
-        }
-    }
-
-    private void validarNombreOriginalOrdenMedica(
-            String nombreOriginal) throws Exception {
-
-        if (WebKeysCompras.isEmpty(nombreOriginal)
-                || nombreOriginal.length() > 255
-                || !nombreOriginal.equals(nombreOriginal.trim())
-                || nombreOriginal.indexOf("..") >= 0
-                || nombreOriginal.indexOf('/') >= 0
-                || nombreOriginal.indexOf('\\') >= 0
-                || nombreOriginal.matches(".*\\p{Cntrl}.*")) {
-
-            throw new Exception(
-                    "El nombre original de la Orden médica es inválido."
-            );
-        }
     }
 
     protected RequerimientoCompra getRequerimientoCompra(
@@ -1098,10 +979,6 @@ private void validarIdentidadOrdenMedica(
         );
     }
 
-    /*
-     * Método conservado para compatibilidad con tests o
-     * subclases que utilizaban la firma anterior.
-     */
     protected boolean registrarCotizacionPrestador(
             int idRequerimientoCompra,
             int idPrestador,
@@ -1134,10 +1011,6 @@ private void validarIdentidadOrdenMedica(
         );
     }
 
-    /*
-     * Método conservado para compatibilidad con tests o
-     * código existente que utilizaba la firma anterior.
-     */
     protected boolean finalizarCotizacionPrestador(
             int idRequerimiento,
             int idPrestador,
@@ -1157,12 +1030,6 @@ private void validarIdentidadOrdenMedica(
                 && finalizacion.isActualizado();
     }
 
-    /*
-     * companyId se conserva para no romper llamadas ni tests.
-     *
-     * El helper SMTP específico de Compras actualmente
-     * no utiliza companyId.
-     */
     protected void enviarMail(
             long companyId,
             String email,
@@ -1182,6 +1049,9 @@ private void validarIdentidadOrdenMedica(
         );
     }
 
+    /**
+     * Contrato legacy para una unica Orden medica.
+     */
     protected void enviarMail(
             long companyId,
             String email,
@@ -1204,6 +1074,56 @@ private void validarIdentidadOrdenMedica(
                 ordenMedica,
                 nombreOrdenMedica,
                 contentTypeOrdenMedica
+        );
+    }
+
+    /**
+     * Contrato canonico del envio actual: un unico correo con 0..N Ordenes
+     * medicas adicionales.
+     */
+    protected void enviarMail(
+            long companyId,
+            String email,
+            String asunto,
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf,
+            List<OrdenMedicaAdjunta> ordenesMedicas)
+            throws Exception {
+
+        List<CotizacionPrestadorMailHelper.AdjuntoOrdenMedica> adjuntos =
+                new ArrayList<CotizacionPrestadorMailHelper.AdjuntoOrdenMedica>();
+
+        for (int i = 0;
+             ordenesMedicas != null && i < ordenesMedicas.size();
+             i++) {
+
+            OrdenMedicaAdjunta ordenMedica =
+                    ordenesMedicas.get(i);
+
+            if (ordenMedica == null) {
+                throw new Exception(
+                        "Se encontro una Orden medica adjunta invalida."
+                );
+            }
+
+            adjuntos.add(
+                    new CotizacionPrestadorMailHelper.AdjuntoOrdenMedica(
+                            ordenMedica.getContenido(),
+                            ordenMedica.getNombreOriginal(),
+                            ordenMedica.getContentType()
+                    )
+            );
+        }
+
+        mailHelper.enviar(
+                email,
+                resolverEmailsCopiaCotizacion(),
+                asunto,
+                cuerpo,
+                pedidoPresupuestoPdf,
+                nombrePedidoPresupuestoPdf,
+                adjuntos
         );
     }
 
@@ -1315,12 +1235,6 @@ private void validarIdentidadOrdenMedica(
 
         detalle.setResultado(tipoResultado);
         detalle.setEtapa(etapa);
-
-        /*
-         * El motivo guardado en el resultado es apto para interfaz.
-         * Las excepciones técnicas completas se registran en el log
-         * o en la persistencia interna, pero no aquí.
-         */
         detalle.setMotivo(
                 truncar(motivo, 1000)
         );
@@ -1384,14 +1298,6 @@ private void validarIdentidadOrdenMedica(
                         ? EMAIL_COPIA_COTIZACION
                         : "";
 
-        /*
-         * El -1 conserva también elementos vacíos al final.
-         *
-         * Esto es deliberado: una configuración como
-         * "uno@dominio.com;" o "uno@dominio.com;;dos@dominio.com"
-         * debe llegar al MailHelper como inválida, en lugar de enviar
-         * silenciosamente el correo con una lista incompleta.
-         */
         String[] emails =
                 configuracion.split(
                         ";",
@@ -1407,8 +1313,8 @@ private void validarIdentidadOrdenMedica(
 
         if (_log.isInfoEnabled()) {
             _log.info(
-                    "Destinatarios CC de cotizacion resueltos. "
-                            + "cantidadCc="
+                    "Destinatarios BCC de cotizacion resueltos. "
+                            + "cantidadBcc="
                             + emails.length
                             + ", modoTemporal="
                             + USAR_EMAIL_DESTINO_TEMPORAL
@@ -1588,8 +1494,6 @@ private void validarIdentidadOrdenMedica(
         }
     }
 
-
-
     private void validarParametros(
             int idRequerimientoCompra,
             long companyId) throws Exception {
@@ -1639,8 +1543,6 @@ private void validarIdentidadOrdenMedica(
         }
     }
 
-
-
     private boolean esEmailValido(
             String email) {
 
@@ -1668,11 +1570,6 @@ private void validarIdentidadOrdenMedica(
                 : null;
     }
 
-    /*
-     * Este método genera un detalle técnico para logs o
-     * persistencia interna. Su resultado no debe mostrarse
-     * directamente en la interfaz.
-     */
     private String construirDetalleError(
             Exception e) {
 
@@ -1746,8 +1643,6 @@ private void validarIdentidadOrdenMedica(
         );
     }
 
-
-
     protected static final class OrdenMedicaAdjunta {
 
         private final byte[] contenido;
@@ -1776,8 +1671,4 @@ private void validarIdentidadOrdenMedica(
             return contentType;
         }
     }
-
-
-
-
 }

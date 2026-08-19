@@ -12,7 +12,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
@@ -69,12 +71,13 @@ public class CotizacionPrestadorMailHelper {
                 cuerpo,
                 pedidoPresupuestoPdf,
                 nombrePedidoPresupuestoPdf,
-                null,
-                null,
                 null
         );
     }
 
+    /**
+     * Contrato legacy de una unica Orden medica.
+     */
     public void enviar(
             String emailDestino,
             String asunto,
@@ -99,6 +102,9 @@ public class CotizacionPrestadorMailHelper {
         );
     }
 
+    /**
+     * Contrato legacy de una unica Orden medica + BCC.
+     */
     public void enviar(
             String emailDestino,
             String[] emailsCopia,
@@ -117,6 +123,17 @@ public class CotizacionPrestadorMailHelper {
                 contentTypeOrdenMedica
         );
 
+        List<AdjuntoOrdenMedica> ordenesMedicas =
+                new ArrayList<AdjuntoOrdenMedica>(1);
+
+        ordenesMedicas.add(
+                new AdjuntoOrdenMedica(
+                        ordenMedica,
+                        nombreOrdenMedica,
+                        contentTypeOrdenMedica
+                )
+        );
+
         enviarInterno(
                 emailDestino,
                 emailsCopia,
@@ -124,9 +141,31 @@ public class CotizacionPrestadorMailHelper {
                 cuerpo,
                 pedidoPresupuestoPdf,
                 nombrePedidoPresupuestoPdf,
-                ordenMedica,
-                nombreOrdenMedica,
-                contentTypeOrdenMedica
+                ordenesMedicas
+        );
+    }
+
+    /**
+     * Contrato canonico: un unico mensaje SMTP con 0..N Ordenes medicas.
+     */
+    public void enviar(
+            String emailDestino,
+            String[] emailsCopia,
+            String asunto,
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf,
+            List<AdjuntoOrdenMedica> ordenesMedicas)
+            throws Exception {
+
+        enviarInterno(
+                emailDestino,
+                emailsCopia,
+                asunto,
+                cuerpo,
+                pedidoPresupuestoPdf,
+                nombrePedidoPresupuestoPdf,
+                ordenesMedicas
         );
     }
 
@@ -137,9 +176,7 @@ public class CotizacionPrestadorMailHelper {
             String cuerpo,
             byte[] pedidoPresupuestoPdf,
             String nombrePedidoPresupuestoPdf,
-            byte[] ordenMedica,
-            String nombreOrdenMedica,
-            String contentTypeOrdenMedica)
+            List<AdjuntoOrdenMedica> ordenesMedicas)
             throws Exception {
 
         validarParametros(
@@ -149,6 +186,10 @@ public class CotizacionPrestadorMailHelper {
                 cuerpo,
                 pedidoPresupuestoPdf,
                 nombrePedidoPresupuestoPdf
+        );
+
+        validarOrdenesMedicas(
+                ordenesMedicas
         );
 
         ReportesAutomaticosConfiguracion configuracion =
@@ -168,10 +209,6 @@ public class CotizacionPrestadorMailHelper {
                 MailUtils.getMailServerProperties()
         );
 
-        /*
-         * Se crea una sesión SMTP independiente para evitar
-         * reutilizar la Session global de otros módulos.
-         */
         propiedades.setProperty(
                 "mail.smtp.starttls.enable",
                 "true"
@@ -182,10 +219,6 @@ public class CotizacionPrestadorMailHelper {
                 "true"
         );
 
-        /*
-         * La conexión desde Java 8 falla durante el handshake
-         * posterior a STARTTLS. Se restringe el cliente a TLS 1.2.
-         */
         propiedades.setProperty(
                 "mail.smtp.ssl.protocols",
                 "TLSv1.2"
@@ -277,9 +310,7 @@ public class CotizacionPrestadorMailHelper {
                         cuerpo,
                         pedidoPresupuestoPdf,
                         nombrePedidoPresupuestoPdf,
-                        ordenMedica,
-                        nombreOrdenMedica,
-                        contentTypeOrdenMedica
+                        ordenesMedicas
                 );
 
         mensaje.setContent(
@@ -311,7 +342,13 @@ public class CotizacionPrestadorMailHelper {
 
             if (_log.isInfoEnabled()) {
                 _log.info(
-                        "Correo de cotización aceptado por el servidor SMTP."
+                        "Correo de cotización aceptado por el servidor SMTP. "
+                                + "ordenesMedicasAdjuntas="
+                                + (
+                                ordenesMedicas != null
+                                        ? ordenesMedicas.size()
+                                        : 0
+                        )
                 );
             }
 
@@ -331,6 +368,9 @@ public class CotizacionPrestadorMailHelper {
         }
     }
 
+    /**
+     * Contrato legacy conservado.
+     */
     protected Multipart construirMultipart(
             String cuerpo,
             byte[] pedidoPresupuestoPdf,
@@ -338,6 +378,48 @@ public class CotizacionPrestadorMailHelper {
             byte[] ordenMedica,
             String nombreOrdenMedica,
             String contentTypeOrdenMedica)
+            throws Exception {
+
+        List<AdjuntoOrdenMedica> ordenesMedicas =
+                null;
+
+        boolean incluyeOrdenMedica =
+                ordenMedica != null
+                        || nombreOrdenMedica != null
+                        || contentTypeOrdenMedica != null;
+
+        if (incluyeOrdenMedica) {
+            validarOrdenMedica(
+                    ordenMedica,
+                    nombreOrdenMedica,
+                    contentTypeOrdenMedica
+            );
+
+            ordenesMedicas =
+                    new ArrayList<AdjuntoOrdenMedica>(1);
+
+            ordenesMedicas.add(
+                    new AdjuntoOrdenMedica(
+                            ordenMedica,
+                            nombreOrdenMedica,
+                            contentTypeOrdenMedica
+                    )
+            );
+        }
+
+        return construirMultipart(
+                cuerpo,
+                pedidoPresupuestoPdf,
+                nombrePedidoPresupuestoPdf,
+                ordenesMedicas
+        );
+    }
+
+    protected Multipart construirMultipart(
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf,
+            List<AdjuntoOrdenMedica> ordenesMedicas)
             throws Exception {
 
         if (cuerpo == null) {
@@ -351,23 +433,25 @@ public class CotizacionPrestadorMailHelper {
                 nombrePedidoPresupuestoPdf
         );
 
-        boolean incluyeOrdenMedica = ordenMedica != null
-                || nombreOrdenMedica != null
-                || contentTypeOrdenMedica != null;
+        validarOrdenesMedicas(
+                ordenesMedicas
+        );
 
-        if (incluyeOrdenMedica) {
-            validarOrdenMedica(
-                    ordenMedica,
-                    nombreOrdenMedica,
-                    contentTypeOrdenMedica
-            );
-        }
+        MimeBodyPart parteTexto =
+                new MimeBodyPart();
 
-        MimeBodyPart parteTexto = new MimeBodyPart();
-        parteTexto.setText(cuerpo, "UTF-8");
+        parteTexto.setText(
+                cuerpo,
+                "UTF-8"
+        );
 
-        Multipart multipart = new MimeMultipart();
-        multipart.addBodyPart(parteTexto);
+        Multipart multipart =
+                new MimeMultipart();
+
+        multipart.addBodyPart(
+                parteTexto
+        );
+
         multipart.addBodyPart(
                 crearParteAdjunto(
                         pedidoPresupuestoPdf,
@@ -376,12 +460,18 @@ public class CotizacionPrestadorMailHelper {
                 )
         );
 
-        if (incluyeOrdenMedica) {
+        for (int i = 0;
+             ordenesMedicas != null && i < ordenesMedicas.size();
+             i++) {
+
+            AdjuntoOrdenMedica ordenMedica =
+                    ordenesMedicas.get(i);
+
             multipart.addBodyPart(
                     crearParteAdjunto(
-                            ordenMedica,
-                            nombreOrdenMedica,
-                            contentTypeOrdenMedica
+                            ordenMedica.getContenido(),
+                            ordenMedica.getNombre(),
+                            ordenMedica.getContentType()
                     )
             );
         }
@@ -394,7 +484,8 @@ public class CotizacionPrestadorMailHelper {
             String nombre,
             String contentType) throws Exception {
 
-        MimeBodyPart parte = new MimeBodyPart();
+        MimeBodyPart parte =
+                new MimeBodyPart();
 
         parte.setDataHandler(
                 new DataHandler(
@@ -485,27 +576,77 @@ public class CotizacionPrestadorMailHelper {
         }
     }
 
+    private void validarOrdenesMedicas(
+            List<AdjuntoOrdenMedica> ordenesMedicas)
+            throws Exception {
+
+        if (ordenesMedicas == null
+                || ordenesMedicas.isEmpty()) {
+
+            return;
+        }
+
+        for (int i = 0; i < ordenesMedicas.size(); i++) {
+            AdjuntoOrdenMedica ordenMedica =
+                    ordenesMedicas.get(i);
+
+            if (ordenMedica == null) {
+                throw new Exception(
+                        "Existe una Orden médica adjunta inválida."
+                );
+            }
+
+            validarOrdenMedica(
+                    ordenMedica.getContenido(),
+                    ordenMedica.getNombre(),
+                    ordenMedica.getContentType()
+            );
+        }
+    }
+
     private void validarOrdenMedica(
             byte[] ordenMedica,
             String nombreOrdenMedica,
             String contentTypeOrdenMedica)
             throws Exception {
 
-        if (ordenMedica == null || ordenMedica.length == 0) {
+        if (ordenMedica == null
+                || ordenMedica.length == 0) {
+
             throw new Exception(
                     "La Orden médica no fue recuperada."
             );
         }
 
-        if (isEmpty(nombreOrdenMedica)) {
+        if (isEmpty(nombreOrdenMedica)
+                || !nombreOrdenMedica.equals(
+                nombreOrdenMedica.trim()
+        )
+                || nombreOrdenMedica.indexOf("..") >= 0
+                || nombreOrdenMedica.indexOf('/') >= 0
+                || nombreOrdenMedica.indexOf('\\') >= 0
+                || nombreOrdenMedica.matches(
+                ".*\\p{Cntrl}.*"
+        )) {
+
             throw new Exception(
                     "El nombre original de la Orden médica no es válido."
             );
         }
 
-        String nombre = nombreOrdenMedica.toLowerCase(Locale.ENGLISH);
-        boolean jpeg = "image/jpeg".equals(contentTypeOrdenMedica);
-        boolean png = "image/png".equals(contentTypeOrdenMedica);
+        String nombre =
+                nombreOrdenMedica
+                        .toLowerCase(Locale.ENGLISH);
+
+        boolean jpeg =
+                "image/jpeg".equals(
+                        contentTypeOrdenMedica
+                );
+
+        boolean png =
+                "image/png".equals(
+                        contentTypeOrdenMedica
+                );
 
         if (!(jpeg || png)) {
             throw new Exception(
@@ -513,9 +654,11 @@ public class CotizacionPrestadorMailHelper {
             );
         }
 
-        if ((jpeg && !(nombre.endsWith(".jpg")
+        if ((jpeg
+                && !(nombre.endsWith(".jpg")
                 || nombre.endsWith(".jpeg")))
-                || (png && !nombre.endsWith(".png"))) {
+                || (png
+                && !nombre.endsWith(".png"))) {
 
             throw new Exception(
                     "El tipo MIME de la Orden médica no coincide con su nombre."
@@ -560,11 +703,6 @@ public class CotizacionPrestadorMailHelper {
 
         } catch (Exception e) {
             if (enviado) {
-                /*
-                 * El mensaje ya fue aceptado por el SMTP.
-                 * Un fallo de cierre no debe transformar
-                 * el envío exitoso en ENVIO_ERROR.
-                 */
                 _log.warn(
                         "El correo fue enviado, pero falló "
                                 + "el cierre de la conexión SMTP.",
@@ -577,6 +715,106 @@ public class CotizacionPrestadorMailHelper {
                         e
                 );
             }
+        }
+    }
+
+    private String normalizar(
+            String value) {
+
+        if (value == null) {
+            return null;
+        }
+
+        String resultado =
+                value.trim();
+
+        return resultado.length() > 0
+                ? resultado
+                : null;
+    }
+
+    private boolean isEmpty(
+            String value) {
+
+        return normalizar(value) == null;
+    }
+
+    private void validarEmailsCopia(
+            String[] emailsCopia) throws Exception {
+
+        if (emailsCopia == null
+                || emailsCopia.length == 0) {
+
+            return;
+        }
+
+        for (int i = 0;
+             i < emailsCopia.length;
+             i++) {
+
+            if (isEmpty(emailsCopia[i])) {
+                throw new Exception(
+                        "Existe un email de copia vacío."
+                );
+            }
+
+            validarEmail(
+                    emailsCopia[i],
+                    "de copia"
+            );
+        }
+    }
+
+    private void agregarDestinatariosCopia(
+            MimeMessage mensaje,
+            String[] emailsCopia) throws Exception {
+
+        if (emailsCopia == null
+                || emailsCopia.length == 0) {
+
+            return;
+        }
+
+        for (int i = 0;
+             i < emailsCopia.length;
+             i++) {
+
+            mensaje.addRecipient(
+                    Message.RecipientType.BCC,
+                    new InternetAddress(
+                            emailsCopia[i].trim(),
+                            true
+                    )
+            );
+        }
+    }
+
+    public static final class AdjuntoOrdenMedica {
+
+        private final byte[] contenido;
+        private final String nombre;
+        private final String contentType;
+
+        public AdjuntoOrdenMedica(
+                byte[] contenido,
+                String nombre,
+                String contentType) {
+
+            this.contenido = contenido;
+            this.nombre = nombre;
+            this.contentType = contentType;
+        }
+
+        public byte[] getContenido() {
+            return contenido;
+        }
+
+        public String getNombre() {
+            return nombre;
+        }
+
+        public String getContentType() {
+            return contentType;
         }
     }
 
@@ -622,72 +860,6 @@ public class CotizacionPrestadorMailHelper {
 
         public String getName() {
             return nombre;
-        }
-    }
-    private String normalizar(
-            String value) {
-
-        if (value == null) {
-            return null;
-        }
-
-        String resultado =
-                value.trim();
-
-        return resultado.length() > 0
-                ? resultado
-                : null;
-    }
-
-    private boolean isEmpty(
-            String value) {
-
-        return normalizar(value) == null;
-    }
-
-    private void validarEmailsCopia(
-            String[] emailsCopia) throws Exception {
-
-        if (emailsCopia == null
-                || emailsCopia.length == 0) {
-
-            return;
-        }
-
-        for (int i = 0; i < emailsCopia.length; i++) {
-
-            if (isEmpty(emailsCopia[i])) {
-                throw new Exception(
-                        "Existe un email de copia vacío."
-                );
-            }
-
-            validarEmail(
-                    emailsCopia[i],
-                    "de copia"
-            );
-        }
-    }
-
-    private void agregarDestinatariosCopia(
-            MimeMessage mensaje,
-            String[] emailsCopia) throws Exception {
-
-        if (emailsCopia == null
-                || emailsCopia.length == 0) {
-
-            return;
-        }
-
-        for (int i = 0; i < emailsCopia.length; i++) {
-
-            mensaje.addRecipient(
-                    Message.RecipientType.BCC,
-                    new InternetAddress(
-                            emailsCopia[i].trim(),
-                            true
-                    )
-            );
         }
     }
 }
