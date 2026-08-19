@@ -96,13 +96,6 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                             PortletURL descargarOrdenMedicaCompraURL =
                                     renderResponse.createActionURL();
 
-                            /*
-                             * Mismo formato utilizado por la visualización
-                             * legacy de imágenes de Reclamo Prestacional:
-                             *
-                             * la respuesta binaria se procesa en una ventana
-                             * EXCLUSIVE independiente de la pantalla actual.
-                             */
                             descargarOrdenMedicaCompraURL.setWindowState(
                                     LiferayWindowState.EXCLUSIVE
                             );
@@ -112,13 +105,14 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                                     "/compras/descargar_orden_medica"
                             );
 
-                            /*
-                             * Obligatorio en Liferay legacy para evitar que
-                             * StripFilter modifique el contenido binario.
-                             */
                             descargarOrdenMedicaCompraURL.setParameter(
                                     "strip",
                                     "false"
+                            );
+
+                            descargarOrdenMedicaCompraURL.setParameter(
+                                    "visualizar",
+                                    "true"
                             );
 
                             descargarOrdenMedicaCompraURL.setParameter(
