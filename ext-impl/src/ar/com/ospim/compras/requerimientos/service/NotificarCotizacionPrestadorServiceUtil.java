@@ -1,29 +1,32 @@
 package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
+import ar.com.ospim.compras.requerimientos.helper.NotificarCotizacionPrestadorHelper;
 
+/**
+ * Fachada estática legacy.
+ */
 public class NotificarCotizacionPrestadorServiceUtil {
 
     private static NotificarCotizacionPrestadorServiceImpl instance;
 
-    public static NotificarCotizacionPrestadorServiceImpl
-    getInstance() {
+    private static final NotificarCotizacionPrestadorHelper helper =
+            new NotificarCotizacionPrestadorHelper();
 
+    public static NotificarCotizacionPrestadorServiceImpl getInstance() {
         if (instance == null) {
-            instance =
-                    new NotificarCotizacionPrestadorServiceImpl();
+            instance = new NotificarCotizacionPrestadorServiceImpl();
         }
 
         return instance;
     }
 
-    public static NotificacionCotizacionResultado
-    notificarPrestadores(
+    public static NotificacionCotizacionResultado notificarPrestadores(
             int idRequerimientoCompra,
             String usuario,
             long companyId) throws Exception {
 
-        return getInstance().notificarPrestadores(
+        return helper.notificarPrestadores(
                 idRequerimientoCompra,
                 usuario,
                 companyId

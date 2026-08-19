@@ -3,12 +3,22 @@ package ar.com.ospim.compras.requerimientos.service;
 import ar.com.ospim.compras.requerimientos.beans.*;
 import ar.com.ospim.compras.requerimientos.documentos.GestorOrdenMedicaDocumento;
 import ar.com.ospim.compras.requerimientos.documentos.OrdenMedicaValidada;
+import ar.com.ospim.compras.requerimientos.helper.EditarRequerimientoCompraHelper;
 
 import java.util.List;
 
+/**
+ * Fachada estática legacy.
+ *
+ * Las reglas funcionales se ejecutan en EditarRequerimientoCompraHelper.
+ * EditarRequerimientoCompraServiceImpl queda reservado a persistencia.
+ */
 public class EditarRequerimientoCompraServiceUtil {
 
     private static EditarRequerimientoCompraServiceImpl instance = null;
+
+    private static final EditarRequerimientoCompraHelper helper =
+            new EditarRequerimientoCompraHelper();
 
     public static EditarRequerimientoCompraServiceImpl getInstance() {
         if (instance == null) {
@@ -22,61 +32,45 @@ public class EditarRequerimientoCompraServiceUtil {
             RequerimientoCompra requerimiento,
             String usuario) throws Exception {
 
-        return getInstance().guardarRequerimientoCompra(
+        return helper.guardarRequerimientoCompra(
                 requerimiento,
                 usuario
         );
     }
 
-    /*
-     * Contrato histórico.
-     *
-     * Se mantiene para no romper callers existentes que todavía
-     * registren una única Orden médica.
-     */
     public static int guardarNuevoRequerimientoCompraConOrdenMedica(
             RequerimientoCompra requerimiento,
             OrdenMedicaValidada ordenMedica,
             GestorOrdenMedicaDocumento gestorDocumento,
             String usuario) throws Exception {
 
-        return getInstance()
-                .guardarNuevoRequerimientoCompraConOrdenMedica(
-                        requerimiento,
-                        ordenMedica,
-                        gestorDocumento,
-                        usuario
-                );
+        return helper.guardarNuevoRequerimientoCompraConOrdenMedica(
+                requerimiento,
+                ordenMedica,
+                gestorDocumento,
+                usuario
+        );
     }
 
-    /*
-     * Nuevo contrato para el alta de un requerimiento con una o más
-     * Órdenes médicas.
-     *
-     * La implementación debe conservar una única transacción SQL y
-     * compensar todos los documentos creados en Document Library si
-     * la operación completa no puede confirmarse.
-     */
     public static int guardarNuevoRequerimientoCompraConOrdenesMedicas(
             RequerimientoCompra requerimiento,
             List<OrdenMedicaValidada> ordenesMedicas,
             GestorOrdenMedicaDocumento gestorDocumento,
             String usuario) throws Exception {
 
-        return getInstance()
-                .guardarNuevoRequerimientoCompraConOrdenesMedicas(
-                        requerimiento,
-                        ordenesMedicas,
-                        gestorDocumento,
-                        usuario
-                );
+        return helper.guardarNuevoRequerimientoCompraConOrdenesMedicas(
+                requerimiento,
+                ordenesMedicas,
+                gestorDocumento,
+                usuario
+        );
     }
 
     public static int guardarDetalle(
             RequerimientoCompraDetalle detalle,
             String usuario) throws Exception {
 
-        return getInstance().guardarDetalle(
+        return helper.guardarDetalle(
                 detalle,
                 usuario
         );
@@ -86,7 +80,7 @@ public class EditarRequerimientoCompraServiceUtil {
             int idDetalle,
             String usuario) throws Exception {
 
-        getInstance().borrarDetalle(
+        helper.borrarDetalle(
                 idDetalle,
                 usuario
         );
@@ -96,7 +90,7 @@ public class EditarRequerimientoCompraServiceUtil {
             int idItem,
             String usuario) throws Exception {
 
-        borrarDetalle(
+        helper.borrarDetalle(
                 idItem,
                 usuario
         );
@@ -106,7 +100,7 @@ public class EditarRequerimientoCompraServiceUtil {
             int idRequerimientoCompra,
             String usuario) throws Exception {
 
-        getInstance().borrarRequerimientoCompra(
+        helper.borrarRequerimientoCompra(
                 idRequerimientoCompra,
                 usuario
         );
@@ -117,7 +111,7 @@ public class EditarRequerimientoCompraServiceUtil {
             int idEstadoNuevo,
             String usuario) throws Exception {
 
-        getInstance().cambiarEstado(
+        helper.cambiarEstado(
                 idRequerimientoCompra,
                 idEstadoNuevo,
                 usuario
@@ -129,7 +123,7 @@ public class EditarRequerimientoCompraServiceUtil {
             String usuario,
             long companyId) throws Exception {
 
-        return getInstance().enviarACotizar(
+        return helper.enviarACotizar(
                 idRequerimientoCompra,
                 usuario,
                 companyId
@@ -142,12 +136,11 @@ public class EditarRequerimientoCompraServiceUtil {
             String usuario,
             long companyId) throws Exception {
 
-        return getInstance()
-                .reintentarNotificacionesCotizacion(
-                        idRequerimientoCompra,
-                        usuario,
-                        companyId
-                );
+        return helper.reintentarNotificacionesCotizacion(
+                idRequerimientoCompra,
+                usuario,
+                companyId
+        );
     }
 
     public static GuardadoCotizacionResultado guardarAvanceCotizacion(
@@ -155,7 +148,7 @@ public class EditarRequerimientoCompraServiceUtil {
             List<RequerimientoCompraDetalle> detalles,
             String usuario) throws Exception {
 
-        return getInstance().guardarAvanceCotizacion(
+        return helper.guardarAvanceCotizacion(
                 idRequerimientoCompra,
                 detalles,
                 usuario
@@ -164,10 +157,9 @@ public class EditarRequerimientoCompraServiceUtil {
 
     public static int registrarPresupuesto(
             RequerimientoCompraPresupuesto presupuesto,
-            String usuario)
-            throws Exception {
+            String usuario) throws Exception {
 
-        return getInstance().registrarPresupuesto(
+        return helper.registrarPresupuesto(
                 presupuesto,
                 usuario
         );
@@ -176,27 +168,23 @@ public class EditarRequerimientoCompraServiceUtil {
     public static boolean darDeBajaPresupuesto(
             int idRequerimientoPresupuesto,
             int idRequerimientoCompra,
-            String usuario)
-            throws Exception {
+            String usuario) throws Exception {
 
-        return getInstance()
-                .darDeBajaPresupuesto(
-                        idRequerimientoPresupuesto,
-                        idRequerimientoCompra,
-                        usuario
-                );
+        return helper.darDeBajaPresupuesto(
+                idRequerimientoPresupuesto,
+                idRequerimientoCompra,
+                usuario
+        );
     }
 
     public static boolean reactivarPresupuesto(
             int idRequerimientoPresupuesto,
-            int idRequerimientoCompra)
-            throws Exception {
+            int idRequerimientoCompra) throws Exception {
 
-        return getInstance()
-                .reactivarPresupuesto(
-                        idRequerimientoPresupuesto,
-                        idRequerimientoCompra
-                );
+        return helper.reactivarPresupuesto(
+                idRequerimientoPresupuesto,
+                idRequerimientoCompra
+        );
     }
 
     private EditarRequerimientoCompraServiceUtil() {

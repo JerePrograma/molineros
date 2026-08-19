@@ -1,18 +1,26 @@
 package ar.com.ospim.compras.requerimientos.service;
 
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper;
+
 import com.liferay.portal.model.User;
 
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Fachada estática legacy. La lógica está en el Helper.
+ */
 public class RequerimientoCompraReclamoPrestacionalServiceUtil {
 
     private static RequerimientoCompraReclamoPrestacionalServiceImpl instance;
 
+    private static final RequerimientoCompraReclamoPrestacionalHelper helper =
+            new RequerimientoCompraReclamoPrestacionalHelper();
+
     public static RequerimientoCompraReclamoPrestacionalServiceImpl
-            getInstance() {
+    getInstance() {
 
         if (instance == null) {
             instance =
@@ -23,32 +31,30 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
     }
 
     public static RequerimientoCompraReclamoPrestacional
-            obtenerPorRequerimiento(int idRequerimientoCompra)
-            throws Exception {
+    obtenerPorRequerimiento(
+            int idRequerimientoCompra) throws Exception {
 
-        return getInstance().obtenerPorRequerimiento(
+        return helper.obtenerPorRequerimiento(
                 idRequerimientoCompra
         );
     }
 
     public static RequerimientoCompraReclamoPrestacional
-            getRelacionPorReclamoPrestacional(
-                    int idReclamoPrestacional) throws Exception {
+    getRelacionPorReclamoPrestacional(
+            int idReclamoPrestacional) throws Exception {
 
-        return getInstance().getRelacionPorReclamoPrestacional(
+        return helper.getRelacionPorReclamoPrestacional(
                 idReclamoPrestacional
         );
     }
 
     public static Map<Integer, RequerimientoCompraReclamoPrestacional>
-            obtenerVinculadasPorRequerimientos(
-                    List<Integer> idsRequerimientos)
-                    throws Exception {
+    obtenerVinculadasPorRequerimientos(
+            List<Integer> idsRequerimientos) throws Exception {
 
-        return getInstance()
-                .obtenerVinculadasPorRequerimientos(
-                        idsRequerimientos
-                );
+        return helper.obtenerVinculadasPorRequerimientos(
+                idsRequerimientos
+        );
     }
 
     public static void reservarCreacion(
@@ -56,7 +62,7 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
             String tokenReserva,
             String usuario) throws Exception {
 
-        getInstance().reservarCreacion(
+        helper.reservarCreacion(
                 idRequerimientoCompra,
                 tokenReserva,
                 usuario
@@ -68,7 +74,7 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
             String tokenReserva,
             String usuario) throws Exception {
 
-        return getInstance().liberarReserva(
+        return helper.liberarReserva(
                 idRequerimientoCompra,
                 tokenReserva,
                 usuario
@@ -82,7 +88,7 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
             String error,
             String usuario) throws Exception {
 
-        return getInstance().marcarErrorPosteriorAlInsert(
+        return helper.marcarErrorPosteriorAlInsert(
                 idRequerimientoCompra,
                 tokenReserva,
                 idReclamoPrestacional,
@@ -91,16 +97,13 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
         );
     }
 
-    private RequerimientoCompraReclamoPrestacionalServiceUtil() {
-    }
-
     public static int crearYVincular(
             int idRequerimientoCompra,
             String tokenReserva,
             ReclamoPrestacional reclamo,
             User user) throws Exception {
 
-        return getInstance().crearYVincular(
+        return helper.crearYVincular(
                 idRequerimientoCompra,
                 tokenReserva,
                 reclamo,
@@ -114,11 +117,14 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
             int idReclamoPrestacional,
             String usuario) throws Exception {
 
-        getInstance().finalizarCreacion(
+        helper.finalizarCreacion(
                 idRequerimientoCompra,
                 tokenReserva,
                 idReclamoPrestacional,
                 usuario
         );
+    }
+
+    private RequerimientoCompraReclamoPrestacionalServiceUtil() {
     }
 }

@@ -1,16 +1,22 @@
 package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.requerimientos.beans.*;
+import ar.com.ospim.compras.requerimientos.helper.BusquedaRequerimientoCompraHelper;
 
 import java.util.List;
 
+/**
+ * Fachada estática legacy.
+ *
+ * No contiene reglas de negocio: conserva las firmas históricas y delega
+ * las validaciones/composición al Helper.
+ */
 public class BusquedaRequerimientoCompraServiceUtil {
 
     private static BusquedaRequerimientoCompraServiceImpl instance = null;
 
-    private static final BusquedaRequerimientoCompraLecturaSeguraServiceImpl
-            lecturaSeguraInstance =
-            new BusquedaRequerimientoCompraLecturaSeguraServiceImpl();
+    private static final BusquedaRequerimientoCompraHelper helper =
+            new BusquedaRequerimientoCompraHelper();
 
     public static BusquedaRequerimientoCompraServiceImpl getInstance() {
         if (instance == null) {
@@ -23,33 +29,25 @@ public class BusquedaRequerimientoCompraServiceUtil {
     public static List<RequerimientoCompra> buscarRequerimientos(
             RequerimientoCompraFiltro filtro) throws Exception {
 
-        return getInstance().buscarRequerimientos(
-                filtro
-        );
+        return helper.buscarRequerimientos(filtro);
     }
 
     public static RequerimientoCompra getRequerimientoCompra(
             int idRequerimientoCompra) throws Exception {
 
-        return lecturaSeguraInstance.getRequerimientoCompra(
-                idRequerimientoCompra
-        );
+        return helper.getRequerimientoCompra(idRequerimientoCompra);
     }
 
     public static List<RequerimientoCompraDetalle> getDetalles(
             int idRequerimientoCompra) throws Exception {
 
-        return getInstance().getDetalles(
-                idRequerimientoCompra
-        );
+        return helper.getDetalles(idRequerimientoCompra);
     }
 
     public static List<RequerimientoCompraDetalle> getItems(
             int idRequerimientoCompra) throws Exception {
 
-        return getInstance().getDetalles(
-                idRequerimientoCompra
-        );
+        return helper.getDetalles(idRequerimientoCompra);
     }
 
     public static List<RequerimientoCompraDetalle>
@@ -60,52 +58,46 @@ public class BusquedaRequerimientoCompraServiceUtil {
             int idRequerimientoExcluir)
             throws Exception {
 
-        return getInstance()
-                .buscarItemsHistoricosAfiliado(
-                        cuilTitular,
-                        inte,
-                        idSector,
-                        idRequerimientoExcluir
-                );
+        return helper.buscarItemsHistoricosAfiliado(
+                cuilTitular,
+                inte,
+                idSector,
+                idRequerimientoExcluir
+        );
     }
 
     public static List<RequerimientoCompraEstado> listarEstados()
             throws Exception {
 
-        return getInstance().listarEstados();
+        return helper.listarEstados();
     }
 
     public static List<RequerimientoCompraSector> listarSectores()
             throws Exception {
 
-        return getInstance().listarSectores();
+        return helper.listarSectores();
     }
 
     public static RequerimientoCompraEstado getEstado(
-            int idEstado) throws Exception {
+            int idRequerimientoCompra) throws Exception {
 
-        return getInstance().getEstado(
-                idEstado
-        );
+        return helper.getEstado(idRequerimientoCompra);
     }
 
     public static RequerimientoCompraSector getSector(
             int idSector) throws Exception {
 
-        return getInstance().getSector(
-                idSector
-        );
+        return helper.getSector(idSector);
     }
 
     public static boolean tieneSituacionMedicaVigente(
             String cuilTitular,
             int inte) throws Exception {
 
-        return getInstance()
-                .tieneSituacionMedicaVigente(
-                        cuilTitular,
-                        inte
-                );
+        return helper.tieneSituacionMedicaVigente(
+                cuilTitular,
+                inte
+        );
     }
 
     public static List<PrestadorCotizacion> buscarPrestadoresEnviados(
@@ -113,7 +105,7 @@ public class BusquedaRequerimientoCompraServiceUtil {
             String texto,
             int limite) throws Exception {
 
-        return getInstance().buscarPrestadoresEnviados(
+        return helper.buscarPrestadoresEnviados(
                 idRequerimientoCompra,
                 texto,
                 limite
@@ -123,7 +115,7 @@ public class BusquedaRequerimientoCompraServiceUtil {
     public static List<PrestadorCotizacion> listarPrestadoresEnviados(
             int idRequerimientoCompra) throws Exception {
 
-        return getInstance().listarPrestadoresEnviados(
+        return helper.listarPrestadoresEnviados(
                 idRequerimientoCompra
         );
     }
@@ -131,7 +123,7 @@ public class BusquedaRequerimientoCompraServiceUtil {
     public static boolean hayPrestadoresPendientesNotificacion(
             int idRequerimientoCompra) throws Exception {
 
-        return getInstance().hayPrestadoresPendientesNotificacion(
+        return helper.hayPrestadoresPendientesNotificacion(
                 idRequerimientoCompra
         );
     }
@@ -139,44 +131,32 @@ public class BusquedaRequerimientoCompraServiceUtil {
     public static List<RequerimientoCompraPresupuesto> listarPresupuestos(
             int idRequerimientoCompra) throws Exception {
 
-        return getInstance().listarPresupuestos(
-                idRequerimientoCompra
-        );
+        return helper.listarPresupuestos(idRequerimientoCompra);
     }
 
     public static RequerimientoCompraPresupuesto getPresupuesto(
             int idRequerimientoPresupuesto,
             int idRequerimientoCompra) throws Exception {
 
-        return getInstance().getPresupuesto(
+        return helper.getPresupuesto(
                 idRequerimientoPresupuesto,
                 idRequerimientoCompra
         );
     }
 
-    /*
-     * Nuevo contrato plural.
-     */
     public static List<RequerimientoCompraPresupuesto>
     listarOrdenesMedicas(
             int idRequerimientoCompra) throws Exception {
 
-        return getInstance().listarOrdenesMedicas(
+        return helper.listarOrdenesMedicas(
                 idRequerimientoCompra
         );
     }
 
-    /*
-     * Contrato histórico.
-     *
-     * Debe mantenerse. Su implementación continuará devolviendo una
-     * Orden médica para callers legacy que todavía trabajen en modo
-     * singular.
-     */
     public static RequerimientoCompraPresupuesto getOrdenMedica(
             int idRequerimientoCompra) throws Exception {
 
-        return getInstance().getOrdenMedica(
+        return helper.getOrdenMedica(
                 idRequerimientoCompra
         );
     }
@@ -184,7 +164,7 @@ public class BusquedaRequerimientoCompraServiceUtil {
     public static RequerimientoCompraPresupuesto getPresupuestoAdjudicado(
             int idRequerimientoCompra) throws Exception {
 
-        return getInstance().getPresupuestoAdjudicado(
+        return helper.getPresupuestoAdjudicado(
                 idRequerimientoCompra
         );
     }

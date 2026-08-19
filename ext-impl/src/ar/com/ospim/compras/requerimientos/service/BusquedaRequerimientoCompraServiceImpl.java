@@ -1,6 +1,5 @@
 package ar.com.ospim.compras.requerimientos.service;
 
-import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
@@ -10,22 +9,26 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.util.ConnectionHelper;
 
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
-
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Capa de persistencia de Requerimientos de Compra.
+ *
+ * Regla de esta clase:
+ * - abrir/cerrar conexiones;
+ * - invocar funciones PostgreSQL mediante CallableStatement;
+ * - parametrizar;
+ * - mapear ResultSet a beans.
+ *
+ * No contiene validaciones funcionales ni reglas de negocio.
+ */
 public class BusquedaRequerimientoCompraServiceImpl {
-
-    private static final Log _log =
-            LogFactoryUtil.getLog(BusquedaRequerimientoCompraServiceImpl.class);
 
     private static final String SQL_BUSCAR_REQUERIMIENTOS =
             "{call compras.buscar_requerimientos(?,?,?,?,?,?,?,?)}";
@@ -63,96 +66,17 @@ public class BusquedaRequerimientoCompraServiceImpl {
     private static final String SQL_GET_ORDEN_MEDICA =
             "{call compras.get_requerimiento_orden_medica(?)}";
 
-    private static final String SQL_GET_PRESTADOR_ADJUDICADO =
-            "SELECT DISTINCT d.id_prestador "
-                    + "FROM compras.requerimiento_detalle d "
-                    + "WHERE d.id_requerimiento = ? "
-                    + "AND d.baja_fecha IS NULL";
-
-    private static final String SQL_GET_PRESUPUESTO_ADJUDICADO =
-            "SELECT rp.* "
-                    + "FROM compras.requerimiento_presupuesto rp "
-                    + "WHERE rp.id_requerimiento = ? "
-                    + "AND rp.id_prestador = ? "
-                    + "AND rp.tipo_documento = 1 "
-                    + "AND rp.baja_fecha IS NULL";
+    private static final String SQL_BUSCAR_ITEMS_HISTORICOS_AFILIADO =
+            "{call compras.buscar_items_historicos_afiliado(?,?,?,?,?)}";
 
     private static final String SQL_TIENE_SITUACION_MEDICA_VIGENTE =
-            "SELECT EXISTS ("
-                    + "SELECT 1 "
-                    + "FROM public.afi_situ_medica sm "
-                    + "WHERE sm.cuil_titular = ? "
-                    + "AND sm.inte = ? "
-                    + "AND sm.baja_fecha IS NULL "
-                    + "AND ("
-                    + "sm.vigen_hasta IS NULL "
-                    + "OR sm.vigen_hasta > CURRENT_DATE"
-                    + ")"
-                    + ")";
+            "{ ? = call compras.tiene_situacion_medica_vigente(?,?) }";
 
-    private static final int MAX_ITEMS_HISTORICOS_AFILIADO =
-            20;
+    private static final String SQL_LISTAR_PRESTADORES_ADJUDICADOS =
+            "{call compras.listar_prestadores_adjudicados(?)}";
 
-    private static final String SQL_BUSCAR_ITEMS_HISTORICOS_AFILIADO =
-            "SELECT historico.id_prestacion, "
-                    + "historico.id_tipo_nomenclador, "
-                    + "historico.codigo, "
-                    + "historico.descripcion "
-                    + "FROM ("
-                    + "SELECT DISTINCT ON ("
-                    + "d.id_prestacion, "
-                    + "d.id_tipo_nomenclador"
-                    + ") "
-                    + "d.id_prestacion, "
-                    + "d.id_tipo_nomenclador, "
-                    + "NULLIF("
-                    + "BTRIM(d.codigo_nomenclador), "
-                    + "''"
-                    + ") AS codigo, "
-                    + "NULLIF("
-                    + "BTRIM(d.descripcion_nomenclador), "
-                    + "''"
-                    + ") AS descripcion, "
-                    + "r.alta_fecha AS fecha_requerimiento, "
-                    + "r.id_requerimiento "
-                    + "AS id_requerimiento_origen, "
-                    + "d.id_detalle "
-                    + "AS id_detalle_origen "
-                    + "FROM compras.requerimiento r "
-                    + "INNER JOIN compras.requerimiento_detalle d "
-                    + "ON d.id_requerimiento = "
-                    + "r.id_requerimiento "
-                    + "WHERE r.afiliado_cuil_titular = ? "
-                    + "AND r.afiliado_int = ? "
-                    + "AND r.id_sector = ? "
-                    + "AND r.id_requerimiento <> ? "
-                    + "AND r.baja_fecha IS NULL "
-                    + "AND d.baja_fecha IS NULL "
-                    + "AND d.tipo_item = 'NOMENCLADOR' "
-                    + "AND d.id_prestacion IS NOT NULL "
-                    + "AND d.id_prestacion > 0 "
-                    + "AND d.id_tipo_nomenclador IS NOT NULL "
-                    + "AND d.id_tipo_nomenclador > 0 "
-                    + "AND NULLIF("
-                    + "BTRIM(d.codigo_nomenclador), "
-                    + "''"
-                    + ") IS NOT NULL "
-                    + "AND NULLIF("
-                    + "BTRIM(d.descripcion_nomenclador), "
-                    + "''"
-                    + ") IS NOT NULL "
-                    + "ORDER BY "
-                    + "d.id_prestacion, "
-                    + "d.id_tipo_nomenclador, "
-                    + "r.alta_fecha DESC NULLS LAST, "
-                    + "r.id_requerimiento DESC, "
-                    + "d.id_detalle DESC"
-                    + ") historico "
-                    + "ORDER BY "
-                    + "historico.fecha_requerimiento DESC NULLS LAST, "
-                    + "historico.id_requerimiento_origen DESC, "
-                    + "historico.id_detalle_origen DESC "
-                    + "LIMIT ?";
+    private static final String SQL_LISTAR_PRESUPUESTOS_PRESTADOR =
+            "{call compras.listar_presupuestos_prestador(?,?)}";
 
     public List<RequerimientoCompra> buscarRequerimientos(
             RequerimientoCompraFiltro filtro) throws Exception {
@@ -160,45 +84,29 @@ public class BusquedaRequerimientoCompraServiceImpl {
         Connection con = null;
         CallableStatement stmt = null;
         ResultSet rs = null;
-        List<RequerimientoCompra> requerimientos =
+        List<RequerimientoCompra> resultado =
                 new ArrayList<RequerimientoCompra>();
 
         try {
-            if (filtro == null) {
-                filtro = new RequerimientoCompraFiltro();
-            }
-
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(SQL_BUSCAR_REQUERIMIENTOS);
 
             setNullableInteger(stmt, 1, filtro.getIdEstado());
             setNullableInteger(stmt, 2, filtro.getIdSector());
-            stmt.setString(
-                    3,
-                    emptyToNull(filtro.getAfiliadoCuilTitular())
-            );
+            stmt.setString(3, filtro.getAfiliadoCuilTitular());
             setNullableInteger(stmt, 4, filtro.getAfiliadoInt());
-            stmt.setString(
-                    5,
-                    emptyToNull(filtro.getIdTercerizadora())
-            );
+            stmt.setString(5, filtro.getIdTercerizadora());
             setNullableBoolean(stmt, 6, filtro.getRecupero());
             setNullableBoolean(stmt, 7, filtro.getSurge());
-            stmt.setString(
-                    8,
-                    emptyToNull(filtro.getTexto())
-            );
+            stmt.setString(8, filtro.getTexto());
 
             rs = stmt.executeQuery();
 
             while (rs.next()) {
-                requerimientos.add(mapRequerimiento(rs));
+                resultado.add(mapRequerimiento(rs));
             }
 
-            return requerimientos;
-        } catch (Exception e) {
-            _log.error(e);
-            throw e;
+            return resultado;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
@@ -206,6 +114,21 @@ public class BusquedaRequerimientoCompraServiceImpl {
     }
 
     public RequerimientoCompra getRequerimientoCompra(
+            int idRequerimientoCompra) throws Exception {
+
+        RequerimientoCompra requerimiento =
+                getCabeceraRequerimiento(idRequerimientoCompra);
+
+        if (requerimiento != null) {
+            requerimiento.setDetalles(
+                    getDetalles(idRequerimientoCompra)
+            );
+        }
+
+        return requerimiento;
+    }
+
+    public RequerimientoCompra getCabeceraRequerimiento(
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
@@ -218,16 +141,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
-            if (!rs.next()) {
-                return null;
-            }
-
-            RequerimientoCompra requerimiento = mapRequerimiento(rs);
-            requerimiento.setDetalles(getDetalles(idRequerimientoCompra));
-            return requerimiento;
-        } catch (Exception e) {
-            _log.error(e);
-            throw e;
+            return rs.next() ? mapRequerimiento(rs) : null;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
@@ -240,7 +154,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
         Connection con = null;
         CallableStatement stmt = null;
         ResultSet rs = null;
-        List<RequerimientoCompraDetalle> detalles =
+        List<RequerimientoCompraDetalle> resultado =
                 new ArrayList<RequerimientoCompraDetalle>();
 
         try {
@@ -250,163 +164,55 @@ public class BusquedaRequerimientoCompraServiceImpl {
             rs = stmt.executeQuery();
 
             while (rs.next()) {
-                detalles.add(mapDetalle(rs));
+                resultado.add(mapDetalle(rs));
             }
 
-            return detalles;
-        } catch (Exception e) {
-            _log.error(e);
-            throw e;
+            return resultado;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
         }
     }
 
-    public List<RequerimientoCompraDetalle>
-    buscarItemsHistoricosAfiliado(
+    public List<RequerimientoCompraDetalle> buscarItemsHistoricosAfiliado(
             String cuilTitular,
             int inte,
             int idSector,
-            int idRequerimientoExcluir)
-            throws Exception {
-
-        String cuilNormalizado =
-                emptyToNull(
-                        cuilTitular
-                );
-
-        if (cuilNormalizado == null
-                || !cuilNormalizado.matches(
-                "^[0-9]{11}$"
-        )) {
-
-            throw new Exception(
-                    "Debe informar un CUIL titular válido."
-            );
-        }
-
-        /*
-         * El integrante cero corresponde al titular
-         * y debe considerarse válido.
-         */
-        if (inte < 0) {
-            throw new Exception(
-                    "Debe informar un integrante válido."
-            );
-        }
-
-        if (idSector <= 0) {
-            throw new Exception(
-                    "Debe informar el sector del requerimiento."
-            );
-        }
-
-        int idRequerimientoExcluirNormalizado =
-                idRequerimientoExcluir > 0
-                        ? idRequerimientoExcluir
-                        : 0;
+            int idRequerimientoExcluir,
+            int limite) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
-
-        List<RequerimientoCompraDetalle> items =
+        List<RequerimientoCompraDetalle> resultado =
                 new ArrayList<RequerimientoCompraDetalle>();
 
         try {
-            con =
-                    ConnectionHelper.getConnection();
-
-            if (con == null) {
-                throw new Exception(
-                        "No se obtuvo conexión para consultar "
-                                + "los ítems históricos."
-                );
-            }
-
-            stmt =
-                    con.prepareStatement(
-                            SQL_BUSCAR_ITEMS_HISTORICOS_AFILIADO
-                    );
-
-            stmt.setString(
-                    1,
-                    cuilNormalizado
-            );
-
-            stmt.setInt(
-                    2,
-                    inte
-            );
-
-            stmt.setInt(
-                    3,
-                    idSector
-            );
-
-            /*
-             * Para un requerimiento nuevo se envía cero.
-             * Como los IDs persistidos son positivos,
-             * r.id_requerimiento <> 0 no excluye ninguna cabecera.
-             */
-            stmt.setInt(
-                    4,
-                    idRequerimientoExcluirNormalizado
-            );
-
-            stmt.setInt(
-                    5,
-                    MAX_ITEMS_HISTORICOS_AFILIADO
-            );
-
-            rs =
-                    stmt.executeQuery();
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_BUSCAR_ITEMS_HISTORICOS_AFILIADO);
+            stmt.setString(1, cuilTitular);
+            stmt.setInt(2, inte);
+            stmt.setInt(3, idSector);
+            stmt.setInt(4, idRequerimientoExcluir);
+            stmt.setInt(5, limite);
+            rs = stmt.executeQuery();
 
             while (rs.next()) {
-                items.add(
-                        mapItemHistoricoAfiliado(
-                                rs
-                        )
-                );
+                resultado.add(mapItemHistoricoAfiliado(rs));
             }
 
-            return items;
-
-        } catch (Exception e) {
-            /*
-             * No registrar CUIL, integrante ni otra
-             * información identificatoria en el log.
-             */
-            _log.error(
-                    "No se pudieron recuperar los ítems históricos "
-                            + "del afiliado para Compras.",
-                    e
-            );
-
-            throw e;
-
+            return resultado;
         } finally {
-            closeQuietly(
-                    rs
-            );
-
-            ConnectionHelper.cerrar(
-                    stmt,
-                    con
-            );
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
         }
-    }
-
-    public List<RequerimientoCompraEstado> listarEstados() throws Exception {
-        return WebKeysCompras.listarEstados();
     }
 
     public List<RequerimientoCompraSector> listarSectores() throws Exception {
         Connection con = null;
         CallableStatement stmt = null;
         ResultSet rs = null;
-        List<RequerimientoCompraSector> sectores =
+        List<RequerimientoCompraSector> resultado =
                 new ArrayList<RequerimientoCompraSector>();
 
         try {
@@ -415,13 +221,10 @@ public class BusquedaRequerimientoCompraServiceImpl {
             rs = stmt.executeQuery();
 
             while (rs.next()) {
-                sectores.add(mapSector(rs));
+                resultado.add(mapSector(rs));
             }
 
-            return sectores;
-        } catch (Exception e) {
-            _log.error(e);
-            throw e;
+            return resultado;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
@@ -440,17 +243,17 @@ public class BusquedaRequerimientoCompraServiceImpl {
             stmt = con.prepareCall(SQL_GET_ESTADO);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
+
             return rs.next() ? mapEstado(rs) : null;
-        } catch (Exception e) {
-            _log.error(e);
-            throw e;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
         }
     }
 
-    public RequerimientoCompraSector getSector(int idSector) throws Exception {
+    public RequerimientoCompraSector getSector(int idSector)
+            throws Exception {
+
         Connection con = null;
         CallableStatement stmt = null;
         ResultSet rs = null;
@@ -460,10 +263,8 @@ public class BusquedaRequerimientoCompraServiceImpl {
             stmt = con.prepareCall(SQL_GET_SECTOR);
             stmt.setInt(1, idSector);
             rs = stmt.executeQuery();
+
             return rs.next() ? mapSector(rs) : null;
-        } catch (Exception e) {
-            _log.error(e);
-            throw e;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
@@ -474,86 +275,21 @@ public class BusquedaRequerimientoCompraServiceImpl {
             String cuilTitular,
             int inte) throws Exception {
 
-        String cuilNormalizado =
-                emptyToNull(
-                        cuilTitular
-                );
-
-        if (cuilNormalizado == null) {
-            throw new Exception(
-                    "Debe informar el CUIL titular."
-            );
-        }
-
-        /*
-         * El integrante 0 es válido para el titular.
-         */
-        if (inte < 0) {
-            throw new Exception(
-                    "Debe informar un integrante válido."
-            );
-        }
-
         Connection con = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
+        CallableStatement stmt = null;
 
         try {
-            con =
-                    ConnectionHelper.getConnection();
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_TIENE_SITUACION_MEDICA_VIGENTE);
+            stmt.registerOutParameter(1, Types.BOOLEAN);
+            stmt.setString(2, cuilTitular);
+            stmt.setInt(3, inte);
+            stmt.execute();
 
-            if (con == null) {
-                throw new Exception(
-                        "No se obtuvo conexión para consultar "
-                                + "la situación médica."
-                );
-            }
-
-            stmt =
-                    con.prepareStatement(
-                            SQL_TIENE_SITUACION_MEDICA_VIGENTE
-                    );
-
-            stmt.setString(
-                    1,
-                    cuilNormalizado
-            );
-
-            stmt.setInt(
-                    2,
-                    inte
-            );
-
-            rs =
-                    stmt.executeQuery();
-
-            if (!rs.next()) {
-                return false;
-            }
-
-            return rs.getBoolean(1);
-
-        } catch (Exception e) {
-            /*
-             * No registrar CUIL ni información clínica en el log.
-             */
-            _log.error(
-                    "No se pudo determinar si el afiliado posee "
-                            + "una situación médica vigente.",
-                    e
-            );
-
-            throw e;
-
+            boolean value = stmt.getBoolean(1);
+            return !stmt.wasNull() && value;
         } finally {
-            closeQuietly(
-                    rs
-            );
-
-            ConnectionHelper.cerrar(
-                    stmt,
-                    con
-            );
+            ConnectionHelper.cerrar(stmt, con);
         }
     }
 
@@ -562,34 +298,25 @@ public class BusquedaRequerimientoCompraServiceImpl {
             String texto,
             int limite) throws Exception {
 
-        validarIdRequerimiento(idRequerimientoCompra);
-
-        if (limite <= 0 || limite > 50) {
-            limite = 20;
-        }
-
         Connection con = null;
         CallableStatement stmt = null;
         ResultSet rs = null;
-        List<PrestadorCotizacion> prestadores =
+        List<PrestadorCotizacion> resultado =
                 new ArrayList<PrestadorCotizacion>();
 
         try {
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(SQL_BUSCAR_PRESTADORES_ENVIADOS);
             stmt.setInt(1, idRequerimientoCompra);
-            stmt.setString(2, emptyToNull(texto));
+            stmt.setString(2, texto);
             stmt.setInt(3, limite);
             rs = stmt.executeQuery();
 
             while (rs.next()) {
-                prestadores.add(mapPrestadorCotizacion(rs));
+                resultado.add(mapPrestadorCotizacion(rs));
             }
 
-            return prestadores;
-        } catch (Exception e) {
-            _log.error(e);
-            throw e;
+            return resultado;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
@@ -597,60 +324,27 @@ public class BusquedaRequerimientoCompraServiceImpl {
     }
 
     public List<PrestadorCotizacion> listarPrestadoresEnviados(
-            int idRequerimientoCompra) throws Exception {
-
-        validarIdRequerimiento(
-                idRequerimientoCompra
-        );
+            int idRequerimientoCompra,
+            int limite) throws Exception {
 
         Connection con = null;
         CallableStatement stmt = null;
         ResultSet rs = null;
-
-        List<PrestadorCotizacion> prestadores =
+        List<PrestadorCotizacion> resultado =
                 new ArrayList<PrestadorCotizacion>();
 
         try {
             con = ConnectionHelper.getConnection();
-
-            stmt = con.prepareCall(
-                    SQL_LISTAR_PRESTADORES_ENVIADOS
-            );
-
-            stmt.setInt(
-                    1,
-                    idRequerimientoCompra
-            );
-
-            stmt.setInt(
-                    2,
-                    WebKeysCompras
-                            .MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO
-                            + 1
-            );
-
+            stmt = con.prepareCall(SQL_LISTAR_PRESTADORES_ENVIADOS);
+            stmt.setInt(1, idRequerimientoCompra);
+            stmt.setInt(2, limite);
             rs = stmt.executeQuery();
 
             while (rs.next()) {
-                prestadores.add(
-                        mapPrestadorCotizacion(rs)
-                );
+                resultado.add(mapPrestadorCotizacion(rs));
             }
 
-            if (prestadores.size()
-                    > WebKeysCompras
-                    .MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO) {
-
-                throw new Exception(
-                        "El requerimiento supera el máximo permitido de "
-                                + "prestadores enviados para esta pantalla."
-                );
-            }
-
-            return prestadores;
-        } catch (Exception e) {
-            _log.error(e);
-            throw e;
+            return resultado;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
@@ -660,39 +354,19 @@ public class BusquedaRequerimientoCompraServiceImpl {
     public boolean hayPrestadoresPendientesNotificacion(
             int idRequerimientoCompra) throws Exception {
 
-        validarIdRequerimiento(
-                idRequerimientoCompra
-        );
-
         Connection con = null;
         CallableStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-
             stmt = con.prepareCall(
                     SQL_HAY_PRESTADORES_PENDIENTES_NOTIFICACION
             );
-
-            stmt.setInt(
-                    1,
-                    idRequerimientoCompra
-            );
-
+            stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
-            return rs.next()
-                    && rs.getBoolean(1);
-        } catch (Exception e) {
-            _log.error(
-                    "No se pudo determinar si existen prestadores pendientes "
-                            + "de notificación. idRequerimiento="
-                            + idRequerimientoCompra,
-                    e
-            );
-
-            throw e;
+            return rs.next() && rs.getBoolean(1);
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
@@ -702,12 +376,10 @@ public class BusquedaRequerimientoCompraServiceImpl {
     public List<RequerimientoCompraPresupuesto> listarPresupuestos(
             int idRequerimientoCompra) throws Exception {
 
-        validarIdRequerimiento(idRequerimientoCompra);
-
         Connection con = null;
         CallableStatement stmt = null;
         ResultSet rs = null;
-        List<RequerimientoCompraPresupuesto> presupuestos =
+        List<RequerimientoCompraPresupuesto> resultado =
                 new ArrayList<RequerimientoCompraPresupuesto>();
 
         try {
@@ -717,17 +389,10 @@ public class BusquedaRequerimientoCompraServiceImpl {
             rs = stmt.executeQuery();
 
             while (rs.next()) {
-                presupuestos.add(mapPresupuesto(rs));
+                resultado.add(mapPresupuesto(rs));
             }
 
-            return presupuestos;
-        } catch (Exception e) {
-            _log.error(
-                    "No se pudieron listar los presupuestos del requerimiento. "
-                            + "idRequerimiento=" + idRequerimientoCompra,
-                    e
-            );
-            throw e;
+            return resultado;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
@@ -737,12 +402,6 @@ public class BusquedaRequerimientoCompraServiceImpl {
     public RequerimientoCompraPresupuesto getPresupuesto(
             int idRequerimientoPresupuesto,
             int idRequerimientoCompra) throws Exception {
-
-        if (idRequerimientoPresupuesto <= 0) {
-            throw new Exception("Debe informar el presupuesto del requerimiento.");
-        }
-
-        validarIdRequerimiento(idRequerimientoCompra);
 
         Connection con = null;
         CallableStatement stmt = null;
@@ -754,17 +413,8 @@ public class BusquedaRequerimientoCompraServiceImpl {
             stmt.setInt(1, idRequerimientoPresupuesto);
             stmt.setInt(2, idRequerimientoCompra);
             rs = stmt.executeQuery();
+
             return rs.next() ? mapPresupuesto(rs) : null;
-        } catch (Exception e) {
-            _log.error(
-                    "No se pudo recuperar el presupuesto del requerimiento. "
-                            + "idRequerimientoPresupuesto="
-                            + idRequerimientoPresupuesto
-                            + ", idRequerimiento="
-                            + idRequerimientoCompra,
-                    e
-            );
-            throw e;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
@@ -772,196 +422,84 @@ public class BusquedaRequerimientoCompraServiceImpl {
     }
 
     public List<RequerimientoCompraPresupuesto> listarOrdenesMedicas(
-            int idRequerimientoCompra)
-            throws Exception {
-
-        validarIdRequerimiento(
-                idRequerimientoCompra
-        );
-
-        Connection con = null;
-        CallableStatement stmt = null;
-        ResultSet rs = null;
-
-        List<RequerimientoCompraPresupuesto> ordenesMedicas =
-                new ArrayList<RequerimientoCompraPresupuesto>();
-
-        try {
-            con =
-                    ConnectionHelper.getConnection();
-
-            stmt =
-                    con.prepareCall(
-                            SQL_GET_ORDEN_MEDICA
-                    );
-
-            stmt.setInt(
-                    1,
-                    idRequerimientoCompra
-            );
-
-            rs =
-                    stmt.executeQuery();
-
-            while (rs.next()) {
-                ordenesMedicas.add(
-                        mapPresupuesto(
-                                rs
-                        )
-                );
-            }
-
-            return ordenesMedicas;
-
-        } catch (Exception e) {
-            _log.error(
-                    "No se pudieron recuperar las Órdenes médicas "
-                            + "del requerimiento. "
-                            + "idRequerimiento="
-                            + idRequerimientoCompra,
-                    e
-            );
-
-            throw e;
-
-        } finally {
-            closeQuietly(
-                    rs
-            );
-
-            ConnectionHelper.cerrar(
-                    stmt,
-                    con
-            );
-        }
-    }
-
-    public RequerimientoCompraPresupuesto getOrdenMedica(
             int idRequerimientoCompra) throws Exception {
 
-        validarIdRequerimiento(idRequerimientoCompra);
-
         Connection con = null;
         CallableStatement stmt = null;
         ResultSet rs = null;
+        List<RequerimientoCompraPresupuesto> resultado =
+                new ArrayList<RequerimientoCompraPresupuesto>();
 
         try {
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(SQL_GET_ORDEN_MEDICA);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
-            return rs.next() ? mapPresupuesto(rs) : null;
-        } catch (Exception e) {
-            _log.error(
-                    "No se pudo recuperar la Orden médica del requerimiento. "
-                            + "idRequerimiento=" + idRequerimientoCompra,
-                    e
-            );
-            throw e;
+
+            while (rs.next()) {
+                resultado.add(mapPresupuesto(rs));
+            }
+
+            return resultado;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
         }
     }
 
-    public RequerimientoCompraPresupuesto getPresupuestoAdjudicado(
+    public List<Integer> listarPrestadoresAdjudicados(
             int idRequerimientoCompra) throws Exception {
 
-        validarIdRequerimiento(idRequerimientoCompra);
-
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
+        List<Integer> resultado = new ArrayList<Integer>();
 
         try {
-            con = obtenerConexionDocumentacionCompras();
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_LISTAR_PRESTADORES_ADJUDICADOS);
+            stmt.setInt(1, idRequerimientoCompra);
+            rs = stmt.executeQuery();
 
-            if (con == null) {
-                throw new Exception(
-                        "No se obtuvo una conexión para consultar "
-                                + "el presupuesto adjudicado."
+            while (rs.next()) {
+                int value = rs.getInt("id_prestador");
+                resultado.add(
+                        rs.wasNull() ? null : Integer.valueOf(value)
                 );
             }
 
-            int idPrestador = resolverPrestadorAdjudicado(
-                    con,
-                    idRequerimientoCompra
-            );
+            return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
 
-            stmt = con.prepareStatement(SQL_GET_PRESUPUESTO_ADJUDICADO);
+    public List<RequerimientoCompraPresupuesto> listarPresupuestosPrestador(
+            int idRequerimientoCompra,
+            int idPrestador) throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+        List<RequerimientoCompraPresupuesto> resultado =
+                new ArrayList<RequerimientoCompraPresupuesto>();
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_LISTAR_PRESUPUESTOS_PRESTADOR);
             stmt.setInt(1, idRequerimientoCompra);
             stmt.setInt(2, idPrestador);
             rs = stmt.executeQuery();
 
-            RequerimientoCompraPresupuesto presupuesto =
-                    rs.next() ? mapPresupuesto(rs) : null;
-
-            if (rs.next()) {
-                throw new Exception(
-                        "Existe más de un presupuesto activo para "
-                                + "el prestador adjudicado."
-                );
+            while (rs.next()) {
+                resultado.add(mapPresupuesto(rs));
             }
 
-            return presupuesto;
-        } catch (Exception e) {
-            _log.error(
-                    "No se pudo recuperar el presupuesto adjudicado. "
-                            + "idRequerimiento=" + idRequerimientoCompra,
-                    e
-            );
-            throw e;
+            return resultado;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
-        }
-    }
-
-    protected Connection obtenerConexionDocumentacionCompras()
-            throws Exception {
-
-        return ConnectionHelper.getConnection();
-    }
-
-    private int resolverPrestadorAdjudicado(
-            Connection con,
-            int idRequerimientoCompra) throws Exception {
-
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
-        try {
-            stmt = con.prepareStatement(SQL_GET_PRESTADOR_ADJUDICADO);
-            stmt.setInt(1, idRequerimientoCompra);
-            rs = stmt.executeQuery();
-
-            if (!rs.next()) {
-                throw new Exception(
-                        "El requerimiento no tiene detalles activos "
-                                + "con un prestador adjudicado."
-                );
-            }
-
-            int idPrestador = rs.getInt("id_prestador");
-
-            if (rs.wasNull() || idPrestador <= 0) {
-                throw new Exception(
-                        "Todos los detalles activos deben tener "
-                                + "un prestador adjudicado válido."
-                );
-            }
-
-            if (rs.next()) {
-                throw new Exception(
-                        "Todos los detalles activos deben tener "
-                                + "el mismo prestador adjudicado."
-                );
-            }
-
-            return idPrestador;
-        } finally {
-            closeQuietly(rs);
-            ConnectionHelper.cerrar(stmt);
         }
     }
 
@@ -971,64 +509,17 @@ public class BusquedaRequerimientoCompraServiceImpl {
         RequerimientoCompraDetalle detalle =
                 new RequerimientoCompraDetalle();
 
-        String codigo =
-                getString(
-                        rs,
-                        "codigo"
-                );
-
-        String descripcion =
-                getString(
-                        rs,
-                        "descripcion"
-                );
-
-        detalle.setTipoItem(
-                RequerimientoCompraDetalle
-                        .TIPO_ITEM_NOMENCLADOR
-        );
-
         detalle.setIdPrestacion(
-                getInteger(
-                        rs,
-                        "id_prestacion"
-                )
+                getInteger(rs, "id_prestacion")
         );
-
         detalle.setIdTipoNomenclador(
-                getInteger(
-                        rs,
-                        "id_tipo_nomenclador"
-                )
+                getInteger(rs, "id_tipo_nomenclador")
         );
-
         detalle.setCodigoNomenclador(
-                codigo
+                getString(rs, "codigo")
         );
-
         detalle.setDescripcionNomenclador(
-                descripcion
-        );
-
-        /*
-         * Mantener consistentes también los campos
-         * genéricos utilizados por la tabla y el editor.
-         */
-        detalle.setCodigoItem(
-                codigo
-        );
-
-        detalle.setDescripcionItem(
-                descripcion
-        );
-
-        /*
-         * La cantidad histórica no se reutiliza.
-         */
-        detalle.setCantidad(
-                Integer.valueOf(
-                        1
-                )
+                getString(rs, "descripcion")
         );
 
         return detalle;
@@ -1217,14 +708,6 @@ public class BusquedaRequerimientoCompraServiceImpl {
         return presupuesto;
     }
 
-    private void validarIdRequerimiento(int idRequerimientoCompra)
-            throws Exception {
-
-        if (idRequerimientoCompra <= 0) {
-            throw new Exception("Debe informar el requerimiento de compra.");
-        }
-    }
-
     private void setNullableInteger(
             CallableStatement stmt,
             int index,
@@ -1247,10 +730,6 @@ public class BusquedaRequerimientoCompraServiceImpl {
         } else {
             stmt.setBoolean(index, value.booleanValue());
         }
-    }
-
-    private String emptyToNull(String value) {
-        return WebKeysCompras.trimToNull(value);
     }
 
     private String getString(ResultSet rs, String column) throws Exception {

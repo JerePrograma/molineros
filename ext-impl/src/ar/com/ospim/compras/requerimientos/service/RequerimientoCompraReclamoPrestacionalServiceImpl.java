@@ -1,414 +1,326 @@
 package ar.com.ospim.compras.requerimientos.service;
 
-import com.liferay.portal.SystemException;
-import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
-import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
-import ar.com.ospim.autorizaciones.services.ReclamoPrestacionServiceImpl;
-import com.liferay.portal.model.User;
 import ar.com.ospim.util.ConnectionHelper;
 
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
-
+import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.HashMap;
+import java.sql.Types;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
+/**
+ * Persistencia del vínculo Compras / Reclamo Prestacional.
+ *
+ * Sin validaciones funcionales ni orquestación de creación del RP.
+ */
 public class RequerimientoCompraReclamoPrestacionalServiceImpl {
 
-    private static final Log _log =
-            LogFactoryUtil.getLog(
-                    RequerimientoCompraReclamoPrestacionalServiceImpl.class
-            );
-
     private static final String SQL_GET_RELACION =
-            "SELECT * "
-                    + "FROM compras.get_requerimiento_reclamo_prestacional(?)";
+            "{call compras.get_requerimiento_reclamo_prestacional(?)}";
 
     private static final String SQL_GET_RELACIONES_BATCH =
-            "SELECT * "
-                    + "FROM compras.requerimiento_reclamo_prestacional "
-                    + "WHERE estado = ? "
-                    + "AND id_reclamo_prestacional IS NOT NULL "
-                    + "AND id_requerimiento = ANY (CAST(? AS INTEGER[]))";
+            "{call compras.listar_requerimientos_reclamo_prestacional_vinculados(?,?)}";
 
     private static final String SQL_GET_RELACION_POR_RECLAMO =
-            "SELECT relacion.* "
-                    + "FROM compras.requerimiento_reclamo_prestacional relacion "
-                    + "JOIN compras.requerimiento requerimiento "
-                    + "ON requerimiento.id_requerimiento = "
-                    + "relacion.id_requerimiento "
-                    + "WHERE relacion.id_reclamo_prestacional = ? "
-                    + "AND relacion.estado = ? "
-                    + "AND requerimiento.baja_fecha IS NULL";
+            "{call compras.get_requerimiento_por_reclamo_prestacional(?,?)}";
 
     private static final String SQL_RESERVAR =
-            "SELECT compras.reservar_reclamo_prestacional(?,?,?)";
+            "{ ? = call compras.reservar_reclamo_prestacional(?,?,?) }";
 
     private static final String SQL_FINALIZAR =
-            "SELECT compras.finalizar_reclamo_prestacional(?,?,?,?)";
+            "{ ? = call compras.finalizar_reclamo_prestacional(?,?,?,?) }";
 
     private static final String SQL_LIBERAR =
-            "SELECT compras.liberar_reserva_reclamo_prestacional(?,?,?)";
+            "{ ? = call compras.liberar_reserva_reclamo_prestacional(?,?,?) }";
 
     private static final String SQL_MARCAR_ERROR =
-            "SELECT compras.marcar_error_reclamo_prestacional(?,?,?,?,?)";
-
-    /*
-     * Namespace ASCII "RCP" utilizado exclusivamente para serializar
-     * la creación del Reclamo Prestacional de un requerimiento.
-     */
-    private static final int ADVISORY_LOCK_NAMESPACE =
-            5391184;
+            "{ ? = call compras.marcar_error_reclamo_prestacional(?,?,?,?,?) }";
 
     private static final String SQL_BLOQUEAR_REQUERIMIENTO =
-            "SELECT pg_advisory_xact_lock(?,?)";
+            "{ ? = call compras.bloquear_requerimiento_reclamo_prestacional(?) }";
 
     private static final String SQL_GET_ESTADO_REQUERIMIENTO_FOR_UPDATE =
-            "SELECT estado "
-                    + "FROM compras.requerimiento "
-                    + "WHERE id_requerimiento = ? "
-                    + "AND baja_fecha IS NULL "
-                    + "FOR UPDATE";
+            "{ ? = call compras.get_estado_requerimiento_for_update(?) }";
 
     private static final String SQL_CAMBIAR_ESTADO_REQUERIMIENTO =
-            "SELECT compras.cambiar_estado_requerimiento(?,?,?)";
+            "{call compras.cambiar_estado_requerimiento(?,?,?)}";
 
     public RequerimientoCompraReclamoPrestacional obtenerPorRequerimiento(
             int idRequerimientoCompra) throws Exception {
 
-        validarIdRequerimiento(idRequerimientoCompra);
-
         Connection con = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_GET_RELACION);
+            return obtenerPorRequerimiento(
+                    con,
+                    idRequerimientoCompra
+            );
+        } finally {
+            ConnectionHelper.cerrar(con);
+        }
+    }
+
+    public RequerimientoCompraReclamoPrestacional obtenerPorRequerimiento(
+            Connection con,
+            int idRequerimientoCompra) throws Exception {
+
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            stmt = con.prepareCall(SQL_GET_RELACION);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
-            return rs.next() ? mapRelacion(rs) : null;
-        } catch (Exception e) {
-            _log.error(
-                    "No se pudo consultar la relación entre el requerimiento "
-                            + "de compra y el Reclamo Prestacional. "
-                            + "idRequerimiento="
-                            + idRequerimientoCompra,
-                    e
-            );
-            throw e;
+            return rs.next()
+                    ? mapRelacion(rs)
+                    : null;
         } finally {
             closeQuietly(rs);
-            ConnectionHelper.cerrar(stmt, con);
+            ConnectionHelper.cerrar(stmt);
         }
     }
 
-    public RequerimientoCompraReclamoPrestacional
-            getRelacionPorReclamoPrestacional(
-                    int idReclamoPrestacional) throws Exception {
-
-        if (idReclamoPrestacional <= 0) {
-            throw new Exception(
-                    "Debe informar el Reclamo Prestacional."
-            );
-        }
+    public List<RequerimientoCompraReclamoPrestacional>
+    listarPorReclamoPrestacional(
+            int idReclamoPrestacional,
+            String estado) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
+        List<RequerimientoCompraReclamoPrestacional> resultado =
+                new ArrayList<RequerimientoCompraReclamoPrestacional>();
 
         try {
             con = ConnectionHelper.getConnection();
-
-            if (con == null) {
-                throw new Exception(
-                        "No se obtuvo una conexión para consultar "
-                                + "el vínculo con Compras."
-                );
-            }
-
-            stmt = con.prepareStatement(SQL_GET_RELACION_POR_RECLAMO);
+            stmt = con.prepareCall(SQL_GET_RELACION_POR_RECLAMO);
             stmt.setInt(1, idReclamoPrestacional);
-            stmt.setString(
-                    2,
-                    WebKeysCompras.VINCULO_RECLAMO_VINCULADO
-            );
+            stmt.setString(2, estado);
             rs = stmt.executeQuery();
 
-            if (!rs.next()) {
-                return null;
+            while (rs.next()) {
+                resultado.add(mapRelacion(rs));
             }
 
-            RequerimientoCompraReclamoPrestacional relacion =
-                    mapRelacion(rs);
-
-            if (rs.next()) {
-                throw new Exception(
-                        "Existe mas de un requerimiento vinculado al "
-                                + "Reclamo Prestacional."
-                );
-            }
-
-            return relacion != null && relacion.isVinculado()
-                    ? relacion
-                    : null;
-        } catch (Exception e) {
-            _log.error(
-                    "No se pudo consultar el requerimiento vinculado al "
-                            + "Reclamo Prestacional. idReclamoPrestacional="
-                            + idReclamoPrestacional,
-                    e
-            );
-            throw e;
+            return resultado;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
         }
     }
 
-    public Map<Integer, RequerimientoCompraReclamoPrestacional>
-            obtenerVinculadasPorRequerimientos(
-                    List<Integer> idsRequerimientos)
-                    throws Exception {
-
-        Map<Integer, RequerimientoCompraReclamoPrestacional> relaciones =
-                new HashMap<Integer, RequerimientoCompraReclamoPrestacional>();
-
-        String idsArray =
-                construirArrayIdsRequerimientos(
-                        idsRequerimientos
-                );
-
-        if (idsArray == null) {
-            return relaciones;
-        }
+    public List<RequerimientoCompraReclamoPrestacional>
+    listarVinculadasPorRequerimientos(
+            String estado,
+            String idsRequerimientosArray) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
+        List<RequerimientoCompraReclamoPrestacional> resultado =
+                new ArrayList<RequerimientoCompraReclamoPrestacional>();
 
         try {
-            con =
-                    ConnectionHelper.getConnection();
-
-            stmt =
-                    con.prepareStatement(
-                            SQL_GET_RELACIONES_BATCH
-                    );
-
-            stmt.setString(
-                    1,
-                    WebKeysCompras.VINCULO_RECLAMO_VINCULADO
-            );
-
-            stmt.setString(
-                    2,
-                    idsArray
-            );
-
-            rs =
-                    stmt.executeQuery();
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_GET_RELACIONES_BATCH);
+            stmt.setString(1, estado);
+            stmt.setString(2, idsRequerimientosArray);
+            rs = stmt.executeQuery();
 
             while (rs.next()) {
-                RequerimientoCompraReclamoPrestacional relacion =
-                        mapRelacion(
-                                rs
-                        );
-
-                if (relacion != null
-                        && relacion.isVinculado()) {
-
-                    relaciones.put(
-                            Integer.valueOf(
-                                    relacion
-                                            .getIdRequerimientoCompra()
-                            ),
-                            relacion
-                    );
-                }
+                resultado.add(mapRelacion(rs));
             }
 
-            return relaciones;
-
-        } catch (Exception e) {
-            _log.error(
-                    "No se pudieron consultar en lote las relaciones "
-                            + "entre requerimientos de compra y Reclamos "
-                            + "Prestacionales.",
-                    e
-            );
-
-            throw e;
-
+            return resultado;
         } finally {
-            closeQuietly(
-                    rs
-            );
-
-            ConnectionHelper.cerrar(
-                    stmt,
-                    con
-            );
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
         }
     }
 
-    private String construirArrayIdsRequerimientos(
-            List<Integer> idsRequerimientos) {
+    public boolean reservarCreacion(
+            Connection con,
+            int idRequerimientoCompra,
+            String tokenReserva,
+            String usuario) throws Exception {
 
-        if (idsRequerimientos == null
-                || idsRequerimientos.isEmpty()) {
+        CallableStatement stmt = null;
 
-            return null;
+        try {
+            stmt = con.prepareCall(SQL_RESERVAR);
+            stmt.registerOutParameter(1, Types.BOOLEAN);
+            stmt.setInt(2, idRequerimientoCompra);
+            stmt.setString(3, tokenReserva);
+            stmt.setString(4, usuario);
+            stmt.execute();
+
+            return stmt.getBoolean(1);
+        } finally {
+            ConnectionHelper.cerrar(stmt);
         }
+    }
 
-        StringBuilder value =
-                new StringBuilder();
+    public boolean finalizarCreacion(
+            Connection con,
+            int idRequerimientoCompra,
+            String tokenReserva,
+            int idReclamoPrestacional,
+            String usuario) throws Exception {
 
-        value.append(
-                '{'
-        );
+        CallableStatement stmt = null;
 
-        boolean primero =
-                true;
+        try {
+            stmt = con.prepareCall(SQL_FINALIZAR);
+            stmt.registerOutParameter(1, Types.BOOLEAN);
+            stmt.setInt(2, idRequerimientoCompra);
+            stmt.setString(3, tokenReserva);
+            stmt.setInt(4, idReclamoPrestacional);
+            stmt.setString(5, usuario);
+            stmt.execute();
 
-        for (int i = 0;
-                i < idsRequerimientos.size();
-                i++) {
+            return stmt.getBoolean(1);
+        } finally {
+            ConnectionHelper.cerrar(stmt);
+        }
+    }
 
-            Integer id =
-                    idsRequerimientos.get(i);
+    public boolean finalizarCreacion(
+            int idRequerimientoCompra,
+            String tokenReserva,
+            int idReclamoPrestacional,
+            String usuario) throws Exception {
 
-            if (id == null
-                    || id.intValue() <= 0) {
+        Connection con = null;
 
-                continue;
-            }
-
-            if (!primero) {
-                value.append(
-                        ','
-                );
-            }
-
-            value.append(
-                    id.intValue()
+        try {
+            con = ConnectionHelper.getConnection();
+            return finalizarCreacion(
+                    con,
+                    idRequerimientoCompra,
+                    tokenReserva,
+                    idReclamoPrestacional,
+                    usuario
             );
-
-            primero =
-                    false;
+        } finally {
+            ConnectionHelper.cerrar(con);
         }
-
-        if (primero) {
-            return null;
-        }
-
-        value.append(
-                '}'
-        );
-
-        return value.toString();
     }
 
     public boolean liberarReserva(
-            final int idRequerimientoCompra,
-            final String tokenReserva,
-            final String usuario) throws Exception {
-
-        validarIdRequerimiento(idRequerimientoCompra);
-        validarToken(tokenReserva);
-
-        return ejecutarBoolean(
-                SQL_LIBERAR,
-                new Parametrizador() {
-                    public void parametrizar(PreparedStatement stmt)
-                            throws Exception {
-
-                        stmt.setInt(1, idRequerimientoCompra);
-                        stmt.setString(2, tokenReserva);
-                        stmt.setString(3, normalizarUsuario(usuario));
-                    }
-                },
-                "No se pudo liberar la reserva del Reclamo Prestacional."
-        );
-    }
-
-    public boolean marcarErrorPosteriorAlInsert(
-            final int idRequerimientoCompra,
-            final String tokenReserva,
-            final int idReclamoPrestacional,
-            final String error,
-            final String usuario) throws Exception {
-
-        validarIdRequerimiento(idRequerimientoCompra);
-        validarToken(tokenReserva);
-
-        if (idReclamoPrestacional <= 0) {
-            throw new Exception(
-                    "Debe informar el Reclamo Prestacional creado."
-            );
-        }
-
-        return ejecutarBoolean(
-                SQL_MARCAR_ERROR,
-                new Parametrizador() {
-                    public void parametrizar(PreparedStatement stmt)
-                            throws Exception {
-
-                        stmt.setInt(1, idRequerimientoCompra);
-                        stmt.setString(2, tokenReserva);
-                        stmt.setInt(3, idReclamoPrestacional);
-                        stmt.setString(4, limitarError(error));
-                        stmt.setString(5, normalizarUsuario(usuario));
-                    }
-                },
-                "No se pudo registrar el error de vinculación "
-                        + "del Reclamo Prestacional."
-        );
-    }
-
-    protected boolean ejecutarBoolean(
-            String sql,
-            Parametrizador parametrizador,
-            String mensajeError) throws Exception {
+            int idRequerimientoCompra,
+            String tokenReserva,
+            String usuario) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
+        CallableStatement stmt = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(sql);
-            parametrizador.parametrizar(stmt);
-            rs = stmt.executeQuery();
+            stmt = con.prepareCall(SQL_LIBERAR);
+            stmt.registerOutParameter(1, Types.BOOLEAN);
+            stmt.setInt(2, idRequerimientoCompra);
+            stmt.setString(3, tokenReserva);
+            stmt.setString(4, usuario);
+            stmt.execute();
 
-            if (!rs.next()) {
-                throw new Exception(mensajeError);
-            }
-
-            boolean resultado = rs.getBoolean(1);
-
-            if (!resultado) {
-                throw new Exception(mensajeError);
-            }
-
-            return true;
-        } catch (Exception e) {
-            _log.error(mensajeError, e);
-            throw e;
+            return stmt.getBoolean(1);
         } finally {
-            closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
         }
     }
 
-    private RequerimientoCompraReclamoPrestacional mapRelacion(ResultSet rs)
-            throws Exception {
+    public boolean marcarErrorPosteriorAlInsert(
+            int idRequerimientoCompra,
+            String tokenReserva,
+            int idReclamoPrestacional,
+            String error,
+            String usuario) throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_MARCAR_ERROR);
+            stmt.registerOutParameter(1, Types.BOOLEAN);
+            stmt.setInt(2, idRequerimientoCompra);
+            stmt.setString(3, tokenReserva);
+            stmt.setInt(4, idReclamoPrestacional);
+            stmt.setString(5, error);
+            stmt.setString(6, usuario);
+            stmt.execute();
+
+            return stmt.getBoolean(1);
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public boolean bloquearRequerimiento(
+            Connection con,
+            int idRequerimientoCompra) throws Exception {
+
+        CallableStatement stmt = null;
+
+        try {
+            stmt = con.prepareCall(SQL_BLOQUEAR_REQUERIMIENTO);
+            stmt.registerOutParameter(1, Types.BOOLEAN);
+            stmt.setInt(2, idRequerimientoCompra);
+            stmt.execute();
+
+            return stmt.getBoolean(1);
+        } finally {
+            ConnectionHelper.cerrar(stmt);
+        }
+    }
+
+    public int getEstadoRequerimientoForUpdate(
+            Connection con,
+            int idRequerimientoCompra) throws Exception {
+
+        CallableStatement stmt = null;
+
+        try {
+            stmt = con.prepareCall(
+                    SQL_GET_ESTADO_REQUERIMIENTO_FOR_UPDATE
+            );
+            stmt.registerOutParameter(1, Types.INTEGER);
+            stmt.setInt(2, idRequerimientoCompra);
+            stmt.execute();
+
+            return stmt.getInt(1);
+        } finally {
+            ConnectionHelper.cerrar(stmt);
+        }
+    }
+
+    public void cambiarEstado(
+            Connection con,
+            int idRequerimientoCompra,
+            int idEstadoNuevo,
+            String usuario) throws Exception {
+
+        CallableStatement stmt = null;
+
+        try {
+            stmt = con.prepareCall(
+                    SQL_CAMBIAR_ESTADO_REQUERIMIENTO
+            );
+            stmt.setInt(1, idRequerimientoCompra);
+            stmt.setInt(2, idEstadoNuevo);
+            stmt.setString(3, usuario);
+            stmt.execute();
+        } finally {
+            ConnectionHelper.cerrar(stmt);
+        }
+    }
+
+    private RequerimientoCompraReclamoPrestacional mapRelacion(
+            ResultSet rs) throws Exception {
 
         RequerimientoCompraReclamoPrestacional relacion =
                 new RequerimientoCompraReclamoPrestacional();
@@ -419,7 +331,9 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
 
         int idReclamo = rs.getInt("id_reclamo_prestacional");
         relacion.setIdReclamoPrestacional(
-                rs.wasNull() ? null : Integer.valueOf(idReclamo)
+                rs.wasNull()
+                        ? null
+                        : Integer.valueOf(idReclamo)
         );
 
         relacion.setEstado(rs.getString("estado"));
@@ -434,43 +348,6 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
         return relacion;
     }
 
-    private void validarIdRequerimiento(int idRequerimientoCompra)
-            throws Exception {
-
-        if (idRequerimientoCompra <= 0) {
-            throw new Exception(
-                    "Debe informar el requerimiento de compra."
-            );
-        }
-    }
-
-    private void validarToken(String tokenReserva) throws Exception {
-        if (WebKeysCompras.isEmpty(tokenReserva)) {
-            throw new Exception(
-                    "No se pudo validar el contexto de creación "
-                            + "del Reclamo Prestacional."
-            );
-        }
-    }
-
-    private String normalizarUsuario(String usuario) {
-        return WebKeysCompras.isEmpty(usuario)
-                ? "sistema"
-                : usuario.trim();
-    }
-
-    private String limitarError(String error) {
-        String value = WebKeysCompras.trimToNull(error);
-
-        if (value == null) {
-            return "Error de vinculación no especificado.";
-        }
-
-        return value.length() <= 2000
-                ? value
-                : value.substring(0, 2000);
-    }
-
     private void closeQuietly(ResultSet rs) {
         if (rs == null) {
             return;
@@ -480,830 +357,5 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             rs.close();
         } catch (Exception ignored) {
         }
-    }
-
-    protected interface Parametrizador {
-        void parametrizar(PreparedStatement stmt) throws Exception;
-    }
-
-    protected boolean ejecutarBoolean(
-            Connection con,
-            String sql,
-            Parametrizador parametrizador,
-            String mensajeError) throws Exception {
-
-        if (con == null) {
-            throw new Exception(
-                    "No se informó la conexión transaccional."
-            );
-        }
-
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
-        try {
-            stmt =
-                    con.prepareStatement(
-                            sql
-                    );
-
-            parametrizador.parametrizar(
-                    stmt
-            );
-
-            rs =
-                    stmt.executeQuery();
-
-            if (!rs.next()
-                    || !rs.getBoolean(1)) {
-
-                throw new Exception(
-                        mensajeError
-                );
-            }
-
-            return true;
-
-        } finally {
-            closeQuietly(
-                    rs
-            );
-
-            ConnectionHelper.cerrar(
-                    stmt
-            );
-        }
-    }
-
-    public int crearYVincular(
-            int idRequerimientoCompra,
-            String tokenReserva,
-            ReclamoPrestacional reclamo,
-            User user) throws Exception {
-
-        validarIdRequerimiento(
-                idRequerimientoCompra
-        );
-
-        validarToken(
-                tokenReserva
-        );
-
-        if (reclamo == null) {
-            throw new Exception(
-                    "Debe informar el Reclamo Prestacional "
-                            + "que se desea crear."
-            );
-        }
-
-        Connection con =
-                null;
-
-        String usuario =
-                user != null
-                        ? user.getScreenName()
-                        : "sistema";
-
-        try {
-            con =
-                    ConnectionHelper
-                            .getConnectionForTransaction();
-
-            /*
-             * Serializa todos los intentos del mismo requerimiento.
-             *
-             * Una segunda petición debe esperar a que la primera confirme
-             * o revierta antes de decidir si inserta.
-             */
-            bloquearRequerimiento(
-                    con,
-                    idRequerimientoCompra
-            );
-
-            RequerimientoCompraReclamoPrestacional relacion =
-                    obtenerPorRequerimiento(
-                            con,
-                            idRequerimientoCompra
-                    );
-
-            /*
-             * Doble clic, reenvío del navegador o repetición del SAVE:
-             * si ya existe el vínculo definitivo, se devuelve el mismo ID
-             * sin insertar otra cabecera.
-             */
-            if (relacion != null
-                    && relacion.isVinculado()) {
-
-                int idReclamoExistente =
-                        relacion.getIdReclamoPrestacionalInt();
-
-                if (idReclamoExistente <= 0) {
-                    throw new Exception(
-                            "La relación figura vinculada, pero no contiene "
-                                    + "un identificador válido de Reclamo "
-                                    + "Prestacional."
-                    );
-                }
-
-                asegurarEstadoReclamoPrestacional(
-                        con,
-                        idRequerimientoCompra,
-                        usuario
-                );
-
-                con.commit();
-
-                return idReclamoExistente;
-            }
-
-            /*
-             * Normalmente la reserva ya fue creada al iniciar el flujo desde
-             * Compras. Se conserva la posibilidad de crearla aquí para mantener
-             * compatibilidad con invocaciones anteriores.
-             */
-            if (relacion == null) {
-                reservarCreacion(
-                        con,
-                        idRequerimientoCompra,
-                        tokenReserva,
-                        usuario
-                );
-
-                relacion =
-                        obtenerPorRequerimiento(
-                                con,
-                                idRequerimientoCompra
-                        );
-            }
-
-            validarReservaCompatible(
-                    relacion,
-                    tokenReserva,
-                    usuario
-            );
-
-            int idReclamo =
-                    new ReclamoPrestacionServiceImpl()
-                            .insertar(
-                                    con,
-                                    reclamo,
-                                    user
-                            );
-
-            if (idReclamo <= 0) {
-                throw new Exception(
-                        "La inserción no devolvió un identificador "
-                                + "válido de Reclamo Prestacional."
-                );
-            }
-
-            finalizarCreacion(
-                    con,
-                    idRequerimientoCompra,
-                    tokenReserva,
-                    idReclamo,
-                    usuario
-            );
-
-            /*
-             * Se verifica el contrato persistente antes del commit.
-             * No alcanza con que la función SQL haya devuelto true.
-             */
-            RequerimientoCompraReclamoPrestacional relacionFinal =
-                    obtenerPorRequerimiento(
-                            con,
-                            idRequerimientoCompra
-                    );
-
-            if (relacionFinal == null
-                    || !relacionFinal.isVinculado()
-                    || relacionFinal.getIdReclamoPrestacionalInt()
-                    != idReclamo) {
-
-                throw new Exception(
-                        "El Reclamo Prestacional fue insertado, pero "
-                                + "la relación con el requerimiento no quedó "
-                                + "confirmada correctamente."
-                );
-            }
-
-            asegurarEstadoReclamoPrestacional(
-                    con,
-                    idRequerimientoCompra,
-                    usuario
-            );
-
-            con.commit();
-
-            return idReclamo;
-
-        } catch (Exception e) {
-            if (con != null) {
-                ConnectionHelper.rollback(
-                        con
-                );
-            }
-
-            throw e;
-
-        } finally {
-            ConnectionHelper.cerrar(
-                    con
-            );
-        }
-    }
-
-    public void finalizarCreacion(
-            final int idRequerimientoCompra,
-            final String tokenReserva,
-            final int idReclamoPrestacional,
-            final String usuario) throws Exception {
-
-        validarIdRequerimiento(
-                idRequerimientoCompra
-        );
-
-        validarToken(
-                tokenReserva
-        );
-
-        if (idReclamoPrestacional <= 0) {
-            throw new Exception(
-                    "Debe informar el Reclamo Prestacional creado."
-            );
-        }
-
-        ejecutarBoolean(
-                SQL_FINALIZAR,
-                new Parametrizador() {
-                    public void parametrizar(
-                            PreparedStatement stmt)
-                            throws Exception {
-
-                        stmt.setInt(
-                                1,
-                                idRequerimientoCompra
-                        );
-
-                        stmt.setString(
-                                2,
-                                tokenReserva
-                        );
-
-                        stmt.setInt(
-                                3,
-                                idReclamoPrestacional
-                        );
-
-                        stmt.setString(
-                                4,
-                                normalizarUsuario(
-                                        usuario
-                                )
-                        );
-                    }
-                },
-                "No se pudo finalizar la relacion "
-                        + "con el Reclamo Prestacional."
-        );
-    }
-
-    private void finalizarCreacion(
-            Connection con,
-            final int idRequerimientoCompra,
-            final String tokenReserva,
-            final int idReclamoPrestacional,
-            final String usuario) throws Exception {
-
-        if (con == null) {
-            throw new Exception(
-                    "No se informo la conexion transaccional."
-            );
-        }
-
-        validarIdRequerimiento(
-                idRequerimientoCompra
-        );
-
-        validarToken(
-                tokenReserva
-        );
-
-        if (idReclamoPrestacional <= 0) {
-            throw new Exception(
-                    "Debe informar el Reclamo Prestacional creado."
-            );
-        }
-
-        ejecutarBoolean(
-                con,
-                SQL_FINALIZAR,
-                new Parametrizador() {
-                    public void parametrizar(
-                            PreparedStatement stmt)
-                            throws Exception {
-
-                        stmt.setInt(
-                                1,
-                                idRequerimientoCompra
-                        );
-
-                        stmt.setString(
-                                2,
-                                tokenReserva
-                        );
-
-                        stmt.setInt(
-                                3,
-                                idReclamoPrestacional
-                        );
-
-                        stmt.setString(
-                                4,
-                                normalizarUsuario(
-                                        usuario
-                                )
-                        );
-                    }
-                },
-                "No se pudo finalizar la relacion "
-                        + "con el Reclamo Prestacional."
-        );
-    }
-
-    private RequerimientoCompraReclamoPrestacional
-    obtenerPorRequerimiento(
-            Connection con,
-            int idRequerimientoCompra) throws Exception {
-
-        if (con == null) {
-            throw new Exception(
-                    "No se informó la conexión transaccional."
-            );
-        }
-
-        validarIdRequerimiento(
-                idRequerimientoCompra
-        );
-
-        PreparedStatement stmt =
-                null;
-
-        ResultSet rs =
-                null;
-
-        try {
-            stmt =
-                    con.prepareStatement(
-                            SQL_GET_RELACION
-                    );
-
-            stmt.setInt(
-                    1,
-                    idRequerimientoCompra
-            );
-
-            rs =
-                    stmt.executeQuery();
-
-            return rs.next()
-                    ? mapRelacion(
-                    rs
-            )
-                    : null;
-
-        } finally {
-            closeQuietly(
-                    rs
-            );
-
-            ConnectionHelper.cerrar(
-                    stmt
-            );
-        }
-    }
-
-    private void bloquearRequerimiento(
-            Connection con,
-            int idRequerimientoCompra) throws Exception {
-
-        if (con == null) {
-            throw new Exception(
-                    "No se informó la conexión transaccional."
-            );
-        }
-
-        validarIdRequerimiento(
-                idRequerimientoCompra
-        );
-
-        PreparedStatement stmt =
-                null;
-
-        ResultSet rs =
-                null;
-
-        try {
-            stmt =
-                    con.prepareStatement(
-                            SQL_BLOQUEAR_REQUERIMIENTO
-                    );
-
-            stmt.setInt(
-                    1,
-                    ADVISORY_LOCK_NAMESPACE
-            );
-
-            stmt.setInt(
-                    2,
-                    idRequerimientoCompra
-            );
-
-            rs =
-                    stmt.executeQuery();
-
-            if (!rs.next()) {
-                throw new Exception(
-                        "No se pudo bloquear transaccionalmente "
-                                + "la creación del Reclamo Prestacional."
-                );
-            }
-
-        } finally {
-            closeQuietly(
-                    rs
-            );
-
-            ConnectionHelper.cerrar(
-                    stmt
-            );
-        }
-    }
-
-    private void asegurarEstadoReclamoPrestacional(
-            Connection con,
-            int idRequerimientoCompra,
-            String usuario) throws Exception {
-
-        int estadoActual =
-                obtenerEstadoRequerimientoForUpdate(
-                        con,
-                        idRequerimientoCompra
-                );
-
-        if (estadoActual
-                == WebKeysCompras.ESTADO_RECLAMO_RP) {
-
-            return;
-        }
-
-        if (!WebKeysCompras.validarTransicionEstado(
-                estadoActual,
-                WebKeysCompras.ESTADO_RECLAMO_RP
-        )) {
-
-            throw new Exception(
-                    "El requerimiento vinculado al Reclamo Prestacional "
-                            + "no puede pasar a RECLAMO (RP) desde su "
-                            + "estado actual: "
-                            + WebKeysCompras.getEstadoDescripcion(
-                                    estadoActual
-                            )
-                            + "."
-            );
-        }
-
-        PreparedStatement stmt =
-                null;
-
-        try {
-            stmt =
-                    con.prepareStatement(
-                            SQL_CAMBIAR_ESTADO_REQUERIMIENTO
-                    );
-
-            stmt.setInt(
-                    1,
-                    idRequerimientoCompra
-            );
-
-            stmt.setInt(
-                    2,
-                    WebKeysCompras.ESTADO_RECLAMO_RP
-            );
-
-            stmt.setString(
-                    3,
-                    normalizarUsuario(
-                            usuario
-                    )
-            );
-
-            stmt.execute();
-
-        } finally {
-            ConnectionHelper.cerrar(
-                    stmt
-            );
-        }
-
-        int estadoFinal =
-                obtenerEstadoRequerimientoForUpdate(
-                        con,
-                        idRequerimientoCompra
-                );
-
-        if (estadoFinal
-                != WebKeysCompras.ESTADO_RECLAMO_RP) {
-
-            throw new Exception(
-                    "El Reclamo Prestacional quedó vinculado, pero "
-                            + "el requerimiento no confirmó el estado "
-                            + "RECLAMO (RP)."
-            );
-        }
-    }
-
-    private int obtenerEstadoRequerimientoForUpdate(
-            Connection con,
-            int idRequerimientoCompra) throws Exception {
-
-        if (con == null) {
-            throw new Exception(
-                    "No se informó la conexión transaccional."
-            );
-        }
-
-        validarIdRequerimiento(
-                idRequerimientoCompra
-        );
-
-        PreparedStatement stmt =
-                null;
-
-        ResultSet rs =
-                null;
-
-        try {
-            stmt =
-                    con.prepareStatement(
-                            SQL_GET_ESTADO_REQUERIMIENTO_FOR_UPDATE
-                    );
-
-            stmt.setInt(
-                    1,
-                    idRequerimientoCompra
-            );
-
-            rs =
-                    stmt.executeQuery();
-
-            if (!rs.next()) {
-                throw new Exception(
-                        "No se encontró el requerimiento activo "
-                                + "durante la vinculación del Reclamo "
-                                + "Prestacional."
-                );
-            }
-
-            int estado =
-                    rs.getInt(
-                            1
-                    );
-
-            if (rs.wasNull()
-                    || !WebKeysCompras.esEstadoValido(
-                            estado
-                    )) {
-
-                throw new Exception(
-                        "El requerimiento posee un estado inválido "
-                                + "durante la vinculación del Reclamo "
-                                + "Prestacional."
-                );
-            }
-
-            return estado;
-
-        } finally {
-            closeQuietly(
-                    rs
-            );
-
-            ConnectionHelper.cerrar(
-                    stmt
-            );
-        }
-    }
-
-    private void validarReservaCompatible(
-            RequerimientoCompraReclamoPrestacional relacion,
-            String tokenReserva,
-            String usuario) throws Exception {
-
-        if (relacion == null) {
-            throw new Exception(
-                    "La reserva del Reclamo Prestacional no pudo "
-                            + "ser recuperada."
-            );
-        }
-
-        if (relacion.isVinculado()) {
-            return;
-        }
-
-        if (relacion.isError()) {
-            throw new Exception(
-                    "El Reclamo Prestacional fue creado, pero "
-                            + "su vinculación requiere reconciliación."
-            );
-        }
-
-        if (!relacion.isReservado()) {
-            throw new Exception(
-                    "La relación del requerimiento posee un estado "
-                            + "incompatible con la creación del Reclamo "
-                            + "Prestacional."
-            );
-        }
-
-        if (WebKeysCompras.isEmpty(
-                relacion.getTokenReserva()
-        )
-                || !relacion.getTokenReserva().equals(
-                tokenReserva
-        )) {
-
-            throw new Exception(
-                    "Ya existe otra creación de Reclamo Prestacional "
-                            + "en proceso para este requerimiento."
-            );
-        }
-
-        String usuarioReserva =
-                WebKeysCompras.trimToNull(
-                        relacion.getAltaUsr()
-                );
-
-        if (usuarioReserva == null) {
-            usuarioReserva =
-                    WebKeysCompras.trimToNull(
-                            relacion.getModiUsr()
-                    );
-        }
-
-        String usuarioActual =
-                normalizarUsuario(
-                        usuario
-                );
-
-        if (usuarioReserva != null
-                && !usuarioReserva.equals(
-                usuarioActual
-        )) {
-
-            throw new Exception(
-                    "La reserva del Reclamo Prestacional pertenece "
-                            + "a otro usuario."
-            );
-        }
-    }
-
-    public void reservarCreacion(
-            int idRequerimientoCompra,
-            String tokenReserva,
-            String usuario) throws Exception {
-
-        validarIdRequerimiento(
-                idRequerimientoCompra
-        );
-
-        validarToken(
-                tokenReserva
-        );
-
-        Connection con =
-                null;
-
-        try {
-            con =
-                    ConnectionHelper
-                            .getConnectionForTransaction();
-
-            bloquearRequerimiento(
-                    con,
-                    idRequerimientoCompra
-            );
-
-            RequerimientoCompraReclamoPrestacional relacion =
-                    obtenerPorRequerimiento(
-                            con,
-                            idRequerimientoCompra
-                    );
-
-            if (relacion != null
-                    && relacion.isVinculado()) {
-
-                con.commit();
-
-                return;
-            }
-
-            if (relacion != null) {
-                validarReservaCompatible(
-                        relacion,
-                        tokenReserva,
-                        usuario
-                );
-
-                con.commit();
-
-                return;
-            }
-
-            reservarCreacion(
-                    con,
-                    idRequerimientoCompra,
-                    tokenReserva,
-                    usuario
-            );
-
-            relacion =
-                    obtenerPorRequerimiento(
-                            con,
-                            idRequerimientoCompra
-                    );
-
-            validarReservaCompatible(
-                    relacion,
-                    tokenReserva,
-                    usuario
-            );
-
-            con.commit();
-
-        } catch (Exception e) {
-            ConnectionHelper.rollback(
-                    con
-            );
-
-            throw e;
-
-        } finally {
-            ConnectionHelper.cerrar(
-                    con
-            );
-        }
-    }
-
-    public void reservarCreacion(
-            Connection con,
-            final int idRequerimientoCompra,
-            final String tokenReserva,
-            final String usuario) throws Exception {
-
-        if (con == null) {
-            throw new Exception(
-                    "No se informó la conexión transaccional."
-            );
-        }
-
-        validarIdRequerimiento(
-                idRequerimientoCompra
-        );
-
-        validarToken(
-                tokenReserva
-        );
-
-        ejecutarBoolean(
-                con,
-                SQL_RESERVAR,
-                new Parametrizador() {
-                    public void parametrizar(
-                            PreparedStatement stmt)
-                            throws Exception {
-
-                        stmt.setInt(
-                                1,
-                                idRequerimientoCompra
-                        );
-
-                        stmt.setString(
-                                2,
-                                tokenReserva
-                        );
-
-                        stmt.setString(
-                                3,
-                                normalizarUsuario(
-                                        usuario
-                                )
-                        );
-                    }
-                },
-                "No se pudo reservar la creación "
-                        + "del Reclamo Prestacional."
-        );
     }
 }
