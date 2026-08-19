@@ -3,8 +3,7 @@
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
 <%@ page import="javax.portlet.PortletURL" %>
-<%@ page import="javax.portlet.WindowState" %>
-
+<%@ page import="com.liferay.portal.kernel.portlet.LiferayWindowState" %>
 <%
 List<RequerimientoCompraPresupuesto> ordenesMedicasCompraVista =
         (List<RequerimientoCompraPresupuesto>) request.getAttribute(
@@ -105,7 +104,7 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                              * EXCLUSIVE independiente de la pantalla actual.
                              */
                             descargarOrdenMedicaCompraURL.setWindowState(
-                                    WindowState.EXCLUSIVE
+                                    LiferayWindowState.EXCLUSIVE
                             );
 
                             descargarOrdenMedicaCompraURL.setParameter(
