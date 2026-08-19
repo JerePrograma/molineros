@@ -4,6 +4,7 @@ import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceImpl;
+import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalTransaccion;
 
 import com.liferay.portal.model.User;
 
@@ -187,11 +188,14 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
                         ? normalizarUsuario(user.getScreenName())
                         : "sistema";
 
-        RequerimientoCompraReclamoPrestacionalServiceImpl.Transaccion
+        RequerimientoCompraReclamoPrestacionalTransaccion
                 transaccion = null;
 
         try {
-            transaccion = persistence.abrirTransaccion();
+            transaccion =
+                    RequerimientoCompraReclamoPrestacionalTransaccion.abrir(
+                            persistence
+                    );
 
             bloquearRequerimiento(
                     transaccion,
@@ -346,11 +350,14 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
         validarIdRequerimiento(idRequerimientoCompra);
         validarToken(tokenReserva);
 
-        RequerimientoCompraReclamoPrestacionalServiceImpl.Transaccion
+        RequerimientoCompraReclamoPrestacionalTransaccion
                 transaccion = null;
 
         try {
-            transaccion = persistence.abrirTransaccion();
+            transaccion =
+                    RequerimientoCompraReclamoPrestacionalTransaccion.abrir(
+                            persistence
+                    );
 
             bloquearRequerimiento(
                     transaccion,
@@ -417,7 +424,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
     }
 
     private void reservarCreacion(
-            RequerimientoCompraReclamoPrestacionalServiceImpl.Transaccion transaccion,
+            RequerimientoCompraReclamoPrestacionalTransaccion transaccion,
             int idRequerimientoCompra,
             String tokenReserva,
             String usuario) throws Exception {
@@ -434,7 +441,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
     }
 
     private void finalizarCreacion(
-            RequerimientoCompraReclamoPrestacionalServiceImpl.Transaccion transaccion,
+            RequerimientoCompraReclamoPrestacionalTransaccion transaccion,
             int idRequerimientoCompra,
             String tokenReserva,
             int idReclamoPrestacional,
@@ -453,7 +460,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
     }
 
     private void bloquearRequerimiento(
-            RequerimientoCompraReclamoPrestacionalServiceImpl.Transaccion transaccion,
+            RequerimientoCompraReclamoPrestacionalTransaccion transaccion,
             int idRequerimientoCompra) throws Exception {
 
         if (!transaccion.bloquearRequerimiento(
@@ -467,7 +474,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
     }
 
     private void asegurarEstadoReclamoPrestacional(
-            RequerimientoCompraReclamoPrestacionalServiceImpl.Transaccion transaccion,
+            RequerimientoCompraReclamoPrestacionalTransaccion transaccion,
             int idRequerimientoCompra,
             String usuario) throws Exception {
 
