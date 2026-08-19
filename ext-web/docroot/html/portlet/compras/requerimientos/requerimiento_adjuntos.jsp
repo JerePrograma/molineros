@@ -107,14 +107,15 @@ boolean puedeVerPrestadoresEnviadosPresupuestos =
         idRequerimientoCompraPresupuestos > 0
         && reqPresupuestos.puedeVerPresupuestos();
 
-/*
- * El Action puede publicar esta lista una sola vez y compartirla con detalle,
- * adjudicacion y adjuntos. El fallback conserva el contrato actual.
- */
 List<PrestadorCotizacion> prestadoresEnviadosPresupuestos =
         (List<PrestadorCotizacion>) request.getAttribute(
                 "compras.requerimiento.prestadoresEnviados"
         );
+
+if (prestadoresEnviadosPresupuestos == null) {
+    prestadoresEnviadosPresupuestos =
+            new ArrayList<PrestadorCotizacion>();
+}
 
 String errorPrestadoresPresupuestos =
         (String) request.getAttribute(
@@ -123,26 +124,6 @@ String errorPrestadoresPresupuestos =
 
 if (errorPrestadoresPresupuestos == null) {
     errorPrestadoresPresupuestos = "";
-}
-
-if (prestadoresEnviadosPresupuestos == null) {
-    prestadoresEnviadosPresupuestos =
-            new ArrayList<PrestadorCotizacion>();
-
-    if (puedeVerPrestadoresEnviadosPresupuestos) {
-        try {
-            prestadoresEnviadosPresupuestos =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .listarPrestadoresEnviados(
-                                    idRequerimientoCompraPresupuestos
-                            );
-        } catch (Exception e) {
-            errorPrestadoresPresupuestos =
-                    e.getMessage() != null
-                            ? e.getMessage()
-                            : "No se pudieron cargar los prestadores enviados.";
-        }
-    }
 }
 
 boolean hayPrestadoresEnviadosPresupuestos =
@@ -157,26 +138,6 @@ List<PrestadorCotizacion> prestadoresDisponiblesPresupuestos =
 if (prestadoresDisponiblesPresupuestos == null) {
     prestadoresDisponiblesPresupuestos =
             new ArrayList<PrestadorCotizacion>();
-
-    for (int i = 0;
-            prestadoresEnviadosPresupuestos != null
-            && i < prestadoresEnviadosPresupuestos.size();
-            i++) {
-
-        PrestadorCotizacion prestadorDisponible =
-                prestadoresEnviadosPresupuestos.get(i);
-
-        if (prestadorDisponible != null
-                && prestadorDisponible.getIdPrestador() > 0
-                && WebKeysCompras.ENVIO_ENVIADO.equals(
-                        prestadorDisponible.getEstadoEnvio()
-                )) {
-
-            prestadoresDisponiblesPresupuestos.add(
-                    prestadorDisponible
-            );
-        }
-    }
 }
 
 boolean hayPrestadoresDisponiblesPresupuestos =

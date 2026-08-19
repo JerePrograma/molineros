@@ -827,6 +827,12 @@ public void processAction(
                     requerimiento
             );
 
+            RequerimientoCompraRenderActionUtil
+                    .publicarContexto(
+                            renderRequest,
+                            requerimiento
+                    );
+
             if (soloLectura) {
                 renderRequest.setAttribute(
                         WebKeysCompras.REQUERIMIENTO_COMPRA_EN_VIEW,

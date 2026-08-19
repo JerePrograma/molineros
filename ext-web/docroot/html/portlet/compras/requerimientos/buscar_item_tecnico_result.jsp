@@ -1,7 +1,5 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ page import="ar.com.ospim.autorizaciones.beans.Nomenclador" %>
-<%@ page import="ar.com.ospim.autorizaciones.services.NomencladorServiceUtil" %>
-<%@ page import="com.liferay.portal.kernel.util.ParamUtil" %>
 
 <%!
 private String comprasNomencladorJs(String value) {
@@ -85,42 +83,12 @@ if (tipoNomencladorBusqueda != null
             Integer.parseInt(tipoNomencladorBusqueda);
 }
 
-int idTipoNomencladorSolicitado =
-        ParamUtil.getInteger(
-                renderRequest,
-                "id_tipo_nomenclador",
-                0
-        );
-
-int marcaReinLiq = 0;
-
-if (marcaReinLiqBusqueda != null
-        && marcaReinLiqBusqueda.matches("^[0-9]+$")) {
-
-    marcaReinLiq =
-            Integer.parseInt(marcaReinLiqBusqueda);
-}
-
 sectorBusqueda =
         sectorBusqueda == null
                 ? ""
                 : WebKeysCompras.normalizarSectorCompra(
                         sectorBusqueda
                 );
-
-if ("PRESTACIONES MEDICAS".equals(sectorBusqueda)
-        && !WebKeysCompras
-                .esTipoNomencladorPrestacionesMedicas(
-                        idTipoNomencladorBusqueda
-                )
-        && WebKeysCompras
-                .esTipoNomencladorPrestacionesMedicas(
-                        idTipoNomencladorSolicitado
-                )) {
-
-    idTipoNomencladorBusqueda =
-            idTipoNomencladorSolicitado;
-}
 
 if (errorBusqueda == null
         && (
@@ -182,118 +150,14 @@ if (errorBusqueda == null
                     ? ""
                     : descripcionBusqueda.trim();
 
-    /*
-     * Contrato objetivo: BuscarItemTecnicoComprasAction publica la lista ya
-     * consultada y validada en COMPRAS_RESULTADOS_NOMENCLADOR.
-     *
-     * El bloque de consulta/filtrado se conserva como fallback hasta que ese
-     * wiring sea incorporado al Action actual.
-     */
     List<Nomenclador> archivos =
             (List<Nomenclador>) request.getAttribute(
                     "COMPRAS_RESULTADOS_NOMENCLADOR"
             );
 
     if (archivos == null) {
-        if ("DISCAPACIDAD".equals(sectorBusqueda)
-                && marcaReinLiq
-                == WebKeysCompras.MARCA_REIN_LIQ_DISCAPACIDAD) {
-
-            archivos =
-                    NomencladorServiceUtil
-                            .getListaNomencladorMarcaReinLiq(
-                                    WebKeysCompras
-                                            .FILTRO_NOMENCLADOR_GENERAL,
-                                    descripcionBusqueda,
-                                    0,
-                                    codigoBusqueda,
-                                    false,
-                                    "",
-                                    WebKeysCompras
-                                            .MARCA_REIN_LIQ_DISCAPACIDAD
-                            );
-
-        } else if ("PRESTACIONES MEDICAS".equals(
-                sectorBusqueda
-        )) {
-
-            archivos =
-                    NomencladorServiceUtil
-                            .getListaNomencladorPrestacionesMedicasCompras(
-                                    idTipoNomencladorBusqueda,
-                                    descripcionBusqueda,
-                                    0,
-                                    codigoBusqueda,
-                                    false,
-                                    ""
-                            );
-
-        } else {
-            archivos =
-                    NomencladorServiceUtil
-                            .getListaNomenclador(
-                                    idTipoNomencladorBusqueda,
-                                    descripcionBusqueda,
-                                    0,
-                                    codigoBusqueda,
-                                    false,
-                                    ""
-                            );
-        }
-
-        List<Nomenclador> archivosFiltrados =
+        archivos =
                 new ArrayList<Nomenclador>();
-
-        if (archivos != null) {
-            for (int i = 0;
-                    i < archivos.size();
-                    i++) {
-
-                Nomenclador nomenclador =
-                        archivos.get(i);
-
-                if (nomenclador == null
-                        || nomenclador.getBaja_fecha() != null) {
-                    continue;
-                }
-
-                int idPrestacionReal =
-                        nomenclador.getId_prestacion();
-
-                int idTipoReal =
-                        nomenclador.getId_tipo_nomenclador();
-
-                if (idPrestacionReal <= 0
-                        || idTipoReal <= 0) {
-                    continue;
-                }
-
-                if (!WebKeysCompras
-                        .esNomencladorValidoParaSectorCompras(
-                                sectorBusqueda,
-                                idTipoReal,
-                                nomenclador
-                                        .getMarcaReintegroLiquidacion(),
-                                nomenclador.getCodigo()
-                        )) {
-                    continue;
-                }
-
-                if ("PRESTACIONES MEDICAS".equals(sectorBusqueda)
-                        && idTipoReal
-                        != idTipoNomencladorBusqueda) {
-                    continue;
-                }
-
-                archivosFiltrados.add(nomenclador);
-            }
-        }
-
-        archivos = archivosFiltrados;
-    }
-
-    if (archivos == null) {
-        archivos = new ArrayList<Nomenclador>();
     }
 
     PortletURL portletURL =

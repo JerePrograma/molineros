@@ -12,7 +12,6 @@
 <%@ page import="ar.com.ospim.afiliados.WebKeysAfiliados" %>
 <%@ page import="ar.com.ospim.afiliados.beans.Afiliado" %>
 <%@ page import="ar.com.ospim.afiliados.beans.TercerizadoraServicio" %>
-<%@ page import="ar.com.ospim.global.services.TraeListasServiceUtil" %>
 <%@ page import="ar.com.ospim.liquidaciones.WebKeysLiquidaciones" %>
 
 <%@ page import="javax.portlet.PortletSession" %>
@@ -40,7 +39,6 @@
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraEstado" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.TipoPrestadorSector" %>
-<%@ page import="ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil" %>
 
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <%@ taglib uri="http://liferay.com/tld/ui-custom" prefix="liferay-ui-custom" %>

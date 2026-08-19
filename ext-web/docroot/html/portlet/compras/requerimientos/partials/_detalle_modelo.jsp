@@ -306,15 +306,15 @@ int idRequerimientoCompraDetalle =
 boolean requerimientoPersistidoDetalle =
         idRequerimientoCompraDetalle > 0;
 
-/*
- * Contrato preparado para el cierre definitivo JSP -> Action.
- * Mientras los Actions actuales no publiquen esta lista, se conserva el
- * fallback legacy para no alterar la funcionalidad existente.
- */
 List<PrestadorCotizacion> prestadoresEnviadosDetalle =
         (List<PrestadorCotizacion>) request.getAttribute(
                 "compras.requerimiento.prestadoresEnviados"
         );
+
+if (prestadoresEnviadosDetalle == null) {
+    prestadoresEnviadosDetalle =
+            new ArrayList<PrestadorCotizacion>();
+}
 
 String errorPrestadoresEnviadosDetalle =
         (String) request.getAttribute(
@@ -323,28 +323,6 @@ String errorPrestadoresEnviadosDetalle =
 
 if (errorPrestadoresEnviadosDetalle == null) {
     errorPrestadoresEnviadosDetalle = "";
-}
-
-if (prestadoresEnviadosDetalle == null) {
-    prestadoresEnviadosDetalle =
-            new ArrayList<PrestadorCotizacion>();
-
-    if (puedeCotizarDetalle
-            && requerimientoPersistidoDetalle) {
-
-        try {
-            prestadoresEnviadosDetalle =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .listarPrestadoresEnviados(
-                                    idRequerimientoCompraDetalle
-                            );
-        } catch (Exception e) {
-            errorPrestadoresEnviadosDetalle =
-                    e.getMessage() != null
-                            ? e.getMessage()
-                            : "No se pudieron cargar los prestadores enviados.";
-        }
-    }
 }
 
 boolean hayPrestadoresEnviadosDetalle =

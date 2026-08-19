@@ -2,7 +2,6 @@
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto" %>
-<%@ page import="ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil" %>
 <%@ page import="ar.com.ospim.util.PermissionUtil" %>
 <%@ page import="com.liferay.portal.kernel.util.HtmlUtil" %>
 <%@ page import="com.liferay.portal.kernel.util.ParamUtil" %>
@@ -128,14 +127,15 @@ String idPrestadorAdjudicadoAdjudicacion =
 String prestadorAdjudicadoAdjudicacion =
         reqAdjudicacion.getPrestadorAdjudicadoVisible();
 
-/*
- * Contrato objetivo: los Actions publican las colecciones de cotizacion.
- * El fallback mantiene compatibilidad inmediata con el backend actual.
- */
 List<PrestadorCotizacion> prestadoresEnviadosAdjudicacion =
         (List<PrestadorCotizacion>) request.getAttribute(
                 "compras.requerimiento.prestadoresEnviados"
         );
+
+if (prestadoresEnviadosAdjudicacion == null) {
+    prestadoresEnviadosAdjudicacion =
+            new ArrayList<PrestadorCotizacion>();
+}
 
 String errorPrestadoresAdjudicacion =
         (String) request.getAttribute(
@@ -144,28 +144,6 @@ String errorPrestadoresAdjudicacion =
 
 if (errorPrestadoresAdjudicacion == null) {
     errorPrestadoresAdjudicacion = "";
-}
-
-if (prestadoresEnviadosAdjudicacion == null) {
-    prestadoresEnviadosAdjudicacion =
-            new ArrayList<PrestadorCotizacion>();
-
-    if (puedeCotizarAdjudicacion
-            && requerimientoPersistidoAdjudicacion) {
-
-        try {
-            prestadoresEnviadosAdjudicacion =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .listarPrestadoresEnviados(
-                                    idRequerimientoAdjudicacion
-                            );
-        } catch (Exception e) {
-            errorPrestadoresAdjudicacion =
-                    e.getMessage() != null
-                            ? e.getMessage()
-                            : "No se pudieron cargar los prestadores enviados.";
-        }
-    }
 }
 
 boolean hayPrestadoresEnviadosAdjudicacion =
@@ -177,6 +155,11 @@ Set<Integer> idsPrestadoresConPresupuestoAdjudicacion =
                 "compras.requerimiento.idsPrestadoresConPresupuesto"
         );
 
+if (idsPrestadoresConPresupuestoAdjudicacion == null) {
+    idsPrestadoresConPresupuestoAdjudicacion =
+            new HashSet<Integer>();
+}
+
 String errorPresupuestosAdjudicacion =
         (String) request.getAttribute(
                 "compras.requerimiento.errorPresupuestos"
@@ -184,64 +167,6 @@ String errorPresupuestosAdjudicacion =
 
 if (errorPresupuestosAdjudicacion == null) {
     errorPresupuestosAdjudicacion = "";
-}
-
-if (idsPrestadoresConPresupuestoAdjudicacion == null) {
-    idsPrestadoresConPresupuestoAdjudicacion =
-            new HashSet<Integer>();
-
-    if (puedeCotizarAdjudicacion
-            && requerimientoPersistidoAdjudicacion
-            && hayPrestadoresEnviadosAdjudicacion) {
-
-        try {
-            List<RequerimientoCompraPresupuesto> presupuestosAdjudicacion =
-                    (List<RequerimientoCompraPresupuesto>)
-                            request.getAttribute(
-                                    "compras.requerimiento.presupuestos"
-                            );
-
-            if (presupuestosAdjudicacion == null) {
-                presupuestosAdjudicacion =
-                        BusquedaRequerimientoCompraServiceUtil
-                                .listarPresupuestos(
-                                        idRequerimientoAdjudicacion
-                                );
-            }
-
-            for (int i = 0;
-                    presupuestosAdjudicacion != null
-                    && i < presupuestosAdjudicacion.size();
-                    i++) {
-
-                RequerimientoCompraPresupuesto presupuestoAdjudicacion =
-                        presupuestosAdjudicacion.get(i);
-
-                if (presupuestoAdjudicacion == null
-                        || presupuestoAdjudicacion.getBajaFecha() != null
-                        || presupuestoAdjudicacion.getIdPrestador() == null
-                        || presupuestoAdjudicacion
-                                .getIdPrestador()
-                                .intValue() <= 0
-                        || presupuestoAdjudicacion
-                                .getDlFileEntryId() == null
-                        || presupuestoAdjudicacion
-                                .getDlFileEntryId()
-                                .longValue() <= 0L) {
-
-                    continue;
-                }
-
-                idsPrestadoresConPresupuestoAdjudicacion.add(
-                        presupuestoAdjudicacion.getIdPrestador()
-                );
-            }
-        } catch (Exception e) {
-            errorPresupuestosAdjudicacion =
-                    "No se pudo verificar qué prestadores tienen "
-                            + "un archivo de presupuesto cargado.";
-        }
-    }
 }
 
 Set<Integer> idsPrestadoresHabilitadosAdjudicacion =

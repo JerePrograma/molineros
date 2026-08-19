@@ -3,7 +3,6 @@
 <%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto" %>
-<%@ page import="ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil" %>
 <%@ page import="ar.com.ospim.util.PermissionUtil" %>
 <%@ page import="com.liferay.portal.kernel.dao.search.ResultRow" %>
 <%@ page import="com.liferay.portal.kernel.dao.search.SearchContainer" %>
@@ -11,12 +10,10 @@
 <%@ page import="com.liferay.portal.kernel.log.LogFactoryUtil" %>
 <%@ page import="com.liferay.portal.kernel.portlet.LiferayWindowState" %>
 <%@ page import="com.liferay.portal.kernel.util.HtmlUtil" %>
-<%@ page import="com.liferay.portal.kernel.util.HttpUtil" %>
 <%@ page import="com.liferay.portal.kernel.util.ParamUtil" %>
-<%@ page import="com.liferay.portlet.documentlibrary.model.DLFileEntry" %>
-<%@ page import="com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil" %>
 <%@ page import="javax.portlet.PortletURL" %>
 <%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
 
@@ -28,9 +25,6 @@ Log logPresupuestos =
 
 String namespaceAdjuntos =
         renderResponse.getNamespace();
-
-long groupIdPresupuestos =
-        themeDisplay.getScopeGroupId();
 
 RequerimientoCompra reqPresupuestos =
         (RequerimientoCompra) request.getAttribute(
@@ -148,16 +142,6 @@ SearchContainer searchContainer =
                 mensajeSinResultados
         );
 
-/*
- * Contrato de migracion:
- * - compras.requerimiento.presupuestos
- * - compras.requerimiento.presupuestoDocumentoValido (Map<Integer, Boolean>)
- * - compras.requerimiento.presupuestoDownloadURL (Map<Integer, String>)
- *
- * Si los Actions ya publican esos atributos, este JSP no toca Document
- * Library. El fallback mantiene intacto el funcionamiento del despliegue
- * actual hasta que se complete ese wiring.
- */
 List<RequerimientoCompraPresupuesto> presupuestos =
         (List<RequerimientoCompraPresupuesto>) request.getAttribute(
                 "compras.requerimiento.presupuestos"
@@ -177,19 +161,16 @@ try {
     if (presupuestos == null) {
         presupuestos =
                 new ArrayList<RequerimientoCompraPresupuesto>();
-
-        if (idRequerimientoCompraPresupuestos > 0) {
-            presupuestos =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .listarPresupuestos(
-                                    idRequerimientoCompraPresupuestos
-                            );
-        }
     }
 
-    if (presupuestos == null) {
-        presupuestos =
-                new ArrayList<RequerimientoCompraPresupuesto>();
+    if (documentosValidosPreparados == null) {
+        documentosValidosPreparados =
+                new HashMap<Integer, Boolean>();
+    }
+
+    if (downloadUrlsPreparadas == null) {
+        downloadUrlsPreparadas =
+                new HashMap<Integer, String>();
     }
 
     int total = presupuestos.size();
@@ -256,123 +237,24 @@ try {
                 )
         );
 
-        boolean documentoValido = false;
-        String downloadURL = "";
+        boolean documentoValido =
+                Boolean.TRUE.equals(
+                        documentosValidosPreparados.get(
+                                Integer.valueOf(
+                                        idRequerimientoPresupuesto
+                                )
+                        )
+                );
 
-        if (documentosValidosPreparados != null
-                && downloadUrlsPreparadas != null
-                && documentosValidosPreparados.containsKey(
-                        Integer.valueOf(idRequerimientoPresupuesto)
-                )) {
+        String downloadURL =
+                downloadUrlsPreparadas.get(
+                        Integer.valueOf(
+                                idRequerimientoPresupuesto
+                        )
+                );
 
-            documentoValido =
-                    Boolean.TRUE.equals(
-                            documentosValidosPreparados.get(
-                                    Integer.valueOf(
-                                            idRequerimientoPresupuesto
-                                    )
-                            )
-                    );
-
-            String urlPreparada =
-                    downloadUrlsPreparadas.get(
-                            Integer.valueOf(
-                                    idRequerimientoPresupuesto
-                            )
-                    );
-
-            downloadURL =
-                    urlPreparada != null
-                            ? urlPreparada
-                            : "";
-
-        } else {
-            /*
-             * Compatibilidad transitoria. Esta rama debe desaparecer cuando
-             * el Action publique el estado documental mediante el helper
-             * canonico de Document Library.
-             */
-            DLFileEntry fileEntry = null;
-
-            try {
-                if (presupuesto.getDlFileEntryId() != null
-                        && presupuesto
-                                .getDlFileEntryId()
-                                .longValue() > 0L) {
-
-                    fileEntry =
-                            DLFileEntryLocalServiceUtil
-                                    .getDLFileEntry(
-                                            presupuesto
-                                                    .getDlFileEntryId()
-                                                    .longValue()
-                                    );
-                }
-
-                documentoValido =
-                        fileEntry != null
-                        && presupuesto.getDlGroupId() != null
-                        && presupuesto.getDlFolderId() != null
-                        && presupuesto.getNombrePersistido() != null
-                        && fileEntry.getFileEntryId()
-                                == presupuesto
-                                        .getDlFileEntryId()
-                                        .longValue()
-                        && fileEntry.getGroupId()
-                                == presupuesto
-                                        .getDlGroupId()
-                                        .longValue()
-                        && fileEntry.getFolderId()
-                                == presupuesto
-                                        .getDlFolderId()
-                                        .longValue()
-                        && presupuesto
-                                .getNombrePersistido()
-                                .equals(fileEntry.getName());
-
-                if (documentoValido
-                        && !WebKeysCompras.isEmpty(
-                                presupuesto.getDlFileUuid()
-                        )) {
-
-                    documentoValido =
-                            presupuesto
-                                    .getDlFileUuid()
-                                    .equals(fileEntry.getUuid());
-                }
-
-                if (documentoValido
-                        && groupIdPresupuestos > 0L) {
-
-                    documentoValido =
-                            fileEntry.getGroupId()
-                                    == groupIdPresupuestos;
-                }
-
-                if (documentoValido) {
-                    downloadURL =
-                            themeDisplay.getPathMain()
-                                    + "/document_library/get_file?folderId="
-                                    + fileEntry.getFolderId()
-                                    + "&name="
-                                    + HttpUtil.encodeURL(
-                                            fileEntry.getName()
-                                    );
-                }
-            } catch (Exception documentoError) {
-                documentoValido = false;
-                downloadURL = "";
-
-                if (logPresupuestos.isDebugEnabled()) {
-                    logPresupuestos.debug(
-                            "No se pudo validar el documento asociado "
-                                    + "al presupuesto. "
-                                    + "idRequerimientoPresupuesto="
-                                    + idRequerimientoPresupuesto,
-                            documentoError
-                    );
-                }
-            }
+        if (downloadURL == null) {
+            downloadURL = "";
         }
 
         StringBuilder descargar =

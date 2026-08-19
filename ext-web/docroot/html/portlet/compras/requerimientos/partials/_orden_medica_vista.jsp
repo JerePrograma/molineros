@@ -1,5 +1,4 @@
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto" %>
-<%@ page import="ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
@@ -16,32 +15,9 @@ String errorOrdenMedicaCompraVista =
                 "compras.requerimiento.errorOrdenesMedicas"
         );
 
-/*
- * Contrato objetivo: el Action publica la lista de Ordenes medicas.
- * Se conserva el fallback para reemplazo inmediato sin alterar el flujo
- * actual de alta/edicion/vista.
- */
 if (ordenesMedicasCompraVista == null) {
     ordenesMedicasCompraVista =
             new ArrayList<RequerimientoCompraPresupuesto>();
-
-    try {
-        List<RequerimientoCompraPresupuesto> ordenesRecuperadas =
-                BusquedaRequerimientoCompraServiceUtil
-                        .listarOrdenesMedicas(
-                                req.getIdRequerimientoCompra()
-                        );
-
-        if (ordenesRecuperadas != null) {
-            ordenesMedicasCompraVista =
-                    ordenesRecuperadas;
-        }
-
-    } catch (Exception errorOrdenMedica) {
-        errorOrdenMedicaCompraVista =
-                "No se pudieron recuperar las Órdenes médicas "
-                        + "del requerimiento.";
-    }
 }
 
 if (errorOrdenMedicaCompraVista != null

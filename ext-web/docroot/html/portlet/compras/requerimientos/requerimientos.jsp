@@ -117,22 +117,10 @@ if ("0".equals(idTercerizadoraFiltro)) {
     idTercerizadoraFiltro = "";
 }
 
-/*
- * Contrato objetivo para quitar la ultima consulta auxiliar de este JSP.
- * El fallback conserva compatibilidad hasta que View/Buscar publiquen el
- * atributo compras.requerimientos.tercerizadoras.
- */
 List<TercerizadoraServicio> tercerizadoras =
         (List<TercerizadoraServicio>) request.getAttribute(
                 "compras.requerimientos.tercerizadoras"
         );
-
-if (tercerizadoras == null) {
-    tercerizadoras =
-            TraeListasServiceUtil.getTercerizadoraServicio(
-                    renderRequest
-            );
-}
 
 if (tercerizadoras == null) {
     tercerizadoras =

@@ -1,9 +1,11 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.autorizaciones.beans.Nomenclador;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
-import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.helper.BusquedaRequerimientoCompraHelper;
+import ar.com.ospim.compras.requerimientos.helper.NomencladorCompraBusquedaHelper;
 
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
@@ -14,6 +16,9 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.portlet.PortletConfig;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
@@ -22,6 +27,12 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
 
     private final RequerimientoCompraDetalleHelper detalleHelper =
             new RequerimientoCompraDetalleHelper();
+
+    private final BusquedaRequerimientoCompraHelper busquedaHelper =
+            new BusquedaRequerimientoCompraHelper();
+
+    private final NomencladorCompraBusquedaHelper nomencladorHelper =
+            new NomencladorCompraBusquedaHelper();
 
     public ActionForward render(
             ActionMapping mapping,
@@ -79,8 +90,8 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
         if (codigo.length() == 0
                 && descripcion.length() == 0) {
 
-            request.setAttribute(
-                    "COMPRAS_ERROR_BUSQUEDA",
+            publicarError(
+                    request,
                     "Ingrese código o descripción."
             );
 
@@ -94,8 +105,8 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                         );
 
         if (filtroTipoNomenclador == null) {
-            request.setAttribute(
-                    "COMPRAS_ERROR_BUSQUEDA",
+            publicarError(
+                    request,
                     "El sector seleccionado no tiene configurado "
                             + "un nomenclador para Compras."
             );
@@ -103,15 +114,6 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
             return;
         }
 
-        /*
-         * PRESTACIONES MEDICAS no tiene un único tipo fijo por sector.
-         *
-         * El tipo concreto debe ser el seleccionado por el usuario
-         * en el editor del detalle.
-         *
-         * Se valida nuevamente en servidor para no confiar en el
-         * parámetro recibido desde JavaScript.
-         */
         if ("PRESTACIONES MEDICAS".equals(
                 sector
         )) {
@@ -128,8 +130,8 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                             idTipoNomencladorSolicitado
                     )) {
 
-                request.setAttribute(
-                        "COMPRAS_ERROR_BUSQUEDA",
+                publicarError(
+                        request,
                         "Debe seleccionar un Tipo Nomenclador válido "
                                 + "para PRESTACIONES MEDICAS."
                 );
@@ -146,7 +148,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
         int marcaReinLiq =
                 "DISCAPACIDAD".equals(sector)
                         ? WebKeysCompras
-                          .MARCA_REIN_LIQ_DISCAPACIDAD
+                        .MARCA_REIN_LIQ_DISCAPACIDAD
                         : 0;
 
         request.setAttribute(
@@ -184,6 +186,32 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                         filtroTipoNomenclador.intValue()
                 )
         );
+
+        try {
+            List<Nomenclador> resultados =
+                    nomencladorHelper.buscar(
+                            sector,
+                            filtroTipoNomenclador.intValue(),
+                            marcaReinLiq,
+                            codigo,
+                            descripcion
+                    );
+
+            request.setAttribute(
+                    "COMPRAS_RESULTADOS_NOMENCLADOR",
+                    resultados != null
+                            ? resultados
+                            : new ArrayList<Nomenclador>()
+            );
+
+        } catch (Exception e) {
+            publicarError(
+                    request,
+                    e.getMessage() != null
+                            ? e.getMessage()
+                            : "No se pudieron buscar nomencladores."
+            );
+        }
     }
 
     private String resolverSector(
@@ -198,10 +226,9 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
 
         if (idRequerimiento > 0) {
             RequerimientoCompra requerimiento =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .getRequerimientoCompra(
-                                    idRequerimiento
-                            );
+                    busquedaHelper.getRequerimientoCompra(
+                            idRequerimiento
+                    );
 
             if (requerimiento == null) {
                 throw new Exception(
@@ -231,10 +258,9 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                 );
 
         RequerimientoCompraSector sector =
-                BusquedaRequerimientoCompraServiceUtil
-                        .getSector(
-                                idSector
-                        );
+                busquedaHelper.getSector(
+                        idSector
+                );
 
         if (sector == null
                 || sector.getIdSector() <= 0) {
@@ -248,5 +274,20 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                 .normalizarSectorCompra(
                         sector.getDescripcion()
                 );
+    }
+
+    private void publicarError(
+            RenderRequest request,
+            String mensaje) {
+
+        request.setAttribute(
+                "COMPRAS_ERROR_BUSQUEDA",
+                mensaje
+        );
+
+        request.setAttribute(
+                "COMPRAS_RESULTADOS_NOMENCLADOR",
+                new ArrayList<Nomenclador>()
+        );
     }
 }

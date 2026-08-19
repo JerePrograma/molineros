@@ -1,6 +1,5 @@
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ page import="ar.com.ospim.farmacia.beans.Medicamento" %>
-<%@ page import="ar.com.ospim.farmacia.services.BusquedaMedicamentoServiceUtil" %>
 
 <%!
 private String comprasMedicamentoJs(String value) {
@@ -97,31 +96,34 @@ SearchContainer searchContainer =
                 )
         );
 
-/*
- * Contrato objetivo: el Action de busqueda publica la coleccion ya resuelta.
- * El fallback conserva el endpoint actual hasta que ese Action sea migrado.
- */
+String errorBusquedaMedicamentos =
+        (String) request.getAttribute(
+                "COMPRAS_ERROR_BUSQUEDA_MEDICAMENTOS"
+        );
+
+if (errorBusquedaMedicamentos == null) {
+    errorBusquedaMedicamentos = "";
+}
+
 List<Medicamento> medicamentos =
         (List<Medicamento>) request.getAttribute(
                 "COMPRAS_RESULTADOS_MEDICAMENTOS"
         );
 
 if (medicamentos == null) {
-    medicamentos =
-            BusquedaMedicamentoServiceUtil
-                    .getBusquedaMedicamentos(
-                            Integer.parseInt(troquel),
-                            nombreMedicamento
-                    );
-}
-
-if (medicamentos == null) {
     medicamentos = new ArrayList<Medicamento>();
 }
 
-int total = medicamentos.size();
+if (!WebKeysCompras.isEmpty(errorBusquedaMedicamentos)) {
+%>
+    <div class="portlet-msg-error">
+        <%= HtmlUtil.escape(errorBusquedaMedicamentos) %>
+    </div>
+<%
+} else {
+    int total = medicamentos.size();
 
-if (total == 1) {
+    if (total == 1) {
     Medicamento medicamento =
             medicamentos.get(0);
 
@@ -242,4 +244,5 @@ if (total == 1) {
             searchContainer="<%= searchContainer %>" />
 <%
 }
+    }
 %>

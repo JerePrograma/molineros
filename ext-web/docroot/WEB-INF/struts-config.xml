@@ -7072,9 +7072,14 @@
 					path="portlet.compras.error" />
 		</action>
 
-		<action
-				path="/compras/buscar_medicamentos"
-				forward="portlet.compras.buscar_medicamentos" />
+        <action
+                path="/compras/buscar_medicamentos"
+                type="ar.com.ospim.compras.requerimientos.action.BuscarMedicamentosComprasAction">
+
+            <forward
+                    name="portlet.compras.buscar_medicamentos"
+                    path="portlet.compras.buscar_medicamentos" />
+        </action>
 
 		<action
 				path="/compras/buscar_item_tecnico"
