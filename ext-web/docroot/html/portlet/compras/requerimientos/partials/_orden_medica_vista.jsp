@@ -3,6 +3,7 @@
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
 <%@ page import="javax.portlet.PortletURL" %>
+<%@ page import="javax.portlet.WindowState" %>
 
 <%
 List<RequerimientoCompraPresupuesto> ordenesMedicasCompraVista =
@@ -30,7 +31,9 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
 %>
 
 <div class="compras-seccion compras-seccion-orden-medica compras-seccion-adjuntos">
+
     <fieldset class="block-labels">
+
         <legend>Orden médica</legend>
 
         <% if (errorOrdenMedicaCompraVista != null) { %>
@@ -48,6 +51,7 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
         <% } else { %>
 
             <table class="lfr-table compras-resumen-requerimiento">
+
                 <thead>
                     <tr>
                         <th>Documento</th>
@@ -73,22 +77,19 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
 
                         String fechaOrdenMedicaCompraVista = "";
 
-                        if (ordenMedicaCompraVista
-                                .getFechaDocumento() != null) {
+                        if (ordenMedicaCompraVista.getFechaDocumento() != null) {
 
                             fechaOrdenMedicaCompraVista =
-                                    formatoFechaOrdenMedicaCompraVista
-                                            .format(
-                                                    ordenMedicaCompraVista
-                                                            .getFechaDocumento()
-                                            );
+                                    formatoFechaOrdenMedicaCompraVista.format(
+                                            ordenMedicaCompraVista
+                                                    .getFechaDocumento()
+                                    );
                         }
 
                         String urlOrdenMedicaCompraVista = "";
 
                         Long dlFileEntryIdOrdenMedica =
-                                ordenMedicaCompraVista
-                                        .getDlFileEntryId();
+                                ordenMedicaCompraVista.getDlFileEntryId();
 
                         if (dlFileEntryIdOrdenMedica != null
                                 && dlFileEntryIdOrdenMedica.longValue() > 0L) {
@@ -96,13 +97,24 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                             PortletURL descargarOrdenMedicaCompraURL =
                                     renderResponse.createActionURL();
 
+                            /*
+                             * Mismo formato utilizado por la visualización
+                             * legacy de imágenes de Reclamo Prestacional:
+                             *
+                             * la respuesta binaria se procesa en una ventana
+                             * EXCLUSIVE independiente de la pantalla actual.
+                             */
+                            descargarOrdenMedicaCompraURL.setWindowState(
+                                    WindowState.EXCLUSIVE
+                            );
+
                             descargarOrdenMedicaCompraURL.setParameter(
                                     "struts_action",
                                     "/compras/descargar_orden_medica"
                             );
 
                             /*
-                             * OBLIGATORIO en Liferay legacy para evitar que
+                             * Obligatorio en Liferay legacy para evitar que
                              * StripFilter modifique el contenido binario.
                              */
                             descargarOrdenMedicaCompraURL.setParameter(
@@ -130,7 +142,10 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                     %>
 
                         <tr>
-                            <td>Orden médica</td>
+
+                            <td>
+                                Orden médica
+                            </td>
 
                             <td>
                                 <%= HtmlUtil.escape(
@@ -146,6 +161,7 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                             </td>
 
                             <td>
+
                                 <% if (!WebKeysCompras.isEmpty(
                                         urlOrdenMedicaCompraVista
                                 )) { %>
@@ -153,17 +169,26 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                                     <a href="<%= HtmlUtil.escape(
                                             urlOrdenMedicaCompraVista
                                     ) %>"
-                                       title="Ver / descargar Orden médica">
+                                       target="_blank"
+                                       title="Ver Orden médica"
+                                       onclick="return <portlet:namespace />verOrdenMedicaCompra(this.href);">
+
                                         <img
                                                 src="<%= themeDisplay.getPathThemeImages() %>/common/view.png"
-                                                alt="Ver / descargar Orden médica"
+                                                alt="Ver Orden médica"
+                                                title="Ver Orden médica"
                                                 style="border:0;" />
+
                                     </a>
 
                                 <% } else { %>
+
                                     No disponible
+
                                 <% } %>
+
                             </td>
+
                         </tr>
 
                     <%
@@ -171,8 +196,30 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                     %>
 
                 </tbody>
+
             </table>
 
         <% } %>
+
     </fieldset>
+
 </div>
+
+<script type="text/javascript">
+
+function <portlet:namespace />verOrdenMedicaCompra(url) {
+
+    if (!url) {
+        return false;
+    }
+
+    window.open(
+            url,
+            'mywindow',
+            'width=800,height=800,toolbar=no,resizable=yes'
+    );
+
+    return false;
+}
+
+</script>
