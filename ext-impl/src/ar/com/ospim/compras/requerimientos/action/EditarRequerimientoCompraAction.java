@@ -6,14 +6,12 @@ import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.GuardadoCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.documentos.OrdenMedicaValidada;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
-import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
-import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
+import ar.com.ospim.compras.requerimientos.helper.EditarRequerimientoCompraHelper;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper;
 import ar.com.ospim.global.WebKeysGlobal;
-import ar.com.ospim.global.beans.Domicilio;
 import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.kernel.log.Log;
@@ -83,17 +81,19 @@ public class EditarRequerimientoCompraAction extends PortletAction {
     private static final String PARAM_ORDEN_MEDICA_COUNT =
             "orden_medica_count";
 
-    private static final int MAX_ORDENES_MEDICAS_POR_CARGA = 20;
 
     /*
-     * La lógica de detalles queda separada en helper:
-     * - parseo de detalle
-     * - validación de detalle
-     * - guardado/borrado de detalles
-     * - normalización de textos nuevos
+     * Adaptador HTTP de detalles. Reconstruye parámetros y delega las
+     * reglas funcionales canónicas en EditarRequerimientoCompraHelper.
      */
     private final RequerimientoCompraDetalleHelper detalleHelper =
             new RequerimientoCompraDetalleHelper();
+
+    private final EditarRequerimientoCompraHelper requerimientoHelper =
+            new EditarRequerimientoCompraHelper();
+
+    private final RequerimientoCompraReclamoPrestacionalHelper reclamoHelper =
+            new RequerimientoCompraReclamoPrestacionalHelper();
 
     private boolean esAltaRequerimiento(RenderRequest renderRequest) {
         String strutsAction = ParamUtil.getString(renderRequest, "struts_action", "");
@@ -137,21 +137,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 || idRequerimientoCompra <= 0;
     }
 
-    private static class ValidacionCompraException extends Exception {
-
-        private final String campo;
-
-        public ValidacionCompraException(String campo, String message) {
-            super(message);
-            this.campo = campo;
-        }
-
-        public String getCampo() {
-            return campo;
-        }
-    }
-
-    public void processAction(
+public void processAction(
             ActionMapping mapping,
             ActionForm form,
             PortletConfig portletConfig,
@@ -202,7 +188,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                         getDetallesCotizacionFromRequest(actionRequest);
 
                 GuardadoCotizacionResultado resultado =
-                        EditarRequerimientoCompraServiceUtil
+                        requerimientoHelper
                                 .guardarAvanceCotizacion(
                                         idRequerimientoCompra,
                                         detallesCotizacion,
@@ -258,18 +244,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 RequerimientoCompra requerimiento =
                         getRequerimientoFromRequest(actionRequest);
 
-                if (requerimiento.getIdRequerimientoCompra() > 0) {
-                    RequerimientoCompra existente =
-                            validarRequerimientoEditable(
-                                    requerimiento.getIdRequerimientoCompra()
-                            );
-                    requerimiento.setIdEstado(existente.getIdEstado());
-                } else {
-                    requerimiento.setIdEstado(WebKeysCompras.ESTADO_PENDIENTE);
+                if (requerimiento.getIdRequerimientoCompra() <= 0) {
+                    requerimiento.setIdEstado(
+                            WebKeysCompras.ESTADO_PENDIENTE
+                    );
                 }
-
-                prepararRequerimientoParaGuardar(requerimiento);
-                validarCabecera(requerimiento);
 
                 idRequerimientoCompra = guardarCabeceraRequerimiento(
                         actionRequestOriginal,
@@ -320,18 +299,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 RequerimientoCompra requerimiento =
                         getRequerimientoFromRequest(actionRequest);
 
-                if (requerimiento.getIdRequerimientoCompra() > 0) {
-                    RequerimientoCompra existente =
-                            validarRequerimientoEditable(
-                                    requerimiento.getIdRequerimientoCompra()
-                            );
-                    requerimiento.setIdEstado(existente.getIdEstado());
-                } else {
-                    requerimiento.setIdEstado(WebKeysCompras.ESTADO_PENDIENTE);
+                if (requerimiento.getIdRequerimientoCompra() <= 0) {
+                    requerimiento.setIdEstado(
+                            WebKeysCompras.ESTADO_PENDIENTE
+                    );
                 }
-
-                prepararRequerimientoParaGuardar(requerimiento);
-                validarCabecera(requerimiento);
 
                 idRequerimientoCompra = guardarCabeceraRequerimiento(
                         actionRequestOriginal,
@@ -377,9 +349,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     );
                 }
 
-                validarRequerimientoPuedeAnular(idRequerimientoCompra);
-
-                EditarRequerimientoCompraServiceUtil.cambiarEstado(
+                requerimientoHelper.cambiarEstado(
                         idRequerimientoCompra,
                         WebKeysCompras.ESTADO_ANULADO,
                         usuario
@@ -511,7 +481,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
          * Órdenes médicas.
          */
         if (requerimiento.getIdRequerimientoCompra() > 0) {
-            return EditarRequerimientoCompraServiceUtil
+            return requerimientoHelper
                     .guardarRequerimientoCompra(
                             requerimiento,
                             usuario
@@ -600,7 +570,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             }
         }
 
-        return EditarRequerimientoCompraServiceUtil
+        return requerimientoHelper
                 .guardarNuevoRequerimientoCompraConOrdenesMedicas(
                         requerimiento,
                         ordenesMedicas,
@@ -633,11 +603,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             return 0;
         }
 
-        if (cantidad > MAX_ORDENES_MEDICAS_POR_CARGA) {
+        if (cantidad > EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA) {
             errorCampo(
                     PARAM_ORDEN_MEDICA_COUNT,
                     "Se pueden cargar hasta "
-                            + MAX_ORDENES_MEDICAS_POR_CARGA
+                            + EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA
                             + " Órdenes médicas por operación."
             );
             return 0;
@@ -699,8 +669,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             cantidad = 1;
         }
 
-        if (cantidad > MAX_ORDENES_MEDICAS_POR_CARGA) {
-            cantidad = MAX_ORDENES_MEDICAS_POR_CARGA;
+        if (cantidad > EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA) {
+            cantidad = EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA;
         }
 
         actionResponse.setRenderParameter(
@@ -987,7 +957,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             try {
                 relacion =
-                        RequerimientoCompraReclamoPrestacionalServiceUtil
+                        reclamoHelper
                                 .obtenerPorRequerimiento(
                                         requerimiento
                                                 .getIdRequerimientoCompra()
@@ -1271,305 +1241,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
     }
 
-    private RequerimientoCompra validarRequerimientoEditable(
-            int idRequerimientoCompra) throws Exception {
-
-        if (idRequerimientoCompra <= 0) {
-            return null;
-        }
-
-        RequerimientoCompra requerimiento =
-                BusquedaRequerimientoCompraServiceUtil
-                        .getRequerimientoCompra(idRequerimientoCompra);
-
-        if (requerimiento == null) {
-            errorCampo(
-                    "id_requerimiento_compra",
-                    "El requerimiento informado ya no existe o no está disponible."
-            );
-        }
-
-        if (!requerimiento.puedeEditarEstructura()) {
-            errorCampo(
-                    "estado",
-                    "La estructura solo puede modificarse mientras el requerimiento "
-                            + "está PENDIENTE. Estado actual: "
-                            + requerimiento.getEstadoDescripcionVisible() + "."
-            );
-        }
-
-        return requerimiento;
-    }
-
-    private void validarRequerimientoPuedeAnular(
-            int idRequerimientoCompra) throws Exception {
-
-        RequerimientoCompra requerimiento =
-                BusquedaRequerimientoCompraServiceUtil
-                        .getRequerimientoCompra(idRequerimientoCompra);
-
-        if (requerimiento == null) {
-            errorCampo(
-                    "id_requerimiento_compra",
-                    "El requerimiento informado ya no existe o no está disponible."
-            );
-        }
-
-        if (!requerimiento.puedeAnular()) {
-            errorCampo(
-                    "estado",
-                    "El requerimiento no puede anularse desde su estado actual: "
-                            + requerimiento.getEstadoDescripcionVisible() + "."
-            );
-        }
-    }
-
-    private void prepararRequerimientoParaGuardar(
-            RequerimientoCompra requerimiento) throws Exception {
-
-        if (requerimiento == null) {
-            return;
-        }
-
-        if (requerimiento.getIdSector() != null
-                && requerimiento.getIdSector().intValue() > 0) {
-
-            RequerimientoCompraSector sector =
-                    BusquedaRequerimientoCompraServiceUtil.getSector(
-                            requerimiento.getIdSector().intValue()
-                    );
-
-            if (sector == null) {
-                errorCampo(
-                        "sector_id",
-                        "El sector seleccionado ya no existe o no está disponible."
-                );
-            }
-
-            requerimiento.setSectorDescripcion(sector.getDescripcion());
-            requerimiento.setRequiereAfiliado(sector.isRequiereAfiliado());
-
-            if (!sector.isRequiereAfiliado()) {
-                aplicarReglaSectorSinAfiliado(requerimiento);
-                return;
-            }
-        }
-
-        if (requerimiento.tieneAfiliadoInformado()) {
-            cargarSnapshotAfiliado(requerimiento);
-        }
-
-        Integer cargoTercerizadora =
-                requerimiento.getCargoTercerizadora();
-
-        requerimiento.setRecupero(
-                cargoTercerizadora != null
-                        && cargoTercerizadora.intValue() > 0
-        );
-    }
-
-    private void cargarSnapshotAfiliado(
-            RequerimientoCompra requerimiento) throws Exception {
-
-        List<Afiliado> afiliados =
-                BusquedaAfiliadoServiceUtil.getBusquedaAfiliadosComponente(
-                        requerimiento.getAfiliadoCuilTitular(),
-                        requerimiento.getAfiliadoIntString(),
-                        null,
-                        null,
-                        0,
-                        null,
-                        null,
-                        WebKeysGlobal.ID_DEFAULT_ENTIDAD,
-                        0,
-                        0,
-                        new BigDecimal(0)
-                );
-
-        if (afiliados == null || afiliados.size() != 1) {
-            errorCampo(
-                    "afiliado_cuil_titular",
-                    "No se pudo obtener un único afiliado para guardar el requerimiento."
-            );
-        }
-
-        Afiliado afiliado = afiliados.get(0);
-
-        requerimiento.setAfiliadoIdOspim(afiliado.getId_ospim());
-        requerimiento.setAfiliadoNombre(afiliado.getNombre());
-        requerimiento.setAfiliadoApellido(afiliado.getApellido());
-        requerimiento.setAfiliadoDocumentoTipo(afiliado.getDocumento_tipo());
-        requerimiento.setAfiliadoDocumentoNro(afiliado.getDocu_numero());
-        requerimiento.setAfiliadoEmail(afiliado.getEmail());
-
-        List<Domicilio> domicilios =
-                BusquedaAfiliadoServiceUtil.buscarDomiciliosAfiliado(
-                        requerimiento.getAfiliadoCuilTitular(),
-                        requerimiento.getAfiliadoInt().intValue()
-                );
-
-        if ((domicilios == null || domicilios.isEmpty())
-                && requerimiento.getAfiliadoInt().intValue() != 0) {
-
-            domicilios =
-                    BusquedaAfiliadoServiceUtil.buscarDomiciliosAfiliado(
-                            requerimiento.getAfiliadoCuilTitular(),
-                            0
-                    );
-        }
-
-        if (domicilios == null || domicilios.isEmpty()) {
-            return;
-        }
-
-        Domicilio domicilio = domicilios.get(0);
-
-        requerimiento.setAfiliadoDireccion(formatearDireccion(domicilio));
-        requerimiento.setAfiliadoLocalidad(domicilio.getLocalidadAsString());
-        requerimiento.setAfiliadoProvincia(domicilio.getProvinciaAsString());
-        requerimiento.setAfiliadoCelular(
-                formatearTelefono(
-                        domicilio.getCod_area_celular(),
-                        domicilio.getCelular()
-                )
-        );
-        requerimiento.setAfiliadoTelefono(
-                formatearTelefono(
-                        domicilio.getCod_area_telefono(),
-                        domicilio.getTelefono()
-                )
-        );
-    }
-
-    private String formatearDireccion(Domicilio domicilio) {
-        if (domicilio == null) {
-            return null;
-        }
-
-        StringBuilder direccion = new StringBuilder();
-        agregarParte(direccion, domicilio.getCalle());
-        agregarParte(direccion, domicilio.getNumero());
-        agregarParte(direccion, prefijar("Piso", domicilio.getPiso()));
-        agregarParte(direccion, prefijar("Dto.", domicilio.getDepto()));
-        agregarParte(direccion, prefijar("Of.", domicilio.getOficina()));
-        return WebKeysCompras.trimToNull(direccion.toString());
-    }
-
-    private String formatearTelefono(String codigoArea, String numero) {
-        StringBuilder telefono = new StringBuilder();
-        agregarParte(telefono, codigoArea);
-        agregarParte(telefono, numero);
-        return WebKeysCompras.trimToNull(telefono.toString());
-    }
-
-    private String prefijar(String prefijo, String valor) {
-        String normalizado = WebKeysCompras.trimToNull(valor);
-        return normalizado != null ? prefijo + " " + normalizado : null;
-    }
-
-    private void agregarParte(StringBuilder destino, String valor) {
-        String normalizado = WebKeysCompras.trimToNull(valor);
-
-        if (normalizado == null) {
-            return;
-        }
-
-        if (destino.length() > 0) {
-            destino.append(' ');
-        }
-
-        destino.append(normalizado);
-    }
-
-    private void validarCabecera(RequerimientoCompra requerimiento)
-            throws Exception {
-
-        if (requerimiento == null) {
-            errorCampo("requerimiento", "Debe informar el requerimiento de compra.");
-        }
-
-        if (requerimiento.getIdSector() == null
-                || requerimiento.getIdSector().intValue() <= 0) {
-
-            errorCampo("sector_id", "Sector: debe seleccionar un sector.");
-        }
-
-        if (!requerimiento.isRequiereAfiliado()) {
-            aplicarReglaSectorSinAfiliado(requerimiento);
-        }
-
-        validarPorcentaje(requerimiento.getCargoOspim(), "Cargo OSPIM");
-        validarPorcentaje(
-                requerimiento.getCargoTercerizadora(),
-                "Cargo tercerizadora"
-        );
-
-        int cargoOspim = requerimiento.getCargoOspim() != null
-                ? requerimiento.getCargoOspim().intValue()
-                : 0;
-        int cargoTercerizadora =
-                requerimiento.getCargoTercerizadora() != null
-                        ? requerimiento.getCargoTercerizadora().intValue()
-                        : 0;
-        int sumaCargos = cargoOspim + cargoTercerizadora;
-
-        if (sumaCargos != 100) {
-            errorCampo(
-                    "cargo_tercerizadora",
-                    "Cargos: la suma de Cargo OSPIM (" + cargoOspim
-                            + ") y Cargo tercerizadora (" + cargoTercerizadora
-                            + ") es " + sumaCargos
-                            + ". Debe ser exactamente 100."
-            );
-        }
-
-        requerimiento.setRecupero(cargoTercerizadora > 0);
-
-        if (requerimiento.isRequiereAfiliado()
-                && cargoTercerizadora > 0
-                && WebKeysCompras.isEmpty(requerimiento.getIdTercerizadora())) {
-
-            errorCampo(
-                    "id_tercerizadora",
-                    "Tercerizadora: debe seleccionar un afiliado con tercerizadora "
-                            + "porque Cargo tercerizadora es mayor a 0."
-            );
-        }
-
-        if (requerimiento.isRequiereAfiliado()) {
-            if (WebKeysCompras.isEmpty(
-                    requerimiento.getAfiliadoCuilTitular()
-            )) {
-                errorCampo(
-                        "afiliado_cuil_titular",
-                        "Afiliado: debe seleccionar un afiliado. Falta CUIL titular."
-                );
-            }
-
-            if (requerimiento.getAfiliadoInt() == null) {
-                errorCampo(
-                        "afiliado_int",
-                        "Afiliado: debe seleccionar un afiliado. Falta integrante."
-                );
-            }
-        }
-    }
-
-    private void validarPorcentaje(Integer value, String label)
-            throws Exception {
-
-        int parsed = value != null ? value.intValue() : 0;
-
-        if (parsed < 0 || parsed > 100) {
-            errorCampo(
-                    label,
-                    label + ": debe estar entre 0 y 100. Valor recibido: "
-                            + parsed + "."
-            );
-        }
-    }
-
-    private RequerimientoCompra getRequerimientoFromRequest(
+private RequerimientoCompra getRequerimientoFromRequest(
             ActionRequest request) throws Exception {
 
         RequerimientoCompra requerimiento = new RequerimientoCompra();
@@ -1656,8 +1328,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         } else {
             requerimiento.setIdTercerizadora(null);
         }
-
-        preservarTercerizadoraExistenteSiNoCambioAfiliado(requerimiento);
 
         requerimiento.setRecupero(
                 cargoTercerizadora != null
@@ -1923,9 +1593,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 && visitados.add(actual)) {
 
             if (actual instanceof ValidacionCompraException
-                    || actual instanceof
-                    RequerimientoCompraDetalleHelper
-                    .ValidacionCompraException
                     || "MensajeUsuarioException".equals(
                     actual.getClass().getSimpleName()
             )) {
@@ -1977,15 +1644,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                         .getCampo();
             }
 
-            if (actual instanceof
-                    RequerimientoCompraDetalleHelper
-                    .ValidacionCompraException) {
-
-                return ((RequerimientoCompraDetalleHelper
-                        .ValidacionCompraException) actual)
-                        .getCampo();
-            }
-
             actual = actual.getCause();
         }
 
@@ -2033,11 +1691,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 && !clave.contains("CALLABLESTATEMENT")
                 && !clave.contains("PREPAREDSTATEMENT")
                 && !clave.contains("STACK TRACE")
-                && !clave.contains(".JAVA:")
-                && !clave.contains("SELECT ")
-                && !clave.contains("INSERT ")
-                && !clave.contains("UPDATE ")
-                && !clave.contains("DELETE FROM ");
+                && !clave.contains(".JAVA:");
     }
 
     private void registrarErrorAction(
@@ -2075,9 +1729,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 && visitados.add(actual)) {
 
             if (actual instanceof ValidacionCompraException
-                    || actual instanceof
-                    RequerimientoCompraDetalleHelper
-                    .ValidacionCompraException
                     || "MensajeUsuarioException".equals(
                     actual.getClass().getSimpleName()
             )) {
@@ -2293,78 +1944,4 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         return Integer.valueOf(parsed);
     }
 
-    private void aplicarReglaSectorSinAfiliado(
-            RequerimientoCompra requerimiento) {
-
-        if (requerimiento == null) {
-            return;
-        }
-
-        requerimiento.setAfiliadoCuilTitular(null);
-        requerimiento.setAfiliadoInt(null);
-        requerimiento.setAfiliadoIdOspim((Integer) null);
-
-        if (requerimiento.getIdRequerimientoCompra() <= 0) {
-            requerimiento.setIdTercerizadora(null);
-        }
-
-        requerimiento.setCargoOspim(Integer.valueOf(100));
-        requerimiento.setCargoTercerizadora(Integer.valueOf(0));
-        requerimiento.setRecupero(false);
-    }
-
-    private void preservarTercerizadoraExistenteSiNoCambioAfiliado(
-            RequerimientoCompra requerimiento) throws Exception {
-
-        if (requerimiento == null
-                || requerimiento.getIdRequerimientoCompra() <= 0) {
-            return;
-        }
-
-        RequerimientoCompra existente =
-                BusquedaRequerimientoCompraServiceUtil
-                        .getRequerimientoCompra(
-                                requerimiento.getIdRequerimientoCompra()
-                        );
-
-        if (existente == null) {
-            return;
-        }
-
-        boolean mismoAfiliado = mismoTexto(
-                existente.getAfiliadoCuilTitular(),
-                requerimiento.getAfiliadoCuilTitular()
-        ) && mismoInteger(
-                existente.getAfiliadoInt(),
-                requerimiento.getAfiliadoInt()
-        );
-
-        if (!mismoAfiliado) {
-            return;
-        }
-
-        if (!WebKeysCompras.isEmpty(existente.getIdTercerizadora())) {
-            requerimiento.setIdTercerizadora(
-                    existente.getIdTercerizadora().trim().toUpperCase()
-            );
-        }
-    }
-
-    private boolean mismoTexto(String a, String b) {
-        String aa = a != null ? a.trim() : "";
-        String bb = b != null ? b.trim() : "";
-        return aa.equalsIgnoreCase(bb);
-    }
-
-    private boolean mismoInteger(Integer a, Integer b) {
-        if (a == null && b == null) {
-            return true;
-        }
-
-        if (a == null || b == null) {
-            return false;
-        }
-
-        return a.intValue() == b.intValue();
-    }
 }

@@ -1,7 +1,11 @@
 package ar.com.ospim.compras.requerimientos.service;
 
+import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
+import ar.com.ospim.autorizaciones.services.ReclamoPrestacionServiceImpl;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.util.ConnectionHelper;
+
+import com.liferay.portal.model.User;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -46,6 +50,18 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
 
     private static final String SQL_CAMBIAR_ESTADO_REQUERIMIENTO =
             "{call compras.cambiar_estado_requerimiento(?,?,?)}";
+
+    public Transaccion abrirTransaccion() throws Exception {
+        Connection con = ConnectionHelper.getConnectionForTransaction();
+
+        if (con == null) {
+            throw new Exception(
+                    "No se obtuvo una conexion transaccional para vincular el RP."
+            );
+        }
+
+        return new Transaccion(this, con);
+    }
 
     public RequerimientoCompraReclamoPrestacional obtenerPorRequerimiento(
             int idRequerimientoCompra) throws Exception {
@@ -111,6 +127,17 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
         }
+    }
+
+    public List<RequerimientoCompraReclamoPrestacional>
+    listarVinculadasPorRequerimientos(
+            String estado,
+            List<Integer> idsRequerimientos) throws Exception {
+
+        return listarVinculadasPorRequerimientos(
+                estado,
+                construirArrayEnterosPostgreSql(idsRequerimientos)
+        );
     }
 
     public List<RequerimientoCompraReclamoPrestacional>
@@ -316,6 +343,141 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             stmt.execute();
         } finally {
             ConnectionHelper.cerrar(stmt);
+        }
+    }
+
+    private String construirArrayEnterosPostgreSql(
+            List<Integer> valores) {
+
+        if (valores == null) {
+            return null;
+        }
+
+        StringBuilder value = new StringBuilder();
+        value.append('{');
+
+        for (int i = 0; i < valores.size(); i++) {
+            if (i > 0) {
+                value.append(',');
+            }
+
+            Integer actual = valores.get(i);
+            value.append(
+                    actual != null
+                            ? actual.toString()
+                            : "NULL"
+            );
+        }
+
+        value.append('}');
+        return value.toString();
+    }
+
+    public static final class Transaccion {
+
+        private final RequerimientoCompraReclamoPrestacionalServiceImpl service;
+        private Connection con;
+
+        private Transaccion(
+                RequerimientoCompraReclamoPrestacionalServiceImpl service,
+                Connection con) {
+
+            this.service = service;
+            this.con = con;
+        }
+
+        public RequerimientoCompraReclamoPrestacional obtenerPorRequerimiento(
+                int idRequerimientoCompra) throws Exception {
+
+            return service.obtenerPorRequerimiento(
+                    con,
+                    idRequerimientoCompra
+            );
+        }
+
+        public boolean reservarCreacion(
+                int idRequerimientoCompra,
+                String tokenReserva,
+                String usuario) throws Exception {
+
+            return service.reservarCreacion(
+                    con,
+                    idRequerimientoCompra,
+                    tokenReserva,
+                    usuario
+            );
+        }
+
+        public boolean finalizarCreacion(
+                int idRequerimientoCompra,
+                String tokenReserva,
+                int idReclamoPrestacional,
+                String usuario) throws Exception {
+
+            return service.finalizarCreacion(
+                    con,
+                    idRequerimientoCompra,
+                    tokenReserva,
+                    idReclamoPrestacional,
+                    usuario
+            );
+        }
+
+        public boolean bloquearRequerimiento(
+                int idRequerimientoCompra) throws Exception {
+
+            return service.bloquearRequerimiento(
+                    con,
+                    idRequerimientoCompra
+            );
+        }
+
+        public int getEstadoRequerimientoForUpdate(
+                int idRequerimientoCompra) throws Exception {
+
+            return service.getEstadoRequerimientoForUpdate(
+                    con,
+                    idRequerimientoCompra
+            );
+        }
+
+        public void cambiarEstado(
+                int idRequerimientoCompra,
+                int idEstadoNuevo,
+                String usuario) throws Exception {
+
+            service.cambiarEstado(
+                    con,
+                    idRequerimientoCompra,
+                    idEstadoNuevo,
+                    usuario
+            );
+        }
+
+        public int insertarReclamoPrestacional(
+                ReclamoPrestacional reclamo,
+                User user) throws Exception {
+
+            return new ReclamoPrestacionServiceImpl()
+                    .insertar(
+                            con,
+                            reclamo,
+                            user
+                    );
+        }
+
+        public void commit() throws Exception {
+            con.commit();
+        }
+
+        public void rollback() throws Exception {
+            con.rollback();
+        }
+
+        public void cerrar() {
+            Connection actual = con;
+            con = null;
+            ConnectionHelper.cerrar(actual);
         }
     }
 

@@ -1,8 +1,8 @@
 package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.requerimientos.service
-        .BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.helper
+        .BusquedaRequerimientoCompraHelper;
 import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.kernel.log.Log;
@@ -11,7 +11,6 @@ import com.liferay.portal.model.User;
 import com.liferay.portal.struts.JSONAction;
 import com.liferay.portal.util.PortalUtil;
 
-import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,12 +28,10 @@ public class TieneSituacionMedicaVigenteCompraAction
                     TieneSituacionMedicaVigenteCompraAction.class
             );
 
-    private static final Pattern CUIL_PATTERN =
-            Pattern.compile(
-                    "^[0-9]{11}$"
-            );
+    private final BusquedaRequerimientoCompraHelper busquedaHelper =
+            new BusquedaRequerimientoCompraHelper();
 
-    @Override
+@Override
     public ActionForward execute(
             ActionMapping mapping,
             ActionForm form,
@@ -105,16 +102,8 @@ public class TieneSituacionMedicaVigenteCompraAction
                             )
                     );
 
-            if (cuilTitular == null
-                    || !CUIL_PATTERN
-                    .matcher(
-                            cuilTitular
-                    )
-                    .matches()) {
-
-                return construirRespuesta(
-                        false
-                );
+            if (cuilTitular == null) {
+                return construirRespuesta(false);
             }
 
             if (inteRaw == null
@@ -139,7 +128,7 @@ public class TieneSituacionMedicaVigenteCompraAction
             }
 
             tieneSituacionMedica =
-                    BusquedaRequerimientoCompraServiceUtil
+                    busquedaHelper
                             .tieneSituacionMedicaVigente(
                                     cuilTitular,
                                     inte

@@ -1,28 +1,30 @@
 package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
-import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
-import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.helper.EditarRequerimientoCompraHelper;
 import ar.com.ospim.util.PermissionUtil;
+
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
-import java.math.BigDecimal;
-import java.text.Normalizer;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
+import javax.portlet.ActionRequest;
+import javax.portlet.ActionResponse;
+
+/**
+ * Adaptador HTTP de los detalles del requerimiento.
+ *
+ * Esta clase interpreta parametros, conserva compatibilidad con los nombres
+ * legacy y coordina el retorno del Action. Las reglas funcionales del detalle
+ * pertenecen exclusivamente a EditarRequerimientoCompraHelper.
+ */
 public class RequerimientoCompraDetalleHelper {
 
     private static final Log _log =
@@ -32,23 +34,29 @@ public class RequerimientoCompraDetalleHelper {
 
     private static final boolean EXIGIR_DETALLES_EN_SAVE_ALL = true;
 
-    private static final Pattern DIACRITICOS =
-            Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-
     private static final String STRUTS_ACTION_EDITAR_REQUERIMIENTO =
             "/compras/editar_requerimiento";
 
-    public static class ValidacionCompraException extends Exception {
+    private final EditarRequerimientoCompraHelper requerimientoHelper =
+            new EditarRequerimientoCompraHelper();
 
-        private final String campo;
+    /**
+     * Alias legacy conservado para callers que referencien el tipo anidado.
+     * La implementacion canonica vive en action.ValidacionCompraException.
+     */
+    @Deprecated
+    public static class ValidacionCompraException
+            extends ar.com.ospim.compras.requerimientos.action.ValidacionCompraException {
 
-        public ValidacionCompraException(String campo, String message) {
-            super(message);
-            this.campo = campo;
+        public ValidacionCompraException(
+                String campo,
+                String mensaje) {
+
+            super(campo, mensaje);
         }
 
         public String getCampo() {
-            return campo;
+            return super.getCampo();
         }
     }
 
@@ -64,11 +72,6 @@ public class RequerimientoCompraDetalleHelper {
             );
         }
 
-        RequerimientoCompra requerimiento =
-                validarRequerimientoEditable(
-                        idRequerimientoCompra
-                );
-
         String deletedIds =
                 getParametroTrim(
                         request,
@@ -79,8 +82,7 @@ public class RequerimientoCompraDetalleHelper {
                 new HashSet<Integer>();
 
         if (!WebKeysCompras.isEmpty(deletedIds)) {
-            String[] ids =
-                    deletedIds.split(",");
+            String[] ids = deletedIds.split(",");
 
             for (int i = 0; i < ids.length; i++) {
                 String rawId =
@@ -95,14 +97,23 @@ public class RequerimientoCompraDetalleHelper {
                 if (!rawId.matches("^[0-9]+$")) {
                     errorCampo(
                             "detalle_deleted_ids",
-                            "Detalle a borrar: ID inválido recibido: '"
+                            "Detalle a borrar: ID invalido recibido: '"
                                     + rawId
                                     + "'."
                     );
                 }
 
-                int idDetalleBorrado =
-                        Integer.parseInt(rawId);
+                int idDetalleBorrado;
+
+                try {
+                    idDetalleBorrado = Integer.parseInt(rawId);
+                } catch (NumberFormatException e) {
+                    errorCampo(
+                            "detalle_deleted_ids",
+                            "Detalle a borrar: ID fuera del rango permitido."
+                    );
+                    return 0;
+                }
 
                 if (idDetalleBorrado <= 0
                         || borrados.contains(
@@ -112,38 +123,15 @@ public class RequerimientoCompraDetalleHelper {
                     continue;
                 }
 
-                validarDetallePerteneceARequerimiento(
-                        requerimiento,
+                requerimientoHelper.borrarDetalle(
+                        idRequerimientoCompra,
                         idDetalleBorrado,
-                        "detalle_deleted_ids"
+                        usuario
                 );
 
-                try {
-                    EditarRequerimientoCompraServiceUtil
-                            .borrarDetalle(
-                                    idDetalleBorrado,
-                                    usuario
-                            );
-
-                    borrados.add(
-                            Integer.valueOf(idDetalleBorrado)
-                    );
-
-                } catch (Exception e) {
-                    _log.error(
-                            "No se pudo borrar un detalle durante "
-                                    + "el guardado conjunto. "
-                                    + "idRequerimiento="
-                                    + idRequerimientoCompra
-                                    + ", idDetalle="
-                                    + idDetalleBorrado
-                                    + ", usuario="
-                                    + usuario,
-                            e
-                    );
-
-                    throw e;
-                }
+                borrados.add(
+                        Integer.valueOf(idDetalleBorrado)
+                );
             }
         }
 
@@ -160,14 +148,8 @@ public class RequerimientoCompraDetalleHelper {
 
             errorCampo(
                     "detalle_count",
-                    "Detalles: no llegó ningún detalle al Action. "
-                            + "detalle_count vino vacío o en cero. "
-                            + "Esto normalmente indica que "
-                            + "serializarDetallesCompras() no generó "
-                            + "los hidden inputs, que los inputs quedaron "
-                            + "fuera del form principal, o que el formulario "
-                            + "se rompió por incluir busqueda_afiliado.jsp "
-                            + "dentro del form."
+                    "Detalles: no llego ningun detalle al Action. "
+                            + "detalle_count vino vacio o en cero."
             );
         }
 
@@ -205,18 +187,6 @@ public class RequerimientoCompraDetalleHelper {
                 continue;
             }
 
-            RequerimientoCompraDetalle detallePersistido =
-                    null;
-
-            if (idDetalle > 0) {
-                detallePersistido =
-                        getDetallePersistido(
-                                requerimiento,
-                                idDetalle,
-                                prefix + "id"
-                        );
-            }
-
             RequerimientoCompraDetalle detalle =
                     getDetalleFromRequest(
                             request,
@@ -231,76 +201,20 @@ public class RequerimientoCompraDetalleHelper {
                             : null
             );
 
-            prepararDetalleSegunPersistencia(
-                    requerimiento,
-                    detallePersistido,
-                    detalle,
-                    contexto
-            );
-
-            /*
-             * Los valores de cotización no pertenecen al guardado
-             * estructural del detalle.
-             */
-            detalle.setPrecioUnitarioEstimado(null);
-            detalle.setPrecioTotalEstimado(null);
-            detalle.setIdPrestador(null);
-
-            normalizarDetalleNuevo(detalle);
-
-            validarDetalle(
-                    detalle,
-                    contexto
-            );
-
-            try {
-                int idDetalleGuardado =
-                        EditarRequerimientoCompraServiceUtil
-                                .guardarDetalle(
-                                        detalle,
-                                        usuario
-                                );
-
-                if (idDetalleGuardado <= 0) {
-                    errorCampo(
-                            prefix + "id",
-                            contexto
-                                    + ": el servicio devolvió "
-                                    + "un identificador inválido."
+            int idDetalleGuardado =
+                    requerimientoHelper.guardarDetalle(
+                            detalle,
+                            usuario
                     );
-                }
 
-                guardados++;
-
-            } catch (Exception e) {
-                _log.error(
-                        "No se pudo guardar un detalle durante "
-                                + "el guardado conjunto. "
-                                + "fila=" + (i + 1)
-                                + ", idDetalle=" + detalle.getId()
-                                + ", idRequerimiento="
-                                + idRequerimientoCompra
-                                + ", tipoItem="
-                                + detalle.getTipoItemNormalizado()
-                                + ", idPrestacion="
-                                + detalle.getIdPrestacion()
-                                + ", idTipoNomenclador="
-                                + detalle.getIdTipoNomenclador()
-                                + ", codigoNomenclador="
-                                + detalle.getCodigoNomenclador()
-                                + ", idMedicamento="
-                                + detalle.getIdMedicamento()
-                                + ", troquel="
-                                + detalle.getTroquel()
-                                + ", cantidad="
-                                + detalle.getCantidad()
-                                + ", usuario="
-                                + usuario,
-                        e
+            if (idDetalleGuardado <= 0) {
+                throw new Exception(
+                        contexto
+                                + ": no se obtuvo un identificador valido."
                 );
-
-                throw e;
             }
+
+            guardados++;
         }
 
         if (EXIGIR_DETALLES_EN_SAVE_ALL
@@ -309,13 +223,12 @@ public class RequerimientoCompraDetalleHelper {
 
             errorCampo(
                     "detalles",
-                    "Detalles: el Action recibió detalle_count="
+                    "Detalles: el Action recibio detalle_count="
                             + count
-                            + ", pero no guardó ningún detalle. "
+                            + ", pero no proceso ningun detalle. "
                             + "Filas omitidas="
                             + omitidos
-                            + ". Revisar los nombres de parámetros "
-                            + "generados por serializarDetallesCompras()."
+                            + "."
             );
         }
 
@@ -343,188 +256,45 @@ public class RequerimientoCompraDetalleHelper {
             ActionResponse response,
             String usuario) throws Exception {
 
-        RequerimientoCompraDetalle detalle = null;
-        String contexto =
-                "Detalle";
-
-        try {
-            detalle =
-                    getDetalleFromRequest(request);
-
-            RequerimientoCompra requerimiento =
-                    validarRequerimientoEditable(
-                            detalle.getIdRequerimientoCompra()
-                    );
-
-            RequerimientoCompraDetalle detallePersistido =
-                    null;
-
-            if (detalle.getIdInt() > 0) {
-                detallePersistido =
-                        getDetallePersistido(
-                                requerimiento,
-                                detalle.getIdInt(),
-                                "id_detalle"
-                        );
-            }
-
-            prepararDetalleSegunPersistencia(
-                    requerimiento,
-                    detallePersistido,
-                    detalle,
-                    contexto
-            );
-
-            normalizarDetalleNuevo(
-                    detalle
-            );
-
-            validarDetalle(
-                    detalle,
-                    contexto
-            );
-
-            int idDetalleGuardado =
-                    EditarRequerimientoCompraServiceUtil
-                            .guardarDetalle(
-                                    detalle,
-                                    usuario
-                            );
-
-            if (idDetalleGuardado <= 0) {
-                errorCampo(
-                        "id_detalle",
-                        contexto
-                                + ": el servicio devolvió un identificador "
-                                + "de detalle inválido."
+        RequerimientoCompraDetalle detalle =
+                getDetalleFromRequest(
+                        request
                 );
-            }
 
-            setIdRequerimientoEnRequest(
-                    request,
-                    response,
-                    detalle.getIdRequerimientoCompra()
+        int idDetalleGuardado =
+                requerimientoHelper.guardarDetalle(
+                        detalle,
+                        usuario
+                );
+
+        if (idDetalleGuardado <= 0) {
+            throw new Exception(
+                    "No se obtuvo un identificador valido del detalle."
             );
-
-        } catch (Exception e) {
-            _log.error(
-                    "No se pudo guardar el detalle recibido "
-                            + "desde el formulario. "
-                            + "contexto="
-                            + contexto
-                            + ", idDetalle="
-                            + (
-                            detalle != null
-                                    ? detalle.getId()
-                                    : null
-                    )
-                            + ", idRequerimiento="
-                            + (
-                            detalle != null
-                                    ? detalle.getIdRequerimientoCompra()
-                                    : getParametroTrim(
-                                    request,
-                                    "id_requerimiento_compra"
-                            )
-                    )
-                            + ", tipoItem="
-                            + (
-                            detalle != null
-                                    ? detalle.getTipoItemNormalizado()
-                                    : getParametroTrim(
-                                    request,
-                                    "tipo_item"
-                            )
-                    )
-                            + ", idPrestacion="
-                            + (
-                            detalle != null
-                                    ? detalle.getIdPrestacion()
-                                    : getParametroTrim(
-                                    request,
-                                    "id_prestacion"
-                            )
-                    )
-                            + ", idTipoNomenclador="
-                            + (
-                            detalle != null
-                                    ? detalle.getIdTipoNomenclador()
-                                    : getParametroTrim(
-                                    request,
-                                    "id_tipo_nomenclador"
-                            )
-                    )
-                            + ", codigoNomenclador="
-                            + (
-                            detalle != null
-                                    ? detalle.getCodigoNomenclador()
-                                    : getParametroTrim(
-                                    request,
-                                    "codigo_nomenclador"
-                            )
-                    )
-                            + ", descripcionNomenclador="
-                            + (
-                            detalle != null
-                                    ? detalle.getDescripcionNomenclador()
-                                    : getParametroTrim(
-                                    request,
-                                    "descripcion_nomenclador"
-                            )
-                    )
-                            + ", idMedicamento="
-                            + (
-                            detalle != null
-                                    ? detalle.getIdMedicamento()
-                                    : getParametroTrim(
-                                    request,
-                                    "id_medicamento"
-                            )
-                    )
-                            + ", troquel="
-                            + (
-                            detalle != null
-                                    ? detalle.getTroquel()
-                                    : getParametroTrim(
-                                    request,
-                                    "troquel"
-                            )
-                    )
-                            + ", nombreMedicamento="
-                            + (
-                            detalle != null
-                                    ? detalle.getNombreMedicamento()
-                                    : getParametroTrim(
-                                    request,
-                                    "nombre_medicamento"
-                            )
-                    )
-                            + ", cantidad="
-                            + (
-                            detalle != null
-                                    ? detalle.getCantidad()
-                                    : getParametroTrim(
-                                    request,
-                                    "cantidad"
-                            )
-                    )
-                            + ", usuario="
-                            + usuario,
-                    e
-            );
-
-            throw e;
         }
+
+        setIdRequerimientoEnRequest(
+                request,
+                response,
+                detalle.getIdRequerimientoCompra()
+        );
     }
 
-    public void borrarDetalleDesdeRequest(ActionRequest request,
-                                          ActionResponse response,
-                                          String usuario) throws Exception {
+    public void borrarDetalleDesdeRequest(
+            ActionRequest request,
+            ActionResponse response,
+            String usuario) throws Exception {
 
-        int idDetalle = getIdDetalleFromRequest(request);
+        int idDetalle =
+                getIdDetalleFromRequest(
+                        request
+                );
 
         if (idDetalle <= 0) {
-            errorCampo("id_detalle", "Debe informar el detalle a borrar.");
+            errorCampo(
+                    "id_detalle",
+                    "Debe informar el detalle a borrar."
+            );
         }
 
         int idRequerimientoCompra =
@@ -542,16 +312,11 @@ public class RequerimientoCompraDetalleHelper {
             );
         }
 
-        RequerimientoCompra requerimiento =
-                validarRequerimientoEditable(idRequerimientoCompra);
-
-        validarDetallePerteneceARequerimiento(
-                requerimiento,
+        requerimientoHelper.borrarDetalle(
+                idRequerimientoCompra,
                 idDetalle,
-                "id_detalle"
+                usuario
         );
-
-        EditarRequerimientoCompraServiceUtil.borrarDetalle(idDetalle, usuario);
 
         setIdRequerimientoEnRequest(
                 request,
@@ -588,8 +353,7 @@ public class RequerimientoCompraDetalleHelper {
         int idDetalle;
 
         if (WebKeysCompras.isEmpty(prefix)) {
-            idDetalle =
-                    getIdDetalleFromRequest(request);
+            idDetalle = getIdDetalleFromRequest(request);
         } else {
             idDetalle =
                     parseEnteroConDefault(
@@ -625,6 +389,10 @@ public class RequerimientoCompraDetalleHelper {
                 )
         );
 
+        /*
+         * Precio y adjudicacion pertenecen al flujo de cotizacion, no al
+         * guardado estructural del detalle.
+         */
         detalle.setPrecioUnitarioEstimado(null);
         detalle.setPrecioTotalEstimado(null);
         detalle.setIdPrestador(null);
@@ -654,112 +422,24 @@ public class RequerimientoCompraDetalleHelper {
         return detalle;
     }
 
-    private void validarDetalle(
-            RequerimientoCompraDetalle detalle,
-            String contexto) throws Exception {
-
-        if (detalle == null) {
-            errorCampo(
-                    contexto,
-                    contexto + ": debe informar el detalle del requerimiento."
-            );
-        }
-
-        if (detalle.getIdRequerimientoCompra() <= 0) {
-            errorCampo(
-                    contexto,
-                    contexto + ": debe guardar primero la cabecera del requerimiento."
-            );
-        }
-
-        if (detalle.getCantidad() == null
-                || detalle.getCantidad().intValue() <= 0) {
-
-            errorCampo(
-                    contexto + " - cantidad",
-                    contexto + ": la Cantidad debe ser mayor a cero."
-            );
-        }
-
-        String tipoItem =
-                detalle.getTipoItemNormalizado();
-
-        if (WebKeysCompras.isEmpty(tipoItem)) {
-            errorCampo(
-                    contexto + " - tipo_item",
-                    contexto + ": debe informar el tipo de ítem."
-            );
-        }
-
-        if (!RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR.equals(tipoItem)
-                && !RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO.equals(tipoItem)
-                && !RequerimientoCompraDetalle.TIPO_ITEM_OBSERVACION.equals(tipoItem)) {
-
-            errorCampo(
-                    contexto + " - tipo_item",
-                    contexto + ": tipo de ítem inválido."
-            );
-        }
-
-        if (RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR.equals(tipoItem)) {
-            validarDetalleNomenclador(
-                    detalle,
-                    contexto
-            );
-        }
-
-        if (RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO.equals(tipoItem)) {
-            validarDetalleMedicamento(
-                    detalle,
-                    contexto
-            );
-        }
-
-        if (RequerimientoCompraDetalle.TIPO_ITEM_OBSERVACION.equals(tipoItem)) {
-            validarDetalleObservacion(
-                    detalle,
-                    contexto
-            );
-        }
-
-        if (detalle.getPrecioUnitarioEstimado() != null
-                && detalle.getPrecioUnitarioEstimado().compareTo(BigDecimal.ZERO) < 0) {
-
-            errorCampo(
-                    contexto + " - precio_unitario_estimado",
-                    contexto + ": el Precio unitario estimado no puede ser negativo."
-            );
-        }
-
-        if (detalle.getPrecioTotalEstimado() != null
-                && detalle.getPrecioTotalEstimado().compareTo(BigDecimal.ZERO) < 0) {
-
-            errorCampo(
-                    contexto + " - precio_total_estimado",
-                    contexto + ": el Precio total estimado no puede ser negativo."
-            );
-        }
-    }
-
     private void cargarDetalleTecnicoDesdeRequest(
             ActionRequest request,
             String prefix,
             String contexto,
             RequerimientoCompraDetalle detalle) throws Exception {
 
-        String tipoItem =
+        detalle.setTipoItem(
                 getParametroTrim(
                         request,
                         prefix + "tipo_item"
-                );
-
-        detalle.setTipoItem(tipoItem);
+                )
+        );
 
         int idPrestacion =
                 parseEnteroConDefault(
                         request,
                         prefix + "id_prestacion",
-                        contexto + " - Prestación",
+                        contexto + " - Prestacion",
                         0
                 );
 
@@ -847,356 +527,53 @@ public class RequerimientoCompraDetalleHelper {
         );
     }
 
-    private void prepararDetalleSegunPersistencia(
-            RequerimientoCompra requerimiento,
-            RequerimientoCompraDetalle detallePersistido,
-            RequerimientoCompraDetalle detalle,
-            String contexto) throws Exception {
-
-        if (detalle == null) {
-            errorCampo(
-                    contexto,
-                    contexto
-                            + ": debe informar el detalle "
-                            + "del requerimiento."
-            );
-
-            return;
-        }
-
-        /*
-         * Compatibilidad histórica:
-         *
-         * un detalle ya persistido como MEDICAMENTO mantiene
-         * todos sus datos técnicos originales. El formulario
-         * sólo puede modificar Cantidad y Observaciones.
-         */
-        if (detallePersistido != null
-                && detallePersistido.esMedicamento()) {
-
-            detalle.setTipoItem(
-                    RequerimientoCompraDetalle
-                            .TIPO_ITEM_MEDICAMENTO
-            );
-
-            detalle.setIdPrestacion(null);
-            detalle.setIdTipoNomenclador(null);
-            detalle.setCodigoNomenclador(null);
-            detalle.setDescripcionNomenclador(null);
-
-            detalle.setIdMedicamento(
-                    detallePersistido
-                            .getIdMedicamento()
-            );
-
-            detalle.setTroquel(
-                    detallePersistido
-                            .getTroquel()
-            );
-
-            detalle.setNombreMedicamento(
-                    detallePersistido
-                            .getNombreMedicamento()
-            );
-
-            detalle.setCodigoItem(
-                    detallePersistido
-                            .getCodigoItemVisible()
-            );
-
-            detalle.setDescripcionItem(
-                    detallePersistido
-                            .getDescripcionItemVisible()
-            );
-
-            return;
-        }
-
-        boolean sectorObservacion =
-                WebKeysCompras
-                        .esSectorDetalleObservacionCompras(
-                                requerimiento != null
-                                        ? requerimiento
-                                          .getSectorDescripcion()
-                                        : null
-                        );
-
-        if (sectorObservacion) {
-            if (detallePersistido != null
-                    && !detallePersistido.esObservacion()) {
-
-                errorCampo(
-                        contexto + " - tipo_item",
-                        contexto
-                                + ": el detalle existente no corresponde "
-                                + "al sector seleccionado. Debe quitarlo "
-                                + "antes de cambiar el sector."
-                );
-            }
-
-            String tipoRecibido =
-                    detalle.getTipoItemNormalizado();
-
-            if (!WebKeysCompras.isEmpty(tipoRecibido)
-                    && !RequerimientoCompraDetalle
-                    .TIPO_ITEM_OBSERVACION
-                    .equals(tipoRecibido)) {
-
-                errorCampo(
-                        contexto + " - tipo_item",
-                        contexto
-                                + ": el sector seleccionado requiere "
-                                + "un detalle de OBSERVACION."
-                );
-            }
-
-            detalle.setTipoItem(
-                    RequerimientoCompraDetalle
-                            .TIPO_ITEM_OBSERVACION
-            );
-            detalle.setIdPrestacion(null);
-            detalle.setIdTipoNomenclador(null);
-            detalle.setCodigoNomenclador(null);
-            detalle.setDescripcionNomenclador(null);
-            detalle.setIdMedicamento(null);
-            detalle.setTroquel(null);
-            detalle.setNombreMedicamento(null);
-            detalle.setCodigoItem(null);
-            detalle.setDescripcionItem(null);
-
-            return;
-        }
-
-        Integer filtroTipoNomenclador =
-                WebKeysCompras
-                        .getFiltroTipoNomencladorCompras(
-                                requerimiento != null
-                                        ? requerimiento
-                                          .getSectorDescripcion()
-                                        : null
-                        );
-
-        if (filtroTipoNomenclador == null) {
-            errorCampo(
-                    contexto + " - sector",
-                    contexto
-                            + ": el sector del requerimiento "
-                            + "no tiene configurado un nomenclador "
-                            + "para Compras."
-            );
-
-            return;
-        }
-
-        if (detallePersistido != null
-                && detallePersistido.esObservacion()) {
-
-            errorCampo(
-                    contexto + " - tipo_item",
-                    contexto
-                            + ": el detalle existente no corresponde "
-                            + "al sector seleccionado. Debe quitarlo "
-                            + "antes de cambiar el sector."
-            );
-        }
-
-        String tipoRecibido =
-                detalle.getTipoItemNormalizado();
-
-        if (!WebKeysCompras.isEmpty(tipoRecibido)
-                && !RequerimientoCompraDetalle
-                .TIPO_ITEM_NOMENCLADOR
-                .equals(tipoRecibido)) {
-
-            errorCampo(
-                    contexto + " - tipo_item",
-                    contexto
-                            + ": los detalles nuevos y los detalles "
-                            + "de nomenclador deben utilizar "
-                            + "NOMENCLADOR."
-            );
-
-            return;
-        }
-
-        detalle.setTipoItem(
-                RequerimientoCompraDetalle
-                        .TIPO_ITEM_NOMENCLADOR
-        );
-
-        detalle.setIdMedicamento(null);
-        detalle.setTroquel(null);
-        detalle.setNombreMedicamento(null);
-
-        detalle.setCodigoItem(
-                detalle.getCodigoNomenclador()
-        );
-
-        detalle.setDescripcionItem(
-                detalle.getDescripcionNomenclador()
-        );
-    }
-
-    private void validarDetalleNomenclador(
-            RequerimientoCompraDetalle detalle,
-            String contexto) throws Exception {
-
-        if (detalle.getIdPrestacion() == null
-                || detalle.getIdPrestacion().intValue() <= 0) {
-
-            errorCampo(
-                    contexto + " - id_prestacion",
-                    contexto + ": debe seleccionar la prestación del nomenclador."
-            );
-        }
-
-        if (detalle.getIdTipoNomenclador() == null
-                || detalle.getIdTipoNomenclador().intValue() <= 0) {
-
-            errorCampo(
-                    contexto + " - id_tipo_nomenclador",
-                    contexto + ": debe informar el tipo de nomenclador."
-            );
-        }
-
-        if (WebKeysCompras.isEmpty(
-                detalle.getCodigoNomenclador()
-        )) {
-            errorCampo(
-                    contexto + " - codigo_nomenclador",
-                    contexto + ": debe informar el código de nomenclador."
-            );
-        }
-
-        if (WebKeysCompras.isEmpty(
-                detalle.getDescripcionNomenclador()
-        )) {
-            errorCampo(
-                    contexto + " - descripcion_nomenclador",
-                    contexto + ": debe informar la descripción del nomenclador."
-            );
-        }
-    }
-
-    private void validarDetalleMedicamento(
-            RequerimientoCompraDetalle detalle,
-            String contexto) throws Exception {
-
-        if (detalle.getIdMedicamento() == null
-                || detalle.getIdMedicamento().intValue() <= 0) {
-
-            errorCampo(
-                    contexto + " - id_medicamento",
-                    contexto + ": debe seleccionar el medicamento."
-            );
-        }
-
-        if (WebKeysCompras.isEmpty(
-                detalle.getNombreMedicamento()
-        )) {
-            errorCampo(
-                    contexto + " - nombre_medicamento",
-                    contexto + ": debe informar el nombre del medicamento."
-            );
-        }
-    }
-
-    private void validarDetalleObservacion(
-            RequerimientoCompraDetalle detalle,
-            String contexto) throws Exception {
-
-        if (WebKeysCompras.isEmpty(
-                detalle.getObservaciones()
-        )) {
-            errorCampo(
-                    contexto + " - observaciones",
-                    contexto + ": debe informar las Observaciones."
-            );
-        }
-
-        if (detalle.getIdPrestacion() != null
-                || detalle.getIdTipoNomenclador() != null
-                || !WebKeysCompras.isEmpty(detalle.getCodigoNomenclador())
-                || !WebKeysCompras.isEmpty(detalle.getDescripcionNomenclador())
-                || detalle.getIdMedicamento() != null
-                || detalle.getTroquel() != null
-                || !WebKeysCompras.isEmpty(detalle.getNombreMedicamento())) {
-
-            errorCampo(
-                    contexto + " - tipo_item",
-                    contexto
-                            + ": un detalle de Observación no puede "
-                            + "contener datos de código o medicamento."
-            );
-        }
-    }
-
     private boolean filaDetalleTecnicaVacia(
             ActionRequest request,
             String prefix) {
 
         return WebKeysCompras.isEmpty(
-                getParametroTrim(
-                        request,
-                        prefix + "id"
-                )
+                getParametroTrim(request, prefix + "id")
         )
                 && WebKeysCompras.isEmpty(
-                getParametroTrim(
-                        request,
-                        prefix + "tipo_item"
-                )
+                getParametroTrim(request, prefix + "tipo_item")
         )
                 && WebKeysCompras.isEmpty(
-                getParametroTrim(
-                        request,
-                        prefix + "id_prestacion"
-                )
+                getParametroTrim(request, prefix + "id_prestacion")
         )
                 && WebKeysCompras.isEmpty(
-                getParametroTrim(
-                        request,
-                        prefix + "id_tipo_nomenclador"
-                )
+                getParametroTrim(request, prefix + "id_tipo_nomenclador")
         )
                 && WebKeysCompras.isEmpty(
-                getParametroTrim(
-                        request,
-                        prefix + "codigo_nomenclador"
-                )
+                getParametroTrim(request, prefix + "codigo_nomenclador")
         )
                 && WebKeysCompras.isEmpty(
-                getParametroTrim(
-                        request,
-                        prefix + "descripcion_nomenclador"
-                )
+                getParametroTrim(request, prefix + "descripcion_nomenclador")
         )
                 && WebKeysCompras.isEmpty(
-                getParametroTrim(
-                        request,
-                        prefix + "id_medicamento"
-                )
+                getParametroTrim(request, prefix + "id_medicamento")
         )
                 && WebKeysCompras.isEmpty(
-                getParametroTrim(
-                        request,
-                        prefix + "troquel"
-                )
+                getParametroTrim(request, prefix + "troquel")
         )
                 && WebKeysCompras.isEmpty(
-                getParametroTrim(
-                        request,
-                        prefix + "nombre_medicamento"
-                )
+                getParametroTrim(request, prefix + "nombre_medicamento")
         );
     }
 
-    public void validarPermisoABM(User user) throws Exception {
+    public void validarPermisoABM(
+            User user) throws Exception {
+
         if (user == null) {
-            errorCampo("usuario", "No se pudo determinar el usuario actual.");
+            errorCampo(
+                    "usuario",
+                    "No se pudo determinar el usuario actual."
+            );
         }
 
-        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
+        if (!PermissionUtil.userContainsRole(
+                user,
+                WebKeysCompras.ROL_ABM_COMPRAS
+        )) {
             errorCampo(
                     "permisos",
                     "No posee permisos para administrar requerimientos de compras."
@@ -1205,11 +582,13 @@ public class RequerimientoCompraDetalleHelper {
     }
 
     public String getUsuario(User user) {
-        return user != null ? user.getScreenName() : "sistema";
+        return user != null
+                ? user.getScreenName()
+                : "sistema";
     }
 
-    public int getIdRequerimientoCompraFromRequest(ActionRequest request)
-            throws Exception {
+    public int getIdRequerimientoCompraFromRequest(
+            ActionRequest request) throws Exception {
 
         return parseEnteroConDefault(
                 request,
@@ -1219,8 +598,9 @@ public class RequerimientoCompraDetalleHelper {
         );
     }
 
-    public void setRenderEdicion(ActionResponse response,
-                                 int idRequerimientoCompra) {
+    public void setRenderEdicion(
+            ActionResponse response,
+            int idRequerimientoCompra) {
 
         if (response == null) {
             return;
@@ -1239,143 +619,18 @@ public class RequerimientoCompraDetalleHelper {
         );
     }
 
-    private RequerimientoCompra validarRequerimientoEditable(int idRequerimientoCompra)
-            throws Exception {
-
-        if (idRequerimientoCompra <= 0) {
-            return null;
-        }
-
-        RequerimientoCompra requerimiento =
-                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(
-                        idRequerimientoCompra
-                );
-
-        if (requerimiento == null) {
-            errorCampo(
-                    "id_requerimiento_compra",
-                    "No se encontró el requerimiento de compra informado. ID recibido: "
-                            + idRequerimientoCompra + "."
-            );
-        }
-
-        if (!requerimiento.puedeEditarEstructura()) {
-            errorCampo(
-                    "estado",
-                    "Solo se puede editar la estructura en estado PENDIENTE. Estado actual: "
-                            + requerimiento.getEstadoDescripcionVisible() + "."
-            );
-        }
-
-        return requerimiento;
-    }
-
-    private RequerimientoCompraDetalle getDetallePersistido(
-            RequerimientoCompra requerimiento,
-            int idDetalle,
-            String campo) throws Exception {
-
-        if (requerimiento == null
-                || idDetalle <= 0) {
-
-            errorCampo(
-                    campo,
-                    "No se pudo validar el detalle informado."
-            );
-
-            return null;
-        }
-
-        List<RequerimientoCompraDetalle> detalles =
-                requerimiento.getDetalles();
-
-        if (detalles != null) {
-            for (int i = 0;
-                 i < detalles.size();
-                 i++) {
-
-                RequerimientoCompraDetalle detalle =
-                        detalles.get(i);
-
-                if (detalle != null
-                        && detalle.getIdInt() == idDetalle
-                        && detalle.getIdRequerimientoCompra()
-                        == requerimiento
-                        .getIdRequerimientoCompra()) {
-
-                    return detalle;
-                }
-            }
-        }
-
-        errorCampo(
-                campo,
-                "El detalle informado no pertenece al requerimiento "
-                        + requerimiento.getIdRequerimientoCompra()
-                        + " o ya no existe. ID de detalle recibido: "
-                        + idDetalle
-                        + "."
-        );
-
-        return null;
-    }
-
-    private void validarDetallePerteneceARequerimiento(
-            RequerimientoCompra requerimiento,
-            int idDetalle,
-            String campo) throws Exception {
-
-        getDetallePersistido(
-                requerimiento,
-                idDetalle,
-                campo
-        );
-    }
-
-    private int getIdDetalleFromRequest(ActionRequest request) throws Exception {
-        return parseEnteroConDefault(request, "id_detalle", "ID del detalle", 0);
-    }
-
-    private boolean esDetalleNuevo(RequerimientoCompraDetalle detalle) {
-        return detalle == null
-                || detalle.getId() == null
-                || detalle.getId().intValue() <= 0;
-    }
-
-    private void normalizarDetalleNuevo(RequerimientoCompraDetalle detalle) {
-        if (!esDetalleNuevo(detalle)) {
-            return;
-        }
-
-        if (detalle == null) {
-            return;
-        }
-
-        detalle.setObservaciones(
-                normalizarTextoCarga(detalle.getObservaciones())
-        );
-    }
-
+    /**
+     * Contrato conservado para callers existentes. La normalizacion real se
+     * encuentra en el Helper de negocio.
+     */
     public String normalizarTextoCarga(String value) {
-        if (value == null) {
-            return null;
-        }
-
-        value = value.trim();
-
-        if (value.length() == 0) {
-            return null;
-        }
-
-        String normalizado = Normalizer.normalize(value, Normalizer.Form.NFD);
-        normalizado = DIACRITICOS.matcher(normalizado).replaceAll("");
-
-        return normalizado.toUpperCase(Locale.ROOT).trim();
+        return requerimientoHelper.normalizarTextoCarga(value);
     }
 
-    private void setIdRequerimientoEnRequest(ActionRequest request,
-                                             ActionResponse response,
-                                             int idRequerimientoCompra) {
+    private void setIdRequerimientoEnRequest(
+            ActionRequest request,
+            ActionResponse response,
+            int idRequerimientoCompra) {
 
         if (request != null) {
             request.setAttribute(
@@ -1384,38 +639,42 @@ public class RequerimientoCompraDetalleHelper {
             );
         }
 
-        if (response != null) {
-            response.setRenderParameter(
-                    "id_requerimiento_compra",
-                    String.valueOf(idRequerimientoCompra)
-            );
-
-            response.setRenderParameter(
-                    "struts_action",
-                    STRUTS_ACTION_EDITAR_REQUERIMIENTO
-            );
-        }
+        setRenderEdicion(
+                response,
+                idRequerimientoCompra
+        );
     }
 
-    private void errorCampo(String campo, String mensaje)
-            throws ValidacionCompraException {
+    private void errorCampo(
+            String campo,
+            String mensaje) throws ValidacionCompraException {
 
-        throw new ValidacionCompraException(campo, mensaje);
+        throw new ValidacionCompraException(
+                campo,
+                mensaje
+        );
     }
 
-    public String getParametroTrim(ActionRequest request, String nombre) {
-        String value = getParametroRaw(request, nombre, null);
+    public String getParametroTrim(
+            ActionRequest request,
+            String nombre) {
 
-        if (value == null) {
-            return "";
-        }
+        String value =
+                getParametroRaw(
+                        request,
+                        nombre,
+                        null
+                );
 
-        return value.trim();
+        return value != null
+                ? value.trim()
+                : "";
     }
 
-    public String getParametroRaw(ActionRequest request,
-                                  String nombre,
-                                  String defaultValue) {
+    public String getParametroRaw(
+            ActionRequest request,
+            String nombre,
+            String defaultValue) {
 
         if (request == null || nombre == null) {
             return defaultValue;
@@ -1433,8 +692,8 @@ public class RequerimientoCompraDetalleHelper {
             if (value != null) {
                 return value;
             }
-        } catch (Exception e) {
-            // Sigue fallback manual.
+        } catch (Exception ignored) {
+            /* Sigue fallback manual para portlets legacy. */
         }
 
         Map parameterMap = request.getParameterMap();
@@ -1444,7 +703,6 @@ public class RequerimientoCompraDetalleHelper {
         }
 
         String bestKey = null;
-
         Iterator it = parameterMap.keySet().iterator();
 
         while (it.hasNext()) {
@@ -1472,27 +730,22 @@ public class RequerimientoCompraDetalleHelper {
 
         Object raw = parameterMap.get(bestKey);
 
-        if (raw == null) {
-            return defaultValue;
-        }
-
         if (raw instanceof String[]) {
             String[] values = (String[]) raw;
-
-            if (values.length == 0) {
-                return defaultValue;
-            }
-
-            return values[0];
+            return values.length > 0
+                    ? values[0]
+                    : defaultValue;
         }
 
-        return String.valueOf(raw);
+        return raw != null
+                ? String.valueOf(raw)
+                : defaultValue;
     }
 
-    private Integer parseEnteroOpcional(ActionRequest request,
-                                        String nombre,
-                                        String label)
-            throws ValidacionCompraException {
+    private Integer parseEnteroOpcional(
+            ActionRequest request,
+            String nombre,
+            String label) throws ValidacionCompraException {
 
         String value = getParametroTrim(request, nombre);
 
@@ -1503,55 +756,64 @@ public class RequerimientoCompraDetalleHelper {
         if (!value.matches("^[0-9]+$")) {
             errorCampo(
                     nombre,
-                    label + ": el valor ingresado '" + value
-                            + "' no es un número entero válido."
+                    label + ": el valor ingresado '"
+                            + value
+                            + "' no es un numero entero valido."
             );
         }
 
         try {
-            return Integer.valueOf(Integer.parseInt(value));
+            return Integer.valueOf(
+                    Integer.parseInt(value)
+            );
         } catch (Exception e) {
             errorCampo(
                     nombre,
-                    label + ": el valor ingresado '" + value
-                            + "' está fuera del rango permitido."
+                    label + ": el valor ingresado '"
+                            + value
+                            + "' esta fuera del rango permitido."
             );
         }
 
         return null;
     }
 
-    public int parseEnteroConDefault(ActionRequest request,
-                                     String nombre,
-                                     String label,
-                                     int defaultValue)
-            throws ValidacionCompraException {
+    public int parseEnteroConDefault(
+            ActionRequest request,
+            String nombre,
+            String label,
+            int defaultValue) throws ValidacionCompraException {
 
-        Integer parsed = parseEnteroOpcional(request, nombre, label);
+        Integer parsed =
+                parseEnteroOpcional(
+                        request,
+                        nombre,
+                        label
+                );
 
-        if (parsed == null) {
-            return defaultValue;
-        }
-
-        return parsed.intValue();
+        return parsed != null
+                ? parsed.intValue()
+                : defaultValue;
     }
 
-    private Integer parseCantidadDesdeRequest(ActionRequest request,
-                                              String nombre,
-                                              String label)
-            throws ValidacionCompraException {
+    private Integer parseCantidadDesdeRequest(
+            ActionRequest request,
+            String nombre,
+            String label) throws ValidacionCompraException {
 
         String value = getParametroTrim(request, nombre);
 
         if (WebKeysCompras.isEmpty(value)) {
-            errorCampo(nombre, label + ": debe informar una cantidad.");
+            errorCampo(
+                    nombre,
+                    label + ": debe informar una cantidad."
+            );
         }
 
         if (!value.matches("^[0-9]+$")) {
             errorCampo(
                     nombre,
-                    label + ": debe ser un número entero mayor a cero. Valor recibido: '"
-                            + value + "'."
+                    label + ": debe ser un numero entero mayor a cero."
             );
         }
 
@@ -1562,8 +824,7 @@ public class RequerimientoCompraDetalleHelper {
         } catch (Exception e) {
             errorCampo(
                     nombre,
-                    label + ": el valor ingresado '" + value
-                            + "' está fuera del rango permitido."
+                    label + ": el valor esta fuera del rango permitido."
             );
             return null;
         }
@@ -1571,7 +832,7 @@ public class RequerimientoCompraDetalleHelper {
         if (parsed <= 0) {
             errorCampo(
                     nombre,
-                    label + ": debe ser mayor a cero. Valor recibido: " + parsed + "."
+                    label + ": debe ser mayor a cero."
             );
         }
 

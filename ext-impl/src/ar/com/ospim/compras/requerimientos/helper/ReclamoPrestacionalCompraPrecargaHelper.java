@@ -338,6 +338,225 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         }
     }
 
+    /**
+     * Registra el contexto temporal de un borrador iniciado desde Compras.
+     * Nunca reemplaza una edicion ordinaria iniciada desde Autorizaciones.
+     */
+    public static void registrarContextoBorrador(
+            HttpSession session,
+            ReclamoPrestacionalCompraContexto nuevoContexto)
+            throws Exception {
+
+        if (session == null) {
+            throw new Exception(
+                    "No se pudo obtener la sesion del usuario."
+            );
+        }
+
+        if (nuevoContexto == null
+                || WebKeysCompras.isEmpty(nuevoContexto.getNonce())) {
+
+            throw new Exception(
+                    "No se pudo construir el contexto temporal de Compras."
+            );
+        }
+
+        synchronized (session) {
+            Object contextoAnteriorObj =
+                    session.getAttribute(
+                            WebKeysCompras
+                                    .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                    );
+
+            Object reclamoEnEdicion =
+                    session.getAttribute(
+                            WebKeysAutorizaciones
+                                    .RECLAMO_PRESTACION_EN_EDICION
+                    );
+
+            if (reclamoEnEdicion != null
+                    && !(contextoAnteriorObj
+                    instanceof ReclamoPrestacionalCompraContexto)) {
+
+                throw new Exception(
+                        "Existe un Reclamo Prestacional en edicion iniciado "
+                                + "desde Autorizaciones. Finalicelo o descartelo "
+                                + "antes de precargar uno desde Compras."
+                );
+            }
+
+            limpiarBorradorComprasEnSesion(session);
+
+            session.setAttribute(
+                    WebKeysCompras
+                            .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA,
+                    nuevoContexto
+            );
+        }
+    }
+
+    /**
+     * Prepara la sesion para consultar un RP ya persistido sin destruir un
+     * borrador vigente perteneciente a otro requerimiento.
+     */
+    public static void prepararSesionParaConsulta(
+            HttpSession session,
+            int idRequerimientoCompra,
+            int idReclamoPrestacional) throws Exception {
+
+        if (session == null) {
+            throw new Exception(
+                    "No se pudo obtener la sesion del usuario."
+            );
+        }
+
+        if (idRequerimientoCompra <= 0
+                || idReclamoPrestacional <= 0) {
+
+            throw new Exception(
+                    "No se pudo determinar el Reclamo Prestacional "
+                            + "que debe consultarse."
+            );
+        }
+
+        synchronized (session) {
+            Object contextoObj =
+                    session.getAttribute(
+                            WebKeysCompras
+                                    .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                    );
+
+            if (contextoObj != null
+                    && !(contextoObj
+                    instanceof ReclamoPrestacionalCompraContexto)) {
+
+                throw new Exception(
+                        "Existe un contexto temporal invalido en la sesion."
+                );
+            }
+
+            if (contextoObj instanceof ReclamoPrestacionalCompraContexto) {
+                ReclamoPrestacionalCompraContexto contexto =
+                        (ReclamoPrestacionalCompraContexto) contextoObj;
+
+                if (contexto.getIdRequerimientoCompra()
+                        == idRequerimientoCompra) {
+
+                    limpiarBorradorComprasEnSesion(session);
+                    return;
+                }
+
+                if (contexto.estaVigente(System.currentTimeMillis())) {
+                    throw new Exception(
+                            "Ya existe un inicio de Reclamo Prestacional "
+                                    + "desde Compras en proceso para el requerimiento "
+                                    + contexto.getIdRequerimientoCompra()
+                                    + ". Finalicelo o descartelo antes de consultar otro."
+                    );
+                }
+
+                session.removeAttribute(
+                        WebKeysCompras
+                                .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                );
+            }
+
+            Object reclamoObj =
+                    session.getAttribute(
+                            WebKeysAutorizaciones
+                                    .RECLAMO_PRESTACION_EN_EDICION
+                    );
+
+            if (reclamoObj == null) {
+                if (hayEstadoEdicionEnSesion(session)) {
+                    throw new Exception(
+                            "Existe informacion parcial de otro Reclamo "
+                                    + "Prestacional en edicion en esta sesion."
+                    );
+                }
+
+                return;
+            }
+
+            if (!(reclamoObj instanceof ReclamoPrestacional)) {
+                throw new Exception(
+                        "Existe un Reclamo Prestacional invalido en la sesion."
+                );
+            }
+
+            ReclamoPrestacional reclamoEnEdicion =
+                    (ReclamoPrestacional) reclamoObj;
+
+            if (reclamoEnEdicion.getId_reclamo()
+                    == idReclamoPrestacional) {
+
+                limpiarBorradorComprasEnSesion(session);
+                return;
+            }
+
+            throw new Exception(
+                    "Ya existe otro Reclamo Prestacional en edicion "
+                            + "en esta sesion. Finalicelo o descartelo "
+                            + "antes de navegar desde Compras."
+            );
+        }
+    }
+
+    private static void limpiarBorradorComprasEnSesion(
+            HttpSession session) {
+
+        session.removeAttribute(
+                WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+        );
+        session.removeAttribute(
+                WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION
+        );
+        session.removeAttribute(
+                WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
+        );
+        session.removeAttribute(
+                WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION
+        );
+        session.removeAttribute(
+                WebKeysAutorizaciones.LISTADO_CONTACTOS_RECLAMOS_EN_SESION
+        );
+        session.removeAttribute(
+                WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION
+        );
+        session.removeAttribute(
+                WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS
+        );
+    }
+
+    private static boolean hayEstadoEdicionEnSesion(
+            HttpSession session) {
+
+        if (session == null) {
+            return false;
+        }
+
+        return session.getAttribute(
+                WebKeysAutorizaciones
+                        .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
+        ) != null
+                || session.getAttribute(
+                WebKeysAutorizaciones
+                        .PRESTACION_EN_PROCESO_DE_EDICION
+        ) != null
+                || session.getAttribute(
+                WebKeysAutorizaciones
+                        .LISTADO_REVISIONES_RECLAMOS_EN_SESION
+        ) != null
+                || session.getAttribute(
+                WebKeysAutorizaciones
+                        .LISTADO_CONTACTOS_RECLAMOS_EN_SESION
+        ) != null
+                || session.getAttribute(
+                WebKeysAutorizaciones
+                        .RECLAMO_NUEVO_ESTADO_OBS
+        ) != null;
+    }
+
     private static void restaurarAtributoSiPertenece(
             HttpSession session,
             String nombre,

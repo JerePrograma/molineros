@@ -1,6 +1,7 @@
 package ar.com.ospim.compras.requerimientos.documentos;
 
 import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 
 import com.liferay.portlet.documentlibrary.NoSuchFolderException;
 import com.liferay.portal.kernel.log.Log;
@@ -45,6 +46,57 @@ public class DocumentoLibraryComprasHelper
     private final ServiceContext serviceContext;
     private final long groupId;
     private final long userId;
+
+    public static void validarRelacionOrdenMedica(
+            RequerimientoCompraPresupuesto ordenMedica,
+            int idRequerimientoCompra) throws Exception {
+
+        if (ordenMedica == null
+                || ordenMedica.getIdRequerimiento() == null
+                || ordenMedica.getIdRequerimiento().intValue()
+                != idRequerimientoCompra
+                || ordenMedica.getTipoDocumento() == null
+                || ordenMedica.getTipoDocumento().intValue()
+                != RequerimientoCompraPresupuesto
+                .TIPO_DOCUMENTO_ORDEN_MEDICA
+                || ordenMedica.getIdPrestador() != null
+                || !ordenMedica.isActivo()
+                || ordenMedica.getFechaDocumento() == null
+                || ordenMedica.getDlGroupId() == null
+                || ordenMedica.getDlGroupId().longValue() <= 0L
+                || ordenMedica.getDlFolderId() == null
+                || ordenMedica.getDlFolderId().longValue() <= 0L
+                || ordenMedica.getDlFileEntryId() == null
+                || ordenMedica.getDlFileEntryId().longValue() <= 0L
+                || WebKeysCompras.isEmpty(ordenMedica.getDlFileUuid())
+                || WebKeysCompras.isEmpty(ordenMedica.getNombrePersistido())
+                || WebKeysCompras.isEmpty(ordenMedica.getNombreOriginal())
+                || !TITULO_ORDEN_MEDICA.equals(ordenMedica.getTitulo())) {
+
+            throw new Exception(
+                    "La asociacion de la Orden medica activa es inconsistente."
+            );
+        }
+    }
+
+    public static DocumentoComprasCreado crearIdentidadOrdenMedica(
+            RequerimientoCompraPresupuesto ordenMedica) throws Exception {
+
+        if (ordenMedica == null) {
+            throw new Exception(
+                    "No se informo la Orden medica."
+            );
+        }
+
+        return new DocumentoComprasCreado(
+                ordenMedica.getDlGroupId().longValue(),
+                ordenMedica.getDlFolderId().longValue(),
+                ordenMedica.getDlFileEntryId().longValue(),
+                ordenMedica.getDlFileUuid(),
+                ordenMedica.getNombrePersistido(),
+                ordenMedica.getTitulo()
+        );
+    }
 
     public static DocumentoLibraryComprasHelper crear(
             ActionRequest actionRequest) throws Exception {

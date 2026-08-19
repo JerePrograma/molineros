@@ -10,6 +10,9 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceImpl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -30,6 +33,78 @@ public final class BusquedaRequerimientoCompraHelper {
                         ? filtro
                         : new RequerimientoCompraFiltro()
         );
+    }
+
+    public List<RequerimientoCompra> buscarRequerimientosListado(
+            RequerimientoCompraFiltro filtro,
+            boolean incluirReclamoRp) throws Exception {
+
+        RequerimientoCompraFiltro filtroEfectivo =
+                filtro != null
+                        ? filtro
+                        : new RequerimientoCompraFiltro();
+
+        List<RequerimientoCompra> requerimientos =
+                service.buscarRequerimientos(
+                        filtroEfectivo
+                );
+
+        if (requerimientos == null) {
+            requerimientos = new ArrayList<RequerimientoCompra>();
+        }
+
+        if (!incluirReclamoRp) {
+            return requerimientos;
+        }
+
+        Integer estadoOriginal = filtroEfectivo.getIdEstado();
+
+        try {
+            filtroEfectivo.setIdEstado(
+                    Integer.valueOf(
+                            WebKeysCompras.ESTADO_RECLAMO_RP
+                    )
+            );
+
+            List<RequerimientoCompra> requerimientosRp =
+                    service.buscarRequerimientos(
+                            filtroEfectivo
+                    );
+
+            if (requerimientosRp != null
+                    && !requerimientosRp.isEmpty()) {
+                requerimientos.addAll(requerimientosRp);
+            }
+        } finally {
+            filtroEfectivo.setIdEstado(estadoOriginal);
+        }
+
+        Collections.sort(
+                requerimientos,
+                new Comparator<RequerimientoCompra>() {
+                    public int compare(
+                            RequerimientoCompra a,
+                            RequerimientoCompra b) {
+
+                        int idA = a != null
+                                ? a.getIdRequerimientoCompra()
+                                : 0;
+                        int idB = b != null
+                                ? b.getIdRequerimientoCompra()
+                                : 0;
+
+                        if (idA == idB) {
+                            return 0;
+                        }
+
+                        return idA > idB
+                                ? -1
+                                : 1;
+                    }
+                }
+        );
+
+        return requerimientos;
     }
 
     public RequerimientoCompra getRequerimientoCompra(
@@ -140,9 +215,9 @@ public final class BusquedaRequerimientoCompraHelper {
 
         String cuil = WebKeysCompras.trimToNull(cuilTitular);
 
-        if (cuil == null) {
+        if (cuil == null || !cuil.matches("^[0-9]{11}$")) {
             throw new Exception(
-                    "Debe informar el CUIL titular."
+                    "Debe informar un CUIL titular valido."
             );
         }
 

@@ -55,6 +55,18 @@ public class EditarRequerimientoCompraServiceImpl {
     private static final String SQL_GUARDAR_COTIZACION =
             "{ ? = call compras.guardar_cotizacion_requerimiento_call(?,?,?,?,?) }";
 
+    public Transaccion abrirTransaccion() throws Exception {
+        Connection con = ConnectionHelper.getConnectionForTransaction();
+
+        if (con == null) {
+            throw new SQLException(
+                    "No se obtuvo una conexion transaccional para Compras."
+            );
+        }
+
+        return new Transaccion(this, con);
+    }
+
     public int guardarRequerimientoCompra(
             RequerimientoCompra requerimiento,
             String usuario) throws Exception {
@@ -273,6 +285,22 @@ public class EditarRequerimientoCompraServiceImpl {
 
     public int guardarCotizacion(
             int idRequerimientoCompra,
+            Integer[] idsDetalle,
+            BigDecimal[] preciosUnitarios,
+            Integer idPrestadorAdjudicado,
+            String usuario) throws Exception {
+
+        return guardarCotizacion(
+                idRequerimientoCompra,
+                construirArrayEnterosPostgreSql(idsDetalle),
+                construirArrayNumericosPostgreSql(preciosUnitarios),
+                idPrestadorAdjudicado,
+                usuario
+        );
+    }
+
+    public int guardarCotizacion(
+            int idRequerimientoCompra,
             String idsDetalle,
             String preciosUnitarios,
             Integer idPrestadorAdjudicado,
@@ -395,6 +423,114 @@ public class EditarRequerimientoCompraServiceImpl {
             return stmt.getInt(1);
         } finally {
             ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    private String construirArrayEnterosPostgreSql(
+            Integer[] valores) {
+
+        if (valores == null) {
+            return null;
+        }
+
+        StringBuilder value = new StringBuilder();
+        value.append('{');
+
+        for (int i = 0; i < valores.length; i++) {
+            if (i > 0) {
+                value.append(',');
+            }
+
+            Integer actual = valores[i];
+            value.append(
+                    actual != null
+                            ? actual.toString()
+                            : "NULL"
+            );
+        }
+
+        value.append('}');
+        return value.toString();
+    }
+
+    private String construirArrayNumericosPostgreSql(
+            BigDecimal[] valores) {
+
+        if (valores == null) {
+            return null;
+        }
+
+        StringBuilder value = new StringBuilder();
+        value.append('{');
+
+        for (int i = 0; i < valores.length; i++) {
+            if (i > 0) {
+                value.append(',');
+            }
+
+            BigDecimal actual = valores[i];
+            value.append(
+                    actual != null
+                            ? actual.toPlainString()
+                            : "NULL"
+            );
+        }
+
+        value.append('}');
+        return value.toString();
+    }
+
+    public static final class Transaccion {
+
+        private final EditarRequerimientoCompraServiceImpl service;
+        private Connection con;
+
+        private Transaccion(
+                EditarRequerimientoCompraServiceImpl service,
+                Connection con) {
+
+            this.service = service;
+            this.con = con;
+        }
+
+        public int guardarRequerimientoCompra(
+                RequerimientoCompra requerimiento,
+                String usuario) throws Exception {
+
+            return service.guardarRequerimientoCompra(
+                    con,
+                    requerimiento,
+                    usuario
+            );
+        }
+
+        public int registrarOrdenMedica(
+                int idRequerimiento,
+                OrdenMedicaValidada ordenMedica,
+                DocumentoComprasCreado documento,
+                String usuario) throws Exception {
+
+            return service.registrarOrdenMedica(
+                    con,
+                    idRequerimiento,
+                    ordenMedica,
+                    documento,
+                    usuario
+            );
+        }
+
+        public void commit() throws Exception {
+            con.commit();
+        }
+
+        public void rollback() throws Exception {
+            con.rollback();
+        }
+
+        public void cerrar() {
+            Connection actual = con;
+            con = null;
+            ConnectionHelper.cerrar(actual);
         }
     }
 

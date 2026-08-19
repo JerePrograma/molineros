@@ -4,8 +4,8 @@ import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraFiltro;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
-import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
-import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
+import ar.com.ospim.compras.requerimientos.helper.BusquedaRequerimientoCompraHelper;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper;
 import ar.com.ospim.util.PermissionUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -20,8 +20,6 @@ import org.apache.struts.action.ActionMapping;
 
 import javax.portlet.*;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +27,12 @@ import java.util.Map;
 public class BuscarRequerimientosComprasAction extends PortletAction {
 
     private static Log _log = LogFactoryUtil.getLog(BuscarRequerimientosComprasAction.class);
+
+    private final BusquedaRequerimientoCompraHelper busquedaHelper =
+            new BusquedaRequerimientoCompraHelper();
+
+    private final RequerimientoCompraReclamoPrestacionalHelper reclamoHelper =
+            new RequerimientoCompraReclamoPrestacionalHelper();
 
     private static final String[] SEARCH_PARAMS = new String[] {
             "id_estado",
@@ -96,7 +100,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
                             == WebKeysCompras.ESTADO_COTIZADO;
 
             List<RequerimientoCompra> requerimientos =
-                    buscarRequerimientosListado(
+                    busquedaHelper.buscarRequerimientosListado(
                             filtro,
                             incluirReclamoRpEnCotizados
                     );
@@ -160,86 +164,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
         return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_RESULT_SEARCH);
     }
 
-    private List<RequerimientoCompra> buscarRequerimientosListado(
-            RequerimientoCompraFiltro filtro,
-            boolean incluirReclamoRp) throws Exception {
-
-        List<RequerimientoCompra> requerimientos =
-                BusquedaRequerimientoCompraServiceUtil
-                        .buscarRequerimientos(
-                                filtro
-                        );
-
-        if (requerimientos == null) {
-            requerimientos =
-                    new ArrayList<RequerimientoCompra>();
-        }
-
-        if (!incluirReclamoRp) {
-            return requerimientos;
-        }
-
-        Integer estadoOriginal =
-                filtro.getIdEstado();
-
-        try {
-            filtro.setIdEstado(
-                    Integer.valueOf(
-                            WebKeysCompras.ESTADO_RECLAMO_RP
-                    )
-            );
-
-            List<RequerimientoCompra> requerimientosRp =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .buscarRequerimientos(
-                                    filtro
-                            );
-
-            if (requerimientosRp != null
-                    && !requerimientosRp.isEmpty()) {
-
-                requerimientos.addAll(
-                        requerimientosRp
-                );
-            }
-        } finally {
-            filtro.setIdEstado(
-                    estadoOriginal
-            );
-        }
-
-        Collections.sort(
-                requerimientos,
-                new Comparator<RequerimientoCompra>() {
-                    public int compare(
-                            RequerimientoCompra a,
-                            RequerimientoCompra b) {
-
-                        int idA =
-                                a != null
-                                        ? a.getIdRequerimientoCompra()
-                                        : 0;
-
-                        int idB =
-                                b != null
-                                        ? b.getIdRequerimientoCompra()
-                                        : 0;
-
-                        if (idA == idB) {
-                            return 0;
-                        }
-
-                        return idA > idB
-                                ? -1
-                                : 1;
-                    }
-                }
-        );
-
-        return requerimientos;
-    }
-
-    private Map<Integer, RequerimientoCompraReclamoPrestacional>
+private Map<Integer, RequerimientoCompraReclamoPrestacional>
             cargarRelacionesRpListado(
                     List<RequerimientoCompra> requerimientos)
                     throws Exception {
@@ -268,7 +193,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             }
         }
 
-        return RequerimientoCompraReclamoPrestacionalServiceUtil
+        return reclamoHelper
                 .obtenerVinculadasPorRequerimientos(
                         ids
                 );
@@ -292,7 +217,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
         try {
             request.setAttribute(
                     WebKeysCompras.ESTADOS_REQUERIMIENTO,
-                    BusquedaRequerimientoCompraServiceUtil.listarEstados()
+                    busquedaHelper.listarEstados()
             );
         } catch (Exception e) {
             request.setAttribute(
@@ -304,7 +229,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
         try {
             request.setAttribute(
                     WebKeysCompras.SECTORES_REQUERIMIENTO,
-                    BusquedaRequerimientoCompraServiceUtil.listarSectores()
+                    busquedaHelper.listarSectores()
             );
         } catch (Exception e) {
             request.setAttribute(

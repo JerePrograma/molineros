@@ -87,7 +87,7 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                             dlFileEntryIdSolicitado
                     );
 
-            validarRelacionOrdenMedica(
+            DocumentoLibraryComprasHelper.validarRelacionOrdenMedica(
                     ordenMedica,
                     idRequerimientoCompra
             );
@@ -101,9 +101,10 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
                             );
 
             DocumentoComprasCreado identidad =
-                    crearIdentidad(
-                            ordenMedica
-                    );
+                    DocumentoLibraryComprasHelper
+                            .crearIdentidadOrdenMedica(
+                                    ordenMedica
+                            );
 
             DocumentoLibraryComprasHelper gestorDocumento =
                     DocumentoLibraryComprasHelper.crear(
@@ -271,57 +272,7 @@ public class DescargarOrdenMedicaCompraAction extends PortletAction {
         );
     }
 
-    private void validarRelacionOrdenMedica(
-            RequerimientoCompraPresupuesto ordenMedica,
-            int idRequerimientoCompra) throws Exception {
-
-        if (ordenMedica == null
-                || ordenMedica.getIdRequerimiento() == null
-                || ordenMedica.getIdRequerimiento().intValue()
-                != idRequerimientoCompra
-                || ordenMedica.getTipoDocumento() == null
-                || ordenMedica.getTipoDocumento().intValue()
-                != RequerimientoCompraPresupuesto
-                .TIPO_DOCUMENTO_ORDEN_MEDICA
-                || ordenMedica.getIdPrestador() != null
-                || !ordenMedica.isActivo()
-                || ordenMedica.getFechaDocumento() == null
-                || ordenMedica.getDlGroupId() == null
-                || ordenMedica.getDlFolderId() == null
-                || ordenMedica.getDlFileEntryId() == null
-                || WebKeysCompras.isEmpty(
-                ordenMedica.getDlFileUuid()
-        )
-                || WebKeysCompras.isEmpty(
-                ordenMedica.getNombrePersistido()
-        )
-                || !DocumentoLibraryComprasHelper
-                .TITULO_ORDEN_MEDICA
-                .equals(
-                        ordenMedica.getTitulo()
-                )) {
-
-            throw new Exception(
-                    "No existe una Orden médica activa "
-                            + "y válida para el requerimiento."
-            );
-        }
-    }
-
-    private DocumentoComprasCreado crearIdentidad(
-            RequerimientoCompraPresupuesto ordenMedica) {
-
-        return new DocumentoComprasCreado(
-                ordenMedica.getDlGroupId().longValue(),
-                ordenMedica.getDlFolderId().longValue(),
-                ordenMedica.getDlFileEntryId().longValue(),
-                ordenMedica.getDlFileUuid(),
-                ordenMedica.getNombrePersistido(),
-                ordenMedica.getTitulo()
-        );
-    }
-
-    private String obtenerNombreDescarga(
+private String obtenerNombreDescarga(
             String nombreOriginal,
             String nombreFallback) {
 

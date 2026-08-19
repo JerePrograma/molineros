@@ -6,7 +6,7 @@ import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
-import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.helper.EditarRequerimientoCompraHelper;
 
 import ar.com.ospim.util.PermissionUtil;
 
@@ -49,6 +49,9 @@ public class CambiarEstadoRequerimientoCompraAction
     private static final String
             STRUTS_ACTION_EDITAR_REQUERIMIENTO =
             "/compras/editar_requerimiento";
+
+    private final EditarRequerimientoCompraHelper requerimientoHelper =
+            new EditarRequerimientoCompraHelper();
 
     public void processAction(
             ActionMapping mapping,
@@ -108,7 +111,7 @@ public class CambiarEstadoRequerimientoCompraAction
                 );
 
                 NotificacionCotizacionResultado resultado =
-                        EditarRequerimientoCompraServiceUtil
+                        requerimientoHelper
                                 .reintentarNotificacionesCotizacion(
                                         idRequerimientoCompra,
                                         usuario,
@@ -146,7 +149,7 @@ public class CambiarEstadoRequerimientoCompraAction
                 );
 
                 NotificacionCotizacionResultado resultado =
-                        EditarRequerimientoCompraServiceUtil
+                        requerimientoHelper
                                 .enviarACotizar(
                                         idRequerimientoCompra,
                                         usuario,
@@ -183,7 +186,7 @@ public class CambiarEstadoRequerimientoCompraAction
                         user
                 );
 
-                EditarRequerimientoCompraServiceUtil
+                requerimientoHelper
                         .cambiarEstado(
                                 idRequerimientoCompra,
                                 WebKeysCompras.ESTADO_ANULADO,

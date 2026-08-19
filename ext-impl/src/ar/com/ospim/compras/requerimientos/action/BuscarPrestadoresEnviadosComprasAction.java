@@ -2,7 +2,7 @@ package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
-import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.helper.BusquedaRequerimientoCompraHelper;
 import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -21,6 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BuscarPrestadoresEnviadosComprasAction extends PortletAction {
+
+    private final BusquedaRequerimientoCompraHelper busquedaHelper =
+            new BusquedaRequerimientoCompraHelper();
 
     public ActionForward render(ActionMapping mapping,
                                 ActionForm form,
@@ -41,7 +44,7 @@ public class BuscarPrestadoresEnviadosComprasAction extends PortletAction {
                     ParamUtil.getInteger(renderRequest, "limite", 20);
 
             prestadores =
-                    BusquedaRequerimientoCompraServiceUtil.buscarPrestadoresEnviados(
+                    busquedaHelper.buscarPrestadoresEnviados(
                             idRequerimiento,
                             texto,
                             limite

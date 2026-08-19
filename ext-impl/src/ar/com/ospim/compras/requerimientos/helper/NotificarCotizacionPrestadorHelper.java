@@ -25,7 +25,6 @@ import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -740,7 +739,7 @@ public class NotificarCotizacionPrestadorHelper {
             return null;
         }
 
-        validarRelacionOrdenMedica(
+        DocumentoLibraryComprasHelper.validarRelacionOrdenMedica(
                 ordenMedica,
                 idRequerimientoCompra
         );
@@ -868,47 +867,7 @@ public class NotificarCotizacionPrestadorHelper {
         );
     }
 
-    private void validarRelacionOrdenMedica(
-            RequerimientoCompraPresupuesto ordenMedica,
-            int idRequerimientoCompra) throws Exception {
-
-        if (ordenMedica.getIdRequerimiento() == null
-                || ordenMedica.getIdRequerimiento().intValue()
-                != idRequerimientoCompra
-                || ordenMedica.getTipoDocumento() == null
-                || ordenMedica.getTipoDocumento().intValue()
-                != RequerimientoCompraPresupuesto
-                        .TIPO_DOCUMENTO_ORDEN_MEDICA
-                || ordenMedica.getIdPrestador() != null
-                || !ordenMedica.isActivo()
-                || ordenMedica.getFechaDocumento() == null
-                || ordenMedica.getDlGroupId() == null
-                || ordenMedica.getDlGroupId().longValue() <= 0L
-                || ordenMedica.getDlFolderId() == null
-                || ordenMedica.getDlFolderId().longValue() <= 0L
-                || ordenMedica.getDlFileEntryId() == null
-                || ordenMedica.getDlFileEntryId().longValue() <= 0L
-                || WebKeysCompras.isEmpty(
-                        ordenMedica.getDlFileUuid()
-                )
-                || WebKeysCompras.isEmpty(
-                        ordenMedica.getNombrePersistido()
-                )
-                || WebKeysCompras.isEmpty(
-                        ordenMedica.getNombreOriginal()
-                )
-                || !DocumentoLibraryComprasHelper
-                        .TITULO_ORDEN_MEDICA.equals(
-                                ordenMedica.getTitulo()
-                        )) {
-
-            throw new Exception(
-                    "La asociación de la Orden médica activa es inconsistente."
-            );
-        }
-    }
-
-    private void validarIdentidadOrdenMedica(
+private void validarIdentidadOrdenMedica(
             RequerimientoCompraPresupuesto ordenMedica,
             DLFileEntry entry,
             long companyId) throws Exception {

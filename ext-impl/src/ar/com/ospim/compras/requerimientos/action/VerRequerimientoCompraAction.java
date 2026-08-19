@@ -4,8 +4,8 @@ import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
-import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
-import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
+import ar.com.ospim.compras.requerimientos.helper.BusquedaRequerimientoCompraHelper;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper;
 import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.util.PermissionUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -32,6 +32,12 @@ public class VerRequerimientoCompraAction extends PortletAction {
 
     private static final Log _log =
             LogFactoryUtil.getLog(VerRequerimientoCompraAction.class);
+
+    private final BusquedaRequerimientoCompraHelper busquedaHelper =
+            new BusquedaRequerimientoCompraHelper();
+
+    private final RequerimientoCompraReclamoPrestacionalHelper reclamoHelper =
+            new RequerimientoCompraReclamoPrestacionalHelper();
 
     public void processAction(ActionMapping mapping,
                               ActionForm form,
@@ -101,7 +107,7 @@ public class VerRequerimientoCompraAction extends PortletAction {
             }
 
             RequerimientoCompra requerimiento =
-                    BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(
+                    busquedaHelper.getRequerimientoCompra(
                             idRequerimientoCompra
                     );
 
@@ -178,7 +184,7 @@ public class VerRequerimientoCompraAction extends PortletAction {
 
             try {
                 hayPendientes =
-                        BusquedaRequerimientoCompraServiceUtil
+                        busquedaHelper
                                 .hayPrestadoresPendientesNotificacion(
                                         requerimiento
                                                 .getIdRequerimientoCompra()
@@ -226,7 +232,7 @@ public class VerRequerimientoCompraAction extends PortletAction {
 
             try {
                 relacion =
-                        RequerimientoCompraReclamoPrestacionalServiceUtil
+                        reclamoHelper
                                 .obtenerPorRequerimiento(
                                         requerimiento
                                                 .getIdRequerimientoCompra()
@@ -263,7 +269,7 @@ public class VerRequerimientoCompraAction extends PortletAction {
         try {
             renderRequest.setAttribute(
                     WebKeysCompras.ESTADOS_REQUERIMIENTO,
-                    BusquedaRequerimientoCompraServiceUtil.listarEstados()
+                    busquedaHelper.listarEstados()
             );
         } catch (Exception e) {
             _log.error(e);
@@ -277,7 +283,7 @@ public class VerRequerimientoCompraAction extends PortletAction {
         try {
             renderRequest.setAttribute(
                     WebKeysCompras.SECTORES_REQUERIMIENTO,
-                    BusquedaRequerimientoCompraServiceUtil.listarSectores()
+                    busquedaHelper.listarSectores()
             );
         } catch (Exception e) {
             _log.error(e);

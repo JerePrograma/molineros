@@ -152,13 +152,10 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                     mensaje
             );
 
-            if (e instanceof
-                    RequerimientoCompraDetalleHelper.ValidacionCompraException) {
+            if (e instanceof ValidacionCompraException) {
 
-                RequerimientoCompraDetalleHelper.ValidacionCompraException
-                        validacion =
-                        (RequerimientoCompraDetalleHelper.ValidacionCompraException)
-                                e;
+                ValidacionCompraException validacion =
+                        (ValidacionCompraException) e;
 
                 actionRequest.setAttribute(
                         WebKeysCompras.ERROR_CAMPO_COMPRA,
