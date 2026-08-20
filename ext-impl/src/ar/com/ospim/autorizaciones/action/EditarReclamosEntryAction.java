@@ -17,6 +17,10 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import javax.servlet.http.HttpSession;
 
+import ar.com.ospim.compras.requerimientos.helper.ReclamoPrestacionalCompraDocumentacionHelper;
+import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.service.ServiceContextFactory;
+import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import org.apache.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -37,19 +41,14 @@ import com.liferay.portal.util.PortalUtil;
 import ar.com.ospim.afiliados.beans.AfiCuentasBancarias;
 import ar.com.ospim.afiliados.beans.AfiPlan;
 import ar.com.ospim.afiliados.beans.AfiSuspencionCobertura;
-import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.afiliados.beans.CieDiez;
 import ar.com.ospim.afiliados.services.AfiCuentasBancariasServiceUtil;
-import ar.com.ospim.afiliados.services.EditarAfiliadoServiceUtil;
 import ar.com.ospim.afiliados.services.PlanServiceUtil;
-import ar.com.ospim.autorizaciones.beans.AfiCuentaBancaria;
 import ar.com.ospim.autorizaciones.beans.ItemReclamoPrestacionalesTotal;
 import ar.com.ospim.autorizaciones.beans.PrestacionesReclamo;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
-import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacionalCuenta;
 import ar.com.ospim.autorizaciones.beans.RevisionesReclamo;
-import ar.com.ospim.autorizaciones.services.ReclamoPrestacionServiceImpl;
 import ar.com.ospim.autorizaciones.services.ReclamosPrestacionesServiceUtil;
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.compras.WebKeysCompras;
@@ -78,7 +77,10 @@ import ar.com.ospim.util.StringUtils;
 	private static final int PLAN_COBERTURA = 3;
 	private static final int PLAN_COBERTURA_TOTAL_O = 9;
 	private static final int PLAN_COBERTURA_TOTAL_M = 20;
-	
+        private final ReclamoPrestacionalCompraDocumentacionHelper
+                documentacionCompraHelper =
+                new ReclamoPrestacionalCompraDocumentacionHelper();
+
 	public void processAction(ActionMapping mapping, ActionForm form,
 			PortletConfig portletConfig, ActionRequest actionRequest,
 			ActionResponse actionResponse) throws Exception {
@@ -788,7 +790,85 @@ import ar.com.ospim.util.StringUtils;
                                 );
                             }
 
-                            idReclamo = idReclamoCreado;
+                            idReclamo =
+                                    idReclamoCreado;
+
+                            /*
+                             * El RP ya existe y su vinculo con Compras quedo confirmado.
+                             *
+                             * Ahora se materializa la documentacion de Compras dentro
+                             * de la carpeta canonica ReclamosPrestacionales para que
+                             * aparezca automaticamente en la solapa Archivos.
+                             *
+                             * Una falla documental NO debe marcar como fallida
+                             * la vinculacion Compras/RP ya confirmada.
+                             */
+                            try {
+                                ServiceContext serviceContextDocumentacion =
+                                        ServiceContextFactory.getInstance(
+                                                DLFileEntry.class.getName(),
+                                                renderRequest
+                                        );
+
+                                int cantidadDocumentos =
+                                        documentacionCompraHelper
+                                                .adjuntarDocumentacion(
+                                                        contextoCompra
+                                                                .getIdRequerimientoCompra(),
+                                                        idReclamoCreado,
+                                                        serviceContextDocumentacion
+                                                );
+
+                                _log.info(
+                                        "Documentacion de Compras copiada "
+                                                + "a la solapa Archivos del RP. "
+                                                + "idRequerimiento="
+                                                + contextoCompra
+                                                .getIdRequerimientoCompra()
+                                                + ", idReclamo="
+                                                + idReclamoCreado
+                                                + ", cantidad="
+                                                + cantidadDocumentos
+                                );
+
+                            } catch (Exception documentacionError) {
+
+                                /*
+                                 * No propagar esta excepcion al catch de vinculacion.
+                                 *
+                                 * crearYVincular(...) ya confirmo el RP y el vinculo.
+                                 * Marcar esa relacion como ERROR por una falla posterior
+                                 * de Document Library seria semánticamente incorrecto.
+                                 */
+                                _log.error(
+                                        "El Reclamo Prestacional fue creado y vinculado "
+                                                + "con Compras, pero no pudo completarse "
+                                                + "la copia de documentacion a la solapa Archivos. "
+                                                + "idRequerimiento="
+                                                + contextoCompra
+                                                .getIdRequerimientoCompra()
+                                                + ", idReclamo="
+                                                + idReclamoCreado,
+                                        documentacionError
+                                );
+
+                                SessionErrors.add(
+                                        renderRequest,
+                                        "error-reclamo-compras"
+                                );
+
+                                renderRequest.setAttribute(
+                                        "msgErrorReclamoCompras",
+                                        "El Reclamo Prestacional "
+                                                + idReclamoCreado
+                                                + " fue creado correctamente, "
+                                                + "pero no se pudo completar toda "
+                                                + "la documentacion de Compras "
+                                                + "en la solapa Archivos. "
+                                                + "No vuelva a crear el reclamo; "
+                                                + "revise la documentacion."
+                                );
+                            }
 
                             session.removeAttribute(
                                     WebKeysCompras

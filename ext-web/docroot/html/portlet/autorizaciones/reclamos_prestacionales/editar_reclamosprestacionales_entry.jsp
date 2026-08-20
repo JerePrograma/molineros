@@ -175,7 +175,6 @@ if (!StringUtils.checkEmpty(contextoCompraNonce)
 				value="<%= cmd %>"
 			/>
 		</liferay-util:include>
-		<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/documentacion_compras.jsp" %>
 	</c:when>
 	<c:when test='<%= tabValue.equals("cta_bancaria") %>'>
 		<liferay-util:include page="/html/portlet/autorizaciones/reclamos_prestacionales/cta_bancaria_reclamo.jsp"/>
