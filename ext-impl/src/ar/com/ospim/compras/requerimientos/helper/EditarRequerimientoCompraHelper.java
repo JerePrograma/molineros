@@ -98,6 +98,35 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
+            /*
+             * El sector queda fijado definitivamente durante el alta.
+             *
+             * No se confia en el valor recibido desde HTTP para un requerimiento
+             * existente. Si se recibe explicitamente otro sector, se rechaza la
+             * operacion. Si no se recibe sector, se restaura el valor persistido.
+             */
+            Integer idSectorActual =
+                    actual.getIdSector();
+
+            Integer idSectorRecibido =
+                    requerimiento.getIdSector();
+
+            if (idSectorRecibido != null
+                    && idSectorRecibido.intValue() > 0
+                    && !mismoInteger(
+                    idSectorActual,
+                    idSectorRecibido
+            )) {
+
+                throw errorUsuario(
+                        "El sector del requerimiento no puede modificarse una vez creado."
+                );
+            }
+
+            requerimiento.setIdSector(
+                    idSectorActual
+            );
+
             RequerimientoCompra requerimientoPersistir;
 
             if (actual.puedeEditarEstructura()) {
@@ -1509,10 +1538,10 @@ private void prepararDetalleParaGuardar(
     if (sectorObservacion) {
         if (detallePersistido != null
                 && !detallePersistido.esObservacion()) {
-
             throw errorUsuario(
                     "El detalle existente no corresponde al sector "
-                            + "seleccionado. Debe quitarlo antes de cambiar el sector."
+                            + "del requerimiento. Actualice la pantalla "
+                            + "e intente nuevamente."
             );
         }
 
@@ -1557,7 +1586,8 @@ private void prepararDetalleParaGuardar(
 
             throw errorUsuario(
                     "El detalle existente no corresponde al sector "
-                            + "seleccionado. Debe quitarlo antes de cambiar el sector."
+                            + "del requerimiento. Actualice la pantalla "
+                            + "e intente nuevamente."
             );
         }
 

@@ -40,6 +40,17 @@ boolean cargosEditablesPantalla =
         puedeEditarEstructuraPantalla
         && !cargosSoloLecturaPantalla;
 
+/*
+ * El sector se define exclusivamente durante el alta.
+ *
+ * Una vez creado el requerimiento, el sector es inmutable incluso
+ * mientras el resto de la estructura continúe editable en PENDIENTE.
+ */
+boolean sectorEditablePantalla =
+        puedeEditarEstructuraPantalla
+        && req != null
+        && req.getIdRequerimientoCompra() <= 0;
+
 Object relacionReclamoCabeceraAttr =
         renderRequest.getAttribute(
                 WebKeysCompras
@@ -333,6 +344,9 @@ int idRpCabecera =
 
                     <select id="<portlet:namespace />sector_id"
                             class="compras-control compras-control-sector"
+                            <%= sectorEditablePantalla
+                                    ? ""
+                                    : "disabled=\"disabled\"" %>
                             onchange="<portlet:namespace />cambiarSectorCompra(true);">
 
                         <option value="0"
