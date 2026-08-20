@@ -1087,8 +1087,7 @@ public class EditarRequerimientoCompraHelper {
         }
     }
 
-    public NotificacionCotizacionResultado
-    reintentarNotificacionesCotizacion(
+    public NotificacionCotizacionResultado reintentarNotificacionesCotizacion(
             int idRequerimientoCompra,
             String usuario,
             long companyId,

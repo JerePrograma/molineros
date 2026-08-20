@@ -105,10 +105,6 @@ public class NotificarCotizacionPrestadorHelper {
                 resultado
         );
 
-        /*
-         * Si no existen candidatos procesables no necesitamos
-         * preparar Document Library ni generar el PDF.
-         */
         if (candidatos.isEmpty()) {
 
             if (_log.isInfoEnabled()) {
@@ -131,14 +127,10 @@ public class NotificarCotizacionPrestadorHelper {
         }
 
         /*
-         * A partir de este punto existe por lo menos un prestador
-         * potencialmente procesable.
+         * Existe por lo menos un prestador procesable.
          *
-         * El contexto documental se valida antes de generar el PDF
-         * y antes de reservar al primer prestador.
-         *
-         * De este modo un error estructural de Document Library
-         * no deja filas de notificacion en PROCESANDO.
+         * El pedido que se enviara por correo debe poder
+         * persistirse en Document Library.
          */
         DocumentoLibraryComprasHelper
                 .validarContextoDocumentLibrary(
@@ -146,18 +138,10 @@ public class NotificarCotizacionPrestadorHelper {
                 );
 
         /*
-         * El PDF se genera una unica vez para esta ejecucion.
+         * El PDF se genera una unica vez.
          *
-         * Estos mismos bytes:
-         *
-         * 1. se conservaran en Document Library para cada intento;
-         * 2. se adjuntaran al correo.
-         *
-         * Por lo tanto el documento historico y el adjunto enviado
-         * son exactamente el mismo contenido binario.
-         *
-         * Si Jasper falla, no queda ninguna fila PROCESANDO
-         * ni se realizan envios parciales.
+         * El mismo byte[] se persiste y posteriormente
+         * se adjunta al correo.
          */
         byte[] pedidoPresupuestoPdf =
                 generarPedidoPresupuestoPdf(
@@ -169,14 +153,6 @@ public class NotificarCotizacionPrestadorHelper {
                         + idRequerimientoCompra
                         + ".pdf";
 
-        /*
-         * Todas las Ordenes medicas activas se recuperan y validan
-         * antes de reservar al primer prestador.
-         *
-         * Esto mantiene la regla fail-closed y evita que una
-         * asociacion documental inconsistente produzca envios
-         * parciales.
-         */
         List<OrdenMedicaAdjunta> ordenesMedicasAdjuntas =
                 recuperarOrdenesMedicasAdjuntas(
                         idRequerimientoCompra,
@@ -586,18 +562,10 @@ public class NotificarCotizacionPrestadorHelper {
          * 3. CONSERVAR EL PEDIDO EXACTO ANTES DEL ENVIO
          * ==========================================================
          *
-         * Este orden es deliberado:
+         * El pedido debe conservarse antes del correo.
          *
-         *   RESERVA
-         *      ->
-         *   PERSISTENCIA DOCUMENTAL
-         *      ->
-         *   MAIL
-         *      ->
-         *   ENVIADO
-         *
-         * Nunca se envia un correo cuyo pedido PDF no haya podido
-         * conservarse previamente.
+         * El mismo byte[] que se persiste es el que luego
+         * se adjunta al mensaje.
          */
         try {
             registrarPedidoCotizacionActual(
@@ -852,8 +820,7 @@ public class NotificarCotizacionPrestadorHelper {
         }
     }
 
-    protected RequerimientoCompraPedidoCotizacion
-    registrarPedidoCotizacionActual(
+    protected RequerimientoCompraPedidoCotizacion registrarPedidoCotizacionActual(
             int idRequerimiento,
             int idPrestador,
             byte[] contenido,
@@ -906,17 +873,6 @@ public class NotificarCotizacionPrestadorHelper {
                 null;
 
         try {
-            /*
-             * Primero se crea el archivo físico.
-             *
-             * DocumentoLibraryComprasHelper debe validar:
-             *
-             * - nombre seguro;
-             * - extensión .pdf;
-             * - firma %PDF-;
-             * - dl.file.max.size;
-             * - identidad final de Document Library.
-             */
             documento =
                     DocumentoLibraryComprasHelper
                             .crearPedidoCotizacion(
@@ -984,10 +940,6 @@ public class NotificarCotizacionPrestadorHelper {
                     documento.getUuid()
             );
 
-            /*
-             * Es el nombre que recibio efectivamente
-             * el prestador como adjunto.
-             */
             asociacion.setNombreOriginal(
                     nombreOriginal
             );
@@ -1027,16 +979,6 @@ public class NotificarCotizacionPrestadorHelper {
 
         } catch (Exception errorRegistro) {
 
-            /*
-             * IMPORTANTE:
-             *
-             * Esta compensacion solamente es segura si
-             * registrarPedidoCotizacionDocumento(...) garantiza que,
-             * cuando lanza una excepcion, la transaccion SQL ya fue
-             * rollbackeada de manera confirmada.
-             *
-             * Ese contrato se implementara en el ServiceImpl.
-             */
             if (documento != null) {
 
                 try {
@@ -1259,7 +1201,7 @@ public class NotificarCotizacionPrestadorHelper {
     }
 
     /**
-     * Firma legacy conservada. La regla canonica vive ahora en
+     * Firma legacy conservada. La regla canonica vive en
      * DocumentoLibraryComprasHelper.
      */
     protected String validarContenidoOrdenMedica(
@@ -1385,11 +1327,11 @@ public class NotificarCotizacionPrestadorHelper {
                         usuario
                 );
 
-        return reserva != null && reserva.isReservado();
+        return reserva != null
+                && reserva.isReservado();
     }
 
-    protected FinalizacionCotizacionPrestador
-    finalizarCotizacionPrestadorConDetalle(
+    protected FinalizacionCotizacionPrestador finalizarCotizacionPrestadorConDetalle(
             int idRequerimiento,
             int idPrestador,
             String estado,
