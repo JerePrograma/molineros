@@ -25,7 +25,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashSet;
