@@ -4,7 +4,7 @@ import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
-import ar.com.ospim.servlets.PdfServlet;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPedidoCotizacion;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -144,18 +144,36 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
          * 2. PEDIDO DE COTIZACION
          * ==========================================================
          *
-         * Se utiliza el mismo generador utilizado por el mail
-         * de solicitud de cotizacion.
+         * No regenerar el PDF en este punto.
+         *
+         * El requerimiento ya se encuentra COTIZADO y el Jasper
+         * imprime datos de cotizacion y prestador. Regenerarlo
+         * podria producir un documento distinto del pedido que
+         * recibio originalmente el prestador.
+         *
+         * Se recupera exclusivamente el pedido exacto persistido
+         * durante el envio correspondiente al prestador finalmente
+         * adjudicado.
          */
-        byte[] pedidoCotizacion =
-                new PdfServlet()
-                        .crearRequerimientoCompraComoAdjunto(
+        RequerimientoCompraPedidoCotizacion pedidoCotizacion =
+                BusquedaRequerimientoCompraServiceUtil
+                        .getPedidoCotizacionAdjudicado(
                                 idRequerimientoCompra
                         );
 
-        validarPdf(
+        validarPedidoCotizacion(
                 pedidoCotizacion,
-                "Pedido de cotizacion"
+                idRequerimientoCompra
+        );
+
+        byte[] contenidoPedidoCotizacion =
+                leerPedidoCotizacion(
+                        pedidoCotizacion
+                );
+
+        validarPdf(
+                contenidoPedidoCotizacion,
+                pedidoCotizacion.getNombreOriginal()
         );
 
         guardarArchivo(
@@ -168,10 +186,11 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                 idReclamoPrestacional
                         + "-COMPRA-PEDIDO-COTIZACION-"
                         + idRequerimientoCompra,
-                "Pedido de cotizacion proveniente del "
+                "Pedido de cotizacion efectivamente enviado "
+                        + "al prestador adjudicado del "
                         + "Requerimiento de Compra #"
                         + idRequerimientoCompra,
-                pedidoCotizacion,
+                contenidoPedidoCotizacion,
                 serviceContext
         );
 
@@ -330,6 +349,78 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                 );
     }
 
+    private void validarPedidoCotizacion(
+            RequerimientoCompraPedidoCotizacion pedido,
+            int idRequerimientoCompra)
+            throws Exception {
+
+        if (pedido == null
+                || pedido.getIdRequerimiento() == null
+                || pedido
+                .getIdRequerimiento()
+                .intValue()
+                != idRequerimientoCompra
+                || pedido.getIdPrestador() == null
+                || pedido
+                .getIdPrestador()
+                .intValue() <= 0
+                || pedido.getIntento() == null
+                || pedido
+                .getIntento()
+                .intValue() <= 0
+                || pedido.getDlGroupId() == null
+                || pedido
+                .getDlGroupId()
+                .longValue() <= 0L
+                || pedido.getDlFolderId() == null
+                || pedido
+                .getDlFolderId()
+                .longValue() <= 0L
+                || pedido.getDlFileEntryId() == null
+                || pedido
+                .getDlFileEntryId()
+                .longValue() <= 0L
+                || WebKeysCompras.isEmpty(
+                pedido.getDlFileUuid()
+        )
+                || WebKeysCompras.isEmpty(
+                pedido.getNombreOriginal()
+        )
+                || WebKeysCompras.isEmpty(
+                pedido.getNombrePersistido()
+        )
+                || WebKeysCompras.isEmpty(
+                pedido.getTitulo()
+        )) {
+
+            throw new Exception(
+                    "No se pudo determinar el pedido de cotizacion "
+                            + "efectivamente enviado al prestador adjudicado."
+            );
+        }
+
+        String extension =
+                DocumentoLibraryComprasHelper
+                        .obtenerExtensionSeguraDocumento(
+                                pedido.getNombreOriginal()
+                        );
+
+        if (!".pdf".equals(
+                extension
+        )) {
+
+            throw new Exception(
+                    "El pedido de cotizacion persistido "
+                            + "no posee formato PDF."
+            );
+        }
+
+        DocumentoLibraryComprasHelper
+                .validarIdentidadAsociacionDocumento(
+                        pedido
+                );
+    }
+
     private void validarPresupuestoAdjudicado(
             RequerimientoCompraPresupuesto presupuesto,
             int idRequerimientoCompra)
@@ -391,6 +482,38 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
             throw new Exception(
                     "El documento de Compras no coincide "
                             + "con su identidad en Document Library."
+            );
+        }
+
+        return DocumentoLibraryComprasHelper
+                .leerContenidoDocumentLibrary(
+                        entry
+                );
+    }
+
+    private byte[] leerPedidoCotizacion(
+            RequerimientoCompraPedidoCotizacion pedido)
+            throws Exception {
+
+        DLFileEntry entry =
+                DLFileEntryLocalServiceUtil
+                        .getDLFileEntry(
+                                pedido
+                                        .getDlFileEntryId()
+                                        .longValue()
+                        );
+
+        if (entry == null
+                || !DocumentoLibraryComprasHelper
+                .coincideIdentidadAsociacionDocumento(
+                        pedido,
+                        entry
+                )) {
+
+            throw new Exception(
+                    "El pedido de cotizacion persistido "
+                            + "no coincide con su identidad "
+                            + "en Document Library."
             );
         }
 
