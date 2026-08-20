@@ -47,7 +47,14 @@ public class EditarRequerimientoCompraHelper {
                     EditarRequerimientoCompraHelper.class
             );
 
-    public static final int MAX_ORDENES_MEDICAS_POR_ALTA = 20;
+    public static final int MAX_ORDENES_MEDICAS_POR_CARGA = 20;
+
+    /**
+     * @deprecated Usar MAX_ORDENES_MEDICAS_POR_CARGA.
+     */
+    @Deprecated
+    public static final int MAX_ORDENES_MEDICAS_POR_ALTA =
+            MAX_ORDENES_MEDICAS_POR_CARGA;
 
     private static final Pattern DIACRITICOS =
             Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
@@ -99,12 +106,30 @@ public class EditarRequerimientoCompraHelper {
             }
 
             /*
-             * El sector queda fijado definitivamente durante el alta.
+             * Una vez que el requerimiento deja de estar PENDIENTE,
+             * ninguno de sus datos estructurales puede modificarse.
              *
-             * No se confia en el valor recibido desde HTTP para un requerimiento
-             * existente. Si se recibe explicitamente otro sector, se rechaza la
-             * operacion. Si no se recibe sector, se restaura el valor persistido.
+             * El flujo de cotizacion utiliza sus operaciones especificas
+             * y no debe ingresar por este guardado de cabecera.
              */
+            if (!actual.puedeEditarEstructura()) {
+                throw errorUsuario(
+                        "El requerimiento solo puede modificarse mientras "
+                                + "se encuentra PENDIENTE."
+                );
+            }
+
+
+            /*
+             * ==========================================================
+             * SECTOR INMUTABLE POST-ALTA
+             * ==========================================================
+             *
+             * Si HTTP envia explicitamente otro sector, se rechaza.
+             * Si no lo envia, o envia el mismo, siempre se restaura
+             * el valor persistido como fuente autoritativa.
+             */
+
             Integer idSectorActual =
                     actual.getIdSector();
 
@@ -127,44 +152,138 @@ public class EditarRequerimientoCompraHelper {
                     idSectorActual
             );
 
-            RequerimientoCompra requerimientoPersistir;
 
-            if (actual.puedeEditarEstructura()) {
-                prepararRequerimientoParaGuardar(
-                        requerimiento
-                );
+            /*
+             * ==========================================================
+             * AFILIADO INMUTABLE POST-ALTA
+             * ==========================================================
+             *
+             * CUIL e integrante conforman la identidad del afiliado
+             * asociado al requerimiento.
+             *
+             * Los campos pueden no llegar desde HTTP porque la pantalla
+             * los renderiza en solo lectura. Por eso solamente se compara
+             * cada dato cuando fue efectivamente informado.
+             *
+             * Independientemente de lo recibido, antes de guardar se
+             * restauran siempre los valores persistidos.
+             */
 
-                validarRequerimientoParaGuardar(
-                        requerimiento
-                );
+            String afiliadoCuilActual =
+                    actual.getAfiliadoCuilTitular();
 
-                requerimientoPersistir =
-                        requerimiento;
+            Integer afiliadoIntActual =
+                    actual.getAfiliadoInt();
 
-            } else if (actual.puedeEditarSurge()) {
-                /*
-                 * En ENVIADO A COTIZAR la unica modificacion estructural
-                 * habilitada es SURGE. Se ignoran deliberadamente los demas
-                 * valores recibidos por HTTP y se parte del snapshot canonico
-                 * recuperado de persistencia.
-                 */
-                actual.setSurge(
-                        requerimiento.getSurge()
-                );
+            String afiliadoCuilRecibido =
+                    requerimiento.getAfiliadoCuilTitular();
 
-                requerimientoPersistir =
-                        actual;
+            Integer afiliadoIntRecibido =
+                    requerimiento.getAfiliadoInt();
 
-            } else {
+
+            if (!WebKeysCompras.isEmpty(
+                    afiliadoCuilRecibido
+            )
+                    && !mismoTexto(
+                    afiliadoCuilActual,
+                    afiliadoCuilRecibido
+            )) {
+
                 throw errorUsuario(
-                        "El requerimiento ya no permite modificar SURGE "
-                                + "ni su estructura desde el estado actual."
+                        "El afiliado del requerimiento no puede modificarse una vez creado."
                 );
             }
 
+
+            if (afiliadoIntRecibido != null
+                    && !mismoInteger(
+                    afiliadoIntActual,
+                    afiliadoIntRecibido
+            )) {
+
+                throw errorUsuario(
+                        "El afiliado del requerimiento no puede modificarse una vez creado."
+                );
+            }
+
+
+            requerimiento.setAfiliadoCuilTitular(
+                    afiliadoCuilActual
+            );
+
+            requerimiento.setAfiliadoInt(
+                    afiliadoIntActual
+            );
+
+            /*
+             * El snapshot completo del afiliado también permanece inmutable.
+             *
+             * No se vuelve a consultar ni reconstruir desde los datos actuales
+             * del padrón durante una edición del requerimiento.
+             */
+            requerimiento.setAfiliadoIdOspim(
+                    actual.getAfiliadoIdOspim()
+            );
+
+            requerimiento.setAfiliadoNombre(
+                    actual.getAfiliadoNombre()
+            );
+
+            requerimiento.setAfiliadoApellido(
+                    actual.getAfiliadoApellido()
+            );
+
+            requerimiento.setAfiliadoDocumentoTipo(
+                    actual.getAfiliadoDocumentoTipo()
+            );
+
+            requerimiento.setAfiliadoDocumentoNro(
+                    actual.getAfiliadoDocumentoNro()
+            );
+
+            requerimiento.setAfiliadoDireccion(
+                    actual.getAfiliadoDireccion()
+            );
+
+            requerimiento.setAfiliadoLocalidad(
+                    actual.getAfiliadoLocalidad()
+            );
+
+            requerimiento.setAfiliadoProvincia(
+                    actual.getAfiliadoProvincia()
+            );
+
+            requerimiento.setAfiliadoCelular(
+                    actual.getAfiliadoCelular()
+            );
+
+            requerimiento.setAfiliadoTelefono(
+                    actual.getAfiliadoTelefono()
+            );
+
+            requerimiento.setAfiliadoEmail(
+                    actual.getAfiliadoEmail()
+            );
+
+            /*
+             * Sector y afiliado ya fueron restaurados desde persistencia.
+             *
+             * El resto de los datos estructurales permanece editable
+             * porque el requerimiento sigue PENDIENTE.
+             */
+            prepararRequerimientoParaGuardar(
+                    requerimiento
+            );
+
+            validarRequerimientoParaGuardar(
+                    requerimiento
+            );
+
+
             int idGuardado =
                     persistence.guardarRequerimientoCompra(
-                            requerimientoPersistir,
+                            requerimiento,
                             normalizarUsuario(usuario)
                     );
 
@@ -334,28 +453,46 @@ public class EditarRequerimientoCompraHelper {
     public void validarOrdenesMedicasParaAlta(
             List<OrdenMedicaValidada> ordenesMedicas) throws Exception {
 
-        if (ordenesMedicas == null || ordenesMedicas.isEmpty()) {
+        validarOrdenesMedicasParaCarga(
+                ordenesMedicas
+        );
+    }
+
+    public void validarOrdenesMedicasParaCarga(
+            List<OrdenMedicaValidada> ordenesMedicas) throws Exception {
+
+        if (ordenesMedicas == null
+                || ordenesMedicas.isEmpty()) {
+
             throw errorUsuario(
-                    "Debe seleccionar la Orden medica e informar su fecha."
+                    "Debe seleccionar al menos una Orden medica "
+                            + "e informar su fecha."
             );
         }
 
-        if (ordenesMedicas.size() > MAX_ORDENES_MEDICAS_POR_ALTA) {
+        if (ordenesMedicas.size()
+                > MAX_ORDENES_MEDICAS_POR_CARGA) {
+
             throw errorUsuario(
                     "Se pueden registrar hasta "
-                            + MAX_ORDENES_MEDICAS_POR_ALTA
-                            + " Ordenes medicas por requerimiento."
+                            + MAX_ORDENES_MEDICAS_POR_CARGA
+                            + " Ordenes medicas por operacion."
             );
         }
 
-        for (int i = 0; i < ordenesMedicas.size(); i++) {
-            OrdenMedicaValidada ordenMedica = ordenesMedicas.get(i);
+        for (int i = 0;
+             i < ordenesMedicas.size();
+             i++) {
+
+            OrdenMedicaValidada ordenMedica =
+                    ordenesMedicas.get(i);
 
             if (ordenMedica == null
                     || ordenMedica.getFechaDocumento() == null) {
 
                 throw errorUsuario(
-                        "Debe seleccionar la Orden medica e informar su fecha."
+                        "Cada Orden medica debe tener "
+                                + "informada su fecha."
                 );
             }
         }
@@ -857,10 +994,6 @@ public class EditarRequerimientoCompraHelper {
             return;
         }
 
-        preservarTercerizadoraExistenteSiNoCambioAfiliado(
-                requerimiento
-        );
-
         Integer idSector = requerimiento.getIdSector();
 
         if (idSector != null && idSector.intValue() > 0) {
@@ -887,8 +1020,18 @@ public class EditarRequerimientoCompraHelper {
             }
         }
 
-        if (requerimiento.tieneAfiliadoInformado()) {
-            cargarSnapshotAfiliado(requerimiento);
+        /*
+         * El snapshot del afiliado se captura exclusivamente durante el alta.
+         *
+         * En requerimientos existentes la identidad y los datos asociados
+         * al afiliado son inmutables.
+         */
+        if (requerimiento.getIdRequerimientoCompra() <= 0
+                && requerimiento.tieneAfiliadoInformado()) {
+
+            cargarSnapshotAfiliado(
+                    requerimiento
+            );
         }
 
         int cargoTercerizadora =
@@ -1130,44 +1273,6 @@ private void aplicarReglaSectorSinAfiliado(
     requerimiento.setCargoOspim(Integer.valueOf(100));
     requerimiento.setCargoTercerizadora(Integer.valueOf(0));
     requerimiento.setRecupero(false);
-}
-
-private void preservarTercerizadoraExistenteSiNoCambioAfiliado(
-        RequerimientoCompra requerimiento) throws Exception {
-
-    if (requerimiento == null
-            || requerimiento.getIdRequerimientoCompra() <= 0) {
-        return;
-    }
-
-    RequerimientoCompra existente =
-            BusquedaRequerimientoCompraServiceUtil
-                    .getRequerimientoCompra(
-                            requerimiento.getIdRequerimientoCompra()
-                    );
-
-    if (existente == null) {
-        return;
-    }
-
-    boolean mismoAfiliado =
-            mismoTexto(
-                    existente.getAfiliadoCuilTitular(),
-                    requerimiento.getAfiliadoCuilTitular()
-            )
-                    && mismoInteger(
-                    existente.getAfiliadoInt(),
-                    requerimiento.getAfiliadoInt()
-            );
-
-    if (mismoAfiliado
-            && !WebKeysCompras.isEmpty(
-            existente.getIdTercerizadora()
-    )) {
-        requerimiento.setIdTercerizadora(
-                existente.getIdTercerizadora().trim().toUpperCase()
-        );
-    }
 }
 
 private boolean mismoTexto(String a, String b) {
@@ -2240,5 +2345,145 @@ private void prepararDetalleParaGuardar(
                 + ", dlFileEntryId="
                 + presupuesto.getDlFileEntryId()
                 + ", usuario=" + usuario;
+    }
+
+    public int agregarOrdenesMedicasRequerimientoPendiente(
+            int idRequerimientoCompra,
+            List<OrdenMedicaValidada> ordenesMedicas,
+            GestorOrdenMedicaDocumento gestorDocumento,
+            String usuario) throws Exception {
+
+        EditarRequerimientoCompraServiceImpl.Transaccion transaccion =
+                null;
+
+        List<DocumentoComprasCreado> documentosCreados =
+                new ArrayList<DocumentoComprasCreado>();
+
+        try {
+            if (idRequerimientoCompra <= 0) {
+                throw errorUsuario(
+                        "Debe informar el requerimiento de compra."
+                );
+            }
+
+            RequerimientoCompra actual =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .getRequerimientoCompra(
+                                    idRequerimientoCompra
+                            );
+
+            if (actual == null) {
+                throw errorUsuario(
+                        "El requerimiento ya no esta disponible."
+                );
+            }
+
+            if (!actual.puedeEditarEstructura()) {
+                throw errorUsuario(
+                        "Solo pueden agregarse Ordenes medicas mientras "
+                                + "el requerimiento se encuentra PENDIENTE."
+                );
+            }
+
+            validarOrdenesMedicasParaCarga(
+                    ordenesMedicas
+            );
+
+            if (gestorDocumento == null) {
+                throw new IllegalStateException(
+                        "No se obtuvo el gestor documental "
+                                + "de la Orden medica."
+                );
+            }
+
+            transaccion =
+                    persistence.abrirTransaccion();
+
+            for (int i = 0;
+                 i < ordenesMedicas.size();
+                 i++) {
+
+                OrdenMedicaValidada ordenMedica =
+                        ordenesMedicas.get(i);
+
+                DocumentoComprasCreado documento =
+                        gestorDocumento.crearOrdenMedica(
+                                idRequerimientoCompra,
+                                ordenMedica
+                        );
+
+                documentosCreados.add(
+                        documento
+                );
+
+                int idDocumento =
+                        transaccion.registrarOrdenMedica(
+                                idRequerimientoCompra,
+                                ordenMedica,
+                                documento,
+                                normalizarUsuario(usuario)
+                        );
+
+                if (idDocumento <= 0) {
+                    throw new IllegalStateException(
+                            "El registro de la Orden medica "
+                                    + "no devolvio un identificador valido."
+                    );
+                }
+            }
+
+            transaccion.commit();
+
+            return documentosCreados.size();
+
+        } catch (Exception e) {
+            boolean rollbackConfirmado =
+                    transaccion == null;
+
+            if (transaccion != null) {
+                try {
+                    transaccion.rollback();
+                    rollbackConfirmado = true;
+
+                } catch (Exception rollbackError) {
+                    _log.error(
+                            "No se pudo confirmar el rollback al agregar "
+                                    + "Ordenes medicas a un requerimiento existente.",
+                            rollbackError
+                    );
+                }
+            }
+
+            if (rollbackConfirmado
+                    && gestorDocumento != null
+                    && !documentosCreados.isEmpty()) {
+
+                compensarOrdenesMedicasCreadas(
+                        documentosCreados,
+                        gestorDocumento
+                );
+            }
+
+            throw manejarErrorOperacion(
+                    "agregar Ordenes medicas al requerimiento",
+                    "No se pudieron agregar las Ordenes medicas. "
+                            + "Vuelva a seleccionar las imagenes "
+                            + "e intente nuevamente.",
+                    e,
+                    "idRequerimiento="
+                            + idRequerimientoCompra
+                            + ", usuario="
+                            + usuario
+                            + ", cantidadOrdenesMedicas="
+                            + (ordenesMedicas != null
+                            ? ordenesMedicas.size()
+                            : 0)
+            );
+
+        } finally {
+            if (transaccion != null) {
+                transaccion.cerrar();
+            }
+        }
     }
 }

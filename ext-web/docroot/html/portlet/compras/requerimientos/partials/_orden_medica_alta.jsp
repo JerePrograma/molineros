@@ -21,7 +21,7 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
 }
 %>
 
-<c:if test="<%= esNuevo && modoEditable %>">
+<c:if test="<%= modoEditable && puedeEditarEstructuraPantalla %>">
 
     <style type="text/css">
         #<portlet:namespace />orden_medica_fieldset {
@@ -86,7 +86,9 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
             class="block-labels compras-seccion compras-seccion-orden-medica">
 
         <legend>
-            Orden médica
+            <%= esNuevo
+                    ? "Orden médica"
+                    : "Agregar Orden médica" %>
 
             <a href="javascript:void(0)"
                onclick="return comprasHelp(
@@ -364,8 +366,26 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
         <strong>Requisitos para cargar órdenes médicas</strong>
         <br /><br />
 
-        - Para dar de alta un requerimiento nuevo debe cargarse
-          al menos una Orden médica.
+        <% if (esNuevo) { %>
+
+            - Para dar de alta un requerimiento nuevo debe cargarse
+              al menos una Orden médica.
+            <br />
+
+        <% } else { %>
+
+            - Mientras el requerimiento se encuentre PENDIENTE puede
+              incorporar nuevas Órdenes médicas.
+            <br />
+
+            - Agregar una nueva Orden médica durante la edición es opcional.
+            <br />
+
+            - Las Órdenes médicas ya registradas no se modifican ni eliminan
+              desde este componente.
+            <br />
+
+        <% } %>
         <br />
 
         - Los formatos permitidos son JPG, JPEG y PNG.

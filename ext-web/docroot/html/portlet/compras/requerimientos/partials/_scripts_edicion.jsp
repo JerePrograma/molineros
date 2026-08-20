@@ -2696,7 +2696,7 @@
         return true;
     }
 
-    <c:if test="<%= esNuevo %>">
+    <c:if test="<%= modoEditable && puedeEditarEstructuraPantalla %>">
         function <portlet:namespace />ordenMedicaDosDigitos(valor) {
             valor = parseInt(valor, 10);
 
@@ -2943,6 +2943,97 @@
             return true;
         }
 
+        function <portlet:namespace />hayCargaOrdenMedicaInformadaPantalla() {
+
+            <portlet:namespace />actualizarContratoFilasOrdenMedica();
+
+            var filas =
+                    jQuery(
+                            '#<portlet:namespace />ordenes_medicas_body '
+                                    + 'tr.orden-medica-activa'
+                    );
+
+            var informada =
+                    false;
+
+            filas.each(function() {
+
+                if (informada) {
+                    return;
+                }
+
+                var fila =
+                        jQuery(this);
+
+                var archivo =
+                        fila.find(
+                                'input.orden-medica-archivo'
+                        ).get(0);
+
+                var fechaValor =
+                        fila.find(
+                                'input.orden-medica-fecha-valor'
+                        ).get(0);
+
+                var fechaDia =
+                        fila.find(
+                                'select.orden-medica-fecha-dia'
+                        ).get(0);
+
+                var fechaMes =
+                        fila.find(
+                                'select.orden-medica-fecha-mes'
+                        ).get(0);
+
+                var fechaAnio =
+                        fila.find(
+                                'select.orden-medica-fecha-anio'
+                        ).get(0);
+
+                var archivoInformado =
+                        archivo
+                        && jQuery.trim(
+                                archivo.value || ''
+                        ) != '';
+
+                var fechaInformada =
+                        fechaValor
+                        && jQuery.trim(
+                                fechaValor.value || ''
+                        ) != '';
+
+                var diaInformado =
+                        fechaDia
+                        && jQuery.trim(
+                                fechaDia.value || ''
+                        ) != '';
+
+                var mesInformado =
+                        fechaMes
+                        && jQuery.trim(
+                                fechaMes.value || ''
+                        ) != '';
+
+                var anioInformado =
+                        fechaAnio
+                        && jQuery.trim(
+                                fechaAnio.value || ''
+                        ) != '';
+
+                if (archivoInformado
+                        || fechaInformada
+                        || diaInformado
+                        || mesInformado
+                        || anioInformado) {
+
+                    informada =
+                            true;
+                }
+            });
+
+            return informada;
+        }
+
         function <portlet:namespace />incorporarOrdenesMedicas(form) {
             <portlet:namespace />actualizarContratoFilasOrdenMedica();
 
@@ -3128,10 +3219,37 @@
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
-        <c:if test="<%= esNuevo %>">
-            if (!<portlet:namespace />validarOrdenMedicaAlta(form)) {
+        var incorporarNuevasOrdenesMedicas =
+                false;
+
+        <c:if test="<%= modoEditable && puedeEditarEstructuraPantalla %>">
+
+            <% if (esNuevo) { %>
+
+                /*
+                 * En el alta la Orden medica es obligatoria.
+                 */
+                incorporarNuevasOrdenesMedicas =
+                        true;
+
+            <% } else { %>
+
+                /*
+                 * En PENDIENTE la carga adicional es opcional.
+                 */
+                incorporarNuevasOrdenesMedicas =
+                        <portlet:namespace />hayCargaOrdenMedicaInformadaPantalla();
+
+            <% } %>
+
+            if (incorporarNuevasOrdenesMedicas
+                    && !<portlet:namespace />validarOrdenMedicaAlta(
+                            form
+                    )) {
+
                 return <portlet:namespace />cancelarGuardadoCompra();
             }
+
         </c:if>
 
         var sectorId = <portlet:namespace />trimValue('sector_id');
@@ -3248,23 +3366,42 @@
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
-        var contextosOrdenesMedicas = null;
+        var contextosOrdenesMedicas =
+                null;
 
-        <c:if test="<%= esNuevo %>">
-            contextosOrdenesMedicas =
-                    <portlet:namespace />incorporarOrdenesMedicas(form);
+        <c:if test="<%= modoEditable && puedeEditarEstructuraPantalla %>">
 
-            if (!contextosOrdenesMedicas) {
-                alert('No se pudieron incorporar las Órdenes médicas al formulario de envío.');
-                return <portlet:namespace />cancelarGuardadoCompra();
+            if (incorporarNuevasOrdenesMedicas) {
+
+                contextosOrdenesMedicas =
+                        <portlet:namespace />incorporarOrdenesMedicas(
+                                form
+                        );
+
+                if (!contextosOrdenesMedicas) {
+
+                    alert(
+                            'No se pudieron incorporar las '
+                                    + 'Órdenes médicas al formulario de envío.'
+                    );
+
+                    return <portlet:namespace />cancelarGuardadoCompra();
+                }
             }
+
         </c:if>
 
         if (!<portlet:namespace />submitFormularioCompra(form)) {
-            <c:if test="<%= esNuevo %>">
-                <portlet:namespace />restaurarOrdenesMedicas(
-                        contextosOrdenesMedicas
-                );
+
+            <c:if test="<%= modoEditable && puedeEditarEstructuraPantalla %>">
+
+                if (contextosOrdenesMedicas) {
+
+                    <portlet:namespace />restaurarOrdenesMedicas(
+                            contextosOrdenesMedicas
+                    );
+                }
+
             </c:if>
 
             return <portlet:namespace />cancelarGuardadoCompra();
@@ -3331,27 +3468,31 @@
          * visible deja de ser confiable hasta volver a seleccionar
          * un afiliado.
          */
-        jQuery(
-                '#<portlet:namespace />cuil, '
-                + '#<portlet:namespace />inte'
-        ).change(function() {
+        <% if (esNuevo) { %>
 
-            <portlet:namespace />ocultarVencimientoCudAfiliado();
-            <portlet:namespace />ocultarSituacionMedicaAfiliado();
-            <portlet:namespace />ocultarItemsHistoricosAfiliado();
-            <portlet:namespace />sincronizarFormularioCompra();
-        });
+            jQuery(
+                    '#<portlet:namespace />cuil, '
+                    + '#<portlet:namespace />inte'
+            ).change(function() {
 
-        jQuery(
-                '#<portlet:namespace />cuil, '
-                + '#<portlet:namespace />inte'
-        ).keyup(function() {
+                <portlet:namespace />ocultarVencimientoCudAfiliado();
+                <portlet:namespace />ocultarSituacionMedicaAfiliado();
+                <portlet:namespace />ocultarItemsHistoricosAfiliado();
+                <portlet:namespace />sincronizarFormularioCompra();
+            });
 
-            <portlet:namespace />ocultarVencimientoCudAfiliado();
-            <portlet:namespace />ocultarSituacionMedicaAfiliado();
-            <portlet:namespace />ocultarItemsHistoricosAfiliado();
-            <portlet:namespace />sincronizarFormularioCompra();
-        });
+            jQuery(
+                    '#<portlet:namespace />cuil, '
+                    + '#<portlet:namespace />inte'
+            ).keyup(function() {
+
+                <portlet:namespace />ocultarVencimientoCudAfiliado();
+                <portlet:namespace />ocultarSituacionMedicaAfiliado();
+                <portlet:namespace />ocultarItemsHistoricosAfiliado();
+                <portlet:namespace />sincronizarFormularioCompra();
+            });
+
+        <% } %>
 
         jQuery(
                 '#<portlet:namespace />id_tercerizadora'

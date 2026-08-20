@@ -1,16 +1,16 @@
 <%
 /*
  * Compatibilidad:
- * se conserva el nombre histórico del partial para no afectar includes,
- * aunque ahora funciona como componente común de ALTA, EDICION y VISTA.
+ * se conserva el nombre historico del partial para no afectar includes,
+ * aunque funciona como componente comun de ALTA, EDICION y VISTA.
  *
- * Solo se permite editar el afiliado cuando la pantalla está realmente en
- * modo editable y el estado/rol permiten modificar la estructura.
- * En cotización y en vista se renderiza exactamente el mismo componente,
- * pero con edit_mode=false.
+ * El afiliado se selecciona exclusivamente durante el alta.
+ * Una vez creado el requerimiento, su identidad queda inmutable aunque
+ * el resto de la estructura siga editable mientras permanezca PENDIENTE.
  */
 boolean afiliadoComponenteEditable =
-        modoEditable
+        esNuevo
+        && modoEditable
         && puedeEditarEstructuraPantalla;
 
 boolean ocultarPanelAfiliado =

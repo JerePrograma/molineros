@@ -433,6 +433,16 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 );
             }
 
+            if (!altaOriginal
+                    && idRequerimientoCompra > 0
+                    && uploadRequest != null) {
+
+                copiarParametrosOrdenesMedicas(
+                        actionRequest,
+                        actionResponse
+                );
+            }
+
             if (altaOriginal && idRequerimientoCompra <= 0) {
                 copiarParametrosOrdenesMedicas(
                         actionRequest,
@@ -490,26 +500,78 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             RequerimientoCompra requerimiento,
             String usuario) throws Exception {
 
+        boolean esNuevo =
+                requerimiento.getIdRequerimientoCompra() <= 0;
+
         /*
-         * La edición de un requerimiento existente conserva exactamente
-         * el comportamiento previo: no intenta volver a registrar
-         * Órdenes médicas.
+         * ==========================================================
+         * ALTA
+         * ==========================================================
+         *
+         * La Orden medica continúa siendo obligatoria.
          */
-        if (requerimiento.getIdRequerimientoCompra() > 0) {
+        if (esNuevo) {
+
+            if (uploadRequest == null) {
+                errorCampo(
+                        DocumentoLibraryComprasHelper
+                                .PARAM_ARCHIVO_ORDEN_MEDICA,
+                        "Orden médica: debe seleccionar "
+                                + "una imagen JPEG o PNG."
+                );
+
+                return 0;
+            }
+
+            int cantidadOrdenesMedicas =
+                    obtenerCantidadOrdenesMedicas(
+                            actionRequest
+                    );
+
+            DocumentoLibraryComprasHelper gestorDocumento =
+                    DocumentoLibraryComprasHelper.crear(
+                            actionRequestOriginal
+                    );
+
+            List<OrdenMedicaValidada> ordenesMedicas =
+                    validarOrdenesMedicasDesdeRequest(
+                            actionRequest,
+                            uploadRequest,
+                            gestorDocumento,
+                            cantidadOrdenesMedicas
+                    );
+
             return requerimientoHelper
-                    .guardarRequerimientoCompra(
+                    .guardarNuevoRequerimientoCompraConOrdenesMedicas(
                             requerimiento,
+                            ordenesMedicas,
+                            gestorDocumento,
                             usuario
                     );
         }
 
+
+        /*
+         * ==========================================================
+         * EDICION
+         * ==========================================================
+         *
+         * El Helper verifica que continúe PENDIENTE y preserva
+         * sector/afiliado.
+         */
+        int idGuardado =
+                requerimientoHelper
+                        .guardarRequerimientoCompra(
+                                requerimiento,
+                                usuario
+                        );
+
+
+        /*
+         * En edición las nuevas Órdenes médicas son opcionales.
+         */
         if (uploadRequest == null) {
-            errorCampo(
-                    DocumentoLibraryComprasHelper
-                            .PARAM_ARCHIVO_ORDEN_MEDICA,
-                    "Orden médica: debe seleccionar una imagen JPEG o PNG."
-            );
-            return 0;
+            return idGuardado;
         }
 
         int cantidadOrdenesMedicas =
@@ -517,10 +579,93 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                         actionRequest
                 );
 
+        if (!hayCargaOrdenMedicaInformada(
+                actionRequest,
+                uploadRequest,
+                cantidadOrdenesMedicas
+        )) {
+
+            return idGuardado;
+        }
+
         DocumentoLibraryComprasHelper gestorDocumento =
                 DocumentoLibraryComprasHelper.crear(
                         actionRequestOriginal
                 );
+
+        List<OrdenMedicaValidada> ordenesMedicas =
+                validarOrdenesMedicasDesdeRequest(
+                        actionRequest,
+                        uploadRequest,
+                        gestorDocumento,
+                        cantidadOrdenesMedicas
+                );
+
+        requerimientoHelper
+                .agregarOrdenesMedicasRequerimientoPendiente(
+                        idGuardado,
+                        ordenesMedicas,
+                        gestorDocumento,
+                        usuario
+                );
+
+        return idGuardado;
+    }
+
+    private List<OrdenMedicaValidada> validarOrdenesMedicasDesdeRequest(
+            ActionRequest actionRequest,
+            UploadPortletRequest uploadRequest,
+            DocumentoLibraryComprasHelper gestorDocumento,
+            int cantidadOrdenesMedicas) throws Exception {
+
+        if (actionRequest == null) {
+            throw new IllegalArgumentException(
+                    "No se recibio la solicitud de carga "
+                            + "de Ordenes medicas."
+            );
+        }
+
+        if (uploadRequest == null) {
+            errorCampo(
+                    DocumentoLibraryComprasHelper
+                            .PARAM_ARCHIVO_ORDEN_MEDICA,
+                    "Orden medica: debe seleccionar "
+                            + "una imagen JPEG o PNG."
+            );
+
+            return new ArrayList<OrdenMedicaValidada>();
+        }
+
+        if (gestorDocumento == null) {
+            throw new IllegalStateException(
+                    "No se pudo preparar el gestor documental "
+                            + "de las Ordenes medicas."
+            );
+        }
+
+        if (cantidadOrdenesMedicas <= 0) {
+            errorCampo(
+                    PARAM_ORDEN_MEDICA_COUNT,
+                    "Debe informar al menos una Orden medica."
+            );
+
+            return new ArrayList<OrdenMedicaValidada>();
+        }
+
+        if (cantidadOrdenesMedicas
+                > EditarRequerimientoCompraHelper
+                .MAX_ORDENES_MEDICAS_POR_CARGA) {
+
+            errorCampo(
+                    PARAM_ORDEN_MEDICA_COUNT,
+                    "Se pueden cargar hasta "
+                            + EditarRequerimientoCompraHelper
+                            .MAX_ORDENES_MEDICAS_POR_CARGA
+                            + " Ordenes medicas por operacion."
+            );
+
+            return new ArrayList<OrdenMedicaValidada>();
+        }
 
         List<OrdenMedicaValidada> ordenesMedicas =
                 new ArrayList<OrdenMedicaValidada>(
@@ -541,16 +686,18 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                             indice
                     );
 
-            try {
+            String fecha =
+                    getParametroTrim(
+                            actionRequest,
+                            campoFecha
+                    );
 
+            try {
                 OrdenMedicaValidada ordenMedica =
                         gestorDocumento.validarOrdenMedica(
                                 uploadRequest,
                                 campoArchivo,
-                                getParametroTrim(
-                                        actionRequest,
-                                        campoFecha
-                                ),
+                                fecha,
                                 null
                         );
 
@@ -562,36 +709,45 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 String mensaje =
                         obtenerMensajeUsuario(
                                 e,
-                                "No se pudo validar la Orden médica."
+                                "No se pudo validar la Orden medica."
                         );
 
                 String mensajeNormalizado =
                         mensaje != null
-                                ? mensaje.toLowerCase(Locale.ROOT)
+                                ? mensaje
+                                  .toLowerCase(
+                                          Locale.ROOT
+                                  )
                                 : "";
 
-                String campo = campoArchivo;
+                String campoError =
+                        campoArchivo;
 
-                if (mensajeNormalizado.indexOf("fecha") >= 0) {
-                    campo = campoFecha;
+                if (mensajeNormalizado.indexOf(
+                        "fecha"
+                ) >= 0) {
+
+                    campoError =
+                            campoFecha;
                 }
 
                 errorCampo(
-                        campo,
+                        campoError,
                         mensaje
                 );
-
-                return 0;
             }
         }
 
-        return requerimientoHelper
-                .guardarNuevoRequerimientoCompraConOrdenesMedicas(
-                        requerimiento,
-                        ordenesMedicas,
-                        gestorDocumento,
-                        usuario
-                );
+        if (ordenesMedicas.size()
+                != cantidadOrdenesMedicas) {
+
+            throw new IllegalStateException(
+                    "No se pudieron preparar todas las "
+                            + "Ordenes medicas informadas."
+            );
+        }
+
+        return ordenesMedicas;
     }
 
     private int obtenerCantidadOrdenesMedicas(
@@ -619,11 +775,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         }
 
-        if (cantidad > EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA) {
+        if (cantidad > EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_CARGA) {
             errorCampo(
                     PARAM_ORDEN_MEDICA_COUNT,
                     "Se pueden cargar hasta "
-                            + EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA
+                            + EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_CARGA
                             + " Órdenes médicas por operación."
             );
             return 0;
@@ -1175,10 +1331,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (PermissionUtil.userContainsRole(
                 user,
                 WebKeysCompras.ROL_ABM_COMPRAS
-        ) && (
-                requerimiento.puedeEditarEstructura()
-                        || requerimiento.puedeEditarSurge()
-        )) {
+        ) && requerimiento.puedeEditarEstructura()) {
 
             return true;
         }
@@ -1971,4 +2124,160 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         return Integer.valueOf(parsed);
     }
 
+    private List<OrdenMedicaValidada> obtenerOrdenesMedicasDesdeRequest(
+            ActionRequest actionRequest,
+            UploadPortletRequest uploadRequest,
+            int cantidadOrdenesMedicas)
+            throws Exception {
+
+        List<OrdenMedicaValidada> ordenesMedicas =
+                new ArrayList<OrdenMedicaValidada>(
+                        cantidadOrdenesMedicas
+                );
+
+        DocumentoLibraryComprasHelper gestorDocumento =
+                DocumentoLibraryComprasHelper.crear(
+                        actionRequest
+                );
+
+        for (int indice = 0;
+             indice < cantidadOrdenesMedicas;
+             indice++) {
+
+            String campoArchivo =
+                    obtenerCampoArchivoOrdenMedica(
+                            indice
+                    );
+
+            String campoFecha =
+                    obtenerCampoFechaOrdenMedica(
+                            indice
+                    );
+
+            try {
+                OrdenMedicaValidada ordenMedica =
+                        gestorDocumento.validarOrdenMedica(
+                                uploadRequest,
+                                campoArchivo,
+                                getParametroTrim(
+                                        actionRequest,
+                                        campoFecha
+                                ),
+                                null
+                        );
+
+                ordenesMedicas.add(
+                        ordenMedica
+                );
+
+            } catch (Exception e) {
+                String mensaje =
+                        obtenerMensajeUsuario(
+                                e,
+                                "No se pudo validar la Orden médica."
+                        );
+
+                String mensajeNormalizado =
+                        mensaje != null
+                                ? mensaje.toLowerCase(Locale.ROOT)
+                                : "";
+
+                String campo =
+                        campoArchivo;
+
+                if (mensajeNormalizado.indexOf("fecha") >= 0) {
+                    campo = campoFecha;
+                }
+
+                errorCampo(
+                        campo,
+                        mensaje
+                );
+            }
+        }
+
+        return ordenesMedicas;
+    }
+
+    private boolean hayOrdenMedicaNuevaSeleccionada(
+            UploadPortletRequest uploadRequest,
+            int cantidadOrdenesMedicas) {
+
+        if (uploadRequest == null) {
+            return false;
+        }
+
+        for (int indice = 0;
+             indice < cantidadOrdenesMedicas;
+             indice++) {
+
+            String campoArchivo =
+                    obtenerCampoArchivoOrdenMedica(
+                            indice
+                    );
+
+            String nombreArchivo =
+                    uploadRequest.getFileName(
+                            campoArchivo
+                    );
+
+            if (!WebKeysCompras.isEmpty(
+                    nombreArchivo
+            )) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean hayCargaOrdenMedicaInformada(
+            ActionRequest actionRequest,
+            UploadPortletRequest uploadRequest,
+            int cantidadOrdenesMedicas) {
+
+        if (uploadRequest == null
+                || cantidadOrdenesMedicas <= 0) {
+
+            return false;
+        }
+
+        for (int indice = 0;
+             indice < cantidadOrdenesMedicas;
+             indice++) {
+
+            String campoArchivo =
+                    obtenerCampoArchivoOrdenMedica(
+                            indice
+                    );
+
+            String campoFecha =
+                    obtenerCampoFechaOrdenMedica(
+                            indice
+                    );
+
+            String nombreArchivo =
+                    uploadRequest.getFileName(
+                            campoArchivo
+                    );
+
+            String fecha =
+                    getParametroTrim(
+                            actionRequest,
+                            campoFecha
+                    );
+
+            if (!WebKeysCompras.isEmpty(
+                    nombreArchivo
+            )
+                    || !WebKeysCompras.isEmpty(
+                    fecha
+            )) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
