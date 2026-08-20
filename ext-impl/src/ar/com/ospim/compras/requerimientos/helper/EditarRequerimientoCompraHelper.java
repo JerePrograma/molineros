@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -498,6 +499,137 @@ public class EditarRequerimientoCompraHelper {
         }
     }
 
+    public void validarNuevoRequerimientoNoDuplicado(
+            RequerimientoCompra requerimiento,
+            List<Integer> idsPrestaciones,
+            List<OrdenMedicaValidada> ordenesMedicas)
+            throws Exception {
+
+        /*
+         * Regla exclusiva de alta.
+         */
+        if (requerimiento == null
+                || requerimiento
+                .getIdRequerimientoCompra() > 0) {
+
+            return;
+        }
+
+        String cuilTitular =
+                WebKeysCompras.trimToNull(
+                        requerimiento
+                                .getAfiliadoCuilTitular()
+                );
+
+        Integer integrante =
+                requerimiento.getAfiliadoInt();
+
+        /*
+         * La ausencia del afiliado se valida posteriormente
+         * mediante las reglas generales del requerimiento.
+         *
+         * Este metodo solamente controla duplicidad.
+         */
+        if (cuilTitular == null
+                || integrante == null
+                || integrante.intValue() < 0) {
+
+            return;
+        }
+
+        if (idsPrestaciones == null
+                || idsPrestaciones.isEmpty()) {
+
+            return;
+        }
+
+        validarOrdenesMedicasParaCarga(
+                ordenesMedicas
+        );
+
+        Set<Integer> prestacionesUnicas =
+                new HashSet<Integer>();
+
+        for (int i = 0;
+             i < idsPrestaciones.size();
+             i++) {
+
+            Integer idPrestacion =
+                    idsPrestaciones.get(i);
+
+            if (idPrestacion != null
+                    && idPrestacion.intValue() > 0) {
+
+                prestacionesUnicas.add(
+                        idPrestacion
+                );
+            }
+        }
+
+        if (prestacionesUnicas.isEmpty()) {
+            return;
+        }
+
+        /*
+         * java.sql.Date hereda de java.util.Date.
+         *
+         * Usando java.util.Date acá aceptamos tanto la fecha
+         * validada de la Orden medica como las fechas leídas
+         * posteriormente desde otros beans.
+         */
+        Set<java.util.Date> fechasUnicas =
+                new HashSet<java.util.Date>();
+
+        for (int i = 0;
+             i < ordenesMedicas.size();
+             i++) {
+
+            OrdenMedicaValidada ordenMedica =
+                    ordenesMedicas.get(i);
+
+            if (ordenMedica == null
+                    || ordenMedica.getFechaDocumento() == null) {
+
+                continue;
+            }
+
+            fechasUnicas.add(
+                    ordenMedica.getFechaDocumento()
+            );
+        }
+
+        if (fechasUnicas.isEmpty()) {
+            return;
+        }
+
+        for (Integer idPrestacion
+                : prestacionesUnicas) {
+
+            for (java.util.Date fechaOrdenMedica
+                    : fechasUnicas) {
+
+                boolean existeDuplicado =
+                        BusquedaRequerimientoCompraServiceUtil
+                                .existeRequerimientoDuplicado(
+                                        cuilTitular,
+                                        integrante.intValue(),
+                                        idPrestacion.intValue(),
+                                        fechaOrdenMedica,
+                                        0
+                                );
+
+                if (existeDuplicado) {
+                    throw errorUsuario(
+                            "Ya existe un requerimiento de compra "
+                                    + "para el mismo afiliado, la misma "
+                                    + "prestacion y la misma fecha "
+                                    + "de Orden medica."
+                    );
+                }
+            }
+        }
+    }
+
     private void compensarOrdenesMedicasCreadas(
             List<DocumentoComprasCreado> documentosCreados,
             GestorOrdenMedicaDocumento gestorDocumento) {
@@ -535,10 +667,15 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
-            idRequerimiento = getIdRequerimientoDetalle(detalle);
+            idRequerimiento =
+                    getIdRequerimientoDetalle(
+                            detalle
+                    );
 
             RequerimientoCompra requerimiento =
-                    validarRequerimientoDetalle(idRequerimiento);
+                    validarRequerimientoDetalle(
+                            idRequerimiento
+                    );
 
             RequerimientoCompraDetalle detallePersistido =
                     obtenerDetallePersistido(
@@ -552,17 +689,41 @@ public class EditarRequerimientoCompraHelper {
                     detalle
             );
 
-            normalizarDetalleNuevo(detalle);
+            normalizarDetalleNuevo(
+                    detalle
+            );
 
             validarDetalleParaGuardar(
                     requerimiento,
                     detalle
             );
 
+            /*
+             * Un detalle NUEVO puede completar posteriormente
+             * una combinación:
+             *
+             * afiliado + prestacion + fecha de Orden medica
+             *
+             * que ya exista en otro requerimiento.
+             *
+             * No se ejecuta para una actualización de un detalle
+             * persistido porque el requerimiento ya existe y esta
+             * regla apunta a impedir generar una nueva combinación
+             * duplicada mediante el agregado posterior de prestaciones.
+             */
+            if (detallePersistido == null) {
+                validarDetalleNuevoNoGeneraDuplicado(
+                        requerimiento,
+                        detalle
+                );
+            }
+
             int idDetalleGuardado =
                     persistence.guardarDetalle(
                             detalle,
-                            normalizarUsuario(usuario)
+                            normalizarUsuario(
+                                    usuario
+                            )
                     );
 
             if (idDetalleGuardado <= 0) {
@@ -585,6 +746,125 @@ public class EditarRequerimientoCompraHelper {
                             usuario
                     )
             );
+        }
+    }
+
+    private void validarDetalleNuevoNoGeneraDuplicado(
+            RequerimientoCompra requerimiento,
+            RequerimientoCompraDetalle detalle)
+            throws Exception {
+
+        if (requerimiento == null
+                || detalle == null) {
+
+            return;
+        }
+
+        Integer idPrestacion =
+                detalle.getIdPrestacion();
+
+        /*
+         * MEDICAMENTO y OBSERVACION no participan
+         * en esta regla.
+         */
+        if (idPrestacion == null
+                || idPrestacion.intValue() <= 0) {
+
+            return;
+        }
+
+        if (!requerimiento
+                .tieneAfiliadoInformado()) {
+
+            return;
+        }
+
+        String cuilTitular =
+                WebKeysCompras.trimToNull(
+                        requerimiento
+                                .getAfiliadoCuilTitular()
+                );
+
+        Integer integrante =
+                requerimiento.getAfiliadoInt();
+
+        if (cuilTitular == null
+                || integrante == null
+                || integrante.intValue() < 0) {
+
+            return;
+        }
+
+        int idRequerimientoCompra =
+                requerimiento
+                        .getIdRequerimientoCompra();
+
+        if (idRequerimientoCompra <= 0) {
+            return;
+        }
+
+        List<RequerimientoCompraPresupuesto> ordenesMedicas =
+                BusquedaRequerimientoCompraServiceUtil
+                        .listarOrdenesMedicas(
+                                idRequerimientoCompra
+                        );
+
+        if (ordenesMedicas == null
+                || ordenesMedicas.isEmpty()) {
+
+            return;
+        }
+
+        /*
+         * RequerimientoCompraPresupuesto#getFechaDocumento()
+         * devuelve java.util.Date.
+         *
+         * Por eso deliberadamente NO usamos java.sql.Date
+         * en la capa funcional.
+         */
+        Set<java.util.Date> fechasUnicas =
+                new HashSet<java.util.Date>();
+
+        for (int i = 0;
+             i < ordenesMedicas.size();
+             i++) {
+
+            RequerimientoCompraPresupuesto ordenMedica =
+                    ordenesMedicas.get(i);
+
+            if (ordenMedica == null
+                    || ordenMedica.getBajaFecha() != null
+                    || ordenMedica.getFechaDocumento() == null) {
+
+                continue;
+            }
+
+            fechasUnicas.add(
+                    ordenMedica.getFechaDocumento()
+            );
+        }
+
+        for (java.util.Date fechaOrdenMedica
+                : fechasUnicas) {
+
+            boolean existeDuplicado =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .existeRequerimientoDuplicado(
+                                    cuilTitular,
+                                    integrante.intValue(),
+                                    idPrestacion.intValue(),
+                                    fechaOrdenMedica,
+                                    idRequerimientoCompra
+                            );
+
+            if (existeDuplicado) {
+                throw errorUsuario(
+                        "Ya existe otro requerimiento de compra "
+                                + "para el mismo afiliado, la misma "
+                                + "prestacion y la misma fecha "
+                                + "de Orden medica."
+                );
+            }
         }
     }
 

@@ -9,12 +9,12 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.util.ConnectionHelper;
 
+import java.util.ArrayList;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Types;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -71,6 +71,9 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
     private static final String SQL_TIENE_SITUACION_MEDICA_VIGENTE =
             "{ ? = call compras.tiene_situacion_medica_vigente(?,?) }";
+
+    private static final String SQL_EXISTE_REQUERIMIENTO_DUPLICADO =
+            "{ ? = call compras.existe_requerimiento_duplicado(?,?,?,?,?) }";
 
     private static final String SQL_LISTAR_PRESTADORES_ADJUDICADOS =
             "{call compras.listar_prestadores_adjudicados(?)}";
@@ -290,6 +293,81 @@ public class BusquedaRequerimientoCompraServiceImpl {
             return !stmt.wasNull() && value;
         } finally {
             ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public boolean existeRequerimientoDuplicado(
+            String cuilTitular,
+            int inte,
+            int idPrestacion,
+            java.util.Date fechaOrdenMedica,
+            int idRequerimientoExcluir)
+            throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con =
+                    ConnectionHelper.getConnection();
+
+            stmt =
+                    con.prepareCall(
+                            SQL_EXISTE_REQUERIMIENTO_DUPLICADO
+                    );
+
+            stmt.registerOutParameter(
+                    1,
+                    Types.BOOLEAN
+            );
+
+            stmt.setString(
+                    2,
+                    cuilTitular
+            );
+
+            stmt.setInt(
+                    3,
+                    inte
+            );
+
+            stmt.setInt(
+                    4,
+                    idPrestacion
+            );
+
+            if (fechaOrdenMedica == null) {
+                stmt.setNull(
+                        5,
+                        Types.DATE
+                );
+            } else {
+                stmt.setDate(
+                        5,
+                        new java.sql.Date(
+                                fechaOrdenMedica.getTime()
+                        )
+                );
+            }
+
+            stmt.setInt(
+                    6,
+                    idRequerimientoExcluir
+            );
+
+            stmt.execute();
+
+            boolean value =
+                    stmt.getBoolean(1);
+
+            return !stmt.wasNull()
+                    && value;
+
+        } finally {
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
         }
     }
 

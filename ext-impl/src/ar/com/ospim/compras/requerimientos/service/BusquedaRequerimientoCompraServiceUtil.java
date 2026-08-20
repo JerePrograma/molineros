@@ -100,6 +100,24 @@ public class BusquedaRequerimientoCompraServiceUtil {
         );
     }
 
+    public static boolean existeRequerimientoDuplicado(
+            String cuilTitular,
+            int inte,
+            int idPrestacion,
+            java.util.Date fechaOrdenMedica,
+            int idRequerimientoExcluir)
+            throws Exception {
+
+        return helper
+                .existeRequerimientoDuplicado(
+                        cuilTitular,
+                        inte,
+                        idPrestacion,
+                        fechaOrdenMedica,
+                        idRequerimientoExcluir
+                );
+    }
+
     public static List<PrestadorCotizacion> buscarPrestadoresEnviados(
             int idRequerimientoCompra,
             String texto,
@@ -171,4 +189,6 @@ public class BusquedaRequerimientoCompraServiceUtil {
 
     private BusquedaRequerimientoCompraServiceUtil() {
     }
+
+
 }

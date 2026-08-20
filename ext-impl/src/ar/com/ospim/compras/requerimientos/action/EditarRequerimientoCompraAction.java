@@ -509,6 +509,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
          * ==========================================================
          *
          * La Orden medica continúa siendo obligatoria.
+         *
+         * Antes de crear la cabecera y antes de crear documentos
+         * en Document Library, se controla que no exista otro
+         * requerimiento para la misma combinación:
+         *
+         * afiliado + prestacion + fecha de Orden medica.
          */
         if (esNuevo) {
 
@@ -541,6 +547,30 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                             cantidadOrdenesMedicas
                     );
 
+            List<Integer> idsPrestaciones =
+                    obtenerIdsPrestacionesDesdeRequest(
+                            actionRequest
+                    );
+
+            /*
+             * IMPORTANTE:
+             *
+             * La validacion se ejecuta antes de:
+             *
+             * - insertar la cabecera;
+             * - crear archivos en Document Library;
+             * - registrar Ordenes medicas;
+             * - guardar detalles.
+             *
+             * Si una combinacion ya existe, el alta termina aca.
+             */
+            requerimientoHelper
+                    .validarNuevoRequerimientoNoDuplicado(
+                            requerimiento,
+                            idsPrestaciones,
+                            ordenesMedicas
+                    );
+
             return requerimientoHelper
                     .guardarNuevoRequerimientoCompraConOrdenesMedicas(
                             requerimiento,
@@ -549,7 +579,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                             usuario
                     );
         }
-
 
         /*
          * ==========================================================
@@ -565,7 +594,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                                 requerimiento,
                                 usuario
                         );
-
 
         /*
          * En edición las nuevas Órdenes médicas son opcionales.
@@ -610,6 +638,95 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 );
 
         return idGuardado;
+    }
+
+    private List<Integer> obtenerIdsPrestacionesDesdeRequest(
+            ActionRequest actionRequest)
+            throws ValidacionCompraException {
+
+        List<Integer> resultado =
+                new ArrayList<Integer>();
+
+        int cantidadDetalles =
+                parseEnteroConDefault(
+                        actionRequest,
+                        "detalle_count",
+                        "Cantidad de detalles",
+                        0
+                );
+
+        if (cantidadDetalles <= 0) {
+            return resultado;
+        }
+
+        Set<Integer> idsUnicos =
+                new HashSet<Integer>();
+
+        for (int indice = 0;
+             indice < cantidadDetalles;
+             indice++) {
+
+            String prefijo =
+                    "detalle_" + indice + "_";
+
+            String tipoItem =
+                    getParametroTrim(
+                            actionRequest,
+                            prefijo + "tipo_item"
+                    );
+
+            /*
+             * MEDICAMENTO y OBSERVACION no participan en la regla.
+             *
+             * Si tipo_item no viene informado, no descartamos la fila:
+             * los formularios legacy pueden dejar que el backend
+             * determine NOMENCLADOR según el sector.
+             */
+            if (!WebKeysCompras.isEmpty(tipoItem)
+                    && !RequerimientoCompraDetalle
+                    .TIPO_ITEM_NOMENCLADOR
+                    .equalsIgnoreCase(tipoItem)) {
+
+                continue;
+            }
+
+            String idPrestacionRaw =
+                    getParametroTrim(
+                            actionRequest,
+                            prefijo + "id_prestacion"
+                    );
+
+            if (WebKeysCompras.isEmpty(
+                    idPrestacionRaw
+            )) {
+                continue;
+            }
+
+            Integer idPrestacion =
+                    parseEnteroOpcional(
+                            actionRequest,
+                            prefijo + "id_prestacion",
+                            "Detalle #"
+                                    + (indice + 1)
+                                    + " - Prestación"
+                    );
+
+            if (idPrestacion == null
+                    || idPrestacion.intValue() <= 0) {
+
+                continue;
+            }
+
+            idsUnicos.add(
+                    idPrestacion
+            );
+        }
+
+        resultado.addAll(
+                idsUnicos
+        );
+
+        return resultado;
     }
 
     private List<OrdenMedicaValidada> validarOrdenesMedicasDesdeRequest(
@@ -714,10 +831,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 String mensajeNormalizado =
                         mensaje != null
-                                ? mensaje
-                                  .toLowerCase(
-                                          Locale.ROOT
-                                  )
+                                ? mensaje.toLowerCase(
+                                Locale.ROOT
+                        )
                                 : "";
 
                 String campoError =

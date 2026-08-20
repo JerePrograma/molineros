@@ -233,6 +233,60 @@ public final class BusquedaRequerimientoCompraHelper {
         );
     }
 
+    public boolean existeRequerimientoDuplicado(
+            String cuilTitular,
+            int inte,
+            int idPrestacion,
+            java.util.Date fechaOrdenMedica,
+            int idRequerimientoExcluir)
+            throws Exception {
+
+        String cuil =
+                WebKeysCompras.trimToNull(
+                        cuilTitular
+                );
+
+        if (cuil == null
+                || !cuil.matches("^[0-9]{11}$")) {
+
+            throw new Exception(
+                    "Debe informar un CUIL titular valido."
+            );
+        }
+
+        if (inte < 0) {
+            throw new Exception(
+                    "Debe informar un integrante valido."
+            );
+        }
+
+        if (idPrestacion <= 0) {
+            throw new Exception(
+                    "Debe informar una prestacion valida."
+            );
+        }
+
+        if (fechaOrdenMedica == null) {
+            throw new Exception(
+                    "Debe informar la fecha de la Orden medica."
+            );
+        }
+
+        int idExcluir =
+                idRequerimientoExcluir > 0
+                        ? idRequerimientoExcluir
+                        : 0;
+
+        return service
+                .existeRequerimientoDuplicado(
+                        cuil,
+                        inte,
+                        idPrestacion,
+                        fechaOrdenMedica,
+                        idExcluir
+                );
+    }
+
     public List<PrestadorCotizacion> buscarPrestadoresEnviados(
             int idRequerimientoCompra,
             String texto,
