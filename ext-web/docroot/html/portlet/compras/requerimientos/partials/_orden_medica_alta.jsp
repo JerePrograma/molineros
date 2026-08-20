@@ -21,7 +21,8 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
 }
 %>
 
-<c:if test="<%= modoEditable && puedeEditarEstructuraPantalla %>">
+<c:if test="<%= modoEditable
+        && puedeEditarEstructuraPantalla %>">
 
     <style type="text/css">
         #<portlet:namespace />orden_medica_fieldset {
