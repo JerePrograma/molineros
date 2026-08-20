@@ -2331,9 +2331,22 @@
         var cargoForzadoPorSector =
                 <portlet:namespace />aplicarReglaCargosPorSector(false);
 
-        jQuery('#<portlet:namespace />sector_id_hidden').val(
-                <portlet:namespace />trimValue('sector_id')
-        );
+        <%
+        /*
+         * El sector solo se sincroniza desde la UI durante el alta.
+         *
+         * Una vez creado el requerimiento, sector_id_hidden conserva
+         * el ID canonico publicado por servidor y nunca debe ser
+         * sobrescrito desde el control visual.
+         */
+        if (esNuevo) {
+        %>
+            jQuery('#<portlet:namespace />sector_id_hidden').val(
+                    <portlet:namespace />trimValue('sector_id')
+            );
+        <%
+        }
+        %>
 
         jQuery('#<portlet:namespace />cargo_ospim_hidden').val(
                 <portlet:namespace />trimValue('cargo_ospim')
@@ -3289,9 +3302,17 @@
             <portlet:namespace />sincronizarFormularioCompra();
         });
 
-        jQuery('#<portlet:namespace />sector_id, #<portlet:namespace />id_sector').change(function() {
-            <portlet:namespace />cambiarSectorCompra(true);
-        });
+        <% if (esNuevo) { %>
+
+            jQuery(
+                    '#<portlet:namespace />sector_id, '
+                    + '#<portlet:namespace />id_sector'
+            ).change(function() {
+
+                <portlet:namespace />cambiarSectorCompra(true);
+            });
+
+        <% } %>
 
         jQuery('#<portlet:namespace />observaciones').change(function() {
             <portlet:namespace />sincronizarFormularioCompra();
