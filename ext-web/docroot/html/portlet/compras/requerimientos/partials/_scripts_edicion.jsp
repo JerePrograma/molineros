@@ -1,4 +1,38 @@
 <%@ page import="ar.com.ospim.afiliados.WebKeysAfiliados" %>
+<%
+/*
+ * _scripts_edicion.jsp puede compilarse en un contexto independiente
+ * del JSP que publica el modelo de pantalla.
+ *
+ * No depender de variables locales declaradas por otros partials.
+ * Se consumen los atributos compartidos del requerimiento.
+ */
+boolean modoEditableScriptsCompra =
+        Boolean.TRUE.equals(
+                request.getAttribute(
+                        "compras.requerimiento.modoEditable"
+                )
+        );
+
+boolean puedeEditarEstructuraScriptsCompra =
+        Boolean.TRUE.equals(
+                request.getAttribute(
+                        "compras.requerimiento.puedeEditarEstructura"
+                )
+        );
+
+Object idTercerizadoraScriptsCompraAttr =
+        request.getAttribute(
+                "compras.requerimiento.idTercerizadora"
+        );
+
+String idTercerizadoraScriptsCompra =
+        idTercerizadoraScriptsCompraAttr != null
+                ? String.valueOf(
+                        idTercerizadoraScriptsCompraAttr
+                )
+                : "";
+%>
 <portlet:renderURL
         var="comprasBuscarAfiliadosURL"
         windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
@@ -2438,17 +2472,17 @@
         <portlet:namespace />setAfiliadoValue('fecha_alta_af', '<%= jsCompra(afiliadoFechaAlta) %>');
         <portlet:namespace />setAfiliadoValue(
                 'id_tercerizadora',
-                '<%= jsCompra(idTercerizadora) %>'
+                '<%= jsCompra(idTercerizadoraScriptsCompra) %>'
         );
 
         <portlet:namespace />setAfiliadoValue(
                 'requerimiento_id_tercerizadora',
-                '<%= jsCompra(idTercerizadora) %>'
+                '<%= jsCompra(idTercerizadoraScriptsCompra) %>'
         );
 
         <portlet:namespace />setAfiliadoValue(
                 'requerimiento_id_tercerizadora_hidden',
-                '<%= jsCompra(idTercerizadora) %>'
+                '<%= jsCompra(idTercerizadoraScriptsCompra) %>'
         );
         <portlet:namespace />setAfiliadoValue('incapacidad_af', '<%= jsCompra(afiliadoIncapacidad) %>');
         <portlet:namespace />setAfiliadoValue('nombre_plan', '<%= jsCompra(afiliadoNombrePlan) %>');
@@ -2707,7 +2741,8 @@
         return true;
     }
 
-    <c:if test="<%= modoEditable && puedeEditarEstructuraPantalla %>">
+    <c:if test="<%= modoEditableScriptsCompra
+        && puedeEditarEstructuraScriptsCompra %>">
         function <portlet:namespace />ordenMedicaDosDigitos(valor) {
             valor = parseInt(valor, 10);
 
@@ -3233,7 +3268,8 @@
         var incorporarNuevasOrdenesMedicas =
                 false;
 
-        <c:if test="<%= modoEditable && puedeEditarEstructuraPantalla %>">
+        <c:if test="<%= modoEditableScriptsCompra
+        && puedeEditarEstructuraScriptsCompra %>">
 
             <% if (esNuevo) { %>
 
@@ -3380,7 +3416,8 @@
         var contextosOrdenesMedicas =
                 null;
 
-        <c:if test="<%= modoEditable && puedeEditarEstructuraPantalla %>">
+        <c:if test="<%= modoEditableScriptsCompra
+        && puedeEditarEstructuraScriptsCompra %>">
 
             if (incorporarNuevasOrdenesMedicas) {
 
@@ -3404,7 +3441,8 @@
 
         if (!<portlet:namespace />submitFormularioCompra(form)) {
 
-            <c:if test="<%= modoEditable && puedeEditarEstructuraPantalla %>">
+            <c:if test="<%= modoEditableScriptsCompra
+        && puedeEditarEstructuraScriptsCompra %>">
 
                 if (contextosOrdenesMedicas) {
 
