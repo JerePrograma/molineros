@@ -2436,9 +2436,20 @@
         <portlet:namespace />setAfiliadoValue('seccional', '<%= jsCompra(afiliadoSeccional) %>');
         <portlet:namespace />setAfiliadoValue('baja_fecha', '<%= jsCompra(afiliadoBajaFecha) %>');
         <portlet:namespace />setAfiliadoValue('fecha_alta_af', '<%= jsCompra(afiliadoFechaAlta) %>');
-        <portlet:namespace />setAfiliadoValue('id_tercerizadora', '<%= jsCompra(afiliadoIdTercerizadora) %>');
-        <portlet:namespace />setAfiliadoValue('requerimiento_id_tercerizadora', '<%= jsCompra(afiliadoIdTercerizadora) %>');
-        <portlet:namespace />setAfiliadoValue('requerimiento_id_tercerizadora_hidden', '<%= jsCompra(afiliadoIdTercerizadora) %>');
+        <portlet:namespace />setAfiliadoValue(
+                'id_tercerizadora',
+                '<%= jsCompra(idTercerizadora) %>'
+        );
+
+        <portlet:namespace />setAfiliadoValue(
+                'requerimiento_id_tercerizadora',
+                '<%= jsCompra(idTercerizadora) %>'
+        );
+
+        <portlet:namespace />setAfiliadoValue(
+                'requerimiento_id_tercerizadora_hidden',
+                '<%= jsCompra(idTercerizadora) %>'
+        );
         <portlet:namespace />setAfiliadoValue('incapacidad_af', '<%= jsCompra(afiliadoIncapacidad) %>');
         <portlet:namespace />setAfiliadoValue('nombre_plan', '<%= jsCompra(afiliadoNombrePlan) %>');
         <portlet:namespace />setAfiliadoValue('id_plan', '<%= jsCompra(afiliadoIdPlan) %>');
