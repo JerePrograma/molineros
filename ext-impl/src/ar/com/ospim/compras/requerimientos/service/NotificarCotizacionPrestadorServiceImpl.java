@@ -1,9 +1,6 @@
 package ar.com.ospim.compras.requerimientos.service;
 
-import ar.com.ospim.compras.requerimientos.beans.CotizacionPrestadorDiagnostico;
-import ar.com.ospim.compras.requerimientos.beans.FinalizacionCotizacionPrestador;
-import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
-import ar.com.ospim.compras.requerimientos.beans.ReservaCotizacionPrestador;
+import ar.com.ospim.compras.requerimientos.beans.*;
 import ar.com.ospim.util.ConnectionHelper;
 
 import java.sql.CallableStatement;
@@ -31,6 +28,11 @@ public class NotificarCotizacionPrestadorServiceImpl {
 
     private static final String SQL_FINALIZAR =
             "{call compras.finalizar_notificacion_cotizacion_prestador(?,?,?,?,?)}";
+
+    private static final String
+            SQL_REGISTRAR_PEDIDO_COTIZACION_DOCUMENTO =
+            "{ ? = call compras.registrar_pedido_cotizacion_documento("
+                    + "?,?,?,?,?,?,?,?,?,?) }";
 
     public List<PrestadorCotizacion> listarPrestadoresCandidatos(
             int idRequerimientoCompra) throws Exception {
@@ -193,6 +195,102 @@ public class NotificarCotizacionPrestadorServiceImpl {
         try {
             rs.close();
         } catch (Exception ignored) {
+        }
+    }
+
+    public int registrarPedidoCotizacionDocumento(
+            RequerimientoCompraPedidoCotizacion documento,
+            String usuario)
+            throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con =
+                    ConnectionHelper.getConnection();
+
+            stmt =
+                    con.prepareCall(
+                            SQL_REGISTRAR_PEDIDO_COTIZACION_DOCUMENTO
+                    );
+
+            stmt.registerOutParameter(
+                    1,
+                    java.sql.Types.INTEGER
+            );
+
+            stmt.setInt(
+                    2,
+                    documento
+                            .getIdRequerimiento()
+                            .intValue()
+            );
+
+            stmt.setInt(
+                    3,
+                    documento
+                            .getIdPrestador()
+                            .intValue()
+            );
+
+            stmt.setLong(
+                    4,
+                    documento
+                            .getDlGroupId()
+                            .longValue()
+            );
+
+            stmt.setLong(
+                    5,
+                    documento
+                            .getDlFolderId()
+                            .longValue()
+            );
+
+            stmt.setLong(
+                    6,
+                    documento
+                            .getDlFileEntryId()
+                            .longValue()
+            );
+
+            stmt.setString(
+                    7,
+                    documento.getDlFileUuid()
+            );
+
+            stmt.setString(
+                    8,
+                    documento.getNombreOriginal()
+            );
+
+            stmt.setString(
+                    9,
+                    documento.getNombrePersistido()
+            );
+
+            stmt.setString(
+                    10,
+                    documento.getTitulo()
+            );
+
+            stmt.setString(
+                    11,
+                    usuario
+            );
+
+            stmt.execute();
+
+            return stmt.getInt(
+                    1
+            );
+
+        } finally {
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
         }
     }
 }

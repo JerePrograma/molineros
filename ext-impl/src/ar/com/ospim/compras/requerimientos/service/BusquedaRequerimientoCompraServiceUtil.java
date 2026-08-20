@@ -190,5 +190,14 @@ public class BusquedaRequerimientoCompraServiceUtil {
     private BusquedaRequerimientoCompraServiceUtil() {
     }
 
+    public static RequerimientoCompraPedidoCotizacion
+    getPedidoCotizacionAdjudicado(
+            int idRequerimientoCompra)
+            throws Exception {
 
+        return helper
+                .getPedidoCotizacionAdjudicado(
+                        idRequerimientoCompra
+                );
+    }
 }

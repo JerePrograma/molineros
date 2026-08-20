@@ -248,6 +248,14 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final int MAX_PRESUPUESTOS_POR_CARGA = 10;
     public static final int MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO = 500;
 
+    public static final String
+            PARAM_TIPO_DOCUMENTO_COMPRA_RECLAMO =
+            "tipo_documento_compra";
+
+    public static final String
+            DOCUMENTO_COMPRA_RECLAMO_PEDIDO_COTIZACION =
+            "PEDIDO_COTIZACION";
+
     public static String getPrefijoDocumentoRequerimientoCompra(
             int idRequerimientoCompra) {
 

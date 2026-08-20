@@ -1,6 +1,7 @@
 package ar.com.ospim.compras.requerimientos.documentos;
 
 import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPedidoCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 
 import com.liferay.documentlibrary.service.DLLocalServiceUtil;
@@ -20,10 +21,7 @@ import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
 
 import javax.portlet.ActionRequest;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.sql.Date;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
@@ -55,6 +53,15 @@ public class DocumentoLibraryComprasHelper
 
     private static final String CONTENT_TYPE_PNG =
             "image/png";
+
+    public static final String TITULO_PEDIDO_COTIZACION =
+            "Pedido de cotización";
+
+    private static final String DESCRIPCION_PEDIDO_COTIZACION =
+            "Pedido de cotización enviado al prestador";
+
+    private static final String CONTENT_TYPE_PDF =
+            "application/pdf";
 
     private final ServiceContext serviceContext;
     private final long groupId;
@@ -1596,5 +1603,321 @@ public class DocumentoLibraryComprasHelper
                 }
             }
         }
+    }
+
+    public static DocumentoComprasCreado crearPedidoCotizacion(
+            int idRequerimientoCompra,
+            int idPrestador,
+            byte[] contenido,
+            String nombreOriginal,
+            ServiceContext serviceContext)
+            throws Exception {
+
+        if (idRequerimientoCompra <= 0) {
+            throw new Exception(
+                    "El requerimiento de compra no es válido."
+            );
+        }
+
+        if (idPrestador <= 0) {
+            throw new Exception(
+                    "El prestador del pedido de cotización no es válido."
+            );
+        }
+
+        validarContextoDocumentLibrary(
+                serviceContext
+        );
+
+        String nombreSeguro =
+                normalizarNombreArchivoSeguro(
+                        nombreOriginal
+                );
+
+        if (WebKeysCompras.isEmpty(
+                nombreSeguro
+        )
+                || nombreSeguro.length() > 255
+                || !".pdf".equals(
+                obtenerExtensionSeguraDocumento(
+                        nombreSeguro
+                )
+        )) {
+
+            throw new Exception(
+                    "El nombre del pedido de cotización no es válido."
+            );
+        }
+
+        validarContenidoPdfPedidoCotizacion(
+                contenido
+        );
+
+        long maximo =
+                obtenerMaximoTamanoDocumento();
+
+        if (contenido.length > maximo) {
+            throw new Exception(
+                    "El pedido de cotización supera "
+                            + "el tamaño permitido."
+            );
+        }
+
+        DLFolder folder =
+                obtenerOCrearFolderCompras(
+                        serviceContext
+                );
+
+        String identificador =
+                UUID.randomUUID()
+                        .toString()
+                        .replace(
+                                "-",
+                                ""
+                        );
+
+        String nombrePersistido =
+                "PEDIDO-COTIZACION-COMPRA-"
+                        + idRequerimientoCompra
+                        + "-PRESTADOR-"
+                        + idPrestador
+                        + "-"
+                        + identificador
+                        + ".pdf";
+
+        String titulo =
+                TITULO_PEDIDO_COTIZACION
+                        + " "
+                        + idRequerimientoCompra
+                        + " prestador "
+                        + idPrestador
+                        + " "
+                        + identificador.substring(
+                        0,
+                        8
+                );
+
+        File archivoTemporal =
+                null;
+
+        FileOutputStream output =
+                null;
+
+        DLFileEntry entry =
+                null;
+
+        try {
+            archivoTemporal =
+                    File.createTempFile(
+                            "pedido-cotizacion-",
+                            ".pdf"
+                    );
+
+            output =
+                    new FileOutputStream(
+                            archivoTemporal
+                    );
+
+            output.write(
+                    contenido
+            );
+
+            output.flush();
+            output.close();
+            output = null;
+
+            entry =
+                    DLFileEntryLocalServiceUtil
+                            .addFileEntry(
+                                    serviceContext.getUserId(),
+                                    folder.getFolderId(),
+                                    nombrePersistido,
+                                    titulo,
+                                    DESCRIPCION_PEDIDO_COTIZACION,
+                                    "",
+                                    archivoTemporal,
+                                    serviceContext
+                            );
+
+            if (entry == null
+                    || entry.getFileEntryId() <= 0L) {
+
+                throw new Exception(
+                        "Document Library no devolvió "
+                                + "un pedido de cotización válido."
+                );
+            }
+
+            DocumentoComprasCreado documento =
+                    new DocumentoComprasCreado(
+                            entry.getGroupId(),
+                            entry.getFolderId(),
+                            entry.getFileEntryId(),
+                            entry.getUuid(),
+                            entry.getName(),
+                            entry.getTitle()
+                    );
+
+            if (documento.getGroupId() <= 0L
+                    || documento.getFolderId() <= 0L
+                    || documento.getFileEntryId() <= 0L
+                    || WebKeysCompras.isEmpty(
+                    documento.getUuid()
+            )
+                    || WebKeysCompras.isEmpty(
+                    documento.getNombrePersistido()
+            )
+                    || WebKeysCompras.isEmpty(
+                    documento.getTitulo()
+            )) {
+
+                throw new Exception(
+                        "El pedido de cotización creado "
+                                + "no conserva una identidad válida."
+                );
+            }
+
+            return documento;
+
+        } catch (Exception error) {
+
+            if (entry != null
+                    && entry.getFileEntryId() > 0L) {
+
+                try {
+                    DLFileEntryLocalServiceUtil
+                            .deleteFileEntry(
+                                    entry
+                            );
+
+                } catch (Exception cleanupError) {
+                    _log.error(
+                            "No se pudo compensar un pedido "
+                                    + "de cotización inválido. "
+                                    + "fileEntryId="
+                                    + entry.getFileEntryId(),
+                            cleanupError
+                    );
+                }
+            }
+
+            throw error;
+
+        } finally {
+
+            if (output != null) {
+                try {
+                    output.close();
+                } catch (Exception ignored) {
+                }
+            }
+
+            if (archivoTemporal != null
+                    && archivoTemporal.exists()
+                    && !archivoTemporal.delete()
+                    && _log.isDebugEnabled()) {
+
+                _log.debug(
+                        "No se pudo eliminar el archivo temporal "
+                                + "del pedido de cotización."
+                );
+            }
+        }
+    }
+
+    private static void validarContenidoPdfPedidoCotizacion(
+            byte[] contenido)
+            throws Exception {
+
+        if (contenido == null
+                || contenido.length < 5
+                || contenido[0] != '%'
+                || contenido[1] != 'P'
+                || contenido[2] != 'D'
+                || contenido[3] != 'F'
+                || contenido[4] != '-') {
+
+            throw new Exception(
+                    "El pedido de cotización generado "
+                            + "no contiene un PDF válido."
+            );
+        }
+    }
+
+    public static void validarIdentidadAsociacionDocumento(
+            RequerimientoCompraPedidoCotizacion documento)
+            throws Exception {
+
+        if (documento == null
+                || documento.getDlGroupId() == null
+                || documento.getDlGroupId().longValue() <= 0L
+                || documento.getDlFolderId() == null
+                || documento.getDlFolderId().longValue() <= 0L
+                || documento.getDlFileEntryId() == null
+                || documento.getDlFileEntryId().longValue() <= 0L
+                || WebKeysCompras.isEmpty(
+                documento.getDlFileUuid()
+        )
+                || WebKeysCompras.isEmpty(
+                documento.getNombrePersistido()
+        )) {
+
+            throw new Exception(
+                    "La asociación del pedido de cotización "
+                            + "contiene una identidad "
+                            + "de Document Library inválida."
+            );
+        }
+    }
+
+    public static boolean coincideIdentidadAsociacionDocumento(
+            RequerimientoCompraPedidoCotizacion documento,
+            DLFileEntry entry) {
+
+        if (documento == null
+                || entry == null
+                || documento.getDlGroupId() == null
+                || documento.getDlFolderId() == null
+                || documento.getDlFileEntryId() == null
+                || WebKeysCompras.isEmpty(
+                documento.getNombrePersistido()
+        )) {
+
+            return false;
+        }
+
+        boolean coincide =
+                entry.getFileEntryId()
+                        == documento
+                        .getDlFileEntryId()
+                        .longValue()
+                        && entry.getGroupId()
+                        == documento
+                        .getDlGroupId()
+                        .longValue()
+                        && entry.getFolderId()
+                        == documento
+                        .getDlFolderId()
+                        .longValue()
+                        && documento
+                        .getNombrePersistido()
+                        .equals(
+                                entry.getName()
+                        );
+
+        if (coincide
+                && !WebKeysCompras.isEmpty(
+                documento.getDlFileUuid()
+        )) {
+
+            coincide =
+                    documento
+                            .getDlFileUuid()
+                            .equals(
+                                    entry.getUuid()
+                            );
+        }
+
+        return coincide;
     }
 }

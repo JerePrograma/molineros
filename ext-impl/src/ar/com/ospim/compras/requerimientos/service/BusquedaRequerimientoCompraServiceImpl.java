@@ -1,12 +1,6 @@
 package ar.com.ospim.compras.requerimientos.service;
 
-import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraEstado;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraFiltro;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
+import ar.com.ospim.compras.requerimientos.beans.*;
 import ar.com.ospim.util.ConnectionHelper;
 
 import java.util.ArrayList;
@@ -80,6 +74,9 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
     private static final String SQL_LISTAR_PRESUPUESTOS_PRESTADOR =
             "{call compras.listar_presupuestos_prestador(?,?)}";
+
+    private static final String SQL_GET_PEDIDO_COTIZACION_PRESTADOR =
+            "{call compras.get_pedido_cotizacion_prestador(?,?)}";
 
     public List<RequerimientoCompra> buscarRequerimientos(
             RequerimientoCompraFiltro filtro) throws Exception {
@@ -865,5 +862,155 @@ public class BusquedaRequerimientoCompraServiceImpl {
             rs.close();
         } catch (Exception ignored) {
         }
+    }
+
+    public RequerimientoCompraPedidoCotizacion
+    getPedidoCotizacionPrestador(
+            int idRequerimientoCompra,
+            int idPrestador)
+            throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con =
+                    ConnectionHelper.getConnection();
+
+            stmt =
+                    con.prepareCall(
+                            SQL_GET_PEDIDO_COTIZACION_PRESTADOR
+                    );
+
+            stmt.setInt(
+                    1,
+                    idRequerimientoCompra
+            );
+
+            stmt.setInt(
+                    2,
+                    idPrestador
+            );
+
+            rs =
+                    stmt.executeQuery();
+
+            return rs.next()
+                    ? mapPedidoCotizacion(
+                    rs
+            )
+                    : null;
+
+        } finally {
+            closeQuietly(
+                    rs
+            );
+
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
+        }
+    }
+
+    private RequerimientoCompraPedidoCotizacion
+    mapPedidoCotizacion(
+            ResultSet rs)
+            throws Exception {
+
+        RequerimientoCompraPedidoCotizacion documento =
+                new RequerimientoCompraPedidoCotizacion();
+
+        documento.setIdRequerimiento(
+                getInteger(
+                        rs,
+                        "id_requerimiento"
+                )
+        );
+
+        documento.setIdPrestador(
+                getInteger(
+                        rs,
+                        "id_prestador"
+                )
+        );
+
+        documento.setIntento(
+                getInteger(
+                        rs,
+                        "intento"
+                )
+        );
+
+        documento.setDlGroupId(
+                getLong(
+                        rs,
+                        "dl_group_id"
+                )
+        );
+
+        documento.setDlFolderId(
+                getLong(
+                        rs,
+                        "dl_folder_id"
+                )
+        );
+
+        documento.setDlFileEntryId(
+                getLong(
+                        rs,
+                        "dl_file_entry_id"
+                )
+        );
+
+        documento.setDlFileUuid(
+                getString(
+                        rs,
+                        "dl_file_uuid"
+                )
+        );
+
+        documento.setNombreOriginal(
+                getString(
+                        rs,
+                        "nombre_original"
+                )
+        );
+
+        documento.setNombrePersistido(
+                getString(
+                        rs,
+                        "nombre_persistido"
+                )
+        );
+
+        documento.setTitulo(
+                getString(
+                        rs,
+                        "titulo"
+                )
+        );
+
+        if (hasColumn(
+                rs,
+                "alta_fecha"
+        )) {
+
+            documento.setAltaFecha(
+                    rs.getTimestamp(
+                            "alta_fecha"
+                    )
+            );
+        }
+
+        documento.setAltaUsr(
+                getString(
+                        rs,
+                        "alta_usr"
+                )
+        );
+
+        return documento;
     }
 }

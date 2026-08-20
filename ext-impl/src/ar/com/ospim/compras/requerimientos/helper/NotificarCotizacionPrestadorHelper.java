@@ -1,21 +1,15 @@
 package ar.com.ospim.compras.requerimientos.helper;
 
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.requerimientos.beans.CotizacionPrestadorDiagnostico;
-import ar.com.ospim.compras.requerimientos.beans.FinalizacionCotizacionPrestador;
-import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionDetalle;
-import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
-import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
-import ar.com.ospim.compras.requerimientos.beans.ReservaCotizacionPrestador;
+import ar.com.ospim.compras.requerimientos.beans.*;
+import ar.com.ospim.compras.requerimientos.documentos.DocumentoComprasCreado;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.NotificarCotizacionPrestadorServiceImpl;
 import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.servlets.PdfServlet;
 
+import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
@@ -76,7 +70,9 @@ public class NotificarCotizacionPrestadorHelper {
     public NotificacionCotizacionResultado notificarPrestadores(
             int idRequerimientoCompra,
             String usuario,
-            long companyId) throws Exception {
+            long companyId,
+            ServiceContext serviceContext)
+            throws Exception {
 
         validarParametros(
                 idRequerimientoCompra,
@@ -88,7 +84,9 @@ public class NotificarCotizacionPrestadorHelper {
                         idRequerimientoCompra
                 );
 
-        validarRequerimiento(requerimiento);
+        validarRequerimiento(
+                requerimiento
+        );
 
         List<PrestadorCotizacion> candidatos =
                 listarPrestadoresCandidatos(
@@ -107,7 +105,12 @@ public class NotificarCotizacionPrestadorHelper {
                 resultado
         );
 
+        /*
+         * Si no existen candidatos procesables no necesitamos
+         * preparar Document Library ni generar el PDF.
+         */
         if (candidatos.isEmpty()) {
+
             if (_log.isInfoEnabled()) {
                 _log.info(
                         "No hay prestadores pendientes de notificacion. "
@@ -128,7 +131,30 @@ public class NotificarCotizacionPrestadorHelper {
         }
 
         /*
-         * El PDF se genera antes de reservar al primer prestador.
+         * A partir de este punto existe por lo menos un prestador
+         * potencialmente procesable.
+         *
+         * El contexto documental se valida antes de generar el PDF
+         * y antes de reservar al primer prestador.
+         *
+         * De este modo un error estructural de Document Library
+         * no deja filas de notificacion en PROCESANDO.
+         */
+        DocumentoLibraryComprasHelper
+                .validarContextoDocumentLibrary(
+                        serviceContext
+                );
+
+        /*
+         * El PDF se genera una unica vez para esta ejecucion.
+         *
+         * Estos mismos bytes:
+         *
+         * 1. se conservaran en Document Library para cada intento;
+         * 2. se adjuntaran al correo.
+         *
+         * Por lo tanto el documento historico y el adjunto enviado
+         * son exactamente el mismo contenido binario.
          *
          * Si Jasper falla, no queda ninguna fila PROCESANDO
          * ni se realizan envios parciales.
@@ -144,11 +170,12 @@ public class NotificarCotizacionPrestadorHelper {
                         + ".pdf";
 
         /*
-         * Todas las Ordenes medicas activas se recuperan y validan antes de
-         * reservar al primer prestador.
+         * Todas las Ordenes medicas activas se recuperan y validan
+         * antes de reservar al primer prestador.
          *
-         * Esto mantiene la regla fail-closed y evita que una asociacion
-         * documental inconsistente produzca envios parciales.
+         * Esto mantiene la regla fail-closed y evita que una
+         * asociacion documental inconsistente produzca envios
+         * parciales.
          */
         List<OrdenMedicaAdjunta> ordenesMedicasAdjuntas =
                 recuperarOrdenesMedicasAdjuntas(
@@ -156,12 +183,16 @@ public class NotificarCotizacionPrestadorHelper {
                         companyId
                 );
 
-        for (int i = 0; i < candidatos.size(); i++) {
+        for (int i = 0;
+             i < candidatos.size();
+             i++) {
+
             procesarPrestador(
                     requerimiento,
                     candidatos.get(i),
                     usuario,
                     companyId,
+                    serviceContext,
                     resultado,
                     pedidoPresupuestoPdf,
                     nombrePedidoPresupuestoPdf,
@@ -170,6 +201,7 @@ public class NotificarCotizacionPrestadorHelper {
         }
 
         if (resultado.getPendientesSinClasificar() > 0) {
+
             _log.error(
                     "El proceso de notificacion finalizo "
                             + "con candidatos sin clasificar. "
@@ -192,12 +224,14 @@ public class NotificarCotizacionPrestadorHelper {
             PrestadorCotizacion prestador,
             String usuario,
             long companyId,
+            ServiceContext serviceContext,
             NotificacionCotizacionResultado resultado,
             byte[] pedidoPresupuestoPdf,
             String nombrePedidoPresupuestoPdf,
             List<OrdenMedicaAdjunta> ordenesMedicasAdjuntas) {
 
         if (prestador == null) {
+
             _log.error(
                     "La consulta de prestadores candidatos "
                             + "devolvio un elemento nulo. "
@@ -222,12 +256,15 @@ public class NotificarCotizacionPrestadorHelper {
         }
 
         int idRequerimiento =
-                requerimiento.getIdRequerimientoCompra();
+                requerimiento
+                        .getIdRequerimientoCompra();
 
         int idPrestador =
-                prestador.getIdPrestador();
+                prestador
+                        .getIdPrestador();
 
         if (_log.isInfoEnabled()) {
+
             _log.info(
                     "Procesando candidato de cotizacion. "
                             + "idRequerimiento="
@@ -243,6 +280,11 @@ public class NotificarCotizacionPrestadorHelper {
 
         ReservaCotizacionPrestador reserva;
 
+        /*
+         * ==========================================================
+         * 1. RESERVA EXCLUSIVA
+         * ==========================================================
+         */
         try {
             reserva =
                     reservarCotizacionPrestador(
@@ -252,6 +294,7 @@ public class NotificarCotizacionPrestadorHelper {
                     );
 
         } catch (Exception e) {
+
             _log.error(
                     "No se pudo reservar la notificacion "
                             + "de cotizacion. "
@@ -278,6 +321,7 @@ public class NotificarCotizacionPrestadorHelper {
         }
 
         if (reserva == null) {
+
             _log.error(
                     "La funcion de reserva no devolvio resultado. "
                             + "idPrestador="
@@ -302,12 +346,14 @@ public class NotificarCotizacionPrestadorHelper {
         }
 
         if (!reserva.isReservado()) {
+
             String motivo =
                     construirMotivoReservaNoOtorgada(
                             reserva
                     );
 
             if (_log.isInfoEnabled()) {
+
                 _log.info(
                         "Prestador omitido porque no se obtuvo "
                                 + "la reserva exclusiva. "
@@ -338,6 +384,10 @@ public class NotificarCotizacionPrestadorHelper {
             return;
         }
 
+        /*
+         * Desde aca la fila queda PROCESANDO y esta ejecucion
+         * posee la reserva exclusiva.
+         */
         String emailReservadoNormalizado =
                 normalizarEmail(
                         reserva.getEmailDestino()
@@ -357,8 +407,15 @@ public class NotificarCotizacionPrestadorHelper {
                 USAR_EMAIL_DESTINO_TEMPORAL
                         && emailRealInvalido;
 
+        /*
+         * ==========================================================
+         * 2. VALIDACION DEL DESTINATARIO
+         * ==========================================================
+         */
         if (USAR_EMAIL_DESTINO_TEMPORAL) {
+
             if (emailRealInvalido) {
+
                 _log.warn(
                         "El email real reservado del prestador "
                                 + "es inexistente o invalido. "
@@ -372,6 +429,7 @@ public class NotificarCotizacionPrestadorHelper {
             }
 
             if (_log.isInfoEnabled()) {
+
                 _log.info(
                         "Modo temporal de notificacion activo. "
                                 + "El correo sera redirigido "
@@ -384,6 +442,7 @@ public class NotificarCotizacionPrestadorHelper {
             }
 
         } else if (emailRealInvalido) {
+
             String errorTecnico =
                     "El email real reservado del prestador "
                             + "es inexistente o invalido.";
@@ -409,10 +468,13 @@ public class NotificarCotizacionPrestadorHelper {
             String motivoUsuario;
 
             if (persistido) {
+
                 motivoUsuario =
                         "El prestador no tiene un email "
                                 + "valido registrado.";
+
             } else {
+
                 motivoUsuario =
                         "El prestador no tiene un email valido "
                                 + "y el resultado no pudo registrarse. "
@@ -439,14 +501,20 @@ public class NotificarCotizacionPrestadorHelper {
             return;
         }
 
-        if (!esEmailValido(emailDestino)) {
+        if (!esEmailValido(
+                emailDestino
+        )) {
+
             String errorTecnico;
 
             if (USAR_EMAIL_DESTINO_TEMPORAL) {
+
                 errorTecnico =
                         "El email destino temporal de QA "
                                 + "es inexistente o invalido.";
+
             } else {
+
                 errorTecnico =
                         "El email destino efectivo del prestador "
                                 + "es inexistente o invalido.";
@@ -476,10 +544,13 @@ public class NotificarCotizacionPrestadorHelper {
             String motivoUsuario;
 
             if (USAR_EMAIL_DESTINO_TEMPORAL) {
+
                 motivoUsuario =
                         "El destinatario configurado para las pruebas "
                                 + "no es valido. Contacte a Sistemas.";
+
             } else {
+
                 motivoUsuario =
                         "El prestador no tiene un email "
                                 + "valido registrado.";
@@ -510,13 +581,100 @@ public class NotificarCotizacionPrestadorHelper {
             return;
         }
 
+        /*
+         * ==========================================================
+         * 3. CONSERVAR EL PEDIDO EXACTO ANTES DEL ENVIO
+         * ==========================================================
+         *
+         * Este orden es deliberado:
+         *
+         *   RESERVA
+         *      ->
+         *   PERSISTENCIA DOCUMENTAL
+         *      ->
+         *   MAIL
+         *      ->
+         *   ENVIADO
+         *
+         * Nunca se envia un correo cuyo pedido PDF no haya podido
+         * conservarse previamente.
+         */
         try {
-            String asunto = construirAsunto(requerimiento);
-            String cuerpo = construirCuerpo(
-                    requerimiento,
-                    prestador
+            registrarPedidoCotizacionActual(
+                    idRequerimiento,
+                    idPrestador,
+                    pedidoPresupuestoPdf,
+                    nombrePedidoPresupuestoPdf,
+                    usuario,
+                    serviceContext
             );
 
+        } catch (Exception e) {
+
+            String detalleError =
+                    construirDetalleError(
+                            e
+                    );
+
+            boolean persistido =
+                    finalizarConControl(
+                            idRequerimiento,
+                            idPrestador,
+                            WebKeysCompras.ENVIO_ERROR,
+                            detalleError,
+                            usuario
+                    );
+
+            _log.error(
+                    "No se pudo conservar el pedido de cotizacion "
+                            + "antes de enviar el correo. "
+                            + "El envio fue cancelado. "
+                            + "idPrestador="
+                            + idPrestador
+                            + ", idRequerimiento="
+                            + idRequerimiento
+                            + ", estadoErrorPersistido="
+                            + persistido,
+                    e
+            );
+
+            registrarResultado(
+                    resultado,
+                    prestador,
+                    emailReservadoNormalizado,
+                    emailDestino,
+                    NotificacionCotizacionDetalle.RESULTADO_ERROR,
+                    "DOCUMENTO_PEDIDO_COTIZACION",
+                    "No se pudo conservar el pedido de cotizacion. "
+                            + "No se envio el correo. "
+                            + "Contacte a Sistemas.",
+                    emailRealInvalidoAdvertido
+            );
+
+            return;
+        }
+
+        /*
+         * ==========================================================
+         * 4. ENVIO DEL CORREO
+         * ==========================================================
+         */
+        try {
+            String asunto =
+                    construirAsunto(
+                            requerimiento
+                    );
+
+            String cuerpo =
+                    construirCuerpo(
+                            requerimiento,
+                            prestador
+                    );
+
+            /*
+             * pedidoPresupuestoPdf es exactamente el mismo byte[]
+             * que se conservo documentalmente.
+             */
             enviarMail(
                     companyId,
                     emailDestino,
@@ -528,8 +686,11 @@ public class NotificarCotizacionPrestadorHelper {
             );
 
         } catch (Exception e) {
+
             String detalleError =
-                    construirDetalleError(e);
+                    construirDetalleError(
+                            e
+                    );
 
             boolean persistido =
                     finalizarConControl(
@@ -543,11 +704,14 @@ public class NotificarCotizacionPrestadorHelper {
             String motivoUsuario;
 
             if (persistido) {
+
                 motivoUsuario =
                         "El correo no pudo enviarse. "
                                 + "Contacte a Sistemas "
                                 + "antes de reintentar.";
+
             } else {
+
                 motivoUsuario =
                         "El correo no pudo enviarse y el resultado "
                                 + "no pudo registrarse. "
@@ -580,6 +744,11 @@ public class NotificarCotizacionPrestadorHelper {
             return;
         }
 
+        /*
+         * ==========================================================
+         * 5. CONFIRMACION DEL ENVIO
+         * ==========================================================
+         */
         boolean enviadoPersistido =
                 finalizarConControl(
                         idRequerimiento,
@@ -590,6 +759,7 @@ public class NotificarCotizacionPrestadorHelper {
                 );
 
         if (!enviadoPersistido) {
+
             String motivoUsuario =
                     "El correo fue aceptado, pero el resultado "
                             + "del envio no pudo confirmarse. "
@@ -620,19 +790,28 @@ public class NotificarCotizacionPrestadorHelper {
             return;
         }
 
+        /*
+         * ==========================================================
+         * 6. RESULTADO EXITOSO
+         * ==========================================================
+         */
         String motivoExito;
 
         if (USAR_EMAIL_DESTINO_TEMPORAL) {
+
             motivoExito =
                     "Correo enviado al destinatario temporal "
                             + "de QA y resultado confirmado.";
 
             if (emailRealInvalidoAdvertido) {
+
                 motivoExito +=
                         " El email real del prestador "
                                 + "debe revisarse.";
             }
+
         } else {
+
             motivoExito =
                     "Correo enviado y resultado confirmado.";
         }
@@ -649,6 +828,7 @@ public class NotificarCotizacionPrestadorHelper {
         );
 
         if (_log.isInfoEnabled()) {
+
             _log.info(
                     "Cotizacion enviada y finalizada. "
                             + "idPrestador="
@@ -669,6 +849,220 @@ public class NotificarCotizacionPrestadorHelper {
                                     : 0
                     )
             );
+        }
+    }
+
+    protected RequerimientoCompraPedidoCotizacion
+    registrarPedidoCotizacionActual(
+            int idRequerimiento,
+            int idPrestador,
+            byte[] contenido,
+            String nombreOriginal,
+            String usuario,
+            ServiceContext serviceContext)
+            throws Exception {
+
+        if (idRequerimiento <= 0) {
+
+            throw new Exception(
+                    "Debe informar el requerimiento "
+                            + "del pedido de cotizacion."
+            );
+        }
+
+        if (idPrestador <= 0) {
+
+            throw new Exception(
+                    "Debe informar el prestador "
+                            + "del pedido de cotizacion."
+            );
+        }
+
+        if (contenido == null
+                || contenido.length == 0) {
+
+            throw new Exception(
+                    "El pedido de cotizacion generado "
+                            + "no contiene datos."
+            );
+        }
+
+        if (WebKeysCompras.isEmpty(
+                nombreOriginal
+        )) {
+
+            throw new Exception(
+                    "El pedido de cotizacion generado "
+                            + "no posee un nombre valido."
+            );
+        }
+
+        DocumentoLibraryComprasHelper
+                .validarContextoDocumentLibrary(
+                        serviceContext
+                );
+
+        DocumentoComprasCreado documento =
+                null;
+
+        try {
+            /*
+             * Primero se crea el archivo físico.
+             *
+             * DocumentoLibraryComprasHelper debe validar:
+             *
+             * - nombre seguro;
+             * - extensión .pdf;
+             * - firma %PDF-;
+             * - dl.file.max.size;
+             * - identidad final de Document Library.
+             */
+            documento =
+                    DocumentoLibraryComprasHelper
+                            .crearPedidoCotizacion(
+                                    idRequerimiento,
+                                    idPrestador,
+                                    contenido,
+                                    nombreOriginal,
+                                    serviceContext
+                            );
+
+            if (documento == null
+                    || documento.getGroupId() <= 0L
+                    || documento.getFolderId() <= 0L
+                    || documento.getFileEntryId() <= 0L
+                    || WebKeysCompras.isEmpty(
+                    documento.getUuid()
+            )
+                    || WebKeysCompras.isEmpty(
+                    documento.getNombrePersistido()
+            )
+                    || WebKeysCompras.isEmpty(
+                    documento.getTitulo()
+            )) {
+
+                throw new Exception(
+                        "Document Library no devolvio una identidad "
+                                + "valida para el pedido de cotizacion."
+                );
+            }
+
+            RequerimientoCompraPedidoCotizacion asociacion =
+                    new RequerimientoCompraPedidoCotizacion();
+
+            asociacion.setIdRequerimiento(
+                    Integer.valueOf(
+                            idRequerimiento
+                    )
+            );
+
+            asociacion.setIdPrestador(
+                    Integer.valueOf(
+                            idPrestador
+                    )
+            );
+
+            asociacion.setDlGroupId(
+                    Long.valueOf(
+                            documento.getGroupId()
+                    )
+            );
+
+            asociacion.setDlFolderId(
+                    Long.valueOf(
+                            documento.getFolderId()
+                    )
+            );
+
+            asociacion.setDlFileEntryId(
+                    Long.valueOf(
+                            documento.getFileEntryId()
+                    )
+            );
+
+            asociacion.setDlFileUuid(
+                    documento.getUuid()
+            );
+
+            /*
+             * Es el nombre que recibio efectivamente
+             * el prestador como adjunto.
+             */
+            asociacion.setNombreOriginal(
+                    nombreOriginal
+            );
+
+            asociacion.setNombrePersistido(
+                    documento.getNombrePersistido()
+            );
+
+            asociacion.setTitulo(
+                    documento.getTitulo()
+            );
+
+            int intento =
+                    persistence
+                            .registrarPedidoCotizacionDocumento(
+                                    asociacion,
+                                    normalizarUsuario(
+                                            usuario
+                                    )
+                            );
+
+            if (intento <= 0) {
+
+                throw new Exception(
+                        "No se obtuvo el intento asociado "
+                                + "al pedido de cotizacion."
+                );
+            }
+
+            asociacion.setIntento(
+                    Integer.valueOf(
+                            intento
+                    )
+            );
+
+            return asociacion;
+
+        } catch (Exception errorRegistro) {
+
+            /*
+             * IMPORTANTE:
+             *
+             * Esta compensacion solamente es segura si
+             * registrarPedidoCotizacionDocumento(...) garantiza que,
+             * cuando lanza una excepcion, la transaccion SQL ya fue
+             * rollbackeada de manera confirmada.
+             *
+             * Ese contrato se implementara en el ServiceImpl.
+             */
+            if (documento != null) {
+
+                try {
+                    DocumentoLibraryComprasHelper
+                            .eliminarDocumentoCreado(
+                                    documento
+                            );
+
+                } catch (Exception cleanupError) {
+
+                    _log.error(
+                            "No se pudo compensar el pedido "
+                                    + "de cotizacion creado "
+                                    + "antes de fallar su asociacion. "
+                                    + "idRequerimiento="
+                                    + idRequerimiento
+                                    + ", idPrestador="
+                                    + idPrestador
+                                    + ", fileEntryId="
+                                    + documento.getFileEntryId(),
+                            cleanupError
+                    );
+                }
+            }
+
+            throw errorRegistro;
         }
     }
 

@@ -1,13 +1,7 @@
 package ar.com.ospim.compras.requerimientos.helper;
 
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraEstado;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraFiltro;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
+import ar.com.ospim.compras.requerimientos.beans.*;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceImpl;
 
 import java.util.ArrayList;
@@ -438,5 +432,60 @@ public final class BusquedaRequerimientoCompraHelper {
                     "Debe informar el requerimiento de compra."
             );
         }
+    }
+
+    public RequerimientoCompraPedidoCotizacion
+    getPedidoCotizacionAdjudicado(
+            int idRequerimientoCompra)
+            throws Exception {
+
+        validarIdRequerimiento(
+                idRequerimientoCompra
+        );
+
+        int idPrestador =
+                resolverIdPrestadorAdjudicado(
+                        idRequerimientoCompra
+                );
+
+        return service
+                .getPedidoCotizacionPrestador(
+                        idRequerimientoCompra,
+                        idPrestador
+                );
+    }
+
+    private int resolverIdPrestadorAdjudicado(
+            int idRequerimientoCompra)
+            throws Exception {
+
+        List<Integer> prestadores =
+                service
+                        .listarPrestadoresAdjudicados(
+                                idRequerimientoCompra
+                        );
+
+        if (prestadores.isEmpty()) {
+            throw new Exception(
+                    "El requerimiento no tiene detalles activos "
+                            + "con un prestador adjudicado."
+            );
+        }
+
+        if (prestadores.size() != 1
+                || prestadores.get(0) == null
+                || prestadores
+                .get(0)
+                .intValue() <= 0) {
+
+            throw new Exception(
+                    "Todos los detalles activos deben tener "
+                            + "el mismo prestador adjudicado válido."
+            );
+        }
+
+        return prestadores
+                .get(0)
+                .intValue();
     }
 }
