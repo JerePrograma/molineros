@@ -20,10 +20,13 @@ import com.liferay.portal.kernel.util.ParamUtil;
 
 import com.liferay.portal.model.User;
 
+import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.service.ServiceContextFactory;
 import com.liferay.portal.struts.PortletAction;
 
 import com.liferay.portal.util.PortalUtil;
 
+import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -110,12 +113,19 @@ public class CambiarEstadoRequerimientoCompraAction
                         user
                 );
 
+                ServiceContext serviceContext =
+                        ServiceContextFactory.getInstance(
+                                DLFileEntry.class.getName(),
+                                actionRequest
+                        );
+
                 NotificacionCotizacionResultado resultado =
                         requerimientoHelper
                                 .reintentarNotificacionesCotizacion(
                                         idRequerimientoCompra,
                                         usuario,
-                                        companyId
+                                        companyId,
+                                        serviceContext
                                 );
 
                 int estadoPersistido =
@@ -148,12 +158,19 @@ public class CambiarEstadoRequerimientoCompraAction
                         user
                 );
 
+                ServiceContext serviceContext =
+                        ServiceContextFactory.getInstance(
+                                DLFileEntry.class.getName(),
+                                actionRequest
+                        );
+
                 NotificacionCotizacionResultado resultado =
                         requerimientoHelper
                                 .enviarACotizar(
                                         idRequerimientoCompra,
                                         usuario,
-                                        companyId
+                                        companyId,
+                                        serviceContext
                                 );
 
                 int estadoPersistido =

@@ -23,6 +23,7 @@ import ar.com.ospim.global.beans.Domicilio;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.service.ServiceContext;
 
 import java.math.BigDecimal;
 import java.text.Normalizer;
@@ -1023,7 +1024,8 @@ public class EditarRequerimientoCompraHelper {
     public NotificacionCotizacionResultado enviarACotizar(
             int idRequerimientoCompra,
             String usuario,
-            long companyId) throws Exception {
+            long companyId,
+            ServiceContext serviceContext) throws Exception {
 
         try {
             RequerimientoCompra requerimiento =
@@ -1033,28 +1035,36 @@ public class EditarRequerimientoCompraHelper {
 
             NotificacionCotizacionResultado resultado =
                     notificacionHelper.notificarPrestadores(
-                            requerimiento.getIdRequerimientoCompra(),
+                            requerimiento
+                                    .getIdRequerimientoCompra(),
                             usuario,
-                            companyId
+                            companyId,
+                            serviceContext
                     );
 
             if (resultado == null) {
                 throw new IllegalStateException(
-                        "El proceso de notificacion no devolvio resultado."
+                        "El proceso de notificacion "
+                                + "no devolvio resultado."
                 );
             }
 
             int estadoFinal =
                     persistence.confirmarEnvioACotizar(
                             idRequerimientoCompra,
-                            normalizarUsuario(usuario)
+                            normalizarUsuario(
+                                    usuario
+                            )
                     );
 
-            if (estadoFinal != WebKeysCompras.ESTADO_PENDIENTE
-                    && estadoFinal != WebKeysCompras.ESTADO_A_COTIZAR) {
+            if (estadoFinal
+                    != WebKeysCompras.ESTADO_PENDIENTE
+                    && estadoFinal
+                    != WebKeysCompras.ESTADO_A_COTIZAR) {
 
                 throw new IllegalStateException(
-                        "Estado inesperado al confirmar el envio: "
+                        "Estado inesperado al confirmar "
+                                + "el envio: "
                                 + estadoFinal
                 );
             }
@@ -1067,17 +1077,23 @@ public class EditarRequerimientoCompraHelper {
                     "No se pudo enviar el requerimiento a cotizar. "
                             + "Verifique los datos e intente nuevamente.",
                     e,
-                    "idRequerimiento=" + idRequerimientoCompra
-                            + ", companyId=" + companyId
-                            + ", usuario=" + usuario
+                    "idRequerimiento="
+                            + idRequerimientoCompra
+                            + ", companyId="
+                            + companyId
+                            + ", usuario="
+                            + usuario
             );
         }
     }
 
-    public NotificacionCotizacionResultado reintentarNotificacionesCotizacion(
+    public NotificacionCotizacionResultado
+    reintentarNotificacionesCotizacion(
             int idRequerimientoCompra,
             String usuario,
-            long companyId) throws Exception {
+            long companyId,
+            ServiceContext serviceContext)
+            throws Exception {
 
         try {
             if (idRequerimientoCompra <= 0) {
@@ -1098,10 +1114,13 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
-            if (!requerimiento.puedeReintentarNotificaciones()) {
+            if (!requerimiento
+                    .puedeReintentarNotificaciones()) {
+
                 throw errorUsuario(
-                        "Las notificaciones solo pueden reenviarse mientras "
-                                + "el requerimiento esta en estado ENVIADO A COTIZAR."
+                        "Las notificaciones solo pueden reenviarse "
+                                + "mientras el requerimiento esta en "
+                                + "estado ENVIADO A COTIZAR."
                 );
             }
 
@@ -1113,11 +1132,13 @@ public class EditarRequerimientoCompraHelper {
                 return new NotificacionCotizacionResultado();
             }
 
-            return notificacionHelper.notificarPrestadores(
-                    idRequerimientoCompra,
-                    usuario,
-                    companyId
-            );
+            return notificacionHelper
+                    .notificarPrestadores(
+                            idRequerimientoCompra,
+                            usuario,
+                            companyId,
+                            serviceContext
+                    );
 
         } catch (Exception e) {
             throw manejarErrorOperacion(
@@ -1125,9 +1146,12 @@ public class EditarRequerimientoCompraHelper {
                     "No se pudieron reenviar las notificaciones pendientes. "
                             + "Intente nuevamente.",
                     e,
-                    "idRequerimiento=" + idRequerimientoCompra
-                            + ", companyId=" + companyId
-                            + ", usuario=" + usuario
+                    "idRequerimiento="
+                            + idRequerimientoCompra
+                            + ", companyId="
+                            + companyId
+                            + ", usuario="
+                            + usuario
             );
         }
     }

@@ -1,13 +1,35 @@
+<%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPedidoCotizacion" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil" %>
+<%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.List" %>
+<%@ page import="javax.portlet.PortletURL" %>
+
 <%
-RequerimientoCompraReclamoPrestacional relacionDocumentacionCompras = null;
-RequerimientoCompraPresupuesto ordenMedicaDocumentacionCompras = null;
-RequerimientoCompraPresupuesto presupuestoDocumentacionCompras = null;
-boolean mostrarDocumentacionCompras = false;
-String errorDocumentacionCompras = null;
+RequerimientoCompraReclamoPrestacional relacionDocumentacionCompras =
+        null;
+
+List<RequerimientoCompraPresupuesto>
+        ordenesMedicasDocumentacionCompras =
+        new ArrayList<RequerimientoCompraPresupuesto>();
+
+RequerimientoCompraPedidoCotizacion
+        pedidoCotizacionDocumentacionCompras =
+        null;
+
+RequerimientoCompraPresupuesto
+        presupuestoDocumentacionCompras =
+        null;
+
+boolean mostrarDocumentacionCompras =
+        false;
+
+String errorDocumentacionCompras =
+        null;
 
 if (reclamoprestacional != null
         && reclamoprestacional.getId_reclamo() > 0) {
@@ -16,35 +38,56 @@ if (reclamoprestacional != null
         relacionDocumentacionCompras =
                 RequerimientoCompraReclamoPrestacionalServiceUtil
                         .getRelacionPorReclamoPrestacional(
-                                reclamoprestacional.getId_reclamo()
+                                reclamoprestacional
+                                        .getId_reclamo()
                         );
 
         mostrarDocumentacionCompras =
                 relacionDocumentacionCompras != null
-                && relacionDocumentacionCompras.isVinculado()
-                && relacionDocumentacionCompras
+                        && relacionDocumentacionCompras
+                        .isVinculado()
+                        && relacionDocumentacionCompras
                         .getIdReclamoPrestacionalInt()
-                        == reclamoprestacional.getId_reclamo()
-                && relacionDocumentacionCompras
+                        == reclamoprestacional
+                        .getId_reclamo()
+                        && relacionDocumentacionCompras
                         .getIdRequerimientoCompra() > 0;
 
         if (mostrarDocumentacionCompras) {
+
             int idRequerimientoDocumentacionCompras =
                     relacionDocumentacionCompras
                             .getIdRequerimientoCompra();
 
-            ordenMedicaDocumentacionCompras =
+            List<RequerimientoCompraPresupuesto>
+                    ordenesRecuperadas =
                     BusquedaRequerimientoCompraServiceUtil
-                            .getOrdenMedica(
+                            .listarOrdenesMedicas(
                                     idRequerimientoDocumentacionCompras
                             );
+
+            if (ordenesRecuperadas != null) {
+                ordenesMedicasDocumentacionCompras
+                        .addAll(
+                                ordenesRecuperadas
+                        );
+            }
+
+            pedidoCotizacionDocumentacionCompras =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .getPedidoCotizacionAdjudicado(
+                                    idRequerimientoDocumentacionCompras
+                            );
+
             presupuestoDocumentacionCompras =
                     BusquedaRequerimientoCompraServiceUtil
                             .getPresupuestoAdjudicado(
                                     idRequerimientoDocumentacionCompras
                             );
         }
+
     } catch (Exception errorDocumentacion) {
+
         if (mostrarDocumentacionCompras) {
             errorDocumentacionCompras =
                     "No se pudo recuperar la documentación de Compras.";
@@ -52,86 +95,112 @@ if (reclamoprestacional != null
     }
 }
 
-boolean ordenMedicaDocumentacionComprasValida =
+boolean pedidoCotizacionDocumentacionComprasValido =
         mostrarDocumentacionCompras
-        && ordenMedicaDocumentacionCompras != null
-        && ordenMedicaDocumentacionCompras.isActivo()
-        && ordenMedicaDocumentacionCompras.getIdRequerimiento() != null
-        && ordenMedicaDocumentacionCompras
-                .getIdRequerimiento().intValue()
+                && pedidoCotizacionDocumentacionCompras != null
+                && pedidoCotizacionDocumentacionCompras
+                .getIdRequerimiento() != null
+                && pedidoCotizacionDocumentacionCompras
+                .getIdRequerimiento()
+                .intValue()
                 == relacionDocumentacionCompras
-                        .getIdRequerimientoCompra()
-        && ordenMedicaDocumentacionCompras.getTipoDocumento() != null
-        && ordenMedicaDocumentacionCompras
-                .getTipoDocumento().intValue()
-                == RequerimientoCompraPresupuesto
-                        .TIPO_DOCUMENTO_ORDEN_MEDICA
-        && ordenMedicaDocumentacionCompras.getIdPrestador() == null
-        && ordenMedicaDocumentacionCompras.getFechaDocumento() != null
-        && ordenMedicaDocumentacionCompras
-                .getIdRequerimientoPresupuesto() != null;
+                .getIdRequerimientoCompra()
+                && pedidoCotizacionDocumentacionCompras
+                .getIdPrestador() != null
+                && pedidoCotizacionDocumentacionCompras
+                .getIdPrestador()
+                .intValue() > 0
+                && pedidoCotizacionDocumentacionCompras
+                .getIntento() != null
+                && pedidoCotizacionDocumentacionCompras
+                .getIntento()
+                .intValue() > 0
+                && pedidoCotizacionDocumentacionCompras
+                .getDlFileEntryId() != null
+                && pedidoCotizacionDocumentacionCompras
+                .getDlFileEntryId()
+                .longValue() > 0L;
 
 boolean presupuestoDocumentacionComprasValido =
         mostrarDocumentacionCompras
-        && presupuestoDocumentacionCompras != null
-        && presupuestoDocumentacionCompras.isActivo()
-        && presupuestoDocumentacionCompras.getIdRequerimiento() != null
-        && presupuestoDocumentacionCompras
-                .getIdRequerimiento().intValue()
+                && presupuestoDocumentacionCompras != null
+                && presupuestoDocumentacionCompras.isActivo()
+                && presupuestoDocumentacionCompras
+                .getIdRequerimiento() != null
+                && presupuestoDocumentacionCompras
+                .getIdRequerimiento()
+                .intValue()
                 == relacionDocumentacionCompras
-                        .getIdRequerimientoCompra()
-        && presupuestoDocumentacionCompras.getTipoDocumento() != null
-        && presupuestoDocumentacionCompras
-                .getTipoDocumento().intValue()
+                .getIdRequerimientoCompra()
+                && presupuestoDocumentacionCompras
+                .getTipoDocumento() != null
+                && presupuestoDocumentacionCompras
+                .getTipoDocumento()
+                .intValue()
                 == RequerimientoCompraPresupuesto
-                        .TIPO_DOCUMENTO_PRESUPUESTO
-        && presupuestoDocumentacionCompras.getIdPrestador() != null
-        && presupuestoDocumentacionCompras
-                .getIdPrestador().intValue() > 0
-        && presupuestoDocumentacionCompras
+                .TIPO_DOCUMENTO_PRESUPUESTO
+                && presupuestoDocumentacionCompras
+                .getIdPrestador() != null
+                && presupuestoDocumentacionCompras
+                .getIdPrestador()
+                .intValue() > 0
+                && presupuestoDocumentacionCompras
                 .getIdRequerimientoPresupuesto() != null;
 
-String fechaOrdenMedicaDocumentacionCompras = "";
-String urlOrdenMedicaDocumentacionCompras = "";
-String urlPresupuestoDocumentacionCompras = "";
+String urlPedidoCotizacionDocumentacionCompras =
+        "";
 
-if (ordenMedicaDocumentacionComprasValida) {
-    fechaOrdenMedicaDocumentacionCompras = new SimpleDateFormat(
-            "dd/MM/yyyy"
-    ).format(ordenMedicaDocumentacionCompras.getFechaDocumento());
+String urlPresupuestoDocumentacionCompras =
+        "";
 
-    PortletURL urlOrdenMedicaCompras =
+if (pedidoCotizacionDocumentacionComprasValido) {
+
+    PortletURL urlPedidoCotizacionCompras =
             renderResponse.createActionURL();
-    urlOrdenMedicaCompras.setParameter(
+
+    urlPedidoCotizacionCompras.setParameter(
             "struts_action",
             "/autorizaciones/descargar_documento_compra_reclamo"
     );
-    urlOrdenMedicaCompras.setParameter(
+
+    urlPedidoCotizacionCompras.setParameter(
             "id_reclamo_prestacional",
-            String.valueOf(reclamoprestacional.getId_reclamo())
-    );
-    urlOrdenMedicaCompras.setParameter(
-            "id_requerimiento_presupuesto",
             String.valueOf(
-                    ordenMedicaDocumentacionCompras
-                            .getIdRequerimientoPresupuesto()
+                    reclamoprestacional
+                            .getId_reclamo()
             )
     );
-    urlOrdenMedicaDocumentacionCompras =
-            urlOrdenMedicaCompras.toString();
+
+    urlPedidoCotizacionCompras.setParameter(
+            WebKeysCompras
+                    .PARAM_TIPO_DOCUMENTO_COMPRA_RECLAMO,
+            WebKeysCompras
+                    .DOCUMENTO_COMPRA_RECLAMO_PEDIDO_COTIZACION
+    );
+
+    urlPedidoCotizacionDocumentacionCompras =
+            urlPedidoCotizacionCompras
+                    .toString();
 }
 
 if (presupuestoDocumentacionComprasValido) {
+
     PortletURL urlPresupuestoCompras =
             renderResponse.createActionURL();
+
     urlPresupuestoCompras.setParameter(
             "struts_action",
             "/autorizaciones/descargar_documento_compra_reclamo"
     );
+
     urlPresupuestoCompras.setParameter(
             "id_reclamo_prestacional",
-            String.valueOf(reclamoprestacional.getId_reclamo())
+            String.valueOf(
+                    reclamoprestacional
+                            .getId_reclamo()
+            )
     );
+
     urlPresupuestoCompras.setParameter(
             "id_requerimiento_presupuesto",
             String.valueOf(
@@ -139,76 +208,241 @@ if (presupuestoDocumentacionComprasValido) {
                             .getIdRequerimientoPresupuesto()
             )
     );
+
     urlPresupuestoDocumentacionCompras =
             urlPresupuestoCompras.toString();
 }
 %>
 
 <% if (mostrarDocumentacionCompras) { %>
+
     <fieldset class="block-labels documentacion-compras-reclamo">
-        <legend>Documentaci&oacute;n de Compras</legend>
+
+        <legend>
+            Documentaci&oacute;n de Compras
+        </legend>
 
         <% if (errorDocumentacionCompras != null) { %>
+
             <div class="portlet-msg-error">
-                <%= HtmlUtil.escape(errorDocumentacionCompras) %>
+                <%= HtmlUtil.escape(
+                        errorDocumentacionCompras
+                ) %>
             </div>
+
         <% } else { %>
+
             <table class="lfr-table">
+
                 <tr>
                     <th>Documento</th>
                     <th>Fecha</th>
                     <th>Archivo</th>
                     <th>Acci&oacute;n</th>
                 </tr>
-                <tr>
-                    <td>Orden médica</td>
-                    <% if (ordenMedicaDocumentacionComprasValida) { %>
-                        <td><%= HtmlUtil.escape(
-                                fechaOrdenMedicaDocumentacionCompras
-                        ) %></td>
-                        <td><%= HtmlUtil.escape(
-                                ordenMedicaDocumentacionCompras
-                                        .getNombreOriginal()
-                        ) %></td>
+
+                <%
+                boolean hayOrdenMedicaValida =
+                        false;
+
+                for (int i = 0;
+                     i < ordenesMedicasDocumentacionCompras.size();
+                     i++) {
+
+                    RequerimientoCompraPresupuesto ordenMedica =
+                            ordenesMedicasDocumentacionCompras
+                                    .get(i);
+
+                    boolean ordenValida =
+                            ordenMedica != null
+                                    && ordenMedica.isActivo()
+                                    && ordenMedica
+                                    .getIdRequerimiento() != null
+                                    && ordenMedica
+                                    .getIdRequerimiento()
+                                    .intValue()
+                                    == relacionDocumentacionCompras
+                                    .getIdRequerimientoCompra()
+                                    && ordenMedica
+                                    .getTipoDocumento() != null
+                                    && ordenMedica
+                                    .getTipoDocumento()
+                                    .intValue()
+                                    == RequerimientoCompraPresupuesto
+                                    .TIPO_DOCUMENTO_ORDEN_MEDICA
+                                    && ordenMedica
+                                    .getIdPrestador() == null
+                                    && ordenMedica
+                                    .getFechaDocumento() != null
+                                    && ordenMedica
+                                    .getIdRequerimientoPresupuesto()
+                                    != null;
+
+                    if (!ordenValida) {
+                        continue;
+                    }
+
+                    hayOrdenMedicaValida =
+                            true;
+
+                    String fechaOrden =
+                            new SimpleDateFormat(
+                                    "dd/MM/yyyy"
+                            ).format(
+                                    ordenMedica
+                                            .getFechaDocumento()
+                            );
+
+                    PortletURL urlOrden =
+                            renderResponse
+                                    .createActionURL();
+
+                    urlOrden.setParameter(
+                            "struts_action",
+                            "/autorizaciones/descargar_documento_compra_reclamo"
+                    );
+
+                    urlOrden.setParameter(
+                            "id_reclamo_prestacional",
+                            String.valueOf(
+                                    reclamoprestacional
+                                            .getId_reclamo()
+                            )
+                    );
+
+                    urlOrden.setParameter(
+                            "id_requerimiento_presupuesto",
+                            String.valueOf(
+                                    ordenMedica
+                                            .getIdRequerimientoPresupuesto()
+                            )
+                    );
+                %>
+
+                    <tr>
+                        <td>Orden m&eacute;dica</td>
+
                         <td>
-                            <a href="<%= HtmlUtil.escape(
-                                    urlOrdenMedicaDocumentacionCompras
-                            ) %>"
-                               title="Ver / descargar Orden médica">
+                            <%= HtmlUtil.escape(
+                                    fechaOrden
+                            ) %>
+                        </td>
+
+                        <td>
+                            <%= HtmlUtil.escape(
+                                    ordenMedica
+                                            .getNombreOriginal()
+                            ) %>
+                        </td>
+
+                        <td>
+                            <a
+                                href="<%= HtmlUtil.escape(
+                                        urlOrden.toString()
+                                ) %>"
+                                title="Ver / descargar Orden médica">
+
                                 <img
                                     src="<%= themeDisplay.getPathThemeImages() %>/common/view.png"
                                     alt="Ver / descargar Orden médica"
                                     style="border:0;" />
+
                             </a>
                         </td>
-                    <% } else { %>
+                    </tr>
+
+                <%
+                }
+
+                if (!hayOrdenMedicaValida) {
+                %>
+
+                    <tr>
+                        <td>Orden m&eacute;dica</td>
                         <td colspan="3">No disponible</td>
-                    <% } %>
-                </tr>
+                    </tr>
+
+                <%
+                }
+                %>
+
                 <tr>
-                    <td>Presupuesto adjudicado</td>
+                    <td>Pedido de cotizaci&oacute;n</td>
                     <td>-</td>
-                    <% if (presupuestoDocumentacionComprasValido) { %>
-                        <td><%= HtmlUtil.escape(
-                                presupuestoDocumentacionCompras
-                                        .getNombreOriginal()
-                        ) %></td>
+
+                    <% if (pedidoCotizacionDocumentacionComprasValido) { %>
+
                         <td>
-                            <a href="<%= HtmlUtil.escape(
-                                    urlPresupuestoDocumentacionCompras
-                            ) %>"
-                               title="Ver / descargar presupuesto adjudicado">
+                            <%= HtmlUtil.escape(
+                                    pedidoCotizacionDocumentacionCompras
+                                            .getNombreOriginal()
+                            ) %>
+                        </td>
+
+                        <td>
+                            <a
+                                href="<%= HtmlUtil.escape(
+                                        urlPedidoCotizacionDocumentacionCompras
+                                ) %>"
+                                title="Ver / descargar pedido de cotización">
+
                                 <img
                                     src="<%= themeDisplay.getPathThemeImages() %>/common/view.png"
-                                    alt="Ver / descargar presupuesto adjudicado"
+                                    alt="Ver / descargar pedido de cotización"
                                     style="border:0;" />
+
                             </a>
                         </td>
+
                     <% } else { %>
+
                         <td colspan="2">No disponible</td>
+
                     <% } %>
                 </tr>
+
+                <tr>
+                    <td>
+                        Cotizaci&oacute;n del prestador adjudicado
+                    </td>
+
+                    <td>-</td>
+
+                    <% if (presupuestoDocumentacionComprasValido) { %>
+
+                        <td>
+                            <%= HtmlUtil.escape(
+                                    presupuestoDocumentacionCompras
+                                            .getNombreOriginal()
+                            ) %>
+                        </td>
+
+                        <td>
+                            <a
+                                href="<%= HtmlUtil.escape(
+                                        urlPresupuestoDocumentacionCompras
+                                ) %>"
+                                title="Ver / descargar cotización adjudicada">
+
+                                <img
+                                    src="<%= themeDisplay.getPathThemeImages() %>/common/view.png"
+                                    alt="Ver / descargar cotización adjudicada"
+                                    style="border:0;" />
+
+                            </a>
+                        </td>
+
+                    <% } else { %>
+
+                        <td colspan="2">No disponible</td>
+
+                    <% } %>
+                </tr>
+
             </table>
+
         <% } %>
+
     </fieldset>
+
 <% } %>

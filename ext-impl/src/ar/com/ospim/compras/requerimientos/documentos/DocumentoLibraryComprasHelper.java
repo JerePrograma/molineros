@@ -21,7 +21,11 @@ import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
 
 import javax.portlet.ActionRequest;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.sql.Date;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
@@ -1919,5 +1923,64 @@ public class DocumentoLibraryComprasHelper
         }
 
         return coincide;
+    }
+
+    public static void eliminarDocumentoCreado(
+            DocumentoComprasCreado documento)
+            throws Exception {
+
+        if (documento == null
+                || documento.getGroupId() <= 0L
+                || documento.getFolderId() <= 0L
+                || documento.getFileEntryId() <= 0L
+                || WebKeysCompras.isEmpty(
+                documento.getNombrePersistido()
+        )) {
+
+            throw new Exception(
+                    "La identidad del documento "
+                            + "a eliminar no es valida."
+            );
+        }
+
+        DLFileEntry entry =
+                DLFileEntryLocalServiceUtil
+                        .getDLFileEntry(
+                                documento.getFileEntryId()
+                        );
+
+        if (entry == null
+                || entry.getFileEntryId()
+                != documento.getFileEntryId()
+                || entry.getGroupId()
+                != documento.getGroupId()
+                || entry.getFolderId()
+                != documento.getFolderId()
+                || !documento
+                .getNombrePersistido()
+                .equals(
+                        entry.getName()
+                )
+                || (
+                !WebKeysCompras.isEmpty(
+                        documento.getUuid()
+                )
+                        && !documento
+                        .getUuid()
+                        .equals(
+                                entry.getUuid()
+                        )
+        )) {
+
+            throw new Exception(
+                    "El documento a compensar no coincide "
+                            + "con su identidad en Document Library."
+            );
+        }
+
+        DLFileEntryLocalServiceUtil
+                .deleteFileEntry(
+                        entry
+                );
     }
 }

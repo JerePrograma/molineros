@@ -4,6 +4,7 @@ import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import ar.com.ospim.autorizaciones.services.ReclamosPrestacionesServiceUtil;
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPedidoCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
@@ -59,6 +60,7 @@ public class DescargarDocumentoCompraReclamoAction
 
         int idReclamoPrestacional = 0;
         int idRequerimientoPresupuesto = 0;
+        String tipoDocumentoCompra = "";
 
         try {
             User user =
@@ -84,8 +86,37 @@ public class DescargarDocumentoCompraReclamoAction
                             0
                     );
 
+            tipoDocumentoCompra =
+                    ParamUtil.getString(
+                            actionRequest,
+                            WebKeysCompras
+                                    .PARAM_TIPO_DOCUMENTO_COMPRA_RECLAMO,
+                            ""
+                    );
+
+            boolean esPedidoCotizacion =
+                    WebKeysCompras
+                            .DOCUMENTO_COMPRA_RECLAMO_PEDIDO_COTIZACION
+                            .equals(
+                                    tipoDocumentoCompra
+                            );
+
+            if (!WebKeysCompras.isEmpty(
+                    tipoDocumentoCompra
+            )
+                    && !esPedidoCotizacion) {
+
+                throw new Exception(
+                        "El tipo de documento de Compras "
+                                + "no es valido."
+                );
+            }
+
             if (idReclamoPrestacional <= 0
-                    || idRequerimientoPresupuesto <= 0) {
+                    || (
+                    !esPedidoCotizacion
+                            && idRequerimientoPresupuesto <= 0
+            )) {
 
                 throw new Exception(
                         "Debe informar el Reclamo Prestacional "
@@ -110,6 +141,16 @@ public class DescargarDocumentoCompraReclamoAction
 
             int idRequerimientoCompra =
                     relacion.getIdRequerimientoCompra();
+
+            if (esPedidoCotizacion) {
+                descargarPedidoCotizacion(
+                        actionRequest,
+                        actionResponse,
+                        idRequerimientoCompra
+                );
+
+                return;
+            }
 
             RequerimientoCompraPresupuesto documento =
                     resolverDocumentoAutorizado(
@@ -458,8 +499,8 @@ public class DescargarDocumentoCompraReclamoAction
                 || contenido[4] != '-') {
 
             throw new Exception(
-                    "El presupuesto adjudicado "
-                            + "no conserva un contenido PDF válido."
+                    "El documento PDF de Compras "
+                            + "no conserva un contenido valido."
             );
         }
     }
@@ -559,5 +600,187 @@ public class DescargarDocumentoCompraReclamoAction
 
     protected boolean isCheckMethodOnProcessAction() {
         return false;
+    }
+
+    private void descargarPedidoCotizacion(
+            ActionRequest actionRequest,
+            ActionResponse actionResponse,
+            int idRequerimientoCompra)
+            throws Exception {
+
+        InputStream input =
+                null;
+
+        try {
+            RequerimientoCompraPedidoCotizacion pedido =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .getPedidoCotizacionAdjudicado(
+                                    idRequerimientoCompra
+                            );
+
+            validarPedidoCotizacion(
+                    pedido,
+                    idRequerimientoCompra
+            );
+
+            ThemeDisplay themeDisplay =
+                    (ThemeDisplay)
+                            actionRequest.getAttribute(
+                                    WebKeys.THEME_DISPLAY
+                            );
+
+            if (themeDisplay == null) {
+                throw new Exception(
+                        "No se pudo determinar "
+                                + "el contexto del portal."
+                );
+            }
+
+            DLFileEntry entry =
+                    DLFileEntryLocalServiceUtil
+                            .getDLFileEntry(
+                                    pedido
+                                            .getDlFileEntryId()
+                                            .longValue()
+                            );
+
+            DocumentoLibraryComprasHelper
+                    .validarIdentidadAsociacionDocumento(
+                            pedido
+                    );
+
+            if (entry == null
+                    || entry.getCompanyId()
+                    != themeDisplay.getCompanyId()
+                    || !DocumentoLibraryComprasHelper
+                    .coincideIdentidadAsociacionDocumento(
+                            pedido,
+                            entry
+                    )) {
+
+                throw new Exception(
+                        "La identidad del pedido de cotizacion "
+                                + "no coincide con Document Library."
+                );
+            }
+
+            if (entry.getGroupId()
+                    != themeDisplay.getScopeGroupId()) {
+
+                throw new Exception(
+                        "El pedido de cotizacion "
+                                + "no pertenece al sitio actual."
+                );
+            }
+
+            DLFileEntryPermission.check(
+                    themeDisplay.getPermissionChecker(),
+                    entry.getFolderId(),
+                    entry.getName(),
+                    ActionKeys.VIEW
+            );
+
+            String nombreDescarga =
+                    validarNombreDescarga(
+                            pedido.getNombreOriginal()
+                    );
+
+            byte[] contenido =
+                    DocumentoLibraryComprasHelper
+                            .leerContenidoDocumentLibrary(
+                                    entry
+                            );
+
+            validarContenidoPdf(
+                    contenido,
+                    nombreDescarga
+            );
+
+            input =
+                    new ByteArrayInputStream(
+                            contenido
+                    );
+
+            HttpServletResponse response =
+                    PortalUtil.getHttpServletResponse(
+                            actionResponse
+                    );
+
+            if (response == null) {
+                throw new Exception(
+                        "No se pudo preparar "
+                                + "la respuesta de descarga."
+                );
+            }
+
+            ServletResponseUtil.sendFile(
+                    response,
+                    nombreDescarga,
+                    input,
+                    contenido.length,
+                    "application/pdf"
+            );
+
+            setForward(
+                    actionRequest,
+                    ActionConstants.COMMON_NULL
+            );
+
+        } finally {
+            ServletResponseUtil.cleanUp(
+                    input
+            );
+        }
+    }
+
+    private void validarPedidoCotizacion(
+            RequerimientoCompraPedidoCotizacion pedido,
+            int idRequerimientoCompra)
+            throws Exception {
+
+        if (pedido == null
+                || pedido.getIdRequerimiento() == null
+                || pedido
+                .getIdRequerimiento()
+                .intValue()
+                != idRequerimientoCompra
+                || pedido.getIdPrestador() == null
+                || pedido
+                .getIdPrestador()
+                .intValue() <= 0
+                || pedido.getIntento() == null
+                || pedido
+                .getIntento()
+                .intValue() <= 0
+                || pedido.getDlGroupId() == null
+                || pedido
+                .getDlGroupId()
+                .longValue() <= 0L
+                || pedido.getDlFolderId() == null
+                || pedido
+                .getDlFolderId()
+                .longValue() <= 0L
+                || pedido.getDlFileEntryId() == null
+                || pedido
+                .getDlFileEntryId()
+                .longValue() <= 0L
+                || WebKeysCompras.isEmpty(
+                pedido.getDlFileUuid()
+        )
+                || WebKeysCompras.isEmpty(
+                pedido.getNombreOriginal()
+        )
+                || WebKeysCompras.isEmpty(
+                pedido.getNombrePersistido()
+        )
+                || WebKeysCompras.isEmpty(
+                pedido.getTitulo()
+        )) {
+
+            throw new Exception(
+                    "El pedido de cotizacion "
+                            + "no posee una identidad valida."
+            );
+        }
     }
 }
