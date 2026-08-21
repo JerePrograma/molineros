@@ -81,6 +81,13 @@ public class DescargarOrdenMedicaCompraAction
                             0L
                     );
 
+            boolean visualizar =
+                    ParamUtil.getBoolean(
+                            actionRequest,
+                            "visualizar",
+                            false
+                    );
+
             RequerimientoCompraPresupuesto ordenMedica =
                     resolverOrdenMedica(
                             idRequerimientoCompra,
@@ -180,13 +187,42 @@ public class DescargarOrdenMedicaCompraAction
              * Se utiliza el tamaño del byte[] efectivamente validado,
              * no un tamaño externo o inferido.
              */
-            ServletResponseUtil.sendFile(
-                    response,
-                    documento.getNombreOriginal(),
-                    input,
-                    contenido.length,
-                    documento.getContentType()
-            );
+            if (visualizar) {
+
+                /*
+                 * sendFile fuerza attachment salvo que la extension figure
+                 * en una propiedad global del portal. La lupa de Compras
+                 * solicita una visualizacion y debe ser deterministica,
+                 * independientemente de esa configuracion externa.
+                 */
+                response.setContentType(
+                        documento.getContentType()
+                );
+                response.setHeader(
+                        "Content-Disposition",
+                        "inline"
+                );
+                response.setHeader(
+                        "X-Content-Type-Options",
+                        "nosniff"
+                );
+
+                ServletResponseUtil.write(
+                        response,
+                        input,
+                        contenido.length
+                );
+
+            } else {
+
+                ServletResponseUtil.sendFile(
+                        response,
+                        documento.getNombreOriginal(),
+                        input,
+                        contenido.length,
+                        documento.getContentType()
+                );
+            }
 
             /*
              * No poner input = null.
