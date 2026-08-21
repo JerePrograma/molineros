@@ -5,7 +5,16 @@
 
     <portlet:param
             name="struts_action"
-            value="/autorizaciones/buscar_afiliado_datos" />
+            value="/compras/buscar_afiliado_datos" />
+
+</portlet:renderURL>
+<portlet:renderURL
+        var="comprasActualizaDomicilioURL"
+        windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+
+    <portlet:param
+            name="struts_action"
+            value="/compras/actualiza_domicilio" />
 
 </portlet:renderURL>
 <portlet:renderURL
@@ -876,8 +885,7 @@
                 });
 
         var url =
-                '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>'
-                + '&struts_action=/autorizaciones/actualiza_domicilio'
+                '${comprasActualizaDomicilioURL}'
                 + '&cuil_titular='
                 + encodeURIComponent(
                         cuilTitular
@@ -1171,8 +1179,7 @@
         }
 
         var url =
-                '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>'
-                + '&struts_action=/autorizaciones/actualiza_domicilio'
+                '${comprasActualizaDomicilioURL}'
                 + '&id_parentesco='
                 + encodeURIComponent(
                         idPar

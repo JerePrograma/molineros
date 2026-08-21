@@ -7202,6 +7202,28 @@
 					path="portlet.compras.afiliados.error" />
 		</action>
 
+        <action
+                path="/compras/buscar_afiliado_datos"
+                type="ar.com.ospim.autorizaciones.action.AfiliadoDatosJSONAction" />
+
+        <action
+                path="/compras/actualiza_domicilio"
+                type="ar.com.ospim.crm.action.ActualizaDomicilioAfiliadoAction">
+
+            <forward
+                    name="portlet.crm.actualiza.domicilio.popup"
+                    path="portlet.crm.actualiza.domicilio.popup" />
+
+            <forward
+                    name="portlet.afiliados.error"
+                    path="portlet.afiliados.error" />
+
+            <forward
+                    name="portlet.novedades.result.search"
+                    path="portlet.novedades.result.search" />
+
+        </action>
+
 		<action
 				path="/compras/buscar_seccional"
 				forward="portlet.seccional.view" />
