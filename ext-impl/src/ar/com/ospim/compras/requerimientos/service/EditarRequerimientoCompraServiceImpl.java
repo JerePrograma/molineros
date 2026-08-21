@@ -26,7 +26,7 @@ public class EditarRequerimientoCompraServiceImpl {
             "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_GUARDAR_REQUERIMIENTO_DETALLE =
-            "{call compras.guardar_requerimiento_detalle(?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+            "{call compras.guardar_requerimiento_detalle_clasificado(?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 
     private static final String SQL_BORRAR_REQUERIMIENTO_DETALLE =
             "{call compras.borrar_requerimiento_detalle(?,?)}";
@@ -195,7 +195,12 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.setString(10, detalle.getNombreMedicamento());
             setNullableInteger(stmt, 11, detalle.getCantidad());
             stmt.setString(12, detalle.getObservaciones());
-            stmt.setString(13, usuario);
+            setNullableInteger(
+                    stmt,
+                    13,
+                    detalle.getIdTipoPrestacion()
+            );
+            stmt.setString(14, usuario);
 
             rs = stmt.executeQuery();
 

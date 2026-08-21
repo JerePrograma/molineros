@@ -184,6 +184,12 @@ public final class BusquedaRequerimientoCompraHelper {
         return service.listarSectores();
     }
 
+    public List<TipoPrestacionCompra> listarTiposPrestacion()
+            throws Exception {
+
+        return service.listarTiposPrestacion();
+    }
+
     public RequerimientoCompraEstado getEstado(
             int idRequerimientoCompra) throws Exception {
 

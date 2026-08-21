@@ -2,6 +2,7 @@ package ar.com.ospim.compras.requerimientos.helper;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
+import ar.com.ospim.compras.requerimientos.documentos.DocumentoComprasCreado;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPedidoCotizacion;
@@ -9,6 +10,7 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPedidoCotiza
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.service.ServiceContext;
+import com.liferay.portlet.documentlibrary.NoSuchFileEntryException;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
@@ -16,7 +18,11 @@ import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public final class ReclamoPrestacionalCompraDocumentacionHelper {
 
@@ -40,7 +46,39 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
     private static final String FOLDER_RECLAMOS =
             "ReclamosPrestacionales";
 
+    public static final class DocumentacionAdjuntada {
+
+        private final List<DocumentoComprasCreado> documentos;
+
+        private DocumentacionAdjuntada(
+                List<DocumentoComprasCreado> documentos) {
+
+            this.documentos = documentos;
+        }
+
+        public int getCantidad() {
+            return documentos != null ? documentos.size() : 0;
+        }
+
+        private List<DocumentoComprasCreado> getDocumentos() {
+            return documentos;
+        }
+    }
+
     public int adjuntarDocumentacion(
+            int idRequerimientoCompra,
+            int idReclamoPrestacional,
+            ServiceContext serviceContext)
+            throws Exception {
+
+        return adjuntarDocumentacionControlada(
+                idRequerimientoCompra,
+                idReclamoPrestacional,
+                serviceContext
+        ).getCantidad();
+    }
+
+    public DocumentacionAdjuntada adjuntarDocumentacionControlada(
             int idRequerimientoCompra,
             int idReclamoPrestacional,
             ServiceContext serviceContext)
@@ -55,8 +93,11 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
         DLFolder folder =
                 obtenerFolderReclamos();
 
-        int cantidadAdjunta =
-                0;
+        List<DocumentoComprasCreado> documentosCreados =
+                new ArrayList<DocumentoComprasCreado>();
+        Set<Long> archivosFuente = new HashSet<Long>();
+
+        try {
 
         /*
          * ==========================================================
@@ -90,6 +131,12 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                     idRequerimientoCompra
             );
 
+            registrarFuenteUnica(
+                    archivosFuente,
+                    ordenMedica.getDlFileEntryId(),
+                    "Orden medica"
+            );
+
             byte[] contenido =
                     leerDocumentoCompra(
                             ordenMedica
@@ -116,27 +163,24 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                             .getIdRequerimientoPresupuesto()
                             + extension;
 
-            String titulo =
-                    idReclamoPrestacional
-                            + "-COMPRA-ORDEN-MEDICA-"
-                            + ordenMedica
-                            .getIdRequerimientoPresupuesto();
+            String titulo = ordenMedica.getNombreOriginal();
 
             String descripcion =
                     "Orden medica proveniente del "
                             + "Requerimiento de Compra #"
                             + idRequerimientoCompra;
 
-            guardarArchivo(
-                    folder,
-                    nombreDestino,
-                    titulo,
-                    descripcion,
-                    contenido,
-                    serviceContext
+            registrarDocumentoCreado(
+                    documentosCreados,
+                    guardarArchivo(
+                            folder,
+                            nombreDestino,
+                            titulo,
+                            descripcion,
+                            contenido,
+                            serviceContext
+                    )
             );
-
-            cantidadAdjunta++;
         }
 
         /*
@@ -166,6 +210,12 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                 idRequerimientoCompra
         );
 
+        registrarFuenteUnica(
+                archivosFuente,
+                pedidoCotizacion.getDlFileEntryId(),
+                "Pedido de cotizacion"
+        );
+
         byte[] contenidoPedidoCotizacion =
                 leerPedidoCotizacion(
                         pedidoCotizacion
@@ -176,25 +226,24 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                 pedidoCotizacion.getNombreOriginal()
         );
 
-        guardarArchivo(
-                folder,
-                "RP-"
-                        + idReclamoPrestacional
-                        + "-PEDIDO-COTIZACION-"
-                        + idRequerimientoCompra
-                        + ".pdf",
-                idReclamoPrestacional
-                        + "-COMPRA-PEDIDO-COTIZACION-"
-                        + idRequerimientoCompra,
-                "Pedido de cotizacion efectivamente enviado "
-                        + "al prestador adjudicado del "
-                        + "Requerimiento de Compra #"
-                        + idRequerimientoCompra,
-                contenidoPedidoCotizacion,
-                serviceContext
+        registrarDocumentoCreado(
+                documentosCreados,
+                guardarArchivo(
+                        folder,
+                        "RP-"
+                                + idReclamoPrestacional
+                                + "-PEDIDO-COTIZACION-"
+                                + idRequerimientoCompra
+                                + ".pdf",
+                        pedidoCotizacion.getNombreOriginal(),
+                        "Pedido de cotizacion efectivamente enviado "
+                                + "al prestador adjudicado del "
+                                + "Requerimiento de Compra #"
+                                + idRequerimientoCompra,
+                        contenidoPedidoCotizacion,
+                        serviceContext
+                )
         );
-
-        cantidadAdjunta++;
 
         /*
          * ==========================================================
@@ -212,6 +261,12 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                 idRequerimientoCompra
         );
 
+        registrarFuenteUnica(
+                archivosFuente,
+                presupuestoAdjudicado.getDlFileEntryId(),
+                "Cotizacion adjudicada"
+        );
+
         byte[] cotizacionAdjudicada =
                 leerDocumentoCompra(
                         presupuestoAdjudicado
@@ -223,26 +278,24 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                         .getNombreOriginal()
         );
 
-        guardarArchivo(
-                folder,
-                "RP-"
-                        + idReclamoPrestacional
-                        + "-COTIZACION-ADJUDICADA-"
-                        + presupuestoAdjudicado
-                        .getIdRequerimientoPresupuesto()
-                        + ".pdf",
-                idReclamoPrestacional
-                        + "-COMPRA-COTIZACION-ADJUDICADA-"
-                        + presupuestoAdjudicado
-                        .getIdRequerimientoPresupuesto(),
-                "Cotizacion del prestador adjudicado proveniente "
-                        + "del Requerimiento de Compra #"
-                        + idRequerimientoCompra,
-                cotizacionAdjudicada,
-                serviceContext
+        registrarDocumentoCreado(
+                documentosCreados,
+                guardarArchivo(
+                        folder,
+                        "RP-"
+                                + idReclamoPrestacional
+                                + "-COTIZACION-ADJUDICADA-"
+                                + presupuestoAdjudicado
+                                .getIdRequerimientoPresupuesto()
+                                + ".pdf",
+                        presupuestoAdjudicado.getNombreOriginal(),
+                        "Cotizacion del prestador adjudicado proveniente "
+                                + "del Requerimiento de Compra #"
+                                + idRequerimientoCompra,
+                        cotizacionAdjudicada,
+                        serviceContext
+                )
         );
-
-        cantidadAdjunta++;
 
         if (_log.isInfoEnabled()) {
             _log.info(
@@ -253,11 +306,88 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                             + ", idReclamo="
                             + idReclamoPrestacional
                             + ", cantidad="
-                            + cantidadAdjunta
+                            + documentosCreados.size()
             );
         }
 
-        return cantidadAdjunta;
+        return new DocumentacionAdjuntada(documentosCreados);
+
+        } catch (Exception e) {
+            try {
+                compensarDocumentacion(
+                        new DocumentacionAdjuntada(documentosCreados)
+                );
+            } catch (Exception compensacionError) {
+                e.addSuppressed(compensacionError);
+            }
+
+            throw e;
+        }
+    }
+
+    private void registrarFuenteUnica(
+            Set<Long> archivosFuente,
+            Long fileEntryId,
+            String tipoDocumento) throws Exception {
+
+        if (archivosFuente == null
+                || fileEntryId == null
+                || fileEntryId.longValue() <= 0L) {
+
+            throw new Exception(
+                    tipoDocumento
+                            + ": no posee una identidad documental valida."
+            );
+        }
+
+        if (!archivosFuente.add(fileEntryId)) {
+            throw new Exception(
+                    "Un mismo archivo de Compras fue asociado mas de una vez "
+                            + "a la documentacion obligatoria del reclamo."
+            );
+        }
+    }
+
+    private void registrarDocumentoCreado(
+            List<DocumentoComprasCreado> documentosCreados,
+            DocumentoComprasCreado documentoCreado) {
+
+        if (documentoCreado != null) {
+            documentosCreados.add(documentoCreado);
+        }
+    }
+
+    public void compensarDocumentacion(
+            DocumentacionAdjuntada documentacion) throws Exception {
+
+        if (documentacion == null
+                || documentacion.getDocumentos() == null) {
+
+            return;
+        }
+
+        Exception errorCompensacion = null;
+        List<DocumentoComprasCreado> documentos =
+                documentacion.getDocumentos();
+
+        for (int i = documentos.size() - 1; i >= 0; i--) {
+            try {
+                DocumentoLibraryComprasHelper
+                        .eliminarDocumentoCreado(documentos.get(i));
+            } catch (Exception e) {
+                if (errorCompensacion == null) {
+                    errorCompensacion = new Exception(
+                            "No se pudo compensar toda la documentacion "
+                                    + "del Reclamo Prestacional."
+                    );
+                }
+                errorCompensacion.addSuppressed(e);
+            }
+        }
+
+        if (errorCompensacion != null) {
+            throw errorCompensacion;
+        }
     }
 
     private void validarParametros(
@@ -556,7 +686,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
         }
     }
 
-    private void guardarArchivo(
+    private DocumentoComprasCreado guardarArchivo(
             DLFolder folder,
             String nombrePersistido,
             String titulo,
@@ -633,6 +763,45 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
             );
         }
 
+        DLFileEntry archivoExistente = null;
+
+        try {
+            archivoExistente =
+                    DLFileEntryLocalServiceUtil.getFileEntry(
+                            folder.getFolderId(),
+                            nombrePersistido
+                    );
+        } catch (NoSuchFileEntryException inexistente) {
+            archivoExistente = null;
+        }
+
+        if (archivoExistente != null) {
+            byte[] contenidoExistente =
+                    DocumentoLibraryComprasHelper
+                            .leerContenidoDocumentLibrary(
+                                    archivoExistente
+                            );
+
+            if (archivoExistente.getGroupId() != folder.getGroupId()
+                    || archivoExistente.getFolderId()
+                    != folder.getFolderId()
+                    || !nombrePersistido.equals(
+                    archivoExistente.getName()
+            )
+                    || !Arrays.equals(
+                    contenido,
+                    contenidoExistente
+            )) {
+
+                throw new Exception(
+                        "Ya existe un documento del reclamo con una "
+                                + "identidad o contenido diferente."
+                );
+            }
+
+            return null;
+        }
+
         File temporal =
                 null;
 
@@ -698,6 +867,15 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                                 + "el documento del Reclamo Prestacional."
                 );
             }
+
+            return new DocumentoComprasCreado(
+                    entry.getGroupId(),
+                    entry.getFolderId(),
+                    entry.getFileEntryId(),
+                    entry.getUuid(),
+                    entry.getName(),
+                    entry.getTitle()
+            );
 
         } finally {
 

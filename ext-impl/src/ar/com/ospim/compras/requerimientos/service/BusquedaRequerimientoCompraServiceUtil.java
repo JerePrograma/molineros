@@ -78,6 +78,12 @@ public class BusquedaRequerimientoCompraServiceUtil {
         return helper.listarSectores();
     }
 
+    public static List<TipoPrestacionCompra> listarTiposPrestacion()
+            throws Exception {
+
+        return helper.listarTiposPrestacion();
+    }
+
     public static RequerimientoCompraEstado getEstado(
             int idRequerimientoCompra) throws Exception {
 

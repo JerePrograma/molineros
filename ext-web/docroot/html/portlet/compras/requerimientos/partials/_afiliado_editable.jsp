@@ -19,6 +19,15 @@ boolean afiliadoComponenteEditable =
 boolean puedeActualizarContactoAfiliado =
         puedeABM;
 
+Object tokenContactoAfiliadoAttribute =
+        renderRequest.getAttribute(
+                "COMPRAS_CONTACTO_AFILIADO_TOKEN"
+        );
+String tokenContactoAfiliado =
+        tokenContactoAfiliadoAttribute != null
+                ? String.valueOf(tokenContactoAfiliadoAttribute)
+                : "";
+
 boolean ocultarPanelAfiliado =
         !mostrarPanelAfiliadoEnVista;
 %>
@@ -66,6 +75,11 @@ boolean ocultarPanelAfiliado =
             <% if (puedeActualizarContactoAfiliado) { %>
                 <td class="compras-afiliado-contacto-acciones">
 
+                    <input
+                            type="hidden"
+                            id="<portlet:namespace />contacto_afiliado_token"
+                            value="<%= HtmlUtil.escape(tokenContactoAfiliado) %>" />
+
                     <div id="<portlet:namespace />seccionVerificarDomicilio"
                          class="compras-verificar-contacto">
 
@@ -77,8 +91,10 @@ boolean ocultarPanelAfiliado =
 
                         <div id="<portlet:namespace />divBotonActualizar">
                             <input
+                                    id="<portlet:namespace />botonActualizarContactoAfiliado"
                                     type="button"
                                     value="Actualizar"
+                                    disabled="disabled"
                                     onclick="return <portlet:namespace />mostrarDomicilioAfiliado();" />
                         </div>
 

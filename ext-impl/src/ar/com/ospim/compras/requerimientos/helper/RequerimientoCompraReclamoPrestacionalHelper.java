@@ -7,6 +7,7 @@ import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPre
 import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalTransaccion;
 
 import com.liferay.portal.model.User;
+import com.liferay.portal.service.ServiceContext;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,6 +25,10 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
     private final RequerimientoCompraReclamoPrestacionalServiceImpl
             persistence =
             new RequerimientoCompraReclamoPrestacionalServiceImpl();
+
+    private final ReclamoPrestacionalCompraDocumentacionHelper
+            documentacionHelper =
+            new ReclamoPrestacionalCompraDocumentacionHelper();
 
     public RequerimientoCompraReclamoPrestacional obtenerPorRequerimiento(
             int idRequerimientoCompra) throws Exception {
@@ -174,6 +179,41 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
             ReclamoPrestacional reclamo,
             User user) throws Exception {
 
+        throw new Exception(
+                "No se puede crear el Reclamo Prestacional sin "
+                        + "el contexto de su documentacion obligatoria."
+        );
+    }
+
+    public int crearYVincular(
+            int idRequerimientoCompra,
+            String tokenReserva,
+            ReclamoPrestacional reclamo,
+            User user,
+            ServiceContext serviceContext) throws Exception {
+
+        if (serviceContext == null) {
+            throw new Exception(
+                    "No se pudo determinar el contexto documental del reclamo."
+            );
+        }
+
+        return crearYVincularInterno(
+                idRequerimientoCompra,
+                tokenReserva,
+                reclamo,
+                user,
+                serviceContext
+        );
+    }
+
+    private int crearYVincularInterno(
+            int idRequerimientoCompra,
+            String tokenReserva,
+            ReclamoPrestacional reclamo,
+            User user,
+            ServiceContext serviceContext) throws Exception {
+
         validarIdRequerimiento(idRequerimientoCompra);
         validarToken(tokenReserva);
 
@@ -190,6 +230,8 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
         RequerimientoCompraReclamoPrestacionalTransaccion
                 transaccion = null;
+        ReclamoPrestacionalCompraDocumentacionHelper.DocumentacionAdjuntada
+                documentacionAdjuntada = null;
 
         try {
             transaccion =
@@ -261,6 +303,14 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
                 );
             }
 
+            documentacionAdjuntada =
+                    documentacionHelper
+                            .adjuntarDocumentacionControlada(
+                                    idRequerimientoCompra,
+                                    idReclamo,
+                                    serviceContext
+                            );
+
             finalizarCreacion(
                     transaccion,
                     idRequerimientoCompra,
@@ -300,6 +350,17 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
                     transaccion.rollback();
                 } catch (Exception rollbackError) {
                     e.addSuppressed(rollbackError);
+                }
+            }
+
+            if (documentacionAdjuntada != null) {
+
+                try {
+                    documentacionHelper.compensarDocumentacion(
+                            documentacionAdjuntada
+                    );
+                } catch (Exception compensacionError) {
+                    e.addSuppressed(compensacionError);
                 }
             }
 

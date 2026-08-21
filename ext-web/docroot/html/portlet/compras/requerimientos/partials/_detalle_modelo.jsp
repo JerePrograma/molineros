@@ -3,6 +3,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra" %>
 
 <%!
 private String jsDetalleCompra(String value) {
@@ -134,6 +135,15 @@ List<RequerimientoCompraDetalle> detalles =
 
 if (detalles == null) {
     detalles = new ArrayList<RequerimientoCompraDetalle>();
+}
+
+List<TipoPrestacionCompra> tiposPrestacionDetalle =
+        (List<TipoPrestacionCompra>) request.getAttribute(
+                WebKeysCompras.TIPOS_PRESTACION_REQUERIMIENTO_COMPRA
+        );
+
+if (tiposPrestacionDetalle == null) {
+    tiposPrestacionDetalle = new ArrayList<TipoPrestacionCompra>();
 }
 
 Map<String, String> preciosCotizacionRestaurados =
@@ -367,7 +377,7 @@ boolean prestadoresAdjudicadosMixtosDetalle =
         reqDetalle.tienePrestadoresAdjudicadosMixtos();
 
 int detalleColspan =
-        5
+        6
         + (puedeVerCotizacionDetalle ? 2 : 0)
         + ((puedeABMDetalle || puedeEliminarDetalle) ? 1 : 0);
 %>

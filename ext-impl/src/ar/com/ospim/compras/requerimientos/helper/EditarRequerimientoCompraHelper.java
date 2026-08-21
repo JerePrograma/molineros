@@ -11,6 +11,7 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
+import ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoComprasCreado;
 import ar.com.ospim.compras.requerimientos.documentos.GestorOrdenMedicaDocumento;
 import ar.com.ospim.compras.requerimientos.documentos.OrdenMedicaValidada;
@@ -684,6 +685,12 @@ public class EditarRequerimientoCompraHelper {
                     );
 
             prepararDetalleParaGuardar(
+                    requerimiento,
+                    detallePersistido,
+                    detalle
+            );
+
+            validarTipoPrestacionParaGuardar(
                     requerimiento,
                     detallePersistido,
                     detalle
@@ -1621,6 +1628,77 @@ private void validarDetalleParaGuardar(
 
         throw errorUsuario(
                 "El precio total no puede ser negativo."
+        );
+    }
+}
+
+private void validarTipoPrestacionParaGuardar(
+        RequerimientoCompra requerimiento,
+        RequerimientoCompraDetalle detallePersistido,
+        RequerimientoCompraDetalle detalle) throws Exception {
+
+    if (requerimiento == null
+            || requerimiento.getIdSector() == null
+            || requerimiento.getIdSector().intValue() <= 0
+            || detalle == null) {
+
+        throw errorUsuario(
+                "No se pudo validar el tipo de prestacion del detalle."
+        );
+    }
+
+    List<TipoPrestacionCompra> tipos =
+            BusquedaRequerimientoCompraServiceUtil
+                    .listarTiposPrestacion();
+
+    boolean sectorConCatalogo = false;
+    boolean tipoValido = false;
+    Integer idTipo = detalle.getIdTipoPrestacion();
+
+    for (int i = 0; tipos != null && i < tipos.size(); i++) {
+        TipoPrestacionCompra tipo = tipos.get(i);
+
+        if (tipo == null
+                || tipo.getIdSectorInt()
+                != requerimiento.getIdSector().intValue()) {
+
+            continue;
+        }
+
+        sectorConCatalogo = true;
+
+        if (idTipo != null
+                && tipo.getIdInt() == idTipo.intValue()) {
+
+            tipoValido = true;
+            detalle.setTipoPrestacionDescripcion(
+                    tipo.getDescripcion()
+            );
+        }
+    }
+
+    if (idTipo == null) {
+        if (detallePersistido != null
+                && detallePersistido.getIdTipoPrestacion() != null) {
+
+            throw errorUsuario(
+                    "El tipo de prestacion ya informado no puede quitarse."
+            );
+        }
+
+        if (detallePersistido == null && sectorConCatalogo) {
+            throw errorUsuario(
+                    "Debe seleccionar el tipo de prestacion."
+            );
+        }
+
+        return;
+    }
+
+    if (!tipoValido) {
+        throw errorUsuario(
+                "El tipo de prestacion no corresponde al sector "
+                        + "del requerimiento."
         );
     }
 }

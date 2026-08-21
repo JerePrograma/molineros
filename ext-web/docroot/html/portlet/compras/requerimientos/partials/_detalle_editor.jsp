@@ -112,6 +112,23 @@
            style="border-collapse: separate; border-spacing: 5px;"
            width="100%">
 
+        <tr>
+            <td>
+                <label for="<portlet:namespace />detalle_id_tipo_prestacion">
+                    Tipo:
+                </label>
+            </td>
+            <td colspan="3">
+                <select id="<portlet:namespace />detalle_id_tipo_prestacion">
+                    <option value="">Seleccione...</option>
+                </select>
+                <span id="<portlet:namespace />detalle_tipo_prestacion_ayuda"
+                      class="portlet-msg-info"
+                      style="display:none;">
+                </span>
+            </td>
+        </tr>
+
         <tbody id="<portlet:namespace />detalle_bloque_nomenclador">
 
             <tr id="<portlet:namespace />detalle_fila_tipo_nomenclador"

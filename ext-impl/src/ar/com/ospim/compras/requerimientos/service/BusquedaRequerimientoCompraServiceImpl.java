@@ -31,10 +31,13 @@ public class BusquedaRequerimientoCompraServiceImpl {
             "{call compras.get_requerimiento(?)}";
 
     private static final String SQL_GET_REQUERIMIENTO_DETALLE =
-            "{call compras.get_requerimiento_detalle(?)}";
+            "{call compras.get_requerimiento_detalle_clasificado(?)}";
 
     private static final String SQL_LISTAR_SECTORES =
             "{call compras.listar_sector_requerimiento()}";
+
+    private static final String SQL_LISTAR_TIPOS_PRESTACION =
+            "{call compras.listar_tipos_prestacion()}";
 
     private static final String SQL_GET_ESTADO =
             "{call compras.get_estado_actual_requerimiento(?)}";
@@ -222,6 +225,39 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
             while (rs.next()) {
                 resultado.add(mapSector(rs));
+            }
+
+            return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public List<TipoPrestacionCompra> listarTiposPrestacion()
+            throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+        List<TipoPrestacionCompra> resultado =
+                new ArrayList<TipoPrestacionCompra>();
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_LISTAR_TIPOS_PRESTACION);
+            rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                TipoPrestacionCompra tipo =
+                        new TipoPrestacionCompra();
+                tipo.setId(getInteger(rs, "id_tipo_prestacion"));
+                tipo.setDescripcion(getString(rs, "descripcion"));
+                tipo.setIdSector(getInteger(rs, "id_sector"));
+                tipo.setSectorDescripcion(
+                        getString(rs, "sector_descripcion")
+                );
+                resultado.add(tipo);
             }
 
             return resultado;
@@ -649,6 +685,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
         d.setIdRequerimiento(getInteger(rs, "id_requerimiento"));
 
         d.setTipoItem(getString(rs, "tipo_item"));
+        d.setIdTipoPrestacion(
+                getInteger(rs, "id_tipo_prestacion")
+        );
+        d.setTipoPrestacionDescripcion(
+                getString(rs, "tipo_prestacion")
+        );
         d.setCodigoItem(getString(rs, "codigo_item"));
         d.setDescripcionItem(getString(rs, "descripcion_item"));
 

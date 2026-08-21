@@ -90,6 +90,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String SECTORES_REQUERIMIENTO_COMPRA =
             SECTORES_REQUERIMIENTO;
 
+    public static final String TIPOS_PRESTACION_REQUERIMIENTO_COMPRA =
+            "TIPOS_PRESTACION_REQUERIMIENTO_COMPRA";
+
     public static final String TIPOS_PRESTADOR_SECTOR =
             "TIPOS_PRESTADOR_SECTOR";
 

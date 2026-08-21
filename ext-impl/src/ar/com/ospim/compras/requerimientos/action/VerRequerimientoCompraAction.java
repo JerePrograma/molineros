@@ -177,6 +177,11 @@ public class VerRequerimientoCompraAction extends PortletAction {
                     requerimiento
             );
 
+            ActualizarContactoAfiliadoCompraToken.publicar(
+                    renderRequest,
+                    requerimiento
+            );
+
             cargarEstadoPrestadoresPendientesNotificacion(
                     renderRequest,
                     requerimiento
@@ -392,6 +397,25 @@ public class VerRequerimientoCompraAction extends PortletAction {
 
             renderRequest.setAttribute(
                     WebKeysCompras.SECTORES_REQUERIMIENTO,
+                    new ArrayList()
+            );
+        }
+
+        try {
+            renderRequest.setAttribute(
+                    WebKeysCompras
+                            .TIPOS_PRESTACION_REQUERIMIENTO_COMPRA,
+                    busquedaHelper.listarTiposPrestacion()
+            );
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudieron cargar los tipos de prestacion de Compras.",
+                    e
+            );
+
+            renderRequest.setAttribute(
+                    WebKeysCompras
+                            .TIPOS_PRESTACION_REQUERIMIENTO_COMPRA,
                     new ArrayList()
             );
         }

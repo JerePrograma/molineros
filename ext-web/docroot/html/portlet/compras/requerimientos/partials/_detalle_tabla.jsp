@@ -3,6 +3,8 @@
 
     <tr class="portlet-section-header results-header">
 
+        <th>Tipo</th>
+
         <th class="compras-detalle-columna-codigo">
             Código presentado
         </th>

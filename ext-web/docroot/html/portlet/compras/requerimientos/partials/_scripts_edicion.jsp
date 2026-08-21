@@ -498,6 +498,22 @@ String idTercerizadoraScriptsCompra =
                         )
                         : '';
 
+        var idTipoPrestacion = jQuery.trim(
+                String(
+                        jQuery(
+                                '#<portlet:namespace />detalle_id_tipo_prestacion'
+                        ).val() || ''
+                )
+        );
+
+        var tipoPrestacion = jQuery.trim(
+                String(
+                        jQuery(
+                                '#<portlet:namespace />detalle_id_tipo_prestacion option:selected'
+                        ).text() || ''
+                )
+        );
+
         if (!/^[0-9]+$/.test(
                 idPrestacion
         )
@@ -532,6 +548,12 @@ String idTercerizadoraScriptsCompra =
 
             tipoItem:
                     'NOMENCLADOR',
+
+            idTipoPrestacion:
+                    idTipoPrestacion,
+
+            tipoPrestacion:
+                    tipoPrestacion,
 
             codigoItem:
                     codigo,
@@ -795,6 +817,11 @@ String idTercerizadoraScriptsCompra =
             );
 
             addHidden(
+                    prefix + 'id_tipo_prestacion',
+                    detalle.idTipoPrestacion
+            );
+
+            addHidden(
                     prefix + 'codigo_item',
                     detalle.codigoItem
             );
@@ -913,6 +940,21 @@ String idTercerizadoraScriptsCompra =
 
 
     function <portlet:namespace />agregarItemsHistoricosSeleccionados() {
+
+        var selectorTipo = jQuery(
+                '#<portlet:namespace />detalle_id_tipo_prestacion'
+        );
+
+        if (selectorTipo.length > 0
+                && !selectorTipo.attr('disabled')
+                && !<portlet:namespace />esTipoPrestacionDetalleValidoParaSector(
+                        selectorTipo.val()
+                )) {
+
+            alert('Debe seleccionar el Tipo para los detalles a agregar.');
+            selectorTipo.focus();
+            return false;
+        }
 
         if (typeof <portlet:namespace />detalleAccionEnCurso
                 != 'undefined'
@@ -1660,7 +1702,10 @@ String idTercerizadoraScriptsCompra =
             <portlet:namespace />aplicarAntecedentesAfiliado(tieneAntecedentes);
         }
 
-        <portlet:namespace />resetearVerificacionContactoAfiliado();
+        <portlet:namespace />actualizarVerificacionContactoAfiliado(
+                cuil,
+                inte
+        );
 
         <portlet:namespace />sincronizarAfiliadoRequerimiento();
 
@@ -2114,6 +2159,8 @@ String idTercerizadoraScriptsCompra =
         jQuery('#<portlet:namespace />id_plan').val('');
         jQuery('#<portlet:namespace />afi_tercerizadora').val('');
 
+        <portlet:namespace />actualizarVerificacionContactoAfiliado('', '');
+
         /*
          * Nunca dejar visible el vencimiento correspondiente
          * al afiliado anterior.
@@ -2181,6 +2228,15 @@ String idTercerizadoraScriptsCompra =
             ](
                     true
             );
+        }
+
+        if (typeof window[
+                '<portlet:namespace />actualizarTiposPrestacionDetalle'
+        ] == 'function') {
+
+            window[
+                    '<portlet:namespace />actualizarTiposPrestacionDetalle'
+            ]('', false);
         }
 
         if (typeof window[

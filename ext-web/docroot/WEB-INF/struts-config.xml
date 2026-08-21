@@ -7208,7 +7208,7 @@
 
         <action
                 path="/compras/actualiza_domicilio"
-                type="ar.com.ospim.crm.action.ActualizaDomicilioAfiliadoAction">
+                type="ar.com.ospim.compras.requerimientos.action.ActualizarContactoAfiliadoCompraAction">
 
             <forward
                     name="portlet.crm.actualiza.domicilio.popup"

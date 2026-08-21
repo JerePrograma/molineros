@@ -461,6 +461,20 @@ public class RequerimientoCompraDetalleHelper {
                 )
         );
 
+        int idTipoPrestacion =
+                parseEnteroConDefault(
+                        request,
+                        prefix + "id_tipo_prestacion",
+                        contexto + " - Tipo",
+                        0
+                );
+
+        detalle.setIdTipoPrestacion(
+                idTipoPrestacion > 0
+                        ? Integer.valueOf(idTipoPrestacion)
+                        : null
+        );
+
         int idPrestacion =
                 parseEnteroConDefault(
                         request,
@@ -562,6 +576,9 @@ public class RequerimientoCompraDetalleHelper {
         )
                 && WebKeysCompras.isEmpty(
                 getParametroTrim(request, prefix + "tipo_item")
+        )
+                && WebKeysCompras.isEmpty(
+                getParametroTrim(request, prefix + "id_tipo_prestacion")
         )
                 && WebKeysCompras.isEmpty(
                 getParametroTrim(request, prefix + "id_prestacion")

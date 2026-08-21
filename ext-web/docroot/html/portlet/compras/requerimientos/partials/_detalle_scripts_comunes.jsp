@@ -2,12 +2,36 @@
     var <portlet:namespace />detallesCompra = [];
     var <portlet:namespace />detalleDeletedIds = [];
     var <portlet:namespace />prestadoresEnviadosDetalleCache = [];
+    var <portlet:namespace />tiposPrestacionDetalleCache = [];
     var <portlet:namespace />sectorDescripcionInicialCompra =
             '<%= jsDetalleCompra(sectorDescripcionActualString) %>';
     var <portlet:namespace />idPrestadorAdjudicado =
             '<%= jsDetalleCompra(idPrestadorAdjudicadoDetalle) %>';
     var <portlet:namespace />prestadorAdjudicado =
             '<%= jsDetalleCompra(prestadorAdjudicadoDetalle) %>';
+
+    <%
+    for (int i = 0; i < tiposPrestacionDetalle.size(); i++) {
+        TipoPrestacionCompra tipoPrestacion =
+                tiposPrestacionDetalle.get(i);
+
+        if (tipoPrestacion == null
+                || tipoPrestacion.getIdInt() <= 0
+                || tipoPrestacion.getIdSectorInt() <= 0) {
+
+            continue;
+        }
+    %>
+        <portlet:namespace />tiposPrestacionDetalleCache.push({
+            id: '<%= tipoPrestacion.getIdInt() %>',
+            idSector: '<%= tipoPrestacion.getIdSectorInt() %>',
+            descripcion: '<%= jsDetalleCompra(
+                    tipoPrestacion.getDescripcionVisible()
+            ) %>'
+        });
+    <%
+    }
+    %>
 
     <%
     if (prestadoresEnviadosDetalle != null) {
@@ -97,6 +121,8 @@
         <portlet:namespace />detallesCompra.push({
             id: '<%= jsDetalleCompra(detalle.getIdString()) %>',
             tipoItem: '<%= jsDetalleCompra(detalle.getTipoItemNormalizado()) %>',
+            idTipoPrestacion: '<%= jsDetalleCompra(detalle.getIdTipoPrestacionString()) %>',
+            tipoPrestacion: '<%= jsDetalleCompra(detalle.getTipoPrestacionDescripcionVisible()) %>',
             codigoItem: '<%= jsDetalleCompra(detalle.getCodigoItemVisible()) %>',
             descripcionItem: '<%= jsDetalleCompra(detalle.getDescripcionItemVisible()) %>',
             idPrestacion: '<%= jsDetalleCompra(detalle.getIdPrestacionString()) %>',
@@ -482,6 +508,7 @@
             var html = '';
 
             html += '<tr class="' + rowClass + '">';
+            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.tipoPrestacion) + '</td>';
             html += '<td class="compras-detalle-columna-codigo">' + <portlet:namespace />detalleEscapeHtml(detalle.codigoItem) + '</td>';
             html += '<td class="compras-detalle-columna-codigo">' + <portlet:namespace />detalleEscapeHtml(detalle.descripcionItem) + '</td>';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.cantidad) + '</td>';
@@ -517,9 +544,7 @@
 
                 <% if (puedeEliminarDetalle) { %>
 
-                    <% if (reqDetalle.isACotizar()) { %>
                     if (<portlet:namespace />detallesCompra.length > 1) {
-                    <% } %>
 
                         html += '<a href="#" title="Quitar" '
                                 + 'onclick="<portlet:namespace />quitarDetalleEnPantalla('
@@ -529,9 +554,7 @@
                                 + 'src="<%= themeDisplay.getPathThemeImages() %>/common/delete.png" />';
                         html += '</a>';
 
-                    <% if (reqDetalle.isACotizar()) { %>
                     }
-                    <% } %>
 
                 <% } %>
 

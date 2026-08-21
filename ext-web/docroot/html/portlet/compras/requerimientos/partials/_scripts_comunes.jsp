@@ -646,6 +646,32 @@
         var <portlet:namespace />verificacionContactoRequest =
                 null;
 
+        var <portlet:namespace />vinculacionContactoRequest =
+                null;
+
+        function <portlet:namespace />establecerDisponibilidadActualizarContacto(
+                habilitado) {
+
+            jQuery(
+                    '#<portlet:namespace />seccionVerificarDomicilio'
+            ).show();
+
+            jQuery(
+                    '#<portlet:namespace />divBotonActualizar'
+            ).show();
+
+            var boton =
+                    jQuery(
+                            '#<portlet:namespace />botonActualizarContactoAfiliado'
+                    );
+
+            if (habilitado) {
+                boton.removeAttr('disabled');
+            } else {
+                boton.attr('disabled', 'disabled');
+            }
+        }
+
         function <portlet:namespace />ocultarVerificacionContactoAfiliado() {
 
             <portlet:namespace />verificacionContactoSecuencia++;
@@ -663,13 +689,22 @@
             <portlet:namespace />verificacionContactoRequest =
                     null;
 
-            jQuery(
-                    '#<portlet:namespace />seccionVerificarDomicilio'
-            ).hide();
+            if (<portlet:namespace />vinculacionContactoRequest
+                    && <portlet:namespace />vinculacionContactoRequest.readyState != 4) {
 
-            jQuery(
-                    '#<portlet:namespace />divBotonActualizar'
-            ).hide();
+                try {
+                    <portlet:namespace />vinculacionContactoRequest.abort();
+                } catch (e) {
+                    /* Aborto esperado. */
+                }
+            }
+
+            <portlet:namespace />vinculacionContactoRequest =
+                    null;
+
+            <portlet:namespace />establecerDisponibilidadActualizarContacto(
+                    false
+            );
 
             jQuery(
                     '#<portlet:namespace />divResultadoActualizarOK'
@@ -685,10 +720,7 @@
                             '#<portlet:namespace />seccionVerificarDomicilio'
                     );
 
-            /*
-             * En VISTA real el componente no se renderiza.
-             * No hacer ninguna consulta innecesaria.
-             */
+            /* El sector o el permiso pueden omitir la seccion. */
             if (seccion.length == 0) {
                 return;
             }
@@ -713,6 +745,68 @@
 
             var secuenciaActual =
                     <portlet:namespace />verificacionContactoSecuencia;
+
+            var tokenContacto =
+                    <portlet:namespace />valorInputCompra(
+                            'contacto_afiliado_token'
+                    );
+
+            if (tokenContacto == '') {
+                return;
+            }
+
+            <portlet:namespace />vinculacionContactoRequest =
+                    jQuery.ajax({
+
+                        url:
+                                '${comprasActualizaDomicilioURL}',
+
+                        data: {
+                            cuil_titular:
+                                    cuil,
+
+                            inte:
+                                    inte,
+
+                            contacto_afiliado_token:
+                                    tokenContacto,
+
+                            cmd:
+                                    'bind'
+                        },
+
+                        cache:
+                                false,
+
+                        success: function() {
+                            if (secuenciaActual
+                                    == <portlet:namespace />verificacionContactoSecuencia) {
+
+                                <portlet:namespace />establecerDisponibilidadActualizarContacto(
+                                        true
+                                );
+                            }
+                        },
+
+                        error: function() {
+                            if (secuenciaActual
+                                    == <portlet:namespace />verificacionContactoSecuencia) {
+
+                                <portlet:namespace />establecerDisponibilidadActualizarContacto(
+                                        false
+                                );
+                            }
+                        },
+
+                        complete: function() {
+                            if (secuenciaActual
+                                    == <portlet:namespace />verificacionContactoSecuencia) {
+
+                                <portlet:namespace />vinculacionContactoRequest =
+                                        null;
+                            }
+                        }
+                    });
 
             <portlet:namespace />verificacionContactoRequest =
                     jQuery.ajax({
@@ -748,12 +842,16 @@
                                                 ? jQuery.parseJSON(data)
                                                 : data;
                             } catch (e) {
-                                <portlet:namespace />ocultarVerificacionContactoAfiliado();
+                                jQuery(
+                                        '#<portlet:namespace />divResultadoActualizarOK'
+                                ).hide();
                                 return;
                             }
 
                             if (!obj) {
-                                <portlet:namespace />ocultarVerificacionContactoAfiliado();
+                                jQuery(
+                                        '#<portlet:namespace />divResultadoActualizarOK'
+                                ).hide();
                                 return;
                             }
 
@@ -772,21 +870,11 @@
                             seccion.show();
 
                             if (requiereActualizar) {
-
-                                jQuery(
-                                        '#<portlet:namespace />divBotonActualizar'
-                                ).show();
-
                                 jQuery(
                                         '#<portlet:namespace />divResultadoActualizarOK'
                                 ).hide();
 
                             } else {
-
-                                jQuery(
-                                        '#<portlet:namespace />divBotonActualizar'
-                                ).hide();
-
                                 jQuery(
                                         '#<portlet:namespace />divResultadoActualizarOK'
                                 ).show();
@@ -805,7 +893,9 @@
                                 return;
                             }
 
-                            <portlet:namespace />ocultarVerificacionContactoAfiliado();
+                            jQuery(
+                                    '#<portlet:namespace />divResultadoActualizarOK'
+                            ).hide();
                         },
 
                         complete: function() {
@@ -825,18 +915,6 @@
             null;
 
 
-    function <portlet:namespace />resetearVerificacionContactoAfiliado() {
-
-        jQuery(
-                '#<portlet:namespace />divResultadoActualizarOK'
-        ).hide();
-
-        jQuery(
-                '#<portlet:namespace />divBotonActualizar'
-        ).show();
-    }
-
-
     function <portlet:namespace />mostrarDomicilioAfiliado() {
 
         var cuilTitular =
@@ -849,8 +927,14 @@
                         'inte'
                 );
 
+        var tokenContacto =
+                <portlet:namespace />valorInputCompra(
+                        'contacto_afiliado_token'
+                );
+
         if (cuilTitular == ''
-                || inte == '') {
+                || inte == ''
+                || tokenContacto == '') {
 
             alert(
                     'Debe seleccionar al Afiliado.'
@@ -893,6 +977,10 @@
                 + '&inte='
                 + encodeURIComponent(
                         inte
+                )
+                + '&contacto_afiliado_token='
+                + encodeURIComponent(
+                        tokenContacto
                 )
                 + '&cmd=view'
                 + '&portlet_name=autorizaciones';
@@ -1036,6 +1124,11 @@
         var integrante =
                 <portlet:namespace />valorInputCompra(
                         'inte'
+                );
+
+        var tokenContacto =
+                <portlet:namespace />valorInputCompra(
+                        'contacto_afiliado_token'
                 );
 
         var idPar =
@@ -1246,6 +1339,9 @@
                 email_original:
                         emailOriginal,
 
+                contacto_afiliado_token:
+                        tokenContacto,
+
                 cmd:
                         'save'
             },
@@ -1256,9 +1352,9 @@
                         '#<portlet:namespace />divResultadoActualizarOK'
                 ).show();
 
-                jQuery(
-                        '#<portlet:namespace />divBotonActualizar'
-                ).hide();
+                <portlet:namespace />establecerDisponibilidadActualizarContacto(
+                        true
+                );
 
                 if (<portlet:namespace />popupDomicilioAfiliado != null) {
 

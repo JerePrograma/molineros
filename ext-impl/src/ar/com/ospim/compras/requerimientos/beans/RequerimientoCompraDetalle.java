@@ -5,17 +5,17 @@ import ar.com.ospim.compras.WebKeysCompras;
 import java.math.BigDecimal;
 
 /**
- * Detalle t茅cnico de un requerimiento de compra.
+ * Detalle tecnico de un requerimiento de compra.
  *
  * Contrato actual:
  *
- * - Los sectores con c贸digo se persisten como NOMENCLADOR.
- * - Los sectores sin c贸digo se persisten como OBSERVACION.
+ * - Los sectores con codigo se persisten como NOMENCLADOR.
+ * - Los sectores sin codigo se persisten como OBSERVACION.
  * - MEDICAMENTO se conserva exclusivamente para lectura y
- *   edici贸n no estructural de registros hist贸ricos.
+ *   edicion no estructural de registros historicos.
  *
  * No deben eliminarse los atributos de medicamento mientras
- * existan registros hist贸ricos que dependan de ellos.
+ * existan registros historicos que dependan de ellos.
  */
 public class RequerimientoCompraDetalle {
 
@@ -27,6 +27,8 @@ public class RequerimientoCompraDetalle {
     private Integer idRequerimiento;
 
     private String tipoItem;
+    private Integer idTipoPrestacion;
+    private String tipoPrestacionDescripcion;
     private String codigoItem;
     private String descripcionItem;
 
@@ -145,6 +147,46 @@ public class RequerimientoCompraDetalle {
                 value != null
                         ? value.toUpperCase()
                         : null;
+    }
+
+    public Integer getIdTipoPrestacion() {
+        return idTipoPrestacion;
+    }
+
+    public int getIdTipoPrestacionInt() {
+        return idTipoPrestacion != null
+                ? idTipoPrestacion.intValue()
+                : 0;
+    }
+
+    public String getIdTipoPrestacionString() {
+        return idTipoPrestacion != null
+                && idTipoPrestacion.intValue() > 0
+                        ? String.valueOf(idTipoPrestacion)
+                        : "";
+    }
+
+    public void setIdTipoPrestacion(Integer idTipoPrestacion) {
+        this.idTipoPrestacion = idTipoPrestacion;
+    }
+
+    public String getTipoPrestacionDescripcion() {
+        return tipoPrestacionDescripcion;
+    }
+
+    public String getTipoPrestacionDescripcionVisible() {
+        return tipoPrestacionDescripcion != null
+                ? tipoPrestacionDescripcion
+                : "Sin clasificar (hist髍ico)";
+    }
+
+    public void setTipoPrestacionDescripcion(
+            String tipoPrestacionDescripcion) {
+
+        this.tipoPrestacionDescripcion =
+                WebKeysCompras.trimToNull(
+                        tipoPrestacionDescripcion
+                );
     }
 
     public String getCodigoItem() {

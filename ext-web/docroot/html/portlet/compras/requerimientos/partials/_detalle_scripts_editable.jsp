@@ -851,6 +851,122 @@
     window['<portlet:namespace />seleccionarNomencladorDetalle'] =
             <portlet:namespace />seleccionarNomencladorDetalle;
 
+        function <portlet:namespace />getIdSectorTipoPrestacionDetalle() {
+            var idSector = jQuery.trim(
+                    String(
+                            jQuery('#<portlet:namespace />sector_id').val()
+                                    || ''
+                    )
+            );
+
+            if (idSector == '') {
+                idSector = jQuery.trim(
+                        String(
+                                jQuery(
+                                        '#<portlet:namespace />sector_id_hidden'
+                                ).val() || ''
+                        )
+                );
+            }
+
+            return idSector;
+        }
+
+        function <portlet:namespace />actualizarTiposPrestacionDetalle(
+                valorSeleccionado,
+                permitirSinClasificar) {
+
+            var select = jQuery(
+                    '#<portlet:namespace />detalle_id_tipo_prestacion'
+            );
+            var ayuda = jQuery(
+                    '#<portlet:namespace />detalle_tipo_prestacion_ayuda'
+            );
+
+            if (select.length == 0) {
+                return;
+            }
+
+            var idSector =
+                    <portlet:namespace />getIdSectorTipoPrestacionDetalle();
+            var cantidad = 0;
+
+            select.empty();
+            select.append(
+                    jQuery('<option/>', {
+                        value: '',
+                        text: permitirSinClasificar
+                                ? 'Sin clasificar (histórico)'
+                                : 'Seleccione...'
+                    })
+            );
+
+            for (var i = 0;
+                    i < <portlet:namespace />tiposPrestacionDetalleCache.length;
+                    i++) {
+
+                var tipo =
+                        <portlet:namespace />tiposPrestacionDetalleCache[i];
+
+                if (String(tipo.idSector) != idSector) {
+                    continue;
+                }
+
+                select.append(
+                        jQuery('<option/>', {
+                            value: tipo.id,
+                            text: tipo.descripcion
+                        })
+                );
+                cantidad++;
+            }
+
+            if (cantidad == 0) {
+                select.attr('disabled', 'disabled');
+                ayuda.text(
+                        'No hay tipos disponibles para este sector.'
+                ).show();
+                return;
+            }
+
+            select.removeAttr('disabled');
+            ayuda.hide().text('');
+            select.val(
+                    valorSeleccionado == null
+                            ? ''
+                            : String(valorSeleccionado)
+            );
+        }
+
+        window['<portlet:namespace />actualizarTiposPrestacionDetalle'] =
+                <portlet:namespace />actualizarTiposPrestacionDetalle;
+
+        function <portlet:namespace />esTipoPrestacionDetalleValidoParaSector(
+                idTipoPrestacion) {
+
+            var idSector =
+                    <portlet:namespace />getIdSectorTipoPrestacionDetalle();
+            var idTipo = idTipoPrestacion == null
+                    ? ''
+                    : String(idTipoPrestacion);
+
+            for (var i = 0;
+                    i < <portlet:namespace />tiposPrestacionDetalleCache.length;
+                    i++) {
+
+                var tipo =
+                        <portlet:namespace />tiposPrestacionDetalleCache[i];
+
+                if (String(tipo.idSector) == idSector
+                        && String(tipo.id) == idTipo) {
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         function <portlet:namespace />limpiarEditorDetalle() {
             jQuery(
                     '#<portlet:namespace />detalle_edit_index'
@@ -901,6 +1017,7 @@
             ).hide();
 
             <portlet:namespace />actualizarTipoItemEditor(false);
+            <portlet:namespace />actualizarTiposPrestacionDetalle('', false);
         }
 
     function <portlet:namespace />editarDetalleEnPantalla(index) {
@@ -914,6 +1031,13 @@
 
         jQuery('#<portlet:namespace />detalle_tipo_item').val(
                 <portlet:namespace />detalleValue(detalle.tipoItem)
+        );
+
+        <portlet:namespace />actualizarTiposPrestacionDetalle(
+                detalle.idTipoPrestacion,
+                <portlet:namespace />detalleValue(
+                        detalle.idTipoPrestacion
+                ) == ''
         );
 
         jQuery('#<portlet:namespace />detalle_codigo_item').val(
@@ -1108,6 +1232,20 @@
                             ? 'MEDICAMENTO'
                             : tipoEsperado,
 
+            idTipoPrestacion:
+                    jQuery.trim(
+                            jQuery(
+                                    '#<portlet:namespace />detalle_id_tipo_prestacion'
+                            ).val() || ''
+                    ),
+
+            tipoPrestacion:
+                    jQuery.trim(
+                            jQuery(
+                                    '#<portlet:namespace />detalle_id_tipo_prestacion option:selected'
+                            ).text() || ''
+                    ),
+
             codigoItem: '',
             descripcionItem: '',
 
@@ -1237,6 +1375,21 @@
                     'Debe informar el detalle.'
             );
 
+            return false;
+        }
+
+        var selectTipoPrestacion = jQuery(
+                '#<portlet:namespace />detalle_id_tipo_prestacion'
+        );
+
+        if (!selectTipoPrestacion.attr('disabled')
+                && !<portlet:namespace />esTipoPrestacionDetalleValidoParaSector(
+                        detalle.idTipoPrestacion
+                )
+                && !<portlet:namespace />esEnteroPositivo(detalle.id)) {
+
+            alert('Debe seleccionar el Tipo.');
+            selectTipoPrestacion.focus();
             return false;
         }
 
@@ -1380,6 +1533,7 @@
         addHidden('id_requerimiento_compra', idReq);
         addHidden('id_detalle', detalle.id);
         addHidden('tipo_item', detalle.tipoItem);
+        addHidden('id_tipo_prestacion', detalle.idTipoPrestacion);
         addHidden('codigo_item', detalle.codigoItem);
         addHidden('descripcion_item', detalle.descripcionItem);
 
@@ -1472,19 +1626,14 @@
             return <portlet:namespace />liberarDetalleAccion(0);
         }
 
-        <% if (reqDetalle.isACotizar()) { %>
-
         if (<portlet:namespace />detallesCompra.length <= 1) {
 
             alert(
-                'El requerimiento ENVIADO A COTIZAR '
-                        + 'debe conservar al menos una prestación.'
+                'El requerimiento debe conservar al menos una prestacion.'
             );
 
             return <portlet:namespace />liberarDetalleAccion(0);
         }
-
-        <% } %>
 
         if (!confirm('¿Confirma quitar el detalle?')) {
             return <portlet:namespace />liberarDetalleAccion(0);
@@ -1848,6 +1997,35 @@
                 return false;
             }
 
+            if (idDetalle == ''
+                    && !<portlet:namespace />esTipoPrestacionDetalleValidoParaSector(
+                            detalle.idTipoPrestacion
+                    )) {
+
+                var tieneTiposSector = false;
+
+                for (var j = 0;
+                        j < <portlet:namespace />tiposPrestacionDetalleCache.length;
+                        j++) {
+
+                    if (String(
+                            <portlet:namespace />tiposPrestacionDetalleCache[j].idSector
+                    ) == <portlet:namespace />getIdSectorTipoPrestacionDetalle()) {
+
+                        tieneTiposSector = true;
+                        break;
+                    }
+                }
+
+                if (tieneTiposSector) {
+                    alert(
+                            'Detalle #' + (i + 1)
+                                    + ': debe seleccionar el Tipo.'
+                    );
+                    return false;
+                }
+            }
+
             if (!<portlet:namespace />crearHiddenDetalle(
                     prefix + 'id',
                     idDetalle
@@ -1858,6 +2036,13 @@
             if (!<portlet:namespace />crearHiddenDetalle(
                     prefix + 'tipo_item',
                     tipoItem
+            )) {
+                return false;
+            }
+
+            if (!<portlet:namespace />crearHiddenDetalle(
+                    prefix + 'id_tipo_prestacion',
+                    detalle.idTipoPrestacion
             )) {
                 return false;
             }

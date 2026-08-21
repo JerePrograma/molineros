@@ -1106,6 +1106,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             cargarCatalogos(renderRequest);
             cargarAfiliadoRequerimiento(renderRequest, requerimiento);
+            ActualizarContactoAfiliadoCompraToken.publicar(
+                    renderRequest,
+                    requerimiento
+            );
             cargarEstadoPrestadoresPendientesNotificacion(
                     renderRequest,
                     requerimiento
@@ -1370,6 +1374,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         request.setAttribute(
                 WebKeysCompras.SECTORES_REQUERIMIENTO_COMPRA,
                 BusquedaRequerimientoCompraServiceUtil.listarSectores()
+        );
+        request.setAttribute(
+                WebKeysCompras.TIPOS_PRESTACION_REQUERIMIENTO_COMPRA,
+                BusquedaRequerimientoCompraServiceUtil
+                        .listarTiposPrestacion()
         );
 
     }
