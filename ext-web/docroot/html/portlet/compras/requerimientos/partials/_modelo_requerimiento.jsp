@@ -24,14 +24,6 @@ boolean modoVistaForzado =
         "VISTA".equalsIgnoreCase(modoRequerimientoCompra)
         || "VER".equalsIgnoreCase(modoRequerimientoCompra);
 
-boolean modoInteractivo =
-        modoEditable
-        || puedeEliminarDetallePantalla;
-
-boolean modoVista =
-        modoVistaForzado
-        || !modoInteractivo;
-
 RequerimientoCompra req = null;
 
 if (!modoAltaForzado) {
@@ -145,9 +137,26 @@ boolean modoEditable =
         layoutEdicion
         && !soloLecturaSolicitada;
 
+/*
+ * Un requerimiento puede tener una interacción limitada sin que
+ * su estructura sea editable.
+ *
+ * Caso concreto:
+ *
+ * ENVIADO A COTIZAR + ABM_Compras
+ *
+ * - no puede agregar prestaciones;
+ * - no puede editar prestaciones;
+ * - sí puede eliminar una prestación;
+ * - debe conservar al menos una.
+ */
+boolean modoInteractivo =
+        modoEditable
+        || puedeEliminarDetallePantalla;
+
 boolean modoVista =
         modoVistaForzado
-        || !modoEditable;
+        || !modoInteractivo;
 
 renderRequest.setAttribute(
         WebKeysCompras.SOLO_LECTURA_ATTR,
