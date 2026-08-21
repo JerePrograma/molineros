@@ -637,6 +637,12 @@ public class RequerimientoCompra {
         return WebKeysCompras.puedeAnular(getEstado()) && bajaFecha == null;
     }
 
+    public boolean puedeEliminarDetalle() {
+        return WebKeysCompras.puedeEliminarDetalle(
+                getEstado()
+        ) && bajaFecha == null;
+    }
+
     public String getAfiliadoNombre() {
         return afiliadoNombre;
     }

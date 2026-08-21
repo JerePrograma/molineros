@@ -1472,6 +1472,20 @@
             return <portlet:namespace />liberarDetalleAccion(0);
         }
 
+        <% if (reqDetalle.isACotizar()) { %>
+
+        if (<portlet:namespace />detallesCompra.length <= 1) {
+
+            alert(
+                'El requerimiento ENVIADO A COTIZAR '
+                        + 'debe conservar al menos una prestación.'
+            );
+
+            return <portlet:namespace />liberarDetalleAccion(0);
+        }
+
+        <% } %>
+
         if (!confirm('¿Confirma quitar el detalle?')) {
             return <portlet:namespace />liberarDetalleAccion(0);
         }

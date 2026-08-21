@@ -30,12 +30,15 @@ boolean showAnularButtons =
                 WebKeysCompras.ROL_ABM_COMPRAS 
         ); 
  
-boolean showEditarButton = 
-        (showABMButtons 
-                && (req.puedeEditarEstructura()
-                        || req.puedeEditarSurge())) 
-        || (showCotizarButtons 
-                && req.puedeEditarCotizacion()); 
+boolean showEditarButton =
+        (showABMButtons
+                && (
+                        req.puedeEditarEstructura()
+                        || req.puedeEditarSurge()
+                        || req.puedeEliminarDetalle()
+                ))
+        || (showCotizarButtons
+                && req.puedeEditarCotizacion());
  
 String idRequerimiento = 
         req.getIdRequerimientoCompraString(); 

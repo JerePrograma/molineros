@@ -1447,7 +1447,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (PermissionUtil.userContainsRole(
                 user,
                 WebKeysCompras.ROL_ABM_COMPRAS
-        ) && requerimiento.puedeEditarEstructura()) {
+        ) && (
+                requerimiento.puedeEditarEstructura()
+                        || requerimiento.puedeEliminarDetalle()
+        )) {
 
             return true;
         }

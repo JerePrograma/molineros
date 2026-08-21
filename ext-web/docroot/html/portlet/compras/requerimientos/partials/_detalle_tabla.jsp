@@ -22,7 +22,7 @@
             <th>Total</th>
         <% } %>
 
-        <% if (puedeABMDetalle) { %>
+        <% if (puedeABMDetalle || puedeEliminarDetalle) { %>
             <th>Acciones</th>
         <% } %>
     </tr>

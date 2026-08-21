@@ -622,8 +622,8 @@ public class EditarRequerimientoCompraHelper {
                     throw errorUsuario(
                             "Ya existe un requerimiento de compra "
                                     + "para el mismo afiliado, la misma "
-                                    + "prestacion y la misma fecha "
-                                    + "de Orden medica."
+                                    + "prestación y la misma fecha "
+                                    + "de Orden médica."
                     );
                 }
             }
@@ -869,36 +869,6 @@ public class EditarRequerimientoCompraHelper {
     }
 
     /**
-     * Contrato legacy: conserva la firma historica para callers existentes.
-     */
-    public void borrarDetalle(
-            int idDetalle,
-            String usuario) throws Exception {
-
-        try {
-            if (idDetalle <= 0) {
-                throw errorUsuario(
-                        "Debe informar el detalle que desea quitar."
-                );
-            }
-
-            persistence.borrarDetalle(
-                    idDetalle,
-                    normalizarUsuario(usuario)
-            );
-        } catch (Exception e) {
-            throw manejarErrorOperacion(
-                    "quitar el detalle del requerimiento",
-                    "No se pudo quitar el detalle del requerimiento. "
-                            + "Actualice la pantalla e intente nuevamente.",
-                    e,
-                    "idDetalle=" + idDetalle
-                            + ", usuario=" + usuario
-            );
-        }
-    }
-
-    /**
      * Contrato canonico utilizado por los Actions: valida estado y pertenencia
      * antes de ejecutar el borrado persistente.
      */
@@ -909,8 +879,10 @@ public class EditarRequerimientoCompraHelper {
 
         try {
             RequerimientoCompra requerimiento =
-                    validarRequerimientoDetalle(
-                            Integer.valueOf(idRequerimientoCompra)
+                    validarRequerimientoParaBorrarDetalle(
+                            Integer.valueOf(
+                                    idRequerimientoCompra
+                            )
                     );
 
             obtenerDetallePersistido(
@@ -918,10 +890,26 @@ public class EditarRequerimientoCompraHelper {
                     idDetalle
             );
 
+            /*
+             * Validación anticipada para mensaje amigable.
+             *
+             * NO sustituye la validación atómica PostgreSQL.
+             * getDetalles() contiene exclusivamente detalles activos.
+             */
+            if (requerimiento.isACotizar()
+                    && requerimiento.getDetalles().size() <= 1) {
+
+                throw errorUsuario(
+                        "El requerimiento ENVIADO A COTIZAR "
+                                + "debe conservar al menos una prestación."
+                );
+            }
+
             persistence.borrarDetalle(
                     idDetalle,
                     normalizarUsuario(usuario)
             );
+
         } catch (Exception e) {
             throw manejarErrorOperacion(
                     "quitar el detalle del requerimiento",
@@ -930,33 +918,6 @@ public class EditarRequerimientoCompraHelper {
                     e,
                     "idRequerimiento=" + idRequerimientoCompra
                             + ", idDetalle=" + idDetalle
-                            + ", usuario=" + usuario
-            );
-        }
-    }
-
-    public void borrarRequerimientoCompra(
-            int idRequerimientoCompra,
-            String usuario) throws Exception {
-
-        try {
-            if (idRequerimientoCompra <= 0) {
-                throw errorUsuario(
-                        "Debe informar el requerimiento de compra que desea eliminar."
-                );
-            }
-
-            persistence.borrarRequerimientoCompra(
-                    idRequerimientoCompra,
-                    normalizarUsuario(usuario)
-            );
-        } catch (Exception e) {
-            throw manejarErrorOperacion(
-                    "eliminar el requerimiento de compra",
-                    "No se pudo eliminar el requerimiento de compra. "
-                            + "Actualice la pantalla e intente nuevamente.",
-                    e,
-                    "idRequerimiento=" + idRequerimientoCompra
                             + ", usuario=" + usuario
             );
         }
@@ -2787,5 +2748,38 @@ private void prepararDetalleParaGuardar(
                 transaccion.cerrar();
             }
         }
+    }
+
+    private RequerimientoCompra validarRequerimientoParaBorrarDetalle(
+            Integer idRequerimiento) throws Exception {
+
+        if (idRequerimiento == null
+                || idRequerimiento.intValue() <= 0) {
+
+            throw errorUsuario(
+                    "Debe informar el requerimiento del detalle."
+            );
+        }
+
+        RequerimientoCompra requerimiento =
+                obtenerRequerimientoDetalle(
+                        idRequerimiento.intValue()
+                );
+
+        if (requerimiento == null) {
+            throw errorUsuario(
+                    "El requerimiento ya no está disponible."
+            );
+        }
+
+        if (!requerimiento.puedeEliminarDetalle()) {
+            throw errorUsuario(
+                    "Los detalles solo pueden quitarse mientras "
+                            + "el requerimiento se encuentra PENDIENTE "
+                            + "o ENVIADO A COTIZAR."
+            );
+        }
+
+        return requerimiento;
     }
 }

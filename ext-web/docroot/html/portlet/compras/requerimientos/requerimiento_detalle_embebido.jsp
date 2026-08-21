@@ -22,6 +22,10 @@
 
 <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle_scripts_comunes.jsp" %>
 
-<% if (puedeABMDetalle || puedeCotizarDetalle) { %>
+<% if (puedeABMDetalle
+        || puedeCotizarDetalle
+        || puedeEliminarDetalle) { %>
+
     <%@ include file="/html/portlet/compras/requerimientos/partials/_detalle_scripts_editable.jsp" %>
+
 <% } %>

@@ -24,6 +24,14 @@ boolean modoVistaForzado =
         "VISTA".equalsIgnoreCase(modoRequerimientoCompra)
         || "VER".equalsIgnoreCase(modoRequerimientoCompra);
 
+boolean modoInteractivo =
+        modoEditable
+        || puedeEliminarDetallePantalla;
+
+boolean modoVista =
+        modoVistaForzado
+        || !modoInteractivo;
+
 RequerimientoCompra req = null;
 
 if (!modoAltaForzado) {
@@ -114,6 +122,15 @@ boolean puedeEditarCotizacionPantalla =
         !esNuevo
         && puedeCotizar
         && cotizacionEditablePorEstado
+        && !soloLecturaSolicitada;
+
+boolean eliminarDetalleEditablePorEstado =
+        !esNuevo
+        && req.puedeEliminarDetalle();
+
+boolean puedeEliminarDetallePantalla =
+        puedeABM
+        && eliminarDetalleEditablePorEstado
         && !soloLecturaSolicitada;
 
 boolean layoutEdicion =
@@ -534,7 +551,7 @@ if (modoVistaForzado) {
     tituloPantalla = "Ver requerimiento de compra";
 } else if (esNuevo) {
     tituloPantalla = "Nuevo requerimiento de compra";
-} else if (modoEditable) {
+} else if (modoEditable || puedeEliminarDetallePantalla) {
     tituloPantalla = "Editar requerimiento de compra";
 } else {
     tituloPantalla = "Ver requerimiento de compra";

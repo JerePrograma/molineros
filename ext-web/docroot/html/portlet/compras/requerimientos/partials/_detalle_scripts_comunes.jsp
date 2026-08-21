@@ -498,15 +498,43 @@
                 <% } %>
             <% } %>
 
-            <% if (puedeABMDetalle) { %>
+            <% if (puedeABMDetalle || puedeEliminarDetalle) { %>
                 html += '<td>';
-                html += '<a href="#" title="Editar" onclick="<portlet:namespace />editarDetalleEnPantalla(' + i + '); return false;">';
-                html += '<img alt="Editar" src="<%= themeDisplay.getPathThemeImages() %>/common/edit.png" />';
-                html += '</a>';
-                html += '&nbsp;';
-                html += '<a href="#" title="Quitar" onclick="<portlet:namespace />quitarDetalleEnPantalla(' + i + '); return false;">';
-                html += '<img alt="Quitar" src="<%= themeDisplay.getPathThemeImages() %>/common/delete.png" />';
-                html += '</a>';
+
+                <% if (puedeABMDetalle) { %>
+                    html += '<a href="#" title="Editar" '
+                            + 'onclick="<portlet:namespace />editarDetalleEnPantalla('
+                            + i
+                            + '); return false;">';
+                    html += '<img alt="Editar" '
+                            + 'src="<%= themeDisplay.getPathThemeImages() %>/common/edit.png" />';
+                    html += '</a>';
+                <% } %>
+
+                <% if (puedeABMDetalle && puedeEliminarDetalle) { %>
+                    html += '&nbsp;';
+                <% } %>
+
+                <% if (puedeEliminarDetalle) { %>
+
+                    <% if (reqDetalle.isACotizar()) { %>
+                    if (<portlet:namespace />detallesCompra.length > 1) {
+                    <% } %>
+
+                        html += '<a href="#" title="Quitar" '
+                                + 'onclick="<portlet:namespace />quitarDetalleEnPantalla('
+                                + i
+                                + '); return false;">';
+                        html += '<img alt="Quitar" '
+                                + 'src="<%= themeDisplay.getPathThemeImages() %>/common/delete.png" />';
+                        html += '</a>';
+
+                    <% if (reqDetalle.isACotizar()) { %>
+                    }
+                    <% } %>
+
+                <% } %>
+
                 html += '</td>';
             <% } %>
 

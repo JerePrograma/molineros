@@ -96,6 +96,18 @@ boolean usuarioPuedeABMDetalle =
                         )
                         && reqDetalle.puedeEditarEstructura();
 
+boolean usuarioPuedeEliminarDetalle =
+        user != null
+        && PermissionUtil.userContainsRole(
+                user,
+                WebKeysCompras.ROL_ABM_COMPRAS
+        )
+        && reqDetalle.puedeEliminarDetalle();
+
+boolean puedeEliminarDetalle =
+        usuarioPuedeEliminarDetalle
+        && !soloLecturaDetalle;
+
 boolean usuarioPuedeCotizarDetalle =
         puedeEditarCotizacionAttr instanceof Boolean
                 ? Boolean.TRUE.equals(puedeEditarCotizacionAttr)
@@ -357,5 +369,5 @@ boolean prestadoresAdjudicadosMixtosDetalle =
 int detalleColspan =
         5
         + (puedeVerCotizacionDetalle ? 2 : 0)
-        + (puedeABMDetalle ? 1 : 0);
+        + ((puedeABMDetalle || puedeEliminarDetalle) ? 1 : 0);
 %>
