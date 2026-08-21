@@ -153,7 +153,7 @@
                     '<%= jsCompra(afiliadoCuilVisible) %>',
                     '<%= jsCompra(afiliadoIntVisible) %>'
             );
-            
+
             /*
              * Algunos includes legacy terminan de inicializar sus controles
              * después del ready. Se reaplica una sola vez sin alterar datos.
