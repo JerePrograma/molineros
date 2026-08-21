@@ -10,17 +10,14 @@ boolean afiliadoComponenteEditable =
         && modoEditable
         && puedeEditarEstructuraPantalla;
 
+/*
+ * La actualización de los datos de contacto debe estar disponible
+ * en cualquier estado y modo de visualización del requerimiento.
+ *
+ * Se conserva únicamente el permiso funcional de ABM.
+ */
 boolean puedeActualizarContactoAfiliado =
-        puedeABM
-        && !modoVistaForzado
-        && !soloLecturaSolicitada
-        && (
-                afiliadoComponenteEditable
-                || (
-                        !esNuevo
-                        && req.tieneAfiliadoInformado()
-                )
-        );
+        puedeABM;
 
 boolean ocultarPanelAfiliado =
         !mostrarPanelAfiliadoEnVista;
@@ -32,7 +29,6 @@ boolean ocultarPanelAfiliado =
 
     <table class="lfr-table compras-afiliado-contacto-layout">
         <tr>
-
             <td class="compras-afiliado-contacto-datos">
 
                 <fieldset class="block-labels">
@@ -63,18 +59,15 @@ boolean ocultarPanelAfiliado =
                                 value="" />
 
                     </liferay-util:include>
-
                 </fieldset>
 
             </td>
 
             <% if (puedeActualizarContactoAfiliado) { %>
-
                 <td class="compras-afiliado-contacto-acciones">
 
                     <div id="<portlet:namespace />seccionVerificarDomicilio"
-                         class="compras-verificar-contacto"
-                         style="display:none;">
+                         class="compras-verificar-contacto">
 
                         <label>
                             Verificar<br />
@@ -82,32 +75,26 @@ boolean ocultarPanelAfiliado =
                             contacto:
                         </label>
 
-                        <div id="<portlet:namespace />divBotonActualizar"
-                             style="display:none;">
-
+                        <div id="<portlet:namespace />divBotonActualizar">
                             <input
                                     type="button"
                                     value="Actualizar"
                                     onclick="return <portlet:namespace />mostrarDomicilioAfiliado();" />
-
                         </div>
 
                         <div id="<portlet:namespace />divResultadoActualizarOK"
                              style="display:none;">
-
                             <p>
                                 <b>
                                     <liferay-ui:message
                                             key="crm-actualiza-domicilio" />
                                 </b>
                             </p>
-
                         </div>
 
                     </div>
 
                 </td>
-
             <% } %>
 
         </tr>
