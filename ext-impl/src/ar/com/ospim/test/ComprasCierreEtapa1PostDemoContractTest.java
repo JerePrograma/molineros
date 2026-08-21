@@ -159,6 +159,10 @@ public final class ComprasCierreEtapa1PostDemoContractTest {
                 "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
                         + "_detalle_editor.jsp"
         );
+        String scriptsEditable = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
+                        + "_detalle_scripts_editable.jsp"
+        );
         String service = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
                         + "EditarRequerimientoCompraServiceImpl.java"
@@ -187,6 +191,16 @@ public final class ComprasCierreEtapa1PostDemoContractTest {
         contiene(busqueda, "lectura clasificada", "get_requerimiento_detalle_clasificado");
         noContiene(migration, "conserva lectura historica", "DROP FUNCTION compras.get_requerimiento_detalle");
         noContiene(editor, "sin catalogo hardcodeado", "Alimentación");
+        contiene(
+                scriptsEditable,
+                "etiqueta visible con jQuery legacy",
+                "opcionTipo.text(tipo.descripcion);"
+        );
+        noContiene(
+                scriptsEditable,
+                "sin constructor de atributos incompatible",
+                "jQuery('<option/>', {"
+        );
     }
 
     private static String leer(String path) throws Exception {

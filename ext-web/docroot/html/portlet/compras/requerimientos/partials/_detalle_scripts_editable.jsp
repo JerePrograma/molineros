@@ -890,16 +890,16 @@
             var idSector =
                     <portlet:namespace />getIdSectorTipoPrestacionDetalle();
             var cantidad = 0;
+            var opcionInicial = jQuery('<option></option>');
 
             select.empty();
-            select.append(
-                    jQuery('<option/>', {
-                        value: '',
-                        text: permitirSinClasificar
-                                ? 'Sin clasificar (histórico)'
-                                : 'Seleccione...'
-                    })
+            opcionInicial.attr('value', '');
+            opcionInicial.text(
+                    permitirSinClasificar
+                            ? 'Sin clasificar (histórico)'
+                            : 'Seleccione...'
             );
+            select.append(opcionInicial);
 
             for (var i = 0;
                     i < <portlet:namespace />tiposPrestacionDetalleCache.length;
@@ -912,12 +912,10 @@
                     continue;
                 }
 
-                select.append(
-                        jQuery('<option/>', {
-                            value: tipo.id,
-                            text: tipo.descripcion
-                        })
-                );
+                var opcionTipo = jQuery('<option></option>');
+                opcionTipo.attr('value', tipo.id);
+                opcionTipo.text(tipo.descripcion);
+                select.append(opcionTipo);
                 cantidad++;
             }
 
