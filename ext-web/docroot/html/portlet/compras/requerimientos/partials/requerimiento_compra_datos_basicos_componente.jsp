@@ -648,7 +648,6 @@ int idRpCabecera =
                 <% if (esNuevo) { %>
                     <input type="checkbox"
                            id="<portlet:namespace />legales"
-                           name="<portlet:namespace />legales"
                            value="true"
                            <%= req.isLegales()
                                    ? "checked=\"checked\""

@@ -63,12 +63,10 @@ Efectos secundarios:
            id="<portlet:namespace />surge_hidden"
            value="<%= HtmlUtil.escape(surgeSeleccionadoCompra) %>" />
 
-    <% if (!esNuevo) { %>
-        <input type="hidden"
-               name="<portlet:namespace />legales"
-               id="<portlet:namespace />legales_hidden"
-               value="<%= req.isLegales() ? "true" : "false" %>" />
-    <% } %>
+    <input type="hidden"
+           name="<portlet:namespace />legales"
+           id="<portlet:namespace />legales_hidden"
+           value="<%= req.isLegales() ? "true" : "false" %>" />
 
     <input type="hidden"
            name="<portlet:namespace />afiliado_cuil_titular"

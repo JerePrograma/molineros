@@ -300,6 +300,12 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             jQuery('#<portlet:namespace />sector_id_hidden').val(
                     <portlet:namespace />trimValue('sector_id')
             );
+
+            jQuery('#<portlet:namespace />legales_hidden').val(
+                    jQuery('#<portlet:namespace />legales').is(':checked')
+                            ? 'true'
+                            : 'false'
+            );
         <%
         }
         %>

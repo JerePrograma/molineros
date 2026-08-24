@@ -21,6 +21,12 @@ public class EditarRequerimientoCompraActionTest {
         assertSurgeInvalidoEsRechazado("false");
         assertSurgeUnoPersisteTrue();
         assertSurgeCeroPersisteFalse();
+        assertLegalesMarcadoPersisteTrue();
+        assertLegalesDesmarcadoPersisteFalse();
+        assertLegalesAusenteTerminaEnFalse();
+
+        System.out.println("EDITAR_REQUERIMIENTO_COMPRA_ACTION_TEST_OK");
+        System.exit(0);
     }
 
     private static void assertSurgeAusenteEsRechazado()
@@ -118,6 +124,62 @@ public class EditarRequerimientoCompraActionTest {
         );
     }
 
+    private static void assertLegalesMarcadoPersisteTrue()
+            throws Exception {
+
+        assertLegalesMarcadoPersisteTrueEnSector("1", "FARMACIA");
+        assertLegalesMarcadoPersisteTrueEnSector("2", "NO FARMACIA");
+    }
+
+    private static void assertLegalesMarcadoPersisteTrueEnSector(
+            String idSector,
+            String descripcionSector) throws Exception {
+
+        Map<String, String> params =
+                parametrosValidos();
+
+        params.put("sector_id", idSector);
+        params.put("legales", "true");
+
+        RequerimientoCompra requerimiento =
+                requerimientoDesdeRequest(params);
+
+        assertBoolean(
+                "legales true sector " + descripcionSector,
+                true,
+                requerimiento.isLegales()
+        );
+    }
+
+    private static void assertLegalesDesmarcadoPersisteFalse()
+            throws Exception {
+
+        Map<String, String> params = parametrosValidos();
+        params.put("legales", "false");
+
+        RequerimientoCompra requerimiento =
+                requerimientoDesdeRequest(params);
+
+        assertBoolean(
+                "legales false explicito",
+                false,
+                requerimiento.isLegales()
+        );
+    }
+
+    private static void assertLegalesAusenteTerminaEnFalse()
+            throws Exception {
+
+        RequerimientoCompra requerimiento =
+                requerimientoDesdeRequest(parametrosValidos());
+
+        assertBoolean(
+                "legales ausente",
+                false,
+                requerimiento.isLegales()
+        );
+    }
+
     private static RequerimientoCompra requerimientoDesdeRequest(
             Map<String, String> params) throws Exception {
 
@@ -169,6 +231,12 @@ public class EditarRequerimientoCompraActionTest {
                 "0"
         );
 
+        return params;
+    }
+
+    private static Map<String, String> parametrosValidos() {
+        Map<String, String> params = parametrosBase();
+        params.put("surge", "0");
         return params;
     }
 

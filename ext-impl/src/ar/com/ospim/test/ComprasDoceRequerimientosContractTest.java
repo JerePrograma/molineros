@@ -260,7 +260,7 @@ public final class ComprasDoceRequerimientosContractTest {
         contiene(migration, "centraliza catálogo", "es_sector_seleccionable_compras");
         contiene(schema, "columna legal", "legales BOOLEAN NOT NULL DEFAULT FALSE");
         contiene(bean, "bean legal", "private Boolean legales;");
-        contiene(datos, "check alta", "name=\"<portlet:namespace />legales\"");
+        contiene(datos, "check alta", "id=\"<portlet:namespace />legales\"");
         contiene(datos, "sólo lectura posterior", "req.getLegalesDescripcion()");
     }
 
