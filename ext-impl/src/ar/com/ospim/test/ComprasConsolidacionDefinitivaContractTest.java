@@ -80,7 +80,7 @@ public final class ComprasConsolidacionDefinitivaContractTest {
         String compact = schema.replaceAll("(?s)^\\s*", "");
         check(compact.startsWith("--"), "El schema debe conservar su cabecera");
         check(schema.contains("BEGIN;"), "Falta BEGIN");
-        check(schema.contains("DROP SCHEMA compras CASCADE;"),
+        check(schema.contains("DROP SCHEMA IF EXISTS compras CASCADE;"),
                 "Falta el DROP destructivo");
         check(schema.contains("CREATE SCHEMA compras;"),
                 "Falta recrear el esquema");

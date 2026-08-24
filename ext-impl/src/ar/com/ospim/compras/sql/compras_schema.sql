@@ -45,7 +45,7 @@
 -- =====================================================================
 BEGIN;
 
-DROP SCHEMA compras CASCADE;
+DROP SCHEMA IF EXISTS compras CASCADE;
 
 CREATE SCHEMA compras;
 
