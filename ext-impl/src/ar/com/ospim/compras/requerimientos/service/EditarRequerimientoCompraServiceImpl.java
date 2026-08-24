@@ -43,6 +43,9 @@ public class EditarRequerimientoCompraServiceImpl {
     private static final String SQL_REGISTRAR_ORDEN_MEDICA =
             "{ ? = call compras.registrar_requerimiento_orden_medica(?,?,?,?,?,?,?,?,?,?,?) }";
 
+    /* Contrato persistente ASCII: evita drift por encoding entre Java y SQL. */
+    private static final String TITULO_ORDEN_MEDICA = "Orden medica";
+
     private static final String SQL_BAJA_PRESUPUESTO =
             "{ ? = call compras.baja_requerimiento_presupuesto(?,?,?) }";
 
@@ -146,7 +149,7 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.setString(6, documento.getUuid());
             stmt.setString(7, ordenMedica.getNombreOriginal());
             stmt.setString(8, documento.getNombrePersistido());
-            stmt.setString(9, "Orden médica");
+            stmt.setString(9, TITULO_ORDEN_MEDICA);
             stmt.setDate(10, ordenMedica.getFechaDocumento());
 
             if (ordenMedica.getNumeroReceta() == null) {

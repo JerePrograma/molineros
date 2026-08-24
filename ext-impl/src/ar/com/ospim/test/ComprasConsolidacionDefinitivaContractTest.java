@@ -54,6 +54,7 @@ public final class ComprasConsolidacionDefinitivaContractTest {
     public static void main(String[] args) throws Exception {
         Map<String, Integer> functions = validarScriptCanonico();
         validarContratosJdbc(functions);
+        validarTituloOrdenMedicaAscii();
         validarStrutsTilesYJsp();
         System.out.println("COMPRAS_CONSOLIDACION_DEFINITIVA_OK");
     }
@@ -136,6 +137,26 @@ public final class ComprasConsolidacionDefinitivaContractTest {
         }
         check(calls == 48,
                 "Se esperaban 48 contratos JDBC y se encontraron " + calls);
+    }
+
+    private static void validarTituloOrdenMedicaAscii() throws Exception {
+        String schema = read(SCHEMA);
+        String service = read(new File(
+                JAVA_DIR,
+                "requerimientos/service/EditarRequerimientoCompraServiceImpl.java"
+        ));
+
+        check(schema.contains("titulo = 'Orden medica'"),
+                "El constraint de Orden medica no es ASCII");
+        check(schema.contains("<> 'Orden medica'"),
+                "La validacion de Orden medica no es ASCII");
+        check(schema.contains("        'Orden medica',"),
+                "La persistencia de Orden medica no es ASCII");
+        check(service.contains(
+                        "TITULO_ORDEN_MEDICA = \"Orden medica\";"),
+                "Java no usa el titulo ASCII canonico");
+        check(service.contains("stmt.setString(9, TITULO_ORDEN_MEDICA);"),
+                "Java no envia el titulo canonico");
     }
 
     private static void validarStrutsTilesYJsp() throws Exception {

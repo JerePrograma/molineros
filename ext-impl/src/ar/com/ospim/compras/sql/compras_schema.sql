@@ -462,7 +462,7 @@ CREATE TABLE compras.requerimiento_presupuesto (
                                                        CHECK (
                                                            tipo_documento <> 2
                                                            OR (
-                                                               titulo = 'Orden médica'
+                                                                titulo = 'Orden medica'
                                                                AND descripcion_prestador IS NULL
                                                            )
                                                        ),
@@ -4489,7 +4489,7 @@ BEGIN
             'Los nombres del documento de Orden médica no son válidos.';
     END IF;
 
-    IF btrim(COALESCE(p_titulo, '')) <> 'Orden médica' THEN
+    IF btrim(COALESCE(p_titulo, '')) <> 'Orden medica' THEN
         RAISE EXCEPTION
             'El título del documento debe ser Orden médica.';
     END IF;
@@ -4626,7 +4626,7 @@ BEGIN
         btrim(p_dl_file_uuid),
         btrim(p_nombre_original),
         btrim(p_nombre_persistido),
-        'Orden médica',
+        'Orden medica',
         NULL,
         v_usuario
     )
