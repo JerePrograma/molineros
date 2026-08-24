@@ -778,8 +778,8 @@ FROM tipos t
 JOIN compras.sector_requerimiento s
   ON translate(
          upper(btrim(s.descripcion)),
-         '������������',
-         'AEIOUUAEIOUU'
+         U&'\00C1\00C9\00CD\00D3\00DA\00DC\00C0\00C8\00CC\00D2\00D9',
+         'AEIOUUAEIOU'
      ) = t.sector_normalizado
  AND s.activo = TRUE
  AND s.baja_fecha IS NULL;
@@ -809,6 +809,21 @@ SELECT COALESCE(
 $func$
 LANGUAGE sql
 STABLE;
+
+
+CREATE FUNCTION compras.normalizar_sector(
+    p_descripcion VARCHAR
+)
+    RETURNS VARCHAR
+AS $func$
+SELECT translate(
+           upper(btrim(COALESCE($1, ''))),
+           U&'\00C1\00C9\00CD\00D3\00DA\00DC\00C0\00C8\00CC\00D2\00D9',
+           'AEIOUUAEIOU'
+       );
+$func$
+LANGUAGE sql
+IMMUTABLE;
 
 
 CREATE FUNCTION compras.estado_requerimiento_descripcion(
@@ -1215,11 +1230,7 @@ v_estado INTEGER;
 BEGIN
 SELECT
     r.estado,
-    translate(
-            upper(btrim(sr.descripcion)),
-            '������������',
-            'AEIOUUAEIOUU'
-    )
+    compras.normalizar_sector(sr.descripcion)
 INTO
     v_estado,
     v_sector
@@ -2645,18 +2656,7 @@ END IF;
             'La cantidad debe ser mayor a cero.';
 END IF;
 
-SELECT translate(
-               upper(
-                       btrim(
-                               COALESCE(
-                                       sr.descripcion,
-                                       ''
-                               )
-                       )
-               ),
-               '������������',
-               'AEIOUUAEIOUU'
-       )
+SELECT compras.normalizar_sector(sr.descripcion)
 INTO v_sector
 FROM compras.requerimiento r
          JOIN compras.sector_requerimiento sr
