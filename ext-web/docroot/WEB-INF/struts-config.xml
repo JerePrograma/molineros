@@ -7000,14 +7000,6 @@
 			<forward
 					name="portlet.compras.result.search"
 					path="portlet.compras.result.search" />
-
-			<forward
-					name="portlet.compras.view"
-					path="portlet.compras.view" />
-
-			<forward
-					name="portlet.compras.error"
-					path="portlet.compras.error" />
 		</action>
 
 		<!-- NUEVO requerimiento: renderiza requerimiento_compra_alta.jsp -->
@@ -7022,6 +7014,10 @@
 			<forward
 					name="portlet.compras.editar_requerimiento"
 					path="portlet.compras.editar_requerimiento" />
+
+			<forward
+					name="portlet.compras.ver_requerimiento"
+					path="portlet.compras.ver_requerimiento" />
 
 			<forward
 					name="portlet.compras.view"
@@ -7088,10 +7084,6 @@
 			<forward
 					name="portlet.compras.buscar_item_tecnico"
 					path="portlet.compras.buscar_item_tecnico" />
-
-			<forward
-					name="portlet.compras.error"
-					path="portlet.compras.error" />
 		</action>
 
 		<!-- VER requerimiento: renderiza requerimiento_compra_consulta.jsp -->
@@ -7104,16 +7096,8 @@
 					path="portlet.compras.ver_requerimiento" />
 
 			<forward
-					name="portlet.compras.editar_requerimiento"
-					path="portlet.compras.editar_requerimiento" />
-
-			<forward
 					name="portlet.compras.result.search"
 					path="portlet.compras.result.search" />
-
-			<forward
-					name="portlet.compras.error"
-					path="portlet.compras.error" />
 		</action>
 
 		<action
@@ -7134,20 +7118,12 @@
 				type="ar.com.ospim.compras.requerimientos.action.CambiarEstadoRequerimientoCompraAction">
 
 			<forward
-					name="portlet.compras.alta_requerimiento"
-					path="portlet.compras.alta_requerimiento" />
-
-			<forward
 					name="portlet.compras.editar_requerimiento"
 					path="portlet.compras.editar_requerimiento" />
 
 			<forward
 					name="portlet.compras.ver_requerimiento"
 					path="portlet.compras.ver_requerimiento" />
-
-			<forward
-					name="portlet.compras.error"
-					path="portlet.compras.error" />
 		</action>
 
 		<action
@@ -7155,16 +7131,8 @@
 				type="ar.com.ospim.compras.requerimientos.action.IniciarReclamoPrestacionalCompraAction">
 
 			<forward
-					name="portlet.autorizaciones.reclamosprestacionales.editar_reclamos_entry"
-					path="portlet.autorizaciones.reclamosprestacionales.editar_reclamos_entry" />
-
-			<forward
 					name="portlet.compras.ver_requerimiento"
 					path="portlet.compras.ver_requerimiento" />
-
-			<forward
-					name="portlet.compras.error"
-					path="portlet.compras.error" />
 		</action>
 
 		<!-- CONFIGURAR tipos de prestador habilitados por sector -->
@@ -7235,18 +7203,10 @@
 			<forward
 					name="portlet.compras.prestadores_enviados"
 					path="portlet.compras.prestadores_enviados" />
-
-			<forward
-					name="portlet.compras.error"
-					path="portlet.compras.error" />
 		</action>
 		<action
 				path="/compras/upload_presupuestos_requerimiento"
 				type="ar.com.ospim.compras.requerimientos.action.UploadPresupuestosComprasAction">
-
-			<forward
-					name="portlet.compras.alta_requerimiento"
-					path="portlet.compras.alta_requerimiento" />
 
 			<forward
 					name="portlet.compras.editar_requerimiento"
@@ -7271,11 +7231,6 @@
         <action
                 path="/compras/buscar_afiliado_fecha_vto_documentacion"
                 type="ar.com.ospim.compras.requerimientos.action.BuscarAfiliadoFechaVtoDocumentacionCompraAction" />
-
-        <action
-                path="/compras/tiene_situacion_medica_vigente"
-                type="ar.com.ospim.compras.requerimientos.action.TieneSituacionMedicaVigenteCompraAction" />
-
         <action
                 path="/compras/ver_situacion_medica_vigente"
                 type="ar.com.ospim.compras.requerimientos.action.VerSituacionMedicaVigenteCompraAction">
@@ -7285,11 +7240,6 @@
                     path="portlet.compras.situacion_medica_vigente" />
 
         </action>
-
-        <action
-                path="/compras/buscar_afiliado_fecha_vto_documentacion"
-                type="ar.com.ospim.compras.requerimientos.action.BuscarAfiliadoFechaVtoDocumentacionCompraAction" />
-
         <action
                 path="/compras/buscar_items_historicos_afiliado"
                 type="ar.com.ospim.compras.requerimientos.action.BuscarItemsHistoricosAfiliadoCompraAction" />

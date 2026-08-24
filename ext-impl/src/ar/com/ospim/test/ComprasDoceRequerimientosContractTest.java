@@ -213,10 +213,7 @@ public final class ComprasDoceRequerimientosContractTest {
     }
 
     private static void validarTipoCotizacion() throws Exception {
-        String catalogo = leer(
-                "ext-impl/src/ar/com/ospim/compras/sql/"
-                        + "20260821_cierre_etapa1_post_demo.sql"
-        );
+        String catalogo = esquema();
         String migration = migracion();
         String editor = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
@@ -371,10 +368,7 @@ public final class ComprasDoceRequerimientosContractTest {
     }
 
     private static String migracion() throws Exception {
-        return leer(
-                "ext-impl/src/ar/com/ospim/compras/sql/"
-                        + "20260824_cierre_requerimientos_compras.sql"
-        );
+        return esquema();
     }
 
     private static List<File> archivos(File base, String suffix) {

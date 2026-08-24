@@ -2,7 +2,7 @@
 Responsabilidad:
     Renderiza sector, cargos, SURGE y la marca LEGALES con capacidades por estado.
 Incluido desde:
-    requerimiento_compra_cabecera_formulario_componente.jsp, requerimiento_compra_datos_basicos_formulario_componente.jsp, requerimiento_compra_datos_basicos_runtime_componente.jsp, requerimiento_compra_formulario_componente.jsp
+    requerimiento_compra_datos_basicos_runtime_componente.jsp
 Pantallas o estados de uso:
     Alta, edición o consulta según el caller indicado.
 Entradas requeridas:

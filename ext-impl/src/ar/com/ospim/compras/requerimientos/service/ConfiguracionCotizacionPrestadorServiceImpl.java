@@ -26,9 +26,6 @@ public class ConfiguracionCotizacionPrestadorServiceImpl {
     private static final String SQL_GUARDAR_TIPO =
             "{call compras.guardar_sector_tipo_prestador_cotizacion(?,?,?,?,?)}";
 
-    private static final String SQL_GUARDAR_TIPO_LEGACY =
-            "{call compras.guardar_sector_tipo_prestador(?,?,?,?)}";
-
     public List<TipoPrestadorSector> listarTiposPrestadorSector(
             int idSector) throws Exception {
 
@@ -86,49 +83,6 @@ public class ConfiguracionCotizacionPrestadorServiceImpl {
                     stmtGuardar.setInt(3, tipo.getIdTipoPrestador());
                     stmtGuardar.setBoolean(4, true);
                     stmtGuardar.setString(5, usuario);
-                    stmtGuardar.execute();
-                }
-            }
-
-            con.commit();
-        } catch (Exception e) {
-            ConnectionHelper.rollback(con);
-            throw e;
-        } finally {
-            ConnectionHelper.cerrar(stmtGuardar);
-            ConnectionHelper.cerrar(stmtDesactivar);
-            ConnectionHelper.cerrar(con);
-        }
-    }
-
-    public void guardarConfiguracion(
-            int idSector,
-            int[] idsTiposSeleccionados,
-            String usuario) throws Exception {
-
-        Connection con = null;
-        CallableStatement stmtDesactivar = null;
-        CallableStatement stmtGuardar = null;
-
-        try {
-            con = ConnectionHelper.getConnectionForTransaction();
-
-            stmtDesactivar = con.prepareCall(SQL_DESACTIVAR_TIPOS);
-            stmtDesactivar.setInt(1, idSector);
-            stmtDesactivar.setString(2, usuario);
-            stmtDesactivar.execute();
-
-            if (idsTiposSeleccionados != null
-                    && idsTiposSeleccionados.length > 0) {
-
-                stmtGuardar = con.prepareCall(SQL_GUARDAR_TIPO_LEGACY);
-
-                for (int i = 0; i < idsTiposSeleccionados.length; i++) {
-                    stmtGuardar.clearParameters();
-                    stmtGuardar.setInt(1, idSector);
-                    stmtGuardar.setInt(2, idsTiposSeleccionados[i]);
-                    stmtGuardar.setBoolean(3, true);
-                    stmtGuardar.setString(4, usuario);
                     stmtGuardar.execute();
                 }
             }

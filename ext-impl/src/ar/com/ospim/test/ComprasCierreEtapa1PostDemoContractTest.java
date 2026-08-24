@@ -156,9 +156,8 @@ public final class ComprasCierreEtapa1PostDemoContractTest {
     }
 
     private static void validarTipoPrestacionPorDetalle() throws Exception {
-        String migration = leer(
-                "ext-impl/src/ar/com/ospim/compras/sql/"
-                        + "20260821_cierre_etapa1_post_demo.sql"
+        String schema = leer(
+                "ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql"
         );
         String detalle = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/beans/"
@@ -185,24 +184,23 @@ public final class ComprasCierreEtapa1PostDemoContractTest {
                         + "BusquedaRequerimientoCompraServiceImpl.java"
         );
 
-        contiene(migration, "tabla maestra", "CREATE TABLE compras.tipo_prestacion");
-        contiene(migration, "FK sector", "REFERENCES compras.sector_requerimiento");
-        contiene(migration, "tipo nullable historico", "ADD COLUMN id_tipo_prestacion SMALLINT;");
-        contiene(migration, "Alimentacion", "(1, 'Alimentación', 'FARMACIA')");
-        contiene(migration, "Medicamentos", "(2, 'Medicamentos', 'FARMACIA')");
-        contiene(migration, "Protesis Trauma", "(3, 'Prótesis Traumatología'");
-        contiene(migration, "Protesis Cardio", "(4, 'Prótesis Cardiología'");
-        contiene(migration, "Protesis General", "(5, 'Prótesis General'");
-        contiene(migration, "Insumos", "(6, 'Insumos'");
-        contiene(migration, "Panales", "(7, 'Pañales'");
-        contiene(migration, "siete filas", "count(*) FROM compras.tipo_prestacion) <> 7");
-        contiene(migration, "valida sector", "v_id_sector_tipo <> v_id_sector_requerimiento");
+        contiene(schema, "tabla maestra", "CREATE TABLE compras.tipo_prestacion");
+        contiene(schema, "FK sector", "REFERENCES compras.sector_requerimiento");
+        contiene(schema, "tipo nullable", "id_tipo_prestacion SMALLINT");
+        contiene(schema, "Alimentacion", "(1, 'Alimentación', 'FARMACIA')");
+        contiene(schema, "Medicamentos", "(2, 'Medicamentos', 'FARMACIA')");
+        contiene(schema, "Protesis Trauma", "(3, 'Prótesis Traumatología'");
+        contiene(schema, "Protesis Cardio", "(4, 'Prótesis Cardiología'");
+        contiene(schema, "Protesis General", "(5, 'Prótesis General'");
+        contiene(schema, "Insumos", "(6, 'Insumos'");
+        contiene(schema, "Panales", "(7, 'Pañales'");
+        contiene(schema, "valida sector", "v_id_sector_tipo <> v_id_sector_requerimiento");
         contiene(detalle, "modelo por detalle", "idTipoPrestacion");
         noContiene(encabezado, "sin duplicar en encabezado", "idTipoPrestacion");
         contiene(editor, "combo tipo", "detalle_id_tipo_prestacion");
         contiene(service, "funcion canonica clasificada", "guardar_requerimiento_detalle_clasificado");
         contiene(busqueda, "lectura clasificada", "get_requerimiento_detalle_clasificado");
-        noContiene(migration, "conserva lectura historica", "DROP FUNCTION compras.get_requerimiento_detalle");
+        noContiene(schema, "conserva lectura canonica", "DROP FUNCTION compras.get_requerimiento_detalle");
         noContiene(editor, "sin catalogo hardcodeado", "Alimentación");
         contiene(
                 scriptsEditable,

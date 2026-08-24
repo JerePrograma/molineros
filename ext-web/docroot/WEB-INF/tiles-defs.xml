@@ -4552,10 +4552,6 @@
 				value="/portlet/compras/requerimientos/requerimiento_compra_busqueda_resultado.jsp" />
 	</definition>
 
-	<definition name="portlet.compras.result.search" extends="portlet.compras">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_busqueda_resultado.jsp" />
-	</definition>
-
 	<definition name="portlet.compras.alta_requerimiento" extends="portlet.compras">
 		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_alta.jsp" />
 	</definition>
@@ -4574,10 +4570,6 @@
 
 	<definition name="portlet.compras.ver_requerimiento" extends="portlet.compras">
 		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_consulta.jsp" />
-	</definition>
-
-	<definition name="portlet.compras.afiliado_auto_select_result" extends="portlet.compras">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_afiliado_busqueda_resultado.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.imprimir_requerimiento" extends="portlet.compras">

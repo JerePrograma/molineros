@@ -2,7 +2,7 @@
 Responsabilidad:
     Renderiza la estructura tabular y el cuerpo namespaced de prestaciones.
 Incluido desde:
-    requerimiento_compra_detalle_consulta_componente.jsp, requerimiento_compra_detalle_embebido.jsp
+    requerimiento_compra_detalle_embebido.jsp
 Pantallas o estados de uso:
     Alta, edición o consulta según el caller indicado.
 Entradas requeridas:

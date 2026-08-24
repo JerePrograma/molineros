@@ -2,7 +2,7 @@
 Responsabilidad:
     Selecciona el editor o la consulta de prestaciones según capacidades.
 Incluido desde:
-    requerimiento_compra_consulta_ensamblado.jsp, requerimiento_compra_edicion_ensamblado.jsp, requerimiento_compra_formulario_componente.jsp
+    requerimiento_compra_consulta_ensamblado.jsp, requerimiento_compra_edicion_ensamblado.jsp
 Pantallas o estados de uso:
     Alta, edición o consulta según el caller indicado.
 Entradas requeridas:

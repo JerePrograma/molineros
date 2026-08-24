@@ -1,12 +1,11 @@
 -- =====================================================================
--- MODULO: Compras - instalacion canonica CREATE ONLY
+-- MODULO: Compras - instalacion canonica destructiva
 -- PostgreSQL 9.6+
 --
--- CREATE ONLY:
---   Crea el esquema compras desde cero.
---   No elimina ni modifica un esquema compras preexistente.
---   Debe ejecutarse despues de haber eliminado manualmente el esquema anterior.
---   Toda la instalacion se ejecuta en una unica transaccion.
+-- INSTALACION COMPLETA:
+--   Elimina y recrea el esquema compras en una unica transaccion.
+--   Este es el unico archivo SQL requerido para desplegar el modulo.
+--   No depende de migraciones, includes ni pasos manuales.
 --
 -- Flujo funcional activo:
 --   1  PENDIENTE
@@ -21,7 +20,7 @@
 --   99 ANULADO
 --
 -- Contratos incorporados:
---   - guardar_requerimiento con 22 argumentos de entrada.
+--   - guardar_requerimiento con 23 argumentos de entrada.
 --   - persistencia de afiliado_id_ospim como snapshot.
 --   - persistencia de surge como cabecera del requerimiento.
 --   - PDF con afiliado_id_ospim, integrante y documento.
@@ -33,13 +32,20 @@
 --
 -- Dependencias externas de solo lectura:
 --   public.prestador
+--   public.prestad_contacto_e
+--   public.contacto_e
+--   public.afi_situ_medica
 --   trae_tipos_prestadores()
+--   autorizaciones.nomenclador
+--   autorizaciones.nomenclador_detalle
+--   autorizaciones.busca_nomenclador(...)
 --
 -- Ejecutar con psql -X -v ON_ERROR_STOP=1.
--- Requiere que el esquema compras no exista al comenzar.
 -- Si la sesion esta abortada, ejecutar ROLLBACK antes de este archivo.
 -- =====================================================================
 BEGIN;
+
+DROP SCHEMA compras CASCADE;
 
 CREATE SCHEMA compras;
 
@@ -94,8 +100,7 @@ CREATE TABLE compras.sector_tipo_prestador (
 
                                                id_tipo_prestador INTEGER NOT NULL,
 
-                                               id_tipo_prestacion SMALLINT NOT NULL
-                                                   REFERENCES compras.tipo_prestacion (id_tipo_prestacion),
+                                               id_tipo_prestacion SMALLINT NOT NULL,
 
                                                activo BOOLEAN NOT NULL DEFAULT TRUE,
 
@@ -105,6 +110,10 @@ CREATE TABLE compras.sector_tipo_prestador (
                                                modi_usr VARCHAR(100),
                                                baja_fecha TIMESTAMP WITHOUT TIME ZONE,
                                                baja_usr VARCHAR(100),
+
+                                               CONSTRAINT fk_compras_sector_tipo_prestador_cotizacion
+                                                   FOREIGN KEY (id_tipo_prestacion)
+                                                   REFERENCES compras.tipo_prestacion (id_tipo_prestacion),
 
                                                CONSTRAINT pk_compras_sector_tipo_prestador
                                                    PRIMARY KEY (
@@ -224,7 +233,7 @@ CREATE TABLE compras.requerimiento_cotizacion_prestador (
                                                             id_requerimiento INTEGER NOT NULL
                                                                 REFERENCES compras.requerimiento (id_requerimiento),
 
-    -- Identificador externo. Sin FK: esta migracion no administra otros esquemas.
+    -- Identificador externo. Sin FK: el modulo no administra otros esquemas.
                                                             id_prestador INTEGER NOT NULL,
 
                                                             estado_envio VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE',
@@ -279,6 +288,63 @@ CREATE INDEX ix_compras_cotizacion_prestador
 
 CREATE INDEX ix_compras_cotizacion_fecha
     ON compras.requerimiento_cotizacion_prestador (fecha_creacion DESC);
+
+CREATE TABLE compras.requerimiento_pedido_cotizacion (
+    id_requerimiento INTEGER NOT NULL,
+    id_prestador INTEGER NOT NULL,
+    intento INTEGER NOT NULL,
+
+    dl_group_id BIGINT NOT NULL,
+    dl_folder_id BIGINT NOT NULL,
+    dl_file_entry_id BIGINT NOT NULL,
+    dl_file_uuid VARCHAR(75) NOT NULL,
+
+    nombre_original VARCHAR(255) NOT NULL,
+    nombre_persistido VARCHAR(255) NOT NULL,
+    titulo VARCHAR(240) NOT NULL,
+
+    alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
+
+    CONSTRAINT pk_compras_pedido_cotizacion
+        PRIMARY KEY (id_requerimiento, id_prestador, intento),
+    CONSTRAINT fk_compras_pedido_cotizacion_envio
+        FOREIGN KEY (id_requerimiento, id_prestador)
+        REFERENCES compras.requerimiento_cotizacion_prestador (
+            id_requerimiento,
+            id_prestador
+        ),
+    CONSTRAINT ck_compras_pedido_cotizacion_requerimiento
+        CHECK (id_requerimiento > 0),
+    CONSTRAINT ck_compras_pedido_cotizacion_prestador
+        CHECK (id_prestador > 0),
+    CONSTRAINT ck_compras_pedido_cotizacion_intento
+        CHECK (intento > 0),
+    CONSTRAINT ck_compras_pedido_cotizacion_group
+        CHECK (dl_group_id > 0),
+    CONSTRAINT ck_compras_pedido_cotizacion_folder
+        CHECK (dl_folder_id > 0),
+    CONSTRAINT ck_compras_pedido_cotizacion_file_entry
+        CHECK (dl_file_entry_id > 0),
+    CONSTRAINT ck_compras_pedido_cotizacion_uuid
+        CHECK (NULLIF(btrim(dl_file_uuid), '') IS NOT NULL),
+    CONSTRAINT ck_compras_pedido_cotizacion_nombre_original
+        CHECK (NULLIF(btrim(nombre_original), '') IS NOT NULL),
+    CONSTRAINT ck_compras_pedido_cotizacion_nombre_persistido
+        CHECK (NULLIF(btrim(nombre_persistido), '') IS NOT NULL),
+    CONSTRAINT ck_compras_pedido_cotizacion_titulo
+        CHECK (NULLIF(btrim(titulo), '') IS NOT NULL)
+);
+
+CREATE UNIQUE INDEX uq_compras_pedido_cotizacion_file_entry
+    ON compras.requerimiento_pedido_cotizacion (dl_file_entry_id);
+
+CREATE INDEX ix_compras_pedido_cotizacion_requerimiento
+    ON compras.requerimiento_pedido_cotizacion (
+        id_requerimiento,
+        id_prestador,
+        intento DESC
+    );
 
 CREATE TABLE compras.requerimiento_presupuesto (
                                                    id_requerimiento_presupuesto SERIAL PRIMARY KEY,
@@ -461,7 +527,7 @@ CREATE TABLE compras.requerimiento_detalle (
                                                precio_unitario_estimado NUMERIC(18, 2),
                                                precio_total_estimado NUMERIC(18, 2),
 
-    -- Identificador externo. Sin FK: esta migracion no administra otros esquemas.
+    -- Identificador externo. Sin FK: el modulo no administra otros esquemas.
                                                id_prestador INTEGER,
 
                                                alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
@@ -658,7 +724,7 @@ COMMENT ON TABLE compras.requerimiento_reclamo_prestacional IS
     'Relacion uno a uno entre un requerimiento COTIZADO y su Reclamo Prestacional.';
 
 COMMENT ON COLUMN compras.requerimiento_reclamo_prestacional.id_reclamo_prestacional IS
-    'Identificador externo del esquema autorizaciones. No se declara FK cruzada para preservar el ciclo de vida legacy.';
+    'Identificador externo del esquema autorizaciones. No se declara FK cruzada porque compras no administra ese esquema.';
 
 -- =====================================================================
 -- DATOS INICIALES
@@ -890,8 +956,8 @@ END IF;
                 IS DISTINCT FROM OLD.id_tercerizadora
             OR NEW.recupero
                 IS DISTINCT FROM OLD.recupero
-            OR NEW.surge
-                IS DISTINCT FROM OLD.surge
+            OR NEW.legales
+                IS DISTINCT FROM OLD.legales
             OR NEW.observaciones
                 IS DISTINCT FROM OLD.observaciones;
 
@@ -900,6 +966,18 @@ END IF;
 
             RAISE EXCEPTION
                 'La estructura solo puede modificarse en estado PENDIENTE.';
+END IF;
+
+        /*
+         * SURGE no forma parte de la estructura del requerimiento.
+         * Puede ajustarse durante la preparacion (PENDIENTE) y durante
+         * la cotizacion (A_COTIZAR), pero queda congelado al cerrarla.
+         */
+        IF NEW.surge IS DISTINCT FROM OLD.surge
+           AND OLD.estado NOT IN (1, 2) THEN
+
+            RAISE EXCEPTION
+                'SURGE solo puede modificarse en estado PENDIENTE o ENVIADO A COTIZAR.';
 END IF;
 
         IF NEW.estado IS DISTINCT FROM OLD.estado THEN
@@ -1127,6 +1205,7 @@ v_estado INTEGER;
     v_tipo_item_anterior VARCHAR(20);
     v_tipo_item_esperado VARCHAR(20);
     v_id_tipo_nomenclador_real INTEGER;
+    v_total_detalles_activos INTEGER;
 BEGIN
 SELECT
     r.estado,
@@ -1147,6 +1226,83 @@ WHERE r.id_requerimiento = NEW.id_requerimiento
 IF v_estado IS NULL THEN
         RAISE EXCEPTION
             'No existe un requerimiento activo para el detalle.';
+END IF;
+
+    IF TG_OP = 'UPDATE'
+       AND OLD.baja_fecha IS NOT NULL
+       AND NEW IS DISTINCT FROM OLD THEN
+
+        RAISE EXCEPTION
+            'Un detalle dado de baja no puede modificarse ni reactivarse.';
+END IF;
+
+    /*
+     * La baja logica es una operacion funcional diferente de un cambio
+     * estructural. En A_COTIZAR se permite siempre que quede al menos un
+     * detalle activo. Ningun otro dato puede cambiar en la misma sentencia.
+     */
+    IF TG_OP = 'UPDATE'
+       AND OLD.baja_fecha IS NULL
+       AND NEW.baja_fecha IS NOT NULL THEN
+
+        IF v_estado NOT IN (1, 2) THEN
+            RAISE EXCEPTION
+                'El detalle no puede eliminarse en el estado actual.';
+END IF;
+
+        IF NEW.id_detalle IS DISTINCT FROM OLD.id_detalle
+           OR NEW.id_requerimiento IS DISTINCT FROM OLD.id_requerimiento
+           OR NEW.tipo_item IS DISTINCT FROM OLD.tipo_item
+           OR NEW.id_tipo_prestacion IS DISTINCT FROM OLD.id_tipo_prestacion
+           OR NEW.id_prestacion IS DISTINCT FROM OLD.id_prestacion
+           OR NEW.id_tipo_nomenclador IS DISTINCT FROM OLD.id_tipo_nomenclador
+           OR NEW.codigo_nomenclador IS DISTINCT FROM OLD.codigo_nomenclador
+           OR NEW.descripcion_nomenclador IS DISTINCT FROM OLD.descripcion_nomenclador
+           OR NEW.id_medicamento IS DISTINCT FROM OLD.id_medicamento
+           OR NEW.troquel IS DISTINCT FROM OLD.troquel
+           OR NEW.nombre_medicamento IS DISTINCT FROM OLD.nombre_medicamento
+           OR NEW.cantidad IS DISTINCT FROM OLD.cantidad
+           OR NEW.precio_unitario_estimado IS DISTINCT FROM OLD.precio_unitario_estimado
+           OR NEW.precio_total_estimado IS DISTINCT FROM OLD.precio_total_estimado
+           OR NEW.id_prestador IS DISTINCT FROM OLD.id_prestador
+           OR NEW.observaciones IS DISTINCT FROM OLD.observaciones
+           OR NEW.alta_fecha IS DISTINCT FROM OLD.alta_fecha
+           OR NEW.alta_usr IS DISTINCT FROM OLD.alta_usr THEN
+
+            RAISE EXCEPTION
+                'La baja del detalle no puede modificar estructura ni cotizacion.';
+END IF;
+
+        IF NULLIF(btrim(NEW.baja_usr), '') IS NULL THEN
+            RAISE EXCEPTION
+                'Debe informar el usuario que elimina el detalle.';
+END IF;
+
+        IF v_estado = 2 THEN
+            PERFORM 1
+            FROM compras.requerimiento r
+            WHERE r.id_requerimiento = NEW.id_requerimiento
+              AND r.baja_fecha IS NULL
+            FOR UPDATE;
+
+            IF NOT FOUND THEN
+                RAISE EXCEPTION
+                    'El requerimiento ya no se encuentra activo.';
+END IF;
+
+            SELECT count(*)
+            INTO v_total_detalles_activos
+            FROM compras.requerimiento_detalle d
+            WHERE d.id_requerimiento = NEW.id_requerimiento
+              AND d.baja_fecha IS NULL;
+
+            IF v_total_detalles_activos <= 1 THEN
+                RAISE EXCEPTION
+                    'El requerimiento ENVIADO A COTIZAR debe conservar al menos una prestacion.';
+END IF;
+END IF;
+
+        RETURN NEW;
 END IF;
 
     IF v_sector IN (
@@ -1316,6 +1472,7 @@ END IF;
         ELSIF v_estado = 2 THEN
             IF NEW.id_requerimiento IS DISTINCT FROM OLD.id_requerimiento
                OR NEW.tipo_item IS DISTINCT FROM OLD.tipo_item
+               OR NEW.id_tipo_prestacion IS DISTINCT FROM OLD.id_tipo_prestacion
                OR NEW.id_prestacion IS DISTINCT FROM OLD.id_prestacion
                OR NEW.id_tipo_nomenclador IS DISTINCT FROM OLD.id_tipo_nomenclador
                OR NEW.codigo_nomenclador IS DISTINCT FROM OLD.codigo_nomenclador
@@ -1954,34 +2111,6 @@ END;
 $func$
 LANGUAGE plpgsql;
 
-
-CREATE FUNCTION compras.guardar_sector_tipo_prestador(
-    p_id_sector INTEGER,
-    p_id_tipo_prestador INTEGER,
-    p_activo BOOLEAN,
-    p_usuario VARCHAR
-)
-RETURNS VOID
-AS $func$
-DECLARE
-    v_tipo RECORD;
-BEGIN
-    FOR v_tipo IN
-        SELECT id_tipo_prestacion
-        FROM compras.tipo_prestacion
-        WHERE id_sector = p_id_sector
-    LOOP
-        PERFORM compras.guardar_sector_tipo_prestador_cotizacion(
-            p_id_sector,
-            v_tipo.id_tipo_prestacion,
-            p_id_tipo_prestador,
-            p_activo,
-            p_usuario
-        );
-    END LOOP;
-END;
-$func$
-LANGUAGE plpgsql;
 
 -- =====================================================================
 -- REQUERIMIENTOS: ESCRITURA
@@ -3270,7 +3399,7 @@ END;
 $func$
 LANGUAGE plpgsql;
 
-CREATE FUNCTION compras.guardar_cotizacion_requerimiento(
+CREATE FUNCTION compras.finalizar_cotizacion_requerimiento(
     p_id_requerimiento INTEGER,
     p_ids_detalle INTEGER[],
     p_precios_unitarios NUMERIC[],
@@ -3504,126 +3633,6 @@ LANGUAGE plpgsql;
 -- =====================================================================
 -- PRESTADORES PARA COTIZACION
 -- =====================================================================
-
-CREATE OR REPLACE FUNCTION
-compras.resolver_email_cotizacion_prestador(
-    p_id_prestador INTEGER
-)
-RETURNS VARCHAR
-LANGUAGE sql
-STABLE
-AS
-$function$
-SELECT
-    candidato.email
-FROM (
-         /*
-          * Prioridad 1:
-          * contacto general de la cabecera del prestador.
-          *
-          * Solo será utilizado si supera la validacion de formato
-          * aplicada fuera del UNION.
-          */
-         SELECT
-             1::INTEGER AS prioridad_fuente,
-             0::INTEGER AS prioridad_domicilio,
-             NULL::TIMESTAMP WITHOUT TIME ZONE AS fecha_orden,
-        NULL::INTEGER AS id_contacto_e,
-
-        NULLIF(
-            BTRIM(p.contacto),
-            ''
-        )::VARCHAR AS email
-
-         FROM public.prestador p
-
-         WHERE p.id_prestador = p_id_prestador
-           AND p.baja_fecha IS NULL
-
-         UNION ALL
-
-         /*
-          * Prioridad 2:
-          * contactos electronicos expresamente clasificados como EMAIL.
-          *
-          * No se consideran:
-          *
-          * F  = fax
-          * P  = personal
-          * S  = sitio web
-          * EC = email relacionado con CBU
-          */
-         SELECT
-             2::INTEGER AS prioridad_fuente,
-             0::INTEGER AS prioridad_domicilio,
-
-             COALESCE(
-             ce.modi_fecha,
-             ce.alta_fecha,
-             ce.vigen_desde,
-             pce.vigen_desde
-             ) AS fecha_orden,
-
-             ce.id_contacto_e::INTEGER,
-
-             NULLIF(
-             BTRIM(ce.contacto),
-             ''
-             )::VARCHAR AS email
-
-         FROM public.prestad_contacto_e pce
-
-             INNER JOIN public.contacto_e ce
-         ON ce.id_contacto_e =
-             pce.id_contacto_e
-
-             INNER JOIN public.prestador p
-             ON p.id_prestador =
-             pce.id_prestador
-             AND p.baja_fecha IS NULL
-
-         WHERE pce.id_prestador =
-             p_id_prestador
-
-           AND UPPER(
-             BTRIM(
-             COALESCE(
-             ce.tipo_contacto_e,
-             ''
-             )
-             )
-             ) = 'E'
-
-           AND ce.baja_fecha IS NULL
-
-           AND (
-             pce.vigen_desde IS NULL
-            OR pce.vigen_desde <= LOCALTIMESTAMP
-             )
-
-           AND (
-             ce.vigen_desde IS NULL
-            OR ce.vigen_desde <= LOCALTIMESTAMP
-             )
-     ) candidato
-
-WHERE candidato.email IS NOT NULL
-
-    /*
-     * Validacion basica y deliberadamente conservadora.
-     * La validacion definitiva tambien se realiza en Java.
-     */
-  AND candidato.email
-    ~* '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'
-
-ORDER BY
-    candidato.prioridad_fuente,
-    candidato.prioridad_domicilio,
-    candidato.fecha_orden DESC NULLS LAST,
-    candidato.id_contacto_e DESC NULLS LAST
-
-    LIMIT 1;
-$function$;
 
 /*
  * Fuente canónica: relación prestador/contacto electrónico tipo E.
@@ -4625,41 +4634,6 @@ BEGIN
     INTO v_id;
 
     RETURN v_id;
-END;
-$func$
-LANGUAGE plpgsql;
-
-/*
- * Compatibilidad para callers anteriores que todavia no informan receta.
- */
-CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_orden_medica(
-    p_id_requerimiento INTEGER,
-    p_dl_group_id BIGINT,
-    p_dl_folder_id BIGINT,
-    p_dl_file_entry_id BIGINT,
-    p_dl_file_uuid VARCHAR,
-    p_nombre_original VARCHAR,
-    p_nombre_persistido VARCHAR,
-    p_titulo VARCHAR,
-    p_fecha_documento DATE,
-    p_usuario VARCHAR
-)
-RETURNS INTEGER
-AS $func$
-BEGIN
-    RETURN compras.registrar_requerimiento_orden_medica(
-        p_id_requerimiento,
-        p_dl_group_id,
-        p_dl_folder_id,
-        p_dl_file_entry_id,
-        p_dl_file_uuid,
-        p_nombre_original,
-        p_nombre_persistido,
-        p_titulo,
-        p_fecha_documento,
-        NULL::VARCHAR,
-        p_usuario
-    );
 END;
 $func$
 LANGUAGE plpgsql;
@@ -5905,7 +5879,165 @@ $function$;
  */
 -- =====================================================================
 -- =====================================================================
--- COMPATIBILIDAD DE PRESTADOR POR TIPO DE COTIZACIÓN
+-- DOCUMENTOS DE PEDIDO DE COTIZACION
+-- =====================================================================
+
+CREATE FUNCTION compras.registrar_pedido_cotizacion_documento(
+    p_id_requerimiento INTEGER,
+    p_id_prestador INTEGER,
+    p_dl_group_id BIGINT,
+    p_dl_folder_id BIGINT,
+    p_dl_file_entry_id BIGINT,
+    p_dl_file_uuid VARCHAR,
+    p_nombre_original VARCHAR,
+    p_nombre_persistido VARCHAR,
+    p_titulo VARCHAR,
+    p_usuario VARCHAR
+)
+RETURNS INTEGER
+AS $func$
+DECLARE
+    v_estado_envio VARCHAR(20);
+    v_intento INTEGER;
+    v_usuario VARCHAR(100);
+BEGIN
+    IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
+        RAISE EXCEPTION
+            'Debe informar el requerimiento de compra.';
+    END IF;
+
+    IF p_id_prestador IS NULL OR p_id_prestador <= 0 THEN
+        RAISE EXCEPTION
+            'Debe informar el prestador.';
+    END IF;
+
+    IF p_dl_group_id IS NULL
+       OR p_dl_group_id <= 0
+       OR p_dl_folder_id IS NULL
+       OR p_dl_folder_id <= 0
+       OR p_dl_file_entry_id IS NULL
+       OR p_dl_file_entry_id <= 0
+       OR NULLIF(btrim(p_dl_file_uuid), '') IS NULL THEN
+
+        RAISE EXCEPTION
+            'La identidad del pedido de cotizacion en Document Library no es valida.';
+    END IF;
+
+    IF NULLIF(btrim(p_nombre_original), '') IS NULL
+       OR NULLIF(btrim(p_nombre_persistido), '') IS NULL
+       OR NULLIF(btrim(p_titulo), '') IS NULL THEN
+
+        RAISE EXCEPTION
+            'Los datos documentales del pedido de cotizacion no son validos.';
+    END IF;
+
+    v_usuario := compras.normalizar_usuario(p_usuario);
+
+    SELECT rcp.estado_envio, rcp.intentos
+    INTO v_estado_envio, v_intento
+    FROM compras.requerimiento_cotizacion_prestador rcp
+    WHERE rcp.id_requerimiento = p_id_requerimiento
+      AND rcp.id_prestador = p_id_prestador
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No existe la notificacion del prestador para el requerimiento.';
+    END IF;
+
+    IF v_estado_envio <> 'PROCESANDO' THEN
+        RAISE EXCEPTION
+            'El pedido de cotizacion solo puede registrarse durante un envio PROCESANDO.';
+    END IF;
+
+    IF v_intento IS NULL OR v_intento <= 0 THEN
+        RAISE EXCEPTION
+            'La notificacion no posee un numero de intento valido.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM compras.requerimiento_pedido_cotizacion pc
+        WHERE pc.id_requerimiento = p_id_requerimiento
+          AND pc.id_prestador = p_id_prestador
+          AND pc.intento = v_intento
+          AND pc.dl_group_id = p_dl_group_id
+          AND pc.dl_folder_id = p_dl_folder_id
+          AND pc.dl_file_entry_id = p_dl_file_entry_id
+          AND pc.dl_file_uuid = btrim(p_dl_file_uuid)
+          AND pc.nombre_original = btrim(p_nombre_original)
+          AND pc.nombre_persistido = btrim(p_nombre_persistido)
+          AND pc.titulo = btrim(p_titulo)
+    ) THEN
+        RETURN v_intento;
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM compras.requerimiento_pedido_cotizacion pc
+        WHERE pc.id_requerimiento = p_id_requerimiento
+          AND pc.id_prestador = p_id_prestador
+          AND pc.intento = v_intento
+    ) THEN
+        RAISE EXCEPTION
+            'El intento actual ya posee otro pedido de cotizacion registrado.';
+    END IF;
+
+    INSERT INTO compras.requerimiento_pedido_cotizacion (
+        id_requerimiento,
+        id_prestador,
+        intento,
+        dl_group_id,
+        dl_folder_id,
+        dl_file_entry_id,
+        dl_file_uuid,
+        nombre_original,
+        nombre_persistido,
+        titulo,
+        alta_usr
+    ) VALUES (
+        p_id_requerimiento,
+        p_id_prestador,
+        v_intento,
+        p_dl_group_id,
+        p_dl_folder_id,
+        p_dl_file_entry_id,
+        btrim(p_dl_file_uuid),
+        btrim(p_nombre_original),
+        btrim(p_nombre_persistido),
+        btrim(p_titulo),
+        v_usuario
+    );
+
+    RETURN v_intento;
+END;
+$func$
+LANGUAGE plpgsql
+VOLATILE;
+
+CREATE FUNCTION compras.get_pedido_cotizacion_prestador(
+    p_id_requerimiento INTEGER,
+    p_id_prestador INTEGER
+)
+RETURNS SETOF compras.requerimiento_pedido_cotizacion
+AS $func$
+    SELECT pc.*
+    FROM compras.requerimiento_pedido_cotizacion pc
+    JOIN compras.requerimiento_cotizacion_prestador rcp
+      ON rcp.id_requerimiento = pc.id_requerimiento
+     AND rcp.id_prestador = pc.id_prestador
+    WHERE pc.id_requerimiento = p_id_requerimiento
+      AND pc.id_prestador = p_id_prestador
+      AND pc.intento = rcp.intentos
+      AND rcp.estado_envio IN ('ENVIADO', 'COTIZADO')
+    ORDER BY pc.intento DESC
+    LIMIT 1;
+$func$
+LANGUAGE sql
+STABLE;
+
+-- =====================================================================
+-- COMPATIBILIDAD DE PRESTADOR POR TIPO DE COTIZACION
 -- =====================================================================
 
 CREATE FUNCTION compras.es_prestador_compatible_cotizacion(
@@ -6115,7 +6247,7 @@ BEGIN
             'El prestador adjudicado no es compatible con las prestaciones conservadas.';
     END IF;
 
-    RETURN compras.guardar_cotizacion_requerimiento(
+    RETURN compras.finalizar_cotizacion_requerimiento(
         p_id_requerimiento,
         p_ids_detalle,
         p_precios_unitarios,
@@ -6384,35 +6516,62 @@ $func$
 LANGUAGE sql
 STABLE;
 
--- CONSULTAS MANUALES DE VERIFICACION
+-- =====================================================================
+-- BUSQUEDA TECNICA DE PRESTACIONES MEDICAS
 -- =====================================================================
 
--- SELECT *
--- FROM compras.listar_estados_requerimiento();
-
--- SELECT *
--- FROM compras.listar_sector_requerimiento();
-
--- SELECT *
--- FROM compras.buscar_requerimientos(
---     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
--- );
-
--- SELECT *
--- FROM compras.listar_prestadores_cotizacion_requerimiento(
---     :id_requerimiento
--- );
-
--- SELECT *
--- FROM compras.buscar_prestadores_enviados(
---     :id_requerimiento,
---     :texto,
---     20
--- );
-
--- SELECT *
--- FROM compras.get_requerimiento_compra_pdf(
---     :id_requerimiento
--- );
+CREATE OR REPLACE FUNCTION autorizaciones.busca_nomenclador_prest_med_compras(
+    tiponomenclador_p INTEGER,
+    descripcionnomenclador_p VARCHAR,
+    especialidad_p INTEGER,
+    codigonomenclador_p VARCHAR,
+    recuperasur_p BOOLEAN,
+    resolucionnomenclador_p VARCHAR
+)
+RETURNS SETOF autorizaciones.nomenclador_detalle
+AS $func$
+BEGIN
+    RETURN QUERY
+    SELECT n.*
+    FROM autorizaciones.busca_nomenclador(
+        tiponomenclador_p,
+        NULL,
+        especialidad_p,
+        codigonomenclador_p,
+        recuperasur_p,
+        resolucionnomenclador_p
+    ) n
+    WHERE n.id_tipo_nomenclador <> 1
+      AND (
+          tiponomenclador_p IS NULL
+          OR n.id_tipo_nomenclador = tiponomenclador_p
+      )
+      AND (
+          descripcionnomenclador_p IS NULL
+          OR btrim(descripcionnomenclador_p) = ''
+          OR translate(
+              upper(COALESCE(n.descripcion, '')),
+              chr(193) || chr(201) || chr(205) || chr(211)
+                  || chr(218) || chr(220) || chr(209) || chr(192)
+                  || chr(200) || chr(204) || chr(210) || chr(217)
+                  || chr(196) || chr(203) || chr(207) || chr(214)
+                  || chr(220) || chr(194) || chr(202) || chr(206)
+                  || chr(212) || chr(219),
+              'AEIOUUNAEIOUAEIOUAEIOU'
+          ) LIKE '%' || translate(
+              upper(btrim(descripcionnomenclador_p)),
+              chr(193) || chr(201) || chr(205) || chr(211)
+                  || chr(218) || chr(220) || chr(209) || chr(192)
+                  || chr(200) || chr(204) || chr(210) || chr(217)
+                  || chr(196) || chr(203) || chr(207) || chr(214)
+                  || chr(220) || chr(194) || chr(202) || chr(206)
+                  || chr(212) || chr(219),
+              'AEIOUUNAEIOUAEIOUAEIOU'
+          ) || '%'
+      );
+END;
+$func$
+LANGUAGE plpgsql
+VOLATILE;
 
 COMMIT;

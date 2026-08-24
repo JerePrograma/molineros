@@ -2,7 +2,7 @@
 Responsabilidad:
     Punto de entrada de edición del requerimiento de compra.
 Incluido desde:
-    requerimiento_compra_edicion_compatibilidad_wrapper.jsp
+    Tile portlet.compras.editar_requerimiento.
 Pantallas o estados de uso:
     PENDIENTE y ENVIADO A COTIZAR con capacidades diferenciadas.
 Entradas requeridas:

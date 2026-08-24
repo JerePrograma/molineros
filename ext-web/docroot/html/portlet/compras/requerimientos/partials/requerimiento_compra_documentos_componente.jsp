@@ -2,7 +2,7 @@
 Responsabilidad:
     Renderiza presupuestos y Órdenes Médicas activas del requerimiento.
 Incluido desde:
-    requerimiento_compra_consulta_ensamblado.jsp, requerimiento_compra_edicion_ensamblado.jsp, requerimiento_compra_formulario_componente.jsp
+    requerimiento_compra_consulta_ensamblado.jsp, requerimiento_compra_edicion_ensamblado.jsp
 Pantallas o estados de uso:
     Alta, edición o consulta según el caller indicado.
 Entradas requeridas:

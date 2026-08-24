@@ -35,18 +35,6 @@ public class ConfiguracionCotizacionPrestadorServiceUtil {
         );
     }
 
-    public static void guardarConfiguracion(
-            int idSector,
-            int[] idsTiposSeleccionados,
-            String usuario) throws Exception {
-
-        getInstance().guardarConfiguracion(
-                idSector,
-                idsTiposSeleccionados,
-                usuario
-        );
-    }
-
     private ConfiguracionCotizacionPrestadorServiceUtil() {
     }
 }
