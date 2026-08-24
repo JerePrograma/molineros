@@ -46,7 +46,7 @@ import javax.portlet.RenderResponse;
 /**
  * Adaptador HTTP de presupuestos.
  *
- * La validacion PDF, Document Library, compensacion y asociacion persistente
+ * La validación PDF, Document Library, compensación y asociación persistente
  * se encuentran en PresupuestoCompraHelper.
  */
 public class UploadPresupuestosComprasAction extends PortletAction {
@@ -224,7 +224,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
             } else {
                 throw new Exception(
-                        "La accion solicitada para el presupuesto no es valida."
+                        "La acción solicitada para el presupuesto no es válida."
                 );
             }
 
@@ -335,7 +335,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                     && requerimiento == null) {
 
                 throw new Exception(
-                        "No se encontro el requerimiento de compra informado."
+                        "No se encontró el requerimiento de compra informado."
                 );
             }
 
@@ -520,7 +520,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             } catch (Exception e) {
                 _log.warn(
                         "No se pudo confirmar si quedan prestadores "
-                                + "pendientes de notificacion.",
+                                + "pendientes de notificación.",
                         e
                 );
             }
@@ -800,8 +800,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
     /**
      * Tipos anidados legacy conservados para no romper subclases/callers
-     * que compilen contra la API historica de esta Action. El flujo actual
-     * no los utiliza: la implementacion vive en PresupuestoCompraHelper.
+     * que compilen contra la API histórica de esta Action. El flujo actual
+     * no los utiliza: la implementación vive en PresupuestoCompraHelper.
      */
     protected static class PresupuestoEntrada {
 
@@ -887,10 +887,10 @@ public class UploadPresupuestosComprasAction extends PortletAction {
     }
 
     /**
-     * Contrato publico legacy conservado para callers que referencien
+     * Contrato público legacy conservado para callers que referencien
      * el descriptor documental anidado de esta Action.
      *
-     * La implementacion funcional nueva utiliza PresupuestoCompraHelper;
+     * La implementación funcional nueva utiliza PresupuestoCompraHelper;
      * esta clase queda exclusivamente como tipo de compatibilidad.
      */
     public static class DocumentoPresupuestoCreado {

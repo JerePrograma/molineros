@@ -56,7 +56,7 @@ Efectos secundarios:
                     .attr('disabled', 'disabled');
 
             /*
-             * busqueda_seccional.jsp no recibe edit_mode. Se bloquean de forma
+             * búsqueda_secciónal.jsp no recibe edit_mode. Se bloquean de forma
              * local sus campos y se oculta únicamente su acción de búsqueda.
              */
             jQuery('#<portlet:namespace />id_seccional, #<portlet:namespace />seccional')

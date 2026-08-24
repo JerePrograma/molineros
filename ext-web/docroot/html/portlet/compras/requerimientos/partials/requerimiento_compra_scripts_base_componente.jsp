@@ -739,7 +739,7 @@ Efectos secundarios:
                             '#<portlet:namespace />seccionVerificarDomicilio'
                     );
 
-            /* El sector o el permiso pueden omitir la seccion. */
+            /* El sector o el permiso pueden omitir la sección. */
             if (seccion.length == 0) {
                 return;
             }
@@ -1216,7 +1216,7 @@ Efectos secundarios:
 
             alert(
                     'El teléfono debe necesariamente tener '
-                            + 'el código de area y el número'
+                            + 'el código de área y el número'
             );
 
             return false;
@@ -1225,7 +1225,7 @@ Efectos secundarios:
         if (codigoAreaTelefono.indexOf('0') == 0) {
 
             alert(
-                    'El código de area del teléfono '
+                    'El código de área del teléfono '
                             + 'no debe iniciar con cero'
             );
 
@@ -1257,7 +1257,7 @@ Efectos secundarios:
         if (codigoAreaCelular.indexOf('0') == 0) {
 
             alert(
-                    'El código de area del celular '
+                    'El código de área del celular '
                             + 'no debe iniciar con cero'
             );
 

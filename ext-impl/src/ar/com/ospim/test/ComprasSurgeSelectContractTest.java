@@ -151,8 +151,8 @@ public final class ComprasSurgeSelectContractTest {
 
         contiene(
                 requerimiento,
-                "sector visible en mayúsculas",
-                "sectorDescripcion.toUpperCase(Locale.ROOT)"
+                "sector visible con acentuación canónica",
+                "WebKeysCompras.getSectorDescripcionVisible("
         );
         contiene(
                 requerimiento,

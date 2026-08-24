@@ -21,7 +21,7 @@ import javax.portlet.RenderResponse;
  * Adaptador de la búsqueda de medicamentos usada por Compras.
  *
  * Sustituye el forward directo histórico para evitar que
- * requerimiento_compra_medicamento_busqueda_resultado.jsp consulte Services.
+ * requerimiento_compra_medicamento_búsqueda_resultado.jsp consulte Services.
  */
 public class BuscarMedicamentosComprasAction extends PortletAction {
 

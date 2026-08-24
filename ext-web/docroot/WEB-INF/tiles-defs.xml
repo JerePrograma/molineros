@@ -2214,7 +2214,7 @@
 	<definition name="portlet.ospim.correspondencia_inbox.result.search"
 		extends="portlet.correspondencia">
 		<put name="portlet_content"
-			value="/portlet/correspondencia/bandeja_de_entradarequerimiento_compra_detalle_componente.jsp" />
+			value="/portlet/correspondencia/bandeja_de_entrada_detalle.jsp" />
 	</definition>
 
 	<definition name="portlet.ospim.correspondencia.result.search"
@@ -3292,7 +3292,7 @@
 	</definition>
 
 	<definition name="portlet.uoma.centrocosto.tablero.detalle"	extends="portlet.uoma">
-		<put name="portlet_content" value="/portlet/uoma/centro_costo/centro_costo_tablerorequerimiento_compra_detalle_componente.jsp" />
+		<put name="portlet_content" value="/portlet/uoma/centro_costo/centro_costo_tablero_detalle.jsp" />
 	</definition>
 
 	<!-- Fin Centro Costo UOMA -->
@@ -4266,7 +4266,7 @@
 	</definition>
 	
 	<definition name="portlet.afiliados.formulario.detalle" extends="portlet.afiliados">
-	    <put name="portlet_content" value="/portlet/afiliados/formulariorequerimiento_compra_detalle_componente.jsp" />
+	    <put name="portlet_content" value="/portlet/afiliados/formulario_detalle.jsp" />
 	</definition>
 	
 	<definition name="portlet.afiliados.vendedor.list" extends="portlet.afiliados">
@@ -4278,7 +4278,7 @@
 	</definition>
 	
 	<definition name="portlet.afiliados.vendedor.detalle" extends="portlet.afiliados">
-	    <put name="portlet_content" value="/portlet/afiliados/vendedoresrequerimiento_compra_detalle_componente.jsp" />
+	    <put name="portlet_content" value="/portlet/afiliados/vendedores_detalle.jsp" />
 	</definition>
 	
 	<definition name="portlet.afiliados.formulario.cotizar" extends="portlet.afiliados">

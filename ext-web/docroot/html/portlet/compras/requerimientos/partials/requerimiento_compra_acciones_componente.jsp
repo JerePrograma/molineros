@@ -72,7 +72,7 @@ Object botoneraPendientesNotificacionAttr =
 
 /*
  * Fail closed: el boton solo se muestra cuando el action confirmo mediante
- * la consulta canonica que realmente existen prestadores pendientes.
+ * la consulta canónica que realmente existen prestadores pendientes.
  */
 boolean botoneraHayPrestadoresPendientesNotificacion =
         Boolean.TRUE.equals(
@@ -237,7 +237,7 @@ String botoneraReclamoPrestacionalFormId =
             <%--
                 No se muestra Editar dentro de la vista.
                 La edicion continua disponible en el menu de acciones del
-                listado, respetando la observacion funcional mas reciente.
+                listado, respetando la observación funcional más reciente.
             --%>
 
             <% if (botoneraPuedeEnviarACotizar) { %>

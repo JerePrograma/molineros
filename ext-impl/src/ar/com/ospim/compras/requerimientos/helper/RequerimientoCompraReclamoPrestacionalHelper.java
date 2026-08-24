@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Orquestacion y reglas del vinculo Compras / Reclamo Prestacional.
+ * Orquestación y reglas del vinculo Compras / Reclamo Prestacional.
  *
- * No administra JDBC. Las operaciones que deben compartir una misma conexion
+ * No administra JDBC. Las operaciones que deben compartir una misma conexión
  * se ejecutan mediante la fachada transaccional opaca del ServiceImpl.
  */
 public final class RequerimientoCompraReclamoPrestacionalHelper {
@@ -62,7 +62,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
         if (relaciones.size() > 1) {
             throw new Exception(
-                    "Existe mas de un requerimiento vinculado al "
+                    "Existe más de un requerimiento vinculado al "
                             + "Reclamo Prestacional."
             );
         }
@@ -165,7 +165,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
         if (!resultado) {
             throw new Exception(
-                    "No se pudo registrar el error de vinculacion "
+                    "No se pudo registrar el error de vinculación "
                             + "del Reclamo Prestacional."
             );
         }
@@ -181,7 +181,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
         throw new Exception(
                 "No se puede crear el Reclamo Prestacional sin "
-                        + "el contexto de su documentacion obligatoria."
+                        + "el contexto de su documentación obligatoria."
         );
     }
 
@@ -255,8 +255,8 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
                 if (idReclamoExistente <= 0) {
                     throw new Exception(
-                            "La relacion figura vinculada, pero no contiene "
-                                    + "un identificador valido de Reclamo Prestacional."
+                            "La relación figura vinculada, pero no contiene "
+                                    + "un identificador válido de Reclamo Prestacional."
                     );
                 }
 
@@ -298,7 +298,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
             if (idReclamo <= 0) {
                 throw new Exception(
-                        "La insercion no devolvio un identificador valido "
+                        "La inserción no devolvió un identificador válido "
                                 + "de Reclamo Prestacional."
                 );
             }
@@ -331,7 +331,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
                 throw new Exception(
                         "El Reclamo Prestacional fue insertado, pero la "
-                                + "relacion con el requerimiento no quedo confirmada."
+                                + "relación con el requerimiento no quedó confirmada."
                 );
             }
 
@@ -398,7 +398,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
         if (!resultado) {
             throw new Exception(
-                    "No se pudo finalizar la relacion con el Reclamo Prestacional."
+                    "No se pudo finalizar la relación con el Reclamo Prestacional."
             );
         }
     }
@@ -496,7 +496,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
                 normalizarUsuario(usuario)
         )) {
             throw new Exception(
-                    "No se pudo reservar la creacion del Reclamo Prestacional."
+                    "No se pudo reservar la creación del Reclamo Prestacional."
             );
         }
     }
@@ -515,7 +515,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
                 normalizarUsuario(usuario)
         )) {
             throw new Exception(
-                    "No se pudo finalizar la relacion con el Reclamo Prestacional."
+                    "No se pudo finalizar la relación con el Reclamo Prestacional."
             );
         }
     }
@@ -528,7 +528,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
                 idRequerimientoCompra
         )) {
             throw new Exception(
-                    "No se pudo bloquear transaccionalmente la creacion "
+                    "No se pudo bloquear transaccionalmente la creación "
                             + "del Reclamo Prestacional."
             );
         }
@@ -546,8 +546,8 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
         if (!WebKeysCompras.esEstadoValido(estadoActual)) {
             throw new Exception(
-                    "El requerimiento posee un estado invalido durante "
-                            + "la vinculacion del Reclamo Prestacional."
+                    "El requerimiento posee un estado inválido durante "
+                            + "la vinculación del Reclamo Prestacional."
             );
         }
 
@@ -580,7 +580,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
         if (estadoFinal != WebKeysCompras.ESTADO_RECLAMO_RP) {
             throw new Exception(
-                    "El Reclamo Prestacional quedo vinculado, pero el "
+                    "El Reclamo Prestacional quedó vinculado, pero el "
                             + "requerimiento no confirmo el estado RECLAMO (RP)."
             );
         }
@@ -603,22 +603,22 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
         if (relacion.isError()) {
             throw new Exception(
-                    "El Reclamo Prestacional fue creado, pero su vinculacion "
-                            + "requiere reconciliacion."
+                    "El Reclamo Prestacional fue creado, pero su vinculación "
+                            + "requiere reconciliación."
             );
         }
 
         if (!relacion.isReservado()) {
             throw new Exception(
-                    "La relacion del requerimiento posee un estado incompatible "
-                            + "con la creacion del Reclamo Prestacional."
+                    "La relación del requerimiento posee un estado incompatible "
+                            + "con la creación del Reclamo Prestacional."
             );
         }
 
         if (WebKeysCompras.isEmpty(relacion.getTokenReserva())
                 || !relacion.getTokenReserva().equals(tokenReserva)) {
             throw new Exception(
-                    "Ya existe otra creacion de Reclamo Prestacional "
+                    "Ya existe otra creación de Reclamo Prestacional "
                             + "en proceso para este requerimiento."
             );
         }
@@ -673,7 +673,7 @@ private void validarIdRequerimiento(
     private void validarToken(String tokenReserva) throws Exception {
         if (WebKeysCompras.isEmpty(tokenReserva)) {
             throw new Exception(
-                    "No se pudo validar el contexto de creacion "
+                    "No se pudo validar el contexto de creación "
                             + "del Reclamo Prestacional."
             );
         }
@@ -689,7 +689,7 @@ private void validarIdRequerimiento(
         String value = WebKeysCompras.trimToNull(error);
 
         if (value == null) {
-            return "Error de vinculacion no especificado.";
+            return "Error de vinculación no especificado.";
         }
 
         return value.length() <= 2000

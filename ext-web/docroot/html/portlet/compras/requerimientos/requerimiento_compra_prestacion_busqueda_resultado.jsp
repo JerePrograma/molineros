@@ -118,7 +118,7 @@ if (errorBusqueda == null
 
     errorBusqueda =
             "No se pudo identificar el formulario "
-                    + "que recibira la seleccion.";
+                            + "que recibirá la selección.";
 }
 
 if (errorBusqueda == null

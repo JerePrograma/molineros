@@ -292,7 +292,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
          * El sector solo se sincroniza desde la UI durante el alta.
          *
          * Una vez creado el requerimiento, sector_id_hidden conserva
-         * el ID canonico publicado por servidor y nunca debe ser
+         * el ID canónico publicado por servidor y nunca debe ser
          * sobrescrito desde el control visual.
          */
         if (esNuevo) {
@@ -1214,7 +1214,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             <% if (esNuevo) { %>
 
                 /*
-                 * En el alta la Orden medica es obligatoria.
+                 * En el alta la Orden médica es obligatoria.
                  */
                 incorporarNuevasOrdenesMedicas =
                         true;

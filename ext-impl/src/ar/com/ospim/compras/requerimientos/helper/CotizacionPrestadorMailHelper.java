@@ -76,7 +76,7 @@ public class CotizacionPrestadorMailHelper {
     }
 
     /**
-     * Contrato legacy de una unica Orden medica.
+     * Contrato legacy de una única Orden médica.
      */
     public void enviar(
             String emailDestino,
@@ -103,7 +103,7 @@ public class CotizacionPrestadorMailHelper {
     }
 
     /**
-     * Contrato legacy de una unica Orden medica + BCC.
+     * Contrato legacy de una única Orden médica + BCC.
      */
     public void enviar(
             String emailDestino,
@@ -146,7 +146,7 @@ public class CotizacionPrestadorMailHelper {
     }
 
     /**
-     * Contrato canonico: un unico mensaje SMTP con 0..N Ordenes medicas.
+     * Contrato canónico: un único mensaje SMTP con 0..N Órdenes médicas.
      */
     public void enviar(
             String emailDestino,

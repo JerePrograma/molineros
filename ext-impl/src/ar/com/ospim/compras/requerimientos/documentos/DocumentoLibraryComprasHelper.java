@@ -41,7 +41,7 @@ public class DocumentoLibraryComprasHelper
             );
 
     public static final String TITULO_ORDEN_MEDICA =
-            "Orden médica";
+            WebKeysCompras.TITULO_ORDEN_MEDICA;
 
     public static final String PARAM_ARCHIVO_ORDEN_MEDICA =
             "orden_medica";
@@ -92,12 +92,12 @@ public class DocumentoLibraryComprasHelper
                 || WebKeysCompras.isEmpty(
                 ordenMedica.getNombreOriginal()
         )
-                || !TITULO_ORDEN_MEDICA.equals(
+                || !WebKeysCompras.esTituloOrdenMedica(
                 ordenMedica.getTitulo()
         )) {
 
             throw new Exception(
-                    "La asociacion de la Orden medica activa es inconsistente."
+                    "La asociación de la Orden médica activa es inconsistente."
             );
         }
 
@@ -107,8 +107,8 @@ public class DocumentoLibraryComprasHelper
     }
 
     /**
-     * Regla generica de identidad SQL -> Document Library reutilizable
-     * tanto por Orden medica como por Presupuesto.
+     * Regla genérica de identidad SQL -> Document Library reutilizable
+     * tanto por Orden médica como por Presupuesto.
      */
     public static void validarIdentidadAsociacionDocumento(
             RequerimientoCompraPresupuesto documento)
@@ -126,8 +126,8 @@ public class DocumentoLibraryComprasHelper
         )) {
 
             throw new Exception(
-                    "La asociacion del documento contiene "
-                            + "una identidad de Document Library invalida."
+                    "La asociación del documento contiene "
+                            + "una identidad de Document Library inválida."
             );
         }
     }
@@ -196,7 +196,7 @@ public class DocumentoLibraryComprasHelper
 
     /**
      * Recupera la entrada de Document Library y comprueba toda la identidad
-     * persistida de la Orden medica.
+     * persistida de la Orden médica.
      *
      * No abre el contenido. Eso permite que un Action de descarga realice
      * primero su DLFileEntryPermission.check().
@@ -260,7 +260,7 @@ public class DocumentoLibraryComprasHelper
     }
 
     /**
-     * Lee el contenido binario de una Orden medica ya autorizada.
+     * Lee el contenido binario de una Orden médica ya autorizada.
      *
      * IMPORTANTE:
      *
@@ -269,12 +269,12 @@ public class DocumentoLibraryComprasHelper
      *
      * En Liferay legacy esa llamada actualiza DLFileRank y readCount antes
      * de recuperar el archivo. El update de DLFileRank depende de Counter
-     * y puede impedir la lectura de un archivo valido por un fallo ajeno
+     * y puede impedir la lectura de un archivo válido por un fallo ajeno
      * al almacenamiento del documento.
      *
      * La identidad de la entrada debe haber sido validada previamente y
      * el Action de descarga debe comprobar DLFileEntryPermission VIEW antes
-     * de invocar este metodo.
+     * de invocar este método.
      */
     public static OrdenMedicaContenido leerOrdenMedicaValidada(
             DLFileEntry entry,
@@ -317,7 +317,7 @@ public class DocumentoLibraryComprasHelper
     }
 
     /**
-     * Fuente unica de validacion del contenido persistido de una Orden medica.
+     * Fuente única de validación del contenido persistido de una Orden médica.
      */
     public static String validarContenidoOrdenMedica(
             byte[] contenido,
@@ -667,7 +667,7 @@ public class DocumentoLibraryComprasHelper
     }
 
     /**
-     * Primitiva documental comun.
+     * Primitiva documental común.
      */
     public static String normalizarNombreArchivoSeguro(
             String filename) {
@@ -706,7 +706,7 @@ public class DocumentoLibraryComprasHelper
     }
 
     /**
-     * Primitiva documental comun.
+     * Primitiva documental común.
      */
     public static String obtenerExtensionSeguraDocumento(
             String nombreOriginal) {
@@ -773,7 +773,7 @@ public class DocumentoLibraryComprasHelper
     }
 
     /**
-     * Primitiva documental comun.
+     * Primitiva documental común.
      */
     public static long obtenerMaximoTamanoDocumento()
             throws Exception {
@@ -1189,7 +1189,7 @@ public class DocumentoLibraryComprasHelper
     }
 
     /**
-     * Primitiva comun para Presupuestos y Ordenes medicas.
+     * Primitiva común para Presupuestos y Órdenes médicas.
      */
     public static void validarContextoDocumentLibrary(
             ServiceContext serviceContext)
@@ -1208,7 +1208,7 @@ public class DocumentoLibraryComprasHelper
     }
 
     /**
-     * Primitiva comun para obtener la carpeta de documentos de Compras.
+     * Primitiva común para obtener la carpeta de documentos de Compras.
      */
     public static DLFolder obtenerOCrearFolderCompras(
             ServiceContext serviceContext)
@@ -1939,7 +1939,7 @@ public class DocumentoLibraryComprasHelper
 
             throw new Exception(
                     "La identidad del documento "
-                            + "a eliminar no es valida."
+                            + "a eliminar no es válida."
             );
         }
 

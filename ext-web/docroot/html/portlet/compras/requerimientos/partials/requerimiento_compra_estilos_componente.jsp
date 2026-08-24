@@ -70,7 +70,7 @@ Efectos secundarios:
     }
 
     /*
-     * Separación vertical uniforme entre las secciones principales.
+     * Separación vertical uniforme entre las secciónes principales.
      * El margen pertenece al bloque que efectivamente se renderiza, por lo
      * que una sección condicional no deja espacios vacíos al ocultarse.
      */

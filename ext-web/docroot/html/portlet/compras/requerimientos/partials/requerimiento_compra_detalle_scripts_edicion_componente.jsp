@@ -203,7 +203,7 @@ Efectos secundarios:
     var <portlet:namespace />tiposNomencladorPrestacionesMedicas = [
         {
             id: '2',
-            descripcion: 'NOM.NAC.PRACTICAS ESPECIALIZADAS'
+                descripcion: 'NOM.NAC.PRÁCTICAS ESPECIALIZADAS'
         },
         {
             id: '3',
@@ -211,15 +211,15 @@ Efectos secundarios:
         },
         {
             id: '4',
-            descripcion: 'NOM.NAC ANALISIS CLINICOS'
+                descripcion: 'NOM.NAC ANÁLISIS CLÍNICOS'
         },
         {
             id: '6',
-            descripcion: 'NOM.NAC QUIRURGICO'
+                descripcion: 'NOM.NAC QUIRÚRGICO'
         },
         {
             id: '10',
-            descripcion: 'PROTESIS E INSUMOS'
+                descripcion: 'PRÓTESIS E INSUMOS'
         }
     ];
 
@@ -756,7 +756,7 @@ Efectos secundarios:
          * Farmacia:
          *     9
          *
-         * PRESTACIONES MEDICAS:
+         * PRESTACIONES MÉDICAS:
          *     4, 2, 10, 6 o 3.
          *
          * Los demás sectores mantienen la búsqueda legacy.
@@ -1651,7 +1651,7 @@ Efectos secundarios:
                 && <portlet:namespace />detallesCompra.length <= 1) {
 
             alert(
-                'El requerimiento debe conservar al menos una prestacion.'
+                    'El requerimiento debe conservar al menos una prestación.'
             );
 
             return <portlet:namespace />liberarDetalleAccion(0);

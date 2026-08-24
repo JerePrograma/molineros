@@ -340,7 +340,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
     /**
      * Registra el contexto temporal de un borrador iniciado desde Compras.
-     * Nunca reemplaza una edicion ordinaria iniciada desde Autorizaciones.
+     * Nunca reemplaza una edición ordinaria iniciada desde Autorizaciones.
      */
     public static void registrarContextoBorrador(
             HttpSession session,
@@ -349,7 +349,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
         if (session == null) {
             throw new Exception(
-                    "No se pudo obtener la sesion del usuario."
+                    "No se pudo obtener la sesión del usuario."
             );
         }
 
@@ -379,8 +379,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                     instanceof ReclamoPrestacionalCompraContexto)) {
 
                 throw new Exception(
-                        "Existe un Reclamo Prestacional en edicion iniciado "
-                                + "desde Autorizaciones. Finalicelo o descartelo "
+                        "Existe un Reclamo Prestacional en edición iniciado "
+                                + "desde Autorizaciones. Finalícelo o descártelo "
                                 + "antes de precargar uno desde Compras."
                 );
             }
@@ -396,7 +396,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
     }
 
     /**
-     * Prepara la sesion para consultar un RP ya persistido sin destruir un
+     * Prepara la sesión para consultar un RP ya persistido sin destruir un
      * borrador vigente perteneciente a otro requerimiento.
      */
     public static void prepararSesionParaConsulta(
@@ -406,7 +406,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
         if (session == null) {
             throw new Exception(
-                    "No se pudo obtener la sesion del usuario."
+                    "No se pudo obtener la sesión del usuario."
             );
         }
 
@@ -431,7 +431,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                     instanceof ReclamoPrestacionalCompraContexto)) {
 
                 throw new Exception(
-                        "Existe un contexto temporal invalido en la sesion."
+                        "Existe un contexto temporal inválido en la sesión."
                 );
             }
 
@@ -451,7 +451,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                             "Ya existe un inicio de Reclamo Prestacional "
                                     + "desde Compras en proceso para el requerimiento "
                                     + contexto.getIdRequerimientoCompra()
-                                    + ". Finalicelo o descartelo antes de consultar otro."
+                                    + ". Finalícelo o descártelo antes de consultar otro."
                     );
                 }
 
@@ -470,8 +470,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
             if (reclamoObj == null) {
                 if (hayEstadoEdicionEnSesion(session)) {
                     throw new Exception(
-                            "Existe informacion parcial de otro Reclamo "
-                                    + "Prestacional en edicion en esta sesion."
+                            "Existe información parcial de otro Reclamo "
+                                    + "Prestacional en edición en esta sesión."
                     );
                 }
 
@@ -480,7 +480,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
             if (!(reclamoObj instanceof ReclamoPrestacional)) {
                 throw new Exception(
-                        "Existe un Reclamo Prestacional invalido en la sesion."
+                        "Existe un Reclamo Prestacional inválido en la sesión."
                 );
             }
 
@@ -495,8 +495,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
             }
 
             throw new Exception(
-                    "Ya existe otro Reclamo Prestacional en edicion "
-                            + "en esta sesion. Finalicelo o descartelo "
+                    "Ya existe otro Reclamo Prestacional en edición "
+                            + "en esta sesión. Finalícelo o descártelo "
                             + "antes de navegar desde Compras."
             );
         }
@@ -662,7 +662,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
         /*
          * El flag recuperable de la cabecera es independiente del combo
-         * Integracion. El combo persiste el codigo real del catalogo.
+         * Integración. El combo persiste el código real del catálogo.
          */
         reclamo.setCodigoIntegracion(
                 resolverCodigoIntegracionCabeceraNoRecuperable()
@@ -757,7 +757,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                         "El item "
                                 + detalle.getIdString()
                                 + " del requerimiento COTIZADO no tiene "
-                                + "un CUIT de prestador valido para "
+                                + "un CUIT de prestador válido para "
                                 + "consolidar el comprobante."
                 );
             }
@@ -774,7 +774,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                         "El requerimiento COTIZADO contiene items "
                                 + "adjudicados a prestadores con CUIT "
                                 + "diferentes. No se puede precargar "
-                                + "un unico comprobante consolidado."
+                                + "un único comprobante consolidado."
                 );
             }
 
@@ -862,14 +862,14 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
                 if (integracion.getId() <= 0) {
                     throw new Exception(
-                            "La integracion NO ES RECUPERABLE "
-                                    + "no tiene un codigo valido."
+                            "La integración NO ES RECUPERABLE "
+                                    + "no tiene un código válido."
                     );
                 }
 
                 if (codigoEncontrado != null) {
                     throw new Exception(
-                            "Existe mas de una integracion "
+                            "Existe más de una integración "
                                     + "NO ES RECUPERABLE."
                     );
                 }
@@ -883,7 +883,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
         if (codigoEncontrado == null) {
             throw new Exception(
-                    "No se encontro la integracion "
+                    "No se encontró la integración "
                             + "NO ES RECUPERABLE."
             );
         }
@@ -1125,7 +1125,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
      * La sucursal 000 corresponde al prestador asociado al CUIT,
      * no al punto de venta o sucursal del comprobante.
      *
-     * No se inventan letra, punto de venta, numero ni fechas.
+     * No se inventan letra, punto de venta, número ni fechas.
      */
     private static void precargarDatosComprobante(
             PrestacionesReclamo prestacion,
@@ -1196,12 +1196,12 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
     }
 
     /**
-     * El handoff desde Compras representa un unico comprobante para todas
+     * El handoff desde Compras representa un único comprobante para todas
      * las prestaciones precargadas.
      *
      * El modelo legacy almacena los datos del comprobante dentro de cada
      * PrestacionesReclamo. Se replica por eso el mismo importe consolidado
-     * sin modificar cantidad, importe ni cargos del Area Medica.
+     * sin modificar cantidad, importe ni cargos del Área Médica.
      */
     private static void precargarImportesComprobanteConsolidado(
             List<PrestacionesReclamo> prestaciones,
@@ -1263,7 +1263,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         )) {
             throw new IllegalArgumentException(
                     "El sector del requerimiento no tiene "
-                            + "una configuracion tecnica valida."
+                            + "una configuración técnica válida."
             );
         }
 
@@ -1279,8 +1279,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
          * Los nuevos detalles de Compras utilizan NOMENCLADOR.
          *
          * La referencia se recupera nuevamente desde el nomenclador
-         * canonico porque el tipo, la marca ReinLiq, el codigo y el
-         * estado activo no deben confiarse a los datos de sesion o HTTP.
+         * canónico porque el tipo, la marca ReinLiq, el código y el
+         * estado activo no deben confiarse a los datos de sesión o HTTP.
          */
         if (detalle.tieneNomenclador()) {
             int idPrestacionDetalle =
@@ -1301,7 +1301,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                     || nomenclador.getBaja_fecha() != null) {
 
                 throw new IllegalArgumentException(
-                        "La prestacion seleccionada ya no existe "
+                        "La prestación seleccionada ya no existe "
                                 + "o no se encuentra activa."
                 );
             }
@@ -1311,7 +1311,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
                 throw new IllegalArgumentException(
                         "El tipo de nomenclador persistido no "
-                                + "corresponde a la prestacion seleccionada."
+                                + "corresponde a la prestación seleccionada."
                 );
             }
 
@@ -1328,34 +1328,34 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 if ("FARMACIA".equals(sector)) {
                     throw new IllegalArgumentException(
                             "Para Farmacia debe utilizarse una "
-                                    + "prestacion del nomenclador tipo 9."
+                                    + "prestación del nomenclador tipo 9."
                     );
                 }
 
                 if ("DISCAPACIDAD".equals(sector)) {
                     throw new IllegalArgumentException(
                             "Para Discapacidad debe utilizarse una "
-                                    + "prestacion con marca ReinLiq 6 "
-                                    + "o el codigo 431003."
+                                    + "prestación con marca ReinLiq 6 "
+                                    + "o el código 431003."
                     );
                 }
 
                 if ("ODONTOLOGIA".equals(sector)) {
                     throw new IllegalArgumentException(
                             "Para Odontologia debe utilizarse una "
-                                    + "prestacion del nomenclador tipo 1."
+                                    + "prestación del nomenclador tipo 1."
                     );
                 }
 
                 if ("PRESTACIONES MEDICAS".equals(sector)) {
                     throw new IllegalArgumentException(
-                            "PRESTACIONES MEDICAS no admite "
+                            "PRESTACIONES MÉDICAS no admite "
                                     + "prestaciones del nomenclador tipo 1."
                     );
                 }
 
                 throw new IllegalArgumentException(
-                        "La prestacion seleccionada no corresponde "
+                        "La prestación seleccionada no corresponde "
                                 + "al sector del requerimiento."
                 );
             }
@@ -1374,8 +1374,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                     codigoCanonico
             )) {
                 throw new IllegalArgumentException(
-                        "La prestacion seleccionada no tiene "
-                                + "un codigo valido."
+                        "La prestación seleccionada no tiene "
+                                + "un código válido."
                 );
             }
 
@@ -1383,8 +1383,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                     descripcionCanonica
             )) {
                 throw new IllegalArgumentException(
-                        "La prestacion seleccionada no tiene "
-                                + "una descripcion valida."
+                        "La prestación seleccionada no tiene "
+                                + "una descripción válida."
                 );
             }
 
@@ -1416,7 +1416,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         }
 
         /*
-         * Compatibilidad historica:
+         * Compatibilidad histórica:
          *
          * Las filas que ya estaban persistidas como MEDICAMENTO
          * continúan siendo utilizables exclusivamente en Farmacia.
@@ -1427,7 +1427,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                     sector
             )) {
                 throw new IllegalArgumentException(
-                        "Un medicamento historico solo puede "
+                        "Un medicamento histórico solo puede "
                                 + "utilizarse en Farmacia."
                 );
             }
@@ -1441,8 +1441,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
             )) {
 
                 throw new IllegalArgumentException(
-                        "El medicamento historico no conserva "
-                                + "una referencia tecnica valida."
+                        "El medicamento histórico no conserva "
+                                + "una referencia técnica válida."
                 );
             }
 
@@ -1490,8 +1490,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
             if (descripcionPendiente == null) {
                 throw new IllegalArgumentException(
-                        "El detalle de observacion de Compras no contiene "
-                                + "una descripcion para precargar."
+                        "El detalle de observación de Compras no contiene "
+                                + "una descripción para precargar."
                 );
             }
 
@@ -1537,7 +1537,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
         throw new IllegalArgumentException(
                 "El detalle de Compras no contiene "
-                        + "una referencia tecnica valida."
+                        + "una referencia técnica válida."
         );
     }
 

@@ -28,6 +28,9 @@ public final class ComprasConsolidacionDefinitivaContractTest {
             "ext-impl/src/ar/com/ospim/compras/sql"
     );
     private static final File SCHEMA = new File(SQL_DIR, "compras_schema.sql");
+    private static final File REPARACION_ACENTUACION = new File(
+            "docs/sql/20260824_reparar_acentuacion_compras.sql"
+    );
     private static final File JAVA_DIR = new File(
             "ext-impl/src/ar/com/ospim/compras"
     );
@@ -54,7 +57,7 @@ public final class ComprasConsolidacionDefinitivaContractTest {
     public static void main(String[] args) throws Exception {
         Map<String, Integer> functions = validarScriptCanonico();
         validarContratosJdbc(functions);
-        validarTituloOrdenMedicaAscii();
+        validarNormalizacionYEncoding();
         validarStrutsTilesYJsp();
         System.out.println("COMPRAS_CONSOLIDACION_DEFINITIVA_OK");
     }
@@ -139,24 +142,87 @@ public final class ComprasConsolidacionDefinitivaContractTest {
                 "Se esperaban 48 contratos JDBC y se encontraron " + calls);
     }
 
-    private static void validarTituloOrdenMedicaAscii() throws Exception {
+    private static void validarNormalizacionYEncoding() throws Exception {
         String schema = read(SCHEMA);
         String service = read(new File(
                 JAVA_DIR,
                 "requerimientos/service/EditarRequerimientoCompraServiceImpl.java"
         ));
+        String webKeys = read(new File(JAVA_DIR, "WebKeysCompras.java"));
+        String documentos = read(new File(
+                JAVA_DIR,
+                "requerimientos/documentos/DocumentoLibraryComprasHelper.java"
+        ));
+        String webXml = read(new File(
+                "ext-web/docroot/WEB-INF/web.xml"
+        ));
+        String initCompras = read(new File(
+                "ext-web/docroot/html/portlet/compras/init.jsp"
+        ));
+        String reparacion = read(REPARACION_ACENTUACION);
 
-        check(schema.contains("titulo = 'Orden medica'"),
-                "El constraint de Orden medica no es ASCII");
-        check(schema.contains("<> 'Orden medica'"),
-                "La validacion de Orden medica no es ASCII");
-        check(schema.contains("        'Orden medica',"),
-                "La persistencia de Orden medica no es ASCII");
+        List<File> archivosIso = files(JAVA_DIR, ".java");
+        archivosIso.addAll(files(new File(
+                "ext-web/docroot/html/portlet/compras"
+        ), ".jsp"));
+        archivosIso.add(SCHEMA);
+        archivosIso.add(REPARACION_ACENTUACION);
+        archivosIso.add(new File("ext-web/docroot/WEB-INF/web.xml"));
+        for (int i = 0; i < archivosIso.size(); i++) {
+            validarArchivoIso(archivosIso.get(i));
+        }
+
+        check(schema.contains("\\encoding LATIN1"),
+                "psql no declara la lectura ISO-8859-1");
+        check(schema.contains("'Orden médica',"),
+                "SQL no persiste el título canónico con tilde");
+        check(schema.contains("'orden medica' THEN"),
+                "SQL no valida el título mediante una clave normalizada");
+        check(webKeys.contains(
+                        "TITULO_ORDEN_MEDICA =\n            \"Orden médica\";"),
+                "Java no define el título canónico con tilde");
+        check(webKeys.contains("Normalizer.Form.NFC"),
+                "Java no normaliza texto de negocio a NFC");
+        check(webKeys.contains("esTituloOrdenMedica("),
+                "Java no compara el título de forma normalizada");
         check(service.contains(
-                        "TITULO_ORDEN_MEDICA = \"Orden medica\";"),
-                "Java no usa el titulo ASCII canonico");
-        check(service.contains("stmt.setString(9, TITULO_ORDEN_MEDICA);"),
-                "Java no envia el titulo canonico");
+                        "stmt.setString(9, WebKeysCompras.TITULO_ORDEN_MEDICA);"),
+                "Java no envía el título canónico centralizado");
+        check(documentos.contains("WebKeysCompras.esTituloOrdenMedica("),
+                "Document Library no tolera el título histórico sin tilde");
+        check(webXml.contains("<page-encoding>ISO-8859-1</page-encoding>"),
+                "La aplicación web no fija ISO-8859-1 para Compras");
+        check(webXml.startsWith(
+                        "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>"),
+                "web.xml no declara su codificación ISO-8859-1");
+        check(initCompras.contains(
+                        "pageEncoding=\"ISO-8859-1\""),
+                "La fuente JSP de Compras no declara ISO-8859-1");
+        check(!initCompras.contains("contentType="),
+                "Compras no debe contradecir el UTF-8 común de Liferay");
+        check(reparacion.contains("\\encoding LATIN1"),
+                "La reparación de la base no declara ISO-8859-1");
+        check(reparacion.contains(
+                        "CREATE OR REPLACE FUNCTION "
+                                + "compras.registrar_requerimiento_orden_medica("),
+                "La reparación no reemplaza la función dañada");
+        check(reparacion.contains("SET titulo = 'Orden médica'"),
+                "La reparación no normaliza los títulos existentes");
+    }
+
+    private static void validarArchivoIso(File file) throws Exception {
+        byte[] bytes = Files.readAllBytes(file.toPath());
+        check(bytes.length < 3
+                        || (bytes[0] & 0xFF) != 0xEF
+                        || (bytes[1] & 0xFF) != 0xBB
+                        || (bytes[2] & 0xFF) != 0xBF,
+                "El archivo ISO no puede tener BOM UTF-8: " + file);
+
+        String source = new String(bytes, LATIN1);
+        check(source.indexOf('\u00C3') < 0
+                        && source.indexOf('\u00C2') < 0
+                        && source.indexOf("\u00EF\u00BF\u00BD") < 0,
+                "Se detectó mojibake o UTF-8 leído como ISO-8859-1: " + file);
     }
 
     private static void validarStrutsTilesYJsp() throws Exception {
@@ -168,6 +234,13 @@ public final class ComprasConsolidacionDefinitivaContractTest {
                 .newDocumentBuilder()
                 .parse(new File("ext-web/docroot/WEB-INF/tiles-defs.xml"))
                 .getDocumentElement();
+
+        String tilesSource = read(new File(
+                "ext-web/docroot/WEB-INF/tiles-defs.xml"
+        ));
+        check(!tilesSource.contains(
+                        "requerimiento_compra_detalle_componente.jsp"),
+                "Tiles contiene una ruta de Compras concatenada a otro JSP");
 
         Set<String> allTileNames = new HashSet<String>();
         Set<String> tileNames = new HashSet<String>();

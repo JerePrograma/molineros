@@ -150,7 +150,7 @@ public final class ComprasDocumentacionRpDataContractTest {
         contiene(
                 getter,
                 "no elige un requerimiento arbitrario",
-                "Existe mas de un requerimiento vinculado"
+                "Existe más de un requerimiento vinculado"
         );
         contiene(
                 getter,

@@ -1,9 +1,9 @@
 package ar.com.ospim.compras.requerimientos.action;
 
 /**
- * Error de validacion asociado a un campo del formulario de Compras.
+ * Error de validación asociado a un campo del formulario de Compras.
  *
- * Esta excepcion pertenece a la capa HTTP: permite conservar el nombre
+ * Esta excepción pertenece a la capa HTTP: permite conservar el nombre
  * del campo que debe destacarse sin trasladar esa responsabilidad a los
  * Helpers de negocio o a los ServiceImpl.
  */

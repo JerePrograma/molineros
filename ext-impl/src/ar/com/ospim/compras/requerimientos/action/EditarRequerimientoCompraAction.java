@@ -515,13 +515,13 @@ public class EditarRequerimientoCompraAction extends PortletAction {
          * ALTA
          * ==========================================================
          *
-         * La Orden medica continúa siendo obligatoria.
+         * La Orden médica continúa siendo obligatoria.
          *
          * Antes de crear la cabecera y antes de crear documentos
          * en Document Library, se controla que no exista otro
          * requerimiento para la misma combinación:
          *
-         * afiliado + prestacion + fecha de Orden medica.
+         * afiliado + prestación + fecha de Orden médica.
          */
         if (esNuevo) {
 
@@ -562,14 +562,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             /*
              * IMPORTANTE:
              *
-             * La validacion se ejecuta antes de:
+             * La validación se ejecuta antes de:
              *
              * - insertar la cabecera;
              * - crear archivos en Document Library;
-             * - registrar Ordenes medicas;
+             * - registrar Órdenes médicas;
              * - guardar detalles.
              *
-             * Si una combinacion ya existe, el alta termina aca.
+             * Si una combinación ya existe, el alta termina aca.
              */
             requerimientoHelper
                     .validarNuevoRequerimientoNoDuplicado(
@@ -745,7 +745,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (actionRequest == null) {
             throw new IllegalArgumentException(
                     "No se recibio la solicitud de carga "
-                            + "de Ordenes medicas."
+                            + "de Órdenes médicas."
             );
         }
 
@@ -753,7 +753,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             errorCampo(
                     DocumentoLibraryComprasHelper
                             .PARAM_ARCHIVO_ORDEN_MEDICA,
-                    "Orden medica: debe seleccionar "
+                    "Orden médica: debe seleccionar "
                             + "una imagen JPEG o PNG."
             );
 
@@ -763,14 +763,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (gestorDocumento == null) {
             throw new IllegalStateException(
                     "No se pudo preparar el gestor documental "
-                            + "de las Ordenes medicas."
+                            + "de las Órdenes médicas."
             );
         }
 
         if (cantidadOrdenesMedicas <= 0) {
             errorCampo(
                     PARAM_ORDEN_MEDICA_COUNT,
-                    "Debe informar al menos una Orden medica."
+                    "Debe informar al menos una Orden médica."
             );
 
             return new ArrayList<OrdenMedicaValidada>();
@@ -785,7 +785,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     "Se pueden cargar hasta "
                             + EditarRequerimientoCompraHelper
                             .MAX_ORDENES_MEDICAS_POR_CARGA
-                            + " Ordenes medicas por operacion."
+                            + " Órdenes médicas por operación."
             );
 
             return new ArrayList<OrdenMedicaValidada>();
@@ -833,7 +833,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 String mensaje =
                         obtenerMensajeUsuario(
                                 e,
-                                "No se pudo validar la Orden medica."
+                                "No se pudo validar la Orden médica."
                         );
 
                 String mensajeNormalizado =
@@ -866,7 +866,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             throw new IllegalStateException(
                     "No se pudieron preparar todas las "
-                            + "Ordenes medicas informadas."
+                            + "Órdenes médicas informadas."
             );
         }
 
@@ -1723,7 +1723,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     "[COMPRAS-COTIZACION][REQUEST]"
                             + " index=" + i
                             + ", idDetalle=" + idDetalle
-                            + ", parametro="
+                            + ", parámetro="
                             + prefix
                             + "precio_unitario_estimado"
                             + ", valorRaw=["

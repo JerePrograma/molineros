@@ -217,7 +217,7 @@ public final class BusquedaRequerimientoCompraHelper {
 
         if (cuil == null || !cuil.matches("^[0-9]{11}$")) {
             throw new Exception(
-                    "Debe informar un CUIL titular valido."
+                    "Debe informar un CUIL titular válido."
             );
         }
 
@@ -250,25 +250,25 @@ public final class BusquedaRequerimientoCompraHelper {
                 || !cuil.matches("^[0-9]{11}$")) {
 
             throw new Exception(
-                    "Debe informar un CUIL titular valido."
+                    "Debe informar un CUIL titular válido."
             );
         }
 
         if (inte < 0) {
             throw new Exception(
-                    "Debe informar un integrante valido."
+                    "Debe informar un integrante válido."
             );
         }
 
         if (idPrestacion <= 0) {
             throw new Exception(
-                    "Debe informar una prestacion valida."
+                    "Debe informar una prestación válida."
             );
         }
 
         if (fechaOrdenMedica == null) {
             throw new Exception(
-                    "Debe informar la fecha de la Orden medica."
+                    "Debe informar la fecha de la Orden médica."
             );
         }
 

@@ -151,7 +151,7 @@ public final class NomencladorCompraBusquedaHelper {
 
             throw new Exception(
                     "La clasificación técnica informada no es válida "
-                            + "para PRESTACIONES MEDICAS."
+                            + "para PRESTACIONES MÉDICAS."
             );
         }
 

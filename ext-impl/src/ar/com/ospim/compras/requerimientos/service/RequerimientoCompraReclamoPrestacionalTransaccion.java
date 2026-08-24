@@ -10,10 +10,10 @@ import com.liferay.portal.model.User;
 import java.sql.Connection;
 
 /**
- * Infraestructura transaccional focalizada para la creacion y vinculacion
+ * Infraestructura transaccional focalizada para la creación y vinculación
  * de un Reclamo Prestacional desde Compras.
  *
- * Mantiene una unica conexion fisica durante todo el flujo y no contiene
+ * Mantiene una única conexión física durante todo el flujo y no contiene
  * validaciones funcionales, permisos, HTTP ni reglas de estado.
  */
 public final class RequerimientoCompraReclamoPrestacionalTransaccion {
@@ -50,7 +50,7 @@ public final class RequerimientoCompraReclamoPrestacionalTransaccion {
 
         if (con == null) {
             throw new Exception(
-                    "No se obtuvo una conexion transaccional para vincular el RP."
+                    "No se obtuvo una conexión transaccional para vincular el RP."
             );
         }
 
@@ -156,7 +156,7 @@ public final class RequerimientoCompraReclamoPrestacionalTransaccion {
     private Connection getConnection() {
         if (con == null) {
             throw new IllegalStateException(
-                    "La transaccion de Compras / RP ya se encuentra cerrada."
+                    "La transacción de Compras / RP ya se encuentra cerrada."
             );
         }
 

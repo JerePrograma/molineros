@@ -45,7 +45,7 @@ boolean showABMButtons =
 
 /*
  * ViewComprasAction y BuscarRequerimientosComprasAction publican estos
- * catalogos. El JSP deja de abrir consultas de respaldo para estados/sectores.
+ * catálogos. El JSP deja de abrir consultas de respaldo para estados/sectores.
  */
 List<RequerimientoCompraSector> sectores =
         (List<RequerimientoCompraSector>)
@@ -917,8 +917,8 @@ if (tercerizadoras == null) {
     }
 
     /*
-     * Firma global legacy consumida por el resultado de busqueda de afiliado.
-     * No modificar orden ni cantidad de parametros.
+     * Firma global legacy consumida por el resultado de búsqueda de afiliado.
+     * No modificar orden ni cantidad de parámetros.
      */
     function seleccionaCamposAfiliado(
             cuil,

@@ -182,7 +182,7 @@ renderRequest.setAttribute(
 );
 
 /*
- * Los Actions de alta/edicion/vista publican el catalogo de sectores.
+ * Los Actions de alta/edición/vista publican el catálogo de sectores.
  * No se consulta persistencia desde la vista. Si un caller legacy no lo
  * publica, se muestra la pantalla sin opciones antes que abrir una consulta
  * lateral desde el JSP.
@@ -347,7 +347,7 @@ String afiliadoAfiTercerizadora = "";
  * Acceso tipado al bean de Afiliados.
  *
  * Se elimina deliberadamente la reflexion que intentaba adivinar getters.
- * El componente de busqueda de afiliados de Compras ya utiliza este mismo
+ * El componente de búsqueda de afiliados de Compras ya utiliza este mismo
  * contrato tipado (id_ospim/id_uoma/id_amtima, Seccional y ultimo_plan).
  */
 if (afiliadoRequerimiento != null) {

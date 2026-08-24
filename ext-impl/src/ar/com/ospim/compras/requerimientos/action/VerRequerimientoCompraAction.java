@@ -409,7 +409,7 @@ public class VerRequerimientoCompraAction extends PortletAction {
             );
         } catch (Exception e) {
             _log.error(
-                    "No se pudieron cargar los tipos de prestacion de Compras.",
+                    "No se pudieron cargar los tipos de prestación de Compras.",
                     e
             );
 

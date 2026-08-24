@@ -109,10 +109,10 @@ public class DescargarOrdenMedicaCompraAction
             }
 
             /*
-             * Primero se valida completamente la relacion persistida
+             * Primero se valida completamente la relación persistida
              * SQL -> Document Library.
              *
-             * Esta operacion obtiene solamente los metadatos de la entrada.
+             * Esta operación obtiene solamente los metadatos de la entrada.
              * Todavia no se lee el contenido binario.
              */
             DLFileEntry entry =
@@ -125,11 +125,11 @@ public class DescargarOrdenMedicaCompraAction
 
             /*
              * El permiso sobre Document Library se comprueba antes de
-             * acceder al contenido fisico.
+             * acceder al contenido físico.
              *
              * La lectura posterior utiliza la capa baja de DL para evitar
              * los efectos secundarios de DLFileRank del servicio legacy.
-             * Por eso esta comprobacion de VIEW no debe quitarse.
+             * Por eso esta comprobación de VIEW no debe quitarse.
              */
             DLFileEntryPermission.check(
                     themeDisplay.getPermissionChecker(),
@@ -190,10 +190,10 @@ public class DescargarOrdenMedicaCompraAction
             if (visualizar) {
 
                 /*
-                 * sendFile fuerza attachment salvo que la extension figure
+                 * sendFile fuerza attachment salvo que la extensión figure
                  * en una propiedad global del portal. La lupa de Compras
-                 * solicita una visualizacion y debe ser deterministica,
-                 * independientemente de esa configuracion externa.
+                 * solicita una visualización y debe ser determinística,
+                 * independientemente de esa configuración externa.
                  */
                 response.setContentType(
                         documento.getContentType()
@@ -259,7 +259,7 @@ public class DescargarOrdenMedicaCompraAction
      * Si la URL identifica un fileEntry concreto, se busca exactamente
      * esa Orden médica dentro del requerimiento.
      *
-     * Si no viene ese parametro se conserva el comportamiento historico
+     * Si no viene ese parámetro se conserva el comportamiento histórico
      * mediante getOrdenMedica(idRequerimientoCompra).
      */
     private RequerimientoCompraPresupuesto resolverOrdenMedica(

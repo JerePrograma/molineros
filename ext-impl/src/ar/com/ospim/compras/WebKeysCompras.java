@@ -12,8 +12,14 @@ import java.util.regex.Pattern;
 
 public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
-    private static final Pattern DIACRITICOS_SECTOR_COMPRAS =
+    private static final Pattern DIACRITICOS_TEXTO_COMPRAS =
             Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+
+    private static final Pattern ESPACIOS_TEXTO_COMPRAS =
+            Pattern.compile("\\s+");
+
+    public static final String TITULO_ORDEN_MEDICA =
+            "Orden médica";
 
     /*
      * Estos valores son filtros para la búsqueda.
@@ -552,27 +558,84 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static String normalizarSectorCompra(
             String value) {
 
+        return normalizarClaveTexto(value);
+    }
+
+    /**
+     * Conserva las tildes y compone los caracteres en NFC antes de que el
+     * texto atraviese JDBC, Document Library o una vista JSP.
+     */
+    public static String normalizarTexto(
+            String value) {
+
         if (value == null) {
+            return "";
+        }
+
+        return Normalizer.normalize(
+                value,
+                Normalizer.Form.NFC
+        ).trim();
+    }
+
+    /**
+     * Genera una clave funcional estable para comparar palabras aunque
+     * lleguen con o sin tilde, con espacios repetidos o en otra caja.
+     */
+    public static String normalizarClaveTexto(
+            String value) {
+
+        String texto = normalizarTexto(value);
+
+        if (texto.length() == 0) {
             return "";
         }
 
         String normalizado =
                 Normalizer.normalize(
-                        value.trim(),
+                        texto,
                         Normalizer.Form.NFD
                 );
 
         normalizado =
-                DIACRITICOS_SECTOR_COMPRAS
+                DIACRITICOS_TEXTO_COMPRAS
                         .matcher(normalizado)
                         .replaceAll("");
 
-        String sector =
-                normalizado
-                        .toUpperCase(Locale.ROOT)
-                        .trim();
+        normalizado =
+                ESPACIOS_TEXTO_COMPRAS
+                        .matcher(normalizado)
+                        .replaceAll(" ");
 
-        return sector;
+        return normalizado.toUpperCase(Locale.ROOT).trim();
+    }
+
+    public static boolean esTituloOrdenMedica(
+            String value) {
+
+        return normalizarClaveTexto(TITULO_ORDEN_MEDICA).equals(
+                normalizarClaveTexto(value)
+        );
+    }
+
+    public static String getSectorDescripcionVisible(
+            String value) {
+
+        String clave = normalizarSectorCompra(value);
+
+        if ("PRESTACIONES MEDICAS".equals(clave)) {
+            return "PRESTACIONES MÉDICAS";
+        }
+
+        if ("ODONTOLOGIA".equals(clave)) {
+            return "ODONTOLOGÍA";
+        }
+
+        String texto = normalizarTexto(value);
+
+        return texto.length() > 0
+                ? texto.toUpperCase(Locale.ROOT)
+                : "";
     }
 
     public static String getSectorReclamoPrestacional(
@@ -690,11 +753,13 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     }
 
     public static String trimToNull(String value) {
-        if (isEmpty(value)) {
+        String normalizado = normalizarTexto(value);
+
+        if (normalizado.length() == 0) {
             return null;
         }
 
-        return value.trim();
+        return normalizado;
     }
 
     private static void agregarEstado(

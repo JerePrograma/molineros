@@ -93,14 +93,14 @@ public class ActualizarContactoAfiliadoCompraAction
 
         } catch (Exception e) {
             _log.error(
-                    "Se rechazo una actualizacion de contacto desde Compras. "
+                    "Se rechazó una actualización de contacto desde Compras. "
                             + "cuil=" + cuilTitular
                             + ", integrante=" + integrante,
                     e
             );
 
             throw new Exception(
-                    "No se pudo autorizar la actualizacion de contacto."
+                    "No se pudo autorizar la actualización de contacto."
             );
         }
     }

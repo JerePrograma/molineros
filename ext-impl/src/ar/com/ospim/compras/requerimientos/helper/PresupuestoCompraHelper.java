@@ -29,10 +29,10 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Reglas documentales y compensacion de presupuestos de Compras.
+ * Reglas documentales y compensación de presupuestos de Compras.
  *
  * No interpreta requests ni decide forwards. Tampoco utiliza JDBC: las
- * asociaciones persistentes se delegan al Helper funcional de edicion.
+ * asociaciones persistentes se delegan al Helper funcional de edición.
  */
 public final class PresupuestoCompraHelper {
 
@@ -52,7 +52,7 @@ public final class PresupuestoCompraHelper {
 
         if (idRequerimientoCompra <= 0) {
             throw new Exception(
-                    "El requerimiento de compra no es valido."
+                    "El requerimiento de compra no es válido."
             );
         }
 
@@ -131,7 +131,7 @@ public final class PresupuestoCompraHelper {
 
         if (idRequerimientoCompra <= 0) {
             throw new Exception(
-                    "No se encontro el requerimiento de compra informado."
+                    "No se encontró el requerimiento de compra informado."
             );
         }
 
@@ -226,8 +226,8 @@ public final class PresupuestoCompraHelper {
 
                 if (!reactivada) {
                     _log.error(
-                            "La eliminacion fisica del presupuesto fallo "
-                                    + "y la asociacion no pudo reactivarse. "
+                            "La eliminación física del presupuesto falló "
+                                    + "y la asociación no pudo reactivarse. "
                                     + "idRequerimientoPresupuesto="
                                     + idRequerimientoPresupuesto
                     );
@@ -235,9 +235,9 @@ public final class PresupuestoCompraHelper {
 
             } catch (Exception reactivarError) {
                 _log.error(
-                        "La eliminacion fisica del presupuesto fallo y "
-                                + "tambien fallo la reactivacion "
-                                + "de su asociacion. "
+                        "La eliminación física del presupuesto falló y "
+                                + "también falló la reactivación "
+                                + "de su asociación. "
                                 + "idRequerimientoPresupuesto="
                                 + idRequerimientoPresupuesto,
                         reactivarError
@@ -299,7 +299,7 @@ public final class PresupuestoCompraHelper {
                 throw new Exception(
                         "El indice del presupuesto "
                                 + (i + 1)
-                                + " no es valido."
+                                + " no es válido."
                 );
             }
 
@@ -325,7 +325,7 @@ public final class PresupuestoCompraHelper {
                 throw new Exception(
                         "El presupuesto "
                                 + (i + 1)
-                                + " supera el tamano permitido."
+                                + " supera el tamaño permitido."
                 );
             }
 
@@ -342,7 +342,7 @@ public final class PresupuestoCompraHelper {
                 throw new Exception(
                         "El nombre del presupuesto "
                                 + (i + 1)
-                                + " no es valido."
+                                + " no es válido."
                 );
             }
 
@@ -405,7 +405,7 @@ public final class PresupuestoCompraHelper {
                 throw new Exception(
                         "El prestador del presupuesto "
                                 + (i + 1)
-                                + " esta repetido. Solo puede cargarse "
+                                + " está repetido. Solo puede cargarse "
                                 + "un archivo por prestador."
                 );
             }
@@ -498,7 +498,7 @@ public final class PresupuestoCompraHelper {
                             _log.error(
                                     "No se pudo eliminar el documento "
                                             + "creado antes de fallar "
-                                            + "su asociacion. fileEntryId="
+                                            + "su asociación. fileEntryId="
                                             + documento.getFileEntryId(),
                                     cleanupError
                             );
@@ -564,8 +564,8 @@ public final class PresupuestoCompraHelper {
 
             } catch (Exception cleanupSqlError) {
                 _log.error(
-                        "No se pudo dar de baja una asociacion "
-                                + "durante la compensacion "
+                        "No se pudo dar de baja una asociación "
+                                + "durante la compensación "
                                 + "de presupuestos. "
                                 + "idRequerimientoPresupuesto="
                                 + idAsociacion,
@@ -588,7 +588,7 @@ public final class PresupuestoCompraHelper {
             } catch (Exception cleanupFileError) {
                 _log.error(
                         "No se pudo eliminar un presupuesto "
-                                + "durante la compensacion. fileEntryId="
+                                + "durante la compensación. fileEntryId="
                                 + creado.getDocumento()
                                 .getFileEntryId(),
                         cleanupFileError
@@ -602,8 +602,8 @@ public final class PresupuestoCompraHelper {
 
                 } catch (Exception reactivarError) {
                     _log.error(
-                            "No se pudo reactivar la asociacion "
-                                    + "despues de fallar la eliminacion "
+                            "No se pudo reactivar la asociación "
+                                    + "después de fallar la eliminación "
                                     + "del documento. "
                                     + "idRequerimientoPresupuesto="
                                     + idAsociacion,
@@ -639,8 +639,8 @@ public final class PresupuestoCompraHelper {
                 || entry.getFileEntryId() <= 0L) {
 
             throw new Exception(
-                    "Document Library no devolvio "
-                            + "un documento valido."
+                    "Document Library no devolvió "
+                            + "un documento válido."
             );
         }
 
@@ -723,7 +723,7 @@ public final class PresupuestoCompraHelper {
         if (id <= 0) {
             throw new Exception(
                     "No se pudo obtener el identificador "
-                            + "de la asociacion del presupuesto."
+                            + "de la asociación del presupuesto."
             );
         }
 
@@ -763,7 +763,7 @@ public final class PresupuestoCompraHelper {
                 .getIdRequerimientoCompra() <= 0) {
 
             throw new Exception(
-                    "No se encontro el requerimiento de compra informado."
+                    "No se encontró el requerimiento de compra informado."
             );
         }
 
@@ -797,7 +797,7 @@ public final class PresupuestoCompraHelper {
 
         if (fileEntry == null) {
             throw new Exception(
-                    "No se encontro el documento "
+                    "No se encontró el documento "
                             + "asociado al presupuesto."
             );
         }
@@ -810,7 +810,7 @@ public final class PresupuestoCompraHelper {
 
             throw new Exception(
                     "El documento persistido no coincide "
-                            + "con la asociacion del presupuesto."
+                            + "con la asociación del presupuesto."
             );
         }
     }
@@ -827,7 +827,7 @@ public final class PresupuestoCompraHelper {
 
             throw new Exception(
                     "La identidad del documento "
-                            + "a eliminar no es valida."
+                            + "a eliminar no es válida."
             );
         }
 
@@ -929,10 +929,10 @@ public final class PresupuestoCompraHelper {
     }
 
     /**
-     * Regla especifica de Presupuesto.
+     * Regla específica de Presupuesto.
      *
      * No se mueve a DocumentoLibraryComprasHelper porque la firma PDF es una
-     * regla propia de este tipo documental, no una primitiva comun de DL.
+     * regla propia de este tipo documental, no una primitiva común de DL.
      */
     private void validarContenidoPdf(
             File archivo,
@@ -946,7 +946,7 @@ public final class PresupuestoCompraHelper {
             throw new Exception(
                     "El presupuesto "
                             + numeroPresupuesto
-                            + " no contiene un archivo PDF valido."
+                            + " no contiene un archivo PDF válido."
             );
         }
 
@@ -997,7 +997,7 @@ public final class PresupuestoCompraHelper {
                 throw new Exception(
                         "El presupuesto "
                                 + numeroPresupuesto
-                                + " no contiene un archivo PDF valido."
+                                + " no contiene un archivo PDF válido."
                 );
             }
 
@@ -1010,7 +1010,7 @@ public final class PresupuestoCompraHelper {
                     if (_log.isDebugEnabled()) {
                         _log.debug(
                                 "No se pudo cerrar "
-                                        + "la validacion del PDF.",
+                                        + "la validación del PDF.",
                                 closeError
                         );
                     }
@@ -1031,7 +1031,7 @@ public final class PresupuestoCompraHelper {
 
         if (error instanceof FileSizeException) {
             return new Exception(
-                    "Uno de los presupuestos supera el tamano permitido.",
+                    "Uno de los presupuestos supera el tamaño permitido.",
                     error
             );
         }
@@ -1039,7 +1039,7 @@ public final class PresupuestoCompraHelper {
         if (error instanceof FileNameException) {
             return new Exception(
                     "El tipo de uno de los presupuestos "
-                            + "no esta permitido.",
+                            + "no está permitido.",
                     error
             );
         }

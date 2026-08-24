@@ -106,7 +106,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
 
         /*
          * ==========================================================
-         * 1. ORDENES MEDICAS
+         * 1. ÓRDENES MÉDICAS
          * ==========================================================
          */
         List<RequerimientoCompraPresupuesto> ordenesMedicas =
@@ -119,7 +119,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                 || ordenesMedicas.isEmpty()) {
 
             throw new Exception(
-                    "El requerimiento no posee Ordenes medicas "
+                    "El requerimiento no posee Órdenes médicas "
                             + "activas para adjuntar al Reclamo Prestacional."
             );
         }
@@ -139,7 +139,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
             registrarFuenteUnica(
                     archivosFuente,
                     ordenMedica.getDlFileEntryId(),
-                    "Orden medica"
+                    "Orden médica"
             );
 
             byte[] contenido =
@@ -171,7 +171,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
             String titulo = ordenMedica.getNombreOriginal();
 
             String descripcion =
-                    "Orden medica proveniente del "
+                    "Orden médica proveniente del "
                             + "Requerimiento de Compra #"
                             + idRequerimientoCompra;
 
@@ -190,18 +190,18 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
 
         /*
          * ==========================================================
-         * 2. PEDIDO DE COTIZACION
+         * 2. PEDIDO DE COTIZACIÓN
          * ==========================================================
          *
          * No regenerar el PDF en este punto.
          *
          * El requerimiento ya se encuentra COTIZADO y el Jasper
-         * imprime datos de cotizacion y prestador. Regenerarlo
+         * imprime datos de cotización y prestador. Regenerarlo
          * podria producir un documento distinto del pedido que
          * recibio originalmente el prestador.
          *
          * Se recupera exclusivamente el pedido exacto persistido
-         * durante el envio correspondiente al prestador finalmente
+         * durante el envío correspondiente al prestador finalmente
          * adjudicado.
          */
         RequerimientoCompraPedidoCotizacion pedidoCotizacion =
@@ -218,7 +218,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
         registrarFuenteUnica(
                 archivosFuente,
                 pedidoCotizacion.getDlFileEntryId(),
-                "Pedido de cotizacion"
+                "Pedido de cotización"
         );
 
         byte[] contenidoPedidoCotizacion =
@@ -241,7 +241,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                                 + idRequerimientoCompra
                                 + ".pdf",
                         pedidoCotizacion.getNombreOriginal(),
-                        "Pedido de cotizacion efectivamente enviado "
+                        "Pedido de cotización efectivamente enviado "
                                 + "al prestador adjudicado del "
                                 + "Requerimiento de Compra #"
                                 + idRequerimientoCompra,
@@ -252,7 +252,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
 
         /*
          * ==========================================================
-         * 3. COTIZACION DEL PRESTADOR ADJUDICADO
+         * 3. COTIZACIÓN DEL PRESTADOR ADJUDICADO
          * ==========================================================
          */
         RequerimientoCompraPresupuesto presupuestoAdjudicado =
@@ -269,7 +269,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
         registrarFuenteUnica(
                 archivosFuente,
                 presupuestoAdjudicado.getDlFileEntryId(),
-                "Cotizacion adjudicada"
+                "Cotización adjudicada"
         );
 
         byte[] cotizacionAdjudicada =
@@ -294,7 +294,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                                 .getIdRequerimientoPresupuesto()
                                 + ".pdf",
                         presupuestoAdjudicado.getNombreOriginal(),
-                        "Cotizacion del prestador adjudicado proveniente "
+                        "Cotización del prestador adjudicado proveniente "
                                 + "del Requerimiento de Compra #"
                                 + idRequerimientoCompra,
                         cotizacionAdjudicada,
@@ -304,7 +304,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
 
         if (_log.isInfoEnabled()) {
             _log.info(
-                    "Documentacion de Compras adjuntada "
+                    "Documentación de Compras adjuntada "
                             + "al Reclamo Prestacional. "
                             + "idRequerimiento="
                             + idRequerimientoCompra
@@ -341,14 +341,14 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
 
             throw new Exception(
                     tipoDocumento
-                            + ": no posee una identidad documental valida."
+                            + ": no posee una identidad documental válida."
             );
         }
 
         if (!archivosFuente.add(fileEntryId)) {
             throw new Exception(
-                    "Un mismo archivo de Compras fue asociado mas de una vez "
-                            + "a la documentacion obligatoria del reclamo."
+                    "Un mismo archivo de Compras fue asociado más de una vez "
+                            + "a la documentación obligatoria del reclamo."
             );
         }
     }
@@ -382,7 +382,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
             } catch (Exception e) {
                 if (errorCompensacion == null) {
                     errorCompensacion = new Exception(
-                            "No se pudo compensar toda la documentacion "
+                            "No se pudo compensar toda la documentación "
                                     + "del Reclamo Prestacional."
                     );
                 }
@@ -522,8 +522,8 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                 || ordenMedica.getFechaDocumento() == null) {
 
             throw new Exception(
-                    "Una Orden medica del requerimiento "
-                            + "no posee una asociacion valida."
+                    "Una Orden médica del requerimiento "
+                            + "no posee una asociación válida."
             );
         }
 
@@ -578,7 +578,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
         )) {
 
             throw new Exception(
-                    "No se pudo determinar el pedido de cotizacion "
+                    "No se pudo determinar el pedido de cotización "
                             + "efectivamente enviado al prestador adjudicado."
             );
         }
@@ -594,7 +594,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
         )) {
 
             throw new Exception(
-                    "El pedido de cotizacion persistido "
+                    "El pedido de cotización persistido "
                             + "no posee formato PDF."
             );
         }
@@ -633,8 +633,8 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                 || !presupuesto.isActivo()) {
 
             throw new Exception(
-                    "No se pudo determinar una cotizacion "
-                            + "adjudicada valida."
+                    "No se pudo determinar una cotización "
+                            + "adjudicada válida."
             );
         }
 
@@ -695,7 +695,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                 )) {
 
             throw new Exception(
-                    "El pedido de cotizacion persistido "
+                    "El pedido de cotización persistido "
                             + "no coincide con su identidad "
                             + "en Document Library."
             );
@@ -723,7 +723,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
             throw new Exception(
                     nombreDocumento
                             + ": el contenido no corresponde "
-                            + "a un PDF valido."
+                            + "a un PDF válido."
             );
         }
 
@@ -735,7 +735,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
             throw new Exception(
                     nombreDocumento
                             + ": el archivo supera "
-                            + "el tamano permitido."
+                            + "el tamaño permitido."
             );
         }
     }
@@ -782,7 +782,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
         )) {
 
             throw new Exception(
-                    "No se pudo construir el titulo "
+                    "No se pudo construir el título "
                             + "del documento del Reclamo Prestacional."
             );
         }
@@ -797,7 +797,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
 
             throw new Exception(
                     "El documento del Reclamo Prestacional "
-                            + "posee un tamano invalido."
+                            + "posee un tamaño inválido."
             );
         }
 
@@ -813,7 +813,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
 
             throw new Exception(
                     "El documento del Reclamo Prestacional "
-                            + "no posee una extension valida."
+                            + "no posee una extensión válida."
             );
         }
 
@@ -885,7 +885,7 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
             /*
              * El nombre es deterministico.
              *
-             * Si por una ejecucion parcial este metodo vuelve
+             * Si por una ejecución parcial este método vuelve
              * a correrse para el mismo RP/documento, se sobrescribe
              * el mismo archivo en lugar de duplicarlo.
              */

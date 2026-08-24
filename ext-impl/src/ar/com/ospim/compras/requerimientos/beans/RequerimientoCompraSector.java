@@ -2,8 +2,6 @@ package ar.com.ospim.compras.requerimientos.beans;
 
 import ar.com.ospim.compras.WebKeysCompras;
 
-import java.util.Locale;
-
 public class RequerimientoCompraSector {
 
     private Integer id;
@@ -21,7 +19,7 @@ public class RequerimientoCompraSector {
 
     public RequerimientoCompraSector(Integer id, String descripcion, Boolean requiereAfiliado) {
         this.id = id;
-        this.descripcion = descripcion;
+        setDescripcion(descripcion);
         this.requiereAfiliado = requiereAfiliado != null ? requiereAfiliado : Boolean.FALSE;
     }
 
@@ -50,11 +48,9 @@ public class RequerimientoCompraSector {
     }
 
     public String getDescripcionVisible() {
-        String value = getDescripcion();
-
-        return value != null
-                ? value.toUpperCase(Locale.ROOT)
-                : "";
+        return WebKeysCompras.getSectorDescripcionVisible(
+                getDescripcion()
+        );
     }
 
     public void setDescripcion(String descripcion) {

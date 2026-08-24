@@ -21,7 +21,7 @@ import javax.portlet.ActionResponse;
 /**
  * Adaptador HTTP de los detalles del requerimiento.
  *
- * Esta clase interpreta parametros, conserva compatibilidad con los nombres
+ * Esta clase interpreta parámetros, conserva compatibilidad con los nombres
  * legacy y coordina el retorno del Action. Las reglas funcionales del detalle
  * pertenecen exclusivamente a EditarRequerimientoCompraHelper.
  */
@@ -42,7 +42,7 @@ public class RequerimientoCompraDetalleHelper {
 
     /**
      * Alias legacy conservado para callers que referencien el tipo anidado.
-     * La implementacion canonica vive en action.ValidacionCompraException.
+     * La implementación canónica vive en action.ValidacionCompraException.
      */
     @Deprecated
     public static class ValidacionCompraException
@@ -97,7 +97,7 @@ public class RequerimientoCompraDetalleHelper {
                 if (!rawId.matches("^[0-9]+$")) {
                     errorCampo(
                             "detalle_deleted_ids",
-                            "Detalle a borrar: ID invalido recibido: '"
+                            "Detalle a borrar: ID inválido recibido: '"
                                     + rawId
                                     + "'."
                     );
@@ -149,7 +149,7 @@ public class RequerimientoCompraDetalleHelper {
             errorCampo(
                     "detalle_count",
                     "Detalles: no llego ningun detalle al Action. "
-                            + "detalle_count vino vacio o en cero."
+                            + "detalle_count vino vacío o en cero."
             );
         }
 
@@ -210,7 +210,7 @@ public class RequerimientoCompraDetalleHelper {
             if (idDetalleGuardado <= 0) {
                 throw new Exception(
                         contexto
-                                + ": no se obtuvo un identificador valido."
+                                + ": no se obtuvo un identificador válido."
                 );
             }
 
@@ -269,7 +269,7 @@ public class RequerimientoCompraDetalleHelper {
 
         if (idDetalleGuardado <= 0) {
             throw new Exception(
-                    "No se obtuvo un identificador valido del detalle."
+                    "No se obtuvo un identificador válido del detalle."
             );
         }
 
@@ -416,7 +416,7 @@ public class RequerimientoCompraDetalleHelper {
         );
 
         /*
-         * Precio y adjudicacion pertenecen al flujo de cotizacion, no al
+         * Precio y adjudicación pertenecen al flujo de cotización, no al
          * guardado estructural del detalle.
          */
         detalle.setPrecioUnitarioEstimado(null);
@@ -479,7 +479,7 @@ public class RequerimientoCompraDetalleHelper {
                 parseEnteroConDefault(
                         request,
                         prefix + "id_prestacion",
-                        contexto + " - Prestacion",
+                        contexto + " - Prestación",
                         0
                 );
 
@@ -663,7 +663,7 @@ public class RequerimientoCompraDetalleHelper {
     }
 
     /**
-     * Contrato conservado para callers existentes. La normalizacion real se
+     * Contrato conservado para callers existentes. La normalización real se
      * encuentra en el Helper de negocio.
      */
     public String normalizarTextoCarga(String value) {
@@ -801,7 +801,7 @@ public class RequerimientoCompraDetalleHelper {
                     nombre,
                     label + ": el valor ingresado '"
                             + value
-                            + "' no es un numero entero valido."
+                            + "' no es un número entero válido."
             );
         }
 
@@ -814,7 +814,7 @@ public class RequerimientoCompraDetalleHelper {
                     nombre,
                     label + ": el valor ingresado '"
                             + value
-                            + "' esta fuera del rango permitido."
+                            + "' está fuera del rango permitido."
             );
         }
 
@@ -856,7 +856,7 @@ public class RequerimientoCompraDetalleHelper {
         if (!value.matches("^[0-9]+$")) {
             errorCampo(
                     nombre,
-                    label + ": debe ser un numero entero mayor a cero."
+                    label + ": debe ser un número entero mayor a cero."
             );
         }
 
@@ -867,7 +867,7 @@ public class RequerimientoCompraDetalleHelper {
         } catch (Exception e) {
             errorCampo(
                     nombre,
-                    label + ": el valor esta fuera del rango permitido."
+                    label + ": el valor está fuera del rango permitido."
             );
             return null;
         }

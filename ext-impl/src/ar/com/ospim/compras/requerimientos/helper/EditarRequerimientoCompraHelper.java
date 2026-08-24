@@ -36,8 +36,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Fuente canonica de reglas funcionales para alta, edicion, detalles,
- * estados, cotizacion y asociaciones documentales del requerimiento.
+ * Fuente canónica de reglas funcionales para alta, edición, detalles,
+ * estados, cotización y asociaciones documentales del requerimiento.
  *
  * No abre conexiones ni conoce JDBC. Toda persistencia se delega en
  * EditarRequerimientoCompraServiceImpl.
@@ -103,7 +103,7 @@ public class EditarRequerimientoCompraHelper {
 
             if (actual == null) {
                 throw errorUsuario(
-                        "El requerimiento que intenta editar ya no esta disponible."
+                        "El requerimiento que intenta editar ya no está disponible."
                 );
             }
 
@@ -111,7 +111,7 @@ public class EditarRequerimientoCompraHelper {
              * Una vez que el requerimiento deja de estar PENDIENTE,
              * ninguno de sus datos estructurales puede modificarse.
              *
-             * El flujo de cotizacion utiliza sus operaciones especificas
+             * El flujo de cotización utiliza sus operaciones específicas
              * y no debe ingresar por este guardado de cabecera.
              */
             if (!actual.puedeEditarEstructura()) {
@@ -299,7 +299,7 @@ public class EditarRequerimientoCompraHelper {
 
             if (idGuardado <= 0) {
                 throw new IllegalStateException(
-                        "El guardado no devolvio un identificador valido."
+                        "El guardado no devolvió un identificador válido."
                 );
             }
 
@@ -354,7 +354,7 @@ public class EditarRequerimientoCompraHelper {
 
             if (requerimiento.getIdRequerimientoCompra() > 0) {
                 throw errorUsuario(
-                        "La Orden medica obligatoria solo se registra "
+                        "La Orden médica obligatoria solo se registra "
                                 + "durante el alta de un requerimiento nuevo."
                 );
             }
@@ -363,7 +363,7 @@ public class EditarRequerimientoCompraHelper {
 
             if (gestorDocumento == null) {
                 throw new IllegalStateException(
-                        "No se obtuvo el gestor documental de la Orden medica."
+                        "No se obtuvo el gestor documental de la Orden médica."
                 );
             }
 
@@ -377,7 +377,7 @@ public class EditarRequerimientoCompraHelper {
 
             if (idRequerimiento <= 0) {
                 throw new IllegalStateException(
-                        "El alta no devolvio un identificador valido."
+                        "El alta no devolvió un identificador válido."
                 );
             }
 
@@ -403,8 +403,8 @@ public class EditarRequerimientoCompraHelper {
 
                 if (idDocumento <= 0) {
                     throw new IllegalStateException(
-                            "El registro de la Orden medica no devolvio "
-                                    + "un identificador valido."
+                            "El registro de la Orden médica no devolvió "
+                                    + "un identificador válido."
                     );
                 }
             }
@@ -422,7 +422,7 @@ public class EditarRequerimientoCompraHelper {
                 } catch (Exception rollbackError) {
                     _log.error(
                             "No se pudo confirmar el rollback del alta "
-                                    + "con Orden medica. No se eliminaran "
+                                    + "con Orden médica. No se eliminarán "
                                     + "documentos ante un estado transaccional ambiguo.",
                             rollbackError
                     );
@@ -440,8 +440,8 @@ public class EditarRequerimientoCompraHelper {
             }
 
             throw manejarErrorOperacion(
-                    "guardar el requerimiento nuevo con Orden medica",
-                    "No se pudo guardar el requerimiento con su Orden medica. "
+                    "guardar el requerimiento nuevo con Orden médica",
+                    "No se pudo guardar el requerimiento con su Orden médica. "
                             + "Vuelva a seleccionar la imagen e intente nuevamente.",
                     e,
                     "idRequerimiento="
@@ -475,7 +475,7 @@ public class EditarRequerimientoCompraHelper {
                 || ordenesMedicas.isEmpty()) {
 
             throw errorUsuario(
-                    "Debe seleccionar al menos una Orden medica "
+                    "Debe seleccionar al menos una Orden médica "
                             + "e informar su fecha."
             );
         }
@@ -486,7 +486,7 @@ public class EditarRequerimientoCompraHelper {
             throw errorUsuario(
                     "Se pueden registrar hasta "
                             + MAX_ORDENES_MEDICAS_POR_CARGA
-                            + " Ordenes medicas por operacion."
+                            + " Órdenes médicas por operación."
             );
         }
 
@@ -501,7 +501,7 @@ public class EditarRequerimientoCompraHelper {
                     || ordenMedica.getFechaDocumento() == null) {
 
                 throw errorUsuario(
-                        "Cada Orden medica debe tener "
+                        "Cada Orden médica debe tener "
                                 + "informada su fecha."
                 );
             }
@@ -537,7 +537,7 @@ public class EditarRequerimientoCompraHelper {
          * La ausencia del afiliado se valida posteriormente
          * mediante las reglas generales del requerimiento.
          *
-         * Este metodo solamente controla duplicidad.
+         * Este método solamente controla duplicidad.
          */
         if (cuilTitular == null
                 || integrante == null
@@ -583,7 +583,7 @@ public class EditarRequerimientoCompraHelper {
          * java.sql.Date hereda de java.util.Date.
          *
          * Usando java.util.Date acá aceptamos tanto la fecha
-         * validada de la Orden medica como las fechas leídas
+         * validada de la Orden médica como las fechas leídas
          * posteriormente desde otros beans.
          */
         Set<java.util.Date> fechasUnicas =
@@ -654,8 +654,8 @@ public class EditarRequerimientoCompraHelper {
                 gestorDocumento.eliminarDocumento(documento);
             } catch (Exception cleanupError) {
                 _log.error(
-                        "No se pudo compensar una Orden medica creada "
-                                + "despues del rollback. fileEntryId="
+                        "No se pudo compensar una Orden médica creada "
+                                + "después del rollback. fileEntryId="
                                 + documento.getFileEntryId(),
                         cleanupError
                 );
@@ -717,7 +717,7 @@ public class EditarRequerimientoCompraHelper {
              * Un detalle NUEVO puede completar posteriormente
              * una combinación:
              *
-             * afiliado + prestacion + fecha de Orden medica
+             * afiliado + prestación + fecha de Orden médica
              *
              * que ya exista en otro requerimiento.
              *
@@ -743,7 +743,7 @@ public class EditarRequerimientoCompraHelper {
 
             if (idDetalleGuardado <= 0) {
                 throw new IllegalStateException(
-                        "El guardado del detalle no devolvio un ID valido."
+                        "El guardado del detalle no devolvió un ID válido."
                 );
             }
 
@@ -753,7 +753,7 @@ public class EditarRequerimientoCompraHelper {
             throw manejarErrorOperacion(
                     "guardar el detalle del requerimiento",
                     "No se pudo guardar el detalle del requerimiento. "
-                            + "Revise la informacion e intente nuevamente.",
+                            + "Revise la información e intente nuevamente.",
                     e,
                     construirContextoDetalle(
                             detalle,
@@ -876,15 +876,15 @@ public class EditarRequerimientoCompraHelper {
                 throw errorUsuario(
                         "Ya existe otro requerimiento de compra "
                                 + "para el mismo afiliado, la misma "
-                                + "prestacion y la misma fecha "
-                                + "de Orden medica."
+                                + "prestación y la misma fecha "
+                                + "de Orden médica."
                 );
             }
         }
     }
 
     /**
-     * Contrato canonico utilizado por los Actions: valida estado y pertenencia
+     * Contrato canónico utilizado por los Actions: valida estado y pertenencia
      * antes de ejecutar el borrado persistente.
      */
     public void borrarDetalle(
@@ -952,7 +952,7 @@ public class EditarRequerimientoCompraHelper {
 
             if (!WebKeysCompras.esEstadoValido(idEstadoNuevo)) {
                 throw errorUsuario(
-                        "El estado seleccionado no es valido."
+                        "El estado seleccionado no es válido."
                 );
             }
 
@@ -964,7 +964,7 @@ public class EditarRequerimientoCompraHelper {
 
             if (requerimientoActual == null) {
                 throw errorUsuario(
-                        "El requerimiento ya no esta disponible."
+                        "El requerimiento ya no está disponible."
                 );
             }
 
@@ -1020,8 +1020,8 @@ public class EditarRequerimientoCompraHelper {
 
             if (resultado == null) {
                 throw new IllegalStateException(
-                        "El proceso de notificacion "
-                                + "no devolvio resultado."
+                        "El proceso de notificación "
+                                + "no devolvió resultado."
                 );
             }
 
@@ -1040,7 +1040,7 @@ public class EditarRequerimientoCompraHelper {
 
                 throw new IllegalStateException(
                         "Estado inesperado al confirmar "
-                                + "el envio: "
+                                + "el envío: "
                                 + estadoFinal
                 );
             }
@@ -1085,7 +1085,7 @@ public class EditarRequerimientoCompraHelper {
 
             if (requerimiento == null) {
                 throw errorUsuario(
-                        "El requerimiento ya no esta disponible."
+                        "El requerimiento ya no está disponible."
                 );
             }
 
@@ -1117,7 +1117,7 @@ public class EditarRequerimientoCompraHelper {
 
         } catch (Exception e) {
             throw manejarErrorOperacion(
-                    "reenviar las notificaciones de cotizacion",
+                    "reenviar las notificaciones de cotización",
                     "No se pudieron reenviar las notificaciones pendientes. "
                             + "Intente nuevamente.",
                     e,
@@ -1190,7 +1190,7 @@ public class EditarRequerimientoCompraHelper {
 
             if (id <= 0) {
                 throw new IllegalStateException(
-                        "El registro del presupuesto no devolvio un ID valido."
+                        "El registro del presupuesto no devolvió un ID válido."
                 );
             }
 
@@ -1301,7 +1301,7 @@ public class EditarRequerimientoCompraHelper {
 
             if (sector == null || sector.getIdSector() <= 0) {
                 throw errorUsuario(
-                        "El sector seleccionado ya no existe o no esta disponible."
+                        "El sector seleccionado ya no existe o no está disponible."
                 );
             }
 
@@ -1444,7 +1444,7 @@ private void cargarSnapshotAfiliado(
 
     if (afiliados == null || afiliados.size() != 1) {
         throw errorUsuario(
-                "No se pudo obtener un unico afiliado para guardar el requerimiento."
+                "No se pudo obtener un único afiliado para guardar el requerimiento."
         );
     }
 
@@ -1626,7 +1626,7 @@ private void validarDetalleParaGuardar(
             && !RequerimientoCompraDetalle.TIPO_ITEM_OBSERVACION.equals(tipoItem)) {
 
         throw errorUsuario(
-                "El tipo de item seleccionado no es valido."
+                "El tipo de item seleccionado no es válido."
         );
     }
 
@@ -1671,7 +1671,7 @@ private void validarTipoPrestacionParaGuardar(
             || detalle == null) {
 
         throw errorUsuario(
-                "No se pudo validar el tipo de prestacion del detalle."
+                "No se pudo validar el tipo de prestación del detalle."
         );
     }
 
@@ -1710,13 +1710,13 @@ private void validarTipoPrestacionParaGuardar(
                 && detallePersistido.getIdTipoPrestacion() != null) {
 
             throw errorUsuario(
-                    "El tipo de prestacion ya informado no puede quitarse."
+                    "El tipo de prestación ya informado no puede quitarse."
             );
         }
 
         if (detallePersistido == null && sectorConCatalogo) {
             throw errorUsuario(
-                    "Debe seleccionar el tipo de prestacion."
+                    "Debe seleccionar el tipo de prestación."
             );
         }
 
@@ -1725,7 +1725,7 @@ private void validarTipoPrestacionParaGuardar(
 
     if (!tipoValido) {
         throw errorUsuario(
-                "El tipo de prestacion no corresponde al sector "
+                "El tipo de prestación no corresponde al sector "
                         + "del requerimiento."
         );
     }
@@ -1739,7 +1739,7 @@ private void validarDetalleNomencladorParaGuardar(
             || detalle.getIdPrestacion().intValue() <= 0) {
 
         throw errorUsuario(
-                "Debe seleccionar una prestacion del nomenclador."
+                "Debe seleccionar una prestación del nomenclador."
         );
     }
 
@@ -1758,7 +1758,7 @@ private void validarDetalleNomencladorParaGuardar(
     )) {
 
         throw errorUsuario(
-                "Los datos recibidos no corresponden a una prestacion. "
+                "Los datos recibidos no corresponden a una prestación. "
                         + "Actualice la pantalla y vuelva a seleccionarla."
         );
     }
@@ -1774,8 +1774,8 @@ private void validarDetalleNomencladorParaGuardar(
             || nomenclador.getBaja_fecha() != null) {
 
         throw errorUsuario(
-                "La prestacion seleccionada ya no existe "
-                        + "o no esta activa. Vuelva a seleccionarla."
+                "La prestación seleccionada ya no existe "
+                        + "o no está activa. Vuelva a seleccionarla."
         );
     }
 
@@ -1787,7 +1787,7 @@ private void validarDetalleNomencladorParaGuardar(
             != detalle.getIdTipoNomenclador().intValue()) {
 
         throw errorUsuario(
-                "La prestacion seleccionada no corresponde al "
+                "La prestación seleccionada no corresponde al "
                         + "tipo de nomenclador actual. Vuelva a seleccionarla."
         );
     }
@@ -1817,13 +1817,13 @@ private void validarDetalleNomencladorParaGuardar(
     }
 
     validarTextoTecnico(
-            "codigo de nomenclador",
+            "código de nomenclador",
             detalle.getCodigoNomenclador(),
             nomenclador.getCodigo()
     );
 
     validarTextoTecnico(
-            "descripcion de nomenclador",
+            "descripción de nomenclador",
             detalle.getDescripcionNomenclador(),
             nomenclador.getDescripcion()
     );
@@ -1844,26 +1844,26 @@ private void validarDetalleNomencladorParaGuardar(
 
 private String mensajeNomencladorInvalido(String sector) {
     if ("FARMACIA".equals(sector)) {
-        return "Para Farmacia debe seleccionar una prestacion "
+        return "Para Farmacia debe seleccionar una prestación "
                 + "del nomenclador tipo 9.";
     }
 
     if ("DISCAPACIDAD".equals(sector)) {
-        return "Para Discapacidad debe seleccionar una prestacion "
-                + "con marca ReinLiq 6 o el codigo 431003.";
+        return "Para Discapacidad debe seleccionar una prestación "
+                + "con marca ReinLiq 6 o el código 431003.";
     }
 
     if ("ODONTOLOGIA".equals(sector)) {
-        return "Para Odontologia debe seleccionar una prestacion "
+        return "Para Odontologia debe seleccionar una prestación "
                 + "del nomenclador tipo 1.";
     }
 
     if ("PRESTACIONES MEDICAS".equals(sector)) {
-        return "Para PRESTACIONES MEDICAS debe seleccionar una "
-                + "prestacion de nomenclador tipo 2, 3, 4, 6 o 10.";
+        return "Para PRESTACIONES MÉDICAS debe seleccionar una "
+                + "prestación de nomenclador tipo 2, 3, 4, 6 o 10.";
     }
 
-    return "La prestacion seleccionada no corresponde "
+    return "La prestación seleccionada no corresponde "
             + "al sector del requerimiento.";
 }
 
@@ -1883,8 +1883,8 @@ private void validarDetalleMedicamentoParaGuardar(
     )) {
 
         throw errorUsuario(
-                "El detalle historico de medicamento no conserva "
-                        + "una referencia valida."
+                "El detalle histórico de medicamento no conserva "
+                        + "una referencia válida."
         );
     }
 
@@ -1894,8 +1894,8 @@ private void validarDetalleMedicamentoParaGuardar(
             || !WebKeysCompras.isEmpty(detalle.getDescripcionNomenclador())) {
 
         throw errorUsuario(
-                "El detalle historico de medicamento contiene "
-                        + "datos tecnicos incompatibles."
+                "El detalle histórico de medicamento contiene "
+                        + "datos técnicos incompatibles."
         );
     }
 }
@@ -1918,8 +1918,8 @@ private void validarDetalleObservacionParaGuardar(
             || !WebKeysCompras.isEmpty(detalle.getNombreMedicamento())) {
 
         throw errorUsuario(
-                "Un detalle de Observacion no puede contener "
-                        + "datos de codigo o medicamento."
+                "Un detalle de Observación no puede contener "
+                        + "datos de código o medicamento."
         );
     }
 }
@@ -1953,7 +1953,7 @@ private RequerimientoCompra validarRequerimientoDetalle(
             || requerimiento.getSectorId().intValue() <= 0) {
 
         throw errorUsuario(
-                "El requerimiento no tiene un sector valido."
+                "El requerimiento no tiene un sector válido."
         );
     }
 
@@ -1982,7 +1982,7 @@ private void prepararDetalleParaGuardar(
                 .equals(tipoRecibido)) {
 
             throw errorUsuario(
-                    "El detalle historico de medicamento no puede "
+                    "El detalle histórico de medicamento no puede "
                             + "convertirse directamente a otro tipo."
             );
         }
@@ -2027,7 +2027,7 @@ private void prepararDetalleParaGuardar(
                 .equals(tipoRecibido)) {
 
             throw errorUsuario(
-                    "El sector seleccionado requiere un detalle de OBSERVACION."
+                    "El sector seleccionado requiere un detalle de OBSERVACIÓN."
             );
         }
 
@@ -2211,7 +2211,7 @@ private void prepararDetalleParaGuardar(
         )) {
             throw errorUsuario(
                     "El " + campo
-                            + " cambio o ya no coincide con la informacion actual. "
+                            + " cambió o ya no coincide con la información actual. "
                             + "Vuelva a seleccionarlo."
             );
         }
@@ -2239,14 +2239,14 @@ private void prepararDetalleParaGuardar(
 
         if (requerimiento == null) {
             throw errorUsuario(
-                    "No se encontro el requerimiento de compra informado."
+                    "No se encontró el requerimiento de compra informado."
             );
         }
 
         if (!requerimiento.puedeEnviarACotizar()) {
             throw errorUsuario(
                     "El requerimiento solo puede enviarse a cotizar "
-                            + "mientras esta PENDIENTE."
+                            + "mientras está PENDIENTE."
             );
         }
 
@@ -2345,7 +2345,7 @@ private void prepararDetalleParaGuardar(
                     && estadoFinal != WebKeysCompras.ESTADO_COTIZADO) {
 
                 throw new IllegalStateException(
-                        "La cotizacion devolvio un estado invalido: "
+                        "La cotización devolvió un estado inválido: "
                                 + estadoFinal
                 );
             }
@@ -2357,8 +2357,8 @@ private void prepararDetalleParaGuardar(
 
         } catch (Exception e) {
             throw manejarErrorOperacion(
-                    "guardar la cotizacion",
-                    "No se pudo guardar la cotizacion. "
+                    "guardar la cotización",
+                    "No se pudo guardar la cotización. "
                             + "Revise los datos e intente nuevamente.",
                     e,
                     "idRequerimiento=" + idRequerimientoCompra
@@ -2429,7 +2429,7 @@ private void prepararDetalleParaGuardar(
 
         if (detalles == null || detalles.isEmpty()) {
             throw errorUsuario(
-                    "La cotizacion no contiene detalles para guardar."
+                    "La cotización no contiene detalles para guardar."
             );
         }
 
@@ -2449,7 +2449,7 @@ private void prepararDetalleParaGuardar(
 
             if (!idsRecibidos.add(idDetalle)) {
                 throw errorUsuario(
-                        "La cotizacion contiene un detalle repetido. "
+                        "La cotización contiene un detalle repetido. "
                                 + "Actualice la pantalla y vuelva a intentarlo."
                 );
             }
@@ -2506,7 +2506,7 @@ private void prepararDetalleParaGuardar(
 
         if (idPrestadorAdjudicado <= 0) {
             throw errorUsuario(
-                    "Debe seleccionar un prestador adjudicado valido."
+                    "Debe seleccionar un prestador adjudicado válido."
             );
         }
 
@@ -2534,7 +2534,7 @@ private void prepararDetalleParaGuardar(
         }
 
         throw errorUsuario(
-                "Para cerrar la cotizacion, primero cargue un presupuesto "
+                "Para cerrar la cotización, primero cargue un presupuesto "
                         + "activo del prestador adjudicado."
         );
     }
@@ -2612,7 +2612,7 @@ private void prepararDetalleParaGuardar(
                 || WebKeysCompras.isEmpty(presupuesto.getTitulo())) {
 
             throw errorUsuario(
-                    "El documento del presupuesto no conserva una identidad valida."
+                    "El documento del presupuesto no conserva una identidad válida."
             );
         }
     }
@@ -2698,7 +2698,7 @@ private void prepararDetalleParaGuardar(
         }
 
         StringBuilder mensajeLog = new StringBuilder();
-        mensajeLog.append("Error tecnico al ");
+        mensajeLog.append("Error técnico al ");
         mensajeLog.append(operacion);
         mensajeLog.append('.');
 
@@ -2808,13 +2808,13 @@ private void prepararDetalleParaGuardar(
 
             if (actual == null) {
                 throw errorUsuario(
-                        "El requerimiento ya no esta disponible."
+                        "El requerimiento ya no está disponible."
                 );
             }
 
             if (!actual.puedeEditarEstructura()) {
                 throw errorUsuario(
-                        "Solo pueden agregarse Ordenes medicas mientras "
+                        "Solo pueden agregarse Órdenes médicas mientras "
                                 + "el requerimiento se encuentra PENDIENTE."
                 );
             }
@@ -2826,7 +2826,7 @@ private void prepararDetalleParaGuardar(
             if (gestorDocumento == null) {
                 throw new IllegalStateException(
                         "No se obtuvo el gestor documental "
-                                + "de la Orden medica."
+                                + "de la Orden médica."
                 );
             }
 
@@ -2860,8 +2860,8 @@ private void prepararDetalleParaGuardar(
 
                 if (idDocumento <= 0) {
                     throw new IllegalStateException(
-                            "El registro de la Orden medica "
-                                    + "no devolvio un identificador valido."
+                            "El registro de la Orden médica "
+                                    + "no devolvió un identificador válido."
                     );
                 }
             }
@@ -2882,7 +2882,7 @@ private void prepararDetalleParaGuardar(
                 } catch (Exception rollbackError) {
                     _log.error(
                             "No se pudo confirmar el rollback al agregar "
-                                    + "Ordenes medicas a un requerimiento existente.",
+                                    + "Órdenes médicas a un requerimiento existente.",
                             rollbackError
                     );
                 }
@@ -2899,9 +2899,9 @@ private void prepararDetalleParaGuardar(
             }
 
             throw manejarErrorOperacion(
-                    "agregar Ordenes medicas al requerimiento",
-                    "No se pudieron agregar las Ordenes medicas. "
-                            + "Vuelva a seleccionar las imagenes "
+                    "agregar Órdenes médicas al requerimiento",
+                    "No se pudieron agregar las Órdenes médicas. "
+                            + "Vuelva a seleccionar las imágenes "
                             + "e intente nuevamente.",
                     e,
                     "idRequerimiento="

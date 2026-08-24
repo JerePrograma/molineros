@@ -5,17 +5,17 @@ import ar.com.ospim.compras.WebKeysCompras;
 import java.math.BigDecimal;
 
 /**
- * Detalle tecnico de un requerimiento de compra.
+ * Detalle técnico de un requerimiento de compra.
  *
  * Contrato actual:
  *
- * - Los sectores con codigo se persisten como NOMENCLADOR.
- * - Los sectores sin codigo se persisten como OBSERVACION.
+ * - Los sectores con código se persisten como NOMENCLADOR.
+ * - Los sectores sin código se persisten como OBSERVACION.
  * - MEDICAMENTO se conserva exclusivamente para lectura y
- *   edicion no estructural de registros historicos.
+ *   edición no estructural de registros históricos.
  *
  * No deben eliminarse los atributos de medicamento mientras
- * existan registros historicos que dependan de ellos.
+ * existan registros históricos que dependan de ellos.
  */
 public class RequerimientoCompraDetalle {
 
