@@ -18,21 +18,25 @@ public final class ComprasOrdenMedicaUiContractTest {
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/action/"
                         + "DescargarOrdenMedicaCompraAction.java"
         );
+        String documentos = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/documentos/"
+                        + "DocumentoLibraryComprasHelper.java"
+        );
         String form = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
-                        + "partials/_form_hidden.jsp"
+                        + "partials/requerimiento_compra_campos_ocultos_formulario_componente.jsp"
         );
         String alta = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
-                        + "partials/_orden_medica_alta.jsp"
+                        + "partials/requerimiento_compra_orden_medica_carga_componente.jsp"
         );
         String scripts = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
-                        + "partials/_scripts_edicion.jsp"
+                        + "partials/requerimiento_compra_scripts_edicion_guardado_componente.jsp"
         );
         String vista = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
-                        + "partials/_orden_medica_vista.jsp"
+                        + "partials/requerimiento_compra_orden_medica_consulta_componente.jsp"
         );
         String struts = leer(
                 "ext-web/docroot/WEB-INF/struts-config.xml"
@@ -51,7 +55,7 @@ public final class ComprasOrdenMedicaUiContractTest {
         assertContains(
                 "archivo sin hidden",
                 alta,
-                "name=\"orden_medica\""
+                "name=\"<%= nombreCampoArchivo %>\""
         );
         assertContains(
                 "formatos exactos",
@@ -61,7 +65,7 @@ public final class ComprasOrdenMedicaUiContractTest {
         assertContains(
                 "fecha obligatoria visible",
                 alta,
-                "Fecha de la orden médica:"
+                "Fecha de la orden médica"
         );
         assertContains(
                 "cliente valida extension",
@@ -71,7 +75,7 @@ public final class ComprasOrdenMedicaUiContractTest {
         assertContains(
                 "mueve nodo real",
                 scripts,
-                "form.appendChild(archivo)"
+                "form.appendChild(nodo)"
         );
         assertNotContains(
                 "no copia valor del archivo a hidden",
@@ -86,13 +90,13 @@ public final class ComprasOrdenMedicaUiContractTest {
         assertContains(
                 "alta usa contrato transaccional",
                 action,
-                ".guardarNuevoRequerimientoCompraConOrdenMedica("
+                ".guardarNuevoRequerimientoCompraConOrdenesMedicas("
         );
         assertOrden(
                 "valida antes de guardar",
                 action,
-                "gestorDocumento.validarOrdenMedica(",
-                ".guardarNuevoRequerimientoCompraConOrdenMedica("
+                "validarOrdenesMedicasDesdeRequest(",
+                ".guardarNuevoRequerimientoCompraConOrdenesMedicas("
         );
         assertContains(
                 "vista muestra fecha",
@@ -112,7 +116,12 @@ public final class ComprasOrdenMedicaUiContractTest {
         assertContains(
                 "descarga valida identidad DL",
                 descarga,
-                "coincideIdentidad(identidad, entry)"
+                "obtenerEntradaOrdenMedicaValidada("
+        );
+        assertContains(
+                "helper compara identidad persistida",
+                documentos,
+                "coincideIdentidadAsociacionDocumento("
         );
         assertContains(
                 "descarga valida permiso DL",

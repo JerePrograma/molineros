@@ -94,6 +94,9 @@ CREATE TABLE compras.sector_tipo_prestador (
 
                                                id_tipo_prestador INTEGER NOT NULL,
 
+                                               id_tipo_prestacion SMALLINT NOT NULL
+                                                   REFERENCES compras.tipo_prestacion (id_tipo_prestacion),
+
                                                activo BOOLEAN NOT NULL DEFAULT TRUE,
 
                                                alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
@@ -104,11 +107,19 @@ CREATE TABLE compras.sector_tipo_prestador (
                                                baja_usr VARCHAR(100),
 
                                                CONSTRAINT pk_compras_sector_tipo_prestador
-                                                   PRIMARY KEY (id_sector, id_tipo_prestador)
+                                                   PRIMARY KEY (
+                                                       id_sector,
+                                                       id_tipo_prestacion,
+                                                       id_tipo_prestador
+                                                   )
 );
 
 CREATE INDEX ix_compras_sector_tipo_sector_activo
-    ON compras.sector_tipo_prestador (id_sector, activo)
+    ON compras.sector_tipo_prestador (
+        id_sector,
+        id_tipo_prestacion,
+        activo
+    )
     WHERE baja_fecha IS NULL;
 
 CREATE INDEX ix_compras_sector_tipo_tipo_activo
@@ -145,6 +156,7 @@ CREATE TABLE compras.requerimiento (
                                        id_tercerizadora VARCHAR(40),
                                        recupero BOOLEAN NOT NULL DEFAULT FALSE,
                                        surge BOOLEAN NOT NULL DEFAULT FALSE,
+                                       legales BOOLEAN NOT NULL DEFAULT FALSE,
 
                                        observaciones TEXT,
 
@@ -1416,7 +1428,8 @@ CREATE TYPE compras.requerimiento_base_row AS (
     observaciones TEXT,
 
     id_estado INTEGER,
-    estado_descripcion VARCHAR
+    estado_descripcion VARCHAR,
+    legales BOOLEAN
     );
 
 
@@ -1493,7 +1506,8 @@ SELECT
     r.estado,
     compras.estado_requerimiento_descripcion(
             r.estado
-    )
+    ),
+    r.legales
 FROM compras.requerimiento r
          JOIN compras.sector_requerimiento s
               ON s.id_sector = r.id_sector;
@@ -1713,6 +1727,24 @@ STABLE;
 -- SECTORES
 -- ============================================================
 
+CREATE FUNCTION compras.es_sector_seleccionable_compras(
+    p_id_sector INTEGER
+)
+RETURNS BOOLEAN
+AS $func$
+    SELECT EXISTS (
+        SELECT 1
+        FROM compras.sector_requerimiento s
+        WHERE s.id_sector = p_id_sector
+          AND s.activo = TRUE
+          AND s.baja_fecha IS NULL
+          AND UPPER(BTRIM(s.descripcion)) NOT IN ('LEGALES', 'OTROS')
+    );
+$func$
+LANGUAGE sql
+STABLE;
+
+
 CREATE OR REPLACE FUNCTION compras.listar_sector_requerimiento()
 RETURNS TABLE (
     id INTEGER,
@@ -1727,8 +1759,7 @@ SELECT
     s.descripcion,
     s.requiere_afiliado
 FROM compras.sector_requerimiento s
-WHERE s.activo = TRUE
-  AND s.baja_fecha IS NULL
+WHERE compras.es_sector_seleccionable_compras(s.id_sector)
 ORDER BY s.descripcion;
 END;
 $func$
@@ -1803,12 +1834,13 @@ RETURN QUERY
 SELECT
     tp.id_tipo_prestador::INTEGER,
     tp.descripcion::VARCHAR,
-    COALESCE(stp.activo, FALSE)::BOOLEAN
+    COALESCE(bool_or(stp.activo), FALSE)::BOOLEAN
 FROM trae_tipos_prestadores() tp
          LEFT JOIN compras.sector_tipo_prestador stp
                    ON stp.id_tipo_prestador = tp.id_tipo_prestador::INTEGER
                   AND stp.id_sector = p_id_sector
                   AND stp.baja_fecha IS NULL
+GROUP BY tp.id_tipo_prestador, tp.descripcion
 ORDER BY tp.descripcion;
 END;
 $func$
@@ -1833,8 +1865,40 @@ END;
 $func$
 LANGUAGE plpgsql;
 
-CREATE FUNCTION compras.guardar_sector_tipo_prestador(
+CREATE FUNCTION compras.listar_configuracion_prestador_tipo_cotizacion(
+    p_id_sector INTEGER
+)
+RETURNS TABLE (
+    id_tipo_prestacion INTEGER,
+    tipo_cotizacion VARCHAR,
+    id_tipo_prestador INTEGER,
+    descripcion VARCHAR,
+    activo BOOLEAN
+)
+AS $func$
+    SELECT
+        tc.id_tipo_prestacion::INTEGER,
+        tc.descripcion::VARCHAR,
+        tp.id_tipo_prestador::INTEGER,
+        tp.descripcion::VARCHAR,
+        COALESCE(stp.activo, FALSE)::BOOLEAN
+    FROM compras.tipo_prestacion tc
+    CROSS JOIN trae_tipos_prestadores() tp
+    LEFT JOIN compras.sector_tipo_prestador stp
+      ON stp.id_sector = tc.id_sector
+     AND stp.id_tipo_prestacion = tc.id_tipo_prestacion
+     AND stp.id_tipo_prestador = tp.id_tipo_prestador::INTEGER
+     AND stp.baja_fecha IS NULL
+    WHERE tc.id_sector = p_id_sector
+    ORDER BY tc.id_tipo_prestacion, tp.descripcion;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.guardar_sector_tipo_prestador_cotizacion(
     p_id_sector INTEGER,
+    p_id_tipo_prestacion INTEGER,
     p_id_tipo_prestador INTEGER,
     p_activo BOOLEAN,
     p_usuario VARCHAR
@@ -1848,13 +1912,12 @@ BEGIN
 
     IF NOT EXISTS (
         SELECT 1
-        FROM compras.sector_requerimiento s
-        WHERE s.id_sector = p_id_sector
-          AND s.activo = TRUE
-          AND s.baja_fecha IS NULL
+        FROM compras.tipo_prestacion tp
+        WHERE tp.id_tipo_prestacion = p_id_tipo_prestacion
+          AND tp.id_sector = p_id_sector
     ) THEN
         RAISE EXCEPTION
-            'El sector informado no existe o no esta activo.';
+            'El tipo de cotización no corresponde al sector informado.';
 END IF;
 
     IF NOT EXISTS (
@@ -1868,23 +1931,54 @@ END IF;
 
 INSERT INTO compras.sector_tipo_prestador (
     id_sector,
+    id_tipo_prestacion,
     id_tipo_prestador,
     activo,
     alta_usr
 )
 VALUES (
     p_id_sector,
+    p_id_tipo_prestacion,
     p_id_tipo_prestador,
     COALESCE(p_activo, TRUE),
     v_usuario
 )
-ON CONFLICT (id_sector, id_tipo_prestador)
+ON CONFLICT (id_sector, id_tipo_prestacion, id_tipo_prestador)
 DO UPDATE
 SET activo = EXCLUDED.activo,
     modi_fecha = now(),
     modi_usr = v_usuario,
     baja_fecha = NULL,
     baja_usr = NULL;
+END;
+$func$
+LANGUAGE plpgsql;
+
+
+CREATE FUNCTION compras.guardar_sector_tipo_prestador(
+    p_id_sector INTEGER,
+    p_id_tipo_prestador INTEGER,
+    p_activo BOOLEAN,
+    p_usuario VARCHAR
+)
+RETURNS VOID
+AS $func$
+DECLARE
+    v_tipo RECORD;
+BEGIN
+    FOR v_tipo IN
+        SELECT id_tipo_prestacion
+        FROM compras.tipo_prestacion
+        WHERE id_sector = p_id_sector
+    LOOP
+        PERFORM compras.guardar_sector_tipo_prestador_cotizacion(
+            p_id_sector,
+            v_tipo.id_tipo_prestacion,
+            p_id_tipo_prestador,
+            p_activo,
+            p_usuario
+        );
+    END LOOP;
 END;
 $func$
 LANGUAGE plpgsql;
@@ -1914,6 +2008,7 @@ CREATE FUNCTION compras.guardar_requerimiento(
     p_id_tercerizadora VARCHAR,
     p_recupero BOOLEAN,
     p_surge BOOLEAN,
+    p_legales BOOLEAN,
     p_observaciones TEXT,
     p_usuario VARCHAR
 )
@@ -1931,6 +2026,11 @@ BEGIN
     v_afiliado_cuil := NULLIF(btrim(p_afiliado_cuil_titular), '');
 
     IF p_id IS NULL OR p_id <= 0 THEN
+        IF NOT compras.es_sector_seleccionable_compras(p_id_sector) THEN
+            RAISE EXCEPTION
+                'El sector informado no está habilitado para nuevas compras.';
+        END IF;
+
         INSERT INTO compras.requerimiento (
             estado, id_sector,
             afiliado_cuil_titular, afiliado_int, afiliado_id_ospim,
@@ -1939,7 +2039,7 @@ BEGIN
             afiliado_direccion, afiliado_localidad, afiliado_provincia,
             afiliado_celular, afiliado_telefono, afiliado_email,
             cargo_ospim, cargo_tercerizadora, id_tercerizadora,
-            recupero, surge, observaciones, alta_usr
+            recupero, surge, legales, observaciones, alta_usr
         )
         VALUES (
             1, p_id_sector,
@@ -1959,6 +2059,7 @@ BEGIN
             NULLIF(btrim(p_id_tercerizadora), ''),
             COALESCE(p_recupero, FALSE),
             COALESCE(p_surge, FALSE),
+            COALESCE(p_legales, FALSE),
             NULLIF(btrim(p_observaciones), ''),
             v_usuario
         )
@@ -1982,32 +2083,26 @@ BEGIN
            v_cuil_anterior IS DISTINCT FROM v_afiliado_cuil
         OR v_inte_anterior IS DISTINCT FROM p_afiliado_int;
 
+    IF v_cambio_afiliado THEN
+        RAISE EXCEPTION
+            'El afiliado del requerimiento no puede modificarse una vez creado.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM compras.requerimiento r
+        WHERE r.id_requerimiento = p_id
+          AND (
+              r.id_sector IS DISTINCT FROM p_id_sector
+              OR r.legales IS DISTINCT FROM COALESCE(p_legales, FALSE)
+          )
+    ) THEN
+        RAISE EXCEPTION
+            'El sector y la marca LEGALES son inmutables después del alta.';
+    END IF;
+
     UPDATE compras.requerimiento
-    SET id_sector = p_id_sector,
-        afiliado_cuil_titular = v_afiliado_cuil,
-        afiliado_int = p_afiliado_int,
-        afiliado_id_ospim = p_afiliado_id_ospim,
-        afiliado_nombre = CASE WHEN v_cambio_afiliado
-            THEN NULLIF(btrim(p_afiliado_nombre), '') ELSE afiliado_nombre END,
-        afiliado_apellido = CASE WHEN v_cambio_afiliado
-            THEN NULLIF(btrim(p_afiliado_apellido), '') ELSE afiliado_apellido END,
-        afiliado_documento_tipo = CASE WHEN v_cambio_afiliado
-            THEN NULLIF(btrim(p_afiliado_documento_tipo), '') ELSE afiliado_documento_tipo END,
-        afiliado_documento_nro = CASE WHEN v_cambio_afiliado
-            THEN NULLIF(btrim(p_afiliado_documento_nro), '') ELSE afiliado_documento_nro END,
-        afiliado_direccion = CASE WHEN v_cambio_afiliado
-            THEN NULLIF(btrim(p_afiliado_direccion), '') ELSE afiliado_direccion END,
-        afiliado_localidad = CASE WHEN v_cambio_afiliado
-            THEN NULLIF(btrim(p_afiliado_localidad), '') ELSE afiliado_localidad END,
-        afiliado_provincia = CASE WHEN v_cambio_afiliado
-            THEN NULLIF(btrim(p_afiliado_provincia), '') ELSE afiliado_provincia END,
-        afiliado_celular = CASE WHEN v_cambio_afiliado
-            THEN NULLIF(btrim(p_afiliado_celular), '') ELSE afiliado_celular END,
-        afiliado_telefono = CASE WHEN v_cambio_afiliado
-            THEN NULLIF(btrim(p_afiliado_telefono), '') ELSE afiliado_telefono END,
-        afiliado_email = CASE WHEN v_cambio_afiliado
-            THEN NULLIF(btrim(p_afiliado_email), '') ELSE afiliado_email END,
-        cargo_ospim = COALESCE(p_cargo_ospim, 0),
+    SET cargo_ospim = COALESCE(p_cargo_ospim, 0),
         cargo_tercerizadora = COALESCE(p_cargo_tercerizadora, 0),
         id_tercerizadora = NULLIF(btrim(p_id_tercerizadora), ''),
         recupero = COALESCE(p_recupero, FALSE),
@@ -3530,6 +3625,38 @@ ORDER BY
     LIMIT 1;
 $function$;
 
+/*
+ * Fuente canónica: relación prestador/contacto electrónico tipo E.
+ * No se utiliza el contacto general no clasificado de la cabecera.
+ */
+CREATE OR REPLACE FUNCTION
+compras.resolver_email_cotizacion_prestador(
+    p_id_prestador INTEGER
+)
+RETURNS VARCHAR
+AS $func$
+    SELECT NULLIF(BTRIM(ce.contacto), '')::VARCHAR
+    FROM public.prestad_contacto_e pce
+    JOIN public.contacto_e ce
+      ON ce.id_contacto_e = pce.id_contacto_e
+    JOIN public.prestador p
+      ON p.id_prestador = pce.id_prestador
+     AND p.baja_fecha IS NULL
+    WHERE pce.id_prestador = p_id_prestador
+      AND UPPER(BTRIM(COALESCE(ce.tipo_contacto_e, ''))) = 'E'
+      AND ce.baja_fecha IS NULL
+      AND (pce.vigen_desde IS NULL OR pce.vigen_desde <= LOCALTIMESTAMP)
+      AND (ce.vigen_desde IS NULL OR ce.vigen_desde <= LOCALTIMESTAMP)
+      AND NULLIF(BTRIM(ce.contacto), '')
+          ~* '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'
+    ORDER BY COALESCE(ce.modi_fecha, ce.alta_fecha,
+                      ce.vigen_desde, pce.vigen_desde) DESC NULLS LAST,
+             ce.id_contacto_e DESC
+    LIMIT 1;
+$func$
+LANGUAGE sql
+STABLE;
+
 CREATE FUNCTION compras.listar_prestadores_cotizacion_requerimiento(
     p_id_requerimiento INTEGER
 )
@@ -3579,6 +3706,13 @@ WHERE r.id_requerimiento =
               p.solicitar_cotizacion,
               FALSE
       ) = TRUE
+  AND EXISTS (
+      SELECT 1
+      FROM compras.requerimiento_detalle d
+      WHERE d.id_requerimiento = r.id_requerimiento
+        AND d.id_tipo_prestacion = stp.id_tipo_prestacion
+        AND d.baja_fecha IS NULL
+  )
   AND (
     -- Primer envio o recuperacion: se listan todos los
     -- candidatos vigentes. registrar_cotizacion_prestador
@@ -3646,6 +3780,13 @@ WHERE r.id_requerimiento =
               p.solicitar_cotizacion,
               FALSE
       ) = TRUE
+  AND EXISTS (
+      SELECT 1
+      FROM compras.requerimiento_detalle d
+      WHERE d.id_requerimiento = r.id_requerimiento
+        AND d.id_tipo_prestacion = stp.id_tipo_prestacion
+        AND d.baja_fecha IS NULL
+  )
     LIMIT 1;
 
 IF NOT FOUND THEN
@@ -5763,6 +5904,486 @@ $function$;
  * );
  */
 -- =====================================================================
+-- =====================================================================
+-- COMPATIBILIDAD DE PRESTADOR POR TIPO DE COTIZACIÓN
+-- =====================================================================
+
+CREATE FUNCTION compras.es_prestador_compatible_cotizacion(
+    p_id_requerimiento INTEGER,
+    p_id_prestador INTEGER
+)
+RETURNS BOOLEAN
+AS $func$
+    SELECT EXISTS (
+        SELECT 1
+        FROM compras.requerimiento r
+        JOIN public.prestador p
+          ON p.id_prestador = p_id_prestador
+         AND p.baja_fecha IS NULL
+         AND COALESCE(p.solicitar_cotizacion, FALSE) = TRUE
+        JOIN compras.sector_tipo_prestador stp
+          ON stp.id_sector = r.id_sector
+         AND stp.id_tipo_prestador = p.id_tipo_prestador
+         AND stp.activo = TRUE
+         AND stp.baja_fecha IS NULL
+        WHERE r.id_requerimiento = p_id_requerimiento
+          AND r.baja_fecha IS NULL
+          AND EXISTS (
+              SELECT 1
+              FROM compras.requerimiento_detalle d
+              WHERE d.id_requerimiento = r.id_requerimiento
+                AND d.id_tipo_prestacion = stp.id_tipo_prestacion
+                AND d.baja_fecha IS NULL
+          )
+    );
+$func$
+LANGUAGE sql
+STABLE;
+
+CREATE FUNCTION compras.validar_prestador_cotizacion_fila()
+RETURNS TRIGGER
+AS $func$
+BEGIN
+    IF NOT compras.es_prestador_compatible_cotizacion(
+        NEW.id_requerimiento,
+        NEW.id_prestador
+    ) THEN
+        RAISE EXCEPTION
+            'El prestador no es compatible con el sector y tipo de cotización.';
+    END IF;
+
+    RETURN NEW;
+END;
+$func$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_compras_cotizacion_prestador_compatible
+    BEFORE INSERT OR UPDATE OF id_requerimiento, id_prestador
+    ON compras.requerimiento_cotizacion_prestador
+    FOR EACH ROW
+    EXECUTE PROCEDURE compras.validar_prestador_cotizacion_fila();
+
+-- =====================================================================
+-- BAJAS DIFERIDAS + SURGE + COTIZACIÓN: UNA SOLA TRANSACCIÓN
+-- =====================================================================
+
+CREATE FUNCTION compras.guardar_cotizacion_requerimiento(
+    p_id_requerimiento INTEGER,
+    p_ids_detalle INTEGER[],
+    p_precios_unitarios NUMERIC[],
+    p_ids_detalle_eliminados INTEGER[],
+    p_id_prestador INTEGER,
+    p_surge BOOLEAN,
+    p_usuario VARCHAR
+)
+RETURNS INTEGER
+AS $func$
+DECLARE
+    v_estado INTEGER;
+    v_total_activos INTEGER;
+    v_total_conservados INTEGER;
+    v_total_eliminados INTEGER;
+    v_usuario VARCHAR(100);
+BEGIN
+    IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
+        RAISE EXCEPTION 'Debe informar el requerimiento de compra.';
+    END IF;
+
+    v_usuario := compras.normalizar_usuario(p_usuario);
+
+    SELECT r.estado
+    INTO v_estado
+    FROM compras.requerimiento r
+    WHERE r.id_requerimiento = p_id_requerimiento
+      AND r.baja_fecha IS NULL
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'No existe el requerimiento activo informado.';
+    END IF;
+
+    IF v_estado = 3 THEN
+        RETURN 3;
+    END IF;
+
+    IF v_estado <> 2 THEN
+        RAISE EXCEPTION
+            'La cotización sólo puede guardarse en estado A COTIZAR.';
+    END IF;
+
+    PERFORM 1
+    FROM compras.requerimiento_detalle d
+    WHERE d.id_requerimiento = p_id_requerimiento
+      AND d.baja_fecha IS NULL
+    ORDER BY d.id_detalle
+    FOR UPDATE;
+
+    SELECT COUNT(*)
+    INTO v_total_activos
+    FROM compras.requerimiento_detalle d
+    WHERE d.id_requerimiento = p_id_requerimiento
+      AND d.baja_fecha IS NULL;
+
+    v_total_conservados := COALESCE(array_length(p_ids_detalle, 1), 0);
+    v_total_eliminados := COALESCE(array_length(p_ids_detalle_eliminados, 1), 0);
+
+    IF v_total_conservados <= 0 THEN
+        RAISE EXCEPTION
+            'Debe conservar al menos una prestación antes de guardar la cotización.';
+    END IF;
+
+    IF v_total_conservados
+       <> COALESCE(array_length(p_precios_unitarios, 1), 0) THEN
+        RAISE EXCEPTION
+            'La cantidad de prestaciones y precios no coincide.';
+    END IF;
+
+    IF v_total_activos <> v_total_conservados + v_total_eliminados THEN
+        RAISE EXCEPTION
+            'La lista final no coincide con las prestaciones activas.';
+    END IF;
+
+    IF (SELECT COUNT(*) FROM unnest(p_ids_detalle) AS ids(id_detalle))
+       <> (SELECT COUNT(DISTINCT id_detalle)
+           FROM unnest(p_ids_detalle) AS ids(id_detalle))
+       OR (SELECT COUNT(*)
+           FROM unnest(p_ids_detalle_eliminados) AS ids(id_detalle))
+       <> (SELECT COUNT(DISTINCT id_detalle)
+           FROM unnest(p_ids_detalle_eliminados) AS ids(id_detalle))
+       OR EXISTS (
+           SELECT 1
+           FROM unnest(p_ids_detalle) AS conservados(id_detalle)
+           JOIN unnest(p_ids_detalle_eliminados) AS eliminados(id_detalle)
+             ON eliminados.id_detalle = conservados.id_detalle
+       ) THEN
+        RAISE EXCEPTION
+            'La lista de prestaciones contiene IDs repetidos o superpuestos.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM (
+            SELECT unnest(p_ids_detalle) AS id_detalle
+            UNION ALL
+            SELECT unnest(p_ids_detalle_eliminados) AS id_detalle
+        ) recibidos
+        LEFT JOIN compras.requerimiento_detalle d
+          ON d.id_detalle = recibidos.id_detalle
+         AND d.id_requerimiento = p_id_requerimiento
+         AND d.baja_fecha IS NULL
+        WHERE recibidos.id_detalle IS NULL
+           OR recibidos.id_detalle <= 0
+           OR d.id_detalle IS NULL
+    ) THEN
+        RAISE EXCEPTION
+            'La lista de prestaciones fue manipulada o quedó desactualizada.';
+    END IF;
+
+    UPDATE compras.requerimiento_detalle
+    SET baja_fecha = now(),
+        baja_usr = v_usuario,
+        modi_fecha = now(),
+        modi_usr = v_usuario
+    WHERE id_requerimiento = p_id_requerimiento
+      AND id_detalle = ANY(p_ids_detalle_eliminados)
+      AND baja_fecha IS NULL;
+
+    IF FOUND AND (
+        SELECT COUNT(*)
+        FROM compras.requerimiento_detalle
+        WHERE id_requerimiento = p_id_requerimiento
+          AND baja_fecha IS NULL
+    ) <= 0 THEN
+        RAISE EXCEPTION
+            'El requerimiento no puede quedar sin prestaciones activas.';
+    END IF;
+
+    UPDATE compras.requerimiento
+    SET surge = COALESCE(p_surge, surge),
+        modi_fecha = now(),
+        modi_usr = v_usuario
+    WHERE id_requerimiento = p_id_requerimiento
+      AND estado = 2
+      AND baja_fecha IS NULL;
+
+    IF p_id_prestador IS NOT NULL
+       AND NOT compras.es_prestador_compatible_cotizacion(
+           p_id_requerimiento,
+           p_id_prestador
+       ) THEN
+        RAISE EXCEPTION
+            'El prestador adjudicado no es compatible con las prestaciones conservadas.';
+    END IF;
+
+    RETURN compras.guardar_cotizacion_requerimiento(
+        p_id_requerimiento,
+        p_ids_detalle,
+        p_precios_unitarios,
+        p_id_prestador,
+        v_usuario
+    );
+END;
+$func$
+LANGUAGE plpgsql;
+
+CREATE FUNCTION compras.guardar_cotizacion_requerimiento_call(
+    p_id_requerimiento INTEGER,
+    p_ids_detalle_array VARCHAR,
+    p_precios_unitarios_array VARCHAR,
+    p_ids_detalle_eliminados_array VARCHAR,
+    p_id_prestador INTEGER,
+    p_surge BOOLEAN,
+    p_usuario VARCHAR
+)
+RETURNS INTEGER
+AS $func$
+    SELECT compras.guardar_cotizacion_requerimiento(
+        p_id_requerimiento,
+        CAST(p_ids_detalle_array AS INTEGER[]),
+        CAST(p_precios_unitarios_array AS NUMERIC[]),
+        CAST(COALESCE(NULLIF(BTRIM(p_ids_detalle_eliminados_array), ''), '{}') AS INTEGER[]),
+        p_id_prestador,
+        p_surge,
+        p_usuario
+    );
+$func$
+LANGUAGE sql
+VOLATILE;
+
+-- Funciones canónicas consumidas por las fachadas JDBC de Compras.
+CREATE OR REPLACE FUNCTION compras.buscar_items_historicos_afiliado(
+    p_cuil_titular VARCHAR,
+    p_inte INTEGER,
+    p_id_sector INTEGER,
+    p_id_requerimiento_excluir INTEGER,
+    p_limite INTEGER
+)
+RETURNS TABLE (
+    id_prestacion INTEGER,
+    id_tipo_nomenclador INTEGER,
+    codigo VARCHAR,
+    descripcion VARCHAR
+)
+AS $func$
+    SELECT
+        historico.id_prestacion,
+        historico.id_tipo_nomenclador,
+        historico.codigo,
+        historico.descripcion
+    FROM (
+        SELECT DISTINCT ON (d.id_prestacion, d.id_tipo_nomenclador)
+            d.id_prestacion,
+            d.id_tipo_nomenclador,
+            NULLIF(BTRIM(d.codigo_nomenclador), '') AS codigo,
+            NULLIF(BTRIM(d.descripcion_nomenclador), '') AS descripcion,
+            r.alta_fecha AS fecha_requerimiento,
+            r.id_requerimiento AS id_requerimiento_origen,
+            d.id_detalle AS id_detalle_origen
+        FROM compras.requerimiento r
+        INNER JOIN compras.requerimiento_detalle d
+            ON d.id_requerimiento = r.id_requerimiento
+        WHERE r.afiliado_cuil_titular = p_cuil_titular
+          AND r.afiliado_int = p_inte
+          AND r.id_sector = p_id_sector
+          AND r.id_requerimiento <> p_id_requerimiento_excluir
+          AND r.baja_fecha IS NULL
+          AND d.baja_fecha IS NULL
+          AND d.tipo_item = 'NOMENCLADOR'
+          AND d.id_prestacion IS NOT NULL
+          AND d.id_prestacion > 0
+          AND d.id_tipo_nomenclador IS NOT NULL
+          AND d.id_tipo_nomenclador > 0
+          AND NULLIF(BTRIM(d.codigo_nomenclador), '') IS NOT NULL
+          AND NULLIF(BTRIM(d.descripcion_nomenclador), '') IS NOT NULL
+        ORDER BY
+            d.id_prestacion,
+            d.id_tipo_nomenclador,
+            r.alta_fecha DESC NULLS LAST,
+            r.id_requerimiento DESC,
+            d.id_detalle DESC
+    ) historico
+    ORDER BY
+        historico.fecha_requerimiento DESC NULLS LAST,
+        historico.id_requerimiento_origen DESC,
+        historico.id_detalle_origen DESC
+    LIMIT p_limite;
+$func$
+LANGUAGE sql
+STABLE;
+
+CREATE OR REPLACE FUNCTION compras.tiene_situacion_medica_vigente(
+    p_cuil_titular VARCHAR,
+    p_inte INTEGER
+)
+RETURNS BOOLEAN
+AS $func$
+    SELECT EXISTS (
+        SELECT 1
+        FROM public.afi_situ_medica sm
+        WHERE sm.cuil_titular = p_cuil_titular
+          AND sm.inte = p_inte
+          AND sm.baja_fecha IS NULL
+          AND (
+                sm.vigen_hasta IS NULL
+                OR sm.vigen_hasta > CURRENT_DATE
+              )
+    );
+$func$
+LANGUAGE sql
+STABLE;
+
+CREATE OR REPLACE FUNCTION compras.listar_prestadores_adjudicados(
+    p_id_requerimiento INTEGER
+)
+RETURNS TABLE (id_prestador INTEGER)
+AS $func$
+    SELECT DISTINCT d.id_prestador
+    FROM compras.requerimiento_detalle d
+    WHERE d.id_requerimiento = p_id_requerimiento
+      AND d.baja_fecha IS NULL;
+$func$
+LANGUAGE sql
+STABLE;
+
+CREATE OR REPLACE FUNCTION compras.listar_presupuestos_prestador(
+    p_id_requerimiento INTEGER,
+    p_id_prestador INTEGER
+)
+RETURNS SETOF compras.requerimiento_presupuesto
+AS $func$
+    SELECT rp.*
+    FROM compras.requerimiento_presupuesto rp
+    WHERE rp.id_requerimiento = p_id_requerimiento
+      AND rp.id_prestador = p_id_prestador
+      AND rp.tipo_documento = 1
+      AND rp.baja_fecha IS NULL
+    ORDER BY rp.id_requerimiento_presupuesto;
+$func$
+LANGUAGE sql
+STABLE;
+
+CREATE OR REPLACE FUNCTION
+compras.listar_requerimientos_reclamo_prestacional_vinculados(
+    p_estado VARCHAR,
+    p_ids_requerimientos_array VARCHAR
+)
+RETURNS SETOF compras.requerimiento_reclamo_prestacional
+AS $func$
+    SELECT relacion.*
+    FROM compras.requerimiento_reclamo_prestacional relacion
+    WHERE relacion.estado = p_estado
+      AND relacion.id_reclamo_prestacional IS NOT NULL
+      AND relacion.id_requerimiento = ANY (
+            CAST(p_ids_requerimientos_array AS INTEGER[])
+          )
+    ORDER BY relacion.id_requerimiento;
+$func$
+LANGUAGE sql
+STABLE;
+
+CREATE OR REPLACE FUNCTION
+compras.get_requerimiento_por_reclamo_prestacional(
+    p_id_reclamo_prestacional INTEGER,
+    p_estado VARCHAR
+)
+RETURNS SETOF compras.requerimiento_reclamo_prestacional
+AS $func$
+    SELECT relacion.*
+    FROM compras.requerimiento_reclamo_prestacional relacion
+    INNER JOIN compras.requerimiento requerimiento
+        ON requerimiento.id_requerimiento = relacion.id_requerimiento
+    WHERE relacion.id_reclamo_prestacional = p_id_reclamo_prestacional
+      AND relacion.estado = p_estado
+      AND requerimiento.baja_fecha IS NULL
+    ORDER BY relacion.id_requerimiento;
+$func$
+LANGUAGE sql
+STABLE;
+
+CREATE OR REPLACE FUNCTION
+compras.bloquear_requerimiento_reclamo_prestacional(
+    p_id_requerimiento INTEGER
+)
+RETURNS BOOLEAN
+AS $func$
+BEGIN
+    PERFORM pg_advisory_xact_lock(5391184, p_id_requerimiento);
+    RETURN TRUE;
+END;
+$func$
+LANGUAGE plpgsql
+VOLATILE;
+
+CREATE OR REPLACE FUNCTION
+compras.get_estado_requerimiento_for_update(
+    p_id_requerimiento INTEGER
+)
+RETURNS INTEGER
+AS $func$
+DECLARE
+    v_estado INTEGER;
+BEGIN
+    SELECT r.estado
+    INTO v_estado
+    FROM compras.requerimiento r
+    WHERE r.id_requerimiento = p_id_requerimiento
+      AND r.baja_fecha IS NULL
+    FOR UPDATE;
+
+    RETURN v_estado;
+END;
+$func$
+LANGUAGE plpgsql
+VOLATILE;
+
+-- Regla canónica de duplicados: persona + prestación + fecha de Orden Médica.
+CREATE OR REPLACE FUNCTION compras.existe_requerimiento_duplicado(
+    p_cuil_titular VARCHAR,
+    p_inte INTEGER,
+    p_id_prestacion INTEGER,
+    p_fecha_orden_medica DATE,
+    p_id_requerimiento_excluir INTEGER
+)
+RETURNS BOOLEAN
+AS $func$
+SELECT
+    CASE
+        WHEN NULLIF(btrim(p_cuil_titular), '') IS NULL
+            OR p_inte IS NULL
+            OR p_inte < 0
+            OR p_id_prestacion IS NULL
+            OR p_id_prestacion <= 0
+            OR p_fecha_orden_medica IS NULL
+            THEN FALSE
+        ELSE EXISTS (
+            SELECT 1
+            FROM compras.requerimiento r
+            INNER JOIN compras.requerimiento_detalle d
+                ON d.id_requerimiento = r.id_requerimiento
+            INNER JOIN compras.requerimiento_presupuesto rp
+                ON rp.id_requerimiento = r.id_requerimiento
+            WHERE r.baja_fecha IS NULL
+              AND r.estado <> 99
+              AND r.afiliado_cuil_titular = btrim(p_cuil_titular)
+              AND r.afiliado_int = p_inte
+              AND d.baja_fecha IS NULL
+              AND d.tipo_item = 'NOMENCLADOR'
+              AND d.id_prestacion = p_id_prestacion
+              AND rp.baja_fecha IS NULL
+              AND rp.tipo_documento = 2
+              AND rp.fecha_documento = p_fecha_orden_medica
+              AND (
+                    p_id_requerimiento_excluir IS NULL
+                    OR p_id_requerimiento_excluir <= 0
+                    OR r.id_requerimiento <> p_id_requerimiento_excluir
+                  )
+            LIMIT 1
+        )
+    END;
+$func$
+LANGUAGE sql
+STABLE;
+
 -- CONSULTAS MANUALES DE VERIFICACION
 -- =====================================================================
 

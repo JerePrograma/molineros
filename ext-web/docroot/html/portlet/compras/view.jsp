@@ -84,16 +84,16 @@ configurarPrestadoresURL.setParameter(
 <c:choose>
     <c:when test='<%= "requerimientos".equals(tabs1) %>'>
         <liferay-util:include
-                page="/html/portlet/compras/requerimientos/requerimientos.jsp" />
+                page="/html/portlet/compras/requerimientos/requerimiento_compra_listado.jsp" />
     </c:when>
 
     <c:when test='<%= "cotizados".equals(tabs1) %>'>
         <liferay-util:include
-                page="/html/portlet/compras/requerimientos/requerimientos_cotizados.jsp" />
+                page="/html/portlet/compras/requerimientos/requerimiento_compra_cotizados.jsp" />
     </c:when>
 
     <c:otherwise>
         <liferay-util:include
-                page="/html/portlet/compras/requerimientos/requerimientos.jsp" />
+                page="/html/portlet/compras/requerimientos/requerimiento_compra_listado.jsp" />
     </c:otherwise>
 </c:choose>

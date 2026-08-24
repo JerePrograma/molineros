@@ -34,6 +34,7 @@ public class RequerimientoCompra {
 
     private Boolean recupero;
     private Boolean surge;
+    private Boolean legales;
     private String observaciones;
 
     private Integer idEstado;
@@ -61,6 +62,7 @@ public class RequerimientoCompra {
         this.cargoTercerizadora = Integer.valueOf(0);
         this.recupero = Boolean.FALSE;
         this.surge = Boolean.FALSE;
+        this.legales = Boolean.FALSE;
         this.detalles = new ArrayList<RequerimientoCompraDetalle>();
     }
 
@@ -345,6 +347,26 @@ public class RequerimientoCompra {
 
     public void setSurge(boolean surge) {
         this.surge = Boolean.valueOf(surge);
+    }
+
+    public Boolean getLegales() {
+        return legales;
+    }
+
+    public boolean isLegales() {
+        return Boolean.TRUE.equals(legales);
+    }
+
+    public String getLegalesDescripcion() {
+        return isLegales() ? "Sí" : "No";
+    }
+
+    public void setLegales(Boolean legales) {
+        this.legales = Boolean.valueOf(Boolean.TRUE.equals(legales));
+    }
+
+    public void setLegales(boolean legales) {
+        this.legales = Boolean.valueOf(legales);
     }
 
     public String getObservaciones() {

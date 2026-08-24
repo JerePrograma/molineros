@@ -23,6 +23,10 @@ public final class ComprasDocumentacionRpDataContractTest {
         String busquedaUtil = leer(
                 BASE + "BusquedaRequerimientoCompraServiceUtil.java"
         );
+        String busquedaHelper = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
+                        + "BusquedaRequerimientoCompraHelper.java"
+        );
         String vinculo = leer(
                 BASE
                         + "RequerimientoCompraReclamoPrestacionalServiceImpl.java"
@@ -31,12 +35,30 @@ public final class ComprasDocumentacionRpDataContractTest {
                 BASE
                         + "RequerimientoCompraReclamoPrestacionalServiceUtil.java"
         );
+        String vinculoHelper = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
+                        + "RequerimientoCompraReclamoPrestacionalHelper.java"
+        );
         String precarga = leer(
-                BASE + "ReclamoPrestacionalCompraPrecargaServiceUtil.java"
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
+                        + "ReclamoPrestacionalCompraPrecargaHelper.java"
+        );
+        String schema = leer(
+                "ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql"
         );
 
-        verificarPresupuestoAdjudicado(busqueda, busquedaUtil);
-        verificarConsultaInversa(vinculo, vinculoUtil);
+        verificarPresupuestoAdjudicado(
+                busqueda,
+                busquedaHelper,
+                busquedaUtil,
+                schema
+        );
+        verificarConsultaInversa(
+                vinculo,
+                vinculoHelper,
+                vinculoUtil,
+                schema
+        );
         verificarCoherenciaPrecarga(precarga);
 
         System.out.println("CONTRATO_DOCUMENTACION_COMPRAS_RP_DATOS_OK");
@@ -44,92 +66,35 @@ public final class ComprasDocumentacionRpDataContractTest {
 
     private static void verificarPresupuestoAdjudicado(
             String busqueda,
-            String util) {
+            String helper,
+            String util,
+            String schema) {
 
-        String sqlPrestador = extraerConstante(
+        contiene(
                 busqueda,
-                "SQL_GET_PRESTADOR_ADJUDICADO"
+                "prestadores mediante función PostgreSQL",
+                "compras.listar_prestadores_adjudicados(?)"
         );
         contiene(
-                sqlPrestador,
-                "prestador deriva de detalles",
-                "SELECT DISTINCT d.id_prestador"
-        );
-        contiene(
-                sqlPrestador,
-                "prestador pertenece al requerimiento",
-                "d.id_requerimiento = ?"
-        );
-        contiene(
-                sqlPrestador,
-                "solo detalles activos",
-                "d.baja_fecha IS NULL"
-        );
-        noContiene(sqlPrestador, "sin orden implicito", "ORDER BY");
-
-        String sqlDocumento = extraerConstante(
                 busqueda,
-                "SQL_GET_PRESUPUESTO_ADJUDICADO"
+                "presupuestos mediante función PostgreSQL",
+                "compras.listar_presupuestos_prestador(?,?)"
         );
-        contiene(
-                sqlDocumento,
-                "documento del requerimiento",
-                "rp.id_requerimiento = ?"
-        );
-        contiene(
-                sqlDocumento,
-                "documento del prestador adjudicado",
-                "rp.id_prestador = ?"
-        );
-        contiene(
-                sqlDocumento,
-                "solo tipo presupuesto",
-                "rp.tipo_documento = 1"
-        );
-        contiene(
-                sqlDocumento,
-                "solo documento activo",
-                "rp.baja_fecha IS NULL"
-        );
-        noContiene(sqlDocumento, "sin ultimo id", "MAX(");
-        noContiene(sqlDocumento, "sin primer resultado", "LIMIT 1");
-        noContiene(sqlDocumento, "sin orden de listado", "ORDER BY");
-
-        String resolver = extraerMetodo(
-                busqueda,
-                "private int resolverPrestadorAdjudicado("
-        );
-        contiene(
-                resolver,
-                "rechaza ausencia de adjudicacion",
-                "if (!rs.next())"
-        );
-        contiene(
-                resolver,
-                "rechaza prestador nulo o invalido",
-                "rs.wasNull() || idPrestador <= 0"
-        );
-        contiene(
-                resolver,
-                "rechaza prestadores distintos",
-                "if (rs.next())"
-        );
+        contiene(schema, "prestador deriva de detalles", "SELECT DISTINCT d.id_prestador");
+        contiene(schema, "prestador pertenece al requerimiento", "d.id_requerimiento = p_id_requerimiento");
+        contiene(schema, "solo detalles activos", "d.baja_fecha IS NULL");
+        contiene(schema, "documento del prestador", "rp.id_prestador = p_id_prestador");
+        contiene(schema, "solo tipo presupuesto", "rp.tipo_documento = 1");
+        contiene(schema, "solo documento activo", "rp.baja_fecha IS NULL");
 
         String getter = extraerMetodo(
-                busqueda,
-                "public RequerimientoCompraPresupuesto "
-                        + "getPresupuestoAdjudicado("
+                helper,
+                "public RequerimientoCompraPresupuesto getPresupuestoAdjudicado("
         );
-        contiene(
-                getter,
-                "resuelve primero el prestador",
-                "resolverPrestadorAdjudicado("
-        );
-        contiene(
-                getter,
-                "usa consulta documental explicita",
-                "SQL_GET_PRESUPUESTO_ADJUDICADO"
-        );
+        contiene(getter, "lista adjudicados", "service.listarPrestadoresAdjudicados(");
+        contiene(getter, "rechaza múltiples adjudicados", "prestadores.size() != 1");
+        contiene(getter, "lista presupuesto exacto", "service.listarPresupuestosPrestador(");
+        contiene(getter, "rechaza documentos ambiguos", "presupuestos.size() > 1");
         contiene(
                 util,
                 "API publica de presupuesto adjudicado",
@@ -140,36 +105,31 @@ public final class ComprasDocumentacionRpDataContractTest {
 
     private static void verificarConsultaInversa(
             String servicio,
-            String util) {
+            String helper,
+            String util,
+            String schema) {
 
-        String sql = extraerConstante(
+        contiene(
                 servicio,
-                "SQL_GET_RELACION_POR_RECLAMO"
+                "consulta inversa mediante función PostgreSQL",
+                "compras.get_requerimiento_por_reclamo_prestacional(?,?)"
         );
+        contiene(schema, "consulta tabla persistente", "compras.requerimiento_reclamo_prestacional relacion");
+        contiene(schema, "busca por RP", "relacion.id_reclamo_prestacional = p_id_reclamo_prestacional");
+        contiene(schema, "exige estado", "relacion.estado = p_estado");
         contiene(
-                sql,
-                "consulta tabla persistente",
-                "compras.requerimiento_reclamo_prestacional relacion"
-        );
-        contiene(
-                sql,
-                "busca por RP",
-                "relacion.id_reclamo_prestacional = ?"
-        );
-        contiene(sql, "exige estado vinculado", "relacion.estado = ?");
-        contiene(
-                sql,
+                schema,
                 "exige requerimiento existente",
-                "JOIN compras.requerimiento requerimiento"
+                "INNER JOIN compras.requerimiento requerimiento"
         );
         contiene(
-                sql,
+                schema,
                 "exige requerimiento activo",
                 "requerimiento.baja_fecha IS NULL"
         );
 
         String getter = extraerMetodo(
-                servicio,
+                helper,
                 "getRelacionPorReclamoPrestacional("
         );
         contiene(
@@ -179,13 +139,13 @@ public final class ComprasDocumentacionRpDataContractTest {
         );
         contiene(
                 getter,
-                "RP sin vinculo devuelve null",
-                "if (!rs.next())"
+                "RP sin vínculo devuelve null",
+                "relaciones.isEmpty()"
         );
         contiene(
                 getter,
-                "multiples vinculos fallan cerrados",
-                "if (rs.next())"
+                "múltiples vínculos fallan cerrados",
+                "relaciones.size() > 1"
         );
         contiene(
                 getter,
@@ -194,7 +154,7 @@ public final class ComprasDocumentacionRpDataContractTest {
         );
         contiene(
                 getter,
-                "revalida bean vinculado",
+                "revalida la única relación",
                 "relacion.isVinculado()"
         );
         contiene(

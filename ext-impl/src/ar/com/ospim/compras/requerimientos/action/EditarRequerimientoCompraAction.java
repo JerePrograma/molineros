@@ -187,11 +187,18 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 List detallesCotizacion =
                         getDetallesCotizacionFromRequest(actionRequest);
 
+                List idsDetallesEliminados =
+                        getIdsDetallesEliminadosFromRequest(actionRequest);
+
+                boolean surge = parseSurgeObligatorio(actionRequest);
+
                 GuardadoCotizacionResultado resultado =
                         requerimientoHelper
                                 .guardarAvanceCotizacion(
                                         idRequerimientoCompra,
                                         detallesCotizacion,
+                                        idsDetallesEliminados,
+                                        surge,
                                         usuario
                                 );
 
@@ -1643,6 +1650,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         requerimiento.setSurge(
                 parseSurgeObligatorio(request)
         );
+        requerimiento.setLegales(
+                getParametroBoolean(request, "legales")
+        );
         requerimiento.setObservaciones(
                 getParametroRaw(request, "observaciones", null)
         );
@@ -1794,6 +1804,56 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         return detalles;
+    }
+
+    private List getIdsDetallesEliminadosFromRequest(
+            ActionRequest request) throws Exception {
+
+        List idsEliminados = new ArrayList();
+        Set idsUnicos = new HashSet();
+        String value = getParametroTrim(request, "detalle_deleted_ids");
+
+        if (WebKeysCompras.isEmpty(value)) {
+            return idsEliminados;
+        }
+
+        String[] values = value.split(",");
+
+        for (int i = 0; i < values.length; i++) {
+            String raw = values[i] != null ? values[i].trim() : "";
+
+            if (WebKeysCompras.isEmpty(raw)
+                    || !raw.matches("^[0-9]+$")) {
+
+                errorCampo(
+                        "detalle_deleted_ids",
+                        "La lista de prestaciones eliminadas es inválida."
+                );
+            }
+
+            Integer id;
+
+            try {
+                id = Integer.valueOf(raw);
+            } catch (NumberFormatException e) {
+                errorCampo(
+                        "detalle_deleted_ids",
+                        "La lista de prestaciones eliminadas está fuera de rango."
+                );
+                return idsEliminados;
+            }
+
+            if (id.intValue() <= 0 || !idsUnicos.add(id)) {
+                errorCampo(
+                        "detalle_deleted_ids",
+                        "La lista de prestaciones eliminadas contiene IDs inválidos o repetidos."
+                );
+            }
+
+            idsEliminados.add(id);
+        }
+
+        return idsEliminados;
     }
 
     private void copiarParametrosCotizacion(

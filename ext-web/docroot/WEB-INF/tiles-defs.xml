@@ -190,7 +190,7 @@
 
 	<definition name="portlet.afiliados.result.search.auto_select"
 		extends="portlet.afiliados">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/afiliado_auto_select_result.jsp" />
+		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_afiliado_busqueda_resultado.jsp" />
 	</definition>
 
 	<definition name="portlet.afiliados.opciones.result.search"
@@ -2214,7 +2214,7 @@
 	<definition name="portlet.ospim.correspondencia_inbox.result.search"
 		extends="portlet.correspondencia">
 		<put name="portlet_content"
-			value="/portlet/correspondencia/bandeja_de_entrada_detalle.jsp" />
+			value="/portlet/correspondencia/bandeja_de_entradarequerimiento_compra_detalle_componente.jsp" />
 	</definition>
 
 	<definition name="portlet.ospim.correspondencia.result.search"
@@ -3292,7 +3292,7 @@
 	</definition>
 
 	<definition name="portlet.uoma.centrocosto.tablero.detalle"	extends="portlet.uoma">
-		<put name="portlet_content" value="/portlet/uoma/centro_costo/centro_costo_tablero_detalle.jsp" />
+		<put name="portlet_content" value="/portlet/uoma/centro_costo/centro_costo_tablerorequerimiento_compra_detalle_componente.jsp" />
 	</definition>
 
 	<!-- Fin Centro Costo UOMA -->
@@ -4266,7 +4266,7 @@
 	</definition>
 	
 	<definition name="portlet.afiliados.formulario.detalle" extends="portlet.afiliados">
-	    <put name="portlet_content" value="/portlet/afiliados/formulario_detalle.jsp" />
+	    <put name="portlet_content" value="/portlet/afiliados/formulariorequerimiento_compra_detalle_componente.jsp" />
 	</definition>
 	
 	<definition name="portlet.afiliados.vendedor.list" extends="portlet.afiliados">
@@ -4278,7 +4278,7 @@
 	</definition>
 	
 	<definition name="portlet.afiliados.vendedor.detalle" extends="portlet.afiliados">
-	    <put name="portlet_content" value="/portlet/afiliados/vendedores_detalle.jsp" />
+	    <put name="portlet_content" value="/portlet/afiliados/vendedoresrequerimiento_compra_detalle_componente.jsp" />
 	</definition>
 	
 	<definition name="portlet.afiliados.formulario.cotizar" extends="portlet.afiliados">
@@ -4543,45 +4543,45 @@
 
 		<put
 				name="portlet_content"
-				value="/portlet/compras/requerimientos/configurar_tipos_prestador_sector.jsp" />
+				value="/portlet/compras/requerimientos/requerimiento_compra_prestadores_configuracion.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.result.search" extends="portlet.compras">
 		<put
 				name="portlet_content"
-				value="/portlet/compras/requerimientos/requerimientos_search_result.jsp" />
+				value="/portlet/compras/requerimientos/requerimiento_compra_busqueda_resultado.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.result.search" extends="portlet.compras">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimientos_search_result.jsp" />
+		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_busqueda_resultado.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.alta_requerimiento" extends="portlet.compras">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_alta.jsp" />
+		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_alta.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.editar_requerimiento" extends="portlet.compras">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_edicion.jsp" />
+		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_edicion.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.buscar_medicamentos" extends="portlet.compras">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/buscar_medicamentos_result.jsp" />
+		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_medicamento_busqueda_resultado.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.buscar_item_tecnico" extends="portlet.compras">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/buscar_item_tecnico_result.jsp" />
+		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_prestacion_busqueda_resultado.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.ver_requerimiento" extends="portlet.compras">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_vista.jsp" />
+		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_consulta.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.afiliado_auto_select_result" extends="portlet.compras">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/afiliado_auto_select_result.jsp" />
+		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_afiliado_busqueda_resultado.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.imprimir_requerimiento" extends="portlet.compras">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/imprimir_requerimiento_pdf.jsp" />
+		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_impresion_pdf.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.error" extends="portlet.compras">
@@ -4591,7 +4591,7 @@
 	<definition name="portlet.compras.prestadores_enviados"
 	            extends="portlet.compras">
 		<put name="portlet_content"
-		     value="/portlet/compras/requerimientos/prestadores_enviados.jsp" />
+		     value="/portlet/compras/requerimientos/requerimiento_compra_prestadores_enviados.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.afiliados.result.search"
@@ -4603,7 +4603,7 @@
 	<definition name="portlet.compras.afiliados.result.search.auto_select"
 	            extends="portlet.compras">
 		<put name="portlet_content"
-		     value="/portlet/compras/requerimientos/afiliado_auto_select_result.jsp" />
+		     value="/portlet/compras/requerimientos/requerimiento_compra_afiliado_busqueda_resultado.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.afiliados.result.search.popup"
@@ -4624,7 +4624,7 @@
 
         <put
                 name="portlet_content"
-                value="/portlet/compras/requerimientos/situacion_medica_vigente.jsp" />
+                value="/portlet/compras/requerimientos/requerimiento_compra_situacion_medica_vigente.jsp" />
 
     </definition>
 

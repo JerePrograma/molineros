@@ -22,15 +22,17 @@ public final class ComprasSurgeSelectContractTest {
     }
 
     public static void main(String[] args) throws Exception {
-        String datosBasicos = leer(BASE + "_datos_basicos.jsp");
-        String formHidden = leer(BASE + "_form_hidden.jsp");
-        String modelo = leer(BASE + "_modelo_requerimiento.jsp");
-        String scripts = leer(BASE + "_scripts_comunes.jsp");
-        String scriptsEdicion = leer(BASE + "_scripts_edicion.jsp");
-        String estilos = leer(BASE + "_estilos.jsp");
+        String datosBasicos = leer(BASE + "requerimiento_compra_datos_basicos_componente.jsp");
+        String formHidden = leer(BASE + "requerimiento_compra_campos_ocultos_formulario_componente.jsp");
+        String modelo = leer(BASE + "requerimiento_compra_modelo_vista_componente.jsp");
+        String scripts = leer(BASE + "requerimiento_compra_scripts_base_componente.jsp");
+        String scriptsEdicion = leer(
+                BASE + "requerimiento_compra_scripts_edicion_guardado_componente.jsp"
+        );
+        String estilos = leer(BASE + "requerimiento_compra_estilos_componente.jsp");
         String resultados = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
-                        + "requerimientos_search_result.jsp"
+                        + "requerimiento_compra_busqueda_resultado.jsp"
         );
         String requerimiento = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/beans/"
@@ -168,9 +170,9 @@ public final class ComprasSurgeSelectContractTest {
                 "cargos conservados debajo",
                 "compras-cargos-requerimiento"
         );
-        contiene(
+        noContiene(
                 datosBasicos,
-                "Recupero conserva su semántica de cargos",
+                "Recupero derivado no se expone como control manipulable",
                 "id=\"<portlet:namespace />recupero\""
         );
         contiene(

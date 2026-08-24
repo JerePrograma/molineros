@@ -1,0 +1,101 @@
+<%--
+Responsabilidad:
+    Renderiza prestadores notificados y sus emails actual e histórico.
+Incluido desde:
+    Forward, Action o entry point directo en: tiles-defs.xml.
+Pantallas o estados de uso:
+    Búsqueda, selección o popup según el forward indicado.
+Entradas requeridas:
+    Atributos preparados por el Action asociado al forward.
+Atributos de request consumidos:
+    Los atributos enumerados en el scriptlet inicial del archivo.
+Parámetros consumidos:
+    Sólo parámetros de render ya validados por el Action; no persiste datos.
+IDs o funciones JavaScript expuestos:
+    Ninguno.
+Efectos secundarios:
+    Sólo renderiza presentación; las operaciones se delegan al Action.
+--%>
+<%@ page contentType="application/json; charset=UTF-8" pageEncoding="ISO-8859-1" %>
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion" %>
+
+<%!
+private String jsonPrestadorCompra(String value) {
+    if (value == null) {
+        return "";
+    }
+
+    return value
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\r", " ")
+            .replace("\n", " ")
+            .replace("\t", " ")
+            .replace("<", "\\u003C")
+            .replace(">", "\\u003E");
+}
+%>
+
+<%
+response.setContentType("application/json; charset=UTF-8");
+response.setCharacterEncoding("UTF-8");
+response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+response.setHeader("Pragma", "no-cache");
+response.setDateHeader("Expires", 0L);
+
+List<PrestadorCotizacion> prestadores =
+        (List<PrestadorCotizacion>) request.getAttribute(
+                WebKeysCompras.PRESTADORES_ENVIADOS_COTIZACION
+        );
+
+if (prestadores == null) {
+    prestadores = new ArrayList<PrestadorCotizacion>();
+}
+%>{
+    "prestadores": [
+<%
+boolean primero = true;
+
+for (int i = 0; i < prestadores.size(); i++) {
+    PrestadorCotizacion prestador = prestadores.get(i);
+
+    if (prestador == null || prestador.getIdPrestador() <= 0) {
+        continue;
+    }
+
+    if (!primero) {
+%>,
+<%
+    }
+
+    primero = false;
+%>
+        {
+            "id": "<%= prestador.getIdPrestador() %>",
+            "cuit": "<%= jsonPrestadorCompra(
+                    prestador.getCuitVisible()
+            ) %>",
+            "razonSocial": "<%= jsonPrestadorCompra(
+                    prestador.getDescripcionVisible()
+            ) %>",
+            "label": "<%= jsonPrestadorCompra(
+                    prestador.getEtiquetaVisible()
+            ) %>",
+            "emailActual": "<%= jsonPrestadorCompra(
+                    prestador.getEmailVisible()
+            ) %>",
+            "emailDestino": "<%= jsonPrestadorCompra(
+                    prestador.getEmailDestinoVisible()
+            ) %>",
+            "estadoEnvio": "<%= jsonPrestadorCompra(
+                    prestador.getEstadoEnvioVisible()
+            ) %>"
+        }
+<%
+}
+%>
+    ]
+}

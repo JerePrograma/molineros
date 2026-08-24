@@ -268,6 +268,14 @@ public class EditarRequerimientoCompraHelper {
                     actual.getAfiliadoEmail()
             );
 
+            if (requerimiento.isLegales() != actual.isLegales()) {
+                throw errorUsuario(
+                        "La marca LEGALES sólo puede definirse durante el alta."
+                );
+            }
+
+            requerimiento.setLegales(actual.getLegales());
+
             /*
              * Sector y afiliado ya fueron restaurados desde persistencia.
              *
@@ -1131,6 +1139,24 @@ public class EditarRequerimientoCompraHelper {
         return guardarCotizacion(
                 idRequerimientoCompra,
                 detalles,
+                new ArrayList<Integer>(),
+                obtenerSurgeActual(idRequerimientoCompra),
+                usuario
+        );
+    }
+
+    public GuardadoCotizacionResultado guardarAvanceCotizacion(
+            int idRequerimientoCompra,
+            List<RequerimientoCompraDetalle> detalles,
+            List<Integer> idsDetallesEliminados,
+            boolean surge,
+            String usuario) throws Exception {
+
+        return guardarCotizacion(
+                idRequerimientoCompra,
+                detalles,
+                idsDetallesEliminados,
+                surge,
                 usuario
         );
     }
@@ -1143,6 +1169,8 @@ public class EditarRequerimientoCompraHelper {
         return guardarCotizacion(
                 idRequerimientoCompra,
                 detalles,
+                new ArrayList<Integer>(),
+                obtenerSurgeActual(idRequerimientoCompra),
                 usuario
         );
     }
@@ -2251,6 +2279,8 @@ private void prepararDetalleParaGuardar(
     private GuardadoCotizacionResultado guardarCotizacion(
             int idRequerimientoCompra,
             List<RequerimientoCompraDetalle> detalles,
+            List<Integer> idsDetallesEliminados,
+            boolean surge,
             String usuario) throws Exception {
 
         Integer idPrestadorAdjudicado = null;
@@ -2263,12 +2293,20 @@ private void prepararDetalleParaGuardar(
             }
 
             validarDetallesCotizacionRecibidos(detalles);
+            validarIdsDetallesEliminados(
+                    detalles,
+                    idsDetallesEliminados
+            );
 
             idPrestadorAdjudicado =
                     obtenerPrestadorAdjudicadoUnico(detalles);
 
             Integer[] idsDetalle = new Integer[detalles.size()];
             BigDecimal[] preciosUnitarios = new BigDecimal[detalles.size()];
+            Integer[] idsEliminados =
+                    idsDetallesEliminados.toArray(
+                            new Integer[idsDetallesEliminados.size()]
+                    );
 
             for (int i = 0; i < detalles.size(); i++) {
                 RequerimientoCompraDetalle detalle = detalles.get(i);
@@ -2297,7 +2335,9 @@ private void prepararDetalleParaGuardar(
                             idRequerimientoCompra,
                             idsDetalle,
                             preciosUnitarios,
+                            idsEliminados,
                             idPrestadorAdjudicado,
+                            surge,
                             normalizarUsuario(usuario)
                     );
 
@@ -2328,6 +2368,59 @@ private void prepararDetalleParaGuardar(
                             + (detalles != null ? detalles.size() : 0)
                             + ", usuario=" + usuario
             );
+        }
+    }
+
+    private boolean obtenerSurgeActual(
+            int idRequerimientoCompra) throws Exception {
+
+        RequerimientoCompra requerimiento =
+                BusquedaRequerimientoCompraServiceUtil
+                        .getRequerimientoCompra(idRequerimientoCompra);
+
+        if (requerimiento == null) {
+            throw errorUsuario(
+                    "No se encontró el requerimiento de compra informado."
+            );
+        }
+
+        return requerimiento.isSurge();
+    }
+
+    protected void validarIdsDetallesEliminados(
+            List<RequerimientoCompraDetalle> detalles,
+            List<Integer> idsDetallesEliminados) throws Exception {
+
+        if (idsDetallesEliminados == null) {
+            throw errorUsuario(
+                    "No se recibió la lista de prestaciones eliminadas."
+            );
+        }
+
+        Set<Integer> idsConservados = new HashSet<Integer>();
+
+        for (int i = 0; detalles != null && i < detalles.size(); i++) {
+            RequerimientoCompraDetalle detalle = detalles.get(i);
+
+            if (detalle != null && detalle.getIdInt() > 0) {
+                idsConservados.add(Integer.valueOf(detalle.getIdInt()));
+            }
+        }
+
+        Set<Integer> idsEliminados = new HashSet<Integer>();
+
+        for (int i = 0; i < idsDetallesEliminados.size(); i++) {
+            Integer id = idsDetallesEliminados.get(i);
+
+            if (id == null
+                    || id.intValue() <= 0
+                    || idsConservados.contains(id)
+                    || !idsEliminados.add(id)) {
+
+                throw errorUsuario(
+                        "La lista de prestaciones eliminadas fue manipulada."
+                );
+            }
         }
     }
 

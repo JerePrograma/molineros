@@ -7010,7 +7010,7 @@
 					path="portlet.compras.error" />
 		</action>
 
-		<!-- NUEVO requerimiento: renderiza requerimiento_alta.jsp -->
+		<!-- NUEVO requerimiento: renderiza requerimiento_compra_alta.jsp -->
 		<action
 				path="/compras/nuevo_requerimiento"
 				type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraAction">
@@ -7032,7 +7032,7 @@
 					path="portlet.compras.error" />
 		</action>
 
-		<!-- EDITAR requerimiento existente: renderiza requerimiento_edicion.jsp -->
+		<!-- EDITAR requerimiento existente: renderiza requerimiento_compra_edicion.jsp -->
 		<action
 				path="/compras/editar_requerimiento"
 				type="ar.com.ospim.compras.requerimientos.action.EditarRequerimientoCompraAction">
@@ -7094,7 +7094,7 @@
 					path="portlet.compras.error" />
 		</action>
 
-		<!-- VER requerimiento: renderiza requerimiento_vista.jsp -->
+		<!-- VER requerimiento: renderiza requerimiento_compra_consulta.jsp -->
 		<action
 				path="/compras/ver_requerimiento"
 				type="ar.com.ospim.compras.requerimientos.action.VerRequerimientoCompraAction">

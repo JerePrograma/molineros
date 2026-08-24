@@ -7,6 +7,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,56 +45,62 @@ public final class ComprasJspCompilationBoundaryContractTest {
     private static final String RUNTIME = PARTIALS + "/runtime";
 
     private static final String ROOT_ALTA =
-            REQUIREMENTS + "/requerimiento_alta.jsp";
+            REQUIREMENTS + "/requerimiento_compra_alta.jsp";
     private static final String ROOT_EDICION =
-            REQUIREMENTS + "/requerimiento_edicion.jsp";
+            REQUIREMENTS + "/requerimiento_compra_edicion.jsp";
     private static final String ROOT_VISTA =
-            REQUIREMENTS + "/requerimiento_vista.jsp";
+            REQUIREMENTS + "/requerimiento_compra_consulta.jsp";
     private static final String LAYOUT_EDICION =
-            PARTIALS + "/_layout_edicion.jsp";
+            PARTIALS + "/requerimiento_compra_edicion_ensamblado.jsp";
     private static final String LAYOUT_VISTA =
-            PARTIALS + "/_layout_vista.jsp";
+            PARTIALS + "/requerimiento_compra_consulta_ensamblado.jsp";
     private static final String MODEL =
-            PARTIALS + "/_modelo_requerimiento.jsp";
+            PARTIALS + "/requerimiento_compra_modelo_vista_componente.jsp";
     private static final String PUBLISHER =
-            PARTIALS + "/_publicar_contexto_requerimiento.jsp";
+            PARTIALS + "/requerimiento_compra_contexto_publicacion_componente.jsp";
     private static final String RUNTIME_INIT =
-            RUNTIME + "/_runtime_init.jsp";
+            RUNTIME + "/requerimiento_compra_runtime_inicializacion_componente.jsp";
     private static final String RUNTIME_JS_HELPER =
-            RUNTIME + "/_runtime_js_helper.jsp";
+            RUNTIME + "/requerimiento_compra_runtime_javascript_helper_componente.jsp";
 
     private static final String[] LARGE_STATIC_BODIES = new String[] {
-        PARTIALS + "/_mensajes.jsp",
-        PARTIALS + "/_datos_basicos.jsp",
-        PARTIALS + "/_adjudicacion.jsp",
-        PARTIALS + "/_orden_medica_alta.jsp",
-        PARTIALS + "/_orden_medica_vista.jsp",
-        PARTIALS + "/_botonera.jsp",
-        PARTIALS + "/_scripts_edicion.jsp",
-        PARTIALS + "/_scripts_vista.jsp"
+        PARTIALS + "/requerimiento_compra_mensajes_componente.jsp",
+        PARTIALS + "/requerimiento_compra_datos_basicos_componente.jsp",
+        PARTIALS + "/requerimiento_compra_adjudicacion_componente.jsp",
+        PARTIALS + "/requerimiento_compra_orden_medica_carga_componente.jsp",
+        PARTIALS + "/requerimiento_compra_orden_medica_consulta_componente.jsp",
+        PARTIALS + "/requerimiento_compra_acciones_componente.jsp",
+        PARTIALS + "/requerimiento_compra_scripts_edicion_afiliado_componente.jsp",
+        PARTIALS + "/requerimiento_compra_scripts_edicion_guardado_componente.jsp",
+        PARTIALS + "/requerimiento_compra_scripts_consulta_componente.jsp"
     };
 
     private static final String[] RUNTIME_WRAPPERS = new String[] {
-        RUNTIME + "/_mensajes_runtime.jsp",
-        RUNTIME + "/_datos_basicos_runtime.jsp",
-        RUNTIME + "/_adjudicacion_runtime.jsp",
-        RUNTIME + "/_orden_medica_alta_runtime.jsp",
-        RUNTIME + "/_orden_medica_vista_runtime.jsp",
-        RUNTIME + "/_botonera_runtime.jsp",
-        RUNTIME + "/_scripts_edicion_runtime.jsp",
-        RUNTIME + "/_scripts_vista_runtime.jsp"
+        RUNTIME + "/requerimiento_compra_mensajes_runtime_componente.jsp",
+        RUNTIME + "/requerimiento_compra_datos_basicos_runtime_componente.jsp",
+        RUNTIME + "/requerimiento_compra_adjudicacion_runtime_componente.jsp",
+        RUNTIME + "/requerimiento_compra_orden_medica_carga_runtime_componente.jsp",
+        RUNTIME + "/requerimiento_compra_orden_medica_consulta_runtime_componente.jsp",
+        RUNTIME + "/requerimiento_compra_acciones_runtime_componente.jsp",
+        RUNTIME + "/requerimiento_compra_scripts_edicion_runtime_componente.jsp",
+        RUNTIME + "/requerimiento_compra_scripts_consulta_runtime_componente.jsp"
     };
 
     private static final String[] EDIT_RUNTIME_INCLUDES =
             RUNTIME_WRAPPERS;
 
+    private static final String[] EDIT_SCRIPT_UNITS = new String[] {
+        PARTIALS + "/requerimiento_compra_scripts_edicion_afiliado_componente.jsp",
+        PARTIALS + "/requerimiento_compra_scripts_edicion_guardado_componente.jsp"
+    };
+
     private static final String[] VIEW_RUNTIME_INCLUDES = new String[] {
-        RUNTIME + "/_mensajes_runtime.jsp",
-        RUNTIME + "/_datos_basicos_runtime.jsp",
-        RUNTIME + "/_adjudicacion_runtime.jsp",
-        RUNTIME + "/_orden_medica_vista_runtime.jsp",
-        RUNTIME + "/_botonera_runtime.jsp",
-        RUNTIME + "/_scripts_vista_runtime.jsp"
+        RUNTIME + "/requerimiento_compra_mensajes_runtime_componente.jsp",
+        RUNTIME + "/requerimiento_compra_datos_basicos_runtime_componente.jsp",
+        RUNTIME + "/requerimiento_compra_adjudicacion_runtime_componente.jsp",
+        RUNTIME + "/requerimiento_compra_orden_medica_consulta_runtime_componente.jsp",
+        RUNTIME + "/requerimiento_compra_acciones_runtime_componente.jsp",
+        RUNTIME + "/requerimiento_compra_scripts_consulta_runtime_componente.jsp"
     };
 
     private static final Path[] BOM_CHECK_PATHS = new Path[] {
@@ -118,6 +128,18 @@ public final class ComprasJspCompilationBoundaryContractTest {
             "<%@\\s*include\\s+file\\s*=\\s*[\"']([^\"']+)[\"']"
                     + "[^%]*%>",
             Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+    );
+
+    private static final Pattern RUNTIME_INCLUDE = Pattern.compile(
+            "<(?:jsp:include|liferay-util:include)\\b[^>]*"
+                    + "\\bpage\\s*=\\s*[\"']([^\"']+)[\"'][^>]*>",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+    );
+
+    private static final Pattern NAMESPACED_ID = Pattern.compile(
+            "\\bid\\s*=\\s*[\"']<portlet:namespace\\s*/>"
+                    + "([^\"'<%]+)[\"']",
+            Pattern.CASE_INSENSITIVE
     );
 
     private ComprasJspCompilationBoundaryContractTest() {
@@ -182,6 +204,18 @@ public final class ComprasJspCompilationBoundaryContractTest {
             assertStaticBoundary(RUNTIME_WRAPPERS[i], wrapper);
         }
 
+        for (int i = 0; i < EDIT_SCRIPT_UNITS.length; i++) {
+            Path scriptUnit = webPath(EDIT_SCRIPT_UNITS[i]);
+            readRequired(scriptUnit);
+            assertStaticBoundary(EDIT_SCRIPT_UNITS[i], scriptUnit);
+        }
+
+        assertRuntimeIncludeOrder(
+                "scripts de edicion",
+                readRequired(webPath(RUNTIME_WRAPPERS[6])),
+                EDIT_SCRIPT_UNITS
+        );
+
         for (int i = 0; i < BOM_CHECK_PATHS.length; i++) {
             readRequired(BOM_CHECK_PATHS[i]);
             assertNoBom(BOM_CHECK_PATHS[i]);
@@ -190,6 +224,9 @@ public final class ComprasJspCompilationBoundaryContractTest {
         assertStaticBoundary("alta", altaPath);
         assertStaticBoundary("edicion", edicionPath);
         assertStaticBoundary("vista", vistaPath);
+        assertNoCompositionCyclesOrDuplicateIds("alta", altaPath);
+        assertNoCompositionCyclesOrDuplicateIds("edicion", edicionPath);
+        assertNoCompositionCyclesOrDuplicateIds("vista", vistaPath);
 
         System.out.println("COMPRAS_JSP_COMPILATION_BOUNDARY_OK");
     }
@@ -255,6 +292,26 @@ public final class ComprasJspCompilationBoundaryContractTest {
                     name + " runtime includes " + path,
                     runtimeInclude.matcher(jsp).find()
             );
+        }
+    }
+
+    private static void assertRuntimeIncludeOrder(
+            String name,
+            String jsp,
+            String[] expectedPaths) {
+
+        int previous = -1;
+        for (int i = 0; i < expectedPaths.length; i++) {
+            int current = jsp.indexOf(expectedPaths[i]);
+            assertTrue(
+                    name + " includes " + expectedPaths[i],
+                    current >= 0
+            );
+            assertTrue(
+                    name + " preserves runtime include order",
+                    current > previous
+            );
+            previous = current;
         }
     }
 
@@ -358,6 +415,108 @@ public final class ComprasJspCompilationBoundaryContractTest {
                     "active static stack order",
                     normalized.equals(removed)
             );
+        }
+    }
+
+    private static void assertNoCompositionCyclesOrDuplicateIds(
+            String name,
+            Path rootPath) throws IOException {
+
+        inspectComposition(
+                rootPath,
+                new HashSet<Path>(),
+                new ArrayDeque<Path>(),
+                new HashMap<String, Path>()
+        );
+    }
+
+    private static void inspectComposition(
+            Path path,
+            Set<Path> visited,
+            Deque<Path> activeStack,
+            Map<String, Path> idOwners) throws IOException {
+
+        Path normalized = path.toAbsolutePath().normalize();
+        Path requirementsRoot = webPath(REQUIREMENTS);
+
+        if (!normalized.startsWith(requirementsRoot)
+                || !Files.isRegularFile(normalized)) {
+            return;
+        }
+
+        if (activeStack.contains(normalized)) {
+            throw new AssertionError(
+                    "JSP include cycle at " + normalized
+            );
+        }
+
+        if (!visited.add(normalized)) {
+            return;
+        }
+
+        activeStack.addLast(normalized);
+        try {
+            String jsp = readRequired(normalized);
+            Matcher ids = NAMESPACED_ID.matcher(jsp);
+
+            while (ids.find()) {
+                String id = ids.group(1);
+                Path owner = idOwners.get(id);
+
+                assertTrue(
+                        "critical ID " + id + " has one component owner",
+                        owner == null || owner.equals(normalized)
+                );
+
+                if (owner == null) {
+                    idOwners.put(id, normalized);
+                }
+            }
+
+            inspectCompositionIncludes(
+                    normalized,
+                    jsp,
+                    STATIC_INCLUDE,
+                    visited,
+                    activeStack,
+                    idOwners
+            );
+            inspectCompositionIncludes(
+                    normalized,
+                    jsp,
+                    RUNTIME_INCLUDE,
+                    visited,
+                    activeStack,
+                    idOwners
+            );
+        } finally {
+            activeStack.removeLast();
+        }
+    }
+
+    private static void inspectCompositionIncludes(
+            Path source,
+            String jsp,
+            Pattern includePattern,
+            Set<Path> visited,
+            Deque<Path> activeStack,
+            Map<String, Path> idOwners) throws IOException {
+
+        Matcher includes = includePattern.matcher(jsp);
+        while (includes.find()) {
+            Path child = resolveStaticTarget(
+                    source,
+                    includes.group(1)
+            );
+
+            if (child != null) {
+                inspectComposition(
+                        child,
+                        visited,
+                        activeStack,
+                        idOwners
+                );
+            }
         }
     }
 

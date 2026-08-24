@@ -18,9 +18,9 @@ public final class ComprasFormularioVisualContractTest {
     }
 
     public static void main(String[] args) throws Exception {
-        String estilos = leer(BASE + "_estilos.jsp");
-        String edicion = leer(BASE + "_layout_edicion.jsp");
-        String vista = leer(BASE + "_layout_vista.jsp");
+        String estilos = leer(BASE + "requerimiento_compra_estilos_componente.jsp");
+        String edicion = leer(BASE + "requerimiento_compra_edicion_ensamblado.jsp");
+        String vista = leer(BASE + "requerimiento_compra_consulta_ensamblado.jsp");
 
         contiene(
                 edicion,

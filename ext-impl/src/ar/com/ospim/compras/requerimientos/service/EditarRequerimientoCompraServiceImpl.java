@@ -23,7 +23,7 @@ import java.sql.Types;
 public class EditarRequerimientoCompraServiceImpl {
 
     private static final String SQL_GUARDAR_REQUERIMIENTO =
-            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
+            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_GUARDAR_REQUERIMIENTO_DETALLE =
             "{call compras.guardar_requerimiento_detalle_clasificado(?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
@@ -53,7 +53,7 @@ public class EditarRequerimientoCompraServiceImpl {
             "{ ? = call compras.confirmar_envio_a_cotizar(?,?) }";
 
     private static final String SQL_GUARDAR_COTIZACION =
-            "{ ? = call compras.guardar_cotizacion_requerimiento_call(?,?,?,?,?) }";
+            "{ ? = call compras.guardar_cotizacion_requerimiento_call(?,?,?,?,?,?,?) }";
 
     public Transaccion abrirTransaccion() throws Exception {
         Connection con = ConnectionHelper.getConnectionForTransaction();
@@ -116,8 +116,9 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.setString(19, requerimiento.getIdTercerizadora());
             stmt.setBoolean(20, requerimiento.isRecupero());
             stmt.setBoolean(21, requerimiento.isSurge());
-            stmt.setString(22, requerimiento.getObservaciones());
-            stmt.setString(23, usuario);
+            stmt.setBoolean(22, requerimiento.isLegales());
+            stmt.setString(23, requerimiento.getObservaciones());
+            stmt.setString(24, usuario);
 
             stmt.execute();
             return stmt.getInt(1);
@@ -299,7 +300,29 @@ public class EditarRequerimientoCompraServiceImpl {
                 idRequerimientoCompra,
                 construirArrayEnterosPostgreSql(idsDetalle),
                 construirArrayNumericosPostgreSql(preciosUnitarios),
+                "{}",
                 idPrestadorAdjudicado,
+                null,
+                usuario
+        );
+    }
+
+    public int guardarCotizacion(
+            int idRequerimientoCompra,
+            Integer[] idsDetalle,
+            BigDecimal[] preciosUnitarios,
+            Integer[] idsDetalleEliminados,
+            Integer idPrestadorAdjudicado,
+            boolean surge,
+            String usuario) throws Exception {
+
+        return guardarCotizacion(
+                idRequerimientoCompra,
+                construirArrayEnterosPostgreSql(idsDetalle),
+                construirArrayNumericosPostgreSql(preciosUnitarios),
+                construirArrayEnterosPostgreSql(idsDetalleEliminados),
+                idPrestadorAdjudicado,
+                Boolean.valueOf(surge),
                 usuario
         );
     }
@@ -308,7 +331,9 @@ public class EditarRequerimientoCompraServiceImpl {
             int idRequerimientoCompra,
             String idsDetalle,
             String preciosUnitarios,
+            String idsDetalleEliminados,
             Integer idPrestadorAdjudicado,
+            Boolean surge,
             String usuario) throws Exception {
 
         Connection con = null;
@@ -321,8 +346,14 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.setInt(2, idRequerimientoCompra);
             stmt.setString(3, idsDetalle);
             stmt.setString(4, preciosUnitarios);
-            setNullableInteger(stmt, 5, idPrestadorAdjudicado);
-            stmt.setString(6, usuario);
+            stmt.setString(5, idsDetalleEliminados);
+            setNullableInteger(stmt, 6, idPrestadorAdjudicado);
+            if (surge == null) {
+                stmt.setNull(7, Types.BOOLEAN);
+            } else {
+                stmt.setBoolean(7, surge.booleanValue());
+            }
+            stmt.setString(8, usuario);
             stmt.execute();
 
             return stmt.getInt(1);

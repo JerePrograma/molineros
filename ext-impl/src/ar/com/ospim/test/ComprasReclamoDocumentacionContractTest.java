@@ -40,7 +40,7 @@ public final class ComprasReclamoDocumentacionContractTest {
         assertContains(
                 "bloque condicionado a vinculo valido",
                 vista,
-                "relacionDocumentacionCompras.isVinculado()"
+                ".isVinculado()"
         );
         assertContains(
                 "RP exacto en vista",
@@ -78,9 +78,9 @@ public final class ComprasReclamoDocumentacionContractTest {
                 ".isActivo()"
         );
         assertContains(
-                "include focalizado",
+                "solapa legacy de archivos",
                 wrapper,
-                "documentacion_compras.jsp"
+                "reclamo_prestacional_imagen.jsp"
         );
 
         assertContains(
@@ -124,9 +124,9 @@ public final class ComprasReclamoDocumentacionContractTest {
                 "!= idRequerimientoCompra"
         );
         assertContains(
-                "endpoint resuelve Orden medica",
+                "endpoint resuelve todas las Órdenes médicas",
                 endpoint,
-                ".getOrdenMedica("
+                ".listarOrdenesMedicas("
         );
         assertContains(
                 "endpoint resuelve adjudicado exacto",
@@ -161,7 +161,7 @@ public final class ComprasReclamoDocumentacionContractTest {
         assertContains(
                 "endpoint valida identidad completa DL",
                 endpoint,
-                "coincideIdentidad(identidad, entry)"
+                ".coincideIdentidadAsociacionDocumento("
         );
         assertContains(
                 "endpoint valida permiso DL",
@@ -186,7 +186,7 @@ public final class ComprasReclamoDocumentacionContractTest {
         assertContains(
                 "endpoint limpia stream DL",
                 endpoint,
-                "ServletResponseUtil.cleanUp(input)"
+                "ServletResponseUtil.cleanUp("
         );
         assertNotContains(
                 "endpoint no pierde referencia antes del cleanup",

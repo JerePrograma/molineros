@@ -5,7 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-/** Contrato focalizado de Recupero oculto solamente durante el alta. */
+/** Contrato focalizado de Recupero derivado, oculto y no manipulable. */
 public final class ComprasRecuperoAltaContractTest {
 
     private static final Charset ISO_8859_1 =
@@ -18,34 +18,19 @@ public final class ComprasRecuperoAltaContractTest {
     }
 
     public static void main(String[] args) throws Exception {
-        String datos = leer(BASE + "_datos_basicos.jsp");
-        String hidden = leer(BASE + "_form_hidden.jsp");
-        String scripts = leer(BASE + "_scripts_comunes.jsp");
+        String datos = leer(BASE + "requerimiento_compra_datos_basicos_componente.jsp");
+        String hidden = leer(BASE + "requerimiento_compra_campos_ocultos_formulario_componente.jsp");
+        String scripts = leer(BASE + "requerimiento_compra_scripts_base_componente.jsp");
         String action = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/action/"
                         + "EditarRequerimientoCompraAction.java"
         );
 
-        contiene(
-                datos,
-                "comentario funcional",
-                "CQA-005: Recupero se conserva en edicion y"
-        );
-        contiene(
-                datos,
-                "condicion exclusiva de alta",
-                "<% if (!esNuevo) { %>"
-        );
-        antes(
-                datos,
-                "<% if (!esNuevo) { %>",
-                "Recupero:"
-        );
-        antes(
-                datos,
-                "Recupero:",
-                "<label for=\"<portlet:namespace />surge\">"
-        );
+        if (datos.indexOf("id=\"<portlet:namespace />recupero\"") >= 0) {
+            throw new AssertionError(
+                    "Recupero no debe exponerse como control manipulable."
+            );
+        }
         contiene(
                 hidden,
                 "hidden Recupero preservado",
@@ -73,7 +58,7 @@ public final class ComprasRecuperoAltaContractTest {
         );
 
         System.out.println(
-                "CONTRATO_COMPRAS_RECUPERO_OCULTO_ALTA_OK"
+                "CONTRATO_COMPRAS_RECUPERO_DERIVADO_OK"
         );
     }
 

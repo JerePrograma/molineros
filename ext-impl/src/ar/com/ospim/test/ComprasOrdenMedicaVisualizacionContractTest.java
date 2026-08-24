@@ -16,7 +16,7 @@ public final class ComprasOrdenMedicaVisualizacionContractTest {
         );
         String vista = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
-                        + "partials/_orden_medica_vista.jsp"
+                        + "partials/requerimiento_compra_orden_medica_consulta_componente.jsp"
         );
 
         contiene(

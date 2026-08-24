@@ -26,8 +26,8 @@ public final class ComprasRequerimientosUiContractTest {
                         + "ReclamoPrestacionServiceImpl.java"
         );
         String precarga = leer(
-                "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
-                        + "ReclamoPrestacionalCompraPrecargaServiceUtil.java"
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
+                        + "ReclamoPrestacionalCompraPrecargaHelper.java"
         );
         String revision = leer(
                 "ext-impl/src/ar/com/ospim/autorizaciones/action/"
@@ -56,7 +56,7 @@ public final class ComprasRequerimientosUiContractTest {
         );
         String botonera = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
-                        + "partials/_botonera.jsp"
+                        + "partials/requerimiento_compra_acciones_componente.jsp"
         );
         String schema = leer(
                 "ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql"

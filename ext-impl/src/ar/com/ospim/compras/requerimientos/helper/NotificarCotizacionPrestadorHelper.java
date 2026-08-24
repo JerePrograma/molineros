@@ -12,6 +12,7 @@ import ar.com.ospim.servlets.PdfServlet;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
 
@@ -28,17 +29,11 @@ public class NotificarCotizacionPrestadorHelper {
                     NotificarCotizacionPrestadorHelper.class
             );
 
-    /*
-     * Modo temporal de QA.
-     *
-     * Se conserva el comportamiento existente. No se cambia este contrato
-     * dentro de la correccion documental porque requiere definir antes una
-     * configuracion externa estable por ambiente.
-     */
-    private static final boolean USAR_EMAIL_DESTINO_TEMPORAL = true;
+    private static final String PROP_REDIRECCION_QA_HABILITADA =
+            "compras.cotizacion.email.redireccion.qa.habilitada";
 
-    private static final String EMAIL_DESTINO_TEMPORAL =
-            "acomas@ospim.org.ar";
+    private static final String PROP_REDIRECCION_QA_DESTINO =
+            "compras.cotizacion.email.redireccion.qa.destino";
 
     /*
      * El nombre historico de la configuracion se conserva por compatibilidad.
@@ -369,9 +364,12 @@ public class NotificarCotizacionPrestadorHelper {
                         reserva.getEmailDestino()
                 );
 
+        boolean modoTemporal = redireccionQaHabilitada();
+
         String emailDestino =
                 resolverEmailDestino(
-                        emailReservadoNormalizado
+                        emailReservadoNormalizado,
+                        modoTemporal
                 );
 
         boolean emailRealInvalido =
@@ -380,7 +378,7 @@ public class NotificarCotizacionPrestadorHelper {
                 );
 
         boolean emailRealInvalidoAdvertido =
-                USAR_EMAIL_DESTINO_TEMPORAL
+                modoTemporal
                         && emailRealInvalido;
 
         /*
@@ -388,7 +386,7 @@ public class NotificarCotizacionPrestadorHelper {
          * 2. VALIDACION DEL DESTINATARIO
          * ==========================================================
          */
-        if (USAR_EMAIL_DESTINO_TEMPORAL) {
+        if (modoTemporal) {
 
             if (emailRealInvalido) {
 
@@ -483,7 +481,7 @@ public class NotificarCotizacionPrestadorHelper {
 
             String errorTecnico;
 
-            if (USAR_EMAIL_DESTINO_TEMPORAL) {
+            if (modoTemporal) {
 
                 errorTecnico =
                         "El email destino temporal de QA "
@@ -501,7 +499,7 @@ public class NotificarCotizacionPrestadorHelper {
                             + "porque el destinatario efectivo "
                             + "es invalido. "
                             + "modoTemporal="
-                            + USAR_EMAIL_DESTINO_TEMPORAL
+                            + modoTemporal
                             + ", idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -519,7 +517,7 @@ public class NotificarCotizacionPrestadorHelper {
 
             String motivoUsuario;
 
-            if (USAR_EMAIL_DESTINO_TEMPORAL) {
+            if (modoTemporal) {
 
                 motivoUsuario =
                         "El destinatario configurado para las pruebas "
@@ -765,7 +763,7 @@ public class NotificarCotizacionPrestadorHelper {
          */
         String motivoExito;
 
-        if (USAR_EMAIL_DESTINO_TEMPORAL) {
+        if (modoTemporal) {
 
             motivoExito =
                     "Correo enviado al destinatario temporal "
@@ -808,7 +806,7 @@ public class NotificarCotizacionPrestadorHelper {
                             + ", idTipoPrestador="
                             + prestador.getIdTipoPrestador()
                             + ", modoTemporal="
-                            + USAR_EMAIL_DESTINO_TEMPORAL
+                            + modoTemporal
                             + ", estadoEnvio=ENVIADO"
                             + ", ordenesMedicasAdjuntas="
                             + (
@@ -1616,15 +1614,23 @@ public class NotificarCotizacionPrestadorHelper {
     }
 
     private String resolverEmailDestino(
-            String emailReservado) {
+            String emailReservado,
+            boolean modoTemporal) {
 
-        if (USAR_EMAIL_DESTINO_TEMPORAL) {
+        if (modoTemporal) {
             return normalizarEmail(
-                    EMAIL_DESTINO_TEMPORAL
+                    leerPropiedad(PROP_REDIRECCION_QA_DESTINO)
             );
         }
 
         return normalizarEmail(emailReservado);
+    }
+
+    protected boolean redireccionQaHabilitada() {
+        String value = leerPropiedad(PROP_REDIRECCION_QA_HABILITADA);
+
+        return value != null
+                && "true".equalsIgnoreCase(value.trim());
     }
 
     private String[] resolverEmailsCopiaCotizacion() {
@@ -1653,11 +1659,25 @@ public class NotificarCotizacionPrestadorHelper {
                             + "cantidadBcc="
                             + emails.length
                             + ", modoTemporal="
-                            + USAR_EMAIL_DESTINO_TEMPORAL
+                            + redireccionQaHabilitada()
             );
         }
 
         return emails;
+    }
+
+    private String leerPropiedad(String clave) {
+        try {
+            return PropsUtil.get(clave);
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudo leer la configuración externa de Compras. "
+                            + "clave="
+                            + clave,
+                    e
+            );
+            return null;
+        }
     }
 
     private String construirAsunto(

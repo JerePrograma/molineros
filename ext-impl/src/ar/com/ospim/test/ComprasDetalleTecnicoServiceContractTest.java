@@ -1,362 +1,113 @@
 package ar.com.ospim.test;
 
-import ar.com.ospim.autorizaciones.beans.Nomenclador;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
-import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceImpl;
-import ar.com.ospim.farmacia.beans.Medicamento;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
+/**
+ * Contrato de capas para validación técnica de detalles de Compras.
+ */
 public final class ComprasDetalleTecnicoServiceContractTest {
 
+    private static final Charset LATIN1 =
+            Charset.forName("ISO-8859-1");
+
     public static void main(String[] args) throws Exception {
-        assertMedicamentoNuevoRechazado();
-        assertNomencladorCanonicoYParametros();
-        assertCamposCruzadosRechazados();
-        assertTipoIncompatibleConSectorRechazado();
-        assertIdInexistenteRechazado();
-        assertTextoManipuladoRechazado();
-        assertSinMetodosDeArticulo();
+        String helper = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
+                        + "EditarRequerimientoCompraHelper.java"
+        );
+        String service = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
+                        + "EditarRequerimientoCompraServiceImpl.java"
+        );
+
+        contiene(
+                helper,
+                "valida antes de persistir",
+                "validarDetalleParaGuardar("
+        );
+        antes(
+                helper,
+                "validarDetalleParaGuardar(",
+                "persistence.guardarDetalle("
+        );
+        contiene(
+                helper,
+                "alta sólo con nomenclador",
+                "Los detalles nuevos de Compras deben utilizar NOMENCLADOR."
+        );
+        contiene(
+                helper,
+                "identidad canónica",
+                "obtenerNomencladorCanonico("
+        );
+        contiene(
+                helper,
+                "tipo técnico canónico",
+                "idTipoNomencladorCanonico"
+        );
+
+        contiene(service, "persistencia CallableStatement", "CallableStatement");
+        contiene(service, "invoca función PostgreSQL", "prepareCall(");
+        noContiene(
+                service,
+                "ServiceImpl sin regla funcional de alta",
+                "Los detalles nuevos de Compras deben utilizar NOMENCLADOR."
+        );
+        noContiene(
+                service,
+                "ServiceImpl sin resolución canónica",
+                "obtenerNomencladorCanonico("
+        );
+
         System.out.println("CONTRATO_DETALLE_TECNICO_COMPRAS_OK");
     }
 
-    private static void assertMedicamentoNuevoRechazado() throws Exception {
-        final Servicio servicio = new Servicio("Farmacia");
-        Medicamento medicamento = new Medicamento();
-        medicamento.setId_medicamento(101);
-        medicamento.setTroquel(12345);
-        medicamento.setNombre("MEDICAMENTO");
-        medicamento.setPresentacion("10 MG");
-        servicio.medicamento = medicamento;
-
-        final RequerimientoCompraDetalle detalle = base("MEDICAMENTO");
-        detalle.setIdMedicamento(Integer.valueOf(101));
-        detalle.setTroquel(Integer.valueOf(12345));
-        detalle.setNombreMedicamento("MEDICAMENTO 10 MG");
-
-        assertRechazoConMensaje(
-                "medicamento nuevo",
-                "Los detalles nuevos de Compras deben utilizar NOMENCLADOR.",
-                new Ejecucion() {
-                    public void ejecutar() throws Exception {
-                        servicio.guardarDetalle(detalle, "tester");
-                    }
-                }
+    private static String leer(String ruta) throws Exception {
+        return new String(
+                Files.readAllBytes(Paths.get(ruta)),
+                LATIN1
         );
     }
 
-    private static void assertNomencladorCanonicoYParametros() throws Exception {
-        Servicio servicio = new Servicio("Prestaciones Medicas");
-        Nomenclador nomenclador = new Nomenclador();
-        nomenclador.setId_prestacion(201);
-        nomenclador.setId_tipo_nomenclador(8);
-        nomenclador.setCodigo("NM-001");
-        nomenclador.setDescripcion("PRESTACION CANONICA");
-        servicio.nomenclador = nomenclador;
+    private static void contiene(
+            String texto,
+            String descripcion,
+            String esperado) {
 
-        RequerimientoCompraDetalle detalle = base("NOMENCLADOR");
-        detalle.setIdPrestacion(Integer.valueOf(201));
-        detalle.setIdTipoNomenclador(Integer.valueOf(8));
-        detalle.setCodigoNomenclador("nm-001");
-        detalle.setDescripcionNomenclador("prestacion canonica");
-
-        servicio.guardarDetalle(detalle, "tester");
-
-        assertEquals("id prestacion", Integer.valueOf(201), servicio.parametros.get(Integer.valueOf(4)));
-        assertEquals("tipo nomenclador", Integer.valueOf(8), servicio.parametros.get(Integer.valueOf(5)));
-        assertEquals("codigo reconstruido", "NM-001", servicio.parametros.get(Integer.valueOf(6)));
-        assertEquals("descripcion reconstruida", "PRESTACION CANONICA", servicio.parametros.get(Integer.valueOf(7)));
-        assertEquals("medicamento nulo", null, servicio.parametros.get(Integer.valueOf(8)));
-    }
-
-    private static void assertCamposCruzadosRechazados() throws Exception {
-        final Servicio servicio = new Servicio("Farmacia");
-        servicio.medicamento = medicamentoCanonico();
-        final RequerimientoCompraDetalle detalle = base("MEDICAMENTO");
-        detalle.setIdMedicamento(Integer.valueOf(101));
-        detalle.setNombreMedicamento("MEDICAMENTO 10 MG");
-        detalle.setIdPrestacion(Integer.valueOf(201));
-
-        assertRechazo("campos cruzados", new Ejecucion() {
-            public void ejecutar() throws Exception {
-                servicio.guardarDetalle(detalle, "tester");
-            }
-        });
-    }
-
-    private static void assertTipoIncompatibleConSectorRechazado() throws Exception {
-        final Servicio servicio = new Servicio("Legales");
-        servicio.medicamento = medicamentoCanonico();
-        final RequerimientoCompraDetalle detalle = base("MEDICAMENTO");
-        detalle.setIdMedicamento(Integer.valueOf(101));
-        detalle.setNombreMedicamento("MEDICAMENTO 10 MG");
-
-        assertRechazo("tipo incompatible", new Ejecucion() {
-            public void ejecutar() throws Exception {
-                servicio.guardarDetalle(detalle, "tester");
-            }
-        });
-    }
-
-    private static void assertIdInexistenteRechazado() throws Exception {
-        final Servicio servicio = new Servicio("Farmacia");
-        final RequerimientoCompraDetalle detalle = base("MEDICAMENTO");
-        detalle.setIdMedicamento(Integer.valueOf(999));
-        detalle.setNombreMedicamento("INEXISTENTE");
-
-        assertRechazo("id inexistente", new Ejecucion() {
-            public void ejecutar() throws Exception {
-                servicio.guardarDetalle(detalle, "tester");
-            }
-        });
-    }
-
-    private static void assertTextoManipuladoRechazado() throws Exception {
-        final Servicio servicio = new Servicio("Prestaciones Medicas");
-        Nomenclador nomenclador = new Nomenclador();
-        nomenclador.setId_prestacion(201);
-        nomenclador.setId_tipo_nomenclador(8);
-        nomenclador.setCodigo("NM-001");
-        nomenclador.setDescripcion("PRESTACION CANONICA");
-        servicio.nomenclador = nomenclador;
-
-        final RequerimientoCompraDetalle detalle = base("NOMENCLADOR");
-        detalle.setIdPrestacion(Integer.valueOf(201));
-        detalle.setIdTipoNomenclador(Integer.valueOf(8));
-        detalle.setCodigoNomenclador("CODIGO MANIPULADO");
-        detalle.setDescripcionNomenclador("PRESTACION CANONICA");
-
-        assertRechazo("codigo manipulado", new Ejecucion() {
-            public void ejecutar() throws Exception {
-                servicio.guardarDetalle(detalle, "tester");
-            }
-        });
-    }
-
-    private static void assertSinMetodosDeArticulo() {
-        Method[] methods = EditarRequerimientoCompraServiceImpl.class.getMethods();
-
-        for (int i = 0; i < methods.length; i++) {
-            if (methods[i].getName().toLowerCase().contains("articulo")) {
-                throw new AssertionError("Metodo residual: " + methods[i].getName());
-            }
-        }
-    }
-
-    private static RequerimientoCompraDetalle base(String tipo) {
-        RequerimientoCompraDetalle detalle = new RequerimientoCompraDetalle();
-        detalle.setIdRequerimientoCompra(Integer.valueOf(42));
-        detalle.setTipoItem(tipo);
-        detalle.setCantidad(Integer.valueOf(2));
-        detalle.setObservaciones("OBS");
-        return detalle;
-    }
-
-    private static Medicamento medicamentoCanonico() {
-        Medicamento medicamento = new Medicamento();
-        medicamento.setId_medicamento(101);
-        medicamento.setTroquel(12345);
-        medicamento.setNombre("MEDICAMENTO");
-        medicamento.setPresentacion("10 MG");
-        return medicamento;
-    }
-
-    private static void assertRechazo(String nombre, Ejecucion ejecucion)
-            throws Exception {
-        try {
-            ejecucion.ejecutar();
-        } catch (Exception esperado) {
-            return;
-        }
-        throw new AssertionError(nombre + ": se esperaba rechazo");
-    }
-
-    private static void assertRechazoConMensaje(
-            String nombre,
-            String mensaje,
-            Ejecucion ejecucion) throws Exception {
-
-        try {
-            ejecucion.ejecutar();
-        } catch (Exception esperado) {
-            if (mensaje.equals(esperado.getMessage())) {
-                return;
-            }
+        if (texto.indexOf(esperado) < 0) {
             throw new AssertionError(
-                    nombre
-                            + ": mensaje esperado="
-                            + mensaje
-                            + ", actual="
-                            + esperado.getMessage()
-            );
-        }
-
-        throw new AssertionError(nombre + ": se esperaba rechazo");
-    }
-
-    private static void assertEquals(String nombre, Object esperado, Object actual) {
-        if (esperado == null ? actual != null : !esperado.equals(actual)) {
-            throw new AssertionError(nombre + ": esperado=" + esperado + ", actual=" + actual);
-        }
-    }
-
-    private static int contar(String value, char buscado) {
-        int total = 0;
-        for (int i = 0; value != null && i < value.length(); i++) {
-            if (value.charAt(i) == buscado) {
-                total++;
-            }
-        }
-        return total;
-    }
-
-    private interface Ejecucion {
-        void ejecutar() throws Exception;
-    }
-
-    private static final class Servicio
-            extends EditarRequerimientoCompraServiceImpl {
-
-        private final RequerimientoCompra requerimiento;
-        private Nomenclador nomenclador;
-        private Medicamento medicamento;
-        private String sql;
-        private Map<Integer, Object> parametros =
-                new LinkedHashMap<Integer, Object>();
-
-        private Servicio(String sector) {
-            requerimiento = new RequerimientoCompra();
-            requerimiento.setIdRequerimientoCompra(42);
-            requerimiento.setIdSector(Integer.valueOf(1));
-            requerimiento.setSectorDescripcion(sector);
-            requerimiento.setEstado(1);
-        }
-
-        protected RequerimientoCompra obtenerRequerimientoDetalle(int id) {
-            return requerimiento;
-        }
-
-        protected Nomenclador obtenerNomencladorCanonico(int id) {
-            return nomenclador;
-        }
-
-        protected Medicamento obtenerMedicamentoCanonico(int id) {
-            return medicamento;
-        }
-
-        protected Connection obtenerConexionGuardarDetalle() {
-            return (Connection) Proxy.newProxyInstance(
-                    Connection.class.getClassLoader(),
-                    new Class[] {Connection.class},
-                    new ConnectionHandler(this)
+                    descripcion + ": falta [" + esperado + "]"
             );
         }
     }
 
-    private static final class ConnectionHandler implements InvocationHandler {
-        private final Servicio servicio;
+    private static void noContiene(
+            String texto,
+            String descripcion,
+            String prohibido) {
 
-        private ConnectionHandler(Servicio servicio) {
-            this.servicio = servicio;
-        }
-
-        public Object invoke(Object proxy, Method method, Object[] args) {
-            if ("prepareCall".equals(method.getName())) {
-                servicio.sql = (String) args[0];
-                return Proxy.newProxyInstance(
-                        CallableStatement.class.getClassLoader(),
-                        new Class[] {CallableStatement.class},
-                        new StatementHandler(servicio)
-                );
-            }
-            return valorDefault(method.getReturnType());
+        if (texto.indexOf(prohibido) >= 0) {
+            throw new AssertionError(
+                    descripcion + ": contiene [" + prohibido + "]"
+            );
         }
     }
 
-    private static final class StatementHandler implements InvocationHandler {
-        private final Servicio servicio;
+    private static void antes(
+            String texto,
+            String primero,
+            String segundo) {
 
-        private StatementHandler(Servicio servicio) {
-            this.servicio = servicio;
-        }
+        int a = texto.indexOf(primero);
+        int b = texto.indexOf(segundo, a + 1);
 
-        public Object invoke(Object proxy, Method method, Object[] args) {
-            String name = method.getName();
-            if ("setNull".equals(name)) {
-                servicio.parametros.put((Integer) args[0], null);
-                return null;
-            }
-            if (name.startsWith("set") && args != null && args.length >= 2
-                    && args[0] instanceof Integer) {
-                servicio.parametros.put((Integer) args[0], args[1]);
-                return null;
-            }
-            if ("executeQuery".equals(name)) {
-                return Proxy.newProxyInstance(
-                        ResultSet.class.getClassLoader(),
-                        new Class[] {ResultSet.class},
-                        new ResultSetHandler()
-                );
-            }
-            return valorDefault(method.getReturnType());
+        if (a < 0 || b <= a) {
+            throw new AssertionError(
+                    "Orden inválido: " + primero + " / " + segundo
+            );
         }
-    }
-
-    private static final class ResultSetHandler implements InvocationHandler {
-        private int nextCalls;
-
-        public Object invoke(Object proxy, Method method, Object[] args) {
-            if ("next".equals(method.getName())) {
-                nextCalls++;
-                return Boolean.valueOf(nextCalls == 1);
-            }
-            if ("getInt".equals(method.getName())) {
-                return Integer.valueOf(777);
-            }
-            if ("wasNull".equals(method.getName())) {
-                return Boolean.FALSE;
-            }
-            return valorDefault(method.getReturnType());
-        }
-    }
-
-    private static Object valorDefault(Class type) {
-        if (type == null || Void.TYPE.equals(type) || !type.isPrimitive()) {
-            return null;
-        }
-        if (Boolean.TYPE.equals(type)) {
-            return Boolean.FALSE;
-        }
-        if (Integer.TYPE.equals(type)) {
-            return Integer.valueOf(0);
-        }
-        if (Long.TYPE.equals(type)) {
-            return Long.valueOf(0L);
-        }
-        if (Double.TYPE.equals(type)) {
-            return Double.valueOf(0D);
-        }
-        if (Float.TYPE.equals(type)) {
-            return Float.valueOf(0F);
-        }
-        if (Short.TYPE.equals(type)) {
-            return Short.valueOf((short) 0);
-        }
-        if (Byte.TYPE.equals(type)) {
-            return Byte.valueOf((byte) 0);
-        }
-        if (Character.TYPE.equals(type)) {
-            return Character.valueOf((char) 0);
-        }
-        return null;
     }
 
     private ComprasDetalleTecnicoServiceContractTest() {

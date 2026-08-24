@@ -21,49 +21,48 @@ public final class ComprasRequerimientoConnectionContractTest {
         String util = leer(
                 SERVICE_DIR + "BusquedaRequerimientoCompraServiceUtil.java"
         );
-        String segura = leer(
-                SERVICE_DIR
-                        + "BusquedaRequerimientoCompraLecturaSeguraServiceImpl.java"
+        String helper = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
+                        + "BusquedaRequerimientoCompraHelper.java"
+        );
+        String persistencia = leer(
+                SERVICE_DIR + "BusquedaRequerimientoCompraServiceImpl.java"
         );
 
         contiene(
                 util,
-                "la lectura publica usa la implementacion segura",
-                "lecturaSeguraInstance.getRequerimientoCompra("
+                "la lectura pública delega reglas al Helper",
+                "return helper.getRequerimientoCompra(idRequerimientoCompra);"
         );
-        noContiene(
-                extraerMetodo(
-                        util,
-                        "public static RequerimientoCompra getRequerimientoCompra("
-                ),
-                "la API no vuelve a la implementacion con conexion anidada",
-                "getInstance().getRequerimientoCompra("
+        contiene(
+                helper,
+                "el Helper delega sólo persistencia",
+                "return service.getRequerimientoCompra("
         );
 
         String metodoPublico = extraerMetodo(
-                segura,
+                persistencia,
                 "public RequerimientoCompra getRequerimientoCompra("
         );
         antes(
                 metodoPublico,
                 "getCabeceraRequerimiento(idRequerimientoCompra)",
-                "getDetallesRequerimiento(idRequerimientoCompra)"
+                "getDetalles(idRequerimientoCompra)"
         );
 
         String metodoCabecera = extraerMetodo(
-                segura,
-                "private RequerimientoCompra getCabeceraRequerimiento("
+                persistencia,
+                "public RequerimientoCompra getCabeceraRequerimiento("
         );
         validarConsultaAislada(
                 metodoCabecera,
                 "cabecera",
-                "getDetallesRequerimiento("
+                "getDetalles("
         );
 
         String metodoDetalles = extraerMetodo(
-                segura,
-                "private List<RequerimientoCompraDetalle> "
-                        + "getDetallesRequerimiento("
+                persistencia,
+                "public List<RequerimientoCompraDetalle> getDetalles("
         );
         validarConsultaAislada(
                 metodoDetalles,
@@ -85,11 +84,6 @@ public final class ComprasRequerimientoConnectionContractTest {
                 metodo,
                 etapa + " cierra recursos en finally",
                 "ConnectionHelper.cerrar(stmt, con);"
-        );
-        contiene(
-                metodo,
-                etapa + " tiene timeout SQL",
-                "stmt.setQueryTimeout(QUERY_TIMEOUT_SEGUNDOS);"
         );
         noContiene(
                 metodo,

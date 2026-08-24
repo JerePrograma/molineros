@@ -6,11 +6,48 @@ import java.util.Locale;
 
 public class TipoPrestadorSector {
 
+    private int idTipoPrestacion;
+    private String tipoPrestacionDescripcion;
     private int idTipoPrestador;
     private String descripcion;
     private boolean activo;
 
     public TipoPrestadorSector() {
+    }
+
+    public int getIdTipoPrestacion() {
+        return idTipoPrestacion;
+    }
+
+    public void setIdTipoPrestacion(int idTipoPrestacion) {
+        this.idTipoPrestacion = idTipoPrestacion;
+    }
+
+    public String getTipoPrestacionDescripcion() {
+        return tipoPrestacionDescripcion;
+    }
+
+    public String getTipoPrestacionDescripcionVisible() {
+        return tipoPrestacionDescripcion != null
+                ? tipoPrestacionDescripcion
+                : "";
+    }
+
+    public void setTipoPrestacionDescripcion(
+            String tipoPrestacionDescripcion) {
+
+        this.tipoPrestacionDescripcion =
+                WebKeysCompras.trimToNull(tipoPrestacionDescripcion);
+    }
+
+    public String getClaveConfiguracion() {
+        if (idTipoPrestacion <= 0 || idTipoPrestador <= 0) {
+            return "";
+        }
+
+        return String.valueOf(idTipoPrestacion)
+                + ":"
+                + String.valueOf(idTipoPrestador);
     }
 
     public TipoPrestadorSector(int idTipoPrestador,

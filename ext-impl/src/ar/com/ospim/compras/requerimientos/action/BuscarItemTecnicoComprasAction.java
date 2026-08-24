@@ -117,32 +117,13 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
         if ("PRESTACIONES MEDICAS".equals(
                 sector
         )) {
-
-            int idTipoNomencladorSolicitado =
-                    ParamUtil.getInteger(
-                            request,
-                            "id_tipo_nomenclador",
-                            0
-                    );
-
-            if (!WebKeysCompras
-                    .esTipoNomencladorPrestacionesMedicas(
-                            idTipoNomencladorSolicitado
-                    )) {
-
-                publicarError(
-                        request,
-                        "Debe seleccionar un Tipo Nomenclador válido "
-                                + "para PRESTACIONES MEDICAS."
-                );
-
-                return;
-            }
-
+            /*
+             * La clasificación técnica se resuelve con la identidad que
+             * devuelve cada resultado. No se expone ni se confía en un
+             * selector HTTP de tipo de nomenclador.
+             */
             filtroTipoNomenclador =
-                    Integer.valueOf(
-                            idTipoNomencladorSolicitado
-                    );
+                    Integer.valueOf(0);
         }
 
         int marcaReinLiq =

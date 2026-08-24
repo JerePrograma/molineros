@@ -79,11 +79,11 @@ public final class ComprasCierreEtapa1PostDemoContractTest {
     private static void validarActualizacionContacto() throws Exception {
         String afiliado = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
-                        + "_afiliado_editable.jsp"
+                        + "requerimiento_compra_afiliado_editable_componente.jsp"
         );
         String scripts = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
-                        + "_scripts_comunes.jsp"
+                        + "requerimiento_compra_scripts_base_componente.jsp"
         );
         String token = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/action/"
@@ -126,20 +126,33 @@ public final class ComprasCierreEtapa1PostDemoContractTest {
         );
         String comunes = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
-                        + "_detalle_scripts_comunes.jsp"
+                        + "requerimiento_compra_detalle_scripts_base_componente.jsp"
         );
         String editable = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
-                        + "_detalle_scripts_editable.jsp"
+                        + "requerimiento_compra_detalle_scripts_edicion_componente.jsp"
         );
 
         contiene(webKeys, "permiso especifico", "puedeEliminarDetalle(int estado)");
         contiene(webKeys, "estado cotizar", "|| esACotizar(estado);");
         contiene(helper, "autoridad backend", "public void borrarDetalle(");
         contiene(schema, "bloqueo del padre", "FOR UPDATE;");
-        contiene(schema, "minimo persistido", "v_total_detalles_activos <= 1");
-        contiene(comunes, "oculta ultima baja", "detallesCompra.length > 1");
-        contiene(editable, "rechaza ultima baja", "detallesCompra.length <= 1");
+        contiene(schema, "mínimo al guardar", "v_total_conservados <= 0");
+        contiene(
+                comunes,
+                "muestra última baja al cotizar",
+                "puedeCotizarDetalle ? \"true\" : \"false\""
+        );
+        contiene(
+                editable,
+                "baja diferida en cotización",
+                "detalleDeletedIds.push("
+        );
+        contiene(
+                editable,
+                "último detalle se valida al guardar",
+                "Debe conservar al menos una prestación"
+        );
     }
 
     private static void validarTipoPrestacionPorDetalle() throws Exception {
@@ -157,11 +170,11 @@ public final class ComprasCierreEtapa1PostDemoContractTest {
         );
         String editor = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
-                        + "_detalle_editor.jsp"
+                        + "requerimiento_compra_detalle_editor_componente.jsp"
         );
         String scriptsEditable = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
-                        + "_detalle_scripts_editable.jsp"
+                        + "requerimiento_compra_detalle_scripts_edicion_componente.jsp"
         );
         String service = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"

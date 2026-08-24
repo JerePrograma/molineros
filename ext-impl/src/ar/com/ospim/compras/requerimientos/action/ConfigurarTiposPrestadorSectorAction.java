@@ -3,6 +3,7 @@ package ar.com.ospim.compras.requerimientos.action;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.requerimientos.beans.TipoPrestadorSector;
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionCotizacionPrestadorHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.ConfiguracionCotizacionPrestadorServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
@@ -28,10 +29,8 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class ConfigurarTiposPrestadorSectorAction
         extends PortletAction {
@@ -43,6 +42,9 @@ public class ConfigurarTiposPrestadorSectorAction
 
     private static final String STRUTS_ACTION_CONFIGURACION =
             "/compras/configurar_tipos_prestador_sector";
+
+    private final ConfiguracionCotizacionPrestadorHelper helper =
+            new ConfiguracionCotizacionPrestadorHelper();
 
     public void processAction(ActionMapping mapping,
                               ActionForm form,
@@ -64,16 +66,16 @@ public class ConfigurarTiposPrestadorSectorAction
             validarPermisoConfiguracion(user);
             validarSector(idSector);
 
-            int[] idsTiposSeleccionados =
-                    getIntegerArrayParam(
+            List<TipoPrestadorSector> tiposSeleccionados =
+                    getTiposSeleccionados(
                             actionRequest,
-                            "id_tipo_prestador"
+                            "tipo_prestador_cotizacion"
                     );
 
-            ConfiguracionCotizacionPrestadorServiceUtil
+            helper
                     .guardarConfiguracion(
                             idSector,
-                            idsTiposSeleccionados,
+                            tiposSeleccionados,
                             user.getScreenName()
                     );
 
@@ -320,9 +322,9 @@ public class ConfigurarTiposPrestadorSectorAction
         }
     }
 
-    private int[] getIntegerArrayParam(
+    private List<TipoPrestadorSector> getTiposSeleccionados(
             PortletRequest request,
-            String paramName) {
+            String paramName) throws Exception {
 
         String[] values =
                 getParameterValues(
@@ -333,11 +335,11 @@ public class ConfigurarTiposPrestadorSectorAction
         if (values == null
                 || values.length == 0) {
 
-            return new int[0];
+            return new ArrayList<TipoPrestadorSector>();
         }
 
-        Set<Integer> ids =
-                new LinkedHashSet<Integer>();
+        List<TipoPrestadorSector> resultado =
+                new ArrayList<TipoPrestadorSector>();
 
         for (int i = 0; i < values.length; i++) {
             String value = values[i];
@@ -348,30 +350,28 @@ public class ConfigurarTiposPrestadorSectorAction
                 continue;
             }
 
-            try {
-                int id =
-                        Integer.parseInt(
-                                value.trim()
-                        );
+            String[] partes = value.trim().split(":");
 
-                if (id > 0) {
-                    ids.add(
-                            Integer.valueOf(id)
-                    );
-                }
-
-            } catch (NumberFormatException ignored) {
+            if (partes.length != 2) {
+                throw new Exception(
+                        "La configuración recibida posee un formato inválido."
+                );
             }
-        }
 
-        int[] resultado =
-                new int[ids.size()];
-
-        int index = 0;
-
-        for (Integer id : ids) {
-            resultado[index++] =
-                    id.intValue();
+            try {
+                TipoPrestadorSector tipo = new TipoPrestadorSector();
+                tipo.setIdTipoPrestacion(
+                        Integer.parseInt(partes[0])
+                );
+                tipo.setIdTipoPrestador(
+                        Integer.parseInt(partes[1])
+                );
+                resultado.add(tipo);
+            } catch (NumberFormatException e) {
+                throw new Exception(
+                        "La configuración recibida contiene IDs inválidos."
+                );
+            }
         }
 
         return resultado;

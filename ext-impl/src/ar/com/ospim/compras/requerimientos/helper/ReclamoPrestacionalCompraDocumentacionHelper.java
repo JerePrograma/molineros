@@ -93,6 +93,11 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
         DLFolder folder =
                 obtenerFolderReclamos();
 
+        alinearContextoConFolder(
+                serviceContext,
+                folder
+        );
+
         List<DocumentoComprasCreado> documentosCreados =
                 new ArrayList<DocumentoComprasCreado>();
         Set<Long> archivosFuente = new HashSet<Long>();
@@ -440,6 +445,55 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
         }
 
         return folder;
+    }
+
+    private void alinearContextoConFolder(
+            ServiceContext serviceContext,
+            DLFolder folder) throws Exception {
+
+        if (serviceContext == null
+                || folder == null
+                || folder.getGroupId() <= 0L) {
+
+            throw new Exception(
+                    "No se pudo validar el grupo documental del reclamo."
+            );
+        }
+
+        if (serviceContext.getCompanyId() > 0L
+                && folder.getCompanyId() > 0L
+                && serviceContext.getCompanyId()
+                != folder.getCompanyId()) {
+
+            throw new Exception(
+                    "El contexto y la carpeta del Reclamo Prestacional "
+                            + "pertenecen a compañías diferentes."
+            );
+        }
+
+        if (serviceContext.getScopeGroupId()
+                != folder.getGroupId()) {
+
+            if (_log.isInfoEnabled()) {
+                _log.info(
+                        "Se alinea el ServiceContext con el grupo "
+                                + "de la carpeta ReclamosPrestacionales. "
+                                + "groupId="
+                                + folder.getGroupId()
+                );
+            }
+
+            serviceContext.setScopeGroupId(folder.getGroupId());
+        }
+
+        if (serviceContext.getScopeGroupId()
+                != folder.getGroupId()) {
+
+            throw new Exception(
+                    "No se pudo alinear el contexto con el grupo "
+                            + "documental del Reclamo Prestacional."
+            );
+        }
     }
 
     private void validarOrdenMedica(

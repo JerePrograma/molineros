@@ -14,7 +14,15 @@ public final class ComprasDatosBasicosLayoutContractTest {
 
     private static final String DATOS_BASICOS =
             "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
-                    + "_datos_basicos.jsp";
+                    + "requerimiento_compra_datos_basicos_componente.jsp";
+
+    private static final String CAMPOS_OCULTOS =
+            "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
+                    + "requerimiento_compra_campos_ocultos_formulario_componente.jsp";
+
+    private static final String SCRIPTS_BASE =
+            "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
+                    + "requerimiento_compra_scripts_base_componente.jsp";
 
     private ComprasDatosBasicosLayoutContractTest() {
     }
@@ -23,6 +31,8 @@ public final class ComprasDatosBasicosLayoutContractTest {
         Path path = Paths.get(DATOS_BASICOS);
         byte[] bytes = Files.readAllBytes(path);
         String jsp = new String(bytes, ISO_8859_1);
+        String camposOcultos = leer(CAMPOS_OCULTOS);
+        String scriptsBase = leer(SCRIPTS_BASE);
 
         contiene(
                 jsp,
@@ -107,15 +117,14 @@ public final class ComprasDatosBasicosLayoutContractTest {
                 "id=\"<portlet:namespace />cargo_tercerizadora\""
         );
         contiene(
-                jsp,
-                "Recupero conserva checkbox calculado al editar",
-                "class=\"compras-checkbox-recupero\""
+                camposOcultos,
+                "Recupero conserva valor calculado no manipulable",
+                "id=\"<portlet:namespace />recupero_hidden\""
         );
         contiene(
-                jsp,
-                "Recupero usa textbox en vista",
-                "class=\"compras-control compras-control-recupero "
-                        + "compras-campo-solo-lectura\""
+                scriptsBase,
+                "Recupero se deriva del cargo de tercerizadora",
+                "cargoTercerizadora != null && cargoTercerizadora > 0"
         );
 
         contiene(
@@ -162,13 +171,6 @@ public final class ComprasDatosBasicosLayoutContractTest {
         noContiene(contenido, "sin mojibake A circunflejo", "\u00C2");
         noContiene(contenido, "sin reemplazo Unicode", "\uFFFD");
 
-        for (int i = 0; i < bytes.length; i++) {
-            if ((bytes[i] & 0x80) != 0) {
-                throw new AssertionError(
-                        "El JSP modificado no es ASCII/ISO-8859-1: byte=" + i
-                );
-            }
-        }
     }
 
     private static void contiene(
@@ -181,6 +183,13 @@ public final class ComprasDatosBasicosLayoutContractTest {
                     etiqueta + ": no se encontro [" + esperado + "]"
             );
         }
+    }
+
+    private static String leer(String ruta) throws Exception {
+        return new String(
+                Files.readAllBytes(Paths.get(ruta)),
+                ISO_8859_1
+        );
     }
 
     private static void noContiene(

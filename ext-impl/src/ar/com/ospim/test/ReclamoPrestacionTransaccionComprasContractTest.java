@@ -19,8 +19,8 @@ public final class ReclamoPrestacionTransaccionComprasContractTest {
                         + "ReclamoPrestacionServiceImpl.java"
         );
         String vinculo = leer(
-                "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
-                        + "RequerimientoCompraReclamoPrestacionalServiceImpl.java"
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
+                        + "RequerimientoCompraReclamoPrestacionalHelper.java"
         );
 
         String interno = extraerMetodo(
@@ -82,23 +82,22 @@ public final class ReclamoPrestacionTransaccionComprasContractTest {
 
         String crearYVincular = extraerMetodo(
                 vinculo,
-                "public int crearYVincular("
+                "private int crearYVincularInterno("
         );
         antes(
                 crearYVincular,
-                ".insertar(\n"
-                        + "                                    con,",
+                ".insertarReclamoPrestacional(",
                 "finalizarCreacion("
         );
         antesDesde(
                 crearYVincular,
                 "finalizarCreacion(",
-                "con.commit()"
+                "transaccion.commit()"
         );
         contiene(
                 crearYVincular,
                 "el flujo Compras revierte RP y vinculo juntos",
-                "ConnectionHelper.rollback("
+                "transaccion.rollback()"
         );
 
         System.out.println(
