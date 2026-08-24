@@ -166,37 +166,37 @@
 <p><a href="<%= volver %>">Volver</a><a href="javascript:void(0)" onclick="help(event, 'helpVolver')"><img style="height: 16px; width: 16px" src="/html/images/help.png" title="Ayuda" alt="Ayuda"/></a></p>
 
 <div id="helpEjercicio" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Ejercicio: Es el per�odo de vigencia del concepto y su equivalencia contable. Generalmente, coincide con el ejercicio contable. Se modificar�, por ejemplo, en el caso que se desee que la equivalencia cobre vigencia desde un mes en particular del ejercicio, ya que los anteriores son per�odos con el an�lisis concluido y los ajustes efectuados.
+Ejercicio: Es el período de vigencia del concepto y su equivalencia contable. Generalmente, coincide con el ejercicio contable. Se modificará, por ejemplo, en el caso que se desee que la equivalencia cobre vigencia desde un mes en particular del ejercicio, ya que los anteriores son períodos con el análisis concluido y los ajustes efectuados.
 </div>
 <div id="helpConcepto" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Concepto: Descripci�n del concepto.
+Concepto: Descripción del concepto.
 </div>
 <div id="helpCuenta" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Cuenta: Es la cuenta que le corresponde contablemente a todo movimiento que utilice el concepto tanto en la generaci�n de asientos autom�ticos como en los reportes con res�menes por cuenta contable. Por ejemplo: subdiarios de ingresos y egresos.
+Cuenta: Es la cuenta que le corresponde contablemente a todo movimiento que utilice el concepto tanto en la generación de asientos automáticos como en los reportes con resúmenes por cuenta contable. Por ejemplo: subdiarios de ingresos y egresos.
 </div>
 <div id="helpCuentaPasivo" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Cuenta Pasivo: Es la cuenta contable que se utilizar� como equivalencia para el concepto, en el caso que se trate de una deuda que no es pagada en el mismo mes que fuera contabilizada. Es decir, efectuado el pago con posterioridad del mes de la fecha de recepci�n del comprobante de dicha deuda. Se utiliza tanto en la generaci�n de asientos autom�ticos como en los reportes con res�menes por cuenta contable. Por ejemplo: subdiarios de ingresos y egresos.
+Cuenta Pasivo: Es la cuenta contable que se utilizará como equivalencia para el concepto, en el caso que se trate de una deuda que no es pagada en el mismo mes que fuera contabilizada. Es decir, efectuado el pago con posterioridad del mes de la fecha de recepción del comprobante de dicha deuda. Se utiliza tanto en la generación de asientos automáticos como en los reportes con resúmenes por cuenta contable. Por ejemplo: subdiarios de ingresos y egresos.
 </div>
 <div id="helpLiquidaciones" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Liquidaciones: Se selecciona en los casos de conceptos que pueden ser utilizados en el m�dulo de liquidaciones cuando no se detalla por c�digo de prestaci�n del nomenclador.
+Liquidaciones: Se selecciona en los casos de conceptos que pueden ser utilizados en el módulo de liquidaciones cuando no se detalla por código de prestación del nomenclador.
 </div>
 <div id="helpEgresos" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Egresos: Se selecciona en los casos de conceptos que pueden ser seleccionados en la carga de comprobantes del m�dulo de pagos. Por lo general los conceptos de egresos que no son seleccionados, son los que se corresponden a procesos especiales con un desarrollo espec�fico; por ejemplo, los canjes de cheques propios o rechazados de terceros o los cr�ditos de autogesti�n. Estos casos, si bien son conceptos de egresos, no pueden asignarse a un comprobante presentado por un proveedor. Los casos donde no se selecciona ni "Egreso", ni "Ingreso", ni "Liquidaciones", se trata de conceptos que s�lo son utilizados para asociarlos a prestaciones del nomenclador, en la tabla correspondiente.
+Egresos: Se selecciona en los casos de conceptos que pueden ser seleccionados en la carga de comprobantes del módulo de pagos. Por lo general los conceptos de egresos que no son seleccionados, son los que se corresponden a procesos especiales con un desarrollo específico; por ejemplo, los canjes de cheques propios o rechazados de terceros o los créditos de autogestión. Estos casos, si bien son conceptos de egresos, no pueden asignarse a un comprobante presentado por un proveedor. Los casos donde no se selecciona ni "Egreso", ni "Ingreso", ni "Liquidaciones", se trata de conceptos que sólo son utilizados para asociarlos a prestaciones del nomenclador, en la tabla correspondiente.
 </div>
 <div id="helpIngresos" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Ingresos: Se selecciona en los casos de conceptos que pueden ser seleccionados en la carga de recibos del m�dulo de ingresos. Los casos donde no se selecciona ni "Egreso", ni "Ingreso", ni "Liquidaciones", se trata de conceptos que s�lo son utilizados para asociarlos a prestaciones del nomenclador, en la tabla correspondiente.
+Ingresos: Se selecciona en los casos de conceptos que pueden ser seleccionados en la carga de recibos del módulo de ingresos. Los casos donde no se selecciona ni "Egreso", ni "Ingreso", ni "Liquidaciones", se trata de conceptos que sólo son utilizados para asociarlos a prestaciones del nomenclador, en la tabla correspondiente.
 </div>
 <div id="helpSubEgresos" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
 Va al Subdiario Egreso: Se selecciona en los casos de conceptos de egresos que deben ser considerados para listarse en el subdiario de egresos. Generalmente, todos los conceptos marcados como Egreso.
 </div>
 <div id="helpSubIngresos" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Va al Subdiario Ingreso: Esta marca es analizada si y solo si, se trata de un ingreso originado en un movimiento bancario. El resto de los ingresos, sin importar lo que se indique, son inclu�dos en el reporte de subdiario de ingresos.
+Va al Subdiario Ingreso: Esta marca es analizada si y solo si, se trata de un ingreso originado en un movimiento bancario. El resto de los ingresos, sin importar lo que se indique, son incluídos en el reporte de subdiario de ingresos.
 </div>
 <div id="helpGuardar" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Guardar: Al seleccionar este bot�n, se efect�an todos los controles sobre los datos ingresados y se graba en la tabla correspondiente; confirmando as� lo ingresado. No ser� guardado ning�n cambio si se abandona la pantalla sin seleccionar este bot�n.
+Guardar: Al seleccionar este botón, se efectúan todos los controles sobre los datos ingresados y se graba en la tabla correspondiente; confirmando así lo ingresado. No será guardado ningún cambio si se abandona la pantalla sin seleccionar este botón.
 </div>
 <div id="helpVolver" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Volver: Seleccionando este link, se vuelve a la pantalla anterior. Se perder� toda actualizaci�n efectuada en el caso que los cambios no se guarden previamente.
+Volver: Seleccionando este link, se vuelve a la pantalla anterior. Se perderá toda actualización efectuada en el caso que los cambios no se guarden previamente.
 </div>
 
 

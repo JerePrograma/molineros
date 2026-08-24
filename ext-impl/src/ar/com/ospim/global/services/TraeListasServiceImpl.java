@@ -1688,7 +1688,7 @@ public class TraeListasServiceImpl {
 				listaDirecciones.add(dire);
 			}
 		} catch (Exception e) {
-			_log.debug("error al traer c�digos postales de la CABA", e);
+			_log.debug("error al traer códigos postales de la CABA", e);
 		} finally {
 			ConnectionHelper.cerrar(stmt, con);
 		}

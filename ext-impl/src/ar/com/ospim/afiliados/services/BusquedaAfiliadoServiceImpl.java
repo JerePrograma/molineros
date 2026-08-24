@@ -186,7 +186,7 @@ public class BusquedaAfiliadoServiceImpl {
 						rs.getInt("id_ospim"), rs.getInt("id_amtima"),
 						rs.getInt("id_uoma"), rs.getInt("id_plan"),
 						rs.getString("nombre_plan"), rs.getDate("alta_fecha"),
-						rs.getString("discapacitado"), "", "");  // algun d�a buscar la tercerizadora y descripcion
+						rs.getString("discapacitado"), "", "");  // algun día buscar la tercerizadora y descripcion
 
 				afi.setId_ospim_baja_fecha(rs.getDate("id_ospim_baja_fecha"));
 				afi.setId_uoma_baja_fecha(rs.getDate("id_uoma_baja_fecha"));
@@ -287,7 +287,7 @@ public class BusquedaAfiliadoServiceImpl {
 						rs.getInt("id_ospim"), rs.getInt("id_amtima"),
 						rs.getInt("id_uoma"), rs.getInt("id_plan"),
 						rs.getString("nombre_plan"), rs.getDate("alta_fecha"),
-						rs.getString("discapacitado"), "", "");  // algun d�a buscar la tercerizadora y descripcion
+						rs.getString("discapacitado"), "", "");  // algun día buscar la tercerizadora y descripcion
 
 				afi.setId_ospim_baja_fecha(rs.getDate("id_ospim_baja_fecha"));
 				afi.setId_uoma_baja_fecha(rs.getDate("id_uoma_baja_fecha"));

@@ -129,34 +129,34 @@
 
 
 <div id="helpEjercicio" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Ejercicio: Se indica el ejercicio en el cual se desean buscar los movimientos bancarios. Luego, se deber� seleccionar el bot�n "Buscar" para visualizar el resultado.
+Ejercicio: Se indica el ejercicio en el cual se desean buscar los movimientos bancarios. Luego, se deberá seleccionar el botón "Buscar" para visualizar el resultado.
 </div>
 <div id="helpBuscar" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Buscar: Ejecuta la b�squeda para el ejercicio que se indique.
+Buscar: Ejecuta la búsqueda para el ejercicio que se indique.
 </div>
 <div id="helpAlta" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Alta Tipo Movimiento: Seleccionando este bot�n, se abrir� la pantalla de alta de un nuevo movimiento bancario.
+Alta Tipo Movimiento: Seleccionando este botón, se abrirá la pantalla de alta de un nuevo movimiento bancario.
 </div>
 <div id="helpEjercicio2" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Ejercicio: Es el ejercicio al cual pertenecen los registros del cuadro inferior de la pantalla. Es decir, de la �ltima b�squeda efectuada.
+Ejercicio: Es el ejercicio al cual pertenecen los registros del cuadro inferior de la pantalla. Es decir, de la última búsqueda efectuada.
 </div>
 <div id="helpDescripcion" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Descripci�n: descripci�n del tipo de movimiento bancario.
+Descripción: descripción del tipo de movimiento bancario.
 </div>
 <div id="helpConcepto" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Concepto: concepto asignado al movimiento bancario. En el caso de no asignar un concepto, los movimientos bancarios de este tipo s�lo tendr�n efecto en el libro banco/caja y no se ver�n reflejados en los subdiarios ni en los asientos autom�ticos. Si se asigna un concepto, los movimientos de este tipo se incluir�n, o no, en alguno de los subdiarios, dependiendo de lo que se indique en la tabla de conceptos para el concepto asignado en los campos: "va en subdiario de ingresos" y "va en subdiario de egresos".
+Concepto: concepto asignado al movimiento bancario. En el caso de no asignar un concepto, los movimientos bancarios de este tipo sólo tendrán efecto en el libro banco/caja y no se verán reflejados en los subdiarios ni en los asientos automáticos. Si se asigna un concepto, los movimientos de este tipo se incuilrán, o no, en alguno de los subdiarios, dependiendo de lo que se indique en la tabla de conceptos para el concepto asignado en los campos: "va en subdiario de ingresos" y "va en subdiario de egresos".
 </div>
 <div id="helpDesde" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Desde: Es la fecha de inicio de la vigencia del tipo de movimiento. Dentro de un mismo ejercicio se podr�n asignar distintas equivalencias para diferentes per�odos. De esta forma, se evita que los cambios efectuados sean retroactivos a meses ya cerrados del ejercicio.
+Desde: Es la fecha de inicio de la vigencia del tipo de movimiento. Dentro de un mismo ejercicio se podrán asignar distintas equivalencias para diferentes períodos. De esta forma, se evita que los cambios efectuados sean retroactivos a meses ya cerrados del ejercicio.
 </div>
 <div id="helpHasta" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Hasta: Es la fecha de finalizaci�n de la vigencia del tipo de movimiento. Dentro de un mismo ejercicio se podr�n asignar distintas equivalencias para diferentes per�odos. De esta forma, se evita que los cambios efectuados sean retroactivos a meses ya cerrados del ejercicio que se trate.
+Hasta: Es la fecha de finalización de la vigencia del tipo de movimiento. Dentro de un mismo ejercicio se podrán asignar distintas equivalencias para diferentes períodos. De esta forma, se evita que los cambios efectuados sean retroactivos a meses ya cerrados del ejercicio que se trate.
 </div>
 <div id="helpEditar" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Editar: Se selecciona en el caso que se desee efectuar cambios sobre alg�n dato de un registro. Se abrir� una nueva pantalla de actualizaci�n.
+Editar: Se selecciona en el caso que se desee efectuar cambios sobre algún dato de un registro. Se abrirá una nueva pantalla de actualización.
 </div>
 <div id="helpEliminar" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Eliminar: Se selecciona en el caso que se desee un registro. No podr� borrarse un registro que fuera utilizado en alguna tabla o transacci�n del sistema.
+Eliminar: Se selecciona en el caso que se desee un registro. No podrá borrarse un registro que fuera utilizado en alguna tabla o transacción del sistema.
 </div>
 
 

@@ -201,19 +201,19 @@
 
 
 <div id="helpEjercicio" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Ejercicio: Se indica el ejercicio en el cual se desean buscar los par�metros especiales. Luego, se deber� seleccionar el bot�n "Buscar" para visualizar el resultado.
+Ejercicio: Se indica el ejercicio en el cual se desean buscar los parámetros especiales. Luego, se deberá seleccionar el botón "Buscar" para visualizar el resultado.
 </div>
 <div id="helpBuscar" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Buscar: Ejecuta la b�squeda de par�metros especiales para el ejercicio que se indique.
+Buscar: Ejecuta la búsqueda de parámetros especiales para el ejercicio que se indique.
 </div>
 <div id="helpDesde" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Desde: Es la fecha de inicio de la vigencia de la equivalencia establecida. Dentro de un mismo ejercicio se podr�n asignar distintas equivalencias para diferentes per�odos. De esta forma, se evita que los cambios efectuados sean retroactivos a meses ya cerrados del ejercicio.
+Desde: Es la fecha de inicio de la vigencia de la equivalencia establecida. Dentro de un mismo ejercicio se podrán asignar distintas equivalencias para diferentes períodos. De esta forma, se evita que los cambios efectuados sean retroactivos a meses ya cerrados del ejercicio.
 </div>
 <div id="helpHasta" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Hasta: Es la fecha de finalizaci�n de la vigencia de la equivalencia establecida. Dentro de un mismo ejercicio se podr�n asignar distintas equivalencias para diferentes per�odos. De esta forma, se evita que los cambios efectuados sean retroactivos a meses ya cerrados del ejercicio que se trate.
+Hasta: Es la fecha de finalización de la vigencia de la equivalencia establecida. Dentro de un mismo ejercicio se podrán asignar distintas equivalencias para diferentes períodos. De esta forma, se evita que los cambios efectuados sean retroactivos a meses ya cerrados del ejercicio que se trate.
 </div>
 <div id="helpEditar" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Editar: Se selecciona en el caso que se desee efectuar cambios sobre alg�n dato de un registro. Se abrir� una nueva pantalla de actualizaci�n.
+Editar: Se selecciona en el caso que se desee efectuar cambios sobre algún dato de un registro. Se abrirá una nueva pantalla de actualización.
 </div>
 
 

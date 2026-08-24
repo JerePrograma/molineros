@@ -113,19 +113,19 @@
 <p><a href="<%= volver %>">Volver</a><a href="javascript:void(0)" onclick="help(event, 'helpVolver')"><img style="height: 16px; width: 16px" src="/html/images/help.png" title="Ayuda" alt="Ayuda"/></a></p>
 
 <div id="helpEjercicio" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Ejercicio: Es el per�odo de vigencia del tipo de movimiento y su concepto. Generalmente, coincide con el ejercicio contable. Se modificar�, por ejemplo, en el caso que se desee que cobre vigencia desde un mes en particular del ejercicio, ya que los anteriores son per�odos con el an�lisis concluido y los ajustes efectuados.
+Ejercicio: Es el período de vigencia del tipo de movimiento y su concepto. Generalmente, coincide con el ejercicio contable. Se modificará, por ejemplo, en el caso que se desee que cobre vigencia desde un mes en particular del ejercicio, ya que los anteriores son períodos con el análisis concluido y los ajustes efectuados.
 </div>
 <div id="helpDescripcion" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Descripci�n: descripci�n del tipo de movimiento bancario.
+Descripción: descripción del tipo de movimiento bancario.
 </div>
 <div id="helpConcepto" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Concepto: concepto asignado al movimiento bancario. En el caso de no asignar un concepto, los movimientos bancarios de este tipo s�lo tendr�n efecto en el libro banco/caja y no se ver�n reflejados en los subdiarios ni en los asientos autom�ticos. Si se asigna un concepto, los movimientos de este tipo se incluir�n, o no, en alguno de los subdiarios, dependiendo de lo que se indique en la tabla de conceptos para el concepto asignado en los campos: "va en subdiario de ingresos" y "va en subdiario de egresos".
+Concepto: concepto asignado al movimiento bancario. En el caso de no asignar un concepto, los movimientos bancarios de este tipo sólo tendrán efecto en el libro banco/caja y no se verán reflejados en los subdiarios ni en los asientos automáticos. Si se asigna un concepto, los movimientos de este tipo se incuilrán, o no, en alguno de los subdiarios, dependiendo de lo que se indique en la tabla de conceptos para el concepto asignado en los campos: "va en subdiario de ingresos" y "va en subdiario de egresos".
 </div>
 <div id="helpGuardar" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Guardar: Al seleccionar este bot�n, se efect�an todos los controles sobre los datos ingresados y se graba en la tabla correspondiente; confirmando as� lo ingresado. No ser� guardado ning�n cambio si se abandona la pantalla sin seleccionar este bot�n.
+Guardar: Al seleccionar este botón, se efectúan todos los controles sobre los datos ingresados y se graba en la tabla correspondiente; confirmando así lo ingresado. No será guardado ningún cambio si se abandona la pantalla sin seleccionar este botón.
 </div>
 <div id="helpVolver" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Volver: Seleccionando este link, se vuelve a la pantalla anterior. Se perder� toda actualizaci�n efectuada en el caso que los cambios no se guarden previamente.
+Volver: Seleccionando este link, se vuelve a la pantalla anterior. Se perderá toda actualización efectuada en el caso que los cambios no se guarden previamente.
 </div>
 
 

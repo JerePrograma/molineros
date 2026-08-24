@@ -21,7 +21,7 @@ function trim(cadena)
 }
 
 /**
- * Valida CUILS (s�lo num�rico y de 11 chars)
+ * Valida CUILS (sólo numérico y de 11 chars)
  */
 function validarCuil(input, message){	
 	if (input.trim() == "00000000000"){

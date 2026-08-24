@@ -223,52 +223,52 @@
 
 
 <div id="helpConcepto" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Concepto: Se completa s�lo cuando se quiere efectuar una b�squeda que filtre por la descripci�n de un concepto o parte del mismo. Tomar� s�lo las cuentas del ejercicio que se indique. Luego de ingresar el texto, se deber� seleccionar el bot�n "Buscar" para visualizar el resultado en el  cuadro inferior de esta pantalla.
+Concepto: Se completa sólo cuando se quiere efectuar una búsqueda que filtre por la descripción de un concepto o parte del mismo. Tomará sólo las cuentas del ejercicio que se indique. Luego de ingresar el texto, se deberá seleccionar el botón "Buscar" para visualizar el resultado en el  cuadro inferior de esta pantalla.
 </div>
 <div id="helpCuenta" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Cuenta: Se completa s�lo cuando se quiere efectuar una b�squeda que filtre por una cuenta del plan de cuentas en particular en la columna "Cuenta". Tomar� s�lo las cuentas del ejercicio que se indique. Luego de seleccionada la cuenta, se deber� seleccionar el bot�n "Buscar" para visualizar el resultado en el cuadro inferior de esta pantalla.
+Cuenta: Se completa sólo cuando se quiere efectuar una búsqueda que filtre por una cuenta del plan de cuentas en particular en la columna "Cuenta". Tomará sólo las cuentas del ejercicio que se indique. Luego de seleccionada la cuenta, se deberá seleccionar el botón "Buscar" para visualizar el resultado en el cuadro inferior de esta pantalla.
 </div>
 <div id="helpCuentaPasivo" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Cuenta Pasivo: Se completa s�lo cuando se quiere efectuar una b�squeda que filtre por una cuenta del plan de cuentas en particular en la columna "Cuenta Pasivo". Tomar� s�lo las cuentas del ejercicio que se indique. Luego de seleccionada la cuenta, se deber� seleccionar el bot�n "Buscar" para visualizar el resultado en el cuadro inferior de esta pantalla.
+Cuenta Pasivo: Se completa sólo cuando se quiere efectuar una búsqueda que filtre por una cuenta del plan de cuentas en particular en la columna "Cuenta Pasivo". Tomará sólo las cuentas del ejercicio que se indique. Luego de seleccionada la cuenta, se deberá seleccionar el botón "Buscar" para visualizar el resultado en el cuadro inferior de esta pantalla.
 </div>
 <div id="helpBuscar" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Buscar: De acuerdo a los par�metros previos, seleccionando este bot�n, se ejecuta la b�squeda de registros coincidentes. El resultado se visualiza en el cuadro inferior de esta pantalla.
+Buscar: De acuerdo a los parámetros previos, seleccionando este botón, se ejecuta la búsqueda de registros coincidentes. El resultado se visualiza en el cuadro inferior de esta pantalla.
 </div>
 <div id="helpAlta" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Alta Concepto: Seleccionando este bot�n, se abrir� la pantalla de alta de un nuevo concepto.
+Alta Concepto: Seleccionando este botón, se abrirá la pantalla de alta de un nuevo concepto.
 </div>
 <div id="helpEjercicio" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Ejercicio: Es el ejercicio al cual pertenecen los registros del cuadro inferior de la pantalla. Es decir, de la �ltima b�squeda efectuada.
+Ejercicio: Es el ejercicio al cual pertenecen los registros del cuadro inferior de la pantalla. Es decir, de la última búsqueda efectuada.
 </div>
 <div id="helpConceptoHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Concepto: Descripci�n del concepto. Puede ser modificado seleccionando "Editar" en el registro que se trate.
+Concepto: Descripción del concepto. Puede ser modificado seleccionando "Editar" en el registro que se trate.
 </div>
 <div id="helpCuentaHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Cuenta: Es la cuenta que le corresponde contablemente a todo movimiento que utilice el concepto tanto en la generaci�n de asientos autom�ticos como en los reportes con res�menes por cuenta contable. Por ejemplo: subdiarios de ingresos y egresos. Puede ser modificado seleccionando "Editar" en el registro que se trate.
+Cuenta: Es la cuenta que le corresponde contablemente a todo movimiento que utilice el concepto tanto en la generación de asientos automáticos como en los reportes con resúmenes por cuenta contable. Por ejemplo: subdiarios de ingresos y egresos. Puede ser modificado seleccionando "Editar" en el registro que se trate.
 </div>
 <div id="helpCuentaPasivoHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Cuenta Pasivo: Es la cuenta contable que se utilizar� como equivalencia para el concepto, en el caso que se trate de una deuda que no es pagada en el mismo mes que fuera contabilizada. Es decir, efectuado el pago con posterioridad del mes de la fecha de recepci�n del comprobante de dicha deuda. Se utiliza tanto en la generaci�n de asientos autom�ticos como en los reportes con res�menes por cuenta contable. Por ejemplo: subdiarios de ingresos y egresos. Puede ser modificado seleccionando "Editar" en el registro que se trate.
+Cuenta Pasivo: Es la cuenta contable que se utilizará como equivalencia para el concepto, en el caso que se trate de una deuda que no es pagada en el mismo mes que fuera contabilizada. Es decir, efectuado el pago con posterioridad del mes de la fecha de recepción del comprobante de dicha deuda. Se utiliza tanto en la generación de asientos automáticos como en los reportes con resúmenes por cuenta contable. Por ejemplo: subdiarios de ingresos y egresos. Puede ser modificado seleccionando "Editar" en el registro que se trate.
 </div>
 <div id="helpEgresosHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Egresos: Se indica con la letra "E" los casos de conceptos que pueden ser seleccionados en la carga de comprobantes del m�dulo de pagos. Se indica con la letra "S" los casos de conceptos de egresos que deben ser considerados para listarse en el subdiario de egresos.
+Egresos: Se indica con la letra "E" los casos de conceptos que pueden ser seleccionados en la carga de comprobantes del módulo de pagos. Se indica con la letra "S" los casos de conceptos de egresos que deben ser considerados para listarse en el subdiario de egresos.
 </div>
 <div id="helpIngresosHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Ingresos: Se indica con la letra "I" los casos de conceptos que pueden ser seleccionados en la carga de recibos del m�dulo de ingresos. Se indica con la letra "S" los casos de conceptos de ingresos que deben ser considerados para listarse en el subdiario de ingresos.
+Ingresos: Se indica con la letra "I" los casos de conceptos que pueden ser seleccionados en la carga de recibos del módulo de ingresos. Se indica con la letra "S" los casos de conceptos de ingresos que deben ser considerados para listarse en el subdiario de ingresos.
 </div>
 <div id="helpLiquidacionesHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Liquidaciones: Se indica con la letra "L" en los casos de conceptos que pueden ser utilizados en el m�dulo de liquidaciones cuando no se detalla por c�digo de prestaci�n del nomenclador.
+Liquidaciones: Se indica con la letra "L" en los casos de conceptos que pueden ser utilizados en el módulo de liquidaciones cuando no se detalla por código de prestación del nomenclador.
 </div>
 <div id="helpDesdeHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Desde: Es la fecha de inicio de la vigencia de la equivalencia establecida para el concepto que se trate. Dentro de un mismo ejercicio se podr�n asignar distintas equivalencias para diferentes per�odos. De esta forma, se evita que los cambios efectuados sean retroactivos a meses ya cerrados del ejercicio.
+Desde: Es la fecha de inicio de la vigencia de la equivalencia establecida para el concepto que se trate. Dentro de un mismo ejercicio se podrán asignar distintas equivalencias para diferentes períodos. De esta forma, se evita que los cambios efectuados sean retroactivos a meses ya cerrados del ejercicio.
 </div>
 <div id="helpHastaHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Hasta: Es la fecha de finalizaci�n de la vigencia de la equivalencia establecida para el concepto que se trate. Dentro de un mismo ejercicio se podr�n asignar distintas equivalencias para diferentes per�odos. De esta forma, se evita que los cambios efectuados sean retroactivos a meses ya cerrados del ejercicio que se trate.
+Hasta: Es la fecha de finalización de la vigencia de la equivalencia establecida para el concepto que se trate. Dentro de un mismo ejercicio se podrán asignar distintas equivalencias para diferentes períodos. De esta forma, se evita que los cambios efectuados sean retroactivos a meses ya cerrados del ejercicio que se trate.
 </div>
 <div id="helpEditarHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Editar: Se selecciona en el caso que se desee efectuar cambios sobre alg�n dato de un registro. Se abrir� una nueva pantalla de actualizaci�n.
+Editar: Se selecciona en el caso que se desee efectuar cambios sobre algún dato de un registro. Se abrirá una nueva pantalla de actualización.
 </div>
 <div id="helpEliminarHeader" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 200px; left: 300px">
-Eliminar: Se selecciona en el caso que se desee un registro. No podr� borrarse un registro que fuera utilizado en alguna tabla o transacci�n del sistema.
+Eliminar: Se selecciona en el caso que se desee un registro. No podrá borrarse un registro que fuera utilizado en alguna tabla o transacción del sistema.
 </div>
 
 
