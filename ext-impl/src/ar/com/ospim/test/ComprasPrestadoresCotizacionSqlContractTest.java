@@ -80,21 +80,97 @@ public class ComprasPrestadoresCotizacionSqlContractTest {
                 registrar,
                 "WHERE compras.requerimiento_cotizacion_prestador.estado_envio\n               IN (\n               'PENDIENTE',\n               'ERROR',\n               'EMAIL_INVALIDO'"
         );
+
+        validarMigracionEmailCotizacion();
+    }
+
+    private static void validarMigracionEmailCotizacion()
+            throws Exception {
+
+        String migracion =
+                leer(
+                        "docs/sql/"
+                                + "20260825_corregir_email_cotizacion_prestador.sql",
+                        "ISO-8859-1"
+                );
+
+        assertContains(
+                "migracion reemplaza el resolver",
+                migracion,
+                "CREATE OR REPLACE FUNCTION\n"
+                        + "compras.resolver_email_cotizacion_prestador("
+        );
+        assertContains(
+                "migracion conserva email y factura",
+                migracion,
+                "IN ('E', 'F')"
+        );
+        assertContains(
+                "migracion preserva prioridad email",
+                migracion,
+                "WHEN 'E' THEN 1"
+        );
+        assertContains(
+                "migracion usa factura como fallback",
+                migracion,
+                "WHEN 'F' THEN 2"
+        );
+        assertContains(
+                "migracion descarta contactos dados de baja",
+                migracion,
+                "AND ce.baja_fecha IS NULL"
+        );
+        assertContains(
+                "migracion valida formato",
+                migracion,
+                "~* '^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$'"
+        );
+        assertNotContains(
+                "migracion sin cambios de datos",
+                migracion,
+                "UPDATE "
+        );
+        assertNotContains(
+                "migracion sin borrado de datos",
+                migracion,
+                "DELETE FROM "
+        );
+
+        String prestadores =
+                leer(
+                        "ext-web/docroot/html/portlet/prestadores/"
+                                + "prestador_lugar_atencion.jsp",
+                        "ISO-8859-1"
+                );
+
+        assertContains(
+                "prestadores publica F como factura",
+                prestadores,
+                "<option value=\"<%=ContactoElectronico.Tipo.FAX%>\">FACTURA</option>"
+        );
+        assertContains(
+                "prestadores valida F como email",
+                prestadores,
+                "tipoContE == '<%=ContactoElectronico.Tipo.FAX%>'"
+        );
     }
 
     private static String leerSchema() throws Exception {
-        File file =
-                new File(
-                        "ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql"
-                );
+        return leer(
+                "ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql",
+                "UTF-8"
+        );
+    }
+
+    private static String leer(
+            String path,
+            String charset) throws Exception {
+
+        File file = new File(path);
 
         String sql = new String(
-                Files.readAllBytes(
-                        file.toPath()
-                ),
-                Charset.forName(
-                        "UTF-8"
-                )
+                Files.readAllBytes(file.toPath()),
+                Charset.forName(charset)
         );
 
         return sql.replace(
@@ -144,6 +220,21 @@ public class ComprasPrestadoresCotizacionSqlContractTest {
                     descripcion
                             + ": no se encontro ["
                             + esperado
+                            + "]"
+            );
+        }
+    }
+
+    private static void assertNotContains(
+            String descripcion,
+            String texto,
+            String prohibido) {
+
+        if (texto.indexOf(prohibido) >= 0) {
+            throw new AssertionError(
+                    descripcion
+                            + ": se encontro ["
+                            + prohibido
                             + "]"
             );
         }
