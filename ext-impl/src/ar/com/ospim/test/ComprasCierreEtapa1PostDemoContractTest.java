@@ -72,7 +72,7 @@ public final class ComprasCierreEtapa1PostDemoContractTest {
         );
         contiene(documentos, "bytes binarios", "byte[] contenido");
         contiene(documentos, "identidad fuente", "Set<Long> archivosFuente");
-        contiene(documentos, "reintento sin duplicar", "getFileEntry(");
+        contiene(documentos, "reintento sin duplicar", "getFileEntryByTitle(");
         contiene(documentos, "reintento con mismos bytes", "Arrays.equals(");
     }
 

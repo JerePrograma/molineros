@@ -31,6 +31,19 @@ public final class ComprasReclamoDocumentacionContractTest {
         String struts = leer(
                 "ext-web/docroot/WEB-INF/struts-config.xml"
         );
+        String materializacion = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
+                        + "ReclamoPrestacionalCompraDocumentacionHelper.java"
+        );
+        String compensacion = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/documentos/"
+                        + "DocumentoLibraryComprasHelper.java"
+        );
+        String listadoArchivos = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/"
+                        + "reclamo_prestacional_imagenes_search_documentos.jsp"
+        );
 
         assertContains(
                 "consulta inversa RP a requerimiento",
@@ -219,6 +232,122 @@ public final class ComprasReclamoDocumentacionContractTest {
                 viewReclamo,
                 "request.setAttribute(\n            Constants.CMD,\n            Constants.VIEW"
         );
+
+        validarMaterializacionRp(
+                materializacion,
+                compensacion,
+                listadoArchivos
+        );
+
+        System.out.println("COMPRAS_RECLAMO_DOCUMENTACION_OK");
+    }
+
+    private static void validarMaterializacionRp(
+            String materializacion,
+            String compensacion,
+            String listadoArchivos) {
+
+        assertContains(
+                "T1 Orden medica separada por RP",
+                materializacion,
+                "String.valueOf(idReclamoPrestacional)\n"
+                        + "                            + \"-ORDEN-MEDICA-\""
+        );
+        assertContains(
+                "T1 pedido separado por RP",
+                materializacion,
+                "+ \"-PEDIDO-COTIZACION-\""
+        );
+        assertContains(
+                "T1 cotizacion separada por RP",
+                materializacion,
+                "+ \"-COTIZACION-ADJUDICADA-\""
+        );
+        assertContains(
+                "T1 listado legacy por prefijo RP",
+                listadoArchivos,
+                "RestrictionsFactoryUtil.ilike(\"title\", String.valueOf(reclamoprestacional.getId_reclamo())"
+        );
+
+        assertNotContains(
+                "T2 nombre original no es titulo de Orden medica",
+                materializacion,
+                "String titulo = ordenMedica.getNombreOriginal();"
+        );
+        assertNotContains(
+                "T2 nombre original no es titulo de pedido",
+                materializacion,
+                "pedidoCotizacion.getNombreOriginal(),"
+        );
+        assertNotContains(
+                "T2 nombre original no es titulo de cotizacion",
+                materializacion,
+                "presupuestoAdjudicado.getNombreOriginal(),"
+        );
+
+        assertContains(
+                "T3 identidad idempotente por titulo",
+                materializacion,
+                ".getFileEntryByTitle("
+        );
+        assertContains(
+                "T3 mismos bytes reconocidos",
+                materializacion,
+                "Arrays.equals("
+        );
+        assertBefore(
+                "T3 consulta antes del alta",
+                materializacion,
+                ".getFileEntryByTitle(",
+                ".addFileEntry("
+        );
+        assertContains(
+                "T3 preexistente no se registra como creado",
+                materializacion,
+                "if (documentoCreado != null)"
+        );
+
+        assertContains(
+                "T4 contenido distinto falla cerrado",
+                materializacion,
+                "identidad o contenido diferente"
+        );
+        assertNotContains(
+                "T4 no sobrescribe Document Library",
+                materializacion,
+                ".addOrOverwriteFileEntry("
+        );
+        assertContains(
+                "T4 alta sin overwrite",
+                materializacion,
+                ".addFileEntry("
+        );
+
+        assertContains(
+                "T5 fuente solo se lee por fileEntryId",
+                materializacion,
+                ".getDlFileEntryId()"
+        );
+        assertContains(
+                "T5 compensacion exige identidad creada",
+                compensacion,
+                "documento.getFileEntryId()"
+        );
+        assertContains(
+                "T5 compensacion valida UUID creado",
+                compensacion,
+                "documento.getUuid()"
+        );
+        assertContains(
+                "T6 compensacion limitada a creados",
+                materializacion,
+                ".eliminarDocumentoCreado(documentos.get(i))"
+        );
+        assertContains(
+                "T6 reintento devuelve documento no creado",
+                materializacion,
+                "return null;"
+        );
     }
 
     private static String leer(String path) throws Exception {
@@ -248,6 +377,30 @@ public final class ComprasReclamoDocumentacionContractTest {
         if (texto.indexOf(prohibido) >= 0) {
             throw new AssertionError(
                     descripcion + ": contiene [" + prohibido + "]"
+            );
+        }
+    }
+
+    private static void assertBefore(
+            String descripcion,
+            String texto,
+            String primero,
+            String segundo) {
+
+        int posicionPrimero = texto.indexOf(primero);
+        int posicionSegundo = texto.indexOf(segundo);
+
+        if (posicionPrimero < 0
+                || posicionSegundo < 0
+                || posicionPrimero >= posicionSegundo) {
+
+            throw new AssertionError(
+                    descripcion
+                            + ": orden invalido ["
+                            + primero
+                            + "] / ["
+                            + segundo
+                            + "]"
             );
         }
     }

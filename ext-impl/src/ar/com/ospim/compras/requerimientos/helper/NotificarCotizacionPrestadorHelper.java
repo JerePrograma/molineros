@@ -29,11 +29,11 @@ public class NotificarCotizacionPrestadorHelper {
                     NotificarCotizacionPrestadorHelper.class
             );
 
-    private static final String PROP_REDIRECCION_QA_HABILITADA =
-            "compras.cotizacion.email.redireccion.qa.habilitada";
+    private static final boolean REDIRECCION_QA_HABILITADA =
+            true;
 
-    private static final String PROP_REDIRECCION_QA_DESTINO =
-            "compras.cotizacion.email.redireccion.qa.destino";
+    private static final String EMAIL_DESTINO_QA =
+            "acomas@ospim.org.ar";
 
     /*
      * El nombre histórico de la configuración se conserva por compatibilidad.
@@ -1619,7 +1619,7 @@ public class NotificarCotizacionPrestadorHelper {
 
         if (modoTemporal) {
             return normalizarEmail(
-                    leerPropiedad(PROP_REDIRECCION_QA_DESTINO)
+                    EMAIL_DESTINO_QA
             );
         }
 
@@ -1627,10 +1627,7 @@ public class NotificarCotizacionPrestadorHelper {
     }
 
     protected boolean redireccionQaHabilitada() {
-        String value = leerPropiedad(PROP_REDIRECCION_QA_HABILITADA);
-
-        return value != null
-                && "true".equalsIgnoreCase(value.trim());
+        return REDIRECCION_QA_HABILITADA;
     }
 
     private String[] resolverEmailsCopiaCotizacion() {

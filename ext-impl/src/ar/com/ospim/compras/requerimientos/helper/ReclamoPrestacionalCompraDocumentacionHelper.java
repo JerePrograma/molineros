@@ -168,7 +168,11 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                             .getIdRequerimientoPresupuesto()
                             + extension;
 
-            String titulo = ordenMedica.getNombreOriginal();
+            String titulo =
+                    String.valueOf(idReclamoPrestacional)
+                            + "-ORDEN-MEDICA-"
+                            + ordenMedica
+                            .getIdRequerimientoPresupuesto();
 
             String descripcion =
                     "Orden médica proveniente del "
@@ -240,7 +244,9 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                                 + "-PEDIDO-COTIZACION-"
                                 + idRequerimientoCompra
                                 + ".pdf",
-                        pedidoCotizacion.getNombreOriginal(),
+                        String.valueOf(idReclamoPrestacional)
+                                + "-PEDIDO-COTIZACION-"
+                                + idRequerimientoCompra,
                         "Pedido de cotización efectivamente enviado "
                                 + "al prestador adjudicado del "
                                 + "Requerimiento de Compra #"
@@ -293,7 +299,10 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                                 + presupuestoAdjudicado
                                 .getIdRequerimientoPresupuesto()
                                 + ".pdf",
-                        presupuestoAdjudicado.getNombreOriginal(),
+                        String.valueOf(idReclamoPrestacional)
+                                + "-COTIZACION-ADJUDICADA-"
+                                + presupuestoAdjudicado
+                                .getIdRequerimientoPresupuesto(),
                         "Cotización del prestador adjudicado proveniente "
                                 + "del Requerimiento de Compra #"
                                 + idRequerimientoCompra,
@@ -821,9 +830,9 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
 
         try {
             archivoExistente =
-                    DLFileEntryLocalServiceUtil.getFileEntry(
+                    DLFileEntryLocalServiceUtil.getFileEntryByTitle(
                             folder.getFolderId(),
-                            nombrePersistido
+                            titulo
                     );
         } catch (NoSuchFileEntryException inexistente) {
             archivoExistente = null;
@@ -836,11 +845,20 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                                     archivoExistente
                             );
 
+            String extensionExistente =
+                    DocumentoLibraryComprasHelper
+                            .obtenerExtensionSeguraDocumento(
+                                    archivoExistente.getName()
+                            );
+
             if (archivoExistente.getGroupId() != folder.getGroupId()
                     || archivoExistente.getFolderId()
                     != folder.getFolderId()
-                    || !nombrePersistido.equals(
-                    archivoExistente.getName()
+                    || !titulo.equals(
+                    archivoExistente.getTitle()
+            )
+                    || !extension.equals(
+                    extensionExistente
             )
                     || !Arrays.equals(
                     contenido,
@@ -860,6 +878,9 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                 null;
 
         FileOutputStream output =
+                null;
+
+        DLFileEntry entry =
                 null;
 
         try {
@@ -883,18 +904,15 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
             output = null;
 
             /*
-             * El nombre es deterministico.
-             *
-             * Si por una ejecución parcial este método vuelve
-             * a correrse para el mismo RP/documento, se sobrescribe
-             * el mismo archivo en lugar de duplicarlo.
+             * El titulo es la identidad logica deterministica.
+             * El nombre fisico es generado por Liferay.
+             * addFileEntry evita sobrescribir un documento existente.
              */
-            DLFileEntry entry =
+            entry =
                     DLFileEntryLocalServiceUtil
-                            .addOrOverwriteFileEntry(
+                            .addFileEntry(
                                     serviceContext.getUserId(),
                                     folder.getFolderId(),
-                                    nombrePersistido,
                                     nombrePersistido,
                                     titulo,
                                     descripcion,
@@ -909,9 +927,6 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                     != folder.getFolderId()
                     || entry.getGroupId()
                     != folder.getGroupId()
-                    || !nombrePersistido.equals(
-                    entry.getName()
-            )
                     || !titulo.equals(
                     entry.getTitle()
             )) {
@@ -919,6 +934,23 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                 throw new Exception(
                         "Document Library no confirmo "
                                 + "el documento del Reclamo Prestacional."
+                );
+            }
+
+            String extensionCreada =
+                    DocumentoLibraryComprasHelper
+                            .obtenerExtensionSeguraDocumento(
+                                    entry.getName()
+                            );
+
+            if (!extension.equals(
+                    extensionCreada
+            )) {
+
+                throw new Exception(
+                        "Document Library no confirmo "
+                                + "la extension del documento "
+                                + "del Reclamo Prestacional."
                 );
             }
 
@@ -930,6 +962,23 @@ public final class ReclamoPrestacionalCompraDocumentacionHelper {
                     entry.getName(),
                     entry.getTitle()
             );
+
+        } catch (Exception error) {
+
+            if (entry != null
+                    && entry.getFileEntryId() > 0L) {
+
+                try {
+                    DLFileEntryLocalServiceUtil
+                            .deleteFileEntry(
+                                    entry
+                            );
+                } catch (Exception cleanupError) {
+                    error.addSuppressed(cleanupError);
+                }
+            }
+
+            throw error;
 
         } finally {
 

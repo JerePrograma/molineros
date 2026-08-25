@@ -591,3 +591,30 @@ No priorizar velocidad aparente sobre consistencia.
 No hacer que una pantalla pase ocultando un defecto.
 
 No inventar soluciones cuando el repositorio ya contiene el patron correcto.
+
+### CHECKLIST OBLIGATORIO
+
+Antes de modificar código responder internamente:
+
+□ Ya encontré una implementación equivalente en Liquidaciones o Autorizaciones.
+
+□ Voy a adaptar esa implementación.
+
+□ No voy a inventar arquitectura.
+
+□ El cambio afecta únicamente los archivos necesarios.
+
+□ El diff esperado será pequeño.
+
+□ No cambiaré estética si no fue solicitado.
+
+□ No introduciré APIs modernas.
+
+□ No moveré lógica entre capas.
+
+□ No modificaré contratos públicos.
+
+□ Antes del commit ejecutaré:
+    git diff --check
+    pruebas focalizadas
+    revisión del log
