@@ -24,6 +24,12 @@ public class ReservaCotizacionPrestador {
         this.estadoEnvio = estadoEnvio;
     }
 
+    /**
+     * Contiene 0..N destinatarios separados por ';'.
+     *
+     * Se conserva String para mantener compatibilidad
+     * con el contrato de persistencia existente.
+     */
     public String getEmailDestino() {
         return emailDestino;
     }

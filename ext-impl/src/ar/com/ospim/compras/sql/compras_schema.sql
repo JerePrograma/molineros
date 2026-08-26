@@ -43,7 +43,6 @@
 -- Ejecutar con psql -X -v ON_ERROR_STOP=1.
 -- Si la sesión está abortada, ejecutar ROLLBACK antes de este archivo.
 -- =====================================================================
-\encoding LATIN1
 
 BEGIN;
 
