@@ -371,6 +371,58 @@ boolean msgPresupuestoBorrado =
                                 String emailDestinoVisible =
                                         prestadorEnviado.getEmailDestinoVisible();
 
+                                /*
+                                 * email_destino puede contener múltiples
+                                 * destinatarios separados por punto y coma.
+                                 *
+                                 * No corresponde comparar el email registrado
+                                 * contra la cadena completa. Sólo se considera
+                                 * que difiere cuando el email registrado actual
+                                 * no está presente entre los destinatarios
+                                 * utilizados para la notificación.
+                                 */
+                                String[] emailsDestinoSeparados =
+                                        WebKeysCompras.isEmpty(
+                                                emailDestinoVisible
+                                        )
+                                                ? new String[0]
+                                                : emailDestinoVisible.split(";");
+
+                                boolean emailRegistradoIncluidoEnDestino =
+                                        false;
+
+                                if (!WebKeysCompras.isEmpty(
+                                        emailRegistradoVisible
+                                )) {
+
+                                    for (int j = 0;
+                                            j < emailsDestinoSeparados.length;
+                                            j++) {
+
+                                        String emailDestinoItem =
+                                                emailsDestinoSeparados[j];
+
+                                        if (emailDestinoItem != null) {
+                                            emailDestinoItem =
+                                                    emailDestinoItem.trim();
+                                        }
+
+                                        if (!WebKeysCompras.isEmpty(
+                                                emailDestinoItem
+                                        )
+                                                && emailRegistradoVisible
+                                                        .equalsIgnoreCase(
+                                                                emailDestinoItem
+                                                        )) {
+
+                                            emailRegistradoIncluidoEnDestino =
+                                                    true;
+
+                                            break;
+                                        }
+                                    }
+                                }
+
                                 boolean emailDestinoDifiere =
                                         !WebKeysCompras.isEmpty(
                                                 emailRegistradoVisible
@@ -378,10 +430,7 @@ boolean msgPresupuestoBorrado =
                                         && !WebKeysCompras.isEmpty(
                                                 emailDestinoVisible
                                         )
-                                        && !emailRegistradoVisible
-                                                .equalsIgnoreCase(
-                                                        emailDestinoVisible
-                                                );
+                                        && !emailRegistradoIncluidoEnDestino;
 
                                 boolean pdfPendiente =
                                         reqPresupuestos
@@ -424,9 +473,44 @@ boolean msgPresupuestoBorrado =
                                         )) { %>
                                             No informado
                                         <% } else { %>
-                                            <%= HtmlUtil.escape(
-                                                    emailDestinoVisible
-                                            ) %>
+
+                                            <%
+                                            boolean primerEmailDestinoVisible =
+                                                    true;
+
+                                            for (int j = 0;
+                                                    j < emailsDestinoSeparados.length;
+                                                    j++) {
+
+                                                String emailDestinoItem =
+                                                        emailsDestinoSeparados[j];
+
+                                                if (emailDestinoItem != null) {
+                                                    emailDestinoItem =
+                                                            emailDestinoItem.trim();
+                                                }
+
+                                                if (WebKeysCompras.isEmpty(
+                                                        emailDestinoItem
+                                                )) {
+                                                    continue;
+                                                }
+
+                                                if (!primerEmailDestinoVisible) {
+                                            %>
+                                                    <br />
+                                            <%
+                                                }
+
+                                                primerEmailDestinoVisible =
+                                                        false;
+                                            %>
+                                                <%= HtmlUtil.escape(
+                                                        emailDestinoItem
+                                                ) %>
+                                            <%
+                                            }
+                                            %>
 
                                             <% if (emailDestinoDifiere) { %>
                                                 <br />
