@@ -65,7 +65,9 @@ public class CotizacionPrestadorMailHelper {
             throws Exception {
 
         enviarInterno(
-                emailDestino,
+                new String[] {
+                        emailDestino
+                },
                 emailsCopia,
                 asunto,
                 cuerpo,
@@ -135,7 +137,9 @@ public class CotizacionPrestadorMailHelper {
         );
 
         enviarInterno(
-                emailDestino,
+                new String[] {
+                        emailDestino
+                },
                 emailsCopia,
                 asunto,
                 cuerpo,
