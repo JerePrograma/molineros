@@ -219,29 +219,25 @@ public final class ComprasDoceRequerimientosContractTest {
                 "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
                         + "requerimiento_compra_detalle_editor_componente.jsp"
         );
-        String config = leer(
-                "ext-web/docroot/html/portlet/compras/requerimientos/"
-                        + "requerimiento_compra_prestadores_configuracion.jsp"
-        );
         String action = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/action/"
                         + "BuscarItemTecnicoComprasAction.java"
         );
 
-        contiene(catalogo, "Alimentación", "(1, 'Alimentación', 'FARMACIA')");
-        contiene(catalogo, "Medicamentos", "(2, 'Medicamentos', 'FARMACIA')");
-        contiene(catalogo, "Prótesis Trauma", "(3, 'Prótesis Traumatología'");
-        contiene(catalogo, "Prótesis Cardio", "(4, 'Prótesis Cardiología'");
-        contiene(catalogo, "Prótesis General", "(5, 'Prótesis General'");
-        contiene(catalogo, "Insumos", "(6, 'Insumos'");
-        contiene(catalogo, "Pañales", "(7, 'Pañales'");
+        contiene(catalogo, "Alimentación", "(1, 'ALIMENTACION', 'FARMACIA')");
+        contiene(catalogo, "Medicamentos", "(2, 'MEDICAMENTOS', 'FARMACIA')");
+        contiene(catalogo, "Prótesis Trauma", "(3, 'PROTESIS TRAUMATOLOGIA'");
+        contiene(catalogo, "Prótesis Cardio", "(4, 'PROTESIS CARDIOLOGIA'");
+        contiene(catalogo, "Prótesis General", "(5, 'PROTESIS GENERAL'");
+        contiene(catalogo, "Insumos", "(6, 'INSUMOS'");
+        contiene(catalogo, "Pañales", "(7, 'PAÑALES'");
         contiene(editor, "etiqueta funcional", "Tipo de cotización:");
         noContiene(editor, "sin selector técnico", "Tipo Nomenclador");
         contiene(action, "tipo técnico interno", "Integer.valueOf(0)");
-        contiene(migration, "FK de tipo", "fk_compras_sector_tipo_prestador_cotizacion");
-        contiene(migration, "PK triple", "id_tipo_prestacion,");
-        contiene(migration, "candidatos por detalle", "d.id_tipo_prestacion = stp.id_tipo_prestacion");
-        contiene(config, "matriz visible", "Tipo de cotización");
+        contiene(catalogo, "dependencia de rubros", "public.prestador_rubro");
+        contiene(migration, "normaliza rubro", "compras.normalizar_rubro(pr.rubro)");
+        contiene(migration, "candidatos por detalle", "t.id_tipo_prestacion = d.id_tipo_prestacion");
+        noContiene(migration, "sin matriz deprecada", "compras.sector_tipo_prestador");
     }
 
     private static void validarSectoresYLegales() throws Exception {

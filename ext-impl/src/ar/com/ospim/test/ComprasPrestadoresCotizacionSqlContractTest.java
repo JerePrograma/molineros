@@ -20,7 +20,7 @@ public class ComprasPrestadoresCotizacionSqlContractTest {
         assertContains(
                 "listar filtra solicitar_cotizacion",
                 listar,
-                "COALESCE(\n              p.solicitar_cotizacion,"
+                "p.solicitar_cotizacion,"
         );
         assertContains(
                 "listar exige TRUE",
@@ -33,14 +33,14 @@ public class ComprasPrestadoresCotizacionSqlContractTest {
                 "AND p.baja_fecha IS NULL"
         );
         assertContains(
-                "listar cruza sector",
+                "listar cruza rubro prestador",
                 listar,
-                "ON stp.id_sector =\n                 r.id_sector"
+                "JOIN public.prestador_rubro pr"
         );
         assertContains(
-                "listar cruza tipo prestador",
+                "listar cruza tipo de prestación normalizado",
                 listar,
-                "ON p.id_tipo_prestador =\n                 stp.id_tipo_prestador"
+                "compras.normalizar_rubro(pr.rubro) = t.descripcion"
         );
         assertContains(
                 "listar no reintenta enviado procesando",
@@ -56,14 +56,14 @@ public class ComprasPrestadoresCotizacionSqlContractTest {
                 );
 
         assertContains(
-                "registrar valida sector-tipo",
+                "registrar valida rubro-tipo",
                 registrar,
-                "AND p.id_tipo_prestador =\n                      stp.id_tipo_prestador"
+                "compras.normalizar_rubro(pr.rubro) = t.descripcion"
         );
         assertContains(
                 "registrar valida solicitar_cotizacion",
                 registrar,
-                "COALESCE(\n              p.solicitar_cotizacion,"
+                "p.solicitar_cotizacion,"
         );
         assertContains(
                 "registrar descarta baja logica",

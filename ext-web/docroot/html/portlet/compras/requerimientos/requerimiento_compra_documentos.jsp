@@ -29,7 +29,10 @@ Efectos secundarios:
 <%@ page import="javax.portlet.PortletURL" %>
 <%@ page import="javax.portlet.WindowState" %>
 <%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.HashSet" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Locale" %>
+<%@ page import="java.util.Set" %>
 
 <%
 RequerimientoCompra reqPresupuestos =
@@ -371,16 +374,13 @@ boolean msgPresupuestoBorrado =
                                 String emailDestinoVisible =
                                         prestadorEnviado.getEmailDestinoVisible();
 
-                                /*
-                                 * email_destino puede contener múltiples
-                                 * destinatarios separados por punto y coma.
-                                 *
-                                 * No corresponde comparar el email registrado
-                                 * contra la cadena completa. Sólo se considera
-                                 * que difiere cuando el email registrado actual
-                                 * no está presente entre los destinatarios
-                                 * utilizados para la notificación.
-                                 */
+                                String[] emailsRegistradosSeparados =
+                                        WebKeysCompras.isEmpty(
+                                                emailRegistradoVisible
+                                        )
+                                                ? new String[0]
+                                                : emailRegistradoVisible.split(";");
+
                                 String[] emailsDestinoSeparados =
                                         WebKeysCompras.isEmpty(
                                                 emailDestinoVisible
@@ -388,49 +388,86 @@ boolean msgPresupuestoBorrado =
                                                 ? new String[0]
                                                 : emailDestinoVisible.split(";");
 
-                                boolean emailRegistradoIncluidoEnDestino =
-                                        false;
+                                List<String> emailsRegistradosVisibles =
+                                        new ArrayList<String>();
 
-                                if (!WebKeysCompras.isEmpty(
-                                        emailRegistradoVisible
-                                )) {
+                                List<String> emailsDestinoVisibles =
+                                        new ArrayList<String>();
 
-                                    for (int j = 0;
-                                            j < emailsDestinoSeparados.length;
-                                            j++) {
+                                Set<String> emailsActuales =
+                                        new HashSet<String>();
 
-                                        String emailDestinoItem =
-                                                emailsDestinoSeparados[j];
+                                Set<String> emailsHistoricos =
+                                        new HashSet<String>();
 
-                                        if (emailDestinoItem != null) {
-                                            emailDestinoItem =
-                                                    emailDestinoItem.trim();
-                                        }
+                                for (int j = 0;
+                                        j < emailsRegistradosSeparados.length;
+                                        j++) {
 
-                                        if (!WebKeysCompras.isEmpty(
+                                    String emailRegistradoItem =
+                                            emailsRegistradosSeparados[j];
+
+                                    if (emailRegistradoItem != null) {
+                                        emailRegistradoItem =
+                                                emailRegistradoItem.trim();
+                                    }
+
+                                    if (WebKeysCompras.isEmpty(
+                                            emailRegistradoItem
+                                    )) {
+                                        continue;
+                                    }
+
+                                    String emailRegistradoNormalizado =
+                                            emailRegistradoItem.toLowerCase(
+                                                    Locale.ROOT
+                                            );
+
+                                    if (emailsActuales.add(
+                                            emailRegistradoNormalizado
+                                    )) {
+                                        emailsRegistradosVisibles.add(
+                                                emailRegistradoItem
+                                        );
+                                    }
+                                }
+
+                                for (int j = 0;
+                                        j < emailsDestinoSeparados.length;
+                                        j++) {
+
+                                    String emailDestinoItem =
+                                            emailsDestinoSeparados[j];
+
+                                    if (emailDestinoItem != null) {
+                                        emailDestinoItem =
+                                                emailDestinoItem.trim();
+                                    }
+
+                                    if (WebKeysCompras.isEmpty(
+                                            emailDestinoItem
+                                    )) {
+                                        continue;
+                                    }
+
+                                    String emailDestinoNormalizado =
+                                            emailDestinoItem.toLowerCase(
+                                                    Locale.ROOT
+                                            );
+
+                                    if (emailsHistoricos.add(
+                                            emailDestinoNormalizado
+                                    )) {
+                                        emailsDestinoVisibles.add(
                                                 emailDestinoItem
-                                        )
-                                                && emailRegistradoVisible
-                                                        .equalsIgnoreCase(
-                                                                emailDestinoItem
-                                                        )) {
-
-                                            emailRegistradoIncluidoEnDestino =
-                                                    true;
-
-                                            break;
-                                        }
+                                        );
                                     }
                                 }
 
                                 boolean emailDestinoDifiere =
-                                        !WebKeysCompras.isEmpty(
-                                                emailRegistradoVisible
-                                        )
-                                        && !WebKeysCompras.isEmpty(
-                                                emailDestinoVisible
-                                        )
-                                        && !emailRegistradoIncluidoEnDestino;
+                                        !emailsActuales.equals(
+                                                emailsHistoricos
+                                        );
 
                                 boolean pdfPendiente =
                                         reqPresupuestos
@@ -456,68 +493,57 @@ boolean msgPresupuestoBorrado =
                                     </td>
 
                                     <td>
-                                        <% if (WebKeysCompras.isEmpty(
-                                                emailRegistradoVisible
-                                        )) { %>
+                                        <% if (emailsRegistradosVisibles.isEmpty()) { %>
                                             No informado
                                         <% } else { %>
-                                            <%= HtmlUtil.escape(
-                                                    emailRegistradoVisible
-                                            ) %>
-                                        <% } %>
-                                    </td>
-
-                                    <td>
-                                        <% if (WebKeysCompras.isEmpty(
-                                                emailDestinoVisible
-                                        )) { %>
-                                            No informado
-                                        <% } else { %>
-
                                             <%
-                                            boolean primerEmailDestinoVisible =
-                                                    true;
-
                                             for (int j = 0;
-                                                    j < emailsDestinoSeparados.length;
+                                                    j < emailsRegistradosVisibles.size();
                                                     j++) {
 
-                                                String emailDestinoItem =
-                                                        emailsDestinoSeparados[j];
-
-                                                if (emailDestinoItem != null) {
-                                                    emailDestinoItem =
-                                                            emailDestinoItem.trim();
-                                                }
-
-                                                if (WebKeysCompras.isEmpty(
-                                                        emailDestinoItem
-                                                )) {
-                                                    continue;
-                                                }
-
-                                                if (!primerEmailDestinoVisible) {
+                                                if (j > 0) {
                                             %>
                                                     <br />
                                             <%
                                                 }
-
-                                                primerEmailDestinoVisible =
-                                                        false;
                                             %>
                                                 <%= HtmlUtil.escape(
-                                                        emailDestinoItem
+                                                        emailsRegistradosVisibles.get(j)
                                                 ) %>
                                             <%
                                             }
                                             %>
+                                        <% } %>
+                                    </td>
 
-                                            <% if (emailDestinoDifiere) { %>
-                                                <br />
-                                                <em>
-                                                    Difiere del email registrado actual
-                                                </em>
-                                            <% } %>
+                                    <td>
+                                        <% if (emailsDestinoVisibles.isEmpty()) { %>
+                                            No informado
+                                        <% } else { %>
+                                            <%
+                                            for (int j = 0;
+                                                    j < emailsDestinoVisibles.size();
+                                                    j++) {
+
+                                                if (j > 0) {
+                                            %>
+                                                    <br />
+                                            <%
+                                                }
+                                            %>
+                                                <%= HtmlUtil.escape(
+                                                        emailsDestinoVisibles.get(j)
+                                                ) %>
+                                            <%
+                                            }
+                                            %>
+                                        <% } %>
+
+                                        <% if (emailDestinoDifiere) { %>
+                                            <br />
+                                            <em>
+                                                Difiere del email registrado actual
+                                            </em>
                                         <% } %>
                                     </td>
 

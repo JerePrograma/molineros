@@ -32,6 +32,7 @@
 --
 -- Dependencias externas de solo lectura:
 --   public.prestador
+--   public.prestador_rubro
 --   public.prestad_contacto_e
 --   public.contacto_e
 --   public.afi_situ_medica
@@ -93,48 +94,6 @@ CREATE TABLE compras.tipo_prestacion (
     CONSTRAINT uq_compras_tipo_prestacion_descripcion
         UNIQUE (descripcion)
 );
-
-
-CREATE TABLE compras.sector_tipo_prestador (
-                                               id_sector INTEGER NOT NULL
-                                                   REFERENCES compras.sector_requerimiento (id_sector),
-
-                                               id_tipo_prestador INTEGER NOT NULL,
-
-                                               id_tipo_prestacion SMALLINT NOT NULL,
-
-                                               activo BOOLEAN NOT NULL DEFAULT TRUE,
-
-                                               alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-                                               alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
-                                               modi_fecha TIMESTAMP WITHOUT TIME ZONE,
-                                               modi_usr VARCHAR(100),
-                                               baja_fecha TIMESTAMP WITHOUT TIME ZONE,
-                                               baja_usr VARCHAR(100),
-
-                                               CONSTRAINT fk_compras_sector_tipo_prestador_cotizacion
-                                                   FOREIGN KEY (id_tipo_prestacion)
-                                                   REFERENCES compras.tipo_prestacion (id_tipo_prestacion),
-
-                                               CONSTRAINT pk_compras_sector_tipo_prestador
-                                                   PRIMARY KEY (
-                                                       id_sector,
-                                                       id_tipo_prestacion,
-                                                       id_tipo_prestador
-                                                   )
-);
-
-CREATE INDEX ix_compras_sector_tipo_sector_activo
-    ON compras.sector_tipo_prestador (
-        id_sector,
-        id_tipo_prestacion,
-        activo
-    )
-    WHERE baja_fecha IS NULL;
-
-CREATE INDEX ix_compras_sector_tipo_tipo_activo
-    ON compras.sector_tipo_prestador (id_tipo_prestador, activo)
-    WHERE baja_fecha IS NULL;
 
 
 CREATE TABLE compras.requerimiento (
@@ -749,13 +708,13 @@ WITH tipos (
     sector_normalizado
 ) AS (
     VALUES
-        (1, 'Alimentación', 'FARMACIA'),
-        (2, 'Medicamentos', 'FARMACIA'),
-        (3, 'Prótesis Traumatología', 'PRESTACIONES MEDICAS'),
-        (4, 'Prótesis Cardiología', 'PRESTACIONES MEDICAS'),
-        (5, 'Prótesis General', 'PRESTACIONES MEDICAS'),
-        (6, 'Insumos', 'PRESTACIONES MEDICAS'),
-        (7, 'Pañales', 'PRESTACIONES MEDICAS')
+        (1, 'ALIMENTACION', 'FARMACIA'),
+        (2, 'MEDICAMENTOS', 'FARMACIA'),
+        (3, 'PROTESIS TRAUMATOLOGIA', 'PRESTACIONES MEDICAS'),
+        (4, 'PROTESIS CARDIOLOGIA', 'PRESTACIONES MEDICAS'),
+        (5, 'PROTESIS GENERAL', 'PRESTACIONES MEDICAS'),
+        (6, 'INSUMOS', 'PRESTACIONES MEDICAS'),
+        (7, 'PAÑALES', 'PRESTACIONES MEDICAS')
 )
 INSERT INTO compras.tipo_prestacion (
     id_tipo_prestacion,
@@ -812,6 +771,21 @@ SELECT translate(
            upper(btrim(COALESCE($1, ''))),
            U&'\00C1\00C9\00CD\00D3\00DA\00DC\00C0\00C8\00CC\00D2\00D9',
            'AEIOUUAEIOU'
+       );
+$func$
+LANGUAGE sql
+IMMUTABLE;
+
+
+CREATE FUNCTION compras.normalizar_rubro(
+    p_rubro VARCHAR
+)
+    RETURNS VARCHAR
+AS $func$
+SELECT translate(
+           upper(btrim(COALESCE($1, ''))),
+           U&'\00C1\00C0\00C4\00C2\00C9\00C8\00CB\00CA\00CD\00CC\00CF\00CE\00D3\00D2\00D6\00D4\00DA\00D9\00DC\00DB',
+           'AAAAEEEEIIIIOOOOUUUU'
        );
 $func$
 LANGUAGE sql
@@ -1886,145 +1860,6 @@ AS $func$
 $func$
 LANGUAGE sql
 STABLE;
-
-
--- ============================================================
--- TIPO DE PRESTADOR POR SECTOR
--- ============================================================
-
-CREATE FUNCTION compras.listar_tipos_prestador_sector(
-    p_id_sector INTEGER
-)
-    RETURNS TABLE (
-        id_tipo_prestador INTEGER,
-        descripcion VARCHAR,
-        activo BOOLEAN
-    )
-AS $func$
-BEGIN
-RETURN QUERY
-SELECT
-    tp.id_tipo_prestador::INTEGER,
-    tp.descripcion::VARCHAR,
-    COALESCE(bool_or(stp.activo), FALSE)::BOOLEAN
-FROM trae_tipos_prestadores() tp
-         LEFT JOIN compras.sector_tipo_prestador stp
-                   ON stp.id_tipo_prestador = tp.id_tipo_prestador::INTEGER
-                  AND stp.id_sector = p_id_sector
-                  AND stp.baja_fecha IS NULL
-GROUP BY tp.id_tipo_prestador, tp.descripcion
-ORDER BY tp.descripcion;
-END;
-$func$
-LANGUAGE plpgsql
-STABLE;
-
-CREATE FUNCTION compras.desactivar_tipos_prestador_sector(
-    p_id_sector INTEGER,
-    p_usuario VARCHAR
-)
-    RETURNS VOID
-AS $func$
-BEGIN
-UPDATE compras.sector_tipo_prestador
-SET activo = FALSE,
-    modi_fecha = now(),
-    modi_usr = compras.normalizar_usuario(p_usuario)
-WHERE id_sector = p_id_sector
-  AND baja_fecha IS NULL
-  AND activo = TRUE;
-END;
-$func$
-LANGUAGE plpgsql;
-
-CREATE FUNCTION compras.listar_configuracion_prestador_tipo_cotizacion(
-    p_id_sector INTEGER
-)
-RETURNS TABLE (
-    id_tipo_prestacion INTEGER,
-    tipo_cotizacion VARCHAR,
-    id_tipo_prestador INTEGER,
-    descripcion VARCHAR,
-    activo BOOLEAN
-)
-AS $func$
-    SELECT
-        tc.id_tipo_prestacion::INTEGER,
-        tc.descripcion::VARCHAR,
-        tp.id_tipo_prestador::INTEGER,
-        tp.descripcion::VARCHAR,
-        COALESCE(stp.activo, FALSE)::BOOLEAN
-    FROM compras.tipo_prestacion tc
-    CROSS JOIN trae_tipos_prestadores() tp
-    LEFT JOIN compras.sector_tipo_prestador stp
-      ON stp.id_sector = tc.id_sector
-     AND stp.id_tipo_prestacion = tc.id_tipo_prestacion
-     AND stp.id_tipo_prestador = tp.id_tipo_prestador::INTEGER
-     AND stp.baja_fecha IS NULL
-    WHERE tc.id_sector = p_id_sector
-    ORDER BY tc.id_tipo_prestacion, tp.descripcion;
-$func$
-LANGUAGE sql
-STABLE;
-
-
-CREATE FUNCTION compras.guardar_sector_tipo_prestador_cotizacion(
-    p_id_sector INTEGER,
-    p_id_tipo_prestacion INTEGER,
-    p_id_tipo_prestador INTEGER,
-    p_activo BOOLEAN,
-    p_usuario VARCHAR
-)
-    RETURNS VOID
-AS $func$
-DECLARE
-v_usuario VARCHAR(100);
-BEGIN
-    v_usuario := compras.normalizar_usuario(p_usuario);
-
-    IF NOT EXISTS (
-        SELECT 1
-        FROM compras.tipo_prestacion tp
-        WHERE tp.id_tipo_prestacion = p_id_tipo_prestacion
-          AND tp.id_sector = p_id_sector
-    ) THEN
-        RAISE EXCEPTION
-            'El tipo de cotización no corresponde al sector informado.';
-END IF;
-
-    IF NOT EXISTS (
-        SELECT 1
-        FROM trae_tipos_prestadores() tp
-        WHERE tp.id_tipo_prestador = p_id_tipo_prestador
-    ) THEN
-        RAISE EXCEPTION
-            'El tipo de prestador informado no existe.';
-END IF;
-
-INSERT INTO compras.sector_tipo_prestador (
-    id_sector,
-    id_tipo_prestacion,
-    id_tipo_prestador,
-    activo,
-    alta_usr
-)
-VALUES (
-    p_id_sector,
-    p_id_tipo_prestacion,
-    p_id_tipo_prestador,
-    COALESCE(p_activo, TRUE),
-    v_usuario
-)
-ON CONFLICT (id_sector, id_tipo_prestacion, id_tipo_prestador)
-DO UPDATE
-SET activo = EXCLUDED.activo,
-    modi_fecha = now(),
-    modi_usr = v_usuario,
-    baja_fecha = NULL,
-    baja_usr = NULL;
-END;
-$func$
-LANGUAGE plpgsql;
 
 
 -- =====================================================================
@@ -3646,14 +3481,12 @@ SELECT DISTINCT
     p.id_tipo_prestador::INTEGER,
     tp.descripcion::VARCHAR
 FROM compras.requerimiento r
-         JOIN compras.sector_tipo_prestador stp
-              ON stp.id_sector =
-                 r.id_sector
-                  AND stp.activo = TRUE
-                  AND stp.baja_fecha IS NULL
          JOIN public.prestador p
-              ON p.id_tipo_prestador =
-                 stp.id_tipo_prestador
+              ON COALESCE(
+                     p.solicitar_cotizacion,
+                     FALSE
+                 ) = TRUE
+                 AND p.baja_fecha IS NULL
          LEFT JOIN trae_tipos_prestadores() tp
                    ON tp.id_tipo_prestador =
                       p.id_tipo_prestador
@@ -3666,16 +3499,15 @@ WHERE r.id_requerimiento =
       p_id_requerimiento
   AND r.estado IN (1, 2)
   AND r.baja_fecha IS NULL
-  AND p.baja_fecha IS NULL
-  AND COALESCE(
-              p.solicitar_cotizacion,
-              FALSE
-      ) = TRUE
   AND EXISTS (
       SELECT 1
       FROM compras.requerimiento_detalle d
+      JOIN compras.tipo_prestacion t
+        ON t.id_tipo_prestacion = d.id_tipo_prestacion
+      JOIN public.prestador_rubro pr
+        ON pr.id_prestador = p.id_prestador
+       AND compras.normalizar_rubro(pr.rubro) = t.descripcion
       WHERE d.id_requerimiento = r.id_requerimiento
-        AND d.id_tipo_prestacion = stp.id_tipo_prestacion
         AND d.baja_fecha IS NULL
   )
   AND (
@@ -3726,30 +3558,27 @@ SELECT
 INTO
     v_email
 FROM compras.requerimiento r
-         JOIN compras.sector_tipo_prestador stp
-              ON stp.id_sector =
-                 r.id_sector
-                  AND stp.activo = TRUE
-                  AND stp.baja_fecha IS NULL
          JOIN public.prestador p
               ON p.id_prestador =
                  p_id_prestador
-                  AND p.id_tipo_prestador =
-                      stp.id_tipo_prestador
+                 AND p.baja_fecha IS NULL
+                 AND COALESCE(
+                         p.solicitar_cotizacion,
+                         FALSE
+                     ) = TRUE
 WHERE r.id_requerimiento =
       p_id_requerimiento
   AND r.estado IN (1, 2)
   AND r.baja_fecha IS NULL
-  AND p.baja_fecha IS NULL
-  AND COALESCE(
-              p.solicitar_cotizacion,
-              FALSE
-      ) = TRUE
   AND EXISTS (
       SELECT 1
       FROM compras.requerimiento_detalle d
+      JOIN compras.tipo_prestacion t
+        ON t.id_tipo_prestacion = d.id_tipo_prestacion
+      JOIN public.prestador_rubro pr
+        ON pr.id_prestador = p.id_prestador
+       AND compras.normalizar_rubro(pr.rubro) = t.descripcion
       WHERE d.id_requerimiento = r.id_requerimiento
-        AND d.id_tipo_prestacion = stp.id_tipo_prestacion
         AND d.baja_fecha IS NULL
   )
     LIMIT 1;
@@ -3940,7 +3769,7 @@ SELECT DISTINCT
     p.id_prestador::INTEGER,
     p.descripcion::VARCHAR,
     p.cuit::VARCHAR,
-    compras.resolver_email_cotizacion_prestador(
+    compras.resolver_emails_cotizacion_prestador(
             p.id_prestador
     )::VARCHAR AS email,
     NULLIF(
@@ -4037,7 +3866,7 @@ SELECT DISTINCT
     p.descripcion::VARCHAR,
     p.cuit::VARCHAR,
 
-    compras.resolver_email_cotizacion_prestador(
+    compras.resolver_emails_cotizacion_prestador(
             p.id_prestador
     )::VARCHAR AS email,
 
@@ -5095,7 +4924,8 @@ $function$;
  *   solicitar_cotizacion = true y sin baja.
  *
  * - prestadores_compatibles_sector:
- *   habilitados cuyo tipo está asociado al sector.
+ *   habilitados con al menos un rubro que coincide con un tipo de prestación
+ *   activo del requerimiento. El nombre se conserva por contrato legacy.
  *
  * - prestadores_bloqueados_estado_previo:
  *   compatibles que ya estaban ENVIADO, COTIZADO o PROCESANDO antes
@@ -5128,7 +4958,7 @@ SELECT
 
     COUNT(
             DISTINCT CASE
-                         WHEN stp.id_tipo_prestador IS NOT NULL
+                         WHEN d_rubro.id_detalle IS NOT NULL
                              THEN p.id_prestador
         END
     )::INTEGER
@@ -5136,7 +4966,7 @@ SELECT
 
     COUNT(
             DISTINCT CASE
-                         WHEN stp.id_tipo_prestador IS NOT NULL
+                         WHEN d_rubro.id_detalle IS NOT NULL
                               AND rcp.estado_envio IN (
                                                        'ENVIADO',
                                                        'COTIZADO',
@@ -5156,11 +4986,18 @@ FROM compras.requerimiento r
                       ) = TRUE
                        AND p.baja_fecha IS NULL
 
-         LEFT JOIN compras.sector_tipo_prestador stp
-                   ON stp.id_sector = r.id_sector
-                       AND stp.id_tipo_prestador = p.id_tipo_prestador
-                       AND stp.activo = TRUE
-                       AND stp.baja_fecha IS NULL
+         LEFT JOIN public.prestador_rubro pr
+                   ON pr.id_prestador = p.id_prestador
+
+         LEFT JOIN compras.tipo_prestacion tp_rubro
+                   ON compras.normalizar_rubro(pr.rubro) =
+                      tp_rubro.descripcion
+
+         LEFT JOIN compras.requerimiento_detalle d_rubro
+                   ON d_rubro.id_requerimiento = r.id_requerimiento
+                       AND d_rubro.id_tipo_prestacion =
+                           tp_rubro.id_tipo_prestacion
+                       AND d_rubro.baja_fecha IS NULL
 
          LEFT JOIN compras.requerimiento_cotizacion_prestador rcp
                    ON rcp.id_requerimiento = r.id_requerimiento
@@ -5210,7 +5047,6 @@ AS
 $function$
 DECLARE
 v_usuario VARCHAR(100);
-    v_id_sector INTEGER;
     v_estado_requerimiento INTEGER;
     v_emails_reales TEXT;
     v_email_guardado TEXT;
@@ -5243,10 +5079,8 @@ END IF;
         );
 
 SELECT
-    r.id_sector,
     r.estado
 INTO
-    v_id_sector,
     v_estado_requerimiento
 FROM compras.requerimiento r
 WHERE r.id_requerimiento = p_id_requerimiento
@@ -5303,24 +5137,20 @@ INTO
     v_emails_reales;
 
 IF NOT EXISTS (
-    SELECT
-        1
-    FROM public.prestador p
-    INNER JOIN compras.sector_tipo_prestador stp
-        ON stp.id_tipo_prestador =
-            p.id_tipo_prestador
-       AND stp.id_sector =
-            v_id_sector
-       AND stp.activo = TRUE
-       AND stp.baja_fecha IS NULL
-    WHERE p.id_prestador =
-        p_id_prestador
-      AND p.baja_fecha IS NULL
+    SELECT 1
+    FROM compras.requerimiento_detalle d
+    JOIN compras.tipo_prestacion tp
+      ON tp.id_tipo_prestacion = d.id_tipo_prestacion
+    JOIN public.prestador_rubro pr
+      ON pr.id_prestador = p_id_prestador
+     AND compras.normalizar_rubro(pr.rubro) = tp.descripcion
+    WHERE d.id_requerimiento = p_id_requerimiento
+      AND d.baja_fecha IS NULL
 ) THEN
     RAISE EXCEPTION
-        'El prestador % no es compatible con el sector %.',
+        'El prestador % no posee un rubro compatible con los tipos de prestación activos del requerimiento %.',
         p_id_prestador,
-        v_id_sector;
+        p_id_requerimiento;
 END IF;
 
     /*
@@ -5834,7 +5664,7 @@ LANGUAGE plpgsql
 VOLATILE;
 
 -- =====================================================================
--- COMPATIBILIDAD DE PRESTADOR POR TIPO DE COTIZACIÓN
+-- COMPATIBILIDAD DE PRESTADOR POR RUBRO Y TIPO DE PRESTACIÓN
 -- =====================================================================
 
 CREATE FUNCTION compras.es_prestador_compatible_cotizacion(
@@ -5850,20 +5680,16 @@ AS $func$
           ON p.id_prestador = p_id_prestador
          AND p.baja_fecha IS NULL
          AND COALESCE(p.solicitar_cotizacion, FALSE) = TRUE
-        JOIN compras.sector_tipo_prestador stp
-          ON stp.id_sector = r.id_sector
-         AND stp.id_tipo_prestador = p.id_tipo_prestador
-         AND stp.activo = TRUE
-         AND stp.baja_fecha IS NULL
+        JOIN compras.requerimiento_detalle d
+          ON d.id_requerimiento = r.id_requerimiento
+         AND d.baja_fecha IS NULL
+        JOIN compras.tipo_prestacion tp
+          ON tp.id_tipo_prestacion = d.id_tipo_prestacion
+        JOIN public.prestador_rubro pr
+          ON pr.id_prestador = p.id_prestador
+         AND compras.normalizar_rubro(pr.rubro) = tp.descripcion
         WHERE r.id_requerimiento = p_id_requerimiento
           AND r.baja_fecha IS NULL
-          AND EXISTS (
-              SELECT 1
-              FROM compras.requerimiento_detalle d
-              WHERE d.id_requerimiento = r.id_requerimiento
-                AND d.id_tipo_prestacion = stp.id_tipo_prestacion
-                AND d.baja_fecha IS NULL
-          )
     );
 $func$
 LANGUAGE sql
@@ -5878,7 +5704,7 @@ BEGIN
         NEW.id_prestador
     ) THEN
         RAISE EXCEPTION
-            'El prestador no es compatible con el sector y tipo de cotización.';
+            'El prestador no posee un rubro compatible con el tipo de prestación.';
     END IF;
 
     RETURN NEW;

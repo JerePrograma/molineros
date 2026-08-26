@@ -99,14 +99,8 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String TIPOS_PRESTACION_REQUERIMIENTO_COMPRA =
             "TIPOS_PRESTACION_REQUERIMIENTO_COMPRA";
 
-    public static final String TIPOS_PRESTADOR_SECTOR =
-            "TIPOS_PRESTADOR_SECTOR";
-
     public static final String PRESTADORES_ENVIADOS_COTIZACION =
             "PRESTADORES_ENVIADOS_COTIZACION";
-
-    public static final String ID_SECTOR_CONFIGURACION_COTIZACION =
-            "ID_SECTOR_CONFIGURACION_COTIZACION";
 
     public static final String RESULTADO_NOTIFICACION_COTIZACION =
             "RESULTADO_NOTIFICACION_COTIZACION";
@@ -226,9 +220,6 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
     public static final String FORWARD_COMPRAS_IMPRIMIR_REQUERIMIENTO =
             "portlet.compras.imprimir_requerimiento";
-
-    public static final String FORWARD_COMPRAS_CONFIGURAR_TIPOS_PRESTADOR =
-            "portlet.compras.configurar_tipos_prestador";
 
     public static final String FORWARD_COMPRAS_PRESTADORES_ENVIADOS =
             "portlet.compras.prestadores_enviados";

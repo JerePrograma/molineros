@@ -4537,15 +4537,6 @@
 				value="/portlet/compras/view.jsp" />
 	</definition>
 
-	<definition
-			name="portlet.compras.configurar_tipos_prestador"
-			extends="portlet.compras">
-
-		<put
-				name="portlet_content"
-				value="/portlet/compras/requerimientos/requerimiento_compra_prestadores_configuracion.jsp" />
-	</definition>
-
 	<definition name="portlet.compras.result.search" extends="portlet.compras">
 		<put
 				name="portlet_content"

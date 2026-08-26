@@ -40,8 +40,6 @@
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraFiltro" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraEstado" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector" %>
-<%@ page import="ar.com.ospim.compras.requerimientos.beans.TipoPrestadorSector" %>
-
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <%@ taglib uri="http://liferay.com/tld/ui-custom" prefix="liferay-ui-custom" %>
 

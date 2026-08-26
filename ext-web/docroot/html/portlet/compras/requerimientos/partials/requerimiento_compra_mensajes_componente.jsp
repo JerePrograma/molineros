@@ -226,10 +226,10 @@ if (!hayResultadoNotificacion) {
                 "portlet-msg-alert";
 
         tituloMensajeNotificacionFallback =
-                "No hay prestadores compatibles con el sector.";
+                "No hay prestadores con rubros compatibles.";
 
         detalleMensajeNotificacionFallback =
-                "Revise la configuración de prestadores del sector.";
+                "Revise los rubros registrados para los prestadores.";
 
     } else if (msgPrestadoresEmailsInvalidos) {
         claseMensajeNotificacionFallback =
@@ -867,11 +867,11 @@ if ("id_requerimiento_compra".equals(errorCampoCompra)) {
                 "portlet-msg-alert";
 
         tituloResumen =
-                "No hay prestadores compatibles con el sector.";
+                "No hay prestadores con rubros compatibles.";
 
         descripcionResumen =
-                "Revise la configuración de tipos de prestador "
-                        + "asociados al sector.";
+                "Revise los rubros registrados para los prestadores "
+                        + "y los tipos de prestación del requerimiento.";
 
     } else if (candidatosResumen <= 0
             && bloqueadosResumen > 0) {

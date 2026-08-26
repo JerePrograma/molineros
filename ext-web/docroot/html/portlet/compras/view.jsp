@@ -38,34 +38,6 @@ portletURL.setParameter("tabs1", tabs1);
 
 currentURL = PortalUtil.getCurrentURL(request);
 %>
-<%
-boolean puedeConfigurarPrestadores =
-        user != null
-        && PermissionUtil.userContainsRole(
-                user,
-                WebKeysCompras.ROL_ABM_COMPRAS
-        );
-
-PortletURL configurarPrestadoresURL =
-        renderResponse.createRenderURL();
-
-configurarPrestadoresURL.setWindowState(
-        LiferayWindowState.MAXIMIZED
-);
-
-configurarPrestadoresURL.setParameter(
-        "struts_action",
-        "/compras/configurar_tipos_prestador_sector"
-);
-%>
-
-<% if (puedeConfigurarPrestadores) { %>
-    <div style="margin-bottom: 15px; text-align: right;">
-        <input type="button"
-               value="Configurar prestadores por sector"
-               onclick="window.location.href='<%= configurarPrestadoresURL.toString() %>';" />
-    </div>
-<% } %>
 <form action="<%= portletURL %>"
       method="get"
       name="<portlet:namespace />fm"
