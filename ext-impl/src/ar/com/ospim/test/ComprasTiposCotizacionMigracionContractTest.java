@@ -4,77 +4,58 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-/** Contrato de despliegue del catalogo de tipos de cotizacion. */
+/** Contrato del catalogo canonico de tipos de cotizacion. */
 public final class ComprasTiposCotizacionMigracionContractTest {
 
     private static final Charset LATIN1 =
             Charset.forName("ISO-8859-1");
 
     public static void main(String[] args) throws Exception {
-        String migration = leer(
-                "docs/sql/"
-                        + "20260824_habilitar_tipos_cotizacion_"
-                        + "prestaciones_medicas.sql"
-        );
         String schema = leer(
                 "ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql"
         );
-        String service = leer(
-                "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
-                        + "BusquedaRequerimientoCompraServiceImpl.java"
-        );
-        String scripts = leer(
-                "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
-                        + "requerimiento_compra_detalle_scripts_edicion_componente.jsp"
-        );
-
-        contiene(
-                migration,
-                "busca sector por descripcion normalizada",
-                "= 'PRESTACIONES MEDICAS'"
-        );
-        noContiene(
-                migration,
-                "no depende del id fisico del sector",
-                "WHERE id_sector = 2"
-        );
-        contiene(migration, "Protesis Trauma", "(3, U&'Pr\\00F3tesis Traumatolog\\00EDa'");
-        contiene(migration, "Protesis Cardio", "(4, U&'Pr\\00F3tesis Cardiolog\\00EDa'");
-        contiene(migration, "Protesis General", "(5, U&'Pr\\00F3tesis General'");
-        contiene(migration, "Insumos", "(6, 'Insumos'");
-        contiene(migration, "Panales", "(7, U&'Pa\\00F1ales'");
-        contiene(
-                migration,
-                "migracion idempotente",
-                "ON CONFLICT (id_tipo_prestacion)"
-        );
-        contiene(
-                migration,
-                "corrige asociacion sectorial",
-                "id_sector = EXCLUDED.id_sector"
-        );
-        contiene(
-                migration,
-                "valida cinco tipos",
-                "IF v_cantidad_tipos <> 5"
-        );
-        contiene(
-                service,
-                "Java consulta catalogo SQL",
-                "{call compras.listar_tipos_prestacion()}"
-        );
-        contiene(
+        String seeds = entre(
                 schema,
-                "funcion publica id sector",
-                "t.id_sector"
+                "INSERT INTO compras.sector_requerimiento (",
+                "SELECT setval("
         );
-        contiene(
-                scripts,
-                "UI filtra por sector",
-                "String(tipo.idSector) != idSector"
+        String tipos = entre(
+                schema,
+                "WITH tipos (",
+                "SELECT setval("
         );
 
-        System.out.println("COMPRAS_TIPOS_COTIZACION_MIGRACION_OK");
+        contiene(
+                seeds,
+                "sector Prestaciones Medicas con acentuacion final",
+                "(2, 'Prestaciones Médicas', TRUE, TRUE, 'sistema')"
+        );
+        contiene(
+                tipos,
+                "catalogo usa sector normalizado",
+                ") = t.sector_normalizado"
+        );
+        contiene(
+                tipos,
+                "catalogo declara Prestaciones Medicas normalizado",
+                "'PRESTACIONES MEDICAS'"
+        );
+        contiene(tipos, "Protesis Trauma", "(3, 'Prótesis Traumatología'");
+        contiene(tipos, "Protesis Cardio", "(4, 'Prótesis Cardiología'");
+        contiene(tipos, "Protesis General", "(5, 'Prótesis General'");
+        contiene(tipos, "Insumos", "(6, 'Insumos'");
+        contiene(tipos, "Panales", "(7, 'Pañales'");
+        noContiene(tipos, "instalacion sin reparacion por conflicto", "ON CONFLICT");
+
+        for (int id = 1; id <= 7; id++) {
+            iguales(
+                    "id de tipo no duplicado " + id,
+                    1,
+                    ocurrencias(tipos, "(" + id + ", '")
+            );
+        }
+
+        System.out.println("COMPRAS_TIPOS_COTIZACION_CANONICO_OK");
     }
 
     private static String leer(String ruta) throws Exception {
@@ -104,6 +85,45 @@ public final class ComprasTiposCotizacionMigracionContractTest {
         if (contenido.indexOf(prohibido) >= 0) {
             throw new AssertionError(
                     etiqueta + ": se encontro [" + prohibido + "]"
+            );
+        }
+    }
+
+    private static String entre(
+            String contenido,
+            String inicio,
+            String fin) {
+
+        int desde = contenido.indexOf(inicio);
+        int hasta = contenido.indexOf(fin, desde);
+
+        if (desde < 0 || hasta <= desde) {
+            throw new AssertionError("No se pudo aislar el bloque de seeds.");
+        }
+
+        return contenido.substring(desde, hasta);
+    }
+
+    private static int ocurrencias(String contenido, String buscado) {
+        int cantidad = 0;
+        int posicion = 0;
+
+        while ((posicion = contenido.indexOf(buscado, posicion)) >= 0) {
+            cantidad++;
+            posicion += buscado.length();
+        }
+
+        return cantidad;
+    }
+
+    private static void iguales(
+            String etiqueta,
+            int esperado,
+            int actual) {
+
+        if (esperado != actual) {
+            throw new AssertionError(
+                    etiqueta + ": esperado=" + esperado + ", actual=" + actual
             );
         }
     }

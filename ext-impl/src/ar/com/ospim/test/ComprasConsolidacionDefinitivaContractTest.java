@@ -28,9 +28,6 @@ public final class ComprasConsolidacionDefinitivaContractTest {
             "ext-impl/src/ar/com/ospim/compras/sql"
     );
     private static final File SCHEMA = new File(SQL_DIR, "compras_schema.sql");
-    private static final File REPARACION_ACENTUACION = new File(
-            "docs/sql/20260824_reparar_acentuacion_compras.sql"
-    );
     private static final File JAVA_DIR = new File(
             "ext-impl/src/ar/com/ospim/compras"
     );
@@ -84,10 +81,13 @@ public final class ComprasConsolidacionDefinitivaContractTest {
         String compact = schema.replaceAll("(?s)^\\s*", "");
         check(compact.startsWith("--"), "El schema debe conservar su cabecera");
         check(schema.contains("BEGIN;"), "Falta BEGIN");
-        check(schema.contains("DROP SCHEMA IF EXISTS compras CASCADE;"),
-                "Falta el DROP destructivo");
+        check(!schema.matches(
+                        "(?is).*\\bDROP\\s+(?:SCHEMA|TABLE|FUNCTION|TYPE|TRIGGER|CONSTRAINT)\\b.*"),
+                "La instalacion canonica no puede contener operaciones DROP");
+        check(!schema.matches("(?is).*\\bTRUNCATE\\b.*"),
+                "La instalacion canonica no puede truncar datos");
         check(schema.contains("CREATE SCHEMA compras;"),
-                "Falta recrear el esquema");
+                "Falta crear el esquema");
         check(schema.trim().endsWith("COMMIT;"), "Falta COMMIT final");
         check(!schema.matches("(?is).*\\\\i\\s+.*"),
                 "El schema no puede usar includes");
@@ -102,8 +102,8 @@ public final class ComprasConsolidacionDefinitivaContractTest {
             functions.put(name, Integer.valueOf(arity));
         }
 
-        check(countPrefix(functions, "compras.") == 68,
-                "El catalogo canonico de compras debe tener 68 funciones");
+        check(countPrefix(functions, "compras.") == 70,
+                "El catalogo canonico de compras debe tener 70 funciones");
         check(functions.containsKey(
                         "autorizaciones.busca_nomenclador_prest_med_compras"),
                 "Falta la busqueda tecnica de prestaciones");
@@ -159,14 +159,11 @@ public final class ComprasConsolidacionDefinitivaContractTest {
         String initCompras = read(new File(
                 "ext-web/docroot/html/portlet/compras/init.jsp"
         ));
-        String reparacion = read(REPARACION_ACENTUACION);
-
         List<File> archivosIso = files(JAVA_DIR, ".java");
         archivosIso.addAll(files(new File(
                 "ext-web/docroot/html/portlet/compras"
         ), ".jsp"));
         archivosIso.add(SCHEMA);
-        archivosIso.add(REPARACION_ACENTUACION);
         archivosIso.add(new File("ext-web/docroot/WEB-INF/web.xml"));
         for (int i = 0; i < archivosIso.size(); i++) {
             validarArchivoIso(archivosIso.get(i));
@@ -174,10 +171,14 @@ public final class ComprasConsolidacionDefinitivaContractTest {
 
         check(schema.contains("\\encoding LATIN1"),
                 "psql no declara la lectura ISO-8859-1");
-        check(schema.contains("'Orden médica',"),
-                "SQL no persiste el título canónico con tilde");
-        check(schema.contains("'orden medica' THEN"),
-                "SQL no valida el título mediante una clave normalizada");
+        check(schema.contains("'Prestaciones Médicas'"),
+                "SQL no contiene la acentuacion final del sector");
+        check(schema.contains(
+                        "NULLIF(btrim(p_titulo), ''),\n"
+                                + "            btrim(p_nombre_original)"),
+                "SQL no resuelve el titulo tecnico opcional de la Orden medica");
+        check(!schema.contains("'orden medica' THEN"),
+                "SQL conserva una validacion artificial del titulo");
         check(webKeys.contains(
                         "TITULO_ORDEN_MEDICA =\n            \"Orden médica\";"),
                 "Java no define el título canónico con tilde");
@@ -200,14 +201,6 @@ public final class ComprasConsolidacionDefinitivaContractTest {
                 "La fuente JSP de Compras no declara ISO-8859-1");
         check(!initCompras.contains("contentType="),
                 "Compras no debe contradecir el UTF-8 común de Liferay");
-        check(reparacion.contains("\\encoding LATIN1"),
-                "La reparación de la base no declara ISO-8859-1");
-        check(reparacion.contains(
-                        "CREATE OR REPLACE FUNCTION "
-                                + "compras.registrar_requerimiento_orden_medica("),
-                "La reparación no reemplaza la función dañada");
-        check(reparacion.contains("SET titulo = 'Orden médica'"),
-                "La reparación no normaliza los títulos existentes");
     }
 
     private static void validarArchivoIso(File file) throws Exception {
@@ -217,6 +210,14 @@ public final class ComprasConsolidacionDefinitivaContractTest {
                         || (bytes[1] & 0xFF) != 0xBB
                         || (bytes[2] & 0xFF) != 0xBF,
                 "El archivo ISO no puede tener BOM UTF-8: " + file);
+        check(bytes.length < 2
+                        || (bytes[0] & 0xFF) != 0xFF
+                        || (bytes[1] & 0xFF) != 0xFE,
+                "El archivo ISO no puede tener BOM UTF-16 LE: " + file);
+        check(bytes.length < 2
+                        || (bytes[0] & 0xFF) != 0xFE
+                        || (bytes[1] & 0xFF) != 0xFF,
+                "El archivo ISO no puede tener BOM UTF-16 BE: " + file);
 
         String source = new String(bytes, LATIN1);
         check(source.indexOf('\u00C3') < 0

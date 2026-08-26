@@ -17,9 +17,6 @@ public final class ComprasDoceRequerimientosContractTest {
     private static final Charset LATIN1 =
             Charset.forName("ISO-8859-1");
 
-    private static final Charset UTF8 =
-            Charset.forName("UTF-8");
-
     private static final File COMPRAS_JSP = new File(
             "ext-web/docroot/html/portlet/compras/requerimientos"
     );
@@ -369,7 +366,7 @@ public final class ComprasDoceRequerimientosContractTest {
     private static String esquema() throws Exception {
         return leer(
                 "ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql",
-                UTF8
+                LATIN1
         );
     }
 

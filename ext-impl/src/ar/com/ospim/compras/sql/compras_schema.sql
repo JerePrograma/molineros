@@ -1,10 +1,10 @@
 -- =====================================================================
--- MÃ“DULO: Compras - instalaciÃ³n canÃ³nica destructiva
+-- MÓDULO: Compras - instalación canónica desde cero
 -- PostgreSQL 9.6+
 --
--- INSTALACIÃ“N COMPLETA:
---   Elimina y recrea el esquema compras en una Ãºnica transacciÃ³n.
---   Este es el Ãºnico archivo SQL requerido para desplegar el mÃ³dulo.
+-- INSTALACIÓN COMPLETA:
+--   Requiere que el esquema compras no exista y lo crea en una transacción.
+--   Este es el único archivo SQL requerido para desplegar el módulo.
 --   No depende de migraciones, includes ni pasos manuales.
 --
 -- Flujo funcional activo:
@@ -13,7 +13,7 @@
 --   3  COTIZADO
 --   4  RECLAMO_RP
 --
--- Estado reconocido de solo lectura, sin transiciÃ³n activa:
+-- Estado reconocido de solo lectura, sin transición activa:
 --   5  ORDEN_COMPRA
 --
 -- Estado lateral:
@@ -24,11 +24,11 @@
 --   - persistencia de afiliado_id_ospim como snapshot.
 --   - persistencia de surge como cabecera del requerimiento.
 --   - PDF con afiliado_id_ospim, integrante y documento.
---   - destinatario de cotizaciÃ³n persistido por prestador.
+--   - destinatario de cotización persistido por prestador.
 --   - un presupuesto activo por requerimiento y prestador.
 --   - estado individual COTIZADO mientras el presupuesto permanece activo.
---   - borrado lÃ³gico de detalles PENDIENTES.
---   - guardado atÃ³mico de cotizaciÃ³n y cierre a COTIZADO.
+--   - borrado lógico de detalles PENDIENTES.
+--   - guardado atómico de cotización y cierre a COTIZADO.
 --
 -- Dependencias externas de solo lectura:
 --   public.prestador
@@ -41,12 +41,12 @@
 --   autorizaciones.busca_nomenclador(...)
 --
 -- Ejecutar con psql -X -v ON_ERROR_STOP=1.
--- Si la sesiÃ³n estÃ¡ abortada, ejecutar ROLLBACK antes de este archivo.
+-- Si la sesión está abortada, ejecutar ROLLBACK antes de este archivo.
 -- =====================================================================
 
-BEGIN;
+\encoding LATIN1
 
-DROP SCHEMA IF EXISTS compras CASCADE;
+BEGIN;
 
 CREATE SCHEMA compras;
 
@@ -234,13 +234,13 @@ CREATE TABLE compras.requerimiento_cotizacion_prestador (
                                                             id_requerimiento INTEGER NOT NULL
                                                                 REFERENCES compras.requerimiento (id_requerimiento),
 
-    -- Identificador externo. Sin FK: el mÃ³dulo no administra otros esquemas.
+    -- Identificador externo. Sin FK: el módulo no administra otros esquemas.
                                                             id_prestador INTEGER NOT NULL,
 
                                                             estado_envio VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE',
                                                             intentos INTEGER NOT NULL DEFAULT 0,
 
-                                                            email_destino VARCHAR(320),
+                                                            email_destino TEXT,
 
                                                             fecha_creacion TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
                                                             fecha_ultimo_intento TIMESTAMP WITHOUT TIME ZONE,
@@ -462,14 +462,7 @@ CREATE TABLE compras.requerimiento_presupuesto (
                                                    CONSTRAINT ck_compras_orden_medica_datos
                                                        CHECK (
                                                            tipo_documento <> 2
-                                                           OR (
-                                                               translate(
-                                                                   upper(btrim(titulo)),
-                                                                   'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½',
-                                                                   'AEIOUUN'
-                                                               ) = 'ORDEN MEDICA'
-                                                               AND descripcion_prestador IS NULL
-                                                           )
+                                                            OR descripcion_prestador IS NULL
                                                        ),
 
                                                    CONSTRAINT uq_compras_presupuesto_dl_file_entry
@@ -532,7 +525,7 @@ CREATE TABLE compras.requerimiento_detalle (
                                                precio_unitario_estimado NUMERIC(18, 2),
                                                precio_total_estimado NUMERIC(18, 2),
 
-    -- Identificador externo. Sin FK: el mÃ³dulo no administra otros esquemas.
+    -- Identificador externo. Sin FK: el módulo no administra otros esquemas.
                                                id_prestador INTEGER,
 
                                                alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
@@ -726,7 +719,7 @@ CREATE INDEX ix_compras_requerimiento_reclamo_estado
     );
 
 COMMENT ON TABLE compras.requerimiento_reclamo_prestacional IS
-    'RelaciÃ³n uno a uno entre un requerimiento COTIZADO y su Reclamo Prestacional.';
+    'Relación uno a uno entre un requerimiento COTIZADO y su Reclamo Prestacional.';
 
 COMMENT ON COLUMN compras.requerimiento_reclamo_prestacional.id_reclamo_prestacional IS
     'Identificador externo del esquema autorizaciones. No se declara FK cruzada porque compras no administra ese esquema.';
@@ -744,7 +737,7 @@ INSERT INTO compras.sector_requerimiento (
 )
 VALUES
     (1, 'Farmacia', TRUE, TRUE, 'sistema'),
-    (2, 'Prestaciones MÃ©dicas', TRUE, TRUE, 'sistema'),
+    (2, 'Prestaciones Médicas', TRUE, TRUE, 'sistema'),
     (3, 'Sistemas', FALSE, TRUE, 'sistema'),
     (4, 'RRHH', FALSE, TRUE, 'sistema'),
     (5, 'Legales', TRUE, TRUE, 'sistema'),
@@ -756,13 +749,13 @@ WITH tipos (
     sector_normalizado
 ) AS (
     VALUES
-        (1, 'AlimentaciÃ³n', 'FARMACIA'),
+        (1, 'Alimentación', 'FARMACIA'),
         (2, 'Medicamentos', 'FARMACIA'),
-        (3, 'PrÃ³tesis TraumatologÃ­a', 'PRESTACIONES MEDICAS'),
-        (4, 'PrÃ³tesis CardiologÃ­a', 'PRESTACIONES MEDICAS'),
-        (5, 'PrÃ³tesis General', 'PRESTACIONES MEDICAS'),
+        (3, 'Prótesis Traumatología', 'PRESTACIONES MEDICAS'),
+        (4, 'Prótesis Cardiología', 'PRESTACIONES MEDICAS'),
+        (5, 'Prótesis General', 'PRESTACIONES MEDICAS'),
         (6, 'Insumos', 'PRESTACIONES MEDICAS'),
-        (7, 'PaÃ±ales', 'PRESTACIONES MEDICAS')
+        (7, 'Pañales', 'PRESTACIONES MEDICAS')
 )
 INSERT INTO compras.tipo_prestacion (
     id_tipo_prestacion,
@@ -890,7 +883,7 @@ WHERE s.id_sector = NEW.id_sector
 
 IF v_requiere_afiliado IS NULL THEN
         RAISE EXCEPTION
-            'El sector informado no existe o no estÃ¡ activo.';
+            'El sector informado no existe o no está activo.';
 END IF;
 
     IF TG_OP = 'INSERT' THEN
@@ -914,11 +907,11 @@ ELSE
 END IF;
 
         /*
-         * COTIZADO tambiÃ©n permanece bloqueado, salvo por la transiciÃ³n
+         * COTIZADO también permanece bloqueado, salvo por la transición
          * funcional COTIZADO -> RECLAMO_RP.
          *
          * Se permite que cambiar_estado_requerimiento actualice
-         * modi_fecha y modi_usr durante esa transiciÃ³n.
+         * modi_fecha y modi_usr durante esa transición.
          */
         IF OLD.estado = 3
            AND NEW IS DISTINCT FROM OLD
@@ -991,7 +984,7 @@ END IF;
         /*
          * SURGE no forma parte de la estructura del requerimiento.
          * Puede ajustarse durante la preparacion (PENDIENTE) y durante
-         * la cotizaciÃ³n (A_COTIZAR), pero queda congelado al cerrarla.
+         * la cotización (A_COTIZAR), pero queda congelado al cerrarla.
          */
         IF NEW.surge IS DISTINCT FROM OLD.surge
            AND OLD.estado NOT IN (1, 2) THEN
@@ -1011,7 +1004,7 @@ END IF;
              * 2 A_COTIZAR -> 99 ANULADO
              * 3 COTIZADO -> 4 RECLAMO_RP
              *
-             * ORDEN_COMPRA (5) continÃºa sin transiciÃ³n activa.
+             * ORDEN_COMPRA (5) continúa sin transición activa.
              */
             IF NOT (
                     (OLD.estado = 1 AND NEW.estado IN (2, 99))
@@ -1020,7 +1013,7 @@ END IF;
             ) THEN
 
                 RAISE EXCEPTION
-                    'Transicion de estado invÃ¡lida: % -> %.',
+                    'Transicion de estado inválida: % -> %.',
                     OLD.estado,
                     NEW.estado;
 END IF;
@@ -1080,7 +1073,7 @@ END IF;
                 ) THEN
 
                     RAISE EXCEPTION
-                        'No se puede cerrar una cotizaciÃ³n sin detalles.';
+                        'No se puede cerrar una cotización sin detalles.';
 END IF;
 
                 IF EXISTS (
@@ -1125,7 +1118,7 @@ END IF;
                 ) THEN
 
                     RAISE EXCEPTION
-                        'No se puede cerrar la cotizaciÃ³n: existen detalles incompletos o invÃ¡lidos.';
+                        'No se puede cerrar la cotización: existen detalles incompletos o inválidos.';
 END IF;
 
 END IF;
@@ -1253,7 +1246,7 @@ END IF;
 END IF;
 
     /*
-     * La baja lÃ³gica es una operaciÃ³n funcional diferente de un cambio
+     * La baja lógica es una operación funcional diferente de un cambio
      * estructural. En A_COTIZAR se permite siempre que quede al menos un
      * detalle activo. Ningun otro dato puede cambiar en la misma sentencia.
      */
@@ -1286,7 +1279,7 @@ END IF;
            OR NEW.alta_usr IS DISTINCT FROM OLD.alta_usr THEN
 
             RAISE EXCEPTION
-                'La baja del detalle no puede modificar estructura ni cotizaciÃ³n.';
+                'La baja del detalle no puede modificar estructura ni cotización.';
 END IF;
 
         IF NULLIF(btrim(NEW.baja_usr), '') IS NULL THEN
@@ -1314,7 +1307,7 @@ END IF;
 
             IF v_total_detalles_activos <= 1 THEN
                 RAISE EXCEPTION
-                    'El requerimiento ENVIADO A COTIZAR debe conservar al menos una prestaciÃ³n.';
+                    'El requerimiento ENVIADO A COTIZAR debe conservar al menos una prestación.';
 END IF;
 END IF;
 
@@ -1357,7 +1350,7 @@ ELSE
         IF v_tipo_item_anterior = 'MEDICAMENTO' THEN
             IF v_tipo_item <> 'MEDICAMENTO' THEN
                 RAISE EXCEPTION
-                    'El detalle histÃ³rico de medicamento no puede convertirse directamente.';
+                    'El detalle histórico de medicamento no puede convertirse directamente.';
 END IF;
 
             IF NEW.id_requerimiento
@@ -1378,7 +1371,7 @@ END IF;
                     IS DISTINCT FROM OLD.nombre_medicamento THEN
 
                 RAISE EXCEPTION
-                    'El detalle histÃ³rico de medicamento solo permite modificar cantidad y observaciones.';
+                    'El detalle histórico de medicamento solo permite modificar cantidad y observaciones.';
 END IF;
 
         ELSIF v_tipo_item_anterior = 'NOMENCLADOR' THEN
@@ -1389,11 +1382,11 @@ END IF;
         ELSIF v_tipo_item_anterior = 'OBSERVACION' THEN
             IF v_tipo_item <> 'OBSERVACION' THEN
                 RAISE EXCEPTION
-                    'Un detalle de observaciÃ³n no puede convertirse a otro tipo.';
+                    'Un detalle de observación no puede convertirse a otro tipo.';
 END IF;
 ELSE
             RAISE EXCEPTION
-                'El detalle persistido tiene un tipo tÃ©cnico desconocido.';
+                'El detalle persistido tiene un tipo técnico desconocido.';
 END IF;
 END IF;
 
@@ -1412,7 +1405,7 @@ END IF;
            OR NEW.id_medicamento <= 0
            OR NULLIF(btrim(NEW.nombre_medicamento), '') IS NULL THEN
             RAISE EXCEPTION
-                'El medicamento histÃ³rico debe conservar id y nombre.';
+                'El medicamento histórico debe conservar id y nombre.';
 END IF;
     ELSIF v_tipo_item = 'OBSERVACION' THEN
         IF NULLIF(btrim(NEW.observaciones), '') IS NULL THEN
@@ -1428,7 +1421,7 @@ END IF;
            OR NEW.troquel IS NOT NULL
            OR NULLIF(btrim(NEW.nombre_medicamento), '') IS NOT NULL THEN
             RAISE EXCEPTION
-                'Un detalle de observaciÃ³n no puede contener datos tÃ©cnicos.';
+                'Un detalle de observación no puede contener datos técnicos.';
 END IF;
 ELSE
         IF NEW.id_medicamento IS NOT NULL
@@ -1445,7 +1438,7 @@ END IF;
            OR NULLIF(btrim(NEW.codigo_nomenclador), '') IS NULL
            OR NULLIF(btrim(NEW.descripcion_nomenclador), '') IS NULL THEN
             RAISE EXCEPTION
-                'El nomenclador debe tener prestaciÃ³n, tipo real positivo, cÃ³digo y descripciÃ³n.';
+                'El nomenclador debe tener prestación, tipo real positivo, código y descripción.';
 END IF;
 
 SELECT n.id_tipo_nomenclador
@@ -1456,12 +1449,12 @@ WHERE n.id_prestacion = NEW.id_prestacion
 
 IF NOT FOUND THEN
             RAISE EXCEPTION
-                'La prestaciÃ³n seleccionada no existe o no estÃ¡ activa.';
+                'La prestación seleccionada no existe o no está activa.';
 END IF;
 
         IF NEW.id_tipo_nomenclador <> v_id_tipo_nomenclador_real THEN
             RAISE EXCEPTION
-                'El tipo de nomenclador informado no corresponde a la prestaciÃ³n seleccionada.';
+                'El tipo de nomenclador informado no corresponde a la prestación seleccionada.';
 END IF;
 
         IF v_sector = 'FARMACIA' THEN
@@ -1514,7 +1507,7 @@ END IF;
            OR NEW.precio_total_estimado IS NOT NULL
            OR NEW.id_prestador IS NOT NULL THEN
             RAISE EXCEPTION
-                'Un requerimiento PENDIENTE no puede tener datos de cotizaciÃ³n.';
+                'Un requerimiento PENDIENTE no puede tener datos de cotización.';
 END IF;
     ELSIF v_estado = 2 THEN
         IF NEW.precio_unitario_estimado < 0 THEN
@@ -2090,7 +2083,7 @@ BEGIN
           AND tp.id_sector = p_id_sector
     ) THEN
         RAISE EXCEPTION
-            'El tipo de cotizaciÃ³n no corresponde al sector informado.';
+            'El tipo de cotización no corresponde al sector informado.';
 END IF;
 
     IF NOT EXISTS (
@@ -2173,7 +2166,7 @@ BEGIN
     IF p_id IS NULL OR p_id <= 0 THEN
         IF NOT compras.es_sector_seleccionable_compras(p_id_sector) THEN
             RAISE EXCEPTION
-                'El sector informado no estÃ¡ habilitado para nuevas compras.';
+                'El sector informado no está habilitado para nuevas compras.';
         END IF;
 
         INSERT INTO compras.requerimiento (
@@ -2221,7 +2214,7 @@ BEGIN
 
     IF NOT FOUND THEN
         RAISE EXCEPTION
-            'No se encontrÃ³ el requerimiento a modificar.';
+            'No se encontró el requerimiento a modificar.';
     END IF;
 
     v_cambio_afiliado :=
@@ -2243,7 +2236,7 @@ BEGIN
           )
     ) THEN
         RAISE EXCEPTION
-            'El sector y la marca LEGALES son inmutables despuÃ©s del alta.';
+            'El sector y la marca LEGALES son inmutables después del alta.';
     END IF;
 
     UPDATE compras.requerimiento
@@ -2298,12 +2291,12 @@ WHERE r.id_requerimiento =
 
 IF v_estado_actual IS NULL THEN
         RAISE EXCEPTION
-            'No se encontrÃ³ el requerimiento.';
+            'No se encontró el requerimiento.';
 END IF;
 
     IF p_estado_nuevo = v_estado_actual THEN
         RAISE EXCEPTION
-            'La transicion al mismo estado no es vÃ¡lida.';
+            'La transicion al mismo estado no es válida.';
 END IF;
 
 UPDATE compras.requerimiento
@@ -2354,12 +2347,12 @@ WHERE r.id_requerimiento = p_id_requerimiento
 
 IF NOT FOUND THEN
         RAISE EXCEPTION
-            'No se encontrÃ³ el requerimiento activo.';
+            'No se encontró el requerimiento activo.';
 END IF;
 
     /*
      * Idempotencia:
-     * otro proceso pudo confirmar el envÃ­o y cambiar el estado.
+     * otro proceso pudo confirmar el envío y cambiar el estado.
      */
     IF v_estado = 2 THEN
         RETURN 2;
@@ -2638,7 +2631,7 @@ BEGIN
         'OBSERVACION'
     ) THEN
         RAISE EXCEPTION
-            'Tipo de item invÃ¡lido.';
+            'Tipo de item inválido.';
 END IF;
 
     IF p_id_requerimiento IS NULL
@@ -2693,7 +2686,7 @@ END IF;
     /*
      * ALTAS
      *
-     * El sector determina si el detalle usa nomenclador u observaciÃ³n.
+     * El sector determina si el detalle usa nomenclador u observación.
      */
     IF p_id IS NULL
        OR p_id <= 0 THEN
@@ -2720,7 +2713,7 @@ END IF;
                OR NULLIF(btrim(p_nombre_medicamento), '') IS NOT NULL THEN
 
                 RAISE EXCEPTION
-                    'Un detalle de observaciÃ³n no puede contener datos tÃ©cnicos.';
+                    'Un detalle de observación no puede contener datos técnicos.';
 END IF;
 ELSE
 
@@ -2728,7 +2721,7 @@ ELSE
            OR p_id_prestacion <= 0 THEN
 
             RAISE EXCEPTION
-                'Debe informar la prestaciÃ³n del nomenclador.';
+                'Debe informar la prestación del nomenclador.';
 END IF;
 
         IF p_id_tipo_nomenclador IS NULL
@@ -2746,14 +2739,14 @@ WHERE n.id_prestacion = p_id_prestacion
 
 IF NOT FOUND THEN
             RAISE EXCEPTION
-                'La prestaciÃ³n seleccionada no existe o no estÃ¡ activa.';
+                'La prestación seleccionada no existe o no está activa.';
 END IF;
 
         IF v_id_tipo_nomenclador_real
                 <> p_id_tipo_nomenclador THEN
 
             RAISE EXCEPTION
-                'El tipo de nomenclador informado no corresponde a la prestaciÃ³n seleccionada.';
+                'El tipo de nomenclador informado no corresponde a la prestación seleccionada.';
 END IF;
 
         IF v_sector = 'FARMACIA' THEN
@@ -2776,7 +2769,7 @@ END IF;
            ) = 0 THEN
 
             RAISE EXCEPTION
-                'Debe informar el cÃ³digo de nomenclador.';
+                'Debe informar el código de nomenclador.';
 END IF;
 
         IF p_descripcion_nomenclador IS NULL
@@ -2787,7 +2780,7 @@ END IF;
            ) = 0 THEN
 
             RAISE EXCEPTION
-                'Debe informar la descripciÃ³n del nomenclador.';
+                'Debe informar la descripción del nomenclador.';
 END IF;
 
         IF p_id_medicamento IS NOT NULL
@@ -2885,14 +2878,14 @@ WHERE d.id_detalle = p_id
 
 IF NOT FOUND THEN
         RAISE EXCEPTION
-            'No se encontrÃ³ el detalle activo a modificar.';
+            'No se encontró el detalle activo a modificar.';
 END IF;
 
     IF v_tipo_item_actual = 'OBSERVACION' THEN
         IF v_tipo_item_esperado <> 'OBSERVACION'
            OR v_tipo_item <> 'OBSERVACION' THEN
             RAISE EXCEPTION
-                'Un detalle de observaciÃ³n no puede convertirse a otro tipo.';
+                'Un detalle de observación no puede convertirse a otro tipo.';
 END IF;
 
         IF NULLIF(btrim(p_observaciones), '') IS NULL THEN
@@ -2909,7 +2902,7 @@ END IF;
            OR NULLIF(btrim(p_nombre_medicamento), '') IS NOT NULL THEN
 
             RAISE EXCEPTION
-                'Un detalle de observaciÃ³n no puede contener datos tÃ©cnicos.';
+                'Un detalle de observación no puede contener datos técnicos.';
 END IF;
 
 UPDATE compras.requerimiento_detalle
@@ -2930,16 +2923,16 @@ RETURN v_id;
 END IF;
 
     /*
-     * HistÃ³rico MEDICAMENTO:
+     * Histórico MEDICAMENTO:
      *
-     * sÃ³lo cambia Cantidad y Observaciones.
+     * sólo cambia Cantidad y Observaciones.
      * No se toca ID, troquel ni nombre.
      */
     IF v_tipo_item_actual = 'MEDICAMENTO' THEN
 
         IF v_tipo_item <> 'MEDICAMENTO' THEN
             RAISE EXCEPTION
-                'El detalle histÃ³rico de medicamento no puede convertirse directamente.';
+                'El detalle histórico de medicamento no puede convertirse directamente.';
 END IF;
 
 UPDATE compras.requerimiento_detalle
@@ -2967,7 +2960,7 @@ INTO v_id;
 
 IF v_id IS NULL THEN
             RAISE EXCEPTION
-                'No se encontrÃ³ el detalle histÃ³rico a modificar.';
+                'No se encontró el detalle histórico a modificar.';
 END IF;
 
 RETURN v_id;
@@ -2975,7 +2968,7 @@ END IF;
 
     IF v_tipo_item_actual <> 'NOMENCLADOR' THEN
         RAISE EXCEPTION
-            'El detalle persistido tiene un tipo tÃ©cnico desconocido.';
+            'El detalle persistido tiene un tipo técnico desconocido.';
 END IF;
 
     IF v_tipo_item_esperado <> 'NOMENCLADOR' THEN
@@ -2994,7 +2987,7 @@ END IF;
        OR p_id_prestacion <= 0 THEN
 
         RAISE EXCEPTION
-            'Debe informar la prestaciÃ³n del nomenclador.';
+            'Debe informar la prestación del nomenclador.';
 END IF;
 
     IF p_id_tipo_nomenclador IS NULL
@@ -3012,14 +3005,14 @@ WHERE n.id_prestacion = p_id_prestacion
 
 IF NOT FOUND THEN
         RAISE EXCEPTION
-            'La prestaciÃ³n seleccionada no existe o no estÃ¡ activa.';
+            'La prestación seleccionada no existe o no está activa.';
 END IF;
 
     IF v_id_tipo_nomenclador_real
             <> p_id_tipo_nomenclador THEN
 
         RAISE EXCEPTION
-            'El tipo de nomenclador informado no corresponde a la prestaciÃ³n seleccionada.';
+            'El tipo de nomenclador informado no corresponde a la prestación seleccionada.';
 END IF;
 
     IF v_sector = 'FARMACIA' THEN
@@ -3042,7 +3035,7 @@ END IF;
        ) = 0 THEN
 
         RAISE EXCEPTION
-            'Debe informar el cÃ³digo de nomenclador.';
+            'Debe informar el código de nomenclador.';
 END IF;
 
     IF p_descripcion_nomenclador IS NULL
@@ -3053,7 +3046,7 @@ END IF;
        ) = 0 THEN
 
         RAISE EXCEPTION
-            'Debe informar la descripciÃ³n del nomenclador.';
+            'Debe informar la descripción del nomenclador.';
 END IF;
 
     IF p_id_medicamento IS NOT NULL
@@ -3122,7 +3115,7 @@ INTO v_id;
 
 IF v_id IS NULL THEN
         RAISE EXCEPTION
-            'No se encontrÃ³ el detalle a modificar.';
+            'No se encontró el detalle a modificar.';
 END IF;
 
 RETURN v_id;
@@ -3156,14 +3149,14 @@ BEGIN
 
         IF v_estado <> 1 THEN
             RAISE EXCEPTION
-                'El tipo de prestaciÃ³n solo puede modificarse en estado PENDIENTE.';
+                'El tipo de prestación solo puede modificarse en estado PENDIENTE.';
         END IF;
 
         IF OLD.id_tipo_prestacion IS NOT NULL
            AND NEW.id_tipo_prestacion IS NULL THEN
 
             RAISE EXCEPTION
-                'El tipo de prestaciÃ³n ya informado no puede quitarse.';
+                'El tipo de prestación ya informado no puede quitarse.';
         END IF;
     END IF;
 
@@ -3178,12 +3171,12 @@ BEGIN
 
     IF NOT FOUND THEN
         RAISE EXCEPTION
-            'El tipo de prestaciÃ³n informado no existe.';
+            'El tipo de prestación informado no existe.';
     END IF;
 
     IF v_id_sector_tipo <> v_id_sector_requerimiento THEN
         RAISE EXCEPTION
-            'El tipo de prestaciÃ³n no corresponde al sector del requerimiento.';
+            'El tipo de prestación no corresponde al sector del requerimiento.';
     END IF;
 
     RETURN NEW;
@@ -3224,7 +3217,7 @@ BEGIN
        AND v_id_tipo_prestacion IS NULL THEN
 
         RAISE EXCEPTION
-            'Debe seleccionar el tipo de prestaciÃ³n.';
+            'Debe seleccionar el tipo de prestación.';
     END IF;
 
     RETURN NULL;
@@ -3329,7 +3322,7 @@ BEGIN
 
     IF NOT FOUND THEN
         RAISE EXCEPTION
-            'No se encontrÃ³ el detalle activo a borrar.';
+            'No se encontró el detalle activo a borrar.';
 
     END IF;
 
@@ -3379,7 +3372,7 @@ BEGIN
 
         IF v_total_detalles_activos <= 1 THEN
             RAISE EXCEPTION
-                'El requerimiento ENVIADO A COTIZAR debe conservar al menos una prestaciÃ³n.';
+                'El requerimiento ENVIADO A COTIZAR debe conservar al menos una prestación.';
 
         END IF;
 
@@ -3444,14 +3437,14 @@ IF NOT FOUND THEN
 END IF;
 
     -- Una repeticion del mismo POST luego del cierre no debe reabrir ni
-    -- modificar la cotizaciÃ³n.
+    -- modificar la cotización.
     IF v_estado = 3 THEN
         RETURN 3;
 END IF;
 
     IF v_estado <> 2 THEN
         RAISE EXCEPTION
-            'La cotizaciÃ³n solo puede guardarse en estado A COTIZAR.';
+            'La cotización solo puede guardarse en estado A COTIZAR.';
 END IF;
 
     IF p_ids_detalle IS NULL
@@ -3477,7 +3470,7 @@ END IF;
             OR ids.id_detalle <= 0
     ) THEN
         RAISE EXCEPTION
-            'La cotizaciÃ³n contiene identificadores de detalle invÃ¡lidos.';
+            'La cotización contiene identificadores de detalle inválidos.';
 END IF;
 
     IF (
@@ -3488,7 +3481,7 @@ FROM unnest(p_ids_detalle) AS ids(id_detalle)
           FROM unnest(p_ids_detalle) AS ids(id_detalle)
     ) THEN
         RAISE EXCEPTION
-            'La cotizaciÃ³n contiene detalles duplicados.';
+            'La cotización contiene detalles duplicados.';
 END IF;
 
     IF EXISTS (
@@ -3517,7 +3510,7 @@ END IF;
 
     IF v_total_detalles <> v_total_ids THEN
         RAISE EXCEPTION
-            'La cotizaciÃ³n debe informar exactamente todos los detalles activos.';
+            'La cotización debe informar exactamente todos los detalles activos.';
 END IF;
 
     IF EXISTS (
@@ -3533,7 +3526,7 @@ END IF;
             'La lista de detalles fue manipulada o pertenece a otro requerimiento.';
 END IF;
 
-    -- Bloquea la estructura completa antes de actualizar valores de cotizaciÃ³n.
+    -- Bloquea la estructura completa antes de actualizar valores de cotización.
     PERFORM 1
       FROM compras.requerimiento_detalle d
      WHERE d.id_requerimiento = p_id_requerimiento
@@ -3609,7 +3602,7 @@ END IF;
            AND rp.baja_fecha IS NULL
     ) THEN
         RAISE EXCEPTION
-            'Debe existir un presupuesto activo del prestador adjudicado antes de cerrar la cotizaciÃ³n.';
+            'Debe existir un presupuesto activo del prestador adjudicado antes de cerrar la cotización.';
 END IF;
 
     IF NOT EXISTS (
@@ -3620,7 +3613,7 @@ END IF;
            AND rcp.estado_envio = 'COTIZADO'
     ) THEN
         RAISE EXCEPTION
-            'El prestador adjudicado debe encontrarse COTIZADO antes de cerrar la cotizaciÃ³n.';
+            'El prestador adjudicado debe encontrarse COTIZADO antes de cerrar la cotización.';
 END IF;
 
     PERFORM compras.cambiar_estado_requerimiento(
@@ -3636,37 +3629,96 @@ LANGUAGE plpgsql;
 
 
 -- =====================================================================
--- PRESTADORES PARA COTIZACIÃ“N
+-- PRESTADORES PARA COTIZACIÓN
 -- =====================================================================
 
 /*
- * Fuente canÃ³nica: relaciÃ³n prestador/contacto electrÃºnico tipo E.
- * No se utiliza el contacto general no clasificado de la cabecera.
+ * Fuente canónica de 0..N destinatarios del prestador:
+ * public.prestad_contacto_e -> public.contacto_e.
+ *
+ * El resultado se separa por ';' para conservar el contrato Java vigente.
  */
-CREATE OR REPLACE FUNCTION
+CREATE FUNCTION compras.resolver_emails_cotizacion_prestador(
+    p_id_prestador INTEGER
+)
+RETURNS TEXT
+AS $func$
+SELECT string_agg(
+           contacto.email,
+           ';' ORDER BY
+               contacto.prioridad,
+               contacto.fecha_referencia DESC NULLS LAST,
+               contacto.id_contacto_e DESC,
+               lower(contacto.email)
+       )
+FROM (
+    SELECT DISTINCT ON (
+        lower(btrim(ce.contacto))
+    )
+        btrim(ce.contacto) AS email,
+        CASE upper(btrim(COALESCE(ce.tipo_contacto_e, '')))
+            WHEN 'E' THEN 1
+            WHEN 'F' THEN 2
+            ELSE 3
+        END AS prioridad,
+        COALESCE(
+            ce.modi_fecha,
+            ce.alta_fecha,
+            ce.vigen_desde,
+            pce.vigen_desde
+        ) AS fecha_referencia,
+        ce.id_contacto_e
+    FROM public.prestad_contacto_e pce
+    JOIN public.contacto_e ce
+      ON ce.id_contacto_e = pce.id_contacto_e
+    WHERE pce.id_prestador = p_id_prestador
+      AND upper(btrim(COALESCE(ce.tipo_contacto_e, ''))) IN ('E', 'F')
+      AND ce.baja_fecha IS NULL
+      AND (pce.vigen_desde IS NULL OR pce.vigen_desde <= LOCALTIMESTAMP)
+      AND (ce.vigen_desde IS NULL OR ce.vigen_desde <= LOCALTIMESTAMP)
+      AND NULLIF(btrim(ce.contacto), '') IS NOT NULL
+      AND NULLIF(btrim(ce.contacto), '')
+          ~* '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'
+    ORDER BY
+        lower(btrim(ce.contacto)),
+        CASE upper(btrim(COALESCE(ce.tipo_contacto_e, '')))
+            WHEN 'E' THEN 1
+            WHEN 'F' THEN 2
+            ELSE 3
+        END,
+        COALESCE(
+            ce.modi_fecha,
+            ce.alta_fecha,
+            ce.vigen_desde,
+            pce.vigen_desde
+        ) DESC NULLS LAST,
+        ce.id_contacto_e DESC
+) contacto;
+$func$
+LANGUAGE sql
+STABLE;
+
+/*
+ * Compatibilidad legacy para callers que esperan un único VARCHAR.
+ * La fuente sigue siendo exclusivamente el resolver plural canónico.
+ */
+CREATE FUNCTION
 compras.resolver_email_cotizacion_prestador(
     p_id_prestador INTEGER
 )
 RETURNS VARCHAR
 AS $func$
-    SELECT NULLIF(BTRIM(ce.contacto), '')::VARCHAR
-    FROM public.prestad_contacto_e pce
-    JOIN public.contacto_e ce
-      ON ce.id_contacto_e = pce.id_contacto_e
-    JOIN public.prestador p
-      ON p.id_prestador = pce.id_prestador
-     AND p.baja_fecha IS NULL
-    WHERE pce.id_prestador = p_id_prestador
-      AND UPPER(BTRIM(COALESCE(ce.tipo_contacto_e, ''))) = 'E'
-      AND ce.baja_fecha IS NULL
-      AND (pce.vigen_desde IS NULL OR pce.vigen_desde <= LOCALTIMESTAMP)
-      AND (ce.vigen_desde IS NULL OR ce.vigen_desde <= LOCALTIMESTAMP)
-      AND NULLIF(BTRIM(ce.contacto), '')
-          ~* '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'
-    ORDER BY COALESCE(ce.modi_fecha, ce.alta_fecha,
-                      ce.vigen_desde, pce.vigen_desde) DESC NULLS LAST,
-             ce.id_contacto_e DESC
-    LIMIT 1;
+SELECT NULLIF(
+           split_part(
+               COALESCE(
+                   compras.resolver_emails_cotizacion_prestador($1),
+                   ''
+               ),
+               ';',
+               1
+           ),
+           ''
+       )::VARCHAR;
 $func$
 LANGUAGE sql
 STABLE;
@@ -3689,8 +3741,18 @@ SELECT DISTINCT
     p.id_prestador::INTEGER,
     p.descripcion::VARCHAR,
     p.cuit::VARCHAR,
-    compras.resolver_email_cotizacion_prestador(
-            p.id_prestador
+    NULLIF(
+        split_part(
+            COALESCE(
+                compras.resolver_emails_cotizacion_prestador(
+                    p.id_prestador
+                ),
+                ''
+            ),
+            ';',
+            1
+        ),
+        ''
     )::VARCHAR AS email,
     p.id_tipo_prestador::INTEGER,
     tp.descripcion::VARCHAR
@@ -3728,7 +3790,7 @@ WHERE r.id_requerimiento =
         AND d.baja_fecha IS NULL
   )
   AND (
-    -- Primer envio o recuperaciÃ³n: se listan todos los
+    -- Primer envio o recuperación: se listan todos los
     -- candidatos vigentes. registrar_cotizacion_prestador
     -- evita reenviar ENVIADO o PROCESANDO.
     r.estado = 1
@@ -3808,7 +3870,7 @@ IF NOT FOUND THEN
 END IF;
 
     /*
-     * Reserva atÃ³mica.
+     * Reserva atómica.
      *
      * INSERT nuevo:
      *   PROCESANDO, intento 1.
@@ -3894,7 +3956,7 @@ BEGIN
         'EMAIL_INVALIDO'
     ) THEN
         RAISE EXCEPTION
-            'Estado final de notificaciÃ³n invÃ¡lido: %.',
+            'Estado final de notificación inválido: %.',
             v_estado;
 END IF;
 
@@ -4308,7 +4370,7 @@ LANGUAGE plpgsql
 STABLE;
 
 -- =====================================================================
--- FUNCIONES DE PRESUPUESTOS, VÃ­NCULOS Y COTIZACIÃ“N
+-- FUNCIONES DE PRESUPUESTOS, VíNCULOS Y COTIZACIÓN
 -- =====================================================================
 
 
@@ -4335,19 +4397,19 @@ DECLARE
 BEGIN
     IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
         RAISE EXCEPTION
-            'El requerimiento informado no es vÃ¡lido.';
+            'El requerimiento informado no es válido.';
     END IF;
 
     IF p_id_prestador IS NULL OR p_id_prestador <= 0 THEN
         RAISE EXCEPTION
-            'El prestador informado no es vÃ¡lido.';
+            'El prestador informado no es válido.';
     END IF;
 
     IF p_dl_group_id IS NULL OR p_dl_group_id <= 0
        OR p_dl_folder_id IS NULL OR p_dl_folder_id < 0
        OR p_dl_file_entry_id IS NULL OR p_dl_file_entry_id <= 0 THEN
         RAISE EXCEPTION
-            'La identidad del documento de presupuesto no es vÃ¡lida.';
+            'La identidad del documento de presupuesto no es válida.';
     END IF;
 
     v_usuario := COALESCE(NULLIF(btrim(p_usuario), ''), 'sistema');
@@ -4467,12 +4529,12 @@ BEGIN
        OR p_id_requerimiento <= 0 THEN
 
         RAISE EXCEPTION
-            'El requerimiento informado no es vÃ¡lido.';
+            'El requerimiento informado no es válido.';
     END IF;
 
     IF p_fecha_documento IS NULL THEN
         RAISE EXCEPTION
-            'Debe informar la fecha de la Orden mÃ©dica.';
+            'Debe informar la fecha de la Orden médica.';
     END IF;
 
     IF p_dl_group_id IS NULL
@@ -4484,37 +4546,26 @@ BEGIN
        OR NULLIF(btrim(p_dl_file_uuid), '') IS NULL THEN
 
         RAISE EXCEPTION
-            'La identidad del documento de Orden mÃ©dica no es vÃ¡lida.';
+            'La identidad del documento de Orden médica no es válida.';
     END IF;
 
     IF NULLIF(btrim(p_nombre_original), '') IS NULL
        OR NULLIF(btrim(p_nombre_persistido), '') IS NULL THEN
 
         RAISE EXCEPTION
-            'Los nombres del documento de Orden mÃ©dica no son vÃ¡lidos.';
+            'Los nombres del documento de Orden médica no son válidos.';
     END IF;
 
-    IF translate(
-           lower(
-               regexp_replace(
-                   btrim(COALESCE(p_titulo, '')),
-                   '[[:space:]]+',
-                   ' ',
-                   'g'
-               )
-           ),
-           'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½',
-           'aeiouun'
-       ) <> 'orden medica' THEN
-        RAISE EXCEPTION
-            'El tÃ­tulo del documento debe ser Orden mÃ©dica.';
-    END IF;
+    /*
+     * p_titulo es opcional y se conserva en la firma para no romper callers.
+     * Si llega vacío se utiliza el nombre original como título técnico.
+     */
 
     IF p_numero_receta IS NOT NULL
        AND length(p_numero_receta) > 100 THEN
 
         RAISE EXCEPTION
-            'El nÃºmero de receta admite hasta 100 caracteres.';
+            'El número de receta admite hasta 100 caracteres.';
     END IF;
 
     v_numero_receta :=
@@ -4532,7 +4583,7 @@ BEGIN
        AND length(v_numero_receta) > 100 THEN
 
         RAISE EXCEPTION
-            'El nÃºmero de receta admite hasta 100 caracteres.';
+            'El número de receta admite hasta 100 caracteres.';
     END IF;
 
     v_usuario :=
@@ -4561,7 +4612,7 @@ BEGIN
 
     IF v_estado_requerimiento <> 1 THEN
         RAISE EXCEPTION
-            'La Orden mÃ©dica solo puede registrarse durante '
+            'La Orden médica solo puede registrarse durante '
             'el alta de un requerimiento PENDIENTE.';
     END IF;
 
@@ -4569,7 +4620,7 @@ BEGIN
      * La receta es opcional. Si se informa y el requerimiento tiene
      * afiliado, el advisory lock serializa la clave funcional antes
      * de revalidar el duplicado exacto. Las colisiones del hash solo
-     * amplÃ­an la serializaciÃ³n: nunca producen un falso duplicado.
+     * amplían la serialización: nunca producen un falso duplicado.
      */
     IF v_numero_receta IS NOT NULL
        AND NULLIF(btrim(v_cuil_titular), '') IS NOT NULL
@@ -4607,7 +4658,7 @@ BEGIN
 
         IF FOUND THEN
             RAISE EXCEPTION
-                'La Orden mÃ©dica ya fue cargada con fecha % y nÃºmero de receta % en el requerimiento %.',
+                'La Orden médica ya fue cargada con fecha % y número de receta % en el requerimiento %.',
                 to_char(p_fecha_documento, 'DD-MM-YYYY'),
                 v_numero_receta,
                 v_id_requerimiento_duplicado;
@@ -4642,7 +4693,10 @@ BEGIN
         btrim(p_dl_file_uuid),
         btrim(p_nombre_original),
         btrim(p_nombre_persistido),
-        'Orden mÃ©dica',
+        COALESCE(
+            NULLIF(btrim(p_titulo), ''),
+            btrim(p_nombre_original)
+        ),
         NULL,
         v_usuario
     )
@@ -4998,7 +5052,7 @@ END IF;
 
     IF NULLIF(btrim(p_token_reserva), '') IS NULL THEN
         RAISE EXCEPTION
-            'No se pudo validar el contexto de creaciÃ³n del Reclamo Prestacional.';
+            'No se pudo validar el contexto de creación del Reclamo Prestacional.';
 END IF;
 
     v_usuario := compras.normalizar_usuario(p_usuario);
@@ -5032,7 +5086,7 @@ END IF;
     IF NULLIF(btrim(v_afiliado_cuil), '') IS NULL
             OR v_afiliado_int IS NULL THEN
         RAISE EXCEPTION
-            'El requerimiento % no posee un afiliado vÃ¡lido.',
+            'El requerimiento % no posee un afiliado válido.',
             p_id_requerimiento;
 END IF;
 
@@ -5085,7 +5139,7 @@ END IF;
 END IF;
 
     RAISE EXCEPTION
-        'Ya existe una creaciÃ³n de Reclamo Prestacional en proceso para el requerimiento %.',
+        'Ya existe una creación de Reclamo Prestacional en proceso para el requerimiento %.',
         p_id_requerimiento;
 END;
 $func$
@@ -5140,7 +5194,7 @@ END IF;
     IF v_estado <> 'RESERVADO'
             OR v_token_actual IS DISTINCT FROM btrim(p_token_reserva) THEN
         RAISE EXCEPTION
-            'La reserva del requerimiento % no es vÃ¡lida.',
+            'La reserva del requerimiento % no es válida.',
             p_id_requerimiento;
 END IF;
 
@@ -5248,7 +5302,8 @@ VOLATILE;
  *
  * compras.listar_prestadores_cotizacion_requerimiento(integer)
  *
- * Esa funciÃ³n ya era utilizada por el servicio anterior.
+ * El email singular del candidato se ignora: el flujo productivo resuelve
+ * todos los destinatarios exclusivamente desde la fuente canónica plural.
  */
 CREATE OR REPLACE FUNCTION
 compras.listar_prestadores_notificacion_cotizacion(
@@ -5270,7 +5325,9 @@ SELECT
     candidato.id_prestador::INTEGER,
     candidato.descripcion::TEXT,
     candidato.cuit::TEXT,
-    candidato.email::TEXT,
+    compras.resolver_emails_cotizacion_prestador(
+        candidato.id_prestador
+    )::TEXT AS email,
     candidato.id_tipo_prestador::INTEGER,
     candidato.tipo_prestador::TEXT
 FROM compras.listar_prestadores_cotizacion_requerimiento(
@@ -5284,7 +5341,7 @@ $function$;
 
 /*
  * ============================================================
- * 2. DIAGNÃ“STICO GENERAL
+ * 2. DIAGNÓSTICO GENERAL
  * ============================================================
  *
  * Diferencia:
@@ -5293,7 +5350,7 @@ $function$;
  *   solicitar_cotizacion = true y sin baja.
  *
  * - prestadores_compatibles_sector:
- *   habilitados cuyo tipo estÃ¡ asociado al sector.
+ *   habilitados cuyo tipo está asociado al sector.
  *
  * - prestadores_bloqueados_estado_previo:
  *   compatibles que ya estaban ENVIADO, COTIZADO o PROCESANDO antes
@@ -5374,13 +5431,13 @@ $function$;
 
 /*
  * ============================================================
- * 3. RESERVA ATÃ“MICA
+ * 3. RESERVA ATÓMICA
  * ============================================================
  *
  * Devuelve:
  *
  * reservado = true
- *   La fila quedÃ³ PROCESANDO y esta ejecuciÃ³n obtuvo la
+ *   La fila quedó PROCESANDO y esta ejecución obtuvo la
  *   reserva exclusiva.
  *
  * reservado = false
@@ -5388,7 +5445,7 @@ $function$;
  *   mediante motivo_codigo y motivo_descripcion.
  *
  * La fila se bloquea con FOR UPDATE para impedir que dos
- * ejecuciones envÃ­en simultÃ¡neamente al mismo prestador.
+ * ejecuciones envíen simultáneamente al mismo prestador.
  */
 CREATE OR REPLACE FUNCTION
 compras.reservar_notificacion_cotizacion_prestador(
@@ -5410,8 +5467,8 @@ DECLARE
 v_usuario VARCHAR(100);
     v_id_sector INTEGER;
     v_estado_requerimiento INTEGER;
-    v_email_real VARCHAR(320);
-    v_email_guardado VARCHAR(320);
+    v_emails_reales TEXT;
+    v_email_guardado TEXT;
     v_estado_actual VARCHAR(20);
 BEGIN
     IF p_id_requerimiento IS NULL
@@ -5464,10 +5521,10 @@ IF v_estado_requerimiento NOT IN (1, 2) THEN
 END IF;
 
 /*
- * Primero se vÃ¡lida la existencia funcional del prestador.
+ * Primero se valida la existencia funcional del prestador.
  *
  * No se usa el resultado de esta consulta para resolver
- * el email. La validaciÃ³n y la resoluciÃ³n son responsabilidades
+ * el email. La validación y la resolución son responsabilidades
  * separadas.
  */
 PERFORM 1
@@ -5482,23 +5539,23 @@ WHERE p.id_prestador = p_id_prestador
 IF NOT FOUND THEN
     RAISE EXCEPTION
         'El prestador % no existe, esta dado de baja '
-        'o no estÃ¡ habilitado para cotizar.',
+        'o no está habilitado para cotizar.',
         p_id_prestador;
 END IF;
 
 /*
- * Se obtiene el destinatario mediante la politica canÃ³nica.
+ * Se obtienen los destinatarios mediante la política canónica plural.
  *
  * Puede devolver NULL. Eso no constituye una falla de reserva:
  * el servicio Java debe clasificarlo como EMAIL_INVALIDO
  * o como advertencia cuando se utiliza el destino temporal.
  */
 SELECT
-    compras.resolver_email_cotizacion_prestador(
+    compras.resolver_emails_cotizacion_prestador(
             p_id_prestador
     )
 INTO
-    v_email_real;
+    v_emails_reales;
 
 IF NOT EXISTS (
     SELECT
@@ -5522,10 +5579,10 @@ IF NOT EXISTS (
 END IF;
 
     /*
-     * Se crea la fila si todavÃ­a no existe.
+     * Se crea la fila si todavía no existe.
      *
-     * ON CONFLICT evita una excepciÃ³n si dos transacciones
-     * intentan crearla simultÃ¡neamente.
+     * ON CONFLICT evita una excepción si dos transacciones
+     * intentan crearla simultáneamente.
      */
 INSERT INTO compras.requerimiento_cotizacion_prestador (
     id_requerimiento,
@@ -5541,7 +5598,7 @@ VALUES (
            p_id_prestador,
            'PENDIENTE',
            0,
-           v_email_real,
+           v_emails_reales,
            clock_timestamp(),
            v_usuario
        )
@@ -5552,7 +5609,7 @@ VALUES (
     DO NOTHING;
 
 /*
- * El bloqueo garantiza que sÃ³lo una ejecuciÃ³n pueda
+ * El bloqueo garantiza que sólo una ejecución pueda
  * analizar y modificar esta fila a la vez.
  */
 SELECT
@@ -5571,7 +5628,7 @@ WHERE rcp.id_requerimiento =
 IF NOT FOUND THEN
         RAISE EXCEPTION
             'No se pudo crear ni localizar la fila de '
-            'notificaciÃ³n para requerimiento % y prestador %.',
+            'notificación para requerimiento % y prestador %.',
             p_id_requerimiento,
             p_id_prestador;
 END IF;
@@ -5615,7 +5672,7 @@ SELECT
     'YA_PROCESANDO'::TEXT,
     (
         'El prestador ya se encontraba PROCESANDO, '
-            || 'posiblemente por otra ejecuciÃ³n concurrente.'
+            || 'posiblemente por otra ejecución concurrente.'
         )::TEXT;
 
 RETURN;
@@ -5637,7 +5694,7 @@ SET
         intentos + 1,
 
     email_destino =
-        v_email_real,
+        v_emails_reales,
 
     fecha_ultimo_intento =
         clock_timestamp(),
@@ -5663,21 +5720,21 @@ RETURN QUERY
 SELECT
     TRUE,
     'PROCESANDO'::TEXT,
-    v_email_real::TEXT,
+    v_emails_reales::TEXT,
     'RESERVA_OTORGADA'::TEXT,
     (
-        'La ejecuciÃ³n obtuvo la reserva exclusiva '
-            || 'y la fila quedÃ³ PROCESANDO.'
+        'La ejecución obtuvo la reserva exclusiva '
+            || 'y la fila quedó PROCESANDO.'
         )::TEXT;
 END;
 $function$;
 
 /*
  * ============================================================
- * 4. FINALIZACIÃ“N ATÃ“MICA
+ * 4. FINALIZACIÓN ATÓMICA
  * ============================================================
  *
- * SÃ³lo permite finalizar una fila que continÃºa PROCESANDO.
+ * Sólo permite finalizar una fila que continúa PROCESANDO.
  *
  * Estados finales aceptados:
  *
@@ -5783,7 +5840,7 @@ SELECT
     NULL::TEXT,
     NULL::TEXT,
     (
-        'No existe una fila de notificaciÃ³n '
+        'No existe una fila de notificación '
             || 'para el requerimiento y prestador.'
         )::TEXT;
 
@@ -5847,7 +5904,7 @@ SELECT
     v_estado_anterior::TEXT,
     (
         'La fila cambio de estado antes de '
-            || 'completar la finalizaciÃ³n.'
+            || 'completar la finalización.'
         )::TEXT;
 
 RETURN;
@@ -5867,12 +5924,12 @@ $function$;
 
 /*
  * ============================================================
- * 5. VALIDACIÃ“NES POSTERIORES A LA INSTALACIÃ“N
+ * 5. VALIDACIÓNES POSTERIORES A LA INSTALACIÓN
  * ============================================================
  */
 
 /*
- * No ejecutar las pruebas de reserva/finalizaciÃ³n sobre un
+ * No ejecutar las pruebas de reserva/finalización sobre un
  * requerimiento productivo sin reemplazar los identificadores.
  *
  * Ejemplo:
@@ -5889,13 +5946,13 @@ $function$;
  *     1,
  *     123,
  *     'ERROR',
- *     'Prueba controlada de instalaciÃ³n.',
+ *     'Prueba controlada de instalación.',
  *     'prueba_sql'
  * );
  */
 -- =====================================================================
 -- =====================================================================
--- DOCUMENTOS DE PEDIDO DE COTIZACIÃ“N
+-- DOCUMENTOS DE PEDIDO DE COTIZACIÓN
 -- =====================================================================
 
 CREATE FUNCTION compras.registrar_pedido_cotizacion_documento(
@@ -5936,7 +5993,7 @@ BEGIN
        OR NULLIF(btrim(p_dl_file_uuid), '') IS NULL THEN
 
         RAISE EXCEPTION
-            'La identidad del pedido de cotizaciÃ³n en Document Library no es vÃ¡lida.';
+            'La identidad del pedido de cotización en Document Library no es válida.';
     END IF;
 
     IF NULLIF(btrim(p_nombre_original), '') IS NULL
@@ -5944,7 +6001,7 @@ BEGIN
        OR NULLIF(btrim(p_titulo), '') IS NULL THEN
 
         RAISE EXCEPTION
-            'Los datos documentales del pedido de cotizaciÃ³n no son vÃ¡lidos.';
+            'Los datos documentales del pedido de cotización no son válidos.';
     END IF;
 
     v_usuario := compras.normalizar_usuario(p_usuario);
@@ -5958,17 +6015,17 @@ BEGIN
 
     IF NOT FOUND THEN
         RAISE EXCEPTION
-            'No existe la notificaciÃ³n del prestador para el requerimiento.';
+            'No existe la notificación del prestador para el requerimiento.';
     END IF;
 
     IF v_estado_envio <> 'PROCESANDO' THEN
         RAISE EXCEPTION
-            'El pedido de cotizaciÃ³n solo puede registrarse durante un envio PROCESANDO.';
+            'El pedido de cotización solo puede registrarse durante un envio PROCESANDO.';
     END IF;
 
     IF v_intento IS NULL OR v_intento <= 0 THEN
         RAISE EXCEPTION
-            'La notificaciÃ³n no posee un nÃºmero de intento vÃ¡lido.';
+            'La notificación no posee un número de intento válido.';
     END IF;
 
     IF EXISTS (
@@ -5996,7 +6053,7 @@ BEGIN
           AND pc.intento = v_intento
     ) THEN
         RAISE EXCEPTION
-            'El intento actual ya posee otro pedido de cotizaciÃ³n registrado.';
+            'El intento actual ya posee otro pedido de cotización registrado.';
     END IF;
 
     INSERT INTO compras.requerimiento_pedido_cotizacion (
@@ -6053,7 +6110,7 @@ LANGUAGE sql
 STABLE;
 
 -- =====================================================================
--- COMPATIBILIDAD DE PRESTADOR POR TIPO DE COTIZACIÃ“N
+-- COMPATIBILIDAD DE PRESTADOR POR TIPO DE COTIZACIÓN
 -- =====================================================================
 
 CREATE FUNCTION compras.es_prestador_compatible_cotizacion(
@@ -6097,7 +6154,7 @@ BEGIN
         NEW.id_prestador
     ) THEN
         RAISE EXCEPTION
-            'El prestador no es compatible con el sector y tipo de cotizaciÃ³n.';
+            'El prestador no es compatible con el sector y tipo de cotización.';
     END IF;
 
     RETURN NEW;
@@ -6112,7 +6169,7 @@ CREATE TRIGGER trg_compras_cotizacion_prestador_compatible
     EXECUTE PROCEDURE compras.validar_prestador_cotizacion_fila();
 
 -- =====================================================================
--- BAJAS DIFERIDAS + SURGE + COTIZACIÃ“N: UNA SOLA TRANSACCIÃ“N
+-- BAJAS DIFERIDAS + SURGE + COTIZACIÓN: UNA SOLA TRANSACCIÓN
 -- =====================================================================
 
 CREATE FUNCTION compras.guardar_cotizacion_requerimiento(
@@ -6156,7 +6213,7 @@ BEGIN
 
     IF v_estado <> 2 THEN
         RAISE EXCEPTION
-            'La cotizaciÃ³n sÃ³lo puede guardarse en estado A COTIZAR.';
+            'La cotización sólo puede guardarse en estado A COTIZAR.';
     END IF;
 
     PERFORM 1
@@ -6177,7 +6234,7 @@ BEGIN
 
     IF v_total_conservados <= 0 THEN
         RAISE EXCEPTION
-            'Debe conservar al menos una prestaciÃ³n antes de guardar la cotizaciÃ³n.';
+            'Debe conservar al menos una prestación antes de guardar la cotización.';
     END IF;
 
     IF v_total_conservados
@@ -6224,7 +6281,7 @@ BEGIN
            OR d.id_detalle IS NULL
     ) THEN
         RAISE EXCEPTION
-            'La lista de prestaciones fue manipulada o quedÃ³ desactualizada.';
+            'La lista de prestaciones fue manipulada o quedó desactualizada.';
     END IF;
 
     UPDATE compras.requerimiento_detalle
@@ -6298,7 +6355,7 @@ $func$
 LANGUAGE sql
 VOLATILE;
 
--- Funciones canÃ³nicas consumidas por las fachadas JDBC de Compras.
+-- Funciones canónicas consumidas por las fachadas JDBC de Compras.
 CREATE OR REPLACE FUNCTION compras.buscar_items_historicos_afiliado(
     p_cuil_titular VARCHAR,
     p_inte INTEGER,
@@ -6484,7 +6541,7 @@ $func$
 LANGUAGE plpgsql
 VOLATILE;
 
--- Regla canÃ³nica de duplicados: persona + prestaciÃ³n + fecha de Orden MÃ©dica.
+-- Regla canónica de duplicados: persona + prestación + fecha de Orden Médica.
 CREATE OR REPLACE FUNCTION compras.existe_requerimiento_duplicado(
     p_cuil_titular VARCHAR,
     p_inte INTEGER,
@@ -6533,7 +6590,7 @@ LANGUAGE sql
 STABLE;
 
 -- =====================================================================
--- BÃšSQUEDA TÃ‰CNICA DE PRESTACIONES MÃ‰DICAS
+-- BÚSQUEDA TÉCNICA DE PRESTACIONES MÉDICAS
 -- =====================================================================
 
 CREATE OR REPLACE FUNCTION autorizaciones.busca_nomenclador_prest_med_compras(

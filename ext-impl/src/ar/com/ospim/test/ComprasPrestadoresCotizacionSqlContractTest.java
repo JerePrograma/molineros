@@ -81,59 +81,205 @@ public class ComprasPrestadoresCotizacionSqlContractTest {
                 "WHERE compras.requerimiento_cotizacion_prestador.estado_envio\n               IN (\n               'PENDIENTE',\n               'ERROR',\n               'EMAIL_INVALIDO'"
         );
 
-        validarMigracionEmailCotizacion();
+        validarSchemaEmailCotizacion(sql);
+        validarJavaMultiplesDestinatarios();
     }
 
-    private static void validarMigracionEmailCotizacion()
+    private static void validarSchemaEmailCotizacion(String sql)
             throws Exception {
 
-        String migracion =
-                leer(
-                        "docs/sql/"
-                                + "20260825_corregir_email_cotizacion_prestador.sql",
-                        "ISO-8859-1"
+        String resolverPlural =
+                seccion(
+                        sql,
+                        "CREATE FUNCTION "
+                                + "compras.resolver_emails_cotizacion_prestador(",
+                        "CREATE FUNCTION\n"
+                                + "compras.resolver_email_cotizacion_prestador("
                 );
 
         assertContains(
-                "migracion reemplaza el resolver",
-                migracion,
-                "CREATE OR REPLACE FUNCTION\n"
-                        + "compras.resolver_email_cotizacion_prestador("
+                "schema contiene resolver plural",
+                resolverPlural,
+                "compras.resolver_emails_cotizacion_prestador("
         );
         assertContains(
-                "migracion conserva email y factura",
-                migracion,
+                "resolver plural usa relacion del prestador",
+                resolverPlural,
+                "FROM public.prestad_contacto_e pce"
+        );
+        assertContains(
+                "resolver plural obtiene el contacto",
+                resolverPlural,
+                "JOIN public.contacto_e ce"
+        );
+        assertContains(
+                "resolver plural admite email y factura",
+                resolverPlural,
                 "IN ('E', 'F')"
         );
         assertContains(
-                "migracion preserva prioridad email",
-                migracion,
+                "resolver plural preserva prioridad email",
+                resolverPlural,
                 "WHEN 'E' THEN 1"
         );
         assertContains(
-                "migracion usa factura como fallback",
-                migracion,
+                "resolver plural preserva prioridad factura",
+                resolverPlural,
                 "WHEN 'F' THEN 2"
         );
         assertContains(
-                "migracion descarta contactos dados de baja",
-                migracion,
+                "resolver plural descarta baja logica",
+                resolverPlural,
                 "AND ce.baja_fecha IS NULL"
         );
         assertContains(
-                "migracion valida formato",
-                migracion,
+                "resolver plural considera vigencia de la relacion",
+                resolverPlural,
+                "pce.vigen_desde <= LOCALTIMESTAMP"
+        );
+        assertContains(
+                "resolver plural considera vigencia del contacto",
+                resolverPlural,
+                "ce.vigen_desde <= LOCALTIMESTAMP"
+        );
+        assertContains(
+                "resolver plural valida formato",
+                resolverPlural,
                 "~* '^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$'"
         );
-        assertNotContains(
-                "migracion sin cambios de datos",
-                migracion,
-                "UPDATE "
+        assertContains(
+                "resolver plural deduplica sin distinguir mayusculas",
+                resolverPlural,
+                "SELECT DISTINCT ON (\n        lower(btrim(ce.contacto))"
+        );
+        assertContains(
+                "resolver plural agrega todos los emails",
+                resolverPlural,
+                "SELECT string_agg("
         );
         assertNotContains(
-                "migracion sin borrado de datos",
-                migracion,
-                "DELETE FROM "
+                "resolver plural no limita a un destinatario",
+                resolverPlural,
+                "LIMIT 1"
+        );
+        assertNotContains(
+                "resolver plural no consulta otra fuente",
+                resolverPlural,
+                "public.prestador"
+        );
+
+        String singularLegacy =
+                seccion(
+                        sql,
+                        "CREATE FUNCTION\n"
+                                + "compras.resolver_email_cotizacion_prestador(",
+                        "CREATE FUNCTION "
+                                + "compras.listar_prestadores_cotizacion_requerimiento("
+                );
+
+        assertContains(
+                "resolver singular delega al plural",
+                singularLegacy,
+                "compras.resolver_emails_cotizacion_prestador($1)"
+        );
+        assertNotContains(
+                "resolver singular no duplica acceso a contactos",
+                singularLegacy,
+                "public.prestad_contacto_e"
+        );
+
+        String listadoLegacy =
+                seccion(
+                        sql,
+                        "CREATE FUNCTION "
+                                + "compras.listar_prestadores_cotizacion_requerimiento(",
+                        "CREATE FUNCTION "
+                                + "compras.registrar_cotizacion_prestador("
+                );
+
+        assertContains(
+                "listado base deriva su email compatible del plural",
+                listadoLegacy,
+                "compras.resolver_emails_cotizacion_prestador("
+        );
+        assertNotContains(
+                "listado base no depende del resolver singular",
+                listadoLegacy,
+                "compras.resolver_email_cotizacion_prestador("
+        );
+
+        String tabla =
+                seccion(
+                        sql,
+                        "CREATE TABLE "
+                                + "compras.requerimiento_cotizacion_prestador (",
+                        "CREATE INDEX "
+                                + "ix_compras_cotizacion_requerimiento_estado"
+                );
+
+        assertContains(
+                "email_destino se crea como TEXT",
+                tabla,
+                "email_destino TEXT,"
+        );
+        assertNotContains(
+                "email_destino no nace limitado",
+                tabla,
+                "email_destino VARCHAR"
+        );
+
+        String listarNotificacion =
+                seccion(
+                        sql,
+                        "compras.listar_prestadores_notificacion_cotizacion(",
+                        "compras.diagnosticar_prestadores_notificacion_cotizacion("
+                );
+
+        assertContains(
+                "listado productivo usa resolver plural",
+                listarNotificacion,
+                "compras.resolver_emails_cotizacion_prestador("
+        );
+        assertNotContains(
+                "listado productivo no usa resolver singular",
+                listarNotificacion,
+                "compras.resolver_email_cotizacion_prestador("
+        );
+
+        String reservar =
+                seccion(
+                        sql,
+                        "compras.reservar_notificacion_cotizacion_prestador(",
+                        "compras.finalizar_notificacion_cotizacion_prestador("
+                );
+
+        assertContains(
+                "reserva productiva usa resolver plural",
+                reservar,
+                "compras.resolver_emails_cotizacion_prestador("
+        );
+        assertNotContains(
+                "reserva productiva no usa resolver singular",
+                reservar,
+                "compras.resolver_email_cotizacion_prestador("
+        );
+
+        assertContains(
+                "schema crea compras",
+                sql,
+                "CREATE SCHEMA compras;"
+        );
+        assertNotContains("schema no elimina schema", sql, "DROP SCHEMA");
+        assertNotContains("schema no elimina tablas", sql, "DROP TABLE");
+        assertNotContains("schema no elimina funciones", sql, "DROP FUNCTION");
+        assertNotContains("schema no elimina tipos", sql, "DROP TYPE");
+        assertNotContains("schema no elimina triggers", sql, "DROP TRIGGER");
+        assertNotContains("schema no elimina constraints", sql, "DROP CONSTRAINT");
+        assertNotContains("schema no trunca datos", sql, "TRUNCATE");
+        assertNotContains(
+                "schema no parchea definiciones instaladas",
+                sql,
+                "pg_get_functiondef"
         );
 
         String prestadores =
@@ -155,10 +301,79 @@ public class ComprasPrestadoresCotizacionSqlContractTest {
         );
     }
 
+    private static void validarJavaMultiplesDestinatarios()
+            throws Exception {
+
+        String mailHelper = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
+                        + "CotizacionPrestadorMailHelper.java",
+                "ISO-8859-1"
+        );
+        String notificar = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
+                        + "NotificarCotizacionPrestadorHelper.java",
+                "ISO-8859-1"
+        );
+
+        assertContains(
+                "helper SMTP recibe destinatarios plurales",
+                mailHelper,
+                "private void enviarInterno(\n            String[] emailsDestino,"
+        );
+        assertContains(
+                "overloads singulares delegan como arreglo",
+                mailHelper,
+                "new String[] {\n                        emailDestino\n                }"
+        );
+        assertOccurrences(
+                "un unico MimeMessage",
+                mailHelper,
+                "new MimeMessage(session)",
+                1
+        );
+        assertContains(
+                "cada destino real se agrega como TO",
+                mailHelper,
+                "Message.RecipientType.TO"
+        );
+        assertContains(
+                "BCC historico conservado",
+                mailHelper,
+                "Message.RecipientType.BCC"
+        );
+        assertOccurrences(
+                "un unico envio SMTP",
+                mailHelper,
+                "transport.sendMessage(",
+                1
+        );
+
+        assertContains(
+                "flujo actual conserva arreglo plural",
+                notificar,
+                "String[] emailsDestino ="
+        );
+        assertContains(
+                "flujo actual envia todos los destinos juntos",
+                notificar,
+                "mailHelper.enviar(\n                emails,"
+        );
+        assertContains(
+                "QA produce un unico destinatario efectivo",
+                notificar,
+                "return new String[] {\n                    emailQa\n            };"
+        );
+        assertNotContains(
+                "sin fallback ejecutable a prestador.getEmail",
+                notificar,
+                "prestador.getEmail();"
+        );
+    }
+
     private static String leerSchema() throws Exception {
         return leer(
                 "ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql",
-                "UTF-8"
+                "ISO-8859-1"
         );
     }
 
@@ -236,6 +451,31 @@ public class ComprasPrestadoresCotizacionSqlContractTest {
                             + ": se encontro ["
                             + prohibido
                             + "]"
+            );
+        }
+    }
+
+    private static void assertOccurrences(
+            String descripcion,
+            String texto,
+            String buscado,
+            int esperado) {
+
+        int cantidad = 0;
+        int posicion = 0;
+
+        while ((posicion = texto.indexOf(buscado, posicion)) >= 0) {
+            cantidad++;
+            posicion += buscado.length();
+        }
+
+        if (cantidad != esperado) {
+            throw new AssertionError(
+                    descripcion
+                            + ": esperado="
+                            + esperado
+                            + ", actual="
+                            + cantidad
             );
         }
     }

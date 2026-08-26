@@ -9,61 +9,32 @@ public final class ComprasTipoDetalleSectorMigracionContractTest {
 
     private static final Charset LATIN1 =
             Charset.forName("ISO-8859-1");
-    private static final Charset UTF8 =
-            Charset.forName("UTF-8");
 
     public static void main(String[] args) throws Exception {
-        String migration = leer(
-                "docs/sql/"
-                        + "20260824_corregir_tipo_detalle_"
-                        + "prestaciones_medicas.sql",
-                LATIN1
-        );
         String schema = leer(
                 "ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql",
-                UTF8
-        );
-
-        contiene(
-                migration,
-                "normalizador desplegable",
-                "CREATE OR REPLACE FUNCTION compras.normalizar_sector("
-        );
-        contiene(
-                migration,
-                "escape independiente de codificacion",
-                "U&'\\00C1\\00C9\\00CD\\00D3\\00DA\\00DC"
-        );
-        contiene(
-                migration,
-                "corrige validacion de fila",
-                "compras.validar_requerimiento_detalle_fila()"
-        );
-        contiene(
-                migration,
-                "corrige guardado de detalle",
-                "compras.guardar_requerimiento_detalle("
-        );
-        contiene(
-                migration,
-                "prueba sector acentuado",
-                "U&'PRESTACIONES M\\00C9DICAS'"
-        );
-        contiene(
-                migration,
-                "resultado normalizado",
-                "<> 'PRESTACIONES MEDICAS'"
-        );
-        contiene(
-                migration,
-                "migracion idempotente",
-                "IF position("
+                LATIN1
         );
 
         contiene(
                 schema,
                 "normalizador canonico",
                 "CREATE FUNCTION compras.normalizar_sector("
+        );
+        contiene(
+                schema,
+                "escape independiente de codificacion",
+                "U&'\\00C1\\00C9\\00CD\\00D3\\00DA\\00DC"
+        );
+        noContiene(
+                schema,
+                "instalacion no parchea funciones existentes",
+                "pg_get_functiondef"
+        );
+        contiene(
+                schema,
+                "seed Prestaciones Medicas acentuado",
+                "'Prestaciones Médicas'"
         );
         iguales(
                 "dos clasificadores usan el normalizador",
@@ -95,7 +66,7 @@ public final class ComprasTipoDetalleSectorMigracionContractTest {
         contiene(guardar, "prestaciones se puede guardar", "'PRESTACIONES MEDICAS'");
         contiene(guardar, "tipo esperado guardado", "'NOMENCLADOR'");
 
-        System.out.println("COMPRAS_TIPO_DETALLE_SECTOR_MIGRACION_OK");
+        System.out.println("COMPRAS_TIPO_DETALLE_SECTOR_CANONICO_OK");
     }
 
     private static String leer(String ruta, Charset charset)
