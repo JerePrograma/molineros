@@ -568,7 +568,8 @@ function <%= reclamoPortletNamespace %>editarPrestacionSeleccionada(tipoAccion) 
 
 
     if (nom_seleccionado_edit ==1){
-        if (codigoSeguimiento_filtro_edit<1  ) {
+        if (codigoSeguimiento_filtro_edit<1
+                && codigoSeguimiento_filtro_edit!='0') {
           alert('Debe seleccionar la prestación');
           return false;
         }
