@@ -656,6 +656,10 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 requerimiento.isSurge()
         );
 
+        reclamo.setAmparo(
+                requerimiento.isLegales()
+        );
+
         reclamo.setRecuperable(
                 false
         );
