@@ -169,7 +169,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         try {
             User user = PortalUtil.getUser(actionRequest);
-            String usuario = getUsuario(user);
+            String usuario = user != null
+                    ? user.getScreenName()
+                    : "sistema";
 
             if ("saveCotizacion".equals(cmd)
                     || "cerrarCotizacion".equals(cmd)) {
@@ -1448,10 +1450,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         );
     }
 
-    private String getUsuario(User user) {
-        return user != null ? user.getScreenName() : "sistema";
-    }
-
     private boolean puedeEditarRender(
             User user,
             RequerimientoCompra requerimiento) throws Exception {
@@ -2310,113 +2308,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         return Integer.valueOf(parsed);
-    }
-
-    private List<OrdenMedicaValidada> obtenerOrdenesMedicasDesdeRequest(
-            ActionRequest actionRequest,
-            UploadPortletRequest uploadRequest,
-            int cantidadOrdenesMedicas)
-            throws Exception {
-
-        List<OrdenMedicaValidada> ordenesMedicas =
-                new ArrayList<OrdenMedicaValidada>(
-                        cantidadOrdenesMedicas
-                );
-
-        DocumentoLibraryComprasHelper gestorDocumento =
-                DocumentoLibraryComprasHelper.crear(
-                        actionRequest
-                );
-
-        for (int indice = 0;
-             indice < cantidadOrdenesMedicas;
-             indice++) {
-
-            String campoArchivo =
-                    obtenerCampoArchivoOrdenMedica(
-                            indice
-                    );
-
-            String campoFecha =
-                    obtenerCampoFechaOrdenMedica(
-                            indice
-                    );
-
-            try {
-                OrdenMedicaValidada ordenMedica =
-                        gestorDocumento.validarOrdenMedica(
-                                uploadRequest,
-                                campoArchivo,
-                                getParametroTrim(
-                                        actionRequest,
-                                        campoFecha
-                                ),
-                                null
-                        );
-
-                ordenesMedicas.add(
-                        ordenMedica
-                );
-
-            } catch (Exception e) {
-                String mensaje =
-                        obtenerMensajeUsuario(
-                                e,
-                                "No se pudo validar la Orden médica."
-                        );
-
-                String mensajeNormalizado =
-                        mensaje != null
-                                ? mensaje.toLowerCase(Locale.ROOT)
-                                : "";
-
-                String campo =
-                        campoArchivo;
-
-                if (mensajeNormalizado.indexOf("fecha") >= 0) {
-                    campo = campoFecha;
-                }
-
-                errorCampo(
-                        campo,
-                        mensaje
-                );
-            }
-        }
-
-        return ordenesMedicas;
-    }
-
-    private boolean hayOrdenMedicaNuevaSeleccionada(
-            UploadPortletRequest uploadRequest,
-            int cantidadOrdenesMedicas) {
-
-        if (uploadRequest == null) {
-            return false;
-        }
-
-        for (int indice = 0;
-             indice < cantidadOrdenesMedicas;
-             indice++) {
-
-            String campoArchivo =
-                    obtenerCampoArchivoOrdenMedica(
-                            indice
-                    );
-
-            String nombreArchivo =
-                    uploadRequest.getFileName(
-                            campoArchivo
-                    );
-
-            if (!WebKeysCompras.isEmpty(
-                    nombreArchivo
-            )) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private boolean hayCargaOrdenMedicaInformada(

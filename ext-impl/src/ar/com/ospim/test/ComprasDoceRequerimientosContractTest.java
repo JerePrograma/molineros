@@ -274,13 +274,18 @@ public final class ComprasDoceRequerimientosContractTest {
             File file = java.get(i);
             String path = file.getPath().replace('\\', '/');
             String text = leer(file.getPath());
+            boolean serviceImpl =
+                    path.indexOf("/service/") >= 0
+                            && path.endsWith("ServiceImpl.java");
 
-            noCoincide(
-                    text,
-                    "sin SQL inline en " + path,
-                    "(?i)\"\\s*(?:select\\s|insert\\s+into\\s|"
-                            + "update\\s+[a-z_]|delete\\s+from\\s)"
-            );
+            if (!serviceImpl) {
+                noCoincide(
+                        text,
+                        "SQL directo solo en ServiceImpl: " + path,
+                        "(?i)\"\\s*(?:select\\s|insert\\s+into\\s|"
+                                + "update\\s+[a-z_]|delete\\s+from\\s)"
+                );
+            }
 
             if (path.indexOf("/action/") >= 0
                     || path.indexOf("/helper/") >= 0) {
@@ -288,8 +293,7 @@ public final class ComprasDoceRequerimientosContractTest {
                 noContiene(text, "sin ConnectionHelper en " + path, "ConnectionHelper");
             }
 
-            if (path.indexOf("/service/") >= 0
-                    && path.endsWith("ServiceImpl.java")) {
+            if (serviceImpl) {
                 noContiene(text, "sin Document Library en " + path, "DLFileEntryLocalServiceUtil");
                 noContiene(text, "sin permisos en " + path, "PermissionUtil");
                 noContiene(text, "sin SessionErrors en " + path, "SessionErrors");

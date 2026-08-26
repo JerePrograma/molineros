@@ -2,7 +2,7 @@ package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
-import ar.com.ospim.compras.requerimientos.helper.BusquedaRequerimientoCompraHelper;
+import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -22,9 +22,6 @@ import java.util.List;
 
 public class BuscarPrestadoresEnviadosComprasAction extends PortletAction {
 
-    private final BusquedaRequerimientoCompraHelper busquedaHelper =
-            new BusquedaRequerimientoCompraHelper();
-
     public ActionForward render(ActionMapping mapping,
                                 ActionForm form,
                                 PortletConfig portletConfig,
@@ -34,7 +31,17 @@ public class BuscarPrestadoresEnviadosComprasAction extends PortletAction {
         List<PrestadorCotizacion> prestadores = new ArrayList<PrestadorCotizacion>();
 
         try {
-            validarPermisoCotizar(PortalUtil.getUser(renderRequest));
+            User user = PortalUtil.getUser(renderRequest);
+
+            if (user == null
+                    || !PermissionUtil.userContainsRole(
+                            user,
+                            WebKeysCompras.ROL_COTIZAR_COMPRAS
+                    )) {
+                throw new Exception(
+                        "No posee permisos para buscar prestadores enviados."
+                );
+            }
 
             int idRequerimiento =
                     ParamUtil.getInteger(renderRequest, "id_requerimiento_compra", 0);
@@ -44,7 +51,8 @@ public class BuscarPrestadoresEnviadosComprasAction extends PortletAction {
                     ParamUtil.getInteger(renderRequest, "limite", 20);
 
             prestadores =
-                    busquedaHelper.buscarPrestadoresEnviados(
+                    BusquedaRequerimientoCompraServiceUtil
+                            .buscarPrestadoresEnviados(
                             idRequerimiento,
                             texto,
                             limite
@@ -61,10 +69,4 @@ public class BuscarPrestadoresEnviadosComprasAction extends PortletAction {
         return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_PRESTADORES_ENVIADOS);
     }
 
-    private void validarPermisoCotizar(User user) throws Exception {
-        if (user == null
-                || !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)) {
-            throw new Exception("No posee permisos para buscar prestadores enviados.");
-        }
-    }
 }

@@ -14,30 +14,63 @@ public final class ComprasRequerimientoConnectionContractTest {
     private static final String SERVICE_DIR =
             "ext-impl/src/ar/com/ospim/compras/requerimientos/service/";
 
+    private static final String ACTION_DIR =
+            "ext-impl/src/ar/com/ospim/compras/requerimientos/action/";
+
     private ComprasRequerimientoConnectionContractTest() {
     }
 
     public static void main(String[] args) throws Exception {
+        String action = leer(
+                ACTION_DIR + "VerRequerimientoCompraAction.java"
+        );
         String util = leer(
                 SERVICE_DIR + "BusquedaRequerimientoCompraServiceUtil.java"
-        );
-        String helper = leer(
-                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
-                        + "BusquedaRequerimientoCompraHelper.java"
         );
         String persistencia = leer(
                 SERVICE_DIR + "BusquedaRequerimientoCompraServiceImpl.java"
         );
 
         contiene(
-                util,
-                "la lectura pública delega reglas al Helper",
-                "return helper.getRequerimientoCompra(idRequerimientoCompra);"
+                action,
+                "la Action usa el ServiceUtil",
+                "import ar.com.ospim.compras.requerimientos.service."
+                        + "BusquedaRequerimientoCompraServiceUtil;"
+        );
+        noContiene(
+                action,
+                "la Action no conserva el Helper eliminado",
+                "BusquedaRequerimientoCompraHelper"
+        );
+
+        String metodoAction = extraerMetodo(
+                action,
+                "public ActionForward render("
         );
         contiene(
-                helper,
-                "el Helper delega sólo persistencia",
-                "return service.getRequerimientoCompra("
+                metodoAction,
+                "la Action invoca la fachada estática",
+                "BusquedaRequerimientoCompraServiceUtil"
+        );
+        contiene(
+                metodoAction,
+                "la Action solicita el requerimiento completo",
+                ".getRequerimientoCompra("
+        );
+
+        String metodoUtil = extraerMetodo(
+                util,
+                "public static RequerimientoCompra getRequerimientoCompra("
+        );
+        contiene(
+                metodoUtil,
+                "el ServiceUtil delega al ServiceImpl",
+                "return getInstance().getRequerimientoCompra("
+        );
+        noContiene(
+                util,
+                "el ServiceUtil no conserva el Helper eliminado",
+                "BusquedaRequerimientoCompraHelper"
         );
 
         String metodoPublico = extraerMetodo(

@@ -52,10 +52,7 @@ public class BuscarMedicamentosComprasAction extends PortletAction {
                             ""
                     );
 
-            troquelRaw =
-                    troquelRaw != null
-                            ? troquelRaw.trim()
-                            : "0";
+            troquelRaw = troquelRaw.trim();
 
             if (troquelRaw.length() == 0) {
                 troquelRaw = "0";
@@ -80,10 +77,7 @@ public class BuscarMedicamentosComprasAction extends PortletAction {
                 );
             }
 
-            nombreMedicamento =
-                    nombreMedicamento != null
-                            ? nombreMedicamento.trim()
-                            : "";
+            nombreMedicamento = nombreMedicamento.trim();
 
             if (troquel <= 0
                     && nombreMedicamento.length() == 0) {

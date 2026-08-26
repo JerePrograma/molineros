@@ -1,8 +1,8 @@
 package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.requerimientos.helper
-        .BusquedaRequerimientoCompraHelper;
+import ar.com.ospim.compras.requerimientos.service
+        .BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.kernel.log.Log;
@@ -27,9 +27,6 @@ public class TieneSituacionMedicaVigenteCompraAction
             LogFactoryUtil.getLog(
                     TieneSituacionMedicaVigenteCompraAction.class
             );
-
-    private final BusquedaRequerimientoCompraHelper busquedaHelper =
-            new BusquedaRequerimientoCompraHelper();
 
 @Override
     public ActionForward execute(
@@ -84,9 +81,38 @@ public class TieneSituacionMedicaVigenteCompraAction
                             request
                     );
 
-            validarPermisoConsulta(
-                    user
-            );
+            if (user == null) {
+                throw new Exception(
+                        "No se pudo determinar el usuario."
+                );
+            }
+
+            boolean puedeVer =
+                    PermissionUtil.userContainsRole(
+                            user,
+                            WebKeysCompras.ROL_VIEW_COMPRAS
+                    );
+
+            boolean puedeAdministrar =
+                    PermissionUtil.userContainsRole(
+                            user,
+                            WebKeysCompras.ROL_ABM_COMPRAS
+                    );
+
+            boolean puedeCotizar =
+                    PermissionUtil.userContainsRole(
+                            user,
+                            WebKeysCompras.ROL_COTIZAR_COMPRAS
+                    );
+
+            if (!puedeVer
+                    && !puedeAdministrar
+                    && !puedeCotizar) {
+
+                throw new Exception(
+                        "El usuario no posee permisos de Compras."
+                );
+            }
 
             String cuilTitular =
                     normalizar(
@@ -128,7 +154,7 @@ public class TieneSituacionMedicaVigenteCompraAction
             }
 
             tieneSituacionMedica =
-                    busquedaHelper
+                    BusquedaRequerimientoCompraServiceUtil
                             .tieneSituacionMedicaVigente(
                                     cuilTitular,
                                     inte
@@ -152,43 +178,6 @@ public class TieneSituacionMedicaVigenteCompraAction
         return construirRespuesta(
                 tieneSituacionMedica
         );
-    }
-
-    private void validarPermisoConsulta(
-            User user) throws Exception {
-
-        if (user == null) {
-            throw new Exception(
-                    "No se pudo determinar el usuario."
-            );
-        }
-
-        boolean puedeVer =
-                PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysCompras.ROL_VIEW_COMPRAS
-                );
-
-        boolean puedeAdministrar =
-                PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysCompras.ROL_ABM_COMPRAS
-                );
-
-        boolean puedeCotizar =
-                PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysCompras.ROL_COTIZAR_COMPRAS
-                );
-
-        if (!puedeVer
-                && !puedeAdministrar
-                && !puedeCotizar) {
-
-            throw new Exception(
-                    "El usuario no posee permisos de Compras."
-            );
-        }
     }
 
     private String construirRespuesta(

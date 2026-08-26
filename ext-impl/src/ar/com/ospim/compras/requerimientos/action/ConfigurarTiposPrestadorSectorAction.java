@@ -3,7 +3,6 @@ package ar.com.ospim.compras.requerimientos.action;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.requerimientos.beans.TipoPrestadorSector;
-import ar.com.ospim.compras.requerimientos.helper.ConfiguracionCotizacionPrestadorHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.ConfiguracionCotizacionPrestadorServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
@@ -29,8 +28,10 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ConfigurarTiposPrestadorSectorAction
         extends PortletAction {
@@ -42,9 +43,6 @@ public class ConfigurarTiposPrestadorSectorAction
 
     private static final String STRUTS_ACTION_CONFIGURACION =
             "/compras/configurar_tipos_prestador_sector";
-
-    private final ConfiguracionCotizacionPrestadorHelper helper =
-            new ConfiguracionCotizacionPrestadorHelper();
 
     public void processAction(ActionMapping mapping,
                               ActionForm form,
@@ -72,7 +70,50 @@ public class ConfigurarTiposPrestadorSectorAction
                             "tipo_prestador_cotizacion"
                     );
 
-            helper
+            List<TipoPrestadorSector> tiposConfigurables =
+                    ConfiguracionCotizacionPrestadorServiceUtil
+                            .listarTiposPrestadorSector(idSector);
+
+            Set<String> clavesValidas = new HashSet<String>();
+
+            for (int i = 0;
+                    tiposConfigurables != null
+                            && i < tiposConfigurables.size();
+                    i++) {
+
+                TipoPrestadorSector tipo =
+                        tiposConfigurables.get(i);
+
+                if (tipo != null
+                        && tipo.getClaveConfiguracion().length() > 0) {
+                    clavesValidas.add(tipo.getClaveConfiguracion());
+                }
+            }
+
+            Set<String> clavesRecibidas = new HashSet<String>();
+
+            for (int i = 0;
+                    tiposSeleccionados != null
+                            && i < tiposSeleccionados.size();
+                    i++) {
+
+                TipoPrestadorSector tipo = tiposSeleccionados.get(i);
+                String clave = tipo != null
+                        ? tipo.getClaveConfiguracion()
+                        : "";
+
+                if (clave.length() == 0
+                        || !clavesValidas.contains(clave)
+                        || !clavesRecibidas.add(clave)) {
+
+                    throw new Exception(
+                            "La configuración de prestadores recibida "
+                                    + "es inválida o está repetida."
+                    );
+                }
+            }
+
+            ConfiguracionCotizacionPrestadorServiceUtil
                     .guardarConfiguracion(
                             idSector,
                             tiposSeleccionados,

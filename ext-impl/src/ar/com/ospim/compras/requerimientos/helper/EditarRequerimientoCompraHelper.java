@@ -2520,7 +2520,12 @@ private void prepararDetalleParaGuardar(
 
             RequerimientoCompraPresupuesto presupuesto = presupuestos.get(i);
 
-            if (!esPresupuestoActivoDeTercerizadora(presupuesto)) {
+            if (presupuesto == null
+                    || presupuesto.getBajaFecha() != null
+                    || presupuesto.getIdPrestador() == null
+                    || presupuesto.getIdPrestador().intValue() <= 0
+                    || presupuesto.getDlFileEntryId() == null
+                    || presupuesto.getDlFileEntryId().longValue() <= 0L) {
                 continue;
             }
 
@@ -2537,17 +2542,6 @@ private void prepararDetalleParaGuardar(
                 "Para cerrar la cotización, primero cargue un presupuesto "
                         + "activo del prestador adjudicado."
         );
-    }
-
-    private boolean esPresupuestoActivoDeTercerizadora(
-            RequerimientoCompraPresupuesto presupuesto) {
-
-        return presupuesto != null
-                && presupuesto.getBajaFecha() == null
-                && presupuesto.getIdPrestador() != null
-                && presupuesto.getIdPrestador().intValue() > 0
-                && presupuesto.getDlFileEntryId() != null
-                && presupuesto.getDlFileEntryId().longValue() > 0L;
     }
 
     private boolean debeValidarPresupuestoParaCotizado(

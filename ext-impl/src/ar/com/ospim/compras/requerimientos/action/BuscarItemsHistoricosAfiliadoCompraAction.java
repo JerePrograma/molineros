@@ -3,8 +3,8 @@ package ar.com.ospim.compras.requerimientos.action;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans
         .RequerimientoCompraDetalle;
-import ar.com.ospim.compras.requerimientos.helper
-        .BusquedaRequerimientoCompraHelper;
+import ar.com.ospim.compras.requerimientos.service
+        .BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.kernel.log.Log;
@@ -30,9 +30,6 @@ public class BuscarItemsHistoricosAfiliadoCompraAction
             LogFactoryUtil.getLog(
                     BuscarItemsHistoricosAfiliadoCompraAction.class
             );
-
-    private final BusquedaRequerimientoCompraHelper busquedaHelper =
-            new BusquedaRequerimientoCompraHelper();
 
 @Override
     public ActionForward execute(
@@ -73,9 +70,23 @@ public class BuscarItemsHistoricosAfiliadoCompraAction
                             request
                     );
 
-            validarPermisoConsulta(
-                    user
-            );
+            if (user == null) {
+                throw new Exception(
+                        "No se pudo determinar el usuario."
+                );
+            }
+
+            boolean puedeAdministrar =
+                    PermissionUtil.userContainsRole(
+                            user,
+                            WebKeysCompras.ROL_ABM_COMPRAS
+                    );
+
+            if (!puedeAdministrar) {
+                throw new Exception(
+                        "El usuario no posee permisos de ABM Compras."
+                );
+            }
 
             String cuilTitular =
                     normalizar(
@@ -151,7 +162,7 @@ public class BuscarItemsHistoricosAfiliadoCompraAction
             }
 
             List<RequerimientoCompraDetalle> items =
-                    busquedaHelper
+                    BusquedaRequerimientoCompraServiceUtil
                             .buscarItemsHistoricosAfiliado(
                                     cuilTitular,
                                     inte.intValue(),
@@ -178,28 +189,6 @@ public class BuscarItemsHistoricosAfiliadoCompraAction
 
             return construirRespuesta(
                     null
-            );
-        }
-    }
-
-    private void validarPermisoConsulta(
-            User user) throws Exception {
-
-        if (user == null) {
-            throw new Exception(
-                    "No se pudo determinar el usuario."
-            );
-        }
-
-        boolean puedeAdministrar =
-                PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysCompras.ROL_ABM_COMPRAS
-                );
-
-        if (!puedeAdministrar) {
-            throw new Exception(
-                    "El usuario no posee permisos de ABM Compras."
             );
         }
     }

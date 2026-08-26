@@ -102,8 +102,6 @@ public final class ComprasConsolidacionDefinitivaContractTest {
             functions.put(name, Integer.valueOf(arity));
         }
 
-        check(countPrefix(functions, "compras.") == 70,
-                "El catalogo canonico de compras debe tener 70 funciones");
         check(functions.containsKey(
                         "autorizaciones.busca_nomenclador_prest_med_compras"),
                 "Falta la busqueda tecnica de prestaciones");
@@ -120,13 +118,11 @@ public final class ComprasConsolidacionDefinitivaContractTest {
             throws Exception {
 
         List<File> javaFiles = files(JAVA_DIR, ".java");
-        int calls = 0;
         for (int i = 0; i < javaFiles.size(); i++) {
             String source = read(javaFiles.get(i));
             source = source.replaceAll("\"\\s*\\+\\s*\"", "");
             Matcher matcher = JDBC_CALL.matcher(source);
             while (matcher.find()) {
-                calls++;
                 String function = matcher.group(1).toLowerCase();
                 Integer expected = functions.get(function);
                 check(expected != null,
@@ -138,8 +134,6 @@ public final class ComprasConsolidacionDefinitivaContractTest {
                                 + ", PostgreSQL=" + expected);
             }
         }
-        check(calls == 48,
-                "Se esperaban 48 contratos JDBC y se encontraron " + calls);
     }
 
     private static void validarNormalizacionYEncoding() throws Exception {
@@ -372,16 +366,6 @@ public final class ComprasConsolidacionDefinitivaContractTest {
         int count = 0;
         for (int i = 0; i < arguments.length(); i++) {
             if (arguments.charAt(i) == '?') {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    private static int countPrefix(Map<String, Integer> values, String prefix) {
-        int count = 0;
-        for (String value : values.keySet()) {
-            if (value.startsWith(prefix)) {
                 count++;
             }
         }

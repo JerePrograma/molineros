@@ -5,8 +5,8 @@ import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
-import ar.com.ospim.compras.requerimientos.helper.BusquedaRequerimientoCompraHelper;
 import ar.com.ospim.compras.requerimientos.helper.PresupuestoCompraHelper;
+import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.util.PermissionUtil;
 
@@ -74,9 +74,6 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
     private final PresupuestoCompraHelper presupuestoHelper =
             new PresupuestoCompraHelper();
-
-    private final BusquedaRequerimientoCompraHelper busquedaHelper =
-            new BusquedaRequerimientoCompraHelper();
 
     public void processAction(
             ActionMapping mapping,
@@ -325,7 +322,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
             RequerimientoCompra requerimiento =
                     idRequerimientoCompra > 0
-                            ? busquedaHelper
+                            ? BusquedaRequerimientoCompraServiceUtil
                             .getRequerimientoCompra(
                                     idRequerimientoCompra
                             )
@@ -511,7 +508,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
             try {
                 hayPendientes =
-                        busquedaHelper
+                        BusquedaRequerimientoCompraServiceUtil
                                 .hayPrestadoresPendientesNotificacion(
                                         requerimiento
                                                 .getIdRequerimientoCompra()
@@ -719,12 +716,12 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         request.setAttribute(
                 WebKeysCompras.ESTADOS_REQUERIMIENTO,
-                busquedaHelper.listarEstados()
+                BusquedaRequerimientoCompraServiceUtil.listarEstados()
         );
 
         request.setAttribute(
                 WebKeysCompras.SECTORES_REQUERIMIENTO,
-                busquedaHelper.listarSectores()
+                BusquedaRequerimientoCompraServiceUtil.listarSectores()
         );
     }
 

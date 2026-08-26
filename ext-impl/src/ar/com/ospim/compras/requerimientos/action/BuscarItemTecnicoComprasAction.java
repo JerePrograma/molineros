@@ -4,8 +4,8 @@ import ar.com.ospim.autorizaciones.beans.Nomenclador;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
-import ar.com.ospim.compras.requerimientos.helper.BusquedaRequerimientoCompraHelper;
 import ar.com.ospim.compras.requerimientos.helper.NomencladorCompraBusquedaHelper;
+import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
@@ -27,9 +27,6 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
 
     private final RequerimientoCompraDetalleHelper detalleHelper =
             new RequerimientoCompraDetalleHelper();
-
-    private final BusquedaRequerimientoCompraHelper busquedaHelper =
-            new BusquedaRequerimientoCompraHelper();
 
     private final NomencladorCompraBusquedaHelper nomencladorHelper =
             new NomencladorCompraBusquedaHelper();
@@ -207,7 +204,8 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
 
         if (idRequerimiento > 0) {
             RequerimientoCompra requerimiento =
-                    busquedaHelper.getRequerimientoCompra(
+                    BusquedaRequerimientoCompraServiceUtil
+                            .getRequerimientoCompra(
                             idRequerimiento
                     );
 
@@ -239,7 +237,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                 );
 
         RequerimientoCompraSector sector =
-                busquedaHelper.getSector(
+                BusquedaRequerimientoCompraServiceUtil.getSector(
                         idSector
                 );
 

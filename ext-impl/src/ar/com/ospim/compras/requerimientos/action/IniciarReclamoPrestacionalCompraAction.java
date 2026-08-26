@@ -818,10 +818,6 @@ public class IniciarReclamoPrestacionalCompraAction
                         || PermissionUtil.userContainsRole(
                         user,
                         WebKeysCompras.ROL_COTIZAR_COMPRAS
-                )
-                        || PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysCompras.ROL_ABM_COMPRAS
                 );
 
         boolean permisoReclamo =

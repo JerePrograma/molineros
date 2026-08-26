@@ -6,6 +6,7 @@ import ar.com.ospim.util.ConnectionHelper;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -19,13 +20,35 @@ import java.util.List;
 public class RequerimientoCompraReclamoPrestacionalServiceImpl {
 
     private static final String SQL_GET_RELACION =
-            "{call compras.get_requerimiento_reclamo_prestacional(?)}";
+            "SELECT rr.id_requerimiento, "
+                    + "rr.id_reclamo_prestacional, rr.estado, "
+                    + "rr.token_reserva, rr.reserva_fecha, "
+                    + "rr.ultimo_error, rr.alta_fecha, rr.alta_usr, "
+                    + "rr.modi_fecha, rr.modi_usr "
+                    + "FROM compras.requerimiento_reclamo_prestacional rr "
+                    + "WHERE rr.id_requerimiento = ?";
 
     private static final String SQL_GET_RELACIONES_BATCH =
-            "{call compras.listar_requerimientos_reclamo_prestacional_vinculados(?,?)}";
+            "SELECT relacion.* "
+                    + "FROM compras.requerimiento_reclamo_prestacional "
+                    + "relacion "
+                    + "WHERE relacion.estado = ? "
+                    + "AND relacion.id_reclamo_prestacional IS NOT NULL "
+                    + "AND relacion.id_requerimiento = ANY ("
+                    + "CAST(? AS INTEGER[])) "
+                    + "ORDER BY relacion.id_requerimiento";
 
     private static final String SQL_GET_RELACION_POR_RECLAMO =
-            "{call compras.get_requerimiento_por_reclamo_prestacional(?,?)}";
+            "SELECT relacion.* "
+                    + "FROM compras.requerimiento_reclamo_prestacional "
+                    + "relacion "
+                    + "INNER JOIN compras.requerimiento requerimiento "
+                    + "ON requerimiento.id_requerimiento = "
+                    + "relacion.id_requerimiento "
+                    + "WHERE relacion.id_reclamo_prestacional = ? "
+                    + "AND relacion.estado = ? "
+                    + "AND requerimiento.baja_fecha IS NULL "
+                    + "ORDER BY relacion.id_requerimiento";
 
     private static final String SQL_RESERVAR =
             "{ ? = call compras.reservar_reclamo_prestacional(?,?,?) }";
@@ -34,16 +57,24 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             "{ ? = call compras.finalizar_reclamo_prestacional(?,?,?,?) }";
 
     private static final String SQL_LIBERAR =
-            "{ ? = call compras.liberar_reserva_reclamo_prestacional(?,?,?) }";
+            "DELETE FROM compras.requerimiento_reclamo_prestacional "
+                    + "WHERE id_requerimiento = ? "
+                    + "AND estado = 'RESERVADO' "
+                    + "AND id_reclamo_prestacional IS NULL "
+                    + "AND token_reserva = btrim(?)";
 
     private static final String SQL_MARCAR_ERROR =
             "{ ? = call compras.marcar_error_reclamo_prestacional(?,?,?,?,?) }";
 
     private static final String SQL_BLOQUEAR_REQUERIMIENTO =
-            "{ ? = call compras.bloquear_requerimiento_reclamo_prestacional(?) }";
+            "SELECT pg_advisory_xact_lock(5391184, ?)";
 
     private static final String SQL_GET_ESTADO_REQUERIMIENTO_FOR_UPDATE =
-            "{ ? = call compras.get_estado_requerimiento_for_update(?) }";
+            "SELECT r.estado "
+                    + "FROM compras.requerimiento r "
+                    + "WHERE r.id_requerimiento = ? "
+                    + "AND r.baja_fecha IS NULL "
+                    + "FOR UPDATE";
 
     private static final String SQL_CAMBIAR_ESTADO_REQUERIMIENTO =
             "{call compras.cambiar_estado_requerimiento(?,?,?)}";
@@ -68,11 +99,11 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             Connection con,
             int idRequerimientoCompra) throws Exception {
 
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
 
         try {
-            stmt = con.prepareCall(SQL_GET_RELACION);
+            stmt = con.prepareStatement(SQL_GET_RELACION);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
@@ -91,14 +122,14 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             String estado) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraReclamoPrestacional> resultado =
                 new ArrayList<RequerimientoCompraReclamoPrestacional>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_GET_RELACION_POR_RECLAMO);
+            stmt = con.prepareStatement(SQL_GET_RELACION_POR_RECLAMO);
             stmt.setInt(1, idReclamoPrestacional);
             stmt.setString(2, estado);
             rs = stmt.executeQuery();
@@ -131,14 +162,14 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             String idsRequerimientosArray) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraReclamoPrestacional> resultado =
                 new ArrayList<RequerimientoCompraReclamoPrestacional>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_GET_RELACIONES_BATCH);
+            stmt = con.prepareStatement(SQL_GET_RELACIONES_BATCH);
             stmt.setString(1, estado);
             stmt.setString(2, idsRequerimientosArray);
             rs = stmt.executeQuery();
@@ -228,18 +259,15 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             String usuario) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_LIBERAR);
-            stmt.registerOutParameter(1, Types.BOOLEAN);
-            stmt.setInt(2, idRequerimientoCompra);
-            stmt.setString(3, tokenReserva);
-            stmt.setString(4, usuario);
-            stmt.execute();
+            stmt = con.prepareStatement(SQL_LIBERAR);
+            stmt.setInt(1, idRequerimientoCompra);
+            stmt.setString(2, tokenReserva);
 
-            return stmt.getBoolean(1);
+            return stmt.executeUpdate() > 0;
         } finally {
             ConnectionHelper.cerrar(stmt, con);
         }
@@ -276,15 +304,14 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             Connection con,
             int idRequerimientoCompra) throws Exception {
 
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
 
         try {
-            stmt = con.prepareCall(SQL_BLOQUEAR_REQUERIMIENTO);
-            stmt.registerOutParameter(1, Types.BOOLEAN);
-            stmt.setInt(2, idRequerimientoCompra);
+            stmt = con.prepareStatement(SQL_BLOQUEAR_REQUERIMIENTO);
+            stmt.setInt(1, idRequerimientoCompra);
             stmt.execute();
 
-            return stmt.getBoolean(1);
+            return true;
         } finally {
             ConnectionHelper.cerrar(stmt);
         }
@@ -294,18 +321,19 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             Connection con,
             int idRequerimientoCompra) throws Exception {
 
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
 
         try {
-            stmt = con.prepareCall(
+            stmt = con.prepareStatement(
                     SQL_GET_ESTADO_REQUERIMIENTO_FOR_UPDATE
             );
-            stmt.registerOutParameter(1, Types.INTEGER);
-            stmt.setInt(2, idRequerimientoCompra);
-            stmt.execute();
+            stmt.setInt(1, idRequerimientoCompra);
+            rs = stmt.executeQuery();
 
-            return stmt.getInt(1);
+            return rs.next() ? rs.getInt(1) : 0;
         } finally {
+            closeQuietly(rs);
             ConnectionHelper.cerrar(stmt);
         }
     }

@@ -2,7 +2,7 @@ package ar.com.ospim.compras.action;
 
 import ar.com.ospim.afiliados.beans.TercerizadoraServicio;
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.requerimientos.helper.BusquedaRequerimientoCompraHelper;
+import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.global.services.TraeListasServiceUtil;
 
 import com.liferay.portal.kernel.log.Log;
@@ -28,9 +28,6 @@ public class ViewComprasAction extends PortletAction {
             LogFactoryUtil.getLog(
                     ViewComprasAction.class
             );
-
-    private final BusquedaRequerimientoCompraHelper busquedaHelper =
-            new BusquedaRequerimientoCompraHelper();
 
     public void processAction(
             ActionMapping mapping,
@@ -95,12 +92,12 @@ public class ViewComprasAction extends PortletAction {
 
         request.setAttribute(
                 WebKeysCompras.ESTADOS_REQUERIMIENTO,
-                busquedaHelper.listarEstados()
+                BusquedaRequerimientoCompraServiceUtil.listarEstados()
         );
 
         request.setAttribute(
                 WebKeysCompras.SECTORES_REQUERIMIENTO,
-                busquedaHelper.listarSectores()
+                BusquedaRequerimientoCompraServiceUtil.listarSectores()
         );
     }
 

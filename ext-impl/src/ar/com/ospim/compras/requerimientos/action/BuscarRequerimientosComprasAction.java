@@ -4,8 +4,8 @@ import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraFiltro;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
-import ar.com.ospim.compras.requerimientos.helper.BusquedaRequerimientoCompraHelper;
 import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper;
+import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -27,9 +27,6 @@ import java.util.Map;
 public class BuscarRequerimientosComprasAction extends PortletAction {
 
     private static Log _log = LogFactoryUtil.getLog(BuscarRequerimientosComprasAction.class);
-
-    private final BusquedaRequerimientoCompraHelper busquedaHelper =
-            new BusquedaRequerimientoCompraHelper();
 
     private final RequerimientoCompraReclamoPrestacionalHelper reclamoHelper =
             new RequerimientoCompraReclamoPrestacionalHelper();
@@ -100,7 +97,8 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
                             == WebKeysCompras.ESTADO_COTIZADO;
 
             List<RequerimientoCompra> requerimientos =
-                    busquedaHelper.buscarRequerimientosListado(
+                    BusquedaRequerimientoCompraServiceUtil
+                            .buscarRequerimientosListado(
                             filtro,
                             incluirReclamoRpEnCotizados
                     );
@@ -217,7 +215,7 @@ private Map<Integer, RequerimientoCompraReclamoPrestacional>
         try {
             request.setAttribute(
                     WebKeysCompras.ESTADOS_REQUERIMIENTO,
-                    busquedaHelper.listarEstados()
+                    BusquedaRequerimientoCompraServiceUtil.listarEstados()
             );
         } catch (Exception e) {
             request.setAttribute(
@@ -229,7 +227,7 @@ private Map<Integer, RequerimientoCompraReclamoPrestacional>
         try {
             request.setAttribute(
                     WebKeysCompras.SECTORES_REQUERIMIENTO,
-                    busquedaHelper.listarSectores()
+                    BusquedaRequerimientoCompraServiceUtil.listarSectores()
             );
         } catch (Exception e) {
             request.setAttribute(

@@ -12,7 +12,6 @@ import ar.com.ospim.servlets.PdfServlet;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
 
@@ -1677,19 +1676,6 @@ public class NotificarCotizacionPrestadorHelper {
         return "No se obtuvo la reserva de procesamiento.";
     }
 
-    private String resolverEmailDestino(
-            String emailReservado,
-            boolean modoTemporal) {
-
-        if (modoTemporal) {
-            return normalizarEmail(
-                    EMAIL_DESTINO_QA
-            );
-        }
-
-        return normalizarEmail(emailReservado);
-    }
-
     protected boolean redireccionQaHabilitada() {
         return REDIRECCION_QA_HABILITADA;
     }
@@ -1725,20 +1711,6 @@ public class NotificarCotizacionPrestadorHelper {
         }
 
         return emails;
-    }
-
-    private String leerPropiedad(String clave) {
-        try {
-            return PropsUtil.get(clave);
-        } catch (Exception e) {
-            _log.error(
-                    "No se pudo leer la configuración externa de Compras. "
-                            + "clave="
-                            + clave,
-                    e
-            );
-            return null;
-        }
     }
 
     private String construirAsunto(

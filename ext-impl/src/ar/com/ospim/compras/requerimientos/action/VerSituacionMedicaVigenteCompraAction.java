@@ -70,9 +70,38 @@ public class VerSituacionMedicaVigenteCompraAction
                             httpRequest
                     );
 
-            validarPermisoConsulta(
-                    user
-            );
+            if (user == null) {
+                throw new Exception(
+                        "No se pudo determinar el usuario."
+                );
+            }
+
+            boolean puedeVer =
+                    PermissionUtil.userContainsRole(
+                            user,
+                            WebKeysCompras.ROL_VIEW_COMPRAS
+                    );
+
+            boolean puedeAdministrar =
+                    PermissionUtil.userContainsRole(
+                            user,
+                            WebKeysCompras.ROL_ABM_COMPRAS
+                    );
+
+            boolean puedeCotizar =
+                    PermissionUtil.userContainsRole(
+                            user,
+                            WebKeysCompras.ROL_COTIZAR_COMPRAS
+                    );
+
+            if (!puedeVer
+                    && !puedeAdministrar
+                    && !puedeCotizar) {
+
+                throw new Exception(
+                        "El usuario no posee permisos de Compras."
+                );
+            }
 
             String cuilTitular =
                     normalizar(
@@ -209,44 +238,6 @@ public class VerSituacionMedicaVigenteCompraAction
                 WebKeysCompras
                         .FORWARD_COMPRAS_SITUACION_MEDICA_VIGENTE
         );
-    }
-
-    private void validarPermisoConsulta(
-            User user)
-            throws Exception {
-
-        if (user == null) {
-            throw new Exception(
-                    "No se pudo determinar el usuario."
-            );
-        }
-
-        boolean puedeVer =
-                PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysCompras.ROL_VIEW_COMPRAS
-                );
-
-        boolean puedeAdministrar =
-                PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysCompras.ROL_ABM_COMPRAS
-                );
-
-        boolean puedeCotizar =
-                PermissionUtil.userContainsRole(
-                        user,
-                        WebKeysCompras.ROL_COTIZAR_COMPRAS
-                );
-
-        if (!puedeVer
-                && !puedeAdministrar
-                && !puedeCotizar) {
-
-            throw new Exception(
-                    "El usuario no posee permisos de Compras."
-            );
-        }
     }
 
     private String normalizar(
