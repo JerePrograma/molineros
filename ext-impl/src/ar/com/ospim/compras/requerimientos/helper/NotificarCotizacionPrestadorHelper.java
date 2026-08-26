@@ -205,7 +205,7 @@ public class NotificarCotizacionPrestadorHelper {
 
             _log.error(
                     "La consulta de prestadores candidatos "
-                            + "devolvió un elemento nulo. "
+                            + "devolvio un elemento nulo. "
                             + "idRequerimiento="
                             + requerimiento
                             .getIdRequerimientoCompra()
@@ -218,7 +218,7 @@ public class NotificarCotizacionPrestadorHelper {
                     null,
                     NotificacionCotizacionDetalle.RESULTADO_ERROR,
                     "VALIDACION",
-                    "No se pudo preparar la notificación. "
+                    "No se pudo preparar la notificacion. "
                             + "Contacte a Sistemas.",
                     false
             );
@@ -237,7 +237,7 @@ public class NotificarCotizacionPrestadorHelper {
         if (_log.isInfoEnabled()) {
 
             _log.info(
-                    "Procesando candidato de cotización. "
+                    "Procesando candidato de cotizacion. "
                             + "idRequerimiento="
                             + idRequerimiento
                             + ", sector="
@@ -257,6 +257,7 @@ public class NotificarCotizacionPrestadorHelper {
          * ==========================================================
          */
         try {
+
             reserva =
                     reservarCotizacionPrestador(
                             idRequerimiento,
@@ -267,8 +268,8 @@ public class NotificarCotizacionPrestadorHelper {
         } catch (Exception e) {
 
             _log.error(
-                    "No se pudo reservar la notificación "
-                            + "de cotización. "
+                    "No se pudo reservar la notificacion "
+                            + "de cotizacion. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -276,14 +277,22 @@ public class NotificarCotizacionPrestadorHelper {
                     e
             );
 
+            /*
+             * No se utiliza prestador.getEmail().
+             *
+             * Los destinatarios reales deben provenir exclusivamente
+             * de la reserva, cuya fuente canonica es:
+             *
+             * prestad_contacto_e -> contacto_e
+             */
             registrarResultado(
                     resultado,
                     prestador,
-                    prestador.getEmail(),
+                    null,
                     null,
                     NotificacionCotizacionDetalle.RESULTADO_ERROR,
                     "RESERVA",
-                    "No se pudo iniciar el envío. "
+                    "No se pudo iniciar el envio. "
                             + "Contacte a Sistemas antes de reintentar.",
                     false
             );
@@ -294,7 +303,7 @@ public class NotificarCotizacionPrestadorHelper {
         if (reserva == null) {
 
             _log.error(
-                    "La función de reserva no devolvió resultado. "
+                    "La funcion de reserva no devolvio resultado. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -304,11 +313,11 @@ public class NotificarCotizacionPrestadorHelper {
             registrarResultado(
                     resultado,
                     prestador,
-                    prestador.getEmail(),
+                    null,
                     null,
                     NotificacionCotizacionDetalle.RESULTADO_ERROR,
                     "RESERVA",
-                    "No se pudo iniciar el envío. "
+                    "No se pudo iniciar el envio. "
                             + "Contacte a Sistemas antes de reintentar.",
                     false
             );
@@ -356,74 +365,58 @@ public class NotificarCotizacionPrestadorHelper {
         }
 
         /*
-         * Desde aca la fila queda PROCESANDO y esta ejecución
+         * Desde aca la fila queda PROCESANDO y esta ejecucion
          * posee la reserva exclusiva.
+         *
+         * email_destino contiene 0..N destinatarios separados
+         * por punto y coma.
          */
-        String emailReservadoNormalizado =
+        String emailsReservados =
                 normalizarEmail(
                         reserva.getEmailDestino()
                 );
 
-        boolean modoTemporal = redireccionQaHabilitada();
-
-        String emailDestino =
-                resolverEmailDestino(
-                        emailReservadoNormalizado,
-                        modoTemporal
+        String[] emailsReales =
+                resolverEmailsPrestador(
+                        emailsReservados
                 );
 
-        boolean emailRealInvalido =
-                !esEmailValido(
-                        emailReservadoNormalizado
-                );
+        boolean modoTemporal =
+                redireccionQaHabilitada();
 
+        boolean prestadorSinEmail =
+                emailsReales == null
+                        || emailsReales.length == 0;
+
+        /*
+         * En modo QA la ausencia de email real es solamente
+         * una advertencia porque ningun correo sera enviado
+         * al prestador.
+         */
         boolean emailRealInvalidoAdvertido =
                 modoTemporal
-                        && emailRealInvalido;
+                        && prestadorSinEmail;
 
         /*
          * ==========================================================
-         * 2. VALIDACIÓN DEL DESTINATARIO
+         * 2. VALIDACION DE LOS DESTINATARIOS REALES
          * ==========================================================
+         *
+         * En produccion, si no existe ningun contacto electronico
+         * valido asociado al prestador, no se consulta otra fuente.
          */
-        if (modoTemporal) {
-
-            if (emailRealInvalido) {
-
-                _log.warn(
-                        "El email real reservado del prestador "
-                                + "es inexistente o inválido. "
-                                + "El envío continuará redirigido "
-                                + "al destinatario temporal. "
-                                + "idPrestador="
-                                + idPrestador
-                                + ", idRequerimiento="
-                                + idRequerimiento
-                );
-            }
-
-            if (_log.isInfoEnabled()) {
-
-                _log.info(
-                        "Modo temporal de notificación activo. "
-                                + "El correo será redirigido "
-                                + "al destinatario fijo de QA. "
-                                + "idPrestador="
-                                + idPrestador
-                                + ", idRequerimiento="
-                                + idRequerimiento
-                );
-            }
-
-        } else if (emailRealInvalido) {
+        if (!modoTemporal
+                && prestadorSinEmail) {
 
             String errorTecnico =
-                    "El email real reservado del prestador "
-                            + "es inexistente o inválido.";
+                    "El prestador no posee contactos electronicos "
+                            + "vigentes y validos asociados mediante "
+                            + "prestad_contacto_e.";
 
             _log.warn(
-                    "No se intentara enviar la cotización "
-                            + "porque el email real es inválido. "
+                    "No se intentara enviar la cotizacion porque "
+                            + "el prestador no posee emails habilitados "
+                            + "obtenidos mediante prestad_contacto_e. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -445,12 +438,12 @@ public class NotificarCotizacionPrestadorHelper {
 
                 motivoUsuario =
                         "El prestador no tiene un email "
-                                + "válido registrado.";
+                                + "habilitado registrado.";
 
             } else {
 
                 motivoUsuario =
-                        "El prestador no tiene un email válido "
+                        "El prestador no tiene un email habilitado "
                                 + "y el resultado no pudo registrarse. "
                                 + "Contacte a Sistemas.";
             }
@@ -458,7 +451,7 @@ public class NotificarCotizacionPrestadorHelper {
             registrarResultado(
                     resultado,
                     prestador,
-                    emailReservadoNormalizado,
+                    null,
                     null,
                     persistido
                             ? NotificacionCotizacionDetalle
@@ -475,9 +468,75 @@ public class NotificarCotizacionPrestadorHelper {
             return;
         }
 
-        if (!esEmailValido(
-                emailDestino
-        )) {
+        if (modoTemporal
+                && prestadorSinEmail) {
+
+            _log.warn(
+                    "El prestador no posee emails habilitados "
+                            + "asociados mediante prestad_contacto_e. "
+                            + "El envio continuara exclusivamente "
+                            + "al destinatario temporal de QA. "
+                            + "idPrestador="
+                            + idPrestador
+                            + ", idRequerimiento="
+                            + idRequerimiento
+            );
+        }
+
+        /*
+         * En produccion devuelve exactamente los emails reales.
+         *
+         * En modo temporal devuelve exclusivamente EMAIL_DESTINO_QA.
+         * Nunca se generan N copias hacia QA.
+         */
+        String[] emailsDestino =
+                resolverEmailsDestino(
+                        emailsReales,
+                        modoTemporal
+                );
+
+        /*
+         * Aunque la funcion SQL filtra las direcciones,
+         * se valida nuevamente el contrato antes de SMTP.
+         */
+        boolean destinoEfectivoValido =
+                emailsDestino != null
+                        && emailsDestino.length > 0;
+
+        if (destinoEfectivoValido) {
+
+            for (int i = 0;
+                 i < emailsDestino.length;
+                 i++) {
+
+                if (!esEmailValido(
+                        emailsDestino[i]
+                )) {
+
+                    destinoEfectivoValido =
+                            false;
+
+                    break;
+                }
+            }
+        }
+
+        String emailsRealesDetalle =
+                unirEmails(
+                        emailsReales
+                );
+
+        String emailsDestinoDetalle =
+                unirEmails(
+                        emailsDestino
+                );
+
+        /*
+         * ==========================================================
+         * 2.1 VALIDACION DEL DESTINO EFECTIVO
+         * ==========================================================
+         */
+        if (!destinoEfectivoValido) {
 
             String errorTecnico;
 
@@ -485,21 +544,28 @@ public class NotificarCotizacionPrestadorHelper {
 
                 errorTecnico =
                         "El email destino temporal de QA "
-                                + "es inexistente o inválido.";
+                                + "es inexistente o invalido.";
 
             } else {
 
                 errorTecnico =
-                        "El email destino efectivo del prestador "
-                                + "es inexistente o inválido.";
+                        "Uno o mas emails destino efectivos "
+                                + "del prestador son inexistentes "
+                                + "o invalidos.";
             }
 
             _log.warn(
-                    "No se intentara enviar la cotización "
-                            + "porque el destinatario efectivo "
-                            + "es inválido. "
+                    "No se intentara enviar la cotizacion "
+                            + "porque el conjunto de destinatarios "
+                            + "efectivos es invalido. "
                             + "modoTemporal="
                             + modoTemporal
+                            + ", cantidadDestinatarios="
+                            + (
+                            emailsDestino != null
+                                    ? emailsDestino.length
+                                    : 0
+                    )
                             + ", idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -521,16 +587,17 @@ public class NotificarCotizacionPrestadorHelper {
 
                 motivoUsuario =
                         "El destinatario configurado para las pruebas "
-                                + "no es válido. Contacte a Sistemas.";
+                                + "no es valido. Contacte a Sistemas.";
 
             } else {
 
                 motivoUsuario =
-                        "El prestador no tiene un email "
-                                + "válido registrado.";
+                        "El prestador no tiene destinatarios "
+                                + "de email validos registrados.";
             }
 
             if (!persistido) {
+
                 motivoUsuario +=
                         " El resultado tampoco pudo registrarse.";
             }
@@ -538,8 +605,8 @@ public class NotificarCotizacionPrestadorHelper {
             registrarResultado(
                     resultado,
                     prestador,
-                    emailReservadoNormalizado,
-                    emailDestino,
+                    emailsRealesDetalle,
+                    emailsDestinoDetalle,
                     persistido
                             ? NotificacionCotizacionDetalle
                               .RESULTADO_EMAIL_INVALIDO
@@ -555,9 +622,29 @@ public class NotificarCotizacionPrestadorHelper {
             return;
         }
 
+        if (modoTemporal
+                && _log.isInfoEnabled()) {
+
+            _log.info(
+                    "Modo temporal de notificacion activo. "
+                            + "El correo sera redirigido "
+                            + "exclusivamente al destinatario fijo de QA. "
+                            + "cantidadEmailsReales="
+                            + (
+                            emailsReales != null
+                                    ? emailsReales.length
+                                    : 0
+                    )
+                            + ", idPrestador="
+                            + idPrestador
+                            + ", idRequerimiento="
+                            + idRequerimiento
+            );
+        }
+
         /*
          * ==========================================================
-         * 3. CONSERVAR EL PEDIDO EXACTO ANTES DEL ENVÍO
+         * 3. CONSERVAR EL PEDIDO EXACTO ANTES DEL ENVIO
          * ==========================================================
          *
          * El pedido debe conservarse antes del correo.
@@ -566,6 +653,7 @@ public class NotificarCotizacionPrestadorHelper {
          * se adjunta al mensaje.
          */
         try {
+
             registrarPedidoCotizacionActual(
                     idRequerimiento,
                     idPrestador,
@@ -592,9 +680,9 @@ public class NotificarCotizacionPrestadorHelper {
                     );
 
             _log.error(
-                    "No se pudo conservar el pedido de cotización "
+                    "No se pudo conservar el pedido de cotizacion "
                             + "antes de enviar el correo. "
-                            + "El envío fue cancelado. "
+                            + "El envio fue cancelado. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -607,12 +695,12 @@ public class NotificarCotizacionPrestadorHelper {
             registrarResultado(
                     resultado,
                     prestador,
-                    emailReservadoNormalizado,
-                    emailDestino,
+                    emailsRealesDetalle,
+                    emailsDestinoDetalle,
                     NotificacionCotizacionDetalle.RESULTADO_ERROR,
                     "DOCUMENTO_PEDIDO_COTIZACION",
-                    "No se pudo conservar el pedido de cotización. "
-                            + "No se envió el correo. "
+                    "No se pudo conservar el pedido de cotizacion. "
+                            + "No se envio el correo. "
                             + "Contacte a Sistemas.",
                     emailRealInvalidoAdvertido
             );
@@ -622,10 +710,18 @@ public class NotificarCotizacionPrestadorHelper {
 
         /*
          * ==========================================================
-         * 4. ENVÍO DEL CORREO
+         * 4. ENVIO DEL CORREO
          * ==========================================================
+         *
+         * Existe un unico MimeMessage para el prestador.
+         *
+         * En produccion contiene todos los emails habilitados
+         * como destinatarios TO.
+         *
+         * En QA contiene solamente EMAIL_DESTINO_QA.
          */
         try {
+
             String asunto =
                     construirAsunto(
                             requerimiento
@@ -643,7 +739,7 @@ public class NotificarCotizacionPrestadorHelper {
              */
             enviarMail(
                     companyId,
-                    emailDestino,
+                    emailsDestino,
                     asunto,
                     cuerpo,
                     pedidoPresupuestoPdf,
@@ -686,11 +782,13 @@ public class NotificarCotizacionPrestadorHelper {
             }
 
             _log.error(
-                    "Falló el envío de la cotización. "
+                    "Fallo el envio de la cotizacion. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
                             + idRequerimiento
+                            + ", cantidadDestinatarios="
+                            + emailsDestino.length
                             + ", estadoErrorPersistido="
                             + persistido,
                     e
@@ -699,8 +797,8 @@ public class NotificarCotizacionPrestadorHelper {
             registrarResultado(
                     resultado,
                     prestador,
-                    emailReservadoNormalizado,
-                    emailDestino,
+                    emailsRealesDetalle,
+                    emailsDestinoDetalle,
                     NotificacionCotizacionDetalle.RESULTADO_ERROR,
                     "ENVIO",
                     motivoUsuario,
@@ -712,7 +810,7 @@ public class NotificarCotizacionPrestadorHelper {
 
         /*
          * ==========================================================
-         * 5. CONFIRMACIÓN DEL ENVÍO
+         * 5. CONFIRMACION DEL ENVIO
          * ==========================================================
          */
         boolean enviadoPersistido =
@@ -728,25 +826,27 @@ public class NotificarCotizacionPrestadorHelper {
 
             String motivoUsuario =
                     "El correo fue aceptado, pero el resultado "
-                            + "del envío no pudo confirmarse. "
+                            + "del envio no pudo confirmarse. "
                             + "No reintente hasta verificarlo "
                             + "con Sistemas.";
 
             _log.error(
-                    "El servicio de correo aceptó el mensaje, "
+                    "El servicio de correo acepto el mensaje, "
                             + "pero no se pudo persistir ENVIADO. "
                             + "La fila puede permanecer PROCESANDO. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
                             + idRequerimiento
+                            + ", cantidadDestinatarios="
+                            + emailsDestino.length
             );
 
             registrarResultado(
                     resultado,
                     prestador,
-                    emailReservadoNormalizado,
-                    emailDestino,
+                    emailsRealesDetalle,
+                    emailsDestinoDetalle,
                     NotificacionCotizacionDetalle.RESULTADO_ERROR,
                     "PERSISTENCIA",
                     motivoUsuario,
@@ -772,21 +872,22 @@ public class NotificarCotizacionPrestadorHelper {
             if (emailRealInvalidoAdvertido) {
 
                 motivoExito +=
-                        " El email real del prestador "
-                                + "debe revisarse.";
+                        " El prestador no posee un email "
+                                + "habilitado y debe revisarse.";
             }
 
         } else {
 
             motivoExito =
-                    "Correo enviado y resultado confirmado.";
+                    "Correo enviado a todos los emails habilitados "
+                            + "del prestador y resultado confirmado.";
         }
 
         registrarResultado(
                 resultado,
                 prestador,
-                emailReservadoNormalizado,
-                emailDestino,
+                emailsRealesDetalle,
+                emailsDestinoDetalle,
                 NotificacionCotizacionDetalle.RESULTADO_ENVIADO,
                 "FINALIZADO",
                 motivoExito,
@@ -796,7 +897,7 @@ public class NotificarCotizacionPrestadorHelper {
         if (_log.isInfoEnabled()) {
 
             _log.info(
-                    "Cotización enviada y finalizada. "
+                    "Cotizacion enviada y finalizada. "
                             + "idPrestador="
                             + idPrestador
                             + ", idRequerimiento="
@@ -807,6 +908,14 @@ public class NotificarCotizacionPrestadorHelper {
                             + prestador.getIdTipoPrestador()
                             + ", modoTemporal="
                             + modoTemporal
+                            + ", cantidadEmailsReales="
+                            + (
+                            emailsReales != null
+                                    ? emailsReales.length
+                                    : 0
+                    )
+                            + ", cantidadDestinatariosEfectivos="
+                            + emailsDestino.length
                             + ", estadoEnvio=ENVIADO"
                             + ", ordenesMedicasAdjuntas="
                             + (
@@ -1364,60 +1473,13 @@ public class NotificarCotizacionPrestadorHelper {
                 && finalizacion.isActualizado();
     }
 
-    protected void enviarMail(
-            long companyId,
-            String email,
-            String asunto,
-            String cuerpo,
-            byte[] pedidoPresupuestoPdf,
-            String nombrePedidoPresupuestoPdf)
-            throws Exception {
-
-        mailHelper.enviar(
-                email,
-                resolverEmailsCopiaCotizacion(),
-                asunto,
-                cuerpo,
-                pedidoPresupuestoPdf,
-                nombrePedidoPresupuestoPdf
-        );
-    }
-
-    /**
-     * Contrato legacy para una única Orden médica.
-     */
-    protected void enviarMail(
-            long companyId,
-            String email,
-            String asunto,
-            String cuerpo,
-            byte[] pedidoPresupuestoPdf,
-            String nombrePedidoPresupuestoPdf,
-            byte[] ordenMedica,
-            String nombreOrdenMedica,
-            String contentTypeOrdenMedica)
-            throws Exception {
-
-        mailHelper.enviar(
-                email,
-                resolverEmailsCopiaCotizacion(),
-                asunto,
-                cuerpo,
-                pedidoPresupuestoPdf,
-                nombrePedidoPresupuestoPdf,
-                ordenMedica,
-                nombreOrdenMedica,
-                contentTypeOrdenMedica
-        );
-    }
-
     /**
      * Contrato canónico del envío actual: un único correo con 0..N Órdenes
      * médicas adicionales.
      */
     protected void enviarMail(
             long companyId,
-            String email,
+            String[] emails,
             String asunto,
             String cuerpo,
             byte[] pedidoPresupuestoPdf,
@@ -1429,13 +1491,15 @@ public class NotificarCotizacionPrestadorHelper {
                 new ArrayList<CotizacionPrestadorMailHelper.AdjuntoOrdenMedica>();
 
         for (int i = 0;
-             ordenesMedicas != null && i < ordenesMedicas.size();
+             ordenesMedicas != null
+                     && i < ordenesMedicas.size();
              i++) {
 
             OrdenMedicaAdjunta ordenMedica =
                     ordenesMedicas.get(i);
 
             if (ordenMedica == null) {
+
                 throw new Exception(
                         "Se encontró una Orden médica adjunta inválida."
                 );
@@ -1451,7 +1515,7 @@ public class NotificarCotizacionPrestadorHelper {
         }
 
         mailHelper.enviar(
-                email,
+                emails,
                 resolverEmailsCopiaCotizacion(),
                 asunto,
                 cuerpo,
@@ -2024,4 +2088,121 @@ public class NotificarCotizacionPrestadorHelper {
             return contentType;
         }
     }
+
+    private String[] resolverEmailsPrestador(
+            String emailsConcatenados) {
+
+        String normalizado =
+                normalizarEmail(
+                        emailsConcatenados
+                );
+
+        if (normalizado == null) {
+            return new String[0];
+        }
+
+        String[] candidatos =
+                normalizado.split(
+                        ";"
+                );
+
+        List<String> resultado =
+                new ArrayList<String>();
+
+        Set<String> encontrados =
+                new HashSet<String>();
+
+        for (int i = 0;
+             i < candidatos.length;
+             i++) {
+
+            String email =
+                    normalizarEmail(
+                            candidatos[i]
+                    );
+
+            if (email == null) {
+                continue;
+            }
+
+            if (!esEmailValido(
+                    email
+            )) {
+                continue;
+            }
+
+            String clave =
+                    email.toLowerCase();
+
+            if (encontrados.add(
+                    clave
+            )) {
+
+                resultado.add(
+                        email
+                );
+            }
+        }
+
+        return resultado.toArray(
+                new String[
+                        resultado.size()
+                        ]
+        );
+    }
+
+    private String[] resolverEmailsDestino(
+            String[] emailsReales,
+            boolean modoTemporal) {
+
+        if (modoTemporal) {
+
+            String emailQa =
+                    normalizarEmail(
+                            EMAIL_DESTINO_QA
+                    );
+
+            if (emailQa == null) {
+                return new String[0];
+            }
+
+            return new String[] {
+                    emailQa
+            };
+        }
+
+        return emailsReales != null
+                ? emailsReales
+                : new String[0];
+    }
+
+    private String unirEmails(
+            String[] emails) {
+
+        if (emails == null
+                || emails.length == 0) {
+
+            return null;
+        }
+
+        StringBuilder sb =
+                new StringBuilder();
+
+        for (int i = 0;
+             i < emails.length;
+             i++) {
+
+            if (i > 0) {
+                sb.append(";");
+            }
+
+            sb.append(
+                    emails[i]
+            );
+        }
+
+        return sb.toString();
+    }
+
+
 }

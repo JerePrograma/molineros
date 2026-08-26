@@ -159,7 +159,30 @@ public class CotizacionPrestadorMailHelper {
             throws Exception {
 
         enviarInterno(
-                emailDestino,
+                new String[] {
+                        emailDestino
+                },
+                emailsCopia,
+                asunto,
+                cuerpo,
+                pedidoPresupuestoPdf,
+                nombrePedidoPresupuestoPdf,
+                ordenesMedicas
+        );
+    }
+
+    public void enviar(
+            String[] emailsDestino,
+            String[] emailsCopia,
+            String asunto,
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf,
+            List<AdjuntoOrdenMedica> ordenesMedicas)
+            throws Exception {
+
+        enviarInterno(
+                emailsDestino,
                 emailsCopia,
                 asunto,
                 cuerpo,
@@ -170,7 +193,7 @@ public class CotizacionPrestadorMailHelper {
     }
 
     private void enviarInterno(
-            String emailDestino,
+            String[] emailsDestino,
             String[] emailsCopia,
             String asunto,
             String cuerpo,
@@ -180,7 +203,7 @@ public class CotizacionPrestadorMailHelper {
             throws Exception {
 
         validarParametros(
-                emailDestino,
+                emailsDestino,
                 emailsCopia,
                 asunto,
                 cuerpo,
@@ -287,12 +310,9 @@ public class CotizacionPrestadorMailHelper {
                 )
         );
 
-        mensaje.setRecipient(
-                Message.RecipientType.TO,
-                new InternetAddress(
-                        emailDestino.trim(),
-                        true
-                )
+        agregarDestinatariosPrincipales(
+                mensaje,
+                emailsDestino
         );
 
         agregarDestinatariosCopia(
@@ -509,7 +529,7 @@ public class CotizacionPrestadorMailHelper {
     }
 
     private void validarParametros(
-            String emailDestino,
+            String[] emailsDestino,
             String[] emailsCopia,
             String asunto,
             String cuerpo,
@@ -517,15 +537,8 @@ public class CotizacionPrestadorMailHelper {
             String nombrePedidoPresupuestoPdf)
             throws Exception {
 
-        if (isEmpty(emailDestino)) {
-            throw new Exception(
-                    "Debe informar email destino."
-            );
-        }
-
-        validarEmail(
-                emailDestino,
-                "destino"
+        validarEmailsDestino(
+                emailsDestino
         );
 
         validarEmailsCopia(
@@ -548,6 +561,38 @@ public class CotizacionPrestadorMailHelper {
                 pedidoPresupuestoPdf,
                 nombrePedidoPresupuestoPdf
         );
+    }
+
+    private void validarEmailsDestino(
+            String[] emailsDestino)
+            throws Exception {
+
+        if (emailsDestino == null
+                || emailsDestino.length == 0) {
+
+            throw new Exception(
+                    "Debe informar al menos un email destino."
+            );
+        }
+
+        for (int i = 0;
+             i < emailsDestino.length;
+             i++) {
+
+            if (isEmpty(
+                    emailsDestino[i]
+            )) {
+
+                throw new Exception(
+                        "Existe un email destino vacío."
+                );
+            }
+
+            validarEmail(
+                    emailsDestino[i],
+                    "destino"
+            );
+        }
     }
 
     private void validarPedidoPresupuesto(
@@ -852,6 +897,26 @@ public class CotizacionPrestadorMailHelper {
 
         public String getName() {
             return nombre;
+        }
+    }
+
+    private void agregarDestinatariosPrincipales(
+            MimeMessage mensaje,
+            String[] emailsDestino)
+            throws Exception {
+
+        for (int i = 0;
+             emailsDestino != null
+                     && i < emailsDestino.length;
+             i++) {
+
+            mensaje.addRecipient(
+                    Message.RecipientType.TO,
+                    new InternetAddress(
+                            emailsDestino[i].trim(),
+                            true
+                    )
+            );
         }
     }
 }
