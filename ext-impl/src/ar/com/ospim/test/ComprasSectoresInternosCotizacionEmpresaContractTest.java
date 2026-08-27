@@ -433,10 +433,29 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
                 migracion,
                 "ADD COLUMN IF NOT EXISTS empresa_cuit VARCHAR(11)"
         );
+        assertOccurrences(
+                "migracion reemplaza ambas firmas de registro",
+                migracion,
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.registrar_requerimiento_presupuesto(",
+                2
+        );
         assertContains(
-                "migracion crea overload tipo tres",
+                "migracion conserva overload tipo tres",
                 migracion,
                 "p_tipo_documento SMALLINT"
+        );
+        assertContains(
+                "migracion restringe baja generica a Prestador",
+                migracion,
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.baja_requerimiento_presupuesto("
+        );
+        assertContains(
+                "migracion restringe reactivacion generica a Prestador",
+                migracion,
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.reactivar_requerimiento_presupuesto("
         );
         assertContains(
                 "migracion consulta Empresa en modo lectura",
@@ -484,9 +503,9 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
                 "ON informacion_afip.empresa"
         );
         assertNotContains(
-                "migracion no reemplaza firma Prestador",
+                "migracion no deja funciones no reejecutables",
                 migracion,
-                "CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_presupuesto"
+                "CREATE FUNCTION compras."
         );
     }
 
@@ -503,6 +522,30 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
         if (texto.indexOf(esperado) < 0) {
             throw new AssertionError(
                     descripcion + ": falta [" + esperado + "]"
+            );
+        }
+    }
+
+    private static void assertOccurrences(
+            String descripcion,
+            String texto,
+            String esperado,
+            int cantidadEsperada) {
+
+        int cantidad = 0;
+        int desde = 0;
+        int encontrado = texto.indexOf(esperado, desde);
+
+        while (encontrado >= 0) {
+            cantidad++;
+            desde = encontrado + esperado.length();
+            encontrado = texto.indexOf(esperado, desde);
+        }
+
+        if (cantidad != cantidadEsperada) {
+            throw new AssertionError(
+                    descripcion + ": esperado=" + cantidadEsperada
+                            + ", obtenido=" + cantidad
             );
         }
     }

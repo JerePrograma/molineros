@@ -120,7 +120,7 @@ ux_compras_presupuesto_requerimiento_empresa_activa
     WHERE baja_fecha IS NULL
       AND tipo_documento = 3;
 
-CREATE FUNCTION compras.buscar_empresas_cotizacion(
+CREATE OR REPLACE FUNCTION compras.buscar_empresas_cotizacion(
     p_cuit VARCHAR,
     p_descripcion VARCHAR,
     p_sucursal VARCHAR,
@@ -168,7 +168,134 @@ $func$
 LANGUAGE sql
 STABLE;
 
-CREATE FUNCTION compras.registrar_requerimiento_presupuesto(
+CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_presupuesto(
+    p_id_requerimiento INTEGER,
+    p_id_prestador INTEGER,
+    p_dl_group_id BIGINT,
+    p_dl_folder_id BIGINT,
+    p_dl_file_entry_id BIGINT,
+    p_dl_file_uuid VARCHAR,
+    p_nombre_original VARCHAR,
+    p_nombre_persistido VARCHAR,
+    p_titulo VARCHAR,
+    p_descripcion_prestador VARCHAR,
+    p_usuario VARCHAR
+)
+RETURNS INTEGER
+AS $func$
+DECLARE
+    v_id INTEGER;
+    v_estado_requerimiento INTEGER;
+    v_estado_envio VARCHAR(20);
+    v_usuario VARCHAR(100);
+BEGIN
+    IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
+        RAISE EXCEPTION
+            'El requerimiento informado no es válido.';
+    END IF;
+
+    IF p_id_prestador IS NULL OR p_id_prestador <= 0 THEN
+        RAISE EXCEPTION
+            'El prestador informado no es válido.';
+    END IF;
+
+    IF p_dl_group_id IS NULL OR p_dl_group_id <= 0
+       OR p_dl_folder_id IS NULL OR p_dl_folder_id < 0
+       OR p_dl_file_entry_id IS NULL OR p_dl_file_entry_id <= 0 THEN
+        RAISE EXCEPTION
+            'La identidad del documento de presupuesto no es válida.';
+    END IF;
+
+    v_usuario := COALESCE(NULLIF(btrim(p_usuario), ''), 'sistema');
+
+    SELECT r.estado
+      INTO v_estado_requerimiento
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento = p_id_requerimiento
+       AND r.baja_fecha IS NULL
+     FOR UPDATE;
+
+    IF NOT FOUND OR v_estado_requerimiento <> 2 THEN
+        RAISE EXCEPTION
+            'El requerimiento no se encuentra activo y en estado A COTIZAR.';
+    END IF;
+
+    SELECT rcp.estado_envio
+      INTO v_estado_envio
+      FROM compras.requerimiento_cotizacion_prestador rcp
+     WHERE rcp.id_requerimiento = p_id_requerimiento
+       AND rcp.id_prestador = p_id_prestador
+     FOR UPDATE;
+
+    IF NOT FOUND OR v_estado_envio <> 'ENVIADO' THEN
+        RAISE EXCEPTION
+            'El prestador no se encuentra ENVIADO y disponible para cotizar.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+          FROM compras.requerimiento_presupuesto rp
+         WHERE rp.id_requerimiento = p_id_requerimiento
+           AND rp.tipo_documento = 1
+           AND rp.id_prestador = p_id_prestador
+           AND rp.baja_fecha IS NULL
+    ) THEN
+        RAISE EXCEPTION
+            'El prestador ya tiene un presupuesto activo para este requerimiento.';
+    END IF;
+
+    INSERT INTO compras.requerimiento_presupuesto (
+        id_requerimiento,
+        tipo_documento,
+        fecha_documento,
+        id_prestador,
+        dl_group_id,
+        dl_folder_id,
+        dl_file_entry_id,
+        dl_file_uuid,
+        nombre_original,
+        nombre_persistido,
+        titulo,
+        descripcion_prestador,
+        alta_usr
+    )
+    VALUES (
+        p_id_requerimiento,
+        1,
+        NULL,
+        p_id_prestador,
+        p_dl_group_id,
+        p_dl_folder_id,
+        p_dl_file_entry_id,
+        NULLIF(btrim(p_dl_file_uuid), ''),
+        btrim(p_nombre_original),
+        btrim(p_nombre_persistido),
+        btrim(p_titulo),
+        NULLIF(btrim(p_descripcion_prestador), ''),
+        v_usuario
+    )
+    RETURNING id_requerimiento_presupuesto
+    INTO v_id;
+
+    UPDATE compras.requerimiento_cotizacion_prestador
+       SET estado_envio = 'COTIZADO',
+           modi_fecha = now(),
+           modi_usr = v_usuario
+     WHERE id_requerimiento = p_id_requerimiento
+       AND id_prestador = p_id_prestador
+       AND estado_envio = 'ENVIADO';
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No se pudo marcar como COTIZADO al prestador del presupuesto.';
+    END IF;
+
+    RETURN v_id;
+END;
+$func$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_presupuesto(
     p_id_requerimiento INTEGER,
     p_tipo_documento SMALLINT,
     p_id_prestador INTEGER,
@@ -311,7 +438,199 @@ END;
 $func$
 LANGUAGE plpgsql;
 
-CREATE FUNCTION compras.baja_cotizacion_empresa_requerimiento(
+CREATE OR REPLACE FUNCTION compras.baja_requerimiento_presupuesto(
+    p_id_requerimiento_presupuesto INTEGER,
+    p_id_requerimiento INTEGER,
+    p_usuario VARCHAR
+)
+RETURNS BOOLEAN
+AS $func$
+DECLARE
+    v_id_prestador INTEGER;
+    v_estado_requerimiento INTEGER;
+    v_usuario VARCHAR(100);
+BEGIN
+    IF p_id_requerimiento_presupuesto IS NULL
+       OR p_id_requerimiento_presupuesto <= 0
+       OR p_id_requerimiento IS NULL
+       OR p_id_requerimiento <= 0 THEN
+        RETURN FALSE;
+    END IF;
+
+    v_usuario := COALESCE(NULLIF(btrim(p_usuario), ''), 'sistema');
+
+    SELECT r.estado
+      INTO v_estado_requerimiento
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento = p_id_requerimiento
+       AND r.baja_fecha IS NULL
+     FOR UPDATE;
+
+    IF NOT FOUND OR v_estado_requerimiento <> 2 THEN
+        RAISE EXCEPTION
+            'Los presupuestos solo pueden eliminarse en estado A COTIZAR.';
+    END IF;
+
+    SELECT rp.id_prestador
+      INTO v_id_prestador
+      FROM compras.requerimiento_presupuesto rp
+     WHERE rp.id_requerimiento_presupuesto = p_id_requerimiento_presupuesto
+       AND rp.id_requerimiento = p_id_requerimiento
+       AND rp.tipo_documento = 1
+       AND rp.baja_fecha IS NULL
+     FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RETURN FALSE;
+    END IF;
+
+    PERFORM 1
+      FROM compras.requerimiento_cotizacion_prestador rcp
+     WHERE rcp.id_requerimiento = p_id_requerimiento
+       AND rcp.id_prestador = v_id_prestador
+     FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No existe el prestador notificado asociado al presupuesto.';
+    END IF;
+
+    UPDATE compras.requerimiento_presupuesto
+       SET baja_fecha = now(),
+           baja_usr = v_usuario
+     WHERE id_requerimiento_presupuesto = p_id_requerimiento_presupuesto
+       AND id_requerimiento = p_id_requerimiento
+       AND tipo_documento = 1
+       AND baja_fecha IS NULL;
+
+    IF NOT FOUND THEN
+        RETURN FALSE;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+          FROM compras.requerimiento_presupuesto rp
+         WHERE rp.id_requerimiento = p_id_requerimiento
+           AND rp.tipo_documento = 1
+           AND rp.id_prestador = v_id_prestador
+           AND rp.baja_fecha IS NULL
+    ) THEN
+        UPDATE compras.requerimiento_cotizacion_prestador
+           SET estado_envio = 'ENVIADO',
+               modi_fecha = now(),
+               modi_usr = v_usuario
+         WHERE id_requerimiento = p_id_requerimiento
+           AND id_prestador = v_id_prestador
+           AND estado_envio = 'COTIZADO';
+
+        IF NOT FOUND THEN
+            RAISE EXCEPTION
+                'No se pudo restaurar el estado ENVIADO del prestador.';
+        END IF;
+    END IF;
+
+    RETURN TRUE;
+END;
+$func$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION compras.reactivar_requerimiento_presupuesto(
+    p_id_requerimiento_presupuesto INTEGER,
+    p_id_requerimiento INTEGER
+)
+RETURNS BOOLEAN
+AS $func$
+DECLARE
+    v_id_prestador INTEGER;
+    v_estado_requerimiento INTEGER;
+BEGIN
+    IF p_id_requerimiento_presupuesto IS NULL
+       OR p_id_requerimiento_presupuesto <= 0
+       OR p_id_requerimiento IS NULL
+       OR p_id_requerimiento <= 0 THEN
+        RETURN FALSE;
+    END IF;
+
+    SELECT r.estado
+      INTO v_estado_requerimiento
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento = p_id_requerimiento
+       AND r.baja_fecha IS NULL
+     FOR UPDATE;
+
+    IF NOT FOUND OR v_estado_requerimiento <> 2 THEN
+        RAISE EXCEPTION
+            'Los presupuestos solo pueden reactivarse en estado A COTIZAR.';
+    END IF;
+
+    SELECT rp.id_prestador
+      INTO v_id_prestador
+      FROM compras.requerimiento_presupuesto rp
+     WHERE rp.id_requerimiento_presupuesto = p_id_requerimiento_presupuesto
+       AND rp.id_requerimiento = p_id_requerimiento
+       AND rp.tipo_documento = 1
+       AND rp.baja_fecha IS NOT NULL
+     FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RETURN FALSE;
+    END IF;
+
+    PERFORM 1
+      FROM compras.requerimiento_cotizacion_prestador rcp
+     WHERE rcp.id_requerimiento = p_id_requerimiento
+       AND rcp.id_prestador = v_id_prestador
+     FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No existe el prestador notificado asociado al presupuesto.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+          FROM compras.requerimiento_presupuesto rp
+         WHERE rp.id_requerimiento = p_id_requerimiento
+           AND rp.tipo_documento = 1
+           AND rp.id_prestador = v_id_prestador
+           AND rp.baja_fecha IS NULL
+           AND rp.id_requerimiento_presupuesto <> p_id_requerimiento_presupuesto
+    ) THEN
+        RAISE EXCEPTION
+            'El prestador ya tiene otro presupuesto activo para este requerimiento.';
+    END IF;
+
+    UPDATE compras.requerimiento_presupuesto
+       SET baja_fecha = NULL,
+           baja_usr = NULL
+     WHERE id_requerimiento_presupuesto = p_id_requerimiento_presupuesto
+       AND id_requerimiento = p_id_requerimiento
+       AND tipo_documento = 1
+       AND baja_fecha IS NOT NULL;
+
+    IF NOT FOUND THEN
+        RETURN FALSE;
+    END IF;
+
+    UPDATE compras.requerimiento_cotizacion_prestador
+       SET estado_envio = 'COTIZADO',
+           modi_fecha = now(),
+           modi_usr = 'sistema'
+     WHERE id_requerimiento = p_id_requerimiento
+       AND id_prestador = v_id_prestador
+       AND estado_envio IN ('ENVIADO', 'COTIZADO');
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No se pudo restaurar el estado COTIZADO del prestador.';
+    END IF;
+
+    RETURN TRUE;
+END;
+$func$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION compras.baja_cotizacion_empresa_requerimiento(
     p_id_requerimiento_presupuesto INTEGER,
     p_id_requerimiento INTEGER,
     p_usuario VARCHAR
@@ -369,7 +688,7 @@ END;
 $func$
 LANGUAGE plpgsql;
 
-CREATE FUNCTION compras.reactivar_cotizacion_empresa_requerimiento(
+CREATE OR REPLACE FUNCTION compras.reactivar_cotizacion_empresa_requerimiento(
     p_id_requerimiento_presupuesto INTEGER,
     p_id_requerimiento INTEGER
 )
