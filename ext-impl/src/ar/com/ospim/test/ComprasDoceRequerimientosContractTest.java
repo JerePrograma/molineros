@@ -135,22 +135,35 @@ public final class ComprasDoceRequerimientosContractTest {
 
     private static void validarReclamoPrestacional() throws Exception {
         String documentos = leer(
-                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
-                        + "ReclamoPrestacionalCompraDocumentacionHelper.java"
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/documentacion_compras.jsp"
         );
         String cierre = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
                         + "RequerimientoCompraReclamoPrestacionalHelper.java"
         );
+        String pantalla = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/reclamo_prestacional_imagen.jsp"
+        );
+        String descarga = leer(
+                "ext-impl/src/ar/com/ospim/autorizaciones/action/"
+                        + "DescargarDocumentoCompraReclamoAction.java"
+        );
 
-        contiene(documentos, "todas las órdenes", "i < ordenesMedicas.size();");
+        contiene(
+                documentos,
+                "todas las órdenes",
+                "i < ordenesMedicasDocumentacionCompras.size();"
+        );
         contiene(documentos, "pedido histórico", ".getPedidoCotizacionAdjudicado(");
         contiene(documentos, "cotización adjudicada", ".getPresupuestoAdjudicado(");
-        contiene(documentos, "idempotencia por bytes", "Arrays.equals(");
-        contiene(documentos, "grupo DL alineado", "setScopeGroupId(folder.getGroupId())");
-        contiene(cierre, "compensación", "compensarDocumentacion(");
-        antes(cierre, ".adjuntarDocumentacionControlada(", "finalizarCreacion(");
-        antes(cierre, "finalizarCreacion(", "transaccion.commit();");
+        contiene(pantalla, "documentación Compras integrada", "documentacion_compras.jsp");
+        contiene(descarga, "lectura DL original", ".leerContenidoDocumentLibrary(");
+        noContiene(cierre, "sin copia documental", "adjuntarDocumentacion");
+        noContiene(cierre, "sin compensación documental", "compensarDocumentacion");
+        contiene(cierre, "finaliza vínculo", "finalizarCreacion(");
+        contiene(cierre, "confirma transacción", "transaccion.commit();");
     }
 
     private static void validarAfiliadoYDuplicados() throws Exception {

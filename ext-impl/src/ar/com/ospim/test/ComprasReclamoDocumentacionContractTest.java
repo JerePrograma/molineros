@@ -31,13 +31,22 @@ public final class ComprasReclamoDocumentacionContractTest {
         String struts = leer(
                 "ext-web/docroot/WEB-INF/struts-config.xml"
         );
-        String materializacion = leer(
+        String vinculacion = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
-                        + "ReclamoPrestacionalCompraDocumentacionHelper.java"
+                        + "RequerimientoCompraReclamoPrestacionalHelper.java"
         );
-        String compensacion = leer(
-                "ext-impl/src/ar/com/ospim/compras/requerimientos/documentos/"
-                        + "DocumentoLibraryComprasHelper.java"
+        String alta = leer(
+                "ext-impl/src/ar/com/ospim/autorizaciones/action/"
+                        + "EditarReclamosEntryAction.java"
+        );
+        String fachadaVinculacion = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
+                        + "RequerimientoCompraReclamoPrestacionalServiceUtil.java"
+        );
+        String pantallaArchivos = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/"
+                        + "reclamo_prestacional_imagen.jsp"
         );
         String listadoArchivos = leer(
                 "ext-web/docroot/html/portlet/autorizaciones/"
@@ -94,6 +103,11 @@ public final class ComprasReclamoDocumentacionContractTest {
                 "solapa legacy de archivos",
                 wrapper,
                 "reclamo_prestacional_imagen.jsp"
+        );
+        assertContains(
+                "documentacion Compras integrada en archivos RP",
+                pantallaArchivos,
+                "documentacion_compras.jsp"
         );
 
         assertContains(
@@ -233,120 +247,84 @@ public final class ComprasReclamoDocumentacionContractTest {
                 "request.setAttribute(\n            Constants.CMD,\n            Constants.VIEW"
         );
 
-        validarMaterializacionRp(
-                materializacion,
-                compensacion,
+        validarLecturaSinMaterializacion(
+                vinculacion,
+                alta,
+                fachadaVinculacion,
+                pantallaArchivos,
                 listadoArchivos
         );
 
         System.out.println("COMPRAS_RECLAMO_DOCUMENTACION_OK");
     }
 
-    private static void validarMaterializacionRp(
-            String materializacion,
-            String compensacion,
+    private static void validarLecturaSinMaterializacion(
+            String vinculacion,
+            String alta,
+            String fachadaVinculacion,
+            String pantallaArchivos,
             String listadoArchivos) {
 
-        assertContains(
-                "T1 Orden medica separada por RP",
-                materializacion,
-                "String.valueOf(idReclamoPrestacional)\n"
-                        + "                            + \"-ORDEN-MEDICA-\""
+        File helperMaterializacion = new File(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
+                        + "ReclamoPrestacionalCompraDocumentacionHelper.java"
+        );
+
+        if (helperMaterializacion.exists()) {
+            throw new AssertionError(
+                    "El helper de materializacion documental no fue eliminado."
+            );
+        }
+
+        assertNotContains(
+                "vinculacion sin copia documental",
+                vinculacion,
+                "adjuntarDocumentacion"
+        );
+        assertNotContains(
+                "vinculacion sin compensacion documental",
+                vinculacion,
+                "compensarDocumentacion"
+        );
+        assertNotContains(
+                "vinculacion sin contexto DL",
+                vinculacion,
+                "ServiceContext"
+        );
+        assertNotContains(
+                "alta sin contexto DL de copia",
+                alta,
+                "serviceContextDocumentacion"
+        );
+        assertNotContains(
+                "fachada sin sobrecarga documental",
+                fachadaVinculacion,
+                "ServiceContext"
         );
         assertContains(
-                "T1 pedido separado por RP",
-                materializacion,
-                "+ \"-PEDIDO-COTIZACION-\""
+                "vinculo se finaliza",
+                vinculacion,
+                "finalizarCreacion("
         );
         assertContains(
-                "T1 cotizacion separada por RP",
-                materializacion,
-                "+ \"-COTIZACION-ADJUDICADA-\""
+                "vinculo conserva rollback",
+                vinculacion,
+                "transaccion.rollback();"
         );
         assertContains(
-                "T1 listado legacy por prefijo RP",
+                "lectura Compras separada del listado propio",
+                pantallaArchivos,
+                "documentacion_compras.jsp"
+        );
+        assertContains(
+                "listado propio conserva carpeta RP",
+                listadoArchivos,
+                "\"ReclamosPrestacionales\""
+        );
+        assertContains(
+                "listado propio conserva prefijo por RP",
                 listadoArchivos,
                 "RestrictionsFactoryUtil.ilike(\"title\", String.valueOf(reclamoprestacional.getId_reclamo())"
-        );
-
-        assertNotContains(
-                "T2 nombre original no es titulo de Orden medica",
-                materializacion,
-                "String titulo = ordenMedica.getNombreOriginal();"
-        );
-        assertNotContains(
-                "T2 nombre original no es titulo de pedido",
-                materializacion,
-                "pedidoCotizacion.getNombreOriginal(),"
-        );
-        assertNotContains(
-                "T2 nombre original no es titulo de cotizacion",
-                materializacion,
-                "presupuestoAdjudicado.getNombreOriginal(),"
-        );
-
-        assertContains(
-                "T3 identidad idempotente por titulo",
-                materializacion,
-                ".getFileEntryByTitle("
-        );
-        assertContains(
-                "T3 mismos bytes reconocidos",
-                materializacion,
-                "Arrays.equals("
-        );
-        assertBefore(
-                "T3 consulta antes del alta",
-                materializacion,
-                ".getFileEntryByTitle(",
-                ".addFileEntry("
-        );
-        assertContains(
-                "T3 preexistente no se registra como creado",
-                materializacion,
-                "if (documentoCreado != null)"
-        );
-
-        assertContains(
-                "T4 contenido distinto falla cerrado",
-                materializacion,
-                "identidad o contenido diferente"
-        );
-        assertNotContains(
-                "T4 no sobrescribe Document Library",
-                materializacion,
-                ".addOrOverwriteFileEntry("
-        );
-        assertContains(
-                "T4 alta sin overwrite",
-                materializacion,
-                ".addFileEntry("
-        );
-
-        assertContains(
-                "T5 fuente solo se lee por fileEntryId",
-                materializacion,
-                ".getDlFileEntryId()"
-        );
-        assertContains(
-                "T5 compensacion exige identidad creada",
-                compensacion,
-                "documento.getFileEntryId()"
-        );
-        assertContains(
-                "T5 compensacion valida UUID creado",
-                compensacion,
-                "documento.getUuid()"
-        );
-        assertContains(
-                "T6 compensacion limitada a creados",
-                materializacion,
-                ".eliminarDocumentoCreado(documentos.get(i))"
-        );
-        assertContains(
-                "T6 reintento devuelve documento no creado",
-                materializacion,
-                "return null;"
         );
     }
 
@@ -377,30 +355,6 @@ public final class ComprasReclamoDocumentacionContractTest {
         if (texto.indexOf(prohibido) >= 0) {
             throw new AssertionError(
                     descripcion + ": contiene [" + prohibido + "]"
-            );
-        }
-    }
-
-    private static void assertBefore(
-            String descripcion,
-            String texto,
-            String primero,
-            String segundo) {
-
-        int posicionPrimero = texto.indexOf(primero);
-        int posicionSegundo = texto.indexOf(segundo);
-
-        if (posicionPrimero < 0
-                || posicionSegundo < 0
-                || posicionPrimero >= posicionSegundo) {
-
-            throw new AssertionError(
-                    descripcion
-                            + ": orden invalido ["
-                            + primero
-                            + "] / ["
-                            + segundo
-                            + "]"
             );
         }
     }

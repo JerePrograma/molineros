@@ -94,6 +94,7 @@ boolean showReadOnlyReclamPrestac=PermissionUtil.userContainsRole(user,WebKeysAu
 <input  type = 'hidden' name="<portlet:namespace />cuit_afiliado" id="<portlet:namespace />cuit_afiliado" value="<%=cuit_afiliado%>" />
 <input  type = 'hidden'  name="<portlet:namespace />inte_afiliado" id="<portlet:namespace />inte_afiliado" value="<%=inte_afiliado%>" />
 
+<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/documentacion_compras.jsp" %>
 
 <fieldset class="block-labels">
 			<legend>

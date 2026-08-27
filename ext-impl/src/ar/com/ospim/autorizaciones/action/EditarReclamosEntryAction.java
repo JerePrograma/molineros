@@ -17,9 +17,6 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import javax.servlet.http.HttpSession;
 
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.service.ServiceContextFactory;
-import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import org.apache.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -762,12 +759,6 @@ import ar.com.ospim.util.StringUtils;
 
 							reservaCompraTomada = true;
 
-                            ServiceContext serviceContextDocumentacion =
-                                    ServiceContextFactory.getInstance(
-                                            DLFileEntry.class.getName(),
-                                            renderRequest
-                                    );
-
                             idReclamoCreado =
                                     RequerimientoCompraReclamoPrestacionalServiceUtil
                                             .crearYVincular(
@@ -775,8 +766,7 @@ import ar.com.ospim.util.StringUtils;
                                                             .getIdRequerimientoCompra(),
                                                     contextoCompra.getNonce(),
                                                     reclamoPrestacional,
-                                                    user,
-                                                    serviceContextDocumentacion
+                                                    user
                                             );
 
                             reclamoPrestacional =

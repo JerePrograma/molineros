@@ -28,36 +28,40 @@ public final class ComprasCierreEtapa1PostDemoContractTest {
                         + "RequerimientoCompraReclamoPrestacionalHelper.java"
         );
         String documentos = leer(
-                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
-                        + "ReclamoPrestacionalCompraDocumentacionHelper.java"
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/documentacion_compras.jsp"
+        );
+        String pantalla = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "reclamos_prestacionales/reclamo_prestacional_imagen.jsp"
         );
 
-        contiene(action, "contexto DL", "ServiceContextFactory.getInstance(");
         noContiene(
                 action,
-                "copia documental posterior al cierre",
-                ".adjuntarDocumentacion("
+                "sin contexto DL de copia",
+                "serviceContextDocumentacion"
         );
-        antes(
+        noContiene(
                 cierre,
-                ".adjuntarDocumentacionControlada(",
+                "sin copia documental",
+                "adjuntarDocumentacion"
+        );
+        noContiene(
+                cierre,
+                "sin compensacion documental",
+                "compensarDocumentacion"
+        );
+        contiene(
+                cierre,
+                "finaliza relacion",
                 "finalizarCreacion("
         );
-        antes(cierre, "finalizarCreacion(", "transaccion.commit();");
-        contiene(
-                cierre,
-                "sobrecarga sin documentos falla cerrada",
-                "No se puede crear el Reclamo Prestacional sin"
-        );
-        contiene(
-                cierre,
-                "compensacion documental",
-                "documentacionHelper.compensarDocumentacion("
-        );
+        contiene(cierre, "confirma transaccion", "transaccion.commit();");
+        contiene(cierre, "conserva rollback", "transaccion.rollback();");
         contiene(
                 documentos,
                 "todas las ordenes medicas",
-                "i < ordenesMedicas.size();"
+                "i < ordenesMedicasDocumentacionCompras.size();"
         );
         noContiene(documentos, "sin primera orden", "ordenesMedicas.get(0)");
         contiene(
@@ -70,10 +74,11 @@ public final class ComprasCierreEtapa1PostDemoContractTest {
                 "cotizacion adjudicada",
                 ".getPresupuestoAdjudicado("
         );
-        contiene(documentos, "bytes binarios", "byte[] contenido");
-        contiene(documentos, "identidad fuente", "Set<Long> archivosFuente");
-        contiene(documentos, "reintento sin duplicar", "getFileEntryByTitle(");
-        contiene(documentos, "reintento con mismos bytes", "Arrays.equals(");
+        contiene(
+                pantalla,
+                "documentacion Compras integrada",
+                "documentacion_compras.jsp"
+        );
     }
 
     private static void validarActualizacionContacto() throws Exception {
@@ -241,21 +246,6 @@ public final class ComprasCierreEtapa1PostDemoContractTest {
         if (texto.indexOf(prohibido) >= 0) {
             throw new AssertionError(
                     descripcion + ": contiene [" + prohibido + "]"
-            );
-        }
-    }
-
-    private static void antes(
-            String texto,
-            String primero,
-            String segundo) {
-
-        int a = texto.indexOf(primero);
-        int b = texto.indexOf(segundo, a + 1);
-
-        if (a < 0 || b <= a) {
-            throw new AssertionError(
-                    "Orden invalido: " + primero + " / " + segundo
             );
         }
     }

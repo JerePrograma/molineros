@@ -5,7 +5,6 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrest
 import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper;
 
 import com.liferay.portal.model.User;
-import com.liferay.portal.service.ServiceContext;
 
 import java.util.List;
 import java.util.Map;
@@ -109,22 +108,6 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
                 tokenReserva,
                 reclamo,
                 user
-        );
-    }
-
-    public static int crearYVincular(
-            int idRequerimientoCompra,
-            String tokenReserva,
-            ReclamoPrestacional reclamo,
-            User user,
-            ServiceContext serviceContext) throws Exception {
-
-        return helper.crearYVincular(
-                idRequerimientoCompra,
-                tokenReserva,
-                reclamo,
-                user,
-                serviceContext
         );
     }
 
