@@ -1472,7 +1472,15 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         return PermissionUtil.userContainsRole(
                 user,
                 WebKeysCompras.ROL_COTIZAR_COMPRAS
-        ) && requerimiento.puedeEditarCotizacion();
+        ) && (
+                requerimiento.puedeEditarCotizacion()
+                        || (
+                                requerimiento
+                                        .esSectorSinCotizacionPrestador()
+                                && requerimiento
+                                        .puedeAdministrarPresupuestos()
+                        )
+        );
     }
 
     private void validarPermisoConsulta(User user) throws Exception {

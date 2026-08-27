@@ -139,13 +139,22 @@ portletURL.setWindowState(
 List<String> headerNames =
         new ArrayList<String>();
 headerNames.add("Archivo");
-headerNames.add("Prestador");
+headerNames.add(
+        reqPresupuestos != null
+                && reqPresupuestos.esSectorSinCotizacionPrestador()
+                        ? "Empresa"
+                        : "Prestador"
+);
 headerNames.add("Descargar");
 headerNames.add("Eliminar");
 
 String mensajeSinResultados =
         idRequerimientoCompraPresupuestos > 0
-                ? "No hay presupuestos asociados al requerimiento."
+                ? reqPresupuestos != null
+                        && reqPresupuestos
+                                .esSectorSinCotizacionPrestador()
+                                ? "No hay cotizaciones de empresas asociadas al requerimiento."
+                                : "No hay presupuestos asociados al requerimiento."
                 : "No se informó el requerimiento de compra.";
 
 SearchContainer searchContainer =
@@ -249,11 +258,39 @@ try {
                 HtmlUtil.escape(archivoVisible)
         );
 
-        row.addText(
-                HtmlUtil.escape(
-                        presupuesto.getDescripcionPrestador()
-                )
-        );
+        if (presupuesto.isCotizacionEmpresa()) {
+            StringBuilder empresaVisible =
+                    new StringBuilder();
+
+            empresaVisible.append(
+                    HtmlUtil.escape(
+                            presupuesto.getDescripcionEmpresa()
+                    )
+            );
+
+            empresaVisible.append("<br />CUIT: ");
+            empresaVisible.append(
+                    HtmlUtil.escape(
+                            presupuesto.getEmpresaCuit()
+                    )
+            );
+
+            empresaVisible.append(" - Sucursal: ");
+            empresaVisible.append(
+                    HtmlUtil.escape(
+                            presupuesto.getEmpresaSucursal()
+                    )
+            );
+
+            row.addText(empresaVisible.toString());
+
+        } else {
+            row.addText(
+                    HtmlUtil.escape(
+                            presupuesto.getDescripcionPrestador()
+                    )
+            );
+        }
 
         boolean documentoValido =
                 Boolean.TRUE.equals(

@@ -130,7 +130,10 @@ Efectos secundarios:
            style="border-collapse: separate; border-spacing: 5px;"
            width="100%">
 
-        <tr>
+        <% if (reqDetalle == null
+                || reqDetalle.getIdRequerimientoCompra() <= 0
+                || !reqDetalle.esSectorSinCotizacionPrestador()) { %>
+        <tr id="<portlet:namespace />detalle_fila_tipo_prestacion">
             <td>
                 <label for="<portlet:namespace />detalle_id_tipo_prestacion">
                     Tipo de cotización:
@@ -146,6 +149,7 @@ Efectos secundarios:
                 </span>
             </td>
         </tr>
+        <% } %>
 
         <tbody id="<portlet:namespace />detalle_bloque_nomenclador">
 

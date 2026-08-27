@@ -116,6 +116,40 @@ Efectos secundarios:
     function <portlet:namespace />actualizarTipoItemEditor(
             preservarValores) {
 
+        var sinCotizacionPrestador =
+                <portlet:namespace />esSectorSinCotizacionPrestadorCompra();
+
+        var filaTipoPrestacion =
+                jQuery(
+                        '#<portlet:namespace />detalle_fila_tipo_prestacion'
+                );
+
+        var selectTipoPrestacion =
+                jQuery(
+                        '#<portlet:namespace />detalle_id_tipo_prestacion'
+                );
+
+        filaTipoPrestacion.css(
+                'display',
+                sinCotizacionPrestador ? 'none' : ''
+        );
+
+        if (selectTipoPrestacion.length > 0) {
+            if (sinCotizacionPrestador) {
+                selectTipoPrestacion.val('').attr(
+                        'disabled',
+                        'disabled'
+                );
+
+                jQuery(
+                        '#<portlet:namespace />detalle_tipo_prestacion_ayuda'
+                ).hide().text('');
+
+            } else {
+                selectTipoPrestacion.removeAttr('disabled');
+            }
+        }
+
         var editIndex =
                 parseInt(
                         jQuery(
@@ -1403,7 +1437,8 @@ Efectos secundarios:
                 '#<portlet:namespace />detalle_id_tipo_prestacion'
         );
 
-        if (!selectTipoPrestacion.attr('disabled')
+        if (selectTipoPrestacion.length > 0
+                && !selectTipoPrestacion.attr('disabled')
                 && !<portlet:namespace />esTipoPrestacionDetalleValidoParaSector(
                         detalle.idTipoPrestacion
                 )

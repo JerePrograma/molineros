@@ -588,7 +588,13 @@ public class RequerimientoCompra {
     }
 
     public boolean puedeAdministrarPresupuestos() {
-        return WebKeysCompras.puedeAdministrarPresupuestos(getEstado()) && bajaFecha == null;
+        if (bajaFecha != null) {
+            return false;
+        }
+
+        return esSectorSinCotizacionPrestador()
+                ? WebKeysCompras.esPendiente(getEstado())
+                : WebKeysCompras.puedeAdministrarPresupuestos(getEstado());
     }
 
     public boolean puedeVerCotizacion() {
@@ -596,22 +602,36 @@ public class RequerimientoCompra {
     }
 
     public boolean puedeVerPresupuestos() {
-        return WebKeysCompras.puedeVerPresupuestos(getEstado());
+        return esSectorSinCotizacionPrestador()
+                ? WebKeysCompras.esPendiente(getEstado())
+                        || WebKeysCompras.puedeVerPresupuestos(getEstado())
+                : WebKeysCompras.puedeVerPresupuestos(getEstado());
     }
 
     public boolean puedeEnviarACotizar() {
-        return WebKeysCompras.puedeEnviarACotizar(getEstado()) && bajaFecha == null;
+        return !esSectorSinCotizacionPrestador()
+                && WebKeysCompras.puedeEnviarACotizar(getEstado())
+                && bajaFecha == null;
     }
 
     public boolean puedeReintentarNotificaciones() {
-        return WebKeysCompras.puedeReintentarNotificaciones(getEstado()) && bajaFecha == null;
+        return !esSectorSinCotizacionPrestador()
+                && WebKeysCompras.puedeReintentarNotificaciones(getEstado())
+                && bajaFecha == null;
     }
 
     public boolean puedeReintentarNotificaciones(boolean hayPrestadoresPendientes) {
-        return WebKeysCompras.puedeReintentarNotificaciones(
+        return !esSectorSinCotizacionPrestador()
+                && WebKeysCompras.puedeReintentarNotificaciones(
                 getEstado(),
                 hayPrestadoresPendientes
         ) && bajaFecha == null;
+    }
+
+    public boolean esSectorSinCotizacionPrestador() {
+        return WebKeysCompras.esSectorSinCotizacionPrestador(
+                getSectorDescripcion()
+        );
     }
 
     public boolean isEditable() {

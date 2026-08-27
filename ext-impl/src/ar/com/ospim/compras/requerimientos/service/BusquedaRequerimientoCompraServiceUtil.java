@@ -356,6 +356,19 @@ public class BusquedaRequerimientoCompraServiceUtil {
         return getInstance().listarPresupuestos(idRequerimientoCompra);
     }
 
+    public static List<RequerimientoCompraPresupuesto> listarPresupuestos(
+            int idRequerimientoCompra,
+            int tipoDocumento) throws Exception {
+
+        validarIdRequerimiento(idRequerimientoCompra);
+        validarTipoDocumentoPresupuesto(tipoDocumento);
+
+        return getInstance().listarPresupuestos(
+                idRequerimientoCompra,
+                tipoDocumento
+        );
+    }
+
     public static RequerimientoCompraPresupuesto getPresupuesto(
             int idRequerimientoPresupuesto,
             int idRequerimientoCompra) throws Exception {
@@ -371,6 +384,27 @@ public class BusquedaRequerimientoCompraServiceUtil {
         return getInstance().getPresupuesto(
                 idRequerimientoPresupuesto,
                 idRequerimientoCompra
+        );
+    }
+
+    public static RequerimientoCompraPresupuesto getPresupuesto(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra,
+            int tipoDocumento) throws Exception {
+
+        if (idRequerimientoPresupuesto <= 0) {
+            throw new Exception(
+                    "Debe informar el presupuesto del requerimiento."
+            );
+        }
+
+        validarIdRequerimiento(idRequerimientoCompra);
+        validarTipoDocumentoPresupuesto(tipoDocumento);
+
+        return getInstance().getPresupuesto(
+                idRequerimientoPresupuesto,
+                idRequerimientoCompra,
+                tipoDocumento
         );
     }
 
@@ -426,6 +460,22 @@ public class BusquedaRequerimientoCompraServiceUtil {
         if (idRequerimientoCompra <= 0) {
             throw new Exception(
                     "Debe informar el requerimiento de compra."
+            );
+        }
+    }
+
+    private static void validarTipoDocumentoPresupuesto(
+            int tipoDocumento) throws Exception {
+
+        if (tipoDocumento
+                != RequerimientoCompraPresupuesto
+                        .TIPO_DOCUMENTO_PRESUPUESTO
+                && tipoDocumento
+                != RequerimientoCompraPresupuesto
+                        .TIPO_DOCUMENTO_COTIZACION_EMPRESA) {
+
+            throw new Exception(
+                    "El tipo de documento del presupuesto no es válido."
             );
         }
     }

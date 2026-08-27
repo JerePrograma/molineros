@@ -36,7 +36,7 @@ public class EditarRequerimientoCompraServiceImpl {
             "{call compras.cambiar_estado_requerimiento(?,?,?)}";
 
     private static final String SQL_REGISTRAR_PRESUPUESTO =
-            "{ ? = call compras.registrar_requerimiento_presupuesto(?,?,?,?,?,?,?,?,?,?,?) }";
+            "{ ? = call compras.registrar_requerimiento_presupuesto(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_REGISTRAR_ORDEN_MEDICA =
             "{ ? = call compras.registrar_requerimiento_orden_medica(?,?,?,?,?,?,?,?,?,?,?) }";
@@ -365,19 +365,23 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt = con.prepareCall(SQL_REGISTRAR_PRESUPUESTO);
             stmt.registerOutParameter(1, Types.INTEGER);
             stmt.setInt(2, presupuesto.getIdRequerimiento().intValue());
-            stmt.setInt(3, presupuesto.getIdPrestador().intValue());
-            stmt.setLong(4, presupuesto.getDlGroupId().longValue());
-            stmt.setLong(5, presupuesto.getDlFolderId().longValue());
-            stmt.setLong(6, presupuesto.getDlFileEntryId().longValue());
-            stmt.setString(7, presupuesto.getDlFileUuid());
-            stmt.setString(8, presupuesto.getNombreOriginal());
-            stmt.setString(9, presupuesto.getNombrePersistido());
-            stmt.setString(10, presupuesto.getTitulo());
+            stmt.setShort(3, presupuesto.getTipoDocumento().shortValue());
+            setNullableInteger(stmt, 4, presupuesto.getIdPrestador());
+            stmt.setString(5, presupuesto.getEmpresaCuit());
+            stmt.setString(6, presupuesto.getEmpresaSucursal());
+            stmt.setString(7, presupuesto.getDescripcionEmpresa());
+            stmt.setLong(8, presupuesto.getDlGroupId().longValue());
+            stmt.setLong(9, presupuesto.getDlFolderId().longValue());
+            stmt.setLong(10, presupuesto.getDlFileEntryId().longValue());
+            stmt.setString(11, presupuesto.getDlFileUuid());
+            stmt.setString(12, presupuesto.getNombreOriginal());
+            stmt.setString(13, presupuesto.getNombrePersistido());
+            stmt.setString(14, presupuesto.getTitulo());
             stmt.setString(
-                    11,
+                    15,
                     presupuesto.getDescripcionPrestador()
             );
-            stmt.setString(12, usuario);
+            stmt.setString(16, usuario);
             stmt.execute();
 
             return stmt.getInt(1);

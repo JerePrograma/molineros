@@ -2581,10 +2581,67 @@ private void prepararDetalleParaGuardar(
             );
         }
 
-        if (presupuesto.getIdPrestador() == null
-                || presupuesto.getIdPrestador().intValue() <= 0) {
+        if (presupuesto.getTipoDocumento() == null) {
             throw errorUsuario(
-                    "Debe informar el prestador del presupuesto."
+                    "Debe informar el tipo de documento del presupuesto."
+            );
+        }
+
+        if (presupuesto.isPresupuestoPrestador()) {
+            if (presupuesto.getIdPrestador() == null
+                    || presupuesto.getIdPrestador().intValue() <= 0) {
+
+                throw errorUsuario(
+                        "Debe informar el prestador del presupuesto."
+                );
+            }
+
+            if (!WebKeysCompras.isEmpty(presupuesto.getEmpresaCuit())
+                    || !WebKeysCompras.isEmpty(
+                            presupuesto.getEmpresaSucursal()
+                    )
+                    || !WebKeysCompras.isEmpty(
+                            presupuesto.getDescripcionEmpresa()
+                    )) {
+
+                throw errorUsuario(
+                        "Un presupuesto de prestador no puede asociarse "
+                                + "a una Empresa."
+                );
+            }
+
+        } else if (presupuesto.isCotizacionEmpresa()) {
+            if (presupuesto.getIdPrestador() != null
+                    || !WebKeysCompras.isEmpty(
+                            presupuesto.getDescripcionPrestador()
+                    )) {
+
+                throw errorUsuario(
+                        "Una cotización de Empresa no puede asociarse "
+                                + "a un prestador."
+                );
+            }
+
+            if (WebKeysCompras.isEmpty(presupuesto.getEmpresaCuit())
+                    || presupuesto.getEmpresaCuit().length() > 11
+                    || WebKeysCompras.isEmpty(
+                            presupuesto.getEmpresaSucursal()
+                    )
+                    || presupuesto.getEmpresaSucursal().length() > 6
+                    || WebKeysCompras.isEmpty(
+                            presupuesto.getDescripcionEmpresa()
+                    )
+                    || presupuesto.getDescripcionEmpresa().length() > 200) {
+
+                throw errorUsuario(
+                        "La identidad de la Empresa de la cotización "
+                                + "no es válida."
+                );
+            }
+
+        } else {
+            throw errorUsuario(
+                    "El tipo de documento del presupuesto no es válido."
             );
         }
 
@@ -2768,8 +2825,14 @@ private void prepararDetalleParaGuardar(
 
         return "idRequerimiento="
                 + presupuesto.getIdRequerimiento()
+                + ", tipoDocumento="
+                + presupuesto.getTipoDocumento()
                 + ", idPrestador="
                 + presupuesto.getIdPrestador()
+                + ", empresaCuit="
+                + presupuesto.getEmpresaCuit()
+                + ", empresaSucursal="
+                + presupuesto.getEmpresaSucursal()
                 + ", dlFileEntryId="
                 + presupuesto.getDlFileEntryId()
                 + ", usuario=" + usuario;

@@ -124,8 +124,12 @@ boolean puedeEditarPresupuestos =
         && reqPresupuestos.puedeAdministrarPresupuestos()
         && !soloLecturaPresupuestos;
 
+boolean cotizacionEmpresaPresupuestos =
+        reqPresupuestos.esSectorSinCotizacionPrestador();
+
 boolean puedeVerPrestadoresEnviadosPresupuestos =
         idRequerimientoCompraPresupuestos > 0
+        && !cotizacionEmpresaPresupuestos
         && reqPresupuestos.puedeVerPresupuestos();
 
 List<PrestadorCotizacion> prestadoresEnviadosPresupuestos =
@@ -165,10 +169,12 @@ boolean hayPrestadoresDisponiblesPresupuestos =
         !prestadoresDisponiblesPresupuestos.isEmpty();
 
 int maxPresupuestosCargaActual =
-        Math.min(
-                WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA,
-                prestadoresDisponiblesPresupuestos.size()
-        );
+        cotizacionEmpresaPresupuestos
+                ? WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA
+                : Math.min(
+                        WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA,
+                        prestadoresDisponiblesPresupuestos.size()
+                );
 
 PortletURL uploadPresupuestosURL =
         renderResponse.createActionURL();
@@ -180,6 +186,18 @@ uploadPresupuestosURL.setWindowState(
 uploadPresupuestosURL.setParameter(
         "struts_action",
         "/compras/upload_presupuestos_requerimiento"
+);
+
+PortletURL buscarEmpresasCotizacionURL =
+        renderResponse.createRenderURL();
+
+buscarEmpresasCotizacionURL.setWindowState(
+        LiferayWindowState.EXCLUSIVE
+);
+
+buscarEmpresasCotizacionURL.setParameter(
+        "struts_action",
+        "/compras/buscar_empresas_cotizacion"
 );
 
 String modoRetornoPresupuestos =
@@ -254,6 +272,11 @@ boolean msgPresupuestoBorrado =
     }
 
     #<portlet:namespace />tabla_carga_presupuestos
+    .presupuesto-empresa-seleccionada {
+        margin-top: 4px;
+    }
+
+    #<portlet:namespace />tabla_carga_presupuestos
     input.presupuesto-archivo {
         width: 98%;
     }
@@ -278,7 +301,9 @@ boolean msgPresupuestoBorrado =
 
     <fieldset class="block-labels compras-adjuntos-pedidos">
         <legend>
-            Pedidos de presupuestos
+            <%= cotizacionEmpresaPresupuestos
+                    ? "Cotizaciones de empresas"
+                    : "Pedidos de presupuestos" %>
 
             <a href="javascript:void(0)"
                onclick="return comprasHelp(
@@ -301,21 +326,30 @@ boolean msgPresupuestoBorrado =
             <div class="portlet-msg-success">
                 Se cargaron
                 <%= presupuestosGuardados %>
-                presupuesto<%= presupuestosGuardados == 1 ? "" : "s" %>
+                <%= cotizacionEmpresaPresupuestos
+                        ? (presupuestosGuardados == 1
+                                ? "cotización"
+                                : "cotizaciones")
+                        : (presupuestosGuardados == 1
+                                ? "presupuesto"
+                                : "presupuestos") %>
                 correctamente.
             </div>
         </c:if>
 
         <c:if test="<%= msgPresupuestoBorrado %>">
             <div class="portlet-msg-success">
-                Presupuesto eliminado correctamente.
+                <%= cotizacionEmpresaPresupuestos
+                        ? "Cotización de empresa eliminada correctamente."
+                        : "Presupuesto eliminado correctamente." %>
             </div>
         </c:if>
 
         <c:if test="<%= idRequerimientoCompraPresupuestos <= 0 %>">
             <div class="portlet-msg-info">
-                Debe guardar y enviar a cotizar el requerimiento
-                antes de subir presupuestos.
+                <%= cotizacionEmpresaPresupuestos
+                        ? "Debe guardar el requerimiento antes de subir cotizaciones de empresas."
+                        : "Debe guardar y enviar a cotizar el requerimiento antes de subir presupuestos." %>
             </div>
         </c:if>
 
@@ -573,6 +607,8 @@ boolean msgPresupuestoBorrado =
         </c:if>
 
         <c:if test="<%=
+                !cotizacionEmpresaPresupuestos
+                &&
                 puedeEditarPresupuestos
                 && hayPrestadoresEnviadosPresupuestos
                 && !hayPrestadoresDisponiblesPresupuestos
@@ -588,6 +624,8 @@ boolean msgPresupuestoBorrado =
         </c:if>
 
         <c:if test="<%=
+                !cotizacionEmpresaPresupuestos
+                &&
                 puedeEditarPresupuestos
                 && WebKeysCompras.isEmpty(
                         errorPrestadoresPresupuestos
@@ -649,13 +687,40 @@ boolean msgPresupuestoBorrado =
         </c:if>
 
         <c:if test="<%=
+                cotizacionEmpresaPresupuestos
+                && puedeEditarPresupuestos
+        %>">
+            <table class="lfr-table taglib-search-iterator"
+                   id="<portlet:namespace />tabla_carga_presupuestos">
+
+                <colgroup>
+                    <col style="width: 40%;" />
+                    <col style="width: 35%;" />
+                    <col style="width: 25%;" />
+                </colgroup>
+
+                <thead>
+                    <tr>
+                        <th>Empresa</th>
+                        <th>Archivo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody id="<portlet:namespace />presupuestos_body">
+                </tbody>
+            </table>
+        </c:if>
+
+        <c:if test="<%=
                 idRequerimientoCompraPresupuestos > 0
                 && !puedeEditarPresupuestos
                 && !soloLecturaPresupuestos
         %>">
             <div class="portlet-msg-info">
-                Los presupuestos solo pueden administrarse
-                en estado A COTIZAR y con rol de cotización.
+                <%= cotizacionEmpresaPresupuestos
+                        ? "Las cotizaciones de empresas solo pueden administrarse mientras el requerimiento está PENDIENTE y con rol de cotización."
+                        : "Los presupuestos solo pueden administrarse en estado A COTIZAR y con rol de cotización." %>
             </div>
         </c:if>
     </fieldset>
@@ -668,6 +733,24 @@ boolean msgPresupuestoBorrado =
         <strong>Requisitos para cargar cotizaciones</strong>
         <br /><br />
 
+        <% if (cotizacionEmpresaPresupuestos) { %>
+        - El requerimiento debe estar guardado, pertenecer a RRHH o SISTEMAS
+          y permanecer PENDIENTE.
+        <br />
+
+        - Debe buscar y seleccionar una Empresa activa del padrón de
+          Empleadores antes de elegir el PDF.
+        <br />
+
+        - Una misma Empresa no puede repetirse dentro de la carga ni tener
+          otra cotización activa para el requerimiento.
+        <br />
+
+        - Puede utilizar "Agregar otra cotización" para cargar documentos de
+          varias Empresas en una misma operación.
+        <br />
+
+        <% } else { %>
         - El requerimiento debe estar guardado y enviado a cotizar.
         <br />
 
@@ -709,6 +792,14 @@ boolean msgPresupuestoBorrado =
 
         - La lamparita de la columna PDF indica que el prestador fue
           notificado y todavía tiene pendiente la carga de su presupuesto.
+        <% } %>
+
+        <% if (cotizacionEmpresaPresupuestos) { %>
+        <br />
+
+        - El archivo debe presentarse en formato PDF, no estar vacío y
+          respetar el tamaño máximo permitido por Document Library.
+        <% } %>
     </div>
 
     <input type="hidden"
@@ -737,7 +828,11 @@ boolean msgPresupuestoBorrado =
            value="<%= HtmlUtil.escape(modoRetornoPresupuestos) %>" />
 
     <fieldset class="block-labels cotizaciones-fieldset compras-adjuntos-cotizaciones">
-        <legend>Cotizaciones</legend>
+        <legend>
+            <%= cotizacionEmpresaPresupuestos
+                    ? "Cotizaciones de empresas cargadas"
+                    : "Cotizaciones" %>
+        </legend>
 
         <div id="<portlet:namespace />listado_presupuestos_requerimiento">
             <jsp:include
@@ -747,6 +842,65 @@ boolean msgPresupuestoBorrado =
 </form>
 
 <script type="text/javascript">
+    var <portlet:namespace />popupEmpresaCotizacion = null;
+    var <portlet:namespace />filaEmpresaCotizacion = null;
+
+    function <portlet:namespace />abrirBusquedaEmpresaCotizacion(row) {
+        <portlet:namespace />filaEmpresaCotizacion = row;
+
+        <portlet:namespace />popupEmpresaCotizacion = Liferay.Popup({
+            title: 'Búsqueda de Empresas',
+            modal: true,
+            width: 700
+        });
+
+        jQuery(<portlet:namespace />popupEmpresaCotizacion).load(
+                '<%= buscarEmpresasCotizacionURL.toString() %>'
+        );
+
+        return false;
+    }
+
+    function <portlet:namespace />seleccionarEmpresaCotizacionCompra(
+            cuit,
+            sucursal,
+            razonSocial) {
+
+        var row = <portlet:namespace />filaEmpresaCotizacion;
+
+        cuit = jQuery.trim(String(cuit || ''));
+        sucursal = jQuery.trim(String(sucursal || ''));
+        razonSocial = jQuery.trim(String(razonSocial || ''));
+
+        if (!row || cuit == '' || sucursal == '' || razonSocial == '') {
+            alert('No se pudo seleccionar la Empresa informada.');
+            return false;
+        }
+
+        row.find('input.presupuesto-empresa-cuit').val(cuit);
+        row.find('input.presupuesto-empresa-sucursal').val(sucursal);
+        row.find('.presupuesto-empresa-seleccionada').text(
+                razonSocial
+                        + ' - CUIT: '
+                        + cuit
+                        + ' - Sucursal: '
+                        + sucursal
+        );
+
+        if (<portlet:namespace />popupEmpresaCotizacion
+                && typeof Liferay.Popup.close == 'function') {
+
+            Liferay.Popup.close(
+                    <portlet:namespace />popupEmpresaCotizacion
+            );
+        }
+
+        <portlet:namespace />popupEmpresaCotizacion = null;
+        <portlet:namespace />filaEmpresaCotizacion = null;
+
+        return false;
+    }
+
     function <portlet:namespace />reindexarFilasPresupuesto() {
         var rows =
                 jQuery(
@@ -757,10 +911,16 @@ boolean msgPresupuestoBorrado =
             var row =
                     jQuery(this);
 
+            <% if (cotizacionEmpresaPresupuestos) { %>
+            var empresaCuit =
+                    row.find('input.presupuesto-empresa-cuit');
+
+            var empresaSucursal =
+                    row.find('input.presupuesto-empresa-sucursal');
+            <% } else { %>
             var prestador =
-                    row.find(
-                            'select.presupuesto-prestador'
-                    );
+                    row.find('select.presupuesto-prestador');
+            <% } %>
 
             var archivo =
                     row.find(
@@ -777,6 +937,35 @@ boolean msgPresupuestoBorrado =
                             'input.presupuesto-agregar'
                     );
 
+            <% if (cotizacionEmpresaPresupuestos) { %>
+            empresaCuit.attr(
+                    'name',
+                    '<portlet:namespace />presupuesto_'
+                            + index
+                            + '_empresa_cuit'
+            );
+
+            empresaCuit.attr(
+                    'id',
+                    '<portlet:namespace />presupuesto_'
+                            + index
+                            + '_empresa_cuit'
+            );
+
+            empresaSucursal.attr(
+                    'name',
+                    '<portlet:namespace />presupuesto_'
+                            + index
+                            + '_empresa_sucursal'
+            );
+
+            empresaSucursal.attr(
+                    'id',
+                    '<portlet:namespace />presupuesto_'
+                            + index
+                            + '_empresa_sucursal'
+            );
+            <% } else { %>
             prestador.attr(
                     'name',
                     '<portlet:namespace />presupuesto_'
@@ -790,6 +979,7 @@ boolean msgPresupuestoBorrado =
                             + index
                             + '_id_prestador'
             );
+            <% } %>
 
             archivo.attr(
                     'name',
@@ -838,11 +1028,53 @@ boolean msgPresupuestoBorrado =
             alert(
                     'Se pueden cargar hasta '
                             + '<%= maxPresupuestosCargaActual %>'
-                            + ' presupuestos por operación.'
+                            + ' <%= cotizacionEmpresaPresupuestos
+                                    ? "cotizaciones"
+                                    : "presupuestos" %> por operación.'
             );
             return false;
         }
 
+        var row = jQuery('<tr></tr>');
+        var contraparte = null;
+
+        <% if (cotizacionEmpresaPresupuestos) { %>
+        var empresaCuit =
+                jQuery(
+                        '<input type="hidden" '
+                                + 'class="presupuesto-empresa-cuit" />'
+                );
+
+        var empresaSucursal =
+                jQuery(
+                        '<input type="hidden" '
+                                + 'class="presupuesto-empresa-sucursal" />'
+                );
+
+        var empresaSeleccionada =
+                jQuery(
+                        '<div class="presupuesto-empresa-seleccionada">'
+                                + 'Sin Empresa seleccionada.'
+                                + '</div>'
+                );
+
+        var buscarEmpresa =
+                jQuery(
+                        '<input type="button" '
+                                + 'value="Buscar" '
+                                + 'title="Buscar Empresa" />'
+                );
+
+        buscarEmpresa.click(function() {
+            return <portlet:namespace />abrirBusquedaEmpresaCotizacion(row);
+        });
+
+        contraparte = jQuery('<div></div>');
+        contraparte.append(buscarEmpresa);
+        contraparte.append(empresaSeleccionada);
+        contraparte.append(empresaCuit);
+        contraparte.append(empresaSucursal);
+        <% } else { %>
         var prestador =
                 jQuery(
                         '#<portlet:namespace />prestador_presupuesto_template'
@@ -851,6 +1083,8 @@ boolean msgPresupuestoBorrado =
         prestador.removeAttr('id');
         prestador.removeAttr('style');
         prestador.addClass('presupuesto-prestador');
+        contraparte = prestador;
+        <% } %>
 
         var archivo =
                 jQuery(
@@ -874,7 +1108,9 @@ boolean msgPresupuestoBorrado =
                                 + 'type="button" '
                                 + 'class="presupuesto-subir" '
                                 + 'value="Subir" '
-                                + 'title="Subir presupuestos" '
+                                + 'title="Subir <%= cotizacionEmpresaPresupuestos
+                                        ? "cotizaciones"
+                                        : "presupuestos" %>" '
                                 + '/>'
                 );
 
@@ -912,8 +1148,13 @@ boolean msgPresupuestoBorrado =
                         '<input '
                                 + 'type="button" '
                                 + 'class="presupuesto-agregar" '
-                                + 'value="Agregar otro presupuesto" '
-                                + 'title="Agregar otra fila de presupuesto" '
+                                + 'value="Agregar otr<%= cotizacionEmpresaPresupuestos
+                                        ? "a cotización"
+                                        : "o presupuesto" %>" '
+                                + 'title="Agregar otra fila de <%=
+                                        cotizacionEmpresaPresupuestos
+                                                ? "cotización"
+                                                : "presupuesto" %>" '
                                 + '/>'
                 );
 
@@ -921,7 +1162,6 @@ boolean msgPresupuestoBorrado =
             return <portlet:namespace />agregarFilaPresupuesto();
         });
 
-        var row = jQuery('<tr></tr>');
         var acciones =
                 jQuery(
                         '<td class="presupuesto-acciones"></td>'
@@ -936,7 +1176,7 @@ boolean msgPresupuestoBorrado =
         row.append(
                 jQuery(
                         '<td class="presupuesto-campo-prestador"></td>'
-                ).append(prestador)
+                ).append(contraparte)
         );
 
         row.append(
@@ -987,23 +1227,51 @@ boolean msgPresupuestoBorrado =
         }
 
         var valido = true;
-        var prestadoresSeleccionados = {};
+        var contrapartesSeleccionadas = {};
 
         rows.each(function(index) {
             var row = jQuery(this);
 
-            var prestador =
+            <% if (cotizacionEmpresaPresupuestos) { %>
+            var empresaCuit =
+                    jQuery.trim(
+                            row.find('input.presupuesto-empresa-cuit').val()
+                    );
+
+            var empresaSucursal =
                     jQuery.trim(
                             row.find(
-                                    'select.presupuesto-prestador'
+                                    'input.presupuesto-empresa-sucursal'
                             ).val()
                     );
+
+            var claveContraparte =
+                    empresaCuit + '|' + empresaSucursal;
+            <% } else { %>
+            var prestador =
+                    jQuery.trim(
+                            row.find('select.presupuesto-prestador').val()
+                    );
+
+            var claveContraparte = prestador;
+            <% } %>
 
             var archivo =
                     row.find(
                             'input.presupuesto-archivo'
                     );
 
+            <% if (cotizacionEmpresaPresupuestos) { %>
+            if (empresaCuit == '' || empresaSucursal == '') {
+                alert(
+                        'Debe buscar y seleccionar la Empresa de la cotización '
+                                + (index + 1)
+                                + '.'
+                );
+                valido = false;
+                return false;
+            }
+            <% } else { %>
             if (prestador == '') {
                 alert(
                         'Debe seleccionar el prestador del presupuesto '
@@ -1013,23 +1281,30 @@ boolean msgPresupuestoBorrado =
                 valido = false;
                 return false;
             }
+            <% } %>
 
-            if (prestadoresSeleccionados[prestador]) {
+            if (contrapartesSeleccionadas[claveContraparte]) {
                 alert(
-                        'El prestador del presupuesto '
+                        '<%= cotizacionEmpresaPresupuestos
+                                ? "La Empresa de la cotización "
+                                : "El prestador del presupuesto " %>'
                                 + (index + 1)
                                 + ' está repetido. Sólo puede cargarse '
-                                + 'un archivo por prestador.'
+                                + 'un archivo por <%= cotizacionEmpresaPresupuestos
+                                        ? "Empresa"
+                                        : "prestador" %>.'
                 );
                 valido = false;
                 return false;
             }
 
-            prestadoresSeleccionados[prestador] = true;
+            contrapartesSeleccionadas[claveContraparte] = true;
 
             if (archivo.length == 0 || archivo.val() == '') {
                 alert(
-                        'Debe seleccionar el archivo del presupuesto '
+                        '<%= cotizacionEmpresaPresupuestos
+                                ? "Debe seleccionar el archivo de la cotización "
+                                : "Debe seleccionar el archivo del presupuesto " %>'
                                 + (index + 1)
                                 + '.'
                 );
@@ -1042,7 +1317,9 @@ boolean msgPresupuestoBorrado =
 
             if (!/\.pdf$/i.test(nombreArchivo)) {
                 alert(
-                        'El archivo del presupuesto '
+                        '<%= cotizacionEmpresaPresupuestos
+                                ? "El archivo de la cotización "
+                                : "El archivo del presupuesto " %>'
                                 + (index + 1)
                                 + ' debe estar en formato PDF.'
                 );
@@ -1095,13 +1372,17 @@ boolean msgPresupuestoBorrado =
                 || idNumerico <= 0) {
 
             alert(
-                    'No se pudo preparar la eliminación del presupuesto.'
+                    '<%= cotizacionEmpresaPresupuestos
+                            ? "No se pudo preparar la eliminación de la cotización."
+                            : "No se pudo preparar la eliminación del presupuesto." %>'
             );
             return false;
         }
 
         if (!confirm(
-                '¿Está seguro de eliminar este presupuesto?'
+                '<%= cotizacionEmpresaPresupuestos
+                        ? "¿Está seguro de eliminar esta cotización?"
+                        : "¿Está seguro de eliminar este presupuesto?" %>'
         )) {
             return false;
         }
@@ -1115,9 +1396,14 @@ boolean msgPresupuestoBorrado =
 
     jQuery(function() {
         <% if (puedeEditarPresupuestos
-                && hayPrestadoresDisponiblesPresupuestos
-                && WebKeysCompras.isEmpty(
-                        errorPrestadoresPresupuestos
+                && (
+                        cotizacionEmpresaPresupuestos
+                        || (
+                                hayPrestadoresDisponiblesPresupuestos
+                                && WebKeysCompras.isEmpty(
+                                        errorPrestadoresPresupuestos
+                                )
+                        )
                 )) { %>
 
             <portlet:namespace />agregarFilaPresupuesto();

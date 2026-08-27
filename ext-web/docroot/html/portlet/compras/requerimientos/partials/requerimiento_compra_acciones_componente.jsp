@@ -103,13 +103,12 @@ boolean botoneraConsultaRelacionReclamoOk =
 boolean botoneraPuedeEnviarACotizar =
         botoneraRequerimientoPersistido
         && botoneraTieneRolCotizar
-        && WebKeysCompras.puedeEnviarACotizar(botoneraEstadoActual);
+        && req.puedeEnviarACotizar();
 
 boolean botoneraPuedeReintentarCotizacion =
         botoneraRequerimientoPersistido
         && botoneraTieneRolCotizar
-        && WebKeysCompras.puedeReintentarNotificaciones(
-                botoneraEstadoActual,
+        && req.puedeReintentarNotificaciones(
                 botoneraHayPrestadoresPendientesNotificacion
         );
 

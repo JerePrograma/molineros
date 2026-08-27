@@ -85,10 +85,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     + "rp.dl_file_entry_id, rp.dl_file_uuid, "
                     + "rp.nombre_original, rp.nombre_persistido, "
                     + "rp.titulo, rp.descripcion_prestador, "
+                    + "rp.empresa_cuit, rp.empresa_sucursal, "
+                    + "rp.descripcion_empresa, "
                     + "rp.alta_fecha, rp.alta_usr "
                     + "FROM compras.requerimiento_presupuesto rp "
                     + "WHERE rp.id_requerimiento = ? "
-                    + "AND rp.tipo_documento = 1 "
+                    + "AND rp.tipo_documento = ? "
                     + "AND rp.baja_fecha IS NULL "
                     + "ORDER BY rp.alta_fecha DESC, "
                     + "rp.id_requerimiento_presupuesto DESC";
@@ -98,7 +100,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     + "FROM compras.requerimiento_presupuesto rp "
                     + "WHERE rp.id_requerimiento_presupuesto = ? "
                     + "AND rp.id_requerimiento = ? "
-                    + "AND rp.tipo_documento = 1 "
+                    + "AND rp.tipo_documento = ? "
                     + "AND rp.baja_fecha IS NULL";
 
     private static final String SQL_GET_ORDEN_MEDICA =
@@ -578,6 +580,17 @@ public class BusquedaRequerimientoCompraServiceImpl {
     public List<RequerimientoCompraPresupuesto> listarPresupuestos(
             int idRequerimientoCompra) throws Exception {
 
+        return listarPresupuestos(
+                idRequerimientoCompra,
+                RequerimientoCompraPresupuesto
+                        .TIPO_DOCUMENTO_PRESUPUESTO
+        );
+    }
+
+    public List<RequerimientoCompraPresupuesto> listarPresupuestos(
+            int idRequerimientoCompra,
+            int tipoDocumento) throws Exception {
+
         Connection con = null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -588,6 +601,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
             con = ConnectionHelper.getConnection();
             stmt = con.prepareStatement(SQL_LISTAR_PRESUPUESTOS);
             stmt.setInt(1, idRequerimientoCompra);
+            stmt.setInt(2, tipoDocumento);
             rs = stmt.executeQuery();
 
             while (rs.next()) {
@@ -605,6 +619,19 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoPresupuesto,
             int idRequerimientoCompra) throws Exception {
 
+        return getPresupuesto(
+                idRequerimientoPresupuesto,
+                idRequerimientoCompra,
+                RequerimientoCompraPresupuesto
+                        .TIPO_DOCUMENTO_PRESUPUESTO
+        );
+    }
+
+    public RequerimientoCompraPresupuesto getPresupuesto(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra,
+            int tipoDocumento) throws Exception {
+
         Connection con = null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -614,6 +641,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
             stmt = con.prepareStatement(SQL_GET_PRESUPUESTO);
             stmt.setInt(1, idRequerimientoPresupuesto);
             stmt.setInt(2, idRequerimientoCompra);
+            stmt.setInt(3, tipoDocumento);
             rs = stmt.executeQuery();
 
             return rs.next() ? mapPresupuesto(rs) : null;
@@ -872,6 +900,13 @@ public class BusquedaRequerimientoCompraServiceImpl {
         presupuesto.setTitulo(getString(rs, "titulo"));
         presupuesto.setDescripcionPrestador(
                 getString(rs, "descripcion_prestador")
+        );
+        presupuesto.setEmpresaCuit(getString(rs, "empresa_cuit"));
+        presupuesto.setEmpresaSucursal(
+                getString(rs, "empresa_sucursal")
+        );
+        presupuesto.setDescripcionEmpresa(
+                getString(rs, "descripcion_empresa")
         );
 
         if (hasColumn(rs, "alta_fecha")) {

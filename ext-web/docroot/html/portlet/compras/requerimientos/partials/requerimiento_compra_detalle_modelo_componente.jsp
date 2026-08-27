@@ -346,6 +346,10 @@ int idRequerimientoCompraDetalle =
 boolean requerimientoPersistidoDetalle =
         idRequerimientoCompraDetalle > 0;
 
+boolean mostrarTipoCotizacionDetalle =
+        !requerimientoPersistidoDetalle
+        || !reqDetalle.esSectorSinCotizacionPrestador();
+
 List<PrestadorCotizacion> prestadoresEnviadosDetalle =
         (List<PrestadorCotizacion>) request.getAttribute(
                 "compras.requerimiento.prestadoresEnviados"
@@ -395,7 +399,8 @@ boolean prestadoresAdjudicadosMixtosDetalle =
         reqDetalle.tienePrestadoresAdjudicadosMixtos();
 
 int detalleColspan =
-        6
+        4
+        + (mostrarTipoCotizacionDetalle ? 1 : 0)
         + (puedeVerCotizacionDetalle ? 2 : 0)
         + ((puedeABMDetalle || puedeEliminarDetalle) ? 1 : 0);
 %>

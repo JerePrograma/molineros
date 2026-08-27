@@ -471,6 +471,21 @@ Efectos secundarios:
                 || <portlet:namespace />esSectorNomencladorCompra();
     }
 
+    function <portlet:namespace />esSectorSinCotizacionPrestadorCompra() {
+        var sector = jQuery('#<portlet:namespace />sector_id');
+
+        if (sector.length > 0 && sector.is('select')) {
+            return sector.find('option:selected').attr(
+                    'data-sin-cotizacion-prestador'
+            ) == 'true';
+        }
+
+        return <%= req != null
+                && req.esSectorSinCotizacionPrestador()
+                        ? "true"
+                        : "false" %>;
+    }
+
     function <portlet:namespace />esSectorDetalleObservacionCompra() {
         var descripcion =
                 <portlet:namespace />normalizarSectorCompra(
@@ -484,11 +499,17 @@ Efectos secundarios:
     }
 
     function <portlet:namespace />actualizarVisibilidadColumnasDetalleCompra() {
+        var mostrarTipoCotizacion =
+                !<portlet:namespace />esSectorSinCotizacionPrestadorCompra();
         var mostrarCodigo =
                 <portlet:namespace />esSectorDetalleConCodigoCompra();
         var mostrarObservacion =
                 <portlet:namespace />esSectorDetalleObservacionCompra();
 
+        jQuery('.compras-detalle-columna-tipo-cotizacion').css(
+                'display',
+                mostrarTipoCotizacion ? '' : 'none'
+        );
         jQuery('.compras-detalle-columna-codigo').css(
                 'display',
                 mostrarCodigo ? '' : 'none'
@@ -526,7 +547,10 @@ Efectos secundarios:
             var html = '';
 
             html += '<tr class="' + rowClass + '">';
-            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.tipoPrestacion) + '</td>';
+            <% if (mostrarTipoCotizacionDetalle) { %>
+                html += '<td class="compras-detalle-columna-tipo-cotizacion">' +
+                        <portlet:namespace />detalleEscapeHtml(detalle.tipoPrestacion) + '</td>';
+            <% } %>
             html += '<td class="compras-detalle-columna-codigo">' + <portlet:namespace />detalleEscapeHtml(detalle.codigoItem) + '</td>';
             html += '<td class="compras-detalle-columna-codigo">' + <portlet:namespace />detalleEscapeHtml(detalle.descripcionItem) + '</td>';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.cantidad) + '</td>';

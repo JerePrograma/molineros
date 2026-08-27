@@ -7157,6 +7157,15 @@
 		</action>
 
         <action
+                path="/compras/buscar_empresas_cotizacion"
+                type="ar.com.ospim.compras.requerimientos.action.BuscarEmpresasCotizacionCompraAction">
+
+            <forward
+                    name="portlet.compras.empresas.result.search"
+                    path="portlet.compras.empresas.result.search" />
+        </action>
+
+        <action
                 path="/compras/buscar_afiliado_datos"
                 type="ar.com.ospim.compras.requerimientos.action.BuscarAfiliadoDatosCompraAction" />
 

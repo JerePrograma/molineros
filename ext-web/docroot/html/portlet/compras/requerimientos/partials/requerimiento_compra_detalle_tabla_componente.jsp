@@ -21,7 +21,11 @@ Efectos secundarios:
 
     <tr class="portlet-section-header results-header">
 
-        <th>Tipo</th>
+        <% if (mostrarTipoCotizacionDetalle) { %>
+            <th class="compras-detalle-columna-tipo-cotizacion">
+                Tipo
+            </th>
+        <% } %>
 
         <th class="compras-detalle-columna-codigo">
             Código presentado

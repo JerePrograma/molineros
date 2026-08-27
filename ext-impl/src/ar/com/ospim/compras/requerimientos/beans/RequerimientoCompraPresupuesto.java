@@ -6,6 +6,7 @@ public class RequerimientoCompraPresupuesto {
 
     public static final int TIPO_DOCUMENTO_PRESUPUESTO = 1;
     public static final int TIPO_DOCUMENTO_ORDEN_MEDICA = 2;
+    public static final int TIPO_DOCUMENTO_COTIZACION_EMPRESA = 3;
 
     private Integer idRequerimientoPresupuesto;
     private Integer idRequerimiento;
@@ -24,6 +25,9 @@ public class RequerimientoCompraPresupuesto {
     private String nombrePersistido;
     private String titulo;
     private String descripcionPrestador;
+    private String empresaCuit;
+    private String empresaSucursal;
+    private String descripcionEmpresa;
 
     private Date altaFecha;
     private String altaUsr;
@@ -169,6 +173,30 @@ public class RequerimientoCompraPresupuesto {
         this.descripcionPrestador = descripcionPrestador;
     }
 
+    public String getEmpresaCuit() {
+        return empresaCuit;
+    }
+
+    public void setEmpresaCuit(String empresaCuit) {
+        this.empresaCuit = empresaCuit;
+    }
+
+    public String getEmpresaSucursal() {
+        return empresaSucursal;
+    }
+
+    public void setEmpresaSucursal(String empresaSucursal) {
+        this.empresaSucursal = empresaSucursal;
+    }
+
+    public String getDescripcionEmpresa() {
+        return descripcionEmpresa;
+    }
+
+    public void setDescripcionEmpresa(String descripcionEmpresa) {
+        this.descripcionEmpresa = descripcionEmpresa;
+    }
+
     public Date getAltaFecha() {
         return altaFecha;
     }
@@ -203,5 +231,17 @@ public class RequerimientoCompraPresupuesto {
 
     public boolean isActivo() {
         return bajaFecha == null;
+    }
+
+    public boolean isPresupuestoPrestador() {
+        return tipoDocumento != null
+                && tipoDocumento.intValue()
+                == TIPO_DOCUMENTO_PRESUPUESTO;
+    }
+
+    public boolean isCotizacionEmpresa() {
+        return tipoDocumento != null
+                && tipoDocumento.intValue()
+                == TIPO_DOCUMENTO_COTIZACION_EMPRESA;
     }
 }

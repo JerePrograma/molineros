@@ -323,6 +323,14 @@ CREATE TABLE compras.requerimiento_presupuesto (
                                                    id_prestador INTEGER,
 
     /*
+     * Identidad funcional y snapshot de la Empresa para tipo 3.
+     * No agregar FK porque public.empresa pertenece a otro modelo.
+     */
+                                                   empresa_cuit VARCHAR(11),
+                                                   empresa_sucursal VARCHAR(6),
+                                                   descripcion_empresa VARCHAR(200),
+
+    /*
      * Identidad exacta del documento en Liferay Document Library.
      */
                                                    dl_group_id BIGINT NOT NULL,
@@ -348,7 +356,7 @@ CREATE TABLE compras.requerimiento_presupuesto (
                                                        CHECK (id_requerimiento > 0),
 
                                                    CONSTRAINT ck_compras_presupuesto_tipo_documento
-                                                       CHECK (tipo_documento IN (1, 2)),
+                                                       CHECK (tipo_documento IN (1, 2, 3)),
 
                                                    CONSTRAINT ck_compras_presupuesto_prestador
                                                        CHECK (
@@ -358,7 +366,7 @@ CREATE TABLE compras.requerimiento_presupuesto (
                                                                AND id_prestador > 0
                                                            )
                                                            OR (
-                                                               tipo_documento = 2
+                                                               tipo_documento IN (2, 3)
                                                                AND id_prestador IS NULL
                                                            )
                                                        ),
@@ -372,7 +380,7 @@ CREATE TABLE compras.requerimiento_presupuesto (
                                                    CONSTRAINT ck_compras_orden_medica_numero_receta
                                                        CHECK (
                                                            (
-                                                               tipo_documento = 1
+                                                               tipo_documento IN (1, 3)
                                                                AND numero_receta IS NULL
                                                            )
                                                            OR (
@@ -420,8 +428,27 @@ CREATE TABLE compras.requerimiento_presupuesto (
 
                                                    CONSTRAINT ck_compras_orden_medica_datos
                                                        CHECK (
-                                                           tipo_documento <> 2
-                                                            OR descripcion_prestador IS NULL
+                                                           tipo_documento = 1
+                                                           OR descripcion_prestador IS NULL
+                                                       ),
+
+                                                   CONSTRAINT ck_compras_presupuesto_empresa_datos
+                                                       CHECK (
+                                                           (
+                                                               tipo_documento IN (1, 2)
+                                                               AND empresa_cuit IS NULL
+                                                               AND empresa_sucursal IS NULL
+                                                               AND descripcion_empresa IS NULL
+                                                           )
+                                                           OR (
+                                                               tipo_documento = 3
+                                                               AND NULLIF(btrim(empresa_cuit), '') IS NOT NULL
+                                                               AND NULLIF(btrim(empresa_sucursal), '') IS NOT NULL
+                                                               AND NULLIF(btrim(descripcion_empresa), '') IS NOT NULL
+                                                               AND empresa_cuit = btrim(empresa_cuit)
+                                                               AND empresa_sucursal = btrim(empresa_sucursal)
+                                                               AND descripcion_empresa = btrim(descripcion_empresa)
+                                                           )
                                                        ),
 
                                                    CONSTRAINT uq_compras_presupuesto_dl_file_entry
@@ -442,6 +469,15 @@ CREATE UNIQUE INDEX ux_compras_presupuesto_requerimiento_prestador_activo
     )
     WHERE baja_fecha IS NULL
       AND tipo_documento = 1;
+
+CREATE UNIQUE INDEX ux_compras_presupuesto_requerimiento_empresa_activa
+    ON compras.requerimiento_presupuesto (
+        id_requerimiento,
+        empresa_cuit,
+        empresa_sucursal
+    )
+    WHERE baja_fecha IS NULL
+      AND tipo_documento = 3;
 
 CREATE INDEX ix_compras_orden_medica_receta_fecha_activa
     ON compras.requerimiento_presupuesto (
@@ -4094,7 +4130,11 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_presupuesto(
     p_id_requerimiento INTEGER,
+    p_tipo_documento SMALLINT,
     p_id_prestador INTEGER,
+    p_empresa_cuit VARCHAR,
+    p_empresa_sucursal VARCHAR,
+    p_descripcion_empresa VARCHAR,
     p_dl_group_id BIGINT,
     p_dl_folder_id BIGINT,
     p_dl_file_entry_id BIGINT,
@@ -4111,6 +4151,7 @@ DECLARE
     v_id INTEGER;
     v_estado_requerimiento INTEGER;
     v_estado_envio VARCHAR(20);
+    v_sector_descripcion VARCHAR(200);
     v_usuario VARCHAR(100);
 BEGIN
     IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
@@ -4118,9 +4159,11 @@ BEGIN
             'El requerimiento informado no es válido.';
     END IF;
 
-    IF p_id_prestador IS NULL OR p_id_prestador <= 0 THEN
+    IF p_tipo_documento IS NULL
+       OR p_tipo_documento NOT IN (1, 3) THEN
+
         RAISE EXCEPTION
-            'El prestador informado no es válido.';
+            'El tipo de documento de la cotización no es válido.';
     END IF;
 
     IF p_dl_group_id IS NULL OR p_dl_group_id <= 0
@@ -4132,40 +4175,113 @@ BEGIN
 
     v_usuario := COALESCE(NULLIF(btrim(p_usuario), ''), 'sistema');
 
-    SELECT r.estado
-      INTO v_estado_requerimiento
+    SELECT
+        r.estado,
+        sr.descripcion
+      INTO
+        v_estado_requerimiento,
+        v_sector_descripcion
       FROM compras.requerimiento r
+      JOIN compras.sector_requerimiento sr
+        ON sr.id_sector = r.id_sector
      WHERE r.id_requerimiento = p_id_requerimiento
        AND r.baja_fecha IS NULL
-     FOR UPDATE;
+     FOR UPDATE OF r;
 
-    IF NOT FOUND OR v_estado_requerimiento <> 2 THEN
+    IF NOT FOUND THEN
         RAISE EXCEPTION
-            'El requerimiento no se encuentra activo y en estado A COTIZAR.';
+            'No existe el requerimiento de compra activo informado.';
     END IF;
 
-    SELECT rcp.estado_envio
-      INTO v_estado_envio
-      FROM compras.requerimiento_cotizacion_prestador rcp
-     WHERE rcp.id_requerimiento = p_id_requerimiento
-       AND rcp.id_prestador = p_id_prestador
-     FOR UPDATE;
+    IF p_tipo_documento = 1 THEN
+        IF p_id_prestador IS NULL OR p_id_prestador <= 0 THEN
+            RAISE EXCEPTION
+                'El prestador informado no es válido.';
+        END IF;
 
-    IF NOT FOUND OR v_estado_envio <> 'ENVIADO' THEN
-        RAISE EXCEPTION
-            'El prestador no se encuentra ENVIADO y disponible para cotizar.';
-    END IF;
+        IF NULLIF(btrim(p_empresa_cuit), '') IS NOT NULL
+           OR NULLIF(btrim(p_empresa_sucursal), '') IS NOT NULL
+           OR NULLIF(btrim(p_descripcion_empresa), '') IS NOT NULL THEN
 
-    IF EXISTS (
-        SELECT 1
-          FROM compras.requerimiento_presupuesto rp
-         WHERE rp.id_requerimiento = p_id_requerimiento
-           AND rp.tipo_documento = 1
-           AND rp.id_prestador = p_id_prestador
-           AND rp.baja_fecha IS NULL
-    ) THEN
-        RAISE EXCEPTION
-            'El prestador ya tiene un presupuesto activo para este requerimiento.';
+            RAISE EXCEPTION
+                'Un presupuesto de prestador no puede asociarse a una Empresa.';
+        END IF;
+
+        IF v_estado_requerimiento <> 2 THEN
+            RAISE EXCEPTION
+                'El requerimiento no se encuentra activo y en estado A COTIZAR.';
+        END IF;
+
+        IF upper(btrim(v_sector_descripcion)) IN ('RRHH', 'SISTEMAS') THEN
+            RAISE EXCEPTION
+                'El sector del requerimiento no utiliza cotización a prestadores.';
+        END IF;
+
+        SELECT rcp.estado_envio
+          INTO v_estado_envio
+          FROM compras.requerimiento_cotizacion_prestador rcp
+         WHERE rcp.id_requerimiento = p_id_requerimiento
+           AND rcp.id_prestador = p_id_prestador
+         FOR UPDATE;
+
+        IF NOT FOUND OR v_estado_envio <> 'ENVIADO' THEN
+            RAISE EXCEPTION
+                'El prestador no se encuentra ENVIADO y disponible para cotizar.';
+        END IF;
+
+        IF EXISTS (
+            SELECT 1
+              FROM compras.requerimiento_presupuesto rp
+             WHERE rp.id_requerimiento = p_id_requerimiento
+               AND rp.tipo_documento = 1
+               AND rp.id_prestador = p_id_prestador
+               AND rp.baja_fecha IS NULL
+        ) THEN
+            RAISE EXCEPTION
+                'El prestador ya tiene un presupuesto activo para este requerimiento.';
+        END IF;
+
+    ELSE
+        IF p_id_prestador IS NOT NULL
+           OR NULLIF(btrim(p_descripcion_prestador), '') IS NOT NULL THEN
+
+            RAISE EXCEPTION
+                'Una cotización de Empresa no puede asociarse a un prestador.';
+        END IF;
+
+        IF NULLIF(btrim(p_empresa_cuit), '') IS NULL
+           OR length(btrim(p_empresa_cuit)) > 11
+           OR NULLIF(btrim(p_empresa_sucursal), '') IS NULL
+           OR length(btrim(p_empresa_sucursal)) > 6
+           OR NULLIF(btrim(p_descripcion_empresa), '') IS NULL
+           OR length(btrim(p_descripcion_empresa)) > 200 THEN
+
+            RAISE EXCEPTION
+                'La identidad de la Empresa de la cotización no es válida.';
+        END IF;
+
+        IF v_estado_requerimiento <> 1 THEN
+            RAISE EXCEPTION
+                'Las cotizaciones de Empresas solo pueden cargarse en estado PENDIENTE.';
+        END IF;
+
+        IF upper(btrim(v_sector_descripcion)) NOT IN ('RRHH', 'SISTEMAS') THEN
+            RAISE EXCEPTION
+                'El sector del requerimiento no admite cotizaciones de Empresas.';
+        END IF;
+
+        IF EXISTS (
+            SELECT 1
+              FROM compras.requerimiento_presupuesto rp
+             WHERE rp.id_requerimiento = p_id_requerimiento
+               AND rp.tipo_documento = 3
+               AND rp.empresa_cuit = btrim(p_empresa_cuit)
+               AND rp.empresa_sucursal = btrim(p_empresa_sucursal)
+               AND rp.baja_fecha IS NULL
+        ) THEN
+            RAISE EXCEPTION
+                'La Empresa ya tiene una cotización activa para este requerimiento.';
+        END IF;
     END IF;
 
     INSERT INTO compras.requerimiento_presupuesto (
@@ -4173,6 +4289,9 @@ BEGIN
         tipo_documento,
         fecha_documento,
         id_prestador,
+        empresa_cuit,
+        empresa_sucursal,
+        descripcion_empresa,
         dl_group_id,
         dl_folder_id,
         dl_file_entry_id,
@@ -4185,9 +4304,12 @@ BEGIN
     )
     VALUES (
         p_id_requerimiento,
-        1,
+        p_tipo_documento,
         NULL,
         p_id_prestador,
+        NULLIF(btrim(p_empresa_cuit), ''),
+        NULLIF(btrim(p_empresa_sucursal), ''),
+        NULLIF(btrim(p_descripcion_empresa), ''),
         p_dl_group_id,
         p_dl_folder_id,
         p_dl_file_entry_id,
@@ -4201,20 +4323,59 @@ BEGIN
     RETURNING id_requerimiento_presupuesto
     INTO v_id;
 
-    UPDATE compras.requerimiento_cotizacion_prestador
-       SET estado_envio = 'COTIZADO',
-           modi_fecha = now(),
-           modi_usr = v_usuario
-     WHERE id_requerimiento = p_id_requerimiento
-       AND id_prestador = p_id_prestador
-       AND estado_envio = 'ENVIADO';
+    IF p_tipo_documento = 1 THEN
+        UPDATE compras.requerimiento_cotizacion_prestador
+           SET estado_envio = 'COTIZADO',
+               modi_fecha = now(),
+               modi_usr = v_usuario
+         WHERE id_requerimiento = p_id_requerimiento
+           AND id_prestador = p_id_prestador
+           AND estado_envio = 'ENVIADO';
 
-    IF NOT FOUND THEN
-        RAISE EXCEPTION
-            'No se pudo marcar como COTIZADO al prestador del presupuesto.';
+        IF NOT FOUND THEN
+            RAISE EXCEPTION
+                'No se pudo marcar como COTIZADO al prestador del presupuesto.';
+        END IF;
     END IF;
 
     RETURN v_id;
+END;
+$func$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_presupuesto(
+    p_id_requerimiento INTEGER,
+    p_id_prestador INTEGER,
+    p_dl_group_id BIGINT,
+    p_dl_folder_id BIGINT,
+    p_dl_file_entry_id BIGINT,
+    p_dl_file_uuid VARCHAR,
+    p_nombre_original VARCHAR,
+    p_nombre_persistido VARCHAR,
+    p_titulo VARCHAR,
+    p_descripcion_prestador VARCHAR,
+    p_usuario VARCHAR
+)
+RETURNS INTEGER
+AS $func$
+BEGIN
+    RETURN compras.registrar_requerimiento_presupuesto(
+        p_id_requerimiento,
+        1::SMALLINT,
+        p_id_prestador,
+        NULL,
+        NULL,
+        NULL,
+        p_dl_group_id,
+        p_dl_folder_id,
+        p_dl_file_entry_id,
+        p_dl_file_uuid,
+        p_nombre_original,
+        p_nombre_persistido,
+        p_titulo,
+        p_descripcion_prestador,
+        p_usuario
+    );
 END;
 $func$
 LANGUAGE plpgsql;
@@ -4434,6 +4595,7 @@ CREATE OR REPLACE FUNCTION compras.baja_requerimiento_presupuesto(
 RETURNS BOOLEAN
 AS $func$
 DECLARE
+    v_tipo_documento SMALLINT;
     v_id_prestador INTEGER;
     v_estado_requerimiento INTEGER;
     v_usuario VARCHAR(100);
@@ -4454,17 +4616,21 @@ BEGIN
        AND r.baja_fecha IS NULL
      FOR UPDATE;
 
-    IF NOT FOUND OR v_estado_requerimiento <> 2 THEN
+    IF NOT FOUND THEN
         RAISE EXCEPTION
-            'Los presupuestos solo pueden eliminarse en estado A COTIZAR.';
+            'No existe el requerimiento de compra activo informado.';
     END IF;
 
-    SELECT rp.id_prestador
-      INTO v_id_prestador
+    SELECT
+        rp.tipo_documento,
+        rp.id_prestador
+      INTO
+        v_tipo_documento,
+        v_id_prestador
       FROM compras.requerimiento_presupuesto rp
      WHERE rp.id_requerimiento_presupuesto = p_id_requerimiento_presupuesto
        AND rp.id_requerimiento = p_id_requerimiento
-       AND rp.tipo_documento = 1
+       AND rp.tipo_documento IN (1, 3)
        AND rp.baja_fecha IS NULL
      FOR UPDATE;
 
@@ -4472,15 +4638,26 @@ BEGIN
         RETURN FALSE;
     END IF;
 
-    PERFORM 1
-      FROM compras.requerimiento_cotizacion_prestador rcp
-     WHERE rcp.id_requerimiento = p_id_requerimiento
-       AND rcp.id_prestador = v_id_prestador
-     FOR UPDATE;
+    IF v_tipo_documento = 1 THEN
+        IF v_estado_requerimiento <> 2 THEN
+            RAISE EXCEPTION
+                'Los presupuestos solo pueden eliminarse en estado A COTIZAR.';
+        END IF;
 
-    IF NOT FOUND THEN
+        PERFORM 1
+          FROM compras.requerimiento_cotizacion_prestador rcp
+         WHERE rcp.id_requerimiento = p_id_requerimiento
+           AND rcp.id_prestador = v_id_prestador
+         FOR UPDATE;
+
+        IF NOT FOUND THEN
+            RAISE EXCEPTION
+                'No existe el prestador notificado asociado al presupuesto.';
+        END IF;
+
+    ELSIF v_estado_requerimiento <> 1 THEN
         RAISE EXCEPTION
-            'No existe el prestador notificado asociado al presupuesto.';
+            'Las cotizaciones de Empresas solo pueden eliminarse en estado PENDIENTE.';
     END IF;
 
     UPDATE compras.requerimiento_presupuesto
@@ -4488,32 +4665,34 @@ BEGIN
            baja_usr = v_usuario
      WHERE id_requerimiento_presupuesto = p_id_requerimiento_presupuesto
        AND id_requerimiento = p_id_requerimiento
-       AND tipo_documento = 1
+       AND tipo_documento = v_tipo_documento
        AND baja_fecha IS NULL;
 
     IF NOT FOUND THEN
         RETURN FALSE;
     END IF;
 
-    IF NOT EXISTS (
-        SELECT 1
-          FROM compras.requerimiento_presupuesto rp
-         WHERE rp.id_requerimiento = p_id_requerimiento
-           AND rp.tipo_documento = 1
-           AND rp.id_prestador = v_id_prestador
-           AND rp.baja_fecha IS NULL
-    ) THEN
-        UPDATE compras.requerimiento_cotizacion_prestador
-           SET estado_envio = 'ENVIADO',
-               modi_fecha = now(),
-               modi_usr = v_usuario
-         WHERE id_requerimiento = p_id_requerimiento
-           AND id_prestador = v_id_prestador
-           AND estado_envio = 'COTIZADO';
+    IF v_tipo_documento = 1 THEN
+        IF NOT EXISTS (
+            SELECT 1
+              FROM compras.requerimiento_presupuesto rp
+             WHERE rp.id_requerimiento = p_id_requerimiento
+               AND rp.tipo_documento = 1
+               AND rp.id_prestador = v_id_prestador
+               AND rp.baja_fecha IS NULL
+        ) THEN
+            UPDATE compras.requerimiento_cotizacion_prestador
+               SET estado_envio = 'ENVIADO',
+                   modi_fecha = now(),
+                   modi_usr = v_usuario
+             WHERE id_requerimiento = p_id_requerimiento
+               AND id_prestador = v_id_prestador
+               AND estado_envio = 'COTIZADO';
 
-        IF NOT FOUND THEN
-            RAISE EXCEPTION
-                'No se pudo restaurar el estado ENVIADO del prestador.';
+            IF NOT FOUND THEN
+                RAISE EXCEPTION
+                    'No se pudo restaurar el estado ENVIADO del prestador.';
+            END IF;
         END IF;
     END IF;
 
@@ -4529,7 +4708,10 @@ CREATE OR REPLACE FUNCTION compras.reactivar_requerimiento_presupuesto(
 RETURNS BOOLEAN
 AS $func$
 DECLARE
+    v_tipo_documento SMALLINT;
     v_id_prestador INTEGER;
+    v_empresa_cuit VARCHAR(11);
+    v_empresa_sucursal VARCHAR(6);
     v_estado_requerimiento INTEGER;
 BEGIN
     IF p_id_requerimiento_presupuesto IS NULL
@@ -4546,17 +4728,25 @@ BEGIN
        AND r.baja_fecha IS NULL
      FOR UPDATE;
 
-    IF NOT FOUND OR v_estado_requerimiento <> 2 THEN
+    IF NOT FOUND THEN
         RAISE EXCEPTION
-            'Los presupuestos solo pueden reactivarse en estado A COTIZAR.';
+            'No existe el requerimiento de compra activo informado.';
     END IF;
 
-    SELECT rp.id_prestador
-      INTO v_id_prestador
+    SELECT
+        rp.tipo_documento,
+        rp.id_prestador,
+        rp.empresa_cuit,
+        rp.empresa_sucursal
+      INTO
+        v_tipo_documento,
+        v_id_prestador,
+        v_empresa_cuit,
+        v_empresa_sucursal
       FROM compras.requerimiento_presupuesto rp
      WHERE rp.id_requerimiento_presupuesto = p_id_requerimiento_presupuesto
        AND rp.id_requerimiento = p_id_requerimiento
-       AND rp.tipo_documento = 1
+       AND rp.tipo_documento IN (1, 3)
        AND rp.baja_fecha IS NOT NULL
      FOR UPDATE;
 
@@ -4564,28 +4754,54 @@ BEGIN
         RETURN FALSE;
     END IF;
 
-    PERFORM 1
-      FROM compras.requerimiento_cotizacion_prestador rcp
-     WHERE rcp.id_requerimiento = p_id_requerimiento
-       AND rcp.id_prestador = v_id_prestador
-     FOR UPDATE;
+    IF v_tipo_documento = 1 THEN
+        IF v_estado_requerimiento <> 2 THEN
+            RAISE EXCEPTION
+                'Los presupuestos solo pueden reactivarse en estado A COTIZAR.';
+        END IF;
 
-    IF NOT FOUND THEN
+        PERFORM 1
+          FROM compras.requerimiento_cotizacion_prestador rcp
+         WHERE rcp.id_requerimiento = p_id_requerimiento
+           AND rcp.id_prestador = v_id_prestador
+         FOR UPDATE;
+
+        IF NOT FOUND THEN
+            RAISE EXCEPTION
+                'No existe el prestador notificado asociado al presupuesto.';
+        END IF;
+
+    ELSIF v_estado_requerimiento <> 1 THEN
         RAISE EXCEPTION
-            'No existe el prestador notificado asociado al presupuesto.';
+            'Las cotizaciones de Empresas solo pueden reactivarse en estado PENDIENTE.';
     END IF;
 
-    IF EXISTS (
+    IF v_tipo_documento = 1 THEN
+        IF EXISTS (
+            SELECT 1
+              FROM compras.requerimiento_presupuesto rp
+             WHERE rp.id_requerimiento = p_id_requerimiento
+               AND rp.tipo_documento = 1
+               AND rp.id_prestador = v_id_prestador
+               AND rp.baja_fecha IS NULL
+               AND rp.id_requerimiento_presupuesto <> p_id_requerimiento_presupuesto
+        ) THEN
+            RAISE EXCEPTION
+                'El prestador ya tiene otro presupuesto activo para este requerimiento.';
+        END IF;
+
+    ELSIF EXISTS (
         SELECT 1
           FROM compras.requerimiento_presupuesto rp
          WHERE rp.id_requerimiento = p_id_requerimiento
-           AND rp.tipo_documento = 1
-           AND rp.id_prestador = v_id_prestador
+           AND rp.tipo_documento = 3
+           AND rp.empresa_cuit = v_empresa_cuit
+           AND rp.empresa_sucursal = v_empresa_sucursal
            AND rp.baja_fecha IS NULL
            AND rp.id_requerimiento_presupuesto <> p_id_requerimiento_presupuesto
     ) THEN
         RAISE EXCEPTION
-            'El prestador ya tiene otro presupuesto activo para este requerimiento.';
+            'La Empresa ya tiene otra cotización activa para este requerimiento.';
     END IF;
 
     UPDATE compras.requerimiento_presupuesto
@@ -4593,24 +4809,26 @@ BEGIN
            baja_usr = NULL
      WHERE id_requerimiento_presupuesto = p_id_requerimiento_presupuesto
        AND id_requerimiento = p_id_requerimiento
-       AND tipo_documento = 1
+       AND tipo_documento = v_tipo_documento
        AND baja_fecha IS NOT NULL;
 
     IF NOT FOUND THEN
         RETURN FALSE;
     END IF;
 
-    UPDATE compras.requerimiento_cotizacion_prestador
-       SET estado_envio = 'COTIZADO',
-           modi_fecha = now(),
-           modi_usr = 'sistema'
-     WHERE id_requerimiento = p_id_requerimiento
-       AND id_prestador = v_id_prestador
-       AND estado_envio IN ('ENVIADO', 'COTIZADO');
+    IF v_tipo_documento = 1 THEN
+        UPDATE compras.requerimiento_cotizacion_prestador
+           SET estado_envio = 'COTIZADO',
+               modi_fecha = now(),
+               modi_usr = 'sistema'
+         WHERE id_requerimiento = p_id_requerimiento
+           AND id_prestador = v_id_prestador
+           AND estado_envio IN ('ENVIADO', 'COTIZADO');
 
-    IF NOT FOUND THEN
-        RAISE EXCEPTION
-            'No se pudo restaurar el estado COTIZADO del prestador.';
+        IF NOT FOUND THEN
+            RAISE EXCEPTION
+                'No se pudo restaurar el estado COTIZADO del prestador.';
+        END IF;
     END IF;
 
     RETURN TRUE;

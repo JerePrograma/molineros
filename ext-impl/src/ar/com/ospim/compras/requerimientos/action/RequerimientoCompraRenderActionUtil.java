@@ -105,8 +105,9 @@ public final class RequerimientoCompraRenderActionUtil {
             int idRequerimientoCompra =
                     requerimiento.getIdRequerimientoCompra();
 
-            if (requerimiento.puedeVerPresupuestos()
-                    || requerimiento.puedeEditarCotizacion()) {
+            if (!requerimiento.esSectorSinCotizacionPrestador()
+                    && (requerimiento.puedeVerPresupuestos()
+                    || requerimiento.puedeEditarCotizacion())) {
 
                 try {
                     prestadoresEnviados.addAll(
@@ -147,7 +148,13 @@ public final class RequerimientoCompraRenderActionUtil {
                     presupuestos.addAll(
                             BusquedaRequerimientoCompraServiceUtil
                                     .listarPresupuestos(
-                                            idRequerimientoCompra
+                                            idRequerimientoCompra,
+                                            requerimiento
+                                                    .esSectorSinCotizacionPrestador()
+                                                    ? RequerimientoCompraPresupuesto
+                                                            .TIPO_DOCUMENTO_COTIZACION_EMPRESA
+                                                    : RequerimientoCompraPresupuesto
+                                                            .TIPO_DOCUMENTO_PRESUPUESTO
                                     )
                     );
 

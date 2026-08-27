@@ -6,6 +6,9 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.global.beans.Empresa;
+import ar.com.ospim.global.services.EmpresaServiceUtil;
+import ar.com.ospim.util.CuilUtils;
 
 import com.liferay.documentlibrary.DuplicateFileException;
 import com.liferay.documentlibrary.FileNameException;
@@ -72,17 +75,25 @@ public final class PresupuestoCompraHelper {
                 requerimiento
         );
 
-        List<PrestadorCotizacion> prestadores =
-                BusquedaRequerimientoCompraServiceUtil
-                        .listarPrestadoresEnviados(
-                                idRequerimientoCompra
-                        );
+        boolean cotizacionEmpresa =
+                requerimiento.esSectorSinCotizacionPrestador();
+
+        List<PrestadorCotizacion> prestadores = null;
+
+        if (!cotizacionEmpresa) {
+            prestadores =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .listarPrestadoresEnviados(
+                                    idRequerimientoCompra
+                            );
+        }
 
         List<PresupuestoValidado> presupuestos =
                 validarPresupuestos(
                         idRequerimientoCompra,
                         entradas,
                         prestadores,
+                        cotizacionEmpresa,
                         DocumentoLibraryComprasHelper
                                 .obtenerMaximoTamanoDocumento()
                 );
@@ -161,7 +172,12 @@ public final class PresupuestoCompraHelper {
                 BusquedaRequerimientoCompraServiceUtil
                         .getPresupuesto(
                                 idRequerimientoPresupuesto,
-                                idRequerimientoCompra
+                                idRequerimientoCompra,
+                                requerimiento.esSectorSinCotizacionPrestador()
+                                        ? RequerimientoCompraPresupuesto
+                                                .TIPO_DOCUMENTO_COTIZACION_EMPRESA
+                                        : RequerimientoCompraPresupuesto
+                                                .TIPO_DOCUMENTO_PRESUPUESTO
                         );
 
         if (presupuesto == null) {
@@ -252,6 +268,7 @@ public final class PresupuestoCompraHelper {
             int idRequerimientoCompra,
             List<PresupuestoEntrada> entradas,
             List<PrestadorCotizacion> prestadores,
+            boolean cotizacionEmpresa,
             long maximoTamanoArchivo) throws Exception {
 
         Map<Integer, PrestadorCotizacion> prestadoresPorId =
@@ -285,6 +302,9 @@ public final class PresupuestoCompraHelper {
 
         Set<Integer> prestadoresSeleccionados =
                 new HashSet<Integer>();
+
+        Set<String> empresasSeleccionadas =
+                new HashSet<String>();
 
         for (int i = 0;
              i < entradas.size();
@@ -368,72 +388,140 @@ public final class PresupuestoCompraHelper {
                     i + 1
             );
 
-            if (entrada.getIdPrestador() <= 0) {
-                throw new Exception(
-                        "Debe seleccionar el prestador "
-                                + "del presupuesto "
-                                + (i + 1)
-                                + "."
-                );
-            }
-
-            PrestadorCotizacion prestador =
-                    prestadoresPorId.get(
-                            Integer.valueOf(
-                                    entrada.getIdPrestador()
-                            )
-                    );
-
-            if (prestador == null) {
-                throw new Exception(
-                        "El prestador del presupuesto "
-                                + (i + 1)
-                                + " no fue notificado correctamente "
-                                + "para este requerimiento."
-                );
-            }
-
-            Integer idPrestador =
-                    Integer.valueOf(
-                            prestador.getIdPrestador()
-                    );
-
-            if (!prestadoresSeleccionados.add(
-                    idPrestador
-            )) {
-
-                throw new Exception(
-                        "El prestador del presupuesto "
-                                + (i + 1)
-                                + " está repetido. Solo puede cargarse "
-                                + "un archivo por prestador."
-                );
-            }
-
             String identificador =
                     UUID.randomUUID()
                             .toString()
                             .replace("-", "");
 
-            validados.add(
-                    new PresupuestoValidado(
-                            archivo,
-                            nombreOriginal,
-                            prestador,
-                            construirNombrePersistido(
-                                    idRequerimientoCompra,
-                                    prestador.getIdPrestador(),
-                                    identificador,
-                                    extension
-                            ),
-                            construirTituloVisible(
-                                    idRequerimientoCompra,
-                                    nombreOriginal,
-                                    identificador
-                            ),
-                            prestador.getEtiquetaVisible()
-                    )
-            );
+            if (cotizacionEmpresa) {
+                if (entrada.getIdPrestador() > 0) {
+                    throw new Exception(
+                            "La cotización de empresa "
+                                    + (i + 1)
+                                    + " no puede asociarse a un prestador."
+                    );
+                }
+
+                Empresa empresa =
+                        obtenerEmpresaActiva(
+                                entrada.getEmpresaCuit(),
+                                entrada.getEmpresaSucursal(),
+                                i + 1
+                        );
+
+                String claveEmpresa =
+                        empresa.getCuit()
+                                + "|"
+                                + empresa.getSucursal();
+
+                if (!empresasSeleccionadas.add(claveEmpresa)) {
+                    throw new Exception(
+                            "La empresa de la cotización "
+                                    + (i + 1)
+                                    + " está repetida. Solo puede cargarse "
+                                    + "un archivo por empresa."
+                    );
+                }
+
+                validados.add(
+                        new PresupuestoValidado(
+                                archivo,
+                                nombreOriginal,
+                                RequerimientoCompraPresupuesto
+                                        .TIPO_DOCUMENTO_COTIZACION_EMPRESA,
+                                null,
+                                empresa,
+                                construirNombrePersistidoEmpresa(
+                                        idRequerimientoCompra,
+                                        empresa.getCuit(),
+                                        empresa.getSucursal(),
+                                        identificador,
+                                        extension
+                                ),
+                                construirTituloVisible(
+                                        idRequerimientoCompra,
+                                        nombreOriginal,
+                                        identificador
+                                ),
+                                empresa.getRazon_soc()
+                        )
+                );
+
+            } else {
+                if (!WebKeysCompras.isEmpty(entrada.getEmpresaCuit())
+                        || !WebKeysCompras.isEmpty(
+                                entrada.getEmpresaSucursal()
+                        )) {
+
+                    throw new Exception(
+                            "El presupuesto del prestador "
+                                    + (i + 1)
+                                    + " no puede asociarse a una empresa."
+                    );
+                }
+
+                if (entrada.getIdPrestador() <= 0) {
+                    throw new Exception(
+                            "Debe seleccionar el prestador "
+                                    + "del presupuesto "
+                                    + (i + 1)
+                                    + "."
+                    );
+                }
+
+                PrestadorCotizacion prestador =
+                        prestadoresPorId.get(
+                                Integer.valueOf(
+                                        entrada.getIdPrestador()
+                                )
+                        );
+
+                if (prestador == null) {
+                    throw new Exception(
+                            "El prestador del presupuesto "
+                                    + (i + 1)
+                                    + " no fue notificado correctamente "
+                                    + "para este requerimiento."
+                    );
+                }
+
+                Integer idPrestador =
+                        Integer.valueOf(
+                                prestador.getIdPrestador()
+                        );
+
+                if (!prestadoresSeleccionados.add(idPrestador)) {
+                    throw new Exception(
+                            "El prestador del presupuesto "
+                                    + (i + 1)
+                                    + " está repetido. Solo puede cargarse "
+                                    + "un archivo por prestador."
+                    );
+                }
+
+                validados.add(
+                        new PresupuestoValidado(
+                                archivo,
+                                nombreOriginal,
+                                RequerimientoCompraPresupuesto
+                                        .TIPO_DOCUMENTO_PRESUPUESTO,
+                                prestador,
+                                null,
+                                construirNombrePersistido(
+                                        idRequerimientoCompra,
+                                        prestador.getIdPrestador(),
+                                        identificador,
+                                        extension
+                                ),
+                                construirTituloVisible(
+                                        idRequerimientoCompra,
+                                        nombreOriginal,
+                                        identificador
+                                ),
+                                prestador.getEtiquetaVisible()
+                        )
+                );
+            }
         }
 
         return validados;
@@ -629,7 +717,7 @@ public final class PresupuestoCompraHelper {
                                 presupuesto.getNombrePersistido(),
                                 presupuesto.getNombreOriginal(),
                                 presupuesto.getTitulo(),
-                                presupuesto.getDescripcionPrestador(),
+                                presupuesto.getDescripcionDocumento(),
                                 "",
                                 presupuesto.getArchivo(),
                                 serviceContext
@@ -670,10 +758,30 @@ public final class PresupuestoCompraHelper {
                 )
         );
 
-        asociacion.setIdPrestador(
+        asociacion.setTipoDocumento(
                 Integer.valueOf(
-                        presupuesto.getIdPrestador()
+                        presupuesto.getTipoDocumento()
                 )
+        );
+
+        asociacion.setIdPrestador(
+                presupuesto.getIdPrestador() > 0
+                        ? Integer.valueOf(
+                                presupuesto.getIdPrestador()
+                        )
+                        : null
+        );
+
+        asociacion.setEmpresaCuit(
+                presupuesto.getEmpresaCuit()
+        );
+
+        asociacion.setEmpresaSucursal(
+                presupuesto.getEmpresaSucursal()
+        );
+
+        asociacion.setDescripcionEmpresa(
+                presupuesto.getDescripcionEmpresa()
         );
 
         asociacion.setDlGroupId(
@@ -767,8 +875,17 @@ public final class PresupuestoCompraHelper {
             );
         }
 
-        if (!requerimiento
-                .puedeAdministrarPresupuestos()) {
+        if (!requerimiento.puedeAdministrarPresupuestos()) {
+
+            if (requerimiento.esSectorSinCotizacionPrestador()) {
+                throw new Exception(
+                        "Las cotizaciones de empresas solo pueden "
+                                + "administrarse mientras el requerimiento "
+                                + "está PENDIENTE y activo. Estado actual: "
+                                + requerimiento.getEstadoDescripcionVisible()
+                                + "."
+                );
+            }
 
             throw new Exception(
                     "Solo se pueden administrar presupuestos "
@@ -778,6 +895,100 @@ public final class PresupuestoCompraHelper {
                             + "."
             );
         }
+    }
+
+    private Empresa obtenerEmpresaActiva(
+            String empresaCuit,
+            String empresaSucursal,
+            int numeroPresupuesto) throws Exception {
+
+        String cuit =
+                WebKeysCompras.trimToNull(
+                        empresaCuit
+                );
+
+        String sucursal =
+                WebKeysCompras.trimToNull(
+                        empresaSucursal
+                );
+
+        if (cuit == null
+                || cuit.length() > 11
+                || !CuilUtils.validarNum(cuit)) {
+
+            throw new Exception(
+                    "El CUIT de la empresa de la cotización "
+                            + numeroPresupuesto
+                            + " no es válido."
+            );
+        }
+
+        if (sucursal == null
+                || sucursal.length() > 6) {
+
+            throw new Exception(
+                    "La sucursal de la empresa de la cotización "
+                            + numeroPresupuesto
+                            + " no es válida."
+            );
+        }
+
+        List<Empresa> empresas =
+                EmpresaServiceUtil.getEmpleadores(
+                        cuit,
+                        null,
+                        sucursal,
+                        0
+                );
+
+        if (empresas == null) {
+            throw new Exception(
+                    "No se pudo validar la empresa seleccionada."
+            );
+        }
+
+        Empresa encontrada = null;
+
+        for (int i = 0; i < empresas.size(); i++) {
+            Empresa empresa = empresas.get(i);
+
+            if (empresa != null
+                    && cuit.equals(
+                            WebKeysCompras.trimToNull(
+                                    empresa.getCuit()
+                            )
+                    )
+                    && sucursal.equals(
+                            WebKeysCompras.trimToNull(
+                                    empresa.getSucursal()
+                            )
+                    )) {
+
+                if (encontrada != null) {
+                    throw new Exception(
+                            "La empresa seleccionada no tiene "
+                                    + "una identidad única en el padrón."
+                    );
+                }
+
+                encontrada = empresa;
+            }
+        }
+
+        if (encontrada == null
+                || encontrada.getBaja_fecha() != null
+                || WebKeysCompras.isEmpty(
+                        encontrada.getRazon_soc()
+                )
+                || encontrada.getRazon_soc().trim().length() > 200) {
+
+            throw new Exception(
+                    "La empresa seleccionada no existe o no está activa "
+                            + "en el padrón de empleadores."
+            );
+        }
+
+        return encontrada;
     }
 
     private void validarIdentidadAsociacion(
@@ -853,6 +1064,36 @@ public final class PresupuestoCompraHelper {
                 + "-"
                 + identificador
                 + extension;
+    }
+
+    private String construirNombrePersistidoEmpresa(
+            int idRequerimientoCompra,
+            String empresaCuit,
+            String empresaSucursal,
+            String identificador,
+            String extension) {
+
+        return WebKeysCompras
+                .getPrefijoDocumentoRequerimientoCompra(
+                        idRequerimientoCompra
+                )
+                + "EMPRESA-"
+                + normalizarComponenteIdentidad(empresaCuit)
+                + "-"
+                + normalizarComponenteIdentidad(empresaSucursal)
+                + "-"
+                + identificador
+                + extension;
+    }
+
+    private String normalizarComponenteIdentidad(String value) {
+        String normalizado = value != null
+                ? value.replaceAll("[^A-Za-z0-9]", "")
+                : "";
+
+        return normalizado.length() > 0
+                ? normalizado
+                : "SIN-DATO";
     }
 
     private String construirTituloVisible(
@@ -1066,12 +1307,32 @@ public final class PresupuestoCompraHelper {
         private final File archivo;
         private final String nombreOriginal;
         private final int idPrestador;
+        private final String empresaCuit;
+        private final String empresaSucursal;
 
         public PresupuestoEntrada(
                 int indice,
                 File archivo,
                 String nombreOriginal,
                 int idPrestador) {
+
+            this(
+                    indice,
+                    archivo,
+                    nombreOriginal,
+                    idPrestador,
+                    null,
+                    null
+            );
+        }
+
+        public PresupuestoEntrada(
+                int indice,
+                File archivo,
+                String nombreOriginal,
+                int idPrestador,
+                String empresaCuit,
+                String empresaSucursal) {
 
             this.indice =
                     indice;
@@ -1084,6 +1345,12 @@ public final class PresupuestoCompraHelper {
 
             this.idPrestador =
                     idPrestador;
+
+            this.empresaCuit =
+                    empresaCuit;
+
+            this.empresaSucursal =
+                    empresaSucursal;
         }
 
         public int getIndice() {
@@ -1101,24 +1368,36 @@ public final class PresupuestoCompraHelper {
         public int getIdPrestador() {
             return idPrestador;
         }
+
+        public String getEmpresaCuit() {
+            return empresaCuit;
+        }
+
+        public String getEmpresaSucursal() {
+            return empresaSucursal;
+        }
     }
 
     private static final class PresupuestoValidado {
 
         private final File archivo;
         private final String nombreOriginal;
+        private final int tipoDocumento;
         private final PrestadorCotizacion prestador;
+        private final Empresa empresa;
         private final String nombrePersistido;
         private final String titulo;
-        private final String descripcionPrestador;
+        private final String descripcionDocumento;
 
         private PresupuestoValidado(
                 File archivo,
                 String nombreOriginal,
+                int tipoDocumento,
                 PrestadorCotizacion prestador,
+                Empresa empresa,
                 String nombrePersistido,
                 String titulo,
-                String descripcionPrestador) {
+                String descripcionDocumento) {
 
             this.archivo =
                     archivo;
@@ -1126,8 +1405,14 @@ public final class PresupuestoCompraHelper {
             this.nombreOriginal =
                     nombreOriginal;
 
+            this.tipoDocumento =
+                    tipoDocumento;
+
             this.prestador =
                     prestador;
+
+            this.empresa =
+                    empresa;
 
             this.nombrePersistido =
                     nombrePersistido;
@@ -1135,8 +1420,8 @@ public final class PresupuestoCompraHelper {
             this.titulo =
                     titulo;
 
-            this.descripcionPrestador =
-                    descripcionPrestador;
+            this.descripcionDocumento =
+                    descripcionDocumento;
         }
 
         private File getArchivo() {
@@ -1147,10 +1432,32 @@ public final class PresupuestoCompraHelper {
             return nombreOriginal;
         }
 
+        private int getTipoDocumento() {
+            return tipoDocumento;
+        }
+
         private int getIdPrestador() {
             return prestador != null
                     ? prestador.getIdPrestador()
                     : 0;
+        }
+
+        private String getEmpresaCuit() {
+            return empresa != null
+                    ? empresa.getCuit()
+                    : null;
+        }
+
+        private String getEmpresaSucursal() {
+            return empresa != null
+                    ? empresa.getSucursal()
+                    : null;
+        }
+
+        private String getDescripcionEmpresa() {
+            return empresa != null
+                    ? empresa.getRazon_soc()
+                    : null;
         }
 
         private String getNombrePersistido() {
@@ -1161,8 +1468,14 @@ public final class PresupuestoCompraHelper {
             return titulo;
         }
 
+        private String getDescripcionDocumento() {
+            return descripcionDocumento;
+        }
+
         private String getDescripcionPrestador() {
-            return descripcionPrestador;
+            return prestador != null
+                    ? descripcionDocumento
+                    : null;
         }
     }
 

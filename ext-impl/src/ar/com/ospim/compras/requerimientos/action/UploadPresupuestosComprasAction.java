@@ -466,6 +466,18 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                                     nombreParametro
                                             + "_id_prestador",
                                     0
+                            ),
+                            ParamUtil.getString(
+                                    uploadReq,
+                                    nombreParametro
+                                            + "_empresa_cuit",
+                                    null
+                            ),
+                            ParamUtil.getString(
+                                    uploadReq,
+                                    nombreParametro
+                                            + "_empresa_sucursal",
+                                    null
                             )
                     )
             );
@@ -480,8 +492,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         if (idRequerimientoCompra <= 0) {
             throw new Exception(
-                    "Debe guardar y enviar a cotizar el requerimiento "
-                            + "antes de administrar presupuestos."
+                    "Debe guardar el requerimiento antes de administrar "
+                            + "sus cotizaciones."
             );
         }
 

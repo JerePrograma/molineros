@@ -134,6 +134,13 @@ boolean puedeEditarCotizacionPantalla =
         && cotizacionEditablePorEstado
         && !soloLecturaSolicitada;
 
+boolean puedeAdministrarCotizacionEmpresaPantalla =
+        !esNuevo
+        && puedeCotizar
+        && req.esSectorSinCotizacionPrestador()
+        && req.puedeAdministrarPresupuestos()
+        && !soloLecturaSolicitada;
+
 boolean eliminarDetalleEditablePorEstado =
         !esNuevo
         && req.puedeEliminarDetalle();
@@ -170,7 +177,8 @@ boolean modoEditable =
  */
 boolean modoInteractivo =
         modoEditable
-        || puedeEliminarDetallePantalla;
+        || puedeEliminarDetallePantalla
+        || puedeAdministrarCotizacionEmpresaPantalla;
 
 boolean modoVista =
         modoVistaForzado
@@ -578,7 +586,9 @@ if (modoVistaForzado) {
     tituloPantalla = "Ver requerimiento de compra";
 } else if (esNuevo) {
     tituloPantalla = "Nuevo requerimiento de compra";
-} else if (modoEditable || puedeEliminarDetallePantalla) {
+} else if (modoEditable
+        || puedeEliminarDetallePantalla
+        || puedeAdministrarCotizacionEmpresaPantalla) {
     tituloPantalla = "Editar requerimiento de compra";
 } else {
     tituloPantalla = "Ver requerimiento de compra";

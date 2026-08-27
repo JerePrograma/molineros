@@ -546,6 +546,18 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                 || "OTROS".equals(sector);
     }
 
+    public static boolean esSectorSinCotizacionPrestador(
+            String sectorDescripcion) {
+
+        String sector =
+                normalizarSectorCompra(
+                        sectorDescripcion
+                );
+
+        return "RRHH".equals(sector)
+                || "SISTEMAS".equals(sector);
+    }
+
     public static String normalizarSectorCompra(
             String value) {
 

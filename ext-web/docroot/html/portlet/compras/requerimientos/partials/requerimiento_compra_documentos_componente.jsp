@@ -24,7 +24,10 @@ Efectos secundarios:
             <liferay-util:param
                 name="solo_lectura"
                 value="<%= Boolean.toString(
-                        !puedeEditarCotizacionPantalla
+                        !(
+                                puedeEditarCotizacionPantalla
+                                || puedeAdministrarCotizacionEmpresaPantalla
+                        )
                 ) %>" />
         </liferay-util:include>
     </div>

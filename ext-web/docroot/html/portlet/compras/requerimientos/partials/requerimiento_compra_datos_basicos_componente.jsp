@@ -369,7 +369,8 @@ int idRpCabecera =
 
                         <option value="0"
                                 data-requiere-afiliado="false"
-                                data-usa-codigo-prestacion="false">
+                                data-usa-codigo-prestacion="false"
+                                data-sin-cotizacion-prestador="false">
                             Seleccione
                         </option>
 
@@ -404,11 +405,20 @@ int idRpCabecera =
                                     usaCodigoPrestacion
                                             ? "true"
                                             : "false";
+
+                            String sinCotizacionPrestadorAttr =
+                                    WebKeysCompras
+                                            .esSectorSinCotizacionPrestador(
+                                                    sector.getDescripcion()
+                                            )
+                                                    ? "true"
+                                                    : "false";
                         %>
 
                             <option value="<%= sectorId %>"
                                     data-requiere-afiliado="<%= requiereAfiliado %>"
                                     data-usa-codigo-prestacion="<%= usaCodigoPrestacionAttr %>"
+                                    data-sin-cotizacion-prestador="<%= sinCotizacionPrestadorAttr %>"
                                     <%= selected %>>
 
                                 <%= HtmlUtil.escape(

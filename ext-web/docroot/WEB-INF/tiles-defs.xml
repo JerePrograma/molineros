@@ -4595,6 +4595,12 @@
 		     value="/portlet/afiliados/afiliados_search_result_popup.jsp" />
 	</definition>
 
+    <definition name="portlet.compras.empresas.result.search"
+                extends="portlet.compras">
+        <put name="portlet_content"
+             value="/portlet/compras/requerimientos/requerimiento_compra_empresa_busqueda_resultado.jsp" />
+    </definition>
+
 	<definition name="portlet.compras.afiliados.error"
 	            extends="portlet.compras">
 		<put name="portlet_content"
