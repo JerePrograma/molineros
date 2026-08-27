@@ -145,18 +145,24 @@ public final class RequerimientoCompraRenderActionUtil {
 
             if (requerimiento.puedeVerPresupuestos()) {
                 try {
-                    presupuestos.addAll(
-                            BusquedaRequerimientoCompraServiceUtil
-                                    .listarPresupuestos(
-                                            idRequerimientoCompra,
-                                            requerimiento
-                                                    .esSectorSinCotizacionPrestador()
-                                                    ? RequerimientoCompraPresupuesto
-                                                            .TIPO_DOCUMENTO_COTIZACION_EMPRESA
-                                                    : RequerimientoCompraPresupuesto
-                                                            .TIPO_DOCUMENTO_PRESUPUESTO
-                                    )
-                    );
+                    if (requerimiento
+                            .esSectorSinCotizacionPrestador()) {
+
+                        presupuestos.addAll(
+                                BusquedaRequerimientoCompraServiceUtil
+                                        .listarCotizacionesEmpresa(
+                                                idRequerimientoCompra
+                                        )
+                        );
+
+                    } else {
+                        presupuestos.addAll(
+                                BusquedaRequerimientoCompraServiceUtil
+                                        .listarPresupuestos(
+                                                idRequerimientoCompra
+                                        )
+                        );
+                    }
 
                     for (int i = 0; i < presupuestos.size(); i++) {
                         RequerimientoCompraPresupuesto presupuesto =

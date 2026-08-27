@@ -1,6 +1,7 @@
 package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.requerimientos.beans.*;
+import ar.com.ospim.global.beans.Empresa;
 import ar.com.ospim.util.ConnectionHelper;
 
 import java.util.ArrayList;
@@ -77,7 +78,34 @@ public class BusquedaRequerimientoCompraServiceImpl {
     private static final String SQL_HAY_PRESTADORES_PENDIENTES_NOTIFICACION =
             "{call compras.hay_prestadores_pendientes_notificacion(?)}";
 
+    private static final String SQL_BUSCAR_EMPRESAS_COTIZACION =
+            "SELECT * FROM compras.buscar_empresas_cotizacion(?,?,?,?)";
+
     private static final String SQL_LISTAR_PRESUPUESTOS =
+            "SELECT rp.id_requerimiento_presupuesto, "
+                    + "rp.id_requerimiento, rp.id_prestador, "
+                    + "rp.tipo_documento, rp.fecha_documento, "
+                    + "rp.dl_group_id, rp.dl_folder_id, "
+                    + "rp.dl_file_entry_id, rp.dl_file_uuid, "
+                    + "rp.nombre_original, rp.nombre_persistido, "
+                    + "rp.titulo, rp.descripcion_prestador, "
+                    + "rp.alta_fecha, rp.alta_usr "
+                    + "FROM compras.requerimiento_presupuesto rp "
+                    + "WHERE rp.id_requerimiento = ? "
+                    + "AND rp.tipo_documento = 1 "
+                    + "AND rp.baja_fecha IS NULL "
+                    + "ORDER BY rp.alta_fecha DESC, "
+                    + "rp.id_requerimiento_presupuesto DESC";
+
+    private static final String SQL_GET_PRESUPUESTO =
+            "SELECT rp.* "
+                    + "FROM compras.requerimiento_presupuesto rp "
+                    + "WHERE rp.id_requerimiento_presupuesto = ? "
+                    + "AND rp.id_requerimiento = ? "
+                    + "AND rp.tipo_documento = 1 "
+                    + "AND rp.baja_fecha IS NULL";
+
+    private static final String SQL_LISTAR_COTIZACIONES_EMPRESA =
             "SELECT rp.id_requerimiento_presupuesto, "
                     + "rp.id_requerimiento, rp.id_prestador, "
                     + "rp.tipo_documento, rp.fecha_documento, "
@@ -90,17 +118,17 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     + "rp.alta_fecha, rp.alta_usr "
                     + "FROM compras.requerimiento_presupuesto rp "
                     + "WHERE rp.id_requerimiento = ? "
-                    + "AND rp.tipo_documento = ? "
+                    + "AND rp.tipo_documento = 3 "
                     + "AND rp.baja_fecha IS NULL "
                     + "ORDER BY rp.alta_fecha DESC, "
                     + "rp.id_requerimiento_presupuesto DESC";
 
-    private static final String SQL_GET_PRESUPUESTO =
+    private static final String SQL_GET_COTIZACION_EMPRESA =
             "SELECT rp.* "
                     + "FROM compras.requerimiento_presupuesto rp "
                     + "WHERE rp.id_requerimiento_presupuesto = ? "
                     + "AND rp.id_requerimiento = ? "
-                    + "AND rp.tipo_documento = ? "
+                    + "AND rp.tipo_documento = 3 "
                     + "AND rp.baja_fecha IS NULL";
 
     private static final String SQL_GET_ORDEN_MEDICA =
@@ -577,19 +605,45 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
     }
 
-    public List<RequerimientoCompraPresupuesto> listarPresupuestos(
-            int idRequerimientoCompra) throws Exception {
+    public List<Empresa> buscarEmpresasCotizacion(
+            String cuit,
+            String descripcion,
+            String sucursal,
+            int limite) throws Exception {
 
-        return listarPresupuestos(
-                idRequerimientoCompra,
-                RequerimientoCompraPresupuesto
-                        .TIPO_DOCUMENTO_PRESUPUESTO
-        );
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        List<Empresa> resultado = new ArrayList<Empresa>();
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(SQL_BUSCAR_EMPRESAS_COTIZACION);
+            stmt.setString(1, cuit);
+            stmt.setString(2, descripcion);
+            stmt.setString(3, sucursal);
+            stmt.setInt(4, limite);
+            rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                resultado.add(
+                        new Empresa(
+                                rs.getString("cuit"),
+                                rs.getString("sucursal"),
+                                rs.getString("razon_soc")
+                        )
+                );
+            }
+
+            return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
     }
 
     public List<RequerimientoCompraPresupuesto> listarPresupuestos(
-            int idRequerimientoCompra,
-            int tipoDocumento) throws Exception {
+            int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
         PreparedStatement stmt = null;
@@ -601,7 +655,6 @@ public class BusquedaRequerimientoCompraServiceImpl {
             con = ConnectionHelper.getConnection();
             stmt = con.prepareStatement(SQL_LISTAR_PRESUPUESTOS);
             stmt.setInt(1, idRequerimientoCompra);
-            stmt.setInt(2, tipoDocumento);
             rs = stmt.executeQuery();
 
             while (rs.next()) {
@@ -615,22 +668,35 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
     }
 
-    public RequerimientoCompraPresupuesto getPresupuesto(
-            int idRequerimientoPresupuesto,
+    public List<RequerimientoCompraPresupuesto> listarCotizacionesEmpresa(
             int idRequerimientoCompra) throws Exception {
 
-        return getPresupuesto(
-                idRequerimientoPresupuesto,
-                idRequerimientoCompra,
-                RequerimientoCompraPresupuesto
-                        .TIPO_DOCUMENTO_PRESUPUESTO
-        );
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        List<RequerimientoCompraPresupuesto> resultado =
+                new ArrayList<RequerimientoCompraPresupuesto>();
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(SQL_LISTAR_COTIZACIONES_EMPRESA);
+            stmt.setInt(1, idRequerimientoCompra);
+            rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                resultado.add(mapCotizacionEmpresa(rs));
+            }
+
+            return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
     }
 
     public RequerimientoCompraPresupuesto getPresupuesto(
             int idRequerimientoPresupuesto,
-            int idRequerimientoCompra,
-            int tipoDocumento) throws Exception {
+            int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
         PreparedStatement stmt = null;
@@ -641,10 +707,31 @@ public class BusquedaRequerimientoCompraServiceImpl {
             stmt = con.prepareStatement(SQL_GET_PRESUPUESTO);
             stmt.setInt(1, idRequerimientoPresupuesto);
             stmt.setInt(2, idRequerimientoCompra);
-            stmt.setInt(3, tipoDocumento);
             rs = stmt.executeQuery();
 
             return rs.next() ? mapPresupuesto(rs) : null;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public RequerimientoCompraPresupuesto getCotizacionEmpresa(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra) throws Exception {
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(SQL_GET_COTIZACION_EMPRESA);
+            stmt.setInt(1, idRequerimientoPresupuesto);
+            stmt.setInt(2, idRequerimientoCompra);
+            rs = stmt.executeQuery();
+
+            return rs.next() ? mapCotizacionEmpresa(rs) : null;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
@@ -901,14 +988,6 @@ public class BusquedaRequerimientoCompraServiceImpl {
         presupuesto.setDescripcionPrestador(
                 getString(rs, "descripcion_prestador")
         );
-        presupuesto.setEmpresaCuit(getString(rs, "empresa_cuit"));
-        presupuesto.setEmpresaSucursal(
-                getString(rs, "empresa_sucursal")
-        );
-        presupuesto.setDescripcionEmpresa(
-                getString(rs, "descripcion_empresa")
-        );
-
         if (hasColumn(rs, "alta_fecha")) {
             presupuesto.setAltaFecha(rs.getTimestamp("alta_fecha"));
         }
@@ -920,6 +999,23 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
 
         presupuesto.setBajaUsr(getString(rs, "baja_usr"));
+        return presupuesto;
+    }
+
+    private RequerimientoCompraPresupuesto mapCotizacionEmpresa(ResultSet rs)
+            throws Exception {
+
+        RequerimientoCompraPresupuesto presupuesto =
+                mapPresupuesto(rs);
+
+        presupuesto.setEmpresaCuit(getString(rs, "empresa_cuit"));
+        presupuesto.setEmpresaSucursal(
+                getString(rs, "empresa_sucursal")
+        );
+        presupuesto.setDescripcionEmpresa(
+                getString(rs, "descripcion_empresa")
+        );
+
         return presupuesto;
     }
 

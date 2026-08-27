@@ -66,6 +66,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String BUSQUEDA_REQUERIMIENTOS_COMPRA =
             "BUSQUEDA_REQUERIMIENTOS_COMPRA";
 
+    public static final String BUSQUEDA_EMPRESAS_COTIZACION =
+            "BUSQUEDA_EMPRESAS_COTIZACION";
+
     public static final String FILTRO_REQUERIMIENTOS_COMPRA =
             "FILTRO_REQUERIMIENTOS_COMPRA";
 

@@ -1,9 +1,9 @@
 package ar.com.ospim.compras.requerimientos.action;
 
-import ar.com.ospim.afiliados.WebKeysAfiliados;
 import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.global.beans.Empresa;
-import ar.com.ospim.global.services.EmpresaServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.kernel.log.Log;
@@ -25,7 +25,7 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 /**
- * Adaptador de búsqueda del padrón legacy de Empresas para Compras.
+ * Búsqueda acotada de Empresas para cotizaciones internas de Compras.
  */
 public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
 
@@ -45,6 +45,17 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
 
         validarPermiso(
                 PortalUtil.getUser(renderRequest)
+        );
+
+        int idRequerimientoCompra =
+                ParamUtil.getInteger(
+                        renderRequest,
+                        WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
+                        0
+                );
+
+        validarRequerimientoInterno(
+                idRequerimientoCompra
         );
 
         boolean buscar =
@@ -110,11 +121,12 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
             } else {
                 try {
                     List<Empresa> empresas =
-                            EmpresaServiceUtil.getEmpleadores(
+                            BusquedaRequerimientoCompraServiceUtil
+                                    .buscarEmpresasCotizacion(
                                     cuit,
                                     descripcion,
                                     sucursal,
-                                    0
+                                    MAX_RESULTADOS
                             );
 
                     if (empresas == null) {
@@ -122,22 +134,8 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
                                 "No se pudo consultar el padrón de empleadores.";
 
                     } else {
-                        for (int i = 0; i < empresas.size(); i++) {
-                            Empresa empresa = empresas.get(i);
-
-                            if (empresa == null
-                                    || empresa.getBaja_fecha() != null) {
-
-                                continue;
-                            }
-
-                            if (resultados.size() >= MAX_RESULTADOS) {
-                                limitada = true;
-                                break;
-                            }
-
-                            resultados.add(empresa);
-                        }
+                        resultados.addAll(empresas);
+                        limitada = resultados.size() >= MAX_RESULTADOS;
                     }
 
                 } catch (Exception e) {
@@ -154,7 +152,7 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
         }
 
         renderRequest.setAttribute(
-                WebKeysAfiliados.BUSQUEDA_EMPLEADORES,
+                WebKeysCompras.BUSQUEDA_EMPRESAS_COTIZACION,
                 resultados
         );
 
@@ -176,6 +174,32 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
         return mapping.findForward(
                 "portlet.compras.empresas.result.search"
         );
+    }
+
+    private void validarRequerimientoInterno(
+            int idRequerimientoCompra) throws Exception {
+
+        if (idRequerimientoCompra <= 0) {
+            throw new Exception(
+                    "Debe informar el requerimiento de compra."
+            );
+        }
+
+        RequerimientoCompra requerimiento =
+                BusquedaRequerimientoCompraServiceUtil
+                        .getRequerimientoCompra(
+                                idRequerimientoCompra
+                        );
+
+        if (requerimiento == null
+                || !requerimiento.esSectorSinCotizacionPrestador()
+                || !requerimiento.puedeAdministrarPresupuestos()) {
+
+            throw new Exception(
+                    "El requerimiento informado no admite "
+                            + "cotizaciones de Empresas."
+            );
+        }
     }
 
     private void validarPermiso(User user) throws Exception {

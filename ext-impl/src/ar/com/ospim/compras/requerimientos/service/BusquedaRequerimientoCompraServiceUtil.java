@@ -2,6 +2,7 @@ package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.*;
+import ar.com.ospim.global.beans.Empresa;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -349,6 +350,20 @@ public class BusquedaRequerimientoCompraServiceUtil {
         );
     }
 
+    public static List<Empresa> buscarEmpresasCotizacion(
+            String cuit,
+            String descripcion,
+            String sucursal,
+            int limite) throws Exception {
+
+        return getInstance().buscarEmpresasCotizacion(
+                cuit,
+                descripcion,
+                sucursal,
+                limite
+        );
+    }
+
     public static List<RequerimientoCompraPresupuesto> listarPresupuestos(
             int idRequerimientoCompra) throws Exception {
 
@@ -356,16 +371,12 @@ public class BusquedaRequerimientoCompraServiceUtil {
         return getInstance().listarPresupuestos(idRequerimientoCompra);
     }
 
-    public static List<RequerimientoCompraPresupuesto> listarPresupuestos(
-            int idRequerimientoCompra,
-            int tipoDocumento) throws Exception {
+    public static List<RequerimientoCompraPresupuesto> listarCotizacionesEmpresa(
+            int idRequerimientoCompra) throws Exception {
 
         validarIdRequerimiento(idRequerimientoCompra);
-        validarTipoDocumentoPresupuesto(tipoDocumento);
-
-        return getInstance().listarPresupuestos(
-                idRequerimientoCompra,
-                tipoDocumento
+        return getInstance().listarCotizacionesEmpresa(
+                idRequerimientoCompra
         );
     }
 
@@ -387,10 +398,9 @@ public class BusquedaRequerimientoCompraServiceUtil {
         );
     }
 
-    public static RequerimientoCompraPresupuesto getPresupuesto(
+    public static RequerimientoCompraPresupuesto getCotizacionEmpresa(
             int idRequerimientoPresupuesto,
-            int idRequerimientoCompra,
-            int tipoDocumento) throws Exception {
+            int idRequerimientoCompra) throws Exception {
 
         if (idRequerimientoPresupuesto <= 0) {
             throw new Exception(
@@ -399,12 +409,10 @@ public class BusquedaRequerimientoCompraServiceUtil {
         }
 
         validarIdRequerimiento(idRequerimientoCompra);
-        validarTipoDocumentoPresupuesto(tipoDocumento);
 
-        return getInstance().getPresupuesto(
+        return getInstance().getCotizacionEmpresa(
                 idRequerimientoPresupuesto,
-                idRequerimientoCompra,
-                tipoDocumento
+                idRequerimientoCompra
         );
     }
 
@@ -460,22 +468,6 @@ public class BusquedaRequerimientoCompraServiceUtil {
         if (idRequerimientoCompra <= 0) {
             throw new Exception(
                     "Debe informar el requerimiento de compra."
-            );
-        }
-    }
-
-    private static void validarTipoDocumentoPresupuesto(
-            int tipoDocumento) throws Exception {
-
-        if (tipoDocumento
-                != RequerimientoCompraPresupuesto
-                        .TIPO_DOCUMENTO_PRESUPUESTO
-                && tipoDocumento
-                != RequerimientoCompraPresupuesto
-                        .TIPO_DOCUMENTO_COTIZACION_EMPRESA) {
-
-            throw new Exception(
-                    "El tipo de documento del presupuesto no es válido."
             );
         }
     }

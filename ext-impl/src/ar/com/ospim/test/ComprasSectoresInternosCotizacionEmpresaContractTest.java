@@ -56,6 +56,9 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
         String sql = leer(
                 "ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql"
         );
+        String migracion = leer(
+                "docs/sql/20260827_aislar_cotizaciones_empresas_compras.sql"
+        );
         String acciones = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
                         + "requerimiento_compra_acciones_componente.jsp"
@@ -187,14 +190,14 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
                 "TIPO_DOCUMENTO_COTIZACION_EMPRESA = 3"
         );
         assertContains(
-                "empresa resuelta desde padron",
+                "empresa resuelta desde consulta Compras",
                 helper,
-                "EmpresaServiceUtil.getEmpleadores("
+                ".buscarEmpresasCotizacion("
         );
-        assertContains(
-                "empresa activa",
+        assertNotContains(
+                "helper desacoplado de EmpresaServiceUtil",
                 helper,
-                "encontrada.getBaja_fecha() != null"
+                "EmpresaServiceUtil"
         );
         assertContains(
                 "snapshot canonico",
@@ -204,7 +207,7 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
         assertContains(
                 "identidad de empresa recibida sin razon social",
                 upload,
-                "nombreParametro\n                                            + \"_empresa_sucursal\""
+                "\"_empresa_sucursal\""
         );
         assertNotContains(
                 "razon social del navegador no se recibe",
@@ -228,24 +231,34 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
         );
 
         assertContains(
-                "consulta filtra tipo",
+                "consulta Prestador filtra tipo uno",
                 busquedaImpl,
-                "+ \"AND rp.tipo_documento = ? \""
+                "+ \"AND rp.tipo_documento = 1 \""
         );
         assertContains(
-                "consulta mapea empresa",
+                "consulta Empresa filtra tipo tres",
                 busquedaImpl,
-                "setEmpresaCuit(getString(rs, \"empresa_cuit\"))"
+                "+ \"AND rp.tipo_documento = 3 \""
         );
         assertContains(
-                "overload controlado",
+                "mapeo Empresa separado",
+                busquedaImpl,
+                "mapCotizacionEmpresa(ResultSet rs)"
+        );
+        assertContains(
+                "lectura Empresa explicita",
                 busquedaUtil,
-                "validarTipoDocumentoPresupuesto(tipoDocumento)"
+                "listarCotizacionesEmpresa("
         );
         assertContains(
                 "firma JDBC incluye SMALLINT",
                 edicionImpl,
                 "stmt.setShort(3, presupuesto.getTipoDocumento().shortValue())"
+        );
+        assertContains(
+                "Prestador conserva firma JDBC historica",
+                edicionImpl,
+                "SQL_REGISTRAR_PRESUPUESTO"
         );
 
         assertContains(
@@ -281,12 +294,12 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
         assertContains(
                 "prestador sigue en A COTIZAR",
                 sql,
-                "IF v_estado_requerimiento <> 2 THEN"
+                "OR v_estado_requerimiento <> 2"
         );
         assertContains(
                 "Empresa queda en PENDIENTE",
                 sql,
-                "IF v_estado_requerimiento <> 1 THEN"
+                "OR v_estado_requerimiento <> 1"
         );
         assertContains(
                 "SQL bloquea sectores externos para tipo 3",
@@ -299,9 +312,34 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
                 "rp.empresa_sucursal = btrim(p_empresa_sucursal)"
         );
         assertContains(
+                "busqueda exclusiva de Compras",
+                sql,
+                "CREATE FUNCTION compras.buscar_empresas_cotizacion("
+        );
+        assertContains(
+                "busqueda consulta tabla externa de solo lectura",
+                sql,
+                "FROM informacion_afip.empresa e"
+        );
+        assertNotContains(
+                "canonico no depende de buscar_empleadores",
+                sql,
+                "buscar_empleadores"
+        );
+        assertNotContains(
+                "canonico no depende de return_empleadores",
+                sql,
+                "return_empleadores"
+        );
+        assertContains(
                 "flujo prestador conserva ENVIADO",
                 sql,
                 "v_estado_envio <> 'ENVIADO'"
+        );
+        assertContains(
+                "firma SQL historica de Prestador sigue disponible",
+                sql,
+                "p_id_prestador INTEGER,\n    p_dl_group_id BIGINT"
         );
         assertContains(
                 "flujo prestador conserva COTIZADO",
@@ -340,9 +378,34 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
                 "presupuesto.isCotizacionEmpresa()"
         );
         assertContains(
-                "buscador usa infraestructura legacy",
+                "buscador usa Service de Compras",
                 buscador,
-                "EmpresaServiceUtil.getEmpleadores("
+                ".buscarEmpresasCotizacion("
+        );
+        assertNotContains(
+                "persistencia de Compras desacoplada de EmpresaServiceUtil",
+                busquedaImpl,
+                "EmpresaServiceUtil"
+        );
+        assertNotContains(
+                "buscador desacoplado de EmpresaServiceUtil",
+                buscador,
+                "EmpresaServiceUtil"
+        );
+        assertContains(
+                "endpoint valida requerimiento interno",
+                buscador,
+                "validarRequerimientoInterno("
+        );
+        assertContains(
+                "popup conserva contexto del requerimiento",
+                documentos,
+                "WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA"
+        );
+        assertContains(
+                "JavaScript Empresa queda en rama interna",
+                documentos,
+                "if (cotizacionEmpresaPresupuestos)"
         );
         assertContains(
                 "buscador limita CUIT funcional",
@@ -363,6 +426,67 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
                 "tile de busqueda",
                 tiles,
                 "portlet.compras.empresas.result.search"
+        );
+
+        assertContains(
+                "migracion agrega columnas propias de Compras",
+                migracion,
+                "ADD COLUMN IF NOT EXISTS empresa_cuit VARCHAR(11)"
+        );
+        assertContains(
+                "migracion crea overload tipo tres",
+                migracion,
+                "p_tipo_documento SMALLINT"
+        );
+        assertContains(
+                "migracion consulta Empresa en modo lectura",
+                migracion,
+                "FROM informacion_afip.empresa e"
+        );
+        assertContains(
+                "migracion conserva baja Empresa separada",
+                migracion,
+                "baja_cotizacion_empresa_requerimiento("
+        );
+        assertNotContains(
+                "migracion no modifica buscar_empleadores",
+                migracion,
+                "buscar_empleadores"
+        );
+        assertNotContains(
+                "migracion no modifica return_empleadores",
+                migracion,
+                "return_empleadores"
+        );
+        assertNotContains(
+                "migracion no altera tabla externa",
+                migracion,
+                "ALTER TABLE informacion_afip.empresa"
+        );
+        assertNotContains(
+                "migracion no escribe tabla externa",
+                migracion,
+                "UPDATE informacion_afip.empresa"
+        );
+        assertNotContains(
+                "migracion no inserta en tabla externa",
+                migracion,
+                "INSERT INTO informacion_afip.empresa"
+        );
+        assertNotContains(
+                "migracion no elimina de tabla externa",
+                migracion,
+                "DELETE FROM informacion_afip.empresa"
+        );
+        assertNotContains(
+                "migracion no crea indices externos",
+                migracion,
+                "ON informacion_afip.empresa"
+        );
+        assertNotContains(
+                "migracion no reemplaza firma Prestador",
+                migracion,
+                "CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_presupuesto"
         );
     }
 

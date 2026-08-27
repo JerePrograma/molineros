@@ -1285,6 +1285,75 @@ public class EditarRequerimientoCompraHelper {
         }
     }
 
+    public boolean darDeBajaCotizacionEmpresa(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra,
+            String usuario) throws Exception {
+
+        try {
+            if (idRequerimientoPresupuesto <= 0
+                    || idRequerimientoCompra <= 0) {
+
+                throw errorUsuario(
+                        "Debe informar la cotización de Empresa "
+                                + "y su requerimiento."
+                );
+            }
+
+            return persistence.darDeBajaCotizacionEmpresa(
+                    idRequerimientoPresupuesto,
+                    idRequerimientoCompra,
+                    normalizarUsuario(usuario)
+            );
+
+        } catch (Exception e) {
+            throw manejarErrorOperacion(
+                    "quitar la cotización de Empresa",
+                    "No se pudo quitar la cotización de Empresa. "
+                            + "Actualice la pantalla e intente nuevamente.",
+                    e,
+                    "idRequerimientoPresupuesto="
+                            + idRequerimientoPresupuesto
+                            + ", idRequerimiento="
+                            + idRequerimientoCompra
+                            + ", usuario=" + usuario
+            );
+        }
+    }
+
+    public boolean reactivarCotizacionEmpresa(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra) throws Exception {
+
+        try {
+            if (idRequerimientoPresupuesto <= 0
+                    || idRequerimientoCompra <= 0) {
+
+                throw errorUsuario(
+                        "Debe informar la cotización de Empresa "
+                                + "y su requerimiento."
+                );
+            }
+
+            return persistence.reactivarCotizacionEmpresa(
+                    idRequerimientoPresupuesto,
+                    idRequerimientoCompra
+            );
+
+        } catch (Exception e) {
+            throw manejarErrorOperacion(
+                    "reactivar la cotización de Empresa",
+                    "No se pudo reactivar la cotización de Empresa. "
+                            + "Actualice la pantalla e intente nuevamente.",
+                    e,
+                    "idRequerimientoPresupuesto="
+                            + idRequerimientoPresupuesto
+                            + ", idRequerimiento="
+                            + idRequerimientoCompra
+            );
+        }
+    }
+
     public void prepararRequerimientoParaGuardar(
             RequerimientoCompra requerimiento) throws Exception {
 
@@ -2823,16 +2892,21 @@ private void prepararDetalleParaGuardar(
             return "presupuesto=null, usuario=" + usuario;
         }
 
-        return "idRequerimiento="
+        String contexto = "idRequerimiento="
                 + presupuesto.getIdRequerimiento()
                 + ", tipoDocumento="
                 + presupuesto.getTipoDocumento()
                 + ", idPrestador="
-                + presupuesto.getIdPrestador()
-                + ", empresaCuit="
-                + presupuesto.getEmpresaCuit()
-                + ", empresaSucursal="
-                + presupuesto.getEmpresaSucursal()
+                + presupuesto.getIdPrestador();
+
+        if (presupuesto.isCotizacionEmpresa()) {
+            contexto += ", empresaCuit="
+                    + presupuesto.getEmpresaCuit()
+                    + ", empresaSucursal="
+                    + presupuesto.getEmpresaSucursal();
+        }
+
+        return contexto
                 + ", dlFileEntryId="
                 + presupuesto.getDlFileEntryId()
                 + ", usuario=" + usuario;

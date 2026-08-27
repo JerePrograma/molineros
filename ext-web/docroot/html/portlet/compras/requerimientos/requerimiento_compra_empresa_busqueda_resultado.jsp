@@ -23,7 +23,7 @@ private String jsEmpresaCotizacion(Object value) {
 <%
 List<Empresa> empresas =
         (List<Empresa>) renderRequest.getAttribute(
-                WebKeysAfiliados.BUSQUEDA_EMPLEADORES
+                WebKeysCompras.BUSQUEDA_EMPRESAS_COTIZACION
         );
 
 if (empresas == null) {
@@ -58,6 +58,13 @@ String sucursalBusquedaEmpresa =
 String descripcionBusquedaEmpresa =
         ParamUtil.getString(renderRequest, "descripcion", "");
 
+int idRequerimientoCompraEmpresa =
+        ParamUtil.getInteger(
+                renderRequest,
+                WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
+                0
+        );
+
 PortletURL buscarEmpresasURL =
         renderResponse.createRenderURL();
 
@@ -68,6 +75,11 @@ buscarEmpresasURL.setWindowState(
 buscarEmpresasURL.setParameter(
         "struts_action",
         "/compras/buscar_empresas_cotizacion"
+);
+
+buscarEmpresasURL.setParameter(
+        WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
+        String.valueOf(idRequerimientoCompraEmpresa)
 );
 %>
 

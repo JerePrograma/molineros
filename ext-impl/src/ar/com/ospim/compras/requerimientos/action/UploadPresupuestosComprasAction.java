@@ -139,10 +139,11 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                             idRequerimientoCompra
                     );
 
-            validarContextoEdicion(
-                    idRequerimientoCompra,
-                    modo
-            );
+            RequerimientoCompra requerimiento =
+                    validarContextoEdicion(
+                            idRequerimientoCompra,
+                            modo
+                    );
 
             ServiceContext serviceContext =
                     ServiceContextFactory.getInstance(
@@ -166,7 +167,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 List<PresupuestoCompraHelper.PresupuestoEntrada> entradas =
                         leerEntradasPresupuesto(
                                 uploadReq,
-                                cantidad
+                                cantidad,
+                                requerimiento
+                                        .esSectorSinCotizacionPrestador()
                         );
 
                 int guardados =
@@ -440,7 +443,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
     private List<PresupuestoCompraHelper.PresupuestoEntrada>
             leerEntradasPresupuesto(
                     UploadPortletRequest uploadReq,
-                    int cantidad) {
+                    int cantidad,
+                    boolean cotizacionEmpresa) {
 
         List<PresupuestoCompraHelper.PresupuestoEntrada> entradas =
                 new ArrayList<PresupuestoCompraHelper.PresupuestoEntrada>();
@@ -452,41 +456,57 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             String nombreParametro =
                     "presupuesto_" + i;
 
-            entradas.add(
-                    new PresupuestoCompraHelper.PresupuestoEntrada(
-                            i,
-                            uploadReq.getFile(
-                                    nombreParametro
-                            ),
-                            uploadReq.getFileName(
-                                    nombreParametro
-                            ),
-                            ParamUtil.getInteger(
-                                    uploadReq,
-                                    nombreParametro
-                                            + "_id_prestador",
-                                    0
-                            ),
-                            ParamUtil.getString(
-                                    uploadReq,
-                                    nombreParametro
-                                            + "_empresa_cuit",
-                                    null
-                            ),
-                            ParamUtil.getString(
-                                    uploadReq,
-                                    nombreParametro
-                                            + "_empresa_sucursal",
-                                    null
-                            )
-                    )
-            );
+            if (cotizacionEmpresa) {
+                entradas.add(
+                        new PresupuestoCompraHelper.PresupuestoEntrada(
+                                i,
+                                uploadReq.getFile(
+                                        nombreParametro
+                                ),
+                                uploadReq.getFileName(
+                                        nombreParametro
+                                ),
+                                0,
+                                ParamUtil.getString(
+                                        uploadReq,
+                                        nombreParametro
+                                                + "_empresa_cuit",
+                                        null
+                                ),
+                                ParamUtil.getString(
+                                        uploadReq,
+                                        nombreParametro
+                                                + "_empresa_sucursal",
+                                        null
+                                )
+                        )
+                );
+
+            } else {
+                entradas.add(
+                        new PresupuestoCompraHelper.PresupuestoEntrada(
+                                i,
+                                uploadReq.getFile(
+                                        nombreParametro
+                                ),
+                                uploadReq.getFileName(
+                                        nombreParametro
+                                ),
+                                ParamUtil.getInteger(
+                                        uploadReq,
+                                        nombreParametro
+                                                + "_id_prestador",
+                                        0
+                                )
+                        )
+                );
+            }
         }
 
         return entradas;
     }
 
-    private void validarContextoEdicion(
+    private RequerimientoCompra validarContextoEdicion(
             int idRequerimientoCompra,
             String modo) throws Exception {
 
@@ -506,6 +526,23 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                             + "en modo de solo lectura."
             );
         }
+
+        RequerimientoCompra requerimiento =
+                BusquedaRequerimientoCompraServiceUtil
+                        .getRequerimientoCompra(
+                                idRequerimientoCompra
+                        );
+
+        if (requerimiento == null
+                || !requerimiento.puedeAdministrarPresupuestos()) {
+
+            throw new Exception(
+                    "El requerimiento no se encuentra disponible "
+                            + "para administrar cotizaciones."
+            );
+        }
+
+        return requerimiento;
     }
 
     private void cargarEstadoPrestadoresPendientesNotificacion(

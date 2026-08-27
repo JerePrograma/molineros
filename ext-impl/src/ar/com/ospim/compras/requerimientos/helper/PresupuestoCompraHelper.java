@@ -7,7 +7,6 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.global.beans.Empresa;
-import ar.com.ospim.global.services.EmpresaServiceUtil;
 import ar.com.ospim.util.CuilUtils;
 
 import com.liferay.documentlibrary.DuplicateFileException;
@@ -168,17 +167,21 @@ public final class PresupuestoCompraHelper {
                 requerimiento
         );
 
+        boolean cotizacionEmpresa =
+                requerimiento.esSectorSinCotizacionPrestador();
+
         RequerimientoCompraPresupuesto presupuesto =
-                BusquedaRequerimientoCompraServiceUtil
-                        .getPresupuesto(
-                                idRequerimientoPresupuesto,
-                                idRequerimientoCompra,
-                                requerimiento.esSectorSinCotizacionPrestador()
-                                        ? RequerimientoCompraPresupuesto
-                                                .TIPO_DOCUMENTO_COTIZACION_EMPRESA
-                                        : RequerimientoCompraPresupuesto
-                                                .TIPO_DOCUMENTO_PRESUPUESTO
-                        );
+                cotizacionEmpresa
+                        ? BusquedaRequerimientoCompraServiceUtil
+                                .getCotizacionEmpresa(
+                                        idRequerimientoPresupuesto,
+                                        idRequerimientoCompra
+                                )
+                        : BusquedaRequerimientoCompraServiceUtil
+                                .getPresupuesto(
+                                        idRequerimientoPresupuesto,
+                                        idRequerimientoCompra
+                                );
 
         if (presupuesto == null) {
             throw new Exception(
@@ -213,7 +216,8 @@ public final class PresupuestoCompraHelper {
         );
 
         boolean asociacionDadaDeBaja =
-                requerimientoHelper.darDeBajaPresupuesto(
+                darDeBajaAsociacion(
+                        presupuesto,
                         idRequerimientoPresupuesto,
                         idRequerimientoCompra,
                         normalizarUsuario(usuario)
@@ -235,7 +239,8 @@ public final class PresupuestoCompraHelper {
         } catch (Exception deleteError) {
             try {
                 boolean reactivada =
-                        requerimientoHelper.reactivarPresupuesto(
+                        reactivarAsociacion(
+                                presupuesto,
                                 idRequerimientoPresupuesto,
                                 idRequerimientoCompra
                         );
@@ -448,18 +453,6 @@ public final class PresupuestoCompraHelper {
                 );
 
             } else {
-                if (!WebKeysCompras.isEmpty(entrada.getEmpresaCuit())
-                        || !WebKeysCompras.isEmpty(
-                                entrada.getEmpresaSucursal()
-                        )) {
-
-                    throw new Exception(
-                            "El presupuesto del prestador "
-                                    + (i + 1)
-                                    + " no puede asociarse a una empresa."
-                    );
-                }
-
                 if (entrada.getIdPrestador() <= 0) {
                     throw new Exception(
                             "Debe seleccionar el prestador "
@@ -644,7 +637,8 @@ public final class PresupuestoCompraHelper {
 
             try {
                 asociacionDadaDeBaja =
-                        requerimientoHelper.darDeBajaPresupuesto(
+                        darDeBajaAsociacion(
+                                creado.getAsociacion(),
                                 idAsociacion.intValue(),
                                 idRequerimientoCompra,
                                 usuario
@@ -683,7 +677,8 @@ public final class PresupuestoCompraHelper {
                 );
 
                 try {
-                    requerimientoHelper.reactivarPresupuesto(
+                    reactivarAsociacion(
+                            creado.getAsociacion(),
                             idAsociacion.intValue(),
                             idRequerimientoCompra
                     );
@@ -764,25 +759,28 @@ public final class PresupuestoCompraHelper {
                 )
         );
 
-        asociacion.setIdPrestador(
-                presupuesto.getIdPrestador() > 0
-                        ? Integer.valueOf(
-                                presupuesto.getIdPrestador()
-                        )
-                        : null
-        );
+        if (presupuesto.getTipoDocumento()
+                == RequerimientoCompraPresupuesto
+                        .TIPO_DOCUMENTO_COTIZACION_EMPRESA) {
 
-        asociacion.setEmpresaCuit(
-                presupuesto.getEmpresaCuit()
-        );
+            asociacion.setIdPrestador(null);
+            asociacion.setEmpresaCuit(
+                    presupuesto.getEmpresaCuit()
+            );
+            asociacion.setEmpresaSucursal(
+                    presupuesto.getEmpresaSucursal()
+            );
+            asociacion.setDescripcionEmpresa(
+                    presupuesto.getDescripcionEmpresa()
+            );
 
-        asociacion.setEmpresaSucursal(
-                presupuesto.getEmpresaSucursal()
-        );
-
-        asociacion.setDescripcionEmpresa(
-                presupuesto.getDescripcionEmpresa()
-        );
+        } else {
+            asociacion.setIdPrestador(
+                    Integer.valueOf(
+                            presupuesto.getIdPrestador()
+                    )
+            );
+        }
 
         asociacion.setDlGroupId(
                 Long.valueOf(
@@ -818,9 +816,14 @@ public final class PresupuestoCompraHelper {
                 documento.getTitulo()
         );
 
-        asociacion.setDescripcionPrestador(
-                presupuesto.getDescripcionPrestador()
-        );
+        if (presupuesto.getTipoDocumento()
+                == RequerimientoCompraPresupuesto
+                        .TIPO_DOCUMENTO_PRESUPUESTO) {
+
+            asociacion.setDescripcionPrestador(
+                    presupuesto.getDescripcionPrestador()
+            );
+        }
 
         int id =
                 requerimientoHelper.registrarPresupuesto(
@@ -934,11 +937,12 @@ public final class PresupuestoCompraHelper {
         }
 
         List<Empresa> empresas =
-                EmpresaServiceUtil.getEmpleadores(
+                BusquedaRequerimientoCompraServiceUtil
+                        .buscarEmpresasCotizacion(
                         cuit,
                         null,
                         sucursal,
-                        0
+                        2
                 );
 
         if (empresas == null) {
@@ -976,7 +980,6 @@ public final class PresupuestoCompraHelper {
         }
 
         if (encontrada == null
-                || encontrada.getBaja_fecha() != null
                 || WebKeysCompras.isEmpty(
                         encontrada.getRazon_soc()
                 )
@@ -989,6 +992,49 @@ public final class PresupuestoCompraHelper {
         }
 
         return encontrada;
+    }
+
+    private boolean darDeBajaAsociacion(
+            RequerimientoCompraPresupuesto presupuesto,
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra,
+            String usuario) throws Exception {
+
+        if (presupuesto != null
+                && presupuesto.isCotizacionEmpresa()) {
+
+            return requerimientoHelper.darDeBajaCotizacionEmpresa(
+                    idRequerimientoPresupuesto,
+                    idRequerimientoCompra,
+                    usuario
+            );
+        }
+
+        return requerimientoHelper.darDeBajaPresupuesto(
+                idRequerimientoPresupuesto,
+                idRequerimientoCompra,
+                usuario
+        );
+    }
+
+    private boolean reactivarAsociacion(
+            RequerimientoCompraPresupuesto presupuesto,
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra) throws Exception {
+
+        if (presupuesto != null
+                && presupuesto.isCotizacionEmpresa()) {
+
+            return requerimientoHelper.reactivarCotizacionEmpresa(
+                    idRequerimientoPresupuesto,
+                    idRequerimientoCompra
+            );
+        }
+
+        return requerimientoHelper.reactivarPresupuesto(
+                idRequerimientoPresupuesto,
+                idRequerimientoCompra
+        );
     }
 
     private void validarIdentidadAsociacion(

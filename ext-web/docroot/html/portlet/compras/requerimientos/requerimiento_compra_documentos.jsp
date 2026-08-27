@@ -188,17 +188,28 @@ uploadPresupuestosURL.setParameter(
         "/compras/upload_presupuestos_requerimiento"
 );
 
-PortletURL buscarEmpresasCotizacionURL =
-        renderResponse.createRenderURL();
+PortletURL buscarEmpresasCotizacionURL = null;
 
-buscarEmpresasCotizacionURL.setWindowState(
-        LiferayWindowState.EXCLUSIVE
-);
+if (cotizacionEmpresaPresupuestos) {
+    buscarEmpresasCotizacionURL =
+            renderResponse.createRenderURL();
 
-buscarEmpresasCotizacionURL.setParameter(
-        "struts_action",
-        "/compras/buscar_empresas_cotizacion"
-);
+    buscarEmpresasCotizacionURL.setWindowState(
+            LiferayWindowState.EXCLUSIVE
+    );
+
+    buscarEmpresasCotizacionURL.setParameter(
+            "struts_action",
+            "/compras/buscar_empresas_cotizacion"
+    );
+
+    buscarEmpresasCotizacionURL.setParameter(
+            WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
+            String.valueOf(
+                    idRequerimientoCompraPresupuestos
+            )
+    );
+}
 
 String modoRetornoPresupuestos =
         soloLecturaPresupuestos
@@ -251,7 +262,7 @@ boolean msgPresupuestoBorrado =
     }
 
     #<portlet:namespace />tabla_carga_presupuestos
-    td.presupuesto-campo-prestador {
+    td.presupuesto-campo-contraparte {
         width: 40%;
     }
 
@@ -271,10 +282,12 @@ boolean msgPresupuestoBorrado =
         width: 98%;
     }
 
-    #<portlet:namespace />tabla_carga_presupuestos
-    .presupuesto-empresa-seleccionada {
-        margin-top: 4px;
-    }
+    <% if (cotizacionEmpresaPresupuestos) { %>
+        #<portlet:namespace />tabla_carga_presupuestos
+        .presupuesto-empresa-seleccionada {
+            margin-top: 4px;
+        }
+    <% } %>
 
     #<portlet:namespace />tabla_carga_presupuestos
     input.presupuesto-archivo {
@@ -842,6 +855,7 @@ boolean msgPresupuestoBorrado =
 </form>
 
 <script type="text/javascript">
+    <% if (cotizacionEmpresaPresupuestos) { %>
     var <portlet:namespace />popupEmpresaCotizacion = null;
     var <portlet:namespace />filaEmpresaCotizacion = null;
 
@@ -900,6 +914,7 @@ boolean msgPresupuestoBorrado =
 
         return false;
     }
+    <% } %>
 
     function <portlet:namespace />reindexarFilasPresupuesto() {
         var rows =
@@ -1175,7 +1190,7 @@ boolean msgPresupuestoBorrado =
 
         row.append(
                 jQuery(
-                        '<td class="presupuesto-campo-prestador"></td>'
+                        '<td class="presupuesto-campo-contraparte"></td>'
                 ).append(contraparte)
         );
 

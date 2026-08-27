@@ -63,6 +63,10 @@ if (reqPresupuestos == null) {
             );
 }
 
+boolean cotizacionEmpresaPresupuestos =
+        reqPresupuestos != null
+        && reqPresupuestos.esSectorSinCotizacionPrestador();
+
 int idRequerimientoCompraPresupuestos =
         reqPresupuestos != null
                 ? reqPresupuestos.getIdRequerimientoCompra()
@@ -140,8 +144,7 @@ List<String> headerNames =
         new ArrayList<String>();
 headerNames.add("Archivo");
 headerNames.add(
-        reqPresupuestos != null
-                && reqPresupuestos.esSectorSinCotizacionPrestador()
+        cotizacionEmpresaPresupuestos
                         ? "Empresa"
                         : "Prestador"
 );
@@ -150,9 +153,7 @@ headerNames.add("Eliminar");
 
 String mensajeSinResultados =
         idRequerimientoCompraPresupuestos > 0
-                ? reqPresupuestos != null
-                        && reqPresupuestos
-                                .esSectorSinCotizacionPrestador()
+                ? cotizacionEmpresaPresupuestos
                                 ? "No hay cotizaciones de empresas asociadas al requerimiento."
                                 : "No hay presupuestos asociados al requerimiento."
                 : "No se informó el requerimiento de compra.";
@@ -229,6 +230,12 @@ try {
             continue;
         }
 
+        if (cotizacionEmpresaPresupuestos
+                != presupuesto.isCotizacionEmpresa()) {
+
+            continue;
+        }
+
         int idRequerimientoPresupuesto =
                 presupuesto
                         .getIdRequerimientoPresupuesto()
@@ -258,7 +265,7 @@ try {
                 HtmlUtil.escape(archivoVisible)
         );
 
-        if (presupuesto.isCotizacionEmpresa()) {
+        if (cotizacionEmpresaPresupuestos) {
             StringBuilder empresaVisible =
                     new StringBuilder();
 

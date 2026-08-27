@@ -36,6 +36,9 @@ public class EditarRequerimientoCompraServiceImpl {
             "{call compras.cambiar_estado_requerimiento(?,?,?)}";
 
     private static final String SQL_REGISTRAR_PRESUPUESTO =
+            "{ ? = call compras.registrar_requerimiento_presupuesto(?,?,?,?,?,?,?,?,?,?,?) }";
+
+    private static final String SQL_REGISTRAR_COTIZACION_EMPRESA =
             "{ ? = call compras.registrar_requerimiento_presupuesto(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_REGISTRAR_ORDEN_MEDICA =
@@ -46,6 +49,12 @@ public class EditarRequerimientoCompraServiceImpl {
 
     private static final String SQL_REACTIVAR_PRESUPUESTO =
             "{ ? = call compras.reactivar_requerimiento_presupuesto(?,?) }";
+
+    private static final String SQL_BAJA_COTIZACION_EMPRESA =
+            "{ ? = call compras.baja_cotizacion_empresa_requerimiento(?,?,?) }";
+
+    private static final String SQL_REACTIVAR_COTIZACION_EMPRESA =
+            "{ ? = call compras.reactivar_cotizacion_empresa_requerimiento(?,?) }";
 
     private static final String SQL_CONFIRMAR_ENVIO_A_COTIZAR =
             "{ ? = call compras.confirmar_envio_a_cotizar(?,?) }";
@@ -357,6 +366,13 @@ public class EditarRequerimientoCompraServiceImpl {
             RequerimientoCompraPresupuesto presupuesto,
             String usuario) throws Exception {
 
+        if (presupuesto.isCotizacionEmpresa()) {
+            return registrarCotizacionEmpresa(
+                    presupuesto,
+                    usuario
+            );
+        }
+
         Connection con = null;
         CallableStatement stmt = null;
 
@@ -365,8 +381,41 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt = con.prepareCall(SQL_REGISTRAR_PRESUPUESTO);
             stmt.registerOutParameter(1, Types.INTEGER);
             stmt.setInt(2, presupuesto.getIdRequerimiento().intValue());
+            stmt.setInt(3, presupuesto.getIdPrestador().intValue());
+            stmt.setLong(4, presupuesto.getDlGroupId().longValue());
+            stmt.setLong(5, presupuesto.getDlFolderId().longValue());
+            stmt.setLong(6, presupuesto.getDlFileEntryId().longValue());
+            stmt.setString(7, presupuesto.getDlFileUuid());
+            stmt.setString(8, presupuesto.getNombreOriginal());
+            stmt.setString(9, presupuesto.getNombrePersistido());
+            stmt.setString(10, presupuesto.getTitulo());
+            stmt.setString(
+                    11,
+                    presupuesto.getDescripcionPrestador()
+            );
+            stmt.setString(12, usuario);
+            stmt.execute();
+
+            return stmt.getInt(1);
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    private int registrarCotizacionEmpresa(
+            RequerimientoCompraPresupuesto presupuesto,
+            String usuario) throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_REGISTRAR_COTIZACION_EMPRESA);
+            stmt.registerOutParameter(1, Types.INTEGER);
+            stmt.setInt(2, presupuesto.getIdRequerimiento().intValue());
             stmt.setShort(3, presupuesto.getTipoDocumento().shortValue());
-            setNullableInteger(stmt, 4, presupuesto.getIdPrestador());
+            stmt.setNull(4, Types.INTEGER);
             stmt.setString(5, presupuesto.getEmpresaCuit());
             stmt.setString(6, presupuesto.getEmpresaSucursal());
             stmt.setString(7, presupuesto.getDescripcionEmpresa());
@@ -377,10 +426,7 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.setString(12, presupuesto.getNombreOriginal());
             stmt.setString(13, presupuesto.getNombrePersistido());
             stmt.setString(14, presupuesto.getTitulo());
-            stmt.setString(
-                    15,
-                    presupuesto.getDescripcionPrestador()
-            );
+            stmt.setNull(15, Types.VARCHAR);
             stmt.setString(16, usuario);
             stmt.execute();
 
@@ -424,6 +470,52 @@ public class EditarRequerimientoCompraServiceImpl {
         try {
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(SQL_REACTIVAR_PRESUPUESTO);
+            stmt.registerOutParameter(1, Types.BOOLEAN);
+            stmt.setInt(2, idRequerimientoPresupuesto);
+            stmt.setInt(3, idRequerimientoCompra);
+            stmt.execute();
+
+            boolean resultado = stmt.getBoolean(1);
+            return !stmt.wasNull() && resultado;
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public boolean darDeBajaCotizacionEmpresa(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra,
+            String usuario) throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_BAJA_COTIZACION_EMPRESA);
+            stmt.registerOutParameter(1, Types.BOOLEAN);
+            stmt.setInt(2, idRequerimientoPresupuesto);
+            stmt.setInt(3, idRequerimientoCompra);
+            stmt.setString(4, usuario);
+            stmt.execute();
+
+            boolean resultado = stmt.getBoolean(1);
+            return !stmt.wasNull() && resultado;
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public boolean reactivarCotizacionEmpresa(
+            int idRequerimientoPresupuesto,
+            int idRequerimientoCompra) throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_REACTIVAR_COTIZACION_EMPRESA);
             stmt.registerOutParameter(1, Types.BOOLEAN);
             stmt.setInt(2, idRequerimientoPresupuesto);
             stmt.setInt(3, idRequerimientoCompra);
