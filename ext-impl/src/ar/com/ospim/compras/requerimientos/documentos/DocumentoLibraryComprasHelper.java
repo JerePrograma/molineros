@@ -827,7 +827,7 @@ public class DocumentoLibraryComprasHelper
         )) {
 
             throw new Exception(
-                    "Fecha de la Orden médica: "
+                    "Fecha del adjunto: "
                             + "debe informar una fecha."
             );
         }
@@ -857,7 +857,7 @@ public class DocumentoLibraryComprasHelper
                 != fecha.length()) {
 
             throw new Exception(
-                    "Fecha de la Orden médica: "
+                    "Fecha del adjunto: "
                             + "el formato no es válido."
             );
         }

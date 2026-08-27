@@ -171,6 +171,16 @@ public final class ComprasOrdenMedicaUiContractTest {
                 "coincideIdentidadAsociacionDocumento("
         );
         assertContains(
+                "helper muestra fecha del adjunto",
+                documentos,
+                "Fecha del adjunto: "
+        );
+        assertNotContains(
+                "helper no expone fecha de orden medica",
+                documentos,
+                "Fecha de la Orden médica: "
+        );
+        assertContains(
                 "descarga valida permiso DL",
                 descarga,
                 "DLFileEntryPermission.check("
