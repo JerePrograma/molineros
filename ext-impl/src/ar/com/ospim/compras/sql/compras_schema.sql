@@ -4480,7 +4480,7 @@ BEGIN
 
     IF p_fecha_documento IS NULL THEN
         RAISE EXCEPTION
-            'Debe informar la fecha de la Orden médica.';
+            'Debe informar la fecha del adjunto.';
     END IF;
 
     IF p_dl_group_id IS NULL
@@ -4492,14 +4492,14 @@ BEGIN
        OR NULLIF(btrim(p_dl_file_uuid), '') IS NULL THEN
 
         RAISE EXCEPTION
-            'La identidad del documento de Orden médica no es válida.';
+            'La identidad del adjunto no es válida.';
     END IF;
 
     IF NULLIF(btrim(p_nombre_original), '') IS NULL
        OR NULLIF(btrim(p_nombre_persistido), '') IS NULL THEN
 
         RAISE EXCEPTION
-            'Los nombres del documento de Orden médica no son válidos.';
+            'Los nombres del adjunto no son válidos.';
     END IF;
 
     /*
@@ -4558,7 +4558,7 @@ BEGIN
 
     IF v_estado_requerimiento <> 1 THEN
         RAISE EXCEPTION
-            'La Orden médica solo puede registrarse durante '
+            'El adjunto solo puede registrarse durante '
             'el alta de un requerimiento PENDIENTE.';
     END IF;
 
@@ -4604,7 +4604,7 @@ BEGIN
 
         IF FOUND THEN
             RAISE EXCEPTION
-                'La Orden médica ya fue cargada con fecha % y número de receta % en el requerimiento %.',
+                'El adjunto ya fue cargado con fecha % y número de receta % en el requerimiento %.',
                 to_char(p_fecha_documento, 'DD-MM-YYYY'),
                 v_numero_receta,
                 v_id_requerimiento_duplicado;

@@ -51,7 +51,7 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
 
     <fieldset class="block-labels">
 
-        <legend>Orden médica</legend>
+        <legend>Adjuntos</legend>
 
         <% if (errorOrdenMedicaCompraVista != null) { %>
 
@@ -62,7 +62,7 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
         <% } else if (ordenesMedicasCompraVista.isEmpty()) { %>
 
             <div class="portlet-msg-info">
-                Este requerimiento histórico no posee Orden médica asociada.
+                Este requerimiento no posee adjuntos asociados.
             </div>
 
         <% } else { %>
@@ -72,7 +72,7 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                 <thead>
                     <tr>
                         <th>Documento</th>
-                        <th>Fecha de la orden médica</th>
+                        <th>Fecha del adjunto</th>
                         <th>Nombre original</th>
                         <th>Acción</th>
                     </tr>
@@ -155,7 +155,7 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                         <tr>
 
                             <td>
-                                Orden médica
+                                Adjunto
                             </td>
 
                             <td>
@@ -181,13 +181,13 @@ SimpleDateFormat formatoFechaOrdenMedicaCompraVista =
                                             urlOrdenMedicaCompraVista
                                     ) %>"
                                        target="_blank"
-                                       title="Ver Orden médica"
+                                       title="Ver adjunto"
                                        onclick="return <portlet:namespace />verOrdenMedicaCompra(this.href);">
 
                                         <img
                                                 src="<%= themeDisplay.getPathThemeImages() %>/common/view.png"
-                                                alt="Ver Orden médica"
-                                                title="Ver Orden médica"
+                                                alt="Ver adjunto"
+                                                title="Ver adjunto"
                                                 style="border:0;" />
 
                                     </a>

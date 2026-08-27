@@ -104,7 +104,7 @@ public class DescargarOrdenMedicaCompraAction
                 throw new Exception(
                         "No se pudo determinar el contexto "
                                 + "del portal para descargar "
-                                + "la Orden médica."
+                                + "el adjunto."
                 );
             }
 
@@ -162,7 +162,7 @@ public class DescargarOrdenMedicaCompraAction
                     || contenido.length == 0) {
 
                 throw new Exception(
-                        "La Orden médica recuperada está vacía."
+                        "El adjunto recuperado está vacío."
                 );
             }
 
@@ -179,7 +179,7 @@ public class DescargarOrdenMedicaCompraAction
             if (response == null) {
                 throw new Exception(
                         "No se pudo preparar la respuesta "
-                                + "de descarga de la Orden médica."
+                                + "de descarga del adjunto."
                 );
             }
 
@@ -238,7 +238,7 @@ public class DescargarOrdenMedicaCompraAction
         } catch (Exception e) {
             _log.error(
                     "No se pudo descargar de forma segura "
-                            + "la Orden médica de Compras.",
+                            + "el adjunto de Compras.",
                     e
             );
 
@@ -305,7 +305,7 @@ public class DescargarOrdenMedicaCompraAction
         }
 
         throw new Exception(
-                "La Orden médica solicitada "
+                "El adjunto solicitado "
                         + "no pertenece al requerimiento informado."
         );
     }

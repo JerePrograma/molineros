@@ -276,7 +276,7 @@ public class BusquedaRequerimientoCompraServiceUtil {
 
         if (fechaOrdenMedica == null) {
             throw new Exception(
-                    "Debe informar la fecha de la Orden médica."
+                    "Debe informar la fecha del adjunto."
             );
         }
 

@@ -517,26 +517,16 @@ public class EditarRequerimientoCompraAction extends PortletAction {
          * ALTA
          * ==========================================================
          *
-         * La Orden médica continúa siendo obligatoria.
+         * El adjunto continúa siendo obligatorio, excepto para los
+         * sectores definidos sin cotización de prestador.
          *
          * Antes de crear la cabecera y antes de crear documentos
          * en Document Library, se controla que no exista otro
          * requerimiento para la misma combinación:
          *
-         * afiliado + prestación + fecha de Orden médica.
+         * afiliado + prestación + fecha del adjunto.
          */
         if (esNuevo) {
-
-            if (uploadRequest == null) {
-                errorCampo(
-                        DocumentoLibraryComprasHelper
-                                .PARAM_ARCHIVO_ORDEN_MEDICA,
-                        "Orden médica: debe seleccionar "
-                                + "una imagen JPEG o PNG."
-                );
-
-                return 0;
-            }
 
             int cantidadOrdenesMedicas =
                     obtenerCantidadOrdenesMedicas(
@@ -544,17 +534,30 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     );
 
             DocumentoLibraryComprasHelper gestorDocumento =
-                    DocumentoLibraryComprasHelper.crear(
-                            actionRequestOriginal
-                    );
+                    null;
 
             List<OrdenMedicaValidada> ordenesMedicas =
-                    validarOrdenesMedicasDesdeRequest(
-                            actionRequest,
-                            uploadRequest,
-                            gestorDocumento,
-                            cantidadOrdenesMedicas
-                    );
+                    new ArrayList<OrdenMedicaValidada>();
+
+            if (hayCargaOrdenMedicaInformada(
+                    actionRequest,
+                    uploadRequest,
+                    cantidadOrdenesMedicas
+            )) {
+
+                gestorDocumento =
+                        DocumentoLibraryComprasHelper.crear(
+                                actionRequestOriginal
+                        );
+
+                ordenesMedicas =
+                        validarOrdenesMedicasDesdeRequest(
+                                actionRequest,
+                                uploadRequest,
+                                gestorDocumento,
+                                cantidadOrdenesMedicas
+                        );
+            }
 
             List<Integer> idsPrestaciones =
                     obtenerIdsPrestacionesDesdeRequest(
@@ -747,7 +750,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (actionRequest == null) {
             throw new IllegalArgumentException(
                     "No se recibio la solicitud de carga "
-                            + "de Órdenes médicas."
+                            + "de adjuntos."
             );
         }
 
@@ -755,7 +758,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             errorCampo(
                     DocumentoLibraryComprasHelper
                             .PARAM_ARCHIVO_ORDEN_MEDICA,
-                    "Orden médica: debe seleccionar "
+                    "Adjunto: debe seleccionar "
                             + "una imagen JPEG o PNG."
             );
 
@@ -765,14 +768,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (gestorDocumento == null) {
             throw new IllegalStateException(
                     "No se pudo preparar el gestor documental "
-                            + "de las Órdenes médicas."
+                            + "de los adjuntos."
             );
         }
 
         if (cantidadOrdenesMedicas <= 0) {
             errorCampo(
                     PARAM_ORDEN_MEDICA_COUNT,
-                    "Debe informar al menos una Orden médica."
+                    "Debe informar al menos un adjunto."
             );
 
             return new ArrayList<OrdenMedicaValidada>();
@@ -787,7 +790,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     "Se pueden cargar hasta "
                             + EditarRequerimientoCompraHelper
                             .MAX_ORDENES_MEDICAS_POR_CARGA
-                            + " Órdenes médicas por operación."
+                            + " adjuntos por operación."
             );
 
             return new ArrayList<OrdenMedicaValidada>();
@@ -835,7 +838,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 String mensaje =
                         obtenerMensajeUsuario(
                                 e,
-                                "No se pudo validar la Orden médica."
+                                "No se pudo validar el adjunto."
                         );
 
                 String mensajeNormalizado =
@@ -867,8 +870,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 != cantidadOrdenesMedicas) {
 
             throw new IllegalStateException(
-                    "No se pudieron preparar todas las "
-                            + "Órdenes médicas informadas."
+                    "No se pudieron preparar todos los "
+                            + "adjuntos informados."
             );
         }
 
@@ -883,7 +886,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 parseEnteroConDefault(
                         actionRequest,
                         PARAM_ORDEN_MEDICA_COUNT,
-                        "Cantidad de Órdenes médicas",
+                        "Cantidad de adjuntos",
                         1
                 );
 
@@ -891,10 +894,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
          * El default 1 mantiene compatibilidad con formularios o callers
          * anteriores que todavía no envían orden_medica_count.
          */
-        if (cantidad <= 0) {
+        if (cantidad < 0) {
             errorCampo(
                     PARAM_ORDEN_MEDICA_COUNT,
-                    "Debe informar al menos una Orden médica."
+                    "La cantidad de adjuntos no puede ser negativa."
             );
             return 0;
 
@@ -905,7 +908,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     PARAM_ORDEN_MEDICA_COUNT,
                     "Se pueden cargar hasta "
                             + EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_CARGA
-                            + " Órdenes médicas por operación."
+                            + " adjuntos por operación."
             );
             return 0;
         }

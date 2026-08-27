@@ -277,7 +277,7 @@ public final class RequerimientoCompraRenderActionUtil {
                 errorOrdenesMedicas =
                         !WebKeysCompras.isEmpty(e.getMessage())
                                 ? e.getMessage()
-                                : "No se pudieron recuperar las órdenes médicas del requerimiento.";
+                                : "No se pudieron recuperar los adjuntos del requerimiento.";
             }
         }
 

@@ -354,16 +354,23 @@ public class EditarRequerimientoCompraHelper {
 
             if (requerimiento.getIdRequerimientoCompra() > 0) {
                 throw errorUsuario(
-                        "La Orden médica obligatoria solo se registra "
+                        "El adjunto obligatorio solo se registra "
                                 + "durante el alta de un requerimiento nuevo."
                 );
             }
 
-            validarOrdenesMedicasParaAlta(ordenesMedicas);
+            if (!requerimiento.esSectorSinCotizacionPrestador()
+                    || ordenesMedicas == null
+                    || !ordenesMedicas.isEmpty()) {
 
-            if (gestorDocumento == null) {
+                validarOrdenesMedicasParaAlta(ordenesMedicas);
+            }
+
+            if (!ordenesMedicas.isEmpty()
+                    && gestorDocumento == null) {
+
                 throw new IllegalStateException(
-                        "No se obtuvo el gestor documental de la Orden médica."
+                        "No se obtuvo el gestor documental del adjunto."
                 );
             }
 
@@ -403,7 +410,7 @@ public class EditarRequerimientoCompraHelper {
 
                 if (idDocumento <= 0) {
                     throw new IllegalStateException(
-                            "El registro de la Orden médica no devolvió "
+                            "El registro del adjunto no devolvió "
                                     + "un identificador válido."
                     );
                 }
@@ -422,7 +429,7 @@ public class EditarRequerimientoCompraHelper {
                 } catch (Exception rollbackError) {
                     _log.error(
                             "No se pudo confirmar el rollback del alta "
-                                    + "con Orden médica. No se eliminarán "
+                                    + "con adjuntos. No se eliminarán "
                                     + "documentos ante un estado transaccional ambiguo.",
                             rollbackError
                     );
@@ -440,8 +447,8 @@ public class EditarRequerimientoCompraHelper {
             }
 
             throw manejarErrorOperacion(
-                    "guardar el requerimiento nuevo con Orden médica",
-                    "No se pudo guardar el requerimiento con su Orden médica. "
+                    "guardar el requerimiento nuevo con adjuntos",
+                    "No se pudo guardar el requerimiento con sus adjuntos. "
                             + "Vuelva a seleccionar la imagen e intente nuevamente.",
                     e,
                     "idRequerimiento="
@@ -475,7 +482,7 @@ public class EditarRequerimientoCompraHelper {
                 || ordenesMedicas.isEmpty()) {
 
             throw errorUsuario(
-                    "Debe seleccionar al menos una Orden médica "
+                    "Debe seleccionar al menos un adjunto "
                             + "e informar su fecha."
             );
         }
@@ -486,7 +493,7 @@ public class EditarRequerimientoCompraHelper {
             throw errorUsuario(
                     "Se pueden registrar hasta "
                             + MAX_ORDENES_MEDICAS_POR_CARGA
-                            + " Órdenes médicas por operación."
+                            + " adjuntos por operación."
             );
         }
 
@@ -501,7 +508,7 @@ public class EditarRequerimientoCompraHelper {
                     || ordenMedica.getFechaDocumento() == null) {
 
                 throw errorUsuario(
-                        "Cada Orden médica debe tener "
+                        "Cada adjunto debe tener "
                                 + "informada su fecha."
                 );
             }
@@ -552,9 +559,13 @@ public class EditarRequerimientoCompraHelper {
             return;
         }
 
-        validarOrdenesMedicasParaCarga(
-                ordenesMedicas
-        );
+        if (ordenesMedicas == null
+                || ordenesMedicas.isEmpty()) {
+
+            return;
+        }
+
+        validarOrdenesMedicasParaCarga(ordenesMedicas);
 
         Set<Integer> prestacionesUnicas =
                 new HashSet<Integer>();
@@ -632,7 +643,7 @@ public class EditarRequerimientoCompraHelper {
                             "Ya existe un requerimiento de compra "
                                     + "para el mismo afiliado, la misma "
                                     + "prestación y la misma fecha "
-                                    + "de Orden médica."
+                                    + "del adjunto."
                     );
                 }
             }
@@ -654,7 +665,7 @@ public class EditarRequerimientoCompraHelper {
                 gestorDocumento.eliminarDocumento(documento);
             } catch (Exception cleanupError) {
                 _log.error(
-                        "No se pudo compensar una Orden médica creada "
+                        "No se pudo compensar un adjunto creado "
                                 + "después del rollback. fileEntryId="
                                 + documento.getFileEntryId(),
                         cleanupError
@@ -877,7 +888,7 @@ public class EditarRequerimientoCompraHelper {
                         "Ya existe otro requerimiento de compra "
                                 + "para el mismo afiliado, la misma "
                                 + "prestación y la misma fecha "
-                                + "de Orden médica."
+                                + "del adjunto."
                 );
             }
         }
@@ -2945,7 +2956,7 @@ private void prepararDetalleParaGuardar(
 
             if (!actual.puedeEditarEstructura()) {
                 throw errorUsuario(
-                        "Solo pueden agregarse Órdenes médicas mientras "
+                        "Solo pueden agregarse adjuntos mientras "
                                 + "el requerimiento se encuentra PENDIENTE."
                 );
             }
@@ -2957,7 +2968,7 @@ private void prepararDetalleParaGuardar(
             if (gestorDocumento == null) {
                 throw new IllegalStateException(
                         "No se obtuvo el gestor documental "
-                                + "de la Orden médica."
+                                + "del adjunto."
                 );
             }
 
@@ -2991,7 +3002,7 @@ private void prepararDetalleParaGuardar(
 
                 if (idDocumento <= 0) {
                     throw new IllegalStateException(
-                            "El registro de la Orden médica "
+                            "El registro del adjunto "
                                     + "no devolvió un identificador válido."
                     );
                 }
@@ -3013,7 +3024,7 @@ private void prepararDetalleParaGuardar(
                 } catch (Exception rollbackError) {
                     _log.error(
                             "No se pudo confirmar el rollback al agregar "
-                                    + "Órdenes médicas a un requerimiento existente.",
+                                    + "adjuntos a un requerimiento existente.",
                             rollbackError
                     );
                 }
@@ -3030,8 +3041,8 @@ private void prepararDetalleParaGuardar(
             }
 
             throw manejarErrorOperacion(
-                    "agregar Órdenes médicas al requerimiento",
-                    "No se pudieron agregar las Órdenes médicas. "
+                    "agregar adjuntos al requerimiento",
+                    "No se pudieron agregar los adjuntos. "
                             + "Vuelva a seleccionar las imágenes "
                             + "e intente nuevamente.",
                     e,

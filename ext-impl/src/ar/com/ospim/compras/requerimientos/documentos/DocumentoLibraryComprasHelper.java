@@ -97,7 +97,7 @@ public class DocumentoLibraryComprasHelper
         )) {
 
             throw new Exception(
-                    "La asociación de la Orden médica activa es inconsistente."
+                    "La asociación del adjunto activo es inconsistente."
             );
         }
 
@@ -214,7 +214,7 @@ public class DocumentoLibraryComprasHelper
         if (companyId <= 0L) {
             throw new Exception(
                     "No se pudo determinar la empresa "
-                            + "de la Orden médica."
+                            + "del adjunto."
             );
         }
 
@@ -253,7 +253,7 @@ public class DocumentoLibraryComprasHelper
 
         if (!coincide) {
             throw new Exception(
-                    "La Orden médica no coincide con "
+                    "El adjunto no coincide con "
                             + "su identidad en Document Library."
             );
         }
@@ -327,7 +327,7 @@ public class DocumentoLibraryComprasHelper
                 || contenido.length == 0) {
 
             throw new Exception(
-                    "La Orden médica persistida está vacía."
+                    "El adjunto persistido está vacío."
             );
         }
 
@@ -345,7 +345,7 @@ public class DocumentoLibraryComprasHelper
         )) {
 
             throw new Exception(
-                    "La Orden médica persistida "
+                    "El adjunto persistido "
                             + "no es JPEG/JPG ni PNG."
             );
         }
@@ -373,7 +373,7 @@ public class DocumentoLibraryComprasHelper
 
         if (actionRequest == null) {
             throw new Exception(
-                    "No se pudo preparar la carga de la Orden médica."
+                    "No se pudo preparar la carga del adjunto."
             );
         }
 
@@ -466,7 +466,7 @@ public class DocumentoLibraryComprasHelper
 
                 throw new Exception(
                         "Document Library no devolvió "
-                                + "una Orden médica válida."
+                                + "un adjunto válido."
                 );
             }
 
@@ -493,7 +493,7 @@ public class DocumentoLibraryComprasHelper
             )) {
 
                 throw new Exception(
-                        "La Orden médica creada no conserva "
+                        "El adjunto creado no conserva "
                                 + "la identidad requerida."
                 );
             }
@@ -512,8 +512,8 @@ public class DocumentoLibraryComprasHelper
 
                 } catch (Exception cleanupError) {
                     _log.error(
-                            "Falló la compensación de una Orden médica "
-                                    + "creada pero no validada. fileEntryId="
+                            "Falló la compensación de un adjunto "
+                                    + "creado pero no validado. fileEntryId="
                                     + entry.getFileEntryId()
                                     + ", folderId="
                                     + entry.getFolderId()
@@ -625,7 +625,7 @@ public class DocumentoLibraryComprasHelper
 
             throw new Exception(
                     "No se pudo construir el título persistido "
-                            + "de la Orden médica."
+                            + "del adjunto."
             );
         }
 
@@ -655,7 +655,7 @@ public class DocumentoLibraryComprasHelper
 
             throw new Exception(
                     "No se pudo construir el nombre persistido "
-                            + "de la Orden médica."
+                            + "del adjunto."
             );
         }
 
@@ -976,7 +976,7 @@ public class DocumentoLibraryComprasHelper
 
         if (!valida) {
             throw new Exception(
-                    "Orden médica: el contenido no coincide "
+                    "Adjunto: el contenido no coincide "
                             + "con una imagen JPEG o PNG válida."
             );
         }
@@ -996,7 +996,7 @@ public class DocumentoLibraryComprasHelper
         )) {
 
             throw new Exception(
-                    "Orden médica: el tipo MIME "
+                    "Adjunto: el tipo MIME "
                             + origen
                             + " no identifica una imagen JPEG o PNG."
             );
@@ -1007,7 +1007,7 @@ public class DocumentoLibraryComprasHelper
         )) {
 
             throw new Exception(
-                    "Orden médica: el tipo MIME "
+                    "Adjunto: el tipo MIME "
                             + origen
                             + " no coincide con la extensión del archivo."
             );
@@ -1076,7 +1076,7 @@ public class DocumentoLibraryComprasHelper
         )) {
 
             throw new Exception(
-                    "El nombre original de la Orden médica es inválido."
+                    "El nombre original del adjunto es inválido."
             );
         }
     }
@@ -1106,7 +1106,7 @@ public class DocumentoLibraryComprasHelper
         )) {
 
             throw new Exception(
-                    "La Orden médica validada no contiene "
+                    "El adjunto validado no contiene "
                             + "todos los datos requeridos."
             );
         }
@@ -1124,7 +1124,7 @@ public class DocumentoLibraryComprasHelper
                 .DOCUMENT_LIBRARY_MAX_TITLE_LENGTH) {
 
             throw new Exception(
-                    "La Orden médica validada tiene "
+                    "El adjunto validado tiene "
                             + "un nombre de archivo inválido."
             );
         }
@@ -1139,7 +1139,7 @@ public class DocumentoLibraryComprasHelper
         )) {
 
             throw new Exception(
-                    "La extensión de la Orden médica "
+                    "La extensión del adjunto "
                             + "no coincide con su nombre original."
             );
         }
@@ -1151,7 +1151,7 @@ public class DocumentoLibraryComprasHelper
                 > maximoTamanoArchivo) {
 
             throw new Exception(
-                    "La Orden médica validada "
+                    "El adjunto validado "
                             + "supera el tamaño permitido."
             );
         }
@@ -1367,7 +1367,7 @@ public class DocumentoLibraryComprasHelper
         if (uploadRequest == null) {
             throw new Exception(
                     "No se recibió el formulario multipart "
-                            + "de la Orden médica."
+                            + "del adjunto."
             );
         }
 
@@ -1377,7 +1377,7 @@ public class DocumentoLibraryComprasHelper
 
             throw new Exception(
                     "No se informó el campo de archivo "
-                            + "de la Orden médica."
+                            + "del adjunto."
             );
         }
 
@@ -1406,7 +1406,7 @@ public class DocumentoLibraryComprasHelper
                 || archivo.length() <= 0L) {
 
             throw new Exception(
-                    "Orden médica: debe seleccionar "
+                    "Adjunto: debe seleccionar "
                             + "una imagen no vacía."
             );
         }
@@ -1416,7 +1416,7 @@ public class DocumentoLibraryComprasHelper
         )) {
 
             throw new Exception(
-                    "Orden médica: el nombre del archivo no es válido."
+                    "Adjunto: el nombre del archivo no es válido."
             );
         }
 
@@ -1428,7 +1428,7 @@ public class DocumentoLibraryComprasHelper
                 > maximoTamanoArchivo) {
 
             throw new Exception(
-                    "Orden médica: el archivo supera "
+                    "Adjunto: el archivo supera "
                             + "el tamaño permitido."
             );
         }
@@ -1443,7 +1443,7 @@ public class DocumentoLibraryComprasHelper
         )) {
 
             throw new Exception(
-                    "Orden médica: sólo se permiten "
+                    "Adjunto: sólo se permiten "
                             + "archivos JPG, JPEG o PNG."
             );
         }

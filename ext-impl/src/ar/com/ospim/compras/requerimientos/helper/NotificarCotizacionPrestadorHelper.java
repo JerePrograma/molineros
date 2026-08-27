@@ -1144,7 +1144,7 @@ public class NotificarCotizacionPrestadorHelper {
 
             if (_log.isDebugEnabled()) {
                 _log.debug(
-                        "El requerimiento no posee Orden médica activa; "
+                        "El requerimiento no posee un adjunto activo; "
                                 + "se conserva el envío histórico con PDF. "
                                 + "idRequerimiento="
                                 + idRequerimientoCompra
@@ -1178,8 +1178,8 @@ public class NotificarCotizacionPrestadorHelper {
                     Long.valueOf(fileEntryId)
             )) {
                 throw new Exception(
-                        "El requerimiento contiene más de una "
-                                + "Orden médica activa asociada al mismo "
+                        "El requerimiento contiene más de un "
+                                + "adjunto activo asociado al mismo "
                                 + "documento de Document Library."
                 );
             }
@@ -1500,7 +1500,7 @@ public class NotificarCotizacionPrestadorHelper {
             if (ordenMedica == null) {
 
                 throw new Exception(
-                        "Se encontró una Orden médica adjunta inválida."
+                        "Se encontró un adjunto inválido."
                 );
             }
 

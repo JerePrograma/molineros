@@ -106,8 +106,8 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
 
         <legend>
             <%= esNuevo
-                    ? "Orden médica"
-                    : "Agregar Orden médica" %>
+                    ? "Adjunto"
+                    : "Agregar adjunto" %>
 
             <a href="javascript:void(0)"
                onclick="return comprasHelp(
@@ -117,7 +117,7 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                 <img
                         style="height: 25px; width: 25px; vertical-align: middle;"
                         src="/html/images/help.png"
-                        title="Ayuda para carga de órdenes médicas"
+                        title="Ayuda para carga de adjuntos"
                         alt="Ayuda" />
             </a>
         </legend>
@@ -134,8 +134,8 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
 
             <thead>
                 <tr>
-                    <th>Orden médica</th>
-                    <th>Fecha de la orden médica</th>
+                    <th>Adjunto</th>
+                    <th>Fecha del adjunto</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -352,13 +352,13 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                     type="button"
                                     class="orden-medica-borrar"
                                     value="Borrar"
-                                    title="Quitar esta orden médica" />
+                                    title="Quitar este adjunto" />
 
                             <input
                                     type="button"
                                     class="orden-medica-agregar"
-                                    value="Agregar otra orden médica"
-                                    title="Agregar otra orden médica"
+                                    value="Agregar otro adjunto"
+                                    title="Agregar otro adjunto"
                                     style="display:none;" />
                         </td>
                     </tr>
@@ -379,28 +379,30 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
 
     <div
             id="<portlet:namespace />helpCargaOrdenMedica"
-            class="containerPlus draggable compras-container-ayuda {buttons:'c', skin:'default', width:'700',title:'Ayuda - Carga de órdenes médicas',closed:'true'}"
+            class="containerPlus draggable compras-container-ayuda {buttons:'c', skin:'default', width:'700',title:'Ayuda - Carga de adjuntos',closed:'true'}"
             style="top: 500px; left: 200px">
 
-        <strong>Requisitos para cargar órdenes médicas</strong>
+        <strong>Requisitos para cargar adjuntos</strong>
         <br /><br />
 
         <% if (esNuevo) { %>
 
-            - Para dar de alta un requerimiento nuevo debe cargarse
-              al menos una Orden médica.
+            - Para RRHH y SISTEMAS la carga de adjuntos es opcional.
+            <br />
+
+            - Para los demás sectores debe cargarse al menos un adjunto.
             <br />
 
         <% } else { %>
 
             - Mientras el requerimiento se encuentre PENDIENTE puede
-              incorporar nuevas Órdenes médicas.
+              incorporar nuevos adjuntos.
             <br />
 
-            - Agregar una nueva Orden médica durante la edición es opcional.
+            - Agregar un nuevo adjunto durante la edición es opcional.
             <br />
 
-            - Las Órdenes médicas ya registradas no se modifican ni eliminan
+            - Los adjuntos ya registrados no se modifican ni eliminan
               desde este componente.
             <br />
 
@@ -417,19 +419,19 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
         - El archivo no puede estar vacío.
         <br />
 
-        - Cada Orden médica debe tener informada su propia fecha.
+        - Cada adjunto debe tener informada su propia fecha.
         <br />
 
         - La fecha debe seleccionarse mediante Día, Mes y Año.
         <br />
 
-        - Puede utilizar "Agregar otra orden médica" para asociar
-          más de una Orden médica al mismo requerimiento.
+        - Puede utilizar "Agregar otro adjunto" para asociar
+          más de un adjunto al mismo requerimiento.
         <br />
 
         - Se pueden cargar hasta
           <%= maxOrdenesMedicasPorCarga %>
-          órdenes médicas en una misma operación.
+          adjuntos en una misma operación.
         <br />
 
         - El botón "Borrar" elimina únicamente la fila de la carga actual,
@@ -785,7 +787,7 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                         )) {
 
                             alert(
-                                    'No se pudo limpiar la Orden médica seleccionada.'
+                                    'No se pudo limpiar el adjunto seleccionado.'
                             );
 
                             return false;
@@ -833,7 +835,7 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                 alert(
                         'Se pueden cargar hasta '
                                 + '<%= maxOrdenesMedicasPorCarga %>'
-                                + ' órdenes médicas por operación.'
+                                + ' adjuntos por operación.'
                 );
 
                 return false;
@@ -851,7 +853,7 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                     )) {
 
                 alert(
-                        'No se pudo preparar una nueva Orden médica.'
+                        'No se pudo preparar un nuevo adjunto.'
                 );
 
                 return false;

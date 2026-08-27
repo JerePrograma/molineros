@@ -22,6 +22,13 @@ public final class ComprasOrdenMedicaUiContractTest {
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/documentos/"
                         + "DocumentoLibraryComprasHelper.java"
         );
+        String helper = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
+                        + "EditarRequerimientoCompraHelper.java"
+        );
+        String webKeys = leer(
+                "ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java"
+        );
         String form = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
                         + "partials/requerimiento_compra_campos_ocultos_formulario_componente.jsp"
@@ -63,9 +70,9 @@ public final class ComprasOrdenMedicaUiContractTest {
                 ".jpg,.jpeg,.png,image/jpeg,image/png"
         );
         assertContains(
-                "fecha obligatoria visible",
+                "fecha visible",
                 alta,
-                "Fecha de la orden médica"
+                "Fecha del adjunto"
         );
         assertContains(
                 "cliente valida extension",
@@ -101,7 +108,47 @@ public final class ComprasOrdenMedicaUiContractTest {
         assertContains(
                 "vista muestra fecha",
                 vista,
-                "Fecha de la orden médica"
+                "Fecha del adjunto"
+        );
+        assertContains(
+                "alta detecta carga informada",
+                action,
+                "if (hayCargaOrdenMedicaInformada("
+        );
+        assertContains(
+                "alta admite cantidad cero",
+                action,
+                "if (cantidad < 0)"
+        );
+        assertContains(
+                "cliente reutiliza regla central de sector",
+                scripts,
+                "!<portlet:namespace />esSectorSinCotizacionPrestadorCompra()"
+        );
+        assertContains(
+                "cliente valida adjunto opcional informado",
+                scripts,
+                "|| <portlet:namespace />hayCargaOrdenMedicaInformadaPantalla()"
+        );
+        assertContains(
+                "backend exceptua sectores internos",
+                helper,
+                "if (!requerimiento.esSectorSinCotizacionPrestador()"
+        );
+        assertContains(
+                "resto conserva adjunto obligatorio",
+                helper,
+                "Debe seleccionar al menos un adjunto"
+        );
+        assertContains(
+                "regla central incluye RRHH",
+                webKeys,
+                "\"RRHH\".equals(sector)"
+        );
+        assertContains(
+                "regla central incluye SISTEMAS",
+                webKeys,
+                "\"SISTEMAS\".equals(sector)"
         );
         assertContains(
                 "vista muestra original",

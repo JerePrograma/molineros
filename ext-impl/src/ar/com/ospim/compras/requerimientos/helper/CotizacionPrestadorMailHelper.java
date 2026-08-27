@@ -629,7 +629,7 @@ public class CotizacionPrestadorMailHelper {
 
             if (ordenMedica == null) {
                 throw new Exception(
-                        "Existe una Orden médica adjunta inválida."
+                        "Existe un adjunto inválido."
                 );
             }
 
@@ -651,7 +651,7 @@ public class CotizacionPrestadorMailHelper {
                 || ordenMedica.length == 0) {
 
             throw new Exception(
-                    "La Orden médica no fue recuperada."
+                    "El adjunto no fue recuperado."
             );
         }
 
@@ -667,7 +667,7 @@ public class CotizacionPrestadorMailHelper {
         )) {
 
             throw new Exception(
-                    "El nombre original de la Orden médica no es válido."
+                    "El nombre original del adjunto no es válido."
             );
         }
 
@@ -689,7 +689,7 @@ public class CotizacionPrestadorMailHelper {
         )) {
 
             throw new Exception(
-                    "El tipo MIME de la Orden médica "
+                    "El tipo MIME del adjunto "
                             + "no coincide con su contenido real."
             );
         }

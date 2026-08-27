@@ -708,7 +708,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             );
 
             if (!form || filas.length == 0 || !fechaHidden) {
-                alert('No se pudieron preparar las Órdenes médicas para el envío.');
+                alert('No se pudieron preparar los adjuntos para el envío.');
                 return false;
             }
 
@@ -767,7 +767,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                         ) == '') {
 
                     alert(
-                            'Orden médica '
+                            'Adjunto '
                                     + numeroOrden
                                     + ': debe seleccionar una imagen JPEG o PNG.'
                     );
@@ -789,7 +789,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
                 if (!/\.(jpe?g|png)$/i.test(nombreArchivo)) {
                     alert(
-                            'Orden médica '
+                            'Adjunto '
                                     + numeroOrden
                                     + ': sólo se permiten archivos JPG, JPEG o PNG.'
                     );
@@ -806,7 +806,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                         || !fechaValorInput) {
 
                     alert(
-                            'No se pudo preparar la fecha de la Orden médica '
+                            'No se pudo preparar la fecha del adjunto '
                                     + numeroOrden
                                     + '.'
                     );
@@ -844,7 +844,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                         || anio < 1) {
 
                     alert(
-                            'Fecha de la orden médica '
+                            'Fecha del adjunto '
                                     + numeroOrden
                                     + ': debe informar día, mes y año.'
                     );
@@ -870,7 +870,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                         || fechaControl.getDate() != dia) {
 
                     alert(
-                            'Fecha de la orden médica '
+                            'Fecha del adjunto '
                                     + numeroOrden
                                     + ': la fecha informada no existe.'
                     );
@@ -921,7 +921,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
             if (!cantidad) {
                 alert(
-                        'No se pudo preparar la cantidad de Órdenes médicas para el envío.'
+                        'No se pudo preparar la cantidad de adjuntos para el envío.'
                 );
 
                 return false;
@@ -1220,10 +1220,12 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             <% if (esNuevo) { %>
 
                 /*
-                 * En el alta la Orden médica es obligatoria.
+                 * En el alta el adjunto es obligatorio salvo para los
+                 * sectores definidos sin cotización de prestador.
                  */
                 incorporarNuevasOrdenesMedicas =
-                        true;
+                        !<portlet:namespace />esSectorSinCotizacionPrestadorCompra()
+                        || <portlet:namespace />hayCargaOrdenMedicaInformadaPantalla();
 
             <% } else { %>
 
@@ -1375,8 +1377,8 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                 if (!contextosOrdenesMedicas) {
 
                     alert(
-                            'No se pudieron incorporar las '
-                                    + 'Órdenes médicas al formulario de envío.'
+                            'No se pudieron incorporar los '
+                                    + 'adjuntos al formulario de envío.'
                     );
 
                     return <portlet:namespace />cancelarGuardadoCompra();
