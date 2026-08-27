@@ -81,7 +81,7 @@ public class ActualizaDomicilioAfiliadoAction extends PortletAction {
 					    domicilio = domicilios.get(0);
 					    renderRequest.setAttribute(WebKeysCrm.CRM_AFILIADO_DOMICILIO, domicilio);
 					}
-					Afiliado afi = EditarAfiliadoServiceUtil.getAfiliadoEntry(cuilTitular, inte);
+					Afiliado afi = EditarAfiliadoServiceUtil.getAfiliadoEntry(cuilTitular, inte, false);
 					int idPar = (afi != null) ? afi.getId_parentesco() : -1;
 
 					String emailDb = (afi != null) ? afi.getEmail() : null;
@@ -89,7 +89,7 @@ public class ActualizaDomicilioAfiliadoAction extends PortletAction {
 					boolean esTitularConyConc = (idPar == 0 || idPar == 1 || idPar == 2);
 
 					if (!esTitularConyConc) {
-					    Afiliado titular = EditarAfiliadoServiceUtil.getAfiliadoEntry(cuilTitular, 0);
+					    Afiliado titular = EditarAfiliadoServiceUtil.getAfiliadoEntry(cuilTitular, 0, false);
 					    if (titular != null && StringUtils.checkNotEmpty(titular.getEmail())) {
 					        emailDb = titular.getEmail();
 					    }

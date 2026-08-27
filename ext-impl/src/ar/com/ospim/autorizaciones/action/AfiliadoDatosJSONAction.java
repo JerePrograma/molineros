@@ -47,7 +47,7 @@ public class AfiliadoDatosJSONAction extends JSONAction {
 		String qDiasAValidar="";
 		
 		try {
-	            Afiliado afiliado = EditarAfiliadoServiceUtil.getAfiliadoEntry(cuil_titular, inte);
+	            Afiliado afiliado = EditarAfiliadoServiceUtil.getAfiliadoEntry(cuil_titular, inte, false);
 	            if (afiliado != null) {
 	                email = afiliado.getEmail();
 	            } else {
@@ -55,7 +55,7 @@ public class AfiliadoDatosJSONAction extends JSONAction {
 	            }
 	            
 	            if (StringUtils.checkEmpty(email) || email.equalsIgnoreCase("null")) {
-	                Afiliado titular = EditarAfiliadoServiceUtil.getAfiliadoEntry(cuil_titular, 0);
+	                Afiliado titular = EditarAfiliadoServiceUtil.getAfiliadoEntry(cuil_titular, 0, false);
 	                if (titular != null) {
 	                    email = titular.getEmail();
 	                }

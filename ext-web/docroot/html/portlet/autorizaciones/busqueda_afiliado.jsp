@@ -10,6 +10,11 @@
 	String pag_reintegro = ParamUtil.getString(request, "pag_reintegro", null);
 	String prefijo = ParamUtil.getString(request, "origen", "");
 	String fromReclamo = ParamUtil.getString(request, "from_reclamo", "false");
+	String datos_afiliado_struts_action = ParamUtil.getString(request,
+			"datos_afiliado_struts_action", "/autorizaciones/buscar_afiliado_datos");
+	if (!"/compras/buscar_afiliado_datos".equals(datos_afiliado_struts_action)) {
+		datos_afiliado_struts_action = "/autorizaciones/buscar_afiliado_datos";
+	}
 
 	if (pag_reintegro != null) {
 		pag_reintegro = "true";
@@ -544,7 +549,7 @@
 		jQuery('#<portlet:namespace />nroCredencialPrevencion<%=prefijo%>').val(nroCredenPrev);
 
 		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
-				'&struts_action=/autorizaciones/buscar_afiliado_datos&cuil_titular=' + cuil +
+				'&struts_action=<%=datos_afiliado_struts_action%>&cuil_titular=' + cuil +
 				'&inte=' + inte;
 		
 		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_TES_1_"))%>'>

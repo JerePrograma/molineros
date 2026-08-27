@@ -21,6 +21,19 @@ public final class ComprasAjaxConsultasContractTest {
 
     public static void main(String[] args) throws Exception {
         String struts = leer("ext-web/docroot/WEB-INF/struts-config.xml");
+        String busquedaAfiliado = leer(
+                "ext-web/docroot/html/portlet/autorizaciones/"
+                        + "busqueda_afiliado.jsp"
+        );
+        String componenteAfiliadoCompra = leer(
+                "ext-web/docroot/html/portlet/compras/requerimientos/"
+                        + "partials/"
+                        + "requerimiento_compra_afiliado_editable_componente.jsp"
+        );
+        String actualizarContactoLegacy = leer(
+                "ext-impl/src/ar/com/ospim/crm/action/"
+                        + "ActualizaDomicilioAfiliadoAction.java"
+        );
         String medicamentos = leer(
                 ACTION_DIR + "BuscarMedicamentosComprasAction.java"
         );
@@ -37,6 +50,12 @@ public final class ComprasAjaxConsultasContractTest {
                 ACTION_DIR
                         + "BuscarAfiliadoFechaVtoDocumentacionCompraAction.java"
         );
+        String datosAfiliado = leer(
+                ACTION_DIR + "BuscarAfiliadoDatosCompraAction.java"
+        );
+        String actualizarContacto = leer(
+                ACTION_DIR + "ActualizarContactoAfiliadoCompraAction.java"
+        );
         String tieneSituacion = leer(
                 ACTION_DIR + "TieneSituacionMedicaVigenteCompraAction.java"
         );
@@ -49,6 +68,7 @@ public final class ComprasAjaxConsultasContractTest {
                 "/compras/buscar_item_tecnico",
                 "/compras/buscar_items_historicos_afiliado",
                 "/compras/buscar_prestadores_enviados",
+                "/compras/buscar_afiliado_datos",
                 "/compras/buscar_afiliado_fecha_vto_documentacion",
                 "/compras/tiene_situacion_medica_vigente",
                 "/compras/ver_situacion_medica_vigente"
@@ -129,6 +149,56 @@ public final class ComprasAjaxConsultasContractTest {
                 "extends BuscarAfiliadoFechaVtoDiscapacidad"
         );
         validarCommonNull(vencimiento, "vencimiento documental");
+
+        contiene(
+                datosAfiliado,
+                "adapter datos afiliado",
+                "extends AfiliadoDatosJSONAction"
+        );
+        validarCommonNull(datosAfiliado, "datos afiliado");
+        contiene(
+                struts,
+                "mapping datos afiliado",
+                "type=\"ar.com.ospim.compras.requerimientos.action."
+                        + "BuscarAfiliadoDatosCompraAction\""
+        );
+        contiene(
+                busquedaAfiliado,
+                "default datos afiliado",
+                "\"/autorizaciones/buscar_afiliado_datos\""
+        );
+        contiene(
+                busquedaAfiliado,
+                "allowlist datos afiliado",
+                "!\"/compras/buscar_afiliado_datos\".equals"
+        );
+        contiene(
+                componenteAfiliadoCompra,
+                "endpoint datos afiliado Compras",
+                "name=\"datos_afiliado_struts_action\""
+        );
+        contiene(
+                componenteAfiliadoCompra,
+                "valor endpoint datos afiliado Compras",
+                "value=\"/compras/buscar_afiliado_datos\""
+        );
+
+        contiene(
+                actualizarContacto,
+                "vinculacion contacto",
+                "if (\"bind\".equals(cmd))"
+        );
+        validarCommonNull(actualizarContacto, "vinculacion contacto");
+        contiene(
+                actualizarContactoLegacy,
+                "contacto integrante sin imagen",
+                "getAfiliadoEntry(cuilTitular, inte, false)"
+        );
+        contiene(
+                actualizarContactoLegacy,
+                "contacto titular sin imagen",
+                "getAfiliadoEntry(cuilTitular, 0, false)"
+        );
 
         validarCommonNull(tieneSituacion, "situacion medica");
         contiene(tieneSituacion, "permiso view", "ROL_VIEW_COMPRAS");

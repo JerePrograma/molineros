@@ -10,6 +10,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
+import com.liferay.portal.struts.ActionConstants;
 import com.liferay.portal.util.PortalUtil;
 
 import org.apache.struts.action.ActionForm;
@@ -57,7 +58,8 @@ public class ActualizarContactoAfiliadoCompraAction
             Afiliado afiliado =
                     EditarAfiliadoServiceUtil.getAfiliadoEntry(
                             cuilTitular,
-                            integrante
+                            integrante,
+                            false
                     );
 
             if (afiliado == null) {
@@ -74,7 +76,9 @@ public class ActualizarContactoAfiliadoCompraAction
                 );
                 renderResponse.setContentType("application/json");
                 renderResponse.getWriter().write("{\"status\":\"ok\"}");
-                return null;
+                return new ActionForward(
+                        ActionConstants.COMMON_NULL
+                );
             }
 
             ActualizarContactoAfiliadoCompraToken.validar(

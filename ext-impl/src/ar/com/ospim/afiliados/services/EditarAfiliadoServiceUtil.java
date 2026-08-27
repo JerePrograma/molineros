@@ -71,6 +71,13 @@ public class EditarAfiliadoServiceUtil {
 		return getAfiliadoEntry(cuil_titular, inte, null);
 	}
 
+	public static Afiliado getAfiliadoEntry(String cuil_titular, int inte,
+			boolean cargarImagen) throws SystemException,
+			NoSuchAfiliadoEntryException {
+		return getInstance().getAfiliadoEntry(cuil_titular, inte, null,
+				cargarImagen);
+	}
+
 	public static DetalleDiscapacidad getDetalleDiscapacidad(
 			String cuil_titular, int inte) throws SystemException {
 		return getDetalleDiscapacidadEntry(cuil_titular, inte, null);
@@ -119,6 +126,13 @@ public class EditarAfiliadoServiceUtil {
 	public static Afiliado getAfiliadoEntryInclusoDadoBaja(String cuil_titular,
 			int inte) throws SystemException, NoSuchAfiliadoEntryException {
 		return getAfiliadoEntryInclusoDadoBaja(cuil_titular, inte, null);
+	}
+
+	public static Afiliado getAfiliadoEntryInclusoDadoBaja(
+			String cuil_titular, int inte, boolean cargarImagen)
+			throws SystemException, NoSuchAfiliadoEntryException {
+		return getInstance().getAfiliadoEntryInclusoDadoBaja(cuil_titular,
+				inte, null, cargarImagen);
 	}
 
 	public static Afiliado getAfiliadoEntryOpciones(String cuil_titular,

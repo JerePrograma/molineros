@@ -108,7 +108,7 @@ public class NotificarCotizacionPrestadorHelper {
                                 + idRequerimientoCompra
                                 + ", habilitados="
                                 + resultado.getPrestadoresHabilitados()
-                                + ", compatiblesSector="
+                                + ", compatiblesRubro="
                                 + resultado
                                 .getPrestadoresCompatiblesSector()
                                 + ", bloqueadosEstadoPrevio="
@@ -233,9 +233,9 @@ public class NotificarCotizacionPrestadorHelper {
                 prestador
                         .getIdPrestador();
 
-        if (_log.isInfoEnabled()) {
+        if (_log.isDebugEnabled()) {
 
-            _log.info(
+            _log.debug(
                     "Procesando candidato de cotizacion. "
                             + "idRequerimiento="
                             + idRequerimiento
@@ -331,9 +331,9 @@ public class NotificarCotizacionPrestadorHelper {
                             reserva
                     );
 
-            if (_log.isInfoEnabled()) {
+            if (_log.isDebugEnabled()) {
 
-                _log.info(
+                _log.debug(
                         "Prestador omitido porque no se obtuvo "
                                 + "la reserva exclusiva. "
                                 + "idPrestador="
@@ -622,9 +622,9 @@ public class NotificarCotizacionPrestadorHelper {
         }
 
         if (modoTemporal
-                && _log.isInfoEnabled()) {
+                && _log.isDebugEnabled()) {
 
-            _log.info(
+            _log.debug(
                     "Modo temporal de notificacion activo. "
                             + "El correo sera redirigido "
                             + "exclusivamente al destinatario fijo de QA. "
@@ -1142,8 +1142,8 @@ public class NotificarCotizacionPrestadorHelper {
         if (ordenesMedicas == null
                 || ordenesMedicas.isEmpty()) {
 
-            if (_log.isInfoEnabled()) {
-                _log.info(
+            if (_log.isDebugEnabled()) {
+                _log.debug(
                         "El requerimiento no posee Orden médica activa; "
                                 + "se conserva el envío histórico con PDF. "
                                 + "idRequerimiento="
@@ -1390,8 +1390,8 @@ public class NotificarCotizacionPrestadorHelper {
             );
         }
 
-        if (_log.isInfoEnabled()) {
-            _log.info(
+        if (_log.isDebugEnabled()) {
+            _log.debug(
                     "Diagnóstico de prestadores candidatos. "
                             + "idRequerimiento="
                             + requerimiento.getIdRequerimientoCompra()
@@ -1401,7 +1401,7 @@ public class NotificarCotizacionPrestadorHelper {
                             + resultado.getTotalCandidatos()
                             + ", habilitados="
                             + resultado.getPrestadoresHabilitados()
-                            + ", compatiblesSector="
+                            + ", compatiblesRubro="
                             + resultado.getPrestadoresCompatiblesSector()
                             + ", bloqueadosEstadoPrevio="
                             + resultado.getPrestadoresBloqueadosEstadoPrevio()
@@ -1700,8 +1700,8 @@ public class NotificarCotizacionPrestadorHelper {
                             : "";
         }
 
-        if (_log.isInfoEnabled()) {
-            _log.info(
+        if (_log.isDebugEnabled()) {
+            _log.debug(
                     "Destinatarios BCC de cotización resueltos. "
                             + "cantidadBcc="
                             + emails.length

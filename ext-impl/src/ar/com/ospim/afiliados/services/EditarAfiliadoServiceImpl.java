@@ -137,6 +137,13 @@ public class EditarAfiliadoServiceImpl {
 	public Afiliado getAfiliadoEntry(String cuil_titular, int inte,
 			Connection connectionParameter) throws SystemException,
 			NoSuchAfiliadoEntryException {
+		return getAfiliadoEntry(cuil_titular, inte, connectionParameter,
+				true);
+	}
+
+	public Afiliado getAfiliadoEntry(String cuil_titular, int inte,
+			Connection connectionParameter, boolean cargarImagen)
+			throws SystemException, NoSuchAfiliadoEntryException {
 		Connection con = null;
 		Connection conLportal = null;
 		CallableStatement stmt = null;
@@ -149,7 +156,9 @@ public class EditarAfiliadoServiceImpl {
 			} else {
 				con = connectionParameter;
 			}
-			conLportal = ConnectionHelper.getLPortalConnection();
+			if (cargarImagen) {
+				conLportal = ConnectionHelper.getLPortalConnection();
+			}
 			stmt = con.prepareCall(sql.toString());
 			stmt.setString(1, cuil_titular);
 			stmt.setInt(2, inte);
@@ -160,18 +169,17 @@ public class EditarAfiliadoServiceImpl {
 				afiliado = Afiliado.getMappingAfiliadoConDomicilioyDocDiscapacidad(rs);
 						
 				// Veo si tiene imágenes
-				String sqlImage = "{call tiene_imagen_afiliado(?)}";
-				stmt = conLportal.prepareCall(sqlImage.toString());
-				stmt.setString(1, cuil_titular);
-				ResultSet rsImage = stmt.executeQuery();
-				while (rsImage.next()) {
-					afiliado.setFolderid(rsImage.getInt(1));
-					afiliado.setTitle(rsImage.getString(2));
-					afiliado.setTiene_imagen(rsImage.getInt(3));
+				if (cargarImagen) {
+					String sqlImage = "{call tiene_imagen_afiliado(?)}";
+					stmt = conLportal.prepareCall(sqlImage.toString());
+					stmt.setString(1, cuil_titular);
+					ResultSet rsImage = stmt.executeQuery();
+					while (rsImage.next()) {
+						afiliado.setFolderid(rsImage.getInt(1));
+						afiliado.setTitle(rsImage.getString(2));
+						afiliado.setTiene_imagen(rsImage.getInt(3));
+					}
 				}
-				_log.debug("TIENE IMAGEN: " + afiliado.getTiene_imagen());
-				_log.debug("TIENE TITLE: " + afiliado.getTitle());
-				_log.debug("TIENE FOLDER_ID: " + afiliado.getFolderid());
 				afiliados.add(afiliado);
 			}
 			if (afiliados.size() > 1) {
@@ -215,6 +223,13 @@ public class EditarAfiliadoServiceImpl {
 	public Afiliado getAfiliadoEntryInclusoDadoBaja(String cuil_titular,
 			int inte, Connection connectionParameter) throws SystemException,
 			NoSuchAfiliadoEntryException {
+		return getAfiliadoEntryInclusoDadoBaja(cuil_titular, inte,
+				connectionParameter, true);
+	}
+
+	public Afiliado getAfiliadoEntryInclusoDadoBaja(String cuil_titular,
+			int inte, Connection connectionParameter, boolean cargarImagen)
+			throws SystemException, NoSuchAfiliadoEntryException {
 		Connection con = null;
 		CallableStatement stmt = null;		
 		Connection conLportal = null;
@@ -228,7 +243,9 @@ public class EditarAfiliadoServiceImpl {
 				con = connectionParameter;
 			}
 			
-			conLportal = ConnectionHelper.getLPortalConnection();
+			if (cargarImagen) {
+				conLportal = ConnectionHelper.getLPortalConnection();
+			}
 			stmt = con.prepareCall(sql.toString());
 			
 			stmt.setString(1, cuil_titular);
@@ -242,14 +259,16 @@ public class EditarAfiliadoServiceImpl {
 				afiliado = Afiliado.getMappingAfiliadoConDomicilioyDocDiscapacidad(rs);
 				
 				// Veo si tiene imágenes
-				String sqlImage = "{call tiene_imagen_afiliado(?)}";
-				stmt = conLportal.prepareCall(sqlImage.toString());
-				stmt.setString(1, cuil_titular);
-				ResultSet rsImage = stmt.executeQuery();
-				while (rsImage.next()) {
-					afiliado.setFolderid(rsImage.getInt(1));
-					afiliado.setTitle(rsImage.getString(2));
-					afiliado.setTiene_imagen(rsImage.getInt(3));
+				if (cargarImagen) {
+					String sqlImage = "{call tiene_imagen_afiliado(?)}";
+					stmt = conLportal.prepareCall(sqlImage.toString());
+					stmt.setString(1, cuil_titular);
+					ResultSet rsImage = stmt.executeQuery();
+					while (rsImage.next()) {
+						afiliado.setFolderid(rsImage.getInt(1));
+						afiliado.setTitle(rsImage.getString(2));
+						afiliado.setTiene_imagen(rsImage.getInt(3));
+					}
 				}
 				//Agrego un incidente de unidad operativa de un empleado si es que tiene
 				incidente = BusquedaAfiliadoServiceImpl.buscarUltimoIncidente(cuil_titular, inte);

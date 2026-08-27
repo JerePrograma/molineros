@@ -85,6 +85,10 @@ boolean ocultarPanelAfiliado =
                                 name="origen"
                                 value="" />
 
+                        <liferay-util:param
+                                name="datos_afiliado_struts_action"
+                                value="/compras/buscar_afiliado_datos" />
+
                     </liferay-util:include>
                 </fieldset>
 

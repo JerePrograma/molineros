@@ -210,13 +210,7 @@ public class CotizacionPrestadorMailHelper {
                 emailsDestino,
                 emailsCopia,
                 asunto,
-                cuerpo,
-                pedidoPresupuestoPdf,
-                nombrePedidoPresupuestoPdf
-        );
-
-        validarOrdenesMedicas(
-                ordenesMedicas
+                cuerpo
         );
 
         ReportesAutomaticosConfiguracion configuracion =
@@ -364,8 +358,8 @@ public class CotizacionPrestadorMailHelper {
 
             enviado = true;
 
-            if (_log.isInfoEnabled()) {
-                _log.info(
+            if (_log.isDebugEnabled()) {
+                _log.debug(
                         "Correo de cotización aceptado por el servidor SMTP. "
                                 + "ordenesMedicasAdjuntas="
                                 + (
@@ -536,9 +530,7 @@ public class CotizacionPrestadorMailHelper {
             String[] emailsDestino,
             String[] emailsCopia,
             String asunto,
-            String cuerpo,
-            byte[] pedidoPresupuestoPdf,
-            String nombrePedidoPresupuestoPdf)
+            String cuerpo)
             throws Exception {
 
         validarEmailsDestino(
@@ -561,10 +553,6 @@ public class CotizacionPrestadorMailHelper {
             );
         }
 
-        validarPedidoPresupuesto(
-                pedidoPresupuestoPdf,
-                nombrePedidoPresupuestoPdf
-        );
     }
 
     private void validarEmailsDestino(

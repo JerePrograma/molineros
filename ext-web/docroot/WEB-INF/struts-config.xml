@@ -7158,7 +7158,7 @@
 
         <action
                 path="/compras/buscar_afiliado_datos"
-                type="ar.com.ospim.autorizaciones.action.AfiliadoDatosJSONAction" />
+                type="ar.com.ospim.compras.requerimientos.action.BuscarAfiliadoDatosCompraAction" />
 
         <action
                 path="/compras/actualiza_domicilio"
