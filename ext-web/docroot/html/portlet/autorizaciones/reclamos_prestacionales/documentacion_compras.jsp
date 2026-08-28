@@ -407,6 +407,8 @@ if (presupuestoDocumentacionComprasValido) {
                                 href="<%= HtmlUtil.escape(
                                         urlPedidoCotizacionDocumentacionCompras
                                 ) %>"
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 title="Ver / descargar pedido de cotización">
 
                                 <img
@@ -449,6 +451,8 @@ if (presupuestoDocumentacionComprasValido) {
                                 href="<%= HtmlUtil.escape(
                                         urlPresupuestoDocumentacionCompras
                                 ) %>"
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 title="Ver / descargar cotización adjudicada">
 
                                 <img
