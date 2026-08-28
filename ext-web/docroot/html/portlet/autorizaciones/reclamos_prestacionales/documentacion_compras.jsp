@@ -232,18 +232,29 @@ if (presupuestoDocumentacionComprasValido) {
 
         <% } else { %>
 
-            <table class="lfr-table">
+            <table class="taglib-search-iterator"
+                   width="100%"
+                   cellpadding="4"
+                   cellspacing="0"
+                   border="0">
 
-                <tr>
-                    <th>Documento</th>
-                    <th>Fecha</th>
-                    <th>Archivo</th>
-                    <th>Acci&oacute;n</th>
-                </tr>
+                <thead>
+                    <tr class="portlet-section-header results-header">
+                        <th>Documento</th>
+                        <th>Fecha</th>
+                        <th>Archivo</th>
+                        <th>Acci&oacute;n</th>
+                    </tr>
+                </thead>
+
+                <tbody>
 
                 <%
                 boolean hayOrdenMedicaValida =
                         false;
+
+                int filaDocumentacionCompras =
+                        0;
 
                 for (int i = 0;
                      i < ordenesMedicasDocumentacionCompras.size();
@@ -319,7 +330,11 @@ if (presupuestoDocumentacionComprasValido) {
                     );
                 %>
 
-                    <tr>
+                    <tr class="<%=
+                            filaDocumentacionCompras++ % 2 == 0
+                                    ? "results-row"
+                                    : "results-row alt"
+                    %>">
                         <td>Orden m&eacute;dica</td>
 
                         <td>
@@ -357,7 +372,11 @@ if (presupuestoDocumentacionComprasValido) {
                 if (!hayOrdenMedicaValida) {
                 %>
 
-                    <tr>
+                    <tr class="<%=
+                            filaDocumentacionCompras++ % 2 == 0
+                                    ? "results-row"
+                                    : "results-row alt"
+                    %>">
                         <td>Orden m&eacute;dica</td>
                         <td colspan="3">No disponible</td>
                     </tr>
@@ -366,7 +385,11 @@ if (presupuestoDocumentacionComprasValido) {
                 }
                 %>
 
-                <tr>
+                <tr class="<%=
+                        filaDocumentacionCompras++ % 2 == 0
+                                ? "results-row"
+                                : "results-row alt"
+                %>">
                     <td>Pedido de cotizaci&oacute;n</td>
                     <td>-</td>
 
@@ -401,7 +424,11 @@ if (presupuestoDocumentacionComprasValido) {
                     <% } %>
                 </tr>
 
-                <tr>
+                <tr class="<%=
+                        filaDocumentacionCompras++ % 2 == 0
+                                ? "results-row"
+                                : "results-row alt"
+                %>">
                     <td>
                         Cotizaci&oacute;n del prestador adjudicado
                     </td>
@@ -438,6 +465,8 @@ if (presupuestoDocumentacionComprasValido) {
 
                     <% } %>
                 </tr>
+
+                </tbody>
 
             </table>
 
