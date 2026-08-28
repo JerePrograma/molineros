@@ -12,7 +12,7 @@ Atributos de request consumidos:
 Parámetros consumidos:
     Ninguno directamente; sólo renderiza names y valores del contrato legacy cuando corresponde.
 IDs o funciones JavaScript expuestos:
-    id_requerimiento_compra, estado_nuevo, reintentar_notificaciones, btnGuardarCompras, btnGuardarCotizacionCompra, btnEnviarCotizarRequerimientoCompra, btnReintentarCotizacionRequerimientoCompra, btnCrearReclamoPrestacional
+    id_requerimiento_compra, estado_nuevo, reintentar_notificaciones, btnGuardarCompras, btnGuardarCotizacionCompra, btnVerPrestadoresHabilitadosCotizacion, btnEnviarCotizarRequerimientoCompra, btnReintentarCotizacionRequerimientoCompra, btnCrearReclamoPrestacional, abrirPrestadoresHabilitadosCotizacion
 Efectos secundarios:
     Sólo modifica el DOM o el modelo JavaScript; no ejecuta persistencia.
 --%>
@@ -157,6 +157,27 @@ PortletURL botoneraCambiarEstadoURL = renderResponse.createActionURL();
 botoneraCambiarEstadoURL.setWindowState(WindowState.MAXIMIZED);
 botoneraCambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerimiento");
 
+PortletURL botoneraPrestadoresHabilitadosURL = null;
+
+if (botoneraPuedeEnviarACotizar) {
+    botoneraPrestadoresHabilitadosURL =
+            renderResponse.createRenderURL();
+
+    botoneraPrestadoresHabilitadosURL.setWindowState(
+            LiferayWindowState.EXCLUSIVE
+    );
+
+    botoneraPrestadoresHabilitadosURL.setParameter(
+            "struts_action",
+            "/compras/ver_prestadores_habilitados_cotizacion"
+    );
+
+    botoneraPrestadoresHabilitadosURL.setParameter(
+            WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
+            String.valueOf(botoneraIdRequerimientoActual)
+    );
+}
+
 PortletURL botoneraReclamoPrestacionalURL =
         renderResponse.createActionURL();
 botoneraReclamoPrestacionalURL.setWindowState(
@@ -241,6 +262,11 @@ String botoneraReclamoPrestacionalFormId =
 
             <% if (botoneraPuedeEnviarACotizar) { %>
                 <input type="button"
+                       id="<portlet:namespace />btnVerPrestadoresHabilitadosCotizacion"
+                       value="Ver prestadores habilitados"
+                       onClick="return <%= namespaceCompra %>abrirPrestadoresHabilitadosCotizacion();" />
+
+                <input type="button"
                        id="<portlet:namespace />btnEnviarCotizarRequerimientoCompra"
                        value="Enviar a Cotizar"
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
@@ -310,6 +336,27 @@ String botoneraReclamoPrestacionalFormId =
 </iframe>
 
 <script type="text/javascript">
+    <% if (botoneraPuedeEnviarACotizar) { %>
+    var <%= namespaceCompra %>popupPrestadoresHabilitadosCotizacion = null;
+
+    function <%= namespaceCompra %>abrirPrestadoresHabilitadosCotizacion() {
+        <%= namespaceCompra %>popupPrestadoresHabilitadosCotizacion =
+                Liferay.Popup({
+                    title: 'Prestadores habilitados por sector/rubro',
+                    modal: true,
+                    width: 800
+                });
+
+        jQuery(
+                <%= namespaceCompra %>popupPrestadoresHabilitadosCotizacion
+        ).load(
+                '<%= botoneraPrestadoresHabilitadosURL.toString() %>'
+        );
+
+        return false;
+    }
+    <% } %>
+
     function <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(formId, botonId, mensajeConfirmacion, textoProcesando) {
         var form = document.getElementById(formId);
         var btn = document.getElementById(botonId);

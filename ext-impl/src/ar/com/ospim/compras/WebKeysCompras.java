@@ -105,6 +105,12 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String PRESTADORES_ENVIADOS_COTIZACION =
             "PRESTADORES_ENVIADOS_COTIZACION";
 
+    public static final String PRESTADORES_HABILITADOS_COTIZACION =
+            "PRESTADORES_HABILITADOS_COTIZACION";
+
+    public static final String ERROR_PRESTADORES_HABILITADOS_COTIZACION =
+            "ERROR_PRESTADORES_HABILITADOS_COTIZACION";
+
     public static final String RESULTADO_NOTIFICACION_COTIZACION =
             "RESULTADO_NOTIFICACION_COTIZACION";
 
@@ -226,6 +232,10 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
     public static final String FORWARD_COMPRAS_PRESTADORES_ENVIADOS =
             "portlet.compras.prestadores_enviados";
+
+    public static final String
+            FORWARD_COMPRAS_PRESTADORES_HABILITADOS_COTIZACION =
+            "portlet.compras.prestadores_habilitados_cotizacion";
 
     /*
      * Compatibilidad legacy con JSP existentes.

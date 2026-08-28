@@ -4577,6 +4577,12 @@
 		     value="/portlet/compras/requerimientos/requerimiento_compra_prestadores_enviados.jsp" />
 	</definition>
 
+	<definition name="portlet.compras.prestadores_habilitados_cotizacion"
+	            extends="portlet.compras">
+		<put name="portlet_content"
+		     value="/portlet/compras/requerimientos/requerimiento_compra_prestadores_habilitados.jsp" />
+	</definition>
+
 	<definition name="portlet.compras.afiliados.result.search"
 	            extends="portlet.compras">
 		<put name="portlet_content"

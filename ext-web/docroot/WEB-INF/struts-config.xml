@@ -7199,6 +7199,16 @@
 					name="portlet.compras.prestadores_enviados"
 					path="portlet.compras.prestadores_enviados" />
 		</action>
+
+		<action
+				path="/compras/ver_prestadores_habilitados_cotizacion"
+				type="ar.com.ospim.compras.requerimientos.action.VerPrestadoresHabilitadosCotizacionCompraAction">
+
+			<forward
+					name="portlet.compras.prestadores_habilitados_cotizacion"
+					path="portlet.compras.prestadores_habilitados_cotizacion" />
+		</action>
+
 		<action
 				path="/compras/upload_presupuestos_requerimiento"
 				type="ar.com.ospim.compras.requerimientos.action.UploadPresupuestosComprasAction">
