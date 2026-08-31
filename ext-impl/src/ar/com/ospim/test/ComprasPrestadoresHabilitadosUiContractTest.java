@@ -110,12 +110,39 @@ public class ComprasPrestadoresHabilitadosUiContractTest {
         );
 
         assertContains(
-                "vista sigue fieldset legacy",
+                "vista sigue filtro de Requerimientos",
                 jsp,
-                "<fieldset class=\"block-labels\">"
+                "<fieldset class=\"block-labels "
+                        + "compras-filtro-requerimientos\">"
         );
         assertContains(
-                "vista sigue tabla legacy",
+                "vista sigue contenedor de resultados legacy",
+                jsp,
+                "<fieldset class=\"block-labels "
+                        + "compras-resultados-requerimientos\">"
+        );
+        assertContains(
+                "vista usa SearchContainer legacy",
+                jsp,
+                "new SearchContainer("
+        );
+        assertContains(
+                "vista muestra todos los resultados como Requerimientos",
+                jsp,
+                "Integer.MAX_VALUE"
+        );
+        assertContains(
+                "vista construye filas legacy",
+                jsp,
+                "new ResultRow("
+        );
+        assertContains(
+                "vista renderiza iterador legacy",
+                jsp,
+                "<liferay-ui:search-iterator"
+        );
+        assertNotContains(
+                "vista no simula el iterador con una tabla manual",
                 jsp,
                 "<table class=\"lfr-table taglib-search-iterator\""
         );

@@ -67,6 +67,12 @@ pageContext.setAttribute(
 );
 %>
 
+<style type="text/css">
+    .compras-filtro-requerimientos {
+        margin-bottom: 12px;
+    }
+</style>
+
 <form action="<%= configuracionCorreosURL %>"
       method="get"
       name="<portlet:namespace />fmConfiguracionCorreos"
@@ -75,7 +81,7 @@ pageContext.setAttribute(
     <liferay-portlet:renderURLParams
             varImpl="configuracionCorreosURL" />
 
-    <fieldset class="block-labels">
+    <fieldset class="block-labels compras-filtro-requerimientos">
         <legend>Consulta de correos por rubro</legend>
 
         <table class="lfr-table">
@@ -134,107 +140,113 @@ pageContext.setAttribute(
     <div class="portlet-msg-error">
         <%= HtmlUtil.escape(errorConfiguracionCorreos) %>
     </div>
-<% } else if (idRubroConfiguracionCorreos == 0) { %>
-    <div class="portlet-msg-info">
-        Seleccione un rubro para consultar los correos configurados.
-    </div>
-<% } else if (rubroConfiguracionCorreos == null) { %>
+<% } else if (idRubroConfiguracionCorreos > 0
+        && rubroConfiguracionCorreos == null) { %>
     <div class="portlet-msg-error">
         El rubro seleccionado no es v&#225;lido.
     </div>
 <% } else { %>
-    <fieldset class="block-labels">
-        <legend>Correos configurados</legend>
+    <%
+    String mensajeVacioConfiguracionCorreos =
+            idRubroConfiguracionCorreos == 0
+                    ? "Seleccione un rubro para consultar los correos configurados."
+                    : "No se encontraron prestadores vigentes y habilitados "
+                            + "para cotizar asociados al rubro seleccionado.";
 
-        <table class="lfr-table" width="100%">
-            <tr>
-                <td><strong>Rubro:</strong></td>
-                <td>
-                    <%= HtmlUtil.escape(
-                            rubroConfiguracionCorreos
-                                    .getDescripcionVisible()
-                    ) %>
-                </td>
-                <td><strong>Cantidad de prestadores:</strong></td>
-                <td><%= prestadoresConfiguracionCorreos.size() %></td>
-            </tr>
-        </table>
+    List<String> headerNamesConfiguracionCorreos =
+            new ArrayList<String>();
+    headerNamesConfiguracionCorreos.add("#");
+    headerNamesConfiguracionCorreos.add("razon-social");
+    headerNamesConfiguracionCorreos.add("cuit");
+    headerNamesConfiguracionCorreos.add("tipo-prestador");
+    headerNamesConfiguracionCorreos.add("Correos configurados");
+
+    SearchContainer searchContainerConfiguracionCorreos =
+            new SearchContainer(
+                    renderRequest,
+                    null,
+                    null,
+                    SearchContainer.DEFAULT_CUR_PARAM,
+                    Integer.MAX_VALUE,
+                    configuracionCorreosURL,
+                    headerNamesConfiguracionCorreos,
+                    mensajeVacioConfiguracionCorreos
+            );
+
+    List resultRowsConfiguracionCorreos =
+            searchContainerConfiguracionCorreos.getResultRows();
+    int numeroPrestadorConfiguracionCorreos = 0;
+
+    for (int i = 0;
+         i < prestadoresConfiguracionCorreos.size();
+         i++) {
+
+        PrestadorCotizacion prestadorConfiguracionCorreos =
+                prestadoresConfiguracionCorreos.get(i);
+
+        if (prestadorConfiguracionCorreos == null) {
+            continue;
+        }
+
+        numeroPrestadorConfiguracionCorreos++;
+
+        String emailConfiguracionCorreos =
+                prestadorConfiguracionCorreos.getEmailVisible();
+
+        if (WebKeysCompras.isEmpty(emailConfiguracionCorreos)) {
+            emailConfiguracionCorreos =
+                    "Sin correos v\u00e1lidos registrados.";
+        }
+
+        ResultRow rowConfiguracionCorreos =
+                new ResultRow(
+                        prestadorConfiguracionCorreos,
+                        String.valueOf(
+                                prestadorConfiguracionCorreos
+                                        .getIdPrestador()
+                        ),
+                        i
+                );
+
+        rowConfiguracionCorreos.addText(
+                HtmlUtil.escape(
+                        String.valueOf(
+                                numeroPrestadorConfiguracionCorreos
+                        )
+                )
+        );
+        rowConfiguracionCorreos.addText(
+                HtmlUtil.escape(
+                        prestadorConfiguracionCorreos
+                                .getRazonSocialVisible()
+                )
+        );
+        rowConfiguracionCorreos.addText(
+                HtmlUtil.escape(
+                        prestadorConfiguracionCorreos.getCuitVisible()
+                )
+        );
+        rowConfiguracionCorreos.addText(
+                HtmlUtil.escape(
+                        prestadorConfiguracionCorreos
+                                .getTipoPrestadorVisible()
+                )
+        );
+        rowConfiguracionCorreos.addText(
+                HtmlUtil.escape(emailConfiguracionCorreos)
+        );
+        resultRowsConfiguracionCorreos.add(
+                rowConfiguracionCorreos
+        );
+    }
+
+    searchContainerConfiguracionCorreos.setTotal(
+            numeroPrestadorConfiguracionCorreos
+    );
+    %>
+
+    <fieldset class="block-labels compras-resultados-requerimientos">
+        <liferay-ui:search-iterator
+                searchContainer="<%= searchContainerConfiguracionCorreos %>" />
     </fieldset>
-
-    <% if (prestadoresConfiguracionCorreos.isEmpty()) { %>
-        <div class="portlet-msg-info">
-            No se encontraron prestadores vigentes y habilitados para
-            cotizar asociados al rubro seleccionado.
-        </div>
-    <% } else { %>
-        <table class="lfr-table taglib-search-iterator" width="100%">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Raz&#243;n social</th>
-                    <th>CUIT</th>
-                    <th>Tipo de prestador</th>
-                    <th>Correos configurados</th>
-                </tr>
-            </thead>
-            <tbody>
-                <%
-                int numeroPrestadorConfiguracionCorreos = 0;
-
-                for (int i = 0;
-                     i < prestadoresConfiguracionCorreos.size();
-                     i++) {
-
-                    PrestadorCotizacion prestador =
-                            prestadoresConfiguracionCorreos.get(i);
-
-                    if (prestador == null) {
-                        continue;
-                    }
-
-                    numeroPrestadorConfiguracionCorreos++;
-                %>
-                    <tr>
-                        <td>
-                            <%= numeroPrestadorConfiguracionCorreos %>
-                        </td>
-                        <td>
-                            <%= HtmlUtil.escape(
-                                    prestador.getRazonSocialVisible()
-                            ) %>
-                        </td>
-                        <td>
-                            <%= HtmlUtil.escape(
-                                    prestador.getCuitVisible()
-                            ) %>
-                        </td>
-                        <td>
-                            <%= HtmlUtil.escape(
-                                    prestador.getTipoPrestadorVisible()
-                            ) %>
-                        </td>
-                        <td>
-                            <% if (WebKeysCompras.isEmpty(
-                                    prestador.getEmailVisible()
-                            )) { %>
-                                Sin correos v&#225;lidos registrados.
-                            <% } else { %>
-                                <%= HtmlUtil.escape(
-                                        prestador.getEmailVisible()
-                                ) %>
-                            <% } %>
-                        </td>
-                    </tr>
-                <%
-                }
-                %>
-            </tbody>
-        </table>
-    <% } %>
-
-    <div class="portlet-msg-info">
-        Se muestran los correos reales registrados de los prestadores
-        vigentes, habilitados para cotizar y asociados al rubro seleccionado.
-        Esta consulta no modifica los contactos ni el env&#237;o.
-    </div>
 <% } %>
