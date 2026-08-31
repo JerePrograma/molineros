@@ -36,7 +36,6 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
     private static final int RECUPERABLE_SUR = 1;
     private static final int NO_RECUPERABLE = 2;
-    private static final int RECUPERABLE_INTEGRACION = 3;
     private static final String
             DESCRIPCION_INTEGRACION_CABECERA_NO_RECUPERABLE =
             "NO ES RECUPERABLE";
@@ -896,13 +895,12 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
     }
 
     /**
-     * Regla vigente del proyecto:
+     * Regla del flujo Compras -> Reclamo Prestacional:
      *
      * - Surge = recuperable SUR.
-     * - Recupero sin Surge = recuperable por Integración.
-     * - Ninguno = no recuperable.
+     * - Sin Surge = no recuperable.
      *
-     * Si ambos indicadores vienen activos, SUR tiene prioridad.
+     * Recupero no habilita Integración en este flujo.
      */
     public static int resolverRecuperable(
             RequerimientoCompra requerimiento) {
@@ -913,13 +911,52 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
             return RECUPERABLE_SUR;
         }
 
-        if (requerimiento != null
-                && requerimiento.isRecupero()) {
+        return NO_RECUPERABLE;
+    }
 
-            return RECUPERABLE_INTEGRACION;
+    public static void validarRecuperablesParaGuardar(
+            RequerimientoCompra requerimiento,
+            List<PrestacionesReclamo> prestaciones) throws Exception {
+
+        if (requerimiento == null) {
+            throw new Exception(
+                    "No se pudo validar la recuperabilidad del requerimiento."
+            );
         }
 
-        return NO_RECUPERABLE;
+        int recuperableEsperado =
+                resolverRecuperable(
+                        requerimiento
+                );
+
+        for (int i = 0;
+                prestaciones != null && i < prestaciones.size();
+                i++) {
+
+            PrestacionesReclamo prestacion =
+                    prestaciones.get(i);
+
+            if (prestacion == null
+                    || PrestacionesReclamo.ESTADOS.BAJA.equals(
+                            prestacion.getEstado()
+                    )) {
+
+                continue;
+            }
+
+            if (prestacion.getRecuperable() == null
+                    || prestacion.getRecuperable().intValue()
+                    != recuperableEsperado) {
+
+                throw new Exception(
+                        requerimiento.isSurge()
+                                ? "Las prestaciones del reclamo deben estar "
+                                        + "marcadas como SURGE."
+                                : "Las prestaciones del reclamo deben estar "
+                                        + "marcadas como NO RECUPERABLE."
+                );
+            }
+        }
     }
 
     /**
@@ -1319,15 +1356,31 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 );
             }
 
-            if (!WebKeysCompras
-                    .esNomencladorValidoParaSectorCompras(
-                            sector,
-                            nomenclador
-                                    .getId_tipo_nomenclador(),
-                            nomenclador
-                                    .getMarcaReintegroLiquidacion(),
-                            nomenclador.getCodigo()
-                    )) {
+            boolean nomencladorValido;
+
+            if (detalle.getIdTipoPrestacionInt() > 0) {
+                nomencladorValido =
+                        WebKeysCompras
+                                .esNomencladorValidoParaTipoPrestacionCompras(
+                                        sector,
+                                        detalle.getIdTipoPrestacionInt(),
+                                        nomenclador
+                                                .getId_tipo_nomenclador(),
+                                        nomenclador
+                                                .getMarcaReintegroLiquidacion(),
+                                        nomenclador.getCodigo()
+                                );
+            } else {
+                nomencladorValido =
+                        WebKeysCompras.esNomencladorValidoParaSectorCompras(
+                                sector,
+                                nomenclador.getId_tipo_nomenclador(),
+                                nomenclador.getMarcaReintegroLiquidacion(),
+                                nomenclador.getCodigo()
+                        );
+            }
+
+            if (!nomencladorValido) {
 
                 if ("FARMACIA".equals(sector)) {
                     throw new IllegalArgumentException(
@@ -1352,9 +1405,26 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 }
 
                 if ("PRESTACIONES MEDICAS".equals(sector)) {
+                    if (detalle.getIdTipoPrestacionInt() <= 0) {
+                        throw new IllegalArgumentException(
+                                "PRESTACIONES MÉDICAS requiere un "
+                                        + "nomenclador tipo 2, 3, 4, 6 o 10."
+                        );
+                    }
+
+                    if (WebKeysCompras.esTipoPrestacionInsumos(
+                            detalle.getIdTipoPrestacionInt()
+                    )) {
+                        throw new IllegalArgumentException(
+                                "Para Insumos debe utilizarse una "
+                                        + "prestación del nomenclador tipo 10."
+                        );
+                    }
+
                     throw new IllegalArgumentException(
-                            "PRESTACIONES MÉDICAS no admite "
-                                    + "prestaciones del nomenclador tipo 1."
+                            "Debe utilizarse un nomenclador tipo 2, 3, 4 o 6; "
+                                    + "el tipo 10 corresponde exclusivamente "
+                                    + "a Insumos."
                     );
                 }
 

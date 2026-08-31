@@ -3004,16 +3004,21 @@ RETURNS TRIGGER
 AS $func$
 DECLARE
     v_id_tipo_prestacion SMALLINT;
+    v_id_tipo_nomenclador INTEGER;
     v_cantidad_tipos_sector INTEGER;
 BEGIN
     SELECT
         d.id_tipo_prestacion,
+        d.id_tipo_nomenclador,
         (
             SELECT count(*)
             FROM compras.tipo_prestacion t
             WHERE t.id_sector = r.id_sector
         )
-    INTO v_id_tipo_prestacion, v_cantidad_tipos_sector
+    INTO
+        v_id_tipo_prestacion,
+        v_id_tipo_nomenclador,
+        v_cantidad_tipos_sector
     FROM compras.requerimiento_detalle d
     JOIN compras.requerimiento r
       ON r.id_requerimiento = d.id_requerimiento
@@ -3021,12 +3026,27 @@ BEGIN
       AND d.baja_fecha IS NULL
       AND r.baja_fecha IS NULL;
 
-    IF FOUND
+    IF TG_OP = 'INSERT'
+       AND FOUND
        AND v_cantidad_tipos_sector > 0
        AND v_id_tipo_prestacion IS NULL THEN
 
         RAISE EXCEPTION
             'Debe seleccionar el tipo de prestación.';
+    END IF;
+
+    IF FOUND
+       AND v_id_tipo_prestacion = 6
+       AND v_id_tipo_nomenclador IS DISTINCT FROM 10 THEN
+
+        RAISE EXCEPTION
+            'Para Insumos el tipo de nomenclador debe ser 10.';
+    ELSIF FOUND
+          AND v_id_tipo_prestacion <> 6
+          AND v_id_tipo_nomenclador = 10 THEN
+
+        RAISE EXCEPTION
+            'El nomenclador tipo 10 corresponde exclusivamente a Insumos.';
     END IF;
 
     RETURN NULL;
@@ -3035,7 +3055,7 @@ $func$
 LANGUAGE plpgsql;
 
 CREATE CONSTRAINT TRIGGER tr_compras_detalle_tipo_prestacion_nuevo
-    AFTER INSERT
+    AFTER INSERT OR UPDATE
     ON compras.requerimiento_detalle
     DEFERRABLE INITIALLY DEFERRED
     FOR EACH ROW

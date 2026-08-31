@@ -539,6 +539,55 @@ Efectos secundarios:
         fila.hide();
     }
 
+    function <portlet:namespace />obtenerIdTipoPrestacionDetalle() {
+        return jQuery.trim(
+                jQuery(
+                        '#<portlet:namespace />detalle_id_tipo_prestacion'
+                ).val() || ''
+        );
+    }
+
+    function <portlet:namespace />esTipoPrestacionInsumosDetalle() {
+        return <portlet:namespace />obtenerIdTipoPrestacionDetalle()
+                == '<%= WebKeysCompras.TIPO_PRESTACION_INSUMOS %>';
+    }
+
+    function <portlet:namespace />esNomencladorValidoParaTipoPrestacionDetalle(
+            idTipoNomenclador) {
+
+        var idTipoPrestacion =
+                <portlet:namespace />obtenerIdTipoPrestacionDetalle();
+
+        if (!<portlet:namespace />esTipoPrestacionDetalleValidoParaSector(
+                idTipoPrestacion
+        )) {
+            return false;
+        }
+
+        idTipoNomenclador =
+                idTipoNomenclador != null
+                        ? jQuery.trim(
+                                String(
+                                        idTipoNomenclador
+                                )
+                        )
+                        : '';
+
+        if (!<portlet:namespace />esTipoNomencladorPrestacionesMedicas(
+                idTipoNomenclador
+        )) {
+            return false;
+        }
+
+        if (<portlet:namespace />esTipoPrestacionInsumosDetalle()) {
+            return idTipoNomenclador
+                    == '<%= WebKeysCompras.TIPO_NOMENCLADOR_PROTESIS_INSUMOS %>';
+        }
+
+        return idTipoNomenclador
+                != '<%= WebKeysCompras.TIPO_NOMENCLADOR_PROTESIS_INSUMOS %>';
+    }
+
     function <portlet:namespace />obtenerTipoNomencladorBusquedaDetalle() {
 
         if (<portlet:namespace />esSectorFarmaciaTipoNomenclador()) {
@@ -546,7 +595,24 @@ Efectos secundarios:
         }
 
         if (<portlet:namespace />esSectorPrestacionesMedicasTipoNomenclador()) {
-            return '';
+            var idTipoPrestacion =
+                    <portlet:namespace />obtenerIdTipoPrestacionDetalle();
+
+            if (!<portlet:namespace />esTipoPrestacionDetalleValidoParaSector(
+                    idTipoPrestacion
+            )) {
+                alert('Debe seleccionar el Tipo.');
+
+                jQuery(
+                        '#<portlet:namespace />detalle_id_tipo_prestacion'
+                ).focus();
+
+                return null;
+            }
+
+            return <portlet:namespace />esTipoPrestacionInsumosDetalle()
+                    ? '<%= WebKeysCompras.TIPO_NOMENCLADOR_PROTESIS_INSUMOS %>'
+                    : '';
         }
 
         /*
@@ -560,13 +626,22 @@ Efectos secundarios:
             idTipoNomencladorResultado) {
 
         if (<portlet:namespace />esSectorPrestacionesMedicasTipoNomenclador()) {
-            if (!<portlet:namespace />esTipoNomencladorPrestacionesMedicas(
+            if (!<portlet:namespace />esNomencladorValidoParaTipoPrestacionDetalle(
                     idTipoNomencladorResultado
             )) {
-                alert(
-                        'La prestación seleccionada no posee una '
-                                + 'clasificación técnica válida.'
-                );
+                if (<portlet:namespace />esTipoPrestacionInsumosDetalle()) {
+                    alert(
+                            'Para Insumos debe seleccionar una prestación '
+                                    + 'del nomenclador tipo 10.'
+                    );
+                } else {
+                    alert(
+                            'Para el Tipo seleccionado debe elegir una prestación '
+                                    + 'de nomenclador tipo 2, 3, 4 o 6; el tipo 10 '
+                                    + 'corresponde exclusivamente a Insumos.'
+                    );
+                }
+
                 return false;
             }
 
@@ -613,7 +688,8 @@ Efectos secundarios:
         return true;
     }
 
-    function <portlet:namespace />validarTipoNomencladorDetalleSeleccionado() {
+    function <portlet:namespace />validarTipoNomencladorDetalleSeleccionado(
+            detalle) {
 
         var tipoItem =
                 jQuery.trim(
@@ -641,12 +717,43 @@ Efectos secundarios:
                             ).val() || ''
                     );
 
-            if (!<portlet:namespace />esTipoNomencladorPrestacionesMedicas(
+            var esHistoricoSinClasificar =
+                    detalle
+                    && <portlet:namespace />esEnteroPositivo(
+                            detalle.id
+                    )
+                    && <portlet:namespace />obtenerIdTipoPrestacionDetalle()
+                    == '';
+
+            if (esHistoricoSinClasificar) {
+                if (!<portlet:namespace />esTipoNomencladorPrestacionesMedicas(
+                        tipoTecnico
+                )) {
+                    alert(
+                            'Debe buscar y seleccionar una prestación válida.'
+                    );
+                    return false;
+                }
+
+                return true;
+            }
+
+            if (!<portlet:namespace />esNomencladorValidoParaTipoPrestacionDetalle(
                     tipoTecnico
             )) {
-                alert(
-                        'Debe buscar y seleccionar una prestación válida.'
-                );
+                if (<portlet:namespace />esTipoPrestacionInsumosDetalle()) {
+                    alert(
+                            'Para Insumos debe buscar y seleccionar una '
+                                    + 'prestación del nomenclador tipo 10.'
+                    );
+                } else {
+                    alert(
+                            'Debe buscar y seleccionar una prestación de '
+                                    + 'nomenclador tipo 2, 3, 4 o 6; el tipo 10 '
+                                    + 'corresponde exclusivamente a Insumos.'
+                    );
+                }
+
                 return false;
             }
 
@@ -708,6 +815,9 @@ Efectos secundarios:
 
         var idTipoNomenclador =
                 <portlet:namespace />obtenerTipoNomencladorBusquedaDetalle();
+
+        var idTipoPrestacion =
+                <portlet:namespace />obtenerIdTipoPrestacionDetalle();
 
         /*
          * null significa que el sector exige una selección
@@ -775,6 +885,10 @@ Efectos secundarios:
                 + encodeURIComponent(
                         <portlet:namespace />getSectorSeleccionadoCompra()
                 )
+                + '&<portlet:namespace />id_tipo_prestacion='
+                + encodeURIComponent(
+                        idTipoPrestacion
+                )
                 + '&<portlet:namespace />codigo='
                 + encodeURIComponent(
                         codigo
@@ -791,7 +905,7 @@ Efectos secundarios:
          *     9
          *
          * PRESTACIONES MÉDICAS:
-         *     4, 2, 10, 6 o 3.
+         *     INSUMOS usa 10; los demas Tipos excluyen 10.
          *
          * Los demás sectores mantienen la búsqueda legacy.
          */
@@ -1620,7 +1734,9 @@ Efectos secundarios:
             return false;
         }
 
-        if (!<portlet:namespace />validarTipoNomencladorDetalleSeleccionado()) {
+        if (!<portlet:namespace />validarTipoNomencladorDetalleSeleccionado(
+                detalle
+        )) {
             return false;
         }
 
@@ -2312,6 +2428,37 @@ Efectos secundarios:
             <portlet:namespace />limpiarSeleccionNomenclador(
                     teniaNomencladorSeleccionado
             );
+        });
+
+        jQuery(
+                '#<portlet:namespace />detalle_id_tipo_prestacion'
+        ).change(function() {
+
+            if (!<portlet:namespace />esSectorPrestacionesMedicasTipoNomenclador()) {
+                return;
+            }
+
+            var teniaNomencladorSeleccionado =
+                    jQuery.trim(
+                            jQuery(
+                                    '#<portlet:namespace />detalle_id_prestacion'
+                            ).val() || ''
+                    ) != '';
+
+            var idTipoNomencladorSeleccionado =
+                    jQuery.trim(
+                            jQuery(
+                                    '#<portlet:namespace />detalle_id_tipo_nomenclador'
+                            ).val() || ''
+                    );
+
+            if (teniaNomencladorSeleccionado
+                    && !<portlet:namespace />esNomencladorValidoParaTipoPrestacionDetalle(
+                            idTipoNomencladorSeleccionado
+                    )) {
+
+                <portlet:namespace />limpiarSeleccionNomenclador(true);
+            }
         });
 
         jQuery(

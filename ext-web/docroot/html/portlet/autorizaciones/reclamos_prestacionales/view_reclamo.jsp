@@ -41,8 +41,8 @@ ReclamoPrestacionalCompraContexto contextoReclamoCompras =
         ? (ReclamoPrestacionalCompraContexto) contextoReclamoComprasObj
         : null;
 
-boolean handoffReclamoComprasValido =
-        Constants.ADD.equalsIgnoreCase(cmdParametroCompras)
+boolean flujoReclamoComprasActivo =
+        !reclamoPersistido
         && "compras".equalsIgnoreCase(origenReclamoCompras)
         && contextoReclamoCompras != null
         && contextoReclamoCompras.coincideNonce(nonceReclamoCompras)
@@ -52,6 +52,10 @@ boolean handoffReclamoComprasValido =
         && contextoReclamoCompras.estaVigente(
                 System.currentTimeMillis()
         );
+
+boolean handoffReclamoComprasValido =
+        Constants.ADD.equalsIgnoreCase(cmdParametroCompras)
+        && flujoReclamoComprasActivo;
 
 if (handoffReclamoComprasValido) {
     request.setAttribute(Constants.CMD, Constants.ADD);
@@ -1075,10 +1079,20 @@ span-fixed-size {
 						WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION
 				);
 			}
+
+			request.setAttribute(
+					"rp.view.restringirRecuperableCompras",
+					Boolean.valueOf(flujoReclamoComprasActivo)
+			);
 			%>
 			<liferay-util:include
 				page="/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp">
 			</liferay-util:include>
+			<%
+			request.removeAttribute(
+					"rp.view.restringirRecuperableCompras"
+			);
+			%>
 		  </td></tr></table>	
 		</div>
 
@@ -1277,10 +1291,12 @@ span-fixed-size {
 
 									<select name="<%= reclamoPortletNamespace %>recuperable_sur" id="<%= reclamoPortletNamespace %>recuperable_sur"
 									 <% if (!esEdicion) { %> disabled="disabled" <%} %> onchange="cambiorecuperable();">
-														<option value="0">Seleccione</option>
-														<option value="1">SURGE</option>
-														<option value="3">Integración</option>
-														<option value="2">NO Recuperable</option>
+												<option value="0">Seleccione</option>
+												<option value="1">SURGE</option>
+												<% if (!flujoReclamoComprasActivo) { %>
+												<option value="3">Integración</option>
+												<% } %>
+												<option value="2">NO Recuperable</option>
 									</select>
 
 

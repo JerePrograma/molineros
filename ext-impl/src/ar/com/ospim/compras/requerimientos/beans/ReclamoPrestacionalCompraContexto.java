@@ -23,6 +23,11 @@ public class ReclamoPrestacionalCompraContexto
      */
     public static final int RECUPERABLE_SUR = 1;
     public static final int NO_RECUPERABLE = 2;
+
+    /*
+     * Se conserva por compatibilidad binaria con consumidores anteriores.
+     * El handoff desde Compras no retorna este valor.
+     */
     public static final int RECUPERABLE_INTEGRACION = 3;
 
     private final int idRequerimientoCompra;
@@ -188,17 +193,13 @@ public class ReclamoPrestacionalCompraContexto
      *
      * 1 = SUR
      * 2 = No recuperable
-     * 3 = Integración
      *
-     * Si Surge está marcado, prevalece SUR.
+     * Recupero no se transforma en Integración durante el handoff
+     * desde Compras.
      */
     public int getRecuperableInicial() {
         if (surge) {
             return RECUPERABLE_SUR;
-        }
-
-        if (recupero) {
-            return RECUPERABLE_INTEGRACION;
         }
 
         return NO_RECUPERABLE;

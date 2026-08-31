@@ -974,6 +974,21 @@ List<RequerimientoCompraSector> sectores =
             return false;
         }
 
+        if (typeof <portlet:namespace />esSectorPrestacionesMedicasTipoNomenclador
+                == 'function'
+                && <portlet:namespace />esSectorPrestacionesMedicasTipoNomenclador()
+                && typeof <portlet:namespace />validarTipoNomencladorResultadoDetalle
+                == 'function') {
+
+            for (var j = 0; j < detalles.length; j++) {
+                if (!<portlet:namespace />validarTipoNomencladorResultadoDetalle(
+                        detalles[j].idTipoNomenclador
+                )) {
+                    return false;
+                }
+            }
+        }
+
         if (typeof <portlet:namespace />requerimientoPersistidoDetalle
                 != 'undefined'
                 && <portlet:namespace />requerimientoPersistidoDetalle) {

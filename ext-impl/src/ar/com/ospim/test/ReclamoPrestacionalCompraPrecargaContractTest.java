@@ -140,9 +140,14 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
                 contexto,
                 "public int getRecuperableInicial("
         );
-        antes(
+        contiene(
                 recuperable,
-                "if (surge)",
+                "contexto usa SURGE cuando corresponde",
+                "if (surge)"
+        );
+        noContiene(
+                recuperable,
+                "contexto no transforma recupero en Integracion",
                 "if (recupero)"
         );
 

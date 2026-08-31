@@ -4,6 +4,7 @@ import ar.com.ospim.autorizaciones.beans.Nomenclador;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
+import ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra;
 import ar.com.ospim.compras.requerimientos.helper.NomencladorCompraBusquedaHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 
@@ -95,6 +96,12 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
             return;
         }
 
+        int idTipoPrestacion =
+                resolverTipoPrestacion(
+                        request,
+                        sector
+                );
+
         Integer filtroTipoNomenclador =
                 WebKeysCompras
                         .getFiltroTipoNomencladorCompras(
@@ -115,12 +122,20 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                 sector
         )) {
             /*
-             * La clasificación técnica se resuelve con la identidad que
-             * devuelve cada resultado. No se expone ni se confía en un
-             * selector HTTP de tipo de nomenclador.
+             * El tipo de prestacion fue validado contra el catalogo del
+             * sector. INSUMOS consulta exclusivamente el tipo 10; los
+             * demas tipos medicos consultan la clasificacion general,
+             * cuya busqueda excluye el tipo 10.
              */
             filtroTipoNomenclador =
-                    Integer.valueOf(0);
+                    WebKeysCompras.esTipoPrestacionInsumos(
+                            idTipoPrestacion
+                    )
+                            ? Integer.valueOf(
+                                    WebKeysCompras
+                                            .TIPO_NOMENCLADOR_PROTESIS_INSUMOS
+                            )
+                            : Integer.valueOf(0);
         }
 
         int marcaReinLiq =
@@ -190,6 +205,51 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                             : "No se pudieron buscar nomencladores."
             );
         }
+    }
+
+    private int resolverTipoPrestacion(
+            RenderRequest request,
+            String sector) throws Exception {
+
+        int idTipoPrestacion =
+                ParamUtil.getInteger(
+                        request,
+                        "id_tipo_prestacion",
+                        0
+                );
+
+        if (!"PRESTACIONES MEDICAS".equals(sector)) {
+            return idTipoPrestacion;
+        }
+
+        if (idTipoPrestacion <= 0) {
+            throw new Exception(
+                    "Debe seleccionar el tipo de prestación."
+            );
+        }
+
+        List<TipoPrestacionCompra> tipos =
+                BusquedaRequerimientoCompraServiceUtil
+                        .listarTiposPrestacion();
+
+        for (int i = 0; tipos != null && i < tipos.size(); i++) {
+            TipoPrestacionCompra tipo = tipos.get(i);
+
+            if (tipo != null
+                    && tipo.getIdInt() == idTipoPrestacion
+                    && sector.equals(
+                            WebKeysCompras.normalizarSectorCompra(
+                                    tipo.getSectorDescripcion()
+                            )
+                    )) {
+                return idTipoPrestacion;
+            }
+        }
+
+        throw new Exception(
+                "El tipo de prestación no corresponde al sector "
+                        + "del requerimiento."
+        );
     }
 
     private String resolverSector(

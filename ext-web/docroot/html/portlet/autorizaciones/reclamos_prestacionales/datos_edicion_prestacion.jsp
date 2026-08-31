@@ -21,6 +21,12 @@ request.getSession().removeAttribute(
 
 Integer tipoedicion = Integer.valueOf(0);
 String ocultarSeccional = null;
+boolean restringirRecuperableCompras =
+        Boolean.TRUE.equals(
+                request.getAttribute(
+                        "rp.view.restringirRecuperableCompras"
+                )
+        );
 
 Calendar fechaseccional = Calendar.getInstance();
 Calendar fechaPrestacion = Calendar.getInstance();
@@ -966,7 +972,9 @@ boolean mostrarCodigoPresentado =
                                     onchange="cambiorecuperableEdicion();"
                                 >
                                     <option value="0">
-                                        Seleccione Integración
+                                        <%=restringirRecuperableCompras
+                                                ? "Seleccione"
+                                                : "Seleccione Integración"%>
                                     </option>
 
                                     <option
@@ -983,19 +991,21 @@ boolean mostrarCodigoPresentado =
                                         SURGE
                                     </option>
 
-                                    <option
-                                        value="3"
-                                        <%=prestacionEnEdicion != null
-                                                && prestacionEnEdicion
-                                                        .getRecuperable() != null
-                                                && prestacionEnEdicion
-                                                        .getRecuperable()
-                                                        .intValue() == 3
-                                                        ? "selected"
-                                                        : ""%>
-                                    >
-                                        Integración
-                                    </option>
+                                    <% if (!restringirRecuperableCompras) { %>
+                                        <option
+                                            value="3"
+                                            <%=prestacionEnEdicion != null
+                                                    && prestacionEnEdicion
+                                                            .getRecuperable() != null
+                                                    && prestacionEnEdicion
+                                                            .getRecuperable()
+                                                            .intValue() == 3
+                                                            ? "selected"
+                                                            : ""%>
+                                        >
+                                            Integración
+                                        </option>
+                                    <% } %>
 
                                     <option
                                         value="2"

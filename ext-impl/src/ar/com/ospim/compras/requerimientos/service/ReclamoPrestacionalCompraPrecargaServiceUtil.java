@@ -80,6 +80,17 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
         );
     }
 
+    public static void validarRecuperablesParaGuardar(
+            RequerimientoCompra requerimiento,
+            List<PrestacionesReclamo> prestaciones) throws Exception {
+
+        ReclamoPrestacionalCompraPrecargaHelper
+                .validarRecuperablesParaGuardar(
+                        requerimiento,
+                        prestaciones
+                );
+    }
+
     public static final class Precarga {
 
         private final ReclamoPrestacionalCompraPrecargaHelper.Precarga

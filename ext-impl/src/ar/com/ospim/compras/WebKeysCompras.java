@@ -39,6 +39,13 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final int TIPO_NOMENCLADOR_ANALISIS_CLINICOS = 4;
     public static final int TIPO_NOMENCLADOR_QUIRURGICO = 6;
     public static final int TIPO_NOMENCLADOR_PROTESIS_INSUMOS = 10;
+    public static final int TIPO_PRESTACION_INSUMOS = 6;
+
+    public static boolean esTipoPrestacionInsumos(
+            int idTipoPrestacion) {
+
+        return idTipoPrestacion == TIPO_PRESTACION_INSUMOS;
+    }
 
     public static boolean esTipoNomencladorPrestacionesMedicas(
             int idTipoNomenclador) {
@@ -543,6 +550,44 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         }
 
         return false;
+    }
+
+    public static boolean esNomencladorValidoParaTipoPrestacionCompras(
+            String sectorDescripcion,
+            int idTipoPrestacion,
+            int idTipoNomenclador,
+            int marcaReinLiq,
+            String codigoNomenclador) {
+
+        if (!esNomencladorValidoParaSectorCompras(
+                sectorDescripcion,
+                idTipoNomenclador,
+                marcaReinLiq,
+                codigoNomenclador
+        )) {
+            return false;
+        }
+
+        String sector =
+                normalizarSectorCompra(
+                        sectorDescripcion
+                );
+
+        if (!"PRESTACIONES MEDICAS".equals(sector)) {
+            return true;
+        }
+
+        if (idTipoPrestacion <= 0) {
+            return false;
+        }
+
+        if (esTipoPrestacionInsumos(idTipoPrestacion)) {
+            return idTipoNomenclador
+                    == TIPO_NOMENCLADOR_PROTESIS_INSUMOS;
+        }
+
+        return idTipoNomenclador
+                != TIPO_NOMENCLADOR_PROTESIS_INSUMOS;
     }
 
     public static boolean esSectorDetalleObservacionCompras(

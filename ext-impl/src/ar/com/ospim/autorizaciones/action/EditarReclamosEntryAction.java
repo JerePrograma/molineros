@@ -51,6 +51,7 @@ import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.service.ReclamoPrestacionalCompraPrecargaServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
 import ar.com.ospim.crm.beans.ContactoCRM;
 import ar.com.ospim.desarrolloAppMobile.beans.ClienteAppMobile;
@@ -1282,6 +1283,12 @@ import ar.com.ospim.util.StringUtils;
 					"El requerimiento de compra ya no esta COTIZADO."
 			);
 		}
+
+		ReclamoPrestacionalCompraPrecargaServiceUtil
+				.validarRecuperablesParaGuardar(
+						requerimiento,
+						reclamoPrestacional.getPrestaciones()
+				);
 
 		String cuilRequerimiento = normalizarCuil(
 				requerimiento.getAfiliadoCuilTitular()

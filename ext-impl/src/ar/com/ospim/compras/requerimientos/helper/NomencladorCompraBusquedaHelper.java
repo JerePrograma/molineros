@@ -158,6 +158,13 @@ public final class NomencladorCompraBusquedaHelper {
         for (int i = 0; i < TIPOS_PRESTACIONES_MEDICAS.length; i++) {
             int tipo = TIPOS_PRESTACIONES_MEDICAS[i];
 
+            if (idTipoNomenclador <= 0
+                    && tipo == WebKeysCompras
+                    .TIPO_NOMENCLADOR_PROTESIS_INSUMOS) {
+
+                continue;
+            }
+
             if (idTipoNomenclador > 0
                     && tipo != idTipoNomenclador) {
                 continue;

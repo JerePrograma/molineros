@@ -1885,14 +1885,40 @@ private void validarDetalleNomencladorParaGuardar(
         );
     }
 
-    if (!WebKeysCompras.esNomencladorValidoParaSectorCompras(
-            sector,
-            idTipoNomencladorCanonico,
-            nomenclador.getMarcaReintegroLiquidacion(),
-            nomenclador.getCodigo()
-    )) {
+    boolean nomencladorValido;
+
+    if (detalle.getIdTipoPrestacionInt() > 0) {
+        nomencladorValido =
+                WebKeysCompras
+                        .esNomencladorValidoParaTipoPrestacionCompras(
+                                sector,
+                                detalle.getIdTipoPrestacionInt(),
+                                idTipoNomencladorCanonico,
+                                nomenclador.getMarcaReintegroLiquidacion(),
+                                nomenclador.getCodigo()
+                        );
+    } else {
+        /*
+         * Compatibilidad exclusiva con detalles historicos que fueron
+         * persistidos antes de incorporar el tipo de prestacion.
+         */
+        nomencladorValido =
+                detalle.getIdInt() > 0
+                        && WebKeysCompras
+                                .esNomencladorValidoParaSectorCompras(
+                                        sector,
+                                        idTipoNomencladorCanonico,
+                                        nomenclador.getMarcaReintegroLiquidacion(),
+                                        nomenclador.getCodigo()
+                                );
+    }
+
+    if (!nomencladorValido) {
         throw errorUsuario(
-                mensajeNomencladorInvalido(sector)
+                mensajeNomencladorInvalido(
+                        sector,
+                        detalle.getIdTipoPrestacionInt()
+                )
         );
     }
 
@@ -1922,7 +1948,9 @@ private void validarDetalleNomencladorParaGuardar(
     );
 }
 
-private String mensajeNomencladorInvalido(String sector) {
+private String mensajeNomencladorInvalido(
+        String sector,
+        int idTipoPrestacion) {
     if ("FARMACIA".equals(sector)) {
         return "Para Farmacia debe seleccionar una prestación "
                 + "del nomenclador tipo 9.";
@@ -1939,8 +1967,21 @@ private String mensajeNomencladorInvalido(String sector) {
     }
 
     if ("PRESTACIONES MEDICAS".equals(sector)) {
-        return "Para PRESTACIONES MÉDICAS debe seleccionar una "
-                + "prestación de nomenclador tipo 2, 3, 4, 6 o 10.";
+        if (idTipoPrestacion <= 0) {
+            return "Para PRESTACIONES MÉDICAS debe seleccionar una "
+                    + "prestación de nomenclador tipo 2, 3, 4, 6 o 10.";
+        }
+
+        if (WebKeysCompras.esTipoPrestacionInsumos(
+                idTipoPrestacion
+        )) {
+            return "Para Insumos debe seleccionar una prestación "
+                    + "del nomenclador tipo 10.";
+        }
+
+        return "Para el tipo de PRESTACIONES MÉDICAS seleccionado "
+                + "debe elegir un nomenclador tipo 2, 3, 4 o 6; "
+                + "el tipo 10 corresponde exclusivamente a Insumos.";
     }
 
     return "La prestación seleccionada no corresponde "
