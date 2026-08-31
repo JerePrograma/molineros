@@ -61,6 +61,10 @@ configuracionCorreosURL.setParameter(
         "tabs1",
         "configuracion-de-correos"
 );
+pageContext.setAttribute(
+        "configuracionCorreosURL",
+        configuracionCorreosURL
+);
 %>
 
 <form action="<%= configuracionCorreosURL %>"

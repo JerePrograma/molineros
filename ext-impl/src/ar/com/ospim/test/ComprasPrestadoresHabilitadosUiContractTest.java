@@ -130,6 +130,13 @@ public class ComprasPrestadoresHabilitadosUiContractTest {
                 "id_tipo_prestacion"
         );
         assertContains(
+                "formulario GET publica parametros de render",
+                jsp,
+                "pageContext.setAttribute(\n"
+                        + "        \"configuracionCorreosURL\",\n"
+                        + "        configuracionCorreosURL"
+        );
+        assertContains(
                 "vista escapa valores",
                 jsp,
                 "HtmlUtil.escape("
