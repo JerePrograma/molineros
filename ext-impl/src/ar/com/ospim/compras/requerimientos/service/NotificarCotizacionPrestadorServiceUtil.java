@@ -32,4 +32,20 @@ public class NotificarCotizacionPrestadorServiceUtil {
                 idRequerimientoCompra
         );
     }
+
+    public static List<PrestadorCotizacion>
+    listarPrestadoresConfiguracionCorreosPorRubro(
+            int idTipoPrestacion) throws Exception {
+
+        if (idTipoPrestacion <= 0) {
+            throw new Exception(
+                    "Debe informar el rubro de cotizaci\u00f3n."
+            );
+        }
+
+        return getInstance()
+                .listarPrestadoresConfiguracionCorreosPorRubro(
+                        idTipoPrestacion
+                );
+    }
 }

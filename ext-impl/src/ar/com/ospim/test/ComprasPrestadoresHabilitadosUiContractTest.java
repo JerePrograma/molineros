@@ -7,44 +7,59 @@ import java.nio.file.Files;
 public class ComprasPrestadoresHabilitadosUiContractTest {
 
     public static void main(String[] args) throws Exception {
+        String vistaPrincipal = leer(
+                "ext-web/docroot/html/portlet/compras/view.jsp"
+        );
         String acciones = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
                         + "partials/requerimiento_compra_acciones_componente.jsp"
         );
         String action = leer(
-                "ext-impl/src/ar/com/ospim/compras/requerimientos/action/"
-                        + "VerPrestadoresHabilitadosCotizacionCompraAction.java"
+                "ext-impl/src/ar/com/ospim/compras/action/"
+                        + "ViewComprasAction.java"
         );
         String serviceUtil = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
                         + "NotificarCotizacionPrestadorServiceUtil.java"
         );
+        String serviceImpl = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
+                        + "NotificarCotizacionPrestadorServiceImpl.java"
+        );
         String jsp = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
-                        + "requerimiento_compra_prestadores_habilitados.jsp"
+                        + "requerimiento_compra_configuracion_correos.jsp"
         );
-        String struts = leer("ext-web/docroot/WEB-INF/struts-config.xml");
-        String tiles = leer("ext-web/docroot/WEB-INF/tiles-defs.xml");
 
         assertContains(
-                "boton de consulta",
-                acciones,
-                "value=\"Ver prestadores habilitados\""
+                "pestana principal",
+                vistaPrincipal,
+                "configuracion-de-correos"
         );
         assertContains(
-                "consulta conserva guarda de envio",
-                acciones,
-                "if (botoneraPuedeEnviarACotizar)"
+                "titulo visible de pestana",
+                vistaPrincipal,
+                "Configuraci\\u00f3n de Correos"
         );
         assertContains(
-                "popup exclusive",
-                acciones,
-                "LiferayWindowState.EXCLUSIVE"
+                "pestana exige rol de cotizacion",
+                vistaPrincipal,
+                "WebKeysCompras.ROL_COTIZAR_COMPRAS"
         );
         assertContains(
-                "popup usa ruta focalizada",
+                "pestana incluye vista focalizada",
+                vistaPrincipal,
+                "requerimiento_compra_configuracion_correos.jsp"
+        );
+        assertNotContains(
+                "boton anterior retirado",
                 acciones,
-                "/compras/ver_prestadores_habilitados_cotizacion"
+                "Ver prestadores habilitados"
+        );
+        assertNotContains(
+                "popup anterior retirado",
+                acciones,
+                "abrirPrestadoresHabilitadosCotizacion"
         );
 
         assertContains(
@@ -53,20 +68,45 @@ public class ComprasPrestadoresHabilitadosUiContractTest {
                 "WebKeysCompras.ROL_COTIZAR_COMPRAS"
         );
         assertContains(
-                "action valida estado vigente",
+                "action carga catalogo de rubros",
                 action,
-                "requerimiento.puedeEnviarACotizar()"
+                ".listarTiposPrestacion()"
         );
         assertContains(
-                "action reutiliza candidatos canonicos",
+                "action conserva pestana en alcance de aplicacion",
                 action,
-                "NotificarCotizacionPrestadorServiceUtil\n"
-                        + "                            .listarPrestadoresCandidatos("
+                "PortletSession.APPLICATION_SCOPE"
+        );
+        assertContains(
+                "action consulta por rubro",
+                action,
+                ".listarPrestadoresConfiguracionCorreosPorRubro("
         );
         assertContains(
                 "service util delega al service existente",
                 serviceUtil,
-                "getInstance().listarPrestadoresCandidatos("
+                ".listarPrestadoresConfiguracionCorreosPorRubro("
+        );
+
+        assertContains(
+                "consulta usa rubro real del prestador",
+                serviceImpl,
+                "public.prestador_rubro"
+        );
+        assertContains(
+                "consulta normaliza rubro como el envio",
+                serviceImpl,
+                "compras.normalizar_rubro(pr.rubro) = t.descripcion"
+        );
+        assertContains(
+                "consulta usa emails canonicos",
+                serviceImpl,
+                "compras.resolver_emails_cotizacion_prestador("
+        );
+        assertContains(
+                "consulta conserva habilitacion",
+                serviceImpl,
+                "COALESCE(p.solicitar_cotizacion, FALSE) = TRUE"
         );
 
         assertContains(
@@ -80,24 +120,24 @@ public class ComprasPrestadoresHabilitadosUiContractTest {
                 "<table class=\"lfr-table taglib-search-iterator\""
         );
         assertContains(
-                "vista informa sector",
+                "vista filtra por rubro",
                 jsp,
-                "<strong>Sector:</strong>"
+                ">Rubro:</label>"
         );
         assertContains(
-                "vista informa rubros",
+                "vista usa id de tipo de prestacion",
                 jsp,
-                "Tipos de cotizaci&#243;n / rubros"
+                "id_tipo_prestacion"
         );
         assertContains(
                 "vista escapa valores",
                 jsp,
                 "HtmlUtil.escape("
         );
-        assertNotContains(
-                "vista no expone email",
+        assertContains(
+                "vista muestra correos configurados",
                 jsp,
-                "getEmail"
+                "getEmailVisible()"
         );
         assertNotContains(
                 "vista no permite seleccion manual",
@@ -105,15 +145,10 @@ public class ComprasPrestadoresHabilitadosUiContractTest {
                 "type=\"checkbox\""
         );
 
-        assertContains(
-                "struts registra action",
-                struts,
-                "path=\"/compras/ver_prestadores_habilitados_cotizacion\""
-        );
-        assertContains(
-                "tiles registra vista",
-                tiles,
-                "requerimiento_compra_prestadores_habilitados.jsp"
+        assertNotContains(
+                "vista no depende de un requerimiento",
+                jsp,
+                "id_requerimiento_compra"
         );
     }
 
