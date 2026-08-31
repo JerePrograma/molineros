@@ -83,6 +83,7 @@ public class ComprasPrestadoresCotizacionSqlContractTest {
 
         validarNormalizacionRubro(sql);
         validarSchemaEmailCotizacion(sql);
+        validarPrestadoresEnviadosCompatibles(sql);
         validarJavaMultiplesDestinatarios();
     }
 
@@ -191,7 +192,12 @@ public class ComprasPrestadoresCotizacionSqlContractTest {
                 "JOIN public.contacto_e ce"
         );
         assertContains(
-                "resolver plural admite email y factura",
+                "resolver plural admite solamente email",
+                resolverPlural,
+                "upper(btrim(COALESCE(ce.tipo_contacto_e, ''))) = 'E'"
+        );
+        assertNotContains(
+                "resolver plural no admite email de facturacion",
                 resolverPlural,
                 "IN ('E', 'F')"
         );
@@ -199,11 +205,6 @@ public class ComprasPrestadoresCotizacionSqlContractTest {
                 "resolver plural preserva prioridad email",
                 resolverPlural,
                 "WHEN 'E' THEN 1"
-        );
-        assertContains(
-                "resolver plural preserva prioridad factura",
-                resolverPlural,
-                "WHEN 'F' THEN 2"
         );
         assertContains(
                 "resolver plural descarta baja logica",
@@ -376,6 +377,77 @@ public class ComprasPrestadoresCotizacionSqlContractTest {
                 "prestadores valida F como email",
                 prestadores,
                 "tipoContE == '<%=ContactoElectronico.Tipo.FAX%>'"
+        );
+    }
+
+    private static void validarPrestadoresEnviadosCompatibles(String sql)
+            throws Exception {
+
+        String buscarEnviados =
+                seccion(
+                        sql,
+                        "CREATE FUNCTION compras.buscar_prestadores_enviados(",
+                        "CREATE OR REPLACE FUNCTION "
+                                + "compras.listar_prestadores_enviados("
+                );
+
+        assertContains(
+                "busqueda filtra prestadores incompatibles en estado abierto",
+                buscarEnviados,
+                "r.estado <> 2"
+        );
+        assertContains(
+                "busqueda reutiliza compatibilidad canonica",
+                buscarEnviados,
+                "compras.es_prestador_compatible_cotizacion("
+        );
+
+        String listarEnviados =
+                seccion(
+                        sql,
+                        "CREATE OR REPLACE FUNCTION "
+                                + "compras.listar_prestadores_enviados(",
+                        "CREATE OR REPLACE FUNCTION "
+                                + "compras.hay_prestadores_pendientes_notificacion("
+                );
+
+        assertContains(
+                "listado filtra prestadores incompatibles en estado abierto",
+                listarEnviados,
+                "r.estado <> 2"
+        );
+        assertContains(
+                "listado reutiliza compatibilidad canonica",
+                listarEnviados,
+                "compras.es_prestador_compatible_cotizacion("
+        );
+
+        String actualizacion =
+                leer(
+                        "docs/sql/"
+                                + "20260831_filtrar_contactos_y_prestadores_cotizacion.sql",
+                        "ISO-8859-1"
+                );
+
+        assertContains(
+                "actualizacion limita contactos a email",
+                actualizacion,
+                "upper(btrim(COALESCE(ce.tipo_contacto_e, ''))) = 'E'"
+        );
+        assertNotContains(
+                "actualizacion no admite facturacion",
+                actualizacion,
+                "IN ('E', 'F')"
+        );
+        assertContains(
+                "actualizacion corrige busqueda de enviados",
+                actualizacion,
+                "CREATE OR REPLACE FUNCTION compras.buscar_prestadores_enviados("
+        );
+        assertContains(
+                "actualizacion corrige listado de enviados",
+                actualizacion,
+                "CREATE OR REPLACE FUNCTION compras.listar_prestadores_enviados("
         );
     }
 

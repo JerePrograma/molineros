@@ -3481,7 +3481,7 @@ FROM (
     JOIN public.contacto_e ce
       ON ce.id_contacto_e = pce.id_contacto_e
     WHERE pce.id_prestador = p_id_prestador
-      AND upper(btrim(COALESCE(ce.tipo_contacto_e, ''))) IN ('E', 'F')
+      AND upper(btrim(COALESCE(ce.tipo_contacto_e, ''))) = 'E'
       AND ce.baja_fecha IS NULL
       AND (pce.vigen_desde IS NULL OR pce.vigen_desde <= LOCALTIMESTAMP)
       AND (ce.vigen_desde IS NULL OR ce.vigen_desde <= LOCALTIMESTAMP)
@@ -3882,6 +3882,13 @@ WHERE r.id_requerimiento =
       p_id_requerimiento
   AND r.estado IN (2, 3, 4, 5, 99)
   AND (
+    r.estado <> 2
+        OR compras.es_prestador_compatible_cotizacion(
+            r.id_requerimiento,
+            p.id_prestador
+        )
+    )
+  AND (
     v_texto IS NULL
 
         OR upper(
@@ -3990,6 +3997,13 @@ WHERE r.id_requerimiento =
                    4,
                    5,
                    99
+    )
+  AND (
+    r.estado <> 2
+        OR compras.es_prestador_compatible_cotizacion(
+            r.id_requerimiento,
+            p.id_prestador
+        )
     )
 
 ORDER BY
