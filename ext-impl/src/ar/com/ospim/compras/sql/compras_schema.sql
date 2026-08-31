@@ -868,7 +868,7 @@ CREATE FUNCTION compras.normalizar_rubro(
     RETURNS VARCHAR
 AS $func$
 SELECT translate(
-           upper(btrim(COALESCE($1, ''))),
+           upper(btrim(replace(COALESCE($1, ''), '_', ' '))),
            U&'\00C1\00C0\00C4\00C2\00C9\00C8\00CB\00CA\00CD\00CC\00CF\00CE\00D3\00D2\00D6\00D4\00DA\00D9\00DC\00DB',
            'AAAAEEEEIIIIOOOOUUUU'
        );

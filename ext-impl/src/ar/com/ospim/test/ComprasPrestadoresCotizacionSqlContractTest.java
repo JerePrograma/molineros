@@ -81,8 +81,86 @@ public class ComprasPrestadoresCotizacionSqlContractTest {
                 "WHERE compras.requerimiento_cotizacion_prestador.estado_envio\n               IN (\n               'PENDIENTE',\n               'ERROR',\n               'EMAIL_INVALIDO'"
         );
 
+        validarNormalizacionRubro(sql);
         validarSchemaEmailCotizacion(sql);
         validarJavaMultiplesDestinatarios();
+    }
+
+    private static void validarNormalizacionRubro(String sql)
+            throws Exception {
+
+        String normalizarRubro =
+                seccion(
+                        sql,
+                        "CREATE FUNCTION compras.normalizar_rubro(",
+                        "CREATE FUNCTION "
+                                + "compras.estado_requerimiento_descripcion("
+                );
+
+        String reemplazoSeparador =
+                "replace(COALESCE($1, ''), '_', ' ')";
+
+        assertContains(
+                "normalizador convierte guion bajo en espacio",
+                normalizarRubro,
+                reemplazoSeparador
+        );
+
+        String actualizacion =
+                leer(
+                        "docs/sql/"
+                                + "20260831_normalizar_rubros_protesis_compras.sql",
+                        "ISO-8859-1"
+                );
+
+        String funcionActualizacion =
+                seccion(
+                        actualizacion,
+                        "CREATE OR REPLACE FUNCTION "
+                                + "compras.normalizar_rubro(",
+                        "DO $postcondition$"
+                );
+
+        assertContains(
+                "actualizacion reemplaza funcion existente",
+                funcionActualizacion,
+                "CREATE OR REPLACE FUNCTION compras.normalizar_rubro("
+        );
+        assertContains(
+                "actualizacion conserva normalizacion canonica",
+                funcionActualizacion,
+                reemplazoSeparador
+        );
+        assertContains(
+                "actualizacion cubre protesis traumatologia",
+                actualizacion,
+                "PROTESIS_TRAUMATOLOGIA"
+        );
+        assertContains(
+                "actualizacion espera protesis traumatologia canonica",
+                actualizacion,
+                "<> 'PROTESIS TRAUMATOLOGIA'"
+        );
+        assertContains(
+                "actualizacion cubre protesis cardiologia",
+                actualizacion,
+                "PROTESIS_CARDIOLOGIA"
+        );
+        assertContains(
+                "actualizacion espera protesis cardiologia canonica",
+                actualizacion,
+                "<> 'PROTESIS CARDIOLOGIA'"
+        );
+        assertContains(
+                "actualizacion cubre protesis general",
+                actualizacion,
+                "PROTESIS_GENERAL"
+        );
+        assertContains(
+                "actualizacion espera protesis general canonica",
+                actualizacion,
+                "<> 'PROTESIS GENERAL'"
+        );
     }
 
     private static void validarSchemaEmailCotizacion(String sql)
