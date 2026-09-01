@@ -37,6 +37,10 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/action/"
                         + "EditarRequerimientoCompraAction.java"
         );
+        String cambiarEstadoAction = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/action/"
+                        + "CambiarEstadoRequerimientoCompraAction.java"
+        );
         String buscador = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/action/"
                         + "BuscarEmpresasCotizacionCompraAction.java"
@@ -61,6 +65,9 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
         );
         String migracionBusqueda = leer(
                 "docs/sql/20260901_optimizar_busqueda_empresas_compras.sql"
+        );
+        String migracionOrdenCompra = leer(
+                "docs/sql/20260901_habilitar_orden_compra_empresas.sql"
         );
         String acciones = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
@@ -119,6 +126,108 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
                 "sector SISTEMAS",
                 webKeys,
                 "\"SISTEMAS\".equals(sector)"
+        );
+        assertContains(
+                "capacidad explicita de Orden de Compra",
+                webKeys,
+                "puedePasarAOrdenCompra("
+        );
+        assertContains(
+                "Orden de Compra exige detalles",
+                webKeys,
+                "&& hayDetalles"
+        );
+        assertContains(
+                "Orden de Compra exige cotizacion de Empresa",
+                webKeys,
+                "&& hayCotizacionesEmpresa"
+        );
+        assertContains(
+                "modelo publica capacidad de Orden de Compra",
+                requerimiento,
+                "public boolean puedePasarAOrdenCompra("
+        );
+        assertContains(
+                "Action procesa Orden de Compra explicitamente",
+                cambiarEstadoAction,
+                "== WebKeysCompras.ESTADO_ORDEN_COMPRA"
+        );
+        assertContains(
+                "Action conserva permiso de cotizacion",
+                cambiarEstadoAction,
+                "validarRolCotizar("
+        );
+        assertContains(
+                "Helper revalida cotizaciones activas",
+                cambioEstado,
+                ".listarCotizacionesEmpresa("
+        );
+        assertContains(
+                "Helper usa operacion especifica",
+                cambioEstado,
+                "persistence.confirmarOrdenCompra("
+        );
+        assertContains(
+                "Service usa funcion especifica",
+                edicionImpl,
+                "compras.confirmar_orden_compra_requerimiento"
+        );
+        assertContains(
+                "boton Orden de Compra",
+                acciones,
+                "value=\"Orden de Compra\""
+        );
+        assertContains(
+                "boton usa cotizaciones ya publicadas",
+                acciones,
+                ".ATTR_PRESUPUESTOS"
+        );
+        assertContains(
+                "form envia estado Orden de Compra",
+                acciones,
+                "WebKeysCompras.ESTADO_ORDEN_COMPRA"
+        );
+        assertContains(
+                "SQL agrega operacion explicita",
+                sql,
+                "CREATE FUNCTION compras.confirmar_orden_compra_requerimiento("
+        );
+        assertContains(
+                "SQL serializa Orden de Compra",
+                sql,
+                "FOR UPDATE OF r;"
+        );
+        assertContains(
+                "trigger admite caso estrecho 1 a 5",
+                sql,
+                "OLD.estado = 1 AND NEW.estado IN (2, 5, 99)"
+        );
+        assertContains(
+                "trigger exige documento de Empresa activo",
+                sql,
+                "AND rp.tipo_documento = 3"
+        );
+        assertContains(
+                "migracion reemplaza trigger reejecutable",
+                migracionOrdenCompra,
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.validar_requerimiento_fila()"
+        );
+        assertContains(
+                "migracion agrega operacion reejecutable",
+                migracionOrdenCompra,
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.confirmar_orden_compra_requerimiento("
+        );
+        assertContains(
+                "migracion es transaccional",
+                migracionOrdenCompra,
+                "BEGIN;"
+        );
+        assertNotContains(
+                "Orden de Compra no altera empresas externas",
+                migracionOrdenCompra,
+                "informacion_afip.empresa"
         );
         assertContains(
                 "envio bloqueado por modelo",

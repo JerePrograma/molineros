@@ -614,6 +614,18 @@ public class RequerimientoCompra {
                 && bajaFecha == null;
     }
 
+    public boolean puedePasarAOrdenCompra(
+            boolean hayCotizacionesEmpresa) {
+
+        return bajaFecha == null
+                && WebKeysCompras.puedePasarAOrdenCompra(
+                        getEstado(),
+                        getSectorDescripcion(),
+                        tieneDetalles(),
+                        hayCotizacionesEmpresa
+                );
+    }
+
     public boolean puedeReintentarNotificaciones() {
         return !esSectorSinCotizacionPrestador()
                 && WebKeysCompras.puedeReintentarNotificaciones(getEstado())

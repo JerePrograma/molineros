@@ -1008,6 +1008,108 @@ public class EditarRequerimientoCompraHelper {
         }
     }
 
+    public int pasarAOrdenCompra(
+            int idRequerimientoCompra,
+            String usuario) throws Exception {
+
+        try {
+            if (idRequerimientoCompra <= 0) {
+                throw errorUsuario(
+                        "Debe informar el requerimiento de compra."
+                );
+            }
+
+            RequerimientoCompra requerimientoActual =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .getRequerimientoCompra(
+                                    idRequerimientoCompra
+                            );
+
+            if (requerimientoActual == null
+                    || !requerimientoActual.isActivo()) {
+
+                throw errorUsuario(
+                        "El requerimiento ya no está disponible."
+                );
+            }
+
+            if (requerimientoActual.isOrdenCompra()) {
+                return WebKeysCompras.ESTADO_ORDEN_COMPRA;
+            }
+
+            if (!requerimientoActual
+                    .esSectorSinCotizacionPrestador()) {
+
+                throw errorUsuario(
+                        "Sólo los requerimientos de RRHH o Sistemas "
+                                + "pueden pasar directamente a Orden de Compra."
+                );
+            }
+
+            if (!requerimientoActual.isPendiente()) {
+                throw errorUsuario(
+                        "El requerimiento sólo puede pasar a Orden de Compra "
+                                + "mientras está PENDIENTE."
+                );
+            }
+
+            if (!requerimientoActual.tieneDetalles()) {
+                throw errorUsuario(
+                        "Debe agregar al menos un detalle antes de pasar "
+                                + "el requerimiento a Orden de Compra."
+                );
+            }
+
+            List<RequerimientoCompraPresupuesto> cotizacionesEmpresa =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .listarCotizacionesEmpresa(
+                                    idRequerimientoCompra
+                            );
+
+            boolean hayCotizacionesEmpresa =
+                    cotizacionesEmpresa != null
+                            && !cotizacionesEmpresa.isEmpty();
+
+            if (!requerimientoActual.puedePasarAOrdenCompra(
+                    hayCotizacionesEmpresa
+            )) {
+
+                throw errorUsuario(
+                        "Debe cargar al menos una cotización de Empresa "
+                                + "antes de pasar el requerimiento "
+                                + "a Orden de Compra."
+                );
+            }
+
+            int estadoFinal =
+                    persistence.confirmarOrdenCompra(
+                            idRequerimientoCompra,
+                            normalizarUsuario(usuario)
+                    );
+
+            if (estadoFinal
+                    != WebKeysCompras.ESTADO_ORDEN_COMPRA) {
+
+                throw new IllegalStateException(
+                        "La operación no confirmó el estado "
+                                + "ORDEN DE COMPRA."
+                );
+            }
+
+            return estadoFinal;
+
+        } catch (Exception e) {
+            throw manejarErrorOperacion(
+                    "pasar el requerimiento a Orden de Compra",
+                    "No se pudo pasar el requerimiento a Orden de Compra. "
+                            + "Actualice la pantalla e intente nuevamente.",
+                    e,
+                    "idRequerimiento=" + idRequerimientoCompra
+                            + ", usuario=" + usuario
+            );
+        }
+    }
+
     public NotificacionCotizacionResultado enviarACotizar(
             int idRequerimientoCompra,
             String usuario,

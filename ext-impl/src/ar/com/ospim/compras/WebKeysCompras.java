@@ -403,6 +403,20 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                 && hayPrestadoresPendientes;
     }
 
+    public static boolean puedePasarAOrdenCompra(
+            int estado,
+            String sectorDescripcion,
+            boolean hayDetalles,
+            boolean hayCotizacionesEmpresa) {
+
+        return esPendiente(estado)
+                && esSectorSinCotizacionPrestador(
+                        sectorDescripcion
+                )
+                && hayDetalles
+                && hayCotizacionesEmpresa;
+    }
+
     public static boolean puedeAnular(int estado) {
         return esPendiente(estado) || esACotizar(estado);
     }
@@ -426,8 +440,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
         /*
          * RECLAMO_RP se activa únicamente cuando existe un Reclamo
-         * Prestacional real y correctamente vinculado. ORDEN_COMPRA continúa
-         * reconocido sin transición activa dentro de este flujo.
+         * Prestacional real y correctamente vinculado. ORDEN_COMPRA utiliza
+         * una operación explícita según sector, por lo que no forma parte
+         * de esta matriz genérica del flujo de prestadores.
          */
         if (estadoActual == estadoNuevo
                 || esAnulado(estadoActual)) {

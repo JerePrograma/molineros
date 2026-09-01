@@ -12,11 +12,12 @@ Atributos de request consumidos:
 Parámetros consumidos:
     Ninguno directamente; sólo renderiza names y valores del contrato legacy cuando corresponde.
 IDs o funciones JavaScript expuestos:
-    id_requerimiento_compra, estado_nuevo, reintentar_notificaciones, btnGuardarCompras, btnGuardarCotizacionCompra, btnEnviarCotizarRequerimientoCompra, btnReintentarCotizacionRequerimientoCompra, btnCrearReclamoPrestacional
+    id_requerimiento_compra, estado_nuevo, reintentar_notificaciones, btnGuardarCompras, btnGuardarCotizacionCompra, btnEnviarCotizarRequerimientoCompra, btnOrdenCompraRequerimientoCompra, btnReintentarCotizacionRequerimientoCompra, btnCrearReclamoPrestacional
 Efectos secundarios:
     Sólo modifica el DOM o el modelo JavaScript; no ejecuta persistencia.
 --%>
 <%@ page import="ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.action.RequerimientoCompraRenderActionUtil" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional" %>
 <%
 int botoneraIdRequerimientoActual = req != null ? req.getIdRequerimientoCompra() : 0;
@@ -79,6 +80,17 @@ boolean botoneraHayPrestadoresPendientesNotificacion =
                 botoneraPendientesNotificacionAttr
         );
 
+Object botoneraCotizacionesEmpresaAttr =
+        renderRequest.getAttribute(
+                RequerimientoCompraRenderActionUtil
+                        .ATTR_PRESUPUESTOS
+        );
+
+boolean botoneraHayCotizacionesEmpresa =
+        botoneraCotizacionesEmpresaAttr instanceof java.util.List
+        && !((java.util.List) botoneraCotizacionesEmpresaAttr)
+                .isEmpty();
+
 Object botoneraRelacionAttr =
         renderRequest.getAttribute(
                 WebKeysCompras
@@ -104,6 +116,13 @@ boolean botoneraPuedeEnviarACotizar =
         botoneraRequerimientoPersistido
         && botoneraTieneRolCotizar
         && req.puedeEnviarACotizar();
+
+boolean botoneraPuedePasarAOrdenCompra =
+        botoneraRequerimientoPersistido
+        && botoneraTieneRolCotizar
+        && req.puedePasarAOrdenCompra(
+                botoneraHayCotizacionesEmpresa
+        );
 
 boolean botoneraPuedeReintentarCotizacion =
         botoneraRequerimientoPersistido
@@ -169,6 +188,8 @@ botoneraReclamoPrestacionalURL.setParameter(
 
 String botoneraEnviarCotizarFormId =
         namespaceCompra + "enviarCotizarRequerimientoCompraForm";
+String botoneraOrdenCompraFormId =
+        namespaceCompra + "ordenCompraRequerimientoCompraForm";
 String botoneraReintentarCotizacionFormId =
         namespaceCompra + "reintentarCotizacionRequerimientoCompraForm";
 String botoneraReclamoPrestacionalFormId =
@@ -186,6 +207,20 @@ String botoneraReclamoPrestacionalFormId =
         <input type="hidden"
                name="<portlet:namespace />estado_nuevo"
                value="<%= String.valueOf(WebKeysCompras.ESTADO_A_COTIZAR) %>" />
+    </form>
+<% } %>
+
+<% if (botoneraPuedePasarAOrdenCompra) { %>
+    <form action="<%= botoneraCambiarEstadoURL.toString() %>"
+          method="post"
+          id="<%= botoneraOrdenCompraFormId %>"
+          style="display:none;">
+        <input type="hidden"
+               name="<portlet:namespace />id_requerimiento_compra"
+               value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
+        <input type="hidden"
+               name="<portlet:namespace />estado_nuevo"
+               value="<%= String.valueOf(WebKeysCompras.ESTADO_ORDEN_COMPRA) %>" />
     </form>
 <% } %>
 
@@ -248,6 +283,18 @@ String botoneraReclamoPrestacionalFormId =
                                '<portlet:namespace />btnEnviarCotizarRequerimientoCompra',
                                '\u00bfConfirma enviar a Cotizar a los prestadores habilitados?',
                                'Notificando...'
+                       );" />
+            <% } %>
+
+            <% if (botoneraPuedePasarAOrdenCompra) { %>
+                <input type="button"
+                       id="<portlet:namespace />btnOrdenCompraRequerimientoCompra"
+                       value="Orden de Compra"
+                       onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
+                               '<%= botoneraOrdenCompraFormId %>',
+                               '<portlet:namespace />btnOrdenCompraRequerimientoCompra',
+                               '\u00bfConfirma pasar el requerimiento a Orden de Compra?',
+                               'Procesando...'
                        );" />
             <% } %>
 

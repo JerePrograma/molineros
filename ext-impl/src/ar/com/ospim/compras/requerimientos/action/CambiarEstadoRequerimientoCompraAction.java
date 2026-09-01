@@ -197,6 +197,24 @@ public class CambiarEstadoRequerimientoCompraAction
                 }
 
             } else if (estadoNuevo
+                    == WebKeysCompras.ESTADO_ORDEN_COMPRA) {
+
+                validarRolCotizar(
+                        user
+                );
+
+                requerimientoHelper
+                        .pasarAOrdenCompra(
+                                idRequerimientoCompra,
+                                usuario
+                        );
+
+                SessionMessages.add(
+                        actionRequest,
+                        "estado-requerimiento-compra-actualizado"
+                );
+
+            } else if (estadoNuevo
                     == WebKeysCompras.ESTADO_ANULADO) {
 
                 validarRolAnular(

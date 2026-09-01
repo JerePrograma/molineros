@@ -59,6 +59,9 @@ public class EditarRequerimientoCompraServiceImpl {
     private static final String SQL_CONFIRMAR_ENVIO_A_COTIZAR =
             "{ ? = call compras.confirmar_envio_a_cotizar(?,?) }";
 
+    private static final String SQL_CONFIRMAR_ORDEN_COMPRA =
+            "{ ? = call compras.confirmar_orden_compra_requerimiento(?,?) }";
+
     private static final String SQL_GUARDAR_COTIZACION =
             "{ ? = call compras.guardar_cotizacion_requerimiento_call(?,?,?,?,?,?,?) }";
 
@@ -538,6 +541,27 @@ public class EditarRequerimientoCompraServiceImpl {
         try {
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(SQL_CONFIRMAR_ENVIO_A_COTIZAR);
+            stmt.registerOutParameter(1, Types.INTEGER);
+            stmt.setInt(2, idRequerimientoCompra);
+            stmt.setString(3, usuario);
+            stmt.execute();
+
+            return stmt.getInt(1);
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public int confirmarOrdenCompra(
+            int idRequerimientoCompra,
+            String usuario) throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_CONFIRMAR_ORDEN_COMPRA);
             stmt.registerOutParameter(1, Types.INTEGER);
             stmt.setInt(2, idRequerimientoCompra);
             stmt.setString(3, usuario);

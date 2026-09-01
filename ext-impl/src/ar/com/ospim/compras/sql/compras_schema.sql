@@ -12,9 +12,7 @@
 --   2  A_COTIZAR
 --   3  COTIZADO
 --   4  RECLAMO_RP
---
--- Estado reconocido de solo lectura, sin transición activa:
---   5  ORDEN_COMPRA
+--   5  ORDEN_COMPRA (directa para RRHH/SISTEMAS con cotizacion de Empresa)
 --
 -- Estado lateral:
 --   99 ANULADO
@@ -1061,12 +1059,17 @@ CREATE FUNCTION compras.validar_requerimiento_fila()
     RETURNS TRIGGER
 AS $func$
 DECLARE
-v_requiere_afiliado BOOLEAN;
+    v_requiere_afiliado BOOLEAN;
+    v_sector_descripcion VARCHAR(120);
     v_cambio_estructura BOOLEAN;
     v_usuario VARCHAR(100);
 BEGIN
-SELECT s.requiere_afiliado
-INTO v_requiere_afiliado
+SELECT
+    s.requiere_afiliado,
+    s.descripcion
+INTO
+    v_requiere_afiliado,
+    v_sector_descripcion
 FROM compras.sector_requerimiento s
 WHERE s.id_sector = NEW.id_sector
   AND s.activo = TRUE
@@ -1190,15 +1193,14 @@ END IF;
              * Transiciones funcionales actualmente soportadas:
              *
              * 1 PENDIENTE -> 2 A_COTIZAR
+             * 1 PENDIENTE -> 5 ORDEN_COMPRA para RRHH/SISTEMAS
              * 1 PENDIENTE -> 99 ANULADO
              * 2 A_COTIZAR -> 3 COTIZADO
              * 2 A_COTIZAR -> 99 ANULADO
              * 3 COTIZADO -> 4 RECLAMO_RP
-             *
-             * ORDEN_COMPRA (5) continúa sin transición activa.
              */
             IF NOT (
-                    (OLD.estado = 1 AND NEW.estado IN (2, 99))
+                    (OLD.estado = 1 AND NEW.estado IN (2, 5, 99))
                  OR (OLD.estado = 2 AND NEW.estado IN (3, 99))
                  OR (OLD.estado = 3 AND NEW.estado = 4)
             ) THEN
@@ -1251,6 +1253,44 @@ END IF;
 END IF;
 
 END IF;
+
+            IF OLD.estado = 1
+               AND NEW.estado = 5 THEN
+
+                IF compras.normalizar_sector(
+                        v_sector_descripcion
+                   ) NOT IN ('RRHH', 'SISTEMAS') THEN
+
+                    RAISE EXCEPTION
+                        'Solo los requerimientos de RRHH o SISTEMAS pueden pasar directamente a ORDEN_COMPRA.';
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1
+                      FROM compras.requerimiento_detalle d
+                     WHERE d.id_requerimiento =
+                           NEW.id_requerimiento
+                       AND d.baja_fecha IS NULL
+                ) THEN
+
+                    RAISE EXCEPTION
+                        'Debe existir al menos un detalle antes de pasar a ORDEN_COMPRA.';
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1
+                      FROM compras.requerimiento_presupuesto rp
+                     WHERE rp.id_requerimiento =
+                           NEW.id_requerimiento
+                       AND rp.tipo_documento = 3
+                       AND rp.baja_fecha IS NULL
+                ) THEN
+
+                    RAISE EXCEPTION
+                        'Debe existir al menos una cotizacion de Empresa activa antes de pasar a ORDEN_COMPRA.';
+                END IF;
+
+            END IF;
 
             IF OLD.estado = 2
                AND NEW.estado = 3 THEN
@@ -2276,6 +2316,94 @@ IF NOT FOUND THEN
         RAISE EXCEPTION
             'El requerimiento fue modificado por otro proceso.';
 END IF;
+END;
+$func$
+LANGUAGE plpgsql;
+
+CREATE FUNCTION compras.confirmar_orden_compra_requerimiento(
+    p_id_requerimiento INTEGER,
+    p_usuario VARCHAR
+)
+RETURNS INTEGER
+AS $func$
+DECLARE
+    v_estado INTEGER;
+    v_sector_descripcion VARCHAR(120);
+BEGIN
+    IF p_id_requerimiento IS NULL
+       OR p_id_requerimiento <= 0 THEN
+
+        RAISE EXCEPTION
+            'Debe informar el requerimiento de compra.';
+    END IF;
+
+    SELECT
+        r.estado,
+        sr.descripcion
+    INTO
+        v_estado,
+        v_sector_descripcion
+    FROM compras.requerimiento r
+    JOIN compras.sector_requerimiento sr
+      ON sr.id_sector = r.id_sector
+     AND sr.activo = TRUE
+     AND sr.baja_fecha IS NULL
+    WHERE r.id_requerimiento = p_id_requerimiento
+      AND r.baja_fecha IS NULL
+    FOR UPDATE OF r;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'No se encontro el requerimiento activo.';
+    END IF;
+
+    IF v_estado = 5 THEN
+        RETURN 5;
+    END IF;
+
+    IF v_estado <> 1 THEN
+        RAISE EXCEPTION
+            'El requerimiento solo puede pasar a ORDEN_COMPRA desde PENDIENTE.';
+    END IF;
+
+    IF compras.normalizar_sector(
+            v_sector_descripcion
+       ) NOT IN ('RRHH', 'SISTEMAS') THEN
+
+        RAISE EXCEPTION
+            'Solo los requerimientos de RRHH o SISTEMAS pueden pasar directamente a ORDEN_COMPRA.';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+          FROM compras.requerimiento_detalle d
+         WHERE d.id_requerimiento = p_id_requerimiento
+           AND d.baja_fecha IS NULL
+    ) THEN
+
+        RAISE EXCEPTION
+            'Debe existir al menos un detalle antes de pasar a ORDEN_COMPRA.';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+          FROM compras.requerimiento_presupuesto rp
+         WHERE rp.id_requerimiento = p_id_requerimiento
+           AND rp.tipo_documento = 3
+           AND rp.baja_fecha IS NULL
+    ) THEN
+
+        RAISE EXCEPTION
+            'Debe existir al menos una cotizacion de Empresa activa antes de pasar a ORDEN_COMPRA.';
+    END IF;
+
+    PERFORM compras.cambiar_estado_requerimiento(
+        p_id_requerimiento,
+        5,
+        p_usuario
+    );
+
+    RETURN 5;
 END;
 $func$
 LANGUAGE plpgsql;
